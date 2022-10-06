@@ -15,12 +15,13 @@ run backend and front end:
 - `npm run start`
 
 stop all running services:
-`postgres: sudo systemctl stop postgresql.service`
-`redis: /etc/init.d/redis-server stop`
-`mongo: sudo systemctl stop mongod`
+- `postgres: sudo systemctl stop postgresql.service`
+redis: 
+- `/etc/init.d/redis-server stop`
+- `mongo: sudo systemctl stop mongod`
 
-remove compose conatiners
-`docker-compose down --volumes`
+remove compose conatiners:
+- `docker-compose down --volumes`
 
 
 Questions? Please join our [Slack channel](https://laudspeakerusers.slack.com/ssb/redirect) or visit our [site](https://laudspeaker.com/).
