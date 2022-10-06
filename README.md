@@ -1,5 +1,7 @@
 <p align="center"><a  href="https://laudspeaker.com/"><img  src="https://user-images.githubusercontent.com/7728266/194206039-0faecc9d-c500-4c64-8401-dfbefe501e4a.png"  height="100"/></a></p>
 
+<a href='https://laudspeakerusers.slack.com/ssb/redirect'><img alt="Join Slack Community" src="https://img.shields.io/badge/slack%20community-join-green"/></a>
+
 ## Laudspeaker - Open Source, Self hostable Customer Messaging Workflows for Developers
 * Send product or event-triggered emails, slack and more to your customers and users at scale
 * Build complex messaging workflows the whole team can understand in a visual tool
