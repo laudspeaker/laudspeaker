@@ -28,9 +28,10 @@ remove compose conatiners:
 Add a `.env` file to both server and client in packages
 
 We have provided examples which you can use: 
-mv env-server-example packages/server/.env and  mv env-client-example packages/server/.env 
 
-Make sure you fill in the fields in the .env files before trying to run it
+`mv env-server-example packages/server/.env` and  `mv env-client-example packages/server/.env` 
+
+Make sure you fill in the fields in the env files before trying to run laudspeaker
 
 Questions? Please join our [Slack channel](https://laudspeakerusers.slack.com/ssb/redirect) or visit our [site](https://laudspeaker.com/).
 
