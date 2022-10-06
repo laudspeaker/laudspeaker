@@ -7,7 +7,7 @@
 
 ### Get Started
 
-Run yourself (instructions below) or use [Laudspeaker Cloud](https://app.laudspeaker.com/login) 
+Run yourself (instructions below) or use [Laudspeaker Cloud](https://app.laudspeaker.com/login) . Docs are [here](https://laudspeaker.com/docs/guides/overview/intro/)
 
 run services:
 - `docker-compose up`
