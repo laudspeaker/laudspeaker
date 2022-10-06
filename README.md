@@ -8,11 +8,11 @@
 ### Get Started
 
 run services:
-`docker-compose up`
+- `docker-compose up`
 
 run backend and front end:
-`npm install`
-`npm run start`
+- `npm install`
+- `npm run start`
 
 stop all running services:
 `postgres: sudo systemctl stop postgresql.service`
