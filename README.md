@@ -37,6 +37,8 @@ Questions? Please join our [Slack channel](https://laudspeakerusers.slack.com/ss
 
 ### Key Features
 
+Description coming soon!
+
 ### What makes Laudspeaker cool?
 
 Lauspeaker is the only multi-channel open-source customer messaging workflow software, which is focused on being event triggered, has been built with a visual journey feature from day one and is focused on scalability.
