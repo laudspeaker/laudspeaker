@@ -1,0 +1,47 @@
+version: 2.1
+jobs:
+  build_and_deploy:
+    docker:
+      - image: circleci/node:18
+    steps:
+      - checkout
+      - setup_remote_docker:
+          version: 20.10.14
+          docker_layer_caching: true
+      - run:
+          command: |
+            sudo apt-get install -y python-pip libyaml-dev python-dev jq
+            sudo pip install awscli
+            export AWS_ACCESS_KEY_ID=$DEMO_AWS_KEY
+            export AWS_SECRET_ACCESS_KEY=$DEMO_AWS_SECRET
+            aws configure set region $DEMO_AWS_REGION
+            aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 427506656486.dkr.ecr.us-east-1.amazonaws.com
+            docker build -f Dockerfile.client -t laudspeaker:latest .
+            docker build -f Dockerfile.server -t laudspeaker:api-latest .
+            docker tag laudspeaker:api-latest 427506656486.dkr.ecr.us-east-1.amazonaws.com/laudspeaker:api-latest
+            docker tag laudspeaker:latest 427506656486.dkr.ecr.us-east-1.amazonaws.com/laudspeaker:latest
+            docker push 427506656486.dkr.ecr.us-east-1.amazonaws.com/laudspeaker:api-latest
+            docker push 427506656486.dkr.ecr.us-east-1.amazonaws.com/laudspeaker:latest
+            aws ecs update-service --cluster ecs-demo --service api --force-new-deployment
+            aws ecs update-service --cluster frontend --service frontend --force-new-deployment
+  test:
+    docker:
+      - image: circleci/node:16
+    steps:
+      - checkout
+      - setup_remote_docker:
+          version: 20.10.14
+          docker_layer_caching: true
+      - run: npm install
+      - run: npm run test
+workflows:
+  pull_request:
+    jobs:
+      - test
+  main:    
+    jobs:
+      - build_and_deploy:
+          filters:
+            branches:
+              only:
+                - main

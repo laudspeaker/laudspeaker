@@ -1,0 +1,44 @@
+.react-daterange-picker__wrapper {
+  text-align: center;
+  font-weight: 400;
+  font-size: 14px;
+  background: #ffffff;
+  box-shadow: 0px 8px 16px -6px rgba(0, 0, 0, 0.1);
+  border-radius: 24px !important;
+  border: none;
+  /* flex-direction: row-reverse; */
+  /* justify-content: center; */
+  width: 250px;
+  padding: 7px 0px
+}
+
+.react-daterange-picker__range-divider {
+  display: flex;
+  align-items: center;
+  /* width: 100%; */
+  justify-content: center;
+}
+
+.react-daterange-picker__clear-button {
+  display: contents;
+}
+
+.react-daterange-picker__calendar {
+  inset: auto !important;
+}
+
+.react-daterange-picker__inputGroup {
+  order: 2;
+}
+
+.react-daterange-picker__range-divider {
+  order: 3;
+}
+
+.react-daterange-picker__range-divider + .react-daterange-picker__inputGroup {
+  order: 4;
+}
+
+.react-daterange-picker__calendar-button {
+  order: 1
+}

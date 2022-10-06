@@ -1,0 +1,38 @@
+{
+  "name": "laudspeaker",
+  "version": "0.1.0",
+  "description": "Open Source Omni-Channel Triggered Messaging",
+  "main": "index.js",
+  "workspaces": [
+    "packages/client",
+    "packages/server"
+  ],
+  "scripts": {
+    "test": "concurrently 'npm run test:client' 'npm run test:server'",
+    "test:client": "npm run test -w packages/client",
+    "test:server": "npm run test -w packages/server",
+    "test:e2e": "concurrently 'npm run test:client' 'npm run test:server'",
+    "test:e2e:client": "npm run test -w packages/client",
+    "test:e2e:server": "npm run test -w packages/server",
+    "lint": "concurrently 'npm run lint:client' 'npm run lint:server'",
+    "lint:client": "npm run lint -w packages/client",
+    "lint:server": "npm run lint -w packages/server",
+    "lint:fix": "concurrently 'npm run lint:fix:client' 'npm run lint:fix:server'",
+    "lint:fix:client": "npm run lint:fix -w packages/client",
+    "lint:fix:server": "npm run lint:fix -w packages/server",
+    "format": "concurrently 'npm run format:client' 'npm run format:server'",
+    "format:client": "npm run format -w packages/client",
+    "format:server": "npm run format -w packages/server",
+    "build": "concurrently 'npm run build:client' 'npm run build:server'",
+    "build:client": "npm run build:prod -w packages/client",
+    "build:server": "npm run build -w packages/server",
+    "start": "concurrently 'npm run start:client' 'npm run start:server'",
+    "start:client": "npm run start -w packages/client",
+    "start:server": "npm run start:dev -w packages/server"
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "concurrently": "^7.4.0"
+  }
+}

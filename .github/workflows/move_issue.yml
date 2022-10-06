@@ -1,0 +1,21 @@
+name: Close Pull Request
+
+# only trigger on pull request closed events
+on:
+  issues:
+    types: [closed]
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+jobs:
+  createCard:
+    runs-on: ubuntu-latest
+    steps:
+     - name: Create or Update Project Card
+       uses: peter-evans/create-or-update-project-card@v2.0.0
+       with:
+          project-name: 'https://github.com/Laudspeaker/Laudspeaker/projects/1'
+          column-name: 'Done'
+          issue-number: ${{ github.event.number }}
+
+
