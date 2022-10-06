@@ -40,7 +40,7 @@ We are planning to build Laudspeaker to work well with the Modern Data Stack, in
 
 ### License
 
-**Laudspeaker** is open source and released under the [MIT License][mit_license], and AGPLv3 licenses with the exception of our ee directory (which is currently empty!) but will be under the Laudspeaker Enterprise Edition license.
+**Laudspeaker** is open source and released under the [MIT License][mit_license], and AGPLv3 licenses (code in separate directories) with the exception of our ee directory (which is currently empty!) but will be under the Laudspeaker Enterprise Edition license. If you can only use MIT licencsed code, you can still use Laudspeaker but with a few fewer features.
 
 ### Contribute 
 
