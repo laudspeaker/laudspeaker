@@ -30,6 +30,12 @@ Questions? Please join our [Slack channel](https://laudspeakerusers.slack.com/ss
 
 ### What makes Laudspeaker cool?
 
+Lauspeaker is the only multi-channel open-source customer messaging workflow software, which is focused on being event triggered, has been built with a visual journey feature from day one and is focused on scalability.
+
+We support slack as a channel and have many more channels on our roadmap.
+
+We are planning to build Laudspeaker to work well with the Modern Data Stack, integrating with data warehouses and other services so you can easily import and export data with no fear of lock in or losing control of your data.
+
 ### License
 
 **Laudspeaker** is open source and released under the [MIT License][mit_license], and AGPLv3 licenses with the exception of our ee directory (which is currently empty!) but will be under the Laudspeaker Enterprise Edition license.
