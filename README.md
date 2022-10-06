@@ -10,7 +10,7 @@
 Run yourself (instructions below) or use [Laudspeaker Cloud](https://app.laudspeaker.com/login) . Docs are [here](https://laudspeaker.com/docs/guides/overview/intro/)
 
 run services:
-- `docker-compose up`
+- `docker-compose up` or `docker compose up` depending on your version of docker
 
 run backend and front end:
 - `npm install`
@@ -25,10 +25,19 @@ redis:
 remove compose conatiners:
 - `docker-compose down --volumes`
 
+Add a `.env` file to both server and client in packages
+
+We have provided examples which you can use: 
+
+`mv env-server-example packages/server/.env` and  `mv env-client-example packages/server/.env` 
+
+Make sure you fill in the fields in the env files before trying to run laudspeaker
 
 Questions? Please join our [Slack channel](https://laudspeakerusers.slack.com/ssb/redirect) or visit our [site](https://laudspeaker.com/).
 
 ### Key Features
+
+Description coming soon!
 
 ### What makes Laudspeaker cool?
 
