@@ -5,6 +5,8 @@
 
 <br/>
 
+### Get Started
+
 run services:
 docker-compose up
 
@@ -26,19 +28,9 @@ Questions? Please join our [Slack channel](https://laudspeakerusers.slack.com/ss
 
 <br>
 
-  
-### Get Started
-
- - To experience the full power of laudspeaker we recommend you import your posthog users first via the event integration on [laudspeakers application] 
- (https:/loom.com/).
-   
- - After configuring posthog on our application, install the plugin, and provide your api for `write-key`, 
- - provide [your_server's_url]/events/posthog for `Lauspeaker URL` (or if using our hosted plan just use app.laudspeaker.com/events/posthog). The other fields are optional
- - Then enable the plugin and you should start seeing events sent to laudspeaker 
-
 ### License
 
-**Laudspeaker PostHog Plugin** is released under the [MIT License][mit_license].
+**Laudspeaker** is open source and released under the [MIT License][mit_license], and AGPLv3 licenses with the exception of our ee directory (which is currently empty!).
 
 ### Contribute 
 
