@@ -25,6 +25,40 @@ redis:
 remove compose conatiners:
 - `docker-compose down --volumes`
 
+Add a `.env` file to both server and client in packages
+
+.env in client:
+
+REACT_APP_API_BASE_URL='http://localhost:3001'
+REACT_APP_FAKE_SERVER_URL='https://jsonplaceholder.typicode.com'
+
+.env in server:
+
+PORT=3001
+
+DATABASE_HOST=localhost
+DATABASE_NAME=laudspeaker
+DATABASE_USER=postgres
+DATABASE_PASSWORD=password
+DATABASE_PORT=5432
+
+JWT_KEY=dev
+JWT_EXPIRES=365d
+
+PAPERTRAIL_API_KEY=
+
+REDIS_HOST=localhost
+REDIS_PORT=6379
+
+MONGOOSE_URL=mongodb://localhost/nest
+
+MAGIC_EMAIL_KEY=[your mail gun key]
+MAGIC_EMAIL_DOMAIN=[your mail gun key]
+
+SLACK_CLIENT_ID=[your slack client id]
+SLACK_CLIENT_SECRET=[your slack client secret]
+SLACK_SIGNING_SECRET=[your slack signing secret]
+
 
 Questions? Please join our [Slack channel](https://laudspeakerusers.slack.com/ssb/redirect) or visit our [site](https://laudspeaker.com/).
 
