@@ -1,10 +1,8 @@
 {
-  "name": "nest-auth-api",
-  "version": "1.0.0",
+  "name": "laudspeaker-api",
+  "version": "0.1.0",
   "description": "",
-  "author": "Laudspeaker, Inc.",
   "private": true,
-  "license": "UNLICENSED",
   "scripts": {
     "prebuild": "rimraf dist",
     "build": "nest build",
