@@ -18,13 +18,12 @@ const drawerWidth = 154;
 
 export default function ResponsiveDrawer() {
   const userState = useTypedSelector<AuthState>((state) => state.auth);
-  const { userPermissions = [] } = userState;
   const location = useLocation();
 
   const generateMenuItem = (item: any) => {
     return (
       <React.Fragment key={item.id}>
-        {userPermissions.includes(item.id) ? (
+        {userState.userPermissions?.includes(item.id) ? (
           <Link
             to={item.link}
             style={

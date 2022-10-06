@@ -1,15 +1,11 @@
-declare function Routes(
-  props: RoutesProps
-): React.ReactElement | null;
+declare function Routes(props: RoutesProps): React.ReactElement | null;
 
 interface RoutesProps {
   children?: React.ReactNode;
   location?: Partial<Location> | string;
 }
 
-declare function Route(
-  props: RouteProps
-): React.ReactElement | null;
+declare function Route(props: RouteProps): React.ReactElement | null;
 
 interface RouteProps {
   caseSensitive?: boolean;

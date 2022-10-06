@@ -12,6 +12,14 @@ const NetworkCofiguration = () => {
     navigate("/settings/slack-configuration");
   };
 
+  const moveToEvents = () => {
+    navigate("/settings/events");
+  };
+
+  const moveToPosthog = () => {
+    navigate("/settings/phconfiguration");
+  };
+
   const moveToCompletion = () => {
     navigate("/settings/completion");
   };
@@ -21,6 +29,7 @@ const NetworkCofiguration = () => {
   useEffect(() => {
     const channels = settings.channel as string[];
     const nextChannel = channels[0];
+    const eventsCompleted = settings.eventsCompleted;
 
     if (nextChannel === "Email") {
       moveToEventProvider();
@@ -30,6 +39,20 @@ const NetworkCofiguration = () => {
     if (nextChannel === "Slack") {
       moveToSlackConfiguration();
       return;
+    }
+
+    if (!settings.eventsCompleted) {
+      const events = settings.events as string[];
+      if (!events?.length) {
+        moveToEvents();
+        return;
+      }
+      const nextEvent = events[0];
+
+      if (nextEvent === "Posthog") {
+        moveToPosthog();
+        return;
+      }
     }
 
     moveToCompletion();

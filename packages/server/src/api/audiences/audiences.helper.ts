@@ -8,8 +8,20 @@ const conditionalCompare = (custAttr: any, checkVal: any, operator: string) => {
       return custAttr != checkVal;
     case 'contains':
       return custAttr.includes(checkVal);
-    case 'doesnotcontain':
+    case 'doesNotContain':
       return !custAttr.includes(checkVal);
+    case 'isBoolEqual':
+      return custAttr === (checkVal === 'true');
+    case 'isBoolNotEqual':
+      return custAttr !== (checkVal === 'true');
+    case 'isTimestampBefore':
+      return new Date(custAttr) < new Date(checkVal);
+    case 'isTimestampAfter':
+      return new Date(custAttr) > new Date(checkVal);
+    case 'isGreaterThan':
+      return custAttr > Number(checkVal);
+    case 'isLessThan':
+      return custAttr < Number(checkVal);
   }
 };
 

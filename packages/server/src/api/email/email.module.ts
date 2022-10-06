@@ -8,6 +8,10 @@ import { Audience } from '../audiences/entities/audience.entity';
 import { CustomersService } from '../customers/customers.service';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Customer, CustomerSchema } from '../customers/schemas/customer.schema';
+import {
+  CustomerKeys,
+  CustomerKeysSchema,
+} from '../customers/schemas/customer-keys.schema';
 
 @Module({
   imports: [
@@ -19,6 +23,12 @@ import { Customer, CustomerSchema } from '../customers/schemas/customer.schema';
     MongooseModule.forFeature([
       { name: Customer.name, schema: CustomerSchema },
     ]),
+    MongooseModule.forFeature([
+      { name: CustomerKeys.name, schema: CustomerKeysSchema },
+    ]),
+    BullModule.registerQueue({
+      name: 'customers',
+    }),
   ],
   controllers: [EmailController],
   providers: [EmailProcessor, CustomersService],

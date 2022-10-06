@@ -129,7 +129,7 @@ function EventProvider() {
                   handleInputChange("eventProvider", e.target.value);
                 }}
                 multipleSelections={true}
-                renderValue={() => <></>}
+                renderValue={(selected) => <>{selected.join(", ")}</>}
                 sx={{
                   height: "44px",
                   margin: "20px 0px",
@@ -168,6 +168,7 @@ function EventProvider() {
                         subtitle={`${channel.subTitle} ${
                           channel.disabled ? "(coming soon)" : ""
                         }`}
+                        tick={eventProvider.includes(channel.title)}
                       />
                     </MenuItem>
                   );

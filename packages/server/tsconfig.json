@@ -19,7 +19,12 @@
     "noFallthroughCasesInSwitch": false,
     "paths": { "@/*": ["./src/*"] },
     "typeRoots": ["./node_modules/@types"],
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "plugins": [
+      {
+        "transform": "tst-reflect-transformer"
+      }
+    ]
   },
   "exclude": ["*.spec.ts"]
 }

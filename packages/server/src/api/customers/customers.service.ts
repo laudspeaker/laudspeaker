@@ -1,3 +1,4 @@
+/* eslint-disable no-case-declarations */
 import { Model } from 'mongoose';
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
@@ -10,6 +11,12 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { checkInclusion } from '../audiences/audiences.helper';
 import { EventDto } from '../events/dto/event.dto';
+import {
+  CustomerKeys,
+  CustomerKeysDocument,
+} from './schemas/customer-keys.schema';
+import { InjectQueue } from '@nestjs/bull';
+import { Queue } from 'bull';
 
 export type Correlation = {
   cust: CustomerDocument;
@@ -19,7 +26,10 @@ export type Correlation = {
 @Injectable()
 export class CustomersService {
   constructor(
+    @InjectQueue('customers') private readonly customersQueue: Queue,
     @InjectModel(Customer.name) public CustomerModel: Model<CustomerDocument>,
+    @InjectModel(CustomerKeys.name)
+    private CustomerKeysModel: Model<CustomerKeysDocument>,
     @InjectRepository(Audience)
     private audiencesRepository: Repository<Audience>
   ) {}
@@ -71,6 +81,61 @@ export class CustomersService {
     return ret;
   }
 
+  async addPhCustomers(data: any, accountId: string) {
+    for (let index = 0; index < data.length; index++) {
+      if (index == 0) {
+        console.log(JSON.stringify(data[index], null, 2));
+      }
+      const createdCustomer = new this.CustomerModel({
+        ownerId: accountId,
+      });
+      createdCustomer['posthogId'] = data[index]['id'];
+      createdCustomer['phCreatedAt'] = data[index]['created_at'];
+      if (data[index]?.properties?.$initial_os) {
+        createdCustomer['phInitialOs'] = data[index]?.properties.$initial_os;
+      }
+      if (data[index]?.properties?.$geoip_time_zone) {
+        createdCustomer['phGeoIpTimeZone'] =
+          data[index]?.properties.$geoip_time_zone;
+      }
+      //add lon check as well for completeness
+      //Note that longitude comes first in a GeoJSON coordinate array, not latitude.
+      if (data[index]?.properties?.$geoip_latitude) {
+        const phGeoip = {
+          type: 'Point',
+          coordinates: [
+            data[index]?.properties.$geoip_longitude,
+            data[index]?.properties.$geoip_latitude,
+          ],
+          //index: '2dsphere'
+        };
+        //createdCustomer['phGeoip_latitude']= data[index]?.properties.$geoip_latitude
+        //createdCustomer['phGeoIp'] = phGeoip;
+      }
+      if (data[index]?.properties?.$initial_geoip_latitude) {
+        const phInitial_geoip = {
+          type: 'Point',
+          coordinates: [
+            data[index]?.properties.$initial_geoip_longitude,
+            data[index]?.properties.$initial_geoip_latitude,
+          ],
+          //index: '2dsphere'
+        };
+        //createdCustomer['phInitial_geoip_latitude']= data[index]?.properties.$initial_geoip_latitude
+        //createdCustomer['phInitialGeoIp']= phInitial_geoip;
+      }
+
+      if (index == 0) {
+        console.log(JSON.stringify(createdCustomer, null, 2));
+      }
+
+      const ret = await createdCustomer.save();
+      if (index == 0) {
+        console.log('ret is', ret);
+      }
+    }
+  }
+
   async findAll(account: Account): Promise<CustomerDocument[]> {
     return this.CustomerModel.find({ ownerId: (<Account>account).id }).exec();
   }
@@ -90,6 +155,53 @@ export class CustomersService {
       return info;
     });
     return listInfo;
+  }
+
+  async ingestPosthogPersons(
+    proj: string,
+    phAuth: string,
+    phUrl: string,
+    accountId: string
+  ) {
+    console.log('in ingest');
+    let posthogUrl: string;
+    console.log(phUrl[phUrl.length - 1]);
+    if (phUrl[phUrl.length - 1] == '/') {
+      posthogUrl = phUrl + 'api/projects/' + proj + '/persons/';
+    } else {
+      posthogUrl = phUrl + '/api/projects/' + proj + '/persons/';
+    }
+    //let posthogUrl = "https://app.posthog.com/api/projects/" + proj + "/persons/";
+    const authString = 'Bearer ' + phAuth;
+    try {
+      console.log('over here');
+      const job = await this.customersQueue.add({
+        url: posthogUrl,
+        auth: authString,
+        account: accountId,
+      });
+      console.log(job);
+      console.log('completed job');
+    } catch (e) {
+      console.log('error ', e);
+    }
+    /*
+    console.log("in ingest");
+    try{
+        //https://app.posthog.com/api/projects/:project_id/persons/
+        const res = await axios({
+            method: 'get',
+            url: "https://app.posthog.com/api/projects/2877/persons/",
+            headers: {
+                Authorization: 'Bearer phx_UUMEhd0XChUyRbEIsAKNikp1TZzGa2ebhEpX3XLdV9F'
+            }
+        });
+    console.log("res", res);
+    }
+    catch(e){
+        console.log("e is", e);
+    }
+    */
   }
 
   async findByAudience(
@@ -151,6 +263,34 @@ export class CustomersService {
         slackId: id,
       });
       return { cust: await createdCustomer.save(), found: false };
+    } else return { cust: customers[0], found: true };
+  }
+
+  async findBySpecifiedEvent(
+    account: Account,
+    correlationKey: string,
+    correlationValue: string,
+    event: any,
+    mapping?: (event: any) => any
+  ): Promise<Correlation> {
+    const queryParam = {};
+    queryParam[correlationKey] = correlationValue;
+    const customers = await this.CustomerModel.find(queryParam).exec();
+    if (customers.length < 1) {
+      if (mapping) {
+        const newCust = mapping(event);
+        newCust['ownerId'] = (<Account>account).id;
+        const createdCustomer = new this.CustomerModel(newCust);
+        return { cust: await createdCustomer.save(), found: false };
+      } else {
+        const createdCustomer = new this.CustomerModel({
+          ownerId: (<Account>account).id,
+          correlationKey: correlationValue,
+        });
+        return { cust: await createdCustomer.save(), found: false };
+      }
+
+      //to do cant just return [0] in the future
     } else return { cust: customers[0], found: true };
   }
 
@@ -281,32 +421,43 @@ export class CustomersService {
   }
 
   async getAttributes(resourceId: string) {
-    // const customerDocumentType: Type = getType<CustomerDocument>();
-    const reflected = [
-      {
-        label: 'firstName',
-        id: 'firstName',
-        options: attributeConditions('String'),
+    const attributes = await this.CustomerKeysModel.find().exec();
+    if (resourceId === 'attributes') {
+      return {
+        id: resourceId,
+        nextResourceURL: 'attributeConditions',
+        options: attributes.map((attribute) => ({
+          label: attribute.key,
+          id: attribute.key,
+          nextResourceURL: attribute.key,
+        })),
         type: 'select',
-      },
-      {
-        label: 'lastName',
-        id: 'lastName',
-        options: attributeConditions('Number'),
+      };
+    }
+
+    const attribute = attributes.find(
+      (attribute) => attribute.key === resourceId
+    );
+    if (attribute)
+      return {
+        id: resourceId,
+        options: attributeConditions(attribute.type, attribute.isArray),
         type: 'select',
-      },
-      {
-        label: 'email',
-        id: 'email',
-        options: attributeConditions('Date'),
-        type: 'select',
-      },
-    ];
-    return mockData.resources.find((resource) => resource.id === resourceId);
+      };
+
+    return (
+      mockData.resources.find((resource) => resource.id === resourceId) || {}
+    );
   }
 }
 
-const attributeConditions = (type: string): any[] => {
+const attributeConditions = (type: string, isArray: boolean): any[] => {
+  if (isArray) {
+    return [
+      { label: 'contains', id: 'contains', where: '' },
+      { label: 'does not contain', id: 'doesNotContain', where: '' },
+    ];
+  }
   switch (type) {
     case 'String':
       return [
@@ -315,7 +466,16 @@ const attributeConditions = (type: string): any[] => {
         { label: 'exists', id: 'exists', where: '' },
         { label: 'does not exist', id: 'doesNotExist', where: '' },
         { label: 'contains', id: 'contains', where: '' },
-        { label: 'does not contain', id: 'doesnotcontain', where: '' },
+        { label: 'does not contain', id: 'doesNotContain', where: '' },
+      ];
+    case 'Email':
+      return [
+        { label: 'is equal to', id: 'isEqual', where: '' },
+        { label: 'is not equal to', id: 'isNotEqual', where: '' },
+        { label: 'exists', id: 'exists', where: '' },
+        { label: 'does not exist', id: 'doesNotExist', where: '' },
+        { label: 'contains', id: 'contains', where: '' },
+        { label: 'does not contain', id: 'doesNotContain', where: '' },
       ];
     case 'Number':
       return [
@@ -324,9 +484,21 @@ const attributeConditions = (type: string): any[] => {
         { label: 'is greater than', id: 'isGreaterThan', where: '' },
         { label: 'is less than', id: 'isLessThan', where: '' },
         { label: 'exists', id: 'exists', where: '' },
-        { label: 'does not exist', id: 'doesnotExist', where: '' },
+        { label: 'does not exist', id: 'doesNotExist', where: '' },
       ];
     case 'Boolean':
+      return [
+        { label: 'is equal to', id: 'isBoolEqual', where: '' },
+        { label: 'is not equal to', id: 'isBoolNotEqual', where: '' },
+      ];
     case 'Date':
+      return [
+        {
+          label: 'before',
+          id: 'isTimestampBefore',
+          where: '',
+        },
+        { label: 'after', id: 'isTimestampAfter', where: '' },
+      ];
   }
 };

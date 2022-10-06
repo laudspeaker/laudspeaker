@@ -1,4 +1,9 @@
-import React, { ReactElement, useLayoutEffect, useState } from "react";
+import React, {
+  ReactElement,
+  useEffect,
+  useLayoutEffect,
+  useState,
+} from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import tokenService from "./services/token.service";
 import Dashboard from "./pages/Dashboard";
@@ -9,12 +14,15 @@ import FlowBuilder from "pages/FlowBuilder";
 import EmailConfig from "pages/EmailConfig";
 import EventProvider from "pages/Settings/EventProvider";
 import EmailConfiguration from "pages/Settings/EmailConfiguration";
+import PosthogConfiguration from "pages/Settings/PosthogConfiguration";
+import PosthogConfigurationTwo from "pages/Settings/PosthogConfigurationTwo";
+import AdditionalPosthog from "pages/Settings/AdditionalPosthog";
 import AdditionalSettings from "pages/Settings/AdditionalSettings";
 import Completion from "pages/Settings/completion";
 import TriggerCreater from "components/TriggerCreater";
 import EmailBuilder from "pages/EmailBuilder";
 import { useTypedSelector } from "hooks/useTypeSelector";
-import { AuthState } from "reducers/auth";
+import { ActionType, AuthState, getUserPermissions } from "reducers/auth";
 import SlackBuilder from "pages/SlackBuilder";
 import Cor from "pages/Cor";
 import FlowTable from "pages/FlowTable/FlowTable";
@@ -28,6 +36,8 @@ import SlackConfiguration from "pages/Settings/SlackConfiguration";
 import { useDispatch } from "react-redux";
 import { setSettingData } from "reducers/settings";
 import ApiService from "services/api.service";
+import EventsProv from "pages/Settings/EventsProv";
+import { useNavigate } from "react-router-dom";
 
 interface IProtected {
   children: ReactElement;
@@ -43,6 +53,11 @@ const Protected = ({ children }: IProtected) => {
     func();
   }, []);
 
+  const dispatch = useDispatch();
+  if (isLoggedIn) {
+    dispatch(getUserPermissions());
+  }
+
   return isLoggedIn ? children : <Navigate to="/login" replace />;
 };
 
@@ -54,28 +69,43 @@ const Onboarded = ({ children }: IOnboarded) => {
   const { userData } = useTypedSelector<AuthState>((state) => state.auth);
   const dispatch = useDispatch();
   const { settings } = useTypedSelector((state) => state.settings);
+  const navigate = useNavigate();
 
-  if (!userData.onboarded) {
-    const func = async () => {
-      const { data } = await ApiService.get({ url: "/accounts", options: {} });
-      dispatch(
-        setSettingData({
-          ...settings,
-          channel: data.expectedOnboarding.filter(
-            (str: string) => !data.currentOnboarding.includes(str)
-          ),
-        })
-      );
-    };
+  useEffect(() => {
+    if (!userData.onboarded) {
+      const func = async () => {
+        const { data } = await ApiService.get({
+          url: "/accounts",
+          options: {},
+        });
+        dispatch({
+          type: ActionType.UPDATE_USER_INFO,
+          payload: {
+            ...userData,
+            onboarded: data.onboarded,
+            expectedOnboarding: data.expectedOnboarding,
+          },
+        });
+        dispatch(
+          setSettingData({
+            ...settings,
+            channel: data.expectedOnboarding.filter(
+              (str: string) => !data.currentOnboarding.includes(str)
+            ),
+          })
+        );
+        if (settings.channel?.length > 0) {
+          navigate("/settings/network-configuration");
+          return;
+        }
+        navigate("/settings/channel");
+      };
 
-    func();
+      func();
+    }
+  }, []);
 
-    if (settings.channel?.length > 0)
-      return <Navigate to="/settings/network-configuration" replace />;
-
-    return <Navigate to="/settings/channel" replace />;
-  }
-  return children;
+  return userData.onboarded ? children : <></>;
 };
 
 const RouteComponent: React.FC = () => {
@@ -143,6 +173,22 @@ const RouteComponent: React.FC = () => {
           }
         />
         <Route
+          path="/settings/phconfiguration"
+          element={
+            <Protected>
+              <PosthogConfiguration />
+            </Protected>
+          }
+        />
+        <Route
+          path="/settings/phconfiguration-two"
+          element={
+            <Protected>
+              <PosthogConfigurationTwo />
+            </Protected>
+          }
+        />
+        <Route
           path="/settings/profile"
           element={
             <Protected>
@@ -155,6 +201,14 @@ const RouteComponent: React.FC = () => {
           element={
             <Protected>
               <Channel />
+            </Protected>
+          }
+        />
+        <Route
+          path="/settings/events"
+          element={
+            <Protected>
+              <EventsProv />
             </Protected>
           }
         />
@@ -195,6 +249,14 @@ const RouteComponent: React.FC = () => {
           element={
             <Protected>
               <AdditionalSettings />
+            </Protected>
+          }
+        />
+        <Route
+          path="/settings/additional-posthog"
+          element={
+            <Protected>
+              <AdditionalPosthog />
             </Protected>
           }
         />

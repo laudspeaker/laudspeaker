@@ -45,6 +45,18 @@ export class PostHogEventDto {
 
   @IsString()
   @IsOptional()
+  public phPhoneNumber: string;
+
+  @IsString()
+  @IsOptional()
+  public phEmail: string;
+
+  @IsString()
+  @IsOptional()
+  public phCustom: string;
+
+  @IsString()
+  @IsOptional()
   public event: string;
 
   //object

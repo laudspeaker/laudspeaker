@@ -57,13 +57,11 @@ export class AuthService {
     return { ...ret, access_token: this.helper.generateToken(user) };
   }
 
-  public async validateAPIKey(apiKey: string): Promise<boolean | never> {
+  public async validateAPIKey(apiKey: string): Promise<Account | never> {
     const user: Account = await this.repository.findOne({
       where: { apiKey: apiKey },
     });
-    if (!user) {
-      throw new HttpException('No user found', HttpStatus.NOT_FOUND);
-    } else return true;
+    return user;
   }
 
   public async refresh(user: Account): Promise<string> {

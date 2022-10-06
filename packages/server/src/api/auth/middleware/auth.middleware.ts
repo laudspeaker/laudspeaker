@@ -12,11 +12,11 @@ export class AuthMiddleware implements NestMiddleware {
     passport.authenticate(
       'headerapikey',
       { session: false, failureRedirect: '/api/unauthorized' },
-      (value) => {
-        if (value) {
+      (err) => {
+        if (!err) {
           next();
         } else {
-          throw new UnauthorizedException();
+          throw new UnauthorizedException(err);
         }
       }
     )(req, res, next);

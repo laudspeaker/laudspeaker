@@ -189,7 +189,7 @@ export const transformDataToUI = ({
             onChange({
               e: {
                 target: {
-                  value: e,
+                  value: e.toUTCString(),
                 },
               },
               id,

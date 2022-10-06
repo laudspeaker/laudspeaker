@@ -77,6 +77,8 @@ export class ApiModule {
       user.sendingDomain =
         'sandboxd7ae9069e24b4e8dbb5ca3ba7d4bed04.mailgun.org';
       user.mailgunAPIKey = 'e52ef0112c0c7394b273ba3d3e25474c-4dd50799-4a315eeb';
+      user.expectedOnboarding = ['Slack'];
+      user.currentOnboarding = ['Slack'];
       user.onboarded = true;
 
       const ret = await this.authService.repository.save(user);

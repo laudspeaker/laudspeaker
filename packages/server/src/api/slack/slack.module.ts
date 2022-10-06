@@ -11,6 +11,10 @@ import { CustomerSchema, Customer } from '../customers/schemas/customer.schema';
 import { Account } from '../accounts/entities/accounts.entity';
 import { Audience } from '../audiences/entities/audience.entity';
 import { State } from './entities/state.entity';
+import {
+  CustomerKeys,
+  CustomerKeysSchema,
+} from '../customers/schemas/customer-keys.schema';
 
 @Module({
   imports: [
@@ -20,9 +24,15 @@ import { State } from './entities/state.entity';
     BullModule.registerQueue({
       name: 'email',
     }),
+    BullModule.registerQueue({
+      name: 'customers',
+    }),
     TypeOrmModule.forFeature([Installation, State, Account, Audience]),
     MongooseModule.forFeature([
       { name: Customer.name, schema: CustomerSchema },
+    ]),
+    MongooseModule.forFeature([
+      { name: CustomerKeys.name, schema: CustomerKeysSchema },
     ]),
   ],
   controllers: [SlackController],

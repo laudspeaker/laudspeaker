@@ -367,6 +367,8 @@ const MySegment = ({
             width: "100%",
             maxWidth: "1138px",
             position: "relative",
+            maxHeight: "100vh",
+            overflow: "auto",
           }}
         >
           {isCollapsible && (

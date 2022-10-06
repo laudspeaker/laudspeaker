@@ -26,6 +26,16 @@ export class CreateCustomerDto {
   @IsString()
   @IsNotEmpty()
   @IsOptional()
+  public correlationKey: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @IsOptional()
+  public correlationValue: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @IsOptional()
   public slackName: string;
 
   @IsString()

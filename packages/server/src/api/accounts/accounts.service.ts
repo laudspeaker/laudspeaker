@@ -1,9 +1,9 @@
-import { BaseJwtHelper } from "../../common/helper/base-jwt.helper";
-import { Inject, Injectable } from "@nestjs/common";
-import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
-import { UpdateAccountDto } from "./dto/update-account.dto";
-import { Account } from "./entities/accounts.entity";
+import { BaseJwtHelper } from '../../common/helper/base-jwt.helper';
+import { Inject, Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { UpdateAccountDto } from './dto/update-account.dto';
+import { Account } from './entities/accounts.entity';
 
 @Injectable()
 export class AccountsService extends BaseJwtHelper {
@@ -18,7 +18,7 @@ export class AccountsService extends BaseJwtHelper {
     return this.accountsRepository.find();
   }
 
-  findOne(user: Express.User): Promise<Account> {
+  findOne(user: Express.User | { id: string }): Promise<Account> {
     return this.accountsRepository.findOneBy({ id: (<Account>user).id });
   }
 

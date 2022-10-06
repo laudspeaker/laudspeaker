@@ -49,6 +49,36 @@ export class UpdateAccountDto {
   @IsOptional()
   public onboarded: boolean;
 
+  @IsString({ each: true })
+  @IsNotEmpty()
+  @IsOptional()
+  public slackTeamId: [string];
+
+  @IsString({ each: true })
+  @IsNotEmpty()
+  @IsOptional()
+  public posthogApiKey: [string];
+
+  @IsString({ each: true })
+  @IsNotEmpty()
+  @IsOptional()
+  public posthogProjectId: [string];
+
+  @IsString({ each: true })
+  @IsNotEmpty()
+  @IsOptional()
+  public posthogHostUrl: [string];
+
+  @IsString({ each: true })
+  @IsNotEmpty()
+  @IsOptional()
+  public posthogSmsKey: [string];
+
+  @IsString({ each: true })
+  @IsNotEmpty()
+  @IsOptional()
+  public posthogEmailKey: [string];
+
   @IsArray()
   @IsOptional()
   public expectedOnboarding: string[];
@@ -60,9 +90,4 @@ export class UpdateAccountDto {
   @IsString()
   @IsOptional()
   public sendingEmail: string;
-
-  @IsString({ each: true })
-  @IsNotEmpty()
-  @IsOptional()
-  public slackTeamId: [string];
 }

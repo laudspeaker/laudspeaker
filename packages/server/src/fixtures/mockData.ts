@@ -14,52 +14,6 @@ export default {
       type: 'inputText',
     },
     {
-      id: 'attributes',
-      type: 'select',
-      nextResourceURL: 'attributeConditions',
-      options: [
-        { label: 'firstName', id: 'firstName', nextResourceURL: 'firstName' },
-        { label: 'lastName', id: 'lastName', nextResourceURL: 'lastName' },
-        { label: 'email', id: 'email', nextResourceURL: 'email' },
-      ],
-    },
-    {
-      id: 'firstName',
-      type: 'select',
-      options: [
-        { label: 'is equal to', id: 'isEqual', where: '' },
-        { label: 'is not equal to', id: 'isNotEqual', where: '' },
-        { label: 'exists', id: 'exists', where: '' },
-        { label: 'does not exist', id: 'doesNotExist', where: '' },
-        { label: 'contains', id: 'contains', where: '' },
-        { label: 'does not contain', id: 'doesnotcontain', where: '' },
-      ],
-    },
-    {
-      id: 'lastName',
-      type: 'select',
-      options: [
-        { label: 'is equal to', id: 'isEqual', where: '' },
-        { label: 'is not equal to', id: 'isNotEqual', where: '' },
-        { label: 'is greater than', id: 'isGreaterThan', where: '' },
-        { label: 'is less than', id: 'isLessThan', where: '' },
-        { label: 'exists', id: 'exists', where: '' },
-        { label: 'does not exist', id: 'doesnotExist', where: '' },
-      ],
-    },
-    {
-      id: 'email',
-      type: 'select',
-      options: [
-        { label: 'is equal to', id: 'isEqual', where: '' },
-        { label: 'is not equal to', id: 'isNotEqual', where: '' },
-        { label: 'exists', id: 'exists', where: '' },
-        { label: 'does not exist', id: 'doesNotExist', where: '' },
-        { label: 'contains', id: 'contains', where: '' },
-        { label: 'does not contain', id: 'doesnotcontain', where: '' },
-      ],
-    },
-    {
       id: 'eventBranches',
       type: 'select',
       options: [
@@ -96,6 +50,14 @@ export default {
       type: 'inputText',
     },
     {
+      id: 'isGreaterThan',
+      type: 'inputNumber',
+    },
+    {
+      id: 'isLessThan',
+      type: 'inputNumber',
+    },
+    {
       id: 'isNotEqual',
       type: 'inputText',
     },
@@ -108,16 +70,32 @@ export default {
       type: 'inputText',
     },
     {
-      id: 'isatimestampafter',
+      id: 'isTimestampAfter',
       type: 'dateTime',
     },
     {
-      id: 'isatimestampbefore',
+      id: 'isTimestampBefore',
       type: 'dateTime',
     },
     {
       id: 'isatimestampbetween',
       type: 'dateRange',
+    },
+    {
+      id: 'isBoolEqual',
+      options: [
+        { label: 'true', id: 'true' },
+        { label: 'false', id: 'false' },
+      ],
+      type: 'select',
+    },
+    {
+      id: 'isBoolNotEqual',
+      options: [
+        { label: 'true', id: 'true' },
+        { label: 'false', id: 'false' },
+      ],
+      type: 'select',
     },
   ],
 };

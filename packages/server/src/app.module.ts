@@ -12,6 +12,16 @@ import { EventsController } from './api/events/events.controller';
 import { SlackMiddleware } from './api/slack/middleware/slack.middleware';
 import { AppController } from './app.controller';
 import { basename } from 'path';
+import { CronService } from './app.cron.service';
+import { ScheduleModule } from '@nestjs/schedule';
+import {
+  Customer,
+  CustomerSchema,
+} from './api/customers/schemas/customer.schema';
+import {
+  CustomerKeys,
+  CustomerKeysSchema,
+} from './api/customers/schemas/customer-keys.schema';
 
 const logLevel = 'debug';
 const papertrail = new winston.transports.Http({
@@ -55,8 +65,16 @@ const papertrail = new winston.transports.Http({
     }),
     TypeOrmModule.forRootAsync({ useClass: TypeOrmConfigService }),
     ApiModule,
+    MongooseModule.forFeature([
+      { name: Customer.name, schema: CustomerSchema },
+    ]),
+    MongooseModule.forFeature([
+      { name: CustomerKeys.name, schema: CustomerKeysSchema },
+    ]),
+    ScheduleModule.forRoot(),
   ],
   controllers: [AppController],
+  providers: [CronService],
 })
 export class AppModule {
   configure(consumer: MiddlewareConsumer) {

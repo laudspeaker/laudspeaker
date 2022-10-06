@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, LoggerService } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Account } from '../accounts/entities/accounts.entity';
@@ -11,10 +11,13 @@ import { Job, Queue } from 'bull';
 import { InjectQueue } from '@nestjs/bull';
 import { Installation } from '../slack/entities/installation.entity';
 import { SlackService } from '../slack/slack.service';
+import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 
 @Injectable()
 export class TemplatesService {
   constructor(
+    @Inject(WINSTON_MODULE_NEST_PROVIDER)
+    private readonly logger: LoggerService,
     @InjectRepository(Template)
     private templatesRepository: Repository<Template>,
     @Inject(CustomersService) private customersService: CustomersService,
@@ -72,6 +75,9 @@ export class TemplatesService {
     }
     try {
       template = await this.findOneById(account, templateId);
+      this.logger.debug(
+        'Found template: ' + template.id + ' of type ' + template.type
+      );
     } catch (err) {
       return Promise.reject(err);
     }

@@ -366,7 +366,8 @@ export class WorkflowsService {
       customer: CustomerDocument, // Customer to be found
       trigger: Trigger, // Trigger being processed
       from: Audience, //  Audience to move customer out of
-      to: Audience; // Audience to move customer into
+      to: Audience, // Audience to move customer into
+      job: Job<any>;
     let interrupt = false; // Interrupt the tick to avoid the same event triggering two customer moves
     if (event) {
       try {
@@ -435,7 +436,7 @@ export class WorkflowsService {
                   trigger.properties.event == event.event
                 ) {
                   try {
-                    await this.audiencesService.moveCustomer(
+                    job = await this.audiencesService.moveCustomer(
                       account,
                       from.id,
                       to.id,
@@ -466,6 +467,7 @@ export class WorkflowsService {
               } else {
                 //TODO: Branch Triggers
               }
+              return Promise.resolve(job);
             }
             break;
           case TriggerType.time_delay: //TODO

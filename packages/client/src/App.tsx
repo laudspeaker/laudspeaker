@@ -10,9 +10,6 @@ import { ColorContext } from "./ColorContext";
 import { darkTheme } from "./themes/dark";
 import { lightTheme } from "./themes/light";
 import "./Global.css";
-import tokenService from "./services/token.service";
-import { useDispatch } from "react-redux";
-import { getUserPermissions } from "./reducers/auth";
 import posthog from "posthog-js";
 import { AppConfig } from "./constants";
 
@@ -21,12 +18,6 @@ interface IApp {
 }
 const App = ({ children }: IApp) => {
   const [mode, setMode] = useState<PaletteMode>("light");
-  const isLoggedIn = tokenService.isUserLoggedIn();
-  const dispatch = useDispatch();
-  if (isLoggedIn) {
-    dispatch(getUserPermissions());
-  }
-
   const colorMode = useMemo(
     () => ({
       toggleColorMode: () => {

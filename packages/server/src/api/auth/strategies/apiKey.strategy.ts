@@ -2,6 +2,7 @@ import { HeaderAPIKeyStrategy } from 'passport-headerapikey';
 import { PassportStrategy } from '@nestjs/passport';
 import { Injectable } from '@nestjs/common';
 import { AuthService } from '../auth.service';
+import { Account } from '../../accounts/entities/accounts.entity';
 
 @Injectable()
 export class ApiKeyStrategy extends PassportStrategy(HeaderAPIKeyStrategy) {
@@ -9,12 +10,17 @@ export class ApiKeyStrategy extends PassportStrategy(HeaderAPIKeyStrategy) {
     super(
       { header: 'Authorization', prefix: 'Api-Key ' },
       true,
-      (apikey, done, req) => {
-        const checkKey = this.authService.validateAPIKey(apikey);
-        if (!checkKey) {
-          return done(false);
+      async (apikey, done, req) => {
+        let checkKey: Account;
+        try {
+          checkKey = await this.authService.validateAPIKey(apikey);
+        } catch (e) {
+          return done(e, false);
         }
-        return done(true);
+        if (!checkKey) {
+          return done(null, false);
+        }
+        return done(null, checkKey);
       }
     );
   }

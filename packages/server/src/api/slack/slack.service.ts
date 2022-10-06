@@ -778,9 +778,10 @@ export class SlackService {
 
   packageIdentifier(): string {
     return (
-      `${"laudspeaker-api".replace('/', ':')}/${
-      "0.1.0"
-      } ${platform()}/${release()} ` +
+      `${'laudspeaker-api'.replace(
+        '/',
+        ':'
+      )}/${'0.1.0'} ${platform()}/${release()} ` +
       `node/${process.version.replace('v', '')}`
     );
   }
@@ -804,7 +805,7 @@ export class SlackService {
 
   async getInstallation(customer: CustomerDocument): Promise<Installation> {
     return await this.installationRepository.findOneBy({
-      id: customer.slackTeamId[0].trim(),
+      id: customer?.slackTeamId[0]?.trim(),
     });
   }
 }

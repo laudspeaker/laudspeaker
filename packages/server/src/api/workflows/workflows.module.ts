@@ -16,6 +16,10 @@ import { Installation } from '../slack/entities/installation.entity';
 import { State } from '../slack/entities/state.entity';
 import { Account } from '../accounts/entities/accounts.entity';
 import { Stats } from '../audiences/entities/stats.entity';
+import {
+  CustomerKeys,
+  CustomerKeysSchema,
+} from '../customers/schemas/customer-keys.schema';
 
 @Module({
   imports: [
@@ -31,11 +35,17 @@ import { Stats } from '../audiences/entities/stats.entity';
     MongooseModule.forFeature([
       { name: Customer.name, schema: CustomerSchema },
     ]),
+    MongooseModule.forFeature([
+      { name: CustomerKeys.name, schema: CustomerKeysSchema },
+    ]),
     BullModule.registerQueue({
       name: 'email',
     }),
     BullModule.registerQueue({
       name: 'slack',
+    }),
+    BullModule.registerQueue({
+      name: 'customers',
     }),
   ],
   controllers: [WorkflowsController],

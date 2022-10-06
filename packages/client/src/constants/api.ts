@@ -21,4 +21,5 @@ export default {
   flow: "/workflows",
   startFlow: "/workflows/start",
   slackInstall: "/slack/install",
+  syncPosthog: "/customers/importph",
 };
