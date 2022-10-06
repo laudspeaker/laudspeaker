@@ -1,6 +1,9 @@
 <p align="center"><a  href="https://laudspeaker.com/"><img  src="https://user-images.githubusercontent.com/7728266/194206039-0faecc9d-c500-4c64-8401-dfbefe501e4a.png"  height="100"/></a></p>
 
-## Laudspeaker - Open Source Customer Messaging Workflows
+## Laudspeaker - Open Source, Self hostable Customer Messaging Workflows for Developers
+* Send event triggered emails, slack and more at scale
+* Build complex messaging workflows the whole team can understand
+* Deploy and run on your own infrastructure to keep control of your data.
 
 <br/>
 
