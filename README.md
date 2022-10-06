@@ -26,7 +26,7 @@ remove compose conatiners:
 
 Questions? Please join our [Slack channel](https://laudspeakerusers.slack.com/ssb/redirect) or visit our [site](https://laudspeaker.com/).
 
-### Features
+### Key Features
 
 ### What makes Laudspeaker cool?
 
