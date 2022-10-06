@@ -10,7 +10,7 @@
 Run yourself (instructions below) or use [Laudspeaker Cloud](https://app.laudspeaker.com/login) . Docs are [here](https://laudspeaker.com/docs/guides/overview/intro/)
 
 run services:
-- `docker-compose up`
+- `docker-compose up` or `docker compose up` depending on your version of docker
 
 run backend and front end:
 - `npm install`
