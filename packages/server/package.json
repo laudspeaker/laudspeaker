@@ -8,7 +8,6 @@
   "scripts": {
     "prebuild": "rimraf dist",
     "build": "nest build",
-    "prepare": "husky install",
     "start": "nest start",
     "start:dev": "env-cmd -f .env npm run prebuild && env-cmd -f .env nest start --watch",
     "start:dev:db": "./src/common/scripts/start-db.sh",
@@ -48,7 +47,6 @@
     "class-validator": "^0.13.2",
     "env-cmd": "^10.1.0",
     "form-data": "^4.0.0",
-    "husky": "^8.0.1",
     "lodash": "^4.17.21",
     "mailgun.js": "^7.0.4",
     "mongoose": "^6.4.7",
