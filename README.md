@@ -5,8 +5,6 @@
 * Build complex messaging workflows the whole team can understand
 * Deploy and run on your own infrastructure to keep control of your data.
 
-<br/>
-
 ### Get Started
 
 run services:
@@ -33,7 +31,7 @@ Questions? Please join our [Slack channel](https://laudspeakerusers.slack.com/ss
 
 ### License
 
-**Laudspeaker** is open source and released under the [MIT License][mit_license], and AGPLv3 licenses with the exception of our ee directory (which is currently empty!).
+**Laudspeaker** is open source and released under the [MIT License][mit_license], and AGPLv3 licenses with the exception of our ee directory (which is currently empty!) but will be under the Laudspeaker Enterprise Edition license.
 
 ### Contribute 
 
