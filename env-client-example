@@ -1,0 +1,2 @@
+REACT_APP_API_BASE_URL='http://localhost:3001'
+REACT_APP_FAKE_SERVER_URL='https://jsonplaceholder.typicode.com'
