@@ -4,7 +4,7 @@
 <a href='https://laudspeakerusers.slack.com/ssb/redirect'><img alt="Join Slack Community" src="https://img.shields.io/badge/slack%20community-join-green"/></a>
 </p>
 
-## Laudspeaker - Open Source alternative to Braze / Iterable / One Signal / Customer Io. Customer Messaging Workflows for Developers
+## Laudspeaker - Open Source alternative to Braze / Iterable / One Signal / Customer Io. Easily Create Messaging Workflows
 * Send product or event-triggered emails, slack and more to your customers and users at scale
 * Build complex messaging workflows the whole team can understand in a visual tool
 * Deploy and run on your own infrastructure to keep control of your data.
