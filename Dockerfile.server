@@ -1,19 +1,20 @@
 # To build : docker build -f Dockerfile.prod -t laudspeaker-api:latest .
 # To run: docker run -it -p 3001:3001 --rm laudspeaker-api:latest
-FROM node:16 As development
-WORKDIR /usr/src/app
-COPY ./packages/server/package.json ./
+FROM node:16 as build
+WORKDIR /app
+COPY ./packages/server/package.json /app
+COPY ./package-lock.json /app
 RUN npm install
-COPY . .
+COPY . /app
 RUN npm run build:server
 
 FROM node:16 As Production
 ARG NODE_ENV=production
 ENV NODE_ENV=${NODE_ENV}
-WORKDIR /usr/src/app
-COPY package*.json ./
+WORKDIR /app
+COPY ./packages/server/package.json /app
+COPY ./package-lock.json /app
 RUN npm install --only=production
-COPY . .
-COPY --from=development /usr/src/app/packages/server/dist ./dist
+COPY --from=build /app/packages/server/dist /app/dist
 EXPOSE 3001
 CMD ["node", "dist/main"]
