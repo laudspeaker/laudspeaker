@@ -23,7 +23,7 @@ export class CustomersProcessor {
       if (res?.data?.results.length > 0) {
         await this.customersService.addPhCustomers(
           res.data.results,
-          job.data.accountId
+          job.data.account
         );
       }
       while (res.data?.next) {
@@ -37,7 +37,7 @@ export class CustomersProcessor {
         if (res?.data?.results.length > 0) {
           await this.customersService.addPhCustomers(
             res.data.results,
-            job.data.accountId
+            job.data.account
           );
         }
       }
