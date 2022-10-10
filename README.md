@@ -33,7 +33,7 @@ Add a `.env` file to both server and client in packages
 
 We have provided examples which you can use: 
 
-`mv env-server-example packages/server/.env` and  `mv env-client-example packages/server/.env` 
+`mv env-server-example packages/server/.env` and  `mv env-client-example packages/client/.env` 
 
 Make sure you fill in the fields in the env files before trying to run laudspeaker
 
