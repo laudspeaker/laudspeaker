@@ -87,8 +87,9 @@ export class CustomersService {
         console.log(JSON.stringify(data[index], null, 2));
       }
       const createdCustomer = new this.CustomerModel({
-        ownerId: accountId,
+        //ownerId: accountId,
       });
+      createdCustomer['ownerId'] = accountId;
       createdCustomer['posthogId'] = data[index]['id'];
       createdCustomer['phCreatedAt'] = data[index]['created_at'];
       if (data[index]?.properties?.$initial_os) {
