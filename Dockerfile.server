@@ -2,7 +2,7 @@
 # To run: docker run -it -p 3001:3001 --rm laudspeaker-api:latest
 FROM node:16 As development
 WORKDIR /usr/src/app
-COPY package*.json ./
+COPY ./packages/server/package.json ./
 RUN npm install
 COPY . .
 RUN npm run build:server
