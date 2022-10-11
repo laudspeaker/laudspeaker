@@ -260,7 +260,8 @@ export class WorkflowsService {
             account,
             null,
             audience,
-            customers
+            customers,
+            null
           );
           this.logger.debug('Finished moving customers into workflow');
         } catch (err) {
@@ -331,7 +332,8 @@ export class WorkflowsService {
               account,
               null,
               audience.id,
-              customer.id
+              customer.id,
+              null
             );
             this.logger.debug('Enrolled customer in dynamic primary audience.');
           } catch (err) {
@@ -430,17 +432,21 @@ export class WorkflowsService {
                 } catch (err) {
                   this.logger.error('Error: ' + err);
                   return Promise.reject(err);
-                }
+                } console.log(from.customers.indexOf(customer.id));
+                console.log(trigger.properties.event);
+                console.log(event.event);
                 if (
                   from.customers.indexOf(customer.id) > -1 &&
                   trigger.properties.event == event.event
                 ) {
                   try {
+                    console.log("ya ya 3");
                     job = await this.audiencesService.moveCustomer(
                       account,
                       from.id,
                       to.id,
-                      customer.id
+                      customer.id,
+                      event
                     );
                     const stats = await this.statsRepository.findOne({
                       where: {

@@ -12,6 +12,7 @@ import { InjectQueue } from '@nestjs/bull';
 import { Installation } from '../slack/entities/installation.entity';
 import { SlackService } from '../slack/slack.service';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
+import { EventDto } from '../events/dto/event.dto';
 
 @Injectable()
 export class TemplatesService {
@@ -62,7 +63,8 @@ export class TemplatesService {
   async queueMessage(
     account: Account,
     templateId: string,
-    customerId: string
+    customerId: string,
+    event: EventDto
   ): Promise<Job<any>> {
     let customer: CustomerDocument,
       template: Template,
@@ -83,12 +85,13 @@ export class TemplatesService {
     }
     switch (template.type) {
       case 'email':
+        console.log("ya ya");
         jobId = await this.emailQueue.add('send', {
           key: account.mailgunAPIKey,
           from: account.sendingName,
           domain: account.sendingDomain,
           email: account.sendingEmail,
-          to: customer.email,
+          to: event.source == 'posthog' ? customer.phEmail : customer.email ,
           subject: template.subject,
           text: template.text,
         });

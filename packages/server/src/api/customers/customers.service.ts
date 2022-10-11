@@ -86,9 +86,17 @@ export class CustomersService {
       if (index == 0) {
         console.log(JSON.stringify(data[index], null, 2));
       }
-      const createdCustomer = new this.CustomerModel({
-        //ownerId: accountId,
-      });
+      let addedBefore = await (this.CustomerModel.find({ ownerId: (<Account>account).id, posthogId: data[index]['id']}).exec());
+      let createdCustomer: CustomerDocument;
+      //create customer only if we don't see before, otherwise update data
+      if( addedBefore.length == 0){
+        createdCustomer = new this.CustomerModel({
+          //ownerId: accountId,
+        });
+      } else {
+        createdCustomer = addedBefore[0];
+      }
+      
       createdCustomer['ownerId'] = account.id;
       createdCustomer['posthogId'] = data[index]['id'];
       createdCustomer['phCreatedAt'] = data[index]['created_at'];
@@ -128,9 +136,13 @@ export class CustomersService {
       if ( account['posthogEmailKey'] != null) {
         //console.log("oi");
         let emailKey = account['posthogEmailKey'][0];
-        if(data[index]?.[emailKey]){
+        if(data[index]?.properties[emailKey]){
+          ///console.log("** **");
+          //console.log(data[index]);
+          console.log(data[index]?.properties[emailKey]);
+          //console.log("email key is",emailKey);
           console.log("adding email");
-          createdCustomer[emailKey]= data[index]?.[emailKey];
+          createdCustomer["phEmail"]= data[index]?.properties[emailKey];
         }
       }
 
@@ -356,6 +368,7 @@ export class CustomersService {
     let customer: CustomerDocument; // Found customer
     const queryParam = { ownerId: (<Account>account).id };
     queryParam[correlationKey] = correlationValue;
+    console.log("q", queryParam);
     try {
       customer = await this.CustomerModel.findOne(queryParam).exec();
     } catch (err) {

@@ -22,6 +22,7 @@ import { CustomersService } from '../customers/customers.service';
 import { checkInclusion } from './audiences.helper';
 import { Stats } from './entities/stats.entity';
 import { Workflow } from '../workflows/entities/workflow.entity';
+import { EventDto } from '../events/dto/event.dto';
 
 @Injectable()
 export class AudiencesService {
@@ -326,7 +327,8 @@ export class AudiencesService {
     account: Account,
     from: string | null | undefined,
     to: string | null | undefined,
-    customerId: string
+    customerId: string,
+    event: EventDto
   ): Promise<Job<any>> {
     let index = -1; // Index of the customer ID in the fromAud.customers array
     let jobId: Job<any>;
@@ -357,7 +359,7 @@ export class AudiencesService {
     }
     if (fromAud && !fromAud.isEditable && index > -1) {
       try {
-        //this.logger.debug('From customers before: ' + fromAud.customers);
+        this.logger.debug('From customers before: ' + fromAud.customers.length);
         fromAud.customers.splice(index, 1);
         await this.audiencesRepository.update(
           { id: fromAud.id, isEditable: false },
@@ -365,7 +367,7 @@ export class AudiencesService {
             customers: fromAud.customers,
           }
         );
-        //this.logger.debug('From customers after: ' + fromAud.customers);
+        this.logger.debug('From customers after: ' + fromAud.customers.length);
       } catch (err) {
         this.logger.error('Error: ' + err);
         return Promise.reject(err);
@@ -373,7 +375,7 @@ export class AudiencesService {
     }
     if (toAud && !toAud.isEditable) {
       try {
-        //this.logger.debug('To before: ' + JSON.stringify(toAud));
+        this.logger.debug('To before: ' + toAud.customers.length);
         const saved = await this.audiencesRepository.save(
           //{ id: toAud.id, isEditable: false },
           {
@@ -381,7 +383,7 @@ export class AudiencesService {
             customers: [...toAud.customers, customerId],
           }
         );
-        //this.logger.debug('To after: ' + JSON.stringify(saved));
+        this.logger.debug('To after: ' + saved.customers.length);
       } catch (err) {
         this.logger.error('Error: ' + err);
         return Promise.reject(err);
@@ -393,10 +395,12 @@ export class AudiencesService {
           templateIndex++
         ) {
           try {
+            console.log("ya ya 2");
             jobId = await this.templatesService.queueMessage(
               account,
               toAud.templates[templateIndex],
-              customerId
+              customerId,
+              event
             );
             this.logger.debug('Queued Message');
           } catch (err) {
@@ -424,7 +428,8 @@ export class AudiencesService {
     account: Account,
     fromAud: Audience | null | undefined,
     toAud: Audience | null | undefined,
-    customers: CustomerDocument[]
+    customers: CustomerDocument[],
+    event: EventDto
   ): Promise<void> {
     for (let index = 0; index < customers.length; index++) {
       try {
@@ -432,7 +437,8 @@ export class AudiencesService {
           account,
           fromAud?.id,
           toAud?.id,
-          customers[index].id
+          customers[index].id,
+          event
         );
       } catch (err) {
         this.logger.error('Error: ' + err);

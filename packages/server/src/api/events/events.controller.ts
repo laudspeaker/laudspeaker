@@ -162,10 +162,12 @@ export class EventsController {
             correlationKey: 'posthogId',
             correlationValue: currentEvent.userId,
             event: currentEvent.event,
+            source: "posthog",
           };
 
           //currentEvent
           try {
+            console.log("ya ya 4");
             job = await this.workflowsService.tick(account, convertedEventDto);
             this.logger.debug('Queued messages with jobID ' + job);
             // return {
