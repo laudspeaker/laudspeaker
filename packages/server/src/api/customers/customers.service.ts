@@ -81,7 +81,7 @@ export class CustomersService {
     return ret;
   }
 
-  async addPhCustomers(data: any, accountId: string) {
+  async addPhCustomers(data: any, account: Account) {
     for (let index = 0; index < data.length; index++) {
       if (index == 0) {
         console.log(JSON.stringify(data[index], null, 2));
@@ -89,7 +89,7 @@ export class CustomersService {
       const createdCustomer = new this.CustomerModel({
         //ownerId: accountId,
       });
-      createdCustomer['ownerId'] = accountId;
+      createdCustomer['ownerId'] = account.id;
       createdCustomer['posthogId'] = data[index]['id'];
       createdCustomer['phCreatedAt'] = data[index]['created_at'];
       if (data[index]?.properties?.$initial_os) {
@@ -125,6 +125,14 @@ export class CustomersService {
         //createdCustomer['phInitial_geoip_latitude']= data[index]?.properties.$initial_geoip_latitude
         //createdCustomer['phInitialGeoIp']= phInitial_geoip;
       }
+      if ( account['posthogEmailKey'] != null) {
+        //console.log("oi");
+        let emailKey = account['posthogEmailKey'][0];
+        if(data[index]?.[emailKey]){
+          console.log("adding email");
+          createdCustomer[emailKey]= data[index]?.[emailKey];
+        }
+      }
 
       if (index == 0) {
         console.log(JSON.stringify(createdCustomer, null, 2));
@@ -135,6 +143,7 @@ export class CustomersService {
         console.log('ret is', ret);
       }
     }
+    console.log("fin add ph");
   }
 
   async findAll(account: Account): Promise<CustomerDocument[]> {
@@ -162,7 +171,7 @@ export class CustomersService {
     proj: string,
     phAuth: string,
     phUrl: string,
-    accountId: string
+    account: Account
   ) {
     console.log('in ingest');
     let posthogUrl: string;
@@ -179,7 +188,7 @@ export class CustomersService {
       const job = await this.customersQueue.add({
         url: posthogUrl,
         auth: authString,
-        account: accountId,
+        account: account,
       });
       console.log(job);
       console.log('completed job');

@@ -111,6 +111,7 @@ export class TemplatesService {
       case 'sms':
         break;
     }
+    console.log("jobid is", jobId);
     return Promise.resolve(jobId);
   }
 

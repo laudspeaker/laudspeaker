@@ -146,6 +146,7 @@ function Channel() {
               <Select
                 id="activeJourney"
                 value={channels}
+                placeholder={"why no herre "}
                 onChange={(e) => {
                   setChannels(e.target.value);
                   handleInputChange("channel", e.target.value);

@@ -119,7 +119,7 @@ const RouteComponent: React.FC = () => {
           element={
             <Protected>
               <Onboarded>
-                <Dashboard />
+                <FlowTable />
               </Onboarded>
             </Protected>
           }
@@ -349,7 +349,7 @@ const RouteComponent: React.FC = () => {
           element={
             <Protected>
               <Onboarded>
-                <Dashboard />
+                <FlowTable />
               </Onboarded>
             </Protected>
           }

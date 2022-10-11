@@ -334,7 +334,7 @@ export class AudiencesService {
     if (from) {
       try {
         fromAud = await this.findOne(account, from);
-        this.logger.debug('Audience: ' + fromAud);
+        //this.logger.debug('Audience: ' + fromAud);
       } catch (err) {
         this.logger.error('Error: ' + err);
         return Promise.reject(err);
@@ -343,7 +343,7 @@ export class AudiencesService {
     if (to) {
       try {
         toAud = await this.findOne(account, to);
-        this.logger.debug('Audience: ' + toAud);
+        //this.logger.debug('Audience: ' + toAud);
       } catch (err) {
         this.logger.error('Error: ' + err);
         return Promise.reject(err);
@@ -357,7 +357,7 @@ export class AudiencesService {
     }
     if (fromAud && !fromAud.isEditable && index > -1) {
       try {
-        this.logger.debug('From customers before: ' + fromAud.customers);
+        //this.logger.debug('From customers before: ' + fromAud.customers);
         fromAud.customers.splice(index, 1);
         await this.audiencesRepository.update(
           { id: fromAud.id, isEditable: false },
@@ -365,7 +365,7 @@ export class AudiencesService {
             customers: fromAud.customers,
           }
         );
-        this.logger.debug('From customers after: ' + fromAud.customers);
+        //this.logger.debug('From customers after: ' + fromAud.customers);
       } catch (err) {
         this.logger.error('Error: ' + err);
         return Promise.reject(err);
@@ -373,7 +373,7 @@ export class AudiencesService {
     }
     if (toAud && !toAud.isEditable) {
       try {
-        this.logger.debug('To before: ' + JSON.stringify(toAud));
+        //this.logger.debug('To before: ' + JSON.stringify(toAud));
         const saved = await this.audiencesRepository.save(
           //{ id: toAud.id, isEditable: false },
           {
@@ -381,7 +381,7 @@ export class AudiencesService {
             customers: [...toAud.customers, customerId],
           }
         );
-        this.logger.debug('To after: ' + JSON.stringify(saved));
+        //this.logger.debug('To after: ' + JSON.stringify(saved));
       } catch (err) {
         this.logger.error('Error: ' + err);
         return Promise.reject(err);

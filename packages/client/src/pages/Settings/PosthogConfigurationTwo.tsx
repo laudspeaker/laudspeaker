@@ -27,15 +27,35 @@ function PosthogConfigurationTwo() {
   const handleInputChange = (name: any, value: any): any => {
     dispatch(setSettingData({ ...settings, [name]: value }));
   };
-  const moveToAdditionalSettings = async () => {
+  const moveToAdditionalSettingsTwo = async () => {
     console.log("cliked next in move to ad ph");
-    await dispatch(
-      updateUserData({
-        posthogSmsKey: phSms,
-        posthogEmailKey: phEmail,
-        //posthogHostUrl: phHostUrl,
-      })
-    );
+    console.log("phSms", phSms);
+    console.log("phEmail", phEmail);
+    if (phEmail != "" && phSms != "") {
+      await dispatch(
+        updateUserData({
+          posthogSmsKey: phSms,
+          posthogEmailKey: phEmail,
+          //posthogHostUrl: phHostUrl,
+        })
+      );
+    } else if (phEmail != "") {
+      await dispatch(
+        updateUserData({
+          posthogEmailKey: phEmail,
+          //posthogHostUrl: phHostUrl,
+        })
+      );
+    } else if (phSms != "") {
+      await dispatch(
+        updateUserData({
+          posthogSmsKey: phSms,
+          //posthogHostUrl: phHostUrl,
+        })
+      );
+    } else {
+    }
+
     console.log("in move to ph additional");
     navigate("/settings/additional-posthog");
   };
@@ -47,7 +67,7 @@ function PosthogConfigurationTwo() {
         <>
           <GenericButton
             variant="contained"
-            onClick={moveToAdditionalSettings}
+            onClick={moveToAdditionalSettingsTwo}
             fullWidth
             sx={{
               maxWidth: "200px",
