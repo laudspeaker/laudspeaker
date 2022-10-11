@@ -33,6 +33,10 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "concurrently": "^7.4.0"
+    "concurrently": "^7.4.0",
+    "newrelic": "latest"
+  },
+  "devDependencies": {
+    "@types/newrelic": "^7.0.4"
   }
 }

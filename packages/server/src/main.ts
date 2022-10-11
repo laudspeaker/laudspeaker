@@ -1,3 +1,4 @@
+import { NewRelicInterceptor } from './newrelic.interceptor';
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
@@ -40,6 +41,7 @@ async function bootstrap() {
   app.enableCors();
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
   app.useLogger(app.get(WINSTON_MODULE_NEST_PROVIDER));
+  app.useGlobalInterceptors(new NewRelicInterceptor());
 
   await app.listen(port, () => {
     console.log('[WEB]', `http://localhost:${port}`);
