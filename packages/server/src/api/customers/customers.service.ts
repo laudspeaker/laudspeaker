@@ -368,7 +368,6 @@ export class CustomersService {
     let customer: CustomerDocument; // Found customer
     const queryParam = { ownerId: (<Account>account).id };
     queryParam[correlationKey] = correlationValue;
-    console.log("q", queryParam);
     try {
       customer = await this.CustomerModel.findOne(queryParam).exec();
     } catch (err) {

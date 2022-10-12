@@ -29,7 +29,7 @@ export class WorkflowsService {
     @InjectRepository(Stats) private statsRepository: Repository<Stats>,
     @Inject(AudiencesService) private audiencesService: AudiencesService,
     @Inject(CustomersService) private customersService: CustomersService
-  ) {}
+  ) { }
 
   /**
    * Finds all workflows
@@ -83,7 +83,7 @@ export class WorkflowsService {
       return Promise.reject(err);
     }
     try {
-      if (needStats && found) {
+      if (needStats && found?.visualLayout) {
         const foundStats = await this.statsRepository.find({
           where: {
             audience: {
@@ -96,7 +96,7 @@ export class WorkflowsService {
           },
           relations: ['audience'],
         });
-        found.visualLayout.nodes = found.visualLayout.nodes.map((node) => ({
+        found.visualLayout.nodes = found?.visualLayout?.nodes?.map((node) => ({
           ...node,
           data: {
             ...node.data,
@@ -113,7 +113,7 @@ export class WorkflowsService {
     }
 
     if (found) {
-      this.logger.debug('Found workflow: ' + found);
+      this.logger.debug('Found workflow: ' + found.id);
       return found;
     } else {
       const workflow = new Workflow();
@@ -123,7 +123,7 @@ export class WorkflowsService {
       let ret: Workflow;
       try {
         ret = await this.workflowsRepository.save(workflow);
-        this.logger.debug('Created workflow: ' + ret);
+        this.logger.debug('Created workflow: ' + ret.id);
       } catch (err) {
         this.logger.error('Error: ' + err);
         return Promise.reject(err);
@@ -147,7 +147,7 @@ export class WorkflowsService {
     updateWorkflowDto: UpdateWorkflowDto
   ): Promise<void> {
     const rules: string[] = [];
-    for (let index = 0; index < updateWorkflowDto.rules?.length; index++)
+    for (let index = 0; index < updateWorkflowDto?.rules?.length; index++)
       rules.push(
         Buffer.from(JSON.stringify(updateWorkflowDto.rules[index])).toString(
           'base64'
@@ -189,7 +189,7 @@ export class WorkflowsService {
    * @param updateAudienceDto - DTO with the updated information
    *
    */
-  async start(account: Account, workflowID: string): Promise<void> {
+  async start(account: Account, workflowID: string): Promise<(string | number)[]> {
     let workflow: Workflow; // Workflow to update
     let audience: Audience; // Audience to freeze/send messages to
     let customers: CustomerDocument[]; // Customers to add to primary audience
@@ -209,7 +209,7 @@ export class WorkflowsService {
     }
     if (workflow.isActive) {
       this.logger.debug('Workflow already active');
-      return Promise.resolve();
+      return Promise.reject(new Error('Workflow already active'));
     }
     if (workflow?.isStopped)
       return Promise.reject(new Error('The workflow has already been stopped'));
@@ -223,7 +223,7 @@ export class WorkflowsService {
       this.logger.error('Error: ' + err);
       return Promise.reject(err);
     }
-    for (let index = 0; index < saved.audiences.length; index++) {
+    for (let index = 0; index < saved?.audiences?.length; index++) {
       try {
         audience = await this.audiencesService.findOne(
           account,
@@ -250,13 +250,13 @@ export class WorkflowsService {
             account,
             audience.inclusionCriteria
           );
-          this.logger.debug('Customers to include in workflow: ' + customers);
+          this.logger.debug('Customers to include in workflow: ' + customers.length);
         } catch (err) {
           this.logger.error('Error: ' + err);
           return Promise.reject(err);
         }
         try {
-          await this.audiencesService.moveCustomers(
+          const jobIDs: (string | number)[] = await this.audiencesService.moveCustomers(
             account,
             null,
             audience,
@@ -264,6 +264,7 @@ export class WorkflowsService {
             null
           );
           this.logger.debug('Finished moving customers into workflow');
+          return Promise.resolve(jobIDs)
         } catch (err) {
           this.logger.error('Error: ' + err);
           return Promise.reject(err);
@@ -300,13 +301,13 @@ export class WorkflowsService {
     }
     for (
       let workflowsIndex = 0;
-      workflowsIndex < workflows.length;
+      workflowsIndex < workflows?.length;
       workflowsIndex++
     ) {
       workflow = workflows[workflowsIndex];
       for (
         let audienceIndex = 0;
-        audienceIndex < workflow.audiences.length;
+        audienceIndex < workflow?.audiences?.length;
         audienceIndex++
       ) {
         try {
@@ -362,14 +363,15 @@ export class WorkflowsService {
   async tick(
     account: Account,
     event: EventDto | null | undefined
-  ): Promise<Job<any>> {
+  ): Promise<(string | number)[]> {
     let workflows: Workflow[], // Active workflows for this account
       workflow: Workflow, // Workflow being updated
       customer: CustomerDocument, // Customer to be found
       trigger: Trigger, // Trigger being processed
       from: Audience, //  Audience to move customer out of
       to: Audience, // Audience to move customer into
-      job: Job<any>;
+      jobIds: (string | number)[] = [];
+    let jobId: string | number;
     let interrupt = false; // Interrupt the tick to avoid the same event triggering two customer moves
     if (event) {
       try {
@@ -378,7 +380,7 @@ export class WorkflowsService {
           event.correlationKey,
           event.correlationValue
         );
-        this.logger.debug('Found customer: ' + customer);
+        this.logger.debug('Found customer: ' + customer.id);
       } catch (err) {
         this.logger.error('Error: ' + err);
         return Promise.reject(err);
@@ -386,20 +388,20 @@ export class WorkflowsService {
     }
     try {
       workflows = await this.findAllActive(account);
-      this.logger.debug('Found active workflows: ' + workflows);
+      this.logger.debug('Found active workflows: ' + workflows.length);
     } catch (err) {
       this.logger.error('Error: ' + err);
       return Promise.reject(err);
     }
     for (
       let workflowsIndex = 0;
-      workflowsIndex < workflows.length;
+      workflowsIndex < workflows?.length;
       workflowsIndex++
     ) {
       workflow = workflows[workflowsIndex];
       for (
         let triggerIndex = 0;
-        triggerIndex < workflow.rules?.length;
+        triggerIndex < workflow?.rules?.length;
         triggerIndex++
       ) {
         if (interrupt) {
@@ -422,7 +424,7 @@ export class WorkflowsService {
                 this.logger.error('Error: ' + err);
                 return Promise.reject(err);
               }
-              if (trigger.dest.length == 1) {
+              if (trigger?.dest?.length == 1) {
                 try {
                   to = await this.audiencesService.findOne(
                     account,
@@ -432,16 +434,13 @@ export class WorkflowsService {
                 } catch (err) {
                   this.logger.error('Error: ' + err);
                   return Promise.reject(err);
-                } console.log(from.customers.indexOf(customer.id));
-                console.log(trigger.properties.event);
-                console.log(event.event);
+                }
                 if (
                   from.customers.indexOf(customer.id) > -1 &&
                   trigger.properties.event == event.event
                 ) {
                   try {
-                    console.log("ya ya 3");
-                    job = await this.audiencesService.moveCustomer(
+                    jobId = await this.audiencesService.moveCustomer(
                       account,
                       from.id,
                       to.id,
@@ -457,13 +456,14 @@ export class WorkflowsService {
                     stats.sentAmount++;
                     await this.statsRepository.save(stats);
                     this.logger.debug(
-                      'Moving' +
-                        customer.id +
-                        'out of  ' +
-                        from.id +
-                        ' and into ' +
-                        to.id
+                      'Moving ' +
+                      customer.id +
+                      ' out of ' +
+                      from.id +
+                      ' and into ' +
+                      to.id
                     );
+                    jobIds.push(jobId)
                   } catch (err) {
                     this.logger.error('Error: ' + err);
                     return Promise.reject(err);
@@ -473,7 +473,7 @@ export class WorkflowsService {
               } else {
                 //TODO: Branch Triggers
               }
-              return Promise.resolve(job);
+              return Promise.resolve(jobIds);
             }
             break;
           case TriggerType.time_delay: //TODO

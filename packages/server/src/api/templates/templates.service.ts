@@ -25,7 +25,7 @@ export class TemplatesService {
     @Inject(SlackService) private slackService: SlackService,
     @InjectQueue('email') private readonly emailQueue: Queue,
     @InjectQueue('slack') private readonly slackQueue: Queue
-  ) {}
+  ) { }
 
   create(account: Account, createTemplateDto: CreateTemplateDto) {
     const template = new Template();
@@ -65,10 +65,10 @@ export class TemplatesService {
     templateId: string,
     customerId: string,
     event: EventDto
-  ): Promise<Job<any>> {
+  ): Promise<string | number> {
     let customer: CustomerDocument,
       template: Template,
-      jobId: Job<any>, // created jobId
+      job: Job<any>, // created jobId
       installation: Installation;
     try {
       customer = await this.customersService.findById(account, customerId);
@@ -85,13 +85,12 @@ export class TemplatesService {
     }
     switch (template.type) {
       case 'email':
-        console.log("ya ya");
-        jobId = await this.emailQueue.add('send', {
+        job = await this.emailQueue.add('send', {
           key: account.mailgunAPIKey,
           from: account.sendingName,
           domain: account.sendingDomain,
           email: account.sendingEmail,
-          to: event.source == 'posthog' ? customer.phEmail : customer.email ,
+          to: event.source == 'posthog' ? customer.phEmail : customer.email,
           subject: template.subject,
           text: template.text,
         });
@@ -102,7 +101,7 @@ export class TemplatesService {
         } catch (err) {
           return Promise.reject(err);
         }
-        jobId = await this.slackQueue.add('send', {
+        job = await this.slackQueue.add('send', {
           methodName: 'chat.postMessage',
           token: installation.installation.bot.token,
           args: {
@@ -114,8 +113,7 @@ export class TemplatesService {
       case 'sms':
         break;
     }
-    console.log("jobid is", jobId);
-    return Promise.resolve(jobId);
+    return Promise.resolve(job.id);
   }
 
   findAll(account: Account): Promise<Template[]> {
