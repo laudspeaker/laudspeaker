@@ -153,7 +153,7 @@ function Channel() {
                 }}
                 displayEmpty
                 multipleSelections
-                renderValue={(selected) => <>{selected.join(", ")}</>}
+                renderValue={() => <>Add channel</>}
                 sx={{
                   height: "44px",
                   margin: "20px 0px",
