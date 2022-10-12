@@ -14,7 +14,6 @@ import errors from '@/shared/utils/errors';
 import { Audience } from '../audiences/entities/audience.entity';
 import { CustomersService } from '../customers/customers.service';
 import { CustomerDocument } from '../customers/schemas/customer.schema';
-import { Job } from 'bull';
 import { EventDto } from '../events/dto/event.dto';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { Stats } from '../audiences/entities/stats.entity';
@@ -194,6 +193,7 @@ export class WorkflowsService {
     let audience: Audience; // Audience to freeze/send messages to
     let customers: CustomerDocument[]; // Customers to add to primary audience
     let saved: Workflow;
+    let jobIDs: (string | number)[] = [];
     try {
       workflow = await this.workflowsRepository.findOneBy({
         ownerId: (<Account>account).id,
@@ -256,7 +256,7 @@ export class WorkflowsService {
           return Promise.reject(err);
         }
         try {
-          const jobIDs: (string | number)[] = await this.audiencesService.moveCustomers(
+          jobIDs = await this.audiencesService.moveCustomers(
             account,
             null,
             audience,
@@ -264,13 +264,13 @@ export class WorkflowsService {
             null
           );
           this.logger.debug('Finished moving customers into workflow');
-          return Promise.resolve(jobIDs)
         } catch (err) {
           this.logger.error('Error: ' + err);
           return Promise.reject(err);
         }
       }
     }
+    return Promise.resolve(jobIDs)
   }
 
   /**
@@ -473,7 +473,6 @@ export class WorkflowsService {
               } else {
                 //TODO: Branch Triggers
               }
-              return Promise.resolve(jobIds);
             }
             break;
           case TriggerType.time_delay: //TODO
@@ -483,6 +482,7 @@ export class WorkflowsService {
         }
       }
     }
+    return Promise.resolve(jobIds);
   }
 
   /**
