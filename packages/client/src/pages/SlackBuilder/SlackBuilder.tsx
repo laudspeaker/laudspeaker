@@ -15,8 +15,7 @@ const SlackBuilder = () => {
   const [templateName, setTemplateName] = useState<string>("My slack template");
   const [slackTemplateId, setSlackTemplateId] = useState<string>("");
   const [possibleAttributes, setPossibleAttributes] = useState<string[]>([]);
-  const [isPreview, setIsPreview] = useState(false);
-  const [editor] = useState<any>();
+  const [isPreview, setIsPreview] = useState(true);
 
   const inputRef = useRef<HTMLInputElement>();
 
@@ -66,7 +65,6 @@ const SlackBuilder = () => {
   };
 
   const onPersonalizeClick = () => {
-    console.log(inputRef);
     const focusedInput = document.querySelector(
       "#slackMessage"
     ) as HTMLInputElement;

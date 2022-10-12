@@ -37,6 +37,7 @@ const generateOptions = ({
         margin-bottom: 5px  !important; height: 62px  !important; border-radius: 5px  !important; border: 1px solid #F3F3F3  !important; color: black  !important; padding: 6px  !important; font-size: 16px; font-weight: 500;
       `
     );
+    option.setAttribute("contenteditable", "false");
     option.innerHTML = el.id;
     option.addEventListener("click", () => onClick(el.id));
 
@@ -70,6 +71,7 @@ const generateTagPicker = ({
       padding: 25px 15px;
     `
   );
+  mainDiv.setAttribute("contenteditable", "false");
 
   label.setAttribute(
     "style",
@@ -82,6 +84,7 @@ const generateTagPicker = ({
       color: #223343;
     `
   );
+  label.setAttribute("contenteditable", "false");
 
   input.setAttribute(
     "style",

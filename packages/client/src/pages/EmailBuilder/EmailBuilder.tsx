@@ -88,7 +88,6 @@ const EmailBuilder = () => {
   }, []);
 
   const onSave = async () => {
-    console.warn(editor?.getHtml());
     const reqBody = {
       name: templateName,
       subject: title,
@@ -115,10 +114,6 @@ const EmailBuilder = () => {
   };
 
   const onPersonalize = async () => {
-    if (document.activeElement === subjectRef.current) {
-      console.log("title");
-    }
-
     const availableComponents = ["Text", "Text Section", "Texto"];
     const el = editor?.getSelected();
     if (!availableComponents.includes(el?.getName() || "")) {

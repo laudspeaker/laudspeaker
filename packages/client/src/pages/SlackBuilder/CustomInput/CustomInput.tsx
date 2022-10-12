@@ -47,6 +47,11 @@ const CustomInput = ({
   });
 
   useEffect(() => {
+    if (!value) {
+      setItems([]);
+      return;
+    }
+
     const nextItems = value.split(/(\{\{.*?\}\})/).map((item, index) => {
       if (item.match(/{{(.*?)}}/)) {
         const itemContent = item.replace("{{", "").replace("}}", "");
@@ -61,6 +66,7 @@ const CustomInput = ({
       }
       return item;
     });
+
     setItems(nextItems);
   }, [value]);
 
@@ -69,36 +75,52 @@ const CustomInput = ({
       sx={{ position: "relative", width: "100%", margin: "0" }}
       ref={wrapperRef}
     >
-      {isPreview ? (
-        <Box
-          sx={{
-            position: "absolute",
-            zIndex: 1000,
-            padding: "18px 29px",
-            backgroundColor: "#EFF0F2",
-            borderRadius: "8px",
-            fontSize: "1rem",
-          }}
-          onClick={() => {
-            setIsPreview(false);
-          }}
-        >
-          {items}
-        </Box>
-      ) : (
-        <Input
-          isRequired
-          value={value}
-          placeholder={placeholder}
-          name={name}
-          id={id}
-          fullWidth={fullWidth}
-          onChange={onChange}
-          labelShrink={labelShrink}
-          sx={sx}
-          ref={ref}
-        />
-      )}
+      <Box
+        sx={{
+          ...(isPreview ? {} : { display: "none" }),
+          width: "100%",
+          maxWidth: "100%",
+          overflowX: "scroll",
+          paddingRight: "20px",
+          position: "absolute",
+          zIndex: 1000,
+          padding: "18px 29px",
+          backgroundColor: "#EFF0F2",
+          borderRadius: "8px",
+          fontSize: "20px",
+          whiteSpace: "nowrap",
+        }}
+        onClick={() => {
+          setIsPreview(false);
+        }}
+      >
+        {items.length > 0 ? (
+          items
+        ) : (
+          <Box
+            sx={{
+              height: "1.4375em",
+              fontSize: "20px",
+              color: "#a3a4a5",
+              paddingBottom: 2,
+            }}
+          >
+            Slack Message
+          </Box>
+        )}
+      </Box>
+      <Input
+        isRequired
+        value={value}
+        placeholder={placeholder}
+        name={name}
+        id={id}
+        fullWidth={fullWidth}
+        onChange={onChange}
+        labelShrink={labelShrink}
+        sx={{ ...sx, ...(isPreview ? { display: "none" } : {}) }}
+        ref={ref}
+      />
     </Box>
   );
 };

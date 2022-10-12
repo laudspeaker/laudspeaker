@@ -21,36 +21,42 @@ const MergeTagType = (
   const textModel = textType.model;
   const defaultView = defaultType.view;
 
-  // domc.addType("text", {
-  //   model: textModel.extend(
-  //     {
-  //       defaults: Object.assign({}, textModel.prototype.defaults, {
-  //         tagName: "div",
-  //         name: "Text",
-  //         draggable: "*",
-  //         droppable: true,
-  //       }),
-  //     },
-  //     {
-  //       isComponent: function (el: any) {
-  //         if (el.tagName == "DIV" && el.classList.contains("txt")) {
-  //           return { type: "text" };
-  //         }
-  //       },
-  //     }
-  //   ),
-  // });
+  domc.addType("text", {
+    model: textModel.extend(
+      {
+        defaults: Object.assign({}, textModel.prototype.defaults, {
+          tagName: "div",
+          name: "Text",
+          draggable: "*",
+          droppable: true,
+          attributes: {
+            class: "text_droppable",
+          },
+        }),
+      },
+      {
+        isComponent: function (el: any) {
+          if (el.tagName == "DIV" && el.classList.contains("text_droppable")) {
+            return { type: "text" };
+          }
+        },
+      }
+    ),
+  });
 
   domc.addType("merge-tag", {
     isComponent: (el) => el.classList?.contains("m_t"),
     model: {
       defaults: {
         tagName: "span",
-        type: "Text",
+        type: "merge-tag",
+        droppable: false,
         name: "Merge tag",
         "picked-attribute": "",
+        editable: false,
         attributes: {
           class: "m_t",
+          contenteditable: "false",
         },
         content: `{{ }}`,
         style: {

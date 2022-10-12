@@ -14,6 +14,7 @@ const MergeTagPicker: FC<MergeTagPickerProps> = ({
 }) => {
   const [anchorEl, setAnchorEl] = useState<HTMLElement>();
   const open = Boolean(anchorEl);
+
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
     setAnchorEl(event.currentTarget);
@@ -21,6 +22,7 @@ const MergeTagPicker: FC<MergeTagPickerProps> = ({
   const handleClose = () => {
     setAnchorEl(undefined);
   };
+
   return (
     <>
       <span onClick={handleClick}>
