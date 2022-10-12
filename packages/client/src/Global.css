@@ -26,3 +26,11 @@
 .gjs-pn-commands, .gjs-pn-devices-c, .gjs-pn-options, .gjs-pn-panel {
     background-color: #FFF;
 }
+
+.hover-opacity{
+    transition: 0.5s;
+  }
+
+.hover-opacity:hover{
+    opacity: 0.7;
+}

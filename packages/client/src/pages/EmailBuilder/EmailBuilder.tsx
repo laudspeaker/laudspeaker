@@ -1,7 +1,7 @@
 import "grapesjs/dist/css/grapes.min.css";
 import "grapesjs-preset-newsletter/dist/grapesjs-preset-newsletter.css";
 import grapesjs from "grapesjs";
-import { useEffect, useState, useLayoutEffect } from "react";
+import { useEffect, useState, useLayoutEffect, useRef } from "react";
 import "grapesjs-preset-newsletter";
 import Drawer from "../../components/Drawer";
 import EmailHeader from "./EmailHeader";
@@ -9,6 +9,15 @@ import { Input } from "../../components/Elements";
 import ApiService from "services/api.service";
 import { ApiConfig } from "../../constants";
 import { useParams } from "react-router-dom";
+import { getCaretCharacterOffsetWithin } from "helpers/genericUtils";
+import MergeTagType from "./MergeTags";
+import { getResources } from "pages/Segment/SegmentHelpers";
+
+export interface Resource {
+  label: string;
+  id: string;
+  nextResourceURL: string;
+}
 
 const EmailBuilder = () => {
   const { name } = useParams();
@@ -19,6 +28,8 @@ const EmailBuilder = () => {
   const [text, setText] = useState<string>("");
   const [style, setStyle] = useState<string>("");
 
+  const subjectRef = useRef<HTMLInputElement>(null);
+
   const getTemplate = async (templateId: string) => {
     return ApiService.get({
       url: `${ApiConfig.getAllTemplates}/${templateId}`,
@@ -26,29 +37,37 @@ const EmailBuilder = () => {
   };
 
   useEffect(() => {
-    const _editor = grapesjs.init({
-      // Indicate where to init the editor. You can also pass an HTMLElement
-      container: "#emailBuilder",
-      plugins: ["gjs-preset-newsletter"],
-      pluginsOpts: {
-        "gjs-preset-newsletter": {
-          modalTitleImport: "Import template",
-          // ... other options
-        },
-      },
-      // Get the content for the canvas directly from the element
-      // As an alternative we could use: `components: '<h1>Hello World Component!</h1>'`,
-      fromElement: true,
-      // Size of the editor
-      height: "100vh",
-      width: "auto",
-      // Disable the storage manager for the moment
-      storageManager: false,
-      // Avoid any default panel
-      // panels: { defaults: [] },
-    });
-
-    setEditor(_editor);
+    getResources("attributes")
+      .then(({ data }) => {
+        const _editor = grapesjs.init({
+          // Indicate where to init the editor. You can also pass an HTMLElement
+          container: "#emailBuilder",
+          plugins: [
+            "gjs-preset-newsletter",
+            (__editor, _props) => MergeTagType(__editor, _props, data.options),
+          ],
+          pluginsOpts: {
+            "gjs-preset-newsletter": {
+              modalTitleImport: "Import template",
+              // ... other options
+            },
+          },
+          // Get the content for the canvas directly from the element
+          // As an alternative we could use: `components: '<h1>Hello World Component!</h1>'`,
+          fromElement: true,
+          // Size of the editor
+          height: "100vh",
+          width: "auto",
+          // Disable the storage manager for the moment
+          storageManager: false,
+          // Avoid any default panel
+          // panels: { defaults: [] },
+        });
+        setEditor(_editor);
+      })
+      .catch((error) => {
+        console.error(error);
+      });
   }, []);
 
   useEffect(() => {
@@ -69,6 +88,7 @@ const EmailBuilder = () => {
   }, []);
 
   const onSave = async () => {
+    console.warn(editor?.getHtml());
     const reqBody = {
       name: templateName,
       subject: title,
@@ -94,16 +114,37 @@ const EmailBuilder = () => {
     }
   };
 
-  const onExport = () => {};
+  const onPersonalize = async () => {
+    if (document.activeElement === subjectRef.current) {
+      console.log("title");
+    }
+
+    const availableComponents = ["Text", "Text Section", "Texto"];
+    const el = editor?.getSelected();
+    if (!availableComponents.includes(el?.getName() || "")) {
+      return;
+    }
+    const selectionStart = getCaretCharacterOffsetWithin(el?.getEl());
+    editor?.addComponents(
+      {
+        type: "merge-tag",
+        textable: true,
+      },
+      {}
+    );
+    console.log(selectionStart);
+  };
 
   return (
     <>
       <Drawer />
       <EmailHeader
-        onExport={onExport}
+        onPersonalize={onPersonalize}
         onSave={onSave}
         templateName={templateName}
-        handleTemplateNameChange={(e: any) => setTemplateName(e.target.value)}
+        handleTemplateNameChange={(e: any) => {
+          setTemplateName(e.target.value);
+        }}
       />
       <div
         style={{
@@ -114,6 +155,7 @@ const EmailBuilder = () => {
       >
         <Input
           isRequired
+          inputRef={subjectRef}
           value={title}
           placeholder={"Subject"}
           name="title"

@@ -76,8 +76,10 @@ export class EmailController {
     });
     const jobs = await Promise.all(
       audienceObj.customers.map(async (customerId) => {
-        const email = (await this.customersService.findById(found, customerId))
-          .email;
+        const { _id, ownerId, audiences, ...tags } = (
+          await this.customersService.findById(found, customerId)
+        ).toObject();
+
         return {
           name: 'send',
           data: {
@@ -85,7 +87,8 @@ export class EmailController {
             from: found.sendingName,
             domain: found.sendingDomain,
             email: found.sendingEmail,
-            to: email,
+            to: tags.email,
+            tags,
             subject: sendEmailDto.subject,
             text: sendEmailDto.text,
           },
