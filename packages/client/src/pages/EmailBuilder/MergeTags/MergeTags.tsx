@@ -97,8 +97,10 @@ const MergeTagType = (
         this.on("component:update", (ev) => {
           const changed = ev?.changed;
           const component: grapesjs.ComponentModelProperties = ev?.component;
+
           this.getEl().innerHTML =
-            "Customer: " + (changed?.attributes?.["picked-attribute"] || "-");
+            "Customer: " +
+            (this.attributes.attributes?.["picked-attribute"] || "-");
 
           if (changed?.attributes?.["picked-attribute"] && component) {
             this.set(
@@ -108,6 +110,8 @@ const MergeTagType = (
             this.components(
               `{{ ${changed?.attributes?.["picked-attribute"]} }}`
             );
+            this.getEl().innerHTML =
+              "Customer: " + (changed?.attributes?.["picked-attribute"] || "-");
             this.addAttributes({ contenteditable: "false" }, {});
           }
         });

@@ -34,7 +34,7 @@ const generateOptions = ({
     option.setAttribute(
       "style",
       `
-        margin-bottom: 5px  !important; height: 62px  !important; border-radius: 5px  !important; border: 1px solid #F3F3F3  !important; color: black  !important; padding: 6px  !important; font-size: 16px; font-family: 'Inter'; font-style: normal; font-weight: 500;
+        margin-bottom: 5px  !important; height: 62px  !important; border-radius: 5px  !important; border: 1px solid #F3F3F3  !important; color: black  !important; padding: 6px  !important; font-size: 16px !important; font-family: 'Inter' !important; font-style: normal !important; font-weight: 500 !important;
       `
     );
     option.setAttribute("contenteditable", "false");
@@ -57,18 +57,18 @@ const generateTagPicker = ({
   mainDiv.setAttribute(
     "style",
     `
-      position: absolute;
-      z-index: 99999;
-      top: 100%;
-      left: 0;
-      min-width: 340px;
-      max-width: 340px;
-      max-height: 368px;
-      background: white;
-      border: 1px solid #F3F3F3;
-      box-shadow: 0px 6px 40px -19px rgba(0, 0, 0, 0.25);
-      border-radius: 15px;
-      padding: 25px 15px;
+      position: absolute !important;
+      z-index: 99999 !important;
+      top: 100% !important;
+      left: 0 !important;
+      min-width: 340px !important;
+      max-width: 340px !important;
+      max-height: 368px !important;
+      background: white !important;
+      border: 1px solid #F3F3F3 !important;
+      box-shadow: 0px 6px 40px -19px rgba(0, 0, 0, 0.25) !important;
+      border-radius: 15px !important;
+      padding: 25px 15px !important;
     `
   );
   mainDiv.setAttribute("contenteditable", "false");
@@ -76,12 +76,12 @@ const generateTagPicker = ({
   label.setAttribute(
     "style",
     `
-      font-family: Poppins;
-      font-style: normal;
-      font-weight: 400;
-      font-size: 16px;
-      line-height: 30px;
-      color: #223343;
+      font-family: Poppins !important;
+      font-style: normal !important;
+      font-weight: 400 !important;
+      font-size: 16px !important;
+      line-height: 30px !important;
+      color: #223343 !important;
     `
   );
   label.setAttribute("contenteditable", "false");
@@ -89,14 +89,14 @@ const generateTagPicker = ({
   input.setAttribute(
     "style",
     `
-      width: 100%;
-      padding: 13px 20px;
-      background: #E5E5E5;
-      color: #6B7280;
-      border-radius: 10px;
-      border: 0;
-      margin-bottom: 5px;
-      outline: none;
+      width: 100% !important;
+      padding: 13px 20px !important;
+      background: #E5E5E5 !important;
+      color: #6B7280 !important;
+      border-radius: 10px !important;
+      border: 0 !important;
+      margin-bottom: 5px !important;
+      outline: none !important;
     `
   );
   input.setAttribute("placeholder", "Name");
@@ -104,8 +104,8 @@ const generateTagPicker = ({
   optionWrapper.setAttribute(
     "style",
     `
-    overflow-y: scroll;
-    max-height: 266px;
+    overflow-y: scroll !important;
+    max-height: 266px !important;
   `
   );
 
