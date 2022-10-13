@@ -54,6 +54,7 @@ const MergeTagType = (
         name: "Merge tag",
         "picked-attribute": "",
         editable: false,
+        textable: 1,
         attributes: {
           class: "m_t",
           contenteditable: "false",
@@ -80,8 +81,8 @@ const MergeTagType = (
         ],
       },
       init() {
-        // __editor.on("component:deselected", (el) => {
-        //   console.log("dsselect", el);
+        // __editor.on("component:selected", (el) => {
+        //   console.log("selected", el);
         // });
 
         this.on("component:update", (ev) => {
@@ -95,6 +96,7 @@ const MergeTagType = (
             this.components(
               `{{ ${changed?.attributes?.["picked-attribute"]} }}`
             );
+            this.setAttributes({ contenteditable: "false" }, {});
           }
         });
       },

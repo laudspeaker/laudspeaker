@@ -43,7 +43,6 @@ const EmailHeader = (props: IEmailHeaderProps) => {
   return (
     <div>
       <Box
-        // onClick={handleClick}
         sx={{
           textAlign: "center",
           display: "flex",

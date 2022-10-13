@@ -123,7 +123,6 @@ const EmailBuilder = () => {
     editor?.addComponents(
       {
         type: "merge-tag",
-        textable: true,
       },
       {}
     );
