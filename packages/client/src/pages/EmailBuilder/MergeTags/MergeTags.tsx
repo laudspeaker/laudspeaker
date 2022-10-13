@@ -85,11 +85,11 @@ const MergeTagType = (
         //   console.log("selected", el);
         // });
 
-        // setTimeout(() => {
-        //   this.getEl().innerHTML =
-        //     "Customer: " +
-        //     (this.attributes.attributes?.["picked-attribute"] || "-");
-        // }, 100);
+        setTimeout(() => {
+          this.getEl().innerHTML =
+            "Customer: " +
+            (this.attributes.attributes?.["picked-attribute"] || "-");
+        }, 100);
 
         this.on("component:update", (ev) => {
           const changed = ev?.changed;
@@ -102,9 +102,9 @@ const MergeTagType = (
             this.components(
               `{{ ${changed?.attributes?.["picked-attribute"]} }}`
             );
-            // this.getEl().innerHTML =
-            //   "Customer: " + changed?.attributes?.["picked-attribute"];
-            this.setAttributes({ contenteditable: "false" }, {});
+            this.getEl().innerHTML =
+              "Customer: " + changed?.attributes?.["picked-attribute"];
+            this.addAttributes({ contenteditable: "false" }, {});
           }
         });
       },
@@ -118,7 +118,7 @@ const MergeTagType = (
         this.isDropdownOpen = false;
 
         this.handleUpdateTag = (str: string) => {
-          model.setAttributes({ "picked-attribute": str }, {});
+          model.addAttributes({ "picked-attribute": str }, {});
           this.isDropdownOpen = false;
         };
       },
