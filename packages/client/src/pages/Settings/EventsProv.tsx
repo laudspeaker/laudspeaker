@@ -130,7 +130,7 @@ function EventsProv() {
               marginBottom: "10px",
             }}
           >
-            Add your Events Provider
+            Add your Event Provider
           </Typography>
           <Typography
             variant="subtitle1"
@@ -161,7 +161,7 @@ function EventsProv() {
                 }}
                 displayEmpty
                 multipleSelections
-                renderValue={(selected) => <>{selected.join(", ")}</>}
+                renderValue={() => <>Event Integration</>}
                 sx={{
                   height: "44px",
                   margin: "20px 0px",
