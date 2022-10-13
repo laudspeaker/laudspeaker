@@ -1,10 +1,10 @@
-import { Box, Typography } from "@mui/material";
+import { Box } from "@mui/material";
 import { Input } from "components/Elements";
 import React, { useEffect, useState, RefObject, useRef } from "react";
 import MergeTagPicker from "../MergeTagPicker/MergeTagPicker";
 import { useClickAway } from "react-use";
 
-interface CustomInputProps {
+interface MergeTagInputProps {
   value: string;
   onChange: (e: any) => void;
   setValue: React.Dispatch<React.SetStateAction<string>>;
@@ -16,12 +16,12 @@ interface CustomInputProps {
   labelShrink?: any;
   sx?: any;
   possibleAttributes: string[];
-  ref?: RefObject<HTMLInputElement | undefined>;
+  inputRef?: RefObject<HTMLInputElement | undefined>;
   isPreview: boolean;
   setIsPreview: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-const CustomInput = ({
+const MergeTagInput = ({
   value,
   onChange,
   setValue,
@@ -34,16 +34,18 @@ const CustomInput = ({
   possibleAttributes,
   isPreview,
   setIsPreview,
-  ref,
-}: CustomInputProps) => {
+  inputRef,
+}: MergeTagInputProps) => {
   const [items, setItems] = useState<(string | JSX.Element)[]>([]);
   const handleValueReplace = (regExp: RegExp | string, str: string) => {
     setValue(value.replace(regExp, str));
   };
 
   const wrapperRef = useRef<HTMLDivElement | null>(null);
-  useClickAway(wrapperRef, (e) => {
-    setIsPreview(true);
+  useClickAway(wrapperRef, () => {
+    setTimeout(() => {
+      setIsPreview(true);
+    }, 100);
   });
 
   useEffect(() => {
@@ -59,7 +61,9 @@ const CustomInput = ({
           <MergeTagPicker
             tagContent={itemContent}
             key={index}
-            possibleAttributes={possibleAttributes}
+            possibleAttributes={possibleAttributes.map(
+              (str) => " " + str + " "
+            )}
             handleValueReplace={handleValueReplace}
           />
         );
@@ -68,11 +72,11 @@ const CustomInput = ({
     });
 
     setItems(nextItems);
-  }, [value]);
+  }, [value, possibleAttributes]);
 
   return (
     <Box
-      sx={{ position: "relative", width: "100%", margin: "0" }}
+      sx={{ width: "100%", margin: "0", marginBottom: "30px" }}
       ref={wrapperRef}
     >
       <Box
@@ -82,7 +86,6 @@ const CustomInput = ({
           maxWidth: "100%",
           overflowX: "scroll",
           paddingRight: "20px",
-          position: "absolute",
           zIndex: 1000,
           padding: "18px 29px",
           backgroundColor: "#EFF0F2",
@@ -105,7 +108,7 @@ const CustomInput = ({
               paddingBottom: 2,
             }}
           >
-            Slack Message
+            {placeholder}
           </Box>
         )}
       </Box>
@@ -119,10 +122,10 @@ const CustomInput = ({
         onChange={onChange}
         labelShrink={labelShrink}
         sx={{ ...sx, ...(isPreview ? { display: "none" } : {}) }}
-        ref={ref}
+        inputRef={inputRef}
       />
     </Box>
   );
 };
 
-export default CustomInput;
+export default MergeTagInput;

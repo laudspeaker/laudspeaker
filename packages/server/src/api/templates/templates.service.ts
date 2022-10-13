@@ -81,6 +81,7 @@ export class TemplatesService {
     } catch (err) {
       return Promise.reject(err);
     }
+    const { _id, ownerId, audiences, ...tags } = customer.toObject();
     switch (template.type) {
       case 'email':
         jobId = await this.emailQueue.add('send', {
@@ -89,6 +90,7 @@ export class TemplatesService {
           domain: account.sendingDomain,
           email: account.sendingEmail,
           to: customer.email,
+          tags,
           subject: template.subject,
           text: template.text,
         });
@@ -105,6 +107,7 @@ export class TemplatesService {
           args: {
             channel: customer.slackId,
             text: template.slackMessage,
+            tags,
           },
         });
         break;

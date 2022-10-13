@@ -123,7 +123,7 @@ export class EventsController {
         // template: Template; // Template for sending
         //Step 2: Create/Correlate customer for each event
         try {
-          function postHogEventMapping(event: any) {
+          const postHogEventMapping = (event: any) => {
             const cust = {};
             cust['posthogId'] = event.userId;
             if (event?.phPhoneNumber) {
@@ -136,7 +136,7 @@ export class EventsController {
               cust['phCustom'] = event.phCustom;
             }
             return cust;
-          }
+          };
           const correlation = await this.customersService.findBySpecifiedEvent(
             account,
             'posthogId',

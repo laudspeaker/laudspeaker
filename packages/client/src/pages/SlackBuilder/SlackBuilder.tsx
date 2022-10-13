@@ -1,12 +1,11 @@
 import "grapesjs/dist/css/grapes.min.css";
-import { useState, useLayoutEffect, RefObject, useRef } from "react";
+import { useState, useLayoutEffect, useRef } from "react";
 import Drawer from "../../components/Drawer";
 import SlackTemplateHeader from "./SlackTemplateHeader";
-import { Input } from "../../components/Elements";
 import ApiService from "services/api.service";
 import { ApiConfig } from "../../constants";
 import { useParams } from "react-router-dom";
-import CustomInput from "./CustomInput/CustomInput";
+import CustomInput from "../../components/MergeTagInput/MergeTagInput";
 import { getResources } from "pages/Segment/SegmentHelpers";
 
 const SlackBuilder = () => {
@@ -55,7 +54,7 @@ const SlackBuilder = () => {
       });
       setSlackTemplateId(response.data.id);
     } else {
-      const response = await ApiService.patch({
+      await ApiService.patch({
         url: `${ApiConfig.getAllTemplates}/${name}`,
         options: {
           ...reqBody,
@@ -95,13 +94,10 @@ const SlackBuilder = () => {
           setValue={setSlackMessage}
           onChange={(e: any) => setSlackMessage(e.target.value)}
           labelShrink
-          sx={{
-            marginBottom: "30px",
-          }}
           isPreview={isPreview}
           setIsPreview={setIsPreview}
           possibleAttributes={possibleAttributes}
-          ref={inputRef}
+          inputRef={inputRef}
         />
       </div>
     </>

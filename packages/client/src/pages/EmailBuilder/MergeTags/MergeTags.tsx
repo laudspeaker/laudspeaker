@@ -85,6 +85,12 @@ const MergeTagType = (
         //   console.log("selected", el);
         // });
 
+        // setTimeout(() => {
+        //   this.getEl().innerHTML =
+        //     "Customer: " +
+        //     (this.attributes.attributes?.["picked-attribute"] || "-");
+        // }, 100);
+
         this.on("component:update", (ev) => {
           const changed = ev?.changed;
           const component: grapesjs.ComponentModelProperties = ev?.component;
@@ -96,6 +102,8 @@ const MergeTagType = (
             this.components(
               `{{ ${changed?.attributes?.["picked-attribute"]} }}`
             );
+            // this.getEl().innerHTML =
+            //   "Customer: " + changed?.attributes?.["picked-attribute"];
             this.setAttributes({ contenteditable: "false" }, {});
           }
         });

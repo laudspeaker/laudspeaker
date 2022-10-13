@@ -26,11 +26,16 @@ export class EmailProcessor {
       job.data.tags || {}
     );
 
+    const subjectWithInsertedTags = await tagEngine.parseAndRender(
+      job.data.subject,
+      job.data.tags || {}
+    );
+
     try {
       const msg = await mg.messages.create(job.data.domain, {
         from: `${job.data.from} <${job.data.email}@${job.data.domain}>`,
         to: job.data.to,
-        subject: job.data.subject,
+        subject: subjectWithInsertedTags,
         html: textWithInsertedTags,
       });
       this.logger.debug(

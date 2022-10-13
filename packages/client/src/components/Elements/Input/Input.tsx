@@ -64,7 +64,6 @@ const Input = (props: InputProps) => {
     value,
     endAdornment,
     onBlur,
-    ref,
   } = props;
   return (
     <>
@@ -98,7 +97,6 @@ const Input = (props: InputProps) => {
         value={value}
         endAdornment={endAdornment}
         onBlur={onBlur}
-        ref={ref}
       />
       {helperText && (
         <FormHelperText error={isError} required={isRequired}>

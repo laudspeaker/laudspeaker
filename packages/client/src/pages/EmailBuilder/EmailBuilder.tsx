@@ -5,13 +5,13 @@ import { useEffect, useState, useLayoutEffect, useRef } from "react";
 import "grapesjs-preset-newsletter";
 import Drawer from "../../components/Drawer";
 import EmailHeader from "./EmailHeader";
-import { Input } from "../../components/Elements";
 import ApiService from "services/api.service";
 import { ApiConfig } from "../../constants";
 import { useParams } from "react-router-dom";
 import { getCaretCharacterOffsetWithin } from "helpers/genericUtils";
 import MergeTagType from "./MergeTags";
 import { getResources } from "pages/Segment/SegmentHelpers";
+import MergeTagInput from "components/MergeTagInput";
 
 export interface Resource {
   label: string;
@@ -27,6 +27,8 @@ const EmailBuilder = () => {
   const [emailTemplateId, setEmailTemplateId] = useState<string>("");
   const [text, setText] = useState<string>("");
   const [style, setStyle] = useState<string>("");
+  const [possibleAttributes, setPossibleAttributes] = useState<string[]>([]);
+  const [isPreview, setIsPreview] = useState(true);
 
   const subjectRef = useRef<HTMLInputElement>(null);
 
@@ -39,6 +41,8 @@ const EmailBuilder = () => {
   useEffect(() => {
     getResources("attributes")
       .then(({ data }) => {
+        setPossibleAttributes(data.options.map((option: any) => option.label));
+
         const _editor = grapesjs.init({
           // Indicate where to init the editor. You can also pass an HTMLElement
           container: "#emailBuilder",
@@ -88,6 +92,7 @@ const EmailBuilder = () => {
   }, []);
 
   const onSave = async () => {
+    console.log(editor?.getHtml());
     const reqBody = {
       name: templateName,
       subject: title,
@@ -104,7 +109,7 @@ const EmailBuilder = () => {
       });
       setEmailTemplateId(response.data.id);
     } else {
-      const response = await ApiService.patch({
+      await ApiService.patch({
         url: `${ApiConfig.getAllTemplates}/${name}`,
         options: {
           ...reqBody,
@@ -114,19 +119,36 @@ const EmailBuilder = () => {
   };
 
   const onPersonalize = async () => {
+    if (!editor) return;
+    if (!isPreview) {
+      const indexToInsert = subjectRef.current?.selectionStart || title.length;
+      const newTitleArr = title.split("");
+      newTitleArr.splice(indexToInsert, 0, "{{}}");
+      setTitle(newTitleArr.join(""));
+      setIsPreview(true);
+      return;
+    }
     const availableComponents = ["Text", "Text Section", "Texto"];
-    const el = editor?.getSelected();
+    const el = editor.getSelected();
+
+    if (!el) return;
+
     if (!availableComponents.includes(el?.getName() || "")) {
       return;
     }
     const selectionStart = getCaretCharacterOffsetWithin(el?.getEl());
-    editor?.addComponents(
+    const component = editor.addComponents(
       {
         type: "merge-tag",
       },
       {}
     );
+    //
+    console.log(el.components());
+    console.log(el);
+    component[0]?.move(el, {});
     console.log(selectionStart);
+    console.log(el?.getEl().innerText.substring(0, selectionStart));
   };
 
   return (
@@ -147,19 +169,20 @@ const EmailBuilder = () => {
           padding: "0 40px",
         }}
       >
-        <Input
+        <MergeTagInput
           isRequired
-          inputRef={subjectRef}
           value={title}
           placeholder={"Subject"}
           name="title"
           id="title"
           fullWidth
+          setValue={setTitle}
           onChange={(e: any) => setTitle(e.target.value)}
           labelShrink
-          sx={{
-            marginBottom: "30px",
-          }}
+          isPreview={isPreview}
+          setIsPreview={setIsPreview}
+          possibleAttributes={possibleAttributes}
+          inputRef={subjectRef}
         />
         <div id="emailBuilder" className="gjs-dashed" />
       </div>
