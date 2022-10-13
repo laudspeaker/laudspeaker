@@ -43,7 +43,9 @@ const MergeTagType = (
   });
 
   domc.addType("merge-tag", {
-    isComponent: (el) => el.classList?.contains("m_t"),
+    isComponent: (el) =>
+      el.classList?.contains("m_t") ||
+      (el?.hasAttribute && el.hasAttribute("picked-attribute")),
     model: {
       defaults: {
         tagName: "span",
@@ -95,6 +97,9 @@ const MergeTagType = (
         this.on("component:update", (ev) => {
           const changed = ev?.changed;
           const component: grapesjs.ComponentModelProperties = ev?.component;
+          this.getEl().innerHTML =
+            "Customer: " + (changed?.attributes?.["picked-attribute"] || "-");
+
           if (changed?.attributes?.["picked-attribute"] && component) {
             this.set(
               "content",
@@ -103,8 +108,6 @@ const MergeTagType = (
             this.components(
               `{{ ${changed?.attributes?.["picked-attribute"]} }}`
             );
-            this.getEl().innerHTML =
-              "Customer: " + changed?.attributes?.["picked-attribute"];
             this.addAttributes({ contenteditable: "false" }, {});
           }
         });
