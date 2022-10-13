@@ -8,7 +8,6 @@ import EmailHeader from "./EmailHeader";
 import ApiService from "services/api.service";
 import { ApiConfig } from "../../constants";
 import { useParams } from "react-router-dom";
-import { getCaretCharacterOffsetWithin } from "helpers/genericUtils";
 import MergeTagType from "./MergeTags";
 import { getResources } from "pages/Segment/SegmentHelpers";
 import MergeTagInput from "components/MergeTagInput";
@@ -67,6 +66,12 @@ const EmailBuilder = () => {
           // Avoid any default panel
           // panels: { defaults: [] },
         });
+
+        _editor.CssComposer.setRule(".default_m_t", {
+          color: "#065F46",
+          "font-family": "Inter",
+        });
+
         setEditor(_editor);
       })
       .catch((error) => {
@@ -92,7 +97,6 @@ const EmailBuilder = () => {
   }, []);
 
   const onSave = async () => {
-    console.log(editor?.getHtml());
     const reqBody = {
       name: templateName,
       subject: title,
@@ -136,7 +140,6 @@ const EmailBuilder = () => {
     if (!availableComponents.includes(el?.getName() || "")) {
       return;
     }
-    const selectionStart = getCaretCharacterOffsetWithin(el?.getEl());
     const component = editor.addComponents(
       {
         type: "merge-tag",
@@ -144,11 +147,7 @@ const EmailBuilder = () => {
       {}
     );
     //
-    console.log(el.components());
-    console.log(el);
     component[0]?.move(el, {});
-    console.log(selectionStart);
-    console.log(el?.getEl().innerText.substring(0, selectionStart));
   };
 
   return (

@@ -34,7 +34,7 @@ const generateOptions = ({
     option.setAttribute(
       "style",
       `
-        margin-bottom: 5px  !important; height: 62px  !important; border-radius: 5px  !important; border: 1px solid #F3F3F3  !important; color: black  !important; padding: 6px  !important; font-size: 16px; font-weight: 500;
+        margin-bottom: 5px  !important; height: 62px  !important; border-radius: 5px  !important; border: 1px solid #F3F3F3  !important; color: black  !important; padding: 6px  !important; font-size: 16px; font-family: 'Inter'; font-style: normal; font-weight: 500;
       `
     );
     option.setAttribute("contenteditable", "false");

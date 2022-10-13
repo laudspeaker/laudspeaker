@@ -15,11 +15,9 @@ const MergeTagType = (
   options: Resource[]
 ) => {
   const domc = __editor.DomComponents;
-  const bm = __editor.BlockManager;
   const defaultType = domc.getType("default");
   const textType = domc.getType("text");
   const textModel = textType.model;
-  const defaultView = defaultType.view;
 
   domc.addType("text", {
     model: textModel.extend(
@@ -56,7 +54,7 @@ const MergeTagType = (
         editable: false,
         textable: 1,
         attributes: {
-          class: "m_t",
+          class: "m_t default_m_t",
           contenteditable: "false",
         },
         content: `{{ }}`,
@@ -65,9 +63,16 @@ const MergeTagType = (
           "border-radius": "10px",
           padding: "2px 10px",
           background: "#D1FAE5",
-          color: "#065F46",
           position: "relative",
         },
+        unstylable: [
+          "width",
+          "height",
+          "padding",
+          "max-width",
+          "min-height",
+          "text-align",
+        ],
         traits: [
           {
             type: "select",
@@ -81,10 +86,6 @@ const MergeTagType = (
         ],
       },
       init() {
-        // __editor.on("component:selected", (el) => {
-        //   console.log("selected", el);
-        // });
-
         setTimeout(() => {
           this.getEl().innerHTML =
             "Customer: " +
