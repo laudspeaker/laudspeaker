@@ -1,5 +1,13 @@
 @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500&display=swap");
 
+html,
+body,
+#root,
+.App {
+  min-height: 100vh;
+  width: 100%;
+}
+
 .removeBtnCss {
   background: none;
   border: 0;

@@ -84,15 +84,11 @@ const Dashboard = () => {
   return (
     <Box
       sx={{
-        // width: "calc( 100vw - 154px)",
-        // left: "154px",
-        paddingLeft: "154px",
         position: "relative",
         backgroundColor: "#E5E5E5",
       }}
     >
       <Header />
-      <Drawer />
       <Grid padding={"30px 31px"}>
         <Box
           borderBottom={"1px solid #D3D3D3"}

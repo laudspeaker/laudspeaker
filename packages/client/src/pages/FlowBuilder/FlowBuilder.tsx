@@ -506,7 +506,7 @@ const Flow = () => {
   };
 
   return (
-    <Box height="100vh" display="flex">
+    <Box height="100vh" display="flex" width="100%">
       <Snackbar
         open={snackBarOpen}
         autoHideDuration={5000}
@@ -518,7 +518,6 @@ const Flow = () => {
         </Alert>
       </Snackbar>
       <Box display="flex">
-        <Drawer />
         <Box display="flex">
           <SideDrawer selectedNode={selectedNode} onClick={performAction} />
         </Box>

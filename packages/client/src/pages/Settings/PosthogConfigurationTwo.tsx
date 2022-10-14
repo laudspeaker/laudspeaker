@@ -94,7 +94,6 @@ function PosthogConfigurationTwo() {
       }}
     >
       <Header />
-      <Drawer />
       <Box
         justifyContent={"space-around"}
         display={"flex"}

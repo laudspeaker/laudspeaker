@@ -72,15 +72,12 @@ const PeopleTable = () => {
   return (
     <Box
       sx={{
-        // width: "calc( 100vw - 154px)",
-        // left: "154px",
-        paddingLeft: "154px",
+        width: "100%",
         position: "relative",
         backgroundColor: "#E5E5E5",
       }}
     >
       <Header />
-      <Drawer />
       <Box padding={"37px 30px"}>
         {nameModalOpen ? (
           <Modal

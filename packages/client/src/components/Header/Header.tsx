@@ -33,7 +33,11 @@ const Header = () => {
         cursor: "pointer",
       }}
     >
-      <Box>
+      <Box
+        sx={{
+          display: "flex",
+        }}
+      >
         <img
           src={Help}
           alt="help"

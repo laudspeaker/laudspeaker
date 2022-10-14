@@ -73,7 +73,6 @@ function Channel() {
   return (
     <Box
       sx={{
-        paddingLeft: "154px",
         position: "relative",
         backgroundColor: "#E5E5E5",
         display: "flex",
@@ -103,7 +102,6 @@ function Channel() {
       }}
     >
       <Header />
-      <Drawer />
       <Box
         justifyContent={"space-around"}
         display={"flex"}

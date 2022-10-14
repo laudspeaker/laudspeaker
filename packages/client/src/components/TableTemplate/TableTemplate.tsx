@@ -42,19 +42,38 @@ function createData(
   };
 }
 
-function renderCorrectLink(row: ReturnType<typeof createData>) {
+function renderCorrectLink(
+  row: ReturnType<typeof createData>,
+  isButton = false
+) {
   if (row.type == "email") {
-    return <Link href={`templates/email/${row.name}`}>{row.name}</Link>;
+    return (
+      <Link href={`templates/email/${row.name}`}>
+        {isButton ? <div>Edit</div> : row.name}
+      </Link>
+    );
   } else if (row.type == "sms") {
-    return <Link href={`templates/sms/${row.name}`}>{row.name}</Link>;
+    return (
+      <Link href={`templates/sms/${row.name}`}>
+        {isButton ? <div>Edit</div> : row.name}
+      </Link>
+    );
   } else if (row.type == "slack") {
-    return <Link href={`templates/slack/${row.name}`}>{row.name}</Link>;
+    return (
+      <Link href={`templates/slack/${row.name}`}>
+        {isButton ? <div>Edit</div> : row.name}
+      </Link>
+    );
   } else if (row.dataSource == "people") {
-    return <Link href={`person/${row.name}`}>{row.name}</Link>;
+    return (
+      <Link href={`person/${row.name}`}>
+        {isButton ? <div>Edit</div> : row.name}
+      </Link>
+    );
   } else {
     return (
       <Link href={`flow/${row.name}${row.isActive ? "/view" : ""}`}>
-        {row.name}
+        {isButton ? <div>Edit</div> : row.name}
       </Link>
     );
   }
@@ -64,43 +83,77 @@ function renderCorrectColumnNames(data: any) {
   if (data.length < 1) {
     return (
       <>
-        <TableCell align="right">Name</TableCell>
-        <TableCell align="right">&nbsp;</TableCell>
-        <TableCell align="right">&nbsp;</TableCell>
-        <TableCell align="right">&nbsp;</TableCell>
-        <TableCell align="right">&nbsp;</TableCell>
+        <th
+          scope="col"
+          className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6"
+        >
+          Name
+        </th>
       </>
     );
   } else if (data[0].hasOwnProperty("isActive")) {
     //this is a test for checking if this is the journeys table or the template table
     return (
       <>
-        <TableCell> Name</TableCell>
-        <TableCell align="right">Active</TableCell>
-        <TableCell align="right">&nbsp;</TableCell>
-        <TableCell align="right">&nbsp;</TableCell>
-        <TableCell align="right">&nbsp;</TableCell>
+        <th
+          scope="col"
+          className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6"
+        >
+          Name
+        </th>
+        <th
+          scope="col"
+          className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6"
+        >
+          Active
+        </th>
+        <th
+          scope="col"
+          className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6"
+        >
+          Edit
+        </th>
       </>
     );
   } else if (data[0].dataSource == "people") {
     //this is a test for checking if this is the journeys table or the template table
     return (
       <>
-        <TableCell> Id</TableCell>
-        <TableCell align="right">Info</TableCell>
-        <TableCell align="right">&nbsp;</TableCell>
-        <TableCell align="right">&nbsp;</TableCell>
-        <TableCell align="right">&nbsp;</TableCell>
+        <th
+          scope="col"
+          className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6"
+        >
+          Id
+        </th>
+        <th
+          scope="col"
+          className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6"
+        >
+          Info
+        </th>
       </>
     );
   } else {
     return (
       <>
-        <TableCell> Name</TableCell>
-        <TableCell align="right">Type</TableCell>
-        <TableCell align="right">&nbsp;</TableCell>
-        <TableCell align="right">&nbsp;</TableCell>
-        <TableCell align="right">&nbsp;</TableCell>
+        <th
+          scope="col"
+          className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6"
+        >
+          Name
+        </th>
+        <th
+          scope="col"
+          className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6"
+        >
+          Type
+        </th>
+        <th
+          scope="col"
+          className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6"
+        >
+          Edit
+        </th>
       </>
     );
   }
@@ -110,7 +163,9 @@ function renderSecondColumn(row: ReturnType<typeof createData>) {
   if (row.dataSource == "people") {
     return (
       <>
-        <TableCell align="right">{row.type}</TableCell>
+        <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
+          {row.type}
+        </td>
       </>
     );
     //journey vs template
@@ -118,17 +173,29 @@ function renderSecondColumn(row: ReturnType<typeof createData>) {
     //this is a test for checking if this is the journeys table or the template table
     return (
       <>
-        <TableCell align="right">{String(row.isActive)}</TableCell>
-        <TableCell align="right">{row.createdOn}</TableCell>
-        <TableCell align="right">{row.createdBy}</TableCell>
+        <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
+          {String(row.isActive)}
+        </td>
+        {/* <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
+          {String(row.createdOn)}
+        </td>
+        <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
+          {String(row.createdBy)}
+        </td> */}
       </>
     );
   } else {
     return (
       <>
-        <TableCell align="right">{String(row.type)}</TableCell>
-        <TableCell align="right">{row.createdOn}</TableCell>
-        <TableCell align="right">{row.createdBy}</TableCell>
+        <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
+          {String(row.type)}
+        </td>
+        {/* <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
+          {String(row.createdOn)}
+        </td>
+        <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
+          {String(row.createdBy)}
+        </td> */}
       </>
     );
   }
@@ -136,51 +203,17 @@ function renderSecondColumn(row: ReturnType<typeof createData>) {
 
 function Row(props: { row: ReturnType<typeof createData> }) {
   const { row } = props;
-  const [open, setOpen] = React.useState(false);
-
   return (
     <React.Fragment>
-      <TableRow sx={{ "& > *": { borderBottom: "unset" } }}>
-        <TableCell>
-          <IconButton
-            aria-label="expand row"
-            size="small"
-            onClick={() => setOpen(!open)}
-          >
-            {open ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
-          </IconButton>
-        </TableCell>
-        <TableCell component="th" scope="row">
+      <tr>
+        <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
           {renderCorrectLink(row)}
-        </TableCell>
+        </td>
         {renderSecondColumn(row)}
-      </TableRow>
-      <TableRow>
-        <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={6}>
-          <Collapse in={open} timeout="auto" unmountOnExit>
-            <Box sx={{ margin: 1 }}>
-              <Typography variant="h6" gutterBottom component="div">
-                Audiences
-              </Typography>
-              {/* <Table size="small" aria-label="purchases">
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Date</TableCell>
-                    <TableCell>Customer</TableCell>
-                    <TableCell align="right">Amount</TableCell>
-                    <TableCell align="right">Total price ($)</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  <TableRow key="audiences">
-                    <TableCell>something</TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table> */}
-            </Box>
-          </Collapse>
-        </TableCell>
-      </TableRow>
+        <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
+          {renderCorrectLink(row, true)}
+        </td>
+      </tr>
     </React.Fragment>
   );
 }
@@ -345,7 +378,7 @@ const rows = [
 // then all other rendering is simple
 function transformJourneyData(data: any) {
   const result = [];
-  for (let i = 0; i < data.length; i++) {
+  for (const element of data) {
     //people table
     // if (data[0].hasOwnProperty("salient")) {
     //   result.push({
@@ -372,14 +405,14 @@ function transformJourneyData(data: any) {
     //   });
     // }
     result.push({
-      name: data[i].hasOwnProperty("salient") ? data[i].id : data[i].name,
-      isActive: data[i].isActive,
-      type: data[i].hasOwnProperty("salient") ? data[i].salient : data[i].type,
-      createdOn: data[i].createdOn,
-      createdBy: data[i].createdBy,
-      customersEnrolled: data[i].customersEnrolled,
-      audiences: data[i].audiences,
-      dataSource: data[i].hasOwnProperty("salient") ? "people" : "j",
+      name: element.hasOwnProperty("salient") ? element.id : element.name,
+      isActive: element.isActive,
+      type: element.hasOwnProperty("salient") ? element.salient : element.type,
+      createdOn: element.createdOn,
+      createdBy: element.createdBy,
+      customersEnrolled: element.customersEnrolled,
+      audiences: element.audiences,
+      dataSource: element.hasOwnProperty("salient") ? "people" : "j",
     });
   }
   return result;
@@ -389,21 +422,24 @@ function transformJourneyData(data: any) {
 
 export default function TableTemplate({ data }: any) {
   return (
-    <TableContainer component={Paper}>
-      <Table aria-label="collapsible table">
-        <TableHead>
-          <TableRow>
-            <TableCell />
-            {renderCorrectColumnNames(data)}
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {transformJourneyData(data).map((row) => (
-            <Row key={row.name} row={row} />
-          ))}
-        </TableBody>
-      </Table>
-    </TableContainer>
+    <div className="mt-8 flex flex-col">
+      <div className="-my-2 -mx-4 overflow-x-auto sm:-mx-6 lg:-mx-8">
+        <div className="inline-block min-w-full py-2 align-middle md:px-6 lg:px-8">
+          <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
+            <table className="min-w-full divide-y divide-gray-300">
+              <thead className="bg-gray-50">
+                <tr>{renderCorrectColumnNames(data)}</tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200 bg-white">
+                {transformJourneyData(data).map((row) => (
+                  <Row key={row.name} row={row} />
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 

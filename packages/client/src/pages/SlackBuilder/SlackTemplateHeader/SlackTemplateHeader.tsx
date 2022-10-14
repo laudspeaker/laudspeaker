@@ -47,7 +47,7 @@ const SlackTemplateHeader = (props: IEmailHeaderProps) => {
           textAlign: "center",
           display: "flex",
           justifyContent: "space-between",
-          marginLeft: "190px",
+          marginLeft: "10px",
           height: "80px",
         }}
       >

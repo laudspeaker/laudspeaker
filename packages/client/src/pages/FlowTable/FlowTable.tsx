@@ -14,9 +14,6 @@ import { GenericButton, Select } from "components/Elements";
 import { formatDistance } from "date-fns";
 import DateRangePicker from "components/DateRangePicker";
 import Card from "components/Cards/Card";
-import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
-import { IconButton, Popover } from "@mui/material";
-import { VictoryChart, VictoryArea } from "victory";
 import ApiService from "services/api.service";
 import { ApiConfig } from "./../../constants";
 import NameJourney from "./NameJourney";
@@ -73,15 +70,12 @@ const FlowTable = () => {
   return (
     <Box
       sx={{
-        // width: "calc( 100vw - 154px)",
-        // left: "154px",
-        paddingLeft: "154px",
         position: "relative",
         backgroundColor: "#E5E5E5",
+        width: "100%",
       }}
     >
       <Header />
-      <Drawer />
       <Box padding={"37px 30px"}>
         {nameModalOpen ? (
           <Modal

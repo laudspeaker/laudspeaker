@@ -38,7 +38,6 @@ const EmailConfig = () => {
       }}
     >
       <Header />
-      <Drawer />
       <Box
         justifyContent={"space-around"}
         display={"flex"}

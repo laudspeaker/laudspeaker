@@ -51,7 +51,6 @@ function Completion() {
       }}
     >
       <Header />
-      <Drawer />
       <Box
         justifyContent={"space-around"}
         display={"flex"}

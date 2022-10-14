@@ -164,8 +164,8 @@ export default function ResponsiveDrawer(props: Props) {
               boxSizing: "border-box",
               width: drawerWidth,
               backgroundColor: "#FFFFFF",
+              position: "relative !important",
               color: "black",
-              left: "154px",
             },
             "& .MuiDrawer-paper::-webkit-scrollbar": { width: 0 },
             "& .MuiTypography-root": {

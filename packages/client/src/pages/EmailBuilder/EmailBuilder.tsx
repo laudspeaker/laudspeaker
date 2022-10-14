@@ -151,8 +151,7 @@ const EmailBuilder = () => {
   };
 
   return (
-    <>
-      <Drawer />
+    <div className="w-full">
       <EmailHeader
         onPersonalize={onPersonalize}
         onSave={onSave}
@@ -164,7 +163,6 @@ const EmailBuilder = () => {
       <div
         style={{
           width: "calc(100vw - 154px)",
-          marginLeft: "154px",
           padding: "0 40px",
         }}
       >
@@ -185,7 +183,7 @@ const EmailBuilder = () => {
         />
         <div id="emailBuilder" className="gjs-dashed" />
       </div>
-    </>
+    </div>
   );
 };
 

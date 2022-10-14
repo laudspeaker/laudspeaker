@@ -1,15 +1,13 @@
 import { Box } from "@mui/material";
 import Header from "../../components/Header";
-
-import Drawer from "../../components/Drawer";
 import ProfileForm from "./components/ProfileForm";
 
 const Profile = () => {
   return (
     <Box
       sx={{
-        paddingLeft: "154px",
         position: "relative",
+        width: "100%",
         backgroundColor: "#E5E5E5",
         display: "flex",
         flexDirection: "column",
@@ -39,7 +37,6 @@ const Profile = () => {
       }}
     >
       <Header />
-      <Drawer />
       <Box
         sx={{
           display: "flex",

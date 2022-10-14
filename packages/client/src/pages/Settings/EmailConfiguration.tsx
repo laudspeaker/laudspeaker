@@ -70,7 +70,6 @@ function EmailConfiguration() {
       }}
     >
       <Header />
-      <Drawer />
       <Box
         justifyContent={"space-around"}
         display={"flex"}
