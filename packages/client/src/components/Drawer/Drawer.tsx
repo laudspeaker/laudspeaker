@@ -116,7 +116,7 @@ export default function ResponsiveDrawer() {
                       {item.children?.map((subItem) => (
                         <>
                           {userState.userPermissions?.includes(subItem.id) && (
-                            <Link to={subItem.link}>
+                            <Link key={subItem.id} to={subItem.link}>
                               <Disclosure.Button
                                 key={subItem.text}
                                 className="group flex w-full whitespace-nowrap items-center rounded-md py-2 px-2 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900"
@@ -130,7 +130,7 @@ export default function ResponsiveDrawer() {
                                   )}
                                   aria-hidden="true"
                                 >
-                                  {item.imgIcon}
+                                  {subItem.imgIcon}
                                 </div>
                                 {subItem.text}
                               </Disclosure.Button>
