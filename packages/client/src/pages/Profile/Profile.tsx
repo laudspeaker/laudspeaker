@@ -18,7 +18,7 @@ const Profile = () => {
               </p>
             </div>
           </div>
-          <div className="mt-5 md:col-span-2 md:mt-0">
+          <div className="mt-5 md:col-span-2 pd-5">
             <form action="#" method="POST">
               <div className="shadow sm:overflow-hidden sm:rounded-md">
                 <div className="space-y-6 bg-white px-4 py-5 sm:p-6">
