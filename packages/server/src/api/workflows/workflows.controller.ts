@@ -33,8 +33,16 @@ export class WorkflowsController {
   @Get()
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
-  findAll(@Req() { user }: Request) {
-    return this.workflowsService.findAll(<Account>user);
+  findAll(
+    @Req() { user }: Request,
+    @Query('take') take?: string,
+    @Query('skip') skip?: string
+  ) {
+    return this.workflowsService.findAll(
+      <Account>user,
+      take && +take,
+      skip && +skip
+    );
   }
 
   @Get(':name')

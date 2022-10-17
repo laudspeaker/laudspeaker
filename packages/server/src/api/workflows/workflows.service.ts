@@ -37,8 +37,20 @@ export class WorkflowsService {
    * @param account - The owner of the workflows
    *
    */
-  findAll(account: Account): Promise<Workflow[]> {
-    return this.workflowsRepository.findBy({ ownerId: (<Account>account).id });
+  async findAll(
+    account: Account,
+    take = 100,
+    skip = 0
+  ): Promise<{ data: Workflow[]; totalPages: number }> {
+    const totalPages = Math.ceil(
+      (await this.workflowsRepository.count()) / take
+    );
+    const workflows = await this.workflowsRepository.find({
+      where: { ownerId: (<Account>account).id },
+      take: take < 100 ? take : 100,
+      skip,
+    });
+    return { data: workflows, totalPages };
   }
 
   /**

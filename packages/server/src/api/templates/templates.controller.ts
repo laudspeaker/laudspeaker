@@ -13,6 +13,7 @@ import {
   UseInterceptors,
   Post,
   Req,
+  Query,
 } from '@nestjs/common';
 import { Request } from 'express';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
@@ -31,8 +32,16 @@ export class TemplatesController {
   @Get()
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
-  findAll(@Req() { user }: Request) {
-    return this.templatesService.findAll(<Account>user);
+  findAll(
+    @Req() { user }: Request,
+    @Query('take') take?: string,
+    @Query('skip') skip?: string
+  ) {
+    return this.templatesService.findAll(
+      <Account>user,
+      take && +take,
+      skip && +skip
+    );
   }
 
   @Post('/create')

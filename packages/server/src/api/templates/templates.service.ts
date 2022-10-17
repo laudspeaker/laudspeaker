@@ -117,8 +117,20 @@ export class TemplatesService {
     return Promise.resolve(jobId);
   }
 
-  findAll(account: Account): Promise<Template[]> {
-    return this.templatesRepository.findBy({ ownerId: (<Account>account).id });
+  async findAll(
+    account: Account,
+    take = 100,
+    skip = 0
+  ): Promise<{ data: Template[]; totalPages: number }> {
+    const totalPages = Math.ceil(
+      (await this.templatesRepository.count()) / take
+    );
+    const templates = await this.templatesRepository.find({
+      where: { ownerId: (<Account>account).id },
+      take: take < 100 ? take : 100,
+      skip,
+    });
+    return { data: templates, totalPages };
   }
 
   findOne(account: Account, name: string): Promise<Template> {

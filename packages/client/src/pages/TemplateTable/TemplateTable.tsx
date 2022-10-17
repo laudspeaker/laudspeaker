@@ -28,7 +28,10 @@ const TemplateTable = () => {
   const [success, setSuccess] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
-  const [journeys, setJourneys] = useState<any>([]);
+  const [templates, setTemplates] = useState<any>([]);
+  const [itemsPerPage, setItemsPerPage] = useState(20);
+  const [pagesCount, setPagesCount] = useState<number>(1);
+  const [currentPage, setCurrentPage] = useState(0);
   const [nameModalOpen, setNameModalOpen] = useState<boolean>(false);
 
   React.useEffect(() => {
@@ -36,10 +39,14 @@ const TemplateTable = () => {
       setLoading(true);
       try {
         const { data } = await ApiService.get({
-          url: `${ApiConfig.getAllTemplates}`,
+          url: `${ApiConfig.getAllTemplates}?take=${itemsPerPage}&skip=${
+            itemsPerPage * currentPage
+          }`,
         });
+        const { data: fetchedTemplates, totalPages } = data;
+        setPagesCount(totalPages);
         setSuccess("Success");
-        setJourneys(data);
+        setTemplates(fetchedTemplates);
       } catch (err) {
         setError(true);
       } finally {
@@ -47,7 +54,7 @@ const TemplateTable = () => {
       }
     };
     setLoadingAsync();
-  }, []);
+  }, [itemsPerPage, currentPage]);
 
   const redirectUses = () => {
     setNameModalOpen(true);
@@ -55,7 +62,7 @@ const TemplateTable = () => {
 
   const handleNameSubmit = () => {};
 
-  //getAllJourneysData();
+  //getAlltemplatesData();
 
   if (error)
     return (
@@ -128,7 +135,14 @@ const TemplateTable = () => {
               All Templates
             </h3>
           </Grid>
-          <TableTemplate data={journeys} />
+          <TableTemplate
+            data={templates}
+            pagesCount={pagesCount}
+            setCurrentPage={setCurrentPage}
+            currentPage={currentPage}
+            itemsPerPage={itemsPerPage}
+            setItemsPerPage={setItemsPerPage}
+          />
         </Card>
       </Box>
     </div>

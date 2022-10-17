@@ -157,64 +157,90 @@ const ProfileForm = () => {
           <Alert severity="error">{errorMessages[0]}</Alert>
         </Snackbar>
       </>
-      <FormControl variant="standard" sx={{ marginBottom: "27px" }}>
-        <Input
-          isRequired
-          label="First Name"
-          value={values.firstName}
-          placeholder={"Enter your first name"}
-          name="firstName"
-          id="firstName"
-          fullWidth
-          onChange={handleChange}
-          labelShrink
-          disabled={isLoading}
-        />
-      </FormControl>
-      <FormControl variant="standard" sx={{ marginBottom: "27px" }}>
-        <Input
-          isRequired
-          label="Last Name"
-          value={values.lastName}
-          placeholder={"Enter your last name"}
-          name="lastName"
-          id="lastName"
-          fullWidth
-          onChange={handleChange}
-          labelShrink
-          disabled={isLoading}
-        />
-      </FormControl>
-      <FormControl variant="standard" sx={{ marginBottom: "27px" }}>
-        <Input
-          isRequired
-          label="Password"
-          value={values.password}
-          type="password"
-          placeholder={"Enter new password"}
-          name="password"
-          id="password"
-          fullWidth
-          onChange={handleChange}
-          labelShrink
-          disabled={isLoading}
-        />
-      </FormControl>
-      <FormControl variant="standard" sx={{ marginBottom: "27px" }}>
-        <Input
-          isRequired
-          label="Password Confirmation"
-          value={values.confirmPassword}
-          type="password"
-          placeholder={"Confirm password"}
-          name="confirmPassword"
-          id="confirmPassword"
-          fullWidth
-          onChange={handleChange}
-          labelShrink
-          disabled={isLoading}
-        />
-      </FormControl>
+      <div className="mb-2">
+        <label
+          htmlFor="firstName"
+          className="block text-sm font-medium text-gray-700"
+        >
+          First Name
+        </label>
+        <div className="mt-1">
+          <input
+            type="text"
+            name="firstName"
+            id="firstName"
+            className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+            placeholder="Enter your first name"
+            required
+            value={values.firstName}
+            onChange={handleChange}
+            disabled={isLoading}
+          />
+        </div>
+      </div>
+      <div className="mb-2">
+        <label
+          htmlFor="lastName"
+          className="block text-sm font-medium text-gray-700"
+        >
+          Last Name
+        </label>
+        <div className="mt-1">
+          <input
+            type="text"
+            name="lastName"
+            id="lastName"
+            className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+            placeholder="Enter your last name"
+            required
+            value={values.lastName}
+            onChange={handleChange}
+            disabled={isLoading}
+          />
+        </div>
+      </div>
+      <div className="mb-2">
+        <label
+          htmlFor="password"
+          className="block text-sm font-medium text-gray-700"
+        >
+          Password
+        </label>
+        <div className="mt-1">
+          <input
+            type="password"
+            name="password"
+            id="password"
+            className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+            placeholder="Enter new password"
+            required
+            value={values.password}
+            onChange={handleChange}
+            disabled={isLoading}
+          />
+        </div>
+      </div>
+      <div className="mb-2">
+        <label
+          htmlFor="confirmPassword"
+          className="block text-sm font-medium text-gray-700"
+        >
+          Password Confirmation
+        </label>
+        <div className="mt-1">
+          <input
+            type="password"
+            name="confirmPassword"
+            id="confirmPassword"
+            className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+            placeholder="Enter new password"
+            required
+            value={values.confirmPassword}
+            onChange={handleChange}
+            disabled={isLoading}
+          />
+        </div>
+      </div>
       <FormControl
         variant="standard"
         sx={{
@@ -225,19 +251,28 @@ const ProfileForm = () => {
         }}
       >
         <Box sx={{ display: "flex", flexDirection: "column", width: "65%" }}>
-          <InputLabel shrink={true}>Private API Key</InputLabel>
-          <div
-            style={{
-              textOverflow: "ellipsis",
-              overflow: "hidden",
-              cursor: "pointer",
-            }}
-            onClick={() => {
-              navigator.clipboard.writeText(privateAPIKey);
-              setIsCopied(true);
-            }}
-          >
-            {privateAPIKey}
+          <div>
+            <label
+              htmlFor="confirmPassword"
+              className="block text-sm font-medium text-gray-700"
+            >
+              Private API key
+            </label>
+            <div className="mt-1">
+              <div
+                style={{
+                  textOverflow: "ellipsis",
+                  overflow: "hidden",
+                  cursor: "pointer",
+                }}
+                onClick={() => {
+                  navigator.clipboard.writeText(privateAPIKey);
+                  setIsCopied(true);
+                }}
+              >
+                {privateAPIKey}
+              </div>
+            </div>
           </div>
         </Box>
         <GenericButton

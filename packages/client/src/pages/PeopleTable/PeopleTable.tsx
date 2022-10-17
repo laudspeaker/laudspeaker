@@ -28,7 +28,10 @@ const PeopleTable = () => {
   const [success, setSuccess] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
-  const [people, setpeople] = useState<any>([]);
+  const [people, setPeople] = useState<any>([]);
+  const [itemsPerPage, setItemsPerPage] = useState(20);
+  const [pagesCount, setPagesCount] = useState<number>(1);
+  const [currentPage, setCurrentPage] = useState(0);
   const [nameModalOpen, setNameModalOpen] = useState<boolean>(false);
 
   React.useEffect(() => {
@@ -36,10 +39,14 @@ const PeopleTable = () => {
       setLoading(true);
       try {
         const { data } = await ApiService.get({
-          url: `${ApiConfig.getAllPeople}`,
+          url: `${ApiConfig.getAllPeople}?take=${itemsPerPage}&skip=${
+            itemsPerPage * currentPage
+          }`,
         });
+        const { data: fetchedPeople, totalPages } = data;
+        setPagesCount(totalPages);
         setSuccess("Success");
-        setpeople(data);
+        setPeople(fetchedPeople);
       } catch (err) {
         setError(true);
       } finally {
@@ -47,7 +54,7 @@ const PeopleTable = () => {
       }
     };
     setLoadingAsync();
-  }, []);
+  }, [itemsPerPage, currentPage]);
 
   const redirectUses = () => {
     setNameModalOpen(true);
@@ -134,7 +141,14 @@ const PeopleTable = () => {
               All People
             </h3>
           </Grid>
-          <TableTemplate data={people} />
+          <TableTemplate
+            data={people}
+            pagesCount={pagesCount}
+            setCurrentPage={setCurrentPage}
+            currentPage={currentPage}
+            itemsPerPage={itemsPerPage}
+            setItemsPerPage={setItemsPerPage}
+          />
         </Card>
       </Box>
     </Box>

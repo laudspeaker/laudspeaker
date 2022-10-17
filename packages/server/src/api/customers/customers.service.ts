@@ -137,12 +137,29 @@ export class CustomersService {
     }
   }
 
-  async findAll(account: Account): Promise<CustomerDocument[]> {
-    return this.CustomerModel.find({ ownerId: (<Account>account).id }).exec();
+  async findAll(
+    account: Account,
+    take = 100,
+    skip = 0
+  ): Promise<{ data: CustomerDocument[]; totalPages: number }> {
+    const totalPages = Math.ceil(
+      (await this.CustomerModel.estimatedDocumentCount().exec()) / take
+    );
+    const customers = await this.CustomerModel.find({
+      ownerId: (<Account>account).id,
+    })
+      .skip(skip)
+      .limit(take <= 100 ? take : 100)
+      .exec();
+    return { data: customers, totalPages };
   }
 
-  async returnAllPeopleInfo(account: Account) {
-    const data = await this.findAll(<Account>account);
+  async returnAllPeopleInfo(account: Account, take = 100, skip = 0) {
+    const { data, totalPages } = await this.findAll(
+      <Account>account,
+      take,
+      skip
+    );
     const listInfo = data.map((person) => {
       const info = {};
       (info['id'] = person['_id'].toString()),
@@ -155,7 +172,7 @@ export class CustomersService {
           : '...');
       return info;
     });
-    return listInfo;
+    return { data: listInfo, totalPages };
   }
 
   async ingestPosthogPersons(
@@ -313,7 +330,7 @@ export class CustomersService {
     let customers: CustomerDocument[] = [];
     const ret: CustomerDocument[] = [];
     try {
-      customers = await this.findAll(account);
+      customers = (await this.findAll(account)).data;
     } catch (err) {
       return Promise.reject(err);
     }

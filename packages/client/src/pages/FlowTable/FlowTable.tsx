@@ -24,6 +24,9 @@ const FlowTable = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
   const [journeys, setJourneys] = useState<any>([]);
+  const [itemsPerPage, setItemsPerPage] = useState(20);
+  const [pagesCount, setPagesCount] = useState<number>(1);
+  const [currentPage, setCurrentPage] = useState(0);
   const [nameModalOpen, setNameModalOpen] = useState<boolean>(false);
 
   React.useEffect(() => {
@@ -31,10 +34,14 @@ const FlowTable = () => {
       setLoading(true);
       try {
         const { data } = await ApiService.get({
-          url: `${ApiConfig.flow}`,
+          url: `${ApiConfig.flow}?take=${itemsPerPage}&skip=${
+            itemsPerPage * currentPage
+          }`,
         });
+        const { data: fetchedJourneys, totalPages } = data;
         setSuccess("Success");
-        setJourneys(data);
+        setPagesCount(totalPages);
+        setJourneys(fetchedJourneys);
       } catch (err) {
         posthog.capture("flowTableError", {
           flowTableError: err,
@@ -45,7 +52,7 @@ const FlowTable = () => {
       }
     };
     setLoadingAsync();
-  }, []);
+  }, [itemsPerPage, currentPage]);
 
   const redirectUses = () => {
     setNameModalOpen(true);
@@ -130,7 +137,14 @@ const FlowTable = () => {
           >
             <Typography variant="h3">Active Journeys</Typography>
           </Grid>
-          <TableTemplate data={journeys} />
+          <TableTemplate
+            data={journeys}
+            pagesCount={pagesCount}
+            setCurrentPage={setCurrentPage}
+            currentPage={currentPage}
+            itemsPerPage={itemsPerPage}
+            setItemsPerPage={setItemsPerPage}
+          />
         </Card>
       </Box>
     </Box>
