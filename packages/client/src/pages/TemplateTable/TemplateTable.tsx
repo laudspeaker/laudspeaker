@@ -70,13 +70,7 @@ const TemplateTable = () => {
       </div>
     );
   return (
-    <Box
-      sx={{
-        width: "100%",
-        position: "relative",
-        backgroundColor: "#E5E5E5",
-      }}
-    >
+    <div className="w-full relative bg-[#E5E5E5]">
       <Header />
       <Box padding={"37px 30px"}>
         {nameModalOpen ? (
@@ -130,12 +124,14 @@ const TemplateTable = () => {
             borderBottom={"1px solid #D3D3D3"}
             height={"104px"}
           >
-            <Typography variant="h3">All Templates</Typography>
+            <h3 className="font-[Inter] font-semibold text-[25px] leading-[38px]">
+              All Templates
+            </h3>
           </Grid>
           <TableTemplate data={journeys} />
         </Card>
       </Box>
-    </Box>
+    </div>
   );
 };
 

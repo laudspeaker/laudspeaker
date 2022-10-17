@@ -31,6 +31,8 @@ export interface InputProps {
   multiline?: boolean;
   minRows?: number | string;
   inputProps?: object;
+  className?: string;
+  labelClass?: string;
   endAdornment?: React.ReactNode;
   onBlur?: () => void;
   ref?: any;
@@ -61,6 +63,8 @@ const Input = (props: InputProps) => {
     multiline,
     minRows,
     inputProps,
+    labelClass,
+    className,
     value,
     endAdornment,
     onBlur,
@@ -68,7 +72,7 @@ const Input = (props: InputProps) => {
   return (
     <>
       {label && (
-        <InputLabel shrink={labelShrink} htmlFor={id}>
+        <InputLabel className={labelClass} shrink={labelShrink} htmlFor={id}>
           {label}
         </InputLabel>
       )}
@@ -84,6 +88,7 @@ const Input = (props: InputProps) => {
         inputRef={inputRef}
         name={name}
         placeholder={placeholder}
+        className={className}
         required={isRequired}
         // variant={variant}
         size={size}

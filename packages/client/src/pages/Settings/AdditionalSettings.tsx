@@ -49,34 +49,7 @@ function AdditionalSettings() {
   )}*****${settings.domainName.substring(settings.domainName.length - 7)}`;
 
   return (
-    <Box
-      sx={{
-        paddingLeft: "154px",
-        position: "relative",
-        backgroundColor: "#E5E5E5",
-        display: "flex",
-        flexDirection: "column",
-        height: "100vh",
-        "& .MuiTypography-root": {
-          fontFamily: "Inter",
-        },
-        "& .MuiInputBase-input": {
-          background: "#fff",
-          border: "1px solid #D1D5DB",
-          fontFamily: "Inter",
-          fontWeight: 400,
-          fontSize: "16px",
-          padding: "12px 16px",
-        },
-        "& .MuiInputLabel-root": {
-          fontSize: "16px",
-          fontFamily: "Inter",
-        },
-        "& .MuiFormControl-root": {
-          maxWidth: "529px",
-        },
-      }}
-    >
+    <div className="w-full relative flex flex-col h-screen font-[Inter] bg-[#E5E5E5]">
       <Header />
       <Box
         justifyContent={"space-around"}
@@ -119,6 +92,7 @@ function AdditionalSettings() {
                   setDefaultName(e.target.value);
                   handleInputChange("defaultName", e.target.value);
                 }}
+                labelClass="!text-[16px]"
                 labelShrink
                 inputProps={{
                   style: {
@@ -149,6 +123,7 @@ function AdditionalSettings() {
                   setDefaultEmail(newValue);
                   handleInputChange("defaultEmail", newValue);
                 }}
+                labelClass="!text-[16px]"
                 labelShrink
                 inputProps={{
                   style: {
@@ -163,7 +138,7 @@ function AdditionalSettings() {
               />
             </FormControl>
           </Grid>
-          <Box display={"flex"} marginTop="10%" justifyContent="flex-start">
+          <Box display={"flex"} marginTop="40px" justifyContent="flex-start">
             <GenericButton
               variant="contained"
               onClick={handleNextButtonClick}
@@ -201,7 +176,7 @@ function AdditionalSettings() {
           <CustomStepper activeStep={2} />
         </Card>
       </Box>
-    </Box>
+    </div>
   );
 }
 

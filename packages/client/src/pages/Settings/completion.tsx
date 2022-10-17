@@ -22,33 +22,34 @@ function Completion() {
     dispatch(resetSetttingsData());
   }, []);
   return (
-    <Box
-      sx={{
-        paddingLeft: "154px",
-        position: "relative",
-        backgroundColor: "#E5E5E5",
-        display: "flex",
-        flexDirection: "column",
-        height: "100vh",
-        "& .MuiTypography-root": {
-          fontFamily: "Inter",
-        },
-        "& .MuiInputBase-input": {
-          background: "#fff",
-          border: "1px solid #D1D5DB",
-          fontFamily: "Inter",
-          fontWeight: 400,
-          fontSize: "16px",
-          padding: "12px 16px",
-        },
-        "& .MuiInputLabel-root": {
-          fontSize: "16px",
-          fontFamily: "Inter",
-        },
-        "& .MuiFormControl-root": {
-          maxWidth: "529px",
-        },
-      }}
+    <div
+      className="w-full relative flex flex-col h-screen font-[Inter] bg-[#E5E5E5]"
+      // sx={{
+      //   paddingLeft: "154px",
+      //   position: "relative",
+      //   backgroundColor: "#E5E5E5",
+      //   display: "flex",
+      //   flexDirection: "column",
+      //   height: "100vh",
+      //   "& .MuiTypography-root": {
+      //     fontFamily: "Inter",
+      //   },
+      //   "& .MuiInputBase-input": {
+      //     background: "#fff",
+      //     border: "1px solid #D1D5DB",
+      //     fontFamily: "Inter",
+      //     fontWeight: 400,
+      //     fontSize: "16px",
+      //     padding: "12px 16px",
+      //   },
+      //   "& .MuiInputLabel-root": {
+      //     fontSize: "16px",
+      //     fontFamily: "Inter",
+      //   },
+      //   "& .MuiFormControl-root": {
+      //     maxWidth: "529px",
+      //   },
+      // }}
     >
       <Header />
       <Box
@@ -64,20 +65,9 @@ function Completion() {
             maxWidth: "930px",
           }}
         >
-          <Typography
-            variant="h3"
-            display={"flex"}
-            alignItems="center"
-            gap="10px"
-            sx={{
-              fontSize: "25px",
-              fontWeight: 600,
-              lineHeight: "40px",
-              marginBottom: "10px",
-            }}
-          >
+          <h3 className="flex font-[Inter] font-semibold items-center text-[25px] gap-[10px] leading-[40px] mb-[10px]">
             Email Setup Successful 🎉
-          </Typography>
+          </h3>
           <Typography
             variant="subtitle1"
             sx={{
@@ -134,7 +124,7 @@ function Completion() {
           <CustomStepper activeStep={3} />
         </Card>
       </Box>
-    </Box>
+    </div>
   );
 }
 

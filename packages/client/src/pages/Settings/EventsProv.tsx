@@ -72,8 +72,8 @@ function EventsProv() {
   };
 
   return (
-    <Box
-      sx={{
+    <div className="w-full relative flex flex-col h-screen font-[Inter] bg-[#E5E5E5]">
+      {/* sx={{
         paddingLeft: "154px",
         position: "relative",
         backgroundColor: "#E5E5E5",
@@ -101,8 +101,7 @@ function EventsProv() {
         "& .MuiFormControl-root": {
           maxWidth: "529px",
         },
-      }}
-    >
+      }} */}
       <Header />
       <Box
         justifyContent={"space-around"}
@@ -233,7 +232,7 @@ function EventsProv() {
               );
             })}
           </Grid> */}
-          <Box display={"flex"} marginTop="10%" justifyContent="flex-start">
+          <Box display={"flex"} marginTop="40px" justifyContent="flex-start">
             <GenericButton
               variant="contained"
               onClick={handleNextButtonClick}
@@ -281,7 +280,7 @@ function EventsProv() {
           />
         </Card>
       </Box>
-    </Box>
+    </div>
   );
 }
 

@@ -130,7 +130,9 @@ const PeopleTable = () => {
             borderBottom={"1px solid #D3D3D3"}
             height={"104px"}
           >
-            <Typography variant="h3">All People</Typography>
+            <h3 className="font-[Inter] font-semibold text-[25px] leading-[38px]">
+              All People
+            </h3>
           </Grid>
           <TableTemplate data={people} />
         </Card>

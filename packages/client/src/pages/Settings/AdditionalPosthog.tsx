@@ -34,8 +34,8 @@ function AdditionalPosthog() {
     navigate("/settings/network-configuration");
   };
   return (
-    <Box
-      sx={{
+    <div className="w-full relative flex flex-col h-screen font-[Inter] bg-[#E5E5E5]">
+      {/* sx={{
         paddingLeft: "154px",
         position: "relative",
         backgroundColor: "#E5E5E5",
@@ -60,8 +60,7 @@ function AdditionalPosthog() {
         "& .MuiFormControl-root": {
           maxWidth: "529px",
         },
-      }}
-    >
+      }} */}
       <Header />
       <Box
         justifyContent={"space-around"}
@@ -138,7 +137,7 @@ function AdditionalPosthog() {
           <CustomStepper activeStep={4} />
         </Card>
       </Box>
-    </Box>
+    </div>
   );
 }
 

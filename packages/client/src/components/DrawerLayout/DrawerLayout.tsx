@@ -9,7 +9,7 @@ const DrawerLayout: FC<DrawerLayoutProps> = ({ children }) => {
   return (
     <div className="flex w-full max-h-screen h-screen">
       <ResponsiveDrawer />
-      {children}
+      <div className="w-full max-h-screen overflow-y-scroll">{children}</div>
     </div>
   );
 };

@@ -375,7 +375,9 @@ const Dashboard = () => {
             borderBottom={"1px solid #D3D3D3"}
             height={"104px"}
           >
-            <Typography variant="h3">Active Journeys</Typography>
+            <h3 className="font-[Inter] font-semibold text-[25px] leading-[38px]">
+              Active Journeys
+            </h3>
             <GenericButton
               variant="contained"
               onClick={redirectUses}
