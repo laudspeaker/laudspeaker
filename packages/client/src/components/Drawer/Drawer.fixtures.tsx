@@ -89,7 +89,7 @@ export const dataSubArray = [
         imgIcon: Integrations("black"),
         text: "Integrations",
         type: "menu",
-        link: "/settings/channel",
+        link: "/settings/integrations",
       },
       // {
       //   id: "analysis",

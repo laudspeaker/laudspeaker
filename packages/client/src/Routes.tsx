@@ -44,6 +44,7 @@ import { setSettingData } from "reducers/settings";
 import ApiService from "services/api.service";
 import EventsProv from "pages/Settings/EventsProv";
 import DrawerLayout from "components/DrawerLayout";
+import Integrations from "pages/Settings/Integrations";
 
 interface IProtected {
   children: ReactElement;
@@ -313,6 +314,18 @@ const RouteComponent: React.FC = () => {
               <DrawerLayout>
                 <Completion />
               </DrawerLayout>
+            </Protected>
+          }
+        />
+        <Route
+          path="/settings/integrations"
+          element={
+            <Protected>
+              <Onboarded>
+                <DrawerLayout>
+                  <Integrations />
+                </DrawerLayout>
+              </Onboarded>
             </Protected>
           }
         />
