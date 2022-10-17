@@ -453,7 +453,7 @@ export default function TableTemplate({
       </div>
       <div className="flex justify-between">
         <div
-          className="isolate inline-flex -space-x-px rounded-md shadow-sm mx-[50px] my-[20px] items-end"
+          className="isolate !border-none inline-flex -space-x-px rounded-md shadow-sm mx-[50px] mb-[20px] items-end"
           aria-label="Pagination"
         >
           <svg
@@ -483,31 +483,25 @@ export default function TableTemplate({
             return (
               <div
                 key={i}
-                className={`flex-row justify-center items-start pt-[16px] px-[16px] cursor-pointer`}
-                style={{
-                  fontFamily: "Poppins",
-                  fontStyle: "normal",
-                  fontWeight: "500",
-                  fontSize: "14px",
-                  lineHeight: "26px",
-                  color: "#E5E5E5",
-                  borderTop: "2px solid #E5E5E5",
-                  ...(isSelected
-                    ? {
-                        background:
-                          "linear-gradient(96.63deg, #6BCDB5 10.79%, #307179 67.24%, #122F5C 87.43%)",
-                        "-webkit-background-clip": "text",
-                        "-webkit-text-fill-color": "transparent",
-                        "background-clip": "text",
-                        "text-fill-color": "transparent",
-                      }
-                    : {}),
-                }}
+                className={`relative flex-row justify-center items-start pt-[16px] px-[16px] cursor-pointer`}
                 onClick={() => {
                   setCurrentPage(i);
                 }}
               >
-                {content}
+                <span
+                  className={`${
+                    isSelected
+                      ? "bg-[linear-gradient(96.63deg,_#6BCDB5_10.79%,_#307179_67.24%,_#122F5C_87.43%)] !bg-clip-text text-transparent"
+                      : ""
+                  }  font-[Poppins] font-medium text-[14px] leading-[26px]`}
+                >
+                  {content}
+                </span>
+                <div
+                  className={`${
+                    !isSelected && "opacity-0"
+                  } transition-all absolute top-[-1px] h-[2px] left-0 w-full bg-[linear-gradient(96.63deg,_#6BCDB5_10.79%,_#307179_67.24%,_#122F5C_87.43%)]`}
+                />
               </div>
             );
           })}
@@ -536,29 +530,42 @@ export default function TableTemplate({
         <div className="mr-[50px] mb-[15px] mt-[10px] flex">
           {itemsPerPageOptions.map((option, i) => (
             <div
-              className={`flex justify-center items-center px-[17px] py-[5px] cursor-pointer max-w-[57px] max-h-[36px] font-[Poppins] font-medium text-[14px] leading-[26px] text-center text-[color]`}
-              style={{
-                ...(itemsPerPage === option
-                  ? {
-                      background:
-                        "linear-gradient(96.63deg, #6BCDB5 10.79%, #307179 67.24%, #122F5C 87.43%)",
-                      "-webkit-background-clip": "text",
-                      "-webkit-text-fill-color": "transparent",
-                      "background-clip": "text",
-                      "text-fill-color": "transparent",
-                      border: "1px solid transparent",
-                    }
-                  : {
-                      border: "1px solid #E5E5E5",
-                    }),
-                ...(i === 0 ? { borderRadius: "6px 0px 0px 6px" } : {}),
-                ...(i === itemsPerPageOptions.length - 1
-                  ? { borderRadius: "0px 6px 6px 0px" }
-                  : {}),
-              }}
+              className={`
+              ${i === 0 && `rounded-bl-[6px] rounded-tl-[6px]`}
+              ${
+                i === itemsPerPageOptions.length - 1 &&
+                `rounded-br-[6px] rounded-tr-[6px]`
+              }
+              ${
+                itemsPerPage === option
+                  ? "bg-[linear-gradient(96.63deg,_#6BCDB5_10.79%,_#307179_67.24%,_#122F5C_87.43%)]"
+                  : "border-[#E5E5E5] border-[2px]"
+              } 
+              flex relative justify-center items-center px-[17px] py-[5px] cursor-pointer max-w-[57px] max-h-[36px] font-[Poppins] font-medium text-[14px] leading-[26px] text-center text-[color]`}
               onClick={() => setItemsPerPage(option)}
             >
-              {option}
+              {itemsPerPage === option && (
+                <div
+                  className={`h-full w-full absolute p-[2px]               ${
+                    i === 0 && `rounded-bl-[6px] rounded-tl-[6px]`
+                  }
+                ${
+                  i === itemsPerPageOptions.length - 1 &&
+                  `rounded-br-[6px] rounded-tr-[6px]`
+                }`}
+                >
+                  <div className="bg-white w-full h-full" />
+                </div>
+              )}
+              <span
+                className={`${
+                  itemsPerPage === option
+                    ? "bg-[linear-gradient(96.63deg,_#6BCDB5_10.79%,_#307179_67.24%,_#122F5C_87.43%)] !bg-clip-text text-transparent"
+                    : ""
+                } relative font-[Poppins] font-medium text-[14px] leading-[26px]`}
+              >
+                {option}
+              </span>
             </div>
           ))}
         </div>
