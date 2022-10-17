@@ -33,12 +33,16 @@ export default function ResponsiveDrawer() {
 
   return (
     <div
-      className={`flex flex-grow flex-col border-r border-gray-200 bg-white pt-5 pb-4 h-full max-w-[300px]`}
+      className={`flex flex-grow flex-col border-r border-gray-200 bg-white pt-5 pb-4 h-full transition-all duration-500 ease-in-out max-w-[54px] hover:!max-w-[200px]`}
       onMouseEnter={() => setMobileMenuOpen(true)}
       onMouseLeave={() => setMobileMenuOpen(false)}
     >
-      <div className="flex flex-shrink-0 items-center px-4">
-        <img className="h-8 w-auto" src={LaudspeakerIcon} alt="Laudspeaker" />
+      <div className="flex flex-shrink-0 items-center pl-4">
+        <img
+          className="h-8 w-full max-w-[23px]"
+          src={LaudspeakerIcon}
+          alt="Laudspeaker"
+        />
       </div>
       <div className="mt-5 flex flex-grow flex-col">
         <nav className="flex-1 space-y-1 bg-white px-2" aria-label="Sidebar">
@@ -53,7 +57,7 @@ export default function ResponsiveDrawer() {
                           location.pathname.includes(item.link)
                             ? "bg-gray-100 text-gray-900"
                             : "bg-white text-gray-600 hover:bg-gray-50 hover:text-gray-900",
-                          "group w-full flex items-center pl-2 py-2 text-sm font-medium rounded-md"
+                          "group w-full flex items-center px-2 py-2 text-sm font-medium rounded-md"
                         )}
                       >
                         <div
@@ -61,7 +65,7 @@ export default function ResponsiveDrawer() {
                             location.pathname.includes(item.link)
                               ? "text-gray-500"
                               : "text-gray-400 group-hover:text-gray-500",
-                            "mr-3 flex-shrink-0 h-6 w-6"
+                            "mr-4 flex-shrink-0 h-6 w-6"
                           )}
                           aria-hidden="true"
                         >
@@ -82,7 +86,7 @@ export default function ResponsiveDrawer() {
                         location.pathname.includes(item.link)
                           ? "bg-gray-100 text-gray-900"
                           : "bg-white text-gray-600 hover:bg-gray-50 hover:text-gray-900",
-                        "group w-full flex items-center pl-2 pr-1 py-2 text-left text-sm font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        "group w-full flex items-center pl-2 pr-1 py-2 text-left text-sm font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
                       )}
                     >
                       <div
@@ -90,7 +94,7 @@ export default function ResponsiveDrawer() {
                           location.pathname.includes(item.link)
                             ? "text-gray-500"
                             : "text-gray-400 group-hover:text-gray-500",
-                          "mr-3 flex-shrink-0 h-6 w-6"
+                          "mr-4 flex-shrink-0 h-6 w-6"
                         )}
                         aria-hidden="true"
                       >
@@ -115,14 +119,14 @@ export default function ResponsiveDrawer() {
                             <Link to={subItem.link}>
                               <Disclosure.Button
                                 key={subItem.text}
-                                className="group flex w-full items-center rounded-md py-2 pl-11 pr-2 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                                className="group flex w-full whitespace-nowrap items-center rounded-md py-2 px-2 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                               >
                                 <div
                                   className={classNames(
                                     location.pathname.includes(item.link)
                                       ? "text-gray-500"
                                       : "text-gray-400 group-hover:text-gray-500",
-                                    "mr-3 flex-shrink-0 h-6 w-6"
+                                    "mr-4 flex-shrink-0 h-6 w-6"
                                   )}
                                   aria-hidden="true"
                                 >
