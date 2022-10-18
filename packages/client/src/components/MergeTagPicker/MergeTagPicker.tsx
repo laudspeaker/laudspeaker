@@ -1,12 +1,5 @@
-import {
-  Box,
-  Chip,
-  FormControl,
-  Input,
-  Menu,
-  MenuItem,
-  Typography,
-} from "@mui/material";
+import { Menu } from "@mui/material";
+import Chip from "components/Elements/Chip";
 import React, { ChangeEvent, FC, useState } from "react";
 
 interface MergeTagPickerProps {
@@ -42,11 +35,7 @@ const MergeTagPicker: FC<MergeTagPickerProps> = ({
   return (
     <>
       <span onClick={handleClick}>
-        <Chip
-          color="success"
-          label={tagContent}
-          sx={{ cursor: "pointer", userSelect: "none" }}
-        />
+        <Chip label={tagContent} />
       </span>
       <Menu
         id="merge-tag-menu"
@@ -57,90 +46,44 @@ const MergeTagPicker: FC<MergeTagPickerProps> = ({
           "aria-labelledby": "basic-button",
         }}
       >
-        <Box
-          sx={{
-            padding: "20px 15px",
-          }}
-        >
-          <FormControl
-            sx={{
-              marginBottom: "2.5px",
-            }}
-          >
-            <Typography
-              sx={{
-                fontFamily: "Poppins",
-                fontStyle: "normal",
-                fontWeight: 400,
-                fontSize: "16px",
-                lineHeight: "30px",
-                marginLeft: "5px",
-                color: "#223343",
-              }}
-            >
+        <div className="py-[20px] px-[15px] outline-none">
+          <form className="mb-[2.5px]">
+            <p className="text-[#223343] font-[Poppins] font-normal leading-[30px] ml-[5px]">
               Search for Customer Properties
-            </Typography>
-            <Input
+            </p>
+            <input
               id="merge-tag-filter-input"
               name="merge-tag-filter-input"
               value={searchStr}
               onChange={handleInputChange}
               onClick={(e) => e.stopPropagation()}
               onKeyDown={(e) => e.stopPropagation()}
-              inputProps={{
-                style: {
-                  background: "#E5E5E5",
-                  borderRadius: "10px",
-                  padding: "12px 20px",
-                  fontFamily: "Poppins",
-                  fontStyle: "normal",
-                  fontWeight: 400,
-                  fontSize: "16px",
-                  lineHeight: "30px",
-                  minWidth: "280px",
-                  minHeight: "23px",
-                },
-              }}
+              className="!bg-[#E5E5E5] outline-none !rounded-[10px] !py-[12px] !px-[20px] font-[Poppins] not-italic font-normal text-[16px] leading-[30px]  min-w-[280px] min-h-[23px]"
             />
-          </FormControl>
-          <Box
-            sx={{
-              overflowY: "scroll",
-              maxHeight: "260px",
-            }}
-          >
+          </form>
+          <div className="overflow-y-scroll max-h-[260px]">
             {possibleAttributes
-              .filter((str) => str.replace(" ", "").startsWith(searchStr))
+              .filter((str) =>
+                str
+                  .replace(" ", "")
+                  .toLowerCase()
+                  .includes(searchStr.toLowerCase())
+              )
               .map((attribute, index) => (
-                <MenuItem
+                <div
                   onClick={(e) => {
                     e.stopPropagation();
                     handleValueReplace(`{{${tagContent}}}`, `{{${attribute}}}`);
                     handleClose();
                   }}
-                  sx={{
-                    minWidth: "338px",
-                    height: "63px",
-                    border: "1px solid #F3F3F3",
-                    borderRadius: "5px",
-                    fontFamily: "Inter",
-                    fontStyle: "normal",
-                    fontWeight: 500,
-                    fontSize: "16px",
-                    lineHeight: "24px",
-                    margin: "2.5px 0",
-                    padding: "5px",
-                    display: "flex",
-                    justifyContent: "flex-start",
-                    alignItems: "flex-start",
-                  }}
+                  className="min-w-[338px] h-[62px] border-[1px] border-[#F3F3F3] rounded-[5px] font-[Inter] font-medium not-italic text-[16px] leading-[24px]  my-[2.5px] mx-0 p-[5px]  flex justify-start items-start"
                   key={index}
                 >
-                  <Box>{attribute}</Box>
-                </MenuItem>
+                  <div>{attribute}</div>
+                </div>
               ))}
-          </Box>
-        </Box>
+          </div>
+        </div>
       </Menu>
     </>
   );

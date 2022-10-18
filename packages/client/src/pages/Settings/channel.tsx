@@ -1,11 +1,4 @@
-import {
-  Box,
-  Chip,
-  FormControl,
-  Grid,
-  MenuItem,
-  Typography,
-} from "@mui/material";
+import { Box, FormControl, Grid, MenuItem, Typography } from "@mui/material";
 import Card from "components/Cards/Card";
 import Header from "components/Header";
 import Drawer from "components/Drawer";
@@ -19,6 +12,7 @@ import { useTypedSelector } from "hooks/useTypeSelector";
 import { setSettingData } from "reducers/settings";
 import ApiService from "services/api.service";
 import { ApiConfig } from "../../constants";
+import Chip from "components/Elements/Chip";
 
 const allChannels: any = [
   {

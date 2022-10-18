@@ -6,6 +6,7 @@ export interface ButtonProps {
   customClasses?: string;
   disabled?: boolean;
   disableElevation?: boolean;
+  preventDefault?: boolean;
   fullWidth?: boolean;
   href?: string;
   onClick: (e: any) => void;
@@ -18,16 +19,26 @@ const GenericButton = (props: ButtonProps) => {
     customClasses,
     disabled,
     disableElevation,
+    preventDefault,
     onClick,
     style,
   } = props;
   return (
     <button
       type="button"
-      className={`inline-flex items-center rounded-md border border-transparent bg-indigo-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${
+      className={`inline-flex items-center rounded-md border-0 border-transparent bg-emerald-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 ${
         customClasses ? customClasses : ""
       }`}
-      onClick={onClick}
+      onClick={(ev) => {
+        if (disableElevation) {
+          ev.stopPropagation();
+        }
+        if (preventDefault) {
+          ev.preventDefault();
+        }
+
+        onClick(ev);
+      }}
       disabled={disabled}
       style={style}
     >

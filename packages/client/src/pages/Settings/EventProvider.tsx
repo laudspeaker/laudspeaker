@@ -1,5 +1,4 @@
 import { Box, FormControl, Grid, MenuItem, Typography } from "@mui/material";
-import Chip from "@mui/material/Chip";
 import Card from "components/Cards/Card";
 import Header from "components/Header";
 import Drawer from "components/Drawer";
@@ -11,6 +10,7 @@ import ListItem from "./components/ListItem";
 import { useDispatch } from "react-redux";
 import { setSettingData } from "reducers/settings";
 import { useTypedSelector } from "hooks/useTypeSelector";
+import Chip from "components/Elements/Chip";
 
 function EventProvider() {
   const allChannels: any = [

@@ -1,7 +1,6 @@
 import { useState } from "react";
-import { Box, Typography, Divider, FormControl, MenuItem } from "@mui/material";
-import EditIcon from "@mui/icons-material/Edit";
-import ListItemIcon from "@mui/material/ListItemIcon";
+import { MenuItem } from "@mui/material";
+import PencilIcon from "@heroicons/react/24/solid/PencilIcon";
 import { GenericButton, Select, Input } from "components/Elements";
 
 import { BackButtonIcon } from "../../../components/Icons/Icons";
@@ -42,43 +41,17 @@ const EmailHeader = (props: IEmailHeaderProps) => {
 
   return (
     <div>
-      <Box
-        sx={{
-          textAlign: "center",
-          display: "flex",
-          justifyContent: "space-between",
-          marginLeft: "190px",
-          height: "80px",
-        }}
-      >
-        <Typography
-          variant="h6"
-          sx={{
-            fontFamily: "Poppins",
-            fontStyle: "normal",
-            fontWeight: "500",
-            fontSize: "14px",
-            lineHeight: "30px",
-            display: "flex",
-            alignItems: "center",
-          }}
-        >
-          <ListItemIcon sx={{ minWidth: "16px", paddingRight: "16px" }}>
-            {BackButtonIcon()}
-          </ListItemIcon>
+      <div className="px-[40px] justify-between flex h-[80px]">
+        <h6 className="font-[Poppins] not-italic font-medium text-[14px] leading-[30px] flex items-center">
+          <div className="min-w-[16px] pr-[16px]">{BackButtonIcon()}</div>
           {!titleEdit ? (
-            <Typography
-              variant="h3"
-              display={"flex"}
-              alignItems="center"
-              gap="10px"
-            >
+            <h3 className="flex items-center gap-[10px]">
               {templateName}
-              <EditIcon
-                sx={{ fontSize: "25px", cursor: "pointer" }}
+              <PencilIcon
+                className="w-[24px] h-[24px] text-[25px] cursor-pointer"
                 onClick={handleTitleEdit}
               />
-            </Typography>
+            </h3>
           ) : (
             <Input
               value={templateName}
@@ -100,63 +73,47 @@ const EmailHeader = (props: IEmailHeaderProps) => {
               }}
             />
           )}
-        </Typography>
-        <Divider />
-
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            width: "400px",
-            paddingRight: "50px",
-          }}
-        >
-          <Box>
-            <FormControl
-              sx={{ maxWidth: "300px", paddingLeft: "15px", minWidth: "112px" }}
+        </h6>
+        <div className="flex items-center justify-between max-w-[500px]">
+          <form className="max-w-[300px] pl-[15px] min-w-[112px]">
+            <Select
+              id="activeJourney"
+              value={activeJourney}
+              onChange={handleActiveJourney}
+              displayEmpty
             >
-              <Select
-                id="activeJourney"
-                value={activeJourney}
-                onChange={handleActiveJourney}
-                displayEmpty
-              >
-                <MenuItem value={"Email"}>Email</MenuItem>
-                <MenuItem value={"Slack"} onClick={goToSlackBuilder}>
-                  Slack
-                </MenuItem>
-              </Select>
-            </FormControl>
-          </Box>
-          <Box>
-            <GenericButton
-              onClick={onSave}
-              style={{
-                maxWidth: "158px",
-                maxHeight: "48px",
-                "background-image":
-                  "linear-gradient(to right, #6BCDB5 , #307179, #122F5C)",
-              }}
-            >
-              Save Draft
-            </GenericButton>
-          </Box>
-          <Box>
-            <GenericButton
-              onClick={onPersonalize}
-              style={{
-                maxWidth: "158px",
-                maxHeight: "48px",
-                "background-image":
-                  "linear-gradient(to right, #6BCDB5 , #307179, #122F5C)",
-              }}
-            >
-              Personalize
-            </GenericButton>
-          </Box>
-        </Box>
-      </Box>
+              <MenuItem value={"Email"}>Email</MenuItem>
+              <MenuItem value={"Slack"} onClick={goToSlackBuilder}>
+                Slack
+              </MenuItem>
+            </Select>
+          </form>
+          <GenericButton
+            customClasses="!ml-[10px]"
+            onClick={onSave}
+            style={{
+              maxWidth: "158px",
+              maxHeight: "48px",
+              "background-image":
+                "linear-gradient(to right, #6BCDB5 , #307179, #122F5C)",
+            }}
+          >
+            Save Draft
+          </GenericButton>
+          <GenericButton
+            onClick={onPersonalize}
+            customClasses="ml-[10px]"
+            style={{
+              maxWidth: "158px",
+              maxHeight: "48px",
+              "background-image":
+                "linear-gradient(to right, #6BCDB5 , #307179, #122F5C)",
+            }}
+          >
+            Personalize
+          </GenericButton>
+        </div>
+      </div>
     </div>
   );
 };

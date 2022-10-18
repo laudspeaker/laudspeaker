@@ -160,12 +160,7 @@ const EmailBuilder = () => {
           setTemplateName(e.target.value);
         }}
       />
-      <div
-        style={{
-          width: "calc(100vw - 154px)",
-          padding: "0 40px",
-        }}
-      >
+      <div className="w-full py-0 px-[40px]">
         <MergeTagInput
           isRequired
           value={title}

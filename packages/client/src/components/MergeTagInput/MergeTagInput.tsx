@@ -1,4 +1,3 @@
-import { Box } from "@mui/material";
 import { Input } from "components/Elements";
 import React, { useEffect, useState, RefObject, useRef } from "react";
 import MergeTagPicker from "../MergeTagPicker/MergeTagPicker";
@@ -75,24 +74,11 @@ const MergeTagInput = ({
   }, [value, possibleAttributes]);
 
   return (
-    <Box
-      sx={{ width: "100%", margin: "0", marginBottom: "30px" }}
-      ref={wrapperRef}
-    >
-      <Box
-        sx={{
-          ...(isPreview ? {} : { display: "none" }),
-          width: "100%",
-          maxWidth: "100%",
-          overflowX: "scroll",
-          paddingRight: "20px",
-          zIndex: 1000,
-          padding: "18px 29px",
-          backgroundColor: "#EFF0F2",
-          borderRadius: "8px",
-          fontSize: "20px",
-          whiteSpace: "nowrap",
-        }}
+    <div className="w-full m-0 mb-[30px]" ref={wrapperRef}>
+      <div
+        className={`${
+          !isPreview && "hidden"
+        } w-full bg-[#E5E5E5] max-w-full overflow-x-scroll py-[18px] px-[29px] z-[1000] rounded-[8px] text-[20px] whitespace-nowrap `}
         onClick={() => {
           setIsPreview(false);
         }}
@@ -100,18 +86,11 @@ const MergeTagInput = ({
         {items.length > 0 ? (
           items
         ) : (
-          <Box
-            sx={{
-              height: "1.4375em",
-              fontSize: "20px",
-              color: "#a3a4a5",
-              paddingBottom: 2,
-            }}
-          >
+          <div className="h-[1.4375em] text-[20px] text-[#a3a4a5] pb-[2px]">
             {placeholder}
-          </Box>
+          </div>
         )}
-      </Box>
+      </div>
       <Input
         isRequired
         value={value}
@@ -119,11 +98,13 @@ const MergeTagInput = ({
         name={name}
         id={id}
         fullWidth={fullWidth}
+        className={`${
+          isPreview && "hidden"
+        } !text-[20px] bg-[#E5E5E5] outline-none text-[#000] py-[18px] px-[29px] z-[1000] rounded-[8px] whitespace-nowrap`}
         onChange={onChange}
-        style={{ ...sx, ...(isPreview ? { display: "none" } : {}) }}
         inputRef={inputRef}
       />
-    </Box>
+    </div>
   );
 };
 
