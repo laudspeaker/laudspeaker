@@ -101,10 +101,8 @@ function AdditionalPosthog() {
           </Typography>
           <Box display={"flex"} marginTop="10%" justifyContent="flex-start">
             <GenericButton
-              variant="contained"
               onClick={moveToCompletion}
-              fullWidth
-              sx={{
+              style={{
                 maxWidth: "200px",
                 "background-image":
                   "linear-gradient(to right, #6BCDB5 , #307179, #122F5C)",

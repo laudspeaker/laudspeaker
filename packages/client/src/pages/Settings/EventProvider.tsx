@@ -165,10 +165,8 @@ function EventProvider() {
           </Grid>
           <Box display={"flex"} marginTop="40px" justifyContent="flex-start">
             <GenericButton
-              variant="contained"
               onClick={moveToEmailConfiguration}
-              fullWidth
-              sx={{
+              style={{
                 maxWidth: "200px",
                 "background-image":
                   "linear-gradient(to right, #6BCDB5 , #307179, #122F5C)",

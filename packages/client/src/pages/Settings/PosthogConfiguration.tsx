@@ -50,10 +50,8 @@ function PosthogConfiguration() {
       return (
         <>
           <GenericButton
-            variant="contained"
             onClick={moveToAdditionalSettings}
-            fullWidth
-            sx={{
+            style={{
               maxWidth: "200px",
               "background-image":
                 "linear-gradient(to right, #6BCDB5 , #307179, #122F5C)",
@@ -134,21 +132,18 @@ function PosthogConfiguration() {
                 placeholder={"****  "}
                 name="name"
                 id="name"
-                sx={{ width: "530px" }}
+                style={{
+                  width: "530px",
+                  padding: "15px 16px 15px 16px",
+                  background: "#fff",
+                  border: "1px solid #D1D5DB",
+                  fontFamily: "Inter",
+                  fontWeight: 400,
+                  fontSize: "16px",
+                }}
                 onChange={(e) => {
                   setPrivateApiKey(e.target.value);
                   handleInputChange("phPrivateApiKey", e.target.value);
-                }}
-                labelShrink
-                inputProps={{
-                  style: {
-                    padding: "15px 16px 15px 16px",
-                    background: "#fff",
-                    border: "1px solid #D1D5DB",
-                    fontFamily: "Inter",
-                    fontWeight: 400,
-                    fontSize: "16px",
-                  },
                 }}
               />
             </FormControl>
@@ -162,21 +157,18 @@ function PosthogConfiguration() {
                 placeholder={"****  "}
                 name="name"
                 id="name"
-                sx={{ width: "530px" }}
+                style={{
+                  width: "530px",
+                  padding: "15px 16px 15px 16px",
+                  background: "#fff",
+                  border: "1px solid #D1D5DB",
+                  fontFamily: "Inter",
+                  fontWeight: 400,
+                  fontSize: "16px",
+                }}
                 onChange={(e) => {
                   setProjectId(e.target.value);
                   handleInputChange("phProjectId", e.target.value);
-                }}
-                labelShrink
-                inputProps={{
-                  style: {
-                    padding: "15px 16px 15px 16px",
-                    background: "#fff",
-                    border: "1px solid #D1D5DB",
-                    fontFamily: "Inter",
-                    fontWeight: 400,
-                    fontSize: "16px",
-                  },
                 }}
               />
             </FormControl>
@@ -190,21 +182,18 @@ function PosthogConfiguration() {
                 placeholder={"https://app.posthog.com"}
                 name="name"
                 id="name"
-                sx={{ width: "530px" }}
+                style={{
+                  width: "530px",
+                  padding: "15px 16px 15px 16px",
+                  background: "#fff",
+                  border: "1px solid #D1D5DB",
+                  fontFamily: "Inter",
+                  fontWeight: 400,
+                  fontSize: "16px",
+                }}
                 onChange={(e) => {
                   setPhHostUrl(e.target.value);
                   handleInputChange("phHostUrl", e.target.value);
-                }}
-                labelShrink
-                inputProps={{
-                  style: {
-                    padding: "15px 16px 15px 16px",
-                    background: "#fff",
-                    border: "1px solid #D1D5DB",
-                    fontFamily: "Inter",
-                    fontWeight: 400,
-                    fontSize: "16px",
-                  },
                 }}
               />
             </FormControl>

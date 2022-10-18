@@ -196,17 +196,14 @@ const Flow = () => {
         >
           <Box data-saveflowbutton sx={{ margin: "0 7.5px" }}>
             <GenericButton
-              variant="contained"
               onClick={isPaused ? handleResume : handlePause}
-              fullWidth
-              sx={{
+              style={{
                 maxWidth: "158px",
                 maxHeight: "48px",
                 "background-image":
                   "linear-gradient(to right, #6BCDB5 , #307179, #122F5C)",
                 padding: "13px 25px",
               }}
-              size={"medium"}
               disabled={!isDataLoaded || isStopped}
             >
               {isPaused ? "Resume" : "Pause"}
@@ -214,17 +211,14 @@ const Flow = () => {
           </Box>
           <Box data-startflowbutton sx={{ margin: "0 7.5px" }}>
             <GenericButton
-              variant="contained"
               onClick={handleDialogOpen}
-              fullWidth
-              sx={{
+              style={{
                 maxWidth: "158px",
                 maxHeight: "48px",
                 "background-image":
                   "linear-gradient(to right, #6BCDB5 , #307179, #122F5C)",
                 padding: "13px 25px",
               }}
-              size={"medium"}
               disabled={!isDataLoaded || isStopped}
             >
               Stop
@@ -242,9 +236,7 @@ const Flow = () => {
             <DialogActions>
               <GenericButton
                 onClick={handleDialogClose}
-                variant="contained"
-                fullWidth
-                sx={{
+                style={{
                   maxWidth: "158px",
                   maxHeight: "48px",
 
@@ -252,22 +244,18 @@ const Flow = () => {
                     "linear-gradient(to right, #bbbbbb , #b4b4b4, #686868)",
                   padding: "13px 25px",
                 }}
-                size={"medium"}
               >
                 No
               </GenericButton>
               <GenericButton
                 onClick={handleStop}
-                variant="contained"
-                fullWidth
-                sx={{
+                style={{
                   maxWidth: "158px",
                   maxHeight: "48px",
                   "background-image":
                     "linear-gradient(to right, #6BCDB5 , #307179, #122F5C)",
                   padding: "13px 25px",
                 }}
-                size={"medium"}
               >
                 Yes
               </GenericButton>

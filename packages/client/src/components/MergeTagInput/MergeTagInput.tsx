@@ -120,8 +120,7 @@ const MergeTagInput = ({
         id={id}
         fullWidth={fullWidth}
         onChange={onChange}
-        labelShrink={labelShrink}
-        sx={{ ...sx, ...(isPreview ? { display: "none" } : {}) }}
+        style={{ ...sx, ...(isPreview ? { display: "none" } : {}) }}
         inputRef={inputRef}
       />
     </Box>

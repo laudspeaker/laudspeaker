@@ -12,28 +12,21 @@ export interface InputProps {
   autoComplete?: string;
   autoFocus?: boolean;
   customClasses?: object;
-  color?: "primary" | "secondary" | "success" | "error" | "info" | "warning";
   disabled?: boolean;
   isError?: boolean;
   fullWidth?: boolean;
   helperText?: string;
   inputRef?: React.RefObject<any>;
   label?: React.ReactNode;
-  labelShrink?: boolean;
   placeholder?: string;
   isRequired?: boolean;
-  size?: "medium" | "small";
-  // variant?: 'filled' | 'outlined' | 'standard',
-  sx?: object;
+  style?: object;
   type?: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onKeyDown?: (e: KeyboardEvent<HTMLInputElement>) => void;
-  multiline?: boolean;
-  minRows?: number | string;
   inputProps?: object;
   className?: string;
   labelClass?: string;
-  endAdornment?: React.ReactNode;
   onBlur?: () => void;
   ref?: any;
 }
@@ -44,7 +37,6 @@ const Input = (props: InputProps) => {
     autoComplete,
     autoFocus,
     customClasses,
-    color,
     disabled,
     isError,
     fullWidth,
@@ -53,25 +45,47 @@ const Input = (props: InputProps) => {
     name,
     placeholder,
     isRequired,
-    size,
-    sx,
     onChange,
     onKeyDown,
     type,
-    labelShrink,
     helperText,
-    multiline,
-    minRows,
     inputProps,
     labelClass,
     className,
     value,
-    endAdornment,
     onBlur,
+    style,
   } = props;
   return (
     <>
-      {label && (
+      <div>
+        <label
+          htmlFor={name}
+          className="block text-sm font-medium text-gray-700"
+        >
+          {label}
+        </label>
+        <div className="mt-1">
+          <input
+            required={isRequired}
+            type={type}
+            name={name}
+            id={id}
+            ref={inputRef}
+            value={value}
+            onChange={onChange}
+            onKeyDown={onKeyDown}
+            onBlur={onBlur}
+            disabled={disabled}
+            className={`block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm ${
+              className ? className : ""
+            }`}
+            placeholder={placeholder}
+            style={style}
+          />
+        </div>
+      </div>
+      {/* {label && (
         <InputLabel className={labelClass} shrink={labelShrink} htmlFor={id}>
           {label}
         </InputLabel>
@@ -107,7 +121,7 @@ const Input = (props: InputProps) => {
         <FormHelperText error={isError} required={isRequired}>
           {helperText}
         </FormHelperText>
-      )}
+      )} */}
     </>
   );
 };

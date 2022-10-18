@@ -553,34 +553,28 @@ const Flow = () => {
         >
           <Box data-saveflowbutton sx={{ margin: "0 7.5px" }}>
             <GenericButton
-              variant="contained"
               onClick={handleSaveJourney}
-              fullWidth
-              sx={{
+              style={{
                 maxWidth: "158px",
                 maxHeight: "48px",
                 "background-image":
                   "linear-gradient(to right, #6BCDB5 , #307179, #122F5C)",
                 padding: "13px 25px",
               }}
-              size={"medium"}
             >
               Save
             </GenericButton>
           </Box>
           <Box data-startflowbutton sx={{ margin: "0 7.5px" }}>
             <GenericButton
-              variant="contained"
               onClick={handleStartJourney}
-              fullWidth
-              sx={{
+              style={{
                 maxWidth: "158px",
                 maxHeight: "48px",
                 "background-image":
                   "linear-gradient(to right, #6BCDB5 , #307179, #122F5C)",
                 padding: "13px 25px",
               }}
-              size={"medium"}
             >
               Start
             </GenericButton>

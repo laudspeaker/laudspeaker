@@ -87,23 +87,20 @@ function AdditionalSettings() {
                 placeholder={"John smith"}
                 name="name"
                 id="name"
-                sx={{ maxWidth: "530px" }}
+                style={{
+                  maxWidth: "530px",
+                  padding: "15px 16px 15px 16px",
+                  background: "#fff",
+                  border: "1px solid #D1D5DB",
+                  fontFamily: "Inter",
+                  fontWeight: 500,
+                  fontSize: "16px",
+                }}
                 onChange={(e) => {
                   setDefaultName(e.target.value);
                   handleInputChange("defaultName", e.target.value);
                 }}
                 labelClass="!text-[16px]"
-                labelShrink
-                inputProps={{
-                  style: {
-                    padding: "15px 16px 15px 16px",
-                    background: "#fff",
-                    border: "1px solid #D1D5DB",
-                    fontFamily: "Inter",
-                    fontWeight: 500,
-                    fontSize: "16px",
-                  },
-                }}
               />
             </FormControl>
           </Grid>
@@ -116,7 +113,15 @@ function AdditionalSettings() {
                 placeholder={"smith"}
                 name="name"
                 id="name"
-                sx={{ maxWidth: "530px" }}
+                style={{
+                  maxWidth: "530px",
+                  padding: "15px 16px 15px 16px",
+                  background: "#fff",
+                  fontFamily: "Inter",
+                  fontWeight: 500,
+                  fontSize: "16px",
+                  border: "1px solid #D1D5DB",
+                }}
                 onChange={(e) => {
                   if (!e.target.value.endsWith(inputEmailDomain)) return;
                   const newValue = e.target.value.replace(inputEmailDomain, "");
@@ -124,26 +129,13 @@ function AdditionalSettings() {
                   handleInputChange("defaultEmail", newValue);
                 }}
                 labelClass="!text-[16px]"
-                labelShrink
-                inputProps={{
-                  style: {
-                    padding: "15px 16px 15px 16px",
-                    background: "#fff",
-                    fontFamily: "Inter",
-                    fontWeight: 500,
-                    fontSize: "16px",
-                    border: "1px solid #D1D5DB",
-                  },
-                }}
               />
             </FormControl>
           </Grid>
           <Box display={"flex"} marginTop="40px" justifyContent="flex-start">
             <GenericButton
-              variant="contained"
               onClick={handleNextButtonClick}
-              fullWidth
-              sx={{
+              style={{
                 maxWidth: "200px",
                 "background-image":
                   "linear-gradient(to right, #6BCDB5 , #307179, #122F5C)",

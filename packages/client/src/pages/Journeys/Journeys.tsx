@@ -33,10 +33,8 @@ const Journeys = () => {
         </Box>
         <Box sx={{ display: "flex" }}>
           <GenericButton
-            variant="contained"
             onClick={addJourney}
-            fullWidth
-            sx={{
+            style={{
               height: "50px",
               "background-image":
                 "linear-gradient(to right, #6BCDB5 , #307179, #122F5C)",
@@ -51,10 +49,8 @@ const Journeys = () => {
             Add Journeys
           </GenericButton>
           <GenericButton
-            variant="contained"
             onClick={addJourney}
-            fullWidth
-            sx={{
+            style={{
               height: "50px",
               background: "#FFF",
               fontSize: "14px",

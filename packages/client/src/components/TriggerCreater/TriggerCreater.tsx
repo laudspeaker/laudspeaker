@@ -920,10 +920,8 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
         <Box display={"flex"} gap={10} justifyContent="flex-end">
           <Box>
             <GenericButton
-              variant="contained"
               onClick={deleteRow}
-              fullWidth
-              sx={{
+              style={{
                 maxWidth: "200px",
                 background: "#D3D3D3",
                 width: "200px",
@@ -935,10 +933,8 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
           </Box>
           <Box data-savetriggerreator>
             <GenericButton
-              variant="contained"
               onClick={handleSubmit}
-              fullWidth
-              sx={{
+              style={{
                 width: "200px",
                 "background-image":
                   "linear-gradient(to right, #6BCDB5 , #307179, #122F5C)",

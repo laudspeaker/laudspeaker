@@ -44,18 +44,15 @@ const ChooseTemplateModal = ({
       return (
         <>
           <GenericButton
-            variant="contained"
             onClick={(_) => {
               handleTemplateModalOpen({ activeTemplate, selectedMessageType });
             }}
-            fullWidth
-            sx={{
+            style={{
               maxWidth: "158px",
               maxHeight: "48px",
               "background-image":
                 "linear-gradient(to right, #6BCDB5 , #307179, #122F5C)",
             }}
-            size={"medium"}
           >
             Exit
           </GenericButton>
@@ -66,38 +63,32 @@ const ChooseTemplateModal = ({
       return (
         <>
           <GenericButton
-            variant="contained"
             onClick={(_) => {
               console.log(_);
               handleTemplateModalOpen({ activeTemplate, selectedMessageType });
             }}
-            fullWidth
-            sx={{
+            style={{
               maxWidth: "158px",
               maxHeight: "48px",
               "background-image":
                 "linear-gradient(to right, #6BCDB5 , #307179, #122F5C)",
               margin: "0 5px",
             }}
-            size={"medium"}
           >
             Export
           </GenericButton>
           {onTemplateDelete && (
             <GenericButton
-              variant="contained"
               onClick={(_) => {
                 onTemplateDelete();
               }}
-              fullWidth
-              sx={{
+              style={{
                 maxWidth: "158px",
                 maxHeight: "48px",
                 "background-image":
                   "linear-gradient(to right, #c0c0c0 , #787878, #465265)",
                 margin: "0 5px",
               }}
-              size={"medium"}
             >
               Delete
             </GenericButton>

@@ -128,16 +128,13 @@ const Dashboard = () => {
             </FormControl>
           </Box>
           <GenericButton
-            variant="contained"
             onClick={redirectJourney}
-            fullWidth
-            sx={{
+            style={{
               maxWidth: "158px",
               maxHeight: "48px",
               "background-image":
                 "linear-gradient(to right, #6BCDB5 , #307179, #122F5C)",
             }}
-            size={"medium"}
           >
             See All Journeys
           </GenericButton>
@@ -379,16 +376,13 @@ const Dashboard = () => {
               Active Journeys
             </h3>
             <GenericButton
-              variant="contained"
               onClick={redirectUses}
-              fullWidth
-              sx={{
+              style={{
                 maxWidth: "158px",
                 maxHeight: "48px",
                 "background-image":
                   "linear-gradient(to right, #6BCDB5 , #307179, #122F5C)",
               }}
-              size={"medium"}
             >
               Go To Customers
             </GenericButton>

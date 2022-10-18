@@ -80,22 +80,19 @@ function EmailConfiguration() {
                 name="name"
                 id="name"
                 type="password"
-                sx={{ maxWidth: "530px" }}
+                style={{
+                  maxWidth: "530px",
+                  padding: "15px 16px 15px 16px",
+                  background: "#fff",
+                  border: "1px solid #D1D5DB",
+                  fontFamily: "Inter",
+                  fontWeight: 400,
+                  fontSize: "16px",
+                }}
                 labelClass="!text-[16px]"
                 onChange={(e) => {
                   setPrivateApiKey(e.target.value);
                   handleInputChange("privateApiKey", e.target.value);
-                }}
-                labelShrink
-                inputProps={{
-                  style: {
-                    padding: "15px 16px 15px 16px",
-                    background: "#fff",
-                    border: "1px solid #D1D5DB",
-                    fontFamily: "Inter",
-                    fontWeight: 400,
-                    fontSize: "16px",
-                  },
                 }}
                 onBlur={callDomains}
               />
@@ -169,11 +166,9 @@ function EmailConfiguration() {
           </Grid>
           <Box display={"flex"} marginTop="50px" justifyContent="flex-start">
             <GenericButton
-              variant="contained"
               onClick={moveToAdditionalSettings}
-              fullWidth
               disabled={!privateApiKey || !domainName}
-              sx={{
+              style={{
                 maxWidth: "200px",
                 "background-image":
                   "linear-gradient(to right, #6BCDB5 , #307179, #122F5C)",

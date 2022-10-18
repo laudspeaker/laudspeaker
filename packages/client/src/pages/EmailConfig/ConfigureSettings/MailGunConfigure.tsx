@@ -45,7 +45,6 @@ const MailGunConfigure = () => {
           id="domain"
           fullWidth
           onChange={handleMailGunConfigFormChange}
-          labelShrink
         />
       </FormControl>
       <FormControl variant="standard">
@@ -57,7 +56,6 @@ const MailGunConfigure = () => {
           id="smtp"
           fullWidth
           onChange={handleMailGunConfigFormChange}
-          labelShrink
         />
       </FormControl>
       <FormControl variant="standard">
@@ -68,9 +66,7 @@ const MailGunConfigure = () => {
           name="password"
           id="password"
           type="password"
-          fullWidth
           onChange={handleMailGunConfigFormChange}
-          labelShrink
         />
       </FormControl>
       <FormControl variant="standard">
@@ -81,16 +77,12 @@ const MailGunConfigure = () => {
           name="apiKey"
           id="apiKey"
           type="password"
-          fullWidth
           onChange={handleMailGunConfigFormChange}
-          labelShrink
         />
       </FormControl>
       <GenericButton
-        variant="contained"
         onClick={handleSubmit}
-        fullWidth
-        sx={{
+        style={{
           maxWidth: "277px",
           "background-image":
             "linear-gradient(to right, #6BCDB5 , #307179, #122F5C)",

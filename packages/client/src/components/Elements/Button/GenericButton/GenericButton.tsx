@@ -3,19 +3,11 @@ import { Button } from "@mui/material";
 
 export interface ButtonProps {
   children: string | React.ReactNode;
-  customClasses?: Object;
-  color?: "primary" | "secondary" | "success" | "error" | "info" | "warning";
+  customClasses?: string;
   disabled?: boolean;
   disableElevation?: boolean;
-  disableFocusRipple?: boolean;
-  disableRippleEffect?: boolean;
-  suffix?: React.ReactNode;
   fullWidth?: boolean;
   href?: string;
-  size?: "small" | "medium" | "large";
-  prefix?: React.ReactNode;
-  variant?: "contained" | "outlined" | "text";
-  sx?: object;
   onClick: (e: any) => void;
   style?: object;
 }
@@ -23,42 +15,24 @@ export interface ButtonProps {
 const GenericButton = (props: ButtonProps) => {
   const {
     children,
-    variant,
     customClasses,
-    color,
     disabled,
     disableElevation,
-    disableFocusRipple,
-    disableRippleEffect,
-    suffix,
-    prefix,
-    fullWidth,
-    href,
-    size,
-    sx,
     onClick,
     style,
   } = props;
   return (
-    <Button
-      variant={variant}
-      classes={customClasses}
-      color={color}
-      disabled={disabled}
-      disableElevation={disableElevation}
-      disableFocusRipple={disableFocusRipple}
-      endIcon={suffix}
-      startIcon={prefix}
-      disableRipple={disableRippleEffect}
-      fullWidth={fullWidth}
-      href={href}
-      size={size}
+    <button
+      type="button"
+      className={`inline-flex items-center rounded-md border border-transparent bg-indigo-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${
+        customClasses ? customClasses : ""
+      }`}
       onClick={onClick}
-      sx={{ borderRadius: "8px", ...sx }}
+      disabled={disabled}
       style={style}
     >
       {children}
-    </Button>
+    </button>
   );
 };
 

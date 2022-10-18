@@ -276,9 +276,7 @@ const ProfileForm = () => {
           </div>
         </Box>
         <GenericButton
-          color="primary"
-          variant="contained"
-          sx={{ width: "30%", height: "46px" }}
+          style={{ width: "30%", height: "46px" }}
           onClick={handleChangeApiKey}
           disabled={isLoading}
         >
@@ -287,10 +285,7 @@ const ProfileForm = () => {
       </FormControl>
       <FormControl variant="standard" sx={{ marginBottom: "27px" }}>
         <GenericButton
-          color="primary"
-          variant="contained"
-          size="small"
-          sx={{
+          style={{
             width: "277px",
 
             marginTop: "27px",

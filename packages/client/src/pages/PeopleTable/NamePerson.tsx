@@ -95,19 +95,16 @@ const NamePerson = ({ onSubmit, isPrimary }: INameSegment) => {
                 placeholder={"Enter name"}
                 name="name"
                 id="name"
-                sx={{ width: "530px" }}
-                onChange={handleSegmentFormChange}
-                labelShrink
-                inputProps={{
-                  style: {
-                    padding: "15px 16px",
-                    background: "#fff",
-                    border: "1px solid #D1D5DB",
-                    fontFamily: "Inter",
-                    fontWeight: 400,
-                    fontSize: "16px",
-                  },
+                style={{
+                  width: "530px",
+                  padding: "15px 16px",
+                  background: "#fff",
+                  border: "1px solid #D1D5DB",
+                  fontFamily: "Inter",
+                  fontWeight: 400,
+                  fontSize: "16px",
                 }}
+                onChange={handleSegmentFormChange}
               />
             </FormControl>
             <FormControl
@@ -140,10 +137,8 @@ const NamePerson = ({ onSubmit, isPrimary }: INameSegment) => {
           </Grid>
           <Box display={"flex"} justifyContent="flex-end">
             <GenericButton
-              variant="contained"
               onClick={handleSubmit}
-              fullWidth
-              sx={{
+              style={{
                 maxWidth: "200px",
                 "background-image":
                   "linear-gradient(to right, #6BCDB5 , #307179, #122F5C)",
