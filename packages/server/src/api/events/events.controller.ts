@@ -67,6 +67,7 @@ export class EventsController {
     @Headers('Authorization') apiKey: string,
     @Body() body: PosthogBatchEventDto
   ) {
+    this.logger.debug("Inside of the posthog events endpoint");
     let account: Account; // Account associated with the caller
     // Step 1: Find corresponding account
     try {
@@ -96,11 +97,11 @@ export class EventsController {
         let jobIDs: (string | number)[] = [];
         let cust: CustomerDocument, // Customer document created/found on this API call
           found: boolean; // If the customer document was previously created
-        //Step 2: Create/Correlate customer for each event
+        //Step 2: Create/Correlate customer for each eventTemplatesService.queueMessage
         try {
           function postHogEventMapping(event: any) {
             const customer = {};
-            customer['posthogId'] = event.userId;
+            customer['posthogId'] = [event.userId];
             if (event?.phPhoneNumber) {
               customer['phPhoneNumber'] = event.phPhoneNumber;
             }
@@ -112,6 +113,7 @@ export class EventsController {
             }
             return customer;
           }
+          this.logger.debug('Fiinding customer by event: ', currentEvent)
           const correlation = await this.customersService.findBySpecifiedEvent(
             account,
             'posthogId',
@@ -135,7 +137,7 @@ export class EventsController {
             correlationKey: 'posthogId',
             correlationValue: currentEvent.userId,
             event: currentEvent.event,
-            source: "posthog",
+            source: 'posthog',
           };
 
           //currentEvent

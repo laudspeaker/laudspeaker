@@ -35,7 +35,7 @@ const App = ({ children }: IApp) => {
   );
 
   posthog.init(AppConfig.POSTHOG_KEY ? AppConfig.POSTHOG_KEY : "", {
-    api_host: "https://app.posthog.com",
+    api_host: AppConfig.POSTHOG_HOST ? AppConfig.POSTHOG_HOST : "https://app.posthog.com",
   });
 
   return (

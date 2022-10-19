@@ -5,7 +5,7 @@ import {
   HttpException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
+import { DataSource, In, Repository } from 'typeorm';
 import { Account } from '../accounts/entities/accounts.entity';
 import { AudiencesService } from '../audiences/audiences.service';
 import { UpdateWorkflowDto } from './dto/update-workflow.dto';
@@ -27,7 +27,8 @@ export class WorkflowsService {
     private workflowsRepository: Repository<Workflow>,
     @InjectRepository(Stats) private statsRepository: Repository<Stats>,
     @Inject(AudiencesService) private audiencesService: AudiencesService,
-    @Inject(CustomersService) private customersService: CustomersService
+    @Inject(CustomersService) private customersService: CustomersService,
+    private dataSource: DataSource
   ) { }
 
   /**

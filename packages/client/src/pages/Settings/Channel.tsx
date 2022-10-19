@@ -16,58 +16,57 @@ import { useNavigate } from "react-router-dom";
 import ListItem from "./components/ListItem";
 import { useDispatch } from "react-redux";
 import { useTypedSelector } from "hooks/useTypeSelector";
-import { setSettingData, setEventsComplete } from "reducers/settings";
+import { setSettingData } from "reducers/settings";
 import ApiService from "services/api.service";
 import { ApiConfig } from "../../constants";
 
 const allChannels: any = [
   {
-    id: "segment",
-    title: "Segment",
+    id: "email",
+    title: "Email",
     subTitle: "for any campaign or newsletter",
+  },
+  {
+    id: "push",
+    title: "Mobile Push",
+    subTitle: "Campaign: Onboarding Campaign",
     disabled: true,
   },
   {
-    id: "posthog",
-    title: "Posthog",
-    subTitle: "Campaign: Onboarding Campaign",
-    disabled: false,
+    id: "slack",
+    title: "Slack",
+    subTitle: "Campaign: Transactional Receipt",
   },
   {
-    id: "rudderstack",
-    title: "Rudderstack",
-    subTitle: "Campaign: Transactional Receipt",
+    id: "human",
+    title: "Human",
+    subTitle: "Campaign: Onboarding Campaign",
     disabled: true,
   },
 ];
 
-function EventsProv() {
+function Channel() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { settings } = useTypedSelector((state) => state.settings);
-  const [events, setChannels] = useState<any>([]);
+  const [channels, setChannels] = useState<any>([]);
   const [friendsList, setFriendsList] = useState<string>("");
   useLayoutEffect(() => {
-    dispatch(setSettingData({ ...settings, ["events"]: undefined }));
+    dispatch(setSettingData({ ...settings, ["channel"]: undefined }));
   }, []);
 
   const handleInputChange = (name: any, value: any): any => {
     dispatch(setSettingData({ ...settings, [name]: value }));
   };
   const moveToNetworkConfiguration = () => {
-    //navigate("/settings/phconfiguration");
-    if (events.length == 0) {
-      dispatch(setEventsComplete(true));
-    }
-    //eventsCompleted = true;
     navigate("/settings/network-configuration");
   };
 
   const handleNextButtonClick = async () => {
-    // await ApiService.patch({
-    //   url: ApiConfig.updateUserInfo,
-    //   options: { expectedOnboarding: events },
-    // });
+    await ApiService.patch({
+      url: ApiConfig.updateUserInfo,
+      options: { expectedOnboarding: channels },
+    });
     moveToNetworkConfiguration();
   };
 
@@ -130,38 +129,31 @@ function EventsProv() {
               marginBottom: "10px",
             }}
           >
-            Add your Event Provider
+            Welcome to Laudspeaker 🎉
           </Typography>
           <Typography
             variant="subtitle1"
             sx={{
               fontSize: "18px",
-              marginBottom: "10px",
+              marginBottom: "35px",
             }}
           >
-            Search for your data integration.
-          </Typography>
-          <Typography
-            variant="subtitle1"
-            sx={{
-              fontSize: "14px",
-              marginBottom: "10px",
-            }}
-          >
-            If you don't need to add one feel free to skip, and click next
+            We’ll get you ready to go in no time! Check out our checklist on the
+            right and happy marketing!
           </Typography>
           <Grid container direction={"row"} padding={"10px 0px"}>
             <FormControl variant="standard">
               <Select
                 id="activeJourney"
-                value={events}
+                value={channels}
+                placeholder={"why no herre "}
                 onChange={(e) => {
                   setChannels(e.target.value);
-                  handleInputChange("events", e.target.value);
+                  handleInputChange("channel", e.target.value);
                 }}
                 displayEmpty
                 multipleSelections
-                renderValue={() => <>Event Integration</>}
+                renderValue={() => <>Add channel</>}
                 sx={{
                   height: "44px",
                   margin: "20px 0px",
@@ -201,14 +193,14 @@ function EventsProv() {
                         subtitle={`${channel.subTitle} ${
                           channel.disabled ? "(coming soon)" : ""
                         }`}
-                        tick={events.includes(channel.title)}
+                        tick={channels.includes(channel.title)}
                       />
                     </MenuItem>
                   );
                 })}
               </Select>
               <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
-                {events.map((value: string) => (
+                {channels.map((value: string) => (
                   <Chip key={value} label={value} />
                 ))}
               </Box>
@@ -220,7 +212,7 @@ function EventsProv() {
             padding={"0px 0px"}
             marginBottom="20px"
           >
-            {events.map((channel: any) => {
+            {channels.map((channel: any) => {
               return (
                 <Box
                   sx={{
@@ -234,11 +226,40 @@ function EventsProv() {
               );
             })}
           </Grid> */}
+          <Grid container direction={"row"} padding={"10px 0px"}>
+            <FormControl variant="standard">
+              <Input
+                isRequired
+                value={friendsList}
+                label="Invite friends and colleagues(Coming soon)"
+                placeholder={"Enter name"}
+                name="name"
+                id="name"
+                sx={{ maxWidth: "530px" }}
+                disabled
+                onChange={(e) => {
+                  setFriendsList(e.target.value);
+                  handleInputChange("friendsList", e.target.value);
+                }}
+                labelShrink
+                inputProps={{
+                  style: {
+                    padding: "15px 16px",
+                    background: "#fff",
+                    border: "1px solid #D1D5DB",
+                    fontFamily: "Inter",
+                    fontWeight: 400,
+                    fontSize: "16px",
+                  },
+                }}
+              />
+            </FormControl>
+          </Grid>
           <Box display={"flex"} marginTop="10%" justifyContent="flex-start">
             <GenericButton
               variant="contained"
               onClick={handleNextButtonClick}
-              disabled={false}
+              disabled={!settings.channel || settings.channel.length === 0}
               fullWidth
               sx={{
                 maxWidth: "200px",
@@ -267,7 +288,7 @@ function EventsProv() {
               Your Setup List
             </Typography>
             <Typography variant="body1" color={"#6B7280"}>
-              Youre only a few steps away from your first message
+              You're only a few steps away from your first message!
             </Typography>
           </Box>
           <CustomStepper
@@ -286,4 +307,4 @@ function EventsProv() {
   );
 }
 
-export default EventsProv;
+export default Channel;

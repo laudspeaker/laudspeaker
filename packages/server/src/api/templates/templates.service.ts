@@ -90,7 +90,7 @@ export class TemplatesService {
           from: account.sendingName,
           domain: account.sendingDomain,
           email: account.sendingEmail,
-          to: event.source == 'posthog' ? customer.phEmail : customer.email,
+          to: customer.phEmail ? customer.phEmail : customer.email,
           subject: template.subject,
           text: template.text,
         });

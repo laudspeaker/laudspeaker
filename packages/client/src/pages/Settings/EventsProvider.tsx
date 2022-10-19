@@ -1,45 +1,76 @@
-import { Box, FormControl, Grid, MenuItem, Typography } from "@mui/material";
+import {
+  Box,
+  Chip,
+  FormControl,
+  Grid,
+  MenuItem,
+  Typography,
+} from "@mui/material";
 import Card from "components/Cards/Card";
 import Header from "components/Header";
 import Drawer from "components/Drawer";
 import { Input, Select, GenericButton } from "components/Elements";
 import CustomStepper from "./components/CustomStepper";
-import { useState } from "react";
+import { useState, useLayoutEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import ListItem from "./components/ListItem";
 import { useDispatch } from "react-redux";
 import { useTypedSelector } from "hooks/useTypeSelector";
-import {
-  setSettingData,
-  setSettingsPrivateApiKey,
-  setDomainsList,
-} from "reducers/settings";
+import { setSettingData, setEventsComplete } from "reducers/settings";
+import ApiService from "services/api.service";
+import { ApiConfig } from "../../constants";
 
-function EmailConfiguration() {
-  const { settings, domainsList } = useTypedSelector((state) => state.settings);
+const allChannels: any = [
+  {
+    id: "segment",
+    title: "Segment",
+    subTitle: "for any campaign or newsletter",
+    disabled: true,
+  },
+  {
+    id: "posthog",
+    title: "Posthog",
+    subTitle: "Campaign: Onboarding Campaign",
+    disabled: false,
+  },
+  {
+    id: "rudderstack",
+    title: "Rudderstack",
+    subTitle: "Campaign: Transactional Receipt",
+    disabled: true,
+  },
+];
 
-  const [domainName, setDomainName] = useState<any>(settings.domainName || "");
-  const [privateApiKey, setPrivateApiKey] = useState<string>(
-    settings.privateApiKey || ""
-  );
-  const [domainList, setDomainList] = useState<any>(domainsList || []);
-  const dispatch = useDispatch();
+function EventsProvider() {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const { settings } = useTypedSelector((state) => state.settings);
+  const [events, setChannels] = useState<any>([]);
+  const [friendsList, setFriendsList] = useState<string>("");
+  useLayoutEffect(() => {
+    dispatch(setSettingData({ ...settings, ["events"]: undefined }));
+  }, []);
+
   const handleInputChange = (name: any, value: any): any => {
     dispatch(setSettingData({ ...settings, [name]: value }));
   };
-  const moveToAdditionalSettings = () => {
-    navigate("/settings/additional-settings");
-  };
-  const callDomains = async () => {
-    if (privateApiKey) {
-      dispatch(setSettingsPrivateApiKey(privateApiKey));
-      const response = await dispatch(setDomainsList(privateApiKey));
-      if (response?.data) {
-        setDomainList(response?.data);
-      }
+  const moveToNetworkConfiguration = () => {
+    //navigate("/settings/phconfiguration");
+    if (events.length == 0) {
+      dispatch(setEventsComplete(true));
     }
+    //eventsCompleted = true;
+    navigate("/settings/network-configuration");
   };
+
+  const handleNextButtonClick = async () => {
+    // await ApiService.patch({
+    //   url: ApiConfig.updateUserInfo,
+    //   options: { expectedOnboarding: events },
+    // });
+    moveToNetworkConfiguration();
+  };
+
   return (
     <Box
       sx={{
@@ -59,6 +90,9 @@ function EmailConfiguration() {
           fontWeight: 400,
           fontSize: "16px",
           padding: "12px 16px",
+          "&:disabled": {
+            background: "#EEE !important",
+          },
         },
         "& .MuiInputLabel-root": {
           fontSize: "16px",
@@ -96,58 +130,38 @@ function EmailConfiguration() {
               marginBottom: "10px",
             }}
           >
-            Email Configuration
+            Add your Event Provider
           </Typography>
-          <Grid container direction={"row"} padding={"10px 0px"}>
-            <FormControl variant="standard">
-              <Input
-                isRequired
-                value={privateApiKey}
-                label="Private API Key"
-                placeholder={"****  "}
-                name="name"
-                id="name"
-                type="password"
-                sx={{ maxWidth: "530px" }}
-                onChange={(e) => {
-                  setPrivateApiKey(e.target.value);
-                  handleInputChange("privateApiKey", e.target.value);
-                }}
-                labelShrink
-                inputProps={{
-                  style: {
-                    padding: "15px 16px 15px 16px",
-                    background: "#fff",
-                    border: "1px solid #D1D5DB",
-                    fontFamily: "Inter",
-                    fontWeight: 400,
-                    fontSize: "16px",
-                  },
-                }}
-                onBlur={callDomains}
-              />
-            </FormControl>
-          </Grid>
           <Typography
             variant="subtitle1"
             sx={{
-              fontSize: "16px",
+              fontSize: "18px",
               marginBottom: "10px",
             }}
           >
-            Domain
+            Search for your data integration.
+          </Typography>
+          <Typography
+            variant="subtitle1"
+            sx={{
+              fontSize: "14px",
+              marginBottom: "10px",
+            }}
+          >
+            If you don't need to add one feel free to skip, and click next
           </Typography>
           <Grid container direction={"row"} padding={"10px 0px"}>
             <FormControl variant="standard">
               <Select
                 id="activeJourney"
-                value={domainName}
+                value={events}
                 onChange={(e) => {
-                  setDomainName(e.target.value);
-                  handleInputChange("domainName", e.target.value);
+                  setChannels(e.target.value);
+                  handleInputChange("events", e.target.value);
                 }}
                 displayEmpty
-                renderValue={(val: any) => val}
+                multipleSelections
+                renderValue={() => <>Event Integration</>}
                 sx={{
                   height: "44px",
                   margin: "20px 0px",
@@ -164,11 +178,11 @@ function EmailConfiguration() {
                   },
                 }}
               >
-                {domainList.map((channel: any) => {
+                {allChannels.map((channel: any) => {
                   return (
                     <MenuItem
-                      value={channel.name}
-                      disabled={!channel?.state}
+                      value={channel.title}
+                      disabled={channel.disabled}
                       sx={{
                         height: "auto",
                         "&.Mui-selected": {
@@ -183,23 +197,49 @@ function EmailConfiguration() {
                       }}
                     >
                       <ListItem
-                        title={channel.name}
-                        subtitle={`${channel.type} ${
-                          !channel.state ? "(coming soon)" : ""
+                        title={channel.title}
+                        subtitle={`${channel.subTitle} ${
+                          channel.disabled ? "(coming soon)" : ""
                         }`}
+                        tick={events.includes(channel.title)}
                       />
                     </MenuItem>
                   );
                 })}
               </Select>
+              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                {events.map((value: string) => (
+                  <Chip key={value} label={value} />
+                ))}
+              </Box>
             </FormControl>
           </Grid>
+          {/* <Grid
+            container
+            direction={"row"}
+            padding={"0px 0px"}
+            marginBottom="20px"
+          >
+            {events.map((channel: any) => {
+              return (
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexWrap: "wrap",
+                    marginRight: "20px",
+                  }}
+                >
+                  <Chip key={channel} label={channel} />
+                </Box>
+              );
+            })}
+          </Grid> */}
           <Box display={"flex"} marginTop="10%" justifyContent="flex-start">
             <GenericButton
               variant="contained"
-              onClick={moveToAdditionalSettings}
+              onClick={handleNextButtonClick}
+              disabled={false}
               fullWidth
-              disabled={!privateApiKey || !domainName}
               sx={{
                 maxWidth: "200px",
                 "background-image":
@@ -227,14 +267,23 @@ function EmailConfiguration() {
               Your Setup List
             </Typography>
             <Typography variant="body1" color={"#6B7280"}>
-              Youre only a few steps away from your first message
+              You're only a few steps away from your first message!
             </Typography>
           </Box>
-          <CustomStepper activeStep={1} />
+          <CustomStepper
+            steps={[
+              "Create Account",
+              "Choose Channels",
+              "Add Event Integrations",
+              "Set Up Channels",
+              "Create your first Journey",
+            ]}
+            activeStep={1}
+          />
         </Card>
       </Box>
     </Box>
   );
 }
 
-export default EmailConfiguration;
+export default EventsProvider;

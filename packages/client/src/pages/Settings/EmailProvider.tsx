@@ -1,75 +1,56 @@
-import {
-  Box,
-  Chip,
-  FormControl,
-  Grid,
-  MenuItem,
-  Typography,
-} from "@mui/material";
+import { Box, FormControl, Grid, MenuItem, Typography } from "@mui/material";
+import Chip from "@mui/material/Chip";
 import Card from "components/Cards/Card";
 import Header from "components/Header";
 import Drawer from "components/Drawer";
-import { Input, Select, GenericButton } from "components/Elements";
+import { Select, GenericButton } from "components/Elements";
 import CustomStepper from "./components/CustomStepper";
-import { useState, useLayoutEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ListItem from "./components/ListItem";
 import { useDispatch } from "react-redux";
-import { useTypedSelector } from "hooks/useTypeSelector";
 import { setSettingData } from "reducers/settings";
-import ApiService from "services/api.service";
-import { ApiConfig } from "../../constants";
+import { useTypedSelector } from "hooks/useTypeSelector";
 
-const allChannels: any = [
-  {
-    id: "email",
-    title: "Email",
-    subTitle: "for any campaign or newsletter",
-  },
-  {
-    id: "push",
-    title: "Mobile Push",
-    subTitle: "Campaign: Onboarding Campaign",
-    disabled: true,
-  },
-  {
-    id: "slack",
-    title: "Slack",
-    subTitle: "Campaign: Transactional Receipt",
-  },
-  {
-    id: "human",
-    title: "Human",
-    subTitle: "Campaign: Onboarding Campaign",
-    disabled: true,
-  },
-];
-
-function Channel() {
-  const navigate = useNavigate();
+function EmailProvider() {
+  const allChannels: any = [
+    {
+      id: "sendgrid",
+      title: "Sendgrid",
+      subTitle: "for any campaign or newsletter",
+      disabled: true,
+    },
+    {
+      id: "mailgun",
+      title: "Mailgun",
+      subTitle: "Campaign: Onboarding Campaign",
+      disabled: false,
+    },
+    {
+      id: "mailchimp",
+      title: "Mailchimp",
+      subTitle: "Campaign: Transactional Receipt",
+      disabled: true,
+    },
+    {
+      id: "smtp",
+      title: "SMTP",
+      subTitle: "Setup your own email server",
+      disabled: true,
+    },
+  ];
   const dispatch = useDispatch();
   const { settings } = useTypedSelector((state) => state.settings);
-  const [channels, setChannels] = useState<any>([]);
-  const [friendsList, setFriendsList] = useState<string>("");
-  useLayoutEffect(() => {
-    dispatch(setSettingData({ ...settings, ["channel"]: undefined }));
-  }, []);
-
+  const [eventProvider, setEventProvider] = useState<any>(
+    settings.eventProvider || []
+  );
   const handleInputChange = (name: any, value: any): any => {
     dispatch(setSettingData({ ...settings, [name]: value }));
   };
-  const moveToNetworkConfiguration = () => {
-    navigate("/settings/network-configuration");
+  const navigate = useNavigate();
+  const moveToMailgunConfiguration = () => {
+    navigate("/settings/mailgun-configuration");
   };
-
-  const handleNextButtonClick = async () => {
-    await ApiService.patch({
-      url: ApiConfig.updateUserInfo,
-      options: { expectedOnboarding: channels },
-    });
-    moveToNetworkConfiguration();
-  };
-
   return (
     <Box
       sx={{
@@ -89,9 +70,6 @@ function Channel() {
           fontWeight: 400,
           fontSize: "16px",
           padding: "12px 16px",
-          "&:disabled": {
-            background: "#EEE !important",
-          },
         },
         "& .MuiInputLabel-root": {
           fontSize: "16px",
@@ -129,31 +107,29 @@ function Channel() {
               marginBottom: "10px",
             }}
           >
-            Welcome to Laudspeaker 🎉
+            Email configuration
           </Typography>
           <Typography
             variant="subtitle1"
             sx={{
               fontSize: "18px",
-              marginBottom: "35px",
+              marginBottom: "10px",
             }}
           >
-            We’ll get you ready to go in no time! Check out our checklist on the
-            right and happy marketing!
+            Search for your email provider
           </Typography>
           <Grid container direction={"row"} padding={"10px 0px"}>
             <FormControl variant="standard">
               <Select
                 id="activeJourney"
-                value={channels}
-                placeholder={"why no herre "}
-                onChange={(e) => {
-                  setChannels(e.target.value);
-                  handleInputChange("channel", e.target.value);
-                }}
+                value={eventProvider}
                 displayEmpty
-                multipleSelections
-                renderValue={() => <>Add channel</>}
+                onChange={(e) => {
+                  setEventProvider(e.target.value);
+                  handleInputChange("eventProvider", e.target.value);
+                }}
+                multipleSelections={true}
+                renderValue={(selected) => <>{selected.join(", ")}</>}
                 sx={{
                   height: "44px",
                   margin: "20px 0px",
@@ -163,7 +139,6 @@ function Channel() {
                     padding: "9px 15px",
                     border: "1px solid #DEDEDE",
                     boxShadow: "none",
-                    borderRadius: "3px",
                   },
                   sx: {
                     borderRadius: "6px !important",
@@ -193,26 +168,21 @@ function Channel() {
                         subtitle={`${channel.subTitle} ${
                           channel.disabled ? "(coming soon)" : ""
                         }`}
-                        tick={channels.includes(channel.title)}
+                        tick={eventProvider.includes(channel.title)}
                       />
                     </MenuItem>
                   );
                 })}
               </Select>
-              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
-                {channels.map((value: string) => (
-                  <Chip key={value} label={value} />
-                ))}
-              </Box>
             </FormControl>
           </Grid>
-          {/* <Grid
+          <Grid
             container
             direction={"row"}
             padding={"0px 0px"}
             marginBottom="20px"
           >
-            {channels.map((channel: any) => {
+            {eventProvider.map((events: any) => {
               return (
                 <Box
                   sx={{
@@ -221,45 +191,15 @@ function Channel() {
                     marginRight: "20px",
                   }}
                 >
-                  <Chip key={channel} label={channel} />
+                  <Chip key={events} label={events} />
                 </Box>
               );
             })}
-          </Grid> */}
-          <Grid container direction={"row"} padding={"10px 0px"}>
-            <FormControl variant="standard">
-              <Input
-                isRequired
-                value={friendsList}
-                label="Invite friends and colleagues(Coming soon)"
-                placeholder={"Enter name"}
-                name="name"
-                id="name"
-                sx={{ maxWidth: "530px" }}
-                disabled
-                onChange={(e) => {
-                  setFriendsList(e.target.value);
-                  handleInputChange("friendsList", e.target.value);
-                }}
-                labelShrink
-                inputProps={{
-                  style: {
-                    padding: "15px 16px",
-                    background: "#fff",
-                    border: "1px solid #D1D5DB",
-                    fontFamily: "Inter",
-                    fontWeight: 400,
-                    fontSize: "16px",
-                  },
-                }}
-              />
-            </FormControl>
           </Grid>
           <Box display={"flex"} marginTop="10%" justifyContent="flex-start">
             <GenericButton
               variant="contained"
-              onClick={handleNextButtonClick}
-              disabled={!settings.channel || settings.channel.length === 0}
+              onClick={moveToMailgunConfiguration}
               fullWidth
               sx={{
                 maxWidth: "200px",
@@ -288,23 +228,15 @@ function Channel() {
               Your Setup List
             </Typography>
             <Typography variant="body1" color={"#6B7280"}>
-              Youre only a few steps away from your first message
+              Get your account ready to send automated message that people like
+              to receive.
             </Typography>
           </Box>
-          <CustomStepper
-            steps={[
-              "Create Account",
-              "Choose Channels",
-              "Add Event Integrations",
-              "Set Up Channels",
-              "Create your first Journey",
-            ]}
-            activeStep={1}
-          />
+          <CustomStepper activeStep={0} />
         </Card>
       </Box>
     </Box>
   );
 }
 
-export default Channel;
+export default EmailProvider;

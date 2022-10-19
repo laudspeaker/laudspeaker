@@ -15,6 +15,7 @@ export class EmailProcessor {
   ) { }
   @Process('send')
   async handleSend(job: Job) {
+    this.logger.debug(JSON.stringify(job, null, 2));
     const mailgun = new Mailgun(formData);
     const mg = mailgun.client({ username: 'api', key: job.data.key });
     try {

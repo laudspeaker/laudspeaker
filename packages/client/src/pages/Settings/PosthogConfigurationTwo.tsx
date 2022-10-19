@@ -57,7 +57,7 @@ function PosthogConfigurationTwo() {
     }
 
     console.log("in move to ph additional");
-    navigate("/settings/additional-posthog");
+    navigate("/settings/posthog-configuration-three");
   };
 
   function renderButton() {
@@ -238,7 +238,7 @@ function PosthogConfigurationTwo() {
               Your Setup List
             </Typography>
             <Typography variant="body1" color={"#6B7280"}>
-              Youre only a few steps away from your first message
+              You're only a few steps away from your first message!
             </Typography>
           </Box>
           <CustomStepper activeStep={3} />

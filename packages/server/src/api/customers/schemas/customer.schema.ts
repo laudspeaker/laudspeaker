@@ -24,7 +24,7 @@ export class Customer {
   externalId: string;
 
   @Prop()
-  posthogId: string;
+  posthogId: string[];
 
   @Prop()
   phPhoneNumber: string;
