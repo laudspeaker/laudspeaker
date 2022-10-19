@@ -183,6 +183,7 @@ export class EventsController {
         account,
         body
       );
+      this.logger.debug("Correlation result:" + correlation.cust)
     } catch (err) {
       this.logger.error('Error: ' + err);
       return new HttpException(err, 500);

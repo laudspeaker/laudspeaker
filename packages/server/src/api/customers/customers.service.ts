@@ -236,7 +236,7 @@ export class CustomersService {
   ): Promise<Correlation> {
     let customer : CustomerDocument;
     const queryParam = { ownerId: (<Account>account).id };
-    if (customer[correlationKey].isArray() || correlationValue instanceof Array) {
+    if (correlationKey == 'posthogId') {
       queryParam[correlationKey] = {
         $in: [...correlationValue]
       }
@@ -313,7 +313,7 @@ export class CustomersService {
   ): Promise<CustomerDocument> {
     let customer: CustomerDocument; // Found customer
     const queryParam = { ownerId: (<Account>account).id };
-    if (customer[correlationKey].isArray() || correlationValue instanceof Array) {
+    if (correlationKey == 'posthogId') {
       queryParam[correlationKey] = {
         $in: [...correlationValue]
       }

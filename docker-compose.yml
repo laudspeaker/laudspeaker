@@ -4,7 +4,7 @@ services:
     image: redis:alpine
     command: redis-server
     ports:
-     - "6378:6379"
+     - "6379:6379"
     environment:
      - REDIS_REPLICATION_MODE=master
   
@@ -15,10 +15,10 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
       POSTGRES_DB: laudspeaker
     ports:
-      - "5433:5432"
+      - "5432:5432"
     restart: unless-stopped
 
   mongo:
     image: 'mongo:latest'
     ports:
-      - "27016:27017"
+      - "27017:27017"
