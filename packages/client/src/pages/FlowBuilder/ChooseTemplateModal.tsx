@@ -98,15 +98,15 @@ const ChooseTemplateModal = ({
     }
   }
 
-  const handleActiveTemplate = (e: any) => {
-    setActiveTemplate(e.target.value);
+  const handleActiveTemplate = (value: any) => {
+    setActiveTemplate(value);
   };
   useEffect(() => {
     const getAllTemplates = async () => {
-      const response = await ApiService.get({
+      const { data: templates } = await ApiService.get({
         url: `${ApiConfig.getAllTemplates}`,
       });
-      const filteredTemplates = response?.data?.filter(
+      const filteredTemplates = templates?.data?.filter(
         (item: any) => item.type === selectedMessageType
       );
       setTemplatesList(filteredTemplates);
@@ -153,13 +153,13 @@ const ChooseTemplateModal = ({
             <Select
               id="activeJourney"
               value={activeTemplate}
+              options={templatesList.map((template: any) => ({
+                value: template.id,
+                title: template.name,
+              }))}
               onChange={handleActiveTemplate}
               displayEmpty
-            >
-              {templatesList.map((template: any) => {
-                return <MenuItem value={template.id}>{template.name}</MenuItem>;
-              })}
-            </Select>
+            />
           </FormControl>
         </Box>
         <Box data-slackexporttemplate>{renderButton(templatesList)}</Box>

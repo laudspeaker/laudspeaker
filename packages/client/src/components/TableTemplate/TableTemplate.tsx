@@ -1,18 +1,7 @@
-import * as React from "react";
-import Box from "@mui/material/Box";
-import Collapse from "@mui/material/Collapse";
-import IconButton from "@mui/material/IconButton";
-import Table from "@mui/material/Table";
-import TableBody from "@mui/material/TableBody";
-import TableCell from "@mui/material/TableCell";
-import TableContainer from "@mui/material/TableContainer";
-import TableHead from "@mui/material/TableHead";
-import TableRow from "@mui/material/TableRow";
-import Typography from "@mui/material/Typography";
-import Paper from "@mui/material/Paper";
-import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
-import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
+import React from "react";
 import { Link } from "@mui/material";
+import Select from "../Elements/Select/Select";
+import { ChevronDownIcon, MinusIcon } from "@heroicons/react/20/solid";
 
 //to do add datasource here to make rendering much simpler
 function createData(
@@ -79,7 +68,11 @@ function renderCorrectLink(
   }
 }
 
-function renderCorrectColumnNames(data: any) {
+function renderCorrectColumnNames(
+  data: any,
+  sortOptions?: any,
+  setSortOptions?: (value: any) => void
+) {
   if (data.length < 1) {
     return (
       <>
@@ -97,9 +90,35 @@ function renderCorrectColumnNames(data: any) {
       <>
         <th
           scope="col"
-          className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6"
+          className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6 flex"
         >
           Name
+          <span className="ml-2 flex-none rounded bg-gray-200 text-gray-900 group-hover:bg-gray-300 cursor-pointer">
+            {sortOptions?.name ? (
+              <ChevronDownIcon
+                className={`h-5 w-5 ${
+                  sortOptions?.name === "desc" ? "rotate-180" : ""
+                }`}
+                onClick={() => {
+                  if (setSortOptions)
+                    setSortOptions({
+                      name: sortOptions?.name === "asc" ? "desc" : undefined,
+                    });
+                }}
+                aria-hidden="true"
+              />
+            ) : (
+              <MinusIcon
+                className={`h-5 w-5`}
+                onClick={() => {
+                  if (setSortOptions)
+                    setSortOptions({
+                      name: "asc",
+                    });
+                }}
+              />
+            )}
+          </span>
         </th>
         <th
           scope="col"
@@ -138,9 +157,23 @@ function renderCorrectColumnNames(data: any) {
       <>
         <th
           scope="col"
-          className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6"
+          className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6 flex"
         >
           Name
+          <span className="ml-2 flex-none rounded bg-gray-200 text-gray-900 group-hover:bg-gray-300 cursor-pointer">
+            <ChevronDownIcon
+              className={`h-5 w-5 ${
+                sortOptions?.name === "desc" ? "rotate-180" : ""
+              }`}
+              onClick={() => {
+                if (setSortOptions)
+                  setSortOptions({
+                    name: sortOptions?.name === "desc" ? "asc" : "desc",
+                  });
+              }}
+              aria-hidden="true"
+            />
+          </span>
         </th>
         <th
           scope="col"
@@ -427,6 +460,8 @@ export default function TableTemplate({
   currentPage = 0,
   itemsPerPage,
   setItemsPerPage,
+  sortOptions,
+  setSortOptions,
 }: any) {
   const isSkipped = (num?: number) => {
     if (!num) return false;
@@ -435,12 +470,66 @@ export default function TableTemplate({
 
   return (
     <div className="mt-8 flex flex-col">
+      <div className="relative mr-[50px] mb-[15px] mt-[10px] flex items-center justify-end">
+        <div className="flex justify-center items-center gap-[10px]">
+          Items per page:
+          <Select
+            id="items_per_page_select"
+            value={itemsPerPage}
+            options={itemsPerPageOptions.map((item) => ({ value: item }))}
+            onChange={(value) => setItemsPerPage(value)}
+          />
+        </div>
+
+        {/* {itemsPerPageOptions.map((option, i) => (
+          <div
+            className={`
+              ${i === 0 && `rounded-bl-[6px] rounded-tl-[6px]`}
+              ${
+                i === itemsPerPageOptions.length - 1 &&
+                `rounded-br-[6px] rounded-tr-[6px]`
+              }
+              ${
+                itemsPerPage === option
+                  ? "bg-[linear-gradient(96.63deg,_#6BCDB5_10.79%,_#307179_67.24%,_#122F5C_87.43%)]"
+                  : "border-[#E5E5E5] border-[2px]"
+              } 
+              flex relative justify-center items-center px-[17px] py-[5px] cursor-pointer max-w-[57px] max-h-[36px] font-[Poppins] font-medium text-[14px] leading-[26px] text-center text-[color]`}
+            onClick={() => setItemsPerPage(option)}
+          >
+            {itemsPerPage === option && (
+              <div
+                className={`h-full w-full absolute p-[2px] ${
+                  i === 0 ? `rounded-bl-[6px] rounded-tl-[6px]` : ""
+                } 
+                ${
+                  i === itemsPerPageOptions.length - 1 &&
+                  `rounded-br-[6px] rounded-tr-[6px]`
+                }`}
+              >
+                <div className="bg-white w-full h-full" />
+              </div>
+            )}
+            <span
+              className={`${
+                itemsPerPage === option
+                  ? "bg-[linear-gradient(96.63deg,_#6BCDB5_10.79%,_#307179_67.24%,_#122F5C_87.43%)] !bg-clip-text text-transparent"
+                  : ""
+              } relative font-[Poppins] font-medium text-[14px] leading-[26px]`}
+            >
+              {option}
+            </span>
+          </div>
+        ))} */}
+      </div>
       <div className="-my-2 -mx-4 overflow-x-auto sm:-mx-6 lg:-mx-8">
         <div className="inline-block min-w-full py-2 align-middle md:px-6 lg:px-8">
           <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
             <table className="min-w-full divide-y divide-gray-300">
               <thead className="bg-gray-50">
-                <tr>{renderCorrectColumnNames(data)}</tr>
+                <tr>
+                  {renderCorrectColumnNames(data, sortOptions, setSortOptions)}
+                </tr>
               </thead>
               <tbody className="divide-y divide-gray-200 bg-white">
                 {transformJourneyData(data).map((row) => (
@@ -526,48 +615,6 @@ export default function TableTemplate({
               stroke-linejoin="round"
             />
           </svg>
-        </div>
-        <div className="mr-[50px] mb-[15px] mt-[10px] flex">
-          {itemsPerPageOptions.map((option, i) => (
-            <div
-              className={`
-              ${i === 0 && `rounded-bl-[6px] rounded-tl-[6px]`}
-              ${
-                i === itemsPerPageOptions.length - 1 &&
-                `rounded-br-[6px] rounded-tr-[6px]`
-              }
-              ${
-                itemsPerPage === option
-                  ? "bg-[linear-gradient(96.63deg,_#6BCDB5_10.79%,_#307179_67.24%,_#122F5C_87.43%)]"
-                  : "border-[#E5E5E5] border-[2px]"
-              } 
-              flex relative justify-center items-center px-[17px] py-[5px] cursor-pointer max-w-[57px] max-h-[36px] font-[Poppins] font-medium text-[14px] leading-[26px] text-center text-[color]`}
-              onClick={() => setItemsPerPage(option)}
-            >
-              {itemsPerPage === option && (
-                <div
-                  className={`h-full w-full absolute p-[2px]               ${
-                    i === 0 && `rounded-bl-[6px] rounded-tl-[6px]`
-                  }
-                ${
-                  i === itemsPerPageOptions.length - 1 &&
-                  `rounded-br-[6px] rounded-tr-[6px]`
-                }`}
-                >
-                  <div className="bg-white w-full h-full" />
-                </div>
-              )}
-              <span
-                className={`${
-                  itemsPerPage === option
-                    ? "bg-[linear-gradient(96.63deg,_#6BCDB5_10.79%,_#307179_67.24%,_#122F5C_87.43%)] !bg-clip-text text-transparent"
-                    : ""
-                } relative font-[Poppins] font-medium text-[14px] leading-[26px]`}
-              >
-                {option}
-              </span>
-            </div>
-          ))}
         </div>
       </div>
     </div>

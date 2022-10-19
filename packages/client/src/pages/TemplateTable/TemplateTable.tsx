@@ -33,6 +33,7 @@ const TemplateTable = () => {
   const [pagesCount, setPagesCount] = useState<number>(1);
   const [currentPage, setCurrentPage] = useState(0);
   const [nameModalOpen, setNameModalOpen] = useState<boolean>(false);
+  const [sortOptions, setSortOptions] = useState({});
 
   React.useEffect(() => {
     const setLoadingAsync = async () => {
@@ -41,6 +42,8 @@ const TemplateTable = () => {
         const { data } = await ApiService.get({
           url: `${ApiConfig.getAllTemplates}?take=${itemsPerPage}&skip=${
             itemsPerPage * currentPage
+          }&orderBy=${Object.keys(sortOptions)[0] || ""}&orderType=${
+            Object.values(sortOptions)[0] || ""
           }`,
         });
         const { data: fetchedTemplates, totalPages } = data;
@@ -54,7 +57,7 @@ const TemplateTable = () => {
       }
     };
     setLoadingAsync();
-  }, [itemsPerPage, currentPage]);
+  }, [itemsPerPage, currentPage, sortOptions]);
 
   const redirectUses = () => {
     setNameModalOpen(true);
@@ -139,6 +142,8 @@ const TemplateTable = () => {
             currentPage={currentPage}
             itemsPerPage={itemsPerPage}
             setItemsPerPage={setItemsPerPage}
+            sortOptions={sortOptions}
+            setSortOptions={setSortOptions}
           />
         </Card>
       </Box>

@@ -20,10 +20,6 @@ const EmailHeader = (props: IEmailHeaderProps) => {
   const [activeJourney, setActiveJourney] = useState("Email");
   const [titleEdit, setTitleEdit] = useState<boolean>(false);
 
-  const handleActiveJourney = (e: any) => {
-    setActiveJourney(e.target.value);
-  };
-
   const handleTitleEdit = () => {
     setTitleEdit(!titleEdit);
   };
@@ -37,6 +33,11 @@ const EmailHeader = (props: IEmailHeaderProps) => {
   const goToSlackBuilder = () => {
     navigate("/slack-builder");
     return;
+  };
+
+  const handleActiveJourney = (e: any) => {
+    if (e.target.value === "Slack") goToSlackBuilder();
+    setActiveJourney(e.target.value);
   };
 
   return (
@@ -79,14 +80,10 @@ const EmailHeader = (props: IEmailHeaderProps) => {
             <Select
               id="activeJourney"
               value={activeJourney}
+              options={[{ value: "Email" }, { value: "Slack" }]}
               onChange={handleActiveJourney}
               displayEmpty
-            >
-              <MenuItem value={"Email"}>Email</MenuItem>
-              <MenuItem value={"Slack"} onClick={goToSlackBuilder}>
-                Slack
-              </MenuItem>
-            </Select>
+            />
           </form>
           <GenericButton
             customClasses="!ml-[10px]"

@@ -14,7 +14,7 @@ import ApiService from "services/api.service";
 import { ApiConfig } from "../../constants";
 import Chip from "components/Elements/Chip";
 
-const allChannels: any = [
+export const allChannels: any = [
   {
     id: "segment",
     title: "Segment",
@@ -147,6 +147,7 @@ function EventsProv() {
               <Select
                 id="activeJourney"
                 value={events}
+                options={allChannels.map((item: any) => item.title)}
                 onChange={(e) => {
                   setChannels(e.target.value);
                   handleInputChange("events", e.target.value);
@@ -169,8 +170,8 @@ function EventsProv() {
                     borderRadius: "6px !important",
                   },
                 }}
-              >
-                {allChannels.map((channel: any) => {
+              />
+              {/* {allChannels.map((channel: any) => {
                   return (
                     <MenuItem
                       value={channel.title}
@@ -198,7 +199,7 @@ function EventsProv() {
                     </MenuItem>
                   );
                 })}
-              </Select>
+              </Select> */}
               <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
                 {events.map((value: string) => (
                   <Chip key={value} label={value} />

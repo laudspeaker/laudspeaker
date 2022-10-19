@@ -112,6 +112,7 @@ function EmailConfiguration() {
               <Select
                 id="activeJourney"
                 value={domainName}
+                options={domainList.map((item: any) => item.name)}
                 onChange={(e) => {
                   setDomainName(e.target.value);
                   handleInputChange("domainName", e.target.value);
@@ -133,8 +134,8 @@ function EmailConfiguration() {
                     borderRadius: "6px !important",
                   },
                 }}
-              >
-                {domainList.map((channel: any) => {
+              />
+              {/* {domainList.map((channel: any) => {
                   return (
                     <MenuItem
                       value={channel.name}
@@ -161,7 +162,7 @@ function EmailConfiguration() {
                     </MenuItem>
                   );
                 })}
-              </Select>
+              </Select> */}
             </FormControl>
           </Grid>
           <Box display={"flex"} marginTop="50px" justifyContent="flex-start">

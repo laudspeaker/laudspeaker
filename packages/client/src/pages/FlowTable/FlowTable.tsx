@@ -28,6 +28,7 @@ const FlowTable = () => {
   const [pagesCount, setPagesCount] = useState<number>(1);
   const [currentPage, setCurrentPage] = useState(0);
   const [nameModalOpen, setNameModalOpen] = useState<boolean>(false);
+  const [sortOptions, setSortOptions] = useState({});
 
   React.useEffect(() => {
     const setLoadingAsync = async () => {
@@ -36,6 +37,8 @@ const FlowTable = () => {
         const { data } = await ApiService.get({
           url: `${ApiConfig.flow}?take=${itemsPerPage}&skip=${
             itemsPerPage * currentPage
+          }&orderBy=${Object.keys(sortOptions)[0] || ""}&orderType=${
+            Object.values(sortOptions)[0] || ""
           }`,
         });
         const { data: fetchedJourneys, totalPages } = data;
@@ -52,7 +55,7 @@ const FlowTable = () => {
       }
     };
     setLoadingAsync();
-  }, [itemsPerPage, currentPage]);
+  }, [itemsPerPage, currentPage, sortOptions]);
 
   const redirectUses = () => {
     setNameModalOpen(true);
@@ -141,6 +144,8 @@ const FlowTable = () => {
             currentPage={currentPage}
             itemsPerPage={itemsPerPage}
             setItemsPerPage={setItemsPerPage}
+            sortOptions={sortOptions}
+            setSortOptions={setSortOptions}
           />
         </Card>
       </Box>

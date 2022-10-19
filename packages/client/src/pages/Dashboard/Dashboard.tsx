@@ -20,8 +20,8 @@ const Dashboard = () => {
   const [anchorEl, setAnchorEl] = React.useState<HTMLButtonElement | null>(
     null
   );
-  const handleActiveJourney = (e: any) => {
-    setActiveJourney(e.target.value);
+  const handleActiveJourney = (value: any) => {
+    setActiveJourney(value);
   };
 
   const handleDateChange = (e: any) => {
@@ -118,13 +118,14 @@ const Dashboard = () => {
               <Select
                 id="activeJourney"
                 value={activeJourney}
+                options={[
+                  { value: "Daily" },
+                  { value: "Weekly" },
+                  { value: "Monthly" },
+                ]}
                 onChange={handleActiveJourney}
                 displayEmpty
-              >
-                <MenuItem value={"Daily"}>Daily</MenuItem>
-                <MenuItem value={"Weekly"}>Weekly</MenuItem>
-                <MenuItem value={"Monthly"}>Monthly</MenuItem>
-              </Select>
+              />
             </FormControl>
           </Box>
           <GenericButton

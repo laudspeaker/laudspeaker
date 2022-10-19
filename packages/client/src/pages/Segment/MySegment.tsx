@@ -194,7 +194,7 @@ const MySegment = ({
   const updateFormData = ({
     formDataToUpdate,
     id,
-    e,
+    value,
     response,
     rowIndex,
     isRoot = false,
@@ -202,7 +202,7 @@ const MySegment = ({
     const updatedData = recursivelyUpdateFormData(
       formDataToUpdate,
       id,
-      e.target.value,
+      value,
       response?.data?.id || "",
       isRoot
     );
@@ -225,11 +225,11 @@ const MySegment = ({
     setFormData(tempData);
   };
 
-  const updateEvent = async ({ e, id, rowIndex, type, isRoot }: any) => {
+  const updateEvent = async ({ value, id, rowIndex, type, isRoot }: any) => {
     const formDataToUpdate = JSON.parse(JSON.stringify(formData[rowIndex]));
     if (type === "select") {
       let response: any = {};
-      const resourceId = e.target.value;
+      const resourceId = value;
       getAllResources(resourceId)
         .then((resourceResponse) => {
           response = JSON.parse(JSON.stringify(resourceResponse));
@@ -242,7 +242,7 @@ const MySegment = ({
           updateFormData({
             formDataToUpdate,
             id,
-            e,
+            value,
             response,
             rowIndex,
             isRoot,
@@ -253,7 +253,7 @@ const MySegment = ({
       updateFormData({
         formDataToUpdate,
         id,
-        e,
+        value,
         response: {},
         rowIndex,
       });
@@ -262,7 +262,7 @@ const MySegment = ({
       updateFormData({
         formDataToUpdate,
         id,
-        e,
+        value,
         response: {},
         rowIndex,
       });
@@ -286,8 +286,8 @@ const MySegment = ({
     }
   };
 
-  const handleSubTitleOptions = (e: any) => {
-    setSubTitleOptions(e.target.value);
+  const handleSubTitleOptions = (value: any) => {
+    setSubTitleOptions(value);
   };
 
   const handleDeleteRow = (rowIndex: number) => {
@@ -464,6 +464,10 @@ const MySegment = ({
                 <Select
                   id="activeJourney"
                   value={subTitleOptions}
+                  options={[
+                    { value: ConditionalType.and, title: "All" },
+                    { value: ConditionalType.or, title: "Any" },
+                  ]}
                   onChange={handleSubTitleOptions}
                   displayEmpty
                   sx={{
@@ -474,10 +478,7 @@ const MySegment = ({
                       boxShadow: "none",
                     },
                   }}
-                >
-                  <MenuItem value={ConditionalType.and}>All</MenuItem>
-                  <MenuItem value={ConditionalType.or}>Any</MenuItem>
-                </Select>
+                />
               </FormControl>
               <Typography variant="subtitle2" fontSize={"14px"}>
                 of the following conditions match

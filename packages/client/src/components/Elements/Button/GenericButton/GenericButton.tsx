@@ -1,5 +1,4 @@
 import React from "react";
-import { Button } from "@mui/material";
 
 export interface ButtonProps {
   children: string | React.ReactNode;
@@ -26,9 +25,9 @@ const GenericButton = (props: ButtonProps) => {
   return (
     <button
       type="button"
-      className={`inline-flex items-center rounded-md border-0 border-transparent bg-emerald-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 ${
-        customClasses ? customClasses : ""
-      }`}
+      className={`inline-flex items-center rounded-md border-0 border-transparent text-white bg-emerald-600 px-6 py-3 text-base font-medium shadow-sm hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 ${
+        disabled ? "grayscale" : ""
+      } ${customClasses ? customClasses : ""} `}
       onClick={(ev) => {
         if (disableElevation) {
           ev.stopPropagation();

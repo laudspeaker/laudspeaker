@@ -120,13 +120,20 @@ export class TemplatesService {
   async findAll(
     account: Account,
     take = 100,
-    skip = 0
+    skip = 0,
+    orderBy?: keyof Template,
+    orderType?: 'asc' | 'desc'
   ): Promise<{ data: Template[]; totalPages: number }> {
     const totalPages = Math.ceil(
       (await this.templatesRepository.count()) / take
     );
+    const orderOptions = {};
+    if (orderBy && orderType) {
+      orderOptions[orderBy] = orderType;
+    }
     const templates = await this.templatesRepository.find({
       where: { ownerId: (<Account>account).id },
+      order: orderOptions,
       take: take < 100 ? take : 100,
       skip,
     });

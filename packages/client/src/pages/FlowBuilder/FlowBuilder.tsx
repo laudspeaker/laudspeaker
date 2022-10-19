@@ -582,16 +582,17 @@ const Flow = () => {
           <Select
             id="zoomSelect"
             value={zoomState}
-            onChange={(e) => {
-              setZoomState(+e.target.value);
-              setViewport({ x: viewX, y: viewY, zoom: +e.target.value });
+            options={possibleViewZoomValues.map((item) => ({
+              value: item,
+              title: item * 100 + "%",
+            }))}
+            renderValue={(item) => item * 100 + "%"}
+            onChange={(value) => {
+              setZoomState(+value);
+              setViewport({ x: viewX, y: viewY, zoom: +value });
             }}
             sx={{ margin: "0 7.5px" }}
-          >
-            {possibleViewZoomValues.map((value) => (
-              <MenuItem value={value}>{value * 100 + "%"}</MenuItem>
-            ))}
-          </Select>
+          />
         </div>
         <Background size={0} />
       </ReactFlow>

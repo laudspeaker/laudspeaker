@@ -117,6 +117,11 @@ const NamePerson = ({ onSubmit, isPrimary }: INameSegment) => {
               <Select
                 id="handleDay"
                 value={day}
+                options={[
+                  { value: "email" },
+                  { value: "slack" },
+                  { value: "sms" },
+                ]}
                 onChange={handleType}
                 displayEmpty
                 sx={{
@@ -128,11 +133,7 @@ const NamePerson = ({ onSubmit, isPrimary }: INameSegment) => {
                     boxShadow: "none",
                   },
                 }}
-              >
-                {["email", "slack", "sms"].map((item) => (
-                  <MenuItem value={item}>{item}</MenuItem>
-                ))}
-              </Select>
+              />
             </FormControl>
           </Grid>
           <Box display={"flex"} justifyContent="flex-end">

@@ -34,9 +34,9 @@ const EventCard = (props: IEventCardProp) => {
     handleDeleteRow(rowIndex);
   };
 
-  const handleChange = ({ e, id: key, type, isRoot }: any) => {
+  const handleChange = ({ value, id: key, type, isRoot }: any) => {
     updateFormData({
-      e,
+      value,
       id: key,
       rowIndex: id,
       type,

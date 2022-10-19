@@ -90,6 +90,7 @@ function EventProvider() {
               <Select
                 id="activeJourney"
                 value={eventProvider}
+                options={allChannels.map((item: any) => item.title)}
                 displayEmpty
                 onChange={(e) => {
                   setEventProvider(e.target.value);
@@ -111,8 +112,8 @@ function EventProvider() {
                     borderRadius: "6px !important",
                   },
                 }}
-              >
-                {allChannels.map((channel: any) => {
+              />
+              {/* {allChannels.map((channel: any) => {
                   return (
                     <MenuItem
                       value={channel.title}
@@ -139,8 +140,8 @@ function EventProvider() {
                       />
                     </MenuItem>
                   );
-                })}
-              </Select>
+                })} */}
+              {/* </Select> */}
             </FormControl>
           </Grid>
           <Grid

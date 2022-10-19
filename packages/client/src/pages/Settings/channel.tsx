@@ -107,6 +107,7 @@ function Channel() {
             padding: "30px",
             width: "100%",
             maxWidth: "930px",
+            overflow: "visible",
           }}
         >
           <Typography
@@ -138,9 +139,15 @@ function Channel() {
               <Select
                 id="activeJourney"
                 value={channels}
-                onChange={(e) => {
-                  setChannels(e.target.value);
-                  handleInputChange("channel", e.target.value);
+                options={allChannels.map((item: any) => ({
+                  value: item.title,
+                  subtitle: item.subTitle,
+                  disabled: item.disabled,
+                }))}
+                tick
+                onChange={(value) => {
+                  setChannels(value);
+                  handleInputChange("channel", value);
                 }}
                 displayEmpty
                 multipleSelections
@@ -160,8 +167,8 @@ function Channel() {
                     borderRadius: "6px !important",
                   },
                 }}
-              >
-                {allChannels.map((channel: any) => {
+              />
+              {/* {allChannels.map((channel: any) => {
                   return (
                     <MenuItem
                       value={channel.title}
@@ -189,7 +196,7 @@ function Channel() {
                     </MenuItem>
                   );
                 })}
-              </Select>
+              </Select> */}
               <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
                 {channels.map((value: string) => (
                   <Chip key={value} label={value} />

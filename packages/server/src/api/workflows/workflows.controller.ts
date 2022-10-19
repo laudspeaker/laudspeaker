@@ -21,6 +21,7 @@ import { Account } from '../accounts/entities/accounts.entity';
 import { Request } from 'express';
 import { StartWorkflowDto } from './dto/start-workflow.dto';
 import { WorkflowStatusUpdateDTO } from './dto/workflow-status-update.dto';
+import { Workflow } from './entities/workflow.entity';
 
 @Controller('workflows')
 export class WorkflowsController {
@@ -36,12 +37,16 @@ export class WorkflowsController {
   findAll(
     @Req() { user }: Request,
     @Query('take') take?: string,
-    @Query('skip') skip?: string
+    @Query('skip') skip?: string,
+    @Query('orderBy') orderBy?: keyof Workflow,
+    @Query('orderType') orderType?: 'asc' | 'desc'
   ) {
     return this.workflowsService.findAll(
       <Account>user,
       take && +take,
-      skip && +skip
+      skip && +skip,
+      orderBy,
+      orderType
     );
   }
 

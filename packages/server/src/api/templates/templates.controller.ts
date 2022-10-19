@@ -21,6 +21,7 @@ import { TemplatesService } from './templates.service';
 import { CreateTemplateDto } from './dto/create-template.dto';
 import { UpdateTemplateDto } from './dto/update-template.dto';
 import { Account } from '../accounts/entities/accounts.entity';
+import { Template } from './entities/template.entity';
 @Controller('templates')
 export class TemplatesController {
   constructor(
@@ -35,12 +36,16 @@ export class TemplatesController {
   findAll(
     @Req() { user }: Request,
     @Query('take') take?: string,
-    @Query('skip') skip?: string
+    @Query('skip') skip?: string,
+    @Query('orderBy') orderBy?: keyof Template,
+    @Query('orderType') orderType?: 'asc' | 'desc'
   ) {
     return this.templatesService.findAll(
       <Account>user,
       take && +take,
-      skip && +skip
+      skip && +skip,
+      orderBy,
+      orderType
     );
   }
 

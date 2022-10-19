@@ -1,20 +1,8 @@
 import * as React from "react";
-import Box from "@mui/material/Box";
-import CssBaseline from "@mui/material/CssBaseline";
-import Drawer from "@mui/material/Drawer";
-import List from "@mui/material/List";
-import ListItem from "@mui/material/ListItem";
-import ListItemButton from "@mui/material/ListItemButton";
-import ListItemIcon from "@mui/material/ListItemIcon";
-import ListItemText from "@mui/material/ListItemText";
 import { dataSubArray } from "./SideDrawer.fixtures";
-import { Typography } from "@mui/material";
 import { useLocation } from "react-router-dom";
-import CopyIcon from "../../assets/images/CopyIcon.svg";
 import { useParams } from "react-router-dom";
 import { useTypedSelector } from "hooks/useTypeSelector";
-
-const drawerWidth = (window.innerWidth - 154) * 0.21;
 
 interface Props {
   /**
@@ -67,7 +55,20 @@ export default function ResponsiveDrawer(props: Props) {
                   }
             }
           >
-            <ListItem key={item.text} disablePadding>
+            <div className="p-0" key={item.text}>
+              <button
+                className={`flex justify-between items-center cursor-pointer relative w-full hover:bg-gray-200 disabled:opacity-50`}
+                disabled={isDisabled}
+              >
+                <div className="w-[50px] h-[50px] flex justify-center items-center">
+                  {item.imgIcon}
+                </div>
+                <div className="text-[#28282E] font-medium leading-[1] text-left w-full">
+                  {item.text}
+                </div>
+              </button>
+            </div>
+            {/* <ListItem key={item.text} disablePadding>
               <ListItemButton disabled={isDisabled}>
                 <ListItemIcon>{item.imgIcon}</ListItemIcon>
                 <ListItemText>
@@ -82,7 +83,7 @@ export default function ResponsiveDrawer(props: Props) {
                   </Typography>
                 </ListItemText>
               </ListItemButton>
-            </ListItem>
+            </ListItem> */}
           </div>
           // : (
           //   <></>
@@ -99,19 +100,9 @@ export default function ResponsiveDrawer(props: Props) {
             <>
               {item.type === "group" ? (
                 <>
-                  <Typography
-                    sx={{
-                      textAlign: "left",
-                      fontWeight: 500,
-                      color: "#707070",
-                      marginTop: "26px",
-                      marginLeft: "18px",
-                      fontSize: "14px",
-                      fontFamily: "Inter",
-                    }}
-                  >
+                  <div className="text-left font-medium mt-[26px] ml-[18px] text-[14px] font-[Inter]">
                     {item.text}
-                  </Typography>
+                  </div>
                   {item?.children?.map((menuItem: any) =>
                     generateMenuItem(menuItem)
                   )}
@@ -128,7 +119,11 @@ export default function ResponsiveDrawer(props: Props) {
   const drawer = (): React.ReactNode => {
     return (
       <div>
-        <List sx={{ padding: "0 0" }}>
+        <div className="h-[50px] bg-[#4FA198] flex-col justify-between px-[20px] py-[15px]">
+          <div className="text-[16px] text-white">{name}</div>
+          {generateMenu(dataSubArray)}
+        </div>
+        {/* <List sx={{ padding: "0 0" }}>
           <Box
             sx={{
               height: "50px",
@@ -143,61 +138,62 @@ export default function ResponsiveDrawer(props: Props) {
             </Box>
           </Box>
           {generateMenu(dataSubArray)}
-        </List>
+        </List> */}
       </div>
     );
   };
 
   return (
-    <Box sx={{ display: "flex" }}>
-      <CssBaseline />
-      <Box
-        component="nav"
-        sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
-        aria-label="mailbox folders"
-      >
-        <Drawer
-          variant="permanent"
-          sx={{
-            display: { xs: "none", sm: "block" },
-            "& .MuiDrawer-paper": {
-              boxSizing: "border-box",
-              width: drawerWidth,
-              backgroundColor: "#FFFFFF",
-              position: "relative !important",
-              color: "black",
-            },
-            "& .MuiDrawer-paper::-webkit-scrollbar": { width: 0 },
-            "& .MuiTypography-root": {
-              fontSize: "16px",
-            },
-            "& .MuiListItemButton-root": {
-              alignItems: "center",
-              justifyContent: "center",
-              paddingLeft: "16px",
-              paddingRight: "24px",
-            },
-            "& .MuiListItemIcon-root": {
-              display: "flex",
-              justifyContent: "center",
-              minWidth: "unset",
-              padding: "14px 12px 14px 17px",
-            },
-            //     "& .MuiListItemText-root": {
-            //       height: "auto",
-            //       lineHeight: 1,
-            //       flex: "none",
-            //       marginBottom: 0,
-            //       marginTop: "8px",
-            //     },
-            //     "& .MuiListItem-root": { margin: "8px 0" },
-            //     "& .MuiButtonBase-root": { height: "76px" },
-          }}
-          open
-        >
-          {drawer()}
-        </Drawer>
-      </Box>
-    </Box>
+    <div>{drawer()}</div>
+    // <Box sx={{ display: "flex" }}>
+    //   <CssBaseline />
+    //   <Box
+    //     component="nav"
+    //     sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
+    //     aria-label="mailbox folders"
+    //   >
+    //     <Drawer
+    //       variant="permanent"
+    //       sx={{
+    //         display: { xs: "none", sm: "block" },
+    //         "& .MuiDrawer-paper": {
+    //           boxSizing: "border-box",
+    //           width: drawerWidth,
+    //           backgroundColor: "#FFFFFF",
+    //           position: "relative !important",
+    //           color: "black",
+    //         },
+    //         "& .MuiDrawer-paper::-webkit-scrollbar": { width: 0 },
+    //         "& .MuiTypography-root": {
+    //           fontSize: "16px",
+    //         },
+    //         "& .MuiListItemButton-root": {
+    //           alignItems: "center",
+    //           justifyContent: "center",
+    //           paddingLeft: "16px",
+    //           paddingRight: "24px",
+    //         },
+    //         "& .MuiListItemIcon-root": {
+    //           display: "flex",
+    //           justifyContent: "center",
+    //           minWidth: "unset",
+    //           padding: "14px 12px 14px 17px",
+    //         },
+    //         //     "& .MuiListItemText-root": {
+    //         //       height: "auto",
+    //         //       lineHeight: 1,
+    //         //       flex: "none",
+    //         //       marginBottom: 0,
+    //         //       marginTop: "8px",
+    //         //     },
+    //         //     "& .MuiListItem-root": { margin: "8px 0" },
+    //         //     "& .MuiButtonBase-root": { height: "76px" },
+    //       }}
+    //       open
+    //     >
+    //       {drawer()}
+    //     </Drawer>
+    //   </Box>
+    // </Box>
   );
 }

@@ -185,9 +185,9 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
 
   const [isButtonDisabled, setIsButtonDisabled] = useState(true);
 
-  const handleTimeDelayChange = (e: any) => {
-    const arr: string[] = e.target.value.split(":");
-    setIsButtonDisabled(!e.target.value.match(/\d\d:\d\d:\d\d/));
+  const handleTimeDelayChange = (value: any) => {
+    const arr: string[] = value.split(":");
+    setIsButtonDisabled(!value.match(/\d\d:\d\d:\d\d/));
     if (
       arr.length > 3 ||
       (arr[0] && arr[0].length > 2) ||
@@ -199,16 +199,16 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
     ) {
       return;
     }
-    setDelayInputTime(e.target.value);
+    setDelayInputTime(value);
   };
 
-  const handleTimeSelectChange = (e: any) => {
+  const handleTimeSelectChange = (value: any) => {
     setIsButtonDisabled(true);
-    setEventTimeSelect(e.target.value);
+    setEventTimeSelect(value);
   };
 
-  const handletriggerType = (e: any) => {
-    setTriggerType(e.target.value);
+  const handletriggerType = (value: any) => {
+    setTriggerType(value);
   };
 
   const handleSpecificTimeChange = (value: Date | null) => {
@@ -321,7 +321,7 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
   const updateFormData = ({
     formDataToUpdate,
     id,
-    e,
+    value,
     response,
     rowIndex,
     isRoot = false,
@@ -329,7 +329,7 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
     const updatedData = recursivelyUpdateFormData(
       formDataToUpdate,
       id,
-      e.target.value,
+      value,
       response?.data?.id || "",
       isRoot
     );
@@ -351,12 +351,12 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
     ];
     setFormData(tempData);
   };
-  const updateEvent = async ({ e, id, rowIndex, type, isRoot }: any) => {
+  const updateEvent = async ({ value, id, rowIndex, type, isRoot }: any) => {
     setIsButtonDisabled(true);
     const formDataToUpdate = JSON.parse(JSON.stringify(formData[rowIndex]));
     if (type === "select") {
       let response: any = {};
-      const resourceId = e.target.value;
+      const resourceId = value;
       getAllResources(resourceId)
         .then((resourceResponse) => {
           response = JSON.parse(JSON.stringify(resourceResponse));
@@ -369,7 +369,7 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
           updateFormData({
             formDataToUpdate,
             id,
-            e,
+            value,
             response,
             rowIndex,
             isRoot,
@@ -377,13 +377,11 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
         });
     }
     if (type === "inputText" || type === "inputNumber") {
-      setIsButtonDisabled(
-        e.target.value === "" || e.target.value === undefined
-      );
+      setIsButtonDisabled(value === "" || value === undefined);
       updateFormData({
         formDataToUpdate,
         id,
-        e,
+        value,
         response: {},
         rowIndex,
       });
@@ -392,16 +390,16 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
       updateFormData({
         formDataToUpdate,
         id,
-        e,
+        value,
         response: {},
         rowIndex,
       });
     }
   };
 
-  const handleEventBasedChange = ({ e, id: key, type, isRoot }: any) => {
+  const handleEventBasedChange = ({ value, id: key, type, isRoot }: any) => {
     updateEvent({
-      e,
+      value,
       id: key,
       rowIndex: 0,
       type,
@@ -526,6 +524,10 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
                   id="eventTime"
                   name="eventTime"
                   value={eventTimeSelect}
+                  options={[
+                    { value: "Delay", title: "Delay" },
+                    { value: "SpecificTime", title: "Specific Time" },
+                  ]}
                   onChange={handleTimeSelectChange}
                   displayEmpty
                   sx={{
@@ -537,10 +539,7 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
                       boxShadow: "none",
                     },
                   }}
-                >
-                  <MenuItem value={"Delay"}>Delay</MenuItem>
-                  <MenuItem value={"SpecificTime"}>Specific Time</MenuItem>
-                </Select>
+                />
               </FormControl>
               {eventTimeSelect ? (
                 <>
@@ -578,7 +577,8 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
                       ? undefined
                       : transformDataToUI({
                           data: { type: "inputText" },
-                          onChange: ({ e }: any) => handleTimeDelayChange(e),
+                          onChange: ({ value }: any) =>
+                            handleTimeDelayChange(value),
                           isRoot: formData.conditions?.isRoot,
                           value: delayInputTime,
                           id: "delayTime",
@@ -789,6 +789,11 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
               <Select
                 id="activeJourney"
                 value={triggerType}
+                options={[
+                  { value: "eventBased", title: "Conditions" },
+                  { value: "timeDelay", title: "When" },
+                  { value: "timeWindow", title: "From" },
+                ].filter((item) => item.value === triggerType)}
                 onChange={handletriggerType}
                 displayEmpty
                 sx={{
@@ -799,17 +804,7 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
                     boxShadow: "none",
                   },
                 }}
-              >
-                {triggerType === "eventBased" && (
-                  <MenuItem value={"eventBased"}>Conditions</MenuItem>
-                )}
-                {triggerType === "timeDelay" && (
-                  <MenuItem value={"timeDelay"}>When</MenuItem>
-                )}
-                {triggerType === "timeWindow" && (
-                  <MenuItem value={"timeWindow"}>From</MenuItem>
-                )}
-              </Select>
+              />
             </FormControl>
           </Box>
           <Box marginLeft="88px">
@@ -862,6 +857,7 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
                   <Select
                     id="activeJourney"
                     value={triggerType}
+                    options={[{ value: "timeWindow", title: "To" }]}
                     onChange={handletriggerType}
                     displayEmpty
                     sx={{
@@ -872,9 +868,7 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
                         boxShadow: "none",
                       },
                     }}
-                  >
-                    <MenuItem value={"timeWindow"}>To</MenuItem>
-                  </Select>
+                  />
                 </FormControl>
               </Box>
               <Box marginLeft="88px">
