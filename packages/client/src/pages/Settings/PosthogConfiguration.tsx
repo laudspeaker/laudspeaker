@@ -41,8 +41,7 @@ function PosthogConfiguration() {
         posthogHostUrl: phHostUrl,
       })
     );
-    navigate("/settings/phconfiguration-two");
-    //navigate("/settings/additional-posthog");
+    navigate("/settings/posthog-configuration-two");
   };
 
   function renderButton() {
@@ -231,7 +230,7 @@ function PosthogConfiguration() {
               Your Setup List
             </Typography>
             <Typography variant="body1" color={"#6B7280"}>
-              Youre only a few steps away from your first message
+              You're only a few steps away from your first message!
             </Typography>
           </Box>
           <CustomStepper activeStep={3} />

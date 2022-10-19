@@ -22,6 +22,7 @@ import { CustomersService } from '../customers/customers.service';
 import { checkInclusion } from './audiences.helper';
 import { Stats } from './entities/stats.entity';
 import { Workflow } from '../workflows/entities/workflow.entity';
+import { EventDto } from '../events/dto/event.dto';
 
 @Injectable()
 export class AudiencesService {
@@ -39,7 +40,7 @@ export class AudiencesService {
     @InjectRepository(Workflow)
     private workflowRepository: Repository<Workflow>,
     @Inject(TemplatesService) private templatesService: TemplatesService
-  ) {}
+  ) { }
 
   /**
    * Find all audiences that belong to a given account. If
@@ -147,17 +148,17 @@ export class AudiencesService {
         isEditable: true,
       });
 
-      const workflows = await this.workflowRepository.find({
-        where: {
-          audiences: Like('%' + audience.id + '%'),
-        },
-      });
+      // const workflows = await this.workflowRepository.find({
+      //   where: {
+      //     audiences: Like('%' + audience.id + '%'),
+      //   },
+      // });
 
-      if (workflows.some((wkf) => wkf.isActive)) {
-        throw new HttpException('This workflow is active', 400);
-      }
+      // if (workflows.some((wkf) => wkf.isActive)) {
+      //   throw new HttpException('This workflow is active', 400);
+      // }
 
-      this.logger.debug('Found audience: ' + audience);
+      this.logger.debug('Found audience: ' + audience.id);
       if (!audience) {
         this.logger.error('Error: Audience not found');
         return Promise.reject(new Error(Errors.ERROR_DOES_NOT_EXIST));
@@ -181,7 +182,7 @@ export class AudiencesService {
             : undefined,
         }
       );
-      this.logger.debug('Updated audience: ' + audience);
+      this.logger.debug('Updated audience: ' + audience.id);
     } catch (err) {
       this.logger.error('Error: ' + err);
       return Promise.reject(err);
@@ -213,7 +214,7 @@ export class AudiencesService {
         id: addTemplateDto.audienceId,
         isEditable: true,
       });
-      this.logger.debug('Found audience: ' + audience);
+      this.logger.debug('Found audience: ' + audience.id);
     } catch (err: unknown) {
       this.logger.error('Error: ' + err);
       return Promise.reject(<Error>err);
@@ -223,15 +224,15 @@ export class AudiencesService {
         account,
         addTemplateDto.templateId
       );
-      this.logger.debug('Found template: ' + template);
+      this.logger.debug('Found template: ' + template.id);
     } catch (err: unknown) {
       this.logger.error('Error: ' + err);
       return Promise.reject(<Error>err);
     }
     if (audience && template) {
       if (
-        audience.templates.length &&
-        audience.templates.indexOf(template.id) > -1
+        audience?.templates?.length &&
+        audience?.templates?.indexOf(template.id) > -1
       ) {
         this.logger.debug('Template already exists on audience');
         return Promise.resolve();
@@ -245,7 +246,7 @@ export class AudiencesService {
             templates: templates,
           }
         );
-        this.logger.debug('Added template to audience.');
+        this.logger.debug('Added template ' + template.id + ' to audience ' + audience.id);
       } catch (err: unknown) {
         this.logger.error('Error: ' + err);
         return Promise.reject(<Error>err);
@@ -290,7 +291,7 @@ export class AudiencesService {
         ownerId: (<Account>account).id,
         id: id,
       });
-      this.logger.debug('Found audience to freeze: ' + found);
+      this.logger.debug('Found audience to freeze: ' + found.id);
     } catch (err) {
       this.logger.error('Error: ' + err);
       return Promise.reject(err);
@@ -300,7 +301,7 @@ export class AudiencesService {
         ...found,
         isEditable: false,
       });
-      this.logger.debug('Froze audience: ' + ret);
+      this.logger.debug('Froze audience: ' + ret.id);
     } catch (err) {
       this.logger.error('Error: ' + err);
       return Promise.reject(err);
@@ -326,15 +327,16 @@ export class AudiencesService {
     account: Account,
     from: string | null | undefined,
     to: string | null | undefined,
-    customerId: string
-  ): Promise<Job<any>> {
+    customerId: string,
+    event: EventDto
+  ): Promise<string | number> {
     let index = -1; // Index of the customer ID in the fromAud.customers array
-    let jobId: Job<any>;
+    let jobId: string | number;
     let fromAud, toAud: Audience;
     if (from) {
       try {
         fromAud = await this.findOne(account, from);
-        this.logger.debug('Audience: ' + fromAud);
+        //this.logger.debug('Audience: ' + fromAud);
       } catch (err) {
         this.logger.error('Error: ' + err);
         return Promise.reject(err);
@@ -343,29 +345,29 @@ export class AudiencesService {
     if (to) {
       try {
         toAud = await this.findOne(account, to);
-        this.logger.debug('Audience: ' + toAud);
+        //this.logger.debug('Audience: ' + toAud);
       } catch (err) {
         this.logger.error('Error: ' + err);
         return Promise.reject(err);
       }
     }
     if (fromAud?.customers?.length) {
-      index = fromAud?.customers.indexOf(customerId);
+      index = fromAud?.customers?.indexOf(customerId);
       this.logger.debug(
         'Index of customer ' + customerId + ' inside of from: ' + index
       );
     }
     if (fromAud && !fromAud.isEditable && index > -1) {
       try {
-        this.logger.debug('From customers before: ' + fromAud.customers);
-        fromAud.customers.splice(index, 1);
+        this.logger.debug('From customers before: ' + fromAud?.customers?.length);
+        fromAud?.customers?.splice(index, 1);
         await this.audiencesRepository.update(
           { id: fromAud.id, isEditable: false },
           {
-            customers: fromAud.customers,
+            customers: fromAud?.customers,
           }
         );
-        this.logger.debug('From customers after: ' + fromAud.customers);
+        this.logger.debug('From customers after: ' + fromAud?.customers?.length);
       } catch (err) {
         this.logger.error('Error: ' + err);
         return Promise.reject(err);
@@ -373,30 +375,31 @@ export class AudiencesService {
     }
     if (toAud && !toAud.isEditable) {
       try {
-        this.logger.debug('To before: ' + JSON.stringify(toAud));
+        this.logger.debug('To before: ' + toAud?.customers?.length);
         const saved = await this.audiencesRepository.save(
           //{ id: toAud.id, isEditable: false },
           {
             ...toAud,
-            customers: [...toAud.customers, customerId],
+            customers: [...toAud?.customers, customerId],
           }
         );
-        this.logger.debug('To after: ' + JSON.stringify(saved));
+        this.logger.debug('To after: ' + saved?.customers?.length);
       } catch (err) {
         this.logger.error('Error: ' + err);
         return Promise.reject(err);
       }
-      if (toAud.templates?.length) {
+      if (toAud?.templates?.length) {
         for (
           let templateIndex = 0;
-          templateIndex < toAud.templates.length;
+          templateIndex < toAud?.templates?.length;
           templateIndex++
         ) {
           try {
             jobId = await this.templatesService.queueMessage(
               account,
               toAud.templates[templateIndex],
-              customerId
+              customerId,
+              event
             );
             this.logger.debug('Queued Message');
           } catch (err) {
@@ -424,20 +427,25 @@ export class AudiencesService {
     account: Account,
     fromAud: Audience | null | undefined,
     toAud: Audience | null | undefined,
-    customers: CustomerDocument[]
-  ): Promise<void> {
-    for (let index = 0; index < customers.length; index++) {
+    customers: CustomerDocument[],
+    event: EventDto
+  ): Promise<(string | number)[]> {
+    let jobIds: (string | number)[] = [];
+    for (let index = 0; index < customers?.length; index++) {
       try {
-        await this.moveCustomer(
+        const jobId: string | number = await this.moveCustomer(
           account,
           fromAud?.id,
           toAud?.id,
-          customers[index].id
+          customers[index].id,
+          event
         );
+        jobIds.push(jobId);
       } catch (err) {
         this.logger.error('Error: ' + err);
         return Promise.reject(err);
       }
     }
+    return Promise.resolve(jobIds)
   }
 }

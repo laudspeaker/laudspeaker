@@ -20,10 +20,10 @@ export class Audience {
   @Column('bool', { default: true })
   isDynamic: boolean;
 
-  @Column('simple-array', { nullable: true })
+  @Column('text', { nullable: false, array: true, default: [] })
   customers: string[];
 
-  @Column('simple-array', { nullable: true })
+  @Column('text', { nullable: false, array: true, default: [] })
   templates: string[];
 
   /*

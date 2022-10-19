@@ -72,7 +72,7 @@ export class CustomersController {
         account.posthogProjectId[0],
         account.posthogApiKey[0],
         account.posthogHostUrl[0],
-        account.id
+        account
       );
     } catch (e) {
       console.log(e);

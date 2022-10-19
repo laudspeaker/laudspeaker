@@ -1,4 +1,4 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable, Inject, LoggerService } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Installation } from './entities/installation.entity';
@@ -20,6 +20,7 @@ import { CreateCustomerDto } from '../customers/dto/create-customer.dto';
 import { State } from './entities/state.entity';
 import { platform, release } from 'os';
 import { CustomerDocument } from '../customers/schemas/customer.schema';
+import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 
 interface ResponseError extends Error {
   status?: number;
@@ -41,6 +42,8 @@ export class SlackService {
   client: WebClient;
 
   constructor(
+    @Inject(WINSTON_MODULE_NEST_PROVIDER)
+    private readonly logger: LoggerService,
     @InjectRepository(Installation)
     private installationRepository: Repository<Installation>,
     @InjectRepository(State)
@@ -74,7 +77,7 @@ export class SlackService {
           try {
             ret = await this.stateRepository.save(state);
           } catch (e) {
-            console.log(e);
+            this.logger.error('Error: ' + e);
             ret = { id: null };
           }
           // return a state string that references saved options in DB
@@ -88,7 +91,7 @@ export class SlackService {
           try {
             decoded = await this.stateRepository.findOneBy({ id: state });
           } catch (e) {
-            console.log(e);
+            this.logger.error('Error: ' + e);
           }
           const generatedAt = new Date(decoded.now);
           const passedSeconds = Math.floor(
@@ -112,7 +115,7 @@ export class SlackService {
             try {
               await this.installationRepository.save(install);
             } catch (e) {
-              console.log(e);
+              this.logger.error('Error: ' + e);
             }
             return;
           }
@@ -123,7 +126,7 @@ export class SlackService {
             try {
               await this.installationRepository.save(install);
             } catch (e) {
-              console.log(e);
+              this.logger.error('Error: ' + e);
             }
             return;
           }
@@ -222,7 +225,7 @@ export class SlackService {
       });
       return url;
     } catch (e) {
-      console.log(e);
+      this.logger.error('Error: ' + e);
       return;
     }
   }
@@ -319,10 +322,10 @@ export class SlackService {
             installation
           );
         } catch (e) {
-          console.log(e);
+          this.logger.error('Error: ' + e);
         }
       } catch (e) {
-        console.log(e);
+        this.logger.error('Error: ' + e);
       }
     }
     return wasFound;
@@ -660,7 +663,7 @@ export class SlackService {
         });
         this.sanitizeMembers(members, tok, teamOrEnterpriseId);
       } catch (e) {
-        console.log(e);
+        this.logger.error('Error: ' + e);
       }
     }
   }
@@ -733,7 +736,6 @@ export class SlackService {
           const { type, user, view } = body.payload;
           if (type === 'view_submission') {
             //res.send(''); // Make sure to respond to the server to avoid an error
-            //console.log();
             // const data = {
             //   note: view.state.values.note01.content.value,
             //   color: view.state.values.note02.color.selected_option.value
@@ -798,7 +800,7 @@ export class SlackService {
         }
         res.end();
       } catch (e) {
-        console.log(e);
+        this.logger.error('Error: ' + e);
       }
     };
   }

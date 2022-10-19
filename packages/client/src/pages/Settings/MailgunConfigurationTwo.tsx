@@ -8,13 +8,9 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { useTypedSelector } from "hooks/useTypeSelector";
-import {
-  setSettingData,
-  startPosthogImport,
-  updateUserData,
-} from "reducers/settings";
+import { setSettingData, updateUserData } from "reducers/settings";
 
-function AdditionalPosthog() {
+function MailgunConfigurationTwo() {
   const dispatch = useDispatch();
   const { settings } = useTypedSelector((state) => state.settings);
   const [defaultName, setDefaultName] = useState<string>(
@@ -27,12 +23,31 @@ function AdditionalPosthog() {
     dispatch(setSettingData({ ...settings, [name]: value }));
   };
   const navigate = useNavigate();
-  const moveToCompletion = async () => {
-    console.log("start import pls");
-    await startPosthogImport();
-    dispatch(setSettingData({ ...settings, eventsCompleted: true }));
+
+  const moveToNetworkConfiguration = () => {
     navigate("/settings/network-configuration");
   };
+
+  const handleNextButtonClick = async () => {
+    await dispatch(
+      updateUserData({
+        mailgunAPIKey: settings.privateApiKey,
+        sendingEmail: settings.defaultEmail,
+        sendingDomain: settings.domainName,
+        sendingName: settings.defaultName,
+        finishedOnboarding: (settings.channel as string[])[0],
+      })
+    );
+    (settings.channel as string[]).shift();
+    dispatch(setSettingData({ ...settings, channel: settings.channel }));
+    moveToNetworkConfiguration();
+  };
+
+  const inputEmailDomain = `@${settings.domainName.substring(
+    0,
+    3
+  )}*****${settings.domainName.substring(settings.domainName.length - 7)}`;
+
   return (
     <Box
       sx={{
@@ -89,22 +104,70 @@ function AdditionalPosthog() {
               marginBottom: "10px",
             }}
           >
-            Ready to Sync Posthog users?
+            Email Configuration
           </Typography>
-          <Typography
-            variant="subtitle1"
-            sx={{
-              fontSize: "18px",
-              marginBottom: "35px",
-            }}
-          >
-            Once this is done, we will email you on how to add the posthog app
-            extension..
-          </Typography>
+          <Grid container direction={"row"} padding={"10px 0px"}>
+            <FormControl variant="standard">
+              <Input
+                isRequired
+                value={defaultName}
+                label="Default From Name"
+                placeholder={"John smith"}
+                name="name"
+                id="name"
+                sx={{ maxWidth: "530px" }}
+                onChange={(e) => {
+                  setDefaultName(e.target.value);
+                  handleInputChange("defaultName", e.target.value);
+                }}
+                labelShrink
+                inputProps={{
+                  style: {
+                    padding: "15px 16px 15px 16px",
+                    background: "#fff",
+                    border: "1px solid #D1D5DB",
+                    fontFamily: "Inter",
+                    fontWeight: 500,
+                    fontSize: "16px",
+                  },
+                }}
+              />
+            </FormControl>
+          </Grid>
+          <Grid container direction={"row"} padding={"10px 0px"}>
+            <FormControl variant="standard">
+              <Input
+                isRequired
+                value={defaultEmail + inputEmailDomain}
+                label="Default From Email"
+                placeholder={"smith"}
+                name="name"
+                id="name"
+                sx={{ maxWidth: "530px" }}
+                onChange={(e) => {
+                  if (!e.target.value.endsWith(inputEmailDomain)) return;
+                  const newValue = e.target.value.replace(inputEmailDomain, "");
+                  setDefaultEmail(newValue);
+                  handleInputChange("defaultEmail", newValue);
+                }}
+                labelShrink
+                inputProps={{
+                  style: {
+                    padding: "15px 16px 15px 16px",
+                    background: "#fff",
+                    fontFamily: "Inter",
+                    fontWeight: 500,
+                    fontSize: "16px",
+                    border: "1px solid #D1D5DB",
+                  },
+                }}
+              />
+            </FormControl>
+          </Grid>
           <Box display={"flex"} marginTop="10%" justifyContent="flex-start">
             <GenericButton
               variant="contained"
-              onClick={moveToCompletion}
+              onClick={handleNextButtonClick}
               fullWidth
               sx={{
                 maxWidth: "200px",
@@ -112,7 +175,7 @@ function AdditionalPosthog() {
                   "linear-gradient(to right, #6BCDB5 , #307179, #122F5C)",
               }}
             >
-              Sync
+              Next
             </GenericButton>
           </Box>
         </Card>
@@ -133,14 +196,14 @@ function AdditionalPosthog() {
               Your Setup List
             </Typography>
             <Typography variant="body1" color={"#6B7280"}>
-              Youre only a few steps away from your first message
+              You're only a few steps away from your first message!
             </Typography>
           </Box>
-          <CustomStepper activeStep={4} />
+          <CustomStepper activeStep={2} />
         </Card>
       </Box>
     </Box>
   );
 }
 
-export default AdditionalPosthog;
+export default MailgunConfigurationTwo;

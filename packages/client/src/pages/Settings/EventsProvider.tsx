@@ -41,7 +41,7 @@ const allChannels: any = [
   },
 ];
 
-function EventsProv() {
+function EventsProvider() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { settings } = useTypedSelector((state) => state.settings);
@@ -267,7 +267,7 @@ function EventsProv() {
               Your Setup List
             </Typography>
             <Typography variant="body1" color={"#6B7280"}>
-              Youre only a few steps away from your first message
+              You're only a few steps away from your first message!
             </Typography>
           </Box>
           <CustomStepper
@@ -286,4 +286,4 @@ function EventsProv() {
   );
 }
 
-export default EventsProv;
+export default EventsProvider;

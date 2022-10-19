@@ -12,6 +12,7 @@ import { InjectQueue } from '@nestjs/bull';
 import { Installation } from '../slack/entities/installation.entity';
 import { SlackService } from '../slack/slack.service';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
+import { EventDto } from '../events/dto/event.dto';
 
 @Injectable()
 export class TemplatesService {
@@ -24,7 +25,7 @@ export class TemplatesService {
     @Inject(SlackService) private slackService: SlackService,
     @InjectQueue('email') private readonly emailQueue: Queue,
     @InjectQueue('slack') private readonly slackQueue: Queue
-  ) {}
+  ) { }
 
   create(account: Account, createTemplateDto: CreateTemplateDto) {
     const template = new Template();
@@ -62,11 +63,12 @@ export class TemplatesService {
   async queueMessage(
     account: Account,
     templateId: string,
-    customerId: string
-  ): Promise<Job<any>> {
+    customerId: string,
+    event: EventDto
+  ): Promise<string | number> {
     let customer: CustomerDocument,
       template: Template,
-      jobId: Job<any>, // created jobId
+      job: Job<any>, // created jobId
       installation: Installation;
     try {
       customer = await this.customersService.findById(account, customerId);
@@ -83,12 +85,12 @@ export class TemplatesService {
     }
     switch (template.type) {
       case 'email':
-        jobId = await this.emailQueue.add('send', {
+        job = await this.emailQueue.add('send', {
           key: account.mailgunAPIKey,
           from: account.sendingName,
           domain: account.sendingDomain,
           email: account.sendingEmail,
-          to: customer.email,
+          to: customer.phEmail ? customer.phEmail : customer.email,
           subject: template.subject,
           text: template.text,
         });
@@ -99,7 +101,7 @@ export class TemplatesService {
         } catch (err) {
           return Promise.reject(err);
         }
-        jobId = await this.slackQueue.add('send', {
+        job = await this.slackQueue.add('send', {
           methodName: 'chat.postMessage',
           token: installation.installation.bot.token,
           args: {
@@ -111,7 +113,7 @@ export class TemplatesService {
       case 'sms':
         break;
     }
-    return Promise.resolve(jobId);
+    return Promise.resolve(job.id);
   }
 
   findAll(account: Account): Promise<Template[]> {

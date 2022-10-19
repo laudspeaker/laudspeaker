@@ -4,20 +4,20 @@ import { useNavigate } from "react-router-dom";
 
 const NetworkCofiguration = () => {
   const navigate = useNavigate();
-  const moveToEventProvider = () => {
-    navigate("/settings/event-provider");
+  const moveToEventsProvider = () => {
+    navigate("/settings/events-provider");
   };
 
   const moveToSlackConfiguration = () => {
     navigate("/settings/slack-configuration");
   };
 
-  const moveToEvents = () => {
-    navigate("/settings/events");
+  const moveToEmailProvider = () => {
+    navigate("/settings/email-provider");
   };
 
-  const moveToPosthog = () => {
-    navigate("/settings/phconfiguration");
+  const moveToPosthogConfiguration = () => {
+    navigate("/settings/posthog-configuration");
   };
 
   const moveToCompletion = () => {
@@ -32,7 +32,7 @@ const NetworkCofiguration = () => {
     const eventsCompleted = settings.eventsCompleted;
 
     if (nextChannel === "Email") {
-      moveToEventProvider();
+      moveToEmailProvider();
       return;
     }
 
@@ -44,13 +44,13 @@ const NetworkCofiguration = () => {
     if (!settings.eventsCompleted) {
       const events = settings.events as string[];
       if (!events?.length) {
-        moveToEvents();
+        moveToEventsProvider();
         return;
       }
       const nextEvent = events[0];
 
       if (nextEvent === "Posthog") {
-        moveToPosthog();
+        moveToPosthogConfiguration();
         return;
       }
     }

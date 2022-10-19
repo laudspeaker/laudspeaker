@@ -12,9 +12,10 @@ export class EmailProcessor {
   constructor(
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
     private readonly logger: LoggerService
-  ) {}
+  ) { }
   @Process('send')
   async handleSend(job: Job) {
+    this.logger.debug(JSON.stringify(job, null, 2));
     const mailgun = new Mailgun(formData);
     const mg = mailgun.client({ username: 'api', key: job.data.key });
     try {
@@ -28,7 +29,7 @@ export class EmailProcessor {
         'Response from message sending: ' + JSON.stringify(msg)
       );
     } catch (err) {
-      this.logger.error(err);
-    } // logs any error
+      this.logger.error('Error attempting to send email: ' + err);
+    }
   }
 }

@@ -1,3 +1,3 @@
-import Channel from "./channel";
+import Channel from "./Channel";
 
 export { Channel };

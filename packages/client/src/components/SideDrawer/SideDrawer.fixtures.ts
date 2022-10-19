@@ -28,13 +28,13 @@ export default [
 export const dataSubArray = [
   {
     id: "audienceStates",
-    text: "Audience States",
+    text: "Steps",
     type: "group",
     children: [
       {
         id: "audience",
         imgIcon: Audience(),
-        text: "Audience State",
+        text: "New Step",
         type: "menu",
         link: "/audience",
       },
