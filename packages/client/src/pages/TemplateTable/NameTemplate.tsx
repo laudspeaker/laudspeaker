@@ -50,8 +50,8 @@ const NameTemplate = ({ onSubmit, isPrimary }: INameSegment) => {
     }
   };
 
-  const handleType = (e: any) => {
-    setDay(e.target.value);
+  const handleType = (value: any) => {
+    setDay(value);
   };
 
   // Pushing state back up to the flow builder

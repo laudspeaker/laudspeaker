@@ -147,10 +147,15 @@ function EventsProv() {
               <Select
                 id="activeJourney"
                 value={events}
-                options={allChannels.map((item: any) => item.title)}
-                onChange={(e) => {
-                  setChannels(e.target.value);
-                  handleInputChange("events", e.target.value);
+                options={allChannels.map((item: any) => ({
+                  title: item.title,
+                  value: item.id,
+                  disabled: item.disabled,
+                  subtitle: item.subTitle,
+                }))}
+                onChange={(value) => {
+                  setChannels(value);
+                  handleInputChange("events", value);
                 }}
                 displayEmpty
                 multipleSelections

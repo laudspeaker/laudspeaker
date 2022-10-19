@@ -60,6 +60,7 @@ function EventProvider() {
             padding: "30px",
             width: "100%",
             maxWidth: "930px",
+            overflow: "visible !important",
           }}
         >
           <Typography
@@ -90,11 +91,16 @@ function EventProvider() {
               <Select
                 id="activeJourney"
                 value={eventProvider}
-                options={allChannels.map((item: any) => item.title)}
+                options={allChannels.map((item: any) => ({
+                  title: item.title,
+                  subtitle: item.subTitle,
+                  value: item.id,
+                  disabled: item.disabled,
+                }))}
                 displayEmpty
-                onChange={(e) => {
-                  setEventProvider(e.target.value);
-                  handleInputChange("eventProvider", e.target.value);
+                onChange={(value) => {
+                  setEventProvider(value);
+                  handleInputChange("eventProvider", value);
                 }}
                 multipleSelections={true}
                 renderValue={(selected) => <>{selected.join(", ")}</>}

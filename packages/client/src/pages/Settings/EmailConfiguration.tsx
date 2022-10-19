@@ -112,10 +112,12 @@ function EmailConfiguration() {
               <Select
                 id="activeJourney"
                 value={domainName}
-                options={domainList.map((item: any) => item.name)}
-                onChange={(e) => {
-                  setDomainName(e.target.value);
-                  handleInputChange("domainName", e.target.value);
+                options={domainList.map((item: any) => ({
+                  value: item.name,
+                }))}
+                onChange={(value) => {
+                  setDomainName(value);
+                  handleInputChange("domainName", value);
                 }}
                 displayEmpty
                 renderValue={(val: any) => val}
