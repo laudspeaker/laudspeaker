@@ -15,7 +15,7 @@ import tokenService from "./services/token.service";
 import Dashboard from "./pages/Dashboard";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
-import Channel from "./pages/Settings/Channel";
+import Channel from "pages/Settings/Channel";
 import FlowBuilder from "pages/FlowBuilder";
 import EmailConfig from "pages/EmailConfig";
 import EmailProvider from "pages/Settings/EmailProvider";
