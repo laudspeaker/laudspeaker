@@ -24,6 +24,7 @@ export class PostHogEventDto {
 
   @Trim()
   @IsNotEmpty()
+  @IsOptional()
   public anonymousId: string;
 
   @IsString()

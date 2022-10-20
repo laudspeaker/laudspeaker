@@ -381,7 +381,7 @@ export class WorkflowsService {
           event.correlationKey,
           event.correlationValue
         );
-        this.logger.debug('Found customer: ' + customer.id);
+        this.logger.debug('Found customer: ' + customer?.id);
       } catch (err) {
         this.logger.error('Error: ' + err);
         return Promise.reject(err);

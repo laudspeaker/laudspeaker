@@ -72,7 +72,7 @@ export class EventsController {
     // Step 1: Find corresponding account
     try {
       account = await this.userService.findOneByAPIKey(apiKey.substring(8));
-      this.logger.debug("Found account: ", account.id)
+      this.logger.debug("Found account: " + account.id)
     } catch (e) {
       this.logger.error('Error: ' + e);
       return new HttpException(e, 500);
