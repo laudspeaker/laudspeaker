@@ -1,5 +1,3 @@
-import { Typography } from "@mui/material";
-import Box from "@mui/material/Box";
 import { StatusCodes } from "./../../constants";
 import { useEffect, useState } from "react";
 import { Handle, Position } from "react-flow-renderer";
@@ -11,17 +9,8 @@ import { Email, SlackMsg, Mobile, SMS } from "../../components/Icons/Icons";
 import TriggerCreater from "components/TriggerCreater";
 import ChooseTemplateModal from "./ChooseTemplateModal";
 
-const textStyle = {
-  color: "#111827",
-  fontFamily: "Inter",
-  fontWeight: 500,
-  fontSize: "14px",
-};
-const subTitleTextStyle = {
-  color: "#6B7280",
-  fontFamily: "Inter",
-  fontSize: "14px",
-};
+const textStyle = "text-[#111827] font-[Inter] font-middle text-[14px]";
+const subTitleTextStyle = "text-[#6B7280] font-[Inter] text-[14px]";
 const iconStyles = { padding: "0 10px" };
 
 const TextUpdaterNode = ({
@@ -118,12 +107,12 @@ const TextUpdaterNode = ({
   const generateMsgIcons = () => {
     return data?.messages?.map((message: any) => {
       return (
-        <Box
-          sx={iconStyles}
+        <div
+          className="p-[0px_10px]"
           onClick={handleIconClick(message.type, message.templateId)}
         >
           {messageIcons[message.type as string]}
-        </Box>
+        </div>
       );
     });
   };
@@ -143,40 +132,26 @@ const TextUpdaterNode = ({
           style={{ background: "transparent" }}
           isConnectable={true}
         />
-        <Box
-          sx={{
-            backgroundColor: "#FFF",
-            maxHeight: "80px",
-            display: "flex",
-            justifyContent: "space-between",
-            borderRadius: "8px",
-            padding: "16.5px 20px",
-            width: nodeData.width || "350px",
-            border: nodeData.isPrimary ? "2px solid #9BF2E6 !important" : "0px",
-          }}
-          className="text-updater"
+        <div
+          className={`text-updater bg-white max-h-[80px] flex justify-between rounded-[8px] p-[16.5px_20px] ${
+            nodeData.width ? `w-[${nodeData.width}]` : "w-[350px]"
+          } !border-[#9BF2E6] ${
+            nodeData.isPrimary ? "!border-[2px ]" : "!border-[0px]"
+          }`}
         >
-          <Box>
-            <Typography variant="subtitle1" sx={textStyle}>
+          <div>
+            <p className={textStyle}>
               {nodeData.preIcon && (
                 <img src={nodeData.preIcon} style={{ marginRight: "10px" }} />
               )}
               {nodeData.name}
-            </Typography>
-            <Typography variant="subtitle1" sx={subTitleTextStyle}>
-              {nodeData.description}
-            </Typography>
-          </Box>
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "space-evenly",
-              alignItems: "center",
-            }}
-          >
+            </p>
+            <p className={subTitleTextStyle}>{nodeData.description}</p>
+          </div>
+          <div className="flex justify-evenly items-center">
             {generateMsgIcons()}
-          </Box>
-        </Box>
+          </div>
+        </div>
         <div
           style={{
             display: "flex",

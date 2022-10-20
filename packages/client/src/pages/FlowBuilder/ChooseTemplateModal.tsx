@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { Box, Typography, FormControl, MenuItem } from "@mui/material";
 import { GenericButton, Select } from "components/Elements";
 import ApiService from "services/api.service";
 import { ApiConfig } from "../../constants";
@@ -108,10 +107,8 @@ const ChooseTemplateModal = ({
       onClose={() => handleTemplateModalOpen(false)}
     >
       <div className="w-full">
-        <Typography id="modal-modal-title" variant="h6" component="h2">
-          Choose {selectedMessageType} template
-        </Typography>
-        <Box>
+        <h6 id="modal-modal-title">Choose {selectedMessageType} template</h6>
+        <div>
           <form className="w-full my-[20px]">
             <Select
               id="activeJourney"
@@ -124,8 +121,8 @@ const ChooseTemplateModal = ({
               displayEmpty
             />
           </form>
-        </Box>
-        <Box data-slackexporttemplate>{renderButton(templatesList)}</Box>
+        </div>
+        <div data-slackexporttemplate>{renderButton(templatesList)}</div>
       </div>
     </Modal>
   );

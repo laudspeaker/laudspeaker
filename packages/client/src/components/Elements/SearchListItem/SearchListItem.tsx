@@ -1,4 +1,3 @@
-import { Box, Typography } from "@mui/material";
 import React from "react";
 import EmailIcon from "../../../assets/images/EmailIcon.svg";
 
@@ -8,33 +7,17 @@ interface IListProp {
 const SearchListItem = (props: IListProp) => {
   const { title } = props;
   return (
-    <Box
-      display="flex"
-      flexDirection="column"
-      gap="5px"
-      margin="5px 15px"
-      border="1px solid #F3F3F3"
-      padding="5px"
-      borderRadius="5px"
-    >
-      <Box display="flex" gap="12px">
+    <div className="flex flex-col gap-[5px] my-[5px] mx-[15px] border-[1px] border-[#F3F3F3] p-[5px] rounded-[5px]">
+      <div className="flex gap-[12px]">
         <img src={EmailIcon} />
-        <Typography variant="subtitle2">{title}</Typography>
-      </Box>
-      <Box display="flex" marginLeft="30px">
-        <Typography
-          sx={{
-            fontFamily: "Inter",
-            fontStyle: "normal",
-            fontWeight: " 400",
-            fontSize: "12px",
-            lineHeight: "24px",
-          }}
-        >
+        <p>{title}</p>
+      </div>
+      <div className="flex ml-[30px]">
+        <p className="font-[Inter] font-normal text-[12px] leading-[24px]">
           Subtitle
-        </Typography>
-      </Box>
-    </Box>
+        </p>
+      </div>
+    </div>
   );
 };
 

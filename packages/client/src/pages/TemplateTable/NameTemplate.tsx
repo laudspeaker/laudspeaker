@@ -1,12 +1,5 @@
 import { useState } from "react";
-import {
-  Box,
-  Typography,
-  Grid,
-  FormControl,
-  Tooltip,
-  MenuItem,
-} from "@mui/material";
+import { Grid, FormControl, Tooltip, MenuItem } from "@mui/material";
 import Card from "components/Cards/Card";
 import { GenericButton, Input, Select } from "components/Elements";
 import { useNavigate } from "react-router-dom";
@@ -74,7 +67,7 @@ const NameTemplate = ({ onSubmit, isPrimary }: INameSegment) => {
     <div>
       <div className="flex items-start justify-center">
         <div className="w-full">
-          <Typography variant="h3">Name your Template</Typography>
+          <h3>Name your Template</h3>
           <Grid container direction={"row"} padding={"10px 0px"}>
             <FormControl variant="standard">
               <Input
@@ -108,7 +101,7 @@ const NameTemplate = ({ onSubmit, isPrimary }: INameSegment) => {
               />
             </form>
           </Grid>
-          <Box display={"flex"} justifyContent="flex-end">
+          <div className="flex justify-end">
             <GenericButton
               onClick={handleSubmit}
               style={{
@@ -119,7 +112,7 @@ const NameTemplate = ({ onSubmit, isPrimary }: INameSegment) => {
             >
               Create
             </GenericButton>
-          </Box>
+          </div>
         </div>
       </div>
     </div>

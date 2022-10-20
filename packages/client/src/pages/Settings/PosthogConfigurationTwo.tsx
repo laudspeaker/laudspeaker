@@ -1,4 +1,4 @@
-import { Box, FormControl, Grid, MenuItem, Typography } from "@mui/material";
+import { FormControl, Grid } from "@mui/material";
 import Card from "components/Cards/Card";
 import Header from "components/Header";
 import Drawer from "components/Drawer";
@@ -63,41 +63,9 @@ function PosthogConfigurationTwo() {
   }
 
   return (
-    <Box
-      sx={{
-        paddingLeft: "154px",
-        position: "relative",
-        backgroundColor: "#E5E5E5",
-        display: "flex",
-        flexDirection: "column",
-        height: "100vh",
-        "& .MuiTypography-root": {
-          fontFamily: "Inter",
-        },
-        "& .MuiInputBase-input": {
-          background: "#fff",
-          border: "1px solid #D1D5DB",
-          fontFamily: "Inter",
-          fontWeight: 400,
-          fontSize: "16px",
-          padding: "12px 16px",
-        },
-        "& .MuiInputLabel-root": {
-          fontSize: "16px",
-          fontFamily: "Inter",
-        },
-        "& .MuiFormControl-root": {
-          maxWidth: "529px",
-        },
-      }}
-    >
+    <div className="pl-[154px] relative bg-[#E5E5E5] flex flex-col h-[100vh]">
       <Header />
-      <Box
-        justifyContent={"space-around"}
-        display={"flex"}
-        margin={"72px 50px 72px 50px"}
-        gap={"30px"}
-      >
+      <div className="flex justify-around m-[72px_50px_72px_50px] gap-[30px]">
         <Card
           sx={{
             padding: "30px",
@@ -105,39 +73,16 @@ function PosthogConfigurationTwo() {
             maxWidth: "930px",
           }}
         >
-          <Typography
-            variant="h3"
-            display={"flex"}
-            alignItems="center"
-            gap="10px"
-            sx={{
-              fontSize: "25px",
-              fontWeight: 600,
-              lineHeight: "40px",
-              marginBottom: "10px",
-            }}
-          >
+          <h3 className="flex items-center gap-[10px] text-[25px] font-semibold leading-[40px] mb-[10px]">
             Posthog Configuration - continued
-          </Typography>
-          <Typography
-            variant="subtitle1"
-            sx={{
-              fontSize: "18px",
-              marginBottom: "10px",
-            }}
-          >
+          </h3>
+          <p className="text-[18px] mb-[10px]">
             Do you have any email or sms fields on your posthog persons?
-          </Typography>
-          <Typography
-            variant="subtitle1"
-            sx={{
-              fontSize: "14px",
-              marginBottom: "10px",
-            }}
-          >
+          </p>
+          <p className="text-[18px] mb-[10px]">
             Often users use field names like $email or email. If you don't have
             these fields, feel free to skip and click next.
-          </Typography>
+          </p>
           <Grid container direction={"row"} padding={"10px 0px"}>
             <FormControl variant="standard">
               <Input
@@ -188,9 +133,7 @@ function PosthogConfigurationTwo() {
               />
             </FormControl>
           </Grid>
-          <Box display={"flex"} marginTop="10%" justifyContent="flex-start">
-            {renderButton()}
-          </Box>
+          <div className="flex mt-[10%] justify-start">{renderButton()}</div>
         </Card>
         <Card
           sx={{
@@ -199,23 +142,16 @@ function PosthogConfigurationTwo() {
             maxHeight: "auto",
           }}
         >
-          <Box
-            padding="20px"
-            display={"flex"}
-            flexDirection={"column"}
-            gap="16px"
-          >
-            <Typography variant="h3" color="#000000">
-              Your Setup List
-            </Typography>
-            <Typography variant="body1" color={"#6B7280"}>
+          <div className="p-[20px] flex flex-col gap-[16px]">
+            <h3 className="text-black">Your Setup List</h3>
+            <p className="text-[#6B7280]">
               Youre only a few steps away from your first message
-            </Typography>
-          </Box>
+            </p>
+          </div>
           <CustomStepper activeStep={3} />
         </Card>
-      </Box>
-    </Box>
+      </div>
+    </div>
   );
 }
 

@@ -1,4 +1,3 @@
-import { Box } from "@mui/material";
 import Modal from "components/Elements/Modal";
 import TriggerCreater from "components/TriggerCreater";
 

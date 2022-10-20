@@ -1,4 +1,4 @@
-import { FormControl, FormGroup, Box } from "@mui/material";
+import { FormControl, FormGroup } from "@mui/material";
 import { useEffect, useState } from "react";
 import { ISignUpForm } from "reducers/auth";
 import { GenericButton } from "components/Elements";
@@ -248,7 +248,7 @@ const ProfileForm = () => {
           justifyContent: "space-between",
         }}
       >
-        <Box sx={{ display: "flex", flexDirection: "column", width: "65%" }}>
+        <div className="flex flex-col w-[65%]">
           <div>
             <label
               htmlFor="confirmPassword"
@@ -272,7 +272,7 @@ const ProfileForm = () => {
               </div>
             </div>
           </div>
-        </Box>
+        </div>
         <GenericButton
           style={{ width: "30%", height: "46px" }}
           onClick={handleChangeApiKey}

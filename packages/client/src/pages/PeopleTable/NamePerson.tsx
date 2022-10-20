@@ -1,12 +1,5 @@
 import { useState } from "react";
-import {
-  Box,
-  Typography,
-  Grid,
-  FormControl,
-  Tooltip,
-  MenuItem,
-} from "@mui/material";
+import { Grid, FormControl } from "@mui/material";
 import Card from "components/Cards/Card";
 import { GenericButton, Input, Select } from "components/Elements";
 import { useNavigate } from "react-router-dom";
@@ -71,14 +64,8 @@ const NamePerson = ({ onSubmit, isPrimary }: INameSegment) => {
   };
 
   return (
-    <Box>
-      <Box
-        alignItems={"flex-start"}
-        justifyContent={"center"}
-        display={"flex"}
-        paddingTop={"18px"}
-        marginBottom="50px"
-      >
+    <div>
+      <div className="flex items-start justify-center pt-[18px] mb-[50px]">
         <Card
           sx={{
             padding: "22px 30px 77px 30px",
@@ -86,7 +73,7 @@ const NamePerson = ({ onSubmit, isPrimary }: INameSegment) => {
             maxWidth: "1138px",
           }}
         >
-          <Typography variant="h3">Name your Person</Typography>
+          <h3>Name your Person</h3>
           <Grid container direction={"row"} padding={"10px 0px"}>
             <FormControl variant="standard">
               <Input
@@ -136,7 +123,7 @@ const NamePerson = ({ onSubmit, isPrimary }: INameSegment) => {
               />
             </FormControl>
           </Grid>
-          <Box display={"flex"} justifyContent="flex-end">
+          <div className="flex justify-end">
             <GenericButton
               onClick={handleSubmit}
               style={{
@@ -147,10 +134,10 @@ const NamePerson = ({ onSubmit, isPrimary }: INameSegment) => {
             >
               Create Person
             </GenericButton>
-          </Box>
+          </div>
         </Card>
-      </Box>
-    </Box>
+      </div>
+    </div>
   );
 };
 

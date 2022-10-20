@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import Header from "../../components/Header";
 import TableTemplate from "../../components/TableTemplate";
-import { Box, Grid, Typography } from "@mui/material";
+import { Grid } from "@mui/material";
 import { GenericButton } from "components/Elements";
 import Card from "components/Cards/Card";
 import ApiService from "services/api.service";
@@ -70,12 +70,7 @@ const FlowTable = () => {
     );
   return (
     <div>
-      <Box
-        sx={{
-          position: "relative",
-          width: "100%",
-        }}
-      >
+      <div className="relative w-full">
         <Header />
         <div className="py-[37px] px-[30px]">
           <Modal
@@ -96,7 +91,7 @@ const FlowTable = () => {
               borderBottom={"1px solid #D3D3D3"}
               height={"104px"}
             >
-              <Typography variant="h3">Active Journeys</Typography>
+              <h3>Active Journeys</h3>
               <GenericButton
                 onClick={redirectUses}
                 style={{
@@ -121,7 +116,7 @@ const FlowTable = () => {
             />
           </div>
         </div>
-      </Box>
+      </div>
     </div>
   );
 };

@@ -28,7 +28,6 @@ import * as _ from "lodash";
 
 import TextUpdaterNode from "./TextUpdater";
 import ExitIcon from "../../assets/images/ExitIcon.svg";
-import { Box } from "@mui/material";
 import SideDrawer from "components/SideDrawer";
 import { ApiConfig } from "./../../constants";
 import ChooseTemplateModal from "./ChooseTemplateModal";
@@ -514,12 +513,12 @@ const Flow = () => {
   };
 
   return (
-    <Box height="100vh" display="flex" width="100%">
-      <Box display="flex">
-        <Box display="flex">
+    <div className="h-[100vh] flex w-full">
+      <div className="flex">
+        <div className="flex">
           <SideDrawer selectedNode={selectedNode} onClick={performAction} />
-        </Box>
-      </Box>
+        </div>
+      </div>
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -549,7 +548,7 @@ const Flow = () => {
             alignItems: "center",
           }}
         >
-          <Box data-saveflowbutton sx={{ margin: "0 7.5px" }}>
+          <div className="m-[0_7.5px]" data-saveflowbutton>
             <GenericButton
               onClick={handleSaveJourney}
               style={{
@@ -562,8 +561,8 @@ const Flow = () => {
             >
               Save
             </GenericButton>
-          </Box>
-          <Box data-startflowbutton sx={{ margin: "0 7.5px" }}>
+          </div>
+          <div className="m-[0_7.5px]" data-startflowbutton>
             <GenericButton
               onClick={handleStartJourney}
               style={{
@@ -576,7 +575,7 @@ const Flow = () => {
             >
               Start
             </GenericButton>
-          </Box>
+          </div>
           <Select
             id="zoomSelect"
             value={zoomState}
@@ -648,7 +647,7 @@ const Flow = () => {
           />
         </Modal>
       ) : null}
-    </Box>
+    </div>
   );
 };
 // const selectedNodeData = nodes.find((node) => node.id === selectedNode);

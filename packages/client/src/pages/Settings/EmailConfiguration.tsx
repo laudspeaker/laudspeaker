@@ -1,12 +1,10 @@
-import { Box, FormControl, Grid, MenuItem, Typography } from "@mui/material";
+import { FormControl, Grid } from "@mui/material";
 import Card from "components/Cards/Card";
 import Header from "components/Header";
-import Drawer from "components/Drawer";
 import { Input, Select, GenericButton } from "components/Elements";
 import CustomStepper from "./components/CustomStepper";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import ListItem from "./components/ListItem";
 import { useDispatch } from "react-redux";
 import { useTypedSelector } from "hooks/useTypeSelector";
 import {
@@ -43,12 +41,7 @@ function EmailConfiguration() {
   return (
     <div className="w-full relative flex flex-col h-screen font-[Inter] bg-[#E5E5E5]">
       <Header />
-      <Box
-        justifyContent={"space-around"}
-        display={"flex"}
-        margin={"72px 50px 72px 50px"}
-        gap={"30px"}
-      >
+      <div className="flex justify-around m-[72px_50px_72px_50px] gap-[30px]">
         <Card
           sx={{
             padding: "30px",
@@ -56,20 +49,9 @@ function EmailConfiguration() {
             maxWidth: "930px",
           }}
         >
-          <Typography
-            variant="h3"
-            display={"flex"}
-            alignItems="center"
-            gap="10px"
-            sx={{
-              fontSize: "25px",
-              fontWeight: 600,
-              lineHeight: "40px",
-              marginBottom: "10px",
-            }}
-          >
+          <h3 className="flex items-center gap-[10px] text-[25px] font-semibold leading-[40px] mb-[10px]">
             Email Configuration
-          </Typography>
+          </h3>
           <Grid container direction={"row"} padding={"10px 0px"}>
             <FormControl variant="standard">
               <Input
@@ -98,15 +80,7 @@ function EmailConfiguration() {
               />
             </FormControl>
           </Grid>
-          <Typography
-            variant="subtitle1"
-            sx={{
-              fontSize: "16px",
-              marginBottom: "10px",
-            }}
-          >
-            Domain
-          </Typography>
+          <p className="text-[16px] mb-[10px]">Domain</p>
           <Grid container direction={"row"} padding={"10px 0px"}>
             <FormControl variant="standard">
               <Select
@@ -167,7 +141,7 @@ function EmailConfiguration() {
               </Select> */}
             </FormControl>
           </Grid>
-          <Box display={"flex"} marginTop="50px" justifyContent="flex-start">
+          <div className="flex mt-[50px] justify-start">
             <GenericButton
               onClick={moveToAdditionalSettings}
               disabled={!privateApiKey || !domainName}
@@ -179,7 +153,7 @@ function EmailConfiguration() {
             >
               Next
             </GenericButton>
-          </Box>
+          </div>
         </Card>
         <Card
           sx={{
@@ -188,22 +162,15 @@ function EmailConfiguration() {
             maxHeight: "auto",
           }}
         >
-          <Box
-            padding="20px"
-            display={"flex"}
-            flexDirection={"column"}
-            gap="16px"
-          >
-            <Typography variant="h3" color="#000000">
-              Your Setup List
-            </Typography>
-            <Typography variant="body1" color={"#6B7280"}>
+          <div className="p-[20x] flex flex-cpl gap-[16px]">
+            <h3 className="text-black">Your Setup List</h3>
+            <p className="text-[#6B7280]">
               Youre only a few steps away from your first message
-            </Typography>
-          </Box>
+            </p>
+          </div>
           <CustomStepper activeStep={1} />
         </Card>
-      </Box>
+      </div>
     </div>
   );
 }

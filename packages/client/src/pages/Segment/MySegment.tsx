@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect, useLayoutEffect } from "react";
-import { Box, FormControl, MenuItem, Typography } from "@mui/material";
+import { Box, FormControl } from "@mui/material";
 import Card from "components/Cards/Card";
 import EditIcon from "@mui/icons-material/Edit";
 import { GenericButton, Input, Select } from "components/Elements";
@@ -357,24 +357,15 @@ const MySegment = ({
     <div className="w-full">
       <div className="w-full flex justify-center items-start pt-[18px]">
         <div className="w-full overflow-hidden relative ">
-          <Box
-            alignItems={"flex-start"}
-            justifyContent={"space-between"}
-            display={"flex"}
-          >
+          <div className="flex items-start justify-between">
             {!titleEdit ? (
-              <Typography
-                variant="h3"
-                display={"flex"}
-                alignItems="center"
-                gap="10px"
-              >
+              <h3 className="flex items-center gap-[10px]">
                 {segmentForm.title}
                 <EditIcon
                   sx={{ fontSize: "25px", cursor: "pointer" }}
                   onClick={handleTitleEdit}
                 />
-              </Typography>
+              </h3>
             ) : (
               <Input
                 value={segmentForm.title}
@@ -399,30 +390,12 @@ const MySegment = ({
             <FormControl
               sx={{ maxWidth: "135px", paddingLeft: "15px", minWidth: "112px" }}
             ></FormControl>
-          </Box>
-          <Box
-            borderRadius={"10px"}
-            border="1px solid #D1D5DB"
-            boxShadow={"0px 1px 2px rgba(0, 0, 0, 0.05)"}
-            margin="25px 0px"
-            padding={"20px 25px"}
-            position="relative"
-            sx={{
-              "::after": {
-                content: "no-close-quote",
-                position: "absolute",
-                zIndex: 1,
-                top: "63px",
-                bottom: "0px",
-                // left: "23.5%",
-                marginLeft: "45px",
-                borderLeft: "2px dashed #7B7E7C",
-                height: "calc(100% - 140px)",
-              },
-            }}
+          </div>
+          <div
+            className="rounded-[10px] border-[1px] border-[#D1D5DB] shadow-[0px_1px_2px_rgba(0,0,0,0.05)] m-[25px_0px] p-[20px_25px] relative after:content-['no-close-quote'] after:absolute after:z-[1] after:top-[63px] after:bottom-[0px] after:ml-[45px] after:border-l-[2px] after:border-dashed after:h-[calc(100% - 140px)]"
             ref={elementRef}
           >
-            <Box display={"flex"} alignItems="center" gap={"15px"}>
+            <div className="flex items-center gap-[15px]">
               <FormControl
                 sx={{
                   maxWidth: "135px",
@@ -449,12 +422,10 @@ const MySegment = ({
                   }}
                 />
               </FormControl>
-              <Typography variant="subtitle2" fontSize={"14px"}>
-                of the following conditions match
-              </Typography>
-            </Box>
+              <p className="text-[14px]">of the following conditions match</p>
+            </div>
 
-            <Box marginLeft="88px">
+            <div className="ml-[88px]">
               {formData?.map((item: any, index: number) => {
                 let canDeleteRow = false;
                 for (const key in item) {
@@ -478,9 +449,9 @@ const MySegment = ({
                   </>
                 );
               })}
-            </Box>
-          </Box>
-          <Box display={"flex"} justifyContent="flex-end">
+            </div>
+          </div>
+          <div className="flex justify-end">
             <GenericButton
               onClick={handleSubmit}
               style={{
@@ -491,7 +462,7 @@ const MySegment = ({
             >
               Save
             </GenericButton>
-          </Box>
+          </div>
         </div>
       </div>
     </div>

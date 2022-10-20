@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { getComments } from "../../reducers/comments";
 import { useDispatch } from "react-redux";
 import { useTypedSelector } from "../../hooks/useTypeSelector";
-import { Box } from "@mui/material";
 
 function App() {
   const dispatch = useDispatch();
@@ -40,18 +39,7 @@ function App() {
         </ul>
       )}
       <div>
-        <Box
-          sx={{
-            bgcolor: "background.paper",
-            boxShadow: 1,
-            borderRadius: 2,
-            p: 2,
-            minWidth: 300,
-            color: "text.secondary",
-          }}
-        >
-          Test
-        </Box>
+        <div className="rounded-[2] p-[2] min-w-[300]">Test</div>
       </div>
     </div>
   );

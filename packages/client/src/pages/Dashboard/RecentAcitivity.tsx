@@ -4,7 +4,6 @@ import ListItem from "@mui/material/ListItem";
 import ListItemText from "@mui/material/ListItemText";
 import ListItemAvatar from "@mui/material/ListItemAvatar";
 import Divider from "@mui/material/Divider";
-import Typography from "@mui/material/Typography";
 import { IconButton, Popover } from "@mui/material";
 import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
 import { getColorSchema } from "helpers/genericUtils";
@@ -72,52 +71,25 @@ export default function RecentActivity({ activities }: IRecentActivity) {
           <ListItemText
             sx={{ display: "flex", flexDirection: "column", width: "500px" }}
             primary={
-              <Typography
-                sx={{ display: "inline", fontSize: "20px", fontWeight: 600 }}
-                component="span"
-                variant="body2"
-                color="text.primary"
-              >
+              <span className="inline text-[20px] font-semibold">
                 {activity.title}
-              </Typography>
+              </span>
             }
             secondary={
-              <Typography
-                sx={{ display: "inline", fontSize: "14px", fontWeight: 400 }}
-                component="span"
-                variant="body2"
-                color="text.primary"
-                noWrap
-              >
+              <span className="inline text-[14px] font-normal flex-nowrap">
                 {activity.subtitle}
-              </Typography>
+              </span>
             }
           ></ListItemText>
           <ListItemText>
-            <Typography
-              sx={{
-                color: "#707070",
-                fontWeight: 400,
-                fontSize: "14px",
-              }}
-            >
+            <p className="text-[#707070] font-normal text-[14px]">
               {activity.sentAt}
-            </Typography>
+            </p>
           </ListItemText>
           <ListItemText>
-            <Typography
-              sx={{
-                display: "inline",
-                color: "#28282E",
-                fontWeight: 400,
-                fontSize: "16px",
-              }}
-              component="span"
-              variant="body2"
-              color="text.primary"
-            >
+            <span className="inline text-[#28282E] font-normal text-[16px]">
               {activity.email}
-            </Typography>
+            </span>
           </ListItemText>
           <ListItemText>
             <IconButton
@@ -138,7 +110,7 @@ export default function RecentActivity({ activities }: IRecentActivity) {
                 horizontal: "left",
               }}
             >
-              <Typography sx={{ p: 2 }}>View User</Typography>
+              <p className="p-[2]">View User</p>
             </Popover>
           </ListItemText>
         </ListItem>

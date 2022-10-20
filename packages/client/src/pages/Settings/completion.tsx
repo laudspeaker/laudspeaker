@@ -1,7 +1,6 @@
-import { Box, Grid, Typography } from "@mui/material";
+import { Grid } from "@mui/material";
 import Card from "components/Cards/Card";
 import Header from "components/Header";
-import Drawer from "components/Drawer";
 import CustomStepper from "./components/CustomStepper";
 import { resetSetttingsData } from "reducers/settings";
 import { useDispatch } from "react-redux";
@@ -22,42 +21,9 @@ function Completion() {
     dispatch(resetSetttingsData());
   }, []);
   return (
-    <div
-      className="w-full relative flex flex-col h-screen font-[Inter] bg-[#E5E5E5]"
-      // sx={{
-      //   paddingLeft: "154px",
-      //   position: "relative",
-      //   backgroundColor: "#E5E5E5",
-      //   display: "flex",
-      //   flexDirection: "column",
-      //   height: "100vh",
-      //   "& .MuiTypography-root": {
-      //     fontFamily: "Inter",
-      //   },
-      //   "& .MuiInputBase-input": {
-      //     background: "#fff",
-      //     border: "1px solid #D1D5DB",
-      //     fontFamily: "Inter",
-      //     fontWeight: 400,
-      //     fontSize: "16px",
-      //     padding: "12px 16px",
-      //   },
-      //   "& .MuiInputLabel-root": {
-      //     fontSize: "16px",
-      //     fontFamily: "Inter",
-      //   },
-      //   "& .MuiFormControl-root": {
-      //     maxWidth: "529px",
-      //   },
-      // }}
-    >
+    <div className="w-full relative flex flex-col h-screen font-[Inter] bg-[#E5E5E5]">
       <Header />
-      <Box
-        justifyContent={"space-around"}
-        display={"flex"}
-        margin={"72px 50px 72px 50px"}
-        gap={"30px"}
-      >
+      <div className="flex justify-around m-[72px_50px_72px_50px] gap-[30px]">
         <Card
           sx={{
             padding: "30px",
@@ -68,23 +34,16 @@ function Completion() {
           <h3 className="flex font-[Inter] font-semibold items-center text-[25px] gap-[10px] leading-[40px] mb-[10px]">
             Email Setup Successful 🎉
           </h3>
-          <Typography
-            variant="subtitle1"
-            sx={{
-              fontSize: "18px",
-              marginBottom: "35px",
-              fontFamily: "Inter",
-            }}
-          >
+          <p className="text-[18px] mb-[35px] font-[Inter]">
             You can now trigger Journeys!
-          </Typography>
+          </p>
           <Grid
             container
             direction={"row"}
             padding={"0px 0px"}
             marginBottom="20px"
           ></Grid>
-          <Box display={"flex"} marginTop="30px" justifyContent="flex-start">
+          <div className="flex mt-[30px] justify-start">
             <GenericButton
               onClick={() => {
                 handleNext();
@@ -97,7 +56,7 @@ function Completion() {
             >
               Create your first journey
             </GenericButton>
-          </Box>
+          </div>
         </Card>
         <Card
           sx={{
@@ -106,22 +65,15 @@ function Completion() {
             maxHeight: "auto",
           }}
         >
-          <Box
-            padding="20px"
-            display={"flex"}
-            flexDirection={"column"}
-            gap="16px"
-          >
-            <Typography variant="h3" color="#000000">
-              Your Setup List
-            </Typography>
-            <Typography variant="body1" color={"#6B7280"}>
+          <div className="flex p-[20px] flex-col gap-[16px]">
+            <h3 className="text-black">Your Setup List</h3>
+            <p className="text-[#6B7280]">
               Youre only a few steps away from your first message
-            </Typography>
-          </Box>
+            </p>
+          </div>
           <CustomStepper activeStep={3} />
         </Card>
-      </Box>
+      </div>
     </div>
   );
 }

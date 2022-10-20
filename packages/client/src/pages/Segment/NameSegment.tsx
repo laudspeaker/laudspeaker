@@ -1,6 +1,5 @@
 import { useState } from "react";
-import { Box, Typography, Grid, FormControl, Tooltip } from "@mui/material";
-import Card from "components/Cards/Card";
+import { Grid, FormControl, Tooltip } from "@mui/material";
 import { GenericButton, Input } from "components/Elements";
 import InfoIcon from "assets/images/info.svg";
 import ToggleSwitch from "./../../components/Elements/ToggleSwitch";
@@ -12,14 +11,8 @@ export interface INameSegmentForm {
   isPrimary: boolean;
 }
 
-const segmentTypeStyle = {
-  border: "1px solid #D1D5DB",
-  borderRadius: "6px",
-  boxShadow: "0px 1px 2px rgba(0, 0, 0, 0.05)",
-  width: "234px",
-  marginTop: "20px",
-  padding: "15px",
-};
+const segmentTypeStyle =
+  "border-[1px] border-[#D1D5DB] rouded-[6px] shadow-[0px_1px_2px_rgba(0,0,0,0.05)] w-[234px] mt-[20px] p-[15px]";
 
 interface INameSegment {
   onSubmit?: (e: any) => void;
@@ -81,7 +74,7 @@ const NameSegment = ({
           //   position: "relative",
           // }}
         >
-          <Typography variant="h3">Name your segment</Typography>
+          <h3>Name your segment</h3>
           <Grid container direction={"row"} padding={"10px 0px"}>
             <FormControl variant="standard">
               <Input
@@ -119,10 +112,8 @@ const NameSegment = ({
           </Grid>
           {isPrimary && (
             <div>
-              <Typography variant="h3" paddingTop={"20px"}>
-                Choose a segment type
-              </Typography>
-              <Box sx={segmentTypeStyle}>
+              <h3 className="pt-[20px]">Choose a segment type</h3>
+              <div className={segmentTypeStyle}>
                 <Grid
                   sx={{
                     display: "flex",
@@ -130,9 +121,7 @@ const NameSegment = ({
                     alignItems: "center",
                   }}
                 >
-                  <Typography variant="body1" fontWeight={600} color="#111827">
-                    Dynamic
-                  </Typography>
+                  <p className="font-semibold text-[#111827]">Dynamic</p>
                   <ToggleSwitch
                     checked={segmentForm.isDynamic}
                     onChange={onToggleChange}
@@ -140,30 +129,17 @@ const NameSegment = ({
                 </Grid>
                 <Tooltip title="dynamic">
                   {/* <IconButton> */}
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "end",
-                      cursor: "default",
-                    }}
-                    marginTop="8px"
-                  >
+                  <div className="flex items-end cursor-default mt-[8px]">
                     <img src={InfoIcon} width="20px" />
-                    <Typography
-                      variant="subtitle2"
-                      color="#4FA198"
-                      fontSize={"12px"}
-                      paddingLeft="5px"
-                    >
+                    <p className="text-[#4FA198] text-[12px] pl-[5px]">
                       What is a dynamic segment?
-                    </Typography>
-                  </Box>
-                  {/* </IconButton> */}
+                    </p>
+                  </div>
                 </Tooltip>
-              </Box>
+              </div>
             </div>
           )}
-          <Box data-namesegmentbox display={"flex"} justifyContent="flex-end">
+          <div className="flex justify-end" data-namesegmentbox>
             <GenericButton
               onClick={handleSubmit}
               style={{
@@ -174,7 +150,7 @@ const NameSegment = ({
             >
               Save
             </GenericButton>
-          </Box>
+          </div>
         </div>
       </div>
     </div>

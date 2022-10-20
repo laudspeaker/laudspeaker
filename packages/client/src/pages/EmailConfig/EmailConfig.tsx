@@ -1,6 +1,4 @@
 import React, { useState } from "react";
-import { Box, Typography } from "@mui/material";
-import Drawer from "components/Drawer";
 import Header from "components/Header";
 import Card from "components/Cards/Card";
 import CustomStepper from "./components/CustomStepper";
@@ -9,42 +7,9 @@ const EmailConfig = () => {
   const [activeStep] = useState<number>(0);
 
   return (
-    <Box
-      sx={{
-        paddingLeft: "154px",
-        position: "relative",
-        backgroundColor: "#E5E5E5",
-        display: "flex",
-        flexDirection: "column",
-        height: "100vh",
-        "& .MuiTypography-root": {
-          fontFamily: "Inter",
-        },
-        "& .MuiInputBase-input": {
-          background: "#fff",
-          border: "1px solid #D1D5DB",
-          fontFamily: "Inter",
-          fontWeight: 400,
-          fontSize: "16px",
-          padding: "12px 16px",
-        },
-        "& .MuiInputLabel-root": {
-          fontSize: "16px",
-          fontFamily: "Inter",
-        },
-        "& .MuiFormControl-root": {
-          maxWidth: "529px",
-        },
-      }}
-    >
+    <div className="relative flex flex-column h-[100vh] bg-[#E5E5E5] pt-[154px]">
       <Header />
-      <Box
-        justifyContent={"space-around"}
-        display={"flex"}
-        // paddingTop={"72px"}
-        margin={"72px 50px 72px 50px"}
-        gap={"30px"}
-      >
+      <div className="flex justify-around m-[72px_50px_72px_50px] gap-[30px]">
         <Card
           sx={{
             padding: "22px",
@@ -52,9 +17,7 @@ const EmailConfig = () => {
             maxWidth: "930px",
           }}
         >
-          <Typography variant="h3" color="#000000">
-            Email Configuration
-          </Typography>
+          <h3 className="text-black">Email Configuration</h3>
           {/* Add Respective component here */}
         </Card>
         <Card
@@ -64,24 +27,17 @@ const EmailConfig = () => {
             maxHeight: "359px",
           }}
         >
-          <Box
-            padding="20px"
-            display={"flex"}
-            flexDirection={"column"}
-            gap="16px"
-          >
-            <Typography variant="h3" color="#000000">
-              Your Setup List
-            </Typography>
-            <Typography variant="body1" color={"#6B7280"}>
+          <div className="p-[20px] flex flex-col gap-[16px]">
+            <h3 className="text-black">Your Setup List</h3>
+            <p className="text-[#6B7280]" color={"#6B7280"}>
               Get your account ready to send automated message that people like
               to receive.
-            </Typography>
-          </Box>
+            </p>
+          </div>
           <CustomStepper activeStep={activeStep} />
         </Card>
-      </Box>
-    </Box>
+      </div>
+    </div>
   );
 };
 

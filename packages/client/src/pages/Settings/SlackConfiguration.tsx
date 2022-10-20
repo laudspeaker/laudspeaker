@@ -2,7 +2,7 @@ import { ApiConfig } from "../../constants";
 import { useTypedSelector } from "hooks/useTypeSelector";
 import React, { useLayoutEffect, useState } from "react";
 import ApiService from "services/api.service";
-import { Box, Card, FormControl, Grid, Typography } from "@mui/material";
+import { Card, FormControl, Grid } from "@mui/material";
 import Header from "components/Header";
 import Drawer from "components/Drawer";
 
@@ -21,44 +21,9 @@ const SlackConfiguration = () => {
   }, []);
 
   return (
-    <Box
-      sx={{
-        paddingLeft: "154px",
-        position: "relative",
-        backgroundColor: "#E5E5E5",
-        display: "flex",
-        flexDirection: "column",
-        height: "100vh",
-        "& .MuiTypography-root": {
-          fontFamily: "Inter",
-        },
-        "& .MuiInputBase-input": {
-          background: "#fff",
-          border: "1px solid #D1D5DB",
-          fontFamily: "Inter",
-          fontWeight: 400,
-          fontSize: "16px",
-          padding: "12px 16px",
-          "&:disabled": {
-            background: "#EEE !important",
-          },
-        },
-        "& .MuiInputLabel-root": {
-          fontSize: "16px",
-          fontFamily: "Inter",
-        },
-        "& .MuiFormControl-root": {
-          maxWidth: "529px",
-        },
-      }}
-    >
+    <div className="pl-[154px] relative bg-[#E5E5E5] flex flex-col h-[100vh]">
       <Header />
-      <Box
-        justifyContent={"space-around"}
-        display={"flex"}
-        margin={"72px 50px 72px 50px"}
-        gap={"30px"}
-      >
+      <div className="flex justify-around m-[72px_50px_72px_50px] gap-[30px]">
         <Card
           sx={{
             padding: "30px",
@@ -66,20 +31,9 @@ const SlackConfiguration = () => {
             maxWidth: "930px",
           }}
         >
-          <Typography
-            variant="h3"
-            display={"flex"}
-            alignItems="center"
-            gap="10px"
-            sx={{
-              fontSize: "25px",
-              fontWeight: 600,
-              lineHeight: "40px",
-              marginBottom: "10px",
-            }}
-          >
+          <h3 className="flex items-center gap-[10px] text-[25px] font-semibold leading-[40px] mb-[10px]">
             Configure your slack
-          </Typography>
+          </h3>
           <Grid container direction={"row"} padding={"10px 0px"}>
             <FormControl variant="standard">
               <div>
@@ -102,8 +56,8 @@ const SlackConfiguration = () => {
             </FormControl>
           </Grid>
         </Card>
-      </Box>
-    </Box>
+      </div>
+    </div>
   );
 };
 

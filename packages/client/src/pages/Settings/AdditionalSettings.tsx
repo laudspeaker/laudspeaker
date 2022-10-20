@@ -1,7 +1,6 @@
-import { Box, FormControl, Grid, Typography } from "@mui/material";
+import { FormControl, Grid } from "@mui/material";
 import Card from "components/Cards/Card";
 import Header from "components/Header";
-import Drawer from "components/Drawer";
 import { Input, GenericButton } from "components/Elements";
 import CustomStepper from "./components/CustomStepper";
 import { useState } from "react";
@@ -51,12 +50,7 @@ function AdditionalSettings() {
   return (
     <div className="w-full relative flex flex-col h-screen font-[Inter] bg-[#E5E5E5]">
       <Header />
-      <Box
-        justifyContent={"space-around"}
-        display={"flex"}
-        margin={"72px 50px 72px 50px"}
-        gap={"30px"}
-      >
+      <div className="justify-around flex m-[72px_50px_72px_50px] gap-[30px]">
         <Card
           sx={{
             padding: "30px",
@@ -64,20 +58,9 @@ function AdditionalSettings() {
             maxWidth: "930px",
           }}
         >
-          <Typography
-            variant="h3"
-            display={"flex"}
-            alignItems="center"
-            gap="10px"
-            sx={{
-              fontSize: "25px",
-              fontWeight: 600,
-              lineHeight: "40px",
-              marginBottom: "10px",
-            }}
-          >
+          <h3 className="flex items-center gap-[10px] text-[25px] font-semibold leading-[40px] mb-[10px]">
             Email Configuration
-          </Typography>
+          </h3>
           <Grid container direction={"row"} padding={"10px 0px"}>
             <FormControl variant="standard">
               <Input
@@ -132,7 +115,7 @@ function AdditionalSettings() {
               />
             </FormControl>
           </Grid>
-          <Box display={"flex"} marginTop="40px" justifyContent="flex-start">
+          <div className="flex mt-[40px] justify-start">
             <GenericButton
               onClick={handleNextButtonClick}
               style={{
@@ -143,7 +126,7 @@ function AdditionalSettings() {
             >
               Next
             </GenericButton>
-          </Box>
+          </div>
         </Card>
         <Card
           sx={{
@@ -152,22 +135,15 @@ function AdditionalSettings() {
             maxHeight: "auto",
           }}
         >
-          <Box
-            padding="20px"
-            display={"flex"}
-            flexDirection={"column"}
-            gap="16px"
-          >
-            <Typography variant="h3" color="#000000">
-              Your Setup List
-            </Typography>
-            <Typography variant="body1" color={"#6B7280"}>
+          <div className="p-[20px] flex flex-col gap-[16px]">
+            <h3 className="text-black">Your Setup List</h3>
+            <p className="text-[#6B7280]">
               Youre only a few steps away from your first message
-            </Typography>
-          </Box>
+            </p>
+          </div>
           <CustomStepper activeStep={2} />
         </Card>
-      </Box>
+      </div>
     </div>
   );
 }

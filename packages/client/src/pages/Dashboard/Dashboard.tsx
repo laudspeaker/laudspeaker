@@ -3,7 +3,7 @@ import Drawer from "../../components/Drawer";
 import RecentActivity from "./RecentAcitivity";
 import activities from "./Dashboard.fixtures";
 import Header from "../../components/Header";
-import { Box, FormControl, Grid, MenuItem, Typography } from "@mui/material";
+import { FormControl, Grid } from "@mui/material";
 import { GenericButton, Select } from "components/Elements";
 import { formatDistance } from "date-fns";
 import DateRangePicker from "components/DateRangePicker";
@@ -82,36 +82,15 @@ const Dashboard = () => {
   };
 
   return (
-    <Box
-      sx={{
-        position: "relative",
-        backgroundColor: "#E5E5E5",
-      }}
-    >
+    <div className="relative bg-[#E5E5E5]">
       <Header />
       <Grid padding={"30px 31px"}>
-        <Box
-          borderBottom={"1px solid #D3D3D3"}
-          width={"100%"}
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            flexDirection: "row",
-          }}
-        >
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              paddingBottom: "30px",
-            }}
-          >
-            <Typography variant="h3" minWidth={"204px"}>
-              Active Journeys
-            </Typography>
-            <Box paddingLeft={"49px"}>
+        <div className="border-b-[1px] border-b-[#D3D3D3] w-full flex justify-between flex-row">
+          <div className="flex items-center pb-[30px]">
+            <h3 className="min-w-[204px]">Active Journeys</h3>
+            <div className="pl-[49px]">
               <DateRangePicker onChange={handleDateChange} value={date} />
-            </Box>
+            </div>
             <FormControl
               sx={{ maxWidth: "200px", paddingLeft: "15px", minWidth: "112px" }}
             >
@@ -127,7 +106,7 @@ const Dashboard = () => {
                 displayEmpty
               />
             </FormControl>
-          </Box>
+          </div>
           <GenericButton
             onClick={redirectJourney}
             style={{
@@ -139,7 +118,7 @@ const Dashboard = () => {
           >
             See All Journeys
           </GenericButton>
-        </Box>
+        </div>
       </Grid>
       <Grid
         container
@@ -150,11 +129,7 @@ const Dashboard = () => {
         spacing={3}
       >
         <Grid item xs={12} sm={6} lg={4}>
-          <Card
-            sx={{
-              height: "299px",
-            }}
-          >
+          <div className="h-[299px]">
             <Grid
               container
               direction={"row"}
@@ -162,8 +137,8 @@ const Dashboard = () => {
               borderBottom={"1px solid #D3D3D3"}
               padding={"20px"}
             >
-              <Typography variant="body2">0 - Sent</Typography>
-              <Typography variant="body2">0 - From last day</Typography>
+              <p>0 - Sent</p>
+              <p>0 - From last day</p>
               {/* <MoreHorizIcon /> */}
 
               <IconButton
@@ -186,10 +161,10 @@ const Dashboard = () => {
                   horizontal: "left",
                 }}
               >
-                <Typography sx={{ p: 2 }}>View User</Typography>
+                <p className="p-[2]">View User</p>
               </Popover>
             </Grid>
-            <Box padding={"20px"}>
+            <div className="p-[20px]">
               <svg style={{ position: "absolute" }}>
                 <defs>
                   <linearGradient
@@ -219,15 +194,11 @@ const Dashboard = () => {
                   }}
                 />
               </VictoryChart>
-            </Box>
-          </Card>
+            </div>
+          </div>
         </Grid>
         <Grid item xs={12} sm={6} lg={4}>
-          <Card
-            sx={{
-              height: "299px",
-            }}
-          >
+          <div className="h-[299px]">
             <Grid
               container
               direction={"row"}
@@ -235,8 +206,8 @@ const Dashboard = () => {
               borderBottom={"1px solid #D3D3D3"}
               padding={"20px"}
             >
-              <Typography variant="body2">0 - Delivered</Typography>
-              <Typography variant="body2">0 - From last day</Typography>
+              <p>0 - Delivered</p>
+              <p>0 - From last day</p>
               {/* <MoreHorizIcon /> */}
 
               <IconButton
@@ -259,11 +230,11 @@ const Dashboard = () => {
                   horizontal: "left",
                 }}
               >
-                <Typography sx={{ p: 2 }}>View User</Typography>
+                <p className="p-[2]">View User</p>
               </Popover>
             </Grid>
-            <Box padding={"20px"}>
-              <svg style={{ position: "absolute" }}>
+            <div className="p-[20px]">
+              <svg className="absolute">
                 <defs>
                   <linearGradient
                     id="myGradient"
@@ -296,15 +267,11 @@ const Dashboard = () => {
                   }}
                 />
               </VictoryChart>
-            </Box>
-          </Card>
+            </div>
+          </div>
         </Grid>
         <Grid item xs={12} sm={6} lg={4}>
-          <Card
-            sx={{
-              height: "299px",
-            }}
-          >
+          <div className="h-[299px]">
             <Grid
               container
               direction={"row"}
@@ -312,7 +279,7 @@ const Dashboard = () => {
               borderBottom={"1px solid #D3D3D3"}
               padding={"20px"}
             >
-              <Typography variant="body2">Deliverability</Typography>
+              <p>Deliverability</p>
               {/* <MoreHorizIcon /> */}
               <IconButton
                 color="primary"
@@ -334,7 +301,7 @@ const Dashboard = () => {
                   horizontal: "left",
                 }}
               >
-                <Typography sx={{ p: 2 }}>View User</Typography>
+                <p className="p-[2]">View User</p>
               </Popover>
             </Grid>
             <Grid
@@ -343,26 +310,20 @@ const Dashboard = () => {
               justifyContent={"space-between"}
               padding="20px 20px 15px 20px"
             >
-              <Typography variant="body2" color={"#00AA58"}>
-                Bounce rate : $25
-              </Typography>
-              <Typography variant="body2" color={"#D17E83"}>
-                Spam rate : $30
-              </Typography>
+              <p className="text-[#00AA58]">Bounce rate : $25</p>
+              <p className="text-[#D17E83]">Spam rate : $30</p>
             </Grid>
-            <Box padding={"0px 20px 20px 20px"}>
-              <Typography variant="body2">
-                Supercharge your transactional delivery.
-              </Typography>
-              <Typography variant="subtitle1">
+            <div className="p-[0px_20px_20px_20px]">
+              <p>Supercharge your transactional delivery.</p>
+              <p>
                 Assign a sending domain specifically for your transactional
                 messages.
-              </Typography>
-            </Box>
-          </Card>
+              </p>
+            </div>
+          </div>
         </Grid>
       </Grid>
-      <Box padding={"37px 30px"}>
+      <div className="p-[37px_30px]">
         <Card>
           <Grid
             container
@@ -388,12 +349,12 @@ const Dashboard = () => {
               Go To Customers
             </GenericButton>
           </Grid>
-          <Box padding={"20px"}>
+          <div className="p-[20px]">
             <RecentActivity activities={formattedActivities} />
-          </Box>
+          </div>
         </Card>
-      </Box>
-    </Box>
+      </div>
+    </div>
   );
 };
 

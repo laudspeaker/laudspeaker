@@ -1,5 +1,3 @@
-import { Box, Typography } from "@mui/material";
-
 interface ListItemProps {
   title: string;
   subtitle: string;
@@ -7,58 +5,19 @@ interface ListItemProps {
 }
 const ListItem = ({ title, subtitle, tick }: ListItemProps) => {
   return (
-    <Box
-      display={"flex"}
-      flex={1}
-      sx={{
-        justifyContent: "space-between",
-        alignItems: "center",
-        padding: "10px",
-        border: "1px solid #F3F3F3",
-        borderRadius: "5px",
-      }}
-    >
-      <Box>
-        <Typography
-          sx={{
-            fontWeight: 500,
-            fontSize: "16px",
-            color: "#000",
-            display: "flex",
-            justifyContent: "space-between",
-          }}
-        >
+    <div className="flex flex-[1] justify-between items-center p-[10px] border-[1px] border-[#F3F3F3] rounded-[5px]">
+      <div>
+        <p className="font-medium text-[16px] text-black flex justify-between">
           {title}
-        </Typography>
-        <Typography
-          variant="subtitle1"
-          sx={{
-            marginLeft: "25px",
-            fontSize: "12px",
-            color: "#000",
-          }}
-        >
-          {subtitle}
-        </Typography>
-      </Box>
+        </p>
+        <p className="ml-[25px] text-[12px] text-black">{subtitle}</p>
+      </div>
       {tick && (
-        <Box
-          sx={{
-            borderRadius: "50%",
-            aspectRatio: "1",
-            width: "20px",
-            height: "20px",
-            backgroundColor: "#4FA198",
-            color: "white",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-          }}
-        >
+        <div className="rounded-[50%] aspect-[1] w-[20px] h-[20-px] bg-[#4FA198] text-white flex justify-center items-center">
           ✔
-        </Box>
+        </div>
       )}
-    </Box>
+    </div>
   );
 };
 

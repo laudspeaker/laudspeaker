@@ -1,37 +1,19 @@
 import React, { useState } from "react";
 import ShowTable from "../../components/ShowTable";
-import { Box, Typography } from "@mui/material";
 import { GenericButton, Input } from "components/Elements";
 
 const Journeys = () => {
   const addJourney = () => {};
   const [email, setEmail] = useState("");
   return (
-    <Box sx={{ padding: "0 20px" }}>
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          padding: "25px 0",
-        }}
-      >
-        <Box>
-          <Typography
-            variant="h3"
-            display={"flex"}
-            alignItems="center"
-            sx={{
-              fontSize: "25px",
-              fontWeight: 600,
-              lineHeight: "40px",
-              marginBottom: "10px",
-            }}
-          >
+    <div className="p-[0px_20px]">
+      <div className="flex justify-between items-center p-[25px_0px]">
+        <div>
+          <h3 className="flex items-center text-[25px] font-semibold leading-[40px] mb-[10px]">
             Journeys
-          </Typography>
-        </Box>
-        <Box sx={{ display: "flex" }}>
+          </h3>
+        </div>
+        <div className="flex">
           <GenericButton
             onClick={addJourney}
             style={{
@@ -63,29 +45,16 @@ const Journeys = () => {
           >
             Next
           </GenericButton>
-        </Box>
-      </Box>
+        </div>
+      </div>
 
-      <Box
-        sx={{ display: "flex", alignItems: "center", marginBottom: "140px" }}
-      >
-        <Box>
-          <Typography
-            // variant="h3"
-            display={"flex"}
-            alignItems="center"
-            sx={{
-              fontSize: "16px",
-              fontWeight: 400,
-              lineHeight: "30px",
-              color: "#223343",
-              margin: "0 10px",
-            }}
-          >
+      <div className="flex items-center mb-[140px]">
+        <div>
+          <p className="flex items-center text-[16px] font-normal leading-[30px] text-[#223343] m-[0px_10px]">
             Filter for journeys by
-          </Typography>
-        </Box>
-        <Box>
+          </p>
+        </div>
+        <div>
           <Input
             value={email}
             placeholder={"Email Address"}
@@ -106,10 +75,10 @@ const Journeys = () => {
               },
             }}
           />
-        </Box>
-      </Box>
+        </div>
+      </div>
       <ShowTable />
-    </Box>
+    </div>
   );
 };
 

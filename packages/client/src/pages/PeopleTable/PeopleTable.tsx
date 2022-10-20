@@ -1,9 +1,8 @@
 import React, { useState } from "react";
 import Header from "../../components/Header";
 import TableTemplate from "../../components/TableTemplate";
-import { Box, Grid } from "@mui/material";
+import { Grid } from "@mui/material";
 import { GenericButton } from "components/Elements";
-import Card from "components/Cards/Card";
 import ApiService from "services/api.service";
 import { ApiConfig } from "../../constants";
 import { useNavigate } from "react-router-dom";
@@ -64,14 +63,9 @@ const PeopleTable = () => {
       </div>
     );
   return (
-    <Box
-      sx={{
-        width: "100%",
-        position: "relative",
-      }}
-    >
+    <div className="w-full relative">
       <Header />
-      <Box padding={"37px 30px"}>
+      <div className="p-[37px_30px]">
         <Modal
           isOpen={nameModalOpen}
           onClose={() => {
@@ -114,8 +108,8 @@ const PeopleTable = () => {
             setItemsPerPage={setItemsPerPage}
           />
         </div>
-      </Box>
-    </Box>
+      </div>
+    </div>
   );
 };
 

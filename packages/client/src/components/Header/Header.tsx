@@ -1,5 +1,4 @@
 import React from "react";
-import Box from "@mui/material/Box";
 import Help from "../../assets/images/Help.svg";
 import Notification from "../../assets/images/Notification.svg";
 import Profile from "../../assets/images/Profile.svg";
@@ -23,21 +22,8 @@ const Header = () => {
     window.location.reload();
   };
   return (
-    <Box
-      sx={{
-        display: "flex",
-        justifyContent: "flex-end",
-        padding: "18px 30px",
-        backgroundColor: "#FFFFFF",
-        borderBottom: "1px solid #D3D3D3",
-        cursor: "pointer",
-      }}
-    >
-      <Box
-        sx={{
-          display: "flex",
-        }}
-      >
+    <div className="flex justify-end py-[18px] px-[30px] bg-white border-b-[1px] border-b-[#D3D3D3] cursor-pointer">
+      <div className="flex">
         <img
           src={Help}
           alt="help"
@@ -56,7 +42,7 @@ const Header = () => {
           onClick={profileClick}
           style={{ padding: "0 8px" }}
         />
-      </Box>
+      </div>
       <Menu
         id="profile-menu"
         anchorEl={anchorEl}
@@ -66,7 +52,7 @@ const Header = () => {
       >
         <MenuItem onClick={handleLogout}>Logout</MenuItem>
       </Menu>
-    </Box>
+    </div>
   );
 };
 

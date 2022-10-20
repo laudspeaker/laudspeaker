@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Box, Typography, Divider, FormControl, MenuItem } from "@mui/material";
+import { Divider, FormControl } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import { GenericButton, Select, Input } from "components/Elements";
@@ -43,43 +43,19 @@ const SlackTemplateHeader = (props: IEmailHeaderProps) => {
 
   return (
     <div>
-      <Box
-        sx={{
-          textAlign: "center",
-          display: "flex",
-          justifyContent: "space-between",
-          marginLeft: "10px",
-          height: "80px",
-        }}
-      >
-        <Typography
-          variant="h6"
-          sx={{
-            fontFamily: "Poppins",
-            fontStyle: "normal",
-            fontWeight: "500",
-            fontSize: "14px",
-            lineHeight: "30px",
-            display: "flex",
-            alignItems: "center",
-          }}
-        >
+      <div className="flex text-center justify-between ml-[10px] h-[80px]">
+        <h6 className="font-[Poppins] font-medium text-[14px] leading-[30px] flex items-center">
           <ListItemIcon sx={{ minWidth: "16px", paddingRight: "16px" }}>
             {BackButtonIcon()}
           </ListItemIcon>
           {!titleEdit ? (
-            <Typography
-              variant="h3"
-              display={"flex"}
-              alignItems="center"
-              gap="10px"
-            >
+            <h3 className="flex items-center gap-[10px]">
               {templateName}
               <EditIcon
                 sx={{ fontSize: "25px", cursor: "pointer" }}
                 onClick={handleTitleEdit}
               />
-            </Typography>
+            </h3>
           ) : (
             <Input
               value={templateName}
@@ -101,19 +77,11 @@ const SlackTemplateHeader = (props: IEmailHeaderProps) => {
               }}
             />
           )}
-        </Typography>
+        </h6>
         <Divider />
 
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            width: "400px",
-            paddingRight: "50px",
-          }}
-        >
-          <Box>
+        <div className="flex text-center justify-between w-[400px] pr-[50px]">
+          <div>
             <FormControl
               sx={{ maxWidth: "300px", paddingLeft: "15px", minWidth: "112px" }}
             >
@@ -126,8 +94,8 @@ const SlackTemplateHeader = (props: IEmailHeaderProps) => {
                 // sx={ border: "1px solid #D1D5DB"}
               />
             </FormControl>
-          </Box>
-          <Box>
+          </div>
+          <div>
             <GenericButton
               onClick={onSave}
               style={{
@@ -139,8 +107,8 @@ const SlackTemplateHeader = (props: IEmailHeaderProps) => {
             >
               Save Draft
             </GenericButton>
-          </Box>
-          <Box>
+          </div>
+          <div>
             <GenericButton
               data-slackexporttemplate
               onClick={onPersonalizeClick}
@@ -153,9 +121,9 @@ const SlackTemplateHeader = (props: IEmailHeaderProps) => {
             >
               Personalize
             </GenericButton>
-          </Box>
-        </Box>
-      </Box>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

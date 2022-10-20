@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Box, MenuItem, Typography, FormControl } from "@mui/material";
+import { FormControl } from "@mui/material";
 import { GenericButton, Select, Input } from "components/Elements";
 import {
   getConditions,
@@ -516,7 +516,7 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
       case "timeDelay": {
         jsx = (
           <>
-            <Box display={"flex"} alignItems={"center"}>
+            <div className="flex items-center">
               <FormControl
                 sx={{
                   padding: "0 15px",
@@ -620,16 +620,16 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
               ) : (
                 <></>
               )}
-            </Box>
+            </div>
           </>
         );
         break;
       }
       case "timeWindow": {
         jsx = (
-          <Box display={"flex"} alignItems={"center"} flexDirection="column">
+          <div className="flex items-center flex-col">
             {toPart ? (
-              <Box display={"flex"} alignItems={"center"} marginTop={"10px"}>
+              <div className="flex items-center mt-[10px]">
                 <FormControl
                   sx={{
                     padding: "0 15px",
@@ -662,9 +662,9 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
                 >
                   after user has left audience state
                 </FormControl>
-              </Box>
+              </div>
             ) : (
-              <Box display={"flex"} alignItems={"center"}>
+              <div className="flex items-center">
                 <FormControl
                   sx={{
                     padding: "0 15px",
@@ -697,9 +697,9 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
                 >
                   after user has entered audience state
                 </FormControl>
-              </Box>
+              </div>
             )}
-          </Box>
+          </div>
         );
         break;
       }
@@ -734,24 +734,15 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
           maxWidth: "1138px",
         }}
       >
-        <Box
-          alignItems={"flex-start"}
-          justifyContent={"space-between"}
-          display={"flex"}
-        >
+        <div className="flex items-start justify-between">
           {!titleEdit ? (
-            <Typography
-              variant="h3"
-              display={"flex"}
-              alignItems="center"
-              gap="10px"
-            >
+            <h3 className="flex text-center gap-[10px]">
               {segmentForm.title}
               <EditIcon
                 sx={{ fontSize: "25px", cursor: "pointer" }}
                 onClick={handleTitleEdit}
               />
-            </Typography>
+            </h3>
           ) : (
             <Input
               value={segmentForm.title}
@@ -773,16 +764,9 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
               }}
             />
           )}
-        </Box>
-        <Box
-          borderRadius={"10px"}
-          border="1px solid #D1D5DB"
-          boxShadow={"0px 1px 2px rgba(0, 0, 0, 0.05)"}
-          margin="25px 0px"
-          padding={"20px 25px"}
-          position="relative"
-        >
-          <Box display={"flex"} alignItems="center" gap={"15px"}>
+        </div>
+        <div className="rounded-[10px] border-[1px] border-[#D1D5DB] my-[25px] mx-[0px] py-[20px] px-[25px] relative shadow-[0px_1px_2px_rgba(0,0,0,0.05)]">
+          <div className="flex items-center gap-[15px]">
             <FormControl
               sx={{
                 maxWidth: "135px",
@@ -810,47 +794,19 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
                 }}
               />
             </FormControl>
-          </Box>
-          <Box marginLeft="88px">
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                position: "relative",
-                "::after": {
-                  content: "no-close-quote",
-                  position: "absolute",
-                  zIndex: 1,
-                  top: "10%",
-                  left: "-100px",
-                  // left: "23.5%",
-                  marginLeft: "45px",
-                  borderLeft: "2px dashed #7B7E7C",
-                  height: "80%",
-                },
-              }}
-            >
-              <Box
-                sx={{
-                  borderRadius: "10px",
-                  margin: "25px 0px",
-                  padding: "10px 25px 20px",
-                  backgroundColor: "#F9F9FA",
-                  display: "flex",
-                  alignItems: "center",
-                  cursor: "pointer",
-                  width: "100%",
-                }}
-              >
-                <Box display={"flex"} flex={1} flexWrap={"wrap"}>
+          </div>
+          <div className="ml-[88px]">
+            <div className="flex items-center relative after:content-[no-close-quote] after:absolute after:z-[1] after:top-[10%] after:left-[-100px] after:ml-[45px] after:border-l-[2px] after:border-dashed after:border-l-[#7B7E7C] after:h-[80%]">
+              <div className="rounded-[10px] my-[25px] mx-[0px] pt-[10px] pb-[25px] px-[20px] bg-[#F9F9FA] flex items-center cursor-pointer w-full">
+                <div className="flex flex-[1] flex-wrap">
                   {generateTriggerUI()}
-                </Box>
-              </Box>
-            </Box>
-          </Box>
+                </div>
+              </div>
+            </div>
+          </div>
           {triggerType === "timeWindow" && (
             <>
-              <Box display={"flex"} alignItems="center" gap={"15px"}>
+              <div className="flex items-center gap-[15px]">
                 <FormControl
                   sx={{
                     maxWidth: "135px",
@@ -874,49 +830,21 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
                     }}
                   />
                 </FormControl>
-              </Box>
-              <Box marginLeft="88px">
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    position: "relative",
-                    "::after": {
-                      content: "no-close-quote",
-                      position: "absolute",
-                      zIndex: 1,
-                      top: "10%",
-                      left: "-100px",
-                      // left: "23.5%",
-                      marginLeft: "45px",
-                      borderLeft: "2px dashed #7B7E7C",
-                      height: "80%",
-                    },
-                  }}
-                >
-                  <Box
-                    sx={{
-                      borderRadius: "10px",
-                      margin: "25px 0px",
-                      padding: "10px 25px 20px",
-                      backgroundColor: "#F9F9FA",
-                      display: "flex",
-                      alignItems: "center",
-                      cursor: "pointer",
-                      width: "100%",
-                    }}
-                  >
-                    <Box display={"flex"} flex={1} flexWrap={"wrap"}>
+              </div>
+              <div className="ml-[88px]">
+                <div className="flex items-center relative after:content-[no-close-quote] after:absolute after:z-[1] after:top-[10%] after:left-[-100px] after:ml-[45px] after:border-l-[2px] after:border-dashed after:border-l-[#7B7E7C] after:h-[80%]">
+                  <div className="rounded-[10px] my-[25px] mx-[0px] pt-[10px] pb-[25px] px-[20px] bg-[#F9F9FA] flex items-center cursor-pointer w-full">
+                    <div className="flex flex-[1] flex-wrap">
                       {generateTriggerUI({ toPart: true })}
-                    </Box>
-                  </Box>
-                </Box>
-              </Box>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </>
           )}
-        </Box>
-        <Box display={"flex"} gap={10} justifyContent="flex-end">
-          <Box>
+        </div>
+        <div className="flex gap-[10px] justify-end">
+          <div>
             <GenericButton
               onClick={deleteRow}
               style={{
@@ -928,8 +856,8 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
             >
               Delete
             </GenericButton>
-          </Box>
-          <Box data-savetriggerreator>
+          </div>
+          <div data-savetriggerreator>
             <GenericButton
               onClick={handleSubmit}
               style={{
@@ -941,8 +869,8 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
             >
               Save
             </GenericButton>
-          </Box>
-        </Box>
+          </div>
+        </div>
       </Card>
     </>
   );

@@ -1,5 +1,5 @@
 /* eslint-disable react/jsx-filename-extension */
-import { FormControl, MenuItem, Box } from "@mui/material";
+import { FormControl } from "@mui/material";
 import DateRangePicker from "components/DateRangePicker";
 import DateTimePicker from "components/Elements/DateTimePicker";
 import { Select, Input } from "../../components/Elements";
@@ -218,10 +218,10 @@ export const transformDataToUI = ({
       }}
     >
       {data?.label ? (
-        <Box display={"flex"} alignItems={"center"}>
+        <div className="flex items-center">
           <p style={{ marginRight: "15px" }}>{data?.label}</p>
           {jsx}
-        </Box>
+        </div>
       ) : (
         <>{jsx}</>
       )}

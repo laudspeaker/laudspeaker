@@ -1,10 +1,4 @@
-import {
-  Box,
-  Dialog,
-  DialogActions,
-  DialogTitle,
-  MenuItem,
-} from "@mui/material";
+import { Dialog, DialogActions, DialogTitle } from "@mui/material";
 import Drawer from "components/Drawer";
 import { GenericButton, Select } from "components/Elements";
 import { getFlow } from "pages/FlowBuilder/FlowHelpers";
@@ -162,7 +156,7 @@ const Flow = () => {
   const possibleViewZoomValues = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
 
   return (
-    <Box height="100vh" display="flex" width="100%">
+    <div className="h-[100vh] flex w-full">
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -194,7 +188,7 @@ const Flow = () => {
             alignItems: "center",
           }}
         >
-          <Box data-saveflowbutton sx={{ margin: "0 7.5px" }}>
+          <div className="p-[0px_7.5px]" data-saveflowbutton>
             <GenericButton
               onClick={isPaused ? handleResume : handlePause}
               style={{
@@ -208,8 +202,8 @@ const Flow = () => {
             >
               {isPaused ? "Resume" : "Pause"}
             </GenericButton>
-          </Box>
-          <Box data-startflowbutton sx={{ margin: "0 7.5px" }}>
+          </div>
+          <div className="p-[0px_7.5px]" data-startflowbutton>
             <GenericButton
               onClick={handleDialogOpen}
               style={{
@@ -223,7 +217,7 @@ const Flow = () => {
             >
               Stop
             </GenericButton>
-          </Box>
+          </div>
           <Dialog
             open={isDialogOpen}
             onClose={handleDialogClose}
@@ -277,7 +271,7 @@ const Flow = () => {
         </div>
         <Background size={0} />
       </ReactFlow>
-    </Box>
+    </div>
   );
 };
 

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Box, FormControl, Typography } from "@mui/material";
+import { FormControl } from "@mui/material";
 import { GenericButton, Input } from "components/Elements";
 
 export interface ISendGridConfigureForm {
@@ -24,12 +24,7 @@ const SendGridConfigure = () => {
   };
 
   return (
-    <Box
-      gap={"43px 0px"}
-      display="flex"
-      flexDirection="column"
-      marginTop="43px"
-    >
+    <div className="gap-[43px_0px] flex flex-col mt-[43px]">
       <FormControl variant="standard">
         <Input
           label="Private API Key"
@@ -50,11 +45,9 @@ const SendGridConfigure = () => {
           borderRadius: "8px",
         }}
       >
-        <Typography variant="h4" color="#FFFFFF">
-          Next
-        </Typography>
+        <h4 className="text-white">Next</h4>
       </GenericButton>
-    </Box>
+    </div>
   );
 };
 
