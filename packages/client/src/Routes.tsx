@@ -223,7 +223,9 @@ const RouteComponent: React.FC = () => {
           path="/settings/posthog-configuration-three"
           element={
             <Protected>
-              <PosthogConfigurationThree />
+              <DrawerLayout>
+                <PosthogConfigurationThree />
+              </DrawerLayout>
             </Protected>
           }
         />
