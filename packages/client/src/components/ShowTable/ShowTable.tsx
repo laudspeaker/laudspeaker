@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React from "react";
 import {
   Table,
   TableBody,
@@ -10,7 +10,6 @@ import {
   Checkbox,
   Pagination,
   Divider,
-  Box,
 } from "@mui/material";
 import RowsPerPage from "./RowsPerPage";
 import ApiService from "services/api.service";
@@ -182,7 +181,7 @@ const ShowTable = () => {
   React.useEffect(() => {}, [rowsPerPage]);
 
   return (
-    <Box sx={{ padding: "0 40px" }}>
+    <div className="py-[0px] px-[40px]">
       <BasicTable
         numSelected={selected.length || 0}
         // order={order}
@@ -193,13 +192,7 @@ const ShowTable = () => {
         rowCount={rows.length || 0}
       />
       <Divider sx={{ marginTop: "40px" }} />
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          padding: "10px 0",
-        }}
-      >
+      <div className="flex justify-between py-[10px] px-[0px]">
         <Pagination
           count={10}
           page={page}
@@ -224,8 +217,8 @@ const ShowTable = () => {
           rowsPerPage={rowsPerPage}
           handleRowClick={handleRowClick}
         />
-      </Box>
-    </Box>
+      </div>
+    </div>
   );
 };
 

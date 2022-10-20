@@ -76,8 +76,10 @@ export class EmailController {
     });
     const jobs = await Promise.all(
       audienceObj.customers.map(async (customerId) => {
-        const email = (await this.customersService.findById(found, customerId))
-          .email;
+        const { email } = (
+          await this.customersService.findById(found, customerId)
+        ).toObject();
+
         return {
           name: 'send',
           data: {

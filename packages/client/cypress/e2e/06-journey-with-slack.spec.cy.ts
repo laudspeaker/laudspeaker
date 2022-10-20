@@ -1,3 +1,6 @@
+/* eslint-disable jest/valid-expect */
+/* eslint-disable jest/valid-describe-callback */
+/* eslint-disable @typescript-eslint/no-shadow */
 import credentials from "../fixtures/credentials.json";
 
 const { email, password, slackTemplate, journeyName, userAPIkey } =
@@ -27,7 +30,10 @@ describe(
       cy.get("#handleDay").click();
       cy.get('[data-value="slack"]').click();
       cy.get(".MuiPaper-root > .MuiBox-root > .MuiButton-root").click();
-      cy.get("#slackMessage").type(slackTemplate.message);
+      cy.get(".css-8dmme6").click();
+      cy.get("#slackMessage").type(slackTemplate.message, {
+        parseSpecialCharSequences: false,
+      });
       cy.get(":nth-child(2) > .MuiButton-root").click();
 
       cy.get(
@@ -90,12 +96,13 @@ describe(
 
       cy.request({
         method: "POST",
-        url: `${Cypress.env("AxiosURL")}events/custom`,
+        url: `${Cypress.env("AxiosURL")}events`,
         headers: {
           Authorization: `Api-Key ${userAPIkey}`,
         },
         body: {
-          slackId: slackTemplate.slackUid,
+          correlationKey: "slackId",
+          correlationValue: slackTemplate.slackUid,
           event: slackTemplate.eventName,
         },
       }).then(({ body }) => {

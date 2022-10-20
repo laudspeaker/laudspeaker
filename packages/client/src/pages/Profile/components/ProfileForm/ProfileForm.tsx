@@ -1,16 +1,9 @@
-import {
-  FormControl,
-  FormGroup,
-  Box,
-  InputLabel,
-  Snackbar,
-  Alert,
-} from "@mui/material";
+import { FormControl, FormGroup } from "@mui/material";
 import { useEffect, useState } from "react";
 import { ISignUpForm } from "reducers/auth";
-import Input from "components/Elements/Input";
 import { GenericButton } from "components/Elements";
 import ApiService from "services/api.service";
+import { toast } from "react-toastify";
 
 const fetchValues = async () => {
   const response = await ApiService.get({ url: "/accounts/settings" });
@@ -83,6 +76,37 @@ const ProfileForm = () => {
       });
   }, []);
 
+  useEffect(() => {
+    if (isCopied) {
+      toast.success("Copied to clipboard", {
+        position: "bottom-center",
+        autoClose: 1000,
+        hideProgressBar: true,
+        closeOnClick: true,
+        pauseOnHover: false,
+        draggable: false,
+        progress: undefined,
+        theme: "colored",
+        className: "!bg-emerald-500",
+        onClose: () => setIsCopied(false),
+      });
+    }
+
+    if (isError) {
+      toast.error(errorMessages[0], {
+        position: "bottom-center",
+        hideProgressBar: true,
+        closeOnClick: false,
+        onClose: () => setIsError(false),
+        closeButton: false,
+        pauseOnHover: true,
+        draggable: false,
+        progress: undefined,
+        theme: "colored",
+      });
+    }
+  }, [isError, isCopied]);
+
   const handleSubmit = (e: React.ChangeEvent<HTMLInputElement>) => {
     e.preventDefault();
     if (values.password != values.confirmPassword) return;
@@ -110,14 +134,6 @@ const ProfileForm = () => {
       });
   };
 
-  const handleCloseCopySnackBar = () => {
-    setIsCopied(false);
-  };
-
-  const handleCloseErrorSnackBar = () => {
-    setIsError(false);
-  };
-
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValues = {
       ...values,
@@ -139,82 +155,90 @@ const ProfileForm = () => {
 
   return (
     <FormGroup onSubmit={handleSubmit}>
-      <>
-        <Snackbar
-          anchorOrigin={{ vertical: "top", horizontal: "center" }}
-          open={isCopied}
-          onClose={handleCloseCopySnackBar}
-          autoHideDuration={1000}
+      <div className="mb-2">
+        <label
+          htmlFor="firstName"
+          className="block text-sm font-medium text-gray-700"
         >
-          <Alert severity="success">Copied to clipboard</Alert>
-        </Snackbar>
-        <Snackbar
-          anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-          open={isError}
-          onClose={handleCloseErrorSnackBar}
-          ClickAwayListenerProps={{ onClickAway: () => null }}
+          First Name
+        </label>
+        <div className="mt-1">
+          <input
+            type="text"
+            name="firstName"
+            id="firstName"
+            className="block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 sm:text-sm"
+            placeholder="Enter your first name"
+            required
+            value={values.firstName}
+            onChange={handleChange}
+            disabled={isLoading}
+          />
+        </div>
+      </div>
+      <div className="mb-2">
+        <label
+          htmlFor="lastName"
+          className="block text-sm font-medium text-gray-700"
         >
-          <Alert severity="error">{errorMessages[0]}</Alert>
-        </Snackbar>
-      </>
-      <FormControl variant="standard" sx={{ marginBottom: "27px" }}>
-        <Input
-          isRequired
-          label="First Name"
-          value={values.firstName}
-          placeholder={"Enter your first name"}
-          name="firstName"
-          id="firstName"
-          fullWidth
-          onChange={handleChange}
-          labelShrink
-          disabled={isLoading}
-        />
-      </FormControl>
-      <FormControl variant="standard" sx={{ marginBottom: "27px" }}>
-        <Input
-          isRequired
-          label="Last Name"
-          value={values.lastName}
-          placeholder={"Enter your last name"}
-          name="lastName"
-          id="lastName"
-          fullWidth
-          onChange={handleChange}
-          labelShrink
-          disabled={isLoading}
-        />
-      </FormControl>
-      <FormControl variant="standard" sx={{ marginBottom: "27px" }}>
-        <Input
-          isRequired
-          label="Password"
-          value={values.password}
-          type="password"
-          placeholder={"Enter new password"}
-          name="password"
-          id="password"
-          fullWidth
-          onChange={handleChange}
-          labelShrink
-          disabled={isLoading}
-        />
-      </FormControl>
-      <FormControl variant="standard" sx={{ marginBottom: "27px" }}>
-        <Input
-          isRequired
-          label="Password Confirmation"
-          value={values.confirmPassword}
-          type="password"
-          placeholder={"Confirm password"}
-          name="confirmPassword"
-          id="confirmPassword"
-          fullWidth
-          onChange={handleChange}
-          labelShrink
-          disabled={isLoading}
-        />
-      </FormControl>
+          Last Name
+        </label>
+        <div className="mt-1">
+          <input
+            type="text"
+            name="lastName"
+            id="lastName"
+            className="block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 sm:text-sm"
+            placeholder="Enter your last name"
+            required
+            value={values.lastName}
+            onChange={handleChange}
+            disabled={isLoading}
+          />
+        </div>
+      </div>
+      <div className="mb-2">
+        <label
+          htmlFor="password"
+          className="block text-sm font-medium text-gray-700"
+        >
+          Password
+        </label>
+        <div className="mt-1">
+          <input
+            type="password"
+            name="password"
+            id="password"
+            className="block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 sm:text-sm"
+            placeholder="Enter new password"
+            required
+            value={values.password}
+            onChange={handleChange}
+            disabled={isLoading}
+          />
+        </div>
+      </div>
+      <div className="mb-2">
+        <label
+          htmlFor="confirmPassword"
+          className="block text-sm font-medium text-gray-700"
+        >
+          Password Confirmation
+        </label>
+        <div className="mt-1">
+          <input
+            type="password"
+            name="confirmPassword"
+            id="confirmPassword"
+            className="block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 sm:text-sm"
+            placeholder="Enter new password"
+            required
+            value={values.confirmPassword}
+            onChange={handleChange}
+            disabled={isLoading}
+          />
+        </div>
+      </div>
       <FormControl
         variant="standard"
         sx={{
@@ -224,26 +248,33 @@ const ProfileForm = () => {
           justifyContent: "space-between",
         }}
       >
-        <Box sx={{ display: "flex", flexDirection: "column", width: "65%" }}>
-          <InputLabel shrink={true}>Private API Key</InputLabel>
-          <div
-            style={{
-              textOverflow: "ellipsis",
-              overflow: "hidden",
-              cursor: "pointer",
-            }}
-            onClick={() => {
-              navigator.clipboard.writeText(privateAPIKey);
-              setIsCopied(true);
-            }}
-          >
-            {privateAPIKey}
+        <div className="flex flex-col w-[65%]">
+          <div>
+            <label
+              htmlFor="confirmPassword"
+              className="block text-sm font-medium text-gray-700"
+            >
+              Private API key
+            </label>
+            <div className="mt-1">
+              <div
+                style={{
+                  textOverflow: "ellipsis",
+                  overflow: "hidden",
+                  cursor: "pointer",
+                }}
+                onClick={() => {
+                  navigator.clipboard.writeText(privateAPIKey);
+                  setIsCopied(true);
+                }}
+              >
+                {privateAPIKey}
+              </div>
+            </div>
           </div>
-        </Box>
+        </div>
         <GenericButton
-          color="primary"
-          variant="contained"
-          sx={{ width: "30%", height: "46px" }}
+          style={{ width: "30%", height: "46px" }}
           onClick={handleChangeApiKey}
           disabled={isLoading}
         >
@@ -252,10 +283,7 @@ const ProfileForm = () => {
       </FormControl>
       <FormControl variant="standard" sx={{ marginBottom: "27px" }}>
         <GenericButton
-          color="primary"
-          variant="contained"
-          size="small"
-          sx={{
+          style={{
             width: "277px",
 
             marginTop: "27px",

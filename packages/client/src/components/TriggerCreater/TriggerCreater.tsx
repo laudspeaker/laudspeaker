@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Box, MenuItem, Typography, FormControl } from "@mui/material";
+import { FormControl } from "@mui/material";
 import { GenericButton, Select, Input } from "components/Elements";
 import {
   getConditions,
@@ -177,17 +177,21 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
   const [delayInputTime, setDelayInputTime] = useState(delayTime || "");
 
   const [datePickerSpecificTimeValue, setDatePickerSpecificTimeValue] =
-    useState(new Date());
+    useState(new Date().toISOString());
 
-  const [datePickerFromValue, setDatePickerFromValue] = useState(new Date());
+  const [datePickerFromValue, setDatePickerFromValue] = useState(
+    new Date().toISOString()
+  );
 
-  const [datePickerToValue, setDatePickerToValue] = useState(new Date());
+  const [datePickerToValue, setDatePickerToValue] = useState(
+    new Date().toISOString()
+  );
 
   const [isButtonDisabled, setIsButtonDisabled] = useState(true);
 
-  const handleTimeDelayChange = (e: any) => {
-    const arr: string[] = e.target.value.split(":");
-    setIsButtonDisabled(!e.target.value.match(/\d\d:\d\d:\d\d/));
+  const handleTimeDelayChange = (value: any) => {
+    const arr: string[] = value.split(":");
+    setIsButtonDisabled(!value.match(/\d\d:\d\d:\d\d/));
     if (
       arr.length > 3 ||
       (arr[0] && arr[0].length > 2) ||
@@ -199,24 +203,24 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
     ) {
       return;
     }
-    setDelayInputTime(e.target.value);
+    setDelayInputTime(value);
   };
 
-  const handleTimeSelectChange = (e: any) => {
+  const handleTimeSelectChange = (value: any) => {
     setIsButtonDisabled(true);
-    setEventTimeSelect(e.target.value);
+    setEventTimeSelect(value);
   };
 
-  const handletriggerType = (e: any) => {
-    setTriggerType(e.target.value);
+  const handletriggerType = (value: any) => {
+    setTriggerType(value);
   };
 
-  const handleSpecificTimeChange = (value: Date | null) => {
-    setIsButtonDisabled(!value || value < new Date());
+  const handleSpecificTimeChange = (value: string | null) => {
+    setIsButtonDisabled(!value || new Date(value) < new Date());
     if (value) setDatePickerSpecificTimeValue(value);
   };
 
-  const handleToTimeChange = (value: Date | null) => {
+  const handleToTimeChange = (value: string | null) => {
     setIsButtonDisabled(
       !datePickerToValue ||
         !datePickerFromValue ||
@@ -225,7 +229,7 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
     if (value) setDatePickerToValue(value);
   };
 
-  const handleFromTimeChange = (value: Date | null) => {
+  const handleFromTimeChange = (value: string | null) => {
     setIsButtonDisabled(
       !datePickerToValue ||
         !datePickerFromValue ||
@@ -321,7 +325,7 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
   const updateFormData = ({
     formDataToUpdate,
     id,
-    e,
+    value,
     response,
     rowIndex,
     isRoot = false,
@@ -329,7 +333,7 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
     const updatedData = recursivelyUpdateFormData(
       formDataToUpdate,
       id,
-      e.target.value,
+      value,
       response?.data?.id || "",
       isRoot
     );
@@ -351,12 +355,12 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
     ];
     setFormData(tempData);
   };
-  const updateEvent = async ({ e, id, rowIndex, type, isRoot }: any) => {
+  const updateEvent = async ({ value, id, rowIndex, type, isRoot }: any) => {
     setIsButtonDisabled(true);
     const formDataToUpdate = JSON.parse(JSON.stringify(formData[rowIndex]));
     if (type === "select") {
       let response: any = {};
-      const resourceId = e.target.value;
+      const resourceId = value;
       getAllResources(resourceId)
         .then((resourceResponse) => {
           response = JSON.parse(JSON.stringify(resourceResponse));
@@ -369,7 +373,7 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
           updateFormData({
             formDataToUpdate,
             id,
-            e,
+            value,
             response,
             rowIndex,
             isRoot,
@@ -377,13 +381,11 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
         });
     }
     if (type === "inputText" || type === "inputNumber") {
-      setIsButtonDisabled(
-        e.target.value === "" || e.target.value === undefined
-      );
+      setIsButtonDisabled(value === "" || value === undefined);
       updateFormData({
         formDataToUpdate,
         id,
-        e,
+        value,
         response: {},
         rowIndex,
       });
@@ -392,16 +394,16 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
       updateFormData({
         formDataToUpdate,
         id,
-        e,
+        value,
         response: {},
         rowIndex,
       });
     }
   };
 
-  const handleEventBasedChange = ({ e, id: key, type, isRoot }: any) => {
+  const handleEventBasedChange = ({ value, id: key, type, isRoot }: any) => {
     updateEvent({
-      e,
+      value,
       id: key,
       rowIndex: 0,
       type,
@@ -514,7 +516,7 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
       case "timeDelay": {
         jsx = (
           <>
-            <Box display={"flex"} alignItems={"center"}>
+            <div className="flex items-center">
               <FormControl
                 sx={{
                   padding: "0 15px",
@@ -526,6 +528,10 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
                   id="eventTime"
                   name="eventTime"
                   value={eventTimeSelect}
+                  options={[
+                    { value: "Delay", title: "Delay" },
+                    { value: "SpecificTime", title: "Specific Time" },
+                  ]}
                   onChange={handleTimeSelectChange}
                   displayEmpty
                   sx={{
@@ -537,10 +543,7 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
                       boxShadow: "none",
                     },
                   }}
-                >
-                  <MenuItem value={"Delay"}>Delay</MenuItem>
-                  <MenuItem value={"SpecificTime"}>Specific Time</MenuItem>
-                </Select>
+                />
               </FormControl>
               {eventTimeSelect ? (
                 <>
@@ -578,7 +581,8 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
                       ? undefined
                       : transformDataToUI({
                           data: { type: "inputText" },
-                          onChange: ({ e }: any) => handleTimeDelayChange(e),
+                          onChange: ({ value }: any) =>
+                            handleTimeDelayChange(value),
                           isRoot: formData.conditions?.isRoot,
                           value: delayInputTime,
                           id: "delayTime",
@@ -616,16 +620,16 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
               ) : (
                 <></>
               )}
-            </Box>
+            </div>
           </>
         );
         break;
       }
       case "timeWindow": {
         jsx = (
-          <Box display={"flex"} alignItems={"center"} flexDirection="column">
+          <div className="flex items-center flex-col">
             {toPart ? (
-              <Box display={"flex"} alignItems={"center"} marginTop={"10px"}>
+              <div className="flex items-center mt-[10px]">
                 <FormControl
                   sx={{
                     padding: "0 15px",
@@ -658,9 +662,9 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
                 >
                   after user has left audience state
                 </FormControl>
-              </Box>
+              </div>
             ) : (
-              <Box display={"flex"} alignItems={"center"}>
+              <div className="flex items-center">
                 <FormControl
                   sx={{
                     padding: "0 15px",
@@ -693,9 +697,9 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
                 >
                   after user has entered audience state
                 </FormControl>
-              </Box>
+              </div>
             )}
-          </Box>
+          </div>
         );
         break;
       }
@@ -730,24 +734,15 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
           maxWidth: "1138px",
         }}
       >
-        <Box
-          alignItems={"flex-start"}
-          justifyContent={"space-between"}
-          display={"flex"}
-        >
+        <div className="flex items-start justify-between">
           {!titleEdit ? (
-            <Typography
-              variant="h3"
-              display={"flex"}
-              alignItems="center"
-              gap="10px"
-            >
+            <h3 className="flex text-center gap-[10px]">
               {segmentForm.title}
               <EditIcon
                 sx={{ fontSize: "25px", cursor: "pointer" }}
                 onClick={handleTitleEdit}
               />
-            </Typography>
+            </h3>
           ) : (
             <Input
               value={segmentForm.title}
@@ -769,16 +764,9 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
               }}
             />
           )}
-        </Box>
-        <Box
-          borderRadius={"10px"}
-          border="1px solid #D1D5DB"
-          boxShadow={"0px 1px 2px rgba(0, 0, 0, 0.05)"}
-          margin="25px 0px"
-          padding={"20px 25px"}
-          position="relative"
-        >
-          <Box display={"flex"} alignItems="center" gap={"15px"}>
+        </div>
+        <div className="rounded-[10px] border-[1px] border-[#D1D5DB] my-[25px] mx-[0px] py-[20px] px-[25px] relative shadow-[0px_1px_2px_rgba(0,0,0,0.05)]">
+          <div className="flex items-center gap-[15px]">
             <FormControl
               sx={{
                 maxWidth: "135px",
@@ -789,6 +777,11 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
               <Select
                 id="activeJourney"
                 value={triggerType}
+                options={[
+                  { value: "eventBased", title: "Conditions" },
+                  { value: "timeDelay", title: "When" },
+                  { value: "timeWindow", title: "From" },
+                ].filter((item) => item.value === triggerType)}
                 onChange={handletriggerType}
                 displayEmpty
                 sx={{
@@ -799,59 +792,21 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
                     boxShadow: "none",
                   },
                 }}
-              >
-                {triggerType === "eventBased" && (
-                  <MenuItem value={"eventBased"}>Conditions</MenuItem>
-                )}
-                {triggerType === "timeDelay" && (
-                  <MenuItem value={"timeDelay"}>When</MenuItem>
-                )}
-                {triggerType === "timeWindow" && (
-                  <MenuItem value={"timeWindow"}>From</MenuItem>
-                )}
-              </Select>
+              />
             </FormControl>
-          </Box>
-          <Box marginLeft="88px">
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                position: "relative",
-                "::after": {
-                  content: "no-close-quote",
-                  position: "absolute",
-                  zIndex: 1,
-                  top: "10%",
-                  left: "-100px",
-                  // left: "23.5%",
-                  marginLeft: "45px",
-                  borderLeft: "2px dashed #7B7E7C",
-                  height: "80%",
-                },
-              }}
-            >
-              <Box
-                sx={{
-                  borderRadius: "10px",
-                  margin: "25px 0px",
-                  padding: "10px 25px 20px",
-                  backgroundColor: "#F9F9FA",
-                  display: "flex",
-                  alignItems: "center",
-                  cursor: "pointer",
-                  width: "100%",
-                }}
-              >
-                <Box display={"flex"} flex={1} flexWrap={"wrap"}>
+          </div>
+          <div className="ml-[88px]">
+            <div className="flex items-center relative after:content-[no-close-quote] after:absolute after:z-[1] after:top-[10%] after:left-[-100px] after:ml-[45px] after:border-l-[2px] after:border-dashed after:border-l-[#7B7E7C] after:h-[80%]">
+              <div className="rounded-[10px] my-[25px] mx-[0px] pt-[10px] pb-[25px] px-[20px] bg-[#F9F9FA] flex items-center cursor-pointer w-full">
+                <div className="flex flex-[1] flex-wrap">
                   {generateTriggerUI()}
-                </Box>
-              </Box>
-            </Box>
-          </Box>
+                </div>
+              </div>
+            </div>
+          </div>
           {triggerType === "timeWindow" && (
             <>
-              <Box display={"flex"} alignItems="center" gap={"15px"}>
+              <div className="flex items-center gap-[15px]">
                 <FormControl
                   sx={{
                     maxWidth: "135px",
@@ -862,6 +817,7 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
                   <Select
                     id="activeJourney"
                     value={triggerType}
+                    options={[{ value: "timeWindow", title: "To" }]}
                     onChange={handletriggerType}
                     displayEmpty
                     sx={{
@@ -872,58 +828,26 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
                         boxShadow: "none",
                       },
                     }}
-                  >
-                    <MenuItem value={"timeWindow"}>To</MenuItem>
-                  </Select>
+                  />
                 </FormControl>
-              </Box>
-              <Box marginLeft="88px">
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    position: "relative",
-                    "::after": {
-                      content: "no-close-quote",
-                      position: "absolute",
-                      zIndex: 1,
-                      top: "10%",
-                      left: "-100px",
-                      // left: "23.5%",
-                      marginLeft: "45px",
-                      borderLeft: "2px dashed #7B7E7C",
-                      height: "80%",
-                    },
-                  }}
-                >
-                  <Box
-                    sx={{
-                      borderRadius: "10px",
-                      margin: "25px 0px",
-                      padding: "10px 25px 20px",
-                      backgroundColor: "#F9F9FA",
-                      display: "flex",
-                      alignItems: "center",
-                      cursor: "pointer",
-                      width: "100%",
-                    }}
-                  >
-                    <Box display={"flex"} flex={1} flexWrap={"wrap"}>
+              </div>
+              <div className="ml-[88px]">
+                <div className="flex items-center relative after:content-[no-close-quote] after:absolute after:z-[1] after:top-[10%] after:left-[-100px] after:ml-[45px] after:border-l-[2px] after:border-dashed after:border-l-[#7B7E7C] after:h-[80%]">
+                  <div className="rounded-[10px] my-[25px] mx-[0px] pt-[10px] pb-[25px] px-[20px] bg-[#F9F9FA] flex items-center cursor-pointer w-full">
+                    <div className="flex flex-[1] flex-wrap">
                       {generateTriggerUI({ toPart: true })}
-                    </Box>
-                  </Box>
-                </Box>
-              </Box>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </>
           )}
-        </Box>
-        <Box display={"flex"} gap={10} justifyContent="flex-end">
-          <Box>
+        </div>
+        <div className="flex gap-[10px] justify-end">
+          <div>
             <GenericButton
-              variant="contained"
               onClick={deleteRow}
-              fullWidth
-              sx={{
+              style={{
                 maxWidth: "200px",
                 background: "#D3D3D3",
                 width: "200px",
@@ -932,13 +856,11 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
             >
               Delete
             </GenericButton>
-          </Box>
-          <Box data-savetriggerreator>
+          </div>
+          <div data-savetriggerreator>
             <GenericButton
-              variant="contained"
               onClick={handleSubmit}
-              fullWidth
-              sx={{
+              style={{
                 width: "200px",
                 "background-image":
                   "linear-gradient(to right, #6BCDB5 , #307179, #122F5C)",
@@ -947,8 +869,8 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
             >
               Save
             </GenericButton>
-          </Box>
-        </Box>
+          </div>
+        </div>
       </Card>
     </>
   );

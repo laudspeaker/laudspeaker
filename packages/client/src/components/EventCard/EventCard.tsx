@@ -1,5 +1,4 @@
 import React from "react";
-import { Box } from "@mui/material";
 import MinusIcon from "../../assets/images/MinusIcon.svg";
 import { transformDataToUI } from "pages/Segment/SegmentHelpers";
 
@@ -34,9 +33,9 @@ const EventCard = (props: IEventCardProp) => {
     handleDeleteRow(rowIndex);
   };
 
-  const handleChange = ({ e, id: key, type, isRoot }: any) => {
+  const handleChange = ({ value, id: key, type, isRoot }: any) => {
     updateFormData({
-      e,
+      value,
       id: key,
       rowIndex: id,
       type,
@@ -72,43 +71,17 @@ const EventCard = (props: IEventCardProp) => {
   };
 
   return (
-    <Box sx={{ display: "flex", alignItems: "center", position: "relative" }}>
-      <Box
-        sx={{
-          position: "absolute",
-          left: "-72px",
-          top: "40px",
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          zIndex: 1111,
-          width: "60px",
-          background: "#FFFFFF",
-          border: "1px solid #DEDEDE",
-          borderRadius: "24px",
-          height: "45px",
-        }}
-      >
+    <div className="flex items-center relative">
+      <div className="absolute left-[-72px] top-[40px] flex justify-center items-center z-[1111] w-[60px] h-[45px] bg-white border-[1px] border-[#DEDEDE] rounded-[24px]">
         {conditionType == ConditionalType.and ? "And" : "Or"}
-      </Box>
-      <Box
-        sx={{
-          borderRadius: "10px",
-          margin: "25px 0px",
-          padding: "0 25px 20px",
-          backgroundColor: "#F9F9FA",
-          display: "flex",
-          alignItems: "center",
-          cursor: "pointer",
-          width: "100%",
-        }}
-      >
-        <Box display={"flex"} flex={1} flexWrap={"wrap"}>
+      </div>
+      <div className="rounded-[10px] my-[25px] mx-[0px] pt-[0px] pb-[25px] px-[20px] bg-[#F9F9FA] flex items-center cursor-pointer w-full">
+        <div className="flex flex-[1] flex-wrap">
           {generateFormData(formData, (option) => option.label !== "Events")}
-        </Box>
-        <Box display={"flex"} alignItems={"center"} sx={{ width: "135px" }}>
+        </div>
+        <div className="flex items-center w-[135px]">
           {canDeleteRow ? (
-            <Box display={"flex"}>
+            <div className="flex">
               <button
                 onClick={() => deleteRow(id)}
                 style={{
@@ -122,11 +95,11 @@ const EventCard = (props: IEventCardProp) => {
               >
                 <img src={MinusIcon} width="24" />
               </button>
-            </Box>
+            </div>
           ) : null}
-        </Box>
-      </Box>
-    </Box>
+        </div>
+      </div>
+    </div>
   );
 };
 

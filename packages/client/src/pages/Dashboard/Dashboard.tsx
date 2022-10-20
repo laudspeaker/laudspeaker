@@ -1,13 +1,11 @@
 import React, { useState } from "react";
-import Drawer from "../../components/Drawer";
 import RecentActivity from "./RecentAcitivity";
 import activities from "./Dashboard.fixtures";
 import Header from "../../components/Header";
-import { Box, FormControl, Grid, MenuItem, Typography } from "@mui/material";
+import { FormControl } from "@mui/material";
 import { GenericButton, Select } from "components/Elements";
 import { formatDistance } from "date-fns";
 import DateRangePicker from "components/DateRangePicker";
-import Card from "components/Cards/Card";
 import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
 import { IconButton, Popover } from "@mui/material";
 import { VictoryChart, VictoryArea } from "victory";
@@ -20,8 +18,8 @@ const Dashboard = () => {
   const [anchorEl, setAnchorEl] = React.useState<HTMLButtonElement | null>(
     null
   );
-  const handleActiveJourney = (e: any) => {
-    setActiveJourney(e.target.value);
+  const handleActiveJourney = (value: any) => {
+    setActiveJourney(value);
   };
 
   const handleDateChange = (e: any) => {
@@ -82,96 +80,50 @@ const Dashboard = () => {
   };
 
   return (
-    <Box
-      sx={{
-        // width: "calc( 100vw - 154px)",
-        // left: "154px",
-        paddingLeft: "154px",
-        position: "relative",
-        backgroundColor: "#E5E5E5",
-      }}
-    >
+    <div className="relative bg-white">
       <Header />
-      <Drawer />
-      <Grid padding={"30px 31px"}>
-        <Box
-          borderBottom={"1px solid #D3D3D3"}
-          width={"100%"}
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            flexDirection: "row",
-          }}
-        >
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              paddingBottom: "30px",
-            }}
-          >
-            <Typography variant="h3" minWidth={"204px"}>
-              Active Journeys
-            </Typography>
-            <Box paddingLeft={"49px"}>
+      <div className="flex p-[30px]">
+        <div className="border-b-[1px] border-b-[#D3D3D3] w-full flex justify-between flex-row">
+          <div className="flex items-center pb-[30px]">
+            <h3 className="min-w-[204px]">Active Journeys</h3>
+            <div className="pl-[49px]">
               <DateRangePicker onChange={handleDateChange} value={date} />
-            </Box>
+            </div>
             <FormControl
               sx={{ maxWidth: "200px", paddingLeft: "15px", minWidth: "112px" }}
             >
               <Select
                 id="activeJourney"
                 value={activeJourney}
+                options={[
+                  { value: "Daily" },
+                  { value: "Weekly" },
+                  { value: "Monthly" },
+                ]}
                 onChange={handleActiveJourney}
                 displayEmpty
-              >
-                <MenuItem value={"Daily"}>Daily</MenuItem>
-                <MenuItem value={"Weekly"}>Weekly</MenuItem>
-                <MenuItem value={"Monthly"}>Monthly</MenuItem>
-              </Select>
+              />
             </FormControl>
-          </Box>
+          </div>
           <GenericButton
-            variant="contained"
             onClick={redirectJourney}
-            fullWidth
-            sx={{
+            style={{
               maxWidth: "158px",
               maxHeight: "48px",
               "background-image":
                 "linear-gradient(to right, #6BCDB5 , #307179, #122F5C)",
             }}
-            size={"medium"}
           >
             See All Journeys
           </GenericButton>
-        </Box>
-      </Grid>
-      <Grid
-        container
-        direction={"row"}
-        justifyContent={"space-between"}
-        alignItems={"center"}
-        padding={"0px 30px"}
-        spacing={3}
-      >
-        <Grid item xs={12} sm={6} lg={4}>
-          <Card
-            sx={{
-              height: "299px",
-            }}
-          >
-            <Grid
-              container
-              direction={"row"}
-              justifyContent={"space-between"}
-              borderBottom={"1px solid #D3D3D3"}
-              padding={"20px"}
-            >
-              <Typography variant="body2">0 - Sent</Typography>
-              <Typography variant="body2">0 - From last day</Typography>
-              {/* <MoreHorizIcon /> */}
-
+        </div>
+      </div>
+      <div className="flex items-center justify-between p-[0px_30px] space-x-[30px]">
+        <div className="shadow-2xl rounded-3xl">
+          <div className="h-[299px] bg-white rounded-3xl">
+            <div className="flex flex-row justify-between border-b-[1px] border-b-[#D3D3D3] p-[20px]">
+              <p>0 - Sent</p>
+              <p>0 - From last day</p>
               <IconButton
                 color="primary"
                 aria-label="upload picture"
@@ -192,10 +144,10 @@ const Dashboard = () => {
                   horizontal: "left",
                 }}
               >
-                <Typography sx={{ p: 2 }}>View User</Typography>
+                <p className="p-[2]">View User</p>
               </Popover>
-            </Grid>
-            <Box padding={"20px"}>
+            </div>
+            <div className="p-[20px] bg-white rounded-3xl">
               <svg style={{ position: "absolute" }}>
                 <defs>
                   <linearGradient
@@ -225,24 +177,14 @@ const Dashboard = () => {
                   }}
                 />
               </VictoryChart>
-            </Box>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={6} lg={4}>
-          <Card
-            sx={{
-              height: "299px",
-            }}
-          >
-            <Grid
-              container
-              direction={"row"}
-              justifyContent={"space-between"}
-              borderBottom={"1px solid #D3D3D3"}
-              padding={"20px"}
-            >
-              <Typography variant="body2">0 - Delivered</Typography>
-              <Typography variant="body2">0 - From last day</Typography>
+            </div>
+          </div>
+        </div>
+        <div className="shadow-2xl rounded-3xl">
+          <div className="h-[299px] bg-white rounded-3xl">
+            <div className="flex flex-row justify-between border-b-[1px] border-b-[#D3D3D3] p-[20px]">
+              <p>0 - Delivered</p>
+              <p>0 - From last day</p>
               {/* <MoreHorizIcon /> */}
 
               <IconButton
@@ -265,11 +207,11 @@ const Dashboard = () => {
                   horizontal: "left",
                 }}
               >
-                <Typography sx={{ p: 2 }}>View User</Typography>
+                <p className="p-[2]">View User</p>
               </Popover>
-            </Grid>
-            <Box padding={"20px"}>
-              <svg style={{ position: "absolute" }}>
+            </div>
+            <div className="p-[20px] bg-white rounded-3xl">
+              <svg className="absolute">
                 <defs>
                   <linearGradient
                     id="myGradient"
@@ -302,23 +244,13 @@ const Dashboard = () => {
                   }}
                 />
               </VictoryChart>
-            </Box>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={6} lg={4}>
-          <Card
-            sx={{
-              height: "299px",
-            }}
-          >
-            <Grid
-              container
-              direction={"row"}
-              justifyContent={"space-between"}
-              borderBottom={"1px solid #D3D3D3"}
-              padding={"20px"}
-            >
-              <Typography variant="body2">Deliverability</Typography>
+            </div>
+          </div>
+        </div>
+        <div className="shadow-2xl rounded-3xl">
+          <div className="h-[299px] bg-white rounded-3xl">
+            <div className="flex flex-row justify-between border-b-[1px] border-b-[#D3D3D3] p-[20px]">
+              <p>Deliverability</p>
               {/* <MoreHorizIcon /> */}
               <IconButton
                 color="primary"
@@ -340,67 +272,47 @@ const Dashboard = () => {
                   horizontal: "left",
                 }}
               >
-                <Typography sx={{ p: 2 }}>View User</Typography>
+                <p className="p-[2]">View User</p>
               </Popover>
-            </Grid>
-            <Grid
-              container
-              direction={"row"}
-              justifyContent={"space-between"}
-              padding="20px 20px 15px 20px"
-            >
-              <Typography variant="body2" color={"#00AA58"}>
-                Bounce rate : $25
-              </Typography>
-              <Typography variant="body2" color={"#D17E83"}>
-                Spam rate : $30
-              </Typography>
-            </Grid>
-            <Box padding={"0px 20px 20px 20px"}>
-              <Typography variant="body2">
-                Supercharge your transactional delivery.
-              </Typography>
-              <Typography variant="subtitle1">
+            </div>
+            <div className="flex justify-between flex-row p-[20px_20px_15px_20px]">
+              <p className="text-[#00AA58]">Bounce rate : $25</p>
+              <p className="text-[#D17E83]">Spam rate : $30</p>
+            </div>
+            <div className="p-[0px_20px_20px_20px]">
+              <p>Supercharge your transactional delivery.</p>
+              <p>
                 Assign a sending domain specifically for your transactional
                 messages.
-              </Typography>
-            </Box>
-          </Card>
-        </Grid>
-      </Grid>
-      <Box padding={"37px 30px"}>
-        <Card>
-          <Grid
-            container
-            direction={"row"}
-            justifyContent={"space-between"}
-            alignItems={"center"}
-            padding={"20px"}
-            borderBottom={"1px solid #D3D3D3"}
-            height={"104px"}
-          >
-            <Typography variant="h3">Active Journeys</Typography>
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="p-[37px_30px]">
+        <div className="bg-white shadow-2xl rounded-3xl">
+          <div className="flex flex-row justify-between items-center p-[20px] border-b-[1px] border-b-[#D3D3D3] h-[104px]">
+            <h3 className="font-[Inter] font-semibold text-[25px] leading-[38px]">
+              Active Journeys
+            </h3>
             <GenericButton
-              variant="contained"
               onClick={redirectUses}
-              fullWidth
-              sx={{
+              style={{
                 maxWidth: "158px",
                 maxHeight: "48px",
                 "background-image":
                   "linear-gradient(to right, #6BCDB5 , #307179, #122F5C)",
               }}
-              size={"medium"}
             >
               Go To Customers
             </GenericButton>
-          </Grid>
-          <Box padding={"20px"}>
+          </div>
+          <div className="p-[20px]">
             <RecentActivity activities={formattedActivities} />
-          </Box>
-        </Card>
-      </Box>
-    </Box>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 

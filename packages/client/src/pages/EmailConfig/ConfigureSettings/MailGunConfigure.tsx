@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Box, FormControl, Typography } from "@mui/material";
+import { FormControl } from "@mui/material";
 import { GenericButton, Input } from "components/Elements";
 
 export interface IMailGunConfigureForm {
@@ -30,12 +30,7 @@ const MailGunConfigure = () => {
   };
 
   return (
-    <Box
-      gap={"41px 0px"}
-      display="flex"
-      flexDirection="column"
-      marginTop="26px"
-    >
+    <div className="gap-[41px_0px] flex flex-col mt-[26px]">
       <FormControl variant="standard">
         <Input
           label="Domain"
@@ -45,7 +40,6 @@ const MailGunConfigure = () => {
           id="domain"
           fullWidth
           onChange={handleMailGunConfigFormChange}
-          labelShrink
         />
       </FormControl>
       <FormControl variant="standard">
@@ -57,7 +51,6 @@ const MailGunConfigure = () => {
           id="smtp"
           fullWidth
           onChange={handleMailGunConfigFormChange}
-          labelShrink
         />
       </FormControl>
       <FormControl variant="standard">
@@ -68,9 +61,7 @@ const MailGunConfigure = () => {
           name="password"
           id="password"
           type="password"
-          fullWidth
           onChange={handleMailGunConfigFormChange}
-          labelShrink
         />
       </FormControl>
       <FormControl variant="standard">
@@ -81,27 +72,21 @@ const MailGunConfigure = () => {
           name="apiKey"
           id="apiKey"
           type="password"
-          fullWidth
           onChange={handleMailGunConfigFormChange}
-          labelShrink
         />
       </FormControl>
       <GenericButton
-        variant="contained"
         onClick={handleSubmit}
-        fullWidth
-        sx={{
+        style={{
           maxWidth: "277px",
           "background-image":
             "linear-gradient(to right, #6BCDB5 , #307179, #122F5C)",
           borderRadius: "8px",
         }}
       >
-        <Typography variant="h4" color="#FFFFFF">
-          Next
-        </Typography>
+        <h4 className="text-white">Next</h4>
       </GenericButton>
-    </Box>
+    </div>
   );
 };
 

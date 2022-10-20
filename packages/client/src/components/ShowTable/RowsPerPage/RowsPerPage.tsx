@@ -1,5 +1,4 @@
 import React from "react";
-import { Box } from "@mui/material";
 
 interface IRowNumberProps {
   rowsPerPage: number;
@@ -19,42 +18,21 @@ const RowsPerPage = (props: IRowNumberProps) => {
   };
 
   return (
-    <Box
-      sx={{
-        display: "flex",
-        background: "#fff",
-      }}
-    >
+    <div className="flex bg-white">
       {rowData.map((item) => (
-        <Box
-          sx={{
-            fontSize: "14px",
-            border: "1px solid #E5E5E5",
-            padding: "5px 17px",
-            "&:last-child": {
-              borderRadius: "0px 6px 6px 0px",
-            },
-            "&:first-of-type": {
-              borderRadius: "6px 0px 0px 6px",
-            },
-            "&:hover": {
-              backgroundColor: "#E5E5E5",
-            },
+        <div
+          className="text-[14px] border-[1px] border-[#E5E5E5] py-[5px] px-[17px] last:rounded-[0px_6px_6px_0px] first-of-type:rounded-[0px_6px_6px_0px] hover:bg-[#E5E5E5]"
+          style={{
+            // @ts-ignore
             "&:active": backgroundStyle,
-            // "&:active": {
-            //   background:
-            //     "linear-gradient(96.63deg, #6BCDB5 10.79%, #307179 67.24%, #122F5C 87.43%)",
-            //   "-webkitBackgroundClip": "text",
-            //   "-webkitTextFillColor": "transparent",
-            // },
           }}
           onClick={(event) => handleRowClick(event)}
           key={item}
         >
           {item}
-        </Box>
+        </div>
       ))}
-    </Box>
+    </div>
   );
 };
 

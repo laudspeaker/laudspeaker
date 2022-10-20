@@ -1,10 +1,4 @@
-import {
-  Box,
-  Dialog,
-  DialogActions,
-  DialogTitle,
-  MenuItem,
-} from "@mui/material";
+import { Dialog, DialogActions, DialogTitle } from "@mui/material";
 import Drawer from "components/Drawer";
 import { GenericButton, Select } from "components/Elements";
 import { getFlow } from "pages/FlowBuilder/FlowHelpers";
@@ -162,10 +156,7 @@ const Flow = () => {
   const possibleViewZoomValues = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
 
   return (
-    <Box height="100vh" display="flex">
-      <Box display="flex">
-        <Drawer />
-      </Box>
+    <div className="h-[100vh] flex w-full">
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -197,42 +188,36 @@ const Flow = () => {
             alignItems: "center",
           }}
         >
-          <Box data-saveflowbutton sx={{ margin: "0 7.5px" }}>
+          <div className="p-[0px_7.5px]" data-saveflowbutton>
             <GenericButton
-              variant="contained"
               onClick={isPaused ? handleResume : handlePause}
-              fullWidth
-              sx={{
+              style={{
                 maxWidth: "158px",
                 maxHeight: "48px",
                 "background-image":
                   "linear-gradient(to right, #6BCDB5 , #307179, #122F5C)",
                 padding: "13px 25px",
               }}
-              size={"medium"}
               disabled={!isDataLoaded || isStopped}
             >
               {isPaused ? "Resume" : "Pause"}
             </GenericButton>
-          </Box>
-          <Box data-startflowbutton sx={{ margin: "0 7.5px" }}>
+          </div>
+          <div className="p-[0px_7.5px]" data-startflowbutton>
             <GenericButton
-              variant="contained"
               onClick={handleDialogOpen}
-              fullWidth
-              sx={{
+              style={{
                 maxWidth: "158px",
                 maxHeight: "48px",
                 "background-image":
                   "linear-gradient(to right, #6BCDB5 , #307179, #122F5C)",
                 padding: "13px 25px",
               }}
-              size={"medium"}
               disabled={!isDataLoaded || isStopped}
             >
               Stop
             </GenericButton>
-          </Box>
+          </div>
           <Dialog
             open={isDialogOpen}
             onClose={handleDialogClose}
@@ -245,9 +230,7 @@ const Flow = () => {
             <DialogActions>
               <GenericButton
                 onClick={handleDialogClose}
-                variant="contained"
-                fullWidth
-                sx={{
+                style={{
                   maxWidth: "158px",
                   maxHeight: "48px",
 
@@ -255,22 +238,18 @@ const Flow = () => {
                     "linear-gradient(to right, #bbbbbb , #b4b4b4, #686868)",
                   padding: "13px 25px",
                 }}
-                size={"medium"}
               >
                 No
               </GenericButton>
               <GenericButton
                 onClick={handleStop}
-                variant="contained"
-                fullWidth
-                sx={{
+                style={{
                   maxWidth: "158px",
                   maxHeight: "48px",
                   "background-image":
                     "linear-gradient(to right, #6BCDB5 , #307179, #122F5C)",
                   padding: "13px 25px",
                 }}
-                size={"medium"}
               >
                 Yes
               </GenericButton>
@@ -279,20 +258,20 @@ const Flow = () => {
           <Select
             id="zoomSelect"
             value={zoomState}
+            options={possibleViewZoomValues.map((item) => ({
+              value: item,
+              title: item * 100 + "%",
+            }))}
             onChange={(e) => {
               setZoomState(+e.target.value);
               setViewport({ x: viewX, y: viewY, zoom: +e.target.value });
             }}
             sx={{ margin: "0 7.5px" }}
-          >
-            {possibleViewZoomValues.map((value) => (
-              <MenuItem value={value}>{value * 100 + "%"}</MenuItem>
-            ))}
-          </Select>
+          />
         </div>
         <Background size={0} />
       </ReactFlow>
-    </Box>
+    </div>
   );
 };
 

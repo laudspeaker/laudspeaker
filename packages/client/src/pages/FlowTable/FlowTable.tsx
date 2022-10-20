@@ -1,43 +1,40 @@
 import React, { useState } from "react";
-import Drawer from "../../components/Drawer";
 import Header from "../../components/Header";
 import TableTemplate from "../../components/TableTemplate";
-import {
-  Box,
-  FormControl,
-  Grid,
-  MenuItem,
-  Modal,
-  Typography,
-} from "@mui/material";
-import { GenericButton, Select } from "components/Elements";
-import { formatDistance } from "date-fns";
-import DateRangePicker from "components/DateRangePicker";
-import Card from "components/Cards/Card";
-import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
-import { IconButton, Popover } from "@mui/material";
-import { VictoryChart, VictoryArea } from "victory";
+import { Grid } from "@mui/material";
+import { GenericButton } from "components/Elements";
 import ApiService from "services/api.service";
 import { ApiConfig } from "./../../constants";
 import NameJourney from "./NameJourney";
 import posthog from "posthog-js";
+import Modal from "components/Elements/Modal";
 
 const FlowTable = () => {
   const [success, setSuccess] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
   const [journeys, setJourneys] = useState<any>([]);
+  const [itemsPerPage, setItemsPerPage] = useState(20);
+  const [pagesCount, setPagesCount] = useState<number>(1);
+  const [currentPage, setCurrentPage] = useState(0);
   const [nameModalOpen, setNameModalOpen] = useState<boolean>(false);
+  const [sortOptions, setSortOptions] = useState({});
 
   React.useEffect(() => {
     const setLoadingAsync = async () => {
       setLoading(true);
       try {
         const { data } = await ApiService.get({
-          url: `${ApiConfig.flow}`,
+          url: `${ApiConfig.flow}?take=${itemsPerPage}&skip=${
+            itemsPerPage * currentPage
+          }&orderBy=${Object.keys(sortOptions)[0] || ""}&orderType=${
+            Object.values(sortOptions)[0] || ""
+          }`,
         });
+        const { data: fetchedJourneys, totalPages } = data;
         setSuccess("Success");
-        setJourneys(data);
+        setPagesCount(totalPages);
+        setJourneys(fetchedJourneys);
       } catch (err) {
         posthog.capture("flowTableError", {
           flowTableError: err,
@@ -48,7 +45,7 @@ const FlowTable = () => {
       }
     };
     setLoadingAsync();
-  }, []);
+  }, [itemsPerPage, currentPage, sortOptions]);
 
   const redirectUses = () => {
     setNameModalOpen(true);
@@ -71,75 +68,55 @@ const FlowTable = () => {
       </div>
     );
   return (
-    <Box
-      sx={{
-        // width: "calc( 100vw - 154px)",
-        // left: "154px",
-        paddingLeft: "154px",
-        position: "relative",
-        backgroundColor: "#E5E5E5",
-      }}
-    >
-      <Header />
-      <Drawer />
-      <Box padding={"37px 30px"}>
-        {nameModalOpen ? (
+    <div>
+      <div className="relative w-full">
+        <Header />
+        <div className="py-[37px] px-[30px]">
           <Modal
-            open={nameModalOpen}
-            onClose={() => {}}
-            aria-labelledby="modal-modal-title"
-            aria-describedby="modal-modal-description"
+            isOpen={nameModalOpen}
+            onClose={() => {
+              setNameModalOpen(false);
+            }}
           >
-            <>
-              <button
-                style={{
-                  position: "absolute",
-                  top: "30px",
-                  right: "15px",
-                  border: "0px",
-                  background: "transparent",
-                  outline: "none",
-                  fontSize: "24px",
-                  cursor: "pointer",
-                }}
-                onClick={() => setNameModalOpen(false)}
-              >
-                x
-              </button>
-              <NameJourney onSubmit={handleNameSubmit} isPrimary={true} />
-            </>
+            <NameJourney onSubmit={handleNameSubmit} isPrimary={true} />
           </Modal>
-        ) : null}
-        <GenericButton
-          variant="contained"
-          onClick={redirectUses}
-          fullWidth
-          sx={{
-            maxWidth: "158px",
-            maxHeight: "48px",
-            "background-image":
-              "linear-gradient(to right, #6BCDB5 , #307179, #122F5C)",
-          }}
-          size={"medium"}
-        >
-          Create Journey
-        </GenericButton>
-        <Card>
-          <Grid
-            container
-            direction={"row"}
-            justifyContent={"space-between"}
-            alignItems={"center"}
-            padding={"20px"}
-            borderBottom={"1px solid #D3D3D3"}
-            height={"104px"}
-          >
-            <Typography variant="h3">Active Journeys</Typography>
-          </Grid>
-          <TableTemplate data={journeys} />
-        </Card>
-      </Box>
-    </Box>
+          <div className="shadow-xl rounded-[10px]">
+            <Grid
+              container
+              direction={"row"}
+              justifyContent={"space-between"}
+              alignItems={"center"}
+              padding={"20px"}
+              borderBottom={"1px solid #D3D3D3"}
+              height={"104px"}
+            >
+              <h3>Active Journeys</h3>
+              <GenericButton
+                onClick={redirectUses}
+                style={{
+                  maxWidth: "158px",
+                  maxHeight: "48px",
+                  "background-image":
+                    "linear-gradient(to right, #6BCDB5 , #307179, #122F5C)",
+                }}
+              >
+                Create Journey
+              </GenericButton>
+            </Grid>
+            <TableTemplate
+              data={journeys}
+              pagesCount={pagesCount}
+              setCurrentPage={setCurrentPage}
+              currentPage={currentPage}
+              itemsPerPage={itemsPerPage}
+              setItemsPerPage={setItemsPerPage}
+              sortOptions={sortOptions}
+              setSortOptions={setSortOptions}
+            />
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 

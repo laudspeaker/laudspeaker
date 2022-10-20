@@ -1,4 +1,4 @@
-import { Box, IconButton, useTheme } from "@mui/material";
+import { IconButton, useTheme } from "@mui/material";
 import DarkIcon from "@mui/icons-material/Brightness4";
 import LightIcon from "@mui/icons-material/Brightness7";
 import React from "react";
@@ -10,14 +10,7 @@ export const SwitchModeButton = () => {
   const colorMode = React.useContext(ColorContext);
 
   return (
-    <Box
-      sx={{
-        display: "flex",
-        width: "100%",
-        alignItems: "center",
-        justifyContent: "center",
-      }}
-    >
+    <div className="flex w-full items-center justify-center">
       {theme.palette.mode} mode
       <IconButton
         sx={{ ml: 1 }}
@@ -26,6 +19,6 @@ export const SwitchModeButton = () => {
       >
         {theme.palette.mode === "dark" ? <LightIcon /> : <DarkIcon />}
       </IconButton>
-    </Box>
+    </div>
   );
 };

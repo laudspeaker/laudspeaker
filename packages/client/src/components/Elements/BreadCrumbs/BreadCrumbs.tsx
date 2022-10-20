@@ -3,7 +3,6 @@ import Breadcrumbs from "@mui/material/Breadcrumbs";
 import Link from "@mui/material/Link";
 import Stack from "@mui/material/Stack";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
-import { Box } from "@mui/material";
 
 function handleClick(event: React.MouseEvent<HTMLAnchorElement, MouseEvent>) {
   event.preventDefault();
@@ -32,21 +31,10 @@ export default function CustomSeparator() {
     >
       New
     </Link>,
-    // <Typography key="3" color="text.primary" sx={{ fontSize: 14 }}>
-    //   Breadcrumb
-    // </Typography>,
   ];
 
   return (
-    <Box
-      sx={{
-        display: "flex",
-        padding: "18px 30px",
-        backgroundColor: "#FFFFFF",
-        borderBottom: "1px solid #D3D3D3",
-        cursor: "pointer",
-      }}
-    >
+    <div className="flex py-[18px] px-[30px] bg-white border-b-[1px] border-b-[#D3D3D3] cursor-pointer">
       <Stack spacing={2}>
         <Breadcrumbs
           separator={<NavigateNextIcon fontSize="small" />}
@@ -55,6 +43,6 @@ export default function CustomSeparator() {
           {breadcrumbs}
         </Breadcrumbs>
       </Stack>
-    </Box>
+    </div>
   );
 }

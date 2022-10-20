@@ -65,12 +65,5 @@ describe("Journey with email triggered", () => {
     cy.get(":nth-child(1) > .MuiButton-root").click();
     cy.wait(100);
     cy.get(":nth-child(2) > .MuiButton-root").click();
-
-    cy.request("POST", "/events/custom/", {
-      slackId: "",
-      event: "hit",
-    }).then((result) => {
-      const jobId = result.body;
-    });
   });
 });

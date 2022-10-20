@@ -4,7 +4,13 @@ import React, {
   useLayoutEffect,
   useState,
 } from "react";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Navigate,
+  useNavigate,
+} from "react-router-dom";
 import tokenService from "./services/token.service";
 import Dashboard from "./pages/Dashboard";
 import Login from "./pages/Login";
@@ -36,7 +42,8 @@ import { useDispatch } from "react-redux";
 import { setSettingData } from "reducers/settings";
 import ApiService from "services/api.service";
 import EventsProvider from "pages/Settings/EventsProvider";
-import { useNavigate } from "react-router-dom";
+import DrawerLayout from "components/DrawerLayout";
+import Integrations from "pages/Settings/Integrations";
 import MailgunConfigurationTwo from "pages/Settings/MailgunConfigurationTwo";
 
 interface IProtected {
@@ -74,10 +81,18 @@ const Onboarded = ({ children }: IOnboarded) => {
   useEffect(() => {
     if (!userData.onboarded) {
       const func = async () => {
-        const { data } = await ApiService.get({
-          url: "/accounts",
-          options: {},
-        });
+        let data: any;
+        try {
+          data = (
+            await ApiService.get({
+              url: "/accounts",
+              options: {},
+            })
+          ).data;
+        } catch (e) {
+          return;
+        }
+
         dispatch({
           type: ActionType.UPDATE_USER_INFO,
           payload: {
@@ -119,7 +134,9 @@ const RouteComponent: React.FC = () => {
           element={
             <Protected>
               <Onboarded>
-                <FlowTable />
+                <DrawerLayout>
+                  <FlowTable />
+                </DrawerLayout>
               </Onboarded>
             </Protected>
           }
@@ -129,7 +146,9 @@ const RouteComponent: React.FC = () => {
           element={
             <Protected>
               <Onboarded>
-                <FlowTable />
+                <DrawerLayout>
+                  <FlowTable />
+                </DrawerLayout>
               </Onboarded>
             </Protected>
           }
@@ -139,7 +158,9 @@ const RouteComponent: React.FC = () => {
           element={
             <Protected>
               <Onboarded>
-                <FlowBuilder />
+                <DrawerLayout>
+                  <FlowBuilder />
+                </DrawerLayout>
               </Onboarded>
             </Protected>
           }
@@ -149,7 +170,9 @@ const RouteComponent: React.FC = () => {
           element={
             <Protected>
               <Onboarded>
-                <FlowViewer />
+                <DrawerLayout>
+                  <FlowViewer />
+                </DrawerLayout>
               </Onboarded>
             </Protected>
           }
@@ -159,7 +182,9 @@ const RouteComponent: React.FC = () => {
           element={
             <Protected>
               <Onboarded>
-                <PeopleTable />
+                <DrawerLayout>
+                  <PeopleTable />
+                </DrawerLayout>
               </Onboarded>
             </Protected>
           }
@@ -168,7 +193,9 @@ const RouteComponent: React.FC = () => {
           path="/emailconfig"
           element={
             <Protected>
-              <EmailConfig />
+              <DrawerLayout>
+                <EmailConfig />
+              </DrawerLayout>
             </Protected>
           }
         />
@@ -176,7 +203,9 @@ const RouteComponent: React.FC = () => {
           path="/settings/posthog-configuration"
           element={
             <Protected>
-              <PosthogConfiguration />
+              <DrawerLayout>
+                <PosthogConfiguration />
+              </DrawerLayout>
             </Protected>
           }
         />
@@ -184,7 +213,9 @@ const RouteComponent: React.FC = () => {
           path="/settings/posthog-configuration-two"
           element={
             <Protected>
-              <PosthogConfigurationTwo />
+              <DrawerLayout>
+                <PosthogConfigurationTwo />
+              </DrawerLayout>
             </Protected>
           }
         />
@@ -200,7 +231,9 @@ const RouteComponent: React.FC = () => {
           path="/settings/profile"
           element={
             <Protected>
-              <Profile />
+              <DrawerLayout>
+                <Profile />
+              </DrawerLayout>
             </Protected>
           }
         />
@@ -208,7 +241,9 @@ const RouteComponent: React.FC = () => {
           path="/settings/channel"
           element={
             <Protected>
-              <Channel />
+              <DrawerLayout>
+                <Channel />
+              </DrawerLayout>
             </Protected>
           }
         />
@@ -216,7 +251,9 @@ const RouteComponent: React.FC = () => {
           path="/settings/events-provider"
           element={
             <Protected>
-              <EventsProvider />
+              <DrawerLayout>
+                <EventsProvider />
+              </DrawerLayout>
             </Protected>
           }
         />
@@ -224,7 +261,9 @@ const RouteComponent: React.FC = () => {
           path="/settings/email-provider"
           element={
             <Protected>
-              <EmailProvider />
+              <DrawerLayout>
+                <EmailProvider />
+              </DrawerLayout>
             </Protected>
           }
         />
@@ -232,7 +271,9 @@ const RouteComponent: React.FC = () => {
           path="/settings/mailgun-configuration"
           element={
             <Protected>
-              <MailgunConfiguration />
+              <DrawerLayout>
+                <MailgunConfiguration />
+              </DrawerLayout>
             </Protected>
           }
         />
@@ -240,7 +281,9 @@ const RouteComponent: React.FC = () => {
           path="/settings/slack-configuration"
           element={
             <Protected>
-              <SlackConfiguration />
+              <DrawerLayout>
+                <SlackConfiguration />
+              </DrawerLayout>
             </Protected>
           }
         />
@@ -256,7 +299,9 @@ const RouteComponent: React.FC = () => {
           path="/settings/mailgun-configuration-two"
           element={
             <Protected>
-              <MailgunConfigurationTwo />
+              <DrawerLayout>
+                <MailgunConfigurationTwo />
+              </DrawerLayout>
             </Protected>
           }
         />
@@ -264,7 +309,21 @@ const RouteComponent: React.FC = () => {
           path="/settings/completion"
           element={
             <Protected>
-              <Completion />
+              <DrawerLayout>
+                <Completion />
+              </DrawerLayout>
+            </Protected>
+          }
+        />
+        <Route
+          path="/settings/integrations"
+          element={
+            <Protected>
+              <Onboarded>
+                <DrawerLayout>
+                  <Integrations />
+                </DrawerLayout>
+              </Onboarded>
             </Protected>
           }
         />
@@ -281,7 +340,9 @@ const RouteComponent: React.FC = () => {
           element={
             <Protected>
               <Onboarded>
-                <EmailBuilder />
+                <DrawerLayout>
+                  <EmailBuilder />
+                </DrawerLayout>
               </Onboarded>
             </Protected>
           }
@@ -291,7 +352,9 @@ const RouteComponent: React.FC = () => {
           element={
             <Protected>
               <Onboarded>
-                <SlackBuilder />
+                <DrawerLayout>
+                  <SlackBuilder />
+                </DrawerLayout>
               </Onboarded>
             </Protected>
           }
@@ -301,7 +364,9 @@ const RouteComponent: React.FC = () => {
           element={
             <Protected>
               <Onboarded>
-                <EmailBuilder />
+                <DrawerLayout>
+                  <EmailBuilder />
+                </DrawerLayout>
               </Onboarded>
             </Protected>
           }
@@ -311,7 +376,9 @@ const RouteComponent: React.FC = () => {
           element={
             <Protected>
               <Onboarded>
-                <SlackBuilder />
+                <DrawerLayout>
+                  <SlackBuilder />
+                </DrawerLayout>
               </Onboarded>
             </Protected>
           }
@@ -321,7 +388,9 @@ const RouteComponent: React.FC = () => {
           element={
             <Protected>
               <Onboarded>
-                <TemplateTable />
+                <DrawerLayout>
+                  <TemplateTable />
+                </DrawerLayout>
               </Onboarded>
             </Protected>
           }
@@ -334,6 +403,8 @@ const RouteComponent: React.FC = () => {
             </Protected>
           }
         />
+        {/* 
+        TEMP: uncomment in future
         <Route
           path="/journeys"
           element={
@@ -343,13 +414,15 @@ const RouteComponent: React.FC = () => {
               </Onboarded>
             </Protected>
           }
-        />
+        /> */}
         <Route
           path="*"
           element={
             <Protected>
               <Onboarded>
-                <FlowTable />
+                <DrawerLayout>
+                  <FlowTable />
+                </DrawerLayout>
               </Onboarded>
             </Protected>
           }

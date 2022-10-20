@@ -13,6 +13,7 @@ import {
   UseInterceptors,
   Post,
   Req,
+  Query,
 } from '@nestjs/common';
 import { Request } from 'express';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
@@ -20,6 +21,7 @@ import { TemplatesService } from './templates.service';
 import { CreateTemplateDto } from './dto/create-template.dto';
 import { UpdateTemplateDto } from './dto/update-template.dto';
 import { Account } from '../accounts/entities/accounts.entity';
+import { Template } from './entities/template.entity';
 @Controller('templates')
 export class TemplatesController {
   constructor(
@@ -31,8 +33,20 @@ export class TemplatesController {
   @Get()
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
-  findAll(@Req() { user }: Request) {
-    return this.templatesService.findAll(<Account>user);
+  findAll(
+    @Req() { user }: Request,
+    @Query('take') take?: string,
+    @Query('skip') skip?: string,
+    @Query('orderBy') orderBy?: keyof Template,
+    @Query('orderType') orderType?: 'asc' | 'desc'
+  ) {
+    return this.templatesService.findAll(
+      <Account>user,
+      take && +take,
+      skip && +skip,
+      orderBy,
+      orderType
+    );
   }
 
   @Post('/create')

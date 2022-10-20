@@ -6,7 +6,7 @@ describe("signup", () => {
   it("passes", () => {
     cy.visit("/");
     cy.clearCookies();
-    cy.clearCookies();
+    cy.url().should("include", "/login");
     cy.get(".MuiTypography-body1 > .MuiTypography-root").click();
     cy.url().should("include", "/signup");
     cy.get("#firstName").click().type("John");
