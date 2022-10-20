@@ -1,13 +1,5 @@
 import { useState } from "react";
-import {
-  Box,
-  Typography,
-  Grid,
-  FormControl,
-  Tooltip,
-  MenuItem,
-} from "@mui/material";
-import Card from "components/Cards/Card";
+import { Grid, FormControl } from "@mui/material";
 import { GenericButton, Input, Select } from "components/Elements";
 import { useNavigate } from "react-router-dom";
 
@@ -71,22 +63,10 @@ const NamePerson = ({ onSubmit, isPrimary }: INameSegment) => {
   };
 
   return (
-    <Box>
-      <Box
-        alignItems={"flex-start"}
-        justifyContent={"center"}
-        display={"flex"}
-        paddingTop={"18px"}
-        marginBottom="50px"
-      >
-        <Card
-          sx={{
-            padding: "22px 30px 77px 30px",
-            width: "100%",
-            maxWidth: "1138px",
-          }}
-        >
-          <Typography variant="h3">Name your Person</Typography>
+    <div>
+      <div className="flex items-start justify-center pt-[18px] mb-[50px]">
+        <div className="bg-white rounded-3xl p-[22px_30px_77px_30px] w-full max-w-[1138px]">
+          <h3>Name your Person</h3>
           <Grid container direction={"row"} padding={"10px 0px"}>
             <FormControl variant="standard">
               <Input
@@ -95,19 +75,16 @@ const NamePerson = ({ onSubmit, isPrimary }: INameSegment) => {
                 placeholder={"Enter name"}
                 name="name"
                 id="name"
-                sx={{ width: "530px" }}
-                onChange={handleSegmentFormChange}
-                labelShrink
-                inputProps={{
-                  style: {
-                    padding: "15px 16px",
-                    background: "#fff",
-                    border: "1px solid #D1D5DB",
-                    fontFamily: "Inter",
-                    fontWeight: 400,
-                    fontSize: "16px",
-                  },
+                style={{
+                  width: "530px",
+                  padding: "15px 16px",
+                  background: "#fff",
+                  border: "1px solid #D1D5DB",
+                  fontFamily: "Inter",
+                  fontWeight: 400,
+                  fontSize: "16px",
                 }}
+                onChange={handleSegmentFormChange}
               />
             </FormControl>
             <FormControl
@@ -120,6 +97,11 @@ const NamePerson = ({ onSubmit, isPrimary }: INameSegment) => {
               <Select
                 id="handleDay"
                 value={day}
+                options={[
+                  { value: "email" },
+                  { value: "slack" },
+                  { value: "sms" },
+                ]}
                 onChange={handleType}
                 displayEmpty
                 sx={{
@@ -131,19 +113,13 @@ const NamePerson = ({ onSubmit, isPrimary }: INameSegment) => {
                     boxShadow: "none",
                   },
                 }}
-              >
-                {["email", "slack", "sms"].map((item) => (
-                  <MenuItem value={item}>{item}</MenuItem>
-                ))}
-              </Select>
+              />
             </FormControl>
           </Grid>
-          <Box display={"flex"} justifyContent="flex-end">
+          <div className="flex justify-end">
             <GenericButton
-              variant="contained"
               onClick={handleSubmit}
-              fullWidth
-              sx={{
+              style={{
                 maxWidth: "200px",
                 "background-image":
                   "linear-gradient(to right, #6BCDB5 , #307179, #122F5C)",
@@ -151,10 +127,10 @@ const NamePerson = ({ onSubmit, isPrimary }: INameSegment) => {
             >
               Create Person
             </GenericButton>
-          </Box>
-        </Card>
-      </Box>
-    </Box>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 

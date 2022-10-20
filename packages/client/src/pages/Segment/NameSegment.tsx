@@ -1,6 +1,5 @@
 import { useState } from "react";
-import { Box, Typography, Grid, FormControl, Tooltip } from "@mui/material";
-import Card from "components/Cards/Card";
+import { Grid, FormControl, Tooltip } from "@mui/material";
 import { GenericButton, Input } from "components/Elements";
 import InfoIcon from "assets/images/info.svg";
 import ToggleSwitch from "./../../components/Elements/ToggleSwitch";
@@ -12,14 +11,8 @@ export interface INameSegmentForm {
   isPrimary: boolean;
 }
 
-const segmentTypeStyle = {
-  border: "1px solid #D1D5DB",
-  borderRadius: "6px",
-  boxShadow: "0px 1px 2px rgba(0, 0, 0, 0.05)",
-  width: "234px",
-  marginTop: "20px",
-  padding: "15px",
-};
+const segmentTypeStyle =
+  "border-[1px] border-[#D1D5DB] rouded-[6px] shadow-[0px_1px_2px_rgba(0,0,0,0.05)] w-[234px] mt-[20px] p-[15px]";
 
 interface INameSegment {
   onSubmit?: (e: any) => void;
@@ -70,40 +63,18 @@ const NameSegment = ({
   };
 
   return (
-    <Box>
-      <Box
-        alignItems={"flex-start"}
-        justifyContent={"center"}
-        display={"flex"}
-        paddingTop={"18px"}
-        marginBottom="50px"
-      >
-        <Card
-          sx={{
-            padding: "22px 30px 77px 30px",
-            width: "100%",
-            maxWidth: "1138px",
-            position: "relative",
-          }}
+    <div>
+      <div className="flex items-start justify-center pt-[18px] mb-[50px]">
+        <div
+          className="w-full max-w-[1138px]"
+          // sx={{
+          //   padding: "22px 30px 77px 30px",
+          //   width: "100%",
+          //   maxWidth: "1138px",
+          //   position: "relative",
+          // }}
         >
-          {isCollapsible && (
-            <button
-              style={{
-                position: "absolute",
-                top: "15px",
-                right: "15px",
-                border: "0px",
-                background: "transparent",
-                outline: "none",
-                fontSize: "24px",
-                cursor: "pointer",
-              }}
-              onClick={onClose}
-            >
-              x
-            </button>
-          )}
-          <Typography variant="h3">Name your segment</Typography>
+          <h3>Name your segment</h3>
           <Grid container direction={"row"} padding={"10px 0px"}>
             <FormControl variant="standard">
               <Input
@@ -113,19 +84,8 @@ const NameSegment = ({
                 placeholder={"Enter name"}
                 name="name"
                 id="name"
-                sx={{ width: "530px" }}
+                className="w-full p-[16px] bg-white border-[1px] border-[#D1D5DB] font-[Inter] text-[16px]"
                 onChange={handleSegmentFormChange}
-                labelShrink
-                inputProps={{
-                  style: {
-                    padding: "15px 16px",
-                    background: "#fff",
-                    border: "1px solid #D1D5DB",
-                    fontFamily: "Inter",
-                    fontWeight: 400,
-                    fontSize: "16px",
-                  },
-                }}
               />
             </FormControl>
           </Grid>
@@ -139,29 +99,21 @@ const NameSegment = ({
                 name="description"
                 id="description"
                 onChange={handleSegmentFormChange}
-                labelShrink
-                fullWidth
-                multiline
-                minRows="3"
-                inputProps={{
-                  style: {
-                    padding: "15px 16px",
-                    background: "#fff",
-                    border: "1px solid #D1D5DB",
-                    fontFamily: "Inter",
-                    fontWeight: 400,
-                    fontSize: "16px",
-                  },
+                style={{
+                  padding: "15px 16px",
+                  background: "#fff",
+                  border: "1px solid #D1D5DB",
+                  fontFamily: "Inter",
+                  fontWeight: 400,
+                  fontSize: "16px",
                 }}
               />
             </FormControl>
           </Grid>
           {isPrimary && (
             <div>
-              <Typography variant="h3" paddingTop={"20px"}>
-                Choose a segment type
-              </Typography>
-              <Box sx={segmentTypeStyle}>
+              <h3 className="pt-[20px]">Choose a segment type</h3>
+              <div className={segmentTypeStyle}>
                 <Grid
                   sx={{
                     display: "flex",
@@ -169,9 +121,7 @@ const NameSegment = ({
                     alignItems: "center",
                   }}
                 >
-                  <Typography variant="body1" fontWeight={600} color="#111827">
-                    Dynamic
-                  </Typography>
+                  <p className="font-semibold text-[#111827]">Dynamic</p>
                   <ToggleSwitch
                     checked={segmentForm.isDynamic}
                     onChange={onToggleChange}
@@ -179,35 +129,20 @@ const NameSegment = ({
                 </Grid>
                 <Tooltip title="dynamic">
                   {/* <IconButton> */}
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "end",
-                      cursor: "default",
-                    }}
-                    marginTop="8px"
-                  >
+                  <div className="flex items-end cursor-default mt-[8px]">
                     <img src={InfoIcon} width="20px" />
-                    <Typography
-                      variant="subtitle2"
-                      color="#4FA198"
-                      fontSize={"12px"}
-                      paddingLeft="5px"
-                    >
+                    <p className="text-[#4FA198] text-[12px] pl-[5px]">
                       What is a dynamic segment?
-                    </Typography>
-                  </Box>
-                  {/* </IconButton> */}
+                    </p>
+                  </div>
                 </Tooltip>
-              </Box>
+              </div>
             </div>
           )}
-          <Box data-namesegmentbox display={"flex"} justifyContent="flex-end">
+          <div className="flex justify-end" data-namesegmentbox>
             <GenericButton
-              variant="contained"
               onClick={handleSubmit}
-              fullWidth
-              sx={{
+              style={{
                 maxWidth: "200px",
                 "background-image":
                   "linear-gradient(to right, #6BCDB5 , #307179, #122F5C)",
@@ -215,10 +150,10 @@ const NameSegment = ({
             >
               Save
             </GenericButton>
-          </Box>
-        </Card>
-      </Box>
-    </Box>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 

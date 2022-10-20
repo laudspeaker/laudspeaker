@@ -1,6 +1,5 @@
 import { useRef, useState, useEffect, useLayoutEffect } from "react";
-import { Box, FormControl, MenuItem, Typography } from "@mui/material";
-import Card from "components/Cards/Card";
+import { Box, FormControl } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import { GenericButton, Input, Select } from "components/Elements";
 import EventCard from "./../../components/EventCard";
@@ -194,7 +193,7 @@ const MySegment = ({
   const updateFormData = ({
     formDataToUpdate,
     id,
-    e,
+    value,
     response,
     rowIndex,
     isRoot = false,
@@ -202,7 +201,7 @@ const MySegment = ({
     const updatedData = recursivelyUpdateFormData(
       formDataToUpdate,
       id,
-      e.target.value,
+      value,
       response?.data?.id || "",
       isRoot
     );
@@ -225,11 +224,11 @@ const MySegment = ({
     setFormData(tempData);
   };
 
-  const updateEvent = async ({ e, id, rowIndex, type, isRoot }: any) => {
+  const updateEvent = async ({ value, id, rowIndex, type, isRoot }: any) => {
     const formDataToUpdate = JSON.parse(JSON.stringify(formData[rowIndex]));
     if (type === "select") {
       let response: any = {};
-      const resourceId = e.target.value;
+      const resourceId = value;
       getAllResources(resourceId)
         .then((resourceResponse) => {
           response = JSON.parse(JSON.stringify(resourceResponse));
@@ -242,7 +241,7 @@ const MySegment = ({
           updateFormData({
             formDataToUpdate,
             id,
-            e,
+            value,
             response,
             rowIndex,
             isRoot,
@@ -253,7 +252,7 @@ const MySegment = ({
       updateFormData({
         formDataToUpdate,
         id,
-        e,
+        value,
         response: {},
         rowIndex,
       });
@@ -262,7 +261,7 @@ const MySegment = ({
       updateFormData({
         formDataToUpdate,
         id,
-        e,
+        value,
         response: {},
         rowIndex,
       });
@@ -286,8 +285,8 @@ const MySegment = ({
     }
   };
 
-  const handleSubTitleOptions = (e: any) => {
-    setSubTitleOptions(e.target.value);
+  const handleSubTitleOptions = (value: any) => {
+    setSubTitleOptions(value);
   };
 
   const handleDeleteRow = (rowIndex: number) => {
@@ -354,58 +353,18 @@ const MySegment = ({
   };
 
   return (
-    <Box>
-      <Box
-        alignItems={"flex-start"}
-        justifyContent={"center"}
-        display={"flex"}
-        paddingTop={"18px"}
-      >
-        <Card
-          sx={{
-            padding: "30px",
-            width: "100%",
-            maxWidth: "1138px",
-            position: "relative",
-            maxHeight: "100vh",
-            overflow: "auto",
-          }}
-        >
-          {isCollapsible && (
-            <button
-              style={{
-                position: "absolute",
-                top: "15px",
-                right: "15px",
-                border: "0px",
-                background: "transparent",
-                outline: "none",
-                fontSize: "24px",
-                cursor: "pointer",
-              }}
-              onClick={onClose}
-            >
-              x
-            </button>
-          )}
-          <Box
-            alignItems={"flex-start"}
-            justifyContent={"space-between"}
-            display={"flex"}
-          >
+    <div className="w-full">
+      <div className="w-full flex justify-center items-start pt-[18px]">
+        <div className="w-full overflow-hidden relative ">
+          <div className="flex items-start justify-between">
             {!titleEdit ? (
-              <Typography
-                variant="h3"
-                display={"flex"}
-                alignItems="center"
-                gap="10px"
-              >
+              <h3 className="flex items-center gap-[10px]">
                 {segmentForm.title}
                 <EditIcon
                   sx={{ fontSize: "25px", cursor: "pointer" }}
                   onClick={handleTitleEdit}
                 />
-              </Typography>
+              </h3>
             ) : (
               <Input
                 value={segmentForm.title}
@@ -430,30 +389,12 @@ const MySegment = ({
             <FormControl
               sx={{ maxWidth: "135px", paddingLeft: "15px", minWidth: "112px" }}
             ></FormControl>
-          </Box>
-          <Box
-            borderRadius={"10px"}
-            border="1px solid #D1D5DB"
-            boxShadow={"0px 1px 2px rgba(0, 0, 0, 0.05)"}
-            margin="25px 0px"
-            padding={"20px 25px"}
-            position="relative"
-            sx={{
-              "::after": {
-                content: "no-close-quote",
-                position: "absolute",
-                zIndex: 1,
-                top: "63px",
-                bottom: "0px",
-                // left: "23.5%",
-                marginLeft: "45px",
-                borderLeft: "2px dashed #7B7E7C",
-                height: "calc(100% - 140px)",
-              },
-            }}
+          </div>
+          <div
+            className="rounded-[10px] border-[1px] border-[#D1D5DB] shadow-[0px_1px_2px_rgba(0,0,0,0.05)] m-[25px_0px] p-[20px_25px] relative after:content-['no-close-quote'] after:absolute after:z-[1] after:top-[63px] after:bottom-[0px] after:ml-[45px] after:border-l-[2px] after:border-dashed after:h-[calc(100% - 140px)]"
             ref={elementRef}
           >
-            <Box display={"flex"} alignItems="center" gap={"15px"}>
+            <div className="flex items-center gap-[15px]">
               <FormControl
                 sx={{
                   maxWidth: "135px",
@@ -464,6 +405,10 @@ const MySegment = ({
                 <Select
                   id="activeJourney"
                   value={subTitleOptions}
+                  options={[
+                    { value: ConditionalType.and, title: "All" },
+                    { value: ConditionalType.or, title: "Any" },
+                  ]}
                   onChange={handleSubTitleOptions}
                   displayEmpty
                   sx={{
@@ -474,17 +419,12 @@ const MySegment = ({
                       boxShadow: "none",
                     },
                   }}
-                >
-                  <MenuItem value={ConditionalType.and}>All</MenuItem>
-                  <MenuItem value={ConditionalType.or}>Any</MenuItem>
-                </Select>
+                />
               </FormControl>
-              <Typography variant="subtitle2" fontSize={"14px"}>
-                of the following conditions match
-              </Typography>
-            </Box>
+              <p className="text-[14px]">of the following conditions match</p>
+            </div>
 
-            <Box marginLeft="88px">
+            <div className="ml-[88px]">
               {formData?.map((item: any, index: number) => {
                 let canDeleteRow = false;
                 for (const key in item) {
@@ -508,14 +448,12 @@ const MySegment = ({
                   </>
                 );
               })}
-            </Box>
-          </Box>
-          <Box display={"flex"} justifyContent="flex-end">
+            </div>
+          </div>
+          <div className="flex justify-end">
             <GenericButton
-              variant="contained"
               onClick={handleSubmit}
-              fullWidth
-              sx={{
+              style={{
                 maxWidth: "200px",
                 "background-image":
                   "linear-gradient(to right, #6BCDB5 , #307179, #122F5C)",
@@ -523,10 +461,10 @@ const MySegment = ({
             >
               Save
             </GenericButton>
-          </Box>
-        </Card>
-      </Box>
-    </Box>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 

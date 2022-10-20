@@ -108,6 +108,9 @@ export const Settings = (fill = "white") => {
       xmlns="http://www.w3.org/2000/svg"
       fill="none"
       viewBox="0 0 1024 1024"
+      style={{
+        transform: "scale(.8) translateX(-5px) translateY(-4px)",
+      }}
     >
       <path
         fill={fill}

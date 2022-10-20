@@ -1,21 +1,13 @@
 import React from "react";
-import { Button } from "@mui/material";
 
 export interface ButtonProps {
   children: string | React.ReactNode;
-  customClasses?: Object;
-  color?: "primary" | "secondary" | "success" | "error" | "info" | "warning";
+  customClasses?: string;
   disabled?: boolean;
   disableElevation?: boolean;
-  disableFocusRipple?: boolean;
-  disableRippleEffect?: boolean;
-  suffix?: React.ReactNode;
+  preventDefault?: boolean;
   fullWidth?: boolean;
   href?: string;
-  size?: "small" | "medium" | "large";
-  prefix?: React.ReactNode;
-  variant?: "contained" | "outlined" | "text";
-  sx?: object;
   onClick: (e: any) => void;
   style?: object;
 }
@@ -23,42 +15,34 @@ export interface ButtonProps {
 const GenericButton = (props: ButtonProps) => {
   const {
     children,
-    variant,
     customClasses,
-    color,
     disabled,
     disableElevation,
-    disableFocusRipple,
-    disableRippleEffect,
-    suffix,
-    prefix,
-    fullWidth,
-    href,
-    size,
-    sx,
+    preventDefault,
     onClick,
     style,
   } = props;
   return (
-    <Button
-      variant={variant}
-      classes={customClasses}
-      color={color}
+    <button
+      type="button"
+      className={`inline-flex items-center rounded-md border-0 border-transparent text-white bg-emerald-600 px-6 py-3 text-base font-medium shadow-sm hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 ${
+        disabled ? "grayscale" : ""
+      } ${customClasses ? customClasses : ""} `}
+      onClick={(ev) => {
+        if (disableElevation) {
+          ev.stopPropagation();
+        }
+        if (preventDefault) {
+          ev.preventDefault();
+        }
+
+        onClick(ev);
+      }}
       disabled={disabled}
-      disableElevation={disableElevation}
-      disableFocusRipple={disableFocusRipple}
-      endIcon={suffix}
-      startIcon={prefix}
-      disableRipple={disableRippleEffect}
-      fullWidth={fullWidth}
-      href={href}
-      size={size}
-      onClick={onClick}
-      sx={{ borderRadius: "8px", ...sx }}
       style={style}
     >
       {children}
-    </Button>
+    </button>
   );
 };
 

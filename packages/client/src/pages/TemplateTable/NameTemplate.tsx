@@ -1,13 +1,5 @@
 import { useState } from "react";
-import {
-  Box,
-  Typography,
-  Grid,
-  FormControl,
-  Tooltip,
-  MenuItem,
-} from "@mui/material";
-import Card from "components/Cards/Card";
+import { Grid, FormControl, Tooltip, MenuItem } from "@mui/material";
 import { GenericButton, Input, Select } from "components/Elements";
 import { useNavigate } from "react-router-dom";
 
@@ -50,8 +42,8 @@ const NameTemplate = ({ onSubmit, isPrimary }: INameSegment) => {
     }
   };
 
-  const handleType = (e: any) => {
-    setDay(e.target.value);
+  const handleType = (value: any) => {
+    setDay(value);
   };
 
   // Pushing state back up to the flow builder
@@ -71,22 +63,10 @@ const NameTemplate = ({ onSubmit, isPrimary }: INameSegment) => {
   };
 
   return (
-    <Box>
-      <Box
-        alignItems={"flex-start"}
-        justifyContent={"center"}
-        display={"flex"}
-        paddingTop={"18px"}
-        marginBottom="50px"
-      >
-        <Card
-          sx={{
-            padding: "22px 30px 77px 30px",
-            width: "100%",
-            maxWidth: "1138px",
-          }}
-        >
-          <Typography variant="h3">Name your Template</Typography>
+    <div>
+      <div className="flex items-start justify-center">
+        <div className="w-full">
+          <h3>Name your Template</h3>
           <Grid container direction={"row"} padding={"10px 0px"}>
             <FormControl variant="standard">
               <Input
@@ -95,55 +75,35 @@ const NameTemplate = ({ onSubmit, isPrimary }: INameSegment) => {
                 placeholder={"Enter name"}
                 name="name"
                 id="name"
-                sx={{ width: "530px" }}
+                className="w-full px-[16px] py-[15px] bg-[#fff] border-[1px] border-[#D1D5DB] font-[Inter] text-[16px] "
                 onChange={handleSegmentFormChange}
-                labelShrink
-                inputProps={{
-                  style: {
-                    padding: "15px 16px",
-                    background: "#fff",
-                    border: "1px solid #D1D5DB",
-                    fontFamily: "Inter",
-                    fontWeight: 400,
-                    fontSize: "16px",
-                  },
-                }}
               />
             </FormControl>
-            <FormControl
-              sx={{
-                padding: "0 15px",
-                marginTop: "20px",
-                width: "auto",
-              }}
-            >
+            <form className="w-auto mt-[20px]">
+              <label
+                htmlFor="handleDay"
+                className="font-[Inter] text-[16px] mb-[10px] font-medium"
+              >
+                Type of template:
+              </label>
               <Select
                 id="handleDay"
+                name="handleDay"
                 value={day}
                 onChange={handleType}
+                options={[
+                  { value: "email" },
+                  { value: "slack" },
+                  { value: "sms" },
+                ]}
                 displayEmpty
-                sx={{
-                  height: "44px",
-                  "& .MuiSelect-select": {
-                    padding: "9px 15px",
-                    border: "1px solid #DEDEDE",
-                    paddingRight: "50px !important",
-                    boxShadow: "none",
-                  },
-                }}
-              >
-                {["email", "slack", "sms"].map((item) => (
-                  <MenuItem value={item}>{item}</MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+              />
+            </form>
           </Grid>
-          <Box display={"flex"} justifyContent="flex-end">
+          <div className="flex justify-end">
             <GenericButton
-              variant="contained"
               onClick={handleSubmit}
-              fullWidth
-              sx={{
+              style={{
                 maxWidth: "200px",
                 "background-image":
                   "linear-gradient(to right, #6BCDB5 , #307179, #122F5C)",
@@ -151,10 +111,10 @@ const NameTemplate = ({ onSubmit, isPrimary }: INameSegment) => {
             >
               Create
             </GenericButton>
-          </Box>
-        </Card>
-      </Box>
-    </Box>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 

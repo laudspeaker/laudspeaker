@@ -1,16 +1,13 @@
-import { Box, FormControl, Grid, MenuItem, Typography } from "@mui/material";
-import Chip from "@mui/material/Chip";
-import Card from "components/Cards/Card";
+import { FormControl, Grid } from "@mui/material";
 import Header from "components/Header";
-import Drawer from "components/Drawer";
 import { Select, GenericButton } from "components/Elements";
 import CustomStepper from "./components/CustomStepper";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import ListItem from "./components/ListItem";
 import { useDispatch } from "react-redux";
 import { setSettingData } from "reducers/settings";
 import { useTypedSelector } from "hooks/useTypeSelector";
+import Chip from "components/Elements/Chip";
 
 function EmailProvider() {
   const allChannels: any = [
@@ -52,81 +49,31 @@ function EmailProvider() {
     navigate("/settings/mailgun-configuration");
   };
   return (
-    <Box
-      sx={{
-        paddingLeft: "154px",
-        position: "relative",
-        backgroundColor: "#E5E5E5",
-        display: "flex",
-        flexDirection: "column",
-        height: "100vh",
-        "& .MuiTypography-root": {
-          fontFamily: "Inter",
-        },
-        "& .MuiInputBase-input": {
-          background: "#fff",
-          border: "1px solid #D1D5DB",
-          fontFamily: "Inter",
-          fontWeight: 400,
-          fontSize: "16px",
-          padding: "12px 16px",
-        },
-        "& .MuiInputLabel-root": {
-          fontSize: "16px",
-          fontFamily: "Inter",
-        },
-        "& .MuiFormControl-root": {
-          maxWidth: "529px",
-        },
-      }}
-    >
+    <div className="w-full relative flex flex-col h-screen font-[Inter] bg-[#E5E5E5]">
       <Header />
-      <Drawer />
-      <Box
-        justifyContent={"space-around"}
-        display={"flex"}
-        margin={"72px 50px 72px 50px"}
-        gap={"30px"}
-      >
-        <Card
-          sx={{
-            padding: "30px",
-            width: "100%",
-            maxWidth: "930px",
-          }}
-        >
-          <Typography
-            variant="h3"
-            display={"flex"}
-            alignItems="center"
-            gap="10px"
-            sx={{
-              fontSize: "25px",
-              fontWeight: 600,
-              lineHeight: "40px",
-              marginBottom: "10px",
-            }}
-          >
+      <div className="flex justify-around m-[72px_50px_72px_50px] gap-[30px]">
+        <div className="bg-white rounded-3xl p-[30px] w-full max-w-[930px] !overflow-visible">
+          <h3 className="flex items-center gap-[10px] text-[25px] font-semibold leading-[40px] mb-[10px]">
             Email configuration
-          </Typography>
-          <Typography
-            variant="subtitle1"
-            sx={{
-              fontSize: "18px",
-              marginBottom: "10px",
-            }}
-          >
+          </h3>
+          <p className="text-[18px] mb-[10px]">
             Search for your email provider
-          </Typography>
+          </p>
           <Grid container direction={"row"} padding={"10px 0px"}>
             <FormControl variant="standard">
               <Select
                 id="activeJourney"
                 value={eventProvider}
+                options={allChannels.map((item: any) => ({
+                  title: item.title,
+                  subtitle: item.subTitle,
+                  value: item.id,
+                  disabled: item.disabled,
+                }))}
                 displayEmpty
-                onChange={(e) => {
-                  setEventProvider(e.target.value);
-                  handleInputChange("eventProvider", e.target.value);
+                onChange={(value) => {
+                  setEventProvider(value);
+                  handleInputChange("eventProvider", value);
                 }}
                 multipleSelections={true}
                 renderValue={(selected) => <>{selected.join(", ")}</>}
@@ -144,36 +91,7 @@ function EmailProvider() {
                     borderRadius: "6px !important",
                   },
                 }}
-              >
-                {allChannels.map((channel: any) => {
-                  return (
-                    <MenuItem
-                      value={channel.title}
-                      disabled={channel.disabled}
-                      sx={{
-                        height: "auto",
-                        "&.Mui-selected": {
-                          background: "transparent",
-                        },
-                        "&.Mui-selected:hover": {
-                          background: "transparent",
-                        },
-                        "&:hover": {
-                          background: "transparent",
-                        },
-                      }}
-                    >
-                      <ListItem
-                        title={channel.title}
-                        subtitle={`${channel.subTitle} ${
-                          channel.disabled ? "(coming soon)" : ""
-                        }`}
-                        tick={eventProvider.includes(channel.title)}
-                      />
-                    </MenuItem>
-                  );
-                })}
-              </Select>
+              />
             </FormControl>
           </Grid>
           <Grid
@@ -184,24 +102,16 @@ function EmailProvider() {
           >
             {eventProvider.map((events: any) => {
               return (
-                <Box
-                  sx={{
-                    display: "flex",
-                    flexWrap: "wrap",
-                    marginRight: "20px",
-                  }}
-                >
+                <div className="flex flex-wrap mr-[20px]">
                   <Chip key={events} label={events} />
-                </Box>
+                </div>
               );
             })}
           </Grid>
-          <Box display={"flex"} marginTop="10%" justifyContent="flex-start">
+          <div className="flex mt-[40px] justify-start">
             <GenericButton
-              variant="contained"
               onClick={moveToMailgunConfiguration}
-              fullWidth
-              sx={{
+              style={{
                 maxWidth: "200px",
                 "background-image":
                   "linear-gradient(to right, #6BCDB5 , #307179, #122F5C)",
@@ -209,33 +119,20 @@ function EmailProvider() {
             >
               Next
             </GenericButton>
-          </Box>
-        </Card>
-        <Card
-          sx={{
-            width: "100%",
-            maxWidth: "465px",
-            maxHeight: "auto",
-          }}
-        >
-          <Box
-            padding="20px"
-            display={"flex"}
-            flexDirection={"column"}
-            gap="16px"
-          >
-            <Typography variant="h3" color="#000000">
-              Your Setup List
-            </Typography>
-            <Typography variant="body1" color={"#6B7280"}>
+          </div>
+        </div>
+        <div className="bg-white rounded-3xl w-full max-w-[465px] max-h-[auto]">
+          <div className="flex p-[20px] flex-col gap-[16px]">
+            <h3 className="text-black">Your Setup List</h3>
+            <p className="text-[#6B7280]">
               Get your account ready to send automated message that people like
               to receive.
-            </Typography>
-          </Box>
+            </p>
+          </div>
           <CustomStepper activeStep={0} />
-        </Card>
-      </Box>
-    </Box>
+        </div>
+      </div>
+    </div>
   );
 }
 

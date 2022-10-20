@@ -1,5 +1,4 @@
-import { Divider, Typography } from "@mui/material";
-import Box from "@mui/material/Box";
+import { Divider } from "@mui/material";
 import { StatusCodes } from "./../../constants";
 import { useEffect, useState } from "react";
 import { Handle, Position } from "react-flow-renderer";
@@ -7,28 +6,13 @@ import { v4 as uuid } from "uuid";
 import thunderbolt from "../../assets/images/thunderbolt.svg";
 
 import { Email, SlackMsg, Mobile, SMS } from "../../components/Icons/Icons";
-import TriggerCreater from "components/TriggerCreater";
 import { getAudienceDetails } from "pages/FlowBuilder/FlowHelpers";
 
-const textStyle = {
-  color: "#223343",
-  fontFamily: "Poppins",
-  fontStyle: "normal",
-  fontWeight: "500",
-  fontSize: "14px",
-  lineHeight: "30px",
-};
-const subTitleTextStyle = {
-  color: "#6B7280",
-  fontFamily: "Poppins",
-  fontSize: "14px",
-};
-const iconStyles = {
-  marginRight: "20px",
-  display: "flex",
-  justifyContent: "center",
-  alignItems: "center",
-};
+const textStyle =
+  "text-[#223343] font-[Poppins] font-normal text-[14px] leading-[30px]";
+const subTitleTextStyle = "text-[#6B7280] font-[Poppins] text-[14px]";
+
+const iconStyles = "mr-[20px] flex justify-center items-center";
 
 const ViewNode = ({ data, setSelectedTrigger, selectedTrigger }: any) => {
   const {
@@ -72,30 +56,30 @@ const ViewNode = ({ data, setSelectedTrigger, selectedTrigger }: any) => {
     return data?.messages?.map((message: any) => {
       if (message.type === "sms") {
         return (
-          <Box sx={iconStyles}>
+          <div className={iconStyles}>
             <SMS />
-          </Box>
+          </div>
         );
       }
       if (message.type === "push") {
         return (
-          <Box sx={iconStyles}>
+          <div className={iconStyles}>
             <Mobile />
-          </Box>
+          </div>
         );
       }
       if (message.type === "email") {
         return (
-          <Box sx={iconStyles}>
+          <div className={iconStyles}>
             <Email />
-          </Box>
+          </div>
         );
       }
       if (message.type === "slack") {
         return (
-          <Box sx={iconStyles}>
+          <div className={iconStyles}>
             <SlackMsg />
-          </Box>
+          </div>
         );
       }
     });
@@ -116,75 +100,36 @@ const ViewNode = ({ data, setSelectedTrigger, selectedTrigger }: any) => {
           style={{ background: "transparent" }}
           isConnectable={false}
         />
-        <Box
-          sx={{
-            backgroundColor: "#FFF",
-            borderRadius: "8px",
-            width: nodeData.width || "350px",
-          }}
-          className="view-node"
+        <div
+          className={`view-node bg-white rounded-[8px] ${
+            nodeData.width ? `w-[${nodeData.width}]` : "w-[350px]"
+          }`}
         >
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "flex-start",
-              alignItems: "center",
-              padding: "8px 20px",
-            }}
-          >
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "space-evenly",
-                alignItems: "center",
-              }}
-            >
+          <div className="flex justify-start items-center p-[8px_20px]">
+            <div className="flex justify-evenly items-center">
               {generateMsgIcons()}
-            </Box>
-            <Box>
-              <Typography variant="subtitle1" sx={textStyle}>
+            </div>
+            <div>
+              <p className={textStyle}>
                 {nodeData.preIcon && (
                   <img src={nodeData.preIcon} style={{ marginRight: "10px" }} />
                 )}
                 {nodeData.name}
-              </Typography>
-              <Typography variant="subtitle1" sx={subTitleTextStyle}>
-                {nodeData.description}
-              </Typography>
-            </Box>
-          </Box>
+              </p>
+              <p className={subTitleTextStyle}>{nodeData.description}</p>
+            </div>
+          </div>
           <Divider />
           {stats && (
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "space-between",
-                fontFamily: "Poppins",
-                padding: "8px 10px",
-                fontStyle: "normal",
-                lineHeight: "30px",
-                fontWeight: "400",
-                fontSize: "14px",
-              }}
-            >
-              <Box
-                sx={{
-                  width: "100%",
-                  padding: "0 10px",
-                }}
-              >
-                <Box>Sent</Box>
-                <Box
-                  sx={{
-                    fontWeight: "500",
-                    color: "#333333",
-                  }}
-                >
+            <div className="flex justify-between font-[Poppins] p-[8px_10px] font-normal leading-[30px] text-[14px]">
+              <div className="w-full p-[0px_10px]">
+                <div>Sent</div>
+                <div className="font-medium text-[#333333]">
                   {new Intl.NumberFormat("en", { notation: "compact" }).format(
                     stats.sentAmount
                   )}
-                </Box>
-              </Box>
+                </div>
+              </div>
               <Divider
                 sx={{
                   height: "auto",
@@ -192,22 +137,10 @@ const ViewNode = ({ data, setSelectedTrigger, selectedTrigger }: any) => {
                 variant="middle"
                 orientation="vertical"
               />
-              <Box
-                sx={{
-                  width: "100%",
-                  padding: "0 10px",
-                }}
-              >
-                <Box>Opened</Box>
-                <Box
-                  sx={{
-                    fontWeight: "500",
-                    color: "#333333",
-                  }}
-                >
-                  0%
-                </Box>
-              </Box>
+              <div className="w-full p-[0px_10px]">
+                <div>Opened</div>
+                <div className="font-medium text-[#333333]">0%</div>
+              </div>
               <Divider
                 sx={{
                   height: "auto",
@@ -215,22 +148,10 @@ const ViewNode = ({ data, setSelectedTrigger, selectedTrigger }: any) => {
                 variant="middle"
                 orientation="vertical"
               />
-              <Box
-                sx={{
-                  width: "100%",
-                  padding: "0 10px",
-                }}
-              >
-                <Box>Clicked</Box>
-                <Box
-                  sx={{
-                    fontWeight: "500",
-                    color: "#333333",
-                  }}
-                >
-                  0%
-                </Box>
-              </Box>
+              <div className="w-full p-[0px_10px]">
+                <div>Clicked</div>
+                <div className="font-medium text-[#333333]">0%</div>
+              </div>
               <Divider
                 sx={{
                   height: "auto",
@@ -238,37 +159,14 @@ const ViewNode = ({ data, setSelectedTrigger, selectedTrigger }: any) => {
                 variant="middle"
                 orientation="vertical"
               />
-              <Box
-                sx={{
-                  width: "100%",
-                  padding: "0 10px",
-                }}
-              >
-                <Box>Converted</Box>
-                <Box
-                  sx={{
-                    fontWeight: "500",
-                    color: "#333333",
-                  }}
-                >
-                  0%
-                </Box>
-              </Box>
-            </Box>
+              <div className="w-full p-[0px_10px]">
+                <div>Converted</div>
+                <div className="font-medium text-[#333333]">0%</div>
+              </div>
+            </div>
           )}
-        </Box>
-        <div
-          style={{
-            display: "flex",
-            height: "15px",
-            position: "absolute",
-            left: 0,
-            bottom: 0,
-            alignItems: "center",
-            width: "100%",
-            justifyContent: "space-around",
-          }}
-        >
+        </div>
+        <div className="flex h-[15px] absolute left-0 bottom-0 items-center w-full justify-around">
           {!isExit &&
             data?.triggers?.map((trigger: any, index: number) => {
               return (

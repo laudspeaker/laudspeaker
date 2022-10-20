@@ -75,8 +75,7 @@ const SlackBuilder = () => {
   };
 
   return (
-    <>
-      <Drawer />
+    <div className="w-full">
       <SlackTemplateHeader
         onPersonalizeClick={onPersonalizeClick}
         onSave={onSave}
@@ -100,7 +99,7 @@ const SlackBuilder = () => {
           inputRef={inputRef}
         />
       </div>
-    </>
+    </div>
   );
 };
 

@@ -25,7 +25,7 @@ export class TemplatesService {
     @Inject(SlackService) private slackService: SlackService,
     @InjectQueue('email') private readonly emailQueue: Queue,
     @InjectQueue('slack') private readonly slackQueue: Queue
-  ) { }
+  ) {}
 
   create(account: Account, createTemplateDto: CreateTemplateDto) {
     const template = new Template();
@@ -119,8 +119,29 @@ export class TemplatesService {
     return Promise.resolve(job.id);
   }
 
-  findAll(account: Account): Promise<Template[]> {
-    return this.templatesRepository.findBy({ ownerId: (<Account>account).id });
+  async findAll(
+    account: Account,
+    take = 100,
+    skip = 0,
+    orderBy?: keyof Template,
+    orderType?: 'asc' | 'desc'
+  ): Promise<{ data: Template[]; totalPages: number }> {
+    const totalPages = Math.ceil(
+      (await this.templatesRepository.count({
+        where: { ownerId: (<Account>account).id },
+      })) / take || 1
+    );
+    const orderOptions = {};
+    if (orderBy && orderType) {
+      orderOptions[orderBy] = orderType;
+    }
+    const templates = await this.templatesRepository.find({
+      where: { ownerId: (<Account>account).id },
+      order: orderOptions,
+      take: take < 100 ? take : 100,
+      skip,
+    });
+    return { data: templates, totalPages };
   }
 
   findOne(account: Account, name: string): Promise<Template> {

@@ -9,6 +9,7 @@ import {
   ClassSerializerInterceptor,
   Param,
   Inject,
+  Query,
 } from '@nestjs/common';
 import { CreateCustomerDto } from './dto/create-customer.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -30,8 +31,16 @@ export class CustomersController {
   @Get()
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
-  findAll(@Req() { user }: Request) {
-    return this.customersService.returnAllPeopleInfo(<Account>user);
+  findAll(
+    @Req() { user }: Request,
+    @Query('take') take?: string,
+    @Query('skip') skip?: string
+  ) {
+    return this.customersService.returnAllPeopleInfo(
+      <Account>user,
+      take && +take,
+      skip && +skip
+    );
   }
 
   @Post('/create/')

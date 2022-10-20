@@ -151,8 +151,7 @@ const EmailBuilder = () => {
   };
 
   return (
-    <>
-      <Drawer />
+    <div className="w-full">
       <EmailHeader
         onPersonalize={onPersonalize}
         onSave={onSave}
@@ -161,13 +160,7 @@ const EmailBuilder = () => {
           setTemplateName(e.target.value);
         }}
       />
-      <div
-        style={{
-          width: "calc(100vw - 154px)",
-          marginLeft: "154px",
-          padding: "0 40px",
-        }}
-      >
+      <div className="w-full py-0 px-[40px]">
         <MergeTagInput
           isRequired
           value={title}
@@ -185,7 +178,7 @@ const EmailBuilder = () => {
         />
         <div id="emailBuilder" className="gjs-dashed" />
       </div>
-    </>
+    </div>
   );
 };
 

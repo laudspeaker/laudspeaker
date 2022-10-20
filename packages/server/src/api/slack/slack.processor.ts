@@ -14,7 +14,7 @@ export class SlackProcessor {
 
   constructor(
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
-    private readonly logger: LoggerService,
+    private readonly logger: LoggerService
   ) {
     this.client = new WebClient();
   }

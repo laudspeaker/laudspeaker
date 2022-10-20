@@ -28,8 +28,6 @@ import * as _ from "lodash";
 
 import TextUpdaterNode from "./TextUpdater";
 import ExitIcon from "../../assets/images/ExitIcon.svg";
-import { Box, Modal, MenuItem, Snackbar, Alert } from "@mui/material";
-import Drawer from "./../../components/Drawer/index";
 import SideDrawer from "components/SideDrawer";
 import { ApiConfig } from "./../../constants";
 import ChooseTemplateModal from "./ChooseTemplateModal";
@@ -38,6 +36,9 @@ import ApiService from "services/api.service";
 import TriggerModal from "./TriggerModal";
 import { GenericButton, Select } from "components/Elements";
 import { getFlow } from "./FlowHelpers";
+import { toast } from "react-toastify";
+import Modal from "components/Elements/Modal";
+import { useForceUpdate } from "hooks/helperHooks";
 
 enum TriggerType {
   event,
@@ -120,7 +121,6 @@ const Flow = () => {
   const [templateModalOpen, setTemplateModalOpen] = useState<boolean>(false);
   const [audienceModalOpen, setAudienceModalOpen] = useState<boolean>(false);
   const [triggerModalOpen, settriggerModalOpen] = useState<boolean>(false);
-  const [snackBarOpen, setSnackBarOpen] = useState(false);
   const [audienceEditModalOpen, setAudienceEditModalOpen] =
     useState<boolean>(false);
   const [selectedMessageType, setSelectedMessageType] = useState<any>("");
@@ -133,6 +133,8 @@ const Flow = () => {
     setSelectedTrigger(trigger);
     settriggerModalOpen(true);
   };
+
+  const forceUpdate = useForceUpdate();
 
   useEffect(() => {}, [triggers]);
   const navigate = useNavigate();
@@ -448,7 +450,16 @@ const Flow = () => {
         },
       });
     } else {
-      setSnackBarOpen(true);
+      toast.warn("Can't connect same template twice to one node!", {
+        position: "bottom-center",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "light",
+      });
     }
 
     setNodes([...nodes]);
@@ -501,28 +512,13 @@ const Flow = () => {
     setAudienceEditModalOpen(false);
   };
 
-  const handleSnackBarClose = () => {
-    setSnackBarOpen(false);
-  };
-
   return (
-    <Box height="100vh" display="flex">
-      <Snackbar
-        open={snackBarOpen}
-        autoHideDuration={5000}
-        onClose={handleSnackBarClose}
-        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-      >
-        <Alert severity="error" sx={{ width: "100%" }}>
-          Can't connect same template twice to one node!
-        </Alert>
-      </Snackbar>
-      <Box display="flex">
-        <Drawer />
-        <Box display="flex">
+    <div className="h-[100vh] flex w-full">
+      <div className="flex">
+        <div className="flex">
           <SideDrawer selectedNode={selectedNode} onClick={performAction} />
-        </Box>
-      </Box>
+        </div>
+      </div>
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -552,53 +548,48 @@ const Flow = () => {
             alignItems: "center",
           }}
         >
-          <Box data-saveflowbutton sx={{ margin: "0 7.5px" }}>
+          <div className="m-[0_7.5px]" data-saveflowbutton>
             <GenericButton
-              variant="contained"
               onClick={handleSaveJourney}
-              fullWidth
-              sx={{
+              style={{
                 maxWidth: "158px",
                 maxHeight: "48px",
                 "background-image":
                   "linear-gradient(to right, #6BCDB5 , #307179, #122F5C)",
                 padding: "13px 25px",
               }}
-              size={"medium"}
             >
               Save
             </GenericButton>
-          </Box>
-          <Box data-startflowbutton sx={{ margin: "0 7.5px" }}>
+          </div>
+          <div className="m-[0_7.5px]" data-startflowbutton>
             <GenericButton
-              variant="contained"
               onClick={handleStartJourney}
-              fullWidth
-              sx={{
+              style={{
                 maxWidth: "158px",
                 maxHeight: "48px",
                 "background-image":
                   "linear-gradient(to right, #6BCDB5 , #307179, #122F5C)",
                 padding: "13px 25px",
               }}
-              size={"medium"}
             >
               Start
             </GenericButton>
-          </Box>
+          </div>
           <Select
             id="zoomSelect"
             value={zoomState}
-            onChange={(e) => {
-              setZoomState(+e.target.value);
-              setViewport({ x: viewX, y: viewY, zoom: +e.target.value });
+            options={possibleViewZoomValues.map((item) => ({
+              value: item,
+              title: item * 100 + "%",
+            }))}
+            renderValue={(item) => item * 100 + "%"}
+            onChange={(value) => {
+              setZoomState(+value);
+              setViewport({ x: viewX, y: viewY, zoom: +value });
             }}
             sx={{ margin: "0 7.5px" }}
-          >
-            {possibleViewZoomValues.map((value) => (
-              <MenuItem value={value}>{value * 100 + "%"}</MenuItem>
-            ))}
-          </Select>
+          />
         </div>
         <Background size={0} />
       </ReactFlow>
@@ -613,10 +604,8 @@ const Flow = () => {
       ) : null}
       {audienceModalOpen ? (
         <Modal
-          open={audienceModalOpen}
-          onClose={() => {}}
-          aria-labelledby="modal-modal-title"
-          aria-describedby="modal-modal-description"
+          isOpen={audienceModalOpen}
+          onClose={() => setAudienceModalOpen(false)}
         >
           <NameSegment
             onSubmit={handleAudienceSubmit}
@@ -642,10 +631,9 @@ const Flow = () => {
         return node.id == selectedNode;
       })[0]?.data?.primary ? (
         <Modal
-          open={audienceEditModalOpen}
-          onClose={() => {}}
-          aria-labelledby="modal-modal-title"
-          aria-describedby="modal-modal-description"
+          isOpen={audienceEditModalOpen}
+          onClose={() => setAudienceEditModalOpen(false)}
+          panelClass="!max-w-[90%]"
         >
           <MySegment
             onSubmit={handleAudienceEdit}
@@ -659,7 +647,7 @@ const Flow = () => {
           />
         </Modal>
       ) : null}
-    </Box>
+    </div>
   );
 };
 // const selectedNodeData = nodes.find((node) => node.id === selectedNode);

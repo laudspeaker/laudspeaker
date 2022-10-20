@@ -1,5 +1,5 @@
 /* eslint-disable react/jsx-filename-extension */
-import { FormControl, MenuItem, Box } from "@mui/material";
+import { FormControl } from "@mui/material";
 import DateRangePicker from "components/DateRangePicker";
 import DateTimePicker from "components/Elements/DateTimePicker";
 import { Select, Input } from "../../components/Elements";
@@ -62,9 +62,13 @@ export const transformDataToUI = ({
         jsx = (
           <Select
             value={value}
+            options={data.options.map((item) => {
+              if (item.isPlaceholder) return { value: "", title: placeholder };
+              return { value: `${item.id}`, title: item.label };
+            })}
             name={id}
             displayEmpty
-            onChange={(e) => onChange({ e, id, type: "select", isRoot })}
+            onChange={(v) => onChange({ value: v, id, type: "select", isRoot })}
             sx={{
               height: "44px",
               "& .MuiSelect-select": {
@@ -74,17 +78,7 @@ export const transformDataToUI = ({
                 boxShadow: "none",
               },
             }}
-          >
-            {data.options.map((item) => {
-              if (item.isPlaceholder)
-                return (
-                  <MenuItem disabled value="">
-                    {placeholder}
-                  </MenuItem>
-                );
-              return <MenuItem value={`${item.id}`}>{item.label}</MenuItem>;
-            })}
-          </Select>
+          />
         );
       }
       break;
@@ -100,7 +94,9 @@ export const transformDataToUI = ({
           id={id}
           disabled={disabled}
           fullWidth
-          onChange={(e) => onChange({ e, id, type: "inputText" })}
+          onChange={(e) =>
+            onChange({ value: e.target.value, id, type: "inputText" })
+          }
           labelShrink
           inputProps={{
             style: {
@@ -135,7 +131,9 @@ export const transformDataToUI = ({
           fullWidth
           min={data?.range?.min}
           max={data?.range?.max}
-          onChange={(e) => onChange({ e, id, type: "inputNumber" })}
+          onChange={(e) =>
+            onChange({ value: e.target.value, id, type: "inputNumber" })
+          }
           labelShrink
           type={"number"}
           inputProps={{
@@ -168,11 +166,7 @@ export const transformDataToUI = ({
           value={value || [new Date(), new Date()]}
           onChange={(e) =>
             onChange({
-              e: {
-                target: {
-                  value: e,
-                },
-              },
+              value: e.target.value,
               id,
               type: "dateRange",
             })
@@ -185,13 +179,9 @@ export const transformDataToUI = ({
       jsx = (
         <DateTimePicker
           value={new Date(value) || new Date()}
-          handleChange={(e) =>
+          handleChange={(v) =>
             onChange({
-              e: {
-                target: {
-                  value: e.toUTCString(),
-                },
-              },
+              value: v.toUTCString(),
               id,
               type: "dateTime",
             })
@@ -228,10 +218,10 @@ export const transformDataToUI = ({
       }}
     >
       {data?.label ? (
-        <Box display={"flex"} alignItems={"center"}>
+        <div className="flex items-center">
           <p style={{ marginRight: "15px" }}>{data?.label}</p>
           {jsx}
-        </Box>
+        </div>
       ) : (
         <>{jsx}</>
       )}

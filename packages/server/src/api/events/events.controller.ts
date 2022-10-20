@@ -39,7 +39,7 @@ export class EventsController {
     private readonly workflowsService: WorkflowsService,
     @Inject(CustomersService)
     private readonly customersService: CustomersService
-  ) { }
+  ) {}
 
   @Post('job-status/email')
   @UseInterceptors(ClassSerializerInterceptor)
@@ -67,12 +67,12 @@ export class EventsController {
     @Headers('Authorization') apiKey: string,
     @Body() body: PosthogBatchEventDto
   ) {
-    this.logger.debug("Inside of the posthog events endpoint");
+    this.logger.debug('Inside of the posthog events endpoint');
     let account: Account; // Account associated with the caller
     // Step 1: Find corresponding account
     try {
       account = await this.userService.findOneByAPIKey(apiKey.substring(8));
-      this.logger.debug("Found account: ", account.id)
+      this.logger.debug('Found account: ', account.id);
     } catch (e) {
       this.logger.error('Error: ' + e);
       return new HttpException(e, 500);
@@ -100,20 +100,19 @@ export class EventsController {
         //Step 2: Create/Correlate customer for each eventTemplatesService.queueMessage
         try {
           function postHogEventMapping(event: any) {
-            const customer = {};
-            customer['posthogId'] = [event.userId];
+            const cust = {};
+            cust['posthogId'] = event.userId;
             if (event?.phPhoneNumber) {
-              customer['phPhoneNumber'] = event.phPhoneNumber;
+              cust['phPhoneNumber'] = event.phPhoneNumber;
             }
             if (event?.phEmail) {
-              customer['phEmail'] = event.phEmail;
+              cust['phEmail'] = event.phEmail;
             }
             if (event?.phCustom) {
-              customer['phCustom'] = event.phCustom;
+              cust['phCustom'] = event.phCustom;
             }
-            return customer;
+            return cust;
           }
-          this.logger.debug('Fiinding customer by event: ', currentEvent)
           const correlation = await this.customersService.findBySpecifiedEvent(
             account,
             'posthogId',
@@ -142,7 +141,10 @@ export class EventsController {
 
           //currentEvent
           try {
-            jobIDs = await this.workflowsService.tick(account, convertedEventDto);
+            jobIDs = await this.workflowsService.tick(
+              account,
+              convertedEventDto
+            );
             this.logger.debug('Queued messages with jobIDs ' + jobIDs);
           } catch (err) {
             this.logger.error('Error: ' + err);
@@ -156,7 +158,7 @@ export class EventsController {
       }
     } catch (e) {
       this.logger.error('Error: ' + e);
-      return new HttpException(e, 500)
+      return new HttpException(e, 500);
     }
     return {
       jobArray,
@@ -183,7 +185,7 @@ export class EventsController {
         account,
         body
       );
-      this.logger.debug("Correlation result:" + correlation.cust)
+      this.logger.debug('Correlation result:' + correlation.cust);
     } catch (err) {
       this.logger.error('Error: ' + err);
       return new HttpException(err, 500);
