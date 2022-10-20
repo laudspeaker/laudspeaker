@@ -4,7 +4,6 @@ import Header from "../../components/Header";
 import TableTemplate from "../../components/TableTemplate";
 import { Grid } from "@mui/material";
 import { GenericButton, Select } from "components/Elements";
-import Card from "components/Cards/Card";
 import ApiService from "services/api.service";
 import { ApiConfig } from "../../constants";
 import NameJourney from "./NameTemplate";

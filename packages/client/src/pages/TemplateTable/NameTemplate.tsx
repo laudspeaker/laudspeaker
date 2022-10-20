@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Grid, FormControl, Tooltip, MenuItem } from "@mui/material";
-import Card from "components/Cards/Card";
 import { GenericButton, Input, Select } from "components/Elements";
 import { useNavigate } from "react-router-dom";
 

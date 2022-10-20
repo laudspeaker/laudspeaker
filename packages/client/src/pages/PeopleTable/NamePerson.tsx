@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Grid, FormControl } from "@mui/material";
-import Card from "components/Cards/Card";
 import { GenericButton, Input, Select } from "components/Elements";
 import { useNavigate } from "react-router-dom";
 
@@ -66,13 +65,7 @@ const NamePerson = ({ onSubmit, isPrimary }: INameSegment) => {
   return (
     <div>
       <div className="flex items-start justify-center pt-[18px] mb-[50px]">
-        <Card
-          sx={{
-            padding: "22px 30px 77px 30px",
-            width: "100%",
-            maxWidth: "1138px",
-          }}
-        >
+        <div className="bg-white rounded-3xl p-[22px_30px_77px_30px] w-full max-w-[1138px]">
           <h3>Name your Person</h3>
           <Grid container direction={"row"} padding={"10px 0px"}>
             <FormControl variant="standard">
@@ -135,7 +128,7 @@ const NamePerson = ({ onSubmit, isPrimary }: INameSegment) => {
               Create Person
             </GenericButton>
           </div>
-        </Card>
+        </div>
       </div>
     </div>
   );

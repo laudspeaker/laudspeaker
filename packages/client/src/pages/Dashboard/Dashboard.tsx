@@ -7,7 +7,6 @@ import { FormControl, Grid } from "@mui/material";
 import { GenericButton, Select } from "components/Elements";
 import { formatDistance } from "date-fns";
 import DateRangePicker from "components/DateRangePicker";
-import Card from "components/Cards/Card";
 import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
 import { IconButton, Popover } from "@mui/material";
 import { VictoryChart, VictoryArea } from "victory";
@@ -324,7 +323,7 @@ const Dashboard = () => {
         </Grid>
       </Grid>
       <div className="p-[37px_30px]">
-        <Card>
+        <div className="bg-white rounded-3xl">
           <Grid
             container
             direction={"row"}
@@ -352,7 +351,7 @@ const Dashboard = () => {
           <div className="p-[20px]">
             <RecentActivity activities={formattedActivities} />
           </div>
-        </Card>
+        </div>
       </div>
     </div>
   );

@@ -1,5 +1,4 @@
 import { FormControl, Grid } from "@mui/material";
-import Card from "components/Cards/Card";
 import Header from "components/Header";
 import { Select, GenericButton } from "components/Elements";
 import CustomStepper from "./components/CustomStepper";
@@ -65,13 +64,7 @@ function EventsProv() {
     <div className="w-full relative flex flex-col h-screen font-[Inter] bg-[#E5E5E5]">
       <Header />
       <div className="flex justify-around m-[72px_50px_72px_50px] gap-[30px]">
-        <Card
-          sx={{
-            padding: "30px",
-            width: "100%",
-            maxWidth: "930px",
-          }}
-        >
+        <div className="bg-white rounded-3xl p-[30px] w-full max-w-[930px]">
           <h3 className="flex items-center gap-[10px] text-[25px] font-semibold leading-[40px] mb-[10px]">
             Add your Event Provider
           </h3>
@@ -153,14 +146,8 @@ function EventsProv() {
               Next
             </GenericButton>
           </div>
-        </Card>
-        <Card
-          sx={{
-            width: "100%",
-            maxWidth: "465px",
-            maxHeight: "auto",
-          }}
-        >
+        </div>
+        <div className="bg-white rounded-3xl w-full max-w-[465px] max-h-[auto]">
           <div className="p-[20px] flex flex-col gap-[16px]">
             <h3 className="text-black">Your Setup List</h3>
             <p className="text-[#6B7280]">
@@ -177,7 +164,7 @@ function EventsProv() {
             ]}
             activeStep={1}
           />
-        </Card>
+        </div>
       </div>
     </div>
   );

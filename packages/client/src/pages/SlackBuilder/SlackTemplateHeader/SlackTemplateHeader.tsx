@@ -80,7 +80,7 @@ const SlackTemplateHeader = (props: IEmailHeaderProps) => {
         </h6>
         <Divider />
 
-        <div className="flex text-center justify-between w-[400px] pr-[50px]">
+        <div className="flex text-center justify-between items-center w-[400px] pr-[50px] gap-[10px]">
           <div>
             <FormControl
               sx={{ maxWidth: "300px", paddingLeft: "15px", minWidth: "112px" }}

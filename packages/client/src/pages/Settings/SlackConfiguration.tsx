@@ -2,7 +2,7 @@ import { ApiConfig } from "../../constants";
 import { useTypedSelector } from "hooks/useTypeSelector";
 import React, { useLayoutEffect, useState } from "react";
 import ApiService from "services/api.service";
-import { Card, FormControl, Grid } from "@mui/material";
+import { FormControl, Grid } from "@mui/material";
 import Header from "components/Header";
 import Drawer from "components/Drawer";
 
@@ -24,13 +24,7 @@ const SlackConfiguration = () => {
     <div className="pl-[154px] relative bg-[#E5E5E5] flex flex-col h-[100vh]">
       <Header />
       <div className="flex justify-around m-[72px_50px_72px_50px] gap-[30px]">
-        <Card
-          sx={{
-            padding: "30px",
-            width: "100%",
-            maxWidth: "930px",
-          }}
-        >
+        <div className="bg-white rounded-3xl p-[30px] w-full max-w-[930px]">
           <h3 className="flex items-center gap-[10px] text-[25px] font-semibold leading-[40px] mb-[10px]">
             Configure your slack
           </h3>
@@ -55,7 +49,7 @@ const SlackConfiguration = () => {
               </div>
             </FormControl>
           </Grid>
-        </Card>
+        </div>
       </div>
     </div>
   );

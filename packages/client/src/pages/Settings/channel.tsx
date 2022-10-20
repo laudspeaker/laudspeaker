@@ -1,5 +1,4 @@
 import { FormControl, Grid } from "@mui/material";
-import Card from "components/Cards/Card";
 import Header from "components/Header";
 import { Input, Select, GenericButton } from "components/Elements";
 import CustomStepper from "./components/CustomStepper";
@@ -63,17 +62,10 @@ function Channel() {
   };
 
   return (
-    <div className="relative flex flex-column h-[100vh] bg-[#E5E5E5]">
+    <div className="relative flex flex-col h-[100vh] bg-[#E5E5E5]">
       <Header />
       <div className="flex justify-around m-[72px_50px_72px_50px] gap-[30px]">
-        <Card
-          sx={{
-            padding: "30px",
-            width: "100%",
-            maxWidth: "930px",
-            overflow: "visible",
-          }}
-        >
+        <div className="bg-white rounded-3xl p-[30px] w-full max-w-[930px] overflow-visible">
           <h3 className="flex items-center gap-[10px] text-[25px] font-semibold leading-[40px] mb-[10px]">
             Welcome to Laudspeaker 🎉
           </h3>
@@ -115,35 +107,6 @@ function Channel() {
                   },
                 }}
               />
-              {/* {allChannels.map((channel: any) => {
-                  return (
-                    <MenuItem
-                      value={channel.title}
-                      disabled={channel.disabled}
-                      sx={{
-                        height: "auto",
-                        "&.Mui-selected": {
-                          background: "transparent",
-                        },
-                        "&.Mui-selected:hover": {
-                          background: "transparent",
-                        },
-                        "&:hover": {
-                          background: "transparent",
-                        },
-                      }}
-                    >
-                      <ListItem
-                        title={channel.title}
-                        subtitle={`${channel.subTitle} ${
-                          channel.disabled ? "(coming soon)" : ""
-                        }`}
-                        tick={channels.includes(channel.title)}
-                      />
-                    </MenuItem>
-                  );
-                })}
-              </Select> */}
               <div className="flex flex-wrap gap-[0.5]">
                 {channels.map((value: string) => (
                   <Chip key={value} label={value} />
@@ -190,14 +153,8 @@ function Channel() {
               Next
             </GenericButton>
           </div>
-        </Card>
-        <Card
-          sx={{
-            width: "100%",
-            maxWidth: "465px",
-            maxHeight: "auto",
-          }}
-        >
+        </div>
+        <div className="bg-white rounded-3xl w-full max-w-[465px] max-h-[auto]">
           <div className="p-[20px] flex flex-col gap-[16px]">
             <h3 className="text-black">Your Setup List</h3>
             <p className="text-[#6B7280]">
@@ -214,7 +171,7 @@ function Channel() {
             ]}
             activeStep={1}
           />
-        </Card>
+        </div>
       </div>
     </div>
   );

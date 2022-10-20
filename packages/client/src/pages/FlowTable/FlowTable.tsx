@@ -3,7 +3,6 @@ import Header from "../../components/Header";
 import TableTemplate from "../../components/TableTemplate";
 import { Grid } from "@mui/material";
 import { GenericButton } from "components/Elements";
-import Card from "components/Cards/Card";
 import ApiService from "services/api.service";
 import { ApiConfig } from "./../../constants";
 import NameJourney from "./NameJourney";

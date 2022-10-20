@@ -1,6 +1,5 @@
 import { useRef, useState, useEffect, useLayoutEffect } from "react";
 import { Box, FormControl } from "@mui/material";
-import Card from "components/Cards/Card";
 import EditIcon from "@mui/icons-material/Edit";
 import { GenericButton, Input, Select } from "components/Elements";
 import EventCard from "./../../components/EventCard";

@@ -1,5 +1,4 @@
 import { Grid } from "@mui/material";
-import Card from "components/Cards/Card";
 import Header from "components/Header";
 import CustomStepper from "./components/CustomStepper";
 import { resetSetttingsData } from "reducers/settings";
@@ -24,13 +23,7 @@ function Completion() {
     <div className="w-full relative flex flex-col h-screen font-[Inter] bg-[#E5E5E5]">
       <Header />
       <div className="flex justify-around m-[72px_50px_72px_50px] gap-[30px]">
-        <Card
-          sx={{
-            padding: "30px",
-            width: "100%",
-            maxWidth: "930px",
-          }}
-        >
+        <div className="bg-white rounded-3xl p-[30px] w-full max-w-[930px]">
           <h3 className="flex font-[Inter] font-semibold items-center text-[25px] gap-[10px] leading-[40px] mb-[10px]">
             Email Setup Successful 🎉
           </h3>
@@ -57,14 +50,8 @@ function Completion() {
               Create your first journey
             </GenericButton>
           </div>
-        </Card>
-        <Card
-          sx={{
-            width: "100%",
-            maxWidth: "465px",
-            maxHeight: "auto",
-          }}
-        >
+        </div>
+        <div className="bg-white rounded-3xl w-full max-w-[465px] max-h-[auto]">
           <div className="flex p-[20px] flex-col gap-[16px]">
             <h3 className="text-black">Your Setup List</h3>
             <p className="text-[#6B7280]">
@@ -72,7 +59,7 @@ function Completion() {
             </p>
           </div>
           <CustomStepper activeStep={3} />
-        </Card>
+        </div>
       </div>
     </div>
   );
