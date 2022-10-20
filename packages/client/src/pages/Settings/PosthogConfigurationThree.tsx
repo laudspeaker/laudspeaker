@@ -57,7 +57,9 @@ function PosthogConfigurationThree() {
         </div>
         <div className="bg-white rounded-3xl w-full max-w-[465px] max-h-[auto]">
           <div className="p-[20px] flex flex-col gap-[16px]">
-            <h3 className="text-black">Your Setup List</h3>
+            <h3 className="text-black font-[Poppins] text-[24px] font-bold">
+              Your Setup List
+            </h3>
             <p className="text-[#6B7280]">
               You're only a few steps away from your first message!
             </p>

@@ -82,7 +82,7 @@ function PosthogConfigurationTwo() {
   }
 
   return (
-    <div className="pl-[154px] relative bg-[#E5E5E5] flex flex-col h-[100vh]">
+    <div className="relative bg-[#E5E5E5] flex flex-col h-[100vh]">
       <Header />
       <div className="flex justify-around m-[72px_50px_72px_50px] gap-[30px]">
         <div className="bg-white rounded-3xl p-[30px] w-full max-w-[930px]">
@@ -150,7 +150,9 @@ function PosthogConfigurationTwo() {
         </div>
         <div className="bg-white rounded-3xl w-full max-w-[465px] max-h-[auto]">
           <div className="p-[20px] flex flex-col gap-[16px]">
-            <h3 className="text-black">Your Setup List</h3>
+            <h3 className="text-black font-[Poppins] text-[24px] font-bold">
+              Your Setup List
+            </h3>
             <p className="text-[#6B7280]">
               You're only a few steps away from your first message!
             </p>
