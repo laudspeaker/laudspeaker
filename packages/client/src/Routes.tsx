@@ -74,10 +74,18 @@ const Onboarded = ({ children }: IOnboarded) => {
   useEffect(() => {
     if (!userData.onboarded) {
       const func = async () => {
-        const { data } = await ApiService.get({
-          url: "/accounts",
-          options: {},
-        });
+        let data: any;
+        try {
+          data = (
+            await ApiService.get({
+              url: "/accounts",
+              options: {},
+            })
+          ).data;
+        } catch (e) {
+          return;
+        }
+
         dispatch({
           type: ActionType.UPDATE_USER_INFO,
           payload: {

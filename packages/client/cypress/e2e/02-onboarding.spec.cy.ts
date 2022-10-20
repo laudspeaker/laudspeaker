@@ -14,6 +14,7 @@ describe("onboarding", () => {
     cy.url().should("include", "/settings/channel");
     cy.get("#activeJourney").click();
     cy.get('[tabindex="0"] > .MuiBox-root').click();
+    cy.get("body").click(1, 1);
     cy.get(".MuiButton-root").click();
     cy.url().should("include", "/settings/event-provider");
     cy.get(".MuiButton-root").click();
@@ -23,8 +24,26 @@ describe("onboarding", () => {
     cy.get(".MuiMenuItem-root > .MuiBox-root").click();
     cy.get(".MuiButton-root").click();
     cy.url().should("include", "/settings/additional-settings");
-    cy.get(":nth-child(2) > .MuiFormControl-root > .MuiInputBase-root > #name").type("John Smith");
+    cy.get(
+      ":nth-child(2) > .MuiFormControl-root > .MuiInputBase-root > #name"
+    ).type("John Smith");
     cy.get(".MuiButton-root").click();
+
+    cy.get("#activeJourney").click();
+    cy.get('[tabindex="0"] > .css-rrytdd').click();
+    cy.get("body").click(1, 1);
+    cy.get(".MuiButton-root").click();
+
+    cy.get(
+      ":nth-child(2) > .MuiFormControl-root > .MuiInputBase-root > #name"
+    ).type("1234");
+    cy.get(
+      ":nth-child(3) > .MuiFormControl-root > .MuiInputBase-root > #name"
+    ).type("1234");
+    cy.get(".MuiButton-root").click();
+    cy.url().should("include", "/settings/additional-posthog");
+    cy.get(".MuiButton-root").click();
+
     cy.url().should("include", "/settings/completion");
     cy.wait(100);
     cy.get(".MuiButton-root").click();

@@ -8,7 +8,7 @@ import { BackButtonIcon } from "../../../components/Icons/Icons";
 import { useNavigate } from "react-router-dom";
 
 export interface IEmailHeaderProps {
-  onExport: (e: any) => void;
+  onPersonalizeClick: (e: any) => void;
   onSave: (e: any) => void;
   templateName: string;
   handleTemplateNameChange: (e: any) => void;
@@ -16,7 +16,8 @@ export interface IEmailHeaderProps {
 
 const SlackTemplateHeader = (props: IEmailHeaderProps) => {
   const navigate = useNavigate();
-  const { onExport, templateName, handleTemplateNameChange, onSave } = props;
+  const { onPersonalizeClick, templateName, handleTemplateNameChange, onSave } =
+    props;
   const [activeJourney, setActiveJourney] = useState("Slack");
   const [titleEdit, setTitleEdit] = useState<boolean>(false);
 
@@ -107,7 +108,7 @@ const SlackTemplateHeader = (props: IEmailHeaderProps) => {
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            width: "360px",
+            width: "400px",
             paddingRight: "50px",
           }}
         >
@@ -149,7 +150,7 @@ const SlackTemplateHeader = (props: IEmailHeaderProps) => {
             <GenericButton
               data-slackexporttemplate
               variant="contained"
-              onClick={onExport}
+              onClick={onPersonalizeClick}
               fullWidth
               sx={{
                 maxWidth: "158px",
@@ -159,7 +160,7 @@ const SlackTemplateHeader = (props: IEmailHeaderProps) => {
               }}
               size={"medium"}
             >
-              Export
+              Personalize
             </GenericButton>
           </Box>
         </Box>

@@ -21,7 +21,7 @@ describe("templates", () => {
     cy.get(".MuiButton-root").click();
     cy.get("#name").type("With email");
     cy.get("#handleDay").click();
-    cy.get('.MuiList-root > [tabindex="0"]').click();
+    cy.get('#menu- > .MuiPaper-root > .MuiList-root > [tabindex="0"]').click();
     cy.get(".MuiPaper-root > .MuiBox-root > .MuiButton-root").click();
     cy.get("#title").type("with email");
     cy.get(":nth-child(2) > .MuiButton-root").click();

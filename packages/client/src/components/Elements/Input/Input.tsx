@@ -33,6 +33,7 @@ export interface InputProps {
   inputProps?: object;
   endAdornment?: React.ReactNode;
   onBlur?: () => void;
+  ref?: any;
 }
 
 const Input = (props: InputProps) => {
