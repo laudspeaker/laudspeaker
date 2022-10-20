@@ -164,17 +164,6 @@ function EventsProv() {
                   height: "44px",
                   margin: "20px 0px",
                 }}
-                inputProps={{
-                  "& .MuiSelect-select": {
-                    padding: "9px 15px",
-                    border: "1px solid #DEDEDE",
-                    boxShadow: "none",
-                    borderRadius: "3px",
-                  },
-                  sx: {
-                    borderRadius: "6px !important",
-                  },
-                }}
               />
               {/* {allChannels.map((channel: any) => {
                   return (
@@ -207,7 +196,7 @@ function EventsProv() {
               </Select> */}
               <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
                 {events.map((value: string) => (
-                  <Chip key={value} label={value} />
+                  <Chip key={value} label={value} wrapperClass="mt-[16px]" />
                 ))}
               </Box>
             </FormControl>

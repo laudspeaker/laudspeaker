@@ -354,40 +354,9 @@ const MySegment = ({
   };
 
   return (
-    <Box>
-      <Box
-        alignItems={"flex-start"}
-        justifyContent={"center"}
-        display={"flex"}
-        paddingTop={"18px"}
-      >
-        <Card
-          sx={{
-            padding: "30px",
-            width: "100%",
-            maxWidth: "1138px",
-            position: "relative",
-            maxHeight: "100vh",
-            overflow: "auto",
-          }}
-        >
-          {isCollapsible && (
-            <button
-              style={{
-                position: "absolute",
-                top: "15px",
-                right: "15px",
-                border: "0px",
-                background: "transparent",
-                outline: "none",
-                fontSize: "24px",
-                cursor: "pointer",
-              }}
-              onClick={onClose}
-            >
-              x
-            </button>
-          )}
+    <div>
+      <div className="flex justify-center items-start pt-[18px]">
+        <div className="w-full overflow-hidden max-w-[1138px] relative ">
           <Box
             alignItems={"flex-start"}
             justifyContent={"space-between"}
@@ -523,9 +492,9 @@ const MySegment = ({
               Save
             </GenericButton>
           </Box>
-        </Card>
-      </Box>
-    </Box>
+        </div>
+      </div>
+    </div>
   );
 };
 

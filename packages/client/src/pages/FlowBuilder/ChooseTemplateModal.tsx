@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
-import { Box, Typography, Modal, FormControl, MenuItem } from "@mui/material";
+import { Box, Typography, FormControl, MenuItem } from "@mui/material";
 import { GenericButton, Select } from "components/Elements";
 import ApiService from "services/api.service";
 import { ApiConfig } from "../../constants";
+import Modal from "components/Elements/Modal";
 
 interface IChooseTemplateModal {
   templateModalOpen: boolean;
@@ -22,18 +23,6 @@ const ChooseTemplateModal = ({
   selectedTemplateId,
   onTemplateDelete,
 }: IChooseTemplateModal) => {
-  const style = {
-    position: "absolute" as const,
-    top: "50%",
-    left: "50%",
-    transform: "translate(-50%, -50%)",
-    width: 400,
-    bgcolor: "background.paper",
-    border: 0,
-    borderRadius: "10px",
-    boxShadow: 24,
-    p: 4,
-  };
   const [templatesList, setTemplatesList] = useState<any>([]);
   const [activeTemplate, setActiveTemplate] = useState<any>(
     selectedTemplateId || ""
@@ -115,41 +104,15 @@ const ChooseTemplateModal = ({
   }, []);
   return (
     <Modal
-      open={templateModalOpen}
+      isOpen={templateModalOpen}
       onClose={() => handleTemplateModalOpen(false)}
-      aria-labelledby="modal-modal-title"
-      aria-describedby="modal-modal-description"
     >
-      <Box sx={style}>
-        {isCollapsible && (
-          <button
-            style={{
-              position: "absolute",
-              top: "15px",
-              right: "15px",
-              border: "0px",
-              background: "transparent",
-              outline: "none",
-              fontSize: "24px",
-              cursor: "pointer",
-            }}
-            onClick={onClose}
-          >
-            x
-          </button>
-        )}
+      <div className="w-full">
         <Typography id="modal-modal-title" variant="h6" component="h2">
           Choose {selectedMessageType} template
         </Typography>
         <Box>
-          <FormControl
-            sx={{
-              width: "100%",
-              minWidth: "112px",
-              marginTop: "20px",
-              marginBottom: "20px",
-            }}
-          >
+          <form className="w-full my-[20px]">
             <Select
               id="activeJourney"
               value={activeTemplate}
@@ -160,10 +123,10 @@ const ChooseTemplateModal = ({
               onChange={handleActiveTemplate}
               displayEmpty
             />
-          </FormControl>
+          </form>
         </Box>
         <Box data-slackexporttemplate>{renderButton(templatesList)}</Box>
-      </Box>
+      </div>
     </Modal>
   );
 };

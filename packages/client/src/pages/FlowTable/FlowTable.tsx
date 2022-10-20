@@ -2,14 +2,7 @@ import React, { useState } from "react";
 import Drawer from "../../components/Drawer";
 import Header from "../../components/Header";
 import TableTemplate from "../../components/TableTemplate";
-import {
-  Box,
-  FormControl,
-  Grid,
-  MenuItem,
-  Modal,
-  Typography,
-} from "@mui/material";
+import { Box, FormControl, Grid, MenuItem, Typography } from "@mui/material";
 import { GenericButton, Select } from "components/Elements";
 import { formatDistance } from "date-fns";
 import DateRangePicker from "components/DateRangePicker";
@@ -18,6 +11,7 @@ import ApiService from "services/api.service";
 import { ApiConfig } from "./../../constants";
 import NameJourney from "./NameJourney";
 import posthog from "posthog-js";
+import Modal from "components/Elements/Modal";
 
 const FlowTable = () => {
   const [success, setSuccess] = useState<string>("");
@@ -86,34 +80,15 @@ const FlowTable = () => {
       }}
     >
       <Header />
-      <Box padding={"37px 30px"}>
-        {nameModalOpen ? (
-          <Modal
-            open={nameModalOpen}
-            onClose={() => {}}
-            aria-labelledby="modal-modal-title"
-            aria-describedby="modal-modal-description"
-          >
-            <>
-              <button
-                style={{
-                  position: "absolute",
-                  top: "30px",
-                  right: "15px",
-                  border: "0px",
-                  background: "transparent",
-                  outline: "none",
-                  fontSize: "24px",
-                  cursor: "pointer",
-                }}
-                onClick={() => setNameModalOpen(false)}
-              >
-                x
-              </button>
-              <NameJourney onSubmit={handleNameSubmit} isPrimary={true} />
-            </>
-          </Modal>
-        ) : null}
+      <div className="py-[37px] px-[30px]">
+        <Modal
+          isOpen={nameModalOpen}
+          onClose={() => {
+            setNameModalOpen(false);
+          }}
+        >
+          <NameJourney onSubmit={handleNameSubmit} isPrimary={true} />
+        </Modal>
         <GenericButton
           onClick={redirectUses}
           style={{
@@ -148,7 +123,7 @@ const FlowTable = () => {
             setSortOptions={setSortOptions}
           />
         </Card>
-      </Box>
+      </div>
     </Box>
   );
 };

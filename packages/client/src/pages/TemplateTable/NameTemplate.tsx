@@ -71,21 +71,9 @@ const NameTemplate = ({ onSubmit, isPrimary }: INameSegment) => {
   };
 
   return (
-    <Box>
-      <Box
-        alignItems={"flex-start"}
-        justifyContent={"center"}
-        display={"flex"}
-        paddingTop={"18px"}
-        marginBottom="50px"
-      >
-        <Card
-          sx={{
-            padding: "22px 30px 77px 30px",
-            width: "100%",
-            maxWidth: "1138px",
-          }}
-        >
+    <div>
+      <div className="flex items-start justify-center">
+        <div className="w-full">
           <Typography variant="h3">Name your Template</Typography>
           <Grid container direction={"row"} padding={"10px 0px"}>
             <FormControl variant="standard">
@@ -95,27 +83,20 @@ const NameTemplate = ({ onSubmit, isPrimary }: INameSegment) => {
                 placeholder={"Enter name"}
                 name="name"
                 id="name"
-                style={{
-                  width: "530px",
-                  padding: "15px 16px",
-                  background: "#fff",
-                  border: "1px solid #D1D5DB",
-                  fontFamily: "Inter",
-                  fontWeight: 400,
-                  fontSize: "16px",
-                }}
+                className="w-full px-[16px] py-[15px] bg-[#fff] border-[1px] border-[#D1D5DB] font-[Inter] text-[16px] "
                 onChange={handleSegmentFormChange}
               />
             </FormControl>
-            <FormControl
-              sx={{
-                padding: "0 15px",
-                marginTop: "20px",
-                width: "auto",
-              }}
-            >
+            <form className="w-auto mt-[20px]">
+              <label
+                htmlFor="handleDay"
+                className="font-[Inter] text-[16px] mb-[10px] font-medium"
+              >
+                Type of template:
+              </label>
               <Select
                 id="handleDay"
+                name="handleDay"
                 value={day}
                 onChange={handleType}
                 options={[
@@ -124,17 +105,8 @@ const NameTemplate = ({ onSubmit, isPrimary }: INameSegment) => {
                   { value: "sms" },
                 ]}
                 displayEmpty
-                sx={{
-                  height: "44px",
-                  "& .MuiSelect-select": {
-                    padding: "9px 15px",
-                    border: "1px solid #DEDEDE",
-                    paddingRight: "50px !important",
-                    boxShadow: "none",
-                  },
-                }}
               />
-            </FormControl>
+            </form>
           </Grid>
           <Box display={"flex"} justifyContent="flex-end">
             <GenericButton
@@ -148,9 +120,9 @@ const NameTemplate = ({ onSubmit, isPrimary }: INameSegment) => {
               Create
             </GenericButton>
           </Box>
-        </Card>
-      </Box>
-    </Box>
+        </div>
+      </div>
+    </div>
   );
 };
 

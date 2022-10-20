@@ -2,14 +2,7 @@ import React, { useState } from "react";
 import Drawer from "../../components/Drawer";
 import Header from "../../components/Header";
 import TableTemplate from "../../components/TableTemplate";
-import {
-  Box,
-  FormControl,
-  Grid,
-  MenuItem,
-  Modal,
-  Typography,
-} from "@mui/material";
+import { Box, FormControl, Grid, MenuItem, Typography } from "@mui/material";
 import { GenericButton, Select } from "components/Elements";
 import { formatDistance } from "date-fns";
 import DateRangePicker from "components/DateRangePicker";
@@ -22,6 +15,7 @@ import { ApiConfig } from "../../constants";
 import NameJourney from "./NamePerson";
 import { useNavigate } from "react-router-dom";
 import NameTemplate from "./NamePerson";
+import Modal from "components/Elements/Modal";
 
 const PeopleTable = () => {
   const navigate = useNavigate();
@@ -86,33 +80,14 @@ const PeopleTable = () => {
     >
       <Header />
       <Box padding={"37px 30px"}>
-        {nameModalOpen ? (
-          <Modal
-            open={nameModalOpen}
-            onClose={() => {}}
-            aria-labelledby="modal-modal-title"
-            aria-describedby="modal-modal-description"
-          >
-            <>
-              <button
-                style={{
-                  position: "absolute",
-                  top: "30px",
-                  right: "15px",
-                  border: "0px",
-                  background: "transparent",
-                  outline: "none",
-                  fontSize: "24px",
-                  cursor: "pointer",
-                }}
-                onClick={() => setNameModalOpen(false)}
-              >
-                x
-              </button>
-              <NameTemplate onSubmit={handleNameSubmit} isPrimary={true} />
-            </>
-          </Modal>
-        ) : null}
+        <Modal
+          isOpen={nameModalOpen}
+          onClose={() => {
+            setNameModalOpen(false);
+          }}
+        >
+          <NameTemplate onSubmit={handleNameSubmit} isPrimary={true} />
+        </Modal>
         <GenericButton
           onClick={redirectUses}
           style={{

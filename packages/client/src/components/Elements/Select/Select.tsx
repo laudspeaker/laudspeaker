@@ -1,6 +1,5 @@
 import React, { ReactNode, Fragment } from "react";
 import { ElementType } from "react";
-import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import { Listbox, Transition } from "@headlessui/react";
 import { ChevronUpDownIcon } from "@heroicons/react/20/solid";
 
@@ -54,7 +53,7 @@ const Select = (props: SelectProps) => {
     defaultOpen,
     defaultValue,
     displayEmpty,
-    arrowIcon = KeyboardArrowDownIcon,
+    arrowIcon = ChevronUpDownIcon,
     id,
     name,
     input,
@@ -109,12 +108,14 @@ const Select = (props: SelectProps) => {
                   key={i}
                   value={option.value}
                   className={({ active }) =>
-                    `select-none py-2 pl-10 pr-4 ${
+                    `select-none py-2 px-4 ${
                       option.disabled
                         ? "cursor-default bg-slate-200"
                         : "cursor-pointer"
                     } ${
-                      active ? "bg-amber-100 text-amber-900" : "text-gray-900"
+                      active
+                        ? "bg-emerald-100 text-emerald-400"
+                        : "text-gray-900"
                     }`
                   }
                   disabled={option.disabled || false}

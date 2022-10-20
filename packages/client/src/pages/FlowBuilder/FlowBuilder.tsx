@@ -28,7 +28,7 @@ import * as _ from "lodash";
 
 import TextUpdaterNode from "./TextUpdater";
 import ExitIcon from "../../assets/images/ExitIcon.svg";
-import { Box, Modal, MenuItem, Snackbar, Alert } from "@mui/material";
+import { Box, MenuItem, Snackbar, Alert } from "@mui/material";
 import Drawer from "./../../components/Drawer/index";
 import SideDrawer from "components/SideDrawer";
 import { ApiConfig } from "./../../constants";
@@ -38,6 +38,7 @@ import ApiService from "services/api.service";
 import TriggerModal from "./TriggerModal";
 import { GenericButton, Select } from "components/Elements";
 import { getFlow } from "./FlowHelpers";
+import Modal from "components/Elements/Modal";
 
 enum TriggerType {
   event,
@@ -607,10 +608,8 @@ const Flow = () => {
       ) : null}
       {audienceModalOpen ? (
         <Modal
-          open={audienceModalOpen}
-          onClose={() => {}}
-          aria-labelledby="modal-modal-title"
-          aria-describedby="modal-modal-description"
+          isOpen={audienceModalOpen}
+          onClose={() => setAudienceModalOpen(false)}
         >
           <NameSegment
             onSubmit={handleAudienceSubmit}
@@ -636,10 +635,9 @@ const Flow = () => {
         return node.id == selectedNode;
       })[0]?.data?.primary ? (
         <Modal
-          open={audienceEditModalOpen}
-          onClose={() => {}}
-          aria-labelledby="modal-modal-title"
-          aria-describedby="modal-modal-description"
+          isOpen={audienceEditModalOpen}
+          onClose={() => setAudienceEditModalOpen(false)}
+          panelClass="max-w-[90%]"
         >
           <MySegment
             onSubmit={handleAudienceEdit}

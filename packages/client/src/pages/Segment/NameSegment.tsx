@@ -70,39 +70,17 @@ const NameSegment = ({
   };
 
   return (
-    <Box>
-      <Box
-        alignItems={"flex-start"}
-        justifyContent={"center"}
-        display={"flex"}
-        paddingTop={"18px"}
-        marginBottom="50px"
-      >
-        <Card
-          sx={{
-            padding: "22px 30px 77px 30px",
-            width: "100%",
-            maxWidth: "1138px",
-            position: "relative",
-          }}
+    <div>
+      <div className="flex items-start justify-center pt-[18px] mb-[50px]">
+        <div
+          className="w-full max-w-[1138px]"
+          // sx={{
+          //   padding: "22px 30px 77px 30px",
+          //   width: "100%",
+          //   maxWidth: "1138px",
+          //   position: "relative",
+          // }}
         >
-          {isCollapsible && (
-            <button
-              style={{
-                position: "absolute",
-                top: "15px",
-                right: "15px",
-                border: "0px",
-                background: "transparent",
-                outline: "none",
-                fontSize: "24px",
-                cursor: "pointer",
-              }}
-              onClick={onClose}
-            >
-              x
-            </button>
-          )}
           <Typography variant="h3">Name your segment</Typography>
           <Grid container direction={"row"} padding={"10px 0px"}>
             <FormControl variant="standard">
@@ -113,15 +91,7 @@ const NameSegment = ({
                 placeholder={"Enter name"}
                 name="name"
                 id="name"
-                style={{
-                  width: "530px",
-                  padding: "15px 16px",
-                  background: "#fff",
-                  border: "1px solid #D1D5DB",
-                  fontFamily: "Inter",
-                  fontWeight: 400,
-                  fontSize: "16px",
-                }}
+                className="w-full p-[16px] bg-white border-[1px] border-[#D1D5DB] font-[Inter] text-[16px]"
                 onChange={handleSegmentFormChange}
               />
             </FormControl>
@@ -205,9 +175,9 @@ const NameSegment = ({
               Save
             </GenericButton>
           </Box>
-        </Card>
-      </Box>
-    </Box>
+        </div>
+      </div>
+    </div>
   );
 };
 

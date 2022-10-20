@@ -53,44 +53,24 @@ const NameJourney = ({ onSubmit, isPrimary }: INameSegment) => {
   };
 
   return (
-    <Box>
-      <Box
-        alignItems={"flex-start"}
-        justifyContent={"center"}
-        display={"flex"}
-        paddingTop={"18px"}
-        marginBottom="50px"
-      >
-        <Card
-          sx={{
-            padding: "22px 30px 77px 30px",
-            width: "100%",
-            maxWidth: "1138px",
-          }}
-        >
-          <Typography variant="h3">Name your Journey</Typography>
-          <Grid container direction={"row"} padding={"10px 0px"}>
-            <FormControl variant="standard">
-              <Input
-                isRequired
-                value={segmentForm.name}
-                placeholder={"Enter name"}
-                name="name"
-                id="name"
-                style={{
-                  width: "530px",
-                  padding: "15px 16px",
-                  background: "#fff",
-                  border: "1px solid #D1D5DB",
-                  fontFamily: "Inter",
-                  fontWeight: 400,
-                  fontSize: "16px",
-                }}
-                onChange={handleSegmentFormChange}
-              />
-            </FormControl>
-          </Grid>
-          <Box data-createbox="true" display={"flex"} justifyContent="flex-end">
+    <div>
+      <div className="items-start flex justify-center pt-[18px] mb-[50px]">
+        <div className="w-full">
+          <h3 className="font-bold text-[25px] font-[Poppins] text-[#28282E] leading-[38px]">
+            Name your Journey
+          </h3>
+          <form>
+            <Input
+              isRequired
+              value={segmentForm.name}
+              placeholder={"Enter name"}
+              name="name"
+              id="name"
+              className="w-full p-[16px] bg-white border-[1px] border-[#D1D5DB] font-[Inter] text-[16px]"
+              onChange={handleSegmentFormChange}
+            />
+          </form>
+          <div className="flex justify-end mt-[10px]">
             <GenericButton
               onClick={handleSubmit}
               style={{
@@ -101,10 +81,10 @@ const NameJourney = ({ onSubmit, isPrimary }: INameSegment) => {
             >
               Create
             </GenericButton>
-          </Box>
-        </Card>
-      </Box>
-    </Box>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 

@@ -1,4 +1,5 @@
-import { Box, Modal } from "@mui/material";
+import { Box } from "@mui/material";
+import Modal from "components/Elements/Modal";
 import TriggerCreater from "components/TriggerCreater";
 
 interface ITriggerModal {
@@ -19,44 +20,13 @@ const TriggerModal = ({
   onClose,
   isCollapsible,
 }: ITriggerModal) => {
-  const style = {
-    position: "absolute" as const,
-    top: "50%",
-    left: "50%",
-    transform: "translate(-50%, -50%)",
-    width: "90vw",
-    bgcolor: "background.paper",
-    border: 0,
-    borderRadius: "10px",
-    boxShadow: 24,
-    p: 4,
-  };
-
   return (
     <Modal
-      open={triggerModalOpen}
-      // onClose={() => handleTriggerModalOpen(false)}
-      aria-labelledby="modal-modal-title"
-      aria-describedby="modal-modal-description"
+      isOpen={!!selectedTrigger}
+      panelClass="w-full max-w-[90%]"
+      onClose={onClose}
     >
-      <Box sx={style}>
-        {isCollapsible && (
-          <button
-            style={{
-              position: "absolute",
-              top: "15px",
-              right: "15px",
-              border: "0px",
-              background: "transparent",
-              outline: "none",
-              fontSize: "24px",
-              cursor: "pointer",
-            }}
-            onClick={onClose}
-          >
-            x
-          </button>
-        )}
+      <div className="w-full bg-[background.paper] border-0 ">
         {selectedTrigger ? (
           <TriggerCreater
             triggerType={selectedTrigger.type}
@@ -65,7 +35,7 @@ const TriggerModal = ({
             onDelete={(triggerData: any) => onDeleteTrigger(triggerData)}
           />
         ) : null}
-      </Box>
+      </div>
     </Modal>
   );
 };
