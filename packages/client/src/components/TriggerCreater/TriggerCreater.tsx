@@ -177,11 +177,15 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
   const [delayInputTime, setDelayInputTime] = useState(delayTime || "");
 
   const [datePickerSpecificTimeValue, setDatePickerSpecificTimeValue] =
-    useState(new Date());
+    useState(new Date().toISOString());
 
-  const [datePickerFromValue, setDatePickerFromValue] = useState(new Date());
+  const [datePickerFromValue, setDatePickerFromValue] = useState(
+    new Date().toISOString()
+  );
 
-  const [datePickerToValue, setDatePickerToValue] = useState(new Date());
+  const [datePickerToValue, setDatePickerToValue] = useState(
+    new Date().toISOString()
+  );
 
   const [isButtonDisabled, setIsButtonDisabled] = useState(true);
 
@@ -211,12 +215,12 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
     setTriggerType(value);
   };
 
-  const handleSpecificTimeChange = (value: Date | null) => {
-    setIsButtonDisabled(!value || value < new Date());
+  const handleSpecificTimeChange = (value: string | null) => {
+    setIsButtonDisabled(!value || new Date(value) < new Date());
     if (value) setDatePickerSpecificTimeValue(value);
   };
 
-  const handleToTimeChange = (value: Date | null) => {
+  const handleToTimeChange = (value: string | null) => {
     setIsButtonDisabled(
       !datePickerToValue ||
         !datePickerFromValue ||
@@ -225,7 +229,7 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
     if (value) setDatePickerToValue(value);
   };
 
-  const handleFromTimeChange = (value: Date | null) => {
+  const handleFromTimeChange = (value: string | null) => {
     setIsButtonDisabled(
       !datePickerToValue ||
         !datePickerFromValue ||

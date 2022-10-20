@@ -80,7 +80,7 @@ const TemplateTable = () => {
         >
           <NameTemplate onSubmit={handleNameSubmit} isPrimary={true} />
         </Modal>
-        <Card>
+        <div className="shadow-xl rounded-[10px]">
           <Grid
             container
             direction={"row"}
@@ -115,7 +115,7 @@ const TemplateTable = () => {
             sortOptions={sortOptions}
             setSortOptions={setSortOptions}
           />
-        </Card>
+        </div>
       </div>
     </div>
   );

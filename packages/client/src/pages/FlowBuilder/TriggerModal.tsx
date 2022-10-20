@@ -23,8 +23,8 @@ const TriggerModal = ({
   return (
     <Modal
       isOpen={!!selectedTrigger}
-      panelClass="w-full max-w-[90%]"
-      onClose={onClose}
+      panelClass="w-full !max-w-[90%]"
+      closeButtonNeed={false}
     >
       <div className="w-full bg-[background.paper] border-0 ">
         {selectedTrigger ? (

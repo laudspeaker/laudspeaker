@@ -6,7 +6,7 @@ import { DateTimePicker as DTP } from "@mui/x-date-pickers/DateTimePicker";
 
 interface IDateTimePickerProps {
   sx?: any;
-  value: Date;
+  value: string;
   handleChange: any;
   label?: string;
   inputStyle?: object;
@@ -23,14 +23,15 @@ export default function DateTimePicker({
   dateStyle,
   timeStyle,
 }: IDateTimePickerProps) {
-  const onChange = (newValue: Date | null) => {
-    handleChange(newValue);
+  const onChange = (e: any) => {
+    handleChange(e.target.value);
   };
 
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns}>
       <Stack spacing={3}>
-        <DTP
+        <input value={value} type="datetime-local" onChange={onChange} />
+        {/* <DTP
           label={label || ""}
           value={value}
           onChange={onChange}
@@ -45,7 +46,7 @@ export default function DateTimePicker({
               inputProps={inputStyle}
             />
           )}
-        />
+        /> */}
       </Stack>
     </LocalizationProvider>
   );

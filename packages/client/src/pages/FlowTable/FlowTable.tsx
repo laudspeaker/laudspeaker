@@ -69,58 +69,60 @@ const FlowTable = () => {
       </div>
     );
   return (
-    <Box
-      sx={{
-        position: "relative",
-        width: "100%",
-      }}
-    >
-      <Header />
-      <div className="py-[37px] px-[30px]">
-        <Modal
-          isOpen={nameModalOpen}
-          onClose={() => {
-            setNameModalOpen(false);
-          }}
-        >
-          <NameJourney onSubmit={handleNameSubmit} isPrimary={true} />
-        </Modal>
-        <Card>
-          <Grid
-            container
-            direction={"row"}
-            justifyContent={"space-between"}
-            alignItems={"center"}
-            padding={"20px"}
-            borderBottom={"1px solid #D3D3D3"}
-            height={"104px"}
+    <div>
+      <Box
+        sx={{
+          position: "relative",
+          width: "100%",
+        }}
+      >
+        <Header />
+        <div className="py-[37px] px-[30px]">
+          <Modal
+            isOpen={nameModalOpen}
+            onClose={() => {
+              setNameModalOpen(false);
+            }}
           >
-            <Typography variant="h3">Active Journeys</Typography>
-            <GenericButton
-              onClick={redirectUses}
-              style={{
-                maxWidth: "158px",
-                maxHeight: "48px",
-                "background-image":
-                  "linear-gradient(to right, #6BCDB5 , #307179, #122F5C)",
-              }}
+            <NameJourney onSubmit={handleNameSubmit} isPrimary={true} />
+          </Modal>
+          <div className="shadow-xl rounded-[10px]">
+            <Grid
+              container
+              direction={"row"}
+              justifyContent={"space-between"}
+              alignItems={"center"}
+              padding={"20px"}
+              borderBottom={"1px solid #D3D3D3"}
+              height={"104px"}
             >
-              Create Journey
-            </GenericButton>
-          </Grid>
-          <TableTemplate
-            data={journeys}
-            pagesCount={pagesCount}
-            setCurrentPage={setCurrentPage}
-            currentPage={currentPage}
-            itemsPerPage={itemsPerPage}
-            setItemsPerPage={setItemsPerPage}
-            sortOptions={sortOptions}
-            setSortOptions={setSortOptions}
-          />
-        </Card>
-      </div>
-    </Box>
+              <Typography variant="h3">Active Journeys</Typography>
+              <GenericButton
+                onClick={redirectUses}
+                style={{
+                  maxWidth: "158px",
+                  maxHeight: "48px",
+                  "background-image":
+                    "linear-gradient(to right, #6BCDB5 , #307179, #122F5C)",
+                }}
+              >
+                Create Journey
+              </GenericButton>
+            </Grid>
+            <TableTemplate
+              data={journeys}
+              pagesCount={pagesCount}
+              setCurrentPage={setCurrentPage}
+              currentPage={currentPage}
+              itemsPerPage={itemsPerPage}
+              setItemsPerPage={setItemsPerPage}
+              sortOptions={sortOptions}
+              setSortOptions={setSortOptions}
+            />
+          </div>
+        </div>
+      </Box>
+    </div>
   );
 };
 

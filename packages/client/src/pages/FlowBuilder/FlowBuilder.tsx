@@ -39,6 +39,7 @@ import { GenericButton, Select } from "components/Elements";
 import { getFlow } from "./FlowHelpers";
 import { toast } from "react-toastify";
 import Modal from "components/Elements/Modal";
+import { useForceUpdate } from "hooks/helperHooks";
 
 enum TriggerType {
   event,
@@ -133,6 +134,8 @@ const Flow = () => {
     setSelectedTrigger(trigger);
     settriggerModalOpen(true);
   };
+
+  const forceUpdate = useForceUpdate();
 
   useEffect(() => {}, [triggers]);
   const navigate = useNavigate();
@@ -631,7 +634,7 @@ const Flow = () => {
         <Modal
           isOpen={audienceEditModalOpen}
           onClose={() => setAudienceEditModalOpen(false)}
-          panelClass="max-w-[90%]"
+          panelClass="!max-w-[90%]"
         >
           <MySegment
             onSubmit={handleAudienceEdit}

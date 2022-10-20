@@ -354,9 +354,9 @@ const MySegment = ({
   };
 
   return (
-    <div>
-      <div className="flex justify-center items-start pt-[18px]">
-        <div className="w-full overflow-hidden max-w-[1138px] relative ">
+    <div className="w-full">
+      <div className="w-full flex justify-center items-start pt-[18px]">
+        <div className="w-full overflow-hidden relative ">
           <Box
             alignItems={"flex-start"}
             justifyContent={"space-between"}

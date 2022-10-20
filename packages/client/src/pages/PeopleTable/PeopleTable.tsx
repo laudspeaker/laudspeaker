@@ -80,7 +80,7 @@ const PeopleTable = () => {
         >
           <NameTemplate onSubmit={handleNameSubmit} isPrimary={true} />
         </Modal>
-        <Card>
+        <div className="shadow-xl rounded-[10px]">
           <Grid
             container
             direction={"row"}
@@ -113,7 +113,7 @@ const PeopleTable = () => {
             itemsPerPage={itemsPerPage}
             setItemsPerPage={setItemsPerPage}
           />
-        </Card>
+        </div>
       </Box>
     </Box>
   );
