@@ -15,16 +15,15 @@ import tokenService from "./services/token.service";
 import Dashboard from "./pages/Dashboard";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
-import Channel from "./pages/Settings/channel";
+import Channel from "./pages/Settings/Channel";
 import FlowBuilder from "pages/FlowBuilder";
 import EmailConfig from "pages/EmailConfig";
-import EventProvider from "pages/Settings/EventProvider";
-import EmailConfiguration from "pages/Settings/EmailConfiguration";
+import EmailProvider from "pages/Settings/EmailProvider";
+import MailgunConfiguration from "pages/Settings/MailgunConfiguration";
 import PosthogConfiguration from "pages/Settings/PosthogConfiguration";
 import PosthogConfigurationTwo from "pages/Settings/PosthogConfigurationTwo";
-import AdditionalPosthog from "pages/Settings/AdditionalPosthog";
-import AdditionalSettings from "pages/Settings/AdditionalSettings";
-import Completion from "pages/Settings/completion";
+import PosthogConfigurationThree from "pages/Settings/PosthogConfigurationThree";
+import Completion from "pages/Settings/Completion";
 import TriggerCreater from "components/TriggerCreater";
 import EmailBuilder from "pages/EmailBuilder";
 import { useTypedSelector } from "hooks/useTypeSelector";
@@ -42,9 +41,10 @@ import SlackConfiguration from "pages/Settings/SlackConfiguration";
 import { useDispatch } from "react-redux";
 import { setSettingData } from "reducers/settings";
 import ApiService from "services/api.service";
-import EventsProv from "pages/Settings/EventsProv";
+import EventsProvider from "pages/Settings/EventsProvider";
 import DrawerLayout from "components/DrawerLayout";
 import Integrations from "pages/Settings/Integrations";
+import MailgunConfigurationTwo from "pages/Settings/MailgunConfigurationTwo";
 
 interface IProtected {
   children: ReactElement;
@@ -135,7 +135,7 @@ const RouteComponent: React.FC = () => {
             <Protected>
               <Onboarded>
                 <DrawerLayout>
-                  <Dashboard />
+                  <FlowTable />
                 </DrawerLayout>
               </Onboarded>
             </Protected>
@@ -200,7 +200,7 @@ const RouteComponent: React.FC = () => {
           }
         />
         <Route
-          path="/settings/phconfiguration"
+          path="/settings/posthog-configuration"
           element={
             <Protected>
               <DrawerLayout>
@@ -210,12 +210,20 @@ const RouteComponent: React.FC = () => {
           }
         />
         <Route
-          path="/settings/phconfiguration-two"
+          path="/settings/posthog-configuration-two"
           element={
             <Protected>
               <DrawerLayout>
                 <PosthogConfigurationTwo />
               </DrawerLayout>
+            </Protected>
+          }
+        />
+        <Route
+          path="/settings/posthog-configuration-three"
+          element={
+            <Protected>
+              <PosthogConfigurationThree />
             </Protected>
           }
         />
@@ -240,31 +248,31 @@ const RouteComponent: React.FC = () => {
           }
         />
         <Route
-          path="/settings/events"
+          path="/settings/events-provider"
           element={
             <Protected>
               <DrawerLayout>
-                <EventsProv />
+                <EventsProvider />
               </DrawerLayout>
             </Protected>
           }
         />
         <Route
-          path="/settings/event-provider"
+          path="/settings/email-provider"
           element={
             <Protected>
               <DrawerLayout>
-                <EventProvider />
+                <EmailProvider />
               </DrawerLayout>
             </Protected>
           }
         />
         <Route
-          path="/settings/email-configuration"
+          path="/settings/mailgun-configuration"
           element={
             <Protected>
               <DrawerLayout>
-                <EmailConfiguration />
+                <MailgunConfiguration />
               </DrawerLayout>
             </Protected>
           }
@@ -288,21 +296,11 @@ const RouteComponent: React.FC = () => {
           }
         />
         <Route
-          path="/settings/additional-settings"
+          path="/settings/mailgun-configuration-two"
           element={
             <Protected>
               <DrawerLayout>
-                <AdditionalSettings />
-              </DrawerLayout>
-            </Protected>
-          }
-        />
-        <Route
-          path="/settings/additional-posthog"
-          element={
-            <Protected>
-              <DrawerLayout>
-                <AdditionalPosthog />
+                <MailgunConfigurationTwo />
               </DrawerLayout>
             </Protected>
           }
@@ -423,7 +421,7 @@ const RouteComponent: React.FC = () => {
             <Protected>
               <Onboarded>
                 <DrawerLayout>
-                  <Dashboard />
+                  <FlowTable />
                 </DrawerLayout>
               </Onboarded>
             </Protected>

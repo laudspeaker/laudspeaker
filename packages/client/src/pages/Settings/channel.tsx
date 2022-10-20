@@ -158,7 +158,7 @@ function Channel() {
           <div className="p-[20px] flex flex-col gap-[16px]">
             <h3 className="text-black">Your Setup List</h3>
             <p className="text-[#6B7280]">
-              Youre only a few steps away from your first message
+              You're only a few steps away from your first message!
             </p>
           </div>
           <CustomStepper

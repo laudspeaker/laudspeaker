@@ -26,17 +26,37 @@ function PosthogConfigurationTwo() {
   const handleInputChange = (name: any, value: any): any => {
     dispatch(setSettingData({ ...settings, [name]: value }));
   };
-  const moveToAdditionalSettings = async () => {
+  const moveToAdditionalSettingsTwo = async () => {
     console.log("cliked next in move to ad ph");
-    await dispatch(
-      updateUserData({
-        posthogSmsKey: phSms,
-        posthogEmailKey: phEmail,
-        //posthogHostUrl: phHostUrl,
-      })
-    );
+    console.log("phSms", phSms);
+    console.log("phEmail", phEmail);
+    if (phEmail != "" && phSms != "") {
+      await dispatch(
+        updateUserData({
+          posthogSmsKey: phSms,
+          posthogEmailKey: phEmail,
+          //posthogHostUrl: phHostUrl,
+        })
+      );
+    } else if (phEmail != "") {
+      await dispatch(
+        updateUserData({
+          posthogEmailKey: phEmail,
+          //posthogHostUrl: phHostUrl,
+        })
+      );
+    } else if (phSms != "") {
+      await dispatch(
+        updateUserData({
+          posthogSmsKey: phSms,
+          //posthogHostUrl: phHostUrl,
+        })
+      );
+    } else {
+    }
+
     console.log("in move to ph additional");
-    navigate("/settings/additional-posthog");
+    navigate("/settings/posthog-configuration-three");
   };
 
   function renderButton() {
@@ -45,7 +65,7 @@ function PosthogConfigurationTwo() {
       return (
         <>
           <GenericButton
-            onClick={moveToAdditionalSettings}
+            onClick={moveToAdditionalSettingsTwo}
             style={{
               maxWidth: "200px",
               "background-image":
@@ -132,7 +152,7 @@ function PosthogConfigurationTwo() {
           <div className="p-[20px] flex flex-col gap-[16px]">
             <h3 className="text-black">Your Setup List</h3>
             <p className="text-[#6B7280]">
-              Youre only a few steps away from your first message
+              You're only a few steps away from your first message!
             </p>
           </div>
           <CustomStepper activeStep={3} />

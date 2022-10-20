@@ -30,7 +30,7 @@ export const allChannels: any = [
   },
 ];
 
-function EventsProv() {
+function EventsProvider() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { settings } = useTypedSelector((state) => state.settings);
@@ -151,7 +151,7 @@ function EventsProv() {
           <div className="p-[20px] flex flex-col gap-[16px]">
             <h3 className="text-black">Your Setup List</h3>
             <p className="text-[#6B7280]">
-              Youre only a few steps away from your first message
+              You're only a few steps away from your first message!
             </p>
           </div>
           <CustomStepper
@@ -170,4 +170,4 @@ function EventsProv() {
   );
 }
 
-export default EventsProv;
+export default EventsProvider;

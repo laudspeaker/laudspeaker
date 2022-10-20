@@ -40,8 +40,7 @@ function PosthogConfiguration() {
         posthogHostUrl: phHostUrl,
       })
     );
-    navigate("/settings/phconfiguration-two");
-    //navigate("/settings/additional-posthog");
+    navigate("/settings/posthog-configuration-two");
   };
 
   function renderButton() {
@@ -154,7 +153,7 @@ function PosthogConfiguration() {
           <div className="p-[20px] flex flex-col gap-[16px]">
             <h3 className="text-black">Your Setup List</h3>
             <p className="text-[#6B7280]">
-              Youre only a few steps away from your first message
+              You're only a few steps away from your first message!
             </p>
           </div>
           <CustomStepper activeStep={3} />

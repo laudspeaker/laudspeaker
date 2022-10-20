@@ -12,7 +12,7 @@ import {
   setDomainsList,
 } from "reducers/settings";
 
-function EmailConfiguration() {
+function MailgunConfiguration() {
   const { settings, domainsList } = useTypedSelector((state) => state.settings);
 
   const [domainName, setDomainName] = useState<any>(settings.domainName || "");
@@ -26,7 +26,7 @@ function EmailConfiguration() {
     dispatch(setSettingData({ ...settings, [name]: value }));
   };
   const moveToAdditionalSettings = () => {
-    navigate("/settings/additional-settings");
+    navigate("/settings/mailgun-configuration-two");
   };
   const callDomains = async () => {
     if (privateApiKey) {
@@ -152,7 +152,7 @@ function EmailConfiguration() {
           <div className="p-[20x] flex flex-cpl gap-[16px]">
             <h3 className="text-black">Your Setup List</h3>
             <p className="text-[#6B7280]">
-              Youre only a few steps away from your first message
+              You're only a few steps away from your first message!
             </p>
           </div>
           <CustomStepper activeStep={1} />
@@ -162,4 +162,4 @@ function EmailConfiguration() {
   );
 }
 
-export default EmailConfiguration;
+export default MailgunConfiguration;

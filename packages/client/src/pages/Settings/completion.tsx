@@ -25,7 +25,7 @@ function Completion() {
       <div className="flex justify-around m-[72px_50px_72px_50px] gap-[30px]">
         <div className="bg-white rounded-3xl p-[30px] w-full max-w-[930px]">
           <h3 className="flex font-[Inter] font-semibold items-center text-[25px] gap-[10px] leading-[40px] mb-[10px]">
-            Email Setup Successful 🎉
+            Onboarding Complete! 🎉
           </h3>
           <p className="text-[18px] mb-[35px] font-[Inter]">
             You can now trigger Journeys!
@@ -55,7 +55,7 @@ function Completion() {
           <div className="flex p-[20px] flex-col gap-[16px]">
             <h3 className="text-black">Your Setup List</h3>
             <p className="text-[#6B7280]">
-              Youre only a few steps away from your first message
+              You're only a few steps away from your first message!
             </p>
           </div>
           <CustomStepper activeStep={3} />

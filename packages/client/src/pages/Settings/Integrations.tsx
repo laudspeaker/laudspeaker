@@ -4,7 +4,7 @@ import React, { useEffect, useLayoutEffect, useState } from "react";
 import ApiService from "services/api.service";
 import Input from "../../components/Elements/Input";
 import Select from "../../components/Elements/Select";
-import { allChannels } from "./EventsProv";
+import { allChannels } from "./EventsProvider";
 import { useTypedSelector } from "hooks/useTypeSelector";
 import { setDomainsList, setSettingsPrivateApiKey } from "reducers/settings";
 import { useDispatch } from "react-redux";

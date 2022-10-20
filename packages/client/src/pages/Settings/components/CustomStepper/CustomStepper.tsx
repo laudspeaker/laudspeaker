@@ -34,13 +34,13 @@ const CustomStepper = ({ steps, activeStep }: CustomStepperProps) => {
             <>
               {stepIdx !== stepperSteps.length - 1 ? (
                 <div
-                  className="absolute top-4 left-4 -ml-px mt-0.5 h-full w-0.5 bg-indigo-600"
+                  className="absolute top-4 left-4 -ml-px mt-0.5 h-full w-0.5 bg-emerald-600"
                   aria-hidden="true"
                 />
               ) : null}
               <div className="group relative flex items-start">
                 <span className="flex h-9 items-center">
-                  <span className="relative z-10 flex h-8 w-8 items-center justify-center rounded-full bg-indigo-600 group-hover:bg-indigo-800">
+                  <span className="relative z-10 flex h-8 w-8 items-center justify-center rounded-full bg-emerald-600 group-hover:bg-emerald-800">
                     <CheckIcon
                       className="h-5 w-5 text-white"
                       aria-hidden="true"
@@ -66,12 +66,12 @@ const CustomStepper = ({ steps, activeStep }: CustomStepperProps) => {
                 aria-current="step"
               >
                 <span className="flex h-9 items-center" aria-hidden="true">
-                  <span className="relative z-10 flex h-8 w-8 items-center justify-center rounded-full border-2 border-indigo-600 bg-white">
-                    <span className="h-2.5 w-2.5 rounded-full bg-indigo-600" />
+                  <span className="relative z-10 flex h-8 w-8 items-center justify-center rounded-full border-2 border-emerald-600 bg-white">
+                    <span className="h-2.5 w-2.5 rounded-full bg-emerald-600" />
                   </span>
                 </span>
                 <span className="ml-4 flex min-w-0 flex-col">
-                  <span className="text-sm font-medium text-indigo-600">
+                  <span className="text-sm font-medium text-emerald-600">
                     {step}
                   </span>
                   <span className="text-sm text-gray-500">{step}</span>

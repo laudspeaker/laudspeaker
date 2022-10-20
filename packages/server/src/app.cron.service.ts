@@ -27,7 +27,7 @@ export class CronService {
     private customerKeysModel: Model<CustomerKeysDocument>
   ) {}
 
-  @Cron(CronExpression.EVERY_HOUR)
+  @Cron(CronExpression.EVERY_MINUTE)
   async handleCron() {
     this.logger.log('Cron job started');
     let current = 0;

@@ -8,7 +8,7 @@ import { useDispatch } from "react-redux";
 import { useTypedSelector } from "hooks/useTypeSelector";
 import { setSettingData, updateUserData } from "reducers/settings";
 
-function AdditionalSettings() {
+function MailgunConfigurationTwo() {
   const dispatch = useDispatch();
   const { settings } = useTypedSelector((state) => state.settings);
   const [defaultName, setDefaultName] = useState<string>(
@@ -125,7 +125,7 @@ function AdditionalSettings() {
           <div className="p-[20px] flex flex-col gap-[16px]">
             <h3 className="text-black">Your Setup List</h3>
             <p className="text-[#6B7280]">
-              Youre only a few steps away from your first message
+              You're only a few steps away from your first message!
             </p>
           </div>
           <CustomStepper activeStep={2} />
@@ -135,4 +135,4 @@ function AdditionalSettings() {
   );
 }
 
-export default AdditionalSettings;
+export default MailgunConfigurationTwo;

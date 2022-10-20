@@ -9,7 +9,7 @@ import { setSettingData } from "reducers/settings";
 import { useTypedSelector } from "hooks/useTypeSelector";
 import Chip from "components/Elements/Chip";
 
-function EventProvider() {
+function EmailProvider() {
   const allChannels: any = [
     {
       id: "sendgrid",
@@ -45,8 +45,8 @@ function EventProvider() {
     dispatch(setSettingData({ ...settings, [name]: value }));
   };
   const navigate = useNavigate();
-  const moveToEmailConfiguration = () => {
-    navigate("/settings/email-configuration");
+  const moveToMailgunConfiguration = () => {
+    navigate("/settings/mailgun-configuration");
   };
   return (
     <div className="w-full relative flex flex-col h-screen font-[Inter] bg-[#E5E5E5]">
@@ -110,7 +110,7 @@ function EventProvider() {
           </Grid>
           <div className="flex mt-[40px] justify-start">
             <GenericButton
-              onClick={moveToEmailConfiguration}
+              onClick={moveToMailgunConfiguration}
               style={{
                 maxWidth: "200px",
                 "background-image":
@@ -136,4 +136,4 @@ function EventProvider() {
   );
 }
 
-export default EventProvider;
+export default EmailProvider;
