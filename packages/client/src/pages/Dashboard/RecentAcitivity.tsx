@@ -41,14 +41,9 @@ export default function RecentActivity({ activities }: IRecentActivity) {
 
   const getListItem = (activity: IActivity) => {
     return (
-      <List
-        sx={{
-          minWidth: "100%",
-          bgcolor: "background.paper",
-        }}
-      >
-        <ListItem>
-          <ListItemAvatar>
+      <ul className="min-w-full bg-white list-none">
+        <li className="flex justify-start items-center decoration-transparent w-full text-left py-[8px] px-[16px] box-border">
+          <div className="min-w-[54px]">
             {/* <Avatar>
             <ImageIcon />
           </Avatar> */}
@@ -60,14 +55,14 @@ export default function RecentActivity({ activities }: IRecentActivity) {
                 borderRadius: "50%",
               }}
             />
-          </ListItemAvatar>
-          <ListItemAvatar>
+          </div>
+          <div className="min-w-[54px]">
             <img
               src={activity.iconUrl}
               style={{ width: "30px" }}
               alt="status"
             />
-          </ListItemAvatar>
+          </div>
           <ListItemText
             sx={{ display: "flex", flexDirection: "column", width: "500px" }}
             primary={
@@ -113,9 +108,9 @@ export default function RecentActivity({ activities }: IRecentActivity) {
               <p className="p-[2]">View User</p>
             </Popover>
           </ListItemText>
-        </ListItem>
+        </li>
         <Divider variant="inset" component="li" />
-      </List>
+      </ul>
     );
   };
 

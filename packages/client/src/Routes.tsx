@@ -405,6 +405,8 @@ const RouteComponent: React.FC = () => {
             </Protected>
           }
         />
+        {/* 
+        TEMP: uncomment in future
         <Route
           path="/journeys"
           element={
@@ -414,7 +416,7 @@ const RouteComponent: React.FC = () => {
               </Onboarded>
             </Protected>
           }
-        />
+        /> */}
         <Route
           path="*"
           element={

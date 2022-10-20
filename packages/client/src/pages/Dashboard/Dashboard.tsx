@@ -1,9 +1,8 @@
 import React, { useState } from "react";
-import Drawer from "../../components/Drawer";
 import RecentActivity from "./RecentAcitivity";
 import activities from "./Dashboard.fixtures";
 import Header from "../../components/Header";
-import { FormControl, Grid } from "@mui/material";
+import { FormControl } from "@mui/material";
 import { GenericButton, Select } from "components/Elements";
 import { formatDistance } from "date-fns";
 import DateRangePicker from "components/DateRangePicker";
@@ -81,9 +80,9 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="relative bg-[#E5E5E5]">
+    <div className="relative bg-white">
       <Header />
-      <Grid padding={"30px 31px"}>
+      <div className="flex p-[30px]">
         <div className="border-b-[1px] border-b-[#D3D3D3] w-full flex justify-between flex-row">
           <div className="flex items-center pb-[30px]">
             <h3 className="min-w-[204px]">Active Journeys</h3>
@@ -118,28 +117,13 @@ const Dashboard = () => {
             See All Journeys
           </GenericButton>
         </div>
-      </Grid>
-      <Grid
-        container
-        direction={"row"}
-        justifyContent={"space-between"}
-        alignItems={"center"}
-        padding={"0px 30px"}
-        spacing={3}
-      >
-        <Grid item xs={12} sm={6} lg={4}>
-          <div className="h-[299px]">
-            <Grid
-              container
-              direction={"row"}
-              justifyContent={"space-between"}
-              borderBottom={"1px solid #D3D3D3"}
-              padding={"20px"}
-            >
+      </div>
+      <div className="flex items-center justify-between p-[0px_30px] space-x-[30px]">
+        <div className="shadow-2xl rounded-3xl">
+          <div className="h-[299px] bg-white rounded-3xl">
+            <div className="flex flex-row justify-between border-b-[1px] border-b-[#D3D3D3] p-[20px]">
               <p>0 - Sent</p>
               <p>0 - From last day</p>
-              {/* <MoreHorizIcon /> */}
-
               <IconButton
                 color="primary"
                 aria-label="upload picture"
@@ -162,8 +146,8 @@ const Dashboard = () => {
               >
                 <p className="p-[2]">View User</p>
               </Popover>
-            </Grid>
-            <div className="p-[20px]">
+            </div>
+            <div className="p-[20px] bg-white rounded-3xl">
               <svg style={{ position: "absolute" }}>
                 <defs>
                   <linearGradient
@@ -195,16 +179,10 @@ const Dashboard = () => {
               </VictoryChart>
             </div>
           </div>
-        </Grid>
-        <Grid item xs={12} sm={6} lg={4}>
-          <div className="h-[299px]">
-            <Grid
-              container
-              direction={"row"}
-              justifyContent={"space-between"}
-              borderBottom={"1px solid #D3D3D3"}
-              padding={"20px"}
-            >
+        </div>
+        <div className="shadow-2xl rounded-3xl">
+          <div className="h-[299px] bg-white rounded-3xl">
+            <div className="flex flex-row justify-between border-b-[1px] border-b-[#D3D3D3] p-[20px]">
               <p>0 - Delivered</p>
               <p>0 - From last day</p>
               {/* <MoreHorizIcon /> */}
@@ -231,8 +209,8 @@ const Dashboard = () => {
               >
                 <p className="p-[2]">View User</p>
               </Popover>
-            </Grid>
-            <div className="p-[20px]">
+            </div>
+            <div className="p-[20px] bg-white rounded-3xl">
               <svg className="absolute">
                 <defs>
                   <linearGradient
@@ -268,16 +246,10 @@ const Dashboard = () => {
               </VictoryChart>
             </div>
           </div>
-        </Grid>
-        <Grid item xs={12} sm={6} lg={4}>
-          <div className="h-[299px]">
-            <Grid
-              container
-              direction={"row"}
-              justifyContent={"space-between"}
-              borderBottom={"1px solid #D3D3D3"}
-              padding={"20px"}
-            >
+        </div>
+        <div className="shadow-2xl rounded-3xl">
+          <div className="h-[299px] bg-white rounded-3xl">
+            <div className="flex flex-row justify-between border-b-[1px] border-b-[#D3D3D3] p-[20px]">
               <p>Deliverability</p>
               {/* <MoreHorizIcon /> */}
               <IconButton
@@ -302,16 +274,11 @@ const Dashboard = () => {
               >
                 <p className="p-[2]">View User</p>
               </Popover>
-            </Grid>
-            <Grid
-              container
-              direction={"row"}
-              justifyContent={"space-between"}
-              padding="20px 20px 15px 20px"
-            >
+            </div>
+            <div className="flex justify-between flex-row p-[20px_20px_15px_20px]">
               <p className="text-[#00AA58]">Bounce rate : $25</p>
               <p className="text-[#D17E83]">Spam rate : $30</p>
-            </Grid>
+            </div>
             <div className="p-[0px_20px_20px_20px]">
               <p>Supercharge your transactional delivery.</p>
               <p>
@@ -320,19 +287,11 @@ const Dashboard = () => {
               </p>
             </div>
           </div>
-        </Grid>
-      </Grid>
+        </div>
+      </div>
       <div className="p-[37px_30px]">
-        <div className="bg-white rounded-3xl">
-          <Grid
-            container
-            direction={"row"}
-            justifyContent={"space-between"}
-            alignItems={"center"}
-            padding={"20px"}
-            borderBottom={"1px solid #D3D3D3"}
-            height={"104px"}
-          >
+        <div className="bg-white shadow-2xl rounded-3xl">
+          <div className="flex flex-row justify-between items-center p-[20px] border-b-[1px] border-b-[#D3D3D3] h-[104px]">
             <h3 className="font-[Inter] font-semibold text-[25px] leading-[38px]">
               Active Journeys
             </h3>
@@ -347,7 +306,7 @@ const Dashboard = () => {
             >
               Go To Customers
             </GenericButton>
-          </Grid>
+          </div>
           <div className="p-[20px]">
             <RecentActivity activities={formattedActivities} />
           </div>
