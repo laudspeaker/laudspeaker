@@ -6,7 +6,11 @@ import Input from "../../components/Elements/Input";
 import Select from "../../components/Elements/Select";
 import { allChannels } from "./EventsProvider";
 import { useTypedSelector } from "hooks/useTypeSelector";
-import { setDomainsList, setSettingsPrivateApiKey } from "reducers/settings";
+import {
+  setDomainsList,
+  setSettingData,
+  setSettingsPrivateApiKey,
+} from "reducers/settings";
 import { useDispatch } from "react-redux";
 
 interface IntegrationsData {
@@ -31,6 +35,10 @@ const Integrations = () => {
   const [privateApiKey, setPrivateApiKey] = useState<string>(
     settings.privateApiKey || ""
   );
+
+  const handleInputSettingsData = (name: any, value: any): any => {
+    dispatch(setSettingData({ ...settings, [name]: value }));
+  };
 
   const callDomains = async () => {
     if (privateApiKey) {
@@ -72,6 +80,73 @@ const Integrations = () => {
     });
   };
 
+  const parametersToConfigure: { [key: string]: React.ReactElement } = {
+    posthog: (
+      <form>
+        <Input
+          isRequired
+          value={settings.phPrivateApiKey}
+          label="Private API Key"
+          placeholder={"****  "}
+          name="name"
+          id="name"
+          className="w-full p-[15px_16px_15px_16px] bg-white border-[1px] border-[#D1D5DB] font-[Inter] text-[16px] mb-[10px]"
+          onChange={(e) => {
+            handleInputSettingsData("phPrivateApiKey", e.target.value);
+          }}
+        />
+        <Input
+          isRequired
+          value={settings.phProjectId}
+          label="Project Id"
+          placeholder={"****  "}
+          name="name"
+          id="name"
+          className="w-full p-[15px_16px_15px_16px] bg-white border-[1px] border-[#D1D5DB] font-[Inter] text-[16px] mb-[10px]"
+          onChange={(e) => {
+            handleInputSettingsData("phProjectId", e.target.value);
+          }}
+        />
+        <Input
+          isRequired
+          value={settings.phHostUrl}
+          label="Posthog Url"
+          placeholder={"https://app.posthog.com"}
+          name="name"
+          id="name"
+          className="w-full p-[15px_16px_15px_16px] bg-white border-[1px] border-[#D1D5DB] font-[Inter] text-[16px] mb-[10px]"
+          onChange={(e) => {
+            handleInputSettingsData("phHostUrl", e.target.value);
+          }}
+        />
+        <Input
+          isRequired
+          value={settings.phSms}
+          label="Name of SMS / Phone number field on your Posthog person"
+          placeholder={"$phoneNumber"}
+          name="name"
+          id="name"
+          className="w-full p-[15px_16px_15px_16px] bg-white border-[1px] border-[#D1D5DB] font-[Inter] text-[16px] mb-[10px]"
+          onChange={(e) => {
+            handleInputSettingsData("phSms", e.target.value);
+          }}
+        />
+        <Input
+          isRequired
+          value={settings.phEmail}
+          label="Name of Email address field on your Posthog person"
+          placeholder={"$email"}
+          name="name"
+          id="name"
+          className="w-full p-[15px_16px_15px_16px] bg-white border-[1px] border-[#D1D5DB] font-[Inter] text-[16px] mb-[10px]"
+          onChange={(e) => {
+            handleInputSettingsData("phEmail", e.target.value);
+          }}
+        />
+      </form>
+    ),
+  };
+
   return (
     <>
       <div className="flex-col">
@@ -98,7 +173,7 @@ const Integrations = () => {
                     id="sendingName"
                     label="Sending name"
                     value={integrationsData.sendingName}
-                    className="border-black border-[1px]"
+                    className="w-full p-[15px_16px_15px_16px] bg-white border-[1px] border-[#D1D5DB] font-[Inter] text-[16px] mb-[10px]"
                     onChange={handleIntegrationsDataChange}
                   />
                   <Input
@@ -106,7 +181,7 @@ const Integrations = () => {
                     id="sendingEmail"
                     label="Sending email"
                     value={integrationsData.sendingEmail}
-                    className="border-black border-[1px]"
+                    className="w-full p-[15px_16px_15px_16px] bg-white border-[1px] border-[#D1D5DB] font-[Inter] text-[16px] mb-[10px]"
                     onChange={handleIntegrationsDataChange}
                   />
                   <Input
@@ -117,15 +192,7 @@ const Integrations = () => {
                     name="privateApiKey"
                     id="privateApiKey"
                     type="password"
-                    style={{
-                      maxWidth: "530px",
-                      padding: "15px 16px 15px 16px",
-                      background: "#fff",
-                      border: "1px solid #D1D5DB",
-                      fontFamily: "Inter",
-                      fontWeight: 400,
-                      fontSize: "16px",
-                    }}
+                    className="w-full p-[15px_16px_15px_16px] bg-white border-[1px] border-[#D1D5DB] font-[Inter] text-[16px] mb-[10px]"
                     labelClass="!text-[16px]"
                     onChange={(e) => {
                       setPrivateApiKey(e.target.value);
@@ -232,6 +299,18 @@ const Integrations = () => {
                       })
                     }
                   />
+                  {integrationsData.eventProvider && (
+                    <>
+                      <h3 className="flex items-center text-[18px] font-semibold leading-[40px] mb-[10px]">
+                        {integrationsData.eventProvider
+                          .charAt(0)
+                          .toUpperCase() +
+                          integrationsData.eventProvider.slice(1)}{" "}
+                        Configuration
+                      </h3>
+                      {parametersToConfigure[integrationsData.eventProvider]}
+                    </>
+                  )}
                 </div>
               </div>
             </form>
