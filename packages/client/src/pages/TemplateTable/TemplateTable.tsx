@@ -2,14 +2,9 @@ import React, { useState } from "react";
 import Drawer from "../../components/Drawer";
 import Header from "../../components/Header";
 import TableTemplate from "../../components/TableTemplate";
-import { Box, FormControl, Grid, MenuItem, Typography } from "@mui/material";
+import { Grid } from "@mui/material";
 import { GenericButton, Select } from "components/Elements";
-import { formatDistance } from "date-fns";
-import DateRangePicker from "components/DateRangePicker";
 import Card from "components/Cards/Card";
-import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
-import { IconButton, Popover } from "@mui/material";
-import { VictoryChart, VictoryArea } from "victory";
 import ApiService from "services/api.service";
 import { ApiConfig } from "../../constants";
 import NameJourney from "./NameTemplate";
@@ -74,7 +69,7 @@ const TemplateTable = () => {
       </div>
     );
   return (
-    <div className="w-full relative bg-[#E5E5E5]">
+    <div className="w-full relative">
       <Header />
       <div className="py-[37px] px-[30px]">
         <Modal
@@ -85,17 +80,6 @@ const TemplateTable = () => {
         >
           <NameTemplate onSubmit={handleNameSubmit} isPrimary={true} />
         </Modal>
-        <GenericButton
-          onClick={redirectUses}
-          style={{
-            maxWidth: "158px",
-            maxHeight: "48px",
-            "background-image":
-              "linear-gradient(to right, #6BCDB5 , #307179, #122F5C)",
-          }}
-        >
-          Create Template
-        </GenericButton>
         <Card>
           <Grid
             container
@@ -109,6 +93,17 @@ const TemplateTable = () => {
             <h3 className="font-[Inter] font-semibold text-[25px] leading-[38px]">
               All Templates
             </h3>
+            <GenericButton
+              onClick={redirectUses}
+              style={{
+                maxWidth: "158px",
+                maxHeight: "48px",
+                "background-image":
+                  "linear-gradient(to right, #6BCDB5 , #307179, #122F5C)",
+              }}
+            >
+              Create Template
+            </GenericButton>
           </Grid>
           <TableTemplate
             data={templates}

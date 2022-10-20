@@ -142,9 +142,12 @@ export class CustomersService {
     take = 100,
     skip = 0
   ): Promise<{ data: CustomerDocument[]; totalPages: number }> {
-    const totalPages = Math.ceil(
-      (await this.CustomerModel.estimatedDocumentCount().exec()) / take
-    );
+    const totalPages =
+      Math.ceil(
+        (await this.CustomerModel.count({
+          ownerId: (<Account>account).id,
+        }).exec()) / take
+      ) || 1;
     const customers = await this.CustomerModel.find({
       ownerId: (<Account>account).id,
     })

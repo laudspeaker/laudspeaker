@@ -1,18 +1,11 @@
 import React, { useState } from "react";
-import Drawer from "../../components/Drawer";
 import Header from "../../components/Header";
 import TableTemplate from "../../components/TableTemplate";
-import { Box, FormControl, Grid, MenuItem, Typography } from "@mui/material";
-import { GenericButton, Select } from "components/Elements";
-import { formatDistance } from "date-fns";
-import DateRangePicker from "components/DateRangePicker";
+import { Box, Grid } from "@mui/material";
+import { GenericButton } from "components/Elements";
 import Card from "components/Cards/Card";
-import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
-import { IconButton, Popover } from "@mui/material";
-import { VictoryChart, VictoryArea } from "victory";
 import ApiService from "services/api.service";
 import { ApiConfig } from "../../constants";
-import NameJourney from "./NamePerson";
 import { useNavigate } from "react-router-dom";
 import NameTemplate from "./NamePerson";
 import Modal from "components/Elements/Modal";
@@ -75,7 +68,6 @@ const PeopleTable = () => {
       sx={{
         width: "100%",
         position: "relative",
-        backgroundColor: "#E5E5E5",
       }}
     >
       <Header />
@@ -88,17 +80,6 @@ const PeopleTable = () => {
         >
           <NameTemplate onSubmit={handleNameSubmit} isPrimary={true} />
         </Modal>
-        <GenericButton
-          onClick={redirectUses}
-          style={{
-            maxWidth: "158px",
-            maxHeight: "48px",
-            "background-image":
-              "linear-gradient(to right, #6BCDB5 , #307179, #122F5C)",
-          }}
-        >
-          Create Person
-        </GenericButton>
         <Card>
           <Grid
             container
@@ -112,6 +93,17 @@ const PeopleTable = () => {
             <h3 className="font-[Inter] font-semibold text-[25px] leading-[38px]">
               All People
             </h3>
+            <GenericButton
+              onClick={redirectUses}
+              style={{
+                maxWidth: "158px",
+                maxHeight: "48px",
+                "background-image":
+                  "linear-gradient(to right, #6BCDB5 , #307179, #122F5C)",
+              }}
+            >
+              Create Person
+            </GenericButton>
           </Grid>
           <TableTemplate
             data={people}

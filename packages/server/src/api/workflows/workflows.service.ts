@@ -45,7 +45,9 @@ export class WorkflowsService {
     orderType?: 'asc' | 'desc'
   ): Promise<{ data: Workflow[]; totalPages: number }> {
     const totalPages = Math.ceil(
-      (await this.workflowsRepository.count()) / take
+      (await this.workflowsRepository.count({
+        where: { ownerId: (<Account>account).id },
+      })) / take || 1
     );
     const orderOptions = {};
     if (orderBy && orderType) {

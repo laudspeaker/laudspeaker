@@ -1,11 +1,8 @@
 import React, { useState } from "react";
-import Drawer from "../../components/Drawer";
 import Header from "../../components/Header";
 import TableTemplate from "../../components/TableTemplate";
-import { Box, FormControl, Grid, MenuItem, Typography } from "@mui/material";
-import { GenericButton, Select } from "components/Elements";
-import { formatDistance } from "date-fns";
-import DateRangePicker from "components/DateRangePicker";
+import { Box, Grid, Typography } from "@mui/material";
+import { GenericButton } from "components/Elements";
 import Card from "components/Cards/Card";
 import ApiService from "services/api.service";
 import { ApiConfig } from "./../../constants";
@@ -75,7 +72,6 @@ const FlowTable = () => {
     <Box
       sx={{
         position: "relative",
-        backgroundColor: "#E5E5E5",
         width: "100%",
       }}
     >
@@ -89,17 +85,6 @@ const FlowTable = () => {
         >
           <NameJourney onSubmit={handleNameSubmit} isPrimary={true} />
         </Modal>
-        <GenericButton
-          onClick={redirectUses}
-          style={{
-            maxWidth: "158px",
-            maxHeight: "48px",
-            "background-image":
-              "linear-gradient(to right, #6BCDB5 , #307179, #122F5C)",
-          }}
-        >
-          Create Journey
-        </GenericButton>
         <Card>
           <Grid
             container
@@ -111,6 +96,17 @@ const FlowTable = () => {
             height={"104px"}
           >
             <Typography variant="h3">Active Journeys</Typography>
+            <GenericButton
+              onClick={redirectUses}
+              style={{
+                maxWidth: "158px",
+                maxHeight: "48px",
+                "background-image":
+                  "linear-gradient(to right, #6BCDB5 , #307179, #122F5C)",
+              }}
+            >
+              Create Journey
+            </GenericButton>
           </Grid>
           <TableTemplate
             data={journeys}

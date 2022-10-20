@@ -1,16 +1,9 @@
-import {
-  FormControl,
-  FormGroup,
-  Box,
-  InputLabel,
-  Snackbar,
-  Alert,
-} from "@mui/material";
+import { FormControl, FormGroup, Box } from "@mui/material";
 import { useEffect, useState } from "react";
 import { ISignUpForm } from "reducers/auth";
-import Input from "components/Elements/Input";
 import { GenericButton } from "components/Elements";
 import ApiService from "services/api.service";
+import { toast } from "react-toastify";
 
 const fetchValues = async () => {
   const response = await ApiService.get({ url: "/accounts/settings" });
@@ -83,6 +76,37 @@ const ProfileForm = () => {
       });
   }, []);
 
+  useEffect(() => {
+    if (isCopied) {
+      toast.success("Copied to clipboard", {
+        position: "bottom-center",
+        autoClose: 1000,
+        hideProgressBar: true,
+        closeOnClick: true,
+        pauseOnHover: false,
+        draggable: false,
+        progress: undefined,
+        theme: "colored",
+        className: "!bg-emerald-500",
+        onClose: () => setIsCopied(false),
+      });
+    }
+
+    if (isError) {
+      toast.error(errorMessages[0], {
+        position: "bottom-center",
+        hideProgressBar: true,
+        closeOnClick: false,
+        onClose: () => setIsError(false),
+        closeButton: false,
+        pauseOnHover: true,
+        draggable: false,
+        progress: undefined,
+        theme: "colored",
+      });
+    }
+  }, [isError, isCopied]);
+
   const handleSubmit = (e: React.ChangeEvent<HTMLInputElement>) => {
     e.preventDefault();
     if (values.password != values.confirmPassword) return;
@@ -110,14 +134,6 @@ const ProfileForm = () => {
       });
   };
 
-  const handleCloseCopySnackBar = () => {
-    setIsCopied(false);
-  };
-
-  const handleCloseErrorSnackBar = () => {
-    setIsError(false);
-  };
-
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValues = {
       ...values,
@@ -139,24 +155,6 @@ const ProfileForm = () => {
 
   return (
     <FormGroup onSubmit={handleSubmit}>
-      <>
-        <Snackbar
-          anchorOrigin={{ vertical: "top", horizontal: "center" }}
-          open={isCopied}
-          onClose={handleCloseCopySnackBar}
-          autoHideDuration={1000}
-        >
-          <Alert severity="success">Copied to clipboard</Alert>
-        </Snackbar>
-        <Snackbar
-          anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-          open={isError}
-          onClose={handleCloseErrorSnackBar}
-          ClickAwayListenerProps={{ onClickAway: () => null }}
-        >
-          <Alert severity="error">{errorMessages[0]}</Alert>
-        </Snackbar>
-      </>
       <div className="mb-2">
         <label
           htmlFor="firstName"

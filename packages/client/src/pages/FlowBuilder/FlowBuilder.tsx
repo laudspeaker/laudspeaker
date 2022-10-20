@@ -28,8 +28,7 @@ import * as _ from "lodash";
 
 import TextUpdaterNode from "./TextUpdater";
 import ExitIcon from "../../assets/images/ExitIcon.svg";
-import { Box, MenuItem, Snackbar, Alert } from "@mui/material";
-import Drawer from "./../../components/Drawer/index";
+import { Box } from "@mui/material";
 import SideDrawer from "components/SideDrawer";
 import { ApiConfig } from "./../../constants";
 import ChooseTemplateModal from "./ChooseTemplateModal";
@@ -38,6 +37,7 @@ import ApiService from "services/api.service";
 import TriggerModal from "./TriggerModal";
 import { GenericButton, Select } from "components/Elements";
 import { getFlow } from "./FlowHelpers";
+import { toast } from "react-toastify";
 import Modal from "components/Elements/Modal";
 
 enum TriggerType {
@@ -121,7 +121,6 @@ const Flow = () => {
   const [templateModalOpen, setTemplateModalOpen] = useState<boolean>(false);
   const [audienceModalOpen, setAudienceModalOpen] = useState<boolean>(false);
   const [triggerModalOpen, settriggerModalOpen] = useState<boolean>(false);
-  const [snackBarOpen, setSnackBarOpen] = useState(false);
   const [audienceEditModalOpen, setAudienceEditModalOpen] =
     useState<boolean>(false);
   const [selectedMessageType, setSelectedMessageType] = useState<any>("");
@@ -449,7 +448,16 @@ const Flow = () => {
         },
       });
     } else {
-      setSnackBarOpen(true);
+      toast.warn("Can't connect same template twice to one node!", {
+        position: "bottom-center",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "light",
+      });
     }
 
     setNodes([...nodes]);
@@ -502,22 +510,8 @@ const Flow = () => {
     setAudienceEditModalOpen(false);
   };
 
-  const handleSnackBarClose = () => {
-    setSnackBarOpen(false);
-  };
-
   return (
     <Box height="100vh" display="flex" width="100%">
-      <Snackbar
-        open={snackBarOpen}
-        autoHideDuration={5000}
-        onClose={handleSnackBarClose}
-        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-      >
-        <Alert severity="error" sx={{ width: "100%" }}>
-          Can't connect same template twice to one node!
-        </Alert>
-      </Snackbar>
       <Box display="flex">
         <Box display="flex">
           <SideDrawer selectedNode={selectedNode} onClick={performAction} />

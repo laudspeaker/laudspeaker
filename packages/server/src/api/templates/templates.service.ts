@@ -125,7 +125,9 @@ export class TemplatesService {
     orderType?: 'asc' | 'desc'
   ): Promise<{ data: Template[]; totalPages: number }> {
     const totalPages = Math.ceil(
-      (await this.templatesRepository.count()) / take
+      (await this.templatesRepository.count({
+        where: { ownerId: (<Account>account).id },
+      })) / take || 1
     );
     const orderOptions = {};
     if (orderBy && orderType) {
