@@ -1,6 +1,6 @@
 /* eslint-disable no-case-declarations */
 import { Model } from 'mongoose';
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable, LoggerService } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Customer, CustomerDocument } from './schemas/customer.schema';
 import { CreateCustomerDto } from './dto/create-customer.dto';
@@ -17,6 +17,7 @@ import {
 } from './schemas/customer-keys.schema';
 import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
+import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 
 export type Correlation = {
   cust: CustomerDocument;
@@ -26,13 +27,15 @@ export type Correlation = {
 @Injectable()
 export class CustomersService {
   constructor(
+    @Inject(WINSTON_MODULE_NEST_PROVIDER)
+    private readonly logger: LoggerService,
     @InjectQueue('customers') private readonly customersQueue: Queue,
     @InjectModel(Customer.name) public CustomerModel: Model<CustomerDocument>,
     @InjectModel(CustomerKeys.name)
     private CustomerKeysModel: Model<CustomerKeysDocument>,
     @InjectRepository(Audience)
     private audiencesRepository: Repository<Audience>
-  ) {}
+  ) { }
 
   async create(
     account: Account,
@@ -81,16 +84,24 @@ export class CustomersService {
     return ret;
   }
 
-  async addPhCustomers(data: any, accountId: string) {
+  async addPhCustomers(data: any, account: Account) {
     for (let index = 0; index < data.length; index++) {
-      if (index == 0) {
-        console.log(JSON.stringify(data[index], null, 2));
+      let addedBefore = await this.CustomerModel.find({
+        ownerId: (<Account>account).id,
+        posthogId: {
+          $in: [...data[index]['distinct_ids']]
+        }
+      }).exec();
+      let createdCustomer: CustomerDocument;
+      //create customer only if we don't see before, otherwise update data
+      if (addedBefore.length == 0) {
+        createdCustomer = new this.CustomerModel({});
+      } else {
+        createdCustomer = addedBefore[0];
       }
-      const createdCustomer = new this.CustomerModel({
-        //ownerId: accountId,
-      });
-      createdCustomer['ownerId'] = accountId;
-      createdCustomer['posthogId'] = data[index]['id'];
+
+      createdCustomer['ownerId'] = account.id;
+      createdCustomer['posthogId'] = data[index]['distinct_ids'];
       createdCustomer['phCreatedAt'] = data[index]['created_at'];
       if (data[index]?.properties?.$initial_os) {
         createdCustomer['phInitialOs'] = data[index]?.properties.$initial_os;
@@ -99,41 +110,13 @@ export class CustomersService {
         createdCustomer['phGeoIpTimeZone'] =
           data[index]?.properties.$geoip_time_zone;
       }
-      //add lon check as well for completeness
-      //Note that longitude comes first in a GeoJSON coordinate array, not latitude.
-      if (data[index]?.properties?.$geoip_latitude) {
-        const phGeoip = {
-          type: 'Point',
-          coordinates: [
-            data[index]?.properties.$geoip_longitude,
-            data[index]?.properties.$geoip_latitude,
-          ],
-          //index: '2dsphere'
-        };
-        //createdCustomer['phGeoip_latitude']= data[index]?.properties.$geoip_latitude
-        //createdCustomer['phGeoIp'] = phGeoip;
+      if (account['posthogEmailKey'] != null) {
+        let emailKey = account['posthogEmailKey'][0];
+        if (data[index]?.properties[emailKey]) {
+          createdCustomer["phEmail"] = data[index]?.properties[emailKey];
+        }
       }
-      if (data[index]?.properties?.$initial_geoip_latitude) {
-        const phInitial_geoip = {
-          type: 'Point',
-          coordinates: [
-            data[index]?.properties.$initial_geoip_longitude,
-            data[index]?.properties.$initial_geoip_latitude,
-          ],
-          //index: '2dsphere'
-        };
-        //createdCustomer['phInitial_geoip_latitude']= data[index]?.properties.$initial_geoip_latitude
-        //createdCustomer['phInitialGeoIp']= phInitial_geoip;
-      }
-
-      if (index == 0) {
-        console.log(JSON.stringify(createdCustomer, null, 2));
-      }
-
       const ret = await createdCustomer.save();
-      if (index == 0) {
-        console.log('ret is', ret);
-      }
     }
   }
 
@@ -149,10 +132,10 @@ export class CustomersService {
         (info['salient'] = person['email']
           ? person['email']
           : person['slackEmail']
-          ? person['slackEmail']
-          : person['slackRealName']
-          ? person['slackRealName']
-          : '...');
+            ? person['slackEmail']
+            : person['slackRealName']
+              ? person['slackRealName']
+              : '...');
       return info;
     });
     return listInfo;
@@ -162,47 +145,24 @@ export class CustomersService {
     proj: string,
     phAuth: string,
     phUrl: string,
-    accountId: string
+    account: Account
   ) {
-    console.log('in ingest');
     let posthogUrl: string;
-    console.log(phUrl[phUrl.length - 1]);
     if (phUrl[phUrl.length - 1] == '/') {
       posthogUrl = phUrl + 'api/projects/' + proj + '/persons/';
     } else {
       posthogUrl = phUrl + '/api/projects/' + proj + '/persons/';
     }
-    //let posthogUrl = "https://app.posthog.com/api/projects/" + proj + "/persons/";
     const authString = 'Bearer ' + phAuth;
     try {
-      console.log('over here');
       const job = await this.customersQueue.add({
         url: posthogUrl,
         auth: authString,
-        account: accountId,
+        account: account,
       });
-      console.log(job);
-      console.log('completed job');
     } catch (e) {
-      console.log('error ', e);
+      this.logger.error('Error: ' + e);
     }
-    /*
-    console.log("in ingest");
-    try{
-        //https://app.posthog.com/api/projects/:project_id/persons/
-        const res = await axios({
-            method: 'get',
-            url: "https://app.posthog.com/api/projects/2877/persons/",
-            headers: {
-                Authorization: 'Bearer phx_UUMEhd0XChUyRbEIsAKNikp1TZzGa2ebhEpX3XLdV9F'
-            }
-        });
-    console.log("res", res);
-    }
-    catch(e){
-        console.log("e is", e);
-    }
-    */
   }
 
   async findByAudience(
@@ -270,14 +230,21 @@ export class CustomersService {
   async findBySpecifiedEvent(
     account: Account,
     correlationKey: string,
-    correlationValue: string,
+    correlationValue: string | [],
     event: any,
     mapping?: (event: any) => any
   ): Promise<Correlation> {
-    const queryParam = {};
-    queryParam[correlationKey] = correlationValue;
-    const customers = await this.CustomerModel.find(queryParam).exec();
-    if (customers.length < 1) {
+    let customer : CustomerDocument;
+    const queryParam = { ownerId: (<Account>account).id };
+    if (correlationKey == 'posthogId') {
+      queryParam[correlationKey] = {
+        $in: [...correlationValue]
+      }
+    } else {
+      queryParam[correlationKey] = correlationValue;
+    }
+    customer = await this.CustomerModel.findOne(queryParam).exec();
+    if (!customer) {
       if (mapping) {
         const newCust = mapping(event);
         newCust['ownerId'] = (<Account>account).id;
@@ -292,7 +259,7 @@ export class CustomersService {
       }
 
       //to do cant just return [0] in the future
-    } else return { cust: customers[0], found: true };
+    } else return { cust: customer, found: true };
   }
 
   /**
@@ -342,11 +309,17 @@ export class CustomersService {
   async findByCorrelationKVPair(
     account: Account,
     correlationKey: string,
-    correlationValue: string
+    correlationValue: string | []
   ): Promise<CustomerDocument> {
     let customer: CustomerDocument; // Found customer
     const queryParam = { ownerId: (<Account>account).id };
-    queryParam[correlationKey] = correlationValue;
+    if (correlationKey == 'posthogId') {
+      queryParam[correlationKey] = {
+        $in: [...correlationValue]
+      }
+    } else {
+      queryParam[correlationKey] = correlationValue;
+    }
     try {
       customer = await this.CustomerModel.findOne(queryParam).exec();
     } catch (err) {
@@ -409,16 +382,6 @@ export class CustomersService {
       oldCustomer.slackTeamMember = true;
     }
     await oldCustomer.save();
-
-    // await this.CustomerModel.aggregate(
-    //   [
-    //     {$replaceRoot:
-    //       {newRoot:
-    //         {$mergeObjects: [oldCustomer,newCustomer]}
-    //       }
-    //     }
-    //   ]
-    // );
   }
 
   async getAttributes(resourceId: string) {

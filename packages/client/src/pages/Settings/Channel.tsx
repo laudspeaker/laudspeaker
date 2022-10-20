@@ -146,6 +146,7 @@ function Channel() {
               <Select
                 id="activeJourney"
                 value={channels}
+                placeholder={"why no herre "}
                 onChange={(e) => {
                   setChannels(e.target.value);
                   handleInputChange("channel", e.target.value);
@@ -287,7 +288,7 @@ function Channel() {
               Your Setup List
             </Typography>
             <Typography variant="body1" color={"#6B7280"}>
-              Youre only a few steps away from your first message
+              You're only a few steps away from your first message!
             </Typography>
           </Box>
           <CustomStepper

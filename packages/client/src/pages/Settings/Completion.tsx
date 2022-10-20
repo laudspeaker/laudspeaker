@@ -77,7 +77,7 @@ function Completion() {
               marginBottom: "10px",
             }}
           >
-            Email Setup Successful 🎉
+            Onboarding Complete! 🎉
           </Typography>
           <Typography
             variant="subtitle1"
@@ -129,7 +129,7 @@ function Completion() {
               Your Setup List
             </Typography>
             <Typography variant="body1" color={"#6B7280"}>
-              Youre only a few steps away from your first message
+              You're only a few steps away from your first message!
             </Typography>
           </Box>
           <CustomStepper activeStep={3} />

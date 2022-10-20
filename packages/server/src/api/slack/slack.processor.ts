@@ -1,7 +1,8 @@
 import { Process, Processor } from '@nestjs/bull';
 import { Job } from 'bull';
-import { Inject, Injectable } from '@nestjs/common';
+import { LoggerService, Injectable, Inject } from '@nestjs/common';
 import { WebClient } from '@slack/web-api';
+import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { Liquid } from 'liquidjs';
 
 const tagEngine = new Liquid();
@@ -11,7 +12,10 @@ const tagEngine = new Liquid();
 export class SlackProcessor {
   client: WebClient;
 
-  constructor() {
+  constructor(
+    @Inject(WINSTON_MODULE_NEST_PROVIDER)
+    private readonly logger: LoggerService,
+  ) {
     this.client = new WebClient();
   }
 
@@ -29,7 +33,7 @@ export class SlackProcessor {
         ...args,
       });
     } catch (e) {
-      console.log(e);
+      this.logger.error('Error: ' + e);
     }
   }
 }

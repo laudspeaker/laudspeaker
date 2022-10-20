@@ -1,44 +1,55 @@
 import { Box, FormControl, Grid, MenuItem, Typography } from "@mui/material";
+import Chip from "@mui/material/Chip";
 import Card from "components/Cards/Card";
 import Header from "components/Header";
 import Drawer from "components/Drawer";
-import { Input, Select, GenericButton } from "components/Elements";
+import { Select, GenericButton } from "components/Elements";
 import CustomStepper from "./components/CustomStepper";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ListItem from "./components/ListItem";
 import { useDispatch } from "react-redux";
+import { setSettingData } from "reducers/settings";
 import { useTypedSelector } from "hooks/useTypeSelector";
-import {
-  setSettingData,
-  setSettingsPrivateApiKey,
-  setDomainsList,
-} from "reducers/settings";
 
-function EmailConfiguration() {
-  const { settings, domainsList } = useTypedSelector((state) => state.settings);
-
-  const [domainName, setDomainName] = useState<any>(settings.domainName || "");
-  const [privateApiKey, setPrivateApiKey] = useState<string>(
-    settings.privateApiKey || ""
-  );
-  const [domainList, setDomainList] = useState<any>(domainsList || []);
+function EmailProvider() {
+  const allChannels: any = [
+    {
+      id: "sendgrid",
+      title: "Sendgrid",
+      subTitle: "for any campaign or newsletter",
+      disabled: true,
+    },
+    {
+      id: "mailgun",
+      title: "Mailgun",
+      subTitle: "Campaign: Onboarding Campaign",
+      disabled: false,
+    },
+    {
+      id: "mailchimp",
+      title: "Mailchimp",
+      subTitle: "Campaign: Transactional Receipt",
+      disabled: true,
+    },
+    {
+      id: "smtp",
+      title: "SMTP",
+      subTitle: "Setup your own email server",
+      disabled: true,
+    },
+  ];
   const dispatch = useDispatch();
-  const navigate = useNavigate();
+  const { settings } = useTypedSelector((state) => state.settings);
+  const [eventProvider, setEventProvider] = useState<any>(
+    settings.eventProvider || []
+  );
   const handleInputChange = (name: any, value: any): any => {
     dispatch(setSettingData({ ...settings, [name]: value }));
   };
-  const moveToAdditionalSettings = () => {
-    navigate("/settings/additional-settings");
-  };
-  const callDomains = async () => {
-    if (privateApiKey) {
-      dispatch(setSettingsPrivateApiKey(privateApiKey));
-      const response = await dispatch(setDomainsList(privateApiKey));
-      if (response?.data) {
-        setDomainList(response?.data);
-      }
-    }
+  const navigate = useNavigate();
+  const moveToMailgunConfiguration = () => {
+    navigate("/settings/mailgun-configuration");
   };
   return (
     <Box
@@ -96,58 +107,29 @@ function EmailConfiguration() {
               marginBottom: "10px",
             }}
           >
-            Email Configuration
+            Email configuration
           </Typography>
-          <Grid container direction={"row"} padding={"10px 0px"}>
-            <FormControl variant="standard">
-              <Input
-                isRequired
-                value={privateApiKey}
-                label="Private API Key"
-                placeholder={"****  "}
-                name="name"
-                id="name"
-                type="password"
-                sx={{ maxWidth: "530px" }}
-                onChange={(e) => {
-                  setPrivateApiKey(e.target.value);
-                  handleInputChange("privateApiKey", e.target.value);
-                }}
-                labelShrink
-                inputProps={{
-                  style: {
-                    padding: "15px 16px 15px 16px",
-                    background: "#fff",
-                    border: "1px solid #D1D5DB",
-                    fontFamily: "Inter",
-                    fontWeight: 400,
-                    fontSize: "16px",
-                  },
-                }}
-                onBlur={callDomains}
-              />
-            </FormControl>
-          </Grid>
           <Typography
             variant="subtitle1"
             sx={{
-              fontSize: "16px",
+              fontSize: "18px",
               marginBottom: "10px",
             }}
           >
-            Domain
+            Search for your email provider
           </Typography>
           <Grid container direction={"row"} padding={"10px 0px"}>
             <FormControl variant="standard">
               <Select
                 id="activeJourney"
-                value={domainName}
-                onChange={(e) => {
-                  setDomainName(e.target.value);
-                  handleInputChange("domainName", e.target.value);
-                }}
+                value={eventProvider}
                 displayEmpty
-                renderValue={(val: any) => val}
+                onChange={(e) => {
+                  setEventProvider(e.target.value);
+                  handleInputChange("eventProvider", e.target.value);
+                }}
+                multipleSelections={true}
+                renderValue={(selected) => <>{selected.join(", ")}</>}
                 sx={{
                   height: "44px",
                   margin: "20px 0px",
@@ -157,18 +139,17 @@ function EmailConfiguration() {
                     padding: "9px 15px",
                     border: "1px solid #DEDEDE",
                     boxShadow: "none",
-                    borderRadius: "3px",
                   },
                   sx: {
                     borderRadius: "6px !important",
                   },
                 }}
               >
-                {domainList.map((channel: any) => {
+                {allChannels.map((channel: any) => {
                   return (
                     <MenuItem
-                      value={channel.name}
-                      disabled={!channel?.state}
+                      value={channel.title}
+                      disabled={channel.disabled}
                       sx={{
                         height: "auto",
                         "&.Mui-selected": {
@@ -183,10 +164,11 @@ function EmailConfiguration() {
                       }}
                     >
                       <ListItem
-                        title={channel.name}
-                        subtitle={`${channel.type} ${
-                          !channel.state ? "(coming soon)" : ""
+                        title={channel.title}
+                        subtitle={`${channel.subTitle} ${
+                          channel.disabled ? "(coming soon)" : ""
                         }`}
+                        tick={eventProvider.includes(channel.title)}
                       />
                     </MenuItem>
                   );
@@ -194,12 +176,31 @@ function EmailConfiguration() {
               </Select>
             </FormControl>
           </Grid>
+          <Grid
+            container
+            direction={"row"}
+            padding={"0px 0px"}
+            marginBottom="20px"
+          >
+            {eventProvider.map((events: any) => {
+              return (
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexWrap: "wrap",
+                    marginRight: "20px",
+                  }}
+                >
+                  <Chip key={events} label={events} />
+                </Box>
+              );
+            })}
+          </Grid>
           <Box display={"flex"} marginTop="10%" justifyContent="flex-start">
             <GenericButton
               variant="contained"
-              onClick={moveToAdditionalSettings}
+              onClick={moveToMailgunConfiguration}
               fullWidth
-              disabled={!privateApiKey || !domainName}
               sx={{
                 maxWidth: "200px",
                 "background-image":
@@ -227,14 +228,15 @@ function EmailConfiguration() {
               Your Setup List
             </Typography>
             <Typography variant="body1" color={"#6B7280"}>
-              Youre only a few steps away from your first message
+              Get your account ready to send automated message that people like
+              to receive.
             </Typography>
           </Box>
-          <CustomStepper activeStep={1} />
+          <CustomStepper activeStep={0} />
         </Card>
       </Box>
     </Box>
   );
 }
 
-export default EmailConfiguration;
+export default EmailProvider;

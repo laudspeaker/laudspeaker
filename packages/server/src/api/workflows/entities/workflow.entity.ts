@@ -37,7 +37,7 @@ export class Workflow {
   @Column('boolean', { default: false })
   isStopped: boolean;
 
-  @Column('simple-array', { nullable: true })
+  @Column('text', { nullable: false, array: true, default: [] })
   audiences: string[];
 
   //This is actually an array of JSON stringified Trigger objects

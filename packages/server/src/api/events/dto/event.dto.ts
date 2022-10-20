@@ -1,5 +1,5 @@
 import { Trim } from 'class-sanitizer';
-import { IsString, IsNotEmpty } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional } from 'class-validator';
 
 export class EventDto {
   @IsString()
@@ -16,4 +16,10 @@ export class EventDto {
   @IsString()
   @IsNotEmpty()
   public event: string;
+
+  @Trim()
+  @IsString()
+  @IsNotEmpty()
+  @IsOptional()
+  public source: string;
 }
