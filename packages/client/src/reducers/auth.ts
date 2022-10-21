@@ -212,6 +212,7 @@ export const getUserPermissions = (): any => {
         "users",
         "integrations",
         "analysis",
+        "settings",
       ],
     });
   };

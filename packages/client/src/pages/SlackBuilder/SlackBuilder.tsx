@@ -24,28 +24,13 @@ const SlackBuilder = () => {
     });
   };
 
-  useLayoutEffect(() => {
-    const populateSlackBuilder = async () => {
-      const { data } = await getTemplate(name);
-      setSlackMessage(data.slackMessage);
-      setTemplateName(name);
-      setSlackTemplateId(data.id);
-    };
-    const loadAttributes = async () => {
-      const { data } = await getResources("attributes");
-      setPossibleAttributes(data.options.map((option: any) => option.label));
-    };
-    populateSlackBuilder();
-    loadAttributes();
-  }, []);
-
   const onSave = async () => {
     const reqBody = {
       name: templateName,
       slackMessage: slackMessage,
       type: "slack",
     };
-    if (slackTemplateId == null) {
+    if (!slackTemplateId) {
       const response = await ApiService.post({
         url: `${ApiConfig.createTemplate}`,
         options: {
@@ -62,6 +47,21 @@ const SlackBuilder = () => {
       });
     }
   };
+
+  useLayoutEffect(() => {
+    const populateSlackBuilder = async () => {
+      const { data } = await getTemplate(name);
+      setSlackMessage(data.slackMessage);
+      setTemplateName(name);
+      setSlackTemplateId(data.id);
+    };
+    const loadAttributes = async () => {
+      const { data } = await getResources("attributes");
+      setPossibleAttributes(data.options.map((option: any) => option.label));
+    };
+    populateSlackBuilder();
+    loadAttributes();
+  }, []);
 
   const onPersonalizeClick = () => {
     const focusedInput = document.querySelector(

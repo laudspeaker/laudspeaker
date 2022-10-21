@@ -287,8 +287,6 @@ const ProfileForm = () => {
             width: "277px",
 
             marginTop: "27px",
-            background:
-              "linear-gradient(90deg, #6BCDB5 21.76%, #307179 49.69%, #122F5C 84.12%)",
           }}
           onClick={handleSubmit}
           disabled={

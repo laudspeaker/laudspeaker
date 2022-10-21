@@ -194,8 +194,6 @@ const Flow = () => {
               style={{
                 maxWidth: "158px",
                 maxHeight: "48px",
-                "background-image":
-                  "linear-gradient(to right, #6BCDB5 , #307179, #122F5C)",
                 padding: "13px 25px",
               }}
               disabled={!isDataLoaded || isStopped}
@@ -209,8 +207,6 @@ const Flow = () => {
               style={{
                 maxWidth: "158px",
                 maxHeight: "48px",
-                "background-image":
-                  "linear-gradient(to right, #6BCDB5 , #307179, #122F5C)",
                 padding: "13px 25px",
               }}
               disabled={!isDataLoaded || isStopped}
@@ -246,8 +242,6 @@ const Flow = () => {
                 style={{
                   maxWidth: "158px",
                   maxHeight: "48px",
-                  "background-image":
-                    "linear-gradient(to right, #6BCDB5 , #307179, #122F5C)",
                   padding: "13px 25px",
                 }}
               >

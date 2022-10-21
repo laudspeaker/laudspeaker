@@ -79,10 +79,10 @@ const NameTemplate = ({ onSubmit, isPrimary }: INameSegment) => {
                 onChange={handleSegmentFormChange}
               />
             </FormControl>
-            <form className="w-auto mt-[20px]">
+            <form className="w-auto mt-[20px] flex justify-start items-center">
               <label
                 htmlFor="handleDay"
-                className="font-[Inter] text-[16px] mb-[10px] font-medium"
+                className="font-[Inter] text-[16px] font-medium mr-1"
               >
                 Type of template:
               </label>
@@ -105,9 +105,8 @@ const NameTemplate = ({ onSubmit, isPrimary }: INameSegment) => {
               onClick={handleSubmit}
               style={{
                 maxWidth: "200px",
-                "background-image":
-                  "linear-gradient(to right, #6BCDB5 , #307179, #122F5C)",
               }}
+              disabled={!segmentForm.name || !day}
             >
               Create
             </GenericButton>

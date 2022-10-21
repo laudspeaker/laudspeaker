@@ -144,9 +144,8 @@ const NameSegment = ({
               onClick={handleSubmit}
               style={{
                 maxWidth: "200px",
-                "background-image":
-                  "linear-gradient(to right, #6BCDB5 , #307179, #122F5C)",
               }}
+              disabled={!segmentForm.name}
             >
               Save
             </GenericButton>

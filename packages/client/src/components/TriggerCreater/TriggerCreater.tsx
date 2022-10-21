@@ -710,23 +710,6 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
   };
   return (
     <>
-      {hasExitButton && (
-        <button
-          style={{
-            position: "absolute",
-            top: "15px",
-            right: "15px",
-            border: "0px",
-            background: "transparent",
-            outline: "none",
-            fontSize: "24px",
-            cursor: "pointer",
-          }}
-          onClick={deleteRow}
-        >
-          x
-        </button>
-      )}
       <Card
         sx={{
           padding: "30px",
@@ -734,37 +717,6 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
           maxWidth: "1138px",
         }}
       >
-        <div className="flex items-start justify-between">
-          {!titleEdit ? (
-            <h3 className="flex text-center gap-[10px]">
-              {segmentForm.title}
-              <EditIcon
-                sx={{ fontSize: "25px", cursor: "pointer" }}
-                onClick={handleTitleEdit}
-              />
-            </h3>
-          ) : (
-            <Input
-              value={segmentForm.title}
-              placeholder={"Enter segment title"}
-              name="title"
-              id="title"
-              onChange={handleSegmentFormChange}
-              onKeyDown={handleTitleEnter}
-              autoFocus
-              inputProps={{
-                style: {
-                  padding: "0px",
-                  background: "#fff",
-                  fontFamily: "Inter",
-                  fontWeight: "600",
-                  fontSize: "25px",
-                  color: "#28282E",
-                },
-              }}
-            />
-          )}
-        </div>
         <div className="rounded-[10px] border-[1px] border-[#D1D5DB] my-[25px] mx-[0px] py-[20px] px-[25px] relative shadow-[0px_1px_2px_rgba(0,0,0,0.05)]">
           <div className="flex items-center gap-[15px]">
             <FormControl
@@ -796,7 +748,7 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
             </FormControl>
           </div>
           <div className="ml-[88px]">
-            <div className="flex items-center relative after:content-[no-close-quote] after:absolute after:z-[1] after:top-[10%] after:left-[-100px] after:ml-[45px] after:border-l-[2px] after:border-dashed after:border-l-[#7B7E7C] after:h-[80%]">
+            <div className="flex items-center relative after:absolute after:z-[1] after:top-[10%] after:left-[-100px] after:ml-[45px] after:border-l-[2px] after:border-dashed after:border-l-[#7B7E7C] after:h-[80%]">
               <div className="rounded-[10px] my-[25px] mx-[0px] pt-[10px] pb-[25px] px-[20px] bg-[#F9F9FA] flex items-center cursor-pointer w-full">
                 <div className="flex flex-[1] flex-wrap">
                   {generateTriggerUI()}
@@ -832,7 +784,7 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
                 </FormControl>
               </div>
               <div className="ml-[88px]">
-                <div className="flex items-center relative after:content-[no-close-quote] after:absolute after:z-[1] after:top-[10%] after:left-[-100px] after:ml-[45px] after:border-l-[2px] after:border-dashed after:border-l-[#7B7E7C] after:h-[80%]">
+                <div className="flex items-center relative after:absolute after:z-[1] after:top-[10%] after:left-[-100px] after:ml-[45px] after:border-l-[2px] after:border-dashed after:border-l-[#7B7E7C] after:h-[80%]">
                   <div className="rounded-[10px] my-[25px] mx-[0px] pt-[10px] pb-[25px] px-[20px] bg-[#F9F9FA] flex items-center cursor-pointer w-full">
                     <div className="flex flex-[1] flex-wrap">
                       {generateTriggerUI({ toPart: true })}
@@ -862,8 +814,6 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
               onClick={handleSubmit}
               style={{
                 width: "200px",
-                "background-image":
-                  "linear-gradient(to right, #6BCDB5 , #307179, #122F5C)",
               }}
               disabled={isButtonDisabled}
             >

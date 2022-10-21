@@ -9,7 +9,7 @@ import { ApiConfig } from "../../constants";
 import NameJourney from "./NameTemplate";
 import { useNavigate } from "react-router-dom";
 import NameTemplate from "./NameTemplate";
-import Modal from "components/Elements/Modal";
+import Modal from "../../components/Elements/Modal";
 
 const TemplateTable = () => {
   const navigate = useNavigate();
@@ -97,8 +97,6 @@ const TemplateTable = () => {
               style={{
                 maxWidth: "158px",
                 maxHeight: "48px",
-                "background-image":
-                  "linear-gradient(to right, #6BCDB5 , #307179, #122F5C)",
               }}
             >
               Create Template

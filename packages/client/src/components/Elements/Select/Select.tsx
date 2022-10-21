@@ -84,7 +84,7 @@ const Select = (props: SelectProps) => {
           multiple={multipleSelections}
           name={name}
         >
-          <Listbox.Button className="relative min-h-[30px] cursor-pointer w-full rounded-lg bg-white py-2 pl-3 pr-10 text-left shadow-md focus:outline-none focus-visible:border-emerald-500 focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-opacity-75 focus-visible:ring-offset-2 focus-visible:ring-offset-orange-300 sm:text-sm">
+          <Listbox.Button className="relative min-h-[30px] cursor-pointer w-full rounded-lg bg-white py-2 pl-3 pr-10 text-left shadow-md focus:outline-none focus-visible:border-emerald-500 focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-opacity-75 focus-visible:ring-offset-2 focus-visible:ring-offset-emerald-300 sm:text-sm">
             {(renderValue && renderValue(value)) ||
               options.find((item) => item.value === value)?.title ||
               value}
@@ -102,7 +102,7 @@ const Select = (props: SelectProps) => {
             leaveFrom="opacity-100"
             leaveTo="opacity-0"
           >
-            <Listbox.Options className="absolute mt-1 max-h-[300px] rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm !z-[1000000] top-[100%]">
+            <Listbox.Options className="absolute mt-1 overflow-y-scroll max-h-[300px] rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm !z-[1000000] top-[100%]">
               {options.map((option, i) => (
                 <Listbox.Option
                   key={i}

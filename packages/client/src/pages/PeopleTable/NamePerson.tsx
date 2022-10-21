@@ -42,8 +42,8 @@ const NamePerson = ({ onSubmit, isPrimary }: INameSegment) => {
     }
   };
 
-  const handleType = (e: any) => {
-    setDay(e.target.value);
+  const handleType = (value: any) => {
+    setDay(value);
   };
 
   // Pushing state back up to the flow builder
@@ -76,7 +76,7 @@ const NamePerson = ({ onSubmit, isPrimary }: INameSegment) => {
                 name="name"
                 id="name"
                 style={{
-                  width: "530px",
+                  width: "100%",
                   padding: "15px 16px",
                   background: "#fff",
                   border: "1px solid #D1D5DB",
@@ -121,8 +121,6 @@ const NamePerson = ({ onSubmit, isPrimary }: INameSegment) => {
               onClick={handleSubmit}
               style={{
                 maxWidth: "200px",
-                "background-image":
-                  "linear-gradient(to right, #6BCDB5 , #307179, #122F5C)",
               }}
             >
               Create Person

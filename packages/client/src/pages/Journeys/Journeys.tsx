@@ -18,8 +18,6 @@ const Journeys = () => {
             onClick={addJourney}
             style={{
               height: "50px",
-              "background-image":
-                "linear-gradient(to right, #6BCDB5 , #307179, #122F5C)",
               boxShadow: "0px 8px 16px -6px rgba(0, 0, 0, 0.1)",
               fontSize: "16px",
               fontWeight: 500,
