@@ -4,6 +4,7 @@ import {
   Campaigns,
   Segments,
   Users,
+  Integrations,
   Settings,
   Messaging,
   People,
@@ -57,7 +58,11 @@ export const dataSubArray = [
   },
   {
     id: "audience",
+    imgIcon: People(),
     text: "Audience",
+    type: "group",
+    children: [
+      // {
       //   id: "segments",
       //   imgIcon: Segments(),
       //   text: "Segments",
