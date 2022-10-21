@@ -10,6 +10,7 @@ import { setSettingData } from "reducers/settings";
 import ApiService from "services/api.service";
 import { ApiConfig } from "../../constants";
 import Chip from "components/Elements/Chip";
+import { Helmet } from "react-helmet";
 
 const allChannels: any = [
   {
@@ -63,6 +64,13 @@ function Channel() {
 
   return (
     <div className="relative flex flex-col h-[100vh] bg-[#E5E5E5]">
+      <Helmet>
+        <script type="text/javascript">
+          {`// Insert Twitter Event ID
+        twq('event', 'tw-ociqx-ociqy', {
+        });`}
+        </script>
+      </Helmet>
       <Header />
       <div className="flex justify-around m-[72px_50px_72px_50px] gap-[30px]">
         <div className="bg-white rounded-3xl p-[30px] w-full max-w-[930px] overflow-visible">
