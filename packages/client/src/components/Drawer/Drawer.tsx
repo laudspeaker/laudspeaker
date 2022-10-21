@@ -80,7 +80,14 @@ export default function ResponsiveDrawer() {
                 )}
               </React.Fragment>
             ) : (
-              <Disclosure as="div" key={item.id} className="space-y-1">
+              <Disclosure
+                as="div"
+                key={item.id}
+                className="space-y-1"
+                defaultOpen={item.children.some((child) =>
+                  location.pathname.includes(child.link)
+                )}
+              >
                 {({ open }) => (
                   <>
                     <Disclosure.Button

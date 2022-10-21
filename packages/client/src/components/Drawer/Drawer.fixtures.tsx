@@ -48,16 +48,8 @@ export const dataSubArray = [
         imgIcon: Campaigns("black"),
         text: "Template Builder",
         type: "menu",
-        link: "/all-templates",
+        link: "/templates",
       },
-
-      // {
-      //   id: "alltemplates",
-      //   imgIcon: Analysis(),
-      //   text: "Templates",
-      //   type: "menu",
-      //   link: "/all-templates",
-      // },
     ],
   },
   {

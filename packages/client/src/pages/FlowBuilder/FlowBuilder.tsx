@@ -468,6 +468,7 @@ const Flow = () => {
           templateId: activeTemplate.toString(),
         },
       });
+      forceRerenderSelectedNode();
     } else {
       toast.warn("Can't connect same template twice to one node!", {
         position: "bottom-center",

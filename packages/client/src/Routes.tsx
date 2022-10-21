@@ -388,7 +388,7 @@ const RouteComponent: React.FC = () => {
           }
         />
         <Route
-          path="/all-templates"
+          path="/templates"
           element={
             <Protected>
               <Onboarded>
