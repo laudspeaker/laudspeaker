@@ -146,8 +146,6 @@ function Channel() {
               disabled={!settings.channel || settings.channel.length === 0}
               style={{
                 maxWidth: "200px",
-                "background-image":
-                  "linear-gradient(to right, #6BCDB5 , #307179, #122F5C)",
               }}
             >
               Next

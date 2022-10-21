@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { GenericButton, Select } from "components/Elements";
 import ApiService from "services/api.service";
 import { ApiConfig } from "../../constants";
-import Modal from "components/Elements/Modal";
+import Modal from "../../components/Elements/Modal";
 
 interface IChooseTemplateModal {
   templateModalOpen: boolean;
@@ -38,8 +38,6 @@ const ChooseTemplateModal = ({
             style={{
               maxWidth: "158px",
               maxHeight: "48px",
-              "background-image":
-                "linear-gradient(to right, #6BCDB5 , #307179, #122F5C)",
             }}
           >
             Exit
@@ -58,8 +56,6 @@ const ChooseTemplateModal = ({
             style={{
               maxWidth: "158px",
               maxHeight: "48px",
-              "background-image":
-                "linear-gradient(to right, #6BCDB5 , #307179, #122F5C)",
               margin: "0 5px",
             }}
           >
@@ -73,8 +69,6 @@ const ChooseTemplateModal = ({
               style={{
                 maxWidth: "158px",
                 maxHeight: "48px",
-                "background-image":
-                  "linear-gradient(to right, #c0c0c0 , #787878, #465265)",
                 margin: "0 5px",
               }}
             >

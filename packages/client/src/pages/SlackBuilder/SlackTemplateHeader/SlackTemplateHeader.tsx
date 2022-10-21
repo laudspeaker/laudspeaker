@@ -45,7 +45,11 @@ const SlackTemplateHeader = (props: IEmailHeaderProps) => {
     <div>
       <div className="flex text-center justify-between ml-[10px] h-[80px]">
         <h6 className="font-[Poppins] font-medium text-[14px] leading-[30px] flex items-center">
-          <ListItemIcon sx={{ minWidth: "16px", paddingRight: "16px" }}>
+          <ListItemIcon
+            className="cursor-pointer"
+            sx={{ minWidth: "16px", paddingRight: "16px" }}
+            onClick={() => window.history.back()}
+          >
             {BackButtonIcon()}
           </ListItemIcon>
           {!titleEdit ? (
@@ -80,29 +84,13 @@ const SlackTemplateHeader = (props: IEmailHeaderProps) => {
         </h6>
         <Divider />
 
-        <div className="flex text-center justify-between items-center w-[400px] pr-[50px] gap-[10px]">
-          <div>
-            <FormControl
-              sx={{ maxWidth: "300px", paddingLeft: "15px", minWidth: "112px" }}
-            >
-              <Select
-                id="activeJourney"
-                value={activeJourney}
-                options={[{ value: "Email" }, { value: "Slack" }]}
-                onChange={handleActiveJourney}
-                displayEmpty
-                // sx={ border: "1px solid #D1D5DB"}
-              />
-            </FormControl>
-          </div>
+        <div className="flex text-center justify-end items-center w-[400px] pr-[50px] gap-[10px]">
           <div>
             <GenericButton
               onClick={onSave}
               style={{
                 maxWidth: "158px",
                 maxHeight: "48px",
-                "background-image":
-                  "linear-gradient(to right, #6BCDB5 , #307179, #122F5C)",
               }}
             >
               Save Draft
@@ -115,8 +103,6 @@ const SlackTemplateHeader = (props: IEmailHeaderProps) => {
               style={{
                 maxWidth: "158px",
                 maxHeight: "48px",
-                "background-image":
-                  "linear-gradient(to right, #6BCDB5 , #307179, #122F5C)",
               }}
             >
               Personalize

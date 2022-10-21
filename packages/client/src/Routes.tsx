@@ -233,9 +233,11 @@ const RouteComponent: React.FC = () => {
           path="/settings/profile"
           element={
             <Protected>
-              <DrawerLayout>
-                <Profile />
-              </DrawerLayout>
+              <Onboarded>
+                <DrawerLayout>
+                  <Profile />
+                </DrawerLayout>
+              </Onboarded>
             </Protected>
           }
         />
@@ -386,7 +388,7 @@ const RouteComponent: React.FC = () => {
           }
         />
         <Route
-          path="/all-templates"
+          path="/templates"
           element={
             <Protected>
               <Onboarded>

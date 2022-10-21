@@ -90,14 +90,14 @@ const FlowTable = () => {
               borderBottom={"1px solid #D3D3D3"}
               height={"104px"}
             >
-              <h3>Active Journeys</h3>
+              <h3 className="font-[Inter] font-semibold text-[25px] leading-[38px]">
+                Active Journeys
+              </h3>
               <GenericButton
                 onClick={redirectUses}
                 style={{
                   maxWidth: "158px",
                   maxHeight: "48px",
-                  "background-image":
-                    "linear-gradient(to right, #6BCDB5 , #307179, #122F5C)",
                 }}
               >
                 Create Journey

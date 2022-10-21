@@ -1,5 +1,6 @@
 import { Dialog, Transition } from "@headlessui/react";
 import { Fragment } from "react";
+import { XMarkIcon } from "@heroicons/react/20/solid";
 
 interface IModalProps {
   isOpen: boolean;
@@ -49,14 +50,14 @@ const Modal = ({
               leaveTo="opacity-0 scale-95"
             >
               <Dialog.Panel
-                className={`${panelClass} w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all max-h-[90vh]`}
+                className={`${panelClass} w-full max-w-md transform overflow-visible rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all max-h-[90vh]`}
               >
                 {title && (
                   <Dialog.Title className={titleClass}>{title}</Dialog.Title>
                 )}
                 <div className="mt-2 pr-[10px]">
                   <Dialog.Description
-                    className={`${childrenClass} max-h-[80vh] overflow-auto pr-[10px]`}
+                    className={`${childrenClass} max-h-[80vh] overflow-visible pr-[10px]`}
                   >
                     {children}
                   </Dialog.Description>
@@ -66,7 +67,7 @@ const Modal = ({
                     className="absolute top-[10px] right-[20px] border-0 bg-transparent outline-none text-[24px] cursor-pointer"
                     onClick={onClose}
                   >
-                    x
+                    <XMarkIcon className="h-[30px] w-[30px]" />
                   </button>
                 )}
               </Dialog.Panel>
