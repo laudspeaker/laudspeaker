@@ -57,11 +57,7 @@ export const dataSubArray = [
   },
   {
     id: "audience",
-    imgIcon: People(),
     text: "Audience",
-    type: "group",
-    children: [
-      // {
       //   id: "segments",
       //   imgIcon: Segments(),
       //   text: "Segments",
