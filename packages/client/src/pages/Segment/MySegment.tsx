@@ -44,7 +44,7 @@ const MySegment = ({
 }: ISegmentInclusion) => {
   const elementRef = useRef<any>(null);
   const [segmentForm, setSegmentForm] = useState<ISegmentInclusionForm>({
-    title: "My Segment",
+    title: "",
   });
   const [titleEdit, setTitleEdit] = useState<boolean>(false);
   const [subTitleOptions, setSubTitleOptions] = useState<ConditionalType>(
@@ -119,6 +119,7 @@ const MySegment = ({
   useLayoutEffect(() => {
     const getAllConditions = async () => {
       const { data } = await getSegment(audienceId);
+      setSegmentForm({ ...segmentForm, title: data.name });
       if (data.resources) {
         setResouces(data.resources);
       } else {
@@ -346,6 +347,7 @@ const MySegment = ({
       inclusionCriteria: requestBody,
       id: audienceId,
       resources: resources,
+      name: segmentForm.title,
     });
     if (onSubmit) {
       onSubmit();
@@ -391,7 +393,7 @@ const MySegment = ({
             ></FormControl>
           </div>
           <div
-            className="rounded-[10px] border-[1px] border-[#D1D5DB] shadow-[0px_1px_2px_rgba(0,0,0,0.05)] m-[25px_0px] p-[20px_25px] relative after:content-['no-close-quote'] after:absolute after:z-[1] after:top-[63px] after:bottom-[0px] after:ml-[45px] after:border-l-[2px] after:border-dashed after:h-[calc(100% - 140px)]"
+            className="rounded-[10px] max-h-[60vh] overflow-y-scroll bg-[#F9F9FA] border-[1px] border-[#D1D5DB] shadow-[0px_1px_2px_rgba(0,0,0,0.05)] m-[25px_0px] p-[20px_25px] relative after:absolute after:z-[1] after:top-[63px] after:bottom-[0px] after:ml-[45px] after:border-l-[2px] after:border-dashed after:h-full"
             ref={elementRef}
           >
             <div className="flex items-center gap-[15px]">
@@ -455,8 +457,6 @@ const MySegment = ({
               onClick={handleSubmit}
               style={{
                 maxWidth: "200px",
-                "background-image":
-                  "linear-gradient(to right, #6BCDB5 , #307179, #122F5C)",
               }}
             >
               Save

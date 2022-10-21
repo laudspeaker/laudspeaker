@@ -37,8 +37,8 @@ import TriggerModal from "./TriggerModal";
 import { GenericButton, Select } from "components/Elements";
 import { getFlow } from "./FlowHelpers";
 import { toast } from "react-toastify";
-import Modal from "components/Elements/Modal";
-import { useForceUpdate } from "hooks/helperHooks";
+import Modal from "../../components/Elements/Modal";
+import { useForceUpdate } from "../../hooks/helperHooks";
 
 enum TriggerType {
   event,
@@ -134,8 +134,6 @@ const Flow = () => {
     settriggerModalOpen(true);
   };
 
-  const forceUpdate = useForceUpdate();
-
   useEffect(() => {}, [triggers]);
   const navigate = useNavigate();
   useLayoutEffect(() => {
@@ -222,6 +220,19 @@ const Flow = () => {
       setNodes(removedIsNewNodes);
     }
   }, [nodes]);
+
+  useEffect(() => {
+    setNodes(
+      nodes.map((node) => ({
+        ...node,
+        data: {
+          ...node.data,
+          isSelected: node.id === selectedNode,
+        },
+      }))
+    );
+  }, [selectedNode]);
+
   const onNodeDragStart = useCallback(
     (event: React.MouseEvent, node: Node, allNodes: Node[]) => {
       setSelectedNode(node.id);
@@ -510,6 +521,7 @@ const Flow = () => {
   const handleAudienceEdit = async () => {
     setAudienceEditModalOpen(true);
     setAudienceEditModalOpen(false);
+    setNodes([...nodes]);
   };
 
   return (
@@ -554,8 +566,6 @@ const Flow = () => {
               style={{
                 maxWidth: "158px",
                 maxHeight: "48px",
-                "background-image":
-                  "linear-gradient(to right, #6BCDB5 , #307179, #122F5C)",
                 padding: "13px 25px",
               }}
             >
@@ -568,8 +578,6 @@ const Flow = () => {
               style={{
                 maxWidth: "158px",
                 maxHeight: "48px",
-                "background-image":
-                  "linear-gradient(to right, #6BCDB5 , #307179, #122F5C)",
                 padding: "13px 25px",
               }}
             >

@@ -7,6 +7,7 @@ import {
   Integrations,
   Analysis,
   Settings,
+  Messaging,
 } from "../Icons/Icons";
 
 export default [
@@ -31,6 +32,7 @@ export const dataSubArray = [
   },
   {
     id: "messaging",
+    imgIcon: Messaging("black"),
     text: "Messaging",
     type: "group",
     children: [
@@ -60,6 +62,7 @@ export const dataSubArray = [
   },
   {
     id: "audience",
+    imgIcon: Users("black"),
     text: "Audience",
     type: "group",
     children: [
@@ -81,6 +84,7 @@ export const dataSubArray = [
   },
   {
     id: "data",
+    imgIcon: Integrations("black"),
     text: "Data",
     type: "group",
     children: [

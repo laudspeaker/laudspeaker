@@ -1,4 +1,4 @@
-import Modal from "components/Elements/Modal";
+import Modal from "../../components/Elements/Modal";
 import TriggerCreater from "components/TriggerCreater";
 
 interface ITriggerModal {

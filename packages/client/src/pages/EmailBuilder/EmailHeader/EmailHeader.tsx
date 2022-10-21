@@ -44,7 +44,12 @@ const EmailHeader = (props: IEmailHeaderProps) => {
     <div>
       <div className="px-[40px] justify-between flex h-[80px]">
         <h6 className="font-[Poppins] not-italic font-medium text-[14px] leading-[30px] flex items-center">
-          <div className="min-w-[16px] pr-[16px]">{BackButtonIcon()}</div>
+          <div
+            className="min-w-[16px] pr-[16px] cursor-pointer"
+            onClick={() => window.history.back()}
+          >
+            {BackButtonIcon()}
+          </div>
           {!titleEdit ? (
             <h3 className="flex items-center gap-[10px]">
               {templateName}
@@ -76,23 +81,12 @@ const EmailHeader = (props: IEmailHeaderProps) => {
           )}
         </h6>
         <div className="flex items-center justify-between max-w-[500px]">
-          <form className="max-w-[300px] pl-[15px] min-w-[112px]">
-            <Select
-              id="activeJourney"
-              value={activeJourney}
-              options={[{ value: "Email" }, { value: "Slack" }]}
-              onChange={handleActiveJourney}
-              displayEmpty
-            />
-          </form>
           <GenericButton
             customClasses="!ml-[10px]"
             onClick={onSave}
             style={{
               maxWidth: "158px",
               maxHeight: "48px",
-              "background-image":
-                "linear-gradient(to right, #6BCDB5 , #307179, #122F5C)",
             }}
           >
             Save Draft
@@ -103,8 +97,6 @@ const EmailHeader = (props: IEmailHeaderProps) => {
             style={{
               maxWidth: "158px",
               maxHeight: "48px",
-              "background-image":
-                "linear-gradient(to right, #6BCDB5 , #307179, #122F5C)",
             }}
           >
             Personalize
