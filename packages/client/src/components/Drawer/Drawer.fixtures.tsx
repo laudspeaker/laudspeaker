@@ -105,7 +105,7 @@ export const dataSubArray = [
     ],
   },
   {
-    id: "home",
+    id: "settings",
     imgIcon: Settings("black"),
     text: "Settings",
     type: "menu",

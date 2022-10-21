@@ -1,8 +1,8 @@
-import React, { Fragment, useState } from "react";
+import React, { Fragment, MouseEvent, useState } from "react";
 import { dataSubArray } from "./Drawer.fixtures";
 import { AuthState } from "../../reducers/auth";
 import { useTypedSelector } from "../../hooks/useTypeSelector";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Dialog, Disclosure, Menu, Transition } from "@headlessui/react";
 import LaudspeakerIcon from "../../assets/images/laudspeaker.svg";
 import {
@@ -29,6 +29,7 @@ const navigation = dataSubArray as NavigationItem[];
 export default function ResponsiveDrawer() {
   const userState = useTypedSelector<AuthState>((state) => state.auth);
   const location = useLocation();
+  const navigate = useNavigate();
 
   return (
     <div
@@ -47,30 +48,34 @@ export default function ResponsiveDrawer() {
             !item.children ? (
               <React.Fragment key={item.id}>
                 {userState.userPermissions?.includes(item.id) && (
-                  <div>
-                    <Link to={item.link}>
+                  <div
+                    onClick={(ev: MouseEvent<HTMLDivElement>) => {
+                      ev.preventDefault();
+                      navigate(item.link);
+                    }}
+                    className="cursor-pointer"
+                  >
+                    <div
+                      className={classNames(
+                        location.pathname.includes(item.link)
+                          ? "bg-gray-300 text-gray-900"
+                          : "bg-white text-gray-600 hover:bg-gray-50 hover:text-gray-900",
+                        "group w-full flex items-center px-2 py-2 text-sm font-medium rounded-md"
+                      )}
+                    >
                       <div
                         className={classNames(
                           location.pathname.includes(item.link)
-                            ? "bg-gray-100 text-gray-900"
-                            : "bg-white text-gray-600 hover:bg-gray-50 hover:text-gray-900",
-                          "group w-full flex items-center px-2 py-2 text-sm font-medium rounded-md"
+                            ? "text-gray-500"
+                            : "text-gray-400 group-hover:text-gray-500",
+                          "mr-4 flex-shrink-0 h-6 w-6"
                         )}
+                        aria-hidden="true"
                       >
-                        <div
-                          className={classNames(
-                            location.pathname.includes(item.link)
-                              ? "text-gray-500"
-                              : "text-gray-400 group-hover:text-gray-500",
-                            "mr-4 flex-shrink-0 h-6 w-6"
-                          )}
-                          aria-hidden="true"
-                        >
-                          {item.imgIcon}
-                        </div>
-                        {item.text}
+                        {item.imgIcon}
                       </div>
-                    </Link>
+                      {item.text}
+                    </div>
                   </div>
                 )}
               </React.Fragment>
@@ -81,9 +86,9 @@ export default function ResponsiveDrawer() {
                     <Disclosure.Button
                       className={classNames(
                         location.pathname.includes(item.link)
-                          ? "bg-gray-100 text-gray-900"
+                          ? "bg-gray-300 text-gray-900"
                           : "bg-white text-gray-600 hover:bg-gray-50 hover:text-gray-900",
-                        "group w-full flex items-center pl-2 pr-1 py-2 text-left text-sm font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                        "group w-full flex transition-all items-center pl-2 pr-1 py-2 text-left text-sm font-medium rounded-md outline-none"
                       )}
                     >
                       <div
@@ -113,24 +118,29 @@ export default function ResponsiveDrawer() {
                       {item.children?.map((subItem) => (
                         <>
                           {userState.userPermissions?.includes(subItem.id) && (
-                            <Link key={subItem.id} to={subItem.link}>
-                              <Disclosure.Button
-                                key={subItem.text}
-                                className="group flex w-full whitespace-nowrap items-center rounded-md py-2 px-2 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                            <Disclosure.Button
+                              onClick={(ev: MouseEvent<HTMLButtonElement>) => {
+                                ev.preventDefault();
+                                navigate(subItem.link);
+                              }}
+                              key={subItem.text}
+                              className={`${classNames(
+                                location.pathname.includes(subItem.link) &&
+                                  "!bg-gray-300"
+                              )} group flex w-full transition-all whitespace-nowrap outline-none items-center rounded-md py-2 px-2 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900`}
+                            >
+                              <div
+                                className={classNames(
+                                  location.pathname.includes(subItem.link)
+                                    ? "text-gray-500"
+                                    : "text-gray-400 group-hover:text-gray-500",
+                                  "mr-4 flex-shrink-0 h-6 w-6"
+                                )}
                               >
-                                <div
-                                  className={classNames(
-                                    location.pathname.includes(item.link)
-                                      ? "text-gray-500"
-                                      : "text-gray-400 group-hover:text-gray-500",
-                                    "mr-4 flex-shrink-0 h-6 w-6"
-                                  )}
-                                >
-                                  {subItem.imgIcon}
-                                </div>
-                                {subItem.text}
-                              </Disclosure.Button>
-                            </Link>
+                                {subItem.imgIcon}
+                              </div>
+                              {subItem.text}
+                            </Disclosure.Button>
                           )}
                         </>
                       ))}
