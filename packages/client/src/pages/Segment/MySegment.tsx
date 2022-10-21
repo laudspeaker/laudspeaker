@@ -393,7 +393,7 @@ const MySegment = ({
             ></FormControl>
           </div>
           <div
-            className="rounded-[10px] max-h-[60vh] overflow-y-scroll bg-[#F9F9FA] border-[1px] border-[#D1D5DB] shadow-[0px_1px_2px_rgba(0,0,0,0.05)] m-[25px_0px] p-[20px_25px] relative after:absolute after:z-[1] after:top-[63px] after:bottom-[0px] after:ml-[45px] after:border-l-[2px] after:border-dashed after:h-full"
+            className="rounded-[10px] max-h-[60vh] overflow-y-scroll border-[1px] border-[#D1D5DB] shadow-[0px_1px_2px_rgba(0,0,0,0.05)] m-[25px_0px] p-[20px_25px] relative after:absolute after:z-[1] after:top-[63px] after:bottom-[0px] after:ml-[45px] after:border-l-[2px] after:border-dashed after:h-full"
             ref={elementRef}
           >
             <div className="flex items-center gap-[15px]">
