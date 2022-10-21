@@ -221,6 +221,12 @@ const Flow = () => {
     }
   }, [nodes]);
 
+  const [needsUpdate, setNeedsUpdate] = useState(false);
+
+  const forceRerenderSelectedNode = () => {
+    setNeedsUpdate(!needsUpdate);
+  };
+
   useEffect(() => {
     setNodes(
       nodes.map((node) => ({
@@ -228,10 +234,11 @@ const Flow = () => {
         data: {
           ...node.data,
           isSelected: node.id === selectedNode,
+          needsUpdate,
         },
       }))
     );
-  }, [selectedNode]);
+  }, [selectedNode, needsUpdate]);
 
   const onNodeDragStart = useCallback(
     (event: React.MouseEvent, node: Node, allNodes: Node[]) => {
@@ -426,9 +433,10 @@ const Flow = () => {
     const newTriggersData: any = selectedNodeData?.data?.triggers.filter(
       (item: any) => item.id !== data
     );
-    if (selectedNodeData != undefined) {
+    if (selectedNodeData !== undefined) {
       selectedNodeData.data.triggers = newTriggersData;
       setNodes([...nodes]);
+      forceRerenderSelectedNode();
       settriggerModalOpen(false);
     }
   };
@@ -518,10 +526,10 @@ const Flow = () => {
     setNodes([...nodes, generateNode(newNode, triggers)]);
     setAudienceModalOpen(false);
   };
-  const handleAudienceEdit = async () => {
+  const handleAudienceEdit = () => {
     setAudienceEditModalOpen(true);
+    forceRerenderSelectedNode();
     setAudienceEditModalOpen(false);
-    setNodes([...nodes]);
   };
 
   return (

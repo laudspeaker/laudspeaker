@@ -27,6 +27,7 @@ const TextUpdaterNode = ({
     isExit,
     updateNodes,
     isSelected,
+    needsUpdate,
   } = data;
   const [nodeData, setNodeData] = useState<any>({});
   const [selectedMessageType, setSelectedMessageType] = useState("");
@@ -82,7 +83,7 @@ const TextUpdaterNode = ({
         desc: "Please define",
       });
     }
-  }, [audienceId]);
+  }, [audienceId, needsUpdate]);
 
   const handleTriggerClick = (e: any, triggerId: string) => {
     e.stopPropagation();
