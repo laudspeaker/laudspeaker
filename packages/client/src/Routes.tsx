@@ -46,6 +46,7 @@ import DrawerLayout from "components/DrawerLayout";
 import Integrations from "pages/Settings/Integrations";
 import MailgunConfigurationTwo from "pages/Settings/MailgunConfigurationTwo";
 import SettingsBeta from "pages/Settings/SettingsBeta";
+import TableBeta from "pages/TemplateTable/TableBeta";
 
 interface IProtected {
   children: ReactElement;
@@ -406,6 +407,16 @@ const RouteComponent: React.FC = () => {
             <Protected>
               <DrawerLayout>
                 <SettingsBeta />
+              </DrawerLayout>
+            </Protected>
+          }
+        />
+        <Route
+          path="/beta/table"
+          element={
+            <Protected>
+              <DrawerLayout>
+                <TableBeta />
               </DrawerLayout>
             </Protected>
           }
