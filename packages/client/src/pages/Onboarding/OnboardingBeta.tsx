@@ -450,7 +450,7 @@ export default function OnboardingBeta() {
                 </div>
               </div>
             </div>
-
+            {/*this is where we added*/}
             <div className="mt-8">
               <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8"></div>
               <div>
@@ -931,6 +931,7 @@ export default function OnboardingBeta() {
                 </div>
               </div>
             </div>
+            {/*this is where we added*/}
           </main>
         </div>
       </div>
