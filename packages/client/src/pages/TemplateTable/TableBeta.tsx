@@ -627,7 +627,16 @@ export default function TableBeta() {
                                 </span>
                                 {transaction.currency}
                               </td>
-
+                              <td className="hidden whitespace-nowrap px-6 py-4 text-sm text-gray-500 md:block">
+                                <span
+                                  className={classNames(
+                                    "Success",
+                                    "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize"
+                                  )}
+                                >
+                                  {transaction.status}
+                                </span>
+                              </td>
                               <td className="whitespace-nowrap px-6 py-4 text-right text-sm text-gray-500">
                                 <time dateTime={transaction.datetime}>
                                   {transaction.date}
