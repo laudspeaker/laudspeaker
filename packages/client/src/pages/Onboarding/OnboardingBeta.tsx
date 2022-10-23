@@ -433,27 +433,15 @@ export default function OnboardingBeta() {
                       </div>
                     </div>
                   </div>
-                  <div className="mt-6 flex space-x-3 md:mt-0 md:ml-4">
-                    <button
-                      type="button"
-                      className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2"
-                    >
-                      Add money
-                    </button>
-                    <button
-                      type="button"
-                      className="inline-flex items-center rounded-md border border-transparent bg-cyan-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2"
-                    >
-                      Send money
-                    </button>
-                  </div>
                 </div>
               </div>
             </div>
             {/*this is where we added*/}
-            <div className="mt-8">
+            {/*<div className="py-6 md:justify-between lg:border-t lg:border-gray-200">*/}
+            <div className="relative mx-auto max-w-4xl md:px-8 xl:px-0">
+              {/*<div className="mt-8">*/}
               <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8"></div>
-              <div>
+              <div className="mt-10 sm:mt-0">
                 <div className="md:grid md:grid-cols-3 md:gap-6">
                   <div className="md:col-span-1">
                     <div className="px-4 sm:px-0">

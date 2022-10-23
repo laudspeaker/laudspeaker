@@ -116,6 +116,16 @@ const NamePerson = ({ onSubmit, isPrimary }: INameSegment) => {
               />
             </FormControl>
           </Grid>
+          <div className="mt-6 flex space-x-3 md:mt-0 md:ml-4">
+            <button
+              type="button"
+              className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2"
+              onClick={handleSubmit}
+            >
+              Create Person
+            </button>
+          </div>
+          {/* 
           <div className="flex justify-end">
             <GenericButton
               onClick={handleSubmit}
@@ -126,6 +136,7 @@ const NamePerson = ({ onSubmit, isPrimary }: INameSegment) => {
               Create Person
             </GenericButton>
           </div>
+          */}
         </div>
       </div>
     </div>
