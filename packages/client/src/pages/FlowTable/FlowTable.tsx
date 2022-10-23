@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import Header from "../../components/Header";
-import TableTemplate from "../../components/TableTemplate";
+import { TableTemplate } from "../../components/TableTemplate/index";
+import { TableTemplateBeta } from "../../components/TableTemplate/index";
 import { Grid } from "@mui/material";
 import { GenericButton } from "components/Elements";
 import ApiService from "services/api.service";
@@ -103,6 +104,7 @@ const FlowTable = () => {
                 Create Journey
               </GenericButton>
             </Grid>
+            <TableTemplateBeta />
             <TableTemplate
               data={journeys}
               pagesCount={pagesCount}

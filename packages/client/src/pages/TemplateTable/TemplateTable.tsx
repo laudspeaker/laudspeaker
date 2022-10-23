@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import Drawer from "../../components/Drawer";
 import Header from "../../components/Header";
-import TableTemplate from "../../components/TableTemplate";
+//import TableTemplate from "../../components/TableTemplate";
+import { TableTemplate } from "../../components/TableTemplate/index";
 import { Grid } from "@mui/material";
 import { GenericButton, Select } from "components/Elements";
 import ApiService from "services/api.service";
