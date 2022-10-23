@@ -3,4 +3,4 @@ import TableTemplateBeta from "./TableTemplateBeta";
 
 //export default TableTemplate;
 //export default TableTemplateBeta;
-export { TableTemplate, TableTemplateBeta };
+export { TableTemplateBeta, TableTemplate };
