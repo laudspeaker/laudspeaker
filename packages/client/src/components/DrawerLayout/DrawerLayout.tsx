@@ -1,5 +1,6 @@
 import React, { FC, ReactNode } from "react";
 import ResponsiveDrawer from "../Drawer";
+import ResponsiveDrawerBeta from "../Drawer";
 
 interface DrawerLayoutProps {
   children: ReactNode;
@@ -8,7 +9,8 @@ interface DrawerLayoutProps {
 const DrawerLayout: FC<DrawerLayoutProps> = ({ children }) => {
   return (
     <div className="flex w-full max-h-screen h-screen">
-      <ResponsiveDrawer />
+      {/* <ResponsiveDrawer /> */}
+      <ResponsiveDrawerBeta />
       <div className="w-full max-h-screen overflow-y-scroll">{children}</div>
     </div>
   );

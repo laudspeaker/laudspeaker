@@ -30,6 +30,7 @@ import {
 import { MagnifyingGlassIcon } from "@heroicons/react/20/solid";
 import ToggleWithLabel from "components/ToggleWithLabel";
 import ModifySettings from "components/ModifySettings";
+import LaudspeakerIcon from "../../assets/images/laudspeakerIcon.svg";
 
 const navigation = [
   { name: "Home", href: "#", icon: HomeIcon, current: false },
@@ -137,9 +138,10 @@ export default function SettingsBeta() {
                     </div>
                   </Transition.Child>
                   <div className="flex flex-shrink-0 items-center px-4">
+                    {/*src="https://tailwindui.com/img/logos/mark.svg?color=purple&shade=600"*/}
                     <img
                       className="h-8 w-auto"
-                      src="https://tailwindui.com/img/logos/mark.svg?color=purple&shade=600"
+                      src={LaudspeakerIcon}
                       alt="Easywire"
                     />
                   </div>
@@ -204,7 +206,7 @@ export default function SettingsBeta() {
             <div className="flex flex-shrink-0 items-center px-4">
               <img
                 className="h-8 w-auto"
-                src="https://tailwindui.com/img/logos/mark.svg?color=purple&shade=600"
+                src={LaudspeakerIcon}
                 alt="Easywire"
               />
             </div>
