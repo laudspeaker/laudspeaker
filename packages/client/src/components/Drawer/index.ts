@@ -1,5 +1,6 @@
 import Drawer from "./Drawer";
-import DrawerBeta from "./Drawer";
+//import DrawerBeta from "./Drawer";
 
-export default DrawerBeta;
+export default Drawer;
+//export default DrawerBeta;
 //export { Drawer, DrawerBeta };

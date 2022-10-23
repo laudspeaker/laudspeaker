@@ -33,8 +33,9 @@ export default function ResponsiveDrawer() {
 
   return (
     <div
-      className={`flex flex-grow flex-col border-r border-gray-200 bg-white pt-5 pb-4 h-full transition-all duration-500 ease-in-out max-w-[54px] hover:!max-w-[200px] `}
+      className={`flex flex-grow flex-col border-r border-gray-200 bg-white pt-5 pb-4 h-full transition-all duration-500 ease-in-out max-w-[54px] `}
     >
+      {/* hover:!max-w-[200px] */}
       <div className="flex flex-shrink-0 items-center pl-4">
         <img
           className="h-8 w-full max-w-[23px]"
@@ -42,6 +43,7 @@ export default function ResponsiveDrawer() {
           alt="Laudspeaker"
         />
       </div>
+      {/* overflow-x-hidden */}
       <div className="mt-5 flex flex-grow flex-col overflow-x-hidden">
         <nav className="flex-1 space-y-1 bg-white px-2" aria-label="Sidebar">
           {navigation.map((item) =>

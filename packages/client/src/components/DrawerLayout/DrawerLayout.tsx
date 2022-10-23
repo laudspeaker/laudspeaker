@@ -9,8 +9,8 @@ interface DrawerLayoutProps {
 const DrawerLayout: FC<DrawerLayoutProps> = ({ children }) => {
   return (
     <div className="flex w-full max-h-screen h-screen">
-      {/* <ResponsiveDrawer /> */}
-      <ResponsiveDrawerBeta />
+      <ResponsiveDrawer />
+      {/* <ResponsiveDrawerBeta /> */}
       <div className="w-full max-h-screen overflow-y-scroll">{children}</div>
     </div>
   );
