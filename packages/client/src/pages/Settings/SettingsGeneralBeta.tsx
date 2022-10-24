@@ -88,6 +88,25 @@ export default function SettingsGeneralBeta() {
     verifyNewPassword: "",
   });
 
+  const errors: { [key: string]: string[] } = {
+    firstName: [],
+    lastName: [],
+    email: [],
+    currentPassword: [],
+    newPassword: [],
+    verifyNewPassword: [],
+  };
+
+  if (formData.firstName.length === 0)
+    errors.firstName.push("First name should be defined");
+
+  if (formData.lastName.length === 0)
+    errors.lastName.push("Last name should be defined");
+
+  if (formData.email.length === 0) errors.email.push("Email should be defined");
+
+  if (!formData.email.match(/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/))
+    errors.email.push("Email should be valid");
   const handleFormDataChange = (e: any) => {
     setFormData({
       ...formData,
@@ -362,7 +381,7 @@ export default function SettingsGeneralBeta() {
                               <dt className="text-sm font-medium text-gray-500">
                                 First Name
                               </dt>
-                              <dd>
+                              <dd className="relative">
                                 <Input
                                   type="text"
                                   value={formData.firstName}
@@ -370,14 +389,36 @@ export default function SettingsGeneralBeta() {
                                   name="firstName"
                                   id="firstName"
                                   placeholder="Mahamad"
+                                  className={classNames(
+                                    errors.firstName.length > 0
+                                      ? "rounded-md sm:text-sm focus:!border-red-500 !border-red-300 shadow-sm focus:!ring-red-500 "
+                                      : "rounded-md sm:text-sm focus:border-purple-500 border-gray-300 shadow-sm focus:ring-purple-500 "
+                                  )}
                                 />
+                                {errors.firstName.length > 0 && (
+                                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center">
+                                    <ExclamationCircleIcon
+                                      className="h-5 w-5 text-red-500"
+                                      aria-hidden="true"
+                                    />
+                                  </div>
+                                )}
                               </dd>
+                              {errors.firstName.map((item) => (
+                                <p
+                                  className="mt-2 text-sm text-red-600"
+                                  id="email-error"
+                                  key={item}
+                                >
+                                  {item}
+                                </p>
+                              ))}
                             </div>
                             <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:py-5">
                               <dt className="text-sm font-medium text-gray-500">
                                 Last Name
                               </dt>
-                              <dd>
+                              <dd className="relative">
                                 <Input
                                   type="text"
                                   value={formData.lastName}
@@ -385,24 +426,67 @@ export default function SettingsGeneralBeta() {
                                   name="lastName"
                                   id="lastName"
                                   placeholder="Charawi"
+                                  className={classNames(
+                                    errors.lastName.length > 0
+                                      ? "rounded-md sm:text-sm focus:!border-red-500 !border-red-300 shadow-sm focus:!ring-red-500 "
+                                      : "rounded-md sm:text-sm focus:border-purple-500 border-gray-300 shadow-sm focus:ring-purple-500 "
+                                  )}
                                 />
+                                {errors.lastName.length > 0 && (
+                                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center">
+                                    <ExclamationCircleIcon
+                                      className="h-5 w-5 text-red-500"
+                                      aria-hidden="true"
+                                    />
+                                  </div>
+                                )}
                               </dd>
+                              {errors.lastName.map((item) => (
+                                <p
+                                  className="mt-2 text-sm text-red-600"
+                                  id="email-error"
+                                  key={item}
+                                >
+                                  {item}
+                                </p>
+                              ))}
                             </div>
                             <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:py-5">
                               <dt className="text-sm font-medium text-gray-500">
                                 Email
                               </dt>
-                              <dd>
+                              <dd className="relative">
                                 <Input
                                   type="email"
                                   value={formData.email}
                                   onChange={handleFormDataChange}
                                   name="email"
                                   id="email"
-                                  className="rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm"
                                   placeholder="you@example.com"
+                                  className={classNames(
+                                    errors.email.length > 0
+                                      ? "rounded-md sm:text-sm focus:!border-red-500 !border-red-300 shadow-sm focus:!ring-red-500 "
+                                      : "rounded-md sm:text-sm focus:border-purple-500 border-gray-300 shadow-sm focus:ring-purple-500 "
+                                  )}
                                 />
+                                {errors.email.length > 0 && (
+                                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center">
+                                    <ExclamationCircleIcon
+                                      className="h-5 w-5 text-red-500"
+                                      aria-hidden="true"
+                                    />
+                                  </div>
+                                )}
                               </dd>
+                              {errors.email.map((item) => (
+                                <p
+                                  className="mt-2 text-sm text-red-600"
+                                  id="email-error"
+                                  key={item}
+                                >
+                                  {item}
+                                </p>
+                              ))}
                             </div>
                             <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:py-5">
                               <dt className="text-sm font-medium text-gray-500">
@@ -417,14 +501,14 @@ export default function SettingsGeneralBeta() {
                                     name="currentPassword"
                                     id="currentPassword"
                                     className={classNames(
-                                      true
+                                      errors.currentPassword.length > 0
                                         ? "rounded-md sm:text-sm focus:!border-red-500 !border-red-300 shadow-sm focus:!ring-red-500 "
                                         : "rounded-md sm:text-sm focus:border-purple-500 border-gray-300 shadow-sm focus:ring-purple-500 "
                                     )}
                                     aria-invalid="true"
                                     aria-describedby="password-error"
                                   />
-                                  {true && (
+                                  {errors.currentPassword.length > 0 && (
                                     <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center">
                                       <ExclamationCircleIcon
                                         className="h-5 w-5 text-red-500"
@@ -433,15 +517,15 @@ export default function SettingsGeneralBeta() {
                                     </div>
                                   )}
                                 </div>
-                                {true && (
+                                {errors.currentPassword.map((item) => (
                                   <p
                                     className="mt-2 text-sm text-red-600"
                                     id="email-error"
+                                    key={item}
                                   >
-                                    Your password must be less than 4
-                                    characters.
+                                    {item}
                                   </p>
-                                )}
+                                ))}
                               </dd>
                             </div>
                             <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:py-5">
@@ -457,14 +541,14 @@ export default function SettingsGeneralBeta() {
                                     name="newPassword"
                                     id="newPassword"
                                     className={classNames(
-                                      true
+                                      errors.newPassword.length > 0
                                         ? "rounded-md sm:text-sm focus:!border-red-500 !border-red-300 shadow-sm focus:!ring-red-500 "
                                         : "rounded-md sm:text-sm focus:border-purple-500 border-gray-300 shadow-sm focus:ring-purple-500 "
                                     )}
                                     aria-invalid="true"
                                     aria-describedby="password-error"
                                   />
-                                  {true && (
+                                  {errors.newPassword.length > 0 && (
                                     <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center">
                                       <ExclamationCircleIcon
                                         className="h-5 w-5 text-red-500"
@@ -473,15 +557,15 @@ export default function SettingsGeneralBeta() {
                                     </div>
                                   )}
                                 </div>
-                                {true && (
+                                {errors.newPassword.map((item) => (
                                   <p
                                     className="mt-2 text-sm text-red-600"
                                     id="email-error"
+                                    key={item}
                                   >
-                                    Your password must be less than 4
-                                    characters.
+                                    {item}
                                   </p>
-                                )}
+                                ))}
                               </dd>
                             </div>
                             <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:py-5">
@@ -497,14 +581,14 @@ export default function SettingsGeneralBeta() {
                                     name="verifyNewPassword"
                                     id="verifyNewPassword"
                                     className={classNames(
-                                      true
+                                      errors.verifyNewPassword.length > 0
                                         ? "rounded-md sm:text-sm focus:!border-red-500 !border-red-300 shadow-sm focus:!ring-red-500 "
                                         : "rounded-md sm:text-sm focus:border-purple-500 border-gray-300 shadow-sm focus:ring-purple-500 "
                                     )}
                                     aria-invalid="true"
                                     aria-describedby="password-error"
                                   />
-                                  {true && (
+                                  {errors.verifyNewPassword.length > 0 && (
                                     <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center">
                                       <ExclamationCircleIcon
                                         className="h-5 w-5 text-red-500"
@@ -513,15 +597,15 @@ export default function SettingsGeneralBeta() {
                                     </div>
                                   )}
                                 </div>
-                                {true && (
+                                {errors.verifyNewPassword.map((item) => (
                                   <p
                                     className="mt-2 text-sm text-red-600"
                                     id="email-error"
+                                    key={item}
                                   >
-                                    Your password must be less than 4
-                                    characters.
+                                    {item}
                                   </p>
-                                )}
+                                ))}
                               </dd>
                             </div>
                             <SaveSettings onClick={handleSubmit} />
