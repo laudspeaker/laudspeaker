@@ -27,10 +27,16 @@ import {
   UsersIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
-import { MagnifyingGlassIcon } from "@heroicons/react/20/solid";
-import ToggleWithLabel from "components/ToggleWithLabel";
-import ModifySettings from "components/ModifySettings";
+import {
+  MagnifyingGlassIcon,
+  ExclamationCircleIcon,
+} from "@heroicons/react/20/solid";
+import {
+  DocumentDuplicateIcon,
+  ArrowPathIcon,
+} from "@heroicons/react/20/solid";
 import LaudspeakerIcon from "../../assets/images/laudspeakerIcon.svg";
+import SaveSettings from "components/SaveSettings";
 
 const navigation = [
   { name: "Home", href: "#", icon: HomeIcon, current: false },
@@ -55,19 +61,22 @@ const secondaryNavigation = [
   { name: "Logout", href: "#", icon: ArrowLeftOnRectangleIcon },
 ];
 const tabs = [
-  { name: "General", href: "#", current: true },
-  { name: "Password", href: "#", current: false },
-  { name: "Notifications", href: "#", current: false },
-  { name: "Plan", href: "#", current: false },
-  { name: "Billing", href: "#", current: false },
-  { name: "Team Members", href: "#", current: false },
+  { name: "Account", href: "/beta/settings", current: false },
+  { name: "API", href: "", current: true },
+  { name: "Email", href: "/beta/settings/email", current: false },
+  { name: "SMS", href: "/beta/settings/sms", current: false },
+  { name: "Slack", href: "/beta/settings/slack", current: false },
+  { name: "Events", href: "/beta/settings/events", current: false },
+  { name: "Plan", href: "/beta/settings/plan", current: false },
+  { name: "Billing", href: "/beta/settings/billing", current: false },
+  { name: "Team Members", href: "/beta/settings/team", current: false },
 ];
 
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(" ");
 }
 
-export default function SettingsBeta() {
+export default function SettingsAPIBeta() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [automaticTimezoneEnabled, setAutomaticTimezoneEnabled] =
     useState(true);
@@ -363,161 +372,46 @@ export default function SettingsBeta() {
                       <div className="mt-10 divide-y divide-gray-200">
                         <div className="space-y-1">
                           <h3 className="text-lg font-medium leading-6 text-gray-900">
-                            Profile
+                            Keys
                           </h3>
                           <p className="max-w-2xl text-sm text-gray-500">
-                            This information will be displayed publicly so be
-                            careful what you share.
+                            Use these keys when making calls to the Laudspeaker
+                            API.
                           </p>
                         </div>
                         <div className="mt-6">
                           <dl className="divide-y divide-gray-200">
                             <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:py-5">
                               <dt className="text-sm font-medium text-gray-500">
-                                Name
+                                Events API Key
                               </dt>
-                              <dd className="mt-1 flex text-sm text-gray-900 sm:col-span-2 sm:mt-0">
-                                <span className="flex-grow">Chelsea Hagon</span>
-                                <span className="ml-4 flex-shrink-0">
-                                  <button
-                                    type="button"
-                                    className="rounded-md bg-white font-medium text-purple-600 hover:text-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
-                                  >
-                                    Update
-                                  </button>
-                                </span>
-                              </dd>
-                            </div>
-                            <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:py-5 sm:pt-5">
-                              <dt className="text-sm font-medium text-gray-500">
-                                Photo
-                              </dt>
-                              <dd className="mt-1 flex text-sm text-gray-900 sm:col-span-2 sm:mt-0">
-                                <span className="flex-grow">
-                                  <img
-                                    className="h-8 w-8 rounded-full"
-                                    src="https://images.unsplash.com/photo-1550525811-e5869dd03032?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
-                                    alt=""
+                              <dd>
+                                <div className="relative rounded-md ">
+                                  <input
+                                    type="email"
+                                    name="verify-new"
+                                    id="email"
+                                    defaultValue={"hello123"}
+                                    disabled
+                                    className="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 disabled:border-gray-200 disabled:bg-gray-50 disabled:text-gray-500 sm:text-sm"
+                                    aria-invalid="true"
+                                    aria-describedby="password-error"
                                   />
-                                </span>
-                                <span className="ml-4 flex flex-shrink-0 items-start space-x-4">
-                                  <button
-                                    type="button"
-                                    className="rounded-md bg-white font-medium text-purple-600 hover:text-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
-                                  >
-                                    Update
-                                  </button>
-                                  <span
-                                    className="text-gray-300"
-                                    aria-hidden="true"
-                                  >
-                                    |
-                                  </span>
-                                  <button
-                                    type="button"
-                                    className="rounded-md bg-white font-medium text-purple-600 hover:text-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
-                                  >
-                                    Remove
-                                  </button>
-                                </span>
+                                  <div className="pointer-events-none absolute inset-y-0 right-10 flex items-center">
+                                    <DocumentDuplicateIcon
+                                      className="h-5 w-5 text-grey-400"
+                                      aria-hidden="true"
+                                    />
+                                  </div>
+                                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center">
+                                    <ArrowPathIcon
+                                      className="h-5 w-5 text-grey-400"
+                                      aria-hidden="true"
+                                    />
+                                  </div>
+                                </div>
                               </dd>
                             </div>
-                            <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:py-5 sm:pt-5">
-                              <dt className="text-sm font-medium text-gray-500">
-                                Email
-                              </dt>
-                              <dd className="mt-1 flex text-sm text-gray-900 sm:col-span-2 sm:mt-0">
-                                <span className="flex-grow">
-                                  chelsea.hagon@example.com
-                                </span>
-                                <span className="ml-4 flex-shrink-0">
-                                  <button
-                                    type="button"
-                                    className="rounded-md bg-white font-medium text-purple-600 hover:text-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
-                                  >
-                                    Update
-                                  </button>
-                                </span>
-                              </dd>
-                            </div>
-                            <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:border-b sm:border-gray-200 sm:py-5">
-                              <dt className="text-sm font-medium text-gray-500">
-                                Job title
-                              </dt>
-                              <dd className="mt-1 flex text-sm text-gray-900 sm:col-span-2 sm:mt-0">
-                                <span className="flex-grow">
-                                  Human Resources Manager
-                                </span>
-                                <span className="ml-4 flex-shrink-0">
-                                  <button
-                                    type="button"
-                                    className="rounded-md bg-white font-medium text-purple-600 hover:text-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
-                                  >
-                                    Update
-                                  </button>
-                                </span>
-                              </dd>
-                            </div>
-                          </dl>
-                        </div>
-                      </div>
-
-                      <div className="mt-10 divide-y divide-gray-200">
-                        <div className="space-y-1">
-                          <h3 className="text-lg font-medium leading-6 text-gray-900">
-                            Account
-                          </h3>
-                          <p className="max-w-2xl text-sm text-gray-500">
-                            Manage how information is displayed on your account.
-                          </p>
-                        </div>
-                        <div className="mt-6">
-                          <dl className="divide-y divide-gray-200">
-                            <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:py-5">
-                              <dt className="text-sm font-medium text-gray-500">
-                                Language
-                              </dt>
-                              <dd className="mt-1 flex text-sm text-gray-900 sm:col-span-2 sm:mt-0">
-                                <span className="flex-grow">English</span>
-                              </dd>
-                            </div>
-                            <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:py-5 sm:pt-5">
-                              <dt className="text-sm font-medium text-gray-500">
-                                Date format
-                              </dt>
-                              <dd className="mt-1 flex text-sm text-gray-900 sm:col-span-2 sm:mt-0">
-                                <span className="flex-grow">DD-MM-YYYY</span>
-                                <span className="ml-4 flex flex-shrink-0 items-start space-x-4">
-                                  <button
-                                    type="button"
-                                    className="rounded-md bg-white font-medium text-purple-600 hover:text-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
-                                  >
-                                    Update
-                                  </button>
-                                  <span
-                                    className="text-gray-300"
-                                    aria-hidden="true"
-                                  >
-                                    |
-                                  </span>
-                                  <button
-                                    type="button"
-                                    className="rounded-md bg-white font-medium text-purple-600 hover:text-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
-                                  >
-                                    Remove
-                                  </button>
-                                </span>
-                              </dd>
-                            </div>
-                            <ToggleWithLabel
-                              label={"Automatic timezone"}
-                              default={true}
-                            ></ToggleWithLabel>
-                            <ToggleWithLabel
-                              label={"Auto-update applicant data"}
-                              default={false}
-                            ></ToggleWithLabel>
-                            <ModifySettings onClick={() => {}} />
                           </dl>
                         </div>
                       </div>
