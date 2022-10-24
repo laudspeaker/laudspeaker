@@ -53,7 +53,7 @@ const Header = () => {
                 id="search-field"
                 name="search-field"
                 className="block h-full w-full border-transparent py-2 pl-8 pr-3 text-gray-900 placeholder-gray-500 focus:border-transparent focus:outline-none focus:ring-0 sm:text-sm"
-                placeholder="Search transactions"
+                placeholder="Search"
                 type="search"
               />
             </div>

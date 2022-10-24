@@ -1,24 +1,4 @@
-import { Fragment, useState } from "react";
-import { Dialog, Switch, Transition } from "@headlessui/react";
-import {
-  ArrowLeftOnRectangleIcon,
-  Bars3BottomLeftIcon,
-  BellIcon,
-  BriefcaseIcon,
-  ChatBubbleOvalLeftEllipsisIcon,
-  CogIcon,
-  DocumentMagnifyingGlassIcon,
-  HomeIcon,
-  QuestionMarkCircleIcon,
-  UsersIcon,
-  XMarkIcon,
-} from "@heroicons/react/24/outline";
-import {
-  MagnifyingGlassIcon,
-  ExclamationCircleIcon,
-} from "@heroicons/react/20/solid";
-import LaudspeakerIcon from "../../assets/images/laudspeakerIcon.svg";
-import SaveSettings from "components/SaveSettings";
+import { useState } from "react";
 import { RadioGroup } from "@headlessui/react";
 import { CheckCircleIcon } from "@heroicons/react/20/solid";
 import Header from "components/Header";
@@ -39,21 +19,21 @@ const tabs = [
 const mailingLists = [
   {
     id: 1,
-    title: "Newsletter",
-    description: "Last message sent an hour ago",
-    users: "621 users",
+    title: "Free/Self Hosted",
+    description: "Free forever, with community support",
+    users: "1000 Messages/Month",
   },
   {
     id: 2,
-    title: "Existing Customers",
-    description: "Last message sent 2 weeks ago",
-    users: "1200 users",
+    title: "Cloud",
+    description: "24/7 Support, No Maintenance",
+    users: " $2 per 1000 Messages/Month",
   },
   {
     id: 3,
-    title: "Trial Users",
-    description: "Last message sent 4 days ago",
-    users: "2740 users",
+    title: "Enterprise",
+    description: "Dedicated Premium Support, Advanced Permissions",
+    users: "Contact Us for Pricing",
   },
 ];
 
@@ -66,11 +46,6 @@ export default function SettingsPlanBeta() {
     mailingLists[0]
   );
   const navigate = useNavigate();
-
-  const [automaticTimezoneEnabled, setAutomaticTimezoneEnabled] =
-    useState(true);
-  const [autoUpdateApplicantDataEnabled, setAutoUpdateApplicantDataEnabled] =
-    useState(false);
 
   return (
     <>
@@ -98,7 +73,7 @@ export default function SettingsPlanBeta() {
                         <select
                           id="selected-tab"
                           name="selected-tab"
-                          className="mt-1 block w-full rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-purple-500 focus:outline-none focus:ring-purple-500 sm:text-sm"
+                          className="mt-1 block w-full rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-cyan-500 focus:outline-none focus:ring-cyan-500 sm:text-sm"
                           defaultValue={tabs.find((tab) => tab.current)?.name}
                           onChange={(ev) => navigate(ev.currentTarget.value)}
                         >
@@ -118,7 +93,7 @@ export default function SettingsPlanBeta() {
                                 href={tab.href}
                                 className={classNames(
                                   tab.current
-                                    ? "border-purple-500 text-purple-600"
+                                    ? "border-cyan-500 text-cyan-600"
                                     : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700",
                                   "whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm"
                                 )}
@@ -151,7 +126,7 @@ export default function SettingsPlanBeta() {
                                       ? "border-transparent"
                                       : "border-gray-300",
                                     active
-                                      ? "border-indigo-500 ring-2 ring-indigo-500"
+                                      ? "border-cyan-500 ring-2 ring-cyan-500"
                                       : "",
                                     "relative flex cursor-pointer rounded-lg border bg-white p-4 shadow-sm focus:outline-none"
                                   )
@@ -184,7 +159,7 @@ export default function SettingsPlanBeta() {
                                     <CheckCircleIcon
                                       className={classNames(
                                         !checked ? "invisible" : "",
-                                        "h-5 w-5 text-indigo-600"
+                                        "h-5 w-5 text-cyan-600"
                                       )}
                                       aria-hidden="true"
                                     />
@@ -192,7 +167,7 @@ export default function SettingsPlanBeta() {
                                       className={classNames(
                                         active ? "border" : "border-2",
                                         checked
-                                          ? "border-indigo-500"
+                                          ? "border-cyan-500"
                                           : "border-transparent",
                                         "pointer-events-none absolute -inset-px rounded-lg"
                                       )}
@@ -221,7 +196,7 @@ export default function SettingsPlanBeta() {
                                   type="text"
                                   name="card-number"
                                   id="card-number"
-                                  className="relative block w-full rounded-none rounded-t-md border-gray-300 bg-transparent focus:z-10 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                                  className="relative block w-full rounded-none rounded-t-md border-gray-300 bg-transparent focus:z-10 focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm"
                                   placeholder="Card number"
                                 />
                               </div>
@@ -237,7 +212,7 @@ export default function SettingsPlanBeta() {
                                     type="text"
                                     name="card-expiration-date"
                                     id="card-expiration-date"
-                                    className="relative block w-full rounded-none rounded-bl-md border-gray-300 bg-transparent focus:z-10 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                                    className="relative block w-full rounded-none rounded-bl-md border-gray-300 bg-transparent focus:z-10 focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm"
                                     placeholder="MM / YY"
                                   />
                                 </div>
@@ -249,7 +224,7 @@ export default function SettingsPlanBeta() {
                                     type="text"
                                     name="card-cvc"
                                     id="card-cvc"
-                                    className="relative block w-full rounded-none rounded-br-md border-gray-300 bg-transparent focus:z-10 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                                    className="relative block w-full rounded-none rounded-br-md border-gray-300 bg-transparent focus:z-10 focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm"
                                     placeholder="CVC"
                                   />
                                 </div>
@@ -269,7 +244,7 @@ export default function SettingsPlanBeta() {
                                   id="country"
                                   name="country"
                                   autoComplete="country-name"
-                                  className="relative block w-full rounded-none rounded-t-md border-gray-300 bg-transparent focus:z-10 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                                  className="relative block w-full rounded-none rounded-t-md border-gray-300 bg-transparent focus:z-10 focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm"
                                 >
                                   <option>United States</option>
                                   <option>Canada</option>
@@ -288,7 +263,7 @@ export default function SettingsPlanBeta() {
                                   name="postal-code"
                                   id="postal-code"
                                   autoComplete="postal-code"
-                                  className="relative block w-full rounded-none rounded-b-md border-gray-300 bg-transparent focus:z-10 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                                  className="relative block w-full rounded-none rounded-b-md border-gray-300 bg-transparent focus:z-10 focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm"
                                   placeholder="ZIP / Postal code"
                                 />
                               </div>

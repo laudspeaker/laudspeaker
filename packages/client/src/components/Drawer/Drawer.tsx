@@ -4,7 +4,7 @@ import { AuthState } from "../../reducers/auth";
 import { useTypedSelector } from "../../hooks/useTypeSelector";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Dialog, Disclosure, Transition } from "@headlessui/react";
-import LaudspeakerIcon from "../../assets/images/laudspeakerIcon.svg";
+import LaudspeakerIcon from "../../assets/images/icon_cyan_cyan.svg";
 import { XMarkIcon } from "@heroicons/react/20/solid";
 import { useDispatch } from "react-redux";
 import { toggleNavbar } from "reducers/settings";

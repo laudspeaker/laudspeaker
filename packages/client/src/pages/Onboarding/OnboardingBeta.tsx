@@ -248,22 +248,7 @@ export default function OnboardingBeta() {
           <main className="flex-1 pb-8">
             {/* Page header */}
             <div className="bg-white shadow">
-              <div className="px-4 sm:px-6 lg:mx-auto lg:max-w-6xl lg:px-8">
-                <div className="py-6 md:flex md:items-center md:justify-between lg:border-t lg:border-gray-200">
-                  <div className="min-w-0 flex-1">
-                    {/* Profile */}
-                    <div className="flex items-center">
-                      <div>
-                        <div className="flex items-center">
-                          <h1 className="ml-3 text-2xl font-bold leading-7 text-gray-900 sm:truncate sm:leading-9">
-                            Good morning
-                          </h1>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <div className="px-4 sm:px-6 lg:mx-auto lg:max-w-6xl lg:px-8"></div>
             </div>
             {/*this is where we added*/}
             {/*<div className="py-6 md:justify-between lg:border-t lg:border-gray-200">*/}
@@ -347,7 +332,7 @@ export default function OnboardingBeta() {
                       <div className="bg-gray-50 px-4 py-3 text-right sm:px-6">
                         <button
                           type="submit"
-                          className="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                          className="inline-flex justify-center rounded-md border border-transparent bg-cyan-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2"
                         >
                           Save
                         </button>
@@ -455,7 +440,7 @@ export default function OnboardingBeta() {
                   <div className="bg-gray-50 px-4 py-3 text-right sm:px-6">
                     <button
                       type="submit"
-                      className="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                      className="inline-flex justify-center rounded-md border border-transparent bg-cyan-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2"
                     >
                       Save
                     </button>

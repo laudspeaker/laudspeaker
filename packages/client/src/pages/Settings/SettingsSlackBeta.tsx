@@ -1,24 +1,4 @@
-import { Fragment, useState, useLayoutEffect } from "react";
-import { Dialog, Switch, Transition } from "@headlessui/react";
-import {
-  ArrowLeftOnRectangleIcon,
-  Bars3BottomLeftIcon,
-  BellIcon,
-  BriefcaseIcon,
-  ChatBubbleOvalLeftEllipsisIcon,
-  CogIcon,
-  DocumentMagnifyingGlassIcon,
-  HomeIcon,
-  QuestionMarkCircleIcon,
-  UsersIcon,
-  XMarkIcon,
-} from "@heroicons/react/24/outline";
-import {
-  MagnifyingGlassIcon,
-  ExclamationCircleIcon,
-} from "@heroicons/react/20/solid";
-import LaudspeakerIcon from "../../assets/images/laudspeakerIcon.svg";
-import SaveSettings from "../../components/SaveSettings";
+import { useState, useLayoutEffect } from "react";
 import ApiService from "../../services/api.service";
 import { ApiConfig } from "../../constants";
 import Header from "components/Header";
@@ -79,7 +59,7 @@ export default function SettingsSlackBeta() {
                         <select
                           id="selected-tab"
                           name="selected-tab"
-                          className="mt-1 block w-full rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-purple-500 focus:outline-none focus:ring-purple-500 sm:text-sm"
+                          className="mt-1 block w-full rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-cyan-500 focus:outline-none focus:ring-cyan-500 sm:text-sm"
                           defaultValue={tabs.find((tab) => tab.current)?.name}
                           onChange={(ev) => navigate(ev.currentTarget.value)}
                         >
@@ -99,7 +79,7 @@ export default function SettingsSlackBeta() {
                                 href={tab.href}
                                 className={classNames(
                                   tab.current
-                                    ? "border-purple-500 text-purple-600"
+                                    ? "border-cyan-500 text-cyan-600"
                                     : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700",
                                   "whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm"
                                 )}

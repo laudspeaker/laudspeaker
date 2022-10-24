@@ -69,14 +69,15 @@ const NameJourney = ({ onSubmit, isPrimary }: INameSegment) => {
             />
           </form>
           <div className="flex justify-end mt-[10px]">
-            <GenericButton
+            <button
+              className="inline-flex items-center rounded-md border border-transparent bg-cyan-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-cyan-500 focus:outline-none focus:ring-2 focus:ring-offset-2 rounded-md bg-white font-medium focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2"
               onClick={handleSubmit}
               style={{
                 maxWidth: "200px",
               }}
             >
               Create
-            </GenericButton>
+            </button>
           </div>
         </div>
       </div>

@@ -105,7 +105,7 @@ export default function SettingsEmailBeta() {
                         <select
                           id="selected-tab"
                           name="selected-tab"
-                          className="mt-1 block w-full rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-purple-500 focus:outline-none focus:ring-purple-500 sm:text-sm"
+                          className="mt-1 block w-full rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-cyan-500 focus:outline-none focus:ring-cyan-500 sm:text-sm"
                           defaultValue={tabs.find((tab) => tab.current)?.name}
                           onChange={(ev) => navigate(ev.currentTarget.value)}
                         >
@@ -125,7 +125,7 @@ export default function SettingsEmailBeta() {
                                 href={tab.href}
                                 className={classNames(
                                   tab.current
-                                    ? "border-purple-500 text-purple-600"
+                                    ? "border-cyan-500 text-cyan-600"
                                     : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700",
                                   "whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm"
                                 )}
@@ -171,10 +171,10 @@ export default function SettingsEmailBeta() {
                                         ? "cursor-pointer focus:outline-none"
                                         : "opacity-25 cursor-not-allowed",
                                       active
-                                        ? "ring-2 ring-offset-2 ring-purple-500"
+                                        ? "ring-2 ring-offset-2 ring-cyan-500"
                                         : "",
                                       checked
-                                        ? "bg-purple-600 border-transparent text-white hover:bg-purple-700"
+                                        ? "bg-cyan-600 border-transparent text-white hover:bg-cyan-700"
                                         : "bg-white border-gray-200 text-gray-900 hover:bg-gray-50",
                                       "border rounded-md py-3 px-3 flex items-center justify-center text-sm font-medium sm:flex-1"
                                     )
@@ -204,14 +204,14 @@ export default function SettingsEmailBeta() {
                                     name="mailgunAPIKey"
                                     id="mailgunAPIKey"
                                     className={classNames(
-                                      true
+                                      false
                                         ? "rounded-md sm:text-sm focus:!border-red-500 !border-red-300 shadow-sm focus:!ring-red-500 "
-                                        : "rounded-md sm:text-sm focus:border-purple-500 border-gray-300 shadow-sm focus:ring-purple-500 "
+                                        : "rounded-md sm:text-sm focus:border-cyan-500 border-gray-300 shadow-sm focus:ring-cyan-500 "
                                     )}
                                     aria-invalid="true"
                                     aria-describedby="password-error"
                                   />
-                                  {true && (
+                                  {false && (
                                     <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center">
                                       <ExclamationCircleIcon
                                         className="h-5 w-5 text-red-500"
@@ -220,7 +220,7 @@ export default function SettingsEmailBeta() {
                                     </div>
                                   )}
                                 </div>
-                                {true && (
+                                {false && (
                                   <p
                                     className="mt-2 text-sm text-red-600"
                                     id="email-error"
@@ -239,7 +239,7 @@ export default function SettingsEmailBeta() {
                                 name="sendingDomain"
                                 value={formData.sendingDomain}
                                 onChange={handleFormDataChange}
-                                className="rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm"
+                                className="rounded-md border-gray-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm"
                                 defaultValue="Canada"
                               >
                                 <option>{formData.sendingDomain}</option>
@@ -256,7 +256,7 @@ export default function SettingsEmailBeta() {
                                   onChange={handleFormDataChange}
                                   name="sendingName"
                                   id="sendingName"
-                                  className="rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm"
+                                  className="rounded-md border-gray-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm"
                                   placeholder="Team Laudspeaker"
                                 />
                               </dd>
@@ -272,7 +272,7 @@ export default function SettingsEmailBeta() {
                                   onChange={handleFormDataChange}
                                   name="sendingEmail"
                                   id="sendingEmail"
-                                  className="rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm"
+                                  className="rounded-md border-gray-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm"
                                   placeholder="noreply"
                                 />
                                 <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">

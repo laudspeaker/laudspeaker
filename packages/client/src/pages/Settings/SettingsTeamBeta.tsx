@@ -44,13 +44,12 @@ const navigation = [
 
 const people = [
   {
-    name: "Jane Cooper",
-    title: "Regional Paradigm Technician",
+    name: "You",
+    title: "",
     role: "Admin",
     email: "janecooper@example.com",
     telephone: "+1-202-555-0170",
-    imageUrl:
-      "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=4&w=256&h=256&q=60",
+    imageUrl: "",
   },
   // More people...
 ];
@@ -88,54 +87,7 @@ export default function SettingsTeamBeta() {
         {/* Content area */}
         <div className="">
           <div className="mx-auto flex flex-col">
-            <div className="sticky top-0 z-10 flex h-16 flex-shrink-0 border-b border-gray-200 bg-white">
-              <Header />
-
-              <div className="flex flex-1 justify-between px-4 md:px-0">
-                <div className="flex flex-1">
-                  <form className="flex w-full md:ml-0" action="#" method="GET">
-                    <label htmlFor="mobile-search-field" className="sr-only">
-                      Search
-                    </label>
-                    <label htmlFor="desktop-search-field" className="sr-only">
-                      Search
-                    </label>
-                    <div className="relative w-full text-gray-400 focus-within:text-gray-600">
-                      <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center">
-                        <MagnifyingGlassIcon
-                          className="h-5 w-5 flex-shrink-0"
-                          aria-hidden="true"
-                        />
-                      </div>
-                      <input
-                        name="mobile-search-field"
-                        id="mobile-search-field"
-                        className="h-full w-full border-transparent py-2 pl-8 pr-3 text-base text-gray-900 placeholder-gray-500 focus:border-transparent focus:placeholder-gray-400 focus:outline-none focus:ring-0 sm:hidden"
-                        placeholder="Search"
-                        type="search"
-                      />
-                      <input
-                        name="desktop-search-field"
-                        id="desktop-search-field"
-                        className="hidden h-full w-full border-transparent py-2 pl-8 pr-3 text-sm text-gray-900 placeholder-gray-500 focus:border-transparent focus:placeholder-gray-400 focus:outline-none focus:ring-0 sm:block"
-                        placeholder="Search jobs, applicants, and more"
-                        type="search"
-                      />
-                    </div>
-                  </form>
-                </div>
-                <div className="ml-4 flex items-center md:ml-6">
-                  <button
-                    type="button"
-                    className="rounded-full bg-white p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
-                  >
-                    <BellIcon className="h-6 w-6" aria-hidden="true" />
-                    <span className="sr-only">View notifications</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-
+            <Header />
             <main className="flex-1">
               <div className="relative mx-auto max-w-4xl md:px-8 xl:px-0">
                 <div className="pt-10 pb-16">
@@ -154,7 +106,7 @@ export default function SettingsTeamBeta() {
                         <select
                           id="selected-tab"
                           name="selected-tab"
-                          className="mt-1 block w-full rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-purple-500 focus:outline-none focus:ring-purple-500 sm:text-sm"
+                          className="mt-1 block w-full rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-cyan-500 focus:outline-none focus:ring-cyan-500 sm:text-sm"
                           defaultValue={tabs.find((tab) => tab.current)?.name}
                           onChange={(ev) => navigate(ev.currentTarget.value)}
                         >
@@ -174,7 +126,7 @@ export default function SettingsTeamBeta() {
                                 href={tab.href}
                                 className={classNames(
                                   tab.current
-                                    ? "border-purple-500 text-purple-600"
+                                    ? "border-cyan-500 text-cyan-600"
                                     : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700",
                                   "whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm"
                                 )}
@@ -235,7 +187,7 @@ export default function SettingsTeamBeta() {
                                 <button
                                   type="button"
                                   disabled
-                                  className="inline-flex items-center rounded-md border border-transparent bg-purple-300 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-purple-300 focus:outline-none focus:ring-2 focus:ring-offset-2 rounded-md bg-white font-medium focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
+                                  className="inline-flex items-center rounded-md border border-transparent bg-cyan-200 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-cyan-200 focus:outline-none focus:ring-2 focus:ring-offset-2 rounded-md bg-white font-medium focus:outline-none focus:ring-2 focus:ring-cyan-900 focus:ring-offset-2"
                                 >
                                   + Add (Coming Soon!)
                                 </button>
