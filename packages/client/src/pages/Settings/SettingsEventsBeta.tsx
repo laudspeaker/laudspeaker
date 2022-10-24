@@ -12,8 +12,8 @@
   }
   ```
 */
-import { Fragment, useState } from "react";
-import { Dialog, Switch, Transition } from "@headlessui/react";
+import { Fragment, useEffect, useState } from "react";
+import { Dialog, Transition } from "@headlessui/react";
 import {
   ArrowLeftOnRectangleIcon,
   Bars3BottomLeftIcon,
@@ -34,6 +34,9 @@ import {
 import LaudspeakerIcon from "../../assets/images/laudspeakerIcon.svg";
 import SaveSettings from "components/SaveSettings";
 import { RadioGroup } from "@headlessui/react";
+import ApiService from "services/api.service";
+import { Input } from "components/Elements";
+import Header from "components/Header";
 
 const navigation = [
   { name: "Home", href: "#", icon: HomeIcon, current: false },
@@ -85,11 +88,48 @@ function classNames(...classes: string[]) {
 export default function SettingsEventsBeta() {
   const [mem, setMem] = useState(memoryOptions[0]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [automaticTimezoneEnabled, setAutomaticTimezoneEnabled] =
-    useState(true);
-  const [autoUpdateApplicantDataEnabled, setAutoUpdateApplicantDataEnabled] =
-    useState(false);
+  const [formData, setFormData] = useState<Record<string, string>>({
+    posthogApiKey: "",
+    posthogProjectId: "",
+    posthogHostUrl: "",
+    posthogSmsKey: "",
+    posthogEmailKey: "",
+  });
 
+  useEffect(() => {
+    (async () => {
+      const { data } = await ApiService.get({ url: "/accounts" });
+      const {
+        posthogApiKey,
+        posthogProjectId,
+        posthogHostUrl,
+        posthogSmsKey,
+        posthogEmailKey,
+      } = data;
+      setFormData({
+        posthogApiKey: posthogApiKey?.[0] || "",
+        posthogProjectId: posthogProjectId?.[0] || "",
+        posthogHostUrl: posthogHostUrl?.[0] || "",
+        posthogSmsKey: posthogSmsKey?.[0] || "",
+        posthogEmailKey: posthogEmailKey?.[0] || "",
+      });
+    })();
+  }, []);
+
+  const handleFormDataChange = (e: any) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async () => {
+    const options: Record<string, any[]> = {};
+    for (const key of Object.keys(formData)) {
+      options[key] = [formData[key]];
+    }
+    await ApiService.patch({
+      url: "/accounts",
+      options,
+    });
+  };
   return (
     <>
       {/*
@@ -274,59 +314,7 @@ export default function SettingsEventsBeta() {
         {/* Content area */}
         <div className="md:pl-64">
           <div className="mx-auto flex max-w-4xl flex-col md:px-8 xl:px-0">
-            <div className="sticky top-0 z-10 flex h-16 flex-shrink-0 border-b border-gray-200 bg-white">
-              <button
-                type="button"
-                className="border-r border-gray-200 px-4 text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-purple-500 md:hidden"
-                onClick={() => setSidebarOpen(true)}
-              >
-                <span className="sr-only">Open sidebar</span>
-                <Bars3BottomLeftIcon className="h-6 w-6" aria-hidden="true" />
-              </button>
-              <div className="flex flex-1 justify-between px-4 md:px-0">
-                <div className="flex flex-1">
-                  <form className="flex w-full md:ml-0" action="#" method="GET">
-                    <label htmlFor="mobile-search-field" className="sr-only">
-                      Search
-                    </label>
-                    <label htmlFor="desktop-search-field" className="sr-only">
-                      Search
-                    </label>
-                    <div className="relative w-full text-gray-400 focus-within:text-gray-600">
-                      <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center">
-                        <MagnifyingGlassIcon
-                          className="h-5 w-5 flex-shrink-0"
-                          aria-hidden="true"
-                        />
-                      </div>
-                      <input
-                        name="mobile-search-field"
-                        id="mobile-search-field"
-                        className="h-full w-full border-transparent py-2 pl-8 pr-3 text-base text-gray-900 placeholder-gray-500 focus:border-transparent focus:placeholder-gray-400 focus:outline-none focus:ring-0 sm:hidden"
-                        placeholder="Search"
-                        type="search"
-                      />
-                      <input
-                        name="desktop-search-field"
-                        id="desktop-search-field"
-                        className="hidden h-full w-full border-transparent py-2 pl-8 pr-3 text-sm text-gray-900 placeholder-gray-500 focus:border-transparent focus:placeholder-gray-400 focus:outline-none focus:ring-0 sm:block"
-                        placeholder="Search jobs, applicants, and more"
-                        type="search"
-                      />
-                    </div>
-                  </form>
-                </div>
-                <div className="ml-4 flex items-center md:ml-6">
-                  <button
-                    type="button"
-                    className="rounded-full bg-white p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
-                  >
-                    <BellIcon className="h-6 w-6" aria-hidden="true" />
-                    <span className="sr-only">View notifications</span>
-                  </button>
-                </div>
-              </div>
-            </div>
+            <Header handleSidebarOpen={() => setSidebarOpen(true)} />
 
             <main className="flex-1">
               <div className="relative mx-auto max-w-4xl md:px-8 xl:px-0">
@@ -435,13 +423,15 @@ export default function SettingsEventsBeta() {
                               </dt>
                               <dd>
                                 <div className="relative rounded-md ">
-                                  <input
+                                  <Input
                                     type="password"
-                                    name="verify-new"
-                                    id="email"
+                                    value={formData.posthogApiKey}
+                                    onChange={handleFormDataChange}
+                                    name="posthogApiKey"
+                                    id="posthogApiKey"
                                     className={classNames(
                                       true
-                                        ? "rounded-md sm:text-sm focus:border-red-500 border-red-300 shadow-sm focus:ring-red-500 "
+                                        ? "rounded-md sm:text-sm focus:!border-red-500 !border-red-300 shadow-sm focus:!ring-red-500 "
                                         : "rounded-md sm:text-sm focus:border-purple-500 border-gray-300 shadow-sm focus:ring-purple-500 "
                                     )}
                                     aria-invalid="true"
@@ -471,10 +461,12 @@ export default function SettingsEventsBeta() {
                                 Posthog Project ID
                               </dt>
                               <dd>
-                                <input
+                                <Input
                                   type="text"
-                                  name="email"
-                                  id="email"
+                                  value={formData.posthogProjectId}
+                                  onChange={handleFormDataChange}
+                                  name="posthogProjectId"
+                                  id="posthogProjectId"
                                   className="rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm"
                                   placeholder="1"
                                 />
@@ -488,25 +480,36 @@ export default function SettingsEventsBeta() {
                                 <span className="inline-flex items-center rounded-l-md border border-r-0 border-gray-300 bg-gray-50 px-3 text-gray-500 sm:text-sm">
                                   https://
                                 </span>
-                                <input
+                                <Input
                                   type="text"
-                                  name="company-website"
-                                  id="company-website"
-                                  defaultValue={"app.posthog.com"}
+                                  value={
+                                    formData.posthogHostUrl || "app.posthog.com"
+                                  }
+                                  onChange={handleFormDataChange}
+                                  name="posthogHostUrl"
+                                  id="posthogHostUrl"
                                   className="min-w-0 flex-1 rounded-none rounded-r-md border-gray-300 px-3 py-2 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                                 />
                               </div>
                             </div>
+                            <button
+                              type="button"
+                              className="inline-flex items-center rounded-md border border-transparent bg-purple-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-purple-500 focus:outline-none focus:ring-2 focus:ring-offset-2 rounded-md bg-white font-medium focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
+                            >
+                              Sync
+                            </button>
                             <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:py-5">
                               <dt className="text-sm font-medium text-gray-500">
                                 Name of SMS/Phone number field on your Posthog
                                 person
                               </dt>
                               <dd>
-                                <input
+                                <Input
                                   type="text"
-                                  name="email"
-                                  id="email"
+                                  value={formData.posthogSmsKey}
+                                  onChange={handleFormDataChange}
+                                  name="posthogSmsKey"
+                                  id="posthogSmsKey"
                                   className="rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm"
                                   placeholder="$phoneNumber"
                                 />
@@ -518,10 +521,12 @@ export default function SettingsEventsBeta() {
                                 person
                               </dt>
                               <dd>
-                                <input
+                                <Input
                                   type="text"
-                                  name="email"
-                                  id="email"
+                                  value={formData.posthogEmailKey}
+                                  onChange={handleFormDataChange}
+                                  name="posthogEmailKey"
+                                  id="posthogEmailKey"
                                   className="rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm"
                                   placeholder="$email"
                                 />
@@ -532,17 +537,12 @@ export default function SettingsEventsBeta() {
                                 <button
                                   type="button"
                                   className="inline-flex items-center rounded-md border border-transparent bg-purple-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-purple-500 focus:outline-none focus:ring-2 focus:ring-offset-2 rounded-md bg-white font-medium focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
-                                >
-                                  Sync
-                                </button>
-                                <button
-                                  type="button"
-                                  className="inline-flex items-center rounded-md border border-transparent bg-purple-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-purple-500 focus:outline-none focus:ring-2 focus:ring-offset-2 rounded-md bg-white font-medium focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
+                                  onClick={handleSubmit}
                                 >
                                   Save
                                 </button>
                               </span>
-                            </div>{" "}
+                            </div>
                           </dl>
                         </div>
                       </div>

@@ -29,11 +29,6 @@ export class UpdateAccountDto {
   public lastName: string;
 
   @IsString()
-  @MinLength(8)
-  @IsOptional()
-  public password: string;
-
-  @IsString()
   @IsOptional()
   public mailgunAPIKey: string;
 
@@ -90,4 +85,19 @@ export class UpdateAccountDto {
   @IsString()
   @IsOptional()
   public sendingEmail: string;
+
+  @IsString()
+  @MinLength(8)
+  @IsOptional()
+  public currentPassword: string;
+
+  @IsString()
+  @MinLength(8)
+  @IsOptional()
+  public newPassword: string;
+
+  @IsString()
+  @MinLength(8)
+  @IsOptional()
+  public verifyNewPassword: string;
 }

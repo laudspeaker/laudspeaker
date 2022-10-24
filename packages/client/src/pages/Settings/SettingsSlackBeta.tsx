@@ -12,7 +12,7 @@
   }
   ```
 */
-import { Fragment, useState } from "react";
+import { Fragment, useState, useLayoutEffect } from "react";
 import { Dialog, Switch, Transition } from "@headlessui/react";
 import {
   ArrowLeftOnRectangleIcon,
@@ -32,7 +32,10 @@ import {
   ExclamationCircleIcon,
 } from "@heroicons/react/20/solid";
 import LaudspeakerIcon from "../../assets/images/laudspeakerIcon.svg";
-import SaveSettings from "components/SaveSettings";
+import SaveSettings from "../../components/SaveSettings";
+import ApiService from "../../services/api.service";
+import { ApiConfig } from "../../constants";
+import Header from "components/Header";
 
 const navigation = [
   { name: "Home", href: "#", icon: HomeIcon, current: false },
@@ -74,10 +77,16 @@ function classNames(...classes: string[]) {
 
 export default function SettingsSlackBeta() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [automaticTimezoneEnabled, setAutomaticTimezoneEnabled] =
-    useState(true);
-  const [autoUpdateApplicantDataEnabled, setAutoUpdateApplicantDataEnabled] =
-    useState(false);
+  const [slackInstallUrl, setSlackInstallUrl] = useState<string>("");
+
+  useLayoutEffect(() => {
+    (async () => {
+      const { data } = await ApiService.get({
+        url: `${ApiConfig.slackInstall}`,
+      });
+      setSlackInstallUrl(data);
+    })();
+  }, []);
 
   return (
     <>
@@ -263,59 +272,7 @@ export default function SettingsSlackBeta() {
         {/* Content area */}
         <div className="md:pl-64">
           <div className="mx-auto flex max-w-4xl flex-col md:px-8 xl:px-0">
-            <div className="sticky top-0 z-10 flex h-16 flex-shrink-0 border-b border-gray-200 bg-white">
-              <button
-                type="button"
-                className="border-r border-gray-200 px-4 text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-purple-500 md:hidden"
-                onClick={() => setSidebarOpen(true)}
-              >
-                <span className="sr-only">Open sidebar</span>
-                <Bars3BottomLeftIcon className="h-6 w-6" aria-hidden="true" />
-              </button>
-              <div className="flex flex-1 justify-between px-4 md:px-0">
-                <div className="flex flex-1">
-                  <form className="flex w-full md:ml-0" action="#" method="GET">
-                    <label htmlFor="mobile-search-field" className="sr-only">
-                      Search
-                    </label>
-                    <label htmlFor="desktop-search-field" className="sr-only">
-                      Search
-                    </label>
-                    <div className="relative w-full text-gray-400 focus-within:text-gray-600">
-                      <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center">
-                        <MagnifyingGlassIcon
-                          className="h-5 w-5 flex-shrink-0"
-                          aria-hidden="true"
-                        />
-                      </div>
-                      <input
-                        name="mobile-search-field"
-                        id="mobile-search-field"
-                        className="h-full w-full border-transparent py-2 pl-8 pr-3 text-base text-gray-900 placeholder-gray-500 focus:border-transparent focus:placeholder-gray-400 focus:outline-none focus:ring-0 sm:hidden"
-                        placeholder="Search"
-                        type="search"
-                      />
-                      <input
-                        name="desktop-search-field"
-                        id="desktop-search-field"
-                        className="hidden h-full w-full border-transparent py-2 pl-8 pr-3 text-sm text-gray-900 placeholder-gray-500 focus:border-transparent focus:placeholder-gray-400 focus:outline-none focus:ring-0 sm:block"
-                        placeholder="Search jobs, applicants, and more"
-                        type="search"
-                      />
-                    </div>
-                  </form>
-                </div>
-                <div className="ml-4 flex items-center md:ml-6">
-                  <button
-                    type="button"
-                    className="rounded-full bg-white p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
-                  >
-                    <BellIcon className="h-6 w-6" aria-hidden="true" />
-                    <span className="sr-only">View notifications</span>
-                  </button>
-                </div>
-              </div>
-            </div>
+            <Header handleSidebarOpen={() => setSidebarOpen(true)} />
 
             <main className="flex-1">
               <div className="relative mx-auto max-w-4xl md:px-8 xl:px-0">
@@ -375,7 +332,7 @@ export default function SettingsSlackBeta() {
                             automated Slack messages to your customers!
                           </p>
                           <a
-                            href={"#"}
+                            href={slackInstallUrl}
                             target="_blank"
                             rel="noreferrer noopener"
                           >

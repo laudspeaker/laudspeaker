@@ -413,7 +413,9 @@ const RouteComponent: React.FC = () => {
           path="/beta/settings"
           element={
             <Protected>
-              <SettingsGeneralBeta />
+              <DrawerLayout>
+                <SettingsGeneralBeta />
+              </DrawerLayout>
             </Protected>
           }
         />
@@ -421,7 +423,9 @@ const RouteComponent: React.FC = () => {
           path="/beta/settings/api"
           element={
             <Protected>
-              <SettingsAPIBeta />
+              <DrawerLayout>
+                <SettingsAPIBeta />
+              </DrawerLayout>
             </Protected>
           }
         />
@@ -429,7 +433,9 @@ const RouteComponent: React.FC = () => {
           path="/beta/settings/email"
           element={
             <Protected>
-              <SettingsEmailBeta />
+              <DrawerLayout>
+                <SettingsEmailBeta />
+              </DrawerLayout>
             </Protected>
           }
         />
@@ -437,7 +443,9 @@ const RouteComponent: React.FC = () => {
           path="/beta/settings/slack"
           element={
             <Protected>
-              <SettingsSlackBeta />
+              <DrawerLayout>
+                <SettingsSlackBeta />
+              </DrawerLayout>
             </Protected>
           }
         />
@@ -445,7 +453,9 @@ const RouteComponent: React.FC = () => {
           path="/beta/settings/events"
           element={
             <Protected>
-              <SettingsEventsBeta />
+              <DrawerLayout>
+                <SettingsEventsBeta />
+              </DrawerLayout>
             </Protected>
           }
         />
@@ -453,7 +463,9 @@ const RouteComponent: React.FC = () => {
           path="/beta/settings/sms"
           element={
             <Protected>
-              <SettingsSMSBeta />
+              <DrawerLayout>
+                <SettingsSMSBeta />
+              </DrawerLayout>
             </Protected>
           }
         />
@@ -461,7 +473,9 @@ const RouteComponent: React.FC = () => {
           path="/beta/settings/plan"
           element={
             <Protected>
-              <SettingsPlanBeta />
+              <DrawerLayout>
+                <SettingsPlanBeta />
+              </DrawerLayout>
             </Protected>
           }
         />
@@ -469,7 +483,9 @@ const RouteComponent: React.FC = () => {
           path="/beta/settings/billing"
           element={
             <Protected>
-              <SettingsBillingBeta />
+              <DrawerLayout>
+                <SettingsBillingBeta />
+              </DrawerLayout>
             </Protected>
           }
         />
@@ -477,7 +493,9 @@ const RouteComponent: React.FC = () => {
           path="/beta/settings/team"
           element={
             <Protected>
-              <SettingsTeamBeta />
+              <DrawerLayout>
+                <SettingsTeamBeta />
+              </DrawerLayout>
             </Protected>
           }
         />
