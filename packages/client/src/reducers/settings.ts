@@ -9,6 +9,7 @@ export enum SettingsActionType {
   SET_SETTINGS_PRIVATE_API_KEY = "SET_SETTINGS_PRIVATE_API_KEY",
   SET_DOMAINS_LIST = "SET_DOMAINS_LIST",
   SET_EVENTS_COMPLETION = "SET_EVENTS_COMPLETION",
+  TOGGLE_NAVBAR = "TOGGLE_NAVBAR",
 }
 
 interface setSettingsData {
@@ -35,12 +36,18 @@ interface setEventsCompletion {
   payload: boolean;
 }
 
+interface IToggleNavbar {
+  type: SettingsActionType.TOGGLE_NAVBAR;
+  payload?: boolean;
+}
+
 export type SettingsAction =
   | setSettingsData
   | resetSettingData
   | setPrivateApiKeyData
   | setDomainsListData
-  | setEventsCompletion;
+  | setEventsCompletion
+  | IToggleNavbar;
 
 export interface SettingsData {
   friendsList?: string;
@@ -65,6 +72,7 @@ export interface SettingsData {
 export interface SettingsState {
   settings: SettingsData;
   domainsList?: Array<any>;
+  navbarOpened?: boolean;
 }
 
 const initialState = {
@@ -88,6 +96,7 @@ const initialState = {
     domainsList: [],
   },
   domainsList: [],
+  navbarOpened: false,
 };
 
 const settingsReducer = (
@@ -111,10 +120,15 @@ const settingsReducer = (
       return { ...state, domainsList: action.payload };
 
     case SettingsActionType.SET_EVENTS_COMPLETION:
-      console.log("in the reduce");
       return {
         ...state,
         settings: { ...state.settings, eventsCompleted: action.payload },
+      };
+
+    case SettingsActionType.TOGGLE_NAVBAR:
+      return {
+        ...state,
+        navbarOpened: action.payload ?? !state.navbarOpened,
       };
 
     default:
@@ -231,5 +245,14 @@ export const updateUserData = (body: any): any => {
         err,
       };
     }
+  };
+};
+
+export const toggleNavbar = (isOpen?: boolean): any => {
+  return (dispatch: Dispatch<SettingsAction>) => {
+    dispatch({
+      type: SettingsActionType.TOGGLE_NAVBAR,
+      payload: isOpen,
+    });
   };
 };
