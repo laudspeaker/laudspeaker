@@ -1,40 +1,22 @@
-import { Fragment, useEffect, useState } from "react";
-import { Dialog, Transition } from "@headlessui/react";
-import {
-  ArrowLeftOnRectangleIcon,
-  Bars3BottomLeftIcon,
-  BellIcon,
-  BriefcaseIcon,
-  ChatBubbleOvalLeftEllipsisIcon,
-  CogIcon,
-  DocumentMagnifyingGlassIcon,
-  HomeIcon,
-  QuestionMarkCircleIcon,
-  UsersIcon,
-  XMarkIcon,
-} from "@heroicons/react/24/outline";
-import {
-  MagnifyingGlassIcon,
-  ExclamationCircleIcon,
-} from "@heroicons/react/20/solid";
-import LaudspeakerIcon from "../../assets/images/laudspeakerIcon.svg";
-import SaveSettings from "components/SaveSettings";
+import { useEffect, useState } from "react";
+import { ExclamationCircleIcon } from "@heroicons/react/20/solid";
 import { RadioGroup } from "@headlessui/react";
 import ApiService from "services/api.service";
 import { Input } from "components/Elements";
 import Header from "components/Header";
 import { useNavigate } from "react-router-dom";
+import { startPosthogImport } from "reducers/settings";
 
 const tabs = [
-  { name: "Account", href: "/beta/settings", current: false },
-  { name: "API", href: "/beta/settings/api", current: false },
-  { name: "Email", href: "/beta/settings/email", current: false },
-  { name: "SMS", href: "/beta/settings/sms", current: false },
-  { name: "Slack", href: "/beta/settings/slack", current: false },
+  { name: "Account", href: "/settings", current: false },
+  { name: "API", href: "/settings/api", current: false },
+  { name: "Email", href: "/settings/email", current: false },
+  { name: "SMS", href: "/settings/sms", current: false },
+  { name: "Slack", href: "/settings/slack", current: false },
   { name: "Events", href: "#", current: true },
-  { name: "Plan", href: "/beta/settings/plan", current: false },
-  { name: "Billing", href: "/beta/settings/billing", current: false },
-  { name: "Team Members", href: "/beta/settings/team", current: false },
+  { name: "Plan", href: "/settings/plan", current: false },
+  { name: "Billing", href: "/settings/billing", current: false },
+  { name: "Team Members", href: "/settings/team", current: false },
 ];
 
 const memoryOptions = [
@@ -84,6 +66,10 @@ export default function SettingsEventsBeta() {
 
   const handleFormDataChange = (e: any) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSync = async () => {
+    await startPosthogImport();
   };
 
   const handleSubmit = async () => {
@@ -285,6 +271,7 @@ export default function SettingsEventsBeta() {
                             </div>
                             <button
                               type="button"
+                              onClick={handleSync}
                               className="inline-flex items-center rounded-md border border-transparent bg-cyan-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-cyan-500 focus:outline-none focus:ring-2 focus:ring-offset-2 rounded-md bg-white font-medium focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2"
                             >
                               Sync

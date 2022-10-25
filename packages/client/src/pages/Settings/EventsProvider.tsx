@@ -9,7 +9,7 @@ import { useTypedSelector } from "hooks/useTypeSelector";
 import { setSettingData, setEventsComplete } from "reducers/settings";
 import Chip from "components/Elements/Chip";
 
-export const allChannels: any = [
+export const allEventChannels: any = [
   {
     id: "segment",
     title: "Segment",
@@ -79,7 +79,7 @@ function EventsProvider() {
               <Select
                 id="activeJourney"
                 value={events}
-                options={allChannels.map((item: any) => ({
+                options={allEventChannels.map((item: any) => ({
                   title: item.title,
                   value: item.id,
                   disabled: item.disabled,

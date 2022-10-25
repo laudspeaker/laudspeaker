@@ -35,7 +35,7 @@ export class CustomersService {
     private CustomerKeysModel: Model<CustomerKeysDocument>,
     @InjectRepository(Audience)
     private audiencesRepository: Repository<Audience>
-  ) { }
+  ) {}
 
   async create(
     account: Account,
@@ -89,8 +89,8 @@ export class CustomersService {
       let addedBefore = await this.CustomerModel.find({
         ownerId: (<Account>account).id,
         posthogId: {
-          $in: [...data[index]['distinct_ids']]
-        }
+          $in: [...data[index]['distinct_ids']],
+        },
       }).exec();
       let createdCustomer: CustomerDocument;
       //create customer only if we don't see before, otherwise update data
@@ -113,7 +113,7 @@ export class CustomersService {
       if (account['posthogEmailKey'] != null) {
         let emailKey = account['posthogEmailKey'][0];
         if (data[index]?.properties[emailKey]) {
-          createdCustomer["phEmail"] = data[index]?.properties[emailKey];
+          createdCustomer['phEmail'] = data[index]?.properties[emailKey];
         }
       }
       const ret = await createdCustomer.save();
@@ -152,10 +152,10 @@ export class CustomersService {
         (info['salient'] = person['email']
           ? person['email']
           : person['slackEmail']
-            ? person['slackEmail']
-            : person['slackRealName']
-              ? person['slackRealName']
-              : '...');
+          ? person['slackEmail']
+          : person['slackRealName']
+          ? person['slackRealName']
+          : '...');
       return info;
     });
     return { data: listInfo, totalPages };
@@ -257,29 +257,29 @@ export class CustomersService {
     let customer: CustomerDocument;
     const queryParam = {
       ownerId: (<Account>account).id,
-      [correlationKey]: correlationValue
+      [correlationKey]: correlationValue,
     };
     customer = await this.CustomerModel.findOne(queryParam).exec();
     if (!customer) {
-      this.logger.debug('Customer not found, creating new customer...')
+      this.logger.debug('Customer not found, creating new customer...');
       if (mapping) {
         const newCust = mapping(event);
         newCust['ownerId'] = (<Account>account).id;
         const createdCustomer = new this.CustomerModel(newCust);
-        this.logger.debug('New customer created: ' + createdCustomer.id)
+        this.logger.debug('New customer created: ' + createdCustomer.id);
         return { cust: await createdCustomer.save(), found: false };
       } else {
         const createdCustomer = new this.CustomerModel({
           ownerId: (<Account>account).id,
           correlationKey: correlationValue,
         });
-        this.logger.debug('New customer created: ' + createdCustomer.id)
+        this.logger.debug('New customer created: ' + createdCustomer.id);
         return { cust: await createdCustomer.save(), found: false };
       }
 
       //to do cant just return [0] in the future
     } else {
-      this.logger.debug('Customer found: ' + customer.id)
+      this.logger.debug('Customer found: ' + customer.id);
       return { cust: customer, found: true };
     }
   }
@@ -336,11 +336,11 @@ export class CustomersService {
     let customer: CustomerDocument; // Found customer
     const queryParam = {
       ownerId: (<Account>account).id,
-      [correlationKey]: correlationValue
+      [correlationKey]: correlationValue,
     };
     try {
       customer = await this.CustomerModel.findOne(queryParam).exec();
-      this.logger.debug("Found customer in correlationKVPair:" + customer.id)
+      this.logger.debug('Found customer in correlationKVPair:' + customer.id);
     } catch (err) {
       return Promise.reject(err);
     }

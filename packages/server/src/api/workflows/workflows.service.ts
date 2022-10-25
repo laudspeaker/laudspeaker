@@ -29,7 +29,7 @@ export class WorkflowsService {
     @Inject(AudiencesService) private audiencesService: AudiencesService,
     @Inject(CustomersService) private customersService: CustomersService,
     private dataSource: DataSource
-  ) { }
+  ) {}
 
   /**
    * Finds all workflows
@@ -210,7 +210,10 @@ export class WorkflowsService {
    * @param updateAudienceDto - DTO with the updated information
    *
    */
-  async start(account: Account, workflowID: string): Promise<(string | number)[]> {
+  async start(
+    account: Account,
+    workflowID: string
+  ): Promise<(string | number)[]> {
     let workflow: Workflow; // Workflow to update
     let audience: Audience; // Audience to freeze/send messages to
     let customers: CustomerDocument[]; // Customers to add to primary audience
@@ -272,7 +275,9 @@ export class WorkflowsService {
             account,
             audience.inclusionCriteria
           );
-          this.logger.debug('Customers to include in workflow: ' + customers.length);
+          this.logger.debug(
+            'Customers to include in workflow: ' + customers.length
+          );
         } catch (err) {
           this.logger.error('Error: ' + err);
           return Promise.reject(err);
@@ -292,7 +297,7 @@ export class WorkflowsService {
         }
       }
     }
-    return Promise.resolve(jobIDs)
+    return Promise.resolve(jobIDs);
   }
 
   /**
@@ -479,13 +484,13 @@ export class WorkflowsService {
                     await this.statsRepository.save(stats);
                     this.logger.debug(
                       'Moving ' +
-                      customer.id +
-                      ' out of ' +
-                      from.id +
-                      ' and into ' +
-                      to.id
+                        customer.id +
+                        ' out of ' +
+                        from.id +
+                        ' and into ' +
+                        to.id
                     );
-                    jobIds.push(jobId)
+                    jobIds.push(jobId);
                   } catch (err) {
                     this.logger.error('Error: ' + err);
                     return Promise.reject(err);

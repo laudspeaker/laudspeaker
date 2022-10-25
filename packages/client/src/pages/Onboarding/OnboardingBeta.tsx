@@ -1,33 +1,11 @@
-/*
-  This example requires some changes to your config:
-  
-  ```
-  // tailwind.config.js
-  const colors = require("tailwindcss/colors")
-  
-  module.exports = {
-    // ...
-    theme: {
-      extend: {
-        colors: {
-          cyan: colors.cyan,
-        },
-      },
-    },
-    plugins: [
-      // ...
-      require("@tailwindcss/forms"),
-    ],
-  }
-  ```
-*/
 import Header from "components/Header";
 import { ApiConfig } from "../../constants";
 import React, { useEffect, useLayoutEffect } from "react";
 import ApiService from "services/api.service";
 import Input from "../../components/Elements/Input";
 import Select from "../../components/Elements/Select";
-import { allChannels } from "../Settings/EventsProvider";
+import { allEventChannels } from "../Settings/EventsProvider";
+import { allEmailChannels } from "../Settings/EmailProvider";
 import { useTypedSelector } from "hooks/useTypeSelector";
 import {
   setDomainsList,
@@ -35,69 +13,7 @@ import {
   setSettingsPrivateApiKey,
 } from "reducers/settings";
 import { useDispatch } from "react-redux";
-
-import { Fragment, useState } from "react";
-import { Dialog, Menu, Transition } from "@headlessui/react";
-import {
-  Bars3CenterLeftIcon,
-  BellIcon,
-  ClockIcon,
-  CogIcon,
-  CreditCardIcon,
-  DocumentChartBarIcon,
-  HomeIcon,
-  QuestionMarkCircleIcon,
-  ScaleIcon,
-  ShieldCheckIcon,
-  UserGroupIcon,
-  XMarkIcon,
-} from "@heroicons/react/24/outline";
-import {
-  BanknotesIcon,
-  BuildingOfficeIcon,
-  CheckCircleIcon,
-  ChevronDownIcon,
-  ChevronRightIcon,
-  MagnifyingGlassIcon,
-} from "@heroicons/react/20/solid";
-import LaudspeakerIcon from "../../assets/images/laudspeakerIcon.svg";
-import LaudspeakerWhiteIcon from "../../assets/images/laudspeakerWhiteIcon.svg";
-
-const navigation = [
-  { name: "Home", href: "#", icon: HomeIcon, current: true },
-  { name: "History", href: "#", icon: ClockIcon, current: false },
-  { name: "Balances", href: "#", icon: ScaleIcon, current: false },
-  { name: "Cards", href: "#", icon: CreditCardIcon, current: false },
-  { name: "Recipients", href: "#", icon: UserGroupIcon, current: false },
-  { name: "Reports", href: "#", icon: DocumentChartBarIcon, current: false },
-];
-const secondaryNavigation = [
-  { name: "Settings", href: "#", icon: CogIcon },
-  { name: "Help", href: "#", icon: QuestionMarkCircleIcon },
-  { name: "Privacy", href: "#", icon: ShieldCheckIcon },
-];
-const cards = [
-  { name: "Account balance", href: "#", icon: ScaleIcon, amount: "$30,659.45" },
-  // More items...
-];
-const transactions = [
-  {
-    id: 1,
-    name: "Payment to Molly Sanders",
-    href: "#",
-    amount: "$20,000",
-    currency: "USD",
-    status: "success",
-    date: "July 11, 2020",
-    datetime: "2020-07-11",
-  },
-  // More transactions...
-];
-const statusStyles = {
-  success: "bg-green-100 text-green-800",
-  processing: "bg-yellow-100 text-yellow-800",
-  failed: "bg-gray-100 text-gray-800",
-};
+import { useState } from "react";
 
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(" ");
@@ -108,6 +24,13 @@ interface IntegrationsData {
   sendingEmail: string;
   slackId: string;
   eventProvider: string;
+  emailProvider: string;
+  mailgunAPIKey: string;
+  posthogApiKey: string;
+  posthogProjectId: string;
+  posthogHostUrl: string;
+  posthogSmsKey: string;
+  posthogEmailKey: string;
 }
 
 export default function OnboardingBeta() {
@@ -116,19 +39,20 @@ export default function OnboardingBeta() {
     sendingName: "",
     sendingEmail: "",
     slackId: "",
+    mailgunAPIKey: "",
     eventProvider: "posthog",
+    emailProvider: "mailgun",
+    posthogApiKey: "",
+    posthogProjectId: "",
+    posthogHostUrl: "app.posthog.com",
+    posthogSmsKey: "",
+    posthogEmailKey: "",
   });
   const dispatch = useDispatch();
   const [slackInstallUrl, setSlackInstallUrl] = useState<string>("");
   const [domainName, setDomainName] = useState<any>(settings.domainName || "");
   const [domainList, setDomainList] = useState<any>(domainsList || []);
-  const [privateApiKey, setPrivateApiKey] = useState<string>(
-    settings.privateApiKey || ""
-  );
-
-  const handleInputSettingsData = (name: any, value: any): any => {
-    dispatch(setSettingData({ ...settings, [name]: value }));
-  };
+  const [privateApiKey, setPrivateApiKey] = useState<string>("");
 
   const callDomains = async () => {
     if (privateApiKey) {
@@ -153,13 +77,29 @@ export default function OnboardingBeta() {
   useEffect(() => {
     (async () => {
       const { data } = await ApiService.get({ url: "/accounts" });
-      const { sendingName, sendingEmail, slackTeamId } = data;
+      const {
+        sendingName,
+        sendingEmail,
+        slackTeamId,
+        mailgunAPIKey,
+        posthogApiKey,
+        posthogProjectId,
+        posthogHostUrl,
+        posthogSmsKey,
+        posthogEmailKey,
+      } = data;
       setIntegrationsData({
         ...integrationsData,
+        posthogApiKey,
+        posthogProjectId,
+        posthogHostUrl,
+        posthogSmsKey,
+        posthogEmailKey,
         sendingName,
         sendingEmail,
         slackId: slackTeamId?.[0],
       });
+      setPrivateApiKey(mailgunAPIKey);
     })();
   }, []);
 
@@ -170,63 +110,64 @@ export default function OnboardingBeta() {
     });
   };
 
+  const handleSubmit = async () => {
+    await ApiService.patch({
+      url: "/accounts",
+      options: {
+        ...integrationsData,
+        sendingDomain: domainName,
+        mailgunAPIKey: privateApiKey,
+      },
+    });
+  };
+
   const parametersToConfigure: { [key: string]: React.ReactElement } = {
     posthog: (
       <form className="grid grid-cols-6 gap-6">
         <Input
           isRequired
-          value={settings.phPrivateApiKey}
+          value={integrationsData.posthogApiKey}
           label="Private API Key"
           placeholder={"****  "}
-          name="name"
-          id="name"
-          onChange={(e) => {
-            handleInputSettingsData("phPrivateApiKey", e.target.value);
-          }}
+          name="posthogApiKey"
+          id="posthogApiKey"
+          onChange={handleIntegrationsDataChange}
         />
         <Input
           isRequired
-          value={settings.phProjectId}
+          value={integrationsData.posthogProjectId}
           label="Project Id"
           placeholder={"****  "}
-          name="name"
-          id="name"
-          onChange={(e) => {
-            handleInputSettingsData("phProjectId", e.target.value);
-          }}
+          name="posthogProjectId"
+          id="posthogProjectId"
+          onChange={handleIntegrationsDataChange}
         />
         <Input
           isRequired
-          value={settings.phHostUrl}
+          value={integrationsData.posthogHostUrl}
           label="Posthog Url"
           placeholder={"https://app.posthog.com"}
-          name="name"
-          id="name"
-          onChange={(e) => {
-            handleInputSettingsData("phHostUrl", e.target.value);
-          }}
+          name="posthogHostUrl"
+          id="posthogHostUrl"
+          onChange={handleIntegrationsDataChange}
         />
         <Input
           isRequired
-          value={settings.phSms}
+          value={integrationsData.posthogSmsKey}
           label="Name of SMS / Phone number field on your Posthog person"
           placeholder={"$phoneNumber"}
-          name="name"
-          id="name"
-          onChange={(e) => {
-            handleInputSettingsData("phSms", e.target.value);
-          }}
+          name="posthogSmsKey"
+          id="posthogSmsKey"
+          onChange={handleIntegrationsDataChange}
         />
         <Input
           isRequired
-          value={settings.phEmail}
+          value={integrationsData.posthogEmailKey}
           label="Name of Email address field on your Posthog person"
           placeholder={"$email"}
-          name="name"
-          id="name"
-          onChange={(e) => {
-            handleInputSettingsData("phEmail", e.target.value);
-          }}
+          name="posthogEmailKey"
+          id="posthogEmailKey"
+          onChange={handleIntegrationsDataChange}
         />
       </form>
     ),
@@ -234,14 +175,6 @@ export default function OnboardingBeta() {
 
   return (
     <>
-      {/*
-        This example requires updating your template:
-
-        ```
-        <html class="h-full bg-gray-100">
-        <body class="h-full">
-        ```
-      */}
       <div className="min-h-full">
         <div className="flex flex-1 flex-col">
           <Header />
@@ -250,9 +183,6 @@ export default function OnboardingBeta() {
             <div className="bg-white shadow">
               <div className="px-4 sm:px-6 lg:mx-auto lg:max-w-6xl lg:px-8"></div>
             </div>
-            {/*this is where we added*/}
-            {/*<div className="py-6 md:justify-between lg:border-t lg:border-gray-200">*/}
-
             <div className="relative mx-auto max-w-4xl md:px-8 xl:px-0">
               <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8"></div>
               <div className="md:grid md:grid-cols-3 md:gap-6">
@@ -262,8 +192,8 @@ export default function OnboardingBeta() {
                       Email
                     </h3>
                     <p className="mt-1 text-sm text-gray-600">
-                      This information will be displayed publicly so be careful
-                      what you share.
+                      Add an email sending service to automatically send emails
+                      to your customers.
                     </p>
                   </div>
                 </div>
@@ -272,6 +202,37 @@ export default function OnboardingBeta() {
                     <div className="overflow-visible shadow sm:rounded-md">
                       <div className="space-y-6 bg-white px-4 py-5 sm:p-6">
                         <h2>Email configuration</h2>
+                        <Select
+                          id="events_config_select"
+                          options={allEmailChannels.map((item: any) => ({
+                            value: item.id,
+                            title: item.title,
+                            disabled: item.disabled,
+                          }))}
+                          value={integrationsData.emailProvider}
+                          onChange={(value: string) =>
+                            setIntegrationsData({
+                              ...integrationsData,
+                              eventProvider: value,
+                            })
+                          }
+                        />
+                        {integrationsData.emailProvider && (
+                          <>
+                            <h3 className="flex items-center text-[18px] font-semibold leading-[40px] mb-[10px]">
+                              {integrationsData.emailProvider
+                                .charAt(0)
+                                .toUpperCase() +
+                                integrationsData.emailProvider.slice(1)}{" "}
+                              Configuration
+                            </h3>
+                            {
+                              parametersToConfigure[
+                                integrationsData.emailProvider
+                              ]
+                            }
+                          </>
+                        )}
                         <Input
                           name="sendingName"
                           id="sendingName"
@@ -331,7 +292,8 @@ export default function OnboardingBeta() {
                       </div>
                       <div className="bg-gray-50 px-4 py-3 text-right sm:px-6">
                         <button
-                          type="submit"
+                          type="button"
+                          onClick={handleSubmit}
                           className="inline-flex justify-center rounded-md border border-transparent bg-cyan-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2"
                         >
                           Save
@@ -353,8 +315,8 @@ export default function OnboardingBeta() {
                       Slack
                     </h3>
                     <p className="mt-1 text-sm text-gray-600">
-                      This information will be displayed publicly so be careful
-                      what you share.
+                      Install the Laudspeaker Slack App to automatically send
+                      triggered Slack messages to your customers.
                     </p>
                   </div>
                 </div>
@@ -393,8 +355,8 @@ export default function OnboardingBeta() {
                       Events
                     </h3>
                     <p className="mt-1 text-sm text-gray-600">
-                      This information will be displayed publicly so be careful
-                      what you share.
+                      Configure your event provider to send event data to
+                      Laudspeaker so you can send triggered messages.
                     </p>
                   </div>
                 </div>
@@ -405,7 +367,7 @@ export default function OnboardingBeta() {
                         <h2>Events configuration</h2>
                         <Select
                           id="events_config_select"
-                          options={allChannels.map((item: any) => ({
+                          options={allEventChannels.map((item: any) => ({
                             value: item.id,
                             title: item.title,
                             disabled: item.disabled,
@@ -439,7 +401,8 @@ export default function OnboardingBeta() {
                   </form>
                   <div className="bg-gray-50 px-4 py-3 text-right sm:px-6">
                     <button
-                      type="submit"
+                      type="button"
+                      onClick={handleSubmit}
                       className="inline-flex justify-center rounded-md border border-transparent bg-cyan-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2"
                     >
                       Save

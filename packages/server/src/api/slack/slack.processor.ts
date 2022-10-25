@@ -22,11 +22,11 @@ export class SlackProcessor {
   @Process('send')
   async handleSend(job: Job) {
     try {
+      let textWithInsertedTags;
       const { tags, text, ...args } = job.data.args;
-      const textWithInsertedTags = await tagEngine.parseAndRender(
-        text,
-        tags || {}
-      );
+      if (text) {
+        textWithInsertedTags = await tagEngine.parseAndRender(text, tags || {});
+      }
       await this.client.apiCall(job.data.methodName, {
         token: job.data.token,
         text: textWithInsertedTags,

@@ -4,7 +4,7 @@ import React, { useEffect, useLayoutEffect, useState } from "react";
 import ApiService from "services/api.service";
 import Input from "../../components/Elements/Input";
 import Select from "../../components/Elements/Select";
-import { allChannels } from "./EventsProvider";
+import { allEventChannels } from "./EventsProvider";
 import { useTypedSelector } from "hooks/useTypeSelector";
 import {
   setDomainsList,
@@ -286,7 +286,7 @@ const Integrations = () => {
                   <h2>Events configuration</h2>
                   <Select
                     id="events_config_select"
-                    options={allChannels.map((item: any) => ({
+                    options={allEventChannels.map((item: any) => ({
                       value: item.id,
                       title: item.title,
                       disabled: item.disabled,

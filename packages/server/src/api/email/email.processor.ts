@@ -15,22 +15,25 @@ export class EmailProcessor {
   constructor(
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
     private readonly logger: LoggerService
-  ) { }
+  ) {}
   @Process('send')
   async handleSend(job: Job) {
     this.logger.debug(JSON.stringify(job, null, 2));
     const mailgun = new Mailgun(formData);
     const mg = mailgun.client({ username: 'api', key: job.data.key });
 
-    const textWithInsertedTags = await tagEngine.parseAndRender(
-      job.data.text,
-      job.data.tags || {}
-    );
+    let textWithInsertedTags, subjectWithInsertedTags;
+    if (job.data.text)
+      textWithInsertedTags = await tagEngine.parseAndRender(
+        job.data.text,
+        job.data.tags || {}
+      );
 
-    const subjectWithInsertedTags = await tagEngine.parseAndRender(
-      job.data.subject,
-      job.data.tags || {}
-    );
+    if (job.data.subject)
+      subjectWithInsertedTags = await tagEngine.parseAndRender(
+        job.data.subject,
+        job.data.tags || {}
+      );
 
     try {
       const msg = await mg.messages.create(job.data.domain, {

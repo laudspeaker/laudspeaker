@@ -32,7 +32,7 @@ export const dataSubArray = [
     imgIcon: Home(),
     text: "Home",
     type: "menu",
-    link: "/dashboard",
+    link: "/home",
   },
   {
     id: "messaging",
@@ -62,13 +62,13 @@ export const dataSubArray = [
     text: "Audience",
     type: "group",
     children: [
-      {
-        id: "segments",
-        imgIcon: Segments(),
-        text: "Segments",
-        type: "menu",
-        link: "/mysegment",
-      },
+      // {
+      //   id: "segments",
+      //   imgIcon: Segments(),
+      //   text: "Segments",
+      //   type: "menu",
+      //   link: "/mysegment",
+      // },
       {
         id: "users",
         imgIcon: Users(),
@@ -105,6 +105,6 @@ export const dataSubArray = [
     imgIcon: Settings(),
     text: "Settings",
     type: "menu",
-    link: "/settings/profile",
+    link: "/settings",
   },
 ];

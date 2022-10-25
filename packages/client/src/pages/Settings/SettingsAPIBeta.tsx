@@ -9,15 +9,15 @@ import ApiService from "services/api.service";
 import { useNavigate } from "react-router-dom";
 
 const tabs = [
-  { name: "Account", href: "/beta/settings", current: false },
+  { name: "Account", href: "/settings", current: false },
   { name: "API", href: "", current: true },
-  { name: "Email", href: "/beta/settings/email", current: false },
-  { name: "SMS", href: "/beta/settings/sms", current: false },
-  { name: "Slack", href: "/beta/settings/slack", current: false },
-  { name: "Events", href: "/beta/settings/events", current: false },
-  { name: "Plan", href: "/beta/settings/plan", current: false },
-  { name: "Billing", href: "/beta/settings/billing", current: false },
-  { name: "Team Members", href: "/beta/settings/team", current: false },
+  { name: "Email", href: "/settings/email", current: false },
+  { name: "SMS", href: "/settings/sms", current: false },
+  { name: "Slack", href: "/settings/slack", current: false },
+  { name: "Events", href: "/settings/events", current: false },
+  { name: "Plan", href: "/settings/plan", current: false },
+  { name: "Billing", href: "/settings/billing", current: false },
+  { name: "Team Members", href: "/settings/team", current: false },
 ];
 
 function classNames(...classes: string[]) {
