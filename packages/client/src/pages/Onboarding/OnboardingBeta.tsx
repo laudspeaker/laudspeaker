@@ -4,6 +4,7 @@ import React, { useEffect, useLayoutEffect } from "react";
 import ApiService from "services/api.service";
 import Input from "../../components/Elements/Input";
 import Select from "../../components/Elements/Select";
+
 import { allEventChannels } from "../Settings/EventsProvider";
 import { allEmailChannels } from "../Settings/EmailProvider";
 import { useTypedSelector } from "hooks/useTypeSelector";
@@ -14,6 +15,8 @@ import {
 } from "reducers/settings";
 import { useDispatch } from "react-redux";
 import { useState } from "react";
+import CSS from "csstype";
+import Modal from "components/Elements/Modal";
 
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(" ");
@@ -53,6 +56,7 @@ export default function OnboardingBeta() {
   const [domainName, setDomainName] = useState<any>(settings.domainName || "");
   const [domainList, setDomainList] = useState<any>(domainsList || []);
   const [privateApiKey, setPrivateApiKey] = useState<string>("");
+  const [nameModalOpen, setNameModalOpen] = useState<boolean>(false);
 
   const callDomains = async () => {
     if (privateApiKey) {
@@ -121,6 +125,10 @@ export default function OnboardingBeta() {
     });
   };
 
+  const redirectUses = () => {
+    setNameModalOpen(true);
+  };
+
   const parametersToConfigure: { [key: string]: React.ReactElement } = {
     posthog: (
       <form className="grid grid-cols-6 gap-6">
@@ -173,12 +181,49 @@ export default function OnboardingBeta() {
     ),
   };
 
+  const frameOne: CSS.Properties = {
+    position: "relative",
+    paddingBottom: "100%",
+    height: "0",
+  };
+
+  const frameTwo: CSS.Properties = {
+    position: "absolute",
+    top: "0",
+    left: "0",
+    height: "100%",
+    width: "100%",
+  };
+
   return (
     <>
       <div className="min-h-full">
         <div className="flex flex-1 flex-col">
           <Header />
           <main className="flex-1 pb-8">
+            <div className="grid place-items-center pt-6">
+              <button
+                type="button"
+                className="inline-flex items-center rounded-md border border-transparent bg-cyan-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-cyan-500 focus:outline-none focus:ring-2 focus:ring-offset-2 rounded-md bg-white font-medium focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2"
+                onClick={redirectUses}
+              >
+                Check Out Onboarding Video
+              </button>
+            </div>
+            <Modal
+              isOpen={nameModalOpen}
+              onClose={() => {
+                setNameModalOpen(false);
+              }}
+            >
+              <div style={frameOne}>
+                <iframe
+                  src="https://www.loom.com/embed/be35f72bd1d04dc5a9c972d2b92c82f8"
+                  frameBorder="0"
+                  style={frameTwo}
+                ></iframe>
+              </div>
+            </Modal>
             {/* Page header */}
             <div className="bg-white shadow">
               <div className="px-4 sm:px-6 lg:mx-auto lg:max-w-6xl lg:px-8"></div>
