@@ -15,7 +15,7 @@ export class CustomersProcessor {
     try {
       let res = await axios({
         method: 'get',
-        url: job.data.url + '?limit=1000',
+        url: 'http://' + job.data.url + '?limit=1000',
         headers: {
           Authorization: job.data.auth,
         },
@@ -41,7 +41,7 @@ export class CustomersProcessor {
           );
         }
       }
-      console.log("processing is over");
+      console.log('processing is over');
     } catch (e) {
       console.log(e);
     }

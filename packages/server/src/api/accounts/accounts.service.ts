@@ -1,5 +1,5 @@
 import { BaseJwtHelper } from '../../common/helper/base-jwt.helper';
-import { Inject, Injectable } from '@nestjs/common';
+import { HttpException, Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UpdateAccountDto } from './dto/update-account.dto';
@@ -31,10 +31,21 @@ export class AccountsService extends BaseJwtHelper {
     updateUserDto: UpdateAccountDto
   ): Promise<Account> {
     const oldUser = await this.findOne(user);
-
     // if user change password
-    if (updateUserDto.password) {
-      updateUserDto.password = this.encodePassword(updateUserDto.password);
+    let password = oldUser.password;
+    if (updateUserDto.newPassword) {
+      if (
+        oldUser.password !== this.encodePassword(updateUserDto.currentPassword)
+      )
+        throw new HttpException('Invalid current password', 400);
+
+      if (updateUserDto.newPassword !== updateUserDto.verifyNewPassword)
+        throw new HttpException("Passwords don't match", 400);
+
+      password = this.encodePassword(updateUserDto.newPassword);
+      delete updateUserDto.currentPassword;
+      delete updateUserDto.newPassword;
+      delete updateUserDto.verifyNewPassword;
     }
 
     if (updateUserDto.expectedOnboarding) {
@@ -55,6 +66,7 @@ export class AccountsService extends BaseJwtHelper {
     const updatedUser = await this.accountsRepository.save({
       ...oldUser,
       ...updateUserDto,
+      password,
     });
 
     return updatedUser;

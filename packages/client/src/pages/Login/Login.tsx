@@ -1,18 +1,12 @@
-import React, { useState } from "react";
-import GoogleAuth from "../../components/Auth/GoogleAuth";
-import GithubAuth from "../../components/Auth/GithubAuth";
+import { useState } from "react";
 import { useDispatch } from "react-redux";
-import { GenericButton, Input } from "../../components/Elements";
 import { ILoginForm, loginUser } from "../../reducers/auth";
 import Link from "@mui/material/Link";
-import googleIcon from "../../assets/images/google.svg";
-import githubIcon from "../../assets/images/github.svg";
-import gitlabIcon from "../../assets/images/gitlab.svg";
 import { useNavigate } from "react-router-dom";
 import posthog from "posthog-js";
 import laudspeakerLogo from "../../assets/images/laudspeaker.svg";
 
-const Home = () => {
+const Login = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
@@ -20,10 +14,6 @@ const Home = () => {
     email: "",
     password: "",
   });
-
-  const handleGitlabLogin = (_: any) => {
-    return _;
-  };
 
   const handleLoginFormChange = (e: any) => {
     setLoginForm({
@@ -43,28 +33,13 @@ const Home = () => {
         },
       });
 
-      navigate("/dashboard");
+      navigate("/");
     }
-  };
-  const responseGoogle = (_: any) => {
-    return _;
-  };
-
-  const responseGithub = (_: any) => {
-    return _;
   };
 
   return (
     <>
-      {/*
-        This example requires updating your template:
-
-        ```
-        <html class="h-full bg-gray-50">
-        <body class="h-full">
-        ```
-      */}
-      <div className="flex min-h-full flex-col justify-center py-12 sm:px-6 lg:px-8">
+      <div className="flex min-h-full flex-col justify-center py-12 sm:px-6 lg:px-8 bg-gray-50">
         <div className="sm:mx-auto sm:w-full sm:max-w-md">
           <img
             className="mx-auto h-12 w-auto"
@@ -95,7 +70,7 @@ const Home = () => {
                     onChange={handleLoginFormChange}
                     value={loginForm.email}
                     required
-                    className="block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 placeholder-gray-400 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-emerald-500 sm:text-sm"
+                    className="block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 placeholder-gray-400 shadow-sm focus:border-cyan-500 focus:outline-none focus:ring-cyan-500 sm:text-sm"
                   />
                 </div>
               </div>
@@ -116,14 +91,14 @@ const Home = () => {
                     onChange={handleLoginFormChange}
                     value={loginForm.password}
                     required
-                    className="block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 placeholder-gray-400 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-emerald-500 sm:text-sm"
+                    className="block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 placeholder-gray-400 shadow-sm focus:border-cyan-500 focus:outline-none focus:ring-cyan-500 sm:text-sm"
                   />
                 </div>
               </div>
               <div>
                 <button
                   type="submit"
-                  className="flex w-full justify-center rounded-md border border-transparent bg-emerald-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+                  className="flex w-full justify-center rounded-md border border-transparent bg-cyan-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2"
                   onClick={handleSubmit}
                 >
                   Sign in
@@ -221,4 +196,4 @@ const Home = () => {
   );
 };
 
-export default Home;
+export default Login;

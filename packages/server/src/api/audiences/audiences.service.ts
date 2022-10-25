@@ -40,7 +40,7 @@ export class AudiencesService {
     @InjectRepository(Workflow)
     private workflowRepository: Repository<Workflow>,
     @Inject(TemplatesService) private templatesService: TemplatesService
-  ) { }
+  ) {}
 
   /**
    * Find all audiences that belong to a given account. If
@@ -246,7 +246,9 @@ export class AudiencesService {
             templates: templates,
           }
         );
-        this.logger.debug('Added template ' + template.id + ' to audience ' + audience.id);
+        this.logger.debug(
+          'Added template ' + template.id + ' to audience ' + audience.id
+        );
       } catch (err: unknown) {
         this.logger.error('Error: ' + err);
         return Promise.reject(<Error>err);
@@ -359,7 +361,9 @@ export class AudiencesService {
     }
     if (fromAud && !fromAud.isEditable && index > -1) {
       try {
-        this.logger.debug('From customers before: ' + fromAud?.customers?.length);
+        this.logger.debug(
+          'From customers before: ' + fromAud?.customers?.length
+        );
         fromAud?.customers?.splice(index, 1);
         await this.audiencesRepository.update(
           { id: fromAud.id, isEditable: false },
@@ -367,7 +371,9 @@ export class AudiencesService {
             customers: fromAud?.customers,
           }
         );
-        this.logger.debug('From customers after: ' + fromAud?.customers?.length);
+        this.logger.debug(
+          'From customers after: ' + fromAud?.customers?.length
+        );
       } catch (err) {
         this.logger.error('Error: ' + err);
         return Promise.reject(err);
@@ -446,6 +452,6 @@ export class AudiencesService {
         return Promise.reject(err);
       }
     }
-    return Promise.resolve(jobIds)
+    return Promise.resolve(jobIds);
   }
 }

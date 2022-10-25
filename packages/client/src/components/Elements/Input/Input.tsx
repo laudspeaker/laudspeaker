@@ -3,7 +3,7 @@ import React, { KeyboardEvent } from "react";
 export interface InputProps {
   id?: string;
   name: string;
-  value: any;
+  value?: any;
   autoComplete?: string;
   autoFocus?: boolean;
   customClasses?: object;
@@ -17,7 +17,7 @@ export interface InputProps {
   isRequired?: boolean;
   style?: object;
   type?: string;
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onKeyDown?: (e: KeyboardEvent<HTMLInputElement>) => void;
   inputProps?: object;
   className?: string;
@@ -53,70 +53,31 @@ const Input = (props: InputProps) => {
   } = props;
   return (
     <>
-      <div>
+      <div className="col-span-6">
         <label
           htmlFor={name}
           className="block text-sm font-medium text-gray-700"
         >
           {label}
         </label>
-        <div className="mt-1">
-          <input
-            required={isRequired}
-            type={type}
-            name={name}
-            id={id}
-            ref={inputRef}
-            value={value}
-            onChange={onChange}
-            onKeyDown={onKeyDown}
-            onBlur={onBlur}
-            disabled={disabled}
-            className={`block w-full min-h-[30px] p-[5px] rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 sm:text-sm ${
-              className ? className : ""
-            }`}
-            placeholder={placeholder}
-            style={style}
-          />
-        </div>
+        <input
+          required={isRequired}
+          type={type || "text"}
+          name={name}
+          id={id}
+          ref={inputRef}
+          value={value}
+          onChange={onChange}
+          onKeyDown={onKeyDown}
+          onBlur={onBlur}
+          disabled={disabled}
+          className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:!border-cyan-500 focus:!ring-cyan-500 sm:text-sm ${
+            className ? className : ""
+          }`}
+          placeholder={placeholder}
+          style={style}
+        />
       </div>
-      {/* {label && (
-        <InputLabel className={labelClass} shrink={labelShrink} htmlFor={id}>
-          {label}
-        </InputLabel>
-      )}
-      <MuiInput
-        autoComplete={autoComplete}
-        autoFocus={autoFocus}
-        classes={customClasses}
-        color={color}
-        disabled={disabled}
-        error={isError}
-        fullWidth={fullWidth}
-        id={id}
-        inputRef={inputRef}
-        name={name}
-        placeholder={placeholder}
-        className={className}
-        required={isRequired}
-        // variant={variant}
-        size={size}
-        type={type}
-        sx={sx}
-        onChange={onChange}
-        onKeyDown={onKeyDown}
-        multiline={multiline}
-        minRows={minRows}
-        inputProps={inputProps}
-        value={value}
-        endAdornment={endAdornment}
-        onBlur={onBlur}
-      />
-      {helperText && (
-        <FormHelperText error={isError} required={isRequired}>
-          {helperText}
-        </FormHelperText>
-      )} */}
     </>
   );
 };
