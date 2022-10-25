@@ -618,9 +618,11 @@ export class SlackService {
         }
         i = i + 1;
       }
-    } catch (err) {
-      this.logger.error('Error adding slack member: ' + err);
     }
+    catch (err) {
+      this.logger.error("Error adding slack memer: " + err)
+    }
+
   }
 
   async syncChannels(channels: any, body: any) {
