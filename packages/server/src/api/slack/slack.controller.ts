@@ -54,6 +54,7 @@ export class SlackController {
 
   @Post('events')
   handleEvents(@Body() body: any, @Res() res: Response) {
+    this.logger.debug("Hiting slack events endpoint with body" + body)
     this.slackService.handleEvent(res, body);
   }
 }

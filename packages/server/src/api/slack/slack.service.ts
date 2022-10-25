@@ -624,6 +624,7 @@ export class SlackService {
   }
 
   async syncChannels(channels: any, body: any) {
+    this.logger.debug("inside sync channels")
     let tok = null;
     let teamOrEnterpriseId = null;
     let install_id = null;
