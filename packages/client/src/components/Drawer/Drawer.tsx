@@ -57,6 +57,7 @@ export default function ResponsiveDrawer() {
                             : "bg-cyan-700 text-cyan-100 hover:bg-cyan-600 hover:text-white",
                           "group w-full flex items-center px-2 py-2 text-sm font-medium rounded-md"
                         )}
+                        aria-hidden="true"
                       >
                         <div
                           className={classNames(
