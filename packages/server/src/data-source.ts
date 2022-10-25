@@ -1,24 +1,20 @@
 import 'reflect-metadata';
+import * as dotenv from 'dotenv';
 import { DataSource } from 'typeorm';
-import { Account } from './api/accounts/entities/accounts.entity';
-import { Audience } from './api/audiences/entities/audience.entity';
-import { Stats } from './api/audiences/entities/stats.entity';
-import { Installation } from './api/slack/entities/installation.entity';
-import { State } from './api/slack/entities/state.entity';
-import { Template } from './api/templates/entities/template.entity';
-import { Workflow } from './api/workflows/entities/workflow.entity';
-import { Migration1666691267551 } from './migrations/1666691267551-Migration';
+dotenv.config();
 
 export const AppDataSource = new DataSource({
   type: 'postgres',
-  host: 'localhost',
-  port: 5432,
-  username: 'postgres',
-  password: 'postgres',
-  database: 'laudspeaker',
+  host: process.env.DATABASE_HOST || 'localhost',
+  port: +process.env.DATABASE_PORT || 5432,
+  username: process.env.DATABASE_USER || 'postgres',
+  password: process.env.DATABASE_PASSWORD || 'postgres',
+  database: process.env.DATABASE_NAME || 'laudspeaker',
   synchronize: false,
   logging: false,
-  entities: [Account, Audience, Installation, State, Stats, Template, Workflow],
-  migrations: [Migration1666691267551],
+  entities: ['dist/**/*.entity{.ts,.js}'],
+  migrations: ['dist/migrations/*{.ts,.js}'],
+  migrationsTableName: 'typeorm_migrations',
   subscribers: [],
 });
+
