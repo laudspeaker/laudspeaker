@@ -41,7 +41,8 @@ Questions? Please join our [Slack channel](https://laudspeakerusers.slack.com/ss
 
 ### Video Walkthrough
 
-Check out how to set up and trigger an email in our [video](https://vimeo.com/763728112)
+Check out how to set up and trigger an email with posthog in our [video](https://vimeo.com/763728112)
+Check out how to trigger a slack message with a custom event in this [video](https://www.loom.com/share/8e1d349ceed24d2bb50280db36b19214)
 
 ### Key Features
 
