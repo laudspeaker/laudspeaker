@@ -39,6 +39,10 @@ Make sure you fill in the fields in the env files before trying to run laudspeak
 
 Questions? Please join our [Slack channel](https://laudspeakerusers.slack.com/ssb/redirect) or visit our [site](https://laudspeaker.com/).
 
+### Video Walkthrough
+
+Check out how to set up and trigger an email in our [video](https://vimeo.com/763728112)
+
 ### Key Features
 
 Description coming soon!
