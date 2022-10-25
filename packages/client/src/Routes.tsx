@@ -33,7 +33,6 @@ import Cor from "pages/Cor";
 import FlowTable from "pages/FlowTable/FlowTable";
 import TemplateTable from "pages/TemplateTable/TemplateTable";
 import PeopleTable from "pages/PeopleTable/PeopleTable";
-import Journeys from "pages/Journeys";
 import Profile from "pages/Profile";
 import FlowViewer from "pages/FlowViewer";
 import NetworkCofiguration from "pages/Settings/NetworkConfiguration";
@@ -45,6 +44,17 @@ import EventsProvider from "pages/Settings/EventsProvider";
 import DrawerLayout from "components/DrawerLayout";
 import Integrations from "pages/Settings/Integrations";
 import MailgunConfigurationTwo from "pages/Settings/MailgunConfigurationTwo";
+import SettingsGeneralBeta from "pages/Settings/SettingsGeneralBeta";
+import SettingsAPIBeta from "pages/Settings/SettingsAPIBeta";
+import SettingsEmailBeta from "pages/Settings/SettingsEmailBeta";
+import SettingsSMSBeta from "pages/Settings/SettingsSMSBeta";
+import SettingsSlackBeta from "pages/Settings/SettingsSlackBeta";
+import SettingsEventsBeta from "pages/Settings/SettingsEventsBeta";
+import SettingsPlanBeta from "pages/Settings/SettingsPlanBeta";
+import SettingsBillingBeta from "pages/Settings/SettingsBillingBeta";
+import SettingsTeamBeta from "pages/Settings/SettingsTeamBeta";
+import TableBeta from "pages/TemplateTable/TableBeta";
+import OnboardingBeta from "pages/Onboarding/OnboardingBeta";
 
 interface IProtected {
   children: ReactElement;
@@ -133,11 +143,9 @@ const RouteComponent: React.FC = () => {
           path="/"
           element={
             <Protected>
-              <Onboarded>
-                <DrawerLayout>
-                  <FlowTable />
-                </DrawerLayout>
-              </Onboarded>
+              <DrawerLayout>
+                <FlowTable />
+              </DrawerLayout>
             </Protected>
           }
         />
@@ -145,11 +153,9 @@ const RouteComponent: React.FC = () => {
           path="/flow"
           element={
             <Protected>
-              <Onboarded>
-                <DrawerLayout>
-                  <FlowTable />
-                </DrawerLayout>
-              </Onboarded>
+              <DrawerLayout>
+                <FlowTable />
+              </DrawerLayout>
             </Protected>
           }
         />
@@ -157,11 +163,9 @@ const RouteComponent: React.FC = () => {
           path="/flow/:name"
           element={
             <Protected>
-              <Onboarded>
-                <DrawerLayout>
-                  <FlowBuilder />
-                </DrawerLayout>
-              </Onboarded>
+              <DrawerLayout>
+                <FlowBuilder />
+              </DrawerLayout>
             </Protected>
           }
         />
@@ -169,11 +173,9 @@ const RouteComponent: React.FC = () => {
           path="/flow/:name/view"
           element={
             <Protected>
-              <Onboarded>
-                <DrawerLayout>
-                  <FlowViewer />
-                </DrawerLayout>
-              </Onboarded>
+              <DrawerLayout>
+                <FlowViewer />
+              </DrawerLayout>
             </Protected>
           }
         />
@@ -181,11 +183,9 @@ const RouteComponent: React.FC = () => {
           path="/people"
           element={
             <Protected>
-              <Onboarded>
-                <DrawerLayout>
-                  <PeopleTable />
-                </DrawerLayout>
-              </Onboarded>
+              <DrawerLayout>
+                <PeopleTable />
+              </DrawerLayout>
             </Protected>
           }
         />
@@ -196,138 +196,6 @@ const RouteComponent: React.FC = () => {
               <DrawerLayout>
                 <EmailConfig />
               </DrawerLayout>
-            </Protected>
-          }
-        />
-        <Route
-          path="/settings/posthog-configuration"
-          element={
-            <Protected>
-              <DrawerLayout>
-                <PosthogConfiguration />
-              </DrawerLayout>
-            </Protected>
-          }
-        />
-        <Route
-          path="/settings/posthog-configuration-two"
-          element={
-            <Protected>
-              <DrawerLayout>
-                <PosthogConfigurationTwo />
-              </DrawerLayout>
-            </Protected>
-          }
-        />
-        <Route
-          path="/settings/posthog-configuration-three"
-          element={
-            <Protected>
-              <DrawerLayout>
-                <PosthogConfigurationThree />
-              </DrawerLayout>
-            </Protected>
-          }
-        />
-        <Route
-          path="/settings/profile"
-          element={
-            <Protected>
-              <Onboarded>
-                <DrawerLayout>
-                  <Profile />
-                </DrawerLayout>
-              </Onboarded>
-            </Protected>
-          }
-        />
-        <Route
-          path="/settings/channel"
-          element={
-            <Protected>
-              <DrawerLayout>
-                <Channel />
-              </DrawerLayout>
-            </Protected>
-          }
-        />
-        <Route
-          path="/settings/events-provider"
-          element={
-            <Protected>
-              <DrawerLayout>
-                <EventsProvider />
-              </DrawerLayout>
-            </Protected>
-          }
-        />
-        <Route
-          path="/settings/email-provider"
-          element={
-            <Protected>
-              <DrawerLayout>
-                <EmailProvider />
-              </DrawerLayout>
-            </Protected>
-          }
-        />
-        <Route
-          path="/settings/mailgun-configuration"
-          element={
-            <Protected>
-              <DrawerLayout>
-                <MailgunConfiguration />
-              </DrawerLayout>
-            </Protected>
-          }
-        />
-        <Route
-          path="/settings/slack-configuration"
-          element={
-            <Protected>
-              <DrawerLayout>
-                <SlackConfiguration />
-              </DrawerLayout>
-            </Protected>
-          }
-        />
-        <Route
-          path="/settings/network-configuration"
-          element={
-            <Protected>
-              <NetworkCofiguration />
-            </Protected>
-          }
-        />
-        <Route
-          path="/settings/mailgun-configuration-two"
-          element={
-            <Protected>
-              <DrawerLayout>
-                <MailgunConfigurationTwo />
-              </DrawerLayout>
-            </Protected>
-          }
-        />
-        <Route
-          path="/settings/completion"
-          element={
-            <Protected>
-              <DrawerLayout>
-                <Completion />
-              </DrawerLayout>
-            </Protected>
-          }
-        />
-        <Route
-          path="/settings/integrations"
-          element={
-            <Protected>
-              <Onboarded>
-                <DrawerLayout>
-                  <Integrations />
-                </DrawerLayout>
-              </Onboarded>
             </Protected>
           }
         />
@@ -343,11 +211,9 @@ const RouteComponent: React.FC = () => {
           path="/email-builder"
           element={
             <Protected>
-              <Onboarded>
-                <DrawerLayout>
-                  <EmailBuilder />
-                </DrawerLayout>
-              </Onboarded>
+              <DrawerLayout>
+                <EmailBuilder />
+              </DrawerLayout>
             </Protected>
           }
         />
@@ -355,11 +221,9 @@ const RouteComponent: React.FC = () => {
           path="/slack-builder"
           element={
             <Protected>
-              <Onboarded>
-                <DrawerLayout>
-                  <SlackBuilder />
-                </DrawerLayout>
-              </Onboarded>
+              <DrawerLayout>
+                <SlackBuilder />
+              </DrawerLayout>
             </Protected>
           }
         />
@@ -367,11 +231,9 @@ const RouteComponent: React.FC = () => {
           path="/templates/email/:name"
           element={
             <Protected>
-              <Onboarded>
-                <DrawerLayout>
-                  <EmailBuilder />
-                </DrawerLayout>
-              </Onboarded>
+              <DrawerLayout>
+                <EmailBuilder />
+              </DrawerLayout>
             </Protected>
           }
         />
@@ -379,11 +241,9 @@ const RouteComponent: React.FC = () => {
           path="/templates/slack/:name"
           element={
             <Protected>
-              <Onboarded>
-                <DrawerLayout>
-                  <SlackBuilder />
-                </DrawerLayout>
-              </Onboarded>
+              <DrawerLayout>
+                <SlackBuilder />
+              </DrawerLayout>
             </Protected>
           }
         />
@@ -391,11 +251,119 @@ const RouteComponent: React.FC = () => {
           path="/templates"
           element={
             <Protected>
-              <Onboarded>
-                <DrawerLayout>
-                  <TemplateTable />
-                </DrawerLayout>
-              </Onboarded>
+              <DrawerLayout>
+                <TemplateTable />
+              </DrawerLayout>
+            </Protected>
+          }
+        />
+        <Route
+          path="/settings"
+          element={
+            <Protected>
+              <DrawerLayout>
+                <SettingsGeneralBeta />
+              </DrawerLayout>
+            </Protected>
+          }
+        />
+        <Route
+          path="/settings/api"
+          element={
+            <Protected>
+              <DrawerLayout>
+                <SettingsAPIBeta />
+              </DrawerLayout>
+            </Protected>
+          }
+        />
+        <Route
+          path="/settings/email"
+          element={
+            <Protected>
+              <DrawerLayout>
+                <SettingsEmailBeta />
+              </DrawerLayout>
+            </Protected>
+          }
+        />
+        <Route
+          path="/settings/slack"
+          element={
+            <Protected>
+              <DrawerLayout>
+                <SettingsSlackBeta />
+              </DrawerLayout>
+            </Protected>
+          }
+        />
+        <Route
+          path="/settings/events"
+          element={
+            <Protected>
+              <DrawerLayout>
+                <SettingsEventsBeta />
+              </DrawerLayout>
+            </Protected>
+          }
+        />
+        <Route
+          path="/settings/sms"
+          element={
+            <Protected>
+              <DrawerLayout>
+                <SettingsSMSBeta />
+              </DrawerLayout>
+            </Protected>
+          }
+        />
+        <Route
+          path="/settings/plan"
+          element={
+            <Protected>
+              <DrawerLayout>
+                <SettingsPlanBeta />
+              </DrawerLayout>
+            </Protected>
+          }
+        />
+        <Route
+          path="/settings/billing"
+          element={
+            <Protected>
+              <DrawerLayout>
+                <SettingsBillingBeta />
+              </DrawerLayout>
+            </Protected>
+          }
+        />
+        <Route
+          path="/settings/team"
+          element={
+            <Protected>
+              <DrawerLayout>
+                <SettingsTeamBeta />
+              </DrawerLayout>
+            </Protected>
+          }
+        />
+        <Route
+          path="/beta/table"
+          element={
+            <Protected>
+              <DrawerLayout>
+                <TableBeta />
+              </DrawerLayout>
+            </Protected>
+          }
+        />
+        <Route
+          path="/home"
+          element={
+            <Protected>
+              <DrawerLayout>
+                <OnboardingBeta />
+              </DrawerLayout>
             </Protected>
           }
         />
@@ -423,11 +391,9 @@ const RouteComponent: React.FC = () => {
           path="*"
           element={
             <Protected>
-              <Onboarded>
-                <DrawerLayout>
-                  <FlowTable />
-                </DrawerLayout>
-              </Onboarded>
+              <DrawerLayout>
+                <FlowTable />
+              </DrawerLayout>
             </Protected>
           }
         />

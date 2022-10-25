@@ -9,33 +9,34 @@ import { setSettingData } from "reducers/settings";
 import { useTypedSelector } from "hooks/useTypeSelector";
 import Chip from "components/Elements/Chip";
 
+export const allEmailChannels: any = [
+  {
+    id: "sendgrid",
+    title: "Sendgrid",
+    subTitle: "for any campaign or newsletter",
+    disabled: true,
+  },
+  {
+    id: "mailgun",
+    title: "Mailgun",
+    subTitle: "Campaign: Onboarding Campaign",
+    disabled: false,
+  },
+  {
+    id: "mailchimp",
+    title: "Mailchimp",
+    subTitle: "Campaign: Transactional Receipt",
+    disabled: true,
+  },
+  {
+    id: "smtp",
+    title: "SMTP",
+    subTitle: "Setup your own email server",
+    disabled: true,
+  },
+];
+
 function EmailProvider() {
-  const allChannels: any = [
-    {
-      id: "sendgrid",
-      title: "Sendgrid",
-      subTitle: "for any campaign or newsletter",
-      disabled: true,
-    },
-    {
-      id: "mailgun",
-      title: "Mailgun",
-      subTitle: "Campaign: Onboarding Campaign",
-      disabled: false,
-    },
-    {
-      id: "mailchimp",
-      title: "Mailchimp",
-      subTitle: "Campaign: Transactional Receipt",
-      disabled: true,
-    },
-    {
-      id: "smtp",
-      title: "SMTP",
-      subTitle: "Setup your own email server",
-      disabled: true,
-    },
-  ];
   const dispatch = useDispatch();
   const { settings } = useTypedSelector((state) => state.settings);
   const [eventProvider, setEventProvider] = useState<any>(
@@ -64,7 +65,7 @@ function EmailProvider() {
               <Select
                 id="activeJourney"
                 value={eventProvider}
-                options={allChannels.map((item: any) => ({
+                options={allEmailChannels.map((item: any) => ({
                   title: item.title,
                   subtitle: item.subTitle,
                   value: item.id,

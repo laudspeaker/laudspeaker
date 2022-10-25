@@ -2,7 +2,7 @@ import * as React from "react";
 import { dataSubArray } from "./SideDrawer.fixtures";
 import { useLocation } from "react-router-dom";
 import { useParams } from "react-router-dom";
-import { useTypedSelector } from "hooks/useTypeSelector";
+import ApiService from "services/api.service";
 
 interface Props {
   /**
@@ -18,14 +18,37 @@ export default function ResponsiveDrawer(props: Props) {
   const { selectedNode, onClick } = props;
   const location = useLocation();
   const { name } = useParams();
+  const [expectedOnboarding, setExpectedOnboarding] = React.useState<string[]>(
+    []
+  );
+
+  React.useLayoutEffect(() => {
+    (async () => {
+      const { data } = await ApiService.get({ url: "/accounts" });
+      const { slackTeamId } = data;
+      if (slackTeamId)
+        setExpectedOnboarding((expectedOnboardingArr) => [
+          "Slack",
+          ...expectedOnboardingArr,
+        ]);
+    })();
+  }, []);
+
+  React.useLayoutEffect(() => {
+    (async () => {
+      const { data } = await ApiService.get({ url: "/accounts" });
+      const { sendingDomain } = data;
+      if (sendingDomain)
+        setExpectedOnboarding((expectedOnboardingArr) => [
+          "Email",
+          ...expectedOnboardingArr,
+        ]);
+    })();
+  }, []);
 
   const handleMenuItemClick = (id: string) => {
     onClick(id);
   };
-
-  const expectedOnboarding = useTypedSelector(
-    (state) => state.auth.userData.expectedOnboarding
-  );
 
   const generateMenuItem = (item: any) => {
     const isDisabled =

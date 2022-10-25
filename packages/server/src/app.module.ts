@@ -29,19 +29,26 @@ const papertrail = new winston.transports.Http({
   ssl: true,
 });
 
-const myFormat = winston.format.printf(function ({ level, message, timestamp, ...metadata }) {
+const myFormat = winston.format.printf(function ({
+  level,
+  message,
+  timestamp,
+  ...metadata
+}) {
   let filename;
   const oldStackTrace = Error.prepareStackTrace;
 
-  const boilerplateLines = line => line &&
+  const boilerplateLines = (line) =>
+    line &&
     line.getFileName() &&
     // in the following line you may want to "play" with adding a '/' as a prefix/postfix to your module name
-    (line.getFileName().indexOf('<The Name of This Module>') &&
-      (line.getFileName().indexOf('/node_modules/') < 0));
+    line.getFileName().indexOf('<The Name of This Module>') &&
+    line.getFileName().indexOf('/node_modules/') < 0;
 
   try {
     // eslint-disable-next-line handle-callback-err
-    Error.prepareStackTrace = (err, structuredStackTrace) => structuredStackTrace;
+    Error.prepareStackTrace = (err, structuredStackTrace) =>
+      structuredStackTrace;
     Error.captureStackTrace(this);
     // we need to "peel" the first CallSites (frames) in order to get to the caller we're looking for
     // in our case we're removing frames that come from logger module or from winston
@@ -55,15 +62,19 @@ const myFormat = winston.format.printf(function ({ level, message, timestamp, ..
       const callSite = callSites[i];
       let fileName = callSite.getFileName();
       // BASE_DIR_NAME is the path to the project root folder
-      fileName = fileName.includes(resolve('.')) ? fileName.substring(resolve('.').length + 1) : fileName;
+      fileName = fileName.includes(resolve('.'))
+        ? fileName.substring(resolve('.').length + 1)
+        : fileName;
       results.push(fileName + ':' + callSite.getLineNumber());
     }
     filename = results.join('\n');
-    return `[${level}] [${filename}] [${timestamp}] ${message} ${JSON.stringify(metadata)}`;
+    return `[${level}] [${filename}] [${timestamp}] ${message} ${JSON.stringify(
+      metadata
+    )}`;
   } finally {
     Error.prepareStackTrace = oldStackTrace;
   }
-})
+});
 
 @Module({
   imports: [
@@ -84,7 +95,7 @@ const myFormat = winston.format.printf(function ({ level, message, timestamp, ..
             format: winston.format.combine(
               winston.format.colorize(),
               winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
-              myFormat,
+              myFormat
             ),
           }),
         ],

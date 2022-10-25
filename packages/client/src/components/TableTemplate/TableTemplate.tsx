@@ -469,7 +469,8 @@ export default function TableTemplate({
   };
 
   return (
-    <div className="mt-8 flex flex-col">
+    <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+      {/*<div className="mt-8 flex flex-col">*/}
       <div className="relative mr-[50px] mb-[15px] mt-[10px] flex items-center justify-end">
         <div className="flex justify-center items-center gap-[10px]">
           Items per page:
@@ -527,7 +528,7 @@ export default function TableTemplate({
           <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
             <table className="min-w-full divide-y divide-gray-300">
               <thead className="bg-gray-50">
-                <tr>
+                <tr className="bg-gray-50 px-6 py-3 text-right text-sm font-semibold text-gray-900">
                   {renderCorrectColumnNames(data, sortOptions, setSortOptions)}
                 </tr>
               </thead>
