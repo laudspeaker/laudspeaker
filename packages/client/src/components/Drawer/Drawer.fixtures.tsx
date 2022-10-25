@@ -4,7 +4,6 @@ import {
   Campaigns,
   Segments,
   Users,
-  Integrations,
   Settings,
   Messaging,
   People,
