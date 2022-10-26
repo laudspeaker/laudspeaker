@@ -10,7 +10,7 @@ describe("signin", () => {
     cy.url().should("include", "/login");
     cy.get("#email").type(email);
     cy.get("#password").type(password);
-    cy.get(".css-0 > .MuiGrid-root > .MuiButton-root").click();
-    cy.url().should("include", "/dashboard");
+    cy.get("#loginIntoAccount").click();
+    cy.contains("Active Journeys").should("exist");
   });
 });

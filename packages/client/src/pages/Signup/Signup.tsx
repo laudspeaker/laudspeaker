@@ -3,13 +3,13 @@ import React, { useState } from "react";
 import { useDispatch } from "react-redux";
 import { GenericButton, Input } from "../../components/Elements";
 import { signUpUser, ISignUpForm } from "../../reducers/auth";
-import Link from "@mui/material/Link";
 import googleIcon from "../../assets/images/google.svg";
 import githubIcon from "../../assets/images/github.svg";
 import gitlabIcon from "../../assets/images/gitlab.svg";
 import { useNavigate } from "react-router-dom";
 import posthog from "posthog-js";
 import laudspeakerLogo from "../../assets/images/laudspeaker.svg";
+import Link from "components/Link/Link";
 
 const Signup = () => {
   const dispatch = useDispatch();
@@ -168,6 +168,7 @@ const Signup = () => {
 
             <div>
               <button
+                id="createAccount"
                 type="submit"
                 onClick={handleSubmit}
                 className="flex w-full justify-center rounded-md border border-transparent bg-cyan-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2"
@@ -180,10 +181,8 @@ const Signup = () => {
           <p className="mt-[24px] mb-[34px] text-center">
             Already have an account?
             <Link
-              href="/"
-              underline="none"
-              color="#4FA198"
-              sx={{ margin: "0 10px" }}
+              href="/login"
+              className="no-underline text-[#4FA198] m-[0_10px]"
             >
               Log in
             </Link>

@@ -86,7 +86,10 @@ const MergeTagInput = ({
         {items.length > 0 ? (
           items
         ) : (
-          <div className="h-[1.4375em] text-[20px] text-[#a3a4a5] pb-[2px]">
+          <div
+            data-custominput-placeholder={placeholder}
+            className="h-[1.4375em] text-[20px] text-[#a3a4a5] pb-[2px]"
+          >
             {placeholder}
           </div>
         )}

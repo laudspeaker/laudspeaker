@@ -4,46 +4,48 @@ const { email, password } = credentials;
 
 describe("templates", () => {
   it("passes", () => {
+    cy.viewport(1280, 1024);
     cy.visit("/");
     cy.clearCookies();
     cy.clearCookies();
     cy.url().should("include", "/login");
     cy.get("#email").type(email);
     cy.get("#password").type(password);
-    cy.get(".css-0 > .MuiGrid-root > .MuiButton-root").click();
-    cy.url().should("include", "/dashboard");
+    cy.get("#loginIntoAccount").click();
+    cy.contains("Active Journeys").should("exist");
     cy.reload();
 
-    cy.get(
-      '[href="/all-templates"] > .MuiListItem-root > .MuiListItemButton-root'
-    ).click();
-    cy.url().should("include", "/all-templates");
-    cy.get(".MuiButton-root").click();
-    cy.get("#name").type("With email");
-    cy.get("#handleDay").click();
-    cy.get('#menu- > .MuiPaper-root > .MuiList-root > [tabindex="0"]').click();
-    cy.get(".MuiPaper-root > .MuiBox-root > .MuiButton-root").click();
-    cy.get("#title").type("with email");
-    cy.get(":nth-child(2) > .MuiButton-root").click();
+    cy.get('[aria-expanded="false"]')
+      .find('[data-disclosure="Messaging"]')
+      .click();
 
-    cy.get(
-      '[href="/all-templates"] > .MuiListItem-root > .MuiListItemButton-root'
-    ).click();
-    cy.wait(100);
-    cy.url().should("include", "/all-templates");
-    cy.get(".MuiButton-root").click();
+    // create slack template
+    cy.get('[data-disclosure-link="Template Builder"]').click();
+    cy.url().should("include", "/templates");
+    cy.get("#createTemplate").click();
     cy.get("#name").type("With slack");
     cy.get("#handleDay").click();
-    cy.get('[data-value="slack"]').click();
-    cy.get(".MuiPaper-root > .MuiBox-root > .MuiButton-root").click();
-    cy.get("#slackMessage").type("Slack message");
-    cy.get(":nth-child(2) > .MuiButton-root").click();
+    cy.get("#handleDay").find('[data-option="slack"]').click();
+    cy.get("#submitTemplateCreation").click();
+    cy.url().should("include", "templates/slack/With%20slack");
+    cy.get('[data-custominput-placeholder="Slack Message"]').click();
+    cy.get("#slackMessage").type("Slack message, tag {{}{{} newTag }}");
+    cy.get("#saveDraftTemplate").click();
+    cy.get("#turnBackFromTemplate").click();
+    cy.url().should("include", "/templates");
+    cy.get('[href="templates/slack/With slack"]').should("exist");
 
-    cy.get(
-      '[href="/all-templates"] > .MuiListItem-root > .MuiListItemButton-root'
-    ).click();
-    cy.url().should("include", "/all-templates");
-    cy.contains("With email");
-    cy.contains("With slack");
+    // create email template
+    cy.get("#createTemplate").click();
+    cy.get("#name").type("With email");
+    cy.get("#handleDay").click();
+    cy.get("#handleDay").find('[data-option="email"]').click();
+    cy.get("#submitTemplateCreation").click();
+    cy.get('[data-custominput-placeholder="Subject"]').click();
+    cy.get("#title").type("Subject of email {{}{{} newTag }}");
+    cy.get("#saveDraftTemplate").click();
+    cy.get("#turnBackFromTemplate").click();
+    cy.url().should("include", "/templates");
+    cy.get('[href="templates/email/With email"]').should("exist");
   });
 });

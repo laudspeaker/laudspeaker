@@ -75,7 +75,7 @@ const Select = (props: SelectProps) => {
   } = props;
   return (
     <>
-      <div className="relative">
+      <div id={id} className="relative">
         <Listbox
           defaultValue={defaultValue}
           disabled={disabled}
@@ -119,6 +119,7 @@ const Select = (props: SelectProps) => {
                     }`
                   }
                   disabled={option.disabled || false}
+                  data-option={option.value}
                 >
                   <div className="flex justify-between">
                     <div>

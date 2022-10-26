@@ -90,6 +90,7 @@ const TemplateTable = () => {
             </h3>
             <div className="mt-6 flex space-x-3 md:mt-0 md:ml-4">
               <button
+                id="createTemplate"
                 type="button"
                 className="inline-flex items-center rounded-md border border-transparent bg-cyan-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-cyan-500 focus:outline-none focus:ring-2 focus:ring-offset-2 rounded-md bg-white font-medium focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2"
                 onClick={redirectUses}

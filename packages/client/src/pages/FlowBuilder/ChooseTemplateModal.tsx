@@ -49,6 +49,7 @@ const ChooseTemplateModal = ({
       return (
         <>
           <GenericButton
+            id="exportSelectedTemplate"
             onClick={(_) => {
               console.log(_);
               handleTemplateModalOpen({ activeTemplate, selectedMessageType });

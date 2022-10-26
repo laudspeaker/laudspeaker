@@ -45,6 +45,7 @@ const EmailHeader = (props: IEmailHeaderProps) => {
       <div className="px-[40px] justify-between flex h-[80px]">
         <h6 className="font-[Poppins] not-italic font-medium text-[14px] leading-[30px] flex items-center">
           <div
+            id="turnBackFromTemplate"
             className="min-w-[16px] pr-[16px] cursor-pointer"
             onClick={() => window.history.back()}
           >
@@ -82,6 +83,7 @@ const EmailHeader = (props: IEmailHeaderProps) => {
         </h6>
         <div className="flex items-center justify-between max-w-[500px]">
           <GenericButton
+            id="saveDraftTemplate"
             customClasses="!ml-[10px]"
             onClick={onSave}
             style={{
