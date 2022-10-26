@@ -37,7 +37,7 @@ We have provided examples which you can use:
 
 Make sure you fill in the fields in the env files before trying to run laudspeaker
 
-Questions? Please join our [Slack channel](https://laudspeakerusers.slack.com/ssb/redirect) or visit our [site](https://laudspeaker.com/).
+Questions? Please join our [Slack channel](https://join.slack.com/t/laudspeakerusers/shared_invite/zt-1io0f6u50-rSCnNtqkJT6QIdbPOyJh6g) or visit our [site](https://laudspeaker.com/).
 
 ### Video Walkthrough
 
@@ -70,7 +70,7 @@ We would love to see you contribute to Laudspeaker. Join our slack to get involv
 
 -  [Twitter][twitter]
 
-[slack]: https://laudspeakerusers.slack.com/ssb/redirect
+[slack]: https://join.slack.com/t/laudspeakerusers/shared_invite/zt-1io0f6u50-rSCnNtqkJT6QIdbPOyJh6g
 [twitter]: https://twitter.com/laudspeaker
 [mit_license]: https://opensource.org/licenses/MIT
 
