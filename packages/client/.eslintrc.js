@@ -27,6 +27,7 @@ module.exports = {
   },
   rules: {
     "linebreak-style": "off",
+    "jest/no-export": "off",
     indent: "off",
     "prettier/prettier": [
       "error",

@@ -20,7 +20,7 @@
     "noEmit": true,
     "jsx": "react-jsx",
     "baseUrl": "src",
-    "types": ["node"]
+    "types": ["node", "cypress", "@4tw/cypress-drag-drop"]
   },
   "include": [
     "src",

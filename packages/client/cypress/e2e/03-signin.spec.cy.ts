@@ -1,24 +1,7 @@
-import credentials from "../fixtures/credentials.json";
-
-const { email, password } = credentials;
+import { loginFunc } from "../test-helpers/loginFunc";
 
 describe("signin", () => {
   it("passes", () => {
     loginFunc();
   });
 });
-
-export const loginFunc = (
-  _email: string = email,
-  _password: string = password
-) => {
-  cy.viewport(1280, 1024);
-  cy.visit("/");
-  cy.clearCookies();
-  cy.clearCookies();
-  cy.url().should("include", "/login");
-  cy.get("#email").type(_email);
-  cy.get("#password").type(_password);
-  cy.get("#loginIntoAccount").click();
-  cy.contains("Active Journeys").should("exist");
-};

@@ -2,7 +2,7 @@
 /* eslint-disable jest/valid-describe-callback */
 /* eslint-disable @typescript-eslint/no-shadow */
 import credentials from "../fixtures/credentials.json";
-import { loginFunc } from "./03-signin.spec.cy";
+import { loginFunc } from "../test-helpers/loginFunc";
 
 const { email, password, slackTemplate, journeyName, userAPIkey } =
   credentials.MessageHitUser;
