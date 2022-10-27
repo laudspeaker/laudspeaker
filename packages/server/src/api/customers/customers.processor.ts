@@ -15,7 +15,7 @@ export class CustomersProcessor {
     try {
       let res = await axios({
         method: 'get',
-        url: 'http://' + job.data.url + '?limit=1000',
+        url: 'https://' + job.data.url + '?limit=1000',
         headers: {
           Authorization: job.data.auth,
         },

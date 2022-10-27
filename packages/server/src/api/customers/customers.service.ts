@@ -254,33 +254,39 @@ export class CustomersService {
     event: any,
     mapping?: (event: any) => any
   ): Promise<Correlation> {
-    let customer: CustomerDocument;
-    const queryParam = {
+    const queryParam: any = {
       ownerId: (<Account>account).id,
       [correlationKey]: correlationValue,
     };
-    customer = await this.CustomerModel.findOne(queryParam).exec();
-    if (!customer) {
-      this.logger.debug('Customer not found, creating new customer...');
+    let customer: CustomerDocument = await this.CustomerModel.findOne(
+      queryParam
+    ).exec();
+    if (customer) {
       if (mapping) {
-        const newCust = mapping(event);
-        newCust['ownerId'] = (<Account>account).id;
-        const createdCustomer = new this.CustomerModel(newCust);
-        this.logger.debug('New customer created: ' + createdCustomer.id);
-        return { cust: await createdCustomer.save(), found: false };
+        customer = await this.CustomerModel.findOneAndUpdate(
+          queryParam,
+          mapping(event)
+        ).exec();
+        this.logger.debug('Customer found and updated: ' + customer.id);
+        return { cust: customer, found: true };
       } else {
-        const createdCustomer = new this.CustomerModel({
-          ownerId: (<Account>account).id,
-          correlationKey: correlationValue,
-        });
-        this.logger.debug('New customer created: ' + createdCustomer.id);
-        return { cust: await createdCustomer.save(), found: false };
+        this.logger.debug('Customer found, no update needed: ' + customer.id);
+        return { cust: customer, found: true };
       }
-
-      //to do cant just return [0] in the future
     } else {
-      this.logger.debug('Customer found: ' + customer.id);
-      return { cust: customer, found: true };
+      if (mapping)
+        customer = await this.CustomerModel.findOneAndUpdate(
+          queryParam,
+          mapping(event),
+          { upsert: true }
+        ).exec();
+      else
+        customer = await this.CustomerModel.findOneAndUpdate(
+          queryParam,
+          undefined,
+          { upsert: true }
+        ).exec();
+      return { cust: customer, found: false };
     }
   }
 

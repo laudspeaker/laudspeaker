@@ -67,7 +67,6 @@ export class EventsController {
     @Headers('Authorization') apiKey: string,
     @Body() body: PosthogBatchEventDto
   ) {
-    this.logger.debug('Inside of the posthog events endpoint');
     let account: Account; // Account associated with the caller
     // Step 1: Find corresponding account
     try {
@@ -94,6 +93,10 @@ export class EventsController {
         numEvent++
       ) {
         const currentEvent = chronologicalEvents[numEvent];
+        this.logger.debug(
+          'Processing posthog event: ' + JSON.stringify(currentEvent, null, 2)
+        );
+
         let jobIDs: (string | number)[] = [];
         let cust: CustomerDocument, // Customer document created/found on this API call
           found: boolean; // If the customer document was previously created

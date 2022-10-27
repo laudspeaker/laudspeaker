@@ -10,18 +10,22 @@ import {
   Param,
   Inject,
   Query,
+  LoggerService,
+  HttpException,
 } from '@nestjs/common';
 import { CreateCustomerDto } from './dto/create-customer.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CustomersService } from './customers.service';
-//import { EventsService } from "../events/events.service";
 import { AccountsService } from '../accounts/accounts.service';
 import { Request } from 'express';
 import { Account } from '../accounts/entities/accounts.entity';
+import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 
 @Controller('customers')
 export class CustomersController {
   constructor(
+    @Inject(WINSTON_MODULE_NEST_PROVIDER)
+    private readonly logger: LoggerService,
     @Inject(CustomersService)
     private readonly customersService: CustomersService,
     @Inject(AccountsService)
@@ -64,15 +68,12 @@ export class CustomersController {
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
   async getPostHogPersons(@Req() { user }: Request) {
-    console.log('in import');
     let account: Account; // Account associated with the caller
     try {
       account = await this.userService.findOne(user);
-      console.log('account is');
-      console.log(account);
     } catch (e) {
-      console.log(e);
-      //return new HttpException(e, 500);
+      this.logger.error('Error:' + e);
+      return new HttpException(e, 500);
     }
 
     //to do will eventually need to make it so it does not take the top g
@@ -84,7 +85,8 @@ export class CustomersController {
         account
       );
     } catch (e) {
-      console.log(e);
+      this.logger.error('Error:' + e);
+      return new HttpException(e, 500);
     }
   }
 }
