@@ -2,6 +2,7 @@
 /* eslint-disable jest/valid-describe-callback */
 /* eslint-disable @typescript-eslint/no-shadow */
 import credentials from "../fixtures/credentials.json";
+import { loginFunc } from "./03-signin.spec.cy";
 
 const { email, password, slackTemplate, journeyName, userAPIkey } =
   credentials.MessageHitUser;
@@ -11,15 +12,7 @@ describe(
   { env: { AxiosURL: "http://localhost:3001/" } },
   () => {
     it("passes", async () => {
-      cy.viewport(1280, 1024);
-      cy.visit("/");
-      cy.clearCookies();
-      cy.clearCookies();
-      cy.url().should("include", "/login");
-      cy.get("#email").type(email);
-      cy.get("#password").type(password);
-      cy.get("#loginIntoAccount").click();
-      cy.contains("Active Journeys").should("exist");
+      loginFunc(email, password);
 
       cy.get('[aria-expanded="false"]')
         .find('[data-disclosure="Messaging"]')
@@ -33,7 +26,7 @@ describe(
       cy.get("#submitTemplateCreation").click();
       cy.url().should("include", "templates/slack");
 
-      cy.get('[data-custominput-placeholder="Slack Message"]').click();
+      cy.get('[data-custominput-placeholder="Slack Message"]').click("left");
       cy.get("#slackMessage").type(slackTemplate.message, {
         parseSpecialCharSequences: false,
       });

@@ -4,13 +4,21 @@ const { email, password } = credentials;
 
 describe("signin", () => {
   it("passes", () => {
-    cy.visit("/");
-    cy.clearCookies();
-    cy.clearCookies();
-    cy.url().should("include", "/login");
-    cy.get("#email").type(email);
-    cy.get("#password").type(password);
-    cy.get("#loginIntoAccount").click();
-    cy.contains("Active Journeys").should("exist");
+    loginFunc();
   });
 });
+
+export const loginFunc = (
+  _email: string = email,
+  _password: string = password
+) => {
+  cy.viewport(1280, 1024);
+  cy.visit("/");
+  cy.clearCookies();
+  cy.clearCookies();
+  cy.url().should("include", "/login");
+  cy.get("#email").type(_email);
+  cy.get("#password").type(_password);
+  cy.get("#loginIntoAccount").click();
+  cy.contains("Active Journeys").should("exist");
+};
