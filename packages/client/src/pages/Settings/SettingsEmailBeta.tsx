@@ -24,6 +24,9 @@ import ApiService from "services/api.service";
 import { Input } from "components/Elements";
 import Header from "components/Header";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
+import { setDomainsList, setSettingsPrivateApiKey } from "reducers/settings";
+import { useDispatch } from "react-redux";
 
 const tabs = [
   { name: "Account", href: "/settings", current: false },
@@ -51,6 +54,13 @@ export default function SettingsEmailBeta() {
   const [mem, setMem] = useState(memoryOptions[0]);
   const navigate = useNavigate();
 
+  const [initialData, setInitialData] = useState({
+    mailgunAPIKey: "",
+    sendingDomain: "",
+    sendingName: "",
+    sendingEmail: "",
+  });
+
   const [formData, setFormData] = useState({
     mailgunAPIKey: "",
     sendingDomain: "",
@@ -58,25 +68,91 @@ export default function SettingsEmailBeta() {
     sendingEmail: "",
   });
 
+  const [errors, setErrors] = useState<{ [key: string]: string[] }>({
+    mailgunAPIKey: [],
+    sendingDomain: [],
+    sendingName: [],
+    sendingEmail: [],
+  });
+
+  const [possibleDomains, setPossibleDomains] = useState<string[]>([]);
+
+  const dispatch = useDispatch();
+  const callDomains = async () => {
+    if (formData.mailgunAPIKey) {
+      dispatch(setSettingsPrivateApiKey(formData.mailgunAPIKey));
+      const response = await dispatch(setDomainsList(formData.mailgunAPIKey));
+      if (response?.data) {
+        setPossibleDomains(response?.data?.map((item: any) => item.name) || []);
+      }
+    }
+  };
+
+  useEffect(() => {
+    const newErrors: { [key: string]: string[] } = {
+      mailgunAPIKey: [],
+      sendingDomain: [],
+      sendingName: [],
+      sendingEmail: [],
+    };
+
+    if (!formData.mailgunAPIKey)
+      newErrors.mailgunAPIKey.push("API key should be provided");
+
+    if (!formData.sendingName)
+      newErrors.sendingName.push("Sending name should be provided");
+
+    if (
+      !`${formData.sendingEmail}@laudspeaker.com`.match(
+        /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/
+      )
+    )
+      newErrors.sendingEmail.push("Email should be valid");
+
+    setErrors(newErrors);
+  }, [formData]);
+
+  const isError = Object.values(errors).some((arr) => arr.length > 0);
+
   useEffect(() => {
     (async () => {
       const { data } = await ApiService.get({ url: "/accounts" });
       const { mailgunAPIKey, sendingDomain, sendingName, sendingEmail } = data;
       setFormData({
-        mailgunAPIKey,
-        sendingDomain,
-        sendingName,
-        sendingEmail,
+        mailgunAPIKey: mailgunAPIKey || "",
+        sendingDomain: sendingDomain || "",
+        sendingName: sendingName || "",
+        sendingEmail: sendingEmail || "",
+      });
+      setInitialData({
+        mailgunAPIKey: mailgunAPIKey || "",
+        sendingDomain: sendingDomain || "",
+        sendingName: sendingName || "",
+        sendingEmail: sendingEmail || "",
       });
     })();
   }, []);
 
   const handleFormDataChange = (e: any) => {
+    console.log(e.target.name, e.target.value);
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async () => {
-    await ApiService.patch({ url: "/accounts", options: { ...formData } });
+    try {
+      await ApiService.patch({ url: "/accounts", options: { ...formData } });
+    } catch (e) {
+      toast.error("Unexpected error!", {
+        position: "bottom-center",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "colored",
+      });
+    }
   };
 
   return (
@@ -106,7 +182,7 @@ export default function SettingsEmailBeta() {
                           id="selected-tab"
                           name="selected-tab"
                           className="mt-1 block w-full rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-cyan-500 focus:outline-none focus:ring-cyan-500 sm:text-sm"
-                          defaultValue={tabs.find((tab) => tab.current)?.name}
+                          defaultValue={tabs.find((tab) => tab.current)?.href}
                           onChange={(ev) => navigate(ev.currentTarget.value)}
                         >
                           {tabs.map((tab) => (
@@ -204,14 +280,15 @@ export default function SettingsEmailBeta() {
                                     name="mailgunAPIKey"
                                     id="mailgunAPIKey"
                                     className={classNames(
-                                      false
+                                      errors.mailgunAPIKey.length > 0
                                         ? "rounded-md sm:text-sm focus:!border-red-500 !border-red-300 shadow-sm focus:!ring-red-500 "
                                         : "rounded-md sm:text-sm focus:border-cyan-500 border-gray-300 shadow-sm focus:ring-cyan-500 "
                                     )}
                                     aria-invalid="true"
                                     aria-describedby="password-error"
+                                    onBlur={callDomains}
                                   />
-                                  {false && (
+                                  {errors.mailgunAPIKey.length > 0 && (
                                     <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center">
                                       <ExclamationCircleIcon
                                         className="h-5 w-5 text-red-500"
@@ -220,72 +297,158 @@ export default function SettingsEmailBeta() {
                                     </div>
                                   )}
                                 </div>
-                                {false && (
+                                {errors.mailgunAPIKey.map((item) => (
                                   <p
                                     className="mt-2 text-sm text-red-600"
                                     id="email-error"
+                                    key={item}
                                   >
-                                    Please enter a valid API key.
+                                    {item}
                                   </p>
-                                )}
+                                ))}
                               </dd>
                             </div>
                             <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:py-5">
                               <dt className="text-sm font-medium text-gray-500">
                                 Sending Domain
                               </dt>
-                              <select
-                                id="sendingDomain"
-                                name="sendingDomain"
-                                value={formData.sendingDomain}
-                                onChange={handleFormDataChange}
-                                className="rounded-md border-gray-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm"
-                                defaultValue="Canada"
-                              >
-                                <option>{formData.sendingDomain}</option>
-                              </select>
+                              <dd>
+                                <div className="relative rounded-md">
+                                  <select
+                                    id="sendingDomain"
+                                    name="sendingDomain"
+                                    disabled={
+                                      !formData.mailgunAPIKey ||
+                                      possibleDomains.length === 0
+                                    }
+                                    value={formData.sendingDomain}
+                                    onChange={handleFormDataChange}
+                                    className={`mt-1 block w-full rounded-md py-2 pl-3 pr-10 text-base focus:outline-none sm:text-sm ${
+                                      errors.sendingDomain.length > 0
+                                        ? "focus:!border-red-500 !border-red-300 shadow-sm focus:!ring-red-500"
+                                        : "border-gray-300 focus:border-cyan-500 focus:ring-cyan-500"
+                                    }`}
+                                  >
+                                    <option value={formData.sendingDomain}>
+                                      {formData.sendingDomain}
+                                    </option>
+                                    {possibleDomains.map((item) => (
+                                      <option value={item}>{item}</option>
+                                    ))}
+                                  </select>
+                                  {errors.sendingDomain.length > 0 && (
+                                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center">
+                                      <ExclamationCircleIcon
+                                        className="h-5 w-5 text-red-500"
+                                        aria-hidden="true"
+                                      />
+                                    </div>
+                                  )}
+                                </div>
+
+                                {errors.sendingDomain.map((item) => (
+                                  <p
+                                    className="mt-2 text-sm text-red-600"
+                                    id="email-error"
+                                    key={item}
+                                  >
+                                    {item}
+                                  </p>
+                                ))}
+                              </dd>
                             </div>
+
                             <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:py-5">
                               <dt className="text-sm font-medium text-gray-500">
                                 Sending Name
                               </dt>
                               <dd>
-                                <Input
-                                  type="text"
-                                  value={formData.sendingName}
-                                  onChange={handleFormDataChange}
-                                  name="sendingName"
-                                  id="sendingName"
-                                  className="rounded-md border-gray-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm"
-                                  placeholder="Team Laudspeaker"
-                                />
+                                <div className="relative rounded-md">
+                                  {" "}
+                                  <Input
+                                    type="text"
+                                    value={formData.sendingName}
+                                    onChange={handleFormDataChange}
+                                    name="sendingName"
+                                    id="sendingName"
+                                    className={`rounded-md shadow-sm sm:text-sm ${
+                                      errors.sendingName.length > 0
+                                        ? "focus:!border-red-500 !border-red-300 shadow-sm focus:!ring-red-500"
+                                        : "border-gray-300 focus:border-cyan-500 focus:ring-cyan-500"
+                                    }`}
+                                    placeholder="Team Laudspeaker"
+                                  />
+                                  {errors.sendingName.length > 0 && (
+                                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center">
+                                      <ExclamationCircleIcon
+                                        className="h-5 w-5 text-red-500"
+                                        aria-hidden="true"
+                                      />
+                                    </div>
+                                  )}
+                                </div>
+                                {errors.sendingName.map((item) => (
+                                  <p
+                                    className="mt-2 text-sm text-red-600"
+                                    id="email-error"
+                                    key={item}
+                                  >
+                                    {item}
+                                  </p>
+                                ))}
                               </dd>
                             </div>
                             <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:py-5">
                               <dt className="text-sm font-medium text-gray-500">
                                 Sending Email
                               </dt>
-                              <div className="relative mt-1 rounded-md shadow-sm">
-                                <Input
-                                  type="text"
-                                  value={formData.sendingEmail}
-                                  onChange={handleFormDataChange}
-                                  name="sendingEmail"
-                                  id="sendingEmail"
-                                  className="rounded-md border-gray-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm"
-                                  placeholder="noreply"
-                                />
-                                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-                                  <span
-                                    className="text-gray-500 sm:text-sm"
-                                    id="price-currency"
-                                  >
-                                    @laudspeaker.com
-                                  </span>
+                              <dd>
+                                <div className="relative mt-1 rounded-md shadow-sm">
+                                  <Input
+                                    type="text"
+                                    value={formData.sendingEmail}
+                                    onChange={handleFormDataChange}
+                                    name="sendingEmail"
+                                    id="sendingEmail"
+                                    className={`rounded-md shadow-sm sm:text-sm pr-[150px] ${
+                                      errors.sendingEmail.length > 0
+                                        ? "focus:!border-red-500 !border-red-300 shadow-sm focus:!ring-red-500"
+                                        : "border-gray-300 focus:border-cyan-500 focus:ring-cyan-500"
+                                    }`}
+                                    placeholder="noreply"
+                                  />
+                                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+                                    <span
+                                      className="text-gray-500 sm:text-sm"
+                                      id="price-currency"
+                                    >
+                                      @laudspeaker.com
+                                    </span>
+                                  </div>
+                                  {errors.sendingEmail.length > 0 && (
+                                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center">
+                                      <ExclamationCircleIcon
+                                        className="h-5 w-5 text-red-500"
+                                        aria-hidden="true"
+                                      />
+                                    </div>
+                                  )}
                                 </div>
-                              </div>
+                                {errors.sendingEmail.map((item) => (
+                                  <p
+                                    className="mt-2 text-sm text-red-600"
+                                    id="email-error"
+                                    key={item}
+                                  >
+                                    {item}
+                                  </p>
+                                ))}
+                              </dd>
                             </div>
-                            <SaveSettings onClick={handleSubmit} />
+                            <SaveSettings
+                              disabled={isError}
+                              onClick={handleSubmit}
+                            />
                           </dl>
                         </div>
                       </div>

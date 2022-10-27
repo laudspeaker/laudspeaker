@@ -122,13 +122,13 @@ function renderCorrectColumnNames(
         </th>
         <th
           scope="col"
-          className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6"
+          className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6 w-[100px]"
         >
           Active
         </th>
         <th
           scope="col"
-          className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6"
+          className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6 w-[100px]"
         >
           Edit
         </th>
@@ -177,13 +177,13 @@ function renderCorrectColumnNames(
         </th>
         <th
           scope="col"
-          className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6"
+          className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6 w-[100px]"
         >
           Type
         </th>
         <th
           scope="col"
-          className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6"
+          className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6 w-[100px]"
         >
           Edit
         </th>

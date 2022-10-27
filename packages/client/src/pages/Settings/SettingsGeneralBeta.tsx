@@ -24,6 +24,7 @@ import ApiService from "services/api.service";
 import { ApiConfig } from "../../constants";
 import { Input } from "components/Elements";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 
 const tabs = [
   { name: "Account", href: "", current: true },
@@ -42,6 +43,15 @@ function classNames(...classes: string[]) {
 }
 
 export default function SettingsGeneralBeta() {
+  const [initialData, setInitialData] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    currentPassword: "",
+    newPassword: "",
+    verifyNewPassword: "",
+  });
+
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -52,25 +62,65 @@ export default function SettingsGeneralBeta() {
   });
   const navigate = useNavigate();
 
-  const errors: { [key: string]: string[] } = {
+  const [errors, setErrors] = useState<{ [key: string]: string[] }>({
     firstName: [],
     lastName: [],
     email: [],
     currentPassword: [],
     newPassword: [],
     verifyNewPassword: [],
-  };
+  });
 
-  if (formData.firstName.length === 0)
-    errors.firstName.push("First name should be defined");
+  useEffect(() => {
+    const newErrors: { [key: string]: string[] } = {
+      firstName: [],
+      lastName: [],
+      email: [],
+      currentPassword: [],
+      newPassword: [],
+      verifyNewPassword: [],
+    };
 
-  if (formData.lastName.length === 0)
-    errors.lastName.push("Last name should be defined");
+    if (
+      formData.firstName !== initialData.firstName &&
+      formData.firstName.length === 0
+    )
+      newErrors.firstName.push("First name should be defined");
 
-  if (formData.email.length === 0) errors.email.push("Email should be defined");
+    if (
+      (formData.lastName !== initialData.lastName &&
+        formData.lastName.length) === 0
+    )
+      newErrors.lastName.push("Last name should be defined");
 
-  if (!formData.email.match(/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/))
-    errors.email.push("Email should be valid");
+    if (formData.email !== initialData.email) {
+      if (formData.email.length === 0)
+        newErrors.email.push("Email should be defined");
+
+      if (
+        !formData.email.match(/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/)
+      )
+        newErrors.email.push("Email should be valid");
+    }
+
+    if (formData.newPassword !== initialData.newPassword) {
+      if (formData.newPassword !== formData.verifyNewPassword)
+        newErrors.verifyNewPassword.push("Passwords should match");
+
+      if (formData.newPassword && !formData.currentPassword)
+        newErrors.currentPassword.push("Passwords should be provided");
+
+      if (formData.newPassword.length < 8)
+        newErrors.newPassword.push(
+          "Passwords should have at least 8 characters"
+        );
+    }
+
+    setErrors(newErrors);
+  }, [formData]);
+
+  const isError = Object.values(errors).some((arr) => arr.length > 0);
+
   const handleFormDataChange = (e: any) => {
     setFormData({
       ...formData,
@@ -83,19 +133,33 @@ export default function SettingsGeneralBeta() {
       const { data } = await ApiService.get({ url: "/accounts" });
       const { firstName, lastName, email } = data;
       setFormData({ ...formData, firstName, lastName, email });
+      setInitialData({ ...formData, firstName, lastName, email });
     })();
   }, []);
 
   const handleSubmit = async () => {
-    await ApiService.patch({
-      url: "/accounts",
-      options: {
-        ...formData,
-        currentPassword: formData.currentPassword || undefined,
-        newPassword: formData.newPassword || undefined,
-        verifyNewPassword: formData.verifyNewPassword || undefined,
-      },
-    });
+    try {
+      await ApiService.patch({
+        url: "/accounts",
+        options: {
+          ...formData,
+          currentPassword: formData.currentPassword || undefined,
+          newPassword: formData.newPassword || undefined,
+          verifyNewPassword: formData.verifyNewPassword || undefined,
+        },
+      });
+    } catch (e: any) {
+      toast.error(e.response.data.message || "Unexpected error!", {
+        position: "bottom-center",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "colored",
+      });
+    }
   };
 
   return (
@@ -123,7 +187,7 @@ export default function SettingsGeneralBeta() {
                           id="selected-tab"
                           name="selected-tab"
                           className="mt-1 block w-full rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-cyan-500 focus:outline-none focus:ring-cyan-500 sm:text-sm"
-                          defaultValue={tabs.find((tab) => tab.current)?.name}
+                          defaultValue={tabs.find((tab) => tab.current)?.href}
                           onChange={(ev) => navigate(ev.currentTarget.value)}
                         >
                           {tabs.map((tab) => (
@@ -244,38 +308,41 @@ export default function SettingsGeneralBeta() {
                               <dt className="text-sm font-medium text-gray-500">
                                 Email
                               </dt>
-                              <dd className="relative">
-                                <Input
-                                  type="email"
-                                  value={formData.email}
-                                  onChange={handleFormDataChange}
-                                  name="email"
-                                  id="email"
-                                  placeholder="you@example.com"
-                                  className={classNames(
-                                    errors.email.length > 0
-                                      ? "rounded-md sm:text-sm focus:!border-red-500 !border-red-300 shadow-sm focus:!ring-red-500 "
-                                      : "rounded-md sm:text-sm focus:border-cyan-500 border-gray-300 shadow-sm focus:ring-cyan-500 "
+                              <dd>
+                                <div className="relative">
+                                  {" "}
+                                  <Input
+                                    type="email"
+                                    value={formData.email}
+                                    onChange={handleFormDataChange}
+                                    name="email"
+                                    id="email"
+                                    placeholder="you@example.com"
+                                    className={classNames(
+                                      errors.email.length > 0
+                                        ? "rounded-md sm:text-sm focus:!border-red-500 !border-red-300 shadow-sm focus:!ring-red-500 "
+                                        : "rounded-md sm:text-sm focus:border-cyan-500 border-gray-300 shadow-sm focus:ring-cyan-500 "
+                                    )}
+                                  />
+                                  {errors.email.length > 0 && (
+                                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center">
+                                      <ExclamationCircleIcon
+                                        className="h-5 w-5 text-red-500"
+                                        aria-hidden="true"
+                                      />
+                                    </div>
                                   )}
-                                />
-                                {errors.email.length > 0 && (
-                                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center">
-                                    <ExclamationCircleIcon
-                                      className="h-5 w-5 text-red-500"
-                                      aria-hidden="true"
-                                    />
-                                  </div>
-                                )}
+                                </div>
+                                {errors.email.map((item) => (
+                                  <p
+                                    className="mt-2 text-sm text-red-600"
+                                    id="email-error"
+                                    key={item}
+                                  >
+                                    {item}
+                                  </p>
+                                ))}
                               </dd>
-                              {errors.email.map((item) => (
-                                <p
-                                  className="mt-2 text-sm text-red-600"
-                                  id="email-error"
-                                  key={item}
-                                >
-                                  {item}
-                                </p>
-                              ))}
                             </div>
                             <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:py-5">
                               <dt className="text-sm font-medium text-gray-500">
@@ -397,7 +464,10 @@ export default function SettingsGeneralBeta() {
                                 ))}
                               </dd>
                             </div>
-                            <SaveSettings onClick={handleSubmit} />
+                            <SaveSettings
+                              disabled={isError}
+                              onClick={handleSubmit}
+                            />
                           </dl>
                         </div>
                       </div>

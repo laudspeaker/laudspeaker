@@ -6,6 +6,7 @@ import { Input } from "components/Elements";
 import Header from "components/Header";
 import { useNavigate } from "react-router-dom";
 import { startPosthogImport } from "reducers/settings";
+import { toast } from "react-toastify";
 
 const tabs = [
   { name: "Account", href: "/settings", current: false },
@@ -36,13 +37,46 @@ export default function SettingsEventsBeta() {
   const [mem, setMem] = useState(memoryOptions[0]);
   const navigate = useNavigate();
 
-  const [formData, setFormData] = useState<Record<string, string>>({
+  const [initialData, setInitialData] = useState<Record<string, string>>({
     posthogApiKey: "",
     posthogProjectId: "",
-    posthogHostUrl: "",
+    posthogHostUrl: "app.posthog.com",
     posthogSmsKey: "",
     posthogEmailKey: "",
   });
+
+  const [formData, setFormData] = useState<Record<string, string>>({
+    posthogApiKey: "",
+    posthogProjectId: "",
+    posthogHostUrl: "app.posthog.com",
+    posthogSmsKey: "",
+    posthogEmailKey: "",
+  });
+
+  const [errors, setErrors] = useState<{ [key: string]: string[] }>({
+    posthogApiKey: [],
+    posthogProjectId: [],
+    posthogHostUrl: [],
+  });
+
+  useEffect(() => {
+    const newErrors: { [key: string]: string[] } = {
+      posthogApiKey: [],
+      posthogProjectId: [],
+      posthogHostUrl: [],
+    };
+
+    if (!formData.posthogApiKey)
+      newErrors.posthogApiKey.push("Should be provided");
+
+    if (!formData.posthogProjectId)
+      newErrors.posthogProjectId.push("Should be provided");
+
+    if (!formData.posthogHostUrl)
+      newErrors.posthogHostUrl.push("Should be provided");
+
+    setErrors(newErrors);
+  }, [formData]);
 
   useEffect(() => {
     (async () => {
@@ -54,15 +88,19 @@ export default function SettingsEventsBeta() {
         posthogSmsKey,
         posthogEmailKey,
       } = data;
-      setFormData({
+      const newData = {
         posthogApiKey: posthogApiKey?.[0] || "",
         posthogProjectId: posthogProjectId?.[0] || "",
         posthogHostUrl: posthogHostUrl?.[0] || "",
         posthogSmsKey: posthogSmsKey?.[0] || "",
         posthogEmailKey: posthogEmailKey?.[0] || "",
-      });
+      };
+      setFormData(newData);
+      setInitialData(newData);
     })();
   }, []);
+
+  const isError = Object.values(errors).some((arr) => arr.length > 0);
 
   const handleFormDataChange = (e: any) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -77,11 +115,25 @@ export default function SettingsEventsBeta() {
     for (const key of Object.keys(formData)) {
       options[key] = [formData[key]];
     }
-    await ApiService.patch({
-      url: "/accounts",
-      options,
-    });
+    try {
+      await ApiService.patch({
+        url: "/accounts",
+        options,
+      });
+    } catch (e) {
+      toast.error("Unexpected error!", {
+        position: "bottom-center",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "colored",
+      });
+    }
   };
+
   return (
     <>
       <div>
@@ -109,7 +161,7 @@ export default function SettingsEventsBeta() {
                           id="selected-tab"
                           name="selected-tab"
                           className="mt-1 block w-full rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-cyan-500 focus:outline-none focus:ring-cyan-500 sm:text-sm"
-                          defaultValue={tabs.find((tab) => tab.current)?.name}
+                          defaultValue={tabs.find((tab) => tab.current)?.href}
                           onChange={(ev) => navigate(ev.currentTarget.value)}
                         >
                           {tabs.map((tab) => (
@@ -207,14 +259,14 @@ export default function SettingsEventsBeta() {
                                     name="posthogApiKey"
                                     id="posthogApiKey"
                                     className={classNames(
-                                      false
+                                      errors.posthogApiKey.length > 0
                                         ? "rounded-md sm:text-sm focus:!border-red-500 !border-red-300 shadow-sm focus:!ring-red-500 "
                                         : "rounded-md sm:text-sm focus:border-cyan-500 border-gray-300 shadow-sm focus:ring-cyan-500 "
                                     )}
                                     aria-invalid="true"
                                     aria-describedby="password-error"
                                   />
-                                  {false && (
+                                  {errors.posthogApiKey.length > 0 && (
                                     <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center">
                                       <ExclamationCircleIcon
                                         className="h-5 w-5 text-red-500"
@@ -223,14 +275,15 @@ export default function SettingsEventsBeta() {
                                     </div>
                                   )}
                                 </div>
-                                {false && (
+                                {errors.posthogApiKey.map((item) => (
                                   <p
                                     className="mt-2 text-sm text-red-600"
                                     id="email-error"
+                                    key={item}
                                   >
-                                    Please enter a valid API key.
+                                    {item}
                                   </p>
-                                )}
+                                ))}
                               </dd>
                             </div>
                             <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:py-5">
@@ -238,41 +291,89 @@ export default function SettingsEventsBeta() {
                                 Posthog Project ID
                               </dt>
                               <dd>
-                                <Input
-                                  type="text"
-                                  value={formData.posthogProjectId}
-                                  onChange={handleFormDataChange}
-                                  name="posthogProjectId"
-                                  id="posthogProjectId"
-                                  className="rounded-md border-gray-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm"
-                                  placeholder="1"
-                                />
+                                <div className="relative">
+                                  <Input
+                                    type="text"
+                                    value={formData.posthogProjectId}
+                                    onChange={handleFormDataChange}
+                                    name="posthogProjectId"
+                                    id="posthogProjectId"
+                                    className={classNames(
+                                      errors.posthogProjectId.length > 0
+                                        ? "rounded-md sm:text-sm focus:!border-red-500 !border-red-300 shadow-sm focus:!ring-red-500 "
+                                        : "rounded-md sm:text-sm focus:border-cyan-500 border-gray-300 shadow-sm focus:ring-cyan-500 "
+                                    )}
+                                    placeholder="1"
+                                  />
+                                  {errors.posthogProjectId.length > 0 && (
+                                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center">
+                                      <ExclamationCircleIcon
+                                        className="h-5 w-5 text-red-500"
+                                        aria-hidden="true"
+                                      />
+                                    </div>
+                                  )}
+                                </div>
+                                {errors.posthogProjectId.map((item) => (
+                                  <p
+                                    className="mt-2 text-sm text-red-600"
+                                    id="email-error"
+                                    key={item}
+                                  >
+                                    {item}
+                                  </p>
+                                ))}
                               </dd>
                             </div>
                             <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:py-5">
                               <dt className="text-sm font-medium text-gray-500">
                                 Posthog URL
                               </dt>
-                              <div className="mt-1 flex rounded-md shadow-sm">
-                                <span className="inline-flex items-center rounded-l-md border border-r-0 border-gray-300 bg-gray-50 px-3 text-gray-500 sm:text-sm">
-                                  https://
-                                </span>
-                                <Input
-                                  type="text"
-                                  value={
-                                    formData.posthogHostUrl || "app.posthog.com"
-                                  }
-                                  onChange={handleFormDataChange}
-                                  name="posthogHostUrl"
-                                  id="posthogHostUrl"
-                                  className="min-w-0 flex-1 rounded-none rounded-r-md border-gray-300 px-3 py-2 focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm"
-                                />
+                              <div className="mt-1 rounded-md shadow-sm">
+                                <div className="relative flex">
+                                  <span className="inline-flex items-center rounded-l-md border border-r-0 border-gray-300 bg-gray-50 px-3 text-gray-500 sm:text-sm">
+                                    https://
+                                  </span>
+                                  <Input
+                                    type="text"
+                                    value={formData.posthogHostUrl}
+                                    onChange={handleFormDataChange}
+                                    name="posthogHostUrl"
+                                    id="posthogHostUrl"
+                                    className={classNames(
+                                      errors.posthogHostUrl.length > 0
+                                        ? "rounded-md sm:text-sm focus:!border-red-500 !border-red-300 shadow-sm focus:!ring-red-500 "
+                                        : "rounded-md sm:text-sm focus:border-cyan-500 border-gray-300 shadow-sm focus:ring-cyan-500 ",
+                                      "!m-0"
+                                    )}
+                                  />
+                                  {errors.posthogHostUrl.length > 0 && (
+                                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center">
+                                      <ExclamationCircleIcon
+                                        className="h-5 w-5 text-red-500"
+                                        aria-hidden="true"
+                                      />
+                                    </div>
+                                  )}
+                                </div>
+                                {errors.posthogHostUrl.map((item) => (
+                                  <p
+                                    className="mt-2 text-sm text-red-600"
+                                    id="email-error"
+                                    key={item}
+                                  >
+                                    {item}
+                                  </p>
+                                ))}
                               </div>
                             </div>
                             <button
                               type="button"
                               onClick={handleSync}
-                              className="inline-flex items-center rounded-md border border-transparent bg-cyan-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-cyan-500 focus:outline-none focus:ring-2 focus:ring-offset-2 rounded-md bg-white font-medium focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2"
+                              disabled={isError}
+                              className={`inline-flex mb-[10px] items-center rounded-md border border-transparent bg-cyan-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-cyan-500 focus:outline-none focus:ring-2 focus:ring-offset-2 rounded-md bg-white font-medium focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 ${
+                                isError ? "grayscale" : ""
+                              }`}
                             >
                               Sync
                             </button>
