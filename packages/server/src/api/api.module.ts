@@ -17,6 +17,7 @@ import { Workflow } from './workflows/entities/workflow.entity';
 import { Repository } from 'typeorm';
 import { Template } from './templates/entities/template.entity';
 import { Audience } from './audiences/entities/audience.entity';
+import { TestsModule } from './tests/tests.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { Audience } from './audiences/entities/audience.entity';
     EventsModule,
     TemplatesModule,
     SlackModule,
+    TestsModule,
   ],
 })
 export class ApiModule {
