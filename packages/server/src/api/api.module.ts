@@ -17,11 +17,10 @@ import { Workflow } from './workflows/entities/workflow.entity';
 import { Repository } from 'typeorm';
 import { Template } from './templates/entities/template.entity';
 import { Audience } from './audiences/entities/audience.entity';
-import { Installation } from './slack/entities/installation.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Workflow, Template, Audience, Installation]),
+    TypeOrmModule.forFeature([Workflow, Template, Audience]),
     AccountsModule,
     AuthModule,
     CustomersModule,
@@ -41,8 +40,6 @@ export class ApiModule {
     private audienceRepository: Repository<Audience>,
     @InjectRepository(Template)
     private templateRepository: Repository<Template>,
-    @InjectRepository(Installation)
-    private installationRepository: Repository<Installation>,
     private readonly authService: AuthService,
     private readonly customersService: CustomersService
   ) {
@@ -96,76 +93,6 @@ export class ApiModule {
       await this.workflowsRepository.delete({ ownerId: '1000' });
       await this.templateRepository.delete({ ownerId: '1000' });
       await this.audienceRepository.delete({ ownerId: '1000' });
-      await this.installationRepository.delete({ id: 'T01U4FFQ796' });
-
-      const installation = new Installation();
-
-      installation.id = 'T01U4FFQ796';
-      installation.installation = `{
-  "bot": {
-    "id": "B044KLJKECR",
-    "token": "xoxb-1956525823312-4145518052180-5zyhoAuKrI22UHeA2lH3DcXs",
-    "scopes": [
-      "app_mentions:read",
-      "channels:history",
-      "chat:write",
-      "commands",
-      "calls:read",
-      "calls:write",
-      "channels:read",
-      "dnd:read",
-      "emoji:read",
-      "files:read",
-      "groups:history",
-      "groups:read",
-      "groups:write",
-      "im:history",
-      "im:read",
-      "im:write",
-      "incoming-webhook",
-      "links:read",
-      "links:write",
-      "mpim:history",
-      "mpim:read",
-      "mpim:write",
-      "pins:read",
-      "pins:write",
-      "reactions:read",
-      "reactions:write",
-      "reminders:read",
-      "reminders:write",
-      "remote_files:read",
-      "remote_files:share",
-      "team:read",
-      "usergroups:read",
-      "usergroups:write",
-      "users.profile:read",
-      "users:read",
-      "users:read.email",
-      "users:write"
-    ],
-    "userId": "U0449F81J5A"
-  },
-  "team": {
-    "id": "T01U4FFQ796",
-    "name": "Tachyon"
-  },
-  "user": {
-    "id": "U04323JCL5A"
-  },
-  "appId": "A04466C15FW",
-  "tokenType": "bot",
-  "authVersion": "v2",
-  "incomingWebhook": {
-    "url": "https://hooks.slack.com/services/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",
-    "channel": "#laudspeaker",
-    "channelId": "C03SU37838A",
-    "configurationUrl": "https://tachyonspace.slack.com/services/B048K18DZ09"
-  },
-  "isEnterpriseInstall": false
-}`;
-
-      await this.installationRepository.save(installation);
 
       await this.customersService.CustomerModel.findOneAndRemove({
         ownerId: '1000',
