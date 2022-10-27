@@ -1,6 +1,11 @@
 import { StatusCodes } from "./../../constants";
 import { useEffect, useState } from "react";
-import { Handle, Position } from "react-flow-renderer";
+import {
+  Handle,
+  Position,
+  useStore,
+  useUpdateNodeInternals,
+} from "react-flow-renderer";
 import { v4 as uuid } from "uuid";
 import thunderbolt from "../../assets/images/thunderbolt.svg";
 import { getAudienceDetails } from "./FlowHelpers";
@@ -28,6 +33,7 @@ const TextUpdaterNode = ({
     updateNodes,
     isSelected,
     needsUpdate,
+    nodeId,
   } = data;
   const [nodeData, setNodeData] = useState<any>({});
   const [selectedMessageType, setSelectedMessageType] = useState("");
@@ -85,6 +91,12 @@ const TextUpdaterNode = ({
     }
   }, [audienceId, needsUpdate]);
 
+  const updateNodeInternals = useUpdateNodeInternals();
+
+  useEffect(() => {
+    updateNodeInternals(nodeId);
+  }, [triggers]);
+
   const handleTriggerClick = (e: any, triggerId: string) => {
     e.stopPropagation();
     // const dataTrigger = dataTriggers.find(
@@ -119,6 +131,8 @@ const TextUpdaterNode = ({
     });
   };
 
+  const connectionNodeId = useStore((state) => state.connectionNodeId);
+  const isTarget = connectionNodeId && connectionNodeId !== nodeData.id;
   return (
     <>
       <div
@@ -131,8 +145,8 @@ const TextUpdaterNode = ({
         <Handle
           type="target"
           position={Position.Top}
-          style={{ background: "transparent" }}
-          isConnectable={true}
+          className="!bg-transparent !h-full !border-0"
+          isConnectable={!!isTarget}
         />
         <div
           className={`text-updater bg-white max-h-[80px] flex justify-between rounded-[8px] p-[16.5px_20px] border-[2px] shadow-md border-transparent ${
