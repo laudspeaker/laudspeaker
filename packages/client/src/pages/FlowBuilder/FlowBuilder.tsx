@@ -39,6 +39,7 @@ import { getFlow } from "./FlowHelpers";
 import { toast } from "react-toastify";
 import Modal from "../../components/Elements/Modal";
 import { useForceUpdate } from "../../hooks/helperHooks";
+import Header from "components/Header";
 
 enum TriggerType {
   event,
@@ -174,7 +175,7 @@ const Flow = () => {
       position,
       type: "special",
       data: {
-        primary: nodes.length < 1,
+        primary: !nodes.some((item) => item.data.primary),
         audienceId,
         triggers: nodeTriggers,
         messages,
@@ -234,6 +235,7 @@ const Flow = () => {
         data: {
           ...node.data,
           isSelected: node.id === selectedNode,
+          nodeId: node.id,
           needsUpdate,
         },
       }))
@@ -254,6 +256,7 @@ const Flow = () => {
   const onConnect = useCallback(
     (connection: Connection | Edge) =>
       setEdges((eds) => {
+        if (connection.target === connection.source) return eds;
         const edge: Edge | Connection = {
           ...connection,
           id: uuid(),
@@ -422,10 +425,12 @@ const Flow = () => {
   const handleTriggerModalOpen = (e: any) => {
     settriggerModalOpen(!triggerModalOpen);
   };
+
   const onSaveTrigger = (data: any) => {
     settriggerModalOpen(false);
     selectedTrigger.properties = data;
   };
+
   const onDeleteTrigger = (data: any) => {
     const selectedNodeData = nodes.find((node) =>
       node.data.triggers.find((item: any) => item.id === data)
@@ -436,6 +441,7 @@ const Flow = () => {
     if (selectedNodeData !== undefined) {
       selectedNodeData.data.triggers = newTriggersData;
       setNodes([...nodes]);
+      setEdges(edges.filter((edge) => edge.sourceHandle !== data));
       forceRerenderSelectedNode();
       settriggerModalOpen(false);
     }
@@ -534,8 +540,8 @@ const Flow = () => {
   };
 
   return (
-    <div className="h-[100vh] flex w-full">
-      <div className="flex">
+    <div className="h-[calc(100vh-64px)] overflow-y-scroll flex w-full">
+      <div className="max-h-[calc(100vh-64px)] h-full lg:overflow-y-auto overflow-y-scroll flex">
         <div className="flex">
           <SideDrawer selectedNode={selectedNode} onClick={performAction} />
         </div>
@@ -561,10 +567,9 @@ const Flow = () => {
         <div
           style={{
             position: "absolute",
-            zIndex: "111",
             display: "flex",
             right: "15px",
-            inset: " 20px 20px auto auto",
+            inset: "20px 20px auto auto",
             justifyContent: "space-between",
             alignItems: "center",
           }}
@@ -628,7 +633,7 @@ const Flow = () => {
         >
           <NameSegment
             onSubmit={handleAudienceSubmit}
-            isPrimary={nodes.length < 1}
+            isPrimary={!nodes.some((item) => item.data.primary)}
             isCollapsible={true}
             onClose={() => setAudienceModalOpen(false)}
           />
@@ -675,6 +680,7 @@ const Flow = () => {
 function FlowBuilder() {
   return (
     <>
+      <Header />
       <ReactFlowProvider>
         <Flow />
       </ReactFlowProvider>
