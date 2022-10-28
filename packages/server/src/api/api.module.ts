@@ -96,7 +96,7 @@ export class ApiModule {
       await this.templateRepository.delete({ ownerId: '1000' });
       await this.audienceRepository.delete({ ownerId: '1000' });
 
-      await this.customersService.CustomerModel.findOneAndRemove({
+      await this.customersService.CustomerModel.deleteMany({
         ownerId: '1000',
       });
 

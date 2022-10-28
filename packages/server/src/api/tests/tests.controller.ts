@@ -1,6 +1,7 @@
 import {
   ClassSerializerInterceptor,
   Controller,
+  HttpException,
   Inject,
   Post,
   Req,
@@ -26,28 +27,15 @@ export class TestsController {
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
   async posthogsynctest(@Req() { user }: Request) {
-    // if (process.env.NODE_ENV !== 'development') return;
-    console.log('in import');
-    let account: Account; // Account associated with the caller
-    try {
-      account = await this.userService.findOne(user);
-      console.log('account is');
-      console.log(account);
-    } catch (e) {
-      console.log(e);
-      //return new HttpException(e, 500);
-    }
+    if (process.env.NODE_ENV !== 'development') return;
 
-    //to do will eventually need to make it so it does not take the top g
-    try {
-      await this.customersService.ingestPosthogPersons(
-        process.env.TESTS_POSTHOG_PROJECT_ID,
-        process.env.TESTS_POSTHOG_API_KEY,
-        process.env.TESTS_POSTHOG_HOST_URL,
-        account
-      );
-    } catch (e) {
-      console.log(e);
-    }
+    const account = await this.userService.findOne(user);
+
+    await this.customersService.ingestPosthogPersons(
+      process.env.TESTS_POSTHOG_PROJECT_ID,
+      process.env.TESTS_POSTHOG_API_KEY,
+      process.env.TESTS_POSTHOG_HOST_URL,
+      account
+    );
   }
 }
