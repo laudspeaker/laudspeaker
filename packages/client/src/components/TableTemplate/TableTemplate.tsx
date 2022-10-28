@@ -2,11 +2,15 @@ import React from "react";
 import { Link } from "@mui/material";
 import Select from "../Elements/Select/Select";
 import { ChevronDownIcon, MinusIcon } from "@heroicons/react/20/solid";
+import Chip from "components/Elements/Chip";
 
 //to do add datasource here to make rendering much simpler
 function createData(
   name: string,
   isActive: boolean,
+  isPaused: boolean,
+  isStopped: boolean,
+  isDeleted: boolean,
   createdOn: number,
   createdBy: number,
   customersEnrolled: number,
@@ -16,6 +20,9 @@ function createData(
   return {
     name,
     isActive,
+    isPaused,
+    isStopped,
+    isDeleted,
     createdOn,
     createdBy,
     customersEnrolled,
@@ -124,7 +131,7 @@ function renderCorrectColumnNames(
           scope="col"
           className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6 w-[100px]"
         >
-          Active
+          Status
         </th>
         <th
           scope="col"
@@ -192,6 +199,22 @@ function renderCorrectColumnNames(
   }
 }
 
+export enum JOURNEY_STATUS {
+  ACTIVE = "Active",
+  PAUSED = "Paused",
+  STOPPED = "Stopped",
+  DELETED = "Deleted",
+  EDITABLE = "Editable",
+}
+
+const statusStyles = {
+  [JOURNEY_STATUS.ACTIVE]: "!bg-[#D1FAE5]",
+  [JOURNEY_STATUS.PAUSED]: "!bg-[#FFF205]",
+  [JOURNEY_STATUS.STOPPED]: "!bg-[#FF0505]",
+  [JOURNEY_STATUS.DELETED]: "!bg-[#FF0505]",
+  [JOURNEY_STATUS.EDITABLE]: "!bg-[#898989]",
+};
+
 function renderSecondColumn(row: ReturnType<typeof createData>) {
   if (row.dataSource == "people") {
     return (
@@ -204,10 +227,17 @@ function renderSecondColumn(row: ReturnType<typeof createData>) {
     //journey vs template
   } else if (row.isActive != null) {
     //this is a test for checking if this is the journeys table or the template table
+    let status: JOURNEY_STATUS = JOURNEY_STATUS.EDITABLE;
+
+    if (row.isActive) status = JOURNEY_STATUS.ACTIVE;
+    if (row.isDeleted) status = JOURNEY_STATUS.DELETED;
+    if (row.isStopped) status = JOURNEY_STATUS.STOPPED;
+    if (row.isPaused) status = JOURNEY_STATUS.PAUSED;
+
     return (
       <>
         <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
-          {String(row.isActive)}
+          <Chip wrapperClass={statusStyles[status]} label={status} />
         </td>
         {/* <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
           {String(row.createdOn)}
@@ -251,13 +281,13 @@ function Row(props: { row: ReturnType<typeof createData> }) {
   );
 }
 
-const rows = [
-  createData("Frozen yoghurt", false, 6.0, 24, 4.0, "email", "other"),
-  createData("Ice cream sandwich", true, 9.0, 37, 4.3, "slack", "other"),
-  createData("Eclair", true, 16.0, 24, 6.0, "email", "other"),
-  createData("Cupcake", false, 3.7, 67, 4.3, "email", "other"),
-  createData("Gingerbread", true, 16.0, 49, 3.9, "slack", "other"),
-];
+// const rows = [
+//   createData("Frozen yoghurt", false, 6.0, 24, 4.0, "email", "other"),
+//   createData("Ice cream sandwich", true, 9.0, 37, 4.3, "slack", "other"),
+//   createData("Eclair", true, 16.0, 24, 6.0, "email", "other"),
+//   createData("Cupcake", false, 3.7, 67, 4.3, "email", "other"),
+//   createData("Gingerbread", true, 16.0, 49, 3.9, "slack", "other"),
+// ];
 
 //example journey template data
 //
@@ -440,6 +470,9 @@ function transformJourneyData(data: any) {
     result.push({
       name: element.hasOwnProperty("salient") ? element.id : element.name,
       isActive: element.isActive,
+      isPaused: element.isPaused,
+      isStopped: element.isStopped,
+      isDeleted: element.isDeleted,
       type: element.hasOwnProperty("salient") ? element.salient : element.type,
       createdOn: element.createdOn,
       createdBy: element.createdBy,
