@@ -254,39 +254,74 @@ export class CustomersService {
     event: any,
     mapping?: (event: any) => any
   ): Promise<Correlation> {
-    const queryParam: any = {
+    // const queryParam: any = {
+    //   ownerId: (<Account>account).id,
+    //   [correlationKey]: correlationValue,
+    // };
+    // let customer: CustomerDocument = await this.CustomerModel.findOne(
+    //   queryParam
+    // ).exec();
+    // if (customer) {
+    //   if (mapping) {
+    //     customer = await this.CustomerModel.findOneAndUpdate(
+    //       queryParam,
+    //       mapping(event)
+    //     ).exec();
+    //     this.logger.debug('Customer found and updated: ' + JSON.stringify(customer));
+    //     return { cust: customer, found: true };
+    //   } else {
+    //     this.logger.debug('Customer found, no update needed: ' + customer.id);
+    //     return { cust: customer, found: true };
+    //   }
+    // } else {
+    //   if (mapping)
+    //     customer = await this.CustomerModel.findOneAndUpdate(
+    //       queryParam,
+    //       mapping(event),
+    //       { upsert: true }
+    //     ).exec();
+    //   else
+    //     customer = await this.CustomerModel.findOneAndUpdate(
+    //       queryParam,
+    //       undefined,
+    //       { upsert: true }
+    //     ).exec();
+    //   return { cust: customer, found: false };
+    // }
+    let customer: CustomerDocument;
+    const queryParam = {
       ownerId: (<Account>account).id,
       [correlationKey]: correlationValue,
     };
-    let customer: CustomerDocument = await this.CustomerModel.findOne(
-      queryParam
-    ).exec();
-    if (customer) {
+    this.logger.debug('QueryParam: ' + JSON.stringify(queryParam));
+    customer = await this.CustomerModel.findOne(queryParam).exec();
+    if (!customer) {
+      this.logger.debug('Customer not found, creating new customer...');
       if (mapping) {
-        customer = await this.CustomerModel.findOneAndUpdate(
-          queryParam,
-          mapping(event)
-        ).exec();
-        this.logger.debug('Customer found and updated: ' + customer.id);
-        return { cust: customer, found: true };
+        const newCust = mapping(event);
+        newCust['ownerId'] = (<Account>account).id;
+        newCust[correlationKey] = [correlationValue];
+        const createdCustomer = new this.CustomerModel(newCust);
+        this.logger.debug('New customer created: ' + createdCustomer.id);
+        return { cust: await createdCustomer.save(), found: false };
       } else {
-        this.logger.debug('Customer found, no update needed: ' + customer.id);
-        return { cust: customer, found: true };
+        const createdCustomer = new this.CustomerModel({
+          ownerId: (<Account>account).id,
+          correlationKey: correlationValue,
+        });
+        this.logger.debug('New customer created: ' + createdCustomer.id);
+        return { cust: await createdCustomer.save(), found: false };
       }
+
+      //to do cant just return [0] in the future
     } else {
       if (mapping)
         customer = await this.CustomerModel.findOneAndUpdate(
           queryParam,
-          mapping(event),
-          { upsert: true }
+          mapping(event)
         ).exec();
-      else
-        customer = await this.CustomerModel.findOneAndUpdate(
-          queryParam,
-          undefined,
-          { upsert: true }
-        ).exec();
-      return { cust: customer, found: false };
+      this.logger.debug('Customer found: ' + customer.id);
+      return { cust: customer, found: true };
     }
   }
 

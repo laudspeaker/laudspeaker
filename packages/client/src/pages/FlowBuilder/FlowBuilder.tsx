@@ -567,6 +567,7 @@ const Flow = () => {
         <div
           style={{
             position: "absolute",
+            zIndex: "111",
             display: "flex",
             right: "15px",
             inset: "20px 20px auto auto",

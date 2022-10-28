@@ -104,7 +104,6 @@ export class EventsController {
         try {
           function postHogEventMapping(event: any) {
             const cust = {};
-            cust['posthogId'] = event.userId;
             if (event?.phPhoneNumber) {
               cust['phPhoneNumber'] = event.phPhoneNumber;
             }
