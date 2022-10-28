@@ -99,7 +99,7 @@ export class EventsController {
           found: boolean; // If the customer document was previously created
         //Step 2: Create/Correlate customer for each eventTemplatesService.queueMessage
         try {
-          function postHogEventMapping(event: any) {
+          const postHogEventMapping = (event: any) => {
             const cust = {};
             cust['posthogId'] = event.userId;
             if (event?.phPhoneNumber) {
@@ -112,7 +112,7 @@ export class EventsController {
               cust['phCustom'] = event.phCustom;
             }
             return cust;
-          }
+          };
           const correlation = await this.customersService.findBySpecifiedEvent(
             account,
             'posthogId',
