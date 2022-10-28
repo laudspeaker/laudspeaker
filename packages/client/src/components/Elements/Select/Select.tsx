@@ -84,7 +84,7 @@ const Select = (props: SelectProps) => {
           multiple={multipleSelections}
           name={name}
         >
-          <Listbox.Button className="relative min-h-[30px] cursor-pointer w-full rounded-lg bg-white py-2 pl-3 pr-10 text-left shadow-md focus:outline-none focus-visible:border-emerald-500 focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-opacity-75 focus-visible:ring-offset-2 focus-visible:ring-offset-emerald-300 sm:text-sm">
+          <Listbox.Button className="relative min-h-[30px] cursor-pointer w-full rounded-lg bg-white py-2 pl-3 pr-10 text-left shadow-md focus:outline-none focus-visible:border-cyan-500 focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-opacity-75 focus-visible:ring-offset-2 focus-visible:ring-offset-cyan-300 sm:text-sm">
             {(renderValue && renderValue(value)) ||
               options.find((item) => item.value === value)?.title ||
               value}
@@ -112,11 +112,7 @@ const Select = (props: SelectProps) => {
                       option.disabled
                         ? "cursor-default bg-slate-200"
                         : "cursor-pointer"
-                    } ${
-                      active
-                        ? "bg-emerald-100 text-emerald-400"
-                        : "text-gray-900"
-                    }`
+                    } ${active ? "bg-cyan-100 text-cyan-400" : "text-gray-900"}`
                   }
                   disabled={option.disabled || false}
                 >

@@ -232,7 +232,7 @@ export default function ResponsiveDrawer() {
           </Transition.Root>
 
           <div
-            className={`flex-grow flex-col border-r border-gray-200 bg-cyan-700 pt-5 pb-4 h-full transition-all duration-500 ease-in-out max-w-[225px] hidden lg:flex`}
+            className={`flex-grow flex-col bg-cyan-700 pt-5 pb-4 h-full transition-all duration-500 ease-in-out max-w-[225px] hidden lg:flex`}
           >
             <div className="flex flex-shrink-0 items-center px-4">
               <img className="h-8" src={LaudspeakerIcon} alt="Laudspeaker" />

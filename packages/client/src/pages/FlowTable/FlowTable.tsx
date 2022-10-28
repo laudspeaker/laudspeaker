@@ -15,9 +15,11 @@ const FlowTable = () => {
   const [journeys, setJourneys] = useState<any>([]);
   const [itemsPerPage, setItemsPerPage] = useState(20);
   const [pagesCount, setPagesCount] = useState<number>(1);
+  const [update, setUpdate] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
   const [nameModalOpen, setNameModalOpen] = useState<boolean>(false);
   const [sortOptions, setSortOptions] = useState({});
+  const [isShowDisabled, setIsShowDisabled] = useState(false);
 
   React.useEffect(() => {
     const setLoadingAsync = async () => {
@@ -28,7 +30,7 @@ const FlowTable = () => {
             itemsPerPage * currentPage
           }&orderBy=${Object.keys(sortOptions)[0] || ""}&orderType=${
             Object.values(sortOptions)[0] || ""
-          }`,
+          }${isShowDisabled ? "&showDisabled=true" : ""}`,
         });
         const { data: fetchedJourneys, totalPages } = data;
         setSuccess("Success");
@@ -44,7 +46,7 @@ const FlowTable = () => {
       }
     };
     setLoadingAsync();
-  }, [itemsPerPage, currentPage, sortOptions]);
+  }, [update, isShowDisabled, itemsPerPage, currentPage, sortOptions]);
 
   const redirectUses = () => {
     setNameModalOpen(true);
@@ -108,6 +110,9 @@ const FlowTable = () => {
               setItemsPerPage={setItemsPerPage}
               sortOptions={sortOptions}
               setSortOptions={setSortOptions}
+              isShowDisabled={isShowDisabled}
+              setIsShowDisabled={setIsShowDisabled}
+              refresh={() => setUpdate((prev) => !prev)}
             />
           </div>
         </div>

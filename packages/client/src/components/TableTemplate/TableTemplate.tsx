@@ -1,11 +1,21 @@
-import React from "react";
+import React, { Fragment } from "react";
 import { Link } from "@mui/material";
 import Select from "../Elements/Select/Select";
-import { ChevronDownIcon, MinusIcon } from "@heroicons/react/20/solid";
+import {
+  ChevronDownIcon,
+  MinusIcon,
+  PencilSquareIcon,
+} from "@heroicons/react/20/solid";
 import Chip from "components/Elements/Chip";
+import { Menu, Transition } from "@headlessui/react";
+import { confirmAlert } from "react-confirm-alert";
+import { ApiConfig } from "../../constants";
+import ApiService from "services/api.service";
+import ToggleSwitch from "components/Elements/ToggleSwitch";
 
 //to do add datasource here to make rendering much simpler
 function createData(
+  id: string | undefined | null,
   name: string,
   isActive: boolean,
   isPaused: boolean,
@@ -18,6 +28,7 @@ function createData(
   dataSource: string
 ) {
   return {
+    id,
     name,
     isActive,
     isPaused,
@@ -36,43 +47,6 @@ function createData(
       },
     ],
   };
-}
-
-function renderCorrectLink(
-  row: ReturnType<typeof createData>,
-  isButton = false
-) {
-  if (row.type == "email") {
-    return (
-      <Link href={`templates/email/${row.name}`}>
-        {isButton ? <div>Edit</div> : row.name}
-      </Link>
-    );
-  } else if (row.type == "sms") {
-    return (
-      <Link href={`templates/sms/${row.name}`}>
-        {isButton ? <div>Edit</div> : row.name}
-      </Link>
-    );
-  } else if (row.type == "slack") {
-    return (
-      <Link href={`templates/slack/${row.name}`}>
-        {isButton ? <div>Edit</div> : row.name}
-      </Link>
-    );
-  } else if (row.dataSource == "people") {
-    return (
-      <Link href={`person/${row.name}`}>
-        {isButton ? <div>Edit</div> : row.name}
-      </Link>
-    );
-  } else {
-    return (
-      <Link href={`flow/${row.name}${row.isActive ? "/view" : ""}`}>
-        {isButton ? <div>Edit</div> : row.name}
-      </Link>
-    );
-  }
 }
 
 function renderCorrectColumnNames(
@@ -137,7 +111,7 @@ function renderCorrectColumnNames(
           scope="col"
           className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6 w-[100px]"
         >
-          Edit
+          Action
         </th>
       </>
     );
@@ -208,11 +182,11 @@ export enum JOURNEY_STATUS {
 }
 
 const statusStyles = {
-  [JOURNEY_STATUS.ACTIVE]: "!bg-[#D1FAE5]",
-  [JOURNEY_STATUS.PAUSED]: "!bg-[#FFF205]",
-  [JOURNEY_STATUS.STOPPED]: "!bg-[#FF0505]",
-  [JOURNEY_STATUS.DELETED]: "!bg-[#FF0505]",
-  [JOURNEY_STATUS.EDITABLE]: "!bg-[#898989]",
+  [JOURNEY_STATUS.ACTIVE]: "",
+  [JOURNEY_STATUS.PAUSED]: "!bg-yellow-200 !text-yellow-600",
+  [JOURNEY_STATUS.STOPPED]: "!bg-red-200 !text-red-600",
+  [JOURNEY_STATUS.DELETED]: "!bg-red-200 !text-red-600",
+  [JOURNEY_STATUS.EDITABLE]: "!bg-gray-200 !text-gray-600",
 };
 
 function renderSecondColumn(row: ReturnType<typeof createData>) {
@@ -230,14 +204,17 @@ function renderSecondColumn(row: ReturnType<typeof createData>) {
     let status: JOURNEY_STATUS = JOURNEY_STATUS.EDITABLE;
 
     if (row.isActive) status = JOURNEY_STATUS.ACTIVE;
-    if (row.isDeleted) status = JOURNEY_STATUS.DELETED;
-    if (row.isStopped) status = JOURNEY_STATUS.STOPPED;
     if (row.isPaused) status = JOURNEY_STATUS.PAUSED;
+    if (row.isStopped) status = JOURNEY_STATUS.STOPPED;
+    if (row.isDeleted) status = JOURNEY_STATUS.DELETED;
 
     return (
       <>
         <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
-          <Chip wrapperClass={statusStyles[status]} label={status} />
+          <Chip
+            wrapperClass={`${statusStyles[status]} w-full`}
+            label={status}
+          />
         </td>
         {/* <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
           {String(row.createdOn)}
@@ -262,23 +239,6 @@ function renderSecondColumn(row: ReturnType<typeof createData>) {
       </>
     );
   }
-}
-
-function Row(props: { row: ReturnType<typeof createData> }) {
-  const { row } = props;
-  return (
-    <React.Fragment>
-      <tr>
-        <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
-          {renderCorrectLink(row)}
-        </td>
-        {renderSecondColumn(row)}
-        <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
-          {renderCorrectLink(row, true)}
-        </td>
-      </tr>
-    </React.Fragment>
-  );
 }
 
 // const rows = [
@@ -468,6 +428,7 @@ function transformJourneyData(data: any) {
     //   });
     // }
     result.push({
+      id: element.id,
       name: element.hasOwnProperty("salient") ? element.id : element.name,
       isActive: element.isActive,
       isPaused: element.isPaused,
@@ -493,18 +454,158 @@ export default function TableTemplate({
   currentPage = 0,
   itemsPerPage,
   setItemsPerPage,
+  isShowDisabled,
+  setIsShowDisabled,
   sortOptions,
   setSortOptions,
+  refresh,
 }: any) {
   const isSkipped = (num?: number) => {
     if (!num) return false;
     return Math.abs(currentPage - num) > 1 && num > 2 && num < pagesCount - 3;
   };
 
+  const handleDeleteJourney = (workflowId: string) => {
+    confirmAlert({
+      title: "Confirm delete?",
+      message: "Are you sure you want to delete journey?",
+      buttons: [
+        {
+          label: "Yes",
+          onClick: async () => {
+            await ApiService.post({
+              url: ApiConfig.deleteFlow,
+              options: {
+                workflowId,
+              },
+            });
+            refresh();
+          },
+        },
+        {
+          label: "No",
+        },
+      ],
+    });
+  };
+
+  function renderCorrectLink(
+    row: ReturnType<typeof createData>,
+    isButton = false
+  ) {
+    if (row.type == "email") {
+      return (
+        <Link href={`templates/email/${row.name}`}>
+          {isButton ? <div>Edit</div> : row.name}
+        </Link>
+      );
+    } else if (row.type == "sms") {
+      return (
+        <Link href={`templates/sms/${row.name}`}>
+          {isButton ? <div>Edit</div> : row.name}
+        </Link>
+      );
+    } else if (row.type == "slack") {
+      return (
+        <Link href={`templates/slack/${row.name}`}>
+          {isButton ? <div>Edit</div> : row.name}
+        </Link>
+      );
+    } else if (row.dataSource == "people") {
+      return (
+        <Link href={`person/${row.name}`}>
+          {isButton ? <div>Edit</div> : row.name}
+        </Link>
+      );
+    } else {
+      return isButton ? (
+        <Menu as="div" className="relative">
+          <Menu.Button className="outline-none">
+            <PencilSquareIcon className="text-gray-400 hover:text-gray-500 ml-[10px] text-[16px] w-[24px]" />
+          </Menu.Button>
+          <Transition
+            as={Fragment}
+            enter="transition ease-out duration-100"
+            enterFrom="transform opacity-0 scale-95"
+            enterTo="transform opacity-100 scale-100"
+            leave="transition ease-in duration-75"
+            leaveFrom="transform opacity-100 scale-100"
+            leaveTo="transform opacity-0 scale-95"
+          >
+            <Menu.Items className="absolute outline-none w-full flex flex-col bg-gray-50 shadow-md rounded-[8px] border-[1px] border-gray-200 items-center right-1/2 top-full z-[1000]">
+              {[
+                <Link
+                  className="!no-underline"
+                  href={`flow/${row.name}${row.isActive ? "/view" : ""}`}
+                >
+                  <div className="w-full">Edit</div>
+                </Link>,
+                ...(row.isDeleted
+                  ? []
+                  : [
+                      <button
+                        className="w-full text-center cursor-pointer outline-none text-red-500"
+                        onClick={() => {
+                          if (row?.id) handleDeleteJourney(row.id);
+                        }}
+                      >
+                        Delete
+                      </button>,
+                    ]),
+              ].map((el, i) => (
+                <Menu.Item>
+                  <div
+                    key={i}
+                    className="w-full text-center hover:bg-gray-200 transition-all px-[6px] py-[4px] border-b-[1px] border-b-gray-200"
+                  >
+                    {el}
+                  </div>
+                </Menu.Item>
+              ))}
+            </Menu.Items>
+          </Transition>
+        </Menu>
+      ) : (
+        <Link href={`flow/${row.name}${row.isActive ? "/view" : ""}`}>
+          {row.name}
+        </Link>
+      );
+    }
+  }
+
+  function Row(props: { row: ReturnType<typeof createData> }) {
+    const { row } = props;
+
+    return (
+      <React.Fragment>
+        <tr>
+          <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
+            {renderCorrectLink(row)}
+          </td>
+          {renderSecondColumn(row)}
+          <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
+            {renderCorrectLink(row, true)}
+          </td>
+        </tr>
+      </React.Fragment>
+    );
+  }
+
   return (
     <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
       {/*<div className="mt-8 flex flex-col">*/}
-      <div className="relative mr-[50px] mb-[15px] mt-[10px] flex items-center justify-end">
+      <div className="relative mb-[15px] mt-[10px] flex items-center justify-between">
+        <div>
+          {setIsShowDisabled && (
+            <div className="flex items-center justify-center gap-[10px]">
+              Show deleted journey's:
+              <ToggleSwitch
+                checked={isShowDisabled}
+                onChange={() => setIsShowDisabled(!isShowDisabled)}
+              />
+            </div>
+          )}
+        </div>
         <div className="flex justify-center items-center gap-[10px]">
           Items per page:
           <Select
@@ -556,10 +657,10 @@ export default function TableTemplate({
           </div>
         ))} */}
       </div>
-      <div className="-my-2 -mx-4 overflow-x-auto sm:-mx-6 lg:-mx-8">
-        <div className="inline-block min-w-full py-2 align-middle md:px-6 lg:px-8">
-          <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
-            <table className="min-w-full divide-y divide-gray-300">
+      <div className="-my-2 -mx-4 sm:-mx-6 lg:-mx-8 overflow-visible">
+        <div className="inline-block min-w-full py-2 align-middle md:px-6 lg:px-8 overflow-visible">
+          <div className="overflow-visible shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
+            <table className="min-w-full divide-y divide-gray-300 md:rounded-lg">
               <thead className="bg-gray-50">
                 <tr className="bg-gray-50 px-6 py-3 text-right text-sm font-semibold text-gray-900">
                   {renderCorrectColumnNames(data, sortOptions, setSortOptions)}
@@ -567,7 +668,7 @@ export default function TableTemplate({
               </thead>
               <tbody className="divide-y divide-gray-200 bg-white">
                 {transformJourneyData(data).map((row) => (
-                  <Row key={row.name} row={row} />
+                  <Row key={row.id} row={row} />
                 ))}
               </tbody>
             </table>

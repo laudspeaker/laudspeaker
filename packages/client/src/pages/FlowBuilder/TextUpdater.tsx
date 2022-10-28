@@ -151,7 +151,7 @@ const TextUpdaterNode = ({
         <div
           className={`text-updater bg-white max-h-[80px] flex justify-between rounded-[8px] p-[16.5px_20px] border-[2px] shadow-md border-transparent ${
             nodeData.width ? `w-[${nodeData.width}]` : "w-[350px]"
-          } ${nodeData.isPrimary ? "border-emerald-500" : ""} ${
+          } ${nodeData.isPrimary ? "border-cyan-500" : ""} ${
             isSelected && !nodeData.isPrimary
               ? "!border-gray-300 !shadow-xl"
               : ""

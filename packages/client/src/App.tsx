@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import "react-toastify/dist/ReactToastify.css";
+import "react-confirm-alert/src/react-confirm-alert.css";
 import {
   createTheme,
   CssBaseline,
