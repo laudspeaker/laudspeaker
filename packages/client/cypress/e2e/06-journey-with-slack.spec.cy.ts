@@ -36,7 +36,7 @@ describe(
       cy.contains(slackTemplate.name).should("exist");
 
       cy.get('[data-disclosure-link="Journey Builder"]').click();
-
+      cy.wait(1000);
       cy.get("button").contains("Create Journey").click();
       cy.get("#name").should("exist").type(journeyName);
       cy.get("#createJourneySubmit").click();
