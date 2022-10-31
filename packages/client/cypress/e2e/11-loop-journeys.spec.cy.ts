@@ -5,20 +5,14 @@ import credentials from "../fixtures/credentials.json";
 import { loginFunc } from "../test-helpers/loginFunc";
 import { tamplatesFunc } from "../test-helpers/templatesFunc";
 
-const {
-  email,
-  password,
-  slackTemplate,
-  journeyName,
-  userAPIkey,
-  emailTemplate,
-} = credentials.MessageHitUser;
+const { email, password, slackTemplate, userAPIkey, emailTemplate } =
+  credentials.MessageHitUser;
 
 describe(
   "Loop journeys",
   { env: { AxiosURL: "http://localhost:3001/" } },
   () => {
-    it("passes", async () => {
+    it("passes", () => {
       loginFunc(email, password);
       tamplatesFunc(slackTemplate, emailTemplate);
 

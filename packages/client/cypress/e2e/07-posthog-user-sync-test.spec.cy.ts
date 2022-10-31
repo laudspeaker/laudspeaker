@@ -5,7 +5,7 @@ import credentials from "../fixtures/credentials.json";
 const { email, password } = credentials.MessageHitUser;
 
 describe("Posthog sync", () => {
-  it("passes", async () => {
+  it("passes", () => {
     loginFunc(email, password);
     cy.wait(2000);
     let accessToken = "";

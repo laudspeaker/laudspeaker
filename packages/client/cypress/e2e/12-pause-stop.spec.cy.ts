@@ -12,7 +12,7 @@ describe(
   "Pause and stop",
   { env: { AxiosURL: "http://localhost:3001/" } },
   () => {
-    it("passes", async () => {
+    it("passes", () => {
       loginFunc(email, password);
       tamplatesFunc(slackTemplate, emailTemplate);
 

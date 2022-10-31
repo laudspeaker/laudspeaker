@@ -11,7 +11,7 @@ describe(
   "Journey with slack triggered and created",
   { env: { AxiosURL: "http://localhost:3001/" } },
   () => {
-    it("passes", async () => {
+    it("passes", () => {
       loginFunc(email, password);
 
       cy.get('[aria-expanded="false"]')
