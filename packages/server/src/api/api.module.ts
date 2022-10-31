@@ -10,6 +10,7 @@ import { TemplatesModule } from './templates/templates.module';
 import { SlackModule } from './slack/slack.module';
 import { Account } from './accounts/entities/accounts.entity';
 import { AuthService } from './auth/auth.service';
+import { AccountsService } from './accounts/accounts.service';
 import { CustomersService } from './customers/customers.service';
 import { CreateCustomerDto } from './customers/dto/create-customer.dto';
 import { InjectRepository, TypeOrmModule } from '@nestjs/typeorm';
@@ -43,6 +44,7 @@ export class ApiModule {
     @InjectRepository(Template)
     private templateRepository: Repository<Template>,
     private readonly authService: AuthService,
+    private readonly accountService: AccountsService,
     private readonly customersService: CustomersService
   ) {
     if (process.env.NODE_ENV === 'development') {
@@ -64,6 +66,20 @@ export class ApiModule {
 
       if (userCreated?.id) {
         await this.authService.repository.remove([userCreated]);
+      }
+
+      const JhonSmeeth = await this.accountService.accountsRepository.findOne({
+        where: {
+          email: 'john.smith@gmail.com',
+          firstName: 'John',
+          lastName: 'Smith',
+          sendingEmail: 'SendingEmail',
+          sendingName: 'SendingName',
+        },
+      });
+
+      if (JhonSmeeth) {
+        await this.accountService.accountsRepository.remove([JhonSmeeth]);
       }
 
       const user = new Account();

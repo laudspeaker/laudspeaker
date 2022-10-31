@@ -9,7 +9,7 @@ import { Account } from './entities/accounts.entity';
 export class AccountsService extends BaseJwtHelper {
   constructor(
     @InjectRepository(Account)
-    private accountsRepository: Repository<Account>
+    public accountsRepository: Repository<Account>
   ) {
     super();
   }
