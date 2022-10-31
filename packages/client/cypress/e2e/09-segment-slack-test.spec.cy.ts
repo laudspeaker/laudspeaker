@@ -6,17 +6,11 @@ import credentials from "../fixtures/credentials.json";
 import { loginFunc } from "../test-helpers/loginFunc";
 import { tamplatesFunc } from "../test-helpers/templatesFunc";
 
-const {
-  email,
-  password,
-  slackTemplate,
-  emailTemplate,
-  journeyName,
-  userAPIkey,
-} = credentials.MessageHitUser;
+const { email, password, slackTemplate, emailTemplate, userAPIkey } =
+  credentials.MessageHitUser;
 
 describe(
-  "Journey with slack triggered and created",
+  "Segment slack test",
   { env: { AxiosURL: "http://localhost:3001/" } },
   () => {
     it("passes", () => {
@@ -26,7 +20,7 @@ describe(
       cy.get('[data-disclosure-link="Journey Builder"]').click();
       cy.wait(1000);
       cy.get("button").contains("Create Journey").click();
-      cy.get("#name").should("exist").type(journeyName);
+      cy.get("#name").should("exist").type("Segment slack test");
       cy.get("#createJourneySubmit").click();
       cy.get("#audience").click();
       cy.get("#name").type("init");
