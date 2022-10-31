@@ -5,17 +5,11 @@ import credentials from "../fixtures/credentials.json";
 import { loginFunc } from "../test-helpers/loginFunc";
 import { tamplatesFunc } from "../test-helpers/templatesFunc";
 
-const {
-  email,
-  password,
-  slackTemplate,
-  journeyName,
-  userAPIkey,
-  emailTemplate,
-} = credentials.MessageHitUser;
+const { email, password, slackTemplate, userAPIkey, emailTemplate } =
+  credentials.MessageHitUser;
 
 describe(
-  "Loop journeys",
+  "Pause and stop",
   { env: { AxiosURL: "http://localhost:3001/" } },
   () => {
     it("passes", async () => {
@@ -25,7 +19,7 @@ describe(
       cy.get('[data-disclosure-link="Journey Builder"]').click();
       cy.wait(1000);
       cy.get("button").contains("Create Journey").click();
-      cy.get("#name").should("exist").type("Loop journeys flow");
+      cy.get("#name").should("exist").type("Pause and stop flow");
       cy.get("#createJourneySubmit").click();
       cy.get("#audience").click();
       cy.get("#name").type("init");
@@ -83,9 +77,10 @@ describe(
       cy.wait(500);
       cy.get("[data-startflowbutton]").click();
       cy.wait(500);
-
-      cy.visit("/flow");
-      cy.wait(500);
+      cy.visit("/flow/Pause%20and%20stop%20flow/view");
+      cy.url().should("contain", "/view");
+      cy.wait(1000);
+      cy.contains("Pause").click();
 
       cy.request({
         method: "POST",
@@ -100,32 +95,33 @@ describe(
         },
       }).then(({ body }) => {
         cy.wait(1000);
+        expect(body[0]).to.equal(undefined);
+        cy.contains("Resume").click();
         cy.request({
           method: "POST",
+          url: `${Cypress.env("AxiosURL")}events`,
           headers: {
             Authorization: `Api-Key ${userAPIkey}`,
           },
-          url: `${Cypress.env("AxiosURL")}events/job-status/slack`,
           body: {
-            jobId: body[0],
+            correlationKey: "slackId",
+            correlationValue: slackTemplate.slackUid,
+            event: "1",
           },
         }).then(({ body }) => {
           cy.wait(1000);
-          expect(body).to.equal("completed");
           cy.request({
             method: "POST",
-            url: `${Cypress.env("AxiosURL")}events`,
             headers: {
               Authorization: `Api-Key ${userAPIkey}`,
             },
+            url: `${Cypress.env("AxiosURL")}events/job-status/slack`,
             body: {
-              correlationKey: "slackId",
-              correlationValue: slackTemplate.slackUid,
-              event: "2",
+              jobId: body[0],
             },
           }).then(({ body }) => {
-            expect(body[0]).to.equal(null);
             cy.wait(1000);
+            expect(body).to.equal("completed");
             cy.request({
               method: "POST",
               url: `${Cypress.env("AxiosURL")}events`,
@@ -135,21 +131,28 @@ describe(
               body: {
                 correlationKey: "slackId",
                 correlationValue: slackTemplate.slackUid,
-                event: "1",
+                event: "2",
               },
-            }).then(({ body }) => {
+            }).then(() => {
+              cy.wait(1000);
+              cy.contains("Stop").click();
+              cy.wait(1000);
+              cy.contains("Yes").click();
               cy.wait(1000);
               cy.request({
                 method: "POST",
+                url: `${Cypress.env("AxiosURL")}events`,
                 headers: {
                   Authorization: `Api-Key ${userAPIkey}`,
                 },
-                url: `${Cypress.env("AxiosURL")}events/job-status/slack`,
                 body: {
-                  jobId: body[0],
+                  correlationKey: "slackId",
+                  correlationValue: slackTemplate.slackUid,
+                  event: "1",
                 },
               }).then(({ body }) => {
-                expect(body).to.equal("completed");
+                cy.wait(1000);
+                expect(body[0]).to.equal(undefined);
               });
             });
           });
