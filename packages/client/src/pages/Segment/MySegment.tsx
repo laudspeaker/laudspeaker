@@ -454,6 +454,7 @@ const MySegment = ({
           </div>
           <div className="flex justify-end">
             <GenericButton
+              id="saveSegmentParams"
               onClick={handleSubmit}
               style={{
                 maxWidth: "200px",
