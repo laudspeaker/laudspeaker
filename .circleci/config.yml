@@ -1,6 +1,4 @@
 version: 2.1
-orbs:
-  cypress: cypress-io/cypress@1
 jobs:
   build_and_deploy:
     docker:
@@ -29,6 +27,7 @@ jobs:
   test:
     docker:
       - image: circleci/node:16
+      - image: cypress/base:14.16.0
     steps:
       - checkout
       - cypress/run
