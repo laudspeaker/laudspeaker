@@ -40,11 +40,11 @@ jobs:
             docker pull postgres:14.4-alpine
             docker pull redis:alpine
             docker pull mongo:latest
-            docker run redis:alpine -p 6379:6379 -e REDIS_REPLICATION_MODE='master'
-            docker run postgres:14.4-alpine -p 5432:5432 -e'POSTGRES_USER='postgres' -e POSTGRES_PASSWORD='postgres' -e POSTGRES_DB='laudspeaker'
-            docker run mongo:latest -p 27017:27017
-            docker run test -p 3000:80
-            docker run api-test -p 3001:3001
+            docker run -p 6379:6379 --name redis -d redis:alpine redis-server --save 60 1 --loglevel warning
+            docker run -p 5432:5432 -e POSTGRES_USER=postgres -e POSTGRES_HOST_AUTH_METHOD=trust -e POSTGRES_DB=laudspeaker postgres:14.4-alpine
+            docker run -p 27017:27017 mongo:latest
+            docker run -p 3000:80 test
+            docker run -p 3001:3001 api-test
       - run: npm install
       - run: npm run test
       - run: npm run test:e2e:client
