@@ -6,6 +6,7 @@ COPY ./packages/server/package.json /app
 RUN npm install
 COPY . /app
 RUN npm run build:server
+RUN npm run typeorm:run
 
 FROM node:16 As Production
 ARG NODE_ENV=production
