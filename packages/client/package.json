@@ -54,7 +54,7 @@
     "start": "env-cmd -f .env react-scripts start",
     "build:staging": "env-cmd --silent -f .env.staging react-scripts build",
     "build:prod": "env-cmd --silent -f .env.prod react-scripts build",
-    "test": "react-scripts test --passWithNoTests && npm run test:e2e",
+    "test": "react-scripts test --passWithNoTests",
     "test:e2e": "npx cypress run",
     "npm run test:components": "",
     "cypress:open": "cypress open",

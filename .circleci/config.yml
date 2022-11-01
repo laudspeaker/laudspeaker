@@ -33,7 +33,9 @@ jobs:
           version: 20.10.14
           docker_layer_caching: true
       - run: npm install
+      - run: npm run build
       - run: npm run test
+      - run: concurrently 'npm run start' 'npm run test:e2e:client'
 workflows:
   pull_request:
     jobs:
