@@ -1,4 +1,6 @@
 version: 2.1
+orbs:
+  cypress: cypress-io/cypress@1
 jobs:
   build_and_deploy:
     docker:
@@ -29,6 +31,7 @@ jobs:
       - image: circleci/node:16
     steps:
       - checkout
+      - cypress/run
       - setup_remote_docker:
           version: 20.10.14
           docker_layer_caching: true
@@ -40,7 +43,7 @@ jobs:
             docker pull postgres:14.4-alpine
             docker pull redis:alpine
             docker pull mongo:latest
-            docker run -p 6379:6379 --name redis -d redis:alpine redis-server --save 60 1 --loglevel warning
+            docker run -p 6379:6379 -d redis:alpine redis-server --save 60 1 --loglevel warning
             docker run -p 5432:5432 -d -e POSTGRES_USER=postgres -e POSTGRES_HOST_AUTH_METHOD=trust -e POSTGRES_DB=laudspeaker postgres:14.4-alpine
             docker run -d -p 27017:27017 mongo:latest
             docker run -d -p 3000:80 test
