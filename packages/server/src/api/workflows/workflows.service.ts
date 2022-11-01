@@ -42,7 +42,8 @@ export class WorkflowsService {
     take = 100,
     skip = 0,
     orderBy?: keyof Workflow,
-    orderType?: 'asc' | 'desc'
+    orderType?: 'asc' | 'desc',
+    showDisabled?: boolean
   ): Promise<{ data: Workflow[]; totalPages: number }> {
     const totalPages = Math.ceil(
       (await this.workflowsRepository.count({
@@ -54,7 +55,10 @@ export class WorkflowsService {
       orderOptions[orderBy] = orderType;
     }
     const workflows = await this.workflowsRepository.find({
-      where: { ownerId: (<Account>account).id },
+      where: {
+        ownerId: (<Account>account).id,
+        isDeleted: In([!!showDisabled, false]),
+      },
       order: orderOptions,
       take: take < 100 ? take : 100,
       skip,
@@ -555,5 +559,18 @@ export class WorkflowsService {
       isStopped: value,
     });
     return value;
+  }
+
+  async markFlowDeleted(workflowId: string) {
+    await this.workflowsRepository.update(
+      { id: workflowId },
+      {
+        isActive: true,
+        isDeleted: true,
+        isPaused: true,
+        isStopped: true,
+      }
+    );
+    return;
   }
 }

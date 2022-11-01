@@ -12,6 +12,7 @@ import {
   ClassSerializerInterceptor,
   UseInterceptors,
   Req,
+  Post,
   Query,
 } from '@nestjs/common';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
@@ -22,6 +23,7 @@ import { Request } from 'express';
 import { StartWorkflowDto } from './dto/start-workflow.dto';
 import { WorkflowStatusUpdateDTO } from './dto/workflow-status-update.dto';
 import { Workflow } from './entities/workflow.entity';
+import { DeleteWorkflowDto } from './dto/delete-flow.dto';
 
 @Controller('workflows')
 export class WorkflowsController {
@@ -39,14 +41,16 @@ export class WorkflowsController {
     @Query('take') take?: string,
     @Query('skip') skip?: string,
     @Query('orderBy') orderBy?: keyof Workflow,
-    @Query('orderType') orderType?: 'asc' | 'desc'
+    @Query('orderType') orderType?: 'asc' | 'desc',
+    @Query('showDisabled') showDisabled?: boolean
   ) {
     return this.workflowsService.findAll(
       <Account>user,
       take && +take,
       skip && +skip,
       orderBy,
-      orderType
+      orderType,
+      showDisabled
     );
   }
 
@@ -131,10 +135,19 @@ export class WorkflowsController {
     }
   }
 
+  @Post('delete')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor)
+  async delete(@Body() deleteWorkflowDto: DeleteWorkflowDto) {
+    return await this.workflowsService.markFlowDeleted(
+      deleteWorkflowDto.workflowId
+    );
+  }
+
   @Delete(':name')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
-  remove(@Req() { user }: Request, @Param('name') name: string) {
+  async remove(@Req() { user }: Request, @Param('name') name: string) {
     return this.workflowsService.remove(<Account>user, name);
   }
 }

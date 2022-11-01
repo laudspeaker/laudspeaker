@@ -279,20 +279,6 @@ export default function OnboardingBeta() {
                           </>
                         )}
                         <Input
-                          name="sendingName"
-                          id="sendingName"
-                          label="Sending name"
-                          value={integrationsData.sendingName}
-                          onChange={handleIntegrationsDataChange}
-                        />
-                        <Input
-                          name="sendingEmail"
-                          id="sendingEmail"
-                          label="Sending email"
-                          value={integrationsData.sendingEmail}
-                          onChange={handleIntegrationsDataChange}
-                        />
-                        <Input
                           isRequired
                           value={privateApiKey}
                           label="Private API Key"
@@ -334,6 +320,24 @@ export default function OnboardingBeta() {
                             },
                           }}
                         />
+                        <Input
+                          name="sendingName"
+                          id="sendingName"
+                          label="Sending name"
+                          value={integrationsData.sendingName}
+                          onChange={handleIntegrationsDataChange}
+                        />
+                        <div className="relative">
+                          <Input
+                            name="sendingEmail"
+                            id="sendingEmail"
+                            label="Sending email"
+                            value={integrationsData.sendingEmail}
+                            onChange={handleIntegrationsDataChange}
+                            className="pr-[150px]"
+                            endText="@laudspeaker.com"
+                          />
+                        </div>
                       </div>
                       <div className="bg-gray-50 px-4 py-3 text-right sm:px-6">
                         <button

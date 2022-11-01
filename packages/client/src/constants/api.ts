@@ -20,6 +20,7 @@ export default {
   getAllPeople: "/customers",
   flow: "/workflows",
   startFlow: "/workflows/start",
+  deleteFlow: "/workflows/delete",
   slackInstall: "/slack/install",
   syncPosthog: "/customers/importph",
 };

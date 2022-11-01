@@ -87,7 +87,7 @@ const ProfileForm = () => {
         draggable: false,
         progress: undefined,
         theme: "colored",
-        className: "!bg-emerald-500",
+        className: "!bg-cyan-500",
         onClose: () => setIsCopied(false),
       });
     }
@@ -167,7 +167,7 @@ const ProfileForm = () => {
             type="text"
             name="firstName"
             id="firstName"
-            className="block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 sm:text-sm"
+            className="block w-full rounded-md border-gray-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm"
             placeholder="Enter your first name"
             required
             value={values.firstName}
@@ -188,7 +188,7 @@ const ProfileForm = () => {
             type="text"
             name="lastName"
             id="lastName"
-            className="block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 sm:text-sm"
+            className="block w-full rounded-md border-gray-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm"
             placeholder="Enter your last name"
             required
             value={values.lastName}
@@ -209,7 +209,7 @@ const ProfileForm = () => {
             type="password"
             name="password"
             id="password"
-            className="block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 sm:text-sm"
+            className="block w-full rounded-md border-gray-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm"
             placeholder="Enter new password"
             required
             value={values.password}
@@ -230,7 +230,7 @@ const ProfileForm = () => {
             type="password"
             name="confirmPassword"
             id="confirmPassword"
-            className="block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 sm:text-sm"
+            className="block w-full rounded-md border-gray-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm"
             placeholder="Enter new password"
             required
             value={values.confirmPassword}

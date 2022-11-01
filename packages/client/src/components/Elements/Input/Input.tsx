@@ -24,6 +24,7 @@ export interface InputProps {
   labelClass?: string;
   onBlur?: () => void;
   ref?: any;
+  endText?: string;
 }
 
 const Input = (props: InputProps) => {
@@ -50,6 +51,7 @@ const Input = (props: InputProps) => {
     value,
     onBlur,
     style,
+    endText,
   } = props;
   return (
     <>
@@ -60,23 +62,32 @@ const Input = (props: InputProps) => {
         >
           {label}
         </label>
-        <input
-          required={isRequired}
-          type={type || "text"}
-          name={name}
-          id={id}
-          ref={inputRef}
-          value={value}
-          onChange={onChange}
-          onKeyDown={onKeyDown}
-          onBlur={onBlur}
-          disabled={disabled}
-          className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:!border-cyan-500 focus:!ring-cyan-500 sm:text-sm ${
-            className ? className : ""
-          }`}
-          placeholder={placeholder}
-          style={style}
-        />
+        <div className="relative">
+          <input
+            required={isRequired}
+            type={type || "text"}
+            name={name}
+            id={id}
+            ref={inputRef}
+            value={value}
+            onChange={onChange}
+            onKeyDown={onKeyDown}
+            onBlur={onBlur}
+            disabled={disabled}
+            className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:!border-cyan-500 focus:!ring-cyan-500 sm:text-sm ${
+              className ? className : ""
+            }`}
+            placeholder={placeholder}
+            style={style}
+          />
+          {endText && (
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+              <span className="text-gray-500 sm:text-sm" id="price-currency">
+                {endText}
+              </span>
+            </div>
+          )}
+        </div>
       </div>
     </>
   );

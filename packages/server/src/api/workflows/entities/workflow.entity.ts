@@ -37,6 +37,9 @@ export class Workflow {
   @Column('boolean', { default: false })
   isStopped: boolean;
 
+  @Column('boolean', { default: false })
+  isDeleted: boolean;
+
   @Column('text', { nullable: false, array: true, default: [] })
   audiences: string[];
 

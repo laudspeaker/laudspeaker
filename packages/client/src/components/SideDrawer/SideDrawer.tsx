@@ -123,8 +123,10 @@ export default function ResponsiveDrawer(props: Props) {
   const drawer = (): React.ReactNode => {
     return (
       <div>
-        <div className="h-[50px] bg-[#4FA198] flex-col justify-between px-[20px] py-[15px]">
-          <div className="text-[16px] text-white">{name}</div>
+        <div className="h-[50px] bg-cyan-700 flex-col justify-between px-[20px] py-[15px]">
+          <div className="text-[16px] text-white text-ellipsis overflow-hidden max-w-[140px]">
+            {name}
+          </div>
           {generateMenu(dataSubArray)}
         </div>
       </div>
