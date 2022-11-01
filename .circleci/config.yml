@@ -42,8 +42,8 @@ jobs:
             docker run redis:alpine -p 6379:6379 -e REDIS_REPLICATION_MODE='master'
             docker run postgres:14.4-alpine -p 5432:5432 -e'POSTGRES_USER='postgres' -e POSTGRES_PASSWORD='postgres' -e POSTGRES_DB='laudspeaker'
             docker run mongo:latest -p 27017:27017
-            docker run test
-            docker run api-test
+            docker run test -p 3000:80
+            docker run api-test -p 3001:3001
       - run: npm install
       - run: npm run test
       - run: npm run test:e2e:client
