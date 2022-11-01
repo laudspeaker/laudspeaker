@@ -26,7 +26,6 @@ jobs:
             aws ecs update-service --cluster frontend --service frontend --force-new-deployment
   test:
     docker:
-      - image: cypress/base:14.16.0
       - image: circleci/node:16
     steps:
       - checkout
@@ -48,6 +47,7 @@ jobs:
             docker run -d -p 3001:3001 api-test
       - run: npm install
       # - run: npm run test
+      - run: apt-get install libgtk2.0-0 libgtk-3-0 libgbm-dev libnotify-dev libgconf-2-4 libnss3 libxss1 libasound2 libxtst6 xauth xvfb
       - run: npm run test:e2e:client
 workflows:
   pull_request:
