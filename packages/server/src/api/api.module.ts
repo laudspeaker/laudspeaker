@@ -1,4 +1,4 @@
-import { Inject, Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { AuthModule } from './auth/auth.module';
 import { AccountsModule } from './accounts/accounts.module';
 import { CustomersModule } from './customers/customers.module';
@@ -94,7 +94,7 @@ export class ApiModule {
       user.sendingName = 'sname';
       user.sendingDomain =
         'sandboxd7ae9069e24b4e8dbb5ca3ba7d4bed04.mailgun.org';
-      user.mailgunAPIKey = 'e52ef0112c0c7394b273ba3d3e25474c-4dd50799-4a315eeb';
+      user.mailgunAPIKey = process.env.MAILGUN_API_KEY;
       user.expectedOnboarding = ['Slack'];
       user.currentOnboarding = ['Slack'];
       user.onboarded = true;
