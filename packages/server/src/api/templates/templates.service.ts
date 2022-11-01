@@ -94,7 +94,7 @@ export class TemplatesService {
           to: customer.phEmail ? customer.phEmail : customer.email,
           tags,
           subject: template.subject,
-          text: template.text,
+          text: event?.payload ? event.payload : template.text,
         });
         break;
       case 'slack':
@@ -108,7 +108,7 @@ export class TemplatesService {
           token: installation.installation.bot.token,
           args: {
             channel: customer.slackId,
-            text: template.slackMessage,
+            text: event?.payload ? event.payload : template.slackMessage,
             tags,
           },
         });

@@ -139,6 +139,7 @@ export class EventsController {
             correlationValue: currentEvent.userId,
             event: currentEvent.event,
             source: 'posthog',
+            payload: undefined,
           };
 
           //currentEvent

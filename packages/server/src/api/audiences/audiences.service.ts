@@ -338,7 +338,6 @@ export class AudiencesService {
     if (from) {
       try {
         fromAud = await this.findOne(account, from);
-        //this.logger.debug('Audience: ' + fromAud);
       } catch (err) {
         this.logger.error('Error: ' + err);
         return Promise.reject(err);
@@ -347,7 +346,6 @@ export class AudiencesService {
     if (to) {
       try {
         toAud = await this.findOne(account, to);
-        //this.logger.debug('Audience: ' + toAud);
       } catch (err) {
         this.logger.error('Error: ' + err);
         return Promise.reject(err);
