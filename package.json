@@ -28,7 +28,8 @@
     "build:server": "npm run build -w packages/server",
     "start": "concurrently 'npm run start:client' 'npm run start:server'",
     "start:client": "npm run start -w packages/client",
-    "start:server": "npm run start:dev -w packages/server"
+    "start:server": "npm run start:dev -w packages/server",
+    "migrations": "npm run typeorm:run -w packages/server"
   },
   "author": "",
   "license": "MIT",
