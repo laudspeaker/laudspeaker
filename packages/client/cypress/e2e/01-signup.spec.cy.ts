@@ -3,6 +3,11 @@ import credentials from "../fixtures/credentials.json";
 const { email, password } = credentials;
 
 describe("signup", () => {
+  beforeEach(() => {
+    cy.request("http://localhost:3001/tests/reset-tests");
+    cy.wait(1000);
+  });
+
   it("passes", () => {
     cy.visit("/");
     cy.clearCookies();

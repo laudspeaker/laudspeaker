@@ -6,13 +6,18 @@ import credentials from "../fixtures/credentials.json";
 import { loginFunc } from "../test-helpers/loginFunc";
 import { tamplatesFunc } from "../test-helpers/templatesFunc";
 
-const { email, password, slackTemplate, emailTemplate, userAPIkey } =
+const { email, password, slackTemplate, emailTemplate } =
   credentials.MessageHitUser;
 
 describe(
   "Journey with slack triggered and created",
   { env: { AxiosURL: "http://localhost:3001/" } },
   () => {
+    beforeEach(() => {
+      cy.request("http://localhost:3001/tests/reset-tests");
+      cy.wait(1000);
+    });
+
     it("passes", () => {
       loginFunc(email, password);
       tamplatesFunc(slackTemplate, emailTemplate);

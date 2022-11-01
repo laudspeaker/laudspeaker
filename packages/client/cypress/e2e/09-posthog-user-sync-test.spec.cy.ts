@@ -5,6 +5,11 @@ import credentials from "../fixtures/credentials.json";
 const { email, password } = credentials.MessageHitUser;
 
 describe("Posthog sync", () => {
+  beforeEach(() => {
+    cy.request("http://localhost:3001/tests/reset-tests");
+    cy.wait(1000);
+  });
+
   it("passes", () => {
     loginFunc(email, password);
     cy.wait(2000);

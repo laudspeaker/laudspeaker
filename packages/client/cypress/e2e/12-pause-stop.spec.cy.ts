@@ -12,6 +12,11 @@ describe(
   "Pause and stop",
   { env: { AxiosURL: "http://localhost:3001/" } },
   () => {
+    beforeEach(() => {
+      cy.request("http://localhost:3001/tests/reset-tests");
+      cy.wait(1000);
+    });
+
     it("passes", () => {
       loginFunc(email, password);
       tamplatesFunc(slackTemplate, emailTemplate);
@@ -51,7 +56,7 @@ describe(
       cy.contains("Add Condition Or Group").click();
 
       cy.get('[data-option="events"]').click();
-      cy.get("#events").type("1");
+      cy.get("#events").type("A");
       cy.get("[data-savetriggerreator] > button").click();
 
       cy.get('[data-isprimary="true"]')
@@ -65,7 +70,7 @@ describe(
       cy.contains("Add Condition Or Group").click();
 
       cy.get('[data-option="events"]').click();
-      cy.get("#events").type("2");
+      cy.get("#events").type("B");
       cy.get("[data-savetriggerreator] > button").click();
 
       cy.get('[data-isprimary="false"] [data-handlepos="bottom"]').drag(
@@ -106,7 +111,7 @@ describe(
           body: {
             correlationKey: "slackId",
             correlationValue: slackTemplate.slackUid,
-            event: "1",
+            event: "A",
           },
         }).then(({ body }) => {
           cy.wait(1000);
@@ -131,7 +136,7 @@ describe(
               body: {
                 correlationKey: "slackId",
                 correlationValue: slackTemplate.slackUid,
-                event: "2",
+                event: "B",
               },
             }).then(() => {
               cy.wait(1000);
@@ -148,7 +153,7 @@ describe(
                 body: {
                   correlationKey: "slackId",
                   correlationValue: slackTemplate.slackUid,
-                  event: "1",
+                  event: "A",
                 },
               }).then(({ body }) => {
                 cy.wait(1000);

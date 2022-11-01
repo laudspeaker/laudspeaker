@@ -45,7 +45,7 @@ describe("onboarding", () => {
     cy.get(".mt-5 > .bg-gray-50 > .inline-flex").click();
 
     cy.reload();
-    cy.wait(1000);
+    cy.wait(5000);
 
     cy.get("#sendingName").should("contain.value", "SendingName");
     cy.get("#sendingEmail").should("contain.value", "SendingEmail");

@@ -10,9 +10,14 @@ const { email, password, slackTemplate, emailTemplate, userAPIkey } =
   credentials.MessageHitUser;
 
 describe(
-  "Journey with slack triggered and created",
+  "Multiple triggers",
   { env: { AxiosURL: "http://localhost:3001/" } },
   () => {
+    beforeEach(() => {
+      cy.request("http://localhost:3001/tests/reset-tests");
+      cy.wait(1000);
+    });
+
     it("passes", () => {
       loginFunc(email, password);
       tamplatesFunc(slackTemplate, emailTemplate);

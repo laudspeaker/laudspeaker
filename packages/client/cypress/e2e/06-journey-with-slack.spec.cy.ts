@@ -11,6 +11,11 @@ describe(
   "Journey with slack triggered and created",
   { env: { AxiosURL: "http://localhost:3001/" } },
   () => {
+    beforeEach(() => {
+      cy.request("http://localhost:3001/tests/reset-tests");
+      cy.wait(1000);
+    });
+
     it("passes", () => {
       loginFunc(email, password);
 

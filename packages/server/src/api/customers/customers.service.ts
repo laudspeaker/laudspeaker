@@ -86,7 +86,7 @@ export class CustomersService {
 
   async addPhCustomers(data: any, account: Account) {
     for (let index = 0; index < data.length; index++) {
-      let addedBefore = await this.CustomerModel.find({
+      const addedBefore = await this.CustomerModel.find({
         ownerId: (<Account>account).id,
         posthogId: {
           $in: [...data[index]['distinct_ids']],
@@ -94,7 +94,7 @@ export class CustomersService {
       }).exec();
       let createdCustomer: CustomerDocument;
       //create customer only if we don't see before, otherwise update data
-      if (addedBefore.length == 0) {
+      if (addedBefore.length === 0) {
         createdCustomer = new this.CustomerModel({});
       } else {
         createdCustomer = addedBefore[0];
@@ -111,7 +111,7 @@ export class CustomersService {
           data[index]?.properties.$geoip_time_zone;
       }
       if (account['posthogEmailKey'] != null) {
-        let emailKey = account['posthogEmailKey'][0];
+        const emailKey = account['posthogEmailKey'][0];
         if (data[index]?.properties[emailKey]) {
           createdCustomer['phEmail'] = data[index]?.properties[emailKey];
         }
