@@ -65,33 +65,6 @@ describe(
 
       cy.visit("/flow");
       cy.wait(500);
-
-      cy.request({
-        method: "POST",
-        url: `${Cypress.env("AxiosURL")}events`,
-        headers: {
-          Authorization: `Api-Key ${userAPIkey}`,
-        },
-        body: {
-          correlationKey: "slackId",
-          correlationValue: slackTemplate.slackUid,
-          event: slackTemplate.eventName,
-        },
-      }).then(({ body }) => {
-        cy.wait(1000);
-        cy.request({
-          method: "POST",
-          headers: {
-            Authorization: `Api-Key ${userAPIkey}`,
-          },
-          url: `${Cypress.env("AxiosURL")}events/job-status/slack`,
-          body: {
-            jobId: body[0],
-          },
-        }).then(({ body }) => {
-          expect(body).to.equal("completed");
-        });
-      });
     });
   }
 );
