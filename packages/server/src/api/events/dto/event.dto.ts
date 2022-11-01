@@ -22,4 +22,8 @@ export class EventDto {
   @IsNotEmpty()
   @IsOptional()
   public source: string;
+
+  @IsString()
+  @IsOptional()
+  public payload: string;
 }
