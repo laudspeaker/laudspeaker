@@ -32,10 +32,21 @@ jobs:
       - setup_remote_docker:
           version: 20.10.14
           docker_layer_caching: true
+      - run:
+          command: |
+            docker build -f Dockerfile.client -t test .
+            docker build -f Dockerfile.server -t api-test .
+            docker pull postgres:14.4-alpine
+            docker pull redis:alpine
+            docker pull mongo:latest
+            docker run redis:alpine -p 6379:6379 -e REDIS_REPLICATION_MODE='master'
+            docker run postgres:14.4-alpine -p 5432:5432 -e'POSTGRES_USER='postgres' -e POSTGRES_PASSWORD='postgres' -e POSTGRES_DB='laudspeaker'
+            docker run mongo:latest -p 27017:27017
+            docker run test
+            docker run api-test
       - run: npm install
-      - run: npm run build
       - run: npm run test
-      - run: concurrently 'npm run start' 'npm run test:e2e:client'
+      - run: npm run test:e2e:client
 workflows:
   pull_request:
     jobs:
