@@ -26,8 +26,8 @@ jobs:
             aws ecs update-service --cluster frontend --service frontend --force-new-deployment
   test:
     docker:
-      - image: circleci/node:16
       - image: cypress/base:14.16.0
+      - image: circleci/node:16
     steps:
       - checkout
       - setup_remote_docker:
