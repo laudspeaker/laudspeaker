@@ -193,35 +193,6 @@ const Flow = () => {
     [setNodes, triggers, nodes]
   );
 
-  useEffect(() => {
-    const filteredNewNodes = nodes.filter((node) => node.data.isNew);
-    if (filteredNewNodes.length) {
-      const edgeData: Edge[] = [];
-      for (let i = 0; i < filteredNewNodes.length; i++) {
-        edgeData.push({
-          id: uuid(),
-          source: selectedNode,
-          target: filteredNewNodes[i].id,
-          markerEnd: {
-            type: MarkerType.Arrow,
-            strokeWidth: 2,
-            height: 20,
-            width: 20,
-          },
-          type: ConnectionLineType.SmoothStep,
-        });
-      }
-
-      setEdges([...edges, ...edgeData]);
-
-      const removedIsNewNodes = nodes.map((node) => {
-        delete node?.data?.isNew;
-        return node;
-      });
-      setNodes(removedIsNewNodes);
-    }
-  }, [nodes]);
-
   const [needsUpdate, setNeedsUpdate] = useState(false);
 
   const forceRerenderSelectedNode = () => {
