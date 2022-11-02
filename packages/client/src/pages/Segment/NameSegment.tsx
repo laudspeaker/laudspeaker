@@ -35,7 +35,7 @@ const NameSegment = ({
   const [segmentForm, setSegmentForm] = useState<INameSegmentForm>({
     isDynamic: true,
     name: "",
-    description: "",
+    description: isPrimary ? "initial step" : "",
     isPrimary: isPrimary,
   });
 

@@ -57,7 +57,7 @@ const NameJourney = ({ onSubmit, isPrimary }: INameSegment) => {
           <h3 className="font-bold text-[25px] font-[Poppins] text-[#28282E] leading-[38px]">
             Name your Journey
           </h3>
-          <form>
+          <form onSubmit={handleSubmit}>
             <Input
               isRequired
               value={segmentForm.name}

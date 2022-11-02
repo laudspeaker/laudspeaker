@@ -24,6 +24,7 @@ import { useParams } from "react-router-dom";
 import ViewNode from "./ViewNode";
 import ApiService from "services/api.service";
 import { ApiConfig } from "./../../constants";
+import TriggerModal from "pages/FlowBuilder/TriggerModal";
 
 const Flow = () => {
   const { name } = useParams();
@@ -36,6 +37,38 @@ const Flow = () => {
   const [isStopped, setIsStopped] = useState(false);
   const [isDataLoaded, setIsDataLoaded] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedTrigger, setSelectedTrigger] = useState<any>(undefined);
+  const [triggerModalOpen, settriggerModalOpen] = useState<boolean>(false);
+
+  const onTriggerSelect = (e: any, triggerId: any, triggersList: any) => {
+    const trigger = triggersList.find((item: any) => item.id === triggerId);
+    setSelectedTrigger(trigger);
+    settriggerModalOpen(true);
+  };
+
+  const handleTriggerModalOpen = (e: any) => {
+    settriggerModalOpen(!triggerModalOpen);
+  };
+
+  const onSaveTrigger = (data: any) => {
+    settriggerModalOpen(false);
+    selectedTrigger.properties = data;
+  };
+
+  const onDeleteTrigger = (data: any) => {
+    const selectedNodeData = nodes.find((node) =>
+      node.data.triggers.find((item: any) => item.id === data)
+    );
+    const newTriggersData: any = selectedNodeData?.data?.triggers.filter(
+      (item: any) => item.id !== data
+    );
+    if (selectedNodeData !== undefined) {
+      selectedNodeData.data.triggers = newTriggersData;
+      setNodes([...nodes]);
+      setEdges(edges.filter((edge) => edge.sourceHandle !== data));
+      settriggerModalOpen(false);
+    }
+  };
 
   useLayoutEffect(() => {
     const populateFlowBuilder = async () => {
@@ -47,6 +80,10 @@ const Flow = () => {
         const updatedNodes = data.visualLayout.nodes.map((item: any) => {
           return {
             ...item,
+            data: {
+              ...item.data,
+              onTriggerSelect,
+            },
           };
         });
         setNodes(updatedNodes);
@@ -265,6 +302,17 @@ const Flow = () => {
         </div>
         <Background size={0} />
       </ReactFlow>
+      {triggerModalOpen && (
+        <TriggerModal
+          triggerModalOpen={triggerModalOpen}
+          handleTriggerModalOpen={handleTriggerModalOpen}
+          selectedTrigger={selectedTrigger}
+          onSaveTrigger={onSaveTrigger}
+          onDeleteTrigger={onDeleteTrigger}
+          isCollapsible={true}
+          onClose={() => settriggerModalOpen(false)}
+        />
+      )}
     </div>
   );
 };
