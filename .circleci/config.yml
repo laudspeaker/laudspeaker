@@ -37,7 +37,16 @@ jobs:
       - run:
           command: |
             npm i
-            $TEST_ENV > .env
+            "$MAGIC_EMAIL_KEY" >> .env
+            "$MAGIC_EMAIL_DOMAIN" >> .env
+            "$SLACK_CLIENT_ID" >> .env
+            "$SLACK_CLIENT_SECRET" >> .env
+            "$SLACK_SIGNING_SECRET" >> .env
+            "$SENDING_TO_TEST_EMAIL" >> .env
+            "$TESTS_POSTHOG_PROJECT_ID" >> .env
+            "$TESTS_POSTHOG_API_KEY" >> .env
+            "$TESTS_POSTHOG_HOST_URL" >> .env
+            "$MAILGUN_API_KEY" >> .env
             docker-compose -f .\docker-compose.dev.yml up -d
       - run: npm install
       - run: docker ps
