@@ -1,0 +1,51 @@
+version: '3.7'
+services:
+  frontend:
+    build:
+      dockerfile: ./Dockerfile.dev.client
+    depends_on:
+      - backend
+    ports:
+      - "3000:80"
+  backend:
+    build: 
+      dockerfile: ./Dockerfile.dev.server
+    ports:
+      - "3001:3001"
+    depends_on:
+      - redis
+      - postgres
+      - mongo
+    environment:
+      - MAGIC_EMAIL_KEY=${MAGIC_EMAIL_KEY}
+      - MAGIC_EMAIL_DOMAIN=${MAGIC_EMAIL_DOMAIN}
+      - SLACK_CLIENT_ID=${SLACK_CLIENT_ID}
+      - SLACK_CLIENT_SECRET=${SLACK_CLIENT_SECRET}
+      - SLACK_SIGNING_SECRET=${SLACK_SIGNING_SECRET}
+      - SENDING_TO_TEST_EMAIL=${SENDING_TO_TEST_EMAIL}
+      - TESTS_POSTHOG_PROJECT_ID=${TESTS_POSTHOG_PROJECT_ID}
+      - TESTS_POSTHOG_API_KEY=${TESTS_POSTHOG_API_KEY}
+      - TESTS_POSTHOG_HOST_URL=${TESTS_POSTHOG_HOST_URL}
+      - MAILGUN_API_KEY=${MAILGUN_API_KEY}
+  redis:
+    image: redis:alpine
+    command: redis-server
+    ports:
+     - "6379:6379"
+    environment:
+     - REDIS_REPLICATION_MODE=master
+  
+  postgres:
+    image: postgres:14.4-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: laudspeaker
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+
+  mongo:
+    image: 'mongo:latest'
+    ports:
+      - "27017:27017"

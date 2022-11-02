@@ -37,16 +37,8 @@ jobs:
       - run:
           command: |
             npm i
-            docker build -f Dockerfile.dev.client -t test .
-            docker build -f Dockerfile.dev.server -t api-test .
-            docker pull postgres:14.4-alpine
-            docker pull redis:alpine
-            docker pull mongo:latest
-            docker run -p 6379:6379 -d redis:alpine redis-server --save 60 1 --loglevel warning
-            docker run -p 5432:5432 -d -e POSTGRES_USER=postgres -e POSTGRES_HOST_AUTH_METHOD=trust -e POSTGRES_DB=laudspeaker postgres:14.4-alpine
-            docker run -d -p 27017:27017 mongo:latest
-            docker run -d -p 3000:80 test
-            docker run -d -p 3001:3001 api-test
+            $TEST_ENV > .env
+            docker-compose -f .\docker-compose.dev.yml up -d
       - run: npm install
       - run: docker ps
       # - run: npm run test

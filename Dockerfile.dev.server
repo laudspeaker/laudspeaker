@@ -19,6 +19,8 @@ ENV DATABASE_PASSWORD=postgres
 ENV DATABASE_PORT=5432
 ENV REDIS_HOST=redis
 ENV REDIS_PORT=6379
+ENV JWT_KEY=dev
+ENV JWT_EXPIRES=365d
 ENV MONGOOSE_URL=mongodb://mongo:27017/nest
 WORKDIR /app
 COPY ./packages/server/package.json /app
