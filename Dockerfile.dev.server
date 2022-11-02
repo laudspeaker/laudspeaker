@@ -1,0 +1,29 @@
+# To build : docker build -f Dockerfile.prod -t laudspeaker-api:latest .
+# To run: docker run -it -p 3001:3001 --rm laudspeaker-api:latest
+FROM node:16-alpine as build
+WORKDIR /app
+COPY ./packages/server/package.json /app
+COPY ./package-lock.json /app
+RUN npm install
+COPY . /app
+RUN npm run build:server
+
+FROM node:16-alpine As Development
+ARG NODE_ENV=development
+ENV NODE_ENV=${NODE_ENV}
+ENV PORT=3001
+ENV DATABASE_HOST=postgres
+ENV DATABASE_NAME=laudspeaker
+ENV DATABASE_USER=postgres
+ENV DATABASE_PASSWORD=postgres
+ENV DATABASE_PORT=5432
+ENV REDIS_HOST=redis
+ENV REDIS_PORT=6379
+ENV MONGOOSE_URL=mongodb://mongo:27017/nest
+WORKDIR /app
+COPY ./packages/server/package.json /app
+COPY ./package-lock.json /app
+RUN npm install
+COPY --from=build /app/packages/server/dist /app/dist
+EXPOSE 3001
+CMD ["node", "dist/main"]
