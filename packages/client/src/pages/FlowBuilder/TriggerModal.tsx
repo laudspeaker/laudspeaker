@@ -8,6 +8,7 @@ interface ITriggerModal {
   onSaveTrigger: any;
   onDeleteTrigger?: any;
   isCollapsible: boolean;
+  isViewMode?: boolean;
   onClose: () => void;
 }
 const TriggerModal = ({
@@ -17,19 +18,22 @@ const TriggerModal = ({
   onSaveTrigger,
   onDeleteTrigger,
   onClose,
+  isViewMode = false,
   isCollapsible,
 }: ITriggerModal) => {
   return (
     <Modal
       isOpen={!!selectedTrigger}
       panelClass="w-full !max-w-[90%]"
-      closeButtonNeed={false}
+      closeButtonNeed={isViewMode}
+      onClose={isViewMode ? onClose : () => null}
     >
       <div className="w-full bg-[background.paper] border-0 ">
         {selectedTrigger ? (
           <TriggerCreater
             triggerType={selectedTrigger.type}
             trigger={selectedTrigger}
+            isViewMode={isViewMode}
             onSave={(triggerData: any) => onSaveTrigger(triggerData)}
             onDelete={(triggerData: any) => onDeleteTrigger(triggerData)}
           />

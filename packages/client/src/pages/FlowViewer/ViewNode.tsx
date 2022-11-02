@@ -82,7 +82,7 @@ const ViewNode = ({ data, setSelectedTrigger, selectedTrigger }: any) => {
     return data?.messages?.map((message: any) => {
       return (
         <div
-          className="p-[0px_10px]"
+          className="p-[0px_10px] cursor-pointer"
           onClick={handleIconClick(message.type, message.templateId)}
         >
           {messageIcons[message.type as string]}
@@ -209,18 +209,8 @@ const ViewNode = ({ data, setSelectedTrigger, selectedTrigger }: any) => {
                   position={Position.Bottom}
                   id={trigger.id}
                   onClick={(e) => handleTriggerClick(e, trigger.id)}
+                  className="!pointer-events-auto !outline-none !h-[15px] !bg-transparent !w-[20px] !transform-none !bottom-[-4px] !top-auto !left-auto !right-auto !relative"
                   isConnectable={false}
-                  style={{
-                    height: "15px",
-                    background: "transparent",
-                    width: "20px",
-                    transform: "unset",
-                    bottom: "-4px",
-                    top: "auto",
-                    left: "auto",
-                    right: "auto",
-                    position: "relative",
-                  }}
                 >
                   <img
                     src={thunderbolt}
@@ -240,7 +230,10 @@ const ViewNode = ({ data, setSelectedTrigger, selectedTrigger }: any) => {
         }}
       >
         {selectedTrigger ? (
-          <TriggerCreater triggerType={selectedTrigger.type} />
+          <TriggerCreater
+            isViewMode={true}
+            triggerType={selectedTrigger.type}
+          />
         ) : null}
       </div>
       {updateTemplateModalOpen && selectedMessageType && selectedTemplateId && (
@@ -250,6 +243,7 @@ const ViewNode = ({ data, setSelectedTrigger, selectedTrigger }: any) => {
           handleTemplateModalOpen={handleTemplateModalOpen}
           selectedTemplateId={selectedTemplateId}
           isCollapsible={true}
+          isViewMode={true}
           onClose={onTemplateModalClose}
           onTemplateDelete={onTemplateDelete}
         />

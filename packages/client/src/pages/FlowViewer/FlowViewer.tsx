@@ -310,6 +310,7 @@ const Flow = () => {
           onSaveTrigger={onSaveTrigger}
           onDeleteTrigger={onDeleteTrigger}
           isCollapsible={true}
+          isViewMode={true}
           onClose={() => settriggerModalOpen(false)}
         />
       )}

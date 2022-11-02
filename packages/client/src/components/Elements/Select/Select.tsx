@@ -15,7 +15,7 @@ export interface SelectProps {
   name?: string;
   autoWidth?: boolean;
   children?: React.ReactNode;
-  customClass?: Object;
+  customButtonClass?: Object;
   defaultOpen?: boolean;
   defaultValue?: any;
   displayEmpty?: boolean;
@@ -49,7 +49,7 @@ const Select = (props: SelectProps) => {
     children,
     options,
     autoWidth,
-    customClass,
+    customButtonClass,
     defaultOpen,
     defaultValue,
     displayEmpty,
@@ -84,7 +84,9 @@ const Select = (props: SelectProps) => {
           multiple={multipleSelections}
           name={name}
         >
-          <Listbox.Button className="relative min-h-[30px] cursor-pointer w-full rounded-lg bg-white py-2 pl-3 pr-10 text-left shadow-md focus:outline-none focus-visible:border-cyan-500 focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-opacity-75 focus-visible:ring-offset-2 focus-visible:ring-offset-cyan-300 sm:text-sm">
+          <Listbox.Button
+            className={`${customButtonClass} relative min-h-[30px] cursor-pointer w-full rounded-lg bg-white py-2 pl-3 pr-10 text-left shadow-md focus:outline-none focus-visible:border-cyan-500 focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-opacity-75 focus-visible:ring-offset-2 focus-visible:ring-offset-cyan-300 sm:text-sm`}
+          >
             {(renderValue && renderValue(value)) ||
               options.find((item) => item.value === value)?.title ||
               value}

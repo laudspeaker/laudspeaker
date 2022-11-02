@@ -68,6 +68,10 @@ export const transformDataToUI = ({
             })}
             name={id}
             displayEmpty
+            disabled={disabled}
+            customButtonClass={`${
+              disabled && "!bg-gray-200 !cursor-auto opacity-[0.7]"
+            }`}
             onChange={(v) => onChange({ value: v, id, type: "select", isRoot })}
             sx={{
               height: "44px",
@@ -134,6 +138,7 @@ export const transformDataToUI = ({
           onChange={(e) =>
             onChange({ value: e.target.value, id, type: "inputNumber" })
           }
+          disabled={disabled}
           labelShrink
           type={"number"}
           inputProps={{
@@ -164,6 +169,7 @@ export const transformDataToUI = ({
       jsx = (
         <DateRangePicker
           value={value || [new Date(), new Date()]}
+          disabled={disabled}
           onChange={(e) =>
             onChange({
               value: e.target.value,
@@ -186,6 +192,7 @@ export const transformDataToUI = ({
               type: "dateTime",
             })
           }
+          disabled={disabled}
           sx={{
             background: "#fff",
             borderRadius: "22px",
