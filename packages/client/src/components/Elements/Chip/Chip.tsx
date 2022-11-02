@@ -14,7 +14,7 @@ const Chip = ({
   return (
     <div
       onClick={onClick}
-      className={`${wrapperClass} text-[#065F46] bg-[#D1FAE5] cursor-pointer inline-flex justify-center text-[12px] h-[20px] font-medium py-[2px] px-[10px] rounded-[10px]`}
+      className={`${wrapperClass} text-[#065F46] bg-[#D1FAE5] cursor-pointer inline-flex justify-center text-[12px] font-medium py-[2px] px-[10px] rounded-[10px]`}
     >
       <span
         className={`${textClass} overflow-hidden whitespace-nowrap p-0 font-[Poppins]`}

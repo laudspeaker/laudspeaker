@@ -28,6 +28,7 @@ interface ITriggerCreaterProp {
   onSave?: any;
   onDelete?: any;
   hasExitButton?: boolean;
+  isViewMode?: boolean;
 }
 interface Condition {
   attribute: string;
@@ -43,6 +44,7 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
     onDelete,
     trigger,
     hasExitButton,
+    isViewMode,
   } = props;
 
   const getAllResources = async (id: any) => {
@@ -490,6 +492,7 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
           isRoot: data[key]?.isRoot,
           value: data[key]?.value,
           id: key,
+          disabled: isViewMode,
         })
       );
       if (data?.[key]?.children && Object.keys(data?.[key]?.children)?.length) {
@@ -534,6 +537,10 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
                   ]}
                   onChange={handleTimeSelectChange}
                   displayEmpty
+                  disabled={isViewMode}
+                  customButtonClass={`${
+                    isViewMode && "!bg-gray-200 !cursor-auto opacity-[0.7]"
+                  }`}
                   sx={{
                     height: "44px",
                     "& .MuiSelect-select": {
@@ -736,6 +743,10 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
                 ].filter((item) => item.value === triggerType)}
                 onChange={handletriggerType}
                 displayEmpty
+                disabled={isViewMode}
+                customButtonClass={`${
+                  isViewMode && "!bg-gray-200 !cursor-auto opacity-[0.7]"
+                }`}
                 sx={{
                   height: "44px",
                   "& .MuiSelect-select": {
@@ -772,6 +783,10 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
                     options={[{ value: "timeWindow", title: "To" }]}
                     onChange={handletriggerType}
                     displayEmpty
+                    disabled={isViewMode}
+                    customButtonClass={`${
+                      isViewMode && "!bg-gray-200 !cursor-auto opacity-[0.7]"
+                    }`}
                     sx={{
                       height: "44px",
                       "& .MuiSelect-select": {
@@ -795,32 +810,34 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
             </>
           )}
         </div>
-        <div className="flex gap-[10px] justify-end">
-          <div>
-            <GenericButton
-              onClick={deleteRow}
-              style={{
-                maxWidth: "200px",
-                background: "#D3D3D3",
-                width: "200px",
-                color: "#28282E",
-              }}
-            >
-              Delete
-            </GenericButton>
+        {!isViewMode && (
+          <div className="flex gap-[10px] justify-end">
+            <div>
+              <GenericButton
+                onClick={deleteRow}
+                style={{
+                  maxWidth: "200px",
+                  background: "#D3D3D3",
+                  width: "200px",
+                  color: "#28282E",
+                }}
+              >
+                Delete
+              </GenericButton>
+            </div>
+            <div data-savetriggerreator>
+              <GenericButton
+                onClick={handleSubmit}
+                style={{
+                  width: "200px",
+                }}
+                disabled={isButtonDisabled}
+              >
+                Save
+              </GenericButton>
+            </div>
           </div>
-          <div data-savetriggerreator>
-            <GenericButton
-              onClick={handleSubmit}
-              style={{
-                width: "200px",
-              }}
-              disabled={isButtonDisabled}
-            >
-              Save
-            </GenericButton>
-          </div>
-        </div>
+        )}
       </Card>
     </>
   );

@@ -446,6 +446,7 @@ const Flow = () => {
       settriggerModalOpen(false);
     }
   };
+
   const handleTemplateModalOpen = async ({ activeTemplate }: any) => {
     if (activeTemplate == null || activeTemplate == "") {
       setTemplateModalOpen(!templateModalOpen);

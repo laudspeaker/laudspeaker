@@ -73,6 +73,7 @@ const TemplateTable = () => {
           onClose={() => {
             setNameModalOpen(false);
           }}
+          onEnterPress={handleNameSubmit}
         >
           <NameTemplate onSubmit={handleNameSubmit} isPrimary={true} />
         </Modal>

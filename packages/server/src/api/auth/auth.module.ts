@@ -8,6 +8,7 @@ import { AuthHelper } from './auth.helper';
 import { AuthService } from './auth.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { ApiKeyStrategy } from './strategies/apiKey.strategy';
+import { Template } from '../templates/entities/template.entity';
 
 @Module({
   imports: [
@@ -18,7 +19,7 @@ import { ApiKeyStrategy } from './strategies/apiKey.strategy';
         signOptions: { expiresIn: process.env.JWT_EXPIRES },
       }),
     }),
-    TypeOrmModule.forFeature([Account]),
+    TypeOrmModule.forFeature([Account, Template]),
   ],
   controllers: [AuthController],
   providers: [AuthService, AuthHelper, JwtStrategy, ApiKeyStrategy],

@@ -48,22 +48,28 @@ const NameTemplate = ({ onSubmit, isPrimary }: INameSegment) => {
 
   // Pushing state back up to the flow builder
   const handleSubmit: any = async (e: any) => {
-    if (day == "slack") {
-      const navigationLink = "/templates/slack/" + segmentForm.name;
-      navigate(navigationLink);
-    } else if (day == "email") {
-      const navigationLink = "/templates/email/" + segmentForm.name;
-      navigate(navigationLink);
-    } else {
-    }
-    e.preventDefault();
-    if (onSubmit) {
-      onSubmit(segmentForm);
+    if (segmentForm.name && day) {
+      if (day == "slack") {
+        const navigationLink = "/templates/slack/" + segmentForm.name;
+        navigate(navigationLink);
+      } else if (day == "email") {
+        const navigationLink = "/templates/email/" + segmentForm.name;
+        navigate(navigationLink);
+      } else {
+      }
+      e.preventDefault();
+      if (onSubmit) {
+        onSubmit(segmentForm);
+      }
     }
   };
 
   return (
-    <div>
+    <div
+      onKeyDown={(e) => {
+        if (e.key === "Enter") handleSubmit(e);
+      }}
+    >
       <div className="flex items-start justify-center">
         <div className="w-full">
           <h3>Name your Template</h3>
@@ -79,7 +85,10 @@ const NameTemplate = ({ onSubmit, isPrimary }: INameSegment) => {
                 onChange={handleSegmentFormChange}
               />
             </FormControl>
-            <form className="w-auto mt-[20px] flex justify-start items-center">
+            <form
+              className="w-auto mt-[20px] flex justify-start items-center"
+              onSubmit={handleSubmit}
+            >
               <label
                 htmlFor="handleDay"
                 className="font-[Inter] text-[16px] font-medium mr-1"

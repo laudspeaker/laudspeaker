@@ -5,19 +5,20 @@ import "./styles.css";
 
 interface RangePickerProps {
   value: Date[];
+  disabled?: boolean;
   onChange: (e: any) => void;
 }
 
 const Wrapper = (props: RangePickerProps) => {
-  const { value, onChange } = props;
+  const { value, disabled, onChange } = props;
   return (
     <>
       <DateRangePicker
         onChange={onChange}
         value={value}
-        className={
-          "react-daterange-picker__wrapper react-daterange-picker__range-divider react-daterange-picker__clear-button"
-        }
+        className={`${
+          disabled ? "!select-none !cursor-auto !pointer-events-none" : ""
+        } react-daterange-picker__wrapper react-daterange-picker__range-divider react-daterange-picker__clear-button`}
         calendarClassName={"react-daterange-picker__calendar"}
         clearIcon
         calendarIcon={<img src={calendarSvg} />}

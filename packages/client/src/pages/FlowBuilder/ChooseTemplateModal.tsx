@@ -10,6 +10,7 @@ interface IChooseTemplateModal {
   selectedMessageType: string;
   isCollapsible: boolean;
   onClose: () => void;
+  isViewMode?: boolean;
   selectedTemplateId?: string | number;
   onTemplateDelete?: () => void;
 }
@@ -18,6 +19,7 @@ const ChooseTemplateModal = ({
   handleTemplateModalOpen,
   selectedMessageType,
   isCollapsible,
+  isViewMode = false,
   onClose,
   selectedTemplateId,
   onTemplateDelete,
@@ -101,7 +103,11 @@ const ChooseTemplateModal = ({
       onClose={() => handleTemplateModalOpen(false)}
     >
       <div className="w-full">
-        <h6 id="modal-modal-title">Choose {selectedMessageType} template</h6>
+        <h6 id="modal-modal-title">
+          {isViewMode
+            ? `Chosen ${selectedMessageType} template`
+            : `Choose ${selectedMessageType} template`}
+        </h6>
         <div>
           <form className="w-full my-[20px]">
             <Select
@@ -111,12 +117,18 @@ const ChooseTemplateModal = ({
                 value: template.id,
                 title: template.name,
               }))}
+              customButtonClass={`${
+                isViewMode && "!bg-gray-200 !cursor-auto opacity-[0.7]"
+              }`}
               onChange={handleActiveTemplate}
               displayEmpty
+              disabled={isViewMode}
             />
           </form>
         </div>
-        <div data-slackexporttemplate>{renderButton(templatesList)}</div>
+        {!isViewMode && (
+          <div data-slackexporttemplate>{renderButton(templatesList)}</div>
+        )}
       </div>
     </Modal>
   );

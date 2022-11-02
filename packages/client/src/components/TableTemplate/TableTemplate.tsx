@@ -210,7 +210,7 @@ function renderSecondColumn(row: ReturnType<typeof createData>) {
 
     return (
       <>
-        <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
+        <td className="whitespace-nowrap py-2 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
           <Chip
             wrapperClass={`${statusStyles[status]} w-full`}
             label={status}

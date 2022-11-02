@@ -10,6 +10,7 @@ interface IDateTimePickerProps {
   handleChange: any;
   label?: string;
   inputStyle?: object;
+  disabled?: boolean;
   dateStyle?: "short" | "medium" | "full" | "long";
   timeStyle?: "short" | "medium" | "full" | "long";
 }
@@ -17,6 +18,7 @@ interface IDateTimePickerProps {
 export default function DateTimePicker({
   handleChange,
   value,
+  disabled = false,
   sx,
   label,
   inputStyle,
@@ -24,13 +26,20 @@ export default function DateTimePicker({
   timeStyle,
 }: IDateTimePickerProps) {
   const onChange = (e: any) => {
+    if (disabled) return;
+
     handleChange(e.target.value);
   };
 
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns}>
       <Stack spacing={3}>
-        <input value={value} type="datetime-local" onChange={onChange} />
+        <input
+          disabled={!!disabled}
+          value={value}
+          type="datetime-local"
+          onChange={onChange}
+        />
         {/* <DTP
           label={label || ""}
           value={value}

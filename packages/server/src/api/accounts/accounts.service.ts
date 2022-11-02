@@ -1,9 +1,10 @@
 import { BaseJwtHelper } from '../../common/helper/base-jwt.helper';
-import { HttpException, Inject, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UpdateAccountDto } from './dto/update-account.dto';
 import { Account } from './entities/accounts.entity';
+import * as bcrypt from 'bcryptjs';
 
 @Injectable()
 export class AccountsService extends BaseJwtHelper {
@@ -33,11 +34,19 @@ export class AccountsService extends BaseJwtHelper {
     const oldUser = await this.findOne(user);
     // if user change password
     let password = oldUser.password;
+
     if (updateUserDto.newPassword) {
-      if (
-        oldUser.password !== this.encodePassword(updateUserDto.currentPassword)
-      )
-        throw new HttpException('Invalid current password', 400);
+      const isPasswordValid: boolean = bcrypt.compareSync(
+        updateUserDto.currentPassword,
+        password
+      );
+
+      if (!isPasswordValid) {
+        throw new HttpException(
+          'Invalid current password',
+          HttpStatus.BAD_REQUEST
+        );
+      }
 
       if (updateUserDto.newPassword !== updateUserDto.verifyNewPassword)
         throw new HttpException("Passwords don't match", 400);

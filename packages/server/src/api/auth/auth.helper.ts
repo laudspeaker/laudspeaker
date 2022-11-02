@@ -9,11 +9,15 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Account } from '../accounts/entities/accounts.entity';
 import { BaseJwtHelper } from '../../common/helper/base-jwt.helper';
+import { DEFAULT_TEMPLATES } from '@/fixtures/user.default.templates';
+import { Template } from '../templates/entities/template.entity';
 
 @Injectable()
 export class AuthHelper extends BaseJwtHelper {
   @InjectRepository(Account)
   private readonly repository: Repository<Account>;
+  @InjectRepository(Template)
+  private templateRepository: Repository<Template>;
 
   private readonly jwt: JwtService;
 
@@ -52,5 +56,12 @@ export class AuthHelper extends BaseJwtHelper {
     }
 
     return true;
+  }
+
+  // generate default templates and workflows for newly registered user
+  public async generateDefaultData(userId: string) {
+    await this.templateRepository.insert(
+      DEFAULT_TEMPLATES.map((el) => ({ ...el, ownerId: userId }))
+    );
   }
 }
