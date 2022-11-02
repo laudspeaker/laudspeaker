@@ -37,6 +37,7 @@ jobs:
       - run:
           command: |
             npm i
+            ls
             docker-compose -f .\docker-compose.dev.yml up -d
       - run: npm install
       - run: docker ps
