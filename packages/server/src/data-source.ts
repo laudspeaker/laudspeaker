@@ -16,4 +16,5 @@ export const AppDataSource = new DataSource({
   migrations: ['dist/migrations/*{.ts,.js}'],
   migrationsTableName: 'typeorm_migrations',
   subscribers: [],
+  migrationsRun: true,
 });
