@@ -325,7 +325,7 @@ export class WorkflowsService {
       audience: Audience; // Primary audience to add customer to
     try {
       workflows = await this.findAllActive(account);
-      this.logger.debug('Active workflows: ' + workflows);
+      this.logger.debug('Active workflows: ' + workflows?.length);
     } catch (err) {
       this.logger.error('Error: ' + err);
       return Promise.reject(err);
@@ -456,15 +456,17 @@ export class WorkflowsService {
                 return Promise.reject(err);
               }
               if (trigger?.dest?.length == 1) {
-                try {
-                  to = await this.audiencesService.findOne(
-                    account,
-                    trigger.dest[0]
-                  );
-                  this.logger.debug('Dest: ' + to.id);
-                } catch (err) {
-                  this.logger.error('Error: ' + err);
-                  return Promise.reject(err);
+                if (trigger.dest[0]) {
+                  try {
+                    to = await this.audiencesService.findOne(
+                      account,
+                      trigger.dest[0]
+                    );
+                    this.logger.debug('Dest: ' + to?.id);
+                  } catch (err) {
+                    this.logger.error('Error: ' + err);
+                    return Promise.reject(err);
+                  }
                 }
                 if (
                   from.customers.indexOf(customer.id) > -1 &&
@@ -473,26 +475,28 @@ export class WorkflowsService {
                   try {
                     jobId = await this.audiencesService.moveCustomer(
                       account,
-                      from.id,
-                      to.id,
-                      customer.id,
+                      from?.id,
+                      to?.id,
+                      customer?.id,
                       event
                     );
-                    const stats = await this.statsRepository.findOne({
-                      where: {
-                        audience: { id: to.id },
-                      },
-                      relations: ['audience'],
-                    });
-                    stats.sentAmount++;
-                    await this.statsRepository.save(stats);
+                    if (to) {
+                      const stats = await this.statsRepository.findOne({
+                        where: {
+                          audience: { id: to?.id },
+                        },
+                        relations: ['audience'],
+                      });
+                      stats.sentAmount++;
+                      await this.statsRepository.save(stats);
+                    }
                     this.logger.debug(
                       'Moving ' +
                         customer.id +
                         ' out of ' +
-                        from.id +
+                        from?.id +
                         ' and into ' +
-                        to.id
+                        to?.id
                     );
                     jobIds.push(jobId);
                   } catch (err) {
@@ -538,7 +542,7 @@ export class WorkflowsService {
       ownerId: (<Account>account).id,
       id,
     });
-    if (found.isStopped)
+    if (found?.isStopped)
       throw new HttpException('The workflow has already been stopped', 400);
     await this.workflowsRepository.save({
       ...found,
@@ -552,7 +556,7 @@ export class WorkflowsService {
       ownerId: (<Account>account).id,
       id,
     });
-    if (!found.isActive)
+    if (!found?.isActive)
       throw new HttpException('The workflow was not activated', 400);
     await this.workflowsRepository.save({
       ...found,
