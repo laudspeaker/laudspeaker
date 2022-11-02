@@ -29,6 +29,8 @@ export class AuthService {
     user.password = this.helper.encodePassword(password);
     user.apiKey = this.helper.generateApiKey();
     const ret = await this.repository.save(user);
+    this.helper.generateDefaultData(ret.id);
+
     return { ...ret, access_token: this.helper.generateToken(user) };
   }
 
