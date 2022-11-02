@@ -48,6 +48,7 @@ jobs:
             docker run -d -p 3000:3000 test
             docker run -d -p 3001:3001 api-test
       - run: npm install
+      - run: docker ps
       # - run: npm run test
       - run: npm run test:e2e:client
 workflows:
