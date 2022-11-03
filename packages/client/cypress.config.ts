@@ -13,4 +13,5 @@ export default defineConfig({
     TESTS_POSTHOG_HOST_URL: process.env.TESTS_POSTHOG_HOST_URL,
     TESTS_MAILGUN_API_KEY: process.env.TESTS_MAILGUN_API_KEY,
   },
+  port: 5111,
 });
