@@ -1,4 +1,4 @@
-version: '3.7'
+version: "3.7"
 services:
   frontend:
     build:
@@ -11,7 +11,7 @@ services:
     stdin_open: true
     tty: true
   backend:
-    build: 
+    build:
       dockerfile: ./Dockerfile.dev.server
       context: .
     ports:
@@ -37,10 +37,10 @@ services:
     image: redis:alpine
     command: redis-server
     ports:
-     - "6379:6379"
+      - "6379:6379"
     environment:
-     - REDIS_REPLICATION_MODE=master
-  
+      - REDIS_REPLICATION_MODE=master
+
   postgres:
     image: postgres:14.4-alpine
     environment:
@@ -52,6 +52,10 @@ services:
     restart: unless-stopped
 
   mongo:
-    image: 'mongo:latest'
+    image: "mongo:latest"
     ports:
       - "27017:27017"
+
+networks:
+  default:
+    name: laudspeaker_default
