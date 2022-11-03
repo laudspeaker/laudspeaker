@@ -1,4 +1,6 @@
 version: 2.1
+orbs:
+  cypress: cypress-io/cypress@2.2.0
 jobs:
   build_and_deploy:
     docker:
@@ -45,7 +47,12 @@ jobs:
 workflows:
   pull_request:
     jobs:
-      - test
+      - cypress/install
+      - cypress/run:
+          start: docker-compose -f ./docker-compose.dev.yml up -d
+          wait-on: 'http://localhost:3000'
+          requires:
+            - cypress/install
   main:
     jobs:
       - build_and_deploy:
