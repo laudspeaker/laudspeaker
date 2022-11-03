@@ -47,7 +47,10 @@ jobs:
 workflows:
   pull_request:
     jobs:
-      - cypress/install
+      - npm i && cypress/install
+      - setup_remote_docker:
+          version: 20.10.14
+          docker_layer_caching: true
       - cypress/run:
           start: docker-compose -f ./docker-compose.dev.yml up -d
           wait-on: 'http://localhost:3000'
