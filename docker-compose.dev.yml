@@ -3,6 +3,7 @@ services:
   frontend:
     build:
       dockerfile: ./Dockerfile.dev.client
+      context: .
     depends_on:
       - backend
     ports:
@@ -10,6 +11,7 @@ services:
   backend:
     build: 
       dockerfile: ./Dockerfile.dev.server
+      context: .
     ports:
       - "3001:3001"
     depends_on:
