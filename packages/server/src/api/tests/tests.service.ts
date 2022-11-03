@@ -47,8 +47,6 @@ export class TestsService {
   async resetTestData() {
     if (process.env.NODE_ENV !== 'development')
       throw new HttpException('Not found', HttpStatus.NOT_FOUND);
-    const installationId = process.env.TESTS_INSTALLATION_ID;
-    const installationJson = process.env.TESTS_INSTALLATION_JSON;
     try {
       await this.accountService.accountsRepository.delete({
         email: 'john.smith@gmail.com',
@@ -127,8 +125,11 @@ export class TestsService {
 
       await this.customersService.create(ret, sanitizedMember);
 
+      const installationId = process.env.TESTS_INSTALLATION_ID;
+      const installationJson =
+        process.env.TESTS_INSTALLATION_JSON_PART1 +
+        process.env.TESTS_INSTALLATION_JSON_PART2;
       if (installationId && installationJson) {
-        console.log(installationJson);
         const foundInstallation = await this.installationRepository.findOneBy({
           id: installationId,
         });
