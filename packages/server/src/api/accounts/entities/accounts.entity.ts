@@ -8,6 +8,12 @@ import {
   PrimaryColumn,
 } from 'typeorm';
 
+export enum PlanType {
+  FREE = "free",
+  PAID = "paid",
+  ENTERPRISE = "enterprise"
+}
+
 @Entity()
 @Unique(['email', 'apiKey'])
 export class Account extends BaseEntity {
@@ -30,8 +36,21 @@ export class Account extends BaseEntity {
   @Column({ type: 'varchar', nullable: true })
   public lastName: string | null;
 
+  @Column({ type: 'timestamp', nullable: false, default: () => "CURRENT_TIMESTAMP" })
+  public accountCreatedAt: Date | null;
+
   @Column({ type: 'timestamp', nullable: true, default: null })
   public lastLoginAt: Date | null;
+
+  @Column({ type: 'integer', nullable: false, default: 0 })
+  public messagesSent: number;
+
+  @Column({
+    type: "enum",
+    enum: PlanType,
+    default: PlanType.FREE
+  })
+  public plan: PlanType;
 
   @Column({ type: 'boolean', default: false })
   public verified!: boolean;

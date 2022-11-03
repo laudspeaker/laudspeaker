@@ -1,6 +1,6 @@
 import { HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Account } from '../accounts/entities/accounts.entity';
+import { Account, PlanType } from '../accounts/entities/accounts.entity';
 import { Repository } from 'typeorm';
 import { RegisterDto } from '@/api/auth/dto/register.dto';
 import { LoginDto } from './dto/login.dto';
@@ -28,7 +28,11 @@ export class AuthService {
     user.email = email;
     user.password = this.helper.encodePassword(password);
     user.apiKey = this.helper.generateApiKey();
-    const ret = await this.repository.save(user);
+    const ret = await this.repository.save({
+      ...user,
+      accountCreatedAt: new Date(),
+      plan: PlanType.FREE
+    });
     this.helper.generateDefaultData(ret.id);
 
     return { ...ret, access_token: this.helper.generateToken(user) };
