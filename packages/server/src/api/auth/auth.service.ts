@@ -34,8 +34,12 @@ export class AuthService {
       plan: PlanType.FREE
     });
     this.helper.generateDefaultData(ret.id);
+    
+    console.log(JSON.stringify(ret,null,2));
+    console.log(JSON.stringify(this.helper.generateToken(ret),null,2));
+    console.log(JSON.stringify(this.helper.generateToken(user),null,2));
 
-    return { ...ret, access_token: this.helper.generateToken(user) };
+    return { ...ret, access_token: this.helper.generateToken(ret) };
   }
 
   public async login(body: LoginDto): Promise<any | never> {
