@@ -9,6 +9,9 @@
 * Build complex messaging workflows the whole team can understand in a visual tool
 * Deploy and run on your own infrastructure to keep control of your data.
 
+[website](https://laudspeaker.com/)
+[product hunt](https://www.producthunt.com/posts/laudspeaker)
+
 ### Get Started
 
 Run yourself (instructions below) or use [Laudspeaker Cloud](https://app.laudspeaker.com/login) . Docs are [here](https://laudspeaker.com/docs/guides/overview/intro/)
