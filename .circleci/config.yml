@@ -51,6 +51,7 @@ workflows:
       - test
       - cypress/run:
           start: docker-compose -f ./docker-compose.dev.yml up -d
+          command: npm run test:e2e:client
           wait-on: 'http://localhost:3000'
           requires:
             - cypress/install
