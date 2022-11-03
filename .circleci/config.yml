@@ -32,14 +32,13 @@ jobs:
       - setup_remote_docker:
           version: 20.10.14
           docker_layer_caching: true
-      - run: sudo apt-get update
+      - run: npm install
       - run:
           command: |
-            npm i
             docker-compose -f ./docker-compose.dev.yml up -d
-      - run: npm install
+      - run: sudo apt-get update
       - run: sudo apt-get install --fix-missing libgtk2.0-0 libgtk-3-0 libgbm-dev libnotify-dev libgconf-2-4 libnss3 libxss1 libasound2 libxtst6 xauth xvfb
-      - run: sleep 10
+      - run: sleep 60
       - run: docker ps
       # - run: npm run test
       - run: npm run test:e2e:client

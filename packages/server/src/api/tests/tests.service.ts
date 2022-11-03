@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { AccountsService } from '../accounts/accounts.service';
@@ -31,7 +31,8 @@ export class TestsService {
   ) {}
 
   async posthogsynctest(user: Express.User) {
-    if (process.env.NODE_ENV !== 'development') return;
+    if (process.env.NODE_ENV !== 'development')
+      throw new HttpException('Not found', HttpStatus.NOT_FOUND);
 
     const account = await this.accountService.findOne(user);
 
@@ -44,21 +45,11 @@ export class TestsService {
   }
 
   async resetTestData() {
-    if (process.env.NODE_ENV !== 'development') return;
+    if (process.env.NODE_ENV !== 'development')
+      throw new HttpException('Not found', HttpStatus.NOT_FOUND);
     const installationId = process.env.TESTS_INSTALLATION_ID;
     const installationJson = process.env.TESTS_INSTALLATION_JSON;
     try {
-      if (installationId && installationJson) {
-        const foundInstallation = await this.installationRepository.findOneBy({
-          id: installationId,
-        });
-        if (!foundInstallation)
-          await this.installationRepository.insert({
-            id: installationId,
-            installation: JSON.parse(installationJson),
-          });
-      }
-
       await this.accountService.accountsRepository.delete({
         email: 'john.smith@gmail.com',
       });
@@ -135,6 +126,19 @@ export class TestsService {
       sanitizedMember.slackTeamMember = true;
 
       await this.customersService.create(ret, sanitizedMember);
+
+      if (installationId && installationJson) {
+        console.log(installationJson);
+        const foundInstallation = await this.installationRepository.findOneBy({
+          id: installationId,
+        });
+        console.log(installationJson);
+        if (!foundInstallation)
+          await this.installationRepository.insert({
+            id: installationId,
+            installation: JSON.parse(installationJson),
+          });
+      }
     } catch (error) {
       console.error('Error generating test users:', error);
     }
