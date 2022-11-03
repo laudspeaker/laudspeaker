@@ -54,7 +54,7 @@ workflows:
           wait-on: 'http://localhost:3000'
           requires:
             - cypress/install
-            - setup_remote_docker
+            - test
   main:
     jobs:
       - build_and_deploy:
