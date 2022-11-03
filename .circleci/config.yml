@@ -27,7 +27,6 @@ jobs:
   test:
     docker:
       - image: circleci/node:16
-      - image: cypress/included:6.1.0
         environment:
           TERM: xterm
 

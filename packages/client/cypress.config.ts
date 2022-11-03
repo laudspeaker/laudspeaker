@@ -5,7 +5,7 @@ dotenv.config();
 
 export default defineConfig({
   e2e: {
-    baseUrl: "http://127.0.0.1:3000",
+    baseUrl: "http://localhost:3000",
   },
   env: {
     TESTS_POSTHOG_PROJECT_ID: process.env.TESTS_POSTHOG_PROJECT_ID,
