@@ -43,17 +43,12 @@ jobs:
       - run: sleep 60
       - run: docker ps
       # - run: npm run test
-      - run: npm run test:e2e:client
+      # - run: npm run test:e2e:client
 workflows:
   pull_request:
     jobs:
       - cypress/install
-      - setup_remote_docker:
-            steps:
-              - checkout
-              - setup_remote_docker:
-                  version: 20.10.14
-                  docker_layer_caching: true
+      - test
       - cypress/run:
           start: docker-compose -f ./docker-compose.dev.yml up -d
           wait-on: 'http://localhost:3000'
