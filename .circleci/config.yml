@@ -7,7 +7,6 @@ jobs:
       - checkout
       - setup_remote_docker:
           version: 20.10.14
-          docker_layer_caching: true
       - run:
           command: |
             sudo apt-get install -y python-pip libyaml-dev python-dev jq
@@ -43,7 +42,7 @@ jobs:
       - run: sudo apt-get install --fix-missing libgtk2.0-0 libgtk-3-0 libgbm-dev libnotify-dev libgconf-2-4 libnss3 libxss1 libasound2 libxtst6 xauth xvfb
       - run: sleep 60
       - run: docker ps
-      - run: curl http://localhost:3000
+      - run: docker network ls
       # - run: npm run test
       - run: npm run test:e2e:client
 workflows:
