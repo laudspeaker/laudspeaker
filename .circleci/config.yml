@@ -47,7 +47,7 @@ jobs:
 workflows:
   pull_request:
     jobs:
-      - npm i && cypress/install
+      - cypress/install
       - setup_remote_docker:
           version: 20.10.14
           docker_layer_caching: true
