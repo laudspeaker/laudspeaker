@@ -9,8 +9,8 @@
 * Build complex messaging workflows the whole team can understand in a visual tool
 * Deploy and run on your own infrastructure to keep control of your data.
 
-[website](https://laudspeaker.com/)
-[product hunt](https://www.producthunt.com/posts/laudspeaker)
+- [website](https://laudspeaker.com/)
+- [product hunt](https://www.producthunt.com/posts/laudspeaker)
 
 ### Get Started
 
