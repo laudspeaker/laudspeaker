@@ -1,10 +1,10 @@
-version: '3.7'
+version: "3.7"
 services:
   e2e-electron:
-    # image: cypress/included:10.3.1-typescript
+    image: cypress/included:10.3.1-typescript
     image: "cypress/included:10.8.0"
-    working_dir: /e2e
-    entrypoint: npm i @4tw/cypress-drag-drop && cypress run
+    working_dir: /
+    command: "--browser chrome"
     volumes:
       - ./packages/client/cypress.config.ts:/cypress.config.ts
       - ./packages/client/cypress:/cypress
