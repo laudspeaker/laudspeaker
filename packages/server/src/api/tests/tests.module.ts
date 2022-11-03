@@ -14,6 +14,7 @@ import {
   CustomerKeysSchema,
 } from '../customers/schemas/customer-keys.schema';
 import { Customer, CustomerSchema } from '../customers/schemas/customer.schema';
+import { Installation } from '../slack/entities/installation.entity';
 import { Template } from '../templates/entities/template.entity';
 import { Workflow } from '../workflows/entities/workflow.entity';
 import { TestsController } from './tests.controller';
@@ -21,7 +22,13 @@ import { TestsService } from './tests.service';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Account, Audience, Workflow, Template]),
+    TypeOrmModule.forFeature([
+      Account,
+      Audience,
+      Workflow,
+      Template,
+      Installation,
+    ]),
     MongooseModule.forFeature([
       { name: Customer.name, schema: CustomerSchema },
     ]),

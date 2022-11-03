@@ -7,6 +7,7 @@ import { Audience } from '../audiences/entities/audience.entity';
 import { AuthService } from '../auth/auth.service';
 import { CustomersService } from '../customers/customers.service';
 import { CreateCustomerDto } from '../customers/dto/create-customer.dto';
+import { Installation } from '../slack/entities/installation.entity';
 import { Template } from '../templates/entities/template.entity';
 import { Workflow } from '../workflows/entities/workflow.entity';
 
@@ -23,6 +24,8 @@ export class TestsService {
     private audienceRepository: Repository<Audience>,
     @InjectRepository(Template)
     private templateRepository: Repository<Template>,
+    @InjectRepository(Installation)
+    private installationRepository: Repository<Installation>,
     @Inject(AuthService)
     private readonly authService: AuthService
   ) {}
@@ -42,7 +45,20 @@ export class TestsService {
 
   async resetTestData() {
     if (process.env.NODE_ENV !== 'development') return;
+    const installationId = process.env.TESTS_INSTALLATION_ID;
+    const installationJson = process.env.TESTS_INSTALLATION_JSON;
     try {
+      if (installationId && installationJson) {
+        const foundInstallation = await this.installationRepository.findOneBy({
+          id: installationId,
+        });
+        if (!foundInstallation)
+          await this.installationRepository.insert({
+            id: installationId,
+            installation: JSON.parse(installationJson),
+          });
+      }
+
       await this.accountService.accountsRepository.delete({
         email: 'john.smith@gmail.com',
       });
