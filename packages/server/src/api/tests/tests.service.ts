@@ -126,14 +126,12 @@ export class TestsService {
       await this.customersService.create(ret, sanitizedMember);
 
       const installationId = process.env.TESTS_INSTALLATION_ID;
-      const installationJson =
-        process.env.TESTS_INSTALLATION_JSON_PART1 +
-        process.env.TESTS_INSTALLATION_JSON_PART2;
+      const installationJson = process.env.TESTS_INSTALLATION_JSON;
       if (installationId && installationJson) {
         const foundInstallation = await this.installationRepository.findOneBy({
           id: installationId,
         });
-        console.log(installationJson);
+        console.log(JSON.parse(installationJson));
         if (!foundInstallation)
           await this.installationRepository.insert({
             id: installationId,
