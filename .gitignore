@@ -164,5 +164,6 @@
 /packages/server/.env*
 /packages/server/packages
 node_modules
+package-lock.json
 cypress.env.json
 .env
