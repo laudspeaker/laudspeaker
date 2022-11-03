@@ -1,6 +1,4 @@
 version: 2.1
-orbs:
-  cypress: cypress-io/cypress@2.2.0
 jobs:
   build_and_deploy:
     docker:
@@ -43,18 +41,11 @@ jobs:
       - run: sleep 60
       - run: docker ps
       # - run: npm run test
-      # - run: npm run test:e2e:client
+      - run: npm run test:e2e:client
 workflows:
   pull_request:
     jobs:
-      - cypress/install
       - test
-      - cypress/run:
-          start: docker-compose -f ./docker-compose.dev.yml up -d
-          wait-on: 'http://localhost:3000'
-          requires:
-            - cypress/install
-            - test
   main:
     jobs:
       - build_and_deploy:
