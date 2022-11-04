@@ -55,6 +55,7 @@ import SettingsBillingBeta from "pages/Settings/SettingsBillingBeta";
 import SettingsTeamBeta from "pages/Settings/SettingsTeamBeta";
 import TableBeta from "pages/TemplateTable/TableBeta";
 import OnboardingBeta from "pages/Onboarding/OnboardingBeta";
+import Settings from "pages/Settings/Settings";
 
 interface IProtected {
   children: ReactElement;
@@ -262,87 +263,7 @@ const RouteComponent: React.FC = () => {
           element={
             <Protected>
               <DrawerLayout>
-                <SettingsGeneralBeta />
-              </DrawerLayout>
-            </Protected>
-          }
-        />
-        <Route
-          path="/settings/api"
-          element={
-            <Protected>
-              <DrawerLayout>
-                <SettingsAPIBeta />
-              </DrawerLayout>
-            </Protected>
-          }
-        />
-        <Route
-          path="/settings/email"
-          element={
-            <Protected>
-              <DrawerLayout>
-                <SettingsEmailBeta />
-              </DrawerLayout>
-            </Protected>
-          }
-        />
-        <Route
-          path="/settings/slack"
-          element={
-            <Protected>
-              <DrawerLayout>
-                <SettingsSlackBeta />
-              </DrawerLayout>
-            </Protected>
-          }
-        />
-        <Route
-          path="/settings/events"
-          element={
-            <Protected>
-              <DrawerLayout>
-                <SettingsEventsBeta />
-              </DrawerLayout>
-            </Protected>
-          }
-        />
-        <Route
-          path="/settings/sms"
-          element={
-            <Protected>
-              <DrawerLayout>
-                <SettingsSMSBeta />
-              </DrawerLayout>
-            </Protected>
-          }
-        />
-        <Route
-          path="/settings/plan"
-          element={
-            <Protected>
-              <DrawerLayout>
-                <SettingsPlanBeta />
-              </DrawerLayout>
-            </Protected>
-          }
-        />
-        <Route
-          path="/settings/billing"
-          element={
-            <Protected>
-              <DrawerLayout>
-                <SettingsBillingBeta />
-              </DrawerLayout>
-            </Protected>
-          }
-        />
-        <Route
-          path="/settings/team"
-          element={
-            <Protected>
-              <DrawerLayout>
-                <SettingsTeamBeta />
+                <Settings />
               </DrawerLayout>
             </Protected>
           }
