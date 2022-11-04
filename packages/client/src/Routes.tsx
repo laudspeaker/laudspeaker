@@ -56,6 +56,7 @@ import SettingsTeamBeta from "pages/Settings/SettingsTeamBeta";
 import TableBeta from "pages/TemplateTable/TableBeta";
 import OnboardingBeta from "pages/Onboarding/OnboardingBeta";
 import Settings from "pages/Settings/Settings";
+import Person from "pages/Person";
 
 interface IProtected {
   children: ReactElement;
@@ -186,6 +187,16 @@ const RouteComponent: React.FC = () => {
             <Protected>
               <DrawerLayout>
                 <PeopleTable />
+              </DrawerLayout>
+            </Protected>
+          }
+        />
+        <Route
+          path="/person/:id"
+          element={
+            <Protected>
+              <DrawerLayout>
+                <Person />
               </DrawerLayout>
             </Protected>
           }

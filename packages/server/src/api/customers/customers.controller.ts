@@ -47,6 +47,13 @@ export class CustomersController {
     );
   }
 
+  @Get('/:id')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor)
+  findOne(@Req() { user }: Request, @Param() id: string) {
+    return this.customersService.findOne(<Account>user, id);
+  }
+
   @Post('/create/')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
