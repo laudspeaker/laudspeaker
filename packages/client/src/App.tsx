@@ -15,6 +15,7 @@ import "./Global.css";
 import posthog from "posthog-js";
 import { AppConfig } from "./constants";
 import { ToastContainer } from "react-toastify";
+import { ThemeProvider as MTThemeProvider } from "@material-tailwind/react";
 
 interface IApp {
   children: React.ReactNode;
@@ -46,22 +47,24 @@ const App = ({ children }: IApp) => {
   return (
     <ColorContext.Provider value={colorMode}>
       <ThemeProvider theme={theme}>
-        <CssBaseline enableColorScheme />
-        <ToastContainer
-          position="bottom-center"
-          autoClose={5000}
-          hideProgressBar={false}
-          newestOnTop={false}
-          closeOnClick
-          rtl={false}
-          pauseOnFocusLoss
-          draggable
-          pauseOnHover
-          theme="light"
-        />
-        <GoogleOAuthProvider clientId="31818866399-n6jktkbmj0o0tt7gbi8i8nosu61nakda.apps.googleusercontent.com">
-          {children}
-        </GoogleOAuthProvider>
+        <MTThemeProvider>
+          <CssBaseline enableColorScheme />
+          <ToastContainer
+            position="bottom-center"
+            autoClose={5000}
+            hideProgressBar={false}
+            newestOnTop={false}
+            closeOnClick
+            rtl={false}
+            pauseOnFocusLoss
+            draggable
+            pauseOnHover
+            theme="light"
+          />
+          <GoogleOAuthProvider clientId="31818866399-n6jktkbmj0o0tt7gbi8i8nosu61nakda.apps.googleusercontent.com">
+            {children}
+          </GoogleOAuthProvider>
+        </MTThemeProvider>
       </ThemeProvider>
     </ColorContext.Provider>
   );

@@ -59,6 +59,7 @@ export const dataSubArray = [
         type: "menu",
         link: "/eventBased",
         canBeDisabled: true,
+        disabledToolTip: "Add step first",
       },
       {
         id: "timeDelay",
@@ -67,6 +68,7 @@ export const dataSubArray = [
         type: "menu",
         link: "/timeDelay",
         canBeDisabled: true,
+        disabledToolTip: "Add step first",
       },
       {
         id: "timeWindow",
@@ -75,6 +77,7 @@ export const dataSubArray = [
         type: "menu",
         link: "/timeWindow",
         canBeDisabled: true,
+        disabledToolTip: "Add step first",
       },
     ],
   },
@@ -91,6 +94,8 @@ export const dataSubArray = [
         link: "/email",
         canBeDisabled: true,
         requiredOnboarding: "Email",
+        disabledToolTip:
+          "Make sure there are steps and configure email in settings",
       },
       {
         id: "push",
@@ -100,6 +105,8 @@ export const dataSubArray = [
         link: "/push",
         canBeDisabled: true,
         alwaysDisabled: true,
+        disabledToolTip:
+          "Make sure there are steps and configure push notification in settings",
       },
       {
         id: "sms",
@@ -109,6 +116,8 @@ export const dataSubArray = [
         link: "/twilio",
         canBeDisabled: true,
         alwaysDisabled: true,
+        disabledToolTip:
+          "Make sure there are steps and configure sms in settings",
       },
       {
         id: "slack",
@@ -118,6 +127,8 @@ export const dataSubArray = [
         link: "/slack",
         canBeDisabled: true,
         requiredOnboarding: "Slack",
+        disabledToolTip:
+          "Make sure there are steps and configure slack in settings",
         //alwaysDisabled: true,
       },
     ],
