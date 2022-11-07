@@ -12,6 +12,7 @@ import {
   Query,
   LoggerService,
   HttpException,
+  Patch,
 } from '@nestjs/common';
 import { CreateCustomerDto } from './dto/create-customer.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -50,8 +51,19 @@ export class CustomersController {
   @Get('/:id')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
-  findOne(@Req() { user }: Request, @Param() id: string) {
+  findOne(@Req() { user }: Request, @Param() { id }: { id: string }) {
     return this.customersService.findOne(<Account>user, id);
+  }
+
+  @Patch('/:id')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor)
+  update(
+    @Req() { user }: Request,
+    @Param() { id }: { id: string },
+    @Body() updateCustomerDto: Record<string, unknown>
+  ) {
+    return this.customersService.update(<Account>user, id, updateCustomerDto);
   }
 
   @Post('/create/')

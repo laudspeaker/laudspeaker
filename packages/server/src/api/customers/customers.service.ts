@@ -156,7 +156,23 @@ export class CustomersService {
     }).exec();
     if (!customer)
       throw new HttpException('Person not found', HttpStatus.NOT_FOUND);
-    return customer.toObject();
+    return {
+      ...customer.toObject<mongoose.LeanDocument<CustomerDocument>>(),
+      _id: id,
+    };
+  }
+
+  async update(
+    account: Account,
+    id: string,
+    { _id, updateCustomerDto }: Record<string, unknown>
+  ) {
+    const customer = await this.findOne(account, id);
+    await this.CustomerModel.updateOne(
+      { id: customer._id },
+      updateCustomerDto
+    ).exec();
+    return updateCustomerDto;
   }
 
   async returnAllPeopleInfo(account: Account, take = 100, skip = 0) {
