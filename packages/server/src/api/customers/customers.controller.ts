@@ -12,7 +12,7 @@ import {
   Query,
   LoggerService,
   HttpException,
-  Patch,
+  Put,
 } from '@nestjs/common';
 import { CreateCustomerDto } from './dto/create-customer.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -55,7 +55,7 @@ export class CustomersController {
     return this.customersService.findOne(<Account>user, id);
   }
 
-  @Patch('/:id')
+  @Put('/:id')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
   update(

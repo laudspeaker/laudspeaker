@@ -8,6 +8,7 @@ import {
   HandThumbUpIcon,
   UserIcon,
 } from "@heroicons/react/20/solid";
+import { TrashIcon } from "@heroicons/react/24/outline";
 
 const eventTypes = {
   applied: { icon: UserIcon, bgColorClass: "bg-gray-400" },
@@ -64,6 +65,9 @@ const Person = () => {
   const { id } = useParams();
   const [personInfo, setPersonInfo] = useState<Record<string, any>>({});
   const [isEditingMode, setIsEditingMode] = useState(false);
+  const [isAddingAttribute, setIsAddingAttribute] = useState(false);
+  const [newAttributeKey, setNewAttributeKey] = useState("");
+  const [newAttributeValue, setNewAttributeValue] = useState("");
 
   useEffect(() => {
     (async () => {
@@ -77,11 +81,16 @@ const Person = () => {
   };
 
   const handleSave = async () => {
-    await ApiService.patch({ url: "/customers/" + id, options: personInfo });
+    await ApiService.put({ url: "/customers/" + id, options: personInfo });
     setIsEditingMode(false);
   };
 
-  const handleDelete = () => {};
+  const handleDeletePerson = () => {};
+
+  const handleDeleteAttribute = (key: string) => {
+    const { [key]: value, ...newPersonInfo } = personInfo;
+    setPersonInfo(newPersonInfo);
+  };
 
   function classNames(...classes: any[]) {
     return classes.filter(Boolean).join(" ");
@@ -104,7 +113,7 @@ const Person = () => {
             >
               {isEditingMode ? "Save" : "Edit"}
             </GenericButton>
-            <GenericButton onClick={handleDelete}>Delete</GenericButton>
+            <GenericButton onClick={handleDeletePerson}>Delete</GenericButton>
           </div>
         </div>
         <div className="flex gap-[30px]">
@@ -132,15 +141,27 @@ const Person = () => {
                             <dt className="text-sm font-medium text-gray-500">
                               {key}
                             </dt>
-                            <dd className="mt-1 text-sm text-gray-900">
+                            <dd className="mt-1 text-sm text-gray-900 flex gap-[5px] items-center">
                               {isEditingMode ? (
-                                <Input
-                                  type="text"
-                                  name={key}
-                                  id={key}
-                                  value={personInfo[key]}
-                                  onChange={handlePersonInfoChange}
-                                />
+                                <>
+                                  <Input
+                                    type="text"
+                                    name={key}
+                                    id={key}
+                                    value={personInfo[key]}
+                                    onChange={handlePersonInfoChange}
+                                    className="w-full text-ellipsis"
+                                  />
+                                  <GenericButton
+                                    customClasses="flex items-center justify-center rounded-full border border-transparent p-1 text-white shadow-sm h-[38px]"
+                                    onClick={() => handleDeleteAttribute(key)}
+                                  >
+                                    <TrashIcon
+                                      className="h-5 w-5"
+                                      aria-hidden="true"
+                                    />
+                                  </GenericButton>
+                                </>
                               ) : typeof personInfo[key] === "number" ||
                                 typeof personInfo[key] === "string" ? (
                                 personInfo[key]
@@ -150,6 +171,66 @@ const Person = () => {
                             </dd>
                           </div>
                         ))}
+                      {isEditingMode ? (
+                        isAddingAttribute ? (
+                          <div>
+                            <Input
+                              name="new-attribute-key"
+                              placeholder="key"
+                              value={newAttributeKey}
+                              onChange={(e) =>
+                                setNewAttributeKey(e.target.value)
+                              }
+                            />
+                            <Input
+                              name="new-attribute-value"
+                              placeholder="value"
+                              value={newAttributeValue}
+                              onChange={(e) =>
+                                setNewAttributeValue(e.target.value)
+                              }
+                            />
+                            <div className="mt-[10px] flex justify-between">
+                              <GenericButton
+                                disabled={
+                                  !newAttributeKey || !newAttributeValue
+                                }
+                                onClick={() => {
+                                  setPersonInfo({
+                                    [newAttributeKey]: newAttributeValue,
+                                    ...personInfo,
+                                  });
+                                  setIsAddingAttribute(false);
+                                  setNewAttributeKey("");
+                                  setNewAttributeValue("");
+                                }}
+                              >
+                                Add
+                              </GenericButton>
+                              <GenericButton
+                                onClick={() => {
+                                  setIsAddingAttribute(false);
+                                  setNewAttributeKey("");
+                                  setNewAttributeValue("");
+                                }}
+                              >
+                                Cancel
+                              </GenericButton>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex justify-center items-end">
+                            <GenericButton
+                              onClick={() => setIsAddingAttribute(true)}
+                              customClasses="!w-full max-h-[38px]"
+                            >
+                              New attribute
+                            </GenericButton>
+                          </div>
+                        )
+                      ) : (
+                        <></>
+                      )}
                     </dl>
                   </div>
                   <div>

@@ -55,7 +55,7 @@ const Input = (props: InputProps) => {
   } = props;
   return (
     <>
-      <div className="col-span-6">
+      <div className="col-span-6 w-full">
         <label
           htmlFor={name}
           className="block text-sm font-medium text-gray-700"

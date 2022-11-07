@@ -165,14 +165,12 @@ export class CustomersService {
   async update(
     account: Account,
     id: string,
-    { _id, updateCustomerDto }: Record<string, unknown>
+    updateCustomerDto: Record<string, unknown>
   ) {
+    const { _id, ...newCustomerData } = updateCustomerDto;
     const customer = await this.findOne(account, id);
-    await this.CustomerModel.updateOne(
-      { id: customer._id },
-      updateCustomerDto
-    ).exec();
-    return updateCustomerDto;
+    await this.CustomerModel.replaceOne(customer, newCustomerData).exec();
+    return newCustomerData;
   }
 
   async returnAllPeopleInfo(account: Account, take = 100, skip = 0) {
