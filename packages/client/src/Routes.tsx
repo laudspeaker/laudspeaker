@@ -56,16 +56,19 @@ import SettingsTeamBeta from "pages/Settings/SettingsTeamBeta";
 import TableBeta from "pages/TemplateTable/TableBeta";
 import OnboardingBeta from "pages/Onboarding/OnboardingBeta";
 import Settings from "pages/Settings/Settings";
+import Person from "pages/Person";
 
 interface IProtected {
   children: ReactElement;
 }
 
 const Protected = ({ children }: IProtected) => {
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(true);
+  const navigate = useNavigate();
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   useLayoutEffect(() => {
     const func = async () => {
       const loggedIn = await tokenService.verify();
+      if (!loggedIn) navigate("/login");
       setIsLoggedIn(loggedIn);
     };
     func();
@@ -76,7 +79,7 @@ const Protected = ({ children }: IProtected) => {
     dispatch(getUserPermissions());
   }
 
-  return isLoggedIn ? children : <Navigate to="/login" replace />;
+  return isLoggedIn ? children : <></>;
 };
 
 interface IOnboarded {
@@ -186,6 +189,16 @@ const RouteComponent: React.FC = () => {
             <Protected>
               <DrawerLayout>
                 <PeopleTable />
+              </DrawerLayout>
+            </Protected>
+          }
+        />
+        <Route
+          path="/person/:id"
+          element={
+            <Protected>
+              <DrawerLayout>
+                <Person />
               </DrawerLayout>
             </Protected>
           }

@@ -3,7 +3,7 @@ import { Document } from 'mongoose';
 
 export type CustomerDocument = Customer & Document;
 
-@Schema()
+@Schema({ strict: false })
 export class Customer {
   @Prop()
   firstName: string;

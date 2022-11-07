@@ -36,6 +36,12 @@ export default function SettingsEventsBeta() {
     posthogHostUrl: [],
   });
 
+  const [showErrors, setShowErrors] = useState({
+    posthogApiKey: false,
+    posthogProjectId: false,
+    posthogHostUrl: false,
+  });
+
   useEffect(() => {
     const newErrors: { [key: string]: string[] } = {
       posthogApiKey: [],
@@ -80,6 +86,10 @@ export default function SettingsEventsBeta() {
 
   const handleFormDataChange = (e: any) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleBlur = (e: any) => {
+    setShowErrors({ ...showErrors, [e.target.name]: true });
   };
 
   const handleSync = async () => {
@@ -127,7 +137,6 @@ export default function SettingsEventsBeta() {
 
           <RadioGroup value={mem} onChange={setMem} className="mt-2">
             <RadioGroup.Label className="sr-only">
-              {" "}
               Choose a memory option{" "}
             </RadioGroup.Label>
             <div className="grid grid-cols-3 gap-3 sm:grid-cols-6">
@@ -170,14 +179,16 @@ export default function SettingsEventsBeta() {
                     name="posthogApiKey"
                     id="posthogApiKey"
                     className={classNames(
-                      errors.posthogApiKey.length > 0
+                      showErrors.posthogApiKey &&
+                        errors.posthogApiKey.length > 0
                         ? "rounded-md sm:text-sm focus:!border-red-500 !border-red-300 shadow-sm focus:!ring-red-500 "
                         : "rounded-md sm:text-sm focus:border-cyan-500 border-gray-300 shadow-sm focus:ring-cyan-500 "
                     )}
                     aria-invalid="true"
                     aria-describedby="password-error"
+                    onBlur={handleBlur}
                   />
-                  {errors.posthogApiKey.length > 0 && (
+                  {showErrors.posthogApiKey && errors.posthogApiKey.length > 0 && (
                     <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center">
                       <ExclamationCircleIcon
                         className="h-5 w-5 text-red-500"
@@ -186,15 +197,16 @@ export default function SettingsEventsBeta() {
                     </div>
                   )}
                 </div>
-                {errors.posthogApiKey.map((item) => (
-                  <p
-                    className="mt-2 text-sm text-red-600"
-                    id="email-error"
-                    key={item}
-                  >
-                    {item}
-                  </p>
-                ))}
+                {showErrors.posthogApiKey &&
+                  errors.posthogApiKey.map((item) => (
+                    <p
+                      className="mt-2 text-sm text-red-600"
+                      id="email-error"
+                      key={item}
+                    >
+                      {item}
+                    </p>
+                  ))}
               </dd>
             </div>
             <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:py-5">
@@ -210,30 +222,34 @@ export default function SettingsEventsBeta() {
                     name="posthogProjectId"
                     id="posthogProjectId"
                     className={classNames(
-                      errors.posthogProjectId.length > 0
+                      showErrors.posthogProjectId &&
+                        errors.posthogProjectId.length > 0
                         ? "rounded-md sm:text-sm focus:!border-red-500 !border-red-300 shadow-sm focus:!ring-red-500 "
                         : "rounded-md sm:text-sm focus:border-cyan-500 border-gray-300 shadow-sm focus:ring-cyan-500 "
                     )}
                     placeholder="1"
+                    onBlur={handleBlur}
                   />
-                  {errors.posthogProjectId.length > 0 && (
-                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center">
-                      <ExclamationCircleIcon
-                        className="h-5 w-5 text-red-500"
-                        aria-hidden="true"
-                      />
-                    </div>
-                  )}
+                  {showErrors.posthogProjectId &&
+                    errors.posthogProjectId.length > 0 && (
+                      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center">
+                        <ExclamationCircleIcon
+                          className="h-5 w-5 text-red-500"
+                          aria-hidden="true"
+                        />
+                      </div>
+                    )}
                 </div>
-                {errors.posthogProjectId.map((item) => (
-                  <p
-                    className="mt-2 text-sm text-red-600"
-                    id="email-error"
-                    key={item}
-                  >
-                    {item}
-                  </p>
-                ))}
+                {showErrors.posthogProjectId &&
+                  errors.posthogProjectId.map((item) => (
+                    <p
+                      className="mt-2 text-sm text-red-600"
+                      id="email-error"
+                      key={item}
+                    >
+                      {item}
+                    </p>
+                  ))}
               </dd>
             </div>
             <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:py-5">
@@ -250,30 +266,34 @@ export default function SettingsEventsBeta() {
                     name="posthogHostUrl"
                     id="posthogHostUrl"
                     className={classNames(
-                      errors.posthogHostUrl.length > 0
+                      showErrors.posthogHostUrl &&
+                        errors.posthogHostUrl.length > 0
                         ? "rounded-md sm:text-sm focus:!border-red-500 !border-red-300 shadow-sm focus:!ring-red-500 "
                         : "rounded-md sm:text-sm focus:border-cyan-500 border-gray-300 shadow-sm focus:ring-cyan-500 ",
                       "!m-0"
                     )}
+                    onBlur={handleBlur}
                   />
-                  {errors.posthogHostUrl.length > 0 && (
-                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center">
-                      <ExclamationCircleIcon
-                        className="h-5 w-5 text-red-500"
-                        aria-hidden="true"
-                      />
-                    </div>
-                  )}
+                  {showErrors.posthogHostUrl &&
+                    errors.posthogHostUrl.length > 0 && (
+                      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center">
+                        <ExclamationCircleIcon
+                          className="h-5 w-5 text-red-500"
+                          aria-hidden="true"
+                        />
+                      </div>
+                    )}
                 </div>
-                {errors.posthogHostUrl.map((item) => (
-                  <p
-                    className="mt-2 text-sm text-red-600"
-                    id="email-error"
-                    key={item}
-                  >
-                    {item}
-                  </p>
-                ))}
+                {showErrors.posthogHostUrl &&
+                  errors.posthogHostUrl.map((item) => (
+                    <p
+                      className="mt-2 text-sm text-red-600"
+                      id="email-error"
+                      key={item}
+                    >
+                      {item}
+                    </p>
+                  ))}
               </div>
             </div>
             <button

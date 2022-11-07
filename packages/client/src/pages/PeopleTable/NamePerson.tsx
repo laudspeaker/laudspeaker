@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Grid, FormControl } from "@mui/material";
 import { GenericButton, Input, Select } from "components/Elements";
 import { useNavigate } from "react-router-dom";
+import ApiService from "services/api.service";
+import { ApiConfig } from "../../constants";
 
 export interface INameSegmentForm {
   name: string;
@@ -33,6 +35,8 @@ const NamePerson = ({ onSubmit, isPrimary }: INameSegment) => {
     isPrimary: isPrimary,
   });
 
+  const navigate = useNavigate();
+
   // Handling Name and Description Fields
   const handleSegmentFormChange = (e: any) => {
     if (e.target.name === "name") {
@@ -40,7 +44,15 @@ const NamePerson = ({ onSubmit, isPrimary }: INameSegment) => {
     }
   };
 
-  const handleSubmit: any = async (e: any) => {};
+  const handleSubmit: any = async (e: any) => {
+    const { data } = await ApiService.post({
+      url: `${ApiConfig.customerCreate}`,
+      options: {
+        name: segmentForm.name,
+      },
+    });
+    if (data) navigate(`/person/${data}`);
+  };
 
   return (
     <div>
@@ -74,7 +86,7 @@ const NamePerson = ({ onSubmit, isPrimary }: INameSegment) => {
               style={{
                 maxWidth: "200px",
               }}
-              disabled={!segmentForm.name}
+              disabled={!segmentForm?.name?.trim()}
             >
               Create Person
             </GenericButton>
