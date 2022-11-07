@@ -250,7 +250,6 @@ export default function SettingsEmailBeta() {
                     </div>
                   )}
                 </div>
-
                 {showErrors.sendingDomain &&
                   errors.sendingDomain.map((item) => (
                     <p
