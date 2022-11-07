@@ -87,6 +87,7 @@ export class CustomersService {
         );
       }
     }
+
     return ret;
   }
 
@@ -170,6 +171,7 @@ export class CustomersService {
     const { _id, ...newCustomerData } = updateCustomerDto;
     const customer = await this.findOne(account, id);
     await this.CustomerModel.replaceOne(customer, newCustomerData).exec();
+
     return newCustomerData;
   }
 
@@ -475,6 +477,11 @@ export class CustomersService {
       oldCustomer.slackTeamMember = true;
     }
     await oldCustomer.save();
+  }
+
+  async removeById(custId: string) {
+    const cust = await this.CustomerModel.findById(custId);
+    await this.CustomerModel.remove(cust);
   }
 
   async getAttributes(resourceId: string) {

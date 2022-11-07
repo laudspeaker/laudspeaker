@@ -13,6 +13,7 @@ import {
   LoggerService,
   HttpException,
   Put,
+  Delete,
 } from '@nestjs/common';
 import { CreateCustomerDto } from './dto/create-customer.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -69,11 +70,17 @@ export class CustomersController {
   @Post('/create/')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
-  create(
+  async create(
     @Req() { user }: Request,
     @Body() createCustomerDto: CreateCustomerDto
   ) {
-    return this.customersService.create(<Account>user, createCustomerDto);
+    const cust = await this.customersService.create(
+      <Account>user,
+      createCustomerDto
+    );
+
+    // @ts-ignore
+    return cust.id;
   }
 
   @Get('/attributes/:resourceId')
@@ -107,5 +114,12 @@ export class CustomersController {
       this.logger.error('Error:' + e);
       return new HttpException(e, 500);
     }
+  }
+
+  @Post('/delete/:custId')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor)
+  async deletePerson(@Param('custId') custId: string) {
+    await this.customersService.removeById(custId);
   }
 }

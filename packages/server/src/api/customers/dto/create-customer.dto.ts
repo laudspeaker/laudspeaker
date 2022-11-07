@@ -3,6 +3,12 @@ import { IsEmail, IsString, IsNotEmpty, IsOptional } from 'class-validator';
 
 export class CreateCustomerDto {
   @Trim()
+  @IsString()
+  @IsNotEmpty()
+  @IsOptional()
+  public name: string;
+
+  @Trim()
   @IsEmail()
   @IsNotEmpty()
   @IsOptional()

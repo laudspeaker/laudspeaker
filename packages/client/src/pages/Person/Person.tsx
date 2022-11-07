@@ -9,6 +9,9 @@ import {
   UserIcon,
 } from "@heroicons/react/20/solid";
 import { TrashIcon } from "@heroicons/react/24/outline";
+import { confirmAlert } from "react-confirm-alert";
+import { useNavigate } from "react-router-dom";
+import { ApiConfig } from "./../../constants";
 
 const eventTypes = {
   applied: { icon: UserIcon, bgColorClass: "bg-gray-400" },
@@ -68,6 +71,7 @@ const Person = () => {
   const [isAddingAttribute, setIsAddingAttribute] = useState(false);
   const [newAttributeKey, setNewAttributeKey] = useState("");
   const [newAttributeValue, setNewAttributeValue] = useState("");
+  const navigate = useNavigate();
 
   useEffect(() => {
     (async () => {
@@ -85,7 +89,27 @@ const Person = () => {
     setIsEditingMode(false);
   };
 
-  const handleDeletePerson = () => {};
+  const handleDeletePerson = () => {
+    confirmAlert({
+      title: "Confirm delete?",
+      message: "Are you sure you want to delete this person?",
+      buttons: [
+        {
+          label: "Yes",
+          onClick: async () => {
+            await ApiService.post({
+              url: ApiConfig.customerDelete + id,
+              options: {},
+            });
+            navigate("/people");
+          },
+        },
+        {
+          label: "No",
+        },
+      ],
+    });
+  };
 
   const handleDeleteAttribute = (key: string) => {
     const { [key]: value, ...newPersonInfo } = personInfo;
@@ -102,7 +126,7 @@ const Person = () => {
       <div className="p-[30px_50px]">
         <div className="flex justify-between items-center">
           <div className="">
-            <h3 className="text-[32px]">{personInfo._id}</h3>
+            <h3 className="text-[32px]">{personInfo.name || personInfo._id}</h3>
             <h6></h6>
           </div>
           <div className="flex h-[50px] gap-[10px]">
