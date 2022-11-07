@@ -22,7 +22,7 @@ export interface InputProps {
   inputProps?: object;
   className?: string;
   labelClass?: string;
-  onBlur?: () => void;
+  onBlur?: (e?: any) => void;
   ref?: any;
   endText?: string;
 }

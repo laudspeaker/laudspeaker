@@ -49,6 +49,13 @@ export default function SettingsEmailBeta() {
     }
   };
 
+  const [showErrors, setShowErrors] = useState({
+    mailgunAPIKey: false,
+    sendingDomain: false,
+    sendingName: false,
+    sendingEmail: false,
+  });
+
   useEffect(() => {
     const newErrors: { [key: string]: string[] } = {
       mailgunAPIKey: [],
@@ -89,8 +96,11 @@ export default function SettingsEmailBeta() {
   }, []);
 
   const handleFormDataChange = (e: any) => {
-    console.log(e.target.name, e.target.value);
     setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleBlur = (e: any) => {
+    setShowErrors({ ...showErrors, [e.target.name]: true });
   };
 
   const handleSubmit = async () => {
@@ -127,8 +137,7 @@ export default function SettingsEmailBeta() {
 
           <RadioGroup value={mem} onChange={setMem} className="mt-2">
             <RadioGroup.Label className="sr-only">
-              {" "}
-              Choose a memory option{" "}
+              Choose a memory option
             </RadioGroup.Label>
             <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
               {memoryOptions.map((option) => (
@@ -170,15 +179,19 @@ export default function SettingsEmailBeta() {
                     name="mailgunAPIKey"
                     id="mailgunAPIKey"
                     className={classNames(
-                      errors.mailgunAPIKey.length > 0
+                      errors.mailgunAPIKey.length > 0 &&
+                        showErrors.mailgunAPIKey
                         ? "rounded-md sm:text-sm focus:!border-red-500 !border-red-300 shadow-sm focus:!ring-red-500 "
                         : "rounded-md sm:text-sm focus:border-cyan-500 border-gray-300 shadow-sm focus:ring-cyan-500 "
                     )}
                     aria-invalid="true"
                     aria-describedby="password-error"
-                    onBlur={callDomains}
+                    onBlur={(e: any) => {
+                      handleBlur(e);
+                      callDomains();
+                    }}
                   />
-                  {errors.mailgunAPIKey.length > 0 && (
+                  {showErrors.mailgunAPIKey && errors.mailgunAPIKey.length > 0 && (
                     <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center">
                       <ExclamationCircleIcon
                         className="h-5 w-5 text-red-500"
@@ -187,15 +200,16 @@ export default function SettingsEmailBeta() {
                     </div>
                   )}
                 </div>
-                {errors.mailgunAPIKey.map((item) => (
-                  <p
-                    className="mt-2 text-sm text-red-600"
-                    id="email-error"
-                    key={item}
-                  >
-                    {item}
-                  </p>
-                ))}
+                {showErrors.mailgunAPIKey &&
+                  errors.mailgunAPIKey.map((item) => (
+                    <p
+                      className="mt-2 text-sm text-red-600"
+                      id="email-error"
+                      key={item}
+                    >
+                      {item}
+                    </p>
+                  ))}
               </dd>
             </div>
             <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:py-5">
@@ -213,10 +227,12 @@ export default function SettingsEmailBeta() {
                     value={formData.sendingDomain}
                     onChange={handleFormDataChange}
                     className={`mt-1 block w-full rounded-md py-2 pl-3 pr-10 text-base focus:outline-none sm:text-sm ${
-                      errors.sendingDomain.length > 0
+                      errors.sendingDomain.length > 0 &&
+                      showErrors.sendingDomain
                         ? "focus:!border-red-500 !border-red-300 shadow-sm focus:!ring-red-500"
                         : "border-gray-300 focus:border-cyan-500 focus:ring-cyan-500"
                     }`}
+                    onBlur={handleBlur}
                   >
                     <option value={formData.sendingDomain}>
                       {formData.sendingDomain}
@@ -225,7 +241,7 @@ export default function SettingsEmailBeta() {
                       <option value={item}>{item}</option>
                     ))}
                   </select>
-                  {errors.sendingDomain.length > 0 && (
+                  {showErrors.sendingDomain && errors.sendingDomain.length > 0 && (
                     <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center">
                       <ExclamationCircleIcon
                         className="h-5 w-5 text-red-500"
@@ -235,15 +251,16 @@ export default function SettingsEmailBeta() {
                   )}
                 </div>
 
-                {errors.sendingDomain.map((item) => (
-                  <p
-                    className="mt-2 text-sm text-red-600"
-                    id="email-error"
-                    key={item}
-                  >
-                    {item}
-                  </p>
-                ))}
+                {showErrors.sendingDomain &&
+                  errors.sendingDomain.map((item) => (
+                    <p
+                      className="mt-2 text-sm text-red-600"
+                      id="email-error"
+                      key={item}
+                    >
+                      {item}
+                    </p>
+                  ))}
               </dd>
             </div>
 
@@ -253,7 +270,6 @@ export default function SettingsEmailBeta() {
               </dt>
               <dd>
                 <div className="relative rounded-md">
-                  {" "}
                   <Input
                     type="text"
                     value={formData.sendingName}
@@ -261,13 +277,14 @@ export default function SettingsEmailBeta() {
                     name="sendingName"
                     id="sendingName"
                     className={`rounded-md shadow-sm sm:text-sm ${
-                      errors.sendingName.length > 0
+                      showErrors.sendingName && errors.sendingName.length > 0
                         ? "focus:!border-red-500 !border-red-300 shadow-sm focus:!ring-red-500"
                         : "border-gray-300 focus:border-cyan-500 focus:ring-cyan-500"
                     }`}
                     placeholder="Team Laudspeaker"
+                    onBlur={handleBlur}
                   />
-                  {errors.sendingName.length > 0 && (
+                  {showErrors.sendingName && errors.sendingName.length > 0 && (
                     <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center">
                       <ExclamationCircleIcon
                         className="h-5 w-5 text-red-500"
@@ -276,15 +293,16 @@ export default function SettingsEmailBeta() {
                     </div>
                   )}
                 </div>
-                {errors.sendingName.map((item) => (
-                  <p
-                    className="mt-2 text-sm text-red-600"
-                    id="email-error"
-                    key={item}
-                  >
-                    {item}
-                  </p>
-                ))}
+                {showErrors.sendingName &&
+                  errors.sendingName.map((item) => (
+                    <p
+                      className="mt-2 text-sm text-red-600"
+                      id="email-error"
+                      key={item}
+                    >
+                      {item}
+                    </p>
+                  ))}
               </dd>
             </div>
             <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:py-5">
@@ -300,11 +318,12 @@ export default function SettingsEmailBeta() {
                     name="sendingEmail"
                     id="sendingEmail"
                     className={`rounded-md shadow-sm sm:text-sm pr-[150px] ${
-                      errors.sendingEmail.length > 0
+                      showErrors.sendingEmail && errors.sendingEmail.length > 0
                         ? "focus:!border-red-500 !border-red-300 shadow-sm focus:!ring-red-500"
                         : "border-gray-300 focus:border-cyan-500 focus:ring-cyan-500"
                     }`}
                     placeholder="noreply"
+                    onBlur={handleBlur}
                   />
                   <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
                     <span
@@ -314,7 +333,7 @@ export default function SettingsEmailBeta() {
                       @laudspeaker.com
                     </span>
                   </div>
-                  {errors.sendingEmail.length > 0 && (
+                  {showErrors.sendingEmail && errors.sendingEmail.length > 0 && (
                     <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center">
                       <ExclamationCircleIcon
                         className="h-5 w-5 text-red-500"
@@ -323,15 +342,16 @@ export default function SettingsEmailBeta() {
                     </div>
                   )}
                 </div>
-                {errors.sendingEmail.map((item) => (
-                  <p
-                    className="mt-2 text-sm text-red-600"
-                    id="email-error"
-                    key={item}
-                  >
-                    {item}
-                  </p>
-                ))}
+                {showErrors.sendingEmail &&
+                  errors.sendingEmail.map((item) => (
+                    <p
+                      className="mt-2 text-sm text-red-600"
+                      id="email-error"
+                      key={item}
+                    >
+                      {item}
+                    </p>
+                  ))}
               </dd>
             </div>
             <SaveSettings disabled={isError} onClick={handleSubmit} />

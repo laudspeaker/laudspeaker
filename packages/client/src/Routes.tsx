@@ -63,10 +63,12 @@ interface IProtected {
 }
 
 const Protected = ({ children }: IProtected) => {
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(true);
+  const navigate = useNavigate();
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   useLayoutEffect(() => {
     const func = async () => {
       const loggedIn = await tokenService.verify();
+      if (!loggedIn) navigate("/login");
       setIsLoggedIn(loggedIn);
     };
     func();
@@ -77,7 +79,7 @@ const Protected = ({ children }: IProtected) => {
     dispatch(getUserPermissions());
   }
 
-  return isLoggedIn ? children : <Navigate to="/login" replace />;
+  return isLoggedIn ? children : <></>;
 };
 
 interface IOnboarded {
