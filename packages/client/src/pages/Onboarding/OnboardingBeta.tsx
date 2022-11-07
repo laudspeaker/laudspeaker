@@ -335,7 +335,7 @@ export default function OnboardingBeta() {
                             value={integrationsData.sendingEmail}
                             onChange={handleIntegrationsDataChange}
                             className="pr-[150px]"
-                            endText="@laudspeaker.com"
+                            endText={domainName ? "@laudspeaker.com" : ""}
                           />
                         </div>
                       </div>

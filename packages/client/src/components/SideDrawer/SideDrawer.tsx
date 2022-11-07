@@ -3,6 +3,7 @@ import { dataSubArray } from "./SideDrawer.fixtures";
 import { useLocation } from "react-router-dom";
 import { useParams } from "react-router-dom";
 import ApiService from "services/api.service";
+import Tooltip from "components/Elements/Tooltip";
 
 interface Props {
   /**
@@ -50,6 +51,44 @@ export default function ResponsiveDrawer(props: Props) {
     onClick(id);
   };
 
+  const MenuItem = React.forwardRef(
+    ({ item, isDisabled, ...itemProps }: any, ref: any) => (
+      <div
+        id={item.id}
+        onClick={isDisabled ? undefined : () => handleMenuItemClick(item.id)}
+        style={
+          location.pathname.includes(item.link)
+            ? {
+                backgroundImage:
+                  "linear-gradient(to right, rgba(255,255,255,0.1) , rgba(255,255,255,0))",
+                borderLeft: "5px solid #FAFAFA",
+                display: "flex",
+                textDecoration: "none",
+              }
+            : {
+                textDecoration: "none",
+              }
+        }
+        {...itemProps}
+        ref={ref}
+      >
+        <div className="p-0" key={item.text}>
+          <button
+            className={`flex justify-between items-center cursor-pointer relative w-full hover:bg-gray-200 disabled:opacity-50`}
+            disabled={isDisabled}
+          >
+            <div className="w-[50px] h-[50px] flex justify-center items-center">
+              {item.imgIcon}
+            </div>
+            <div className="text-[#28282E] font-medium leading-[1] text-left w-full">
+              {item.text}
+            </div>
+          </button>
+        </div>
+      </div>
+    )
+  );
+
   const generateMenuItem = (item: any) => {
     const isDisabled =
       item.alwaysDisabled ||
@@ -58,44 +97,16 @@ export default function ResponsiveDrawer(props: Props) {
         !expectedOnboarding?.includes(item.requiredOnboarding));
     return (
       <>
-        {
-          <div
-            id={item.id}
-            onClick={
-              isDisabled ? undefined : () => handleMenuItemClick(item.id)
-            }
-            style={
-              location.pathname.includes(item.link)
-                ? {
-                    backgroundImage:
-                      "linear-gradient(to right, rgba(255,255,255,0.1) , rgba(255,255,255,0))",
-                    borderLeft: "5px solid #FAFAFA",
-                    display: "flex",
-                    textDecoration: "none",
-                  }
-                : {
-                    textDecoration: "none",
-                  }
-            }
-          >
-            <div className="p-0" key={item.text}>
-              <button
-                className={`flex justify-between items-center cursor-pointer relative w-full hover:bg-gray-200 disabled:opacity-50`}
-                disabled={isDisabled}
-              >
-                <div className="w-[50px] h-[50px] flex justify-center items-center">
-                  {item.imgIcon}
-                </div>
-                <div className="text-[#28282E] font-medium leading-[1] text-left w-full">
-                  {item.text}
-                </div>
-              </button>
-            </div>
-          </div>
-        }
+        <Tooltip
+          title={(isDisabled && item.disabledToolTip) || ""}
+          placement="right"
+        >
+          <MenuItem item={item} isDisabled={isDisabled} />
+        </Tooltip>
       </>
     );
   };
+
   const generateMenu = (arr: any) => {
     return (
       <>
@@ -107,12 +118,12 @@ export default function ResponsiveDrawer(props: Props) {
                   <div className="text-left font-medium mt-[26px] ml-[18px] text-[14px] font-[Inter]">
                     {item.text}
                   </div>
-                  {item?.children?.map((menuItem: any) =>
-                    generateMenuItem(menuItem)
-                  )}
+                  {item?.children?.map((menuItem: any) => (
+                    <>{generateMenuItem(menuItem)}</>
+                  ))}
                 </>
               ) : (
-                generateMenuItem(item)
+                <>{generateMenuItem(item)}</>
               )}
             </>
           );

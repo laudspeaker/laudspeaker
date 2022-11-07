@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Grid, FormControl } from "@mui/material";
 import { GenericButton, Input, Select } from "components/Elements";
 import { useNavigate } from "react-router-dom";
+import ApiService from "services/api.service";
+import { ApiConfig } from "../../constants";
 
 export interface INameSegmentForm {
   name: string;
@@ -32,7 +34,7 @@ const NamePerson = ({ onSubmit, isPrimary }: INameSegment) => {
     name: "",
     isPrimary: isPrimary,
   });
-  const [day, setDay] = useState("");
+
   const navigate = useNavigate();
 
   // Handling Name and Description Fields
@@ -42,30 +44,20 @@ const NamePerson = ({ onSubmit, isPrimary }: INameSegment) => {
     }
   };
 
-  const handleType = (value: any) => {
-    setDay(value);
-  };
-
-  // Pushing state back up to the flow builder
   const handleSubmit: any = async (e: any) => {
-    if (day == "slack") {
-      const navigationLink = "/templates/slack/" + segmentForm.name;
-      navigate(navigationLink);
-    } else if (day == "email") {
-      const navigationLink = "/templates/email/" + segmentForm.name;
-      navigate(navigationLink);
-    } else {
-    }
-    e.preventDefault();
-    if (onSubmit) {
-      onSubmit(segmentForm);
-    }
+    const { data } = await ApiService.post({
+      url: `${ApiConfig.customerCreate}`,
+      options: {
+        name: segmentForm.name,
+      },
+    });
+    if (data) navigate(`/person/${data}`);
   };
 
   return (
     <div>
-      <div className="flex items-start justify-center pt-[18px] mb-[50px]">
-        <div className="bg-white rounded-3xl p-[22px_30px_77px_30px] w-full max-w-[1138px]">
+      <div className="flex items-start justify-center pt-[18px]">
+        <div className="bg-white rounded-3xl w-full max-w-[1138px]">
           <h3>Name your Person</h3>
           <Grid container direction={"row"} padding={"10px 0px"}>
             <FormControl variant="standard">
@@ -87,43 +79,17 @@ const NamePerson = ({ onSubmit, isPrimary }: INameSegment) => {
                 onChange={handleSegmentFormChange}
               />
             </FormControl>
-            <FormControl
-              sx={{
-                padding: "0 15px",
-                marginTop: "20px",
-                width: "auto",
-              }}
-            >
-              <Select
-                id="handleDay"
-                value={day}
-                options={[
-                  { value: "email" },
-                  { value: "slack" },
-                  { value: "sms" },
-                ]}
-                onChange={handleType}
-                displayEmpty
-                sx={{
-                  height: "44px",
-                  "& .MuiSelect-select": {
-                    padding: "9px 15px",
-                    border: "1px solid #DEDEDE",
-                    paddingRight: "50px !important",
-                    boxShadow: "none",
-                  },
-                }}
-              />
-            </FormControl>
           </Grid>
-          <div className="mt-6 flex space-x-3 md:mt-0 md:ml-4">
-            <button
-              type="button"
-              className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2"
+          <div className="mt-6 flex justify-end space-x-3 md:mt-0 md:ml-4">
+            <GenericButton
               onClick={handleSubmit}
+              style={{
+                maxWidth: "200px",
+              }}
+              disabled={!segmentForm?.name?.trim()}
             >
               Create Person
-            </button>
+            </GenericButton>
           </div>
           {/* 
           <div className="flex justify-end">

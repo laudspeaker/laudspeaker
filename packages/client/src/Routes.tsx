@@ -55,16 +55,20 @@ import SettingsBillingBeta from "pages/Settings/SettingsBillingBeta";
 import SettingsTeamBeta from "pages/Settings/SettingsTeamBeta";
 import TableBeta from "pages/TemplateTable/TableBeta";
 import OnboardingBeta from "pages/Onboarding/OnboardingBeta";
+import Settings from "pages/Settings/Settings";
+import Person from "pages/Person";
 
 interface IProtected {
   children: ReactElement;
 }
 
 const Protected = ({ children }: IProtected) => {
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(true);
+  const navigate = useNavigate();
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   useLayoutEffect(() => {
     const func = async () => {
       const loggedIn = await tokenService.verify();
+      if (!loggedIn) navigate("/login");
       setIsLoggedIn(loggedIn);
     };
     func();
@@ -75,7 +79,7 @@ const Protected = ({ children }: IProtected) => {
     dispatch(getUserPermissions());
   }
 
-  return isLoggedIn ? children : <Navigate to="/login" replace />;
+  return isLoggedIn ? children : <></>;
 };
 
 interface IOnboarded {
@@ -190,6 +194,16 @@ const RouteComponent: React.FC = () => {
           }
         />
         <Route
+          path="/person/:id"
+          element={
+            <Protected>
+              <DrawerLayout>
+                <Person />
+              </DrawerLayout>
+            </Protected>
+          }
+        />
+        <Route
           path="/emailconfig"
           element={
             <Protected>
@@ -262,87 +276,7 @@ const RouteComponent: React.FC = () => {
           element={
             <Protected>
               <DrawerLayout>
-                <SettingsGeneralBeta />
-              </DrawerLayout>
-            </Protected>
-          }
-        />
-        <Route
-          path="/settings/api"
-          element={
-            <Protected>
-              <DrawerLayout>
-                <SettingsAPIBeta />
-              </DrawerLayout>
-            </Protected>
-          }
-        />
-        <Route
-          path="/settings/email"
-          element={
-            <Protected>
-              <DrawerLayout>
-                <SettingsEmailBeta />
-              </DrawerLayout>
-            </Protected>
-          }
-        />
-        <Route
-          path="/settings/slack"
-          element={
-            <Protected>
-              <DrawerLayout>
-                <SettingsSlackBeta />
-              </DrawerLayout>
-            </Protected>
-          }
-        />
-        <Route
-          path="/settings/events"
-          element={
-            <Protected>
-              <DrawerLayout>
-                <SettingsEventsBeta />
-              </DrawerLayout>
-            </Protected>
-          }
-        />
-        <Route
-          path="/settings/sms"
-          element={
-            <Protected>
-              <DrawerLayout>
-                <SettingsSMSBeta />
-              </DrawerLayout>
-            </Protected>
-          }
-        />
-        <Route
-          path="/settings/plan"
-          element={
-            <Protected>
-              <DrawerLayout>
-                <SettingsPlanBeta />
-              </DrawerLayout>
-            </Protected>
-          }
-        />
-        <Route
-          path="/settings/billing"
-          element={
-            <Protected>
-              <DrawerLayout>
-                <SettingsBillingBeta />
-              </DrawerLayout>
-            </Protected>
-          }
-        />
-        <Route
-          path="/settings/team"
-          element={
-            <Protected>
-              <DrawerLayout>
-                <SettingsTeamBeta />
+                <Settings />
               </DrawerLayout>
             </Protected>
           }

@@ -1,6 +1,12 @@
 /* eslint-disable no-case-declarations */
-import { Model } from 'mongoose';
-import { Inject, Injectable, LoggerService } from '@nestjs/common';
+import mongoose, { isValidObjectId, Model, Types } from 'mongoose';
+import {
+  HttpException,
+  HttpStatus,
+  Inject,
+  Injectable,
+  LoggerService,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Customer, CustomerDocument } from './schemas/customer.schema';
 import { CreateCustomerDto } from './dto/create-customer.dto';
@@ -81,12 +87,13 @@ export class CustomersService {
         );
       }
     }
+
     return ret;
   }
 
   async addPhCustomers(data: any, account: Account) {
     for (let index = 0; index < data.length; index++) {
-      let addedBefore = await this.CustomerModel.find({
+      const addedBefore = await this.CustomerModel.find({
         ownerId: (<Account>account).id,
         posthogId: {
           $in: [...data[index]['distinct_ids']],
@@ -111,7 +118,7 @@ export class CustomersService {
           data[index]?.properties.$geoip_time_zone;
       }
       if (account['posthogEmailKey'] != null) {
-        let emailKey = account['posthogEmailKey'][0];
+        const emailKey = account['posthogEmailKey'][0];
         if (data[index]?.properties[emailKey]) {
           createdCustomer['phEmail'] = data[index]?.properties[emailKey];
         }
@@ -138,6 +145,34 @@ export class CustomersService {
       .limit(take <= 100 ? take : 100)
       .exec();
     return { data: customers, totalPages };
+  }
+
+  async findOne(account: Account, id: string) {
+    if (!isValidObjectId(id))
+      throw new HttpException('Id is not valid', HttpStatus.BAD_REQUEST);
+
+    const customer = await this.CustomerModel.findOne({
+      _id: new Types.ObjectId(id),
+      ownerId: account.id,
+    }).exec();
+    if (!customer)
+      throw new HttpException('Person not found', HttpStatus.NOT_FOUND);
+    return {
+      ...customer.toObject<mongoose.LeanDocument<CustomerDocument>>(),
+      _id: id,
+    };
+  }
+
+  async update(
+    account: Account,
+    id: string,
+    updateCustomerDto: Record<string, unknown>
+  ) {
+    const { _id, ...newCustomerData } = updateCustomerDto;
+    const customer = await this.findOne(account, id);
+    await this.CustomerModel.replaceOne(customer, newCustomerData).exec();
+
+    return newCustomerData;
   }
 
   async returnAllPeopleInfo(account: Account, take = 100, skip = 0) {
@@ -442,6 +477,11 @@ export class CustomersService {
       oldCustomer.slackTeamMember = true;
     }
     await oldCustomer.save();
+  }
+
+  async removeById(custId: string) {
+    const cust = await this.CustomerModel.findById(custId);
+    await this.CustomerModel.remove(cust);
   }
 
   async getAttributes(resourceId: string) {

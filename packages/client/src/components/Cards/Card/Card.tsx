@@ -8,11 +8,19 @@ export interface Cardprops {
   overideClasses?: object;
   squareCorner?: boolean;
   variant?: "elevation" | "outlined";
+  className?: string;
 }
 
 const Card = (props: Cardprops) => {
-  const { children, raisedStyle, sx, overideClasses, squareCorner, variant } =
-    props;
+  const {
+    children,
+    raisedStyle,
+    sx,
+    overideClasses,
+    squareCorner,
+    variant,
+    className,
+  } = props;
 
   return (
     <MuiCard
@@ -21,6 +29,7 @@ const Card = (props: Cardprops) => {
       sx={sx}
       square={squareCorner}
       variant={variant}
+      className={className}
     >
       {children}
     </MuiCard>

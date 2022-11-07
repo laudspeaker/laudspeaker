@@ -18,6 +18,8 @@ export default {
   correlateSlack: "/slack/cor",
   getAllTemplates: "/templates",
   getAllPeople: "/customers",
+  customerCreate: "/customers/create",
+  customerDelete: "/customers/delete/",
   flow: "/workflows",
   startFlow: "/workflows/start",
   deleteFlow: "/workflows/delete",

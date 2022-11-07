@@ -34,12 +34,12 @@ import ChooseTemplateModal from "./ChooseTemplateModal";
 import { MySegment, NameSegment } from "pages/Segment";
 import ApiService from "services/api.service";
 import TriggerModal from "./TriggerModal";
-import { GenericButton, Select } from "components/Elements";
+import { Select } from "components/Elements";
 import { getFlow } from "./FlowHelpers";
 import { toast } from "react-toastify";
 import Modal from "../../components/Elements/Modal";
-import { useForceUpdate } from "../../hooks/helperHooks";
 import Header from "components/Header";
+import Tooltip from "components/Elements/Tooltip";
 
 enum TriggerType {
   event,
@@ -125,6 +125,7 @@ const Flow = () => {
   const [audienceEditModalOpen, setAudienceEditModalOpen] =
     useState<boolean>(false);
   const [selectedMessageType, setSelectedMessageType] = useState<any>("");
+  const [tutorialOpen, setTutorialOpen] = useState(false);
 
   const onHandleClick = (e: any, triggerId: any) => {
     return { e, triggerId };
@@ -397,6 +398,10 @@ const Flow = () => {
     settriggerModalOpen(!triggerModalOpen);
   };
 
+  const handleTutorialOpen = () => {
+    setTutorialOpen(true);
+  };
+
   const onSaveTrigger = (data: any) => {
     settriggerModalOpen(false);
     selectedTrigger.properties = data;
@@ -511,6 +516,13 @@ const Flow = () => {
     setAudienceEditModalOpen(false);
   };
 
+  let startDisabledReason = "";
+
+  if (!nodes.some((node) => node.data.primary))
+    startDisabledReason = "Your journey is empty";
+  else if (!nodes.some((node) => node.data.messages.length > 0))
+    startDisabledReason = "There is no message chosen";
+
   return (
     <div className="h-[calc(100vh-64px)] overflow-y-scroll flex w-full">
       <div className="max-h-[calc(100vh-64px)] h-full lg:overflow-y-auto overflow-y-scroll flex">
@@ -550,6 +562,19 @@ const Flow = () => {
           <div className="m-[0_7.5px]" data-saveflowbutton>
             <button
               className="inline-flex items-center rounded-md border border-transparent bg-cyan-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-cyan-500 focus:outline-none focus:ring-2 focus:ring-offset-2 rounded-md bg-white font-medium focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2"
+              onClick={handleTutorialOpen}
+              style={{
+                maxWidth: "158px",
+                maxHeight: "48px",
+                padding: "13px 25px",
+              }}
+            >
+              Tutorial
+            </button>
+          </div>
+          <div className="m-[0_7.5px]" data-saveflowbutton>
+            <button
+              className="inline-flex items-center rounded-md border border-transparent bg-cyan-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-cyan-500 focus:outline-none focus:ring-2 focus:ring-offset-2 rounded-md bg-white font-medium focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2"
               onClick={handleSaveJourney}
               style={{
                 maxWidth: "158px",
@@ -561,17 +586,22 @@ const Flow = () => {
             </button>
           </div>
           <div className="m-[0_7.5px]" data-startflowbutton>
-            <button
-              className="inline-flex items-center rounded-md border border-transparent bg-cyan-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-cyan-500 focus:outline-none focus:ring-2 focus:ring-offset-2 rounded-md bg-white font-medium focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2"
-              onClick={handleStartJourney}
-              style={{
-                maxWidth: "158px",
-                maxHeight: "48px",
-                padding: "13px 25px",
-              }}
-            >
-              Start
-            </button>
+            <Tooltip title={startDisabledReason} placement="bottom">
+              <button
+                className={`inline-flex items-center rounded-md border border-transparent bg-cyan-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-cyan-500 focus:outline-none focus:ring-2 focus:ring-offset-2 rounded-md bg-white font-medium focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 ${
+                  !!startDisabledReason ? "grayscale" : ""
+                }`}
+                onClick={handleStartJourney}
+                style={{
+                  maxWidth: "158px",
+                  maxHeight: "48px",
+                  padding: "13px 25px",
+                }}
+                disabled={!!startDisabledReason}
+              >
+                Start
+              </button>
+            </Tooltip>
           </div>
           <Select
             id="zoomSelect"
@@ -644,6 +674,20 @@ const Flow = () => {
           />
         </Modal>
       ) : null}
+      <Modal
+        isOpen={tutorialOpen}
+        onClose={() => {
+          setTutorialOpen(false);
+        }}
+      >
+        <div className="relative pb-[100%] h-0">
+          <iframe
+            className="absolute top-0 left-0 h-full w-full"
+            src="https://www.loom.com/embed/be35f72bd1d04dc5a9c972d2b92c82f8"
+            frameBorder="0"
+          />
+        </div>
+      </Modal>
     </div>
   );
 };
