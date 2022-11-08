@@ -41,6 +41,7 @@ export class EmailProcessor {
         to: job.data.to,
         subject: subjectWithInsertedTags,
         html: textWithInsertedTags,
+        'v:audienceId': job.data.audienceId,
       });
       this.logger.debug(
         'Response from message sending: ' + JSON.stringify(msg)

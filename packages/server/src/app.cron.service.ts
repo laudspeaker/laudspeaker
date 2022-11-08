@@ -6,12 +6,17 @@ import {
   Customer,
   CustomerDocument,
 } from './api/customers/schemas/customer.schema';
+import FormData from 'form-data';
 import { getType } from 'tst-reflect';
 import {
   CustomerKeys,
   CustomerKeysDocument,
 } from './api/customers/schemas/customer-keys.schema';
 import { isDateString, isEmail } from 'class-validator';
+import Mailgun from 'mailgun.js';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Account } from './api/accounts/entities/accounts.entity';
+import { Repository } from 'typeorm';
 
 const BATCH_SIZE = 500;
 const KEYS_TO_SKIP = ['__v', '_id', 'audiences', 'ownerId'];
@@ -24,12 +29,14 @@ export class CronService {
     @InjectModel(Customer.name)
     private customerModel: Model<CustomerDocument>,
     @InjectModel(CustomerKeys.name)
-    private customerKeysModel: Model<CustomerKeysDocument>
+    private customerKeysModel: Model<CustomerKeysDocument>,
+    @InjectRepository(Account)
+    private accountRepository: Repository<Account>
   ) {}
 
   @Cron(CronExpression.EVERY_MINUTE)
-  async handleCron() {
-    this.logger.log('Cron job started');
+  async handleCustomerKeysCron() {
+    this.logger.log('Cron customer keys job started');
     let current = 0;
     const documentsCount = await this.customerModel
       .estimatedDocumentCount()
@@ -93,9 +100,95 @@ export class CronService {
     }
 
     this.logger.log(
-      `Cron job finished, checked ${documentsCount} records, found ${
+      `Cron customer keys job finished, checked ${documentsCount} records, found ${
         Object.keys(keys).length
       } keys`
     );
+  }
+
+  private lastEventFetch?: string = new Date('2020-10-10').toUTCString();
+
+  @Cron(CronExpression.EVERY_10_SECONDS)
+  async handleClickHouseCron() {
+    const mailgun = new Mailgun(FormData);
+    const mg = mailgun.client({
+      username: 'api',
+      key: process.env.MAILGUN_API_KEY,
+    });
+
+    const stats: Record<string, Record<string, number>> = {};
+
+    const accountsNumber = await this.accountRepository.count();
+    let offset = 0;
+
+    while (offset < accountsNumber) {
+      const accountsBatch = await this.accountRepository.find({
+        take: BATCH_SIZE,
+        skip: offset,
+      });
+
+      for (const account of accountsBatch) {
+        try {
+          let events = await mg.events.get(account.sendingDomain, {
+            begin: this.lastEventFetch,
+            ascending: 'yes',
+          });
+
+          for (const item of events.items) {
+            const { audienceId } = item['user-variables'];
+            if (!audienceId) continue;
+            if (!stats[audienceId]) stats[audienceId] = {};
+            stats[audienceId][item.event] = stats[audienceId][item.event]
+              ? 1
+              : stats[audienceId][item.event] + 1;
+          }
+
+          let page = events.pages.next.number;
+          let lastEventTimestamp =
+            events.items[events.items.length - 1].timestamp * 1000;
+
+          while (new Date(lastEventTimestamp) > new Date(this.lastEventFetch)) {
+            events = await mg.events.get(account.sendingDomain, {
+              begin: this.lastEventFetch,
+              ascending: 'yes',
+              page,
+            });
+
+            for (const item of events.items) {
+              const { audienceId } = item['user-variables'];
+              if (!audienceId) continue;
+              if (!stats[audienceId]) stats[audienceId] = {};
+              if (!stats[audienceId][item.event]) {
+                stats[audienceId][item.event] = 0;
+              }
+
+              stats[audienceId][item.event]++;
+            }
+
+            lastEventTimestamp =
+              events.items[events.items.length - 1].timestamp * 1000;
+
+            page = events.pages.next.number;
+          }
+        } catch (e) {
+          this.logger.error(e);
+        }
+      }
+      offset += BATCH_SIZE;
+      console.log(stats);
+    }
+
+    // console.dir(
+    //   events,
+    //   // await mg.stats.getAccount({ event: ['opened', 'delivered', 'failed'] }),
+    //   {
+    //     depth: null,
+    //   }
+    // );
+
+    // console.log('------');
+    // console.log(await mg.stats.getAccount({ event: 'clicked' }));
+    // console.log('------');
+    // console.log(await mg.stats.getAccount({ event: 'delivered' }));
   }
 }
