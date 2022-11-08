@@ -69,6 +69,8 @@ export const dataSubArray = [
         link: "/timeDelay",
         canBeDisabled: true,
         disabledToolTip: "Add step first",
+        enabledToolTip:
+          "This trigger moves a user from one step to another some time after an action",
       },
       {
         id: "timeWindow",

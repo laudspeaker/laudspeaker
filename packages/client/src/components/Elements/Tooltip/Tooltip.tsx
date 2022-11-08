@@ -13,7 +13,11 @@ const Tooltip: FC<CustomTooltipProps & TooltipProps> = ({
   placement = "top",
 }) => {
   return (
-    <MTTooltip content={title} placement={placement}>
+    <MTTooltip
+      className="text-center z-[10]"
+      content={title}
+      placement={placement}
+    >
       <div>{children}</div>
     </MTTooltip>
   );
