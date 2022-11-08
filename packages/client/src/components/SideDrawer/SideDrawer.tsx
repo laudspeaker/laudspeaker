@@ -98,7 +98,11 @@ export default function ResponsiveDrawer(props: Props) {
     return (
       <>
         <Tooltip
-          title={(isDisabled && item.disabledToolTip) || ""}
+          title={
+            (isDisabled && item.disabledToolTip) ||
+            (!isDisabled && item.enabledToolTip) ||
+            ""
+          }
           placement="right"
         >
           <MenuItem item={item} isDisabled={isDisabled} />
