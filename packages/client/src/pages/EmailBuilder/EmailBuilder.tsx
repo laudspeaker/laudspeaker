@@ -11,6 +11,7 @@ import { useParams } from "react-router-dom";
 import MergeTagType from "./MergeTags";
 import { getResources } from "pages/Segment/SegmentHelpers";
 import MergeTagInput from "components/MergeTagInput";
+import { Helmet } from "react-helmet";
 
 export interface Resource {
   label: string;
@@ -152,6 +153,25 @@ const EmailBuilder = () => {
 
   return (
     <div className="w-full">
+      <Helmet>
+        <script>
+          {`
+            (function (d, t) {
+              var BASE_URL = "https://app.chatwoot.com";
+              var g = d.createElement(t), s = d.getElementsByTagName(t)[0];
+              g.src = BASE_URL + "/packs/js/sdk.js";
+              g.defer = true;
+              g.async = true;
+              s.parentNode.insertBefore(g, s);
+              g.onload = function () {
+                window.chatwootSDK.run({
+                  websiteToken: 'SzjbgmVdjTexxW1nEFLHHBGM',
+                  baseUrl: BASE_URL
+                })
+              }
+            })(document, "script");`}
+        </script>
+      </Helmet>
       <EmailHeader
         onPersonalize={onPersonalize}
         onSave={onSave}

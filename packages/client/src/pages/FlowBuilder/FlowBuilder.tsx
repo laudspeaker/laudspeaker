@@ -40,6 +40,7 @@ import { toast } from "react-toastify";
 import Modal from "../../components/Elements/Modal";
 import Header from "components/Header";
 import Tooltip from "components/Elements/Tooltip";
+import { Helmet } from "react-helmet";
 
 enum TriggerType {
   event,
@@ -527,6 +528,25 @@ const Flow = () => {
 
   return (
     <div className="h-[calc(100vh-64px)] overflow-y-scroll flex w-full">
+      <Helmet>
+        <script>
+          {`
+            (function (d, t) {
+              var BASE_URL = "https://app.chatwoot.com";
+              var g = d.createElement(t), s = d.getElementsByTagName(t)[0];
+              g.src = BASE_URL + "/packs/js/sdk.js";
+              g.defer = true;
+              g.async = true;
+              s.parentNode.insertBefore(g, s);
+              g.onload = function () {
+                window.chatwootSDK.run({
+                  websiteToken: 'SzjbgmVdjTexxW1nEFLHHBGM',
+                  baseUrl: BASE_URL
+                })
+              }
+            })(document, "script");`}
+        </script>
+      </Helmet>
       <div className="max-h-[calc(100vh-64px)] h-full lg:overflow-y-auto overflow-y-scroll flex">
         <div className="flex">
           <SideDrawer selectedNode={selectedNode} onClick={performAction} />
