@@ -127,7 +127,10 @@ export class EventsController {
 
           if (!correlation.found) {
             try {
-              await this.workflowsService.enrollCustomer(account, correlation.cust);
+              await this.workflowsService.enrollCustomer(
+                account,
+                correlation.cust
+              );
             } catch (err) {
               this.logger.error('Error: ' + err);
               return new HttpException(err, 500);
