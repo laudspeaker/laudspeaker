@@ -27,8 +27,8 @@ const client = createClient({
 
 const createTableQuery = `
 CREATE TABLE IF NOT EXISTS message_status
-(id UInt64, audienceId String, customerId String, messageId String, clicked Boolean, accepted Boolean, delivered Boolean)
-ORDER BY (id);`;
+(audienceId UUID, customerId String, messageId String, event String, createdAt DateTime)
+PRIMARY KEY (audienceId, customerId, messageId, event)`;
 
 const selectMessageQuery = `
 SELECT * FROM message_status WHERE messageId =`;
@@ -37,20 +37,25 @@ interface ClickHouseMessage {
   audienceId: string;
   customerId: string;
   messageId: string;
-  clicked: boolean;
-  accepted: boolean;
-  delivered: boolean;
+  event: string;
+  createdAt: string;
 }
 
 const createTable = async () => {
   await client.query({ query: createTableQuery });
 };
 
-const insertMessage = async (values: ClickHouseMessage[]) => {
+const getLastFetchedEventTimestamp = async () => {
+  return await client.query({
+    query: `SELECT MAX(createdAt) FROM message_status`,
+  });
+};
+
+const insertMessages = async (values: ClickHouseMessage[]) => {
   await client.insert<ClickHouseMessage>({
     table: 'message_status',
     values,
-    format: 'JSONCompactEachRow',
+    format: 'JSONEachRow',
   });
 };
 
@@ -71,7 +76,9 @@ export class CronService {
     private customerKeysModel: Model<CustomerKeysDocument>,
     @InjectRepository(Account)
     private accountRepository: Repository<Account>
-  ) {}
+  ) {
+    createTable();
+  }
 
   @Cron(CronExpression.EVERY_MINUTE)
   async handleCustomerKeysCron() {
@@ -145,17 +152,16 @@ export class CronService {
     );
   }
 
-  private lastEventFetch?: string = new Date('2020-10-10').toUTCString();
-
   @Cron(CronExpression.EVERY_10_SECONDS)
   async handleClickHouseCron() {
-    const mailgun = new Mailgun(FormData);
-    const mg = mailgun.client({
-      username: 'api',
-      key: process.env.MAILGUN_API_KEY,
-    });
+    const lastEventFetch =
+      new Date(
+        (await (await getLastFetchedEventTimestamp()).json<any>())?.data?.[0]?.[
+          'max(createdAt)'
+        ]
+      ) || new Date('2000-10-10');
 
-    const stats: Record<string, Record<string, number>> = {};
+    const mailgun = new Mailgun(FormData);
 
     const accountsNumber = await this.accountRepository.count();
     let offset = 0;
@@ -167,77 +173,73 @@ export class CronService {
       });
 
       for (const account of accountsBatch) {
+        const mg = mailgun.client({
+          username: 'api',
+          key: account.mailgunAPIKey,
+        });
         try {
           let events = await mg.events.get(account.sendingDomain, {
-            begin: this.lastEventFetch,
+            begin: new Date(lastEventFetch.getTime() + 1000).toUTCString(),
             ascending: 'yes',
           });
 
+          const batchToSave: ClickHouseMessage[] = [];
+
           for (const item of events.items) {
-            const { audienceId } = item['user-variables'];
-            if (!audienceId) continue;
-            if (!stats[audienceId]) stats[audienceId] = {};
-            stats[audienceId][item.event] = stats[audienceId][item.event]
-              ? 1
-              : stats[audienceId][item.event] + 1;
+            const { audienceId, customerId } = item['user-variables'];
+            if (!audienceId || !customerId) continue;
+            const event = item.event;
+            const messageId = item.message.headers['message-id'];
+            const createdAt = new Date(item.timestamp * 1000).toUTCString();
+            batchToSave.push({
+              audienceId,
+              customerId,
+              event,
+              messageId,
+              createdAt,
+            });
           }
 
           let page = events.pages.next.number;
           let lastEventTimestamp =
-            events.items[events.items.length - 1].timestamp * 1000;
+            events.items[events.items.length - 1]?.timestamp * 1000;
 
-          while (new Date(lastEventTimestamp) > new Date(this.lastEventFetch)) {
+          while (
+            lastEventTimestamp &&
+            new Date(lastEventTimestamp) > lastEventFetch
+          ) {
             events = await mg.events.get(account.sendingDomain, {
-              begin: this.lastEventFetch,
+              begin: lastEventFetch.toUTCString(),
               ascending: 'yes',
               page,
             });
 
             for (const item of events.items) {
-              const { audienceId } = item['user-variables'];
-              if (!audienceId) continue;
-              if (!stats[audienceId]) stats[audienceId] = {};
-              if (!stats[audienceId][item.event]) {
-                stats[audienceId][item.event] = 0;
-              }
-
-              stats[audienceId][item.event]++;
+              const { audienceId, customerId } = item['user-variables'];
+              if (!audienceId || !customerId) continue;
+              const event = item.event;
+              const messageId = item.message.headers['message-id'];
+              const createdAt = new Date(item.timestamp * 1000).toUTCString();
+              batchToSave.push({
+                audienceId,
+                customerId,
+                event,
+                messageId,
+                createdAt,
+              });
             }
 
             lastEventTimestamp =
-              events.items[events.items.length - 1].timestamp * 1000;
+              events.items[events.items.length - 1]?.timestamp * 1000;
 
             page = events.pages.next.number;
           }
+          insertMessages(batchToSave);
         } catch (e) {
           this.logger.error(e);
         }
       }
       offset += BATCH_SIZE;
-      console.log(stats);
-      console.log('---');
-      console.log(
-        await mg.events.get('laudspeaker.com', {
-          'message-id': [
-            '20221109093825.415252a7e295e6e3@laudspeaker.com',
-            '20221109093951.409db1590c084acd@laudspeaker.com',
-            '20221109095109.d3b4a658e6bd1604@laudspeaker.com',
-          ].join(' OR '),
-        })
-      );
     }
-
-    // console.dir(
-    //   events,
-    //   // await mg.stats.getAccount({ event: ['opened', 'delivered', 'failed'] }),
-    //   {
-    //     depth: null,
-    //   }
-    // );
-
-    // console.log('------');
-    // console.log(await mg.stats.getAccount({ event: 'clicked' }));
-    // console.log('------');
-    // console.log(await mg.stats.getAccount({ event: 'delivered' }));
   }
 }
