@@ -42,7 +42,9 @@ export class EmailProcessor {
         subject: subjectWithInsertedTags,
         html: textWithInsertedTags,
         'v:audienceId': job.data.audienceId,
+        'v:customerId': job.data.customerId,
       });
+      console.log('Email id: ' + msg.id);
       this.logger.debug(
         'Response from message sending: ' + JSON.stringify(msg)
       );

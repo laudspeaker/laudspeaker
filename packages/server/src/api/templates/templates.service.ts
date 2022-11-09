@@ -94,6 +94,7 @@ export class TemplatesService {
           email: account.sendingEmail,
           to: customer.phEmail ? customer.phEmail : customer.email,
           audienceId,
+          customerId,
           tags,
           subject: template.subject,
           text: event?.payload ? event.payload : template.text,

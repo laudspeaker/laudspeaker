@@ -17,6 +17,45 @@ import Mailgun from 'mailgun.js';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Account } from './api/accounts/entities/accounts.entity';
 import { Repository } from 'typeorm';
+import { createClient } from '@clickhouse/client';
+
+const client = createClient({
+  host: process.env.CLICKHOUSE_HOST ?? 'http://localhost:8123',
+  username: process.env.CLICKHOUSE_USER ?? 'default',
+  password: process.env.CLICKHOUSE_PASSWORD ?? '',
+});
+
+const createTableQuery = `
+CREATE TABLE IF NOT EXISTS message_status
+(id UInt64, audienceId String, customerId String, messageId String, clicked Boolean, accepted Boolean, delivered Boolean)
+ORDER BY (id);`;
+
+const selectMessageQuery = `
+SELECT * FROM message_status WHERE messageId =`;
+
+interface ClickHouseMessage {
+  audienceId: string;
+  customerId: string;
+  messageId: string;
+  clicked: boolean;
+  accepted: boolean;
+  delivered: boolean;
+}
+
+const createTable = async () => {
+  await client.query({ query: createTableQuery });
+};
+
+const insertMessage = async (values: ClickHouseMessage[]) => {
+  await client.insert<ClickHouseMessage>({
+    table: 'message_status',
+    values,
+    format: 'JSONCompactEachRow',
+  });
+};
+
+const getMessageById = (id: string) =>
+  client.query({ query: `${selectMessageQuery} "${id}"` });
 
 const BATCH_SIZE = 500;
 const KEYS_TO_SKIP = ['__v', '_id', 'audiences', 'ownerId'];
@@ -176,6 +215,16 @@ export class CronService {
       }
       offset += BATCH_SIZE;
       console.log(stats);
+      console.log('---');
+      console.log(
+        await mg.events.get('laudspeaker.com', {
+          'message-id': [
+            '20221109093825.415252a7e295e6e3@laudspeaker.com',
+            '20221109093951.409db1590c084acd@laudspeaker.com',
+            '20221109095109.d3b4a658e6bd1604@laudspeaker.com',
+          ].join(' OR '),
+        })
+      );
     }
 
     // console.dir(
