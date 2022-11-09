@@ -16,7 +16,7 @@ import { isDateString, isEmail } from 'class-validator';
 import Mailgun from 'mailgun.js';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Account } from './api/accounts/entities/accounts.entity';
-import { Repository } from 'typeorm';
+import { IsNull, Not, Repository } from 'typeorm';
 import { createClient } from '@clickhouse/client';
 
 const client = createClient({
@@ -169,15 +169,19 @@ export class CronService {
     while (offset < accountsNumber) {
       const accountsBatch = await this.accountRepository.find({
         take: BATCH_SIZE,
+        where: {
+          mailgunAPIKey: Not(IsNull()),
+        },
         skip: offset,
       });
 
       for (const account of accountsBatch) {
-        const mg = mailgun.client({
-          username: 'api',
-          key: account.mailgunAPIKey,
-        });
         try {
+          const mg = mailgun.client({
+            username: 'api',
+            key: account.mailgunAPIKey,
+          });
+
           let events = await mg.events.get(account.sendingDomain, {
             begin: new Date(lastEventFetch.getTime() + 1000).toUTCString(),
             ascending: 'yes',
