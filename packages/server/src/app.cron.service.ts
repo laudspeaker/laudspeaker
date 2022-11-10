@@ -57,9 +57,6 @@ const insertMessages = async (values: ClickHouseMessage[]) => {
   });
 };
 
-const getMessageById = (id: string) =>
-  client.query({ query: `${selectMessageQuery} "${id}"` });
-
 const BATCH_SIZE = 500;
 const KEYS_TO_SKIP = ['__v', '_id', 'audiences', 'ownerId'];
 
