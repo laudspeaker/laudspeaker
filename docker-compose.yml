@@ -22,3 +22,10 @@ services:
     image: 'mongo:latest'
     ports:
       - "27017:27017"
+  
+  clickhouse:
+    image: clickhouse/clickhouse-server:latest
+    restart: on-failure
+    ports:
+      - "8123:8123"
+      - "9000:9000"
