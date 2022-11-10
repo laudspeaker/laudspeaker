@@ -175,6 +175,20 @@ export class CustomersService {
     };
   }
 
+  async findCustomerEvents(account: Account, customerId: string) {
+    await this.findOne(account, customerId);
+    const response = await this.clickhouseClient.query({
+      query: `SELECT event, createdAt FROM message_status WHERE customerId = {customerId:String} LIMIT 4`,
+      query_params: { customerId },
+    });
+    const data = (
+      await response.json<{
+        data: { event: string; createdAt: string }[];
+      }>()
+    )?.data;
+    return data;
+  }
+
   async update(
     account: Account,
     id: string,
