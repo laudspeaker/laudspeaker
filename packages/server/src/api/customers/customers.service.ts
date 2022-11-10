@@ -24,14 +24,26 @@ import {
 import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
+import { createClient } from '@clickhouse/client';
 
 export type Correlation = {
   cust: CustomerDocument;
   found: boolean;
 };
 
+const eventsMap = {
+  sent: 'accepted',
+  clicked: 'clicked',
+};
+
 @Injectable()
 export class CustomersService {
+  private clickhouseClient = createClient({
+    host: process.env.CLICKHOUSE_HOST ?? 'http://localhost:8123',
+    username: process.env.CLICKHOUSE_USER ?? 'default',
+    password: process.env.CLICKHOUSE_PASSWORD ?? '',
+  });
+
   constructor(
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
     private readonly logger: LoggerService,
@@ -194,6 +206,30 @@ export class CustomersService {
       return info;
     });
     return { data: listInfo, totalPages };
+  }
+
+  async findAudienceStatsCustomers(
+    account: Account,
+    take = 100,
+    skip = 0,
+    event?: string,
+    audienceId?: string
+  ) {
+    if (eventsMap[event] && audienceId) {
+      const response = await this.clickhouseClient.query({
+        query: `SELECT customerId FROM message_status WHERE audienceId = {audienceId:UUID} AND event = {event:String} ORDER BY createdAt LIMIT {take:Int32} OFFSET {skip:Int32}`,
+        query_params: { audienceId, event: eventsMap[event], take, skip },
+      });
+      const data = (await response.json<{ data: { customerId: string }[] }>())
+        ?.data;
+      const customerIds = data?.map((item) => item.customerId) || [];
+
+      return Promise.all(
+        customerIds.map(async (id) =>
+          (await this.findById(account, id)).toObject()
+        )
+      );
+    }
   }
 
   async ingestPosthogPersons(

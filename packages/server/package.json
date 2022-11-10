@@ -25,6 +25,7 @@
     "typeorm:revert": "npm run typeorm migration:revert"
   },
   "dependencies": {
+    "@clickhouse/client": "^0.0.9",
     "@depyronick/nestjs-clickhouse": "^1.0.16",
     "@nestjs/bull": "^0.6.0",
     "@nestjs/cli": "^8.0.0",

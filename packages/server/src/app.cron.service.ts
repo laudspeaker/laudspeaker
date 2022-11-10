@@ -6,12 +6,56 @@ import {
   Customer,
   CustomerDocument,
 } from './api/customers/schemas/customer.schema';
+import FormData from 'form-data';
 import { getType } from 'tst-reflect';
 import {
   CustomerKeys,
   CustomerKeysDocument,
 } from './api/customers/schemas/customer-keys.schema';
 import { isDateString, isEmail } from 'class-validator';
+import Mailgun from 'mailgun.js';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Account } from './api/accounts/entities/accounts.entity';
+import { IsNull, Not, Repository } from 'typeorm';
+import { createClient } from '@clickhouse/client';
+
+const client = createClient({
+  host: process.env.CLICKHOUSE_HOST ?? 'http://localhost:8123',
+  username: process.env.CLICKHOUSE_USER ?? 'default',
+  password: process.env.CLICKHOUSE_PASSWORD ?? '',
+});
+
+const createTableQuery = `
+CREATE TABLE IF NOT EXISTS message_status
+(audienceId UUID, customerId String, messageId String, event String, createdAt DateTime) 
+ENGINE = ReplacingMergeTree
+PRIMARY KEY (audienceId, customerId, messageId, event)`;
+
+interface ClickHouseMessage {
+  audienceId: string;
+  customerId: string;
+  messageId: string;
+  event: string;
+  createdAt: string;
+}
+
+const createTable = async () => {
+  await client.query({ query: createTableQuery });
+};
+
+const getLastFetchedEventTimestamp = async () => {
+  return await client.query({
+    query: `SELECT MAX(createdAt) FROM message_status`,
+  });
+};
+
+const insertMessages = async (values: ClickHouseMessage[]) => {
+  await client.insert<ClickHouseMessage>({
+    table: 'message_status',
+    values,
+    format: 'JSONEachRow',
+  });
+};
 
 const BATCH_SIZE = 500;
 const KEYS_TO_SKIP = ['__v', '_id', 'audiences', 'ownerId'];
@@ -24,12 +68,16 @@ export class CronService {
     @InjectModel(Customer.name)
     private customerModel: Model<CustomerDocument>,
     @InjectModel(CustomerKeys.name)
-    private customerKeysModel: Model<CustomerKeysDocument>
-  ) {}
+    private customerKeysModel: Model<CustomerKeysDocument>,
+    @InjectRepository(Account)
+    private accountRepository: Repository<Account>
+  ) {
+    createTable();
+  }
 
   @Cron(CronExpression.EVERY_MINUTE)
-  async handleCron() {
-    this.logger.log('Cron job started');
+  async handleCustomerKeysCron() {
+    this.logger.log('Cron customer keys job started');
     let current = 0;
     const documentsCount = await this.customerModel
       .estimatedDocumentCount()
@@ -93,9 +141,110 @@ export class CronService {
     }
 
     this.logger.log(
-      `Cron job finished, checked ${documentsCount} records, found ${
+      `Cron customer keys job finished, checked ${documentsCount} records, found ${
         Object.keys(keys).length
       } keys`
     );
+  }
+
+  @Cron(CronExpression.EVERY_10_SECONDS)
+  async handleClickHouseCron() {
+    const response = await getLastFetchedEventTimestamp();
+    const data = (await response.json<any>())?.data;
+    const dateInDB = data?.[0]?.['max(createdAt)'];
+    const lastEventFetch =
+      new Date(
+        new Date(dateInDB).getTime() -
+          new Date().getTimezoneOffset() * 60 * 1000
+      ) || new Date('2000-10-10');
+
+    const mailgun = new Mailgun(FormData);
+
+    const accountsNumber = await this.accountRepository.count({
+      where: {
+        mailgunAPIKey: Not(IsNull()),
+      },
+    });
+    let offset = 0;
+
+    while (offset < accountsNumber) {
+      const accountsBatch = await this.accountRepository.find({
+        take: BATCH_SIZE,
+        where: {
+          mailgunAPIKey: Not(IsNull()),
+        },
+        skip: offset,
+      });
+
+      for (const account of accountsBatch) {
+        try {
+          const mg = mailgun.client({
+            username: 'api',
+            key: account.mailgunAPIKey,
+          });
+
+          let events = await mg.events.get(account.sendingDomain, {
+            begin: new Date(lastEventFetch.getTime() + 1000).toUTCString(),
+            ascending: 'yes',
+          });
+
+          const batchToSave: ClickHouseMessage[] = [];
+
+          for (const item of events.items) {
+            const { audienceId, customerId } = item['user-variables'];
+            if (!audienceId || !customerId) continue;
+            const event = item.event;
+            const messageId = item.message.headers['message-id'];
+            const createdAt = new Date(item.timestamp * 1000).toUTCString();
+            batchToSave.push({
+              audienceId,
+              customerId,
+              event,
+              messageId,
+              createdAt,
+            });
+          }
+
+          let page = events.pages.next.number;
+          let lastEventTimestamp =
+            events.items[events.items.length - 1]?.timestamp * 1000;
+
+          while (
+            lastEventTimestamp &&
+            new Date(lastEventTimestamp) > lastEventFetch
+          ) {
+            events = await mg.events.get(account.sendingDomain, {
+              begin: new Date(lastEventFetch.getTime() + 1000).toUTCString(),
+              ascending: 'yes',
+              page,
+            });
+
+            for (const item of events.items) {
+              const { audienceId, customerId } = item['user-variables'];
+              if (!audienceId || !customerId) continue;
+              const event = item.event;
+              const messageId = item.message.headers['message-id'];
+              const createdAt = new Date(item.timestamp * 1000).toUTCString();
+              batchToSave.push({
+                audienceId,
+                customerId,
+                event,
+                messageId,
+                createdAt,
+              });
+            }
+
+            lastEventTimestamp =
+              events.items[events.items.length - 1]?.timestamp * 1000;
+
+            page = events.pages.next.number;
+          }
+          await insertMessages(batchToSave);
+        } catch (e) {
+          this.logger.error(e);
+        }
+      }
+      offset += BATCH_SIZE;
+    }
   }
 }

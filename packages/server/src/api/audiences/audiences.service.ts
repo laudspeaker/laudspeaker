@@ -334,7 +334,7 @@ export class AudiencesService {
   ): Promise<string | number> {
     let index = -1; // Index of the customer ID in the fromAud.customers array
     let jobId: string | number;
-    let fromAud, toAud: Audience;
+    let fromAud: Audience, toAud: Audience;
     if (from) {
       try {
         fromAud = await this.findOne(account, from);
@@ -403,7 +403,8 @@ export class AudiencesService {
               account,
               toAud.templates[templateIndex],
               customerId,
-              event
+              event,
+              toAud.id
             );
             this.logger.debug('Queued Message');
           } catch (err) {

@@ -21,6 +21,7 @@ import {
   CustomerKeys,
   CustomerKeysSchema,
 } from './api/customers/schemas/customer-keys.schema';
+import { Account } from './api/accounts/entities/accounts.entity';
 
 const papertrail = new winston.transports.Http({
   host: 'logs.collector.solarwinds.com',
@@ -111,6 +112,7 @@ const myFormat = winston.format.printf(function ({
       { name: CustomerKeys.name, schema: CustomerKeysSchema },
     ]),
     ScheduleModule.forRoot(),
+    TypeOrmModule.forFeature([Account]),
   ],
   controllers: [AppController],
   providers: [CronService],

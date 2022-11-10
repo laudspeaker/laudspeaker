@@ -64,7 +64,8 @@ export class TemplatesService {
     account: Account,
     templateId: string,
     customerId: string,
-    event: EventDto
+    event: EventDto,
+    audienceId?: string
   ): Promise<string | number> {
     let customer: CustomerDocument,
       template: Template,
@@ -92,6 +93,8 @@ export class TemplatesService {
           domain: account.sendingDomain,
           email: account.sendingEmail,
           to: customer.phEmail ? customer.phEmail : customer.email,
+          audienceId,
+          customerId,
           tags,
           subject: template.subject,
           text: event?.payload ? event.payload : template.text,

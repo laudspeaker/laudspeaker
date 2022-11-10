@@ -26,6 +26,7 @@ import ApiService from "services/api.service";
 import { ApiConfig } from "./../../constants";
 import TriggerModal from "pages/FlowBuilder/TriggerModal";
 import Tooltip from "components/Elements/Tooltip";
+import Header from "components/Header";
 
 const Flow = () => {
   const { name } = useParams();
@@ -338,6 +339,7 @@ const Flow = () => {
 const FlowViewer = () => {
   return (
     <>
+      <Header />
       <ReactFlowProvider>
         <Flow />
       </ReactFlowProvider>
