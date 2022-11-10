@@ -17,9 +17,16 @@ import { CustomerDocument } from '../customers/schemas/customer.schema';
 import { EventDto } from '../events/dto/event.dto';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { Stats } from '../audiences/entities/stats.entity';
+import { createClient } from '@clickhouse/client';
 
 @Injectable()
 export class WorkflowsService {
+  private clickhouseClient = createClient({
+    host: process.env.CLICKHOUSE_HOST ?? 'http://localhost:8123',
+    username: process.env.CLICKHOUSE_USER ?? 'default',
+    password: process.env.CLICKHOUSE_PASSWORD ?? '',
+  });
+
   constructor(
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
     private readonly logger: LoggerService,
@@ -81,6 +88,30 @@ export class WorkflowsService {
     });
   }
 
+  private async getStats(audienceId?: string) {
+    if (!audienceId) return {};
+    const sentResponse = await this.clickhouseClient.query({
+      query: `SELECT COUNT(*) FROM message_status WHERE event = 'accepted' AND audienceId = {audienceId:UUID}`,
+      query_params: { audienceId },
+    });
+    const sentData = (await sentResponse.json<any>())?.data;
+    const sent = +sentData?.[0]?.['count()'] || 0;
+
+    const clickedResponse = await this.clickhouseClient.query({
+      query: `SELECT COUNT(*) FROM message_status WHERE event = 'clicked' AND audienceId = {audienceId:UUID}`,
+      query_params: { audienceId },
+    });
+    const clickedData = (await clickedResponse.json<any>())?.data;
+    const clicked = +clickedData?.[0]?.['count()'];
+
+    const clickedPercentage = (clicked / sent) * 100;
+
+    return {
+      sent,
+      clickedPercentage,
+    };
+  }
+
   /**
    * Finds a workflow by name, creating it if it does not
    * exist.
@@ -109,29 +140,15 @@ export class WorkflowsService {
     }
     try {
       if (needStats && found?.visualLayout) {
-        const foundStats = await this.statsRepository.find({
-          where: {
-            audience: {
-              id: In(
-                found?.visualLayout?.nodes
-                  ?.map((node) => node.data.audienceId)
-                  .filter((str) => !!str) || []
-              ),
+        found.visualLayout.nodes = await Promise.all(
+          found?.visualLayout?.nodes?.map(async (node) => ({
+            ...node,
+            data: {
+              ...node.data,
+              stats: await this.getStats(node?.data?.audienceId),
             },
-          },
-          relations: ['audience'],
-        });
-        found.visualLayout.nodes = found?.visualLayout?.nodes?.map((node) => ({
-          ...node,
-          data: {
-            ...node.data,
-            stats: ((
-              val = foundStats.find(
-                (stat) => stat.audience.id === node.data.audienceId
-              )
-            ) => (val ? { sentAmount: val.sentAmount } : null))(),
-          },
-        }));
+          }))
+        );
       }
     } catch (e) {
       console.error(e);
@@ -400,8 +417,8 @@ export class WorkflowsService {
       customer: CustomerDocument, // Customer to be found
       trigger: Trigger, // Trigger being processed
       from: Audience, //  Audience to move customer out of
-      to: Audience, // Audience to move customer into
-      jobIds: (string | number)[] = [];
+      to: Audience; // Audience to move customer into
+    const jobIds: (string | number)[] = [];
     let jobId: string | number;
     let interrupt = false; // Interrupt the tick to avoid the same event triggering two customer moves
     if (event) {

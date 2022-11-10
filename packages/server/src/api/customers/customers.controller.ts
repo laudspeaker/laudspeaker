@@ -49,6 +49,25 @@ export class CustomersController {
     );
   }
 
+  @Get('/audienceStats')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor)
+  findAudienceStatsCustomers(
+    @Req() { user }: Request,
+    @Query('take') take?: string,
+    @Query('skip') skip?: string,
+    @Query('event') event?: string,
+    @Query('audienceId') audienceId?: string
+  ) {
+    return this.customersService.findAudienceStatsCustomers(
+      <Account>user,
+      take && +take,
+      skip && +skip,
+      event,
+      audienceId
+    );
+  }
+
   @Get('/:id')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)

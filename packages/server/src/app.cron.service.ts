@@ -27,11 +27,9 @@ const client = createClient({
 
 const createTableQuery = `
 CREATE TABLE IF NOT EXISTS message_status
-(audienceId UUID, customerId String, messageId String, event String, createdAt DateTime)
+(audienceId UUID, customerId String, messageId String, event String, createdAt DateTime) 
+ENGINE = ReplacingMergeTree
 PRIMARY KEY (audienceId, customerId, messageId, event)`;
-
-const selectMessageQuery = `
-SELECT * FROM message_status WHERE messageId =`;
 
 interface ClickHouseMessage {
   audienceId: string;
@@ -154,16 +152,22 @@ export class CronService {
 
   @Cron(CronExpression.EVERY_10_SECONDS)
   async handleClickHouseCron() {
+    const response = await getLastFetchedEventTimestamp();
+    const data = (await response.json<any>())?.data;
+    const dateInDB = data?.[0]?.['max(createdAt)'];
     const lastEventFetch =
       new Date(
-        (await (await getLastFetchedEventTimestamp()).json<any>())?.data?.[0]?.[
-          'max(createdAt)'
-        ]
+        new Date(dateInDB).getTime() -
+          new Date().getTimezoneOffset() * 60 * 1000
       ) || new Date('2000-10-10');
 
     const mailgun = new Mailgun(FormData);
 
-    const accountsNumber = await this.accountRepository.count();
+    const accountsNumber = await this.accountRepository.count({
+      where: {
+        mailgunAPIKey: Not(IsNull()),
+      },
+    });
     let offset = 0;
 
     while (offset < accountsNumber) {
@@ -213,7 +217,7 @@ export class CronService {
             new Date(lastEventTimestamp) > lastEventFetch
           ) {
             events = await mg.events.get(account.sendingDomain, {
-              begin: lastEventFetch.toUTCString(),
+              begin: new Date(lastEventFetch.getTime() + 1000).toUTCString(),
               ascending: 'yes',
               page,
             });
@@ -238,7 +242,7 @@ export class CronService {
 
             page = events.pages.next.number;
           }
-          insertMessages(batchToSave);
+          await insertMessages(batchToSave);
         } catch (e) {
           this.logger.error(e);
         }

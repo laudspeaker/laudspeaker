@@ -9,6 +9,7 @@ import { Email, SlackMsg, Mobile, SMS } from "../../components/Icons/Icons";
 import { getAudienceDetails } from "pages/FlowBuilder/FlowHelpers";
 import TriggerCreater from "components/TriggerCreater";
 import ChooseTemplateModal from "pages/FlowBuilder/ChooseTemplateModal";
+import StatModal from "./StatModal";
 
 const textStyle =
   "text-[#223343] font-[Poppins] font-normal text-[14px] leading-[30px]";
@@ -31,6 +32,8 @@ const ViewNode = ({ data, setSelectedTrigger, selectedTrigger }: any) => {
   const [selectedMessageType, setSelectedMessageType] = useState("");
   const [selectedTemplateId, setSelectedTemplateId] = useState<number>();
   const [updateTemplateModalOpen, setUpdateTemplateModalOpen] = useState(false);
+  const [sentStatModalOpen, setSentStatModalOpen] = useState(false);
+  const [clickedStatModalOpen, setClickedStatModalOpen] = useState(false);
 
   const onTemplateModalClose = () => {
     setUpdateTemplateModalOpen(false);
@@ -155,11 +158,14 @@ const ViewNode = ({ data, setSelectedTrigger, selectedTrigger }: any) => {
           <Divider />
           {stats && (
             <div className="flex justify-between font-[Poppins] p-[8px_10px] font-normal leading-[30px] text-[14px]">
-              <div className="w-full p-[0px_10px]">
+              <div
+                className="w-full p-[0px_10px] cursor-pointer"
+                onClick={() => setSentStatModalOpen(true)}
+              >
                 <div>Sent</div>
                 <div className="font-medium text-[#333333]">
                   {new Intl.NumberFormat("en", { notation: "compact" }).format(
-                    stats.sentAmount
+                    stats.sent
                   )}
                 </div>
               </div>
@@ -181,9 +187,14 @@ const ViewNode = ({ data, setSelectedTrigger, selectedTrigger }: any) => {
                 variant="middle"
                 orientation="vertical"
               />
-              <div className="w-full p-[0px_10px]">
+              <div
+                className="w-full p-[0px_10px] cursor-pointer"
+                onClick={() => setClickedStatModalOpen(true)}
+              >
                 <div>Clicked</div>
-                <div className="font-medium text-[#333333]">0%</div>
+                <div className="font-medium text-[#333333]">
+                  {stats.clickedPercentage}%
+                </div>
               </div>
               <Divider
                 sx={{
@@ -248,6 +259,18 @@ const ViewNode = ({ data, setSelectedTrigger, selectedTrigger }: any) => {
           onTemplateDelete={onTemplateDelete}
         />
       )}
+      <StatModal
+        isOpen={sentStatModalOpen}
+        event="sent"
+        audienceId={audienceId}
+        onClose={() => setSentStatModalOpen(false)}
+      />
+      <StatModal
+        isOpen={clickedStatModalOpen}
+        event="clicked"
+        audienceId={audienceId}
+        onClose={() => setClickedStatModalOpen(false)}
+      />
     </>
   );
 };
