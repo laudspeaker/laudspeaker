@@ -155,7 +155,7 @@ export class WorkflowsService {
     }
 
     if (found) {
-      this.logger.debug('Found workflow: ' + found.id);
+      this.logger.debug('Found workflow: ' + found?.id);
       return found;
     } else {
       const workflow = new Workflow();
@@ -165,7 +165,7 @@ export class WorkflowsService {
       let ret: Workflow;
       try {
         ret = await this.workflowsRepository.save(workflow);
-        this.logger.debug('Created workflow: ' + ret.id);
+        this.logger.debug('Created workflow: ' + ret?.id);
       } catch (err) {
         this.logger.error('Error: ' + err);
         return Promise.reject(err);
@@ -264,7 +264,7 @@ export class WorkflowsService {
         ...workflow,
         isActive: true,
       });
-      this.logger.debug('Started workflow ' + saved.id);
+      this.logger.debug('Started workflow ' + saved?.id);
     } catch (err) {
       this.logger.error('Error: ' + err);
       return Promise.reject(err);
@@ -284,8 +284,8 @@ export class WorkflowsService {
         return Promise.reject(err);
       }
       try {
-        audience = await this.audiencesService.freeze(account, audience.id);
-        this.logger.debug('Freezing audience ' + audience.id);
+        audience = await this.audiencesService.freeze(account, audience?.id);
+        this.logger.debug('Freezing audience ' + audience?.id);
       } catch (err) {
         this.logger.error('Error: ' + err);
         return Promise.reject(err);
@@ -380,8 +380,8 @@ export class WorkflowsService {
             await this.audiencesService.moveCustomer(
               account,
               null,
-              audience.id,
-              customer.id,
+              audience?.id,
+              customer?.id,
               null
             );
             this.logger.debug('Enrolled customer in dynamic primary audience.');
@@ -467,7 +467,7 @@ export class WorkflowsService {
                   account,
                   trigger.source
                 );
-                this.logger.debug('Source: ' + from.id);
+                this.logger.debug('Source: ' + from?.id);
               } catch (err) {
                 this.logger.error('Error: ' + err);
                 return Promise.reject(err);
@@ -486,7 +486,7 @@ export class WorkflowsService {
                   }
                 }
                 if (
-                  from.customers.indexOf(customer.id) > -1 &&
+                  from.customers.indexOf(customer?.id) > -1 &&
                   trigger.properties.event == event.event
                 ) {
                   try {
@@ -509,7 +509,7 @@ export class WorkflowsService {
                     }
                     this.logger.debug(
                       'Moving ' +
-                        customer.id +
+                        customer?.id +
                         ' out of ' +
                         from?.id +
                         ' and into ' +

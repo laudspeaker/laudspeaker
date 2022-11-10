@@ -3,6 +3,7 @@ import { ApiConfig } from "../constants";
 import ApiService from "../services/api.service";
 import tokenService from "../services/token.service";
 import posthog from "posthog-js";
+import { toast } from "react-toastify";
 
 export enum ActionType {
   AUTH_USER_PENDING = "AUTH_USER_PENDING",
@@ -186,6 +187,17 @@ export const loginUser = (body: ILoginForm): any => {
         status,
       };
     } catch (err: any) {
+      toast.error("Email or password is incorrect!", {
+        position: "bottom-center",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "colored",
+      });
+
       posthog.capture("authError", {
         authError: err.message,
       });

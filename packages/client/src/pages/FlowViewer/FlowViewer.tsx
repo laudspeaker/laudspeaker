@@ -25,6 +25,7 @@ import ViewNode from "./ViewNode";
 import ApiService from "services/api.service";
 import { ApiConfig } from "./../../constants";
 import TriggerModal from "pages/FlowBuilder/TriggerModal";
+import Tooltip from "components/Elements/Tooltip";
 import Header from "components/Header";
 
 const Flow = () => {
@@ -227,30 +228,46 @@ const Flow = () => {
           }}
         >
           <div className="p-[0px_7.5px]" data-saveflowbutton>
-            <GenericButton
-              onClick={isPaused ? handleResume : handlePause}
-              style={{
-                maxWidth: "158px",
-                maxHeight: "48px",
-                padding: "13px 25px",
-              }}
-              disabled={!isDataLoaded || isStopped}
+            <Tooltip
+              title={
+                !isPaused && isDataLoaded && !isStopped
+                  ? "Users won't move between steps or get messages temporarily"
+                  : ""
+              }
             >
-              {isPaused ? "Resume" : "Pause"}
-            </GenericButton>
+              <GenericButton
+                onClick={isPaused ? handleResume : handlePause}
+                style={{
+                  maxWidth: "158px",
+                  maxHeight: "48px",
+                  padding: "13px 25px",
+                }}
+                disabled={!isDataLoaded || isStopped}
+              >
+                {isPaused ? "Resume" : "Pause"}
+              </GenericButton>
+            </Tooltip>
           </div>
           <div className="p-[0px_7.5px]" data-startflowbutton>
-            <GenericButton
-              onClick={handleDialogOpen}
-              style={{
-                maxWidth: "158px",
-                maxHeight: "48px",
-                padding: "13px 25px",
-              }}
-              disabled={!isDataLoaded || isStopped}
+            <Tooltip
+              title={
+                !isDataLoaded && !isStopped
+                  ? ""
+                  : "Once you stop a journey no more messages are sent, and users don't move steps"
+              }
             >
-              Stop
-            </GenericButton>
+              <GenericButton
+                onClick={handleDialogOpen}
+                style={{
+                  maxWidth: "158px",
+                  maxHeight: "48px",
+                  padding: "13px 25px",
+                }}
+                disabled={!isDataLoaded || isStopped}
+              >
+                Stop
+              </GenericButton>
+            </Tooltip>
           </div>
           <Dialog
             open={isDialogOpen}
