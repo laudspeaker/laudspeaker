@@ -486,6 +486,7 @@ const Flow = () => {
   };
 
   const handleStartJourney = async () => {
+    await handleSaveJourney();
     await ApiService.get({
       url: `${ApiConfig.startFlow}/${flowId}`,
     });
@@ -521,7 +522,8 @@ const Flow = () => {
   if (!nodes.some((node) => node.data.primary))
     startDisabledReason = "Your journey is empty";
   else if (!nodes.some((node) => node.data.messages.length > 0))
-    startDisabledReason = "There is no message chosen";
+    startDisabledReason =
+      "Add a message to a step to be able to start a journey";
 
   return (
     <div className="h-[calc(100vh-64px)] overflow-y-scroll flex w-full">
@@ -586,7 +588,13 @@ const Flow = () => {
             </button>
           </div>
           <div className="m-[0_7.5px]" data-startflowbutton>
-            <Tooltip title={startDisabledReason} placement="bottom">
+            <Tooltip
+              title={
+                startDisabledReason ||
+                "Once you start a journey users can be messaged"
+              }
+              placement="bottom"
+            >
               <button
                 className={`inline-flex items-center rounded-md border border-transparent bg-cyan-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-cyan-500 focus:outline-none focus:ring-2 focus:ring-offset-2 rounded-md bg-white font-medium focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 ${
                   !!startDisabledReason ? "grayscale" : ""

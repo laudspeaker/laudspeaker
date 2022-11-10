@@ -10,6 +10,7 @@ import gitlabIcon from "../../assets/images/gitlab.svg";
 import { useNavigate } from "react-router-dom";
 import posthog from "posthog-js";
 import laudspeakerLogo from "../../assets/images/laudspeaker.svg";
+import Tooltip from "components/Elements/Tooltip";
 
 const Signup = () => {
   const dispatch = useDispatch();
@@ -22,6 +23,17 @@ const Signup = () => {
     password: "",
     confirmPassword: "",
   });
+
+  const [checkedFields, setCheckedFields] = useState({
+    firstName: false,
+    lastName: false,
+    email: false,
+    password: false,
+    confirmPassword: false,
+  });
+
+  const handleFieldBlur = (key: string) => () =>
+    setCheckedFields((prev) => ({ ...prev, [key]: true }));
 
   const handleGoogleSignup = () => {};
   const handleGithubSignup = () => {};
@@ -49,6 +61,26 @@ const Signup = () => {
       navigate("/home");
     }
   };
+
+  const isInvalids = {
+    firstName: !signUpForm.firstName.trim(),
+    lastName: !signUpForm.lastName.trim(),
+    pass:
+      !signUpForm.password.trim() ||
+      !signUpForm.confirmPassword.trim() ||
+      signUpForm.password.trim().length <= 8 ||
+      signUpForm.confirmPassword.trim().length <= 8 ||
+      signUpForm.confirmPassword.trim() !== signUpForm.password.trim(),
+    mail: !signUpForm.email.match(
+      /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/
+    ),
+  };
+
+  const isInvalid =
+    isInvalids.firstName ||
+    isInvalids.lastName ||
+    isInvalids.pass ||
+    isInvalids.mail;
 
   return (
     <div className="flex min-h-full flex-col justify-center py-12 sm:px-6 lg:px-8">
@@ -82,8 +114,18 @@ const Signup = () => {
                     name="firstName"
                     id="firstName"
                     onChange={handlesignUpFormChange}
-                    className="block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 placeholder-gray-400 shadow-sm focus:border-cyan-500 focus:outline-none focus:ring-cyan-500 sm:text-sm"
+                    className={`${
+                      isInvalids.firstName && checkedFields.firstName
+                        ? "border-red-600 text-red-600 focus:border-red-600 focus:ring-red-600"
+                        : "focus:border-cyan-500 focus:ring-cyan-500"
+                    } block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 placeholder-gray-400 shadow-sm  sm:text-sm focus:outline-none`}
+                    onBlur={handleFieldBlur("firstName")}
                   />
+                  {isInvalids.firstName && checkedFields.firstName && (
+                    <p className="mt-2 text-sm text-red-600">
+                      First Name is required
+                    </p>
+                  )}
                 </div>
               </div>
               <div>
@@ -101,8 +143,18 @@ const Signup = () => {
                     name="lastName"
                     id="lastName"
                     onChange={handlesignUpFormChange}
-                    className="block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 placeholder-gray-400 shadow-sm focus:border-cyan-500 focus:outline-none focus:ring-cyan-500 sm:text-sm"
+                    className={`${
+                      isInvalids.lastName && checkedFields.lastName
+                        ? "border-red-600 text-red-600 focus:border-red-600 focus:ring-red-600"
+                        : "focus:border-cyan-500 focus:ring-cyan-500"
+                    } block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 placeholder-gray-400 shadow-sm  sm:text-sm focus:outline-none`}
+                    onBlur={handleFieldBlur("lastName")}
                   />
+                  {isInvalids.lastName && checkedFields.lastName && (
+                    <p className="mt-2 text-sm text-red-600">
+                      Last Name is required
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
@@ -121,8 +173,16 @@ const Signup = () => {
                   name="email"
                   id="email"
                   onChange={handlesignUpFormChange}
-                  className="block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 placeholder-gray-400 shadow-sm focus:border-cyan-500 focus:outline-none focus:ring-cyan-500 sm:text-sm"
+                  className={`${
+                    isInvalids.mail && checkedFields.email
+                      ? "border-red-600 text-red-600 focus:border-red-600 focus:ring-red-600"
+                      : "focus:border-cyan-500 focus:ring-cyan-500"
+                  } block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 placeholder-gray-400 shadow-sm  sm:text-sm focus:outline-none`}
+                  onBlur={handleFieldBlur("email")}
                 />
+                {isInvalids.mail && checkedFields.email && (
+                  <p className="mt-2 text-sm text-red-600">Email is required</p>
+                )}
               </div>
             </div>
             <div>
@@ -141,7 +201,12 @@ const Signup = () => {
                   name="password"
                   id="password"
                   onChange={handlesignUpFormChange}
-                  className="block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 placeholder-gray-400 shadow-sm focus:border-cyan-500 focus:outline-none focus:ring-cyan-500 sm:text-sm"
+                  className={`${
+                    isInvalids.pass && checkedFields.password
+                      ? "border-red-600 text-red-600 focus:border-red-600 focus:ring-red-600"
+                      : "focus:border-cyan-500 focus:ring-cyan-500"
+                  } block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 placeholder-gray-400 shadow-sm  sm:text-sm focus:outline-none`}
+                  onBlur={handleFieldBlur("password")}
                 />
               </div>
             </div>
@@ -161,19 +226,36 @@ const Signup = () => {
                   name="confirmPassword"
                   id="confirmPassword"
                   onChange={handlesignUpFormChange}
-                  className="block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 placeholder-gray-400 shadow-sm focus:border-cyan-500 focus:outline-none focus:ring-cyan-500 sm:text-sm"
+                  className={`${
+                    isInvalids.pass && checkedFields.password
+                      ? "border-red-600 text-red-600 focus:border-red-600 focus:ring-red-600"
+                      : "focus:border-cyan-500 focus:ring-cyan-500"
+                  } block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 placeholder-gray-400 shadow-sm  sm:text-sm focus:outline-none`}
+                  onBlur={handleFieldBlur("password")}
                 />
+                {isInvalids.pass && checkedFields.password && (
+                  <p className="mt-2 text-sm text-red-600">
+                    Password's should be longer or equal 8 char's and should be
+                    equal
+                  </p>
+                )}
               </div>
             </div>
 
             <div>
-              <button
-                type="submit"
-                onClick={handleSubmit}
-                className="flex w-full justify-center rounded-md border border-transparent bg-cyan-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2"
+              <Tooltip
+                title={isInvalid ? "Fill all fields" : ""}
+                placement="bottom"
               >
-                Create Account
-              </button>
+                <button
+                  type="submit"
+                  onClick={handleSubmit}
+                  className="flex w-full disabled:bg-gray-400 disabled:border-gray-400 disabled:text-gray-600 justify-center rounded-md border border-transparent bg-cyan-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2"
+                  disabled={isInvalid}
+                >
+                  Create Account
+                </button>
+              </Tooltip>
             </div>
           </form>
 
