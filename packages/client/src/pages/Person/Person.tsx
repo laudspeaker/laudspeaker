@@ -21,6 +21,24 @@ const eventTypes = {
 
 const KEYS_TO_SKIP = ["_id", "ownerId", "__v"];
 
+interface ITimeline {
+  id: number;
+  type: {
+    icon: (
+      props: React.SVGProps<SVGSVGElement> & {
+        title?: string | undefined;
+        titleId?: string | undefined;
+      }
+    ) => JSX.Element;
+    bgColorClass: string;
+  };
+  name?: string;
+  audName?: string;
+  content: string;
+  date: string;
+  datetime: string;
+}
+
 const Person = () => {
   const { id } = useParams();
   const [personInfo, setPersonInfo] = useState<Record<string, any>>({});
@@ -29,7 +47,7 @@ const Person = () => {
   const [newAttributeKey, setNewAttributeKey] = useState("");
   const [newAttributeValue, setNewAttributeValue] = useState("");
 
-  const [timeline, setTimeline] = useState([
+  const [timeline, setTimeline] = useState<ITimeline[]>([
     {
       id: 1,
       type: eventTypes.applied,
@@ -54,10 +72,12 @@ const Person = () => {
       setTimeline([
         ...timeline,
         ...eventsData.map((item: any) => ({
-          id: item.createdAt,
+          id: item.id + item.name + item.audName + item.event,
           type: eventTypes.completed,
-          content: item.event,
+          content: "Email " + item.event,
           datetime: item.createdAt,
+          name: item.name,
+          audName: item.audname,
           date: new Date(item.createdAt).toLocaleString(),
         })),
       ]);
@@ -283,13 +303,23 @@ const Person = () => {
                                 />
                               </span>
                             </div>
-                            <div className="flex min-w-0 flex-1 justify-between space-x-4 pt-1.5">
+                            <div className="flex min-w-0 flex-1 justify-between space-x-4 items-center">
                               <div>
+                                {item.name && (
+                                  <p className="text-sm text-gray-500 break-all">
+                                    <b>Flow:</b> {item.name}
+                                  </p>
+                                )}
+                                {item.audName && (
+                                  <p className="text-sm text-gray-500 break-all">
+                                    <b>Step:</b> {item.audName}
+                                  </p>
+                                )}
                                 <p className="text-sm text-gray-500">
                                   {item.content}
                                 </p>
                               </div>
-                              <div className="whitespace-nowrap text-right text-sm text-gray-500">
+                              <div className="whitespace-nowrap text-right text-sm break-all text-gray-500">
                                 <time dateTime={item.datetime}>
                                   {item.date}
                                 </time>
