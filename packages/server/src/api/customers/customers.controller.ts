@@ -119,16 +119,6 @@ export class CustomersController {
     return this.customersService.getAttributes(resourceId);
   }
 
-  @Get('/:id/events')
-  @UseGuards(JwtAuthGuard)
-  @UseInterceptors(ClassSerializerInterceptor)
-  findCustomerEvents(
-    @Req() { user }: Request,
-    @Param() { id }: { id: string }
-  ) {
-    return this.customersService.findCustomerEvents(<Account>user, id);
-  }
-
   @Post('/importph')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
