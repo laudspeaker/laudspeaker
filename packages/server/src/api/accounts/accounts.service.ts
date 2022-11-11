@@ -89,7 +89,7 @@ export class AccountsService extends BaseJwtHelper {
         await customer.save();
       }
 
-      await this.authService.requestVerification(oldUser, updateUserDto.email);
+      await this.authService.requestVerification(oldUser);
     }
 
     const updatedUser = await this.accountsRepository.save({
