@@ -13,9 +13,9 @@
 * Build complex messaging workflows the whole team can understand in a visual tool
 * Deploy and run on your own infrastructure to keep control of your data.
 
-- [website](https://laudspeaker.com/)
-- [product hunt](https://www.producthunt.com/posts/laudspeaker)
-- [Slack][slack]
+- [Our Website](https://laudspeaker.com/)
+- [Our Product Hunt](https://www.producthunt.com/posts/laudspeaker)
+- [Join our Slack][slack]
 
 ### Get Started
 
