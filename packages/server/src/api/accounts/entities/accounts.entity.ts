@@ -9,9 +9,9 @@ import {
 } from 'typeorm';
 
 export enum PlanType {
-  FREE = "free",
-  PAID = "paid",
-  ENTERPRISE = "enterprise"
+  FREE = 'free',
+  PAID = 'paid',
+  ENTERPRISE = 'enterprise',
 }
 
 @Entity()
@@ -36,7 +36,11 @@ export class Account extends BaseEntity {
   @Column({ type: 'varchar', nullable: true })
   public lastName: string | null;
 
-  @Column({ type: 'timestamp', nullable: false, default: () => "CURRENT_TIMESTAMP" })
+  @Column({
+    type: 'timestamp',
+    nullable: false,
+    default: () => 'CURRENT_TIMESTAMP',
+  })
   public accountCreatedAt: Date | null;
 
   @Column({ type: 'timestamp', nullable: true, default: null })
@@ -46,9 +50,9 @@ export class Account extends BaseEntity {
   public messagesSent: number;
 
   @Column({
-    type: "enum",
+    type: 'enum',
     enum: PlanType,
-    default: PlanType.FREE
+    default: PlanType.FREE,
   })
   public plan: PlanType;
 

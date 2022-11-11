@@ -25,6 +25,7 @@ import { PostHogEventDto } from './dto/posthog-event.dto';
 import { CustomerDocument } from '../customers/schemas/customer.schema';
 import { EventDto } from './dto/event.dto';
 import { Stats } from '../audiences/entities/stats.entity';
+import { WorkflowTick } from '../workflows/interfaces/workflow-tick.interface';
 
 @Controller('events')
 export class EventsController {
@@ -66,8 +67,8 @@ export class EventsController {
   async getPostHogPayload(
     @Headers('Authorization') apiKey: string,
     @Body() body: PosthogBatchEventDto
-  ) {
-    let account: Account; // Account associated with the caller
+  ): Promise<WorkflowTick[] | HttpException> {
+    let account: Account, jobIds: WorkflowTick[]; // Account associated with the caller
     // Step 1: Find corresponding account
     try {
       account = await this.userService.findOneByAPIKey(apiKey.substring(8));
@@ -77,7 +78,7 @@ export class EventsController {
       return new HttpException(e, 500);
     }
 
-    let jobArray: (string | number)[] = []; // created jobId
+    let jobArray: WorkflowTick[] = []; // created jobId
 
     let chronologicalEvents: PostHogEventDto[];
     chronologicalEvents = body.batch.sort(
@@ -97,7 +98,7 @@ export class EventsController {
           'Processing posthog event: ' + JSON.stringify(currentEvent, null, 2)
         );
 
-        let jobIDs: (string | number)[] = [];
+        let jobIDs: WorkflowTick[] = [];
         let cust: CustomerDocument, // Customer document created/found on this API call
           found: boolean; // If the customer document was previously created
         //Step 2: Create/Correlate customer for each eventTemplatesService.queueMessage
@@ -127,7 +128,10 @@ export class EventsController {
 
           if (!correlation.found) {
             try {
-              await this.workflowsService.enrollCustomer(account, correlation.cust);
+              await this.workflowsService.enrollCustomer(
+                account,
+                correlation.cust
+              );
             } catch (err) {
               this.logger.error('Error: ' + err);
               return new HttpException(err, 500);
@@ -157,15 +161,13 @@ export class EventsController {
           this.logger.error('Error: ' + e);
           return new HttpException(e, 500);
         }
-        jobArray = _.union(jobArray, jobIDs);
+        jobArray = [...jobArray, ...jobIDs];
       }
     } catch (e) {
       this.logger.error('Error: ' + e);
       return new HttpException(e, 500);
     }
-    return {
-      jobArray,
-    };
+    return jobArray;
   }
 
   @Post()
@@ -173,8 +175,8 @@ export class EventsController {
   async enginePayload(
     @Headers('Authorization') apiKey: string,
     @Body() body: EventDto
-  ): Promise<(string | number)[] | HttpException> {
-    let account: Account, correlation: Correlation, jobIDs: (string | number)[];
+  ): Promise<WorkflowTick[] | HttpException> {
+    let account: Account, correlation: Correlation, jobIDs: WorkflowTick[];
     try {
       account = await this.userService.findOneByAPIKey(apiKey.substring(8));
       if (!account) this.logger.error('Account not found');
