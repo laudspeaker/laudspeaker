@@ -31,9 +31,9 @@ export class AuthService {
     const ret = await this.repository.save({
       ...user,
       accountCreatedAt: new Date(),
-      plan: PlanType.FREE
+      plan: PlanType.FREE,
     });
-    this.helper.generateDefaultData(ret.id);
+    await this.helper.generateDefaultData(ret.id);
 
     return { ...ret, access_token: this.helper.generateToken(user) };
   }

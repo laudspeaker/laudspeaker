@@ -73,12 +73,7 @@ export class AuthHelper extends BaseJwtHelper {
     return true;
   }
 
-  // generate default templates and workflows for newly registered user
-  public async generateDefaultData(userId: string) {
-    await this.templateRepository.insert(
-      DEFAULT_TEMPLATES.map((el) => ({ ...el, ownerId: userId }))
-    );
-
+  private async generateExampleOnboardingJourney(userId: string) {
     const workflow = new Workflow();
     workflow.name = 'example-onboarding';
     workflow.audiences = [];
@@ -234,5 +229,96 @@ export class AuthHelper extends BaseJwtHelper {
       ],
     };
     await this.workflowRepository.save(ret);
+  }
+
+  private async generateExampleSingleCampaignJourney(userId: string) {
+    const workflow = new Workflow();
+    workflow.name = 'example-single-campaign';
+    workflow.audiences = [];
+    workflow.ownerId = userId;
+    let ret: Workflow;
+    try {
+      ret = await this.workflowRepository.save(workflow);
+      this.logger.debug('Created workflow: ' + ret?.id);
+    } catch (err) {
+      this.logger.error('Error: ' + err);
+    }
+
+    const data = await Promise.all(
+      [
+        {
+          name: 'initial step',
+          customers: [],
+          templates: [],
+          isDynamic: true,
+          isPrimary: true,
+          inclusionCriteria: undefined,
+          description: 'initial step',
+          ownerId: userId,
+        },
+      ].map(async (el) => {
+        const audience = new Audience();
+        audience.name = el.name;
+        audience.customers = el.customers;
+        audience.templates = el.templates;
+        audience.isDynamic = el.isDynamic;
+        audience.isPrimary = el.isPrimary;
+        audience.inclusionCriteria = el.inclusionCriteria;
+        audience.description = el.description;
+        audience.ownerId = el.ownerId;
+
+        const resp = await this.audienceRepository.save(audience);
+        const stats = this.statsRepository.create({ audience: resp });
+        await this.statsRepository.save(stats);
+        return resp;
+      })
+    );
+
+    const nodeId = randomUUID();
+
+    ret.audiences = data.map((el) => el.id);
+
+    ret.visualLayout = {
+      edges: [],
+      nodes: [
+        {
+          id: nodeId,
+          data: {
+            nodeId: nodeId,
+            primary: true,
+            triggers: [],
+            messages: [],
+            audienceId: data[0].id,
+            isSelected: false,
+            needsUpdate: true,
+            dataTriggers: [],
+          },
+          type: 'special',
+          width: 350,
+          height: 79,
+          dragging: false,
+          position: {
+            x: 252,
+            y: 231,
+          },
+          selected: false,
+          positionAbsolute: {
+            x: 252,
+            y: 231,
+          },
+        },
+      ],
+    };
+    await this.workflowRepository.save(ret);
+  }
+
+  // generate default templates and workflows for newly registered user
+  public async generateDefaultData(userId: string) {
+    await this.templateRepository.insert(
+      DEFAULT_TEMPLATES.map((el) => ({ ...el, ownerId: userId }))
+    );
+
+    await this.generateExampleOnboardingJourney(userId);
+    await this.generateExampleSingleCampaignJourney(userId);
   }
 }
