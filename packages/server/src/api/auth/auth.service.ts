@@ -35,6 +35,7 @@ export class AuthService {
     });
     await this.helper.generateDefaultData(ret.id);
 
+    user.id = ret.id;
     return { ...ret, access_token: this.helper.generateToken(user) };
   }
 
