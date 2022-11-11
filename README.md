@@ -15,6 +15,7 @@
 
 - [website](https://laudspeaker.com/)
 - [product hunt](https://www.producthunt.com/posts/laudspeaker)
+- [Slack][slack]
 
 ### Get Started
 
