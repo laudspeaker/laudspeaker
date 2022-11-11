@@ -9,6 +9,9 @@ import { AuthService } from './auth.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { ApiKeyStrategy } from './strategies/apiKey.strategy';
 import { Template } from '../templates/entities/template.entity';
+import { Workflow } from '../workflows/entities/workflow.entity';
+import { Audience } from '../audiences/entities/audience.entity';
+import { Stats } from '../audiences/entities/stats.entity';
 
 @Module({
   imports: [
@@ -19,7 +22,7 @@ import { Template } from '../templates/entities/template.entity';
         signOptions: { expiresIn: process.env.JWT_EXPIRES },
       }),
     }),
-    TypeOrmModule.forFeature([Account, Template]),
+    TypeOrmModule.forFeature([Account, Template, Workflow, Audience, Stats]),
   ],
   controllers: [AuthController],
   providers: [AuthService, AuthHelper, JwtStrategy, ApiKeyStrategy],

@@ -33,7 +33,7 @@ export class AuthService {
       accountCreatedAt: new Date(),
       plan: PlanType.FREE,
     });
-    this.helper.generateDefaultData(ret.id);
+    await this.helper.generateDefaultData(ret.id);
 
     return { ...ret, access_token: this.helper.generateToken(ret) };
   }

@@ -14,7 +14,7 @@ import mockData from '../../fixtures/mockData';
 import { Account } from '../accounts/entities/accounts.entity';
 import { Audience } from '../audiences/entities/audience.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Any, DataSource, In, Repository } from 'typeorm';
 import { checkInclusion } from '../audiences/audiences.helper';
 import { EventDto } from '../events/dto/event.dto';
 import {
@@ -25,6 +25,7 @@ import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { createClient } from '@clickhouse/client';
+import { Workflow } from '../workflows/entities/workflow.entity';
 
 export type Correlation = {
   cust: CustomerDocument;
@@ -52,7 +53,8 @@ export class CustomersService {
     @InjectModel(CustomerKeys.name)
     private CustomerKeysModel: Model<CustomerKeysDocument>,
     @InjectRepository(Audience)
-    private audiencesRepository: Repository<Audience>
+    private audiencesRepository: Repository<Audience>,
+    private dataSource: DataSource
   ) {}
 
   async create(
@@ -173,6 +175,40 @@ export class CustomersService {
       ...customer.toObject<mongoose.LeanDocument<CustomerDocument>>(),
       _id: id,
     };
+  }
+
+  async findCustomerEvents(account: Account, customerId: string) {
+    await this.findOne(account, customerId);
+    const response = await this.clickhouseClient.query({
+      query: `SELECT audienceId, event, createdAt FROM message_status WHERE customerId = {customerId:String} LIMIT 4`,
+      query_params: { customerId },
+    });
+    const data = (
+      await response.json<{
+        data: { audienceId: string; event: string; createdAt: string }[];
+      }>()
+    )?.data;
+
+    const result = await Promise.all(
+      data.map(async (el) => {
+        const query = await this.dataSource
+          .createQueryBuilder(Workflow, 'workflow')
+          .select('workflow.id, workflow.name, audience.name as audname')
+          .where(':id=ANY(audiences)', {
+            id: el.audienceId,
+          })
+          .leftJoin('audience', 'audience', 'audience.id = :id', {
+            id: el.audienceId,
+          })
+          .execute();
+        return {
+          ...el,
+          ...(query?.[0] || {}),
+        };
+      })
+    );
+
+    return result;
   }
 
   async update(
