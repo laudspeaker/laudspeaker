@@ -8,6 +8,8 @@ import {
   UseGuards,
   Req,
   Get,
+  Patch,
+  Param,
 } from '@nestjs/common';
 import { Account } from '@/api/accounts/entities/accounts.entity';
 import { LoginDto } from './dto/login.dto';
@@ -43,5 +45,15 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   private verify() {
     return;
+  }
+
+  @Patch('verify-email/:id')
+  @UseInterceptors(ClassSerializerInterceptor)
+  @UseGuards(JwtAuthGuard)
+  private verifyEmail(
+    @Req() { user }: Request,
+    @Param('id') { id }: { id: string }
+  ) {
+    return this.service.verifyEmail(<Account>user, id);
   }
 }

@@ -60,7 +60,12 @@ export class CustomersService {
   async create(
     account: Account,
     createCustomerDto: CreateCustomerDto
-  ): Promise<Customer> {
+  ): Promise<
+    Customer &
+      mongoose.Document<any, any, any> & {
+        _id: Types.ObjectId;
+      }
+  > {
     const createdCustomer = new this.CustomerModel({
       ownerId: (<Account>account).id,
       ...createCustomerDto,
@@ -305,7 +310,12 @@ export class CustomersService {
   async findById(
     account: Account,
     customerId: string
-  ): Promise<CustomerDocument> {
+  ): Promise<
+    Customer &
+      mongoose.Document<any, any, any> & {
+        _id: Types.ObjectId;
+      }
+  > {
     const found = await this.CustomerModel.findById(customerId).exec();
     if (found && found?.ownerId == (<Account>account).id) return found;
     return;

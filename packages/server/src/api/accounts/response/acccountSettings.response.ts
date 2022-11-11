@@ -5,6 +5,9 @@ export class AccountSettingsResponse {
   public apiKey!: string;
 
   @Expose()
+  public email: string | null;
+
+  @Expose()
   public firstName: string | null;
 
   @Expose()

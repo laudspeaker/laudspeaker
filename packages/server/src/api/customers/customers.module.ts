@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { CustomersController } from './customers.controller';
 import { Account } from '../accounts/entities/accounts.entity';
 import { CustomersService } from './customers.service';
@@ -14,6 +14,8 @@ import {
   CustomerKeys,
   CustomerKeysSchema,
 } from './schemas/customer-keys.schema';
+import { AuthService } from '../auth/auth.service';
+import { AccountsModule } from '../accounts/accounts.module';
 
 @Module({
   imports: [
@@ -29,7 +31,7 @@ import {
     }),
   ],
   controllers: [CustomersController],
-  providers: [CustomersService, AccountsService, CustomersProcessor],
+  providers: [CustomersService, CustomersProcessor, AccountsModule],
   exports: [CustomersService],
 })
 export class CustomersModule {}
