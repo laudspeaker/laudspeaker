@@ -19,50 +19,25 @@ const eventTypes = {
   completed: { icon: CheckIcon, bgColorClass: "bg-green-500" },
 };
 
-const timeline = [
-  {
-    id: 1,
-    type: eventTypes.applied,
-    content: "Applied to",
-    target: "Front End Developer",
-    date: "Sep 20",
-    datetime: "2020-09-20",
-  },
-  {
-    id: 2,
-    type: eventTypes.advanced,
-    content: "Advanced to phone screening by",
-    target: "Bethany Blake",
-    date: "Sep 22",
-    datetime: "2020-09-22",
-  },
-  {
-    id: 3,
-    type: eventTypes.completed,
-    content: "Completed phone screening with",
-    target: "Martha Gardner",
-    date: "Sep 28",
-    datetime: "2020-09-28",
-  },
-  {
-    id: 4,
-    type: eventTypes.advanced,
-    content: "Advanced to interview by",
-    target: "Bethany Blake",
-    date: "Sep 30",
-    datetime: "2020-09-30",
-  },
-  {
-    id: 5,
-    type: eventTypes.completed,
-    content: "Completed interview with",
-    target: "Katherine Snyder",
-    date: "Oct 4",
-    datetime: "2020-10-04",
-  },
-];
-
 const KEYS_TO_SKIP = ["_id", "ownerId", "__v"];
+
+interface ITimeline {
+  id: number;
+  type: {
+    icon: (
+      props: React.SVGProps<SVGSVGElement> & {
+        title?: string | undefined;
+        titleId?: string | undefined;
+      }
+    ) => JSX.Element;
+    bgColorClass: string;
+  };
+  name?: string;
+  audName?: string;
+  content: string;
+  date: string;
+  datetime: string;
+}
 
 const Person = () => {
   const { id } = useParams();
@@ -71,12 +46,41 @@ const Person = () => {
   const [isAddingAttribute, setIsAddingAttribute] = useState(false);
   const [newAttributeKey, setNewAttributeKey] = useState("");
   const [newAttributeValue, setNewAttributeValue] = useState("");
+
+  const [timeline, setTimeline] = useState<ITimeline[]>([
+    {
+      id: 1,
+      type: eventTypes.applied,
+      content: "First seen in laudspeaker",
+      date: "Sep 20",
+      datetime: "2020-09-20",
+    },
+  ]);
+
   const navigate = useNavigate();
 
   useEffect(() => {
     (async () => {
-      const { data } = await ApiService.get({ url: "/customers/" + id });
-      setPersonInfo(data);
+      const { data: personData } = await ApiService.get({
+        url: "/customers/" + id,
+      });
+      setPersonInfo(personData);
+
+      const { data: eventsData } = await ApiService.get({
+        url: `/customers/${id}/events`,
+      });
+      setTimeline([
+        ...timeline,
+        ...eventsData.map((item: any) => ({
+          id: item.id + item.name + item.audName + item.event,
+          type: eventTypes.completed,
+          content: "Email " + item.event,
+          datetime: item.createdAt,
+          name: item.name,
+          audName: item.audname,
+          date: new Date(item.createdAt).toLocaleString(),
+        })),
+      ]);
     })();
   }, []);
 
@@ -143,17 +147,17 @@ const Person = () => {
         <div className="flex gap-[30px]">
           <div className="mx-auto mt-8 grid max-w-3xl grid-cols-1 gap-6 sm:px-6 lg:max-w-7xl lg:grid-flow-col-dense lg:grid-cols-3">
             <div className="space-y-6 lg:col-span-2 lg:col-start-1">
-              <section aria-labelledby="applicant-information-title">
+              <section aria-labelledby="customer-information-title">
                 <div className="bg-white shadow sm:rounded-lg">
                   <div className="px-4 py-5 sm:px-6">
                     <h2
-                      id="applicant-information-title"
+                      id="customer-information-title"
                       className="text-lg font-medium leading-6 text-gray-900"
                     >
-                      Applicant Information
+                      Customer Information
                     </h2>
                     <p className="mt-1 max-w-2xl text-sm text-gray-500">
-                      Personal details and application.
+                      Personal details
                     </p>
                   </div>
                   <div className="border-t border-gray-200 px-4 py-5 sm:px-6">
@@ -257,14 +261,6 @@ const Person = () => {
                       )}
                     </dl>
                   </div>
-                  <div>
-                    <a
-                      href="#"
-                      className="block bg-gray-50 px-4 py-4 text-center text-sm font-medium text-gray-500 hover:text-gray-700 sm:rounded-b-lg"
-                    >
-                      Read full application
-                    </a>
-                  </div>
                 </div>
               </section>
             </div>
@@ -307,19 +303,23 @@ const Person = () => {
                                 />
                               </span>
                             </div>
-                            <div className="flex min-w-0 flex-1 justify-between space-x-4 pt-1.5">
+                            <div className="flex min-w-0 flex-1 justify-between space-x-4 items-center">
                               <div>
+                                {item.name && (
+                                  <p className="text-sm text-gray-500 break-all">
+                                    <b>Flow:</b> {item.name}
+                                  </p>
+                                )}
+                                {item.audName && (
+                                  <p className="text-sm text-gray-500 break-all">
+                                    <b>Step:</b> {item.audName}
+                                  </p>
+                                )}
                                 <p className="text-sm text-gray-500">
-                                  {item.content}{" "}
-                                  <a
-                                    href="#"
-                                    className="font-medium text-gray-900"
-                                  >
-                                    {item.target}
-                                  </a>
+                                  {item.content}
                                 </p>
                               </div>
-                              <div className="whitespace-nowrap text-right text-sm text-gray-500">
+                              <div className="whitespace-nowrap text-right text-sm break-all text-gray-500">
                                 <time dateTime={item.datetime}>
                                   {item.date}
                                 </time>
@@ -334,9 +334,10 @@ const Person = () => {
                 <div className="justify-stretch mt-6 flex flex-col">
                   <button
                     type="button"
-                    className="inline-flex items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                    className="grayscale inline-flex items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                    disabled
                   >
-                    Advance to offer
+                    See more
                   </button>
                 </div>
               </div>
