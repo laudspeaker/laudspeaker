@@ -26,7 +26,6 @@ import { Queue } from 'bull';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { createClient } from '@clickhouse/client';
 import { Workflow } from '../workflows/entities/workflow.entity';
-// import { Workflow } from '../workflows/entities/workflow.entity';
 
 export type Correlation = {
   cust: CustomerDocument;
