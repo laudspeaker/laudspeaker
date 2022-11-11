@@ -31,11 +31,11 @@ export class AuthService {
     const ret = await this.repository.save({
       ...user,
       accountCreatedAt: new Date(),
-      plan: PlanType.FREE
+      plan: PlanType.FREE,
     });
     this.helper.generateDefaultData(ret.id);
 
-    return { ...ret, access_token: this.helper.generateToken(user) };
+    return { ...ret, access_token: this.helper.generateToken(ret) };
   }
 
   public async login(body: LoginDto): Promise<any | never> {
