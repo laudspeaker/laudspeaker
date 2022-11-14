@@ -12,7 +12,7 @@ import { AuthService } from '../auth/auth.service';
 export class AccountsService extends BaseJwtHelper {
   constructor(
     @InjectRepository(Account)
-    private accountsRepository: Repository<Account>,
+    public accountsRepository: Repository<Account>,
     @Inject(CustomersService) private customersService: CustomersService,
     @Inject(AuthService) private authService: AuthService
   ) {

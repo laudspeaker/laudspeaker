@@ -365,7 +365,7 @@ export default function OnboardingBeta() {
                             title: item.title,
                             disabled:
                               item.id === "free3" && !verified
-                                ? false
+                                ? true
                                 : item.disabled,
                             tooltip:
                               item.id === "free3" && !verified
