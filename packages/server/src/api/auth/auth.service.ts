@@ -103,7 +103,7 @@ export class AuthService {
     await this.emailQueue.add('send', {
       key: process.env.MAILGUN_API_KEY,
       from: 'Laudspeaker',
-      domain: 'hello.laudspeaker.com',
+      domain: process.env.MAILGUN_DOMAIN,
       email: 'noreply',
       to: user.email,
       subject: 'Email verification',

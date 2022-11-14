@@ -1,4 +1,10 @@
-import { Inject, Injectable, LoggerService } from '@nestjs/common';
+import {
+  HttpException,
+  HttpStatus,
+  Inject,
+  Injectable,
+  LoggerService,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Account } from '../accounts/entities/accounts.entity';
@@ -85,13 +91,29 @@ export class TemplatesService {
       return Promise.reject(err);
     }
     const { _id, ownerId, audiences, ...tags } = customer.toObject();
+
+    const { testSendingEmail, testSendingName } = account;
+    let { mailgunAPIKey, sendingName, sendingDomain, sendingEmail } = account;
+
     switch (template.type) {
       case 'email':
+        if (account.emailProvider === 'free3') {
+          if (account.freeEmailsCount === 0)
+            throw new HttpException(
+              'You exceeded limit of 3 emails',
+              HttpStatus.PAYMENT_REQUIRED
+            );
+          sendingDomain = process.env.MAILGUN_DOMAIN;
+          mailgunAPIKey = process.env.MAILGUN_API_KEY;
+          sendingName = testSendingName;
+          sendingEmail = testSendingEmail;
+          account.freeEmailsCount--;
+        }
         job = await this.emailQueue.add('send', {
-          key: account.mailgunAPIKey,
-          from: account.sendingName,
-          domain: account.sendingDomain,
-          email: account.sendingEmail,
+          key: mailgunAPIKey,
+          from: sendingName,
+          domain: sendingDomain,
+          email: sendingEmail,
           to: customer.phEmail ? customer.phEmail : customer.email,
           audienceId,
           customerId,
@@ -99,6 +121,7 @@ export class TemplatesService {
           subject: template.subject,
           text: event?.payload ? event.payload : template.text,
         });
+        if (account.emailProvider === 'free3') await account.save();
         break;
       case 'slack':
         try {
