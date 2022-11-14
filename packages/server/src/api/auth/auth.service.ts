@@ -109,6 +109,8 @@ export class AuthService {
       subject: 'Email verification',
       text: `Link: <a href="${verificationLink}">${verificationLink}</a>`,
     });
+
+    return verification;
   }
 
   public async verifyEmail(user: Account, verificationId: string) {

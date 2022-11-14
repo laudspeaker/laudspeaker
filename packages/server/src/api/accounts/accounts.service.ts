@@ -77,7 +77,7 @@ export class AccountsService extends BaseJwtHelper {
     }
 
     let verified = oldUser.verified;
-    if (oldUser.email !== updateUserDto.email) {
+    if (updateUserDto.email && oldUser.email !== updateUserDto.email) {
       verified = false;
       if (oldUser.customerId) {
         const customer = await this.customersService.findById(
@@ -89,6 +89,12 @@ export class AccountsService extends BaseJwtHelper {
         await customer.save();
       }
     }
+
+    if (updateUserDto.emailProvider === 'free3' && !verified)
+      throw new HttpException(
+        'Email has to be verified to use this',
+        HttpStatus.BAD_REQUEST
+      );
 
     const updatedUser = await this.accountsRepository.save({
       ...oldUser,

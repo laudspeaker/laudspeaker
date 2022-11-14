@@ -56,4 +56,11 @@ export class AuthController {
   ) {
     return this.service.verifyEmail(<Account>user, id);
   }
+
+  @Patch('resend-email')
+  @UseInterceptors(ClassSerializerInterceptor)
+  @UseGuards(JwtAuthGuard)
+  private resendEmail(@Req() { user }: Request) {
+    return this.service.requestVerification(<Account>user);
+  }
 }

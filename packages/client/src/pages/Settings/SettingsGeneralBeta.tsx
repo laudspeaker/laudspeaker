@@ -4,6 +4,8 @@ import SaveSettings from "components/SaveSettings";
 import ApiService from "services/api.service";
 import { Input } from "components/Elements";
 import { toast } from "react-toastify";
+import Timer from "components/Timer";
+import { useForceUpdate } from "hooks/helperHooks";
 
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(" ");
@@ -38,6 +40,10 @@ export default function SettingsGeneralBeta() {
   });
 
   const [showErrors, setShowErrors] = useState(false);
+
+  const [verified, setVerified] = useState(false);
+
+  const [showResend, setShowResend] = useState(false);
 
   useEffect(() => {
     const newErrors: { [key: string]: string[] } = {
@@ -100,9 +106,15 @@ export default function SettingsGeneralBeta() {
   useEffect(() => {
     (async () => {
       const { data } = await ApiService.get({ url: "/accounts" });
-      const { firstName, lastName, email } = data;
+      const {
+        firstName,
+        lastName,
+        email,
+        verified: verifiedFromRequest,
+      } = data;
       setFormData({ ...formData, firstName, lastName, email });
       setInitialData({ ...formData, firstName, lastName, email });
+      setVerified(verifiedFromRequest);
     })();
   }, []);
 
@@ -144,6 +156,13 @@ export default function SettingsGeneralBeta() {
         theme: "colored",
       });
     }
+  };
+
+  const [timerSeconds, setTimerSeconds] = useState(300);
+
+  const handleResend = async () => {
+    await ApiService.patch({ url: "/auth/resend-email", options: {} });
+    setTimerSeconds(timerSeconds + 1);
   };
 
   return (
@@ -233,7 +252,28 @@ export default function SettingsGeneralBeta() {
                 ))}
             </div>
             <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:py-5">
-              <dt className="text-sm font-medium text-gray-500">Email</dt>
+              <dt className="text-sm font-medium text-gray-500">
+                <div>Email</div>
+                {verified ? (
+                  <div className="text-green-500">Your email is verified</div>
+                ) : (
+                  <div className="text-red-500">
+                    Waiting for verification:{" "}
+                    <Timer
+                      s={timerSeconds}
+                      onFinish={() => setShowResend(true)}
+                    />
+                  </div>
+                )}
+                {showResend && (
+                  <div
+                    className="text-black cursor-pointer"
+                    onClick={handleResend}
+                  >
+                    Resend
+                  </div>
+                )}
+              </dt>
               <dd>
                 <div className="relative">
                   <Input

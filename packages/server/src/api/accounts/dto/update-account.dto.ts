@@ -100,4 +100,16 @@ export class UpdateAccountDto {
   @MinLength(8)
   @IsOptional()
   public verifyNewPassword: string;
+
+  @IsString()
+  @IsOptional()
+  public emailProvider: string;
+
+  @IsString()
+  @IsOptional()
+  public testSendingName: string;
+
+  @IsString()
+  @IsOptional()
+  public testSendingEmail: string;
 }

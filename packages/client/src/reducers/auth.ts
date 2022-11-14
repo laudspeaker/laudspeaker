@@ -21,6 +21,7 @@ export interface IUserData {
   lastName: string;
   uId: string;
   onboarded: boolean;
+  verified: boolean;
   expectedOnboarding: string[];
 }
 
@@ -179,6 +180,7 @@ export const loginUser = (body: ILoginForm): any => {
           onboarded: data.onboarded,
           email: data.email,
           expectedOnboarding: data.expectedOnboarding,
+          verified: data.verified,
         },
       });
 
@@ -256,6 +258,7 @@ export const signUpUser = (body: ISignUpForm): any => {
           lastName: data.lastName,
           onboarded: data.onboarded,
           expectedOnboarding: [],
+          verified: data.verified,
         },
       });
       return {
