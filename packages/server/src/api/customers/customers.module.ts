@@ -3,7 +3,6 @@ import { CustomersController } from './customers.controller';
 import { Account } from '../accounts/entities/accounts.entity';
 import { CustomersService } from './customers.service';
 //import { EventsService } from "../events/events.service";
-import { AccountsService } from '../accounts/accounts.service';
 import { CustomersProcessor } from './customers.processor';
 import { BullModule } from '@nestjs/bull';
 import { MongooseModule } from '@nestjs/mongoose';
@@ -14,8 +13,8 @@ import {
   CustomerKeys,
   CustomerKeysSchema,
 } from './schemas/customer-keys.schema';
-import { AuthService } from '../auth/auth.service';
 import { AccountsModule } from '../accounts/accounts.module';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
   imports: [
@@ -29,9 +28,11 @@ import { AccountsModule } from '../accounts/accounts.module';
     BullModule.registerQueue({
       name: 'customers',
     }),
+    forwardRef(() => AuthModule),
+    AccountsModule,
   ],
   controllers: [CustomersController],
-  providers: [CustomersService, CustomersProcessor, AccountsModule],
+  providers: [CustomersService, CustomersProcessor],
   exports: [CustomersService],
 })
 export class CustomersModule {}

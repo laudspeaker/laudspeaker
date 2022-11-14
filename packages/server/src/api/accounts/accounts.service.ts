@@ -88,8 +88,6 @@ export class AccountsService extends BaseJwtHelper {
         customer.verified = false;
         await customer.save();
       }
-
-      await this.authService.requestVerification(oldUser);
     }
 
     const updatedUser = await this.accountsRepository.save({
@@ -98,6 +96,8 @@ export class AccountsService extends BaseJwtHelper {
       password,
       verified,
     });
+
+    if (!verified) await this.authService.requestVerification(updatedUser);
 
     return updatedUser;
   }

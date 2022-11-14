@@ -117,6 +117,21 @@ export default function SettingsGeneralBeta() {
           verifyNewPassword: formData.verifyNewPassword || undefined,
         },
       });
+      if (formData.email !== initialData.email) {
+        toast.info(
+          "You need to verify your email. We've sent you a verification email",
+          {
+            position: "bottom-center",
+            autoClose: 5000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+            theme: "colored",
+          }
+        );
+      }
     } catch (e: any) {
       toast.error(e.response.data.message || "Unexpected error!", {
         position: "bottom-center",

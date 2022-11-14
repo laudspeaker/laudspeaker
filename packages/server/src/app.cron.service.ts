@@ -251,16 +251,14 @@ export class CronService {
     }
   }
 
-  private VERIFICATION_DUE = 24 * 60 * 60 * 1000;
-
-  @Cron(CronExpression.EVERY_10_MINUTES)
+  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
   async handleVerificationCheck() {
-    this.verificationRepository
+    await this.verificationRepository
       .createQueryBuilder()
       .where(
-        `verification.status = "sent" AND verification.createAt AFTER :due_date`,
-        { due_date: new Date(Date.now() - this.VERIFICATION_DUE) }
+        `verification.status = 'sent' AND now() > verification."createdAt"::TIMESTAMP + INTERVAL '1 DAY'`
       )
-      .update({ status: 'expired' });
+      .update({ status: 'expired' })
+      .execute();
   }
 }

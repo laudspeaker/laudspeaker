@@ -11,6 +11,7 @@ import { useNavigate } from "react-router-dom";
 import posthog from "posthog-js";
 import laudspeakerLogo from "../../assets/images/laudspeaker.svg";
 import Tooltip from "components/Elements/Tooltip";
+import { toast } from "react-toastify";
 
 const Signup = () => {
   const dispatch = useDispatch();
@@ -58,6 +59,19 @@ const Signup = () => {
           laudspeakerId: response.data.id,
         },
       });
+      toast.info(
+        "You need to verify your email. We've sent you a verification email",
+        {
+          position: "bottom-center",
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          theme: "colored",
+        }
+      );
       navigate("/home");
     }
   };

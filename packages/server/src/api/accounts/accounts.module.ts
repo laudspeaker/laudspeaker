@@ -7,7 +7,11 @@ import { AuthModule } from '../auth/auth.module';
 import { CustomersModule } from '../customers/customers.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Account]), AuthModule, CustomersModule],
+  imports: [
+    TypeOrmModule.forFeature([Account]),
+    forwardRef(() => AuthModule),
+    forwardRef(() => CustomersModule),
+  ],
   controllers: [AccountsController],
   providers: [AccountsService],
   exports: [AccountsService],
