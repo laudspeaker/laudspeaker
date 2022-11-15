@@ -79,6 +79,16 @@ export class CustomersController {
     return customer;
   }
 
+  @Get('/:id/events')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor)
+  findCustomerEvents(
+    @Req() { user }: Request,
+    @Param() { id }: { id: string }
+  ) {
+    return this.customersService.findCustomerEvents(<Account>user, id);
+  }
+
   @Put('/:id')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)

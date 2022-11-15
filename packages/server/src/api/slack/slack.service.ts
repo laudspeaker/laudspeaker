@@ -552,74 +552,81 @@ export class SlackService {
   }
 
   async sanitizeMembers(members: any, tok: string, teamOrEnterpriseId: string) {
-    const newMembers = [];
-    for (let index = 0; index < members.length; index++) {
-      const { user } = await this.client.users.info({
-        //method: 'users.list',
-        token: tok,
-        user: members[index],
+    try {
+      const newMembers = [];
+      for (let index = 0; index < members.length; index++) {
+        const { user } = await this.client.users.info({
+          //method: 'users.list',
+          token: tok,
+          user: members[index],
 
-        //try empty args
+          //try empty args
+        });
+        newMembers.push(user);
+      }
+      const filteredNewMembers = newMembers.filter((obj) => {
+        return !obj.is_bot;
       });
-      newMembers.push(user);
-    }
-    const filteredNewMembers = newMembers.filter((obj) => {
-      return !obj.is_bot;
-    });
-    let i = 0;
-    for (const member of filteredNewMembers) {
-      const sanitizedMember = new CreateCustomerDto();
-      sanitizedMember.slackName = member.name;
-      sanitizedMember.slackId = member.id;
+      let i = 0;
+      for (const member of filteredNewMembers) {
+        const sanitizedMember = new CreateCustomerDto();
+        sanitizedMember.slackName = member.name;
+        sanitizedMember.slackId = member.id;
 
-      if (member.real_name != null) {
-        sanitizedMember.slackRealName = member.real_name;
-      }
-      if (member.team_id) sanitizedMember.slackTeamId = [member.team_id];
+        if (member.real_name != null) {
+          sanitizedMember.slackRealName = member.real_name;
+        }
+        if (member.team_id) sanitizedMember.slackTeamId = [member.team_id];
 
-      if (member.profile.first_name != null) {
-        sanitizedMember.firstName = member.profile.first_name;
-      }
+        if (member.profile.first_name != null) {
+          sanitizedMember.firstName = member.profile.first_name;
+        }
 
-      if (member.profile.last_name != null) {
-        sanitizedMember.lastName = member.profile.last_name;
-      }
-      if (member.tz_offset != null) {
-        sanitizedMember.slackTimeZone = member.tz_offset;
-      }
-      if (member.profile.email != null) {
-        sanitizedMember.slackEmail = member.profile.email;
-      }
-      sanitizedMember.slackDeleted = member.deleted;
-      sanitizedMember.slackAdmin = member.is_admin;
-      //false until specified by user
-      if (!member.is_admin) {
-        sanitizedMember.slackTeamMember = false;
-      } else {
-        sanitizedMember.slackTeamMember = true;
-      }
-      const account: Account = await this.accountsRepository.findOneBy({
-        slackTeamId: teamOrEnterpriseId,
-      });
-      //to do check if user is there
-      const data = await this.customersService.findBySlackId(
-        account,
-        sanitizedMember.slackId
-      );
-      if (!data) {
-        await this.customersService.create(account, sanitizedMember);
-      } else {
-        await this.customersService.mergeCustomers(
+        if (member.profile.last_name != null) {
+          sanitizedMember.lastName = member.profile.last_name;
+        }
+        if (member.tz_offset != null) {
+          sanitizedMember.slackTimeZone = member.tz_offset;
+        }
+        if (member.profile.email != null) {
+          sanitizedMember.slackEmail = member.profile.email;
+        }
+        sanitizedMember.slackDeleted = member.deleted;
+        sanitizedMember.slackAdmin = member.is_admin;
+        //false until specified by user
+        if (!member.is_admin) {
+          sanitizedMember.slackTeamMember = false;
+        } else {
+          sanitizedMember.slackTeamMember = true;
+        }
+        const account: Account = await this.accountsRepository.findOneBy({
+          slackTeamId: teamOrEnterpriseId,
+        });
+        //to do check if user is there
+        const data = await this.customersService.findBySlackId(
           account,
-          data,
-          sanitizedMember
+          sanitizedMember.slackId
         );
+        if (!data) {
+          await this.customersService.create(account, sanitizedMember);
+        } else {
+          await this.customersService.mergeCustomers(
+            account,
+            data,
+            sanitizedMember
+          );
+        }
+        i = i + 1;
       }
-      i = i + 1;
     }
+    catch (err) {
+      this.logger.error("Error adding slack memer: " + err)
+    }
+
   }
 
   async syncChannels(channels: any, body: any) {
+    this.logger.debug("inside sync channels")
     let tok = null;
     let teamOrEnterpriseId = null;
     let install_id = null;

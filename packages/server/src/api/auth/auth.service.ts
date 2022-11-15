@@ -48,7 +48,7 @@ export class AuthService {
 
     await this.requestVerification(ret);
 
-    return { ...ret, access_token: this.helper.generateToken(user) };
+    return { ...ret, access_token: this.helper.generateToken(ret) };
   }
 
   public async login(body: LoginDto): Promise<any | never> {

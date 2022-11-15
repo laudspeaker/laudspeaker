@@ -1,6 +1,6 @@
 version: 2.1
 jobs:
-  build_and_deploy:
+  build_and_deploy_production:
     docker:
       - image: circleci/node:16
     steps:
@@ -16,14 +16,39 @@ jobs:
             export AWS_SECRET_ACCESS_KEY=$DEMO_AWS_SECRET
             aws configure set region $DEMO_AWS_REGION
             aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 427506656486.dkr.ecr.us-east-1.amazonaws.com
-            docker build -f Dockerfile.client -t laudspeaker:latest .
-            docker build -f Dockerfile.server -t laudspeaker:api-latest .
+            docker build -f Dockerfile.prod.client -t laudspeaker:latest .
+            docker build -f Dockerfile.prod.server -t laudspeaker:api-latest .
             docker tag laudspeaker:api-latest 427506656486.dkr.ecr.us-east-1.amazonaws.com/laudspeaker:api-latest
             docker tag laudspeaker:latest 427506656486.dkr.ecr.us-east-1.amazonaws.com/laudspeaker:latest
             docker push 427506656486.dkr.ecr.us-east-1.amazonaws.com/laudspeaker:api-latest
             docker push 427506656486.dkr.ecr.us-east-1.amazonaws.com/laudspeaker:latest
             aws ecs update-service --cluster ecs-demo --service api --force-new-deployment
             aws ecs update-service --cluster frontend --service frontend --force-new-deployment
+  
+  build_and_deploy_staging:
+    docker:
+      - image: circleci/node:16
+    steps:
+      - checkout
+      - setup_remote_docker:
+          version: 20.10.14
+          docker_layer_caching: true
+      - run:
+          command: |
+            sudo apt-get install -y python-pip libyaml-dev python-dev jq
+            sudo pip install awscli
+            export AWS_ACCESS_KEY_ID=$DEMO_AWS_KEY
+            export AWS_SECRET_ACCESS_KEY=$DEMO_AWS_SECRET
+            aws configure set region $DEMO_AWS_REGION
+            aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 427506656486.dkr.ecr.us-east-1.amazonaws.com
+            docker build -f Dockerfile.staging.client -t laudspeaker:staging-latest .
+            docker build -f Dockerfile.staging.server -t laudspeaker:api-staging-latest .
+            docker tag laudspeaker:api-staging-latest 427506656486.dkr.ecr.us-east-1.amazonaws.com/laudspeaker:api-staging-latest
+            docker tag laudspeaker:staging-latest 427506656486.dkr.ecr.us-east-1.amazonaws.com/laudspeaker:staging-latest
+            docker push 427506656486.dkr.ecr.us-east-1.amazonaws.com/laudspeaker:api-staging-latest
+            docker push 427506656486.dkr.ecr.us-east-1.amazonaws.com/laudspeaker:staging-latest
+            aws ecs update-service --cluster api-staging --service api-staging --force-new-deployment
+            aws ecs update-service --cluster frontend-staging --service frontend-staging --force-new-deployment
   test:
     docker:
       - image: circleci/node:16
@@ -38,9 +63,16 @@ workflows:
   pull_request:
     jobs:
       - test
-  main:    
+  staging:    
     jobs:
-      - build_and_deploy:
+      - build_and_deploy_staging:
+          filters:
+            branches:
+              only:
+                - staging
+  production:    
+    jobs:
+      - build_and_deploy_production:
           filters:
             branches:
               only:

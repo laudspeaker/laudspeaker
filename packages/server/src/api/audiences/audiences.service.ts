@@ -331,8 +331,9 @@ export class AudiencesService {
     to: string | null | undefined,
     customerId: string,
     event: EventDto
-  ): Promise<string | number> {
+  ): Promise<(string | number)[]> {
     let index = -1; // Index of the customer ID in the fromAud.customers array
+    const jobIds: (string | number)[] = [];
     let jobId: string | number;
     let fromAud: Audience, toAud: Audience;
     if (from) {
@@ -407,6 +408,7 @@ export class AudiencesService {
               toAud.id
             );
             this.logger.debug('Queued Message');
+            jobIds.push(jobId);
           } catch (err) {
             this.logger.error('Error: ' + err);
             return Promise.reject(err);
@@ -414,7 +416,7 @@ export class AudiencesService {
         }
       }
     }
-    return Promise.resolve(jobId);
+    return Promise.resolve(jobIds);
   }
 
   /**
@@ -438,14 +440,14 @@ export class AudiencesService {
     let jobIds: (string | number)[] = [];
     for (let index = 0; index < customers?.length; index++) {
       try {
-        const jobId: string | number = await this.moveCustomer(
+        const jobIdArr: (string | number)[] = await this.moveCustomer(
           account,
           fromAud?.id,
           toAud?.id,
           customers[index].id,
           event
         );
-        jobIds.push(jobId);
+        jobIds = [...jobIdArr, ...jobIds];
       } catch (err) {
         this.logger.error('Error: ' + err);
         return Promise.reject(err);

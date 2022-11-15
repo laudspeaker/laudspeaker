@@ -18,6 +18,7 @@ import { EventDto } from '../events/dto/event.dto';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { Stats } from '../audiences/entities/stats.entity';
 import { createClient } from '@clickhouse/client';
+import { WorkflowTick } from './interfaces/workflow-tick.interface';
 
 @Injectable()
 export class WorkflowsService {
@@ -410,15 +411,15 @@ export class WorkflowsService {
   async tick(
     account: Account,
     event: EventDto | null | undefined
-  ): Promise<(string | number)[]> {
+  ): Promise<WorkflowTick[]> {
     let workflows: Workflow[], // Active workflows for this account
       workflow: Workflow, // Workflow being updated
       customer: CustomerDocument, // Customer to be found
       trigger: Trigger, // Trigger being processed
       from: Audience, //  Audience to move customer out of
       to: Audience; // Audience to move customer into
-    const jobIds: (string | number)[] = [];
-    let jobId: string | number;
+    const jobIds: WorkflowTick[] = [];
+    let jobIdArr: (string | number)[] = [];
     let interrupt = false; // Interrupt the tick to avoid the same event triggering two customer moves
     if (event) {
       try {
@@ -440,12 +441,18 @@ export class WorkflowsService {
       this.logger.error('Error: ' + err);
       return Promise.reject(err);
     }
-    for (
+    workflow_loop: for (
       let workflowsIndex = 0;
       workflowsIndex < workflows?.length;
       workflowsIndex++
     ) {
       workflow = workflows[workflowsIndex];
+      let jobId: WorkflowTick = {
+        workflowId: workflow.id,
+        jobIds: undefined,
+        status: undefined,
+        failureReason: undefined,
+      };
       for (
         let triggerIndex = 0;
         triggerIndex < workflow?.rules?.length;
@@ -469,7 +476,11 @@ export class WorkflowsService {
                 this.logger.debug('Source: ' + from?.id);
               } catch (err) {
                 this.logger.error('Error: ' + err);
-                return Promise.reject(err);
+                jobId.failureReason = err;
+                jobId.status = 'Failed';
+                jobIds.push(jobId);
+                continue workflow_loop;
+                //return Promise.reject(err);
               }
               if (trigger?.dest?.length == 1) {
                 if (trigger.dest[0]) {
@@ -481,7 +492,11 @@ export class WorkflowsService {
                     this.logger.debug('Dest: ' + to?.id);
                   } catch (err) {
                     this.logger.error('Error: ' + err);
-                    return Promise.reject(err);
+                    jobId.failureReason = err;
+                    jobId.status = 'Failed';
+                    jobIds.push(jobId);
+                    continue workflow_loop;
+                    // return Promise.reject(err);
                   }
                 }
                 if (
@@ -489,7 +504,7 @@ export class WorkflowsService {
                   trigger.properties.event == event.event
                 ) {
                   try {
-                    jobId = await this.audiencesService.moveCustomer(
+                    jobIdArr = await this.audiencesService.moveCustomer(
                       account,
                       from?.id,
                       to?.id,
@@ -514,10 +529,15 @@ export class WorkflowsService {
                         ' and into ' +
                         to?.id
                     );
+                    jobId.jobIds = jobIdArr;
                     jobIds.push(jobId);
                   } catch (err) {
                     this.logger.error('Error: ' + err);
-                    return Promise.reject(err);
+                    jobId.failureReason = err;
+                    jobId.status = 'Failed';
+                    jobIds.push(jobId);
+                    break workflow_loop;
+                    // return Promise.reject(err);
                   }
                   interrupt = true;
                 }

@@ -8,16 +8,13 @@ import {
   Body,
   Param,
   UseGuards,
-  ConsoleLogger,
+  LoggerService,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { SlackService } from './slack.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { InjectRepository } from '@nestjs/typeorm';
 import { Account } from '../accounts/entities/accounts.entity';
-import { Repository } from 'typeorm';
-import { Audience } from '../audiences/entities/audience.entity';
-import { CustomersService } from '../customers/customers.service';
+import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 
 enum ResponseStatus {
   Ok = 200,
@@ -29,6 +26,8 @@ enum ResponseStatus {
 @Controller('slack')
 export class SlackController {
   constructor(
+    @Inject(WINSTON_MODULE_NEST_PROVIDER)
+    private readonly logger: LoggerService,
     @Inject(SlackService) private readonly slackService: SlackService
   ) {}
 
@@ -55,6 +54,7 @@ export class SlackController {
 
   @Post('events')
   handleEvents(@Body() body: any, @Res() res: Response) {
+    this.logger.debug("Hiting slack events endpoint with body" + body)
     this.slackService.handleEvent(res, body);
   }
 }

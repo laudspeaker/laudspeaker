@@ -15,7 +15,7 @@ export class TypeOrmConfigService implements TypeOrmOptionsFactory {
       migrations: ['dist/migrations/*.{ts,js}'],
       migrationsTableName: 'typeorm_migrations',
       logger: 'file',
-      synchronize: false, // never use TRUE in production!
+      synchronize: process.env.SYNCHRONIZE == 'true', // never use TRUE in production!
       // migrationsRun: true,
     };
   }

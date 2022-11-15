@@ -1,0 +1,21 @@
+# To build: docker build -f Dockerfile.staging.client -t laudspeaker:latest .
+# To run: docker run -it -p 3000:80 --rm laudspeaker:latest 
+FROM node:16 as build
+WORKDIR /app
+ENV REACT_APP_API_BASE_URL https://staging-api.laudspeaker.com
+ENV REACT_APP_POSTHOG_HOST https://app.posthog.com
+ENV REACT_APP_POSTHOG_KEY RxdBl8vjdTwic7xTzoKTdbmeSC1PCzV6sw-x-FKSB-k
+ENV PATH /app/node_modules/.bin:$PATH
+COPY ./packages/client/package.json /app/
+RUN npm install
+COPY . /app
+RUN npm run build:client
+
+# stage 2 - build the final image and copy the react build files
+FROM nginx:1.17.8-alpine
+COPY --from=build /app/packages/client/build /usr/share/nginx/html
+RUN rm /etc/nginx/conf.d/default.conf
+COPY nginx/staging.nginx.conf /etc/nginx/conf.d
+EXPOSE 80
+EXPOSE 443
+CMD ["nginx", "-g", "daemon off;"]
