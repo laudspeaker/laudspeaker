@@ -77,8 +77,11 @@ export class AccountsService extends BaseJwtHelper {
     }
 
     let verified = oldUser.verified;
-    if (updateUserDto.email && oldUser.email !== updateUserDto.email) {
+    const needEmailUpdate =
+      updateUserDto.email && oldUser.email !== updateUserDto.email;
+    if (needEmailUpdate) {
       verified = false;
+
       if (oldUser.customerId) {
         const customer = await this.customersService.findById(
           oldUser,
@@ -103,7 +106,8 @@ export class AccountsService extends BaseJwtHelper {
       verified,
     });
 
-    if (!verified) await this.authService.requestVerification(updatedUser);
+    if (needEmailUpdate)
+      await this.authService.requestVerification(updatedUser);
 
     return updatedUser;
   }

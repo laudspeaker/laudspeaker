@@ -297,10 +297,12 @@ export default function SettingsGeneralBeta() {
                     name="email"
                     id="email"
                     placeholder="you@example.com"
+                    disabled={!!(timerSeconds && !verified)}
                     className={classNames(
                       errors.email.length > 0 && showErrors
                         ? "rounded-md sm:text-sm focus:!border-red-500 !border-red-300 shadow-sm focus:!ring-red-500 "
-                        : "rounded-md sm:text-sm focus:border-cyan-500 border-gray-300 shadow-sm focus:ring-cyan-500 "
+                        : "rounded-md sm:text-sm focus:border-cyan-500 border-gray-300 shadow-sm focus:ring-cyan-500 ",
+                      " disabled:border-gray-200 disabled:bg-gray-50 disabled:text-gray-500"
                     )}
                   />
                   {showErrors && errors.email.length > 0 && (
