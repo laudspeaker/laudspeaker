@@ -58,7 +58,7 @@ Description coming soon!
 
 ### What makes Laudspeaker cool?
 
-Lauspeaker is the only multi-channel open-source customer messaging workflow software, which is focused on being event triggered, has been built with a visual journey feature from day one and is focused on scalability.
+Lauspeaker is the only multi-channel open-source customer messaging workflow software, which is focused on being event triggered, has been built with a no-code visual journey builder from day one and is focused on scalability.
 
 We support slack as a channel and have many more channels on our roadmap.
 
