@@ -238,7 +238,6 @@ export class WorkflowsService {
     let workflow: Workflow; // Workflow to update
     let audience: Audience; // Audience to freeze/send messages to
     let customers: CustomerDocument[]; // Customers to add to primary audience
-    let saved: Workflow;
     let jobIDs: (string | number)[] = [];
     try {
       workflow = await this.workflowsRepository.findOneBy({
@@ -259,21 +258,11 @@ export class WorkflowsService {
     }
     if (workflow?.isStopped)
       return Promise.reject(new Error('The workflow has already been stopped'));
-    try {
-      saved = await this.workflowsRepository.save({
-        ...workflow,
-        isActive: true,
-      });
-      this.logger.debug('Started workflow ' + saved?.id);
-    } catch (err) {
-      this.logger.error('Error: ' + err);
-      return Promise.reject(err);
-    }
-    for (let index = 0; index < saved?.audiences?.length; index++) {
+    for (let index = 0; index < workflow?.audiences?.length; index++) {
       try {
         audience = await this.audiencesService.findOne(
           account,
-          saved.audiences[index]
+          workflow.audiences[index]
         );
         if (!audience) {
           this.logger.error('Error: Workflow contains nonexistant audience');
@@ -312,6 +301,16 @@ export class WorkflowsService {
             null
           );
           this.logger.debug('Finished moving customers into workflow');
+        } catch (err) {
+          this.logger.error('Error: ' + err);
+          return Promise.reject(err);
+        }
+        try {
+          await this.workflowsRepository.save({
+            ...workflow,
+            isActive: true,
+          });
+          this.logger.debug('Started workflow ' + workflow?.id);
         } catch (err) {
           this.logger.error('Error: ' + err);
           return Promise.reject(err);

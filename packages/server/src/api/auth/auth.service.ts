@@ -126,6 +126,9 @@ export class AuthService {
     if (!verification)
       throw new HttpException('Verification not found', HttpStatus.NOT_FOUND);
 
+    if (verification.email !== account.email)
+      throw new HttpException('Unexpected user email', HttpStatus.BAD_REQUEST);
+
     account.verified = true;
     verification.status = 'verified';
 

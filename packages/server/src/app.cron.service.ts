@@ -251,12 +251,12 @@ export class CronService {
     }
   }
 
-  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
+  @Cron(CronExpression.EVERY_HOUR)
   async handleVerificationCheck() {
     await this.verificationRepository
       .createQueryBuilder()
       .where(
-        `verification.status = 'sent' AND now() > verification."createdAt"::TIMESTAMP + INTERVAL '1 DAY'`
+        `verification.status = 'sent' AND now() > verification."createdAt"::TIMESTAMP + INTERVAL '1 HOUR'`
       )
       .update({ status: 'expired' })
       .execute();

@@ -5,7 +5,6 @@ import ApiService from "services/api.service";
 import { Input } from "components/Elements";
 import { toast } from "react-toastify";
 import Timer from "components/Timer";
-import { useForceUpdate } from "hooks/helperHooks";
 
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(" ");
@@ -43,7 +42,7 @@ export default function SettingsGeneralBeta() {
 
   const [verified, setVerified] = useState(false);
 
-  const [showResend, setShowResend] = useState(false);
+  const [timerSeconds, setTimerSeconds] = useState(300);
 
   useEffect(() => {
     const newErrors: { [key: string]: string[] } = {
@@ -103,19 +102,23 @@ export default function SettingsGeneralBeta() {
     setShowErrors(true);
   };
 
+  const loadData = async () => {
+    const { data } = await ApiService.get({ url: "/accounts" });
+    const {
+      firstName,
+      lastName,
+      email,
+      verified: verifiedFromRequest,
+      secondtillunblockresend,
+    } = data;
+    setFormData({ ...formData, firstName, lastName, email });
+    setInitialData({ ...formData, firstName, lastName, email });
+    setVerified(verifiedFromRequest);
+    setTimerSeconds(Math.ceil(+secondtillunblockresend || 0));
+  };
+
   useEffect(() => {
-    (async () => {
-      const { data } = await ApiService.get({ url: "/accounts" });
-      const {
-        firstName,
-        lastName,
-        email,
-        verified: verifiedFromRequest,
-      } = data;
-      setFormData({ ...formData, firstName, lastName, email });
-      setInitialData({ ...formData, firstName, lastName, email });
-      setVerified(verifiedFromRequest);
-    })();
+    loadData();
   }, []);
 
   const handleSubmit = async () => {
@@ -144,6 +147,7 @@ export default function SettingsGeneralBeta() {
           }
         );
       }
+      await loadData();
     } catch (e: any) {
       toast.error(e.response.data.message || "Unexpected error!", {
         position: "bottom-center",
@@ -158,11 +162,19 @@ export default function SettingsGeneralBeta() {
     }
   };
 
-  const [timerSeconds, setTimerSeconds] = useState(300);
-
   const handleResend = async () => {
     await ApiService.patch({ url: "/auth/resend-email", options: {} });
-    setTimerSeconds(timerSeconds + 1);
+    await loadData();
+    toast.info("We have sent you new email", {
+      position: "bottom-center",
+      autoClose: 5000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      progress: undefined,
+      theme: "colored",
+    });
   };
 
   return (
@@ -259,18 +271,20 @@ export default function SettingsGeneralBeta() {
                 ) : (
                   <div className="text-red-500">
                     Waiting for verification:{" "}
-                    <Timer
-                      s={timerSeconds}
-                      onFinish={() => setShowResend(true)}
-                    />
-                  </div>
-                )}
-                {showResend && (
-                  <div
-                    className="text-black cursor-pointer"
-                    onClick={handleResend}
-                  >
-                    Resend
+                    {!timerSeconds ? (
+                      <span
+                        className="text-black cursor-pointer"
+                        onClick={handleResend}
+                      >
+                        Resend
+                      </span>
+                    ) : (
+                      <Timer
+                        seconds={timerSeconds}
+                        setSeconds={setTimerSeconds}
+                        onFinish={() => setTimerSeconds(0)}
+                      />
+                    )}
                   </div>
                 )}
               </dt>

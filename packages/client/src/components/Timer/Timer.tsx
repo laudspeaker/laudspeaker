@@ -1,30 +1,24 @@
-import React, { FC, useEffect, useState } from "react";
+import React, { FC } from "react";
+import { useInterval } from "react-use";
 
 interface TimerProps {
-  s: number;
-  onFinish: () => void;
+  seconds?: number;
+  setSeconds: (s: number) => void;
+  onFinish?: () => void;
 }
 
-const Timer: FC<TimerProps> = ({ s, onFinish }) => {
-  const [seconds, setSeconds] = useState(s);
-
-  useEffect(() => {
-    setSeconds(s);
-  }, [s]);
-
-  useEffect(() => {
-    if (seconds > 0) {
-      setTimeout(() => {
-        setSeconds(seconds - 1);
-      }, 1000);
+const Timer: FC<TimerProps> = ({ seconds, setSeconds, onFinish }) => {
+  useInterval(() => {
+    if (seconds && seconds > 0) {
+      setSeconds(seconds - 1);
     } else {
-      onFinish();
+      if (onFinish) onFinish();
     }
-  }, [seconds]);
+  }, 1000);
 
-  const minutesView = Math.floor(seconds / 60);
+  const minutesView = seconds ? Math.floor(seconds / 60) : 0;
 
-  const secondsView = seconds - minutesView * 60;
+  const secondsView = seconds ? seconds - minutesView * 60 : 0;
 
   return (
     <>
