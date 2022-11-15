@@ -30,8 +30,26 @@ export class AccountsController {
   @Get()
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
-  findOne(@Req() { user }: Request) {
-    return this.accountsService.findOne(user);
+  async findOne(@Req() { user }: Request) {
+    const data = await this.accountsService.accountsRepository
+      .createQueryBuilder('ac')
+      .select(
+        `ac.*, (300 - extract ('epoch' from (now() - "vr"."createdAt")::interval)) as secondtillunblockresend`
+      )
+      .leftJoin(
+        'verification',
+        'vr',
+        `ac.id = CAST(vr.accountId as INTEGER) and extract ('epoch' from (now() - "vr"."createdAt")::interval) < 300 AND vr.status = 'sent'`
+      )
+      .where(`ac.id = :userId`, {
+        // @ts-ignore
+        userId: user.id,
+      })
+      .orderBy('vr.createdAt', 'DESC')
+      .limit(1)
+      .execute();
+
+    return data?.[0];
   }
 
   @Get('/settings')
