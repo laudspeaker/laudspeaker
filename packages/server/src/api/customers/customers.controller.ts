@@ -75,16 +75,6 @@ export class CustomersController {
     return this.customersService.findOne(<Account>user, id);
   }
 
-  @Get('/:id/events')
-  @UseGuards(JwtAuthGuard)
-  @UseInterceptors(ClassSerializerInterceptor)
-  findCustomerEvents(
-    @Req() { user }: Request,
-    @Param() { id }: { id: string }
-  ) {
-    return this.customersService.findCustomerEvents(<Account>user, id);
-  }
-
   @Put('/:id')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
@@ -117,6 +107,16 @@ export class CustomersController {
   @UseInterceptors(ClassSerializerInterceptor)
   getAttributes(@Param('resourceId') resourceId: string) {
     return this.customersService.getAttributes(resourceId);
+  }
+  
+  @Get('/:id/events')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor)
+  findCustomerEvents(
+    @Req() { user }: Request,
+    @Param() { id }: { id: string }
+  ) {
+    return this.customersService.findCustomerEvents(<Account>user, id);
   }
 
   @Post('/importph')
