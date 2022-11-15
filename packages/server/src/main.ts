@@ -11,14 +11,14 @@ async function bootstrap() {
     key:
       parseInt(process.env.PORT) == 443
         ? readFileSync(
-            '/etc/letsencrypt/live/api.laudspeaker.com/privkey.pem',
+            process.env.KEY_PATH,
             'utf8'
           )
         : null,
     cert:
       parseInt(process.env.PORT) == 443
         ? readFileSync(
-            '/etc/letsencrypt/live/api.laudspeaker.com/fullchain.pem',
+            process.env.CERT_PATH,
             'utf8'
           )
         : null,
