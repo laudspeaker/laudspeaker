@@ -103,7 +103,7 @@ export class TemplatesService {
               'You exceeded limit of 3 emails',
               HttpStatus.PAYMENT_REQUIRED
             );
-          sendingDomain = process.env.MAILGUN_DOMAIN;
+          sendingDomain = process.env.MAILGUN_TEST_DOMAIN;
           mailgunAPIKey = process.env.MAILGUN_API_KEY;
           sendingName = testSendingName;
           sendingEmail = testSendingEmail;
