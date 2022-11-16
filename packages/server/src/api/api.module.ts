@@ -123,7 +123,7 @@ export class ApiModule {
       sanitizedMember.slackRealName = 'Mahamad Charawi';
       sanitizedMember.slackTeamId = ['T01U4FFQ796'];
       sanitizedMember.slackTimeZone = -25200;
-      sanitizedMember.slackEmail = 'mahamad@trytachyon.com';
+      // sanitizedMember.slackEmail = 'mahamad@trytachyon.com';
       sanitizedMember.email = process.env.SENDING_TO_TEST_EMAIL;
       sanitizedMember.slackDeleted = false;
       sanitizedMember.slackAdmin = true;

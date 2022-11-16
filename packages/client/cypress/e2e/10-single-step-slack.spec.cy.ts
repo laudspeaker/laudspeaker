@@ -49,9 +49,9 @@ describe(
       cy.get("#events").type(slackTemplate.eventName);
       cy.get("[data-savetriggerreator] > button").click();
 
-      cy.get("[data-saveflowbutton]").click();
+      cy.contains("Save").click();
       cy.wait(500);
-      cy.get("[data-startflowbutton]").click();
+      cy.contains("Start").click();
       cy.wait(500);
 
       cy.visit("/flow");

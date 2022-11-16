@@ -24,6 +24,7 @@ describe(
       cy.get(".mt-6 > .inline-flex").click();
       cy.get("#name").type("Email flow");
       cy.get("#createJourneySubmit").click();
+      cy.wait(3000);
       cy.get("#audience > .p-0 > .justify-between").click();
       cy.get("#name").type("Initial");
       cy.get("#saveNewSegment").click();
@@ -51,6 +52,7 @@ describe(
       ).drag('[data-isprimary]:not([data-isprimary="true"])');
       cy.get('[data-isprimary]:not([data-isprimary="true"])').click();
       cy.contains("Save").click();
+      cy.wait(1000);
       cy.contains("Start").click();
       cy.request({
         method: "POST",

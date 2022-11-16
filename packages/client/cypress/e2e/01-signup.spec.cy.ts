@@ -19,7 +19,7 @@ describe("signup", () => {
     cy.get("#email").type(email);
     cy.get("#password").type(password);
     cy.get("#confirmPassword").type(password);
-    cy.get("#createAccount").click();
+    cy.get(":nth-child(5) > div > .flex").click();
     cy.url().should("include", "/home");
   });
 });

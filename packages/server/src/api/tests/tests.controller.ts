@@ -1,8 +1,11 @@
 import {
+  Body,
   ClassSerializerInterceptor,
   Controller,
   Get,
   Inject,
+  Param,
+  Patch,
   Post,
   Req,
   UseGuards,
@@ -26,5 +29,20 @@ export class TestsController {
   @Get('reset-tests')
   async resetTestData() {
     return this.testsService.resetTestData();
+  }
+
+  @Get('test-verification')
+  async getTestVerification() {
+    return this.testsService.getTestVerification();
+  }
+
+  @Patch('test-account')
+  async updateTestAccount(@Body() body: any) {
+    return this.testsService.updateTestAccount(body);
+  }
+
+  @Patch('verify-test-account/:id')
+  async verifyTestAccount(@Param('id') id: string) {
+    return this.testsService.verifyTestAccount(id);
   }
 }

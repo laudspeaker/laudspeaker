@@ -48,8 +48,12 @@ export class TestsService {
     if (process.env.NODE_ENV !== 'development')
       throw new HttpException('Not found', HttpStatus.NOT_FOUND);
     try {
-      await this.accountService.accountsRepository.delete({
+      await this.authService.verificationRepository.delete({
         email: 'john.smith@gmail.com',
+      });
+
+      await this.authService.verificationRepository.delete({
+        accountId: '1000',
       });
 
       const userCreated = await this.authService.repository.findOne({
@@ -86,11 +90,11 @@ export class TestsService {
       user.slackTeamId = ['T01U4FFQ796'];
       user.sendingEmail = 'semail';
       user.sendingName = 'sname';
-      user.sendingDomain =
-        'sandboxd7ae9069e24b4e8dbb5ca3ba7d4bed04.mailgun.org';
+      user.sendingDomain = process.env.MAILGUN_DOMAIN;
       user.mailgunAPIKey = process.env.MAILGUN_API_KEY;
       user.expectedOnboarding = ['Slack'];
       user.currentOnboarding = ['Slack'];
+      user.emailProvider = 'mailgun';
       user.onboarded = true;
 
       const ret = await this.authService.repository.save(user);
@@ -117,7 +121,7 @@ export class TestsService {
       sanitizedMember.slackRealName = 'Mahamad Charawi';
       sanitizedMember.slackTeamId = ['T01U4FFQ796'];
       sanitizedMember.slackTimeZone = -25200;
-      sanitizedMember.slackEmail = 'mahamad@trytachyon.com';
+      // sanitizedMember.slackEmail = 'mahamad@trytachyon.com';
       sanitizedMember.email = process.env.SENDING_TO_TEST_EMAIL;
       sanitizedMember.slackDeleted = false;
       sanitizedMember.slackAdmin = true;
@@ -143,5 +147,33 @@ export class TestsService {
     } catch (error) {
       console.error('Error generating test users:', error);
     }
+  }
+
+  public async getTestVerification() {
+    return this.authService.verificationRepository.findOneBy({
+      email: 'testmail@gmail.com',
+      status: 'sent',
+    });
+  }
+
+  public async updateTestAccount(data: Record<string, any>) {
+    const account = await this.accountService.accountsRepository.findOneBy({
+      email: 'testmail@gmail.com',
+    });
+
+    await this.accountService.accountsRepository.update(
+      {
+        email: 'testmail@gmail.com',
+      },
+      { ...account, ...data }
+    );
+  }
+
+  public async verifyTestAccount(id: string) {
+    const account = await this.accountService.accountsRepository.findOneBy({
+      email: 'testmail@gmail.com',
+    });
+
+    await this.authService.verifyEmail(account, id);
   }
 }

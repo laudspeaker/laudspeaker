@@ -124,6 +124,7 @@ const ChooseTemplateModal = ({
               onChange={handleActiveTemplate}
               displayEmpty
               disabled={isViewMode}
+              data-select-template
             />
           </form>
         </div>

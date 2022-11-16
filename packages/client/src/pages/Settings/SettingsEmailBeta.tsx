@@ -94,7 +94,9 @@ export default function SettingsEmailBeta() {
     setErrors(newErrors);
   }, [formData]);
 
-  const isError = Object.values(errors).some((arr) => arr.length > 0);
+  const isError =
+    emailProvider === "mailgun" &&
+    Object.values(errors).some((arr) => arr.length > 0);
 
   useEffect(() => {
     (async () => {
@@ -133,9 +135,14 @@ export default function SettingsEmailBeta() {
 
   const handleSubmit = async () => {
     try {
+      const objToSend: Record<string, any> = {};
+      for (const key of Object.keys(formData)) {
+        if ((formData as Record<string, any>)[key])
+          objToSend[key] = (formData as Record<string, any>)[key];
+      }
       await ApiService.patch({
         url: "/accounts",
-        options: { ...formData, emailProvider },
+        options: { ...objToSend, emailProvider },
       });
     } catch (e: any) {
       toast.error(e.response?.data?.message || "Unexpected error", {

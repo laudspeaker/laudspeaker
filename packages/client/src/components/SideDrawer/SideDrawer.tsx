@@ -38,8 +38,8 @@ export default function ResponsiveDrawer(props: Props) {
   React.useLayoutEffect(() => {
     (async () => {
       const { data } = await ApiService.get({ url: "/accounts" });
-      const { sendingDomain } = data;
-      if (sendingDomain)
+      const { emailProvider } = data;
+      if (emailProvider)
         setExpectedOnboarding((expectedOnboardingArr) => [
           "Email",
           ...expectedOnboardingArr,

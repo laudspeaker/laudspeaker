@@ -63,9 +63,9 @@ describe(
       cy.get("#contains").clear().type("mad@try");
       cy.get("#saveSegmentParams").click();
 
-      cy.get("[data-saveflowbutton]").click();
+      cy.contains("Save").click();
       cy.wait(500);
-      cy.get("[data-startflowbutton]").click();
+      cy.contains("Start").click();
       cy.wait(500);
 
       cy.visit("/flow");

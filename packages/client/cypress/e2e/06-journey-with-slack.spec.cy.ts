@@ -45,7 +45,8 @@ describe(
       cy.get("button").contains("Create Journey").click();
       cy.get("#name").should("exist").type(journeyName);
       cy.get("#createJourneySubmit").click();
-      cy.get("#audience").click();
+      cy.wait(3000);
+      cy.get("#audience > .p-0 > .justify-between").click();
       cy.get("#name").type("init");
       cy.get("#description").type("init description text");
       cy.get("#saveNewSegment").click();
@@ -54,7 +55,7 @@ describe(
         .get('[data-isprimary="true"]')
         .move({ deltaX: 100, deltaY: 100 });
 
-      cy.get("#audience").click();
+      cy.get("#audience > .p-0 > .justify-between").click();
       cy.get("#name").type("slack audience");
       cy.get("#description").type("slack description");
       cy.get("#saveNewSegment").click();
@@ -84,9 +85,9 @@ describe(
 
       cy.get('[data-isprimary="false"] [data-handlepos="top"]').click();
 
-      cy.get("[data-saveflowbutton]").click();
+      cy.contains("Save").click();
       cy.wait(500);
-      cy.get("[data-startflowbutton]").click();
+      cy.contains("Start").click();
       cy.wait(500);
 
       cy.visit("/flow");
