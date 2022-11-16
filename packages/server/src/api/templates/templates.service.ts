@@ -109,6 +109,7 @@ export class TemplatesService {
           sendingEmail = testSendingEmail;
           account.freeEmailsCount--;
         }
+
         job = await this.emailQueue.add('send', {
           key: mailgunAPIKey,
           from: sendingName,
