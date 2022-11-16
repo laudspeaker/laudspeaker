@@ -26,6 +26,7 @@ describe(
       cy.get("button").contains("Create Journey").click();
       cy.get("#name").should("exist").type("Pause and stop flow");
       cy.get("#createJourneySubmit").click();
+      cy.wait(500);
       cy.get("#audience").click();
       cy.get("#name").type("init");
       cy.get("#description").type("init description text");
@@ -35,6 +36,7 @@ describe(
         .get('[data-isprimary="true"]')
         .move({ deltaX: 100, deltaY: 100 });
 
+      cy.wait(500);
       cy.get("#audience").click();
       cy.get("#name").type("slack audience");
       cy.get("#description").type("slack description");
@@ -122,7 +124,7 @@ describe(
             },
             url: `${Cypress.env("AxiosURL")}events/job-status/slack`,
             body: {
-              jobId: body[0],
+              jobId: body[0]?.jobIds?.[0],
             },
           }).then(({ body }) => {
             cy.wait(1000);

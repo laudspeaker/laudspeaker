@@ -356,7 +356,7 @@ export default function OnboardingBeta() {
                       <div className="space-y-6 bg-white px-4 py-5 sm:p-6">
                         <h2>Email configuration</h2>
                         <Select
-                          id="events_config_select"
+                          id="email_config_select"
                           options={allEmailChannels.map((item) => ({
                             value: item.id,
                             title: item.title,

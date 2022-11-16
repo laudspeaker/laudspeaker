@@ -53,7 +53,7 @@ export class TestsService {
       });
 
       await this.authService.verificationRepository.delete({
-        accountId: '1000',
+        accountId: '-1000',
       });
 
       const userCreated = await this.authService.repository.findOne({
@@ -101,17 +101,17 @@ export class TestsService {
       await this.authService.repository.update(
         { id: ret.id },
         {
-          id: '1000',
+          id: '-1000',
         }
       );
-      ret.id = '1000';
+      ret.id = '-1000';
 
-      await this.workflowsRepository.delete({ ownerId: '1000' });
-      await this.templateRepository.delete({ ownerId: '1000' });
-      await this.audienceRepository.delete({ ownerId: '1000' });
+      await this.workflowsRepository.delete({ ownerId: '-1000' });
+      await this.templateRepository.delete({ ownerId: '-1000' });
+      await this.audienceRepository.delete({ ownerId: '-1000' });
 
       await this.customersService.CustomerModel.deleteMany({
-        ownerId: '1000',
+        ownerId: '-1000',
       });
 
       const sanitizedMember = new CreateCustomerDto();
@@ -177,3 +177,4 @@ export class TestsService {
     await this.authService.verifyEmail(account, id);
   }
 }
+

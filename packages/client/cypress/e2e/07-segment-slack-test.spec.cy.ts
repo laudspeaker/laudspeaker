@@ -27,6 +27,7 @@ describe(
       cy.get("button").contains("Create Journey").click();
       cy.get("#name").should("exist").type("Segment slack test");
       cy.get("#createJourneySubmit").click();
+      cy.wait(500);
       cy.get("#audience").click();
       cy.get("#name").type("init");
       cy.get("#description").type("init description text");

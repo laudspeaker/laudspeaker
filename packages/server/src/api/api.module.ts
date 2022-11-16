@@ -103,17 +103,17 @@ export class ApiModule {
       await this.authService.repository.update(
         { id: ret.id },
         {
-          id: '1000',
+          id: '-1000',
         }
       );
-      ret.id = '1000';
+      ret.id = '-1000';
 
-      await this.workflowsRepository.delete({ ownerId: '1000' });
-      await this.templateRepository.delete({ ownerId: '1000' });
-      await this.audienceRepository.delete({ ownerId: '1000' });
+      await this.workflowsRepository.delete({ ownerId: '-1000' });
+      await this.templateRepository.delete({ ownerId: '-1000' });
+      await this.audienceRepository.delete({ ownerId: '-1000' });
 
       await this.customersService.CustomerModel.deleteMany({
-        ownerId: '1000',
+        ownerId: '-1000',
       });
 
       const sanitizedMember = new CreateCustomerDto();
