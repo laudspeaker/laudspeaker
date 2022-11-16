@@ -57,6 +57,7 @@ import TableBeta from "pages/TemplateTable/TableBeta";
 import OnboardingBeta from "pages/Onboarding/OnboardingBeta";
 import Settings from "pages/Settings/Settings";
 import Person from "pages/Person";
+import Verify from "pages/Verify";
 
 interface IProtected {
   children: ReactElement;
@@ -149,6 +150,16 @@ const RouteComponent: React.FC = () => {
             <Protected>
               <DrawerLayout>
                 <FlowTable />
+              </DrawerLayout>
+            </Protected>
+          }
+        />
+        <Route
+          path="/verify-email/:id"
+          element={
+            <Protected>
+              <DrawerLayout>
+                <Verify />
               </DrawerLayout>
             </Protected>
           }

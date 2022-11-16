@@ -1,16 +1,20 @@
 import { BaseJwtHelper } from '../../common/helper/base-jwt.helper';
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UpdateAccountDto } from './dto/update-account.dto';
 import { Account } from './entities/accounts.entity';
 import * as bcrypt from 'bcryptjs';
+import { CustomersService } from '../customers/customers.service';
+import { AuthService } from '../auth/auth.service';
 
 @Injectable()
 export class AccountsService extends BaseJwtHelper {
   constructor(
     @InjectRepository(Account)
-    private accountsRepository: Repository<Account>
+    public accountsRepository: Repository<Account>,
+    @Inject(CustomersService) private customersService: CustomersService,
+    @Inject(AuthService) private authService: AuthService
   ) {
     super();
   }
@@ -72,11 +76,38 @@ export class AccountsService extends BaseJwtHelper {
         oldUser.expectedOnboarding.length === oldUser.currentOnboarding.length;
     }
 
+    let verified = oldUser.verified;
+    const needEmailUpdate =
+      updateUserDto.email && oldUser.email !== updateUserDto.email;
+    if (needEmailUpdate) {
+      verified = false;
+
+      if (oldUser.customerId) {
+        const customer = await this.customersService.findById(
+          oldUser,
+          oldUser.customerId
+        );
+
+        customer.verified = false;
+        await customer.save();
+      }
+    }
+
+    if (updateUserDto.emailProvider === 'free3' && !verified)
+      throw new HttpException(
+        'Email has to be verified to use this',
+        HttpStatus.BAD_REQUEST
+      );
+
     const updatedUser = await this.accountsRepository.save({
       ...oldUser,
       ...updateUserDto,
       password,
+      verified,
     });
+
+    if (needEmailUpdate)
+      await this.authService.requestVerification(updatedUser);
 
     return updatedUser;
   }

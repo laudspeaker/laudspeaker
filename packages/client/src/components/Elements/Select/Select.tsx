@@ -2,6 +2,7 @@ import React, { ReactNode, Fragment } from "react";
 import { ElementType } from "react";
 import { Listbox, Transition } from "@headlessui/react";
 import { ChevronUpDownIcon } from "@heroicons/react/20/solid";
+import Tooltip from "../Tooltip";
 
 export interface SelectProps {
   value: any;
@@ -10,6 +11,7 @@ export interface SelectProps {
     value: string | number;
     disabled?: boolean;
     subtitle?: string;
+    tooltip?: string;
   }[];
   id: string;
   name?: string;
@@ -75,7 +77,7 @@ const Select = (props: SelectProps) => {
   } = props;
   return (
     <>
-      <div className="relative">
+      <div id={id} className="relative">
         <Listbox
           defaultValue={defaultValue}
           disabled={disabled}
@@ -104,7 +106,7 @@ const Select = (props: SelectProps) => {
             leaveFrom="opacity-100"
             leaveTo="opacity-0"
           >
-            <Listbox.Options className="absolute mt-1 overflow-y-scroll max-h-[300px] rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm !z-[1000000] top-[100%]">
+            <Listbox.Options className="absolute mt-1 overflow-y-scroll max-h-[300px] rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm !z-[1] top-[100%]">
               {options.map((option, i) => (
                 <Listbox.Option
                   key={i}
@@ -112,27 +114,30 @@ const Select = (props: SelectProps) => {
                   className={({ active }) =>
                     `select-none py-2 px-4 ${
                       option.disabled
-                        ? "cursor-default bg-slate-200"
+                        ? "cursor-default bg-gray-300"
                         : "cursor-pointer"
                     } ${active ? "bg-cyan-100 text-cyan-400" : "text-gray-900"}`
                   }
                   disabled={option.disabled || false}
+                  data-option={option.value}
                 >
-                  <div className="flex justify-between">
-                    <div>
-                      <div>{option.title || option.value}</div>
-                      {option.subtitle && (
-                        <div className="text-gray-400">{option.subtitle}</div>
-                      )}
+                  <Tooltip className="![z-100001]" title={option.tooltip || ""}>
+                    <div className="flex justify-between">
+                      <div>
+                        <div>{option.title || option.value}</div>
+                        {option.subtitle && (
+                          <div className="text-gray-400">{option.subtitle}</div>
+                        )}
+                      </div>
+                      {tick &&
+                        (value === option.value ||
+                          (value[0] && value.includes(option.value))) && (
+                          <span className="rounded-[50%] aspect-[1] w-[20px] h-[20px] bg-[#4FA198] text-white flex justify-center items-center">
+                            ✔
+                          </span>
+                        )}
                     </div>
-                    {tick &&
-                      (value === option.value ||
-                        (value[0] && value.includes(option.value))) && (
-                        <span className="rounded-[50%] aspect-[1] w-[20px] h-[20px] bg-[#4FA198] text-white flex justify-center items-center">
-                          ✔
-                        </span>
-                      )}
-                  </div>
+                  </Tooltip>
                 </Listbox.Option>
               ))}
             </Listbox.Options>

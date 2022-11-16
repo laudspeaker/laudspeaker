@@ -8,15 +8,12 @@ import Select from "../../components/Elements/Select";
 import { allEventChannels } from "../Settings/EventsProvider";
 import { allEmailChannels } from "../Settings/EmailProvider";
 import { useTypedSelector } from "hooks/useTypeSelector";
-import {
-  setDomainsList,
-  setSettingData,
-  setSettingsPrivateApiKey,
-} from "reducers/settings";
+import { setDomainsList, setSettingsPrivateApiKey } from "reducers/settings";
 import { useDispatch } from "react-redux";
 import { useState } from "react";
 import CSS from "csstype";
 import Modal from "components/Elements/Modal";
+import { toast } from "react-toastify";
 
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(" ");
@@ -25,6 +22,8 @@ function classNames(...classes: string[]) {
 interface IntegrationsData {
   sendingName: string;
   sendingEmail: string;
+  testSendingEmail: string;
+  testSendingName: string;
   slackId: string;
   eventProvider: string;
   emailProvider: string;
@@ -41,10 +40,12 @@ export default function OnboardingBeta() {
   const [integrationsData, setIntegrationsData] = useState<IntegrationsData>({
     sendingName: "",
     sendingEmail: "",
+    testSendingEmail: "",
+    testSendingName: "",
     slackId: "",
     mailgunAPIKey: "",
     eventProvider: "posthog",
-    emailProvider: "mailgun",
+    emailProvider: "",
     posthogApiKey: "",
     posthogProjectId: "",
     posthogHostUrl: "app.posthog.com",
@@ -57,6 +58,7 @@ export default function OnboardingBeta() {
   const [domainList, setDomainList] = useState<any>(domainsList || []);
   const [privateApiKey, setPrivateApiKey] = useState<string>("");
   const [nameModalOpen, setNameModalOpen] = useState<boolean>(false);
+  const [verified, setVerified] = useState(false);
 
   const callDomains = async () => {
     if (privateApiKey) {
@@ -91,6 +93,11 @@ export default function OnboardingBeta() {
         posthogHostUrl,
         posthogSmsKey,
         posthogEmailKey,
+        emailProvider,
+        testSendingEmail,
+        testSendingName,
+        sendingDomain,
+        verified: verifiedFromRequest,
       } = data;
       setIntegrationsData({
         ...integrationsData,
@@ -101,9 +108,14 @@ export default function OnboardingBeta() {
         posthogEmailKey,
         sendingName,
         sendingEmail,
+        emailProvider,
+        testSendingEmail,
+        testSendingName,
         slackId: slackTeamId?.[0],
       });
       setPrivateApiKey(mailgunAPIKey);
+      setDomainName(sendingDomain);
+      setVerified(verifiedFromRequest);
     })();
   }, []);
 
@@ -115,14 +127,27 @@ export default function OnboardingBeta() {
   };
 
   const handleSubmit = async () => {
-    await ApiService.patch({
-      url: "/accounts",
-      options: {
-        ...integrationsData,
-        sendingDomain: domainName,
-        mailgunAPIKey: privateApiKey,
-      },
-    });
+    try {
+      await ApiService.patch({
+        url: "/accounts",
+        options: {
+          ...integrationsData,
+          sendingDomain: domainName,
+          mailgunAPIKey: privateApiKey,
+        },
+      });
+    } catch (e: any) {
+      toast.error(e.response?.data?.message || "Unexpected error", {
+        position: "bottom-center",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "colored",
+      });
+    }
   };
 
   const redirectUses = () => {
@@ -179,18 +204,100 @@ export default function OnboardingBeta() {
         />
       </form>
     ),
+    mailgun: (
+      <>
+        <Input
+          isRequired
+          value={privateApiKey}
+          label="Private API Key"
+          placeholder={"****  "}
+          name="privateApiKey"
+          id="privateApiKey"
+          type="password"
+          labelClass="!text-[16px]"
+          onChange={(e) => {
+            setPrivateApiKey(e.target.value);
+            handleIntegrationsDataChange(e);
+          }}
+          onBlur={callDomains}
+        />
+        <Select
+          id="activeJourney"
+          value={domainName}
+          options={domainList.map((item: any) => ({
+            value: item.name,
+          }))}
+          onChange={(value) => {
+            setDomainName(value);
+          }}
+          displayEmpty
+          renderValue={(val: any) => val}
+          sx={{
+            height: "44px",
+            margin: "20px 0px",
+          }}
+          inputProps={{
+            "& .MuiSelect-select": {
+              padding: "9px 15px",
+              border: "1px solid #DEDEDE",
+              boxShadow: "none",
+              borderRadius: "3px",
+            },
+            sx: {
+              borderRadius: "6px !important",
+            },
+          }}
+        />
+        <Input
+          name="sendingName"
+          id="sendingName"
+          label="Sending name"
+          value={integrationsData.sendingName}
+          onChange={handleIntegrationsDataChange}
+        />
+        <div className="relative">
+          <Input
+            name="sendingEmail"
+            id="sendingEmail"
+            label="Sending email"
+            value={integrationsData.sendingEmail}
+            onChange={handleIntegrationsDataChange}
+            className="pr-[150px]"
+            endText={domainName ? "@laudspeaker.com" : ""}
+          />
+        </div>
+      </>
+    ),
+    free3: (
+      <>
+        <Input
+          name="testSendingName"
+          id="testSendingName"
+          label="Sending name"
+          value={integrationsData.testSendingName}
+          onChange={handleIntegrationsDataChange}
+        />
+        <div className="relative">
+          <Input
+            name="testSendingEmail"
+            id="testSendingEmail"
+            label="Sending email"
+            value={integrationsData.testSendingEmail}
+            onChange={handleIntegrationsDataChange}
+            className="pr-[150px]"
+            endText={domainName ? "@laudspeaker-test.com" : ""}
+          />
+        </div>
+      </>
+    ),
   };
 
   const frameOne: CSS.Properties = {
     position: "relative",
-    paddingBottom: "100%",
-    height: "0",
+    height: "80vh",
   };
 
   const frameTwo: CSS.Properties = {
-    position: "absolute",
-    top: "0",
-    left: "0",
     height: "100%",
     width: "100%",
   };
@@ -204,7 +311,7 @@ export default function OnboardingBeta() {
             <div className="grid place-items-center pt-6">
               <button
                 type="button"
-                className="inline-flex items-center rounded-md border border-transparent bg-cyan-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-cyan-500 focus:outline-none focus:ring-2 focus:ring-offset-2 rounded-md bg-white font-medium focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2"
+                className="inline-flex items-center rounded-md border border-transparent bg-cyan-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-cyan-500 focus:outline-none focus:ring-2 focus:ring-offset-2 d bg-white font-medium focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2"
                 onClick={redirectUses}
               >
                 Check Out Onboarding Video
@@ -212,6 +319,7 @@ export default function OnboardingBeta() {
             </div>
             <Modal
               isOpen={nameModalOpen}
+              panelClass="max-w-[90%]"
               onClose={() => {
                 setNameModalOpen(false);
               }}
@@ -248,17 +356,24 @@ export default function OnboardingBeta() {
                       <div className="space-y-6 bg-white px-4 py-5 sm:p-6">
                         <h2>Email configuration</h2>
                         <Select
-                          id="events_config_select"
-                          options={allEmailChannels.map((item: any) => ({
+                          id="email_config_select"
+                          options={allEmailChannels.map((item) => ({
                             value: item.id,
                             title: item.title,
-                            disabled: item.disabled,
+                            disabled:
+                              item.id === "free3" && !verified
+                                ? true
+                                : item.disabled,
+                            tooltip:
+                              item.id === "free3" && !verified
+                                ? "You need to verify your email"
+                                : item.tooltip,
                           }))}
                           value={integrationsData.emailProvider}
                           onChange={(value: string) =>
                             setIntegrationsData({
                               ...integrationsData,
-                              eventProvider: value,
+                              emailProvider: value,
                             })
                           }
                         />
@@ -278,69 +393,10 @@ export default function OnboardingBeta() {
                             }
                           </>
                         )}
-                        <Input
-                          isRequired
-                          value={privateApiKey}
-                          label="Private API Key"
-                          placeholder={"****  "}
-                          name="privateApiKey"
-                          id="privateApiKey"
-                          type="password"
-                          labelClass="!text-[16px]"
-                          onChange={(e) => {
-                            setPrivateApiKey(e.target.value);
-                            handleIntegrationsDataChange(e);
-                          }}
-                          onBlur={callDomains}
-                        />
-                        <Select
-                          id="activeJourney"
-                          value={domainName}
-                          options={domainList.map((item: any) => ({
-                            value: item.name,
-                          }))}
-                          onChange={(value) => {
-                            setDomainName(value);
-                          }}
-                          displayEmpty
-                          renderValue={(val: any) => val}
-                          sx={{
-                            height: "44px",
-                            margin: "20px 0px",
-                          }}
-                          inputProps={{
-                            "& .MuiSelect-select": {
-                              padding: "9px 15px",
-                              border: "1px solid #DEDEDE",
-                              boxShadow: "none",
-                              borderRadius: "3px",
-                            },
-                            sx: {
-                              borderRadius: "6px !important",
-                            },
-                          }}
-                        />
-                        <Input
-                          name="sendingName"
-                          id="sendingName"
-                          label="Sending name"
-                          value={integrationsData.sendingName}
-                          onChange={handleIntegrationsDataChange}
-                        />
-                        <div className="relative">
-                          <Input
-                            name="sendingEmail"
-                            id="sendingEmail"
-                            label="Sending email"
-                            value={integrationsData.sendingEmail}
-                            onChange={handleIntegrationsDataChange}
-                            className="pr-[150px]"
-                            endText={domainName ? "@laudspeaker.com" : ""}
-                          />
-                        </div>
                       </div>
                       <div className="bg-gray-50 px-4 py-3 text-right sm:px-6">
                         <button
+                          id="saveEmailConfiguration"
                           type="button"
                           onClick={handleSubmit}
                           className="inline-flex justify-center rounded-md border border-transparent bg-cyan-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2"

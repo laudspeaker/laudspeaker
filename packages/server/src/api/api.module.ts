@@ -10,6 +10,7 @@ import { TemplatesModule } from './templates/templates.module';
 import { SlackModule } from './slack/slack.module';
 import { Account } from './accounts/entities/accounts.entity';
 import { AuthService } from './auth/auth.service';
+import { AccountsService } from './accounts/accounts.service';
 import { CustomersService } from './customers/customers.service';
 import { CreateCustomerDto } from './customers/dto/create-customer.dto';
 import { InjectRepository, TypeOrmModule } from '@nestjs/typeorm';
@@ -17,6 +18,7 @@ import { Workflow } from './workflows/entities/workflow.entity';
 import { Repository } from 'typeorm';
 import { Template } from './templates/entities/template.entity';
 import { Audience } from './audiences/entities/audience.entity';
+import { TestsModule } from './tests/tests.module';
 
 @Module({
   imports: [
@@ -30,6 +32,7 @@ import { Audience } from './audiences/entities/audience.entity';
     EventsModule,
     TemplatesModule,
     SlackModule,
+    TestsModule,
   ],
 })
 export class ApiModule {
@@ -41,6 +44,7 @@ export class ApiModule {
     @InjectRepository(Template)
     private templateRepository: Repository<Template>,
     private readonly authService: AuthService,
+    private readonly accountService: AccountsService,
     private readonly customersService: CustomersService
   ) {
     if (process.env.NODE_ENV === 'development') {
@@ -64,6 +68,20 @@ export class ApiModule {
         await this.authService.repository.remove([userCreated]);
       }
 
+      const JhonSmeeth = await this.accountService.accountsRepository.findOne({
+        where: {
+          email: 'john.smith@gmail.com',
+          firstName: 'John',
+          lastName: 'Smith',
+          sendingEmail: 'SendingEmail',
+          sendingName: 'SendingName',
+        },
+      });
+
+      if (JhonSmeeth) {
+        await this.accountService.accountsRepository.remove([JhonSmeeth]);
+      }
+
       const user = new Account();
 
       user.firstName = 'TFNameUser';
@@ -76,7 +94,7 @@ export class ApiModule {
       user.sendingName = 'sname';
       user.sendingDomain =
         'sandboxd7ae9069e24b4e8dbb5ca3ba7d4bed04.mailgun.org';
-      user.mailgunAPIKey = 'e52ef0112c0c7394b273ba3d3e25474c-4dd50799-4a315eeb';
+      user.mailgunAPIKey = process.env.MAILGUN_API_KEY;
       user.expectedOnboarding = ['Slack'];
       user.currentOnboarding = ['Slack'];
       user.onboarded = true;
@@ -85,17 +103,17 @@ export class ApiModule {
       await this.authService.repository.update(
         { id: ret.id },
         {
-          id: '1000',
+          id: '-1000',
         }
       );
-      ret.id = '1000';
+      ret.id = '-1000';
 
-      await this.workflowsRepository.delete({ ownerId: '1000' });
-      await this.templateRepository.delete({ ownerId: '1000' });
-      await this.audienceRepository.delete({ ownerId: '1000' });
+      await this.workflowsRepository.delete({ ownerId: '-1000' });
+      await this.templateRepository.delete({ ownerId: '-1000' });
+      await this.audienceRepository.delete({ ownerId: '-1000' });
 
-      await this.customersService.CustomerModel.findOneAndRemove({
-        ownerId: '1000',
+      await this.customersService.CustomerModel.deleteMany({
+        ownerId: '-1000',
       });
 
       const sanitizedMember = new CreateCustomerDto();
@@ -105,7 +123,8 @@ export class ApiModule {
       sanitizedMember.slackRealName = 'Mahamad Charawi';
       sanitizedMember.slackTeamId = ['T01U4FFQ796'];
       sanitizedMember.slackTimeZone = -25200;
-      sanitizedMember.slackEmail = 'mahamad@trytachyon.com';
+      // sanitizedMember.slackEmail = 'mahamad@trytachyon.com';
+      sanitizedMember.email = process.env.SENDING_TO_TEST_EMAIL;
       sanitizedMember.slackDeleted = false;
       sanitizedMember.slackAdmin = true;
       sanitizedMember.slackTeamMember = true;

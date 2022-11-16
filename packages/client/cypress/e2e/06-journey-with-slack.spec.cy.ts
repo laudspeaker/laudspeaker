@@ -2,6 +2,7 @@
 /* eslint-disable jest/valid-describe-callback */
 /* eslint-disable @typescript-eslint/no-shadow */
 import credentials from "../fixtures/credentials.json";
+import { loginFunc } from "../test-helpers/loginFunc";
 
 const { email, password, slackTemplate, journeyName, userAPIkey } =
   credentials.MessageHitUser;
@@ -10,56 +11,54 @@ describe(
   "Journey with slack triggered and created",
   { env: { AxiosURL: "http://localhost:3001/" } },
   () => {
-    it("passes", async () => {
-      cy.visit("/");
-      cy.clearCookies();
-      cy.clearCookies();
-      cy.url().should("include", "/login");
-      cy.get("#email").type(email);
-      cy.get("#password").type(password);
-      cy.get(".css-0 > .MuiGrid-root > .MuiButton-root").click();
-      cy.url().should("include", "/dashboard");
-      cy.reload();
-      cy.url().should("include", "/dashboard");
+    beforeEach(() => {
+      cy.request("http://localhost:3001/tests/reset-tests");
+      cy.wait(1000);
+    });
 
-      cy.get('[href="/all-templates"] > .MuiListItem-root').click();
-      cy.url().should("include", "/all-templates");
+    it("passes", () => {
+      loginFunc(email, password);
 
-      cy.get(".MuiButton-root").click();
+      cy.get('[aria-expanded="false"]')
+        .find('[data-disclosure="Messaging"]')
+        .click();
+      cy.get('[data-disclosure-link="Template Builder"]').click();
+      cy.url().should("include", "/templates");
+      cy.get("#createTemplate").click();
       cy.get("#name").type(slackTemplate.name);
       cy.get("#handleDay").click();
-      cy.get('[data-value="slack"]').click();
-      cy.get(".MuiPaper-root > .MuiBox-root > .MuiButton-root").click();
-      cy.get(".css-8dmme6").click();
+      cy.get("#handleDay").find('[data-option="slack"]').click();
+      cy.get("#submitTemplateCreation").click();
+      cy.url().should("include", "templates/slack");
+
+      cy.get('[data-custominput-placeholder="Slack Message"]').click("left");
       cy.get("#slackMessage").type(slackTemplate.message, {
         parseSpecialCharSequences: false,
       });
-      cy.get(":nth-child(2) > .MuiButton-root").click();
+      cy.get("#saveDraftTemplate").click();
+      cy.get("#turnBackFromTemplate").click();
+      cy.url().should("include", "/templates");
+      cy.contains(slackTemplate.name).should("exist");
 
-      cy.get(
-        '[href="/all-templates"] > .MuiListItem-root > .MuiListItemButton-root'
-      ).click();
-      cy.url().should("include", "/all-templates");
-      cy.contains(slackTemplate.name);
-
-      cy.get('[href="/flow"]').click();
-
+      cy.get('[data-disclosure-link="Journey Builder"]').click();
+      cy.wait(1000);
       cy.get("button").contains("Create Journey").click();
       cy.get("#name").should("exist").type(journeyName);
-      cy.get('[data-createbox="true"] > button').click();
-      cy.get("#audience").click();
+      cy.get("#createJourneySubmit").click();
+      cy.wait(3000);
+      cy.get("#audience > .p-0 > .justify-between").click();
       cy.get("#name").type("init");
       cy.get("#description").type("init description text");
-      cy.get("[data-namesegmentbox] > button").click();
+      cy.get("#saveNewSegment").click();
 
       cy.get(".react-flow__viewport")
         .get('[data-isprimary="true"]')
         .move({ deltaX: 100, deltaY: 100 });
 
-      cy.get("#audience").click();
+      cy.get("#audience > .p-0 > .justify-between").click();
       cy.get("#name").type("slack audience");
       cy.get("#description").type("slack description");
-      cy.get("[data-namesegmentbox] > button").click();
+      cy.get("#saveNewSegment").click();
 
       cy.get(".react-flow__viewport")
         .get('[data-isprimary="false"]')
@@ -69,14 +68,14 @@ describe(
       cy.get("#slack").click();
 
       cy.get("#activeJourney").click();
-      cy.contains("TestTemplateForSlackSending").click();
-      cy.get("[data-slackexporttemplate] > button").click();
+      cy.contains(slackTemplate.name).click();
+      cy.get("#exportSelectedTemplate").click();
 
       cy.get(".react-flow__viewport").get('[data-isprimary="true"]').click();
       cy.get("#eventBased").click();
       cy.contains("Add Condition Or Group").click();
 
-      cy.get('[data-value="events"]').click();
+      cy.get('[data-option="events"]').click();
       cy.get("#events").type(slackTemplate.eventName);
       cy.get("[data-savetriggerreator] > button").click();
 
@@ -86,9 +85,9 @@ describe(
 
       cy.get('[data-isprimary="false"] [data-handlepos="top"]').click();
 
-      cy.get("[data-saveflowbutton]").click();
+      cy.contains("Save").click();
       cy.wait(500);
-      cy.get("[data-startflowbutton]").click();
+      cy.contains("Start").click();
       cy.wait(500);
 
       cy.visit("/flow");
@@ -114,7 +113,7 @@ describe(
           },
           url: `${Cypress.env("AxiosURL")}events/job-status/slack`,
           body: {
-            jobId: body.jobId,
+            jobId: body[0]?.jobIds?.[0],
           },
         }).then(({ body }) => {
           expect(body).to.equal("completed");

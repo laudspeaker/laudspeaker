@@ -45,13 +45,13 @@ const SlackTemplateHeader = (props: IEmailHeaderProps) => {
     <div>
       <div className="flex text-center justify-between ml-[10px] h-[80px]">
         <h6 className="font-[Poppins] font-medium text-[14px] leading-[30px] flex items-center">
-          <ListItemIcon
-            className="cursor-pointer"
-            sx={{ minWidth: "16px", paddingRight: "16px" }}
+          <div
+            id="turnBackFromTemplate"
+            className="min-w-[16px] pr-[16px] cursor-pointer"
             onClick={() => window.history.back()}
           >
             {BackButtonIcon()}
-          </ListItemIcon>
+          </div>
           {!titleEdit ? (
             <h3 className="flex items-center gap-[10px]">
               {templateName}
@@ -87,6 +87,7 @@ const SlackTemplateHeader = (props: IEmailHeaderProps) => {
         <div className="flex text-center justify-end items-center w-[400px] pr-[50px] gap-[10px]">
           <div>
             <GenericButton
+              id="saveDraftTemplate"
               onClick={onSave}
               style={{
                 maxWidth: "158px",

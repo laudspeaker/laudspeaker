@@ -22,6 +22,7 @@ import {
   CustomerKeys,
   CustomerKeysSchema,
 } from '../customers/schemas/customer-keys.schema';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
   imports: [
@@ -49,6 +50,7 @@ import {
     BullModule.registerQueue({
       name: 'customers',
     }),
+    AuthModule,
   ],
   controllers: [EventsController],
   providers: [

@@ -8,6 +8,8 @@ import {
   UseGuards,
   Req,
   Get,
+  Patch,
+  Param,
 } from '@nestjs/common';
 import { Account } from '@/api/accounts/entities/accounts.entity';
 import { LoginDto } from './dto/login.dto';
@@ -19,29 +21,43 @@ import { Request } from 'express';
 @Controller('auth')
 export class AuthController {
   @Inject(AuthService)
-  private readonly service: AuthService;
+  public readonly service: AuthService;
 
   @Post('register')
   @UseInterceptors(ClassSerializerInterceptor)
-  private register(@Body() body: RegisterDto): Promise<Account | never> {
+  public async register(@Body() body: RegisterDto): Promise<Account | never> {
     return this.service.register(body);
   }
 
   @Post('login')
-  private login(@Body() body: LoginDto): Promise<string | never> {
+  public async login(@Body() body: LoginDto): Promise<string | never> {
     return this.service.login(body);
   }
 
   @Post('refresh')
   @UseGuards(JwtAuthGuard)
-  private refresh(@Req() { user }: Request): Promise<string | never> {
+  public async refresh(@Req() { user }: Request): Promise<string | never> {
     return this.service.refresh(<Account>user);
   }
 
   @Get()
   @UseInterceptors(ClassSerializerInterceptor)
   @UseGuards(JwtAuthGuard)
-  private verify() {
+  public async verify() {
     return;
+  }
+
+  @Patch('verify-email/:id')
+  @UseInterceptors(ClassSerializerInterceptor)
+  @UseGuards(JwtAuthGuard)
+  public async verifyEmail(@Req() { user }: Request, @Param('id') id: string) {
+    return this.service.verifyEmail(<Account>user, id);
+  }
+
+  @Patch('resend-email')
+  @UseInterceptors(ClassSerializerInterceptor)
+  @UseGuards(JwtAuthGuard)
+  public async resendEmail(@Req() { user }: Request) {
+    return this.service.requestVerification(<Account>user);
   }
 }

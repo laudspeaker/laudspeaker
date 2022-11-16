@@ -488,10 +488,23 @@ const Flow = () => {
 
   const handleStartJourney = async () => {
     await handleSaveJourney();
-    await ApiService.get({
-      url: `${ApiConfig.startFlow}/${flowId}`,
-    });
-    window.location.reload();
+    try {
+      await ApiService.get({
+        url: `${ApiConfig.startFlow}/${flowId}`,
+      });
+      window.location.reload();
+    } catch (e: any) {
+      toast.error(e.response?.data?.message || "Unexpected error", {
+        position: "bottom-center",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "colored",
+      });
+    }
   };
 
   const handleAudienceSubmit = async (segment: any) => {
@@ -573,7 +586,7 @@ const Flow = () => {
         <div
           style={{
             position: "absolute",
-            zIndex: "111",
+            zIndex: "10",
             display: "flex",
             right: "15px",
             inset: "20px 20px auto auto",

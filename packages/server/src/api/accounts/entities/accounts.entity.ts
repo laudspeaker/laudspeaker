@@ -5,7 +5,6 @@ import {
   Entity,
   PrimaryGeneratedColumn,
   Unique,
-  PrimaryColumn,
 } from 'typeorm';
 
 export enum PlanType {
@@ -100,4 +99,19 @@ export class Account extends BaseEntity {
 
   @Column({ type: 'boolean', default: false })
   public onboarded: boolean;
+
+  @Column({ type: 'varchar', nullable: true, default: null })
+  public customerId?: string;
+
+  @Column({ type: 'varchar', nullable: true, default: null })
+  public emailProvider?: string;
+
+  @Column({ type: 'varchar', nullable: true, default: null })
+  public testSendingEmail?: string;
+
+  @Column({ type: 'varchar', nullable: true, default: null })
+  public testSendingName?: string;
+
+  @Column({ type: 'int', default: 3 })
+  public freeEmailsCount: number;
 }

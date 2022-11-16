@@ -111,6 +111,7 @@ const NameTemplate = ({ onSubmit, isPrimary }: INameSegment) => {
           </Grid>
           <div className="flex justify-end">
             <GenericButton
+              id="submitTemplateCreation"
               onClick={handleSubmit}
               style={{
                 maxWidth: "200px",

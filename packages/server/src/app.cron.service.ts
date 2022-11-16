@@ -16,8 +16,9 @@ import { isDateString, isEmail } from 'class-validator';
 import Mailgun from 'mailgun.js';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Account } from './api/accounts/entities/accounts.entity';
-import { IsNull, Not, Repository } from 'typeorm';
+import { IsNull, MoreThan, Not, Repository } from 'typeorm';
 import { createClient } from '@clickhouse/client';
+import { Verification } from './api/auth/entities/verification.entity';
 
 const client = createClient({
   host: process.env.CLICKHOUSE_HOST ?? 'http://localhost:8123',
@@ -70,7 +71,9 @@ export class CronService {
     @InjectModel(CustomerKeys.name)
     private customerKeysModel: Model<CustomerKeysDocument>,
     @InjectRepository(Account)
-    private accountRepository: Repository<Account>
+    private accountRepository: Repository<Account>,
+    @InjectRepository(Verification)
+    private verificationRepository: Repository<Verification>
   ) {
     createTable();
   }
@@ -246,5 +249,16 @@ export class CronService {
       }
       offset += BATCH_SIZE;
     }
+  }
+
+  @Cron(CronExpression.EVERY_HOUR)
+  async handleVerificationCheck() {
+    await this.verificationRepository
+      .createQueryBuilder()
+      .where(
+        `verification.status = 'sent' AND now() > verification."createdAt"::TIMESTAMP + INTERVAL '1 HOUR'`
+      )
+      .update({ status: 'expired' })
+      .execute();
   }
 }

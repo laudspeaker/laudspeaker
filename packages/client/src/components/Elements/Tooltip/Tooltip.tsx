@@ -5,16 +5,18 @@ interface CustomTooltipProps {
   children: ReactNode;
   title: string;
   placement?: string;
+  className?: string;
 }
 
 const Tooltip: FC<CustomTooltipProps & TooltipProps> = ({
   children,
   title,
   placement = "top",
+  className,
 }) => {
   return (
     <MTTooltip
-      className="text-center z-[10]"
+      className={`${className} text-center z-[10]`}
       content={title}
       placement={placement}
     >
