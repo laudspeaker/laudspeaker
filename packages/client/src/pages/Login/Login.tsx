@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { useDispatch } from "react-redux";
 import { ILoginForm, loginUser } from "../../reducers/auth";
-import Link from "@mui/material/Link";
 import { useNavigate } from "react-router-dom";
 import posthog from "posthog-js";
 import laudspeakerLogo from "../../assets/images/laudspeaker.svg";
+import Link from "components/Link/Link";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -97,6 +97,7 @@ const Login = () => {
               </div>
               <div>
                 <button
+                  id="loginIntoAccount"
                   type="submit"
                   className="flex w-full justify-center rounded-md border border-transparent bg-cyan-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2"
                   onClick={handleSubmit}
@@ -109,9 +110,7 @@ const Login = () => {
               Want to create an account?
               <Link
                 href="/signup"
-                underline="none"
-                color="#4FA198"
-                sx={{ margin: "0 10px" }}
+                className="no-underline text-[#4FA198] m-[0_10px]"
               >
                 Sign Up
               </Link>

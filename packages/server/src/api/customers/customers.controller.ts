@@ -13,7 +13,6 @@ import {
   LoggerService,
   HttpException,
   Put,
-  Delete,
 } from '@nestjs/common';
 import { CreateCustomerDto } from './dto/create-customer.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -77,16 +76,6 @@ export class CustomersController {
       id
     );
     return customer;
-  }
-
-  @Get('/:id/events')
-  @UseGuards(JwtAuthGuard)
-  @UseInterceptors(ClassSerializerInterceptor)
-  findCustomerEvents(
-    @Req() { user }: Request,
-    @Param() { id }: { id: string }
-  ) {
-    return this.customersService.findCustomerEvents(<Account>user, id);
   }
 
   @Put('/:id')

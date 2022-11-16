@@ -120,7 +120,7 @@ export class CustomersService {
       }).exec();
       let createdCustomer: CustomerDocument;
       //create customer only if we don't see before, otherwise update data
-      if (addedBefore.length == 0) {
+      if (addedBefore.length === 0) {
         createdCustomer = new this.CustomerModel({});
       } else {
         createdCustomer = addedBefore[0];

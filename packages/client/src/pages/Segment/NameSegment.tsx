@@ -141,6 +141,7 @@ const NameSegment = ({
           )}
           <div className="flex justify-end" data-namesegmentbox>
             <GenericButton
+              id="saveNewSegment"
               onClick={handleSubmit}
               style={{
                 maxWidth: "200px",

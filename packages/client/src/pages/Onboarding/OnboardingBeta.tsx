@@ -294,14 +294,10 @@ export default function OnboardingBeta() {
 
   const frameOne: CSS.Properties = {
     position: "relative",
-    paddingBottom: "100%",
-    height: "0",
+    height: "80vh",
   };
 
   const frameTwo: CSS.Properties = {
-    position: "absolute",
-    top: "0",
-    left: "0",
     height: "100%",
     width: "100%",
   };
@@ -315,7 +311,7 @@ export default function OnboardingBeta() {
             <div className="grid place-items-center pt-6">
               <button
                 type="button"
-                className="inline-flex items-center rounded-md border border-transparent bg-cyan-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-cyan-500 focus:outline-none focus:ring-2 focus:ring-offset-2 rounded-md bg-white font-medium focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2"
+                className="inline-flex items-center rounded-md border border-transparent bg-cyan-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-cyan-500 focus:outline-none focus:ring-2 focus:ring-offset-2 d bg-white font-medium focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2"
                 onClick={redirectUses}
               >
                 Check Out Onboarding Video
@@ -323,6 +319,7 @@ export default function OnboardingBeta() {
             </div>
             <Modal
               isOpen={nameModalOpen}
+              panelClass="max-w-[90%]"
               onClose={() => {
                 setNameModalOpen(false);
               }}
@@ -399,6 +396,7 @@ export default function OnboardingBeta() {
                       </div>
                       <div className="bg-gray-50 px-4 py-3 text-right sm:px-6">
                         <button
+                          id="saveEmailConfiguration"
                           type="button"
                           onClick={handleSubmit}
                           className="inline-flex justify-center rounded-md border border-transparent bg-cyan-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2"

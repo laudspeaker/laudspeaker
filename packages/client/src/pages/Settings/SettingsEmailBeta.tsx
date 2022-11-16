@@ -123,6 +123,7 @@ export default function SettingsEmailBeta() {
   }, []);
 
   const handleFormDataChange = (e: any) => {
+    console.log(e.target.name, e.target.value);
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 

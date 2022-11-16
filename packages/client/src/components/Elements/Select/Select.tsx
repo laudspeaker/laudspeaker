@@ -77,7 +77,7 @@ const Select = (props: SelectProps) => {
   } = props;
   return (
     <>
-      <div className="relative">
+      <div id={id} className="relative">
         <Listbox
           defaultValue={defaultValue}
           disabled={disabled}
@@ -119,6 +119,7 @@ const Select = (props: SelectProps) => {
                     } ${active ? "bg-cyan-100 text-cyan-400" : "text-gray-900"}`
                   }
                   disabled={option.disabled || false}
+                  data-option={option.value}
                 >
                   <Tooltip className="![z-100001]" title={option.tooltip || ""}>
                     <div className="flex justify-between">

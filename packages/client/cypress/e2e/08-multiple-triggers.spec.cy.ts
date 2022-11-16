@@ -1,14 +1,16 @@
+/* eslint-disable jest/expect-expect */
 /* eslint-disable jest/valid-expect */
 /* eslint-disable jest/valid-describe-callback */
 /* eslint-disable @typescript-eslint/no-shadow */
 import credentials from "../fixtures/credentials.json";
 import { loginFunc } from "../test-helpers/loginFunc";
+import { tamplatesFunc } from "../test-helpers/templatesFunc";
 
-const { email, password, slackTemplate, journeyName, userAPIkey } =
+const { email, password, slackTemplate, emailTemplate, userAPIkey } =
   credentials.MessageHitUser;
 
 describe(
-  "Journey with slack triggered and created",
+  "Multiple triggers",
   { env: { AxiosURL: "http://localhost:3001/" } },
   () => {
     beforeEach(() => {
@@ -18,32 +20,12 @@ describe(
 
     it("passes", () => {
       loginFunc(email, password);
-
-      cy.get('[aria-expanded="false"]')
-        .find('[data-disclosure="Messaging"]')
-        .click();
-      cy.get('[data-disclosure-link="Template Builder"]').click();
-      cy.url().should("include", "/templates");
-      cy.get("#createTemplate").click();
-      cy.get("#name").type(slackTemplate.name);
-      cy.get("#handleDay").click();
-      cy.get("#handleDay").find('[data-option="slack"]').click();
-      cy.get("#submitTemplateCreation").click();
-      cy.url().should("include", "templates/slack");
-
-      cy.get('[data-custominput-placeholder="Slack Message"]').click("left");
-      cy.get("#slackMessage").type(slackTemplate.message, {
-        parseSpecialCharSequences: false,
-      });
-      cy.get("#saveDraftTemplate").click();
-      cy.get("#turnBackFromTemplate").click();
-      cy.url().should("include", "/templates");
-      cy.contains(slackTemplate.name).should("exist");
+      tamplatesFunc(slackTemplate, emailTemplate);
 
       cy.get('[data-disclosure-link="Journey Builder"]').click();
       cy.wait(1000);
       cy.get("button").contains("Create Journey").click();
-      cy.get("#name").should("exist").type(journeyName);
+      cy.get("#name").should("exist").type("Multiple triggers flow");
       cy.get("#createJourneySubmit").click();
       cy.get("#audience").click();
       cy.get("#name").type("init");
@@ -61,7 +43,7 @@ describe(
 
       cy.get(".react-flow__viewport")
         .get('[data-isprimary="false"]')
-        .move({ deltaX: 100, deltaY: 300 });
+        .move({ deltaX: 50, deltaY: 300 });
 
       cy.get('[data-isprimary="false"]').click();
       cy.get("#slack").click();
@@ -83,6 +65,26 @@ describe(
         .drag('[data-isprimary="false"] [data-handlepos="top"]');
 
       cy.get('[data-isprimary="false"] [data-handlepos="top"]').click();
+
+      cy.get("#audience").click();
+      cy.get("#name").type("email audience");
+      cy.get("#description").type("email description");
+      cy.get("#saveNewSegment").click();
+      cy.contains("email audience").move({ deltaX: 450, deltaY: 300 }).click();
+      cy.get("#email").click();
+      cy.get("#activeJourney").click();
+      cy.contains(emailTemplate.name).click();
+      cy.get("#exportSelectedTemplate").click();
+      cy.get(".react-flow__viewport").get('[data-isprimary="true"]').click();
+      cy.get("#eventBased").click();
+      cy.contains("Add Condition Or Group").click();
+      cy.get('[data-option="events"]').click();
+      cy.get("#events").type(emailTemplate.eventName);
+      cy.get("[data-savetriggerreator] > button").click();
+      cy.get('[data-handlepos="bottom"]:last').drag(
+        '[data-isprimary="false"] [data-handlepos="top"]:last'
+      );
+      cy.get('[data-isprimary="false"] [data-handlepos="top"]:last').click();
 
       cy.get("[data-saveflowbutton]").click();
       cy.wait(500);
@@ -111,6 +113,32 @@ describe(
             Authorization: `Api-Key ${userAPIkey}`,
           },
           url: `${Cypress.env("AxiosURL")}events/job-status/slack`,
+          body: {
+            jobId: body[0],
+          },
+        }).then(({ body }) => {
+          expect(body).to.equal("completed");
+        });
+      });
+      cy.request({
+        method: "POST",
+        url: `${Cypress.env("AxiosURL")}events`,
+        headers: {
+          Authorization: `Api-Key ${userAPIkey}`,
+        },
+        body: {
+          correlationKey: "email",
+          correlationValue: emailTemplate.correlationValue,
+          event: emailTemplate.eventName,
+        },
+      }).then(({ body }) => {
+        cy.wait(1000);
+        cy.request({
+          method: "POST",
+          headers: {
+            Authorization: `Api-Key ${userAPIkey}`,
+          },
+          url: `${Cypress.env("AxiosURL")}events/job-status/email`,
           body: {
             jobId: body[0],
           },

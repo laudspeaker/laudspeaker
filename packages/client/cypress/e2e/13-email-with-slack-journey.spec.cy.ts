@@ -3,12 +3,13 @@
 /* eslint-disable @typescript-eslint/no-shadow */
 import credentials from "../fixtures/credentials.json";
 import { loginFunc } from "../test-helpers/loginFunc";
+import { tamplatesFunc } from "../test-helpers/templatesFunc";
 
-const { email, password, slackTemplate, journeyName, userAPIkey } =
+const { email, password, slackTemplate, userAPIkey, emailTemplate } =
   credentials.MessageHitUser;
 
 describe(
-  "Journey with slack triggered and created",
+  "Email and slack journey",
   { env: { AxiosURL: "http://localhost:3001/" } },
   () => {
     beforeEach(() => {
@@ -18,32 +19,12 @@ describe(
 
     it("passes", () => {
       loginFunc(email, password);
-
-      cy.get('[aria-expanded="false"]')
-        .find('[data-disclosure="Messaging"]')
-        .click();
-      cy.get('[data-disclosure-link="Template Builder"]').click();
-      cy.url().should("include", "/templates");
-      cy.get("#createTemplate").click();
-      cy.get("#name").type(slackTemplate.name);
-      cy.get("#handleDay").click();
-      cy.get("#handleDay").find('[data-option="slack"]').click();
-      cy.get("#submitTemplateCreation").click();
-      cy.url().should("include", "templates/slack");
-
-      cy.get('[data-custominput-placeholder="Slack Message"]').click("left");
-      cy.get("#slackMessage").type(slackTemplate.message, {
-        parseSpecialCharSequences: false,
-      });
-      cy.get("#saveDraftTemplate").click();
-      cy.get("#turnBackFromTemplate").click();
-      cy.url().should("include", "/templates");
-      cy.contains(slackTemplate.name).should("exist");
+      tamplatesFunc(slackTemplate, emailTemplate);
 
       cy.get('[data-disclosure-link="Journey Builder"]').click();
       cy.wait(1000);
       cy.get("button").contains("Create Journey").click();
-      cy.get("#name").should("exist").type(journeyName);
+      cy.get("#name").should("exist").type("Email and slack journey");
       cy.get("#createJourneySubmit").click();
       cy.get("#audience").click();
       cy.get("#name").type("init");
@@ -68,6 +49,11 @@ describe(
 
       cy.get("#activeJourney").click();
       cy.contains(slackTemplate.name).click();
+      cy.get("#exportSelectedTemplate").click();
+
+      cy.get("#email").click();
+      cy.get("#activeJourney").click();
+      cy.contains(emailTemplate.name).click();
       cy.get("#exportSelectedTemplate").click();
 
       cy.get(".react-flow__viewport").get('[data-isprimary="true"]').click();

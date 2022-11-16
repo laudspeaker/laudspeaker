@@ -1,6 +1,7 @@
 import React from "react";
 
 export interface ButtonProps {
+  id?: string;
   children: string | React.ReactNode;
   customClasses?: string;
   disabled?: boolean;
@@ -14,6 +15,7 @@ export interface ButtonProps {
 
 const GenericButton = (props: ButtonProps) => {
   const {
+    id,
     children,
     customClasses,
     disabled,
@@ -22,8 +24,10 @@ const GenericButton = (props: ButtonProps) => {
     onClick,
     style,
   } = props;
+
   return (
     <button
+      id={id}
       type="button"
       className={`inline-flex items-center rounded-md border-0 border-transparent text-white bg-cyan-600 px-6 py-3 text-base font-medium shadow-sm hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 ${
         disabled ? "grayscale" : ""
