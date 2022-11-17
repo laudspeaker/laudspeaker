@@ -177,4 +177,3 @@ export class TestsService {
     await this.authService.verifyEmail(account, id);
   }
 }
-

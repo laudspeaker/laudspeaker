@@ -10,17 +10,11 @@ async function bootstrap() {
   const httpsOptions = {
     key:
       parseInt(process.env.PORT) == 443
-        ? readFileSync(
-            process.env.KEY_PATH,
-            'utf8'
-          )
+        ? readFileSync(process.env.KEY_PATH, 'utf8')
         : null,
     cert:
       parseInt(process.env.PORT) == 443
-        ? readFileSync(
-            process.env.CERT_PATH,
-            'utf8'
-          )
+        ? readFileSync(process.env.CERT_PATH, 'utf8')
         : null,
   };
   const app: NestExpressApplication = await NestFactory.create(AppModule, {
