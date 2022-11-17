@@ -266,7 +266,6 @@ export class CronService {
        */
 
       let batch = await this.sendgridEventRepository.find({
-        where: {},
         take: BATCH_SIZE,
       });
       while (batch.length > 0) {
@@ -279,7 +278,6 @@ export class CronService {
         }
 
         batch = await this.sendgridEventRepository.find({
-          where: {},
           take: BATCH_SIZE,
         });
       }
