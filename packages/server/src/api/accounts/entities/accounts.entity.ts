@@ -117,4 +117,7 @@ export class Account extends BaseEntity {
 
   @Column({ type: 'varchar', nullable: true })
   public sendgridApiKey?: string;
+
+  @Column({ type: 'varchar', nullable: true })
+  public sendgridFromEmail?: string;
 }

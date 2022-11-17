@@ -115,4 +115,8 @@ export class UpdateAccountDto {
   @IsString()
   @IsOptional()
   public sendgridApiKey: string;
+
+  @IsString()
+  @IsOptional()
+  public sendgridFromEmail: string;
 }

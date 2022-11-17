@@ -39,7 +39,17 @@ export class EmailProcessor {
     try {
       let msg: any;
       switch (job.data.eventProvider) {
+        case 'sendgrid':
+          this.sgMailService.setApiKey(process.env.SENDGRID_API_KEY);
+          msg = await this.sgMailService.send({
+            from: job.data.from,
+            to: job.data.to,
+            subject: subjectWithInsertedTags,
+            html: textWithInsertedTags,
+          });
+          break;
         case 'mailgun':
+        default:
           msg = await mg.messages.create(job.data.domain, {
             from: `${job.data.from} <${job.data.email}@${job.data.domain}>`,
             to: job.data.to,
@@ -48,21 +58,6 @@ export class EmailProcessor {
             'v:audienceId': job.data.audienceId,
             'v:customerId': job.data.customerId,
           });
-          break;
-        case 'sendgrid':
-          this.sgMailService.setApiKey(process.env.SENDGRID_API_KEY);
-          msg = await this.sgMailService.send({
-            from: `${job.data.from} <${job.data.email}@${job.data.domain}>`,
-            to: job.data.to,
-            subject: subjectWithInsertedTags,
-            html: textWithInsertedTags,
-            headers: {
-              'v:audienceId': job.data.audienceId,
-              'v:customerId': job.data.customerId,
-            },
-          });
-          break;
-        default:
           break;
       }
 
