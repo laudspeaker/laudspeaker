@@ -33,6 +33,7 @@ interface IntegrationsData {
   posthogHostUrl: string;
   posthogSmsKey: string;
   posthogEmailKey: string;
+  sendgridApiKey: string;
 }
 
 export default function OnboardingBeta() {
@@ -51,6 +52,7 @@ export default function OnboardingBeta() {
     posthogHostUrl: "app.posthog.com",
     posthogSmsKey: "",
     posthogEmailKey: "",
+    sendgridApiKey: "",
   });
   const dispatch = useDispatch();
   const [slackInstallUrl, setSlackInstallUrl] = useState<string>("");
@@ -98,6 +100,7 @@ export default function OnboardingBeta() {
         testSendingName,
         sendingDomain,
         verified: verifiedFromRequest,
+        sendgridApiKey,
       } = data;
       setIntegrationsData({
         ...integrationsData,
@@ -112,6 +115,7 @@ export default function OnboardingBeta() {
         testSendingEmail,
         testSendingName,
         slackId: slackTeamId?.[0],
+        sendgridApiKey,
       });
       setPrivateApiKey(mailgunAPIKey);
       setDomainName(sendingDomain);
@@ -288,6 +292,22 @@ export default function OnboardingBeta() {
             endText={domainName ? "@laudspeaker-test.com" : ""}
           />
         </div>
+      </>
+    ),
+    sendgrid: (
+      <>
+        <Input
+          isRequired
+          value={integrationsData.sendgridApiKey}
+          label="Private sendgrid API Key"
+          placeholder={"****  "}
+          name="sendgridApiKey"
+          id="sendgridApiKey"
+          type="password"
+          labelClass="!text-[16px]"
+          onChange={handleIntegrationsDataChange}
+          onBlur={callDomains}
+        />
       </>
     ),
   };

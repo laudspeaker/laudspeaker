@@ -7,7 +7,6 @@ import {
   IsFQDN,
   IsOptional,
   IsBoolean,
-  isArray,
   IsArray,
 } from 'class-validator';
 
@@ -112,4 +111,8 @@ export class UpdateAccountDto {
   @IsString()
   @IsOptional()
   public testSendingEmail: string;
+
+  @IsString()
+  @IsOptional()
+  public sendgridApiKey: string;
 }
