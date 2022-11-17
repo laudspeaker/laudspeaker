@@ -40,12 +40,21 @@ export class EmailProcessor {
       let msg: any;
       switch (job.data.eventProvider) {
         case 'sendgrid':
-          this.sgMailService.setApiKey(process.env.SENDGRID_API_KEY);
+          this.sgMailService.setApiKey(job.data.key);
           msg = await this.sgMailService.send({
             from: job.data.from,
             to: job.data.to,
             subject: subjectWithInsertedTags,
             html: textWithInsertedTags,
+            personalizations: [
+              {
+                to: job.data.to,
+                customArgs: {
+                  audienceId: job.data.audienceId,
+                  customerId: job.data.customerId,
+                },
+              },
+            ],
           });
           break;
         case 'mailgun':

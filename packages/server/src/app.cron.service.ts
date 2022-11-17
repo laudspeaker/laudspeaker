@@ -19,6 +19,7 @@ import { Account } from './api/accounts/entities/accounts.entity';
 import { IsNull, Not, Repository } from 'typeorm';
 import { createClient } from '@clickhouse/client';
 import { Verification } from './api/auth/entities/verification.entity';
+import { SendgridEvent } from './api/webhooks/entities/sendgrid-event.entity';
 
 const client = createClient({
   host: process.env.CLICKHOUSE_HOST ?? 'http://localhost:8123',
@@ -28,7 +29,7 @@ const client = createClient({
 
 const createTableQuery = `
 CREATE TABLE IF NOT EXISTS message_status
-(audienceId UUID, customerId String, messageId String, event String, createdAt DateTime) 
+(audienceId UUID, customerId String, messageId String, event String, eventProvider String, createdAt DateTime) 
 ENGINE = ReplacingMergeTree
 PRIMARY KEY (audienceId, customerId, messageId, event)`;
 
@@ -37,6 +38,7 @@ interface ClickHouseMessage {
   customerId: string;
   messageId: string;
   event: string;
+  eventProvider: 'mailgun' | 'sendgrid';
   createdAt: string;
 }
 
@@ -73,7 +75,9 @@ export class CronService {
     @InjectRepository(Account)
     private accountRepository: Repository<Account>,
     @InjectRepository(Verification)
-    private verificationRepository: Repository<Verification>
+    private verificationRepository: Repository<Verification>,
+    @InjectRepository(SendgridEvent)
+    private sendgridEventRepository: Repository<SendgridEvent>
   ) {
     createTable();
   }
@@ -154,7 +158,7 @@ export class CronService {
     }
   }
 
-  @Cron(CronExpression.EVERY_HOUR)
+  @Cron(CronExpression.EVERY_10_SECONDS)
   async handleClickHouseCron() {
     try {
       const response = await getLastFetchedEventTimestamp();
@@ -208,6 +212,7 @@ export class CronService {
                 audienceId,
                 customerId,
                 event,
+                eventProvider: 'mailgun',
                 messageId,
                 createdAt,
               });
@@ -237,6 +242,7 @@ export class CronService {
                   audienceId,
                   customerId,
                   event,
+                  eventProvider: 'mailgun',
                   messageId,
                   createdAt,
                 });
@@ -253,6 +259,29 @@ export class CronService {
           }
         }
         offset += BATCH_SIZE;
+      }
+
+      /**
+       * sendgrid
+       */
+
+      let batch = await this.sendgridEventRepository.find({
+        where: {},
+        take: BATCH_SIZE,
+      });
+      while (batch.length > 0) {
+        await insertMessages(
+          batch.map((item) => ({ ...item, eventProvider: 'sendgrid' }))
+        );
+
+        for (const item of batch) {
+          await this.sendgridEventRepository.delete(item);
+        }
+
+        batch = await this.sendgridEventRepository.find({
+          where: {},
+          take: BATCH_SIZE,
+        });
       }
     } catch (e) {
       this.logger.error('Cron error: ' + e);
