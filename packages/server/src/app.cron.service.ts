@@ -158,7 +158,7 @@ export class CronService {
     }
   }
 
-  @Cron(CronExpression.EVERY_10_SECONDS)
+  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
   async handleClickHouseCron() {
     try {
       const response = await getLastFetchedEventTimestamp();

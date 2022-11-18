@@ -8,12 +8,12 @@ export class WebhooksController {
 
   @Post('sendgrid')
   public processSendgridData(@Req() req: Request, @Body() data: any) {
-    const publicKey = req.headers[
+    const signature = req.headers[
       'x-twilio-email-event-webhook-signature'
     ] as string;
     const timestamp = req.headers[
       'x-twilio-email-event-webhook-timestamp'
     ] as string;
-    this.webhooksService.processSendgridData(publicKey, timestamp, data);
+    this.webhooksService.processSendgridData(signature, timestamp, data);
   }
 }
