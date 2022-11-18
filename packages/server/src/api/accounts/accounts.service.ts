@@ -1,5 +1,11 @@
 import { BaseJwtHelper } from '../../common/helper/base-jwt.helper';
-import { HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  HttpException,
+  HttpStatus,
+  Inject,
+  Injectable,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UpdateAccountDto } from './dto/update-account.dto';
@@ -7,9 +13,12 @@ import { Account } from './entities/accounts.entity';
 import * as bcrypt from 'bcryptjs';
 import { CustomersService } from '../customers/customers.service';
 import { AuthService } from '../auth/auth.service';
+import { MailService } from '@sendgrid/mail';
 
 @Injectable()
 export class AccountsService extends BaseJwtHelper {
+  private sgMailService = new MailService();
+
   constructor(
     @InjectRepository(Account)
     public accountsRepository: Repository<Account>,
@@ -38,6 +47,24 @@ export class AccountsService extends BaseJwtHelper {
     const oldUser = await this.findOne(user);
     // if user change password
     let password = oldUser.password;
+
+    if (
+      oldUser.sendgridFromEmail !== updateUserDto.sendgridFromEmail ||
+      oldUser.sendgridApiKey !== updateUserDto.sendgridApiKey
+    ) {
+      try {
+        this.sgMailService.setApiKey(updateUserDto.sendgridApiKey);
+        await this.sgMailService.send({
+          from: updateUserDto.sendgridFromEmail,
+          to: updateUserDto.sendgridFromEmail,
+          html: '<h1>If you see this message, you successfully connected your sendgrid email to laudspeaker</h1>',
+        });
+      } catch (e) {
+        throw new BadRequestException(
+          'There is something wrong with your sendgrid account. Check if your email is verified'
+        );
+      }
+    }
 
     if (updateUserDto.newPassword) {
       const isPasswordValid: boolean = bcrypt.compareSync(
