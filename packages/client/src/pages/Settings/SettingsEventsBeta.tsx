@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { ExclamationCircleIcon } from "@heroicons/react/20/solid";
 import { RadioGroup } from "@headlessui/react";
 import ApiService from "services/api.service";
-import { Input } from "components/Elements";
+import { GenericButton, Input } from "components/Elements";
 import { startPosthogImport } from "reducers/settings";
 import { toast } from "react-toastify";
 
@@ -72,9 +72,9 @@ export default function SettingsEventsBeta() {
         posthogEmailKey,
       } = data;
       const newData = {
-        posthogApiKey: posthogApiKey?.[0] || "",
-        posthogProjectId: posthogProjectId?.[0] || "",
-        posthogHostUrl: posthogHostUrl?.[0] || "",
+        posthogApiKey: posthogApiKey || "",
+        posthogProjectId: posthogProjectId || "",
+        posthogHostUrl: posthogHostUrl || "",
         posthogSmsKey: posthogSmsKey?.[0] || "",
         posthogEmailKey: posthogEmailKey?.[0] || "",
       };
@@ -93,6 +93,14 @@ export default function SettingsEventsBeta() {
   };
 
   const handleSync = async () => {
+    await ApiService.patch({
+      url: "/accounts",
+      options: {
+        posthogApiKey: formData.posthogApiKey || "",
+        posthogProjectId: formData.posthogProjectId || "",
+        posthogHostUrl: formData.posthogHostUrl || "",
+      },
+    });
     await startPosthogImport();
   };
 
@@ -340,13 +348,7 @@ export default function SettingsEventsBeta() {
             </div>
             <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-10 sm:py-5 sm:pt-5">
               <span className="flex-grow">
-                <button
-                  type="button"
-                  className="inline-flex items-center rounded-md border border-transparent px-6 py-3 text-base text-white shadow-sm hover:bg-cyan-500 bg-white font-medium focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2"
-                  onClick={handleSubmit}
-                >
-                  Save
-                </button>
+                <GenericButton onClick={handleSubmit}>Save</GenericButton>
               </span>
             </div>
           </dl>

@@ -101,17 +101,17 @@ export default function OnboardingBeta() {
       } = data;
       setIntegrationsData({
         ...integrationsData,
-        posthogApiKey,
-        posthogProjectId,
-        posthogHostUrl,
-        posthogSmsKey,
-        posthogEmailKey,
-        sendingName,
-        sendingEmail,
-        emailProvider,
-        testSendingEmail,
-        testSendingName,
-        slackId: slackTeamId?.[0],
+        posthogApiKey: posthogApiKey || integrationsData.posthogApiKey,
+        posthogProjectId: posthogProjectId || integrationsData.posthogProjectId,
+        posthogHostUrl: posthogHostUrl || integrationsData.posthogHostUrl,
+        posthogSmsKey: posthogSmsKey || integrationsData.posthogSmsKey,
+        posthogEmailKey: posthogEmailKey || integrationsData.posthogEmailKey,
+        sendingName: sendingName || integrationsData.sendingName,
+        sendingEmail: sendingEmail || integrationsData.sendingEmail,
+        emailProvider: emailProvider || integrationsData.emailProvider,
+        testSendingEmail: testSendingEmail || integrationsData.testSendingEmail,
+        testSendingName: testSendingName || integrationsData.testSendingName,
+        slackId: slackTeamId?.[0] || integrationsData.slackId,
       });
       setPrivateApiKey(mailgunAPIKey);
       setDomainName(sendingDomain);
@@ -127,11 +127,16 @@ export default function OnboardingBeta() {
   };
 
   const handleSubmit = async () => {
+    const objToSend: Record<string, any> = {};
+    for (const key of Object.keys(integrationsData)) {
+      if ((integrationsData as Record<string, any>)[key])
+        objToSend[key] = (integrationsData as Record<string, any>)[key];
+    }
     try {
       await ApiService.patch({
         url: "/accounts",
         options: {
-          ...integrationsData,
+          ...objToSend,
           sendingDomain: domainName,
           mailgunAPIKey: privateApiKey,
         },

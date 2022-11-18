@@ -8,6 +8,7 @@ import {
 import { useTypedSelector } from "hooks/useTypeSelector";
 import { useDispatch } from "react-redux";
 import { toggleNavbar } from "reducers/settings";
+import { Link } from "react-router-dom";
 
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(" ");
@@ -105,15 +106,16 @@ const Header = () => {
                 </Menu.Item>
                 <Menu.Item>
                   {({ active }) => (
-                    <a
-                      href="#"
-                      className={classNames(
-                        active ? "bg-gray-100" : "",
-                        "block px-4 py-2 text-sm text-gray-700"
-                      )}
-                    >
-                      Settings
-                    </a>
+                    <Link to="/settings">
+                      <div
+                        className={classNames(
+                          active ? "bg-gray-100" : "",
+                          "block px-4 py-2 text-sm text-gray-700"
+                        )}
+                      >
+                        Settings
+                      </div>
+                    </Link>
                   )}
                 </Menu.Item>
                 <Menu.Item>

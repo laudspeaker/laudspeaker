@@ -87,6 +87,7 @@ const EmailHeader = (props: IEmailHeaderProps) => {
             customClasses="!ml-[10px]"
             onClick={onSave}
             style={{
+              whiteSpace: "nowrap",
               maxWidth: "158px",
               maxHeight: "48px",
             }}
