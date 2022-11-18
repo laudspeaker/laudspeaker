@@ -14,10 +14,12 @@ import * as bcrypt from 'bcryptjs';
 import { CustomersService } from '../customers/customers.service';
 import { AuthService } from '../auth/auth.service';
 import { MailService } from '@sendgrid/mail';
+import { Client } from '@sendgrid/client';
 
 @Injectable()
 export class AccountsService extends BaseJwtHelper {
   private sgMailService = new MailService();
+  private sgClient = new Client();
 
   constructor(
     @InjectRepository(Account)
@@ -60,6 +62,8 @@ export class AccountsService extends BaseJwtHelper {
           to: oldUser.email,
           html: '<h1>If you see this message, you successfully connected your sendgrid email to laudspeaker</h1>',
         });
+
+        this.sgClient.setApiKey(process.env.SENDGRID_API_KEY);
       } catch (e) {
         throw new BadRequestException(
           'There is something wrong with your sendgrid account. Check if your email is verified'
