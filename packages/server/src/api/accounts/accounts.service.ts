@@ -55,8 +55,9 @@ export class AccountsService extends BaseJwtHelper {
       try {
         this.sgMailService.setApiKey(updateUserDto.sendgridApiKey);
         await this.sgMailService.send({
+          subject: 'Sendgrid connection to Laudspeaker',
           from: updateUserDto.sendgridFromEmail,
-          to: updateUserDto.sendgridFromEmail,
+          to: oldUser.email,
           html: '<h1>If you see this message, you successfully connected your sendgrid email to laudspeaker</h1>',
         });
       } catch (e) {
