@@ -33,7 +33,7 @@ export type Correlation = {
 };
 
 const eventsMap = {
-  sent: 'accepted',
+  sent: 'delivered',
   clicked: 'clicked',
 };
 

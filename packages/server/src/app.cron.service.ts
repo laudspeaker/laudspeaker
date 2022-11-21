@@ -82,7 +82,7 @@ export class CronService {
     createTable();
   }
 
-  @Cron(CronExpression.EVERY_MINUTE)
+  @Cron(CronExpression.EVERY_HOUR)
   async handleCustomerKeysCron() {
     try {
       this.logger.log('Cron customer keys job started');

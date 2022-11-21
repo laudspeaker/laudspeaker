@@ -50,6 +50,7 @@ export class AccountsService extends BaseJwtHelper {
     // if user change password
     let password = oldUser.password;
 
+    let verificationKey = '';
     if (
       oldUser.sendgridFromEmail !== updateUserDto.sendgridFromEmail ||
       oldUser.sendgridApiKey !== updateUserDto.sendgridApiKey
@@ -63,7 +64,34 @@ export class AccountsService extends BaseJwtHelper {
           html: '<h1>If you see this message, you successfully connected your sendgrid email to laudspeaker</h1>',
         });
 
-        this.sgClient.setApiKey(process.env.SENDGRID_API_KEY);
+        this.sgClient.setApiKey(updateUserDto.sendgridApiKey);
+        await this.sgClient.request({
+          url: '/v3/user/webhooks/event/settings',
+          method: 'PATCH',
+          body: {
+            enabled: true,
+            url: process.env.SENDGRID_WEBHOOK_ENDPOINT,
+            group_resubscribe: false,
+            delivered: true,
+            group_unsubscribe: false,
+            spam_report: false,
+            bounce: false,
+            deferred: false,
+            unsubscribe: false,
+            processed: false,
+            open: true,
+            click: true,
+            dropped: false,
+          },
+        });
+        const [_, body] = await this.sgClient.request({
+          url: `/v3/user/webhooks/event/settings/signed`,
+          method: 'PATCH',
+          body: {
+            enabled: true,
+          },
+        });
+        verificationKey = body.public_key;
       } catch (e) {
         throw new BadRequestException(
           'There is something wrong with your sendgrid account. Check if your email is verified'
@@ -136,6 +164,7 @@ export class AccountsService extends BaseJwtHelper {
       ...updateUserDto,
       password,
       verified,
+      sendgridVerificationKey: verificationKey,
     });
 
     if (needEmailUpdate)

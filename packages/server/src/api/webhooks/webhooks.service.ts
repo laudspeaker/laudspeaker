@@ -3,6 +3,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { SendgridEvent } from './entities/sendgrid-event.entity';
 import { PublicKey, Signature, Ecdsa } from 'starkbank-ecdsa';
+import { Audience } from '../audiences/entities/audience.entity';
+import { Account } from '../accounts/entities/accounts.entity';
 
 const eventsMap = {
   click: 'clicked',
@@ -13,7 +15,11 @@ const eventsMap = {
 export class WebhooksService {
   constructor(
     @InjectRepository(SendgridEvent)
-    private sendgridEventRepository: Repository<SendgridEvent>
+    private sendgridEventRepository: Repository<SendgridEvent>,
+    @InjectRepository(Audience)
+    private audienceRepository: Repository<Audience>,
+    @InjectRepository(Account)
+    private accountRepository: Repository<Account>
   ) {}
 
   public async processSendgridData(
@@ -21,9 +27,20 @@ export class WebhooksService {
     timestamp: string,
     data: any[]
   ) {
-    const publicKey = PublicKey.fromPem(
-      process.env.SENDGRID_WEBHOOK_VERIFICATION_KEY
-    );
+    const audienceId = data?.[0]?.audienceId;
+    if (!audienceId) return;
+
+    const { ownerId: accountId } = await this.audienceRepository.findOneBy({
+      id: audienceId,
+    });
+
+    const { sendgridVerificationKey } = await this.accountRepository.findOneBy({
+      id: accountId,
+    });
+
+    if (!sendgridVerificationKey) return;
+
+    const publicKey = PublicKey.fromPem(sendgridVerificationKey);
 
     const decodedSignature = Signature.fromBase64(signature);
     const timestampPayload = timestamp + JSON.stringify(data) + '\r\n';
