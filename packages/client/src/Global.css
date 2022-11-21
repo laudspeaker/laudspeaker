@@ -51,3 +51,8 @@ body,
 .hover-opacity:hover {
   opacity: 0.7;
 }
+
+.gjs-layer-title-c {
+  min-height: 30px;
+  font-size: 12px;
+}
