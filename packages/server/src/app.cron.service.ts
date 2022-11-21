@@ -16,7 +16,7 @@ import { isDateString, isEmail } from 'class-validator';
 import Mailgun from 'mailgun.js';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Account } from './api/accounts/entities/accounts.entity';
-import { IsNull, MoreThan, Not, Repository } from 'typeorm';
+import { IsNull, Not, Repository } from 'typeorm';
 import { createClient } from '@clickhouse/client';
 import { Verification } from './api/auth/entities/verification.entity';
 
@@ -75,7 +75,13 @@ export class CronService {
     @InjectRepository(Verification)
     private verificationRepository: Repository<Verification>
   ) {
-    createTable();
+    (async () => {
+      try {
+        await createTable();
+      } catch (e) {
+        console.error(e);
+      }
+    })();
   }
 
   @Cron(CronExpression.EVERY_MINUTE)
