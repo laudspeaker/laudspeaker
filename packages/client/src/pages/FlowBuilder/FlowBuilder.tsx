@@ -41,6 +41,11 @@ import Modal from "../../components/Elements/Modal";
 import Header from "components/Header";
 import Tooltip from "components/Elements/Tooltip";
 import { Helmet } from "react-helmet";
+import { Grid } from "@mui/material";
+import ToggleSwitch from "components/Elements/ToggleSwitch";
+
+const segmentTypeStyle =
+  "border-[1px] border-[#D1D5DB] rouded-[6px] shadow-[0px_1px_2px_rgba(0,0,0,0.05)] w-[234px] mt-[20px] p-[15px]";
 
 enum TriggerType {
   event,
@@ -531,6 +536,13 @@ const Flow = () => {
     setAudienceEditModalOpen(false);
   };
 
+  const [segmentForm, setSegmentForm] = useState<INameSegmentForm>({
+    isDynamic: true,
+  });
+  const onToggleChange = () => {
+    setSegmentForm({ ...segmentForm, isDynamic: !segmentForm.isDynamic });
+  };
+
   let startDisabledReason = "";
 
   if (!nodes.some((node) => node.data.primary))
@@ -561,8 +573,35 @@ const Flow = () => {
         </script>
       </Helmet>
       <div className="max-h-[calc(100vh-64px)] h-full lg:overflow-y-auto overflow-y-scroll flex">
-        <div className="flex">
+        <div className="flex flex-col">
           <SideDrawer selectedNode={selectedNode} onClick={performAction} />
+          <div>
+            <h3 className="pt-[20px]">Choose a segment type</h3>
+            <div className={segmentTypeStyle}>
+              <Grid
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <p className="font-semibold text-[#111827]">Dynamic</p>
+                <ToggleSwitch
+                  checked={segmentForm.isDynamic}
+                  onChange={onToggleChange}
+                />
+              </Grid>
+              <Tooltip title="dynamic">
+                {/* <IconButton> */}
+                <div className="flex items-end cursor-default mt-[8px]">
+                  <img src={InfoIcon} width="20px" />
+                  <p className="text-[#4FA198] text-[12px] pl-[5px]">
+                    What is a dynamic segment?
+                  </p>
+                </div>
+              </Tooltip>
+            </div>
+          </div>
         </div>
       </div>
       <ReactFlow

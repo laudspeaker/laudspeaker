@@ -75,7 +75,13 @@ export class CronService {
     @InjectRepository(Verification)
     private verificationRepository: Repository<Verification>
   ) {
-    createTable();
+    (async () => {
+      try {
+        await createTable();
+      } catch (e) {
+        console.error(e);
+      }
+    })();
   }
 
   @Cron(CronExpression.EVERY_MINUTE)

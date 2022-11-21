@@ -148,5 +148,5 @@ export default function ResponsiveDrawer(props: Props) {
     );
   };
 
-  return <div>{drawer()}</div>;
+  return <div className="h-full">{drawer()}</div>;
 }
