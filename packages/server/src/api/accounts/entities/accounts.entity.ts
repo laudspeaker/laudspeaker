@@ -114,4 +114,13 @@ export class Account extends BaseEntity {
 
   @Column({ type: 'int', default: 3 })
   public freeEmailsCount: number;
+
+  @Column({ type: 'varchar', nullable: true })
+  public sendgridApiKey?: string;
+
+  @Column({ type: 'varchar', nullable: true })
+  public sendgridFromEmail?: string;
+
+  @Column({ type: 'varchar', nullable: true })
+  public sendgridVerificationKey?: string;
 }

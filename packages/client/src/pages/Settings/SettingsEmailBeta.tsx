@@ -14,7 +14,7 @@ const memoryOptions: Record<
 > = {
   free3: { id: "free3", name: "Free3", inStock: true },
   mailgun: { id: "mailgun", name: "Mailgun", inStock: true },
-  sendgrid: { id: "sendgrid", name: "Sendgrid", inStock: false },
+  sendgrid: { id: "sendgrid", name: "Sendgrid", inStock: true },
   mailchimp: { id: "mailchimp", name: "Mailchimp", inStock: false },
   smtp: { id: "smtp", name: "SMTP", inStock: false },
 };
@@ -35,6 +35,8 @@ export default function SettingsEmailBeta() {
     sendingEmail: "",
     testSendingName: "",
     testSendingEmail: "",
+    sendgridApiKey: "",
+    sendgridFromEmail: "",
   });
 
   const [mailgunErrors, setMailgunErrors] = useState<{
@@ -49,6 +51,8 @@ export default function SettingsEmailBeta() {
   const [free3Errors, setFree3Errors] = useState<{ [key: string]: string[] }>({
     testSendingName: [],
     testSendingEmail: [],
+    sendgridApiKey: [],
+    sendgridFromEmail: [],
   });
 
   const [possibleDomains, setPossibleDomains] = useState<string[]>([]);
@@ -71,6 +75,8 @@ export default function SettingsEmailBeta() {
     sendingEmail: false,
     testSendingName: false,
     testSendingEmail: false,
+    sendgridApiKey: false,
+    sendgridFromEmail: false,
   });
 
   useEffect(() => {
@@ -94,6 +100,8 @@ export default function SettingsEmailBeta() {
     const newFree3Errors: { [key: string]: string[] } = {
       testSendingName: [],
       testSendingEmail: [],
+      sendgridApiKey: [],
+      sendgridFromEmail: [],
     };
     switch (emailProvider) {
       case "mailgun":
@@ -148,6 +156,8 @@ export default function SettingsEmailBeta() {
         testSendingName,
         emailProvider: provider,
         verified: verifiedFromRequest,
+        sendgridApiKey,
+        sendgridFromEmail,
       } = data;
       setFormData({
         mailgunAPIKey: mailgunAPIKey || "",
@@ -156,6 +166,8 @@ export default function SettingsEmailBeta() {
         sendingEmail: sendingEmail || "",
         testSendingEmail: testSendingEmail || "",
         testSendingName: testSendingName || "",
+        sendgridApiKey: sendgridApiKey || "",
+        sendgridFromEmail: sendgridFromEmail || "",
       });
       setEmailProvider(provider);
       setVerified(verifiedFromRequest);
@@ -480,6 +492,92 @@ export default function SettingsEmailBeta() {
             </div>
             {showErrors.testSendingEmail &&
               free3Errors.testSendingEmail.map((item) => (
+                <p
+                  className="mt-2 text-sm text-red-600"
+                  id="email-error"
+                  key={item}
+                >
+                  {item}
+                </p>
+              ))}
+          </dd>
+        </div>
+      </>
+    ),
+    sendgrid: (
+      <>
+        <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:py-5">
+          <dt className="text-sm font-medium text-gray-500">
+            Sendgrid Api key
+          </dt>
+          <dd>
+            <div className="relative rounded-md">
+              <Input
+                type="password"
+                value={formData.sendgridApiKey}
+                onChange={handleFormDataChange}
+                name="sendgridApiKey"
+                id="sendgridApiKey"
+                className={`rounded-md shadow-sm sm:text-sm ${
+                  showErrors.sendgridApiKey && errors.sendgridApiKey.length > 0
+                    ? "focus:!border-red-500 !border-red-300 shadow-sm focus:!ring-red-500"
+                    : "border-gray-300 focus:border-cyan-500 focus:ring-cyan-500"
+                }`}
+                placeholder="****"
+                onBlur={handleBlur}
+              />
+              {showErrors.sendgridApiKey && errors.sendgridApiKey.length > 0 && (
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center">
+                  <ExclamationCircleIcon
+                    className="h-5 w-5 text-red-500"
+                    aria-hidden="true"
+                  />
+                </div>
+              )}
+            </div>
+            {showErrors.sendgridApiKey &&
+              errors.sendgridApiKey.map((item) => (
+                <p
+                  className="mt-2 text-sm text-red-600"
+                  id="email-error"
+                  key={item}
+                >
+                  {item}
+                </p>
+              ))}
+          </dd>
+        </div>
+        <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:py-5">
+          <dt className="text-sm font-medium text-gray-500">Sendgrid email</dt>
+          <dd>
+            <div className="relative mt-1 rounded-md shadow-sm">
+              <Input
+                type="text"
+                value={formData.sendgridFromEmail}
+                onChange={handleFormDataChange}
+                name="sendgridFromEmail"
+                id="sendgridFromEmail"
+                className={`rounded-md shadow-sm sm:text-sm ${
+                  showErrors.sendgridFromEmail &&
+                  errors.sendgridFromEmail.length > 0
+                    ? "focus:!border-red-500 !border-red-300 shadow-sm focus:!ring-red-500"
+                    : "border-gray-300 focus:border-cyan-500 focus:ring-cyan-500"
+                }`}
+                placeholder="your.email@sendgrid.com"
+                onBlur={handleBlur}
+              />
+              {showErrors.sendgridFromEmail &&
+                errors.sendgridFromEmail.length > 0 && (
+                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center">
+                    <ExclamationCircleIcon
+                      className="h-5 w-5 text-red-500"
+                      aria-hidden="true"
+                    />
+                  </div>
+                )}
+            </div>
+            {showErrors.sendgridFromEmail &&
+              errors.sendgridFromEmail.map((item) => (
                 <p
                   className="mt-2 text-sm text-red-600"
                   id="email-error"

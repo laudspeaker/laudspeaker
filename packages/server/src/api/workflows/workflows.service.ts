@@ -92,7 +92,7 @@ export class WorkflowsService {
   private async getStats(audienceId?: string) {
     if (!audienceId) return {};
     const sentResponse = await this.clickhouseClient.query({
-      query: `SELECT COUNT(*) FROM message_status WHERE event = 'accepted' AND audienceId = {audienceId:UUID}`,
+      query: `SELECT COUNT(*) FROM message_status WHERE event = 'delivered' AND audienceId = {audienceId:UUID}`,
       query_params: { audienceId },
     });
     const sentData = (await sentResponse.json<any>())?.data;
