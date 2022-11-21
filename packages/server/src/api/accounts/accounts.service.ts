@@ -52,8 +52,10 @@ export class AccountsService extends BaseJwtHelper {
 
     let verificationKey = '';
     if (
-      oldUser.sendgridFromEmail !== updateUserDto.sendgridFromEmail ||
-      oldUser.sendgridApiKey !== updateUserDto.sendgridApiKey
+      updateUserDto.sendgridFromEmail &&
+      updateUserDto.sendgridApiKey &&
+      (oldUser.sendgridFromEmail !== updateUserDto.sendgridFromEmail ||
+        oldUser.sendgridApiKey !== updateUserDto.sendgridApiKey)
     ) {
       try {
         this.sgMailService.setApiKey(updateUserDto.sendgridApiKey);
