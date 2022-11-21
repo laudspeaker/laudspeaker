@@ -16,9 +16,10 @@ import { isDateString, isEmail } from 'class-validator';
 import Mailgun from 'mailgun.js';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Account } from './api/accounts/entities/accounts.entity';
-import { IsNull, MoreThan, Not, Repository } from 'typeorm';
+import { IsNull, Not, Repository } from 'typeorm';
 import { createClient } from '@clickhouse/client';
 import { Verification } from './api/auth/entities/verification.entity';
+import { SendgridEvent } from './api/webhooks/entities/sendgrid-event.entity';
 
 const client = createClient({
   host: process.env.CLICKHOUSE_HOST ?? 'http://localhost:8123',
@@ -28,7 +29,7 @@ const client = createClient({
 
 const createTableQuery = `
 CREATE TABLE IF NOT EXISTS message_status
-(audienceId UUID, customerId String, messageId String, event String, createdAt DateTime) 
+(audienceId UUID, customerId String, messageId String, event String, eventProvider String, createdAt DateTime) 
 ENGINE = ReplacingMergeTree
 PRIMARY KEY (audienceId, customerId, messageId, event)`;
 
@@ -37,6 +38,7 @@ interface ClickHouseMessage {
   customerId: string;
   messageId: string;
   event: string;
+  eventProvider: 'mailgun' | 'sendgrid';
   createdAt: string;
 }
 
@@ -73,154 +75,132 @@ export class CronService {
     @InjectRepository(Account)
     private accountRepository: Repository<Account>,
     @InjectRepository(Verification)
-    private verificationRepository: Repository<Verification>
+    private verificationRepository: Repository<Verification>,
+    @InjectRepository(SendgridEvent)
+    private sendgridEventRepository: Repository<SendgridEvent>
   ) {
     createTable();
   }
 
-  @Cron(CronExpression.EVERY_MINUTE)
+  @Cron(CronExpression.EVERY_HOUR)
   async handleCustomerKeysCron() {
-    this.logger.log('Cron customer keys job started');
-    let current = 0;
-    const documentsCount = await this.customerModel
-      .estimatedDocumentCount()
-      .exec();
-
-    const keys: Record<string, any[]> = {};
-
-    while (current < documentsCount) {
-      const batch = await this.customerModel
-        .find()
-        .skip(current)
-        .limit(BATCH_SIZE)
+    try {
+      this.logger.log('Cron customer keys job started');
+      let current = 0;
+      const documentsCount = await this.customerModel
+        .estimatedDocumentCount()
         .exec();
 
-      batch.forEach((customer) => {
-        const obj = customer.toObject();
-        for (const key of Object.keys(obj)) {
-          if (KEYS_TO_SKIP.includes(key)) continue;
+      const keys: Record<string, any[]> = {};
 
-          if (keys[key]) {
-            keys[key].push(obj[key]);
-            continue;
+      while (current < documentsCount) {
+        const batch = await this.customerModel
+          .find()
+          .skip(current)
+          .limit(BATCH_SIZE)
+          .exec();
+
+        batch.forEach((customer) => {
+          const obj = customer.toObject();
+          for (const key of Object.keys(obj)) {
+            if (KEYS_TO_SKIP.includes(key)) continue;
+
+            if (keys[key]) {
+              keys[key].push(obj[key]);
+              continue;
+            }
+
+            keys[key] = [obj[key]];
           }
-
-          keys[key] = [obj[key]];
-        }
-      });
-      current += BATCH_SIZE;
-    }
-
-    for (const key of Object.keys(keys)) {
-      const validItem = keys[key].find(
-        (item) => item !== '' && item !== undefined && item !== null
-      );
-
-      if (validItem === '' || validItem === undefined || validItem === null)
-        continue;
-
-      const keyType = getType(validItem);
-      const isArray = keyType.isArray();
-      let type = isArray ? getType(validItem[0]).name : keyType.name;
-
-      if (type === 'String') {
-        if (isEmail(validItem)) type = 'Email';
-        if (isDateString(validItem)) type = 'Date';
+        });
+        current += BATCH_SIZE;
       }
 
-      await this.customerKeysModel
-        .updateOne(
-          { key },
-          {
-            $set: {
-              key,
-              type,
-              isArray,
-            },
-          },
-          { upsert: true }
-        )
-        .exec();
-    }
+      for (const key of Object.keys(keys)) {
+        const validItem = keys[key].find(
+          (item) => item !== '' && item !== undefined && item !== null
+        );
 
-    this.logger.log(
-      `Cron customer keys job finished, checked ${documentsCount} records, found ${
-        Object.keys(keys).length
-      } keys`
-    );
+        if (validItem === '' || validItem === undefined || validItem === null)
+          continue;
+
+        const keyType = getType(validItem);
+        const isArray = keyType.isArray();
+        let type = isArray ? getType(validItem[0]).name : keyType.name;
+
+        if (type === 'String') {
+          if (isEmail(validItem)) type = 'Email';
+          if (isDateString(validItem)) type = 'Date';
+        }
+
+        await this.customerKeysModel
+          .updateOne(
+            { key },
+            {
+              $set: {
+                key,
+                type,
+                isArray,
+              },
+            },
+            { upsert: true }
+          )
+          .exec();
+      }
+
+      this.logger.log(
+        `Cron customer keys job finished, checked ${documentsCount} records, found ${
+          Object.keys(keys).length
+        } keys`
+      );
+    } catch (e) {
+      this.logger.error('Cron error: ' + e);
+    }
   }
 
-  @Cron(CronExpression.EVERY_HOUR)
+  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
   async handleClickHouseCron() {
-    const response = await getLastFetchedEventTimestamp();
-    const data = (await response.json<any>())?.data;
-    const dateInDB = data?.[0]?.['max(createdAt)'];
-    const lastEventFetch =
-      new Date(
-        new Date(dateInDB).getTime() -
-          new Date().getTimezoneOffset() * 60 * 1000
-      ) || new Date('2000-10-10');
+    try {
+      const response = await getLastFetchedEventTimestamp();
+      const data = (await response.json<any>())?.data;
+      const dateInDB = data?.[0]?.['max(createdAt)'];
+      const lastEventFetch =
+        new Date(
+          new Date(dateInDB).getTime() -
+            new Date().getTimezoneOffset() * 60 * 1000
+        ) || new Date('2000-10-10');
 
-    const mailgun = new Mailgun(FormData);
+      const mailgun = new Mailgun(FormData);
 
-    const accountsNumber = await this.accountRepository.count({
-      where: {
-        mailgunAPIKey: Not(IsNull()),
-      },
-    });
-    let offset = 0;
-
-    while (offset < accountsNumber) {
-      const accountsBatch = await this.accountRepository.find({
-        take: BATCH_SIZE,
+      const accountsNumber = await this.accountRepository.count({
         where: {
           mailgunAPIKey: Not(IsNull()),
         },
-        skip: offset,
       });
+      let offset = 0;
 
-      for (const account of accountsBatch) {
-        try {
-          const mg = mailgun.client({
-            username: 'api',
-            key: account.mailgunAPIKey,
-          });
+      while (offset < accountsNumber) {
+        const accountsBatch = await this.accountRepository.find({
+          take: BATCH_SIZE,
+          where: {
+            mailgunAPIKey: Not(IsNull()),
+          },
+          skip: offset,
+        });
 
-          let events = await mg.events.get(account.sendingDomain, {
-            begin: new Date(lastEventFetch.getTime() + 1000).toUTCString(),
-            ascending: 'yes',
-          });
-
-          const batchToSave: ClickHouseMessage[] = [];
-
-          for (const item of events.items) {
-            const { audienceId, customerId } = item['user-variables'];
-            if (!audienceId || !customerId) continue;
-            const event = item.event;
-            const messageId = item.message.headers['message-id'];
-            const createdAt = new Date(item.timestamp * 1000).toUTCString();
-            batchToSave.push({
-              audienceId,
-              customerId,
-              event,
-              messageId,
-              createdAt,
+        for (const account of accountsBatch) {
+          try {
+            const mg = mailgun.client({
+              username: 'api',
+              key: account.mailgunAPIKey,
             });
-          }
 
-          let page = events.pages.next.number;
-          let lastEventTimestamp =
-            events.items[events.items.length - 1]?.timestamp * 1000;
-
-          while (
-            lastEventTimestamp &&
-            new Date(lastEventTimestamp) > lastEventFetch
-          ) {
-            events = await mg.events.get(account.sendingDomain, {
+            let events = await mg.events.get(account.sendingDomain, {
               begin: new Date(lastEventFetch.getTime() + 1000).toUTCString(),
               ascending: 'yes',
-              page,
             });
+
+            const batchToSave: ClickHouseMessage[] = [];
 
             for (const item of events.items) {
               const { audienceId, customerId } = item['user-variables'];
@@ -232,33 +212,92 @@ export class CronService {
                 audienceId,
                 customerId,
                 event,
+                eventProvider: 'mailgun',
                 messageId,
                 createdAt,
               });
             }
 
-            lastEventTimestamp =
+            let page = events.pages.next.number;
+            let lastEventTimestamp =
               events.items[events.items.length - 1]?.timestamp * 1000;
 
-            page = events.pages.next.number;
+            while (
+              lastEventTimestamp &&
+              new Date(lastEventTimestamp) > lastEventFetch
+            ) {
+              events = await mg.events.get(account.sendingDomain, {
+                begin: new Date(lastEventFetch.getTime() + 1000).toUTCString(),
+                ascending: 'yes',
+                page,
+              });
+
+              for (const item of events.items) {
+                const { audienceId, customerId } = item['user-variables'];
+                if (!audienceId || !customerId) continue;
+                const event = item.event;
+                const messageId = item.message.headers['message-id'];
+                const createdAt = new Date(item.timestamp * 1000).toUTCString();
+                batchToSave.push({
+                  audienceId,
+                  customerId,
+                  event,
+                  eventProvider: 'mailgun',
+                  messageId,
+                  createdAt,
+                });
+              }
+
+              lastEventTimestamp =
+                events.items[events.items.length - 1]?.timestamp * 1000;
+
+              page = events.pages.next.number;
+            }
+            await insertMessages(batchToSave);
+          } catch (e) {
+            this.logger.error(e);
           }
-          await insertMessages(batchToSave);
-        } catch (e) {
-          this.logger.error(e);
         }
+        offset += BATCH_SIZE;
       }
-      offset += BATCH_SIZE;
+
+      /**
+       * sendgrid
+       */
+
+      let batch = await this.sendgridEventRepository.find({
+        take: BATCH_SIZE,
+      });
+      while (batch.length > 0) {
+        await insertMessages(
+          batch.map((item) => ({ ...item, eventProvider: 'sendgrid' }))
+        );
+
+        for (const item of batch) {
+          await this.sendgridEventRepository.delete(item);
+        }
+
+        batch = await this.sendgridEventRepository.find({
+          take: BATCH_SIZE,
+        });
+      }
+    } catch (e) {
+      this.logger.error('Cron error: ' + e);
     }
   }
 
   @Cron(CronExpression.EVERY_HOUR)
   async handleVerificationCheck() {
-    await this.verificationRepository
-      .createQueryBuilder()
-      .where(
-        `verification.status = 'sent' AND now() > verification."createdAt"::TIMESTAMP + INTERVAL '1 HOUR'`
-      )
-      .update({ status: 'expired' })
-      .execute();
+    try {
+      await this.verificationRepository
+        .createQueryBuilder()
+        .where(
+          `verification.status = 'sent' AND now() > verification."createdAt"::TIMESTAMP + INTERVAL '1 HOUR'`
+        )
+        .update({ status: 'expired' })
+        .execute();
+    } catch (e) {
+      this.logger.error('Cron error: ' + e);
+    }
   }
 }

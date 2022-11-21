@@ -29,7 +29,7 @@ export const allEmailChannels = [
     title: "Sendgrid",
     subTitle: "for any campaign or newsletter",
     tooltip: "",
-    disabled: true,
+    disabled: false,
   },
   {
     id: "mailchimp",

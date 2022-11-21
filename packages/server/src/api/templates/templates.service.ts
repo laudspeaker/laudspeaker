@@ -92,8 +92,18 @@ export class TemplatesService {
     }
     const { _id, ownerId, audiences, ...tags } = customer.toObject();
 
-    const { testSendingEmail, testSendingName } = account;
-    let { mailgunAPIKey, sendingName, sendingDomain, sendingEmail } = account;
+    const {
+      mailgunAPIKey,
+      sendingName,
+      testSendingEmail,
+      testSendingName,
+      sendgridApiKey,
+      sendgridFromEmail,
+    } = account;
+    let { sendingDomain, sendingEmail } = account;
+
+    let key = mailgunAPIKey;
+    let from = sendingName;
 
     switch (template.type) {
       case 'email':
@@ -104,15 +114,21 @@ export class TemplatesService {
               HttpStatus.PAYMENT_REQUIRED
             );
           sendingDomain = process.env.MAILGUN_TEST_DOMAIN;
-          mailgunAPIKey = process.env.MAILGUN_API_KEY;
-          sendingName = testSendingName;
+          key = process.env.MAILGUN_API_KEY;
+          from = testSendingName;
           sendingEmail = testSendingEmail;
           account.freeEmailsCount--;
         }
 
+        if (account.emailProvider === 'sendgrid') {
+          key = sendgridApiKey;
+          from = sendgridFromEmail;
+        }
+
         job = await this.emailQueue.add('send', {
-          key: mailgunAPIKey,
-          from: sendingName,
+          eventProvider: account.emailProvider,
+          key,
+          from,
           domain: sendingDomain,
           email: sendingEmail,
           to: customer.phEmail ? customer.phEmail : customer.email,
