@@ -13,6 +13,7 @@ interface Props {
   window?: () => Window;
   selectedNode: string;
   onClick: (id: string) => void;
+  afterMenuContent?: React.ReactNode;
 }
 
 export default function ResponsiveDrawer(props: Props) {
@@ -143,6 +144,7 @@ export default function ResponsiveDrawer(props: Props) {
             {name}
           </div>
           {generateMenu(dataSubArray)}
+          {props.afterMenuContent}
         </div>
       </div>
     );

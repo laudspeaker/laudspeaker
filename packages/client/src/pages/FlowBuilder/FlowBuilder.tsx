@@ -23,6 +23,7 @@ import ReactFlow, {
 } from "react-flow-renderer";
 import { v4 as uuid } from "uuid";
 import { useParams, useNavigate } from "react-router-dom";
+import InfoIcon from "assets/images/info.svg";
 
 import * as _ from "lodash";
 
@@ -46,6 +47,10 @@ import ToggleSwitch from "components/Elements/ToggleSwitch";
 
 const segmentTypeStyle =
   "border-[1px] border-[#D1D5DB] rouded-[6px] shadow-[0px_1px_2px_rgba(0,0,0,0.05)] w-[234px] mt-[20px] p-[15px]";
+
+interface INameSegmentForm {
+  isDynamic: boolean;
+}
 
 enum TriggerType {
   event,
@@ -574,34 +579,40 @@ const Flow = () => {
       </Helmet>
       <div className="max-h-[calc(100vh-64px)] h-full lg:overflow-y-auto overflow-y-scroll flex">
         <div className="flex flex-col">
-          <SideDrawer selectedNode={selectedNode} onClick={performAction} />
-          <div>
-            <h3 className="pt-[20px]">Choose a segment type</h3>
-            <div className={segmentTypeStyle}>
-              <Grid
-                sx={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                }}
-              >
-                <p className="font-semibold text-[#111827]">Dynamic</p>
-                <ToggleSwitch
-                  checked={segmentForm.isDynamic}
-                  onChange={onToggleChange}
-                />
-              </Grid>
-              <Tooltip title="dynamic">
-                {/* <IconButton> */}
-                <div className="flex items-end cursor-default mt-[8px]">
-                  <img src={InfoIcon} width="20px" />
-                  <p className="text-[#4FA198] text-[12px] pl-[5px]">
-                    What is a dynamic segment?
-                  </p>
+          <SideDrawer
+            selectedNode={selectedNode}
+            onClick={performAction}
+            afterMenuContent={
+              <div className="w-full">
+                <h3 className="pt-[20px] font-bold">Journey type</h3>
+                <div className={segmentTypeStyle}>
+                  <Grid
+                    sx={{
+                      width: "100%",
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                    }}
+                  >
+                    <p className="font-semibold text-[#111827]">Dynamic</p>
+                    <ToggleSwitch
+                      checked={segmentForm.isDynamic}
+                      onChange={onToggleChange}
+                    />
+                  </Grid>
+                  <Tooltip title="dynamic">
+                    {/* <IconButton> */}
+                    <div className="flex items-center cursor-default mt-[8px]">
+                      <img src={InfoIcon} width="20px" />
+                      <p className="text-[#4FA198] text-[12px] pl-[5px] break-all">
+                        What is a dynamic segment?
+                      </p>
+                    </div>
+                  </Tooltip>
                 </div>
-              </Tooltip>
-            </div>
-          </div>
+              </div>
+            }
+          />
         </div>
       </div>
       <ReactFlow

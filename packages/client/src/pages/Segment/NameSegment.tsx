@@ -11,7 +11,6 @@ export interface INameSegmentForm {
   isPrimary: boolean;
 }
 
-
 interface INameSegment {
   onSubmit?: (e: any) => void;
   isPrimary: boolean;
