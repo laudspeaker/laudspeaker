@@ -1,4 +1,4 @@
-import { ReactNode, useEffect, useState } from "react";
+import { ChangeEvent, ReactNode, useEffect, useState } from "react";
 import { ExclamationCircleIcon } from "@heroicons/react/20/solid";
 import SaveSettings from "components/SaveSettings";
 import { RadioGroup } from "@headlessui/react";
@@ -39,11 +39,16 @@ export default function SettingsEmailBeta() {
     sendgridFromEmail: "",
   });
 
-  const [errors, setErrors] = useState<{ [key: string]: string[] }>({
+  const [mailgunErrors, setMailgunErrors] = useState<{
+    [key: string]: string[];
+  }>({
     mailgunAPIKey: [],
     sendingDomain: [],
     sendingName: [],
     sendingEmail: [],
+  });
+
+  const [free3Errors, setFree3Errors] = useState<{ [key: string]: string[] }>({
     testSendingName: [],
     testSendingEmail: [],
     sendgridApiKey: [],
@@ -75,36 +80,69 @@ export default function SettingsEmailBeta() {
   });
 
   useEffect(() => {
-    const newErrors: { [key: string]: string[] } = {
+    setShowErrors({
+      mailgunAPIKey: false,
+      sendingDomain: false,
+      sendingName: false,
+      sendingEmail: false,
+      testSendingName: false,
+      testSendingEmail: false,
+    });
+  }, [emailProvider]);
+
+  useEffect(() => {
+    const newMailgunErrors: { [key: string]: string[] } = {
       mailgunAPIKey: [],
       sendingDomain: [],
       sendingName: [],
       sendingEmail: [],
+    };
+    const newFree3Errors: { [key: string]: string[] } = {
       testSendingName: [],
       testSendingEmail: [],
       sendgridApiKey: [],
       sendgridFromEmail: [],
     };
+    switch (emailProvider) {
+      case "mailgun":
+        if (!formData.mailgunAPIKey)
+          newMailgunErrors.mailgunAPIKey.push("API key should be provided");
 
-    if (!formData.mailgunAPIKey)
-      newErrors.mailgunAPIKey.push("API key should be provided");
+        if (!formData.sendingName)
+          newMailgunErrors.sendingName.push("Sending name should be provided");
 
-    if (!formData.sendingName)
-      newErrors.sendingName.push("Sending name should be provided");
+        if (
+          !`${formData.sendingEmail}@laudspeaker.com`.match(
+            /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/
+          )
+        )
+          newMailgunErrors.sendingEmail.push("Email should be valid");
 
-    if (
-      !`${formData.sendingEmail}@laudspeaker.com`.match(
-        /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/
-      )
-    )
-      newErrors.sendingEmail.push("Email should be valid");
+        break;
+      case "free3":
+        if (!formData.testSendingEmail) {
+          newFree3Errors.testSendingEmail.push(
+            "Test sending email should be provided"
+          );
+        }
 
-    setErrors(newErrors);
-  }, [formData]);
+        if (!formData.testSendingName) {
+          newFree3Errors.testSendingName.push(
+            "Test sending name should be provided"
+          );
+        }
+
+        break;
+    }
+    setMailgunErrors(newMailgunErrors);
+    setFree3Errors(newFree3Errors);
+  }, [formData, emailProvider]);
 
   const isError =
-    emailProvider === "mailgun" &&
-    Object.values(errors).some((arr) => arr.length > 0);
+    (emailProvider === "mailgun" &&
+      Object.values(mailgunErrors).some((arr) => arr.length > 0)) ||
+    (emailProvider === "free3" &&
+      Object.values(free3Errors).some((arr) => arr.length > 0));
 
   useEffect(() => {
     (async () => {
@@ -136,8 +174,22 @@ export default function SettingsEmailBeta() {
     })();
   }, []);
 
-  const handleFormDataChange = (e: any) => {
-    console.log(e.target.name, e.target.value);
+  const handleFormDataChange = (
+    e: ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
+    if (e.target.value.includes(" ")) {
+      e.target.value = e.target.value.replaceAll(" ", "");
+      toast.error("Value should not contain spaces!", {
+        position: "bottom-center",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "colored",
+      });
+    }
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
@@ -184,7 +236,8 @@ export default function SettingsEmailBeta() {
                 name="mailgunAPIKey"
                 id="mailgunAPIKey"
                 className={classNames(
-                  errors.mailgunAPIKey.length > 0 && showErrors.mailgunAPIKey
+                  mailgunErrors.mailgunAPIKey.length > 0 &&
+                    showErrors.mailgunAPIKey
                     ? "rounded-md sm:text-sm focus:!border-red-500 !border-red-300 shadow-sm focus:!ring-red-500 "
                     : "rounded-md sm:text-sm focus:border-cyan-500 border-gray-300 shadow-sm focus:ring-cyan-500 "
                 )}
@@ -195,17 +248,18 @@ export default function SettingsEmailBeta() {
                   callDomains();
                 }}
               />
-              {showErrors.mailgunAPIKey && errors.mailgunAPIKey.length > 0 && (
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center">
-                  <ExclamationCircleIcon
-                    className="h-5 w-5 text-red-500"
-                    aria-hidden="true"
-                  />
-                </div>
-              )}
+              {showErrors.mailgunAPIKey &&
+                mailgunErrors.mailgunAPIKey.length > 0 && (
+                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center">
+                    <ExclamationCircleIcon
+                      className="h-5 w-5 text-red-500"
+                      aria-hidden="true"
+                    />
+                  </div>
+                )}
             </div>
             {showErrors.mailgunAPIKey &&
-              errors.mailgunAPIKey.map((item) => (
+              mailgunErrors.mailgunAPIKey.map((item) => (
                 <p
                   className="mt-2 text-sm text-red-600"
                   id="email-error"
@@ -229,7 +283,8 @@ export default function SettingsEmailBeta() {
                 value={formData.sendingDomain}
                 onChange={handleFormDataChange}
                 className={`mt-1 block w-full rounded-md py-2 pl-3 pr-10 text-base focus:outline-none sm:text-sm ${
-                  errors.sendingDomain.length > 0 && showErrors.sendingDomain
+                  mailgunErrors.sendingDomain.length > 0 &&
+                  showErrors.sendingDomain
                     ? "focus:!border-red-500 !border-red-300 shadow-sm focus:!ring-red-500"
                     : "border-gray-300 focus:border-cyan-500 focus:ring-cyan-500"
                 }`}
@@ -242,17 +297,18 @@ export default function SettingsEmailBeta() {
                   <option value={item}>{item}</option>
                 ))}
               </select>
-              {showErrors.sendingDomain && errors.sendingDomain.length > 0 && (
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center">
-                  <ExclamationCircleIcon
-                    className="h-5 w-5 text-red-500"
-                    aria-hidden="true"
-                  />
-                </div>
-              )}
+              {showErrors.sendingDomain &&
+                mailgunErrors.sendingDomain.length > 0 && (
+                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center">
+                    <ExclamationCircleIcon
+                      className="h-5 w-5 text-red-500"
+                      aria-hidden="true"
+                    />
+                  </div>
+                )}
             </div>
             {showErrors.sendingDomain &&
-              errors.sendingDomain.map((item) => (
+              mailgunErrors.sendingDomain.map((item) => (
                 <p
                   className="mt-2 text-sm text-red-600"
                   id="email-error"
@@ -274,14 +330,14 @@ export default function SettingsEmailBeta() {
                 name="sendingName"
                 id="sendingName"
                 className={`rounded-md shadow-sm sm:text-sm ${
-                  showErrors.sendingName && errors.sendingName.length > 0
+                  showErrors.sendingName && mailgunErrors.sendingName.length > 0
                     ? "focus:!border-red-500 !border-red-300 shadow-sm focus:!ring-red-500"
                     : "border-gray-300 focus:border-cyan-500 focus:ring-cyan-500"
                 }`}
                 placeholder="Team Laudspeaker"
                 onBlur={handleBlur}
               />
-              {showErrors.sendingName && errors.sendingName.length > 0 && (
+              {showErrors.sendingName && mailgunErrors.sendingName.length > 0 && (
                 <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center">
                   <ExclamationCircleIcon
                     className="h-5 w-5 text-red-500"
@@ -291,7 +347,7 @@ export default function SettingsEmailBeta() {
               )}
             </div>
             {showErrors.sendingName &&
-              errors.sendingName.map((item) => (
+              mailgunErrors.sendingName.map((item) => (
                 <p
                   className="mt-2 text-sm text-red-600"
                   id="email-error"
@@ -313,7 +369,8 @@ export default function SettingsEmailBeta() {
                 name="sendingEmail"
                 id="sendingEmail"
                 className={`rounded-md shadow-sm sm:text-sm pr-[150px] ${
-                  showErrors.sendingEmail && errors.sendingEmail.length > 0
+                  showErrors.sendingEmail &&
+                  mailgunErrors.sendingEmail.length > 0
                     ? "focus:!border-red-500 !border-red-300 shadow-sm focus:!ring-red-500"
                     : "border-gray-300 focus:border-cyan-500 focus:ring-cyan-500"
                 }`}
@@ -325,17 +382,18 @@ export default function SettingsEmailBeta() {
                   @laudspeaker.com
                 </span>
               </div>
-              {showErrors.sendingEmail && errors.sendingEmail.length > 0 && (
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center">
-                  <ExclamationCircleIcon
-                    className="h-5 w-5 text-red-500"
-                    aria-hidden="true"
-                  />
-                </div>
-              )}
+              {showErrors.sendingEmail &&
+                mailgunErrors.sendingEmail.length > 0 && (
+                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center">
+                    <ExclamationCircleIcon
+                      className="h-5 w-5 text-red-500"
+                      aria-hidden="true"
+                    />
+                  </div>
+                )}
             </div>
             {showErrors.sendingEmail &&
-              errors.sendingEmail.map((item) => (
+              mailgunErrors.sendingEmail.map((item) => (
                 <p
                   className="mt-2 text-sm text-red-600"
                   id="email-error"
@@ -367,7 +425,7 @@ export default function SettingsEmailBeta() {
                 id="testSendingName"
                 className={`rounded-md shadow-sm sm:text-sm ${
                   showErrors.testSendingName &&
-                  errors.testSendingName.length > 0
+                  free3Errors.testSendingName.length > 0
                     ? "focus:!border-red-500 !border-red-300 shadow-sm focus:!ring-red-500"
                     : "border-gray-300 focus:border-cyan-500 focus:ring-cyan-500"
                 }`}
@@ -375,17 +433,18 @@ export default function SettingsEmailBeta() {
                 onBlur={handleBlur}
                 disabled={!verified}
               />
-              {showErrors.testSendingName && errors.testSendingName.length > 0 && (
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center">
-                  <ExclamationCircleIcon
-                    className="h-5 w-5 text-red-500"
-                    aria-hidden="true"
-                  />
-                </div>
-              )}
+              {showErrors.testSendingName &&
+                free3Errors.testSendingName.length > 0 && (
+                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center">
+                    <ExclamationCircleIcon
+                      className="h-5 w-5 text-red-500"
+                      aria-hidden="true"
+                    />
+                  </div>
+                )}
             </div>
             {showErrors.testSendingName &&
-              errors.testSendingName.map((item) => (
+              free3Errors.testSendingName.map((item) => (
                 <p
                   className="mt-2 text-sm text-red-600"
                   id="email-error"
@@ -408,7 +467,7 @@ export default function SettingsEmailBeta() {
                 id="testSendingEmail"
                 className={`rounded-md shadow-sm sm:text-sm pr-[150px] ${
                   showErrors.testSendingEmail &&
-                  errors.testSendingEmail.length > 0
+                  free3Errors.testSendingEmail.length > 0
                     ? "focus:!border-red-500 !border-red-300 shadow-sm focus:!ring-red-500"
                     : "border-gray-300 focus:border-cyan-500 focus:ring-cyan-500"
                 }`}
@@ -422,7 +481,7 @@ export default function SettingsEmailBeta() {
                 </span>
               </div>
               {showErrors.testSendingEmail &&
-                errors.testSendingEmail.length > 0 && (
+                free3Errors.testSendingEmail.length > 0 && (
                   <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center">
                     <ExclamationCircleIcon
                       className="h-5 w-5 text-red-500"
@@ -432,7 +491,7 @@ export default function SettingsEmailBeta() {
                 )}
             </div>
             {showErrors.testSendingEmail &&
-              errors.testSendingEmail.map((item) => (
+              free3Errors.testSendingEmail.map((item) => (
                 <p
                   className="mt-2 text-sm text-red-600"
                   id="email-error"

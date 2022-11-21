@@ -90,6 +90,7 @@ const SlackTemplateHeader = (props: IEmailHeaderProps) => {
               id="saveDraftTemplate"
               onClick={onSave}
               style={{
+                whiteSpace: "nowrap",
                 maxWidth: "158px",
                 maxHeight: "48px",
               }}
