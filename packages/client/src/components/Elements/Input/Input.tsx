@@ -9,6 +9,7 @@ export interface InputProps {
   customClasses?: object;
   disabled?: boolean;
   isError?: boolean;
+  errorText?: string;
   fullWidth?: boolean;
   helperText?: string;
   inputRef?: React.RefObject<any>;
@@ -35,6 +36,7 @@ const Input = (props: InputProps) => {
     customClasses,
     disabled,
     isError,
+    errorText,
     fullWidth,
     inputRef,
     label,
@@ -74,8 +76,12 @@ const Input = (props: InputProps) => {
             onKeyDown={onKeyDown}
             onBlur={onBlur}
             disabled={disabled}
-            className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:!border-cyan-500 focus:!ring-cyan-500 sm:text-sm ${
+            className={`mt-1 block w-full rounded-md shadow-sm sm:text-sm ${
               className ? className : ""
+            } ${
+              isError
+                ? "focus:!border-red-500 !border-red-300 shadow-sm focus:!ring-red-500"
+                : "border-gray-300 focus:border-cyan-500 focus:ring-cyan-500"
             }`}
             placeholder={placeholder}
             style={style}
@@ -88,6 +94,11 @@ const Input = (props: InputProps) => {
             </div>
           )}
         </div>
+        {isError && (
+          <>
+            <p className="mt-2 text-sm text-red-600">{errorText}</p>
+          </>
+        )}
       </div>
     </>
   );

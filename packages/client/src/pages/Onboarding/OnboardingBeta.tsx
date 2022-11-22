@@ -1,3 +1,5 @@
+/* eslint @typescript-eslint/dot-notation: 0 */
+
 import Header from "components/Header";
 import { ApiConfig } from "../../constants";
 import React, { useEffect, useLayoutEffect } from "react";
@@ -62,6 +64,9 @@ export default function OnboardingBeta() {
   const [domainList, setDomainList] = useState<any>(domainsList || []);
   const [privateApiKey, setPrivateApiKey] = useState<string>("");
   const [nameModalOpen, setNameModalOpen] = useState<boolean>(false);
+  const [errors, setErrors] = useState<{ [key: string]: string | undefined }>(
+    {}
+  );
   const [verified, setVerified] = useState(false);
 
   const callDomains = async () => {
@@ -125,7 +130,18 @@ export default function OnboardingBeta() {
     })();
   }, []);
 
+  const errorCheck = (e: any) => {
+    let newError: string | undefined = undefined;
+    if (!e.target.value) {
+      newError = "Field can't be empty.";
+    }
+
+    setErrors((prev) => ({ ...prev, [e.target.name]: newError }));
+  };
+
   const handleIntegrationsDataChange = (e: any) => {
+    errorCheck(e);
+
     setIntegrationsData({
       ...integrationsData,
       [e.target.name]: e.target.value,
@@ -175,7 +191,7 @@ export default function OnboardingBeta() {
           placeholder={"****  "}
           name="posthogApiKey"
           id="posthogApiKey"
-          onChange={handleIntegrationsDataChange}
+          onChange={(e) => handleIntegrationsDataChange(e)}
         />
         <Input
           isRequired
@@ -184,7 +200,7 @@ export default function OnboardingBeta() {
           placeholder={"****  "}
           name="posthogProjectId"
           id="posthogProjectId"
-          onChange={handleIntegrationsDataChange}
+          onChange={(e) => handleIntegrationsDataChange(e)}
         />
         <Input
           isRequired
@@ -193,7 +209,7 @@ export default function OnboardingBeta() {
           placeholder={"https://app.posthog.com"}
           name="posthogHostUrl"
           id="posthogHostUrl"
-          onChange={handleIntegrationsDataChange}
+          onChange={(e) => handleIntegrationsDataChange(e)}
         />
         <Input
           isRequired
@@ -202,7 +218,7 @@ export default function OnboardingBeta() {
           placeholder={"$phoneNumber"}
           name="posthogSmsKey"
           id="posthogSmsKey"
-          onChange={handleIntegrationsDataChange}
+          onChange={(e) => handleIntegrationsDataChange(e)}
         />
         <Input
           isRequired
@@ -211,7 +227,7 @@ export default function OnboardingBeta() {
           placeholder={"$email"}
           name="posthogEmailKey"
           id="posthogEmailKey"
-          onChange={handleIntegrationsDataChange}
+          onChange={(e) => handleIntegrationsDataChange(e)}
         />
       </form>
     ),
@@ -230,6 +246,8 @@ export default function OnboardingBeta() {
             setPrivateApiKey(e.target.value);
             handleIntegrationsDataChange(e);
           }}
+          isError={!!errors["privateApiKey"]}
+          errorText={errors["privateApiKey"]}
           onBlur={callDomains}
         />
         <Select
@@ -264,7 +282,9 @@ export default function OnboardingBeta() {
           id="sendingName"
           label="Sending name"
           value={integrationsData.sendingName}
-          onChange={handleIntegrationsDataChange}
+          isError={!!errors["sendingName"]}
+          errorText={errors["sendingName"]}
+          onChange={(e) => handleIntegrationsDataChange(e)}
         />
         <div className="relative">
           <Input
@@ -272,8 +292,10 @@ export default function OnboardingBeta() {
             id="sendingEmail"
             label="Sending email"
             value={integrationsData.sendingEmail}
-            onChange={handleIntegrationsDataChange}
+            onChange={(e) => handleIntegrationsDataChange(e)}
             className="pr-[150px]"
+            isError={!!errors["sendingEmail"]}
+            errorText={errors["sendingEmail"]}
             endText={domainName ? "@laudspeaker.com" : ""}
           />
         </div>
@@ -285,8 +307,10 @@ export default function OnboardingBeta() {
           name="testSendingName"
           id="testSendingName"
           label="Sending name"
+          isError={!!errors["testSendingName"]}
+          errorText={errors["testSendingName"]}
           value={integrationsData.testSendingName}
-          onChange={handleIntegrationsDataChange}
+          onChange={(e) => handleIntegrationsDataChange(e)}
         />
         <div className="relative">
           <Input
@@ -294,7 +318,9 @@ export default function OnboardingBeta() {
             id="testSendingEmail"
             label="Sending email"
             value={integrationsData.testSendingEmail}
-            onChange={handleIntegrationsDataChange}
+            onChange={(e) => handleIntegrationsDataChange(e)}
+            isError={!!errors["testSendingEmail"]}
+            errorText={errors["testSendingEmail"]}
             className="pr-[150px]"
             endText={domainName ? "@laudspeaker-test.com" : ""}
           />
@@ -311,8 +337,10 @@ export default function OnboardingBeta() {
           name="sendgridApiKey"
           id="sendgridApiKey"
           type="password"
+          isError={!!errors["sendgridApiKey"]}
+          errorText={errors["sendgridApiKey"]}
           labelClass="!text-[16px]"
-          onChange={handleIntegrationsDataChange}
+          onChange={(e) => handleIntegrationsDataChange(e)}
           onBlur={callDomains}
         />
         <Input
@@ -322,9 +350,11 @@ export default function OnboardingBeta() {
           placeholder={"your.email@sendgrid.com"}
           name="sendgridFromEmail"
           id="sendgridFromEmail"
+          isError={!!errors["sendgridFromEmail"]}
+          errorText={errors["sendgridFromEmail"]}
           type="text"
           labelClass="!text-[16px]"
-          onChange={handleIntegrationsDataChange}
+          onChange={(e) => handleIntegrationsDataChange(e)}
           onBlur={callDomains}
         />
       </>
