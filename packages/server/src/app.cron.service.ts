@@ -79,7 +79,13 @@ export class CronService {
     @InjectRepository(SendgridEvent)
     private sendgridEventRepository: Repository<SendgridEvent>
   ) {
-    createTable();
+    (async () => {
+      try {
+        await createTable();
+      } catch (e) {
+        console.error(e);
+      }
+    })();
   }
 
   @Cron(CronExpression.EVERY_HOUR)
