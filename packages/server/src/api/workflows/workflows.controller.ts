@@ -105,6 +105,13 @@ export class WorkflowsController {
     return await this.workflowsService.update(<Account>user, updateWorkflowDto);
   }
 
+  @Post('duplicate/:id')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor)
+  async duplicate(@Req() { user }: Request, @Param('id') id: string) {
+    return await this.workflowsService.duplicate(<Account>user, id);
+  }
+
   @Get('start/:id')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
