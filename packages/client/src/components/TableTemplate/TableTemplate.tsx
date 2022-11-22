@@ -540,6 +540,17 @@ export default function TableTemplate({
                 >
                   <div className="w-full">Edit</div>
                 </Link>,
+                <button
+                  onClick={async () => {
+                    await ApiService.post({
+                      url: "/workflows/duplicate/" + row.id,
+                      options: {},
+                    });
+                    window.location.reload();
+                  }}
+                >
+                  Duplicate
+                </button>,
                 ...(row.isDeleted
                   ? []
                   : [

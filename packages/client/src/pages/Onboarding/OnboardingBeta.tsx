@@ -1,3 +1,5 @@
+/* eslint @typescript-eslint/dot-notation: 0 */
+
 import Header from "components/Header";
 import { ApiConfig } from "../../constants";
 import React, { useEffect, useLayoutEffect } from "react";
@@ -6,7 +8,7 @@ import Input from "../../components/Elements/Input";
 import Select from "../../components/Elements/Select";
 
 import { allEventChannels } from "../Settings/EventsProvider";
-import { allEmailChannels } from "../Settings/EmailProvider";
+import EmailProvider, { allEmailChannels } from "../Settings/EmailProvider";
 import { useTypedSelector } from "hooks/useTypeSelector";
 import { setDomainsList, setSettingsPrivateApiKey } from "reducers/settings";
 import { useDispatch } from "react-redux";
@@ -14,10 +16,17 @@ import { useState } from "react";
 import CSS from "csstype";
 import Modal from "components/Elements/Modal";
 import { toast } from "react-toastify";
+import { GenericButton } from "components/Elements";
 
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(" ");
 }
+
+const expectedFields: Record<string, string[]> = {
+  free3: ["testSendingEmail", "testSendingName"],
+  mailgun: ["sendingName", "sendingEmail"],
+  sendgrid: ["sendgridApiKey", "sendgridFromEmail"],
+};
 
 interface IntegrationsData {
   sendingName: string;
@@ -62,6 +71,9 @@ export default function OnboardingBeta() {
   const [domainList, setDomainList] = useState<any>(domainsList || []);
   const [privateApiKey, setPrivateApiKey] = useState<string>("");
   const [nameModalOpen, setNameModalOpen] = useState<boolean>(false);
+  const [errors, setErrors] = useState<{ [key: string]: string | undefined }>(
+    {}
+  );
   const [verified, setVerified] = useState(false);
 
   const callDomains = async () => {
@@ -118,6 +130,9 @@ export default function OnboardingBeta() {
         testSendingEmail: testSendingEmail || integrationsData.testSendingEmail,
         testSendingName: testSendingName || integrationsData.testSendingName,
         slackId: slackTeamId?.[0] || integrationsData.slackId,
+        sendgridApiKey: sendgridApiKey || integrationsData.sendgridApiKey,
+        sendgridFromEmail:
+          sendgridFromEmail || integrationsData.sendgridFromEmail,
       });
       setPrivateApiKey(mailgunAPIKey);
       setDomainName(sendingDomain);
@@ -125,7 +140,34 @@ export default function OnboardingBeta() {
     })();
   }, []);
 
+  const errorCheck = (e: any) => {
+    let newError: string | undefined = undefined;
+    if (!e.target.value) {
+      newError = "Field can't be empty.";
+    }
+
+    setErrors((prev) => ({ ...prev, [e.target.name]: newError }));
+    return !!newError;
+  };
+
+  const handleBlur = (e: any) => {
+    errorCheck(e);
+  };
+
   const handleIntegrationsDataChange = (e: any) => {
+    if (e.target.value.includes(" ")) {
+      e.target.value = e.target.value.replaceAll(" ", "");
+      toast.error("Value should not contain spaces!", {
+        position: "bottom-center",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "colored",
+      });
+    }
     setIntegrationsData({
       ...integrationsData,
       [e.target.name]: e.target.value,
@@ -138,6 +180,22 @@ export default function OnboardingBeta() {
       if ((integrationsData as Record<string, any>)[key])
         objToSend[key] = (integrationsData as Record<string, any>)[key];
     }
+
+    if (integrationsData.emailProvider) {
+      for (const key of expectedFields[integrationsData.emailProvider]) {
+        if (
+          errorCheck({
+            target: {
+              name: key,
+              value: (integrationsData as any)?.[key],
+            },
+          })
+        ) {
+          return;
+        }
+      }
+    }
+
     try {
       await ApiService.patch({
         url: "/accounts",
@@ -175,7 +233,8 @@ export default function OnboardingBeta() {
           placeholder={"****  "}
           name="posthogApiKey"
           id="posthogApiKey"
-          onChange={handleIntegrationsDataChange}
+          onChange={(e) => handleIntegrationsDataChange(e)}
+          onBlur={handleBlur}
         />
         <Input
           isRequired
@@ -184,7 +243,8 @@ export default function OnboardingBeta() {
           placeholder={"****  "}
           name="posthogProjectId"
           id="posthogProjectId"
-          onChange={handleIntegrationsDataChange}
+          onChange={(e) => handleIntegrationsDataChange(e)}
+          onBlur={handleBlur}
         />
         <Input
           isRequired
@@ -193,7 +253,8 @@ export default function OnboardingBeta() {
           placeholder={"https://app.posthog.com"}
           name="posthogHostUrl"
           id="posthogHostUrl"
-          onChange={handleIntegrationsDataChange}
+          onChange={(e) => handleIntegrationsDataChange(e)}
+          onBlur={handleBlur}
         />
         <Input
           isRequired
@@ -202,7 +263,8 @@ export default function OnboardingBeta() {
           placeholder={"$phoneNumber"}
           name="posthogSmsKey"
           id="posthogSmsKey"
-          onChange={handleIntegrationsDataChange}
+          onChange={(e) => handleIntegrationsDataChange(e)}
+          onBlur={handleBlur}
         />
         <Input
           isRequired
@@ -211,7 +273,8 @@ export default function OnboardingBeta() {
           placeholder={"$email"}
           name="posthogEmailKey"
           id="posthogEmailKey"
-          onChange={handleIntegrationsDataChange}
+          onChange={(e) => handleIntegrationsDataChange(e)}
+          onBlur={handleBlur}
         />
       </form>
     ),
@@ -230,7 +293,12 @@ export default function OnboardingBeta() {
             setPrivateApiKey(e.target.value);
             handleIntegrationsDataChange(e);
           }}
-          onBlur={callDomains}
+          isError={!!errors["privateApiKey"]}
+          errorText={errors["privateApiKey"]}
+          onBlur={(e) => {
+            callDomains();
+            handleBlur(e);
+          }}
         />
         <Select
           id="activeJourney"
@@ -264,7 +332,10 @@ export default function OnboardingBeta() {
           id="sendingName"
           label="Sending name"
           value={integrationsData.sendingName}
-          onChange={handleIntegrationsDataChange}
+          isError={!!errors["sendingName"]}
+          errorText={errors["sendingName"]}
+          onChange={(e) => handleIntegrationsDataChange(e)}
+          onBlur={handleBlur}
         />
         <div className="relative">
           <Input
@@ -272,9 +343,12 @@ export default function OnboardingBeta() {
             id="sendingEmail"
             label="Sending email"
             value={integrationsData.sendingEmail}
-            onChange={handleIntegrationsDataChange}
+            onChange={(e) => handleIntegrationsDataChange(e)}
             className="pr-[150px]"
+            isError={!!errors["sendingEmail"]}
+            errorText={errors["sendingEmail"]}
             endText={domainName ? "@laudspeaker.com" : ""}
+            onBlur={handleBlur}
           />
         </div>
       </>
@@ -285,8 +359,11 @@ export default function OnboardingBeta() {
           name="testSendingName"
           id="testSendingName"
           label="Sending name"
+          isError={!!errors["testSendingName"]}
+          errorText={errors["testSendingName"]}
           value={integrationsData.testSendingName}
-          onChange={handleIntegrationsDataChange}
+          onChange={(e) => handleIntegrationsDataChange(e)}
+          onBlur={handleBlur}
         />
         <div className="relative">
           <Input
@@ -294,9 +371,12 @@ export default function OnboardingBeta() {
             id="testSendingEmail"
             label="Sending email"
             value={integrationsData.testSendingEmail}
-            onChange={handleIntegrationsDataChange}
+            onChange={(e) => handleIntegrationsDataChange(e)}
+            isError={!!errors["testSendingEmail"]}
+            errorText={errors["testSendingEmail"]}
             className="pr-[150px]"
             endText={domainName ? "@laudspeaker-test.com" : ""}
+            onBlur={handleBlur}
           />
         </div>
       </>
@@ -311,9 +391,14 @@ export default function OnboardingBeta() {
           name="sendgridApiKey"
           id="sendgridApiKey"
           type="password"
+          isError={!!errors["sendgridApiKey"]}
+          errorText={errors["sendgridApiKey"]}
           labelClass="!text-[16px]"
-          onChange={handleIntegrationsDataChange}
-          onBlur={callDomains}
+          onChange={(e) => handleIntegrationsDataChange(e)}
+          onBlur={(e) => {
+            callDomains();
+            handleBlur(e);
+          }}
         />
         <Input
           isRequired
@@ -322,10 +407,12 @@ export default function OnboardingBeta() {
           placeholder={"your.email@sendgrid.com"}
           name="sendgridFromEmail"
           id="sendgridFromEmail"
+          isError={!!errors["sendgridFromEmail"]}
+          errorText={errors["sendgridFromEmail"]}
           type="text"
           labelClass="!text-[16px]"
-          onChange={handleIntegrationsDataChange}
-          onBlur={callDomains}
+          onChange={(e) => handleIntegrationsDataChange(e)}
+          onBlur={handleBlur}
         />
       </>
     ),
@@ -340,6 +427,15 @@ export default function OnboardingBeta() {
     height: "100%",
     width: "100%",
   };
+
+  const [isError, setIsError] = useState(false);
+
+  useEffect(() => {
+    const requiredKeys = expectedFields[integrationsData.emailProvider];
+    if (!requiredKeys) return;
+    const requiredValues = requiredKeys.map((key) => !errors[key]);
+    setIsError(requiredValues.some((value) => !value));
+  }, [errors, integrationsData]);
 
   return (
     <>
@@ -409,12 +505,13 @@ export default function OnboardingBeta() {
                                 : item.tooltip,
                           }))}
                           value={integrationsData.emailProvider}
-                          onChange={(value: string) =>
+                          onChange={(value: string) => {
                             setIntegrationsData({
                               ...integrationsData,
                               emailProvider: value,
-                            })
-                          }
+                            });
+                            setErrors({});
+                          }}
                         />
                         {integrationsData.emailProvider && (
                           <>
@@ -434,14 +531,14 @@ export default function OnboardingBeta() {
                         )}
                       </div>
                       <div className="bg-gray-50 px-4 py-3 text-right sm:px-6">
-                        <button
+                        <GenericButton
                           id="saveEmailConfiguration"
-                          type="button"
                           onClick={handleSubmit}
-                          className="inline-flex justify-center rounded-md border border-transparent bg-cyan-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2"
+                          customClasses="inline-flex justify-center rounded-md border border-transparent bg-cyan-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2"
+                          disabled={isError}
                         >
                           Save
-                        </button>
+                        </GenericButton>
                       </div>
                     </div>
                   </form>

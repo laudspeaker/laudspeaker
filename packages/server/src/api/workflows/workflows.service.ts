@@ -3,6 +3,7 @@ import {
   Inject,
   Injectable,
   HttpException,
+  NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, In, Repository } from 'typeorm';
@@ -218,6 +219,71 @@ export class WorkflowsService {
       return Promise.reject(err);
     }
     return;
+  }
+
+  async duplicate(user: Account, id: string) {
+    const oldWorkflow = await this.workflowsRepository.findOneBy({
+      ownerId: user.id,
+      id,
+    });
+    if (!oldWorkflow) throw new NotFoundException('Workflow not found');
+
+    let copyEraseIndex = oldWorkflow.name.indexOf('-copy');
+    if (copyEraseIndex === -1) copyEraseIndex = oldWorkflow.name.length;
+
+    const res = await this.workflowsRepository
+      .createQueryBuilder()
+      .select('COUNT(*)')
+      .where('starts_with(name, :oldName) = TRUE AND "ownerId" = :ownerId', {
+        oldName: oldWorkflow.name.substring(0, copyEraseIndex),
+        ownerId: user.id,
+      })
+      .execute();
+    const newName =
+      oldWorkflow.name.substring(0, copyEraseIndex) +
+      '-copy-' +
+      (res?.[0]?.count || '0');
+    const newWorkflow = await this.findOne(user, newName, false);
+
+    const newAudiences = await Promise.all(
+      oldWorkflow.audiences?.map(async (id) => {
+        const { name, description, inclusionCriteria, isDynamic, isPrimary } =
+          await this.audiencesService.findOne(user, id);
+        const newAudience = await this.audiencesService.insert(user, {
+          name,
+          description,
+          inclusionCriteria,
+          isDynamic,
+          isPrimary,
+        });
+        return newAudience.id;
+      }) || []
+    );
+
+    let visualLayout = JSON.stringify(oldWorkflow.visualLayout);
+    const rules = oldWorkflow.rules.map((rule) =>
+      Buffer.from(rule, 'base64').toString()
+    );
+
+    for (let i = 0; i < oldWorkflow.audiences.length; i++) {
+      const oldAudience = oldWorkflow.audiences[i];
+      const newAudience = newAudiences[i];
+      visualLayout = visualLayout.replaceAll(oldAudience, newAudience);
+      for (let i = 0; i < rules.length; i++) {
+        rules[i] = rules[i].replaceAll(oldAudience, newAudience);
+      }
+    }
+
+    visualLayout = JSON.parse(visualLayout);
+    const triggers: Trigger[] = rules.map((rule) => JSON.parse(rule));
+
+    await this.update(user, {
+      id: newWorkflow.id,
+      audiences: newAudiences,
+      name: newName,
+      visualLayout,
+      rules: triggers,
+    });
   }
 
   /**

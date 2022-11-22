@@ -51,6 +51,11 @@ export default function SettingsEmailBeta() {
   const [free3Errors, setFree3Errors] = useState<{ [key: string]: string[] }>({
     testSendingName: [],
     testSendingEmail: [],
+  });
+
+  const [sendgridErrors, setSendgridErrors] = useState<{
+    [key: string]: string[];
+  }>({
     sendgridApiKey: [],
     sendgridFromEmail: [],
   });
@@ -87,6 +92,8 @@ export default function SettingsEmailBeta() {
       sendingEmail: false,
       testSendingName: false,
       testSendingEmail: false,
+      sendgridApiKey: false,
+      sendgridFromEmail: false,
     });
   }, [emailProvider]);
 
@@ -97,12 +104,17 @@ export default function SettingsEmailBeta() {
       sendingName: [],
       sendingEmail: [],
     };
+
     const newFree3Errors: { [key: string]: string[] } = {
       testSendingName: [],
       testSendingEmail: [],
+    };
+
+    const newSendgridErrors: { [key: string]: string[] } = {
       sendgridApiKey: [],
       sendgridFromEmail: [],
     };
+
     switch (emailProvider) {
       case "mailgun":
         if (!formData.mailgunAPIKey)
@@ -133,16 +145,29 @@ export default function SettingsEmailBeta() {
         }
 
         break;
+
+      case "sendgrid":
+        if (!formData.sendgridApiKey)
+          newSendgridErrors.sendgridApiKey.push("API key should be provided");
+
+        if (!formData.sendgridFromEmail)
+          newSendgridErrors.sendgridFromEmail.push(
+            "Sending email should be provided"
+          );
+        break;
     }
     setMailgunErrors(newMailgunErrors);
     setFree3Errors(newFree3Errors);
+    setSendgridErrors(newSendgridErrors);
   }, [formData, emailProvider]);
 
   const isError =
     (emailProvider === "mailgun" &&
       Object.values(mailgunErrors).some((arr) => arr.length > 0)) ||
     (emailProvider === "free3" &&
-      Object.values(free3Errors).some((arr) => arr.length > 0));
+      Object.values(free3Errors).some((arr) => arr.length > 0)) ||
+    (emailProvider === "sendgrid" &&
+      Object.values(sendgridErrors).some((arr) => arr.length > 0));
 
   useEffect(() => {
     (async () => {
@@ -519,24 +544,26 @@ export default function SettingsEmailBeta() {
                 name="sendgridApiKey"
                 id="sendgridApiKey"
                 className={`rounded-md shadow-sm sm:text-sm ${
-                  showErrors.sendgridApiKey && errors.sendgridApiKey.length > 0
+                  showErrors.sendgridApiKey &&
+                  sendgridErrors.sendgridApiKey.length > 0
                     ? "focus:!border-red-500 !border-red-300 shadow-sm focus:!ring-red-500"
                     : "border-gray-300 focus:border-cyan-500 focus:ring-cyan-500"
                 }`}
                 placeholder="****"
                 onBlur={handleBlur}
               />
-              {showErrors.sendgridApiKey && errors.sendgridApiKey.length > 0 && (
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center">
-                  <ExclamationCircleIcon
-                    className="h-5 w-5 text-red-500"
-                    aria-hidden="true"
-                  />
-                </div>
-              )}
+              {showErrors.sendgridApiKey &&
+                sendgridErrors.sendgridApiKey.length > 0 && (
+                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center">
+                    <ExclamationCircleIcon
+                      className="h-5 w-5 text-red-500"
+                      aria-hidden="true"
+                    />
+                  </div>
+                )}
             </div>
             {showErrors.sendgridApiKey &&
-              errors.sendgridApiKey.map((item) => (
+              sendgridErrors.sendgridApiKey.map((item) => (
                 <p
                   className="mt-2 text-sm text-red-600"
                   id="email-error"
@@ -559,7 +586,7 @@ export default function SettingsEmailBeta() {
                 id="sendgridFromEmail"
                 className={`rounded-md shadow-sm sm:text-sm ${
                   showErrors.sendgridFromEmail &&
-                  errors.sendgridFromEmail.length > 0
+                  sendgridErrors.sendgridFromEmail.length > 0
                     ? "focus:!border-red-500 !border-red-300 shadow-sm focus:!ring-red-500"
                     : "border-gray-300 focus:border-cyan-500 focus:ring-cyan-500"
                 }`}
@@ -567,7 +594,7 @@ export default function SettingsEmailBeta() {
                 onBlur={handleBlur}
               />
               {showErrors.sendgridFromEmail &&
-                errors.sendgridFromEmail.length > 0 && (
+                sendgridErrors.sendgridFromEmail.length > 0 && (
                   <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center">
                     <ExclamationCircleIcon
                       className="h-5 w-5 text-red-500"
@@ -577,7 +604,7 @@ export default function SettingsEmailBeta() {
                 )}
             </div>
             {showErrors.sendgridFromEmail &&
-              errors.sendgridFromEmail.map((item) => (
+              sendgridErrors.sendgridFromEmail.map((item) => (
                 <p
                   className="mt-2 text-sm text-red-600"
                   id="email-error"
