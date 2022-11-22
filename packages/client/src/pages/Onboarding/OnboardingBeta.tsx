@@ -24,7 +24,7 @@ function classNames(...classes: string[]) {
 
 const expectedFields: Record<string, string[]> = {
   free3: ["testSendingEmail", "testSendingName"],
-  mailgun: ["sendingName", "sendingEmail", "mailgunAPIKey"],
+  mailgun: ["sendingName", "sendingEmail"],
   sendgrid: ["sendgridApiKey", "sendgridFromEmail"],
 };
 
