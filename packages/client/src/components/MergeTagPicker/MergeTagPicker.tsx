@@ -34,8 +34,11 @@ const MergeTagPicker: FC<MergeTagPickerProps> = ({
 
   return (
     <>
-      <span onClick={handleClick}>
-        <Chip label={tagContent} />
+      <span className="h-full" onClick={handleClick}>
+        <Chip
+          label={tagContent || "specify the property here"}
+          textClass="text-[20px]"
+        />
       </span>
       <Menu
         id="merge-tag-menu"
@@ -54,6 +57,7 @@ const MergeTagPicker: FC<MergeTagPickerProps> = ({
             <input
               id="merge-tag-filter-input"
               name="merge-tag-filter-input"
+              placeholder="define your own property here"
               value={searchStr}
               onChange={handleInputChange}
               onClick={(e) => e.stopPropagation()}
