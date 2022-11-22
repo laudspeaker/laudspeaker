@@ -13,6 +13,7 @@ interface Props {
   window?: () => Window;
   selectedNode: string;
   onClick: (id: string) => void;
+  afterMenuContent?: React.ReactNode;
 }
 
 export default function ResponsiveDrawer(props: Props) {
@@ -137,16 +138,17 @@ export default function ResponsiveDrawer(props: Props) {
   };
   const drawer = (): React.ReactNode => {
     return (
-      <div>
-        <div className="h-[50px] bg-cyan-700 flex-col justify-between px-[20px] py-[15px]">
-          <div className="text-[16px] text-white text-ellipsis overflow-hidden max-w-[140px]">
-            {name}
-          </div>
-          {generateMenu(dataSubArray)}
+      <>
+        <div className="text-[16px] bg-cyan-700 w-full min-h-[50px] text-white text-ellipsis overflow-hidden px-[20px] py-[15px]">
+          {name}
         </div>
-      </div>
+        <div className="min-h-screen flex-col justify-between px-[20px] py-[15px]">
+          {generateMenu(dataSubArray)}
+          {props.afterMenuContent}
+        </div>
+      </>
     );
   };
 
-  return <div>{drawer()}</div>;
+  return <div className="h-full">{drawer()}</div>;
 }

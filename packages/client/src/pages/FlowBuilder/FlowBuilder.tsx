@@ -23,6 +23,7 @@ import ReactFlow, {
 } from "react-flow-renderer";
 import { v4 as uuid } from "uuid";
 import { useParams, useNavigate } from "react-router-dom";
+import InfoIcon from "assets/images/info.svg";
 
 import * as _ from "lodash";
 
@@ -41,6 +42,15 @@ import Modal from "../../components/Elements/Modal";
 import Header from "components/Header";
 import Tooltip from "components/Elements/Tooltip";
 import { Helmet } from "react-helmet";
+import { Grid } from "@mui/material";
+import ToggleSwitch from "components/Elements/ToggleSwitch";
+
+const segmentTypeStyle =
+  "border-[1px] border-[#D1D5DB] rouded-[6px] shadow-[0px_1px_2px_rgba(0,0,0,0.05)] w-full mt-[20px] p-[15px]";
+
+interface INameSegmentForm {
+  isDynamic: boolean;
+}
 
 enum TriggerType {
   event,
@@ -531,6 +541,32 @@ const Flow = () => {
     setAudienceEditModalOpen(false);
   };
 
+  const [segmentForm, setSegmentForm] = useState<INameSegmentForm>({
+    isDynamic:
+      nodes.find((node) => node.data.primary)?.data?.isDynamic || false,
+  });
+
+  useEffect(() => {
+    setSegmentForm({
+      isDynamic:
+        nodes.find((node) => node.data.primary)?.data?.isDynamic || false,
+    });
+  }, [nodes]);
+
+  const onToggleChange = async () => {
+    const primaryNode = nodes.find((node) => node.data.primary);
+    if (!primaryNode) return;
+    await ApiService.patch({
+      url: "/audiences",
+      options: {
+        id: primaryNode.data?.audienceId,
+        isDynamic: !segmentForm.isDynamic,
+      },
+    });
+    primaryNode.data.isDynamic = !primaryNode.data.isDynamic;
+    setSegmentForm({ isDynamic: !segmentForm.isDynamic });
+  };
+
   let startDisabledReason = "";
 
   if (!nodes.some((node) => node.data.primary))
@@ -540,7 +576,7 @@ const Flow = () => {
       "Add a message to a step to be able to start a journey";
 
   return (
-    <div className="h-[calc(100vh-64px)] overflow-y-scroll flex w-full">
+    <div className="h-[calc(100vh-64px)] flex w-full">
       <Helmet>
         <script>
           {`
@@ -560,11 +596,45 @@ const Flow = () => {
             })(document, "script");`}
         </script>
       </Helmet>
-      <div className="max-h-[calc(100vh-64px)] h-full lg:overflow-y-auto overflow-y-scroll flex">
-        <div className="flex">
-          <SideDrawer selectedNode={selectedNode} onClick={performAction} />
+      <div className="max-h-[calc(100vh-64px)] h-full lg:overflow-y-auto overflow-y-scroll overflow-x-hidden">
+        <div className="flex flex-col">
+          <SideDrawer
+            selectedNode={selectedNode}
+            onClick={performAction}
+            afterMenuContent={
+              <div className="w-full">
+                <h3 className="pt-[20px] font-bold">Journey type</h3>
+                <div className={segmentTypeStyle}>
+                  <Grid
+                    sx={{
+                      width: "100%",
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                    }}
+                  >
+                    <p className="font-semibold text-[#111827]">Dynamic</p>
+                    <ToggleSwitch
+                      checked={segmentForm.isDynamic}
+                      onChange={onToggleChange}
+                    />
+                  </Grid>
+                  <Tooltip title="dynamic">
+                    {/* <IconButton> */}
+                    <div className="flex items-center cursor-default mt-[8px]">
+                      <img src={InfoIcon} width="20px" />
+                      <p className="text-[#4FA198] text-[12px] pl-[5px] break-all">
+                        What is a dynamic segment?
+                      </p>
+                    </div>
+                  </Tooltip>
+                </div>
+              </div>
+            }
+          />
         </div>
       </div>
+
       <ReactFlow
         nodes={nodes}
         edges={edges}
