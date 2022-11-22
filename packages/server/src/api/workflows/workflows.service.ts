@@ -228,14 +228,25 @@ export class WorkflowsService {
     });
     if (!oldWorkflow) throw new NotFoundException('Workflow not found');
 
-    const newWorkflow = await this.findOne(
-      user,
-      oldWorkflow.name + '-copy',
-      false
-    );
+    let copyEraseIndex = oldWorkflow.name.indexOf('-copy');
+    if (copyEraseIndex === -1) copyEraseIndex = oldWorkflow.name.length;
+
+    const res = await this.workflowsRepository
+      .createQueryBuilder()
+      .select('COUNT(*)')
+      .where('starts_with(name, :oldName) = TRUE AND "ownerId" = :ownerId', {
+        oldName: oldWorkflow.name.substring(0, copyEraseIndex),
+        ownerId: user.id,
+      })
+      .execute();
+    const newName =
+      oldWorkflow.name.substring(0, copyEraseIndex) +
+      '-copy-' +
+      (res?.[0]?.count || '0');
+    const newWorkflow = await this.findOne(user, newName, false);
 
     const newAudiences = await Promise.all(
-      oldWorkflow.audiences.map(async (id) => {
+      oldWorkflow.audiences?.map(async (id) => {
         const { name, description, inclusionCriteria, isDynamic, isPrimary } =
           await this.audiencesService.findOne(user, id);
         const newAudience = await this.audiencesService.insert(user, {
@@ -246,7 +257,7 @@ export class WorkflowsService {
           isPrimary,
         });
         return newAudience.id;
-      })
+      }) || []
     );
 
     let visualLayout = JSON.stringify(oldWorkflow.visualLayout);
@@ -269,7 +280,7 @@ export class WorkflowsService {
     await this.update(user, {
       id: newWorkflow.id,
       audiences: newAudiences,
-      name: oldWorkflow.name + '-copy',
+      name: newName,
       visualLayout,
       rules: triggers,
     });
