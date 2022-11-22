@@ -46,7 +46,7 @@ import { Grid } from "@mui/material";
 import ToggleSwitch from "components/Elements/ToggleSwitch";
 
 const segmentTypeStyle =
-  "border-[1px] border-[#D1D5DB] rouded-[6px] shadow-[0px_1px_2px_rgba(0,0,0,0.05)] w-[234px] mt-[20px] p-[15px]";
+  "border-[1px] border-[#D1D5DB] rouded-[6px] shadow-[0px_1px_2px_rgba(0,0,0,0.05)] w-full mt-[20px] p-[15px]";
 
 interface INameSegmentForm {
   isDynamic: boolean;
@@ -542,10 +542,29 @@ const Flow = () => {
   };
 
   const [segmentForm, setSegmentForm] = useState<INameSegmentForm>({
-    isDynamic: true,
+    isDynamic:
+      nodes.find((node) => node.data.primary)?.data?.isDynamic || false,
   });
-  const onToggleChange = () => {
-    setSegmentForm({ ...segmentForm, isDynamic: !segmentForm.isDynamic });
+
+  useEffect(() => {
+    setSegmentForm({
+      isDynamic:
+        nodes.find((node) => node.data.primary)?.data?.isDynamic || false,
+    });
+  }, [nodes]);
+
+  const onToggleChange = async () => {
+    const primaryNode = nodes.find((node) => node.data.primary);
+    if (!primaryNode) return;
+    await ApiService.patch({
+      url: "/audiences",
+      options: {
+        id: primaryNode.data?.audienceId,
+        isDynamic: !segmentForm.isDynamic,
+      },
+    });
+    primaryNode.data.isDynamic = !primaryNode.data.isDynamic;
+    setSegmentForm({ isDynamic: !segmentForm.isDynamic });
   };
 
   let startDisabledReason = "";
@@ -557,7 +576,7 @@ const Flow = () => {
       "Add a message to a step to be able to start a journey";
 
   return (
-    <div className="h-[calc(100vh-64px)] overflow-y-scroll flex w-full">
+    <div className="h-[calc(100vh-64px)] flex w-full">
       <Helmet>
         <script>
           {`
@@ -577,7 +596,7 @@ const Flow = () => {
             })(document, "script");`}
         </script>
       </Helmet>
-      <div className="max-h-[calc(100vh-64px)] h-full lg:overflow-y-auto overflow-y-scroll flex">
+      <div className="max-h-[calc(100vh-64px)] h-full lg:overflow-y-auto overflow-y-scroll overflow-x-hidden">
         <div className="flex flex-col">
           <SideDrawer
             selectedNode={selectedNode}
@@ -615,6 +634,7 @@ const Flow = () => {
           />
         </div>
       </div>
+
       <ReactFlow
         nodes={nodes}
         edges={edges}
