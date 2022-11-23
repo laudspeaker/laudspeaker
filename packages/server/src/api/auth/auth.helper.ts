@@ -89,23 +89,25 @@ export class AuthHelper extends BaseJwtHelper {
     const data = await Promise.all(
       [
         {
-          name: 'before user signs up',
+          name: 'Pre-Signup',
           customers: [],
           templates: [],
           isDynamic: true,
           isPrimary: true,
           inclusionCriteria: undefined,
-          description: 'initial step',
+          description:
+            "User hasn't created an account yet. When a user creates an account, we receive the SignUp event, and they are moved to the next step in the Journey, where they will be sent a message. Users that we have never seen before are added to this step, and then we process their associated SignUp event.",
           ownerId: userId,
         },
         {
-          name: 'after sign up step 1',
+          name: 'Post-Signup',
           customers: [],
           templates: [],
           isDynamic: false,
           isPrimary: false,
           inclusionCriteria: undefined,
-          description: '',
+          description:
+            'In this step, triggered immediately after the SignUp event, users are sent a Welcome Email. You can see the all available templates under the Templates tab in the Side Navigation Menu.',
           ownerId: userId,
         },
       ].map(async (el) => {
@@ -128,7 +130,7 @@ export class AuthHelper extends BaseJwtHelper {
 
     const nodeIds = [randomUUID(), randomUUID()];
     const triggerId = randomUUID();
-    const eventName = randomUUID();
+    const eventName = 'SignUp';
 
     ret.audiences = data.map((el) => el.id);
 
@@ -247,13 +249,14 @@ export class AuthHelper extends BaseJwtHelper {
     const data = await Promise.all(
       [
         {
-          name: 'initial step',
+          name: 'One-Off Broadcast',
           customers: [],
           templates: [],
-          isDynamic: true,
+          isDynamic: false,
           isPrimary: true,
           inclusionCriteria: undefined,
-          description: 'initial step',
+          description:
+            "This email is sent to all your customers that exist at the moment that the Journey is started and meet the crtiteria for this Journey. It is not sent to customers who's profiles are created after this Journey is started (Static Journey).",
           ownerId: userId,
         },
       ].map(async (el) => {
