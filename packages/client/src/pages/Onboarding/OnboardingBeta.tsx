@@ -8,7 +8,7 @@ import Input from "../../components/Elements/Input";
 import Select from "../../components/Elements/Select";
 
 import { allEventChannels } from "../Settings/EventsProvider";
-import EmailProvider, { allEmailChannels } from "../Settings/EmailProvider";
+import { allEmailChannels } from "../Settings/EmailProvider";
 import { useTypedSelector } from "hooks/useTypeSelector";
 import { setDomainsList, setSettingsPrivateApiKey } from "reducers/settings";
 import { useDispatch } from "react-redux";
@@ -17,7 +17,8 @@ import CSS from "csstype";
 import Modal from "components/Elements/Modal";
 import { toast } from "react-toastify";
 import { GenericButton } from "components/Elements";
-
+import ExclamationTriangleIcon from "@heroicons/react/24/solid/ExclamationTriangleIcon";
+import { Link } from "react-router-dom";
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(" ");
 }
@@ -442,6 +443,24 @@ export default function OnboardingBeta() {
       <div className="min-h-full">
         <div className="flex flex-1 flex-col">
           <Header />
+          {!verified && (
+            <div className="flex items-center py-[10px] px-[10px] md:px-[30px] bg-[#fffde9]">
+              <ExclamationTriangleIcon className="w-[30px] h-[30px] text-[#ffe30c] mr-[20px]" />
+              <div className="w-full flex flex-col">
+                <span className="text-[#f3c276] text-[18px] leading-[24px] font-medium">
+                  Email not verified.
+                </span>
+                <span className="text-[#f6d077] text-[14px] leading-[18px]">
+                  Please check your inbox to verify your email. Once you have
+                  you can test email sending. If you need to resend the email
+                  verification go to{" "}
+                  <Link to="/settings">
+                    <u>settings.</u>
+                  </Link>
+                </span>
+              </div>
+            </div>
+          )}
           <main className="flex-1 pb-8">
             <div className="grid place-items-center pt-6">
               <button
