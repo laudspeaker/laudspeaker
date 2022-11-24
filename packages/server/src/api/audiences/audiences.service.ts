@@ -5,7 +5,7 @@ import {
   LoggerService,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Like, Repository } from 'typeorm';
+import { In, Like, Repository } from 'typeorm';
 import { Audience } from './entities/audience.entity';
 import { CreateAudienceDto } from './dto/create-audience.dto';
 import { UpdateAudienceDto } from './dto/update-audience.dto';
@@ -35,11 +35,11 @@ export class AudiencesService {
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
     private readonly logger: LoggerService,
     @InjectRepository(Audience)
-    private audiencesRepository: Repository<Audience>,
+    public audiencesRepository: Repository<Audience>,
     @InjectRepository(Stats) private statsRepository: Repository<Stats>,
     @InjectRepository(Workflow)
     private workflowRepository: Repository<Workflow>,
-    @Inject(TemplatesService) private templatesService: TemplatesService
+    @Inject(TemplatesService) public templatesService: TemplatesService
   ) {}
 
   /**
@@ -336,6 +336,7 @@ export class AudiencesService {
     const jobIds: (string | number)[] = [];
     let jobId: string | number;
     let fromAud: Audience, toAud: Audience;
+
     if (from) {
       try {
         fromAud = await this.findOne(account, from);
@@ -352,6 +353,7 @@ export class AudiencesService {
         return Promise.reject(err);
       }
     }
+
     if (fromAud?.customers?.length) {
       index = fromAud?.customers?.indexOf(customerId);
       this.logger.debug(
@@ -393,6 +395,40 @@ export class AudiencesService {
         this.logger.error('Error: ' + err);
         return Promise.reject(err);
       }
+
+      if (
+        account.emailProvider === 'free3' &&
+        account.customerId !== customerId &&
+        toAud?.templates?.length
+      ) {
+        const data = await this.templatesService.templatesRepository.find({
+          where: {
+            ownerId: account.id,
+            type: 'email',
+            id: In(toAud?.templates),
+          },
+        });
+        if (data.length > 0) {
+          this.logger.debug(
+            'ToAud templates before template skip: ',
+            toAud.templates
+          );
+          const dataIds = data.map((el2) => String(el2.id));
+          toAud.templates = toAud.templates.filter(
+            (el) => !dataIds.includes(String(el))
+          );
+          this.logger.debug(
+            'ToAud templates after template skip: ',
+            toAud.templates
+          );
+          this.logger.warn(
+            'Templates: [' +
+              dataIds.join(',') +
+              "] was skipped to send because test mail's can't be sent to external account."
+          );
+        }
+      }
+
       if (toAud?.templates?.length) {
         for (
           let templateIndex = 0;
