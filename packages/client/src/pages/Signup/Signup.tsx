@@ -249,8 +249,8 @@ const Signup = () => {
                 />
                 {isInvalids.pass && checkedFields.password && (
                   <p className="mt-2 text-sm text-red-600">
-                    Password's should be longer or equal 8 char's and should be
-                    equal
+                    Password should be longer than 8 characters and passwords
+                    should be equal.
                   </p>
                 )}
               </div>
