@@ -26,6 +26,7 @@ export interface InputProps {
   onBlur?: (e?: any) => void;
   ref?: any;
   endText?: string;
+  [key: string]: any;
 }
 
 const Input = (props: InputProps) => {
@@ -54,6 +55,7 @@ const Input = (props: InputProps) => {
     onBlur,
     style,
     endText,
+    ...otherProps
   } = props;
   return (
     <>
@@ -71,7 +73,7 @@ const Input = (props: InputProps) => {
             name={name}
             id={id}
             ref={inputRef}
-            value={value}
+            value={value || ""}
             onChange={onChange}
             onKeyDown={onKeyDown}
             onBlur={onBlur}
@@ -85,6 +87,7 @@ const Input = (props: InputProps) => {
             }`}
             placeholder={placeholder}
             style={style}
+            {...otherProps}
           />
           {endText && (
             <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">

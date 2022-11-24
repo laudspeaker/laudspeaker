@@ -253,7 +253,7 @@ export default function SettingsEmailBeta() {
         <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:py-5">
           <dt className="text-sm font-medium text-gray-500">Mailgun API Key</dt>
           <dd>
-            <div className="relative rounded-md ">
+            <div className="relative rounded-md min-w-[260px]">
               <Input
                 type="password"
                 value={formData.mailgunAPIKey}
@@ -298,7 +298,7 @@ export default function SettingsEmailBeta() {
         <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:py-5">
           <dt className="text-sm font-medium text-gray-500">Sending Domain</dt>
           <dd>
-            <div className="relative rounded-md">
+            <div className="relative rounded-md min-w-[260px]">
               <select
                 id="sendingDomain"
                 name="sendingDomain"
@@ -347,7 +347,7 @@ export default function SettingsEmailBeta() {
         <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:py-5">
           <dt className="text-sm font-medium text-gray-500">Sending Name</dt>
           <dd>
-            <div className="relative rounded-md">
+            <div className="relative rounded-md min-w-[260px]">
               <Input
                 type="text"
                 value={formData.sendingName}
@@ -386,7 +386,7 @@ export default function SettingsEmailBeta() {
         <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:py-5">
           <dt className="text-sm font-medium text-gray-500">Sending Email</dt>
           <dd>
-            <div className="relative mt-1 rounded-md shadow-sm">
+            <div className="relative mt-1 rounded-md shadow-sm min-w-[260px]">
               <Input
                 type="text"
                 value={formData.sendingEmail}
@@ -441,7 +441,7 @@ export default function SettingsEmailBeta() {
         <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:py-5">
           <dt className="text-sm font-medium text-gray-500">Sending Name</dt>
           <dd>
-            <div className="relative rounded-md">
+            <div className="relative rounded-md min-w-[260px]">
               <Input
                 type="text"
                 value={formData.testSendingName}
@@ -483,14 +483,14 @@ export default function SettingsEmailBeta() {
         <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:py-5">
           <dt className="text-sm font-medium text-gray-500">Sending Email</dt>
           <dd>
-            <div className="relative mt-1 rounded-md shadow-sm">
+            <div className="relative mt-1 rounded-md shadow-sm min-w-[260px]">
               <Input
                 type="text"
                 value={formData.testSendingEmail}
                 onChange={handleFormDataChange}
                 name="testSendingEmail"
                 id="testSendingEmail"
-                className={`rounded-md shadow-sm sm:text-sm pr-[150px] ${
+                className={`rounded-md shadow-sm sm:text-sm pr-[186px] ${
                   showErrors.testSendingEmail &&
                   free3Errors.testSendingEmail.length > 0
                     ? "focus:!border-red-500 !border-red-300 shadow-sm focus:!ring-red-500"
@@ -502,7 +502,7 @@ export default function SettingsEmailBeta() {
               />
               <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
                 <span className="text-gray-500 sm:text-sm" id="price-currency">
-                  @laudspeaker.com
+                  @laudspeaker-test.com
                 </span>
               </div>
               {showErrors.testSendingEmail &&
@@ -536,7 +536,7 @@ export default function SettingsEmailBeta() {
             Sendgrid Api key
           </dt>
           <dd>
-            <div className="relative rounded-md">
+            <div className="relative rounded-md min-w-[260px]">
               <Input
                 type="password"
                 value={formData.sendgridApiKey}
@@ -577,7 +577,7 @@ export default function SettingsEmailBeta() {
         <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:py-5">
           <dt className="text-sm font-medium text-gray-500">Sendgrid email</dt>
           <dd>
-            <div className="relative mt-1 rounded-md shadow-sm">
+            <div className="relative mt-1 rounded-md shadow-sm min-w-[260px]">
               <Input
                 type="text"
                 value={formData.sendgridFromEmail}
