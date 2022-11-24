@@ -619,7 +619,7 @@ const Flow = () => {
                       onChange={onToggleChange}
                     />
                   </Grid>
-                  <Tooltip title="dynamic">
+                  <Tooltip title="Dynamic journeys will enroll new customers that satisfy the conditions of the Journey. Static journeys will only enroll customers that satisfy the conditions of the journey when it is started.">
                     {/* <IconButton> */}
                     <div className="flex items-center cursor-default mt-[8px]">
                       <img src={InfoIcon} width="20px" />
