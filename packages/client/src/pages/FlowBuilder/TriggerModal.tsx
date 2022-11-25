@@ -19,14 +19,25 @@ const TriggerModal = ({
   onDeleteTrigger,
   onClose,
   isViewMode = false,
-  isCollapsible,
+  isCollapsible = true,
 }: ITriggerModal) => {
+  const handleClose = () => {
+    const inVal = selectedTrigger?.properties?.conditions?.[0]?.value;
+
+    if (isViewMode && isCollapsible) onClose();
+    else if (isCollapsible) {
+      if (!!inVal) onClose();
+      else if (!inVal) onDeleteTrigger(selectedTrigger.id);
+      else onClose();
+    }
+  };
+
   return (
     <Modal
       isOpen={!!selectedTrigger}
       panelClass="w-full !max-w-[90%]"
-      closeButtonNeed={isViewMode}
-      onClose={isViewMode ? onClose : () => null}
+      closeButtonNeed={isCollapsible}
+      onClose={handleClose}
     >
       <div className="w-full bg-[background.paper] border-0 ">
         {selectedTrigger ? (
