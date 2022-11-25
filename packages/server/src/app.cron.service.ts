@@ -20,6 +20,13 @@ import { IsNull, Not, Repository } from 'typeorm';
 import { createClient } from '@clickhouse/client';
 import { Verification } from './api/auth/entities/verification.entity';
 import { SendgridEvent } from './api/webhooks/entities/sendgrid-event.entity';
+import { EventDocument } from './api/events/schemas/event.schema';
+import { EventKeysDocument } from './api/events/schemas/event-keys.schema';
+import { Event } from './api/events/schemas/event.schema';
+import {
+  EventKeys,
+  EventKeysSchema,
+} from './api/events/schemas/event-keys.schema';
 
 const client = createClient({
   host: process.env.CLICKHOUSE_HOST ?? 'http://localhost:8123',
@@ -72,6 +79,10 @@ export class CronService {
     private customerModel: Model<CustomerDocument>,
     @InjectModel(CustomerKeys.name)
     private customerKeysModel: Model<CustomerKeysDocument>,
+    @InjectModel(Event.name)
+    private eventModel: Model<EventDocument>,
+    @InjectModel(EventKeys.name)
+    private eventKeysModel: Model<EventKeysDocument>,
     @InjectRepository(Account)
     private accountRepository: Repository<Account>,
     @InjectRepository(Verification)
@@ -156,6 +167,82 @@ export class CronService {
 
       this.logger.log(
         `Cron customer keys job finished, checked ${documentsCount} records, found ${
+          Object.keys(keys).length
+        } keys`
+      );
+    } catch (e) {
+      this.logger.error('Cron error: ' + e);
+    }
+  }
+
+  @Cron(CronExpression.EVERY_HOUR)
+  async handleEventKeysCron() {
+    try {
+      this.logger.log('Cron event keys job started');
+      let current = 0;
+      const documentsCount = await this.eventModel
+        .estimatedDocumentCount()
+        .exec();
+
+      const keys: Record<string, any[]> = {};
+
+      while (current < documentsCount) {
+        const batch = await this.eventModel
+          .find()
+          .skip(current)
+          .limit(BATCH_SIZE)
+          .exec();
+
+        batch.forEach((event) => {
+          const obj = event.toObject();
+          for (const key of Object.keys(obj)) {
+            if (KEYS_TO_SKIP.includes(key)) continue;
+
+            if (keys[key]) {
+              keys[key].push(obj[key]);
+              continue;
+            }
+
+            keys[key] = [obj[key]];
+          }
+        });
+        current += BATCH_SIZE;
+      }
+
+      for (const key of Object.keys(keys)) {
+        const validItem = keys[key].find(
+          (item) => item !== '' && item !== undefined && item !== null
+        );
+
+        if (validItem === '' || validItem === undefined || validItem === null)
+          continue;
+
+        const keyType = getType(validItem);
+        const isArray = keyType.isArray();
+        let type = isArray ? getType(validItem[0]).name : keyType.name;
+
+        if (type === 'String') {
+          if (isEmail(validItem)) type = 'Email';
+          if (isDateString(validItem)) type = 'Date';
+        }
+
+        await this.eventKeysModel
+          .updateOne(
+            { key },
+            {
+              $set: {
+                key,
+                type,
+                isArray,
+              },
+            },
+            { upsert: true }
+          )
+          .exec();
+      }
+
+      this.logger.log(
+        `Cron event keys job finished, checked ${documentsCount} records, found ${
           Object.keys(keys).length
         } keys`
       );
