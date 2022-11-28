@@ -1,5 +1,5 @@
 import { Trim } from 'class-sanitizer';
-import { IsString, IsNotEmpty, IsOptional } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsObject } from 'class-validator';
 
 export class EventDto {
   @IsString()
@@ -26,4 +26,8 @@ export class EventDto {
   @IsString()
   @IsOptional()
   public payload: string;
+
+  @IsObject()
+  @IsOptional()
+  public value?: Record<string, any>;
 }

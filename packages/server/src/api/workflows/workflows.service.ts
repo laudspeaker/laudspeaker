@@ -261,7 +261,7 @@ export class WorkflowsService {
     );
 
     let visualLayout = JSON.stringify(oldWorkflow.visualLayout);
-    const rules = oldWorkflow.rules.map((rule) =>
+    const rules = oldWorkflow.rules?.map((rule) =>
       Buffer.from(rule, 'base64').toString()
     );
 
@@ -275,7 +275,7 @@ export class WorkflowsService {
     }
 
     visualLayout = JSON.parse(visualLayout);
-    const triggers: Trigger[] = rules.map((rule) => JSON.parse(rule));
+    const triggers: Trigger[] = rules?.map((rule) => JSON.parse(rule));
 
     await this.update(user, {
       id: newWorkflow.id,
@@ -567,7 +567,7 @@ export class WorkflowsService {
                 }
                 if (
                   from.customers.indexOf(customer?.id) > -1 &&
-                  trigger.properties.event == event.event
+                  trigger.properties.event == event.event /////
                 ) {
                   try {
                     jobIdArr = await this.audiencesService.moveCustomer(
