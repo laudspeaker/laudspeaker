@@ -96,6 +96,7 @@ export default function ResponsiveDrawer(props: Props) {
       (item.canBeDisabled && !selectedNode) ||
       (item.requiredOnboarding &&
         !expectedOnboarding?.includes(item.requiredOnboarding));
+
     return (
       <>
         <Tooltip

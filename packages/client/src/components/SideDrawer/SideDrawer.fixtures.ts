@@ -59,7 +59,7 @@ export const dataSubArray = [
         type: "menu",
         link: "/eventBased",
         canBeDisabled: true,
-        disabledToolTip: "Add step first",
+        disabledToolTip: "Add step first or select if added",
       },
       {
         id: "timeDelay",
@@ -68,7 +68,7 @@ export const dataSubArray = [
         type: "menu",
         link: "/timeDelay",
         canBeDisabled: true,
-        disabledToolTip: "Add step first",
+        disabledToolTip: "Add step first or select if added",
         enabledToolTip:
           "This trigger moves a user from one step to another some time after an action",
       },
@@ -79,7 +79,7 @@ export const dataSubArray = [
         type: "menu",
         link: "/timeWindow",
         canBeDisabled: true,
-        disabledToolTip: "Add step first",
+        disabledToolTip: "Add step first or select if added",
       },
     ],
   },
@@ -97,7 +97,7 @@ export const dataSubArray = [
         canBeDisabled: true,
         requiredOnboarding: "Email",
         disabledToolTip:
-          "Make sure there are steps and configure email in settings",
+          "Make sure there are steps and configure email in settings and step selected",
       },
       {
         id: "push",
@@ -108,7 +108,7 @@ export const dataSubArray = [
         canBeDisabled: true,
         alwaysDisabled: true,
         disabledToolTip:
-          "Make sure there are steps and configure push notification in settings",
+          "Make sure there are steps and configure push notification in settings and step selected",
       },
       {
         id: "sms",
@@ -119,7 +119,7 @@ export const dataSubArray = [
         canBeDisabled: true,
         alwaysDisabled: true,
         disabledToolTip:
-          "Make sure there are steps and configure sms in settings",
+          "Make sure there are steps and configure sms in settings and step selected",
       },
       {
         id: "slack",
@@ -130,7 +130,7 @@ export const dataSubArray = [
         canBeDisabled: true,
         requiredOnboarding: "Slack",
         disabledToolTip:
-          "Make sure there are steps and configure slack in settings",
+          "Make sure there are steps and configure slack in settings and step selected",
         //alwaysDisabled: true,
       },
     ],

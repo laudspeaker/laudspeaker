@@ -19,13 +19,27 @@ import { toast } from "react-toastify";
 import { GenericButton } from "components/Elements";
 import ExclamationTriangleIcon from "@heroicons/react/24/solid/ExclamationTriangleIcon";
 import { Link } from "react-router-dom";
-function classNames(...classes: string[]) {
-  return classes.filter(Boolean).join(" ");
-}
+
+const validators: { [key: string]: (value: string) => string | void } = {
+  emailwithend: (value: string) => {
+    if (value.match(/[ `!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~]/)) {
+      return "You shouldn't pass full email here.";
+    }
+  },
+  email: (value: string) => {
+    if (!value?.match(/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/)) {
+      return "You should pass email.";
+    }
+  },
+};
+
+const attributeKeys: { [key: string]: string } = {
+  testSendingEmail: "emailwithend",
+};
 
 const expectedFields: Record<string, string[]> = {
   free3: ["testSendingEmail", "testSendingName"],
-  mailgun: ["sendingName", "sendingEmail"],
+  mailgun: ["sendingName", "sendingEmail", "privateApiKey"],
   sendgrid: ["sendgridApiKey", "sendgridFromEmail"],
 };
 
@@ -142,9 +156,15 @@ export default function OnboardingBeta() {
   }, []);
 
   const errorCheck = (e: any) => {
-    let newError: string | undefined = undefined;
+    let newError: string | void = undefined;
     if (!e.target.value) {
       newError = "Field can't be empty.";
+    }
+    const attribute =
+      e.target?.getAttribute?.("data-spectype") || e.target?.custattribute;
+
+    if (!newError && attribute) {
+      newError = validators[attribute]?.(e.target.value);
     }
 
     setErrors((prev) => ({ ...prev, [e.target.name]: newError }));
@@ -169,6 +189,7 @@ export default function OnboardingBeta() {
         theme: "colored",
       });
     }
+    errorCheck(e);
     setIntegrationsData({
       ...integrationsData,
       [e.target.name]: e.target.value,
@@ -182,6 +203,8 @@ export default function OnboardingBeta() {
         objToSend[key] = (integrationsData as Record<string, any>)[key];
     }
 
+    let skip = false;
+
     if (integrationsData.emailProvider) {
       for (const key of expectedFields[integrationsData.emailProvider]) {
         if (
@@ -189,12 +212,27 @@ export default function OnboardingBeta() {
             target: {
               name: key,
               value: (integrationsData as any)?.[key],
+              custattribute: attributeKeys[key],
             },
           })
         ) {
-          return;
+          skip = true;
         }
       }
+    }
+
+    if (skip) {
+      toast.error("Please check passed data", {
+        position: "bottom-center",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "colored",
+      });
+      return;
     }
 
     try {
@@ -234,7 +272,7 @@ export default function OnboardingBeta() {
           placeholder={"****  "}
           name="posthogApiKey"
           id="posthogApiKey"
-          onChange={(e) => handleIntegrationsDataChange(e)}
+          onChange={handleIntegrationsDataChange}
           onBlur={handleBlur}
         />
         <Input
@@ -244,7 +282,7 @@ export default function OnboardingBeta() {
           placeholder={"****  "}
           name="posthogProjectId"
           id="posthogProjectId"
-          onChange={(e) => handleIntegrationsDataChange(e)}
+          onChange={handleIntegrationsDataChange}
           onBlur={handleBlur}
         />
         <Input
@@ -254,7 +292,7 @@ export default function OnboardingBeta() {
           placeholder={"https://app.posthog.com"}
           name="posthogHostUrl"
           id="posthogHostUrl"
-          onChange={(e) => handleIntegrationsDataChange(e)}
+          onChange={handleIntegrationsDataChange}
           onBlur={handleBlur}
         />
         <Input
@@ -264,7 +302,7 @@ export default function OnboardingBeta() {
           placeholder={"$phoneNumber"}
           name="posthogSmsKey"
           id="posthogSmsKey"
-          onChange={(e) => handleIntegrationsDataChange(e)}
+          onChange={handleIntegrationsDataChange}
           onBlur={handleBlur}
         />
         <Input
@@ -274,7 +312,7 @@ export default function OnboardingBeta() {
           placeholder={"$email"}
           name="posthogEmailKey"
           id="posthogEmailKey"
-          onChange={(e) => handleIntegrationsDataChange(e)}
+          onChange={handleIntegrationsDataChange}
           onBlur={handleBlur}
         />
       </form>
@@ -335,7 +373,7 @@ export default function OnboardingBeta() {
           value={integrationsData.sendingName}
           isError={!!errors["sendingName"]}
           errorText={errors["sendingName"]}
-          onChange={(e) => handleIntegrationsDataChange(e)}
+          onChange={handleIntegrationsDataChange}
           onBlur={handleBlur}
         />
         <div className="relative">
@@ -344,7 +382,7 @@ export default function OnboardingBeta() {
             id="sendingEmail"
             label="Sending email"
             value={integrationsData.sendingEmail}
-            onChange={(e) => handleIntegrationsDataChange(e)}
+            onChange={handleIntegrationsDataChange}
             className="pr-[150px]"
             isError={!!errors["sendingEmail"]}
             errorText={errors["sendingEmail"]}
@@ -363,7 +401,7 @@ export default function OnboardingBeta() {
           isError={!!errors["testSendingName"]}
           errorText={errors["testSendingName"]}
           value={integrationsData.testSendingName}
-          onChange={(e) => handleIntegrationsDataChange(e)}
+          onChange={handleIntegrationsDataChange}
           onBlur={handleBlur}
         />
         <div className="relative">
@@ -371,12 +409,13 @@ export default function OnboardingBeta() {
             name="testSendingEmail"
             id="testSendingEmail"
             label="Sending email"
+            data-spectype="emailwithend"
             value={integrationsData.testSendingEmail}
-            onChange={(e) => handleIntegrationsDataChange(e)}
+            onChange={handleIntegrationsDataChange}
             isError={!!errors["testSendingEmail"]}
             errorText={errors["testSendingEmail"]}
-            className="pr-[150px]"
-            endText={domainName ? "@laudspeaker-test.com" : ""}
+            className="pr-[210px]"
+            endText={"@laudspeaker-test.com"}
             onBlur={handleBlur}
           />
         </div>
@@ -395,7 +434,7 @@ export default function OnboardingBeta() {
           isError={!!errors["sendgridApiKey"]}
           errorText={errors["sendgridApiKey"]}
           labelClass="!text-[16px]"
-          onChange={(e) => handleIntegrationsDataChange(e)}
+          onChange={handleIntegrationsDataChange}
           onBlur={(e) => {
             callDomains();
             handleBlur(e);
@@ -412,7 +451,7 @@ export default function OnboardingBeta() {
           errorText={errors["sendgridFromEmail"]}
           type="text"
           labelClass="!text-[16px]"
-          onChange={(e) => handleIntegrationsDataChange(e)}
+          onChange={handleIntegrationsDataChange}
           onBlur={handleBlur}
         />
       </>
@@ -436,7 +475,19 @@ export default function OnboardingBeta() {
     if (!requiredKeys) return;
     const requiredValues = requiredKeys.map((key) => !errors[key]);
     setIsError(requiredValues.some((value) => !value));
-  }, [errors, integrationsData]);
+
+    if (integrationsData.emailProvider) {
+      for (const key of expectedFields[integrationsData.emailProvider]) {
+        errorCheck({
+          target: {
+            name: key,
+            value: (integrationsData as any)?.[key],
+            custattribute: attributeKeys[key],
+          },
+        });
+      }
+    }
+  }, [integrationsData]);
 
   return (
     <>
