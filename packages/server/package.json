@@ -50,6 +50,7 @@
     "class-sanitizer": "^1.0.1",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.13.2",
+    "dd-trace": "^3.8.0",
     "env-cmd": "^10.1.0",
     "form-data": "^4.0.0",
     "liquidjs": "^9.42.0",
