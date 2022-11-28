@@ -730,45 +730,10 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
         }}
       >
         <div className="rounded-[10px] border-[1px] border-[#D1D5DB] my-[25px] mx-[0px] py-[20px] px-[25px] relative shadow-[0px_1px_2px_rgba(0,0,0,0.05)]">
-          <div className="flex items-center gap-[15px]">
-            <FormControl
-              sx={{
-                maxWidth: "135px",
-                paddingLeft: "15px",
-                minWidth: "112px",
-              }}
-            >
-              <Select
-                id="activeJourney"
-                value={triggerType}
-                options={[
-                  { value: "eventBased", title: "Conditions" },
-                  { value: "timeDelay", title: "When" },
-                  { value: "timeWindow", title: "From" },
-                ].filter((item) => item.value === triggerType)}
-                onChange={handletriggerType}
-                displayEmpty
-                disabled={isViewMode}
-                customButtonClass={`${
-                  isViewMode && "!bg-gray-200 !cursor-auto opacity-[0.7]"
-                }`}
-                sx={{
-                  height: "44px",
-                  "& .MuiSelect-select": {
-                    padding: "9px 15px",
-                    border: "1px solid #DEDEDE",
-                    boxShadow: "none",
-                  },
-                }}
-              />
-            </FormControl>
-          </div>
-          <div className="ml-[88px]">
-            <div className="flex items-center relative after:absolute after:z-[1] after:top-[10%] after:left-[-100px] after:ml-[45px] after:border-l-[2px] after:border-dashed after:border-l-[#7B7E7C] after:h-[80%]">
-              <div className="rounded-[10px] my-[25px] mx-[0px] pt-[10px] pb-[25px] px-[20px] bg-[#F9F9FA] flex items-center cursor-pointer w-full">
-                <div className="flex flex-[1] flex-wrap">
-                  {generateTriggerUI()}
-                </div>
+          <div className="flex items-center relative">
+            <div className="rounded-[10px] my-[25px] mx-[0px] pt-[10px] pb-[25px] px-[20px] bg-[#F9F9FA] flex items-center cursor-pointer w-full">
+              <div className="flex flex-[1] flex-wrap">
+                {generateTriggerUI()}
               </div>
             </div>
           </div>
@@ -803,12 +768,10 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
                   />
                 </FormControl>
               </div>
-              <div className="ml-[88px]">
-                <div className="flex items-center relative after:absolute after:z-[1] after:top-[10%] after:left-[-100px] after:ml-[45px] after:border-l-[2px] after:border-dashed after:border-l-[#7B7E7C] after:h-[80%]">
-                  <div className="rounded-[10px] my-[25px] mx-[0px] pt-[10px] pb-[25px] px-[20px] bg-[#F9F9FA] flex items-center cursor-pointer w-full">
-                    <div className="flex flex-[1] flex-wrap">
-                      {generateTriggerUI({ toPart: true })}
-                    </div>
+              <div className="flex items-center relative">
+                <div className="rounded-[10px] my-[25px] mx-[0px] pt-[10px] pb-[25px] px-[20px] bg-[#F9F9FA] flex items-center cursor-pointer w-full">
+                  <div className="flex flex-[1] flex-wrap">
+                    {generateTriggerUI({ toPart: true })}
                   </div>
                 </div>
               </div>

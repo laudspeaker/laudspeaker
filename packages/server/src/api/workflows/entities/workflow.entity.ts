@@ -6,8 +6,14 @@ export enum TriggerType {
   time_window,
 }
 
+export interface IEventConditions {
+  value: any;
+  attribute: string;
+  condition: string;
+}
+
 export class EventProps {
-  event: string;
+  conditions: IEventConditions[];
 }
 
 export class Trigger {

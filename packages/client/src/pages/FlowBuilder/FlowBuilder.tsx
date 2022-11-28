@@ -755,8 +755,6 @@ const Flow = () => {
       ) : null}
       {triggerModalOpen && (
         <TriggerModal
-          triggerModalOpen={triggerModalOpen}
-          handleTriggerModalOpen={handleTriggerModalOpen}
           selectedTrigger={selectedTrigger}
           onSaveTrigger={onSaveTrigger}
           onDeleteTrigger={onDeleteTrigger}

@@ -566,8 +566,8 @@ export class WorkflowsService {
                   }
                 }
                 if (
-                  from.customers.indexOf(customer?.id) > -1 &&
-                  trigger.properties.event == event.event /////
+                  from.customers.indexOf(customer?.id) > -1
+                  // trigger.properties.event == event.event ///// TODO: change due to compare logic changes
                 ) {
                   try {
                     jobIdArr = await this.audiencesService.moveCustomer(
