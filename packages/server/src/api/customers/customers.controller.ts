@@ -71,10 +71,9 @@ export class CustomersController {
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
   async findOne(@Req() { user }: Request, @Param() { id }: { id: string }) {
-    const { verified, ...customer } = await this.customersService.findOne(
-      <Account>user,
-      id
-    );
+    const { _id, __v, ownerId, verified, ...customer } =
+      await this.customersService.findOne(<Account>user, id);
+
     return customer;
   }
 

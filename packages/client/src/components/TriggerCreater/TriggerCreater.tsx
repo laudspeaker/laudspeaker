@@ -438,6 +438,7 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
 
     return result;
   };
+
   const handleEventBasedTrigger: any = async (e: any) => {
     const requestBody: InclusionCriteria = {
       conditions: [],
@@ -462,15 +463,19 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
     return requestBody;
   };
 
-  const handleSubmit: any = async (e: any) => {
-    e.preventDefault();
+  const handleData = async (func: (data: any) => void) => {
     if (triggerType == "timeDelay")
-      onSave(JSON.parse(JSON.stringify(delayInputTime)));
-    else if (triggerType == "timeWindow") onSave(timeWindow);
+      func(JSON.parse(JSON.stringify(delayInputTime)));
+    else if (triggerType == "timeWindow") func(timeWindow);
     else if (triggerType == "eventBased") {
       const eventBasedTriggerData = await handleEventBasedTrigger();
-      onSave(eventBasedTriggerData);
+      func(eventBasedTriggerData);
     }
+  };
+
+  const handleSubmit: any = async (e: any) => {
+    e.preventDefault();
+    handleData(onSave);
   };
 
   const generateFormData = (

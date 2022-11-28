@@ -221,9 +221,26 @@ export class CustomersService {
     id: string,
     updateCustomerDto: Record<string, unknown>
   ) {
-    const { _id, ...newCustomerData } = updateCustomerDto;
+    const { ...newCustomerData } = updateCustomerDto;
+
+    delete newCustomerData.verified;
+    delete newCustomerData.ownerId;
+    delete newCustomerData._id;
+    delete newCustomerData.__v;
     const customer = await this.findOne(account, id);
-    await this.CustomerModel.replaceOne(customer, newCustomerData).exec();
+
+    if (customer.ownerId != account.id) {
+      throw new HttpException("You can't update this customer.", 400);
+    }
+
+    const newCustomer = Object.fromEntries(
+      Object.entries({
+        ...customer,
+        ...newCustomerData,
+      }).filter(([_, v]) => v != null)
+    );
+
+    await this.CustomerModel.replaceOne(customer, newCustomer).exec();
 
     return newCustomerData;
   }

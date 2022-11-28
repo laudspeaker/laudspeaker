@@ -26,7 +26,7 @@ export class TemplatesService {
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
     private readonly logger: LoggerService,
     @InjectRepository(Template)
-    private templatesRepository: Repository<Template>,
+    public templatesRepository: Repository<Template>,
     @Inject(CustomersService) private customersService: CustomersService,
     @Inject(SlackService) private slackService: SlackService,
     @InjectQueue('email') private readonly emailQueue: Queue,
