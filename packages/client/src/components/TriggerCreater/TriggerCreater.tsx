@@ -13,6 +13,8 @@ import {
 } from "pages/Segment/MySegment";
 import EditIcon from "@mui/icons-material/Edit";
 import DateTimePicker from "components/Elements/DateTimePicker";
+import TriggerSegment from "./TriggerSegment";
+import Autocomplete from "components/Autocomplete";
 
 export type TriggerType = "eventBased" | "timeDelay" | "timeWindow";
 interface ITriggerCreaterProp {
