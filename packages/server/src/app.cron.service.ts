@@ -184,7 +184,7 @@ export class CronService {
         .estimatedDocumentCount()
         .exec();
 
-      const keys: Record<string, any[]> = {};
+      let keys: Record<string, any[]> = {};
 
       while (current < documentsCount) {
         const batch = await this.eventModel
@@ -194,7 +194,7 @@ export class CronService {
           .exec();
 
         batch.forEach((event) => {
-          const obj = event.toObject();
+          const obj = event.toObject()?.event || {};
           for (const key of Object.keys(obj)) {
             if (KEYS_TO_SKIP.includes(key)) continue;
 
@@ -206,39 +206,43 @@ export class CronService {
             keys[key] = [obj[key]];
           }
         });
+
         current += BATCH_SIZE;
       }
 
       for (const key of Object.keys(keys)) {
-        const validItem = keys[key].find(
+        const validItems = keys[key].filter(
           (item) => item !== '' && item !== undefined && item !== null
         );
 
-        if (validItem === '' || validItem === undefined || validItem === null)
-          continue;
+        if (!validItems.length) continue;
 
-        const keyType = getType(validItem);
-        const isArray = keyType.isArray();
-        let type = isArray ? getType(validItem[0]).name : keyType.name;
+        await Promise.all(
+          validItems.map(async (validItem) => {
+            const keyType = getType(validItem);
+            const isArray = keyType.isArray();
+            let type = isArray ? getType(validItem[0]).name : keyType.name;
 
-        if (type === 'String') {
-          if (isEmail(validItem)) type = 'Email';
-          if (isDateString(validItem)) type = 'Date';
-        }
+            if (type === 'String') {
+              if (isEmail(validItem)) type = 'Email';
+              if (isDateString(validItem)) type = 'Date';
+            }
 
-        await this.eventKeysModel
-          .updateOne(
-            { key },
-            {
-              $set: {
-                key,
-                type,
-                isArray,
-              },
-            },
-            { upsert: true }
-          )
-          .exec();
+            await this.eventKeysModel
+              .updateOne(
+                { key },
+                {
+                  $set: {
+                    key,
+                    type,
+                    isArray,
+                  },
+                },
+                { upsert: true }
+              )
+              .exec();
+          })
+        );
       }
 
       this.logger.log(

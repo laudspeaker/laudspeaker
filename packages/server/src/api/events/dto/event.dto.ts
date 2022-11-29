@@ -15,11 +15,6 @@ export class EventDto {
   @Trim()
   @IsString()
   @IsNotEmpty()
-  public event: string;
-
-  @Trim()
-  @IsString()
-  @IsNotEmpty()
   @IsOptional()
   public source: string;
 
@@ -27,7 +22,7 @@ export class EventDto {
   @IsOptional()
   public payload: string;
 
+  @IsNotEmpty()
   @IsObject()
-  @IsOptional()
-  public value?: Record<string, any>;
+  public event?: Record<string, any>;
 }

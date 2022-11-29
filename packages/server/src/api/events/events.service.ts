@@ -209,8 +209,11 @@ export class EventsService {
     try {
       jobIDs = await this.workflowsService.tick(account, body);
       this.logger.debug('Queued messages with jobID ' + jobIDs);
-      if (body.value) {
-        await this.EventModel.create(body.value);
+      if (body) {
+        await this.EventModel.create({
+          ...body,
+          createdAt: new Date().toUTCString(),
+        });
       }
       return jobIDs;
     } catch (err) {

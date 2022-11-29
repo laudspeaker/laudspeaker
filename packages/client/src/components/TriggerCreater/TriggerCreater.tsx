@@ -757,14 +757,6 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
                     customButtonClass={`${
                       isViewMode && "!bg-gray-200 !cursor-auto opacity-[0.7]"
                     }`}
-                    sx={{
-                      height: "44px",
-                      "& .MuiSelect-select": {
-                        padding: "9px 15px",
-                        border: "1px solid #DEDEDE",
-                        boxShadow: "none",
-                      },
-                    }}
                   />
                 </FormControl>
               </div>
