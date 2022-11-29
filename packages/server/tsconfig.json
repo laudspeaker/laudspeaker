@@ -19,6 +19,7 @@
     "noFallthroughCasesInSwitch": false,
     "paths": { "@/*": ["./src/*"] },
     "typeRoots": ["./node_modules/@types"],
+    "esModuleInterop": true,
     "resolveJsonModule": true,
     "plugins": [
       {
