@@ -1,6 +1,6 @@
 import tracer from 'dd-trace';
 import p from '../package.json';
-import fetch from 'node-fetch';
+import fetch from 'sync-fetch';
 
 tracer.init({
   version: p.version,
