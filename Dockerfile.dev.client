@@ -9,7 +9,7 @@ ENV REACT_APP_API_BASE_URL http://localhost:3001
 ENV PATH /app/node_modules/.bin:$PATH
 COPY ./packages/client/package.json /app/
 COPY ./package-lock.json /app/
-RUN npm install
+RUN npm install --legacy-peer-deps
 COPY . /app
 RUN npm run build:client
 

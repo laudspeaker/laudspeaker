@@ -251,4 +251,17 @@ export class EventsService {
       mockData.resources.find((resource) => resource.id === resourceId) || {}
     );
   }
+
+  async getAttributes(resourceId: string) {
+    const attributes = await this.EventKeysModel.find({
+      key: RegExp(`.*${resourceId}.*`, 'i'),
+    })
+      .limit(10)
+      .exec();
+
+    return attributes.map((el) => ({
+      key: el.key,
+      options: attributeConditions(el.type, el.isArray),
+    }));
+  }
 }

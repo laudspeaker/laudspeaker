@@ -56,10 +56,17 @@ export class EventsController {
     return this.eventsService.enginePayload(apiKey, body);
   }
 
-  @Get('/attributes/:resourceId')
+  @Get('/possible-attributes/:resourceId?')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
-  async getAttributes(@Param('resourceId') resourceId: string) {
+  async getAttributes(@Param('resourceId') resourceId: string = '') {
+    return this.eventsService.getAttributes(resourceId);
+  }
+
+  @Get('/attributes/:resourceId?')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor)
+  async getOrUpdateAttributes(@Param('resourceId') resourceId: string = '') {
     return this.eventsService.getOrUpdateAttributes(resourceId);
   }
 }
