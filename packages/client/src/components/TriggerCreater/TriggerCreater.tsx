@@ -13,8 +13,8 @@ import {
 } from "pages/Segment/MySegment";
 import EditIcon from "@mui/icons-material/Edit";
 import DateTimePicker from "components/Elements/DateTimePicker";
-import TriggerSegment from "./TriggerSegment";
 import Autocomplete from "components/Autocomplete";
+import ConditionCreater from "./ConditionCreator";
 
 export type TriggerType = "eventBased" | "timeDelay" | "timeWindow";
 interface ITriggerCreaterProp {
@@ -39,6 +39,13 @@ interface Condition {
   type?: string;
 }
 
+export interface EventCondition {
+  key: string;
+  type: string;
+  value: string;
+  comparisonType: string;
+}
+
 const TriggerCreater = (props: ITriggerCreaterProp) => {
   const {
     triggerType: triggerProp,
@@ -54,7 +61,17 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
     return response;
   };
 
-  const [conditions, setConditions] = useState(trigger?.properties?.conditions);
+  const [conditions, setConditions] = useState<EventCondition[]>(
+    trigger?.properties?.conditions || []
+  );
+
+  const handleConditionsChange = (
+    index: number,
+    newCondition: EventCondition
+  ) => {
+    conditions[index] = newCondition;
+    setConditions([...conditions]);
+  };
 
   const populateFormData: any = (criteria: Condition[]) => {
     const parsedFormData = [];
@@ -362,6 +379,7 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
     ];
     setFormData(tempData);
   };
+
   const updateEvent = async ({ value, id, rowIndex, type, isRoot }: any) => {
     setIsButtonDisabled(true);
     const formDataToUpdate = JSON.parse(JSON.stringify(formData[rowIndex]));
@@ -725,6 +743,7 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
     }
     return <>{jsx}</>;
   };
+
   return (
     <>
       <Card
@@ -737,8 +756,29 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
         <div className="rounded-[10px] border-[1px] border-[#D1D5DB] my-[25px] mx-[0px] py-[20px] px-[25px] relative shadow-[0px_1px_2px_rgba(0,0,0,0.05)]">
           <div className="flex items-center relative">
             <div className="rounded-[10px] my-[25px] mx-[0px] pt-[10px] pb-[25px] px-[20px] bg-[#F9F9FA] flex items-center cursor-pointer w-full">
-              <div className="flex flex-[1] flex-wrap">
-                {generateTriggerUI()}
+              <div className="flex flex-[1] flex-wrap flex-col">
+                <div>
+                  {conditions.map((condition: any, i) => (
+                    <ConditionCreater
+                      condition={condition}
+                      onChange={(updatedCondition) =>
+                        handleConditionsChange(i, updatedCondition)
+                      }
+                    />
+                  ))}
+                </div>
+                <div>
+                  <GenericButton
+                    onClick={() =>
+                      setConditions([
+                        ...conditions,
+                        { key: "", value: "", comparisonType: "", type: "" },
+                      ])
+                    }
+                  >
+                    Add new condition
+                  </GenericButton>
+                </div>
               </div>
             </div>
           </div>

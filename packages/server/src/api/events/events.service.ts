@@ -222,7 +222,7 @@ export class EventsService {
     }
   }
 
-  async getAttributes(resourceId: string) {
+  async getOrUpdateAttributes(resourceId: string) {
     const attributes = await this.EventKeysModel.find().exec();
     if (resourceId === 'attributes') {
       return {

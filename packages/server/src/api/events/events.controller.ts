@@ -60,6 +60,6 @@ export class EventsController {
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
   async getAttributes(@Param('resourceId') resourceId: string) {
-    return this.eventsService.getAttributes(resourceId);
+    return this.eventsService.getOrUpdateAttributes(resourceId);
   }
 }

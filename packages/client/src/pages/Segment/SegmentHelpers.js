@@ -22,7 +22,7 @@ export const getConditions = async () => {
 
 export const getResources = async (id) => {
   return ApiService.get({
-    url: `${ApiConfig.resources}/${id}`,
+    url: `${ApiConfig.eventResources}/${id}`,
   });
 };
 
