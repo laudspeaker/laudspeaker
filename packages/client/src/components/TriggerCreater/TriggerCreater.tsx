@@ -54,8 +54,11 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
     return response;
   };
 
+  const [conditions, setConditions] = useState(trigger?.properties?.conditions);
+
   const populateFormData: any = (criteria: Condition[]) => {
     const parsedFormData = [];
+
     for (let index = 0; index < criteria?.length; index++) {
       let objToPush = {};
       if (criteria[index].type === "events") {
@@ -72,6 +75,7 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
             isDirty: true,
           },
         };
+        console.log(objToPush); // TODO: remove
       } else {
         if (criteria[index].condition) {
           objToPush = {
@@ -250,12 +254,11 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
           [response.id]: response,
         }));
         setIsButtonDisabled(
-          !(trigger?.properties?.conditions as { value: string }[])?.some(
-            (item) => item.value
-          ) || false
+          !(conditions as { value: string }[])?.some((item) => item.value) ||
+            false
         );
         setFormData(
-          populateFormData(trigger?.properties?.conditions) || [
+          populateFormData(conditions) || [
             {
               [response.id]: {
                 value: "",
@@ -265,7 +268,7 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
             },
           ]
         );
-        trigger?.properties?.conditions?.forEach((item: any) => {
+        conditions.forEach((item: any) => {
           for (const key in item) {
             getAllResources(item[key]).then((resourceResponse) => {
               const tempResponse = JSON.parse(JSON.stringify(resourceResponse));
@@ -281,7 +284,7 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
     if (triggerType === "eventBased" || "timeDelay") {
       getAllConditions();
     }
-  }, [triggerType]);
+  }, [triggerType, conditions]);
 
   const recursivelyUpdateFormData = (
     formDataToUpdate: any,
@@ -447,8 +450,8 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
     };
     const generatedConditions: any = [];
     formData.forEach((item: any) => {
-      const conditions = generateConditions(item.conditions);
-      const flattenedObj = flatten(conditions);
+      const condits = generateConditions(item.conditions);
+      const flattenedObj = flatten(condits);
       const transformedObj: any = {};
       for (const key in flattenedObj) {
         const split = key.split(".");
