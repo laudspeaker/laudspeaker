@@ -24,6 +24,7 @@ import { EventDocument, Event } from './schemas/event.schema';
 import mockData from '@/fixtures/mockData';
 import { EventKeys, EventKeysDocument } from './schemas/event-keys.schema';
 import { attributeConditions } from '@/fixtures/attributeConditions';
+import keyTypes from '@/fixtures/keyTypes';
 
 @Injectable()
 export class EventsService {
@@ -263,5 +264,13 @@ export class EventsService {
       key: el.key,
       options: attributeConditions(el.type, el.isArray),
     }));
+  }
+
+  async getPossibleTypes() {
+    return keyTypes;
+  }
+
+  async getPossibleComparisonTypes(type: string, isArray = false) {
+    return attributeConditions(type, isArray);
   }
 }

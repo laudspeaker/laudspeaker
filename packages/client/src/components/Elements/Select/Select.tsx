@@ -13,7 +13,7 @@ export interface SelectProps {
     subtitle?: string;
     tooltip?: string;
   }[];
-  id: string;
+  id?: string;
   name?: string;
   autoWidth?: boolean;
   children?: React.ReactNode;

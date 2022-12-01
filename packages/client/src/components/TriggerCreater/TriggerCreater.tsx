@@ -15,6 +15,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import DateTimePicker from "components/Elements/DateTimePicker";
 import Autocomplete from "components/Autocomplete";
 import ConditionCreater from "./ConditionCreator";
+import ApiService from "services/api.service";
 
 export type TriggerType = "eventBased" | "timeDelay" | "timeWindow";
 interface ITriggerCreaterProp {
@@ -302,6 +303,15 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
       getAllConditions();
     }
   }, [triggerType, conditions]);
+
+  const [possibleTypes, setPossibleTypes] = useState<string[]>([]);
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await ApiService.get({ url: "/events/possible-types" });
+      setPossibleTypes(data);
+    })();
+  }, []);
 
   const recursivelyUpdateFormData = (
     formDataToUpdate: any,
@@ -759,12 +769,16 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
               <div className="flex flex-[1] flex-wrap flex-col">
                 <div>
                   {conditions.map((condition: any, i) => (
-                    <ConditionCreater
-                      condition={condition}
-                      onChange={(updatedCondition) =>
-                        handleConditionsChange(i, updatedCondition)
-                      }
-                    />
+                    <>
+                      <ConditionCreater
+                        condition={condition}
+                        onChange={(updatedCondition) =>
+                          handleConditionsChange(i, updatedCondition)
+                        }
+                        possibleTypes={possibleTypes}
+                      />
+                      {i !== conditions.length - 1 && <>And</>}
+                    </>
                   ))}
                 </div>
                 <div>
@@ -836,7 +850,7 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
                 style={{
                   width: "200px",
                 }}
-                disabled={isButtonDisabled}
+                disabled={triggerType !== "eventBased" && isButtonDisabled}
               >
                 Save
               </GenericButton>

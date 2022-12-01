@@ -59,14 +59,28 @@ export class EventsController {
   @Get('/possible-attributes/:resourceId?')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
-  async getAttributes(@Param('resourceId') resourceId: string = '') {
+  async getAttributes(@Param('resourceId') resourceId = '') {
     return this.eventsService.getAttributes(resourceId);
   }
 
   @Get('/attributes/:resourceId?')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
-  async getOrUpdateAttributes(@Param('resourceId') resourceId: string = '') {
+  async getOrUpdateAttributes(@Param('resourceId') resourceId = '') {
     return this.eventsService.getOrUpdateAttributes(resourceId);
+  }
+
+  @Get('/possible-types')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor)
+  async getPossibleTypes() {
+    return this.eventsService.getPossibleTypes();
+  }
+
+  @Get('/possible-comparison/:type')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor)
+  async getPossibleComparison(@Param('type') type: string) {
+    return this.eventsService.getPossibleComparisonTypes(type);
   }
 }
