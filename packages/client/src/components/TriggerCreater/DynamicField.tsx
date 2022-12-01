@@ -1,4 +1,5 @@
 import { Input, Select } from "components/Elements";
+import DateTimePicker from "components/Elements/DateTimePicker";
 import React, { FC } from "react";
 
 export interface DynamicFieldProps {
@@ -40,6 +41,8 @@ const DynamicField: FC<DynamicFieldProps> = ({ data, value, onChange }) => {
           onChange={(e) => onChange(e.target.value)}
         />
       );
+    case "dateTime":
+      return <DateTimePicker handleChange={onChange} value={value} />;
   }
   return <></>;
 };

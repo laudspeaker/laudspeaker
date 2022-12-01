@@ -71,7 +71,7 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
     newCondition: EventCondition
   ) => {
     conditions[index] = newCondition;
-    setConditions([...conditions]);
+    setConditions([...conditions.map((condition) => ({ ...condition }))]);
   };
 
   const populateFormData: any = (criteria: Condition[]) => {
@@ -501,8 +501,7 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
       func(JSON.parse(JSON.stringify(delayInputTime)));
     else if (triggerType == "timeWindow") func(timeWindow);
     else if (triggerType == "eventBased") {
-      const eventBasedTriggerData = await handleEventBasedTrigger();
-      func(eventBasedTriggerData);
+      func({ conditions });
     }
   };
 
@@ -754,6 +753,11 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
     return <>{jsx}</>;
   };
 
+  const handleDeleteCondition = (i: number) => {
+    conditions.splice(i, 1);
+    setConditions([...conditions.map((condition) => ({ ...condition }))]);
+  };
+
   return (
     <>
       <Card
@@ -775,6 +779,7 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
                         onChange={(updatedCondition) =>
                           handleConditionsChange(i, updatedCondition)
                         }
+                        onDelete={() => handleDeleteCondition(i)}
                         possibleTypes={possibleTypes}
                       />
                       {i !== conditions.length - 1 && <>And</>}

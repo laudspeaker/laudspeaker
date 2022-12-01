@@ -1,4 +1,3 @@
-import AutoComplete from "components/Autocomplete";
 import { Input, Select } from "components/Elements";
 import { getEventKeys } from "pages/Segment/SegmentHelpers";
 import React, { FC, useEffect, useState } from "react";
@@ -7,16 +6,19 @@ import AC from "react-autocomplete";
 import { useDebounce } from "react-use";
 import ApiService from "services/api.service";
 import DynamicField from "./DynamicField";
+import MinusIcon from "../../assets/images/MinusIcon.svg";
 
 export interface ConditionCreaterProps {
   condition: EventCondition;
   onChange: (condition: EventCondition) => void;
+  onDelete: () => void;
   possibleTypes: string[];
 }
 
 const ConditionCreater: FC<ConditionCreaterProps> = ({
   condition,
   onChange,
+  onDelete,
   possibleTypes,
 }) => {
   const { key, value, type, comparisonType } = condition;
@@ -60,11 +62,13 @@ const ConditionCreater: FC<ConditionCreaterProps> = ({
     });
   };
 
-  const [newKey, setNewKey] = useState(condition.key);
+  const [newKey, setNewKey] = useState(key);
+
+  useEffect(() => {}, [newKey]);
 
   useDebounce(
     () => {
-      handleConditionChange("Key name", newKey || "");
+      handleConditionChange("key", newKey || "");
     },
     1000,
     [newKey]
@@ -144,11 +148,14 @@ const ConditionCreater: FC<ConditionCreaterProps> = ({
           handleConditionChange("value", "");
         }}
       />
-      <DynamicField
-        value={value}
-        data={dynamicDataToRender}
-        onChange={(val) => handleConditionChange("value", val)}
-      />
+      <div className="flex gap-[10px]">
+        <DynamicField
+          value={value}
+          data={dynamicDataToRender}
+          onChange={(val) => handleConditionChange("value", val)}
+        />
+        <img onClick={onDelete} src={MinusIcon} />
+      </div>
     </div>
   );
 };
