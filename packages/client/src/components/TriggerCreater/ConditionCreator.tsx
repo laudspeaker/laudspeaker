@@ -107,6 +107,8 @@ const ConditionCreater: FC<ConditionCreaterProps> = ({
             </div>
           )}
           renderMenu={(items) => {
+            if (!items.length) return <></>;
+
             return (
               <div className="shadow-md  border-[1px] bg-white border-cyan-500 absolute top-[calc(100%+4px)] w-full rounded-[6px] z-[9999999999]">
                 {items}
