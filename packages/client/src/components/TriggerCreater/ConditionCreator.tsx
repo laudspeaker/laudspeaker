@@ -88,7 +88,9 @@ const ConditionCreater: FC<ConditionCreaterProps> = ({
               name={props.name || ""}
               value={props.value}
               onChange={props.onChange}
+              inputRef={props.ref}
               aria-expanded={props["aria-expanded"]}
+              {...props}
             />
           )}
           renderItem={(item, isHighlighted) => (
@@ -112,7 +114,11 @@ const ConditionCreater: FC<ConditionCreaterProps> = ({
             setNewKey(e.target.value);
           }}
           onSelect={(e) => {
-            console.log(JSON.parse(e));
+            const val = JSON.parse(e);
+            setNewKey(val.key);
+            handleConditionChange("type", val.type);
+            handleConditionChange("comparisonType", "");
+            handleConditionChange("value", "");
           }}
         />
       </div>

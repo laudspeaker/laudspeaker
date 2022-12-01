@@ -1,4 +1,4 @@
-import React, { KeyboardEvent } from "react";
+import React, { KeyboardEvent, LegacyRef } from "react";
 
 export interface InputProps {
   id?: string;
@@ -12,7 +12,7 @@ export interface InputProps {
   errorText?: string;
   fullWidth?: boolean;
   helperText?: string;
-  inputRef?: React.RefObject<any>;
+  inputRef?: React.RefObject<any> | LegacyRef<HTMLInputElement>;
   label?: React.ReactNode;
   placeholder?: string;
   isRequired?: boolean;
@@ -26,6 +26,7 @@ export interface InputProps {
   onBlur?: (e?: any) => void;
   ref?: any;
   endText?: string;
+  [key: string]: any;
 }
 
 const Input = (props: InputProps) => {
@@ -54,7 +55,9 @@ const Input = (props: InputProps) => {
     onBlur,
     style,
     endText,
+    ...otherProps
   } = props;
+
   return (
     <>
       <div className="w-full">
@@ -85,6 +88,7 @@ const Input = (props: InputProps) => {
             }`}
             placeholder={placeholder}
             style={style}
+            {...otherProps}
           />
           {endText && (
             <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">

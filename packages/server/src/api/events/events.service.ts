@@ -262,6 +262,8 @@ export class EventsService {
 
     return attributes.map((el) => ({
       key: el.key,
+      type: el.type,
+      isArray: el.isArray,
       options: attributeConditions(el.type, el.isArray),
     }));
   }
