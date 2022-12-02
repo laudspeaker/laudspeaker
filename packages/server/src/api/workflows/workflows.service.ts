@@ -247,7 +247,7 @@ export class WorkflowsService {
 
     const newAudiences = await Promise.all(
       oldWorkflow.audiences?.map(async (id) => {
-        const { name, description, inclusionCriteria, isDynamic, isPrimary } =
+        const { name, description, inclusionCriteria, isDynamic, isPrimary, templates } =
           await this.audiencesService.findOne(user, id);
         const newAudience = await this.audiencesService.insert(user, {
           name,
@@ -255,6 +255,7 @@ export class WorkflowsService {
           inclusionCriteria,
           isDynamic,
           isPrimary,
+          templates,
         });
         return newAudience.id;
       }) || []
