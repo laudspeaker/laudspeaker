@@ -71,7 +71,7 @@ const convertLayoutToTable = (
       source: string;
       dest: string[];
       properties: {
-        event: string;
+        conditions: Record<string, any>;
       };
     }[];
     visualLayout: {
@@ -108,9 +108,8 @@ const convertLayoutToTable = (
       source: fromNode[0]?.data?.audienceId,
       dest: [toNode[0].data.audienceId],
       properties: {
-        event:
-          fromNode[0]?.data.triggers[foundTriggerIndex]?.properties
-            ?.conditions[0]?.value,
+        conditions:
+          fromNode[0]?.data.triggers[foundTriggerIndex]?.properties?.conditions,
       },
     };
     dto.rules.push(rule);

@@ -10,8 +10,8 @@ import {
   UseGuards,
   Param,
   Get,
+  Query,
 } from '@nestjs/common';
-import * as _ from 'lodash';
 import { StatusJobDto } from './dto/status-event.dto';
 import { PosthogBatchEventDto } from './dto/posthog-batch-event.dto';
 import { EventDto } from './dto/event.dto';
@@ -82,5 +82,15 @@ export class EventsController {
   @UseInterceptors(ClassSerializerInterceptor)
   async getPossibleComparison(@Param('type') type: string) {
     return this.eventsService.getPossibleComparisonTypes(type);
+  }
+
+  @Get('/possible-values/:key')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor)
+  async getPossibleValues(
+    @Param('key') key: string,
+    @Query('search') search: string
+  ) {
+    return this.eventsService.getPossibleValues(key, search);
   }
 }

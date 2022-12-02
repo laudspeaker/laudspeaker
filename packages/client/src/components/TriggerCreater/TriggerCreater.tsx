@@ -16,6 +16,7 @@ import DateTimePicker from "components/Elements/DateTimePicker";
 import Autocomplete from "components/Autocomplete";
 import ConditionCreater from "./ConditionCreator";
 import ApiService from "services/api.service";
+import AndOrSelect from "./AndOrSelect";
 
 export type TriggerType = "eventBased" | "timeDelay" | "timeWindow";
 interface ITriggerCreaterProp {
@@ -45,6 +46,8 @@ export interface EventCondition {
   type: string;
   value: string;
   comparisonType: string;
+  relationWithNext: "and" | "or";
+  isArray: boolean;
 }
 
 const TriggerCreater = (props: ITriggerCreaterProp) => {
@@ -671,7 +674,7 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
       }
       case "timeWindow": {
         jsx = (
-          <div className="flex items-center flex-col">
+          <div className="flex flex-col flex-wrap">
             {toPart ? (
               <div className="flex items-center mt-[10px]">
                 <FormControl
@@ -764,40 +767,64 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
         sx={{
           padding: "30px",
           width: "100%",
-          maxWidth: "1138px",
         }}
       >
         <div className="rounded-[10px] border-[1px] border-[#D1D5DB] my-[25px] mx-[0px] py-[20px] px-[25px] relative shadow-[0px_1px_2px_rgba(0,0,0,0.05)]">
           <div className="flex items-center relative">
             <div className="rounded-[10px] my-[25px] mx-[0px] pt-[10px] pb-[25px] px-[20px] bg-[#F9F9FA] flex items-center cursor-pointer w-full">
               <div className="flex flex-[1] flex-wrap flex-col">
-                <div>
-                  {conditions.map((condition: any, i) => (
-                    <>
-                      <ConditionCreater
-                        condition={condition}
-                        onChange={(updatedCondition) =>
-                          handleConditionsChange(i, updatedCondition)
+                {triggerType === "eventBased" ? (
+                  <>
+                    <div>
+                      {conditions.map((condition, i) => (
+                        <>
+                          <ConditionCreater
+                            condition={condition}
+                            onChange={(updatedCondition) =>
+                              handleConditionsChange(i, updatedCondition)
+                            }
+                            onDelete={() => handleDeleteCondition(i)}
+                            possibleTypes={possibleTypes}
+                          />
+                          {i !== conditions.length - 1 && (
+                            <div className="max-w-[7%]">
+                              <AndOrSelect
+                                value={condition.relationWithNext}
+                                onChange={(val) =>
+                                  handleConditionsChange(i, {
+                                    ...condition,
+                                    relationWithNext: val,
+                                  })
+                                }
+                              />
+                            </div>
+                          )}
+                        </>
+                      ))}
+                    </div>
+                    <div>
+                      <GenericButton
+                        onClick={() =>
+                          setConditions([
+                            ...conditions,
+                            {
+                              key: "",
+                              value: "",
+                              comparisonType: "",
+                              type: "",
+                              relationWithNext: "and",
+                              isArray: false,
+                            },
+                          ])
                         }
-                        onDelete={() => handleDeleteCondition(i)}
-                        possibleTypes={possibleTypes}
-                      />
-                      {i !== conditions.length - 1 && <>And</>}
-                    </>
-                  ))}
-                </div>
-                <div>
-                  <GenericButton
-                    onClick={() =>
-                      setConditions([
-                        ...conditions,
-                        { key: "", value: "", comparisonType: "", type: "" },
-                      ])
-                    }
-                  >
-                    Add new condition
-                  </GenericButton>
-                </div>
+                      >
+                        Add new condition
+                      </GenericButton>
+                    </div>
+                  </>
+                ) : (
+                  generateTriggerUI()
+                )}
               </div>
             </div>
           </div>

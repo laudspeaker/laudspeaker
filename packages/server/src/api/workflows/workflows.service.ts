@@ -20,6 +20,13 @@ import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { Stats } from '../audiences/entities/stats.entity';
 import { createClient } from '@clickhouse/client';
 import { WorkflowTick } from './interfaces/workflow-tick.interface';
+import { isBoolean, isString } from 'class-validator';
+import {
+  EventKeys,
+  EventKeysDocument,
+} from '../events/schemas/event-keys.schema';
+import { Model } from 'mongoose';
+import { InjectModel } from '@nestjs/mongoose';
 
 @Injectable()
 export class WorkflowsService {
@@ -37,6 +44,8 @@ export class WorkflowsService {
     @InjectRepository(Stats) private statsRepository: Repository<Stats>,
     @Inject(AudiencesService) private audiencesService: AudiencesService,
     @Inject(CustomersService) private customersService: CustomersService,
+    @InjectModel(EventKeys.name)
+    private EventKeysModel: Model<EventKeysDocument>,
     private dataSource: DataSource
   ) {}
 
@@ -191,12 +200,19 @@ export class WorkflowsService {
     updateWorkflowDto: UpdateWorkflowDto
   ): Promise<void> {
     const rules: string[] = [];
-    for (let index = 0; index < updateWorkflowDto?.rules?.length; index++)
-      rules.push(
-        Buffer.from(JSON.stringify(updateWorkflowDto.rules[index])).toString(
-          'base64'
-        )
-      );
+
+    for (const trigger of updateWorkflowDto.rules) {
+      for (const condition of trigger.properties.conditions) {
+        const { key, type, isArray } = condition;
+        if (isString(key) && isString(type) && isBoolean(isArray)) {
+          await this.EventKeysModel.findOne({ key, type, isArray }, undefined, {
+            upsert: true,
+          }).exec();
+        }
+      }
+      rules.push(Buffer.from(JSON.stringify(trigger)).toString('base64'));
+    }
+
     const found = await this.workflowsRepository.findOneBy({
       ownerId: (<Account>account).id,
       id: updateWorkflowDto.id,

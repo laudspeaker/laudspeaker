@@ -275,4 +275,12 @@ export class EventsService {
   async getPossibleComparisonTypes(type: string, isArray = false) {
     return attributeConditions(type, isArray);
   }
+
+  async getPossibleValues(key: string, search: string) {
+    const searchRegExp = new RegExp('^' + search || '');
+    const docs = await this.EventModel.find({ [key]: searchRegExp })
+      .limit(10)
+      .exec();
+    return docs.map((doc) => doc[key]);
+  }
 }

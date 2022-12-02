@@ -64,5 +64,6 @@ import { EventKeys, EventKeysSchema } from './schemas/event-keys.schema';
     AudiencesService,
     SlackService,
   ],
+  exports: [EventsService],
 })
 export class EventsModule {}

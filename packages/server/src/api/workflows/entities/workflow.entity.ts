@@ -8,8 +8,13 @@ export enum TriggerType {
 
 export interface IEventConditions {
   value: any;
-  attribute: string;
-  condition: string;
+  attribute?: string;
+  condition?: string;
+  key?: string;
+  type?: string;
+  comparisonType?: string;
+  relationWithNext?: 'and' | 'or';
+  isArray?: boolean;
 }
 
 export class EventProps {

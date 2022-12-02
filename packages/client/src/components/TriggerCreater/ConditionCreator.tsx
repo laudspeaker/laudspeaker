@@ -7,6 +7,7 @@ import { useDebounce } from "react-use";
 import ApiService from "services/api.service";
 import DynamicField from "./DynamicField";
 import MinusIcon from "../../assets/images/MinusIcon.svg";
+import Tooltip from "components/Elements/Tooltip";
 
 export interface ConditionCreaterProps {
   condition: EventCondition;
@@ -23,7 +24,14 @@ const ConditionCreater: FC<ConditionCreaterProps> = ({
 }) => {
   const { key, value, type, comparisonType } = condition;
 
-  const [possibleKeys, setPossibleKeys] = useState<string[]>([]);
+  const [possibleKeys, setPossibleKeys] = useState<
+    {
+      key: string;
+      type: string;
+      isArray: boolean;
+      options: { label: string; id: string };
+    }[]
+  >([]);
 
   const [possibleComparisonTypes, setPossibleComparisonTypes] = useState<
     {
@@ -74,6 +82,17 @@ const ConditionCreater: FC<ConditionCreaterProps> = ({
     [newKey]
   );
 
+  const [possibleValues, setPossibleValues] = useState<string[]>([]);
+
+  const loadPossibleValues = async () => {
+    const { data } = await ApiService.get({
+      url: `/events/possible-values/${key}?search=${value}`,
+    });
+    setPossibleValues(data);
+  };
+
+  useDebounce(loadPossibleValues, 1000, [value, key]);
+
   useEffect(() => {
     getEventKeys("").then(({ data }) => {
       setPossibleKeys(data);
@@ -101,9 +120,9 @@ const ConditionCreater: FC<ConditionCreaterProps> = ({
             <div
               className={`${
                 isHighlighted ? "bg-cyan-100" : ""
-              } p-[2px] rounded-[6px]`}
+              } p-[2px] rounded-[6px] relative`}
             >
-              {item.key}
+              {item.key} ({item.type})
             </div>
           )}
           renderMenu={(items) => {
@@ -154,6 +173,7 @@ const ConditionCreater: FC<ConditionCreaterProps> = ({
         <DynamicField
           value={value}
           data={dynamicDataToRender}
+          possibleValues={possibleValues}
           onChange={(val) => handleConditionChange("value", val)}
         />
         <img onClick={onDelete} src={MinusIcon} />

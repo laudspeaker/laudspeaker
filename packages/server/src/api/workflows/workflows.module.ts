@@ -20,6 +20,7 @@ import {
   CustomerKeys,
   CustomerKeysSchema,
 } from '../customers/schemas/customer-keys.schema';
+import { EventKeys, EventKeysSchema } from '../events/schemas/event-keys.schema';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import {
     ]),
     MongooseModule.forFeature([
       { name: Customer.name, schema: CustomerSchema },
+      { name: EventKeys.name, schema: EventKeysSchema },
     ]),
     MongooseModule.forFeature([
       { name: CustomerKeys.name, schema: CustomerKeysSchema },

@@ -184,7 +184,7 @@ export class CronService {
         .estimatedDocumentCount()
         .exec();
 
-      let keys: Record<string, any[]> = {};
+      const keys: Record<string, any[]> = {};
 
       while (current < documentsCount) {
         const batch = await this.eventModel
