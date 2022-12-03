@@ -785,6 +785,7 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
                             }
                             onDelete={() => handleDeleteCondition(i)}
                             possibleTypes={possibleTypes}
+                            isViewMode={isViewMode}
                           />
                           {i !== conditions.length - 1 && (
                             <div className="max-w-[7%]">
@@ -796,31 +797,34 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
                                     relationWithNext: val,
                                   })
                                 }
+                                disabled={isViewMode}
                               />
                             </div>
                           )}
                         </>
                       ))}
                     </div>
-                    <div>
-                      <GenericButton
-                        onClick={() =>
-                          setConditions([
-                            ...conditions,
-                            {
-                              key: "",
-                              value: "",
-                              comparisonType: "",
-                              type: "",
-                              relationWithNext: "and",
-                              isArray: false,
-                            },
-                          ])
-                        }
-                      >
-                        Add new condition
-                      </GenericButton>
-                    </div>
+                    {!isViewMode && (
+                      <div>
+                        <GenericButton
+                          onClick={() =>
+                            setConditions([
+                              ...conditions,
+                              {
+                                key: "",
+                                value: "",
+                                comparisonType: "",
+                                type: "",
+                                relationWithNext: "and",
+                                isArray: false,
+                              },
+                            ])
+                          }
+                        >
+                          Add new condition
+                        </GenericButton>
+                      </div>
+                    )}
                   </>
                 ) : (
                   generateTriggerUI()

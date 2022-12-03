@@ -3,6 +3,7 @@
 /* eslint-disable @typescript-eslint/no-shadow */
 import credentials from "../fixtures/credentials.json";
 import { loginFunc } from "../test-helpers/loginFunc";
+import setupEventTrigger from "../test-helpers/setupEventTrigger";
 import { tamplatesFunc } from "../test-helpers/templatesFunc";
 
 const { email, password, slackTemplate, userAPIkey, emailTemplate } =
@@ -54,12 +55,7 @@ describe(
       cy.get("#exportSelectedTemplate").click();
 
       cy.get(".react-flow__viewport").get('[data-isprimary="true"]').click();
-      cy.get("#eventBased").click();
-      cy.contains("Add Condition Or Group").click();
-
-      cy.get('[data-option="events"]').click();
-      cy.get("#events").type("A");
-      cy.get("[data-savetriggerreator] > button").click();
+      setupEventTrigger("A", "A");
 
       cy.get('[data-isprimary="true"]')
         .get('[data-handlepos="bottom"]')
@@ -68,12 +64,7 @@ describe(
       cy.get('[data-isprimary="false"] [data-handlepos="top"]').click();
       cy.get('[data-isprimary="false"]').click();
 
-      cy.get("#eventBased").click();
-      cy.contains("Add Condition Or Group").click();
-
-      cy.get('[data-option="events"]').click();
-      cy.get("#events").type("B");
-      cy.get("[data-savetriggerreator] > button").click();
+      setupEventTrigger("B", "B");
 
       cy.get('[data-isprimary="false"] [data-handlepos="bottom"]').drag(
         '[data-isprimary="true"] [data-handlepos="top"]'
@@ -98,11 +89,11 @@ describe(
         body: {
           correlationKey: "slackId",
           correlationValue: slackTemplate.slackUid,
-          event: "1",
+          event: { "1": "1" },
         },
       }).then(({ body }) => {
         cy.wait(1000);
-        expect(body[0]).to.equal(undefined);
+        expect(body?.[0]?.jobIDs?.[0]).to.equal(undefined);
         cy.contains("Resume").click();
         cy.request({
           method: "POST",
@@ -113,7 +104,7 @@ describe(
           body: {
             correlationKey: "slackId",
             correlationValue: slackTemplate.slackUid,
-            event: "A",
+            event: { A: "A" },
           },
         }).then(({ body }) => {
           cy.wait(1000);
@@ -138,7 +129,7 @@ describe(
               body: {
                 correlationKey: "slackId",
                 correlationValue: slackTemplate.slackUid,
-                event: "B",
+                event: { B: "B" },
               },
             }).then(() => {
               cy.wait(1000);
@@ -155,11 +146,11 @@ describe(
                 body: {
                   correlationKey: "slackId",
                   correlationValue: slackTemplate.slackUid,
-                  event: "A",
+                  event: { A: "A" },
                 },
               }).then(({ body }) => {
                 cy.wait(1000);
-                expect(body[0]).to.equal(undefined);
+                expect(body?.[0]?.jobIDs?.[0]).to.equal(undefined);
               });
             });
           });

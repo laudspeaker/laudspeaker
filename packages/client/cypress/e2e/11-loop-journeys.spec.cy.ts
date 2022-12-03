@@ -3,6 +3,7 @@
 /* eslint-disable @typescript-eslint/no-shadow */
 import credentials from "../fixtures/credentials.json";
 import { loginFunc } from "../test-helpers/loginFunc";
+import setupEventTrigger from "../test-helpers/setupEventTrigger";
 import { tamplatesFunc } from "../test-helpers/templatesFunc";
 
 const { email, password, slackTemplate, userAPIkey, emailTemplate } =
@@ -54,12 +55,7 @@ describe(
       cy.get("#exportSelectedTemplate").click();
 
       cy.get(".react-flow__viewport").get('[data-isprimary="true"]').click();
-      cy.get("#eventBased").click();
-      cy.contains("Add Condition Or Group").click();
-
-      cy.get('[data-option="events"]').click();
-      cy.get("#events").type("1");
-      cy.get("[data-savetriggerreator] > button").click();
+      setupEventTrigger("1", "1");
 
       cy.get('[data-isprimary="true"]')
         .get('[data-handlepos="bottom"]')
@@ -68,12 +64,7 @@ describe(
       cy.get('[data-isprimary="false"] [data-handlepos="top"]').click();
       cy.get('[data-isprimary="false"]').click();
 
-      cy.get("#eventBased").click();
-      cy.contains("Add Condition Or Group").click();
-
-      cy.get('[data-option="events"]').click();
-      cy.get("#events").type("2");
-      cy.get("[data-savetriggerreator] > button").click();
+      setupEventTrigger("2", "2");
 
       cy.get('[data-isprimary="false"] [data-handlepos="bottom"]').drag(
         '[data-isprimary="true"] [data-handlepos="top"]'
@@ -97,7 +88,7 @@ describe(
         body: {
           correlationKey: "slackId",
           correlationValue: slackTemplate.slackUid,
-          event: "1",
+          event: { "1": "1" },
         },
       }).then(({ body }) => {
         cy.wait(1000);
@@ -122,10 +113,10 @@ describe(
             body: {
               correlationKey: "slackId",
               correlationValue: slackTemplate.slackUid,
-              event: "2",
+              event: { "2": "2" },
             },
           }).then(({ body }) => {
-            expect(body[0]).to.equal(null);
+            expect(body?.[0]?.jobIDs?.[0]).to.equal(undefined);
             cy.wait(1000);
             cy.request({
               method: "POST",
@@ -136,7 +127,7 @@ describe(
               body: {
                 correlationKey: "slackId",
                 correlationValue: slackTemplate.slackUid,
-                event: "1",
+                event: { "1": "1" },
               },
             }).then(({ body }) => {
               cy.wait(1000);

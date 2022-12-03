@@ -8,6 +8,7 @@ export interface DynamicFieldProps {
   value: string;
   possibleValues: string[];
   onChange: (value: string) => void;
+  disabled?: boolean;
 }
 
 const DynamicField: FC<DynamicFieldProps> = ({
@@ -15,6 +16,7 @@ const DynamicField: FC<DynamicFieldProps> = ({
   value,
   onChange,
   possibleValues,
+  disabled,
 }) => {
   switch (data.type) {
     case "select":
@@ -22,11 +24,13 @@ const DynamicField: FC<DynamicFieldProps> = ({
       return (
         <Select
           value={value}
+          id="dynamicInput"
           onChange={onChange}
           options={data.options.map((item) => ({
             value: item.id,
             title: item.label,
           }))}
+          disabled={disabled}
         />
       );
     case "inputText":
@@ -50,6 +54,8 @@ const DynamicField: FC<DynamicFieldProps> = ({
                 className="!col-span-1"
                 name="dynamic-input"
                 inputRef={props.ref}
+                disabled={disabled}
+                id="dynamicInput"
                 {...props}
               />
             )}
@@ -74,12 +80,20 @@ const DynamicField: FC<DynamicFieldProps> = ({
           className="!col-span-1"
           name="dynamic-input"
           type="number"
+          id="dynamicInput"
           value={value}
           onChange={(e) => onChange(e.target.value)}
+          disabled={disabled}
         />
       );
     case "dateTime":
-      return <DateTimePicker handleChange={onChange} value={value} />;
+      return (
+        <DateTimePicker
+          handleChange={onChange}
+          value={value}
+          disabled={disabled}
+        />
+      );
   }
   return <></>;
 };

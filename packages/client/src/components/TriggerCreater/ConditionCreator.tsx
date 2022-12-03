@@ -14,6 +14,7 @@ export interface ConditionCreaterProps {
   onChange: (condition: EventCondition) => void;
   onDelete: () => void;
   possibleTypes: string[];
+  isViewMode?: boolean;
 }
 
 const ConditionCreater: FC<ConditionCreaterProps> = ({
@@ -21,6 +22,7 @@ const ConditionCreater: FC<ConditionCreaterProps> = ({
   onChange,
   onDelete,
   possibleTypes,
+  isViewMode,
 }) => {
   const { key, value, type, comparisonType } = condition;
 
@@ -42,11 +44,15 @@ const ConditionCreater: FC<ConditionCreaterProps> = ({
 
   useEffect(() => {
     (async () => {
-      const { data } = await ApiService.get({
-        url: `/events/possible-comparison/${type}`,
-      });
+      try {
+        const { data } = await ApiService.get({
+          url: `/events/possible-comparison/${type}`,
+        });
 
-      setPossibleComparisonTypes(data);
+        setPossibleComparisonTypes(data);
+      } catch (e) {
+        console.error(e);
+      }
     })();
   }, [type]);
 
@@ -54,20 +60,28 @@ const ConditionCreater: FC<ConditionCreaterProps> = ({
 
   useEffect(() => {
     (async () => {
-      const { data } = await ApiService.get({
-        url: `/events/attributes/${comparisonType}`,
-      });
+      try {
+        const { data } = await ApiService.get({
+          url: `/events/attributes/${comparisonType}`,
+        });
 
-      setDynamicDataToRender(data);
+        setDynamicDataToRender(data);
+      } catch (e) {
+        console.error(e);
+      }
     })();
   }, [comparisonType]);
 
   const handleConditionChange = (name: string, newValue: string) => {
     (condition as any)[name] = newValue;
     onChange(condition);
-    getEventKeys(newValue).then(({ data }) => {
-      setPossibleKeys(data);
-    });
+    getEventKeys(newValue)
+      .then(({ data }) => {
+        setPossibleKeys(data);
+      })
+      .catch((err) => {
+        console.error(err);
+      });
   };
 
   const [newKey, setNewKey] = useState(key);
@@ -85,18 +99,28 @@ const ConditionCreater: FC<ConditionCreaterProps> = ({
   const [possibleValues, setPossibleValues] = useState<string[]>([]);
 
   const loadPossibleValues = async () => {
-    const { data } = await ApiService.get({
-      url: `/events/possible-values/${key}?search=${value}`,
-    });
-    setPossibleValues(data);
+    try {
+      const { data } = await ApiService.get({
+        url: `/events/possible-values/${key}?search=${value}`,
+      });
+      setPossibleValues(data);
+    } catch (e) {
+      console.error(e);
+    }
   };
+
+  useEffect(() => {}, [possibleValues]);
 
   useDebounce(loadPossibleValues, 1000, [value, key]);
 
   useEffect(() => {
-    getEventKeys("").then(({ data }) => {
-      setPossibleKeys(data);
-    });
+    getEventKeys("")
+      .then(({ data }) => {
+        setPossibleKeys(data);
+      })
+      .catch((e) => {
+        console.error(e);
+      });
   }, []);
 
   return (
@@ -113,6 +137,8 @@ const ConditionCreater: FC<ConditionCreaterProps> = ({
               onChange={props.onChange}
               inputRef={props.ref}
               aria-expanded={props["aria-expanded"]}
+              disabled={isViewMode}
+              id="keyInput"
               {...props}
             />
           )}
@@ -156,6 +182,7 @@ const ConditionCreater: FC<ConditionCreaterProps> = ({
           handleConditionChange("comparisonType", "");
           handleConditionChange("value", "");
         }}
+        disabled={isViewMode}
       />
       <Select
         id="comparisonType"
@@ -168,6 +195,7 @@ const ConditionCreater: FC<ConditionCreaterProps> = ({
           handleConditionChange("comparisonType", val);
           handleConditionChange("value", "");
         }}
+        disabled={isViewMode}
       />
       <div className="flex gap-[10px]">
         <DynamicField
@@ -175,8 +203,9 @@ const ConditionCreater: FC<ConditionCreaterProps> = ({
           data={dynamicDataToRender}
           possibleValues={possibleValues}
           onChange={(val) => handleConditionChange("value", val)}
+          disabled={isViewMode}
         />
-        <img onClick={onDelete} src={MinusIcon} />
+        {!isViewMode && <img onClick={onDelete} src={MinusIcon} />}
       </div>
     </div>
   );

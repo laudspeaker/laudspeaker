@@ -27,6 +27,11 @@ import {
 } from '../events/schemas/event-keys.schema';
 import { Model } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
+import {
+  conditionalCompare,
+  conditionalComposition,
+  operableCompare,
+} from '../audiences/audiences.helper';
 
 @Injectable()
 export class WorkflowsService {
@@ -205,9 +210,17 @@ export class WorkflowsService {
       for (const condition of trigger.properties.conditions) {
         const { key, type, isArray } = condition;
         if (isString(key) && isString(type) && isBoolean(isArray)) {
-          await this.EventKeysModel.findOne({ key, type, isArray }, undefined, {
-            upsert: true,
+          const eventKey = await this.EventKeysModel.findOne({
+            key,
+            type,
+            isArray,
           }).exec();
+          if (!eventKey)
+            await this.EventKeysModel.create({
+              key,
+              type,
+              isArray,
+            });
         }
       }
       rules.push(Buffer.from(JSON.stringify(trigger)).toString('base64'));
@@ -581,9 +594,54 @@ export class WorkflowsService {
                     // return Promise.reject(err);
                   }
                 }
+
+                const { conditions } = trigger.properties;
+                let eventIncluded = true;
+                this.logger.debug(
+                  'Event conditions: ' + JSON.stringify(conditions)
+                );
+                if (conditions && conditions.length > 0) {
+                  const compareResults = conditions.map((condition) => {
+                    this.logger.debug(
+                      `Comparing: ${event?.event?.[condition.key] || ''} ${
+                        condition.comparisonType || ''
+                      } ${condition.value || ''}`
+                    );
+                    return ['exists', 'doesNotExist'].includes(
+                      condition.comparisonType
+                    )
+                      ? operableCompare(
+                          event?.event?.[condition.key],
+                          condition.comparisonType
+                        )
+                      : conditionalCompare(
+                          event?.event?.[condition.key],
+                          condition.value,
+                          condition.comparisonType
+                        );
+                  });
+                  this.logger.debug(
+                    'Compare result: ' + JSON.stringify(compareResults)
+                  );
+
+                  if (compareResults.length > 1) {
+                    const compareTypes = conditions.map(
+                      (condition) => condition.relationWithNext
+                    );
+                    eventIncluded = conditionalComposition(
+                      compareResults,
+                      compareTypes
+                    );
+                  } else {
+                    eventIncluded = compareResults[0];
+                  }
+                }
+
+                this.logger.debug('Event included: ' + eventIncluded);
+
                 if (
-                  from.customers.indexOf(customer?.id) > -1
-                  // trigger.properties.event == event.event ///// TODO: change due to compare logic changes
+                  from.customers.indexOf(customer?.id) > -1 &&
+                  eventIncluded
                 ) {
                   try {
                     jobIdArr = await this.audiencesService.moveCustomer(
