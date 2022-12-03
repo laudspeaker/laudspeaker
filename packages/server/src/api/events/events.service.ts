@@ -25,6 +25,7 @@ import mockData from '@/fixtures/mockData';
 import { EventKeys, EventKeysDocument } from './schemas/event-keys.schema';
 import { attributeConditions } from '@/fixtures/attributeConditions';
 import keyTypes from '@/fixtures/keyTypes';
+import defaultEventKeys from '@/fixtures/defaultEventKeys';
 
 @Injectable()
 export class EventsService {
@@ -42,7 +43,17 @@ export class EventsService {
     private EventModel: Model<EventDocument>,
     @InjectModel(EventKeys.name)
     private EventKeysModel: Model<EventKeysDocument>
-  ) {}
+  ) {
+    for (const { name, property_type } of defaultEventKeys) {
+      if (name && property_type) {
+        this.EventKeysModel.updateOne(
+          { key: name, type: property_type },
+          { key: name, type: property_type },
+          { upsert: true }
+        ).exec();
+      }
+    }
+  }
 
   async correlate(
     account: Account,
