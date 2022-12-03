@@ -25,4 +25,7 @@ export class CreateAudienceDto {
   @IsObject()
   @IsOptional()
   public inclusionCriteria: Record<string, unknown>;
+
+  @IsOptional()
+  public templates: string[];
 }
