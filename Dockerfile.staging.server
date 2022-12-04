@@ -1,5 +1,5 @@
-# To build : docker build -f Dockerfile.staging.server -t laudspeaker-api:latest .
-# To run: docker run -it -p 3001:3001 --rm laudspeaker-api:latest
+# To build : docker build -f Dockerfile.staging.server -t laudspeaker:api-latest .
+# To run: docker run -it -p 3001:3001 --rm laudspeaker:api-latest
 FROM node:16 as build
 WORKDIR /app
 COPY ./packages/server/package.json /app
@@ -15,4 +15,4 @@ COPY ./packages/server/package.json /app
 RUN npm install --only=production
 COPY --from=build /app/packages/server/dist /app/dist
 EXPOSE 3001
-CMD ["node", "dist/main"]
+CMD ["node", "dist/src/main.js"]

@@ -74,7 +74,7 @@ const Input = (props: InputProps) => {
             name={name}
             id={id}
             ref={inputRef}
-            value={value}
+            value={value || ""}
             onChange={onChange}
             onKeyDown={onKeyDown}
             onBlur={onBlur}

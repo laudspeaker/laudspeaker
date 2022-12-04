@@ -4,7 +4,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { NextFunction, Request, Response } from 'express';
-import * as passport from 'passport';
+const passport = require('passport');
 
 @Injectable()
 export class AuthMiddleware implements NestMiddleware {

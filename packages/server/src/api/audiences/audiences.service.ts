@@ -113,6 +113,7 @@ export class AudiencesService {
       : undefined;
     audience.description = createAudienceDto.description;
     audience.ownerId = account.id;
+    audience.templates = createAudienceDto.templates;
     try {
       const resp = await this.audiencesRepository.save(audience);
       const stats = this.statsRepository.create({ audience: resp });
