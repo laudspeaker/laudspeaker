@@ -148,11 +148,12 @@ export default [
     property_type: 'Number',
   },
   {
-    name: '$viewport_width',
-    property_type: 'Number',
-  },
-  {
     name: '$window_id',
     property_type: 'String',
   },
+  {
+    name: '$viewport_width',
+    property_type: 'Number',
+  },
 ];
+
