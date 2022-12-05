@@ -11,6 +11,7 @@ COPY ./packages/client/package.json /app/
 COPY ./package-lock.json /app/
 RUN npm install
 COPY . /app
+RUN npm run format:client
 RUN npm run build:client
 
 # stage 2 - build the final image and copy the react build files
