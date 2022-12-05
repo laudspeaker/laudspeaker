@@ -77,7 +77,7 @@ describe(
       cy.wait(500);
       cy.visit("/flow/Pause%20and%20stop%20flow/view");
       cy.url().should("contain", "/view");
-      cy.wait(1000);
+      cy.wait(3000);
       cy.contains("Pause").click();
 
       cy.request({
@@ -92,9 +92,10 @@ describe(
           event: { "1": "1" },
         },
       }).then(({ body }) => {
-        cy.wait(1000);
         expect(body?.[0]?.jobIDs?.[0]).to.equal(undefined);
+        cy.wait(3000);
         cy.contains("Resume").click();
+        cy.wait(3000);
         cy.request({
           method: "POST",
           url: `${Cypress.env("AxiosURL")}events`,

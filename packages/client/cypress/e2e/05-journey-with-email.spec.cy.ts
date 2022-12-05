@@ -51,6 +51,7 @@ describe(
       cy.contains("Save").click();
       cy.wait(1000);
       cy.contains("Start").click();
+      cy.wait(3000);
       cy.request({
         method: "POST",
         url: `${Cypress.env("AxiosURL")}events`,
