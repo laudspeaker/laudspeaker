@@ -73,7 +73,6 @@ export class CustomersController {
   async findOne(@Req() { user }: Request, @Param() { id }: { id: string }) {
     const { _id, __v, ownerId, verified, ...customer } =
       await this.customersService.findOne(<Account>user, id);
-
     return customer;
   }
 
@@ -110,7 +109,7 @@ export class CustomersController {
   getAttributes(@Param('resourceId') resourceId: string) {
     return this.customersService.getAttributes(resourceId);
   }
-
+  
   @Get('/:id/events')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
