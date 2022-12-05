@@ -12,6 +12,9 @@ import { Template } from '../templates/entities/template.entity';
 import { Workflow } from '../workflows/entities/workflow.entity';
 import { Audience } from '../audiences/entities/audience.entity';
 import { Stats } from '../audiences/entities/stats.entity';
+import { BullModule } from '@nestjs/bull';
+import { Verification } from './entities/verification.entity';
+import { CustomersModule } from '../customers/customers.module';
 
 @Module({
   imports: [
@@ -22,7 +25,18 @@ import { Stats } from '../audiences/entities/stats.entity';
         signOptions: { expiresIn: process.env.JWT_EXPIRES },
       }),
     }),
-    TypeOrmModule.forFeature([Account, Template, Workflow, Audience, Stats]),
+    TypeOrmModule.forFeature([
+      Account,
+      Template,
+      Workflow,
+      Audience,
+      Stats,
+      Verification,
+    ]),
+    BullModule.registerQueue({
+      name: 'email',
+    }),
+    CustomersModule,
   ],
   controllers: [AuthController],
   providers: [AuthService, AuthHelper, JwtStrategy, ApiKeyStrategy],

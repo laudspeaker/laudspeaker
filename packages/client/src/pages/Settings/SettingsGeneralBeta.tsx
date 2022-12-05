@@ -4,6 +4,7 @@ import SaveSettings from "components/SaveSettings";
 import ApiService from "services/api.service";
 import { Input } from "components/Elements";
 import { toast } from "react-toastify";
+import Timer from "components/Timer";
 
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(" ");
@@ -38,6 +39,10 @@ export default function SettingsGeneralBeta() {
   });
 
   const [showErrors, setShowErrors] = useState(false);
+
+  const [verified, setVerified] = useState(false);
+
+  const [timerSeconds, setTimerSeconds] = useState(300);
 
   useEffect(() => {
     const newErrors: { [key: string]: string[] } = {
@@ -97,13 +102,23 @@ export default function SettingsGeneralBeta() {
     setShowErrors(true);
   };
 
+  const loadData = async () => {
+    const { data } = await ApiService.get({ url: "/accounts" });
+    const {
+      firstName,
+      lastName,
+      email,
+      verified: verifiedFromRequest,
+      secondtillunblockresend,
+    } = data;
+    setFormData({ ...formData, firstName, lastName, email });
+    setInitialData({ ...formData, firstName, lastName, email });
+    setVerified(verifiedFromRequest);
+    setTimerSeconds(Math.ceil(+secondtillunblockresend || 0));
+  };
+
   useEffect(() => {
-    (async () => {
-      const { data } = await ApiService.get({ url: "/accounts" });
-      const { firstName, lastName, email } = data;
-      setFormData({ ...formData, firstName, lastName, email });
-      setInitialData({ ...formData, firstName, lastName, email });
-    })();
+    loadData();
   }, []);
 
   const handleSubmit = async () => {
@@ -117,6 +132,22 @@ export default function SettingsGeneralBeta() {
           verifyNewPassword: formData.verifyNewPassword || undefined,
         },
       });
+      if (formData.email !== initialData.email) {
+        toast.info(
+          "You need to verify your email. We've sent you a verification email",
+          {
+            position: "bottom-center",
+            autoClose: 5000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+            theme: "colored",
+          }
+        );
+      }
+      await loadData();
     } catch (e: any) {
       toast.error(e.response.data.message || "Unexpected error!", {
         position: "bottom-center",
@@ -129,6 +160,21 @@ export default function SettingsGeneralBeta() {
         theme: "colored",
       });
     }
+  };
+
+  const handleResend = async () => {
+    await ApiService.patch({ url: "/auth/resend-email", options: {} });
+    await loadData();
+    toast.info("We have sent you new email", {
+      position: "bottom-center",
+      autoClose: 5000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      progress: undefined,
+      theme: "colored",
+    });
   };
 
   return (
@@ -218,7 +264,30 @@ export default function SettingsGeneralBeta() {
                 ))}
             </div>
             <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:py-5">
-              <dt className="text-sm font-medium text-gray-500">Email</dt>
+              <dt className="text-sm font-medium text-gray-500">
+                <div>Email</div>
+                {verified ? (
+                  <div className="text-green-500">Your email is verified</div>
+                ) : (
+                  <div className="text-red-500">
+                    Waiting for verification:{" "}
+                    {!timerSeconds ? (
+                      <span
+                        className="text-black cursor-pointer"
+                        onClick={handleResend}
+                      >
+                        Resend
+                      </span>
+                    ) : (
+                      <Timer
+                        seconds={timerSeconds}
+                        setSeconds={setTimerSeconds}
+                        onFinish={() => setTimerSeconds(0)}
+                      />
+                    )}
+                  </div>
+                )}
+              </dt>
               <dd>
                 <div className="relative">
                   <Input
@@ -228,10 +297,12 @@ export default function SettingsGeneralBeta() {
                     name="email"
                     id="email"
                     placeholder="you@example.com"
+                    disabled={!!(timerSeconds && !verified)}
                     className={classNames(
                       errors.email.length > 0 && showErrors
                         ? "rounded-md sm:text-sm focus:!border-red-500 !border-red-300 shadow-sm focus:!ring-red-500 "
-                        : "rounded-md sm:text-sm focus:border-cyan-500 border-gray-300 shadow-sm focus:ring-cyan-500 "
+                        : "rounded-md sm:text-sm focus:border-cyan-500 border-gray-300 shadow-sm focus:ring-cyan-500 ",
+                      " disabled:border-gray-200 disabled:bg-gray-50 disabled:text-gray-500"
                     )}
                   />
                   {showErrors && errors.email.length > 0 && (

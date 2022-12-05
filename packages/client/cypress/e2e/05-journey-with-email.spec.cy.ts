@@ -1,69 +1,85 @@
+/* eslint-disable jest/valid-expect */
+/* eslint-disable jest/valid-describe-callback */
+/* eslint-disable @typescript-eslint/no-shadow */
 import credentials from "../fixtures/credentials.json";
+import { loginFunc } from "../test-helpers/loginFunc";
+import { tamplatesFunc } from "../test-helpers/templatesFunc";
 
-const { email, password } = credentials;
+const { email, password, emailTemplate, journeyName, userAPIkey } =
+  credentials.MessageHitUser;
 
-describe("Journey with email triggered", () => {
-  it("passes", () => {
-    cy.visit("/");
-    cy.clearCookies();
-    cy.clearCookies();
-    cy.url().should("include", "/login");
-    cy.get("#email").type(email);
-    cy.get("#password").type(password);
-    cy.get(".css-0 > .MuiGrid-root > .MuiButton-root").click();
-    cy.url().should("include", "/dashboard");
-    cy.reload();
-    cy.url().should("include", "/dashboard");
-
-    cy.get(
-      '[href="/flow"] > .MuiListItem-root > .MuiListItemButton-root'
-    ).click();
-    cy.url().should("include", "/flow");
-    cy.get(".MuiButton-root").click();
-    cy.get("#name").type("test1");
-    cy.get(".MuiPaper-root > .MuiBox-root > .MuiButton-root").click();
-    cy.url().should("include", "/flow/test1");
-    cy.get(
-      ":nth-child(3) > .MuiListItem-root > .MuiListItemButton-root"
-    ).click();
-    cy.get("#name").type("First");
-    cy.get("#description").type("first");
-    cy.get(".css-1bvc4cc > .MuiButton-root").click();
-    cy.get(".text-updater").move({ deltaX: 100, deltaY: 100 });
-    cy.get(
-      ":nth-child(3) > .MuiListItem-root > .MuiListItemButton-root"
-    ).click();
-    cy.get("#name").type("Second");
-    cy.get("#description").type("second");
-    cy.get(".MuiPaper-root > .MuiBox-root > .MuiButton-root").click();
-    cy.get("div:not(.selected) > .text-updater-node > .text-updater").move({
-      deltaX: 100,
-      deltaY: 300,
+describe(
+  "Journey with email triggered",
+  { env: { AxiosURL: "http://localhost:3001/" } },
+  () => {
+    beforeEach(() => {
+      cy.request("http://localhost:3001/tests/reset-tests");
+      cy.wait(1000);
     });
-    cy.get("div:not(.selected) > .text-updater-node > .text-updater").click();
-    cy.get(
-      ":nth-child(6) > .MuiListItem-root > .MuiListItemButton-root"
-    ).click();
-    cy.get("#mui-component-select-conditions").click();
-    cy.get('.MuiList-root > [tabindex="0"]').click();
-    cy.get("#events").type("event123");
-    cy.get(".css-120hbbo > :nth-child(2) > .MuiButton-root").click();
-    cy.get(
-      '[style="display: flex; height: 15px; position: absolute; left: 0px; bottom: 0px; align-items: center; width: 100%; justify-content: space-around;"] > .react-flow__handle'
-    ).drag("div:not(.selected) > .text-updater-node > .react-flow__handle");
-    cy.get(
-      "div:not(.selected) > .text-updater-node > .react-flow__handle"
-    ).click();
-    cy.get("div:not(.selected) > .text-updater-node > .text-updater").click();
-    cy.get(
-      ".css-wgtxfr > .MuiDrawer-root > .MuiPaper-root > :nth-child(1) > .MuiList-root > :nth-child(10) > .MuiListItem-root > .MuiListItemButton-root"
-    ).click();
-    cy.get("#activeJourney").click();
-    cy.contains("With email");
-    cy.get(".MuiMenuItem-root").click();
-    cy.get(":nth-child(4) > .MuiButton-root").click();
-    cy.get(":nth-child(1) > .MuiButton-root").click();
-    cy.wait(100);
-    cy.get(":nth-child(2) > .MuiButton-root").click();
-  });
-});
+
+    it("passes", () => {
+      loginFunc(email, password);
+      tamplatesFunc();
+      cy.get('[data-disclosure-link="Journey Builder"]').click();
+      cy.get(".mt-6 > .inline-flex").click();
+      cy.get("#name").type("Email flow");
+      cy.get("#createJourneySubmit").click();
+      cy.wait(3000);
+      cy.get("#audience > .p-0 > .justify-between").click();
+      cy.get("#name").type("Initial");
+      cy.get("#saveNewSegment").click();
+      cy.get(".text-updater").move({ deltaX: 100, deltaY: 100 });
+      cy.get("#audience > .p-0 > .justify-between").click();
+      cy.get("#name").type("Second");
+      cy.get("#saveNewSegment").click();
+      cy.get('[data-isprimary]:not([data-isprimary="true"])').move({
+        deltaX: 100,
+        deltaY: 300,
+      });
+      cy.get('[data-isprimary]:not([data-isprimary="true"])').click();
+      cy.get("#email > .p-0 > .justify-between").click();
+      cy.get("#activeJourney").click();
+      cy.contains(emailTemplate.name).click();
+      cy.get("#exportSelectedTemplate").click();
+      cy.get('[data-isprimary="true"]').click();
+      cy.get("#eventBased > .p-0 > .justify-between").click();
+      cy.contains("Add Condition Or Group").click();
+      cy.contains("Events").click();
+      cy.get("#events").type(emailTemplate.eventName);
+      cy.get('[data-savetriggerreator="true"] > .inline-flex').click();
+      cy.get(
+        '[style="display: flex; height: 15px; position: absolute; left: 0px; bottom: 0px; align-items: center; width: 100%; justify-content: space-around;"] > .react-flow__handle'
+      ).drag('[data-isprimary]:not([data-isprimary="true"])');
+      cy.get('[data-isprimary]:not([data-isprimary="true"])').click();
+      cy.contains("Save").click();
+      cy.wait(1000);
+      cy.contains("Start").click();
+      cy.request({
+        method: "POST",
+        url: `${Cypress.env("AxiosURL")}events`,
+        headers: {
+          Authorization: `Api-Key ${userAPIkey}`,
+        },
+        body: {
+          correlationKey: "email",
+          correlationValue: emailTemplate.correlationValue,
+          event: emailTemplate.eventName,
+        },
+      }).then(({ body }) => {
+        cy.wait(1000);
+        cy.request({
+          method: "POST",
+          headers: {
+            Authorization: `Api-Key ${userAPIkey}`,
+          },
+          url: `${Cypress.env("AxiosURL")}events/job-status/email`,
+          body: {
+            jobId: body[0]?.jobIds?.[0],
+          },
+        }).then(({ body }) => {
+          expect(body).to.equal("completed");
+        });
+      });
+    });
+  }
+);

@@ -12,18 +12,10 @@ import {
   useNavigate,
 } from "react-router-dom";
 import tokenService from "./services/token.service";
-import Dashboard from "./pages/Dashboard";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
-import Channel from "pages/Settings/Channel";
 import FlowBuilder from "pages/FlowBuilder";
 import EmailConfig from "pages/EmailConfig";
-import EmailProvider from "pages/Settings/EmailProvider";
-import MailgunConfiguration from "pages/Settings/MailgunConfiguration";
-import PosthogConfiguration from "pages/Settings/PosthogConfiguration";
-import PosthogConfigurationTwo from "pages/Settings/PosthogConfigurationTwo";
-import PosthogConfigurationThree from "pages/Settings/PosthogConfigurationThree";
-import Completion from "pages/Settings/Completion";
 import TriggerCreater from "components/TriggerCreater";
 import EmailBuilder from "pages/EmailBuilder";
 import { useTypedSelector } from "hooks/useTypeSelector";
@@ -33,30 +25,16 @@ import Cor from "pages/Cor";
 import FlowTable from "pages/FlowTable/FlowTable";
 import TemplateTable from "pages/TemplateTable/TemplateTable";
 import PeopleTable from "pages/PeopleTable/PeopleTable";
-import Profile from "pages/Profile";
 import FlowViewer from "pages/FlowViewer";
-import NetworkCofiguration from "pages/Settings/NetworkConfiguration";
-import SlackConfiguration from "pages/Settings/SlackConfiguration";
 import { useDispatch } from "react-redux";
 import { setSettingData } from "reducers/settings";
 import ApiService from "services/api.service";
-import EventsProvider from "pages/Settings/EventsProvider";
 import DrawerLayout from "components/DrawerLayout";
-import Integrations from "pages/Settings/Integrations";
-import MailgunConfigurationTwo from "pages/Settings/MailgunConfigurationTwo";
-import SettingsGeneralBeta from "pages/Settings/SettingsGeneralBeta";
-import SettingsAPIBeta from "pages/Settings/SettingsAPIBeta";
-import SettingsEmailBeta from "pages/Settings/SettingsEmailBeta";
-import SettingsSMSBeta from "pages/Settings/SettingsSMSBeta";
-import SettingsSlackBeta from "pages/Settings/SettingsSlackBeta";
-import SettingsEventsBeta from "pages/Settings/SettingsEventsBeta";
-import SettingsPlanBeta from "pages/Settings/SettingsPlanBeta";
-import SettingsBillingBeta from "pages/Settings/SettingsBillingBeta";
-import SettingsTeamBeta from "pages/Settings/SettingsTeamBeta";
 import TableBeta from "pages/TemplateTable/TableBeta";
 import OnboardingBeta from "pages/Onboarding/OnboardingBeta";
 import Settings from "pages/Settings/Settings";
 import Person from "pages/Person";
+import Verify from "pages/Verify";
 
 interface IProtected {
   children: ReactElement;
@@ -149,6 +127,16 @@ const RouteComponent: React.FC = () => {
             <Protected>
               <DrawerLayout>
                 <FlowTable />
+              </DrawerLayout>
+            </Protected>
+          }
+        />
+        <Route
+          path="/verify-email/:id"
+          element={
+            <Protected>
+              <DrawerLayout>
+                <Verify />
               </DrawerLayout>
             </Protected>
           }

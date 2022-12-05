@@ -9,29 +9,40 @@ import { setSettingData } from "reducers/settings";
 import { useTypedSelector } from "hooks/useTypeSelector";
 import Chip from "components/Elements/Chip";
 
-export const allEmailChannels: any = [
+export const allEmailChannels = [
   {
-    id: "sendgrid",
-    title: "Sendgrid",
-    subTitle: "for any campaign or newsletter",
-    disabled: true,
+    id: "free3",
+    title: "Free 3 emails",
+    subTitle: "Campaign: Onboarding Campaign",
+    tooltip: "",
+    disabled: false,
   },
   {
     id: "mailgun",
     title: "Mailgun",
     subTitle: "Campaign: Onboarding Campaign",
+    tooltip: "",
+    disabled: false,
+  },
+  {
+    id: "sendgrid",
+    title: "Sendgrid",
+    subTitle: "for any campaign or newsletter",
+    tooltip: "",
     disabled: false,
   },
   {
     id: "mailchimp",
     title: "Mailchimp",
     subTitle: "Campaign: Transactional Receipt",
+    tooltip: "",
     disabled: true,
   },
   {
     id: "smtp",
     title: "SMTP",
     subTitle: "Setup your own email server",
+    tooltip: "",
     disabled: true,
   },
 ];

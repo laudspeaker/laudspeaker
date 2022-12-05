@@ -1,16 +1,31 @@
 import { BaseJwtHelper } from '../../common/helper/base-jwt.helper';
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  HttpException,
+  HttpStatus,
+  Inject,
+  Injectable,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UpdateAccountDto } from './dto/update-account.dto';
 import { Account } from './entities/accounts.entity';
 import * as bcrypt from 'bcryptjs';
+import { CustomersService } from '../customers/customers.service';
+import { AuthService } from '../auth/auth.service';
+import { MailService } from '@sendgrid/mail';
+import { Client } from '@sendgrid/client';
 
 @Injectable()
 export class AccountsService extends BaseJwtHelper {
+  private sgMailService = new MailService();
+  private sgClient = new Client();
+
   constructor(
     @InjectRepository(Account)
-    private accountsRepository: Repository<Account>
+    public accountsRepository: Repository<Account>,
+    @Inject(CustomersService) private customersService: CustomersService,
+    @Inject(AuthService) private authService: AuthService
   ) {
     super();
   }
@@ -34,6 +49,57 @@ export class AccountsService extends BaseJwtHelper {
     const oldUser = await this.findOne(user);
     // if user change password
     let password = oldUser.password;
+
+    let verificationKey = '';
+    if (
+      updateUserDto.sendgridFromEmail &&
+      updateUserDto.sendgridApiKey &&
+      (oldUser.sendgridFromEmail !== updateUserDto.sendgridFromEmail ||
+        oldUser.sendgridApiKey !== updateUserDto.sendgridApiKey)
+    ) {
+      try {
+        this.sgMailService.setApiKey(updateUserDto.sendgridApiKey);
+        await this.sgMailService.send({
+          subject: 'Sendgrid connection to Laudspeaker',
+          from: updateUserDto.sendgridFromEmail,
+          to: oldUser.email,
+          html: '<h1>If you see this message, you successfully connected your sendgrid email to laudspeaker</h1>',
+        });
+
+        this.sgClient.setApiKey(updateUserDto.sendgridApiKey);
+        await this.sgClient.request({
+          url: '/v3/user/webhooks/event/settings',
+          method: 'PATCH',
+          body: {
+            enabled: true,
+            url: process.env.SENDGRID_WEBHOOK_ENDPOINT,
+            group_resubscribe: false,
+            delivered: true,
+            group_unsubscribe: false,
+            spam_report: false,
+            bounce: false,
+            deferred: false,
+            unsubscribe: false,
+            processed: false,
+            open: true,
+            click: true,
+            dropped: false,
+          },
+        });
+        const [_, body] = await this.sgClient.request({
+          url: `/v3/user/webhooks/event/settings/signed`,
+          method: 'PATCH',
+          body: {
+            enabled: true,
+          },
+        });
+        verificationKey = body.public_key;
+      } catch (e) {
+        throw new BadRequestException(
+          'There is something wrong with your sendgrid account. Check if your email is verified'
+        );
+      }
+    }
 
     if (updateUserDto.newPassword) {
       const isPasswordValid: boolean = bcrypt.compareSync(
@@ -72,11 +138,39 @@ export class AccountsService extends BaseJwtHelper {
         oldUser.expectedOnboarding.length === oldUser.currentOnboarding.length;
     }
 
+    let verified = oldUser.verified;
+    const needEmailUpdate =
+      updateUserDto.email && oldUser.email !== updateUserDto.email;
+    if (needEmailUpdate) {
+      verified = false;
+
+      if (oldUser.customerId) {
+        const customer = await this.customersService.findById(
+          oldUser,
+          oldUser.customerId
+        );
+
+        customer.verified = false;
+        await customer.save();
+      }
+    }
+
+    if (updateUserDto.emailProvider === 'free3' && !verified)
+      throw new HttpException(
+        'Email has to be verified to use this',
+        HttpStatus.BAD_REQUEST
+      );
+
     const updatedUser = await this.accountsRepository.save({
       ...oldUser,
       ...updateUserDto,
       password,
+      verified,
+      sendgridVerificationKey: verificationKey,
     });
+
+    if (needEmailUpdate)
+      await this.authService.requestVerification(updatedUser);
 
     return updatedUser;
   }

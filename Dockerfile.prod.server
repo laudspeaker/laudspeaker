@@ -1,5 +1,5 @@
 
-# To build : docker build -f Dockerfile.prod -t laudspeaker-api:latest .
+# To build : docker build -f Dockerfile.prod.server -t laudspeaker-api:latest .
 # To run: docker run -it -p 3001:3001 --rm laudspeaker-api:latest
 FROM node:16 as build
 WORKDIR /app

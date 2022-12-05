@@ -13,7 +13,6 @@ import {
   LoggerService,
   HttpException,
   Put,
-  Delete,
 } from '@nestjs/common';
 import { CreateCustomerDto } from './dto/create-customer.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -71,8 +70,10 @@ export class CustomersController {
   @Get('/:id')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
-  findOne(@Req() { user }: Request, @Param() { id }: { id: string }) {
-    return this.customersService.findOne(<Account>user, id);
+  async findOne(@Req() { user }: Request, @Param() { id }: { id: string }) {
+    const { _id, __v, ownerId, verified, ...customer } =
+      await this.customersService.findOne(<Account>user, id);
+    return customer;
   }
 
   @Put('/:id')

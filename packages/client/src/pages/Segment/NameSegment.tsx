@@ -11,9 +11,6 @@ export interface INameSegmentForm {
   isPrimary: boolean;
 }
 
-const segmentTypeStyle =
-  "border-[1px] border-[#D1D5DB] rouded-[6px] shadow-[0px_1px_2px_rgba(0,0,0,0.05)] w-[234px] mt-[20px] p-[15px]";
-
 interface INameSegment {
   onSubmit?: (e: any) => void;
   isPrimary: boolean;
@@ -110,37 +107,9 @@ const NameSegment = ({
               />
             </FormControl>
           </Grid>
-          {isPrimary && (
-            <div>
-              <h3 className="pt-[20px]">Choose a segment type</h3>
-              <div className={segmentTypeStyle}>
-                <Grid
-                  sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                  }}
-                >
-                  <p className="font-semibold text-[#111827]">Dynamic</p>
-                  <ToggleSwitch
-                    checked={segmentForm.isDynamic}
-                    onChange={onToggleChange}
-                  />
-                </Grid>
-                <Tooltip title="dynamic">
-                  {/* <IconButton> */}
-                  <div className="flex items-end cursor-default mt-[8px]">
-                    <img src={InfoIcon} width="20px" />
-                    <p className="text-[#4FA198] text-[12px] pl-[5px]">
-                      What is a dynamic segment?
-                    </p>
-                  </div>
-                </Tooltip>
-              </div>
-            </div>
-          )}
           <div className="flex justify-end" data-namesegmentbox>
             <GenericButton
+              id="saveNewSegment"
               onClick={handleSubmit}
               style={{
                 maxWidth: "200px",

@@ -9,6 +9,7 @@ export interface InputProps {
   customClasses?: object;
   disabled?: boolean;
   isError?: boolean;
+  errorText?: string;
   fullWidth?: boolean;
   helperText?: string;
   inputRef?: React.RefObject<any>;
@@ -25,6 +26,7 @@ export interface InputProps {
   onBlur?: (e?: any) => void;
   ref?: any;
   endText?: string;
+  [key: string]: any;
 }
 
 const Input = (props: InputProps) => {
@@ -35,6 +37,7 @@ const Input = (props: InputProps) => {
     customClasses,
     disabled,
     isError,
+    errorText,
     fullWidth,
     inputRef,
     label,
@@ -52,6 +55,7 @@ const Input = (props: InputProps) => {
     onBlur,
     style,
     endText,
+    ...otherProps
   } = props;
   return (
     <>
@@ -69,16 +73,21 @@ const Input = (props: InputProps) => {
             name={name}
             id={id}
             ref={inputRef}
-            value={value}
+            value={value || ""}
             onChange={onChange}
             onKeyDown={onKeyDown}
             onBlur={onBlur}
             disabled={disabled}
-            className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:!border-cyan-500 focus:!ring-cyan-500 sm:text-sm ${
+            className={`mt-1 block w-full rounded-md shadow-sm sm:text-sm ${
               className ? className : ""
+            } ${
+              isError
+                ? "focus:!border-red-500 !border-red-300 shadow-sm focus:!ring-red-500"
+                : "border-gray-300 focus:border-cyan-500 focus:ring-cyan-500"
             }`}
             placeholder={placeholder}
             style={style}
+            {...otherProps}
           />
           {endText && (
             <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
@@ -88,6 +97,11 @@ const Input = (props: InputProps) => {
             </div>
           )}
         </div>
+        {isError && (
+          <>
+            <p className="mt-2 text-sm text-red-600">{errorText}</p>
+          </>
+        )}
       </div>
     </>
   );

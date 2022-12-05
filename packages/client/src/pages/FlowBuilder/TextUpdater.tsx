@@ -80,6 +80,7 @@ const TextUpdaterNode = ({
       getAudienceDetails(audienceId).then((response: any) => {
         if (response.status === StatusCodes.OK) {
           setNodeData(response.data);
+          data.isDynamic = response.data.isDynamic;
         }
       });
     } else {

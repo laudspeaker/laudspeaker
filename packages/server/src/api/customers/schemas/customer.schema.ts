@@ -109,6 +109,9 @@ export class Customer {
 
   @Prop()
   slackTeamMember: boolean;
+
+  @Prop()
+  verified: boolean;
 }
 
 export const CustomerSchema = SchemaFactory.createForClass(Customer);

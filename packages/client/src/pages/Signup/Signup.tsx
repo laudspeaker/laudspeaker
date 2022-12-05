@@ -3,7 +3,6 @@ import React, { useState } from "react";
 import { useDispatch } from "react-redux";
 import { GenericButton, Input } from "../../components/Elements";
 import { signUpUser, ISignUpForm } from "../../reducers/auth";
-import Link from "@mui/material/Link";
 import googleIcon from "../../assets/images/google.svg";
 import githubIcon from "../../assets/images/github.svg";
 import gitlabIcon from "../../assets/images/gitlab.svg";
@@ -11,6 +10,8 @@ import { useNavigate } from "react-router-dom";
 import posthog from "posthog-js";
 import laudspeakerLogo from "../../assets/images/laudspeaker.svg";
 import Tooltip from "components/Elements/Tooltip";
+import { toast } from "react-toastify";
+import Link from "components/Link/Link";
 
 const Signup = () => {
   const dispatch = useDispatch();
@@ -58,6 +59,19 @@ const Signup = () => {
           laudspeakerId: response.data.id,
         },
       });
+      toast.info(
+        "You need to verify your email. We've sent you a verification email",
+        {
+          position: "bottom-center",
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          theme: "colored",
+        }
+      );
       navigate("/home");
     }
   };
@@ -235,8 +249,8 @@ const Signup = () => {
                 />
                 {isInvalids.pass && checkedFields.password && (
                   <p className="mt-2 text-sm text-red-600">
-                    Password's should be longer or equal 8 char's and should be
-                    equal
+                    Password should be longer than 8 characters and passwords
+                    should be equal.
                   </p>
                 )}
               </div>
@@ -262,10 +276,8 @@ const Signup = () => {
           <p className="mt-[24px] mb-[34px] text-center">
             Already have an account?
             <Link
-              href="/"
-              underline="none"
-              color="#4FA198"
-              sx={{ margin: "0 10px" }}
+              href="/login"
+              className="no-underline text-[#4FA198] m-[0_10px]"
             >
               Log in
             </Link>

@@ -19,7 +19,7 @@ const eventTypes = {
   completed: { icon: CheckIcon, bgColorClass: "bg-green-500" },
 };
 
-const KEYS_TO_SKIP = ["_id", "ownerId", "__v"];
+const KEYS_TO_SKIP = ["_id", "ownerId", "__v", "verified"];
 
 interface ITimeline {
   id: number;
@@ -116,7 +116,8 @@ const Person = () => {
   };
 
   const handleDeleteAttribute = (key: string) => {
-    const { [key]: value, ...newPersonInfo } = personInfo;
+    const newPersonInfo = { ...personInfo };
+    newPersonInfo[key] = null;
     setPersonInfo(newPersonInfo);
   };
 
@@ -163,7 +164,11 @@ const Person = () => {
                   <div className="border-t border-gray-200 px-4 py-5 sm:px-6">
                     <dl className="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2">
                       {Object.keys(personInfo)
-                        .filter((key) => !KEYS_TO_SKIP.includes(key))
+                        .filter(
+                          (key) =>
+                            !KEYS_TO_SKIP.includes(key) &&
+                            personInfo[key] !== null
+                        )
                         .map((key) => (
                           <div className="sm:col-span-1" key={key}>
                             <dt className="text-sm font-medium text-gray-500">

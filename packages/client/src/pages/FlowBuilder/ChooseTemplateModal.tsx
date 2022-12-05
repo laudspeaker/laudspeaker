@@ -51,6 +51,7 @@ const ChooseTemplateModal = ({
       return (
         <>
           <GenericButton
+            id="exportSelectedTemplate"
             onClick={(_) => {
               console.log(_);
               handleTemplateModalOpen({ activeTemplate, selectedMessageType });
@@ -123,6 +124,7 @@ const ChooseTemplateModal = ({
               onChange={handleActiveTemplate}
               displayEmpty
               disabled={isViewMode}
+              data-select-template
             />
           </form>
         </div>

@@ -82,6 +82,7 @@ const MergeTagInput = ({
         onClick={() => {
           setIsPreview(false);
         }}
+        data-custominput-placeholder={placeholder}
       >
         {items.length > 0 ? (
           items

@@ -3,6 +3,7 @@ import {
   Inject,
   Injectable,
   HttpException,
+  NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, In, Repository } from 'typeorm';
@@ -92,7 +93,7 @@ export class WorkflowsService {
   private async getStats(audienceId?: string) {
     if (!audienceId) return {};
     const sentResponse = await this.clickhouseClient.query({
-      query: `SELECT COUNT(*) FROM message_status WHERE event = 'accepted' AND audienceId = {audienceId:UUID}`,
+      query: `SELECT COUNT(*) FROM message_status WHERE event = 'delivered' AND audienceId = {audienceId:UUID}`,
       query_params: { audienceId },
     });
     const sentData = (await sentResponse.json<any>())?.data;
@@ -220,6 +221,78 @@ export class WorkflowsService {
     return;
   }
 
+  async duplicate(user: Account, id: string) {
+    const oldWorkflow = await this.workflowsRepository.findOneBy({
+      ownerId: user.id,
+      id,
+    });
+    if (!oldWorkflow) throw new NotFoundException('Workflow not found');
+
+    let copyEraseIndex = oldWorkflow.name.indexOf('-copy');
+    if (copyEraseIndex === -1) copyEraseIndex = oldWorkflow.name.length;
+
+    const res = await this.workflowsRepository
+      .createQueryBuilder()
+      .select('COUNT(*)')
+      .where('starts_with(name, :oldName) = TRUE AND "ownerId" = :ownerId', {
+        oldName: oldWorkflow.name.substring(0, copyEraseIndex),
+        ownerId: user.id,
+      })
+      .execute();
+    const newName =
+      oldWorkflow.name.substring(0, copyEraseIndex) +
+      '-copy-' +
+      (res?.[0]?.count || '0');
+    const newWorkflow = await this.findOne(user, newName, false);
+
+    const newAudiences = await Promise.all(
+      oldWorkflow.audiences?.map(async (id) => {
+        const {
+          name,
+          description,
+          inclusionCriteria,
+          isDynamic,
+          isPrimary,
+          templates,
+        } = await this.audiencesService.findOne(user, id);
+        const newAudience = await this.audiencesService.insert(user, {
+          name,
+          description,
+          inclusionCriteria,
+          isDynamic,
+          isPrimary,
+          templates,
+        });
+        return newAudience.id;
+      }) || []
+    );
+
+    let visualLayout = JSON.stringify(oldWorkflow.visualLayout);
+    const rules = oldWorkflow.rules.map((rule) =>
+      Buffer.from(rule, 'base64').toString()
+    );
+
+    for (let i = 0; i < oldWorkflow.audiences.length; i++) {
+      const oldAudience = oldWorkflow.audiences[i];
+      const newAudience = newAudiences[i];
+      visualLayout = visualLayout.replaceAll(oldAudience, newAudience);
+      for (let i = 0; i < rules.length; i++) {
+        rules[i] = rules[i].replaceAll(oldAudience, newAudience);
+      }
+    }
+
+    visualLayout = JSON.parse(visualLayout);
+    const triggers: Trigger[] = rules.map((rule) => JSON.parse(rule));
+
+    await this.update(user, {
+      id: newWorkflow.id,
+      audiences: newAudiences,
+      name: newName,
+      visualLayout,
+      rules: triggers,
+    });
+  }
+
   /**
    * Start a workflow, adding the initial set of customers to the primary audience
    * and sending them any relevant messages. Similar to enrollCustomers,
@@ -239,7 +312,6 @@ export class WorkflowsService {
     let workflow: Workflow; // Workflow to update
     let audience: Audience; // Audience to freeze/send messages to
     let customers: CustomerDocument[]; // Customers to add to primary audience
-    let saved: Workflow;
     let jobIDs: (string | number)[] = [];
     try {
       workflow = await this.workflowsRepository.findOneBy({
@@ -260,21 +332,11 @@ export class WorkflowsService {
     }
     if (workflow?.isStopped)
       return Promise.reject(new Error('The workflow has already been stopped'));
-    try {
-      saved = await this.workflowsRepository.save({
-        ...workflow,
-        isActive: true,
-      });
-      this.logger.debug('Started workflow ' + saved?.id);
-    } catch (err) {
-      this.logger.error('Error: ' + err);
-      return Promise.reject(err);
-    }
-    for (let index = 0; index < saved?.audiences?.length; index++) {
+    for (let index = 0; index < workflow?.audiences?.length; index++) {
       try {
         audience = await this.audiencesService.findOne(
           account,
-          saved.audiences[index]
+          workflow.audiences[index]
         );
         if (!audience) {
           this.logger.error('Error: Workflow contains nonexistant audience');
@@ -313,6 +375,16 @@ export class WorkflowsService {
             null
           );
           this.logger.debug('Finished moving customers into workflow');
+        } catch (err) {
+          this.logger.error('Error: ' + err);
+          return Promise.reject(err);
+        }
+        try {
+          await this.workflowsRepository.save({
+            ...workflow,
+            isActive: true,
+          });
+          this.logger.debug('Started workflow ' + workflow?.id);
         } catch (err) {
           this.logger.error('Error: ' + err);
           return Promise.reject(err);

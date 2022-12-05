@@ -1,88 +1,98 @@
 import { Trim } from 'class-sanitizer';
-import { IsEmail, IsString, IsNotEmpty, IsOptional } from 'class-validator';
+import {
+  IsEmail,
+  IsString,
+  IsNotEmpty,
+  IsOptional,
+  IsBoolean,
+} from 'class-validator';
 
 export class CreateCustomerDto {
   @Trim()
   @IsString()
   @IsNotEmpty()
   @IsOptional()
-  public name: string;
+  public name?: string;
 
   @Trim()
   @IsEmail()
   @IsNotEmpty()
   @IsOptional()
-  public email: string;
+  public email?: string;
 
   @IsString()
   @IsNotEmpty()
   @IsOptional()
-  public firstName: string;
+  public firstName?: string;
 
   @IsString()
   @IsNotEmpty()
   @IsOptional()
-  public lastName: string;
+  public lastName?: string;
 
   @IsString()
   @IsNotEmpty()
   @IsOptional()
-  public externalId: string;
+  public externalId?: string;
 
   @IsString()
   @IsNotEmpty()
   @IsOptional()
-  public correlationKey: string;
+  public correlationKey?: string;
 
   @IsString()
   @IsNotEmpty()
   @IsOptional()
-  public correlationValue: string;
+  public correlationValue?: string;
 
   @IsString()
   @IsNotEmpty()
   @IsOptional()
-  public slackName: string;
+  public slackName?: string;
 
   @IsString()
   @IsNotEmpty()
   @IsOptional()
-  public slackId: string;
+  public slackId?: string;
 
   @IsString()
   @IsNotEmpty()
   @IsOptional()
-  public slackRealName: string;
+  public slackRealName?: string;
 
   @IsString({ each: true })
   @IsNotEmpty()
   @IsOptional()
-  public slackTeamId: [string];
+  public slackTeamId?: [string];
 
   //minutes offset from utc (gmt)?
 
   @IsNotEmpty()
   @IsOptional()
-  public slackTimeZone: number;
+  public slackTimeZone?: number;
 
   @IsString()
   @IsNotEmpty()
   @IsOptional()
-  public slackEmail: string;
+  public slackEmail?: string;
 
   @IsNotEmpty()
   @IsOptional()
-  public slackDeleted: boolean;
+  public slackDeleted?: boolean;
 
   @IsNotEmpty()
   @IsOptional()
-  public slackAdmin: boolean;
+  public slackAdmin?: boolean;
 
   //to filter out your own org
 
   @IsNotEmpty()
   @IsOptional()
-  public slackTeamMember: boolean;
+  public slackTeamMember?: boolean;
+
+  @IsBoolean()
+  @IsOptional()
+  verified?: boolean;
 }
 /*
 example slack 

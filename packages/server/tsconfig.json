@@ -6,7 +6,7 @@
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "allowSyntheticDefaultImports": true,
-    "target": "es2017",
+    "target": "es2022",
     "sourceMap": true,
     "outDir": "./dist",
     "baseUrl": "./",
@@ -19,6 +19,7 @@
     "noFallthroughCasesInSwitch": false,
     "paths": { "@/*": ["./src/*"] },
     "typeRoots": ["./node_modules/@types"],
+    "esModuleInterop": true,
     "resolveJsonModule": true,
     "plugins": [
       {

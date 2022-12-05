@@ -48,6 +48,7 @@ export default function ResponsiveDrawer() {
                         handleCloseClick();
                         navigate(item.link);
                       }}
+                      data-disclosure-link={item.text}
                       className="cursor-pointer"
                     >
                       <div
@@ -105,7 +106,9 @@ export default function ResponsiveDrawer() {
                         >
                           {item.imgIcon}
                         </div>
-                        <span className="flex-1">{item.text}</span>
+                        <span className="flex-1" data-disclosure={item.text}>
+                          {item.text}
+                        </span>
                         <svg
                           className={classNames(
                             open ? "text-gray-400 rotate-90" : "text-gray-300",
@@ -136,6 +139,7 @@ export default function ResponsiveDrawer() {
                                   location.pathname.includes(subItem.link) &&
                                     "!bg-cyan-800 text-white"
                                 )} group bg-cyan-700 flex w-full transition-all whitespace-nowrap outline-none items-center rounded-md py-2 px-2 text-sm font-medium text-cyan-100 hover:bg-cyan-600 hover:text-white`}
+                                data-disclosure-link={subItem.text}
                               >
                                 <div
                                   className={classNames(

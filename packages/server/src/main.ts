@@ -1,3 +1,5 @@
+// DO NOT IMPORT ANYTHING BEFORE TRACER
+import './tracer';
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
@@ -10,17 +12,11 @@ async function bootstrap() {
   const httpsOptions = {
     key:
       parseInt(process.env.PORT) == 443
-        ? readFileSync(
-            '/etc/letsencrypt/live/api.laudspeaker.com/privkey.pem',
-            'utf8'
-          )
+        ? readFileSync(process.env.KEY_PATH, 'utf8')
         : null,
     cert:
       parseInt(process.env.PORT) == 443
-        ? readFileSync(
-            '/etc/letsencrypt/live/api.laudspeaker.com/fullchain.pem',
-            'utf8'
-          )
+        ? readFileSync(process.env.CERT_PATH, 'utf8')
         : null,
   };
   const app: NestExpressApplication = await NestFactory.create(AppModule, {

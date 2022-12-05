@@ -33,7 +33,7 @@ export type Correlation = {
 };
 
 const eventsMap = {
-  sent: 'accepted',
+  sent: 'delivered',
   clicked: 'clicked',
 };
 
@@ -60,7 +60,12 @@ export class CustomersService {
   async create(
     account: Account,
     createCustomerDto: CreateCustomerDto
-  ): Promise<Customer> {
+  ): Promise<
+    Customer &
+      mongoose.Document<any, any, any> & {
+        _id: Types.ObjectId;
+      }
+  > {
     const createdCustomer = new this.CustomerModel({
       ownerId: (<Account>account).id,
       ...createCustomerDto,
@@ -115,7 +120,7 @@ export class CustomersService {
       }).exec();
       let createdCustomer: CustomerDocument;
       //create customer only if we don't see before, otherwise update data
-      if (addedBefore.length == 0) {
+      if (addedBefore.length === 0) {
         createdCustomer = new this.CustomerModel({});
       } else {
         createdCustomer = addedBefore[0];
@@ -216,9 +221,26 @@ export class CustomersService {
     id: string,
     updateCustomerDto: Record<string, unknown>
   ) {
-    const { _id, ...newCustomerData } = updateCustomerDto;
+    const { ...newCustomerData } = updateCustomerDto;
+
+    delete newCustomerData.verified;
+    delete newCustomerData.ownerId;
+    delete newCustomerData._id;
+    delete newCustomerData.__v;
     const customer = await this.findOne(account, id);
-    await this.CustomerModel.replaceOne(customer, newCustomerData).exec();
+
+    if (customer.ownerId != account.id) {
+      throw new HttpException("You can't update this customer.", 400);
+    }
+
+    const newCustomer = Object.fromEntries(
+      Object.entries({
+        ...customer,
+        ...newCustomerData,
+      }).filter(([_, v]) => v != null)
+    );
+
+    await this.CustomerModel.replaceOne(customer, newCustomer).exec();
 
     return newCustomerData;
   }
@@ -305,7 +327,12 @@ export class CustomersService {
   async findById(
     account: Account,
     customerId: string
-  ): Promise<CustomerDocument> {
+  ): Promise<
+    Customer &
+      mongoose.Document<any, any, any> & {
+        _id: Types.ObjectId;
+      }
+  > {
     const found = await this.CustomerModel.findById(customerId).exec();
     if (found && found?.ownerId == (<Account>account).id) return found;
     return;

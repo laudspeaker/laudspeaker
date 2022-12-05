@@ -233,6 +233,7 @@ export const updateUserData = (body: any): any => {
           uId: data.id,
           email: data.email,
           expectedOnboarding: data.expectedOnboarding,
+          verified: data.verified,
         },
       });
 
