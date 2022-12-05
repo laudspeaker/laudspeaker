@@ -94,9 +94,22 @@ describe(
           headers: {
             Authorization: `Api-Key ${userAPIkey}`,
           },
-          url: `${Cypress.env("AxiosURL")}events/job-status/slack`,
+          url: `${Cypress.env("AxiosURL")}events/job-status/email`,
           body: {
             jobId: body[0]?.jobIds?.[0],
+          },
+        }).then(({ body }) => {
+          expect(body).to.equal("completed");
+        });
+
+        cy.request({
+          method: "POST",
+          headers: {
+            Authorization: `Api-Key ${userAPIkey}`,
+          },
+          url: `${Cypress.env("AxiosURL")}events/job-status/slack`,
+          body: {
+            jobId: body[0]?.jobIds?.[1],
           },
         }).then(({ body }) => {
           expect(body).to.equal("completed");

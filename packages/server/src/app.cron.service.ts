@@ -217,32 +217,48 @@ export class CronService {
 
         if (!validItems.length) continue;
 
-        await Promise.all(
-          validItems.map(async (validItem) => {
-            const keyType = getType(validItem);
-            const isArray = keyType.isArray();
-            let type = isArray ? getType(validItem[0]).name : keyType.name;
+        let batchToSave = [];
+        for (const validItem of validItems) {
+          const keyType = getType(validItem);
+          const isArray = keyType.isArray();
+          let type = isArray ? getType(validItem[0]).name : keyType.name;
 
-            if (type === 'String') {
-              if (isEmail(validItem)) type = 'Email';
-              if (isDateString(validItem)) type = 'Date';
-            }
+          if (type === 'String') {
+            if (isEmail(validItem)) type = 'Email';
+            if (isDateString(validItem)) type = 'Date';
+          }
 
-            await this.eventKeysModel
-              .updateOne(
-                { key },
-                {
-                  $set: {
-                    key,
-                    type,
-                    isArray,
-                  },
-                },
-                { upsert: true }
-              )
-              .exec();
-          })
-        );
+          const eventKey = {
+            key,
+            type,
+            isArray,
+          };
+
+          const foundEventKey = await this.eventKeysModel
+            .findOne(eventKey)
+            .exec();
+
+          if (!foundEventKey) {
+            batchToSave.push(eventKey);
+          }
+
+          if (batchToSave.length > BATCH_SIZE) {
+            await this.eventKeysModel.insertMany(batchToSave);
+            batchToSave = [];
+          }
+
+          // await this.eventKeysModel
+          //   .updateOne(
+          //     { key },
+          //     {
+          //       $set: eventKey,
+          //     },
+          //     { upsert: true }
+          //   )
+          //   .exec();
+        }
+
+        await this.eventKeysModel.insertMany(batchToSave);
       }
 
       this.logger.log(

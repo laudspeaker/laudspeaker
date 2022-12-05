@@ -31,7 +31,7 @@ const TriggerModal = ({
   return (
     <Modal
       isOpen={!!selectedTrigger}
-      panelClass="w-full !max-w-[90%]"
+      panelClass="w-full !max-w-[90%] h-full max-h-full overflow-y-scroll"
       closeButtonNeed={isCollapsible}
       onClose={handleClose}
     >

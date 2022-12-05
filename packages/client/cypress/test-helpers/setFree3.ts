@@ -23,6 +23,7 @@ export default () => {
         cy.get(".inline-flex").click();
 
         cy.reload();
+        cy.wait(1000);
         cy.get(".-mb-px > :nth-child(3)").click();
         cy.contains("Free3").click();
 

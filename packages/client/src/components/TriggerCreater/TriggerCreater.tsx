@@ -3,7 +3,7 @@ import { FormControl } from "@mui/material";
 import { GenericButton, Select, Input } from "components/Elements";
 import {
   getConditions,
-  getResources,
+  getEventResources,
   transformDataToUI,
 } from "../../pages/Segment/SegmentHelpers";
 import Card from "components/Cards/Card";
@@ -17,6 +17,7 @@ import Autocomplete from "components/Autocomplete";
 import ConditionCreater from "./ConditionCreator";
 import ApiService from "services/api.service";
 import AndOrSelect from "./AndOrSelect";
+import Tooltip from "components/Elements/Tooltip";
 
 export type TriggerType = "eventBased" | "timeDelay" | "timeWindow";
 interface ITriggerCreaterProp {
@@ -61,7 +62,7 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
   } = props;
 
   const getAllResources = async (id: any) => {
-    const response = await getResources(id);
+    const response = await getEventResources(id);
     return response;
   };
 
@@ -757,9 +758,41 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
   };
 
   const handleDeleteCondition = (i: number) => {
-    conditions.splice(i, 1);
-    setConditions([...conditions.map((condition) => ({ ...condition }))]);
+    setConditions([...conditions.filter((_condition, index) => index !== i)]);
   };
+
+  let eventBasedErrorMessage = "";
+
+  for (let i = 0; i < conditions.length; i++) {
+    const condition = conditions[i];
+    // for (const key of Object.keys(condition)) {
+    //   if (!condition[key as keyof EventCondition]) {
+    //     eventBasedErrorMessage = `${key} is not defined at position ${i + 1}`;
+    //   }
+    // }
+
+    if (!condition.key) {
+      eventBasedErrorMessage = `Key is not defined at position ${i + 1}`;
+      break;
+    }
+
+    if (!condition.type) {
+      eventBasedErrorMessage = `Type is not defined at position ${i + 1}`;
+      break;
+    }
+
+    if (!condition.comparisonType) {
+      eventBasedErrorMessage = `Comparison type is not defined at position ${
+        i + 1
+      }`;
+      break;
+    }
+
+    if (!condition.value) {
+      eventBasedErrorMessage = `Value is not defined at position ${i + 1}`;
+      break;
+    }
+  }
 
   return (
     <>
@@ -804,6 +837,11 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
                         </>
                       ))}
                     </div>
+                    {conditions.length === 10 && (
+                      <span className="text-red-500">
+                        Maximum 10 conditions allowed
+                      </span>
+                    )}
                     {!isViewMode && (
                       <div>
                         <GenericButton
@@ -820,6 +858,7 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
                               },
                             ])
                           }
+                          disabled={conditions.length === 10}
                         >
                           Add new condition
                         </GenericButton>
@@ -865,6 +904,11 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
             </>
           )}
         </div>
+        {triggerType === "eventBased" ? (
+          <span className="text-red-500">{eventBasedErrorMessage}</span>
+        ) : (
+          <></>
+        )}
         {!isViewMode && (
           <div className="flex gap-[10px] justify-end">
             <div>
@@ -886,7 +930,11 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
                 style={{
                   width: "200px",
                 }}
-                disabled={triggerType !== "eventBased" && isButtonDisabled}
+                disabled={
+                  triggerType === "eventBased"
+                    ? !!eventBasedErrorMessage
+                    : isButtonDisabled
+                }
               >
                 Save
               </GenericButton>
