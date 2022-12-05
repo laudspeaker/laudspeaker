@@ -28,4 +28,4 @@ COPY ./package-lock.json /app
 RUN npm install
 COPY --from=build /app/packages/server/dist /app/dist
 EXPOSE 3001
-CMD ["node", "dist/main"]
+CMD ["node", "dist/src/main.js"]
