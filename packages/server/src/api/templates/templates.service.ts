@@ -4,6 +4,7 @@ import {
   Inject,
   Injectable,
   LoggerService,
+  NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -222,6 +223,40 @@ export class TemplatesService {
     await this.templatesRepository.delete({
       ownerId: (<Account>account).id,
       name,
+    });
+  }
+
+  async duplicate(account: Account, name: string) {
+    const foundTemplate = await this.findOne(account, name);
+    if (!foundTemplate) throw new NotFoundException('Template not found');
+
+    const { ownerId, slackMessage, style, subject, text, type } = foundTemplate;
+
+    let copyEraseIndex = foundTemplate.name.indexOf('-copy');
+    if (copyEraseIndex === -1) copyEraseIndex = foundTemplate.name.length;
+
+    const res = await this.templatesRepository
+      .createQueryBuilder()
+      .select('COUNT(*)')
+      .where('starts_with(name, :oldName) = TRUE AND "ownerId" = :ownerId', {
+        oldName: foundTemplate.name.substring(0, copyEraseIndex),
+        ownerId: account.id,
+      })
+      .execute();
+
+    const newName =
+      foundTemplate.name.substring(0, copyEraseIndex) +
+      '-copy-' +
+      (res?.[0]?.count || '0');
+
+    await this.templatesRepository.save({
+      name: newName,
+      ownerId,
+      slackMessage,
+      style,
+      subject,
+      text,
+      type,
     });
   }
 }

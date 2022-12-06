@@ -13,7 +13,7 @@ export interface SelectProps {
     subtitle?: string;
     tooltip?: string;
   }[];
-  id: string;
+  id?: string;
   name?: string;
   autoWidth?: boolean;
   children?: React.ReactNode;
@@ -42,6 +42,7 @@ export interface SelectProps {
   onOpen?: (e: object) => void;
   renderValue?: (value: any) => React.ReactNode;
   disabled?: boolean;
+  wrapperClassnames?: string;
   tick?: boolean;
 }
 
@@ -74,10 +75,11 @@ const Select = (props: SelectProps) => {
     renderValue,
     disabled,
     tick,
+    wrapperClassnames,
   } = props;
   return (
     <>
-      <div id={id} className="relative">
+      <div id={id} className={`relative ${wrapperClassnames}`}>
         <Listbox
           defaultValue={defaultValue}
           disabled={disabled}

@@ -396,7 +396,7 @@ const MySegment = ({
             className="rounded-[10px] max-h-[60vh] overflow-y-scroll border-[1px] border-[#D1D5DB] shadow-[0px_1px_2px_rgba(0,0,0,0.05)] m-[25px_0px] p-[20px_25px] relative after:absolute after:z-[1] after:top-[63px] after:bottom-[0px] after:ml-[45px] after:border-l-[2px] after:border-dashed after:h-full"
             ref={elementRef}
           >
-            <div className="flex items-center gap-[15px]">
+            <div className="relative z-[10000] flex items-center gap-[15px]">
               <FormControl
                 sx={{
                   maxWidth: "135px",
@@ -413,14 +413,7 @@ const MySegment = ({
                   ]}
                   onChange={handleSubTitleOptions}
                   displayEmpty
-                  sx={{
-                    height: "44px",
-                    "& .MuiSelect-select": {
-                      padding: "9px 15px",
-                      border: "1px solid #DEDEDE",
-                      boxShadow: "none",
-                    },
-                  }}
+                  wrapperClassnames="z-[100]"
                 />
               </FormControl>
               <p className="text-[14px]">of the following conditions match</p>

@@ -20,6 +20,18 @@ import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { Stats } from '../audiences/entities/stats.entity';
 import { createClient } from '@clickhouse/client';
 import { WorkflowTick } from './interfaces/workflow-tick.interface';
+import { isBoolean, isString } from 'class-validator';
+import {
+  EventKeys,
+  EventKeysDocument,
+} from '../events/schemas/event-keys.schema';
+import { Model } from 'mongoose';
+import { InjectModel } from '@nestjs/mongoose';
+import {
+  conditionalCompare,
+  conditionalComposition,
+  operableCompare,
+} from '../audiences/audiences.helper';
 
 @Injectable()
 export class WorkflowsService {
@@ -37,6 +49,8 @@ export class WorkflowsService {
     @InjectRepository(Stats) private statsRepository: Repository<Stats>,
     @Inject(AudiencesService) private audiencesService: AudiencesService,
     @Inject(CustomersService) private customersService: CustomersService,
+    @InjectModel(EventKeys.name)
+    private EventKeysModel: Model<EventKeysDocument>,
     private dataSource: DataSource
   ) {}
 
@@ -191,12 +205,27 @@ export class WorkflowsService {
     updateWorkflowDto: UpdateWorkflowDto
   ): Promise<void> {
     const rules: string[] = [];
-    for (let index = 0; index < updateWorkflowDto?.rules?.length; index++)
-      rules.push(
-        Buffer.from(JSON.stringify(updateWorkflowDto.rules[index])).toString(
-          'base64'
-        )
-      );
+
+    for (const trigger of updateWorkflowDto.rules) {
+      for (const condition of trigger.properties.conditions) {
+        const { key, type, isArray } = condition;
+        if (isString(key) && isString(type) && isBoolean(isArray)) {
+          const eventKey = await this.EventKeysModel.findOne({
+            key,
+            type,
+            isArray,
+          }).exec();
+          if (!eventKey)
+            await this.EventKeysModel.create({
+              key,
+              type,
+              isArray,
+            });
+        }
+      }
+      rules.push(Buffer.from(JSON.stringify(trigger)).toString('base64'));
+    }
+
     const found = await this.workflowsRepository.findOneBy({
       ownerId: (<Account>account).id,
       id: updateWorkflowDto.id,
@@ -268,7 +297,7 @@ export class WorkflowsService {
     );
 
     let visualLayout = JSON.stringify(oldWorkflow.visualLayout);
-    const rules = oldWorkflow.rules.map((rule) =>
+    const rules = oldWorkflow.rules?.map((rule) =>
       Buffer.from(rule, 'base64').toString()
     );
 
@@ -282,7 +311,7 @@ export class WorkflowsService {
     }
 
     visualLayout = JSON.parse(visualLayout);
-    const triggers: Trigger[] = rules.map((rule) => JSON.parse(rule));
+    const triggers: Trigger[] = rules?.map((rule) => JSON.parse(rule));
 
     await this.update(user, {
       id: newWorkflow.id,
@@ -572,9 +601,54 @@ export class WorkflowsService {
                     // return Promise.reject(err);
                   }
                 }
+
+                const { conditions } = trigger.properties;
+                let eventIncluded = true;
+                this.logger.debug(
+                  'Event conditions: ' + JSON.stringify(conditions)
+                );
+                if (conditions && conditions.length > 0) {
+                  const compareResults = conditions.map((condition) => {
+                    this.logger.debug(
+                      `Comparing: ${event?.event?.[condition.key] || ''} ${
+                        condition.comparisonType || ''
+                      } ${condition.value || ''}`
+                    );
+                    return ['exists', 'doesNotExist'].includes(
+                      condition.comparisonType
+                    )
+                      ? operableCompare(
+                          event?.event?.[condition.key],
+                          condition.comparisonType
+                        )
+                      : conditionalCompare(
+                          event?.event?.[condition.key],
+                          condition.value,
+                          condition.comparisonType
+                        );
+                  });
+                  this.logger.debug(
+                    'Compare result: ' + JSON.stringify(compareResults)
+                  );
+
+                  if (compareResults.length > 1) {
+                    const compareTypes = conditions.map(
+                      (condition) => condition.relationWithNext
+                    );
+                    eventIncluded = conditionalComposition(
+                      compareResults,
+                      compareTypes
+                    );
+                  } else {
+                    eventIncluded = compareResults[0];
+                  }
+                }
+
+                this.logger.debug('Event included: ' + eventIncluded);
+
                 if (
                   from.customers.indexOf(customer?.id) > -1 &&
-                  trigger.properties.event == event.event
+                  eventIncluded
                 ) {
                   try {
                     jobIdArr = await this.audiencesService.moveCustomer(

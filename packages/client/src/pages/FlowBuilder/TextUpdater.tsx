@@ -214,17 +214,6 @@ const TextUpdaterNode = ({
             })}
         </div>
       </div>
-      <div
-        style={{
-          position: "absolute",
-          top: "100px",
-          width: "calc(760px)",
-        }}
-      >
-        {selectedTrigger ? (
-          <TriggerCreater triggerType={selectedTrigger.type} />
-        ) : null}
-      </div>
       {updateTemplateModalOpen && selectedMessageType && selectedTemplateId && (
         <ChooseTemplateModal
           templateModalOpen={updateTemplateModalOpen}

@@ -1,4 +1,4 @@
-import React, { KeyboardEvent } from "react";
+import React, { KeyboardEvent, LegacyRef } from "react";
 
 export interface InputProps {
   id?: string;
@@ -12,7 +12,7 @@ export interface InputProps {
   errorText?: string;
   fullWidth?: boolean;
   helperText?: string;
-  inputRef?: React.RefObject<any>;
+  inputRef?: React.RefObject<any> | LegacyRef<HTMLInputElement>;
   label?: React.ReactNode;
   placeholder?: string;
   isRequired?: boolean;
@@ -57,9 +57,10 @@ const Input = (props: InputProps) => {
     endText,
     ...otherProps
   } = props;
+
   return (
     <>
-      <div className="col-span-6 w-full">
+      <div className="w-full">
         <label
           htmlFor={name}
           className="block text-sm font-medium text-gray-700"

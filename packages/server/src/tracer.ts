@@ -10,10 +10,14 @@ if (process.env.DD_MONITORING) {
         service: p.name,
     });
     (async () => {
-        const { data: hostname } = await axios.get(
-            'http://169.254.169.254/latest/meta-data/local-ipv4'
-        );
-        tracer.setUrl(`http://${hostname}:8126`);
+        try {
+            const { data: hostname } = await axios.get(
+                'http://169.254.169.254/latest/meta-data/local-ipv4'
+            );
+            tracer.setUrl(`http://${hostname}:8126`);
+        } catch (e) {
+            console.error(e);
+        }
     })();
 }
 

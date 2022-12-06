@@ -16,13 +16,19 @@ export default () => {
         method: "PATCH",
       }).then(() => {
         cy.reload();
+        cy.wait(3000);
         cy.get(".-mb-px > :nth-child(3)").click();
+        cy.wait(1000);
+
         cy.contains("Free3").click();
+        cy.wait(1000);
+
         cy.get("#testSendingName").type("TestName");
         cy.get("#testSendingEmail").type("test-email");
         cy.get(".inline-flex").click();
 
         cy.reload();
+        cy.wait(1000);
         cy.get(".-mb-px > :nth-child(3)").click();
         cy.contains("Free3").click();
 
