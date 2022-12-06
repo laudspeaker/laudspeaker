@@ -289,10 +289,11 @@ export class EventsService {
 
   async getPossibleValues(key: string, search: string) {
     const searchRegExp = new RegExp(`.*${search}.*`, 'i');
-    const docs = await this.EventModel.find({ [`event.${key}`]: searchRegExp })
-      .distinct(`event.${key}`)
-      .limit(10)
-      .exec();
+    const docs = await this.EventModel.aggregate([
+      { $match: { [`event.${key}`]: searchRegExp } },
+      { $group: { _id: `$event.${key}` } },
+      { $limit: 5 },
+    ]).exec();
     return docs.map((doc) => doc?.['event']?.[key]).filter((item) => item);
   }
 }

@@ -33,84 +33,74 @@ const ConditionCreater: FC<ConditionCreaterProps> = ({
       options: { label: string; id: string };
     }[]
   >([]);
-
   const [possibleComparisonTypes, setPossibleComparisonTypes] = useState<
     {
       label: string;
       id: string;
     }[]
   >([]);
+  const [dynamicDataToRender, setDynamicDataToRender] = useState({});
+  const [newKey, setNewKey] = useState(key);
+  const [possibleValues, setPossibleValues] = useState<string[]>([]);
+  const [newValue, setNewValue] = useState(value);
+
+  const loadPossibleValues = async () => {
+    if (key && value) {
+      try {
+        const { data } = await ApiService.get({
+          url: `/events/possible-values/${key}?search=${value}`,
+        });
+        setPossibleValues(data);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+  };
+
+  const handleConditionChange = (name: string, newValueToSet: string) => {
+    (condition as any)[name] = newValueToSet;
+    onChange(condition);
+  };
 
   useEffect(() => {
     (async () => {
-      try {
-        const { data } = await ApiService.get({
-          url: `/events/possible-comparison/${type}`,
-        });
+      if (type) {
+        try {
+          const { data } = await ApiService.get({
+            url: `/events/possible-comparison/${type}`,
+          });
 
-        setPossibleComparisonTypes(data);
-      } catch (e) {
-        console.error(e);
+          setPossibleComparisonTypes(data);
+        } catch (e) {
+          console.error(e);
+        }
       }
     })();
   }, [type]);
 
-  const [dynamicDataToRender, setDynamicDataToRender] = useState({});
-
   useEffect(() => {
     (async () => {
-      try {
-        const { data } = await ApiService.get({
-          url: `/events/attributes/${comparisonType}`,
-        });
+      if (comparisonType) {
+        try {
+          const { data } = await ApiService.get({
+            url: `/events/attributes/${comparisonType}`,
+          });
 
-        setDynamicDataToRender(data);
-      } catch (e) {
-        console.error(e);
+          setDynamicDataToRender(data);
+        } catch (e) {
+          console.error(e);
+        }
       }
     })();
   }, [comparisonType]);
 
-  const handleConditionChange = (name: string, newValue: string) => {
-    (condition as any)[name] = newValue;
-    onChange(condition);
-    getEventKeys(newValue)
-      .then(({ data }) => {
-        setPossibleKeys(data);
-      })
-      .catch((err) => {
-        console.error(err);
-      });
-  };
+  useEffect(() => {
+    setNewKey(key);
+  }, [key]);
 
-  const [newKey, setNewKey] = useState(key);
-
-  useEffect(() => {}, [newKey]);
-
-  useDebounce(
-    () => {
-      handleConditionChange("key", newKey || "");
-    },
-    1000,
-    [newKey]
-  );
-
-  const [possibleValues, setPossibleValues] = useState<string[]>([]);
-
-  const loadPossibleValues = async () => {
-    try {
-      const { data } = await ApiService.get({
-        url: `/events/possible-values/${key}?search=${value}`,
-      });
-      setPossibleValues(data);
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
-  useEffect(() => {}, [possibleValues]);
-
-  useDebounce(loadPossibleValues, 1000, [value, key]);
+  useEffect(() => {
+    setNewValue(value);
+  }, [value]);
 
   useEffect(() => {
     getEventKeys("")
@@ -121,6 +111,30 @@ const ConditionCreater: FC<ConditionCreaterProps> = ({
         console.error(e);
       });
   }, []);
+
+  useDebounce(
+    () => {
+      handleConditionChange("key", newKey || "");
+      getEventKeys(newKey || "")
+        .then(({ data }) => {
+          setPossibleKeys(data);
+        })
+        .catch((err) => {
+          console.error(err);
+        });
+    },
+    1000,
+    [newKey]
+  );
+
+  useDebounce(
+    () => {
+      handleConditionChange("value", newValue || "");
+      loadPossibleValues();
+    },
+    1000,
+    [newValue, key]
+  );
 
   return (
     <div className="grid grid-cols-4 gap-[10px] items-center m-[10px_0px]">
@@ -198,10 +212,10 @@ const ConditionCreater: FC<ConditionCreaterProps> = ({
       />
       <div className="flex gap-[10px]">
         <DynamicField
-          value={value}
+          value={newValue}
           data={dynamicDataToRender}
           possibleValues={possibleValues}
-          onChange={(val) => handleConditionChange("value", val)}
+          onChange={(val) => setNewValue(val)}
           disabled={isViewMode}
         />
         {!isViewMode && <img onClick={onDelete} src={MinusIcon} />}

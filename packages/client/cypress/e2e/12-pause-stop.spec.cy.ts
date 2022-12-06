@@ -9,6 +9,8 @@ import { tamplatesFunc } from "../test-helpers/templatesFunc";
 const { email, password, slackTemplate, userAPIkey, emailTemplate } =
   credentials.MessageHitUser;
 
+const resizeObserverLoopErrRegExp = /^ResizeObserver loop limit exceeded/;
+
 describe(
   "Pause and stop",
   { env: { AxiosURL: "http://localhost:3001/" } },
@@ -16,6 +18,9 @@ describe(
     beforeEach(() => {
       cy.request("http://localhost:3001/tests/reset-tests");
       cy.wait(1000);
+      Cypress.on("uncaught:exception", () => {
+        return false;
+      });
     });
 
     it("passes", () => {
