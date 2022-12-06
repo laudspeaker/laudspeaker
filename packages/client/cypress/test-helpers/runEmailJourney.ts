@@ -1,4 +1,5 @@
 export default (JourneyName = "Single step flow") => {
+  cy.wait(3000);
   cy.get('[data-disclosure-link="Journey Builder"]').click();
   cy.wait(3000);
   cy.get("button").contains("Create Journey").click();
@@ -17,6 +18,7 @@ export default (JourneyName = "Single step flow") => {
   cy.get("#email").click();
   cy.get("#activeJourney").click();
   cy.contains("TestTemplate").click();
+  cy.wait(1000);
   cy.get("#exportSelectedTemplate").click();
 
   cy.contains("Save").click();

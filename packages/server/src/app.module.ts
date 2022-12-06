@@ -24,6 +24,11 @@ import {
 import { Account } from './api/accounts/entities/accounts.entity';
 import { Verification } from './api/auth/entities/verification.entity';
 import { SendgridEvent } from './api/webhooks/entities/sendgrid-event.entity';
+import { EventSchema, Event } from './api/events/schemas/event.schema';
+import {
+  EventKeys,
+  EventKeysSchema,
+} from './api/events/schemas/event-keys.schema';
 
 const papertrail = new winston.transports.Http({
   host: 'logs.collector.solarwinds.com',
@@ -109,9 +114,9 @@ const myFormat = winston.format.printf(function ({
     ApiModule,
     MongooseModule.forFeature([
       { name: Customer.name, schema: CustomerSchema },
-    ]),
-    MongooseModule.forFeature([
       { name: CustomerKeys.name, schema: CustomerKeysSchema },
+      { name: Event.name, schema: EventSchema },
+      { name: EventKeys.name, schema: EventKeysSchema },
     ]),
     ScheduleModule.forRoot(),
     TypeOrmModule.forFeature([Account, Verification, SendgridEvent]),

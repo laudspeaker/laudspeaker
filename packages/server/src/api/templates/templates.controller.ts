@@ -83,4 +83,11 @@ export class TemplatesController {
   remove(@Req() { user }: Request, @Param('name') name: string) {
     return this.templatesService.remove(<Account>user, name);
   }
+
+  @Post(':name/duplicate')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor)
+  duplicate(@Req() { user }: Request, @Param('name') name: string) {
+    return this.templatesService.duplicate(<Account>user, name);
+  }
 }

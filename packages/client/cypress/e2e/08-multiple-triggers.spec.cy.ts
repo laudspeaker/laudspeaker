@@ -4,6 +4,7 @@
 /* eslint-disable @typescript-eslint/no-shadow */
 import credentials from "../fixtures/credentials.json";
 import { loginFunc } from "../test-helpers/loginFunc";
+import setupEventTrigger from "../test-helpers/setupEventTrigger";
 import { tamplatesFunc } from "../test-helpers/templatesFunc";
 
 const { email, password, slackTemplate, emailTemplate, userAPIkey } =
@@ -55,12 +56,7 @@ describe(
       cy.get("#exportSelectedTemplate").click();
 
       cy.get(".react-flow__viewport").get('[data-isprimary="true"]').click();
-      cy.get("#eventBased").click();
-      cy.contains("Add Condition Or Group").click();
-
-      cy.get('[data-option="events"]').click();
-      cy.get("#events").type(slackTemplate.eventName);
-      cy.get("[data-savetriggerreator] > button").click();
+      setupEventTrigger(slackTemplate.eventName, slackTemplate.eventName);
 
       cy.get('[data-isprimary="true"]')
         .get('[data-handlepos="bottom"]')
@@ -79,11 +75,8 @@ describe(
       cy.contains(emailTemplate.name).click();
       cy.get("#exportSelectedTemplate").click();
       cy.get(".react-flow__viewport").get('[data-isprimary="true"]').click();
-      cy.get("#eventBased").click();
-      cy.contains("Add Condition Or Group").click();
-      cy.get('[data-option="events"]').click();
-      cy.get("#events").type(emailTemplate.eventName);
-      cy.get("[data-savetriggerreator] > button").click();
+      setupEventTrigger(emailTemplate.eventName, emailTemplate.eventName);
+
       cy.get('[data-handlepos="bottom"]:last').drag(
         '[data-isprimary="false"] [data-handlepos="top"]:last'
       );
@@ -106,7 +99,7 @@ describe(
         body: {
           correlationKey: "slackId",
           correlationValue: slackTemplate.slackUid,
-          event: slackTemplate.eventName,
+          event: { [slackTemplate.eventName]: slackTemplate.eventName },
         },
       }).then(({ body }) => {
         cy.wait(1000);
@@ -132,7 +125,7 @@ describe(
         body: {
           correlationKey: "email",
           correlationValue: emailTemplate.correlationValue,
-          event: emailTemplate.eventName,
+          event: { [emailTemplate.eventName]: emailTemplate.eventName },
         },
       }).then(({ body }) => {
         cy.wait(1000);

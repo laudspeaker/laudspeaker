@@ -23,6 +23,8 @@ import {
   CustomerKeysSchema,
 } from '../customers/schemas/customer-keys.schema';
 import { AuthModule } from '../auth/auth.module';
+import { Event, EventSchema } from './schemas/event.schema';
+import { EventKeys, EventKeysSchema } from './schemas/event-keys.schema';
 
 @Module({
   imports: [
@@ -37,9 +39,9 @@ import { AuthModule } from '../auth/auth.module';
     ]),
     MongooseModule.forFeature([
       { name: Customer.name, schema: CustomerSchema },
-    ]),
-    MongooseModule.forFeature([
       { name: CustomerKeys.name, schema: CustomerKeysSchema },
+      { name: Event.name, schema: EventSchema },
+      { name: EventKeys.name, schema: EventKeysSchema },
     ]),
     BullModule.registerQueue({
       name: 'email',
@@ -62,5 +64,6 @@ import { AuthModule } from '../auth/auth.module';
     AudiencesService,
     SlackService,
   ],
+  exports: [EventsService],
 })
 export class EventsModule {}

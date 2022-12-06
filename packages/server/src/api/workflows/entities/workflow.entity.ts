@@ -6,8 +6,19 @@ export enum TriggerType {
   time_window,
 }
 
+export interface IEventConditions {
+  value: any;
+  attribute?: string;
+  condition?: string;
+  key?: string;
+  type?: string;
+  comparisonType?: string;
+  relationWithNext?: 'and' | 'or';
+  isArray?: boolean;
+}
+
 export class EventProps {
-  event: string;
+  conditions: IEventConditions[];
 }
 
 export class Trigger {

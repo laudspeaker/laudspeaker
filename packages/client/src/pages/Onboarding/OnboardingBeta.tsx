@@ -264,7 +264,7 @@ export default function OnboardingBeta() {
 
   const parametersToConfigure: { [key: string]: React.ReactElement } = {
     posthog: (
-      <form className="grid grid-cols-6 gap-6">
+      <form className="flex flex-col gap-[10px]">
         <Input
           isRequired
           value={integrationsData.posthogApiKey}
