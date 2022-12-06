@@ -7,9 +7,10 @@ services:
     depends_on:
       - backend
     ports:
-      - "3000:80"
+      - "3000:3000"
     stdin_open: true
     tty: true
+  
   backend:
     build:
       dockerfile: ./Dockerfile.dev.server
@@ -20,6 +21,7 @@ services:
       - redis
       - postgres
       - mongo
+      - clickhouse
     environment:
       - MAGIC_EMAIL_KEY=${MAGIC_EMAIL_KEY}
       - MAGIC_EMAIL_DOMAIN=${MAGIC_EMAIL_DOMAIN}
@@ -33,6 +35,7 @@ services:
       - MAILGUN_API_KEY=${MAILGUN_API_KEY}
       - TESTS_INSTALLATION_JSON=${TESTS_INSTALLATION_JSON}
       - TESTS_INSTALLATION_ID=${TESTS_INSTALLATION_ID}
+  
   redis:
     image: redis:alpine
     command: redis-server
@@ -55,6 +58,13 @@ services:
     image: "mongo:latest"
     ports:
       - "27017:27017"
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:latest
+    restart: on-failure
+    ports:
+      - "8123:8123"
+      - "9000:9000"
 
 networks:
   default:
