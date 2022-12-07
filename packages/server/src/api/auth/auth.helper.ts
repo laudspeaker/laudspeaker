@@ -139,7 +139,15 @@ export class AuthHelper extends BaseJwtHelper {
         type: 0,
         source: data[0].id,
         dest: [data[1].id],
-        properties: { event: eventName },
+        properties: {
+          conditions: {
+            key: eventName,
+            comparisonType: 'isEqual',
+            type: 'String',
+            value: eventName,
+            relationWithNext: 'and',
+          },
+        },
       },
     ];
     const rules: string[] = [];
@@ -176,7 +184,15 @@ export class AuthHelper extends BaseJwtHelper {
               {
                 id: triggerId,
                 properties: {
-                  conditions: [{ value: eventName, type: 'events' }],
+                  conditions: [
+                    {
+                      key: eventName,
+                      comparisonType: 'isEqual',
+                      type: 'String',
+                      value: eventName,
+                      relationWithNext: 'and',
+                    },
+                  ],
                 },
                 title: 'Event Based',
                 type: 'eventBased',
@@ -212,7 +228,24 @@ export class AuthHelper extends BaseJwtHelper {
             audienceId: data[1].id,
             isSelected: false,
             needsUpdate: true,
-            dataTriggers: [],
+            dataTriggers: [
+              {
+                id: triggerId,
+                properties: {
+                  conditions: [
+                    {
+                      key: eventName,
+                      comparisonType: 'isEqual',
+                      type: 'String',
+                      value: eventName,
+                      relationWithNext: 'and',
+                    },
+                  ],
+                },
+                title: 'Event Based',
+                type: 'eventBased',
+              },
+            ],
           },
           type: 'special',
           width: 350,
@@ -220,12 +253,12 @@ export class AuthHelper extends BaseJwtHelper {
           dragging: false,
           position: {
             x: 252,
-            y: 431,
+            y: 531,
           },
           selected: false,
           positionAbsolute: {
             x: 252,
-            y: 431,
+            y: 531,
           },
         },
       ],
