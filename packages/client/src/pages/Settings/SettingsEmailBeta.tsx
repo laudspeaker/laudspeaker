@@ -53,6 +53,8 @@ export default function SettingsEmailBeta() {
     testSendingEmail: [],
   });
 
+  const [isLoading, setIsLoading] = useState(false);
+
   const [sendgridErrors, setSendgridErrors] = useState<{
     [key: string]: string[];
   }>({
@@ -171,31 +173,38 @@ export default function SettingsEmailBeta() {
 
   useEffect(() => {
     (async () => {
-      const { data } = await ApiService.get({ url: "/accounts" });
-      const {
-        mailgunAPIKey,
-        sendingDomain,
-        sendingName,
-        sendingEmail,
-        testSendingEmail,
-        testSendingName,
-        emailProvider: provider,
-        verified: verifiedFromRequest,
-        sendgridApiKey,
-        sendgridFromEmail,
-      } = data;
-      setFormData({
-        mailgunAPIKey: mailgunAPIKey || "",
-        sendingDomain: sendingDomain || "",
-        sendingName: sendingName || "",
-        sendingEmail: sendingEmail || "",
-        testSendingEmail: testSendingEmail || "",
-        testSendingName: testSendingName || "",
-        sendgridApiKey: sendgridApiKey || "",
-        sendgridFromEmail: sendgridFromEmail || "",
-      });
-      setEmailProvider(provider);
-      setVerified(verifiedFromRequest);
+      setIsLoading(true);
+      try {
+        const { data } = await ApiService.get({ url: "/accounts" });
+        const {
+          mailgunAPIKey,
+          sendingDomain,
+          sendingName,
+          sendingEmail,
+          testSendingEmail,
+          testSendingName,
+          emailProvider: provider,
+          verified: verifiedFromRequest,
+          sendgridApiKey,
+          sendgridFromEmail,
+        } = data;
+        setFormData({
+          mailgunAPIKey: mailgunAPIKey || "",
+          sendingDomain: sendingDomain || "",
+          sendingName: sendingName || "",
+          sendingEmail: sendingEmail || "",
+          testSendingEmail: testSendingEmail || "",
+          testSendingName: testSendingName || "",
+          sendgridApiKey: sendgridApiKey || "",
+          sendgridFromEmail: sendgridFromEmail || "",
+        });
+        setEmailProvider(provider);
+        setVerified(verifiedFromRequest);
+      } catch (e) {
+        toast.error("Error while loading data");
+      } finally {
+        setIsLoading(false);
+      }
     })();
   }, []);
 
@@ -223,6 +232,7 @@ export default function SettingsEmailBeta() {
   };
 
   const handleSubmit = async () => {
+    setIsLoading(true);
     try {
       const objToSend: Record<string, any> = {};
       for (const key of Object.keys(formData)) {
@@ -234,16 +244,9 @@ export default function SettingsEmailBeta() {
         options: { ...objToSend, emailProvider },
       });
     } catch (e: any) {
-      toast.error(e.response?.data?.message || "Unexpected error", {
-        position: "bottom-center",
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-        theme: "colored",
-      });
+      toast.error(e.response?.data?.message || "Unexpected error");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -671,7 +674,9 @@ export default function SettingsEmailBeta() {
           <dl className="divide-y divide-gray-200">
             {configuration[emailProvider]}
             <SaveSettings
-              disabled={isError || (!verified && emailProvider === "free3")}
+              disabled={
+                isError || (!verified && emailProvider === "free3") || isLoading
+              }
               onClick={handleSubmit}
             />
           </dl>

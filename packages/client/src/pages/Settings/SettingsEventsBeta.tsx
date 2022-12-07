@@ -42,6 +42,8 @@ export default function SettingsEventsBeta() {
     posthogHostUrl: false,
   });
 
+  const [isLoading, setIsLoading] = useState(false);
+
   useEffect(() => {
     const newErrors: { [key: string]: string[] } = {
       posthogApiKey: [],
@@ -93,15 +95,22 @@ export default function SettingsEventsBeta() {
   };
 
   const handleSync = async () => {
-    await ApiService.patch({
-      url: "/accounts",
-      options: {
-        posthogApiKey: formData.posthogApiKey || "",
-        posthogProjectId: formData.posthogProjectId || "",
-        posthogHostUrl: formData.posthogHostUrl || "",
-      },
-    });
-    await startPosthogImport();
+    setIsLoading(true);
+    try {
+      await ApiService.patch({
+        url: "/accounts",
+        options: {
+          posthogApiKey: formData.posthogApiKey || "",
+          posthogProjectId: formData.posthogProjectId || "",
+          posthogHostUrl: formData.posthogHostUrl || "",
+        },
+      });
+      await startPosthogImport();
+    } catch (e) {
+      toast.error("Error while syncing");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleSubmit = async () => {
@@ -109,22 +118,16 @@ export default function SettingsEventsBeta() {
     for (const key of Object.keys(formData)) {
       options[key] = [formData[key]];
     }
+    setIsLoading(true);
     try {
       await ApiService.patch({
         url: "/accounts",
         options,
       });
     } catch (e) {
-      toast.error("Unexpected error!", {
-        position: "bottom-center",
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-        theme: "colored",
-      });
+      toast.error("Unexpected error!");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -307,7 +310,7 @@ export default function SettingsEventsBeta() {
             <button
               type="button"
               onClick={handleSync}
-              disabled={isError}
+              disabled={isError || isLoading}
               className={`inline-flex mb-[10px] items-center rounded-md border border-transparent bg-cyan-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-cyan-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 ${
                 isError ? "grayscale" : ""
               }`}
@@ -348,7 +351,9 @@ export default function SettingsEventsBeta() {
             </div>
             <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-10 sm:py-5 sm:pt-5">
               <span className="flex-grow">
-                <GenericButton onClick={handleSubmit}>Save</GenericButton>
+                <GenericButton onClick={handleSubmit} disabled={isLoading}>
+                  Save
+                </GenericButton>
               </span>
             </div>
           </dl>

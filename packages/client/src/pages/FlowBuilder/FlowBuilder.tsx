@@ -453,14 +453,6 @@ const Flow = () => {
         type: selectedMessageType,
         templateId: activeTemplate,
       });
-
-      await ApiService.patch({
-        url: `${ApiConfig.addtemplate}`,
-        options: {
-          audienceId: selectedNodeData?.data.audienceId,
-          templateId: activeTemplate.toString(),
-        },
-      });
       forceRerenderSelectedNode();
     } else {
       toast.warn("Can't connect same template twice to one node!", {

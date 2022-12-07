@@ -91,6 +91,8 @@ export default function OnboardingBeta() {
   );
   const [verified, setVerified] = useState(false);
 
+  const [isLoading, setIsLoading] = useState(false);
+
   const callDomains = async () => {
     if (privateApiKey) {
       dispatch(setSettingsPrivateApiKey(privateApiKey));
@@ -235,6 +237,7 @@ export default function OnboardingBeta() {
       return;
     }
 
+    setIsLoading(true);
     try {
       await ApiService.patch({
         url: "/accounts",
@@ -245,16 +248,9 @@ export default function OnboardingBeta() {
         },
       });
     } catch (e: any) {
-      toast.error(e.response?.data?.message || "Unexpected error", {
-        position: "bottom-center",
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-        theme: "colored",
-      });
+      toast.error(e.response?.data?.message || "Unexpected error");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -605,7 +601,7 @@ export default function OnboardingBeta() {
                           id="saveEmailConfiguration"
                           onClick={handleSubmit}
                           customClasses="inline-flex justify-center rounded-md border border-transparent bg-cyan-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2"
-                          disabled={isError}
+                          disabled={isError || isLoading}
                         >
                           Save
                         </GenericButton>
@@ -714,6 +710,7 @@ export default function OnboardingBeta() {
                     <button
                       type="button"
                       onClick={handleSubmit}
+                      disabled={isLoading}
                       className="inline-flex justify-center rounded-md border border-transparent bg-cyan-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2"
                     >
                       Save
