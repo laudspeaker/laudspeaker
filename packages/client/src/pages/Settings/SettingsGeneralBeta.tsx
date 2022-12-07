@@ -44,6 +44,8 @@ export default function SettingsGeneralBeta() {
 
   const [timerSeconds, setTimerSeconds] = useState(300);
 
+  const [isLoading, setIsLoading] = useState(false);
+
   useEffect(() => {
     const newErrors: { [key: string]: string[] } = {
       firstName: [],
@@ -103,18 +105,25 @@ export default function SettingsGeneralBeta() {
   };
 
   const loadData = async () => {
-    const { data } = await ApiService.get({ url: "/accounts" });
-    const {
-      firstName,
-      lastName,
-      email,
-      verified: verifiedFromRequest,
-      secondtillunblockresend,
-    } = data;
-    setFormData({ ...formData, firstName, lastName, email });
-    setInitialData({ ...formData, firstName, lastName, email });
-    setVerified(verifiedFromRequest);
-    setTimerSeconds(Math.ceil(+secondtillunblockresend || 0));
+    setIsLoading(true);
+    try {
+      const { data } = await ApiService.get({ url: "/accounts" });
+      const {
+        firstName,
+        lastName,
+        email,
+        verified: verifiedFromRequest,
+        secondtillunblockresend,
+      } = data;
+      setFormData({ ...formData, firstName, lastName, email });
+      setInitialData({ ...formData, firstName, lastName, email });
+      setVerified(verifiedFromRequest);
+      setTimerSeconds(Math.ceil(+secondtillunblockresend || 0));
+    } catch (e) {
+      toast.error("Error while loading data");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -122,6 +131,7 @@ export default function SettingsGeneralBeta() {
   }, []);
 
   const handleSubmit = async () => {
+    setIsLoading(true);
     try {
       await ApiService.patch({
         url: "/accounts",
@@ -148,17 +158,11 @@ export default function SettingsGeneralBeta() {
         );
       }
       await loadData();
+      toast.success("Data saved sucessfully");
     } catch (e: any) {
-      toast.error(e.response.data.message || "Unexpected error!", {
-        position: "bottom-center",
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-        theme: "colored",
-      });
+      toast.error(e.response.data.message || "Unexpected error!");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -446,7 +450,10 @@ export default function SettingsGeneralBeta() {
                 ))}
               </dd>
             </div>
-            <SaveSettings disabled={isError} onClick={handleSubmit} />
+            <SaveSettings
+              disabled={isError || isLoading}
+              onClick={handleSubmit}
+            />
           </dl>
         </div>
       </div>
