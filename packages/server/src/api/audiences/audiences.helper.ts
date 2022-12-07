@@ -1,19 +1,15 @@
 import { CustomerDocument } from '../customers/schemas/customer.schema';
 
-export const conditionalCompare = (
-  custAttr: any,
-  checkVal: any,
-  operator: string
-) => {
+const conditionalCompare = (custAttr: any, checkVal: any, operator: string) => {
   switch (operator) {
     case 'isEqual':
       return custAttr == checkVal;
     case 'isNotEqual':
       return custAttr != checkVal;
     case 'contains':
-      return (custAttr as any[])?.includes(checkVal) || false;
+      return custAttr.includes(checkVal);
     case 'doesNotContain':
-      return (custAttr && !(custAttr as any[]).includes(checkVal)) || false;
+      return !custAttr.includes(checkVal);
     case 'isBoolEqual':
       return custAttr === (checkVal === 'true');
     case 'isBoolNotEqual':
@@ -26,45 +22,16 @@ export const conditionalCompare = (
       return custAttr > Number(checkVal);
     case 'isLessThan':
       return custAttr < Number(checkVal);
-    default:
-      return false;
   }
 };
 
-export const operableCompare = (custAttr: any, operator: string) => {
+const operableCompare = (custAttr: any, operator: string) => {
   switch (operator) {
     case 'exists':
       return custAttr != null && custAttr != undefined;
     case 'doesNotExist':
       return custAttr == null || custAttr == undefined;
   }
-};
-
-export const conditionalComposition = (
-  conditions: boolean[],
-  types: ('and' | 'or')[]
-) => {
-  if (conditions.length === 0) return true;
-  if (conditions.length === 1) return conditions[0];
-
-  if (!types.includes('or'))
-    return conditions.reduce((acc, condition) => acc && condition);
-
-  if (!types.includes('and'))
-    return conditions.reduce((acc, condition) => acc || condition);
-
-  const orPosition = types.indexOf('or');
-
-  const part1Conditions = conditions.slice(0, orPosition);
-  const part2Conditions = conditions.slice(orPosition + 1);
-
-  const part1Types = types.slice(0, orPosition);
-  const part2Types = types.slice(orPosition + 1);
-
-  const res1 = conditionalComposition(part1Conditions, part1Types);
-  const res2 = conditionalComposition(part2Conditions, part2Types);
-
-  return res1 || res2;
 };
 
 export const checkInclusion = (

@@ -26,18 +26,6 @@ export const getResources = async (id) => {
   });
 };
 
-export const getEventResources = async (id) => {
-  return ApiService.get({
-    url: `${ApiConfig.eventResources}/${id}`,
-  });
-};
-
-export const getEventKeys = async (id) => {
-  return ApiService.get({
-    url: `${ApiConfig.eventAttributes}/${id}`,
-  });
-};
-
 export const getSegment = async (id) => {
   return ApiService.get({
     url: `${ApiConfig.audiences}/${id}`,

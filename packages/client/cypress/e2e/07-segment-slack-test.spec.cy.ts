@@ -4,7 +4,6 @@
 /* eslint-disable @typescript-eslint/no-shadow */
 import credentials from "../fixtures/credentials.json";
 import { loginFunc } from "../test-helpers/loginFunc";
-import setupEventTrigger from "../test-helpers/setupEventTrigger";
 import { tamplatesFunc } from "../test-helpers/templatesFunc";
 
 const { email, password, slackTemplate, emailTemplate, userAPIkey } =
@@ -44,7 +43,12 @@ describe(
       cy.get("#exportSelectedTemplate").click();
 
       cy.get(".react-flow__viewport").get('[data-isprimary="true"]').click();
-      setupEventTrigger(slackTemplate.eventName, slackTemplate.eventName);
+      cy.get("#eventBased").click();
+      cy.contains("Add Condition Or Group").click();
+
+      cy.get('[data-option="events"]').click();
+      cy.get("#events").type("Segment event name");
+      cy.get("[data-savetriggerreator] > button").click();
 
       cy.get(".react-flow__viewport").get('[data-isprimary="true"]').dblclick();
       cy.contains("Add Condition Or Group").click();

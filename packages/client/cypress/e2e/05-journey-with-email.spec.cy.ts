@@ -3,7 +3,6 @@
 /* eslint-disable @typescript-eslint/no-shadow */
 import credentials from "../fixtures/credentials.json";
 import { loginFunc } from "../test-helpers/loginFunc";
-import setupEventTrigger from "../test-helpers/setupEventTrigger";
 import { tamplatesFunc } from "../test-helpers/templatesFunc";
 
 const { email, password, emailTemplate, journeyName, userAPIkey } =
@@ -43,7 +42,11 @@ describe(
       cy.contains(emailTemplate.name).click();
       cy.get("#exportSelectedTemplate").click();
       cy.get('[data-isprimary="true"]').click();
-      setupEventTrigger(emailTemplate.eventName, emailTemplate.eventName);
+      cy.get("#eventBased > .p-0 > .justify-between").click();
+      cy.contains("Add Condition Or Group").click();
+      cy.contains("Events").click();
+      cy.get("#events").type(emailTemplate.eventName);
+      cy.get('[data-savetriggerreator="true"] > .inline-flex').click();
       cy.get(
         '[style="display: flex; height: 15px; position: absolute; left: 0px; bottom: 0px; align-items: center; width: 100%; justify-content: space-around;"] > .react-flow__handle'
       ).drag('[data-isprimary]:not([data-isprimary="true"])');
@@ -51,7 +54,6 @@ describe(
       cy.contains("Save").click();
       cy.wait(1000);
       cy.contains("Start").click();
-      cy.wait(3000);
       cy.request({
         method: "POST",
         url: `${Cypress.env("AxiosURL")}events`,
@@ -61,7 +63,7 @@ describe(
         body: {
           correlationKey: "email",
           correlationValue: emailTemplate.correlationValue,
-          event: { [emailTemplate.eventName]: emailTemplate.eventName },
+          event: emailTemplate.eventName,
         },
       }).then(({ body }) => {
         cy.wait(1000);

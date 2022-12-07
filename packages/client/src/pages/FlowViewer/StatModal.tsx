@@ -28,18 +28,14 @@ const StatModal: FC<StatModalProps> = ({
 
   useEffect(() => {
     (async () => {
-      try {
-        setIsLoading(true);
-        const { data } = await ApiService.get({
-          url: `/customers/audienceStats?event=${event}&audienceId=${audienceId}&take=${ITEMS_PER_PAGE}&skip=${
-            (page - 1) * ITEMS_PER_PAGE
-          }`,
-        });
-        setCustomers(customers.concat(data));
-        setIsLoading(false);
-      } catch (e) {
-        console.error(e);
-      }
+      setIsLoading(true);
+      const { data } = await ApiService.get({
+        url: `/customers/audienceStats?event=${event}&audienceId=${audienceId}&take=${ITEMS_PER_PAGE}&skip=${
+          (page - 1) * ITEMS_PER_PAGE
+        }`,
+      });
+      setCustomers(customers.concat(data));
+      setIsLoading(false);
     })();
   }, [event, audienceId, page]);
 

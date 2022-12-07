@@ -150,46 +150,34 @@ const Flow = () => {
   };
 
   const handlePause = async () => {
-    try {
-      setIsDataLoaded(false);
-      await ApiService.patch({
-        url: `${ApiConfig.flow}/pause`,
-        options: { id: flowId },
-      });
-      setIsPaused(!isPaused);
-      setIsDataLoaded(true);
-    } catch (e) {
-      console.error(e);
-    }
+    setIsDataLoaded(false);
+    await ApiService.patch({
+      url: `${ApiConfig.flow}/pause`,
+      options: { id: flowId },
+    });
+    setIsPaused(!isPaused);
+    setIsDataLoaded(true);
   };
 
   const handleResume = async () => {
-    try {
-      setIsDataLoaded(false);
-      await ApiService.patch({
-        url: `${ApiConfig.flow}/resume`,
-        options: { id: flowId },
-      });
-      setIsPaused(!isPaused);
-      setIsDataLoaded(true);
-    } catch (e) {
-      console.error(e);
-    }
+    setIsDataLoaded(false);
+    await ApiService.patch({
+      url: `${ApiConfig.flow}/resume`,
+      options: { id: flowId },
+    });
+    setIsPaused(!isPaused);
+    setIsDataLoaded(true);
   };
 
   const handleStop = async () => {
-    try {
-      setIsDataLoaded(false);
-      await ApiService.patch({
-        url: `${ApiConfig.flow}/stop`,
-        options: { id: flowId },
-      });
-      setIsStopped(!isStopped);
-      setIsDataLoaded(true);
-      setIsDialogOpen(false);
-    } catch (e) {
-      console.error(e);
-    }
+    setIsDataLoaded(false);
+    await ApiService.patch({
+      url: `${ApiConfig.flow}/stop`,
+      options: { id: flowId },
+    });
+    setIsStopped(!isStopped);
+    setIsDataLoaded(true);
+    setIsDialogOpen(false);
   };
 
   const onPaneClick = useCallback((event: React.MouseEvent) => {
@@ -334,6 +322,8 @@ const Flow = () => {
       </ReactFlow>
       {triggerModalOpen && (
         <TriggerModal
+          triggerModalOpen={triggerModalOpen}
+          handleTriggerModalOpen={handleTriggerModalOpen}
           selectedTrigger={selectedTrigger}
           onSaveTrigger={onSaveTrigger}
           onDeleteTrigger={onDeleteTrigger}

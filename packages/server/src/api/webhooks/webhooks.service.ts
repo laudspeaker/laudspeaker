@@ -37,6 +37,7 @@ export class WebhooksService {
     const { sendgridVerificationKey } = await this.accountRepository.findOneBy({
       id: accountId,
     });
+
     if (!sendgridVerificationKey) return;
 
     const publicKey = PublicKey.fromPem(sendgridVerificationKey);

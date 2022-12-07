@@ -2,7 +2,9 @@ import Modal from "../../components/Elements/Modal";
 import TriggerCreater from "components/TriggerCreater";
 
 interface ITriggerModal {
+  triggerModalOpen: boolean;
   selectedTrigger: any;
+  handleTriggerModalOpen: (e: any) => void;
   onSaveTrigger: any;
   onDeleteTrigger?: any;
   isCollapsible: boolean;
@@ -10,7 +12,9 @@ interface ITriggerModal {
   onClose: () => void;
 }
 const TriggerModal = ({
+  triggerModalOpen,
   selectedTrigger,
+  handleTriggerModalOpen,
   onSaveTrigger,
   onDeleteTrigger,
   onClose,
@@ -31,7 +35,7 @@ const TriggerModal = ({
   return (
     <Modal
       isOpen={!!selectedTrigger}
-      panelClass="w-full !max-w-[90%] h-full max-h-full overflow-y-scroll"
+      panelClass="w-full !max-w-[90%]"
       closeButtonNeed={isCollapsible}
       onClose={handleClose}
     >

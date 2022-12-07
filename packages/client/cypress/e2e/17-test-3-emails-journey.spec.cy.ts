@@ -25,12 +25,8 @@ describe(
       tamplatesFunc(slackTemplate, emailTemplate);
 
       runEmailJourney("Email journey 1");
-      cy.wait(3000);
       runEmailJourney("Email journey 2");
-      cy.wait(3000);
       runEmailJourney("Email journey 3");
-      cy.wait(3000);
-      runEmailJourney("Email journey 4");
       cy.contains("You exceeded limit of 3 emails").should("exist");
     });
   }

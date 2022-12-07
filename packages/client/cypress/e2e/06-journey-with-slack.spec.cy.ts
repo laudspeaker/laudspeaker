@@ -3,7 +3,6 @@
 /* eslint-disable @typescript-eslint/no-shadow */
 import credentials from "../fixtures/credentials.json";
 import { loginFunc } from "../test-helpers/loginFunc";
-import setupEventTrigger from "../test-helpers/setupEventTrigger";
 
 const { email, password, slackTemplate, journeyName, userAPIkey } =
   credentials.MessageHitUser;
@@ -73,7 +72,12 @@ describe(
       cy.get("#exportSelectedTemplate").click();
 
       cy.get(".react-flow__viewport").get('[data-isprimary="true"]').click();
-      setupEventTrigger(slackTemplate.eventName, slackTemplate.eventName);
+      cy.get("#eventBased").click();
+      cy.contains("Add Condition Or Group").click();
+
+      cy.get('[data-option="events"]').click();
+      cy.get("#events").type(slackTemplate.eventName);
+      cy.get("[data-savetriggerreator] > button").click();
 
       cy.get('[data-isprimary="true"]')
         .get('[data-handlepos="bottom"]')
@@ -98,7 +102,7 @@ describe(
         body: {
           correlationKey: "slackId",
           correlationValue: slackTemplate.slackUid,
-          event: { [slackTemplate.eventName]: slackTemplate.eventName },
+          event: slackTemplate.eventName,
         },
       }).then(({ body }) => {
         cy.wait(1000);

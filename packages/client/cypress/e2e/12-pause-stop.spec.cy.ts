@@ -3,13 +3,10 @@
 /* eslint-disable @typescript-eslint/no-shadow */
 import credentials from "../fixtures/credentials.json";
 import { loginFunc } from "../test-helpers/loginFunc";
-import setupEventTrigger from "../test-helpers/setupEventTrigger";
 import { tamplatesFunc } from "../test-helpers/templatesFunc";
 
 const { email, password, slackTemplate, userAPIkey, emailTemplate } =
   credentials.MessageHitUser;
-
-const resizeObserverLoopErrRegExp = /^ResizeObserver loop limit exceeded/;
 
 describe(
   "Pause and stop",
@@ -18,9 +15,6 @@ describe(
     beforeEach(() => {
       cy.request("http://localhost:3001/tests/reset-tests");
       cy.wait(1000);
-      Cypress.on("uncaught:exception", () => {
-        return false;
-      });
     });
 
     it("passes", () => {
@@ -60,7 +54,12 @@ describe(
       cy.get("#exportSelectedTemplate").click();
 
       cy.get(".react-flow__viewport").get('[data-isprimary="true"]').click();
-      setupEventTrigger("A", "A");
+      cy.get("#eventBased").click();
+      cy.contains("Add Condition Or Group").click();
+
+      cy.get('[data-option="events"]').click();
+      cy.get("#events").type("A");
+      cy.get("[data-savetriggerreator] > button").click();
 
       cy.get('[data-isprimary="true"]')
         .get('[data-handlepos="bottom"]')
@@ -69,7 +68,12 @@ describe(
       cy.get('[data-isprimary="false"] [data-handlepos="top"]').click();
       cy.get('[data-isprimary="false"]').click();
 
-      setupEventTrigger("B", "B");
+      cy.get("#eventBased").click();
+      cy.contains("Add Condition Or Group").click();
+
+      cy.get('[data-option="events"]').click();
+      cy.get("#events").type("B");
+      cy.get("[data-savetriggerreator] > button").click();
 
       cy.get('[data-isprimary="false"] [data-handlepos="bottom"]').drag(
         '[data-isprimary="true"] [data-handlepos="top"]'
@@ -82,7 +86,7 @@ describe(
       cy.wait(500);
       cy.visit("/flow/Pause%20and%20stop%20flow/view");
       cy.url().should("contain", "/view");
-      cy.wait(3000);
+      cy.wait(1000);
       cy.contains("Pause").click();
 
       cy.request({
@@ -94,13 +98,12 @@ describe(
         body: {
           correlationKey: "slackId",
           correlationValue: slackTemplate.slackUid,
-          event: { "1": "1" },
+          event: "1",
         },
       }).then(({ body }) => {
-        expect(body?.[0]?.jobIDs?.[0]).to.equal(undefined);
-        cy.wait(3000);
+        cy.wait(1000);
+        expect(body[0]).to.equal(undefined);
         cy.contains("Resume").click();
-        cy.wait(3000);
         cy.request({
           method: "POST",
           url: `${Cypress.env("AxiosURL")}events`,
@@ -110,7 +113,7 @@ describe(
           body: {
             correlationKey: "slackId",
             correlationValue: slackTemplate.slackUid,
-            event: { A: "A" },
+            event: "A",
           },
         }).then(({ body }) => {
           cy.wait(1000);
@@ -135,7 +138,7 @@ describe(
               body: {
                 correlationKey: "slackId",
                 correlationValue: slackTemplate.slackUid,
-                event: { B: "B" },
+                event: "B",
               },
             }).then(() => {
               cy.wait(1000);
@@ -152,11 +155,11 @@ describe(
                 body: {
                   correlationKey: "slackId",
                   correlationValue: slackTemplate.slackUid,
-                  event: { A: "A" },
+                  event: "A",
                 },
               }).then(({ body }) => {
                 cy.wait(1000);
-                expect(body?.[0]?.jobIDs?.[0]).to.equal(undefined);
+                expect(body[0]).to.equal(undefined);
               });
             });
           });

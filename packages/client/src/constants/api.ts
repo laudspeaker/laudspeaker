@@ -6,8 +6,6 @@ export default {
   signup: "/auth/register",
   conditions: "/conditions",
   resources: "/customers/attributes",
-  eventResources: "/events/attributes",
-  eventAttributes: "/events/possible-attributes",
   campaigns: "/campaigns",
   segments: "/segments",
   domains: "/email/domains",

@@ -13,7 +13,7 @@ export const AppDataSource = new DataSource({
   synchronize: process.env.SYNCHRONIZE == 'true',
   logging: false,
   entities: ['dist/**/*.entity{.ts,.js}'],
-  migrations: ['dist/**/migrations/*{.ts,.js}'],
+  migrations: ['dist/migrations/*{.ts,.js}'],
   migrationsTableName: 'typeorm_migrations',
   subscribers: [],
   // migrationsRun: true,

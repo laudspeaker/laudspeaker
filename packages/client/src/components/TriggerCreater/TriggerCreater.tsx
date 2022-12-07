@@ -3,7 +3,7 @@ import { FormControl } from "@mui/material";
 import { GenericButton, Select, Input } from "components/Elements";
 import {
   getConditions,
-  getEventResources,
+  getResources,
   transformDataToUI,
 } from "../../pages/Segment/SegmentHelpers";
 import Card from "components/Cards/Card";
@@ -13,11 +13,6 @@ import {
 } from "pages/Segment/MySegment";
 import EditIcon from "@mui/icons-material/Edit";
 import DateTimePicker from "components/Elements/DateTimePicker";
-import Autocomplete from "components/Autocomplete";
-import ConditionCreater from "./ConditionCreator";
-import ApiService from "services/api.service";
-import AndOrSelect from "./AndOrSelect";
-import Tooltip from "components/Elements/Tooltip";
 
 export type TriggerType = "eventBased" | "timeDelay" | "timeWindow";
 interface ITriggerCreaterProp {
@@ -42,15 +37,6 @@ interface Condition {
   type?: string;
 }
 
-export interface EventCondition {
-  key: string;
-  type: string;
-  value: string;
-  comparisonType: string;
-  relationWithNext: "and" | "or";
-  isArray: boolean;
-}
-
 const TriggerCreater = (props: ITriggerCreaterProp) => {
   const {
     triggerType: triggerProp,
@@ -62,25 +48,12 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
   } = props;
 
   const getAllResources = async (id: any) => {
-    const response = await getEventResources(id);
+    const response = await getResources(id);
     return response;
-  };
-
-  const [conditions, setConditions] = useState<EventCondition[]>(
-    trigger?.properties?.conditions || []
-  );
-
-  const handleConditionsChange = (
-    index: number,
-    newCondition: EventCondition
-  ) => {
-    conditions[index] = newCondition;
-    setConditions([...conditions.map((condition) => ({ ...condition }))]);
   };
 
   const populateFormData: any = (criteria: Condition[]) => {
     const parsedFormData = [];
-
     for (let index = 0; index < criteria?.length; index++) {
       let objToPush = {};
       if (criteria[index].type === "events") {
@@ -97,7 +70,6 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
             isDirty: true,
           },
         };
-        console.log(objToPush); // TODO: remove
       } else {
         if (criteria[index].condition) {
           objToPush = {
@@ -276,11 +248,12 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
           [response.id]: response,
         }));
         setIsButtonDisabled(
-          !(conditions as { value: string }[])?.some((item) => item.value) ||
-            false
+          !(trigger?.properties?.conditions as { value: string }[])?.some(
+            (item) => item.value
+          ) || false
         );
         setFormData(
-          populateFormData(conditions) || [
+          populateFormData(trigger?.properties?.conditions) || [
             {
               [response.id]: {
                 value: "",
@@ -290,7 +263,7 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
             },
           ]
         );
-        conditions.forEach((item: any) => {
+        trigger?.properties?.conditions?.forEach((item: any) => {
           for (const key in item) {
             getAllResources(item[key]).then((resourceResponse) => {
               const tempResponse = JSON.parse(JSON.stringify(resourceResponse));
@@ -306,16 +279,7 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
     if (triggerType === "eventBased" || "timeDelay") {
       getAllConditions();
     }
-  }, [triggerType, conditions]);
-
-  const [possibleTypes, setPossibleTypes] = useState<string[]>([]);
-
-  useEffect(() => {
-    (async () => {
-      const { data } = await ApiService.get({ url: "/events/possible-types" });
-      setPossibleTypes(data);
-    })();
-  }, []);
+  }, [triggerType]);
 
   const recursivelyUpdateFormData = (
     formDataToUpdate: any,
@@ -393,7 +357,6 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
     ];
     setFormData(tempData);
   };
-
   const updateEvent = async ({ value, id, rowIndex, type, isRoot }: any) => {
     setIsButtonDisabled(true);
     const formDataToUpdate = JSON.parse(JSON.stringify(formData[rowIndex]));
@@ -482,8 +445,8 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
     };
     const generatedConditions: any = [];
     formData.forEach((item: any) => {
-      const condits = generateConditions(item.conditions);
-      const flattenedObj = flatten(condits);
+      const conditions = generateConditions(item.conditions);
+      const flattenedObj = flatten(conditions);
       const transformedObj: any = {};
       for (const key in flattenedObj) {
         const split = key.split(".");
@@ -505,7 +468,8 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
       func(JSON.parse(JSON.stringify(delayInputTime)));
     else if (triggerType == "timeWindow") func(timeWindow);
     else if (triggerType == "eventBased") {
-      func({ conditions });
+      const eventBasedTriggerData = await handleEventBasedTrigger();
+      func(eventBasedTriggerData);
     }
   };
 
@@ -675,7 +639,7 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
       }
       case "timeWindow": {
         jsx = (
-          <div className="flex flex-col flex-wrap">
+          <div className="flex items-center flex-col">
             {toPart ? (
               <div className="flex items-center mt-[10px]">
                 <FormControl
@@ -756,118 +720,55 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
     }
     return <>{jsx}</>;
   };
-
-  const handleDeleteCondition = (i: number) => {
-    setConditions([...conditions.filter((_condition, index) => index !== i)]);
-  };
-
-  let eventBasedErrorMessage = "";
-
-  for (let i = 0; i < conditions.length; i++) {
-    const condition = conditions[i];
-    // for (const key of Object.keys(condition)) {
-    //   if (!condition[key as keyof EventCondition]) {
-    //     eventBasedErrorMessage = `${key} is not defined at position ${i + 1}`;
-    //   }
-    // }
-
-    if (!condition.key) {
-      eventBasedErrorMessage = `Key is not defined at position ${i + 1}`;
-      break;
-    }
-
-    if (!condition.type) {
-      eventBasedErrorMessage = `Type is not defined at position ${i + 1}`;
-      break;
-    }
-
-    if (!condition.comparisonType) {
-      eventBasedErrorMessage = `Comparison type is not defined at position ${
-        i + 1
-      }`;
-      break;
-    }
-
-    if (!condition.value) {
-      eventBasedErrorMessage = `Value is not defined at position ${i + 1}`;
-      break;
-    }
-  }
-
   return (
     <>
       <Card
         sx={{
           padding: "30px",
           width: "100%",
+          maxWidth: "1138px",
         }}
       >
         <div className="rounded-[10px] border-[1px] border-[#D1D5DB] my-[25px] mx-[0px] py-[20px] px-[25px] relative shadow-[0px_1px_2px_rgba(0,0,0,0.05)]">
-          <div className="flex items-center relative">
-            <div className="rounded-[10px] my-[25px] mx-[0px] pt-[10px] pb-[25px] px-[20px] bg-[#F9F9FA] flex items-center cursor-pointer w-full">
-              <div className="flex flex-[1] flex-wrap flex-col">
-                {triggerType === "eventBased" ? (
-                  <>
-                    <div>
-                      {conditions.map((condition, i) => (
-                        <>
-                          <ConditionCreater
-                            condition={condition}
-                            onChange={(updatedCondition) =>
-                              handleConditionsChange(i, updatedCondition)
-                            }
-                            onDelete={() => handleDeleteCondition(i)}
-                            possibleTypes={possibleTypes}
-                            isViewMode={isViewMode}
-                          />
-                          {i !== conditions.length - 1 && (
-                            <div className="max-w-[7%]">
-                              <AndOrSelect
-                                value={condition.relationWithNext}
-                                onChange={(val) =>
-                                  handleConditionsChange(i, {
-                                    ...condition,
-                                    relationWithNext: val,
-                                  })
-                                }
-                                disabled={isViewMode}
-                              />
-                            </div>
-                          )}
-                        </>
-                      ))}
-                    </div>
-                    {conditions.length === 10 && (
-                      <span className="text-red-500">
-                        Maximum 10 conditions allowed
-                      </span>
-                    )}
-                    {!isViewMode && (
-                      <div>
-                        <GenericButton
-                          onClick={() =>
-                            setConditions([
-                              ...conditions,
-                              {
-                                key: "",
-                                value: "",
-                                comparisonType: "",
-                                type: "",
-                                relationWithNext: "and",
-                                isArray: false,
-                              },
-                            ])
-                          }
-                          disabled={conditions.length === 10}
-                        >
-                          Add new condition
-                        </GenericButton>
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  generateTriggerUI()
-                )}
+          <div className="flex items-center gap-[15px]">
+            <FormControl
+              sx={{
+                maxWidth: "135px",
+                paddingLeft: "15px",
+                minWidth: "112px",
+              }}
+            >
+              <Select
+                id="activeJourney"
+                value={triggerType}
+                options={[
+                  { value: "eventBased", title: "Conditions" },
+                  { value: "timeDelay", title: "When" },
+                  { value: "timeWindow", title: "From" },
+                ].filter((item) => item.value === triggerType)}
+                onChange={handletriggerType}
+                displayEmpty
+                disabled={isViewMode}
+                customButtonClass={`${
+                  isViewMode && "!bg-gray-200 !cursor-auto opacity-[0.7]"
+                }`}
+                sx={{
+                  height: "44px",
+                  "& .MuiSelect-select": {
+                    padding: "9px 15px",
+                    border: "1px solid #DEDEDE",
+                    boxShadow: "none",
+                  },
+                }}
+              />
+            </FormControl>
+          </div>
+          <div className="ml-[88px]">
+            <div className="flex items-center relative after:absolute after:z-[1] after:top-[10%] after:left-[-100px] after:ml-[45px] after:border-l-[2px] after:border-dashed after:border-l-[#7B7E7C] after:h-[80%]">
+              <div className="rounded-[10px] my-[25px] mx-[0px] pt-[10px] pb-[25px] px-[20px] bg-[#F9F9FA] flex items-center cursor-pointer w-full">
+                <div className="flex flex-[1] flex-wrap">
+                  {generateTriggerUI()}
+                </div>
               </div>
             </div>
           </div>
@@ -891,24 +792,29 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
                     customButtonClass={`${
                       isViewMode && "!bg-gray-200 !cursor-auto opacity-[0.7]"
                     }`}
+                    sx={{
+                      height: "44px",
+                      "& .MuiSelect-select": {
+                        padding: "9px 15px",
+                        border: "1px solid #DEDEDE",
+                        boxShadow: "none",
+                      },
+                    }}
                   />
                 </FormControl>
               </div>
-              <div className="flex items-center relative">
-                <div className="rounded-[10px] my-[25px] mx-[0px] pt-[10px] pb-[25px] px-[20px] bg-[#F9F9FA] flex items-center cursor-pointer w-full">
-                  <div className="flex flex-[1] flex-wrap">
-                    {generateTriggerUI({ toPart: true })}
+              <div className="ml-[88px]">
+                <div className="flex items-center relative after:absolute after:z-[1] after:top-[10%] after:left-[-100px] after:ml-[45px] after:border-l-[2px] after:border-dashed after:border-l-[#7B7E7C] after:h-[80%]">
+                  <div className="rounded-[10px] my-[25px] mx-[0px] pt-[10px] pb-[25px] px-[20px] bg-[#F9F9FA] flex items-center cursor-pointer w-full">
+                    <div className="flex flex-[1] flex-wrap">
+                      {generateTriggerUI({ toPart: true })}
+                    </div>
                   </div>
                 </div>
               </div>
             </>
           )}
         </div>
-        {triggerType === "eventBased" ? (
-          <span className="text-red-500">{eventBasedErrorMessage}</span>
-        ) : (
-          <></>
-        )}
         {!isViewMode && (
           <div className="flex gap-[10px] justify-end">
             <div>
@@ -930,11 +836,7 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
                 style={{
                   width: "200px",
                 }}
-                disabled={
-                  triggerType === "eventBased"
-                    ? !!eventBasedErrorMessage
-                    : isButtonDisabled
-                }
+                disabled={isButtonDisabled}
               >
                 Save
               </GenericButton>

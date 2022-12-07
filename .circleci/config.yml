@@ -24,7 +24,7 @@ jobs:
             docker push 427506656486.dkr.ecr.us-east-1.amazonaws.com/laudspeaker:latest
             aws ecs update-service --cluster ecs-demo --service api --force-new-deployment
             aws ecs update-service --cluster frontend --service frontend --force-new-deployment
-
+  
   build_and_deploy_staging:
     docker:
       - image: circleci/node:16
@@ -60,7 +60,7 @@ jobs:
       - setup_remote_docker:
           version: 20.10.14
           docker_layer_caching: true
-      - run: npm install --legacy-peer-deps
+      - run: npm install
       - run: docker build -f Dockerfile.dev.client -t laudspeaker:latest .
       - run: docker build -f Dockerfile.dev.server -t laudspeaker:api-latest .
       - run: docker-compose -f ./docker-compose.dev.yml up -d
@@ -73,14 +73,14 @@ workflows:
   pull_request:
     jobs:
       - test
-  staging:
+  staging:    
     jobs:
       - build_and_deploy_staging:
           filters:
             branches:
               only:
                 - staging
-  production:
+  production:    
     jobs:
       - build_and_deploy_production:
           filters:

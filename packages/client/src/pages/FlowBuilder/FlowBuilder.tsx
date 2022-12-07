@@ -71,7 +71,7 @@ const convertLayoutToTable = (
       source: string;
       dest: string[];
       properties: {
-        conditions: Record<string, any>;
+        event: string;
       };
     }[];
     visualLayout: {
@@ -108,8 +108,9 @@ const convertLayoutToTable = (
       source: fromNode[0]?.data?.audienceId,
       dest: [toNode[0].data.audienceId],
       properties: {
-        conditions:
-          fromNode[0]?.data.triggers[foundTriggerIndex]?.properties?.conditions,
+        event:
+          fromNode[0]?.data.triggers[foundTriggerIndex]?.properties
+            ?.conditions[0]?.value,
       },
     };
     dto.rules.push(rule);
@@ -754,6 +755,8 @@ const Flow = () => {
       ) : null}
       {triggerModalOpen && (
         <TriggerModal
+          triggerModalOpen={triggerModalOpen}
+          handleTriggerModalOpen={handleTriggerModalOpen}
           selectedTrigger={selectedTrigger}
           onSaveTrigger={onSaveTrigger}
           onDeleteTrigger={onDeleteTrigger}
