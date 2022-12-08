@@ -1,18 +1,10 @@
 version: "3.7"
 services:
-  frontend:
-    image: laudspeaker:latest
-    depends_on:
-      - backend
-    ports:
-      - "3000:3000"
-    stdin_open: true
-    tty: true
-  
   backend:
     image: laudspeaker:api-latest
     ports:
       - "3001:3001"
+    network_mode: "host"
     depends_on:
       - redis
       - postgres
