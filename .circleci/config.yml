@@ -83,6 +83,10 @@ workflows:
     jobs:
       - cypress/run:
           pre-steps:
+            - checkout
+            - setup_remote_docker:
+                version: 20.10.14
+                docker_layer_caching: true
             - run: docker build -f Dockerfile.dev.server -t laudspeaker:api-latest .
             - run: docker-compose -f ./docker-compose.dev.yml up -d
           start: npm run start
