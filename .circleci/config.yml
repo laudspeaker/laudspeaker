@@ -83,7 +83,6 @@ workflows:
     jobs:
       - cypress/run:
           pre-steps:
-            - run: npm install --legacy-peer-deps
             - run: docker build -f Dockerfile.dev.server -t laudspeaker:api-latest .
             - run: docker-compose -f ./docker-compose.dev.yml up -d
           start: npm run start
