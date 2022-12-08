@@ -39,7 +39,7 @@ const attributeKeys: { [key: string]: string } = {
 
 const expectedFields: Record<string, string[]> = {
   free3: ["testSendingEmail", "testSendingName"],
-  mailgun: ["sendingName", "sendingEmail", "privateApiKey"],
+  mailgun: ["sendingName", "sendingEmail"],
   sendgrid: ["sendgridApiKey", "sendgridFromEmail"],
 };
 
