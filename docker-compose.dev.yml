@@ -2,8 +2,6 @@ version: "3.7"
 services:
   backend:
     image: laudspeaker:api-latest
-    ports:
-      - "3001:3001"
     network_mode: "host"
     depends_on:
       - redis
