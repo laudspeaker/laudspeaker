@@ -4,7 +4,7 @@ orbs:
 executors:
   base16:
     docker:
-      - image: 'cypress/base:16'
+      - image: 'circleci/node:16'
     environment:
       FOO: foo
       BAR: bar
