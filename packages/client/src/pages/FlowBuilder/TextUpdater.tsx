@@ -141,7 +141,7 @@ const TextUpdaterNode = ({
         />
         <div
           className={`relative text-updater overflow-hidden bg-white ${
-            descriptionCollaped ? "max-h-[80px]" : "min-h-[80px]"
+            descriptionCollaped ? "max-h-[88px]" : "min-h-[80px]"
           }  flex justify-between rounded-[8px] p-[16.5px_20px] border-[2px] shadow-md border-transparent ${
             nodeData.width ? `w-[${nodeData.width}]` : "w-[350px]"
           } ${nodeData.isPrimary ? "border-cyan-500" : ""} ${
@@ -157,14 +157,30 @@ const TextUpdaterNode = ({
               )}
               {nodeData.name}
             </p>
-            <p
-              onClick={() => setDescriptionCollaped(!descriptionCollaped)}
-              className={
-                subTitleTextStyle + " h-full text-ellipsis cursor-pointer"
-              }
-            >
-              {nodeData.description}
-            </p>
+            {descriptionCollaped && nodeData.description ? (
+              <LinesEllipsis
+                onClick={() => {
+                  setDescriptionCollaped(!descriptionCollaped);
+                }}
+                text={nodeData.description}
+                className={
+                  subTitleTextStyle + " h-full text-ellipsis cursor-pointer"
+                }
+                maxLine="2"
+                ellipsis="..."
+                trimRight
+                basedOn="letters"
+              />
+            ) : (
+              <p
+                onClick={() => setDescriptionCollaped(!descriptionCollaped)}
+                className={
+                  subTitleTextStyle + " h-full text-ellipsis cursor-pointer"
+                }
+              >
+                {nodeData.description}
+              </p>
+            )}
           </div>
           <div className="flex justify-evenly items-center">
             {generateMsgIcons()}
