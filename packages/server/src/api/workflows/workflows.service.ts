@@ -226,6 +226,23 @@ export class WorkflowsService {
       rules.push(Buffer.from(JSON.stringify(trigger)).toString('base64'));
     }
 
+    for (const node of updateWorkflowDto.visualLayout.nodes) {
+      const audienceId = node?.data?.audienceId;
+      const nodeTemplates = node?.data?.messages;
+      if (!nodeTemplates || !Array.isArray(nodeTemplates) || !audienceId)
+        continue;
+
+      await this.audiencesService.audiencesRepository.update(
+        {
+          id: audienceId,
+          ownerId: account.id,
+        },
+        {
+          templates: nodeTemplates.map((item) => item.templateId),
+        }
+      );
+    }
+
     const found = await this.workflowsRepository.findOneBy({
       ownerId: (<Account>account).id,
       id: updateWorkflowDto.id,

@@ -57,19 +57,7 @@ const TextUpdaterNode = ({
     onTemplateModalClose();
   };
 
-  const handleTemplateModalOpen = ({ activeTemplate }: any) => {
-    if (activeTemplate == null || activeTemplate == "") {
-      onTemplateModalClose();
-      return;
-    }
-    const found = data?.messages?.find(
-      (message: any) => message.templateId === selectedTemplateId
-    );
-
-    if (found) {
-      found.templateId = activeTemplate;
-    }
-
+  const handleTemplateModalOpen = () => {
     onTemplateModalClose();
   };
 
@@ -150,7 +138,7 @@ const TextUpdaterNode = ({
           isConnectable={!!isTarget}
         />
         <div
-          className={`text-updater bg-white max-h-[80px] flex justify-between rounded-[8px] p-[16.5px_20px] border-[2px] shadow-md border-transparent ${
+          className={`text-updater bg-white min-h-[80px] flex justify-between rounded-[8px] p-[16.5px_20px] border-[2px] shadow-md border-transparent ${
             nodeData.width ? `w-[${nodeData.width}]` : "w-[350px]"
           } ${nodeData.isPrimary ? "border-cyan-500" : ""} ${
             isSelected && !nodeData.isPrimary

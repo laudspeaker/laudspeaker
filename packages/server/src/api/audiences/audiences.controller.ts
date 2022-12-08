@@ -66,17 +66,4 @@ export class AudiencesController {
   ) {
     return await this.audienceService.update(<Account>user, updateAudienceDto);
   }
-
-  @Patch('add-template')
-  @UseGuards(JwtAuthGuard)
-  @UseInterceptors(ClassSerializerInterceptor)
-  async addTemplate(
-    @Req() { user }: Request,
-    @Body() addTemplateDto: AddTemplateDto
-  ) {
-    return await this.audienceService.addTemplate(
-      <Account>user,
-      addTemplateDto
-    );
-  }
 }

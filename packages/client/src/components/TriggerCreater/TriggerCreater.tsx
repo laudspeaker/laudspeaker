@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { FormControl } from "@mui/material";
-import { GenericButton, Select, Input } from "components/Elements";
+import { GenericButton, Select } from "components/Elements";
 import {
   getConditions,
   getEventResources,
@@ -11,13 +11,10 @@ import {
   ISegmentInclusionForm,
   InclusionCriteria,
 } from "pages/Segment/MySegment";
-import EditIcon from "@mui/icons-material/Edit";
 import DateTimePicker from "components/Elements/DateTimePicker";
-import Autocomplete from "components/Autocomplete";
 import ConditionCreater from "./ConditionCreator";
 import ApiService from "services/api.service";
 import AndOrSelect from "./AndOrSelect";
-import Tooltip from "components/Elements/Tooltip";
 
 export type TriggerType = "eventBased" | "timeDelay" | "timeWindow";
 interface ITriggerCreaterProp {
