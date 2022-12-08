@@ -1,4 +1,13 @@
 version: 2.1
+orbs:
+  cypress: cypress-io/cypress@2.2.0
+executors:
+  base16:
+    docker:
+      - image: 'cypress/base:16'
+    environment:
+      FOO: foo
+      BAR: bar
 jobs:
   build_and_deploy_production:
     docker:
@@ -72,7 +81,15 @@ jobs:
 workflows:
   pull_request:
     jobs:
-      - test
+      - cypress/run:
+          pre-steps:
+            - run: npm install --legacy-peer-deps
+            - run: docker build -f Dockerfile.dev.server -t laudspeaker:api-latest .
+            - run: docker-compose -f ./docker-compose.dev.yml up -d
+          start: npm run start
+          wait-on: 'http://localhost:3000'
+          command: npm run test:e2e:client
+          executor: base16
   staging:
     jobs:
       - build_and_deploy_staging:
