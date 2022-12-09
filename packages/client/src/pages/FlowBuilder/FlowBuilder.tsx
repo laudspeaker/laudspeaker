@@ -537,26 +537,25 @@ const Flow = () => {
       nodes.find((node) => node.data.primary)?.data?.isDynamic || false,
   });
 
-  useEffect(() => {
-    setSegmentForm({
-      isDynamic:
-        nodes.find((node) => node.data.primary)?.data?.isDynamic || false,
-    });
-  }, [nodes]);
-
   const onToggleChange = async () => {
-    const primaryNode = nodes.find((node) => node.data.primary);
-    if (!primaryNode) return;
-    await ApiService.patch({
-      url: "/audiences",
-      options: {
-        id: primaryNode.data?.audienceId,
-        isDynamic: !segmentForm.isDynamic,
-      },
-    });
-    primaryNode.data.isDynamic = !primaryNode.data.isDynamic;
     setSegmentForm({ isDynamic: !segmentForm.isDynamic });
   };
+
+  useEffect(() => {
+    (async () => {
+      const primaryNode = nodes.find((node) => node.data.primary);
+      if (!primaryNode || primaryNode.data.isDynamic === segmentForm.isDynamic)
+        return;
+      await ApiService.patch({
+        url: "/audiences",
+        options: {
+          id: primaryNode.data?.audienceId,
+          isDynamic: segmentForm.isDynamic,
+        },
+      });
+      primaryNode.data.isDynamic = segmentForm.isDynamic;
+    })();
+  }, [segmentForm.isDynamic, nodes]);
 
   let startDisabledReason = "";
 
