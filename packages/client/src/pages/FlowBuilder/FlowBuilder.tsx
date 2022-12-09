@@ -533,8 +533,7 @@ const Flow = () => {
   };
 
   const [segmentForm, setSegmentForm] = useState<INameSegmentForm>({
-    isDynamic:
-      nodes.find((node) => node.data.primary)?.data?.isDynamic || false,
+    isDynamic: nodes.find((node) => node.data.primary)?.data?.isDynamic || true,
   });
 
   const onToggleChange = async () => {

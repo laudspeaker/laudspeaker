@@ -136,7 +136,7 @@ const TextUpdaterNode = ({
         <Handle
           type="target"
           position={Position.Top}
-          className="!bg-transparent !h-full !border-0"
+          className="!bg-transparent !h-full !border-0 !z-[99999]"
           isConnectable={!!isTarget}
         />
         <div
