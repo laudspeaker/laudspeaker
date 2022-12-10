@@ -1,13 +1,4 @@
 version: 2.1
-orbs:
-  cypress: cypress-io/cypress@2.2.0
-executors:
-  base16:
-    docker:
-      - image: 'circleci/node:16'
-    environment:
-      FOO: foo
-      BAR: bar
 jobs:
   build_and_deploy_production:
     docker:
@@ -72,29 +63,30 @@ jobs:
       - run: npm install --legacy-peer-deps
       - run: docker build -f Dockerfile.dev.client -t laudspeaker:latest .
       - run: docker build -f Dockerfile.dev.server -t laudspeaker:api-latest .
-      - run: docker-compose -f ./docker-compose.dev.yml up -d
-      - run: sudo apt-get update
-      - run: sudo apt-get install --fix-missing libgtk2.0-0 libgtk-3-0 libgbm-dev libnotify-dev libgconf-2-4 libnss3 libxss1 libasound2 libxtst6 xauth xvfb
-      - run: sleep 60
-      - run: docker ps
-      - run: cd packages/client && npm run test:e2e
+      - run: docker-compose -f ./docker-compose.dev.yml up --abort-on-container-exit
+      # - run: sudo apt-get update
+      # - run: sudo apt-get install --fix-missing libgtk2.0-0 libgtk-3-0 libgbm-dev libnotify-dev libgconf-2-4 libnss3 libxss1 libasound2 libxtst6 xauth xvfb
+      # - run: sleep 60
+      # - run: docker ps
+      # - run: cd packages/client && npm run test:e2e
 workflows:
   pull_request:
     jobs:
-      - cypress/run:
-          pre-steps:
-            - checkout
-            - setup_remote_docker:
-                version: 20.10.14
-                docker_layer_caching: true
-            - run: docker build -f Dockerfile.dev.server -t laudspeaker:api-latest .
-            - run: docker-compose -f ./docker-compose.dev.yml up -d
-            - run: sudo apt-get update
-            - run: sudo apt-get install --fix-missing libgtk2.0-0 libgtk-3-0 libgbm-dev libnotify-dev libgconf-2-4 libnss3 libxss1 libasound2 libxtst6 xauth xvfb
-          start: npm run start:client:ci
-          wait-on: 'http://localhost:3000'
-          command: npm run test:e2e:client
-          executor: base16
+      - test
+      # - cypress/run:
+      #     pre-steps:
+      #       - checkout
+      #       - setup_remote_docker:
+      #           version: 20.10.14
+      #           docker_layer_caching: true
+      #       - run: docker build -f Dockerfile.dev.server -t laudspeaker:api-latest .
+      #       - run: docker-compose -f ./docker-compose.dev.yml up -d
+      #       - run: sudo apt-get update
+      #       - run: sudo apt-get install --fix-missing libgtk2.0-0 libgtk-3-0 libgbm-dev libnotify-dev libgconf-2-4 libnss3 libxss1 libasound2 libxtst6 xauth xvfb
+      #     start: npm run start:client:ci
+      #     wait-on: 'http://localhost:3000'
+      #     command: npm run test:e2e:client
+      #     executor: base16
   staging:
     jobs:
       - build_and_deploy_staging:
