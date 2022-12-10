@@ -71,7 +71,7 @@ const NameSegment = ({
           //   position: "relative",
           // }}
         >
-          <h3>Name your segment</h3>
+          <h3>Name Your Step</h3>
           <Grid container direction={"row"} padding={"10px 0px"}>
             <FormControl variant="standard">
               <Input
