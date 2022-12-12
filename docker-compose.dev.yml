@@ -2,14 +2,13 @@ version: "3.7"
 services:
   e2e:
     image: cypress
-    build: ./packages/client/cypress/
+    build:
+      dockerfile: Dockerfile.dev.e2e
+      context: ./
     container_name: cypress
     depends_on:
       - frontend
     command: npx cypress run
-    volumes:
-      - ./packages/client/cypress:/app/cypress
-      - ./packages/client/cypress/cypress.config.js:/app/cypress.config.js
 
   frontend:
     image: laudspeaker:latest
