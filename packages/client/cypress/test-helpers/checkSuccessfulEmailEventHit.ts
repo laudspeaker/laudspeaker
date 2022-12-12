@@ -2,7 +2,8 @@ export default (
   apiKey: string,
   eventName: string,
   correlationKey: string,
-  correlationValue: string
+  correlationValue: string,
+  callback?: () => void
 ) => {
   cy.request({
     method: "POST",
@@ -28,6 +29,7 @@ export default (
       },
     }).then(({ body }) => {
       expect(body).to.equal("completed");
+      if (callback) callback();
     });
   });
 };

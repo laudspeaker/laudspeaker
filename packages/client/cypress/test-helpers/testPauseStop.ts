@@ -93,7 +93,6 @@ export default () => {
         event: { A: "A" },
       },
     }).then(({ body }) => {
-      cy.wait(1000);
       cy.request({
         method: "POST",
         headers: {
@@ -104,8 +103,8 @@ export default () => {
           jobId: body[0]?.jobIds?.[0],
         },
       }).then(({ body }) => {
-        cy.wait(1000);
         expect(body).to.equal("completed");
+        cy.wait(3000);
         cy.request({
           method: "POST",
           url: `${Cypress.env("AxiosURL")}events`,
@@ -135,7 +134,6 @@ export default () => {
               event: { A: "A" },
             },
           }).then(({ body }) => {
-            cy.wait(1000);
             expect(body?.[0]?.jobIDs?.[0]).to.equal(undefined);
           });
         });

@@ -14,7 +14,7 @@ const { email, password, emailTemplate, journeyName, userAPIkey } =
 const { TESTS_SENDGRID_API_KEY, TESTS_SENDGRID_FROM_EMAIL } = Cypress.env();
 
 describe(
-  "Free3 witj two steps",
+  "Sendgrid with two steps",
   { env: { AxiosURL: "http://localhost:3001/" } },
   () => {
     beforeEach(() => {
