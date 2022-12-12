@@ -78,7 +78,7 @@ We would love to see you contribute to Laudspeaker. Join our slack to get involv
 
 -  [Twitter][twitter]
 
-[slack]: https://join.slack.com/t/laudspeakerusers/shared_invite/zt-1io0f6u50-rSCnNtqkJT6QIdbPOyJh6g
+[slack]: https://join.slack.com/t/laudspeakerusers/shared_invite/zt-1li25huaq-BljJUA1Zm8dXvbZViAbMwg
 [twitter]: https://twitter.com/laudspeaker
 [mit_license]: https://opensource.org/licenses/MIT
 
