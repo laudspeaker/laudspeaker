@@ -68,6 +68,7 @@ const MergeTagType = (
           position: "relative",
         },
         unstylable: [
+          "display",
           "width",
           "height",
           "padding",
@@ -118,7 +119,7 @@ const MergeTagType = (
       },
     },
     view: defaultType.view.extend({
-      tagName: "div",
+      tagName: "span",
       events: {
         dblclick: "dblClick",
       },
