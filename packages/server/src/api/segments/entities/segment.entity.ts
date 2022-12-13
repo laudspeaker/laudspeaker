@@ -5,6 +5,9 @@ export class Segment {
   @PrimaryGeneratedColumn('uuid')
   public id: string;
 
+  @Column()
+  public userId: string;
+
   /*
       {
           conditionalType: ...,

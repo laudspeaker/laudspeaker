@@ -1,5 +1,5 @@
 import { Entity, Column, PrimaryGeneratedColumn, JoinColumn } from 'typeorm';
-import { Segment } from './segment.entity';
+import { Segment } from '../../segments/entities/segment.entity';
 
 export enum TriggerType {
   event,

@@ -2,6 +2,7 @@ import { GenericButton, Select } from "components/Elements";
 import Modal from "components/Elements/Modal";
 import { MySegment } from "pages/Segment";
 import React, { FC, useEffect, useState } from "react";
+import ApiService from "services/api.service";
 
 export interface SegmentModalProps {
   isOpen: boolean;
@@ -25,8 +26,18 @@ const SegmentModal: FC<SegmentModalProps> = ({
     isFreezed: false,
   });
 
+  const [possibleSegments, setPossibleSegments] = useState();
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await ApiService.get({ url: "/segments" });
+      setPossibleSegments(data);
+    })();
+  }, []);
+
   useEffect(() => {
     if (segmentId) {
+      // TODO: load segment data
     }
   }, [segmentId]);
 
@@ -36,7 +47,9 @@ const SegmentModal: FC<SegmentModalProps> = ({
         <MySegment
           onClose={() => setIsSegmentEditModalOpen(false)}
           workflowId={workflowId}
+          segmentId={segmentData.id || ""}
           isCollapsible={true}
+          onSubmit={() => {}}
         />
       ) : (
         <div>

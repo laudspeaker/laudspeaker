@@ -29,7 +29,8 @@ export interface InclusionCriteria {
 
 interface ISegmentInclusion {
   onSubmit?: () => void;
-  audienceId: string;
+  workflowId: string;
+  segmentId: string;
   audienceName?: string;
   isCollapsible: boolean;
   onClose: () => void;
@@ -37,7 +38,8 @@ interface ISegmentInclusion {
 
 const MySegment = ({
   onSubmit,
-  audienceId,
+  workflowId,
+  segmentId,
   audienceName,
   onClose,
   isCollapsible,
@@ -117,24 +119,24 @@ const MySegment = ({
   };
 
   useLayoutEffect(() => {
-    const getAllConditions = async () => {
-      const { data } = await getSegment(audienceId);
-      setSegmentForm({ ...segmentForm, title: data.name });
-      if (data.resources) {
-        setResouces(data.resources);
-      } else {
-        const conditionsResponse = await getConditions();
-        setResouces((e: any) => ({
-          ...e,
-          [conditionsResponse.id]: conditionsResponse,
-        }));
-      }
-      if (data.inclusionCriteria)
-        if (data.inclusionCriteria.conditionalType != undefined)
-          setSubTitleOptions(data.inclusionCriteria.conditionalType);
-      populateFormData(data.inclusionCriteria.conditions);
-    };
-    getAllConditions();
+    // const getAllConditions = async () => {
+    //   const { data } = await getSegment(audienceId);
+    //   setSegmentForm({ ...segmentForm, title: data.name });
+    //   if (data.resources) {
+    //     setResouces(data.resources);
+    //   } else {
+    //     const conditionsResponse = await getConditions();
+    //     setResouces((e: any) => ({
+    //       ...e,
+    //       [conditionsResponse.id]: conditionsResponse,
+    //     }));
+    //   }
+    //   if (data.inclusionCriteria)
+    //     if (data.inclusionCriteria.conditionalType != undefined)
+    //       setSubTitleOptions(data.inclusionCriteria.conditionalType);
+    //   populateFormData(data.inclusionCriteria.conditions);
+    // };
+    // getAllConditions();
   }, []);
 
   const getAllResources = async (id: any) => {
@@ -343,12 +345,12 @@ const MySegment = ({
       }
     });
     requestBody.conditions = generatedConditions;
-    await updateSegment(audienceId, {
-      inclusionCriteria: requestBody,
-      id: audienceId,
-      resources: resources,
-      name: segmentForm.title,
-    });
+    // await updateSegment(audienceId, {
+    //   inclusionCriteria: requestBody,
+    //   id: audienceId,
+    //   resources: resources,
+    //   name: segmentForm.title,
+    // });
     if (onSubmit) {
       onSubmit();
     }
