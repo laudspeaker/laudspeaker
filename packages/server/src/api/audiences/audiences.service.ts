@@ -104,13 +104,7 @@ export class AudiencesService {
     audience.name = createAudienceDto.name;
     audience.customers = [];
     audience.templates = [];
-    audience.isDynamic = createAudienceDto.isPrimary
-      ? createAudienceDto.isDynamic
-      : false;
     audience.isPrimary = createAudienceDto.isPrimary;
-    audience.inclusionCriteria = createAudienceDto.isPrimary
-      ? createAudienceDto.inclusionCriteria
-      : undefined;
     audience.description = createAudienceDto.description;
     audience.ownerId = account.id;
     audience.templates = createAudienceDto.templates;
@@ -174,12 +168,8 @@ export class AudiencesService {
         {
           description: updateAudienceDto.description,
           name: updateAudienceDto.name,
-          isDynamic: audience.isPrimary ? updateAudienceDto.isDynamic : false,
           resources: audience.isPrimary
             ? updateAudienceDto.resources
-            : undefined,
-          inclusionCriteria: audience.isPrimary
-            ? updateAudienceDto.inclusionCriteria
             : undefined,
         }
       );
@@ -189,21 +179,6 @@ export class AudiencesService {
       return Promise.reject(err);
     }
     return;
-  }
-
-  /**
-   * Find all dynamic audiences
-   *
-   * @param account - The account entity that the audiences belongs to
-   *
-   */
-
-  findAllDynamic(account: Account): Promise<Audience[]> {
-    return this.audiencesRepository.findBy({
-      ownerId: (<Account>account).id,
-      isDynamic: true,
-      isPrimary: true,
-    });
   }
 
   /**

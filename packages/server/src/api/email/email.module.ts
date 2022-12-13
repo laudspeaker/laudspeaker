@@ -5,21 +5,20 @@ import { BullModule } from '@nestjs/bull';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Account } from '../accounts/entities/accounts.entity';
 import { Audience } from '../audiences/entities/audience.entity';
-import { CustomersService } from '../customers/customers.service';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Customer, CustomerSchema } from '../customers/schemas/customer.schema';
 import {
   CustomerKeys,
   CustomerKeysSchema,
 } from '../customers/schemas/customer-keys.schema';
+import { CustomersModule } from '../customers/customers.module';
 
 @Module({
   imports: [
     BullModule.registerQueue({
       name: 'email',
     }),
-    TypeOrmModule.forFeature([Account]),
-    TypeOrmModule.forFeature([Audience]),
+    TypeOrmModule.forFeature([Account, Audience]),
     MongooseModule.forFeature([
       { name: Customer.name, schema: CustomerSchema },
     ]),
@@ -29,8 +28,9 @@ import {
     BullModule.registerQueue({
       name: 'customers',
     }),
+    CustomersModule,
   ],
   controllers: [EmailController],
-  providers: [EmailProcessor, CustomersService],
+  providers: [EmailProcessor],
 })
 export class EmailModule {}

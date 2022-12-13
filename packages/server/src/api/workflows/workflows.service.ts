@@ -204,61 +204,74 @@ export class WorkflowsService {
     account: Account,
     updateWorkflowDto: UpdateWorkflowDto
   ): Promise<void> {
-    const rules: string[] = [];
+    const workflow = await this.workflowsRepository.findOneBy({
+      id: updateWorkflowDto.id,
+    });
 
-    for (const trigger of updateWorkflowDto.rules) {
-      for (const condition of trigger.properties.conditions) {
-        const { key, type, isArray } = condition;
-        if (isString(key) && isString(type) && isBoolean(isArray)) {
-          const eventKey = await this.EventKeysModel.findOne({
-            key,
-            type,
-            isArray,
-          }).exec();
-          if (!eventKey)
-            await this.EventKeysModel.create({
+    if (!workflow) throw new NotFoundException('Workflow not found');
+    if (workflow.isActive)
+      return Promise.reject(new Error('Workflow has already been activated'));
+
+    const { rules, visualLayout, isDynamic, audiences, name } =
+      updateWorkflowDto;
+
+    if (rules) {
+      const rules = [];
+      for (const trigger of rules) {
+        for (const condition of trigger.properties.conditions) {
+          const { key, type, isArray } = condition;
+          if (isString(key) && isString(type) && isBoolean(isArray)) {
+            const eventKey = await this.EventKeysModel.findOne({
               key,
               type,
               isArray,
-            });
+            }).exec();
+            if (!eventKey)
+              await this.EventKeysModel.create({
+                key,
+                type,
+                isArray,
+              });
+          }
         }
+        rules.push(Buffer.from(JSON.stringify(trigger)).toString('base64'));
       }
-      rules.push(Buffer.from(JSON.stringify(trigger)).toString('base64'));
+      workflow.rules = rules;
     }
 
-    for (const node of updateWorkflowDto.visualLayout.nodes) {
-      const audienceId = node?.data?.audienceId;
-      const nodeTemplates = node?.data?.messages;
-      if (!nodeTemplates || !Array.isArray(nodeTemplates) || !audienceId)
-        continue;
+    if (visualLayout) {
+      for (const node of visualLayout.nodes) {
+        const audienceId = node?.data?.audienceId;
+        const nodeTemplates = node?.data?.messages;
+        if (!nodeTemplates || !Array.isArray(nodeTemplates) || !audienceId)
+          continue;
 
-      await this.audiencesService.audiencesRepository.update(
-        {
-          id: audienceId,
-          ownerId: account.id,
-        },
-        {
-          templates: nodeTemplates.map((item) => item.templateId),
-        }
-      );
+        await this.audiencesService.audiencesRepository.update(
+          {
+            id: audienceId,
+            ownerId: account.id,
+          },
+          {
+            templates: nodeTemplates.map((item) => item.templateId),
+          }
+        );
+      }
     }
 
-    const found = await this.workflowsRepository.findOneBy({
-      ownerId: (<Account>account).id,
-      id: updateWorkflowDto.id,
-    });
-    if (found?.isActive)
-      return Promise.reject(new Error('Workflow has already been activated'));
+    let segmentId = undefined;
+    if (updateWorkflowDto.segmentId !== undefined) {
+      segmentId = { id: updateWorkflowDto.segmentId };
+    }
+
     try {
-      await this.workflowsRepository.update(
-        { ownerId: (<Account>account).id, id: updateWorkflowDto.id },
-        {
-          audiences: updateWorkflowDto.audiences,
-          name: updateWorkflowDto.name,
-          visualLayout: updateWorkflowDto.visualLayout,
-          rules: rules,
-        }
-      );
+      await this.workflowsRepository.save({
+        ...workflow,
+        segment: { id: segmentId || workflow.segment?.id },
+        audiences,
+        visualLayout,
+        isDynamic,
+        name,
+      });
       this.logger.debug('Updated workflow ' + updateWorkflowDto.id);
     } catch (err) {
       this.logger.error('Error:' + err);
@@ -293,19 +306,11 @@ export class WorkflowsService {
 
     const newAudiences = await Promise.all(
       oldWorkflow.audiences?.map(async (id) => {
-        const {
-          name,
-          description,
-          inclusionCriteria,
-          isDynamic,
-          isPrimary,
-          templates,
-        } = await this.audiencesService.findOne(user, id);
+        const { name, description, isPrimary, templates } =
+          await this.audiencesService.findOne(user, id);
         const newAudience = await this.audiencesService.insert(user, {
           name,
           description,
-          inclusionCriteria,
-          isDynamic,
           isPrimary,
           templates,
         });
@@ -336,6 +341,8 @@ export class WorkflowsService {
       name: newName,
       visualLayout,
       rules: triggers,
+      segmentId: oldWorkflow.segment.id,
+      isDynamic: oldWorkflow.isDynamic,
     });
   }
 
@@ -403,7 +410,7 @@ export class WorkflowsService {
         try {
           customers = await this.customersService.findByInclusionCriteria(
             account,
-            audience.inclusionCriteria
+            workflow.segment.inclusionCriteria
           );
           this.logger.debug(
             'Customers to include in workflow: ' + customers.length
@@ -489,10 +496,10 @@ export class WorkflowsService {
         }
         if (
           audience.isPrimary &&
-          audience.isDynamic &&
+          workflow.isDynamic &&
           this.customersService.checkInclusion(
             customer,
-            audience.inclusionCriteria
+            workflow.segment.inclusionCriteria
           )
         ) {
           try {

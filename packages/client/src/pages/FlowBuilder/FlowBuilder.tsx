@@ -35,7 +35,7 @@ import ChooseTemplateModal from "./ChooseTemplateModal";
 import { MySegment, NameSegment } from "pages/Segment";
 import ApiService from "services/api.service";
 import TriggerModal from "./TriggerModal";
-import { Select } from "components/Elements";
+import { GenericButton, Select } from "components/Elements";
 import { getFlow } from "./FlowHelpers";
 import { toast } from "react-toastify";
 import Modal from "../../components/Elements/Modal";
@@ -45,6 +45,7 @@ import { Helmet } from "react-helmet";
 import { Grid } from "@mui/material";
 import ToggleSwitch from "components/Elements/ToggleSwitch";
 import AlertBanner from "components/AlertBanner";
+import SegmentModal from "./SegmentModal";
 
 const segmentTypeStyle =
   "border-[1px] border-[#D1D5DB] rouded-[6px] shadow-[0px_1px_2px_rgba(0,0,0,0.05)] w-full mt-[20px] p-[15px]";
@@ -133,11 +134,14 @@ const Flow = () => {
   const [templateModalOpen, setTemplateModalOpen] = useState<boolean>(false);
   const [audienceModalOpen, setAudienceModalOpen] = useState<boolean>(false);
   const [triggerModalOpen, settriggerModalOpen] = useState<boolean>(false);
-  const [audienceEditModalOpen, setAudienceEditModalOpen] =
-    useState<boolean>(false);
   const [selectedMessageType, setSelectedMessageType] = useState<any>("");
   const [tutorialOpen, setTutorialOpen] = useState(false);
   const [isSegmentDefined, setIsSegmentDefined] = useState(false);
+  const [segmentId, setSegmentId] = useState<string>();
+  const [segmentForm, setSegmentForm] = useState<INameSegmentForm>({
+    isDynamic: true,
+  });
+  const [segmentModalOpen, setSegmentModalOpen] = useState(false);
 
   const onHandleClick = (e: any, triggerId: any) => {
     return { e, triggerId };
@@ -156,6 +160,9 @@ const Flow = () => {
       if (data.isActive) {
         return navigate(`/flow/${name}/view`);
       }
+      setSegmentForm({
+        isDynamic: data.isDynamic === undefined ? true : data.isDynamic,
+      });
       setFlowId(data.id);
       if (data.visualLayout) {
         const updatedNodes = data.visualLayout.nodes.map((item: any) => {
@@ -267,11 +274,6 @@ const Flow = () => {
   const onNodeDoubleClick = useCallback(
     (event: React.MouseEvent, node: Node) => {
       setSelectedNode(node.id);
-      if (event.detail == 2) {
-        if (!audienceEditModalOpen) {
-          setAudienceEditModalOpen(true);
-        }
-      }
     },
     [setNodes, triggers]
   );
@@ -528,35 +530,16 @@ const Flow = () => {
     setNodes([...nodes, generateNode(newNode, triggers)]);
     setAudienceModalOpen(false);
   };
-  const handleAudienceEdit = () => {
-    setAudienceEditModalOpen(true);
-    forceRerenderSelectedNode();
-    setAudienceEditModalOpen(false);
-  };
-
-  const [segmentForm, setSegmentForm] = useState<INameSegmentForm>({
-    isDynamic:
-      nodes.find((node) => node.data.primary)?.data?.isDynamic || false,
-  });
-
-  useEffect(() => {
-    setSegmentForm({
-      isDynamic:
-        nodes.find((node) => node.data.primary)?.data?.isDynamic || false,
-    });
-  }, [nodes]);
 
   const onToggleChange = async () => {
-    const primaryNode = nodes.find((node) => node.data.primary);
-    if (!primaryNode) return;
     await ApiService.patch({
-      url: "/audiences",
+      url: "/workflows/" + name,
       options: {
-        id: primaryNode.data?.audienceId,
+        id: flowId,
         isDynamic: !segmentForm.isDynamic,
+        isActive: false,
       },
     });
-    primaryNode.data.isDynamic = !primaryNode.data.isDynamic;
     setSegmentForm({ isDynamic: !segmentForm.isDynamic });
   };
 
@@ -629,6 +612,9 @@ const Flow = () => {
                       </div>
                     </Tooltip>
                   </div>
+                  <GenericButton onClick={() => setSegmentModalOpen(true)}>
+                    Define segment
+                  </GenericButton>
                 </div>
               }
             />
@@ -761,27 +747,15 @@ const Flow = () => {
             onClose={() => settriggerModalOpen(false)}
           />
         )}
-        {audienceEditModalOpen &&
-        _.filter(nodes, (node: any) => {
-          return node.id == selectedNode;
-        })[0]?.data?.primary ? (
-          <Modal
-            isOpen={audienceEditModalOpen}
-            onClose={() => setAudienceEditModalOpen(false)}
-            panelClass="!max-w-[90%]"
-          >
-            <MySegment
-              onSubmit={handleAudienceEdit}
-              audienceId={
-                _.filter(nodes, (node: any) => {
-                  return node.id == selectedNode;
-                })[0].data.audienceId
-              }
-              isCollapsible={true}
-              onClose={() => setAudienceEditModalOpen(false)}
-            />
-          </Modal>
-        ) : null}
+        {segmentModalOpen && (
+          <SegmentModal
+            isOpen={segmentModalOpen}
+            onClose={() => setSegmentModalOpen(false)}
+            segmentId={segmentId}
+            workflowId={flowId}
+            setSegmentId={setSegmentId}
+          />
+        )}
         <Modal
           isOpen={tutorialOpen}
           onClose={() => {

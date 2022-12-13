@@ -1,4 +1,5 @@
-import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, JoinColumn } from 'typeorm';
+import { Segment } from './segment.entity';
 
 export enum TriggerType {
   event,
@@ -61,4 +62,10 @@ export class Workflow {
   // {"nodes":[...list of nodes], "edges": [...list of edges]}
   @Column('jsonb', { nullable: true })
   visualLayout: any;
+
+  @Column({ default: true })
+  isDynamic: boolean;
+
+  @JoinColumn()
+  segment?: Segment;
 }
