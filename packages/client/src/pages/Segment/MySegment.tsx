@@ -4,12 +4,14 @@ import EditIcon from "@mui/icons-material/Edit";
 import { GenericButton, Input, Select } from "components/Elements";
 import EventCard from "./../../components/EventCard";
 import {
+  createSegment,
   getConditions,
   getResources,
   getSegment,
   updateSegment,
 } from "./SegmentHelpers";
 import { ConditionalType } from "components/EventCard/EventCard";
+import { toast } from "react-toastify";
 
 interface Condition {
   attribute: string;
@@ -30,7 +32,7 @@ export interface InclusionCriteria {
 interface ISegmentInclusion {
   onSubmit?: () => void;
   workflowId: string;
-  segmentId: string;
+  segmentId?: string;
   audienceName?: string;
   isCollapsible: boolean;
   onClose: () => void;
@@ -119,24 +121,26 @@ const MySegment = ({
   };
 
   useLayoutEffect(() => {
-    // const getAllConditions = async () => {
-    //   const { data } = await getSegment(audienceId);
-    //   setSegmentForm({ ...segmentForm, title: data.name });
-    //   if (data.resources) {
-    //     setResouces(data.resources);
-    //   } else {
-    //     const conditionsResponse = await getConditions();
-    //     setResouces((e: any) => ({
-    //       ...e,
-    //       [conditionsResponse.id]: conditionsResponse,
-    //     }));
-    //   }
-    //   if (data.inclusionCriteria)
-    //     if (data.inclusionCriteria.conditionalType != undefined)
-    //       setSubTitleOptions(data.inclusionCriteria.conditionalType);
-    //   populateFormData(data.inclusionCriteria.conditions);
-    // };
-    // getAllConditions();
+    // if (segmentId === undefined) {
+    //   return;
+    // }
+    (async () => {
+      // const { data } = await getSegment(segmentId);
+      // setSegmentForm({ ...segmentForm, title: data.name });
+      // if (data.resources) {
+      //   setResouces(data.resources);
+      // } else {
+      const conditionsResponse = await getConditions();
+      setResouces((e: any) => ({
+        ...e,
+        [conditionsResponse.id]: conditionsResponse,
+      }));
+      // }
+      // if (data.inclusionCriteria)
+      //   if (data.inclusionCriteria.conditionalType != undefined)
+      //     setSubTitleOptions(data.inclusionCriteria.conditionalType);
+      populateFormData([]);
+    })();
   }, []);
 
   const getAllResources = async (id: any) => {
@@ -345,12 +349,44 @@ const MySegment = ({
       }
     });
     requestBody.conditions = generatedConditions;
-    // await updateSegment(audienceId, {
-    //   inclusionCriteria: requestBody,
-    //   id: audienceId,
-    //   resources: resources,
-    //   name: segmentForm.title,
-    // });
+
+    if (segmentId === undefined) {
+      try {
+        await createSegment({
+          name: segmentForm.title,
+          inclusionCriteria: requestBody,
+        });
+      } catch (err: any) {
+        toast.error(
+          err.response?.data?.message?.[0] ||
+            err.response?.data?.message ||
+            "Unexpected error",
+          {
+            position: "bottom-center",
+            autoClose: 5000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+            theme: "colored",
+          }
+        );
+        return;
+      }
+    }
+
+    toast.success("Segment created.", {
+      position: "bottom-center",
+      autoClose: 2000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      progress: undefined,
+      theme: "colored",
+    });
+
     if (onSubmit) {
       onSubmit();
     }
@@ -359,7 +395,7 @@ const MySegment = ({
   return (
     <div className="w-full">
       <div className="w-full flex justify-center items-start pt-[18px]">
-        <div className="w-full overflow-hidden relative ">
+        <div className="w-full overflow-visible relative ">
           <div className="flex items-start justify-between">
             {!titleEdit ? (
               <h3 className="flex items-center gap-[10px]">
@@ -377,6 +413,7 @@ const MySegment = ({
                 id="title"
                 onChange={handleSegmentFormChange}
                 onKeyDown={handleTitleEnter}
+                onBlur={() => setTitleEdit(false)}
                 autoFocus
                 inputProps={{
                   style: {
@@ -395,7 +432,7 @@ const MySegment = ({
             ></FormControl>
           </div>
           <div
-            className="rounded-[10px] max-h-[60vh] overflow-y-scroll border-[1px] border-[#D1D5DB] shadow-[0px_1px_2px_rgba(0,0,0,0.05)] m-[25px_0px] p-[20px_25px] relative after:absolute after:z-[1] after:top-[63px] after:bottom-[0px] after:ml-[45px] after:border-l-[2px] after:border-dashed after:h-full"
+            className="rounded-[10px] max-h-[60vh] overflow-y-scroll min-h-[200px] border-[1px] border-[#D1D5DB] shadow-[0px_1px_2px_rgba(0,0,0,0.05)] m-[25px_0px] p-[20px_25px] relative after:absolute after:z-[1] after:top-[63px] after:bottom-[0px] after:ml-[45px] after:border-l-[2px] after:border-dashed after:h-full"
             ref={elementRef}
           >
             <div className="relative z-[10000] flex items-center gap-[15px]">
@@ -415,7 +452,7 @@ const MySegment = ({
                   ]}
                   onChange={handleSubTitleOptions}
                   displayEmpty
-                  wrapperClassnames="z-[100]"
+                  wrapperClassnames="z-[100000]"
                 />
               </FormControl>
               <p className="text-[14px]">of the following conditions match</p>

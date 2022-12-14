@@ -63,7 +63,9 @@ enum TriggerType {
 const convertLayoutToTable = (
   name: string,
   nodes: Node[],
-  edges: Edge[]
+  edges: Edge[],
+  isDynamic: boolean,
+  segmentId?: string
 ): any => {
   const dto: {
     name: string;
@@ -80,11 +82,15 @@ const convertLayoutToTable = (
       nodes: Node<any>[];
       edges: Edge<any>[];
     };
+    isDynamic?: boolean;
+    segmentId?: string;
   } = {
     name: name,
     audiences: [],
     rules: [],
     visualLayout: { nodes: nodes, edges: edges },
+    isDynamic,
+    segmentId,
   };
   for (let index = 0; index < edges.length; index++) {
     const fromNode = _.filter(nodes, (node: any) => {
@@ -136,7 +142,6 @@ const Flow = () => {
   const [triggerModalOpen, settriggerModalOpen] = useState<boolean>(false);
   const [selectedMessageType, setSelectedMessageType] = useState<any>("");
   const [tutorialOpen, setTutorialOpen] = useState(false);
-  const [isSegmentDefined, setIsSegmentDefined] = useState(false);
   const [segmentId, setSegmentId] = useState<string>();
   const [segmentForm, setSegmentForm] = useState<INameSegmentForm>({
     isDynamic: true,
@@ -161,8 +166,9 @@ const Flow = () => {
         return navigate(`/flow/${name}/view`);
       }
       setSegmentForm({
-        isDynamic: data.isDynamic === undefined ? true : data.isDynamic,
+        isDynamic: data.isDynamic ?? true,
       });
+      setSegmentId(data.segment?.id);
       setFlowId(data.id);
       if (data.visualLayout) {
         const updatedNodes = data.visualLayout.nodes.map((item: any) => {
@@ -479,7 +485,13 @@ const Flow = () => {
     console.log(nodes);
     console.log(edges);
     console.log(triggers);
-    const dto = convertLayoutToTable(name, nodes, edges);
+    const dto = convertLayoutToTable(
+      name,
+      nodes,
+      edges,
+      segmentForm.isDynamic,
+      segmentId
+    );
     dto.audiences = (dto.audiences as string[]).filter((item) => !!item);
 
     await ApiService.patch({
@@ -553,12 +565,6 @@ const Flow = () => {
 
   return (
     <div>
-      {!isSegmentDefined && nodes.length > 0 && (
-        <AlertBanner
-          title="Sengment is not defined"
-          text="You need to define a segment"
-        />
-      )}
       <div className="h-[calc(100vh-64px)] flex w-full">
         <Helmet>
           <script>
@@ -612,7 +618,10 @@ const Flow = () => {
                       </div>
                     </Tooltip>
                   </div>
-                  <GenericButton onClick={() => setSegmentModalOpen(true)}>
+                  <GenericButton
+                    customClasses="mt-[10px] !p-[4px] !w-full !block !text-center"
+                    onClick={() => setSegmentModalOpen(true)}
+                  >
                     Define segment
                   </GenericButton>
                 </div>
@@ -620,102 +629,112 @@ const Flow = () => {
             />
           </div>
         </div>
-        <ReactFlow
-          nodes={nodes}
-          edges={edges}
-          onNodeDoubleClick={onNodeDoubleClick}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-          onPaneClick={onPaneClick}
-          onNodeDragStart={onNodeDragStart}
-          onClickConnectStart={onClickConnectionStart}
-          connectionLineType={ConnectionLineType.SmoothStep}
-          onConnect={onConnect}
-          style={rfStyle}
-          nodeTypes={nodeTypes}
-          zoomOnScroll={false}
-          zoomOnPinch={false}
-          defaultZoom={1}
-          zoomOnDoubleClick={false}
-        >
-          <div
-            style={{
-              position: "absolute",
-              zIndex: "10",
-              display: "flex",
-              right: "15px",
-              inset: "20px 20px auto auto",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
-            <div className="m-[0_7.5px]" data-saveflowbutton>
-              <button
-                className="inline-flex items-center rounded-md border border-transparent bg-cyan-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-cyan-500 focus:outline-none focus:ring-2 focus:ring-offset-2 rounded-md bg-white font-medium focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2"
-                onClick={handleTutorialOpen}
-                style={{
-                  maxWidth: "158px",
-                  maxHeight: "48px",
-                  padding: "13px 25px",
-                }}
-              >
-                Tutorial
-              </button>
-            </div>
-            <div className="m-[0_7.5px]" data-saveflowbutton>
-              <button
-                className="inline-flex items-center rounded-md border border-transparent bg-cyan-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-cyan-500 focus:outline-none focus:ring-2 focus:ring-offset-2 rounded-md bg-white font-medium focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2"
-                onClick={handleSaveJourney}
-                style={{
-                  maxWidth: "158px",
-                  maxHeight: "48px",
-                  padding: "13px 25px",
-                }}
-              >
-                Save
-              </button>
-            </div>
-            <div className="m-[0_7.5px]" data-startflowbutton>
-              <Tooltip
-                title={
-                  startDisabledReason ||
-                  "Once you start a journey users can be messaged"
-                }
-                placement="bottom"
-              >
-                <button
-                  className={`inline-flex items-center rounded-md border border-transparent bg-cyan-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-cyan-500 focus:outline-none focus:ring-2 focus:ring-offset-2 rounded-md bg-white font-medium focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 ${
-                    !!startDisabledReason ? "grayscale" : ""
-                  }`}
-                  onClick={handleStartJourney}
-                  style={{
-                    maxWidth: "158px",
-                    maxHeight: "48px",
-                    padding: "13px 25px",
-                  }}
-                  disabled={!!startDisabledReason}
-                >
-                  Start
-                </button>
-              </Tooltip>
-            </div>
-            <Select
-              id="zoomSelect"
-              value={zoomState}
-              options={possibleViewZoomValues.map((item) => ({
-                value: item,
-                title: item * 100 + "%",
-              }))}
-              renderValue={(item) => item * 100 + "%"}
-              onChange={(value) => {
-                setZoomState(+value);
-                setViewport({ x: viewX, y: viewY, zoom: +value });
-              }}
-              sx={{ margin: "0 7.5px" }}
+        <div className="w-full h-full">
+          {!segmentId && (
+            <AlertBanner
+              title="Sengment is not defined"
+              text="You need to define a segment"
             />
+          )}
+          <div className={`${!segmentId ? "h-[calc(100%-80px)]" : "h-full"}`}>
+            <ReactFlow
+              nodes={nodes}
+              edges={edges}
+              onNodeDoubleClick={onNodeDoubleClick}
+              onNodesChange={onNodesChange}
+              onEdgesChange={onEdgesChange}
+              onPaneClick={onPaneClick}
+              onNodeDragStart={onNodeDragStart}
+              onClickConnectStart={onClickConnectionStart}
+              connectionLineType={ConnectionLineType.SmoothStep}
+              onConnect={onConnect}
+              style={rfStyle}
+              nodeTypes={nodeTypes}
+              zoomOnScroll={false}
+              zoomOnPinch={false}
+              defaultZoom={1}
+              zoomOnDoubleClick={false}
+            >
+              <div
+                style={{
+                  position: "absolute",
+                  zIndex: "10",
+                  display: "flex",
+                  right: "15px",
+                  inset: "20px 20px auto auto",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <div className="m-[0_7.5px]" data-saveflowbutton>
+                  <button
+                    className="inline-flex items-center rounded-md border border-transparent bg-cyan-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-cyan-500 focus:outline-none focus:ring-2 focus:ring-offset-2 rounded-md bg-white font-medium focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2"
+                    onClick={handleTutorialOpen}
+                    style={{
+                      maxWidth: "158px",
+                      maxHeight: "48px",
+                      padding: "13px 25px",
+                    }}
+                  >
+                    Tutorial
+                  </button>
+                </div>
+                <div className="m-[0_7.5px]" data-saveflowbutton>
+                  <button
+                    className="inline-flex items-center rounded-md border border-transparent bg-cyan-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-cyan-500 focus:outline-none focus:ring-2 focus:ring-offset-2 rounded-md bg-white font-medium focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2"
+                    onClick={handleSaveJourney}
+                    style={{
+                      maxWidth: "158px",
+                      maxHeight: "48px",
+                      padding: "13px 25px",
+                    }}
+                  >
+                    Save
+                  </button>
+                </div>
+                <div className="m-[0_7.5px]" data-startflowbutton>
+                  <Tooltip
+                    title={
+                      startDisabledReason ||
+                      "Once you start a journey users can be messaged"
+                    }
+                    placement="bottom"
+                  >
+                    <button
+                      className={`inline-flex items-center rounded-md border border-transparent bg-cyan-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-cyan-500 focus:outline-none focus:ring-2 focus:ring-offset-2 rounded-md bg-white font-medium focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 ${
+                        !!startDisabledReason ? "grayscale" : ""
+                      }`}
+                      onClick={handleStartJourney}
+                      style={{
+                        maxWidth: "158px",
+                        maxHeight: "48px",
+                        padding: "13px 25px",
+                      }}
+                      disabled={!!startDisabledReason}
+                    >
+                      Start
+                    </button>
+                  </Tooltip>
+                </div>
+                <Select
+                  id="zoomSelect"
+                  value={zoomState}
+                  options={possibleViewZoomValues.map((item) => ({
+                    value: item,
+                    title: item * 100 + "%",
+                  }))}
+                  renderValue={(item) => item * 100 + "%"}
+                  onChange={(value) => {
+                    setZoomState(+value);
+                    setViewport({ x: viewX, y: viewY, zoom: +value });
+                  }}
+                  sx={{ margin: "0 7.5px" }}
+                />
+              </div>
+              <Background size={0} />
+            </ReactFlow>
           </div>
-          <Background size={0} />
-        </ReactFlow>
+        </div>
         {templateModalOpen ? (
           <ChooseTemplateModal
             templateModalOpen={templateModalOpen}

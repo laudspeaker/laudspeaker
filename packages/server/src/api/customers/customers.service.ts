@@ -76,9 +76,12 @@ export class CustomersService {
     const ret = await createdCustomer.save();
     // Already started (isEditable = false), dynamic (isDyanmic = true),push
     // Not started (isEditable = true), dynamic (isDyanmic = true), push
-    const dynamicWkfs = await this.workflowsRepository.findBy({
-      ownerId: (<Account>account).id,
-      isDynamic: true,
+    const dynamicWkfs = await this.workflowsRepository.find({
+      where:{
+        ownerId: (<Account>account).id,
+        isDynamic: true,
+      },
+      relations:['segment']
     });
     for (let index = 0; index < dynamicWkfs.length; index++) {
       const workflow = dynamicWkfs[index];
@@ -103,9 +106,12 @@ export class CustomersService {
     }
     // Already started(isEditable = true), static(isDyanmic = false), don't push
     // Not started(isEditable = false), static(isDyanmic = false), push
-    const staticWkfs = await this.workflowsRepository.findBy({
-      ownerId: (<Account>account).id,
-      isDynamic: false,
+    const staticWkfs = await this.workflowsRepository.find({
+      where:{
+        ownerId: (<Account>account).id,
+        isDynamic: false,
+      },
+      relations:['segment']
     });
     for (let index = 0; index < staticWkfs.length; index++) {
       const workflow = staticWkfs[index];

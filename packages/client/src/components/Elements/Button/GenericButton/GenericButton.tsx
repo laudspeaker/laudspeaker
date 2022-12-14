@@ -29,7 +29,7 @@ const GenericButton = (props: ButtonProps) => {
     <button
       id={id}
       type="button"
-      className={`inline-flex items-center rounded-md border-0 border-transparent text-white bg-cyan-600 px-6 py-3 text-base font-medium shadow-sm hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 ${
+      className={`transition-[0.3s] inline-flex items-center rounded-md border-0 border-transparent text-white bg-cyan-600 px-6 py-3 text-base font-medium shadow-sm hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 ${
         disabled ? "grayscale" : ""
       } ${customClasses ? customClasses : ""} `}
       onClick={(ev) => {

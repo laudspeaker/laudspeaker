@@ -1,4 +1,5 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { Workflow } from '@/api/workflows/entities/workflow.entity';
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity()
 export class Segment {
@@ -7,6 +8,9 @@ export class Segment {
 
   @Column()
   public userId: string;
+
+  @Column()
+  public name: string;
 
   /*
       {
@@ -29,4 +33,7 @@ export class Segment {
 
   @Column({ default: false })
   public isFreezed: boolean;
+
+  @OneToMany(()=>Workflow, (wf)=>wf.segment)
+  public workflows: Workflow[]
 }

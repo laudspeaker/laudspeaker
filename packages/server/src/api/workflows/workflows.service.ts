@@ -96,11 +96,14 @@ export class WorkflowsService {
    *
    */
   findAllActive(account: Account): Promise<Workflow[]> {
-    return this.workflowsRepository.findBy({
-      ownerId: (<Account>account).id,
-      isActive: true,
-      isStopped: false,
-      isPaused: false,
+    return this.workflowsRepository.find({
+      where: {
+        ownerId: (<Account>account).id,
+        isActive: true,
+        isStopped: false,
+        isPaused: false,
+      },
+      relations: ['segment'],
     });
   }
 
@@ -146,10 +149,14 @@ export class WorkflowsService {
   ): Promise<Workflow> {
     let found: Workflow;
     try {
-      found = await this.workflowsRepository.findOneBy({
-        ownerId: (<Account>account).id,
-        name: name,
+      found = await this.workflowsRepository.findOne({
+        where: {
+          ownerId: (<Account>account).id,
+          name: name,
+        },
+        relations: ['segment'],
       });
+      console.log(found);
     } catch (err) {
       this.logger.error('Error: ' + err);
       return Promise.reject(err);
@@ -204,9 +211,14 @@ export class WorkflowsService {
     account: Account,
     updateWorkflowDto: UpdateWorkflowDto
   ): Promise<void> {
-    const workflow = await this.workflowsRepository.findOneBy({
-      id: updateWorkflowDto.id,
+    const workflow = await this.workflowsRepository.findOne({
+      where: {
+        id: updateWorkflowDto.id,
+      },
+      relations: ['segment'],
     });
+
+    console.log(updateWorkflowDto);
 
     if (!workflow) throw new NotFoundException('Workflow not found');
     if (workflow.isActive)
@@ -258,15 +270,15 @@ export class WorkflowsService {
       }
     }
 
-    let segmentId = undefined;
+    let segmentId = workflow.segment?.id;
     if (updateWorkflowDto.segmentId !== undefined) {
-      segmentId = { id: updateWorkflowDto.segmentId };
+      segmentId = updateWorkflowDto.segmentId;
     }
 
     try {
       await this.workflowsRepository.save({
         ...workflow,
-        segment: { id: segmentId || workflow.segment?.id },
+        segment: { id: segmentId },
         audiences,
         visualLayout,
         isDynamic,
@@ -281,9 +293,12 @@ export class WorkflowsService {
   }
 
   async duplicate(user: Account, id: string) {
-    const oldWorkflow = await this.workflowsRepository.findOneBy({
-      ownerId: user.id,
-      id,
+    const oldWorkflow = await this.workflowsRepository.findOne({
+      where: {
+        ownerId: user.id,
+        id,
+      },
+      relations: ['segment'],
     });
     if (!oldWorkflow) throw new NotFoundException('Workflow not found');
 
@@ -367,9 +382,12 @@ export class WorkflowsService {
     let customers: CustomerDocument[]; // Customers to add to primary audience
     let jobIDs: (string | number)[] = [];
     try {
-      workflow = await this.workflowsRepository.findOneBy({
-        ownerId: (<Account>account).id,
-        id: workflowID,
+      workflow = await this.workflowsRepository.findOne({
+        where: {
+          ownerId: (<Account>account).id,
+          id: workflowID,
+        },
+        relations: ['segment'],
       });
       if (!workflow) {
         this.logger.debug('Workflow does not exist');
