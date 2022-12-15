@@ -5,7 +5,6 @@ import { SlackController } from './slack.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Installation } from './entities/installation.entity';
 import { SlackService } from './slack.service';
-import { CustomersService } from '../customers/customers.service';
 import { MongooseModule } from '@nestjs/mongoose';
 import { CustomerSchema, Customer } from '../customers/schemas/customer.schema';
 import { Account } from '../accounts/entities/accounts.entity';
@@ -15,6 +14,7 @@ import {
   CustomerKeys,
   CustomerKeysSchema,
 } from '../customers/schemas/customer-keys.schema';
+import { CustomersModule } from '../customers/customers.module';
 
 @Module({
   imports: [
@@ -30,12 +30,12 @@ import {
     TypeOrmModule.forFeature([Installation, State, Account, Audience]),
     MongooseModule.forFeature([
       { name: Customer.name, schema: CustomerSchema },
-    ]),
-    MongooseModule.forFeature([
       { name: CustomerKeys.name, schema: CustomerKeysSchema },
     ]),
+    CustomersModule,
   ],
   controllers: [SlackController],
-  providers: [SlackProcessor, SlackService, CustomersService],
+  providers: [SlackProcessor, SlackService],
+  exports: [SlackService],
 })
 export class SlackModule {}

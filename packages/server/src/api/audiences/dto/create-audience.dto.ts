@@ -18,14 +18,6 @@ export class CreateAudienceDto {
   @IsOptional()
   public isPrimary: boolean;
 
-  @IsBoolean()
-  @IsOptional()
-  public isDynamic: boolean;
-
-  @IsObject()
-  @IsOptional()
-  public inclusionCriteria: Record<string, unknown>;
-
   @IsOptional()
   public templates: string[];
 }

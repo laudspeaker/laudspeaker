@@ -20,6 +20,7 @@ import { Template } from './templates/entities/template.entity';
 import { Audience } from './audiences/entities/audience.entity';
 import { TestsModule } from './tests/tests.module';
 import { WebhooksModule } from './webhooks/webhooks.module';
+import { SegmentsModule } from './segments/segments.module';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { WebhooksModule } from './webhooks/webhooks.module';
     SlackModule,
     TestsModule,
     WebhooksModule,
+    SegmentsModule,
   ],
 })
 export class ApiModule {

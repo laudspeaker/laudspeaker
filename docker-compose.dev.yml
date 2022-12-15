@@ -1,8 +1,28 @@
 version: "3.7"
 services:
+  e2e:
+    image: cypress
+    build:
+      dockerfile: Dockerfile.dev.e2e
+      context: ./
+    container_name: cypress
+    depends_on:
+      - frontend
+    command: npx cypress run
+
+  frontend:
+    image: laudspeaker:latest
+    depends_on:
+      - backend
+    ports:
+      - "3000:3000"
+    stdin_open: true
+    tty: true
+
   backend:
     image: laudspeaker:api-latest
-    network_mode: "host"
+    ports:
+      - "3001:3001"
     depends_on:
       - redis
       - postgres
@@ -12,7 +32,8 @@ services:
   redis:
     image: redis:alpine
     command: redis-server
-    network_mode: "host"
+    ports:
+      - "6379:6379"
     environment:
       - REDIS_REPLICATION_MODE=master
 
@@ -22,20 +43,18 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: laudspeaker
-    network_mode: "host"
+    ports:
+      - "5432:5432"
     restart: unless-stopped
 
   mongo:
     image: "mongo:latest"
-    network_mode: "host"
-
+    ports:
+      - "27017:27017"
 
   clickhouse:
     image: clickhouse/clickhouse-server:latest
     restart: on-failure
-    network_mode: "host"
-
-
-networks:
-  default:
-    name: laudspeaker_default
+    ports:
+      - "8123:8123"
+      - "9000:9000"

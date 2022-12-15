@@ -9,7 +9,7 @@
   /* flex-direction: row-reverse; */
   /* justify-content: center; */
   width: 250px;
-  padding: 7px 0px
+  padding: 7px 0px;
 }
 
 .react-daterange-picker__range-divider {
@@ -40,5 +40,5 @@
 }
 
 .react-daterange-picker__calendar-button {
-  order: 1
+  order: 1;
 }

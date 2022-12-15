@@ -35,7 +35,7 @@ import ChooseTemplateModal from "./ChooseTemplateModal";
 import { MySegment, NameSegment } from "pages/Segment";
 import ApiService from "services/api.service";
 import TriggerModal from "./TriggerModal";
-import { Select } from "components/Elements";
+import { GenericButton, Select } from "components/Elements";
 import { getFlow } from "./FlowHelpers";
 import { toast } from "react-toastify";
 import Modal from "../../components/Elements/Modal";
@@ -44,6 +44,8 @@ import Tooltip from "components/Elements/Tooltip";
 import { Helmet } from "react-helmet";
 import { Grid } from "@mui/material";
 import ToggleSwitch from "components/Elements/ToggleSwitch";
+import AlertBanner from "components/AlertBanner";
+import SegmentModal from "./SegmentModal";
 
 const segmentTypeStyle =
   "border-[1px] border-[#D1D5DB] rouded-[6px] shadow-[0px_1px_2px_rgba(0,0,0,0.05)] w-full mt-[20px] p-[15px]";
@@ -61,7 +63,9 @@ enum TriggerType {
 const convertLayoutToTable = (
   name: string,
   nodes: Node[],
-  edges: Edge[]
+  edges: Edge[],
+  isDynamic: boolean,
+  segmentId?: string
 ): any => {
   const dto: {
     name: string;
@@ -78,11 +82,15 @@ const convertLayoutToTable = (
       nodes: Node<any>[];
       edges: Edge<any>[];
     };
+    isDynamic?: boolean;
+    segmentId?: string;
   } = {
     name: name,
     audiences: [],
     rules: [],
     visualLayout: { nodes: nodes, edges: edges },
+    isDynamic,
+    segmentId,
   };
   for (let index = 0; index < edges.length; index++) {
     const fromNode = _.filter(nodes, (node: any) => {
@@ -132,10 +140,13 @@ const Flow = () => {
   const [templateModalOpen, setTemplateModalOpen] = useState<boolean>(false);
   const [audienceModalOpen, setAudienceModalOpen] = useState<boolean>(false);
   const [triggerModalOpen, settriggerModalOpen] = useState<boolean>(false);
-  const [audienceEditModalOpen, setAudienceEditModalOpen] =
-    useState<boolean>(false);
   const [selectedMessageType, setSelectedMessageType] = useState<any>("");
   const [tutorialOpen, setTutorialOpen] = useState(false);
+  const [segmentId, setSegmentId] = useState<string>();
+  const [segmentForm, setSegmentForm] = useState<INameSegmentForm>({
+    isDynamic: true,
+  });
+  const [segmentModalOpen, setSegmentModalOpen] = useState(false);
 
   const onHandleClick = (e: any, triggerId: any) => {
     return { e, triggerId };
@@ -154,6 +165,10 @@ const Flow = () => {
       if (data.isActive) {
         return navigate(`/flow/${name}/view`);
       }
+      setSegmentForm({
+        isDynamic: data.isDynamic ?? true,
+      });
+      setSegmentId(data.segment?.id);
       setFlowId(data.id);
       if (data.visualLayout) {
         const updatedNodes = data.visualLayout.nodes.map((item: any) => {
@@ -265,11 +280,6 @@ const Flow = () => {
   const onNodeDoubleClick = useCallback(
     (event: React.MouseEvent, node: Node) => {
       setSelectedNode(node.id);
-      if (event.detail == 2) {
-        if (!audienceEditModalOpen) {
-          setAudienceEditModalOpen(true);
-        }
-      }
     },
     [setNodes, triggers]
   );
@@ -475,7 +485,13 @@ const Flow = () => {
     console.log(nodes);
     console.log(edges);
     console.log(triggers);
-    const dto = convertLayoutToTable(name, nodes, edges);
+    const dto = convertLayoutToTable(
+      name,
+      nodes,
+      edges,
+      segmentForm.isDynamic,
+      segmentId
+    );
     dto.audiences = (dto.audiences as string[]).filter((item) => !!item);
 
     await ApiService.patch({
@@ -526,17 +542,16 @@ const Flow = () => {
     setNodes([...nodes, generateNode(newNode, triggers)]);
     setAudienceModalOpen(false);
   };
-  const handleAudienceEdit = () => {
-    setAudienceEditModalOpen(true);
-    forceRerenderSelectedNode();
-    setAudienceEditModalOpen(false);
-  };
-
-  const [segmentForm, setSegmentForm] = useState<INameSegmentForm>({
-    isDynamic: nodes.find((node) => node.data.primary)?.data?.isDynamic || true,
-  });
 
   const onToggleChange = async () => {
+    await ApiService.patch({
+      url: "/workflows/" + name,
+      options: {
+        id: flowId,
+        isDynamic: !segmentForm.isDynamic,
+        isActive: false,
+      },
+    });
     setSegmentForm({ isDynamic: !segmentForm.isDynamic });
   };
 
@@ -565,10 +580,11 @@ const Flow = () => {
       "Add a message to a step to be able to start a journey";
 
   return (
-    <div className="h-[calc(100vh-64px)] flex w-full">
-      <Helmet>
-        <script>
-          {`
+    <div>
+      <div className="h-[calc(100vh-64px)] flex w-full">
+        <Helmet>
+          <script>
+            {`
             (function (d, t) {
               var BASE_URL = "https://app.chatwoot.com";
               var g = d.createElement(t), s = d.getElementsByTagName(t)[0];
@@ -583,221 +599,225 @@ const Flow = () => {
                 })
               }
             })(document, "script");`}
-        </script>
-      </Helmet>
-      <div className="max-h-[calc(100vh-64px)] h-full lg:overflow-y-auto overflow-y-scroll overflow-x-hidden">
-        <div className="flex flex-col">
-          <SideDrawer
-            selectedNode={selectedNode}
-            onClick={performAction}
-            afterMenuContent={
-              <div className="w-full">
-                <h3 className="pt-[20px] font-bold">Journey type</h3>
-                <div className={segmentTypeStyle}>
-                  <Grid
-                    sx={{
-                      width: "100%",
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
+          </script>
+        </Helmet>
+        <div className="max-h-[calc(100vh-64px)] h-full lg:overflow-y-auto overflow-y-scroll overflow-x-hidden">
+          <div className="flex flex-col">
+            <SideDrawer
+              selectedNode={selectedNode}
+              onClick={performAction}
+              afterMenuContent={
+                <div className="w-full">
+                  <h3 className="pt-[20px] font-bold">Journey type</h3>
+                  <div className={segmentTypeStyle}>
+                    <Grid
+                      sx={{
+                        width: "100%",
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                      }}
+                    >
+                      <p className="font-semibold text-[#111827]">Dynamic</p>
+                      <ToggleSwitch
+                        checked={segmentForm.isDynamic}
+                        onChange={onToggleChange}
+                      />
+                    </Grid>
+                    <Tooltip title="Dynamic journeys will enroll new customers that satisfy the conditions of the Journey. Static journeys will only enroll customers that satisfy the conditions of the journey when it is started.">
+                      {/* <IconButton> */}
+                      <div className="flex items-center cursor-default mt-[8px]">
+                        <img src={InfoIcon} width="20px" />
+                        <p className="text-[#4FA198] text-[12px] pl-[5px] break-all">
+                          What is a dynamic segment?
+                        </p>
+                      </div>
+                    </Tooltip>
+                  </div>
+                  <GenericButton
+                    customClasses="mt-[10px] !p-[4px] !w-full !block !text-center"
+                    onClick={() => setSegmentModalOpen(true)}
+                  >
+                    Define segment
+                  </GenericButton>
+                </div>
+              }
+            />
+          </div>
+        </div>
+        <div className="w-full h-full">
+          {!segmentId && (
+            <AlertBanner
+              title="Sengment is not defined"
+              text="You need to define a segment"
+            />
+          )}
+          <div className={`${!segmentId ? "h-[calc(100%-80px)]" : "h-full"}`}>
+            <ReactFlow
+              nodes={nodes}
+              edges={edges}
+              onNodeDoubleClick={onNodeDoubleClick}
+              onNodesChange={onNodesChange}
+              onEdgesChange={onEdgesChange}
+              onPaneClick={onPaneClick}
+              onNodeDragStart={onNodeDragStart}
+              onClickConnectStart={onClickConnectionStart}
+              connectionLineType={ConnectionLineType.SmoothStep}
+              onConnect={onConnect}
+              style={rfStyle}
+              nodeTypes={nodeTypes}
+              zoomOnScroll={false}
+              zoomOnPinch={false}
+              defaultZoom={1}
+              zoomOnDoubleClick={false}
+            >
+              <div
+                style={{
+                  position: "absolute",
+                  zIndex: "10",
+                  display: "flex",
+                  right: "15px",
+                  inset: "20px 20px auto auto",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <div className="m-[0_7.5px]" data-saveflowbutton>
+                  <button
+                    className="inline-flex items-center rounded-md border border-transparent bg-cyan-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-cyan-500 focus:outline-none focus:ring-2 focus:ring-offset-2 rounded-md bg-white font-medium focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2"
+                    onClick={handleTutorialOpen}
+                    style={{
+                      maxWidth: "158px",
+                      maxHeight: "48px",
+                      padding: "13px 25px",
                     }}
                   >
-                    <p className="font-semibold text-[#111827]">Dynamic</p>
-                    <ToggleSwitch
-                      checked={segmentForm.isDynamic}
-                      onChange={onToggleChange}
-                    />
-                  </Grid>
-                  <Tooltip title="Dynamic journeys will enroll new customers that satisfy the conditions of the Journey. Static journeys will only enroll customers that satisfy the conditions of the journey when it is started.">
-                    {/* <IconButton> */}
-                    <div className="flex items-center cursor-default mt-[8px]">
-                      <img src={InfoIcon} width="20px" />
-                      <p className="text-[#4FA198] text-[12px] pl-[5px] break-all">
-                        What is a dynamic segment?
-                      </p>
-                    </div>
+                    Tutorial
+                  </button>
+                </div>
+                <div className="m-[0_7.5px]" data-saveflowbutton>
+                  <button
+                    className="inline-flex items-center rounded-md border border-transparent bg-cyan-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-cyan-500 focus:outline-none focus:ring-2 focus:ring-offset-2 rounded-md bg-white font-medium focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2"
+                    onClick={handleSaveJourney}
+                    style={{
+                      maxWidth: "158px",
+                      maxHeight: "48px",
+                      padding: "13px 25px",
+                    }}
+                  >
+                    Save
+                  </button>
+                </div>
+                <div className="m-[0_7.5px]" data-startflowbutton>
+                  <Tooltip
+                    title={
+                      startDisabledReason ||
+                      "Once you start a journey users can be messaged"
+                    }
+                    placement="bottom"
+                  >
+                    <button
+                      className={`inline-flex items-center rounded-md border border-transparent bg-cyan-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-cyan-500 focus:outline-none focus:ring-2 focus:ring-offset-2 rounded-md bg-white font-medium focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 ${
+                        !!startDisabledReason ? "grayscale" : ""
+                      }`}
+                      onClick={handleStartJourney}
+                      style={{
+                        maxWidth: "158px",
+                        maxHeight: "48px",
+                        padding: "13px 25px",
+                      }}
+                      disabled={!!startDisabledReason}
+                    >
+                      Start
+                    </button>
                   </Tooltip>
                 </div>
+                <Select
+                  id="zoomSelect"
+                  value={zoomState}
+                  options={possibleViewZoomValues.map((item) => ({
+                    value: item,
+                    title: item * 100 + "%",
+                  }))}
+                  renderValue={(item) => item * 100 + "%"}
+                  onChange={(value) => {
+                    setZoomState(+value);
+                    setViewport({ x: viewX, y: viewY, zoom: +value });
+                  }}
+                  sx={{ margin: "0 7.5px" }}
+                />
               </div>
-            }
-          />
+              <Background size={0} />
+            </ReactFlow>
+          </div>
         </div>
-      </div>
-
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        onNodeDoubleClick={onNodeDoubleClick}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        onPaneClick={onPaneClick}
-        onNodeDragStart={onNodeDragStart}
-        onClickConnectStart={onClickConnectionStart}
-        connectionLineType={ConnectionLineType.SmoothStep}
-        onConnect={onConnect}
-        style={rfStyle}
-        nodeTypes={nodeTypes}
-        zoomOnScroll={false}
-        zoomOnPinch={false}
-        defaultZoom={1}
-        zoomOnDoubleClick={false}
-      >
-        <div
-          style={{
-            position: "absolute",
-            zIndex: "10",
-            display: "flex",
-            right: "15px",
-            inset: "20px 20px auto auto",
-            justifyContent: "space-between",
-            alignItems: "center",
+        {templateModalOpen ? (
+          <ChooseTemplateModal
+            templateModalOpen={templateModalOpen}
+            handleTemplateModalOpen={handleTemplateModalOpen}
+            selectedMessageType={selectedMessageType}
+            isCollapsible={true}
+            onClose={() => setTemplateModalOpen(false)}
+          />
+        ) : null}
+        {audienceModalOpen ? (
+          <Modal
+            isOpen={audienceModalOpen}
+            onClose={() => setAudienceModalOpen(false)}
+          >
+            <NameSegment
+              onSubmit={handleAudienceSubmit}
+              isPrimary={!nodes.some((item) => item.data.primary)}
+              isCollapsible={true}
+              onClose={() => setAudienceModalOpen(false)}
+            />
+          </Modal>
+        ) : null}
+        {triggerModalOpen && (
+          <TriggerModal
+            selectedTrigger={selectedTrigger}
+            onSaveTrigger={onSaveTrigger}
+            onDeleteTrigger={onDeleteTrigger}
+            isCollapsible={true}
+            onClose={() => settriggerModalOpen(false)}
+          />
+        )}
+        {segmentModalOpen && (
+          <SegmentModal
+            isOpen={segmentModalOpen}
+            onClose={() => setSegmentModalOpen(false)}
+            segmentId={segmentId}
+            workflowId={flowId}
+            setSegmentId={setSegmentId}
+          />
+        )}
+        <Modal
+          isOpen={tutorialOpen}
+          onClose={() => {
+            setTutorialOpen(false);
           }}
         >
-          <div className="m-[0_7.5px]" data-saveflowbutton>
-            <button
-              className="inline-flex items-center rounded-md border border-transparent bg-cyan-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-cyan-500 focus:outline-none focus:ring-2 focus:ring-offset-2 rounded-md bg-white font-medium focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2"
-              onClick={handleTutorialOpen}
-              style={{
-                maxWidth: "158px",
-                maxHeight: "48px",
-                padding: "13px 25px",
-              }}
-            >
-              Tutorial
-            </button>
-          </div>
-          <div className="m-[0_7.5px]" data-saveflowbutton>
-            <button
-              className="inline-flex items-center rounded-md border border-transparent bg-cyan-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-cyan-500 focus:outline-none focus:ring-2 focus:ring-offset-2 rounded-md bg-white font-medium focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2"
-              onClick={handleSaveJourney}
-              style={{
-                maxWidth: "158px",
-                maxHeight: "48px",
-                padding: "13px 25px",
-              }}
-            >
-              Save
-            </button>
-          </div>
-          <div className="m-[0_7.5px]" data-startflowbutton>
-            <Tooltip
-              title={
-                startDisabledReason ||
-                "Once you start a journey users can be messaged"
-              }
-              placement="bottom"
-            >
-              <button
-                className={`inline-flex items-center rounded-md border border-transparent bg-cyan-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-cyan-500 focus:outline-none focus:ring-2 focus:ring-offset-2 rounded-md bg-white font-medium focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 ${
-                  !!startDisabledReason ? "grayscale" : ""
-                }`}
-                onClick={handleStartJourney}
+          <div className="relative pb-[100%] h-0">
+            <div style={{ padding: "56.25% 0 0 0", position: "relative" }}>
+              <iframe
+                src="https://player.vimeo.com/video/772141536?h=a682c166c0&amp;badge=0&amp;autopause=0&amp;player_id=0&amp;app_id=58479"
+                frameBorder="0"
+                allow="autoplay; fullscreen; picture-in-picture"
+                allowFullScreen
                 style={{
-                  maxWidth: "158px",
-                  maxHeight: "48px",
-                  padding: "13px 25px",
+                  position: "absolute",
+                  top: "0",
+                  left: "0",
+                  width: "100%",
+                  height: "100%",
                 }}
-                disabled={!!startDisabledReason}
-              >
-                Start
-              </button>
-            </Tooltip>
+                title="Journey-Tutorial"
+              ></iframe>
+            </div>
+            <script src="https://player.vimeo.com/api/player.js"></script>
           </div>
-          <Select
-            id="zoomSelect"
-            value={zoomState}
-            options={possibleViewZoomValues.map((item) => ({
-              value: item,
-              title: item * 100 + "%",
-            }))}
-            renderValue={(item) => item * 100 + "%"}
-            onChange={(value) => {
-              setZoomState(+value);
-              setViewport({ x: viewX, y: viewY, zoom: +value });
-            }}
-            sx={{ margin: "0 7.5px" }}
-          />
-        </div>
-        <Background size={0} />
-      </ReactFlow>
-      {templateModalOpen ? (
-        <ChooseTemplateModal
-          templateModalOpen={templateModalOpen}
-          handleTemplateModalOpen={handleTemplateModalOpen}
-          selectedMessageType={selectedMessageType}
-          isCollapsible={true}
-          onClose={() => setTemplateModalOpen(false)}
-        />
-      ) : null}
-      {audienceModalOpen ? (
-        <Modal
-          isOpen={audienceModalOpen}
-          onClose={() => setAudienceModalOpen(false)}
-        >
-          <NameSegment
-            onSubmit={handleAudienceSubmit}
-            isPrimary={!nodes.some((item) => item.data.primary)}
-            isCollapsible={true}
-            onClose={() => setAudienceModalOpen(false)}
-          />
         </Modal>
-      ) : null}
-      {triggerModalOpen && (
-        <TriggerModal
-          selectedTrigger={selectedTrigger}
-          onSaveTrigger={onSaveTrigger}
-          onDeleteTrigger={onDeleteTrigger}
-          isCollapsible={true}
-          onClose={() => settriggerModalOpen(false)}
-        />
-      )}
-      {audienceEditModalOpen &&
-      _.filter(nodes, (node: any) => {
-        return node.id == selectedNode;
-      })[0]?.data?.primary ? (
-        <Modal
-          isOpen={audienceEditModalOpen}
-          onClose={() => setAudienceEditModalOpen(false)}
-          panelClass="!max-w-[90%]"
-        >
-          <MySegment
-            onSubmit={handleAudienceEdit}
-            audienceId={
-              _.filter(nodes, (node: any) => {
-                return node.id == selectedNode;
-              })[0].data.audienceId
-            }
-            isCollapsible={true}
-            onClose={() => setAudienceEditModalOpen(false)}
-          />
-        </Modal>
-      ) : null}
-      <Modal
-        isOpen={tutorialOpen}
-        onClose={() => {
-          setTutorialOpen(false);
-        }}
-      >
-        <div className="relative pb-[100%] h-0">
-          <div style={{ padding: "56.25% 0 0 0", position: "relative" }}>
-            <iframe
-              src="https://player.vimeo.com/video/772141536?h=a682c166c0&amp;badge=0&amp;autopause=0&amp;player_id=0&amp;app_id=58479"
-              frameBorder="0"
-              allow="autoplay; fullscreen; picture-in-picture"
-              allowFullScreen
-              style={{
-                position: "absolute",
-                top: "0",
-                left: "0",
-                width: "100%",
-                height: "100%",
-              }}
-              title="Journey-Tutorial"
-            ></iframe>
-          </div>
-          <script src="https://player.vimeo.com/api/player.js"></script>
-        </div>
-      </Modal>
+      </div>
     </div>
   );
 };
