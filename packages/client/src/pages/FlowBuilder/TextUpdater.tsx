@@ -13,6 +13,7 @@ import { getAudienceDetails } from "./FlowHelpers";
 import { Email, SlackMsg, Mobile, SMS } from "../../components/Icons/Icons";
 import TriggerCreater from "components/TriggerCreater";
 import ChooseTemplateModal from "./ChooseTemplateModal";
+import LinesEllipsis from "react-lines-ellipsis";
 
 const textStyle = "text-[#111827] font-[Inter] font-middle text-[14px]";
 const subTitleTextStyle = "text-[#6B7280] font-[Inter] text-[14px]";
@@ -39,6 +40,7 @@ const TextUpdaterNode = ({
   const [selectedMessageType, setSelectedMessageType] = useState("");
   const [selectedTemplateId, setSelectedTemplateId] = useState<number>();
   const [updateTemplateModalOpen, setUpdateTemplateModalOpen] = useState(false);
+  const [descriptionCollaped, setDescriptionCollaped] = useState(true);
   // const [selectedTrigger, setSelectedTrigger] = useState<any>(undefined);
 
   const onTemplateModalClose = () => {
@@ -138,7 +140,9 @@ const TextUpdaterNode = ({
           isConnectable={!!isTarget}
         />
         <div
-          className={`text-updater bg-white min-h-[80px] flex justify-between rounded-[8px] p-[16.5px_20px] border-[2px] shadow-md border-transparent ${
+          className={`relative text-updater overflow-hidden bg-white ${
+            descriptionCollaped ? "max-h-[88px]" : "min-h-[80px]"
+          }  flex justify-between rounded-[8px] p-[16.5px_20px] border-[2px] shadow-md border-transparent ${
             nodeData.width ? `w-[${nodeData.width}]` : "w-[350px]"
           } ${nodeData.isPrimary ? "border-cyan-500" : ""} ${
             isSelected && !nodeData.isPrimary
@@ -153,7 +157,30 @@ const TextUpdaterNode = ({
               )}
               {nodeData.name}
             </p>
-            <p className={subTitleTextStyle}>{nodeData.description}</p>
+            {descriptionCollaped && nodeData.description ? (
+              <LinesEllipsis
+                onClick={() => {
+                  setDescriptionCollaped(!descriptionCollaped);
+                }}
+                text={nodeData.description}
+                className={
+                  subTitleTextStyle + " h-full text-ellipsis cursor-pointer"
+                }
+                maxLine="2"
+                ellipsis="..."
+                trimRight
+                basedOn="letters"
+              />
+            ) : (
+              <p
+                onClick={() => setDescriptionCollaped(!descriptionCollaped)}
+                className={
+                  subTitleTextStyle + " h-full text-ellipsis cursor-pointer"
+                }
+              >
+                {nodeData.description}
+              </p>
+            )}
           </div>
           <div className="flex justify-evenly items-center">
             {generateMsgIcons()}

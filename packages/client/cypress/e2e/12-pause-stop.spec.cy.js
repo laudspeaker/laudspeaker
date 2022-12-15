@@ -94,7 +94,7 @@ describe(
         body: {
           correlationKey: "slackId",
           correlationValue: slackTemplate.slackUid,
-          event: { "1": "1" },
+          event: { 1: "1" },
         },
       }).then(({ body }) => {
         expect(body?.[0]?.jobIDs?.[0]).to.equal(undefined);

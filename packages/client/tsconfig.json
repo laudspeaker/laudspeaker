@@ -1,11 +1,7 @@
 {
   "compilerOptions": {
     "target": "es5",
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "esnext"
-    ],
+    "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
@@ -22,8 +18,5 @@
     "baseUrl": "src",
     "types": ["node", "cypress", "@4tw/cypress-drag-drop"]
   },
-  "include": [
-    "src",
-    ".eslintrc.js"
-  ]
+  "include": ["src", ".eslintrc.js"]
 }

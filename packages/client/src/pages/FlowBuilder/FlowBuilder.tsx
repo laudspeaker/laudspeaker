@@ -555,6 +555,22 @@ const Flow = () => {
     setSegmentForm({ isDynamic: !segmentForm.isDynamic });
   };
 
+  useEffect(() => {
+    (async () => {
+      const primaryNode = nodes.find((node) => node.data.primary);
+      if (!primaryNode || primaryNode.data.isDynamic === segmentForm.isDynamic)
+        return;
+      await ApiService.patch({
+        url: "/audiences",
+        options: {
+          id: primaryNode.data?.audienceId,
+          isDynamic: segmentForm.isDynamic,
+        },
+      });
+      primaryNode.data.isDynamic = segmentForm.isDynamic;
+    })();
+  }, [segmentForm.isDynamic, nodes]);
+
   let startDisabledReason = "";
 
   if (!nodes.some((node) => node.data.primary))

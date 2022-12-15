@@ -64,6 +64,13 @@ const Person = () => {
       const { data: personData } = await ApiService.get({
         url: "/customers/" + id,
       });
+      if (personData.createdAt) {
+        const [firstItem, ...items] = timeline;
+        const creationDate = new Date(personData.createdAt);
+        firstItem.datetime = creationDate.toUTCString();
+        firstItem.date = creationDate.toLocaleDateString();
+        setTimeline([firstItem, ...items]);
+      }
       setPersonInfo(personData);
 
       const { data: eventsData } = await ApiService.get({
