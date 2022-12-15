@@ -61,10 +61,17 @@ export const createSegment = async (data) => {
 
 export const updateSegment = async (id, data) => {
   return ApiService.patch({
-    url: `${ApiConfig.audiences}`,
+    url: `${ApiConfig.segments}/${id}`,
     options: {
       ...data,
     },
+  });
+};
+
+export const duplicateSegment = async (id) => {
+  return ApiService.post({
+    url: `${ApiConfig.segments}/${id}/duplicate`,
+    options: {},
   });
 };
 

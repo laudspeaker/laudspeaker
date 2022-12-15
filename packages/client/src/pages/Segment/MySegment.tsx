@@ -30,7 +30,7 @@ export interface InclusionCriteria {
 }
 
 interface ISegmentInclusion {
-  onSubmit?: () => void;
+  onSubmit?: (id?: string) => void;
   workflowId: string;
   segmentId?: string;
   audienceName?: string;
@@ -125,21 +125,25 @@ const MySegment = ({
     //   return;
     // }
     (async () => {
-      // const { data } = await getSegment(segmentId);
-      // setSegmentForm({ ...segmentForm, title: data.name });
-      // if (data.resources) {
-      //   setResouces(data.resources);
-      // } else {
-      const conditionsResponse = await getConditions();
-      setResouces((e: any) => ({
-        ...e,
-        [conditionsResponse.id]: conditionsResponse,
-      }));
-      // }
+      let data: any;
+      if (segmentId) {
+        const { data: fetchedData } = await getSegment(segmentId);
+        data = fetchedData;
+      }
+      setSegmentForm({ ...segmentForm, title: data?.name || "" });
+      if (data?.resources) {
+        setResouces(data.resources);
+      } else {
+        const conditionsResponse = await getConditions();
+        setResouces((e: any) => ({
+          ...e,
+          [conditionsResponse.id]: conditionsResponse,
+        }));
+      }
       // if (data.inclusionCriteria)
       //   if (data.inclusionCriteria.conditionalType != undefined)
       //     setSubTitleOptions(data.inclusionCriteria.conditionalType);
-      populateFormData([]);
+      populateFormData(data?.inclusionCriteria?.conditions || []);
     })();
   }, []);
 
@@ -352,9 +356,59 @@ const MySegment = ({
 
     if (segmentId === undefined) {
       try {
-        await createSegment({
+        const { data } = await createSegment({
           name: segmentForm.title,
           inclusionCriteria: requestBody,
+          resources,
+        });
+
+        if (data.id) segmentId = data.id;
+
+        toast.success("Segment created.", {
+          position: "bottom-center",
+          autoClose: 2000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          theme: "colored",
+        });
+      } catch (err: any) {
+        toast.error(
+          err.response?.data?.message?.[0] ||
+            err.response?.data?.message ||
+            "Unexpected error",
+          {
+            position: "bottom-center",
+            autoClose: 5000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+            theme: "colored",
+          }
+        );
+        return;
+      }
+    } else {
+      try {
+        await updateSegment(segmentId, {
+          name: segmentForm.title,
+          inclusionCriteria: requestBody,
+          resources,
+        });
+
+        toast.success("Segment updated.", {
+          position: "bottom-center",
+          autoClose: 2000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          theme: "colored",
         });
       } catch (err: any) {
         toast.error(
@@ -375,20 +429,8 @@ const MySegment = ({
         return;
       }
     }
-
-    toast.success("Segment created.", {
-      position: "bottom-center",
-      autoClose: 2000,
-      hideProgressBar: false,
-      closeOnClick: true,
-      pauseOnHover: true,
-      draggable: true,
-      progress: undefined,
-      theme: "colored",
-    });
-
     if (onSubmit) {
-      onSubmit();
+      onSubmit(segmentId);
     }
   };
 

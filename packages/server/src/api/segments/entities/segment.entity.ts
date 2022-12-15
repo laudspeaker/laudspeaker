@@ -34,6 +34,9 @@ export class Segment {
   @Column({ default: false })
   public isFreezed: boolean;
 
-  @OneToMany(()=>Workflow, (wf)=>wf.segment)
-  public workflows: Workflow[]
+  @OneToMany(() => Workflow, (wf) => wf.segment)
+  public workflows: Workflow[];
+
+  @Column('jsonb')
+  public resources: any;
 }

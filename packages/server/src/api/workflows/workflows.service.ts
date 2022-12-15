@@ -156,7 +156,6 @@ export class WorkflowsService {
         },
         relations: ['segment'],
       });
-      console.log(found);
     } catch (err) {
       this.logger.error('Error: ' + err);
       return Promise.reject(err);
@@ -217,8 +216,6 @@ export class WorkflowsService {
       },
       relations: ['segment'],
     });
-
-    console.log(updateWorkflowDto);
 
     if (!workflow) throw new NotFoundException('Workflow not found');
     if (workflow.isActive)

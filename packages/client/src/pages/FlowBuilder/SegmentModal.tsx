@@ -5,6 +5,8 @@ import React, { FC, useEffect, useState } from "react";
 import ApiService from "services/api.service";
 import AC from "react-autocomplete";
 import { useDebounce } from "react-use";
+import { duplicateSegment, getSegment } from "pages/Segment/SegmentHelpers";
+import { toast } from "react-toastify";
 
 export interface SegmentModalProps {
   isOpen: boolean;
@@ -37,6 +39,20 @@ const SegmentModal: FC<SegmentModalProps> = ({
   const [possibleSegments, setPossibleSegments] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isFirstRender, setIsFirstRender] = useState(true);
+
+  const updateSegmentData = async () => {
+    const { data } = await getSegment(segmentId);
+    setSegmentName(data.name || "");
+    setSelectedSegment({
+      id: data.id || segmentId,
+      inclusionCriteria: data.inclusionCriteria || {},
+      isFreezed: !!data.isFreezed,
+    });
+  };
+
+  useEffect(() => {
+    updateSegmentData();
+  }, [segmentId]);
 
   const refetchPossibleSegments = async () => {
     setIsLoading(true);
@@ -82,12 +98,6 @@ const SegmentModal: FC<SegmentModalProps> = ({
     })();
   }, []);
 
-  useEffect(() => {
-    if (segmentId) {
-      // TODO: load segment data
-    }
-  }, [segmentId]);
-
   return (
     <Modal
       panelClass={`${
@@ -103,9 +113,13 @@ const SegmentModal: FC<SegmentModalProps> = ({
           workflowId={workflowId}
           segmentId={selectedSegment?.id}
           isCollapsible={true}
-          onSubmit={() => {
+          onSubmit={(id) => {
             setIsSegmentEditModalOpen(false);
             refetchPossibleSegments();
+            if (id) {
+              setSegmentId(id);
+              updateSegmentData();
+            }
           }}
         />
       ) : (
@@ -182,7 +196,19 @@ const SegmentModal: FC<SegmentModalProps> = ({
             </GenericButton>
             <GenericButton
               disabled={!selectedSegment.id || isLoading}
-              onClick={() => {}}
+              onClick={async () => {
+                if (!selectedSegment.id) {
+                  return;
+                }
+                try {
+                  const { data } = await duplicateSegment(selectedSegment.id);
+                  if (data.id) setSelectedSegment(data);
+                  handleEditModalOpen(OpenModelType.Edit);
+                } catch (e) {
+                  console.error(e);
+                  toast.error("Unexpected error");
+                }
+              }}
             >
               Copy
             </GenericButton>
