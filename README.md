@@ -59,11 +59,6 @@ Make sure you fill in the fields in the env files before trying to run laudspeak
 
 Questions? Please join our [Slack channel](https://join.slack.com/t/laudspeakerusers/shared_invite/zt-1io0f6u50-rSCnNtqkJT6QIdbPOyJh6g) or visit our [site](https://laudspeaker.com/).
 
-## Video Walkthrough
-
-- Check out how to set up and trigger an email with posthog in our [video](https://vimeo.com/763728112)
-- Check out how to trigger a slack message with a custom event in this [video](https://www.loom.com/share/8e1d349ceed24d2bb50280db36b19214)
-
 ## 🔥 What makes Laudspeaker cool?
 
 Lauspeaker is the only multi-channel open-source customer messaging workflow software, which is focused on being event triggered, has been built with a visual journey feature from day one and is focused on scalability.
@@ -87,6 +82,11 @@ We're currently in Public Alpha.
 ## 🌱 Contribute 
 
 We would love to see you contribute to Laudspeaker. Join our slack to get involved
+
+## 🎥 Video Walkthrough
+
+- Check out how to set up and trigger an email with posthog in our [video](https://vimeo.com/763728112)
+- Check out how to trigger a slack message with a custom event in this [video](https://www.loom.com/share/8e1d349ceed24d2bb50280db36b19214)
 
 ## Follow Us
 
