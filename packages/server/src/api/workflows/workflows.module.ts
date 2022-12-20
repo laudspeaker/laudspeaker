@@ -20,7 +20,10 @@ import {
   CustomerKeys,
   CustomerKeysSchema,
 } from '../customers/schemas/customer-keys.schema';
-import { EventKeys, EventKeysSchema } from '../events/schemas/event-keys.schema';
+import {
+  EventKeys,
+  EventKeysSchema,
+} from '../events/schemas/event-keys.schema';
 
 @Module({
   imports: [

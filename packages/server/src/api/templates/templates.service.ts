@@ -137,7 +137,7 @@ export class TemplatesService {
           customerId,
           tags,
           subject: template.subject,
-          text: event?.payload ? event.payload : template.text,
+          text: template.text,
         });
         if (account.emailProvider === 'free3') await account.save();
         break;

@@ -24,7 +24,6 @@ export class UpdateWorkflowDto {
   @IsOptional()
   public audiences?: string[];
 
-  @IsArray()
   @IsOptional()
   @Type(() => Trigger)
   public rules?: Trigger[];

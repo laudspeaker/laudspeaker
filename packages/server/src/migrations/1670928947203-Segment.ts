@@ -27,4 +27,3 @@ export class Segment1670928947203 implements MigrationInterface {
     await queryRunner.query(`DROP TABLE "segment"`);
   }
 }
-

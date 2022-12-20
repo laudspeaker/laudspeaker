@@ -10,7 +10,13 @@ import { DataSource, In, Repository } from 'typeorm';
 import { Account } from '../accounts/entities/accounts.entity';
 import { AudiencesService } from '../audiences/audiences.service';
 import { UpdateWorkflowDto } from './dto/update-workflow.dto';
-import { Trigger, TriggerType, Workflow } from './entities/workflow.entity';
+import {
+  PosthogTriggerParams,
+  ProviderTypes,
+  Trigger,
+  TriggerType,
+  Workflow,
+} from './entities/workflow.entity';
 import errors from '@/shared/utils/errors';
 import { Audience } from '../audiences/entities/audience.entity';
 import { CustomersService } from '../customers/customers.service';
@@ -19,7 +25,10 @@ import { EventDto } from '../events/dto/event.dto';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { Stats } from '../audiences/entities/stats.entity';
 import { createClient } from '@clickhouse/client';
-import { WorkflowTick } from './interfaces/workflow-tick.interface';
+import {
+  PosthogKeysPayload,
+  WorkflowTick,
+} from './interfaces/workflow-tick.interface';
 import { isBoolean, isString } from 'class-validator';
 import {
   EventKeys,
@@ -32,6 +41,8 @@ import {
   conditionalComposition,
   operableCompare,
 } from '../audiences/audiences.helper';
+
+const defaultEventParams = ['click', 'change', 'pageleave', 'submit'];
 
 @Injectable()
 export class WorkflowsService {
@@ -223,9 +234,8 @@ export class WorkflowsService {
 
     const { rules, visualLayout, isDynamic, audiences, name } =
       updateWorkflowDto;
-
     if (rules) {
-      const rules = [];
+      const newRules: string[] = [];
       for (const trigger of rules) {
         for (const condition of trigger.properties.conditions) {
           const { key, type, isArray } = condition;
@@ -243,9 +253,9 @@ export class WorkflowsService {
               });
           }
         }
-        rules.push(Buffer.from(JSON.stringify(trigger)).toString('base64'));
+        newRules.push(Buffer.from(JSON.stringify(trigger)).toString('base64'));
       }
-      workflow.rules = rules;
+      workflow.rules = newRules;
     }
 
     if (visualLayout) {
@@ -562,6 +572,7 @@ export class WorkflowsService {
     const jobIds: WorkflowTick[] = [];
     let jobIdArr: (string | number)[] = [];
     let interrupt = false; // Interrupt the tick to avoid the same event triggering two customer moves
+
     if (event) {
       try {
         customer = await this.customersService.findByCorrelationKVPair(
@@ -606,6 +617,20 @@ export class WorkflowsService {
         trigger = JSON.parse(
           Buffer.from(workflow.rules[triggerIndex], 'base64').toString('ascii')
         );
+
+        if (
+          event.source === ProviderTypes.Posthog &&
+          trigger.providerType === ProviderTypes.Posthog &&
+          !(
+            event.payload.type === trigger.providerParams ||
+            (event.payload.type === PosthogTriggerParams.Track &&
+              !defaultEventParams.includes(event.payload.type) &&
+              trigger.providerParams === PosthogTriggerParams.Autocapture)
+          )
+        ) {
+          continue;
+        }
+
         switch (trigger.type) {
           case TriggerType.event:
             if (customer) {

@@ -18,12 +18,12 @@ const TriggerModal = ({
   isCollapsible = true,
 }: ITriggerModal) => {
   const handleClose = () => {
-    const inVal = selectedTrigger?.properties?.conditions?.[0]?.value;
+    const initialValue = selectedTrigger?.properties?.conditions?.[0]?.value;
 
     if (isViewMode && isCollapsible) onClose();
     else if (isCollapsible) {
-      if (!!inVal) onClose();
-      else if (!inVal) onDeleteTrigger(selectedTrigger.id);
+      if (!!initialValue) onClose();
+      else if (!initialValue) onDeleteTrigger(selectedTrigger.id);
       else onClose();
     }
   };
