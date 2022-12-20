@@ -235,7 +235,6 @@ export class WorkflowsService {
     const { rules, visualLayout, isDynamic, audiences, name } =
       updateWorkflowDto;
     if (rules) {
-      // TODO: fix saving
       const newRules: string[] = [];
 
       for (const trigger of rules) {

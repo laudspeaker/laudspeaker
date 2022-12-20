@@ -477,30 +477,6 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
     return result;
   };
 
-  // const handleEventBasedTrigger: any = async (e: any) => {
-  //   const requestBody: InclusionCriteria = {
-  //     conditions: [],
-  //   };
-  //   const generatedConditions: any = [];
-  //   formData.forEach((item: any) => {
-  //     const condits = generateConditions(item.conditions);
-  //     const flattenedObj = flatten(condits);
-  //     const transformedObj: any = {};
-  //     for (const key in flattenedObj) {
-  //       const split = key.split(".");
-  //       const [, ...rest] = split;
-  //       for (let i = 0; i < rest?.length - 1; i++) {
-  //         transformedObj[attributeRequestBodyKeys[i]] = rest[i];
-  //       }
-  //       transformedObj.value = flattenedObj[key];
-  //       transformedObj.type = item.conditions.value;
-  //     }
-  //     generatedConditions.push(transformedObj);
-  //   });
-  //   requestBody.conditions = generatedConditions;
-  //   return requestBody;
-  // };
-
   const handleData = async (func: (data: any) => void) => {
     if (triggerType == "timeDelay")
       func(JSON.parse(JSON.stringify(delayInputTime)));
