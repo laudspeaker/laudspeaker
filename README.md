@@ -3,7 +3,14 @@
 <p align="center">
 <a href='https://laudspeakerusers.slack.com/ssb/redirect'><img alt="Join Slack Community" src="https://img.shields.io/badge/slack%20community-join-green"/></a>
 <a href='https://twitter.com/laudspeaker'><img alt="Follow Laudspeaker" src="https://img.shields.io/badge/%40laudspeaker-follow-blue"/></a>
-  
+
+<h4 align="center">
+  <a href="https://join.slack.com/t/laudspeakerusers/shared_invite/zt-1li25huaq-BljJUA1Zm8dXvbZViAbMwg">Slack</a> |
+  <a href="https://laudspeaker.com/">Laudspeaker Cloud</a> |
+  <a href="https://laudspeaker.com/docs/guides/category/deploy">Self-Hosting</a> |
+  <a href="https://laudspeaker.com/docs/guides/overview/intro/">Docs</a> |
+  <a href="https://laudspeaker.com/">Website</a>
+</h4>
   
 </p>
 
@@ -12,7 +19,6 @@
 * Build complex messaging workflows the whole team can understand in a visual tool
 * Deploy and run on your own infrastructure to keep control of your data.
 
-- [Our Website](https://laudspeaker.com/)
 - [Our Product Hunt](https://www.producthunt.com/posts/laudspeaker)
 - [Join our Slack][slack]
 
@@ -62,6 +68,14 @@ Lauspeaker is the only multi-channel open-source customer messaging workflow sof
 We support slack as a channel and have many more channels on our roadmap.
 
 We are planning to build Laudspeaker to work well with the Modern Data Stack, integrating with data warehouses and other services so you can easily import and export data with no fear of lock in or losing control of your data.
+
+## 🐥 Status
+
+- [x] Public Alpha: Anyone can sign up over at [laudspeaker.com](https://laudspeaker.com) but go easy on us, there are kinks and we're just getting started.
+- [ ] Public Beta: Stable enough for most non-enterprise use-cases.
+- [ ] Public: Production-ready.
+
+We're currently in Public Alpha.
 
 ### License
 
