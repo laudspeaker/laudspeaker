@@ -1,12 +1,12 @@
 import { Input, Select } from "components/Elements";
 import { getEventKeys } from "pages/Segment/SegmentHelpers";
 import React, { FC, useEffect, useState } from "react";
-import { EventCondition } from "./TriggerCreater";
 import AC from "react-autocomplete";
 import { useDebounce } from "react-use";
 import ApiService from "services/api.service";
 import DynamicField from "./DynamicField";
 import MinusIcon from "../../assets/images/MinusIcon.svg";
+import { EventCondition, ProviderTypes } from "types/triggers";
 
 export interface ConditionCreaterProps {
   condition: EventCondition;
@@ -14,6 +14,7 @@ export interface ConditionCreaterProps {
   onDelete: () => void;
   possibleTypes: string[];
   isViewMode?: boolean;
+  specificProvider: ProviderTypes;
 }
 
 const ConditionCreater: FC<ConditionCreaterProps> = ({
@@ -22,6 +23,7 @@ const ConditionCreater: FC<ConditionCreaterProps> = ({
   onDelete,
   possibleTypes,
   isViewMode,
+  specificProvider,
 }) => {
   const { key, value, type, comparisonType } = condition;
 
@@ -115,7 +117,7 @@ const ConditionCreater: FC<ConditionCreaterProps> = ({
   useDebounce(
     () => {
       handleConditionChange("key", newKey || "");
-      getEventKeys(newKey || "")
+      getEventKeys(newKey || "", specificProvider)
         .then(({ data }) => {
           setPossibleKeys(data);
         })
@@ -124,7 +126,7 @@ const ConditionCreater: FC<ConditionCreaterProps> = ({
         });
     },
     1000,
-    [newKey]
+    [newKey, specificProvider]
   );
 
   useDebounce(

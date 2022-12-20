@@ -47,8 +47,8 @@ export class EventsService {
     for (const { name, property_type } of defaultEventKeys) {
       if (name && property_type) {
         this.EventKeysModel.updateOne(
-          { key: name, type: property_type },
-          { key: name, type: property_type },
+          { key: name },
+          { key: name, type: property_type, providerSpecific: 'posthog' },
           { upsert: true }
         ).exec();
       }
@@ -161,9 +161,12 @@ export class EventsService {
           const convertedEventDto: EventDto = {
             correlationKey: 'posthogId',
             correlationValue: currentEvent.userId,
-            event: currentEvent.event,
+            event: currentEvent.context,
             source: 'posthog',
-            payload: undefined,
+            payload: {
+              type: currentEvent.type,
+              event: currentEvent.event,
+            },
           };
 
           //currentEvent
@@ -264,9 +267,10 @@ export class EventsService {
     );
   }
 
-  async getAttributes(resourceId: string) {
+  async getAttributes(resourceId: string, providerSpecific?: string) {
     const attributes = await this.EventKeysModel.find({
       key: RegExp(`.*${resourceId}.*`, 'i'),
+      providerSpecific,
     })
       .limit(10)
       .exec();

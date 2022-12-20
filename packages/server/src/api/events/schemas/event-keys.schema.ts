@@ -12,7 +12,11 @@ export class EventKeys {
   type: 'String' | 'Number' | 'Boolean' | 'Email';
 
   @Prop()
+  providerSpecific: string;
+
+  @Prop()
   isArray: boolean;
 }
 
 export const EventKeysSchema = SchemaFactory.createForClass(EventKeys);
+

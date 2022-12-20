@@ -15,6 +15,12 @@ import DateTimePicker from "components/Elements/DateTimePicker";
 import ConditionCreater from "./ConditionCreator";
 import ApiService from "services/api.service";
 import AndOrSelect from "./AndOrSelect";
+import {
+  EventCondition,
+  EventTrigger,
+  PosthogTriggerParams,
+  ProviderTypes,
+} from "types/triggers";
 
 export type TriggerType = "eventBased" | "timeDelay" | "timeWindow";
 interface ITriggerCreaterProp {
@@ -39,15 +45,6 @@ interface Condition {
   type?: string;
 }
 
-export interface EventCondition {
-  key: string;
-  type: string;
-  value: string;
-  comparisonType: string;
-  relationWithNext: "and" | "or";
-  isArray: boolean;
-}
-
 const TriggerCreater = (props: ITriggerCreaterProp) => {
   const {
     triggerType: triggerProp,
@@ -63,16 +60,23 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
     return response;
   };
 
-  const [conditions, setConditions] = useState<EventCondition[]>(
-    trigger?.properties?.conditions || []
-  );
+  const [eventTrigger, setEventTrigger] = useState<EventTrigger>(trigger);
 
   const handleConditionsChange = (
     index: number,
     newCondition: EventCondition
   ) => {
-    conditions[index] = newCondition;
-    setConditions([...conditions.map((condition) => ({ ...condition }))]);
+    if (!eventTrigger?.properties?.conditions?.[index]) return;
+
+    eventTrigger.properties.conditions[index] = newCondition;
+    setEventTrigger((prev) => ({
+      ...prev,
+      conditions: [
+        ...(prev.properties?.conditions?.map((condition) => ({
+          ...condition,
+        })) || []),
+      ],
+    }));
   };
 
   const populateFormData: any = (criteria: Condition[]) => {
@@ -94,7 +98,6 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
             isDirty: true,
           },
         };
-        console.log(objToPush); // TODO: remove
       } else {
         if (criteria[index].condition) {
           objToPush = {
@@ -220,10 +223,10 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
     const arr: string[] = value.split(":");
     setIsButtonDisabled(!value.match(/\d\d:\d\d:\d\d/));
     if (
-      arr.length > 3 ||
-      (arr[0] && arr[0].length > 2) ||
-      (arr[1] && arr[1].length > 2) ||
-      (arr[2] && arr[2].length > 3) ||
+      arr?.length > 3 ||
+      (arr[0] && arr[0]?.length > 2) ||
+      (arr[1] && arr[1]?.length > 2) ||
+      (arr[2] && arr[2]?.length > 3) ||
       arr.some((part: string) => isNaN(+part)) ||
       +arr[0] > 59 ||
       +arr[1] > 23
@@ -273,11 +276,12 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
           [response.id]: response,
         }));
         setIsButtonDisabled(
-          !(conditions as { value: string }[])?.some((item) => item.value) ||
-            false
+          !(eventTrigger.properties?.conditions as { value: string }[])?.some(
+            (item) => item.value
+          ) || false
         );
         setFormData(
-          populateFormData(conditions) || [
+          populateFormData(eventTrigger.properties?.conditions) || [
             {
               [response.id]: {
                 value: "",
@@ -287,7 +291,7 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
             },
           ]
         );
-        conditions.forEach((item: any) => {
+        eventTrigger?.properties?.conditions?.forEach((item: any) => {
           for (const key in item) {
             getAllResources(item[key]).then((resourceResponse) => {
               const tempResponse = JSON.parse(JSON.stringify(resourceResponse));
@@ -303,7 +307,7 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
     if (triggerType === "eventBased" || "timeDelay") {
       getAllConditions();
     }
-  }, [triggerType, conditions]);
+  }, [triggerType, eventTrigger.properties?.conditions]);
 
   const [possibleTypes, setPossibleTypes] = useState<string[]>([]);
 
@@ -373,11 +377,11 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
       isRoot
     );
     let shouldAddRow = false;
-    for (const key in formData[formData.length - 1]) {
+    for (const key in formData[formData?.length - 1]) {
       if (
         !updatedData.isDirty &&
-        (formData.length === 1 ||
-          formData[formData.length - 1][key].value === "")
+        (formData?.length === 1 ||
+          formData[formData?.length - 1][key].value === "")
       ) {
         shouldAddRow = true;
       }
@@ -464,7 +468,7 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
 
   const generateConditions = (obj: any) => {
     const result: any = {};
-    if (obj.children && Object.keys(obj.children).length) {
+    if (obj.children && Object.keys(obj.children)?.length) {
       result[obj.value] = generateConditions(obj.children[obj.value]);
     } else {
       result.value = obj.value;
@@ -473,36 +477,36 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
     return result;
   };
 
-  const handleEventBasedTrigger: any = async (e: any) => {
-    const requestBody: InclusionCriteria = {
-      conditions: [],
-    };
-    const generatedConditions: any = [];
-    formData.forEach((item: any) => {
-      const condits = generateConditions(item.conditions);
-      const flattenedObj = flatten(condits);
-      const transformedObj: any = {};
-      for (const key in flattenedObj) {
-        const split = key.split(".");
-        const [, ...rest] = split;
-        for (let i = 0; i < rest.length - 1; i++) {
-          transformedObj[attributeRequestBodyKeys[i]] = rest[i];
-        }
-        transformedObj.value = flattenedObj[key];
-        transformedObj.type = item.conditions.value;
-      }
-      generatedConditions.push(transformedObj);
-    });
-    requestBody.conditions = generatedConditions;
-    return requestBody;
-  };
+  // const handleEventBasedTrigger: any = async (e: any) => {
+  //   const requestBody: InclusionCriteria = {
+  //     conditions: [],
+  //   };
+  //   const generatedConditions: any = [];
+  //   formData.forEach((item: any) => {
+  //     const condits = generateConditions(item.conditions);
+  //     const flattenedObj = flatten(condits);
+  //     const transformedObj: any = {};
+  //     for (const key in flattenedObj) {
+  //       const split = key.split(".");
+  //       const [, ...rest] = split;
+  //       for (let i = 0; i < rest?.length - 1; i++) {
+  //         transformedObj[attributeRequestBodyKeys[i]] = rest[i];
+  //       }
+  //       transformedObj.value = flattenedObj[key];
+  //       transformedObj.type = item.conditions.value;
+  //     }
+  //     generatedConditions.push(transformedObj);
+  //   });
+  //   requestBody.conditions = generatedConditions;
+  //   return requestBody;
+  // };
 
   const handleData = async (func: (data: any) => void) => {
     if (triggerType == "timeDelay")
       func(JSON.parse(JSON.stringify(delayInputTime)));
     else if (triggerType == "timeWindow") func(timeWindow);
     else if (triggerType == "eventBased") {
-      func({ conditions });
+      func(eventTrigger);
     }
   };
 
@@ -755,37 +759,53 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
   };
 
   const handleDeleteCondition = (i: number) => {
-    setConditions([...conditions.filter((_condition, index) => index !== i)]);
+    setEventTrigger((prev) => ({
+      ...prev,
+      properties: {
+        conditions: [
+          ...(prev?.properties?.conditions?.filter(
+            (_condition, index) => index !== i
+          ) || []),
+        ],
+      },
+    }));
   };
 
   let eventBasedErrorMessage = "";
 
-  for (let i = 0; i < conditions.length; i++) {
-    const condition = conditions[i];
+  for (
+    let i = 0;
+    i < (eventTrigger?.properties?.conditions?.length || 0);
+    i++
+  ) {
+    const condition = eventTrigger?.properties?.conditions?.[i];
     // for (const key of Object.keys(condition)) {
     //   if (!condition[key as keyof EventCondition]) {
     //     eventBasedErrorMessage = `${key} is not defined at position ${i + 1}`;
     //   }
     // }
 
-    if (!condition.key) {
+    if (!condition?.key) {
       eventBasedErrorMessage = `Key is not defined at position ${i + 1}`;
       break;
     }
 
-    if (!condition.type) {
+    if (!condition?.type) {
       eventBasedErrorMessage = `Type is not defined at position ${i + 1}`;
       break;
     }
 
-    if (!condition.comparisonType) {
+    if (!condition?.comparisonType) {
       eventBasedErrorMessage = `Comparison type is not defined at position ${
         i + 1
       }`;
       break;
     }
 
-    if (!condition.value) {
+    if (
+      !condition.value &&
+      !["exists", "doesNotExist"].includes(condition.comparisonType)
+    ) {
       eventBasedErrorMessage = `Value is not defined at position ${i + 1}`;
       break;
     }
@@ -803,38 +823,77 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
           <div className="flex items-center relative">
             <div className="rounded-[10px] my-[25px] mx-[0px] pt-[10px] pb-[25px] px-[20px] bg-[#F9F9FA] flex items-center cursor-pointer w-full">
               <div className="flex flex-[1] flex-wrap flex-col">
+                <div className="w-full flex mb-[10px]">
+                  <Select
+                    onChange={(val) =>
+                      setEventTrigger({ ...eventTrigger, providerType: val })
+                    }
+                    options={[
+                      { value: ProviderTypes.Posthog, title: "Posthog" },
+                      { value: ProviderTypes.Custom, title: "Custom" },
+                    ]}
+                    wrapperClassnames="max-w-[120px] mr-[15px]"
+                    value={eventTrigger.providerType}
+                  />
+                  {eventTrigger.providerType === ProviderTypes.Posthog && (
+                    <Select
+                      onChange={(val) =>
+                        setEventTrigger({
+                          ...eventTrigger,
+                          providerParams: val,
+                        })
+                      }
+                      options={[
+                        { value: PosthogTriggerParams.Track, title: "Track" },
+                        { value: PosthogTriggerParams.Page, title: "Page" },
+                        {
+                          value: PosthogTriggerParams.Autocapture,
+                          title: "Autocapture",
+                        },
+                      ]}
+                      wrapperClassnames="max-w-[120px] w-full"
+                      value={eventTrigger.providerParams}
+                    />
+                  )}
+                </div>
                 {triggerType === "eventBased" ? (
                   <>
                     <div>
-                      {conditions.map((condition, i) => (
-                        <>
-                          <ConditionCreater
-                            condition={condition}
-                            onChange={(updatedCondition) =>
-                              handleConditionsChange(i, updatedCondition)
-                            }
-                            onDelete={() => handleDeleteCondition(i)}
-                            possibleTypes={possibleTypes}
-                            isViewMode={isViewMode}
-                          />
-                          {i !== conditions.length - 1 && (
-                            <div className="max-w-[7%]">
-                              <AndOrSelect
-                                value={condition.relationWithNext}
-                                onChange={(val) =>
-                                  handleConditionsChange(i, {
-                                    ...condition,
-                                    relationWithNext: val,
-                                  })
-                                }
-                                disabled={isViewMode}
-                              />
-                            </div>
-                          )}
-                        </>
-                      ))}
+                      {eventTrigger.properties?.conditions?.map(
+                        (condition, i) => (
+                          <>
+                            <ConditionCreater
+                              condition={condition}
+                              onChange={(updatedCondition) =>
+                                handleConditionsChange(i, updatedCondition)
+                              }
+                              onDelete={() => handleDeleteCondition(i)}
+                              possibleTypes={possibleTypes}
+                              isViewMode={isViewMode}
+                              specificProvider={eventTrigger.providerType}
+                            />
+                            {i !==
+                              (eventTrigger?.properties?.conditions?.length ||
+                                0) -
+                                1 && (
+                              <div className="max-w-[7%]">
+                                <AndOrSelect
+                                  value={condition.relationWithNext}
+                                  onChange={(val) =>
+                                    handleConditionsChange(i, {
+                                      ...condition,
+                                      relationWithNext: val,
+                                    })
+                                  }
+                                  disabled={isViewMode}
+                                />
+                              </div>
+                            )}
+                          </>
+                        )
+                      )}
                     </div>
-                    {conditions.length === 10 && (
+                    {eventTrigger.properties?.conditions?.length === 10 && (
                       <span className="text-red-500">
                         Maximum 10 conditions allowed
                       </span>
@@ -843,19 +902,28 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
                       <div>
                         <GenericButton
                           onClick={() =>
-                            setConditions([
-                              ...conditions,
-                              {
-                                key: "",
-                                value: "",
-                                comparisonType: "",
-                                type: "",
-                                relationWithNext: "and",
-                                isArray: false,
+                            setEventTrigger({
+                              ...eventTrigger,
+                              properties: {
+                                ...eventTrigger.properties,
+                                conditions: [
+                                  ...(eventTrigger?.properties?.conditions ||
+                                    []),
+                                  {
+                                    key: "",
+                                    value: "",
+                                    comparisonType: "",
+                                    type: "",
+                                    relationWithNext: "and",
+                                    isArray: false,
+                                  },
+                                ],
                               },
-                            ])
+                            })
                           }
-                          disabled={conditions.length === 10}
+                          disabled={
+                            eventTrigger.properties?.conditions?.length === 10
+                          }
                         >
                           Add new condition
                         </GenericButton>
