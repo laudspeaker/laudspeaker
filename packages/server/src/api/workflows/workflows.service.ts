@@ -236,7 +236,6 @@ export class WorkflowsService {
       updateWorkflowDto;
     if (rules) {
       const newRules: string[] = [];
-
       for (const trigger of rules) {
         for (const condition of trigger.properties.conditions) {
           const { key, type, isArray } = condition;

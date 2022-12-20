@@ -44,6 +44,12 @@ export const getSegments = async (search) => {
   });
 };
 
+export const getSegments = async (search) => {
+  return ApiService.get({
+    url: `${ApiConfig.segments}?searchText=${search}`,
+  });
+};
+
 export const getSegment = async (id) => {
   return ApiService.get({
     url: `${ApiConfig.segments}/${id}`,
