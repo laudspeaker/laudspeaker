@@ -35,6 +35,7 @@ import OnboardingBeta from "pages/Onboarding/OnboardingBeta";
 import Settings from "pages/Settings/Settings";
 import Person from "pages/Person";
 import Verify from "pages/Verify";
+import DatabaseTable from "pages/DatabaseTable/DatabaseTable";
 
 interface IProtected {
   children: ReactElement;
@@ -294,6 +295,16 @@ const RouteComponent: React.FC = () => {
           element={
             <Protected>
               <Cor />
+            </Protected>
+          }
+        />
+        <Route
+          path="/integrations"
+          element={
+            <Protected>
+              <DrawerLayout>
+                <DatabaseTable />
+              </DrawerLayout>
             </Protected>
           }
         />
