@@ -32,9 +32,9 @@ export const getEventResources = async (id) => {
   });
 };
 
-export const getEventKeys = async (id) => {
+export const getEventKeys = async (id, provider = "") => {
   return ApiService.get({
-    url: `${ApiConfig.eventAttributes}/${id}`,
+    url: `${ApiConfig.eventAttributes}/${id}?provider=${provider}`,
   });
 };
 

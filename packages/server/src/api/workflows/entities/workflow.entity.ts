@@ -1,4 +1,10 @@
-import { Entity, Column, PrimaryGeneratedColumn, JoinColumn, ManyToOne } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  JoinColumn,
+  ManyToOne,
+} from 'typeorm';
 import { Segment } from '../../segments/entities/segment.entity';
 
 export enum TriggerType {
@@ -22,11 +28,23 @@ export class EventProps {
   conditions: IEventConditions[];
 }
 
+export enum ProviderTypes {
+  Posthog = 'posthog',
+  Custom = 'custom',
+}
+export enum PosthogTriggerParams {
+  Track = 'track',
+  Page = 'page',
+  Autocapture = 'autocapture',
+}
+
 export class Trigger {
   type: TriggerType;
   source: string;
   dest: string[];
-  properties: EventProps;
+  providerType?: ProviderTypes;
+  providerParams?: PosthogTriggerParams;
+  properties?: EventProps;
 }
 
 @Entity()
@@ -66,7 +84,7 @@ export class Workflow {
   @Column({ default: true })
   isDynamic: boolean;
 
-  @ManyToOne(()=>Segment,(segment)=>segment.workflows)
+  @ManyToOne(() => Segment, (segment) => segment.workflows)
   @JoinColumn()
   segment?: Segment;
 }

@@ -28,7 +28,7 @@ services:
       - postgres
       - mongo
       - clickhouse
-  
+
   redis:
     image: redis:alpine
     command: redis-server

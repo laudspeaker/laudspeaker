@@ -8,13 +8,13 @@ import {
   IsDateString,
 } from 'class-validator';
 
-enum Eventtype {
-  identify,
-  page,
-  screen,
-  track,
-  group,
-  alias,
+export enum Eventtype {
+  identify = 'identify',
+  page = 'page',
+  screen = 'screen',
+  track = 'track',
+  group = 'group',
+  alias = 'alias',
 }
 
 export class PostHogEventDto {

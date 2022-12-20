@@ -46,6 +46,7 @@ import { Grid } from "@mui/material";
 import ToggleSwitch from "components/Elements/ToggleSwitch";
 import AlertBanner from "components/AlertBanner";
 import SegmentModal from "./SegmentModal";
+import { ProviderTypes } from "types/triggers";
 
 const segmentTypeStyle =
   "border-[1px] border-[#D1D5DB] rouded-[6px] shadow-[0px_1px_2px_rgba(0,0,0,0.05)] w-full mt-[20px] p-[15px]";
@@ -77,6 +78,8 @@ const convertLayoutToTable = (
       properties: {
         conditions: Record<string, any>;
       };
+      providerType: ProviderTypes;
+      providerParams?: string;
     }[];
     visualLayout: {
       nodes: Node<any>[];
@@ -111,14 +114,17 @@ const convertLayoutToTable = (
         foundTriggerIndex = triggerIndex;
     }
 
+    const trigger = fromNode[0]?.data.triggers[foundTriggerIndex];
+
     const rule = {
       type: TriggerType.event,
       source: fromNode[0]?.data?.audienceId,
       dest: [toNode[0].data.audienceId],
       properties: {
-        conditions:
-          fromNode[0]?.data.triggers[foundTriggerIndex]?.properties?.conditions,
+        conditions: trigger?.properties?.conditions,
       },
+      providerType: trigger?.providerType || ProviderTypes.Custom,
+      providerParams: trigger?.providerParams,
     };
     dto.rules.push(rule);
   }
@@ -153,11 +159,11 @@ const Flow = () => {
   };
   const onTriggerSelect = (e: any, triggerId: any, triggersList: any) => {
     const trigger = triggersList.find((item: any) => item.id === triggerId);
+    console.log("onselecttrigger", triggersList, trigger);
     setSelectedTrigger(trigger);
     settriggerModalOpen(true);
   };
 
-  useEffect(() => {}, [triggers]);
   const navigate = useNavigate();
   useLayoutEffect(() => {
     const populateFlowBuilder = async () => {
@@ -391,9 +397,12 @@ const Flow = () => {
           id: triggerId,
           title: "Event Based",
           type: "eventBased",
-          properties: {},
+          properties: {
+            conditions: [],
+          },
+          providerType: ProviderTypes.Custom,
+          providerParams: undefined,
         };
-
         setTriggers([...triggers, trigger]);
         selectedNodeData?.data?.triggers.push(trigger);
         setSelectedTrigger(trigger);
@@ -421,10 +430,15 @@ const Flow = () => {
   const handleTutorialOpen = () => {
     setTutorialOpen(true);
   };
+  console.log("Dtriggers ", triggers);
 
   const onSaveTrigger = (data: any) => {
     settriggerModalOpen(false);
-    selectedTrigger.properties = data;
+    console.log(data);
+    selectedTrigger.providerParams = data.providerParams;
+    selectedTrigger.providerType = data.providerType;
+    selectedTrigger.properties = data.properties;
+    console.log(selectedTrigger);
   };
 
   const onDeleteTrigger = (data: any) => {
@@ -554,22 +568,6 @@ const Flow = () => {
     });
     setSegmentForm({ isDynamic: !segmentForm.isDynamic });
   };
-
-  useEffect(() => {
-    (async () => {
-      const primaryNode = nodes.find((node) => node.data.primary);
-      if (!primaryNode || primaryNode.data.isDynamic === segmentForm.isDynamic)
-        return;
-      await ApiService.patch({
-        url: "/audiences",
-        options: {
-          id: primaryNode.data?.audienceId,
-          isDynamic: segmentForm.isDynamic,
-        },
-      });
-      primaryNode.data.isDynamic = segmentForm.isDynamic;
-    })();
-  }, [segmentForm.isDynamic, nodes]);
 
   let startDisabledReason = "";
 
