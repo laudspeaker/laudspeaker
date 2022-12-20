@@ -88,7 +88,7 @@ describe(
         body: {
           correlationKey: "slackId",
           correlationValue: slackTemplate.slackUid,
-          event: { "1": "1" },
+          event: { 1: "1" },
         },
       }).then(({ body }) => {
         cy.wait(1000);
@@ -113,7 +113,7 @@ describe(
             body: {
               correlationKey: "slackId",
               correlationValue: slackTemplate.slackUid,
-              event: { "2": "2" },
+              event: { 2: "2" },
             },
           }).then(({ body }) => {
             expect(body?.[0]?.jobIDs?.[0]).to.equal(undefined);
@@ -127,7 +127,7 @@ describe(
               body: {
                 correlationKey: "slackId",
                 correlationValue: slackTemplate.slackUid,
-                event: { "1": "1" },
+                event: { 1: "1" },
               },
             }).then(({ body }) => {
               cy.wait(1000);

@@ -15,10 +15,11 @@ import {
 } from './schemas/customer-keys.schema';
 import { AccountsModule } from '../accounts/accounts.module';
 import { AuthModule } from '../auth/auth.module';
+import { Workflow } from '../workflows/entities/workflow.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Account, Audience]),
+    TypeOrmModule.forFeature([Account, Audience, Workflow]),
     MongooseModule.forFeature([
       { name: Customer.name, schema: CustomerSchema },
     ]),
