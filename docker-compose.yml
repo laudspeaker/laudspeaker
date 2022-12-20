@@ -1,13 +1,13 @@
-version: '3.7'
+version: "3.7"
 services:
   redis:
     image: redis:alpine
     command: redis-server
     ports:
-     - "6379:6379"
+      - "6379:6379"
     environment:
-     - REDIS_REPLICATION_MODE=master
-  
+      - REDIS_REPLICATION_MODE=master
+
   postgres:
     image: postgres:14.4-alpine
     environment:
@@ -19,10 +19,10 @@ services:
     restart: unless-stopped
 
   mongo:
-    image: 'mongo:latest'
+    image: "mongo:latest"
     ports:
       - "27017:27017"
-  
+
   clickhouse:
     image: clickhouse/clickhouse-server:latest
     restart: on-failure

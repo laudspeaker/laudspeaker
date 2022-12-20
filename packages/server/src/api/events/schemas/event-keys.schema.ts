@@ -19,4 +19,3 @@ export class EventKeys {
 }
 
 export const EventKeysSchema = SchemaFactory.createForClass(EventKeys);
-

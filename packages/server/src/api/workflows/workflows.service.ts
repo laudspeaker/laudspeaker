@@ -11,8 +11,9 @@ import { Account } from '../accounts/entities/accounts.entity';
 import { AudiencesService } from '../audiences/audiences.service';
 import { UpdateWorkflowDto } from './dto/update-workflow.dto';
 import {
+  PosthogTriggerParams,
+  ProviderTypes,
   Trigger,
-  TriggerCondition,
   TriggerType,
   Workflow,
 } from './entities/workflow.entity';
@@ -40,6 +41,8 @@ import {
   conditionalComposition,
   operableCompare,
 } from '../audiences/audiences.helper';
+
+const defaultEventParams = ['click', 'change', 'pageleave', 'submit'];
 
 @Injectable()
 export class WorkflowsService {
@@ -231,12 +234,9 @@ export class WorkflowsService {
 
     const { rules, visualLayout, isDynamic, audiences, name } =
       updateWorkflowDto;
-
     if (rules) {
       // TODO: fix saving
-      const newRules: Trigger = {
-        ...rules,
-      };
+      const newRules: string[] = [];
 
       for (const trigger of rules) {
         for (const condition of trigger.properties.conditions) {
@@ -619,6 +619,19 @@ export class WorkflowsService {
         trigger = JSON.parse(
           Buffer.from(workflow.rules[triggerIndex], 'base64').toString('ascii')
         );
+
+        if (
+          event.source === ProviderTypes.Posthog &&
+          trigger.providerType === ProviderTypes.Posthog &&
+          !(
+            event.payload.type === trigger.providerParams ||
+            (event.payload.type === PosthogTriggerParams.Track &&
+              !defaultEventParams.includes(event.payload.type) &&
+              trigger.providerParams === PosthogTriggerParams.Autocapture)
+          )
+        ) {
+          continue;
+        }
 
         switch (trigger.type) {
           case TriggerType.event:

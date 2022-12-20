@@ -78,6 +78,8 @@ const convertLayoutToTable = (
       properties: {
         conditions: Record<string, any>;
       };
+      providerType: ProviderTypes;
+      providerParams?: string;
     }[];
     visualLayout: {
       nodes: Node<any>[];
@@ -112,14 +114,17 @@ const convertLayoutToTable = (
         foundTriggerIndex = triggerIndex;
     }
 
+    const trigger = fromNode[0]?.data.triggers[foundTriggerIndex];
+
     const rule = {
       type: TriggerType.event,
       source: fromNode[0]?.data?.audienceId,
       dest: [toNode[0].data.audienceId],
       properties: {
-        conditions:
-          fromNode[0]?.data.triggers[foundTriggerIndex]?.properties?.conditions,
+        conditions: trigger?.properties?.conditions,
       },
+      providerType: trigger?.providerType || ProviderTypes.Custom,
+      providerParams: trigger?.providerParams,
     };
     dto.rules.push(rule);
   }
@@ -429,8 +434,11 @@ const Flow = () => {
 
   const onSaveTrigger = (data: any) => {
     settriggerModalOpen(false);
-    setSelectedTrigger(undefined);
-    setTriggers(triggers.map((el: any) => (el.id === data.id ? data : el)));
+    console.log(data);
+    selectedTrigger.providerParams = data.providerParams;
+    selectedTrigger.providerType = data.providerType;
+    selectedTrigger.properties = data.properties;
+    console.log(selectedTrigger);
   };
 
   const onDeleteTrigger = (data: any) => {

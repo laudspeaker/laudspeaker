@@ -77,59 +77,66 @@ export class CustomersService {
     // Already started (isEditable = false), dynamic (isDyanmic = true),push
     // Not started (isEditable = true), dynamic (isDyanmic = true), push
     const dynamicWkfs = await this.workflowsRepository.find({
-      where:{
+      where: {
         ownerId: (<Account>account).id,
         isDynamic: true,
       },
-      relations:['segment']
+      relations: ['segment'],
     });
     for (let index = 0; index < dynamicWkfs.length; index++) {
       const workflow = dynamicWkfs[index];
-      if (checkInclusion(ret, workflow.segment.inclusionCriteria)) {
-        const audiences = await Promise.all(
-          workflow.audiences.map((item) =>
-            this.audiencesRepository.findOneBy({ id: item })
-          )
-        );
+      if (workflow.segment) {
+        if (checkInclusion(ret, workflow.segment.inclusionCriteria)) {
+          const audiences = await Promise.all(
+            workflow.audiences.map((item) =>
+              this.audiencesRepository.findOneBy({ id: item })
+            )
+          );
 
-        const primaryAudience = audiences.find(
-          (audience) => audience.isPrimary
-        );
+          const primaryAudience = audiences.find(
+            (audience) => audience.isPrimary
+          );
 
-        await this.audiencesRepository.update(
-          { ownerId: (<Account>account).id, id: primaryAudience.id },
-          {
-            customers: primaryAudience.customers.concat(ret.id),
-          }
-        );
+          await this.audiencesRepository.update(
+            { ownerId: (<Account>account).id, id: primaryAudience.id },
+            {
+              customers: primaryAudience.customers.concat(ret.id),
+            }
+          );
+        }
       }
     }
     // Already started(isEditable = true), static(isDyanmic = false), don't push
     // Not started(isEditable = false), static(isDyanmic = false), push
     const staticWkfs = await this.workflowsRepository.find({
-      where:{
+      where: {
         ownerId: (<Account>account).id,
         isDynamic: false,
       },
-      relations:['segment']
+      relations: ['segment'],
     });
     for (let index = 0; index < staticWkfs.length; index++) {
       const workflow = staticWkfs[index];
-      if (checkInclusion(ret, workflow.segment.inclusionCriteria)) {
-        const audiences = await Promise.all(
-          workflow.audiences.map((item) =>
-            this.audiencesRepository.findOneBy({ id: item, isEditable: false })
-          )
-        );
+      if (workflow.segment) {
+        if (checkInclusion(ret, workflow.segment.inclusionCriteria)) {
+          const audiences = await Promise.all(
+            workflow.audiences.map((item) =>
+              this.audiencesRepository.findOneBy({
+                id: item,
+                isEditable: false,
+              })
+            )
+          );
 
-        const primaryAudience = audiences.find((item) => item.isPrimary);
+          const primaryAudience = audiences.find((item) => item.isPrimary);
 
-        await this.audiencesRepository.update(
-          { ownerId: (<Account>account).id, id: primaryAudience.id },
-          {
-            customers: primaryAudience.customers.concat(ret.id),
-          }
-        );
+          await this.audiencesRepository.update(
+            { ownerId: (<Account>account).id, id: primaryAudience.id },
+            {
+              customers: primaryAudience.customers.concat(ret.id),
+            }
+          );
+        }
       }
     }
 

@@ -28,13 +28,6 @@ export class EventProps {
   conditions: IEventConditions[];
 }
 
-export class TriggerCondition {
-  type: TriggerType;
-  source: string;
-  dest: string[];
-  properties: EventProps;
-}
-
 export enum ProviderTypes {
   Posthog = 'posthog',
   Custom = 'custom',
@@ -46,9 +39,12 @@ export enum PosthogTriggerParams {
 }
 
 export class Trigger {
+  type: TriggerType;
+  source: string;
+  dest: string[];
   providerType?: ProviderTypes;
   providerParams?: PosthogTriggerParams;
-  conditions?: TriggerCondition[];
+  properties?: EventProps;
 }
 
 @Entity()

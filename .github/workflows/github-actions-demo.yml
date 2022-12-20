@@ -13,19 +13,19 @@ jobs:
     runs-on: ubuntu-latest
     name: Assign to One Project
     steps:
-    - name: Assign NEW issues and NEW pull requests to project 2
-      uses: srggrs/assign-one-project-github-action@1.2.1
-      if: github.event.action == 'opened'
-      with:
-        #project: 'https://github.com/Laudspeaker/Laudspeaker/projects/1'
-        project: 'https://github.com/orgs/Laudspeaker/projects/2'
+      - name: Assign NEW issues and NEW pull requests to project 2
+        uses: srggrs/assign-one-project-github-action@1.2.1
+        if: github.event.action == 'opened'
+        with:
+          #project: 'https://github.com/Laudspeaker/Laudspeaker/projects/1'
+          project: "https://github.com/orgs/Laudspeaker/projects/2"
 
-    - name: Assign issues and pull requests with `bug` label to project 3
-      uses: srggrs/assign-one-project-github-action@1.2.1
-      if: |
-        contains(github.event.issue.labels.*.name, 'bug') ||
-        contains(github.event.pull_request.labels.*.name, 'bug')
-      with:
-        #project: 'https://github.com/Laudspeaker/Laudspeaker/projects/1'
-        project: 'https://github.com/orgs/Laudspeaker/projects/2'
-        column_name: 'To do'
+      - name: Assign issues and pull requests with `bug` label to project 3
+        uses: srggrs/assign-one-project-github-action@1.2.1
+        if: |
+          contains(github.event.issue.labels.*.name, 'bug') ||
+          contains(github.event.pull_request.labels.*.name, 'bug')
+        with:
+          #project: 'https://github.com/Laudspeaker/Laudspeaker/projects/1'
+          project: "https://github.com/orgs/Laudspeaker/projects/2"
+          column_name: "To do"

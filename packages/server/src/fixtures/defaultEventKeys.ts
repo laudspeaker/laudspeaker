@@ -1,142 +1,142 @@
 export default [
   {
-    name: '$active_feature_flags',
+    name: 'active_feature_flags',
     property_type: null,
   },
   {
-    name: '$browser',
+    name: 'browser',
     property_type: 'String',
   },
   {
-    name: '$browser_version',
+    name: 'browser_version',
     property_type: 'Number',
   },
   {
-    name: '$ce_version',
+    name: 'ce_version',
     property_type: 'Number',
   },
   {
-    name: '$current_url',
+    name: 'current_url',
     property_type: 'String',
   },
   {
-    name: '$device_id',
+    name: 'device_id',
     property_type: 'String',
   },
   {
-    name: '$device_type',
+    name: 'device_type',
     property_type: 'String',
   },
   {
-    name: '$event_type',
+    name: 'event_type',
     property_type: 'String',
   },
   {
-    name: '$geoip_city_name',
+    name: 'geoip_city_name',
     property_type: 'String',
   },
   {
-    name: '$geoip_continent_code',
+    name: 'geoip_continent_code',
     property_type: 'String',
   },
   {
-    name: '$geoip_continent_name',
+    name: 'geoip_continent_name',
     property_type: 'String',
   },
   {
-    name: '$geoip_country_code',
+    name: 'geoip_country_code',
     property_type: 'String',
   },
   {
-    name: '$geoip_country_name',
+    name: 'geoip_country_name',
     property_type: 'String',
   },
   {
-    name: '$geoip_latitude',
+    name: 'geoip_latitude',
     property_type: 'Number',
   },
   {
-    name: '$geoip_longitude',
+    name: 'geoip_longitude',
     property_type: 'Number',
   },
   {
-    name: '$geoip_postal_code',
+    name: 'geoip_postal_code',
     property_type: 'Number',
   },
   {
-    name: '$geoip_subdivision_1_code',
+    name: 'geoip_subdivision_1_code',
     property_type: 'Number',
   },
   {
-    name: '$geoip_subdivision_1_name',
+    name: 'geoip_subdivision_1_name',
     property_type: 'String',
   },
   {
-    name: '$geoip_time_zone',
+    name: 'geoip_time_zone',
     property_type: 'String',
   },
   {
-    name: '$host',
+    name: 'host',
     property_type: 'String',
   },
   {
-    name: '$insert_id',
+    name: 'insert_id',
     property_type: 'String',
   },
   {
-    name: '$ip',
+    name: 'ip',
     property_type: 'String',
   },
   {
-    name: '$lib',
+    name: 'lib',
     property_type: 'String',
   },
   {
-    name: '$lib_version',
+    name: 'lib_version',
     property_type: 'String',
   },
   {
-    name: '$os',
+    name: 'os',
     property_type: 'String',
   },
   {
-    name: '$pathname',
+    name: 'pathname',
     property_type: 'String',
   },
   {
-    name: '$plugins_deferred',
+    name: 'plugins_deferred',
     property_type: null,
   },
   {
-    name: '$plugins_failed',
+    name: 'plugins_failed',
     property_type: null,
   },
   {
-    name: '$plugins_succeeded',
+    name: 'plugins_succeeded',
     property_type: null,
   },
   {
-    name: '$referrer',
+    name: 'referrer',
     property_type: 'String',
   },
   {
-    name: '$referring_domain',
+    name: 'referring_domain',
     property_type: 'String',
   },
   {
-    name: '$screen_height',
+    name: 'screen_height',
     property_type: 'Number',
   },
   {
-    name: '$screen_width',
+    name: 'screen_width',
     property_type: 'Number',
   },
   {
-    name: '$session_id',
+    name: 'session_id',
     property_type: 'String',
   },
   {
-    name: '$time',
+    name: 'time',
     property_type: 'Date',
   },
   {
@@ -144,15 +144,15 @@ export default [
     property_type: 'String',
   },
   {
-    name: '$viewport_height',
+    name: 'viewport_height',
     property_type: 'Number',
   },
   {
-    name: '$window_id',
+    name: 'window_id',
     property_type: 'String',
   },
   {
-    name: '$viewport_width',
+    name: 'viewport_width',
     property_type: 'Number',
   },
 ];
