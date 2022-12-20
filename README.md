@@ -10,17 +10,20 @@
   <a href="https://laudspeaker.com/docs/guides/category/deploy">Self-Hosting</a> |
   <a href="https://laudspeaker.com/docs/guides/overview/intro/">Docs</a> |
   <a href="https://laudspeaker.com/">Website</a>
+  <a href="https://www.producthunt.com/posts/laudspeaker/">Product Hunt</a>
 </h4>
   
 </p>
 
 ## Laudspeaker - Open Source omni-channel customer messaging. Alternative to Braze / Iterable / One Signal / Customer Io
+
+![app laudspeaker com_flow_onboarding-example (1)](https://user-images.githubusercontent.com/7728266/208761386-5dfe6803-16d1-47ca-98f4-45d77ff6058e.png)
+
+
 * Send product or event-triggered emails, sms and more to your customers and users at scale
 * Build complex messaging workflows the whole team can understand in a visual tool
 * Deploy and run on your own infrastructure to keep control of your data.
 
-- [Our Product Hunt](https://www.producthunt.com/posts/laudspeaker)
-- [Join our Slack][slack]
 
 ## 🚀 Get Started
 
@@ -61,15 +64,11 @@ Questions? Please join our [Slack channel](https://join.slack.com/t/laudspeakeru
 - Check out how to set up and trigger an email with posthog in our [video](https://vimeo.com/763728112)
 - Check out how to trigger a slack message with a custom event in this [video](https://www.loom.com/share/8e1d349ceed24d2bb50280db36b19214)
 
-## Key Features
-
-Description coming soon!
-
-## What makes Laudspeaker cool?
+## 🔥 What makes Laudspeaker cool?
 
 Lauspeaker is the only multi-channel open-source customer messaging workflow software, which is focused on being event triggered, has been built with a visual journey feature from day one and is focused on scalability.
 
-We support slack as a channel and have many more channels on our roadmap.
+We support email, sms and slack as a channel and have many more channels on our roadmap.
 
 We are planning to build Laudspeaker to work well with the Modern Data Stack, integrating with data warehouses and other services so you can easily import and export data with no fear of lock in or losing control of your data.
 
@@ -85,7 +84,7 @@ We're currently in Public Alpha.
 
 **Laudspeaker** is open source and released under the [MIT License][mit_license], and AGPLv3 licenses (code in separate directories) with the exception of our ee directory (which is currently empty!) but will be under the Laudspeaker Enterprise Edition license. If you can only use MIT licencsed code, you can still use Laudspeaker but with a few fewer features.
 
-## Contribute 
+## 🌱 Contribute 
 
 We would love to see you contribute to Laudspeaker. Join our slack to get involved
 
