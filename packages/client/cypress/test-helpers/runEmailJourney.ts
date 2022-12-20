@@ -1,3 +1,4 @@
+import "@4tw/cypress-drag-drop";
 export default (JourneyName = "Single step flow") => {
   cy.wait(3000);
   cy.get('[data-disclosure-link="Journey Builder"]').click();

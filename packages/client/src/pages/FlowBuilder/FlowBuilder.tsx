@@ -32,7 +32,7 @@ import ExitIcon from "../../assets/images/ExitIcon.svg";
 import SideDrawer from "components/SideDrawer";
 import { ApiConfig } from "./../../constants";
 import ChooseTemplateModal from "./ChooseTemplateModal";
-import { MySegment, NameSegment } from "pages/Segment";
+import { NameSegment } from "pages/Segment";
 import ApiService from "services/api.service";
 import TriggerModal from "./TriggerModal";
 import { GenericButton, Select } from "components/Elements";

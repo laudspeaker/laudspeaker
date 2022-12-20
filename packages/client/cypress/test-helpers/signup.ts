@@ -1,3 +1,4 @@
+import "@4tw/cypress-drag-drop";
 export default (
   email: string,
   password: string,

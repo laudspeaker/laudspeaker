@@ -1,3 +1,4 @@
+import "@4tw/cypress-drag-drop";
 import credentials from "../fixtures/credentials.json";
 import setupEventTrigger from "./setupEventTrigger";
 

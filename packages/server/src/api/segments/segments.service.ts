@@ -5,7 +5,9 @@ import {
   LoggerService,
   NotFoundException,
 } from '@nestjs/common';
+import { BadRequestException } from '@nestjs/common/exceptions';
 import { InjectRepository } from '@nestjs/typeorm';
+import { isUUID } from 'class-validator';
 import { FindManyOptions, Repository } from 'typeorm';
 import { Account } from '../accounts/entities/accounts.entity';
 import { CreateSegmentDTO } from './dto/create-segment.dto';
@@ -25,6 +27,7 @@ export class SegmentsService {
   }
 
   public async findOne(account: Account, id: string) {
+    if (!isUUID(id)) throw new BadRequestException('Invalid id');
     const segment = await this.segmentsRepository.findOneBy({
       userId: account.id,
       id,

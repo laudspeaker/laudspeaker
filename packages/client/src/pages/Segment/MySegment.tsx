@@ -442,10 +442,9 @@ const MySegment = ({
             {!titleEdit ? (
               <h3 className="flex items-center gap-[10px]">
                 {segmentForm.title}
-                <EditIcon
-                  sx={{ fontSize: "25px", cursor: "pointer" }}
-                  onClick={handleTitleEdit}
-                />
+                <div onClick={handleTitleEdit} data-title-edit>
+                  <EditIcon sx={{ fontSize: "25px", cursor: "pointer" }} />
+                </div>
               </h3>
             ) : (
               <Input

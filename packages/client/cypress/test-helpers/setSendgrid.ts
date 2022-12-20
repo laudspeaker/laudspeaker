@@ -1,3 +1,4 @@
+import "@4tw/cypress-drag-drop";
 import setFree3 from "./setFree3";
 
 export default (apiKey: string, fromEmail: string) => {
