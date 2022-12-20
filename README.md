@@ -9,7 +9,7 @@
   <a href="https://laudspeaker.com/">Laudspeaker Cloud</a> |
   <a href="https://laudspeaker.com/docs/guides/category/deploy">Self-Hosting</a> |
   <a href="https://laudspeaker.com/docs/guides/overview/intro/">Docs</a> |
-  <a href="https://laudspeaker.com/">Website</a>
+  <a href="https://laudspeaker.com/">Website</a> |
   <a href="https://www.producthunt.com/posts/laudspeaker/">Product Hunt</a>
 </h4>
   
