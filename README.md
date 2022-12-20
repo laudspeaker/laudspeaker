@@ -22,7 +22,7 @@
 - [Our Product Hunt](https://www.producthunt.com/posts/laudspeaker)
 - [Join our Slack][slack]
 
-### Get Started
+## 🚀 Get Started
 
 Run yourself (instructions below) or use [Laudspeaker Cloud](https://app.laudspeaker.com/login) . Docs are [here](https://laudspeaker.com/docs/guides/overview/intro/)
 
@@ -52,16 +52,16 @@ Make sure you fill in the fields in the env files before trying to run laudspeak
 
 Questions? Please join our [Slack channel](https://join.slack.com/t/laudspeakerusers/shared_invite/zt-1io0f6u50-rSCnNtqkJT6QIdbPOyJh6g) or visit our [site](https://laudspeaker.com/).
 
-### Video Walkthrough
+## Video Walkthrough
 
 - Check out how to set up and trigger an email with posthog in our [video](https://vimeo.com/763728112)
 - Check out how to trigger a slack message with a custom event in this [video](https://www.loom.com/share/8e1d349ceed24d2bb50280db36b19214)
 
-### Key Features
+## Key Features
 
 Description coming soon!
 
-### What makes Laudspeaker cool?
+## What makes Laudspeaker cool?
 
 Lauspeaker is the only multi-channel open-source customer messaging workflow software, which is focused on being event triggered, has been built with a visual journey feature from day one and is focused on scalability.
 
@@ -77,15 +77,15 @@ We are planning to build Laudspeaker to work well with the Modern Data Stack, in
 
 We're currently in Public Alpha.
 
-### License
+## License
 
 **Laudspeaker** is open source and released under the [MIT License][mit_license], and AGPLv3 licenses (code in separate directories) with the exception of our ee directory (which is currently empty!) but will be under the Laudspeaker Enterprise Edition license. If you can only use MIT licencsed code, you can still use Laudspeaker but with a few fewer features.
 
-### Contribute 
+## Contribute 
 
 We would love to see you contribute to Laudspeaker. Join our slack to get involved
 
-### Follow Us
+## Follow Us
 
 -  [Slack][slack]
 
