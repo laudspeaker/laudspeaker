@@ -14,7 +14,10 @@
   
 </p>
 
-## Laudspeaker - Open Source alternative to Braze / Iterable / One Signal / Customer Io. Easily Create Messaging Workflows
+## Laudspeaker - Open Source omni-channel customer messaging. Alternative to Braze / Iterable / One Signal / Customer Io
+* Send product or event-triggered emails, sms and more to your customers and users at scale
+* Build complex messaging workflows the whole team can understand in a visual tool
+* Deploy and run on your own infrastructure to keep control of your data.
 
 - [Our Product Hunt](https://www.producthunt.com/posts/laudspeaker)
 - [Join our Slack][slack]
