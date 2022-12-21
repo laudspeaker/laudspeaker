@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: laudspeaker
+    healthCheckPath: /login
+    env: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    autoDeploy: false
+    disk:
+      name: data
+      mountPath: /data
+    envVars:
+      - key: PORT
+        value: 80
