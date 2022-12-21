@@ -7,11 +7,20 @@ import AC from "react-autocomplete";
 import { useDebounce } from "react-use";
 import { duplicateSegment, getSegment } from "pages/Segment/SegmentHelpers";
 import { toast } from "react-toastify";
+import Chip from "components/Elements/Chip";
+import { ChevronUpDownIcon } from "@heroicons/react/20/solid";
+import Tooltip from "components/Elements/Tooltip";
+
+export enum SegmentModalMode {
+  EDIT = "edit",
+  NEW = "new",
+}
 
 export interface SegmentModalProps {
   isOpen: boolean;
   onClose: () => void;
   segmentId?: string;
+  mode: SegmentModalMode;
   setSegmentId: React.Dispatch<React.SetStateAction<string | undefined>>;
   workflowId: string;
   onAttach?: (id: string) => void;
@@ -28,26 +37,39 @@ const SegmentModal: FC<SegmentModalProps> = ({
   segmentId,
   setSegmentId,
   workflowId,
+  mode,
 }) => {
   const [isSegmentEditModalOpen, setIsSegmentEditModalOpen] = useState(false);
   const [selectedSegment, setSelectedSegment] = useState({
     id: segmentId,
     inclusionCriteria: {},
     isFreezed: false,
+    name: "",
   });
+  const [newSegmentName, setNewSegmentName] = useState("");
   const [segmentName, setSegmentName] = useState("");
   const [possibleSegments, setPossibleSegments] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isFirstRender, setIsFirstRender] = useState(true);
 
   const updateSegmentData = async () => {
-    const { data } = await getSegment(segmentId);
-    setSegmentName(data.name || "");
-    setSelectedSegment({
-      id: data.id || segmentId,
-      inclusionCriteria: data.inclusionCriteria || {},
-      isFreezed: !!data.isFreezed,
-    });
+    setIsLoading(true);
+    try {
+      if (segmentId) {
+        const { data } = await getSegment(segmentId);
+        setSegmentName(data.name || "");
+        setSelectedSegment({
+          id: data.id || segmentId,
+          inclusionCriteria: data.inclusionCriteria || {},
+          isFreezed: !!data.isFreezed,
+          name: data.name,
+        });
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -57,7 +79,9 @@ const SegmentModal: FC<SegmentModalProps> = ({
   const refetchPossibleSegments = async () => {
     setIsLoading(true);
     const { data } = await ApiService.get({
-      url: `/segments?searchText=${segmentName}`,
+      url: `/segments?searchText=${
+        segmentName === selectedSegment.name ? "" : segmentName
+      }`,
     });
     setIsLoading(false);
     setPossibleSegments(data || []);
@@ -70,6 +94,7 @@ const SegmentModal: FC<SegmentModalProps> = ({
         id: undefined,
         inclusionCriteria: {},
         isFreezed: false,
+        name: "",
       });
     }
 
@@ -111,6 +136,7 @@ const SegmentModal: FC<SegmentModalProps> = ({
         <MySegment
           onClose={() => setIsSegmentEditModalOpen(false)}
           workflowId={workflowId}
+          defaultTitle={newSegmentName}
           segmentId={selectedSegment?.id}
           isCollapsible={true}
           onSubmit={(id) => {
@@ -119,113 +145,141 @@ const SegmentModal: FC<SegmentModalProps> = ({
             if (id) {
               setSegmentId(id);
               updateSegmentData();
+              onClose();
             }
           }}
         />
       ) : (
         <div className="w-full">
-          <AC
-            value={segmentName}
-            getItemValue={(item) => JSON.stringify(item)}
-            items={possibleSegments}
-            autoHighlight={false}
-            wrapperStyle={{
-              width: "100%",
-              position: "relative",
-            }}
-            renderInput={(props) => (
-              <Input
-                name={props.name || ""}
-                value={props.value}
-                onChange={props.onChange}
-                inputRef={props.ref}
-                className="mb-[10px]"
-                aria-expanded={props["aria-expanded"]}
-                disabled={isLoading}
-                id="input_segment"
-                {...props}
-              />
-            )}
-            renderItem={(item, isHighlighted) => (
-              <div
-                key={item.id}
-                className={`${
-                  isHighlighted && !item.isFreezed ? "bg-cyan-100" : ""
-                } ${
-                  item.isFreezed && "bg-gray-200"
-                } p-[2px] rounded-[6px] relative max-w-full break-all cursor-pointer`}
-              >
-                {item.name} {item.isFreezed && "(Freezed)"}
-              </div>
-            )}
-            renderMenu={(items) => {
-              if (!items.length) return <></>;
-
-              return (
-                <div className="max-h-[200px] overflow-y-scroll shadow-md  border-[1px] bg-white border-cyan-500 absolute top-[calc(100%+4px)] w-full rounded-[6px] z-[9999999999]">
-                  {items}
+          {mode === SegmentModalMode.NEW && (
+            <Input
+              name="newSegmentName"
+              id="newSegmentName"
+              value={newSegmentName}
+              className="mb-[10px]"
+              onChange={(e) => {
+                setNewSegmentName(e.target.value);
+              }}
+            />
+          )}
+          {mode === SegmentModalMode.EDIT && (
+            <AC
+              value={segmentName}
+              getItemValue={(item) => JSON.stringify(item)}
+              items={possibleSegments}
+              autoHighlight={false}
+              wrapperStyle={{
+                width: "100%",
+                position: "relative",
+              }}
+              renderInput={(props) => (
+                <div className="w-full relative">
+                  <Input
+                    name={props.name || ""}
+                    value={props.value}
+                    onChange={props.onChange}
+                    inputRef={props.ref}
+                    autoFocus
+                    className="mb-[10px] z-[10] relative bg-transparent"
+                    aria-expanded={props["aria-expanded"]}
+                    disabled={isLoading}
+                    id="input_segment"
+                    {...props}
+                  />
+                  <ChevronUpDownIcon className="absolute w-[20px] top-[50%] -translate-y-1/2 right-[8px] text-gray-600" />
                 </div>
-              );
-            }}
-            onChange={(e) => {
-              setSelectedSegment({
-                id: segmentId,
-                inclusionCriteria: {},
-                isFreezed: false,
-              });
-              setSegmentName(e.target.value);
-            }}
-            onSelect={(e) => {
-              const val = JSON.parse(e);
+              )}
+              renderItem={(item, isHighlighted) => (
+                <div
+                  key={item.id}
+                  className={`${
+                    isHighlighted && !item.isFreezed ? "bg-cyan-100" : ""
+                  } ${
+                    item.isFreezed && "bg-gray-200"
+                  } p-[2px] rounded-[6px] relative max-w-full break-all cursor-pointer flex justify-between`}
+                >
+                  {item.name}
 
-              setSegmentName(val.name);
-              setSelectedSegment({
-                ...val,
-              });
-            }}
-          />
-          <div className="flex justify-between">
-            <GenericButton
-              disabled={!selectedSegment.id || isLoading}
-              onClick={() => {
-                setSegmentId(selectedSegment.id);
-                onClose();
-              }}
-            >
-              Export
-            </GenericButton>
-            <GenericButton
-              disabled={!selectedSegment.id || isLoading}
-              onClick={async () => {
-                if (!selectedSegment.id) {
-                  return;
-                }
-                try {
-                  const { data } = await duplicateSegment(selectedSegment.id);
-                  if (data.id) setSelectedSegment(data);
-                  handleEditModalOpen(OpenModelType.Edit);
-                } catch (e) {
-                  console.error(e);
-                  toast.error("Unexpected error");
-                }
-              }}
-            >
-              Copy
-            </GenericButton>
+                  <Chip
+                    label={item.isFreezed ? "In use" : "Editable"}
+                    wrapperClass={`${
+                      item.isFreezed ? "!bg-yellow-500" : ""
+                    } w-[70px]`}
+                  />
+                </div>
+              )}
+              renderMenu={(items) => {
+                if (!items.length) return <></>;
 
-            <GenericButton
-              disabled={
-                !(selectedSegment.id && !selectedSegment.isFreezed) || isLoading
-              }
-              onClick={() => handleEditModalOpen(OpenModelType.Edit)}
-            >
-              Edit
-            </GenericButton>
-            <GenericButton
-              onClick={() => handleEditModalOpen(OpenModelType.New)}
-            >
-              New
-            </GenericButton>
+                return (
+                  <div className="max-h-[200px] overflow-y-scroll shadow-md  border-[1px] bg-white border-cyan-500 absolute top-[calc(100%+4px)] w-full rounded-[6px] z-[9999999999]">
+                    {items}
+                  </div>
+                );
+              }}
+              onChange={(e) => {
+                setSelectedSegment({
+                  id: segmentId,
+                  inclusionCriteria: {},
+                  isFreezed: false,
+                  name: "",
+                });
+                setSegmentName(e.target.value);
+              }}
+              onSelect={(e) => {
+                const val = JSON.parse(e);
+                setSegmentId(val.id);
+              }}
+            />
+          )}
+          <div className="flex justify-end gap-[10px]">
+            {mode === SegmentModalMode.EDIT && (
+              <>
+                <GenericButton
+                  disabled={!selectedSegment.id || isLoading}
+                  onClick={async () => {
+                    if (!selectedSegment.id) {
+                      return;
+                    }
+                    try {
+                      const { data } = await duplicateSegment(
+                        selectedSegment.id
+                      );
+                      if (data.id) setSelectedSegment(data);
+                      handleEditModalOpen(OpenModelType.Edit);
+                    } catch (e) {
+                      console.error(e);
+                      toast.error("Unexpected error");
+                    }
+                  }}
+                >
+                  Copy
+                </GenericButton>
+                <GenericButton
+                  disabled={
+                    !(selectedSegment.id && !selectedSegment.isFreezed) ||
+                    isLoading
+                  }
+                  onClick={() => handleEditModalOpen(OpenModelType.Edit)}
+                >
+                  Edit
+                </GenericButton>
+              </>
+            )}
+            {mode === SegmentModalMode.NEW && (
+              <Tooltip
+                title={!newSegmentName.trim() ? "Name of segment required" : ""}
+                placement="left"
+                className="!z-[2000000000]"
+              >
+                <GenericButton
+                  disabled={!newSegmentName.trim()}
+                  onClick={() => handleEditModalOpen(OpenModelType.New)}
+                >
+                  Create new
+                </GenericButton>
+              </Tooltip>
+            )}
           </div>
         </div>
       )}
