@@ -87,7 +87,16 @@ We're currently in Public Alpha.
 
 ## 🌱 Contribute 
 
-We would love to see you contribute to Laudspeaker. Join our slack to get involved
+We would love to see you contribute to Laudspeaker. Join our slack to get involved.
+
+A quick how to for contribution:
+    
+1. Fork the project
+2. Create your feature branch (`git checkout -b feature/some-feature`)
+3. Make your changes
+4. Commit your changes (`git commit -m 'Implement an amazing feature.'`)
+5. Push to the branch (`git push origin feature/some-feature`)
+6. Open a pull request
 
 ## 🎥 Video Walkthrough
 
