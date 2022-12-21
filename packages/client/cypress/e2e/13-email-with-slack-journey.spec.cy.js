@@ -65,7 +65,9 @@ describe(
 
       cy.get('[data-isprimary="true"]')
         .get('[data-handlepos="bottom"]')
-        .drag('[data-isprimary="false"] [data-handlepos="top"]');
+        .drag('[data-isprimary="false"] [data-handlepos="top"]', {
+          force: true,
+        });
 
       cy.get('[data-isprimary="false"] [data-handlepos="top"]').click();
 
@@ -97,7 +99,7 @@ describe(
           headers: {
             Authorization: `Api-Key ${userAPIkey}`,
           },
-          url: `${Cypress.env("AxiosURL")}events/job-status/email`,
+          url: `${Cypress.env("AxiosURL")}events/job-status/slack`,
           body: {
             jobId: body[0]?.jobIds?.[0],
           },
@@ -110,7 +112,7 @@ describe(
           headers: {
             Authorization: `Api-Key ${userAPIkey}`,
           },
-          url: `${Cypress.env("AxiosURL")}events/job-status/slack`,
+          url: `${Cypress.env("AxiosURL")}events/job-status/email`,
           body: {
             jobId: body[0]?.jobIds?.[1],
           },
