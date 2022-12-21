@@ -1,5 +1,6 @@
 import "@4tw/cypress-drag-drop";
 import credentials from "../fixtures/credentials.json";
+import createNewSegment from "./createNewSegment";
 import setupEventTrigger from "./setupEventTrigger";
 
 const { email, password, userAPIkey, emailTemplate } =
@@ -57,6 +58,8 @@ export default () => {
   );
   cy.get('[data-isprimary="true"] [data-handlepos="top"]').click();
 
+  createNewSegment();
+
   cy.contains("Save").click();
   cy.wait(500);
   cy.contains("Start").click();
@@ -65,6 +68,7 @@ export default () => {
   cy.url().should("contain", "/view");
   cy.wait(3000);
   cy.contains("Pause").click();
+  cy.wait(1000);
 
   cy.request({
     method: "POST",
@@ -94,6 +98,7 @@ export default () => {
         event: { A: "A" },
       },
     }).then(({ body }) => {
+      cy.wait(1000);
       cy.request({
         method: "POST",
         headers: {

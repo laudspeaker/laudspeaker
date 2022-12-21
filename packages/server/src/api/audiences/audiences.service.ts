@@ -396,6 +396,8 @@ export class AudiencesService {
         return Promise.reject(err);
       }
     }
+    // TODO: remove
+    console.warn("jobId's ==============\n", jobIds);
     return Promise.resolve(jobIds);
   }
 }

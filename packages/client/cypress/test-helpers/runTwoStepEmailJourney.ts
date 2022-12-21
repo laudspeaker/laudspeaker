@@ -1,4 +1,5 @@
 import "@4tw/cypress-drag-drop";
+import createNewSegment from "./createNewSegment";
 import setupEventTrigger from "./setupEventTrigger";
 
 export default (name: string, eventName: string) => {
@@ -30,11 +31,10 @@ export default (name: string, eventName: string) => {
   ).drag('[data-isprimary]:not([data-isprimary="true"])', { force: true });
   cy.get('[data-isprimary]:not([data-isprimary="true"])').click();
 
-  cy.contains("Define segment").click();
-  cy.get("button").contains("New").click();
-  cy.get("[data-title-edit]").click();
-  // cy.contains("Save").click();
-  // cy.wait(1000);
-  // cy.contains("Start").click();
-  // cy.wait(3000);
+  createNewSegment();
+
+  cy.contains("Save").click();
+  cy.wait(1000);
+  cy.contains("Start").click();
+  cy.wait(3000);
 };

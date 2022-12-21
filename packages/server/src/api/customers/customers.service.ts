@@ -175,7 +175,7 @@ export class CustomersService {
           createdCustomer['phEmail'] = data[index]?.properties[emailKey];
         }
       }
-      const ret = await createdCustomer.save();
+      await createdCustomer.save();
     }
   }
 

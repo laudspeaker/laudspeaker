@@ -74,6 +74,8 @@ export class EventsService {
 
   async getJobEmailStatus(body: StatusJobDto) {
     const emailJob = await this.emailQueue.getJob(body.jobId);
+    // TODO: remove
+    console.log(emailJob, body);
     return emailJob.getState();
   }
 
@@ -230,6 +232,7 @@ export class EventsService {
           createdAt: new Date().toUTCString(),
         });
       }
+      console.log(jobIDs);
       return jobIDs;
     } catch (err) {
       this.logger.error('Error: ' + err);

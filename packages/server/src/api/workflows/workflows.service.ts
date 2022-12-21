@@ -412,6 +412,11 @@ export class WorkflowsService {
     }
     if (workflow?.isStopped)
       return Promise.reject(new Error('The workflow has already been stopped'));
+    if (!workflow?.segment)
+      return Promise.reject(
+        new Error('To start workflow segment should be defined')
+      );
+
     for (let index = 0; index < workflow?.audiences?.length; index++) {
       try {
         audience = await this.audiencesService.findOne(

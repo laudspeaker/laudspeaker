@@ -3,6 +3,7 @@
 /* eslint-disable jest/valid-describe-callback */
 /* eslint-disable @typescript-eslint/no-shadow */
 import credentials from "../fixtures/credentials.json";
+import createNewSegment from "../test-helpers/createNewSegment";
 import { loginFunc } from "../test-helpers/loginFunc";
 import setupEventTrigger from "../test-helpers/setupEventTrigger";
 import { tamplatesFunc } from "../test-helpers/templatesFunc";
@@ -82,6 +83,8 @@ describe(
       );
       cy.get('[data-isprimary="false"] [data-handlepos="top"]:last').click();
 
+      createNewSegment();
+
       cy.contains("Save").click();
       cy.wait(500);
       cy.contains("Start").click();
@@ -102,7 +105,7 @@ describe(
           event: { [slackTemplate.eventName]: slackTemplate.eventName },
         },
       }).then(({ body }) => {
-        cy.wait(1000);
+        cy.wait(2000);
         cy.request({
           method: "POST",
           headers: {
@@ -128,7 +131,7 @@ describe(
           event: { [emailTemplate.eventName]: emailTemplate.eventName },
         },
       }).then(({ body }) => {
-        cy.wait(1000);
+        cy.wait(2000);
         cy.request({
           method: "POST",
           headers: {

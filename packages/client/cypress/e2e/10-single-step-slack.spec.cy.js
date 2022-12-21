@@ -3,6 +3,7 @@
 /* eslint-disable jest/valid-describe-callback */
 /* eslint-disable @typescript-eslint/no-shadow */
 import credentials from "../fixtures/credentials.json";
+import createNewSegment from "../test-helpers/createNewSegment";
 import { loginFunc } from "../test-helpers/loginFunc";
 import setupEventTrigger from "../test-helpers/setupEventTrigger";
 import { tamplatesFunc } from "../test-helpers/templatesFunc";
@@ -45,6 +46,8 @@ describe(
 
       cy.get(".react-flow__viewport").get('[data-isprimary="true"]').click();
       setupEventTrigger(slackTemplate.eventName, slackTemplate.eventName);
+
+      createNewSegment();
 
       cy.contains("Save").click();
       cy.wait(500);

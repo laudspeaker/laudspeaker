@@ -2,6 +2,7 @@
 /* eslint-disable jest/valid-describe-callback */
 /* eslint-disable @typescript-eslint/no-shadow */
 import credentials from "../fixtures/credentials.json";
+import createNewSegment from "../test-helpers/createNewSegment";
 import { loginFunc } from "../test-helpers/loginFunc";
 import setupEventTrigger from "../test-helpers/setupEventTrigger";
 import { tamplatesFunc } from "../test-helpers/templatesFunc";
@@ -70,6 +71,8 @@ describe(
         '[data-isprimary="true"] [data-handlepos="top"]'
       );
       cy.get('[data-isprimary="true"] [data-handlepos="top"]').click();
+
+      createNewSegment();
 
       cy.contains("Save").click();
       cy.wait(500);
