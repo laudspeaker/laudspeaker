@@ -31,6 +31,7 @@ export interface InclusionCriteria {
 
 interface ISegmentInclusion {
   onSubmit?: (id?: string) => void;
+  defaultTitle?: string;
   workflowId: string;
   segmentId?: string;
   audienceName?: string;
@@ -45,10 +46,11 @@ const MySegment = ({
   audienceName,
   onClose,
   isCollapsible,
+  defaultTitle,
 }: ISegmentInclusion) => {
   const elementRef = useRef<any>(null);
   const [segmentForm, setSegmentForm] = useState<ISegmentInclusionForm>({
-    title: "",
+    title: defaultTitle || "",
   });
   const [titleEdit, setTitleEdit] = useState<boolean>(false);
   const [subTitleOptions, setSubTitleOptions] = useState<ConditionalType>(
@@ -130,7 +132,10 @@ const MySegment = ({
         const { data: fetchedData } = await getSegment(segmentId);
         data = fetchedData;
       }
-      setSegmentForm({ ...segmentForm, title: data?.name || "" });
+      setSegmentForm({
+        ...segmentForm,
+        title: data?.name || segmentForm.title,
+      });
       if (data?.resources) {
         setResouces(data.resources);
       } else {

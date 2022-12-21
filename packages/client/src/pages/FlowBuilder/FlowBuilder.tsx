@@ -45,7 +45,7 @@ import { Helmet } from "react-helmet";
 import { Grid } from "@mui/material";
 import ToggleSwitch from "components/Elements/ToggleSwitch";
 import AlertBanner from "components/AlertBanner";
-import SegmentModal from "./SegmentModal";
+import SegmentModal, { SegmentModalMode } from "./SegmentModal";
 import { ProviderTypes } from "types/triggers";
 
 const segmentTypeStyle =
@@ -153,6 +153,9 @@ const Flow = () => {
     isDynamic: true,
   });
   const [segmentModalOpen, setSegmentModalOpen] = useState(false);
+  const [segmentModalMode, setSegmentModalMode] = useState(
+    SegmentModalMode.EDIT
+  );
 
   const onHandleClick = (e: any, triggerId: any) => {
     return { e, triggerId };
@@ -633,10 +636,22 @@ const Flow = () => {
                     </Tooltip>
                   </div>
                   <GenericButton
-                    customClasses="mt-[10px] !p-[4px] !w-full !block !text-center"
-                    onClick={() => setSegmentModalOpen(true)}
+                    customClasses="mt-[10px] !p-[4px] !w-full !block !text-center text-[12px]"
+                    onClick={() => {
+                      setSegmentModalMode(SegmentModalMode.NEW);
+                      setSegmentModalOpen(true);
+                    }}
                   >
-                    Define segment
+                    Create new segment
+                  </GenericButton>
+                  <GenericButton
+                    customClasses="mt-[10px] !p-[4px] !w-full !block !text-center text-[12px]"
+                    onClick={() => {
+                      setSegmentModalMode(SegmentModalMode.EDIT);
+                      setSegmentModalOpen(true);
+                    }}
+                  >
+                    Use existing segment
                   </GenericButton>
                 </div>
               }
@@ -646,7 +661,7 @@ const Flow = () => {
         <div className="w-full h-full">
           {!segmentId && (
             <AlertBanner
-              title="Sengment is not defined"
+              title="Segment is not defined"
               text="You need to define a segment"
             />
           )}
@@ -783,9 +798,12 @@ const Flow = () => {
         {segmentModalOpen && (
           <SegmentModal
             isOpen={segmentModalOpen}
-            onClose={() => setSegmentModalOpen(false)}
+            onClose={() => {
+              setSegmentModalOpen(false);
+            }}
             segmentId={segmentId}
             workflowId={flowId}
+            mode={segmentModalMode}
             setSegmentId={setSegmentId}
           />
         )}
