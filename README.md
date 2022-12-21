@@ -4,9 +4,16 @@
 <a href='https://laudspeakerusers.slack.com/ssb/redirect'><img alt="Join Slack Community" src="https://img.shields.io/badge/slack%20community-join-green"/></a>
 <a href='https://twitter.com/laudspeaker'><img alt="Follow Laudspeaker" src="https://img.shields.io/badge/%40laudspeaker-follow-blue"/></a>
 <a href='https://img.shields.io/github/commit-activity/m/laudspeaker/laudspeaker'><img alt="Commits" src="https://img.shields.io/github/commit-activity/m/laudspeaker/laudspeaker"/></a>
-  
-  
+
+
 </p>
+
+## Deploy Laudspeaker on Render.com
+
+<a href="https://render.com/deploy?repo=https://github.com/laudspeaker/laudspeaker/tree/docker_optimise">
+<img src="https://render.com/images/deploy-to-render-button.svg" alt="Deploy to Render">
+</a>
+
 
 ## Laudspeaker - Open Source alternative to Braze / Iterable / One Signal / Customer Io. Easily Create Messaging Workflows
 * Send product or event-triggered emails, slack and more to your customers and users at scale
@@ -30,7 +37,7 @@ run backend and front end:
 
 stop all running services:
 - `postgres: sudo systemctl stop postgresql.service`
-redis: 
+redis:
 - `/etc/init.d/redis-server stop`
 - `mongo: sudo systemctl stop mongod`
 
@@ -39,9 +46,9 @@ remove compose conatiners:
 
 Add a `.env` file to both server and client in packages
 
-We have provided examples which you can use: 
+We have provided examples which you can use:
 
-`mv env-server-example packages/server/.env` and  `mv env-client-example packages/client/.env` 
+`mv env-server-example packages/server/.env` and  `mv env-client-example packages/client/.env`
 
 Make sure you fill in the fields in the env files before trying to run laudspeaker
 
@@ -68,7 +75,7 @@ We are planning to build Laudspeaker to work well with the Modern Data Stack, in
 
 **Laudspeaker** is open source and released under the [MIT License][mit_license], and AGPLv3 licenses (code in separate directories) with the exception of our ee directory (which is currently empty!) but will be under the Laudspeaker Enterprise Edition license. If you can only use MIT licencsed code, you can still use Laudspeaker but with a few fewer features.
 
-### Contribute 
+### Contribute
 
 We would love to see you contribute to Laudspeaker. Join our slack to get involved
 
@@ -82,7 +89,7 @@ We would love to see you contribute to Laudspeaker. Join our slack to get involv
 [twitter]: https://twitter.com/laudspeaker
 [mit_license]: https://opensource.org/licenses/MIT
 
-<!--- 
+<!---
 -  [Laudspeaker Blog][laudspeaker-blog]
 
 -  [LinkedIn][linkedin]
