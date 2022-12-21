@@ -48,5 +48,6 @@ import { SlackModule } from '../slack/slack.module';
   ],
   providers: [TemplatesService],
   controllers: [TemplatesController],
+  exports: [TemplatesService],
 })
 export class TemplatesModule {}

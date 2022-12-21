@@ -19,6 +19,9 @@ import {
   CustomerKeys,
   CustomerKeysSchema,
 } from '../customers/schemas/customer-keys.schema';
+import { CustomersModule } from '../customers/customers.module';
+import { TemplatesModule } from '../templates/templates.module';
+import { SlackModule } from '../slack/slack.module';
 
 @Module({
   imports: [
@@ -46,13 +49,12 @@ import {
     BullModule.registerQueue({
       name: 'customers',
     }),
+    CustomersModule,
+    TemplatesModule,
+    SlackModule,
   ],
   controllers: [AudiencesController],
-  providers: [
-    AudiencesService,
-    CustomersService,
-    TemplatesService,
-    SlackService,
-  ],
+  providers: [AudiencesService],
+  exports: [AudiencesService],
 })
 export class AudiencesModule {}

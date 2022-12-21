@@ -24,6 +24,11 @@ import {
   EventKeys,
   EventKeysSchema,
 } from '../events/schemas/event-keys.schema';
+import { Segment } from '../segments/entities/segment.entity';
+import { AudiencesModule } from '../audiences/audiences.module';
+import { CustomersModule } from '../customers/customers.module';
+import { TemplatesModule } from '../templates/templates.module';
+import { SlackModule } from '../slack/slack.module';
 
 @Module({
   imports: [
@@ -35,6 +40,7 @@ import {
       Installation,
       State,
       Stats,
+      Segment,
     ]),
     MongooseModule.forFeature([
       { name: Customer.name, schema: CustomerSchema },
@@ -52,14 +58,13 @@ import {
     BullModule.registerQueue({
       name: 'customers',
     }),
+    AudiencesModule,
+    CustomersModule,
+    TemplatesModule,
+    SlackModule,
   ],
   controllers: [WorkflowsController],
-  providers: [
-    WorkflowsService,
-    AudiencesService,
-    CustomersService,
-    TemplatesService,
-    SlackService,
-  ],
+  providers: [WorkflowsService],
+  exports: [WorkflowsService],
 })
 export class WorkflowsModule {}

@@ -41,6 +41,7 @@ import {
   conditionalComposition,
   operableCompare,
 } from '../audiences/audiences.helper';
+import { Segment } from '../segments/entities/segment.entity';
 
 const defaultEventParams = ['click', 'change', 'pageleave', 'submit'];
 
@@ -58,6 +59,7 @@ export class WorkflowsService {
     @InjectRepository(Workflow)
     private workflowsRepository: Repository<Workflow>,
     @InjectRepository(Stats) private statsRepository: Repository<Stats>,
+    @InjectRepository(Segment) private segmentsRepository: Repository<Segment>,
     @Inject(AudiencesService) private audiencesService: AudiencesService,
     @Inject(CustomersService) private customersService: CustomersService,
     @InjectModel(EventKeys.name)
@@ -469,6 +471,11 @@ export class WorkflowsService {
         }
       }
     }
+
+    const segment = await this.segmentsRepository.findOneBy({
+      id: workflow.segment.id,
+    });
+    await this.segmentsRepository.save({ ...segment, isFreezed: true });
     return Promise.resolve(jobIDs);
   }
 
