@@ -12,3 +12,12 @@ services:
     envVars:
       - key: PORT
         value: 80
+  - type: redis
+    name: laudspeaker
+    ipAllowList:
+      - source: 0.0.0.0/0
+        description: everywhere
+databases:
+- name: laudspeaker-db
+  databaseName: laudspeaker
+  user: postgres
