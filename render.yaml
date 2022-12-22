@@ -20,4 +20,3 @@ services:
 databases:
 - name: laudspeaker-db
   databaseName: laudspeaker
-  user: postgres
