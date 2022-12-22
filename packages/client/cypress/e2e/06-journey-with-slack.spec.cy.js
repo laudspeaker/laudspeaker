@@ -40,6 +40,7 @@ describe(
       cy.get("#saveDraftTemplate").click();
       cy.get("#turnBackFromTemplate").click();
       cy.url().should("include", "/templates");
+      cy.wait(3000);
       cy.contains(slackTemplate.name).should("exist");
 
       cy.get('[data-disclosure-link="Journey Builder"]').click();

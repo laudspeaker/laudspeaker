@@ -3,6 +3,7 @@
 /* eslint-disable @typescript-eslint/no-shadow */
 import credentials from "../fixtures/credentials.json";
 import checkSuccessfulEmailEventHit from "../test-helpers/checkSuccessfulEmailEventHit";
+import createNewSegment from "../test-helpers/createNewSegment";
 import { loginFunc } from "../test-helpers/loginFunc";
 import runTwoStepEmailJourney from "../test-helpers/runTwoStepEmailJourney";
 import setupEventTrigger from "../test-helpers/setupEventTrigger";
@@ -80,6 +81,8 @@ describe(
         '[data-isprimary]:not([data-isprimary="true"]):contains("Step 3")'
       ).click();
 
+      createNewSegment();
+
       cy.contains("Save").click();
       cy.wait(1000);
       cy.contains("Start").click();
@@ -98,8 +101,8 @@ describe(
               Authorization: `Api-Key ${userAPIkey}`,
             },
             body: {
-              correlationKey: "slackId",
-              correlationValue: slackTemplate.slackUid,
+              correlationKey: "email",
+              correlationValue: emailTemplate.correlationValue,
               event: { [slackTemplate.eventName]: slackTemplate.eventName },
             },
           }).then(({ body }) => {

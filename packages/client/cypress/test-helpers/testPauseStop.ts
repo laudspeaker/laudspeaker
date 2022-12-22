@@ -12,7 +12,7 @@ export default () => {
   cy.get("button").contains("Create Journey").click();
   cy.get("#name").should("exist").type("Pause and stop flow");
   cy.get("#createJourneySubmit").click();
-  cy.wait(500);
+  cy.wait(100);
   cy.get("#audience").click();
   cy.get("#name").type("init");
   cy.get("#description").type("init description text");
@@ -22,7 +22,7 @@ export default () => {
     .get('[data-isprimary="true"]')
     .move({ deltaX: 100, deltaY: 100 });
 
-  cy.wait(500);
+  cy.wait(1000);
   cy.get("#audience").click();
   cy.get("#name").type("slack audience");
   cy.get("#description").type("slack description");
@@ -61,9 +61,9 @@ export default () => {
   createNewSegment();
 
   cy.contains("Save").click();
-  cy.wait(500);
+  cy.wait(1000);
   cy.contains("Start").click();
-  cy.wait(500);
+  cy.wait(1000);
   cy.visit("/flow/Pause%20and%20stop%20flow/view");
   cy.url().should("contain", "/view");
   cy.wait(3000);
@@ -98,7 +98,7 @@ export default () => {
         event: { A: "A" },
       },
     }).then(({ body }) => {
-      cy.wait(1000);
+      cy.wait(5000);
       cy.request({
         method: "POST",
         headers: {
@@ -127,7 +127,7 @@ export default () => {
           cy.contains("Stop").click();
           cy.wait(1000);
           cy.contains("Yes").click();
-          cy.wait(1000);
+          cy.wait(2000);
           cy.request({
             method: "POST",
             url: `${Cypress.env("AxiosURL")}events`,

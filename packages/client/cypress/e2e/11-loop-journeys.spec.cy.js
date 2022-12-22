@@ -94,7 +94,7 @@ describe(
           event: { 1: "1" },
         },
       }).then(({ body }) => {
-        cy.wait(1000);
+        cy.wait(4000);
         cy.request({
           method: "POST",
           headers: {
@@ -105,8 +105,8 @@ describe(
             jobId: body[0]?.jobIds?.[0],
           },
         }).then(({ body }) => {
-          cy.wait(1000);
           expect(body).to.equal("completed");
+          cy.wait(1000);
           cy.request({
             method: "POST",
             url: `${Cypress.env("AxiosURL")}events`,
@@ -133,7 +133,7 @@ describe(
                 event: { 1: "1" },
               },
             }).then(({ body }) => {
-              cy.wait(1000);
+              cy.wait(4000);
               cy.request({
                 method: "POST",
                 headers: {

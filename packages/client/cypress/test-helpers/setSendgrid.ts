@@ -18,7 +18,7 @@ export default (apiKey: string, fromEmail: string) => {
   cy.get("#sendgridFromEmail").should("have.value", "");
 
   cy.get("#sendgridApiKey").clear().type(apiKey);
-  cy.get("#sendgridFromEmail").type(fromEmail);
+  cy.get("#sendgridFromEmail").clear().type(fromEmail);
   cy.get(".inline-flex").click();
   cy.wait(3000);
   cy.reload();

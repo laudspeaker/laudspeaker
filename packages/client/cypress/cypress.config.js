@@ -5,6 +5,10 @@ dotenv.config();
 
 module.exports = defineConfig({
   e2e: {
+    retries: {
+      runMode: 2,
+    },
+    screenshotOnRunFailure: false,
     baseUrl: process.env.TESTS_BASE_URL || "http://project_frontend_1:3000",
   },
   env: {

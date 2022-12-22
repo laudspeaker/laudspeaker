@@ -31,7 +31,9 @@ describe(
       runEmailJourney("Email journey 3");
       cy.wait(3000);
       runEmailJourney("Email journey 4");
-      cy.contains("You exceeded limit of 3 emails").should("exist");
+      cy.contains("You exceeded limit of 3 emails", { timeout: 1000 }).should(
+        "exist"
+      );
     });
   }
 );
