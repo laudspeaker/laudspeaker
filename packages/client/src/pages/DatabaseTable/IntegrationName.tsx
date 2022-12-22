@@ -38,28 +38,6 @@ const NamePerson = ({ onSubmit, isPrimary }: INameSegment) => {
 
   const navigate = useNavigate();
 
-  // Handling Name and Description Fields
-  const handleSegmentFormChange = (e: any) => {
-    if (e.target.name === "name") {
-      setSegmentForm({ ...segmentForm, name: e.target.value });
-    }
-  };
-
-  const handleSubmit: any = async (e: any) => {
-    const { data } = await ApiService.post({
-      url: `${ApiConfig.customerCreate}`,
-      options: {
-        name: segmentForm.name,
-      },
-    });
-    if (data) navigate(`/person/${data}`);
-  };
-
-  const [verified, setVerified] = useState(false);
-  const [errors, setErrors] = useState<{ [key: string]: string | undefined }>(
-    {}
-  );
-
   interface IntegrationsData {
     sendingName: string;
     sendingEmail: string;
@@ -67,7 +45,7 @@ const NamePerson = ({ onSubmit, isPrimary }: INameSegment) => {
     testSendingName: string;
     slackId: string;
     eventProvider: string;
-    emailProvider: string;
+    ingestProvider: string;
     mailgunAPIKey: string;
     posthogApiKey: string;
     posthogProjectId: string;
@@ -86,7 +64,7 @@ const NamePerson = ({ onSubmit, isPrimary }: INameSegment) => {
     slackId: "",
     mailgunAPIKey: "",
     eventProvider: "posthog",
-    emailProvider: "",
+    ingestProvider: "",
     posthogApiKey: "",
     posthogProjectId: "",
     posthogHostUrl: "app.posthog.com",
@@ -95,6 +73,29 @@ const NamePerson = ({ onSubmit, isPrimary }: INameSegment) => {
     sendgridApiKey: "",
     sendgridFromEmail: "",
   });
+
+  // Handling Name and Description Fields
+  const handleSegmentFormChange = (e: any) => {
+    if (e.target.name === "name") {
+      setSegmentForm({ ...segmentForm, name: e.target.value });
+    }
+  };
+
+  const handleSubmit: any = async (e: any) => {
+    const { data } = await ApiService.post({
+      url: `${ApiConfig.ingestCreate}`,
+      options: {
+        ingestName: segmentForm.name,
+        ingestProvider: integrationsData.ingestProvider,
+      },
+    });
+    if (data) navigate(`/person/${data}`);
+  };
+
+  const [verified, setVerified] = useState(false);
+  const [errors, setErrors] = useState<{ [key: string]: string | undefined }>(
+    {}
+  );
 
   return (
     <div>
@@ -132,11 +133,11 @@ const NamePerson = ({ onSubmit, isPrimary }: INameSegment) => {
                       ? "You need to verify your email"
                       : item.tooltip,
                 }))}
-                value={integrationsData.emailProvider}
+                value={integrationsData.ingestProvider}
                 onChange={(value: string) => {
                   setIntegrationsData({
                     ...integrationsData,
-                    emailProvider: value,
+                    ingestProvider: value,
                   });
                   setErrors({});
                 }}
