@@ -1,3 +1,4 @@
+// eslint-disable-next-line import/no-extraneous-dependencies
 import "@4tw/cypress-drag-drop";
 import createNewSegment from "./createNewSegment";
 export default (
@@ -10,7 +11,7 @@ export default (
   cy.get("button").contains("Create Journey").click();
   cy.get("#name").should("exist").type(JourneyName);
   cy.get("#createJourneySubmit").click();
-  cy.wait(1000);
+  cy.wait(3000);
   cy.get("#audience > .p-0 > .justify-between").click();
   cy.get("#name").type("init");
   cy.get("#description").type("init description text");

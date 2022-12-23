@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-shadow */
+/* eslint-disable jest/valid-expect */
+// eslint-disable-next-line import/no-extraneous-dependencies
 import "@4tw/cypress-drag-drop";
 import credentials from "../fixtures/credentials.json";
 import createNewSegment from "./createNewSegment";
@@ -12,7 +15,7 @@ export default () => {
   cy.get("button").contains("Create Journey").click();
   cy.get("#name").should("exist").type("Pause and stop flow");
   cy.get("#createJourneySubmit").click();
-  cy.wait(100);
+  cy.wait(3000);
   cy.get("#audience").click();
   cy.get("#name").type("init");
   cy.get("#description").type("init description text");
@@ -22,7 +25,7 @@ export default () => {
     .get('[data-isprimary="true"]')
     .move({ deltaX: 100, deltaY: 100 });
 
-  cy.wait(1000);
+  cy.wait(3000);
   cy.get("#audience").click();
   cy.get("#name").type("slack audience");
   cy.get("#description").type("slack description");

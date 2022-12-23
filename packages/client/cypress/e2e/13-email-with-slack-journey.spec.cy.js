@@ -28,7 +28,7 @@ describe(
       cy.get("button").contains("Create Journey").click();
       cy.get("#name").should("exist").type("Email and slack journey");
       cy.get("#createJourneySubmit").click();
-      cy.wait(500);
+      cy.wait(3000);
       cy.get("#audience").click();
       cy.get("#name").type("init");
       cy.get("#description").type("init description text");
@@ -38,7 +38,7 @@ describe(
         .get('[data-isprimary="true"]')
         .move({ deltaX: 100, deltaY: 100 });
 
-      cy.wait(500);
+      cy.wait(3000);
       cy.get("#audience").click();
       cy.get("#name").type("slack audience");
       cy.get("#description").type("slack description");
