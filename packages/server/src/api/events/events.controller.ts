@@ -96,4 +96,11 @@ export class EventsController {
   ) {
     return this.eventsService.getPossibleValues(key, search);
   }
+
+  @Get('/possible-posthog-types')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor)
+  async getPossiblePothogTypes(@Query('search') search: string) {
+    return this.eventsService.getPossiblePosthogTypes(search);
+  }
 }
