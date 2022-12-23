@@ -128,7 +128,7 @@ export class EventsService {
         if (
           currentEvent.type === 'track' &&
           currentEvent.event &&
-          currentEvent.event !== 'click'
+          currentEvent.event !== 'clicked'
         ) {
           const found = await this.PosthogEventTypeModel.findOne({
             name: currentEvent.event,
