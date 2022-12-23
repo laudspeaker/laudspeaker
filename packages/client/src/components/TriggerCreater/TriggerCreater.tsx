@@ -888,24 +888,6 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
                         }}
                       />
                     </div>
-
-                    // <Select
-                    //   onChange={(val) =>
-                    // setEventTrigger({
-                    //   ...eventTrigger,
-                    //   providerParams: val,
-                    // })
-                    //   }
-                    //   options={[
-                    //     { value: PosthogTriggerParams.Page, title: "Page" },
-                    //     {
-                    //       value: PosthogTriggerParams.Autocapture,
-                    //       title: "Autocapture",
-                    //     },
-                    //   ]}
-                    //   wrapperClassnames="max-w-[120px] w-full"
-                    //   value={eventTrigger.providerParams}
-                    // />
                   )}
                 </div>
                 {triggerType === "eventBased" ? (
