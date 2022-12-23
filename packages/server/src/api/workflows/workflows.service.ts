@@ -603,6 +603,7 @@ export class WorkflowsService {
       this.logger.error('Error: ' + err);
       return Promise.reject(err);
     }
+
     workflow_loop: for (
       let workflowsIndex = 0;
       workflowsIndex < workflows?.length;
@@ -615,13 +616,14 @@ export class WorkflowsService {
         status: undefined,
         failureReason: undefined,
       };
+
+      interrupt = false;
       for (
         let triggerIndex = 0;
         triggerIndex < workflow?.rules?.length;
         triggerIndex++
       ) {
         if (interrupt) {
-          interrupt = false;
           break;
         }
         trigger = JSON.parse(

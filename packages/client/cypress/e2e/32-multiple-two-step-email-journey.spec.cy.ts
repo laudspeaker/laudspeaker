@@ -47,7 +47,7 @@ describe(
           event: { [emailTemplate.eventName]: emailTemplate.eventName },
         },
       }).then(({ body }) => {
-        cy.wait(2000);
+        cy.wait(5000);
         cy.request({
           method: "POST",
           headers: {
@@ -68,7 +68,7 @@ describe(
           },
           url: `${Cypress.env("AxiosURL")}events/job-status/email`,
           body: {
-            jobId: body[0]?.jobIds?.[1],
+            jobId: body[1]?.jobIds?.[0],
           },
         }).then(({ body }) => {
           expect(body).to.equal("completed");
