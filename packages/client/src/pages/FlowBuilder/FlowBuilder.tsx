@@ -433,7 +433,6 @@ const Flow = () => {
   const handleTutorialOpen = () => {
     setTutorialOpen(true);
   };
-  console.log("Dtriggers ", triggers);
 
   const onSaveTrigger = (data: any) => {
     settriggerModalOpen(false);

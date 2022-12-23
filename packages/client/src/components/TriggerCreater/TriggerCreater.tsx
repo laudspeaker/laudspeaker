@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { FormControl } from "@mui/material";
-import { GenericButton, Select } from "components/Elements";
+import { GenericButton, Input, Select } from "components/Elements";
+import AC from "react-autocomplete";
 import {
   getConditions,
   getEventResources,
@@ -21,6 +22,7 @@ import {
   PosthogTriggerParams,
   ProviderTypes,
 } from "types/triggers";
+import { useDebounce } from "react-use";
 
 export type TriggerType = "eventBased" | "timeDelay" | "timeWindow";
 interface ITriggerCreaterProp {
@@ -787,6 +789,25 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
     }
   }
 
+  const [possiblePosthogEventTypes, setPossiblePosthogEventTypes] = useState<
+    string[]
+  >([]);
+
+  const loadPossiblePosthogEventTypes = async () => {
+    const { data } = await ApiService.get({
+      url: "/events/possible-posthog-types",
+    });
+    setPossiblePosthogEventTypes(data);
+  };
+
+  useDebounce(
+    () => {
+      loadPossiblePosthogEventTypes();
+    },
+    1000,
+    [eventTrigger.providerParams]
+  );
+
   return (
     <>
       <Card
@@ -812,24 +833,79 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
                     value={eventTrigger.providerType}
                   />
                   {eventTrigger.providerType === ProviderTypes.Posthog && (
-                    <Select
-                      onChange={(val) =>
-                        setEventTrigger({
-                          ...eventTrigger,
-                          providerParams: val,
-                        })
-                      }
-                      options={[
-                        { value: PosthogTriggerParams.Track, title: "Track" },
-                        { value: PosthogTriggerParams.Page, title: "Page" },
-                        {
-                          value: PosthogTriggerParams.Autocapture,
-                          title: "Autocapture",
-                        },
-                      ]}
-                      wrapperClassnames="max-w-[120px] w-full"
-                      value={eventTrigger.providerParams}
-                    />
+                    <div className="relative">
+                      <AC
+                        getItemValue={(item) => item}
+                        items={[
+                          "page",
+                          "autocapture",
+                          ...possiblePosthogEventTypes,
+                        ]}
+                        autoHighlight={false}
+                        // eslint-disable-next-line @typescript-eslint/no-shadow
+                        renderInput={(props) => (
+                          <Input
+                            name={props.name || ""}
+                            value={props.value}
+                            onChange={props.onChange}
+                            inputRef={props.ref}
+                            aria-expanded={props["aria-expanded"]}
+                            disabled={isViewMode}
+                            id="keyInput"
+                            {...props}
+                          />
+                        )}
+                        renderItem={(item, isHighlighted) => (
+                          <div
+                            className={`${
+                              isHighlighted ? "bg-cyan-100" : ""
+                            } p-[2px] rounded-[6px] relative max-w-full break-all`}
+                          >
+                            {item}
+                          </div>
+                        )}
+                        renderMenu={(items) => {
+                          if (!items.length) return <></>;
+
+                          return (
+                            <div className="max-h-[200px] overflow-y-scroll shadow-md  border-[1px] bg-white border-cyan-500 absolute top-[calc(100%+4px)] w-full rounded-[6px] z-[9999999999]">
+                              {items}
+                            </div>
+                          );
+                        }}
+                        value={eventTrigger.providerParams}
+                        onChange={(e) => {
+                          setEventTrigger({
+                            ...eventTrigger,
+                            providerParams: e.target.value,
+                          });
+                        }}
+                        onSelect={(val) => {
+                          setEventTrigger({
+                            ...eventTrigger,
+                            providerParams: val,
+                          });
+                        }}
+                      />
+                    </div>
+
+                    // <Select
+                    //   onChange={(val) =>
+                    // setEventTrigger({
+                    //   ...eventTrigger,
+                    //   providerParams: val,
+                    // })
+                    //   }
+                    //   options={[
+                    //     { value: PosthogTriggerParams.Page, title: "Page" },
+                    //     {
+                    //       value: PosthogTriggerParams.Autocapture,
+                    //       title: "Autocapture",
+                    //     },
+                    //   ]}
+                    //   wrapperClassnames="max-w-[120px] w-full"
+                    //   value={eventTrigger.providerParams}
+                    // />
                   )}
                 </div>
                 {triggerType === "eventBased" ? (
