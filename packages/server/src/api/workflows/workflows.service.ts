@@ -637,14 +637,14 @@ export class WorkflowsService {
             //for autocapture
             (
               (event.payload.type === PosthogTriggerParams.Track &&
-                event.payload.event === 'clicked' &&
+                event.payload.event === 'click' &&
                 trigger.providerParams === PosthogTriggerParams.Autocapture) ||
               // for page
               (event.payload.type === PosthogTriggerParams.Page &&
                 trigger.providerParams === PosthogTriggerParams.Page) ||
               // for custom
               (event.payload.type === PosthogTriggerParams.Track &&
-                event.payload.event !== 'clicked' &&
+                event.payload.event !== 'click' &&
                 event.payload.event === trigger.providerParams)
             )
           )
