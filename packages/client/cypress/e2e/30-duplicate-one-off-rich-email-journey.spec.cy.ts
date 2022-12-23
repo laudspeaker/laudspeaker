@@ -25,8 +25,14 @@ describe(
       runEmailJourney("Journey with rich email", "example-template-bill");
 
       cy.contains("Journey Builder").click();
-      cy.wait(1000);
-      cy.get(".divide-y > tr > :nth-child(3) button:last").click();
+      cy.wait(3000);
+      cy.contains("Journey with rich email")
+        .parent("td")
+        .parent("tr")
+        .children("td:nth-child(3)")
+        .children("div")
+        .children("button")
+        .click();
       cy.get("[data-duplicate-button]").click();
       cy.wait(1000);
       cy.contains("Journey with rich email-copy-1").click();

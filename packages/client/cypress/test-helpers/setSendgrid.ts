@@ -20,6 +20,7 @@ export default (
   cy.wait(3000);
   cy.reload();
   cy.get(".-mb-px > :nth-child(3)").click();
+  cy.wait(3000);
   cy.contains("Sendgrid").click();
   cy.get("#sendgridApiKey").should("have.value", "");
   cy.get("#sendgridFromEmail").should("have.value", "");
@@ -27,8 +28,9 @@ export default (
   cy.get("#sendgridApiKey").clear().type(apiKey);
   cy.get("#sendgridFromEmail").clear().type(fromEmail);
   cy.get(".inline-flex").click();
-  cy.wait(3000);
+  cy.wait(10000);
   cy.reload();
+  cy.wait(3000);
   cy.get(".-mb-px > :nth-child(3)").click();
   cy.get("#sendgridApiKey").should("have.value", apiKey);
   cy.get("#sendgridFromEmail").should("have.value", fromEmail);
