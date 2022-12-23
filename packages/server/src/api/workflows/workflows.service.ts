@@ -365,7 +365,7 @@ export class WorkflowsService {
       name: newName,
       visualLayout,
       rules: triggers,
-      segmentId: oldWorkflow.segment.id,
+      segmentId: oldWorkflow.segment?.id,
       isDynamic: oldWorkflow.isDynamic,
     });
   }

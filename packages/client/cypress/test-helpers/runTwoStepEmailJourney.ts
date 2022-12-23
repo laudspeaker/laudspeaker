@@ -1,11 +1,13 @@
+// eslint-disable-next-line import/no-extraneous-dependencies
 import "@4tw/cypress-drag-drop";
 import createNewSegment from "./createNewSegment";
 import setupEventTrigger from "./setupEventTrigger";
 
-export default (name: string, eventName: string) => {
+export default (name: string, eventName: string, flowName = "Email flow") => {
   cy.get('[data-disclosure-link="Journey Builder"]').click();
+  cy.wait(100);
   cy.get(".mt-6 > .inline-flex").click();
-  cy.get("#name").type("Email flow");
+  cy.get("#name").type(flowName);
   cy.get("#createJourneySubmit").click();
   cy.wait(3000);
   cy.get("#audience > .p-0 > .justify-between").click();

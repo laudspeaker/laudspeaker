@@ -1,8 +1,15 @@
+// eslint-disable-next-line import/no-extraneous-dependencies
 import "@4tw/cypress-drag-drop";
-import setFree3 from "./setFree3";
 
-export default (apiKey: string, fromEmail: string) => {
-  setFree3();
+const { TESTS_SENDGRID_API_KEY, TESTS_SENDGRID_FROM_EMAIL } = Cypress.env();
+
+export default (
+  apiKey: string = TESTS_SENDGRID_API_KEY,
+  fromEmail: string = TESTS_SENDGRID_FROM_EMAIL
+) => {
+  cy.get('[data-disclosure-link="Settings"] > .bg-cyan-700').click();
+  cy.get(".-mb-px > :nth-child(3)").click();
+  cy.wait(1000);
   cy.contains("Sendgrid").click();
   cy.get("#sendgridApiKey").clear().type("any-value");
   cy.get("#sendgridFromEmail").type("any-value");

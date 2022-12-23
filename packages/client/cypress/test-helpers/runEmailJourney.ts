@@ -1,6 +1,9 @@
 import "@4tw/cypress-drag-drop";
 import createNewSegment from "./createNewSegment";
-export default (JourneyName = "Single step flow") => {
+export default (
+  JourneyName = "Single step flow",
+  templateName = "TestTemplateForEmail"
+) => {
   cy.wait(3000);
   cy.get('[data-disclosure-link="Journey Builder"]').click();
   cy.wait(3000);
@@ -19,7 +22,7 @@ export default (JourneyName = "Single step flow") => {
     .click();
   cy.get("#email").click();
   cy.get("#activeJourney").click();
-  cy.contains("TestTemplate").click();
+  cy.contains(templateName).click();
   cy.wait(1000);
   cy.get("#exportSelectedTemplate").click();
 
