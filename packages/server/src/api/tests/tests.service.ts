@@ -178,4 +178,10 @@ export class TestsService {
 
     await this.authService.verifyEmail(account, id);
   }
+
+  public async getTestPosthogCustomer(id: string) {
+    return this.customersService.CustomerModel.findOne({
+      posthogId: [id],
+    }).exec();
+  }
 }

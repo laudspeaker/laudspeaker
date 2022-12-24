@@ -736,13 +736,14 @@ export class WorkflowsService {
                   eventIncluded
                 ) {
                   try {
-                    jobIdArr = await this.audiencesService.moveCustomer(
-                      account,
-                      from?.id,
-                      to?.id,
-                      customer?.id,
-                      event
-                    );
+                    const { jobIds: jobIdArr, templates } =
+                      await this.audiencesService.moveCustomer(
+                        account,
+                        from?.id,
+                        to?.id,
+                        customer?.id,
+                        event
+                      );
                     if (to) {
                       const stats = await this.statsRepository.findOne({
                         where: {
@@ -762,6 +763,7 @@ export class WorkflowsService {
                         to?.id
                     );
                     jobId.jobIds = jobIdArr;
+                    jobId.templates = templates;
                     jobIds.push(jobId);
                   } catch (err) {
                     this.logger.error('Error: ' + err);

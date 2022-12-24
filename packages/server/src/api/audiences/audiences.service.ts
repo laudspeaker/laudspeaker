@@ -238,11 +238,12 @@ export class AudiencesService {
     to: string | null | undefined,
     customerId: string,
     event: EventDto
-  ): Promise<(string | number)[]> {
+  ): Promise<{ jobIds: (string | number)[]; templates: Template[] }> {
     let index = -1; // Index of the customer ID in the fromAud.customers array
     const jobIds: (string | number)[] = [];
     let jobId: string | number;
     let fromAud: Audience, toAud: Audience;
+    const templates: Template[] = [];
 
     if (from) {
       try {
@@ -350,6 +351,11 @@ export class AudiencesService {
               event,
               toAud.id
             );
+            templates.push(
+              await this.templatesService.templatesRepository.findOneBy({
+                id: toAud.templates[templateIndex],
+              })
+            );
             this.logger.debug('Queued Message');
             jobIds.push(jobId);
           } catch (err) {
@@ -359,7 +365,7 @@ export class AudiencesService {
         }
       }
     }
-    return Promise.resolve(jobIds);
+    return Promise.resolve({ jobIds, templates });
   }
 
   /**
@@ -383,7 +389,7 @@ export class AudiencesService {
     let jobIds: (string | number)[] = [];
     for (let index = 0; index < customers?.length; index++) {
       try {
-        const jobIdArr: (string | number)[] = await this.moveCustomer(
+        const { jobIds: jobIdArr } = await this.moveCustomer(
           account,
           fromAud?.id,
           toAud?.id,
