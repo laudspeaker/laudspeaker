@@ -29,7 +29,6 @@ describe(
     it("passes for mailgun", () => {
       loginFunc(email, password);
       tamplatesFunc(slackTemplate, emailTemplate);
-      verifyAccount();
       testPauseStop();
     });
 

@@ -19,7 +19,7 @@ describe(
   () => {
     beforeEach(() => {
       cy.request("http://localhost:3001/tests/reset-tests");
-      cy.wait(1000);
+      cy.wait(10000);
     });
 
     it("passes for mailgun", () => {
@@ -32,7 +32,7 @@ describe(
       );
 
       cy.contains("Journey Builder").click();
-      cy.wait(3000);
+      cy.wait(10000);
       cy.contains("someflow")
         .parent("td")
         .parent("tr")
@@ -42,7 +42,7 @@ describe(
         .click();
       cy.get("[data-delete-button]").click();
       cy.get('[label="Yes"]').click();
-      cy.wait(1000);
+      cy.wait(10000);
       cy.contains("someflow").should("not.exist");
 
       checkFailedEmailEventHit(
@@ -65,7 +65,7 @@ describe(
       );
 
       cy.contains("Journey Builder").click();
-      cy.wait(3000);
+      cy.wait(10000);
       cy.contains("someflow")
         .parent("td")
         .parent("tr")
@@ -75,7 +75,7 @@ describe(
         .click();
       cy.get("[data-delete-button]").click();
       cy.get('[label="Yes"]').click();
-      cy.wait(1000);
+      cy.wait(10000);
       cy.contains("someflow").should("not.exist");
 
       checkFailedEmailEventHit(
@@ -98,7 +98,7 @@ describe(
       );
 
       cy.contains("Journey Builder").click();
-      cy.wait(3000);
+      cy.wait(10000);
       cy.contains("someflow")
         .parent("td")
         .parent("tr")
@@ -108,7 +108,7 @@ describe(
         .click();
       cy.get("[data-delete-button]").click();
       cy.get('[label="Yes"]').click();
-      cy.wait(1000);
+      cy.wait(10000);
       cy.contains("someflow").should("not.exist");
 
       checkFailedEmailEventHit(

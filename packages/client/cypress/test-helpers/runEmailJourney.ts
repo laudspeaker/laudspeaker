@@ -24,7 +24,7 @@ export default (
   cy.get("#email").click();
   cy.get("#activeJourney").click();
   cy.contains(templateName).click();
-  cy.wait(1000);
+  cy.wait(3000);
   cy.get("#exportSelectedTemplate").click();
 
   createNewSegment();
