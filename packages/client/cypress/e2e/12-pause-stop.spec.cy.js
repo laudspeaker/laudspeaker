@@ -29,6 +29,7 @@ describe(
     it("passes for mailgun", () => {
       loginFunc(email, password);
       tamplatesFunc(slackTemplate, emailTemplate);
+      verifyAccount();
       testPauseStop();
     });
 
@@ -43,6 +44,7 @@ describe(
 
     it("passes for sendgrid", () => {
       loginFunc(email, password);
+      verifyAccount();
       tamplatesFunc(slackTemplate, emailTemplate);
       setSendgrid(TESTS_SENDGRID_API_KEY, TESTS_SENDGRID_FROM_EMAIL);
 
