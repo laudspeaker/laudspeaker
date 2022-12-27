@@ -161,6 +161,15 @@ export class AccountsService extends BaseJwtHelper {
         HttpStatus.BAD_REQUEST
       );
 
+    if (
+      (updateUserDto.smsAccountSid && !updateUserDto.smsAuthToken) ||
+      (!updateUserDto.smsAccountSid && updateUserDto.smsAuthToken)
+    )
+      throw new HttpException(
+        'Both sms account sid and sms auth token must be provider',
+        HttpStatus.BAD_REQUEST
+      );
+
     const updatedUser = await this.accountsRepository.save({
       ...oldUser,
       ...updateUserDto,

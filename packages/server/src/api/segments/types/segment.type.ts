@@ -13,4 +13,3 @@ export interface InclusionCriteria {
   conditionalType?: ConditionalType;
   conditions: Condition[];
 }
-

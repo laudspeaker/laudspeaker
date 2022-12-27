@@ -1,18 +1,16 @@
-import "grapesjs/dist/css/grapes.min.css";
-import { useState, useLayoutEffect, useRef } from "react";
-import Drawer from "../../components/Drawer";
-import SlackTemplateHeader from "./SlackTemplateHeader";
-import ApiService from "services/api.service";
 import { ApiConfig } from "../../constants";
+import React, { useLayoutEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
-import MergeTagInput from "../../components/MergeTagInput/MergeTagInput";
+import ApiService from "services/api.service";
 import { getResources } from "pages/Segment/SegmentHelpers";
+import SlackTemplateHeader from "pages/SlackBuilder/SlackTemplateHeader";
+import MergeTagInput from "components/MergeTagInput";
 
-const SlackBuilder = () => {
+const SmsBuilder = () => {
   const { name } = useParams();
-  const [slackMessage, setSlackMessage] = useState<string>("");
-  const [templateName, setTemplateName] = useState<string>("My slack template");
-  const [slackTemplateId, setSlackTemplateId] = useState<string>("");
+  const [smsMessage, setSmsMessage] = useState<string>("");
+  const [templateName, setTemplateName] = useState<string>("My sms template");
+  const [smsTemplateId, setSmsTemplateId] = useState<string>("");
   const [possibleAttributes, setPossibleAttributes] = useState<string[]>([]);
   const [isPreview, setIsPreview] = useState(true);
 
@@ -27,17 +25,18 @@ const SlackBuilder = () => {
   const onSave = async () => {
     const reqBody = {
       name: templateName,
-      slackMessage: slackMessage,
-      type: "slack",
+      text: smsMessage,
+      type: "sms",
     };
-    if (!slackTemplateId) {
+
+    if (!smsTemplateId) {
       const response = await ApiService.post({
         url: `${ApiConfig.createTemplate}`,
         options: {
           ...reqBody,
         },
       });
-      setSlackTemplateId(response.data.id);
+      setSmsTemplateId(response.data.id);
     } else {
       await ApiService.patch({
         url: `${ApiConfig.getAllTemplates}/${name}`,
@@ -51,9 +50,9 @@ const SlackBuilder = () => {
   useLayoutEffect(() => {
     const populateSlackBuilder = async () => {
       const { data } = await getTemplate(name);
-      setSlackMessage(data.slackMessage);
+      setSmsMessage(data.text);
       setTemplateName(name);
-      setSlackTemplateId(data.id);
+      setSmsTemplateId(data.id);
     };
     const loadAttributes = async () => {
       const { data } = await getResources("attributes");
@@ -67,10 +66,10 @@ const SlackBuilder = () => {
     const focusedInput = document.querySelector(
       "#slackMessage"
     ) as HTMLInputElement;
-    const indexToInsert = focusedInput?.selectionStart || slackMessage.length;
-    const newSlackMessageArr = slackMessage.split("");
+    const indexToInsert = focusedInput?.selectionStart || smsMessage.length;
+    const newSlackMessageArr = smsMessage.split("");
     newSlackMessageArr.splice(indexToInsert, 0, "{{}}");
-    setSlackMessage(newSlackMessageArr.join(""));
+    setSmsMessage(newSlackMessageArr.join(""));
     setIsPreview(true);
   };
 
@@ -85,13 +84,13 @@ const SlackBuilder = () => {
       <div style={{ width: "490px", margin: "auto" }}>
         <MergeTagInput
           isRequired
-          value={slackMessage}
-          placeholder={"Slack Message"}
-          name="slackMessage"
-          id="slackMessage"
+          value={smsMessage}
+          placeholder={"Sms Message"}
+          name="smsMessage"
+          id="smsMessage"
           fullWidth
-          setValue={setSlackMessage}
-          onChange={(e: any) => setSlackMessage(e.target.value)}
+          setValue={setSmsMessage}
+          onChange={(e: any) => setSmsMessage(e.target.value)}
           labelShrink
           isPreview={isPreview}
           setIsPreview={setIsPreview}
@@ -103,4 +102,4 @@ const SlackBuilder = () => {
   );
 };
 
-export default SlackBuilder;
+export default SmsBuilder;

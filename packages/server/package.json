@@ -72,6 +72,7 @@
     "sync-fetch": "^0.4.2",
     "tr-nestjs-clickhouse": "^1.1.1",
     "tst-reflect": "^0.12.0",
+    "twilio": "^3.84.0",
     "typeorm": "^0.3.7",
     "winston": "^3.8.1",
     "winston-papertrail": "^1.0.5",

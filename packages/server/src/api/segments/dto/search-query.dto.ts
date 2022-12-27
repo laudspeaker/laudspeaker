@@ -7,4 +7,3 @@ export class SearchQueryDTO {
   @Trim()
   searchText?: string;
 }
-
