@@ -43,8 +43,6 @@ import {
 } from '../audiences/audiences.helper';
 import { Segment } from '../segments/entities/segment.entity';
 
-const defaultEventParams = ['click', 'change', 'pageleave', 'submit'];
-
 @Injectable()
 export class WorkflowsService {
   private clickhouseClient = createClient({
@@ -365,7 +363,7 @@ export class WorkflowsService {
       name: newName,
       visualLayout,
       rules: triggers,
-      segmentId: oldWorkflow.segment.id,
+      segmentId: oldWorkflow.segment?.id,
       isDynamic: oldWorkflow.isDynamic,
     });
   }
@@ -412,6 +410,11 @@ export class WorkflowsService {
     }
     if (workflow?.isStopped)
       return Promise.reject(new Error('The workflow has already been stopped'));
+    if (!workflow?.segment)
+      return Promise.reject(
+        new Error('To start workflow segment should be defined')
+      );
+
     for (let index = 0; index < workflow?.audiences?.length; index++) {
       try {
         audience = await this.audiencesService.findOne(
@@ -600,6 +603,7 @@ export class WorkflowsService {
       this.logger.error('Error: ' + err);
       return Promise.reject(err);
     }
+
     workflow_loop: for (
       let workflowsIndex = 0;
       workflowsIndex < workflows?.length;
@@ -612,13 +616,14 @@ export class WorkflowsService {
         status: undefined,
         failureReason: undefined,
       };
+
+      interrupt = false;
       for (
         let triggerIndex = 0;
         triggerIndex < workflow?.rules?.length;
         triggerIndex++
       ) {
         if (interrupt) {
-          interrupt = false;
           break;
         }
         trigger = JSON.parse(
@@ -629,10 +634,19 @@ export class WorkflowsService {
           event.source === ProviderTypes.Posthog &&
           trigger.providerType === ProviderTypes.Posthog &&
           !(
-            event.payload.type === trigger.providerParams ||
-            (event.payload.type === PosthogTriggerParams.Track &&
-              !defaultEventParams.includes(event.payload.type) &&
-              trigger.providerParams === PosthogTriggerParams.Autocapture)
+            //for autocapture
+            (
+              (event.payload.type === PosthogTriggerParams.Track &&
+                event.payload.event === 'click' &&
+                trigger.providerParams === PosthogTriggerParams.Autocapture) ||
+              // for page
+              (event.payload.type === PosthogTriggerParams.Page &&
+                trigger.providerParams === PosthogTriggerParams.Page) ||
+              // for custom
+              (event.payload.type === PosthogTriggerParams.Track &&
+                event.payload.event !== 'click' &&
+                event.payload.event === trigger.providerParams)
+            )
           )
         ) {
           continue;
@@ -722,13 +736,14 @@ export class WorkflowsService {
                   eventIncluded
                 ) {
                   try {
-                    jobIdArr = await this.audiencesService.moveCustomer(
-                      account,
-                      from?.id,
-                      to?.id,
-                      customer?.id,
-                      event
-                    );
+                    const { jobIds: jobIdArr, templates } =
+                      await this.audiencesService.moveCustomer(
+                        account,
+                        from?.id,
+                        to?.id,
+                        customer?.id,
+                        event
+                      );
                     if (to) {
                       const stats = await this.statsRepository.findOne({
                         where: {
@@ -748,6 +763,7 @@ export class WorkflowsService {
                         to?.id
                     );
                     jobId.jobIds = jobIdArr;
+                    jobId.templates = templates;
                     jobIds.push(jobId);
                   } catch (err) {
                     this.logger.error('Error: ' + err);

@@ -2,6 +2,7 @@
 /* eslint-disable jest/valid-describe-callback */
 /* eslint-disable @typescript-eslint/no-shadow */
 import credentials from "../fixtures/credentials.json";
+import createNewSegment from "../test-helpers/createNewSegment";
 import { loginFunc } from "../test-helpers/loginFunc";
 import setupEventTrigger from "../test-helpers/setupEventTrigger";
 import { tamplatesFunc } from "../test-helpers/templatesFunc";
@@ -27,7 +28,7 @@ describe(
       cy.get("button").contains("Create Journey").click();
       cy.get("#name").should("exist").type("Email and slack journey");
       cy.get("#createJourneySubmit").click();
-      cy.wait(500);
+      cy.wait(3000);
       cy.get("#audience").click();
       cy.get("#name").type("init");
       cy.get("#description").type("init description text");
@@ -37,7 +38,7 @@ describe(
         .get('[data-isprimary="true"]')
         .move({ deltaX: 100, deltaY: 100 });
 
-      cy.wait(500);
+      cy.wait(3000);
       cy.get("#audience").click();
       cy.get("#name").type("slack audience");
       cy.get("#description").type("slack description");
@@ -64,9 +65,13 @@ describe(
 
       cy.get('[data-isprimary="true"]')
         .get('[data-handlepos="bottom"]')
-        .drag('[data-isprimary="false"] [data-handlepos="top"]');
+        .drag('[data-isprimary="false"] [data-handlepos="top"]', {
+          force: true,
+        });
 
       cy.get('[data-isprimary="false"] [data-handlepos="top"]').click();
+
+      createNewSegment();
 
       cy.contains("Save").click();
       cy.wait(500);
@@ -94,7 +99,7 @@ describe(
           headers: {
             Authorization: `Api-Key ${userAPIkey}`,
           },
-          url: `${Cypress.env("AxiosURL")}events/job-status/email`,
+          url: `${Cypress.env("AxiosURL")}events/job-status/slack`,
           body: {
             jobId: body[0]?.jobIds?.[0],
           },
@@ -107,7 +112,7 @@ describe(
           headers: {
             Authorization: `Api-Key ${userAPIkey}`,
           },
-          url: `${Cypress.env("AxiosURL")}events/job-status/slack`,
+          url: `${Cypress.env("AxiosURL")}events/job-status/email`,
           body: {
             jobId: body[0]?.jobIds?.[1],
           },

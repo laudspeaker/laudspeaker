@@ -110,6 +110,8 @@ export class TestsService {
       await this.templateRepository.delete({ ownerId: '-1000' });
       await this.audienceRepository.delete({ ownerId: '-1000' });
 
+      await this.authService.helper.generateDefaultData(ret.id);
+
       await this.customersService.CustomerModel.deleteMany({
         ownerId: '-1000',
       });
@@ -175,5 +177,11 @@ export class TestsService {
     });
 
     await this.authService.verifyEmail(account, id);
+  }
+
+  public async getTestPosthogCustomer(id: string) {
+    return this.customersService.CustomerModel.findOne({
+      posthogId: [id],
+    }).exec();
   }
 }

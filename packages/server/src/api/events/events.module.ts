@@ -31,6 +31,10 @@ import { TemplatesModule } from '../templates/templates.module';
 import { WorkflowsModule } from '../workflows/workflows.module';
 import { AudiencesModule } from '../audiences/audiences.module';
 import { SlackModule } from '../slack/slack.module';
+import {
+  PosthogEventType,
+  PosthogEventTypeSchema,
+} from './schemas/posthog-event-type.schema';
 
 @Module({
   imports: [
@@ -48,6 +52,7 @@ import { SlackModule } from '../slack/slack.module';
       { name: CustomerKeys.name, schema: CustomerKeysSchema },
       { name: Event.name, schema: EventSchema },
       { name: EventKeys.name, schema: EventKeysSchema },
+      { name: PosthogEventType.name, schema: PosthogEventTypeSchema },
     ]),
     BullModule.registerQueue({
       name: 'email',

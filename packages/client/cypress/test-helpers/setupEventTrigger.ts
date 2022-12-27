@@ -1,3 +1,4 @@
+import "@4tw/cypress-drag-drop";
 export default (key: string, value: string) => {
   cy.wait(3000);
   cy.contains("Event Based").click();

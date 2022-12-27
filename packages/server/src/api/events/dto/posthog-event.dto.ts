@@ -58,7 +58,7 @@ export class PostHogEventDto {
 
   @IsString()
   @IsOptional()
-  public event?: Record<string, any>;
+  public event?: string;
 
   //object
   @IsObject()

@@ -20,7 +20,7 @@ export enum PosthogTriggerParams {
 
 export interface EventTrigger {
   providerType: ProviderTypes;
-  providerParams: PosthogTriggerParams;
+  providerParams: string;
   properties: {
     conditions?: EventCondition[];
   };

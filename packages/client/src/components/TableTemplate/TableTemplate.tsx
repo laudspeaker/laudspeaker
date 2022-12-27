@@ -640,6 +640,7 @@ export default function TableTemplate({
                     });
                     window.location.reload();
                   }}
+                  data-duplicate-button
                 >
                   Duplicate
                 </button>,
@@ -651,6 +652,7 @@ export default function TableTemplate({
                         onClick={() => {
                           if (row?.id) handleDeleteJourney(row.id);
                         }}
+                        data-delete-button
                       >
                         Delete
                       </button>,

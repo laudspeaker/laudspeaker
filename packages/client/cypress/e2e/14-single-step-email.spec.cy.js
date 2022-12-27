@@ -11,7 +11,7 @@ const { email, password, slackTemplate, emailTemplate } =
   credentials.MessageHitUser;
 
 describe(
-  "Journey with slack triggered and created",
+  "Journey with single step email triggered",
   { env: { AxiosURL: "http://localhost:3001/" } },
   () => {
     beforeEach(() => {

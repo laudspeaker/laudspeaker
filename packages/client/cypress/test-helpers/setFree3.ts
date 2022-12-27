@@ -1,3 +1,4 @@
+import "@4tw/cypress-drag-drop";
 /* eslint-disable jest/valid-expect */
 export default () => {
   cy.get('[data-disclosure-link="Settings"] > .bg-cyan-700').click();
