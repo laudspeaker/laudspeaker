@@ -10,13 +10,16 @@ import twilio from 'twilio';
 @Injectable()
 export class SmsProcessor {
   private tagEngine = new Liquid();
+
+  private MAXIMUM_SMS_LENGTH = 1600;
+
   constructor(
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
     private readonly logger: LoggerService
   ) {}
   @Process('send')
   async handleSend(job: Job) {
-    let textWithInsertedTags;
+    let textWithInsertedTags: string;
 
     if (job.data.text) {
       textWithInsertedTags = await this.tagEngine.parseAndRender(
@@ -29,7 +32,7 @@ export class SmsProcessor {
 
     try {
       const message = await twilioClient.messages.create({
-        body: textWithInsertedTags,
+        body: textWithInsertedTags.slice(0, this.MAXIMUM_SMS_LENGTH),
         from: job.data.from,
         to: job.data.to,
       });

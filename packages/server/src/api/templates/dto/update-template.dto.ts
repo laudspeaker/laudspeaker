@@ -1,19 +1,22 @@
 import { Trim } from 'class-sanitizer';
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
 
 export class UpdateTemplateDto {
   @Trim()
   @IsNotEmpty()
+  @MaxLength(255)
   public name: string;
 
   @IsString()
   @IsNotEmpty()
   @IsOptional()
+  @MaxLength(2000)
   public subject: string;
 
   @IsString()
   @IsNotEmpty()
   @IsOptional()
+  @MaxLength(2000)
   public text: string;
 
   @IsString()
@@ -24,6 +27,7 @@ export class UpdateTemplateDto {
   @IsString()
   @IsNotEmpty()
   @IsOptional()
+  @MaxLength(2000)
   public slackMessage: string;
 
   //todo for sms

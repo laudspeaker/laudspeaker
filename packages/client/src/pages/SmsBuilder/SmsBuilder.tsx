@@ -5,6 +5,7 @@ import ApiService from "services/api.service";
 import { getResources } from "pages/Segment/SegmentHelpers";
 import SlackTemplateHeader from "pages/SlackBuilder/SlackTemplateHeader";
 import MergeTagInput from "components/MergeTagInput";
+import { toast } from "react-toastify";
 
 const SmsBuilder = () => {
   const { name } = useParams();
@@ -23,27 +24,35 @@ const SmsBuilder = () => {
   };
 
   const onSave = async () => {
-    const reqBody = {
-      name: templateName,
-      text: smsMessage,
-      type: "sms",
-    };
+    try {
+      const reqBody = {
+        name: templateName,
+        text: smsMessage,
+        type: "sms",
+      };
 
-    if (!smsTemplateId) {
-      const response = await ApiService.post({
-        url: `${ApiConfig.createTemplate}`,
-        options: {
-          ...reqBody,
-        },
-      });
-      setSmsTemplateId(response.data.id);
-    } else {
-      await ApiService.patch({
-        url: `${ApiConfig.getAllTemplates}/${name}`,
-        options: {
-          ...reqBody,
-        },
-      });
+      if (!smsTemplateId) {
+        const response = await ApiService.post({
+          url: `${ApiConfig.createTemplate}`,
+          options: {
+            ...reqBody,
+          },
+        });
+        setSmsTemplateId(response.data.id);
+      } else {
+        await ApiService.patch({
+          url: `${ApiConfig.getAllTemplates}/${name}`,
+          options: {
+            ...reqBody,
+          },
+        });
+      }
+    } catch (e: any) {
+      toast.error(
+        e.response?.data?.message?.[0] ||
+          e.response?.data?.message ||
+          "Unexpected error"
+      );
     }
   };
 
@@ -97,6 +106,19 @@ const SmsBuilder = () => {
           possibleAttributes={possibleAttributes}
           inputRef={inputRef}
         />
+        <div className="text-gray-500">
+          <h3>Things you should notice:</h3>
+          <div className="text-[12px]">
+            <div>
+              * if message length is over 160 it will be splitted into multiple
+              parts
+            </div>
+            <div>
+              * if message length is over 1600 it will be limited to first 1600
+              characters to meet system's requirements
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
