@@ -85,7 +85,7 @@ const SmsBuilder = () => {
         <MergeTagInput
           isRequired
           value={smsMessage}
-          placeholder={"Sms Message"}
+          placeholder={"SMS Message"}
           name="smsMessage"
           id="smsMessage"
           fullWidth

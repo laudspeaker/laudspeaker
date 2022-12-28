@@ -6,7 +6,11 @@ import {
 } from '@nestjs/common';
 import { Correlation, CustomersService } from '../customers/customers.service';
 import { CustomerDocument } from '../customers/schemas/customer.schema';
-import { EventsTable, CustomEventTable } from './interfaces/event.interface';
+import {
+  EventsTable,
+  CustomEventTable,
+  JobTypes,
+} from './interfaces/event.interface';
 import { Account } from '../accounts/entities/accounts.entity';
 import { PosthogBatchEventDto } from './dto/posthog-batch-event.dto';
 import { EventDto } from './dto/event.dto';
@@ -42,8 +46,9 @@ export class EventsService {
     private readonly customersService: CustomersService,
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
     private readonly logger: LoggerService,
-    @InjectQueue('email') private readonly emailQueue: Queue,
-    @InjectQueue('slack') private readonly slackQueue: Queue,
+    @InjectQueue(JobTypes.email) private readonly emailQueue: Queue,
+    @InjectQueue(JobTypes.slack) private readonly slackQueue: Queue,
+    @InjectQueue(JobTypes.sms) private readonly smsQueue: Queue,
     @InjectModel(Event.name)
     private EventModel: Model<EventDocument>,
     @InjectModel(EventKeys.name)
@@ -79,25 +84,20 @@ export class EventsService {
     return this.customersService.findByCustomEvent(account, ev.slackId);
   }
 
-  async getJobEmailStatus(body: StatusJobDto) {
-    try {
-      const emailJob = await this.emailQueue.getJob(body.jobId);
-      const state = await emailJob.getState();
-      return state;
-    } catch (err) {
-      this.logger.error('Error getting email job status: ' + err);
-      throw new HttpException('Error getting email job status', 503);
-    }
-  }
+  async getJobStatus(body: StatusJobDto, type: JobTypes) {
+    const jobQueues = {
+      [JobTypes.email]: this.emailQueue,
+      [JobTypes.slack]: this.slackQueue,
+      [JobTypes.sms]: this.smsQueue,
+    };
 
-  async getJobSlackStatus(body: StatusJobDto) {
     try {
-      const slackJob = await this.slackQueue.getJob(body.jobId);
-      const state = await slackJob.getState();
+      const job = await jobQueues[type].getJob(body.jobId);
+      const state = await job.getState();
       return state;
     } catch (err) {
-      this.logger.error('Error getting slack job status: ' + err);
-      throw new HttpException('Error getting slack job status', 503);
+      this.logger.error(`Error getting ${type} job status: ` + err);
+      throw new HttpException(`Error getting ${type} job status`, 503);
     }
   }
 

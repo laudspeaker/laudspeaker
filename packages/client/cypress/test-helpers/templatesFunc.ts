@@ -4,6 +4,11 @@ export interface ISlackTemplate {
   message: string;
 }
 
+export interface ISMSTemplate {
+  name: string;
+  message: string;
+}
+
 export interface IEmailTemplate {
   name: string;
   subject: string;
@@ -19,6 +24,11 @@ export const tamplatesFunc = (
     name: "TestTemplateForEmailSending",
     subject:
       "Test email message by cypress. Unknown tag: {{ randomText }}, known tag: {{ slackEmail }}",
+  },
+  smsTemplate: ISMSTemplate = {
+    name: "TestTemplateForSMSSending",
+    message:
+      "Test SMS message by cypress. Unknown tag: {{ randomText }}, known tag: {{ slackEmail }}",
   }
 ) => {
   cy.reload();
@@ -61,4 +71,20 @@ export const tamplatesFunc = (
   cy.get("#turnBackFromTemplate").click();
   cy.url().should("include", "/templates");
   cy.get(`[href="templates/email/${emailTemplate.name}"]`).should("exist");
+
+  // create sms template
+  cy.get("#createTemplate").click();
+  cy.get("#name").clear().type(smsTemplate.name);
+  cy.get("#handleDay").click();
+  cy.get("#handleDay").find('[data-option="sms"]').click();
+  cy.get("#submitTemplateCreation").click();
+  cy.url().should("include", `templates/sms/${smsTemplate.name}`);
+  cy.get('[data-custominput-placeholder="SMS Message"]').click("left");
+  cy.get("#smsMessage")
+    .clear()
+    .type(smsTemplate.message, { parseSpecialCharSequences: false });
+  cy.get("#saveDraftTemplate").click();
+  cy.get("#turnBackFromTemplate").click();
+  cy.url().should("include", "/templates");
+  cy.get(`[href="templates/sms/${smsTemplate.name}"]`).should("exist");
 };
