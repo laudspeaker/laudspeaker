@@ -161,12 +161,13 @@ export class AccountsService extends BaseJwtHelper {
         HttpStatus.BAD_REQUEST
       );
 
-    if (
-      (updateUserDto.smsAccountSid && !updateUserDto.smsAuthToken) ||
-      (!updateUserDto.smsAccountSid && updateUserDto.smsAuthToken)
-    )
+    const { smsAccountSid, smsAuthToken, smsFrom } = updateUserDto;
+
+    const smsDetails = [smsAccountSid, smsAuthToken, smsFrom];
+
+    if (smsDetails.some((item) => !!item) && smsDetails.some((item) => !item))
       throw new HttpException(
-        'Both sms account sid and sms auth token must be provider',
+        'Both sms account sid, sms auth token and sms from number must be provided',
         HttpStatus.BAD_REQUEST
       );
 

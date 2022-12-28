@@ -112,6 +112,9 @@ export class Customer {
 
   @Prop()
   verified: boolean;
+
+  @Prop()
+  phone: string;
 }
 
 export const CustomerSchema = SchemaFactory.createForClass(Customer);

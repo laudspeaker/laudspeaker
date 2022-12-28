@@ -4,6 +4,7 @@ import { Job } from 'bull';
 import { Injectable } from '@nestjs/common';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { Liquid } from 'liquidjs';
+import twilio from 'twilio';
 
 @Processor('sms')
 @Injectable()
@@ -15,7 +16,29 @@ export class SmsProcessor {
   ) {}
   @Process('send')
   async handleSend(job: Job) {
-    console.log('Sms job status:');
-    console.dir(job, { depth: null });
+    let textWithInsertedTags;
+
+    if (job.data.text) {
+      textWithInsertedTags = await this.tagEngine.parseAndRender(
+        job.data.text,
+        job.data.tags || {}
+      );
+    }
+
+    const twilioClient = twilio(job.data.sid, job.data.token);
+
+    try {
+      const message = await twilioClient.messages.create({
+        body: textWithInsertedTags,
+        from: job.data.from,
+        to: job.data.to,
+      });
+
+      this.logger.debug(
+        `Sms with sid ${message.sid} status: ${JSON.stringify(message.status)}`
+      );
+    } catch (e) {
+      this.logger.error(e);
+    }
   }
 }
