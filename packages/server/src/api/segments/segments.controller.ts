@@ -35,7 +35,7 @@ export class SegmentsController {
   ): Promise<Segment[]> {
     return this.segmentsService.findAll({
       where: {
-        userId: (<Account>user).id,
+        user: { id: (<Account>user).id },
         name: Like(`%${searchText || ''}%`),
       },
       take: 10,

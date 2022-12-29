@@ -81,7 +81,7 @@ export class WorkflowsService {
   ): Promise<{ data: Workflow[]; totalPages: number }> {
     const totalPages = Math.ceil(
       (await this.workflowsRepository.count({
-        where: { ownerId: (<Account>account).id },
+        where: { owner: { id: account.id } },
       })) / take || 1
     );
     const orderOptions = {};
@@ -90,7 +90,7 @@ export class WorkflowsService {
     }
     const workflows = await this.workflowsRepository.find({
       where: {
-        ownerId: (<Account>account).id,
+        owner: { id: account.id },
         isDeleted: In([!!showDisabled, false]),
       },
       order: orderOptions,
@@ -109,7 +109,7 @@ export class WorkflowsService {
   findAllActive(account: Account): Promise<Workflow[]> {
     return this.workflowsRepository.find({
       where: {
-        ownerId: (<Account>account).id,
+        owner: { id: account.id },
         isActive: true,
         isStopped: false,
         isPaused: false,
@@ -162,7 +162,7 @@ export class WorkflowsService {
     try {
       found = await this.workflowsRepository.findOne({
         where: {
-          ownerId: (<Account>account).id,
+          owner: { id: account.id },
           name: name,
         },
         relations: ['segment'],
@@ -194,7 +194,7 @@ export class WorkflowsService {
       const workflow = new Workflow();
       workflow.name = name;
       workflow.audiences = [];
-      workflow.ownerId = (<Account>account).id;
+      workflow.owner.id = account.id;
       let ret: Workflow;
       try {
         ret = await this.workflowsRepository.save(workflow);
@@ -268,7 +268,7 @@ export class WorkflowsService {
         await this.audiencesService.audiencesRepository.update(
           {
             id: audienceId,
-            ownerId: account.id,
+            owner: { id: account.id },
           },
           {
             templates: nodeTemplates.map((item) => item.templateId),
@@ -302,7 +302,7 @@ export class WorkflowsService {
   async duplicate(user: Account, id: string) {
     const oldWorkflow = await this.workflowsRepository.findOne({
       where: {
-        ownerId: user.id,
+        owner: { id: user.id },
         id,
       },
       relations: ['segment'],
@@ -391,7 +391,7 @@ export class WorkflowsService {
     try {
       workflow = await this.workflowsRepository.findOne({
         where: {
-          ownerId: (<Account>account).id,
+          owner: { id: (<Account>account).id },
           id: workflowID,
         },
         relations: ['segment'],
@@ -802,14 +802,14 @@ export class WorkflowsService {
    */
   async remove(account: Account, name: string): Promise<void> {
     await this.workflowsRepository.delete({
-      ownerId: (<Account>account).id,
+      owner: { id: account.id },
       name,
     });
   }
 
   async setPaused(account: Account, id: string, value: boolean) {
     const found: Workflow = await this.workflowsRepository.findOneBy({
-      ownerId: (<Account>account).id,
+      owner: { id: account.id },
       id,
     });
     if (found?.isStopped)
@@ -823,7 +823,7 @@ export class WorkflowsService {
 
   async setStopped(account: Account, id: string, value: boolean) {
     const found: Workflow = await this.workflowsRepository.findOneBy({
-      ownerId: (<Account>account).id,
+      owner: { id: account.id },
       id,
     });
     if (!found?.isActive)

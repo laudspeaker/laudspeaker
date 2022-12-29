@@ -1,5 +1,12 @@
+import { Account } from '@/api/accounts/entities/accounts.entity';
 import { Workflow } from '@/api/workflows/entities/workflow.entity';
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  ManyToOne,
+  OneToMany,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 
 @Entity()
 export class Segment {
@@ -7,7 +14,8 @@ export class Segment {
   public id: string;
 
   @Column()
-  public userId: string;
+  @ManyToOne(() => Account, (account) => account.id)
+  public user: Account;
 
   @Column()
   public name: string;

@@ -92,7 +92,7 @@ export class AuthService {
   public async requestVerification(user: Account) {
     let verification = this.verificationRepository.create({
       email: user.email,
-      accountId: user.id,
+      account: { id: user.id },
       status: 'sent',
     });
 
@@ -120,7 +120,7 @@ export class AuthService {
 
     const verification = await this.verificationRepository.findOneBy({
       id: verificationId,
-      accountId: user.id,
+      account: { id: user.id },
       status: 'sent',
     });
     if (!verification)

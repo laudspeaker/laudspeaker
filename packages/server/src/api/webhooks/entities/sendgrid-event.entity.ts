@@ -1,4 +1,5 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { Audience } from '@/api/audiences/entities/audience.entity';
+import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity()
 export class SendgridEvent {
@@ -6,7 +7,8 @@ export class SendgridEvent {
   id: string;
 
   @Column()
-  audienceId: string;
+  @ManyToOne(() => Audience, (audience) => audience.id)
+  audience: Audience;
 
   @Column()
   customerId: string;

@@ -1,3 +1,4 @@
+import { Account } from '@/api/accounts/entities/accounts.entity';
 import {
   Entity,
   Column,
@@ -56,7 +57,8 @@ export class Workflow {
   name!: string;
 
   @Column()
-  ownerId: string;
+  @ManyToOne(() => Account, (account) => account.id)
+  owner: Account;
 
   @Column('boolean', { default: false })
   isActive: boolean;

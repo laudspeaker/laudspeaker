@@ -77,7 +77,7 @@ export class AuthHelper extends BaseJwtHelper {
     const workflow = new Workflow();
     workflow.name = 'example-onboarding';
     workflow.audiences = [];
-    workflow.ownerId = userId;
+    workflow.owner.id = userId;
     let ret: Workflow;
     try {
       ret = await this.workflowRepository.save(workflow);
@@ -117,7 +117,7 @@ export class AuthHelper extends BaseJwtHelper {
         audience.templates = el.templates;
         audience.isPrimary = el.isPrimary;
         audience.description = el.description;
-        audience.ownerId = el.ownerId;
+        audience.owner.id = el.ownerId;
 
         const resp = await this.audienceRepository.save(audience);
         const stats = this.statsRepository.create({ audience: resp });
@@ -268,7 +268,7 @@ export class AuthHelper extends BaseJwtHelper {
     const workflow = new Workflow();
     workflow.name = 'example-single-campaign';
     workflow.audiences = [];
-    workflow.ownerId = userId;
+    workflow.owner.id = userId;
     let ret: Workflow;
     try {
       ret = await this.workflowRepository.save(workflow);
@@ -297,7 +297,7 @@ export class AuthHelper extends BaseJwtHelper {
         audience.templates = el.templates;
         audience.isPrimary = el.isPrimary;
         audience.description = el.description;
-        audience.ownerId = el.ownerId;
+        audience.owner.id = el.ownerId;
 
         const resp = await this.audienceRepository.save(audience);
         const stats = this.statsRepository.create({ audience: resp });

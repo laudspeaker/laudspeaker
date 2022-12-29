@@ -39,7 +39,7 @@ export class TemplatesService {
     const template = new Template();
     template.type = createTemplateDto.type;
     template.name = createTemplateDto.name;
-    template.ownerId = (<Account>account).id;
+    template.owner.id = (<Account>account).id;
     switch (template.type) {
       case 'email':
         template.subject = createTemplateDto.subject;
@@ -182,7 +182,7 @@ export class TemplatesService {
   ): Promise<{ data: Template[]; totalPages: number }> {
     const totalPages = Math.ceil(
       (await this.templatesRepository.count({
-        where: { ownerId: (<Account>account).id },
+        where: { owner: { id: account.id } },
       })) / take || 1
     );
     const orderOptions = {};
@@ -190,7 +190,7 @@ export class TemplatesService {
       orderOptions[orderBy] = orderType;
     }
     const templates = await this.templatesRepository.find({
-      where: { ownerId: (<Account>account).id },
+      where: { owner: { id: account.id } },
       order: orderOptions,
       take: take < 100 ? take : 100,
       skip,
@@ -200,14 +200,14 @@ export class TemplatesService {
 
   findOne(account: Account, name: string): Promise<Template> {
     return this.templatesRepository.findOneBy({
-      ownerId: (<Account>account).id,
+      owner: { id: account.id },
       name: name,
     });
   }
 
   findOneById(account: Account, id: string): Promise<Template> {
     return this.templatesRepository.findOneBy({
-      ownerId: (<Account>account).id,
+      owner: { id: account.id },
       id: id,
     });
   }
@@ -217,21 +217,21 @@ export class TemplatesService {
     type: 'email' | 'slack' | 'sms'
   ): Promise<Template[]> {
     return this.templatesRepository.findBy({
-      ownerId: (<Account>account).id,
+      owner: { id: account.id },
       type: type,
     });
   }
 
   update(account: Account, name: string, updateTemplateDto: UpdateTemplateDto) {
     return this.templatesRepository.update(
-      { ownerId: (<Account>account).id, name: name },
+      { owner: { id: (<Account>account).id }, name: name },
       { ...updateTemplateDto }
     );
   }
 
   async remove(account: Account, name: string): Promise<void> {
     await this.templatesRepository.delete({
-      ownerId: (<Account>account).id,
+      owner: { id: (<Account>account).id },
       name,
     });
   }
@@ -240,7 +240,9 @@ export class TemplatesService {
     const foundTemplate = await this.findOne(account, name);
     if (!foundTemplate) throw new NotFoundException('Template not found');
 
-    const { ownerId, slackMessage, style, subject, text, type } = foundTemplate;
+    const { owner, slackMessage, style, subject, text, type } = foundTemplate;
+
+    const ownerId = owner.id;
 
     let copyEraseIndex = foundTemplate.name.indexOf('-copy');
     if (copyEraseIndex === -1) copyEraseIndex = foundTemplate.name.length;

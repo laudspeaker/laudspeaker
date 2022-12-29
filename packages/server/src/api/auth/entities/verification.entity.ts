@@ -1,4 +1,11 @@
-import { BaseEntity, Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { Account } from '@/api/accounts/entities/accounts.entity';
+import {
+  BaseEntity,
+  Column,
+  Entity,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 
 @Entity()
 export class Verification extends BaseEntity {
@@ -6,7 +13,8 @@ export class Verification extends BaseEntity {
   public id!: string;
 
   @Column()
-  public accountId: string;
+  @ManyToOne(() => Account, (account) => account.id)
+  public account: Account;
 
   @Column({ type: 'varchar' })
   public email!: string;

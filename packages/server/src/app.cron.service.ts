@@ -380,14 +380,23 @@ export class CronService {
 
       let batch = await this.sendgridEventRepository.find({
         take: BATCH_SIZE,
+        relations: ['account'],
       });
       while (batch.length > 0) {
         await insertMessages(
-          batch.map((item) => ({ ...item, eventProvider: 'sendgrid' }))
+          batch
+            .map((item) => ({
+              ...item,
+              audienceId: item.audience.id,
+              audience: undefined,
+            }))
+            .map((item) => <any>{ ...item, eventProvider: 'sendgrid' })
         );
 
         for (const item of batch) {
-          await this.sendgridEventRepository.delete(item);
+          await this.sendgridEventRepository.delete({
+            id: item.id,
+          });
         }
 
         batch = await this.sendgridEventRepository.find({

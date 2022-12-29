@@ -50,7 +50,9 @@ export class AudiencesService {
    *
    */
   findAll(account: Account): Promise<Audience[]> {
-    return this.audiencesRepository.findBy({ ownerId: (<Account>account).id });
+    return this.audiencesRepository.findBy({
+      owner: { id: account.id },
+    });
   }
 
   /**
@@ -63,7 +65,7 @@ export class AudiencesService {
    */
   findByName(account: Account, name: string): Promise<Audience | null> {
     return this.audiencesRepository.findOneBy({
-      ownerId: (<Account>account).id,
+      owner: { id: account.id },
       name: name,
     });
   }
@@ -78,7 +80,7 @@ export class AudiencesService {
    */
   findOne(account: Account, id: string): Promise<Audience> {
     return this.audiencesRepository.findOneBy({
-      ownerId: (<Account>account).id,
+      owner: { id: account.id },
       id: id,
     });
   }
@@ -106,7 +108,7 @@ export class AudiencesService {
     audience.templates = [];
     audience.isPrimary = createAudienceDto.isPrimary;
     audience.description = createAudienceDto.description;
-    audience.ownerId = account.id;
+    audience.owner.id = account.id;
     audience.templates = createAudienceDto.templates;
     try {
       const resp = await this.audiencesRepository.save(audience);
@@ -138,7 +140,7 @@ export class AudiencesService {
     let audience: Audience; // The found audience
     try {
       audience = await this.audiencesRepository.findOneBy({
-        ownerId: (<Account>account).id,
+        owner: { id: account.id },
         id: updateAudienceDto.id,
         isEditable: true,
       });
@@ -164,7 +166,7 @@ export class AudiencesService {
     }
     try {
       await this.audiencesRepository.update(
-        { ownerId: (<Account>account).id, id: updateAudienceDto.id },
+        { owner: { id: account.id }, id: updateAudienceDto.id },
         {
           description: updateAudienceDto.description,
           name: updateAudienceDto.name,
@@ -197,7 +199,7 @@ export class AudiencesService {
     let found: Audience, ret: Audience;
     try {
       found = await this.audiencesRepository.findOneBy({
-        ownerId: (<Account>account).id,
+        owner: { id: account.id },
         id: id,
       });
       this.logger.debug('Found audience to freeze: ' + found.id);
@@ -311,7 +313,7 @@ export class AudiencesService {
       ) {
         const data = await this.templatesService.templatesRepository.find({
           where: {
-            ownerId: account.id,
+            owner: { id: account.id },
             type: 'email',
             id: In(toAud?.templates),
           },

@@ -1,4 +1,5 @@
-import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
+import { Account } from '@/api/accounts/entities/accounts.entity';
+import { Entity, Column, PrimaryGeneratedColumn, ManyToOne } from 'typeorm';
 
 @Entity()
 export class Template {
@@ -9,7 +10,8 @@ export class Template {
   name: string;
 
   @Column()
-  ownerId: string;
+  @ManyToOne(() => Account, (account) => account.id)
+  owner: Account;
 
   @Column({ nullable: true })
   text: string;

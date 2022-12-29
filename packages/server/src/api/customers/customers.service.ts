@@ -78,7 +78,7 @@ export class CustomersService {
     // Not started (isEditable = true), dynamic (isDyanmic = true), push
     const dynamicWkfs = await this.workflowsRepository.find({
       where: {
-        ownerId: (<Account>account).id,
+        owner: { id: account.id },
         isDynamic: true,
       },
       relations: ['segment'],
@@ -98,7 +98,7 @@ export class CustomersService {
           );
 
           await this.audiencesRepository.update(
-            { ownerId: (<Account>account).id, id: primaryAudience.id },
+            { owner: { id: account.id }, id: primaryAudience.id },
             {
               customers: primaryAudience.customers.concat(ret.id),
             }
@@ -110,7 +110,7 @@ export class CustomersService {
     // Not started(isEditable = false), static(isDyanmic = false), push
     const staticWkfs = await this.workflowsRepository.find({
       where: {
-        ownerId: (<Account>account).id,
+        owner: { id: account.id },
         isDynamic: false,
       },
       relations: ['segment'],
@@ -131,7 +131,7 @@ export class CustomersService {
           const primaryAudience = audiences.find((item) => item.isPrimary);
 
           await this.audiencesRepository.update(
-            { ownerId: (<Account>account).id, id: primaryAudience.id },
+            { owner: { id: account.id }, id: primaryAudience.id },
             {
               customers: primaryAudience.customers.concat(ret.id),
             }

@@ -30,7 +30,9 @@ export class WebhooksService {
     const audienceId = data?.[0]?.audienceId;
     if (!audienceId) return;
 
-    const { ownerId: accountId } = await this.audienceRepository.findOneBy({
+    const {
+      owner: { id: accountId },
+    } = await this.audienceRepository.findOneBy({
       id: audienceId,
     });
 

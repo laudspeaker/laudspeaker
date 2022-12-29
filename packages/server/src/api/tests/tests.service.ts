@@ -53,7 +53,7 @@ export class TestsService {
       });
 
       await this.authService.verificationRepository.delete({
-        accountId: '-1000',
+        account: { id: '-1000' },
       });
 
       const userCreated = await this.authService.repository.findOne({
@@ -109,9 +109,9 @@ export class TestsService {
       );
       ret.id = '-1000';
 
-      await this.workflowsRepository.delete({ ownerId: '-1000' });
-      await this.templateRepository.delete({ ownerId: '-1000' });
-      await this.audienceRepository.delete({ ownerId: '-1000' });
+      await this.workflowsRepository.delete({ owner: { id: '-1000' } });
+      await this.templateRepository.delete({ owner: { id: '-1000' } });
+      await this.audienceRepository.delete({ owner: { id: '-1000' } });
 
       await this.authService.helper.generateDefaultData(ret.id);
 
