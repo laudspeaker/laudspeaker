@@ -19,7 +19,7 @@ export class SmsProcessor {
   ) {}
   @Process('send')
   async handleSend(job: Job) {
-    let textWithInsertedTags: string;
+    let textWithInsertedTags: string | undefined;
 
     if (job.data.text) {
       textWithInsertedTags = await this.tagEngine.parseAndRender(
@@ -32,7 +32,7 @@ export class SmsProcessor {
 
     try {
       const message = await twilioClient.messages.create({
-        body: textWithInsertedTags.slice(0, this.MAXIMUM_SMS_LENGTH),
+        body: textWithInsertedTags?.slice(0, this.MAXIMUM_SMS_LENGTH),
         from: job.data.from,
         to: job.data.to,
       });

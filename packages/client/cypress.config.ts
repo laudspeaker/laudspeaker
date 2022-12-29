@@ -21,6 +21,7 @@ module.exports = defineConfig({
     TESTS_BASE_URL: process.env.TESTS_BASE_URL,
     TESTS_API_BASE_URL:
       process.env.TESTS_API_BASE_URL || "http://laudspeaker_backend_1:3001",
+    TESTS_SMS_TO: process.env.TESTS_SMS_TO,
   },
   port: 5111,
 });

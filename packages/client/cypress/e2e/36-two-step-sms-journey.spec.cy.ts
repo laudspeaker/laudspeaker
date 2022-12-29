@@ -31,7 +31,7 @@ describe(
         },
         body: {
           correlationKey: "phone",
-          correlationValue: smsTemplate.phone,
+          correlationValue: Cypress.env("TESTS_SMS_TO") || smsTemplate.phone,
           event: { [smsTemplate.eventName]: smsTemplate.eventName },
         },
       }).then(({ body }) => {

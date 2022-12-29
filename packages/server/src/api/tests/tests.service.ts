@@ -131,6 +131,7 @@ export class TestsService {
       sanitizedMember.slackDeleted = false;
       sanitizedMember.slackAdmin = true;
       sanitizedMember.slackTeamMember = true;
+      sanitizedMember.phone = process.env.TESTS_SMS_TO;
 
       await this.customersService.create(ret, sanitizedMember);
 

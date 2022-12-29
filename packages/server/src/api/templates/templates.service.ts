@@ -50,6 +50,7 @@ export class TemplatesService {
         template.slackMessage = createTemplateDto.slackMessage;
         break;
       case 'sms':
+        template.text = createTemplateDto.text;
         break;
       //TODO
     }
