@@ -1,12 +1,12 @@
 /* eslint-disable jest/valid-expect */
 /* eslint-disable jest/valid-describe-callback */
 /* eslint-disable @typescript-eslint/no-shadow */
-import credentials from "../fixtures/credentials.json";
+import credentials from "../fixtures/credentials";
 import { loginFunc } from "../test-helpers/loginFunc";
 import runEmailJourney from "../test-helpers/runEmailJourney";
 import setFree3 from "../test-helpers/setFree3";
 import setSendgrid from "../test-helpers/setSendgrid";
-import { tamplatesFunc } from "../test-helpers/templatesFunc";
+import { templatesFunc } from "../test-helpers/templatesFunc";
 
 const { email, password, slackTemplate, emailTemplate } =
   credentials.MessageHitUser;
@@ -25,7 +25,7 @@ describe(
     it("passes", () => {
       loginFunc(email, password);
       setSendgrid(TESTS_SENDGRID_API_KEY, TESTS_SENDGRID_FROM_EMAIL);
-      tamplatesFunc(slackTemplate, emailTemplate);
+      templatesFunc(slackTemplate, emailTemplate);
       runEmailJourney("Sendgrid email journey");
     });
   }

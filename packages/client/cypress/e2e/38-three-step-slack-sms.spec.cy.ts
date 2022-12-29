@@ -1,13 +1,13 @@
 /* eslint-disable jest/valid-expect */
 /* eslint-disable jest/valid-describe-callback */
 /* eslint-disable @typescript-eslint/no-shadow */
-import credentials from "../fixtures/credentials.json";
+import credentials from "../fixtures/credentials";
 import checkSuccessfulEmailEventHit from "../test-helpers/checkSuccessfulEmailEventHit";
 import createNewSegment from "../test-helpers/createNewSegment";
 import { loginFunc } from "../test-helpers/loginFunc";
 import runTwoStepEmailJourney from "../test-helpers/runTwoStepEmailJourney";
 import setupEventTrigger from "../test-helpers/setupEventTrigger";
-import { tamplatesFunc } from "../test-helpers/templatesFunc";
+import { templatesFunc } from "../test-helpers/templatesFunc";
 
 const {
   email,
@@ -30,7 +30,7 @@ describe(
 
     it("passes", () => {
       loginFunc(email, password);
-      tamplatesFunc();
+      templatesFunc();
 
       cy.get('[data-disclosure-link="Journey Builder"]').click();
       cy.get(".mt-6 > .inline-flex").click();
@@ -121,8 +121,9 @@ describe(
               Authorization: `Api-Key ${userAPIkey}`,
             },
             body: {
-              correlationKey: "email",
-              correlationValue: emailTemplate.correlationValue,
+              correlationKey: "phone",
+              correlationValue:
+                Cypress.env("TESTS_SMS_TO") || smsTemplate.phone,
               event: { [slackTemplate.eventName]: slackTemplate.eventName },
             },
           }).then(({ body }) => {

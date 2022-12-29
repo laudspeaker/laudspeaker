@@ -14,7 +14,7 @@ export interface IEmailTemplate {
   subject: string;
 }
 
-export const tamplatesFunc = (
+export const templatesFunc = (
   slackTemplate: ISlackTemplate = {
     name: "TestTemplateForSlackSending",
     message:

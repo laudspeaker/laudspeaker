@@ -1,7 +1,7 @@
 /* eslint-disable jest/valid-expect */
 /* eslint-disable jest/valid-describe-callback */
 /* eslint-disable @typescript-eslint/no-shadow */
-import credentials from "../fixtures/credentials.json";
+import credentials from "../fixtures/credentials";
 import createNewSegment from "../test-helpers/createNewSegment";
 import { loginFunc } from "../test-helpers/loginFunc";
 import setupEventTrigger from "../test-helpers/setupEventTrigger";

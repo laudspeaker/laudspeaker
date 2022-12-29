@@ -1,10 +1,10 @@
 /* eslint-disable jest/valid-expect */
 /* eslint-disable jest/valid-describe-callback */
 /* eslint-disable @typescript-eslint/no-shadow */
-import credentials from "../fixtures/credentials.json";
+import credentials from "../fixtures/credentials";
 import { loginFunc } from "../test-helpers/loginFunc";
 import runTwoStepSMSJourney from "../test-helpers/runTwoStepSMSJourney";
-import { tamplatesFunc } from "../test-helpers/templatesFunc";
+import { templatesFunc } from "../test-helpers/templatesFunc";
 
 const { email, password, smsTemplate, journeyName, userAPIkey } =
   credentials.MessageHitUser;
@@ -20,7 +20,7 @@ describe(
 
     it("passes", () => {
       loginFunc(email, password);
-      tamplatesFunc();
+      templatesFunc();
       runTwoStepSMSJourney(smsTemplate.name, smsTemplate.eventName);
 
       cy.request({

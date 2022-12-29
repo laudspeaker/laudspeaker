@@ -2,11 +2,11 @@
 /* eslint-disable jest/valid-expect */
 /* eslint-disable jest/valid-describe-callback */
 /* eslint-disable @typescript-eslint/no-shadow */
-import credentials from "../fixtures/credentials.json";
+import credentials from "../fixtures/credentials";
 import createNewSegment from "../test-helpers/createNewSegment";
 import { loginFunc } from "../test-helpers/loginFunc";
 import runEmailJourney from "../test-helpers/runEmailJourney";
-import { tamplatesFunc } from "../test-helpers/templatesFunc";
+import { templatesFunc } from "../test-helpers/templatesFunc";
 
 const { email, password, smsTemplate } = credentials.MessageHitUser;
 
@@ -21,7 +21,7 @@ describe(
 
     it("passes", () => {
       loginFunc(email, password);
-      tamplatesFunc();
+      templatesFunc();
 
       cy.get('[data-disclosure-link="Journey Builder"]').click();
       cy.wait(100);

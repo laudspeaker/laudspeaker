@@ -1,12 +1,12 @@
 /* eslint-disable jest/valid-expect */
 /* eslint-disable jest/valid-describe-callback */
 /* eslint-disable @typescript-eslint/no-shadow */
-import credentials from "../fixtures/credentials.json";
+import credentials from "../fixtures/credentials";
 import checkSuccessfulEmailEventHit from "../test-helpers/checkSuccessfulEmailEventHit";
 import { loginFunc } from "../test-helpers/loginFunc";
 import runTwoStepEmailJourney from "../test-helpers/runTwoStepEmailJourney";
 import setSendgrid from "../test-helpers/setSendgrid";
-import { tamplatesFunc } from "../test-helpers/templatesFunc";
+import { templatesFunc } from "../test-helpers/templatesFunc";
 
 const { email, password, emailTemplate, journeyName, userAPIkey } =
   credentials.MessageHitUser;
@@ -24,7 +24,7 @@ describe(
 
     it("passes", () => {
       loginFunc(email, password);
-      tamplatesFunc();
+      templatesFunc();
       setSendgrid(TESTS_SENDGRID_API_KEY, TESTS_SENDGRID_FROM_EMAIL);
       cy.contains("Messaging").click();
       runTwoStepEmailJourney(emailTemplate.name, emailTemplate.eventName);
