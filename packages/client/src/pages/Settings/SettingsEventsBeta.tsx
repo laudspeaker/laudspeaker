@@ -106,7 +106,7 @@ export default function SettingsEventsBeta() {
         },
       });
       await startPosthogImport();
-    } catch (e) {
+    } catch (e: any) {
       toast.error("Error while syncing");
     } finally {
       setIsLoading(false);
@@ -124,7 +124,7 @@ export default function SettingsEventsBeta() {
         url: "/accounts",
         options,
       });
-    } catch (e) {
+    } catch (e: any) {
       toast.error("Unexpected error!");
     } finally {
       setIsLoading(false);

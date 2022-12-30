@@ -200,7 +200,7 @@ export default function SettingsEmailBeta() {
         });
         setEmailProvider(provider);
         setVerified(verifiedFromRequest);
-      } catch (e) {
+      } catch (e: any) {
         toast.error("Error while loading data");
       } finally {
         setIsLoading(false);

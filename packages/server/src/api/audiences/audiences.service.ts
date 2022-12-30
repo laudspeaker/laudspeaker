@@ -115,7 +115,7 @@ export class AudiencesService {
       const stats = this.statsRepository.create({ audience: resp });
       await this.statsRepository.save(stats);
       return resp;
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
     }
   }
@@ -160,7 +160,7 @@ export class AudiencesService {
         this.logger.error('Error: Audience not found');
         return Promise.reject(new Error(Errors.ERROR_DOES_NOT_EXIST));
       }
-    } catch (err) {
+    } catch (err: any) {
       this.logger.error('Error: ' + err);
       return Promise.reject(err);
     }
@@ -176,7 +176,7 @@ export class AudiencesService {
         }
       );
       this.logger.debug('Updated audience: ' + audience.id);
-    } catch (err) {
+    } catch (err: any) {
       this.logger.error('Error: ' + err);
       return Promise.reject(err);
     }
@@ -203,7 +203,7 @@ export class AudiencesService {
         id: id,
       });
       this.logger.debug('Found audience to freeze: ' + found.id);
-    } catch (err) {
+    } catch (err: any) {
       this.logger.error('Error: ' + err);
       return Promise.reject(err);
     }
@@ -213,7 +213,7 @@ export class AudiencesService {
         isEditable: false,
       });
       this.logger.debug('Froze audience: ' + ret.id);
-    } catch (err) {
+    } catch (err: any) {
       this.logger.error('Error: ' + err);
       return Promise.reject(err);
     }
@@ -250,7 +250,7 @@ export class AudiencesService {
     if (from) {
       try {
         fromAud = await this.findOne(account, from);
-      } catch (err) {
+      } catch (err: any) {
         this.logger.error('Error: ' + err);
         return Promise.reject(err);
       }
@@ -258,7 +258,7 @@ export class AudiencesService {
     if (to) {
       try {
         toAud = await this.findOne(account, to);
-      } catch (err) {
+      } catch (err: any) {
         this.logger.error('Error: ' + err);
         return Promise.reject(err);
       }
@@ -285,7 +285,7 @@ export class AudiencesService {
         this.logger.debug(
           'From customers after: ' + fromAud?.customers?.length
         );
-      } catch (err) {
+      } catch (err: any) {
         this.logger.error('Error: ' + err);
         return Promise.reject(err);
       }
@@ -301,7 +301,7 @@ export class AudiencesService {
           }
         );
         this.logger.debug('To after: ' + saved?.customers?.length);
-      } catch (err) {
+      } catch (err: any) {
         this.logger.error('Error: ' + err);
         return Promise.reject(err);
       }
@@ -360,7 +360,7 @@ export class AudiencesService {
             );
             this.logger.debug('Queued Message');
             jobIds.push(jobId);
-          } catch (err) {
+          } catch (err: any) {
             this.logger.error('Error: ' + err);
             return Promise.reject(err);
           }
@@ -399,7 +399,7 @@ export class AudiencesService {
           event
         );
         jobIds = [...jobIdArr, ...jobIds];
-      } catch (err) {
+      } catch (err: any) {
         this.logger.error('Error: ' + err);
         return Promise.reject(err);
       }

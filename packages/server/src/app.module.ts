@@ -57,9 +57,11 @@ const myFormat = winston.format.printf(function ({
     // eslint-disable-next-line handle-callback-err
     Error.prepareStackTrace = (err, structuredStackTrace) =>
       structuredStackTrace;
+    // @ts-ignore
     Error.captureStackTrace(this);
     // we need to "peel" the first CallSites (frames) in order to get to the caller we're looking for
     // in our case we're removing frames that come from logger module or from winston
+    // @ts-ignore
     const callSites = this.stack.filter(boilerplateLines);
     if (callSites.length === 0) {
       // bail gracefully: even though we shouldn't get here, we don't want to crash for a log print!

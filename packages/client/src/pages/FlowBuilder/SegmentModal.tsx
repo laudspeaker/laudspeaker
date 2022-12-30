@@ -65,7 +65,7 @@ const SegmentModal: FC<SegmentModalProps> = ({
           name: data.name,
         });
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
     } finally {
       setIsLoading(false);
@@ -247,7 +247,7 @@ const SegmentModal: FC<SegmentModalProps> = ({
                       );
                       if (data.id) setSelectedSegment(data);
                       handleEditModalOpen(OpenModelType.Edit);
-                    } catch (e) {
+                    } catch (e: any) {
                       console.error(e);
                       toast.error("Unexpected error");
                     }

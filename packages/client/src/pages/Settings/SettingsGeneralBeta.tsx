@@ -119,7 +119,7 @@ export default function SettingsGeneralBeta() {
       setInitialData({ ...formData, firstName, lastName, email });
       setVerified(verifiedFromRequest);
       setTimerSeconds(Math.ceil(+secondtillunblockresend || 0));
-    } catch (e) {
+    } catch (e: any) {
       toast.error("Error while loading data");
     } finally {
       setIsLoading(false);

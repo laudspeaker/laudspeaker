@@ -35,7 +35,7 @@ const TemplateTable = () => {
         setPagesCount(totalPages);
         setSuccess("Success");
         setTemplates(fetchedTemplates);
-      } catch (err) {
+      } catch (err: any) {
         setError(true);
       } finally {
         setLoading(false);

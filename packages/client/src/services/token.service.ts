@@ -43,7 +43,7 @@ class TokenService {
         url: `${ApiConfig.verify}`,
       });
       return true;
-    } catch (e) {
+    } catch (e: any) {
       return false;
     }
   }

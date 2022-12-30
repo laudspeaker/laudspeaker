@@ -89,7 +89,7 @@ const Person = () => {
             date: new Date(item.createdAt).toLocaleString(),
           })),
         ]);
-      } catch (e) {
+      } catch (e: any) {
         console.error(e);
       }
     })();

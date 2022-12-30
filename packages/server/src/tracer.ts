@@ -15,7 +15,7 @@ if (process.env.DD_MONITORING) {
         'http://169.254.169.254/latest/meta-data/local-ipv4'
       );
       tracer.setUrl(`http://${hostname}:8126`);
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
     }
   })();

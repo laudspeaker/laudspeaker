@@ -74,7 +74,7 @@ export class EmailProcessor {
       this.logger.debug(
         'Response from message sending: ' + JSON.stringify(msg)
       );
-    } catch (err) {
+    } catch (err: any) {
       this.logger.error('Error attempting to send email: ' + err);
     }
   }

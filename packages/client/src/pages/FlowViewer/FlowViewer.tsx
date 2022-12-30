@@ -158,7 +158,7 @@ const Flow = () => {
       });
       setIsPaused(!isPaused);
       setIsDataLoaded(true);
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
     }
   };
@@ -172,7 +172,7 @@ const Flow = () => {
       });
       setIsPaused(!isPaused);
       setIsDataLoaded(true);
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
     }
   };
@@ -187,7 +187,7 @@ const Flow = () => {
       setIsStopped(!isStopped);
       setIsDataLoaded(true);
       setIsDialogOpen(false);
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
     }
   };

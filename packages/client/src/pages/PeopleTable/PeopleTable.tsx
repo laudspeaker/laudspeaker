@@ -32,7 +32,7 @@ const PeopleTable = () => {
         setPagesCount(totalPages);
         setSuccess("Success");
         setPeople(fetchedPeople);
-      } catch (err) {
+      } catch (err: any) {
         setError(true);
       } finally {
         setLoading(false);

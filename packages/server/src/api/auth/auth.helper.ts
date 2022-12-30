@@ -82,7 +82,7 @@ export class AuthHelper extends BaseJwtHelper {
         owner: { id: userId },
       });
       this.logger.debug('Created workflow: ' + ret?.id);
-    } catch (err) {
+    } catch (err: any) {
       this.logger.error('Error: ' + err);
     }
 
@@ -277,7 +277,7 @@ export class AuthHelper extends BaseJwtHelper {
         owner: { id: userId },
       });
       this.logger.debug('Created workflow: ' + ret?.id);
-    } catch (err) {
+    } catch (err: any) {
       this.logger.error('Error: ' + err);
     }
 

@@ -95,7 +95,7 @@ export class EventsService {
       const job = await jobQueues[type].getJob(body.jobId);
       const state = await job.getState();
       return state;
-    } catch (err) {
+    } catch (err: any) {
       this.logger.error(`Error getting ${type} job status: ` + err);
       throw new HttpException(`Error getting ${type} job status`, 503);
     }
@@ -107,7 +107,7 @@ export class EventsService {
     try {
       account = await this.userService.findOneByAPIKey(apiKey.substring(8));
       this.logger.debug('Found account: ' + account.id);
-    } catch (e) {
+    } catch (e: any) {
       this.logger.error('Error: ' + e);
       return new HttpException(e, 500);
     }
@@ -180,7 +180,7 @@ export class EventsService {
                 account,
                 correlation.cust
               );
-            } catch (err) {
+            } catch (err: any) {
               this.logger.error('Error: ' + err);
               return new HttpException(err, 500);
             }
@@ -204,17 +204,17 @@ export class EventsService {
               convertedEventDto
             );
             this.logger.debug('Queued messages with jobIDs ' + jobIDs);
-          } catch (err) {
+          } catch (err: any) {
             this.logger.error('Error: ' + err);
             return new HttpException(err, 500);
           }
-        } catch (e) {
+        } catch (e: any) {
           this.logger.error('Error: ' + e);
           return new HttpException(e, 500);
         }
         jobArray = [...jobArray, ...jobIDs];
       }
-    } catch (e) {
+    } catch (e: any) {
       this.logger.error('Error: ' + e);
       return new HttpException(e, 500);
     }
@@ -227,7 +227,7 @@ export class EventsService {
       account = await this.userService.findOneByAPIKey(apiKey.substring(8));
       if (!account) this.logger.error('Account not found');
       this.logger.debug('Found Account: ' + account.id);
-    } catch (err) {
+    } catch (err: any) {
       this.logger.error('Error: ' + err);
       return new HttpException(err, 500);
     }
@@ -237,14 +237,14 @@ export class EventsService {
         body
       );
       this.logger.debug('Correlation result:' + correlation.cust);
-    } catch (err) {
+    } catch (err: any) {
       this.logger.error('Error: ' + err);
       return new HttpException(err, 500);
     }
     if (!correlation.found) {
       try {
         await this.workflowsService.enrollCustomer(account, correlation.cust);
-      } catch (err) {
+      } catch (err: any) {
         this.logger.error('Error: ' + err);
         return new HttpException(err, 500);
       }
@@ -260,7 +260,7 @@ export class EventsService {
       }
       console.log(jobIDs);
       return jobIDs;
-    } catch (err) {
+    } catch (err: any) {
       this.logger.error('Error: ' + err);
       return new HttpException(err, 500);
     }

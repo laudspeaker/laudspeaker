@@ -53,7 +53,7 @@ const ConditionCreater: FC<ConditionCreaterProps> = ({
           url: `/events/possible-values/${key}?search=${value}`,
         });
         setPossibleValues(data);
-      } catch (e) {
+      } catch (e: any) {
         console.error(e);
       }
     }
@@ -73,7 +73,7 @@ const ConditionCreater: FC<ConditionCreaterProps> = ({
           });
 
           setPossibleComparisonTypes(data);
-        } catch (e) {
+        } catch (e: any) {
           console.error(e);
         }
       }
@@ -89,7 +89,7 @@ const ConditionCreater: FC<ConditionCreaterProps> = ({
           });
 
           setDynamicDataToRender(data);
-        } catch (e) {
+        } catch (e: any) {
           console.error(e);
         }
       }

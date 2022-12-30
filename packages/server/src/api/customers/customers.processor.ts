@@ -45,7 +45,7 @@ export class CustomersProcessor {
         }
       }
       console.log('processing is over');
-    } catch (e) {
+    } catch (e: any) {
       console.log(e);
     }
   }

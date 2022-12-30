@@ -94,7 +94,7 @@ export class AccountsService extends BaseJwtHelper {
           },
         });
         verificationKey = body.public_key;
-      } catch (e) {
+      } catch (e: any) {
         throw new BadRequestException(
           'There is something wrong with your sendgrid account. Check if your email is verified'
         );

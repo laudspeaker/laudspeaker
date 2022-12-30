@@ -342,7 +342,7 @@ export class CustomersService {
         auth: authString,
         account: account,
       });
-    } catch (e) {
+    } catch (e: any) {
       this.logger.error('Error: ' + e);
     }
   }
@@ -511,7 +511,7 @@ export class CustomersService {
     const ret: CustomerDocument[] = [];
     try {
       customers = (await this.findAll(account)).data;
-    } catch (err) {
+    } catch (err: any) {
       return Promise.reject(err);
     }
     customers.forEach((customer) => {
@@ -549,7 +549,7 @@ export class CustomersService {
     try {
       customer = await this.CustomerModel.findOne(queryParam).exec();
       this.logger.debug('Found customer in correlationKVPair:' + customer.id);
-    } catch (err) {
+    } catch (err: any) {
       return Promise.reject(err);
     }
     return Promise.resolve(customer);
@@ -564,7 +564,7 @@ export class CustomersService {
     queryParam[dto.correlationKey] = dto.correlationValue;
     try {
       customer = await this.CustomerModel.findOne(queryParam).exec();
-    } catch (err) {
+    } catch (err: any) {
       return Promise.reject(err);
     }
     if (!customer) {

@@ -36,7 +36,7 @@ const FlowTable = () => {
         setSuccess("Success");
         setPagesCount(totalPages);
         setJourneys(fetchedJourneys);
-      } catch (err) {
+      } catch (err: any) {
         posthog.capture("flowTableError", {
           flowTableError: err,
         });

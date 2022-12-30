@@ -82,7 +82,7 @@ const Onboarded = ({ children }: IOnboarded) => {
               options: {},
             })
           ).data;
-        } catch (e) {
+        } catch (e: any) {
           return;
         }
 

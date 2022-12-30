@@ -128,7 +128,7 @@ export class CustomersController {
     let account: Account; // Account associated with the caller
     try {
       account = await this.userService.findOne(user);
-    } catch (e) {
+    } catch (e: any) {
       this.logger.error('Error:' + e);
       return new HttpException(e, 500);
     }
@@ -141,7 +141,7 @@ export class CustomersController {
         account.posthogHostUrl[0],
         account
       );
-    } catch (e) {
+    } catch (e: any) {
       this.logger.error('Error:' + e);
       return new HttpException(e, 500);
     }

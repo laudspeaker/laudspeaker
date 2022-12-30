@@ -37,7 +37,7 @@ const StatModal: FC<StatModalProps> = ({
         });
         setCustomers(customers.concat(data));
         setIsLoading(false);
-      } catch (e) {
+      } catch (e: any) {
         console.error(e);
       }
     })();

@@ -40,7 +40,7 @@ export class SmsProcessor {
       this.logger.debug(
         `Sms with sid ${message.sid} status: ${JSON.stringify(message.status)}`
       );
-    } catch (e) {
+    } catch (e: any) {
       this.logger.error(e);
     }
   }

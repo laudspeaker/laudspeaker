@@ -167,7 +167,7 @@ export class WorkflowsService {
         },
         relations: ['segment'],
       });
-    } catch (err) {
+    } catch (err: any) {
       this.logger.error('Error: ' + err);
       return Promise.reject(err);
     }
@@ -183,7 +183,7 @@ export class WorkflowsService {
           }))
         );
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
     }
 
@@ -199,7 +199,7 @@ export class WorkflowsService {
           owner: { id: account.id },
         });
         this.logger.debug('Created workflow: ' + ret?.id);
-      } catch (err) {
+      } catch (err: any) {
         this.logger.error('Error: ' + err);
         return Promise.reject(err);
       }
@@ -292,7 +292,7 @@ export class WorkflowsService {
         name,
       });
       this.logger.debug('Updated workflow ' + updateWorkflowDto.id);
-    } catch (err) {
+    } catch (err: any) {
       this.logger.error('Error:' + err);
       return Promise.reject(err);
     }
@@ -400,7 +400,7 @@ export class WorkflowsService {
         this.logger.debug('Workflow does not exist');
         return Promise.reject(errors.ERROR_DOES_NOT_EXIST);
       }
-    } catch (err) {
+    } catch (err: any) {
       this.logger.error('Error: ' + err);
       return Promise.reject(err);
     }
@@ -425,14 +425,14 @@ export class WorkflowsService {
           this.logger.error('Error: Workflow contains nonexistant audience');
           return Promise.reject(errors.ERROR_DOES_NOT_EXIST);
         }
-      } catch (err) {
+      } catch (err: any) {
         this.logger.error('Error: ' + err);
         return Promise.reject(err);
       }
       try {
         audience = await this.audiencesService.freeze(account, audience?.id);
         this.logger.debug('Freezing audience ' + audience?.id);
-      } catch (err) {
+      } catch (err: any) {
         this.logger.error('Error: ' + err);
         return Promise.reject(err);
       }
@@ -445,7 +445,7 @@ export class WorkflowsService {
           this.logger.debug(
             'Customers to include in workflow: ' + customers.length
           );
-        } catch (err) {
+        } catch (err: any) {
           this.logger.error('Error: ' + err);
           return Promise.reject(err);
         }
@@ -458,7 +458,7 @@ export class WorkflowsService {
             null
           );
           this.logger.debug('Finished moving customers into workflow');
-        } catch (err) {
+        } catch (err: any) {
           this.logger.error('Error: ' + err);
           return Promise.reject(err);
         }
@@ -468,7 +468,7 @@ export class WorkflowsService {
             isActive: true,
           });
           this.logger.debug('Started workflow ' + workflow?.id);
-        } catch (err) {
+        } catch (err: any) {
           this.logger.error('Error: ' + err);
           return Promise.reject(err);
         }
@@ -504,7 +504,7 @@ export class WorkflowsService {
     try {
       workflows = await this.findAllActive(account);
       this.logger.debug('Active workflows: ' + workflows?.length);
-    } catch (err) {
+    } catch (err: any) {
       this.logger.error('Error: ' + err);
       return Promise.reject(err);
     }
@@ -525,7 +525,7 @@ export class WorkflowsService {
             workflow.audiences[audienceIndex]
           );
           this.logger.debug('Audience: ' + audience);
-        } catch (err) {
+        } catch (err: any) {
           this.logger.error('Error: ' + err);
           return Promise.reject(err);
         }
@@ -546,7 +546,7 @@ export class WorkflowsService {
               null
             );
             this.logger.debug('Enrolled customer in dynamic primary audience.');
-          } catch (err) {
+          } catch (err: any) {
             this.logger.error('Error: ' + err);
             return Promise.reject(err);
           }
@@ -580,7 +580,6 @@ export class WorkflowsService {
       from: Audience, //  Audience to move customer out of
       to: Audience; // Audience to move customer into
     const jobIds: WorkflowTick[] = [];
-    let jobIdArr: (string | number)[] = [];
     let interrupt = false; // Interrupt the tick to avoid the same event triggering two customer moves
 
     if (event) {
@@ -591,7 +590,7 @@ export class WorkflowsService {
           event.correlationValue
         );
         this.logger.debug('Found customer: ' + customer?.id);
-      } catch (err) {
+      } catch (err: any) {
         this.logger.error('Error: ' + err);
         return Promise.reject(err);
       }
@@ -599,7 +598,7 @@ export class WorkflowsService {
     try {
       workflows = await this.findAllActive(account);
       this.logger.debug('Found active workflows: ' + workflows.length);
-    } catch (err) {
+    } catch (err: any) {
       this.logger.error('Error: ' + err);
       return Promise.reject(err);
     }
@@ -610,7 +609,7 @@ export class WorkflowsService {
       workflowsIndex++
     ) {
       workflow = workflows[workflowsIndex];
-      let jobId: WorkflowTick = {
+      const jobId: WorkflowTick = {
         workflowId: workflow.id,
         jobIds: undefined,
         status: undefined,
@@ -661,7 +660,7 @@ export class WorkflowsService {
                   trigger.source
                 );
                 this.logger.debug('Source: ' + from?.id);
-              } catch (err) {
+              } catch (err: any) {
                 this.logger.error('Error: ' + err);
                 jobId.failureReason = err;
                 jobId.status = 'Failed';
@@ -677,7 +676,7 @@ export class WorkflowsService {
                       trigger.dest[0]
                     );
                     this.logger.debug('Dest: ' + to?.id);
-                  } catch (err) {
+                  } catch (err: any) {
                     this.logger.error('Error: ' + err);
                     jobId.failureReason = err;
                     jobId.status = 'Failed';
@@ -765,7 +764,7 @@ export class WorkflowsService {
                     jobId.jobIds = jobIdArr;
                     jobId.templates = templates;
                     jobIds.push(jobId);
-                  } catch (err) {
+                  } catch (err: any) {
                     this.logger.error('Error: ' + err);
                     jobId.failureReason = err;
                     jobId.status = 'Failed';

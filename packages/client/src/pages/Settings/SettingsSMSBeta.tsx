@@ -42,7 +42,7 @@ export default function SettingsSMSBeta() {
           smsAuthToken: smsAuthToken || "",
           smsFrom: smsFrom || "",
         });
-      } catch (e) {
+      } catch (e: any) {
         toast.error("Error while loading data");
       } finally {
         setIsLoading(false);
