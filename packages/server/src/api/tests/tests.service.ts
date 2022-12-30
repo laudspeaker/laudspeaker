@@ -156,10 +156,18 @@ export class TestsService {
   }
 
   public async getTestVerification() {
-    return this.authService.verificationRepository.findOneBy({
-      email: 'testmail@gmail.com',
-      status: 'sent',
+    const verification = await this.authService.verificationRepository.findOne({
+      where: {
+        email: 'testmail@gmail.com',
+        status: 'sent',
+      },
+      relations: ['account'],
     });
+    return {
+      ...verification,
+      account: undefined,
+      accountId: String(verification.account.id),
+    };
   }
 
   public async updateTestAccount(data: Record<string, any>) {
