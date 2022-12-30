@@ -245,7 +245,7 @@ export class AuthHelper extends BaseJwtHelper {
                   ],
                 },
                 title: 'Event Based',
-                type: 'eventBased',
+                type: TriggerType.EVENT,
               },
             ],
           },

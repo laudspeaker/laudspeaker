@@ -75,7 +75,7 @@ export interface Node {
     audienceId: string;
     isSelected: boolean;
     needsUpdate: boolean;
-    dataTriggers?: any[];
+    dataTriggers?: Trigger[];
   };
   type: string;
   width: number;
