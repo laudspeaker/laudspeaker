@@ -11,5 +11,5 @@ export interface WorkflowTick {
 
 export interface PosthogKeysPayload {
   type?: Eventtype;
-  event?: any;
+  event?: Record<string, any>;
 }

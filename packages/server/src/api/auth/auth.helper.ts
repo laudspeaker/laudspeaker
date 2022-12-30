@@ -11,7 +11,7 @@ import { Account } from '../accounts/entities/accounts.entity';
 import { BaseJwtHelper } from '../../common/helper/base-jwt.helper';
 import { DEFAULT_TEMPLATES } from '@/fixtures/user.default.templates';
 import { Template } from '../templates/entities/template.entity';
-import { Workflow } from '../workflows/entities/workflow.entity';
+import { TriggerType, Workflow } from '../workflows/entities/workflow.entity';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { LoggerService } from '@nestjs/common/services';
 import { Inject } from '@nestjs/common/decorators';
@@ -197,7 +197,7 @@ export class AuthHelper extends BaseJwtHelper {
                   ],
                 },
                 title: 'Event Based',
-                type: 'eventBased',
+                type: TriggerType.EVENT,
               },
             ],
             messages: [],

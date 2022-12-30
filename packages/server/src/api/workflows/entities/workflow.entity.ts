@@ -9,9 +9,9 @@ import {
 import { Segment } from '../../segments/entities/segment.entity';
 
 export enum TriggerType {
-  event,
-  time_delay,
-  time_window,
+  EVENT = 'eventBased',
+  TIME_DELAY = 'timeDelay',
+  TIME_WINDOW = 'timeWindow',
 }
 
 export interface IEventConditions {
@@ -40,12 +40,61 @@ export enum PosthogTriggerParams {
 }
 
 export class Trigger {
+  id: string;
+  title: string;
   type: TriggerType;
-  source: string;
-  dest: string[];
+  source?: string;
+  dest?: string[];
   providerType?: ProviderTypes;
   providerParams?: PosthogTriggerParams;
   properties?: EventProps;
+}
+
+export interface Edge {
+  id: string;
+  type: 'smoothstep';
+  source: string;
+  target: string;
+  markerEnd: {
+    type: string;
+    width: number;
+    height: number;
+    strokeWidth: number;
+  };
+  sourceHandle: string;
+  targetHandle: string | null;
+}
+
+export interface Node {
+  id: string;
+  data: {
+    nodeId: string;
+    primary: boolean;
+    messages: string[];
+    triggers: Trigger[];
+    audienceId: string;
+    isSelected: boolean;
+    needsUpdate: boolean;
+    dataTriggers?: any[];
+  };
+  type: string;
+  width: number;
+  height: number;
+  dragging: boolean;
+  position: {
+    x: number;
+    y: number;
+  };
+  selected: boolean;
+  positionAbsolute: {
+    x: number;
+    y: number;
+  };
+}
+
+export interface VisualLayout {
+  edges: Edge[];
+  nodes: Node[];
 }
 
 @Entity()
@@ -81,7 +130,7 @@ export class Workflow {
 
   // {"nodes":[...list of nodes], "edges": [...list of edges]}
   @Column('jsonb', { nullable: true })
-  visualLayout: any;
+  visualLayout: VisualLayout;
 
   @Column({ default: true })
   isDynamic: boolean;

@@ -652,7 +652,7 @@ export class WorkflowsService {
         }
 
         switch (trigger.type) {
-          case TriggerType.event:
+          case TriggerType.EVENT:
             if (customer) {
               try {
                 from = await this.audiencesService.findOne(
@@ -779,9 +779,9 @@ export class WorkflowsService {
               }
             }
             break;
-          case TriggerType.time_delay: //TODO
+          case TriggerType.TIME_DELAY: //TODO
             break;
-          case TriggerType.time_window: //TODO
+          case TriggerType.TIME_WINDOW: //TODO
             break;
         }
       }
