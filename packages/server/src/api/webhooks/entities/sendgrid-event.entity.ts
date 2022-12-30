@@ -1,12 +1,18 @@
 import { Audience } from '@/api/audiences/entities/audience.entity';
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 
 @Entity()
 export class SendgridEvent {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column()
+  @JoinColumn()
   @ManyToOne(() => Audience, (audience) => audience.id)
   audience: Audience;
 

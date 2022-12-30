@@ -3,6 +3,7 @@ import { Workflow } from '@/api/workflows/entities/workflow.entity';
 import {
   Column,
   Entity,
+  JoinColumn,
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
@@ -13,8 +14,8 @@ export class Segment {
   @PrimaryGeneratedColumn('uuid')
   public id: string;
 
-  @Column()
-  @ManyToOne(() => Account, (account) => account.id)
+  @JoinColumn()
+  @ManyToOne(() => Account, (account) => account.id, { onDelete: 'CASCADE' })
   public user: Account;
 
   @Column()

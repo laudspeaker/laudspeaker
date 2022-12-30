@@ -1,5 +1,11 @@
 import { Account } from '@/api/accounts/entities/accounts.entity';
-import { Entity, Column, PrimaryGeneratedColumn, ManyToOne } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  ManyToOne,
+  JoinColumn,
+} from 'typeorm';
 
 @Entity()
 export class Audience {
@@ -9,8 +15,8 @@ export class Audience {
   @Column()
   name!: string;
 
-  @Column()
-  @ManyToOne(() => Account, (account) => account.id)
+  @JoinColumn()
+  @ManyToOne(() => Account, (account) => account.id, { onDelete: 'CASCADE' })
   owner: Account;
 
   @Column('varchar', { nullable: true })

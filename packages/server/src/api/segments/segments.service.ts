@@ -44,16 +44,15 @@ export class SegmentsService {
     createSegmentDTO: CreateSegmentDTO,
     userId: string
   ) {
-    const newSegment = new Segment();
-    newSegment.name = createSegmentDTO.name;
-    newSegment.user.id = userId;
-    if (createSegmentDTO.inclusionCriteria) {
-      newSegment.inclusionCriteria = createSegmentDTO.inclusionCriteria;
-    }
-    newSegment.resources = createSegmentDTO.resources;
+    const { name, inclusionCriteria, resources } = createSegmentDTO;
 
     try {
-      return await this.segmentsRepository.save(newSegment);
+      return await this.segmentsRepository.save({
+        name,
+        inclusionCriteria,
+        resources,
+        user: { id: userId },
+      });
     } catch (error) {
       this.logger.error(error);
       throw new HttpException(

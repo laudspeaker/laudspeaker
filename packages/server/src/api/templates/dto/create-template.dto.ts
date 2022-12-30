@@ -16,7 +16,6 @@ export class CreateTemplateDto {
   @IsString()
   @IsNotEmpty()
   @IsOptional()
-  @MaxLength(2000)
   public text: string;
 
   @IsString()
@@ -34,4 +33,10 @@ export class CreateTemplateDto {
 
   @IsNotEmpty()
   public type: 'email' | 'slack' | 'sms';
+
+  @IsString()
+  @IsNotEmpty()
+  @IsOptional()
+  @MaxLength(2000)
+  public smsText: string;
 }

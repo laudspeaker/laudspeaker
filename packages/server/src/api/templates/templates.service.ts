@@ -39,7 +39,6 @@ export class TemplatesService {
     const template = new Template();
     template.type = createTemplateDto.type;
     template.name = createTemplateDto.name;
-    template.owner.id = (<Account>account).id;
     switch (template.type) {
       case 'email':
         template.subject = createTemplateDto.subject;
@@ -50,11 +49,14 @@ export class TemplatesService {
         template.slackMessage = createTemplateDto.slackMessage;
         break;
       case 'sms':
-        template.text = createTemplateDto.text;
+        template.smsText = createTemplateDto.smsText;
         break;
       //TODO
     }
-    return this.templatesRepository.save(template);
+    return this.templatesRepository.save({
+      ...template,
+      owner: { id: account.id },
+    });
   }
 
   /**
@@ -166,7 +168,7 @@ export class TemplatesService {
           from: account.smsFrom,
           to: customer.phPhoneNumber || customer.phone,
           tags,
-          text: template.text,
+          text: template.smsText,
         });
         break;
     }

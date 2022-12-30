@@ -74,13 +74,13 @@ export class AuthHelper extends BaseJwtHelper {
   }
 
   private async generateExampleOnboardingJourney(userId: string) {
-    const workflow = new Workflow();
-    workflow.name = 'example-onboarding';
-    workflow.audiences = [];
-    workflow.owner.id = userId;
     let ret: Workflow;
     try {
-      ret = await this.workflowRepository.save(workflow);
+      ret = await this.workflowRepository.save({
+        name: 'example-onboarding',
+        audiences: [],
+        owner: { id: userId },
+      });
       this.logger.debug('Created workflow: ' + ret?.id);
     } catch (err) {
       this.logger.error('Error: ' + err);
@@ -111,15 +111,18 @@ export class AuthHelper extends BaseJwtHelper {
           ownerId: userId,
         },
       ].map(async (el) => {
-        const audience = new Audience();
-        audience.name = el.name;
-        audience.customers = el.customers;
-        audience.templates = el.templates;
-        audience.isPrimary = el.isPrimary;
-        audience.description = el.description;
-        audience.owner.id = el.ownerId;
+        const { name, customers, templates, isPrimary, description, ownerId } =
+          el;
 
-        const resp = await this.audienceRepository.save(audience);
+        const resp = await this.audienceRepository.save({
+          name,
+          customers,
+          templates,
+          isPrimary,
+          description,
+          owner: { id: ownerId },
+        });
+
         const stats = this.statsRepository.create({ audience: resp });
         await this.statsRepository.save(stats);
         return resp;
@@ -148,6 +151,7 @@ export class AuthHelper extends BaseJwtHelper {
         },
       },
     ];
+
     const rules: string[] = [];
     for (let index = 0; index < defRules?.length; index++)
       rules.push(
@@ -265,13 +269,13 @@ export class AuthHelper extends BaseJwtHelper {
   }
 
   private async generateExampleSingleCampaignJourney(userId: string) {
-    const workflow = new Workflow();
-    workflow.name = 'example-single-campaign';
-    workflow.audiences = [];
-    workflow.owner.id = userId;
     let ret: Workflow;
     try {
-      ret = await this.workflowRepository.save(workflow);
+      ret = await this.workflowRepository.save({
+        name: 'example-single-campaign',
+        audiences: [],
+        owner: { id: userId },
+      });
       this.logger.debug('Created workflow: ' + ret?.id);
     } catch (err) {
       this.logger.error('Error: ' + err);
@@ -291,15 +295,17 @@ export class AuthHelper extends BaseJwtHelper {
           ownerId: userId,
         },
       ].map(async (el) => {
-        const audience = new Audience();
-        audience.name = el.name;
-        audience.customers = el.customers;
-        audience.templates = el.templates;
-        audience.isPrimary = el.isPrimary;
-        audience.description = el.description;
-        audience.owner.id = el.ownerId;
+        const { name, customers, templates, isPrimary, description, ownerId } =
+          el;
 
-        const resp = await this.audienceRepository.save(audience);
+        const resp = await this.audienceRepository.save({
+          name,
+          customers,
+          templates,
+          isPrimary,
+          description,
+          owner: { id: ownerId },
+        });
         const stats = this.statsRepository.create({ audience: resp });
         await this.statsRepository.save(stats);
         return resp;
@@ -347,7 +353,7 @@ export class AuthHelper extends BaseJwtHelper {
   // generate default templates and workflows for newly registered user
   public async generateDefaultData(userId: string) {
     await this.templateRepository.insert(
-      DEFAULT_TEMPLATES.map((el) => ({ ...el, ownerId: userId }))
+      DEFAULT_TEMPLATES.map((el) => ({ ...el, owner: { id: userId } }))
     );
 
     await this.generateExampleOnboardingJourney(userId);

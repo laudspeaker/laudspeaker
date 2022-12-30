@@ -1,5 +1,11 @@
 import { Account } from '@/api/accounts/entities/accounts.entity';
-import { Entity, Column, PrimaryGeneratedColumn, ManyToOne } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  ManyToOne,
+  JoinColumn,
+} from 'typeorm';
 
 @Entity()
 export class Template {
@@ -9,8 +15,8 @@ export class Template {
   @Column()
   name: string;
 
-  @Column()
-  @ManyToOne(() => Account, (account) => account.id)
+  @JoinColumn()
+  @ManyToOne(() => Account, (account) => account.id, { onDelete: 'CASCADE' })
   owner: Account;
 
   @Column({ nullable: true })
@@ -27,4 +33,7 @@ export class Template {
 
   @Column()
   type: 'email' | 'slack' | 'sms';
+
+  @Column({ nullable: true })
+  smsText: string;
 }

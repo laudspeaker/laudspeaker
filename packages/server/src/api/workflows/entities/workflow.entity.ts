@@ -56,8 +56,8 @@ export class Workflow {
   @Column()
   name!: string;
 
-  @Column()
-  @ManyToOne(() => Account, (account) => account.id)
+  @JoinColumn()
+  @ManyToOne(() => Account, (account) => account.id, { onDelete: 'CASCADE' })
   owner: Account;
 
   @Column('boolean', { default: false })

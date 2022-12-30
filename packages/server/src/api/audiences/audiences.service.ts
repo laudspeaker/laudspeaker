@@ -102,16 +102,16 @@ export class AudiencesService {
     account: Account,
     createAudienceDto: CreateAudienceDto
   ): Promise<Audience> {
-    const audience = new Audience();
-    audience.name = createAudienceDto.name;
-    audience.customers = [];
-    audience.templates = [];
-    audience.isPrimary = createAudienceDto.isPrimary;
-    audience.description = createAudienceDto.description;
-    audience.owner.id = account.id;
-    audience.templates = createAudienceDto.templates;
+    const { name, isPrimary, description, templates } = createAudienceDto;
     try {
-      const resp = await this.audiencesRepository.save(audience);
+      const resp = await this.audiencesRepository.save({
+        customers: [],
+        name,
+        isPrimary,
+        description,
+        templates: templates || [],
+        owner: { id: account.id },
+      });
       const stats = this.statsRepository.create({ audience: resp });
       await this.statsRepository.save(stats);
       return resp;

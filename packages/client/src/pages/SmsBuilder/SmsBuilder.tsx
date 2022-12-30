@@ -27,7 +27,7 @@ const SmsBuilder = () => {
     try {
       const reqBody = {
         name: templateName,
-        text: smsMessage,
+        smsText: smsMessage,
         type: "sms",
       };
 
@@ -59,7 +59,7 @@ const SmsBuilder = () => {
   useLayoutEffect(() => {
     const populateSlackBuilder = async () => {
       const { data } = await getTemplate(name);
-      setSmsMessage(data.text);
+      setSmsMessage(data.smsText);
       setTemplateName(name);
       setSmsTemplateId(data.id);
     };

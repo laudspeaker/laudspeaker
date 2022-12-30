@@ -34,4 +34,10 @@ export class UpdateTemplateDto {
 
   @IsNotEmpty()
   public type: 'email' | 'slack' | 'sms';
+
+  @IsString()
+  @IsNotEmpty()
+  @IsOptional()
+  @MaxLength(2000)
+  public smsText: string;
 }

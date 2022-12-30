@@ -191,13 +191,13 @@ export class WorkflowsService {
       this.logger.debug('Found workflow: ' + found?.id);
       return found;
     } else {
-      const workflow = new Workflow();
-      workflow.name = name;
-      workflow.audiences = [];
-      workflow.owner.id = account.id;
       let ret: Workflow;
       try {
-        ret = await this.workflowsRepository.save(workflow);
+        ret = await this.workflowsRepository.save({
+          name,
+          audiences: [],
+          owner: { id: account.id },
+        });
         this.logger.debug('Created workflow: ' + ret?.id);
       } catch (err) {
         this.logger.error('Error: ' + err);
