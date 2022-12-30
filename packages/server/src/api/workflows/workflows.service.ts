@@ -43,8 +43,6 @@ import {
 } from '../audiences/audiences.helper';
 import { Segment } from '../segments/entities/segment.entity';
 
-const defaultEventParams = ['click', 'change', 'pageleave', 'submit'];
-
 @Injectable()
 export class WorkflowsService {
   private clickhouseClient = createClient({
@@ -629,10 +627,19 @@ export class WorkflowsService {
           event.source === ProviderTypes.Posthog &&
           trigger.providerType === ProviderTypes.Posthog &&
           !(
-            event.payload.type === trigger.providerParams ||
-            (event.payload.type === PosthogTriggerParams.Track &&
-              !defaultEventParams.includes(event.payload.type) &&
-              trigger.providerParams === PosthogTriggerParams.Autocapture)
+            //for autocapture
+            (
+              (event.payload.type === PosthogTriggerParams.Track &&
+                event.payload.event === 'click' &&
+                trigger.providerParams === PosthogTriggerParams.Autocapture) ||
+              // for page
+              (event.payload.type === PosthogTriggerParams.Page &&
+                trigger.providerParams === PosthogTriggerParams.Page) ||
+              // for custom
+              (event.payload.type === PosthogTriggerParams.Track &&
+                event.payload.event !== 'click' &&
+                event.payload.event === trigger.providerParams)
+            )
           )
         ) {
           continue;

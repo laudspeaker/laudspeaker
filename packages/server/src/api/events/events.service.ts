@@ -14,7 +14,7 @@ import { AccountsService } from '../accounts/accounts.service';
 import { WorkflowsService } from '../workflows/workflows.service';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { WorkflowTick } from '../workflows/interfaces/workflow-tick.interface';
-import { PostHogEventDto } from './dto/posthog-event.dto';
+import { Eventtype, PostHogEventDto } from './dto/posthog-event.dto';
 import { StatusJobDto } from './dto/status-event.dto';
 import { Queue } from 'bull';
 import { InjectQueue } from '@nestjs/bull';
@@ -26,6 +26,11 @@ import { EventKeys, EventKeysDocument } from './schemas/event-keys.schema';
 import { attributeConditions } from '@/fixtures/attributeConditions';
 import keyTypes from '@/fixtures/keyTypes';
 import defaultEventKeys from '@/fixtures/defaultEventKeys';
+import {
+  PosthogEventType,
+  PosthogEventTypeDocument,
+} from './schemas/posthog-event-type.schema';
+import { PosthogTriggerParams } from '../workflows/entities/workflow.entity';
 
 @Injectable()
 export class EventsService {
@@ -42,7 +47,9 @@ export class EventsService {
     @InjectModel(Event.name)
     private EventModel: Model<EventDocument>,
     @InjectModel(EventKeys.name)
-    private EventKeysModel: Model<EventKeysDocument>
+    private EventKeysModel: Model<EventKeysDocument>,
+    @InjectModel(PosthogEventType.name)
+    private PosthogEventTypeModel: Model<PosthogEventTypeDocument>
   ) {
     for (const { name, property_type } of defaultEventKeys) {
       if (name && property_type) {
@@ -117,6 +124,21 @@ export class EventsService {
         this.logger.debug(
           'Processing posthog event: ' + JSON.stringify(currentEvent, null, 2)
         );
+
+        if (
+          currentEvent.type === 'track' &&
+          currentEvent.event &&
+          currentEvent.event !== 'clicked'
+        ) {
+          const found = await this.PosthogEventTypeModel.findOne({
+            name: currentEvent.event,
+          }).exec();
+          if (!found) {
+            await this.PosthogEventTypeModel.create({
+              name: currentEvent.event,
+            });
+          }
+        }
 
         let jobIDs: WorkflowTick[] = [];
         let cust: CustomerDocument, // Customer document created/found on this API call
@@ -299,5 +321,15 @@ export class EventsService {
       { $limit: 5 },
     ]).exec();
     return docs.map((doc) => doc?.['event']?.[key]).filter((item) => item);
+  }
+
+  async getPossiblePosthogTypes(search = '') {
+    const searchRegExp = new RegExp(`.*${search}.*`, 'i');
+    const types = await this.PosthogEventTypeModel.find({
+      name: searchRegExp,
+    })
+      .limit(10)
+      .exec();
+    return types.map((type) => type.name);
   }
 }
