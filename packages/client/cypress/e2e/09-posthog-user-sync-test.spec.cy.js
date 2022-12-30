@@ -24,9 +24,9 @@ describe("Posthog sync", () => {
           Authorization: "Bearer " + accessToken,
         },
       });
-      cy.wait(2000);
+      cy.wait(20000);
       cy.visit("people");
-      cy.get("td").should("have.length.above", 0);
+      cy.get("td").should("have.length.above", 10);
     });
   });
 });

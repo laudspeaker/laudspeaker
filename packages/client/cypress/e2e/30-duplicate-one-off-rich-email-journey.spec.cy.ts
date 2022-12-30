@@ -11,7 +11,7 @@ const { email, password, slackTemplate, emailTemplate } =
   credentials.MessageHitUser;
 
 describe(
-  "Journey with single step email triggered",
+  "Journey with single step email triggered and duplicating it",
   { env: { AxiosURL: "http://localhost:3001/" } },
   () => {
     beforeEach(() => {
@@ -22,7 +22,21 @@ describe(
     it("passes", () => {
       loginFunc(email, password);
       tamplatesFunc(slackTemplate, emailTemplate);
-      runEmailJourney();
+      runEmailJourney("Journey with rich email", "example-template-bill");
+
+      cy.contains("Journey Builder").click();
+      cy.wait(3000);
+      cy.contains("Journey with rich email")
+        .parent("td")
+        .parent("tr")
+        .children("td:nth-child(3)")
+        .children("div")
+        .children("button")
+        .click();
+      cy.get("[data-duplicate-button]").click();
+      cy.wait(1000);
+      cy.contains("Journey with rich email-copy-1").click();
+      cy.contains("Start").click();
     });
   }
 );

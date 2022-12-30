@@ -32,7 +32,7 @@ import ExitIcon from "../../assets/images/ExitIcon.svg";
 import SideDrawer from "components/SideDrawer";
 import { ApiConfig } from "./../../constants";
 import ChooseTemplateModal from "./ChooseTemplateModal";
-import { MySegment, NameSegment } from "pages/Segment";
+import { NameSegment } from "pages/Segment";
 import ApiService from "services/api.service";
 import TriggerModal from "./TriggerModal";
 import { GenericButton, Select } from "components/Elements";
@@ -578,6 +578,8 @@ const Flow = () => {
   else if (!nodes.some((node) => node.data.messages.length > 0))
     startDisabledReason =
       "Add a message to a step to be able to start a journey";
+  else if (!segmentId)
+    startDisabledReason = "You have to define segment for journey";
 
   return (
     <div>
@@ -635,6 +637,7 @@ const Flow = () => {
                     </Tooltip>
                   </div>
                   <GenericButton
+                    id="createNewSegment"
                     customClasses="mt-[10px] !p-[4px] !w-full !block !text-center text-[12px]"
                     onClick={() => {
                       setSegmentModalMode(SegmentModalMode.NEW);
@@ -644,6 +647,7 @@ const Flow = () => {
                     Create new segment
                   </GenericButton>
                   <GenericButton
+                    id="useExistingSegment"
                     customClasses="mt-[10px] !p-[4px] !w-full !block !text-center text-[12px]"
                     onClick={() => {
                       setSegmentModalMode(SegmentModalMode.EDIT);

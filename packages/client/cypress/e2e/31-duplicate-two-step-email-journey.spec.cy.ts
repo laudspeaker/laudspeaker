@@ -31,6 +31,27 @@ describe(
         "email",
         emailTemplate.correlationValue
       );
+
+      cy.contains("Journey Builder").click();
+      cy.wait(1000);
+      cy.contains("Email flow")
+        .parent("td")
+        .parent("tr")
+        .children("td:nth-child(3)")
+        .children("div")
+        .children("button")
+        .click();
+      cy.get("[data-duplicate-button]").click();
+      cy.wait(1000);
+      cy.contains("Email flow-copy-1").click();
+      cy.contains("Start").click();
+      cy.wait(3000);
+      checkSuccessfulEmailEventHit(
+        userAPIkey,
+        emailTemplate.eventName,
+        "email",
+        emailTemplate.correlationValue
+      );
     });
   }
 );

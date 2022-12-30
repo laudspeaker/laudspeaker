@@ -3,6 +3,7 @@
 /* eslint-disable jest/valid-describe-callback */
 /* eslint-disable @typescript-eslint/no-shadow */
 import credentials from "../fixtures/credentials.json";
+import createNewSegment from "../test-helpers/createNewSegment";
 import { loginFunc } from "../test-helpers/loginFunc";
 import setupEventTrigger from "../test-helpers/setupEventTrigger";
 import { tamplatesFunc } from "../test-helpers/templatesFunc";
@@ -28,7 +29,7 @@ describe(
       cy.get("button").contains("Create Journey").click();
       cy.get("#name").should("exist").type("Multiple triggers flow");
       cy.get("#createJourneySubmit").click();
-      cy.wait(500);
+      cy.wait(3000);
       cy.get("#audience").click();
       cy.get("#name").type("init");
       cy.get("#description").type("init description text");
@@ -38,7 +39,7 @@ describe(
         .get('[data-isprimary="true"]')
         .move({ deltaX: 100, deltaY: 100 });
 
-      cy.wait(500);
+      cy.wait(3000);
       cy.get("#audience").click();
       cy.get("#name").type("slack audience");
       cy.get("#description").type("slack description");
@@ -64,7 +65,7 @@ describe(
 
       cy.get('[data-isprimary="false"] [data-handlepos="top"]').click();
 
-      cy.wait(500);
+      cy.wait(3000);
       cy.get("#audience").click();
       cy.get("#name").type("email audience");
       cy.get("#description").type("email description");
@@ -81,6 +82,8 @@ describe(
         '[data-isprimary="false"] [data-handlepos="top"]:last'
       );
       cy.get('[data-isprimary="false"] [data-handlepos="top"]:last').click();
+
+      createNewSegment();
 
       cy.contains("Save").click();
       cy.wait(500);
@@ -102,7 +105,7 @@ describe(
           event: { [slackTemplate.eventName]: slackTemplate.eventName },
         },
       }).then(({ body }) => {
-        cy.wait(1000);
+        cy.wait(2000);
         cy.request({
           method: "POST",
           headers: {
@@ -128,7 +131,7 @@ describe(
           event: { [emailTemplate.eventName]: emailTemplate.eventName },
         },
       }).then(({ body }) => {
-        cy.wait(1000);
+        cy.wait(2000);
         cy.request({
           method: "POST",
           headers: {

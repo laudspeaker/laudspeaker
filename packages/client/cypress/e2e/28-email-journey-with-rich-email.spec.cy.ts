@@ -12,7 +12,7 @@ const { email, password, emailTemplate, journeyName, userAPIkey } =
   credentials.MessageHitUser;
 
 describe(
-  "Journey with email triggered",
+  "Journey with rich email template triggered",
   { env: { AxiosURL: "http://localhost:3001/" } },
   () => {
     beforeEach(() => {
@@ -22,8 +22,8 @@ describe(
 
     it("passes", () => {
       loginFunc(email, password);
-      tamplatesFunc();
-      runTwoStepEmailJourney(emailTemplate.name, emailTemplate.eventName);
+      cy.contains("Messaging").click();
+      runTwoStepEmailJourney("example-template-bill", emailTemplate.eventName);
 
       checkSuccessfulEmailEventHit(
         userAPIkey,

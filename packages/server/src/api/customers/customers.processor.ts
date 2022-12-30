@@ -22,6 +22,7 @@ export class CustomersProcessor {
           Authorization: job.data.auth,
         },
       });
+
       if (res?.data?.results.length > 0) {
         await this.customersService.addPhCustomers(
           res.data.results,

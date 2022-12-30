@@ -45,4 +45,9 @@ export class TestsController {
   async verifyTestAccount(@Param('id') id: string) {
     return this.testsService.verifyTestAccount(id);
   }
+
+  @Get('test-posthog-customer/:id')
+  async getTestPosthogCustomer(@Param('id') id: string) {
+    return this.testsService.getTestPosthogCustomer(id);
+  }
 }

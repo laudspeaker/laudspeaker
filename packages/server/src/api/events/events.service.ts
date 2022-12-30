@@ -80,8 +80,14 @@ export class EventsService {
   }
 
   async getJobEmailStatus(body: StatusJobDto) {
-    const emailJob = await this.emailQueue.getJob(body.jobId);
-    return emailJob.getState();
+    try {
+      const emailJob = await this.emailQueue.getJob(body.jobId);
+      const state = await emailJob.getState();
+      return state;
+    } catch (err) {
+      this.logger.error('Error getting email job status: ' + err);
+      throw new HttpException('Error getting email job status', 503);
+    }
   }
 
   async getJobSlackStatus(body: StatusJobDto) {
@@ -90,8 +96,8 @@ export class EventsService {
       const state = await slackJob.getState();
       return state;
     } catch (err) {
-      this.logger.error('Error: ' + err);
-      throw new HttpException('Error getting job status', 503);
+      this.logger.error('Error getting slack job status: ' + err);
+      throw new HttpException('Error getting slack job status', 503);
     }
   }
 
@@ -252,6 +258,7 @@ export class EventsService {
           createdAt: new Date().toUTCString(),
         });
       }
+      console.log(jobIDs);
       return jobIDs;
     } catch (err) {
       this.logger.error('Error: ' + err);

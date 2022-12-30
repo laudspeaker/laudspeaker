@@ -273,6 +273,7 @@ const SegmentModal: FC<SegmentModalProps> = ({
                 className="!z-[2000000000]"
               >
                 <GenericButton
+                  id="submitSegmentCreate"
                   disabled={!newSegmentName.trim()}
                   onClick={() => handleEditModalOpen(OpenModelType.New)}
                 >

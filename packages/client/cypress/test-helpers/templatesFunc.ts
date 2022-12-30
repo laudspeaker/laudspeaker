@@ -1,3 +1,4 @@
+import "@4tw/cypress-drag-drop";
 export interface ISlackTemplate {
   name: string;
   message: string;
