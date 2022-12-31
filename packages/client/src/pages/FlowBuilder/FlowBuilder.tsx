@@ -162,7 +162,6 @@ const Flow = () => {
   };
   const onTriggerSelect = (e: any, triggerId: any, triggersList: any) => {
     const trigger = triggersList.find((item: any) => item.id === triggerId);
-    console.log("onselecttrigger", triggersList, trigger);
     setSelectedTrigger(trigger);
     settriggerModalOpen(true);
   };
