@@ -9,9 +9,9 @@ import {
 import { Segment } from '../../segments/entities/segment.entity';
 
 export enum TriggerType {
-  EVENT = 'eventBased',
-  TIME_DELAY = 'timeDelay',
-  TIME_WINDOW = 'timeWindow',
+  EVENT,
+  TIME_DELAY,
+  TIME_WINDOW,
 }
 
 export interface IEventConditions {
