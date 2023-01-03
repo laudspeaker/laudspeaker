@@ -829,6 +829,7 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
                       { value: ProviderTypes.Posthog, title: "Posthog" },
                       { value: ProviderTypes.Custom, title: "Custom" },
                     ]}
+                    disabled={isViewMode}
                     wrapperClassnames="max-w-[120px] mr-[15px]"
                     value={eventTrigger.providerType}
                   />

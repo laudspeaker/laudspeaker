@@ -1,5 +1,5 @@
 /* eslint-disable jest/expect-expect */
-import credentials from "../fixtures/credentials.json";
+import credentials from "../fixtures/credentials";
 import setMailgun from "../test-helpers/setMailgun";
 
 const { email, password } = credentials;

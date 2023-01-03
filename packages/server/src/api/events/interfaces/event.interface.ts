@@ -102,3 +102,9 @@ export enum Eventtype {
   group,
   alias,
 }
+
+export enum JobTypes {
+  email = 'email',
+  slack = 'slack',
+  sms = 'sms',
+}

@@ -63,6 +63,9 @@ import {
     BullModule.registerQueue({
       name: 'customers',
     }),
+    BullModule.registerQueue({
+      name: 'sms',
+    }),
     AuthModule,
     CustomersModule,
     AccountsModule,

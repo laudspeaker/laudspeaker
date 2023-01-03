@@ -48,6 +48,18 @@ export default function ResponsiveDrawer(props: Props) {
     })();
   }, []);
 
+  React.useLayoutEffect(() => {
+    (async () => {
+      const { data } = await ApiService.get({ url: "/accounts" });
+      const { smsAccountSid } = data;
+      if (smsAccountSid)
+        setExpectedOnboarding((expectedOnboardingArr) => [
+          "Sms",
+          ...expectedOnboardingArr,
+        ]);
+    })();
+  }, []);
+
   const handleMenuItemClick = (id: string) => {
     onClick(id);
   };

@@ -18,6 +18,7 @@ import { EventDto } from './dto/event.dto';
 import { WorkflowTick } from '../workflows/interfaces/workflow-tick.interface';
 import { EventsService } from './events.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { JobTypes } from './interfaces/event.interface';
 
 @Controller('events')
 export class EventsController {
@@ -29,13 +30,19 @@ export class EventsController {
   @Post('job-status/email')
   @UseInterceptors(ClassSerializerInterceptor)
   async getJobEmailStatus(@Body() body: StatusJobDto): Promise<string> {
-    return this.eventsService.getJobEmailStatus(body);
+    return this.eventsService.getJobStatus(body, JobTypes.email);
   }
 
   @Post('job-status/slack')
   @UseInterceptors(ClassSerializerInterceptor)
   async getJobSlackStatus(@Body() body: StatusJobDto): Promise<string> {
-    return this.eventsService.getJobSlackStatus(body);
+    return this.eventsService.getJobStatus(body, JobTypes.slack);
+  }
+
+  @Post('job-status/sms')
+  @UseInterceptors(ClassSerializerInterceptor)
+  async getJobSMSStatus(@Body() body: StatusJobDto): Promise<string> {
+    return this.eventsService.getJobStatus(body, JobTypes.sms);
   }
 
   @Post('/posthog/')

@@ -123,4 +123,13 @@ export class Account extends BaseEntity {
 
   @Column({ type: 'varchar', nullable: true })
   public sendgridVerificationKey?: string;
+
+  @Column({ type: 'varchar', nullable: true })
+  public smsAccountSid?: string;
+
+  @Column({ type: 'varchar', nullable: true })
+  public smsAuthToken?: string;
+
+  @Column({ type: 'varchar', nullable: true })
+  public smsFrom?: string;
 }

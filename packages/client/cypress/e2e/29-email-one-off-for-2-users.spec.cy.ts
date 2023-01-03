@@ -2,10 +2,10 @@
 /* eslint-disable jest/valid-expect */
 /* eslint-disable jest/valid-describe-callback */
 /* eslint-disable @typescript-eslint/no-shadow */
-import credentials from "../fixtures/credentials.json";
+import credentials from "../fixtures/credentials";
 import { loginFunc } from "../test-helpers/loginFunc";
 import runEmailJourney from "../test-helpers/runEmailJourney";
-import { tamplatesFunc } from "../test-helpers/templatesFunc";
+import { templatesFunc } from "../test-helpers/templatesFunc";
 
 const { email, password, slackTemplate, emailTemplate } =
   credentials.MessageHitUser;
@@ -33,7 +33,7 @@ describe(
       cy.get(":nth-child(2) > .relative > .mt-1").type("some-email@gmail.com");
       cy.contains("Add").click();
       cy.contains("Save").click();
-      tamplatesFunc(slackTemplate, emailTemplate);
+      templatesFunc(slackTemplate, emailTemplate);
       runEmailJourney();
     });
   }

@@ -1,4 +1,4 @@
-import credentials from "../fixtures/credentials.json";
+import credentials from "../fixtures/credentials";
 import signup from "../test-helpers/signup";
 
 const { email, password } = credentials;

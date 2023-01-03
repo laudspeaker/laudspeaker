@@ -2,10 +2,10 @@
 /* eslint-disable jest/valid-expect */
 /* eslint-disable jest/valid-describe-callback */
 /* eslint-disable @typescript-eslint/no-shadow */
-import credentials from "../fixtures/credentials.json";
+import credentials from "../fixtures/credentials";
 import { loginFunc } from "../test-helpers/loginFunc";
 import runEmailJourney from "../test-helpers/runEmailJourney";
-import { tamplatesFunc } from "../test-helpers/templatesFunc";
+import { templatesFunc } from "../test-helpers/templatesFunc";
 
 const { email, password, slackTemplate, emailTemplate } =
   credentials.MessageHitUser;
@@ -21,9 +21,10 @@ describe(
 
     it("passes", () => {
       loginFunc(email, password);
-      tamplatesFunc(slackTemplate, emailTemplate);
+      templatesFunc(slackTemplate, emailTemplate);
       runEmailJourney("Journey with rich email", "example-template-bill");
 
+      cy.wait(3000);
       cy.contains("Journey Builder").click();
       cy.wait(3000);
       cy.contains("Journey with rich email")

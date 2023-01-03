@@ -1,6 +1,6 @@
 /* eslint-disable jest/expect-expect */
 import { loginFunc } from "../test-helpers/loginFunc";
-import credentials from "../fixtures/credentials.json";
+import credentials from "../fixtures/credentials";
 
 const { email, password } = credentials.MessageHitUser;
 

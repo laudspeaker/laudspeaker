@@ -1,16 +1,25 @@
 /* eslint-disable jest/valid-expect */
 /* eslint-disable jest/valid-describe-callback */
 /* eslint-disable @typescript-eslint/no-shadow */
-import credentials from "../fixtures/credentials.json";
+import credentials from "../fixtures/credentials";
 import { loginFunc } from "../test-helpers/loginFunc";
 import setFree3 from "../test-helpers/setFree3";
 import setSendgrid from "../test-helpers/setSendgrid";
-import { tamplatesFunc } from "../test-helpers/templatesFunc";
-import testPauseStop from "../test-helpers/testPauseStop";
+import setSMS from "../test-helpers/setSMS";
+import { templatesFunc } from "../test-helpers/templatesFunc";
+import testPauseStop, {
+  PauseStopTestType,
+} from "../test-helpers/testPauseStop";
 import verifyAccount from "../test-helpers/verifyAccount";
 
-const { email, password, slackTemplate, userAPIkey, emailTemplate } =
-  credentials.MessageHitUser;
+const {
+  email,
+  password,
+  slackTemplate,
+  userAPIkey,
+  emailTemplate,
+  smsTemplate,
+} = credentials.MessageHitUser;
 
 const { TESTS_SENDGRID_API_KEY, TESTS_SENDGRID_FROM_EMAIL } = Cypress.env();
 
@@ -28,14 +37,14 @@ describe(
 
     it("passes for mailgun", () => {
       loginFunc(email, password);
-      tamplatesFunc(slackTemplate, emailTemplate);
+      templatesFunc(slackTemplate, emailTemplate);
       verifyAccount();
       testPauseStop();
     });
 
     it("passes for free3", () => {
       loginFunc(email, password);
-      tamplatesFunc(slackTemplate, emailTemplate);
+      templatesFunc(slackTemplate, emailTemplate);
       setFree3();
       cy.contains("Messaging").click();
 
@@ -45,11 +54,20 @@ describe(
     it("passes for sendgrid", () => {
       loginFunc(email, password);
       verifyAccount();
-      tamplatesFunc(slackTemplate, emailTemplate);
+      templatesFunc(slackTemplate, emailTemplate);
       setSendgrid(TESTS_SENDGRID_API_KEY, TESTS_SENDGRID_FROM_EMAIL);
 
       cy.contains("Messaging").click();
       testPauseStop();
+    });
+
+    it("passes for sms", () => {
+      loginFunc(email, password);
+      verifyAccount();
+      templatesFunc(slackTemplate, emailTemplate, smsTemplate);
+      setSMS();
+      cy.contains("Messaging").click();
+      testPauseStop(PauseStopTestType.sms);
     });
   }
 );

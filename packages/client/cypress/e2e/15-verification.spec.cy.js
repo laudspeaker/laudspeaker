@@ -1,7 +1,7 @@
 /* eslint-disable jest/valid-expect */
 /* eslint-disable jest/valid-describe-callback */
 /* eslint-disable @typescript-eslint/no-shadow */
-import credentials from "../fixtures/credentials.json";
+import credentials from "../fixtures/credentials";
 import { loginFunc } from "../test-helpers/loginFunc";
 
 const { email, password } = credentials.MessageHitUser;
@@ -25,7 +25,7 @@ describe(
 
       cy.request(`${Cypress.env("AxiosURL")}tests/test-verification`).then(
         ({ body }) => {
-          expect(body.accountId).to.equal("-1000");
+          expect(body.accountId).to.equal(-1000);
           expect(body.status).to.equal("sent");
 
           cy.request({

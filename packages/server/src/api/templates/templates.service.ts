@@ -31,7 +31,8 @@ export class TemplatesService {
     @Inject(CustomersService) private customersService: CustomersService,
     @Inject(SlackService) private slackService: SlackService,
     @InjectQueue('email') private readonly emailQueue: Queue,
-    @InjectQueue('slack') private readonly slackQueue: Queue
+    @InjectQueue('slack') private readonly slackQueue: Queue,
+    @InjectQueue('sms') private readonly smsQueue: Queue
   ) {}
 
   create(account: Account, createTemplateDto: CreateTemplateDto) {
@@ -49,6 +50,7 @@ export class TemplatesService {
         template.slackMessage = createTemplateDto.slackMessage;
         break;
       case 'sms':
+        template.text = createTemplateDto.text;
         break;
       //TODO
     }
@@ -158,6 +160,14 @@ export class TemplatesService {
         });
         break;
       case 'sms':
+        job = await this.smsQueue.add('send', {
+          sid: account.smsAccountSid,
+          token: account.smsAuthToken,
+          from: account.smsFrom,
+          to: customer.phPhoneNumber || customer.phone,
+          tags,
+          text: template.text,
+        });
         break;
     }
     return Promise.resolve(job.id);

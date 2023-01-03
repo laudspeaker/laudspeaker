@@ -1,9 +1,9 @@
 import { loginFunc } from "../test-helpers/loginFunc";
-import { tamplatesFunc } from "../test-helpers/templatesFunc";
+import { templatesFunc } from "../test-helpers/templatesFunc";
 
 describe("templates", () => {
   it("passes", () => {
     loginFunc();
-    tamplatesFunc();
+    templatesFunc();
   });
 });

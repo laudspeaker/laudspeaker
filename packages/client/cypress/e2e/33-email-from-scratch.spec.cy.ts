@@ -1,12 +1,12 @@
 /* eslint-disable jest/valid-expect */
 /* eslint-disable jest/valid-describe-callback */
 /* eslint-disable @typescript-eslint/no-shadow */
-import credentials from "../fixtures/credentials.json";
+import credentials from "../fixtures/credentials";
 import checkSuccessfulEmailEventHit from "../test-helpers/checkSuccessfulEmailEventHit";
 import { loginFunc } from "../test-helpers/loginFunc";
 import runTwoStepEmailJourney from "../test-helpers/runTwoStepEmailJourney";
 import setupEventTrigger from "../test-helpers/setupEventTrigger";
-import { tamplatesFunc } from "../test-helpers/templatesFunc";
+import { templatesFunc } from "../test-helpers/templatesFunc";
 
 const { email, password, emailTemplate, journeyName, userAPIkey } =
   credentials.MessageHitUser;

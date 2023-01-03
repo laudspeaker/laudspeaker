@@ -96,6 +96,9 @@ export class TestsService {
       user.currentOnboarding = ['Slack'];
       user.emailProvider = 'mailgun';
       user.onboarded = true;
+      user.smsAccountSid = process.env.TESTS_SMS_SID;
+      user.smsAuthToken = process.env.TESTS_SMS_AUTH_TOKEN;
+      user.smsFrom = process.env.TESTS_SMS_FROM;
 
       const ret = await this.authService.repository.save(user);
       await this.authService.repository.update(
@@ -128,6 +131,7 @@ export class TestsService {
       sanitizedMember.slackDeleted = false;
       sanitizedMember.slackAdmin = true;
       sanitizedMember.slackTeamMember = true;
+      sanitizedMember.phone = process.env.TESTS_SMS_TO;
 
       await this.customersService.create(ret, sanitizedMember);
 

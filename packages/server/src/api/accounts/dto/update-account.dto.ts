@@ -119,4 +119,16 @@ export class UpdateAccountDto {
   @IsString()
   @IsOptional()
   public sendgridFromEmail: string;
+
+  @IsString()
+  @IsOptional()
+  public smsAccountSid: string;
+
+  @IsString()
+  @IsOptional()
+  public smsAuthToken: string;
+
+  @IsString()
+  @IsOptional()
+  public smsFrom: string;
 }

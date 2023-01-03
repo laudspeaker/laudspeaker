@@ -1,7 +1,7 @@
 /* eslint-disable jest/valid-expect */
 /* eslint-disable jest/valid-describe-callback */
 /* eslint-disable @typescript-eslint/no-shadow */
-import credentials from "../fixtures/credentials.json";
+import credentials from "../fixtures/credentials";
 import checkSuccessfulEmailEventHit from "../test-helpers/checkSuccessfulEmailEventHit";
 import { loginFunc } from "../test-helpers/loginFunc";
 import runTwoStepEmailJourney from "../test-helpers/runTwoStepEmailJourney";
@@ -9,7 +9,7 @@ import setFree3 from "../test-helpers/setFree3";
 import setMailgun from "../test-helpers/setMailgun";
 import setSendgrid from "../test-helpers/setSendgrid";
 import setupEventTrigger from "../test-helpers/setupEventTrigger";
-import { tamplatesFunc } from "../test-helpers/templatesFunc";
+import { templatesFunc } from "../test-helpers/templatesFunc";
 
 const { email, password, emailTemplate, journeyName, userAPIkey } =
   credentials.MessageHitUser;
@@ -25,7 +25,7 @@ describe(
 
     it("free3 -> sendgrid", () => {
       loginFunc(email, password);
-      tamplatesFunc();
+      templatesFunc();
 
       setFree3();
       cy.contains("Messaging").click();
@@ -56,7 +56,7 @@ describe(
 
     it("free3 -> mailgun", () => {
       loginFunc(email, password);
-      tamplatesFunc();
+      templatesFunc();
 
       setFree3();
       cy.contains("Messaging").click();
@@ -87,7 +87,7 @@ describe(
 
     it("mailgun -> sendgrid", () => {
       loginFunc(email, password);
-      tamplatesFunc();
+      templatesFunc();
 
       runTwoStepEmailJourney(emailTemplate.name, emailTemplate.eventName);
 

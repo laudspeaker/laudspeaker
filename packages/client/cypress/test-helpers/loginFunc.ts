@@ -1,5 +1,5 @@
 import "@4tw/cypress-drag-drop";
-import credentials from "../fixtures/credentials.json";
+import credentials from "../fixtures/credentials";
 
 const { email, password } = credentials;
 
