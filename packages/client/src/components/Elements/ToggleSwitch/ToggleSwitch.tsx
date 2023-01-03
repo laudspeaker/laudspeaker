@@ -2,7 +2,13 @@ import XMarkIcon from "@heroicons/react/20/solid/XMarkIcon";
 import CheckIcon from "@heroicons/react/20/solid/CheckIcon";
 import { Switch as HeadlessSwitch } from "@headlessui/react";
 
-export default function ToggleSwitch({ checked, onChange }: any) {
+export default function ToggleSwitch({
+  checked,
+  onChange,
+}: {
+  checked: boolean;
+  onChange: () => void;
+}) {
   return (
     <HeadlessSwitch
       checked={checked}

@@ -10,9 +10,21 @@ export enum ConditionalType {
 interface IEventCardProp {
   updateFormData: any;
   formData: any;
-  id: any;
-  resources: any;
-  handleDeleteRow: any;
+  id: number;
+  resources: Record<
+    string,
+    {
+      id: string;
+      type: string;
+      options?: {
+        id?: string;
+        label: string;
+        where?: string;
+        nextResourceURL?: string;
+      }[];
+    }
+  >;
+  handleDeleteRow: (rowIndex: number) => void;
   rowLength: number;
   canDeleteRow: boolean;
   conditionType: ConditionalType;

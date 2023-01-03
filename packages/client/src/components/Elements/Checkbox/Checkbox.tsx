@@ -17,7 +17,7 @@ export interface CheckBoxProps {
   indeterminateIcon?: React.ReactNode;
   cssOverideClass?: object;
   inputProps?: object;
-  inputRef?: React.RefObject<any>;
+  inputRef?: React.RefObject<HTMLInputElement>;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 

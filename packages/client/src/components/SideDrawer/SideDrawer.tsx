@@ -4,6 +4,7 @@ import { useLocation } from "react-router-dom";
 import { useParams } from "react-router-dom";
 import ApiService from "services/api.service";
 import Tooltip from "components/Elements/Tooltip";
+import { ReactNode } from "react";
 
 interface Props {
   /**
@@ -64,8 +65,13 @@ export default function ResponsiveDrawer(props: Props) {
     onClick(id);
   };
 
+  interface MenuItemProps {
+    item: { id: string; link: string; text: string; imgIcon: ReactNode };
+    isDisabled: boolean;
+  }
+
   const MenuItem = React.forwardRef(
-    ({ item, isDisabled, ...itemProps }: any, ref: any) => (
+    ({ item, isDisabled, ...itemProps }: MenuItemProps, ref: any) => (
       <div
         id={item.id}
         onClick={isDisabled ? undefined : () => handleMenuItemClick(item.id)}
@@ -125,10 +131,16 @@ export default function ResponsiveDrawer(props: Props) {
     );
   };
 
-  const generateMenu = (arr: any) => {
+  interface IMenuItem {
+    type: string;
+    text: string;
+    children?: IMenuItem[];
+  }
+
+  const generateMenu = (arr: IMenuItem[]) => {
     return (
       <>
-        {arr.map((item: any) => {
+        {arr.map((item) => {
           return (
             <>
               {item.type === "group" ? (
@@ -136,7 +148,7 @@ export default function ResponsiveDrawer(props: Props) {
                   <div className="text-left font-medium mt-[26px] ml-[18px] text-[14px] font-[Inter]">
                     {item.text}
                   </div>
-                  {item?.children?.map((menuItem: any) => (
+                  {item?.children?.map((menuItem) => (
                     <>{generateMenuItem(menuItem)}</>
                   ))}
                 </>

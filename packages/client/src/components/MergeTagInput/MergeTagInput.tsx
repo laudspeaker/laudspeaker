@@ -1,18 +1,24 @@
 import { Input } from "components/Elements";
-import React, { useEffect, useState, RefObject, useRef } from "react";
+import React, {
+  useEffect,
+  useState,
+  RefObject,
+  useRef,
+  ChangeEvent,
+} from "react";
 import MergeTagPicker from "../MergeTagPicker/MergeTagPicker";
 import { useClickAway } from "react-use";
 
 interface MergeTagInputProps {
   value: string;
-  onChange: (e: any) => void;
+  onChange: (e: ChangeEvent<HTMLInputElement>) => void;
   setValue: React.Dispatch<React.SetStateAction<string>>;
   name: string;
   id: string;
   placeholder: string;
   isRequired?: boolean;
   fullWidth?: boolean;
-  labelShrink?: any;
+  labelShrink?: boolean;
   sx?: any;
   possibleAttributes: string[];
   inputRef?: RefObject<HTMLInputElement | undefined>;

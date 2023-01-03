@@ -9,7 +9,7 @@ export interface ButtonProps {
   preventDefault?: boolean;
   fullWidth?: boolean;
   href?: string;
-  onClick: (e: any) => void;
+  onClick: (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => void;
   style?: object;
 }
 

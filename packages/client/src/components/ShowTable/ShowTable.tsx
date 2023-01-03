@@ -171,7 +171,7 @@ const ShowTable = () => {
   };
 
   const getAllJourneysData = async () => {
-    const data = await ApiService.get({
+    await ApiService.get({
       url: `${ApiConfig.flow}`,
     });
   };
