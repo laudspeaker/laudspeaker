@@ -2,6 +2,11 @@ import axios from "axios";
 import { ApiConfig, AppConfig } from "../constants";
 import TokenService from "./token.service";
 
+export interface ApiServiceArgs<T> {
+  url: string;
+  options?: Record<string, T> & { fakeAPI?: boolean; jsonServer?: boolean };
+}
+
 const instance = axios.create({
   baseURL: AppConfig.API_BASE_URL,
   headers: {
@@ -49,7 +54,7 @@ instance.interceptors.response.use(
 );
 
 const ApiService = {
-  async get({ url, options }: any) {
+  async get<T>({ url, options }: ApiServiceArgs<T>) {
     const { fakeAPI = false, jsonServer = false, ...rest } = options || {};
     return instance.get(url, {
       ...(fakeAPI && { baseURL: AppConfig.FAKE_SERVER_URL }),
@@ -57,30 +62,30 @@ const ApiService = {
       ...rest,
     });
   },
-  async post({ url, options }: any) {
-    const { fakeAPI = false, jsonServer = false, ...rest } = options;
+  async post<T>({ url, options }: ApiServiceArgs<T>) {
+    const { fakeAPI = false, jsonServer = false, ...rest } = options || {};
     return instance.post(url, {
       ...(fakeAPI && { baseURL: AppConfig.FAKE_SERVER_URL }),
       ...(jsonServer && { baseURL: AppConfig.JSON_SERVER_URL }),
       ...rest,
     });
   },
-  async put({ url, options }: any) {
-    const { fakeAPI = false, ...rest } = options;
+  async put<T>({ url, options }: ApiServiceArgs<T>) {
+    const { fakeAPI = false, ...rest } = options || {};
     return instance.put(url, {
       ...(fakeAPI && { baseURL: AppConfig.FAKE_SERVER_URL }),
       ...rest,
     });
   },
-  async delete({ url, options }: any) {
-    const { fakeAPI = false, ...rest } = options;
+  async delete<T>({ url, options }: ApiServiceArgs<T>) {
+    const { fakeAPI = false, ...rest } = options || {};
     return instance.delete(url, {
       ...(fakeAPI && { baseURL: AppConfig.FAKE_SERVER_URL }),
       ...rest,
     });
   },
-  async patch({ url, options }: any) {
-    const { fakeAPI = false, ...rest } = options;
+  async patch<T>({ url, options }: ApiServiceArgs<T>) {
+    const { fakeAPI = false, ...rest } = options || {};
     return instance.patch(url, {
       ...(fakeAPI && { baseURL: AppConfig.FAKE_SERVER_URL }),
       ...rest,

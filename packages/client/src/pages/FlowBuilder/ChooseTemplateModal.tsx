@@ -18,9 +18,7 @@ const ChooseTemplateModal = ({
   templateModalOpen,
   handleTemplateModalOpen,
   selectedMessageType,
-  isCollapsible,
   isViewMode = false,
-  onClose,
   selectedTemplateId,
   onTemplateDelete,
 }: IChooseTemplateModal) => {
@@ -34,7 +32,7 @@ const ChooseTemplateModal = ({
       return (
         <>
           <GenericButton
-            onClick={(_) => {
+            onClick={() => {
               handleTemplateModalOpen({ activeTemplate, selectedMessageType });
             }}
             style={{
@@ -52,8 +50,7 @@ const ChooseTemplateModal = ({
         <>
           <GenericButton
             id="exportSelectedTemplate"
-            onClick={(_) => {
-              console.log(_);
+            onClick={() => {
               handleTemplateModalOpen({ activeTemplate, selectedMessageType });
             }}
             style={{
@@ -66,7 +63,7 @@ const ChooseTemplateModal = ({
           </GenericButton>
           {onTemplateDelete && (
             <GenericButton
-              onClick={(_) => {
+              onClick={() => {
                 onTemplateDelete();
               }}
               style={{

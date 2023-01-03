@@ -4,16 +4,14 @@ import { TableTemplate } from "../../components/TableTemplate/index";
 import { Grid } from "@mui/material";
 import ApiService from "services/api.service";
 import { ApiConfig } from "../../constants";
-import { useNavigate } from "react-router-dom";
 import NameTemplate from "./NameTemplate";
 import Modal from "../../components/Elements/Modal";
+import Template from "types/Template";
 
 const TemplateTable = () => {
-  const navigate = useNavigate();
-  const [success, setSuccess] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
-  const [templates, setTemplates] = useState<any>([]);
+  const [templates, setTemplates] = useState<Template[]>([]);
   const [itemsPerPage, setItemsPerPage] = useState(20);
   const [pagesCount, setPagesCount] = useState<number>(1);
   const [currentPage, setCurrentPage] = useState(0);
@@ -33,9 +31,8 @@ const TemplateTable = () => {
         });
         const { data: fetchedTemplates, totalPages } = data;
         setPagesCount(totalPages);
-        setSuccess("Success");
         setTemplates(fetchedTemplates);
-      } catch (err: any) {
+      } catch (err) {
         setError(true);
       } finally {
         setLoading(false);
@@ -93,7 +90,7 @@ const TemplateTable = () => {
               <button
                 id="createTemplate"
                 type="button"
-                className="inline-flex items-center rounded-md border border-transparent bg-cyan-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-cyan-500 focus:outline-none focus:ring-2 focus:ring-offset-2 rounded-md bg-white font-medium focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2"
+                className="inline-flex items-center border border-transparent bg-cyan-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-cyan-500 focus:outline-none focus:ring-2 focus:ring-offset-2 rounded-md focus:ring-cyan-500"
                 onClick={redirectUses}
               >
                 Create Template

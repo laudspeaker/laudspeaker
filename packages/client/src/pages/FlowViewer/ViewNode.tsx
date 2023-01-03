@@ -15,18 +15,8 @@ const textStyle =
   "text-[#223343] font-[Poppins] font-normal text-[14px] leading-[30px]";
 const subTitleTextStyle = "text-[#6B7280] font-[Poppins] text-[14px]";
 
-const iconStyles = "mr-[20px] flex justify-center items-center";
-
-const ViewNode = ({ data, setSelectedTrigger, selectedTrigger }: any) => {
-  const {
-    audienceId,
-    dataTriggers,
-    hidden,
-    onTriggerSelect,
-    triggers,
-    isExit,
-    stats,
-  } = data;
+const ViewNode = ({ data, selectedTrigger }: any) => {
+  const { audienceId, hidden, onTriggerSelect, triggers, isExit, stats } = data;
   const [nodeData, setNodeData] = useState<any>({});
 
   const [selectedMessageType, setSelectedMessageType] = useState("");

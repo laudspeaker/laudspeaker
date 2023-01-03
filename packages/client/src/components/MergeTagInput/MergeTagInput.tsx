@@ -28,8 +28,6 @@ const MergeTagInput = ({
   name,
   id,
   fullWidth,
-  labelShrink,
-  sx,
   possibleAttributes,
   isPreview,
   setIsPreview,

@@ -249,7 +249,7 @@ const Flow = () => {
   }, [selectedNode, needsUpdate]);
 
   const onNodeDragStart = useCallback(
-    (event: React.MouseEvent, node: Node, allNodes: Node[]) => {
+    (event: React.MouseEvent, node: Node) => {
       setSelectedNode(node.id);
     },
     [nodes, triggers]
@@ -293,7 +293,7 @@ const Flow = () => {
     [setNodes, triggers]
   );
 
-  const onPaneClick = useCallback((event: React.MouseEvent) => {
+  const onPaneClick = useCallback(() => {
     setSelectedNode("");
   }, []);
 
@@ -424,10 +424,6 @@ const Flow = () => {
       default:
         break;
     }
-  };
-
-  const handleTriggerModalOpen = (e: any) => {
-    settriggerModalOpen(!triggerModalOpen);
   };
 
   const handleTutorialOpen = () => {
@@ -700,7 +696,7 @@ const Flow = () => {
               >
                 <div className="m-[0_7.5px]" data-saveflowbutton>
                   <button
-                    className="inline-flex items-center rounded-md border border-transparent bg-cyan-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-cyan-500 focus:outline-none focus:ring-2 focus:ring-offset-2 rounded-md bg-white font-medium focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2"
+                    className="inline-flex items-center rounded-md border border-transparent bg-cyan-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-cyan-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500"
                     onClick={handleTutorialOpen}
                     style={{
                       maxWidth: "158px",
@@ -713,7 +709,7 @@ const Flow = () => {
                 </div>
                 <div className="m-[0_7.5px]" data-saveflowbutton>
                   <button
-                    className="inline-flex items-center rounded-md border border-transparent bg-cyan-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-cyan-500 focus:outline-none focus:ring-2 focus:ring-offset-2 rounded-md bg-white font-medium focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2"
+                    className="inline-flex items-center rounded-md border border-transparent bg-cyan-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-cyan-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500"
                     onClick={handleSaveJourney}
                     style={{
                       maxWidth: "158px",
@@ -733,7 +729,7 @@ const Flow = () => {
                     placement="bottom"
                   >
                     <button
-                      className={`inline-flex items-center rounded-md border border-transparent bg-cyan-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-cyan-500 focus:outline-none focus:ring-2 focus:ring-offset-2 rounded-md bg-white font-medium focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 ${
+                      className={`inline-flex items-center rounded-md border border-transparent bg-cyan-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-cyan-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500 ${
                         !!startDisabledReason ? "grayscale" : ""
                       }`}
                       onClick={handleStartJourney}

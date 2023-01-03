@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect, useLayoutEffect } from "react";
-import { Box, FormControl } from "@mui/material";
+import { FormControl } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import { GenericButton, Input, Select } from "components/Elements";
 import EventCard from "./../../components/EventCard";
@@ -41,11 +41,7 @@ interface ISegmentInclusion {
 
 const MySegment = ({
   onSubmit,
-  workflowId,
   segmentId,
-  audienceName,
-  onClose,
-  isCollapsible,
   defaultTitle,
 }: ISegmentInclusion) => {
   const elementRef = useRef<any>(null);

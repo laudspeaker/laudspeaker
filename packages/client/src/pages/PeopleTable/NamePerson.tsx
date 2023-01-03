@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Grid, FormControl } from "@mui/material";
-import { GenericButton, Input, Select } from "components/Elements";
+import { GenericButton, Input } from "components/Elements";
 import { useNavigate } from "react-router-dom";
 import ApiService from "services/api.service";
 import { ApiConfig } from "../../constants";
@@ -10,21 +10,12 @@ export interface INameSegmentForm {
   isPrimary: boolean;
 }
 
-const segmentTypeStyle = {
-  border: "1px solid #D1D5DB",
-  borderRadius: "6px",
-  boxShadow: "0px 1px 2px rgba(0, 0, 0, 0.05)",
-  width: "234px",
-  marginTop: "20px",
-  padding: "15px",
-};
-
 interface INameSegment {
   onSubmit?: (e: any) => void;
   isPrimary: boolean;
 }
 
-const NamePerson = ({ onSubmit, isPrimary }: INameSegment) => {
+const NamePerson = ({ isPrimary }: INameSegment) => {
   // A Segment initally has three Properties:
   //      1. Dynamic: whether new customers are added
   //         after a workflow is live
@@ -44,7 +35,7 @@ const NamePerson = ({ onSubmit, isPrimary }: INameSegment) => {
     }
   };
 
-  const handleSubmit: any = async (e: any) => {
+  const handleSubmit: any = async () => {
     const { data } = await ApiService.post({
       url: `${ApiConfig.customerCreate}`,
       options: {

@@ -1,6 +1,5 @@
 import "grapesjs/dist/css/grapes.min.css";
 import { useState, useLayoutEffect, useRef } from "react";
-import Drawer from "../../components/Drawer";
 import SlackTemplateHeader from "./SlackTemplateHeader";
 import ApiService from "services/api.service";
 import { ApiConfig } from "../../constants";

@@ -1,5 +1,4 @@
 import { Dialog, DialogActions, DialogTitle } from "@mui/material";
-import Drawer from "components/Drawer";
 import { GenericButton, Select } from "components/Elements";
 import { getFlow } from "pages/FlowBuilder/FlowHelpers";
 import { v4 as uuid } from "uuid";
@@ -33,7 +32,6 @@ const Flow = () => {
   const [flowId, setFlowId] = useState<string>("");
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
-  const [triggers, setTriggers] = useState<any>([]);
   const [selectedNode, setSelectedNode] = useState<string>("");
   const [isPaused, setIsPaused] = useState(false);
   const [isStopped, setIsStopped] = useState(false);
@@ -46,10 +44,6 @@ const Flow = () => {
     const trigger = triggersList.find((item: any) => item.id === triggerId);
     setSelectedTrigger(trigger);
     settriggerModalOpen(true);
-  };
-
-  const handleTriggerModalOpen = (e: any) => {
-    settriggerModalOpen(!triggerModalOpen);
   };
 
   const onSaveTrigger = (data: any) => {
@@ -192,7 +186,7 @@ const Flow = () => {
     }
   };
 
-  const onPaneClick = useCallback((event: React.MouseEvent) => {
+  const onPaneClick = useCallback(() => {
     setSelectedNode("");
   }, []);
 
@@ -200,7 +194,7 @@ const Flow = () => {
     backgroundColor: "rgba(112,112,112, 0.06)",
   };
 
-  const nodeTypes = useMemo(() => ({ special: ViewNode }), [triggers]);
+  const nodeTypes = useMemo(() => ({ special: ViewNode }), []);
   const { setViewport } = useReactFlow();
   const { x: viewX, y: viewY } = useViewport();
   const [zoomState, setZoomState] = useState(1);

@@ -65,7 +65,9 @@ const SmsBuilder = () => {
     };
     const loadAttributes = async () => {
       const { data } = await getResources("attributes");
-      setPossibleAttributes(data.options.map((option: any) => option.label));
+      setPossibleAttributes(
+        data.options.map((option: { label: string }) => option.label)
+      );
     };
     populateSlackBuilder();
     loadAttributes();
@@ -88,7 +90,7 @@ const SmsBuilder = () => {
         onPersonalizeClick={onPersonalizeClick}
         onSave={onSave}
         templateName={templateName}
-        handleTemplateNameChange={(e: any) => setTemplateName(e.target.value)}
+        handleTemplateNameChange={(e) => setTemplateName(e.target.value)}
       />
       <div style={{ width: "490px", margin: "auto" }}>
         <MergeTagInput
@@ -99,7 +101,7 @@ const SmsBuilder = () => {
           id="smsMessage"
           fullWidth
           setValue={setSmsMessage}
-          onChange={(e: any) => setSmsMessage(e.target.value)}
+          onChange={(e) => setSmsMessage(e.target.value)}
           labelShrink
           isPreview={isPreview}
           setIsPreview={setIsPreview}

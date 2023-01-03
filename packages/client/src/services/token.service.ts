@@ -1,5 +1,6 @@
 import { ApiConfig, AppConfig } from "../constants";
 import ApiService from "services/api.service";
+import Account from "../types/Account";
 
 class TokenService {
   getLocalRefreshToken() {
@@ -29,7 +30,7 @@ class TokenService {
     );
   }
 
-  setUser(user: any) {
+  setUser(user: Account) {
     localStorage.setItem(AppConfig.storageKeys.USER_DATA, JSON.stringify(user));
   }
 
@@ -43,7 +44,7 @@ class TokenService {
         url: `${ApiConfig.verify}`,
       });
       return true;
-    } catch (e: any) {
+    } catch (e) {
       return false;
     }
   }

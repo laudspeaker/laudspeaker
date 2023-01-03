@@ -35,7 +35,6 @@ function EventsProvider() {
   const dispatch = useDispatch();
   const { settings } = useTypedSelector((state) => state.settings);
   const [events, setChannels] = useState<any>([]);
-  const [friendsList, setFriendsList] = useState<string>("");
   useLayoutEffect(() => {
     dispatch(setSettingData({ ...settings, ["events"]: undefined }));
   }, []);

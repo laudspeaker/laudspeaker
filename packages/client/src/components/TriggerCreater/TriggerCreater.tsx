@@ -8,20 +8,11 @@ import {
   transformDataToUI,
 } from "../../pages/Segment/SegmentHelpers";
 import Card from "components/Cards/Card";
-import {
-  ISegmentInclusionForm,
-  InclusionCriteria,
-} from "pages/Segment/MySegment";
 import DateTimePicker from "components/Elements/DateTimePicker";
 import ConditionCreater from "./ConditionCreator";
 import ApiService from "services/api.service";
 import AndOrSelect from "./AndOrSelect";
-import {
-  EventCondition,
-  EventTrigger,
-  PosthogTriggerParams,
-  ProviderTypes,
-} from "types/triggers";
+import { EventCondition, EventTrigger, ProviderTypes } from "types/triggers";
 import { useDebounce } from "react-use";
 
 export type TriggerType = "eventBased" | "timeDelay" | "timeWindow";
@@ -53,7 +44,6 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
     onSave,
     onDelete,
     trigger,
-    hasExitButton,
     isViewMode,
   } = props;
 
@@ -161,48 +151,21 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
 
   const [resources, setResouces] = useState<any>({});
   const [formData, setFormData] = useState<any>([]);
-  const [titleEdit, setTitleEdit] = useState<boolean>(false);
-
-  const [segmentForm, setSegmentForm] = useState<ISegmentInclusionForm>({
-    title: "Custom Event Trigger",
-  });
-
-  const handleTitleEdit = () => {
-    setTitleEdit(!titleEdit);
-  };
-
-  const handleTitleEnter = (e: any) => {
-    if (e.key === "Enter") {
-      handleTitleEdit();
-    }
-  };
-
-  const handleSegmentFormChange = (e: any) => {
-    setSegmentForm({
-      ...segmentForm,
-      [e.target.name]: e.target.value,
-    });
-  };
 
   const {
-    fromDuration,
-    fromMetric,
-    toDuration,
-    toMetric,
+    // fromDuration,
+    // fromMetric,
+    // toDuration,
+    // toMetric,
     eventTime,
-    month,
-    timer,
-    day,
     delayTime,
-    year,
   } = trigger.properties;
-  const [timeWindow, setTimeWindow] = useState<any>({
-    fromDuration,
-    fromMetric,
-    toDuration,
-    toMetric,
-  });
-  const attributeRequestBodyKeys = ["attribute", "condition", "value"];
+  // const [timeWindow, setTimeWindow] = useState<any>({
+  //   fromDuration,
+  //   fromMetric,
+  //   toDuration,
+  //   toMetric,
+  // });
 
   const [triggerType, setTriggerType] = useState<TriggerType>(triggerProp);
   const [eventTimeSelect, setEventTimeSelect] = useState(eventTime);
@@ -378,16 +341,6 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
       response?.data?.id || "",
       isRoot
     );
-    let shouldAddRow = false;
-    for (const key in formData[formData?.length - 1]) {
-      if (
-        !updatedData.isDirty &&
-        (formData?.length === 1 ||
-          formData[formData?.length - 1][key].value === "")
-      ) {
-        shouldAddRow = true;
-      }
-    }
 
     const tempData = [
       ...formData.slice(0, rowIndex),
@@ -457,33 +410,11 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
     onDelete(trigger.id);
   };
 
-  const flatten = (obj: any, prefix: any = [], current: any = {}) => {
-    if (typeof obj === "object" && obj !== null) {
-      for (const key of Object.keys(obj)) {
-        flatten(obj[key], prefix.concat(key), current);
-      }
-    } else {
-      current[prefix.join(".")] = obj;
-    }
-    return current;
-  };
-
-  const generateConditions = (obj: any) => {
-    const result: any = {};
-    if (obj.children && Object.keys(obj.children)?.length) {
-      result[obj.value] = generateConditions(obj.children[obj.value]);
-    } else {
-      result.value = obj.value;
-    }
-
-    return result;
-  };
-
   const handleData = async (func: (data: any) => void) => {
-    if (triggerType == "timeDelay")
+    if (triggerType === "timeDelay")
       func(JSON.parse(JSON.stringify(delayInputTime)));
-    else if (triggerType == "timeWindow") func(timeWindow);
-    else if (triggerType == "eventBased") {
+    // else if (triggerType === "timeWindow") func(timeWindow);
+    else if (triggerType === "eventBased") {
       func(eventTrigger);
     }
   };

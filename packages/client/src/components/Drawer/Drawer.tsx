@@ -1,4 +1,4 @@
-import React, { Fragment, MouseEvent, useState } from "react";
+import React, { Fragment, MouseEvent } from "react";
 import { dataSubArray } from "./Drawer.fixtures";
 import { AuthState } from "../../reducers/auth";
 import { useTypedSelector } from "../../hooks/useTypeSelector";

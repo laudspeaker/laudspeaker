@@ -11,27 +11,19 @@ import thunderbolt from "../../assets/images/thunderbolt.svg";
 import { getAudienceDetails } from "./FlowHelpers";
 
 import { Email, SlackMsg, Mobile, SMS } from "../../components/Icons/Icons";
-import TriggerCreater from "components/TriggerCreater";
 import ChooseTemplateModal from "./ChooseTemplateModal";
 import LinesEllipsis from "react-lines-ellipsis";
 
 const textStyle = "text-[#111827] font-[Inter] font-middle text-[14px]";
 const subTitleTextStyle = "text-[#6B7280] font-[Inter] text-[14px]";
-const iconStyles = { padding: "0 10px" };
 
-const TextUpdaterNode = ({
-  data,
-  setSelectedTrigger,
-  selectedTrigger,
-}: any) => {
+const TextUpdaterNode = ({ data }: any) => {
   const {
     audienceId,
-    dataTriggers,
     hidden,
     onTriggerSelect,
     triggers,
     isExit,
-    updateNodes,
     isSelected,
     needsUpdate,
     nodeId,

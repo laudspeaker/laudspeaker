@@ -1,8 +1,6 @@
 import { useState } from "react";
-import { Grid, FormControl, Tooltip } from "@mui/material";
+import { Grid, FormControl } from "@mui/material";
 import { GenericButton, Input } from "components/Elements";
-import InfoIcon from "assets/images/info.svg";
-import ToggleSwitch from "./../../components/Elements/ToggleSwitch";
 
 export interface INameSegmentForm {
   name: string;
@@ -18,12 +16,7 @@ interface INameSegment {
   onClose: () => void;
 }
 
-const NameSegment = ({
-  onSubmit,
-  isPrimary,
-  onClose,
-  isCollapsible,
-}: INameSegment) => {
+const NameSegment = ({ onSubmit, isPrimary }: INameSegment) => {
   // A Segment initally has three Properties:
   //      1. Dynamic: whether new customers are added
   //         after a workflow is live
@@ -44,11 +37,6 @@ const NameSegment = ({
     if (e.target.name === "description") {
       setSegmentForm({ ...segmentForm, description: e.target.value });
     }
-  };
-
-  // Handling Dynamic toggle
-  const onToggleChange = () => {
-    setSegmentForm({ ...segmentForm, isDynamic: !segmentForm.isDynamic });
   };
 
   // Pushing state back up to the flow builder

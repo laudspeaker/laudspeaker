@@ -3,7 +3,6 @@ import "grapesjs-preset-newsletter/dist/grapesjs-preset-newsletter.css";
 import grapesjs from "grapesjs";
 import { useEffect, useState, useLayoutEffect, useRef } from "react";
 import "grapesjs-preset-newsletter";
-import Drawer from "../../components/Drawer";
 import EmailHeader from "./EmailHeader";
 import ApiService from "services/api.service";
 import { ApiConfig } from "../../constants";

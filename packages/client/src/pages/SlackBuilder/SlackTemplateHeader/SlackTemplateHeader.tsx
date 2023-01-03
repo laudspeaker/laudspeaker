@@ -1,11 +1,9 @@
 import { useState } from "react";
-import { Divider, FormControl } from "@mui/material";
+import { Divider } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
-import ListItemIcon from "@mui/material/ListItemIcon";
-import { GenericButton, Select, Input } from "components/Elements";
+import { GenericButton, Input } from "components/Elements";
 
 import { BackButtonIcon } from "../../../components/Icons/Icons";
-import { useNavigate } from "react-router-dom";
 
 export interface IEmailHeaderProps {
   onPersonalizeClick: (e: any) => void;
@@ -15,10 +13,8 @@ export interface IEmailHeaderProps {
 }
 
 const SlackTemplateHeader = (props: IEmailHeaderProps) => {
-  const navigate = useNavigate();
   const { onPersonalizeClick, templateName, handleTemplateNameChange, onSave } =
     props;
-  const [activeJourney, setActiveJourney] = useState("Slack");
   const [titleEdit, setTitleEdit] = useState<boolean>(false);
 
   const handleTitleEdit = () => {
@@ -29,16 +25,6 @@ const SlackTemplateHeader = (props: IEmailHeaderProps) => {
     if (e.key === "Enter") {
       handleTitleEdit();
     }
-  };
-
-  const goToEmailBuilder = () => {
-    navigate("/email-builder");
-    return;
-  };
-
-  const handleActiveJourney = (e: any) => {
-    if (e.target.value === "Email") goToEmailBuilder();
-    setActiveJourney(e.target.value);
   };
 
   return (
