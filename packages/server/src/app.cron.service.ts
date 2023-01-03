@@ -19,7 +19,7 @@ import { Account } from './api/accounts/entities/accounts.entity';
 import { IsNull, Not, Repository } from 'typeorm';
 import { createClient } from '@clickhouse/client';
 import { Verification } from './api/auth/entities/verification.entity';
-import { SendgridEvent } from './api/webhooks/entities/sendgrid-event.entity';
+import { WebhookEvent } from './api/webhooks/entities/webhook-event.entity';
 import { EventDocument } from './api/events/schemas/event.schema';
 import { EventKeysDocument } from './api/events/schemas/event-keys.schema';
 import { Event } from './api/events/schemas/event.schema';
@@ -45,7 +45,7 @@ interface ClickHouseMessage {
   customerId: string;
   messageId: string;
   event: string;
-  eventProvider: 'mailgun' | 'sendgrid';
+  eventProvider: 'mailgun' | 'sendgrid' | 'twillio';
   createdAt: string;
 }
 
@@ -87,8 +87,8 @@ export class CronService {
     private accountRepository: Repository<Account>,
     @InjectRepository(Verification)
     private verificationRepository: Repository<Verification>,
-    @InjectRepository(SendgridEvent)
-    private sendgridEventRepository: Repository<SendgridEvent>
+    @InjectRepository(WebhookEvent)
+    private webhookEventRepository: Repository<WebhookEvent>
   ) {
     (async () => {
       try {
@@ -375,31 +375,29 @@ export class CronService {
       }
 
       /**
-       * sendgrid
+       * sendgrid & twillio
        */
 
-      let batch = await this.sendgridEventRepository.find({
+      let batch = await this.webhookEventRepository.find({
         take: BATCH_SIZE,
-        relations: ['account'],
+        relations: ['audience'],
       });
       while (batch.length > 0) {
         await insertMessages(
-          batch
-            .map((item) => ({
-              ...item,
-              audienceId: item.audience.id,
-              audience: undefined,
-            }))
-            .map((item) => <any>{ ...item, eventProvider: 'sendgrid' })
+          batch.map((item) => ({
+            ...item,
+            audienceId: item.audience.id,
+            audience: undefined,
+          }))
         );
 
         for (const item of batch) {
-          await this.sendgridEventRepository.delete({
+          await this.webhookEventRepository.delete({
             id: item.id,
           });
         }
 
-        batch = await this.sendgridEventRepository.find({
+        batch = await this.webhookEventRepository.find({
           take: BATCH_SIZE,
         });
       }

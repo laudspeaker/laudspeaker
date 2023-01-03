@@ -23,12 +23,12 @@ import {
 } from './api/customers/schemas/customer-keys.schema';
 import { Account } from './api/accounts/entities/accounts.entity';
 import { Verification } from './api/auth/entities/verification.entity';
-import { SendgridEvent } from './api/webhooks/entities/sendgrid-event.entity';
 import { EventSchema, Event } from './api/events/schemas/event.schema';
 import {
   EventKeys,
   EventKeysSchema,
 } from './api/events/schemas/event-keys.schema';
+import { WebhookEvent } from './api/webhooks/entities/webhook-event.entity';
 
 const papertrail = new winston.transports.Http({
   host: 'logs.collector.solarwinds.com',
@@ -121,7 +121,7 @@ const myFormat = winston.format.printf(function ({
       { name: EventKeys.name, schema: EventKeysSchema },
     ]),
     ScheduleModule.forRoot(),
-    TypeOrmModule.forFeature([Account, Verification, SendgridEvent]),
+    TypeOrmModule.forFeature([Account, Verification, WebhookEvent]),
   ],
   controllers: [AppController],
   providers: [CronService],

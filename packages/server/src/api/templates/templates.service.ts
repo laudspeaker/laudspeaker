@@ -169,6 +169,8 @@ export class TemplatesService {
           to: customer.phPhoneNumber || customer.phone,
           tags,
           text: template.smsText,
+          audienceId,
+          customerId,
         });
         break;
     }
