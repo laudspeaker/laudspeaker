@@ -4,11 +4,11 @@ import { Listbox, Transition } from "@headlessui/react";
 import { ChevronUpDownIcon } from "@heroicons/react/20/solid";
 import Tooltip from "../Tooltip";
 
-export interface SelectProps {
-  value: any;
+export interface SelectProps<T> {
+  value: T;
   options: {
     title?: string;
-    value: string | number;
+    value: T;
     disabled?: boolean;
     subtitle?: string;
     tooltip?: string;
@@ -19,7 +19,7 @@ export interface SelectProps {
   children?: React.ReactNode;
   customButtonClass?: Object;
   defaultOpen?: boolean;
-  defaultValue?: any;
+  defaultValue?: T;
   displayEmpty?: boolean;
   arrowIcon?: ElementType;
   input?: React.ReactElement;
@@ -37,16 +37,16 @@ export interface SelectProps {
   variant?: "filled" | "outlined" | "standard";
   // SelectDisplayProps?: boolean,
   // renderValue?: ReactNode,
-  onChange: (v: any) => void;
+  onChange: (v: T) => void;
   onClose?: (e: object) => void;
   onOpen?: (e: object) => void;
-  renderValue?: (value: any) => React.ReactNode;
+  renderValue?: (value: T) => React.ReactNode;
   disabled?: boolean;
   wrapperClassnames?: string;
   tick?: boolean;
 }
 
-const Select = (props: SelectProps) => {
+const Select = <T extends string | number>(props: SelectProps<T>) => {
   const {
     value,
     children,
@@ -76,16 +76,18 @@ const Select = (props: SelectProps) => {
           <Listbox.Button
             className={`${customButtonClass} relative min-h-[30px] cursor-pointer w-full rounded-lg bg-white py-2 pl-3 pr-10 text-left shadow-md focus:outline-none focus-visible:border-cyan-500 focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-opacity-75 focus-visible:ring-offset-2 focus-visible:ring-offset-cyan-300 sm:text-sm`}
           >
-            {(renderValue && renderValue(value)) ||
-              options.find((item) => item.value === value)?.title ||
-              value}
-            {children}
-            <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
-              <ChevronUpDownIcon
-                className="h-5 w-5 text-gray-400"
-                aria-hidden="true"
-              />
-            </span>
+            <>
+              {(renderValue && renderValue(value)) ||
+                options.find((item) => item.value === value)?.title ||
+                value}
+              {children}
+              <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
+                <ChevronUpDownIcon
+                  className="h-5 w-5 text-gray-400"
+                  aria-hidden="true"
+                />
+              </span>
+            </>
           </Listbox.Button>
           <Transition
             as={Fragment}
@@ -118,7 +120,8 @@ const Select = (props: SelectProps) => {
                       </div>
                       {tick &&
                         (value === option.value ||
-                          (value[0] && value.includes(option.value))) && (
+                          (Array.isArray(value) &&
+                            value.includes(option.value))) && (
                           <span className="rounded-[50%] aspect-[1] w-[20px] h-[20px] bg-[#4FA198] text-white flex justify-center items-center">
                             ✔
                           </span>

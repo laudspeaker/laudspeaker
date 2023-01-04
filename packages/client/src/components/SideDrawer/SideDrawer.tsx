@@ -4,7 +4,25 @@ import { useLocation } from "react-router-dom";
 import { useParams } from "react-router-dom";
 import ApiService from "services/api.service";
 import Tooltip from "components/Elements/Tooltip";
-import { ReactNode } from "react";
+import { ForwardedRef, ReactNode } from "react";
+
+interface IMenuItem {
+  type: string;
+  text: string;
+  children?: IMenuItemChildren[];
+}
+
+interface IMenuItemChildren {
+  id: string;
+  text: string;
+  link: string;
+  imgIcon: ReactNode;
+  alwaysDisabled?: boolean;
+  canBeDisabled?: boolean;
+  requiredOnboarding?: string;
+  disabledToolTip?: string;
+  enabledToolTip?: string;
+}
 
 interface Props {
   /**
@@ -71,7 +89,10 @@ export default function ResponsiveDrawer(props: Props) {
   }
 
   const MenuItem = React.forwardRef(
-    ({ item, isDisabled, ...itemProps }: MenuItemProps, ref: any) => (
+    (
+      { item, isDisabled, ...itemProps }: MenuItemProps,
+      ref: ForwardedRef<HTMLDivElement>
+    ) => (
       <div
         id={item.id}
         onClick={isDisabled ? undefined : () => handleMenuItemClick(item.id)}
@@ -108,12 +129,13 @@ export default function ResponsiveDrawer(props: Props) {
     )
   );
 
-  const generateMenuItem = (item: any) => {
-    const isDisabled =
+  const generateMenuItem = (item: IMenuItemChildren) => {
+    const isDisabled = Boolean(
       item.alwaysDisabled ||
-      (item.canBeDisabled && !selectedNode) ||
-      (item.requiredOnboarding &&
-        !expectedOnboarding?.includes(item.requiredOnboarding));
+        (item.canBeDisabled && !selectedNode) ||
+        (item.requiredOnboarding &&
+          !expectedOnboarding?.includes(item.requiredOnboarding))
+    );
 
     return (
       <>
@@ -131,30 +153,18 @@ export default function ResponsiveDrawer(props: Props) {
     );
   };
 
-  interface IMenuItem {
-    type: string;
-    text: string;
-    children?: IMenuItem[];
-  }
-
   const generateMenu = (arr: IMenuItem[]) => {
     return (
       <>
         {arr.map((item) => {
           return (
             <>
-              {item.type === "group" ? (
-                <>
-                  <div className="text-left font-medium mt-[26px] ml-[18px] text-[14px] font-[Inter]">
-                    {item.text}
-                  </div>
-                  {item?.children?.map((menuItem) => (
-                    <>{generateMenuItem(menuItem)}</>
-                  ))}
-                </>
-              ) : (
-                <>{generateMenuItem(item)}</>
-              )}
+              <div className="text-left font-medium mt-[26px] ml-[18px] text-[14px] font-[Inter]">
+                {item.text}
+              </div>
+              {item?.children?.map((menuItem) => (
+                <>{generateMenuItem(menuItem)}</>
+              ))}
             </>
           );
         })}

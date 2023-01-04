@@ -4,7 +4,7 @@ import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { ChangeEvent } from "react";
 
 interface IDateTimePickerProps {
-  sx?: any;
+  sx?: object;
   value: string;
   handleChange: (val: string) => void;
   label?: string;

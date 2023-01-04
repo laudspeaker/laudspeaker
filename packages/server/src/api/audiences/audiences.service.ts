@@ -1,26 +1,15 @@
-import {
-  HttpException,
-  Inject,
-  Injectable,
-  LoggerService,
-} from '@nestjs/common';
+import { Inject, Injectable, LoggerService } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, Like, Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { Audience } from './entities/audience.entity';
 import { CreateAudienceDto } from './dto/create-audience.dto';
 import { UpdateAudienceDto } from './dto/update-audience.dto';
 import { Account } from '../accounts/entities/accounts.entity';
-import { AddTemplateDto } from './dto/add-template.dto';
 import { CustomerDocument } from '../customers/schemas/customer.schema';
 import { Template } from '../templates/entities/template.entity';
 import Errors from '../../shared/utils/errors';
 import { TemplatesService } from '../templates/templates.service';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
-import { from } from 'form-data';
-import { Job } from 'bull';
-import { CustomersService } from '../customers/customers.service';
-import { checkInclusion } from './audiences.helper';
-import { Stats } from './entities/stats.entity';
 import { Workflow } from '../workflows/entities/workflow.entity';
 import { EventDto } from '../events/dto/event.dto';
 
@@ -36,7 +25,6 @@ export class AudiencesService {
     private readonly logger: LoggerService,
     @InjectRepository(Audience)
     public audiencesRepository: Repository<Audience>,
-    @InjectRepository(Stats) private statsRepository: Repository<Stats>,
     @InjectRepository(Workflow)
     private workflowRepository: Repository<Workflow>,
     @Inject(TemplatesService) public templatesService: TemplatesService
@@ -120,8 +108,6 @@ export class AudiencesService {
         owner: { id: account.id },
         workflow: { id: workflowId },
       });
-      const stats = this.statsRepository.create({ audience: resp });
-      await this.statsRepository.save(stats);
       return resp;
     } catch (e: any) {
       console.error(e);

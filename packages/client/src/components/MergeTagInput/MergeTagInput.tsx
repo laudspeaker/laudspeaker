@@ -19,9 +19,9 @@ interface MergeTagInputProps {
   isRequired?: boolean;
   fullWidth?: boolean;
   labelShrink?: boolean;
-  sx?: any;
+  sx?: object;
   possibleAttributes: string[];
-  inputRef?: RefObject<HTMLInputElement | undefined>;
+  inputRef?: RefObject<HTMLInputElement>;
   isPreview: boolean;
   setIsPreview: React.Dispatch<React.SetStateAction<boolean>>;
 }

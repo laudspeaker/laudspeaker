@@ -29,6 +29,14 @@ export interface InclusionCriteria {
   conditions: Condition[];
 }
 
+export interface FormDataItem {
+  [key: string]: {
+    value: string;
+    isRoot?: boolean;
+    children: FormDataItem;
+  };
+}
+
 interface ISegmentInclusion {
   onSubmit?: (id?: string) => void;
   defaultTitle?: string;
@@ -53,7 +61,7 @@ const MySegment = ({
     ConditionalType.and
   );
   const [resources, setResouces] = useState<any>({});
-  const [formData, setFormData] = useState<any[]>([]);
+  const [formData, setFormData] = useState<FormDataItem[]>([]);
   const [, setElementHeight] = useState<Number>(0);
 
   const attributeRequestBodyKeys = ["attribute", "condition", "value"];

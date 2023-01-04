@@ -38,7 +38,7 @@ function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(" ");
 }
 
-export default function TableTemplateBeta({}: any) {
+export default function TableTemplateBeta() {
   return (
     <>
       <div className="shadow sm:hidden">

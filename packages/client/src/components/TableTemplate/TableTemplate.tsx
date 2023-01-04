@@ -50,9 +50,9 @@ function createData(
 }
 
 function renderCorrectColumnNames(
-  data: any,
-  sortOptions?: any,
-  setSortOptions?: (value: any) => void
+  data: { dataSource: string }[],
+  sortOptions?: SortOptions,
+  setSortOptions?: (value: SortOptions) => void
 ) {
   if (data.length < 1) {
     return (
@@ -399,7 +399,7 @@ function renderSecondColumn(row: ReturnType<typeof createData>) {
 // to do
 // this function takes in the data, figures out is it journey, template or people, sets datasource to that
 // then all other rendering is simple
-function transformJourneyData(data: any) {
+function transformJourneyData(data: any[]) {
   const result = [];
   for (const element of data) {
     //people table
@@ -447,19 +447,37 @@ function transformJourneyData(data: any) {
 
 const itemsPerPageOptions = [10, 20, 50, 80, 100];
 
-export default function TableTemplate({
+export interface SortOptions {
+  name?: string;
+}
+
+export interface TableTemplateProps<T> {
+  data: T[];
+  pagesCount?: number;
+  setCurrentPage?: (currentPage: number) => void;
+  currentPage?: number;
+  itemsPerPage: number;
+  setItemsPerPage: (itemsPerPage: number) => void;
+  isShowDisabled?: boolean;
+  setIsShowDisabled?: (isShowDisabled: boolean) => void;
+  sortOptions?: SortOptions;
+  setSortOptions?: (sortOptions: SortOptions) => void;
+  refresh?: () => void;
+}
+
+export default function TableTemplate<T>({
   data,
   pagesCount = 1,
-  setCurrentPage = 0,
+  setCurrentPage = () => {},
   currentPage = 0,
   itemsPerPage,
   setItemsPerPage,
-  isShowDisabled,
-  setIsShowDisabled,
+  isShowDisabled = false,
+  setIsShowDisabled = () => {},
   sortOptions,
   setSortOptions,
-  refresh,
-}: any) {
+  refresh = () => {},
+}: TableTemplateProps<T>) {
   const isSkipped = (num?: number) => {
     if (!num) return false;
     return Math.abs(currentPage - num) > 1 && num > 2 && num < pagesCount - 3;
@@ -768,7 +786,11 @@ export default function TableTemplate({
             <table className="min-w-full divide-y divide-gray-300 md:rounded-lg">
               <thead className="bg-gray-50">
                 <tr className="bg-gray-50 px-6 py-3 text-right text-sm font-semibold text-gray-900">
-                  {renderCorrectColumnNames(data, sortOptions, setSortOptions)}
+                  {renderCorrectColumnNames(
+                    data as (T & { dataSource: string })[],
+                    sortOptions,
+                    setSortOptions
+                  )}
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200 bg-white">

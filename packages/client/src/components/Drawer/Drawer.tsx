@@ -9,7 +9,7 @@ import { XMarkIcon } from "@heroicons/react/20/solid";
 import { useDispatch } from "react-redux";
 import { toggleNavbar } from "reducers/settings";
 
-const classNames = (...classes: any[]) => classes.filter(Boolean).join(" ");
+const classNames = (...classes: string[]) => classes.filter(Boolean).join(" ");
 
 interface NavigationItem {
   id: string;

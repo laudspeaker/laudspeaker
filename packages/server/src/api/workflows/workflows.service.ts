@@ -23,12 +23,8 @@ import { CustomersService } from '../customers/customers.service';
 import { CustomerDocument } from '../customers/schemas/customer.schema';
 import { EventDto } from '../events/dto/event.dto';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
-import { Stats } from '../audiences/entities/stats.entity';
 import { createClient } from '@clickhouse/client';
-import {
-  PosthogKeysPayload,
-  WorkflowTick,
-} from './interfaces/workflow-tick.interface';
+import { WorkflowTick } from './interfaces/workflow-tick.interface';
 import { isBoolean, isString } from 'class-validator';
 import {
   EventKeys,
@@ -56,7 +52,6 @@ export class WorkflowsService {
     private readonly logger: LoggerService,
     @InjectRepository(Workflow)
     private workflowsRepository: Repository<Workflow>,
-    @InjectRepository(Stats) private statsRepository: Repository<Stats>,
     @InjectRepository(Segment) private segmentsRepository: Repository<Segment>,
     @Inject(AudiencesService) private audiencesService: AudiencesService,
     @Inject(CustomersService) private customersService: CustomersService,
@@ -734,16 +729,7 @@ export class WorkflowsService {
                         customer?.id,
                         event
                       );
-                    if (to) {
-                      const stats = await this.statsRepository.findOne({
-                        where: {
-                          audience: { id: to?.id },
-                        },
-                        relations: ['audience'],
-                      });
-                      stats.sentAmount++;
-                      await this.statsRepository.save(stats);
-                    }
+
                     this.logger.debug(
                       'Moving ' +
                         customer?.id +

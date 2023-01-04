@@ -1,10 +1,10 @@
 import React from "react";
 import { Checkbox as MuiCheckbox } from "@mui/material";
 
-export interface CheckBoxProps {
+export interface CheckBoxProps<T> {
   checked: boolean;
   id: string;
-  value?: any;
+  value?: T;
   customClasses?: Object;
   color?: "primary" | "secondary" | "success" | "error" | "info" | "warning";
   customCheckedIcon?: React.ReactNode;
@@ -21,7 +21,7 @@ export interface CheckBoxProps {
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
-const CheckBox = (props: CheckBoxProps) => {
+const CheckBox = <T,>(props: CheckBoxProps<T>) => {
   const {
     checked,
     id,

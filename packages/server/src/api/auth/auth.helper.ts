@@ -16,7 +16,6 @@ import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { LoggerService } from '@nestjs/common/services';
 import { Inject } from '@nestjs/common/decorators';
 import { Audience } from '../audiences/entities/audience.entity';
-import { Stats } from '../audiences/entities/stats.entity';
 import { randomUUID } from 'crypto';
 
 @Injectable()
@@ -29,8 +28,6 @@ export class AuthHelper extends BaseJwtHelper {
   private workflowRepository: Repository<Workflow>;
   @InjectRepository(Audience)
   private audienceRepository: Repository<Audience>;
-  @InjectRepository(Stats)
-  private statsRepository: Repository<Stats>;
   @Inject(WINSTON_MODULE_NEST_PROVIDER)
   private readonly logger: LoggerService;
 
@@ -124,8 +121,6 @@ export class AuthHelper extends BaseJwtHelper {
           workflow: { id: ret.id },
         });
 
-        const stats = this.statsRepository.create({ audience: resp });
-        await this.statsRepository.save(stats);
         return resp;
       })
     );
@@ -306,8 +301,6 @@ export class AuthHelper extends BaseJwtHelper {
           owner: { id: ownerId },
           workflow: { id: ret.id },
         });
-        const stats = this.statsRepository.create({ audience: resp });
-        await this.statsRepository.save(stats);
         return resp;
       })
     );

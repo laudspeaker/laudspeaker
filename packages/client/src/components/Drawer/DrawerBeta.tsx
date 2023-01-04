@@ -33,7 +33,7 @@ import {
 
 const drawerWidth = 200;
 
-const classNames = (...classes: any[]) => classes.filter(Boolean).join(" ");
+const classNames = (...classes: string[]) => classes.filter(Boolean).join(" ");
 
 interface NavigationItem {
   id: string;

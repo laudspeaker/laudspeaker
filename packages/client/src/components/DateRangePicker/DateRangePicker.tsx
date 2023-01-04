@@ -6,7 +6,7 @@ import "./styles.css";
 interface RangePickerProps {
   value: Date[];
   disabled?: boolean;
-  onChange: (e: any) => void;
+  onChange: (date: Date) => void;
 }
 
 const Wrapper = (props: RangePickerProps) => {

@@ -1,9 +1,14 @@
-import React, { KeyboardEvent, LegacyRef } from "react";
+import React, {
+  FocusEventHandler,
+  KeyboardEvent,
+  LegacyRef,
+  RefObject,
+} from "react";
 
 export interface InputProps {
   id?: string;
   name: string;
-  value?: any;
+  value?: string | number | readonly string[];
   autoComplete?: string;
   autoFocus?: boolean;
   customClasses?: object;
@@ -12,7 +17,7 @@ export interface InputProps {
   errorText?: string;
   fullWidth?: boolean;
   helperText?: string;
-  inputRef?: React.RefObject<any> | LegacyRef<HTMLInputElement>;
+  inputRef?: RefObject<HTMLInputElement> | LegacyRef<HTMLInputElement>;
   label?: React.ReactNode;
   placeholder?: string;
   isRequired?: boolean;
@@ -23,10 +28,9 @@ export interface InputProps {
   inputProps?: object;
   className?: string;
   labelClass?: string;
-  onBlur?: (e?: any) => void;
-  ref?: any;
+  onBlur?: FocusEventHandler;
+  ref?: LegacyRef<HTMLInputElement>;
   endText?: string;
-  [key: string]: any;
 }
 
 const Input = (props: InputProps) => {

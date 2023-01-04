@@ -15,7 +15,7 @@ const SlackBuilder = () => {
   const [possibleAttributes, setPossibleAttributes] = useState<string[]>([]);
   const [isPreview, setIsPreview] = useState(true);
 
-  const inputRef = useRef<HTMLInputElement>();
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const getTemplate = async (templateId: string) => {
     return ApiService.get({

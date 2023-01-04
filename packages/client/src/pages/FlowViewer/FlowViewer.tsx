@@ -317,9 +317,9 @@ const Flow = () => {
               value: item,
               title: item * 100 + "%",
             }))}
-            onChange={(e) => {
-              setZoomState(+e.target.value);
-              setViewport({ x: viewX, y: viewY, zoom: +e.target.value });
+            onChange={(val) => {
+              setZoomState(val);
+              setViewport({ x: viewX, y: viewY, zoom: val });
             }}
             sx={{ margin: "0 7.5px" }}
           />
