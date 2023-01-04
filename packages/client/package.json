@@ -10,7 +10,7 @@
     "@material-tailwind/react": "^1.2.4",
     "@mui/icons-material": "^5.8.4",
     "@mui/lab": "^5.0.0-alpha.89",
-    "@mui/material": "5.8.6",
+    "@mui/material": "5.11.0",
     "@mui/x-date-pickers": "^5.0.0-beta.2",
     "@react-oauth/google": "^0.2.6",
     "@sendgrid/client": "^7.7.0",

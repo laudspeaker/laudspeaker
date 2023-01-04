@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: laudspeaker
+    healthCheckPath: /
+    env: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    autoDeploy: false
+    disk:
+      name: data
+      mountPath: /data
+    envVars:
+      - key: PORT
+        value: 80
+  - type: redis
+    name: laudspeaker
+    ipAllowList:
+      - source: 0.0.0.0/0
+        description: everywhere
+databases:
+- name: laudspeaker-db
+  databaseName: laudspeaker
