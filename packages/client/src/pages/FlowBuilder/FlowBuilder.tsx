@@ -782,6 +782,7 @@ const Flow = () => {
               isPrimary={!nodes.some((item) => item.data.primary)}
               isCollapsible={true}
               onClose={() => setAudienceModalOpen(false)}
+              workflowId={flowId}
             />
           </Modal>
         ) : null}

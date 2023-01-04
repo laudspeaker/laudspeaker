@@ -87,11 +87,9 @@ export class CustomersService {
       const workflow = dynamicWkfs[index];
       if (workflow.segment) {
         if (checkInclusion(ret, workflow.segment.inclusionCriteria)) {
-          const audiences = await Promise.all(
-            workflow.audiences.map((item) =>
-              this.audiencesRepository.findOneBy({ id: item })
-            )
-          );
+          const audiences = await this.audiencesRepository.findBy({
+            workflow: { id: workflow.id },
+          });
 
           const primaryAudience = audiences.find(
             (audience) => audience.isPrimary
@@ -119,14 +117,10 @@ export class CustomersService {
       const workflow = staticWkfs[index];
       if (workflow.segment) {
         if (checkInclusion(ret, workflow.segment.inclusionCriteria)) {
-          const audiences = await Promise.all(
-            workflow.audiences.map((item) =>
-              this.audiencesRepository.findOneBy({
-                id: item,
-                isEditable: false,
-              })
-            )
-          );
+          const audiences = await this.audiencesRepository.findBy({
+            workflow: { id: workflow.id },
+            isEditable: false,
+          });
 
           const primaryAudience = audiences.find((item) => item.isPrimary);
 

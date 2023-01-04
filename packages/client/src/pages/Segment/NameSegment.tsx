@@ -7,6 +7,7 @@ export interface INameSegmentForm {
   description: string;
   isDynamic: boolean;
   isPrimary: boolean;
+  workflowId: string;
 }
 
 interface INameSegment {
@@ -14,9 +15,10 @@ interface INameSegment {
   isPrimary: boolean;
   isCollapsible: boolean;
   onClose: () => void;
+  workflowId: string;
 }
 
-const NameSegment = ({ onSubmit, isPrimary }: INameSegment) => {
+const NameSegment = ({ onSubmit, isPrimary, workflowId }: INameSegment) => {
   // A Segment initally has three Properties:
   //      1. Dynamic: whether new customers are added
   //         after a workflow is live
@@ -27,6 +29,7 @@ const NameSegment = ({ onSubmit, isPrimary }: INameSegment) => {
     name: "",
     description: isPrimary ? "initial step" : "",
     isPrimary: isPrimary,
+    workflowId,
   });
 
   // Handling Name and Description Fields

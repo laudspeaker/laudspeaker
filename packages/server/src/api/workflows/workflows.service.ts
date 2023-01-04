@@ -265,15 +265,23 @@ export class WorkflowsService {
         if (!nodeTemplates || !Array.isArray(nodeTemplates) || !audienceId)
           continue;
 
-        await this.audiencesService.audiencesRepository.update(
-          {
-            id: audienceId,
-            owner: { id: account.id },
-          },
-          {
-            templates: nodeTemplates.map((item) => item.templateId),
-          }
-        );
+        const templates = (
+          await Promise.all(
+            nodeTemplates.map((item) =>
+              this.audiencesService.templatesService.templatesRepository.findOneBy(
+                {
+                  id: item.templateId,
+                }
+              )
+            )
+          )
+        ).filter((item) => item.id);
+
+        await this.audiencesService.audiencesRepository.save({
+          id: audienceId,
+          owner: { id: account.id },
+          templates,
+        });
       }
     }
 
@@ -326,31 +334,34 @@ export class WorkflowsService {
       (res?.[0]?.count || '0');
     const newWorkflow = await this.findOne(user, newName, false);
 
-    const newAudiences = await Promise.all(
-      oldWorkflow.audiences?.map(async (id) => {
-        const { name, description, isPrimary, templates } =
-          await this.audiencesService.findOne(user, id);
-        const newAudience = await this.audiencesService.insert(user, {
-          name,
-          description,
-          isPrimary,
-          templates,
-        });
-        return newAudience.id;
-      }) || []
-    );
+    const oldAudiences = await this.audiencesService.audiencesRepository.find({
+      where: { workflow: { id: oldWorkflow.id } },
+      relations: ['workflow', 'owner'],
+    });
+
+    const newAudiences: Audience[] =
+      await this.audiencesService.audiencesRepository.save(
+        oldAudiences.map((oldAudience) => ({
+          customers: [],
+          name: oldAudience.name,
+          isPrimary: oldAudience.isPrimary,
+          description: oldAudience.description,
+          owner: oldAudience.owner,
+          workflow: newWorkflow,
+        }))
+      );
 
     let visualLayout = JSON.stringify(oldWorkflow.visualLayout);
     const rules = oldWorkflow.rules?.map((rule) =>
       Buffer.from(rule, 'base64').toString()
     );
 
-    for (let i = 0; i < oldWorkflow.audiences.length; i++) {
-      const oldAudience = oldWorkflow.audiences[i];
-      const newAudience = newAudiences[i];
-      visualLayout = visualLayout.replaceAll(oldAudience, newAudience);
+    for (let i = 0; i < oldAudiences.length; i++) {
+      const oldAudienceId = oldAudiences[i].id;
+      const newAudienceId = newAudiences[i].id;
+      visualLayout = visualLayout.replaceAll(oldAudienceId, newAudienceId);
       for (let i = 0; i < rules.length; i++) {
-        rules[i] = rules[i].replaceAll(oldAudience, newAudience);
+        rules[i] = rules[i].replaceAll(oldAudienceId, newAudienceId);
       }
     }
 
@@ -359,7 +370,6 @@ export class WorkflowsService {
 
     await this.update(user, {
       id: newWorkflow.id,
-      audiences: newAudiences,
       name: newName,
       visualLayout,
       rules: triggers,
@@ -415,22 +425,13 @@ export class WorkflowsService {
         new Error('To start workflow segment should be defined')
       );
 
-    for (let index = 0; index < workflow?.audiences?.length; index++) {
+    const audiences = await this.audiencesService.audiencesRepository.findBy({
+      workflow: { id: workflow.id },
+    });
+
+    for (let audience of audiences) {
       try {
-        audience = await this.audiencesService.findOne(
-          account,
-          workflow.audiences[index]
-        );
-        if (!audience) {
-          this.logger.error('Error: Workflow contains nonexistant audience');
-          return Promise.reject(errors.ERROR_DOES_NOT_EXIST);
-        }
-      } catch (err: any) {
-        this.logger.error('Error: ' + err);
-        return Promise.reject(err);
-      }
-      try {
-        audience = await this.audiencesService.freeze(account, audience?.id);
+        audience = await this.audiencesService.freeze(account, audience.id);
         this.logger.debug('Freezing audience ' + audience?.id);
       } catch (err: any) {
         this.logger.error('Error: ' + err);
@@ -514,21 +515,11 @@ export class WorkflowsService {
       workflowsIndex++
     ) {
       workflow = workflows[workflowsIndex];
-      for (
-        let audienceIndex = 0;
-        audienceIndex < workflow?.audiences?.length;
-        audienceIndex++
-      ) {
-        try {
-          audience = await this.audiencesService.findOne(
-            account,
-            workflow.audiences[audienceIndex]
-          );
-          this.logger.debug('Audience: ' + audience);
-        } catch (err: any) {
-          this.logger.error('Error: ' + err);
-          return Promise.reject(err);
-        }
+      const audiences = await this.audiencesService.audiencesRepository.findBy({
+        workflow: { id: workflow.id },
+      });
+      for (const audience of audiences) {
+        this.logger.debug('Audience: ' + audience);
         if (
           audience.isPrimary &&
           workflow.isDynamic &&

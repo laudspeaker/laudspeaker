@@ -1,10 +1,4 @@
-import {
-  IsString,
-  IsBoolean,
-  IsJSON,
-  IsOptional,
-  IsObject,
-} from 'class-validator';
+import { IsString, IsBoolean, IsOptional, IsArray } from 'class-validator';
 
 export class CreateAudienceDto {
   @IsString()
@@ -19,5 +13,9 @@ export class CreateAudienceDto {
   public isPrimary: boolean;
 
   @IsOptional()
+  @IsArray()
   public templates: string[];
+
+  @IsString()
+  public workflowId: string;
 }

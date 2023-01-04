@@ -102,15 +102,23 @@ export class AudiencesService {
     account: Account,
     createAudienceDto: CreateAudienceDto
   ): Promise<Audience> {
-    const { name, isPrimary, description, templates } = createAudienceDto;
+    const { name, isPrimary, description, templates, workflowId } =
+      createAudienceDto;
     try {
       const resp = await this.audiencesRepository.save({
         customers: [],
         name,
         isPrimary,
         description,
-        templates: templates || [],
+        templates: await Promise.all(
+          (templates || []).map((templateId) =>
+            this.templatesService.templatesRepository.findOneBy({
+              id: templateId,
+            })
+          )
+        ),
         owner: { id: account.id },
+        workflow: { id: workflowId },
       });
       const stats = this.statsRepository.create({ audience: resp });
       await this.statsRepository.save(stats);
@@ -257,7 +265,10 @@ export class AudiencesService {
     }
     if (to) {
       try {
-        toAud = await this.findOne(account, to);
+        toAud = await this.audiencesRepository.findOne({
+          where: { owner: { id: account.id }, id: to },
+          relations: ['templates'],
+        });
       } catch (err: any) {
         this.logger.error('Error: ' + err);
         return Promise.reject(err);
@@ -297,7 +308,7 @@ export class AudiencesService {
           //{ id: toAud.id, isEditable: false },
           {
             ...toAud,
-            customers: [...toAud?.customers, customerId],
+            customers: [...toAud.customers, customerId],
           }
         );
         this.logger.debug('To after: ' + saved?.customers?.length);
@@ -306,30 +317,32 @@ export class AudiencesService {
         return Promise.reject(err);
       }
 
+      let toTemplates = toAud.templates.map((item) => item.id);
+
       if (
         account.emailProvider === 'free3' &&
         account.customerId !== customerId &&
-        toAud?.templates?.length
+        toTemplates.length
       ) {
         const data = await this.templatesService.templatesRepository.find({
           where: {
             owner: { id: account.id },
             type: 'email',
-            id: In(toAud?.templates),
+            id: In(toTemplates),
           },
         });
         if (data.length > 0) {
           this.logger.debug(
             'ToAud templates before template skip: ',
-            toAud.templates
+            toTemplates
           );
           const dataIds = data.map((el2) => String(el2.id));
-          toAud.templates = toAud.templates.filter(
+          toTemplates = toTemplates.filter(
             (el) => !dataIds.includes(String(el))
           );
           this.logger.debug(
             'ToAud templates after template skip: ',
-            toAud.templates
+            toTemplates
           );
           this.logger.warn(
             'Templates: [' +
@@ -339,23 +352,23 @@ export class AudiencesService {
         }
       }
 
-      if (toAud?.templates?.length) {
+      if (toTemplates?.length) {
         for (
           let templateIndex = 0;
-          templateIndex < toAud?.templates?.length;
+          templateIndex < toTemplates?.length;
           templateIndex++
         ) {
           try {
             jobId = await this.templatesService.queueMessage(
               account,
-              toAud.templates[templateIndex],
+              toTemplates[templateIndex],
               customerId,
               event,
               toAud.id
             );
             templates.push(
               await this.templatesService.templatesRepository.findOneBy({
-                id: toAud.templates[templateIndex],
+                id: toTemplates[templateIndex],
               })
             );
             this.logger.debug('Queued Message');

@@ -13,7 +13,7 @@ export class WebhookEvent {
   id: string;
 
   @JoinColumn()
-  @ManyToOne(() => Audience, (audience) => audience.id)
+  @ManyToOne(() => Audience, (audience) => audience.id, { onDelete: 'CASCADE' })
   audience: Audience;
 
   @Column()

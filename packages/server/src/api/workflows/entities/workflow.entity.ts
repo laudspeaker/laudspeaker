@@ -121,9 +121,6 @@ export class Workflow {
   @Column('boolean', { default: false })
   isDeleted: boolean;
 
-  @Column('text', { nullable: false, array: true, default: [] })
-  audiences: string[];
-
   //This is actually an array of JSON stringified Trigger objects
   @Column('simple-array', { nullable: true })
   rules: string[];
@@ -135,7 +132,7 @@ export class Workflow {
   @Column({ default: true })
   isDynamic: boolean;
 
-  @ManyToOne(() => Segment, (segment) => segment.workflows)
+  @ManyToOne(() => Segment, (segment) => segment.id, { onDelete: 'CASCADE' })
   @JoinColumn()
   segment?: Segment;
 }

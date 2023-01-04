@@ -121,6 +121,7 @@ export class AuthHelper extends BaseJwtHelper {
           isPrimary,
           description,
           owner: { id: ownerId },
+          workflow: { id: ret.id },
         });
 
         const stats = this.statsRepository.create({ audience: resp });
@@ -132,8 +133,6 @@ export class AuthHelper extends BaseJwtHelper {
     const nodeIds = [randomUUID(), randomUUID()];
     const triggerId = randomUUID();
     const eventName = 'SignUp';
-
-    ret.audiences = data.map((el) => el.id);
 
     const defRules = [
       {
@@ -305,6 +304,7 @@ export class AuthHelper extends BaseJwtHelper {
           isPrimary,
           description,
           owner: { id: ownerId },
+          workflow: { id: ret.id },
         });
         const stats = this.statsRepository.create({ audience: resp });
         await this.statsRepository.save(stats);
@@ -313,8 +313,6 @@ export class AuthHelper extends BaseJwtHelper {
     );
 
     const nodeId = randomUUID();
-
-    ret.audiences = data.map((el) => el.id);
 
     ret.visualLayout = {
       edges: [],
