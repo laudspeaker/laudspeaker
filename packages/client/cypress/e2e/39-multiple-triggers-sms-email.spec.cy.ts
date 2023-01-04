@@ -2,13 +2,20 @@
 /* eslint-disable jest/valid-expect */
 /* eslint-disable jest/valid-describe-callback */
 /* eslint-disable @typescript-eslint/no-shadow */
-import credentials from "../fixtures/credentials.json";
+import credentials from "../fixtures/credentials";
+import createNewSegment from "../test-helpers/createNewSegment";
 import { loginFunc } from "../test-helpers/loginFunc";
 import setupEventTrigger from "../test-helpers/setupEventTrigger";
-import { tamplatesFunc } from "../test-helpers/templatesFunc";
+import { templatesFunc } from "../test-helpers/templatesFunc";
 
-const { email, password, slackTemplate, emailTemplate, userAPIkey } =
-  credentials.MessageHitUser;
+const {
+  email,
+  password,
+  slackTemplate,
+  emailTemplate,
+  smsTemplate,
+  userAPIkey,
+} = credentials.MessageHitUser;
 
 describe(
   "Multiple triggers",
@@ -21,14 +28,14 @@ describe(
 
     it("passes", () => {
       loginFunc(email, password);
-      tamplatesFunc(slackTemplate, emailTemplate);
+      templatesFunc();
 
       cy.get('[data-disclosure-link="Journey Builder"]').click();
       cy.wait(1000);
       cy.get("button").contains("Create Journey").click();
       cy.get("#name").should("exist").type("Multiple triggers flow");
       cy.get("#createJourneySubmit").click();
-      cy.wait(500);
+      cy.wait(3000);
       cy.get("#audience").click();
       cy.get("#name").type("init");
       cy.get("#description").type("init description text");
@@ -38,10 +45,10 @@ describe(
         .get('[data-isprimary="true"]')
         .move({ deltaX: 100, deltaY: 100 });
 
-      cy.wait(500);
+      cy.wait(3000);
       cy.get("#audience").click();
-      cy.get("#name").type("slack audience");
-      cy.get("#description").type("slack description");
+      cy.get("#name").type("sms audience");
+      cy.get("#description").type("sms description");
       cy.get("#saveNewSegment").click();
 
       cy.get(".react-flow__viewport")
@@ -49,22 +56,23 @@ describe(
         .move({ deltaX: 50, deltaY: 300 });
 
       cy.get('[data-isprimary="false"]').click();
-      cy.get("#slack").click();
-
+      cy.get("#sms > .p-0 > .justify-between").click();
       cy.get("#activeJourney").click();
-      cy.contains(slackTemplate.name).click();
+      cy.contains(smsTemplate.name).click();
       cy.get("#exportSelectedTemplate").click();
 
       cy.get(".react-flow__viewport").get('[data-isprimary="true"]').click();
-      setupEventTrigger(slackTemplate.eventName, slackTemplate.eventName);
+      setupEventTrigger(smsTemplate.eventName, smsTemplate.eventName);
 
       cy.get('[data-isprimary="true"]')
         .get('[data-handlepos="bottom"]')
-        .drag('[data-isprimary="false"] [data-handlepos="top"]');
+        .drag('[data-isprimary="false"] [data-handlepos="top"]', {
+          force: true,
+        });
 
       cy.get('[data-isprimary="false"] [data-handlepos="top"]').click();
 
-      cy.wait(500);
+      cy.wait(3000);
       cy.get("#audience").click();
       cy.get("#name").type("email audience");
       cy.get("#description").type("email description");
@@ -78,9 +86,12 @@ describe(
       setupEventTrigger(emailTemplate.eventName, emailTemplate.eventName);
 
       cy.get('[data-handlepos="bottom"]:last').drag(
-        '[data-isprimary="false"] [data-handlepos="top"]:last'
+        '[data-isprimary="false"] [data-handlepos="top"]:last',
+        { force: true }
       );
       cy.get('[data-isprimary="false"] [data-handlepos="top"]:last').click();
+
+      createNewSegment();
 
       cy.contains("Save").click();
       cy.wait(500);
@@ -88,7 +99,7 @@ describe(
       cy.wait(500);
 
       cy.visit("/flow");
-      cy.wait(500);
+      cy.wait(3000);
 
       cy.request({
         method: "POST",
@@ -97,18 +108,18 @@ describe(
           Authorization: `Api-Key ${userAPIkey}`,
         },
         body: {
-          correlationKey: "slackId",
-          correlationValue: slackTemplate.slackUid,
-          event: { [slackTemplate.eventName]: slackTemplate.eventName },
+          correlationKey: "phone",
+          correlationValue: Cypress.env("TESTS_SMS_TO") || smsTemplate.phone,
+          event: { [smsTemplate.eventName]: smsTemplate.eventName },
         },
       }).then(({ body }) => {
-        cy.wait(1000);
+        cy.wait(2000);
         cy.request({
           method: "POST",
           headers: {
             Authorization: `Api-Key ${userAPIkey}`,
           },
-          url: `${Cypress.env("AxiosURL")}events/job-status/slack`,
+          url: `${Cypress.env("AxiosURL")}events/job-status/sms`,
           body: {
             jobId: body[0]?.jobIds?.[0],
           },
@@ -116,6 +127,7 @@ describe(
           expect(body).to.equal("completed");
         });
       });
+
       cy.request({
         method: "POST",
         url: `${Cypress.env("AxiosURL")}events`,
@@ -128,7 +140,7 @@ describe(
           event: { [emailTemplate.eventName]: emailTemplate.eventName },
         },
       }).then(({ body }) => {
-        cy.wait(1000);
+        cy.wait(2000);
         cy.request({
           method: "POST",
           headers: {

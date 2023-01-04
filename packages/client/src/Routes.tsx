@@ -35,6 +35,7 @@ import OnboardingBeta from "pages/Onboarding/OnboardingBeta";
 import Settings from "pages/Settings/Settings";
 import Person from "pages/Person";
 import Verify from "pages/Verify";
+import SmsBuilder from "pages/SmsBuilder";
 
 interface IProtected {
   children: ReactElement;
@@ -230,6 +231,16 @@ const RouteComponent: React.FC = () => {
           }
         />
         <Route
+          path="/sms-builder"
+          element={
+            <Protected>
+              <DrawerLayout>
+                <SmsBuilder />
+              </DrawerLayout>
+            </Protected>
+          }
+        />
+        <Route
           path="/templates/email/:name"
           element={
             <Protected>
@@ -245,6 +256,16 @@ const RouteComponent: React.FC = () => {
             <Protected>
               <DrawerLayout>
                 <SlackBuilder />
+              </DrawerLayout>
+            </Protected>
+          }
+        />
+        <Route
+          path="/templates/sms/:name"
+          element={
+            <Protected>
+              <DrawerLayout>
+                <SmsBuilder />
               </DrawerLayout>
             </Protected>
           }

@@ -1,20 +1,19 @@
 ---
 name: Feature Work
 about: Standard ticket template
-title: ''
-labels: ''
-assignees: ''
-
+title: ""
+labels: ""
+assignees: ""
 ---
 
 ## Helpful title:
 
-##Context, 
+##Context,
 **Link to PRD and short 3 sentences max**
 
 ##To Do list
 
-##Story size 
+##Story size
 
 ##Dates
 

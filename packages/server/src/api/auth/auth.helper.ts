@@ -115,9 +115,7 @@ export class AuthHelper extends BaseJwtHelper {
         audience.name = el.name;
         audience.customers = el.customers;
         audience.templates = el.templates;
-        audience.isDynamic = el.isDynamic;
         audience.isPrimary = el.isPrimary;
-        audience.inclusionCriteria = el.inclusionCriteria;
         audience.description = el.description;
         audience.ownerId = el.ownerId;
 
@@ -297,9 +295,7 @@ export class AuthHelper extends BaseJwtHelper {
         audience.name = el.name;
         audience.customers = el.customers;
         audience.templates = el.templates;
-        audience.isDynamic = el.isDynamic;
         audience.isPrimary = el.isPrimary;
-        audience.inclusionCriteria = el.inclusionCriteria;
         audience.description = el.description;
         audience.ownerId = el.ownerId;
 

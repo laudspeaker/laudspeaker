@@ -1,10 +1,11 @@
 /* eslint-disable jest/valid-expect */
 /* eslint-disable jest/valid-describe-callback */
 /* eslint-disable @typescript-eslint/no-shadow */
-import credentials from "../fixtures/credentials.json";
+import credentials from "../fixtures/credentials";
+import createNewSegment from "../test-helpers/createNewSegment";
 import { loginFunc } from "../test-helpers/loginFunc";
 import setupEventTrigger from "../test-helpers/setupEventTrigger";
-import { tamplatesFunc } from "../test-helpers/templatesFunc";
+import { templatesFunc } from "../test-helpers/templatesFunc";
 
 const { email, password, slackTemplate, userAPIkey, emailTemplate } =
   credentials.MessageHitUser;
@@ -20,14 +21,14 @@ describe(
 
     it("passes", () => {
       loginFunc(email, password);
-      tamplatesFunc(slackTemplate, emailTemplate);
+      templatesFunc(slackTemplate, emailTemplate);
 
       cy.get('[data-disclosure-link="Journey Builder"]').click();
       cy.wait(1000);
       cy.get("button").contains("Create Journey").click();
       cy.get("#name").should("exist").type("Loop journeys flow");
       cy.get("#createJourneySubmit").click();
-      cy.wait(500);
+      cy.wait(3000);
       cy.get("#audience").click();
       cy.get("#name").type("init");
       cy.get("#description").type("init description text");
@@ -37,7 +38,7 @@ describe(
         .get('[data-isprimary="true"]')
         .move({ deltaX: 100, deltaY: 100 });
 
-      cy.wait(500);
+      cy.wait(3000);
       cy.get("#audience").click();
       cy.get("#name").type("slack audience");
       cy.get("#description").type("slack description");
@@ -71,6 +72,8 @@ describe(
       );
       cy.get('[data-isprimary="true"] [data-handlepos="top"]').click();
 
+      createNewSegment();
+
       cy.contains("Save").click();
       cy.wait(500);
       cy.contains("Start").click();
@@ -88,10 +91,10 @@ describe(
         body: {
           correlationKey: "slackId",
           correlationValue: slackTemplate.slackUid,
-          event: { "1": "1" },
+          event: { 1: "1" },
         },
       }).then(({ body }) => {
-        cy.wait(1000);
+        cy.wait(4000);
         cy.request({
           method: "POST",
           headers: {
@@ -102,8 +105,8 @@ describe(
             jobId: body[0]?.jobIds?.[0],
           },
         }).then(({ body }) => {
-          cy.wait(1000);
           expect(body).to.equal("completed");
+          cy.wait(1000);
           cy.request({
             method: "POST",
             url: `${Cypress.env("AxiosURL")}events`,
@@ -113,7 +116,7 @@ describe(
             body: {
               correlationKey: "slackId",
               correlationValue: slackTemplate.slackUid,
-              event: { "2": "2" },
+              event: { 2: "2" },
             },
           }).then(({ body }) => {
             expect(body?.[0]?.jobIDs?.[0]).to.equal(undefined);
@@ -127,10 +130,10 @@ describe(
               body: {
                 correlationKey: "slackId",
                 correlationValue: slackTemplate.slackUid,
-                event: { "1": "1" },
+                event: { 1: "1" },
               },
             }).then(({ body }) => {
-              cy.wait(1000);
+              cy.wait(4000);
               cy.request({
                 method: "POST",
                 headers: {

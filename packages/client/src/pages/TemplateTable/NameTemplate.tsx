@@ -49,13 +49,15 @@ const NameTemplate = ({ onSubmit, isPrimary }: INameSegment) => {
   // Pushing state back up to the flow builder
   const handleSubmit: any = async (e: any) => {
     if (segmentForm.name && day) {
-      if (day == "slack") {
+      if (day === "slack") {
         const navigationLink = "/templates/slack/" + segmentForm.name;
         navigate(navigationLink);
-      } else if (day == "email") {
+      } else if (day === "email") {
         const navigationLink = "/templates/email/" + segmentForm.name;
         navigate(navigationLink);
-      } else {
+      } else if (day === "sms") {
+        const navigationLink = "/templates/sms/" + segmentForm.name;
+        navigate(navigationLink);
       }
       e.preventDefault();
       if (onSubmit) {

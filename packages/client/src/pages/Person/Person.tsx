@@ -61,33 +61,37 @@ const Person = () => {
 
   useEffect(() => {
     (async () => {
-      const { data: personData } = await ApiService.get({
-        url: "/customers/" + id,
-      });
-      if (personData.createdAt) {
-        const [firstItem, ...items] = timeline;
-        const creationDate = new Date(personData.createdAt);
-        firstItem.datetime = creationDate.toUTCString();
-        firstItem.date = creationDate.toLocaleDateString();
-        setTimeline([firstItem, ...items]);
-      }
-      setPersonInfo(personData);
+      try {
+        const { data: personData } = await ApiService.get({
+          url: "/customers/" + id,
+        });
+        if (personData.createdAt) {
+          const [firstItem, ...items] = timeline;
+          const creationDate = new Date(personData.createdAt);
+          firstItem.datetime = creationDate.toUTCString();
+          firstItem.date = creationDate.toLocaleDateString();
+          setTimeline([firstItem, ...items]);
+        }
+        setPersonInfo(personData);
 
-      const { data: eventsData } = await ApiService.get({
-        url: `/customers/${id}/events`,
-      });
-      setTimeline([
-        ...timeline,
-        ...eventsData.map((item: any) => ({
-          id: item.id + item.name + item.audName + item.event,
-          type: eventTypes.completed,
-          content: "Email " + item.event,
-          datetime: item.createdAt,
-          name: item.name,
-          audName: item.audname,
-          date: new Date(item.createdAt).toLocaleString(),
-        })),
-      ]);
+        const { data: eventsData } = await ApiService.get({
+          url: `/customers/${id}/events`,
+        });
+        setTimeline([
+          ...timeline,
+          ...eventsData.map((item: any) => ({
+            id: item.id + item.name + item.audName + item.event,
+            type: eventTypes.completed,
+            content: "Email " + item.event,
+            datetime: item.createdAt,
+            name: item.name,
+            audName: item.audname,
+            date: new Date(item.createdAt).toLocaleString(),
+          })),
+        ]);
+      } catch (e) {
+        console.error(e);
+      }
     })();
   }, []);
 

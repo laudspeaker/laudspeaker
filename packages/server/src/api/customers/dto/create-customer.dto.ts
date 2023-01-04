@@ -93,6 +93,11 @@ export class CreateCustomerDto {
   @IsBoolean()
   @IsOptional()
   verified?: boolean;
+
+  @IsString()
+  @IsNotEmpty()
+  @IsOptional()
+  public phone?: string;
 }
 /*
 example slack 

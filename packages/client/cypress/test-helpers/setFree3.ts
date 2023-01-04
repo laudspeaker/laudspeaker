@@ -1,3 +1,4 @@
+import "@4tw/cypress-drag-drop";
 /* eslint-disable jest/valid-expect */
 export default () => {
   cy.get('[data-disclosure-link="Settings"] > .bg-cyan-700').click();
@@ -8,7 +9,7 @@ export default () => {
   cy.contains("You need to verify your email!").should("exist");
   cy.request(`${Cypress.env("AxiosURL")}tests/test-verification`).then(
     ({ body }) => {
-      expect(body.accountId).to.equal("-1000");
+      expect(body.accountId).to.equal(-1000);
       expect(body.status).to.equal("sent");
 
       cy.request({

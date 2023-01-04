@@ -15,39 +15,44 @@
 
 
 ## Laudspeaker - Open Source alternative to Braze / Iterable / One Signal / Customer Io. Easily Create Messaging Workflows
-* Send product or event-triggered emails, slack and more to your customers and users at scale
-* Build complex messaging workflows the whole team can understand in a visual tool
-* Deploy and run on your own infrastructure to keep control of your data.
 
-- [Our Website](https://laudspeaker.com/)
-- [Our Product Hunt](https://www.producthunt.com/posts/laudspeaker)
-- [Join our Slack][slack]
+- Send product or event-triggered emails, slack and more to your customers and users at scale
+- Build complex messaging workflows the whole team can understand in a visual tool
+- Deploy and run on your own infrastructure to keep control of your data.
+
+* [Our Website](https://laudspeaker.com/)
+* [Our Product Hunt](https://www.producthunt.com/posts/laudspeaker)
+* [Join our Slack][slack]
 
 ### Get Started
 
 Run yourself (instructions below) or use [Laudspeaker Cloud](https://app.laudspeaker.com/login) . Docs are [here](https://laudspeaker.com/docs/guides/overview/intro/)
 
 run services:
+
 - `docker-compose up` or `docker compose up` depending on your version of docker
 
 run backend and front end:
+
 - `npm install`
 - `npm run start`
 
 stop all running services:
+
 - `postgres: sudo systemctl stop postgresql.service`
-redis:
+  redis:
 - `/etc/init.d/redis-server stop`
 - `mongo: sudo systemctl stop mongod`
 
 remove compose conatiners:
+
 - `docker-compose down --volumes`
 
 Add a `.env` file to both server and client in packages
 
 We have provided examples which you can use:
 
-`mv env-server-example packages/server/.env` and  `mv env-client-example packages/client/.env`
+`mv env-server-example packages/server/.env` and `mv env-client-example packages/client/.env`
 
 Make sure you fill in the fields in the env files before trying to run laudspeaker
 
@@ -80,9 +85,9 @@ We would love to see you contribute to Laudspeaker. Join our slack to get involv
 
 ### Follow Us
 
--  [Slack][slack]
+- [Slack][slack]
 
--  [Twitter][twitter]
+- [Twitter][twitter]
 
 [slack]: https://join.slack.com/t/laudspeakerusers/shared_invite/zt-1io0f6u50-rSCnNtqkJT6QIdbPOyJh6g
 [twitter]: https://twitter.com/laudspeaker
@@ -103,7 +108,6 @@ We would love to see you contribute to Laudspeaker. Join our slack to get involv
 
 -  [Product Hunt][producthunt]
 -->
-
 
 <!---[devto]: https://dev.to/rudderstack
 [youtube]: https://www.youtube.com/channel/UCgV-B77bV_-LOmKYHw8jvBw

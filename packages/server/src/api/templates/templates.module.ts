@@ -16,6 +16,8 @@ import {
   CustomerKeys,
   CustomerKeysSchema,
 } from '../customers/schemas/customer-keys.schema';
+import { CustomersModule } from '../customers/customers.module';
+import { SlackModule } from '../slack/slack.module';
 
 @Module({
   imports: [
@@ -41,8 +43,14 @@ import {
     BullModule.registerQueue({
       name: 'customers',
     }),
+    BullModule.registerQueue({
+      name: 'sms',
+    }),
+    CustomersModule,
+    SlackModule,
   ],
-  providers: [TemplatesService, CustomersService, SlackService],
+  providers: [TemplatesService],
   controllers: [TemplatesController],
+  exports: [TemplatesService],
 })
 export class TemplatesModule {}

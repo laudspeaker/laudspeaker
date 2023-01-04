@@ -117,7 +117,7 @@ export const dataSubArray = [
         type: "menu",
         link: "/twilio",
         canBeDisabled: true,
-        alwaysDisabled: true,
+        requiredOnboarding: "Sms",
         disabledToolTip:
           "Make sure there are steps and configure sms in settings and step selected",
       },

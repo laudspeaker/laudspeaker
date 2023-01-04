@@ -18,9 +18,8 @@ export class EventDto {
   @IsOptional()
   public source: string;
 
-  @IsString()
   @IsOptional()
-  public payload: string;
+  public payload?: any;
 
   @IsNotEmpty()
   @IsObject()

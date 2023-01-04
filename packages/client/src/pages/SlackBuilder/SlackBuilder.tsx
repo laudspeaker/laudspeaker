@@ -5,7 +5,7 @@ import SlackTemplateHeader from "./SlackTemplateHeader";
 import ApiService from "services/api.service";
 import { ApiConfig } from "../../constants";
 import { useParams } from "react-router-dom";
-import CustomInput from "../../components/MergeTagInput/MergeTagInput";
+import MergeTagInput from "../../components/MergeTagInput/MergeTagInput";
 import { getResources } from "pages/Segment/SegmentHelpers";
 
 const SlackBuilder = () => {
@@ -83,7 +83,7 @@ const SlackBuilder = () => {
         handleTemplateNameChange={(e: any) => setTemplateName(e.target.value)}
       />
       <div style={{ width: "490px", margin: "auto" }}>
-        <CustomInput
+        <MergeTagInput
           isRequired
           value={slackMessage}
           placeholder={"Slack Message"}

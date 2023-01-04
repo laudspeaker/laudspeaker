@@ -6,7 +6,11 @@ import {
 } from '@nestjs/common';
 import { Correlation, CustomersService } from '../customers/customers.service';
 import { CustomerDocument } from '../customers/schemas/customer.schema';
-import { EventsTable, CustomEventTable } from './interfaces/event.interface';
+import {
+  EventsTable,
+  CustomEventTable,
+  JobTypes,
+} from './interfaces/event.interface';
 import { Account } from '../accounts/entities/accounts.entity';
 import { PosthogBatchEventDto } from './dto/posthog-batch-event.dto';
 import { EventDto } from './dto/event.dto';
@@ -14,7 +18,7 @@ import { AccountsService } from '../accounts/accounts.service';
 import { WorkflowsService } from '../workflows/workflows.service';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { WorkflowTick } from '../workflows/interfaces/workflow-tick.interface';
-import { PostHogEventDto } from './dto/posthog-event.dto';
+import { Eventtype, PostHogEventDto } from './dto/posthog-event.dto';
 import { StatusJobDto } from './dto/status-event.dto';
 import { Queue } from 'bull';
 import { InjectQueue } from '@nestjs/bull';
@@ -26,6 +30,11 @@ import { EventKeys, EventKeysDocument } from './schemas/event-keys.schema';
 import { attributeConditions } from '@/fixtures/attributeConditions';
 import keyTypes from '@/fixtures/keyTypes';
 import defaultEventKeys from '@/fixtures/defaultEventKeys';
+import {
+  PosthogEventType,
+  PosthogEventTypeDocument,
+} from './schemas/posthog-event-type.schema';
+import { PosthogTriggerParams } from '../workflows/entities/workflow.entity';
 
 @Injectable()
 export class EventsService {
@@ -37,18 +46,21 @@ export class EventsService {
     private readonly customersService: CustomersService,
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
     private readonly logger: LoggerService,
-    @InjectQueue('email') private readonly emailQueue: Queue,
-    @InjectQueue('slack') private readonly slackQueue: Queue,
+    @InjectQueue(JobTypes.email) private readonly emailQueue: Queue,
+    @InjectQueue(JobTypes.slack) private readonly slackQueue: Queue,
+    @InjectQueue(JobTypes.sms) private readonly smsQueue: Queue,
     @InjectModel(Event.name)
     private EventModel: Model<EventDocument>,
     @InjectModel(EventKeys.name)
-    private EventKeysModel: Model<EventKeysDocument>
+    private EventKeysModel: Model<EventKeysDocument>,
+    @InjectModel(PosthogEventType.name)
+    private PosthogEventTypeModel: Model<PosthogEventTypeDocument>
   ) {
     for (const { name, property_type } of defaultEventKeys) {
       if (name && property_type) {
         this.EventKeysModel.updateOne(
-          { key: name, type: property_type },
-          { key: name, type: property_type },
+          { key: name },
+          { key: name, type: property_type, providerSpecific: 'posthog' },
           { upsert: true }
         ).exec();
       }
@@ -72,19 +84,20 @@ export class EventsService {
     return this.customersService.findByCustomEvent(account, ev.slackId);
   }
 
-  async getJobEmailStatus(body: StatusJobDto) {
-    const emailJob = await this.emailQueue.getJob(body.jobId);
-    return emailJob.getState();
-  }
+  async getJobStatus(body: StatusJobDto, type: JobTypes) {
+    const jobQueues = {
+      [JobTypes.email]: this.emailQueue,
+      [JobTypes.slack]: this.slackQueue,
+      [JobTypes.sms]: this.smsQueue,
+    };
 
-  async getJobSlackStatus(body: StatusJobDto) {
     try {
-      const slackJob = await this.slackQueue.getJob(body.jobId);
-      const state = await slackJob.getState();
+      const job = await jobQueues[type].getJob(body.jobId);
+      const state = await job.getState();
       return state;
     } catch (err) {
-      this.logger.error('Error: ' + err);
-      throw new HttpException('Error getting job status', 503);
+      this.logger.error(`Error getting ${type} job status: ` + err);
+      throw new HttpException(`Error getting ${type} job status`, 503);
     }
   }
 
@@ -117,6 +130,21 @@ export class EventsService {
         this.logger.debug(
           'Processing posthog event: ' + JSON.stringify(currentEvent, null, 2)
         );
+
+        if (
+          currentEvent.type === 'track' &&
+          currentEvent.event &&
+          currentEvent.event !== 'clicked'
+        ) {
+          const found = await this.PosthogEventTypeModel.findOne({
+            name: currentEvent.event,
+          }).exec();
+          if (!found) {
+            await this.PosthogEventTypeModel.create({
+              name: currentEvent.event,
+            });
+          }
+        }
 
         let jobIDs: WorkflowTick[] = [];
         let cust: CustomerDocument, // Customer document created/found on this API call
@@ -161,9 +189,12 @@ export class EventsService {
           const convertedEventDto: EventDto = {
             correlationKey: 'posthogId',
             correlationValue: currentEvent.userId,
-            event: currentEvent.event,
+            event: currentEvent.context,
             source: 'posthog',
-            payload: undefined,
+            payload: {
+              type: currentEvent.type,
+              event: currentEvent.event,
+            },
           };
 
           //currentEvent
@@ -227,6 +258,7 @@ export class EventsService {
           createdAt: new Date().toUTCString(),
         });
       }
+      console.log(jobIDs);
       return jobIDs;
     } catch (err) {
       this.logger.error('Error: ' + err);
@@ -264,9 +296,10 @@ export class EventsService {
     );
   }
 
-  async getAttributes(resourceId: string) {
+  async getAttributes(resourceId: string, providerSpecific?: string) {
     const attributes = await this.EventKeysModel.find({
       key: RegExp(`.*${resourceId}.*`, 'i'),
+      providerSpecific,
     })
       .limit(10)
       .exec();
@@ -295,5 +328,15 @@ export class EventsService {
       { $limit: 5 },
     ]).exec();
     return docs.map((doc) => doc?.['event']?.[key]).filter((item) => item);
+  }
+
+  async getPossiblePosthogTypes(search = '') {
+    const searchRegExp = new RegExp(`.*${search}.*`, 'i');
+    const types = await this.PosthogEventTypeModel.find({
+      name: searchRegExp,
+    })
+      .limit(10)
+      .exec();
+    return types.map((type) => type.name);
   }
 }

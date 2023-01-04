@@ -32,24 +32,46 @@ export const getEventResources = async (id) => {
   });
 };
 
-export const getEventKeys = async (id) => {
+export const getEventKeys = async (id, provider = "") => {
   return ApiService.get({
-    url: `${ApiConfig.eventAttributes}/${id}`,
+    url: `${ApiConfig.eventAttributes}/${id}?provider=${provider}`,
+  });
+};
+
+export const getSegments = async (search) => {
+  return ApiService.get({
+    url: `${ApiConfig.segments}?searchText=${search}`,
   });
 };
 
 export const getSegment = async (id) => {
   return ApiService.get({
-    url: `${ApiConfig.audiences}/${id}`,
+    url: `${ApiConfig.segments}/${id}`,
+  });
+};
+
+export const createSegment = async (data) => {
+  return ApiService.put({
+    url: ApiConfig.segments,
+    options: {
+      ...data,
+    },
   });
 };
 
 export const updateSegment = async (id, data) => {
   return ApiService.patch({
-    url: `${ApiConfig.audiences}`,
+    url: `${ApiConfig.segments}/${id}`,
     options: {
       ...data,
     },
+  });
+};
+
+export const duplicateSegment = async (id) => {
+  return ApiService.post({
+    url: `${ApiConfig.segments}/${id}/duplicate`,
+    options: {},
   });
 };
 

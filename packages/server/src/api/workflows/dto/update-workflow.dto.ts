@@ -3,9 +3,9 @@ import {
   IsNotEmpty,
   IsOptional,
   IsArray,
-  IsJSON,
-  IsBoolean,
   IsString,
+  IsUUID,
+  IsBoolean,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { Trigger } from '../entities/workflow.entity';
@@ -17,18 +17,25 @@ export class UpdateWorkflowDto {
   @Trim()
   @IsNotEmpty()
   @IsOptional()
-  public name: string;
+  public name?: string;
 
   @IsArray()
   @IsNotEmpty()
   @IsOptional()
-  public audiences: string[];
+  public audiences?: string[];
 
-  @IsArray()
   @IsOptional()
   @Type(() => Trigger)
-  public rules: Trigger[];
+  public rules?: Trigger[];
 
   @IsOptional()
-  public visualLayout: any;
+  public visualLayout?: any;
+
+  @IsUUID()
+  @IsOptional()
+  public segmentId?: string;
+
+  @IsBoolean()
+  @IsOptional()
+  public isDynamic?: boolean;
 }

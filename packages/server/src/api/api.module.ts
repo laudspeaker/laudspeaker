@@ -20,6 +20,8 @@ import { Template } from './templates/entities/template.entity';
 import { Audience } from './audiences/entities/audience.entity';
 import { TestsModule } from './tests/tests.module';
 import { WebhooksModule } from './webhooks/webhooks.module';
+import { SegmentsModule } from './segments/segments.module';
+import { SmsModule } from './sms/sms.module';
 
 @Module({
   imports: [
@@ -35,6 +37,8 @@ import { WebhooksModule } from './webhooks/webhooks.module';
     SlackModule,
     TestsModule,
     WebhooksModule,
+    SegmentsModule,
+    SmsModule,
   ],
 })
 export class ApiModule {
@@ -130,6 +134,7 @@ export class ApiModule {
       sanitizedMember.slackDeleted = false;
       sanitizedMember.slackAdmin = true;
       sanitizedMember.slackTeamMember = true;
+      sanitizedMember.phone = process.env.TESTS_SMS_TO;
 
       await this.customersService.create(ret, sanitizedMember);
     } catch (error) {

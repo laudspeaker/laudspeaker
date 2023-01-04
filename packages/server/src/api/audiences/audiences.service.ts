@@ -104,13 +104,7 @@ export class AudiencesService {
     audience.name = createAudienceDto.name;
     audience.customers = [];
     audience.templates = [];
-    audience.isDynamic = createAudienceDto.isPrimary
-      ? createAudienceDto.isDynamic
-      : false;
     audience.isPrimary = createAudienceDto.isPrimary;
-    audience.inclusionCriteria = createAudienceDto.isPrimary
-      ? createAudienceDto.inclusionCriteria
-      : undefined;
     audience.description = createAudienceDto.description;
     audience.ownerId = account.id;
     audience.templates = createAudienceDto.templates;
@@ -174,12 +168,8 @@ export class AudiencesService {
         {
           description: updateAudienceDto.description,
           name: updateAudienceDto.name,
-          isDynamic: audience.isPrimary ? updateAudienceDto.isDynamic : false,
           resources: audience.isPrimary
             ? updateAudienceDto.resources
-            : undefined,
-          inclusionCriteria: audience.isPrimary
-            ? updateAudienceDto.inclusionCriteria
             : undefined,
         }
       );
@@ -189,21 +179,6 @@ export class AudiencesService {
       return Promise.reject(err);
     }
     return;
-  }
-
-  /**
-   * Find all dynamic audiences
-   *
-   * @param account - The account entity that the audiences belongs to
-   *
-   */
-
-  findAllDynamic(account: Account): Promise<Audience[]> {
-    return this.audiencesRepository.findBy({
-      ownerId: (<Account>account).id,
-      isDynamic: true,
-      isPrimary: true,
-    });
   }
 
   /**
@@ -263,11 +238,12 @@ export class AudiencesService {
     to: string | null | undefined,
     customerId: string,
     event: EventDto
-  ): Promise<(string | number)[]> {
+  ): Promise<{ jobIds: (string | number)[]; templates: Template[] }> {
     let index = -1; // Index of the customer ID in the fromAud.customers array
     const jobIds: (string | number)[] = [];
     let jobId: string | number;
     let fromAud: Audience, toAud: Audience;
+    const templates: Template[] = [];
 
     if (from) {
       try {
@@ -375,6 +351,11 @@ export class AudiencesService {
               event,
               toAud.id
             );
+            templates.push(
+              await this.templatesService.templatesRepository.findOneBy({
+                id: toAud.templates[templateIndex],
+              })
+            );
             this.logger.debug('Queued Message');
             jobIds.push(jobId);
           } catch (err) {
@@ -384,7 +365,7 @@ export class AudiencesService {
         }
       }
     }
-    return Promise.resolve(jobIds);
+    return Promise.resolve({ jobIds, templates });
   }
 
   /**
@@ -408,7 +389,7 @@ export class AudiencesService {
     let jobIds: (string | number)[] = [];
     for (let index = 0; index < customers?.length; index++) {
       try {
-        const jobIdArr: (string | number)[] = await this.moveCustomer(
+        const { jobIds: jobIdArr } = await this.moveCustomer(
           account,
           fromAud?.id,
           toAud?.id,
@@ -421,6 +402,8 @@ export class AudiencesService {
         return Promise.reject(err);
       }
     }
+    // TODO: remove
+    console.warn("jobId's ==============\n", jobIds);
     return Promise.resolve(jobIds);
   }
 }

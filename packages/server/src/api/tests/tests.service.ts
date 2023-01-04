@@ -96,6 +96,9 @@ export class TestsService {
       user.currentOnboarding = ['Slack'];
       user.emailProvider = 'mailgun';
       user.onboarded = true;
+      user.smsAccountSid = process.env.TESTS_SMS_SID;
+      user.smsAuthToken = process.env.TESTS_SMS_AUTH_TOKEN;
+      user.smsFrom = process.env.TESTS_SMS_FROM;
 
       const ret = await this.authService.repository.save(user);
       await this.authService.repository.update(
@@ -109,6 +112,8 @@ export class TestsService {
       await this.workflowsRepository.delete({ ownerId: '-1000' });
       await this.templateRepository.delete({ ownerId: '-1000' });
       await this.audienceRepository.delete({ ownerId: '-1000' });
+
+      await this.authService.helper.generateDefaultData(ret.id);
 
       await this.customersService.CustomerModel.deleteMany({
         ownerId: '-1000',
@@ -126,6 +131,7 @@ export class TestsService {
       sanitizedMember.slackDeleted = false;
       sanitizedMember.slackAdmin = true;
       sanitizedMember.slackTeamMember = true;
+      sanitizedMember.phone = process.env.TESTS_SMS_TO;
 
       await this.customersService.create(ret, sanitizedMember);
 
@@ -175,5 +181,11 @@ export class TestsService {
     });
 
     await this.authService.verifyEmail(account, id);
+  }
+
+  public async getTestPosthogCustomer(id: string) {
+    return this.customersService.CustomerModel.findOne({
+      posthogId: [id],
+    }).exec();
   }
 }
