@@ -156,7 +156,7 @@ const MySegment = ({
     })();
   }, []);
 
-  const getAllResources = async (id: any) => {
+  const getAllResources = async (id: string) => {
     const response = await getResources(id);
     return response;
   };

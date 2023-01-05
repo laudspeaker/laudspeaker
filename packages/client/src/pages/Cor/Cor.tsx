@@ -14,7 +14,7 @@ const Cor = () => {
       try {
         await correlateSlack(id);
         setSuccess("Success");
-      } catch (err: any) {
+      } catch (err) {
         setError(true);
       } finally {
         setLoading(false);

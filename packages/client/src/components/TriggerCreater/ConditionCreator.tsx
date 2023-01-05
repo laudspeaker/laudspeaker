@@ -6,7 +6,7 @@ import { useDebounce } from "react-use";
 import ApiService from "services/api.service";
 import DynamicField from "./DynamicField";
 import MinusIcon from "../../assets/images/MinusIcon.svg";
-import { EventCondition, ProviderTypes } from "types/triggers";
+import { EventCondition, ProviderTypes } from "types/Workflow";
 
 export interface ConditionCreaterProps {
   condition: EventCondition;
@@ -53,7 +53,7 @@ const ConditionCreater: FC<ConditionCreaterProps> = ({
           url: `/events/possible-values/${key}?search=${value}`,
         });
         setPossibleValues(data);
-      } catch (e: any) {
+      } catch (e) {
         console.error(e);
       }
     }
@@ -73,7 +73,7 @@ const ConditionCreater: FC<ConditionCreaterProps> = ({
           });
 
           setPossibleComparisonTypes(data);
-        } catch (e: any) {
+        } catch (e) {
           console.error(e);
         }
       }
@@ -89,7 +89,7 @@ const ConditionCreater: FC<ConditionCreaterProps> = ({
           });
 
           setDynamicDataToRender(data);
-        } catch (e: any) {
+        } catch (e) {
           console.error(e);
         }
       }
@@ -191,7 +191,7 @@ const ConditionCreater: FC<ConditionCreaterProps> = ({
       <Select
         id="keyType"
         options={possibleTypes.map((item) => ({ value: item }))}
-        value={type}
+        value={type || ""}
         onChange={(val) => {
           handleConditionChange("type", val);
           handleConditionChange("comparisonType", "");
@@ -201,7 +201,7 @@ const ConditionCreater: FC<ConditionCreaterProps> = ({
       />
       <Select
         id="comparisonType"
-        value={comparisonType}
+        value={comparisonType || ""}
         options={possibleComparisonTypes.map((item) => ({
           value: item.id,
           title: item.label,

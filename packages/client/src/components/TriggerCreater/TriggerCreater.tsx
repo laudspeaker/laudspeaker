@@ -12,8 +12,8 @@ import DateTimePicker from "components/Elements/DateTimePicker";
 import ConditionCreater from "./ConditionCreator";
 import ApiService from "services/api.service";
 import AndOrSelect from "./AndOrSelect";
-import { EventCondition, EventTrigger, ProviderTypes } from "types/triggers";
 import { useDebounce } from "react-use";
+import { EventCondition, ProviderTypes, Trigger } from "types/Workflow";
 
 export type TriggerType = "eventBased" | "timeDelay" | "timeWindow";
 interface ITriggerCreaterProp {
@@ -52,7 +52,7 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
     return response;
   };
 
-  const [eventTrigger, setEventTrigger] = useState<EventTrigger>(trigger);
+  const [eventTrigger, setEventTrigger] = useState<Trigger>(trigger);
 
   const handleConditionsChange = (
     index: number,
@@ -762,7 +762,7 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
                     ]}
                     disabled={isViewMode}
                     wrapperClassnames="max-w-[120px] mr-[15px]"
-                    value={eventTrigger.providerType}
+                    value={eventTrigger.providerType || ProviderTypes.Custom}
                   />
                   {eventTrigger.providerType === ProviderTypes.Posthog && (
                     <div className="relative">
@@ -836,7 +836,10 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
                               onDelete={() => handleDeleteCondition(i)}
                               possibleTypes={possibleTypes}
                               isViewMode={isViewMode}
-                              specificProvider={eventTrigger.providerType}
+                              specificProvider={
+                                eventTrigger.providerType ||
+                                ProviderTypes.Custom
+                              }
                             />
                             {i !==
                               (eventTrigger?.properties?.conditions?.length ||
@@ -844,7 +847,7 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
                                 1 && (
                               <div className="max-w-[7%]">
                                 <AndOrSelect
-                                  value={condition.relationWithNext}
+                                  value={condition.relationWithNext || "and"}
                                   onChange={(val) =>
                                     handleConditionsChange(i, {
                                       ...condition,

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { MouseEvent, useState } from "react";
 import { Grid, FormControl } from "@mui/material";
 import { GenericButton, Input } from "components/Elements";
 
@@ -11,7 +11,7 @@ export interface INameSegmentForm {
 }
 
 interface INameSegment {
-  onSubmit?: (e: any) => void;
+  onSubmit?: (form: INameSegmentForm) => void;
   isPrimary: boolean;
   isCollapsible: boolean;
   onClose: () => void;
@@ -43,7 +43,7 @@ const NameSegment = ({ onSubmit, isPrimary, workflowId }: INameSegment) => {
   };
 
   // Pushing state back up to the flow builder
-  const handleSubmit: any = async (e: any) => {
+  const handleSubmit = async (e: MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     if (onSubmit) {
       onSubmit(segmentForm);

@@ -13,40 +13,20 @@ import { ApiConfig } from "../../constants";
 import ApiService from "services/api.service";
 import ToggleSwitch from "components/Elements/ToggleSwitch";
 
-//to do add datasource here to make rendering much simpler
-function createData(
-  id: string | undefined | null,
-  name: string,
-  isActive: boolean,
-  isPaused: boolean,
-  isStopped: boolean,
-  isDeleted: boolean,
-  createdOn: number,
-  createdBy: number,
-  customersEnrolled: number,
-  type: string,
-  dataSource: string
-) {
-  return {
-    id,
-    name,
-    isActive,
-    isPaused,
-    isStopped,
-    isDeleted,
-    createdOn,
-    createdBy,
-    customersEnrolled,
-    type,
-    dataSource,
-    audiences: [
-      {
-        date: "2020-01-05",
-        customerId: "11091700",
-        amount: 3,
-      },
-    ],
-  };
+export interface TableDataItem {
+  id?: string | number | null;
+  name?: string;
+  isActive?: boolean;
+  isPaused?: boolean;
+  isStopped?: boolean;
+  isDeleted?: boolean;
+  createdOn?: number;
+  createdBy?: number;
+  customersEnrolled?: number;
+  type?: string;
+  audiences?: object[];
+  dataSource?: string;
+  salient?: string;
 }
 
 function renderCorrectColumnNames(
@@ -189,7 +169,7 @@ const statusStyles = {
   [JOURNEY_STATUS.EDITABLE]: "!bg-gray-200 !text-gray-600",
 };
 
-function renderSecondColumn(row: ReturnType<typeof createData>) {
+function renderSecondColumn(row: TableDataItem) {
   if (row.dataSource == "people") {
     return (
       <>
@@ -399,37 +379,16 @@ function renderSecondColumn(row: ReturnType<typeof createData>) {
 // to do
 // this function takes in the data, figures out is it journey, template or people, sets datasource to that
 // then all other rendering is simple
-function transformJourneyData(data: any[]) {
-  const result = [];
+function transformJourneyData(data: TableDataItem[]): TableDataItem[] {
+  const result: TableDataItem[] = [];
+
   for (const element of data) {
-    //people table
-    // if (data[0].hasOwnProperty("salient")) {
-    //   result.push({
-    //     name: data[i].id,
-    //     isActive: null,
-    //     type: null,
-    //     createdOn: null,
-    //     createdBy: data[i].salient,
-    //     customersEnrolled: null,
-    //     audiences: null,
-    //     dataSource: "people",
-    //   });
-    // } else {
-    //   // journey or templates
-    //   result.push({
-    //     name: data[i].name,
-    //     isActive: data[i].isActive,
-    //     type: data[i].type,
-    //     createdOn: data[i].createdOn,
-    //     createdBy: data[i].createdBy,
-    //     customersEnrolled: data[i].customersEnrolled,
-    //     audiences: data[i].audiences,
-    //     datasource: (data[0].hasOwnProperty("salient")? "people" :),
-    //   });
-    // }
     result.push({
       id: element.id,
-      name: element.hasOwnProperty("salient") ? element.id : element.name,
+      name:
+        (element.hasOwnProperty("salient")
+          ? String(element.id)
+          : element.name) || "",
       isActive: element.isActive,
       isPaused: element.isPaused,
       isStopped: element.isStopped,
@@ -440,8 +399,10 @@ function transformJourneyData(data: any[]) {
       customersEnrolled: element.customersEnrolled,
       audiences: element.audiences,
       dataSource: element.hasOwnProperty("salient") ? "people" : "j",
+      salient: element.salient,
     });
   }
+
   return result;
 }
 
@@ -451,7 +412,7 @@ export interface SortOptions {
   name?: string;
 }
 
-export interface TableTemplateProps<T> {
+export interface TableTemplateProps<T extends TableDataItem> {
   data: T[];
   pagesCount?: number;
   setCurrentPage?: (currentPage: number) => void;
@@ -465,7 +426,7 @@ export interface TableTemplateProps<T> {
   refresh?: () => void;
 }
 
-export default function TableTemplate<T>({
+export default function TableTemplate<T extends TableDataItem>({
   data,
   pagesCount = 1,
   setCurrentPage = () => {},
@@ -507,10 +468,7 @@ export default function TableTemplate<T>({
     });
   };
 
-  function renderCorrectLink(
-    row: ReturnType<typeof createData>,
-    isButton = false
-  ) {
+  function renderCorrectLink(row: TableDataItem, isButton = false) {
     if (row.type == "email") {
       return isButton ? (
         <Menu as="div" className="relative">
@@ -668,7 +626,7 @@ export default function TableTemplate<T>({
                       <button
                         className="w-full text-center cursor-pointer outline-none text-red-500"
                         onClick={() => {
-                          if (row?.id) handleDeleteJourney(row.id);
+                          if (row?.id) handleDeleteJourney(row.id as string);
                         }}
                         data-delete-button
                       >
@@ -696,7 +654,7 @@ export default function TableTemplate<T>({
     }
   }
 
-  function Row(props: { row: ReturnType<typeof createData> }) {
+  function Row(props: { row: TableDataItem }) {
     const { row } = props;
 
     return (

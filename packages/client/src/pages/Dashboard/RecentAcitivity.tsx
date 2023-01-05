@@ -1,8 +1,5 @@
 import * as React from "react";
-import List from "@mui/material/List";
-import ListItem from "@mui/material/ListItem";
 import ListItemText from "@mui/material/ListItemText";
-import ListItemAvatar from "@mui/material/ListItemAvatar";
 import Divider from "@mui/material/Divider";
 import { IconButton, Popover } from "@mui/material";
 import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
@@ -14,7 +11,7 @@ export interface IActivity {
   title: string;
   subtitle: string;
   lastUpdated: number;
-  sentAt: any;
+  sentAt: string | number;
   email: string;
   userId: string;
 }

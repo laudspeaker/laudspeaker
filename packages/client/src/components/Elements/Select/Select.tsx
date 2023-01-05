@@ -4,7 +4,7 @@ import { Listbox, Transition } from "@headlessui/react";
 import { ChevronUpDownIcon } from "@heroicons/react/20/solid";
 import Tooltip from "../Tooltip";
 
-export interface SelectProps<T> {
+export interface SelectProps<T extends string | number | undefined> {
   value: T;
   options: {
     title?: string;
@@ -46,7 +46,9 @@ export interface SelectProps<T> {
   tick?: boolean;
 }
 
-const Select = <T extends string | number>(props: SelectProps<T>) => {
+const Select = <T extends string | number | undefined>(
+  props: SelectProps<T>
+) => {
   const {
     value,
     children,

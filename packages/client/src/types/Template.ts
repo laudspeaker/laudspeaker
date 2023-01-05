@@ -1,7 +1,7 @@
 import Account from "./Account";
 
 export default interface Template {
-  id: string;
+  id: number;
   name: string;
   owner: Account;
   text: string;

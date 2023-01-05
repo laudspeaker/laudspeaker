@@ -1,14 +1,14 @@
-import { useState } from "react";
+import { ChangeEvent, KeyboardEvent, MouseEvent, useState } from "react";
 import PencilIcon from "@heroicons/react/24/solid/PencilIcon";
 import { GenericButton, Input } from "components/Elements";
 
 import { BackButtonIcon } from "../../../components/Icons/Icons";
 
 export interface IEmailHeaderProps {
-  onPersonalize: (e: any) => void;
-  onSave: (e: any) => void;
+  onPersonalize: (e: MouseEvent<HTMLButtonElement>) => void;
+  onSave: (e: MouseEvent<HTMLButtonElement>) => void;
   templateName: string;
-  handleTemplateNameChange: (e: any) => void;
+  handleTemplateNameChange: (e: ChangeEvent<HTMLInputElement>) => void;
 }
 
 const EmailHeader = (props: IEmailHeaderProps) => {
@@ -20,7 +20,7 @@ const EmailHeader = (props: IEmailHeaderProps) => {
     setTitleEdit(!titleEdit);
   };
 
-  const handleTitleEnter = (e: any) => {
+  const handleTitleEnter = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       handleTitleEdit();
     }

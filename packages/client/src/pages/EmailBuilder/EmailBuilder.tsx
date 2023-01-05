@@ -40,7 +40,9 @@ const EmailBuilder = () => {
   useEffect(() => {
     getResources("attributes")
       .then(({ data }) => {
-        setPossibleAttributes(data.options.map((option: any) => option.label));
+        setPossibleAttributes(
+          data.options.map((option: Resource) => option.label)
+        );
 
         const _editor = grapesjs.init({
           // Indicate where to init the editor. You can also pass an HTMLElement
@@ -175,7 +177,7 @@ const EmailBuilder = () => {
         onPersonalize={onPersonalize}
         onSave={onSave}
         templateName={templateName}
-        handleTemplateNameChange={(e: any) => {
+        handleTemplateNameChange={(e) => {
           setTemplateName(e.target.value);
         }}
       />
@@ -188,7 +190,7 @@ const EmailBuilder = () => {
           id="title"
           fullWidth
           setValue={setTitle}
-          onChange={(e: any) => setTitle(e.target.value)}
+          onChange={(e) => setTitle(e.target.value)}
           labelShrink
           isPreview={isPreview}
           setIsPreview={setIsPreview}

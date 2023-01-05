@@ -64,7 +64,7 @@ const Protected = ({ children }: IProtected) => {
 //               options: {},
 //             })
 //           ).data;
-//         } catch (e: any) {
+//         } catch (e) {
 //           return;
 //         }
 

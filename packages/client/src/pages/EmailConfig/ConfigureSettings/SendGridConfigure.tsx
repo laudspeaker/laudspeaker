@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { ChangeEvent, MouseEvent, useState } from "react";
 import { FormControl } from "@mui/material";
 import { GenericButton, Input } from "components/Elements";
 
@@ -12,14 +12,14 @@ const SendGridConfigure = () => {
       apiKey: "",
     });
 
-  const handleSendGridConfigFormChange = (e: any) => {
+  const handleSendGridConfigFormChange = (e: ChangeEvent<HTMLInputElement>) => {
     setSendGridConfigForm({
       ...sendGridConfigForm,
       [e.target.name]: e.target.value,
     });
   };
 
-  const handleSubmit = (e: any) => {
+  const handleSubmit = (e: MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
   };
 

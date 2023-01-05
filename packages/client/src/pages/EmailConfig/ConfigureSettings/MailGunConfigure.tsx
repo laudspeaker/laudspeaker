@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { ChangeEvent, MouseEvent, useState } from "react";
 import { FormControl } from "@mui/material";
 import { GenericButton, Input } from "components/Elements";
 
@@ -18,14 +18,14 @@ const MailGunConfigure = () => {
       apiKey: "",
     });
 
-  const handleMailGunConfigFormChange = (e: any) => {
+  const handleMailGunConfigFormChange = (e: ChangeEvent<HTMLInputElement>) => {
     setMailGunConfigForm({
       ...mailGunConfigForm,
       [e.target.name]: e.target.value,
     });
   };
 
-  const handleSubmit = (e: any) => {
+  const handleSubmit = (e: MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
   };
 

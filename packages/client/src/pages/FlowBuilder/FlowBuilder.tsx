@@ -46,7 +46,13 @@ import { Grid } from "@mui/material";
 import ToggleSwitch from "components/Elements/ToggleSwitch";
 import AlertBanner from "components/AlertBanner";
 import SegmentModal, { SegmentModalMode } from "./SegmentModal";
-import { ProviderTypes } from "types/triggers";
+import {
+  ProviderTypes,
+  Trigger,
+  TriggerTypeName,
+  Workflow,
+} from "types/Workflow";
+import { AxiosError } from "axios";
 
 const segmentTypeStyle =
   "border-[1px] border-[#D1D5DB] rouded-[6px] shadow-[0px_1px_2px_rgba(0,0,0,0.05)] w-full mt-[20px] p-[15px]";
@@ -61,13 +67,34 @@ enum TriggerType {
   time_window,
 }
 
+export interface NodeData {
+  audienceId: string;
+  dataTriggers: Trigger[];
+  isDynamic?: boolean;
+  isSelected?: boolean;
+  messages: { type: string; templateId: number }[];
+  needsUpdate?: boolean;
+  nodeId?: string;
+  onHandleClick?: (
+    e: unknown,
+    triggerId: string
+  ) => { e: unknown; triggerId: string };
+  onTriggerSelect: (
+    e: unknown,
+    triggerId: string,
+    triggersList: Trigger[]
+  ) => void;
+  primary: boolean;
+  triggers: Trigger[];
+}
+
 const convertLayoutToTable = (
   name: string,
-  nodes: Node[],
+  nodes: Node<NodeData>[],
   edges: Edge[],
   isDynamic: boolean,
   segmentId?: string
-): any => {
+) => {
   const dto: {
     name: string;
     audiences: string[];
@@ -76,14 +103,14 @@ const convertLayoutToTable = (
       source: string;
       dest: string[];
       properties: {
-        conditions: Record<string, any>;
+        conditions?: Record<string, any>;
       };
       providerType: ProviderTypes;
       providerParams?: string;
     }[];
     visualLayout: {
-      nodes: Node<any>[];
-      edges: Edge<any>[];
+      nodes: Node<NodeData>[];
+      edges: Edge<undefined>[];
     };
     isDynamic?: boolean;
     segmentId?: string;
@@ -96,10 +123,10 @@ const convertLayoutToTable = (
     segmentId,
   };
   for (let index = 0; index < edges.length; index++) {
-    const fromNode = _.filter(nodes, (node: any) => {
+    const fromNode = _.filter(nodes, (node) => {
       return node.id == edges[index].source;
     });
-    const toNode = _.filter(nodes, (node: any) => {
+    const toNode = _.filter(nodes, (node) => {
       return node.id == edges[index].target;
     });
     let foundTriggerIndex = 0;
@@ -138,15 +165,15 @@ const convertLayoutToTable = (
 const Flow = () => {
   const { name } = useParams();
   const [flowId, setFlowId] = useState<string>("");
-  const [nodes, setNodes] = useState<Node[]>([]);
-  const [edges, setEdges] = useState<Edge[]>([]);
-  const [triggers, setTriggers] = useState<any>([]);
-  const [selectedTrigger, setSelectedTrigger] = useState<any>(undefined);
+  const [nodes, setNodes] = useState<Node<NodeData>[]>([]);
+  const [edges, setEdges] = useState<Edge<undefined>[]>([]);
+  const [triggers, setTriggers] = useState<Trigger[]>([]);
+  const [selectedTrigger, setSelectedTrigger] = useState<Trigger>();
   const [selectedNode, setSelectedNode] = useState<string>("");
   const [templateModalOpen, setTemplateModalOpen] = useState<boolean>(false);
   const [audienceModalOpen, setAudienceModalOpen] = useState<boolean>(false);
   const [triggerModalOpen, settriggerModalOpen] = useState<boolean>(false);
-  const [selectedMessageType, setSelectedMessageType] = useState<any>("");
+  const [selectedMessageType, setSelectedMessageType] = useState("");
   const [tutorialOpen, setTutorialOpen] = useState(false);
   const [segmentId, setSegmentId] = useState<string>();
   const [segmentForm, setSegmentForm] = useState<INameSegmentForm>({
@@ -157,11 +184,16 @@ const Flow = () => {
     SegmentModalMode.EDIT
   );
 
-  const onHandleClick = (e: any, triggerId: any) => {
+  const onHandleClick = (e: unknown, triggerId: string) => {
     return { e, triggerId };
   };
-  const onTriggerSelect = (e: any, triggerId: any, triggersList: any) => {
-    const trigger = triggersList.find((item: any) => item.id === triggerId);
+
+  const onTriggerSelect = (
+    e: unknown,
+    triggerId: string,
+    triggersList: Trigger[]
+  ) => {
+    const trigger = triggersList.find((item) => item.id === triggerId);
     console.log("onselecttrigger", triggersList, trigger);
     setSelectedTrigger(trigger);
     settriggerModalOpen(true);
@@ -170,7 +202,7 @@ const Flow = () => {
   const navigate = useNavigate();
   useLayoutEffect(() => {
     const populateFlowBuilder = async () => {
-      const { data } = await getFlow(name);
+      const { data }: { data: Workflow } = await getFlow(name);
       if (data.isActive) {
         return navigate(`/flow/${name}/view`);
       }
@@ -180,12 +212,13 @@ const Flow = () => {
       setSegmentId(data.segment?.id);
       setFlowId(data.id);
       if (data.visualLayout) {
-        const updatedNodes = data.visualLayout.nodes.map((item: any) => {
+        const updatedNodes = data.visualLayout.nodes.map((item) => {
           return {
             ...item,
             data: {
               ...item.data,
               onTriggerSelect,
+              dataTriggers: item.data.dataTriggers || [],
             },
           };
         });
@@ -196,7 +229,19 @@ const Flow = () => {
     populateFlowBuilder();
   }, []);
 
-  const generateNode = (node: any, dataTriggers: any) => {
+  const generateNode = (
+    node: Node<
+      | {
+          [key: string]: string | boolean;
+        }
+      | undefined
+    > & {
+      audienceId: string;
+      triggers: Trigger[];
+      messages: { type: string; templateId: number }[];
+    },
+    dataTriggers: Trigger[]
+  ): Node<NodeData> => {
     const {
       position,
       id,
@@ -280,7 +325,7 @@ const Flow = () => {
   );
 
   const onClickConnectionStart = useCallback(
-    (event: React.MouseEvent, arg2: any) => {
+    (event: React.MouseEvent, arg2: unknown) => {
       console.log(event, arg2);
     },
     [triggers]
@@ -361,14 +406,16 @@ const Flow = () => {
         setNodes([...nodes, generateNode(newNode, triggers)]);
         break;
       }
-      case "timeDelay": {
+      case TriggerTypeName.TIME_DELAY: {
         const selectedNodeData = nodes.find((node) => node.id === selectedNode);
         const triggerId = uuid();
-        const trigger = {
+        const trigger: Trigger = {
           id: triggerId,
           title: "Time Delay",
-          type: "timeDelay",
-          properties: {},
+          type: TriggerTypeName.TIME_DELAY,
+          properties: {
+            conditions: [],
+          },
         };
         setTriggers([...triggers, trigger]);
         selectedNodeData?.data?.triggers.push(trigger);
@@ -377,14 +424,14 @@ const Flow = () => {
         settriggerModalOpen(true);
         break;
       }
-      case "timeWindow": {
+      case TriggerTypeName.TIME_WINDOW: {
         const selectedNodeData = nodes.find((node) => node.id === selectedNode);
         const triggerId = uuid();
         const trigger = {
           id: triggerId,
           title: "Time Window",
-          type: "timeWindow",
-          properties: {},
+          type: TriggerTypeName.TIME_WINDOW,
+          properties: { conditions: [] },
         };
         setTriggers([...triggers, trigger]);
         selectedNodeData?.data?.triggers.push(trigger);
@@ -393,13 +440,13 @@ const Flow = () => {
         settriggerModalOpen(true);
         break;
       }
-      case "eventBased": {
+      case TriggerTypeName.EVENT: {
         const selectedNodeData = nodes.find((node) => node.id === selectedNode);
         const triggerId = uuid();
         const trigger = {
           id: triggerId,
           title: "Event Based",
-          type: "eventBased",
+          type: TriggerTypeName.EVENT,
           properties: {
             conditions: [],
           },
@@ -430,23 +477,24 @@ const Flow = () => {
     setTutorialOpen(true);
   };
 
-  const onSaveTrigger = (data: any) => {
+  const onSaveTrigger = (data: Trigger) => {
     settriggerModalOpen(false);
     console.log(data);
+    if (!selectedTrigger) return;
     selectedTrigger.providerParams = data.providerParams;
     selectedTrigger.providerType = data.providerType;
     selectedTrigger.properties = data.properties;
     console.log(selectedTrigger);
   };
 
-  const onDeleteTrigger = (data: any) => {
+  const onDeleteTrigger = (data: string) => {
     const selectedNodeData = nodes.find((node) =>
-      node.data.triggers.find((item: any) => item.id === data)
+      node.data.triggers.find((item) => item.id === data)
     );
-    const newTriggersData: any = selectedNodeData?.data?.triggers.filter(
-      (item: any) => item.id !== data
+    const newTriggersData = selectedNodeData?.data?.triggers.filter(
+      (item) => item.id !== data
     );
-    if (selectedNodeData !== undefined) {
+    if (selectedNodeData && newTriggersData) {
       selectedNodeData.data.triggers = newTriggersData;
       setNodes([...nodes]);
       setEdges(edges.filter((edge) => edge.sourceHandle !== data));
@@ -455,21 +503,26 @@ const Flow = () => {
     }
   };
 
-  const handleTemplateModalOpen = async ({ activeTemplate }: any) => {
-    if (activeTemplate == null || activeTemplate == "") {
+  const handleTemplateModalOpen = async (data?: {
+    activeTemplate?: number;
+    selectedMessageType: string;
+  }) => {
+    if (!data) return;
+    const { activeTemplate } = data;
+
+    if (!activeTemplate) {
       setTemplateModalOpen(!templateModalOpen);
       return;
     }
     const selectedNodeData = nodes.find((node) => node.id === selectedNode);
-    const messages = selectedNodeData?.data?.messages as {
-      type: string;
-      templateId: string;
-    }[];
-    const foundMessage = messages.find(
-      (message) =>
-        message.type === selectedMessageType &&
-        message.templateId === activeTemplate
-    );
+    const messages = selectedNodeData?.data?.messages;
+    const foundMessage =
+      !!messages &&
+      messages.find(
+        (message) =>
+          message.type === selectedMessageType &&
+          message.templateId === activeTemplate
+      );
     if (!foundMessage) {
       messages?.push({
         type: selectedMessageType,
@@ -522,8 +575,13 @@ const Flow = () => {
         url: `${ApiConfig.startFlow}/${flowId}`,
       });
       window.location.reload();
-    } catch (e: any) {
-      toast.error(e.response?.data?.message || "Unexpected error", {
+    } catch (e) {
+      let message = "Unexpected error";
+      if (e instanceof AxiosError) {
+        message = e.response?.data.message;
+      }
+
+      toast.error(message, {
         position: "bottom-center",
         autoClose: 5000,
         hideProgressBar: false,
@@ -536,7 +594,7 @@ const Flow = () => {
     }
   };
 
-  const handleAudienceSubmit = async (segment: any) => {
+  const handleAudienceSubmit = async (segment: INameSegmentForm) => {
     const { data } = await ApiService.post({
       url: `${ApiConfig.createSegment}`,
       options: {
@@ -550,6 +608,7 @@ const Flow = () => {
       messages: [],
       position: { x: 0, y: 0 },
       audienceId: data.id,
+      data: {},
     };
     setNodes([...nodes, generateNode(newNode, triggers)]);
     setAudienceModalOpen(false);
