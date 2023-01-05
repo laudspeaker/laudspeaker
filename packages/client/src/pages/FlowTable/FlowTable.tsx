@@ -7,11 +7,12 @@ import { ApiConfig } from "./../../constants";
 import NameJourney from "./NameJourney";
 import posthog from "posthog-js";
 import Modal from "components/Elements/Modal";
+import { Workflow } from "types/Workflow";
 
 const FlowTable = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
-  const [journeys, setJourneys] = useState<any>([]);
+  const [journeys, setJourneys] = useState<Workflow[]>([]);
   const [itemsPerPage, setItemsPerPage] = useState(20);
   const [pagesCount, setPagesCount] = useState<number>(1);
   const [update, setUpdate] = useState(false);
@@ -31,10 +32,13 @@ const FlowTable = () => {
             Object.values(sortOptions)[0] || ""
           }${isShowDisabled ? "&showDisabled=true" : ""}`,
         });
-        const { data: fetchedJourneys, totalPages } = data;
+        const {
+          data: fetchedJourneys,
+          totalPages,
+        }: { data: Workflow[]; totalPages: number } = data;
         setPagesCount(totalPages);
         setJourneys(fetchedJourneys);
-      } catch (err: any) {
+      } catch (err) {
         posthog.capture("flowTableError", {
           flowTableError: err,
         });

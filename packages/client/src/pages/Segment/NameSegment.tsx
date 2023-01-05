@@ -1,4 +1,4 @@
-import { MouseEvent, useState } from "react";
+import { ChangeEvent, MouseEvent, useState } from "react";
 import { Grid, FormControl } from "@mui/material";
 import { GenericButton, Input } from "components/Elements";
 
@@ -33,7 +33,7 @@ const NameSegment = ({ onSubmit, isPrimary, workflowId }: INameSegment) => {
   });
 
   // Handling Name and Description Fields
-  const handleSegmentFormChange = (e: any) => {
+  const handleSegmentFormChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.name === "name") {
       setSegmentForm({ ...segmentForm, name: e.target.value });
     }

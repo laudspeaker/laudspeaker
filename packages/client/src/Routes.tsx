@@ -22,6 +22,7 @@ import Settings from "pages/Settings/Settings";
 import Person from "pages/Person";
 import Verify from "pages/Verify";
 import SmsBuilder from "pages/SmsBuilder";
+import { TriggerTypeName } from "types/Workflow";
 
 interface IProtected {
   children: ReactElement;
@@ -188,7 +189,7 @@ const RouteComponent: React.FC = () => {
           path="/trigger"
           element={
             <Protected>
-              <TriggerCreater triggerType="timeWindow" />
+              <TriggerCreater triggerType={TriggerTypeName.TIME_WINDOW} />
             </Protected>
           }
         />

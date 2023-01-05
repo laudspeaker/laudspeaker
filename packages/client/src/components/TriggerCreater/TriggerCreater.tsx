@@ -13,9 +13,13 @@ import ConditionCreater from "./ConditionCreator";
 import ApiService from "services/api.service";
 import AndOrSelect from "./AndOrSelect";
 import { useDebounce } from "react-use";
-import { EventCondition, ProviderTypes, Trigger } from "types/Workflow";
+import {
+  EventCondition,
+  ProviderTypes,
+  Trigger,
+  TriggerTypeName,
+} from "types/Workflow";
 
-export type TriggerType = "eventBased" | "timeDelay" | "timeWindow";
 interface ITriggerCreaterProp {
   updateFormData?: any;
   formData?: any;
@@ -24,7 +28,7 @@ interface ITriggerCreaterProp {
   handleDeleteRow?: any;
   rowLength?: number;
   canDeleteRow?: boolean;
-  triggerType: TriggerType;
+  triggerType: TriggerTypeName;
   trigger?: any;
   onSave?: any;
   onDelete?: any;
@@ -167,7 +171,7 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
   //   toMetric,
   // });
 
-  const [triggerType, setTriggerType] = useState<TriggerType>(triggerProp);
+  const [triggerType, setTriggerType] = useState<TriggerTypeName>(triggerProp);
   const [eventTimeSelect, setEventTimeSelect] = useState(eventTime);
   const [delayInputTime, setDelayInputTime] = useState(delayTime || "");
 
@@ -269,7 +273,7 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
         });
       });
     };
-    if (triggerType === "eventBased" || "timeDelay") {
+    if (triggerType === TriggerTypeName.EVENT || "timeDelay") {
       getAllConditions();
     }
   }, [triggerType, eventTrigger.properties?.conditions]);

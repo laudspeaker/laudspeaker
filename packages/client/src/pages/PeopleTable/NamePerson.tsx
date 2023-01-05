@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { ChangeEvent, useState } from "react";
 import { Grid, FormControl } from "@mui/material";
 import { GenericButton, Input } from "components/Elements";
 import { useNavigate } from "react-router-dom";
@@ -11,7 +11,6 @@ export interface INameSegmentForm {
 }
 
 interface INameSegment {
-  onSubmit?: (e: any) => void;
   isPrimary: boolean;
 }
 
@@ -29,13 +28,13 @@ const NamePerson = ({ isPrimary }: INameSegment) => {
   const navigate = useNavigate();
 
   // Handling Name and Description Fields
-  const handleSegmentFormChange = (e: any) => {
+  const handleSegmentFormChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.name === "name") {
       setSegmentForm({ ...segmentForm, name: e.target.value });
     }
   };
 
-  const handleSubmit: any = async () => {
+  const handleSubmit = async () => {
     const { data } = await ApiService.post({
       url: `${ApiConfig.customerCreate}`,
       options: {
@@ -82,18 +81,6 @@ const NamePerson = ({ isPrimary }: INameSegment) => {
               Create Person
             </GenericButton>
           </div>
-          {/* 
-          <div className="flex justify-end">
-            <GenericButton
-              onClick={handleSubmit}
-              style={{
-                maxWidth: "200px",
-              }}
-            >
-              Create Person
-            </GenericButton>
-          </div>
-          */}
         </div>
       </div>
     </div>

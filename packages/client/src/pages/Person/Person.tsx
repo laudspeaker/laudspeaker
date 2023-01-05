@@ -89,7 +89,7 @@ const Person = () => {
             date: new Date(item.createdAt).toLocaleString(),
           })),
         ]);
-      } catch (e: any) {
+      } catch (e) {
         console.error(e);
       }
     })();
@@ -132,7 +132,7 @@ const Person = () => {
     setPersonInfo(newPersonInfo);
   };
 
-  function classNames(...classes: any[]) {
+  function classNames(...classes: string[]) {
     return classes.filter(Boolean).join(" ");
   }
 

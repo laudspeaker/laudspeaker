@@ -1,7 +1,8 @@
 import { ExclamationCircleIcon } from "@heroicons/react/20/solid";
+import { AxiosError } from "axios";
 import { Input } from "components/Elements";
 import SaveSettings from "components/SaveSettings";
-import { ChangeEvent, useEffect, useState } from "react";
+import { ChangeEvent, FocusEvent, useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { useDebounce } from "react-use";
 import ApiService from "services/api.service";
@@ -42,7 +43,7 @@ export default function SettingsSMSBeta() {
           smsAuthToken: smsAuthToken || "",
           smsFrom: smsFrom || "",
         });
-      } catch (e: any) {
+      } catch (e) {
         toast.error("Error while loading data");
       } finally {
         setIsLoading(false);
@@ -110,7 +111,7 @@ export default function SettingsSMSBeta() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleBlur = (e: any) => {
+  const handleBlur = (e: FocusEvent<HTMLSelectElement>) => {
     setShowErrors({ ...showErrors, [e.target.name]: true });
   };
 
@@ -121,8 +122,11 @@ export default function SettingsSMSBeta() {
         url: "/accounts",
         options: { ...formData },
       });
-    } catch (e: any) {
-      toast.error(e.response?.data?.message || "Unexpected error");
+    } catch (e) {
+      let message = "Unexpected error";
+
+      if (e instanceof AxiosError) message = e.response?.data?.message;
+      toast.error(message);
     } finally {
       setIsLoading(false);
     }

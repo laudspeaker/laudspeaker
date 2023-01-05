@@ -1,10 +1,11 @@
 import Modal from "../../components/Elements/Modal";
 import TriggerCreater from "components/TriggerCreater";
+import { Trigger, TriggerTypeName } from "types/Workflow";
 
 interface ITriggerModal {
-  selectedTrigger: any;
-  onSaveTrigger: any;
-  onDeleteTrigger?: any;
+  selectedTrigger?: Trigger;
+  onSaveTrigger: (data: Trigger) => void;
+  onDeleteTrigger?: (data: string) => void;
   isCollapsible: boolean;
   isViewMode?: boolean;
   onClose: () => void;
@@ -23,7 +24,8 @@ const TriggerModal = ({
     if (isViewMode && isCollapsible) onClose();
     else if (isCollapsible) {
       if (!!initialValue) onClose();
-      else if (!initialValue) onDeleteTrigger(selectedTrigger.id);
+      else if (!initialValue && onDeleteTrigger && selectedTrigger?.id)
+        onDeleteTrigger(selectedTrigger.id);
       else onClose();
     }
   };
@@ -38,11 +40,13 @@ const TriggerModal = ({
       <div className="w-full bg-[background.paper] border-0 ">
         {selectedTrigger ? (
           <TriggerCreater
-            triggerType={selectedTrigger.type}
+            triggerType={selectedTrigger.type as TriggerTypeName}
             trigger={selectedTrigger}
             isViewMode={isViewMode}
-            onSave={(triggerData: any) => onSaveTrigger(triggerData)}
-            onDelete={(triggerData: any) => onDeleteTrigger(triggerData)}
+            onSave={(trigger: Trigger) => onSaveTrigger(trigger)}
+            onDelete={(triggerId: string) =>
+              onDeleteTrigger && onDeleteTrigger(triggerId)
+            }
           />
         ) : null}
       </div>

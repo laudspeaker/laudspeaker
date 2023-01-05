@@ -6,6 +6,7 @@ import { getResources } from "pages/Segment/SegmentHelpers";
 import SlackTemplateHeader from "pages/SlackBuilder/SlackTemplateHeader";
 import MergeTagInput from "components/MergeTagInput";
 import { toast } from "react-toastify";
+import { AxiosError } from "axios";
 
 const SmsBuilder = () => {
   const { name } = useParams();
@@ -47,12 +48,12 @@ const SmsBuilder = () => {
           },
         });
       }
-    } catch (e: any) {
-      toast.error(
-        e.response?.data?.message?.[0] ||
-          e.response?.data?.message ||
-          "Unexpected error"
-      );
+    } catch (e) {
+      let message = "Unexpected error";
+      if (e instanceof AxiosError) {
+        message = e.response?.data?.message?.[0] || e.response?.data?.message;
+      }
+      toast.error(message);
     }
   };
 

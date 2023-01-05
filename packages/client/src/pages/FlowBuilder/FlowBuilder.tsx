@@ -86,6 +86,10 @@ export interface NodeData {
   ) => void;
   primary: boolean;
   triggers: Trigger[];
+  hidden?: boolean;
+  isExit?: boolean;
+  isNew?: boolean;
+  stats?: { sent: number; clickedPercentage: number };
 }
 
 const convertLayoutToTable = (

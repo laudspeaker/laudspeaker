@@ -10,7 +10,7 @@ import { useEffect, useState } from "react";
 const PeopleTable = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
-  const [people, setPeople] = useState<any>([]);
+  const [people, setPeople] = useState<Record<string, any>[]>([]);
   const [itemsPerPage, setItemsPerPage] = useState(20);
   const [pagesCount, setPagesCount] = useState<number>(1);
   const [currentPage, setCurrentPage] = useState(0);
@@ -28,7 +28,7 @@ const PeopleTable = () => {
         const { data: fetchedPeople, totalPages } = data;
         setPagesCount(totalPages);
         setPeople(fetchedPeople);
-      } catch (err: any) {
+      } catch (err) {
         setError(true);
       } finally {
         setLoading(false);
@@ -40,8 +40,6 @@ const PeopleTable = () => {
   const redirectUses = () => {
     setNameModalOpen(true);
   };
-
-  const handleNameSubmit = () => {};
 
   if (error)
     return (
@@ -65,7 +63,7 @@ const PeopleTable = () => {
             setNameModalOpen(false);
           }}
         >
-          <NameTemplate onSubmit={handleNameSubmit} isPrimary={true} />
+          <NameTemplate isPrimary={true} />
         </Modal>
         <div>
           <Grid

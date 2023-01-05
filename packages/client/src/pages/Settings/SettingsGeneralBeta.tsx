@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
+import { ChangeEvent, useEffect, useState } from "react";
 import { ExclamationCircleIcon } from "@heroicons/react/20/solid";
 import SaveSettings from "components/SaveSettings";
 import ApiService from "services/api.service";
 import { Input } from "components/Elements";
 import { toast } from "react-toastify";
 import Timer from "components/Timer";
+import { AxiosError } from "axios";
 
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(" ");
@@ -96,7 +97,7 @@ export default function SettingsGeneralBeta() {
 
   const isError = Object.values(errors).some((arr) => arr.length > 0);
 
-  const handleFormDataChange = (e: any) => {
+  const handleFormDataChange = (e: ChangeEvent<HTMLInputElement>) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
@@ -119,7 +120,7 @@ export default function SettingsGeneralBeta() {
       setInitialData({ ...formData, firstName, lastName, email });
       setVerified(verifiedFromRequest);
       setTimerSeconds(Math.ceil(+secondtillunblockresend || 0));
-    } catch (e: any) {
+    } catch (e) {
       toast.error("Error while loading data");
     } finally {
       setIsLoading(false);
@@ -159,8 +160,10 @@ export default function SettingsGeneralBeta() {
       }
       await loadData();
       toast.success("Data saved sucessfully");
-    } catch (e: any) {
-      toast.error(e.response.data.message || "Unexpected error!");
+    } catch (e) {
+      let message = "Unexpected error!";
+      if (e instanceof AxiosError) message = e.response?.data.message;
+      toast.error(message);
     } finally {
       setIsLoading(false);
     }

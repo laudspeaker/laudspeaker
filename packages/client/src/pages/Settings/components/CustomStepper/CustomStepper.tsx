@@ -1,7 +1,7 @@
 import React from "react";
 import { CheckIcon } from "@heroicons/react/20/solid";
 
-const classNames = (...classes: any[]) => {
+const classNames = (...classes: string[]) => {
   return classes.filter(Boolean).join(" ");
 };
 

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { ChangeEvent, MouseEvent, useState } from "react";
 import { useDispatch } from "react-redux";
 import { signUpUser, ISignUpForm } from "../../reducers/auth";
 import { useNavigate } from "react-router-dom";
@@ -31,14 +31,14 @@ const Signup = () => {
   const handleFieldBlur = (key: string) => () =>
     setCheckedFields((prev) => ({ ...prev, [key]: true }));
 
-  const handlesignUpFormChange = (e: any) => {
+  const handlesignUpFormChange = (e: ChangeEvent<HTMLInputElement>) => {
     setsignUpForm({
       ...signUpForm,
       [e.target.name]: e.target.value,
     });
   };
 
-  const handleSubmit: any = async (e: any) => {
+  const handleSubmit = async (e: MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     const response = await dispatch(signUpUser(signUpForm));
     if (response?.data?.access_token) {

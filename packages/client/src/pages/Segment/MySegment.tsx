@@ -52,7 +52,7 @@ const MySegment = ({
   segmentId,
   defaultTitle,
 }: ISegmentInclusion) => {
-  const elementRef = useRef<any>(null);
+  const elementRef = useRef<HTMLDivElement>(null);
   const [segmentForm, setSegmentForm] = useState<ISegmentInclusionForm>({
     title: defaultTitle || "",
   });
@@ -162,7 +162,7 @@ const MySegment = ({
   };
 
   useEffect(() => {
-    setElementHeight(elementRef?.current?.clientHeight);
+    setElementHeight(elementRef?.current?.clientHeight || 0);
   }, [elementRef]);
 
   const recursivelyUpdateFormData = (

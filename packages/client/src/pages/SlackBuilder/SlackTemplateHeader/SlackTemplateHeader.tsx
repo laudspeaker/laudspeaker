@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { ChangeEvent, KeyboardEvent, MouseEvent, useState } from "react";
 import { Divider } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import { GenericButton, Input } from "components/Elements";
@@ -6,10 +6,10 @@ import { GenericButton, Input } from "components/Elements";
 import { BackButtonIcon } from "../../../components/Icons/Icons";
 
 export interface IEmailHeaderProps {
-  onPersonalizeClick: (e: any) => void;
-  onSave: (e: any) => void;
+  onPersonalizeClick: (e: MouseEvent<HTMLButtonElement>) => void;
+  onSave: (e: MouseEvent<HTMLButtonElement>) => void;
   templateName: string;
-  handleTemplateNameChange: (e: any) => void;
+  handleTemplateNameChange: (e: ChangeEvent<HTMLInputElement>) => void;
 }
 
 const SlackTemplateHeader = (props: IEmailHeaderProps) => {
@@ -21,7 +21,7 @@ const SlackTemplateHeader = (props: IEmailHeaderProps) => {
     setTitleEdit(!titleEdit);
   };
 
-  const handleTitleEnter = (e: any) => {
+  const handleTitleEnter = (e: KeyboardEvent<HTMLDivElement>) => {
     if (e.key === "Enter") {
       handleTitleEdit();
     }

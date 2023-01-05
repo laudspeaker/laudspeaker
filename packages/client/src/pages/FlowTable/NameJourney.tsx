@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { ChangeEvent, useState } from "react";
 import { Input } from "components/Elements";
 import { useNavigate } from "react-router-dom";
 
@@ -8,7 +8,7 @@ export interface INameSegmentForm {
 }
 
 interface INameSegment {
-  onSubmit?: (e: any) => void;
+  onSubmit?: (form: INameSegmentForm) => void;
   isPrimary: boolean;
 }
 
@@ -25,14 +25,14 @@ const NameJourney = ({ onSubmit, isPrimary }: INameSegment) => {
   const navigate = useNavigate();
 
   // Handling Name and Description Fields
-  const handleSegmentFormChange = (e: any) => {
+  const handleSegmentFormChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.name === "name") {
       setSegmentForm({ ...segmentForm, name: e.target.value });
     }
   };
 
   // Pushing state back up to the flow builder
-  const handleSubmit: any = async (e: any) => {
+  const handleSubmit = async (e: { preventDefault: () => void }) => {
     const navigationLink = "/flow/" + segmentForm.name;
     navigate(navigationLink);
     e.preventDefault();

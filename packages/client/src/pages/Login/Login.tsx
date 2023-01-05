@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { ChangeEvent, MouseEvent, useState } from "react";
 import { useDispatch } from "react-redux";
 import { ILoginForm, loginUser } from "../../reducers/auth";
 import { useNavigate } from "react-router-dom";
@@ -16,14 +16,14 @@ const Login = () => {
     password: "",
   });
 
-  const handleLoginFormChange = (e: any) => {
+  const handleLoginFormChange = (e: ChangeEvent<HTMLInputElement>) => {
     setLoginForm({
       ...loginForm,
       [e.target.name]: e.target.value,
     });
   };
 
-  const handleSubmit: any = async (e: any) => {
+  const handleSubmit = async (e: MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     const response = await dispatch(loginUser(loginForm));
     if (response?.data?.access_token) {

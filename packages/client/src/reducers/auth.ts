@@ -188,7 +188,7 @@ export const loginUser = (body: ILoginForm): any => {
         data,
         status,
       };
-    } catch (err: any) {
+    } catch (err) {
       toast.error("Email or password is incorrect!", {
         position: "bottom-center",
         autoClose: 3000,
@@ -200,13 +200,16 @@ export const loginUser = (body: ILoginForm): any => {
         theme: "colored",
       });
 
-      posthog.capture("authError", {
-        authError: err.message,
-      });
-      dispatch({
-        type: ActionType.LOGIN_USER_FAIL,
-        payload: err.message,
-      });
+      if (err instanceof Error) {
+        posthog.capture("authError", {
+          authError: err.message,
+        });
+        dispatch({
+          type: ActionType.LOGIN_USER_FAIL,
+          payload: err.message,
+        });
+      }
+
       return {
         err,
       };

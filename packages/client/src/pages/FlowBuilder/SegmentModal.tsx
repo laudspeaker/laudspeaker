@@ -10,6 +10,7 @@ import { toast } from "react-toastify";
 import Chip from "components/Elements/Chip";
 import { ChevronUpDownIcon } from "@heroicons/react/20/solid";
 import Tooltip from "components/Elements/Tooltip";
+import { Segment } from "types/Segment";
 
 export enum SegmentModalMode {
   EDIT = "edit",
@@ -48,7 +49,7 @@ const SegmentModal: FC<SegmentModalProps> = ({
   });
   const [newSegmentName, setNewSegmentName] = useState("");
   const [segmentName, setSegmentName] = useState("");
-  const [possibleSegments, setPossibleSegments] = useState([]);
+  const [possibleSegments, setPossibleSegments] = useState<Segment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isFirstRender, setIsFirstRender] = useState(true);
 
@@ -65,7 +66,7 @@ const SegmentModal: FC<SegmentModalProps> = ({
           name: data.name,
         });
       }
-    } catch (e: any) {
+    } catch (e) {
       console.error(e);
     } finally {
       setIsLoading(false);
@@ -78,7 +79,7 @@ const SegmentModal: FC<SegmentModalProps> = ({
 
   const refetchPossibleSegments = async () => {
     setIsLoading(true);
-    const { data } = await ApiService.get({
+    const { data }: { data: Segment[] } = await ApiService.get({
       url: `/segments?searchText=${
         segmentName === selectedSegment.name ? "" : segmentName
       }`,
@@ -113,7 +114,7 @@ const SegmentModal: FC<SegmentModalProps> = ({
   useEffect(() => {
     (async () => {
       const data = await refetchPossibleSegments();
-      const found = data.find((el: any) => el.id === segmentId);
+      const found = data.find((el) => el.id === segmentId);
 
       if (found) {
         setSelectedSegment(found);
@@ -247,7 +248,7 @@ const SegmentModal: FC<SegmentModalProps> = ({
                       );
                       if (data.id) setSelectedSegment(data);
                       handleEditModalOpen(OpenModelType.Edit);
-                    } catch (e: any) {
+                    } catch (e) {
                       console.error(e);
                       toast.error("Unexpected error");
                     }
