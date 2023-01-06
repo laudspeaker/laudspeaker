@@ -14,6 +14,7 @@ import { Audience } from '../audiences/entities/audience.entity';
 import { BullModule } from '@nestjs/bull';
 import { Verification } from './entities/verification.entity';
 import { CustomersModule } from '../customers/customers.module';
+import { GithubOauthStrategy } from './strategies/github-oauth.strategy';
 
 @Module({
   imports: [
@@ -37,7 +38,13 @@ import { CustomersModule } from '../customers/customers.module';
     CustomersModule,
   ],
   controllers: [AuthController],
-  providers: [AuthService, AuthHelper, JwtStrategy, ApiKeyStrategy],
+  providers: [
+    AuthService,
+    AuthHelper,
+    JwtStrategy,
+    ApiKeyStrategy,
+    GithubOauthStrategy,
+  ],
   exports: [AuthService],
 })
 export class AuthModule {}

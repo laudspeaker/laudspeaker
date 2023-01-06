@@ -10,13 +10,15 @@ import {
   Get,
   Patch,
   Param,
+  Res,
 } from '@nestjs/common';
 import { Account } from '@/api/accounts/entities/accounts.entity';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from '../auth/dto/register.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { AuthService } from './auth.service';
-import { Request } from 'express';
+import { Request, Response } from 'express';
+import { GithubOauthGuard } from './guards/github-oauth.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -59,5 +61,23 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   public async resendEmail(@Req() { user }: Request) {
     return this.service.requestVerification(<Account>user);
+  }
+
+  @Get('github')
+  @UseGuards(GithubOauthGuard)
+  async githubAuth() {
+    //
+  }
+
+  @Get('github/callback')
+  @UseGuards(GithubOauthGuard)
+  async githubAuthCallback(
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response
+  ) {
+    const user = req.user;
+    console.log('User:');
+
+    console.dir(user, { depth: null });
   }
 }
