@@ -729,7 +729,6 @@ export class WorkflowsService {
                         customer?.id,
                         event
                       );
-
                     this.logger.debug(
                       'Moving ' +
                         customer?.id +

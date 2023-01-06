@@ -25,7 +25,7 @@ describe(
 
       cy.request(`${Cypress.env("AxiosURL")}tests/test-verification`).then(
         ({ body }) => {
-          expect(body.accountId).to.equal("-1000");
+          expect(body.accountId).to.equal(-1000);
           expect(body.status).to.equal("sent");
 
           cy.request({
