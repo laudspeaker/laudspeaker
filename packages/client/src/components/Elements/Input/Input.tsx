@@ -31,6 +31,7 @@ export interface InputProps {
   onBlur?: FocusEventHandler;
   ref?: LegacyRef<HTMLInputElement>;
   endText?: string;
+  [key: string]: any;
 }
 
 const Input = (props: InputProps) => {

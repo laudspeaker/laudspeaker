@@ -12,6 +12,7 @@ import {
 } from "./SegmentHelpers";
 import { ConditionalType } from "components/EventCard/EventCard";
 import { toast } from "react-toastify";
+import { Resource } from "pages/EmailBuilder/EmailBuilder";
 
 interface Condition {
   attribute: string;
@@ -31,10 +32,23 @@ export interface InclusionCriteria {
 
 export interface FormDataItem {
   [key: string]: {
-    value: string;
+    value?: string;
     isRoot?: boolean;
+    isDirty?: boolean;
     children: FormDataItem;
   };
+}
+
+export interface ISegmentFetch {
+  id: string;
+  inclusionCriteria: InclusionCriteria;
+  isFreezed: boolean;
+  name: string;
+  resources: IResource;
+}
+
+export interface IResource {
+  [key: string]: Resource;
 }
 
 interface ISegmentInclusion {
@@ -60,16 +74,22 @@ const MySegment = ({
   const [subTitleOptions, setSubTitleOptions] = useState<ConditionalType>(
     ConditionalType.and
   );
-  const [resources, setResouces] = useState<any>({});
+  const [resources, setResources] = useState<IResource>({});
   const [formData, setFormData] = useState<FormDataItem[]>([]);
   const [, setElementHeight] = useState<Number>(0);
 
   const attributeRequestBodyKeys = ["attribute", "condition", "value"];
 
-  const populateFormData: any = (criteria: Condition[]) => {
-    const parsedFormData = [];
+  const populateFormData = (criteria: Condition[]) => {
+    const parsedFormData: FormDataItem[] = [];
+
     for (let index = 0; index < criteria.length; index++) {
-      let objToPush = {};
+      let objToPush: FormDataItem = {
+        conditions: {
+          children: {},
+          value: "",
+        },
+      };
       if (criteria[index].condition) {
         objToPush = {
           conditions: {
@@ -82,7 +102,7 @@ const MySegment = ({
                   [criteria[index].attribute]: {
                     value: criteria[index].condition,
                     children: {
-                      [criteria[index].condition as any]: {
+                      [criteria[index].condition as string]: {
                         value: criteria[index].value,
                         children: {},
                       },
@@ -123,6 +143,7 @@ const MySegment = ({
         children: {},
       },
     });
+
     setFormData(parsedFormData);
   };
 
@@ -131,20 +152,21 @@ const MySegment = ({
     //   return;
     // }
     (async () => {
-      let data: any;
+      let data: ISegmentFetch | undefined = undefined;
       if (segmentId) {
         const { data: fetchedData } = await getSegment(segmentId);
         data = fetchedData;
       }
+
       setSegmentForm({
         ...segmentForm,
         title: data?.name || segmentForm.title,
       });
       if (data?.resources) {
-        setResouces(data.resources);
+        setResources(data.resources);
       } else {
         const conditionsResponse = await getConditions();
-        setResouces((e: any) => ({
+        setResources((e: IResource) => ({
           ...e,
           [conditionsResponse.id]: conditionsResponse,
         }));
@@ -244,15 +266,29 @@ const MySegment = ({
     setFormData(tempData);
   };
 
-  const updateEvent = async ({ value, id, rowIndex, type, isRoot }: any) => {
-    const formDataToUpdate = JSON.parse(JSON.stringify(formData[rowIndex]));
+  const updateEvent = async ({
+    value,
+    id,
+    rowIndex,
+    type,
+    isRoot,
+  }: {
+    value: string;
+    id: string;
+    rowIndex: number;
+    type: string;
+    isRoot: boolean;
+  }) => {
+    const formDataToUpdate: FormDataItem = JSON.parse(
+      JSON.stringify(formData[rowIndex])
+    );
     if (type === "select") {
       let response: any = {};
       const resourceId = value;
       getAllResources(resourceId)
         .then((resourceResponse) => {
           response = JSON.parse(JSON.stringify(resourceResponse));
-          setResouces((re: any) => ({
+          setResources((re: any) => ({
             ...re,
             [resourceResponse.data.id]: resourceResponse.data,
           }));

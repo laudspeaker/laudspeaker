@@ -12,10 +12,24 @@ import { getResources } from "pages/Segment/SegmentHelpers";
 import MergeTagInput from "components/MergeTagInput";
 import { Helmet } from "react-helmet";
 
+export interface IResourceOptions {
+  label: string;
+  id?: string;
+  where?: string;
+  nextResourceURL?: string;
+  isPlaceholder?: boolean;
+}
+
 export interface Resource {
   label: string;
   id: string;
-  nextResourceURL: string;
+  type: string;
+  options?: IResourceOptions[];
+  nextResourceURL?: string;
+  range?: {
+    min: number;
+    max: number;
+  };
 }
 
 const EmailBuilder = () => {

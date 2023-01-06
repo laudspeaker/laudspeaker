@@ -532,6 +532,8 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
                       </FormControl>
                     )}
                   </FormControl>
+                  {/* 
+                  TODO: Uncomment and fix data passing on feature implementation
                   <FormControl
                     sx={{
                       padding: "0 15px",
@@ -550,7 +552,7 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
                           id: "delayTime",
                           placeholderText: "MM:HH:Days",
                         })}
-                  </FormControl>
+                  </FormControl> */}
                   <FormControl
                     sx={{
                       padding: "0 15px",

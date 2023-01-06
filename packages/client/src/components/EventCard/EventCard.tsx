@@ -2,6 +2,7 @@ import React from "react";
 import MinusIcon from "../../assets/images/MinusIcon.svg";
 import { transformDataToUI } from "pages/Segment/SegmentHelpers";
 import { FormDataItem } from "pages/Segment/MySegment";
+import { Resource } from "pages/EmailBuilder/EmailBuilder";
 
 export enum ConditionalType {
   and = "and",
@@ -18,19 +19,7 @@ interface IEventCardProp {
   }) => void;
   formData: FormDataItem;
   id: number;
-  resources: Record<
-    string,
-    {
-      id: string;
-      type: string;
-      options?: {
-        id?: string;
-        label: string;
-        where?: string;
-        nextResourceURL?: string;
-      }[];
-    }
-  >;
+  resources: Record<string, Resource>;
   handleDeleteRow: (rowIndex: number) => void;
   rowLength: number;
   canDeleteRow: boolean;
