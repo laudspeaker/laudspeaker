@@ -115,6 +115,8 @@ export class TestsService {
 
       await this.authService.helper.generateDefaultData(ret.id);
 
+      await this.authService.helper.generateDefaultData(ret.id);
+
       await this.customersService.CustomerModel.deleteMany({
         ownerId: '-1000',
       });

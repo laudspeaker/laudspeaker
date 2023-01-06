@@ -24,6 +24,7 @@ describe(
       templatesFunc(slackTemplate, emailTemplate);
       runEmailJourney("Journey with rich email", "example-template-bill");
 
+      cy.wait(3000);
       cy.contains("Journey Builder").click();
       cy.wait(3000);
       cy.contains("Journey with rich email")

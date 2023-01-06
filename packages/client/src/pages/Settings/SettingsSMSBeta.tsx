@@ -1,5 +1,4 @@
 import { ExclamationCircleIcon } from "@heroicons/react/20/solid";
-import { AxiosError } from "axios";
 import { Input } from "components/Elements";
 import SaveSettings from "components/SaveSettings";
 import { ChangeEvent, FocusEvent, useEffect, useState } from "react";
@@ -123,12 +122,7 @@ export default function SettingsSMSBeta() {
         options: { ...formData },
       });
     } catch (e) {
-      let message = "Unexpected error";
-
-      if (e instanceof AxiosError) message = e.response?.data?.message;
-      toast.error(message);
-    } finally {
-      setIsLoading(false);
+      toast.error("Unexpected error");
     }
   };
 
