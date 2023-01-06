@@ -60,7 +60,7 @@ const ConditionCreater: FC<ConditionCreaterProps> = ({
   };
 
   const handleConditionChange = (name: string, newValueToSet: string) => {
-    (condition as any)[name] = newValueToSet;
+    condition[name as keyof EventCondition] = newValueToSet;
     onChange(condition);
   };
 

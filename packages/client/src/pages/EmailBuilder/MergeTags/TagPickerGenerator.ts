@@ -1,3 +1,4 @@
+import { ChangeEvent, FormEvent } from "react";
 import { Resource } from "../EmailBuilder";
 
 interface IMergeTagPickerProps {
@@ -125,7 +126,7 @@ const generateTagPicker = ({
       optionWrapper,
       options,
       onClick,
-      filterText: ev.currentTarget.value,
+      filterText: ev.currentTarget?.value,
     })
   );
 

@@ -65,7 +65,7 @@ export class CustomersService {
     createCustomerDto: CreateCustomerDto
   ): Promise<
     Customer &
-      mongoose.Document<any, any, any> & {
+      mongoose.Document & {
         _id: Types.ObjectId;
       }
   > {
@@ -137,7 +137,7 @@ export class CustomersService {
     return ret;
   }
 
-  async addPhCustomers(data: any, account: Account) {
+  async addPhCustomers(data: any[], account: Account) {
     for (let index = 0; index < data.length; index++) {
       const addedBefore = await this.CustomerModel.find({
         ownerId: (<Account>account).id,
@@ -336,7 +336,7 @@ export class CustomersService {
         auth: authString,
         account: account,
       });
-    } catch (e: any) {
+    } catch (e) {
       this.logger.error('Error: ' + e);
     }
   }
@@ -356,7 +356,7 @@ export class CustomersService {
     customerId: string
   ): Promise<
     Customer &
-      mongoose.Document<any, any, any> & {
+      mongoose.Document & {
         _id: Types.ObjectId;
       }
   > {
@@ -505,7 +505,7 @@ export class CustomersService {
     const ret: CustomerDocument[] = [];
     try {
       customers = (await this.findAll(account)).data;
-    } catch (err: any) {
+    } catch (err) {
       return Promise.reject(err);
     }
     customers.forEach((customer) => {
@@ -543,7 +543,7 @@ export class CustomersService {
     try {
       customer = await this.CustomerModel.findOne(queryParam).exec();
       this.logger.debug('Found customer in correlationKVPair:' + customer.id);
-    } catch (err: any) {
+    } catch (err) {
       return Promise.reject(err);
     }
     return Promise.resolve(customer);
@@ -558,7 +558,7 @@ export class CustomersService {
     queryParam[dto.correlationKey] = dto.correlationValue;
     try {
       customer = await this.CustomerModel.findOne(queryParam).exec();
-    } catch (err: any) {
+    } catch (err) {
       return Promise.reject(err);
     }
     if (!customer) {

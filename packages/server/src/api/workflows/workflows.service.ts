@@ -162,7 +162,7 @@ export class WorkflowsService {
         },
         relations: ['segment'],
       });
-    } catch (err: any) {
+    } catch (err) {
       this.logger.error('Error: ' + err);
       return Promise.reject(err);
     }
@@ -194,7 +194,7 @@ export class WorkflowsService {
           owner: { id: account.id },
         });
         this.logger.debug('Created workflow: ' + ret?.id);
-      } catch (err: any) {
+      } catch (err) {
         this.logger.error('Error: ' + err);
         return Promise.reject(err);
       }
@@ -295,7 +295,7 @@ export class WorkflowsService {
         name,
       });
       this.logger.debug('Updated workflow ' + updateWorkflowDto.id);
-    } catch (err: any) {
+    } catch (err) {
       this.logger.error('Error:' + err);
       return Promise.reject(err);
     }
@@ -405,7 +405,7 @@ export class WorkflowsService {
         this.logger.debug('Workflow does not exist');
         return Promise.reject(errors.ERROR_DOES_NOT_EXIST);
       }
-    } catch (err: any) {
+    } catch (err) {
       this.logger.error('Error: ' + err);
       return Promise.reject(err);
     }
@@ -428,7 +428,7 @@ export class WorkflowsService {
       try {
         audience = await this.audiencesService.freeze(account, audience.id);
         this.logger.debug('Freezing audience ' + audience?.id);
-      } catch (err: any) {
+      } catch (err) {
         this.logger.error('Error: ' + err);
         return Promise.reject(err);
       }
@@ -441,7 +441,7 @@ export class WorkflowsService {
           this.logger.debug(
             'Customers to include in workflow: ' + customers.length
           );
-        } catch (err: any) {
+        } catch (err) {
           this.logger.error('Error: ' + err);
           return Promise.reject(err);
         }
@@ -454,7 +454,7 @@ export class WorkflowsService {
             null
           );
           this.logger.debug('Finished moving customers into workflow');
-        } catch (err: any) {
+        } catch (err) {
           this.logger.error('Error: ' + err);
           return Promise.reject(err);
         }
@@ -464,7 +464,7 @@ export class WorkflowsService {
             isActive: true,
           });
           this.logger.debug('Started workflow ' + workflow?.id);
-        } catch (err: any) {
+        } catch (err) {
           this.logger.error('Error: ' + err);
           return Promise.reject(err);
         }
@@ -500,7 +500,7 @@ export class WorkflowsService {
     try {
       workflows = await this.findAllActive(account);
       this.logger.debug('Active workflows: ' + workflows?.length);
-    } catch (err: any) {
+    } catch (err) {
       this.logger.error('Error: ' + err);
       return Promise.reject(err);
     }
@@ -532,7 +532,7 @@ export class WorkflowsService {
               null
             );
             this.logger.debug('Enrolled customer in dynamic primary audience.');
-          } catch (err: any) {
+          } catch (err) {
             this.logger.error('Error: ' + err);
             return Promise.reject(err);
           }
@@ -576,7 +576,7 @@ export class WorkflowsService {
           event.correlationValue
         );
         this.logger.debug('Found customer: ' + customer?.id);
-      } catch (err: any) {
+      } catch (err) {
         this.logger.error('Error: ' + err);
         return Promise.reject(err);
       }
@@ -584,7 +584,7 @@ export class WorkflowsService {
     try {
       workflows = await this.findAllActive(account);
       this.logger.debug('Found active workflows: ' + workflows.length);
-    } catch (err: any) {
+    } catch (err) {
       this.logger.error('Error: ' + err);
       return Promise.reject(err);
     }

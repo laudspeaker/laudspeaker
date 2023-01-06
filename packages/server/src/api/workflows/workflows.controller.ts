@@ -119,7 +119,7 @@ export class WorkflowsController {
     try {
       const res = await this.workflowsService.start(<Account>user, id);
       return Promise.resolve(res);
-    } catch (err: any) {
+    } catch (err) {
       return Promise.reject(err);
     }
   }
@@ -137,7 +137,7 @@ export class WorkflowsController {
         startWorkflowDto.id
       );
       return Promise.resolve(res);
-    } catch (err: any) {
+    } catch (err) {
       return Promise.reject(err);
     }
   }

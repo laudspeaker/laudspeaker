@@ -93,7 +93,7 @@ export class CronService {
     (async () => {
       try {
         await createTable();
-      } catch (e: any) {
+      } catch (e) {
         console.error(e);
       }
     })();
@@ -170,7 +170,7 @@ export class CronService {
           Object.keys(keys).length
         } keys`
       );
-    } catch (e: any) {
+    } catch (e) {
       this.logger.error('Cron error: ' + e);
     }
   }
@@ -266,7 +266,7 @@ export class CronService {
           Object.keys(keys).length
         } keys`
       );
-    } catch (e: any) {
+    } catch (e) {
       this.logger.error('Cron error: ' + e);
     }
   }
@@ -275,7 +275,9 @@ export class CronService {
   async handleClickHouseCron() {
     try {
       const response = await getLastFetchedEventTimestamp();
-      const data = (await response.json<any>())?.data;
+      const data = (
+        await response.json<{ data?: { ['max(createdAt)']: string }[] }>()
+      )?.data;
       const dateInDB = data?.[0]?.['max(createdAt)'];
       const lastEventFetch =
         new Date(
@@ -367,7 +369,7 @@ export class CronService {
               page = events.pages.next.number;
             }
             await insertMessages(batchToSave);
-          } catch (e: any) {
+          } catch (e) {
             this.logger.error(e);
           }
         }
@@ -401,7 +403,7 @@ export class CronService {
           take: BATCH_SIZE,
         });
       }
-    } catch (e: any) {
+    } catch (e) {
       this.logger.error('Cron error: ' + e);
     }
   }
@@ -416,7 +418,7 @@ export class CronService {
         )
         .update({ status: 'expired' })
         .execute();
-    } catch (e: any) {
+    } catch (e) {
       this.logger.error('Cron error: ' + e);
     }
   }

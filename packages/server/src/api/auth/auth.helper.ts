@@ -44,7 +44,7 @@ export class AuthHelper extends BaseJwtHelper {
   }
 
   // Get User by User ID we get from decode()
-  public async validateUser(decoded: any): Promise<Account> {
+  public async validateUser(decoded: { id: string }): Promise<Account> {
     return this.repository.findOne({ where: { id: decoded.id } });
   }
 
@@ -55,7 +55,7 @@ export class AuthHelper extends BaseJwtHelper {
 
   // Validate JWT Token, throw forbidden error if JWT Token is invalid
   private async validate(token: string): Promise<boolean | never> {
-    const decoded: unknown = this.jwt.verify(token);
+    const decoded: { id: string } = this.jwt.verify(token);
 
     if (!decoded) {
       throw new HttpException('Forbidden', HttpStatus.FORBIDDEN);
@@ -79,7 +79,7 @@ export class AuthHelper extends BaseJwtHelper {
         owner: { id: userId },
       });
       this.logger.debug('Created workflow: ' + ret?.id);
-    } catch (err: any) {
+    } catch (err) {
       this.logger.error('Error: ' + err);
     }
 
@@ -271,7 +271,7 @@ export class AuthHelper extends BaseJwtHelper {
         owner: { id: userId },
       });
       this.logger.debug('Created workflow: ' + ret?.id);
-    } catch (err: any) {
+    } catch (err) {
       this.logger.error('Error: ' + err);
     }
 

@@ -2,13 +2,10 @@
 
 import Header from "components/Header";
 import { ApiConfig } from "../../constants";
-import React, { useEffect, useLayoutEffect } from "react";
+import React, { ChangeEvent, useEffect, useLayoutEffect } from "react";
 import ApiService from "services/api.service";
 import Input from "../../components/Elements/Input";
 import Select from "../../components/Elements/Select";
-
-import { allEventChannels } from "../Settings/EventsProvider";
-import { allEmailChannels } from "../Settings/EmailProvider";
 import { useTypedSelector } from "hooks/useTypeSelector";
 import { setDomainsList, setSettingsPrivateApiKey } from "reducers/settings";
 import { useDispatch } from "react-redux";
@@ -19,6 +16,66 @@ import { toast } from "react-toastify";
 import { GenericButton } from "components/Elements";
 import ExclamationTriangleIcon from "@heroicons/react/24/solid/ExclamationTriangleIcon";
 import { Link } from "react-router-dom";
+import { AxiosError } from "axios";
+
+export const allEmailChannels = [
+  {
+    id: "free3",
+    title: "Free 3 emails",
+    subTitle: "Campaign: Onboarding Campaign",
+    tooltip: "",
+    disabled: false,
+  },
+  {
+    id: "mailgun",
+    title: "Mailgun",
+    subTitle: "Campaign: Onboarding Campaign",
+    tooltip: "",
+    disabled: false,
+  },
+  {
+    id: "sendgrid",
+    title: "Sendgrid",
+    subTitle: "for any campaign or newsletter",
+    tooltip: "",
+    disabled: false,
+  },
+  {
+    id: "mailchimp",
+    title: "Mailchimp",
+    subTitle: "Campaign: Transactional Receipt",
+    tooltip: "",
+    disabled: true,
+  },
+  {
+    id: "smtp",
+    title: "SMTP",
+    subTitle: "Setup your own email server",
+    tooltip: "",
+    disabled: true,
+  },
+];
+
+export const allEventChannels = [
+  {
+    id: "segment",
+    title: "Segment",
+    subTitle: "for any campaign or newsletter",
+    disabled: true,
+  },
+  {
+    id: "posthog",
+    title: "Posthog",
+    subTitle: "Campaign: Onboarding Campaign",
+    disabled: false,
+  },
+  {
+    id: "rudderstack",
+    title: "Rudderstack",
+    subTitle: "Campaign: Transactional Receipt",
+    disabled: true,
+  },
+];
 
 const validators: { [key: string]: (value: string) => string | void } = {
   emailwithend: (value: string) => {
@@ -82,13 +139,17 @@ export default function OnboardingBeta() {
   });
   const dispatch = useDispatch();
   const [slackInstallUrl, setSlackInstallUrl] = useState<string>("");
-  const [domainName, setDomainName] = useState<any>(settings.domainName || "");
-  const [domainList, setDomainList] = useState<any>(domainsList || []);
+  const [domainName, setDomainName] = useState<string>(
+    settings.domainName || ""
+  );
+  const [domainList, setDomainList] = useState<{ name: string }[]>(
+    domainsList || []
+  );
   const [privateApiKey, setPrivateApiKey] = useState<string>("");
   const [nameModalOpen, setNameModalOpen] = useState<boolean>(false);
-  const [errors, setErrors] = useState<{ [key: string]: string | undefined }>(
-    {}
-  );
+  const [errors, setErrors] = useState<{
+    [key: string]: string | undefined;
+  }>({});
   const [verified, setVerified] = useState(false);
 
   const [isLoading, setIsLoading] = useState(false);
@@ -157,7 +218,14 @@ export default function OnboardingBeta() {
     })();
   }, []);
 
-  const errorCheck = (e: any) => {
+  const errorCheck = (e: {
+    target: {
+      name?: string;
+      value?: string;
+      custattribute?: string;
+      getAttribute?: (str: string) => string | undefined;
+    };
+  }) => {
     let newError: string | void = undefined;
     if (!e.target.value) {
       newError = "Field can't be empty.";
@@ -165,19 +233,29 @@ export default function OnboardingBeta() {
     const attribute =
       e.target?.getAttribute?.("data-spectype") || e.target?.custattribute;
 
-    if (!newError && attribute) {
-      newError = validators[attribute]?.(e.target.value);
+    if (!newError && attribute && validators[attribute]) {
+      newError = validators[attribute](e.target.value || "");
     }
 
-    setErrors((prev) => ({ ...prev, [e.target.name]: newError }));
+    setErrors((prev) => ({
+      ...prev,
+      [e.target.name || ""]: newError as string,
+    }));
     return !!newError;
   };
 
-  const handleBlur = (e: any) => {
+  const handleBlur = (e: {
+    target: {
+      name?: string;
+      value?: string;
+      custattribute?: string;
+      getAttribute?: (str: string) => string | undefined;
+    };
+  }) => {
     errorCheck(e);
   };
 
-  const handleIntegrationsDataChange = (e: any) => {
+  const handleIntegrationsDataChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.value.includes(" ")) {
       e.target.value = e.target.value.replaceAll(" ", "");
       toast.error("Value should not contain spaces!", {
@@ -191,7 +269,16 @@ export default function OnboardingBeta() {
         theme: "colored",
       });
     }
-    errorCheck(e);
+    errorCheck(
+      e as {
+        target: {
+          name?: string;
+          value?: string;
+          custattribute?: string;
+          getAttribute?: (str: string) => string | undefined;
+        };
+      }
+    );
     setIntegrationsData({
       ...integrationsData,
       [e.target.name]: e.target.value,
@@ -199,10 +286,10 @@ export default function OnboardingBeta() {
   };
 
   const handleSubmit = async () => {
-    const objToSend: Record<string, any> = {};
+    const objToSend: Record<string, string> = {};
     for (const key of Object.keys(integrationsData)) {
-      if ((integrationsData as Record<string, any>)[key])
-        objToSend[key] = (integrationsData as Record<string, any>)[key];
+      if (integrationsData[key as keyof IntegrationsData])
+        objToSend[key] = integrationsData[key as keyof IntegrationsData];
     }
 
     let skip = false;
@@ -213,7 +300,7 @@ export default function OnboardingBeta() {
           errorCheck({
             target: {
               name: key,
-              value: (integrationsData as any)?.[key],
+              value: integrationsData?.[key as keyof IntegrationsData],
               custattribute: attributeKeys[key],
             },
           })
@@ -247,8 +334,10 @@ export default function OnboardingBeta() {
           mailgunAPIKey: privateApiKey,
         },
       });
-    } catch (e: any) {
-      toast.error(e.response?.data?.message || "Unexpected error");
+    } catch (e) {
+      let message = "Unexpected error";
+      if (e instanceof AxiosError) message = e.response?.data?.message;
+      toast.error(message);
     } finally {
       setIsLoading(false);
     }
@@ -269,7 +358,18 @@ export default function OnboardingBeta() {
           name="posthogApiKey"
           id="posthogApiKey"
           onChange={handleIntegrationsDataChange}
-          onBlur={handleBlur}
+          onBlur={(e) =>
+            handleBlur(
+              e as {
+                target: {
+                  name?: string;
+                  value?: string;
+                  custattribute?: string;
+                  getAttribute?: (str: string) => string | undefined;
+                };
+              }
+            )
+          }
         />
         <Input
           isRequired
@@ -279,7 +379,18 @@ export default function OnboardingBeta() {
           name="posthogProjectId"
           id="posthogProjectId"
           onChange={handleIntegrationsDataChange}
-          onBlur={handleBlur}
+          onBlur={(e) =>
+            handleBlur(
+              e as {
+                target: {
+                  name?: string;
+                  value?: string;
+                  custattribute?: string;
+                  getAttribute?: (str: string) => string | undefined;
+                };
+              }
+            )
+          }
         />
         <Input
           isRequired
@@ -289,7 +400,18 @@ export default function OnboardingBeta() {
           name="posthogHostUrl"
           id="posthogHostUrl"
           onChange={handleIntegrationsDataChange}
-          onBlur={handleBlur}
+          onBlur={(e) =>
+            handleBlur(
+              e as {
+                target: {
+                  name?: string;
+                  value?: string;
+                  custattribute?: string;
+                  getAttribute?: (str: string) => string | undefined;
+                };
+              }
+            )
+          }
         />
         <Input
           isRequired
@@ -299,7 +421,18 @@ export default function OnboardingBeta() {
           name="posthogSmsKey"
           id="posthogSmsKey"
           onChange={handleIntegrationsDataChange}
-          onBlur={handleBlur}
+          onBlur={(e) =>
+            handleBlur(
+              e as {
+                target: {
+                  name?: string;
+                  value?: string;
+                  custattribute?: string;
+                  getAttribute?: (str: string) => string | undefined;
+                };
+              }
+            )
+          }
         />
         <Input
           isRequired
@@ -309,7 +442,18 @@ export default function OnboardingBeta() {
           name="posthogEmailKey"
           id="posthogEmailKey"
           onChange={handleIntegrationsDataChange}
-          onBlur={handleBlur}
+          onBlur={(e) =>
+            handleBlur(
+              e as {
+                target: {
+                  name?: string;
+                  value?: string;
+                  custattribute?: string;
+                  getAttribute?: (str: string) => string | undefined;
+                };
+              }
+            )
+          }
         />
       </form>
     ),
@@ -332,20 +476,29 @@ export default function OnboardingBeta() {
           errorText={errors["privateApiKey"]}
           onBlur={(e) => {
             callDomains();
-            handleBlur(e);
+            handleBlur(
+              e as {
+                target: {
+                  name?: string;
+                  value?: string;
+                  custattribute?: string;
+                  getAttribute?: (str: string) => string | undefined;
+                };
+              }
+            );
           }}
         />
         <Select
           id="activeJourney"
           value={domainName}
-          options={domainList.map((item: any) => ({
+          options={domainList.map((item) => ({
             value: item.name,
           }))}
           onChange={(value) => {
             setDomainName(value);
           }}
           displayEmpty
-          renderValue={(val: any) => val}
+          renderValue={(val) => val}
           sx={{
             height: "44px",
             margin: "20px 0px",
@@ -370,7 +523,18 @@ export default function OnboardingBeta() {
           isError={!!errors["sendingName"]}
           errorText={errors["sendingName"]}
           onChange={handleIntegrationsDataChange}
-          onBlur={handleBlur}
+          onBlur={(e) =>
+            handleBlur(
+              e as {
+                target: {
+                  name?: string;
+                  value?: string;
+                  custattribute?: string;
+                  getAttribute?: (str: string) => string | undefined;
+                };
+              }
+            )
+          }
         />
         <div className="relative">
           <Input
@@ -383,7 +547,18 @@ export default function OnboardingBeta() {
             isError={!!errors["sendingEmail"]}
             errorText={errors["sendingEmail"]}
             endText={domainName ? "@laudspeaker.com" : ""}
-            onBlur={handleBlur}
+            onBlur={(e) =>
+              handleBlur(
+                e as {
+                  target: {
+                    name?: string;
+                    value?: string;
+                    custattribute?: string;
+                    getAttribute?: (str: string) => string | undefined;
+                  };
+                }
+              )
+            }
           />
         </div>
       </>
@@ -398,7 +573,18 @@ export default function OnboardingBeta() {
           errorText={errors["testSendingName"]}
           value={integrationsData.testSendingName}
           onChange={handleIntegrationsDataChange}
-          onBlur={handleBlur}
+          onBlur={(e) =>
+            handleBlur(
+              e as {
+                target: {
+                  name?: string;
+                  value?: string;
+                  custattribute?: string;
+                  getAttribute?: (str: string) => string | undefined;
+                };
+              }
+            )
+          }
         />
         <div className="relative">
           <Input
@@ -412,7 +598,18 @@ export default function OnboardingBeta() {
             errorText={errors["testSendingEmail"]}
             className="pr-[210px]"
             endText={"@laudspeaker-test.com"}
-            onBlur={handleBlur}
+            onBlur={(e) =>
+              handleBlur(
+                e as {
+                  target: {
+                    name?: string;
+                    value?: string;
+                    custattribute?: string;
+                    getAttribute?: (str: string) => string | undefined;
+                  };
+                }
+              )
+            }
           />
         </div>
       </>
@@ -433,7 +630,16 @@ export default function OnboardingBeta() {
           onChange={handleIntegrationsDataChange}
           onBlur={(e) => {
             callDomains();
-            handleBlur(e);
+            handleBlur(
+              e as {
+                target: {
+                  name?: string;
+                  value?: string;
+                  custattribute?: string;
+                  getAttribute?: (str: string) => string | undefined;
+                };
+              }
+            );
           }}
         />
         <Input
@@ -448,7 +654,18 @@ export default function OnboardingBeta() {
           type="text"
           labelClass="!text-[16px]"
           onChange={handleIntegrationsDataChange}
-          onBlur={handleBlur}
+          onBlur={(e) =>
+            handleBlur(
+              e as {
+                target: {
+                  name?: string;
+                  value?: string;
+                  custattribute?: string;
+                  getAttribute?: (str: string) => string | undefined;
+                };
+              }
+            )
+          }
         />
       </>
     ),
@@ -477,7 +694,7 @@ export default function OnboardingBeta() {
         errorCheck({
           target: {
             name: key,
-            value: (integrationsData as any)?.[key],
+            value: integrationsData[key as keyof IntegrationsData],
             custattribute: attributeKeys[key],
           },
         });
@@ -512,7 +729,7 @@ export default function OnboardingBeta() {
             <div className="grid place-items-center pt-6">
               <button
                 type="button"
-                className="inline-flex items-center rounded-md border border-transparent bg-cyan-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-cyan-500 focus:outline-none focus:ring-2 focus:ring-offset-2 d bg-white font-medium focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2"
+                className="inline-flex items-center rounded-md border border-transparent bg-cyan-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-cyan-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500"
                 onClick={redirectUses}
               >
                 Check Out Onboarding Video
@@ -674,7 +891,7 @@ export default function OnboardingBeta() {
                         <h2>Events configuration</h2>
                         <Select
                           id="events_config_select"
-                          options={allEventChannels.map((item: any) => ({
+                          options={allEventChannels.map((item) => ({
                             value: item.id,
                             title: item.title,
                             disabled: item.disabled,

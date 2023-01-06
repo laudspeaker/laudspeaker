@@ -54,15 +54,15 @@ instance.interceptors.response.use(
 );
 
 const ApiService = {
-  async get<T>({ url, options }: ApiServiceArgs<T>) {
+  async get<T = any, R = any>({ url, options }: ApiServiceArgs<R>) {
     const { fakeAPI = false, jsonServer = false, ...rest } = options || {};
-    return instance.get(url, {
+    return instance.get<T>(url, {
       ...(fakeAPI && { baseURL: AppConfig.FAKE_SERVER_URL }),
       ...(jsonServer && { baseURL: AppConfig.JSON_SERVER_URL }),
       ...rest,
     });
   },
-  async post<T>({ url, options }: ApiServiceArgs<T>) {
+  async post<T = any, R = any>({ url, options }: ApiServiceArgs<R>) {
     const { fakeAPI = false, jsonServer = false, ...rest } = options || {};
     return instance.post(url, {
       ...(fakeAPI && { baseURL: AppConfig.FAKE_SERVER_URL }),
@@ -70,23 +70,23 @@ const ApiService = {
       ...rest,
     });
   },
-  async put<T>({ url, options }: ApiServiceArgs<T>) {
+  async put<T = any, R = any>({ url, options }: ApiServiceArgs<R>) {
     const { fakeAPI = false, ...rest } = options || {};
-    return instance.put(url, {
+    return instance.put<T>(url, {
       ...(fakeAPI && { baseURL: AppConfig.FAKE_SERVER_URL }),
       ...rest,
     });
   },
-  async delete<T>({ url, options }: ApiServiceArgs<T>) {
+  async delete<T = any, R = any>({ url, options }: ApiServiceArgs<R>) {
     const { fakeAPI = false, ...rest } = options || {};
-    return instance.delete(url, {
+    return instance.delete<T>(url, {
       ...(fakeAPI && { baseURL: AppConfig.FAKE_SERVER_URL }),
       ...rest,
     });
   },
-  async patch<T>({ url, options }: ApiServiceArgs<T>) {
+  async patch<T = any, R = any>({ url, options }: ApiServiceArgs<R>) {
     const { fakeAPI = false, ...rest } = options || {};
-    return instance.patch(url, {
+    return instance.patch<T>(url, {
       ...(fakeAPI && { baseURL: AppConfig.FAKE_SERVER_URL }),
       ...rest,
     });

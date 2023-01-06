@@ -15,7 +15,7 @@ interface IEventCardProp {
     id: string;
     rowIndex: number;
     type: string;
-    isRoot: boolean;
+    isRoot?: boolean;
   }) => void;
   formData: FormDataItem;
   id: number;
@@ -49,9 +49,9 @@ const EventCard = (props: IEventCardProp) => {
   }: {
     value: string;
     id: string;
-    rowIndex: number;
+    rowIndex?: number;
     type: string;
-    isRoot: boolean;
+    isRoot?: boolean;
   }) => {
     updateFormData({
       value,

@@ -76,7 +76,7 @@ export class SlackService {
           let ret;
           try {
             ret = await this.stateRepository.save(state);
-          } catch (e: any) {
+          } catch (e) {
             this.logger.error('Error: ' + e);
             ret = { id: null };
           }
@@ -90,7 +90,7 @@ export class SlackService {
           let decoded;
           try {
             decoded = await this.stateRepository.findOneBy({ id: state });
-          } catch (e: any) {
+          } catch (e) {
             this.logger.error('Error: ' + e);
           }
           const generatedAt = new Date(decoded.now);
@@ -114,7 +114,7 @@ export class SlackService {
             install.installation = installation;
             try {
               await this.installationRepository.save(install);
-            } catch (e: any) {
+            } catch (e) {
               this.logger.error('Error: ' + e);
             }
             return;
@@ -125,7 +125,7 @@ export class SlackService {
             install.installation = installation;
             try {
               await this.installationRepository.save(install);
-            } catch (e: any) {
+            } catch (e) {
               this.logger.error('Error: ' + e);
             }
             return;
@@ -224,7 +224,7 @@ export class SlackService {
         ],
       });
       return url;
-    } catch (e: any) {
+    } catch (e) {
       this.logger.error('Error: ' + e);
       return;
     }
@@ -321,10 +321,10 @@ export class SlackService {
             installation.user.id,
             installation
           );
-        } catch (e: any) {
+        } catch (e) {
           this.logger.error('Error: ' + e);
         }
-      } catch (e: any) {
+      } catch (e) {
         this.logger.error('Error: ' + e);
       }
     }
@@ -618,7 +618,7 @@ export class SlackService {
         }
         i = i + 1;
       }
-    } catch (err: any) {
+    } catch (err) {
       this.logger.error('Error adding slack member: ' + err);
     }
   }

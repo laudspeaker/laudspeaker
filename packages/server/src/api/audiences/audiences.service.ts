@@ -109,7 +109,7 @@ export class AudiencesService {
         workflow: { id: workflowId },
       });
       return resp;
-    } catch (e: any) {
+    } catch (e) {
       console.error(e);
     }
   }
@@ -154,7 +154,7 @@ export class AudiencesService {
         this.logger.error('Error: Audience not found');
         return Promise.reject(new Error(Errors.ERROR_DOES_NOT_EXIST));
       }
-    } catch (err: any) {
+    } catch (err) {
       this.logger.error('Error: ' + err);
       return Promise.reject(err);
     }
@@ -170,7 +170,7 @@ export class AudiencesService {
         }
       );
       this.logger.debug('Updated audience: ' + audience.id);
-    } catch (err: any) {
+    } catch (err) {
       this.logger.error('Error: ' + err);
       return Promise.reject(err);
     }
@@ -197,7 +197,7 @@ export class AudiencesService {
         id: id,
       });
       this.logger.debug('Found audience to freeze: ' + found.id);
-    } catch (err: any) {
+    } catch (err) {
       this.logger.error('Error: ' + err);
       return Promise.reject(err);
     }
@@ -207,7 +207,7 @@ export class AudiencesService {
         isEditable: false,
       });
       this.logger.debug('Froze audience: ' + ret.id);
-    } catch (err: any) {
+    } catch (err) {
       this.logger.error('Error: ' + err);
       return Promise.reject(err);
     }
@@ -244,7 +244,7 @@ export class AudiencesService {
     if (from) {
       try {
         fromAud = await this.findOne(account, from);
-      } catch (err: any) {
+      } catch (err) {
         this.logger.error('Error: ' + err);
         return Promise.reject(err);
       }
@@ -255,7 +255,7 @@ export class AudiencesService {
           where: { owner: { id: account.id }, id: to },
           relations: ['templates'],
         });
-      } catch (err: any) {
+      } catch (err) {
         this.logger.error('Error: ' + err);
         return Promise.reject(err);
       }
@@ -282,7 +282,7 @@ export class AudiencesService {
         this.logger.debug(
           'From customers after: ' + fromAud?.customers?.length
         );
-      } catch (err: any) {
+      } catch (err) {
         this.logger.error('Error: ' + err);
         return Promise.reject(err);
       }
@@ -298,7 +298,7 @@ export class AudiencesService {
           }
         );
         this.logger.debug('To after: ' + saved?.customers?.length);
-      } catch (err: any) {
+      } catch (err) {
         this.logger.error('Error: ' + err);
         return Promise.reject(err);
       }
@@ -359,7 +359,7 @@ export class AudiencesService {
             );
             this.logger.debug('Queued Message');
             jobIds.push(jobId);
-          } catch (err: any) {
+          } catch (err) {
             this.logger.error('Error: ' + err);
             return Promise.reject(err);
           }
@@ -398,7 +398,7 @@ export class AudiencesService {
           event
         );
         jobIds = [...jobIdArr, ...jobIds];
-      } catch (err: any) {
+      } catch (err) {
         this.logger.error('Error: ' + err);
         return Promise.reject(err);
       }

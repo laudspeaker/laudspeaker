@@ -30,7 +30,7 @@ export const getResources = async (id: string) => {
 };
 
 export const getEventResources = async (id: string) => {
-  return ApiService.get({
+  return ApiService.get<Resource>({
     url: `${ApiConfig.eventResources}/${id}`,
   });
 };
@@ -54,7 +54,6 @@ interface ISegmentMutationData {
 }
 
 export const createSegment = async (data: ISegmentMutationData) => {
-  console.warn(data);
   return ApiService.put({
     url: ApiConfig.segments,
     options: {
@@ -81,7 +80,13 @@ export const duplicateSegment = async (id: string) => {
 
 interface ITransformToUI {
   data: Resource;
-  onChange: ({}: any) => any;
+  onChange: (data: {
+    value: any;
+    id: string;
+    rowIndex?: number;
+    type: string;
+    isRoot?: boolean;
+  }) => void;
   value?: string | [Date, Date];
   id?: string;
   isRoot?: boolean;

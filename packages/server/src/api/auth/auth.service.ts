@@ -23,7 +23,7 @@ export class AuthService {
     @Inject(CustomersService) private customersService: CustomersService
   ) {}
 
-  public async register(body: RegisterDto): Promise<any | never> {
+  public async register(body: RegisterDto) {
     const { firstName, lastName, email, password }: RegisterDto = body;
     let user: Account = await this.repository.findOne({ where: { email } });
     if (user) {
@@ -51,7 +51,7 @@ export class AuthService {
     return { ...ret, access_token: this.helper.generateToken(ret) };
   }
 
-  public async login(body: LoginDto): Promise<any | never> {
+  public async login(body: LoginDto) {
     const { email, password }: LoginDto = body;
     const user: Account = await this.repository.findOne({ where: { email } });
 

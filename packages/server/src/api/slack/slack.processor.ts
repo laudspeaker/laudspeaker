@@ -32,7 +32,7 @@ export class SlackProcessor {
         text: textWithInsertedTags,
         ...args,
       });
-    } catch (e: any) {
+    } catch (e) {
       this.logger.error('Error: ' + e);
     }
   }

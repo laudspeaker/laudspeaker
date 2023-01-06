@@ -114,7 +114,7 @@ export default function SettingsEventsBeta() {
   };
 
   const handleSubmit = async () => {
-    const options: Record<string, any[]> = {};
+    const options: Record<string, string[]> = {};
     for (const key of Object.keys(formData)) {
       options[key] = [formData[key]];
     }

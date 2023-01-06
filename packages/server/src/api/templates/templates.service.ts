@@ -84,7 +84,7 @@ export class TemplatesService {
       installation: Installation;
     try {
       customer = await this.customersService.findById(account, customerId);
-    } catch (err: any) {
+    } catch (err) {
       return Promise.reject(err);
     }
     try {
@@ -92,7 +92,7 @@ export class TemplatesService {
       this.logger.debug(
         'Found template: ' + template.id + ' of type ' + template.type
       );
-    } catch (err: any) {
+    } catch (err) {
       return Promise.reject(err);
     }
     const { _id, ownerId, audiences, ...tags } = customer.toObject();
@@ -148,7 +148,7 @@ export class TemplatesService {
       case 'slack':
         try {
           installation = await this.slackService.getInstallation(customer);
-        } catch (err: any) {
+        } catch (err) {
           return Promise.reject(err);
         }
         job = await this.slackQueue.add('send', {

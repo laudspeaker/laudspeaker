@@ -1,4 +1,12 @@
-import { useRef, useState, useEffect, useLayoutEffect } from "react";
+import {
+  useRef,
+  useState,
+  useEffect,
+  useLayoutEffect,
+  ChangeEvent,
+  KeyboardEvent,
+  MouseEvent,
+} from "react";
 import { FormControl } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import { GenericButton, Input, Select } from "components/Elements";
@@ -13,6 +21,7 @@ import {
 import { ConditionalType } from "components/EventCard/EventCard";
 import { toast } from "react-toastify";
 import { Resource } from "pages/EmailBuilder/EmailBuilder";
+import { AxiosError } from "axios";
 
 interface Condition {
   attribute: string;
@@ -188,13 +197,13 @@ const MySegment = ({
   }, [elementRef]);
 
   const recursivelyUpdateFormData = (
-    formDataToUpdate: any,
-    lookupId: any,
-    updateValue: any,
-    childId: any,
+    formDataToUpdate: FormDataItem,
+    lookupId: string,
+    updateValue: string,
+    childId: string,
     isRoot: boolean
   ) => {
-    const returnedData: any = {};
+    const returnedData: FormDataItem = {};
     for (const key in formDataToUpdate) {
       if (key === lookupId) {
         // update the data
@@ -239,7 +248,14 @@ const MySegment = ({
     response,
     rowIndex,
     isRoot = false,
-  }: any) => {
+  }: {
+    formDataToUpdate: FormDataItem;
+    id: string;
+    value: string;
+    response?: { data?: { id?: string } };
+    rowIndex?: number;
+    isRoot?: boolean;
+  }) => {
     const updatedData = recursivelyUpdateFormData(
       formDataToUpdate,
       id,
@@ -252,7 +268,7 @@ const MySegment = ({
     const tempData = [
       ...formData.slice(0, rowIndex),
       updatedData,
-      ...formData.slice(rowIndex + 1),
+      ...formData.slice((rowIndex || 0) + 1),
     ];
     if (isRoot === true && shouldAddRow) {
       tempData.push({
@@ -275,20 +291,20 @@ const MySegment = ({
   }: {
     value: string;
     id: string;
-    rowIndex: number;
+    rowIndex?: number;
     type: string;
-    isRoot: boolean;
+    isRoot?: boolean;
   }) => {
     const formDataToUpdate: FormDataItem = JSON.parse(
-      JSON.stringify(formData[rowIndex])
+      JSON.stringify(formData[rowIndex || 0])
     );
     if (type === "select") {
-      let response: any = {};
+      let response = {};
       const resourceId = value;
       getAllResources(resourceId)
         .then((resourceResponse) => {
           response = JSON.parse(JSON.stringify(resourceResponse));
-          setResources((re: any) => ({
+          setResources((re) => ({
             ...re,
             [resourceResponse.data.id]: resourceResponse.data,
           }));
@@ -324,7 +340,7 @@ const MySegment = ({
     }
   };
 
-  const handleSegmentFormChange = (e: any) => {
+  const handleSegmentFormChange = (e: ChangeEvent<HTMLInputElement>) => {
     setSegmentForm({
       ...segmentForm,
       [e.target.name]: e.target.value,
@@ -335,20 +351,18 @@ const MySegment = ({
     setTitleEdit(!titleEdit);
   };
 
-  const handleTitleEnter = (e: any) => {
+  const handleTitleEnter = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       handleTitleEdit();
     }
   };
 
-  const handleSubTitleOptions = (value: any) => {
+  const handleSubTitleOptions = (value: ConditionalType) => {
     setSubTitleOptions(value);
   };
 
   const handleDeleteRow = (rowIndex: number) => {
-    const filteredData = formData.filter(
-      (item: any, index: number) => index !== rowIndex
-    );
+    const filteredData = formData.filter((item, index) => index !== rowIndex);
     setFormData(filteredData);
   };
 
@@ -363,9 +377,13 @@ const MySegment = ({
     return current;
   };
 
-  const generateConditions = (obj: any) => {
-    const result: any = {};
-    if (obj.children && Object.keys(obj.children).length) {
+  interface IConditionResult {
+    [x: string]: IConditionResult | string | undefined;
+  }
+
+  const generateConditions = (obj: FormDataItem[string]) => {
+    const result: IConditionResult = {};
+    if (obj.children && Object.keys(obj.children).length && obj.value) {
       result[obj.value] = generateConditions(obj.children[obj.value]);
     } else {
       result.value = obj.value;
@@ -374,14 +392,14 @@ const MySegment = ({
     return result;
   };
 
-  const handleSubmit: any = async (e: any) => {
+  const handleSubmit = async (e: MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     const requestBody: InclusionCriteria = {
       conditionalType: subTitleOptions,
       conditions: [],
     };
     const generatedConditions: any = [];
-    formData.forEach((item: any) => {
+    formData.forEach((item) => {
       if (item.conditions.value === "attributes") {
         const conditions = generateConditions(item.conditions);
         const flattenedObj = flatten(conditions);
@@ -419,22 +437,23 @@ const MySegment = ({
           progress: undefined,
           theme: "colored",
         });
-      } catch (err: any) {
-        toast.error(
-          err.response?.data?.message?.[0] ||
+      } catch (err) {
+        let message = "Unexpected error";
+        if (err instanceof AxiosError)
+          message =
+            err.response?.data?.message?.[0] ||
             err.response?.data?.message ||
-            "Unexpected error",
-          {
-            position: "bottom-center",
-            autoClose: 5000,
-            hideProgressBar: false,
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            progress: undefined,
-            theme: "colored",
-          }
-        );
+            message;
+        toast.error(message, {
+          position: "bottom-center",
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          theme: "colored",
+        });
         return;
       }
     } else {
@@ -455,22 +474,23 @@ const MySegment = ({
           progress: undefined,
           theme: "colored",
         });
-      } catch (err: any) {
-        toast.error(
-          err.response?.data?.message?.[0] ||
+      } catch (err) {
+        let message = "Unexpected error";
+        if (err instanceof AxiosError)
+          message =
+            err.response?.data?.message?.[0] ||
             err.response?.data?.message ||
-            "Unexpected error",
-          {
-            position: "bottom-center",
-            autoClose: 5000,
-            hideProgressBar: false,
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            progress: undefined,
-            theme: "colored",
-          }
-        );
+            message;
+        toast.error(message, {
+          position: "bottom-center",
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          theme: "colored",
+        });
         return;
       }
     }
@@ -545,7 +565,7 @@ const MySegment = ({
             </div>
 
             <div className="ml-[88px]">
-              {formData?.map((item: any, index: number) => {
+              {formData?.map((item, index) => {
                 let canDeleteRow = false;
                 for (const key in item) {
                   if (item[key]?.value) {

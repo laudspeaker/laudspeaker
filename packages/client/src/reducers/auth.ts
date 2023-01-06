@@ -158,7 +158,7 @@ export const loginUser = (body: ILoginForm): any => {
     });
 
     try {
-      const { data, status } = await ApiService.post({
+      const { data, status } = await ApiService.post<any>({
         url: `${ApiConfig.login}`,
         options: {
           ...body,
@@ -243,7 +243,7 @@ export const signUpUser = (body: ISignUpForm): any => {
 
     try {
       const { confirmPassword, ...rest } = body;
-      const { data } = await ApiService.post({
+      const { data } = await ApiService.post<any>({
         url: `${ApiConfig.signup}`,
         options: {
           ...rest,
@@ -268,11 +268,12 @@ export const signUpUser = (body: ISignUpForm): any => {
         data,
         status,
       };
-    } catch (err: any) {
-      dispatch({
-        type: ActionType.SIGNUP_USER_FAIL,
-        payload: err.message,
-      });
+    } catch (err) {
+      if (err instanceof Error)
+        dispatch({
+          type: ActionType.SIGNUP_USER_FAIL,
+          payload: err.message,
+        });
     }
   };
 };

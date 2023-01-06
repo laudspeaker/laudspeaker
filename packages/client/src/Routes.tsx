@@ -48,57 +48,6 @@ const Protected = ({ children }: IProtected) => {
   return isLoggedIn ? children : <></>;
 };
 
-// const Onboarded = ({ children }: IOnboarded) => {
-//   const { userData } = useTypedSelector<AuthState>((state) => state.auth);
-//   const dispatch = useDispatch();
-//   const { settings } = useTypedSelector((state) => state.settings);
-//   const navigate = useNavigate();
-
-//   useEffect(() => {
-//     if (!userData.onboarded) {
-//       const func = async () => {
-//         let data: any;
-//         try {
-//           data = (
-//             await ApiService.get({
-//               url: "/accounts",
-//               options: {},
-//             })
-//           ).data;
-//         } catch (e) {
-//           return;
-//         }
-
-//         dispatch({
-//           type: ActionType.UPDATE_USER_INFO,
-//           payload: {
-//             ...userData,
-//             onboarded: data.onboarded,
-//             expectedOnboarding: data.expectedOnboarding,
-//           },
-//         });
-//         dispatch(
-//           setSettingData({
-//             ...settings,
-//             channel: data.expectedOnboarding.filter(
-//               (str: string) => !data.currentOnboarding.includes(str)
-//             ),
-//           })
-//         );
-//         if (settings.channel?.length > 0) {
-//           navigate("/settings/network-configuration");
-//           return;
-//         }
-//         navigate("/settings/channel");
-//       };
-
-//       func();
-//     }
-//   }, []);
-
-//   return userData.onboarded ? children : <></>;
-// };
-
 const RouteComponent: React.FC = () => {
   return (
     <BrowserRouter>
@@ -182,14 +131,6 @@ const RouteComponent: React.FC = () => {
               <DrawerLayout>
                 <EmailConfig />
               </DrawerLayout>
-            </Protected>
-          }
-        />
-        <Route
-          path="/trigger"
-          element={
-            <Protected>
-              <TriggerCreater triggerType={TriggerTypeName.TIME_WINDOW} />
             </Protected>
           }
         />

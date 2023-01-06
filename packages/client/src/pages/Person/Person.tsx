@@ -21,8 +21,17 @@ const eventTypes = {
 
 const KEYS_TO_SKIP = ["_id", "ownerId", "__v", "verified"];
 
+export interface IEventsFetchData {
+  id: string;
+  name: string;
+  event: string;
+  createdAt: string;
+  audname: string;
+  audName: string;
+}
+
 interface ITimeline {
-  id: number;
+  id: string;
   type: {
     icon: (
       props: React.SVGProps<SVGSVGElement> & {
@@ -49,7 +58,7 @@ const Person = () => {
 
   const [timeline, setTimeline] = useState<ITimeline[]>([
     {
-      id: 1,
+      id: "1",
       type: eventTypes.applied,
       content: "First seen in laudspeaker",
       date: "Sep 20",
@@ -74,12 +83,12 @@ const Person = () => {
         }
         setPersonInfo(personData);
 
-        const { data: eventsData } = await ApiService.get({
+        const { data: eventsData } = await ApiService.get<IEventsFetchData[]>({
           url: `/customers/${id}/events`,
         });
         setTimeline([
           ...timeline,
-          ...eventsData.map((item: any) => ({
+          ...eventsData.map((item) => ({
             id: item.id + item.name + item.audName + item.event,
             type: eventTypes.completed,
             content: "Email " + item.event,
