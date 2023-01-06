@@ -52,9 +52,7 @@ describe(
 
       cy.contains("Add Condition Or Group").click();
       cy.get('[data-option="attributes"]').click();
-      cy.get('[class="flex flex-[1] flex-wrap"]')
-        .find("div:nth-child(2)")
-        .click();
+      cy.get('[class="flex flex-[1] flex-wrap"] > div:nth-child(2)').click();
       cy.get('[data-option="slackRealName"]').click();
       cy.get('[class="flex flex-[1] flex-wrap"]')
         .find("div:nth-child(3)")
