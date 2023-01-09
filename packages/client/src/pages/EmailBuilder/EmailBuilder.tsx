@@ -180,13 +180,12 @@ const EmailBuilder = () => {
     component[0]?.move(el, {});
   };
 
-  if (isLoading) return <Progress />;
-
   return (
-    <div className="w-full">
-      <Helmet>
-        <script>
-          {`
+    <>
+      <div hidden={isLoading} className="w-full">
+        <Helmet>
+          <script>
+            {`
             (function (d, t) {
               var BASE_URL = "https://app.chatwoot.com";
               var g = d.createElement(t), s = d.getElementsByTagName(t)[0];
@@ -201,36 +200,38 @@ const EmailBuilder = () => {
                 })
               }
             })(document, "script");`}
-        </script>
-      </Helmet>
-      <EmailHeader
-        onPersonalize={onPersonalize}
-        onSave={onSave}
-        loading={isSaving}
-        templateName={templateName}
-        handleTemplateNameChange={(e) => {
-          setTemplateName(e.target.value);
-        }}
-      />
-      <div className="w-full py-0 px-[40px]">
-        <MergeTagInput
-          isRequired
-          value={title}
-          placeholder={"Subject"}
-          name="title"
-          id="title"
-          fullWidth
-          setValue={setTitle}
-          onChange={(e) => setTitle(e.target.value)}
-          labelShrink
-          isPreview={isPreview}
-          setIsPreview={setIsPreview}
-          possibleAttributes={possibleAttributes}
-          inputRef={subjectRef}
+          </script>
+        </Helmet>
+        <EmailHeader
+          onPersonalize={onPersonalize}
+          onSave={onSave}
+          loading={isSaving}
+          templateName={templateName}
+          handleTemplateNameChange={(e) => {
+            setTemplateName(e.target.value);
+          }}
         />
-        <div id="emailBuilder" className="gjs-dashed" />
+        <div className="w-full py-0 px-[40px]">
+          <MergeTagInput
+            isRequired
+            value={title}
+            placeholder={"Subject"}
+            name="title"
+            id="title"
+            fullWidth
+            setValue={setTitle}
+            onChange={(e) => setTitle(e.target.value)}
+            labelShrink
+            isPreview={isPreview}
+            setIsPreview={setIsPreview}
+            possibleAttributes={possibleAttributes}
+            inputRef={subjectRef}
+          />
+          <div id="emailBuilder" className="gjs-dashed" />
+        </div>
       </div>
-    </div>
+      {isLoading && <Progress />}
+    </>
   );
 };
 
