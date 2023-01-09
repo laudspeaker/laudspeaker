@@ -64,7 +64,7 @@ const ApiService = {
   },
   async post<T = any, R = any>({ url, options }: ApiServiceArgs<R>) {
     const { fakeAPI = false, jsonServer = false, ...rest } = options || {};
-    return instance.post(url, {
+    return instance.post<T>(url, {
       ...(fakeAPI && { baseURL: AppConfig.FAKE_SERVER_URL }),
       ...(jsonServer && { baseURL: AppConfig.JSON_SERVER_URL }),
       ...rest,

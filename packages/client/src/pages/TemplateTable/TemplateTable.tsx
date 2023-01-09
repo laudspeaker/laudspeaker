@@ -7,6 +7,7 @@ import { ApiConfig } from "../../constants";
 import NameTemplate from "./NameTemplate";
 import Modal from "../../components/Elements/Modal";
 import Template from "types/Template";
+import Progress from "components/Progress";
 
 const TemplateTable = () => {
   const [loading, setLoading] = useState(false);
@@ -55,12 +56,7 @@ const TemplateTable = () => {
         <p style={{ textAlign: "center" }}>Error</p>
       </div>
     );
-  if (loading)
-    return (
-      <div>
-        <p style={{ textAlign: "center" }}>One moment</p>
-      </div>
-    );
+  if (loading) return <Progress />;
   return (
     <div className="w-full relative">
       <Header />

@@ -640,8 +640,6 @@ export default function SettingsEmailBeta() {
           </p>
         </div>
         <div className="space-y-10">
-          <div className="flex items-center justify-between"></div>
-
           <RadioGroup
             value={mem}
             onChange={(m) => setEmailProvider(m.id)}

@@ -4,6 +4,7 @@ import { toast } from "react-toastify";
 import ApiService from "services/api.service";
 import { useNavigate } from "react-router-dom";
 import { AxiosError } from "axios";
+import Progress from "components/Progress";
 
 const Verify = () => {
   const { id } = useParams();
@@ -47,7 +48,7 @@ const Verify = () => {
     })();
   }, []);
 
-  if (loading) return <>Loading...</>;
+  if (loading) return <Progress />;
 
   return <></>;
 };

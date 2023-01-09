@@ -2,10 +2,11 @@ import { ChangeEvent, useEffect, useState } from "react";
 import { ExclamationCircleIcon } from "@heroicons/react/20/solid";
 import SaveSettings from "components/SaveSettings";
 import ApiService from "services/api.service";
-import { Input } from "components/Elements";
+import { GenericButton, Input } from "components/Elements";
 import { toast } from "react-toastify";
 import Timer from "components/Timer";
 import { AxiosError } from "axios";
+import Modal from "components/Elements/Modal";
 
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(" ");
@@ -46,6 +47,10 @@ export default function SettingsGeneralBeta() {
   const [timerSeconds, setTimerSeconds] = useState(300);
 
   const [isLoading, setIsLoading] = useState(false);
+
+  const [isDeleteAccountModalOpen, setIsDeleteAccountModalOpen] =
+    useState(false);
+  const [passwordToDelete, setPasswordToDelete] = useState("");
 
   useEffect(() => {
     const newErrors: { [key: string]: string[] } = {
@@ -182,6 +187,25 @@ export default function SettingsGeneralBeta() {
       progress: undefined,
       theme: "colored",
     });
+  };
+
+  const handleDeleteAccount = async () => {
+    try {
+      setIsLoading(true);
+      await ApiService.delete({
+        url: "/accounts",
+        options: { data: { password: passwordToDelete } },
+      });
+      window.location.reload();
+    } catch (e) {
+      let message = "Unexpected error";
+      if (e instanceof AxiosError)
+        message = e.response?.data.message || message;
+
+      toast.error(message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -456,10 +480,43 @@ export default function SettingsGeneralBeta() {
             <SaveSettings
               disabled={isError || isLoading}
               onClick={handleSubmit}
+              additionalButtons={
+                <>
+                  <GenericButton
+                    customClasses="bg-red-600 hover:bg-red-500 focus:ring-red-500"
+                    onClick={() => setIsDeleteAccountModalOpen(true)}
+                  >
+                    Delete
+                  </GenericButton>
+                </>
+              }
             />
           </dl>
         </div>
       </div>
+      <Modal
+        isOpen={isDeleteAccountModalOpen}
+        onClose={() => setIsDeleteAccountModalOpen(false)}
+      >
+        <div className="flex flex-col gap-[10px]">
+          <div>To delete your account please enter password:</div>
+          <Input
+            name="password"
+            type="password"
+            value={passwordToDelete}
+            onChange={(e) => setPasswordToDelete(e.target.value)}
+          />
+          <div>
+            <GenericButton
+              customClasses="bg-red-600 hover:bg-red-500 focus:ring-red-500"
+              onClick={handleDeleteAccount}
+              disabled={!passwordToDelete}
+            >
+              Delete
+            </GenericButton>
+          </div>
+        </div>
+      </Modal>
     </>
   );
 }

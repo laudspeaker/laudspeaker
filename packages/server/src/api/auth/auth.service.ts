@@ -27,7 +27,10 @@ export class AuthService {
     const { firstName, lastName, email, password }: RegisterDto = body;
     let user: Account = await this.repository.findOne({ where: { email } });
     if (user) {
-      throw new HttpException('Conflict', HttpStatus.CONFLICT);
+      throw new HttpException(
+        'This account already exists',
+        HttpStatus.CONFLICT
+      );
     }
 
     user = new Account();
