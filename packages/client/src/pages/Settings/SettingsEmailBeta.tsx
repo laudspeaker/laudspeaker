@@ -680,6 +680,7 @@ export default function SettingsEmailBeta() {
               disabled={
                 isError || (!verified && emailProvider === "free3") || isLoading
               }
+              loading={isLoading}
               onClick={handleSubmit}
             />
           </dl>

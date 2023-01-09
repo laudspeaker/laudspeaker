@@ -10,11 +10,17 @@ export interface IEmailHeaderProps {
   onSave: (e: MouseEvent<HTMLButtonElement>) => void;
   templateName: string;
   handleTemplateNameChange: (e: ChangeEvent<HTMLInputElement>) => void;
+  loading: boolean;
 }
 
 const SlackTemplateHeader = (props: IEmailHeaderProps) => {
-  const { onPersonalizeClick, templateName, handleTemplateNameChange, onSave } =
-    props;
+  const {
+    onPersonalizeClick,
+    templateName,
+    handleTemplateNameChange,
+    onSave,
+    loading,
+  } = props;
   const [titleEdit, setTitleEdit] = useState<boolean>(false);
 
   const handleTitleEdit = () => {
@@ -80,6 +86,8 @@ const SlackTemplateHeader = (props: IEmailHeaderProps) => {
                 maxWidth: "158px",
                 maxHeight: "48px",
               }}
+              disabled={loading}
+              loading={loading}
             >
               Save Draft
             </GenericButton>
@@ -92,6 +100,8 @@ const SlackTemplateHeader = (props: IEmailHeaderProps) => {
                 maxWidth: "158px",
                 maxHeight: "48px",
               }}
+              disabled={loading}
+              loading={loading}
             >
               Personalize
             </GenericButton>

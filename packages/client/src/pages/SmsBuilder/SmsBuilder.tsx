@@ -7,6 +7,7 @@ import SlackTemplateHeader from "pages/SlackBuilder/SlackTemplateHeader";
 import MergeTagInput from "components/MergeTagInput";
 import { toast } from "react-toastify";
 import { AxiosError } from "axios";
+import Progress from "components/Progress";
 
 const SmsBuilder = () => {
   const { name } = useParams();
@@ -15,6 +16,8 @@ const SmsBuilder = () => {
   const [smsTemplateId, setSmsTemplateId] = useState<string>("");
   const [possibleAttributes, setPossibleAttributes] = useState<string[]>([]);
   const [isPreview, setIsPreview] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
 
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -25,6 +28,8 @@ const SmsBuilder = () => {
   };
 
   const onSave = async () => {
+    setIsSaving(true);
+
     try {
       const reqBody = {
         name: templateName,
@@ -54,15 +59,23 @@ const SmsBuilder = () => {
         message = e.response?.data?.message?.[0] || e.response?.data?.message;
       }
       toast.error(message);
+    } finally {
+      setIsSaving(false);
     }
   };
 
   useLayoutEffect(() => {
     const populateSlackBuilder = async () => {
-      const { data } = await getTemplate(name);
-      setSmsMessage(data.smsText);
-      setTemplateName(name);
-      setSmsTemplateId(data.id);
+      try {
+        const { data } = await getTemplate(name);
+        setSmsMessage(data.smsText);
+        setTemplateName(name);
+        setSmsTemplateId(data.id);
+      } catch (e) {
+        toast.error("Error while loading");
+      } finally {
+        setIsLoading(false);
+      }
     };
     const loadAttributes = async () => {
       const { data } = await getResources("attributes");
@@ -85,11 +98,14 @@ const SmsBuilder = () => {
     setIsPreview(true);
   };
 
+  if (isLoading) return <Progress />;
+
   return (
     <div className="w-full">
       <SlackTemplateHeader
         onPersonalizeClick={onPersonalizeClick}
         onSave={onSave}
+        loading={isSaving}
         templateName={templateName}
         handleTemplateNameChange={(e) => setTemplateName(e.target.value)}
       />

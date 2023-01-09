@@ -28,6 +28,8 @@ import Tooltip from "components/Elements/Tooltip";
 import Header from "components/Header";
 import { NodeData } from "pages/FlowBuilder/FlowBuilder";
 import { Trigger, Workflow } from "types/Workflow";
+import { toast } from "react-toastify";
+import Progress from "components/Progress";
 
 const Flow = () => {
   const { name } = useParams();
@@ -41,6 +43,8 @@ const Flow = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedTrigger, setSelectedTrigger] = useState<Trigger>();
   const [triggerModalOpen, settriggerModalOpen] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
 
   const onTriggerSelect = (
     e: unknown,
@@ -79,23 +83,29 @@ const Flow = () => {
 
   useLayoutEffect(() => {
     const populateFlowBuilder = async () => {
-      const { data }: { data: Workflow } = await getFlow(name, true);
-      setFlowId(data.id);
-      setIsPaused(data.isPaused);
-      setIsStopped(data.isStopped);
-      if (data.visualLayout) {
-        const updatedNodes = data.visualLayout.nodes.map((item) => {
-          return {
-            ...item,
-            data: {
-              ...item.data,
-              onTriggerSelect,
-              dataTriggers: item.data.dataTriggers || [],
-            },
-          };
-        });
-        setNodes(updatedNodes);
-        setEdges(data.visualLayout.edges);
+      try {
+        const { data }: { data: Workflow } = await getFlow(name, true);
+        setFlowId(data.id);
+        setIsPaused(data.isPaused);
+        setIsStopped(data.isStopped);
+        if (data.visualLayout) {
+          const updatedNodes = data.visualLayout.nodes.map((item) => {
+            return {
+              ...item,
+              data: {
+                ...item.data,
+                onTriggerSelect,
+                dataTriggers: item.data.dataTriggers || [],
+              },
+            };
+          });
+          setNodes(updatedNodes);
+          setEdges(data.visualLayout.edges);
+        }
+      } catch (e) {
+        toast.error("Error while loading");
+      } finally {
+        setIsLoading(false);
       }
     };
     populateFlowBuilder();
@@ -156,6 +166,7 @@ const Flow = () => {
   };
 
   const handlePause = async () => {
+    setIsSaving(true);
     try {
       setIsDataLoaded(false);
       await ApiService.patch({
@@ -166,10 +177,13 @@ const Flow = () => {
       setIsDataLoaded(true);
     } catch (e) {
       console.error(e);
+    } finally {
+      setIsSaving(false);
     }
   };
 
   const handleResume = async () => {
+    setIsSaving(true);
     try {
       setIsDataLoaded(false);
       await ApiService.patch({
@@ -180,10 +194,13 @@ const Flow = () => {
       setIsDataLoaded(true);
     } catch (e) {
       console.error(e);
+    } finally {
+      setIsSaving(false);
     }
   };
 
   const handleStop = async () => {
+    setIsSaving(true);
     try {
       setIsDataLoaded(false);
       await ApiService.patch({
@@ -195,6 +212,8 @@ const Flow = () => {
       setIsDialogOpen(false);
     } catch (e) {
       console.error(e);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -211,6 +230,8 @@ const Flow = () => {
   const { x: viewX, y: viewY } = useViewport();
   const [zoomState, setZoomState] = useState(1);
   const possibleViewZoomValues = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
+
+  if (isLoading) return <Progress />;
 
   return (
     <div className="h-[100vh] flex w-full">
@@ -260,7 +281,8 @@ const Flow = () => {
                   maxHeight: "48px",
                   padding: "13px 25px",
                 }}
-                disabled={!isDataLoaded || isStopped}
+                loading={isSaving}
+                disabled={!isDataLoaded || isStopped || isSaving}
               >
                 {isPaused ? "Resume" : "Pause"}
               </GenericButton>
@@ -281,7 +303,8 @@ const Flow = () => {
                   maxHeight: "48px",
                   padding: "13px 25px",
                 }}
-                disabled={!isDataLoaded || isStopped}
+                loading={isSaving}
+                disabled={!isDataLoaded || isStopped || isSaving}
               >
                 Stop
               </GenericButton>

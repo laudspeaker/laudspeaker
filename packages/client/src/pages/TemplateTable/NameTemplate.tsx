@@ -38,7 +38,7 @@ const NameTemplate = ({ onSubmit, isPrimary }: INameSegment) => {
   };
 
   // Pushing state back up to the flow builder
-  const handleSubmit = async (e: { preventDefault: () => void }) => {
+  const handleSubmit = (e: { preventDefault: () => void }) => {
     if (segmentForm.name && day) {
       if (day === "slack") {
         const navigationLink = "/templates/slack/" + segmentForm.name;

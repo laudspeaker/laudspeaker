@@ -53,6 +53,7 @@ import {
   Workflow,
 } from "types/Workflow";
 import { AxiosError } from "axios";
+import Progress from "components/Progress";
 
 const segmentTypeStyle =
   "border-[1px] border-[#D1D5DB] rouded-[6px] shadow-[0px_1px_2px_rgba(0,0,0,0.05)] w-full mt-[20px] p-[15px]";
@@ -187,6 +188,8 @@ const Flow = () => {
   const [segmentModalMode, setSegmentModalMode] = useState(
     SegmentModalMode.EDIT
   );
+  const [isFlowLoading, setIsFlowLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
 
   const onHandleClick = (e: unknown, triggerId: string) => {
     return { e, triggerId };
@@ -206,28 +209,34 @@ const Flow = () => {
   const navigate = useNavigate();
   useLayoutEffect(() => {
     const populateFlowBuilder = async () => {
-      const { data }: { data: Workflow } = await getFlow(name);
-      if (data.isActive) {
-        return navigate(`/flow/${name}/view`);
-      }
-      setSegmentForm({
-        isDynamic: data.isDynamic ?? true,
-      });
-      setSegmentId(data.segment?.id);
-      setFlowId(data.id);
-      if (data.visualLayout) {
-        const updatedNodes = data.visualLayout.nodes.map((item) => {
-          return {
-            ...item,
-            data: {
-              ...item.data,
-              onTriggerSelect,
-              dataTriggers: item.data.dataTriggers || [],
-            },
-          };
+      try {
+        const { data }: { data: Workflow } = await getFlow(name);
+        if (data.isActive) {
+          return navigate(`/flow/${name}/view`);
+        }
+        setSegmentForm({
+          isDynamic: data.isDynamic ?? true,
         });
-        setNodes(updatedNodes);
-        setEdges(data.visualLayout.edges);
+        setSegmentId(data.segment?.id);
+        setFlowId(data.id);
+        if (data.visualLayout) {
+          const updatedNodes = data.visualLayout.nodes.map((item) => {
+            return {
+              ...item,
+              data: {
+                ...item.data,
+                onTriggerSelect,
+                dataTriggers: item.data.dataTriggers || [],
+              },
+            };
+          });
+          setNodes(updatedNodes);
+          setEdges(data.visualLayout.edges);
+        }
+      } catch (e) {
+        toast.error("Error while loading workflow");
+      } finally {
+        setIsFlowLoading(false);
       }
     };
     populateFlowBuilder();
@@ -551,29 +560,37 @@ const Flow = () => {
   };
 
   const handleSaveJourney = async () => {
-    console.log(nodes);
-    console.log(edges);
-    console.log(triggers);
-    const dto = convertLayoutToTable(
-      name,
-      nodes,
-      edges,
-      segmentForm.isDynamic,
-      segmentId
-    );
-    dto.audiences = (dto.audiences as string[]).filter((item) => !!item);
+    setIsSaving(true);
+    try {
+      console.log(nodes);
+      console.log(edges);
+      console.log(triggers);
+      const dto = convertLayoutToTable(
+        name,
+        nodes,
+        edges,
+        segmentForm.isDynamic,
+        segmentId
+      );
+      dto.audiences = (dto.audiences as string[]).filter((item) => !!item);
 
-    await ApiService.patch({
-      url: `${ApiConfig.flow}/${name}`,
-      options: {
-        ...dto,
-        id: flowId,
-      },
-    });
+      await ApiService.patch({
+        url: `${ApiConfig.flow}/${name}`,
+        options: {
+          ...dto,
+          id: flowId,
+        },
+      });
+    } catch (e) {
+      toast.error("Error while saving");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleStartJourney = async () => {
     await handleSaveJourney();
+    setIsSaving(true);
     try {
       await ApiService.get({
         url: `${ApiConfig.startFlow}/${flowId}`,
@@ -595,6 +612,8 @@ const Flow = () => {
         progress: undefined,
         theme: "colored",
       });
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -639,6 +658,8 @@ const Flow = () => {
       "Add a message to a step to be able to start a journey";
   else if (!segmentId)
     startDisabledReason = "You have to define segment for journey";
+
+  if (isFlowLoading) return <Progress />;
 
   return (
     <div>
@@ -770,18 +791,21 @@ const Flow = () => {
                     Tutorial
                   </button>
                 </div>
+
                 <div className="m-[0_7.5px]" data-saveflowbutton>
-                  <button
-                    className="inline-flex items-center rounded-md border border-transparent bg-cyan-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-cyan-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500"
+                  <GenericButton
+                    customClasses="inline-flex items-center rounded-md border border-transparent bg-cyan-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-cyan-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500"
                     onClick={handleSaveJourney}
                     style={{
                       maxWidth: "158px",
                       maxHeight: "48px",
                       padding: "13px 25px",
                     }}
+                    disabled={isSaving}
+                    loading={isSaving}
                   >
                     Save
-                  </button>
+                  </GenericButton>
                 </div>
                 <div className="m-[0_7.5px]" data-startflowbutton>
                   <Tooltip
@@ -791,8 +815,8 @@ const Flow = () => {
                     }
                     placement="bottom"
                   >
-                    <button
-                      className={`inline-flex items-center rounded-md border border-transparent bg-cyan-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-cyan-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500 ${
+                    <GenericButton
+                      customClasses={`inline-flex items-center rounded-md border border-transparent bg-cyan-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-cyan-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500 ${
                         !!startDisabledReason ? "grayscale" : ""
                       }`}
                       onClick={handleStartJourney}
@@ -801,10 +825,11 @@ const Flow = () => {
                         maxHeight: "48px",
                         padding: "13px 25px",
                       }}
-                      disabled={!!startDisabledReason}
+                      disabled={!!startDisabledReason || isSaving}
+                      loading={isSaving}
                     >
                       Start
-                    </button>
+                    </GenericButton>
                   </Tooltip>
                 </div>
                 <Select

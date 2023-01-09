@@ -1,3 +1,4 @@
+import { CircularProgress } from "@mui/material";
 import React from "react";
 
 export interface ButtonProps {
@@ -11,6 +12,7 @@ export interface ButtonProps {
   href?: string;
   onClick: (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => void;
   style?: object;
+  loading?: boolean;
 }
 
 const GenericButton = (props: ButtonProps) => {
@@ -23,6 +25,7 @@ const GenericButton = (props: ButtonProps) => {
     preventDefault,
     onClick,
     style,
+    loading,
   } = props;
 
   return (
@@ -45,6 +48,11 @@ const GenericButton = (props: ButtonProps) => {
       disabled={disabled}
       style={style}
     >
+      {loading && (
+        <div className="flex items-center justify-center mr-[10px]">
+          <CircularProgress size={20} />
+        </div>
+      )}
       {children}
     </button>
   );

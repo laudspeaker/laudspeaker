@@ -6,7 +6,7 @@ const DotProgress = () => {
   useEffect(() => {
     setTimeout(() => {
       setDots(dots.length === 3 ? "." : dots + ".");
-    }, 1000);
+    }, 500);
   }, [dots]);
 
   return <>{dots}</>;

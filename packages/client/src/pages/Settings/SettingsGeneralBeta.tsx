@@ -479,12 +479,15 @@ export default function SettingsGeneralBeta() {
             </div>
             <SaveSettings
               disabled={isError || isLoading}
+              loading={isLoading}
               onClick={handleSubmit}
               additionalButtons={
                 <>
                   <GenericButton
                     customClasses="bg-red-600 hover:bg-red-500 focus:ring-red-500"
                     onClick={() => setIsDeleteAccountModalOpen(true)}
+                    loading={isLoading}
+                    disabled={isLoading}
                   >
                     Delete
                   </GenericButton>

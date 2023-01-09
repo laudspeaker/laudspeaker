@@ -11,6 +11,8 @@ import MergeTagType from "./MergeTags";
 import { getResources } from "pages/Segment/SegmentHelpers";
 import MergeTagInput from "components/MergeTagInput";
 import { Helmet } from "react-helmet";
+import Progress from "components/Progress";
+import { toast } from "react-toastify";
 
 export interface IResourceOptions {
   label: string;
@@ -42,6 +44,8 @@ const EmailBuilder = () => {
   const [style, setStyle] = useState<string>("");
   const [possibleAttributes, setPossibleAttributes] = useState<string[]>([]);
   const [isPreview, setIsPreview] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
 
   const subjectRef = useRef<HTMLInputElement>(null);
 
@@ -92,6 +96,9 @@ const EmailBuilder = () => {
       })
       .catch((error) => {
         console.error(error);
+      })
+      .finally(() => {
+        setIsLoading(false);
       });
   }, []);
 
@@ -113,28 +120,35 @@ const EmailBuilder = () => {
   }, []);
 
   const onSave = async () => {
-    const reqBody = {
-      name: templateName,
-      subject: title,
-      text: editor?.getHtml(),
-      style: editor?.getCss(),
-      type: "email",
-    };
-    if (emailTemplateId == null) {
-      const response = await ApiService.post({
-        url: `${ApiConfig.createTemplate}`,
-        options: {
-          ...reqBody,
-        },
-      });
-      setEmailTemplateId(response.data.id);
-    } else {
-      await ApiService.patch({
-        url: `${ApiConfig.getAllTemplates}/${name}`,
-        options: {
-          ...reqBody,
-        },
-      });
+    setIsSaving(true);
+    try {
+      const reqBody = {
+        name: templateName,
+        subject: title,
+        text: editor?.getHtml(),
+        style: editor?.getCss(),
+        type: "email",
+      };
+      if (emailTemplateId == null) {
+        const response = await ApiService.post({
+          url: `${ApiConfig.createTemplate}`,
+          options: {
+            ...reqBody,
+          },
+        });
+        setEmailTemplateId(response.data.id);
+      } else {
+        await ApiService.patch({
+          url: `${ApiConfig.getAllTemplates}/${name}`,
+          options: {
+            ...reqBody,
+          },
+        });
+      }
+    } catch (e) {
+      toast.error("Error while saving");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -166,6 +180,8 @@ const EmailBuilder = () => {
     component[0]?.move(el, {});
   };
 
+  if (isLoading) return <Progress />;
+
   return (
     <div className="w-full">
       <Helmet>
@@ -190,6 +206,7 @@ const EmailBuilder = () => {
       <EmailHeader
         onPersonalize={onPersonalize}
         onSave={onSave}
+        loading={isSaving}
         templateName={templateName}
         handleTemplateNameChange={(e) => {
           setTemplateName(e.target.value);
