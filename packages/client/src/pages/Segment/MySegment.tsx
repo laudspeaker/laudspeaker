@@ -86,6 +86,7 @@ const MySegment = ({
   const [resources, setResources] = useState<IResource>({});
   const [formData, setFormData] = useState<FormDataItem[]>([]);
   const [, setElementHeight] = useState<Number>(0);
+  const [isLoading, setIsLoading] = useState(false);
 
   const attributeRequestBodyKeys = ["attribute", "condition", "value"];
 
@@ -238,8 +239,6 @@ const MySegment = ({
     }
     return returnedData;
   };
-
-  //useEffect(() => {}, [formData]);
 
   const updateFormData = ({
     formDataToUpdate,
@@ -417,6 +416,7 @@ const MySegment = ({
     });
     requestBody.conditions = generatedConditions;
 
+    setIsLoading(true);
     if (segmentId === undefined) {
       try {
         const { data } = await createSegment({
@@ -455,6 +455,8 @@ const MySegment = ({
           theme: "colored",
         });
         return;
+      } finally {
+        setIsLoading(false);
       }
     } else {
       try {
@@ -492,6 +494,8 @@ const MySegment = ({
           theme: "colored",
         });
         return;
+      } finally {
+        setIsLoading(false);
       }
     }
     if (onSubmit) {
@@ -594,6 +598,8 @@ const MySegment = ({
             <GenericButton
               id="saveSegmentParams"
               onClick={handleSubmit}
+              loading={isLoading}
+              disabled={isLoading}
               style={{
                 maxWidth: "200px",
               }}

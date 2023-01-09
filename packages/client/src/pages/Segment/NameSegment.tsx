@@ -14,11 +14,17 @@ interface INameSegment {
   onSubmit?: (form: INameSegmentForm) => void;
   isPrimary: boolean;
   isCollapsible: boolean;
+  isSaving?: boolean;
   onClose: () => void;
   workflowId: string;
 }
 
-const NameSegment = ({ onSubmit, isPrimary, workflowId }: INameSegment) => {
+const NameSegment = ({
+  onSubmit,
+  isPrimary,
+  workflowId,
+  isSaving = false,
+}: INameSegment) => {
   // A Segment initally has three Properties:
   //      1. Dynamic: whether new customers are added
   //         after a workflow is live
@@ -102,10 +108,11 @@ const NameSegment = ({ onSubmit, isPrimary, workflowId }: INameSegment) => {
             <GenericButton
               id="saveNewSegment"
               onClick={handleSubmit}
+              loading={isSaving}
               style={{
                 maxWidth: "200px",
               }}
-              disabled={!segmentForm.name}
+              disabled={!segmentForm.name || isSaving}
             >
               Save
             </GenericButton>

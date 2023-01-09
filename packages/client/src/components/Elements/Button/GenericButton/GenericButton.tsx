@@ -32,8 +32,8 @@ const GenericButton = (props: ButtonProps) => {
     <button
       id={id}
       type="button"
-      className={`transition-[0.3s] inline-flex items-center rounded-md border-0 border-transparent text-white bg-cyan-600 px-6 py-3 text-base font-medium shadow-sm hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 ${
-        disabled ? "grayscale" : ""
+      className={`transition-[0.3s] relative inline-flex items-center rounded-md border-0 border-transparent text-white bg-cyan-600 px-6 py-3 text-base font-medium shadow-sm hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 ${
+        disabled || loading ? "grayscale" : ""
       } ${customClasses ? customClasses : ""} `}
       onClick={(ev) => {
         if (disableElevation) {
@@ -45,11 +45,11 @@ const GenericButton = (props: ButtonProps) => {
 
         onClick(ev);
       }}
-      disabled={disabled}
+      disabled={disabled || loading}
       style={style}
     >
       {loading && (
-        <div className="flex items-center justify-center mr-[10px]">
+        <div className="absolute w-full bg-transparent h-full backdrop-blur-md rounded-md left-0 top-0 flex items-center justify-center mr-[10px]">
           <CircularProgress size={20} />
         </div>
       )}

@@ -618,23 +618,30 @@ const Flow = () => {
   };
 
   const handleAudienceSubmit = async (segment: INameSegmentForm) => {
-    const { data } = await ApiService.post({
-      url: `${ApiConfig.createSegment}`,
-      options: {
-        ...segment,
-      },
-    });
-    setAudienceModalOpen(true);
-    const newNode = {
-      id: uuid(),
-      triggers: [],
-      messages: [],
-      position: { x: 0, y: 0 },
-      audienceId: data.id,
-      data: {},
-    };
-    setNodes([...nodes, generateNode(newNode, triggers)]);
-    setAudienceModalOpen(false);
+    setIsSaving(true);
+    try {
+      const { data } = await ApiService.post({
+        url: `${ApiConfig.createSegment}`,
+        options: {
+          ...segment,
+        },
+      });
+      setAudienceModalOpen(true);
+      const newNode = {
+        id: uuid(),
+        triggers: [],
+        messages: [],
+        position: { x: 0, y: 0 },
+        audienceId: data.id,
+        data: {},
+      };
+      setNodes([...nodes, generateNode(newNode, triggers)]);
+      setAudienceModalOpen(false);
+    } catch (error) {
+      toast.error("Error, saving segment");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const onToggleChange = async () => {
@@ -869,6 +876,7 @@ const Flow = () => {
               onSubmit={handleAudienceSubmit}
               isPrimary={!nodes.some((item) => item.data.primary)}
               isCollapsible={true}
+              isSaving={isSaving}
               onClose={() => setAudienceModalOpen(false)}
               workflowId={flowId}
             />
