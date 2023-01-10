@@ -1,3 +1,4 @@
+import { AppDataSource } from '@/data-source';
 import { HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -103,9 +104,15 @@ export class TestsService {
       await this.templateRepository.delete({ owner: { id: '-1000' } });
       await this.audienceRepository.delete({ owner: { id: '-1000' } });
 
-      await this.authService.helper.generateDefaultData(ret.id);
+      await this.authService.helper.generateDefaultData(
+        ret,
+        AppDataSource.manager
+      );
 
-      await this.authService.helper.generateDefaultData(ret.id);
+      await this.authService.helper.generateDefaultData(
+        ret,
+        AppDataSource.manager
+      );
 
       await this.customersService.CustomerModel.deleteMany({
         ownerId: '-1000',
