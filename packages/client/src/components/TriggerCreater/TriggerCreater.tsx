@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, MouseEvent } from "react";
 import { FormControl } from "@mui/material";
 import { GenericButton, Input, Select } from "components/Elements";
 import AC from "react-autocomplete";
@@ -8,40 +8,30 @@ import {
   transformDataToUI,
 } from "../../pages/Segment/SegmentHelpers";
 import Card from "components/Cards/Card";
-import {
-  ISegmentInclusionForm,
-  InclusionCriteria,
-} from "pages/Segment/MySegment";
 import DateTimePicker from "components/Elements/DateTimePicker";
 import ConditionCreater from "./ConditionCreator";
 import ApiService from "services/api.service";
 import AndOrSelect from "./AndOrSelect";
+import { useDebounce } from "react-use";
 import {
   EventCondition,
-  EventTrigger,
-  PosthogTriggerParams,
   ProviderTypes,
-} from "types/triggers";
-import { useDebounce } from "react-use";
+  Trigger,
+  TriggerTypeName,
+} from "types/Workflow";
+import { FormDataItem, IResource } from "pages/Segment/MySegment";
+import { Resource } from "pages/EmailBuilder/EmailBuilder";
 
-export type TriggerType = "eventBased" | "timeDelay" | "timeWindow";
 interface ITriggerCreaterProp {
-  updateFormData?: any;
-  formData?: any;
-  triggerId?: any;
-  resources?: any;
-  handleDeleteRow?: any;
-  rowLength?: number;
-  canDeleteRow?: boolean;
-  triggerType: TriggerType;
-  trigger?: any;
-  onSave?: any;
-  onDelete?: any;
-  hasExitButton?: boolean;
-  isViewMode?: boolean;
+  triggerType: TriggerTypeName;
+  trigger: Trigger;
+  onSave: (trigger: Trigger) => void;
+  onDelete: (triggerId: string) => void;
+  isViewMode: boolean;
 }
+
 interface Condition {
-  attribute: string;
+  attribute?: string;
   condition?: string;
   value?: string;
   type?: string;
@@ -53,16 +43,15 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
     onSave,
     onDelete,
     trigger,
-    hasExitButton,
     isViewMode,
   } = props;
 
-  const getAllResources = async (id: any) => {
+  const getAllResources = async (id: string) => {
     const response = await getEventResources(id);
     return response;
   };
 
-  const [eventTrigger, setEventTrigger] = useState<EventTrigger>(trigger);
+  const [eventTrigger, setEventTrigger] = useState<Trigger>(trigger);
 
   const handleConditionsChange = (
     index: number,
@@ -81,7 +70,7 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
     }));
   };
 
-  const populateFormData: any = (criteria: Condition[]) => {
+  const populateFormData = (criteria: Condition[]) => {
     const parsedFormData = [];
 
     for (let index = 0; index < criteria?.length; index++) {
@@ -110,10 +99,10 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
                 attributes: {
                   value: criteria[index].attribute,
                   children: {
-                    [criteria[index].attribute]: {
+                    [criteria[index].attribute as string]: {
                       value: criteria[index].condition,
                       children: {
-                        [criteria[index].condition as any]: {
+                        [criteria[index].condition as string]: {
                           value: criteria[index].value,
                           children: {},
                         },
@@ -134,7 +123,7 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
                 attributes: {
                   value: criteria[index].attribute,
                   children: {
-                    [criteria[index].attribute]: {
+                    [criteria[index].attribute as string]: {
                       value: criteria[index].value,
                       children: {},
                     },
@@ -159,54 +148,16 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
     return parsedFormData;
   };
 
-  const [resources, setResouces] = useState<any>({});
-  const [formData, setFormData] = useState<any>([]);
-  const [titleEdit, setTitleEdit] = useState<boolean>(false);
+  const [resources, setResouces] = useState<IResource>({});
+  const [formData, setFormData] = useState<FormDataItem[]>([]);
 
-  const [segmentForm, setSegmentForm] = useState<ISegmentInclusionForm>({
-    title: "Custom Event Trigger",
-  });
-
-  const handleTitleEdit = () => {
-    setTitleEdit(!titleEdit);
-  };
-
-  const handleTitleEnter = (e: any) => {
-    if (e.key === "Enter") {
-      handleTitleEdit();
-    }
-  };
-
-  const handleSegmentFormChange = (e: any) => {
-    setSegmentForm({
-      ...segmentForm,
-      [e.target.name]: e.target.value,
-    });
-  };
-
-  const {
-    fromDuration,
-    fromMetric,
-    toDuration,
-    toMetric,
-    eventTime,
-    month,
-    timer,
-    day,
-    delayTime,
-    year,
-  } = trigger.properties;
-  const [timeWindow, setTimeWindow] = useState<any>({
-    fromDuration,
-    fromMetric,
-    toDuration,
-    toMetric,
-  });
-  const attributeRequestBodyKeys = ["attribute", "condition", "value"];
-
-  const [triggerType, setTriggerType] = useState<TriggerType>(triggerProp);
-  const [eventTimeSelect, setEventTimeSelect] = useState(eventTime);
-  const [delayInputTime, setDelayInputTime] = useState(delayTime || "");
+  const [triggerType, setTriggerType] = useState<TriggerTypeName>(triggerProp);
+  const [eventTimeSelect, setEventTimeSelect] = useState(
+    trigger.properties?.eventTime || ""
+  );
+  const [delayInputTime, setDelayInputTime] = useState(
+    trigger.properties?.delayTime || ""
+  );
 
   const [datePickerSpecificTimeValue, setDatePickerSpecificTimeValue] =
     useState(new Date().toISOString());
@@ -221,29 +172,29 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
 
   const [isButtonDisabled, setIsButtonDisabled] = useState(true);
 
-  const handleTimeDelayChange = (value: any) => {
-    const arr: string[] = value.split(":");
-    setIsButtonDisabled(!value.match(/\d\d:\d\d:\d\d/));
-    if (
-      arr?.length > 3 ||
-      (arr[0] && arr[0]?.length > 2) ||
-      (arr[1] && arr[1]?.length > 2) ||
-      (arr[2] && arr[2]?.length > 3) ||
-      arr.some((part: string) => isNaN(+part)) ||
-      +arr[0] > 59 ||
-      +arr[1] > 23
-    ) {
-      return;
-    }
-    setDelayInputTime(value);
-  };
+  // const handleTimeDelayChange = (value: string)
+  //   const arr: string[] = value.split(":");
+  //   setIsButtonDisabled(!value.match(/\d\d:\d\d:\d\d/));
+  //   if (
+  //     arr?.length > 3 ||
+  //     (arr[0] && arr[0]?.length > 2) ||
+  //     (arr[1] && arr[1]?.length > 2) ||
+  //     (arr[2] && arr[2]?.length > 3) ||
+  //     arr.some((part: string) => isNaN(+part)) ||
+  //     +arr[0] > 59 ||
+  //     +arr[1] > 23
+  //   ) {
+  //     return;
+  //   }
+  //   setDelayInputTime(value);
+  // };
 
-  const handleTimeSelectChange = (value: any) => {
+  const handleTimeSelectChange = (value: string) => {
     setIsButtonDisabled(true);
     setEventTimeSelect(value);
   };
 
-  const handletriggerType = (value: any) => {
+  const handleTriggerType = (value: TriggerTypeName) => {
     setTriggerType(value);
   };
 
@@ -273,8 +224,8 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
   useEffect(() => {
     const getAllConditions = async () => {
       getConditions().then((response) => {
-        setResouces((e: any) => ({
-          ...e,
+        setResouces((re) => ({
+          ...re,
           [response.id]: response,
         }));
         setIsButtonDisabled(
@@ -283,7 +234,7 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
           ) || false
         );
         setFormData(
-          populateFormData(eventTrigger.properties?.conditions) || [
+          populateFormData(eventTrigger.properties?.conditions || []) || [
             {
               [response.id]: {
                 value: "",
@@ -293,20 +244,24 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
             },
           ]
         );
-        eventTrigger?.properties?.conditions?.forEach((item: any) => {
-          for (const key in item) {
-            getAllResources(item[key]).then((resourceResponse) => {
-              const tempResponse = JSON.parse(JSON.stringify(resourceResponse));
-              setResouces((re: any) => ({
-                ...re,
-                [tempResponse.data.id]: tempResponse.data,
-              }));
-            });
+        eventTrigger?.properties?.conditions?.forEach((item) => {
+          for (const key of Object.keys(item)) {
+            getAllResources(item[key as keyof EventCondition]).then(
+              (resourceResponse) => {
+                const tempResponse = JSON.parse(
+                  JSON.stringify(resourceResponse)
+                );
+                setResouces((re) => ({
+                  ...re,
+                  [tempResponse.data.id]: tempResponse.data,
+                }));
+              }
+            );
           }
         });
       });
     };
-    if (triggerType === "eventBased" || "timeDelay") {
+    if (triggerType === TriggerTypeName.EVENT || "timeDelay") {
       getAllConditions();
     }
   }, [triggerType, eventTrigger.properties?.conditions]);
@@ -321,13 +276,13 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
   }, []);
 
   const recursivelyUpdateFormData = (
-    formDataToUpdate: any,
-    lookupId: any,
-    updateValue: any,
-    childId: any,
+    formDataToUpdate: FormDataItem,
+    lookupId: string,
+    updateValue: string,
+    childId: string,
     isRoot: boolean
   ) => {
-    const returnedData: any = {};
+    const returnedData: FormDataItem = {};
     for (const key in formDataToUpdate) {
       if (key === lookupId) {
         // update the data
@@ -370,7 +325,14 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
     response,
     rowIndex,
     isRoot = false,
-  }: any) => {
+  }: {
+    id: string;
+    value: string;
+    response: { data?: { id?: string } };
+    formDataToUpdate: FormDataItem;
+    rowIndex: number;
+    isRoot?: boolean;
+  }) => {
     const updatedData = recursivelyUpdateFormData(
       formDataToUpdate,
       id,
@@ -378,16 +340,6 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
       response?.data?.id || "",
       isRoot
     );
-    let shouldAddRow = false;
-    for (const key in formData[formData?.length - 1]) {
-      if (
-        !updatedData.isDirty &&
-        (formData?.length === 1 ||
-          formData[formData?.length - 1][key].value === "")
-      ) {
-        shouldAddRow = true;
-      }
-    }
 
     const tempData = [
       ...formData.slice(0, rowIndex),
@@ -397,16 +349,28 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
     setFormData(tempData);
   };
 
-  const updateEvent = async ({ value, id, rowIndex, type, isRoot }: any) => {
+  const updateEvent = async ({
+    value,
+    id,
+    rowIndex,
+    type,
+    isRoot,
+  }: {
+    value: string;
+    id: string;
+    rowIndex: number;
+    type: string;
+    isRoot: boolean;
+  }) => {
     setIsButtonDisabled(true);
-    const formDataToUpdate = JSON.parse(JSON.stringify(formData[rowIndex]));
+    const formDataToUpdate = { ...formData[rowIndex] };
     if (type === "select") {
-      let response: any = {};
+      let response: { data?: Resource } = {};
       const resourceId = value;
       getAllResources(resourceId)
         .then((resourceResponse) => {
-          response = JSON.parse(JSON.stringify(resourceResponse));
-          setResouces((re: any) => ({
+          response = { ...resourceResponse };
+          setResouces((re) => ({
             ...re,
             [resourceResponse.data.id]: resourceResponse.data,
           }));
@@ -443,7 +407,17 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
     }
   };
 
-  const handleEventBasedChange = ({ value, id: key, type, isRoot }: any) => {
+  const handleEventBasedChange = ({
+    value,
+    id: key,
+    type,
+    isRoot,
+  }: {
+    value: string;
+    id: string;
+    type: string;
+    isRoot: boolean;
+  }) => {
     updateEvent({
       value,
       id: key,
@@ -457,85 +431,24 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
     onDelete(trigger.id);
   };
 
-  const flatten = (obj: any, prefix: any = [], current: any = {}) => {
-    if (typeof obj === "object" && obj !== null) {
-      for (const key of Object.keys(obj)) {
-        flatten(obj[key], prefix.concat(key), current);
-      }
-    } else {
-      current[prefix.join(".")] = obj;
-    }
-    return current;
-  };
-
-  const generateConditions = (obj: any) => {
-    const result: any = {};
-    if (obj.children && Object.keys(obj.children)?.length) {
-      result[obj.value] = generateConditions(obj.children[obj.value]);
-    } else {
-      result.value = obj.value;
-    }
-
-    return result;
-  };
-
-  const handleData = async (func: (data: any) => void) => {
-    if (triggerType == "timeDelay")
+  const handleData = async (func: (data: Trigger) => void) => {
+    if (triggerType === TriggerTypeName.TIME_DELAY)
       func(JSON.parse(JSON.stringify(delayInputTime)));
-    else if (triggerType == "timeWindow") func(timeWindow);
-    else if (triggerType == "eventBased") {
+    // else if (triggerType === "timeWindow") func(timeWindow);
+    else if (triggerType === TriggerTypeName.EVENT) {
       func(eventTrigger);
     }
   };
 
-  const handleSubmit: any = async (e: any) => {
+  const handleSubmit = async (e: MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     handleData(onSave);
-  };
-
-  const generateFormData = (
-    data: any,
-    index: any,
-    optionsFilter = (item: { label: string }) => item.label !== undefined
-  ) => {
-    const formElements: React.ReactNode[] = [];
-    const filteredOptions = (
-      resources.conditions.options as { label: string }[]
-    ).filter(optionsFilter);
-    const resouresWithFilteredOptions = { ...resources };
-    resouresWithFilteredOptions.conditions.options = filteredOptions;
-    for (const key in data) {
-      formElements.push(
-        transformDataToUI({
-          data: resources[key],
-          onChange: handleEventBasedChange,
-          isRoot: data[key]?.isRoot,
-          value: data[key]?.value,
-          id: key,
-          disabled: isViewMode,
-        })
-      );
-      if (data?.[key]?.children && Object.keys(data?.[key]?.children)?.length) {
-        formElements.push(generateFormData(data?.[key]?.children, index));
-      }
-    }
-    return formElements;
   };
 
   let jsx: JSX.Element | null = null;
 
   const generateTriggerUI = ({ toPart = false } = {}) => {
     switch (triggerType) {
-      case "eventBased": {
-        jsx = formData?.map((item: any, index: number) =>
-          generateFormData(
-            item,
-            index,
-            (option) => option.label != "Attributes"
-          )
-        );
-        break;
-      }
       case "timeDelay": {
         jsx = (
           <>
@@ -597,6 +510,8 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
                       </FormControl>
                     )}
                   </FormControl>
+                  {/* 
+                  TODO: Uncomment and fix data passing on feature implementation
                   <FormControl
                     sx={{
                       padding: "0 15px",
@@ -608,14 +523,14 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
                       ? undefined
                       : transformDataToUI({
                           data: { type: "inputText" },
-                          onChange: ({ value }: any) =>
+                          onChange: ({ value }: { value: string }) =>
                             handleTimeDelayChange(value),
                           isRoot: formData.conditions?.isRoot,
                           value: delayInputTime,
                           id: "delayTime",
                           placeholderText: "MM:HH:Days",
                         })}
-                  </FormControl>
+                  </FormControl> */}
                   <FormControl
                     sx={{
                       padding: "0 15px",
@@ -831,7 +746,7 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
                     ]}
                     disabled={isViewMode}
                     wrapperClassnames="max-w-[120px] mr-[15px]"
-                    value={eventTrigger.providerType}
+                    value={eventTrigger.providerType || ProviderTypes.Custom}
                   />
                   {eventTrigger.providerType === ProviderTypes.Posthog && (
                     <div className="relative">
@@ -905,7 +820,10 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
                               onDelete={() => handleDeleteCondition(i)}
                               possibleTypes={possibleTypes}
                               isViewMode={isViewMode}
-                              specificProvider={eventTrigger.providerType}
+                              specificProvider={
+                                eventTrigger.providerType ||
+                                ProviderTypes.Custom
+                              }
                             />
                             {i !==
                               (eventTrigger?.properties?.conditions?.length ||
@@ -913,7 +831,7 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
                                 1 && (
                               <div className="max-w-[7%]">
                                 <AndOrSelect
-                                  value={condition.relationWithNext}
+                                  value={condition.relationWithNext || "and"}
                                   onChange={(val) =>
                                     handleConditionsChange(i, {
                                       ...condition,
@@ -984,8 +902,10 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
                   <Select
                     id="activeJourney"
                     value={triggerType}
-                    options={[{ value: "timeWindow", title: "To" }]}
-                    onChange={handletriggerType}
+                    options={[
+                      { value: TriggerTypeName.TIME_WINDOW, title: "To" },
+                    ]}
+                    onChange={handleTriggerType}
                     displayEmpty
                     disabled={isViewMode}
                     customButtonClass={`${

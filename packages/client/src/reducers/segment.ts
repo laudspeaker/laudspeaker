@@ -130,10 +130,11 @@ export const createSegment = (body: any): any => {
         data,
         status,
       };
-    } catch (err: any) {
-      posthog.capture("segmentError", {
-        segmentError: err.message,
-      });
+    } catch (err) {
+      if (err instanceof Error)
+        posthog.capture("segmentError", {
+          segmentError: err.message,
+        });
       return {
         err,
       };
@@ -154,7 +155,7 @@ export const updateSegment = (body: any): any => {
         data,
         status,
       };
-    } catch (err: any) {
+    } catch (err) {
       return {
         err,
       };

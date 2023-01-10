@@ -36,7 +36,7 @@ describe(
 
       cy.get(".react-flow__viewport")
         .get('[data-isprimary="true"]')
-        .move({ deltaX: 100, deltaY: 100 });
+        .move({ deltaX: 100, deltaY: 100 }, { force: true });
 
       cy.wait(3000);
       cy.get("#audience").click();
@@ -46,7 +46,7 @@ describe(
 
       cy.get(".react-flow__viewport")
         .get('[data-isprimary="false"]')
-        .move({ deltaX: 100, deltaY: 300 });
+        .move({ deltaX: 100, deltaY: 300 }, { force: true });
 
       cy.get('[data-isprimary="false"]').click();
       cy.get("#slack").click();
@@ -60,7 +60,9 @@ describe(
 
       cy.get('[data-isprimary="true"]')
         .get('[data-handlepos="bottom"]')
-        .drag('[data-isprimary="false"] [data-handlepos="top"]');
+        .drag('[data-isprimary="false"] [data-handlepos="top"]', {
+          force: true,
+        });
 
       cy.get('[data-isprimary="false"] [data-handlepos="top"]').click();
       cy.get('[data-isprimary="false"]').click();

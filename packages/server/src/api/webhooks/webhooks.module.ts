@@ -1,14 +1,26 @@
-import { Module } from '@nestjs/common';
+import {
+  MiddlewareConsumer,
+  Module,
+  NestModule,
+  RequestMethod,
+} from '@nestjs/common';
 import { WebhooksService } from './webhooks.service';
 import { WebhooksController } from './webhooks.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { SendgridEvent } from './entities/sendgrid-event.entity';
+import { WebhookEvent } from './entities/webhook-event.entity';
 import { Account } from '../accounts/entities/accounts.entity';
 import { Audience } from '../audiences/entities/audience.entity';
+import twilio from 'twilio';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([SendgridEvent, Account, Audience])],
+  imports: [TypeOrmModule.forFeature([WebhookEvent, Account, Audience])],
   providers: [WebhooksService],
   controllers: [WebhooksController],
 })
-export class WebhooksModule {}
+export class WebhooksModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(twilio.webhook())
+      .forRoutes({ path: '/webhooks/twillio', method: RequestMethod.POST });
+  }
+}

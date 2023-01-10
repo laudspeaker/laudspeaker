@@ -1,4 +1,4 @@
-import { Dispatch } from "redux";
+import { AnyAction, Dispatch } from "redux";
 import { ApiConfig } from "../constants";
 import ApiService from "../services/api.service";
 import { AuthAction, ActionType } from "./auth";
@@ -190,7 +190,7 @@ export const setDomainsList = (body: any): any => {
         data,
         status,
       };
-    } catch (err: any) {
+    } catch (err) {
       return {
         err,
       };
@@ -206,7 +206,7 @@ export const startPosthogImport = async () => {
       options: { fakeAPI: false },
     });
     console.log("in phi 2");
-  } catch (err: any) {
+  } catch (err) {
     console.log("error in posthog imp");
     console.log(err);
     return {
@@ -241,7 +241,7 @@ export const updateUserData = (body: any): any => {
         data,
         status,
       };
-    } catch (err: any) {
+    } catch (err) {
       return {
         err,
       };

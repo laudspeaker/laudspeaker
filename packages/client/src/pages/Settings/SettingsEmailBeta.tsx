@@ -1,4 +1,4 @@
-import { ChangeEvent, ReactNode, useEffect, useState } from "react";
+import { ChangeEvent, FocusEvent, ReactNode, useEffect, useState } from "react";
 import { ExclamationCircleIcon } from "@heroicons/react/20/solid";
 import SaveSettings from "components/SaveSettings";
 import { RadioGroup } from "@headlessui/react";
@@ -7,6 +7,7 @@ import { Input } from "components/Elements";
 import { toast } from "react-toastify";
 import { setDomainsList, setSettingsPrivateApiKey } from "reducers/settings";
 import { useDispatch } from "react-redux";
+import { AxiosError } from "axios";
 
 const memoryOptions: Record<
   string,
@@ -70,7 +71,9 @@ export default function SettingsEmailBeta() {
       dispatch(setSettingsPrivateApiKey(formData.mailgunAPIKey));
       const response = await dispatch(setDomainsList(formData.mailgunAPIKey));
       if (response?.data) {
-        setPossibleDomains(response?.data?.map((item: any) => item.name) || []);
+        setPossibleDomains(
+          response?.data?.map((item: { name: string }) => item.name) || []
+        );
       }
     }
   };
@@ -227,24 +230,26 @@ export default function SettingsEmailBeta() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleBlur = (e: any) => {
+  const handleBlur = (e: FocusEvent<HTMLInputElement | HTMLSelectElement>) => {
     setShowErrors({ ...showErrors, [e.target.name]: true });
   };
 
   const handleSubmit = async () => {
     setIsLoading(true);
     try {
-      const objToSend: Record<string, any> = {};
+      const objToSend: Record<string, string> = {};
       for (const key of Object.keys(formData)) {
-        if ((formData as Record<string, any>)[key])
-          objToSend[key] = (formData as Record<string, any>)[key];
+        if ((formData as Record<string, string>)[key])
+          objToSend[key] = (formData as Record<string, string>)[key];
       }
       await ApiService.patch({
         url: "/accounts",
         options: { ...objToSend, emailProvider },
       });
-    } catch (e: any) {
-      toast.error(e.response?.data?.message || "Unexpected error");
+    } catch (e) {
+      let message = "Unexpected error";
+      if (e instanceof AxiosError) message = e.response?.data?.message;
+      toast.error(message);
     } finally {
       setIsLoading(false);
     }
@@ -271,8 +276,8 @@ export default function SettingsEmailBeta() {
                 )}
                 aria-invalid="true"
                 aria-describedby="password-error"
-                onBlur={(e: any) => {
-                  handleBlur(e);
+                onBlur={(e) => {
+                  handleBlur(e as FocusEvent<HTMLInputElement>);
                   callDomains();
                 }}
               />
@@ -639,7 +644,7 @@ export default function SettingsEmailBeta() {
 
           <RadioGroup
             value={mem}
-            onChange={(m: any) => setEmailProvider(m.id)}
+            onChange={(m) => setEmailProvider(m.id)}
             className="mt-2"
           >
             <RadioGroup.Label className="sr-only">

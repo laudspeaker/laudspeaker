@@ -1,44 +1,30 @@
-import { useState } from "react";
-import { Divider, FormControl } from "@mui/material";
+import { ChangeEvent, KeyboardEvent, MouseEvent, useState } from "react";
+import { Divider } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
-import ListItemIcon from "@mui/material/ListItemIcon";
-import { GenericButton, Select, Input } from "components/Elements";
+import { GenericButton, Input } from "components/Elements";
 
 import { BackButtonIcon } from "../../../components/Icons/Icons";
-import { useNavigate } from "react-router-dom";
 
 export interface IEmailHeaderProps {
-  onPersonalizeClick: (e: any) => void;
-  onSave: (e: any) => void;
+  onPersonalizeClick: (e: MouseEvent<HTMLButtonElement>) => void;
+  onSave: (e: MouseEvent<HTMLButtonElement>) => void;
   templateName: string;
-  handleTemplateNameChange: (e: any) => void;
+  handleTemplateNameChange: (e: ChangeEvent<HTMLInputElement>) => void;
 }
 
 const SlackTemplateHeader = (props: IEmailHeaderProps) => {
-  const navigate = useNavigate();
   const { onPersonalizeClick, templateName, handleTemplateNameChange, onSave } =
     props;
-  const [activeJourney, setActiveJourney] = useState("Slack");
   const [titleEdit, setTitleEdit] = useState<boolean>(false);
 
   const handleTitleEdit = () => {
     setTitleEdit(!titleEdit);
   };
 
-  const handleTitleEnter = (e: any) => {
+  const handleTitleEnter = (e: KeyboardEvent<HTMLDivElement>) => {
     if (e.key === "Enter") {
       handleTitleEdit();
     }
-  };
-
-  const goToEmailBuilder = () => {
-    navigate("/email-builder");
-    return;
-  };
-
-  const handleActiveJourney = (e: any) => {
-    if (e.target.value === "Email") goToEmailBuilder();
-    setActiveJourney(e.target.value);
   };
 
   return (

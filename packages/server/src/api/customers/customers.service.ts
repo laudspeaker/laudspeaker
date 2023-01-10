@@ -65,7 +65,7 @@ export class CustomersService {
     createCustomerDto: CreateCustomerDto
   ): Promise<
     Customer &
-      mongoose.Document<any, any, any> & {
+      mongoose.Document & {
         _id: Types.ObjectId;
       }
   > {
@@ -78,7 +78,7 @@ export class CustomersService {
     // Not started (isEditable = true), dynamic (isDyanmic = true), push
     const dynamicWkfs = await this.workflowsRepository.find({
       where: {
-        ownerId: (<Account>account).id,
+        owner: { id: account.id },
         isDynamic: true,
       },
       relations: ['segment'],
@@ -87,18 +87,16 @@ export class CustomersService {
       const workflow = dynamicWkfs[index];
       if (workflow.segment) {
         if (checkInclusion(ret, workflow.segment.inclusionCriteria)) {
-          const audiences = await Promise.all(
-            workflow.audiences.map((item) =>
-              this.audiencesRepository.findOneBy({ id: item })
-            )
-          );
+          const audiences = await this.audiencesRepository.findBy({
+            workflow: { id: workflow.id },
+          });
 
           const primaryAudience = audiences.find(
             (audience) => audience.isPrimary
           );
 
           await this.audiencesRepository.update(
-            { ownerId: (<Account>account).id, id: primaryAudience.id },
+            { owner: { id: account.id }, id: primaryAudience.id },
             {
               customers: primaryAudience.customers.concat(ret.id),
             }
@@ -110,7 +108,7 @@ export class CustomersService {
     // Not started(isEditable = false), static(isDyanmic = false), push
     const staticWkfs = await this.workflowsRepository.find({
       where: {
-        ownerId: (<Account>account).id,
+        owner: { id: account.id },
         isDynamic: false,
       },
       relations: ['segment'],
@@ -119,19 +117,15 @@ export class CustomersService {
       const workflow = staticWkfs[index];
       if (workflow.segment) {
         if (checkInclusion(ret, workflow.segment.inclusionCriteria)) {
-          const audiences = await Promise.all(
-            workflow.audiences.map((item) =>
-              this.audiencesRepository.findOneBy({
-                id: item,
-                isEditable: false,
-              })
-            )
-          );
+          const audiences = await this.audiencesRepository.findBy({
+            workflow: { id: workflow.id },
+            isEditable: false,
+          });
 
           const primaryAudience = audiences.find((item) => item.isPrimary);
 
           await this.audiencesRepository.update(
-            { ownerId: (<Account>account).id, id: primaryAudience.id },
+            { owner: { id: account.id }, id: primaryAudience.id },
             {
               customers: primaryAudience.customers.concat(ret.id),
             }
@@ -143,7 +137,7 @@ export class CustomersService {
     return ret;
   }
 
-  async addPhCustomers(data: any, account: Account) {
+  async addPhCustomers(data: any[], account: Account) {
     for (let index = 0; index < data.length; index++) {
       const addedBefore = await this.CustomerModel.find({
         ownerId: (<Account>account).id,
@@ -362,7 +356,7 @@ export class CustomersService {
     customerId: string
   ): Promise<
     Customer &
-      mongoose.Document<any, any, any> & {
+      mongoose.Document & {
         _id: Types.ObjectId;
       }
   > {

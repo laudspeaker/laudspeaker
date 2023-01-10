@@ -25,12 +25,12 @@ export class AuthController {
 
   @Post('register')
   @UseInterceptors(ClassSerializerInterceptor)
-  public async register(@Body() body: RegisterDto): Promise<Account | never> {
+  public async register(@Body() body: RegisterDto) {
     return this.service.register(body);
   }
 
   @Post('login')
-  public async login(@Body() body: LoginDto): Promise<string | never> {
+  public async login(@Body() body: LoginDto) {
     return this.service.login(body);
   }
 

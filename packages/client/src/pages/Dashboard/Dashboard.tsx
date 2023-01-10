@@ -18,11 +18,11 @@ const Dashboard = () => {
   const [anchorEl, setAnchorEl] = React.useState<HTMLButtonElement | null>(
     null
   );
-  const handleActiveJourney = (value: any) => {
+  const handleActiveJourney = (value: string) => {
     setActiveJourney(value);
   };
 
-  const handleDateChange = (e: any) => {
+  const handleDateChange = (e: Date[]) => {
     setDate(e);
   };
 

@@ -1,7 +1,7 @@
 import TokenService from "./token.service";
 
 const AuthService = {
-  authHeader: (headers: any) => {
+  authHeader: (headers: Headers) => {
     const accessToken = TokenService.getLocalAccessToken();
     return {
       ...headers,
@@ -9,7 +9,7 @@ const AuthService = {
       ...(accessToken && { Authorization: `Bearer ${accessToken}` }),
     };
   },
-  refreshAuthHeader: (token: any) => {
+  refreshAuthHeader: (token: { accessToken: string; refreshToken: string }) => {
     const { accessToken, refreshToken } = token;
     const user = TokenService.getUser();
     TokenService.setUser({

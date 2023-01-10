@@ -53,7 +53,7 @@ export class TestsService {
       });
 
       await this.authService.verificationRepository.delete({
-        accountId: '-1000',
+        account: { id: '-1000' },
       });
 
       const userCreated = await this.authService.repository.findOne({
@@ -109,9 +109,11 @@ export class TestsService {
       );
       ret.id = '-1000';
 
-      await this.workflowsRepository.delete({ ownerId: '-1000' });
-      await this.templateRepository.delete({ ownerId: '-1000' });
-      await this.audienceRepository.delete({ ownerId: '-1000' });
+      await this.workflowsRepository.delete({ owner: { id: '-1000' } });
+      await this.templateRepository.delete({ owner: { id: '-1000' } });
+      await this.audienceRepository.delete({ owner: { id: '-1000' } });
+
+      await this.authService.helper.generateDefaultData(ret.id);
 
       await this.authService.helper.generateDefaultData(ret.id);
 
@@ -156,10 +158,18 @@ export class TestsService {
   }
 
   public async getTestVerification() {
-    return this.authService.verificationRepository.findOneBy({
-      email: 'testmail@gmail.com',
-      status: 'sent',
+    const verification = await this.authService.verificationRepository.findOne({
+      where: {
+        email: 'testmail@gmail.com',
+        status: 'sent',
+      },
+      relations: ['account'],
     });
+    return {
+      ...verification,
+      account: undefined,
+      accountId: String(verification.account.id),
+    };
   }
 
   public async updateTestAccount(data: Record<string, any>) {

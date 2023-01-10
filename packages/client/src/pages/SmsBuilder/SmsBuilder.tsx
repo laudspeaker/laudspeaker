@@ -6,6 +6,7 @@ import { getResources } from "pages/Segment/SegmentHelpers";
 import SlackTemplateHeader from "pages/SlackBuilder/SlackTemplateHeader";
 import MergeTagInput from "components/MergeTagInput";
 import { toast } from "react-toastify";
+import { AxiosError } from "axios";
 
 const SmsBuilder = () => {
   const { name } = useParams();
@@ -15,7 +16,7 @@ const SmsBuilder = () => {
   const [possibleAttributes, setPossibleAttributes] = useState<string[]>([]);
   const [isPreview, setIsPreview] = useState(true);
 
-  const inputRef = useRef<HTMLInputElement>();
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const getTemplate = async (templateId: string) => {
     return ApiService.get({
@@ -27,7 +28,7 @@ const SmsBuilder = () => {
     try {
       const reqBody = {
         name: templateName,
-        text: smsMessage,
+        smsText: smsMessage,
         type: "sms",
       };
 
@@ -47,25 +48,27 @@ const SmsBuilder = () => {
           },
         });
       }
-    } catch (e: any) {
-      toast.error(
-        e.response?.data?.message?.[0] ||
-          e.response?.data?.message ||
-          "Unexpected error"
-      );
+    } catch (e) {
+      let message = "Unexpected error";
+      if (e instanceof AxiosError) {
+        message = e.response?.data?.message?.[0] || e.response?.data?.message;
+      }
+      toast.error(message);
     }
   };
 
   useLayoutEffect(() => {
     const populateSlackBuilder = async () => {
       const { data } = await getTemplate(name);
-      setSmsMessage(data.text);
+      setSmsMessage(data.smsText);
       setTemplateName(name);
       setSmsTemplateId(data.id);
     };
     const loadAttributes = async () => {
       const { data } = await getResources("attributes");
-      setPossibleAttributes(data.options.map((option: any) => option.label));
+      setPossibleAttributes(
+        data.options.map((option: { label: string }) => option.label)
+      );
     };
     populateSlackBuilder();
     loadAttributes();
@@ -88,7 +91,7 @@ const SmsBuilder = () => {
         onPersonalizeClick={onPersonalizeClick}
         onSave={onSave}
         templateName={templateName}
-        handleTemplateNameChange={(e: any) => setTemplateName(e.target.value)}
+        handleTemplateNameChange={(e) => setTemplateName(e.target.value)}
       />
       <div style={{ width: "490px", margin: "auto" }}>
         <MergeTagInput
@@ -99,7 +102,7 @@ const SmsBuilder = () => {
           id="smsMessage"
           fullWidth
           setValue={setSmsMessage}
-          onChange={(e: any) => setSmsMessage(e.target.value)}
+          onChange={(e) => setSmsMessage(e.target.value)}
           labelShrink
           isPreview={isPreview}
           setIsPreview={setIsPreview}

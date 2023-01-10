@@ -107,7 +107,7 @@ const ProfileForm = () => {
     }
   }, [isError, isCopied]);
 
-  const handleSubmit = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSubmit = (e: { preventDefault: () => void }) => {
     e.preventDefault();
     if (values.password != values.confirmPassword) return;
     setIsLoading(true);

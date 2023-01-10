@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { GenericButton, Input } from "components/Elements";
+import { ChangeEvent, useState } from "react";
+import { Input } from "components/Elements";
 import { useNavigate } from "react-router-dom";
 
 export interface INameSegmentForm {
@@ -7,17 +7,8 @@ export interface INameSegmentForm {
   isPrimary: boolean;
 }
 
-const segmentTypeStyle = {
-  border: "1px solid #D1D5DB",
-  borderRadius: "6px",
-  boxShadow: "0px 1px 2px rgba(0, 0, 0, 0.05)",
-  width: "234px",
-  marginTop: "20px",
-  padding: "15px",
-};
-
 interface INameSegment {
-  onSubmit?: (e: any) => void;
+  onSubmit?: (form: INameSegmentForm) => void;
   isPrimary: boolean;
 }
 
@@ -34,14 +25,14 @@ const NameJourney = ({ onSubmit, isPrimary }: INameSegment) => {
   const navigate = useNavigate();
 
   // Handling Name and Description Fields
-  const handleSegmentFormChange = (e: any) => {
+  const handleSegmentFormChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.name === "name") {
       setSegmentForm({ ...segmentForm, name: e.target.value });
     }
   };
 
   // Pushing state back up to the flow builder
-  const handleSubmit: any = async (e: any) => {
+  const handleSubmit = async (e: { preventDefault: () => void }) => {
     const navigationLink = "/flow/" + segmentForm.name;
     navigate(navigationLink);
     e.preventDefault();
@@ -71,7 +62,7 @@ const NameJourney = ({ onSubmit, isPrimary }: INameSegment) => {
           <div className="flex justify-end mt-[10px]">
             <button
               id="createJourneySubmit"
-              className="inline-flex items-center rounded-md border border-transparent bg-cyan-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-cyan-500 focus:outline-none focus:ring-2 focus:ring-offset-2 rounded-md bg-white font-medium focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2"
+              className="inline-flex items-center rounded-md border border-transparent bg-cyan-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-cyan-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500"
               onClick={handleSubmit}
               style={{
                 maxWidth: "200px",

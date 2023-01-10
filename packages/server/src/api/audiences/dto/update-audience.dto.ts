@@ -1,3 +1,4 @@
+import { InclusionCriteria } from '@/api/segments/types/segment.type';
 import { IsString, IsBoolean, IsOptional, IsObject } from 'class-validator';
 
 export class UpdateAudienceDto {
@@ -22,7 +23,7 @@ export class UpdateAudienceDto {
 
   @IsObject()
   @IsOptional()
-  public inclusionCriteria: any;
+  public inclusionCriteria: InclusionCriteria;
 
   @IsOptional()
   @IsString()

@@ -1,6 +1,5 @@
 import "grapesjs/dist/css/grapes.min.css";
 import { useState, useLayoutEffect, useRef } from "react";
-import Drawer from "../../components/Drawer";
 import SlackTemplateHeader from "./SlackTemplateHeader";
 import ApiService from "services/api.service";
 import { ApiConfig } from "../../constants";
@@ -16,7 +15,7 @@ const SlackBuilder = () => {
   const [possibleAttributes, setPossibleAttributes] = useState<string[]>([]);
   const [isPreview, setIsPreview] = useState(true);
 
-  const inputRef = useRef<HTMLInputElement>();
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const getTemplate = async (templateId: string) => {
     return ApiService.get({
@@ -57,7 +56,9 @@ const SlackBuilder = () => {
     };
     const loadAttributes = async () => {
       const { data } = await getResources("attributes");
-      setPossibleAttributes(data.options.map((option: any) => option.label));
+      setPossibleAttributes(
+        data.options.map((option: { label: string }) => option.label)
+      );
     };
     populateSlackBuilder();
     loadAttributes();
@@ -80,7 +81,7 @@ const SlackBuilder = () => {
         onPersonalizeClick={onPersonalizeClick}
         onSave={onSave}
         templateName={templateName}
-        handleTemplateNameChange={(e: any) => setTemplateName(e.target.value)}
+        handleTemplateNameChange={(e) => setTemplateName(e.target.value)}
       />
       <div style={{ width: "490px", margin: "auto" }}>
         <MergeTagInput
@@ -91,7 +92,7 @@ const SlackBuilder = () => {
           id="slackMessage"
           fullWidth
           setValue={setSlackMessage}
-          onChange={(e: any) => setSlackMessage(e.target.value)}
+          onChange={(e) => setSlackMessage(e.target.value)}
           labelShrink
           isPreview={isPreview}
           setIsPreview={setIsPreview}

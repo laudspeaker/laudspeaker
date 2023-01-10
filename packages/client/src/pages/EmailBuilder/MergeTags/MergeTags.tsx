@@ -33,7 +33,7 @@ const MergeTagType = (
         }),
       },
       {
-        isComponent: function (el: any) {
+        isComponent: function (el: Element) {
           if (el.tagName == "DIV" && el.classList.contains("text_droppable")) {
             return { type: "text" };
           }

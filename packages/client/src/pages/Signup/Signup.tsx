@@ -1,11 +1,6 @@
-import { Box, Grid, Paper, FormControl } from "@mui/material";
-import React, { useState } from "react";
+import React, { ChangeEvent, MouseEvent, useState } from "react";
 import { useDispatch } from "react-redux";
-import { GenericButton, Input } from "../../components/Elements";
 import { signUpUser, ISignUpForm } from "../../reducers/auth";
-import googleIcon from "../../assets/images/google.svg";
-import githubIcon from "../../assets/images/github.svg";
-import gitlabIcon from "../../assets/images/gitlab.svg";
 import { useNavigate } from "react-router-dom";
 import posthog from "posthog-js";
 import laudspeakerLogo from "../../assets/images/laudspeaker.svg";
@@ -36,18 +31,14 @@ const Signup = () => {
   const handleFieldBlur = (key: string) => () =>
     setCheckedFields((prev) => ({ ...prev, [key]: true }));
 
-  const handleGoogleSignup = () => {};
-  const handleGithubSignup = () => {};
-  const handleGitlabSignup = () => {};
-
-  const handlesignUpFormChange = (e: any) => {
+  const handlesignUpFormChange = (e: ChangeEvent<HTMLInputElement>) => {
     setsignUpForm({
       ...signUpForm,
       [e.target.name]: e.target.value,
     });
   };
 
-  const handleSubmit: any = async (e: any) => {
+  const handleSubmit = async (e: MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     const response = await dispatch(signUpUser(signUpForm));
     if (response?.data?.access_token) {

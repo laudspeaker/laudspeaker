@@ -4,8 +4,8 @@ import { useGoogleLogin } from "@react-oauth/google";
 export interface GoogleAuthProps {
   clientId: string;
   cookiePolicy: string;
-  onFailure: (error: any) => void;
-  onSuccess: (response: any) => void;
+  onFailure: (error: object) => void;
+  onSuccess: (response: object) => void;
   children?: JSX.Element;
   // onClick?: () => void
 }

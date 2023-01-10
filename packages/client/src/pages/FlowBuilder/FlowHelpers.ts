@@ -10,7 +10,7 @@ export const getCampaigns = async (id: string) => {
   });
 };
 
-export const getAudienceDetails = async (id: any) => {
+export const getAudienceDetails = async (id: string) => {
   return ApiService.get({
     url: `${ApiConfig.audiences}/${id}`,
     //options: {

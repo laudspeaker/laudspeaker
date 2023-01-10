@@ -1,5 +1,5 @@
 import { StatusCodes } from "./../../constants";
-import { useEffect, useState } from "react";
+import { MouseEvent, useEffect, useState } from "react";
 import {
   Handle,
   Position,
@@ -11,37 +11,36 @@ import thunderbolt from "../../assets/images/thunderbolt.svg";
 import { getAudienceDetails } from "./FlowHelpers";
 
 import { Email, SlackMsg, Mobile, SMS } from "../../components/Icons/Icons";
-import TriggerCreater from "components/TriggerCreater";
 import ChooseTemplateModal from "./ChooseTemplateModal";
 import LinesEllipsis from "react-lines-ellipsis";
+import { NodeData } from "./FlowBuilder";
 
 const textStyle = "text-[#111827] font-[Inter] font-middle text-[14px]";
 const subTitleTextStyle = "text-[#6B7280] font-[Inter] text-[14px]";
-const iconStyles = { padding: "0 10px" };
 
-const TextUpdaterNode = ({
-  data,
-  setSelectedTrigger,
-  selectedTrigger,
-}: any) => {
+const TextUpdaterNode = ({ data }: { data: NodeData }) => {
   const {
     audienceId,
-    dataTriggers,
     hidden,
     onTriggerSelect,
     triggers,
     isExit,
-    updateNodes,
     isSelected,
     needsUpdate,
     nodeId,
   } = data;
-  const [nodeData, setNodeData] = useState<any>({});
+  const [nodeData, setNodeData] = useState<{
+    id?: string;
+    isPrimary?: boolean;
+    preIcon?: string;
+    name?: string;
+    description?: string;
+    width?: string;
+  }>({});
   const [selectedMessageType, setSelectedMessageType] = useState("");
   const [selectedTemplateId, setSelectedTemplateId] = useState<number>();
   const [updateTemplateModalOpen, setUpdateTemplateModalOpen] = useState(false);
   const [descriptionCollaped, setDescriptionCollaped] = useState(true);
-  // const [selectedTrigger, setSelectedTrigger] = useState<any>(undefined);
 
   const onTemplateModalClose = () => {
     setUpdateTemplateModalOpen(false);
@@ -52,7 +51,7 @@ const TextUpdaterNode = ({
   const onTemplateDelete = () => {
     if (data?.messages) {
       data.messages = data.messages.filter(
-        (message: any) => message.templateId !== selectedTemplateId
+        (message) => message.templateId !== selectedTemplateId
       );
     }
 
@@ -64,10 +63,10 @@ const TextUpdaterNode = ({
   };
 
   useEffect(() => {
-    if (isExit) setNodeData(data);
+    if (isExit) setNodeData({});
     // audienceId is present when we are just dispalying the existing node data
     else if (audienceId) {
-      getAudienceDetails(audienceId).then((response: any) => {
+      getAudienceDetails(audienceId).then((response) => {
         if (response.status === StatusCodes.OK) {
           setNodeData(response.data);
           data.isDynamic = response.data.isDynamic;
@@ -76,8 +75,8 @@ const TextUpdaterNode = ({
     } else {
       setNodeData({
         id: uuid(),
-        title: "Please define audience",
-        desc: "Please define",
+        name: "Please define audience",
+        description: "Please define",
       });
     }
   }, [audienceId, needsUpdate]);
@@ -85,14 +84,14 @@ const TextUpdaterNode = ({
   const updateNodeInternals = useUpdateNodeInternals();
 
   useEffect(() => {
-    updateNodeInternals(nodeId);
+    updateNodeInternals(nodeId || "");
   }, [triggers]);
 
-  const handleTriggerClick = (e: any, triggerId: string) => {
+  const handleTriggerClick = (
+    e: MouseEvent<HTMLDivElement>,
+    triggerId: string
+  ) => {
     e.stopPropagation();
-    // const dataTrigger = dataTriggers.find(
-    //   (trigger: any) => trigger.id === triggerId
-    // );
     onTriggerSelect(e, triggerId, triggers);
   };
 
@@ -110,7 +109,7 @@ const TextUpdaterNode = ({
   };
 
   const generateMsgIcons = () => {
-    return data?.messages?.map((message: any) => {
+    return data?.messages?.map((message) => {
       return (
         <div
           className="p-[0px_10px]"
@@ -199,7 +198,7 @@ const TextUpdaterNode = ({
           }}
         >
           {!isExit &&
-            data?.triggers?.map((trigger: any, index: number) => {
+            data?.triggers?.map((trigger, index) => {
               return (
                 <Handle
                   type="source"

@@ -2,17 +2,20 @@
 import { FormControl } from "@mui/material";
 import DateRangePicker from "components/DateRangePicker";
 import DateTimePicker from "components/Elements/DateTimePicker";
+import { Resource } from "pages/EmailBuilder/EmailBuilder";
 import { Select, Input } from "../../components/Elements";
 import { ApiConfig } from "../../constants";
 import ApiService from "../../services/api.service";
+import { InclusionCriteria, IResource } from "./MySegment";
 
 export const getConditions = async () => {
-  return new Promise((resolve) => {
+  return new Promise<Resource>((resolve) => {
     resolve({
       id: "conditions",
       type: "select",
+      label: "conditions",
       options: [
-        { label: "Add Condition Or Group", id: -1, isPlaceholder: true },
+        { label: "Add Condition Or Group", id: "", isPlaceholder: true },
         { label: "Events", id: "events" },
         { label: "Attributes", id: "attributes" },
       ],
@@ -20,37 +23,37 @@ export const getConditions = async () => {
   });
 };
 
-export const getResources = async (id) => {
+export const getResources = async (id: string) => {
   return ApiService.get({
     url: `${ApiConfig.resources}/${id}`,
   });
 };
 
-export const getEventResources = async (id) => {
-  return ApiService.get({
+export const getEventResources = async (id: string) => {
+  return ApiService.get<Resource>({
     url: `${ApiConfig.eventResources}/${id}`,
   });
 };
 
-export const getEventKeys = async (id, provider = "") => {
+export const getEventKeys = async (id: string, provider = "") => {
   return ApiService.get({
     url: `${ApiConfig.eventAttributes}/${id}?provider=${provider}`,
   });
 };
 
-export const getSegments = async (search) => {
-  return ApiService.get({
-    url: `${ApiConfig.segments}?searchText=${search}`,
-  });
-};
-
-export const getSegment = async (id) => {
+export const getSegment = async (id: string) => {
   return ApiService.get({
     url: `${ApiConfig.segments}/${id}`,
   });
 };
 
-export const createSegment = async (data) => {
+interface ISegmentMutationData {
+  name: string;
+  inclusionCriteria: InclusionCriteria;
+  resources: IResource;
+}
+
+export const createSegment = async (data: ISegmentMutationData) => {
   return ApiService.put({
     url: ApiConfig.segments,
     options: {
@@ -59,7 +62,7 @@ export const createSegment = async (data) => {
   });
 };
 
-export const updateSegment = async (id, data) => {
+export const updateSegment = async (id: string, data: ISegmentMutationData) => {
   return ApiService.patch({
     url: `${ApiConfig.segments}/${id}`,
     options: {
@@ -68,23 +71,40 @@ export const updateSegment = async (id, data) => {
   });
 };
 
-export const duplicateSegment = async (id) => {
+export const duplicateSegment = async (id: string) => {
   return ApiService.post({
     url: `${ApiConfig.segments}/${id}/duplicate`,
     options: {},
   });
 };
 
+interface ITransformToUI {
+  data: Resource;
+  onChange: (data: {
+    value: any;
+    id: string;
+    rowIndex?: number;
+    type: string;
+    isRoot?: boolean;
+  }) => void;
+  value?: string | [Date, Date];
+  id?: string;
+  isRoot?: boolean;
+  disabled?: boolean;
+  width?: string;
+  placeholderText?: string;
+}
+
 export const transformDataToUI = ({
-  data = {},
+  data,
   onChange,
   value,
   id = "id",
-  isRoot,
+  isRoot = false,
   disabled = false,
   width = "40px",
   placeholderText = "",
-}) => {
+}: ITransformToUI) => {
   const { type } = data;
   let jsx = null;
   switch (type) {
@@ -95,7 +115,7 @@ export const transformDataToUI = ({
         )?.label;
         jsx = (
           <Select
-            value={value}
+            value={value as string}
             options={data.options.map((item) => {
               if (item.isPlaceholder) return { value: "", title: placeholder };
               return { value: `${item.id}`, title: item.label };
@@ -126,7 +146,7 @@ export const transformDataToUI = ({
         <Input
           isRequired
           label=""
-          value={value}
+          value={value as string}
           placeholder={placeholderText}
           name={id}
           id={id}
@@ -162,7 +182,7 @@ export const transformDataToUI = ({
         <Input
           isRequired
           label=""
-          value={value || "1"}
+          value={(value as string) || "1"}
           placeholder={""}
           name={id}
           id={id}
@@ -202,11 +222,11 @@ export const transformDataToUI = ({
     case "dateRange": {
       jsx = (
         <DateRangePicker
-          value={value || [new Date(), new Date()]}
+          value={(value as [Date, Date]) || [new Date(), new Date()]}
           disabled={disabled}
           onChange={(e) =>
             onChange({
-              value: e.target.value,
+              value: e,
               id,
               type: "dateRange",
             })
@@ -218,10 +238,10 @@ export const transformDataToUI = ({
     case "dateTime": {
       jsx = (
         <DateTimePicker
-          value={new Date(value) || new Date()}
+          value={(value as string) || new Date().toUTCString()}
           handleChange={(v) =>
             onChange({
-              value: v.toUTCString(),
+              value: new Date(v).toUTCString(),
               id,
               type: "dateTime",
             })

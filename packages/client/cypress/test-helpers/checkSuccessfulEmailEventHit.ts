@@ -18,7 +18,7 @@ export default (
       event: { [eventName]: eventName },
     },
   }).then(({ body }) => {
-    cy.wait(2000);
+    cy.wait(5000);
     cy.request({
       method: "POST",
       headers: {

@@ -1,12 +1,12 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { SendgridEvent } from './entities/sendgrid-event.entity';
+import { WebhookEvent } from './entities/webhook-event.entity';
 import { PublicKey, Signature, Ecdsa } from 'starkbank-ecdsa';
 import { Audience } from '../audiences/entities/audience.entity';
 import { Account } from '../accounts/entities/accounts.entity';
 
-const eventsMap = {
+const sendgridEventsMap = {
   click: 'clicked',
   open: 'opened',
 };
@@ -14,8 +14,8 @@ const eventsMap = {
 @Injectable()
 export class WebhooksService {
   constructor(
-    @InjectRepository(SendgridEvent)
-    private sendgridEventRepository: Repository<SendgridEvent>,
+    @InjectRepository(WebhookEvent)
+    private webhookEventRepository: Repository<WebhookEvent>,
     @InjectRepository(Audience)
     private audienceRepository: Repository<Audience>,
     @InjectRepository(Account)
@@ -25,12 +25,14 @@ export class WebhooksService {
   public async processSendgridData(
     signature: string,
     timestamp: string,
-    data: any[]
+    data?: any[]
   ) {
     const audienceId = data?.[0]?.audienceId;
     if (!audienceId) return;
 
-    const { ownerId: accountId } = await this.audienceRepository.findOneBy({
+    const {
+      owner: { id: accountId },
+    } = await this.audienceRepository.findOneBy({
       id: audienceId,
     });
 
@@ -55,13 +57,35 @@ export class WebhooksService {
       const { audienceId, customerId, event, sg_message_id, timestamp } = item;
       if (!audienceId || !customerId || !event || !sg_message_id || !timestamp)
         continue;
-      await this.sendgridEventRepository.save({
-        audienceId,
+      await this.webhookEventRepository.save({
+        audience: { id: audienceId },
         customerId,
         messageId: sg_message_id,
-        event: eventsMap[event] || event,
+        event: sendgridEventsMap[event] || event,
+        eventProvider: 'sendgrid',
         createdAt: new Date(timestamp * 1000).toUTCString(),
       });
     }
+  }
+
+  public async processTwillioData({
+    audienceId,
+    customerId,
+    SmsStatus,
+    MessageSid,
+  }: {
+    audienceId: string;
+    customerId: string;
+    SmsStatus: string;
+    MessageSid: string;
+  }) {
+    await this.webhookEventRepository.save({
+      audience: { id: audienceId },
+      customerId,
+      messageId: MessageSid,
+      event: SmsStatus,
+      eventProvider: 'twillio',
+      createdAt: new Date().toUTCString(),
+    });
   }
 }

@@ -1,7 +1,3 @@
-import { Dispatch } from "redux";
-import { ApiConfig } from "../constants";
-import ApiService from "../services/api.service";
-
 export enum ActionType {
   GET_POST_COMMENTS_PENDING = "GET_POST_COMMENTS_PENDING",
   GET_POST_COMMENTS_SUCCESS = "GET_POST_COMMENTS_SUCCESS",
@@ -70,27 +66,3 @@ const commentReducer = (state: State = initialState, action: Action): State => {
 };
 
 export default commentReducer;
-
-export const getComments = (postId: string): any => {
-  return async (dispatch: Dispatch<Action>) => {
-    dispatch({
-      type: ActionType.GET_POST_COMMENTS_PENDING,
-    });
-
-    try {
-      const { data } = await ApiService.get({
-        url: `${ApiConfig.comments}?postId=${postId}`,
-        options: { fakeAPI: true },
-      });
-      dispatch({
-        type: ActionType.GET_POST_COMMENTS_SUCCESS,
-        payload: data,
-      });
-    } catch (err: any) {
-      dispatch({
-        type: ActionType.GET_POST_COMMENTS_FAIL,
-        payload: err.message,
-      });
-    }
-  };
-};

@@ -1,26 +1,15 @@
-import {
-  HttpException,
-  Inject,
-  Injectable,
-  LoggerService,
-} from '@nestjs/common';
+import { Inject, Injectable, LoggerService } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, Like, Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { Audience } from './entities/audience.entity';
 import { CreateAudienceDto } from './dto/create-audience.dto';
 import { UpdateAudienceDto } from './dto/update-audience.dto';
 import { Account } from '../accounts/entities/accounts.entity';
-import { AddTemplateDto } from './dto/add-template.dto';
 import { CustomerDocument } from '../customers/schemas/customer.schema';
 import { Template } from '../templates/entities/template.entity';
 import Errors from '../../shared/utils/errors';
 import { TemplatesService } from '../templates/templates.service';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
-import { from } from 'form-data';
-import { Job } from 'bull';
-import { CustomersService } from '../customers/customers.service';
-import { checkInclusion } from './audiences.helper';
-import { Stats } from './entities/stats.entity';
 import { Workflow } from '../workflows/entities/workflow.entity';
 import { EventDto } from '../events/dto/event.dto';
 
@@ -36,7 +25,6 @@ export class AudiencesService {
     private readonly logger: LoggerService,
     @InjectRepository(Audience)
     public audiencesRepository: Repository<Audience>,
-    @InjectRepository(Stats) private statsRepository: Repository<Stats>,
     @InjectRepository(Workflow)
     private workflowRepository: Repository<Workflow>,
     @Inject(TemplatesService) public templatesService: TemplatesService
@@ -50,7 +38,9 @@ export class AudiencesService {
    *
    */
   findAll(account: Account): Promise<Audience[]> {
-    return this.audiencesRepository.findBy({ ownerId: (<Account>account).id });
+    return this.audiencesRepository.findBy({
+      owner: { id: account.id },
+    });
   }
 
   /**
@@ -63,7 +53,7 @@ export class AudiencesService {
    */
   findByName(account: Account, name: string): Promise<Audience | null> {
     return this.audiencesRepository.findOneBy({
-      ownerId: (<Account>account).id,
+      owner: { id: account.id },
       name: name,
     });
   }
@@ -78,7 +68,7 @@ export class AudiencesService {
    */
   findOne(account: Account, id: string): Promise<Audience> {
     return this.audiencesRepository.findOneBy({
-      ownerId: (<Account>account).id,
+      owner: { id: account.id },
       id: id,
     });
   }
@@ -100,18 +90,24 @@ export class AudiencesService {
     account: Account,
     createAudienceDto: CreateAudienceDto
   ): Promise<Audience> {
-    const audience = new Audience();
-    audience.name = createAudienceDto.name;
-    audience.customers = [];
-    audience.templates = [];
-    audience.isPrimary = createAudienceDto.isPrimary;
-    audience.description = createAudienceDto.description;
-    audience.ownerId = account.id;
-    audience.templates = createAudienceDto.templates;
+    const { name, isPrimary, description, templates, workflowId } =
+      createAudienceDto;
     try {
-      const resp = await this.audiencesRepository.save(audience);
-      const stats = this.statsRepository.create({ audience: resp });
-      await this.statsRepository.save(stats);
+      const resp = await this.audiencesRepository.save({
+        customers: [],
+        name,
+        isPrimary,
+        description,
+        templates: await Promise.all(
+          (templates || []).map((templateId) =>
+            this.templatesService.templatesRepository.findOneBy({
+              id: templateId,
+            })
+          )
+        ),
+        owner: { id: account.id },
+        workflow: { id: workflowId },
+      });
       return resp;
     } catch (e) {
       console.error(e);
@@ -138,7 +134,7 @@ export class AudiencesService {
     let audience: Audience; // The found audience
     try {
       audience = await this.audiencesRepository.findOneBy({
-        ownerId: (<Account>account).id,
+        owner: { id: account.id },
         id: updateAudienceDto.id,
         isEditable: true,
       });
@@ -164,7 +160,7 @@ export class AudiencesService {
     }
     try {
       await this.audiencesRepository.update(
-        { ownerId: (<Account>account).id, id: updateAudienceDto.id },
+        { owner: { id: account.id }, id: updateAudienceDto.id },
         {
           description: updateAudienceDto.description,
           name: updateAudienceDto.name,
@@ -197,7 +193,7 @@ export class AudiencesService {
     let found: Audience, ret: Audience;
     try {
       found = await this.audiencesRepository.findOneBy({
-        ownerId: (<Account>account).id,
+        owner: { id: account.id },
         id: id,
       });
       this.logger.debug('Found audience to freeze: ' + found.id);
@@ -255,7 +251,10 @@ export class AudiencesService {
     }
     if (to) {
       try {
-        toAud = await this.findOne(account, to);
+        toAud = await this.audiencesRepository.findOne({
+          where: { owner: { id: account.id }, id: to },
+          relations: ['templates'],
+        });
       } catch (err) {
         this.logger.error('Error: ' + err);
         return Promise.reject(err);
@@ -295,7 +294,7 @@ export class AudiencesService {
           //{ id: toAud.id, isEditable: false },
           {
             ...toAud,
-            customers: [...toAud?.customers, customerId],
+            customers: [...toAud.customers, customerId],
           }
         );
         this.logger.debug('To after: ' + saved?.customers?.length);
@@ -304,30 +303,32 @@ export class AudiencesService {
         return Promise.reject(err);
       }
 
+      let toTemplates = toAud.templates.map((item) => item.id);
+
       if (
         account.emailProvider === 'free3' &&
         account.customerId !== customerId &&
-        toAud?.templates?.length
+        toTemplates.length
       ) {
         const data = await this.templatesService.templatesRepository.find({
           where: {
-            ownerId: account.id,
+            owner: { id: account.id },
             type: 'email',
-            id: In(toAud?.templates),
+            id: In(toTemplates),
           },
         });
         if (data.length > 0) {
           this.logger.debug(
             'ToAud templates before template skip: ',
-            toAud.templates
+            toTemplates
           );
           const dataIds = data.map((el2) => String(el2.id));
-          toAud.templates = toAud.templates.filter(
+          toTemplates = toTemplates.filter(
             (el) => !dataIds.includes(String(el))
           );
           this.logger.debug(
             'ToAud templates after template skip: ',
-            toAud.templates
+            toTemplates
           );
           this.logger.warn(
             'Templates: [' +
@@ -337,23 +338,23 @@ export class AudiencesService {
         }
       }
 
-      if (toAud?.templates?.length) {
+      if (toTemplates?.length) {
         for (
           let templateIndex = 0;
-          templateIndex < toAud?.templates?.length;
+          templateIndex < toTemplates?.length;
           templateIndex++
         ) {
           try {
             jobId = await this.templatesService.queueMessage(
               account,
-              toAud.templates[templateIndex],
+              toTemplates[templateIndex],
               customerId,
               event,
               toAud.id
             );
             templates.push(
               await this.templatesService.templatesRepository.findOneBy({
-                id: toAud.templates[templateIndex],
+                id: toTemplates[templateIndex],
               })
             );
             this.logger.debug('Queued Message');

@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { ChangeEvent, useState } from "react";
 import { Grid, FormControl } from "@mui/material";
-import { GenericButton, Input, Select } from "components/Elements";
+import { GenericButton, Input } from "components/Elements";
 import { useNavigate } from "react-router-dom";
 import ApiService from "services/api.service";
 import { ApiConfig } from "../../constants";
@@ -10,21 +10,11 @@ export interface INameSegmentForm {
   isPrimary: boolean;
 }
 
-const segmentTypeStyle = {
-  border: "1px solid #D1D5DB",
-  borderRadius: "6px",
-  boxShadow: "0px 1px 2px rgba(0, 0, 0, 0.05)",
-  width: "234px",
-  marginTop: "20px",
-  padding: "15px",
-};
-
 interface INameSegment {
-  onSubmit?: (e: any) => void;
   isPrimary: boolean;
 }
 
-const NamePerson = ({ onSubmit, isPrimary }: INameSegment) => {
+const NamePerson = ({ isPrimary }: INameSegment) => {
   // A Segment initally has three Properties:
   //      1. Dynamic: whether new customers are added
   //         after a workflow is live
@@ -38,13 +28,13 @@ const NamePerson = ({ onSubmit, isPrimary }: INameSegment) => {
   const navigate = useNavigate();
 
   // Handling Name and Description Fields
-  const handleSegmentFormChange = (e: any) => {
+  const handleSegmentFormChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.name === "name") {
       setSegmentForm({ ...segmentForm, name: e.target.value });
     }
   };
 
-  const handleSubmit: any = async (e: any) => {
+  const handleSubmit = async () => {
     const { data } = await ApiService.post({
       url: `${ApiConfig.customerCreate}`,
       options: {
@@ -91,18 +81,6 @@ const NamePerson = ({ onSubmit, isPrimary }: INameSegment) => {
               Create Person
             </GenericButton>
           </div>
-          {/* 
-          <div className="flex justify-end">
-            <GenericButton
-              onClick={handleSubmit}
-              style={{
-                maxWidth: "200px",
-              }}
-            >
-              Create Person
-            </GenericButton>
-          </div>
-          */}
         </div>
       </div>
     </div>

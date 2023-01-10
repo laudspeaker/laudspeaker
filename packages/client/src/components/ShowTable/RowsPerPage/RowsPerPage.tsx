@@ -1,11 +1,11 @@
-import React from "react";
+import React, { MouseEvent } from "react";
 
 interface IRowNumberProps {
   rowsPerPage: number;
-  handleRowClick: (event: React.MouseEvent<unknown>) => void;
+  handleRowClick: (event: MouseEvent<HTMLDivElement>) => void;
 }
 const RowsPerPage = (props: IRowNumberProps) => {
-  const { handleRowClick, rowsPerPage } = props;
+  const { handleRowClick } = props;
   const rowData = [10, 20, 50, 80, 100];
 
   const backgroundStyle = {

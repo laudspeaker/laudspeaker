@@ -1,13 +1,12 @@
 import Stack from "@mui/material/Stack";
-import TextField from "@mui/material/TextField";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-import { DateTimePicker as DTP } from "@mui/x-date-pickers/DateTimePicker";
+import { ChangeEvent } from "react";
 
 interface IDateTimePickerProps {
-  sx?: any;
+  sx?: object;
   value: string;
-  handleChange: any;
+  handleChange: (val: string) => void;
   label?: string;
   inputStyle?: object;
   disabled?: boolean;
@@ -19,13 +18,8 @@ export default function DateTimePicker({
   handleChange,
   value,
   disabled = false,
-  sx,
-  label,
-  inputStyle,
-  dateStyle,
-  timeStyle,
 }: IDateTimePickerProps) {
-  const onChange = (e: any) => {
+  const onChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (disabled) return;
 
     handleChange(e.target.value);
@@ -40,22 +34,6 @@ export default function DateTimePicker({
           type="datetime-local"
           onChange={onChange}
         />
-        {/* <DTP
-          label={label || ""}
-          value={value}
-          onChange={onChange}
-          renderInput={(params) => (
-            <TextField
-              value={value.toLocaleString(undefined, {
-                dateStyle,
-                timeStyle,
-              })}
-              {...params}
-              sx={sx}
-              inputProps={inputStyle}
-            />
-          )}
-        /> */}
       </Stack>
     </LocalizationProvider>
   );

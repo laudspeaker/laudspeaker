@@ -15,7 +15,6 @@ import { BullModule } from '@nestjs/bull';
 import { Installation } from '../slack/entities/installation.entity';
 import { State } from '../slack/entities/state.entity';
 import { Account } from '../accounts/entities/accounts.entity';
-import { Stats } from '../audiences/entities/stats.entity';
 import {
   CustomerKeys,
   CustomerKeysSchema,
@@ -39,7 +38,6 @@ import { SlackModule } from '../slack/slack.module';
       Template,
       Installation,
       State,
-      Stats,
       Segment,
     ]),
     MongooseModule.forFeature([

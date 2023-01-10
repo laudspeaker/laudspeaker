@@ -11,12 +11,11 @@ import { Account } from '../accounts/entities/accounts.entity';
 import { BaseJwtHelper } from '../../common/helper/base-jwt.helper';
 import { DEFAULT_TEMPLATES } from '@/fixtures/user.default.templates';
 import { Template } from '../templates/entities/template.entity';
-import { Workflow } from '../workflows/entities/workflow.entity';
+import { TriggerType, Workflow } from '../workflows/entities/workflow.entity';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { LoggerService } from '@nestjs/common/services';
 import { Inject } from '@nestjs/common/decorators';
 import { Audience } from '../audiences/entities/audience.entity';
-import { Stats } from '../audiences/entities/stats.entity';
 import { randomUUID } from 'crypto';
 
 @Injectable()
@@ -29,8 +28,6 @@ export class AuthHelper extends BaseJwtHelper {
   private workflowRepository: Repository<Workflow>;
   @InjectRepository(Audience)
   private audienceRepository: Repository<Audience>;
-  @InjectRepository(Stats)
-  private statsRepository: Repository<Stats>;
   @Inject(WINSTON_MODULE_NEST_PROVIDER)
   private readonly logger: LoggerService;
 
@@ -47,7 +44,7 @@ export class AuthHelper extends BaseJwtHelper {
   }
 
   // Get User by User ID we get from decode()
-  public async validateUser(decoded: any): Promise<Account> {
+  public async validateUser(decoded: { id: string }): Promise<Account> {
     return this.repository.findOne({ where: { id: decoded.id } });
   }
 
@@ -58,7 +55,7 @@ export class AuthHelper extends BaseJwtHelper {
 
   // Validate JWT Token, throw forbidden error if JWT Token is invalid
   private async validate(token: string): Promise<boolean | never> {
-    const decoded: unknown = this.jwt.verify(token);
+    const decoded: { id: string } = this.jwt.verify(token);
 
     if (!decoded) {
       throw new HttpException('Forbidden', HttpStatus.FORBIDDEN);
@@ -74,13 +71,13 @@ export class AuthHelper extends BaseJwtHelper {
   }
 
   private async generateExampleOnboardingJourney(userId: string) {
-    const workflow = new Workflow();
-    workflow.name = 'example-onboarding';
-    workflow.audiences = [];
-    workflow.ownerId = userId;
     let ret: Workflow;
     try {
-      ret = await this.workflowRepository.save(workflow);
+      ret = await this.workflowRepository.save({
+        name: 'example-onboarding',
+        audiences: [],
+        owner: { id: userId },
+      });
       this.logger.debug('Created workflow: ' + ret?.id);
     } catch (err) {
       this.logger.error('Error: ' + err);
@@ -111,17 +108,19 @@ export class AuthHelper extends BaseJwtHelper {
           ownerId: userId,
         },
       ].map(async (el) => {
-        const audience = new Audience();
-        audience.name = el.name;
-        audience.customers = el.customers;
-        audience.templates = el.templates;
-        audience.isPrimary = el.isPrimary;
-        audience.description = el.description;
-        audience.ownerId = el.ownerId;
+        const { name, customers, templates, isPrimary, description, ownerId } =
+          el;
 
-        const resp = await this.audienceRepository.save(audience);
-        const stats = this.statsRepository.create({ audience: resp });
-        await this.statsRepository.save(stats);
+        const resp = await this.audienceRepository.save({
+          name,
+          customers,
+          templates,
+          isPrimary,
+          description,
+          owner: { id: ownerId },
+          workflow: { id: ret.id },
+        });
+
         return resp;
       })
     );
@@ -129,8 +128,6 @@ export class AuthHelper extends BaseJwtHelper {
     const nodeIds = [randomUUID(), randomUUID()];
     const triggerId = randomUUID();
     const eventName = 'SignUp';
-
-    ret.audiences = data.map((el) => el.id);
 
     const defRules = [
       {
@@ -148,6 +145,7 @@ export class AuthHelper extends BaseJwtHelper {
         },
       },
     ];
+
     const rules: string[] = [];
     for (let index = 0; index < defRules?.length; index++)
       rules.push(
@@ -193,7 +191,7 @@ export class AuthHelper extends BaseJwtHelper {
                   ],
                 },
                 title: 'Event Based',
-                type: 'eventBased',
+                type: TriggerType.EVENT,
               },
             ],
             messages: [],
@@ -241,7 +239,7 @@ export class AuthHelper extends BaseJwtHelper {
                   ],
                 },
                 title: 'Event Based',
-                type: 'eventBased',
+                type: TriggerType.EVENT,
               },
             ],
           },
@@ -265,13 +263,13 @@ export class AuthHelper extends BaseJwtHelper {
   }
 
   private async generateExampleSingleCampaignJourney(userId: string) {
-    const workflow = new Workflow();
-    workflow.name = 'example-single-campaign';
-    workflow.audiences = [];
-    workflow.ownerId = userId;
     let ret: Workflow;
     try {
-      ret = await this.workflowRepository.save(workflow);
+      ret = await this.workflowRepository.save({
+        name: 'example-single-campaign',
+        audiences: [],
+        owner: { id: userId },
+      });
       this.logger.debug('Created workflow: ' + ret?.id);
     } catch (err) {
       this.logger.error('Error: ' + err);
@@ -291,24 +289,23 @@ export class AuthHelper extends BaseJwtHelper {
           ownerId: userId,
         },
       ].map(async (el) => {
-        const audience = new Audience();
-        audience.name = el.name;
-        audience.customers = el.customers;
-        audience.templates = el.templates;
-        audience.isPrimary = el.isPrimary;
-        audience.description = el.description;
-        audience.ownerId = el.ownerId;
+        const { name, customers, templates, isPrimary, description, ownerId } =
+          el;
 
-        const resp = await this.audienceRepository.save(audience);
-        const stats = this.statsRepository.create({ audience: resp });
-        await this.statsRepository.save(stats);
+        const resp = await this.audienceRepository.save({
+          name,
+          customers,
+          templates,
+          isPrimary,
+          description,
+          owner: { id: ownerId },
+          workflow: { id: ret.id },
+        });
         return resp;
       })
     );
 
     const nodeId = randomUUID();
-
-    ret.audiences = data.map((el) => el.id);
 
     ret.visualLayout = {
       edges: [],
@@ -347,7 +344,7 @@ export class AuthHelper extends BaseJwtHelper {
   // generate default templates and workflows for newly registered user
   public async generateDefaultData(userId: string) {
     await this.templateRepository.insert(
-      DEFAULT_TEMPLATES.map((el) => ({ ...el, ownerId: userId }))
+      DEFAULT_TEMPLATES.map((el) => ({ ...el, owner: { id: userId } }))
     );
 
     await this.generateExampleOnboardingJourney(userId);

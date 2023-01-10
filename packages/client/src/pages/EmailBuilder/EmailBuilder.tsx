@@ -3,7 +3,6 @@ import "grapesjs-preset-newsletter/dist/grapesjs-preset-newsletter.css";
 import grapesjs from "grapesjs";
 import { useEffect, useState, useLayoutEffect, useRef } from "react";
 import "grapesjs-preset-newsletter";
-import Drawer from "../../components/Drawer";
 import EmailHeader from "./EmailHeader";
 import ApiService from "services/api.service";
 import { ApiConfig } from "../../constants";
@@ -13,10 +12,24 @@ import { getResources } from "pages/Segment/SegmentHelpers";
 import MergeTagInput from "components/MergeTagInput";
 import { Helmet } from "react-helmet";
 
+export interface IResourceOptions {
+  label: string;
+  id?: string;
+  where?: string;
+  nextResourceURL?: string;
+  isPlaceholder?: boolean;
+}
+
 export interface Resource {
   label: string;
   id: string;
-  nextResourceURL: string;
+  type: string;
+  options?: IResourceOptions[];
+  nextResourceURL?: string;
+  range?: {
+    min: number;
+    max: number;
+  };
 }
 
 const EmailBuilder = () => {
@@ -41,7 +54,9 @@ const EmailBuilder = () => {
   useEffect(() => {
     getResources("attributes")
       .then(({ data }) => {
-        setPossibleAttributes(data.options.map((option: any) => option.label));
+        setPossibleAttributes(
+          data.options.map((option: Resource) => option.label)
+        );
 
         const _editor = grapesjs.init({
           // Indicate where to init the editor. You can also pass an HTMLElement
@@ -176,7 +191,7 @@ const EmailBuilder = () => {
         onPersonalize={onPersonalize}
         onSave={onSave}
         templateName={templateName}
-        handleTemplateNameChange={(e: any) => {
+        handleTemplateNameChange={(e) => {
           setTemplateName(e.target.value);
         }}
       />
@@ -189,7 +204,7 @@ const EmailBuilder = () => {
           id="title"
           fullWidth
           setValue={setTitle}
-          onChange={(e: any) => setTitle(e.target.value)}
+          onChange={(e) => setTitle(e.target.value)}
           labelShrink
           isPreview={isPreview}
           setIsPreview={setIsPreview}

@@ -18,23 +18,38 @@ export class SmsProcessor {
     private readonly logger: LoggerService
   ) {}
   @Process('send')
-  async handleSend(job: Job) {
+  async handleSend(
+    job: Job<{
+      sid: string;
+      token: string;
+      from: string;
+      to: string;
+      tags: Record<string, string>;
+      text: string;
+      audienceId: string;
+      customerId: string;
+    }>
+  ) {
     let textWithInsertedTags: string | undefined;
 
-    if (job.data.text) {
+    const { text, tags, audienceId, customerId, from, sid, to, token } =
+      job.data;
+
+    if (text) {
       textWithInsertedTags = await this.tagEngine.parseAndRender(
-        job.data.text,
-        job.data.tags || {}
+        text,
+        tags || {}
       );
     }
 
-    const twilioClient = twilio(job.data.sid, job.data.token);
+    const twilioClient = twilio(sid, token);
 
     try {
       const message = await twilioClient.messages.create({
         body: textWithInsertedTags?.slice(0, this.MAXIMUM_SMS_LENGTH),
-        from: job.data.from,
-        to: job.data.to,
+        from,
+        to,
+        statusCallback: `${process.env.TWILLIO_WEBHOOK_ENDPOINT}?audienceId=${audienceId}&customerId=${customerId}`,
       });
 
       this.logger.debug(

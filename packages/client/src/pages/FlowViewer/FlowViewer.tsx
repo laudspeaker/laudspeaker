@@ -1,5 +1,4 @@
 import { Dialog, DialogActions, DialogTitle } from "@mui/material";
-import Drawer from "components/Drawer";
 import { GenericButton, Select } from "components/Elements";
 import { getFlow } from "pages/FlowBuilder/FlowHelpers";
 import { v4 as uuid } from "uuid";
@@ -27,44 +26,50 @@ import { ApiConfig } from "./../../constants";
 import TriggerModal from "pages/FlowBuilder/TriggerModal";
 import Tooltip from "components/Elements/Tooltip";
 import Header from "components/Header";
+import { NodeData } from "pages/FlowBuilder/FlowBuilder";
+import { Trigger, Workflow } from "types/Workflow";
 
 const Flow = () => {
   const { name } = useParams();
   const [flowId, setFlowId] = useState<string>("");
-  const [nodes, setNodes] = useState<Node[]>([]);
-  const [edges, setEdges] = useState<Edge[]>([]);
-  const [triggers, setTriggers] = useState<any>([]);
+  const [nodes, setNodes] = useState<Node<NodeData>[]>([]);
+  const [edges, setEdges] = useState<Edge<undefined>[]>([]);
   const [selectedNode, setSelectedNode] = useState<string>("");
   const [isPaused, setIsPaused] = useState(false);
   const [isStopped, setIsStopped] = useState(false);
   const [isDataLoaded, setIsDataLoaded] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [selectedTrigger, setSelectedTrigger] = useState<any>(undefined);
+  const [selectedTrigger, setSelectedTrigger] = useState<Trigger>();
   const [triggerModalOpen, settriggerModalOpen] = useState<boolean>(false);
 
-  const onTriggerSelect = (e: any, triggerId: any, triggersList: any) => {
-    const trigger = triggersList.find((item: any) => item.id === triggerId);
+  const onTriggerSelect = (
+    e: unknown,
+    triggerId: string,
+    triggersList: Trigger[]
+  ) => {
+    const trigger = triggersList.find((item) => item.id === triggerId);
     setSelectedTrigger(trigger);
     settriggerModalOpen(true);
   };
 
-  const handleTriggerModalOpen = (e: any) => {
-    settriggerModalOpen(!triggerModalOpen);
-  };
-
-  const onSaveTrigger = (data: any) => {
+  const onSaveTrigger = (data: Trigger) => {
     settriggerModalOpen(false);
-    selectedTrigger.properties = data;
+    console.log(data);
+    if (!selectedTrigger) return;
+    selectedTrigger.providerParams = data.providerParams;
+    selectedTrigger.providerType = data.providerType;
+    selectedTrigger.properties = data.properties;
+    console.log(selectedTrigger);
   };
 
-  const onDeleteTrigger = (data: any) => {
+  const onDeleteTrigger = (data: string) => {
     const selectedNodeData = nodes.find((node) =>
-      node.data.triggers.find((item: any) => item.id === data)
+      node.data.triggers.find((item) => item.id === data)
     );
-    const newTriggersData: any = selectedNodeData?.data?.triggers.filter(
-      (item: any) => item.id !== data
+    const newTriggersData = selectedNodeData?.data?.triggers.filter(
+      (item) => item.id !== data
     );
-    if (selectedNodeData !== undefined) {
+    if (selectedNodeData !== undefined && newTriggersData) {
       selectedNodeData.data.triggers = newTriggersData;
       setNodes([...nodes]);
       setEdges(edges.filter((edge) => edge.sourceHandle !== data));
@@ -74,17 +79,18 @@ const Flow = () => {
 
   useLayoutEffect(() => {
     const populateFlowBuilder = async () => {
-      const { data } = await getFlow(name, true);
+      const { data }: { data: Workflow } = await getFlow(name, true);
       setFlowId(data.id);
       setIsPaused(data.isPaused);
       setIsStopped(data.isStopped);
       if (data.visualLayout) {
-        const updatedNodes = data.visualLayout.nodes.map((item: any) => {
+        const updatedNodes = data.visualLayout.nodes.map((item) => {
           return {
             ...item,
             data: {
               ...item.data,
               onTriggerSelect,
+              dataTriggers: item.data.dataTriggers || [],
             },
           };
         });
@@ -192,7 +198,7 @@ const Flow = () => {
     }
   };
 
-  const onPaneClick = useCallback((event: React.MouseEvent) => {
+  const onPaneClick = useCallback(() => {
     setSelectedNode("");
   }, []);
 
@@ -200,7 +206,7 @@ const Flow = () => {
     backgroundColor: "rgba(112,112,112, 0.06)",
   };
 
-  const nodeTypes = useMemo(() => ({ special: ViewNode }), [triggers]);
+  const nodeTypes = useMemo(() => ({ special: ViewNode }), []);
   const { setViewport } = useReactFlow();
   const { x: viewX, y: viewY } = useViewport();
   const [zoomState, setZoomState] = useState(1);
@@ -323,9 +329,9 @@ const Flow = () => {
               value: item,
               title: item * 100 + "%",
             }))}
-            onChange={(e) => {
-              setZoomState(+e.target.value);
-              setViewport({ x: viewX, y: viewY, zoom: +e.target.value });
+            onChange={(val) => {
+              setZoomState(val);
+              setViewport({ x: viewX, y: viewY, zoom: val });
             }}
             sx={{ margin: "0 7.5px" }}
           />

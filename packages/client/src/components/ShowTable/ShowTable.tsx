@@ -1,4 +1,4 @@
-import React from "react";
+import React, { MouseEvent } from "react";
 import {
   Table,
   TableBody,
@@ -166,12 +166,12 @@ const ShowTable = () => {
     setPage(pageNumber);
   };
 
-  const handleRowClick = (event: any) => {
-    setRowsPerPage(event.target.innerText);
+  const handleRowClick = (event: MouseEvent<HTMLDivElement>) => {
+    // setRowsPerPage(event.target.innerText);
   };
 
   const getAllJourneysData = async () => {
-    const data = await ApiService.get({
+    await ApiService.get({
       url: `${ApiConfig.flow}`,
     });
   };
