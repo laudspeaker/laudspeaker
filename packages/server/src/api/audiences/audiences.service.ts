@@ -12,6 +12,7 @@ import { TemplatesService } from '../templates/templates.service';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { Workflow } from '../workflows/entities/workflow.entity';
 import { EventDto } from '../events/dto/event.dto';
+import { AppDataSource } from '@/data-source';
 
 @Injectable()
 export class AudiencesService {
@@ -261,19 +262,20 @@ export class AudiencesService {
       }
     }
 
-    if (fromAud?.customers?.length) {
-      index = fromAud?.customers?.indexOf(customerId);
-      this.logger.debug(
-        'Index of customer ' + customerId + ' inside of from: ' + index
-      );
-    }
-    if (fromAud && !fromAud.isEditable && index > -1) {
-      try {
+    await AppDataSource.manager.transaction(async (transactionManager) => {
+      if (fromAud?.customers?.length) {
+        index = fromAud?.customers?.indexOf(customerId);
+        this.logger.debug(
+          'Index of customer ' + customerId + ' inside of from: ' + index
+        );
+      }
+      if (fromAud && !fromAud.isEditable && index > -1) {
         this.logger.debug(
           'From customers before: ' + fromAud?.customers?.length
         );
         fromAud?.customers?.splice(index, 1);
-        await this.audiencesRepository.update(
+        await transactionManager.update(
+          Audience,
           { id: fromAud.id, isEditable: false },
           {
             customers: fromAud?.customers,
@@ -282,90 +284,78 @@ export class AudiencesService {
         this.logger.debug(
           'From customers after: ' + fromAud?.customers?.length
         );
-      } catch (err) {
-        this.logger.error('Error: ' + err);
-        return Promise.reject(err);
       }
-    }
-    if (toAud && !toAud.isEditable) {
-      try {
+      if (toAud && !toAud.isEditable) {
         this.logger.debug('To before: ' + toAud?.customers?.length);
-        const saved = await this.audiencesRepository.save(
-          //{ id: toAud.id, isEditable: false },
-          {
-            ...toAud,
-            customers: [...toAud.customers, customerId],
-          }
-        );
+        toAud.customers = [...toAud.customers, customerId];
+        const saved = await transactionManager.save(toAud);
         this.logger.debug('To after: ' + saved?.customers?.length);
-      } catch (err) {
-        this.logger.error('Error: ' + err);
-        return Promise.reject(err);
-      }
 
-      let toTemplates = toAud.templates.map((item) => item.id);
+        let toTemplates = toAud.templates.map((item) => item.id);
 
-      if (
-        account.emailProvider === 'free3' &&
-        account.customerId !== customerId &&
-        toTemplates.length
-      ) {
-        const data = await this.templatesService.templatesRepository.find({
-          where: {
-            owner: { id: account.id },
-            type: 'email',
-            id: In(toTemplates),
-          },
-        });
-        if (data.length > 0) {
-          this.logger.debug(
-            'ToAud templates before template skip: ',
-            toTemplates
-          );
-          const dataIds = data.map((el2) => String(el2.id));
-          toTemplates = toTemplates.filter(
-            (el) => !dataIds.includes(String(el))
-          );
-          this.logger.debug(
-            'ToAud templates after template skip: ',
-            toTemplates
-          );
-          this.logger.warn(
-            'Templates: [' +
-              dataIds.join(',') +
-              "] was skipped to send because test mail's can't be sent to external account."
-          );
-        }
-      }
-
-      if (toTemplates?.length) {
-        for (
-          let templateIndex = 0;
-          templateIndex < toTemplates?.length;
-          templateIndex++
+        if (
+          account.emailProvider === 'free3' &&
+          account.customerId !== customerId &&
+          toTemplates.length
         ) {
-          try {
-            jobId = await this.templatesService.queueMessage(
-              account,
-              toTemplates[templateIndex],
-              customerId,
-              event,
-              toAud.id
+          const data = await this.templatesService.templatesRepository.find({
+            where: {
+              owner: { id: account.id },
+              type: 'email',
+              id: In(toTemplates),
+            },
+          });
+          if (data.length > 0) {
+            this.logger.debug(
+              'ToAud templates before template skip: ',
+              toTemplates
             );
-            templates.push(
-              await this.templatesService.templatesRepository.findOneBy({
-                id: toTemplates[templateIndex],
-              })
+            const dataIds = data.map((el2) => String(el2.id));
+            toTemplates = toTemplates.filter(
+              (el) => !dataIds.includes(String(el))
             );
-            this.logger.debug('Queued Message');
-            jobIds.push(jobId);
-          } catch (err) {
-            this.logger.error('Error: ' + err);
-            return Promise.reject(err);
+            this.logger.debug(
+              'ToAud templates after template skip: ',
+              toTemplates
+            );
+            this.logger.warn(
+              'Templates: [' +
+                dataIds.join(',') +
+                "] was skipped to send because test mail's can't be sent to external account."
+            );
+          }
+        }
+
+        if (toTemplates?.length) {
+          for (
+            let templateIndex = 0;
+            templateIndex < toTemplates?.length;
+            templateIndex++
+          ) {
+            try {
+              jobId = await this.templatesService.queueMessage(
+                account,
+                toTemplates[templateIndex],
+                customerId,
+                event,
+                toAud.id
+              );
+              templates.push(
+                await this.templatesService.templatesRepository.findOneBy({
+                  id: toTemplates[templateIndex],
+                })
+              );
+              this.logger.debug('Queued Message');
+              jobIds.push(jobId);
+            } catch (err) {
+              this.logger.error('Error: ' + err);
+              return Promise.reject(err);
+            }
           }
         }
       }
-    }
+    });
+
     return Promise.resolve({ jobIds, templates });
   }
 

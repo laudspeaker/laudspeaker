@@ -9,10 +9,11 @@ import {
   JoinColumn,
   ManyToMany,
   JoinTable,
+  BaseEntity,
 } from 'typeorm';
 
 @Entity()
-export class Audience {
+export class Audience extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
   public id!: string;
 
