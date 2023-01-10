@@ -7,6 +7,7 @@ import laudspeakerLogo from "../../assets/images/laudspeaker.svg";
 import Tooltip from "components/Elements/Tooltip";
 import { toast } from "react-toastify";
 import Link from "components/Link/Link";
+import { AxiosError } from "axios";
 
 const Signup = () => {
   const dispatch = useDispatch();
@@ -40,7 +41,9 @@ const Signup = () => {
 
   const handleSubmit = async (e: MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
+
     const response = await dispatch(signUpUser(signUpForm));
+
     if (response?.data?.access_token) {
       posthog.capture("SignUpProps", {
         $set: {
@@ -64,6 +67,13 @@ const Signup = () => {
         }
       );
       navigate("/home");
+    }
+
+    if (response.err) {
+      let message = "Unexpected error";
+      if (response.err instanceof AxiosError)
+        message = response.err.response?.data?.message || message;
+      toast.error(message);
     }
   };
 

@@ -12,6 +12,8 @@ import { TrashIcon } from "@heroicons/react/24/outline";
 import { confirmAlert } from "react-confirm-alert";
 import { useNavigate } from "react-router-dom";
 import { ApiConfig } from "./../../constants";
+import Progress from "components/Progress";
+import { toast } from "react-toastify";
 
 const eventTypes = {
   applied: { icon: UserIcon, bgColorClass: "bg-gray-400" },
@@ -55,6 +57,8 @@ const Person = () => {
   const [isAddingAttribute, setIsAddingAttribute] = useState(false);
   const [newAttributeKey, setNewAttributeKey] = useState("");
   const [newAttributeValue, setNewAttributeValue] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
 
   const [timeline, setTimeline] = useState<ITimeline[]>([
     {
@@ -100,6 +104,8 @@ const Person = () => {
         ]);
       } catch (e) {
         console.error(e);
+      } finally {
+        setIsLoading(false);
       }
     })();
   }, []);
@@ -109,8 +115,15 @@ const Person = () => {
   };
 
   const handleSave = async () => {
-    await ApiService.put({ url: "/customers/" + id, options: personInfo });
-    setIsEditingMode(false);
+    setIsSaving(true);
+    try {
+      await ApiService.put({ url: "/customers/" + id, options: personInfo });
+    } catch (e) {
+      toast.error("Error while saving");
+    } finally {
+      setIsSaving(false);
+      setIsEditingMode(false);
+    }
   };
 
   const handleDeletePerson = () => {
@@ -121,11 +134,18 @@ const Person = () => {
         {
           label: "Yes",
           onClick: async () => {
-            await ApiService.post({
-              url: ApiConfig.customerDelete + id,
-              options: {},
-            });
-            navigate("/people");
+            setIsSaving(true);
+            try {
+              await ApiService.post({
+                url: ApiConfig.customerDelete + id,
+                options: {},
+              });
+              navigate("/people");
+            } catch (e) {
+              toast.error("Error while deleting");
+            } finally {
+              setIsSaving(false);
+            }
           },
         },
         {
@@ -145,6 +165,8 @@ const Person = () => {
     return classes.filter(Boolean).join(" ");
   }
 
+  if (isLoading) return <Progress />;
+
   return (
     <div className="w-full min-h-screen">
       <Header />
@@ -159,10 +181,18 @@ const Person = () => {
               onClick={() =>
                 isEditingMode ? handleSave() : setIsEditingMode(true)
               }
+              loading={isSaving}
+              disabled={isSaving}
             >
               {isEditingMode ? "Save" : "Edit"}
             </GenericButton>
-            <GenericButton onClick={handleDeletePerson}>Delete</GenericButton>
+            <GenericButton
+              onClick={handleDeletePerson}
+              loading={isSaving}
+              disabled={isSaving}
+            >
+              Delete
+            </GenericButton>
           </div>
         </div>
         <div className="flex gap-[30px]">

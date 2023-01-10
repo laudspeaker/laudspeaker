@@ -1,3 +1,4 @@
+import Progress from "components/Progress";
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { correlateSlack } from "./CorrelationHelpers";
@@ -29,12 +30,7 @@ const Cor = () => {
         <p style={{ textAlign: "center" }}>Error</p>
       </div>
     );
-  if (loading)
-    return (
-      <div>
-        <p style={{ textAlign: "center" }}>One moment</p>
-      </div>
-    );
+  if (loading) return <Progress />;
   return (
     <div>
       <p style={{ textAlign: "center" }}>{success}</p>

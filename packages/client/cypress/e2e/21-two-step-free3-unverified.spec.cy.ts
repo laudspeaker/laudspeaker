@@ -28,7 +28,7 @@ describe(
       setFree3();
       cy.get(".-mb-px > :nth-child(1)").click();
       cy.get("#email").clear().type("testmail1@gmail.com");
-      cy.get(".inline-flex").click();
+      cy.get(".border").click();
       cy.contains("Messaging").click();
       runTwoStepEmailJourney(emailTemplate.name, emailTemplate.eventName);
 

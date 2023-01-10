@@ -5,6 +5,7 @@ import {
   HttpStatus,
   Inject,
   Injectable,
+  NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -15,6 +16,7 @@ import { CustomersService } from '../customers/customers.service';
 import { AuthService } from '../auth/auth.service';
 import { MailService } from '@sendgrid/mail';
 import { Client } from '@sendgrid/client';
+import { RemoveAccountDto } from './dto/remove-account.dto';
 
 @Injectable()
 export class AccountsService extends BaseJwtHelper {
@@ -34,8 +36,14 @@ export class AccountsService extends BaseJwtHelper {
     return this.accountsRepository.find();
   }
 
-  findOne(user: Express.User | { id: string }): Promise<Account> {
-    return this.accountsRepository.findOneBy({ id: (<Account>user).id });
+  async findOne(user: Express.User | { id: string }): Promise<Account> {
+    const account = await this.accountsRepository.findOneBy({
+      id: (<Account>user).id,
+    });
+
+    if (!account) throw new NotFoundException('Account not found');
+
+    return account;
   }
 
   findOneByAPIKey(apiKey: string): Promise<Account> {
@@ -197,7 +205,18 @@ export class AccountsService extends BaseJwtHelper {
     return newKey;
   }
 
-  async remove(user: Express.User): Promise<void> {
-    await this.accountsRepository.delete((<Account>user).id);
+  async remove(
+    user: Express.User,
+    removeAccountDto: RemoveAccountDto
+  ): Promise<void> {
+    const account = await this.findOne(user);
+
+    if (!bcrypt.compareSync(removeAccountDto.password, account.password))
+      throw new BadRequestException('Password is incorrect');
+
+    await this.customersService.CustomerModel.deleteMany({
+      ownerId: account.id,
+    }).exec();
+    await this.accountsRepository.delete(account.id);
   }
 }

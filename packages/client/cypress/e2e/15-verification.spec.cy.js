@@ -38,7 +38,7 @@ describe(
             cy.contains("Your email is verified").should("exist");
 
             cy.get("#email").clear().type("another-email@gmail.com");
-            cy.get(".inline-flex").click();
+            cy.get(".border").click();
             cy.contains("Waiting for verification:").should("exist");
             cy.contains(
               "You need to verify your email. We've sent you a verification email"

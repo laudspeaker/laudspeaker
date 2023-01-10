@@ -70,7 +70,10 @@ describe(
       setupEventTrigger("2", "2");
 
       cy.get('[data-isprimary="false"] [data-handlepos="bottom"]').drag(
-        '[data-isprimary="true"] [data-handlepos="top"]'
+        '[data-isprimary="true"] [data-handlepos="top"]',
+        {
+          force: true,
+        }
       );
       cy.get('[data-isprimary="true"] [data-handlepos="top"]').click();
 

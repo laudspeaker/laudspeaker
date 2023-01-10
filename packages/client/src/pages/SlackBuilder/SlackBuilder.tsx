@@ -6,6 +6,8 @@ import { ApiConfig } from "../../constants";
 import { useParams } from "react-router-dom";
 import MergeTagInput from "../../components/MergeTagInput/MergeTagInput";
 import { getResources } from "pages/Segment/SegmentHelpers";
+import { toast } from "react-toastify";
+import Progress from "components/Progress";
 
 const SlackBuilder = () => {
   const { name } = useParams();
@@ -14,6 +16,8 @@ const SlackBuilder = () => {
   const [slackTemplateId, setSlackTemplateId] = useState<string>("");
   const [possibleAttributes, setPossibleAttributes] = useState<string[]>([]);
   const [isPreview, setIsPreview] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
 
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -24,35 +28,48 @@ const SlackBuilder = () => {
   };
 
   const onSave = async () => {
-    const reqBody = {
-      name: templateName,
-      slackMessage: slackMessage,
-      type: "slack",
-    };
-    if (!slackTemplateId) {
-      const response = await ApiService.post({
-        url: `${ApiConfig.createTemplate}`,
-        options: {
-          ...reqBody,
-        },
-      });
-      setSlackTemplateId(response.data.id);
-    } else {
-      await ApiService.patch({
-        url: `${ApiConfig.getAllTemplates}/${name}`,
-        options: {
-          ...reqBody,
-        },
-      });
+    setIsSaving(true);
+    try {
+      const reqBody = {
+        name: templateName,
+        slackMessage: slackMessage,
+        type: "slack",
+      };
+      if (!slackTemplateId) {
+        const response = await ApiService.post({
+          url: `${ApiConfig.createTemplate}`,
+          options: {
+            ...reqBody,
+          },
+        });
+        setSlackTemplateId(response.data.id);
+      } else {
+        await ApiService.patch({
+          url: `${ApiConfig.getAllTemplates}/${name}`,
+          options: {
+            ...reqBody,
+          },
+        });
+      }
+    } catch (e) {
+      toast.error("Error while saving");
+    } finally {
+      setIsSaving(false);
     }
   };
 
   useLayoutEffect(() => {
     const populateSlackBuilder = async () => {
-      const { data } = await getTemplate(name);
-      setSlackMessage(data.slackMessage);
-      setTemplateName(name);
-      setSlackTemplateId(data.id);
+      try {
+        const { data } = await getTemplate(name);
+        setSlackMessage(data.slackMessage);
+        setTemplateName(name);
+        setSlackTemplateId(data.id);
+      } catch (e) {
+        toast.error("Error while loading");
+      } finally {
+        setIsLoading(false);
+      }
     };
     const loadAttributes = async () => {
       const { data } = await getResources("attributes");
@@ -75,11 +92,14 @@ const SlackBuilder = () => {
     setIsPreview(true);
   };
 
+  if (isLoading) return <Progress />;
+
   return (
     <div className="w-full">
       <SlackTemplateHeader
         onPersonalizeClick={onPersonalizeClick}
         onSave={onSave}
+        loading={isSaving}
         templateName={templateName}
         handleTemplateNameChange={(e) => setTemplateName(e.target.value)}
       />

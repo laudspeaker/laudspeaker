@@ -6,6 +6,7 @@ import { ApiConfig } from "../../constants";
 import NameTemplate from "./NamePerson";
 import Modal from "components/Elements/Modal";
 import { useEffect, useState } from "react";
+import Progress from "components/Progress";
 
 const PeopleTable = () => {
   const [loading, setLoading] = useState(false);
@@ -47,12 +48,7 @@ const PeopleTable = () => {
         <p style={{ textAlign: "center" }}>Error</p>
       </div>
     );
-  if (loading)
-    return (
-      <div>
-        <p style={{ textAlign: "center" }}>One moment</p>
-      </div>
-    );
+  if (loading) return <Progress />;
   return (
     <div className="w-full relative">
       <Header />

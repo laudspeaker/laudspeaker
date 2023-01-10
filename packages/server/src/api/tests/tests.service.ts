@@ -52,6 +52,10 @@ export class TestsService {
         email: 'john.smith@gmail.com',
       });
 
+      await this.accountService.accountsRepository.delete({
+        email: 'john.smith@gmail.com',
+      });
+
       await this.authService.verificationRepository.delete({
         account: { id: '-1000' },
       });
@@ -64,20 +68,6 @@ export class TestsService {
 
       if (userCreated?.id) {
         await this.authService.repository.remove([userCreated]);
-      }
-
-      const JhonSmeeth = await this.accountService.accountsRepository.findOne({
-        where: {
-          email: 'john.smith@gmail.com',
-          firstName: 'John',
-          lastName: 'Smith',
-          sendingEmail: 'SendingEmail',
-          sendingName: 'SendingName',
-        },
-      });
-
-      if (JhonSmeeth) {
-        await this.accountService.accountsRepository.remove([JhonSmeeth]);
       }
 
       const user = new Account();

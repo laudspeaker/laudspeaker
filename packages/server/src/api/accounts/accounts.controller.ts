@@ -18,6 +18,7 @@ import { Request } from 'express';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { transformToObject } from '../../common/helper/transformers';
 import { AccountSettingsResponse } from './response/acccountSettings.response';
+import { RemoveAccountDto } from './dto/remove-account.dto';
 
 @Controller('accounts')
 export class AccountsController {
@@ -81,7 +82,7 @@ export class AccountsController {
   @Delete()
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
-  remove(@Req() { user }: Request) {
-    return this.accountsService.remove(user);
+  remove(@Req() { user }: Request, @Body() removeAccountDto: RemoveAccountDto) {
+    return this.accountsService.remove(user, removeAccountDto);
   }
 }

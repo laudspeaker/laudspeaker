@@ -274,6 +274,7 @@ export const signUpUser = (body: ISignUpForm): any => {
           type: ActionType.SIGNUP_USER_FAIL,
           payload: err.message,
         });
+      return { err };
     }
   };
 };

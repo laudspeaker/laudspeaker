@@ -8,6 +8,7 @@ import NameJourney from "./NameJourney";
 import posthog from "posthog-js";
 import Modal from "components/Elements/Modal";
 import { Workflow } from "types/Workflow";
+import Progress from "components/Progress";
 
 const FlowTable = () => {
   const [loading, setLoading] = useState(false);
@@ -62,12 +63,7 @@ const FlowTable = () => {
         <p style={{ textAlign: "center" }}>Error</p>
       </div>
     );
-  if (loading)
-    return (
-      <div>
-        <p style={{ textAlign: "center" }}>One moment</p>
-      </div>
-    );
+  if (loading) return <Progress />;
   return (
     <div className="bg-gray-100">
       <div className="relative w-full h-full ">

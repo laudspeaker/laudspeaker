@@ -640,8 +640,6 @@ export default function SettingsEmailBeta() {
           </p>
         </div>
         <div className="space-y-10">
-          <div className="flex items-center justify-between"></div>
-
           <RadioGroup
             value={mem}
             onChange={(m) => setEmailProvider(m.id)}
@@ -682,6 +680,7 @@ export default function SettingsEmailBeta() {
               disabled={
                 isError || (!verified && emailProvider === "free3") || isLoading
               }
+              loading={isLoading}
               onClick={handleSubmit}
             />
           </dl>
