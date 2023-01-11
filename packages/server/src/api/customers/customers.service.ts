@@ -1,5 +1,10 @@
 /* eslint-disable no-case-declarations */
-import mongoose, { isValidObjectId, Model, Types } from 'mongoose';
+import mongoose, {
+  ClientSession,
+  isValidObjectId,
+  Model,
+  Types,
+} from 'mongoose';
 import {
   HttpException,
   HttpStatus,
@@ -27,6 +32,7 @@ import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { createClient } from '@clickhouse/client';
 import { Workflow } from '../workflows/entities/workflow.entity';
 import { attributeConditions } from '@/fixtures/attributeConditions';
+import { AppDataSource } from '@/data-source';
 
 export type Correlation = {
   cust: CustomerDocument;
@@ -62,7 +68,8 @@ export class CustomersService {
 
   async create(
     account: Account,
-    createCustomerDto: CreateCustomerDto
+    createCustomerDto: CreateCustomerDto,
+    transactionSession?: ClientSession
   ): Promise<
     Customer &
       mongoose.Document & {
@@ -73,66 +80,71 @@ export class CustomersService {
       ownerId: (<Account>account).id,
       ...createCustomerDto,
     });
-    const ret = await createdCustomer.save();
-    // Already started (isEditable = false), dynamic (isDyanmic = true),push
-    // Not started (isEditable = true), dynamic (isDyanmic = true), push
-    const dynamicWkfs = await this.workflowsRepository.find({
-      where: {
-        owner: { id: account.id },
-        isDynamic: true,
-      },
-      relations: ['segment'],
-    });
-    for (let index = 0; index < dynamicWkfs.length; index++) {
-      const workflow = dynamicWkfs[index];
-      if (workflow.segment) {
-        if (checkInclusion(ret, workflow.segment.inclusionCriteria)) {
-          const audiences = await this.audiencesRepository.findBy({
-            workflow: { id: workflow.id },
-          });
+    const ret = await createdCustomer.save({ session: transactionSession });
 
-          const primaryAudience = audiences.find(
-            (audience) => audience.isPrimary
-          );
+    await AppDataSource.transaction(async (transactionManager) => {
+      // Already started (isEditable = false), dynamic (isDyanmic = true),push
+      // Not started (isEditable = true), dynamic (isDyanmic = true), push
+      const dynamicWkfs = await transactionManager.find(Workflow, {
+        where: {
+          owner: { id: account.id },
+          isDynamic: true,
+        },
+        relations: ['segment'],
+      });
+      for (let index = 0; index < dynamicWkfs.length; index++) {
+        const workflow = dynamicWkfs[index];
+        if (workflow.segment) {
+          if (checkInclusion(ret, workflow.segment.inclusionCriteria)) {
+            const audiences = await transactionManager.findBy(Audience, {
+              workflow: { id: workflow.id },
+            });
 
-          await this.audiencesRepository.update(
-            { owner: { id: account.id }, id: primaryAudience.id },
-            {
-              customers: primaryAudience.customers.concat(ret.id),
-            }
-          );
+            const primaryAudience = audiences.find(
+              (audience) => audience.isPrimary
+            );
+
+            await transactionManager.update(
+              Audience,
+              { owner: { id: account.id }, id: primaryAudience.id },
+              {
+                customers: primaryAudience.customers.concat(ret.id),
+              }
+            );
+          }
         }
       }
-    }
-    // Already started(isEditable = true), static(isDyanmic = false), don't push
-    // Not started(isEditable = false), static(isDyanmic = false), push
-    const staticWkfs = await this.workflowsRepository.find({
-      where: {
-        owner: { id: account.id },
-        isDynamic: false,
-      },
-      relations: ['segment'],
-    });
-    for (let index = 0; index < staticWkfs.length; index++) {
-      const workflow = staticWkfs[index];
-      if (workflow.segment) {
-        if (checkInclusion(ret, workflow.segment.inclusionCriteria)) {
-          const audiences = await this.audiencesRepository.findBy({
-            workflow: { id: workflow.id },
-            isEditable: false,
-          });
+      // Already started(isEditable = true), static(isDyanmic = false), don't push
+      // Not started(isEditable = false), static(isDyanmic = false), push
+      const staticWkfs = await transactionManager.find(Workflow, {
+        where: {
+          owner: { id: account.id },
+          isDynamic: false,
+        },
+        relations: ['segment'],
+      });
+      for (let index = 0; index < staticWkfs.length; index++) {
+        const workflow = staticWkfs[index];
+        if (workflow.segment) {
+          if (checkInclusion(ret, workflow.segment.inclusionCriteria)) {
+            const audiences = await transactionManager.findBy(Audience, {
+              workflow: { id: workflow.id },
+              isEditable: false,
+            });
 
-          const primaryAudience = audiences.find((item) => item.isPrimary);
+            const primaryAudience = audiences.find((item) => item.isPrimary);
 
-          await this.audiencesRepository.update(
-            { owner: { id: account.id }, id: primaryAudience.id },
-            {
-              customers: primaryAudience.customers.concat(ret.id),
-            }
-          );
+            await transactionManager.update(
+              Audience,
+              { owner: { id: account.id }, id: primaryAudience.id },
+              {
+                customers: primaryAudience.customers.concat(ret.id),
+              }
+            );
+          }
         }
       }
-    }
+    });
 
     return ret;
   }

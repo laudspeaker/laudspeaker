@@ -10,6 +10,8 @@ import { Queue } from 'bull';
 import { Verification } from './entities/verification.entity';
 import { CustomersService } from '../customers/customers.service';
 import { AppDataSource } from '@/data-source';
+import mongoose from 'mongoose';
+import { InjectConnection } from '@nestjs/mongoose';
 
 @Injectable()
 export class AuthService {
@@ -21,7 +23,8 @@ export class AuthService {
     public readonly verificationRepository: Repository<Verification>,
     @Inject(AuthHelper)
     public readonly helper: AuthHelper,
-    @Inject(CustomersService) private customersService: CustomersService
+    @Inject(CustomersService) private customersService: CustomersService,
+    @InjectConnection() private readonly connection: mongoose.Connection
   ) {}
 
   public async register(body: RegisterDto) {
@@ -141,25 +144,41 @@ export class AuthService {
 
     const { email, firstName, lastName, verified, customerId } = account;
 
-    if (customerId) {
-      const foundCustomer = await this.customersService.findById(
-        account,
-        customerId
-      );
+    const transactionSession = await this.connection.startSession();
+    transactionSession.startTransaction();
 
-      foundCustomer.verified = true;
-      await foundCustomer.save();
-    } else {
-      const customer = await this.customersService.create(account, {
-        email,
-        firstName,
-        lastName,
-        verified,
+    try {
+      if (customerId) {
+        const foundCustomer = await this.customersService.findById(
+          account,
+          customerId
+        );
+
+        foundCustomer.verified = true;
+        await foundCustomer.save({ session: transactionSession });
+      } else {
+        const customer = await this.customersService.create(
+          account,
+          {
+            email,
+            firstName,
+            lastName,
+            verified,
+          },
+          transactionSession
+        );
+        account.customerId = customer.id;
+      }
+
+      await AppDataSource.transaction(async (transactionSession) => {
+        await transactionSession.save(account);
+        await transactionSession.save(verification);
       });
-      account.customerId = customer.id;
+      await transactionSession.commitTransaction();
+    } catch (e) {
+      await transactionSession.abortTransaction();
+    } finally {
+      await transactionSession.endSession();
     }
-
-    await account.save();
-    await verification.save();
   }
 }

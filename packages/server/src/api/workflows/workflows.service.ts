@@ -38,6 +38,8 @@ import {
   operableCompare,
 } from '../audiences/audiences.helper';
 import { Segment } from '../segments/entities/segment.entity';
+import { AppDataSource } from '@/data-source';
+import { Template } from '../templates/entities/template.entity';
 
 @Injectable()
 export class WorkflowsService {
@@ -214,79 +216,86 @@ export class WorkflowsService {
    */
   async update(
     account: Account,
-    updateWorkflowDto: UpdateWorkflowDto
+    updateWorkflowDto: UpdateWorkflowDto,
+    queryRunner = AppDataSource.createQueryRunner()
   ): Promise<void> {
-    const workflow = await this.workflowsRepository.findOne({
-      where: {
-        id: updateWorkflowDto.id,
-      },
-      relations: ['segment'],
-    });
-
-    if (!workflow) throw new NotFoundException('Workflow not found');
-    if (workflow.isActive)
-      return Promise.reject(new Error('Workflow has already been activated'));
-
-    const { rules, visualLayout, isDynamic, audiences, name } =
-      updateWorkflowDto;
-    if (rules) {
-      const newRules: string[] = [];
-      for (const trigger of rules) {
-        for (const condition of trigger.properties.conditions) {
-          const { key, type, isArray } = condition;
-          if (isString(key) && isString(type) && isBoolean(isArray)) {
-            const eventKey = await this.EventKeysModel.findOne({
-              key,
-              type,
-              isArray,
-            }).exec();
-            if (!eventKey)
-              await this.EventKeysModel.create({
-                key,
-                type,
-                isArray,
-              });
-          }
-        }
-        newRules.push(Buffer.from(JSON.stringify(trigger)).toString('base64'));
-      }
-      workflow.rules = newRules;
-    }
-
-    if (visualLayout) {
-      for (const node of visualLayout.nodes) {
-        const audienceId = node?.data?.audienceId;
-        const nodeTemplates = node?.data?.messages;
-        if (!nodeTemplates || !Array.isArray(nodeTemplates) || !audienceId)
-          continue;
-
-        const templates = (
-          await Promise.all(
-            nodeTemplates.map((item) =>
-              this.audiencesService.templatesService.templatesRepository.findOneBy(
-                {
-                  id: item.templateId,
-                }
-              )
-            )
-          )
-        ).filter((item) => item.id);
-
-        await this.audiencesService.audiencesRepository.save({
-          id: audienceId,
-          owner: { id: account.id },
-          templates,
-        });
-      }
-    }
-
-    let segmentId = workflow.segment?.id;
-    if (updateWorkflowDto.segmentId !== undefined) {
-      segmentId = updateWorkflowDto.segmentId;
+    const alreadyInsideTransaction = queryRunner.isTransactionActive;
+    if (!alreadyInsideTransaction) {
+      await queryRunner.connect();
+      await queryRunner.startTransaction();
     }
 
     try {
-      await this.workflowsRepository.save({
+      const workflow = await queryRunner.manager.findOne(Workflow, {
+        where: {
+          id: updateWorkflowDto.id,
+        },
+        relations: ['segment'],
+      });
+
+      if (!workflow) throw new NotFoundException('Workflow not found');
+      if (workflow.isActive)
+        return Promise.reject(new Error('Workflow has already been activated'));
+
+      const { rules, visualLayout, isDynamic, audiences, name } =
+        updateWorkflowDto;
+      if (rules) {
+        const newRules: string[] = [];
+        for (const trigger of rules) {
+          for (const condition of trigger.properties.conditions) {
+            const { key, type, isArray } = condition;
+            if (isString(key) && isString(type) && isBoolean(isArray)) {
+              const eventKey = await this.EventKeysModel.findOne({
+                key,
+                type,
+                isArray,
+              }).exec();
+              if (!eventKey)
+                await this.EventKeysModel.create({
+                  key,
+                  type,
+                  isArray,
+                });
+            }
+          }
+          newRules.push(
+            Buffer.from(JSON.stringify(trigger)).toString('base64')
+          );
+        }
+        workflow.rules = newRules;
+      }
+
+      if (visualLayout) {
+        for (const node of visualLayout.nodes) {
+          const audienceId = node?.data?.audienceId;
+          const nodeTemplates = node?.data?.messages;
+          if (!nodeTemplates || !Array.isArray(nodeTemplates) || !audienceId)
+            continue;
+
+          const templates = (
+            await Promise.all(
+              nodeTemplates.map((item) =>
+                queryRunner.manager.findOneBy(Template, {
+                  id: item.templateId,
+                })
+              )
+            )
+          ).filter((item) => item.id);
+
+          await queryRunner.manager.save(Audience, {
+            id: audienceId,
+            owner: { id: account.id },
+            templates,
+          });
+        }
+      }
+
+      let segmentId = workflow.segment?.id;
+      if (updateWorkflowDto.segmentId !== undefined) {
+        segmentId = updateWorkflowDto.segmentId;
+      }
+
+      await queryRunner.manager.save(Workflow, {
         ...workflow,
         segment: { id: segmentId },
         audiences,
@@ -295,11 +304,13 @@ export class WorkflowsService {
         name,
       });
       this.logger.debug('Updated workflow ' + updateWorkflowDto.id);
-    } catch (err) {
-      this.logger.error('Error:' + err);
-      return Promise.reject(err);
+
+      if (!alreadyInsideTransaction) await queryRunner.commitTransaction();
+    } catch (e) {
+      if (!alreadyInsideTransaction) await queryRunner.rollbackTransaction();
+    } finally {
+      if (!alreadyInsideTransaction) await queryRunner.release();
     }
-    return;
   }
 
   async duplicate(user: Account, id: string) {
@@ -334,8 +345,12 @@ export class WorkflowsService {
       relations: ['workflow', 'owner'],
     });
 
-    const newAudiences: Audience[] =
-      await this.audiencesService.audiencesRepository.save(
+    const queryRunner = AppDataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
+      const newAudiences: Audience[] = await queryRunner.manager.save(
+        Audience,
         oldAudiences.map((oldAudience) => ({
           customers: [],
           name: oldAudience.name,
@@ -346,31 +361,43 @@ export class WorkflowsService {
         }))
       );
 
-    let visualLayout = JSON.stringify(oldWorkflow.visualLayout);
-    const rules = oldWorkflow.rules?.map((rule) =>
-      Buffer.from(rule, 'base64').toString()
-    );
+      let visualLayout = JSON.stringify(oldWorkflow.visualLayout);
+      const rules = oldWorkflow.rules?.map((rule) =>
+        Buffer.from(rule, 'base64').toString()
+      );
 
-    for (let i = 0; i < oldAudiences.length; i++) {
-      const oldAudienceId = oldAudiences[i].id;
-      const newAudienceId = newAudiences[i].id;
-      visualLayout = visualLayout.replaceAll(oldAudienceId, newAudienceId);
-      for (let i = 0; i < rules.length; i++) {
-        rules[i] = rules[i].replaceAll(oldAudienceId, newAudienceId);
+      for (let i = 0; i < oldAudiences.length; i++) {
+        const oldAudienceId = oldAudiences[i].id;
+        const newAudienceId = newAudiences[i].id;
+        visualLayout = visualLayout.replaceAll(oldAudienceId, newAudienceId);
+        for (let i = 0; i < rules.length; i++) {
+          rules[i] = rules[i].replaceAll(oldAudienceId, newAudienceId);
+        }
       }
+
+      visualLayout = JSON.parse(visualLayout);
+      const triggers: Trigger[] = rules?.map((rule) => JSON.parse(rule));
+
+      await this.update(
+        user,
+        {
+          id: newWorkflow.id,
+          name: newName,
+          visualLayout,
+          rules: triggers,
+          segmentId: oldWorkflow.segment?.id,
+          isDynamic: oldWorkflow.isDynamic,
+        },
+        queryRunner
+      );
+
+      await queryRunner.commitTransaction();
+    } catch (e) {
+      await queryRunner.rollbackTransaction();
+      throw e;
+    } finally {
+      await queryRunner.release();
     }
-
-    visualLayout = JSON.parse(visualLayout);
-    const triggers: Trigger[] = rules?.map((rule) => JSON.parse(rule));
-
-    await this.update(user, {
-      id: newWorkflow.id,
-      name: newName,
-      visualLayout,
-      rules: triggers,
-      segmentId: oldWorkflow.segment?.id,
-      isDynamic: oldWorkflow.isDynamic,
-    });
   }
 
   /**
