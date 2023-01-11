@@ -1,6 +1,6 @@
 import { Inject, Injectable, LoggerService } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
+import { In, QueryRunner, Repository } from 'typeorm';
 import { Audience } from './entities/audience.entity';
 import { CreateAudienceDto } from './dto/create-audience.dto';
 import { UpdateAudienceDto } from './dto/update-audience.dto';
@@ -190,10 +190,14 @@ export class AudiencesService {
    * @param id - The audience ID to freeze
    *
    */
-  async freeze(account: Account, id: string): Promise<Audience> {
+  async freeze(
+    account: Account,
+    id: string,
+    queryRunner: QueryRunner
+  ): Promise<Audience> {
     let found: Audience, ret: Audience;
     try {
-      found = await this.audiencesRepository.findOneBy({
+      found = await queryRunner.manager.findOneBy(Audience, {
         owner: { id: account.id },
         id: id,
       });
@@ -203,7 +207,7 @@ export class AudiencesService {
       return Promise.reject(err);
     }
     try {
-      ret = await this.audiencesRepository.save({
+      ret = await queryRunner.manager.save(Audience, {
         ...found,
         isEditable: false,
       });
@@ -233,36 +237,36 @@ export class AudiencesService {
     account: Account,
     from: string | null | undefined,
     to: string | null | undefined,
-    customerId: string,
-    event: EventDto
+    customer: CustomerDocument,
+    event: EventDto,
+    queryRunner: QueryRunner
   ): Promise<{ jobIds: (string | number)[]; templates: Template[] }> {
+    const customerId = customer.id;
     let index = -1; // Index of the customer ID in the fromAud.customers array
     const jobIds: (string | number)[] = [];
     let jobId: string | number;
     let fromAud: Audience, toAud: Audience;
     const templates: Template[] = [];
-
-    if (from) {
-      try {
-        fromAud = await this.findOne(account, from);
-      } catch (err) {
-        this.logger.error('Error: ' + err);
-        return Promise.reject(err);
+    try {
+      if (from) {
+        try {
+          fromAud = await queryRunner.manager.findOneBy(Audience, {
+            owner: { id: account.id },
+            id: from,
+          });
+        } catch (err) {
+          this.logger.error('Error: ' + err);
+          return Promise.reject(err);
+        }
       }
-    }
-    if (to) {
-      try {
-        toAud = await this.audiencesRepository.findOne({
+
+      if (to) {
+        toAud = await queryRunner.manager.findOne(Audience, {
           where: { owner: { id: account.id }, id: to },
           relations: ['templates'],
         });
-      } catch (err) {
-        this.logger.error('Error: ' + err);
-        return Promise.reject(err);
       }
-    }
 
-    await AppDataSource.manager.transaction(async (transactionManager) => {
       if (fromAud?.customers?.length) {
         index = fromAud?.customers?.indexOf(customerId);
         this.logger.debug(
@@ -274,7 +278,7 @@ export class AudiencesService {
           'From customers before: ' + fromAud?.customers?.length
         );
         fromAud?.customers?.splice(index, 1);
-        await transactionManager.update(
+        await queryRunner.manager.update(
           Audience,
           { id: fromAud.id, isEditable: false },
           {
@@ -288,7 +292,7 @@ export class AudiencesService {
       if (toAud && !toAud.isEditable) {
         this.logger.debug('To before: ' + toAud?.customers?.length);
         toAud.customers = [...toAud.customers, customerId];
-        const saved = await transactionManager.save(toAud);
+        const saved = await queryRunner.manager.save(toAud);
         this.logger.debug('To after: ' + saved?.customers?.length);
 
         let toTemplates = toAud.templates.map((item) => item.id);
@@ -298,7 +302,7 @@ export class AudiencesService {
           account.customerId !== customerId &&
           toTemplates.length
         ) {
-          const data = await this.templatesService.templatesRepository.find({
+          const data = await queryRunner.manager.find(Template, {
             where: {
               owner: { id: account.id },
               type: 'email',
@@ -332,29 +336,27 @@ export class AudiencesService {
             templateIndex < toTemplates?.length;
             templateIndex++
           ) {
-            try {
-              jobId = await this.templatesService.queueMessage(
-                account,
-                toTemplates[templateIndex],
-                customerId,
-                event,
-                toAud.id
-              );
-              templates.push(
-                await this.templatesService.templatesRepository.findOneBy({
-                  id: toTemplates[templateIndex],
-                })
-              );
-              this.logger.debug('Queued Message');
-              jobIds.push(jobId);
-            } catch (err) {
-              this.logger.error('Error: ' + err);
-              return Promise.reject(err);
-            }
+            jobId = await this.templatesService.queueMessage(
+              account,
+              toTemplates[templateIndex],
+              customer,
+              event,
+              toAud.id
+            );
+            templates.push(
+              await this.templatesService.templatesRepository.findOneBy({
+                id: toTemplates[templateIndex],
+              })
+            );
+            this.logger.debug('Queued Message');
+            jobIds.push(jobId);
           }
         }
       }
-    });
+    } catch (err) {
+      this.logger.error('Error: ' + err);
+      return Promise.reject(err);
+    }
 
     return Promise.resolve({ jobIds, templates });
   }
@@ -375,7 +377,8 @@ export class AudiencesService {
     fromAud: Audience | null | undefined,
     toAud: Audience | null | undefined,
     customers: CustomerDocument[],
-    event: EventDto
+    event: EventDto,
+    queryRunner: QueryRunner
   ): Promise<(string | number)[]> {
     let jobIds: (string | number)[] = [];
     for (let index = 0; index < customers?.length; index++) {
@@ -384,8 +387,9 @@ export class AudiencesService {
           account,
           fromAud?.id,
           toAud?.id,
-          customers[index].id,
-          event
+          customers[index],
+          event,
+          queryRunner
         );
         jobIds = [...jobIdArr, ...jobIds];
       } catch (err) {

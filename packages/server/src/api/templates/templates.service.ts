@@ -74,19 +74,14 @@ export class TemplatesService {
   async queueMessage(
     account: Account,
     templateId: string,
-    customerId: string,
+    customer: CustomerDocument,
     event: EventDto,
     audienceId?: string
   ): Promise<string | number> {
-    let customer: CustomerDocument,
-      template: Template,
+    const customerId = customer.id;
+    let template: Template,
       job: Job<any>, // created jobId
       installation: Installation;
-    try {
-      customer = await this.customersService.findById(account, customerId);
-    } catch (err) {
-      return Promise.reject(err);
-    }
     try {
       template = await this.findOneById(account, templateId);
       this.logger.debug(

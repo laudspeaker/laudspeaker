@@ -425,6 +425,7 @@ export class CustomersService {
     correlationKey: string,
     correlationValue: string | [],
     event: any,
+    transactionSession: ClientSession,
     mapping?: (event: any) => any
   ): Promise<Correlation> {
     // const queryParam: any = {
@@ -467,7 +468,9 @@ export class CustomersService {
       [correlationKey]: correlationValue,
     };
     this.logger.debug('QueryParam: ' + JSON.stringify(queryParam));
-    customer = await this.CustomerModel.findOne(queryParam).exec();
+    customer = await this.CustomerModel.findOne(queryParam)
+      .session(transactionSession)
+      .exec();
     if (!customer) {
       this.logger.debug('Customer not found, creating new customer...');
       if (mapping) {
@@ -476,14 +479,20 @@ export class CustomersService {
         newCust[correlationKey] = [correlationValue];
         const createdCustomer = new this.CustomerModel(newCust);
         this.logger.debug('New customer created: ' + createdCustomer.id);
-        return { cust: await createdCustomer.save(), found: false };
+        return {
+          cust: await createdCustomer.save({ session: transactionSession }),
+          found: false,
+        };
       } else {
         const createdCustomer = new this.CustomerModel({
           ownerId: (<Account>account).id,
           correlationKey: correlationValue,
         });
         this.logger.debug('New customer created: ' + createdCustomer.id);
-        return { cust: await createdCustomer.save(), found: false };
+        return {
+          cust: await createdCustomer.save({ session: transactionSession }),
+          found: false,
+        };
       }
 
       //to do cant just return [0] in the future
@@ -492,7 +501,9 @@ export class CustomersService {
         customer = await this.CustomerModel.findOneAndUpdate(
           queryParam,
           mapping(event)
-        ).exec();
+        )
+          .session(transactionSession)
+          .exec();
       this.logger.debug('Customer found: ' + customer.id);
       return { cust: customer, found: true };
     }
@@ -511,12 +522,17 @@ export class CustomersService {
    */
   async findByInclusionCriteria(
     account: Account,
-    criteria: any
+    criteria: any,
+    transactionSession: ClientSession
   ): Promise<CustomerDocument[]> {
     let customers: CustomerDocument[] = [];
     const ret: CustomerDocument[] = [];
     try {
-      customers = (await this.findAll(account)).data;
+      customers = await this.CustomerModel.find({
+        ownerId: (<Account>account).id,
+      })
+        .session(transactionSession)
+        .exec();
     } catch (err) {
       return Promise.reject(err);
     }
@@ -545,7 +561,8 @@ export class CustomersService {
   async findByCorrelationKVPair(
     account: Account,
     correlationKey: string,
-    correlationValue: string | []
+    correlationValue: string | [],
+    transactionSession: ClientSession
   ): Promise<CustomerDocument> {
     let customer: CustomerDocument; // Found customer
     const queryParam = {
@@ -553,7 +570,9 @@ export class CustomersService {
       [correlationKey]: correlationValue,
     };
     try {
-      customer = await this.CustomerModel.findOne(queryParam).exec();
+      customer = await this.CustomerModel.findOne(queryParam)
+        .session(transactionSession)
+        .exec();
       this.logger.debug('Found customer in correlationKVPair:' + customer.id);
     } catch (err) {
       return Promise.reject(err);
@@ -563,19 +582,25 @@ export class CustomersService {
 
   async findOrCreateByCorrelationKVPair(
     account: Account,
-    dto: EventDto
+    dto: EventDto,
+    transactionSession: ClientSession
   ): Promise<Correlation> {
     let customer: CustomerDocument; // Found customer
     const queryParam = { ownerId: (<Account>account).id };
     queryParam[dto.correlationKey] = dto.correlationValue;
     try {
-      customer = await this.CustomerModel.findOne(queryParam).exec();
+      customer = await this.CustomerModel.findOne(queryParam)
+        .session(transactionSession)
+        .exec();
     } catch (err) {
       return Promise.reject(err);
     }
     if (!customer) {
       const createdCustomer = new this.CustomerModel(queryParam);
-      return { cust: await createdCustomer.save(), found: false };
+      return {
+        cust: await createdCustomer.save({ session: transactionSession }),
+        found: false,
+      };
     } else return { cust: customer, found: true };
   }
 
