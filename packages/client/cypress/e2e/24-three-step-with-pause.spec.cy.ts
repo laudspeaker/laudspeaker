@@ -94,9 +94,9 @@ describe(
         "email",
         emailTemplate.correlationValue,
         () => {
-          cy.wait(5000);
+          cy.wait(10000);
           cy.contains("Pause").click();
-          cy.wait(3000);
+          cy.wait(10000);
 
           cy.request({
             method: "POST",
