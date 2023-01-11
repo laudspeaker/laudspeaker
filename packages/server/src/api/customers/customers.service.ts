@@ -149,14 +149,20 @@ export class CustomersService {
     return ret;
   }
 
-  async addPhCustomers(data: any[], account: Account) {
+  async addPhCustomers(
+    data: any[],
+    account: Account,
+    transactionSession: ClientSession
+  ) {
     for (let index = 0; index < data.length; index++) {
       const addedBefore = await this.CustomerModel.find({
         ownerId: (<Account>account).id,
         posthogId: {
           $in: [...data[index]['distinct_ids']],
         },
-      }).exec();
+      })
+        .session(transactionSession)
+        .exec();
       let createdCustomer: CustomerDocument;
       //create customer only if we don't see before, otherwise update data
       if (addedBefore.length === 0) {
@@ -181,7 +187,7 @@ export class CustomersService {
           createdCustomer['phEmail'] = data[index]?.properties[emailKey];
         }
       }
-      await createdCustomer.save();
+      await createdCustomer.save({ session: transactionSession });
     }
   }
 
