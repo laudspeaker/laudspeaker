@@ -35,7 +35,7 @@ describe(
       cy.get(".mt-6 > .inline-flex").click();
       cy.get("#name").type("Email flow");
       cy.get("#createJourneySubmit").click();
-      cy.wait(3000);
+      cy.wait(5000);
       cy.get("#audience > .p-0 > .justify-between").click();
       cy.get("#name").type("Initial");
       cy.get("#saveNewSegment").click();
@@ -64,7 +64,7 @@ describe(
       cy.get("#audience > .p-0 > .justify-between").click();
       cy.get("#name").clear().type("Step 3");
       cy.get("#saveNewSegment").click();
-
+      cy.wait(3000);
       cy.contains("Step 3").move({ deltaX: 100, deltaY: 500 });
       cy.get("#slack > .p-0 > .justify-between").click();
 
@@ -94,7 +94,7 @@ describe(
         "email",
         emailTemplate.correlationValue,
         () => {
-          cy.wait(1000);
+          cy.wait(5000);
           cy.contains("Pause").click();
           cy.wait(3000);
 

@@ -61,7 +61,9 @@ export const templatesFunc = (
   cy.get("#handleDay").click();
   cy.get("#handleDay").find('[data-option="email"]').click();
   cy.get("#submitTemplateCreation").click();
-  cy.get('[data-custominput-placeholder="Subject"]').click("left");
+  cy.get('[data-custominput-placeholder="Subject"]').click("left", {
+    force: true,
+  });
   cy.get("#title")
     .clear()
     .type(emailTemplate.subject, { parseSpecialCharSequences: false });
