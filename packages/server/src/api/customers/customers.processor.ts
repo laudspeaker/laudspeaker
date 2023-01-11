@@ -15,9 +15,6 @@ export class CustomersProcessor {
 
   @Process()
   async handleSync(job: Job) {
-    const transactionSession = await this.connection.startSession();
-    transactionSession.startTransaction();
-
     try {
       let res = await axios({
         method: 'get',
@@ -32,8 +29,7 @@ export class CustomersProcessor {
       if (res?.data?.results.length > 0) {
         await this.customersService.addPhCustomers(
           res.data.results,
-          job.data.account,
-          transactionSession
+          job.data.account
         );
       }
       while (res.data?.next) {
@@ -47,18 +43,13 @@ export class CustomersProcessor {
         if (res?.data?.results.length > 0) {
           await this.customersService.addPhCustomers(
             res.data.results,
-            job.data.account,
-            transactionSession
+            job.data.account
           );
         }
       }
       console.log('processing is over');
-      await transactionSession.commitTransaction();
     } catch (e) {
       console.log(e);
-      await transactionSession.abortTransaction();
-    } finally {
-      await transactionSession.endSession();
     }
   }
 }
