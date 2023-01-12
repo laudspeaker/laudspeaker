@@ -17,7 +17,6 @@ import {
   TriggerType,
   Workflow,
 } from './entities/workflow.entity';
-import errors from '@/shared/utils/errors';
 import { Audience } from '../audiences/entities/audience.entity';
 import { CustomersService } from '../customers/customers.service';
 import { CustomerDocument } from '../customers/schemas/customer.schema';
@@ -40,6 +39,9 @@ import {
 import { Segment } from '../segments/entities/segment.entity';
 import { AppDataSource } from '@/data-source';
 import { Template } from '../templates/entities/template.entity';
+import { InjectQueue } from '@nestjs/bull';
+import { JobTypes } from '../events/interfaces/event.interface';
+import { Queue } from 'bull';
 
 @Injectable()
 export class WorkflowsService {
@@ -60,6 +62,8 @@ export class WorkflowsService {
     @InjectModel(EventKeys.name)
     private EventKeysModel: Model<EventKeysDocument>,
     private dataSource: DataSource,
+    @InjectQueue(JobTypes.events)
+    private readonly eventsQueue: Queue,
     @InjectConnection() private readonly connection: mongoose.Connection
   ) {}
 
@@ -417,101 +421,12 @@ export class WorkflowsService {
     account: Account,
     workflowID: string
   ): Promise<(string | number)[]> {
-    let workflow: Workflow; // Workflow to update
-    let audience: Audience; // Audience to freeze/send messages to
-    let customers: CustomerDocument[]; // Customers to add to primary audience
-    let jobIDs: (string | number)[] = [];
+    const job = await this.eventsQueue.add('start', {
+      accountId: account.id,
+      workflowID,
+    });
 
-    const transactionSession = await this.connection.startSession();
-    transactionSession.startTransaction();
-    const queryRunner = AppDataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-
-    try {
-      workflow = await queryRunner.manager.findOne(Workflow, {
-        where: {
-          owner: { id: (<Account>account).id },
-          id: workflowID,
-        },
-        relations: ['segment'],
-      });
-      if (!workflow) {
-        this.logger.debug('Workflow does not exist');
-        return Promise.reject(errors.ERROR_DOES_NOT_EXIST);
-      }
-
-      if (workflow.isActive) {
-        this.logger.debug('Workflow already active');
-        return Promise.reject(new Error('Workflow already active'));
-      }
-      if (workflow?.isStopped)
-        return Promise.reject(
-          new Error('The workflow has already been stopped')
-        );
-      if (!workflow?.segment)
-        return Promise.reject(
-          new Error('To start workflow segment should be defined')
-        );
-
-      const audiences = await queryRunner.manager.findBy(Audience, {
-        workflow: { id: workflow.id },
-      });
-
-      for (let audience of audiences) {
-        audience = await this.audiencesService.freeze(
-          account,
-          audience.id,
-          queryRunner
-        );
-        this.logger.debug('Freezing audience ' + audience?.id);
-
-        if (audience.isPrimary) {
-          customers = await this.customersService.findByInclusionCriteria(
-            account,
-            workflow.segment.inclusionCriteria,
-            transactionSession
-          );
-          this.logger.debug(
-            'Customers to include in workflow: ' + customers.length
-          );
-
-          jobIDs = await this.audiencesService.moveCustomers(
-            account,
-            null,
-            audience,
-            customers,
-            null,
-            queryRunner
-          );
-          this.logger.debug('Finished moving customers into workflow');
-
-          await queryRunner.manager.save(Workflow, {
-            ...workflow,
-            isActive: true,
-          });
-          this.logger.debug('Started workflow ' + workflow?.id);
-        }
-      }
-
-      const segment = await queryRunner.manager.findOneBy(Segment, {
-        id: workflow.segment.id,
-      });
-      await queryRunner.manager.save(Segment, { ...segment, isFreezed: true });
-
-      await transactionSession.commitTransaction();
-      await queryRunner.commitTransaction();
-    } catch (err) {
-      await transactionSession.abortTransaction();
-      await queryRunner.rollbackTransaction();
-      this.logger.error('Error: ' + err);
-      return Promise.reject(err);
-    } finally {
-      await transactionSession.endSession();
-      await queryRunner.release();
-    }
-
-    return Promise.resolve(jobIDs);
+    return job.finished();
   }
 
   /**

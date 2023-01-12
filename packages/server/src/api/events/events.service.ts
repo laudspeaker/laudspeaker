@@ -17,8 +17,6 @@ import { EventDto } from './dto/event.dto';
 import { AccountsService } from '../accounts/accounts.service';
 import { WorkflowsService } from '../workflows/workflows.service';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
-import { WorkflowTick } from '../workflows/interfaces/workflow-tick.interface';
-import { PostHogEventDto } from './dto/posthog-event.dto';
 import { StatusJobDto } from './dto/status-event.dto';
 import { Queue } from 'bull';
 import { InjectQueue } from '@nestjs/bull';
@@ -34,7 +32,6 @@ import {
   PosthogEventType,
   PosthogEventTypeDocument,
 } from './schemas/posthog-event-type.schema';
-import { AppDataSource } from '@/data-source';
 
 @Injectable()
 export class EventsService {
@@ -49,6 +46,8 @@ export class EventsService {
     @InjectQueue(JobTypes.email) private readonly emailQueue: Queue,
     @InjectQueue(JobTypes.slack) private readonly slackQueue: Queue,
     @InjectQueue(JobTypes.sms) private readonly smsQueue: Queue,
+    @InjectQueue(JobTypes.events)
+    private readonly eventsQueue: Queue,
     @InjectModel(Event.name)
     private EventModel: Model<EventDocument>,
     @InjectModel(EventKeys.name)
@@ -90,6 +89,7 @@ export class EventsService {
       [JobTypes.email]: this.emailQueue,
       [JobTypes.slack]: this.slackQueue,
       [JobTypes.sms]: this.smsQueue,
+      [JobTypes.events]: this.eventsQueue,
     };
 
     try {
@@ -102,180 +102,16 @@ export class EventsService {
     }
   }
 
-  async getPostHogPayload(apiKey: string, body: PosthogBatchEventDto) {
-    let account: Account, jobIds: WorkflowTick[]; // Account associated with the caller
-    const transactionSession = await this.connection.startSession();
-    transactionSession.startTransaction();
-    const queryRunner = AppDataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-    // Step 1: Find corresponding account
-    let jobArray: WorkflowTick[] = []; // created jobId
-    try {
-      account = await this.userService.findOneByAPIKey(apiKey.substring(8));
-      this.logger.debug('Found account: ' + account.id);
+  async getPostHogPayload(apiKey: string, eventDto: PosthogBatchEventDto) {
+    const job = await this.eventsQueue.add('custom', { apiKey, eventDto });
 
-      const chronologicalEvents: PostHogEventDto[] = body.batch.sort(
-        (a, b) =>
-          new Date(a.originalTimestamp).getTime() -
-          new Date(b.originalTimestamp).getTime()
-      );
-
-      for (
-        let numEvent = 0;
-        numEvent < chronologicalEvents.length;
-        numEvent++
-      ) {
-        const currentEvent = chronologicalEvents[numEvent];
-        this.logger.debug(
-          'Processing posthog event: ' + JSON.stringify(currentEvent, null, 2)
-        );
-
-        if (
-          currentEvent.type === 'track' &&
-          currentEvent.event &&
-          currentEvent.event !== 'clicked'
-        ) {
-          const found = await this.PosthogEventTypeModel.findOne({
-            name: currentEvent.event,
-          })
-            .session(transactionSession)
-            .exec();
-          if (!found) {
-            await this.PosthogEventTypeModel.create(
-              {
-                name: currentEvent.event,
-              },
-              { session: transactionSession }
-            );
-          }
-        }
-
-        let jobIDs: WorkflowTick[] = [];
-        //Step 2: Create/Correlate customer for each eventTemplatesService.queueMessage
-        const postHogEventMapping = (event: any) => {
-          const cust = {};
-          if (event?.phPhoneNumber) {
-            cust['phPhoneNumber'] = event.phPhoneNumber;
-          }
-          if (event?.phEmail) {
-            cust['phEmail'] = event.phEmail;
-          }
-          if (event?.phCustom) {
-            cust['phCustom'] = event.phCustom;
-          }
-          return cust;
-        };
-
-        const correlation = await this.customersService.findBySpecifiedEvent(
-          account,
-          'posthogId',
-          currentEvent.userId,
-          currentEvent,
-          transactionSession,
-          postHogEventMapping
-        );
-
-        if (!correlation.found) {
-          await this.workflowsService.enrollCustomer(
-            account,
-            correlation.cust,
-            queryRunner
-          );
-        }
-        //need to change posthogeventdto to eventdo
-        const convertedEventDto: EventDto = {
-          correlationKey: 'posthogId',
-          correlationValue: currentEvent.userId,
-          event: currentEvent.context,
-          source: 'posthog',
-          payload: {
-            type: currentEvent.type,
-            event: currentEvent.event,
-          },
-        };
-
-        //currentEvent
-        jobIDs = await this.workflowsService.tick(
-          account,
-          convertedEventDto,
-          queryRunner,
-          transactionSession
-        );
-        this.logger.debug('Queued messages with jobIDs ' + jobIDs);
-        jobArray = [...jobArray, ...jobIDs];
-      }
-
-      await transactionSession.commitTransaction();
-      await queryRunner.commitTransaction();
-    } catch (e) {
-      await transactionSession.abortTransaction();
-      await queryRunner.rollbackTransaction();
-      this.logger.error('Error: ' + e);
-      return new HttpException(e, 500);
-    } finally {
-      await transactionSession.endSession();
-      await queryRunner.release();
-    }
-    return jobArray;
+    return job.finished();
   }
 
-  async enginePayload(apiKey: string, body: EventDto) {
-    let account: Account, correlation: Correlation, jobIDs: WorkflowTick[];
+  async enginePayload(apiKey: string, eventDto: EventDto) {
+    const job = await this.eventsQueue.add('custom', { apiKey, eventDto });
 
-    const transactionSession = await this.connection.startSession();
-    transactionSession.startTransaction();
-    const queryRunner = AppDataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-
-    try {
-      account = await this.userService.findOneByAPIKey(apiKey.substring(8));
-      if (!account) this.logger.error('Account not found');
-      this.logger.debug('Found Account: ' + account.id);
-
-      correlation = await this.customersService.findOrCreateByCorrelationKVPair(
-        account,
-        body,
-        transactionSession
-      );
-      this.logger.debug('Correlation result:' + correlation.cust);
-
-      if (!correlation.found)
-        await this.workflowsService.enrollCustomer(
-          account,
-          correlation.cust,
-          queryRunner
-        );
-
-      jobIDs = await this.workflowsService.tick(
-        account,
-        body,
-        queryRunner,
-        transactionSession
-      );
-      this.logger.debug('Queued messages with jobID ' + jobIDs);
-      if (body) {
-        await this.EventModel.create({
-          ...body,
-          createdAt: new Date().toUTCString(),
-        });
-      }
-
-      await transactionSession.commitTransaction();
-      await queryRunner.commitTransaction();
-    } catch (err) {
-      await transactionSession.abortTransaction();
-      await queryRunner.rollbackTransaction();
-      this.logger.error('Error: ' + err);
-      return new HttpException(err, 500);
-    } finally {
-      await transactionSession.endSession();
-      await queryRunner.release();
-    }
-
-    console.log(jobIDs);
-    return jobIDs;
+    return job.finished();
   }
 
   async getOrUpdateAttributes(resourceId: string) {
