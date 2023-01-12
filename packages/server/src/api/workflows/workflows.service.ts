@@ -4,6 +4,7 @@ import {
   Injectable,
   HttpException,
   NotFoundException,
+  HttpStatus,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, In, QueryRunner, Repository } from 'typeorm';
@@ -426,7 +427,13 @@ export class WorkflowsService {
       workflowID,
     });
 
-    return job.finished();
+    try {
+      const data = await job.finished();
+      return data;
+    } catch (e) {
+      if (e instanceof Error)
+        throw new HttpException(e.message, HttpStatus.BAD_REQUEST);
+    }
   }
 
   /**

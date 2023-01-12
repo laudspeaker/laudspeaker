@@ -155,7 +155,7 @@ export class EventsProcessor {
       await transactionSession.abortTransaction();
       await queryRunner.rollbackTransaction();
       this.logger.error('Error: ' + err);
-      return Promise.reject(err);
+      throw err;
     } finally {
       await transactionSession.endSession();
       await queryRunner.release();
