@@ -84,7 +84,10 @@ export class WorkflowsService {
   ): Promise<{ data: Workflow[]; totalPages: number }> {
     const totalPages = Math.ceil(
       (await this.workflowsRepository.count({
-        where: { owner: { id: account.id } },
+        where: {
+          owner: { id: account.id },
+          isDeleted: In([!!showDisabled, false]),
+        },
       })) / take || 1
     );
     const orderOptions = {};
@@ -372,12 +375,14 @@ export class WorkflowsService {
         Buffer.from(rule, 'base64').toString()
       );
 
-      for (let i = 0; i < oldAudiences.length; i++) {
-        const oldAudienceId = oldAudiences[i].id;
-        const newAudienceId = newAudiences[i].id;
-        visualLayout = visualLayout.replaceAll(oldAudienceId, newAudienceId);
-        for (let i = 0; i < rules.length; i++) {
-          rules[i] = rules[i].replaceAll(oldAudienceId, newAudienceId);
+      if (rules) {
+        for (let i = 0; i < oldAudiences.length; i++) {
+          const oldAudienceId = oldAudiences[i].id;
+          const newAudienceId = newAudiences[i].id;
+          visualLayout = visualLayout.replaceAll(oldAudienceId, newAudienceId);
+          for (let i = 0; i < rules.length; i++) {
+            rules[i] = rules[i].replaceAll(oldAudienceId, newAudienceId);
+          }
         }
       }
 
