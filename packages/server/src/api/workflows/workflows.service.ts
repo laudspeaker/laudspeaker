@@ -25,7 +25,7 @@ import { EventDto } from '../events/dto/event.dto';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { createClient } from '@clickhouse/client';
 import { WorkflowTick } from './interfaces/workflow-tick.interface';
-import { isBoolean, isString } from 'class-validator';
+import { isBoolean, isString, isUUID } from 'class-validator';
 import {
   EventKeys,
   EventKeysDocument,
@@ -43,6 +43,7 @@ import { Template } from '../templates/entities/template.entity';
 import { InjectQueue } from '@nestjs/bull';
 import { JobTypes } from '../events/interfaces/event.interface';
 import { Queue } from 'bull';
+import { BadRequestException } from '@nestjs/common/exceptions';
 
 @Injectable()
 export class WorkflowsService {
@@ -161,15 +162,17 @@ export class WorkflowsService {
    */
   async findOne(
     account: Account,
-    name: string,
+    id: string,
     needStats: boolean
   ): Promise<Workflow> {
+    if (!isUUID(id)) throw new BadRequestException('Id is not valid uuid');
+
     let found: Workflow;
     try {
       found = await this.workflowsRepository.findOne({
         where: {
           owner: { id: account.id },
-          name: name,
+          id,
         },
         relations: ['segment'],
       });
@@ -177,6 +180,7 @@ export class WorkflowsService {
       this.logger.error('Error: ' + err);
       return Promise.reject(err);
     }
+
     try {
       if (needStats && found?.visualLayout) {
         found.visualLayout.nodes = await Promise.all(
@@ -193,24 +197,24 @@ export class WorkflowsService {
       console.error(e);
     }
 
-    if (found) {
-      this.logger.debug('Found workflow: ' + found?.id);
-      return found;
-    } else {
-      let ret: Workflow;
-      try {
-        ret = await this.workflowsRepository.save({
-          name,
-          audiences: [],
-          owner: { id: account.id },
-        });
-        this.logger.debug('Created workflow: ' + ret?.id);
-      } catch (err) {
-        this.logger.error('Error: ' + err);
-        return Promise.reject(err);
-      }
-      return Promise.resolve(ret); //await this.workflowsRepository.save(workflow)
+    this.logger.debug('Found workflow: ' + found?.id);
+    return found;
+  }
+
+  async create(account: Account, name: string) {
+    let ret: Workflow;
+    try {
+      ret = await this.workflowsRepository.save({
+        name,
+        audiences: [],
+        owner: { id: account.id },
+      });
+      this.logger.debug('Created workflow: ' + ret?.id);
+    } catch (err) {
+      this.logger.error('Error: ' + err);
+      return Promise.reject(err);
     }
+    return Promise.resolve(ret); //await this.workflowsRepository.save(workflow)
   }
 
   /**
@@ -347,7 +351,7 @@ export class WorkflowsService {
       oldWorkflow.name.substring(0, copyEraseIndex) +
       '-copy-' +
       (res?.[0]?.count || '0');
-    const newWorkflow = await this.findOne(user, newName, false);
+    const newWorkflow = await this.create(user, newName);
 
     const oldAudiences = await this.audiencesService.audiencesRepository.find({
       where: { workflow: { id: oldWorkflow.id } },

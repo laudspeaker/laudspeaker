@@ -1,43 +1,37 @@
-import { ChangeEvent, useState } from "react";
-import { Input } from "components/Elements";
+import { MouseEvent, useState } from "react";
+import { GenericButton, Input } from "components/Elements";
 import { useNavigate } from "react-router-dom";
+import { AxiosError } from "axios";
+import { toast } from "react-toastify";
+import ApiService from "services/api.service";
+import { Workflow } from "types/Workflow";
 
 export interface INameSegmentForm {
   name: string;
   isPrimary: boolean;
 }
 
-interface INameSegment {
-  onSubmit?: (form: INameSegmentForm) => void;
-  isPrimary: boolean;
-}
+const NameJourney = () => {
+  const [name, setName] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-const NameJourney = ({ onSubmit, isPrimary }: INameSegment) => {
-  // A Segment initally has three Properties:
-  //      1. Dynamic: whether new customers are added
-  //         after a workflow is live
-  //      2. Name, the name of the segment
-  //      3. Description, the segment description
-  const [segmentForm, setSegmentForm] = useState<INameSegmentForm>({
-    name: "",
-    isPrimary: isPrimary,
-  });
   const navigate = useNavigate();
 
-  // Handling Name and Description Fields
-  const handleSegmentFormChange = (e: ChangeEvent<HTMLInputElement>) => {
-    if (e.target.name === "name") {
-      setSegmentForm({ ...segmentForm, name: e.target.value });
-    }
-  };
-
-  // Pushing state back up to the flow builder
-  const handleSubmit = async (e: { preventDefault: () => void }) => {
-    const navigationLink = "/flow/" + segmentForm.name;
-    navigate(navigationLink);
+  const handleSubmit = async (e: MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
-    if (onSubmit) {
-      onSubmit(segmentForm);
+    setIsLoading(true);
+    try {
+      const { data } = await ApiService.post<Workflow>({
+        url: "/workflows",
+        options: { name },
+      });
+      navigate("/flow/" + data.id);
+    } catch (err) {
+      let message = "Unexpected error";
+      if (err instanceof AxiosError) message = err.response?.data.message;
+      toast.error(message);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -48,28 +42,27 @@ const NameJourney = ({ onSubmit, isPrimary }: INameSegment) => {
           <h3 className="font-bold text-[25px] font-[Poppins] text-[#28282E] leading-[38px]">
             Name your Journey
           </h3>
-          <form onSubmit={handleSubmit}>
-            <Input
-              isRequired
-              value={segmentForm.name}
-              placeholder={"Enter name"}
-              name="name"
-              id="name"
-              className="w-full p-[16px] bg-white border-[1px] border-[#D1D5DB] font-[Inter] text-[16px]"
-              onChange={handleSegmentFormChange}
-            />
-          </form>
+          <Input
+            isRequired
+            value={name}
+            placeholder={"Enter name"}
+            name="name"
+            id="name"
+            className="w-full p-[16px] bg-white border-[1px] border-[#D1D5DB] font-[Inter] text-[16px]"
+            onChange={(e) => setName(e.target.value)}
+          />
           <div className="flex justify-end mt-[10px]">
-            <button
+            <GenericButton
               id="createJourneySubmit"
-              className="inline-flex items-center rounded-md border border-transparent bg-cyan-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-cyan-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500"
+              customClasses="inline-flex items-center rounded-md border border-transparent bg-cyan-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-cyan-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500"
               onClick={handleSubmit}
               style={{
                 maxWidth: "200px",
               }}
+              loading={isLoading}
             >
               Create
-            </button>
+            </GenericButton>
           </div>
         </div>
       </div>

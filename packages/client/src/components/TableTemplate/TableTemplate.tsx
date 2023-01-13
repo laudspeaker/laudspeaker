@@ -604,7 +604,7 @@ export default function TableTemplate<T extends TableDataItem>({
               {[
                 <Link
                   className="!no-underline"
-                  href={`flow/${row.name}${row.isActive ? "/view" : ""}`}
+                  href={`flow/${row.id}${row.isActive ? "/view" : ""}`}
                 >
                   <div className="w-full">Edit</div>
                 </Link>,
@@ -647,7 +647,7 @@ export default function TableTemplate<T extends TableDataItem>({
           </Transition>
         </Menu>
       ) : (
-        <Link href={`flow/${row.name}${row.isActive ? "/view" : ""}`}>
+        <Link href={`flow/${row.id}${row.isActive ? "/view" : ""}`}>
           {row.name}
         </Link>
       );

@@ -32,7 +32,8 @@ import { toast } from "react-toastify";
 import Progress from "components/Progress";
 
 const Flow = () => {
-  const { name } = useParams();
+  const { id } = useParams();
+
   const [flowId, setFlowId] = useState<string>("");
   const [nodes, setNodes] = useState<Node<NodeData>[]>([]);
   const [edges, setEdges] = useState<Edge<undefined>[]>([]);
@@ -84,7 +85,7 @@ const Flow = () => {
   useLayoutEffect(() => {
     const populateFlowBuilder = async () => {
       try {
-        const { data }: { data: Workflow } = await getFlow(name, true);
+        const { data }: { data: Workflow } = await getFlow(id, true);
         setFlowId(data.id);
         setIsPaused(data.isPaused);
         setIsStopped(data.isStopped);

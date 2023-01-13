@@ -168,8 +168,9 @@ const convertLayoutToTable = (
 };
 
 const Flow = () => {
-  const { name } = useParams();
+  const { id } = useParams();
   const [flowId, setFlowId] = useState<string>("");
+  const [flowName, setFlowName] = useState("");
   const [nodes, setNodes] = useState<Node<NodeData>[]>([]);
   const [edges, setEdges] = useState<Edge<undefined>[]>([]);
   const [triggers, setTriggers] = useState<Trigger[]>([]);
@@ -210,15 +211,16 @@ const Flow = () => {
   useLayoutEffect(() => {
     const populateFlowBuilder = async () => {
       try {
-        const { data }: { data: Workflow } = await getFlow(name);
+        const { data }: { data: Workflow } = await getFlow(id);
         if (data.isActive) {
-          return navigate(`/flow/${name}/view`);
+          return navigate(`/flow/${id}/view`);
         }
         setSegmentForm({
           isDynamic: data.isDynamic ?? true,
         });
         setSegmentId(data.segment?.id);
         setFlowId(data.id);
+        setFlowName(data.name);
         if (data.visualLayout) {
           const updatedNodes = data.visualLayout.nodes.map((item) => {
             return {
@@ -257,14 +259,14 @@ const Flow = () => {
   ): Node<NodeData> => {
     const {
       position,
-      id,
+      id: nodeId,
       audienceId,
       triggers: nodeTriggers,
       messages,
       data,
     } = node;
     return {
-      id,
+      id: nodeId,
       position,
       type: "special",
       data: {
@@ -365,8 +367,8 @@ const Flow = () => {
   const [zoomState, setZoomState] = useState(1);
   const possibleViewZoomValues = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
 
-  const performAction = (id: string) => {
-    switch (id) {
+  const performAction = (actionId: string) => {
+    switch (actionId) {
       case "audience": {
         setAudienceModalOpen(true);
         break;
@@ -477,7 +479,7 @@ const Flow = () => {
       case "push":
       case "sms":
       case "slack": {
-        setSelectedMessageType(id);
+        setSelectedMessageType(actionId);
         setTemplateModalOpen(true);
         break;
       }
@@ -566,7 +568,7 @@ const Flow = () => {
       console.log(edges);
       console.log(triggers);
       const dto = convertLayoutToTable(
-        name,
+        flowName,
         nodes,
         edges,
         segmentForm.isDynamic,
@@ -575,7 +577,7 @@ const Flow = () => {
       dto.audiences = (dto.audiences as string[]).filter((item) => !!item);
 
       await ApiService.patch({
-        url: `${ApiConfig.flow}/${name}`,
+        url: `${ApiConfig.flow}`,
         options: {
           ...dto,
           id: flowId,
@@ -695,6 +697,7 @@ const Flow = () => {
             <SideDrawer
               selectedNode={selectedNode}
               onClick={performAction}
+              flowName={flowName}
               afterMenuContent={
                 <div className="w-full">
                   <h3 className="pt-[20px] font-bold">Journey type</h3>

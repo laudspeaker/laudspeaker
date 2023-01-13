@@ -25,6 +25,7 @@ const ChooseTemplateModal = ({
   isViewMode = false,
   selectedTemplateId,
   onTemplateDelete,
+  onClose,
 }: IChooseTemplateModal) => {
   const [templatesList, setTemplatesList] = useState<Template[]>([]);
   const [activeTemplate, setActiveTemplate] = useState(selectedTemplateId);
@@ -99,7 +100,7 @@ const ChooseTemplateModal = ({
     getAllTemplates();
   }, []);
   return (
-    <Modal isOpen={templateModalOpen} onClose={() => handleTemplateModalOpen()}>
+    <Modal isOpen={templateModalOpen} onClose={onClose}>
       <div className="w-full">
         <h6 id="modal-modal-title">
           {isViewMode

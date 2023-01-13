@@ -85,7 +85,7 @@ const RouteComponent: React.FC = () => {
           }
         />
         <Route
-          path="/flow/:name"
+          path="/flow/:id"
           element={
             <Protected>
               <DrawerLayout>
@@ -95,7 +95,7 @@ const RouteComponent: React.FC = () => {
           }
         />
         <Route
-          path="/flow/:name/view"
+          path="/flow/:id/view"
           element={
             <Protected>
               <DrawerLayout>

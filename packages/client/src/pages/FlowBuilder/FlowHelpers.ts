@@ -19,8 +19,8 @@ export const getAudienceDetails = async (id: string) => {
   });
 };
 
-export const getFlow = async (name: string, needStats = false) => {
+export const getFlow = async (id: string, needStats = false) => {
   return ApiService.get({
-    url: `${ApiConfig.flow}/${name}?needsStats=${needStats}`,
+    url: `${ApiConfig.flow}/${id}?needsStats=${needStats}`,
   });
 };
