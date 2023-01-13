@@ -40,13 +40,13 @@ const correlationValues = {
 };
 
 export default (type: PauseStopTestType = PauseStopTestType.email) => {
-  cy.wait(100);
-  cy.get('[data-disclosure-link="Journey Builder"]').click();
   cy.wait(1000);
+  cy.get('[data-disclosure-link="Journey Builder"]').click();
+  cy.wait(3000);
   cy.get("button").contains("Create Journey").click();
   cy.get("#name").should("exist").type("Pause and stop flow");
   cy.get("#createJourneySubmit").click();
-  cy.wait(1000);
+  cy.wait(3000);
   cy.get("#audience").click();
   cy.get("#name").type("init");
   cy.get("#description").type("init description text");
@@ -98,7 +98,6 @@ export default (type: PauseStopTestType = PauseStopTestType.email) => {
   cy.wait(5000);
   cy.contains("Start").click();
   cy.wait(5000);
-  cy.visit("/flow/Pause%20and%20stop%20flow/view");
   cy.url().should("contain", "/view");
   cy.wait(5000);
   cy.contains("Pause").click();

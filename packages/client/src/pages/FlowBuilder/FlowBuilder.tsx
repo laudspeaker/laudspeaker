@@ -213,7 +213,7 @@ const Flow = () => {
       try {
         const { data }: { data: Workflow } = await getFlow(id);
         if (data.isActive) {
-          return navigate(`/flow/${id}/view`);
+          return navigate(`/flow/${data.id}/view`);
         }
         setSegmentForm({
           isDynamic: data.isDynamic ?? true,
