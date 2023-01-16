@@ -96,7 +96,6 @@
     "@types/react-helmet": "latest",
     "@types/react-lines-ellipsis": "^0.15.1",
     "@types/react-redux": "7.1.24",
-    "@types/react-router": "^5.1.18",
     "@types/react-router-dom": "^5.3.3",
     "@typescript-eslint/eslint-plugin": "^5.30.5",
     "@typescript-eslint/parser": "^5.30.5",

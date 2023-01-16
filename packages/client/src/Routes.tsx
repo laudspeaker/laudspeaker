@@ -4,8 +4,6 @@ import tokenService from "./services/token.service";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import FlowBuilder from "pages/FlowBuilder";
-import EmailConfig from "pages/EmailConfig";
-import TriggerCreater from "components/TriggerCreater";
 import EmailBuilder from "pages/EmailBuilder";
 import { getUserPermissions } from "reducers/auth";
 import SlackBuilder from "pages/SlackBuilder";
@@ -22,7 +20,7 @@ import Settings from "pages/Settings/Settings";
 import Person from "pages/Person";
 import Verify from "pages/Verify";
 import SmsBuilder from "pages/SmsBuilder";
-import { TriggerTypeName } from "types/Workflow";
+import Database from "pages/Integrations/Database";
 
 interface IProtected {
   children: ReactElement;
@@ -125,16 +123,6 @@ const RouteComponent: React.FC = () => {
           }
         />
         <Route
-          path="/emailconfig"
-          element={
-            <Protected>
-              <DrawerLayout>
-                <EmailConfig />
-              </DrawerLayout>
-            </Protected>
-          }
-        />
-        <Route
           path="/email-builder"
           element={
             <Protected>
@@ -200,6 +188,16 @@ const RouteComponent: React.FC = () => {
             <Protected>
               <DrawerLayout>
                 <TemplateTable />
+              </DrawerLayout>
+            </Protected>
+          }
+        />
+        <Route
+          path="/integrations/db"
+          element={
+            <Protected>
+              <DrawerLayout>
+                <Database />
               </DrawerLayout>
             </Protected>
           }
