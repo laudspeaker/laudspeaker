@@ -28,6 +28,7 @@ import {
   PosthogEventType,
   PosthogEventTypeSchema,
 } from './schemas/posthog-event-type.schema';
+import { EventsProcessor } from './events.processor';
 
 @Module({
   imports: [
@@ -58,6 +59,9 @@ import {
     BullModule.registerQueue({
       name: 'sms',
     }),
+    BullModule.registerQueue({
+      name: 'events',
+    }),
     AuthModule,
     CustomersModule,
     AccountsModule,
@@ -67,7 +71,7 @@ import {
     SlackModule,
   ],
   controllers: [EventsController],
-  providers: [EventsService],
+  providers: [EventsService, EventsProcessor],
   exports: [EventsService],
 })
 export class EventsModule {}

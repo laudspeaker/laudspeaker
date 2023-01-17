@@ -1,11 +1,8 @@
-const DEFAULT_TEMPLATES: {
-  name: string;
-  subject: string;
-  text: string;
-  style: string;
-  type: 'email' | 'slack' | 'sms';
-}[] = [
+import { Template } from '@/api/templates/entities/template.entity';
+
+const DEFAULT_TEMPLATES: Template[] = [
   {
+    ...new Template(),
     name: 'example-template-action',
     subject: 'Confirm your email',
     text: `<body><meta name="viewport" content="width=device-width"/><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/><title class="text_droppable">Actionable emails e.g. reset password
@@ -23,6 +20,7 @@ const DEFAULT_TEMPLATES: {
     type: 'email',
   },
   {
+    ...new Template(),
     name: 'example-template-bill',
     subject: 'Bill',
     text: `<body id="i7eb"><meta name="viewport" content="width=device-width"/><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/><title class="text_droppable">Billing e.g. invoices and receipts
@@ -49,6 +47,7 @@ const DEFAULT_TEMPLATES: {
     type: 'email',
   },
   {
+    ...new Template(),
     name: 'example-template-alert',
     subject: 'Alert',
     text: `<body><meta name="viewport" content="width=device-width"/><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/><title class="text_droppable">Alerts e.g. approaching your limit
@@ -69,9 +68,10 @@ const DEFAULT_TEMPLATES: {
     type: 'email',
   },
   {
+    ...new Template(),
     name: 'example-template-onboarding-simple',
     subject: 'Welcome to ',
-    text: `<body id="i1nu"><div class="text_droppable" id="i2yf">Hey <br id="inue" draggable="true"/><br id="izpm" draggable="true"/>Welcome to . If you have any questions or feedback shoot us an email at <br id="iapj" draggable="true"/><br id="ixgi" draggable="true"/>Thanks!</div></body>`,
+    text: `<body id="i1nu"><div class="text_droppable" id="i2yf">Hey <br id="inue" draggable="true"/><br id="izpm" draggable="true"/>Welcome to . If you have any questions or feedback shoot us an email at <br id="iapj" draggable="true"/><br id="ixgi" draggable="true"/>Thanks!</div></body>`,
     style: `* { box-sizing: border-box; } body {margin: 0;}#i2yf{padding:10px;}`,
     type: 'email',
   },

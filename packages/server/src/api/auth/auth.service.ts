@@ -1,7 +1,7 @@
 import { HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Account, PlanType } from '../accounts/entities/accounts.entity';
-import { Repository } from 'typeorm';
+import { EntityManager, Repository } from 'typeorm';
 import { RegisterDto } from '@/api/auth/dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { AuthHelper } from './auth.helper';
@@ -9,6 +9,9 @@ import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
 import { Verification } from './entities/verification.entity';
 import { CustomersService } from '../customers/customers.service';
+import { AppDataSource } from '@/data-source';
+import mongoose from 'mongoose';
+import { InjectConnection } from '@nestjs/mongoose';
 
 @Injectable()
 export class AuthService {
@@ -20,7 +23,8 @@ export class AuthService {
     public readonly verificationRepository: Repository<Verification>,
     @Inject(AuthHelper)
     public readonly helper: AuthHelper,
-    @Inject(CustomersService) private customersService: CustomersService
+    @Inject(CustomersService) private customersService: CustomersService,
+    @InjectConnection() private readonly connection: mongoose.Connection
   ) {}
 
   public async register(body: RegisterDto) {
@@ -33,23 +37,24 @@ export class AuthService {
       );
     }
 
-    user = new Account();
+    let ret: Account;
+    await AppDataSource.manager.transaction(async (transactionManager) => {
+      user = new Account();
 
-    user.firstName = firstName;
-    user.lastName = lastName;
-    user.email = email;
-    user.password = this.helper.encodePassword(password);
-    user.apiKey = this.helper.generateApiKey();
-    const ret = await this.repository.save({
-      ...user,
-      accountCreatedAt: new Date(),
-      plan: PlanType.FREE,
+      user.firstName = firstName;
+      user.lastName = lastName;
+      user.email = email;
+      user.password = this.helper.encodePassword(password);
+      user.apiKey = this.helper.generateApiKey();
+      user.accountCreatedAt = new Date();
+      user.plan = PlanType.FREE;
+      ret = await transactionManager.save(user);
+      await this.helper.generateDefaultData(ret, transactionManager);
+
+      user.id = ret.id;
+
+      await this.requestVerification(ret, transactionManager);
     });
-    await this.helper.generateDefaultData(ret.id);
-
-    user.id = ret.id;
-
-    await this.requestVerification(ret);
 
     return { ...ret, access_token: this.helper.generateToken(ret) };
   }
@@ -92,14 +97,16 @@ export class AuthService {
     return this.helper.generateToken(user);
   }
 
-  public async requestVerification(user: Account) {
-    let verification = this.verificationRepository.create({
-      email: user.email,
-      account: { id: user.id },
-      status: 'sent',
-    });
+  public async requestVerification(
+    user: Account,
+    transactionManager: EntityManager = AppDataSource.manager
+  ) {
+    let verification = new Verification();
+    verification.email = user.email;
+    verification.account = user;
+    verification.status = 'sent';
 
-    verification = await this.verificationRepository.save(verification);
+    verification = await transactionManager.save(verification);
 
     const verificationLink = `${process.env.FRONTEND_URL}/verify-email/${verification.id}`;
 
@@ -137,25 +144,41 @@ export class AuthService {
 
     const { email, firstName, lastName, verified, customerId } = account;
 
-    if (customerId) {
-      const foundCustomer = await this.customersService.findById(
-        account,
-        customerId
-      );
+    const transactionSession = await this.connection.startSession();
+    transactionSession.startTransaction();
 
-      foundCustomer.verified = true;
-      await foundCustomer.save();
-    } else {
-      const customer = await this.customersService.create(account, {
-        email,
-        firstName,
-        lastName,
-        verified,
+    try {
+      if (customerId) {
+        const foundCustomer = await this.customersService.findById(
+          account,
+          customerId
+        );
+
+        foundCustomer.verified = true;
+        await foundCustomer.save({ session: transactionSession });
+      } else {
+        const customer = await this.customersService.create(
+          account,
+          {
+            email,
+            firstName,
+            lastName,
+            verified,
+          },
+          transactionSession
+        );
+        account.customerId = customer.id;
+      }
+
+      await AppDataSource.transaction(async (transactionSession) => {
+        await transactionSession.save(account);
+        await transactionSession.save(verification);
       });
-      account.customerId = customer.id;
+      await transactionSession.commitTransaction();
+    } catch (e) {
+      await transactionSession.abortTransaction();
+    } finally {
+      await transactionSession.endSession();
     }
-
-    await account.save();
-    await verification.save();
   }
 }

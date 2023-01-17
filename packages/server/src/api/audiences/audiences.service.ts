@@ -1,6 +1,6 @@
 import { Inject, Injectable, LoggerService } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
+import { In, QueryRunner, Repository } from 'typeorm';
 import { Audience } from './entities/audience.entity';
 import { CreateAudienceDto } from './dto/create-audience.dto';
 import { UpdateAudienceDto } from './dto/update-audience.dto';
@@ -12,6 +12,7 @@ import { TemplatesService } from '../templates/templates.service';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { Workflow } from '../workflows/entities/workflow.entity';
 import { EventDto } from '../events/dto/event.dto';
+import { AppDataSource } from '@/data-source';
 
 @Injectable()
 export class AudiencesService {
@@ -189,10 +190,14 @@ export class AudiencesService {
    * @param id - The audience ID to freeze
    *
    */
-  async freeze(account: Account, id: string): Promise<Audience> {
+  async freeze(
+    account: Account,
+    id: string,
+    queryRunner: QueryRunner
+  ): Promise<Audience> {
     let found: Audience, ret: Audience;
     try {
-      found = await this.audiencesRepository.findOneBy({
+      found = await queryRunner.manager.findOneBy(Audience, {
         owner: { id: account.id },
         id: id,
       });
@@ -202,7 +207,7 @@ export class AudiencesService {
       return Promise.reject(err);
     }
     try {
-      ret = await this.audiencesRepository.save({
+      ret = await queryRunner.manager.save(Audience, {
         ...found,
         isEditable: false,
       });
@@ -232,48 +237,49 @@ export class AudiencesService {
     account: Account,
     from: string | null | undefined,
     to: string | null | undefined,
-    customerId: string,
-    event: EventDto
+    customer: CustomerDocument,
+    event: EventDto,
+    queryRunner: QueryRunner
   ): Promise<{ jobIds: (string | number)[]; templates: Template[] }> {
+    const customerId = customer.id;
     let index = -1; // Index of the customer ID in the fromAud.customers array
     const jobIds: (string | number)[] = [];
     let jobId: string | number;
     let fromAud: Audience, toAud: Audience;
     const templates: Template[] = [];
-
-    if (from) {
-      try {
-        fromAud = await this.findOne(account, from);
-      } catch (err) {
-        this.logger.error('Error: ' + err);
-        return Promise.reject(err);
+    try {
+      if (from) {
+        try {
+          fromAud = await queryRunner.manager.findOneBy(Audience, {
+            owner: { id: account.id },
+            id: from,
+          });
+        } catch (err) {
+          this.logger.error('Error: ' + err);
+          return Promise.reject(err);
+        }
       }
-    }
-    if (to) {
-      try {
-        toAud = await this.audiencesRepository.findOne({
+
+      if (to) {
+        toAud = await queryRunner.manager.findOne(Audience, {
           where: { owner: { id: account.id }, id: to },
           relations: ['templates'],
         });
-      } catch (err) {
-        this.logger.error('Error: ' + err);
-        return Promise.reject(err);
       }
-    }
 
-    if (fromAud?.customers?.length) {
-      index = fromAud?.customers?.indexOf(customerId);
-      this.logger.debug(
-        'Index of customer ' + customerId + ' inside of from: ' + index
-      );
-    }
-    if (fromAud && !fromAud.isEditable && index > -1) {
-      try {
+      if (fromAud?.customers?.length) {
+        index = fromAud?.customers?.indexOf(customerId);
+        this.logger.debug(
+          'Index of customer ' + customerId + ' inside of from: ' + index
+        );
+      }
+      if (fromAud && !fromAud.isEditable && index > -1) {
         this.logger.debug(
           'From customers before: ' + fromAud?.customers?.length
         );
         fromAud?.customers?.splice(index, 1);
-        await this.audiencesRepository.update(
+        await queryRunner.manager.update(
+          Audience,
           { id: fromAud.id, isEditable: false },
           {
             customers: fromAud?.customers,
@@ -282,73 +288,58 @@ export class AudiencesService {
         this.logger.debug(
           'From customers after: ' + fromAud?.customers?.length
         );
-      } catch (err) {
-        this.logger.error('Error: ' + err);
-        return Promise.reject(err);
       }
-    }
-    if (toAud && !toAud.isEditable) {
-      try {
+      if (toAud && !toAud.isEditable) {
         this.logger.debug('To before: ' + toAud?.customers?.length);
-        const saved = await this.audiencesRepository.save(
-          //{ id: toAud.id, isEditable: false },
-          {
-            ...toAud,
-            customers: [...toAud.customers, customerId],
-          }
-        );
+        toAud.customers = [...toAud.customers, customerId];
+        const saved = await queryRunner.manager.save(toAud);
         this.logger.debug('To after: ' + saved?.customers?.length);
-      } catch (err) {
-        this.logger.error('Error: ' + err);
-        return Promise.reject(err);
-      }
 
-      let toTemplates = toAud.templates.map((item) => item.id);
+        let toTemplates = toAud.templates.map((item) => item.id);
 
-      if (
-        account.emailProvider === 'free3' &&
-        account.customerId !== customerId &&
-        toTemplates.length
-      ) {
-        const data = await this.templatesService.templatesRepository.find({
-          where: {
-            owner: { id: account.id },
-            type: 'email',
-            id: In(toTemplates),
-          },
-        });
-        if (data.length > 0) {
-          this.logger.debug(
-            'ToAud templates before template skip: ',
-            toTemplates
-          );
-          const dataIds = data.map((el2) => String(el2.id));
-          toTemplates = toTemplates.filter(
-            (el) => !dataIds.includes(String(el))
-          );
-          this.logger.debug(
-            'ToAud templates after template skip: ',
-            toTemplates
-          );
-          this.logger.warn(
-            'Templates: [' +
-              dataIds.join(',') +
-              "] was skipped to send because test mail's can't be sent to external account."
-          );
-        }
-      }
-
-      if (toTemplates?.length) {
-        for (
-          let templateIndex = 0;
-          templateIndex < toTemplates?.length;
-          templateIndex++
+        if (
+          account.emailProvider === 'free3' &&
+          account.customerId !== customerId &&
+          toTemplates.length
         ) {
-          try {
+          const data = await queryRunner.manager.find(Template, {
+            where: {
+              owner: { id: account.id },
+              type: 'email',
+              id: In(toTemplates),
+            },
+          });
+          if (data.length > 0) {
+            this.logger.debug(
+              'ToAud templates before template skip: ',
+              toTemplates
+            );
+            const dataIds = data.map((el2) => String(el2.id));
+            toTemplates = toTemplates.filter(
+              (el) => !dataIds.includes(String(el))
+            );
+            this.logger.debug(
+              'ToAud templates after template skip: ',
+              toTemplates
+            );
+            this.logger.warn(
+              'Templates: [' +
+                dataIds.join(',') +
+                "] was skipped to send because test mail's can't be sent to external account."
+            );
+          }
+        }
+
+        if (toTemplates?.length) {
+          for (
+            let templateIndex = 0;
+            templateIndex < toTemplates?.length;
+            templateIndex++
+          ) {
             jobId = await this.templatesService.queueMessage(
               account,
               toTemplates[templateIndex],
-              customerId,
+              customer,
               event,
               toAud.id
             );
@@ -359,13 +350,14 @@ export class AudiencesService {
             );
             this.logger.debug('Queued Message');
             jobIds.push(jobId);
-          } catch (err) {
-            this.logger.error('Error: ' + err);
-            return Promise.reject(err);
           }
         }
       }
+    } catch (err) {
+      this.logger.error('Error: ' + err);
+      return Promise.reject(err);
     }
+
     return Promise.resolve({ jobIds, templates });
   }
 
@@ -385,7 +377,8 @@ export class AudiencesService {
     fromAud: Audience | null | undefined,
     toAud: Audience | null | undefined,
     customers: CustomerDocument[],
-    event: EventDto
+    event: EventDto,
+    queryRunner: QueryRunner
   ): Promise<(string | number)[]> {
     let jobIds: (string | number)[] = [];
     for (let index = 0; index < customers?.length; index++) {
@@ -394,8 +387,9 @@ export class AudiencesService {
           account,
           fromAud?.id,
           toAud?.id,
-          customers[index].id,
-          event
+          customers[index],
+          event,
+          queryRunner
         );
         jobIds = [...jobIdArr, ...jobIds];
       } catch (err) {

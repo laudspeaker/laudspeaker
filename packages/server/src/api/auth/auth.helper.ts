@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { EntityManager, Repository } from 'typeorm';
 import { Account } from '../accounts/entities/accounts.entity';
 import { BaseJwtHelper } from '../../common/helper/base-jwt.helper';
 import { DEFAULT_TEMPLATES } from '@/fixtures/user.default.templates';
@@ -70,18 +70,15 @@ export class AuthHelper extends BaseJwtHelper {
     return true;
   }
 
-  private async generateExampleOnboardingJourney(userId: string) {
-    let ret: Workflow;
-    try {
-      ret = await this.workflowRepository.save({
-        name: 'example-onboarding',
-        audiences: [],
-        owner: { id: userId },
-      });
-      this.logger.debug('Created workflow: ' + ret?.id);
-    } catch (err) {
-      this.logger.error('Error: ' + err);
-    }
+  private async generateExampleOnboardingJourney(
+    account: Account,
+    transactionManager: EntityManager
+  ) {
+    let ret = new Workflow();
+    ret.name = 'example-onboarding';
+    ret.owner = account;
+    ret = await transactionManager.save(ret);
+    this.logger.debug('Created workflow: ' + ret?.id);
 
     const data = await Promise.all(
       [
@@ -94,7 +91,7 @@ export class AuthHelper extends BaseJwtHelper {
           inclusionCriteria: undefined,
           description:
             "User hasn't created an account yet. When a user creates an account, we receive the SignUp event, and they are moved to the next step in the Journey, where they will be sent a message. Users that we have never seen before are added to this step, and then we process their associated SignUp event.",
-          ownerId: userId,
+          owner: account,
         },
         {
           name: 'Post-Signup',
@@ -105,21 +102,22 @@ export class AuthHelper extends BaseJwtHelper {
           inclusionCriteria: undefined,
           description:
             'In this step, triggered immediately after the SignUp event, users are sent a Welcome Email. You can see the all available templates under the Templates tab in the Side Navigation Menu.',
-          ownerId: userId,
+          owner: account,
         },
       ].map(async (el) => {
-        const { name, customers, templates, isPrimary, description, ownerId } =
+        const { name, customers, templates, isPrimary, description, owner } =
           el;
 
-        const resp = await this.audienceRepository.save({
-          name,
-          customers,
-          templates,
-          isPrimary,
-          description,
-          owner: { id: ownerId },
-          workflow: { id: ret.id },
-        });
+        const audience = new Audience();
+        audience.name = name;
+        audience.customers = customers;
+        audience.templates = templates;
+        audience.isPrimary = isPrimary;
+        audience.description = description;
+        audience.owner = owner;
+        audience.workflow = ret;
+
+        const resp = await transactionManager.save(audience);
 
         return resp;
       })
@@ -259,21 +257,18 @@ export class AuthHelper extends BaseJwtHelper {
         },
       ],
     };
-    await this.workflowRepository.save(ret);
+    await transactionManager.save(ret);
   }
 
-  private async generateExampleSingleCampaignJourney(userId: string) {
-    let ret: Workflow;
-    try {
-      ret = await this.workflowRepository.save({
-        name: 'example-single-campaign',
-        audiences: [],
-        owner: { id: userId },
-      });
-      this.logger.debug('Created workflow: ' + ret?.id);
-    } catch (err) {
-      this.logger.error('Error: ' + err);
-    }
+  private async generateExampleSingleCampaignJourney(
+    account: Account,
+    transactionManager: EntityManager
+  ) {
+    let ret = new Workflow();
+    ret.name = 'example-single-campaign';
+    ret.owner = account;
+    ret = await transactionManager.save(ret);
+    this.logger.debug('Created workflow: ' + ret?.id);
 
     const data = await Promise.all(
       [
@@ -286,21 +281,22 @@ export class AuthHelper extends BaseJwtHelper {
           inclusionCriteria: undefined,
           description:
             "This email is sent to all your customers that exist at the moment that the Journey is started and meet the crtiteria for this Journey. It is not sent to customers who's profiles are created after this Journey is started (Static Journey).",
-          ownerId: userId,
+          owner: account,
         },
       ].map(async (el) => {
-        const { name, customers, templates, isPrimary, description, ownerId } =
+        const { name, customers, templates, isPrimary, description, owner } =
           el;
 
-        const resp = await this.audienceRepository.save({
-          name,
-          customers,
-          templates,
-          isPrimary,
-          description,
-          owner: { id: ownerId },
-          workflow: { id: ret.id },
-        });
+        const audience = new Audience();
+        audience.name = name;
+        audience.customers = customers;
+        audience.templates = templates;
+        audience.isPrimary = isPrimary;
+        audience.description = description;
+        audience.owner = owner;
+        audience.workflow = ret;
+
+        const resp = await transactionManager.save(audience);
         return resp;
       })
     );
@@ -338,16 +334,35 @@ export class AuthHelper extends BaseJwtHelper {
         },
       ],
     };
-    await this.workflowRepository.save(ret);
+    await transactionManager.save(ret);
   }
 
   // generate default templates and workflows for newly registered user
-  public async generateDefaultData(userId: string) {
-    await this.templateRepository.insert(
-      DEFAULT_TEMPLATES.map((el) => ({ ...el, owner: { id: userId } }))
+  public async generateDefaultData(
+    account: Account,
+    transactionManager: EntityManager
+  ) {
+    await transactionManager.save<Template>(
+      DEFAULT_TEMPLATES.map((el) => {
+        const template = new Template();
+        template.id = el.id;
+        template.name = el.name;
+        template.owner = account;
+        template.slackMessage = el.slackMessage;
+        template.smsText = el.smsText;
+        template.style = el.style;
+        template.subject = el.subject;
+        template.text = el.text;
+        template.type = el.type;
+
+        return template;
+      })
     );
 
-    await this.generateExampleOnboardingJourney(userId);
-    await this.generateExampleSingleCampaignJourney(userId);
+    await this.generateExampleOnboardingJourney(account, transactionManager);
+    await this.generateExampleSingleCampaignJourney(
+      account,
+      transactionManager
+    );
   }
 }

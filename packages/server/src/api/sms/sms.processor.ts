@@ -17,6 +17,7 @@ export class SmsProcessor {
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
     private readonly logger: LoggerService
   ) {}
+
   @Process('send')
   async handleSend(
     job: Job<{

@@ -98,7 +98,7 @@ describe(
           event: { [smsTemplate.eventName]: smsTemplate.eventName },
         },
       }).then(({ body }) => {
-        cy.wait(2000);
+        cy.wait(5000);
         cy.request({
           method: "POST",
           headers: {
@@ -111,6 +111,8 @@ describe(
         }).then(({ body }) => {
           expect(body).to.equal("completed");
         });
+
+        cy.wait(5000);
 
         cy.request({
           method: "POST",
