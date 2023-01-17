@@ -1,3 +1,4 @@
+import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
 import { Input, Select } from "components/Elements";
 import ToggleSwitch from "components/Elements/ToggleSwitch";
 import React, { FC } from "react";
@@ -7,65 +8,147 @@ import {
   PeopleIdentification,
 } from "../Database";
 
+function classNames(...classes: string[]) {
+  return classes.filter(Boolean).join(" ");
+}
+
 const DatabaseStep2: FC<DatabaseStepProps> = ({ formData, setFormData }) => {
+  const errors = {
+    frequencyNumber: [],
+    peopleIdentification: [],
+    syncToASegment: [],
+  };
+  const showErrors = false;
+
   return (
-    <div>
-      <div>
-        <b>How often should this import sync?</b>
-        <div className="flex justify-start items-center gap-[10px]">
-          <span>Add and update people every</span>
-          <Input
-            value={formData.frequencyNumber}
-            onChange={(e) =>
-              setFormData({
-                ...formData,
-                frequencyNumber: +e.target.value,
-              })
-            }
-            name="number"
-            type="number"
-            wrapperClasses="!max-w-[50px]"
-          />
+    <div className="flex flex-col gap-[10px]">
+      <div className="py-2 sm:grid sm:grid-cols-3 sm:gap-4 sm:py-3">
+        <dt className="text-sm font-medium text-gray-500">Sync data every</dt>
+        <div className="flex justify-end items-center gap-[10px]">
+          <dd className="relative max-w-[70px]">
+            <Input
+              type="number"
+              value={formData.frequencyNumber}
+              onChange={(e) =>
+                setFormData({ ...formData, frequencyNumber: +e.target.value })
+              }
+              name="frequencyNumber"
+              id="frequencyNumber"
+              className={classNames(
+                errors.frequencyNumber.length > 0 && showErrors
+                  ? "rounded-md sm:text-sm focus:!border-red-500 !border-red-300 shadow-sm focus:!ring-red-500 "
+                  : "rounded-md sm:text-sm focus:border-cyan-500 border-gray-300 shadow-sm focus:ring-cyan-500 "
+              )}
+            />
+            {errors.frequencyNumber.length > 0 && showErrors && (
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center">
+                <ExclamationCircleIcon
+                  className="h-5 w-5 text-red-500"
+                  aria-hidden="true"
+                />
+              </div>
+            )}
+          </dd>
+          <dd className="relative">
+            <Select
+              options={[
+                { value: FrequencyUnit.HOUR },
+                { value: FrequencyUnit.DAY },
+                { value: FrequencyUnit.WEEK },
+                { value: FrequencyUnit.MONTH },
+                { value: FrequencyUnit.YEAR },
+              ]}
+              onChange={(val) =>
+                setFormData({ ...formData, frequencyUnit: val })
+              }
+              value={formData.frequencyUnit}
+            />
+          </dd>
+        </div>
+        {showErrors &&
+          errors.frequencyNumber.map((item) => (
+            <p
+              className="mt-2 text-sm text-red-600"
+              id="email-error"
+              key={item}
+            >
+              {item}
+            </p>
+          ))}
+      </div>
+      <div className="py-2 sm:grid sm:grid-cols-3 sm:gap-4 sm:py-3">
+        <dt className="text-sm font-medium text-gray-500">
+          How do you want to identify people?
+        </dt>
+        <dd className="relative">
           <Select
             options={[
-              { value: FrequencyUnit.HOUR },
-              { value: FrequencyUnit.DAY },
-              { value: FrequencyUnit.WEEK },
-              { value: FrequencyUnit.MONTH },
-              { value: FrequencyUnit.YEAR },
+              { value: PeopleIdentification.BY_ID, title: "By id" },
+              { value: PeopleIdentification.BY_NAME, title: "By name" },
             ]}
-            onChange={(val) => setFormData({ ...formData, frequencyUnit: val })}
-            value={formData.frequencyUnit}
+            onChange={(val) =>
+              setFormData({ ...formData, peopleIdentification: val })
+            }
+            value={formData.peopleIdentification}
+            wrapperClassnames={classNames(
+              errors.peopleIdentification.length > 0 && showErrors
+                ? "rounded-md sm:text-sm focus:!border-red-500 !border-red-300 shadow-sm focus:!ring-red-500 "
+                : "rounded-md sm:text-sm focus:border-cyan-500 border-gray-300 shadow-sm focus:ring-cyan-500 "
+            )}
           />
-        </div>
+          {errors.peopleIdentification.length > 0 && showErrors && (
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center">
+              <ExclamationCircleIcon
+                className="h-5 w-5 text-red-500"
+                aria-hidden="true"
+              />
+            </div>
+          )}
+        </dd>
+        {showErrors &&
+          errors.peopleIdentification.map((item) => (
+            <p
+              className="mt-2 text-sm text-red-600"
+              id="email-error"
+              key={item}
+            >
+              {item}
+            </p>
+          ))}
       </div>
-      <div>
-        <b>How do you want to identify people?</b>
-        <Select
-          options={[
-            { value: PeopleIdentification.BY_ID, title: "By id" },
-            { value: PeopleIdentification.BY_NAME, title: "By name" },
-          ]}
-          onChange={(val) =>
-            setFormData({ ...formData, peopleIdentification: val })
-          }
-          value={formData.peopleIdentification}
-        />
-      </div>
-      <div className="flex justify-between">
-        <div>
-          <b>Sync this people to a segment?</b>
-          <span>(optional)</span>
-        </div>
-        <ToggleSwitch
-          checked={formData.syncToASegment}
-          onChange={() =>
-            setFormData({
-              ...formData,
-              syncToASegment: !formData.syncToASegment,
-            })
-          }
-        />
+      <div className="py-2 sm:grid sm:grid-cols-3 sm:gap-4 sm:py-3">
+        <dt className="text-sm font-medium text-gray-500">
+          Sync this people to a segment? (optional)
+        </dt>
+        <dd className="relative flex justify-end items-center">
+          <ToggleSwitch
+            checked={formData.syncToASegment}
+            onChange={() =>
+              setFormData({
+                ...formData,
+                syncToASegment: !formData.syncToASegment,
+              })
+            }
+          />
+          {errors.syncToASegment.length > 0 && showErrors && (
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center">
+              <ExclamationCircleIcon
+                className="h-5 w-5 text-red-500"
+                aria-hidden="true"
+              />
+            </div>
+          )}
+        </dd>
+        {showErrors &&
+          errors.syncToASegment.map((item) => (
+            <p
+              className="mt-2 text-sm text-red-600"
+              id="email-error"
+              key={item}
+            >
+              {item}
+            </p>
+          ))}
       </div>
     </div>
   );

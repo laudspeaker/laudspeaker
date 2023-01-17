@@ -1,3 +1,4 @@
+import { GenericButton } from "components/Elements";
 import Stepper from "components/Elements/Stepper";
 import Header from "components/Header";
 import React, { Dispatch, useState } from "react";
@@ -27,6 +28,7 @@ export interface DatabaseFormData {
   peopleIdentification: PeopleIdentification;
   syncToASegment: boolean;
   connectionString: string;
+  dbType: string;
   query: string;
 }
 
@@ -45,6 +47,7 @@ const Database = () => {
     syncToASegment: false,
     connectionString: "",
     query: "",
+    dbType: "",
   });
 
   const steps = [
@@ -66,22 +69,37 @@ const Database = () => {
               <div className="pt-10 pb-16">
                 <div className="px-4 sm:px-6 md:px-0">
                   <h1 className="text-3xl font-bold tracking-tight text-gray-900">
-                    Sync your database
+                    Integrations
                   </h1>
-                  <div className="flex items-center justify-center">
-                    <Stepper
-                      activeStep={stepperIndex}
-                      steps={[
-                        "Sync",
-                        "Settings",
-                        "Database",
-                        "Query",
-                        "Review",
-                      ]}
-                      onChange={(index) => setStepperIndex(index)}
-                    />
+                  <div className="py-6">
+                    <div className="flex items-center justify-center select-none">
+                      <Stepper
+                        activeStep={stepperIndex}
+                        steps={[
+                          "Sync",
+                          "Settings",
+                          "Database",
+                          "Query",
+                          "Review",
+                        ]}
+                      />
+                    </div>
+                    <div className="py-6">{steps[stepperIndex]}</div>
                   </div>
-                  {steps[stepperIndex]}
+                  <div className="flex gap-[10px]">
+                    <GenericButton
+                      disabled={stepperIndex === 0}
+                      onClick={() => setStepperIndex((index) => index - 1)}
+                    >
+                      Back
+                    </GenericButton>
+                    <GenericButton
+                      disabled={stepperIndex === steps.length - 1}
+                      onClick={() => setStepperIndex((index) => index + 1)}
+                    >
+                      Next
+                    </GenericButton>
+                  </div>
                 </div>
               </div>
             </div>

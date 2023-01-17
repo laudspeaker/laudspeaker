@@ -1,4 +1,4 @@
-import { AnyAction, Dispatch } from "redux";
+import { Dispatch } from "redux";
 import { ApiConfig } from "../constants";
 import ApiService from "../services/api.service";
 import { AuthAction, ActionType } from "./auth";
