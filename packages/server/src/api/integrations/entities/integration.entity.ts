@@ -26,8 +26,8 @@ export class Integration extends BaseEntity {
   @Column()
   name: string;
 
-  @Column()
-  description: string;
+  @Column({ nullable: true })
+  description?: string;
 
   @Column({ enum: IntegrationType })
   type: IntegrationType;

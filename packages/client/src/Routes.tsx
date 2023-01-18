@@ -21,6 +21,7 @@ import Person from "pages/Person";
 import Verify from "pages/Verify";
 import SmsBuilder from "pages/SmsBuilder";
 import Database from "pages/Integrations/Database";
+import Integrations from "pages/Integrations/DatabaseSteps/Integrations";
 
 interface IProtected {
   children: ReactElement;
@@ -193,7 +194,27 @@ const RouteComponent: React.FC = () => {
           }
         />
         <Route
+          path="/integrations"
+          element={
+            <Protected>
+              <DrawerLayout>
+                <Integrations />
+              </DrawerLayout>
+            </Protected>
+          }
+        />
+        <Route
           path="/integrations/db"
+          element={
+            <Protected>
+              <DrawerLayout>
+                <Database />
+              </DrawerLayout>
+            </Protected>
+          }
+        />
+        <Route
+          path="/integrations/db/:id"
           element={
             <Protected>
               <DrawerLayout>

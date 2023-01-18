@@ -15,8 +15,7 @@ export enum PeopleIdentification {
 
 export enum DBType {
   DATABRICKS = 'databricks',
-  POSTGRESQL = 'posgresql',
-  MYSQL = 'mysql',
+  POSTGRESQL = 'postgresql',
 }
 
 @Entity()
@@ -39,9 +38,18 @@ export class Database extends BaseEntity {
   @Column()
   connectionString: string;
 
-  @Column()
-  dbType: string;
+  @Column({ enum: DBType })
+  dbType: DBType;
 
   @Column()
   query: string;
+
+  @Column({ nullable: true })
+  databricksHost?: string;
+
+  @Column({ nullable: true })
+  databricksPath?: string;
+
+  @Column({ nullable: true })
+  databricksToken?: string;
 }

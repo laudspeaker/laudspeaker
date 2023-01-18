@@ -1,11 +1,15 @@
 import { GenericButton } from "components/Elements";
 import Stepper from "components/Elements/Stepper";
 import Header from "components/Header";
-import React, { Dispatch, useState } from "react";
+import React, { Dispatch, useState, useEffect } from "react";
 import DatabaseStep1 from "./DatabaseSteps/DatabaseStep1";
 import DatabaseStep2 from "./DatabaseSteps/DatabaseStep2";
-import DatabaseStep3 from "./DatabaseSteps/DatabaseStep3";
+import DatabaseStep3, { DBType } from "./DatabaseSteps/DatabaseStep3";
 import DatabaseStep4 from "./DatabaseSteps/DatabaseStep4";
+import DatabaseStep5 from "./DatabaseSteps/DatabaseStep5";
+import { toast } from "react-toastify";
+import ApiService from "services/api.service";
+import { useNavigate, useParams } from "react-router-dom";
 
 export enum FrequencyUnit {
   HOUR = "hour",
@@ -28,16 +32,21 @@ export interface DatabaseFormData {
   peopleIdentification: PeopleIdentification;
   syncToASegment: boolean;
   connectionString: string;
-  dbType: string;
+  databricksData: { host?: string; path?: string; token?: string };
+  dbType: DBType;
   query: string;
 }
 
 export interface DatabaseStepProps {
   formData: DatabaseFormData;
   setFormData: Dispatch<React.SetStateAction<DatabaseFormData>>;
+  isLoading: boolean;
+  setIsLoading: Dispatch<React.SetStateAction<boolean>>;
 }
 
 const Database = () => {
+  const { id } = useParams();
+
   const [formData, setFormData] = useState<DatabaseFormData>({
     name: "",
     description: "",
@@ -47,21 +56,97 @@ const Database = () => {
     syncToASegment: false,
     connectionString: "",
     query: "",
-    dbType: "",
+    dbType: DBType.DATABRICKS,
+    databricksData: {},
   });
 
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      if (id) {
+        const { data } = await ApiService.get<
+          DatabaseFormData & {
+            databricksHost?: string;
+            databricksPath?: string;
+            databricksToken?: string;
+            id: string;
+          }
+        >({
+          url: "/integrations/db/" + id,
+        });
+        setFormData({
+          ...data,
+          databricksData: {
+            host: data.databricksHost,
+            path: data.databricksPath,
+            token: data.databricksToken,
+          },
+        });
+      }
+    })();
+  }, [id]);
+
   const steps = [
-    <DatabaseStep1 formData={formData} setFormData={setFormData} />,
-    <DatabaseStep2 formData={formData} setFormData={setFormData} />,
-    <DatabaseStep3 formData={formData} setFormData={setFormData} />,
-    <DatabaseStep4 formData={formData} setFormData={setFormData} />,
+    <DatabaseStep1
+      formData={formData}
+      setFormData={setFormData}
+      isLoading={isLoading}
+      setIsLoading={setIsLoading}
+    />,
+    <DatabaseStep2
+      formData={formData}
+      setFormData={setFormData}
+      isLoading={isLoading}
+      setIsLoading={setIsLoading}
+    />,
+    <DatabaseStep3
+      formData={formData}
+      setFormData={setFormData}
+      isLoading={isLoading}
+      setIsLoading={setIsLoading}
+    />,
+    <DatabaseStep4
+      formData={formData}
+      setFormData={setFormData}
+      isLoading={isLoading}
+      setIsLoading={setIsLoading}
+    />,
+    <DatabaseStep5
+      formData={formData}
+      setFormData={setFormData}
+      isLoading={isLoading}
+      setIsLoading={setIsLoading}
+    />,
   ];
 
   const [stepperIndex, setStepperIndex] = useState(0);
 
+  const navigate = useNavigate();
+
+  const handleSave = async () => {
+    setIsLoading(true);
+    try {
+      if (id) {
+        await ApiService.patch({
+          url: "/integrations/db/" + id,
+          options: formData,
+        });
+      } else {
+        await ApiService.post({ url: "/integrations/db", options: formData });
+      }
+
+      navigate("/integrations");
+    } catch (e) {
+      toast.error("Error while saving");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div>
-      <div className="">
+      <div>
         <div className="mx-auto flex flex-col">
           <Header />
           <main>
@@ -90,15 +175,22 @@ const Database = () => {
                     <GenericButton
                       disabled={stepperIndex === 0}
                       onClick={() => setStepperIndex((index) => index - 1)}
+                      loading={isLoading}
                     >
                       Back
                     </GenericButton>
-                    <GenericButton
-                      disabled={stepperIndex === steps.length - 1}
-                      onClick={() => setStepperIndex((index) => index + 1)}
-                    >
-                      Next
-                    </GenericButton>
+                    {stepperIndex === steps.length - 1 ? (
+                      <GenericButton onClick={handleSave} loading={isLoading}>
+                        Save
+                      </GenericButton>
+                    ) : (
+                      <GenericButton
+                        onClick={() => setStepperIndex((index) => index + 1)}
+                        loading={isLoading}
+                      >
+                        Next
+                      </GenericButton>
+                    )}
                   </div>
                 </div>
               </div>
