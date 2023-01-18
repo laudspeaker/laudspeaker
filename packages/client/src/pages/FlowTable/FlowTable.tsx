@@ -55,8 +55,6 @@ const FlowTable = () => {
     setNameModalOpen(true);
   };
 
-  const handleNameSubmit = () => {};
-
   if (error)
     return (
       <div>
@@ -75,7 +73,7 @@ const FlowTable = () => {
               setNameModalOpen(false);
             }}
           >
-            <NameJourney onSubmit={handleNameSubmit} isPrimary={true} />
+            <NameJourney />
           </Modal>
           <div>
             <Grid

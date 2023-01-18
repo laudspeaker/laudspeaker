@@ -100,10 +100,10 @@ export interface VisualLayout {
 @Entity()
 export class Workflow {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column()
-  name!: string;
+  name: string;
 
   @JoinColumn()
   @ManyToOne(() => Account, (account) => account.id, { onDelete: 'CASCADE' })

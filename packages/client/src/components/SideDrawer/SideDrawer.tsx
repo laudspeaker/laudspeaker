@@ -33,12 +33,12 @@ interface Props {
   selectedNode: string;
   onClick: (id: string) => void;
   afterMenuContent?: React.ReactNode;
+  flowName: string;
 }
 
 export default function ResponsiveDrawer(props: Props) {
   const { selectedNode, onClick } = props;
   const location = useLocation();
-  const { name } = useParams();
   const [expectedOnboarding, setExpectedOnboarding] = React.useState<string[]>(
     []
   );
@@ -175,7 +175,7 @@ export default function ResponsiveDrawer(props: Props) {
     return (
       <>
         <div className="text-[16px] bg-cyan-700 w-full min-h-[50px] text-white text-ellipsis overflow-hidden px-[20px] py-[15px]">
-          {name}
+          {props.flowName}
         </div>
         <div className="min-h-screen flex-col justify-between px-[20px] py-[15px]">
           {generateMenu(dataSubArray)}
