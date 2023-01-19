@@ -5,7 +5,7 @@ const SettingsIntegrationsBeta = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    navigate("/integrations/db");
+    navigate("/integrations");
   }, []);
 
   return <></>;

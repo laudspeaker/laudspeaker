@@ -5,7 +5,13 @@ import "ace-builds/src-min-noconflict/mode-mysql";
 import "ace-builds/src-noconflict/theme-github";
 import { DatabaseStepProps } from "../Database";
 
-const DatabaseStep4: FC<DatabaseStepProps> = ({ formData, setFormData }) => {
+const DatabaseStep4: FC<DatabaseStepProps> = ({
+  formData,
+  setFormData,
+  errors,
+  showErrors,
+  handleShowErrors,
+}) => {
   return (
     <div>
       <div className="space-y-1 pb-[10px]">
@@ -33,8 +39,18 @@ const DatabaseStep4: FC<DatabaseStepProps> = ({ formData, setFormData }) => {
           enableSnippets: true,
         }}
         value={formData.query}
-        onChange={(val) => setFormData({ ...formData, query: val })}
+        onChange={(val) => {
+          setFormData({ ...formData, query: val });
+          handleShowErrors("query");
+        }}
+        onBlur={() => handleShowErrors("query")}
       />
+      {showErrors.query &&
+        errors.query.map((item) => (
+          <p className="mt-2 text-sm text-red-600" id="email-error" key={item}>
+            {item}
+          </p>
+        ))}
     </div>
   );
 };

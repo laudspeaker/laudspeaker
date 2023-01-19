@@ -1,11 +1,13 @@
 import {
-  IsBoolean,
   IsEnum,
   IsNotEmpty,
   IsNumber,
   IsObject,
   IsOptional,
   IsString,
+  Max,
+  MaxLength,
+  Min,
 } from 'class-validator';
 import {
   DBType,
@@ -16,15 +18,19 @@ import {
 export class CreateDBDto {
   @IsNotEmpty()
   @IsString()
+  @MaxLength(100)
   name: string;
 
   @IsNotEmpty()
   @IsString()
   @IsOptional()
+  @MaxLength(255)
   description?: string;
 
   @IsNotEmpty()
   @IsNumber()
+  @Min(1)
+  @Max(1000)
   frequencyNumber: number;
 
   @IsNotEmpty()
@@ -34,10 +40,6 @@ export class CreateDBDto {
   @IsNotEmpty()
   @IsEnum(PeopleIdentification)
   peopleIdentification: PeopleIdentification;
-
-  @IsNotEmpty()
-  @IsBoolean()
-  syncToASegment: boolean;
 
   @IsString()
   connectionString?: string;

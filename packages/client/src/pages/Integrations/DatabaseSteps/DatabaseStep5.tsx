@@ -1,21 +1,19 @@
-import React, { FC, useState, useEffect } from "react";
+import React, { FC, useState, useEffect, Dispatch } from "react";
 import ApiService from "services/api.service";
 import { DatabaseStepProps } from "../Database";
 import { toast } from "react-toastify";
 import Progress from "components/Progress";
 
-const DatabaseStep5: FC<DatabaseStepProps> = ({
-  formData,
-  isLoading,
-  setIsLoading,
-}) => {
-  const [tableData, setTableData] = useState<Record<string, string | number>[]>(
-    []
-  );
+const DatabaseStep5: FC<
+  DatabaseStepProps & { setIsSuccess: Dispatch<React.SetStateAction<boolean>> }
+> = ({ formData, isLoading, setIsLoading, setIsSuccess }) => {
+  const [tableData, setTableData] =
+    useState<Record<string, string | number>[]>();
 
   useEffect(() => {
     (async () => {
       setIsLoading(true);
+      setIsSuccess(false);
       try {
         const { data } = await ApiService.post<
           Record<string, string | number>[]
@@ -24,8 +22,9 @@ const DatabaseStep5: FC<DatabaseStepProps> = ({
           options: formData,
         });
 
-        console.log(data);
+        console.table(data);
         setTableData(data);
+        setIsSuccess(true);
       } catch (e) {
         toast.error("There is something wrong with your connection or query");
       } finally {
@@ -36,7 +35,7 @@ const DatabaseStep5: FC<DatabaseStepProps> = ({
 
   if (isLoading) return <Progress />;
 
-  const header = Object.keys(tableData[0] || {});
+  const header = Object.keys(tableData?.[0] || {});
 
   return (
     <div className="relative">
@@ -46,28 +45,36 @@ const DatabaseStep5: FC<DatabaseStepProps> = ({
           Check if query data is correct.
         </p>
       </div>
-      <div className="max-h-[50vh] overflow-scroll">
-        <table className="text-[10px]">
-          <thead>
-            <tr>
-              {header.map((item) => (
-                <td className="border-[1px] border-black">{item}</td>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {tableData.map((row) => (
+      {tableData ? (
+        <div className="max-h-[50vh] overflow-scroll">
+          <table className="text-[10px]">
+            <thead className="bg-[#FAFAFA]">
               <tr>
-                {Object.values(row).map((item) => (
-                  <td className="max-h-[10px] border-[1px] border-black">
-                    {item}
+                {header.map((item) => (
+                  <td className="border-r-[1px] border-b-[1px] border-b-[#F0F0F0] border-r-[#EBEBEB] whitespace-nowrap px-3">
+                    <b>{item}</b>
                   </td>
                 ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {tableData.map((row) => (
+                <tr>
+                  {Object.values(row).map((item) => (
+                    <td className="max-h-[10px] border-b-[1px] border-b-[#EBEBEB] whitespace-nowrap">
+                      {item}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <div className="flex justify-center items-center text-gray-400 text-[48px] border-[2px]  rounded-md">
+          NO DATA
+        </div>
+      )}
     </div>
   );
 };

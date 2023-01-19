@@ -7,10 +7,13 @@ function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(" ");
 }
 
-const DatabaseStep1: FC<DatabaseStepProps> = ({ formData, setFormData }) => {
-  const errors = { name: [], description: [] };
-  const showErrors = false;
-
+const DatabaseStep1: FC<DatabaseStepProps> = ({
+  formData,
+  setFormData,
+  errors,
+  showErrors,
+  handleShowErrors,
+}) => {
   return (
     <div className="flex flex-col gap-[10px]">
       <div className="py-2 sm:grid sm:grid-cols-3 sm:gap-4 sm:py-3">
@@ -19,17 +22,21 @@ const DatabaseStep1: FC<DatabaseStepProps> = ({ formData, setFormData }) => {
           <Input
             type="text"
             value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            onChange={(e) => {
+              setFormData({ ...formData, name: e.target.value });
+              handleShowErrors("name");
+            }}
+            onBlur={() => handleShowErrors("name")}
             name="name"
             id="name"
             placeholder="Name your import"
             className={classNames(
-              errors.name.length > 0 && showErrors
+              errors.name.length > 0 && showErrors.name
                 ? "rounded-md sm:text-sm focus:!border-red-500 !border-red-300 shadow-sm focus:!ring-red-500 "
                 : "rounded-md sm:text-sm focus:border-cyan-500 border-gray-300 shadow-sm focus:ring-cyan-500 "
             )}
           />
-          {errors.name.length > 0 && showErrors && (
+          {errors.name.length > 0 && showErrors.name && (
             <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center">
               <ExclamationCircleIcon
                 className="h-5 w-5 text-red-500"
@@ -38,7 +45,7 @@ const DatabaseStep1: FC<DatabaseStepProps> = ({ formData, setFormData }) => {
             </div>
           )}
         </dd>
-        {showErrors &&
+        {showErrors.name &&
           errors.name.map((item) => (
             <p
               className="mt-2 text-sm text-red-600"
@@ -55,19 +62,21 @@ const DatabaseStep1: FC<DatabaseStepProps> = ({ formData, setFormData }) => {
           <Input
             type="text"
             value={formData.description}
-            onChange={(e) =>
-              setFormData({ ...formData, description: e.target.value })
-            }
+            onChange={(e) => {
+              setFormData({ ...formData, description: e.target.value });
+              handleShowErrors("description");
+            }}
+            onBlur={() => handleShowErrors("description")}
             name="description"
             id="description"
             placeholder="Describe your import"
             className={classNames(
-              errors.description.length > 0 && showErrors
+              errors.description.length > 0 && showErrors.description
                 ? "rounded-md sm:text-sm focus:!border-red-500 !border-red-300 shadow-sm focus:!ring-red-500 "
                 : "rounded-md sm:text-sm focus:border-cyan-500 border-gray-300 shadow-sm focus:ring-cyan-500 "
             )}
           />
-          {errors.description.length > 0 && showErrors && (
+          {errors.description.length > 0 && showErrors.description && (
             <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center">
               <ExclamationCircleIcon
                 className="h-5 w-5 text-red-500"
@@ -76,7 +85,7 @@ const DatabaseStep1: FC<DatabaseStepProps> = ({ formData, setFormData }) => {
             </div>
           )}
         </dd>
-        {showErrors &&
+        {showErrors.description &&
           errors.description.map((item) => (
             <p
               className="mt-2 text-sm text-red-600"

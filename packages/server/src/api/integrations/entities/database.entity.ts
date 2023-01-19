@@ -33,9 +33,6 @@ export class Database extends BaseEntity {
   peopleIdentification: PeopleIdentification;
 
   @Column()
-  syncToASegment: boolean;
-
-  @Column()
   connectionString: string;
 
   @Column({ enum: DBType })

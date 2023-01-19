@@ -1,7 +1,11 @@
 /* eslint-disable no-case-declarations */
 import { AppDataSource } from '@/data-source';
 import { DBSQLClient } from '@databricks/sql';
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { AccountsService } from '../accounts/accounts.service';
@@ -77,7 +81,6 @@ export class IntegrationsService {
       frequencyUnit,
       peopleIdentification,
       query,
-      syncToASegment,
     } = dbProperties;
 
     await AppDataSource.manager.transaction(async (transactionManager) => {
@@ -88,7 +91,6 @@ export class IntegrationsService {
         frequencyUnit,
         peopleIdentification,
         query,
-        syncToASegment,
         databricksHost: databricksData.host,
         databricksPath: databricksData.path,
         databricksToken: databricksData.token,
@@ -129,7 +131,6 @@ export class IntegrationsService {
       frequencyUnit,
       peopleIdentification,
       query,
-      syncToASegment,
     } = dbProperties;
 
     await AppDataSource.manager.transaction(async (transactionManager) => {
@@ -141,7 +142,6 @@ export class IntegrationsService {
         frequencyUnit,
         peopleIdentification,
         query,
-        syncToASegment,
         databricksHost: databricksData.host,
         databricksPath: databricksData.path,
         databricksToken: databricksData.token,
@@ -167,29 +167,37 @@ export class IntegrationsService {
   public async reviewDB(createDBDto: CreateDBDto) {
     switch (createDBDto.dbType) {
       case DBType.DATABRICKS:
-        const client = new DBSQLClient({});
-        await client.connect({
-          token: createDBDto.databricksData.token || '',
-          host: createDBDto.databricksData.host || '',
-          path: createDBDto.databricksData.path || '',
-        });
-        const session = await client.openSession();
+        try {
+          const client = new DBSQLClient({});
+          await client.connect({
+            token: createDBDto.databricksData.token || '',
+            host: createDBDto.databricksData.host || '',
+            path: createDBDto.databricksData.path || '',
+          });
+          const session = await client.openSession();
 
-        let limittedQuery = createDBDto.query.replace(';', ' LIMIT 10;');
+          let limittedQuery = createDBDto.query.replace(';', ' LIMIT 10;');
 
-        if (!limittedQuery.includes('LIMIT 10')) limittedQuery += ' LIMIT 10;';
+          if (!limittedQuery.includes('LIMIT 10'))
+            limittedQuery += ' LIMIT 10;';
 
-        const queryOperation = await session.executeStatement(limittedQuery, {
-          runAsync: true,
-          maxRows: 10,
-        });
+          const queryOperation = await session.executeStatement(limittedQuery, {
+            runAsync: true,
+            maxRows: 10,
+          });
 
-        const result = await queryOperation.fetchAll({
-          progress: false,
-        });
-        await queryOperation.close();
+          const result = await queryOperation.fetchAll({
+            progress: false,
+          });
+          await queryOperation.close();
 
-        return result;
+          return result;
+        } catch (e) {
+          throw new BadRequestException(
+            'Something wrong with connection to databricks'
+          );
+        }
+
       case DBType.POSTGRESQL:
         break;
       default:

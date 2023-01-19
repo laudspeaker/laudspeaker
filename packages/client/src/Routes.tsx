@@ -21,7 +21,7 @@ import Person from "pages/Person";
 import Verify from "pages/Verify";
 import SmsBuilder from "pages/SmsBuilder";
 import Database from "pages/Integrations/Database";
-import Integrations from "pages/Integrations/DatabaseSteps/Integrations";
+import Integrations from "pages/Integrations/Integrations";
 
 interface IProtected {
   children: ReactElement;

@@ -1,6 +1,5 @@
 import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
 import { Input, Select } from "components/Elements";
-import ToggleSwitch from "components/Elements/ToggleSwitch";
 import React, { FC } from "react";
 import {
   DatabaseStepProps,
@@ -12,14 +11,13 @@ function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(" ");
 }
 
-const DatabaseStep2: FC<DatabaseStepProps> = ({ formData, setFormData }) => {
-  const errors = {
-    frequencyNumber: [],
-    peopleIdentification: [],
-    syncToASegment: [],
-  };
-  const showErrors = false;
-
+const DatabaseStep2: FC<DatabaseStepProps> = ({
+  formData,
+  setFormData,
+  errors,
+  showErrors,
+  handleShowErrors,
+}) => {
   return (
     <div className="flex flex-col gap-[10px]">
       <div className="py-2 sm:grid sm:grid-cols-3 sm:gap-4 sm:py-3">
@@ -29,18 +27,20 @@ const DatabaseStep2: FC<DatabaseStepProps> = ({ formData, setFormData }) => {
             <Input
               type="number"
               value={formData.frequencyNumber}
-              onChange={(e) =>
-                setFormData({ ...formData, frequencyNumber: +e.target.value })
-              }
+              onChange={(e) => {
+                setFormData({ ...formData, frequencyNumber: +e.target.value });
+                handleShowErrors("frequencyNumber");
+              }}
+              onBlur={() => handleShowErrors("frequencyNumber")}
               name="frequencyNumber"
               id="frequencyNumber"
               className={classNames(
-                errors.frequencyNumber.length > 0 && showErrors
+                errors.frequencyNumber.length > 0 && showErrors.frequencyNumber
                   ? "rounded-md sm:text-sm focus:!border-red-500 !border-red-300 shadow-sm focus:!ring-red-500 "
                   : "rounded-md sm:text-sm focus:border-cyan-500 border-gray-300 shadow-sm focus:ring-cyan-500 "
               )}
             />
-            {errors.frequencyNumber.length > 0 && showErrors && (
+            {errors.frequencyNumber.length > 0 && showErrors.frequencyNumber && (
               <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center">
                 <ExclamationCircleIcon
                   className="h-5 w-5 text-red-500"
@@ -65,7 +65,7 @@ const DatabaseStep2: FC<DatabaseStepProps> = ({ formData, setFormData }) => {
             />
           </dd>
         </div>
-        {showErrors &&
+        {showErrors.frequencyNumber &&
           errors.frequencyNumber.map((item) => (
             <p
               className="mt-2 text-sm text-red-600"
@@ -82,65 +82,31 @@ const DatabaseStep2: FC<DatabaseStepProps> = ({ formData, setFormData }) => {
         </dt>
         <dd className="relative">
           <Select
-            options={[
-              { value: PeopleIdentification.BY_ID, title: "By id" },
-              { value: PeopleIdentification.BY_NAME, title: "By name" },
-            ]}
-            onChange={(val) =>
-              setFormData({ ...formData, peopleIdentification: val })
-            }
+            options={[{ value: PeopleIdentification.BY_ID, title: "By id" }]}
+            onChange={(val) => {
+              setFormData({ ...formData, peopleIdentification: val });
+              handleShowErrors("peopleIdentification");
+            }}
             value={formData.peopleIdentification}
             wrapperClassnames={classNames(
-              errors.peopleIdentification.length > 0 && showErrors
+              errors.peopleIdentification.length > 0 &&
+                showErrors.peopleIdentification
                 ? "rounded-md sm:text-sm focus:!border-red-500 !border-red-300 shadow-sm focus:!ring-red-500 "
                 : "rounded-md sm:text-sm focus:border-cyan-500 border-gray-300 shadow-sm focus:ring-cyan-500 "
             )}
           />
-          {errors.peopleIdentification.length > 0 && showErrors && (
-            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center">
-              <ExclamationCircleIcon
-                className="h-5 w-5 text-red-500"
-                aria-hidden="true"
-              />
-            </div>
-          )}
+          {errors.peopleIdentification.length > 0 &&
+            showErrors.peopleIdentification && (
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center">
+                <ExclamationCircleIcon
+                  className="h-5 w-5 text-red-500"
+                  aria-hidden="true"
+                />
+              </div>
+            )}
         </dd>
-        {showErrors &&
+        {showErrors.peopleIdentification &&
           errors.peopleIdentification.map((item) => (
-            <p
-              className="mt-2 text-sm text-red-600"
-              id="email-error"
-              key={item}
-            >
-              {item}
-            </p>
-          ))}
-      </div>
-      <div className="py-2 sm:grid sm:grid-cols-3 sm:gap-4 sm:py-3">
-        <dt className="text-sm font-medium text-gray-500">
-          Sync this people to a segment? (optional)
-        </dt>
-        <dd className="relative flex justify-end items-center">
-          <ToggleSwitch
-            checked={formData.syncToASegment}
-            onChange={() =>
-              setFormData({
-                ...formData,
-                syncToASegment: !formData.syncToASegment,
-              })
-            }
-          />
-          {errors.syncToASegment.length > 0 && showErrors && (
-            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center">
-              <ExclamationCircleIcon
-                className="h-5 w-5 text-red-500"
-                aria-hidden="true"
-              />
-            </div>
-          )}
-        </dd>
-        {showErrors &&
-          errors.syncToASegment.map((item) => (
             <p
               className="mt-2 text-sm text-red-600"
               id="email-error"

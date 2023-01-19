@@ -1,4 +1,5 @@
 import { RadioGroup } from "@headlessui/react";
+import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
 import { Input } from "components/Elements";
 import React, { FC } from "react";
 import { DatabaseStepProps } from "../Database";
@@ -36,7 +37,13 @@ function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(" ");
 }
 
-const DatabaseStep3: FC<DatabaseStepProps> = ({ formData, setFormData }) => {
+const DatabaseStep3: FC<DatabaseStepProps> = ({
+  formData,
+  setFormData,
+  errors,
+  showErrors,
+  handleShowErrors,
+}) => {
   const dbType = formData.dbType;
   const mem = memoryOptions[dbType];
 
@@ -91,52 +98,120 @@ const DatabaseStep3: FC<DatabaseStepProps> = ({ formData, setFormData }) => {
         (dbType === DBType.DATABRICKS ? (
           <div className="mt-[20px] flex flex-col gap-[10px]">
             <b>Params separeted</b>
-            <Input
-              value={formData.databricksData.host}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  databricksData: {
-                    ...formData.databricksData,
-                    host: e.target.value,
-                  },
-                })
-              }
-              name="host"
-              placeholder="host"
-              label="Host"
-            />
-            <Input
-              value={formData.databricksData.path}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  databricksData: {
-                    ...formData.databricksData,
-                    path: e.target.value,
-                  },
-                })
-              }
-              name="httpPath"
-              placeholder="http path"
-              label="Http path"
-            />
-            <Input
-              value={formData.databricksData.token}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  databricksData: {
-                    ...formData.databricksData,
-                    token: e.target.value,
-                  },
-                })
-              }
-              type="password"
-              name="token"
-              placeholder="token"
-              label="Token"
-            />
+            <div>
+              <dd className="relative">
+                <Input
+                  value={formData.databricksData.host}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      databricksData: {
+                        ...formData.databricksData,
+                        host: e.target.value,
+                      },
+                    })
+                  }
+                  onBlur={() => handleShowErrors("databricksData")}
+                  className={classNames(
+                    errors.databricksData.length > 0 &&
+                      showErrors.databricksData
+                      ? "rounded-md sm:text-sm focus:!border-red-500 !border-red-300 shadow-sm focus:!ring-red-500 "
+                      : "rounded-md sm:text-sm focus:border-cyan-500 border-gray-300 shadow-sm focus:ring-cyan-500 "
+                  )}
+                  name="host"
+                  placeholder="host"
+                  label="Host"
+                />
+                {errors.databricksData.length > 0 && showErrors.databricksData && (
+                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center">
+                    <ExclamationCircleIcon
+                      className="h-5 w-5 text-red-500"
+                      aria-hidden="true"
+                    />
+                  </div>
+                )}
+              </dd>
+            </div>
+            <div>
+              <dd className="relative">
+                <Input
+                  value={formData.databricksData.path}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      databricksData: {
+                        ...formData.databricksData,
+                        path: e.target.value,
+                      },
+                    })
+                  }
+                  onBlur={() => handleShowErrors("databricksData")}
+                  className={classNames(
+                    errors.databricksData.length > 0 &&
+                      showErrors.databricksData
+                      ? "rounded-md sm:text-sm focus:!border-red-500 !border-red-300 shadow-sm focus:!ring-red-500 "
+                      : "rounded-md sm:text-sm focus:border-cyan-500 border-gray-300 shadow-sm focus:ring-cyan-500 "
+                  )}
+                  name="httpPath"
+                  placeholder="http path"
+                  label="Http path"
+                />
+                {errors.databricksData.length > 0 && showErrors.databricksData && (
+                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center">
+                    <ExclamationCircleIcon
+                      className="h-5 w-5 text-red-500"
+                      aria-hidden="true"
+                    />
+                  </div>
+                )}
+              </dd>
+            </div>
+            <div>
+              <dd className="relative">
+                <Input
+                  value={formData.databricksData.token}
+                  onChange={(e) => {
+                    setFormData({
+                      ...formData,
+                      databricksData: {
+                        ...formData.databricksData,
+                        token: e.target.value,
+                      },
+                    });
+                    handleShowErrors("databricksData");
+                  }}
+                  onBlur={() => handleShowErrors("databricksData")}
+                  type="password"
+                  className={classNames(
+                    errors.databricksData.length > 0 &&
+                      showErrors.databricksData
+                      ? "rounded-md sm:text-sm focus:!border-red-500 !border-red-300 shadow-sm focus:!ring-red-500 "
+                      : "rounded-md sm:text-sm focus:border-cyan-500 border-gray-300 shadow-sm focus:ring-cyan-500 "
+                  )}
+                  name="token"
+                  placeholder="token"
+                  label="Token"
+                />
+                {errors.databricksData.length > 0 && showErrors.databricksData && (
+                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center">
+                    <ExclamationCircleIcon
+                      className="h-5 w-5 text-red-500"
+                      aria-hidden="true"
+                    />
+                  </div>
+                )}
+              </dd>
+            </div>
+            {showErrors.databricksData &&
+              errors.databricksData.map((item) => (
+                <p
+                  className="mt-2 text-sm text-red-600"
+                  id="email-error"
+                  key={item}
+                >
+                  {item}
+                </p>
+              ))}
           </div>
         ) : (
           <div>
