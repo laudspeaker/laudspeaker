@@ -18,12 +18,12 @@ services:
       - source: 0.0.0.0/0
         description: everywhere
   - type: pserv
-      name: clickhouse
-      env: docker
-      disk:
-        name: data
-        mountPath: /var/lib/clickhouse
-        sizeGB: 10
+    name: clickhouse
+    env: docker
+    disk:
+      name: data
+      mountPath: /var/lib/clickhouse
+      sizeGB: 10
   - type: pserv
     name: mongodb
     env: docker
