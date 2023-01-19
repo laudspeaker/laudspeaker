@@ -12,6 +12,20 @@ services:
     envVars:
       - key: PORT
         value: 80
+      - key: REDIS_HOST
+        fromService:
+          type: redis
+          name: laudspeaker
+          property: host
+      - key: REDIS_PORT
+        fromService:
+          type: redis
+          name: laudspeaker
+          property: port
+      - key: DATABASE_URL
+        fromDatabase:
+          name: laudspeaker-db
+          property: connectionString
   - type: redis
     name: laudspeaker
     ipAllowList:
@@ -25,7 +39,7 @@ services:
       mountPath: /var/lib/clickhouse
       sizeGB: 10
   - type: pserv
-    name: mongodb
+    name: mongo
     env: docker
     disk:
       name: data
