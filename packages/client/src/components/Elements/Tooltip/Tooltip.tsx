@@ -1,12 +1,12 @@
-import React, { FC, ReactNode } from "react";
-import { Tooltip as MTTooltip, TooltipProps } from "@material-tailwind/react";
+// import React, { FC, ReactNode } from "react";
+// import { Tooltip as MTTooltip, TooltipProps } from "@material-tailwind/react";
 
-interface CustomTooltipProps {
-  children: ReactNode;
-  title: string;
-  placement?: string;
-  className?: string;
-}
+// interface CustomTooltipProps {
+//   children: ReactNode;
+//   title: string;
+//   placement?: string;
+//   className?: string;
+// }
 
 // const Tooltip: FC<CustomTooltipProps & TooltipProps> = ({
 //   children,
