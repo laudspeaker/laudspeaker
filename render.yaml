@@ -12,6 +12,16 @@ services:
     envVars:
       - key: PORT
         value: 80
+      - key: MONGOOSE_URL
+        fromService:
+          type: pserv
+          name: mongo
+          property: hostport
+      - key: CLICKHOUSE_HOST
+        fromService:
+          type: pserv
+          name: clickhouse
+          property: hostport
       - key: REDIS_HOST
         fromService:
           type: redis
