@@ -666,7 +666,7 @@ export class SlackService {
           //try empty args
         });
         this.sanitizeMembers(members, tok, teamOrEnterpriseId);
-      } catch (e) {
+      } catch (e: any) {
         this.logger.error('Error: ' + e);
       }
     }
@@ -803,7 +803,7 @@ export class SlackService {
           }
         }
         res.end();
-      } catch (e) {
+      } catch (e: any) {
         this.logger.error('Error: ' + e);
       }
     };

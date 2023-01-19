@@ -1,10 +1,7 @@
 import React from "react";
-import Stepper from "components/Stepper";
-import DoneIcon from "@mui/icons-material/Done";
-import { StepIconProps } from "@mui/material/StepIcon";
 import { CheckIcon } from "@heroicons/react/20/solid";
 
-const classNames = (...classes: any[]) => {
+const classNames = (...classes: string[]) => {
   return classes.filter(Boolean).join(" ");
 };
 

@@ -23,12 +23,12 @@ import {
 } from './api/customers/schemas/customer-keys.schema';
 import { Account } from './api/accounts/entities/accounts.entity';
 import { Verification } from './api/auth/entities/verification.entity';
-import { SendgridEvent } from './api/webhooks/entities/sendgrid-event.entity';
 import { EventSchema, Event } from './api/events/schemas/event.schema';
 import {
   EventKeys,
   EventKeysSchema,
 } from './api/events/schemas/event-keys.schema';
+import { WebhookEvent } from './api/webhooks/entities/webhook-event.entity';
 
 const papertrail = new winston.transports.Http({
   host: 'logs.collector.solarwinds.com',
@@ -57,9 +57,11 @@ const myFormat = winston.format.printf(function ({
     // eslint-disable-next-line handle-callback-err
     Error.prepareStackTrace = (err, structuredStackTrace) =>
       structuredStackTrace;
+    // @ts-ignore
     Error.captureStackTrace(this);
     // we need to "peel" the first CallSites (frames) in order to get to the caller we're looking for
     // in our case we're removing frames that come from logger module or from winston
+    // @ts-ignore
     const callSites = this.stack.filter(boilerplateLines);
     if (callSites.length === 0) {
       // bail gracefully: even though we shouldn't get here, we don't want to crash for a log print!
@@ -119,7 +121,7 @@ const myFormat = winston.format.printf(function ({
       { name: EventKeys.name, schema: EventKeysSchema },
     ]),
     ScheduleModule.forRoot(),
-    TypeOrmModule.forFeature([Account, Verification, SendgridEvent]),
+    TypeOrmModule.forFeature([Account, Verification, WebhookEvent]),
   ],
   controllers: [AppController],
   providers: [CronService],

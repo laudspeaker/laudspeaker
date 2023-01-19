@@ -1,28 +1,18 @@
-import {
-  HttpException,
-  Inject,
-  Injectable,
-  LoggerService,
-} from '@nestjs/common';
+import { Inject, Injectable, LoggerService } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, Like, Repository } from 'typeorm';
+import { In, QueryRunner, Repository } from 'typeorm';
 import { Audience } from './entities/audience.entity';
 import { CreateAudienceDto } from './dto/create-audience.dto';
 import { UpdateAudienceDto } from './dto/update-audience.dto';
 import { Account } from '../accounts/entities/accounts.entity';
-import { AddTemplateDto } from './dto/add-template.dto';
 import { CustomerDocument } from '../customers/schemas/customer.schema';
 import { Template } from '../templates/entities/template.entity';
 import Errors from '../../shared/utils/errors';
 import { TemplatesService } from '../templates/templates.service';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
-import { from } from 'form-data';
-import { Job } from 'bull';
-import { CustomersService } from '../customers/customers.service';
-import { checkInclusion } from './audiences.helper';
-import { Stats } from './entities/stats.entity';
 import { Workflow } from '../workflows/entities/workflow.entity';
 import { EventDto } from '../events/dto/event.dto';
+import { AppDataSource } from '@/data-source';
 
 @Injectable()
 export class AudiencesService {
@@ -36,7 +26,6 @@ export class AudiencesService {
     private readonly logger: LoggerService,
     @InjectRepository(Audience)
     public audiencesRepository: Repository<Audience>,
-    @InjectRepository(Stats) private statsRepository: Repository<Stats>,
     @InjectRepository(Workflow)
     private workflowRepository: Repository<Workflow>,
     @Inject(TemplatesService) public templatesService: TemplatesService
@@ -50,7 +39,9 @@ export class AudiencesService {
    *
    */
   findAll(account: Account): Promise<Audience[]> {
-    return this.audiencesRepository.findBy({ ownerId: (<Account>account).id });
+    return this.audiencesRepository.findBy({
+      owner: { id: account.id },
+    });
   }
 
   /**
@@ -63,7 +54,7 @@ export class AudiencesService {
    */
   findByName(account: Account, name: string): Promise<Audience | null> {
     return this.audiencesRepository.findOneBy({
-      ownerId: (<Account>account).id,
+      owner: { id: account.id },
       name: name,
     });
   }
@@ -78,7 +69,7 @@ export class AudiencesService {
    */
   findOne(account: Account, id: string): Promise<Audience> {
     return this.audiencesRepository.findOneBy({
-      ownerId: (<Account>account).id,
+      owner: { id: account.id },
       id: id,
     });
   }
@@ -100,18 +91,24 @@ export class AudiencesService {
     account: Account,
     createAudienceDto: CreateAudienceDto
   ): Promise<Audience> {
-    const audience = new Audience();
-    audience.name = createAudienceDto.name;
-    audience.customers = [];
-    audience.templates = [];
-    audience.isPrimary = createAudienceDto.isPrimary;
-    audience.description = createAudienceDto.description;
-    audience.ownerId = account.id;
-    audience.templates = createAudienceDto.templates;
+    const { name, isPrimary, description, templates, workflowId } =
+      createAudienceDto;
     try {
-      const resp = await this.audiencesRepository.save(audience);
-      const stats = this.statsRepository.create({ audience: resp });
-      await this.statsRepository.save(stats);
+      const resp = await this.audiencesRepository.save({
+        customers: [],
+        name,
+        isPrimary,
+        description,
+        templates: await Promise.all(
+          (templates || []).map((templateId) =>
+            this.templatesService.templatesRepository.findOneBy({
+              id: templateId,
+            })
+          )
+        ),
+        owner: { id: account.id },
+        workflow: { id: workflowId },
+      });
       return resp;
     } catch (e) {
       console.error(e);
@@ -138,7 +135,7 @@ export class AudiencesService {
     let audience: Audience; // The found audience
     try {
       audience = await this.audiencesRepository.findOneBy({
-        ownerId: (<Account>account).id,
+        owner: { id: account.id },
         id: updateAudienceDto.id,
         isEditable: true,
       });
@@ -164,7 +161,7 @@ export class AudiencesService {
     }
     try {
       await this.audiencesRepository.update(
-        { ownerId: (<Account>account).id, id: updateAudienceDto.id },
+        { owner: { id: account.id }, id: updateAudienceDto.id },
         {
           description: updateAudienceDto.description,
           name: updateAudienceDto.name,
@@ -193,11 +190,15 @@ export class AudiencesService {
    * @param id - The audience ID to freeze
    *
    */
-  async freeze(account: Account, id: string): Promise<Audience> {
+  async freeze(
+    account: Account,
+    id: string,
+    queryRunner: QueryRunner
+  ): Promise<Audience> {
     let found: Audience, ret: Audience;
     try {
-      found = await this.audiencesRepository.findOneBy({
-        ownerId: (<Account>account).id,
+      found = await queryRunner.manager.findOneBy(Audience, {
+        owner: { id: account.id },
         id: id,
       });
       this.logger.debug('Found audience to freeze: ' + found.id);
@@ -206,7 +207,7 @@ export class AudiencesService {
       return Promise.reject(err);
     }
     try {
-      ret = await this.audiencesRepository.save({
+      ret = await queryRunner.manager.save(Audience, {
         ...found,
         isEditable: false,
       });
@@ -236,45 +237,49 @@ export class AudiencesService {
     account: Account,
     from: string | null | undefined,
     to: string | null | undefined,
-    customerId: string,
-    event: EventDto
+    customer: CustomerDocument,
+    event: EventDto,
+    queryRunner: QueryRunner
   ): Promise<{ jobIds: (string | number)[]; templates: Template[] }> {
+    const customerId = customer.id;
     let index = -1; // Index of the customer ID in the fromAud.customers array
     const jobIds: (string | number)[] = [];
     let jobId: string | number;
     let fromAud: Audience, toAud: Audience;
     const templates: Template[] = [];
-
-    if (from) {
-      try {
-        fromAud = await this.findOne(account, from);
-      } catch (err) {
-        this.logger.error('Error: ' + err);
-        return Promise.reject(err);
+    try {
+      if (from) {
+        try {
+          fromAud = await queryRunner.manager.findOneBy(Audience, {
+            owner: { id: account.id },
+            id: from,
+          });
+        } catch (err) {
+          this.logger.error('Error: ' + err);
+          return Promise.reject(err);
+        }
       }
-    }
-    if (to) {
-      try {
-        toAud = await this.findOne(account, to);
-      } catch (err) {
-        this.logger.error('Error: ' + err);
-        return Promise.reject(err);
-      }
-    }
 
-    if (fromAud?.customers?.length) {
-      index = fromAud?.customers?.indexOf(customerId);
-      this.logger.debug(
-        'Index of customer ' + customerId + ' inside of from: ' + index
-      );
-    }
-    if (fromAud && !fromAud.isEditable && index > -1) {
-      try {
+      if (to) {
+        toAud = await queryRunner.manager.findOne(Audience, {
+          where: { owner: { id: account.id }, id: to },
+          relations: ['templates'],
+        });
+      }
+
+      if (fromAud?.customers?.length) {
+        index = fromAud?.customers?.indexOf(customerId);
+        this.logger.debug(
+          'Index of customer ' + customerId + ' inside of from: ' + index
+        );
+      }
+      if (fromAud && !fromAud.isEditable && index > -1) {
         this.logger.debug(
           'From customers before: ' + fromAud?.customers?.length
         );
         fromAud?.customers?.splice(index, 1);
-        await this.audiencesRepository.update(
+        await queryRunner.manager.update(
+          Audience,
           { id: fromAud.id, isEditable: false },
           {
             customers: fromAud?.customers,
@@ -283,88 +288,76 @@ export class AudiencesService {
         this.logger.debug(
           'From customers after: ' + fromAud?.customers?.length
         );
-      } catch (err) {
-        this.logger.error('Error: ' + err);
-        return Promise.reject(err);
       }
-    }
-    if (toAud && !toAud.isEditable) {
-      try {
+      if (toAud && !toAud.isEditable) {
         this.logger.debug('To before: ' + toAud?.customers?.length);
-        const saved = await this.audiencesRepository.save(
-          //{ id: toAud.id, isEditable: false },
-          {
-            ...toAud,
-            customers: [...toAud?.customers, customerId],
-          }
-        );
+        toAud.customers = [...toAud.customers, customerId];
+        const saved = await queryRunner.manager.save(toAud);
         this.logger.debug('To after: ' + saved?.customers?.length);
-      } catch (err) {
-        this.logger.error('Error: ' + err);
-        return Promise.reject(err);
-      }
 
-      if (
-        account.emailProvider === 'free3' &&
-        account.customerId !== customerId &&
-        toAud?.templates?.length
-      ) {
-        const data = await this.templatesService.templatesRepository.find({
-          where: {
-            ownerId: account.id,
-            type: 'email',
-            id: In(toAud?.templates),
-          },
-        });
-        if (data.length > 0) {
-          this.logger.debug(
-            'ToAud templates before template skip: ',
-            toAud.templates
-          );
-          const dataIds = data.map((el2) => String(el2.id));
-          toAud.templates = toAud.templates.filter(
-            (el) => !dataIds.includes(String(el))
-          );
-          this.logger.debug(
-            'ToAud templates after template skip: ',
-            toAud.templates
-          );
-          this.logger.warn(
-            'Templates: [' +
-              dataIds.join(',') +
-              "] was skipped to send because test mail's can't be sent to external account."
-          );
-        }
-      }
+        let toTemplates = toAud.templates.map((item) => item.id);
 
-      if (toAud?.templates?.length) {
-        for (
-          let templateIndex = 0;
-          templateIndex < toAud?.templates?.length;
-          templateIndex++
+        if (
+          account.emailProvider === 'free3' &&
+          account.customerId !== customerId &&
+          toTemplates.length
         ) {
-          try {
+          const data = await queryRunner.manager.find(Template, {
+            where: {
+              owner: { id: account.id },
+              type: 'email',
+              id: In(toTemplates),
+            },
+          });
+          if (data.length > 0) {
+            this.logger.debug(
+              'ToAud templates before template skip: ',
+              toTemplates
+            );
+            const dataIds = data.map((el2) => String(el2.id));
+            toTemplates = toTemplates.filter(
+              (el) => !dataIds.includes(String(el))
+            );
+            this.logger.debug(
+              'ToAud templates after template skip: ',
+              toTemplates
+            );
+            this.logger.warn(
+              'Templates: [' +
+                dataIds.join(',') +
+                "] was skipped to send because test mail's can't be sent to external account."
+            );
+          }
+        }
+
+        if (toTemplates?.length) {
+          for (
+            let templateIndex = 0;
+            templateIndex < toTemplates?.length;
+            templateIndex++
+          ) {
             jobId = await this.templatesService.queueMessage(
               account,
-              toAud.templates[templateIndex],
-              customerId,
+              toTemplates[templateIndex],
+              customer,
               event,
               toAud.id
             );
             templates.push(
               await this.templatesService.templatesRepository.findOneBy({
-                id: toAud.templates[templateIndex],
+                id: toTemplates[templateIndex],
               })
             );
             this.logger.debug('Queued Message');
             jobIds.push(jobId);
-          } catch (err) {
-            this.logger.error('Error: ' + err);
-            return Promise.reject(err);
           }
         }
       }
+    } catch (err) {
+      this.logger.error('Error: ' + err);
+      return Promise.reject(err);
     }
+
     return Promise.resolve({ jobIds, templates });
   }
 
@@ -384,7 +377,8 @@ export class AudiencesService {
     fromAud: Audience | null | undefined,
     toAud: Audience | null | undefined,
     customers: CustomerDocument[],
-    event: EventDto
+    event: EventDto,
+    queryRunner: QueryRunner
   ): Promise<(string | number)[]> {
     let jobIds: (string | number)[] = [];
     for (let index = 0; index < customers?.length; index++) {
@@ -393,8 +387,9 @@ export class AudiencesService {
           account,
           fromAud?.id,
           toAud?.id,
-          customers[index].id,
-          event
+          customers[index],
+          event,
+          queryRunner
         );
         jobIds = [...jobIdArr, ...jobIds];
       } catch (err) {

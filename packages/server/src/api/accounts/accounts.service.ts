@@ -5,6 +5,7 @@ import {
   HttpStatus,
   Inject,
   Injectable,
+  NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -15,6 +16,10 @@ import { CustomersService } from '../customers/customers.service';
 import { AuthService } from '../auth/auth.service';
 import { MailService } from '@sendgrid/mail';
 import { Client } from '@sendgrid/client';
+import { RemoveAccountDto } from './dto/remove-account.dto';
+import { InjectConnection } from '@nestjs/mongoose';
+import mongoose from 'mongoose';
+import { AppDataSource } from '@/data-source';
 
 @Injectable()
 export class AccountsService extends BaseJwtHelper {
@@ -25,7 +30,8 @@ export class AccountsService extends BaseJwtHelper {
     @InjectRepository(Account)
     public accountsRepository: Repository<Account>,
     @Inject(CustomersService) private customersService: CustomersService,
-    @Inject(AuthService) private authService: AuthService
+    @Inject(AuthService) private authService: AuthService,
+    @InjectConnection() private readonly connection: mongoose.Connection
   ) {
     super();
   }
@@ -34,8 +40,14 @@ export class AccountsService extends BaseJwtHelper {
     return this.accountsRepository.find();
   }
 
-  findOne(user: Express.User | { id: string }): Promise<Account> {
-    return this.accountsRepository.findOneBy({ id: (<Account>user).id });
+  async findOne(user: Express.User | { id: string }): Promise<Account> {
+    const account = await this.accountsRepository.findOneBy({
+      id: (<Account>user).id,
+    });
+
+    if (!account) throw new NotFoundException('Account not found');
+
+    return account;
   }
 
   findOneByAPIKey(apiKey: string): Promise<Account> {
@@ -138,6 +150,9 @@ export class AccountsService extends BaseJwtHelper {
         oldUser.expectedOnboarding.length === oldUser.currentOnboarding.length;
     }
 
+    const transactionSession = await this.connection.startSession();
+    transactionSession.startTransaction();
+
     let verified = oldUser.verified;
     const needEmailUpdate =
       updateUserDto.email && oldUser.email !== updateUserDto.email;
@@ -151,7 +166,7 @@ export class AccountsService extends BaseJwtHelper {
         );
 
         customer.verified = false;
-        await customer.save();
+        await customer.save({ session: transactionSession });
       }
     }
 
@@ -171,18 +186,35 @@ export class AccountsService extends BaseJwtHelper {
         HttpStatus.BAD_REQUEST
       );
 
-    const updatedUser = await this.accountsRepository.save({
-      ...oldUser,
-      ...updateUserDto,
-      password,
-      verified,
-      sendgridVerificationKey: verificationKey,
-    });
+    try {
+      let updatedUser: Account;
+      await AppDataSource.manager.transaction(async (transactionManager) => {
+        for (const key of Object.keys(updateUserDto)) {
+          oldUser[key] = updateUserDto[key];
+        }
 
-    if (needEmailUpdate)
-      await this.authService.requestVerification(updatedUser);
+        oldUser.password = password;
+        oldUser.verified = verified;
+        oldUser.sendgridVerificationKey = verificationKey;
 
-    return updatedUser;
+        updatedUser = await transactionManager.save<Account>(oldUser);
+
+        if (needEmailUpdate)
+          await this.authService.requestVerification(
+            updatedUser,
+            transactionManager
+          );
+      });
+
+      await transactionSession.commitTransaction();
+
+      return updatedUser;
+    } catch (e) {
+      await transactionSession.abortTransaction();
+      throw e;
+    } finally {
+      await transactionSession.endSession();
+    }
   }
 
   async updateApiKey(user: Express.User): Promise<string> {
@@ -197,7 +229,35 @@ export class AccountsService extends BaseJwtHelper {
     return newKey;
   }
 
-  async remove(user: Express.User): Promise<void> {
-    await this.accountsRepository.delete((<Account>user).id);
+  async remove(
+    user: Express.User,
+    removeAccountDto: RemoveAccountDto
+  ): Promise<void> {
+    const account = await this.findOne(user);
+
+    if (!bcrypt.compareSync(removeAccountDto.password, account.password))
+      throw new BadRequestException('Password is incorrect');
+
+    const transactionSession = await this.connection.startSession();
+    transactionSession.startTransaction();
+
+    await this.customersService.CustomerModel.deleteMany(
+      {
+        ownerId: account.id,
+      },
+      { session: transactionSession }
+    )
+      .session(transactionSession)
+      .exec();
+
+    try {
+      await this.accountsRepository.delete(account.id);
+      await transactionSession.commitTransaction();
+    } catch (e) {
+      await transactionSession.abortTransaction();
+      throw e;
+    } finally {
+      await transactionSession.endSession();
+    }
   }
 }

@@ -39,7 +39,7 @@ export class TemplatesController {
     @Query('skip') skip?: string,
     @Query('orderBy') orderBy?: keyof Template,
     @Query('orderType') orderType?: 'asc' | 'desc'
-  ) {
+  ): Promise<{ data: Template[]; totalPages: number }> {
     return this.templatesService.findAll(
       <Account>user,
       take && +take,

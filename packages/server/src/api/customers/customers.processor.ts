@@ -3,11 +3,14 @@ import { Job } from 'bull';
 import { Inject } from '@nestjs/common';
 import { CustomersService } from './customers.service';
 import axios from 'axios';
+import { InjectConnection } from '@nestjs/mongoose';
+import mongoose from 'mongoose';
 
 @Processor('customers')
 export class CustomersProcessor {
   constructor(
-    @Inject(CustomersService) private customersService: CustomersService
+    @Inject(CustomersService) private customersService: CustomersService,
+    @InjectConnection() private readonly connection: mongoose.Connection
   ) {}
 
   @Process()

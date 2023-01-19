@@ -1,16 +1,5 @@
-import React, {
-  ReactElement,
-  useEffect,
-  useLayoutEffect,
-  useState,
-} from "react";
-import {
-  BrowserRouter,
-  Routes,
-  Route,
-  Navigate,
-  useNavigate,
-} from "react-router-dom";
+import React, { ReactElement, useLayoutEffect, useState } from "react";
+import { BrowserRouter, Routes, Route, useNavigate } from "react-router-dom";
 import tokenService from "./services/token.service";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
@@ -18,8 +7,7 @@ import FlowBuilder from "pages/FlowBuilder";
 import EmailConfig from "pages/EmailConfig";
 import TriggerCreater from "components/TriggerCreater";
 import EmailBuilder from "pages/EmailBuilder";
-import { useTypedSelector } from "hooks/useTypeSelector";
-import { ActionType, AuthState, getUserPermissions } from "reducers/auth";
+import { getUserPermissions } from "reducers/auth";
 import SlackBuilder from "pages/SlackBuilder";
 import Cor from "pages/Cor";
 import FlowTable from "pages/FlowTable/FlowTable";
@@ -27,8 +15,6 @@ import TemplateTable from "pages/TemplateTable/TemplateTable";
 import PeopleTable from "pages/PeopleTable/PeopleTable";
 import FlowViewer from "pages/FlowViewer";
 import { useDispatch } from "react-redux";
-import { setSettingData } from "reducers/settings";
-import ApiService from "services/api.service";
 import DrawerLayout from "components/DrawerLayout";
 import TableBeta from "pages/TemplateTable/TableBeta";
 import OnboardingBeta from "pages/Onboarding/OnboardingBeta";
@@ -36,6 +22,7 @@ import Settings from "pages/Settings/Settings";
 import Person from "pages/Person";
 import Verify from "pages/Verify";
 import SmsBuilder from "pages/SmsBuilder";
+import { TriggerTypeName } from "types/Workflow";
 
 interface IProtected {
   children: ReactElement;
@@ -59,61 +46,6 @@ const Protected = ({ children }: IProtected) => {
   }
 
   return isLoggedIn ? children : <></>;
-};
-
-interface IOnboarded {
-  children: ReactElement;
-}
-
-const Onboarded = ({ children }: IOnboarded) => {
-  const { userData } = useTypedSelector<AuthState>((state) => state.auth);
-  const dispatch = useDispatch();
-  const { settings } = useTypedSelector((state) => state.settings);
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    if (!userData.onboarded) {
-      const func = async () => {
-        let data: any;
-        try {
-          data = (
-            await ApiService.get({
-              url: "/accounts",
-              options: {},
-            })
-          ).data;
-        } catch (e) {
-          return;
-        }
-
-        dispatch({
-          type: ActionType.UPDATE_USER_INFO,
-          payload: {
-            ...userData,
-            onboarded: data.onboarded,
-            expectedOnboarding: data.expectedOnboarding,
-          },
-        });
-        dispatch(
-          setSettingData({
-            ...settings,
-            channel: data.expectedOnboarding.filter(
-              (str: string) => !data.currentOnboarding.includes(str)
-            ),
-          })
-        );
-        if (settings.channel?.length > 0) {
-          navigate("/settings/network-configuration");
-          return;
-        }
-        navigate("/settings/channel");
-      };
-
-      func();
-    }
-  }, []);
-
-  return userData.onboarded ? children : <></>;
 };
 
 const RouteComponent: React.FC = () => {
@@ -153,7 +85,7 @@ const RouteComponent: React.FC = () => {
           }
         />
         <Route
-          path="/flow/:name"
+          path="/flow/:id"
           element={
             <Protected>
               <DrawerLayout>
@@ -163,7 +95,7 @@ const RouteComponent: React.FC = () => {
           }
         />
         <Route
-          path="/flow/:name/view"
+          path="/flow/:id/view"
           element={
             <Protected>
               <DrawerLayout>
@@ -199,14 +131,6 @@ const RouteComponent: React.FC = () => {
               <DrawerLayout>
                 <EmailConfig />
               </DrawerLayout>
-            </Protected>
-          }
-        />
-        <Route
-          path="/trigger"
-          element={
-            <Protected>
-              <TriggerCreater triggerType="timeWindow" />
             </Protected>
           }
         />

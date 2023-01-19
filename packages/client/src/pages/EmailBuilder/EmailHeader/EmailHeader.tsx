@@ -1,43 +1,35 @@
-import { useState } from "react";
-import { MenuItem } from "@mui/material";
+import { ChangeEvent, KeyboardEvent, MouseEvent, useState } from "react";
 import PencilIcon from "@heroicons/react/24/solid/PencilIcon";
-import { GenericButton, Select, Input } from "components/Elements";
+import { GenericButton, Input } from "components/Elements";
 
 import { BackButtonIcon } from "../../../components/Icons/Icons";
-import { useNavigate } from "react-router-dom";
 
 export interface IEmailHeaderProps {
-  onPersonalize: (e: any) => void;
-  onSave: (e: any) => void;
+  onPersonalize: (e: MouseEvent<HTMLButtonElement>) => void;
+  onSave: (e: MouseEvent<HTMLButtonElement>) => void;
   templateName: string;
-  handleTemplateNameChange: (e: any) => void;
+  handleTemplateNameChange: (e: ChangeEvent<HTMLInputElement>) => void;
+  loading: boolean;
 }
 
 const EmailHeader = (props: IEmailHeaderProps) => {
-  const navigate = useNavigate();
-  const { onPersonalize, templateName, handleTemplateNameChange, onSave } =
-    props;
-  const [activeJourney, setActiveJourney] = useState("Email");
+  const {
+    onPersonalize,
+    templateName,
+    handleTemplateNameChange,
+    onSave,
+    loading,
+  } = props;
   const [titleEdit, setTitleEdit] = useState<boolean>(false);
 
   const handleTitleEdit = () => {
     setTitleEdit(!titleEdit);
   };
 
-  const handleTitleEnter = (e: any) => {
+  const handleTitleEnter = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       handleTitleEdit();
     }
-  };
-
-  const goToSlackBuilder = () => {
-    navigate("/slack-builder");
-    return;
-  };
-
-  const handleActiveJourney = (e: any) => {
-    if (e.target.value === "Slack") goToSlackBuilder();
-    setActiveJourney(e.target.value);
   };
 
   return (
@@ -91,6 +83,8 @@ const EmailHeader = (props: IEmailHeaderProps) => {
               maxWidth: "158px",
               maxHeight: "48px",
             }}
+            disabled={loading}
+            loading={loading}
           >
             Save Draft
           </GenericButton>
@@ -101,6 +95,8 @@ const EmailHeader = (props: IEmailHeaderProps) => {
               maxWidth: "158px",
               maxHeight: "48px",
             }}
+            disabled={loading}
+            loading={loading}
           >
             Personalize
           </GenericButton>

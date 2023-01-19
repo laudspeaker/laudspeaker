@@ -79,7 +79,9 @@ describe(
 
       cy.get('[data-isprimary="true"]')
         .get('[data-handlepos="bottom"]')
-        .drag('[data-isprimary="false"] [data-handlepos="top"]');
+        .drag('[data-isprimary="false"] [data-handlepos="top"]', {
+          force: true,
+        });
 
       cy.get('[data-isprimary="false"] [data-handlepos="top"]').click();
 

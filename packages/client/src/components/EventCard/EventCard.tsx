@@ -1,6 +1,8 @@
 import React from "react";
 import MinusIcon from "../../assets/images/MinusIcon.svg";
 import { transformDataToUI } from "pages/Segment/SegmentHelpers";
+import { FormDataItem } from "pages/Segment/MySegment";
+import { Resource } from "pages/EmailBuilder/EmailBuilder";
 
 export enum ConditionalType {
   and = "and",
@@ -8,11 +10,17 @@ export enum ConditionalType {
 }
 
 interface IEventCardProp {
-  updateFormData: any;
-  formData: any;
-  id: any;
-  resources: any;
-  handleDeleteRow: any;
+  updateFormData: (args: {
+    value: string;
+    id: string;
+    rowIndex: number;
+    type: string;
+    isRoot?: boolean;
+  }) => void;
+  formData: FormDataItem;
+  id: number;
+  resources: Record<string, Resource>;
+  handleDeleteRow: (rowIndex: number) => void;
   rowLength: number;
   canDeleteRow: boolean;
   conditionType: ConditionalType;
@@ -33,7 +41,18 @@ const EventCard = (props: IEventCardProp) => {
     handleDeleteRow(rowIndex);
   };
 
-  const handleChange = ({ value, id: key, type, isRoot }: any) => {
+  const handleChange = ({
+    value,
+    id: key,
+    type,
+    isRoot,
+  }: {
+    value: string;
+    id: string;
+    rowIndex?: number;
+    type: string;
+    isRoot?: boolean;
+  }) => {
     updateFormData({
       value,
       id: key,
@@ -44,7 +63,7 @@ const EventCard = (props: IEventCardProp) => {
   };
 
   const generateFormData = (
-    data: any,
+    data: FormDataItem,
     optionsFilter = (item: { label: string }) => item.label !== undefined
   ) => {
     const formElements: React.ReactNode[] = [];
@@ -62,6 +81,7 @@ const EventCard = (props: IEventCardProp) => {
         value: data[key]?.value,
         id: key,
       };
+
       formElements.push(transformDataToUI(objToPush));
       if (data?.[key]?.children && Object.keys(data?.[key]?.children)?.length) {
         formElements.push(generateFormData(data?.[key]?.children));

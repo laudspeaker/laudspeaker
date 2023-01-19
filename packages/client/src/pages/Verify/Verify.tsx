@@ -1,9 +1,10 @@
-import Header from "components/Header";
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import ApiService from "services/api.service";
 import { useNavigate } from "react-router-dom";
+import { AxiosError } from "axios";
+import Progress from "components/Progress";
 
 const Verify = () => {
   const { id } = useParams();
@@ -28,8 +29,10 @@ const Verify = () => {
           progress: undefined,
           theme: "colored",
         });
-      } catch (error: any) {
-        toast.error(error?.response?.data?.message || "Unexpected error.", {
+      } catch (e) {
+        let message = "Unexpected error";
+        if (e instanceof AxiosError) message = e?.response?.data?.message;
+        toast.error(message, {
           position: "bottom-center",
           autoClose: 5000,
           hideProgressBar: false,
@@ -45,7 +48,7 @@ const Verify = () => {
     })();
   }, []);
 
-  if (loading) return <>Loading...</>;
+  if (loading) return <Progress />;
 
   return <></>;
 };

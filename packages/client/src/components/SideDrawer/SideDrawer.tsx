@@ -4,6 +4,25 @@ import { useLocation } from "react-router-dom";
 import { useParams } from "react-router-dom";
 import ApiService from "services/api.service";
 import Tooltip from "components/Elements/Tooltip";
+import { ForwardedRef, ReactNode } from "react";
+
+interface IMenuItem {
+  type: string;
+  text: string;
+  children?: IMenuItemChildren[];
+}
+
+interface IMenuItemChildren {
+  id: string;
+  text: string;
+  link: string;
+  imgIcon: ReactNode;
+  alwaysDisabled?: boolean;
+  canBeDisabled?: boolean;
+  requiredOnboarding?: string;
+  disabledToolTip?: string;
+  enabledToolTip?: string;
+}
 
 interface Props {
   /**
@@ -14,12 +33,12 @@ interface Props {
   selectedNode: string;
   onClick: (id: string) => void;
   afterMenuContent?: React.ReactNode;
+  flowName: string;
 }
 
 export default function ResponsiveDrawer(props: Props) {
   const { selectedNode, onClick } = props;
   const location = useLocation();
-  const { name } = useParams();
   const [expectedOnboarding, setExpectedOnboarding] = React.useState<string[]>(
     []
   );
@@ -64,8 +83,16 @@ export default function ResponsiveDrawer(props: Props) {
     onClick(id);
   };
 
+  interface MenuItemProps {
+    item: { id: string; link: string; text: string; imgIcon: ReactNode };
+    isDisabled: boolean;
+  }
+
   const MenuItem = React.forwardRef(
-    ({ item, isDisabled, ...itemProps }: any, ref: any) => (
+    (
+      { item, isDisabled, ...itemProps }: MenuItemProps,
+      ref: ForwardedRef<HTMLDivElement>
+    ) => (
       <div
         id={item.id}
         onClick={isDisabled ? undefined : () => handleMenuItemClick(item.id)}
@@ -102,12 +129,13 @@ export default function ResponsiveDrawer(props: Props) {
     )
   );
 
-  const generateMenuItem = (item: any) => {
-    const isDisabled =
+  const generateMenuItem = (item: IMenuItemChildren) => {
+    const isDisabled = Boolean(
       item.alwaysDisabled ||
-      (item.canBeDisabled && !selectedNode) ||
-      (item.requiredOnboarding &&
-        !expectedOnboarding?.includes(item.requiredOnboarding));
+        (item.canBeDisabled && !selectedNode) ||
+        (item.requiredOnboarding &&
+          !expectedOnboarding?.includes(item.requiredOnboarding))
+    );
 
     return (
       <>
@@ -125,24 +153,18 @@ export default function ResponsiveDrawer(props: Props) {
     );
   };
 
-  const generateMenu = (arr: any) => {
+  const generateMenu = (arr: IMenuItem[]) => {
     return (
       <>
-        {arr.map((item: any) => {
+        {arr.map((item) => {
           return (
             <>
-              {item.type === "group" ? (
-                <>
-                  <div className="text-left font-medium mt-[26px] ml-[18px] text-[14px] font-[Inter]">
-                    {item.text}
-                  </div>
-                  {item?.children?.map((menuItem: any) => (
-                    <>{generateMenuItem(menuItem)}</>
-                  ))}
-                </>
-              ) : (
-                <>{generateMenuItem(item)}</>
-              )}
+              <div className="text-left font-medium mt-[26px] ml-[18px] text-[14px] font-[Inter]">
+                {item.text}
+              </div>
+              {item?.children?.map((menuItem) => (
+                <>{generateMenuItem(menuItem)}</>
+              ))}
             </>
           );
         })}
@@ -153,7 +175,7 @@ export default function ResponsiveDrawer(props: Props) {
     return (
       <>
         <div className="text-[16px] bg-cyan-700 w-full min-h-[50px] text-white text-ellipsis overflow-hidden px-[20px] py-[15px]">
-          {name}
+          {props.flowName}
         </div>
         <div className="min-h-screen flex-col justify-between px-[20px] py-[15px]">
           {generateMenu(dataSubArray)}

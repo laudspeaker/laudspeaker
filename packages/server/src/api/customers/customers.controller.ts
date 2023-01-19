@@ -100,7 +100,6 @@ export class CustomersController {
       createCustomerDto
     );
 
-    // @ts-ignore
     return cust.id;
   }
 

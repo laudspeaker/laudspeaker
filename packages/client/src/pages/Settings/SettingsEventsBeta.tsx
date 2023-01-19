@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { ChangeEvent, FocusEvent, useEffect, useState } from "react";
 import { ExclamationCircleIcon } from "@heroicons/react/20/solid";
 import { RadioGroup } from "@headlessui/react";
 import ApiService from "services/api.service";
@@ -86,11 +86,11 @@ export default function SettingsEventsBeta() {
 
   const isError = Object.values(errors).some((arr) => arr.length > 0);
 
-  const handleFormDataChange = (e: any) => {
+  const handleFormDataChange = (e: ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleBlur = (e: any) => {
+  const handleBlur = (e: FocusEvent<HTMLInputElement>) => {
     setShowErrors({ ...showErrors, [e.target.name]: true });
   };
 
@@ -114,7 +114,7 @@ export default function SettingsEventsBeta() {
   };
 
   const handleSubmit = async () => {
-    const options: Record<string, any[]> = {};
+    const options: Record<string, string[]> = {};
     for (const key of Object.keys(formData)) {
       options[key] = [formData[key]];
     }

@@ -1,7 +1,7 @@
 import React from "react";
 import { Radio } from "@mui/material";
 
-export interface RadioButtonProps {
+export interface RadioButtonProps<T> {
   name: string;
   id: string;
   checked: boolean;
@@ -17,12 +17,12 @@ export interface RadioButtonProps {
   cssOverideClass?: object;
   // variant?: 'contained' | 'outlined' | 'text',
   inputProps?: object;
-  inputRef?: React.RefObject<any>;
-  value?: any;
+  inputRef?: React.RefObject<HTMLInputElement>;
+  value?: T;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
-const RadioButton = (props: RadioButtonProps) => {
+const RadioButton = <T,>(props: RadioButtonProps<T>) => {
   const {
     checked,
     customClasses,

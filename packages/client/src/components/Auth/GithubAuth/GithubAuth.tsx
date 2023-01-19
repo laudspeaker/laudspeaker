@@ -4,8 +4,8 @@ import LoginGithub from "react-login-github";
 
 export interface GithubProps {
   clientId: string;
-  onFailure: (response: any) => void;
-  onSuccess: (response: any) => void;
+  onFailure: (response: object) => void;
+  onSuccess: (response: object) => void;
   children?: React.ReactNode;
   redirectUri?: string;
   scope?: string;

@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import Progress from "components/Progress";
+import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { correlateSlack } from "./CorrelationHelpers";
 
@@ -8,11 +9,11 @@ const Cor = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
 
-  React.useEffect(() => {
+  useEffect(() => {
     async function setLoadingAsync() {
       setLoading(true);
       try {
-        const data = await correlateSlack(id);
+        await correlateSlack(id);
         setSuccess("Success");
       } catch (err) {
         setError(true);
@@ -29,12 +30,7 @@ const Cor = () => {
         <p style={{ textAlign: "center" }}>Error</p>
       </div>
     );
-  if (loading)
-    return (
-      <div>
-        <p style={{ textAlign: "center" }}>One moment</p>
-      </div>
-    );
+  if (loading) return <Progress />;
   return (
     <div>
       <p style={{ textAlign: "center" }}>{success}</p>

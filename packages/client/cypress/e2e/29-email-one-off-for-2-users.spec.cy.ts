@@ -26,7 +26,7 @@ describe(
       cy.contains("Create Person").click();
       cy.get("#name").type("NewUser");
       cy.get(".bg-white > .mt-6 button").click();
-      cy.wait(1000);
+      cy.wait(5000);
       cy.contains("Edit").click();
       cy.contains("New attribute").click();
       cy.get(":nth-child(6) > :nth-child(1) > .relative > .mt-1").type("email");

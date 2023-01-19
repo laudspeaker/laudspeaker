@@ -7,27 +7,24 @@ import thunderbolt from "../../assets/images/thunderbolt.svg";
 
 import { Email, SlackMsg, Mobile, SMS } from "../../components/Icons/Icons";
 import { getAudienceDetails } from "pages/FlowBuilder/FlowHelpers";
-import TriggerCreater from "components/TriggerCreater";
 import ChooseTemplateModal from "pages/FlowBuilder/ChooseTemplateModal";
 import StatModal from "./StatModal";
+import { NodeData } from "pages/FlowBuilder/FlowBuilder";
 
 const textStyle =
   "text-[#223343] font-[Poppins] font-normal text-[14px] leading-[30px]";
 const subTitleTextStyle = "text-[#6B7280] font-[Poppins] text-[14px]";
 
-const iconStyles = "mr-[20px] flex justify-center items-center";
-
-const ViewNode = ({ data, setSelectedTrigger, selectedTrigger }: any) => {
-  const {
-    audienceId,
-    dataTriggers,
-    hidden,
-    onTriggerSelect,
-    triggers,
-    isExit,
-    stats,
-  } = data;
-  const [nodeData, setNodeData] = useState<any>({});
+const ViewNode = ({ data }: { data: NodeData }) => {
+  const { audienceId, hidden, onTriggerSelect, triggers, isExit, stats } = data;
+  const [nodeData, setNodeData] = useState<{
+    id?: string;
+    isPrimary?: boolean;
+    preIcon?: string;
+    name?: string;
+    description?: string;
+    width?: string;
+  }>({});
 
   const [selectedMessageType, setSelectedMessageType] = useState("");
   const [selectedTemplateId, setSelectedTemplateId] = useState<number>();
@@ -47,12 +44,11 @@ const ViewNode = ({ data, setSelectedTrigger, selectedTrigger }: any) => {
     setSelectedTemplateId(templateId);
   };
 
-  // const [selectedTrigger, setSelectedTrigger] = useState<any>(undefined);
   useEffect(() => {
-    if (isExit) setNodeData(data);
+    if (isExit) setNodeData({});
     // audienceId is present when we are just dispalying the existing node data
     else if (audienceId) {
-      getAudienceDetails(audienceId).then((response: any) => {
+      getAudienceDetails(audienceId).then((response) => {
         if (response.status === StatusCodes.OK) {
           setNodeData(response.data);
         }
@@ -60,17 +56,17 @@ const ViewNode = ({ data, setSelectedTrigger, selectedTrigger }: any) => {
     } else {
       setNodeData({
         id: uuid(),
-        title: "Please define audience",
-        desc: "Please define",
+        name: "Please define audience",
+        description: "Please define",
       });
     }
   }, [audienceId]);
 
-  const handleTriggerClick = (e: any, triggerId: string) => {
+  const handleTriggerClick = (
+    e: { stopPropagation: () => void },
+    triggerId: string
+  ) => {
     e.stopPropagation();
-    // const dataTrigger = dataTriggers.find(
-    //   (trigger: any) => trigger.id === triggerId
-    // );
     onTriggerSelect(e, triggerId, triggers);
   };
 
@@ -82,7 +78,7 @@ const ViewNode = ({ data, setSelectedTrigger, selectedTrigger }: any) => {
   };
 
   const generateMsgIcons = () => {
-    return data?.messages?.map((message: any) => {
+    return data?.messages?.map((message) => {
       return (
         <div
           className="p-[0px_10px] cursor-pointer"
@@ -94,13 +90,19 @@ const ViewNode = ({ data, setSelectedTrigger, selectedTrigger }: any) => {
     });
   };
 
-  const handleTemplateModalOpen = ({ activeTemplate }: any) => {
-    if (activeTemplate == null || activeTemplate == "") {
+  const handleTemplateModalOpen = (dat?: {
+    activeTemplate?: number;
+    selectedMessageType: string;
+  }) => {
+    if (!dat) return;
+
+    const { activeTemplate } = dat;
+    if (!activeTemplate) {
       onTemplateModalClose();
       return;
     }
     const found = data?.messages?.find(
-      (message: any) => message.templateId === selectedTemplateId
+      (message) => message.templateId === selectedTemplateId
     );
 
     if (found) {
@@ -113,7 +115,7 @@ const ViewNode = ({ data, setSelectedTrigger, selectedTrigger }: any) => {
   const onTemplateDelete = () => {
     if (data?.messages) {
       data.messages = data.messages.filter(
-        (message: any) => message.templateId !== selectedTemplateId
+        (message) => message.templateId !== selectedTemplateId
       );
     }
 
@@ -212,7 +214,7 @@ const ViewNode = ({ data, setSelectedTrigger, selectedTrigger }: any) => {
         </div>
         <div className="flex h-[15px] absolute left-0 bottom-0 items-center w-full justify-around">
           {!isExit &&
-            data?.triggers?.map((trigger: any, index: number) => {
+            data?.triggers?.map((trigger, index) => {
               return (
                 <Handle
                   type="source"
@@ -232,20 +234,6 @@ const ViewNode = ({ data, setSelectedTrigger, selectedTrigger }: any) => {
               );
             })}
         </div>
-      </div>
-      <div
-        style={{
-          position: "absolute",
-          top: "100px",
-          width: "calc(760px)",
-        }}
-      >
-        {selectedTrigger ? (
-          <TriggerCreater
-            isViewMode={true}
-            triggerType={selectedTrigger.type}
-          />
-        ) : null}
       </div>
       {updateTemplateModalOpen && selectedMessageType && selectedTemplateId && (
         <ChooseTemplateModal

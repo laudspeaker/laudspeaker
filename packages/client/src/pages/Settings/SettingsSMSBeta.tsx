@@ -1,12 +1,28 @@
+import { RadioGroup } from "@headlessui/react";
 import { ExclamationCircleIcon } from "@heroicons/react/20/solid";
 import { Input } from "components/Elements";
 import SaveSettings from "components/SaveSettings";
-import { ChangeEvent, useEffect, useState } from "react";
+import { ChangeEvent, FocusEvent, useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { useDebounce } from "react-use";
 import ApiService from "services/api.service";
 
+const memoryOptions: Record<
+  string,
+  { id: string; name: string; inStock: boolean }
+> = {
+  twilio: { id: "twilio", name: "Twilio", inStock: true },
+  vonage: { id: "vonage", name: "Vonage", inStock: false },
+};
+
+function classNames(...classes: string[]) {
+  return classes.filter(Boolean).join(" ");
+}
+
 export default function SettingsSMSBeta() {
+  const [smsProvider, setSmsProvider] = useState("twilio");
+  const mem = memoryOptions[smsProvider];
+
   const [formData, setFormData] = useState({
     smsAccountSid: "",
     smsAuthToken: "",
@@ -110,7 +126,7 @@ export default function SettingsSMSBeta() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleBlur = (e: any) => {
+  const handleBlur = (e: FocusEvent<HTMLSelectElement>) => {
     setShowErrors({ ...showErrors, [e.target.name]: true });
   };
 
@@ -121,10 +137,8 @@ export default function SettingsSMSBeta() {
         url: "/accounts",
         options: { ...formData },
       });
-    } catch (e: any) {
-      toast.error(e.response?.data?.message || "Unexpected error");
-    } finally {
-      setIsLoading(false);
+    } catch (e) {
+      toast.error("Unexpected error");
     }
   };
 
@@ -133,6 +147,40 @@ export default function SettingsSMSBeta() {
   return (
     <>
       <div className="mt-10 divide-y divide-gray-200">
+        <div className="space-y-10">
+          <RadioGroup
+            value={mem}
+            onChange={(m) => setSmsProvider(m.id)}
+            className="mt-2"
+          >
+            <RadioGroup.Label className="sr-only">
+              Choose a memory option
+            </RadioGroup.Label>
+            <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
+              {Object.values(memoryOptions).map((option) => (
+                <RadioGroup.Option
+                  key={option.name}
+                  value={option}
+                  className={({ active, checked }) =>
+                    classNames(
+                      option.inStock
+                        ? "cursor-pointer focus:outline-none"
+                        : "opacity-25 cursor-not-allowed",
+                      active ? "ring-2 ring-offset-2 ring-cyan-500" : "",
+                      checked
+                        ? "bg-cyan-600 border-transparent text-white hover:bg-cyan-700"
+                        : "bg-white border-gray-200 text-gray-900 hover:bg-gray-50",
+                      "border rounded-md py-3 px-3 flex items-center justify-center text-sm font-medium sm:flex-1"
+                    )
+                  }
+                  disabled={!option.inStock}
+                >
+                  <RadioGroup.Label as="span">{option.name}</RadioGroup.Label>
+                </RadioGroup.Option>
+              ))}
+            </div>
+          </RadioGroup>
+        </div>
         <div className="mt-6">
           <dl className="divide-y divide-gray-200">
             <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:py-5">

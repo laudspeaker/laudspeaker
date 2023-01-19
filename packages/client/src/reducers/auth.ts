@@ -158,7 +158,7 @@ export const loginUser = (body: ILoginForm): any => {
     });
 
     try {
-      const { data, status } = await ApiService.post({
+      const { data, status } = await ApiService.post<any>({
         url: `${ApiConfig.login}`,
         options: {
           ...body,
@@ -188,7 +188,7 @@ export const loginUser = (body: ILoginForm): any => {
         data,
         status,
       };
-    } catch (err: any) {
+    } catch (err) {
       toast.error("Email or password is incorrect!", {
         position: "bottom-center",
         autoClose: 3000,
@@ -200,13 +200,16 @@ export const loginUser = (body: ILoginForm): any => {
         theme: "colored",
       });
 
-      posthog.capture("authError", {
-        authError: err.message,
-      });
-      dispatch({
-        type: ActionType.LOGIN_USER_FAIL,
-        payload: err.message,
-      });
+      if (err instanceof Error) {
+        posthog.capture("authError", {
+          authError: err.message,
+        });
+        dispatch({
+          type: ActionType.LOGIN_USER_FAIL,
+          payload: err.message,
+        });
+      }
+
       return {
         err,
       };
@@ -240,7 +243,7 @@ export const signUpUser = (body: ISignUpForm): any => {
 
     try {
       const { confirmPassword, ...rest } = body;
-      const { data } = await ApiService.post({
+      const { data } = await ApiService.post<any>({
         url: `${ApiConfig.signup}`,
         options: {
           ...rest,
@@ -265,11 +268,13 @@ export const signUpUser = (body: ISignUpForm): any => {
         data,
         status,
       };
-    } catch (err: any) {
-      dispatch({
-        type: ActionType.SIGNUP_USER_FAIL,
-        payload: err.message,
-      });
+    } catch (err) {
+      if (err instanceof Error)
+        dispatch({
+          type: ActionType.SIGNUP_USER_FAIL,
+          payload: err.message,
+        });
+      return { err };
     }
   };
 };

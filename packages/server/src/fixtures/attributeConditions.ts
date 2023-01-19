@@ -1,4 +1,7 @@
-export const attributeConditions = (type: string, isArray: boolean): any[] => {
+export const attributeConditions = (
+  type: string,
+  isArray: boolean
+): { label: string; id: string; where: string }[] => {
   if (isArray) {
     return [
       { label: 'contains', id: 'contains', where: '' },

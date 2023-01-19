@@ -1,15 +1,35 @@
-import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
+import { Account } from '@/api/accounts/entities/accounts.entity';
+import { Template } from '@/api/templates/entities/template.entity';
+import { Workflow } from '@/api/workflows/entities/workflow.entity';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  ManyToOne,
+  JoinColumn,
+  ManyToMany,
+  JoinTable,
+  BaseEntity,
+} from 'typeorm';
 
 @Entity()
-export class Audience {
+export class Audience extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
   public id!: string;
 
   @Column()
   name!: string;
 
-  @Column()
-  ownerId: string;
+  @JoinColumn()
+  @ManyToOne(() => Account, (account) => account.id, { onDelete: 'CASCADE' })
+  owner: Account;
+
+  @JoinColumn()
+  @ManyToOne(() => Workflow, (workflow) => workflow.id, {
+    onDelete: 'CASCADE',
+    nullable: false,
+  })
+  workflow: Workflow;
 
   @Column('varchar', { nullable: true })
   description: string;
@@ -20,8 +40,9 @@ export class Audience {
   @Column('text', { nullable: false, array: true, default: [] })
   customers: string[];
 
-  @Column('text', { nullable: false, array: true, default: [] })
-  templates: string[];
+  @ManyToMany(() => Template)
+  @JoinTable()
+  templates: Template[];
 
   @Column('jsonb', { nullable: true })
   resources: any;

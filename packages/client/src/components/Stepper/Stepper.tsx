@@ -6,8 +6,8 @@ export interface StepperProps {
   activeStep: number;
   alternativeLabel?: boolean;
   orientation?: "vertical" | "horizontal";
-  connector?: React.ReactElement<any, any>;
-  StepIconComponent?: React.ElementType<any>;
+  connector?: React.ReactElement;
+  StepIconComponent?: React.ElementType;
   icon?: React.ReactNode;
   sx?: object;
 }

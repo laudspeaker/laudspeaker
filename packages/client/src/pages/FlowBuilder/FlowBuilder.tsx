@@ -46,7 +46,14 @@ import { Grid } from "@mui/material";
 import ToggleSwitch from "components/Elements/ToggleSwitch";
 import AlertBanner from "components/AlertBanner";
 import SegmentModal, { SegmentModalMode } from "./SegmentModal";
-import { ProviderTypes } from "types/triggers";
+import {
+  ProviderTypes,
+  Trigger,
+  TriggerTypeName,
+  Workflow,
+} from "types/Workflow";
+import { AxiosError } from "axios";
+import Progress from "components/Progress";
 
 const segmentTypeStyle =
   "border-[1px] border-[#D1D5DB] rouded-[6px] shadow-[0px_1px_2px_rgba(0,0,0,0.05)] w-full mt-[20px] p-[15px]";
@@ -61,13 +68,38 @@ enum TriggerType {
   time_window,
 }
 
+export interface NodeData {
+  audienceId: string;
+  dataTriggers: Trigger[];
+  isDynamic?: boolean;
+  isSelected?: boolean;
+  messages: { type: string; templateId: number }[];
+  needsUpdate?: boolean;
+  nodeId?: string;
+  onHandleClick?: (
+    e: unknown,
+    triggerId: string
+  ) => { e: unknown; triggerId: string };
+  onTriggerSelect: (
+    e: unknown,
+    triggerId: string,
+    triggersList: Trigger[]
+  ) => void;
+  primary: boolean;
+  triggers: Trigger[];
+  hidden?: boolean;
+  isExit?: boolean;
+  isNew?: boolean;
+  stats?: { sent: number; clickedPercentage: number };
+}
+
 const convertLayoutToTable = (
   name: string,
-  nodes: Node[],
+  nodes: Node<NodeData>[],
   edges: Edge[],
   isDynamic: boolean,
   segmentId?: string
-): any => {
+) => {
   const dto: {
     name: string;
     audiences: string[];
@@ -76,14 +108,14 @@ const convertLayoutToTable = (
       source: string;
       dest: string[];
       properties: {
-        conditions: Record<string, any>;
+        conditions?: Record<string, any>;
       };
       providerType: ProviderTypes;
       providerParams?: string;
     }[];
     visualLayout: {
-      nodes: Node<any>[];
-      edges: Edge<any>[];
+      nodes: Node<NodeData>[];
+      edges: Edge<undefined>[];
     };
     isDynamic?: boolean;
     segmentId?: string;
@@ -96,10 +128,10 @@ const convertLayoutToTable = (
     segmentId,
   };
   for (let index = 0; index < edges.length; index++) {
-    const fromNode = _.filter(nodes, (node: any) => {
+    const fromNode = _.filter(nodes, (node) => {
       return node.id == edges[index].source;
     });
-    const toNode = _.filter(nodes, (node: any) => {
+    const toNode = _.filter(nodes, (node) => {
       return node.id == edges[index].target;
     });
     let foundTriggerIndex = 0;
@@ -136,17 +168,18 @@ const convertLayoutToTable = (
 };
 
 const Flow = () => {
-  const { name } = useParams();
+  const { id } = useParams();
   const [flowId, setFlowId] = useState<string>("");
-  const [nodes, setNodes] = useState<Node[]>([]);
-  const [edges, setEdges] = useState<Edge[]>([]);
-  const [triggers, setTriggers] = useState<any>([]);
-  const [selectedTrigger, setSelectedTrigger] = useState<any>(undefined);
+  const [flowName, setFlowName] = useState("");
+  const [nodes, setNodes] = useState<Node<NodeData>[]>([]);
+  const [edges, setEdges] = useState<Edge<undefined>[]>([]);
+  const [triggers, setTriggers] = useState<Trigger[]>([]);
+  const [selectedTrigger, setSelectedTrigger] = useState<Trigger>();
   const [selectedNode, setSelectedNode] = useState<string>("");
   const [templateModalOpen, setTemplateModalOpen] = useState<boolean>(false);
   const [audienceModalOpen, setAudienceModalOpen] = useState<boolean>(false);
   const [triggerModalOpen, settriggerModalOpen] = useState<boolean>(false);
-  const [selectedMessageType, setSelectedMessageType] = useState<any>("");
+  const [selectedMessageType, setSelectedMessageType] = useState("");
   const [tutorialOpen, setTutorialOpen] = useState(false);
   const [segmentId, setSegmentId] = useState<string>();
   const [segmentForm, setSegmentForm] = useState<INameSegmentForm>({
@@ -156,12 +189,20 @@ const Flow = () => {
   const [segmentModalMode, setSegmentModalMode] = useState(
     SegmentModalMode.EDIT
   );
+  const [isFlowLoading, setIsFlowLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
 
-  const onHandleClick = (e: any, triggerId: any) => {
+  const onHandleClick = (e: unknown, triggerId: string) => {
     return { e, triggerId };
   };
-  const onTriggerSelect = (e: any, triggerId: any, triggersList: any) => {
-    const trigger = triggersList.find((item: any) => item.id === triggerId);
+
+  const onTriggerSelect = (
+    e: unknown,
+    triggerId: string,
+    triggersList: Trigger[]
+  ) => {
+    const trigger = triggersList.find((item) => item.id === triggerId);
+    console.log("onselecttrigger", triggersList, trigger);
     setSelectedTrigger(trigger);
     settriggerModalOpen(true);
   };
@@ -169,43 +210,63 @@ const Flow = () => {
   const navigate = useNavigate();
   useLayoutEffect(() => {
     const populateFlowBuilder = async () => {
-      const { data } = await getFlow(name);
-      if (data.isActive) {
-        return navigate(`/flow/${name}/view`);
-      }
-      setSegmentForm({
-        isDynamic: data.isDynamic ?? true,
-      });
-      setSegmentId(data.segment?.id);
-      setFlowId(data.id);
-      if (data.visualLayout) {
-        const updatedNodes = data.visualLayout.nodes.map((item: any) => {
-          return {
-            ...item,
-            data: {
-              ...item.data,
-              onTriggerSelect,
-            },
-          };
+      try {
+        const { data }: { data: Workflow } = await getFlow(id);
+        if (data.isActive) {
+          return navigate(`/flow/${data.id}/view`);
+        }
+        setSegmentForm({
+          isDynamic: data.isDynamic ?? true,
         });
-        setNodes(updatedNodes);
-        setEdges(data.visualLayout.edges);
+        setSegmentId(data.segment?.id);
+        setFlowId(data.id);
+        setFlowName(data.name);
+        if (data.visualLayout) {
+          const updatedNodes = data.visualLayout.nodes.map((item) => {
+            return {
+              ...item,
+              data: {
+                ...item.data,
+                onTriggerSelect,
+                dataTriggers: item.data.dataTriggers || [],
+              },
+            };
+          });
+          setNodes(updatedNodes);
+          setEdges(data.visualLayout.edges);
+        }
+      } catch (e) {
+        toast.error("Error while loading workflow");
+      } finally {
+        setIsFlowLoading(false);
       }
     };
     populateFlowBuilder();
   }, []);
 
-  const generateNode = (node: any, dataTriggers: any) => {
+  const generateNode = (
+    node: Node<
+      | {
+          [key: string]: string | boolean;
+        }
+      | undefined
+    > & {
+      audienceId: string;
+      triggers: Trigger[];
+      messages: { type: string; templateId: number }[];
+    },
+    dataTriggers: Trigger[]
+  ): Node<NodeData> => {
     const {
       position,
-      id,
+      id: nodeId,
       audienceId,
       triggers: nodeTriggers,
       messages,
       data,
     } = node;
     return {
-      id,
+      id: nodeId,
       position,
       type: "special",
       data: {
@@ -248,7 +309,7 @@ const Flow = () => {
   }, [selectedNode, needsUpdate]);
 
   const onNodeDragStart = useCallback(
-    (event: React.MouseEvent, node: Node, allNodes: Node[]) => {
+    (event: React.MouseEvent, node: Node) => {
       setSelectedNode(node.id);
     },
     [nodes, triggers]
@@ -279,7 +340,7 @@ const Flow = () => {
   );
 
   const onClickConnectionStart = useCallback(
-    (event: React.MouseEvent, arg2: any) => {
+    (event: React.MouseEvent, arg2: unknown) => {
       console.log(event, arg2);
     },
     [triggers]
@@ -292,7 +353,7 @@ const Flow = () => {
     [setNodes, triggers]
   );
 
-  const onPaneClick = useCallback((event: React.MouseEvent) => {
+  const onPaneClick = useCallback(() => {
     setSelectedNode("");
   }, []);
 
@@ -306,8 +367,8 @@ const Flow = () => {
   const [zoomState, setZoomState] = useState(1);
   const possibleViewZoomValues = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
 
-  const performAction = (id: string) => {
-    switch (id) {
+  const performAction = (actionId: string) => {
+    switch (actionId) {
       case "audience": {
         setAudienceModalOpen(true);
         break;
@@ -360,14 +421,16 @@ const Flow = () => {
         setNodes([...nodes, generateNode(newNode, triggers)]);
         break;
       }
-      case "timeDelay": {
+      case TriggerTypeName.TIME_DELAY: {
         const selectedNodeData = nodes.find((node) => node.id === selectedNode);
         const triggerId = uuid();
-        const trigger = {
+        const trigger: Trigger = {
           id: triggerId,
           title: "Time Delay",
-          type: "timeDelay",
-          properties: {},
+          type: TriggerTypeName.TIME_DELAY,
+          properties: {
+            conditions: [],
+          },
         };
         setTriggers([...triggers, trigger]);
         selectedNodeData?.data?.triggers.push(trigger);
@@ -376,14 +439,14 @@ const Flow = () => {
         settriggerModalOpen(true);
         break;
       }
-      case "timeWindow": {
+      case TriggerTypeName.TIME_WINDOW: {
         const selectedNodeData = nodes.find((node) => node.id === selectedNode);
         const triggerId = uuid();
         const trigger = {
           id: triggerId,
           title: "Time Window",
-          type: "timeWindow",
-          properties: {},
+          type: TriggerTypeName.TIME_WINDOW,
+          properties: { conditions: [] },
         };
         setTriggers([...triggers, trigger]);
         selectedNodeData?.data?.triggers.push(trigger);
@@ -392,13 +455,13 @@ const Flow = () => {
         settriggerModalOpen(true);
         break;
       }
-      case "eventBased": {
+      case TriggerTypeName.EVENT: {
         const selectedNodeData = nodes.find((node) => node.id === selectedNode);
         const triggerId = uuid();
         const trigger = {
           id: triggerId,
           title: "Event Based",
-          type: "eventBased",
+          type: TriggerTypeName.EVENT,
           properties: {
             conditions: [],
           },
@@ -416,7 +479,7 @@ const Flow = () => {
       case "push":
       case "sms":
       case "slack": {
-        setSelectedMessageType(id);
+        setSelectedMessageType(actionId);
         setTemplateModalOpen(true);
         break;
       }
@@ -425,31 +488,28 @@ const Flow = () => {
     }
   };
 
-  const handleTriggerModalOpen = (e: any) => {
-    settriggerModalOpen(!triggerModalOpen);
-  };
-
   const handleTutorialOpen = () => {
     setTutorialOpen(true);
   };
 
-  const onSaveTrigger = (data: any) => {
+  const onSaveTrigger = (data: Trigger) => {
     settriggerModalOpen(false);
     console.log(data);
+    if (!selectedTrigger) return;
     selectedTrigger.providerParams = data.providerParams;
     selectedTrigger.providerType = data.providerType;
     selectedTrigger.properties = data.properties;
     console.log(selectedTrigger);
   };
 
-  const onDeleteTrigger = (data: any) => {
+  const onDeleteTrigger = (data: string) => {
     const selectedNodeData = nodes.find((node) =>
-      node.data.triggers.find((item: any) => item.id === data)
+      node.data.triggers.find((item) => item.id === data)
     );
-    const newTriggersData: any = selectedNodeData?.data?.triggers.filter(
-      (item: any) => item.id !== data
+    const newTriggersData = selectedNodeData?.data?.triggers.filter(
+      (item) => item.id !== data
     );
-    if (selectedNodeData !== undefined) {
+    if (selectedNodeData && newTriggersData) {
       selectedNodeData.data.triggers = newTriggersData;
       setNodes([...nodes]);
       setEdges(edges.filter((edge) => edge.sourceHandle !== data));
@@ -458,21 +518,26 @@ const Flow = () => {
     }
   };
 
-  const handleTemplateModalOpen = async ({ activeTemplate }: any) => {
-    if (activeTemplate == null || activeTemplate == "") {
+  const handleTemplateModalOpen = async (data?: {
+    activeTemplate?: number;
+    selectedMessageType: string;
+  }) => {
+    if (!data) return;
+    const { activeTemplate } = data;
+
+    if (!activeTemplate) {
       setTemplateModalOpen(!templateModalOpen);
       return;
     }
     const selectedNodeData = nodes.find((node) => node.id === selectedNode);
-    const messages = selectedNodeData?.data?.messages as {
-      type: string;
-      templateId: string;
-    }[];
-    const foundMessage = messages.find(
-      (message) =>
-        message.type === selectedMessageType &&
-        message.templateId === activeTemplate
-    );
+    const messages = selectedNodeData?.data?.messages;
+    const foundMessage =
+      !!messages &&
+      messages.find(
+        (message) =>
+          message.type === selectedMessageType &&
+          message.templateId === activeTemplate
+      );
     if (!foundMessage) {
       messages?.push({
         type: selectedMessageType,
@@ -497,36 +562,49 @@ const Flow = () => {
   };
 
   const handleSaveJourney = async () => {
-    console.log(nodes);
-    console.log(edges);
-    console.log(triggers);
-    const dto = convertLayoutToTable(
-      name,
-      nodes,
-      edges,
-      segmentForm.isDynamic,
-      segmentId
-    );
-    dto.audiences = (dto.audiences as string[]).filter((item) => !!item);
+    setIsSaving(true);
+    try {
+      console.log(nodes);
+      console.log(edges);
+      console.log(triggers);
+      const dto = convertLayoutToTable(
+        flowName,
+        nodes,
+        edges,
+        segmentForm.isDynamic,
+        segmentId
+      );
+      dto.audiences = (dto.audiences as string[]).filter((item) => !!item);
 
-    await ApiService.patch({
-      url: `${ApiConfig.flow}/${name}`,
-      options: {
-        ...dto,
-        id: flowId,
-      },
-    });
+      await ApiService.patch({
+        url: `${ApiConfig.flow}`,
+        options: {
+          ...dto,
+          id: flowId,
+        },
+      });
+    } catch (e) {
+      toast.error("Error while saving");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleStartJourney = async () => {
     await handleSaveJourney();
+    setIsSaving(true);
     try {
       await ApiService.get({
         url: `${ApiConfig.startFlow}/${flowId}`,
       });
       window.location.reload();
-    } catch (e: any) {
-      toast.error(e.response?.data?.message || "Unexpected error", {
+    } catch (e) {
+      let message = "Unexpected error";
+      if (e instanceof AxiosError) {
+        message = e.response?.data.message;
+      }
+
+      toast.error(message, {
         position: "bottom-center",
         autoClose: 5000,
         hideProgressBar: false,
@@ -536,26 +614,36 @@ const Flow = () => {
         progress: undefined,
         theme: "colored",
       });
+    } finally {
+      setIsSaving(false);
     }
   };
 
-  const handleAudienceSubmit = async (segment: any) => {
-    const { data } = await ApiService.post({
-      url: `${ApiConfig.createSegment}`,
-      options: {
-        ...segment,
-      },
-    });
-    setAudienceModalOpen(true);
-    const newNode = {
-      id: uuid(),
-      triggers: [],
-      messages: [],
-      position: { x: 0, y: 0 },
-      audienceId: data.id,
-    };
-    setNodes([...nodes, generateNode(newNode, triggers)]);
-    setAudienceModalOpen(false);
+  const handleAudienceSubmit = async (segment: INameSegmentForm) => {
+    setIsSaving(true);
+    try {
+      const { data } = await ApiService.post({
+        url: `${ApiConfig.createSegment}`,
+        options: {
+          ...segment,
+        },
+      });
+      setAudienceModalOpen(true);
+      const newNode = {
+        id: uuid(),
+        triggers: [],
+        messages: [],
+        position: { x: 0, y: 0 },
+        audienceId: data.id,
+        data: {},
+      };
+      setNodes([...nodes, generateNode(newNode, triggers)]);
+      setAudienceModalOpen(false);
+    } catch (error) {
+      toast.error("Error, saving segment");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const onToggleChange = async () => {
@@ -579,6 +667,8 @@ const Flow = () => {
       "Add a message to a step to be able to start a journey";
   else if (!segmentId)
     startDisabledReason = "You have to define segment for journey";
+
+  if (isFlowLoading) return <Progress />;
 
   return (
     <div>
@@ -607,6 +697,7 @@ const Flow = () => {
             <SideDrawer
               selectedNode={selectedNode}
               onClick={performAction}
+              flowName={flowName}
               afterMenuContent={
                 <div className="w-full">
                   <h3 className="pt-[20px] font-bold">Journey type</h3>
@@ -699,7 +790,7 @@ const Flow = () => {
               >
                 <div className="m-[0_7.5px]" data-saveflowbutton>
                   <button
-                    className="inline-flex items-center rounded-md border border-transparent bg-cyan-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-cyan-500 focus:outline-none focus:ring-2 focus:ring-offset-2 rounded-md bg-white font-medium focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2"
+                    className="inline-flex items-center rounded-md border border-transparent bg-cyan-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-cyan-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500"
                     onClick={handleTutorialOpen}
                     style={{
                       maxWidth: "158px",
@@ -710,18 +801,21 @@ const Flow = () => {
                     Tutorial
                   </button>
                 </div>
+
                 <div className="m-[0_7.5px]" data-saveflowbutton>
-                  <button
-                    className="inline-flex items-center rounded-md border border-transparent bg-cyan-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-cyan-500 focus:outline-none focus:ring-2 focus:ring-offset-2 rounded-md bg-white font-medium focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2"
+                  <GenericButton
+                    customClasses="inline-flex items-center rounded-md border border-transparent bg-cyan-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-cyan-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500"
                     onClick={handleSaveJourney}
                     style={{
                       maxWidth: "158px",
                       maxHeight: "48px",
                       padding: "13px 25px",
                     }}
+                    disabled={isSaving}
+                    loading={isSaving}
                   >
                     Save
-                  </button>
+                  </GenericButton>
                 </div>
                 <div className="m-[0_7.5px]" data-startflowbutton>
                   <Tooltip
@@ -731,8 +825,8 @@ const Flow = () => {
                     }
                     placement="bottom"
                   >
-                    <button
-                      className={`inline-flex items-center rounded-md border border-transparent bg-cyan-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-cyan-500 focus:outline-none focus:ring-2 focus:ring-offset-2 rounded-md bg-white font-medium focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 ${
+                    <GenericButton
+                      customClasses={`inline-flex items-center rounded-md border border-transparent bg-cyan-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-cyan-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500 ${
                         !!startDisabledReason ? "grayscale" : ""
                       }`}
                       onClick={handleStartJourney}
@@ -741,10 +835,11 @@ const Flow = () => {
                         maxHeight: "48px",
                         padding: "13px 25px",
                       }}
-                      disabled={!!startDisabledReason}
+                      disabled={!!startDisabledReason || isSaving}
+                      loading={isSaving}
                     >
                       Start
-                    </button>
+                    </GenericButton>
                   </Tooltip>
                 </div>
                 <Select
@@ -784,7 +879,9 @@ const Flow = () => {
               onSubmit={handleAudienceSubmit}
               isPrimary={!nodes.some((item) => item.data.primary)}
               isCollapsible={true}
+              isSaving={isSaving}
               onClose={() => setAudienceModalOpen(false)}
+              workflowId={flowId}
             />
           </Modal>
         ) : null}

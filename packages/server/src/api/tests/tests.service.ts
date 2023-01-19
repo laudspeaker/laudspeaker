@@ -1,5 +1,8 @@
+import { AppDataSource } from '@/data-source';
 import { HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Model } from 'mongoose';
 import { Repository } from 'typeorm';
 import { AccountsService } from '../accounts/accounts.service';
 import { Account } from '../accounts/entities/accounts.entity';
@@ -7,6 +10,10 @@ import { Audience } from '../audiences/entities/audience.entity';
 import { AuthService } from '../auth/auth.service';
 import { CustomersService } from '../customers/customers.service';
 import { CreateCustomerDto } from '../customers/dto/create-customer.dto';
+import {
+  CustomerKeys,
+  CustomerKeysDocument,
+} from '../customers/schemas/customer-keys.schema';
 import { Installation } from '../slack/entities/installation.entity';
 import { Template } from '../templates/entities/template.entity';
 import { Workflow } from '../workflows/entities/workflow.entity';
@@ -27,7 +34,9 @@ export class TestsService {
     @InjectRepository(Installation)
     private installationRepository: Repository<Installation>,
     @Inject(AuthService)
-    private readonly authService: AuthService
+    private readonly authService: AuthService,
+    @InjectModel(CustomerKeys.name)
+    private CustomerKeysModel: Model<CustomerKeysDocument>
   ) {}
 
   async posthogsynctest(user: Express.User) {
@@ -52,8 +61,12 @@ export class TestsService {
         email: 'john.smith@gmail.com',
       });
 
+      await this.accountService.accountsRepository.delete({
+        email: 'john.smith@gmail.com',
+      });
+
       await this.authService.verificationRepository.delete({
-        accountId: '-1000',
+        account: { id: '-1000' },
       });
 
       const userCreated = await this.authService.repository.findOne({
@@ -64,20 +77,6 @@ export class TestsService {
 
       if (userCreated?.id) {
         await this.authService.repository.remove([userCreated]);
-      }
-
-      const JhonSmeeth = await this.accountService.accountsRepository.findOne({
-        where: {
-          email: 'john.smith@gmail.com',
-          firstName: 'John',
-          lastName: 'Smith',
-          sendingEmail: 'SendingEmail',
-          sendingName: 'SendingName',
-        },
-      });
-
-      if (JhonSmeeth) {
-        await this.accountService.accountsRepository.remove([JhonSmeeth]);
       }
 
       const user = new Account();
@@ -109,15 +108,36 @@ export class TestsService {
       );
       ret.id = '-1000';
 
-      await this.workflowsRepository.delete({ ownerId: '-1000' });
-      await this.templateRepository.delete({ ownerId: '-1000' });
-      await this.audienceRepository.delete({ ownerId: '-1000' });
+      await this.workflowsRepository.delete({ owner: { id: '-1000' } });
+      await this.templateRepository.delete({ owner: { id: '-1000' } });
+      await this.audienceRepository.delete({ owner: { id: '-1000' } });
 
-      await this.authService.helper.generateDefaultData(ret.id);
+      await this.authService.helper.generateDefaultData(
+        ret,
+        AppDataSource.manager
+      );
+
+      await this.authService.helper.generateDefaultData(
+        ret,
+        AppDataSource.manager
+      );
 
       await this.customersService.CustomerModel.deleteMany({
         ownerId: '-1000',
       });
+
+      const exists = await this.CustomerKeysModel.findOne({
+        key: 'slackRealName',
+        type: 'String',
+        isArray: false,
+      }).exec();
+
+      if (!exists)
+        await this.CustomerKeysModel.create({
+          key: 'slackRealName',
+          type: 'String',
+          isArray: false,
+        });
 
       const sanitizedMember = new CreateCustomerDto();
 
@@ -156,10 +176,18 @@ export class TestsService {
   }
 
   public async getTestVerification() {
-    return this.authService.verificationRepository.findOneBy({
-      email: 'testmail@gmail.com',
-      status: 'sent',
+    const verification = await this.authService.verificationRepository.findOne({
+      where: {
+        email: 'testmail@gmail.com',
+        status: 'sent',
+      },
+      relations: ['account'],
     });
+    return {
+      ...verification,
+      account: undefined,
+      accountId: String(verification.account.id),
+    };
   }
 
   public async updateTestAccount(data: Record<string, any>) {

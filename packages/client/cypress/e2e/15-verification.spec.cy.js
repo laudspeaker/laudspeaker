@@ -25,7 +25,7 @@ describe(
 
       cy.request(`${Cypress.env("AxiosURL")}tests/test-verification`).then(
         ({ body }) => {
-          expect(body.accountId).to.equal(-1000);
+          expect(body.accountId).to.equal("-1000");
           expect(body.status).to.equal("sent");
 
           cy.request({
@@ -38,7 +38,7 @@ describe(
             cy.contains("Your email is verified").should("exist");
 
             cy.get("#email").clear().type("another-email@gmail.com");
-            cy.get(".inline-flex").click();
+            cy.get(".border").click();
             cy.contains("Waiting for verification:").should("exist");
             cy.contains(
               "You need to verify your email. We've sent you a verification email"

@@ -1,7 +1,10 @@
 import { Select } from "components/Elements";
 import React, { FC } from "react";
 
-const andOrOptions = [{ value: "and" }, { value: "or" }];
+const andOrOptions: { value: "and" | "or" }[] = [
+  { value: "and" },
+  { value: "or" },
+];
 
 export interface AndOrSelectProps {
   value: "and" | "or";

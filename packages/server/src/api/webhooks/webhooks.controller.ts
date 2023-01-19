@@ -1,4 +1,5 @@
 import { Body, Controller, Post, Req } from '@nestjs/common';
+import { Query } from '@nestjs/common/decorators';
 import { Request } from 'express';
 import { WebhooksService } from './webhooks.service';
 
@@ -15,5 +16,28 @@ export class WebhooksController {
       'x-twilio-email-event-webhook-timestamp'
     ] as string;
     this.webhooksService.processSendgridData(signature, timestamp, data);
+  }
+
+  @Post('twillio')
+  public processTwillioData(
+    @Body()
+    body: {
+      SmsSid: string;
+      SmsStatus: string;
+      MessageStatus: string;
+      To: string;
+      MessageSid: string;
+      AccountSid: string;
+      From: string;
+      ApiVersion: string;
+    },
+    @Query('audienceId') audienceId: string,
+    @Query('customerId') customerId: string
+  ) {
+    this.webhooksService.processTwillioData({
+      ...body,
+      audienceId,
+      customerId,
+    });
   }
 }

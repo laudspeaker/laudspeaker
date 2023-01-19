@@ -1,5 +1,10 @@
 /* eslint-disable no-case-declarations */
-import mongoose, { isValidObjectId, Model, Types } from 'mongoose';
+import mongoose, {
+  ClientSession,
+  isValidObjectId,
+  Model,
+  Types,
+} from 'mongoose';
 import {
   HttpException,
   HttpStatus,
@@ -27,6 +32,7 @@ import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { createClient } from '@clickhouse/client';
 import { Workflow } from '../workflows/entities/workflow.entity';
 import { attributeConditions } from '@/fixtures/attributeConditions';
+import { AppDataSource } from '@/data-source';
 
 export type Correlation = {
   cust: CustomerDocument;
@@ -62,10 +68,11 @@ export class CustomersService {
 
   async create(
     account: Account,
-    createCustomerDto: CreateCustomerDto
+    createCustomerDto: CreateCustomerDto,
+    transactionSession?: ClientSession
   ): Promise<
     Customer &
-      mongoose.Document<any, any, any> & {
+      mongoose.Document & {
         _id: Types.ObjectId;
       }
   > {
@@ -73,77 +80,76 @@ export class CustomersService {
       ownerId: (<Account>account).id,
       ...createCustomerDto,
     });
-    const ret = await createdCustomer.save();
-    // Already started (isEditable = false), dynamic (isDyanmic = true),push
-    // Not started (isEditable = true), dynamic (isDyanmic = true), push
-    const dynamicWkfs = await this.workflowsRepository.find({
-      where: {
-        ownerId: (<Account>account).id,
-        isDynamic: true,
-      },
-      relations: ['segment'],
-    });
-    for (let index = 0; index < dynamicWkfs.length; index++) {
-      const workflow = dynamicWkfs[index];
-      if (workflow.segment) {
-        if (checkInclusion(ret, workflow.segment.inclusionCriteria)) {
-          const audiences = await Promise.all(
-            workflow.audiences.map((item) =>
-              this.audiencesRepository.findOneBy({ id: item })
-            )
-          );
+    const ret = await createdCustomer.save({ session: transactionSession });
 
-          const primaryAudience = audiences.find(
-            (audience) => audience.isPrimary
-          );
+    await AppDataSource.transaction(async (transactionManager) => {
+      // Already started (isEditable = false), dynamic (isDyanmic = true),push
+      // Not started (isEditable = true), dynamic (isDyanmic = true), push
+      const dynamicWkfs = await transactionManager.find(Workflow, {
+        where: {
+          owner: { id: account.id },
+          isDynamic: true,
+        },
+        relations: ['segment'],
+      });
+      for (let index = 0; index < dynamicWkfs.length; index++) {
+        const workflow = dynamicWkfs[index];
+        if (workflow.segment) {
+          if (checkInclusion(ret, workflow.segment.inclusionCriteria)) {
+            const audiences = await transactionManager.findBy(Audience, {
+              workflow: { id: workflow.id },
+            });
 
-          await this.audiencesRepository.update(
-            { ownerId: (<Account>account).id, id: primaryAudience.id },
-            {
-              customers: primaryAudience.customers.concat(ret.id),
-            }
-          );
+            const primaryAudience = audiences.find(
+              (audience) => audience.isPrimary
+            );
+
+            await transactionManager.update(
+              Audience,
+              { owner: { id: account.id }, id: primaryAudience.id },
+              {
+                customers: primaryAudience.customers.concat(ret.id),
+              }
+            );
+          }
         }
       }
-    }
-    // Already started(isEditable = true), static(isDyanmic = false), don't push
-    // Not started(isEditable = false), static(isDyanmic = false), push
-    const staticWkfs = await this.workflowsRepository.find({
-      where: {
-        ownerId: (<Account>account).id,
-        isDynamic: false,
-      },
-      relations: ['segment'],
-    });
-    for (let index = 0; index < staticWkfs.length; index++) {
-      const workflow = staticWkfs[index];
-      if (workflow.segment) {
-        if (checkInclusion(ret, workflow.segment.inclusionCriteria)) {
-          const audiences = await Promise.all(
-            workflow.audiences.map((item) =>
-              this.audiencesRepository.findOneBy({
-                id: item,
-                isEditable: false,
-              })
-            )
-          );
+      // Already started(isEditable = true), static(isDyanmic = false), don't push
+      // Not started(isEditable = false), static(isDyanmic = false), push
+      const staticWkfs = await transactionManager.find(Workflow, {
+        where: {
+          owner: { id: account.id },
+          isDynamic: false,
+        },
+        relations: ['segment'],
+      });
+      for (let index = 0; index < staticWkfs.length; index++) {
+        const workflow = staticWkfs[index];
+        if (workflow.segment) {
+          if (checkInclusion(ret, workflow.segment.inclusionCriteria)) {
+            const audiences = await transactionManager.findBy(Audience, {
+              workflow: { id: workflow.id },
+              isEditable: false,
+            });
 
-          const primaryAudience = audiences.find((item) => item.isPrimary);
+            const primaryAudience = audiences.find((item) => item.isPrimary);
 
-          await this.audiencesRepository.update(
-            { ownerId: (<Account>account).id, id: primaryAudience.id },
-            {
-              customers: primaryAudience.customers.concat(ret.id),
-            }
-          );
+            await transactionManager.update(
+              Audience,
+              { owner: { id: account.id }, id: primaryAudience.id },
+              {
+                customers: primaryAudience.customers.concat(ret.id),
+              }
+            );
+          }
         }
       }
-    }
+    });
 
     return ret;
   }
 
-  async addPhCustomers(data: any, account: Account) {
+  async addPhCustomers(data: any[], account: Account) {
     for (let index = 0; index < data.length; index++) {
       const addedBefore = await this.CustomerModel.find({
         ownerId: (<Account>account).id,
@@ -362,7 +368,7 @@ export class CustomersService {
     customerId: string
   ): Promise<
     Customer &
-      mongoose.Document<any, any, any> & {
+      mongoose.Document & {
         _id: Types.ObjectId;
       }
   > {
@@ -419,6 +425,7 @@ export class CustomersService {
     correlationKey: string,
     correlationValue: string | [],
     event: any,
+    transactionSession: ClientSession,
     mapping?: (event: any) => any
   ): Promise<Correlation> {
     // const queryParam: any = {
@@ -461,7 +468,9 @@ export class CustomersService {
       [correlationKey]: correlationValue,
     };
     this.logger.debug('QueryParam: ' + JSON.stringify(queryParam));
-    customer = await this.CustomerModel.findOne(queryParam).exec();
+    customer = await this.CustomerModel.findOne(queryParam)
+      .session(transactionSession)
+      .exec();
     if (!customer) {
       this.logger.debug('Customer not found, creating new customer...');
       if (mapping) {
@@ -470,14 +479,20 @@ export class CustomersService {
         newCust[correlationKey] = [correlationValue];
         const createdCustomer = new this.CustomerModel(newCust);
         this.logger.debug('New customer created: ' + createdCustomer.id);
-        return { cust: await createdCustomer.save(), found: false };
+        return {
+          cust: await createdCustomer.save({ session: transactionSession }),
+          found: false,
+        };
       } else {
         const createdCustomer = new this.CustomerModel({
           ownerId: (<Account>account).id,
           correlationKey: correlationValue,
         });
         this.logger.debug('New customer created: ' + createdCustomer.id);
-        return { cust: await createdCustomer.save(), found: false };
+        return {
+          cust: await createdCustomer.save({ session: transactionSession }),
+          found: false,
+        };
       }
 
       //to do cant just return [0] in the future
@@ -486,7 +501,9 @@ export class CustomersService {
         customer = await this.CustomerModel.findOneAndUpdate(
           queryParam,
           mapping(event)
-        ).exec();
+        )
+          .session(transactionSession)
+          .exec();
       this.logger.debug('Customer found: ' + customer.id);
       return { cust: customer, found: true };
     }
@@ -505,12 +522,17 @@ export class CustomersService {
    */
   async findByInclusionCriteria(
     account: Account,
-    criteria: any
+    criteria: any,
+    transactionSession: ClientSession
   ): Promise<CustomerDocument[]> {
     let customers: CustomerDocument[] = [];
     const ret: CustomerDocument[] = [];
     try {
-      customers = (await this.findAll(account)).data;
+      customers = await this.CustomerModel.find({
+        ownerId: (<Account>account).id,
+      })
+        .session(transactionSession)
+        .exec();
     } catch (err) {
       return Promise.reject(err);
     }
@@ -539,7 +561,8 @@ export class CustomersService {
   async findByCorrelationKVPair(
     account: Account,
     correlationKey: string,
-    correlationValue: string | []
+    correlationValue: string | [],
+    transactionSession: ClientSession
   ): Promise<CustomerDocument> {
     let customer: CustomerDocument; // Found customer
     const queryParam = {
@@ -547,7 +570,9 @@ export class CustomersService {
       [correlationKey]: correlationValue,
     };
     try {
-      customer = await this.CustomerModel.findOne(queryParam).exec();
+      customer = await this.CustomerModel.findOne(queryParam)
+        .session(transactionSession)
+        .exec();
       this.logger.debug('Found customer in correlationKVPair:' + customer.id);
     } catch (err) {
       return Promise.reject(err);
@@ -557,19 +582,25 @@ export class CustomersService {
 
   async findOrCreateByCorrelationKVPair(
     account: Account,
-    dto: EventDto
+    dto: EventDto,
+    transactionSession: ClientSession
   ): Promise<Correlation> {
     let customer: CustomerDocument; // Found customer
     const queryParam = { ownerId: (<Account>account).id };
     queryParam[dto.correlationKey] = dto.correlationValue;
     try {
-      customer = await this.CustomerModel.findOne(queryParam).exec();
+      customer = await this.CustomerModel.findOne(queryParam)
+        .session(transactionSession)
+        .exec();
     } catch (err) {
       return Promise.reject(err);
     }
     if (!customer) {
       const createdCustomer = new this.CustomerModel(queryParam);
-      return { cust: await createdCustomer.save(), found: false };
+      return {
+        cust: await createdCustomer.save({ session: transactionSession }),
+        found: false,
+      };
     } else return { cust: customer, found: true };
   }
 

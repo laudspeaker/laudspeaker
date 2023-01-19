@@ -24,6 +24,7 @@ import { StartWorkflowDto } from './dto/start-workflow.dto';
 import { WorkflowStatusUpdateDTO } from './dto/workflow-status-update.dto';
 import { Workflow } from './entities/workflow.entity';
 import { DeleteWorkflowDto } from './dto/delete-flow.dto';
+import { CreateWorkflowDto } from './dto/create-workflow.dto';
 
 @Controller('workflows')
 export class WorkflowsController {
@@ -54,15 +55,28 @@ export class WorkflowsController {
     );
   }
 
-  @Get(':name')
+  @Get(':id')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
   async findOne(
     @Req() { user }: Request,
-    @Param('name') name: string,
+    @Param('id') id: string,
     @Query('needsStats') needsStats: boolean
   ) {
-    return await this.workflowsService.findOne(<Account>user, name, needsStats);
+    return await this.workflowsService.findOne(<Account>user, id, needsStats);
+  }
+
+  @Post()
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor)
+  async create(
+    @Req() { user }: Request,
+    @Body() createWorkflowDto: CreateWorkflowDto
+  ) {
+    return await this.workflowsService.create(
+      <Account>user,
+      createWorkflowDto.name
+    );
   }
 
   @Patch('pause')
@@ -95,7 +109,7 @@ export class WorkflowsController {
     return await this.workflowsService.setStopped(<Account>user, id, true);
   }
 
-  @Patch(':name')
+  @Patch()
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
   async update(

@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Grid, FormControl, Tooltip, MenuItem } from "@mui/material";
+import { ChangeEvent, useState } from "react";
+import { Grid, FormControl } from "@mui/material";
 import { GenericButton, Input, Select } from "components/Elements";
 import { useNavigate } from "react-router-dom";
 
@@ -8,17 +8,8 @@ export interface INameSegmentForm {
   isPrimary: boolean;
 }
 
-const segmentTypeStyle = {
-  border: "1px solid #D1D5DB",
-  borderRadius: "6px",
-  boxShadow: "0px 1px 2px rgba(0, 0, 0, 0.05)",
-  width: "234px",
-  marginTop: "20px",
-  padding: "15px",
-};
-
 interface INameSegment {
-  onSubmit?: (e: any) => void;
+  onSubmit?: (e: INameSegmentForm) => void;
   isPrimary: boolean;
 }
 
@@ -36,18 +27,18 @@ const NameTemplate = ({ onSubmit, isPrimary }: INameSegment) => {
   const navigate = useNavigate();
 
   // Handling Name and Description Fields
-  const handleSegmentFormChange = (e: any) => {
+  const handleSegmentFormChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.name === "name") {
       setSegmentForm({ ...segmentForm, name: e.target.value });
     }
   };
 
-  const handleType = (value: any) => {
+  const handleType = (value: string) => {
     setDay(value);
   };
 
   // Pushing state back up to the flow builder
-  const handleSubmit: any = async (e: any) => {
+  const handleSubmit = (e: { preventDefault: () => void }) => {
     if (segmentForm.name && day) {
       if (day === "slack") {
         const navigationLink = "/templates/slack/" + segmentForm.name;

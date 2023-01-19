@@ -1,3 +1,4 @@
+import { Account } from '@/api/accounts/entities/accounts.entity';
 import {
   Entity,
   Column,
@@ -8,9 +9,9 @@ import {
 import { Segment } from '../../segments/entities/segment.entity';
 
 export enum TriggerType {
-  event,
-  time_delay,
-  time_window,
+  EVENT,
+  TIME_DELAY,
+  TIME_WINDOW,
 }
 
 export interface IEventConditions {
@@ -39,24 +40,74 @@ export enum PosthogTriggerParams {
 }
 
 export class Trigger {
+  id: string;
+  title: string;
   type: TriggerType;
-  source: string;
-  dest: string[];
+  source?: string;
+  dest?: string[];
   providerType?: ProviderTypes;
   providerParams?: PosthogTriggerParams;
   properties?: EventProps;
 }
 
+export interface Edge {
+  id: string;
+  type: 'smoothstep';
+  source: string;
+  target: string;
+  markerEnd: {
+    type: string;
+    width: number;
+    height: number;
+    strokeWidth: number;
+  };
+  sourceHandle: string;
+  targetHandle: string | null;
+}
+
+export interface Node {
+  id: string;
+  data: {
+    nodeId: string;
+    primary: boolean;
+    messages: string[];
+    triggers: Trigger[];
+    audienceId: string;
+    isSelected: boolean;
+    needsUpdate: boolean;
+    dataTriggers?: Trigger[];
+  };
+  type: string;
+  width: number;
+  height: number;
+  dragging: boolean;
+  position: {
+    x: number;
+    y: number;
+  };
+  selected: boolean;
+  positionAbsolute: {
+    x: number;
+    y: number;
+  };
+}
+
+export interface VisualLayout {
+  edges: Edge[];
+  nodes: Node[];
+}
+
 @Entity()
 export class Workflow {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column()
-  name!: string;
+  name: string;
 
-  @Column()
-  ownerId: string;
+  @JoinColumn()
+  @ManyToOne(() => Account, (account) => account.id, { onDelete: 'CASCADE' })
+  owner: Account;
 
   @Column('boolean', { default: false })
   isActive: boolean;
@@ -70,21 +121,18 @@ export class Workflow {
   @Column('boolean', { default: false })
   isDeleted: boolean;
 
-  @Column('text', { nullable: false, array: true, default: [] })
-  audiences: string[];
-
   //This is actually an array of JSON stringified Trigger objects
   @Column('simple-array', { nullable: true })
   rules: string[];
 
   // {"nodes":[...list of nodes], "edges": [...list of edges]}
   @Column('jsonb', { nullable: true })
-  visualLayout: any;
+  visualLayout: VisualLayout;
 
   @Column({ default: true })
   isDynamic: boolean;
 
-  @ManyToOne(() => Segment, (segment) => segment.workflows)
+  @ManyToOne(() => Segment, (segment) => segment.id, { onDelete: 'CASCADE' })
   @JoinColumn()
   segment?: Segment;
 }

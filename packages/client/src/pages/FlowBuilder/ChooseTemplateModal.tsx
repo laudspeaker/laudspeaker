@@ -3,38 +3,39 @@ import { GenericButton, Select } from "components/Elements";
 import ApiService from "services/api.service";
 import { ApiConfig } from "../../constants";
 import Modal from "../../components/Elements/Modal";
+import Template from "types/Template";
 
 interface IChooseTemplateModal {
   templateModalOpen: boolean;
-  handleTemplateModalOpen: (e: any) => void;
+  handleTemplateModalOpen: (val?: {
+    activeTemplate: number | undefined;
+    selectedMessageType: string;
+  }) => void;
   selectedMessageType: string;
   isCollapsible: boolean;
   onClose: () => void;
   isViewMode?: boolean;
-  selectedTemplateId?: string | number;
+  selectedTemplateId?: number;
   onTemplateDelete?: () => void;
 }
 const ChooseTemplateModal = ({
   templateModalOpen,
   handleTemplateModalOpen,
   selectedMessageType,
-  isCollapsible,
   isViewMode = false,
-  onClose,
   selectedTemplateId,
   onTemplateDelete,
+  onClose,
 }: IChooseTemplateModal) => {
-  const [templatesList, setTemplatesList] = useState<any>([]);
-  const [activeTemplate, setActiveTemplate] = useState<any>(
-    selectedTemplateId || ""
-  );
+  const [templatesList, setTemplatesList] = useState<Template[]>([]);
+  const [activeTemplate, setActiveTemplate] = useState(selectedTemplateId);
 
-  function renderButton(data: any) {
+  function renderButton(data: Template[]) {
     if (data.length < 1) {
       return (
         <>
           <GenericButton
-            onClick={(_) => {
+            onClick={() => {
               handleTemplateModalOpen({ activeTemplate, selectedMessageType });
             }}
             style={{
@@ -52,8 +53,7 @@ const ChooseTemplateModal = ({
         <>
           <GenericButton
             id="exportSelectedTemplate"
-            onClick={(_) => {
-              console.log(_);
+            onClick={() => {
               handleTemplateModalOpen({ activeTemplate, selectedMessageType });
             }}
             style={{
@@ -66,7 +66,7 @@ const ChooseTemplateModal = ({
           </GenericButton>
           {onTemplateDelete && (
             <GenericButton
-              onClick={(_) => {
+              onClick={() => {
                 onTemplateDelete();
               }}
               style={{
@@ -83,26 +83,24 @@ const ChooseTemplateModal = ({
     }
   }
 
-  const handleActiveTemplate = (value: any) => {
+  const handleActiveTemplate = (value?: number) => {
     setActiveTemplate(value);
   };
+
   useEffect(() => {
     const getAllTemplates = async () => {
       const { data: templates } = await ApiService.get({
         url: `${ApiConfig.getAllTemplates}`,
       });
       const filteredTemplates = templates?.data?.filter(
-        (item: any) => item.type === selectedMessageType
+        (item: { type?: string }) => item.type === selectedMessageType
       );
       setTemplatesList(filteredTemplates);
     };
     getAllTemplates();
   }, []);
   return (
-    <Modal
-      isOpen={templateModalOpen}
-      onClose={() => handleTemplateModalOpen(false)}
-    >
+    <Modal isOpen={templateModalOpen} onClose={onClose}>
       <div className="w-full">
         <h6 id="modal-modal-title">
           {isViewMode
@@ -114,7 +112,7 @@ const ChooseTemplateModal = ({
             <Select
               id="activeJourney"
               value={activeTemplate}
-              options={templatesList.map((template: any) => ({
+              options={templatesList.map((template) => ({
                 value: template.id,
                 title: template.name,
               }))}

@@ -93,7 +93,7 @@ describe(
           event: { [slackTemplate.eventName]: slackTemplate.eventName },
         },
       }).then(({ body }) => {
-        cy.wait(3000);
+        cy.wait(10000);
         cy.request({
           method: "POST",
           headers: {
@@ -106,6 +106,8 @@ describe(
         }).then(({ body }) => {
           expect(body).to.equal("completed");
         });
+
+        cy.wait(10000);
 
         cy.request({
           method: "POST",

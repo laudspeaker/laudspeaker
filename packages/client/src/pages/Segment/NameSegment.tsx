@@ -1,28 +1,29 @@
-import { useState } from "react";
-import { Grid, FormControl, Tooltip } from "@mui/material";
+import { ChangeEvent, MouseEvent, useState } from "react";
+import { Grid, FormControl } from "@mui/material";
 import { GenericButton, Input } from "components/Elements";
-import InfoIcon from "assets/images/info.svg";
-import ToggleSwitch from "./../../components/Elements/ToggleSwitch";
 
 export interface INameSegmentForm {
   name: string;
   description: string;
   isDynamic: boolean;
   isPrimary: boolean;
+  workflowId: string;
 }
 
 interface INameSegment {
-  onSubmit?: (e: any) => void;
+  onSubmit?: (form: INameSegmentForm) => void;
   isPrimary: boolean;
   isCollapsible: boolean;
+  isSaving?: boolean;
   onClose: () => void;
+  workflowId: string;
 }
 
 const NameSegment = ({
   onSubmit,
   isPrimary,
-  onClose,
-  isCollapsible,
+  workflowId,
+  isSaving = false,
 }: INameSegment) => {
   // A Segment initally has three Properties:
   //      1. Dynamic: whether new customers are added
@@ -34,10 +35,11 @@ const NameSegment = ({
     name: "",
     description: isPrimary ? "initial step" : "",
     isPrimary: isPrimary,
+    workflowId,
   });
 
   // Handling Name and Description Fields
-  const handleSegmentFormChange = (e: any) => {
+  const handleSegmentFormChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.name === "name") {
       setSegmentForm({ ...segmentForm, name: e.target.value });
     }
@@ -46,13 +48,8 @@ const NameSegment = ({
     }
   };
 
-  // Handling Dynamic toggle
-  const onToggleChange = () => {
-    setSegmentForm({ ...segmentForm, isDynamic: !segmentForm.isDynamic });
-  };
-
   // Pushing state back up to the flow builder
-  const handleSubmit: any = async (e: any) => {
+  const handleSubmit = async (e: MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     if (onSubmit) {
       onSubmit(segmentForm);
@@ -111,10 +108,11 @@ const NameSegment = ({
             <GenericButton
               id="saveNewSegment"
               onClick={handleSubmit}
+              loading={isSaving}
               style={{
                 maxWidth: "200px",
               }}
-              disabled={!segmentForm.name}
+              disabled={!segmentForm.name || isSaving}
             >
               Save
             </GenericButton>

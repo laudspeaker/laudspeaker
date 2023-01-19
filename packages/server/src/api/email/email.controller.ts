@@ -71,7 +71,7 @@ export class EmailController {
       id: (<Account>user).id,
     });
     const audienceObj = await this.audienceRepository.findOneBy({
-      ownerId: (<Account>user).id,
+      owner: { id: (<Account>user).id },
       name: name,
     });
     const jobs = await Promise.all(

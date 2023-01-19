@@ -107,4 +107,5 @@ export enum JobTypes {
   email = 'email',
   slack = 'slack',
   sms = 'sms',
+  events = 'events',
 }

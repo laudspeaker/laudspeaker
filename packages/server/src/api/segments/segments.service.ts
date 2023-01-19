@@ -29,7 +29,7 @@ export class SegmentsService {
   public async findOne(account: Account, id: string) {
     if (!isUUID(id)) throw new BadRequestException('Invalid id');
     const segment = await this.segmentsRepository.findOneBy({
-      userId: account.id,
+      user: { id: account.id },
       id,
     });
     if (!segment) throw new NotFoundException('Segment not found');
@@ -44,16 +44,15 @@ export class SegmentsService {
     createSegmentDTO: CreateSegmentDTO,
     userId: string
   ) {
-    const newSegment = new Segment();
-    newSegment.name = createSegmentDTO.name;
-    newSegment.userId = userId;
-    if (createSegmentDTO.inclusionCriteria) {
-      newSegment.inclusionCriteria = createSegmentDTO.inclusionCriteria;
-    }
-    newSegment.resources = createSegmentDTO.resources;
+    const { name, inclusionCriteria, resources } = createSegmentDTO;
 
     try {
-      return await this.segmentsRepository.save(newSegment);
+      return await this.segmentsRepository.save({
+        name,
+        inclusionCriteria,
+        resources,
+        user: { id: userId },
+      });
     } catch (error) {
       this.logger.error(error);
       throw new HttpException(

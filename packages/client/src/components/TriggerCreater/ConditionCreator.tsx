@@ -6,7 +6,7 @@ import { useDebounce } from "react-use";
 import ApiService from "services/api.service";
 import DynamicField from "./DynamicField";
 import MinusIcon from "../../assets/images/MinusIcon.svg";
-import { EventCondition, ProviderTypes } from "types/triggers";
+import { EventCondition, ProviderTypes } from "types/Workflow";
 
 export interface ConditionCreaterProps {
   condition: EventCondition;
@@ -60,7 +60,7 @@ const ConditionCreater: FC<ConditionCreaterProps> = ({
   };
 
   const handleConditionChange = (name: string, newValueToSet: string) => {
-    (condition as any)[name] = newValueToSet;
+    condition[name as keyof EventCondition] = newValueToSet;
     onChange(condition);
   };
 
@@ -191,7 +191,7 @@ const ConditionCreater: FC<ConditionCreaterProps> = ({
       <Select
         id="keyType"
         options={possibleTypes.map((item) => ({ value: item }))}
-        value={type}
+        value={type || ""}
         onChange={(val) => {
           handleConditionChange("type", val);
           handleConditionChange("comparisonType", "");
@@ -201,7 +201,7 @@ const ConditionCreater: FC<ConditionCreaterProps> = ({
       />
       <Select
         id="comparisonType"
-        value={comparisonType}
+        value={comparisonType || ""}
         options={possibleComparisonTypes.map((item) => ({
           value: item.id,
           title: item.label,

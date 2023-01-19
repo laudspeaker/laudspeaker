@@ -3,7 +3,6 @@ import "grapesjs-preset-newsletter/dist/grapesjs-preset-newsletter.css";
 import grapesjs from "grapesjs";
 import { useEffect, useState, useLayoutEffect, useRef } from "react";
 import "grapesjs-preset-newsletter";
-import Drawer from "../../components/Drawer";
 import EmailHeader from "./EmailHeader";
 import ApiService from "services/api.service";
 import { ApiConfig } from "../../constants";
@@ -12,11 +11,35 @@ import MergeTagType from "./MergeTags";
 import { getResources } from "pages/Segment/SegmentHelpers";
 import MergeTagInput from "components/MergeTagInput";
 import { Helmet } from "react-helmet";
+import Progress from "components/Progress";
+import { toast } from "react-toastify";
+
+export interface IResourceOptions {
+  label: string;
+  id?: string;
+  where?: string;
+  nextResourceURL?: string;
+  isPlaceholder?: boolean;
+}
+
+export interface IResourceOptions {
+  label: string;
+  id?: string;
+  where?: string;
+  nextResourceURL?: string;
+  isPlaceholder?: boolean;
+}
 
 export interface Resource {
   label: string;
   id: string;
-  nextResourceURL: string;
+  type: string;
+  options?: IResourceOptions[];
+  nextResourceURL?: string;
+  range?: {
+    min: number;
+    max: number;
+  };
 }
 
 const EmailBuilder = () => {
@@ -29,6 +52,8 @@ const EmailBuilder = () => {
   const [style, setStyle] = useState<string>("");
   const [possibleAttributes, setPossibleAttributes] = useState<string[]>([]);
   const [isPreview, setIsPreview] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
 
   const subjectRef = useRef<HTMLInputElement>(null);
 
@@ -41,7 +66,9 @@ const EmailBuilder = () => {
   useEffect(() => {
     getResources("attributes")
       .then(({ data }) => {
-        setPossibleAttributes(data.options.map((option: any) => option.label));
+        setPossibleAttributes(
+          data.options.map((option: Resource) => option.label)
+        );
 
         const _editor = grapesjs.init({
           // Indicate where to init the editor. You can also pass an HTMLElement
@@ -77,6 +104,9 @@ const EmailBuilder = () => {
       })
       .catch((error) => {
         console.error(error);
+      })
+      .finally(() => {
+        setIsLoading(false);
       });
   }, []);
 
@@ -98,28 +128,35 @@ const EmailBuilder = () => {
   }, []);
 
   const onSave = async () => {
-    const reqBody = {
-      name: templateName,
-      subject: title,
-      text: editor?.getHtml(),
-      style: editor?.getCss(),
-      type: "email",
-    };
-    if (emailTemplateId == null) {
-      const response = await ApiService.post({
-        url: `${ApiConfig.createTemplate}`,
-        options: {
-          ...reqBody,
-        },
-      });
-      setEmailTemplateId(response.data.id);
-    } else {
-      await ApiService.patch({
-        url: `${ApiConfig.getAllTemplates}/${name}`,
-        options: {
-          ...reqBody,
-        },
-      });
+    setIsSaving(true);
+    try {
+      const reqBody = {
+        name: templateName,
+        subject: title,
+        text: editor?.getHtml(),
+        style: editor?.getCss(),
+        type: "email",
+      };
+      if (emailTemplateId == null) {
+        const response = await ApiService.post({
+          url: `${ApiConfig.createTemplate}`,
+          options: {
+            ...reqBody,
+          },
+        });
+        setEmailTemplateId(response.data.id);
+      } else {
+        await ApiService.patch({
+          url: `${ApiConfig.getAllTemplates}/${name}`,
+          options: {
+            ...reqBody,
+          },
+        });
+      }
+    } catch (e) {
+      toast.error("Error while saving");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -152,10 +189,11 @@ const EmailBuilder = () => {
   };
 
   return (
-    <div className="w-full">
-      <Helmet>
-        <script>
-          {`
+    <>
+      <div hidden={isLoading} className="w-full">
+        <Helmet>
+          <script>
+            {`
             (function (d, t) {
               var BASE_URL = "https://app.chatwoot.com";
               var g = d.createElement(t), s = d.getElementsByTagName(t)[0];
@@ -170,35 +208,38 @@ const EmailBuilder = () => {
                 })
               }
             })(document, "script");`}
-        </script>
-      </Helmet>
-      <EmailHeader
-        onPersonalize={onPersonalize}
-        onSave={onSave}
-        templateName={templateName}
-        handleTemplateNameChange={(e: any) => {
-          setTemplateName(e.target.value);
-        }}
-      />
-      <div className="w-full py-0 px-[40px]">
-        <MergeTagInput
-          isRequired
-          value={title}
-          placeholder={"Subject"}
-          name="title"
-          id="title"
-          fullWidth
-          setValue={setTitle}
-          onChange={(e: any) => setTitle(e.target.value)}
-          labelShrink
-          isPreview={isPreview}
-          setIsPreview={setIsPreview}
-          possibleAttributes={possibleAttributes}
-          inputRef={subjectRef}
+          </script>
+        </Helmet>
+        <EmailHeader
+          onPersonalize={onPersonalize}
+          onSave={onSave}
+          loading={isSaving}
+          templateName={templateName}
+          handleTemplateNameChange={(e) => {
+            setTemplateName(e.target.value);
+          }}
         />
-        <div id="emailBuilder" className="gjs-dashed" />
+        <div className="w-full py-0 px-[40px]">
+          <MergeTagInput
+            isRequired
+            value={title}
+            placeholder={"Subject"}
+            name="title"
+            id="title"
+            fullWidth
+            setValue={setTitle}
+            onChange={(e) => setTitle(e.target.value)}
+            labelShrink
+            isPreview={isPreview}
+            setIsPreview={setIsPreview}
+            possibleAttributes={possibleAttributes}
+            inputRef={subjectRef}
+          />
+          <div id="emailBuilder" className="gjs-dashed" />
+        </div>
       </div>
-    </div>
+      {isLoading && <Progress />}
+    </>
   );
 };
 

@@ -13,46 +13,26 @@ import { ApiConfig } from "../../constants";
 import ApiService from "services/api.service";
 import ToggleSwitch from "components/Elements/ToggleSwitch";
 
-//to do add datasource here to make rendering much simpler
-function createData(
-  id: string | undefined | null,
-  name: string,
-  isActive: boolean,
-  isPaused: boolean,
-  isStopped: boolean,
-  isDeleted: boolean,
-  createdOn: number,
-  createdBy: number,
-  customersEnrolled: number,
-  type: string,
-  dataSource: string
-) {
-  return {
-    id,
-    name,
-    isActive,
-    isPaused,
-    isStopped,
-    isDeleted,
-    createdOn,
-    createdBy,
-    customersEnrolled,
-    type,
-    dataSource,
-    audiences: [
-      {
-        date: "2020-01-05",
-        customerId: "11091700",
-        amount: 3,
-      },
-    ],
-  };
+export interface TableDataItem {
+  id?: string | number | null;
+  name?: string;
+  isActive?: boolean;
+  isPaused?: boolean;
+  isStopped?: boolean;
+  isDeleted?: boolean;
+  createdOn?: number;
+  createdBy?: number;
+  customersEnrolled?: number;
+  type?: string;
+  audiences?: object[];
+  dataSource?: string;
+  salient?: string;
 }
 
 function renderCorrectColumnNames(
-  data: any,
-  sortOptions?: any,
-  setSortOptions?: (value: any) => void
+  data: { dataSource: string }[],
+  sortOptions?: SortOptions,
+  setSortOptions?: (value: SortOptions) => void
 ) {
   if (data.length < 1) {
     return (
@@ -189,7 +169,7 @@ const statusStyles = {
   [JOURNEY_STATUS.EDITABLE]: "!bg-gray-200 !text-gray-600",
 };
 
-function renderSecondColumn(row: ReturnType<typeof createData>) {
+function renderSecondColumn(row: TableDataItem) {
   if (row.dataSource == "people") {
     return (
       <>
@@ -399,37 +379,16 @@ function renderSecondColumn(row: ReturnType<typeof createData>) {
 // to do
 // this function takes in the data, figures out is it journey, template or people, sets datasource to that
 // then all other rendering is simple
-function transformJourneyData(data: any) {
-  const result = [];
+function transformJourneyData(data: TableDataItem[]): TableDataItem[] {
+  const result: TableDataItem[] = [];
+
   for (const element of data) {
-    //people table
-    // if (data[0].hasOwnProperty("salient")) {
-    //   result.push({
-    //     name: data[i].id,
-    //     isActive: null,
-    //     type: null,
-    //     createdOn: null,
-    //     createdBy: data[i].salient,
-    //     customersEnrolled: null,
-    //     audiences: null,
-    //     dataSource: "people",
-    //   });
-    // } else {
-    //   // journey or templates
-    //   result.push({
-    //     name: data[i].name,
-    //     isActive: data[i].isActive,
-    //     type: data[i].type,
-    //     createdOn: data[i].createdOn,
-    //     createdBy: data[i].createdBy,
-    //     customersEnrolled: data[i].customersEnrolled,
-    //     audiences: data[i].audiences,
-    //     datasource: (data[0].hasOwnProperty("salient")? "people" :),
-    //   });
-    // }
     result.push({
       id: element.id,
-      name: element.hasOwnProperty("salient") ? element.id : element.name,
+      name:
+        (element.hasOwnProperty("salient")
+          ? String(element.id)
+          : element.name) || "",
       isActive: element.isActive,
       isPaused: element.isPaused,
       isStopped: element.isStopped,
@@ -440,26 +399,46 @@ function transformJourneyData(data: any) {
       customersEnrolled: element.customersEnrolled,
       audiences: element.audiences,
       dataSource: element.hasOwnProperty("salient") ? "people" : "j",
+      salient: element.salient,
     });
   }
+
   return result;
 }
 
 const itemsPerPageOptions = [10, 20, 50, 80, 100];
 
-export default function TableTemplate({
+export interface SortOptions {
+  name?: string;
+}
+
+export interface TableTemplateProps<T extends TableDataItem> {
+  data: T[];
+  pagesCount?: number;
+  setCurrentPage?: (currentPage: number) => void;
+  currentPage?: number;
+  itemsPerPage: number;
+  setItemsPerPage: (itemsPerPage: number) => void;
+  isShowDisabled?: boolean;
+  setIsShowDisabled?: (isShowDisabled: boolean) => void;
+  sortOptions?: SortOptions;
+  setSortOptions?: (sortOptions: SortOptions) => void;
+  refresh?: () => void;
+}
+
+export default function TableTemplate<T extends TableDataItem>({
   data,
   pagesCount = 1,
-  setCurrentPage = 0,
+  setCurrentPage = () => {},
   currentPage = 0,
   itemsPerPage,
   setItemsPerPage,
-  isShowDisabled,
-  setIsShowDisabled,
+  isShowDisabled = false,
+  setIsShowDisabled = () => {},
   sortOptions,
   setSortOptions,
-  refresh,
-}: any) {
+  refresh = () => {},
+}: TableTemplateProps<T>) {
   const isSkipped = (num?: number) => {
     if (!num) return false;
     return Math.abs(currentPage - num) > 1 && num > 2 && num < pagesCount - 3;
@@ -489,10 +468,7 @@ export default function TableTemplate({
     });
   };
 
-  function renderCorrectLink(
-    row: ReturnType<typeof createData>,
-    isButton = false
-  ) {
+  function renderCorrectLink(row: TableDataItem, isButton = false) {
     if (row.type == "email") {
       return isButton ? (
         <Menu as="div" className="relative">
@@ -628,7 +604,7 @@ export default function TableTemplate({
               {[
                 <Link
                   className="!no-underline"
-                  href={`flow/${row.name}${row.isActive ? "/view" : ""}`}
+                  href={`flow/${row.id}${row.isActive ? "/view" : ""}`}
                 >
                   <div className="w-full">Edit</div>
                 </Link>,
@@ -650,7 +626,7 @@ export default function TableTemplate({
                       <button
                         className="w-full text-center cursor-pointer outline-none text-red-500"
                         onClick={() => {
-                          if (row?.id) handleDeleteJourney(row.id);
+                          if (row?.id) handleDeleteJourney(row.id as string);
                         }}
                         data-delete-button
                       >
@@ -671,14 +647,14 @@ export default function TableTemplate({
           </Transition>
         </Menu>
       ) : (
-        <Link href={`flow/${row.name}${row.isActive ? "/view" : ""}`}>
+        <Link href={`flow/${row.id}${row.isActive ? "/view" : ""}`}>
           {row.name}
         </Link>
       );
     }
   }
 
-  function Row(props: { row: ReturnType<typeof createData> }) {
+  function Row(props: { row: TableDataItem }) {
     const { row } = props;
 
     return (
@@ -768,7 +744,11 @@ export default function TableTemplate({
             <table className="min-w-full divide-y divide-gray-300 md:rounded-lg">
               <thead className="bg-gray-50">
                 <tr className="bg-gray-50 px-6 py-3 text-right text-sm font-semibold text-gray-900">
-                  {renderCorrectColumnNames(data, sortOptions, setSortOptions)}
+                  {renderCorrectColumnNames(
+                    data as (T & { dataSource: string })[],
+                    sortOptions,
+                    setSortOptions
+                  )}
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200 bg-white">

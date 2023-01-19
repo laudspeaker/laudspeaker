@@ -1,12 +1,21 @@
-import { BaseEntity, Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { Account } from '@/api/accounts/entities/accounts.entity';
+import {
+  BaseEntity,
+  Column,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 
 @Entity()
 export class Verification extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
   public id!: string;
 
-  @Column()
-  public accountId: string;
+  @JoinColumn()
+  @ManyToOne(() => Account, (account) => account.id, { onDelete: 'CASCADE' })
+  public account: Account;
 
   @Column({ type: 'varchar' })
   public email!: string;

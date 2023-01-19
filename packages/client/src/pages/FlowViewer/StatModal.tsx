@@ -21,7 +21,7 @@ const StatModal: FC<StatModalProps> = ({
   arr[0] = arr[0].toUpperCase();
   const title = arr.join("");
 
-  const [customers, setCustomers] = useState<any[]>([]);
+  const [customers, setCustomers] = useState<Record<string, any>[]>([]);
   const [page, setPage] = useState(1);
 
   const [isLoading, setIsLoading] = useState(false);

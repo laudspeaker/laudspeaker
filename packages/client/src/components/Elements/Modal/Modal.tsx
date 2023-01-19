@@ -1,5 +1,5 @@
 import { Dialog, Transition } from "@headlessui/react";
-import { Fragment } from "react";
+import { Fragment, KeyboardEvent } from "react";
 import { XMarkIcon } from "@heroicons/react/20/solid";
 
 interface IModalProps {
@@ -11,7 +11,7 @@ interface IModalProps {
   panelClass?: string;
   closeButtonNeed?: boolean;
   onClose?: () => void;
-  onEnterPress?: (e: any) => void;
+  onEnterPress?: (e: KeyboardEvent<HTMLDivElement>) => void;
 }
 
 const Modal = ({

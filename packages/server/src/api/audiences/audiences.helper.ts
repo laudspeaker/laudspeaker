@@ -1,4 +1,5 @@
 import { CustomerDocument } from '../customers/schemas/customer.schema';
+import { InclusionCriteria } from '../segments/types/segment.type';
 
 export const conditionalCompare = (
   custAttr: any,
@@ -69,7 +70,7 @@ export const conditionalComposition = (
 
 export const checkInclusion = (
   cust: CustomerDocument,
-  inclusionCriteria: any
+  inclusionCriteria: InclusionCriteria
 ) => {
   if (
     !inclusionCriteria ||
