@@ -8,21 +8,21 @@ interface CustomTooltipProps {
   className?: string;
 }
 
-const Tooltip: FC<CustomTooltipProps & TooltipProps> = ({
-  children,
-  title,
-  placement = "top",
-  className,
-}) => {
-  return (
-    <MTTooltip
-      className={`${className} text-center z-[10]`}
-      content={title}
-      placement={placement}
-    >
-      <div>{children}</div>
-    </MTTooltip>
-  );
-};
+// const Tooltip: FC<CustomTooltipProps & TooltipProps> = ({
+//   children,
+//   title,
+//   placement = "top",
+//   className,
+// }) => {
+//   return (
+//     <MTTooltip
+//       className={`${className} text-center z-[10]`}
+//       content={title}
+//       placement={placement}
+//     >
+//       <div>{children}</div>
+//     </MTTooltip>
+//   );
+// };
 
-export default Tooltip;
+// export default Tooltip;
