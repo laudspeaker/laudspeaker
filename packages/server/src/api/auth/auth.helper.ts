@@ -11,7 +11,12 @@ import { Account } from '../accounts/entities/accounts.entity';
 import { BaseJwtHelper } from '../../common/helper/base-jwt.helper';
 import { DEFAULT_TEMPLATES } from '@/fixtures/user.default.templates';
 import { Template } from '../templates/entities/template.entity';
-import { TriggerType, Workflow } from '../workflows/entities/workflow.entity';
+import {
+  ProviderTypes,
+  TriggerType,
+  TriggerTypeName,
+  Workflow,
+} from '../workflows/entities/workflow.entity';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { LoggerService } from '@nestjs/common/services';
 import { Inject } from '@nestjs/common/decorators';
@@ -132,14 +137,18 @@ export class AuthHelper extends BaseJwtHelper {
         type: 0,
         source: data[0].id,
         dest: [data[1].id],
+        providerType: 'custom',
         properties: {
-          conditions: {
-            key: eventName,
-            comparisonType: 'isEqual',
-            type: 'String',
-            value: eventName,
-            relationWithNext: 'and',
-          },
+          conditions: [
+            {
+              key: 'Event',
+              comparisonType: 'isEqual',
+              type: 'String',
+              value: eventName,
+              relationWithNext: 'and',
+              isArray: false,
+            },
+          ],
         },
       },
     ];
@@ -180,16 +189,18 @@ export class AuthHelper extends BaseJwtHelper {
                 properties: {
                   conditions: [
                     {
-                      key: eventName,
+                      key: 'Event',
                       comparisonType: 'isEqual',
                       type: 'String',
                       value: eventName,
                       relationWithNext: 'and',
+                      isArray: false,
                     },
                   ],
                 },
+                providerType: ProviderTypes.Custom,
                 title: 'Event Based',
-                type: TriggerType.EVENT,
+                type: TriggerTypeName.EVENT,
               },
             ],
             messages: [],
@@ -228,14 +239,16 @@ export class AuthHelper extends BaseJwtHelper {
                 properties: {
                   conditions: [
                     {
-                      key: eventName,
+                      key: 'Event',
                       comparisonType: 'isEqual',
                       type: 'String',
                       value: eventName,
                       relationWithNext: 'and',
+                      isArray: false,
                     },
                   ],
                 },
+                providerType: ProviderTypes.Custom,
                 title: 'Event Based',
                 type: TriggerType.EVENT,
               },

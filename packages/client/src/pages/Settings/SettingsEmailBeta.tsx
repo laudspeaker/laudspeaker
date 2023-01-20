@@ -214,7 +214,10 @@ export default function SettingsEmailBeta() {
   const handleFormDataChange = (
     e: ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
-    if (e.target.value.includes(" ")) {
+    if (
+      !["sendingName", "testSendingName"].includes(e.target.name) &&
+      e.target.value.includes(" ")
+    ) {
       e.target.value = e.target.value.replaceAll(" ", "");
       toast.error("Value should not contain spaces!", {
         position: "bottom-center",

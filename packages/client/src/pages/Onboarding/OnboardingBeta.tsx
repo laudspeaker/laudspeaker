@@ -256,7 +256,10 @@ export default function OnboardingBeta() {
   };
 
   const handleIntegrationsDataChange = (e: ChangeEvent<HTMLInputElement>) => {
-    if (e.target.value.includes(" ")) {
+    if (
+      !["sendingName", "testSendingName"].includes(e.target.name) &&
+      e.target.value.includes(" ")
+    ) {
       e.target.value = e.target.value.replaceAll(" ", "");
       toast.error("Value should not contain spaces!", {
         position: "bottom-center",
@@ -787,6 +790,7 @@ export default function OnboardingBeta() {
                                 ? "You need to verify your email"
                                 : item.tooltip,
                           }))}
+                          placeholder="select your email sending service"
                           value={integrationsData.emailProvider}
                           onChange={(value: string) => {
                             setIntegrationsData({
@@ -796,6 +800,7 @@ export default function OnboardingBeta() {
                             setErrors({});
                           }}
                         />
+
                         {integrationsData.emailProvider && (
                           <>
                             <h3 className="flex items-center text-[18px] font-semibold leading-[40px] mb-[10px]">

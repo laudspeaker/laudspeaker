@@ -5,7 +5,6 @@ import AC from "react-autocomplete";
 import {
   getConditions,
   getEventResources,
-  transformDataToUI,
 } from "../../pages/Segment/SegmentHelpers";
 import Card from "components/Cards/Card";
 import DateTimePicker from "components/Elements/DateTimePicker";
@@ -158,16 +157,14 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
   const [delayInputTime, setDelayInputTime] = useState(
     trigger.properties?.delayTime || ""
   );
-
   const [datePickerSpecificTimeValue, setDatePickerSpecificTimeValue] =
-    useState(new Date().toISOString());
+    useState(trigger.properties?.specificTime || new Date().toISOString());
 
   const [datePickerFromValue, setDatePickerFromValue] = useState(
-    new Date().toISOString()
+    trigger.properties?.fromTime || new Date().toISOString()
   );
-
   const [datePickerToValue, setDatePickerToValue] = useState(
-    new Date().toISOString()
+    trigger.properties?.toTime || new Date().toISOString()
   );
 
   const [isButtonDisabled, setIsButtonDisabled] = useState(true);
@@ -433,8 +430,24 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
 
   const handleData = async (func: (data: Trigger) => void) => {
     if (triggerType === TriggerTypeName.TIME_DELAY)
-      func(JSON.parse(JSON.stringify(delayInputTime)));
-    // else if (triggerType === "timeWindow") func(timeWindow);
+      func({
+        ...eventTrigger,
+        properties: {
+          conditions: [],
+          specificTime: datePickerSpecificTimeValue,
+          delayTime: delayInputTime,
+          eventTime: eventTimeSelect,
+        },
+      });
+    else if (triggerType === "timeWindow")
+      func({
+        ...eventTrigger,
+        properties: {
+          conditions: [],
+          fromTime: datePickerFromValue,
+          toTime: datePickerToValue,
+        },
+      });
     else if (triggerType === TriggerTypeName.EVENT) {
       func(eventTrigger);
     }
@@ -723,6 +736,22 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
     [eventTrigger.providerParams]
   );
 
+  let isError = false;
+
+  switch (triggerType) {
+    case TriggerTypeName.EVENT:
+      isError = !!eventBasedErrorMessage;
+      break;
+    case TriggerTypeName.TIME_DELAY:
+      isError =
+        eventTimeSelect === "SpecificTime"
+          ? !datePickerSpecificTimeValue
+          : !delayInputTime;
+      break;
+    case TriggerTypeName.TIME_WINDOW:
+      break;
+  }
+
   return (
     <>
       <Card
@@ -806,6 +835,15 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
                     </div>
                   )}
                 </div>
+                {triggerType === TriggerTypeName.TIME_WINDOW && (
+                  <div className="w-full flex mb-[10px]">
+                    <Select
+                      options={[{ value: "From" }]}
+                      value="From"
+                      onChange={() => {}}
+                    />
+                  </div>
+                )}
                 {triggerType === "eventBased" ? (
                   <>
                     <div>
@@ -950,11 +988,7 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
                 style={{
                   width: "200px",
                 }}
-                disabled={
-                  triggerType === "eventBased"
-                    ? !!eventBasedErrorMessage
-                    : isButtonDisabled
-                }
+                disabled={isError}
               >
                 Save
               </GenericButton>

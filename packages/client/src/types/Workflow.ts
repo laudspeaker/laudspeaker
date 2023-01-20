@@ -27,6 +27,9 @@ export interface EventProps {
   conditions: EventCondition[];
   eventTime?: string;
   delayTime?: string;
+  specificTime?: string;
+  fromTime?: string;
+  toTime?: string;
 }
 
 export enum ProviderTypes {
