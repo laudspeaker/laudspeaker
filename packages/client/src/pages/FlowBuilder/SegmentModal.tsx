@@ -157,7 +157,7 @@ const SegmentModal: FC<SegmentModalProps> = ({
           {mode === SegmentModalMode.NEW && (
             <Input
               name="newSegmentName"
-              id="newSegmentName"
+              id="segmentName"
               value={newSegmentName}
               className="mb-[10px]"
               onChange={(e) => {
@@ -187,9 +187,9 @@ const SegmentModal: FC<SegmentModalProps> = ({
                     className="mb-[10px] z-[10] relative bg-transparent"
                     aria-expanded={props["aria-expanded"]}
                     disabled={isLoading}
-                    id="input_segment"
                     {...props}
                     placeholder="Customer Segment Name"
+                    id="segmentName"
                   />
                   <ChevronUpDownIcon className="absolute w-[20px] top-[50%] -translate-y-1/2 right-[8px] text-gray-600" />
                 </div>
