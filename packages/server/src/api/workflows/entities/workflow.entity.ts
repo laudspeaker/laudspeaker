@@ -33,6 +33,11 @@ export interface IEventConditions {
 
 export class EventProps {
   conditions: IEventConditions[];
+  eventTime?: string;
+  delayTime?: string;
+  specificTime?: string;
+  fromTime?: string;
+  toTime?: string;
 }
 
 export enum ProviderTypes {

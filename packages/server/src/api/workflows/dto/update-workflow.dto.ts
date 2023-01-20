@@ -8,7 +8,7 @@ import {
   IsBoolean,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { Trigger, VisualLayout } from '../entities/workflow.entity';
+import { Trigger } from '../entities/workflow.entity';
 
 export class UpdateWorkflowDto {
   @IsString()

@@ -153,7 +153,7 @@ const convertLayoutToTable = (
       source: fromNode[0]?.data?.audienceId,
       dest: [toNode[0].data.audienceId],
       properties: {
-        conditions: trigger?.properties?.conditions,
+        ...(trigger?.properties || {}),
       },
       providerType: trigger?.providerType || ProviderTypes.Custom,
       providerParams: trigger?.providerParams,
