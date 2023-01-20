@@ -13,9 +13,9 @@ export const getConditions = async () => {
     resolve({
       id: "conditions",
       type: "select",
-      label: "conditions",
+      label: "filter on",
       options: [
-        { label: "Add Condition Or Group", id: "", isPlaceholder: true },
+        { label: "select", id: "", isPlaceholder: true },
         { label: "Events", id: "events" },
         { label: "Attributes", id: "attributes" },
       ],

@@ -22,6 +22,7 @@ export interface SegmentModalProps {
   onClose: () => void;
   segmentId?: string;
   mode: SegmentModalMode;
+  setMode: React.Dispatch<React.SetStateAction<SegmentModalMode>>;
   setSegmentId: React.Dispatch<React.SetStateAction<string | undefined>>;
   workflowId: string;
   onAttach?: (id: string) => void;
@@ -38,6 +39,7 @@ const SegmentModal: FC<SegmentModalProps> = ({
   segmentId,
   setSegmentId,
   workflowId,
+  setMode,
   mode,
 }) => {
   const [isSegmentEditModalOpen, setIsSegmentEditModalOpen] = useState(false);
@@ -161,6 +163,7 @@ const SegmentModal: FC<SegmentModalProps> = ({
               onChange={(e) => {
                 setNewSegmentName(e.target.value);
               }}
+              placeholder="Customer Segment Name"
             />
           )}
           {mode === SegmentModalMode.EDIT && (
@@ -186,6 +189,7 @@ const SegmentModal: FC<SegmentModalProps> = ({
                     disabled={isLoading}
                     id="input_segment"
                     {...props}
+                    placeholder="Customer Segment Name"
                   />
                   <ChevronUpDownIcon className="absolute w-[20px] top-[50%] -translate-y-1/2 right-[8px] text-gray-600" />
                 </div>
@@ -210,10 +214,14 @@ const SegmentModal: FC<SegmentModalProps> = ({
                 </div>
               )}
               renderMenu={(items) => {
-                if (!items.length) return <></>;
-
                 return (
                   <div className="max-h-[200px] overflow-y-scroll shadow-md  border-[1px] bg-white border-cyan-500 absolute top-[calc(100%+4px)] w-full rounded-[6px] z-[9999999999]">
+                    <div
+                      className="p-[2px] rounded-[6px] relative max-w-full break-all cursor-pointer flex justify-between hover:bg-cyan-100"
+                      onClick={() => setMode(SegmentModalMode.NEW)}
+                    >
+                      Create new
+                    </div>
                     {items}
                   </div>
                 );
@@ -278,7 +286,7 @@ const SegmentModal: FC<SegmentModalProps> = ({
                   disabled={!newSegmentName.trim()}
                   onClick={() => handleEditModalOpen(OpenModelType.New)}
                 >
-                  Create new
+                  Create
                 </GenericButton>
               </Tooltip>
             )}

@@ -727,16 +727,6 @@ const Flow = () => {
                     </Tooltip>
                   </div>
                   <GenericButton
-                    id="createNewSegment"
-                    customClasses="mt-[10px] !p-[4px] !w-full !block !text-center text-[12px]"
-                    onClick={() => {
-                      setSegmentModalMode(SegmentModalMode.NEW);
-                      setSegmentModalOpen(true);
-                    }}
-                  >
-                    Create new segment
-                  </GenericButton>
-                  <GenericButton
                     id="useExistingSegment"
                     customClasses="mt-[10px] !p-[4px] !w-full !block !text-center text-[12px]"
                     onClick={() => {
@@ -744,7 +734,7 @@ const Flow = () => {
                       setSegmentModalOpen(true);
                     }}
                   >
-                    Use existing segment
+                    Define segment
                   </GenericButton>
                 </div>
               }
@@ -754,8 +744,8 @@ const Flow = () => {
         <div className="w-full h-full">
           {!segmentId && (
             <AlertBanner
-              title="Segment is not defined"
-              text="You need to define a segment"
+              title="Customer Segment is not defined"
+              text="Please specify which users are eligible to receive messages by defining a segment"
             />
           )}
           <div className={`${!segmentId ? "h-[calc(100%-80px)]" : "h-full"}`}>
@@ -903,6 +893,7 @@ const Flow = () => {
             segmentId={segmentId}
             workflowId={flowId}
             mode={segmentModalMode}
+            setMode={setSegmentModalMode}
             setSegmentId={setSegmentId}
           />
         )}
