@@ -14,6 +14,12 @@ export enum IntegrationType {
   DATABASE = 'database',
 }
 
+export enum IntegrationStatus {
+  ACTIVE = 'active',
+  PAUSED = 'paused',
+  FAILED = 'failed',
+}
+
 @Entity()
 export class Integration extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
@@ -31,6 +37,12 @@ export class Integration extends BaseEntity {
 
   @Column({ enum: IntegrationType })
   type: IntegrationType;
+
+  @Column({ enum: IntegrationStatus, default: IntegrationStatus.ACTIVE })
+  status: IntegrationStatus;
+
+  @Column({ nullable: true })
+  errorMessage?: string;
 
   @JoinColumn()
   @OneToOne(() => Database, (database) => database.id, { onDelete: 'CASCADE' })

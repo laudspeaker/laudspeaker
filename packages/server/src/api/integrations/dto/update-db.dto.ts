@@ -22,7 +22,6 @@ export class UpdateDBDto {
   @MaxLength(100)
   name?: string;
 
-  @IsNotEmpty()
   @IsString()
   @IsOptional()
   @MaxLength(255)

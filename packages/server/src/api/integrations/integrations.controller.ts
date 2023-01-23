@@ -56,6 +56,26 @@ export class IntegrationsController {
     return this.integrationsService.createDatabase(user, createDBDto);
   }
 
+  @Patch('/:id/pause')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor)
+  public async pauseIntegration(
+    @Req() { user }: Request,
+    @Param('id') id: string
+  ) {
+    return this.integrationsService.pauseIntegration(user, id);
+  }
+
+  @Patch('/:id/resume')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor)
+  public async resumeIntegration(
+    @Req() { user }: Request,
+    @Param('id') id: string
+  ) {
+    return this.integrationsService.resumeIntegration(user, id);
+  }
+
   @Patch('db/:id')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)

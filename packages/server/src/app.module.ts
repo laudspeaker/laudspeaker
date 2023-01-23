@@ -29,6 +29,7 @@ import {
   EventKeysSchema,
 } from './api/events/schemas/event-keys.schema';
 import { WebhookEvent } from './api/webhooks/entities/webhook-event.entity';
+import { Integration } from './api/integrations/entities/integration.entity';
 
 const papertrail = new winston.transports.Http({
   host: 'logs.collector.solarwinds.com',
@@ -121,7 +122,15 @@ const myFormat = winston.format.printf(function ({
       { name: EventKeys.name, schema: EventKeysSchema },
     ]),
     ScheduleModule.forRoot(),
-    TypeOrmModule.forFeature([Account, Verification, WebhookEvent]),
+    TypeOrmModule.forFeature([
+      Account,
+      Verification,
+      WebhookEvent,
+      Integration,
+    ]),
+    BullModule.registerQueue({
+      name: 'integrations',
+    }),
   ],
   controllers: [AppController],
   providers: [CronService],

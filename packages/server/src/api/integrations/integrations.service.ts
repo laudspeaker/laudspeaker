@@ -12,7 +12,11 @@ import { AccountsService } from '../accounts/accounts.service';
 import { CreateDBDto } from './dto/create-db.dto';
 import { UpdateDBDto } from './dto/update-db.dto';
 import { Database, DBType } from './entities/database.entity';
-import { Integration, IntegrationType } from './entities/integration.entity';
+import {
+  Integration,
+  IntegrationStatus,
+  IntegrationType,
+} from './entities/integration.entity';
 
 @Injectable()
 export class IntegrationsService {
@@ -43,17 +47,13 @@ export class IntegrationsService {
       name: integration.name,
       description: integration.description,
       id: integration.id,
+      status: integration.status,
+      errorMessage: integration.errorMessage,
     }));
   }
 
   public async getOneDatabase(user: Express.User, id: string) {
     const account = await this.accountsService.findOne(user);
-
-    console.log({
-      id,
-      owner: { id: account.id },
-      type: IntegrationType.DATABASE,
-    });
 
     const integration = await this.integrationRepository.findOne({
       where: { id, owner: { id: account.id }, type: IntegrationType.DATABASE },
@@ -66,6 +66,8 @@ export class IntegrationsService {
       ...integration.database,
       name: integration.name,
       description: integration.description,
+      status: integration.status,
+      errorMessage: integration.errorMessage,
     };
   }
 
@@ -146,8 +148,43 @@ export class IntegrationsService {
         databricksPath: databricksData.path,
         databricksToken: databricksData.token,
       });
-      await transactionManager.save(Integration, { id, name, description });
+      await transactionManager.save(Integration, {
+        id,
+        name,
+        description,
+        status:
+          integration.status === IntegrationStatus.FAILED
+            ? IntegrationStatus.ACTIVE
+            : integration.status,
+        errorMessage: null,
+      });
     });
+  }
+
+  public async pauseIntegration(user: Express.User, id: string) {
+    const account = await this.accountsService.findOne(user);
+    const integration = await this.integrationRepository.findOne({
+      where: {
+        id,
+        owner: { id: account.id },
+      },
+    });
+
+    integration.status = IntegrationStatus.PAUSED;
+    await integration.save();
+  }
+
+  public async resumeIntegration(user: Express.User, id: string) {
+    const account = await this.accountsService.findOne(user);
+    const integration = await this.integrationRepository.findOne({
+      where: {
+        id,
+        owner: { id: account.id },
+      },
+    });
+
+    integration.status = IntegrationStatus.ACTIVE;
+    await integration.save();
   }
 
   public async deleteIntegration(user: Express.User, id: string) {
@@ -176,17 +213,15 @@ export class IntegrationsService {
           });
           const session = await client.openSession();
 
-          let limittedQuery = createDBDto.query.replace(';', ' LIMIT 10;');
+          const queryOperation = await session.executeStatement(
+            createDBDto.query,
+            {
+              runAsync: true,
+              maxRows: 10,
+            }
+          );
 
-          if (!limittedQuery.includes('LIMIT 10'))
-            limittedQuery += ' LIMIT 10;';
-
-          const queryOperation = await session.executeStatement(limittedQuery, {
-            runAsync: true,
-            maxRows: 10,
-          });
-
-          const result = await queryOperation.fetchAll({
+          const result = await queryOperation.fetchChunk({
             progress: false,
           });
           await queryOperation.close();

@@ -21,7 +21,6 @@ export class CreateDBDto {
   @MaxLength(100)
   name: string;
 
-  @IsNotEmpty()
   @IsString()
   @IsOptional()
   @MaxLength(255)

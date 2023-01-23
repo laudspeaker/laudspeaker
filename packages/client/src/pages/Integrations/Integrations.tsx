@@ -5,36 +5,95 @@ import { DatabaseFormData } from "./Database";
 import { Link } from "react-router-dom";
 import { Menu, Transition } from "@headlessui/react";
 import { PencilSquareIcon } from "@heroicons/react/20/solid";
+import { GenericButton } from "components/Elements";
+import { useNavigate } from "react-router-dom";
+import { confirmAlert } from "react-confirm-alert";
+import Chip from "components/Elements/Chip";
+import Tooltip from "components/Elements/Tooltip";
+
+enum IntegrationStatus {
+  ACTIVE = "active",
+  PAUSED = "paused",
+  FAILED = "failed",
+}
 
 const Integrations = () => {
+  const navigate = useNavigate();
+
   const [integrations, setIntegrations] = useState<
-    (DatabaseFormData & { id: string })[]
+    (DatabaseFormData & {
+      id: string;
+      status: IntegrationStatus;
+      errorMessage?: string;
+    })[]
   >([]);
 
+  const loadData = async () => {
+    const { data } = await ApiService.get<
+      (DatabaseFormData & {
+        databricksHost?: string;
+        databricksPath?: string;
+        databricksToken?: string;
+        id: string;
+        status: IntegrationStatus;
+        errorMessage?: string;
+      })[]
+    >({
+      url: "/integrations/db",
+    });
+    setIntegrations(
+      data?.map((item) => ({
+        ...item,
+        databricksData: {
+          host: item.databricksHost,
+          path: item.databricksPath,
+          token: item.databricksToken,
+        },
+      })) || []
+    );
+  };
+
   useEffect(() => {
-    (async () => {
-      const { data } = await ApiService.get<
-        (DatabaseFormData & {
-          databricksHost?: string;
-          databricksPath?: string;
-          databricksToken?: string;
-          id: string;
-        })[]
-      >({
-        url: "/integrations/db",
-      });
-      setIntegrations(
-        data?.map((item) => ({
-          ...item,
-          databricksData: {
-            host: item.databricksHost,
-            path: item.databricksPath,
-            token: item.databricksToken,
-          },
-        })) || []
-      );
-    })();
+    loadData();
   }, []);
+
+  const handleDeleteIntegration = (id: string) => {
+    confirmAlert({
+      title: "Confirm delete?",
+      message: "Are you sure you want to delete integration?",
+      buttons: [
+        {
+          label: "Yes",
+          onClick: async () => {
+            await ApiService.delete({
+              url: "/integrations/" + id,
+              options: {},
+            });
+            loadData();
+          },
+        },
+        {
+          label: "No",
+        },
+      ],
+    });
+  };
+
+  const handlePauseIntegration = async (id: string) => {
+    await ApiService.patch({ url: `integrations/${id}/pause` });
+    loadData();
+  };
+
+  const handleResumeIntegration = async (id: string) => {
+    await ApiService.patch({ url: `integrations/${id}/resume` });
+    loadData();
+  };
+
+  const statusStyles = {
+    [IntegrationStatus.ACTIVE]: "",
+    [IntegrationStatus.PAUSED]: "!bg-yellow-200 !text-yellow-600",
+    [IntegrationStatus.FAILED]: "!bg-red-200 !text-red-600",
+  };
 
   return (
     <div>
@@ -45,9 +104,14 @@ const Integrations = () => {
             <div className="relative mx-auto max-w-4xl md:px-8 xl:px-0">
               <div className="pt-10 pb-16">
                 <div className="px-4 sm:px-6 md:px-0">
-                  <h1 className="text-3xl font-bold tracking-tight text-gray-900">
-                    Integrations
-                  </h1>
+                  <div className="flex justify-between items-center">
+                    <h1 className="text-3xl font-bold tracking-tight text-gray-900">
+                      Integrations
+                    </h1>
+                    <GenericButton onClick={() => navigate("/integrations/db")}>
+                      Add new DB
+                    </GenericButton>
+                  </div>
                   <div className="py-6">
                     <div className="-my-2 -mx-4 sm:-mx-6 lg:-mx-8 overflow-visible">
                       <div className="inline-block min-w-full py-2 align-middle md:px-6 lg:px-8 overflow-visible">
@@ -71,6 +135,12 @@ const Integrations = () => {
                                   scope="col"
                                   className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6"
                                 >
+                                  Status
+                                </th>
+                                <th
+                                  scope="col"
+                                  className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6"
+                                >
                                   Action
                                 </th>
                               </tr>
@@ -85,6 +155,22 @@ const Integrations = () => {
                                   </td>
                                   <td className="whitespace-nowrap py-2 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
                                     <div>{item.description}</div>
+                                  </td>
+                                  <td className="w-[100px] whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
+                                    <Tooltip
+                                      title={
+                                        item.status === IntegrationStatus.FAILED
+                                          ? item.errorMessage || ""
+                                          : ""
+                                      }
+                                    >
+                                      <Chip
+                                        wrapperClass={`${
+                                          statusStyles[item.status]
+                                        } w-full`}
+                                        label={item.status}
+                                      />
+                                    </Tooltip>
                                   </td>
                                   <td className="w-[100px] whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
                                     <Menu as="div" className="relative">
@@ -108,6 +194,41 @@ const Integrations = () => {
                                             >
                                               <div className="w-full">Edit</div>
                                             </Link>,
+                                            ...(item.status ===
+                                            IntegrationStatus.FAILED
+                                              ? []
+                                              : [
+                                                  <button
+                                                    onClick={() =>
+                                                      item.status ===
+                                                      IntegrationStatus.PAUSED
+                                                        ? handleResumeIntegration(
+                                                            item.id
+                                                          )
+                                                        : handlePauseIntegration(
+                                                            item.id
+                                                          )
+                                                    }
+                                                    className="w-full text-center cursor-pointer outline-none"
+                                                  >
+                                                    {item.status ===
+                                                    IntegrationStatus.PAUSED
+                                                      ? "Resume"
+                                                      : "Pause"}
+                                                  </button>,
+                                                ]),
+                                            <button
+                                              className="w-full text-center cursor-pointer outline-none text-red-500"
+                                              onClick={() => {
+                                                if (item.id)
+                                                  handleDeleteIntegration(
+                                                    item.id
+                                                  );
+                                              }}
+                                              data-delete-button
+                                            >
+                                              Delete
+                                            </button>,
                                           ].map((el, i) => (
                                             <Menu.Item>
                                               <div

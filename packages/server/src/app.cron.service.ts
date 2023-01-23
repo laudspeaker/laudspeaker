@@ -23,10 +23,14 @@ import { WebhookEvent } from './api/webhooks/entities/webhook-event.entity';
 import { EventDocument } from './api/events/schemas/event.schema';
 import { EventKeysDocument } from './api/events/schemas/event-keys.schema';
 import { Event } from './api/events/schemas/event.schema';
+import { EventKeys } from './api/events/schemas/event-keys.schema';
+import { Queue } from 'bull';
+import { InjectQueue } from '@nestjs/bull';
 import {
-  EventKeys,
-  EventKeysSchema,
-} from './api/events/schemas/event-keys.schema';
+  Integration,
+  IntegrationStatus,
+  IntegrationType,
+} from './api/integrations/entities/integration.entity';
 
 const client = createClient({
   host: process.env.CLICKHOUSE_HOST ?? 'http://localhost:8123',
@@ -88,7 +92,10 @@ export class CronService {
     @InjectRepository(Verification)
     private verificationRepository: Repository<Verification>,
     @InjectRepository(WebhookEvent)
-    private webhookEventRepository: Repository<WebhookEvent>
+    private webhookEventRepository: Repository<WebhookEvent>,
+    @InjectRepository(Integration)
+    private integrationsRepository: Repository<Integration>,
+    @InjectQueue('integrations') private readonly integrationsQueue: Queue
   ) {
     (async () => {
       try {
@@ -98,6 +105,16 @@ export class CronService {
       }
     })();
   }
+
+  private integrationsMap: Record<
+    IntegrationType,
+    (integration: Integration) => Promise<void>
+  > = {
+    [IntegrationType.DATABASE]: async (integration) => {
+      const job = await this.integrationsQueue.add('db', { integration });
+      await job.finished();
+    },
+  };
 
   @Cron(CronExpression.EVERY_HOUR)
   async handleCustomerKeysCron() {
@@ -420,6 +437,40 @@ export class CronService {
         .execute();
     } catch (e) {
       this.logger.error('Cron error: ' + e);
+    }
+  }
+
+  @Cron(CronExpression.EVERY_HOUR)
+  async handleIntegrations() {
+    const integrationsNumber = await this.integrationsRepository.countBy({
+      status: IntegrationStatus.ACTIVE,
+    });
+
+    let offset = 0;
+
+    while (offset < integrationsNumber) {
+      const integrationsBatch = await this.integrationsRepository.find({
+        where: { status: IntegrationStatus.ACTIVE },
+        relations: ['database', 'owner'],
+        take: BATCH_SIZE,
+        skip: offset,
+      });
+
+      for (const integration of integrationsBatch) {
+        try {
+          await this.integrationsMap[integration.type](integration);
+        } catch (e) {
+          if (e instanceof Error) {
+            await this.integrationsRepository.save({
+              id: integration.id,
+              status: IntegrationStatus.FAILED,
+              errorMessage: e.message,
+            });
+          }
+        }
+      }
+
+      offset += BATCH_SIZE;
     }
   }
 }
