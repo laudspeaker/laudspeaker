@@ -22,6 +22,7 @@ import { ConditionalType } from "components/EventCard/EventCard";
 import { toast } from "react-toastify";
 import { Resource } from "pages/EmailBuilder/EmailBuilder";
 import { AxiosError } from "axios";
+import AlertBanner from "components/AlertBanner";
 
 interface Condition {
   attribute: string;
@@ -542,56 +543,64 @@ const MySegment = ({
             ></FormControl>
           </div>
           <div
-            className="rounded-[10px] max-h-[60vh] overflow-y-scroll min-h-[200px] border-[1px] border-[#D1D5DB] shadow-[0px_1px_2px_rgba(0,0,0,0.05)] m-[25px_0px] p-[20px_25px] relative after:absolute after:z-[1] after:top-[63px] after:bottom-[0px] after:ml-[45px] after:border-l-[2px] after:border-dashed after:h-full"
+            className="rounded-[10px] max-h-[60vh] overflow-y-scroll min-h-[200px] border-[1px] border-[#D1D5DB] shadow-[0px_1px_2px_rgba(0,0,0,0.05)] m-[25px_0px] p-[20px_25px]"
             ref={elementRef}
           >
-            <div className="relative z-[10000] flex items-center gap-[15px]">
-              <FormControl
-                sx={{
-                  maxWidth: "135px",
-                  paddingLeft: "15px",
-                  minWidth: "112px",
-                }}
-              >
-                <Select
-                  id="activeJourney"
-                  value={subTitleOptions}
-                  options={[
-                    { value: ConditionalType.and, title: "All" },
-                    { value: ConditionalType.or, title: "Any" },
-                  ]}
-                  onChange={handleSubTitleOptions}
-                  displayEmpty
-                  wrapperClassnames="z-[100000]"
-                />
-              </FormControl>
-              <p className="text-[14px]">of the following conditions match</p>
+            <div className="mb-[10px]">
+              <AlertBanner
+                title="Don't specify conditions is you want any user to be eligible to be enrolled in this journey"
+                text=""
+              />
             </div>
+            <div className="relative after:absolute after:z-[1] after:top-[63px] after:bottom-[0px] after:ml-[45px] after:border-l-[2px] after:border-dashed after:h-full">
+              <div className="relative z-[10000] flex items-center gap-[15px]">
+                <FormControl
+                  sx={{
+                    maxWidth: "135px",
+                    paddingLeft: "15px",
+                    minWidth: "112px",
+                  }}
+                >
+                  <Select
+                    id="activeJourney"
+                    value={subTitleOptions}
+                    options={[
+                      { value: ConditionalType.and, title: "All" },
+                      { value: ConditionalType.or, title: "Any" },
+                    ]}
+                    onChange={handleSubTitleOptions}
+                    displayEmpty
+                    wrapperClassnames="z-[100000]"
+                  />
+                </FormControl>
+                <p className="text-[14px]">of the following conditions match</p>
+              </div>
 
-            <div className="ml-[88px]">
-              {formData?.map((item, index) => {
-                let canDeleteRow = false;
-                for (const key in item) {
-                  if (item[key]?.value) {
-                    canDeleteRow = true;
+              <div className="ml-[88px]">
+                {formData?.map((item, index) => {
+                  let canDeleteRow = false;
+                  for (const key in item) {
+                    if (item[key]?.value) {
+                      canDeleteRow = true;
+                    }
                   }
-                }
-                return (
-                  <>
-                    <EventCard
-                      updateFormData={updateEvent}
-                      key={index}
-                      formData={item}
-                      id={index}
-                      canDeleteRow={canDeleteRow}
-                      resources={resources}
-                      handleDeleteRow={handleDeleteRow}
-                      rowLength={formData?.length}
-                      conditionType={subTitleOptions}
-                    />
-                  </>
-                );
-              })}
+                  return (
+                    <>
+                      <EventCard
+                        updateFormData={updateEvent}
+                        key={index}
+                        formData={item}
+                        id={index}
+                        canDeleteRow={canDeleteRow}
+                        resources={resources}
+                        handleDeleteRow={handleDeleteRow}
+                        rowLength={formData?.length}
+                        conditionType={subTitleOptions}
+                      />
+                    </>
+                  );
+                })}
+              </div>
             </div>
           </div>
           <div className="flex justify-end">

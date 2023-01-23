@@ -77,8 +77,8 @@ export default function SettingsEventsBeta() {
         posthogApiKey: posthogApiKey || "",
         posthogProjectId: posthogProjectId || "",
         posthogHostUrl: posthogHostUrl || "",
-        posthogSmsKey: posthogSmsKey?.[0] || "",
-        posthogEmailKey: posthogEmailKey?.[0] || "",
+        posthogSmsKey: posthogSmsKey || "",
+        posthogEmailKey: posthogEmailKey || "",
       };
       setFormData(newData);
     })();
@@ -307,16 +307,22 @@ export default function SettingsEventsBeta() {
                   ))}
               </div>
             </div>
-            <button
-              type="button"
-              onClick={handleSync}
+            <GenericButton
+              onClick={() =>
+                toast.promise(handleSync, {
+                  pending: { render: "Sync in progress!", type: "info" },
+                  success: { render: "Sync success!", type: "success" },
+                  error: { render: "Sync failed!", type: "error" },
+                })
+              }
               disabled={isError || isLoading}
-              className={`inline-flex mb-[10px] items-center rounded-md border border-transparent bg-cyan-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-cyan-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 ${
+              customClasses={`inline-flex mb-[10px] items-center rounded-md border border-transparent bg-cyan-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-cyan-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 ${
                 isError ? "grayscale" : ""
               }`}
+              loading={isLoading}
             >
               Sync
-            </button>
+            </GenericButton>
             <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:py-5">
               <dt className="text-sm font-medium text-gray-500">
                 Name of SMS/Phone number field on your Posthog person
@@ -351,7 +357,11 @@ export default function SettingsEventsBeta() {
             </div>
             <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-10 sm:py-5 sm:pt-5">
               <span className="flex-grow">
-                <GenericButton onClick={handleSubmit} disabled={isLoading}>
+                <GenericButton
+                  onClick={handleSubmit}
+                  disabled={isLoading}
+                  loading={isLoading}
+                >
                   Save
                 </GenericButton>
               </span>

@@ -46,12 +46,7 @@ import { Grid } from "@mui/material";
 import ToggleSwitch from "components/Elements/ToggleSwitch";
 import AlertBanner from "components/AlertBanner";
 import SegmentModal, { SegmentModalMode } from "./SegmentModal";
-import {
-  ProviderTypes,
-  Trigger,
-  TriggerTypeName,
-  Workflow,
-} from "types/Workflow";
+import { ProviderTypes, Trigger, TriggerType, Workflow } from "types/Workflow";
 import { AxiosError } from "axios";
 import Progress from "components/Progress";
 
@@ -60,12 +55,6 @@ const segmentTypeStyle =
 
 interface INameSegmentForm {
   isDynamic: boolean;
-}
-
-enum TriggerType {
-  event,
-  time_delay,
-  time_window,
 }
 
 export interface NodeData {
@@ -149,11 +138,11 @@ const convertLayoutToTable = (
     const trigger = fromNode[0]?.data.triggers[foundTriggerIndex];
 
     const rule = {
-      type: TriggerType.event,
+      type: trigger.type,
       source: fromNode[0]?.data?.audienceId,
       dest: [toNode[0].data.audienceId],
       properties: {
-        conditions: trigger?.properties?.conditions,
+        ...(trigger?.properties || {}),
       },
       providerType: trigger?.providerType || ProviderTypes.Custom,
       providerParams: trigger?.providerParams,
@@ -421,13 +410,13 @@ const Flow = () => {
         setNodes([...nodes, generateNode(newNode, triggers)]);
         break;
       }
-      case TriggerTypeName.TIME_DELAY: {
+      case TriggerType.TIME_DELAY: {
         const selectedNodeData = nodes.find((node) => node.id === selectedNode);
         const triggerId = uuid();
         const trigger: Trigger = {
           id: triggerId,
           title: "Time Delay",
-          type: TriggerTypeName.TIME_DELAY,
+          type: TriggerType.TIME_DELAY,
           properties: {
             conditions: [],
           },
@@ -439,13 +428,13 @@ const Flow = () => {
         settriggerModalOpen(true);
         break;
       }
-      case TriggerTypeName.TIME_WINDOW: {
+      case TriggerType.TIME_WINDOW: {
         const selectedNodeData = nodes.find((node) => node.id === selectedNode);
         const triggerId = uuid();
         const trigger = {
           id: triggerId,
           title: "Time Window",
-          type: TriggerTypeName.TIME_WINDOW,
+          type: TriggerType.TIME_WINDOW,
           properties: { conditions: [] },
         };
         setTriggers([...triggers, trigger]);
@@ -455,13 +444,13 @@ const Flow = () => {
         settriggerModalOpen(true);
         break;
       }
-      case TriggerTypeName.EVENT: {
+      case TriggerType.EVENT: {
         const selectedNodeData = nodes.find((node) => node.id === selectedNode);
         const triggerId = uuid();
         const trigger = {
           id: triggerId,
           title: "Event Based",
-          type: TriggerTypeName.EVENT,
+          type: TriggerType.EVENT,
           properties: {
             conditions: [],
           },
@@ -727,16 +716,6 @@ const Flow = () => {
                     </Tooltip>
                   </div>
                   <GenericButton
-                    id="createNewSegment"
-                    customClasses="mt-[10px] !p-[4px] !w-full !block !text-center text-[12px]"
-                    onClick={() => {
-                      setSegmentModalMode(SegmentModalMode.NEW);
-                      setSegmentModalOpen(true);
-                    }}
-                  >
-                    Create new segment
-                  </GenericButton>
-                  <GenericButton
                     id="useExistingSegment"
                     customClasses="mt-[10px] !p-[4px] !w-full !block !text-center text-[12px]"
                     onClick={() => {
@@ -744,7 +723,7 @@ const Flow = () => {
                       setSegmentModalOpen(true);
                     }}
                   >
-                    Use existing segment
+                    Define segment
                   </GenericButton>
                 </div>
               }
@@ -754,8 +733,8 @@ const Flow = () => {
         <div className="w-full h-full">
           {!segmentId && (
             <AlertBanner
-              title="Segment is not defined"
-              text="You need to define a segment"
+              title="Customer Segment is not defined"
+              text="Please specify which users are eligible to receive messages by defining a segment"
             />
           )}
           <div className={`${!segmentId ? "h-[calc(100%-80px)]" : "h-full"}`}>
@@ -903,6 +882,7 @@ const Flow = () => {
             segmentId={segmentId}
             workflowId={flowId}
             mode={segmentModalMode}
+            setMode={setSegmentModalMode}
             setSegmentId={setSegmentId}
           />
         )}

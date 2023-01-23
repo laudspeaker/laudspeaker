@@ -9,9 +9,9 @@ import {
 import { Segment } from '../../segments/entities/segment.entity';
 
 export enum TriggerType {
-  EVENT,
-  TIME_DELAY,
-  TIME_WINDOW,
+  EVENT = 'eventBased',
+  TIME_DELAY = 'timeDelay',
+  TIME_WINDOW = 'timeWindow',
 }
 
 export interface IEventConditions {
@@ -27,6 +27,11 @@ export interface IEventConditions {
 
 export class EventProps {
   conditions: IEventConditions[];
+  eventTime?: string;
+  delayTime?: string;
+  specificTime?: string;
+  fromTime?: string;
+  toTime?: string;
 }
 
 export enum ProviderTypes {
@@ -42,7 +47,7 @@ export enum PosthogTriggerParams {
 export class Trigger {
   id: string;
   title: string;
-  type: TriggerType;
+  type: TriggerType | TriggerType;
   source?: string;
   dest?: string[];
   providerType?: ProviderTypes;

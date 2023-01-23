@@ -5,7 +5,6 @@ import AC from "react-autocomplete";
 import {
   getConditions,
   getEventResources,
-  transformDataToUI,
 } from "../../pages/Segment/SegmentHelpers";
 import Card from "components/Cards/Card";
 import DateTimePicker from "components/Elements/DateTimePicker";
@@ -17,13 +16,13 @@ import {
   EventCondition,
   ProviderTypes,
   Trigger,
-  TriggerTypeName,
+  TriggerType,
 } from "types/Workflow";
 import { FormDataItem, IResource } from "pages/Segment/MySegment";
 import { Resource } from "pages/EmailBuilder/EmailBuilder";
 
 interface ITriggerCreaterProp {
-  triggerType: TriggerTypeName;
+  triggerType: TriggerType;
   trigger: Trigger;
   onSave: (trigger: Trigger) => void;
   onDelete: (triggerId: string) => void;
@@ -151,50 +150,49 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
   const [resources, setResouces] = useState<IResource>({});
   const [formData, setFormData] = useState<FormDataItem[]>([]);
 
-  const [triggerType, setTriggerType] = useState<TriggerTypeName>(triggerProp);
+  const [triggerType, setTriggerType] = useState<TriggerType>(triggerProp);
   const [eventTimeSelect, setEventTimeSelect] = useState(
     trigger.properties?.eventTime || ""
   );
   const [delayInputTime, setDelayInputTime] = useState(
-    trigger.properties?.delayTime || ""
+    trigger.properties?.delayTime
   );
-
   const [datePickerSpecificTimeValue, setDatePickerSpecificTimeValue] =
-    useState(new Date().toISOString());
+    useState(trigger.properties?.specificTime);
 
   const [datePickerFromValue, setDatePickerFromValue] = useState(
-    new Date().toISOString()
+    trigger.properties?.fromTime
   );
-
   const [datePickerToValue, setDatePickerToValue] = useState(
-    new Date().toISOString()
+    trigger.properties?.toTime
   );
 
   const [isButtonDisabled, setIsButtonDisabled] = useState(true);
 
-  // const handleTimeDelayChange = (value: string)
-  //   const arr: string[] = value.split(":");
-  //   setIsButtonDisabled(!value.match(/\d\d:\d\d:\d\d/));
-  //   if (
-  //     arr?.length > 3 ||
-  //     (arr[0] && arr[0]?.length > 2) ||
-  //     (arr[1] && arr[1]?.length > 2) ||
-  //     (arr[2] && arr[2]?.length > 3) ||
-  //     arr.some((part: string) => isNaN(+part)) ||
-  //     +arr[0] > 59 ||
-  //     +arr[1] > 23
-  //   ) {
-  //     return;
-  //   }
-  //   setDelayInputTime(value);
-  // };
+  const handleTimeDelayChange = (value: string) => {
+    const arr: string[] = value.split(":");
+    setIsButtonDisabled(!value.match(/\d\d:\d\d/));
+
+    if (
+      arr?.length > 2 ||
+      (arr[0] && arr[0]?.length > 2) ||
+      (arr[1] && arr[1]?.length > 2) ||
+      arr.some((part: string) => isNaN(+part)) ||
+      +arr[0] > 23 ||
+      +arr[1] > 59
+    ) {
+      return;
+    }
+
+    setDelayInputTime(value);
+  };
 
   const handleTimeSelectChange = (value: string) => {
     setIsButtonDisabled(true);
     setEventTimeSelect(value);
   };
 
-  const handleTriggerType = (value: TriggerTypeName) => {
+  const handleTriggerType = (value: TriggerType) => {
     setTriggerType(value);
   };
 
@@ -261,7 +259,7 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
         });
       });
     };
-    if (triggerType === TriggerTypeName.EVENT || "timeDelay") {
+    if (triggerType === TriggerType.EVENT || "timeDelay") {
       getAllConditions();
     }
   }, [triggerType, eventTrigger.properties?.conditions]);
@@ -432,10 +430,26 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
   };
 
   const handleData = async (func: (data: Trigger) => void) => {
-    if (triggerType === TriggerTypeName.TIME_DELAY)
-      func(JSON.parse(JSON.stringify(delayInputTime)));
-    // else if (triggerType === "timeWindow") func(timeWindow);
-    else if (triggerType === TriggerTypeName.EVENT) {
+    if (triggerType === TriggerType.TIME_DELAY)
+      func({
+        ...eventTrigger,
+        properties: {
+          conditions: [],
+          specificTime: datePickerSpecificTimeValue,
+          delayTime: delayInputTime,
+          eventTime: eventTimeSelect,
+        },
+      });
+    else if (triggerType === "timeWindow")
+      func({
+        ...eventTrigger,
+        properties: {
+          conditions: [],
+          fromTime: datePickerFromValue,
+          toTime: datePickerToValue,
+        },
+      });
+    else if (triggerType === TriggerType.EVENT) {
       func(eventTrigger);
     }
   };
@@ -502,7 +516,7 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
                         }}
                       >
                         <DateTimePicker
-                          value={datePickerSpecificTimeValue}
+                          value={datePickerSpecificTimeValue || ""}
                           handleChange={handleSpecificTimeChange}
                           dateStyle="short"
                           timeStyle="short"
@@ -510,8 +524,6 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
                       </FormControl>
                     )}
                   </FormControl>
-                  {/* 
-                  TODO: Uncomment and fix data passing on feature implementation
                   <FormControl
                     sx={{
                       padding: "0 15px",
@@ -519,18 +531,16 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
                       width: "auto",
                     }}
                   >
-                    {eventTimeSelect == "SpecificTime"
-                      ? undefined
-                      : transformDataToUI({
-                          data: { type: "inputText" },
-                          onChange: ({ value }: { value: string }) =>
-                            handleTimeDelayChange(value),
-                          isRoot: formData.conditions?.isRoot,
-                          value: delayInputTime,
-                          id: "delayTime",
-                          placeholderText: "MM:HH:Days",
-                        })}
-                  </FormControl> */}
+                    {eventTimeSelect !== "SpecificTime" && (
+                      <Input
+                        name="delayTime"
+                        id="delayTime"
+                        value={delayInputTime}
+                        onChange={(e) => handleTimeDelayChange(e.target.value)}
+                        placeholder="HH:MM"
+                      />
+                    )}
+                  </FormControl>
                   <FormControl
                     sx={{
                       padding: "0 15px",
@@ -580,7 +590,7 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
                   }}
                 >
                   <DateTimePicker
-                    value={datePickerToValue}
+                    value={datePickerToValue || ""}
                     handleChange={handleToTimeChange}
                     dateStyle="short"
                     timeStyle="short"
@@ -615,7 +625,7 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
                   }}
                 >
                   <DateTimePicker
-                    value={datePickerFromValue}
+                    value={datePickerFromValue || ""}
                     handleChange={handleFromTimeChange}
                     dateStyle="short"
                     timeStyle="short"
@@ -723,6 +733,26 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
     [eventTrigger.providerParams]
   );
 
+  let isError = false;
+
+  switch (triggerType) {
+    case TriggerType.EVENT:
+      isError = !!eventBasedErrorMessage;
+      break;
+    case TriggerType.TIME_DELAY:
+      isError =
+        eventTimeSelect === "SpecificTime"
+          ? !datePickerSpecificTimeValue
+          : !delayInputTime || !delayInputTime.match(/\d\d:\d\d/);
+      break;
+    case TriggerType.TIME_WINDOW:
+      isError =
+        !datePickerFromValue ||
+        !datePickerToValue ||
+        new Date(datePickerFromValue) > new Date(datePickerToValue);
+      break;
+  }
+
   return (
     <>
       <Card
@@ -735,77 +765,91 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
           <div className="flex items-center relative">
             <div className="rounded-[10px] my-[25px] mx-[0px] pt-[10px] pb-[25px] px-[20px] bg-[#F9F9FA] flex items-center cursor-pointer w-full">
               <div className="flex flex-[1] flex-wrap flex-col">
-                <div className="w-full flex mb-[10px]">
-                  <Select
-                    onChange={(val) =>
-                      setEventTrigger({ ...eventTrigger, providerType: val })
-                    }
-                    options={[
-                      { value: ProviderTypes.Posthog, title: "Posthog" },
-                      { value: ProviderTypes.Custom, title: "Custom" },
-                    ]}
-                    disabled={isViewMode}
-                    wrapperClassnames="max-w-[120px] mr-[15px]"
-                    value={eventTrigger.providerType || ProviderTypes.Custom}
-                  />
-                  {eventTrigger.providerType === ProviderTypes.Posthog && (
-                    <div className="relative">
-                      <AC
-                        getItemValue={(item) => item}
-                        items={[
-                          "page",
-                          "autocapture",
-                          ...possiblePosthogEventTypes,
-                        ]}
-                        autoHighlight={false}
-                        // eslint-disable-next-line @typescript-eslint/no-shadow
-                        renderInput={(props) => (
-                          <Input
-                            name={props.name || ""}
-                            value={props.value}
-                            onChange={props.onChange}
-                            inputRef={props.ref}
-                            aria-expanded={props["aria-expanded"]}
-                            disabled={isViewMode}
-                            id="keyInput"
-                            {...props}
-                          />
-                        )}
-                        renderItem={(item, isHighlighted) => (
-                          <div
-                            className={`${
-                              isHighlighted ? "bg-cyan-100" : ""
-                            } p-[2px] rounded-[6px] relative max-w-full break-all`}
-                          >
-                            {item}
-                          </div>
-                        )}
-                        renderMenu={(items) => {
-                          if (!items.length) return <></>;
-
-                          return (
-                            <div className="max-h-[200px] overflow-y-scroll shadow-md  border-[1px] bg-white border-cyan-500 absolute top-[calc(100%+4px)] w-full rounded-[6px] z-[9999999999]">
-                              {items}
+                {eventTrigger.type === TriggerType.EVENT && (
+                  <div className="w-full flex mb-[10px]">
+                    <Select
+                      onChange={(val) =>
+                        setEventTrigger({
+                          ...eventTrigger,
+                          providerType: val,
+                        })
+                      }
+                      options={[
+                        { value: ProviderTypes.Posthog, title: "Posthog" },
+                        { value: ProviderTypes.Custom, title: "Custom" },
+                      ]}
+                      disabled={isViewMode}
+                      wrapperClassnames="max-w-[120px] mr-[15px]"
+                      value={eventTrigger.providerType || ProviderTypes.Custom}
+                    />
+                    {eventTrigger.providerType === ProviderTypes.Posthog && (
+                      <div className="relative">
+                        <AC
+                          getItemValue={(item) => item}
+                          items={[
+                            "page",
+                            "autocapture",
+                            ...possiblePosthogEventTypes,
+                          ]}
+                          autoHighlight={false}
+                          // eslint-disable-next-line @typescript-eslint/no-shadow
+                          renderInput={(props) => (
+                            <Input
+                              name={props.name || ""}
+                              value={props.value}
+                              onChange={props.onChange}
+                              inputRef={props.ref}
+                              aria-expanded={props["aria-expanded"]}
+                              disabled={isViewMode}
+                              id="keyInput"
+                              {...props}
+                            />
+                          )}
+                          renderItem={(item, isHighlighted) => (
+                            <div
+                              className={`${
+                                isHighlighted ? "bg-cyan-100" : ""
+                              } p-[2px] rounded-[6px] relative max-w-full break-all`}
+                            >
+                              {item}
                             </div>
-                          );
-                        }}
-                        value={eventTrigger.providerParams}
-                        onChange={(e) => {
-                          setEventTrigger({
-                            ...eventTrigger,
-                            providerParams: e.target.value,
-                          });
-                        }}
-                        onSelect={(val) => {
-                          setEventTrigger({
-                            ...eventTrigger,
-                            providerParams: val,
-                          });
-                        }}
-                      />
-                    </div>
-                  )}
-                </div>
+                          )}
+                          renderMenu={(items) => {
+                            if (!items.length) return <></>;
+
+                            return (
+                              <div className="max-h-[200px] overflow-y-scroll shadow-md  border-[1px] bg-white border-cyan-500 absolute top-[calc(100%+4px)] w-full rounded-[6px] z-[9999999999]">
+                                {items}
+                              </div>
+                            );
+                          }}
+                          value={eventTrigger.providerParams}
+                          onChange={(e) => {
+                            setEventTrigger({
+                              ...eventTrigger,
+                              providerParams: e.target.value,
+                            });
+                          }}
+                          onSelect={(val) => {
+                            setEventTrigger({
+                              ...eventTrigger,
+                              providerParams: val,
+                            });
+                          }}
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+                {triggerType === TriggerType.TIME_WINDOW && (
+                  <div className="w-full flex mb-[10px]">
+                    <Select
+                      options={[{ value: "From" }]}
+                      value="From"
+                      onChange={() => {}}
+                    />
+                  </div>
+                )}
                 {triggerType === "eventBased" ? (
                   <>
                     <div>
@@ -902,9 +946,7 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
                   <Select
                     id="activeJourney"
                     value={triggerType}
-                    options={[
-                      { value: TriggerTypeName.TIME_WINDOW, title: "To" },
-                    ]}
+                    options={[{ value: TriggerType.TIME_WINDOW, title: "To" }]}
                     onChange={handleTriggerType}
                     displayEmpty
                     disabled={isViewMode}
@@ -950,11 +992,7 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
                 style={{
                   width: "200px",
                 }}
-                disabled={
-                  triggerType === "eventBased"
-                    ? !!eventBasedErrorMessage
-                    : isButtonDisabled
-                }
+                disabled={isError}
               >
                 Save
               </GenericButton>
