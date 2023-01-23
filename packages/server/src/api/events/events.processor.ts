@@ -57,7 +57,7 @@ export class EventsProcessor {
     @InjectModel(PosthogEventType.name)
     private PosthogEventTypeModel: Model<PosthogEventTypeDocument>,
     @InjectConnection() private readonly connection: mongoose.Connection
-  ) {}
+  ) { }
 
   @Process('start')
   async processJourneyStart(job: Job<StartDto>) {
@@ -132,7 +132,9 @@ export class EventsProcessor {
             audience,
             customers,
             null,
-            queryRunner
+            queryRunner,
+            workflow.rules,
+            workflow.id,
           );
           this.logger.debug('Finished moving customers into workflow');
 

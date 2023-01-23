@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { Model } from 'mongoose';
@@ -27,6 +27,8 @@ import {
   EventKeys,
   EventKeysSchema,
 } from './api/events/schemas/event-keys.schema';
+import { JobsService } from './api/jobs/jobs.service';
+import { WorkflowsService } from './api/workflows/workflows.service';
 
 const client = createClient({
   host: process.env.CLICKHOUSE_HOST ?? 'http://localhost:8123',
@@ -88,7 +90,9 @@ export class CronService {
     @InjectRepository(Verification)
     private verificationRepository: Repository<Verification>,
     @InjectRepository(WebhookEvent)
-    private webhookEventRepository: Repository<WebhookEvent>
+    private webhookEventRepository: Repository<WebhookEvent>,
+    @Inject(JobsService) private jobsService: JobsService,
+    @Inject(WorkflowsService) private workflowsService: WorkflowsService
   ) {
     (async () => {
       try {
@@ -166,8 +170,7 @@ export class CronService {
       }
 
       this.logger.log(
-        `Cron customer keys job finished, checked ${documentsCount} records, found ${
-          Object.keys(keys).length
+        `Cron customer keys job finished, checked ${documentsCount} records, found ${Object.keys(keys).length
         } keys`
       );
     } catch (e) {
@@ -262,8 +265,7 @@ export class CronService {
       }
 
       this.logger.log(
-        `Cron event keys job finished, checked ${documentsCount} records, found ${
-          Object.keys(keys).length
+        `Cron event keys job finished, checked ${documentsCount} records, found ${Object.keys(keys).length
         } keys`
       );
     } catch (e) {
@@ -282,7 +284,7 @@ export class CronService {
       const lastEventFetch =
         new Date(
           new Date(dateInDB).getTime() -
-            new Date().getTimezoneOffset() * 60 * 1000
+          new Date().getTimezoneOffset() * 60 * 1000
         ) || new Date('2000-10-10');
 
       const mailgun = new Mailgun(FormData);
@@ -418,6 +420,19 @@ export class CronService {
         )
         .update({ status: 'expired' })
         .execute();
+    } catch (e) {
+      this.logger.error('Cron error: ' + e);
+    }
+  }
+
+  @Cron(CronExpression.EVERY_10_SECONDS)
+  async handleTimeTriggers() {
+    try {
+      const jobs = await this.jobsService.findAllByDate(new Date());
+      this.logger.debug("Found jobs:" +jobs)
+      for (let jobIndex = 0; jobIndex < jobs.length; jobIndex++) {
+        await this.workflowsService.timeTick(jobs[jobIndex]);
+      }
     } catch (e) {
       this.logger.error('Cron error: ' + e);
     }

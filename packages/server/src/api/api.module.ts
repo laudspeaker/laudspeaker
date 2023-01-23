@@ -22,6 +22,7 @@ import { TestsModule } from './tests/tests.module';
 import { WebhooksModule } from './webhooks/webhooks.module';
 import { SegmentsModule } from './segments/segments.module';
 import { SmsModule } from './sms/sms.module';
+import { JobsModule } from './jobs/jobs.module';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { SmsModule } from './sms/sms.module';
     WebhooksModule,
     SegmentsModule,
     SmsModule,
+    JobsModule
   ],
 })
 export class ApiModule {

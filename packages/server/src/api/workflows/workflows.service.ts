@@ -44,6 +44,7 @@ import { InjectQueue } from '@nestjs/bull';
 import { JobTypes } from '../events/interfaces/event.interface';
 import { Queue } from 'bull';
 import { BadRequestException } from '@nestjs/common/exceptions';
+import { Job } from '../jobs/entities/job.entity';
 
 @Injectable()
 export class WorkflowsService {
@@ -59,7 +60,8 @@ export class WorkflowsService {
     @InjectRepository(Workflow)
     private workflowsRepository: Repository<Workflow>,
     @InjectRepository(Segment) private segmentsRepository: Repository<Segment>,
-    @Inject(AudiencesService) private audiencesService: AudiencesService,
+    @InjectRepository(Account)
+    private usersRepository: Repository<Account>, @Inject(AudiencesService) private audiencesService: AudiencesService,
     @Inject(CustomersService) private customersService: CustomersService,
     @InjectModel(EventKeys.name)
     private EventKeysModel: Model<EventKeysDocument>,
@@ -67,7 +69,7 @@ export class WorkflowsService {
     @InjectQueue(JobTypes.events)
     private readonly eventsQueue: Queue,
     @InjectConnection() private readonly connection: mongoose.Connection
-  ) {}
+  ) { }
 
   /**
    * Finds all workflows
@@ -499,7 +501,9 @@ export class WorkflowsService {
               audience?.id,
               customer,
               null,
-              queryRunner
+              queryRunner,
+              workflow.rules,
+              workflow.id,
             );
             this.logger.debug('Enrolled customer in dynamic primary audience.');
           }
@@ -598,7 +602,7 @@ export class WorkflowsService {
                 (event.payload.type === PosthogTriggerParams.Track &&
                   event.payload.event === 'click' &&
                   trigger.providerParams ===
-                    PosthogTriggerParams.Autocapture) ||
+                  PosthogTriggerParams.Autocapture) ||
                 // for page
                 (event.payload.type === PosthogTriggerParams.Page &&
                   trigger.providerParams === PosthogTriggerParams.Page) ||
@@ -656,22 +660,21 @@ export class WorkflowsService {
                   if (conditions && conditions.length > 0) {
                     const compareResults = conditions.map((condition) => {
                       this.logger.debug(
-                        `Comparing: ${event?.event?.[condition.key] || ''} ${
-                          condition.comparisonType || ''
+                        `Comparing: ${event?.event?.[condition.key] || ''} ${condition.comparisonType || ''
                         } ${condition.value || ''}`
                       );
                       return ['exists', 'doesNotExist'].includes(
                         condition.comparisonType
                       )
                         ? operableCompare(
-                            event?.event?.[condition.key],
-                            condition.comparisonType
-                          )
+                          event?.event?.[condition.key],
+                          condition.comparisonType
+                        )
                         : conditionalCompare(
-                            event?.event?.[condition.key],
-                            condition.value,
-                            condition.comparisonType
-                          );
+                          event?.event?.[condition.key],
+                          condition.value,
+                          condition.comparisonType
+                        );
                     });
                     this.logger.debug(
                       'Compare result: ' + JSON.stringify(compareResults)
@@ -704,15 +707,17 @@ export class WorkflowsService {
                           to?.id,
                           customer,
                           event,
-                          queryRunner
+                          queryRunner,
+                          workflow.rules,
+                          workflow.id,
                         );
                       this.logger.debug(
                         'Moving ' +
-                          customer?.id +
-                          ' out of ' +
-                          from?.id +
-                          ' and into ' +
-                          to?.id
+                        customer?.id +
+                        ' out of ' +
+                        from?.id +
+                        ' and into ' +
+                        to?.id
                       );
                       jobId.jobIds = jobIdArr;
                       jobId.templates = templates;
@@ -743,7 +748,6 @@ export class WorkflowsService {
       this.logger.error('Error: ' + err);
       return Promise.reject(err);
     }
-
     return Promise.resolve(jobIds);
   }
 
@@ -803,5 +807,30 @@ export class WorkflowsService {
       }
     );
     return;
+  }
+
+  async timeTick(job: Job) {
+    const queryRunner = AppDataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
+      const acct: Account = await queryRunner.manager.findOneBy(Account, {
+        id: job.owner,
+      });
+      const found = await queryRunner.manager.findOne(Workflow, { where: { id: job.workflow } });
+      this.logger.debug("Found Workflow for Job: " + found.id)
+      if (found.isActive) {
+        this.logger.debug("Looking for customer...");
+        const customer = await this.customersService.findById(acct, job.customer);
+        this.logger.debug("Found customer for Job: " + customer.id)
+        await this.audiencesService.moveCustomer(acct, job.from, job.to, customer, null, queryRunner, found.rules, found.id);
+      }
+      await queryRunner.commitTransaction();
+    } catch (e) {
+      await queryRunner.rollbackTransaction();
+      throw e;
+    } finally {
+      await queryRunner.release();
+    }
   }
 }
