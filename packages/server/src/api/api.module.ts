@@ -40,7 +40,7 @@ import { JobsModule } from './jobs/jobs.module';
     WebhooksModule,
     SegmentsModule,
     SmsModule,
-    JobsModule
+    JobsModule,
   ],
 })
 export class ApiModule {

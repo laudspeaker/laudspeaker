@@ -170,7 +170,8 @@ export class CronService {
       }
 
       this.logger.log(
-        `Cron customer keys job finished, checked ${documentsCount} records, found ${Object.keys(keys).length
+        `Cron customer keys job finished, checked ${documentsCount} records, found ${
+          Object.keys(keys).length
         } keys`
       );
     } catch (e) {
@@ -265,7 +266,8 @@ export class CronService {
       }
 
       this.logger.log(
-        `Cron event keys job finished, checked ${documentsCount} records, found ${Object.keys(keys).length
+        `Cron event keys job finished, checked ${documentsCount} records, found ${
+          Object.keys(keys).length
         } keys`
       );
     } catch (e) {
@@ -284,7 +286,7 @@ export class CronService {
       const lastEventFetch =
         new Date(
           new Date(dateInDB).getTime() -
-          new Date().getTimezoneOffset() * 60 * 1000
+            new Date().getTimezoneOffset() * 60 * 1000
         ) || new Date('2000-10-10');
 
       const mailgun = new Mailgun(FormData);
@@ -429,7 +431,7 @@ export class CronService {
   async handleTimeTriggers() {
     try {
       const jobs = await this.jobsService.findAllByDate(new Date());
-      this.logger.debug("Found jobs:" +jobs)
+      this.logger.debug('Found jobs:' + jobs);
       for (let jobIndex = 0; jobIndex < jobs.length; jobIndex++) {
         await this.workflowsService.timeTick(jobs[jobIndex]);
       }

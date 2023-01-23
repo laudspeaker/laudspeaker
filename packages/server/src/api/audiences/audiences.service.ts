@@ -32,7 +32,7 @@ export class AudiencesService {
     private workflowRepository: Repository<Workflow>,
     @Inject(TemplatesService) public templatesService: TemplatesService,
     @Inject(JobsService) public jobsService: JobsService
-  ) { }
+  ) {}
 
   /**
    * Find all audiences that belong to a given account. If
@@ -245,7 +245,7 @@ export class AudiencesService {
     event: EventDto,
     queryRunner: QueryRunner,
     encodedRules: string[],
-    workflowID: string,
+    workflowID: string
   ): Promise<{ jobIds: (string | number)[]; templates: Template[] }> {
     const customerId = customer.id;
     let index = -1; // Index of the customer ID in the fromAud.customers array
@@ -280,7 +280,10 @@ export class AudiencesService {
         );
       }
 
-      if (toAud?.customers?.length && toAud?.customers?.indexOf(customerId) > -1) {
+      if (
+        toAud?.customers?.length &&
+        toAud?.customers?.indexOf(customerId) > -1
+      ) {
         this.logger.debug(
           'Customer ' + customerId + ' is already in audience ' + toAud.id
         );
@@ -309,28 +312,31 @@ export class AudiencesService {
         this.logger.debug('To after: ' + saved?.customers?.length);
 
         // Queue up any jobs for time based triggers based on this audience
-        for (let rulesIndex = 0; rulesIndex < encodedRules?.length; rulesIndex++) {
+        for (
+          let rulesIndex = 0;
+          rulesIndex < encodedRules?.length;
+          rulesIndex++
+        ) {
           const trigger = JSON.parse(
-            Buffer.from(encodedRules[rulesIndex], 'base64').toString(
-              'ascii'
-            )
+            Buffer.from(encodedRules[rulesIndex], 'base64').toString('ascii')
           );
           if (to == trigger.source) {
             const now = DateTime.now();
-            this.jobsService.create(
-              account,
-              {
-                customer: customerId,
-                from: trigger.source,
-                to: trigger.dest[0],
-                workflow: workflowID,
-                startTime: trigger.properties.fromTime,
-                endTime: trigger.properties.toTime,
-                executionTime: trigger.properties.eventTime == "SpecificTime" ? trigger.properties.specificTime : now.plus({
-                  hours: trigger.properties.delayTime.split(":")[0],
-                  minutes: trigger.properties.delayTime.split(":")[1]
-                })
-              })
+            this.jobsService.create(account, {
+              customer: customerId,
+              from: trigger.source,
+              to: trigger.dest[0],
+              workflow: workflowID,
+              startTime: trigger.properties.fromTime,
+              endTime: trigger.properties.toTime,
+              executionTime:
+                trigger.properties.eventTime == 'SpecificTime'
+                  ? trigger.properties.specificTime
+                  : now.plus({
+                      hours: trigger.properties.delayTime.split(':')[0],
+                      minutes: trigger.properties.delayTime.split(':')[1],
+                    }),
+            });
           }
         }
 
@@ -363,8 +369,8 @@ export class AudiencesService {
             );
             this.logger.warn(
               'Templates: [' +
-              dataIds.join(',') +
-              "] was skipped to send because test mail's can't be sent to external account."
+                dataIds.join(',') +
+                "] was skipped to send because test mail's can't be sent to external account."
             );
           }
         }
@@ -419,7 +425,7 @@ export class AudiencesService {
     event: EventDto,
     queryRunner: QueryRunner,
     encodedRules: string[],
-    workflowId: string,
+    workflowId: string
   ): Promise<(string | number)[]> {
     let jobIds: (string | number)[] = [];
     for (let index = 0; index < customers?.length; index++) {

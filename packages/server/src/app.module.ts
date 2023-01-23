@@ -134,7 +134,18 @@ const myFormat = winston.format.printf(function ({
       { name: EventKeys.name, schema: EventKeysSchema },
     ]),
     ScheduleModule.forRoot(),
-    TypeOrmModule.forFeature([Account, Verification, WebhookEvent, Workflow, Job, Segment, Audience, Template, Installation, State]),
+    TypeOrmModule.forFeature([
+      Account,
+      Verification,
+      WebhookEvent,
+      Workflow,
+      Job,
+      Segment,
+      Audience,
+      Template,
+      Installation,
+      State,
+    ]),
     BullModule.registerQueue({
       name: 'events',
     }),
@@ -152,7 +163,15 @@ const myFormat = winston.format.printf(function ({
     }),
   ],
   controllers: [AppController],
-  providers: [CronService, WorkflowsService, JobsService, AudiencesService, CustomersService, TemplatesService, SlackService],
+  providers: [
+    CronService,
+    WorkflowsService,
+    JobsService,
+    AudiencesService,
+    CustomersService,
+    TemplatesService,
+    SlackService,
+  ],
 })
 export class AppModule {
   configure(consumer: MiddlewareConsumer) {
