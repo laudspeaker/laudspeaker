@@ -81,4 +81,3 @@ export class SegmentsService {
     return newSegment;
   }
 }
-

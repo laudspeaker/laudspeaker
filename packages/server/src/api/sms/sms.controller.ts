@@ -23,4 +23,3 @@ export class SmsController {
     return this.smsService.getPossiblePhoneNumbers(smsAccountSid, smsAuthToken);
   }
 }
-

@@ -18,6 +18,8 @@ import {
 import { CustomersModule } from '../customers/customers.module';
 import { TemplatesModule } from '../templates/templates.module';
 import { SlackModule } from '../slack/slack.module';
+import { JobsService } from '../jobs/jobs.service';
+import { Job } from '../jobs/entities/job.entity';
 
 @Module({
   imports: [
@@ -28,6 +30,7 @@ import { SlackModule } from '../slack/slack.module';
       Template,
       Installation,
       Workflow,
+      Job,
     ]),
     MongooseModule.forFeature([
       { name: Customer.name, schema: CustomerSchema },
@@ -49,7 +52,7 @@ import { SlackModule } from '../slack/slack.module';
     SlackModule,
   ],
   controllers: [AudiencesController],
-  providers: [AudiencesService],
+  providers: [AudiencesService, JobsService],
   exports: [AudiencesService],
 })
 export class AudiencesModule {}

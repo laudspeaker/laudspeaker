@@ -132,7 +132,9 @@ export class EventsProcessor {
             audience,
             customers,
             null,
-            queryRunner
+            queryRunner,
+            workflow.rules,
+            workflow.id
           );
           this.logger.debug('Finished moving customers into workflow');
 

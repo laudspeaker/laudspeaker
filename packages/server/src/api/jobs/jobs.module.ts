@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
-import { TemplatesService } from './templates.service';
-import { TemplatesController } from './templates.controller';
+import { JobsService } from './jobs.service';
+import { JobsController } from './jobs.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Template } from './entities/template.entity';
+import { Job } from './entities/job.entity';
 import { BullModule } from '@nestjs/bull';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Customer, CustomerSchema } from '../customers/schemas/customer.schema';
@@ -10,12 +10,8 @@ import { Audience } from '../audiences/entities/audience.entity';
 import { Installation } from '../slack/entities/installation.entity';
 import { State } from '../slack/entities/state.entity';
 import { Account } from '../accounts/entities/accounts.entity';
-import {
-  CustomerKeys,
-  CustomerKeysSchema,
-} from '../customers/schemas/customer-keys.schema';
 import { CustomersModule } from '../customers/customers.module';
-import { SlackModule } from '../slack/slack.module';
+import { Workflow } from '../workflows/entities/workflow.entity';
 
 @Module({
   imports: [
@@ -24,13 +20,11 @@ import { SlackModule } from '../slack/slack.module';
       State,
       Installation,
       Audience,
-      Template,
+      Workflow,
+      Job,
     ]),
     MongooseModule.forFeature([
       { name: Customer.name, schema: CustomerSchema },
-    ]),
-    MongooseModule.forFeature([
-      { name: CustomerKeys.name, schema: CustomerKeysSchema },
     ]),
     BullModule.registerQueue({
       name: 'email',
@@ -45,10 +39,9 @@ import { SlackModule } from '../slack/slack.module';
       name: 'sms',
     }),
     CustomersModule,
-    SlackModule,
   ],
-  providers: [TemplatesService],
-  controllers: [TemplatesController],
-  exports: [TemplatesService],
+  providers: [JobsService],
+  controllers: [JobsController],
+  exports: [JobsService],
 })
-export class TemplatesModule {}
+export class JobsModule {}
