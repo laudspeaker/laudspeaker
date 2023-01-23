@@ -5,7 +5,6 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import FlowBuilder from "pages/FlowBuilder";
 import EmailConfig from "pages/EmailConfig";
-import TriggerCreater from "components/TriggerCreater";
 import EmailBuilder from "pages/EmailBuilder";
 import { getUserPermissions } from "reducers/auth";
 import SlackBuilder from "pages/SlackBuilder";
@@ -22,7 +21,6 @@ import Settings from "pages/Settings/Settings";
 import Person from "pages/Person";
 import Verify from "pages/Verify";
 import SmsBuilder from "pages/SmsBuilder";
-import { TriggerTypeName } from "types/Workflow";
 
 interface IProtected {
   children: ReactElement;

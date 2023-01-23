@@ -46,12 +46,7 @@ import { Grid } from "@mui/material";
 import ToggleSwitch from "components/Elements/ToggleSwitch";
 import AlertBanner from "components/AlertBanner";
 import SegmentModal, { SegmentModalMode } from "./SegmentModal";
-import {
-  ProviderTypes,
-  Trigger,
-  TriggerTypeName,
-  Workflow,
-} from "types/Workflow";
+import { ProviderTypes, Trigger, TriggerType, Workflow } from "types/Workflow";
 import { AxiosError } from "axios";
 import Progress from "components/Progress";
 
@@ -60,12 +55,6 @@ const segmentTypeStyle =
 
 interface INameSegmentForm {
   isDynamic: boolean;
-}
-
-enum TriggerType {
-  event,
-  time_delay,
-  time_window,
 }
 
 export interface NodeData {
@@ -149,7 +138,7 @@ const convertLayoutToTable = (
     const trigger = fromNode[0]?.data.triggers[foundTriggerIndex];
 
     const rule = {
-      type: TriggerType.event,
+      type: trigger.type,
       source: fromNode[0]?.data?.audienceId,
       dest: [toNode[0].data.audienceId],
       properties: {
@@ -421,13 +410,13 @@ const Flow = () => {
         setNodes([...nodes, generateNode(newNode, triggers)]);
         break;
       }
-      case TriggerTypeName.TIME_DELAY: {
+      case TriggerType.TIME_DELAY: {
         const selectedNodeData = nodes.find((node) => node.id === selectedNode);
         const triggerId = uuid();
         const trigger: Trigger = {
           id: triggerId,
           title: "Time Delay",
-          type: TriggerTypeName.TIME_DELAY,
+          type: TriggerType.TIME_DELAY,
           properties: {
             conditions: [],
           },
@@ -439,13 +428,13 @@ const Flow = () => {
         settriggerModalOpen(true);
         break;
       }
-      case TriggerTypeName.TIME_WINDOW: {
+      case TriggerType.TIME_WINDOW: {
         const selectedNodeData = nodes.find((node) => node.id === selectedNode);
         const triggerId = uuid();
         const trigger = {
           id: triggerId,
           title: "Time Window",
-          type: TriggerTypeName.TIME_WINDOW,
+          type: TriggerType.TIME_WINDOW,
           properties: { conditions: [] },
         };
         setTriggers([...triggers, trigger]);
@@ -455,13 +444,13 @@ const Flow = () => {
         settriggerModalOpen(true);
         break;
       }
-      case TriggerTypeName.EVENT: {
+      case TriggerType.EVENT: {
         const selectedNodeData = nodes.find((node) => node.id === selectedNode);
         const triggerId = uuid();
         const trigger = {
           id: triggerId,
           title: "Event Based",
-          type: TriggerTypeName.EVENT,
+          type: TriggerType.EVENT,
           properties: {
             conditions: [],
           },

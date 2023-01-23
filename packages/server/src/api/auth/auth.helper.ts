@@ -14,7 +14,6 @@ import { Template } from '../templates/entities/template.entity';
 import {
   ProviderTypes,
   TriggerType,
-  TriggerTypeName,
   Workflow,
 } from '../workflows/entities/workflow.entity';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
@@ -200,7 +199,7 @@ export class AuthHelper extends BaseJwtHelper {
                 },
                 providerType: ProviderTypes.Custom,
                 title: 'Event Based',
-                type: TriggerTypeName.EVENT,
+                type: TriggerType.EVENT,
               },
             ],
             messages: [],
