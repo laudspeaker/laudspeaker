@@ -1,6 +1,6 @@
 import Modal from "../../components/Elements/Modal";
 import TriggerCreater from "components/TriggerCreater";
-import { Trigger, TriggerTypeName } from "types/Workflow";
+import { Trigger, TriggerType } from "types/Workflow";
 
 interface ITriggerModal {
   selectedTrigger?: Trigger;
@@ -19,7 +19,22 @@ const TriggerModal = ({
   isCollapsible = true,
 }: ITriggerModal) => {
   const handleClose = () => {
-    const initialValue = selectedTrigger?.properties?.conditions?.[0]?.value;
+    const triggerType = selectedTrigger?.type as TriggerType;
+    let initialValue: string | undefined = undefined;
+
+    if (triggerType === TriggerType.EVENT)
+      initialValue = selectedTrigger?.properties?.conditions?.[0]?.value;
+
+    if (triggerType === TriggerType.TIME_DELAY)
+      initialValue =
+        selectedTrigger?.properties?.eventTime === "SpecificTime"
+          ? selectedTrigger.properties.specificTime
+          : selectedTrigger?.properties?.delayTime;
+
+    if (triggerType === TriggerType.TIME_WINDOW)
+      initialValue =
+        selectedTrigger?.properties?.fromTime &&
+        selectedTrigger.properties.toTime;
 
     if (isViewMode && isCollapsible) onClose();
     else if (isCollapsible) {
@@ -40,7 +55,7 @@ const TriggerModal = ({
       <div className="w-full bg-[background.paper] border-0 ">
         {selectedTrigger ? (
           <TriggerCreater
-            triggerType={selectedTrigger.type as TriggerTypeName}
+            triggerType={selectedTrigger.type as TriggerType}
             trigger={selectedTrigger}
             isViewMode={isViewMode}
             onSave={(trigger: Trigger) => onSaveTrigger(trigger)}

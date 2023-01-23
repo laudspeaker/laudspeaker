@@ -8,16 +8,10 @@ import {
 } from 'typeorm';
 import { Segment } from '../../segments/entities/segment.entity';
 
-export enum TriggerTypeName {
+export enum TriggerType {
   EVENT = 'eventBased',
   TIME_DELAY = 'timeDelay',
   TIME_WINDOW = 'timeWindow',
-}
-
-export enum TriggerType {
-  EVENT,
-  TIME_DELAY,
-  TIME_WINDOW,
 }
 
 export interface IEventConditions {
@@ -53,7 +47,7 @@ export enum PosthogTriggerParams {
 export class Trigger {
   id: string;
   title: string;
-  type: TriggerType | TriggerTypeName;
+  type: TriggerType | TriggerType;
   source?: string;
   dest?: string[];
   providerType?: ProviderTypes;

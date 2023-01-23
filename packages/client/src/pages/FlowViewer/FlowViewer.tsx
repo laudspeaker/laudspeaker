@@ -59,12 +59,10 @@ const Flow = () => {
 
   const onSaveTrigger = (data: Trigger) => {
     settriggerModalOpen(false);
-    console.log(data);
     if (!selectedTrigger) return;
     selectedTrigger.providerParams = data.providerParams;
     selectedTrigger.providerType = data.providerType;
     selectedTrigger.properties = data.properties;
-    console.log(selectedTrigger);
   };
 
   const onDeleteTrigger = (data: string) => {
