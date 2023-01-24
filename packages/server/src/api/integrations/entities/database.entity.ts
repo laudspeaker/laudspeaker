@@ -41,6 +41,9 @@ export class Database extends BaseEntity {
   @Column()
   query: string;
 
+  @Column({ default: new Date().toUTCString() })
+  lastSync: string;
+
   @Column({ nullable: true })
   databricksHost?: string;
 
