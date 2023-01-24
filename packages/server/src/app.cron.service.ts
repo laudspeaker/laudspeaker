@@ -431,7 +431,7 @@ export class CronService {
   async handleTimeTriggers() {
     try {
       const jobs = await this.jobsService.findAllByDate(new Date());
-      // this.logger.debug('Found jobs:' + JSON.stringify(jobs));
+      this.logger.debug('Found jobs:' + jobs);
       for (const job of jobs) {
         await this.workflowsService.timeTick(job);
         await this.jobsService.jobsRepository.delete({ id: job.id });
