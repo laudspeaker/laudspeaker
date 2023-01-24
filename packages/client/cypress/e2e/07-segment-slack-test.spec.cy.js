@@ -50,13 +50,13 @@ describe(
       // cy.get(".react-flow__viewport").get('[data-isprimary="true"]').dblclick();
       createNewSegment(false);
 
-      cy.contains("Add Condition Or Group").click();
+      cy.contains("select").click();
       cy.get('[data-option="attributes"]').click();
-      cy.get('[class="flex flex-[1] flex-wrap"] > div:nth-child(2)').click();
+      cy.wait(1000);
+      cy.get("#event-conditions:first > div:last").click();
       cy.get('[data-option="slackRealName"]').click();
-      cy.get('[class="flex flex-[1] flex-wrap"]')
-        .find("div:nth-child(3)")
-        .click();
+      cy.wait(1000);
+      cy.get("#event-conditions:first > div:last").click();
       cy.get('[data-option="contains"]').click();
       cy.get("#contains").clear().type("mad Cha");
       cy.get("#saveSegmentParams").click();

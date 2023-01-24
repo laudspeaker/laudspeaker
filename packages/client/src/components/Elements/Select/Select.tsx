@@ -63,6 +63,7 @@ const Select = <T extends string | number | undefined>(
     disabled,
     tick,
     wrapperClassnames,
+    placeholder,
   } = props;
   return (
     <>
@@ -81,7 +82,8 @@ const Select = <T extends string | number | undefined>(
             <>
               {(renderValue && renderValue(value)) ||
                 options.find((item) => item.value === value)?.title ||
-                value}
+                value ||
+                placeholder}
               {children}
               <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
                 <ChevronUpDownIcon
@@ -113,7 +115,10 @@ const Select = <T extends string | number | undefined>(
                   data-option={option.value}
                 >
                   <Tooltip className="![z-100001]" title={option.tooltip || ""}>
-                    <div className="flex justify-between">
+                    <div
+                      className="flex justify-between"
+                      id={`data-option-${option.value}`}
+                    >
                       <div>
                         <div>{option.title || option.value}</div>
                         {option.subtitle && (

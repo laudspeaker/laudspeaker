@@ -1,12 +1,6 @@
 import { MarkerType } from "react-flow-renderer";
 
 export enum TriggerType {
-  EVENT,
-  TIME_DELAY,
-  TIME_WINDOW,
-}
-
-export enum TriggerTypeName {
   EVENT = "eventBased",
   TIME_DELAY = "timeDelay",
   TIME_WINDOW = "timeWindow",
@@ -27,6 +21,9 @@ export interface EventProps {
   conditions: EventCondition[];
   eventTime?: string;
   delayTime?: string;
+  specificTime?: string;
+  fromTime?: string;
+  toTime?: string;
 }
 
 export enum ProviderTypes {
@@ -37,7 +34,7 @@ export enum ProviderTypes {
 export interface Trigger {
   id: string;
   title: string;
-  type: TriggerType | TriggerTypeName;
+  type: TriggerType;
   source?: string;
   dest?: string[];
   providerType?: ProviderTypes;

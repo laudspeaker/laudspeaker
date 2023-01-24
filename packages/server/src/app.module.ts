@@ -29,6 +29,19 @@ import {
   EventKeysSchema,
 } from './api/events/schemas/event-keys.schema';
 import { WebhookEvent } from './api/webhooks/entities/webhook-event.entity';
+import { Workflow } from './api/workflows/entities/workflow.entity';
+import { WorkflowsService } from './api/workflows/workflows.service';
+import { Job } from './api/jobs/entities/job.entity';
+import { JobsService } from './api/jobs/jobs.service';
+import { Segment } from './api/segments/entities/segment.entity';
+import { AudiencesService } from './api/audiences/audiences.service';
+import { CustomersService } from './api/customers/customers.service';
+import { Audience } from './api/audiences/entities/audience.entity';
+import { TemplatesService } from './api/templates/templates.service';
+import { Template } from './api/templates/entities/template.entity';
+import { SlackService } from './api/slack/slack.service';
+import { Installation } from './api/slack/entities/installation.entity';
+import { State } from './api/slack/entities/state.entity';
 
 const papertrail = new winston.transports.Http({
   host: 'logs.collector.solarwinds.com',
@@ -121,10 +134,44 @@ const myFormat = winston.format.printf(function ({
       { name: EventKeys.name, schema: EventKeysSchema },
     ]),
     ScheduleModule.forRoot(),
-    TypeOrmModule.forFeature([Account, Verification, WebhookEvent]),
+    TypeOrmModule.forFeature([
+      Account,
+      Verification,
+      WebhookEvent,
+      Workflow,
+      Job,
+      Segment,
+      Audience,
+      Template,
+      Installation,
+      State,
+    ]),
+    BullModule.registerQueue({
+      name: 'events',
+    }),
+    BullModule.registerQueue({
+      name: 'customers',
+    }),
+    BullModule.registerQueue({
+      name: 'email',
+    }),
+    BullModule.registerQueue({
+      name: 'slack',
+    }),
+    BullModule.registerQueue({
+      name: 'sms',
+    }),
   ],
   controllers: [AppController],
-  providers: [CronService],
+  providers: [
+    CronService,
+    WorkflowsService,
+    JobsService,
+    AudiencesService,
+    CustomersService,
+    TemplatesService,
+    SlackService,
+  ],
 })
 export class AppModule {
   configure(consumer: MiddlewareConsumer) {

@@ -44,6 +44,7 @@ import { InjectQueue } from '@nestjs/bull';
 import { JobTypes } from '../events/interfaces/event.interface';
 import { Queue } from 'bull';
 import { BadRequestException } from '@nestjs/common/exceptions';
+import { Job } from '../jobs/entities/job.entity';
 
 @Injectable()
 export class WorkflowsService {
@@ -59,6 +60,8 @@ export class WorkflowsService {
     @InjectRepository(Workflow)
     private workflowsRepository: Repository<Workflow>,
     @InjectRepository(Segment) private segmentsRepository: Repository<Segment>,
+    @InjectRepository(Account)
+    private usersRepository: Repository<Account>,
     @Inject(AudiencesService) private audiencesService: AudiencesService,
     @Inject(CustomersService) private customersService: CustomersService,
     @InjectModel(EventKeys.name)
@@ -499,7 +502,9 @@ export class WorkflowsService {
               audience?.id,
               customer,
               null,
-              queryRunner
+              queryRunner,
+              workflow.rules,
+              workflow.id
             );
             this.logger.debug('Enrolled customer in dynamic primary audience.');
           }
@@ -704,7 +709,9 @@ export class WorkflowsService {
                           to?.id,
                           customer,
                           event,
-                          queryRunner
+                          queryRunner,
+                          workflow.rules,
+                          workflow.id
                         );
                       this.logger.debug(
                         'Moving ' +
@@ -743,7 +750,6 @@ export class WorkflowsService {
       this.logger.error('Error: ' + err);
       return Promise.reject(err);
     }
-
     return Promise.resolve(jobIds);
   }
 
@@ -803,5 +809,44 @@ export class WorkflowsService {
       }
     );
     return;
+  }
+
+  async timeTick(job: Job) {
+    const queryRunner = AppDataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
+      const acct: Account = await queryRunner.manager.findOneBy(Account, {
+        id: job.owner,
+      });
+      const found = await queryRunner.manager.findOne(Workflow, {
+        where: { id: job.workflow },
+      });
+      this.logger.debug('Found Workflow for Job: ' + found.id);
+      if (found.isActive) {
+        this.logger.debug('Looking for customer...');
+        const customer = await this.customersService.findById(
+          acct,
+          job.customer
+        );
+        this.logger.debug('Found customer for Job: ' + customer.id);
+        await this.audiencesService.moveCustomer(
+          acct,
+          job.from,
+          job.to,
+          customer,
+          null,
+          queryRunner,
+          found.rules,
+          found.id
+        );
+      }
+      await queryRunner.commitTransaction();
+    } catch (e) {
+      await queryRunner.rollbackTransaction();
+      throw e;
+    } finally {
+      await queryRunner.release();
+    }
   }
 }
