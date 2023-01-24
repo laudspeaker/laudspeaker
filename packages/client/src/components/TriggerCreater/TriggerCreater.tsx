@@ -992,6 +992,7 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
                 style={{
                   width: "200px",
                 }}
+                id="save-trigger"
                 disabled={isError}
               >
                 Save

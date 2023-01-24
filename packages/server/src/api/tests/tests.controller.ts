@@ -50,4 +50,14 @@ export class TestsController {
   async getTestPosthogCustomer(@Param('id') id: string) {
     return this.testsService.getTestPosthogCustomer(id);
   }
+
+  @Get('test-customer-id')
+  async getTestCustomerId() {
+    return this.testsService.getTestCustomerId();
+  }
+
+  @Get('audience-by-customer/:id')
+  async getAudienceByCustomerId(@Param('id') id: string) {
+    return this.testsService.getAudienceByCustomerId(id);
+  }
 }

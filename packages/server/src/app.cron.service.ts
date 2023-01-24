@@ -432,8 +432,9 @@ export class CronService {
     try {
       const jobs = await this.jobsService.findAllByDate(new Date());
       // this.logger.debug('Found jobs:' + JSON.stringify(jobs));
-      for (let jobIndex = 0; jobIndex < jobs.length; jobIndex++) {
-        await this.workflowsService.timeTick(jobs[jobIndex]);
+      for (const job of jobs) {
+        await this.workflowsService.timeTick(job);
+        await this.jobsService.jobsRepository.delete({ id: job.id });
       }
     } catch (e) {
       this.logger.error('Cron error: ' + e);

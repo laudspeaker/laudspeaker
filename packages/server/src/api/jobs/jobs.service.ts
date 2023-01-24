@@ -16,7 +16,7 @@ export class JobsService {
   constructor(
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
     private readonly logger: LoggerService,
-    @InjectRepository(Job) private readonly jobsRepository: Repository<Job>
+    @InjectRepository(Job) public readonly jobsRepository: Repository<Job>
   ) {}
 
   async create(account: Account, createJobDto: CreateJobDto) {
