@@ -96,7 +96,10 @@ const EventCard = (props: IEventCardProp) => {
         {conditionType == ConditionalType.and ? "And" : "Or"}
       </div>
       <div className="rounded-[10px] mt-[10px] mx-[0px] pt-[0px] px-[20px] flex items-center cursor-pointer w-full bg-[#F9F9FA]">
-        <div className="flex flex-[1] flex-wrap pt-[15px]">
+        <div
+          id="event-conditions"
+          className="flex flex-[1] flex-wrap pt-[15px]"
+        >
           {generateFormData(formData, (option) => option.label !== "Events")}
         </div>
         <div className="flex items-center justify-end w-[135px]">
