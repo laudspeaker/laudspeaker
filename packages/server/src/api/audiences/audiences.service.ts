@@ -280,15 +280,6 @@ export class AudiencesService {
         );
       }
 
-      if (
-        toAud?.customers?.length &&
-        toAud?.customers?.indexOf(customerId) > -1
-      ) {
-        this.logger.debug(
-          'Customer ' + customerId + ' is already in audience ' + toAud.id
-        );
-        return Promise.resolve({ jobIds: [], templates: [] });
-      }
       if (fromAud && !fromAud.isEditable && index > -1) {
         this.logger.debug(
           'From customers before: ' + fromAud?.customers?.length
@@ -305,6 +296,17 @@ export class AudiencesService {
           'From customers after: ' + fromAud?.customers?.length
         );
       }
+
+      if (
+        toAud?.customers?.length &&
+        toAud?.customers?.indexOf(customerId) > -1
+      ) {
+        this.logger.debug(
+          'Customer ' + customerId + ' is already in audience ' + toAud.id
+        );
+        return Promise.resolve({ jobIds: [], templates: [] });
+      }
+
       if (toAud && !toAud.isEditable) {
         this.logger.debug('To before: ' + toAud?.customers?.length);
         toAud.customers = [...toAud.customers, customerId];
@@ -336,11 +338,11 @@ export class AudiencesService {
               startTime: trigger.properties.fromTime,
               endTime: trigger.properties.toTime,
               executionTime:
-                trigger.properties.eventTime == 'SpecificTime'
+                trigger.properties.eventTime === 'SpecificTime'
                   ? trigger.properties.specificTime
                   : now.plus({
-                      hours: trigger.properties.delayTime.split(':')[0],
-                      minutes: trigger.properties.delayTime.split(':')[1],
+                      hours: trigger.properties.delayTime?.split(':')?.[0],
+                      minutes: trigger.properties.delayTime?.split(':')?.[1],
                     }),
             });
           }

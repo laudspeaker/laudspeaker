@@ -3,7 +3,7 @@ import { HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Model } from 'mongoose';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { AccountsService } from '../accounts/accounts.service';
 import { Account } from '../accounts/entities/accounts.entity';
 import { Audience } from '../audiences/entities/audience.entity';
@@ -215,5 +215,20 @@ export class TestsService {
     return this.customersService.CustomerModel.findOne({
       posthogId: [id],
     }).exec();
+  }
+
+  public async getTestCustomerId() {
+    const customer = await this.customersService.CustomerModel.findOne({
+      ownerId: '-1000',
+    });
+    return customer.id;
+  }
+
+  public async getAudienceByCustomerId(id: string) {
+    const audiences = await this.audienceRepository.findBy({
+      owner: { id: '-1000', email: 'testmail@gmail.com' },
+    });
+
+    return audiences.find((audience) => audience.customers.includes(id));
   }
 }
