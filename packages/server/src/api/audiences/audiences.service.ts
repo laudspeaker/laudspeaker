@@ -320,12 +320,18 @@ export class AudiencesService {
           const trigger = JSON.parse(
             Buffer.from(encodedRules[rulesIndex], 'base64').toString('ascii')
           );
-          if (to == trigger.source) {
+          if (
+            to == trigger?.source &&
+            (trigger.properties.fromTime ||
+              trigger.properties.toTime ||
+              trigger.properties.specificTime ||
+              trigger.properties.delayTime)
+          ) {
             const now = DateTime.now();
             this.jobsService.create(account, {
               customer: customerId,
-              from: trigger.source,
-              to: trigger.dest[0],
+              from: trigger?.source,
+              to: trigger?.dest[0],
               workflow: workflowID,
               startTime: trigger.properties.fromTime,
               endTime: trigger.properties.toTime,
