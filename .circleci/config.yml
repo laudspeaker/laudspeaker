@@ -14,6 +14,8 @@ jobs:
           docker_layer_caching: false
       - run:
           command: |
+            sudo apt-get update
+            sudo apt-get upgrade
             sudo apt-get install awscli
             export AWS_ACCESS_KEY_ID=$DEMO_AWS_KEY
             export AWS_SECRET_ACCESS_KEY=$DEMO_AWS_SECRET
