@@ -18,6 +18,7 @@
 ## Laudspeaker - Open Source omni-channel customer messaging. Alternative to Braze / Iterable / One Signal / Customer Io
 
 ![app laudspeaker com_flow_onboarding-example (1)](https://user-images.githubusercontent.com/7728266/208761386-5dfe6803-16d1-47ca-98f4-45d77ff6058e.png)
+<<<<<<< HEAD
 
 
 * **Multiple messaging channels like email and slack** Send product or event-triggered emails, sms and more to your customers and users at scale
@@ -31,6 +32,21 @@
 * 🔜 **Trigger journeys from segment/rudderstack/mixpanel events**
 
 
+=======
+
+
+* **Multiple messaging channels like email and slack** Send product or event-triggered emails, sms and more to your customers and users at scale
+* **Visual Journey Builder** Build complex messaging workflows the whole team can understand in a visual tool, and see stats once a journey is started
+* **Easy WYSIWYG Template builder** Build nice emails and more with our template builder
+* **Run on your own infra** Deploy and run on your own infrastructure to keep control of your data.
+* **Integrate with PostHog analytics** Easily trigger journeys with PostHog, the open source product analytics platform
+* 🔜 **1-Click Deploy** to Render
+* 🔜 **Database / datalake / data warehouse import** ingest user data from your databases
+* 🔜 **Build and save segments of users**
+* 🔜 **Trigger journeys from segment/rudderstack/mixpanel events**
+
+
+>>>>>>> e15590b43168d40a38a09cf297101ec69ce3a7f5
 ## 🚀 Get Started
 
 Run yourself (instructions below) or use [Laudspeaker Cloud](https://app.laudspeaker.com/login) . Docs are [here](https://laudspeaker.com/docs/guides/overview/intro/)
@@ -105,9 +121,14 @@ A quick how to for contribution:
 
 ## Follow Us
 
-- [Slack][slack]
+## 🎥 Video Walkthrough
 
-- [Twitter][twitter]
+- Check out how to set up and trigger an email with posthog in our [video](https://vimeo.com/763728112)
+- Check out how to trigger a slack message with a custom event in this [video](https://www.loom.com/share/8e1d349ceed24d2bb50280db36b19214)
+
+## Follow Us
+
+- [Slack][slack]
 
 [slack]: https://join.slack.com/t/laudspeakerusers/shared_invite/zt-1li25huaq-BljJUA1Zm8dXvbZViAbMwg
 [twitter]: https://twitter.com/laudspeaker
