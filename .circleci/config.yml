@@ -4,10 +4,14 @@ jobs:
     docker:
       - image: circleci/node:16
     steps:
+      - save_cache:
+          key: v1-cache
+          paths:
+            - project/
       - checkout
       - setup_remote_docker:
           version: 20.10.14
-          docker_layer_caching: true
+          docker_layer_caching: false
       - run:
           command: |
             sudo apt-get install -y python-pip libyaml-dev python-dev jq
@@ -32,7 +36,7 @@ jobs:
       - checkout
       - setup_remote_docker:
           version: 20.10.14
-          docker_layer_caching: true
+          docker_layer_caching: false
       - run:
           command: |
             sudo apt-get install -y python-pip libyaml-dev python-dev jq
