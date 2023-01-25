@@ -2,7 +2,7 @@ version: 2.1
 jobs:
   build_and_deploy_production:
     docker:
-      - image: node:18
+      - image: circleci/node:16
     steps:
       - save_cache:
           key: v1-cache
