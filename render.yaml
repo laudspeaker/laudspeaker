@@ -1,7 +1,7 @@
 services:
   - type: web
     name: laudspeaker
-    healthCheckPath: /
+    healthCheckPath: /login
     env: docker
     dockerfilePath: ./Dockerfile
     dockerContext: .
