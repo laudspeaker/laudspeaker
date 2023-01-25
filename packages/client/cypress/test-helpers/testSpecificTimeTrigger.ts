@@ -6,7 +6,13 @@ const { emailTemplate } = credentials.MessageHitUser;
 
 export default (
   audience1Name = "23232323",
-  audience2Name = "23212414151323"
+  audience2Name = "23212414151323",
+  setupTemplate = () => {
+    cy.get("#email > .p-0 > .justify-between").click();
+    cy.get("#activeJourney").click();
+    cy.contains(emailTemplate.name).click();
+    cy.get("#exportSelectedTemplate").click();
+  }
 ) => {
   cy.get('[data-disclosure-link="Journey Builder"]').click();
   cy.wait(100);
@@ -25,11 +31,9 @@ export default (
     deltaX: 100,
     deltaY: 300,
   });
+
   cy.get('[data-isprimary]:not([data-isprimary="true"])').click();
-  cy.get("#email > .p-0 > .justify-between").click();
-  cy.get("#activeJourney").click();
-  cy.contains(emailTemplate.name).click();
-  cy.get("#exportSelectedTemplate").click();
+  setupTemplate();
 
   createNewSegment();
 

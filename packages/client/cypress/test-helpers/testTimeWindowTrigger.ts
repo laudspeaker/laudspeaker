@@ -1,7 +1,7 @@
 /* eslint-disable jest/valid-expect */
 import credentials from "../fixtures/credentials";
 import createNewSegment from "./createNewSegment";
-import setupDelayTrigger from "./setupDelayTrigger";
+import setupTimeWindowTrigger from "./setupTimeWindowTrigger";
 const { emailTemplate } = credentials.MessageHitUser;
 
 export default (
@@ -17,7 +17,7 @@ export default (
   cy.get('[data-disclosure-link="Journey Builder"]').click();
   cy.wait(100);
   cy.get(".mt-6 > .inline-flex").click();
-  cy.get("#name").type("Delay test");
+  cy.get("#name").type("Specific time test");
   cy.get("#createJourneySubmit").click();
   cy.wait(3000);
   cy.get("#audience > .p-0 > .justify-between").click();
@@ -35,38 +35,21 @@ export default (
   cy.get('[data-isprimary]:not([data-isprimary="true"])').click();
   setupTemplate();
 
-  cy.get('[data-isprimary="true"]').click();
-  setupDelayTrigger();
+  createNewSegment();
 
+  cy.get('[data-isprimary="true"]').click();
+  setupTimeWindowTrigger();
   cy.get(
     '[style="display: flex; height: 15px; position: absolute; left: 0px; bottom: 0px; align-items: center; width: 100%; justify-content: space-around;"] > .react-flow__handle'
   ).drag('[data-isprimary]:not([data-isprimary="true"])', { force: true });
   cy.get('[data-isprimary]:not([data-isprimary="true"])').click();
 
-  createNewSegment();
-
   cy.contains("Save").click();
   cy.wait(1000);
   cy.contains("Start").click();
-  cy.wait(3000);
+  cy.wait(20000);
   cy.request(`${Cypress.env("AxiosURL")}tests/test-customer-id`).then(
     ({ body: id }) => {
-      cy.wait(30000);
-      // no
-      cy.request(
-        `${Cypress.env("AxiosURL")}tests/audience-by-customer/${id}`
-      ).then(({ body: { name } }) => {
-        expect(name).to.equal(audience1Name);
-      });
-      cy.wait(20000);
-      // no
-      cy.request(
-        `${Cypress.env("AxiosURL")}tests/audience-by-customer/${id}`
-      ).then(({ body: { name } }) => {
-        expect(name).to.equal(audience1Name);
-      });
-      cy.wait(20000);
-      // yes
       cy.request(
         `${Cypress.env("AxiosURL")}tests/audience-by-customer/${id}`
       ).then(({ body: { name } }) => {

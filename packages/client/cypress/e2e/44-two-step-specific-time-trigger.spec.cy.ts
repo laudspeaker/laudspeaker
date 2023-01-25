@@ -5,12 +5,12 @@ import credentials from "../fixtures/credentials";
 import { loginFunc } from "../test-helpers/loginFunc";
 import setFree3 from "../test-helpers/setFree3";
 import setSendgrid from "../test-helpers/setSendgrid";
+import setSMS from "../test-helpers/setSMS";
 import { templatesFunc } from "../test-helpers/templatesFunc";
-import testDelayTrigger from "../test-helpers/testDelayTrigger";
 import testSpecificTimeTrigger from "../test-helpers/testSpecificTimeTrigger";
 import verifyAccount from "../test-helpers/verifyAccount";
 
-const { email, password, emailTemplate, slackTemplate } =
+const { email, password, emailTemplate, slackTemplate, smsTemplate } =
   credentials.MessageHitUser;
 
 const { TESTS_SENDGRID_API_KEY, TESTS_SENDGRID_FROM_EMAIL } = Cypress.env();
@@ -48,6 +48,34 @@ describe(
 
       cy.contains("Messaging").click();
       testSpecificTimeTrigger();
+    });
+
+    it("passes for slack", () => {
+      loginFunc(email, password);
+      verifyAccount();
+      templatesFunc(slackTemplate, emailTemplate);
+
+      testSpecificTimeTrigger("13141414", "124we1414", () => {
+        cy.get("#slack").click();
+
+        cy.get("#activeJourney").click();
+        cy.contains(slackTemplate.name).click();
+        cy.get("#exportSelectedTemplate").click();
+      });
+    });
+
+    it("passes for sms", () => {
+      loginFunc(email, password);
+      verifyAccount();
+      templatesFunc(slackTemplate, emailTemplate, smsTemplate);
+      setSMS();
+      cy.contains("Messaging").click();
+      testSpecificTimeTrigger("13141414", "124we1414", () => {
+        cy.get("#sms > .p-0 > .justify-between").click();
+        cy.get("#activeJourney").click();
+        cy.contains(smsTemplate.name).click();
+        cy.get("#exportSelectedTemplate").click();
+      });
     });
   }
 );
