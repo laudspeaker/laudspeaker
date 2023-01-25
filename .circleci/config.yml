@@ -2,7 +2,7 @@ version: 2.1
 jobs:
   build_and_deploy_production:
     docker:
-      - image: cimg/node:18
+      - image: cimg/node:18.12
     steps:
       - save_cache:
           key: v1-cache
