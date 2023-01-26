@@ -16,7 +16,7 @@ import { isDateString, isEmail } from 'class-validator';
 import Mailgun from 'mailgun.js';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Account } from './api/accounts/entities/accounts.entity';
-import { IsNull, Not, Repository } from 'typeorm';
+import { Between, IsNull, Not, Repository } from 'typeorm';
 import { createClient } from '@clickhouse/client';
 import { Verification } from './api/auth/entities/verification.entity';
 import { WebhookEvent } from './api/webhooks/entities/webhook-event.entity';
@@ -29,6 +29,7 @@ import {
 } from './api/events/schemas/event-keys.schema';
 import { JobsService } from './api/jobs/jobs.service';
 import { WorkflowsService } from './api/workflows/workflows.service';
+import { TimeJobStatus } from './api/jobs/entities/job.entity';
 
 const client = createClient({
   host: process.env.CLICKHOUSE_HOST ?? 'http://localhost:8123',
@@ -71,6 +72,9 @@ const insertMessages = async (values: ClickHouseMessage[]) => {
 
 const BATCH_SIZE = 500;
 const KEYS_TO_SKIP = ['__v', '_id', 'audiences', 'ownerId'];
+
+const MAX_DATE = new Date(8640000000000000);
+const MIN_DATE = new Date(0);
 
 @Injectable()
 export class CronService {
@@ -430,11 +434,36 @@ export class CronService {
   @Cron(CronExpression.EVERY_10_SECONDS)
   async handleTimeTriggers() {
     try {
-      const jobs = await this.jobsService.findAllByDate(new Date());
-      this.logger.debug('Found jobs:' + jobs);
+      const date = new Date();
+      const jobs = await this.jobsService.jobsRepository.find({
+        where: [
+          { executionTime: Between(MIN_DATE, date) },
+          {
+            startTime: Between(MIN_DATE, date),
+            endTime: Between(date, MAX_DATE),
+            workflow: {
+              isActive: true,
+              isDeleted: false,
+              isPaused: false,
+              isStopped: false,
+            },
+            status: TimeJobStatus.PENDING,
+          },
+        ],
+        relations: ['owner', 'from', 'to', 'workflow'],
+      });
+      this.logger.debug('Found jobs:' + JSON.stringify(jobs));
       for (const job of jobs) {
-        await this.workflowsService.timeTick(job);
-        await this.jobsService.jobsRepository.delete({ id: job.id });
+        try {
+          await this.jobsService.jobsRepository.save({
+            ...job,
+            status: TimeJobStatus.IN_PROGRESS,
+          });
+          await this.workflowsService.timeTick(job);
+          await this.jobsService.jobsRepository.delete({ id: job.id });
+        } catch (e) {
+          this.logger.error('Time job error: ' + e);
+        }
       }
     } catch (e) {
       this.logger.error('Cron error: ' + e);

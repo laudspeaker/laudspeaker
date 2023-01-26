@@ -18,6 +18,7 @@ import {
   TriggerType,
   Workflow,
 } from './entities/workflow.entity';
+
 import { Audience } from '../audiences/entities/audience.entity';
 import { CustomersService } from '../customers/customers.service';
 import { CustomerDocument } from '../customers/schemas/customer.schema';
@@ -44,7 +45,7 @@ import { InjectQueue } from '@nestjs/bull';
 import { JobTypes } from '../events/interfaces/event.interface';
 import { Queue } from 'bull';
 import { BadRequestException } from '@nestjs/common/exceptions';
-import { Job } from '../jobs/entities/job.entity';
+import { Job, TimeJobType } from '../jobs/entities/job.entity';
 
 @Injectable()
 export class WorkflowsService {
@@ -770,18 +771,58 @@ export class WorkflowsService {
     });
   }
 
-  async setPaused(account: Account, id: string, value: boolean) {
-    const found: Workflow = await this.workflowsRepository.findOneBy({
-      owner: { id: account.id },
-      id,
-    });
-    if (found?.isStopped)
-      throw new HttpException('The workflow has already been stopped', 400);
-    await this.workflowsRepository.save({
-      ...found,
-      isPaused: value,
-    });
-    return value;
+  async setPaused(
+    account: Account,
+    id: string,
+    value: boolean,
+    queryRunner = AppDataSource.createQueryRunner()
+  ) {
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const found: Workflow = await queryRunner.manager.findOneBy(Workflow, {
+        owner: { id: account.id },
+        id,
+      });
+
+      if (value) {
+        found.latestPause = new Date();
+      } else {
+        if (found.latestPause) {
+          const jobs = await queryRunner.manager.findBy(Job, {
+            workflow: { id: found.id },
+            type: TimeJobType.DELAY,
+          });
+          await queryRunner.manager.save(
+            jobs.map((item) => ({
+              ...item,
+              executionTime: new Date(
+                new Date().getTime() -
+                  found.latestPause.getTime() +
+                  item.executionTime.getTime()
+              ),
+            }))
+          );
+        }
+        found.latestPause = null;
+      }
+
+      if (found?.isStopped)
+        throw new HttpException('The workflow has already been stopped', 400);
+      await queryRunner.manager.save(Workflow, {
+        ...found,
+        isPaused: value,
+      });
+
+      await queryRunner.commitTransaction();
+
+      return value;
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+    } finally {
+      await queryRunner.release();
+    }
   }
 
   async setStopped(account: Account, id: string, value: boolean) {
@@ -816,11 +857,11 @@ export class WorkflowsService {
     await queryRunner.connect();
     await queryRunner.startTransaction();
     try {
-      const acct: Account = await queryRunner.manager.findOneBy(Account, {
-        id: job.owner,
+      const acct = await queryRunner.manager.findOneBy(Account, {
+        id: job.owner.id,
       });
       const found = await queryRunner.manager.findOne(Workflow, {
-        where: { id: job.workflow },
+        where: { id: job.workflow.id },
       });
       this.logger.debug('Found Workflow for Job: ' + found.id);
       if (found.isActive) {
@@ -832,8 +873,8 @@ export class WorkflowsService {
         this.logger.debug('Found customer for Job: ' + customer.id);
         await this.audiencesService.moveCustomer(
           acct,
-          job.from,
-          job.to,
+          job.from.id,
+          job.to.id,
           customer,
           null,
           queryRunner,

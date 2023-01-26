@@ -1,4 +1,11 @@
-import { IsString, IsNotEmpty, IsDate, ValidateIf } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsDate,
+  ValidateIf,
+  IsEnum,
+} from 'class-validator';
+import { TimeJobType } from '../entities/job.entity';
 
 export class CreateJobDto {
   @IsString()
@@ -31,4 +38,7 @@ export class CreateJobDto {
   @IsString()
   @IsNotEmpty()
   public to: string;
+
+  @IsEnum(TimeJobType)
+  public type: TimeJobType;
 }

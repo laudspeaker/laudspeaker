@@ -7,7 +7,7 @@ import setFree3 from "../test-helpers/setFree3";
 import setSendgrid from "../test-helpers/setSendgrid";
 import setSMS from "../test-helpers/setSMS";
 import { templatesFunc } from "../test-helpers/templatesFunc";
-import testDelayTrigger from "../test-helpers/testDelayTrigger";
+import testSpecificTimeTrigger from "../test-helpers/testSpecificTimeTrigger";
 import verifyAccount from "../test-helpers/verifyAccount";
 
 const { email, password, emailTemplate, slackTemplate, smsTemplate } =
@@ -30,14 +30,14 @@ describe(
       setFree3();
       cy.contains("Messaging").click();
 
-      testDelayTrigger();
+      testSpecificTimeTrigger();
     });
 
     it("passes for mailgun", () => {
       loginFunc(email, password);
       templatesFunc(slackTemplate, emailTemplate);
       verifyAccount();
-      testDelayTrigger();
+      testSpecificTimeTrigger();
     });
 
     it("passes for sendgrid", () => {
@@ -47,7 +47,7 @@ describe(
       setSendgrid(TESTS_SENDGRID_API_KEY, TESTS_SENDGRID_FROM_EMAIL);
 
       cy.contains("Messaging").click();
-      testDelayTrigger();
+      testSpecificTimeTrigger();
     });
 
     it("passes for slack", () => {
@@ -55,7 +55,7 @@ describe(
       verifyAccount();
       templatesFunc(slackTemplate, emailTemplate);
 
-      testDelayTrigger("13141414", "124we1414", () => {
+      testSpecificTimeTrigger("13141414", "124we1414", () => {
         cy.get("#slack").click();
 
         cy.get("#activeJourney").click();
@@ -70,7 +70,7 @@ describe(
       templatesFunc(slackTemplate, emailTemplate, smsTemplate);
       setSMS();
       cy.contains("Messaging").click();
-      testDelayTrigger("13141414", "124we1414", () => {
+      testSpecificTimeTrigger("13141414", "124we1414", () => {
         cy.get("#sms > .p-0 > .justify-between").click();
         cy.get("#activeJourney").click();
         cy.contains(smsTemplate.name).click();
