@@ -816,11 +816,11 @@ export class WorkflowsService {
     await queryRunner.connect();
     await queryRunner.startTransaction();
     try {
-      const acct: Account = await queryRunner.manager.findOneBy(Account, {
-        id: job.owner,
+      const acct = await queryRunner.manager.findOneBy(Account, {
+        id: job.owner.id,
       });
       const found = await queryRunner.manager.findOne(Workflow, {
-        where: { id: job.workflow },
+        where: { id: job.workflow.id },
       });
       this.logger.debug('Found Workflow for Job: ' + found.id);
       if (found.isActive) {
@@ -832,8 +832,8 @@ export class WorkflowsService {
         this.logger.debug('Found customer for Job: ' + customer.id);
         await this.audiencesService.moveCustomer(
           acct,
-          job.from,
-          job.to,
+          job.from.id,
+          job.to.id,
           customer,
           null,
           queryRunner,

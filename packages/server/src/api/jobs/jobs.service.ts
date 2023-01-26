@@ -20,23 +20,23 @@ export class JobsService {
   ) {}
 
   async create(account: Account, createJobDto: CreateJobDto) {
-    const job = new Job();
-    job.customer = createJobDto.customer;
-    job.endTime = createJobDto.endTime;
-    job.startTime = createJobDto.startTime;
-    job.executionTime = createJobDto.executionTime;
-    job.workflow = createJobDto.workflow;
-    job.from = createJobDto.from;
-    job.to = createJobDto.to;
-    job.owner = account.id;
+    const { customer, endTime, startTime, executionTime, workflow, from, to } =
+      createJobDto;
     return this.jobsRepository.save({
-      ...job,
+      owner: { id: account.id },
+      customer,
+      endTime,
+      startTime,
+      executionTime,
+      workflow: { id: workflow },
+      from: { id: from },
+      to: { id: to },
     });
   }
 
   async findAll(account: Account): Promise<Job[]> {
     return await this.jobsRepository.find({
-      where: { owner: account.id },
+      where: { owner: { id: account.id } },
     });
   }
 
@@ -49,12 +49,13 @@ export class JobsService {
           endTime: Between(date, MAX_DATE),
         },
       ],
+      relations: ['owner', 'from', 'to', 'workflow'],
     });
   }
 
   async findOneById(account: Account, id: string): Promise<Job> {
     return await this.jobsRepository.findOneBy({
-      owner: account.id,
+      owner: { id: account.id },
       id: id,
     });
   }
@@ -68,7 +69,7 @@ export class JobsService {
 
   async remove(account: Account, id: string): Promise<void> {
     await this.jobsRepository.delete({
-      owner: (<Account>account).id,
+      owner: { id: account.id },
       id,
     });
   }
