@@ -10,6 +10,17 @@ import { Account } from '@/api/accounts/entities/accounts.entity';
 import { Audience } from '@/api/audiences/entities/audience.entity';
 import { Workflow } from '@/api/workflows/entities/workflow.entity';
 
+export enum TimeJobType {
+  DELAY,
+  SPECIFIC_TIME,
+  TIME_WINDOW,
+}
+
+export enum TimeJobStatus {
+  IN_PROGRESS,
+  PENDING,
+}
+
 @Entity()
 export class Job {
   @PrimaryGeneratedColumn()
@@ -60,4 +71,10 @@ export class Job {
   @IsDefined()
   @IsDate()
   endTime: Date;
+
+  @Column({ enum: TimeJobType })
+  type: TimeJobType;
+
+  @Column({ enum: TimeJobStatus, default: TimeJobStatus.PENDING })
+  status: TimeJobStatus;
 }

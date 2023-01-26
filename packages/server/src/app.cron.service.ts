@@ -29,6 +29,7 @@ import {
 } from './api/events/schemas/event-keys.schema';
 import { JobsService } from './api/jobs/jobs.service';
 import { WorkflowsService } from './api/workflows/workflows.service';
+import { TimeJobStatus } from './api/jobs/entities/job.entity';
 
 const client = createClient({
   host: process.env.CLICKHOUSE_HOST ?? 'http://localhost:8123',
@@ -446,14 +447,23 @@ export class CronService {
               isPaused: false,
               isStopped: false,
             },
+            status: TimeJobStatus.PENDING,
           },
         ],
         relations: ['owner', 'from', 'to', 'workflow'],
       });
       this.logger.debug('Found jobs:' + JSON.stringify(jobs));
       for (const job of jobs) {
-        await this.workflowsService.timeTick(job);
-        await this.jobsService.jobsRepository.delete({ id: job.id });
+        try {
+          await this.jobsService.jobsRepository.save({
+            ...job,
+            status: TimeJobStatus.IN_PROGRESS,
+          });
+          await this.workflowsService.timeTick(job);
+          await this.jobsService.jobsRepository.delete({ id: job.id });
+        } catch (e) {
+          this.logger.error('Time job error: ' + e);
+        }
       }
     } catch (e) {
       this.logger.error('Cron error: ' + e);

@@ -45,7 +45,7 @@ import { InjectQueue } from '@nestjs/bull';
 import { JobTypes } from '../events/interfaces/event.interface';
 import { Queue } from 'bull';
 import { BadRequestException } from '@nestjs/common/exceptions';
-import { Job } from '../jobs/entities/job.entity';
+import { Job, TimeJobType } from '../jobs/entities/job.entity';
 
 @Injectable()
 export class WorkflowsService {
@@ -789,9 +789,22 @@ export class WorkflowsService {
       if (value) {
         found.latestPause = new Date();
       } else {
-        // TODO:  finish
-        const jobs = await queryRunner.manager.findBy(Job, {});
-        console.log(jobs);
+        if (found.latestPause) {
+          const jobs = await queryRunner.manager.findBy(Job, {
+            workflow: { id: found.id },
+            type: TimeJobType.DELAY,
+          });
+          await queryRunner.manager.save(
+            jobs.map((item) => ({
+              ...item,
+              executionTime: new Date(
+                new Date().getTime() -
+                  found.latestPause.getTime() +
+                  item.executionTime.getTime()
+              ),
+            }))
+          );
+        }
         found.latestPause = null;
       }
 

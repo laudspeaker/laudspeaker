@@ -20,8 +20,16 @@ export class JobsService {
   ) {}
 
   async create(account: Account, createJobDto: CreateJobDto) {
-    const { customer, endTime, startTime, executionTime, workflow, from, to } =
-      createJobDto;
+    const {
+      customer,
+      endTime,
+      startTime,
+      executionTime,
+      workflow,
+      from,
+      to,
+      type,
+    } = createJobDto;
     return this.jobsRepository.save({
       owner: { id: account.id },
       customer,
@@ -31,6 +39,7 @@ export class JobsService {
       workflow: { id: workflow },
       from: { id: from },
       to: { id: to },
+      type,
     });
   }
 
