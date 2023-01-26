@@ -71,7 +71,7 @@ export class WorkflowsService {
     @InjectQueue(JobTypes.events)
     private readonly eventsQueue: Queue,
     @InjectConnection() private readonly connection: mongoose.Connection
-  ) {}
+  ) { }
 
   /**
    * Finds all workflows
@@ -87,28 +87,34 @@ export class WorkflowsService {
     orderType?: 'asc' | 'desc',
     showDisabled?: boolean
   ): Promise<{ data: Workflow[]; totalPages: number }> {
-    const totalPages = Math.ceil(
-      (await this.workflowsRepository.count({
+    try {
+      const totalPages = Math.ceil(
+        (await this.workflowsRepository.count({
+          where: {
+            owner: { id: account.id },
+            isDeleted: In([!!showDisabled, false]),
+          },
+        })) / take || 1
+      );
+      const orderOptions = {};
+      if (orderBy && orderType) {
+        orderOptions[orderBy] = orderType;
+      }
+      const workflows = await this.workflowsRepository.find({
         where: {
           owner: { id: account.id },
           isDeleted: In([!!showDisabled, false]),
         },
-      })) / take || 1
-    );
-    const orderOptions = {};
-    if (orderBy && orderType) {
-      orderOptions[orderBy] = orderType;
+        order: orderOptions,
+        take: take < 100 ? take : 100,
+        skip,
+      });
+      return { data: workflows, totalPages };
     }
-    const workflows = await this.workflowsRepository.find({
-      where: {
-        owner: { id: account.id },
-        isDeleted: In([!!showDisabled, false]),
-      },
-      order: orderOptions,
-      take: take < 100 ? take : 100,
-      skip,
-    });
-    return { data: workflows, totalPages };
+    catch (err) {
+      this.logger.error(`${arguments.callee.name}: Error: ${err}`);
+      return Promise.reject(err);
+    }
   }
 
   /**
@@ -181,7 +187,7 @@ export class WorkflowsService {
         relations: ['segment'],
       });
     } catch (err) {
-      this.logger.error('Error: ' + err);
+      this.logger.error(`${arguments.callee.name}: Error: ${err}`);
       return Promise.reject(err);
     }
 
@@ -198,7 +204,7 @@ export class WorkflowsService {
         );
       }
     } catch (e: any) {
-      console.error(e);
+      this.logger.error(`${arguments.callee.name}: Error: ${e}`);
     }
 
     this.logger.debug('Found workflow: ' + found?.id);
@@ -215,7 +221,7 @@ export class WorkflowsService {
       });
       this.logger.debug('Created workflow: ' + ret?.id);
     } catch (err) {
-      this.logger.error('Error: ' + err);
+      this.logger.error(`${arguments.callee.name}: Error: ${err}`);
       return Promise.reject(err);
     }
     return Promise.resolve(ret); //await this.workflowsRepository.save(workflow)
@@ -324,6 +330,7 @@ export class WorkflowsService {
 
       if (!alreadyInsideTransaction) await queryRunner.commitTransaction();
     } catch (e) {
+      this.logger.error(`${arguments.callee.name}: Error: ${e}`);
       if (!alreadyInsideTransaction) await queryRunner.rollbackTransaction();
     } finally {
       if (!alreadyInsideTransaction) await queryRunner.release();
@@ -412,6 +419,7 @@ export class WorkflowsService {
 
       await queryRunner.commitTransaction();
     } catch (e) {
+      this.logger.error(`${arguments.callee.name}: Error: ${e}`);
       await queryRunner.rollbackTransaction();
       throw e;
     } finally {
@@ -435,15 +443,15 @@ export class WorkflowsService {
     account: Account,
     workflowID: string
   ): Promise<(string | number)[]> {
-    const job = await this.eventsQueue.add('start', {
-      accountId: account.id,
-      workflowID,
-    });
-
     try {
+      const job = await this.eventsQueue.add('start', {
+        accountId: account.id,
+        workflowID,
+      });
       const data = await job.finished();
       return data;
     } catch (e) {
+      this.logger.error(`${arguments.callee.name}: Error: ${e}`);
       if (e instanceof Error)
         throw new HttpException(e.message, HttpStatus.BAD_REQUEST);
     }
@@ -512,7 +520,7 @@ export class WorkflowsService {
         }
       }
     } catch (err) {
-      this.logger.error('Error: ' + err);
+      this.logger.error(`${arguments.callee.name}: Error: ${err}`);
       return Promise.reject(err);
     }
   }
@@ -604,7 +612,7 @@ export class WorkflowsService {
                 (event.payload.type === PosthogTriggerParams.Track &&
                   event.payload.event === 'click' &&
                   trigger.providerParams ===
-                    PosthogTriggerParams.Autocapture) ||
+                  PosthogTriggerParams.Autocapture) ||
                 // for page
                 (event.payload.type === PosthogTriggerParams.Page &&
                   trigger.providerParams === PosthogTriggerParams.Page) ||
@@ -662,22 +670,21 @@ export class WorkflowsService {
                   if (conditions && conditions.length > 0) {
                     const compareResults = conditions.map((condition) => {
                       this.logger.debug(
-                        `Comparing: ${event?.event?.[condition.key] || ''} ${
-                          condition.comparisonType || ''
+                        `Comparing: ${event?.event?.[condition.key] || ''} ${condition.comparisonType || ''
                         } ${condition.value || ''}`
                       );
                       return ['exists', 'doesNotExist'].includes(
                         condition.comparisonType
                       )
                         ? operableCompare(
-                            event?.event?.[condition.key],
-                            condition.comparisonType
-                          )
+                          event?.event?.[condition.key],
+                          condition.comparisonType
+                        )
                         : conditionalCompare(
-                            event?.event?.[condition.key],
-                            condition.value,
-                            condition.comparisonType
-                          );
+                          event?.event?.[condition.key],
+                          condition.value,
+                          condition.comparisonType
+                        );
                     });
                     this.logger.debug(
                       'Compare result: ' + JSON.stringify(compareResults)
@@ -716,11 +723,11 @@ export class WorkflowsService {
                         );
                       this.logger.debug(
                         'Moving ' +
-                          customer?.id +
-                          ' out of ' +
-                          from?.id +
-                          ' and into ' +
-                          to?.id
+                        customer?.id +
+                        ' out of ' +
+                        from?.id +
+                        ' and into ' +
+                        to?.id
                       );
                       jobId.jobIds = jobIdArr;
                       jobId.templates = templates;
@@ -748,7 +755,7 @@ export class WorkflowsService {
         }
       }
     } catch (err) {
-      this.logger.error('Error: ' + err);
+      this.logger.error(`${arguments.callee.name}: Error: ${err}`);
       return Promise.reject(err);
     }
     return Promise.resolve(jobIds);
@@ -799,8 +806,8 @@ export class WorkflowsService {
               ...item,
               executionTime: new Date(
                 new Date().getTime() -
-                  found.latestPause.getTime() +
-                  item.executionTime.getTime()
+                found.latestPause.getTime() +
+                item.executionTime.getTime()
               ),
             }))
           );
