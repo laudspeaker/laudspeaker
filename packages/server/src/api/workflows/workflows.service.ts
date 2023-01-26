@@ -18,6 +18,7 @@ import {
   TriggerType,
   Workflow,
 } from './entities/workflow.entity';
+
 import { Audience } from '../audiences/entities/audience.entity';
 import { CustomersService } from '../customers/customers.service';
 import { CustomerDocument } from '../customers/schemas/customer.schema';
@@ -770,18 +771,45 @@ export class WorkflowsService {
     });
   }
 
-  async setPaused(account: Account, id: string, value: boolean) {
-    const found: Workflow = await this.workflowsRepository.findOneBy({
-      owner: { id: account.id },
-      id,
-    });
-    if (found?.isStopped)
-      throw new HttpException('The workflow has already been stopped', 400);
-    await this.workflowsRepository.save({
-      ...found,
-      isPaused: value,
-    });
-    return value;
+  async setPaused(
+    account: Account,
+    id: string,
+    value: boolean,
+    queryRunner = AppDataSource.createQueryRunner()
+  ) {
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const found: Workflow = await queryRunner.manager.findOneBy(Workflow, {
+        owner: { id: account.id },
+        id,
+      });
+
+      if (value) {
+        found.latestPause = new Date();
+      } else {
+        // TODO:  finish
+        const jobs = await queryRunner.manager.findBy(Job, {});
+        console.log(jobs);
+        found.latestPause = null;
+      }
+
+      if (found?.isStopped)
+        throw new HttpException('The workflow has already been stopped', 400);
+      await queryRunner.manager.save(Workflow, {
+        ...found,
+        isPaused: value,
+      });
+
+      await queryRunner.commitTransaction();
+
+      return value;
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+    } finally {
+      await queryRunner.release();
+    }
   }
 
   async setStopped(account: Account, id: string, value: boolean) {
