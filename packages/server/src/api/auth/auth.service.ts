@@ -88,6 +88,7 @@ export class AuthService {
     const user: Account = await this.repository.findOne({
       where: { apiKey: apiKey },
     });
+    console.warn('\nVALIDATE API KEY ', apiKey, user, '\n');
     return user;
   }
 

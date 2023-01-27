@@ -239,6 +239,7 @@ export class EventsProcessor {
     let jobArray: WorkflowTick[] = []; // created jobId
     try {
       account = await this.userService.findOneByAPIKey(apiKey.substring(8));
+      this.logger.warn('POSTHOG ACCOUT', account);
       this.logger.debug('Found account: ' + account.id);
 
       const chronologicalEvents: PostHogEventDto[] = eventDto.batch.sort(
