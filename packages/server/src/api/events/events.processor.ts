@@ -88,7 +88,7 @@ export class EventsProcessor {
 
       workflow = await queryRunner.manager.findOne(Workflow, {
         where: {
-          owner: { id: account.id },
+          owner: { id: account?.id },
           id: workflowID,
         },
         relations: ['segment'],
