@@ -17,7 +17,7 @@ export enum PlanType {
 @Unique(['email', 'apiKey'])
 export class Account extends BaseEntity {
   @PrimaryGeneratedColumn()
-  public id!: number;
+  public id!: string;
 
   @Column({ type: 'varchar' })
   public email!: string;

@@ -76,7 +76,7 @@ export class EventsProcessor {
 
     try {
       const account = await queryRunner.manager.findOneBy(Account, {
-        id: accountId,
+        id: accountId.toString(),
       });
 
       workflow = await queryRunner.manager.findOne(Workflow, {
