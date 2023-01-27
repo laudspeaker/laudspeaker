@@ -75,11 +75,11 @@ export class EventsProcessor {
     await queryRunner.startTransaction();
 
     try {
-      console.log('accout----', accountId);
+      this.logger.warn('accout----', accountId);
       const account = await queryRunner.manager.findOneBy(Account, {
         id: accountId.toString(),
       });
-      console.log('accout on start -----', account);
+      this.logger.warn('accout on start -----', account);
 
       workflow = await queryRunner.manager.findOne(Workflow, {
         where: {
