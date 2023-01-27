@@ -74,14 +74,14 @@ export class EventsProcessor {
     let jobIDs: (string | number)[] = [];
 
     const transactionSession = await this.connection.startSession();
-    transactionSession.startTransaction();
-    const queryRunner = AppDataSource.createQueryRunner();
+    await transactionSession.startTransaction();
+    const queryRunner = await AppDataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
     try {
+      this.logger.debug(`events.processor.ts:EventsProcessort.processJourneyStart: Account ${accountId} of type ${typeof accountId}`);
       const account = await queryRunner.manager.findOneBy(Account, {
-        // @ts-ignore
         id: accountId,
       });
 
