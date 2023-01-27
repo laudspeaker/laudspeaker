@@ -14,7 +14,10 @@ export class ApiKeyStrategy extends PassportStrategy(HeaderAPIKeyStrategy) {
         let checkKey: Account;
         try {
           checkKey = await this.authService.validateAPIKey(apikey);
+          console.log('\nCHECK KEY', checkKey);
         } catch (e) {
+          console.log('\nCHECK KEY ERROR:', checkKey, e);
+
           return done(e, false);
         }
         if (!checkKey) {

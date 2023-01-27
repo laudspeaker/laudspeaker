@@ -53,6 +53,7 @@ export class EventsController {
     @Headers('Authorization') apiKey: string,
     @Body() body: PosthogBatchEventDto
   ): Promise<WorkflowTick[] | HttpException> {
+    console.log('\n POSTHOG HIT ------');
     return this.eventsService.getPostHogPayload(apiKey, body);
   }
 
