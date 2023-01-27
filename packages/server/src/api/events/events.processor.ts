@@ -26,7 +26,7 @@ import { Segment } from '../segments/entities/segment.entity';
 import { AudiencesService } from '../audiences/audiences.service';
 
 export interface StartDto {
-  accountId: string;
+  accountId: number;
   workflowID: string;
 }
 
