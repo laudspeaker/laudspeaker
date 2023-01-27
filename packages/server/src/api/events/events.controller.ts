@@ -19,6 +19,7 @@ import { WorkflowTick } from '../workflows/interfaces/workflow-tick.interface';
 import { EventsService } from './events.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { JobTypes } from './interfaces/event.interface';
+import { ApiKeyAuthGuard } from '../auth/guards/apikey-auth.guard';
 
 @Controller('events')
 export class EventsController {
@@ -47,6 +48,7 @@ export class EventsController {
 
   @Post('/posthog/')
   @UseInterceptors(ClassSerializerInterceptor)
+  @UseGuards(ApiKeyAuthGuard)
   async getPostHogPayload(
     @Headers('Authorization') apiKey: string,
     @Body() body: PosthogBatchEventDto
@@ -56,6 +58,7 @@ export class EventsController {
 
   @Post()
   @UseInterceptors(ClassSerializerInterceptor)
+  @UseGuards(ApiKeyAuthGuard)
   async enginePayload(
     @Headers('Authorization') apiKey: string,
     @Body() body: EventDto
