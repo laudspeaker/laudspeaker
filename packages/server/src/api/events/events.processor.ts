@@ -1,6 +1,11 @@
 import { AppDataSource } from '@/data-source';
 import { Process, Processor } from '@nestjs/bull';
-import { Inject, Injectable, LoggerService } from '@nestjs/common';
+import {
+  HttpException,
+  Inject,
+  Injectable,
+  LoggerService,
+} from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { Job } from 'bull';
 import mongoose, { Model } from 'mongoose';
@@ -75,11 +80,11 @@ export class EventsProcessor {
     await queryRunner.startTransaction();
 
     try {
-      this.logger.warn('accout----', accountId);
       const account = await queryRunner.manager.findOneBy(Account, {
         id: accountId.toString(),
       });
-      this.logger.warn('accout on start -----', account);
+
+      if (!account) throw new HttpException('User not found', 404);
 
       workflow = await queryRunner.manager.findOne(Workflow, {
         where: {
