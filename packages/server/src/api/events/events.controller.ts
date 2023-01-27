@@ -56,7 +56,6 @@ export class EventsController {
     try {
       return this.eventsService.getPostHogPayload(apiKey, body);
     } catch (error) {
-      console.log('ERROR ON POSTHOG HIT', error);
       return new HttpException('Error with posthog event', 503);
     }
   }
