@@ -31,7 +31,7 @@ import { Segment } from '../segments/entities/segment.entity';
 import { AudiencesService } from '../audiences/audiences.service';
 
 export interface StartDto {
-  accountId: number;
+  accountId: string;
   workflowID: string;
 }
 
