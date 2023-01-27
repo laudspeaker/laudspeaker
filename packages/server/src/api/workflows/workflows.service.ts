@@ -443,16 +443,23 @@ export class WorkflowsService {
     account: Account,
     workflowID: string
   ): Promise<(string | number)[]> {
+    let job, data;
     try {
       this.logger.debug(`workflow.service.ts:WorkflowService.start: Account attempting to start workflow: ${JSON.stringify(account, null, 2)}`);
-      const job = await this.eventsQueue.add('start', {
+      job = await this.eventsQueue.add('start', {
         accountId: account.id,
         workflowID,
       });
-      const data = await job.finished();
+    } catch (e) {
+      this.logger.error(`workflows.service.ts:WorkflowsService.start: Error adding to event queue: ${e}`);
+      if (e instanceof Error)
+        throw new HttpException(e.message, HttpStatus.BAD_REQUEST);
+    }
+    try {
+      data = await job.finished();
       return data;
     } catch (e) {
-      this.logger.error(`workflows.service.ts:WorkflowsService.start: Error: ${e}`);
+      this.logger.error(`workflows.service.ts:WorkflowsService.start: Error waiting for job to finish: ${e}`);
       if (e instanceof Error)
         throw new HttpException(e.message, HttpStatus.BAD_REQUEST);
     }
