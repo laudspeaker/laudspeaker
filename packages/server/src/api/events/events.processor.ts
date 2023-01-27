@@ -81,7 +81,8 @@ export class EventsProcessor {
 
     try {
       const account = await queryRunner.manager.findOneBy(Account, {
-        id: accountId.toString(),
+        // @ts-ignore
+        id: accountId,
       });
 
       if (!account) throw new HttpException('User not found', 404);
