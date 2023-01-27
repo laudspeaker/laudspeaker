@@ -239,8 +239,7 @@ export class EventsProcessor {
     let jobArray: WorkflowTick[] = []; // created jobId
     try {
       account = await this.userService.findOneByAPIKey(apiKey.substring(8));
-      this.logger.warn('POSTHOG ACCOUT', account);
-      this.logger.debug('Found account: ' + account.id);
+      this.logger.debug('Found account: ' + account?.id);
 
       const chronologicalEvents: PostHogEventDto[] = eventDto.batch.sort(
         (a, b) =>
@@ -338,7 +337,7 @@ export class EventsProcessor {
     } catch (e) {
       await transactionSession.abortTransaction();
       await queryRunner.rollbackTransaction();
-      this.logger.error('Error: ' + e);
+      this.logger.error('Error 340 processor: ' + e);
       throw e;
     } finally {
       await transactionSession.endSession();

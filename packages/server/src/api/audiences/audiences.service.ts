@@ -248,6 +248,8 @@ export class AudiencesService {
     encodedRules: string[],
     workflowID: string
   ): Promise<{ jobIds: (string | number)[]; templates: Template[] }> {
+    this.logger.warn('\nmoveCustomer 251', customer);
+
     const customerId = customer.id;
     let index = -1; // Index of the customer ID in the fromAud.customers array
     const jobIds: (string | number)[] = [];

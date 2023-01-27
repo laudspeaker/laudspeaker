@@ -565,6 +565,9 @@ export class CustomersService {
         )
           .session(transactionSession)
           .exec();
+
+      this.logger.warn('\n findBySpecifiedEvent 569', customer);
+
       this.logger.debug('Customer found: ' + customer.id);
       return { cust: customer, found: true };
     }
