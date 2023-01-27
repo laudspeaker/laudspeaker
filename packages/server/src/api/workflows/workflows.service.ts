@@ -112,7 +112,7 @@ export class WorkflowsService {
       return { data: workflows, totalPages };
     }
     catch (err) {
-      this.logger.error(`${arguments.callee.name}: Error: ${err}`);
+      this.logger.error(`workflows.service.ts:WorkflowsService.findAll: Error: ${err}`);
       return Promise.reject(err);
     }
   }
@@ -187,7 +187,7 @@ export class WorkflowsService {
         relations: ['segment'],
       });
     } catch (err) {
-      this.logger.error(`${arguments.callee.name}: Error: ${err}`);
+      this.logger.error(`workflows.service.ts:WorkflowsService.findOne: Error: ${err}`);
       return Promise.reject(err);
     }
 
@@ -204,7 +204,7 @@ export class WorkflowsService {
         );
       }
     } catch (e: any) {
-      this.logger.error(`${arguments.callee.name}: Error: ${e}`);
+      this.logger.error(`workflows.service.ts:WorkflowsService.findOne: Error: ${e}`);
     }
 
     this.logger.debug('Found workflow: ' + found?.id);
@@ -221,7 +221,7 @@ export class WorkflowsService {
       });
       this.logger.debug('Created workflow: ' + ret?.id);
     } catch (err) {
-      this.logger.error(`${arguments.callee.name}: Error: ${err}`);
+      this.logger.error(`workflows.service.ts:WorkflowsService.findOne: Error: ${err}`);
       return Promise.reject(err);
     }
     return Promise.resolve(ret); //await this.workflowsRepository.save(workflow)
@@ -330,7 +330,7 @@ export class WorkflowsService {
 
       if (!alreadyInsideTransaction) await queryRunner.commitTransaction();
     } catch (e) {
-      this.logger.error(`${arguments.callee.name}: Error: ${e}`);
+      this.logger.error(`workflows.service.ts:WorkflowsService.update: Error: ${e}`);
       if (!alreadyInsideTransaction) await queryRunner.rollbackTransaction();
     } finally {
       if (!alreadyInsideTransaction) await queryRunner.release();
@@ -419,7 +419,7 @@ export class WorkflowsService {
 
       await queryRunner.commitTransaction();
     } catch (e) {
-      this.logger.error(`${arguments.callee.name}: Error: ${e}`);
+      this.logger.error(`workflows.service.ts:WorkflowsService.duplicate: Error: ${e}`);
       await queryRunner.rollbackTransaction();
       throw e;
     } finally {
@@ -451,7 +451,7 @@ export class WorkflowsService {
       const data = await job.finished();
       return data;
     } catch (e) {
-      this.logger.error(`${arguments.callee.name}: Error: ${e}`);
+      this.logger.error(`workflows.service.ts:WorkflowsService.start: Error: ${e}`);
       if (e instanceof Error)
         throw new HttpException(e.message, HttpStatus.BAD_REQUEST);
     }
@@ -520,7 +520,7 @@ export class WorkflowsService {
         }
       }
     } catch (err) {
-      this.logger.error(`${arguments.callee.name}: Error: ${err}`);
+      this.logger.error(`workflows.service.ts:WorkflowsService.enrollCustomer: Error: ${err}`);
       return Promise.reject(err);
     }
   }
@@ -755,7 +755,7 @@ export class WorkflowsService {
         }
       }
     } catch (err) {
-      this.logger.error(`${arguments.callee.name}: Error: ${err}`);
+      this.logger.error(`workflows.service.ts:WorkflowsService.tick Error: ${err}`);
       return Promise.reject(err);
     }
     return Promise.resolve(jobIds);
