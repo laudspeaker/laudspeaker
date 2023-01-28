@@ -31,7 +31,7 @@ import { Segment } from '../segments/entities/segment.entity';
 import { AudiencesService } from '../audiences/audiences.service';
 
 export interface StartDto {
-  accountId: string;
+  account: Account;
   workflowID: string;
 }
 
@@ -66,7 +66,7 @@ export class EventsProcessor {
 
   @Process('start')
   async processJourneyStart(job: Job<StartDto>) {
-    const { accountId, workflowID } = job.data;
+    const { account, workflowID } = job.data;
 
     let workflow: Workflow; // Workflow to update
     let audience: Audience; // Audience to freeze/send messages to
@@ -80,10 +80,10 @@ export class EventsProcessor {
     await queryRunner.startTransaction();
 
     try {
-      this.logger.debug(`events.processor.ts:EventsProcessort.processJourneyStart: Account ${accountId} of type ${typeof accountId}`);
-      const account = await queryRunner.manager.findOneBy(Account, {
-        id: accountId,
-      });
+      // this.logger.debug(`events.processor.ts:EventsProcessort.processJourneyStart: Account ${accountId} of type ${typeof accountId}`);
+      // const account = await queryRunner.manager.findOneBy(Account, {
+      //   id: accountId,
+      // });
 
       if (!account) throw new HttpException('User not found', 404);
 

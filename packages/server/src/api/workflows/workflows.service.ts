@@ -447,7 +447,7 @@ export class WorkflowsService {
     try {
       this.logger.debug(`workflow.service.ts:WorkflowService.start: Account attempting to start workflow: ${JSON.stringify(account, null, 2)}`);
       job = await this.eventsQueue.add('start', {
-        accountId: account.id,
+        account: account,
         workflowID,
       });
     } catch (e) {
