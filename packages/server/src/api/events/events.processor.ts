@@ -79,7 +79,7 @@ export class EventsProcessor {
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
-    this.logger.log('\n\n\nAccount id:', accountId, '\n\n\n');
+    this.logger.debug('\n\n\nAccount id:', accountId, '\n\n\n');
 
     try {
       // this.logger.debug(`events.processor.ts:EventsProcessort.processJourneyStart: Account ${accountId} of type ${typeof accountId}`);
