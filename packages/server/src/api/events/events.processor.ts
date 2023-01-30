@@ -66,6 +66,12 @@ export class EventsProcessor {
 
   @Process('start')
   async processJourneyStart(job: Job<StartDto>) {
+    this.logger.debug(
+      '\n\n\n JOB data:\n',
+      JSON.stringify(job.data, null, 2),
+      '\n\n\n'
+    );
+
     const { accountId, workflowID } = job.data;
 
     let workflow: Workflow; // Workflow to update
@@ -79,7 +85,7 @@ export class EventsProcessor {
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
-    this.logger.log('\n\n\nAccount id:', accountId, '\n\n\n');
+    this.logger.debug('\n\n\nAccount id:', accountId, '\n\n\n');
 
     try {
       const account = await this.userService.findOne({
