@@ -44,7 +44,7 @@ export class AccountsController {
       )
       .where(`ac.id = :userId`, {
         // @ts-ignore
-        userId: user.id,
+        userId: <Account>user.id,
       })
       .orderBy('vr.createdAt', 'DESC')
       .limit(1)
