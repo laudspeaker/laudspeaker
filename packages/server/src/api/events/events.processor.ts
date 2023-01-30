@@ -79,6 +79,8 @@ export class EventsProcessor {
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
+    this.logger.log('\n\n\nAccount id:', accountId, '\n\n\n');
+
     try {
       const account = await queryRunner.manager.findOneBy(Account, {
         // @ts-ignore
