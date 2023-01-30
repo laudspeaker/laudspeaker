@@ -71,7 +71,7 @@ export class WorkflowsService {
     @InjectQueue(JobTypes.events)
     private readonly eventsQueue: Queue,
     @InjectConnection() private readonly connection: mongoose.Connection
-  ) { }
+  ) {}
 
   /**
    * Finds all workflows
@@ -110,9 +110,10 @@ export class WorkflowsService {
         skip,
       });
       return { data: workflows, totalPages };
-    }
-    catch (err) {
-      this.logger.error(`workflows.service.ts:WorkflowsService.findAll: Error: ${err}`);
+    } catch (err) {
+      this.logger.error(
+        `workflows.service.ts:WorkflowsService.findAll: Error: ${err}`
+      );
       return Promise.reject(err);
     }
   }
@@ -187,7 +188,9 @@ export class WorkflowsService {
         relations: ['segment'],
       });
     } catch (err) {
-      this.logger.error(`workflows.service.ts:WorkflowsService.findOne: Error: ${err}`);
+      this.logger.error(
+        `workflows.service.ts:WorkflowsService.findOne: Error: ${err}`
+      );
       return Promise.reject(err);
     }
 
@@ -204,7 +207,9 @@ export class WorkflowsService {
         );
       }
     } catch (e: any) {
-      this.logger.error(`workflows.service.ts:WorkflowsService.findOne: Error: ${e}`);
+      this.logger.error(
+        `workflows.service.ts:WorkflowsService.findOne: Error: ${e}`
+      );
     }
 
     this.logger.debug('Found workflow: ' + found?.id);
@@ -221,7 +226,9 @@ export class WorkflowsService {
       });
       this.logger.debug('Created workflow: ' + ret?.id);
     } catch (err) {
-      this.logger.error(`workflows.service.ts:WorkflowsService.findOne: Error: ${err}`);
+      this.logger.error(
+        `workflows.service.ts:WorkflowsService.findOne: Error: ${err}`
+      );
       return Promise.reject(err);
     }
     return Promise.resolve(ret); //await this.workflowsRepository.save(workflow)
@@ -330,7 +337,9 @@ export class WorkflowsService {
 
       if (!alreadyInsideTransaction) await queryRunner.commitTransaction();
     } catch (e) {
-      this.logger.error(`workflows.service.ts:WorkflowsService.update: Error: ${e}`);
+      this.logger.error(
+        `workflows.service.ts:WorkflowsService.update: Error: ${e}`
+      );
       if (!alreadyInsideTransaction) await queryRunner.rollbackTransaction();
     } finally {
       if (!alreadyInsideTransaction) await queryRunner.release();
@@ -419,7 +428,9 @@ export class WorkflowsService {
 
       await queryRunner.commitTransaction();
     } catch (e) {
-      this.logger.error(`workflows.service.ts:WorkflowsService.duplicate: Error: ${e}`);
+      this.logger.error(
+        `workflows.service.ts:WorkflowsService.duplicate: Error: ${e}`
+      );
       await queryRunner.rollbackTransaction();
       throw e;
     } finally {
@@ -445,13 +456,21 @@ export class WorkflowsService {
   ): Promise<(string | number)[]> {
     let job, data;
     try {
-      this.logger.debug(`workflow.service.ts:WorkflowService.start: Account attempting to start workflow: ${JSON.stringify(account, null, 2)}`);
+      this.logger.debug(
+        `workflow.service.ts:WorkflowService.start: Account attempting to start workflow: ${JSON.stringify(
+          account,
+          null,
+          2
+        )}`
+      );
       job = await this.eventsQueue.add('start', {
         accountId: account.id,
         workflowID,
       });
     } catch (e) {
-      this.logger.error(`workflows.service.ts:WorkflowsService.start: Error adding to event queue: ${e}`);
+      this.logger.error(
+        `workflows.service.ts:WorkflowsService.start: Error adding to event queue: ${e}`
+      );
       if (e instanceof Error)
         throw new HttpException(e.message, HttpStatus.BAD_REQUEST);
     }
@@ -459,7 +478,9 @@ export class WorkflowsService {
       data = await job.finished();
       return data;
     } catch (e) {
-      this.logger.error(`workflows.service.ts:WorkflowsService.start: Error waiting for job to finish: ${e}`);
+      this.logger.error(
+        `workflows.service.ts:WorkflowsService.start: Error waiting for job to finish: ${e}`
+      );
       if (e instanceof Error)
         throw new HttpException(e.message, HttpStatus.BAD_REQUEST);
     }
@@ -528,7 +549,9 @@ export class WorkflowsService {
         }
       }
     } catch (err) {
-      this.logger.error(`workflows.service.ts:WorkflowsService.enrollCustomer: Error: ${err}`);
+      this.logger.error(
+        `workflows.service.ts:WorkflowsService.enrollCustomer: Error: ${err}`
+      );
       return Promise.reject(err);
     }
   }
@@ -620,7 +643,7 @@ export class WorkflowsService {
                 (event.payload.type === PosthogTriggerParams.Track &&
                   event.payload.event === 'click' &&
                   trigger.providerParams ===
-                  PosthogTriggerParams.Autocapture) ||
+                    PosthogTriggerParams.Autocapture) ||
                 // for page
                 (event.payload.type === PosthogTriggerParams.Page &&
                   trigger.providerParams === PosthogTriggerParams.Page) ||
@@ -678,21 +701,22 @@ export class WorkflowsService {
                   if (conditions && conditions.length > 0) {
                     const compareResults = conditions.map((condition) => {
                       this.logger.debug(
-                        `Comparing: ${event?.event?.[condition.key] || ''} ${condition.comparisonType || ''
+                        `Comparing: ${event?.event?.[condition.key] || ''} ${
+                          condition.comparisonType || ''
                         } ${condition.value || ''}`
                       );
                       return ['exists', 'doesNotExist'].includes(
                         condition.comparisonType
                       )
                         ? operableCompare(
-                          event?.event?.[condition.key],
-                          condition.comparisonType
-                        )
+                            event?.event?.[condition.key],
+                            condition.comparisonType
+                          )
                         : conditionalCompare(
-                          event?.event?.[condition.key],
-                          condition.value,
-                          condition.comparisonType
-                        );
+                            event?.event?.[condition.key],
+                            condition.value,
+                            condition.comparisonType
+                          );
                     });
                     this.logger.debug(
                       'Compare result: ' + JSON.stringify(compareResults)
@@ -731,11 +755,11 @@ export class WorkflowsService {
                         );
                       this.logger.debug(
                         'Moving ' +
-                        customer?.id +
-                        ' out of ' +
-                        from?.id +
-                        ' and into ' +
-                        to?.id
+                          customer?.id +
+                          ' out of ' +
+                          from?.id +
+                          ' and into ' +
+                          to?.id
                       );
                       jobId.jobIds = jobIdArr;
                       jobId.templates = templates;
@@ -763,7 +787,9 @@ export class WorkflowsService {
         }
       }
     } catch (err) {
-      this.logger.error(`workflows.service.ts:WorkflowsService.tick Error: ${err}`);
+      this.logger.error(
+        `workflows.service.ts:WorkflowsService.tick Error: ${err}`
+      );
       return Promise.reject(err);
     }
     return Promise.resolve(jobIds);
@@ -814,8 +840,8 @@ export class WorkflowsService {
               ...item,
               executionTime: new Date(
                 new Date().getTime() -
-                found.latestPause.getTime() +
-                item.executionTime.getTime()
+                  found.latestPause.getTime() +
+                  item.executionTime.getTime()
               ),
             }))
           );
