@@ -31,7 +31,7 @@ import { Segment } from '../segments/entities/segment.entity';
 import { AudiencesService } from '../audiences/audiences.service';
 
 export interface StartDto {
-  accountId: number;
+  accountId: string;
   workflowID: string;
 }
 
@@ -80,8 +80,8 @@ export class EventsProcessor {
     let jobIDs: (string | number)[] = [];
 
     const transactionSession = await this.connection.startSession();
-    transactionSession.startTransaction();
-    const queryRunner = AppDataSource.createQueryRunner();
+    await transactionSession.startTransaction();
+    const queryRunner = await AppDataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
 

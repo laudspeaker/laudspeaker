@@ -18,7 +18,7 @@ import {
   TriggerType,
   Workflow,
 } from './entities/workflow.entity';
-
+import errors from '@/shared/utils/errors';
 import { Audience } from '../audiences/entities/audience.entity';
 import { CustomersService } from '../customers/customers.service';
 import { CustomerDocument } from '../customers/schemas/customer.schema';
@@ -455,6 +455,15 @@ export class WorkflowsService {
     workflowID: string
   ): Promise<(string | number)[]> {
     let job, data;
+
+    const jobIDs: (string | number)[] = [];
+
+    const transactionSession = await this.connection.startSession();
+    transactionSession.startTransaction();
+    const queryRunner = AppDataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
     try {
       this.logger.debug(
         `workflow.service.ts:WorkflowService.start: Account attempting to start workflow: ${JSON.stringify(
@@ -484,6 +493,8 @@ export class WorkflowsService {
       if (e instanceof Error)
         throw new HttpException(e.message, HttpStatus.BAD_REQUEST);
     }
+
+    return Promise.resolve(jobIDs);
   }
 
   /**
