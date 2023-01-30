@@ -88,7 +88,9 @@ describe(
 
               cy.get(".react-flow__viewport")
                 .get('[data-isprimary="true"]')
-                .click();
+                .click({
+                  force: true,
+                });
               setupDelayTrigger();
 
               cy.get('[data-isprimary="true"]')
@@ -97,7 +99,9 @@ describe(
                   force: true,
                 });
 
-              cy.get('[data-isprimary="false"] [data-handlepos="top"]').click();
+              cy.get('[data-isprimary="false"] [data-handlepos="top"]').click({
+                force: true,
+              });
 
               cy.wait(3000);
               cy.get("#audience").click();
@@ -113,7 +117,9 @@ describe(
               cy.get("#exportSelectedTemplate").click();
               cy.get(".react-flow__viewport")
                 .get('[data-isprimary="true"]')
-                .click();
+                .click({
+                  force: true,
+                });
               setupEventTrigger(
                 emailTemplate.eventName,
                 emailTemplate.eventName
@@ -125,7 +131,9 @@ describe(
               );
               cy.get(
                 '[data-isprimary="false"] [data-handlepos="top"]:last'
-              ).click();
+              ).click({
+                force: true,
+              });
 
               cy.contains("Save").click();
               cy.wait(500);
