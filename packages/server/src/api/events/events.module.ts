@@ -33,12 +33,12 @@ import { EventsProcessor } from './events.processor';
 @Module({
   imports: [
     TypeOrmModule.forFeature([
-      State,
       Account,
-      Workflow,
-      Template,
       Audience,
       Installation,
+      State,
+      Template,
+      Workflow,
     ]),
     MongooseModule.forFeature([
       { name: Customer.name, schema: CustomerSchema },
@@ -74,4 +74,4 @@ import { EventsProcessor } from './events.processor';
   providers: [EventsService, EventsProcessor],
   exports: [EventsService],
 })
-export class EventsModule {}
+export class EventsModule { }

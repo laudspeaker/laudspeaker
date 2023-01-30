@@ -26,7 +26,7 @@ import { JobsModule } from './jobs/jobs.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Workflow, Template, Audience]),
+    TypeOrmModule.forFeature([Audience, Template, Workflow]),
     AccountsModule,
     AuthModule,
     CustomersModule,
