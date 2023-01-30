@@ -225,25 +225,17 @@ export class TestsService {
 
   public async getTestCustomerId() {
     const customer = await this.customersService.CustomerModel.findOne({
-<<<<<<< HEAD
-      ownerId: '00000000-0000-0000-0000-00000000000',
-=======
       ownerId: '00000000-0000-0000-0000-000000000000',
->>>>>>> Fix: migrate user to uuid
     });
     return customer.id;
   }
 
   public async getAudienceByCustomerId(id: string) {
     const audiences = await this.audienceRepository.findBy({
-<<<<<<< HEAD
-      owner: { id: '00000000-0000-0000-0000-00000000000', email: 'testmail@gmail.com' },
-=======
       owner: {
         id: '00000000-0000-0000-0000-000000000000',
         email: 'testmail@gmail.com',
       },
->>>>>>> Fix: migrate user to uuid
     });
 
     return audiences.find((audience) => audience.customers.includes(id));
