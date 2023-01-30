@@ -82,8 +82,7 @@ export class EventsProcessor {
     this.logger.log('\n\n\nAccount id:', accountId, '\n\n\n');
 
     try {
-      const account = await queryRunner.manager.findOneBy(Account, {
-        // @ts-ignore
+      const account = await this.userService.findOne({
         id: accountId,
       });
 
