@@ -71,7 +71,7 @@ export class WorkflowsService {
     @InjectQueue(JobTypes.events)
     private readonly eventsQueue: Queue,
     @InjectConnection() private readonly connection: mongoose.Connection
-  ) { }
+  ) {}
 
   /**
    * Finds all workflows
@@ -110,9 +110,10 @@ export class WorkflowsService {
         skip,
       });
       return { data: workflows, totalPages };
-    }
-    catch (err) {
-      this.logger.error(`workflows.service.ts:WorkflowsService.findAll: Error: ${err}`);
+    } catch (err) {
+      this.logger.error(
+        `workflows.service.ts:WorkflowsService.findAll: Error: ${err}`
+      );
       return Promise.reject(err);
     }
   }
@@ -187,7 +188,9 @@ export class WorkflowsService {
         relations: ['segment'],
       });
     } catch (err) {
-      this.logger.error(`workflows.service.ts:WorkflowsService.findOne: Error: ${err}`);
+      this.logger.error(
+        `workflows.service.ts:WorkflowsService.findOne: Error: ${err}`
+      );
       return Promise.reject(err);
     }
 
@@ -204,7 +207,9 @@ export class WorkflowsService {
         );
       }
     } catch (e: any) {
-      this.logger.error(`workflows.service.ts:WorkflowsService.findOne: Error: ${e}`);
+      this.logger.error(
+        `workflows.service.ts:WorkflowsService.findOne: Error: ${e}`
+      );
     }
 
     this.logger.debug('Found workflow: ' + found?.id);
@@ -221,7 +226,9 @@ export class WorkflowsService {
       });
       this.logger.debug('Created workflow: ' + ret?.id);
     } catch (err) {
-      this.logger.error(`workflows.service.ts:WorkflowsService.findOne: Error: ${err}`);
+      this.logger.error(
+        `workflows.service.ts:WorkflowsService.findOne: Error: ${err}`
+      );
       return Promise.reject(err);
     }
     return Promise.resolve(ret); //await this.workflowsRepository.save(workflow)
@@ -330,7 +337,9 @@ export class WorkflowsService {
 
       if (!alreadyInsideTransaction) await queryRunner.commitTransaction();
     } catch (e) {
-      this.logger.error(`workflows.service.ts:WorkflowsService.update: Error: ${e}`);
+      this.logger.error(
+        `workflows.service.ts:WorkflowsService.update: Error: ${e}`
+      );
       if (!alreadyInsideTransaction) await queryRunner.rollbackTransaction();
     } finally {
       if (!alreadyInsideTransaction) await queryRunner.release();
@@ -419,7 +428,9 @@ export class WorkflowsService {
 
       await queryRunner.commitTransaction();
     } catch (e) {
-      this.logger.error(`workflows.service.ts:WorkflowsService.duplicate: Error: ${e}`);
+      this.logger.error(
+        `workflows.service.ts:WorkflowsService.duplicate: Error: ${e}`
+      );
       await queryRunner.rollbackTransaction();
       throw e;
     } finally {
@@ -443,132 +454,47 @@ export class WorkflowsService {
     account: Account,
     workflowID: string
   ): Promise<(string | number)[]> {
-    // let job, data;
-    // try {
-    //   this.logger.debug(`workflow.service.ts:WorkflowService.start: Account attempting to start workflow: ${JSON.stringify(account, null, 2)}`);
-    //   job = await this.eventsQueue.add('start', {
-    //     account: account,
-    //     workflowID,
-    //   });
-    // } catch (e) {
-    //   this.logger.error(`workflows.service.ts:WorkflowsService.start: Error adding to event queue: ${e}`);
-    //   if (e instanceof Error)
-    //     throw new HttpException(e.message, HttpStatus.BAD_REQUEST);
-    // }
-    // try {
-    //   data = await job.finished();
-    //   return data;
-    // } catch (e) {
-    //   this.logger.error(`workflows.service.ts:WorkflowsService.start: Error waiting for job to finish: ${e}`);
-    //   if (e instanceof Error)
-    //     throw new HttpException(e.message, HttpStatus.BAD_REQUEST);
-    // }
+    let job, data;
 
-    let workflow: Workflow; // Workflow to update
-    let audience: Audience; // Audience to freeze/send messages to
-    let customers: CustomerDocument[]; // Customers to add to primary audience
-    let jobIDs: (string | number)[] = [];
+    const jobIDs: (string | number)[] = [];
 
     const transactionSession = await this.connection.startSession();
-    await transactionSession.startTransaction();
-    const queryRunner = await AppDataSource.createQueryRunner();
+    transactionSession.startTransaction();
+    const queryRunner = AppDataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
     try {
-      // this.logger.debug(`events.processor.ts:EventsProcessort.processJourneyStart: Account ${accountId} of type ${typeof accountId}`);
-      // const account = await queryRunner.manager.findOneBy(Account, {
-      //   id: accountId,
-      // });
-
-      if (!account) throw new HttpException('User not found', 404);
-
-      workflow = await queryRunner.manager.findOne(Workflow, {
-        where: {
-          owner: { id: account?.id },
-          id: workflowID,
-        },
-        relations: ['segment'],
-      });
-      if (!workflow) {
-        this.logger.debug('Workflow does not exist');
-        return Promise.reject(errors.ERROR_DOES_NOT_EXIST);
-      }
-
-      if (workflow.isActive) {
-        this.logger.debug('Workflow already active');
-        return Promise.reject(new Error('Workflow already active'));
-      }
-      if (workflow?.isStopped)
-        return Promise.reject(
-          new Error('The workflow has already been stopped')
-        );
-      if (!workflow?.segment)
-        return Promise.reject(
-          new Error('To start workflow segment should be defined')
-        );
-
-      const audiences = await queryRunner.manager.findBy(Audience, {
-        workflow: { id: workflow.id },
-      });
-
-      for (let audience of audiences) {
-        audience = await this.audiencesService.freeze(
+      this.logger.debug(
+        `workflow.service.ts:WorkflowService.start: Account attempting to start workflow: ${JSON.stringify(
           account,
-          audience.id,
-          queryRunner
-        );
-        this.logger.debug('Freezing audience ' + audience?.id);
-
-        if (audience.isPrimary) {
-          customers = await this.customersService.findByInclusionCriteria(
-            account,
-            workflow.segment.inclusionCriteria,
-            transactionSession
-          );
-          this.logger.debug(
-            'Customers to include in workflow: ' + customers.length
-          );
-
-          jobIDs = await this.audiencesService.moveCustomers(
-            account,
-            null,
-            audience,
-            customers,
-            null,
-            queryRunner,
-            workflow.rules,
-            workflow.id
-          );
-          this.logger.debug('Finished moving customers into workflow');
-
-          await queryRunner.manager.save(Workflow, {
-            ...workflow,
-            isActive: true,
-          });
-          this.logger.debug('Started workflow ' + workflow?.id);
-        }
-      }
-
-      const segment = await queryRunner.manager.findOneBy(Segment, {
-        id: workflow.segment.id,
+          null,
+          2
+        )}`
+      );
+      job = await this.eventsQueue.add('start', {
+        accountId: account.id,
+        workflowID,
       });
-      await queryRunner.manager.save(Segment, { ...segment, isFreezed: true });
-
-      await transactionSession.commitTransaction();
-      await queryRunner.commitTransaction();
-    } catch (err) {
-      await transactionSession.abortTransaction();
-      await queryRunner.rollbackTransaction();
-      this.logger.error('Error: ' + err);
-      throw err;
-    } finally {
-      await transactionSession.endSession();
-      await queryRunner.release();
+    } catch (e) {
+      this.logger.error(
+        `workflows.service.ts:WorkflowsService.start: Error adding to event queue: ${e}`
+      );
+      if (e instanceof Error)
+        throw new HttpException(e.message, HttpStatus.BAD_REQUEST);
+    }
+    try {
+      data = await job.finished();
+      return data;
+    } catch (e) {
+      this.logger.error(
+        `workflows.service.ts:WorkflowsService.start: Error waiting for job to finish: ${e}`
+      );
+      if (e instanceof Error)
+        throw new HttpException(e.message, HttpStatus.BAD_REQUEST);
     }
 
     return Promise.resolve(jobIDs);
-
   }
 
   /**
@@ -634,7 +560,9 @@ export class WorkflowsService {
         }
       }
     } catch (err) {
-      this.logger.error(`workflows.service.ts:WorkflowsService.enrollCustomer: Error: ${err}`);
+      this.logger.error(
+        `workflows.service.ts:WorkflowsService.enrollCustomer: Error: ${err}`
+      );
       return Promise.reject(err);
     }
   }
@@ -726,7 +654,7 @@ export class WorkflowsService {
                 (event.payload.type === PosthogTriggerParams.Track &&
                   event.payload.event === 'click' &&
                   trigger.providerParams ===
-                  PosthogTriggerParams.Autocapture) ||
+                    PosthogTriggerParams.Autocapture) ||
                 // for page
                 (event.payload.type === PosthogTriggerParams.Page &&
                   trigger.providerParams === PosthogTriggerParams.Page) ||
@@ -784,21 +712,22 @@ export class WorkflowsService {
                   if (conditions && conditions.length > 0) {
                     const compareResults = conditions.map((condition) => {
                       this.logger.debug(
-                        `Comparing: ${event?.event?.[condition.key] || ''} ${condition.comparisonType || ''
+                        `Comparing: ${event?.event?.[condition.key] || ''} ${
+                          condition.comparisonType || ''
                         } ${condition.value || ''}`
                       );
                       return ['exists', 'doesNotExist'].includes(
                         condition.comparisonType
                       )
                         ? operableCompare(
-                          event?.event?.[condition.key],
-                          condition.comparisonType
-                        )
+                            event?.event?.[condition.key],
+                            condition.comparisonType
+                          )
                         : conditionalCompare(
-                          event?.event?.[condition.key],
-                          condition.value,
-                          condition.comparisonType
-                        );
+                            event?.event?.[condition.key],
+                            condition.value,
+                            condition.comparisonType
+                          );
                     });
                     this.logger.debug(
                       'Compare result: ' + JSON.stringify(compareResults)
@@ -837,11 +766,11 @@ export class WorkflowsService {
                         );
                       this.logger.debug(
                         'Moving ' +
-                        customer?.id +
-                        ' out of ' +
-                        from?.id +
-                        ' and into ' +
-                        to?.id
+                          customer?.id +
+                          ' out of ' +
+                          from?.id +
+                          ' and into ' +
+                          to?.id
                       );
                       jobId.jobIds = jobIdArr;
                       jobId.templates = templates;
@@ -869,7 +798,9 @@ export class WorkflowsService {
         }
       }
     } catch (err) {
-      this.logger.error(`workflows.service.ts:WorkflowsService.tick Error: ${err}`);
+      this.logger.error(
+        `workflows.service.ts:WorkflowsService.tick Error: ${err}`
+      );
       return Promise.reject(err);
     }
     return Promise.resolve(jobIds);
@@ -920,8 +851,8 @@ export class WorkflowsService {
               ...item,
               executionTime: new Date(
                 new Date().getTime() -
-                found.latestPause.getTime() +
-                item.executionTime.getTime()
+                  found.latestPause.getTime() +
+                  item.executionTime.getTime()
               ),
             }))
           );

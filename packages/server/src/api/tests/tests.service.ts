@@ -103,14 +103,20 @@ export class TestsService {
       await this.authService.repository.update(
         { id: ret.id },
         {
-          id: '00000000-0000-0000-0000-00000000000',
+          id: '00000000-0000-0000-0000-000000000000',
         }
       );
-      ret.id = '00000000-0000-0000-0000-00000000000';
+      ret.id = '00000000-0000-0000-0000-000000000000';
 
-      await this.workflowsRepository.delete({ owner: { id: '00000000-0000-0000-0000-00000000000' } });
-      await this.templateRepository.delete({ owner: { id: '00000000-0000-0000-0000-00000000000' } });
-      await this.audienceRepository.delete({ owner: { id: '00000000-0000-0000-0000-00000000000' } });
+      await this.workflowsRepository.delete({
+        owner: { id: '00000000-0000-0000-0000-000000000000' },
+      });
+      await this.templateRepository.delete({
+        owner: { id: '00000000-0000-0000-0000-000000000000' },
+      });
+      await this.audienceRepository.delete({
+        owner: { id: '00000000-0000-0000-0000-000000000000' },
+      });
 
       await this.authService.helper.generateDefaultData(
         ret,
@@ -123,7 +129,7 @@ export class TestsService {
       );
 
       await this.customersService.CustomerModel.deleteMany({
-        ownerId: '00000000-0000-0000-0000-00000000000',
+        ownerId: '00000000-0000-0000-0000-000000000000',
       });
 
       const exists = await this.CustomerKeysModel.findOne({
@@ -219,14 +225,17 @@ export class TestsService {
 
   public async getTestCustomerId() {
     const customer = await this.customersService.CustomerModel.findOne({
-      ownerId: '00000000-0000-0000-0000-00000000000',
+      ownerId: '00000000-0000-0000-0000-000000000000',
     });
     return customer.id;
   }
 
   public async getAudienceByCustomerId(id: string) {
     const audiences = await this.audienceRepository.findBy({
-      owner: { id: '00000000-0000-0000-0000-00000000000', email: 'testmail@gmail.com' },
+      owner: {
+        id: '00000000-0000-0000-0000-000000000000',
+        email: 'testmail@gmail.com',
+      },
     });
 
     return audiences.find((audience) => audience.customers.includes(id));

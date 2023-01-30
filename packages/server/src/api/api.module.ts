@@ -116,9 +116,15 @@ export class ApiModule {
       );
       ret.id = '00000000-0000-0000-0000-000000000000';
 
-      await this.workflowsRepository.delete({ owner: { id: '00000000-0000-0000-0000-000000000000' } });
-      await this.templateRepository.delete({ owner: { id: '00000000-0000-0000-0000-000000000000' } });
-      await this.audienceRepository.delete({ owner: { id: '00000000-0000-0000-0000-000000000000' } });
+      await this.workflowsRepository.delete({
+        owner: { id: '00000000-0000-0000-0000-000000000000' },
+      });
+      await this.templateRepository.delete({
+        owner: { id: '00000000-0000-0000-0000-000000000000' },
+      });
+      await this.audienceRepository.delete({
+        owner: { id: '00000000-0000-0000-0000-000000000000' },
+      });
 
       await this.customersService.CustomerModel.deleteMany({
         ownerId: '00000000-0000-0000-0000-000000000000',
