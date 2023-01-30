@@ -88,8 +88,8 @@ export class EventsProcessor {
     this.logger.debug('\n\n\nAccount id:', accountId, '\n\n\n');
 
     try {
-      const account = await this.userService.findOne({
-        id: accountId,
+      const account = await queryRunner.manager.findOneBy(Account, {
+        id: accountId.toString(),
       });
 
       if (!account) throw new HttpException('User not found', 404);
