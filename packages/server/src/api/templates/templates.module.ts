@@ -21,9 +21,9 @@ import { SlackModule } from '../slack/slack.module';
   imports: [
     TypeOrmModule.forFeature([
       Account,
-      State,
-      Installation,
       Audience,
+      Installation,
+      State,
       Template,
     ]),
     MongooseModule.forFeature([
@@ -51,4 +51,4 @@ import { SlackModule } from '../slack/slack.module';
   controllers: [TemplatesController],
   exports: [TemplatesService],
 })
-export class TemplatesModule {}
+export class TemplatesModule { }

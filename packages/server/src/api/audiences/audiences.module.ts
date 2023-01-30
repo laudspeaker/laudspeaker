@@ -25,12 +25,12 @@ import { Job } from '../jobs/entities/job.entity';
   imports: [
     TypeOrmModule.forFeature([
       Account,
-      State,
       Audience,
-      Template,
       Installation,
-      Workflow,
       Job,
+      State,
+      Template,
+      Workflow,
     ]),
     MongooseModule.forFeature([
       { name: Customer.name, schema: CustomerSchema },
@@ -55,4 +55,4 @@ import { Job } from '../jobs/entities/job.entity';
   providers: [AudiencesService, JobsService],
   exports: [AudiencesService],
 })
-export class AudiencesModule {}
+export class AudiencesModule { }
