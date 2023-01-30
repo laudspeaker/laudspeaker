@@ -116,7 +116,6 @@ export class EventsProcessor {
 
   @Process('posthog')
   async processPosthogEvent(job: Job<PosthogEventDto>) {
-    console.log('--- processor start ---');
     const { apiKey, eventDto } = job.data;
     let account: Account, jobIds: WorkflowTick[]; // Account associated with the caller
     const transactionSession = await this.connection.startSession();
@@ -124,7 +123,6 @@ export class EventsProcessor {
     const queryRunner = AppDataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
-    console.log('--- processor transaction started ---');
 
     // Step 1: Find corresponding account
     let jobArray: WorkflowTick[] = []; // created jobId
