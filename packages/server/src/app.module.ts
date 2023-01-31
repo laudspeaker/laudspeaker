@@ -42,6 +42,7 @@ import { Template } from './api/templates/entities/template.entity';
 import { SlackService } from './api/slack/slack.service';
 import { Installation } from './api/slack/entities/installation.entity';
 import { State } from './api/slack/entities/state.entity';
+import { DataSource } from 'typeorm';
 
 const papertrail = new winston.transports.Http({
   host: 'logs.collector.solarwinds.com',

@@ -32,7 +32,6 @@ import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { createClient } from '@clickhouse/client';
 import { Workflow } from '../workflows/entities/workflow.entity';
 import { attributeConditions } from '@/fixtures/attributeConditions';
-import { AppDataSource } from '@/data-source';
 import { getType } from 'tst-reflect';
 import { isDateString, isEmail } from 'class-validator';
 
@@ -68,7 +67,7 @@ export class CustomersService {
     @InjectRepository(Workflow)
     private workflowsRepository: Repository<Workflow>,
     private dataSource: DataSource
-  ) {}
+  ) { }
 
   async create(
     account: Account,
@@ -76,9 +75,9 @@ export class CustomersService {
     transactionSession?: ClientSession
   ): Promise<
     Customer &
-      mongoose.Document & {
-        _id: Types.ObjectId;
-      }
+    mongoose.Document & {
+      _id: Types.ObjectId;
+    }
   > {
     const createdCustomer = new this.CustomerModel({
       ownerId: (<Account>account).id,
@@ -114,7 +113,7 @@ export class CustomersService {
       ).exec();
     }
 
-    await AppDataSource.transaction(async (transactionManager) => {
+    await this.dataSource.transaction(async (transactionManager) => {
       // Already started (isEditable = false), dynamic (isDyanmic = true),push
       // Not started (isEditable = true), dynamic (isDyanmic = true), push
       const dynamicWkfs = await transactionManager.find(Workflow, {
@@ -357,10 +356,10 @@ export class CustomersService {
         (info['salient'] = person['email']
           ? person['email']
           : person['slackEmail']
-          ? person['slackEmail']
-          : person['slackRealName']
-          ? person['slackRealName']
-          : '...');
+            ? person['slackEmail']
+            : person['slackRealName']
+              ? person['slackRealName']
+              : '...');
       return info;
     });
     return { data: listInfo, totalPages };
@@ -429,9 +428,9 @@ export class CustomersService {
     customerId: string
   ): Promise<
     Customer &
-      mongoose.Document & {
-        _id: Types.ObjectId;
-      }
+    mongoose.Document & {
+      _id: Types.ObjectId;
+    }
   > {
     const found = await this.CustomerModel.findById(customerId).exec();
     if (found && found?.ownerId == (<Account>account).id) return found;
