@@ -143,11 +143,7 @@ const TextUpdaterNode = ({ data }: { data: NodeData }) => {
             descriptionCollaped ? "max-h-[88px]" : "min-h-[80px]"
           }  flex justify-between rounded-[8px] p-[16.5px_20px] border-[2px] shadow-md border-transparent ${
             nodeData.width ? `w-[${nodeData.width}]` : "w-[350px]"
-          } ${nodeData.isPrimary ? "border-cyan-500" : ""} ${
-            isSelected && !nodeData.isPrimary
-              ? "!border-gray-300 !shadow-xl"
-              : ""
-          }`}
+          } ${isSelected ? "border-cyan-500 !shadow-xl" : ""}`}
         >
           <div>
             <p className={textStyle}>
@@ -188,7 +184,7 @@ const TextUpdaterNode = ({ data }: { data: NodeData }) => {
         <div
           style={{
             display: "flex",
-            height: "15px",
+            height: "22px",
             position: "absolute",
             left: 0,
             bottom: 0,
@@ -207,9 +203,9 @@ const TextUpdaterNode = ({ data }: { data: NodeData }) => {
                   id={trigger.id}
                   onClick={(e) => handleTriggerClick(e, trigger.id)}
                   style={{
-                    height: "15px",
+                    height: "22px",
                     background: "transparent",
-                    width: "20px",
+                    width: "30px",
                     transform: "unset",
                     bottom: "-4px",
                     top: "auto",
@@ -220,7 +216,7 @@ const TextUpdaterNode = ({ data }: { data: NodeData }) => {
                 >
                   <img
                     src={thunderbolt}
-                    width="20"
+                    width="30"
                     style={{ pointerEvents: "none" }}
                   />
                 </Handle>
