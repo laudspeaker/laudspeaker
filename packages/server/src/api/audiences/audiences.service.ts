@@ -12,7 +12,6 @@ import { TemplatesService } from '../templates/templates.service';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { Workflow } from '../workflows/entities/workflow.entity';
 import { EventDto } from '../events/dto/event.dto';
-import { AppDataSource } from '@/data-source';
 import { JobsService } from '../jobs/jobs.service';
 import { DateTime } from 'luxon';
 import { TimeJobType } from '../jobs/entities/job.entity';

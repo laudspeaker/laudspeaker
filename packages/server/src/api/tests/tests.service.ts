@@ -1,9 +1,8 @@
-import { AppDataSource } from '@/data-source';
 import { HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Model } from 'mongoose';
-import { In, Repository } from 'typeorm';
+import { DataSource, In, Repository } from 'typeorm';
 import { AccountsService } from '../accounts/accounts.service';
 import { Account } from '../accounts/entities/accounts.entity';
 import { Audience } from '../audiences/entities/audience.entity';
@@ -21,6 +20,7 @@ import { Workflow } from '../workflows/entities/workflow.entity';
 @Injectable()
 export class TestsService {
   constructor(
+    private dataSource: DataSource,
     @Inject(CustomersService)
     private readonly customersService: CustomersService,
     @Inject(AccountsService)
@@ -37,7 +37,7 @@ export class TestsService {
     private readonly authService: AuthService,
     @InjectModel(CustomerKeys.name)
     private CustomerKeysModel: Model<CustomerKeysDocument>
-  ) {}
+  ) { }
 
   async posthogsynctest(user: Express.User) {
     if (process.env.NODE_ENV !== 'development')
@@ -120,12 +120,12 @@ export class TestsService {
 
       await this.authService.helper.generateDefaultData(
         ret,
-        AppDataSource.manager
+        this.dataSource.manager
       );
 
       await this.authService.helper.generateDefaultData(
         ret,
-        AppDataSource.manager
+        this.dataSource.manager
       );
 
       await this.customersService.CustomerModel.deleteMany({

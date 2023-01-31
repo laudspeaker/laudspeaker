@@ -1,4 +1,3 @@
-import { AppDataSource } from '@/data-source';
 import { Process, Processor } from '@nestjs/bull';
 import { HttpException, Inject, Injectable, LoggerService } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
@@ -24,6 +23,7 @@ import { Audience } from '../audiences/entities/audience.entity';
 import { CustomerDocument } from '../customers/schemas/customer.schema';
 import { Segment } from '../segments/entities/segment.entity';
 import errors from '@/shared/utils/errors';
+import { DataSource } from 'typeorm';
 
 export interface StartDto {
   account: Account;
@@ -44,6 +44,7 @@ export interface PosthogEventDto {
 @Injectable()
 export class EventsProcessor {
   constructor(
+    private dataSource: DataSource,
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
     private readonly logger: LoggerService,
     @InjectModel(Event.name)
@@ -70,7 +71,7 @@ export class EventsProcessor {
 
     const transactionSession = await this.connection.startSession();
     await transactionSession.startTransaction();
-    const queryRunner = await AppDataSource.createQueryRunner();
+    const queryRunner = await this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
@@ -176,7 +177,7 @@ export class EventsProcessor {
 
     const transactionSession = await this.connection.startSession();
     transactionSession.startTransaction();
-    const queryRunner = AppDataSource.createQueryRunner();
+    const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
@@ -235,7 +236,7 @@ export class EventsProcessor {
     let account: Account, jobIds: WorkflowTick[]; // Account associated with the caller
     const transactionSession = await this.connection.startSession();
     transactionSession.startTransaction();
-    const queryRunner = AppDataSource.createQueryRunner();
+    const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
 

@@ -32,10 +32,14 @@ import {
   PosthogEventType,
   PosthogEventTypeDocument,
 } from './schemas/posthog-event-type.schema';
+import { WorkflowTick } from '../workflows/interfaces/workflow-tick.interface';
+import { DataSource } from 'typeorm';
+
 
 @Injectable()
 export class EventsService {
   constructor(
+    private dataSource: DataSource,
     @Inject(AccountsService) private readonly userService: AccountsService,
     @Inject(WorkflowsService)
     private readonly workflowsService: WorkflowsService,
