@@ -155,15 +155,15 @@ export class EventsProcessor {
     //   });
     //   await queryRunner.manager.save(Segment, { ...segment, isFreezed: true });
 
-      await transactionSession.commitTransaction();
+      // await transactionSession.commitTransaction();
       await queryRunner.commitTransaction();
     } catch (err) {
-      await transactionSession.abortTransaction();
+      // await transactionSession.abortTransaction();
       await queryRunner.rollbackTransaction();
       this.logger.error('Error: ' + err);
       throw err;
     } finally {
-      await transactionSession.endSession();
+      // await transactionSession.endSession();
       await queryRunner.release();
     }
 
