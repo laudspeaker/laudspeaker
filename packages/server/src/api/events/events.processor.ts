@@ -69,11 +69,11 @@ export class EventsProcessor {
     let customers: CustomerDocument[]; // Customers to add to primary audience
     let jobIDs: (string | number)[] = [];
 
-    const transactionSession = await this.connection.startSession();
-    await transactionSession.startTransaction();
-    const queryRunner = await this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
+    // const transactionSession = await this.connection.startSession();
+    // await transactionSession.startTransaction();
+    // const queryRunner = await this.dataSource.createQueryRunner();
+    // await queryRunner.connect();
+    // await queryRunner.startTransaction();
 
     try {
       // this.logger.debug(`events.processor.ts:EventsProcessort.processJourneyStart: Account ${accountId} of type ${typeof accountId}`);
@@ -156,15 +156,15 @@ export class EventsProcessor {
     //   await queryRunner.manager.save(Segment, { ...segment, isFreezed: true });
 
       // await transactionSession.commitTransaction();
-      await queryRunner.commitTransaction();
+      // await queryRunner.commitTransaction();
     } catch (err) {
       // await transactionSession.abortTransaction();
-      await queryRunner.rollbackTransaction();
+      // await queryRunner.rollbackTransaction();
       this.logger.error('Error: ' + err);
       throw err;
     } finally {
       // await transactionSession.endSession();
-      await queryRunner.release();
+      // await queryRunner.release();
     }
 
     return Promise.resolve(jobIDs);
