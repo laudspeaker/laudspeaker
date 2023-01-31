@@ -108,14 +108,14 @@ export class EventsService {
 
   async getPostHogPayload(apiKey: string, eventDto: PosthogBatchEventDto) {
     const job = await this.eventsQueue.add('posthog', { apiKey, eventDto });
-
-    return job.finished();
+    return job;
+    // return job.finished();
   }
 
   async enginePayload(apiKey: string, eventDto: EventDto) {
     const job = await this.eventsQueue.add('custom', { apiKey, eventDto });
-
-    return job.finished();
+    return job;
+    // return job.finished();
   }
 
   async getOrUpdateAttributes(resourceId: string) {
