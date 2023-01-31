@@ -60,7 +60,6 @@ export class AuthHelper extends BaseJwtHelper {
 
   // Validate JWT Token, throw forbidden error if JWT Token is invalid
   private async validate(token: string): Promise<boolean | never> {
-    this.logger.debug(`auth.helper.ts:AuthHelper.validate: Validating user with token ${token}`);
     const decoded: { id: string } = this.jwt.verify(token);
 
     if (!decoded) {
@@ -68,7 +67,6 @@ export class AuthHelper extends BaseJwtHelper {
     }
 
     const user: Account = await this.validateUser(decoded);
-    this.logger.debug(`auth.helper.ts:AuthHelper.validate: Found user: ${JSON.stringify(user, null, 2)}`);
     if (!user) {
       throw new UnauthorizedException();
     }
