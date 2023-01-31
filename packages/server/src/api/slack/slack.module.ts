@@ -27,7 +27,7 @@ import { CustomersModule } from '../customers/customers.module';
     BullModule.registerQueue({
       name: 'customers',
     }),
-    TypeOrmModule.forFeature([Installation, State, Account, Audience]),
+    TypeOrmModule.forFeature([Account, Audience, Installation, State]),
     MongooseModule.forFeature([
       { name: Customer.name, schema: CustomerSchema },
       { name: CustomerKeys.name, schema: CustomerKeysSchema },
@@ -38,4 +38,4 @@ import { CustomersModule } from '../customers/customers.module';
   providers: [SlackProcessor, SlackService],
   exports: [SlackService],
 })
-export class SlackModule {}
+export class SlackModule { }

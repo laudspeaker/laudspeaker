@@ -1,32 +1,32 @@
 import { AppDataSource } from '@/data-source';
 import { Process, Processor } from '@nestjs/bull';
-import { Inject, Injectable, LoggerService } from '@nestjs/common';
+import { HttpException, Inject, Injectable, LoggerService } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { Job } from 'bull';
 import mongoose, { Model } from 'mongoose';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { AccountsService } from '../accounts/accounts.service';
 import { Account } from '../accounts/entities/accounts.entity';
-import { Audience } from '../audiences/entities/audience.entity';
 import { Correlation, CustomersService } from '../customers/customers.service';
-import { CustomerDocument } from '../customers/schemas/customer.schema';
-import { Workflow } from '../workflows/entities/workflow.entity';
 import { WorkflowTick } from '../workflows/interfaces/workflow-tick.interface';
 import { WorkflowsService } from '../workflows/workflows.service';
 import { EventDto } from './dto/event.dto';
 import { PosthogBatchEventDto } from './dto/posthog-batch-event.dto';
 import { PostHogEventDto } from './dto/posthog-event.dto';
-import errors from '@/shared/utils/errors';
 import { EventDocument } from './schemas/event.schema';
 import {
   PosthogEventType,
   PosthogEventTypeDocument,
 } from './schemas/posthog-event-type.schema';
-import { Segment } from '../segments/entities/segment.entity';
 import { AudiencesService } from '../audiences/audiences.service';
+import { Workflow } from '../workflows/entities/workflow.entity';
+import { Audience } from '../audiences/entities/audience.entity';
+import { CustomerDocument } from '../customers/schemas/customer.schema';
+import { Segment } from '../segments/entities/segment.entity';
+import errors from '@/shared/utils/errors';
 
 export interface StartDto {
-  accountId: string;
+  account: Account;
   workflowID: string;
 }
 
@@ -61,7 +61,7 @@ export class EventsProcessor {
 
   @Process('start')
   async processJourneyStart(job: Job<StartDto>) {
-    const { accountId, workflowID } = job.data;
+    const { account, workflowID } = job.data;
 
     let workflow: Workflow; // Workflow to update
     let audience: Audience; // Audience to freeze/send messages to
@@ -69,19 +69,22 @@ export class EventsProcessor {
     let jobIDs: (string | number)[] = [];
 
     const transactionSession = await this.connection.startSession();
-    transactionSession.startTransaction();
-    const queryRunner = AppDataSource.createQueryRunner();
+    await transactionSession.startTransaction();
+    const queryRunner = await AppDataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
     try {
-      const account = await queryRunner.manager.findOneBy(Account, {
-        id: accountId,
-      });
+      // this.logger.debug(`events.processor.ts:EventsProcessort.processJourneyStart: Account ${accountId} of type ${typeof accountId}`);
+      // const account = await queryRunner.manager.findOneBy(Account, {
+      //   id: accountId,
+      // });
+
+      if (!account) throw new HttpException('User not found', 404);
 
       workflow = await queryRunner.manager.findOne(Workflow, {
         where: {
-          owner: { id: account.id },
+          owner: { id: account?.id },
           id: workflowID,
         },
         relations: ['segment'],
@@ -132,7 +135,9 @@ export class EventsProcessor {
             audience,
             customers,
             null,
-            queryRunner
+            queryRunner,
+            workflow.rules,
+            workflow.id
           );
           this.logger.debug('Finished moving customers into workflow');
 
@@ -233,11 +238,12 @@ export class EventsProcessor {
     const queryRunner = AppDataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
+
     // Step 1: Find corresponding account
     let jobArray: WorkflowTick[] = []; // created jobId
     try {
       account = await this.userService.findOneByAPIKey(apiKey.substring(8));
-      this.logger.debug('Found account: ' + account.id);
+      this.logger.debug('Found account: ' + account?.id);
 
       const chronologicalEvents: PostHogEventDto[] = eventDto.batch.sort(
         (a, b) =>
@@ -335,7 +341,7 @@ export class EventsProcessor {
     } catch (e) {
       await transactionSession.abortTransaction();
       await queryRunner.rollbackTransaction();
-      this.logger.error('Error: ' + e);
+      this.logger.error('Error 340 processor: ' + e);
       throw e;
     } finally {
       await transactionSession.endSession();

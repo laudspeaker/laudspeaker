@@ -33,6 +33,8 @@ import { createClient } from '@clickhouse/client';
 import { Workflow } from '../workflows/entities/workflow.entity';
 import { attributeConditions } from '@/fixtures/attributeConditions';
 import { AppDataSource } from '@/data-source';
+import { getType } from 'tst-reflect';
+import { isDateString, isEmail } from 'class-validator';
 
 export type Correlation = {
   cust: CustomerDocument;
@@ -43,6 +45,8 @@ const eventsMap = {
   sent: 'delivered',
   clicked: 'clicked',
 };
+
+const KEYS_TO_SKIP = ['__v', '_id', 'audiences', 'ownerId'];
 
 @Injectable()
 export class CustomersService {
@@ -81,6 +85,34 @@ export class CustomersService {
       ...createCustomerDto,
     });
     const ret = await createdCustomer.save({ session: transactionSession });
+
+    for (const key of Object.keys(ret.toObject()).filter(
+      (item) => !KEYS_TO_SKIP.includes(item)
+    )) {
+      const value = ret[key];
+      if (value === '' || value === undefined || value === null) continue;
+
+      const keyType = getType(value);
+      const isArray = keyType.isArray();
+      let type = isArray ? getType(value[0]).name : keyType.name;
+
+      if (type === 'String') {
+        if (isEmail(value)) type = 'Email';
+        if (isDateString(value)) type = 'Date';
+      }
+
+      await this.CustomerKeysModel.updateOne(
+        { key },
+        {
+          $set: {
+            key,
+            type,
+            isArray,
+          },
+        },
+        { upsert: true }
+      ).exec();
+    }
 
     await AppDataSource.transaction(async (transactionManager) => {
       // Already started (isEditable = false), dynamic (isDyanmic = true),push
@@ -266,10 +298,39 @@ export class CustomersService {
     delete newCustomerData.ownerId;
     delete newCustomerData._id;
     delete newCustomerData.__v;
+    delete newCustomerData.audiences;
     const customer = await this.findOne(account, id);
 
     if (customer.ownerId != account.id) {
       throw new HttpException("You can't update this customer.", 400);
+    }
+
+    for (const key of Object.keys(newCustomerData).filter(
+      (item) => !KEYS_TO_SKIP.includes(item)
+    )) {
+      const value = newCustomerData[key];
+      if (value === '' || value === undefined || value === null) continue;
+
+      const keyType = getType(value);
+      const isArray = keyType.isArray();
+      let type = isArray ? getType(value[0]).name : keyType.name;
+
+      if (type === 'String') {
+        if (isEmail(value)) type = 'Email';
+        if (isDateString(value)) type = 'Date';
+      }
+
+      await this.CustomerKeysModel.updateOne(
+        { key },
+        {
+          $set: {
+            key,
+            type,
+            isArray,
+          },
+        },
+        { upsert: true }
+      ).exec();
     }
 
     const newCustomer = Object.fromEntries(
@@ -504,6 +565,9 @@ export class CustomersService {
         )
           .session(transactionSession)
           .exec();
+
+      this.logger.warn('\n findBySpecifiedEvent 569', customer);
+
       this.logger.debug('Customer found: ' + customer.id);
       return { cust: customer, found: true };
     }

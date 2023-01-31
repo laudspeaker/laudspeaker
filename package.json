@@ -36,6 +36,7 @@
   "license": "MIT",
   "dependencies": {
     "concurrently": "^7.4.0",
-    "logform": "^2.4.2"
+    "logform": "^2.4.2",
+    "luxon": "^3.2.1"
   }
 }

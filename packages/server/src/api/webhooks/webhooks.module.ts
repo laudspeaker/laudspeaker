@@ -13,7 +13,7 @@ import { Audience } from '../audiences/entities/audience.entity';
 import twilio from 'twilio';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([WebhookEvent, Account, Audience])],
+  imports: [TypeOrmModule.forFeature([Account, Audience, WebhookEvent])],
   providers: [WebhooksService],
   controllers: [WebhooksController],
 })

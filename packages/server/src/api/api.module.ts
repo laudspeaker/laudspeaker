@@ -23,10 +23,11 @@ import { WebhooksModule } from './webhooks/webhooks.module';
 import { SegmentsModule } from './segments/segments.module';
 import { SmsModule } from './sms/sms.module';
 import { IntegrationsModule } from './integrations/integrations.module';
+import { JobsModule } from './jobs/jobs.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Workflow, Template, Audience]),
+    TypeOrmModule.forFeature([Audience, Template, Workflow]),
     AccountsModule,
     AuthModule,
     CustomersModule,
@@ -41,6 +42,7 @@ import { IntegrationsModule } from './integrations/integrations.module';
     SegmentsModule,
     SmsModule,
     IntegrationsModule,
+    JobsModule,
   ],
 })
 export class ApiModule {
@@ -111,17 +113,23 @@ export class ApiModule {
       await this.authService.repository.update(
         { id: ret.id },
         {
-          id: '-1000',
+          id: '00000000-0000-0000-0000-000000000000',
         }
       );
-      ret.id = '-1000';
+      ret.id = '00000000-0000-0000-0000-000000000000';
 
-      await this.workflowsRepository.delete({ owner: { id: '-1000' } });
-      await this.templateRepository.delete({ owner: { id: '-1000' } });
-      await this.audienceRepository.delete({ owner: { id: '-1000' } });
+      await this.workflowsRepository.delete({
+        owner: { id: '00000000-0000-0000-0000-000000000000' },
+      });
+      await this.templateRepository.delete({
+        owner: { id: '00000000-0000-0000-0000-000000000000' },
+      });
+      await this.audienceRepository.delete({
+        owner: { id: '00000000-0000-0000-0000-000000000000' },
+      });
 
       await this.customersService.CustomerModel.deleteMany({
-        ownerId: '-1000',
+        ownerId: '00000000-0000-0000-0000-000000000000',
       });
 
       const sanitizedMember = new CreateCustomerDto();

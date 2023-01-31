@@ -13,6 +13,9 @@ import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { Workflow } from '../workflows/entities/workflow.entity';
 import { EventDto } from '../events/dto/event.dto';
 import { AppDataSource } from '@/data-source';
+import { JobsService } from '../jobs/jobs.service';
+import { DateTime } from 'luxon';
+import { TimeJobType } from '../jobs/entities/job.entity';
 
 @Injectable()
 export class AudiencesService {
@@ -28,7 +31,8 @@ export class AudiencesService {
     public audiencesRepository: Repository<Audience>,
     @InjectRepository(Workflow)
     private workflowRepository: Repository<Workflow>,
-    @Inject(TemplatesService) public templatesService: TemplatesService
+    @Inject(TemplatesService) public templatesService: TemplatesService,
+    @Inject(JobsService) public jobsService: JobsService
   ) {}
 
   /**
@@ -226,7 +230,8 @@ export class AudiencesService {
    * If either fromAud or toAud are falsy, this functions as a way
    * to remove/add customers from audiences. The audience must no longer
    * be editable. If the toAud is primary and static, the customer will
-   * not be moved to that audience.
+   * not be moved to that audience. If the toAud already contains that customerID,
+   * the customer will not be moved into that audience
    *
    * @param fromAud - The audience entity to remove the customer ID from
    * @param toAud - The audience entity to add the customer ID to
@@ -239,8 +244,12 @@ export class AudiencesService {
     to: string | null | undefined,
     customer: CustomerDocument,
     event: EventDto,
-    queryRunner: QueryRunner
+    queryRunner: QueryRunner,
+    encodedRules: string[],
+    workflowID: string
   ): Promise<{ jobIds: (string | number)[]; templates: Template[] }> {
+    this.logger.warn('\nmoveCustomer 251', customer);
+
     const customerId = customer.id;
     let index = -1; // Index of the customer ID in the fromAud.customers array
     const jobIds: (string | number)[] = [];
@@ -273,6 +282,7 @@ export class AudiencesService {
           'Index of customer ' + customerId + ' inside of from: ' + index
         );
       }
+
       if (fromAud && !fromAud.isEditable && index > -1) {
         this.logger.debug(
           'From customers before: ' + fromAud?.customers?.length
@@ -289,11 +299,66 @@ export class AudiencesService {
           'From customers after: ' + fromAud?.customers?.length
         );
       }
+
+      if (
+        toAud?.customers?.length &&
+        toAud?.customers?.indexOf(customerId) > -1
+      ) {
+        this.logger.debug(
+          'Customer ' + customerId + ' is already in audience ' + toAud.id
+        );
+        return Promise.resolve({ jobIds: [], templates: [] });
+      }
+
       if (toAud && !toAud.isEditable) {
         this.logger.debug('To before: ' + toAud?.customers?.length);
         toAud.customers = [...toAud.customers, customerId];
         const saved = await queryRunner.manager.save(toAud);
         this.logger.debug('To after: ' + saved?.customers?.length);
+
+        // Queue up any jobs for time based triggers based on this audience
+        for (
+          let rulesIndex = 0;
+          rulesIndex < encodedRules?.length;
+          rulesIndex++
+        ) {
+          const trigger = JSON.parse(
+            Buffer.from(encodedRules[rulesIndex], 'base64').toString('ascii')
+          );
+
+          if (
+            to == trigger?.source &&
+            (trigger.properties.fromTime ||
+              trigger.properties.toTime ||
+              trigger.properties.specificTime ||
+              trigger.properties.delayTime)
+          ) {
+            const type =
+              trigger.properties.eventTime === 'SpecificTime'
+                ? TimeJobType.SPECIFIC_TIME
+                : trigger.properties.eventTime === 'Delay'
+                ? TimeJobType.DELAY
+                : TimeJobType.TIME_WINDOW;
+
+            const now = DateTime.now();
+            this.jobsService.create(account, {
+              customer: customerId,
+              from: trigger?.source,
+              to: trigger?.dest[0],
+              workflow: workflowID,
+              startTime: trigger.properties.fromTime,
+              endTime: trigger.properties.toTime,
+              executionTime:
+                trigger.properties.eventTime === 'SpecificTime'
+                  ? trigger.properties.specificTime
+                  : now.plus({
+                      hours: trigger.properties.delayTime?.split(':')?.[0],
+                      minutes: trigger.properties.delayTime?.split(':')?.[1],
+                    }),
+              type,
+            });
+          }
+        }
 
         let toTemplates = toAud.templates.map((item) => item.id);
 
@@ -378,7 +443,9 @@ export class AudiencesService {
     toAud: Audience | null | undefined,
     customers: CustomerDocument[],
     event: EventDto,
-    queryRunner: QueryRunner
+    queryRunner: QueryRunner,
+    encodedRules: string[],
+    workflowId: string
   ): Promise<(string | number)[]> {
     let jobIds: (string | number)[] = [];
     for (let index = 0; index < customers?.length; index++) {
@@ -389,7 +456,9 @@ export class AudiencesService {
           toAud?.id,
           customers[index],
           event,
-          queryRunner
+          queryRunner,
+          encodedRules,
+          workflowId
         );
         jobIds = [...jobIdArr, ...jobIds];
       } catch (err) {

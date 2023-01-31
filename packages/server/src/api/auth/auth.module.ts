@@ -26,10 +26,10 @@ import { CustomersModule } from '../customers/customers.module';
     }),
     TypeOrmModule.forFeature([
       Account,
-      Template,
-      Workflow,
       Audience,
+      Template,
       Verification,
+      Workflow,
     ]),
     BullModule.registerQueue({
       name: 'email',
@@ -40,4 +40,4 @@ import { CustomersModule } from '../customers/customers.module';
   providers: [AuthService, AuthHelper, JwtStrategy, ApiKeyStrategy],
   exports: [AuthService],
 })
-export class AuthModule {}
+export class AuthModule { }

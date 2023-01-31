@@ -126,6 +126,9 @@ export class Workflow {
   @Column('boolean', { default: false })
   isDeleted: boolean;
 
+  @Column('timestamp', { nullable: true })
+  latestPause?: Date;
+
   //This is actually an array of JSON stringified Trigger objects
   @Column('simple-array', { nullable: true })
   rules: string[];

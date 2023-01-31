@@ -588,6 +588,7 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
                     marging: "auto 0",
                     width: "auto",
                   }}
+                  id="toValueDate"
                 >
                   <DateTimePicker
                     value={datePickerToValue || ""}
@@ -623,6 +624,7 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
                     marging: "auto 0",
                     width: "auto",
                   }}
+                  id="fromValueDate"
                 >
                   <DateTimePicker
                     value={datePickerFromValue || ""}
@@ -992,6 +994,7 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
                 style={{
                   width: "200px",
                 }}
+                id="save-trigger"
                 disabled={isError}
               >
                 Save
