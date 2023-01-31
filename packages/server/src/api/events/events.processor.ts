@@ -81,36 +81,36 @@ export class EventsProcessor {
       //   id: accountId,
       // });
 
-      if (!account) throw new HttpException('User not found', 404);
+      // if (!account) throw new HttpException('User not found', 404);
 
-      workflow = await queryRunner.manager.findOne(Workflow, {
-        where: {
-          owner: { id: account?.id },
-          id: workflowID,
-        },
-        relations: ['segment'],
-      });
-      if (!workflow) {
-        this.logger.debug('Workflow does not exist');
-        return Promise.reject(errors.ERROR_DOES_NOT_EXIST);
-      }
+      // workflow = await queryRunner.manager.findOne(Workflow, {
+      //   where: {
+      //     owner: { id: account?.id },
+      //     id: workflowID,
+      //   },
+      //   relations: ['segment'],
+      // });
+      // if (!workflow) {
+      //   this.logger.debug('Workflow does not exist');
+      //   return Promise.reject(errors.ERROR_DOES_NOT_EXIST);
+      // }
 
-      if (workflow.isActive) {
-        this.logger.debug('Workflow already active');
-        return Promise.reject(new Error('Workflow already active'));
-      }
-      if (workflow?.isStopped)
-        return Promise.reject(
-          new Error('The workflow has already been stopped')
-        );
-      if (!workflow?.segment)
-        return Promise.reject(
-          new Error('To start workflow segment should be defined')
-        );
+      // if (workflow.isActive) {
+      //   this.logger.debug('Workflow already active');
+      //   return Promise.reject(new Error('Workflow already active'));
+      // }
+      // if (workflow?.isStopped)
+      //   return Promise.reject(
+      //     new Error('The workflow has already been stopped')
+      //   );
+      // if (!workflow?.segment)
+      //   return Promise.reject(
+      //     new Error('To start workflow segment should be defined')
+      //   );
 
-      const audiences = await queryRunner.manager.findBy(Audience, {
-        workflow: { id: workflow.id },
-      });
+      // const audiences = await queryRunner.manager.findBy(Audience, {
+      //   workflow: { id: workflow.id },
+      // });
 
     //   for (let audience of audiences) {
     //     audience = await this.audiencesService.freeze(
