@@ -41,7 +41,7 @@ export class Database extends BaseEntity {
   @Column()
   query: string;
 
-  @Column({ default: new Date().toUTCString() })
+  @Column({ default: new Date(0).toUTCString() })
   lastSync: string;
 
   @Column({ nullable: true })

@@ -17,6 +17,9 @@ import { IntegrationsService } from './integrations.service';
     MongooseModule.forFeature([
       { name: Customer.name, schema: CustomerSchema },
     ]),
+    BullModule.registerQueue({
+      name: 'integrations',
+    }),
   ],
   controllers: [IntegrationsController],
   providers: [IntegrationsService, IntegrationsProcessor],

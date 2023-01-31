@@ -119,6 +119,7 @@ const DatabaseStep3: FC<DatabaseStepProps> = ({
                       : "rounded-md sm:text-sm focus:border-cyan-500 border-gray-300 shadow-sm focus:ring-cyan-500 "
                   )}
                   name="host"
+                  id="host"
                   placeholder="host"
                   label="Host"
                 />
@@ -153,6 +154,7 @@ const DatabaseStep3: FC<DatabaseStepProps> = ({
                       : "rounded-md sm:text-sm focus:border-cyan-500 border-gray-300 shadow-sm focus:ring-cyan-500 "
                   )}
                   name="httpPath"
+                  id="httpPath"
                   placeholder="http path"
                   label="Http path"
                 />
@@ -188,6 +190,7 @@ const DatabaseStep3: FC<DatabaseStepProps> = ({
                       ? "rounded-md sm:text-sm focus:!border-red-500 !border-red-300 shadow-sm focus:!ring-red-500 "
                       : "rounded-md sm:text-sm focus:border-cyan-500 border-gray-300 shadow-sm focus:ring-cyan-500 "
                   )}
+                  id="token"
                   name="token"
                   placeholder="token"
                   label="Token"
@@ -239,6 +242,7 @@ const DatabaseStep3: FC<DatabaseStepProps> = ({
                   }
                   className="pl-[120px]"
                   name="connectionString"
+                  id="connectionString"
                 />
               </div>
             </div>
@@ -246,12 +250,14 @@ const DatabaseStep3: FC<DatabaseStepProps> = ({
               <b>Params separeted</b>
               <div className="flex justify-between items-center gap-[20px]">
                 <Input
+                  id="host"
                   name="host"
                   placeholder="host"
                   wrapperClasses="flex-[3]"
                   label="Host"
                 />
                 <Input
+                  id="port"
                   name="port"
                   type="number"
                   placeholder="port"
@@ -259,14 +265,25 @@ const DatabaseStep3: FC<DatabaseStepProps> = ({
                   label="Port"
                 />
               </div>
-              <Input name="username" placeholder="username" label="Username" />
               <Input
+                id="username"
+                name="username"
+                placeholder="username"
+                label="Username"
+              />
+              <Input
+                id="password"
                 type="password"
                 name="password"
                 placeholder="password"
                 label="Password"
               />
-              <Input name="database" placeholder="database" label="Database" />
+              <Input
+                id="database"
+                name="database"
+                placeholder="database"
+                label="Database"
+              />
             </div>
           </div>
         ))}

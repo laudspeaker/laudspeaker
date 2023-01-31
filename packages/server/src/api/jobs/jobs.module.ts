@@ -15,13 +15,7 @@ import { Workflow } from '../workflows/entities/workflow.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([
-      Account,
-      Audience,
-      Job,
-      State,
-      Workflow,
-    ]),
+    TypeOrmModule.forFeature([Account, Audience, Job, State, Workflow]),
     MongooseModule.forFeature([
       { name: Customer.name, schema: CustomerSchema },
     ]),

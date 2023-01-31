@@ -34,6 +34,7 @@ import { EventKeys } from './api/events/schemas/event-keys.schema';
 import { JobsService } from './api/jobs/jobs.service';
 import { WorkflowsService } from './api/workflows/workflows.service';
 import { TimeJobStatus } from './api/jobs/entities/job.entity';
+import { IntegrationsService } from './api/integrations/integrations.service';
 
 const client = createClient({
   host: process.env.CLICKHOUSE_HOST ?? 'http://localhost:8123',
@@ -101,6 +102,7 @@ export class CronService {
     private webhookEventRepository: Repository<WebhookEvent>,
     @InjectRepository(Integration)
     private integrationsRepository: Repository<Integration>,
+    private integrationsService: IntegrationsService,
     @InjectQueue('integrations') private readonly integrationsQueue: Queue,
     @Inject(JobsService) private jobsService: JobsService,
     @Inject(WorkflowsService) private workflowsService: WorkflowsService
@@ -113,16 +115,6 @@ export class CronService {
       }
     })();
   }
-
-  private integrationsMap: Record<
-    IntegrationType,
-    (integration: Integration) => Promise<void>
-  > = {
-    [IntegrationType.DATABASE]: async (integration) => {
-      const job = await this.integrationsQueue.add('db', { integration });
-      await job.finished();
-    },
-  };
 
   @Cron(CronExpression.EVERY_HOUR)
   async handleCustomerKeysCron() {
@@ -465,17 +457,7 @@ export class CronService {
       });
 
       for (const integration of integrationsBatch) {
-        try {
-          await this.integrationsMap[integration.type](integration);
-        } catch (e) {
-          if (e instanceof Error) {
-            await this.integrationsRepository.save({
-              id: integration.id,
-              status: IntegrationStatus.FAILED,
-              errorMessage: e.message,
-            });
-          }
-        }
+        await this.integrationsService.handleIntegration(integration);
       }
 
       offset += BATCH_SIZE;

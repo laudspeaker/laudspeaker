@@ -63,7 +63,7 @@ export class IntegrationsProcessor {
       new Date(lastSync).getTime() +
       frequencyNumber * frequencyUnitToMsMap[frequencyUnit];
 
-    if (new Date(syncTime) < new Date()) return;
+    if (new Date(syncTime) > new Date()) return;
 
     await this.databasesMap[integration.database.dbType](
       integration.database,
@@ -84,7 +84,6 @@ export class IntegrationsProcessor {
       path: database.databricksPath || '',
     });
     const session = await client.openSession();
-
     const queryOperation = await session.executeStatement(database.query, {
       runAsync: true,
       maxRows: 10_000_000,

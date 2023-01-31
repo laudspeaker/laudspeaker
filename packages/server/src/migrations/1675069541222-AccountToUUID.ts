@@ -129,4 +129,3 @@ export class AccountToUUID1675069541222 implements MigrationInterface {
     );
   }
 }
-

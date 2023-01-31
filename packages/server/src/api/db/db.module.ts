@@ -12,8 +12,19 @@ import { WebhookEvent } from '../webhooks/entities/webhook-event.entity';
 import { State } from '../slack/entities/state.entity';
 
 @Module({
-    imports: [
-        TypeOrmModule.forFeature([Account, Job, Segment, Installation, State, WebhookEvent, Workflow, Template, Audience, Verification]),
-    ],
+  imports: [
+    TypeOrmModule.forFeature([
+      Account,
+      Job,
+      Segment,
+      Installation,
+      State,
+      WebhookEvent,
+      Workflow,
+      Template,
+      Audience,
+      Verification,
+    ]),
+  ],
 })
-export class DBModule { }
+export class DBModule {}

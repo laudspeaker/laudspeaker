@@ -43,6 +43,7 @@ import { Template } from './api/templates/entities/template.entity';
 import { SlackService } from './api/slack/slack.service';
 import { Installation } from './api/slack/entities/installation.entity';
 import { State } from './api/slack/entities/state.entity';
+import { IntegrationsModule } from './api/integrations/integrations.module';
 
 const papertrail = new winston.transports.Http({
   host: 'logs.collector.solarwinds.com',
@@ -166,6 +167,7 @@ const myFormat = winston.format.printf(function ({
     BullModule.registerQueue({
       name: 'sms',
     }),
+    IntegrationsModule,
   ],
   controllers: [AppController],
   providers: [

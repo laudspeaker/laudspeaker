@@ -1,6 +1,11 @@
 import { AppDataSource } from '@/data-source';
 import { Process, Processor } from '@nestjs/bull';
-import { HttpException, Inject, Injectable, LoggerService } from '@nestjs/common';
+import {
+  HttpException,
+  Inject,
+  Injectable,
+  LoggerService,
+} from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { Job } from 'bull';
 import mongoose, { Model } from 'mongoose';

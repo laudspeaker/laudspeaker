@@ -74,4 +74,4 @@ import { EventsProcessor } from './events.processor';
   providers: [EventsService, EventsProcessor],
   exports: [EventsService],
 })
-export class EventsModule { }
+export class EventsModule {}

@@ -1,12 +1,15 @@
 /* eslint-disable no-case-declarations */
 import { AppDataSource } from '@/data-source';
 import { DBSQLClient } from '@databricks/sql';
+import { InjectQueue } from '@nestjs/bull';
 import {
   BadRequestException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Queue } from 'bull';
 import { Repository } from 'typeorm';
 import { AccountsService } from '../accounts/accounts.service';
 import { CreateDBDto } from './dto/create-db.dto';
@@ -20,13 +23,26 @@ import {
 
 @Injectable()
 export class IntegrationsService {
+  private readonly logger = new Logger(IntegrationsService.name);
+
   constructor(
     private accountsService: AccountsService,
     @InjectRepository(Integration)
-    private integrationRepository: Repository<Integration>,
+    private integrationsRepository: Repository<Integration>,
     @InjectRepository(Database)
-    private databaseRepository: Repository<Database>
+    private databaseRepository: Repository<Database>,
+    @InjectQueue('integrations') private readonly integrationsQueue: Queue
   ) {}
+
+  public integrationsMap: Record<
+    IntegrationType,
+    (integration: Integration) => Promise<void>
+  > = {
+    [IntegrationType.DATABASE]: async (integration) => {
+      const job = await this.integrationsQueue.add('db', { integration });
+      await job.finished();
+    },
+  };
 
   public async getAllIntegrations(user: Express.User) {
     const databases = await this.getAllDatabases(user);
@@ -37,7 +53,7 @@ export class IntegrationsService {
   public async getAllDatabases(user: Express.User) {
     const account = await this.accountsService.findOne(user);
 
-    const integrations = await this.integrationRepository.find({
+    const integrations = await this.integrationsRepository.find({
       where: { owner: { id: account.id }, type: IntegrationType.DATABASE },
       relations: ['database'],
     });
@@ -55,7 +71,7 @@ export class IntegrationsService {
   public async getOneDatabase(user: Express.User, id: string) {
     const account = await this.accountsService.findOne(user);
 
-    const integration = await this.integrationRepository.findOne({
+    const integration = await this.integrationsRepository.findOne({
       where: { id, owner: { id: account.id }, type: IntegrationType.DATABASE },
       relations: ['database'],
     });
@@ -97,13 +113,15 @@ export class IntegrationsService {
         databricksPath: databricksData.path,
         databricksToken: databricksData.token,
       });
-      await transactionManager.save(Integration, {
+      const integration = await transactionManager.save(Integration, {
         name,
         description,
         owner: account,
         type: IntegrationType.DATABASE,
         database,
       });
+
+      this.handleIntegration(integration);
     });
   }
 
@@ -113,7 +131,7 @@ export class IntegrationsService {
     id: string
   ) {
     const account = await this.accountsService.findOne(user);
-    const integration = await this.integrationRepository.findOne({
+    const integration = await this.integrationsRepository.findOne({
       where: {
         id,
         owner: { id: account.id },
@@ -163,7 +181,7 @@ export class IntegrationsService {
 
   public async pauseIntegration(user: Express.User, id: string) {
     const account = await this.accountsService.findOne(user);
-    const integration = await this.integrationRepository.findOne({
+    const integration = await this.integrationsRepository.findOne({
       where: {
         id,
         owner: { id: account.id },
@@ -176,7 +194,7 @@ export class IntegrationsService {
 
   public async resumeIntegration(user: Express.User, id: string) {
     const account = await this.accountsService.findOne(user);
-    const integration = await this.integrationRepository.findOne({
+    const integration = await this.integrationsRepository.findOne({
       where: {
         id,
         owner: { id: account.id },
@@ -189,7 +207,7 @@ export class IntegrationsService {
 
   public async deleteIntegration(user: Express.User, id: string) {
     const account = await this.accountsService.findOne(user);
-    const integration = await this.integrationRepository.findOne({
+    const integration = await this.integrationsRepository.findOne({
       where: {
         id,
         owner: { id: account.id },
@@ -205,8 +223,9 @@ export class IntegrationsService {
     switch (createDBDto.dbType) {
       case DBType.DATABRICKS:
         try {
-          const client = new DBSQLClient({});
-          await client.connect({
+          const client = await new DBSQLClient({
+            logger: console,
+          }).connect({
             token: createDBDto.databricksData.token || '',
             host: createDBDto.databricksData.host || '',
             path: createDBDto.databricksData.path || '',
@@ -224,7 +243,10 @@ export class IntegrationsService {
           const result = await queryOperation.fetchChunk({
             progress: false,
           });
+
           await queryOperation.close();
+          await session.close();
+          await client.close();
 
           return result;
         } catch (e) {
@@ -237,6 +259,20 @@ export class IntegrationsService {
         break;
       default:
         break;
+    }
+  }
+
+  public async handleIntegration(integration: Integration) {
+    try {
+      await this.integrationsMap[integration.type](integration);
+    } catch (e) {
+      if (e instanceof Error) {
+        await this.integrationsRepository.save({
+          id: integration.id,
+          status: IntegrationStatus.FAILED,
+          errorMessage: e.message,
+        });
+      }
     }
   }
 }

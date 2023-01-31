@@ -25,6 +25,9 @@ module.exports = defineConfig({
     TESTS_SMS_SID: process.env.TESTS_SMS_SID,
     TESTS_SMS_AUTH_TOKEN: process.env.TESTS_SMS_AUTH_TOKEN,
     TESTS_SMS_FROM: process.env.TESTS_SMS_FROM,
+    TESTS_DATABRICKS_HOST: process.env.TESTS_DATABRICKS_HOST,
+    TESTS_DATABRICKS_PATH: process.env.TESTS_DATABRICKS_PATH,
+    TESTS_DATABRICKS_TOKEN: process.env.TESTS_DATABRICKS_TOKEN,
   },
   port: 5111,
 });

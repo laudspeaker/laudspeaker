@@ -456,13 +456,21 @@ export class WorkflowsService {
   ): Promise<(string | number)[]> {
     let job, data;
     try {
-      this.logger.debug(`workflow.service.ts:WorkflowService.start: Account attempting to start workflow: ${JSON.stringify(account, null, 2)}`);
+      this.logger.debug(
+        `workflow.service.ts:WorkflowService.start: Account attempting to start workflow: ${JSON.stringify(
+          account,
+          null,
+          2
+        )}`
+      );
       job = await this.eventsQueue.add('start', {
         account: account,
         workflowID,
       });
     } catch (e) {
-      this.logger.error(`workflows.service.ts:WorkflowsService.start: Error adding to event queue: ${e}`);
+      this.logger.error(
+        `workflows.service.ts:WorkflowsService.start: Error adding to event queue: ${e}`
+      );
       if (e instanceof Error)
         throw new HttpException(e.message, HttpStatus.BAD_REQUEST);
     }
@@ -470,7 +478,9 @@ export class WorkflowsService {
       data = await job.finished();
       return data;
     } catch (e) {
-      this.logger.error(`workflows.service.ts:WorkflowsService.start: Error waiting for job to finish: ${e}`);
+      this.logger.error(
+        `workflows.service.ts:WorkflowsService.start: Error waiting for job to finish: ${e}`
+      );
       if (e instanceof Error)
         throw new HttpException(e.message, HttpStatus.BAD_REQUEST);
     }
@@ -559,7 +569,7 @@ export class WorkflowsService {
     //       });
     //       this.logger.debug('Started workflow ' + workflow?.id);
     //     }
-      // }
+    // }
 
     //   const segment = await queryRunner.manager.findOneBy(Segment, {
     //     id: workflow.segment.id,
@@ -579,7 +589,6 @@ export class WorkflowsService {
     // }
 
     // return Promise.resolve(jobIDs);
-
   }
 
   /**
