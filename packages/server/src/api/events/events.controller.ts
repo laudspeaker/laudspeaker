@@ -15,11 +15,11 @@ import {
 import { StatusJobDto } from './dto/status-event.dto';
 import { PosthogBatchEventDto } from './dto/posthog-batch-event.dto';
 import { EventDto } from './dto/event.dto';
+import { WorkflowTick } from '../workflows/interfaces/workflow-tick.interface';
 import { EventsService } from './events.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { JobTypes } from './interfaces/event.interface';
 import { ApiKeyAuthGuard } from '../auth/guards/apikey-auth.guard';
-import { Job } from 'bull';
 
 @Controller('events')
 export class EventsController {
@@ -52,7 +52,7 @@ export class EventsController {
   async getPostHogPayload(
     @Headers('Authorization') apiKey: string,
     @Body() body: PosthogBatchEventDto
-  ): Promise<Job<any> | HttpException> {
+  ): Promise<WorkflowTick[] | HttpException> {
     return this.eventsService.getPostHogPayload(apiKey, body);
   }
 
@@ -62,7 +62,7 @@ export class EventsController {
   async enginePayload(
     @Headers('Authorization') apiKey: string,
     @Body() body: EventDto
-  ): Promise<Job<any>  | HttpException> {
+  ): Promise<WorkflowTick[] | HttpException> {
     return this.eventsService.enginePayload(apiKey, body);
   }
 
