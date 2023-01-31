@@ -44,20 +44,20 @@ export interface PosthogEventDto {
 @Injectable()
 export class EventsProcessor {
   constructor(
-    // private dataSource: DataSource,
+    private dataSource: DataSource,
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
-    private readonly logger: LoggerService
-    // @InjectModel(Event.name)
-    // private EventModel: Model<EventDocument>,
-    // @Inject(AccountsService) private readonly userService: AccountsService,
-    // @Inject(WorkflowsService)
-    // private readonly workflowsService: WorkflowsService,
-    // @Inject(CustomersService)
-    // private readonly customersService: CustomersService,
-    // @Inject(AudiencesService) private audiencesService: AudiencesService,
-    // @InjectModel(PosthogEventType.name)
-    // private PosthogEventTypeModel: Model<PosthogEventTypeDocument>,
-    // @InjectConnection() private readonly connection: mongoose.Connection
+    private readonly logger: LoggerService,
+    @InjectModel(Event.name)
+    private EventModel: Model<EventDocument>,
+    @Inject(AccountsService) private readonly userService: AccountsService,
+    @Inject(WorkflowsService)
+    private readonly workflowsService: WorkflowsService,
+    @Inject(CustomersService)
+    private readonly customersService: CustomersService,
+    @Inject(AudiencesService) private audiencesService: AudiencesService,
+    @InjectModel(PosthogEventType.name)
+    private PosthogEventTypeModel: Model<PosthogEventTypeDocument>,
+    @InjectConnection() private readonly connection: mongoose.Connection
   ) {}
 
   @Process('start')
@@ -69,11 +69,11 @@ export class EventsProcessor {
     let customers: CustomerDocument[]; // Customers to add to primary audience
     let jobIDs: (string | number)[] = [];
 
-    // const transactionSession = await this.connection.startSession();
-    // await transactionSession.startTransaction();
-    // const queryRunner = await this.dataSource.createQueryRunner();
-    // await queryRunner.connect();
-    // await queryRunner.startTransaction();
+    const transactionSession = await this.connection.startSession();
+    await transactionSession.startTransaction();
+    const queryRunner = await this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
 
     try {
       // this.logger.debug(`events.processor.ts:EventsProcessort.processJourneyStart: Account ${accountId} of type ${typeof accountId}`);
@@ -81,90 +81,90 @@ export class EventsProcessor {
       //   id: accountId,
       // });
 
-      // if (!account) throw new HttpException('User not found', 404);
+      if (!account) throw new HttpException('User not found', 404);
 
-      // workflow = await queryRunner.manager.findOne(Workflow, {
-      //   where: {
-      //     owner: { id: account?.id },
-      //     id: workflowID,
-      //   },
-      //   relations: ['segment'],
-      // });
-      // if (!workflow) {
-      //   this.logger.debug('Workflow does not exist');
-      //   return Promise.reject(errors.ERROR_DOES_NOT_EXIST);
-      // }
+      workflow = await queryRunner.manager.findOne(Workflow, {
+        where: {
+          owner: { id: account?.id },
+          id: workflowID,
+        },
+        relations: ['segment'],
+      });
+      if (!workflow) {
+        this.logger.debug('Workflow does not exist');
+        return Promise.reject(errors.ERROR_DOES_NOT_EXIST);
+      }
 
-      // if (workflow.isActive) {
-      //   this.logger.debug('Workflow already active');
-      //   return Promise.reject(new Error('Workflow already active'));
-      // }
-      // if (workflow?.isStopped)
-      //   return Promise.reject(
-      //     new Error('The workflow has already been stopped')
-      //   );
-      // if (!workflow?.segment)
-      //   return Promise.reject(
-      //     new Error('To start workflow segment should be defined')
-      //   );
+      if (workflow.isActive) {
+        this.logger.debug('Workflow already active');
+        return Promise.reject(new Error('Workflow already active'));
+      }
+      if (workflow?.isStopped)
+        return Promise.reject(
+          new Error('The workflow has already been stopped')
+        );
+      if (!workflow?.segment)
+        return Promise.reject(
+          new Error('To start workflow segment should be defined')
+        );
 
-      // const audiences = await queryRunner.manager.findBy(Audience, {
-      //   workflow: { id: workflow.id },
-      // });
+      const audiences = await queryRunner.manager.findBy(Audience, {
+        workflow: { id: workflow.id },
+      });
 
-    //   for (let audience of audiences) {
-    //     audience = await this.audiencesService.freeze(
-    //       account,
-    //       audience.id,
-    //       queryRunner
-    //     );
-    //     this.logger.debug('Freezing audience ' + audience?.id);
+      for (let audience of audiences) {
+        audience = await this.audiencesService.freeze(
+          account,
+          audience.id,
+          queryRunner
+        );
+        this.logger.debug('Freezing audience ' + audience?.id);
 
-    //     if (audience.isPrimary) {
-    //       customers = await this.customersService.findByInclusionCriteria(
-    //         account,
-    //         workflow.segment.inclusionCriteria,
-    //         transactionSession
-    //       );
-    //       this.logger.debug(
-    //         'Customers to include in workflow: ' + customers.length
-    //       );
+        if (audience.isPrimary) {
+          customers = await this.customersService.findByInclusionCriteria(
+            account,
+            workflow.segment.inclusionCriteria,
+            transactionSession
+          );
+          this.logger.debug(
+            'Customers to include in workflow: ' + customers.length
+          );
 
-    //       jobIDs = await this.audiencesService.moveCustomers(
-    //         account,
-    //         null,
-    //         audience,
-    //         customers,
-    //         null,
-    //         queryRunner,
-    //         workflow.rules,
-    //         workflow.id
-    //       );
-    //       this.logger.debug('Finished moving customers into workflow');
+          jobIDs = await this.audiencesService.moveCustomers(
+            account,
+            null,
+            audience,
+            customers,
+            null,
+            queryRunner,
+            workflow.rules,
+            workflow.id
+          );
+          this.logger.debug('Finished moving customers into workflow');
 
-    //       await queryRunner.manager.save(Workflow, {
-    //         ...workflow,
-    //         isActive: true,
-    //       });
-    //       this.logger.debug('Started workflow ' + workflow?.id);
-    //     }
-    //   }
+          await queryRunner.manager.save(Workflow, {
+            ...workflow,
+            isActive: true,
+          });
+          this.logger.debug('Started workflow ' + workflow?.id);
+        }
+      }
 
-    //   const segment = await queryRunner.manager.findOneBy(Segment, {
-    //     id: workflow.segment.id,
-    //   });
-    //   await queryRunner.manager.save(Segment, { ...segment, isFreezed: true });
+      const segment = await queryRunner.manager.findOneBy(Segment, {
+        id: workflow.segment.id,
+      });
+      await queryRunner.manager.save(Segment, { ...segment, isFreezed: true });
 
-      // await transactionSession.commitTransaction();
-      // await queryRunner.commitTransaction();
+      await transactionSession.commitTransaction();
+      await queryRunner.commitTransaction();
     } catch (err) {
-      // await transactionSession.abortTransaction();
-      // await queryRunner.rollbackTransaction();
+      await transactionSession.abortTransaction();
+      await queryRunner.rollbackTransaction();
       this.logger.error('Error: ' + err);
       throw err;
     } finally {
-      // await transactionSession.endSession();
-      // await queryRunner.release();
+      await transactionSession.endSession();
+      await queryRunner.release();
     }
 
     return Promise.resolve(jobIDs);
@@ -175,56 +175,56 @@ export class EventsProcessor {
     const { apiKey, eventDto } = job.data;
     let account: Account, correlation: Correlation, jobIDs: WorkflowTick[];
 
-    // const transactionSession = await this.connection.startSession();
-    // transactionSession.startTransaction();
-    // const queryRunner = this.dataSource.createQueryRunner();
-    // await queryRunner.connect();
-    // await queryRunner.startTransaction();
+    const transactionSession = await this.connection.startSession();
+    transactionSession.startTransaction();
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
 
-    // try {
-    //   account = await this.userService.findOneByAPIKey(apiKey.substring(8));
-    //   if (!account) this.logger.error('Account not found');
-    //   this.logger.debug('Found Account: ' + account.id);
+    try {
+      account = await this.userService.findOneByAPIKey(apiKey.substring(8));
+      if (!account) this.logger.error('Account not found');
+      this.logger.debug('Found Account: ' + account.id);
 
-    //   correlation = await this.customersService.findOrCreateByCorrelationKVPair(
-    //     account,
-    //     eventDto,
-    //     transactionSession
-    //   );
-    //   this.logger.debug('Correlation result:' + correlation.cust);
+      correlation = await this.customersService.findOrCreateByCorrelationKVPair(
+        account,
+        eventDto,
+        transactionSession
+      );
+      this.logger.debug('Correlation result:' + correlation.cust);
 
-    //   if (!correlation.found)
-    //     await this.workflowsService.enrollCustomer(
-    //       account,
-    //       correlation.cust,
-    //       queryRunner
-    //     );
+      if (!correlation.found)
+        await this.workflowsService.enrollCustomer(
+          account,
+          correlation.cust,
+          queryRunner
+        );
 
-    //   jobIDs = await this.workflowsService.tick(
-    //     account,
-    //     eventDto,
-    //     queryRunner,
-    //     transactionSession
-    //   );
-    //   this.logger.debug('Queued messages with jobID ' + jobIDs);
-    //   if (eventDto) {
-    //     await this.EventModel.create({
-    //       ...eventDto,
-    //       createdAt: new Date().toUTCString(),
-    //     });
-    //   }
+      jobIDs = await this.workflowsService.tick(
+        account,
+        eventDto,
+        queryRunner,
+        transactionSession
+      );
+      this.logger.debug('Queued messages with jobID ' + jobIDs);
+      if (eventDto) {
+        await this.EventModel.create({
+          ...eventDto,
+          createdAt: new Date().toUTCString(),
+        });
+      }
 
-    //   await transactionSession.commitTransaction();
-    //   await queryRunner.commitTransaction();
-    // } catch (err) {
-    //   await transactionSession.abortTransaction();
-    //   await queryRunner.rollbackTransaction();
-    //   this.logger.error('Error: ' + err);
-    //   throw err;
-    // } finally {
-    //   await transactionSession.endSession();
-    //   await queryRunner.release();
-    // }
+      await transactionSession.commitTransaction();
+      await queryRunner.commitTransaction();
+    } catch (err) {
+      await transactionSession.abortTransaction();
+      await queryRunner.rollbackTransaction();
+      this.logger.error('Error: ' + err);
+      throw err;
+    } finally {
+      await transactionSession.endSession();
+      await queryRunner.release();
+    }
 
     console.log(jobIDs);
     return jobIDs;
@@ -233,121 +233,121 @@ export class EventsProcessor {
   @Process('posthog')
   async processPosthogEvent(job: Job<PosthogEventDto>) {
     const { apiKey, eventDto } = job.data;
-    // let account: Account, jobIds: WorkflowTick[]; // Account associated with the caller
-    // const transactionSession = await this.connection.startSession();
-    // transactionSession.startTransaction();
-    // const queryRunner = this.dataSource.createQueryRunner();
-    // await queryRunner.connect();
-    // await queryRunner.startTransaction();
+    let account: Account, jobIds: WorkflowTick[]; // Account associated with the caller
+    const transactionSession = await this.connection.startSession();
+    transactionSession.startTransaction();
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
 
-    // // Step 1: Find corresponding account
+    // Step 1: Find corresponding account
     let jobArray: WorkflowTick[] = []; // created jobId
-    // try {
-    //   account = await this.userService.findOneByAPIKey(apiKey.substring(8));
-    //   this.logger.debug('Found account: ' + account?.id);
+    try {
+      account = await this.userService.findOneByAPIKey(apiKey.substring(8));
+      this.logger.debug('Found account: ' + account?.id);
 
-    //   const chronologicalEvents: PostHogEventDto[] = eventDto.batch.sort(
-    //     (a, b) =>
-    //       new Date(a.originalTimestamp).getTime() -
-    //       new Date(b.originalTimestamp).getTime()
-    //   );
+      const chronologicalEvents: PostHogEventDto[] = eventDto.batch.sort(
+        (a, b) =>
+          new Date(a.originalTimestamp).getTime() -
+          new Date(b.originalTimestamp).getTime()
+      );
 
-    //   for (
-    //     let numEvent = 0;
-    //     numEvent < chronologicalEvents.length;
-    //     numEvent++
-    //   ) {
-    //     const currentEvent = chronologicalEvents[numEvent];
-    //     this.logger.debug(
-    //       'Processing posthog event: ' + JSON.stringify(currentEvent, null, 2)
-    //     );
+      for (
+        let numEvent = 0;
+        numEvent < chronologicalEvents.length;
+        numEvent++
+      ) {
+        const currentEvent = chronologicalEvents[numEvent];
+        this.logger.debug(
+          'Processing posthog event: ' + JSON.stringify(currentEvent, null, 2)
+        );
 
-    //     if (
-    //       currentEvent.type === 'track' &&
-    //       currentEvent.event &&
-    //       currentEvent.event !== 'clicked'
-    //     ) {
-    //       const found = await this.PosthogEventTypeModel.findOne({
-    //         name: currentEvent.event,
-    //       })
-    //         .session(transactionSession)
-    //         .exec();
-    //       if (!found) {
-    //         await this.PosthogEventTypeModel.create(
-    //           {
-    //             name: currentEvent.event,
-    //           },
-    //           { session: transactionSession }
-    //         );
-    //       }
-    //     }
+        if (
+          currentEvent.type === 'track' &&
+          currentEvent.event &&
+          currentEvent.event !== 'clicked'
+        ) {
+          const found = await this.PosthogEventTypeModel.findOne({
+            name: currentEvent.event,
+          })
+            .session(transactionSession)
+            .exec();
+          if (!found) {
+            await this.PosthogEventTypeModel.create(
+              {
+                name: currentEvent.event,
+              },
+              { session: transactionSession }
+            );
+          }
+        }
 
-    //     let jobIDs: WorkflowTick[] = [];
-    //     //Step 2: Create/Correlate customer for each eventTemplatesService.queueMessage
-    //     const postHogEventMapping = (event: any) => {
-    //       const cust = {};
-    //       if (event?.phPhoneNumber) {
-    //         cust['phPhoneNumber'] = event.phPhoneNumber;
-    //       }
-    //       if (event?.phEmail) {
-    //         cust['phEmail'] = event.phEmail;
-    //       }
-    //       if (event?.phCustom) {
-    //         cust['phCustom'] = event.phCustom;
-    //       }
-    //       return cust;
-    //     };
+        let jobIDs: WorkflowTick[] = [];
+        //Step 2: Create/Correlate customer for each eventTemplatesService.queueMessage
+        const postHogEventMapping = (event: any) => {
+          const cust = {};
+          if (event?.phPhoneNumber) {
+            cust['phPhoneNumber'] = event.phPhoneNumber;
+          }
+          if (event?.phEmail) {
+            cust['phEmail'] = event.phEmail;
+          }
+          if (event?.phCustom) {
+            cust['phCustom'] = event.phCustom;
+          }
+          return cust;
+        };
 
-    //     const correlation = await this.customersService.findBySpecifiedEvent(
-    //       account,
-    //       'posthogId',
-    //       currentEvent.userId,
-    //       currentEvent,
-    //       transactionSession,
-    //       postHogEventMapping
-    //     );
+        const correlation = await this.customersService.findBySpecifiedEvent(
+          account,
+          'posthogId',
+          currentEvent.userId,
+          currentEvent,
+          transactionSession,
+          postHogEventMapping
+        );
 
-    //     if (!correlation.found) {
-    //       await this.workflowsService.enrollCustomer(
-    //         account,
-    //         correlation.cust,
-    //         queryRunner
-    //       );
-    //     }
-    //     //need to change posthogeventdto to eventdo
-    //     const convertedEventDto: EventDto = {
-    //       correlationKey: 'posthogId',
-    //       correlationValue: currentEvent.userId,
-    //       event: currentEvent.context,
-    //       source: 'posthog',
-    //       payload: {
-    //         type: currentEvent.type,
-    //         event: currentEvent.event,
-    //       },
-    //     };
+        if (!correlation.found) {
+          await this.workflowsService.enrollCustomer(
+            account,
+            correlation.cust,
+            queryRunner
+          );
+        }
+        //need to change posthogeventdto to eventdo
+        const convertedEventDto: EventDto = {
+          correlationKey: 'posthogId',
+          correlationValue: currentEvent.userId,
+          event: currentEvent.context,
+          source: 'posthog',
+          payload: {
+            type: currentEvent.type,
+            event: currentEvent.event,
+          },
+        };
 
-    //     //currentEvent
-    //     jobIDs = await this.workflowsService.tick(
-    //       account,
-    //       convertedEventDto,
-    //       queryRunner,
-    //       transactionSession
-    //     );
-    //     this.logger.debug('Queued messages with jobIDs ' + jobIDs);
-    //     jobArray = [...jobArray, ...jobIDs];
-    //   }
+        //currentEvent
+        jobIDs = await this.workflowsService.tick(
+          account,
+          convertedEventDto,
+          queryRunner,
+          transactionSession
+        );
+        this.logger.debug('Queued messages with jobIDs ' + jobIDs);
+        jobArray = [...jobArray, ...jobIDs];
+      }
 
-    //   await transactionSession.commitTransaction();
-    //   await queryRunner.commitTransaction();
-    // } catch (e) {
-    //   await transactionSession.abortTransaction();
-    //   await queryRunner.rollbackTransaction();
-    //   this.logger.error('Error 340 processor: ' + e);
-    //   throw e;
-    // } finally {
-    //   await transactionSession.endSession();
-    //   await queryRunner.release();
-    // }
+      await transactionSession.commitTransaction();
+      await queryRunner.commitTransaction();
+    } catch (e) {
+      await transactionSession.abortTransaction();
+      await queryRunner.rollbackTransaction();
+      this.logger.error('Error 340 processor: ' + e);
+      throw e;
+    } finally {
+      await transactionSession.endSession();
+      await queryRunner.release();
+    }
 
     return jobArray;
   }

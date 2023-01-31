@@ -460,19 +460,20 @@ export class WorkflowsService {
         account: account,
         workflowID,
       });
+      return job;
     } catch (e) {
       this.logger.error(`workflows.service.ts:WorkflowsService.start: Error adding to event queue: ${e}`);
       if (e instanceof Error)
         throw new HttpException(e.message, HttpStatus.BAD_REQUEST);
     }
-    try {
-      data = await job.finished();
-      return data;
-    } catch (e) {
-      this.logger.error(`workflows.service.ts:WorkflowsService.start: Error waiting for job to finish: ${e}`);
-      if (e instanceof Error)
-        throw new HttpException(e.message, HttpStatus.BAD_REQUEST);
-    }
+    // try {
+    //   data = await job.finished();
+    //   return data;
+    // } catch (e) {
+    //   this.logger.error(`workflows.service.ts:WorkflowsService.start: Error waiting for job to finish: ${e}`);
+    //   if (e instanceof Error)
+    //     throw new HttpException(e.message, HttpStatus.BAD_REQUEST);
+    // }
 
   }
 
