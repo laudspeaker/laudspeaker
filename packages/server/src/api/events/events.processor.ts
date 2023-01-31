@@ -112,48 +112,48 @@ export class EventsProcessor {
         workflow: { id: workflow.id },
       });
 
-      for (let audience of audiences) {
-        audience = await this.audiencesService.freeze(
-          account,
-          audience.id,
-          queryRunner
-        );
-        this.logger.debug('Freezing audience ' + audience?.id);
+    //   for (let audience of audiences) {
+    //     audience = await this.audiencesService.freeze(
+    //       account,
+    //       audience.id,
+    //       queryRunner
+    //     );
+    //     this.logger.debug('Freezing audience ' + audience?.id);
 
-        if (audience.isPrimary) {
-          customers = await this.customersService.findByInclusionCriteria(
-            account,
-            workflow.segment.inclusionCriteria,
-            transactionSession
-          );
-          this.logger.debug(
-            'Customers to include in workflow: ' + customers.length
-          );
+    //     if (audience.isPrimary) {
+    //       customers = await this.customersService.findByInclusionCriteria(
+    //         account,
+    //         workflow.segment.inclusionCriteria,
+    //         transactionSession
+    //       );
+    //       this.logger.debug(
+    //         'Customers to include in workflow: ' + customers.length
+    //       );
 
-          jobIDs = await this.audiencesService.moveCustomers(
-            account,
-            null,
-            audience,
-            customers,
-            null,
-            queryRunner,
-            workflow.rules,
-            workflow.id
-          );
-          this.logger.debug('Finished moving customers into workflow');
+    //       jobIDs = await this.audiencesService.moveCustomers(
+    //         account,
+    //         null,
+    //         audience,
+    //         customers,
+    //         null,
+    //         queryRunner,
+    //         workflow.rules,
+    //         workflow.id
+    //       );
+    //       this.logger.debug('Finished moving customers into workflow');
 
-          await queryRunner.manager.save(Workflow, {
-            ...workflow,
-            isActive: true,
-          });
-          this.logger.debug('Started workflow ' + workflow?.id);
-        }
-      }
+    //       await queryRunner.manager.save(Workflow, {
+    //         ...workflow,
+    //         isActive: true,
+    //       });
+    //       this.logger.debug('Started workflow ' + workflow?.id);
+    //     }
+    //   }
 
-      const segment = await queryRunner.manager.findOneBy(Segment, {
-        id: workflow.segment.id,
-      });
-      await queryRunner.manager.save(Segment, { ...segment, isFreezed: true });
+    //   const segment = await queryRunner.manager.findOneBy(Segment, {
+    //     id: workflow.segment.id,
+    //   });
+    //   await queryRunner.manager.save(Segment, { ...segment, isFreezed: true });
 
       await transactionSession.commitTransaction();
       await queryRunner.commitTransaction();
