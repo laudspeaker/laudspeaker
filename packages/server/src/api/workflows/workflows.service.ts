@@ -70,7 +70,7 @@ export class WorkflowsService {
     @InjectQueue(JobTypes.events)
     private readonly eventsQueue: Queue,
     @InjectConnection() private readonly connection: mongoose.Connection
-  ) { }
+  ) {}
 
   /**
    * Finds all workflows
@@ -710,7 +710,7 @@ export class WorkflowsService {
                 (event.payload.type === PosthogTriggerParams.Track &&
                   event.payload.event === 'click' &&
                   trigger.providerParams ===
-                  PosthogTriggerParams.Autocapture) ||
+                    PosthogTriggerParams.Autocapture) ||
                 // for page
                 (event.payload.type === PosthogTriggerParams.Page &&
                   trigger.providerParams === PosthogTriggerParams.Page) ||
@@ -768,21 +768,22 @@ export class WorkflowsService {
                   if (conditions && conditions.length > 0) {
                     const compareResults = conditions.map((condition) => {
                       this.logger.debug(
-                        `Comparing: ${event?.event?.[condition.key] || ''} ${condition.comparisonType || ''
+                        `Comparing: ${event?.event?.[condition.key] || ''} ${
+                          condition.comparisonType || ''
                         } ${condition.value || ''}`
                       );
                       return ['exists', 'doesNotExist'].includes(
                         condition.comparisonType
                       )
                         ? operableCompare(
-                          event?.event?.[condition.key],
-                          condition.comparisonType
-                        )
+                            event?.event?.[condition.key],
+                            condition.comparisonType
+                          )
                         : conditionalCompare(
-                          event?.event?.[condition.key],
-                          condition.value,
-                          condition.comparisonType
-                        );
+                            event?.event?.[condition.key],
+                            condition.value,
+                            condition.comparisonType
+                          );
                     });
                     this.logger.debug(
                       'Compare result: ' + JSON.stringify(compareResults)
@@ -821,11 +822,11 @@ export class WorkflowsService {
                         );
                       this.logger.debug(
                         'Moving ' +
-                        customer?.id +
-                        ' out of ' +
-                        from?.id +
-                        ' and into ' +
-                        to?.id
+                          customer?.id +
+                          ' out of ' +
+                          from?.id +
+                          ' and into ' +
+                          to?.id
                       );
                       jobId.jobIds = jobIdArr;
                       jobId.templates = templates;
@@ -906,8 +907,8 @@ export class WorkflowsService {
               ...item,
               executionTime: new Date(
                 new Date().getTime() -
-                found.latestPause.getTime() +
-                item.executionTime.getTime()
+                  found.latestPause.getTime() +
+                  item.executionTime.getTime()
               ),
             }))
           );

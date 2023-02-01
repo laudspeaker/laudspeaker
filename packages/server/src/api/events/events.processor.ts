@@ -63,5 +63,5 @@ export class EventsProcessor {
     @InjectModel(PosthogEventType.name)
     private PosthogEventTypeModel: Model<PosthogEventTypeDocument>,
     @InjectConnection() private readonly connection: mongoose.Connection
-  ) { }
+  ) {}
 }

@@ -36,7 +36,6 @@ import {
 import { WorkflowTick } from '../workflows/interfaces/workflow-tick.interface';
 import { DataSource } from 'typeorm';
 
-
 @Injectable()
 export class EventsService {
   constructor(

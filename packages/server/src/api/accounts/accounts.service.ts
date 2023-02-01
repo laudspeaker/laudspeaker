@@ -26,7 +26,7 @@ export class AccountsService extends BaseJwtHelper {
   private sgClient = new Client();
 
   constructor(
-    private dataSource:DataSource,
+    private dataSource: DataSource,
     @InjectRepository(Account)
     public accountsRepository: Repository<Account>,
     @Inject(CustomersService) private customersService: CustomersService,

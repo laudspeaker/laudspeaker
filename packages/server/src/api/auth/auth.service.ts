@@ -25,7 +25,7 @@ export class AuthService {
     public readonly helper: AuthHelper,
     @Inject(CustomersService) private customersService: CustomersService,
     @InjectConnection() private readonly connection: mongoose.Connection
-  ) { }
+  ) {}
 
   public async register(body: RegisterDto) {
     const { firstName, lastName, email, password }: RegisterDto = body;
