@@ -16,7 +16,7 @@ export class SmsProcessor {
   constructor(
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
     private readonly logger: LoggerService
-  ) {}
+  ) { }
 
   @Process('send')
   async handleSend(
@@ -31,21 +31,28 @@ export class SmsProcessor {
       customerId: string;
     }>
   ) {
-    let textWithInsertedTags: string | undefined;
-
-    const { text, tags, audienceId, customerId, from, sid, to, token } =
-      job.data;
-
-    if (text) {
-      textWithInsertedTags = await this.tagEngine.parseAndRender(
-        text,
-        tags || {}
-      );
-    }
-
-    const twilioClient = twilio(sid, token);
-
     try {
+      this.logger.debug(
+        `Starting SMS sending from ${job?.data?.from} to ${JSON.stringify(job?.data?.to)}`
+      );
+      let textWithInsertedTags: string | undefined;
+
+      const { text, tags, audienceId, customerId, from, sid, to, token } =
+        job.data;
+
+      if (text) {
+        textWithInsertedTags = await this.tagEngine.parseAndRender(
+          text,
+          tags || {}
+        );
+      }
+
+      this.logger.debug(
+        `Finished rendering tags in SMS from ${job?.data?.from} to ${JSON.stringify(job?.data?.to)}`
+      );
+      const twilioClient = twilio(sid, token);
+
+
       const message = await twilioClient.messages.create({
         body: textWithInsertedTags?.slice(0, this.MAXIMUM_SMS_LENGTH),
         from,
