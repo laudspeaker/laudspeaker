@@ -169,7 +169,16 @@ const Integrations = () => {
                                         wrapperClass={`${
                                           statusStyles[item.status]
                                         } w-full`}
-                                        label={item.status}
+                                        label={
+                                          item.status ===
+                                          IntegrationStatus.FAILED ? (
+                                            <span className="cursor-help underline-offset-2 underline decoration-dashed">
+                                              {item.status} <b>ⓘ</b>
+                                            </span>
+                                          ) : (
+                                            item.status
+                                          )
+                                        }
                                       />
                                     </Tooltip>
                                   </td>

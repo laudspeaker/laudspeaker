@@ -1,5 +1,5 @@
 interface IChipProps {
-  label: string;
+  label: string | React.ReactNode;
   wrapperClass?: string;
   textClass?: string;
   onClick?: (ev: React.MouseEvent<HTMLElement>) => void;
