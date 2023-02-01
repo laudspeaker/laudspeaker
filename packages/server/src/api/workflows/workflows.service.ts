@@ -39,7 +39,6 @@ import {
   operableCompare,
 } from '../audiences/audiences.helper';
 import { Segment } from '../segments/entities/segment.entity';
-import { AppDataSource } from '@/data-source';
 import { Template } from '../templates/entities/template.entity';
 import { InjectQueue } from '@nestjs/bull';
 import { JobTypes } from '../events/interfaces/event.interface';
@@ -56,6 +55,7 @@ export class WorkflowsService {
   });
 
   constructor(
+    private dataSource: DataSource,
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
     private readonly logger: LoggerService,
     @InjectRepository(Workflow)
@@ -67,11 +67,10 @@ export class WorkflowsService {
     @Inject(CustomersService) private customersService: CustomersService,
     @InjectModel(EventKeys.name)
     private EventKeysModel: Model<EventKeysDocument>,
-    private dataSource: DataSource,
     @InjectQueue(JobTypes.events)
     private readonly eventsQueue: Queue,
     @InjectConnection() private readonly connection: mongoose.Connection
-  ) {}
+  ) { }
 
   /**
    * Finds all workflows
@@ -247,7 +246,7 @@ export class WorkflowsService {
   async update(
     account: Account,
     updateWorkflowDto: UpdateWorkflowDto,
-    queryRunner = AppDataSource.createQueryRunner()
+    queryRunner = this.dataSource.createQueryRunner()
   ): Promise<void> {
     const alreadyInsideTransaction = queryRunner.isTransactionActive;
     if (!alreadyInsideTransaction) {
@@ -378,7 +377,7 @@ export class WorkflowsService {
       relations: ['workflow', 'owner'],
     });
 
-    const queryRunner = AppDataSource.createQueryRunner();
+    const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
     try {
@@ -454,141 +453,104 @@ export class WorkflowsService {
     account: Account,
     workflowID: string
   ): Promise<(string | number)[]> {
-    let job, data;
+    let workflow: Workflow; // Workflow to update
+    let customers: CustomerDocument[]; // Customers to add to primary audience
+    let jobIDs: (string | number)[] = [];
+
+    const transactionSession = await this.connection.startSession();
+    await transactionSession.startTransaction();
+    const queryRunner = await this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
     try {
-      this.logger.debug(
-        `workflow.service.ts:WorkflowService.start: Account attempting to start workflow: ${JSON.stringify(
-          account,
-          null,
-          2
-        )}`
-      );
-      job = await this.eventsQueue.add('start', {
-        account: account,
-        workflowID,
+      if (!account) throw new HttpException('User not found', 404);
+
+      workflow = await queryRunner.manager.findOne(Workflow, {
+        where: {
+          owner: { id: account?.id },
+          id: workflowID,
+        },
+        relations: ['segment'],
       });
-    } catch (e) {
-      this.logger.error(
-        `workflows.service.ts:WorkflowsService.start: Error adding to event queue: ${e}`
-      );
-      if (e instanceof Error)
-        throw new HttpException(e.message, HttpStatus.BAD_REQUEST);
+      if (!workflow) {
+        this.logger.debug('Workflow does not exist');
+        return Promise.reject(errors.ERROR_DOES_NOT_EXIST);
+      }
+
+      if (workflow.isActive) {
+        this.logger.debug('Workflow already active');
+        return Promise.reject(new Error('Workflow already active'));
+      }
+      if (workflow?.isStopped)
+        return Promise.reject(
+          new Error('The workflow has already been stopped')
+        );
+      if (!workflow?.segment)
+        return Promise.reject(
+          new Error('To start workflow segment should be defined')
+        );
+
+      const audiences = await queryRunner.manager.findBy(Audience, {
+        workflow: { id: workflow.id },
+      });
+
+      for (let audience of audiences) {
+        audience = await this.audiencesService.freeze(
+          account,
+          audience.id,
+          queryRunner
+        );
+        this.logger.debug('Freezing audience ' + audience?.id);
+
+        if (audience.isPrimary) {
+          customers = await this.customersService.findByInclusionCriteria(
+            account,
+            workflow.segment.inclusionCriteria,
+            transactionSession
+          );
+          this.logger.debug(
+            'Customers to include in workflow: ' + customers.length
+          );
+
+          jobIDs = await this.audiencesService.moveCustomers(
+            account,
+            null,
+            audience,
+            customers,
+            null,
+            queryRunner,
+            workflow.rules,
+            workflow.id
+          );
+          this.logger.debug('Finished moving customers into workflow');
+
+          await queryRunner.manager.save(Workflow, {
+            ...workflow,
+            isActive: true,
+          });
+          this.logger.debug('Started workflow ' + workflow?.id);
+        }
+      }
+
+      const segment = await queryRunner.manager.findOneBy(Segment, {
+        id: workflow.segment.id,
+      });
+      await queryRunner.manager.save(Segment, { ...segment, isFreezed: true });
+
+      await transactionSession.commitTransaction();
+      await queryRunner.commitTransaction();
+    } catch (err) {
+      await transactionSession.abortTransaction();
+      await queryRunner.rollbackTransaction();
+      this.logger.error('Error: ' + err);
+      throw err;
+    } finally {
+      await transactionSession.endSession();
+      await queryRunner.release();
     }
-    try {
-      data = await job.finished();
-      return data;
-    } catch (e) {
-      this.logger.error(
-        `workflows.service.ts:WorkflowsService.start: Error waiting for job to finish: ${e}`
-      );
-      if (e instanceof Error)
-        throw new HttpException(e.message, HttpStatus.BAD_REQUEST);
-    }
 
-    // let workflow: Workflow; // Workflow to update
-    // let audience: Audience; // Audience to freeze/send messages to
-    // let customers: CustomerDocument[]; // Customers to add to primary audience
-    // let jobIDs: (string | number)[] = [];
-
-    // const transactionSession = await this.connection.startSession();
-    // await transactionSession.startTransaction();
-    // const queryRunner = await AppDataSource.createQueryRunner();
-    // await queryRunner.connect();
-    // await queryRunner.startTransaction();
-
-    // try {
-    //   // this.logger.debug(`events.processor.ts:EventsProcessort.processJourneyStart: Account ${accountId} of type ${typeof accountId}`);
-    //   // const account = await queryRunner.manager.findOneBy(Account, {
-    //   //   id: accountId,
-    //   // });
-
-    //   if (!account) throw new HttpException('User not found', 404);
-
-    //   workflow = await queryRunner.manager.findOne(Workflow, {
-    //     where: {
-    //       owner: { id: account?.id },
-    //       id: workflowID,
-    //     },
-    //     relations: ['segment'],
-    //   });
-    //   if (!workflow) {
-    //     this.logger.debug('Workflow does not exist');
-    //     return Promise.reject(errors.ERROR_DOES_NOT_EXIST);
-    //   }
-
-    //   if (workflow.isActive) {
-    //     this.logger.debug('Workflow already active');
-    //     return Promise.reject(new Error('Workflow already active'));
-    //   }
-    //   if (workflow?.isStopped)
-    //     return Promise.reject(
-    //       new Error('The workflow has already been stopped')
-    //     );
-    //   if (!workflow?.segment)
-    //     return Promise.reject(
-    //       new Error('To start workflow segment should be defined')
-    //     );
-
-    //   const audiences = await queryRunner.manager.findBy(Audience, {
-    //     workflow: { id: workflow.id },
-    //   });
-
-    //   for (let audience of audiences) {
-    //     audience = await this.audiencesService.freeze(
-    //       account,
-    //       audience.id,
-    //       queryRunner
-    //     );
-    //     this.logger.debug('Freezing audience ' + audience?.id);
-
-    //     if (audience.isPrimary) {
-    //       customers = await this.customersService.findByInclusionCriteria(
-    //         account,
-    //         workflow.segment.inclusionCriteria,
-    //         transactionSession
-    //       );
-    //       this.logger.debug(
-    //         'Customers to include in workflow: ' + customers.length
-    //       );
-
-    //       jobIDs = await this.audiencesService.moveCustomers(
-    //         account,
-    //         null,
-    //         audience,
-    //         customers,
-    //         null,
-    //         queryRunner,
-    //         workflow.rules,
-    //         workflow.id
-    //       );
-    //       this.logger.debug('Finished moving customers into workflow');
-
-    //       await queryRunner.manager.save(Workflow, {
-    //         ...workflow,
-    //         isActive: true,
-    //       });
-    //       this.logger.debug('Started workflow ' + workflow?.id);
-    //     }
-    // }
-
-    //   const segment = await queryRunner.manager.findOneBy(Segment, {
-    //     id: workflow.segment.id,
-    //   });
-    //   await queryRunner.manager.save(Segment, { ...segment, isFreezed: true });
-
-    //   await transactionSession.commitTransaction();
-    //   await queryRunner.commitTransaction();
-    // } catch (err) {
-    //   await transactionSession.abortTransaction();
-    //   await queryRunner.rollbackTransaction();
-    //   this.logger.error('Error: ' + err);
-    //   throw err;
-    // } finally {
-    //   await transactionSession.endSession();
-    //   await queryRunner.release();
-    // }
-
-    // return Promise.resolve(jobIDs);
+    return Promise.resolve(jobIDs);
   }
 
   /**
@@ -748,7 +710,7 @@ export class WorkflowsService {
                 (event.payload.type === PosthogTriggerParams.Track &&
                   event.payload.event === 'click' &&
                   trigger.providerParams ===
-                    PosthogTriggerParams.Autocapture) ||
+                  PosthogTriggerParams.Autocapture) ||
                 // for page
                 (event.payload.type === PosthogTriggerParams.Page &&
                   trigger.providerParams === PosthogTriggerParams.Page) ||
@@ -806,22 +768,21 @@ export class WorkflowsService {
                   if (conditions && conditions.length > 0) {
                     const compareResults = conditions.map((condition) => {
                       this.logger.debug(
-                        `Comparing: ${event?.event?.[condition.key] || ''} ${
-                          condition.comparisonType || ''
+                        `Comparing: ${event?.event?.[condition.key] || ''} ${condition.comparisonType || ''
                         } ${condition.value || ''}`
                       );
                       return ['exists', 'doesNotExist'].includes(
                         condition.comparisonType
                       )
                         ? operableCompare(
-                            event?.event?.[condition.key],
-                            condition.comparisonType
-                          )
+                          event?.event?.[condition.key],
+                          condition.comparisonType
+                        )
                         : conditionalCompare(
-                            event?.event?.[condition.key],
-                            condition.value,
-                            condition.comparisonType
-                          );
+                          event?.event?.[condition.key],
+                          condition.value,
+                          condition.comparisonType
+                        );
                     });
                     this.logger.debug(
                       'Compare result: ' + JSON.stringify(compareResults)
@@ -860,11 +821,11 @@ export class WorkflowsService {
                         );
                       this.logger.debug(
                         'Moving ' +
-                          customer?.id +
-                          ' out of ' +
-                          from?.id +
-                          ' and into ' +
-                          to?.id
+                        customer?.id +
+                        ' out of ' +
+                        from?.id +
+                        ' and into ' +
+                        to?.id
                       );
                       jobId.jobIds = jobIdArr;
                       jobId.templates = templates;
@@ -921,7 +882,7 @@ export class WorkflowsService {
     account: Account,
     id: string,
     value: boolean,
-    queryRunner = AppDataSource.createQueryRunner()
+    queryRunner = this.dataSource.createQueryRunner()
   ) {
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -945,8 +906,8 @@ export class WorkflowsService {
               ...item,
               executionTime: new Date(
                 new Date().getTime() -
-                  found.latestPause.getTime() +
-                  item.executionTime.getTime()
+                found.latestPause.getTime() +
+                item.executionTime.getTime()
               ),
             }))
           );
@@ -999,7 +960,7 @@ export class WorkflowsService {
   }
 
   async timeTick(job: Job) {
-    const queryRunner = AppDataSource.createQueryRunner();
+    const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
     try {
