@@ -50,7 +50,7 @@ export class SmsProcessor {
         body: textWithInsertedTags?.slice(0, this.MAXIMUM_SMS_LENGTH),
         from,
         to,
-        statusCallback: `${process.env.TWILLIO_WEBHOOK_ENDPOINT}?audienceId=${audienceId}&customerId=${customerId}`,
+        statusCallback: `${process.env.TWILIO_WEBHOOK_ENDPOINT}?audienceId=${audienceId}&customerId=${customerId}`,
       });
 
       this.logger.debug(
