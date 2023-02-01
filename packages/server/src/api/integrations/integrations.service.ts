@@ -1,6 +1,5 @@
 /* eslint-disable no-case-declarations */
 import { AppDataSource } from '@/data-source';
-import { DBSQLClient } from '@databricks/sql';
 import { InjectQueue } from '@nestjs/bull';
 import {
   BadRequestException,
@@ -21,6 +20,8 @@ import {
   IntegrationType,
 } from './entities/integration.entity';
 import handleDatabricks from './databricks.worker';
+import { Pool } from 'pg';
+import Cursor from 'pg-cursor';
 
 @Injectable()
 export class IntegrationsService {
@@ -102,7 +103,15 @@ export class IntegrationsService {
       query,
     } = dbProperties;
 
+    let integration: Integration;
     await AppDataSource.manager.transaction(async (transactionManager) => {
+      integration = await transactionManager.save(Integration, {
+        name,
+        description,
+        owner: account,
+        type: IntegrationType.DATABASE,
+      });
+
       const database = await transactionManager.save(Database, {
         connectionString,
         dbType,
@@ -113,17 +122,16 @@ export class IntegrationsService {
         databricksHost: databricksData.host,
         databricksPath: databricksData.path,
         databricksToken: databricksData.token,
-      });
-      const integration = await transactionManager.save(Integration, {
-        name,
-        description,
-        owner: account,
-        type: IntegrationType.DATABASE,
-        database,
+        integration,
       });
 
-      this.handleIntegration(integration);
+      integration = await transactionManager.save(Integration, {
+        ...integration,
+        database,
+      });
     });
+
+    this.handleIntegration(integration);
   }
 
   public async updateDatabase(
@@ -182,28 +190,28 @@ export class IntegrationsService {
 
   public async pauseIntegration(user: Express.User, id: string) {
     const account = await this.accountsService.findOne(user);
-    const integration = await this.integrationsRepository.findOne({
-      where: {
+    await this.integrationsRepository.update(
+      {
         id,
         owner: { id: account.id },
       },
-    });
-
-    integration.status = IntegrationStatus.PAUSED;
-    await integration.save();
+      {
+        status: IntegrationStatus.PAUSED,
+      }
+    );
   }
 
   public async resumeIntegration(user: Express.User, id: string) {
     const account = await this.accountsService.findOne(user);
-    const integration = await this.integrationsRepository.findOne({
-      where: {
+    await this.integrationsRepository.update(
+      {
         id,
         owner: { id: account.id },
       },
-    });
-
-    integration.status = IntegrationStatus.ACTIVE;
-    await integration.save();
+      {
+        status: IntegrationStatus.ACTIVE,
+      }
+    );
   }
 
   public async deleteIntegration(user: Express.User, id: string) {
@@ -244,9 +252,28 @@ export class IntegrationsService {
         }
 
       case DBType.POSTGRESQL:
-        break;
+        try {
+          const pool = new Pool({
+            connectionString: createDBDto.connectionString,
+          });
+          const pgClient = await pool.connect();
+          const cursor = pgClient.query(new Cursor(createDBDto.query));
+
+          const result = await cursor.read(10);
+
+          await cursor.close();
+          pgClient.release();
+          await pool.end();
+
+          return result;
+        } catch (e) {
+          throw new BadRequestException(
+            'Something wrong with connection to postgresql'
+          );
+        }
+
       default:
-        break;
+        throw new BadRequestException('Unknown db type');
     }
   }
 
@@ -254,13 +281,11 @@ export class IntegrationsService {
     try {
       await this.integrationsMap[integration.type](integration);
     } catch (e) {
-      if (e instanceof Error) {
-        await this.integrationsRepository.save({
-          id: integration.id,
-          status: IntegrationStatus.FAILED,
-          errorMessage: e.message,
-        });
-      }
+      await this.integrationsRepository.save({
+        id: integration.id,
+        status: IntegrationStatus.FAILED,
+        errorMessage: 'Error retrieving data for integration',
+      });
     }
   }
 }

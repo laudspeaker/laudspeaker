@@ -16,6 +16,8 @@ import {
 import { Model } from 'mongoose';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Pool } from 'pg';
+import Cursor from 'pg-cursor';
 
 const hourMs = 60 * 60 * 1000;
 const dayMs = 24 * hourMs;
@@ -30,6 +32,8 @@ const frequencyUnitToMsMap: Record<FrequencyUnit, number> = {
   [FrequencyUnit.MONTH]: monthMs,
   [FrequencyUnit.YEAR]: yearMs,
 };
+
+const BATCH_SiZE = 10_000_000;
 
 @Processor('integrations')
 export class IntegrationsProcessor {
@@ -48,7 +52,7 @@ export class IntegrationsProcessor {
       await handleDatabricks(database, owner);
     },
     [DBType.POSTGRESQL]: async (database, owner) => {
-      // TODO
+      await this.handlePostgreSQLSync(database, owner);
     },
   };
 
@@ -58,12 +62,12 @@ export class IntegrationsProcessor {
     if (!integration || !integration.database)
       throw new Error('Wrong integration was passed to job');
 
-    const { frequencyUnit, frequencyNumber, lastSync } = integration.database;
-    const syncTime =
-      new Date(lastSync).getTime() +
-      frequencyNumber * frequencyUnitToMsMap[frequencyUnit];
+    // const { frequencyUnit, frequencyNumber, lastSync } = integration.database;
+    // const syncTime =
+    //   new Date(lastSync).getTime() +
+    //   frequencyNumber * frequencyUnitToMsMap[frequencyUnit];
 
-    if (new Date(syncTime) > new Date()) return;
+    // if (new Date(syncTime) > new Date()) return;
 
     await this.databasesMap[integration.database.dbType](
       integration.database,
@@ -76,7 +80,45 @@ export class IntegrationsProcessor {
     });
   }
 
-  async handlePostgreSQLSync(database: Database) {
-    // TODO
+  async handlePostgreSQLSync(database: Database, owner: Account) {
+    const pool = new Pool({
+      connectionString: database.connectionString,
+    });
+    const pgClient = await pool.connect();
+    const cursor = pgClient.query(new Cursor(database.query));
+
+    let lastReadLength = Infinity;
+    while (lastReadLength !== 0) {
+      const customers = await cursor.read(BATCH_SiZE);
+
+      for (const customer of customers) {
+        if (!customer.id) continue;
+        const customerInDb = await this.customerModel
+          .findOne({ postgresqlId: customer.id, ownerId: owner.id })
+          .exec();
+
+        if (customerInDb) {
+          for (const key of Object.keys(customer)) {
+            if (key === 'id') continue;
+
+            customerInDb[key] = customer[key];
+          }
+          await customerInDb.save();
+        } else {
+          await this.customerModel.create({
+            ...customer,
+            ownerId: owner.id,
+            id: undefined,
+            postgresqlId: customer.id,
+          });
+        }
+      }
+
+      lastReadLength = customers.length;
+    }
+
+    await cursor.close();
+    pgClient.release();
+    await pool.end();
   }
 }

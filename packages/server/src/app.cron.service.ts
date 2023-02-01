@@ -28,7 +28,6 @@ import { InjectQueue } from '@nestjs/bull';
 import {
   Integration,
   IntegrationStatus,
-  IntegrationType,
 } from './api/integrations/entities/integration.entity';
 import { EventKeys } from './api/events/schemas/event-keys.schema';
 import { JobsService } from './api/jobs/jobs.service';
@@ -440,7 +439,7 @@ export class CronService {
     }
   }
 
-  @Cron(CronExpression.EVERY_HOUR)
+  @Cron(CronExpression.EVERY_10_SECONDS)
   async handleIntegrations() {
     const integrationsNumber = await this.integrationsRepository.countBy({
       status: IntegrationStatus.ACTIVE,

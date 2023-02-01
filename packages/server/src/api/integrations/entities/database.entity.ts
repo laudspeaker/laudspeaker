@@ -1,4 +1,12 @@
-import { BaseEntity, Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  BaseEntity,
+  Column,
+  Entity,
+  JoinColumn,
+  OneToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
+import { Integration } from './integration.entity';
 
 export enum FrequencyUnit {
   HOUR = 'hour',
@@ -52,4 +60,10 @@ export class Database extends BaseEntity {
 
   @Column({ nullable: true })
   databricksToken?: string;
+
+  @JoinColumn()
+  @OneToOne(() => Integration, (integration) => integration.id, {
+    onDelete: 'CASCADE',
+  })
+  integration: Integration;
 }

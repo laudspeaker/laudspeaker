@@ -1,7 +1,7 @@
 import { RadioGroup } from "@headlessui/react";
 import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
 import { Input } from "components/Elements";
-import React, { FC } from "react";
+import React, { ChangeEvent, FC, useEffect, useState } from "react";
 import { DatabaseStepProps } from "../Database";
 
 export enum DBType {
@@ -21,7 +21,7 @@ const memoryOptions: Record<
   postgresql: {
     id: DBType.POSTGRESQL,
     name: "PostgreSQL",
-    inStock: false,
+    inStock: true,
   },
   // mysql: { id: "mysql", name: "MySQL", inStock: false },
   // sqlServer: { id: "sqlServer", name: "SQL Server", inStock: false },
@@ -46,6 +46,62 @@ const DatabaseStep3: FC<DatabaseStepProps> = ({
 }) => {
   const dbType = formData.dbType;
   const mem = memoryOptions[dbType];
+
+  const [connectionData, setConnectionData] = useState({
+    host: "",
+    port: "",
+    username: "",
+    password: "",
+    database: "",
+  });
+  const [isFirstRender, setIsFirstRender] = useState(true);
+
+  useEffect(() => {
+    if (!isFirstRender)
+      setFormData({
+        ...formData,
+        connectionString: `${protocols[mem.id]}${connectionData.username}${
+          connectionData.password && connectionData.username
+            ? `:${connectionData.password}`
+            : ""
+        }${connectionData.username ? "@" : ""}${connectionData.host}${
+          connectionData.port ? `:${connectionData.port}` : ""
+        }${connectionData.database ? `/${connectionData.database}` : ""}`,
+      });
+  }, [connectionData]);
+
+  useEffect(() => {
+    const atParts = formData.connectionString.split("@", 2);
+
+    if (atParts.length === 2) {
+      const [username, password] = atParts[0]
+        .replace(protocols[mem.id], "")
+        .split(":", 2);
+      const [hostAndPort, database] = atParts[1].split("/", 2);
+      const [host, port] = hostAndPort.split(":", 2);
+
+      setConnectionData({ host, port, username, password, database });
+    } else {
+      const [hostAndPort, database] = formData.connectionString
+        .replace(protocols[mem.id], "")
+        .split("/", 2);
+      const [host, port] = hostAndPort.split(":", 2);
+
+      setConnectionData({
+        host,
+        port,
+        username: "",
+        password: "",
+        database: database || "",
+      });
+    }
+
+    setIsFirstRender(false);
+  }, []);
+
+  const handleConnectionData = (e: ChangeEvent<HTMLInputElement>) => {
+    setConnectionData({ ...connectionData, [e.target.name]: e.target.value });
+  };
 
   return (
     <div>
@@ -221,28 +277,11 @@ const DatabaseStep3: FC<DatabaseStepProps> = ({
             <div>
               <b>Connection string</b>
               <div className="relative">
-                <div className="pointer-events-none absolute inset-y-0 left-[0.75rem] flex items-center pr-3 z-[9999]">
-                  <span
-                    className="text-gray-500 sm:text-sm"
-                    id="price-currency"
-                  >
-                    {protocols[dbType]}
-                  </span>
-                </div>
                 <Input
-                  value={formData.connectionString.replace(
-                    protocols[dbType],
-                    ""
-                  )}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      connectionString: protocols[dbType] + e.target.value,
-                    })
-                  }
-                  className="pl-[120px]"
+                  value={formData.connectionString}
                   name="connectionString"
                   id="connectionString"
+                  disabled
                 />
               </div>
             </div>
@@ -255,6 +294,8 @@ const DatabaseStep3: FC<DatabaseStepProps> = ({
                   placeholder="host"
                   wrapperClasses="flex-[3]"
                   label="Host"
+                  value={connectionData.host}
+                  onChange={handleConnectionData}
                 />
                 <Input
                   id="port"
@@ -263,6 +304,8 @@ const DatabaseStep3: FC<DatabaseStepProps> = ({
                   placeholder="port"
                   wrapperClasses="flex-[1]"
                   label="Port"
+                  value={connectionData.port}
+                  onChange={handleConnectionData}
                 />
               </div>
               <Input
@@ -270,6 +313,8 @@ const DatabaseStep3: FC<DatabaseStepProps> = ({
                 name="username"
                 placeholder="username"
                 label="Username"
+                value={connectionData.username}
+                onChange={handleConnectionData}
               />
               <Input
                 id="password"
@@ -277,12 +322,16 @@ const DatabaseStep3: FC<DatabaseStepProps> = ({
                 name="password"
                 placeholder="password"
                 label="Password"
+                value={connectionData.password}
+                onChange={handleConnectionData}
               />
               <Input
                 id="database"
                 name="database"
                 placeholder="database"
                 label="Database"
+                value={connectionData.database}
+                onChange={handleConnectionData}
               />
             </div>
           </div>
