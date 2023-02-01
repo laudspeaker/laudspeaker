@@ -100,7 +100,10 @@ export class IntegrationsController {
   @Post('db/review')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
-  public async reviewDB(@Body() createDBDto: CreateDBDto) {
-    return this.integrationsService.reviewDB(createDBDto);
+  public async reviewDB(
+    @Req() { user }: Request,
+    @Body() createDBDto: CreateDBDto
+  ) {
+    return this.integrationsService.reviewDB(user, createDBDto);
   }
 }

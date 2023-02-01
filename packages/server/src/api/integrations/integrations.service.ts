@@ -20,6 +20,7 @@ import {
   IntegrationStatus,
   IntegrationType,
 } from './entities/integration.entity';
+import handleDatabricks from './databricks.worker';
 
 @Injectable()
 export class IntegrationsService {
@@ -219,35 +220,22 @@ export class IntegrationsService {
     await integration.remove();
   }
 
-  public async reviewDB(createDBDto: CreateDBDto) {
+  public async reviewDB(user: Express.User, createDBDto: CreateDBDto) {
+    const account = await this.accountsService.findOne(user);
     switch (createDBDto.dbType) {
       case DBType.DATABRICKS:
         try {
-          const client = await new DBSQLClient({
-            logger: console,
-          }).connect({
-            token: createDBDto.databricksData.token || '',
-            host: createDBDto.databricksData.host || '',
-            path: createDBDto.databricksData.path || '',
-          });
-          const session = await client.openSession();
-
-          const queryOperation = await session.executeStatement(
-            createDBDto.query,
+          const { host, path, token } = createDBDto.databricksData;
+          const result = await handleDatabricks(
             {
-              runAsync: true,
-              maxRows: 10,
-            }
+              databricksHost: host,
+              databricksPath: path,
+              databricksToken: token,
+              query: createDBDto.query,
+            },
+            account,
+            true
           );
-
-          const result = await queryOperation.fetchChunk({
-            progress: false,
-          });
-
-          await queryOperation.close();
-          await session.close();
-          await client.close();
-
           return result;
         } catch (e) {
           throw new BadRequestException(
