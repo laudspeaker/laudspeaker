@@ -439,7 +439,7 @@ export class CronService {
     }
   }
 
-  @Cron(CronExpression.EVERY_10_SECONDS)
+  @Cron(CronExpression.EVERY_HOUR)
   async handleIntegrations() {
     const integrationsNumber = await this.integrationsRepository.countBy({
       status: IntegrationStatus.ACTIVE,

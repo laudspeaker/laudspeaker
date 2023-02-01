@@ -62,12 +62,12 @@ export class IntegrationsProcessor {
     if (!integration || !integration.database)
       throw new Error('Wrong integration was passed to job');
 
-    // const { frequencyUnit, frequencyNumber, lastSync } = integration.database;
-    // const syncTime =
-    //   new Date(lastSync).getTime() +
-    //   frequencyNumber * frequencyUnitToMsMap[frequencyUnit];
+    const { frequencyUnit, frequencyNumber, lastSync } = integration.database;
+    const syncTime =
+      new Date(lastSync).getTime() +
+      frequencyNumber * frequencyUnitToMsMap[frequencyUnit];
 
-    // if (new Date(syncTime) > new Date()) return;
+    if (new Date(syncTime) > new Date()) return;
 
     await this.databasesMap[integration.database.dbType](
       integration.database,
