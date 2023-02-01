@@ -34,6 +34,7 @@ describe(
       cy.contains("Next").click();
       cy.contains("Next").click();
       cy.contains("Next").click();
+      cy.wait(5000);
       cy.contains("Save").click();
       cy.contains("dbName1")
         .parent("td")

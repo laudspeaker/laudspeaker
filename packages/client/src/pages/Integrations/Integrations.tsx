@@ -160,7 +160,8 @@ const Integrations = () => {
                                     <Tooltip
                                       title={
                                         item.status === IntegrationStatus.FAILED
-                                          ? item.errorMessage || ""
+                                          ? (item.errorMessage || "") +
+                                            " Please update integration settings."
                                           : ""
                                       }
                                     >

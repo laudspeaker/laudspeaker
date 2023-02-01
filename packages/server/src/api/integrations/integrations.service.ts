@@ -284,7 +284,7 @@ export class IntegrationsService {
       await this.integrationsRepository.save({
         id: integration.id,
         status: IntegrationStatus.FAILED,
-        errorMessage: 'Error retrieving data for integration',
+        errorMessage: 'Error retrieving data for integration.',
       });
     }
   }
