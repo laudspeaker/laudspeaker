@@ -1,5 +1,4 @@
 /* eslint-disable no-case-declarations */
-import { AppDataSource } from '@/data-source';
 import { InjectQueue } from '@nestjs/bull';
 import {
   BadRequestException,
@@ -9,7 +8,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Queue } from 'bull';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { AccountsService } from '../accounts/accounts.service';
 import { CreateDBDto } from './dto/create-db.dto';
 import { UpdateDBDto } from './dto/update-db.dto';
@@ -28,6 +27,7 @@ export class IntegrationsService {
   private readonly logger = new Logger(IntegrationsService.name);
 
   constructor(
+    private AppDataSource: DataSource,
     private accountsService: AccountsService,
     @InjectRepository(Integration)
     private integrationsRepository: Repository<Integration>,
@@ -104,7 +104,7 @@ export class IntegrationsService {
     } = dbProperties;
 
     let integration: Integration;
-    await AppDataSource.manager.transaction(async (transactionManager) => {
+    await this.AppDataSource.manager.transaction(async (transactionManager) => {
       integration = await transactionManager.save(Integration, {
         name,
         description,
@@ -162,7 +162,7 @@ export class IntegrationsService {
       query,
     } = dbProperties;
 
-    await AppDataSource.manager.transaction(async (transactionManager) => {
+    await this.AppDataSource.manager.transaction(async (transactionManager) => {
       await transactionManager.save(Database, {
         id: integration.database.id,
         connectionString,
