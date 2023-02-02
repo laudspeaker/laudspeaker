@@ -175,7 +175,12 @@ export class TemplatesService {
         //   customerId,
         // });
         try {
-          if (!customer.phPhoneNumber && !customer.phone) return;
+          if (!customer.phPhoneNumber && !customer.phone) {
+            this.logger.warn(
+              `Customer ${customer.id} has no phone number; skipping`
+            );
+            return;
+          }
           this.logger.debug(
             `Starting SMS sending from ${account?.smsFrom} to ${
               customer.phPhoneNumber || customer.phone
