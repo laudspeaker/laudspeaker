@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bull';
 import { SmsController } from './sms.controller';
-import { SmsProcessor } from './sms.processor';
 import { SmsService } from './sms.service';
 
 @Module({
@@ -11,7 +10,7 @@ import { SmsService } from './sms.service';
     }),
   ],
   controllers: [SmsController],
-  providers: [SmsService, SmsProcessor],
+  providers: [SmsService],
   exports: [SmsService],
 })
-export class SmsModule { }
+export class SmsModule {}

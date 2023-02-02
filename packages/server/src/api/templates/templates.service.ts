@@ -9,7 +9,6 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Account } from '../accounts/entities/accounts.entity';
-import { CustomersService } from '../customers/customers.service';
 import { CustomerDocument } from '../customers/schemas/customer.schema';
 import { CreateTemplateDto } from './dto/create-template.dto';
 import { UpdateTemplateDto } from './dto/update-template.dto';
@@ -20,19 +19,23 @@ import { Installation } from '../slack/entities/installation.entity';
 import { SlackService } from '../slack/slack.service';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { EventDto } from '../events/dto/event.dto';
+import { Liquid } from 'liquidjs';
+import twilio from 'twilio';
 
 @Injectable()
 export class TemplatesService {
+  private tagEngine = new Liquid();
+
+  private MAXIMUM_SMS_LENGTH = 1600;
+
   constructor(
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
     private readonly logger: LoggerService,
     @InjectRepository(Template)
     public templatesRepository: Repository<Template>,
-    @Inject(CustomersService) private customersService: CustomersService,
     @Inject(SlackService) private slackService: SlackService,
     @InjectQueue('email') private readonly emailQueue: Queue,
-    @InjectQueue('slack') private readonly slackQueue: Queue,
-    @InjectQueue('sms') private readonly smsQueue: Queue
+    @InjectQueue('slack') private readonly slackQueue: Queue
   ) {}
 
   create(account: Account, createTemplateDto: CreateTemplateDto) {
@@ -81,7 +84,8 @@ export class TemplatesService {
     const customerId = customer.id;
     let template: Template,
       job: Job<any>, // created jobId
-      installation: Installation;
+      installation: Installation,
+      message: any;
     try {
       template = await this.findOneById(account, templateId);
       this.logger.debug(
@@ -157,19 +161,59 @@ export class TemplatesService {
         });
         break;
       case 'sms':
-        job = await this.smsQueue.add('send', {
-          sid: account.smsAccountSid,
-          token: account.smsAuthToken,
-          from: account.smsFrom,
-          to: customer.phPhoneNumber || customer.phone,
-          tags,
-          text: template.smsText,
-          audienceId,
-          customerId,
-        });
+        // job = await this.smsQueue.add('send', {
+        //   sid: account.smsAccountSid,
+        //   token: account.smsAuthToken,
+        //   from: account.smsFrom,
+        //   to: customer.phPhoneNumber || customer.phone,
+        //   tags,
+        //   text: template.smsText,
+        //   audienceId,
+        //   customerId,
+        // });
+        try {
+          this.logger.debug(
+            `Starting SMS sending from ${account?.smsFrom} to ${
+              customer.phPhoneNumber || customer.phone
+            }`
+          );
+          let textWithInsertedTags: string | undefined;
+
+          if (template.smsText) {
+            textWithInsertedTags = await this.tagEngine.parseAndRender(
+              template.smsText,
+              tags || {}
+            );
+          }
+
+          this.logger.debug(
+            `Finished rendering tags in SMS from ${account?.smsFrom} to ${
+              customer.phPhoneNumber || customer.phone
+            }`
+          );
+          const twilioClient = twilio(
+            account.smsAccountSid,
+            account.smsAuthToken
+          );
+
+          message = await twilioClient.messages.create({
+            body: textWithInsertedTags?.slice(0, this.MAXIMUM_SMS_LENGTH),
+            from: account.smsFrom,
+            to: customer.phPhoneNumber || customer.phone,
+            statusCallback: `${process.env.TWILIO_WEBHOOK_ENDPOINT}?audienceId=${audienceId}&customerId=${customerId}`,
+          });
+
+          this.logger.debug(
+            `Sms with sid ${message.sid} status: ${JSON.stringify(
+              message.status
+            )}`
+          );
+        } catch (e) {
+          this.logger.error(e);
+        }
         break;
     }
-    return Promise.resolve(job.id);
+    return Promise.resolve(message ? message.sid : job.id);
   }
 
   async findAll(

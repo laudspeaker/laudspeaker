@@ -36,7 +36,6 @@ import {
 import { WorkflowTick } from '../workflows/interfaces/workflow-tick.interface';
 import { DataSource } from 'typeorm';
 
-
 @Injectable()
 export class EventsService {
   constructor(
@@ -50,7 +49,6 @@ export class EventsService {
     private readonly logger: LoggerService,
     @InjectQueue(JobTypes.email) private readonly emailQueue: Queue,
     @InjectQueue(JobTypes.slack) private readonly slackQueue: Queue,
-    @InjectQueue(JobTypes.sms) private readonly smsQueue: Queue,
     @InjectQueue(JobTypes.events)
     private readonly eventsQueue: Queue,
     @InjectModel(Event.name)
@@ -93,7 +91,6 @@ export class EventsService {
     const jobQueues = {
       [JobTypes.email]: this.emailQueue,
       [JobTypes.slack]: this.slackQueue,
-      [JobTypes.sms]: this.smsQueue,
       [JobTypes.events]: this.eventsQueue,
     };
 

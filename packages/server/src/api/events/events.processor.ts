@@ -1,5 +1,10 @@
 import { Process, Processor } from '@nestjs/bull';
-import { HttpException, Inject, Injectable, LoggerService } from '@nestjs/common';
+import {
+  HttpException,
+  Inject,
+  Injectable,
+  LoggerService,
+} from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { Job } from 'bull';
 import mongoose, { Model } from 'mongoose';
@@ -58,5 +63,5 @@ export class EventsProcessor {
     @InjectModel(PosthogEventType.name)
     private PosthogEventTypeModel: Model<PosthogEventTypeDocument>,
     @InjectConnection() private readonly connection: mongoose.Connection
-  ) { }
+  ) {}
 }

@@ -68,4 +68,4 @@ import { SlackModule } from '../slack/slack.module';
   providers: [WorkflowsService],
   exports: [WorkflowsService],
 })
-export class WorkflowsModule { }
+export class WorkflowsModule {}

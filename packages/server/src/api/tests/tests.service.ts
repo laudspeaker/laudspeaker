@@ -37,7 +37,7 @@ export class TestsService {
     private readonly authService: AuthService,
     @InjectModel(CustomerKeys.name)
     private CustomerKeysModel: Model<CustomerKeysDocument>
-  ) { }
+  ) {}
 
   async posthogsynctest(user: Express.User) {
     if (process.env.NODE_ENV !== 'development')

@@ -41,9 +41,6 @@ import { SlackModule } from '../slack/slack.module';
     BullModule.registerQueue({
       name: 'customers',
     }),
-    BullModule.registerQueue({
-      name: 'sms',
-    }),
     CustomersModule,
     SlackModule,
   ],
@@ -51,4 +48,4 @@ import { SlackModule } from '../slack/slack.module';
   controllers: [TemplatesController],
   exports: [TemplatesService],
 })
-export class TemplatesModule { }
+export class TemplatesModule {}

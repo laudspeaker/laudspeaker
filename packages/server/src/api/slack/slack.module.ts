@@ -38,4 +38,4 @@ import { CustomersModule } from '../customers/customers.module';
   providers: [SlackProcessor, SlackService],
   exports: [SlackService],
 })
-export class SlackModule { }
+export class SlackModule {}

@@ -40,4 +40,4 @@ import { CustomersModule } from '../customers/customers.module';
   providers: [AuthService, AuthHelper, JwtStrategy, ApiKeyStrategy],
   exports: [AuthService],
 })
-export class AuthModule { }
+export class AuthModule {}
