@@ -1,4 +1,4 @@
-import React, { ChangeEvent, MouseEvent, useState } from "react";
+import React, { ChangeEvent, FC, MouseEvent, useState } from "react";
 import { useDispatch } from "react-redux";
 import { signUpUser, ISignUpForm } from "../../reducers/auth";
 import { useNavigate } from "react-router-dom";
@@ -12,7 +12,11 @@ import githubIcon from "../../assets/images/github.svg";
 import googleIcon from "../../assets/images/google.svg";
 import gitlabIcon from "../../assets/images/gitlab.svg";
 
-const Signup = () => {
+export interface SignupProps {
+  setShowWelcomeBanner: (value: boolean) => void;
+}
+
+const Signup: FC<SignupProps> = ({ setShowWelcomeBanner }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -69,6 +73,7 @@ const Signup = () => {
           theme: "colored",
         }
       );
+      setShowWelcomeBanner(true);
       navigate("/home");
     }
 

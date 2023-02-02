@@ -7,7 +7,11 @@ import ApiService from "services/api.service";
 import Input from "../../components/Elements/Input";
 import Select from "../../components/Elements/Select";
 import { useTypedSelector } from "hooks/useTypeSelector";
-import { setDomainsList, setSettingsPrivateApiKey } from "reducers/settings";
+import {
+  setDomainsList,
+  setSettingsPrivateApiKey,
+  startPosthogImport,
+} from "reducers/settings";
 import { useDispatch } from "react-redux";
 import { useState } from "react";
 import CSS from "csstype";
@@ -17,6 +21,8 @@ import { GenericButton } from "components/Elements";
 import ExclamationTriangleIcon from "@heroicons/react/24/solid/ExclamationTriangleIcon";
 import { Link } from "react-router-dom";
 import { AxiosError } from "axios";
+import { CheckIcon } from "@heroicons/react/24/solid";
+import { useNavigate } from "react-router-dom";
 
 export const allEmailChannels = [
   {
@@ -119,6 +125,7 @@ interface IntegrationsData {
 }
 
 export default function OnboardingBeta() {
+  const navigate = useNavigate();
   const { settings, domainsList } = useTypedSelector((state) => state.settings);
   const [integrationsData, setIntegrationsData] = useState<IntegrationsData>({
     sendingName: "",
@@ -153,6 +160,9 @@ export default function OnboardingBeta() {
   const [verified, setVerified] = useState(false);
 
   const [isLoading, setIsLoading] = useState(false);
+
+  const [currentStep, setCurrentStep] = useState(0);
+  const [isNextItemAvailable, setIsNextItemAvailable] = useState(false);
 
   const callDomains = async () => {
     if (privateApiKey) {
@@ -215,6 +225,7 @@ export default function OnboardingBeta() {
       setPrivateApiKey(mailgunAPIKey);
       setDomainName(sendingDomain);
       setVerified(verifiedFromRequest);
+      setIsNextItemAvailable(!!emailProvider);
     })();
   }, []);
 
@@ -337,6 +348,7 @@ export default function OnboardingBeta() {
           mailgunAPIKey: privateApiKey,
         },
       });
+      setIsNextItemAvailable(true);
     } catch (e) {
       let message = "Unexpected error";
       if (e instanceof AxiosError) message = e.response?.data?.message;
@@ -705,6 +717,300 @@ export default function OnboardingBeta() {
     }
   }, [integrationsData]);
 
+  const handleSync = async () => {
+    setIsLoading(true);
+    try {
+      await ApiService.patch({
+        url: "/accounts",
+        options: {
+          posthogApiKey: integrationsData.posthogApiKey || "",
+          posthogProjectId: integrationsData.posthogProjectId || "",
+          posthogHostUrl: integrationsData.posthogHostUrl || "",
+        },
+      });
+      await startPosthogImport();
+      navigate("/");
+    } catch (e) {
+      toast.error("Error while import");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const steps = [
+    {
+      label: "01",
+      name: "Add channels",
+      href: "#",
+      component: (
+        <>
+          <div className="md:grid md:grid-cols-3 md:gap-6">
+            <div className="md:col-span-1 p-5">
+              <div className="px-4 sm:px-0">
+                <h3 className="text-lg font-medium leading-6 text-gray-900">
+                  Email
+                </h3>
+                <p className="mt-1 text-sm text-gray-600">
+                  Add an email sending service to automatically send emails to
+                  your customers.
+                </p>
+              </div>
+            </div>
+            <div className="mt-5 md:col-span-2 pd-5">
+              <form action="#" method="POST">
+                <div className="overflow-visible shadow sm:rounded-md">
+                  <div className="space-y-6 bg-white px-4 py-5 sm:p-6">
+                    <h2>Email configuration</h2>
+                    <Select
+                      id="email_config_select"
+                      options={allEmailChannels.map((item) => ({
+                        value: item.id,
+                        title: item.title,
+                        disabled:
+                          item.id === "free3" && !verified
+                            ? true
+                            : item.disabled,
+                        tooltip:
+                          item.id === "free3" && !verified
+                            ? "You need to verify your email"
+                            : item.tooltip,
+                      }))}
+                      placeholder="select your email sending service"
+                      value={integrationsData.emailProvider}
+                      onChange={(value: string) => {
+                        setIntegrationsData({
+                          ...integrationsData,
+                          emailProvider: value,
+                        });
+                        setErrors({});
+                      }}
+                    />
+
+                    {integrationsData.emailProvider && (
+                      <>
+                        <h3 className="flex items-center text-[18px] font-semibold leading-[40px] mb-[10px]">
+                          {integrationsData.emailProvider
+                            .charAt(0)
+                            .toUpperCase() +
+                            integrationsData.emailProvider.slice(1)}{" "}
+                          Configuration
+                        </h3>
+                        {parametersToConfigure[integrationsData.emailProvider]}
+                      </>
+                    )}
+                  </div>
+                  <div className="bg-gray-50 px-4 py-3 text-right sm:px-6">
+                    <GenericButton
+                      id="saveEmailConfiguration"
+                      onClick={handleSubmit}
+                      customClasses="inline-flex justify-center rounded-md border border-transparent bg-cyan-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2"
+                      disabled={isError || isLoading}
+                    >
+                      Save
+                    </GenericButton>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+          <div className="hidden sm:block" aria-hidden="true">
+            <div className="py-5">
+              <div className="border-t border-gray-200" />
+            </div>
+          </div>
+          <div className="md:grid md:grid-cols-3 md:gap-6">
+            <div className="md:col-span-1 p-5">
+              <div className="px-4 sm:px-0">
+                <h3 className="text-lg font-medium leading-6 text-gray-900">
+                  Slack
+                </h3>
+                <p className="mt-1 text-sm text-gray-600">
+                  Install the Laudspeaker Slack App to automatically send
+                  triggered Slack messages to your customers.
+                </p>
+              </div>
+            </div>
+            <div className="mt-5 md:col-span-2 pd-5">
+              <form action="#" method="POST">
+                <div className="shadow sm:overflow-hidden sm:rounded-md">
+                  <div className="space-y-6 bg-white px-4 py-5 sm:p-6">
+                    <h2>Slack configuration</h2>
+                    <a
+                      href={slackInstallUrl}
+                      target="_blank"
+                      rel="noreferrer noopener"
+                    >
+                      <img
+                        alt="add to slack"
+                        src="https://platform.slack-edge.com/img/add_to_slack.png"
+                        srcSet="https://platform.slack-edge.com/img/add_to_slack.png 1x, https://platform.slack-edge.com/img/add_to_slack@2x.png 2x"
+                        width="139"
+                        height="40"
+                      />
+                    </a>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+          <div className="hidden sm:block" aria-hidden="true">
+            <div className="py-5">
+              <div className="border-t border-gray-200" />
+            </div>
+          </div>
+        </>
+      ),
+    },
+    {
+      label: "02",
+      name: "Add events",
+      href: "#",
+      component: (
+        <>
+          <div className="md:grid md:grid-cols-3 md:gap-6">
+            <div className="md:col-span-1 p-5">
+              <div className="px-4 sm:px-0">
+                <h3 className="text-lg font-medium leading-6 text-gray-900">
+                  Events
+                </h3>
+                <p className="mt-1 text-sm text-gray-600">
+                  Configure your event provider to send event data to
+                  Laudspeaker so you can send triggered messages.
+                </p>
+              </div>
+            </div>
+            <div className="mt-5 md:col-span-2 pd-5">
+              <form action="#" method="POST">
+                <div className="shadow sm:rounded-md">
+                  <div className="space-y-6 bg-white px-4 py-5 sm:p-6">
+                    <h2>Events configuration</h2>
+                    <Select
+                      id="events_config_select"
+                      options={allEventChannels.map((item) => ({
+                        value: item.id,
+                        title: item.title,
+                        disabled: item.disabled,
+                      }))}
+                      value={integrationsData.eventProvider}
+                      onChange={(value: string) =>
+                        setIntegrationsData({
+                          ...integrationsData,
+                          eventProvider: value,
+                        })
+                      }
+                    />
+                    {integrationsData.eventProvider && (
+                      <>
+                        <h3 className="flex items-center text-[18px] font-semibold leading-[40px] mb-[10px]">
+                          {integrationsData.eventProvider
+                            .charAt(0)
+                            .toUpperCase() +
+                            integrationsData.eventProvider.slice(1)}{" "}
+                          Configuration
+                        </h3>
+                        {parametersToConfigure[integrationsData.eventProvider]}
+                      </>
+                    )}
+                  </div>
+                </div>
+              </form>
+              <div className="bg-gray-50 px-4 py-3 text-right sm:px-6">
+                <button
+                  type="button"
+                  onClick={handleSubmit}
+                  disabled={isLoading}
+                  className="inline-flex justify-center rounded-md border border-transparent bg-cyan-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2"
+                >
+                  Save
+                </button>
+              </div>
+            </div>
+          </div>
+        </>
+      ),
+    },
+    {
+      label: "03",
+      name: "Add customers (optional)",
+      href: "#",
+      component: (
+        <>
+          <div className="md:grid md:grid-cols-3 md:gap-6">
+            <div className="md:col-span-1 p-5">
+              <div className="px-4 sm:px-0">
+                <h3 className="text-lg font-medium leading-6 text-gray-900">
+                  Events
+                </h3>
+                <p className="mt-1 text-sm text-gray-600">
+                  Configure your event provider to send event data to
+                  Laudspeaker so you can send triggered messages.
+                </p>
+              </div>
+            </div>
+            <div className="mt-5 md:col-span-2 pd-5">
+              <form action="#" method="POST">
+                <div className="shadow sm:rounded-md">
+                  <div className="space-y-6 bg-white px-4 py-5 sm:p-6">
+                    <h2>Events configuration</h2>
+                    <Select
+                      id="events_config_select"
+                      options={allEventChannels.map((item) => ({
+                        value: item.id,
+                        title: item.title,
+                        disabled: item.disabled,
+                      }))}
+                      value={integrationsData.eventProvider}
+                      onChange={(value: string) =>
+                        setIntegrationsData({
+                          ...integrationsData,
+                          eventProvider: value,
+                        })
+                      }
+                    />
+                    {integrationsData.eventProvider && (
+                      <>
+                        <h3 className="flex items-center text-[18px] font-semibold leading-[40px] mb-[10px]">
+                          {integrationsData.eventProvider
+                            .charAt(0)
+                            .toUpperCase() +
+                            integrationsData.eventProvider.slice(1)}{" "}
+                          Configuration
+                        </h3>
+                        {parametersToConfigure[integrationsData.eventProvider]}
+                      </>
+                    )}
+                  </div>
+                </div>
+              </form>
+              <div className="flex justify-end items-center gap-[10px] bg-gray-50 px-4 py-3 text-right sm:px-6">
+                <GenericButton
+                  customClasses="grayscale"
+                  onClick={() => navigate("/")}
+                >
+                  Skip
+                </GenericButton>
+                <button
+                  type="button"
+                  onClick={() =>
+                    toast.promise(handleSync, {
+                      pending: { render: "Sync in progress!", type: "info" },
+                      success: { render: "Sync success!", type: "success" },
+                      error: { render: "Sync failed!", type: "error" },
+                    })
+                  }
+                  disabled={isError || isLoading}
+                  className="inline-flex justify-center rounded-md border border-transparent bg-cyan-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2"
+                >
+                  Sync
+                </button>
+              </div>
+            </div>
+          </div>
+        </>
+      ),
+    },
+  ];
+
   return (
     <>
       <div className="min-h-full">
@@ -728,6 +1034,91 @@ export default function OnboardingBeta() {
               </div>
             </div>
           )}
+          {/* Navigation */}
+          <nav aria-label="Progress">
+            <ol
+              role="list"
+              className="divide-y divide-gray-300 rounded-md border border-gray-300 md:flex md:divide-y-0"
+            >
+              {steps.map((step, stepIdx) => (
+                <li key={step.name} className="relative md:flex md:flex-1">
+                  {stepIdx < currentStep ? (
+                    <a
+                      href={step.href}
+                      className="group flex w-full items-center"
+                    >
+                      <span className="flex items-center px-6 py-4 text-sm font-medium">
+                        <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-indigo-600 group-hover:bg-indigo-800">
+                          <CheckIcon
+                            className="h-6 w-6 text-white"
+                            aria-hidden="true"
+                          />
+                        </span>
+                        <span className="ml-4 text-sm font-medium text-gray-900">
+                          {step.name}
+                        </span>
+                      </span>
+                    </a>
+                  ) : stepIdx === currentStep ||
+                    (isNextItemAvailable && stepIdx === currentStep + 1) ? (
+                    <a
+                      href="#"
+                      onClick={() => {
+                        setCurrentStep(stepIdx);
+                        setIsNextItemAvailable(false);
+                      }}
+                      className="flex items-center px-6 py-4 text-sm font-medium"
+                      aria-current="step"
+                    >
+                      <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border-2 border-indigo-600">
+                        <span className="text-indigo-600">{step.label}</span>
+                      </span>
+                      <span className="ml-4 text-sm font-medium text-indigo-600">
+                        {step.name}
+                      </span>
+                    </a>
+                  ) : (
+                    <a href={step.href} className="group flex items-center">
+                      <span className="flex items-center px-6 py-4 text-sm font-medium">
+                        <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border-2 border-gray-300 group-hover:border-gray-400">
+                          <span className="text-gray-500 group-hover:text-gray-900">
+                            {step.label}
+                          </span>
+                        </span>
+                        <span className="ml-4 text-sm font-medium text-gray-500 group-hover:text-gray-900">
+                          {step.name}
+                        </span>
+                      </span>
+                    </a>
+                  )}
+
+                  {stepIdx !== steps.length - 1 ? (
+                    <>
+                      {/* Arrow separator for lg screens and up */}
+                      <div
+                        className="absolute top-0 right-0 hidden h-full w-5 md:block"
+                        aria-hidden="true"
+                      >
+                        <svg
+                          className="h-full w-full text-gray-300"
+                          viewBox="0 0 22 80"
+                          fill="none"
+                          preserveAspectRatio="none"
+                        >
+                          <path
+                            d="M0 -2L20 40L0 82"
+                            vectorEffect="non-scaling-stroke"
+                            stroke="currentcolor"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      </div>
+                    </>
+                  ) : null}
+                </li>
+              ))}
+            </ol>
+          </nav>
           <main className="flex-1 pb-8">
             <div className="grid place-items-center pt-6">
               <button
@@ -759,187 +1150,7 @@ export default function OnboardingBeta() {
             </div>
             <div className="relative mx-auto max-w-4xl md:px-8 xl:px-0">
               <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8"></div>
-              <div className="md:grid md:grid-cols-3 md:gap-6">
-                <div className="md:col-span-1 p-5">
-                  <div className="px-4 sm:px-0">
-                    <h3 className="text-lg font-medium leading-6 text-gray-900">
-                      Email
-                    </h3>
-                    <p className="mt-1 text-sm text-gray-600">
-                      Add an email sending service to automatically send emails
-                      to your customers.
-                    </p>
-                  </div>
-                </div>
-                <div className="mt-5 md:col-span-2 pd-5">
-                  <form action="#" method="POST">
-                    <div className="overflow-visible shadow sm:rounded-md">
-                      <div className="space-y-6 bg-white px-4 py-5 sm:p-6">
-                        <h2>Email configuration</h2>
-                        <Select
-                          id="email_config_select"
-                          options={allEmailChannels.map((item) => ({
-                            value: item.id,
-                            title: item.title,
-                            disabled:
-                              item.id === "free3" && !verified
-                                ? true
-                                : item.disabled,
-                            tooltip:
-                              item.id === "free3" && !verified
-                                ? "You need to verify your email"
-                                : item.tooltip,
-                          }))}
-                          placeholder="select your email sending service"
-                          value={integrationsData.emailProvider}
-                          onChange={(value: string) => {
-                            setIntegrationsData({
-                              ...integrationsData,
-                              emailProvider: value,
-                            });
-                            setErrors({});
-                          }}
-                        />
-
-                        {integrationsData.emailProvider && (
-                          <>
-                            <h3 className="flex items-center text-[18px] font-semibold leading-[40px] mb-[10px]">
-                              {integrationsData.emailProvider
-                                .charAt(0)
-                                .toUpperCase() +
-                                integrationsData.emailProvider.slice(1)}{" "}
-                              Configuration
-                            </h3>
-                            {
-                              parametersToConfigure[
-                                integrationsData.emailProvider
-                              ]
-                            }
-                          </>
-                        )}
-                      </div>
-                      <div className="bg-gray-50 px-4 py-3 text-right sm:px-6">
-                        <GenericButton
-                          id="saveEmailConfiguration"
-                          onClick={handleSubmit}
-                          customClasses="inline-flex justify-center rounded-md border border-transparent bg-cyan-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2"
-                          disabled={isError || isLoading}
-                        >
-                          Save
-                        </GenericButton>
-                      </div>
-                    </div>
-                  </form>
-                </div>
-              </div>
-              <div className="hidden sm:block" aria-hidden="true">
-                <div className="py-5">
-                  <div className="border-t border-gray-200" />
-                </div>
-              </div>
-              <div className="md:grid md:grid-cols-3 md:gap-6">
-                <div className="md:col-span-1 p-5">
-                  <div className="px-4 sm:px-0">
-                    <h3 className="text-lg font-medium leading-6 text-gray-900">
-                      Slack
-                    </h3>
-                    <p className="mt-1 text-sm text-gray-600">
-                      Install the Laudspeaker Slack App to automatically send
-                      triggered Slack messages to your customers.
-                    </p>
-                  </div>
-                </div>
-                <div className="mt-5 md:col-span-2 pd-5">
-                  <form action="#" method="POST">
-                    <div className="shadow sm:overflow-hidden sm:rounded-md">
-                      <div className="space-y-6 bg-white px-4 py-5 sm:p-6">
-                        <h2>Slack configuration</h2>
-                        <a
-                          href={slackInstallUrl}
-                          target="_blank"
-                          rel="noreferrer noopener"
-                        >
-                          <img
-                            alt="add to slack"
-                            src="https://platform.slack-edge.com/img/add_to_slack.png"
-                            srcSet="https://platform.slack-edge.com/img/add_to_slack.png 1x, https://platform.slack-edge.com/img/add_to_slack@2x.png 2x"
-                            width="139"
-                            height="40"
-                          />
-                        </a>
-                      </div>
-                    </div>
-                  </form>
-                </div>
-              </div>
-              <div className="hidden sm:block" aria-hidden="true">
-                <div className="py-5">
-                  <div className="border-t border-gray-200" />
-                </div>
-              </div>
-              <div className="md:grid md:grid-cols-3 md:gap-6">
-                <div className="md:col-span-1 p-5">
-                  <div className="px-4 sm:px-0">
-                    <h3 className="text-lg font-medium leading-6 text-gray-900">
-                      Events
-                    </h3>
-                    <p className="mt-1 text-sm text-gray-600">
-                      Configure your event provider to send event data to
-                      Laudspeaker so you can send triggered messages.
-                    </p>
-                  </div>
-                </div>
-                <div className="mt-5 md:col-span-2 pd-5">
-                  <form action="#" method="POST">
-                    <div className="shadow sm:rounded-md">
-                      <div className="space-y-6 bg-white px-4 py-5 sm:p-6">
-                        <h2>Events configuration</h2>
-                        <Select
-                          id="events_config_select"
-                          options={allEventChannels.map((item) => ({
-                            value: item.id,
-                            title: item.title,
-                            disabled: item.disabled,
-                          }))}
-                          value={integrationsData.eventProvider}
-                          onChange={(value: string) =>
-                            setIntegrationsData({
-                              ...integrationsData,
-                              eventProvider: value,
-                            })
-                          }
-                        />
-                        {integrationsData.eventProvider && (
-                          <>
-                            <h3 className="flex items-center text-[18px] font-semibold leading-[40px] mb-[10px]">
-                              {integrationsData.eventProvider
-                                .charAt(0)
-                                .toUpperCase() +
-                                integrationsData.eventProvider.slice(1)}{" "}
-                              Configuration
-                            </h3>
-                            {
-                              parametersToConfigure[
-                                integrationsData.eventProvider
-                              ]
-                            }
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  </form>
-                  <div className="bg-gray-50 px-4 py-3 text-right sm:px-6">
-                    <button
-                      type="button"
-                      onClick={handleSubmit}
-                      disabled={isLoading}
-                      className="inline-flex justify-center rounded-md border border-transparent bg-cyan-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2"
-                    >
-                      Save
-                    </button>
-                  </div>
-                </div>
-              </div>
+              {steps[currentStep].component}
             </div>
           </main>
         </div>
