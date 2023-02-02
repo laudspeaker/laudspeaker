@@ -2,7 +2,12 @@
 
 import Header from "components/Header";
 import { ApiConfig } from "../../constants";
-import React, { ChangeEvent, useEffect, useLayoutEffect } from "react";
+import React, {
+  ChangeEvent,
+  FocusEvent,
+  useEffect,
+  useLayoutEffect,
+} from "react";
 import ApiService from "services/api.service";
 import Input from "../../components/Elements/Input";
 import Select from "../../components/Elements/Select";
@@ -21,8 +26,10 @@ import { GenericButton } from "components/Elements";
 import ExclamationTriangleIcon from "@heroicons/react/24/solid/ExclamationTriangleIcon";
 import { Link } from "react-router-dom";
 import { AxiosError } from "axios";
-import { CheckIcon } from "@heroicons/react/24/solid";
+import { CheckIcon, ExclamationCircleIcon } from "@heroicons/react/24/solid";
 import { useNavigate } from "react-router-dom";
+import { useDebounce } from "react-use";
+import { RadioGroup } from "@headlessui/react";
 
 export const allEmailChannels = [
   {
@@ -83,6 +90,18 @@ export const allEventChannels = [
   },
 ];
 
+const smsMemoryOptions: Record<
+  string,
+  { id: string; name: string; inStock: boolean }
+> = {
+  twilio: { id: "twilio", name: "Twilio", inStock: true },
+  vonage: { id: "vonage", name: "Vonage", inStock: false },
+};
+
+function classNames(...classes: string[]) {
+  return classes.filter(Boolean).join(" ");
+}
+
 const validators: { [key: string]: (value: string) => string | void } = {
   emailwithend: (value: string) => {
     if (value.match(/[ `!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~]/)) {
@@ -122,6 +141,9 @@ interface IntegrationsData {
   posthogEmailKey: string;
   sendgridApiKey: string;
   sendgridFromEmail: string;
+  smsAccountSid: string;
+  smsAuthToken: string;
+  smsFrom: string;
 }
 
 export default function OnboardingBeta() {
@@ -143,6 +165,9 @@ export default function OnboardingBeta() {
     posthogEmailKey: "",
     sendgridApiKey: "",
     sendgridFromEmail: "",
+    smsAccountSid: "",
+    smsAuthToken: "",
+    smsFrom: "",
   });
   const dispatch = useDispatch();
   const [slackInstallUrl, setSlackInstallUrl] = useState<string>("");
@@ -163,6 +188,95 @@ export default function OnboardingBeta() {
 
   const [currentStep, setCurrentStep] = useState(0);
   const [isNextItemAvailable, setIsNextItemAvailable] = useState(false);
+
+  const [smsProvider, setSmsProvider] = useState("twilio");
+  const smsMem = smsMemoryOptions[smsProvider];
+  const [showErrors, setShowErrors] = useState({
+    smsAccountSid: false,
+    smsAuthToken: false,
+    smsFrom: false,
+  });
+
+  const [smsErrors, setSmsErrors] = useState<{
+    [key: string]: string[];
+  }>({
+    smsAccountSid: [],
+    smsAuthToken: [],
+    smsFrom: [],
+  });
+  const [possibleNumbers, setPossibleNumbers] = useState<string[]>([]);
+
+  useEffect(() => {
+    const newSmsErrors: { [key: string]: string[] } = {
+      smsAccountSid: [],
+      smsAuthToken: [],
+      smsFrom: [],
+    };
+
+    if (!integrationsData.smsAccountSid) {
+      newSmsErrors.smsAccountSid.push("Account sid must be defined");
+    }
+
+    if (!integrationsData.smsAuthToken) {
+      newSmsErrors.smsAuthToken.push("Auth token must be defined");
+    }
+
+    if (!integrationsData.smsFrom) {
+      newSmsErrors.smsFrom.push("Sms from must be defined");
+    }
+    setSmsErrors(newSmsErrors);
+  }, [integrationsData]);
+
+  const loadPossibleNumbers = async (
+    smsAccountSid: string,
+    smsAuthToken: string
+  ) => {
+    const { data } = await ApiService.get({
+      url: `/sms/possible-phone-numbers?smsAccountSid=${smsAccountSid}&smsAuthToken=${smsAuthToken}`,
+    });
+
+    setPossibleNumbers(data || []);
+  };
+
+  useDebounce(
+    () => {
+      if (integrationsData.smsAccountSid && integrationsData.smsAuthToken)
+        loadPossibleNumbers(
+          integrationsData.smsAccountSid,
+          integrationsData.smsAuthToken
+        );
+    },
+    1000,
+    [integrationsData]
+  );
+
+  const handleFormDataChange = (
+    e: ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
+    if (e.target.value.includes(" ")) {
+      e.target.value = e.target.value.replaceAll(" ", "");
+      toast.error("Value should not contain spaces!", {
+        position: "bottom-center",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "colored",
+      });
+    }
+    setIntegrationsData({
+      ...integrationsData,
+      [e.target.name]: e.target.value,
+    });
+  };
+
+  const handleSMSBlur = (e: FocusEvent<HTMLSelectElement>) => {
+    setShowErrors({ ...showErrors, [e.target.name]: true });
+  };
+
+  const isSMSError = Object.values(smsErrors).some((item) => item.length > 0);
 
   const callDomains = async () => {
     if (privateApiKey) {
@@ -204,6 +318,9 @@ export default function OnboardingBeta() {
         verified: verifiedFromRequest,
         sendgridApiKey,
         sendgridFromEmail,
+        smsAccountSid,
+        smsAuthToken,
+        smsFrom,
       } = data;
       setIntegrationsData({
         ...integrationsData,
@@ -221,11 +338,14 @@ export default function OnboardingBeta() {
         sendgridApiKey: sendgridApiKey || integrationsData.sendgridApiKey,
         sendgridFromEmail:
           sendgridFromEmail || integrationsData.sendgridFromEmail,
+        smsAccountSid: smsAccountSid || integrationsData.smsAccountSid,
+        smsAuthToken: smsAuthToken || integrationsData.smsAuthToken,
+        smsFrom: smsFrom || integrationsData.smsFrom,
       });
       setPrivateApiKey(mailgunAPIKey);
       setDomainName(sendingDomain);
       setVerified(verifiedFromRequest);
-      setIsNextItemAvailable(!!emailProvider);
+      setIsNextItemAvailable(!!emailProvider || !!smsAccountSid);
     })();
   }, []);
 
@@ -805,6 +925,224 @@ export default function OnboardingBeta() {
                       onClick={handleSubmit}
                       customClasses="inline-flex justify-center rounded-md border border-transparent bg-cyan-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2"
                       disabled={isError || isLoading}
+                    >
+                      Save
+                    </GenericButton>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+          <div className="hidden sm:block" aria-hidden="true">
+            <div className="py-5">
+              <div className="border-t border-gray-200" />
+            </div>
+          </div>
+          <div className="md:grid md:grid-cols-3 md:gap-6">
+            <div className="md:col-span-1 p-5">
+              <div className="px-4 sm:px-0">
+                <h3 className="text-lg font-medium leading-6 text-gray-900">
+                  SMS
+                </h3>
+                <p className="mt-1 text-sm text-gray-600">
+                  Add an sms sending service to automatically send sms to your
+                  customers.
+                </p>
+              </div>
+            </div>
+            <div className="mt-5 md:col-span-2 pd-5">
+              <form action="#" method="POST">
+                <div className="overflow-visible shadow sm:rounded-md">
+                  <div className="space-y-6 bg-white px-4 py-5 sm:p-6">
+                    <h2>SMS configuration</h2>
+                    <div className="mt-10 divide-y divide-gray-200">
+                      <div className="space-y-10">
+                        <RadioGroup
+                          value={smsMem}
+                          onChange={(m) => setSmsProvider(m.id)}
+                          className="mt-2"
+                        >
+                          <RadioGroup.Label className="sr-only">
+                            Choose a memory option
+                          </RadioGroup.Label>
+                          <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
+                            {Object.values(smsMemoryOptions).map((option) => (
+                              <RadioGroup.Option
+                                key={option.name}
+                                value={option}
+                                className={({ active, checked }) =>
+                                  classNames(
+                                    option.inStock
+                                      ? "cursor-pointer focus:outline-none"
+                                      : "opacity-25 cursor-not-allowed",
+                                    active
+                                      ? "ring-2 ring-offset-2 ring-cyan-500"
+                                      : "",
+                                    checked
+                                      ? "bg-cyan-600 border-transparent text-white hover:bg-cyan-700"
+                                      : "bg-white border-gray-200 text-gray-900 hover:bg-gray-50",
+                                    "border rounded-md py-3 px-3 flex items-center justify-center text-sm font-medium sm:flex-1"
+                                  )
+                                }
+                                disabled={!option.inStock}
+                              >
+                                <RadioGroup.Label as="span">
+                                  {option.name}
+                                </RadioGroup.Label>
+                              </RadioGroup.Option>
+                            ))}
+                          </div>
+                        </RadioGroup>
+                      </div>
+                      <div className="mt-6">
+                        <dl className="divide-y divide-gray-200">
+                          <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:py-5">
+                            <dt className="text-sm font-medium text-gray-500">
+                              Twillio account sid
+                            </dt>
+                            <dd>
+                              <div className="relative rounded-md min-w-[260px]">
+                                <Input
+                                  type="text"
+                                  value={integrationsData.smsAccountSid}
+                                  onChange={handleFormDataChange}
+                                  name="smsAccountSid"
+                                  id="smsAccountSid"
+                                  className={`rounded-md shadow-sm sm:text-sm ${
+                                    showErrors.smsAccountSid &&
+                                    smsErrors.smsAccountSid.length > 0
+                                      ? "focus:!border-red-500 !border-red-300 shadow-sm focus:!ring-red-500"
+                                      : "border-gray-300 focus:border-cyan-500 focus:ring-cyan-500"
+                                  }`}
+                                  onBlur={handleSMSBlur}
+                                />
+                                {showErrors.smsAccountSid &&
+                                  smsErrors.smsAccountSid.length > 0 && (
+                                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center">
+                                      <ExclamationCircleIcon
+                                        className="h-5 w-5 text-red-500"
+                                        aria-hidden="true"
+                                      />
+                                    </div>
+                                  )}
+                              </div>
+                              {showErrors.smsAccountSid &&
+                                smsErrors.smsAccountSid.map((item) => (
+                                  <p
+                                    className="mt-2 text-sm text-red-600"
+                                    id="email-error"
+                                    key={item}
+                                  >
+                                    {item}
+                                  </p>
+                                ))}
+                            </dd>
+                          </div>
+                          <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:py-5">
+                            <dt className="text-sm font-medium text-gray-500">
+                              Twillio auth token
+                            </dt>
+                            <dd>
+                              <div className="relative rounded-md min-w-[260px]">
+                                <Input
+                                  type="text"
+                                  value={integrationsData.smsAuthToken}
+                                  onChange={handleFormDataChange}
+                                  name="smsAuthToken"
+                                  id="smsAuthToken"
+                                  className={`rounded-md shadow-sm sm:text-sm ${
+                                    showErrors.smsAuthToken &&
+                                    smsErrors.smsAuthToken.length > 0
+                                      ? "focus:!border-red-500 !border-red-300 shadow-sm focus:!ring-red-500"
+                                      : "border-gray-300 focus:border-cyan-500 focus:ring-cyan-500"
+                                  }`}
+                                  onBlur={handleSMSBlur}
+                                />
+                                {showErrors.smsAuthToken &&
+                                  smsErrors.smsAuthToken.length > 0 && (
+                                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center">
+                                      <ExclamationCircleIcon
+                                        className="h-5 w-5 text-red-500"
+                                        aria-hidden="true"
+                                      />
+                                    </div>
+                                  )}
+                              </div>
+                              {showErrors.smsAuthToken &&
+                                smsErrors.smsAuthToken.map((item) => (
+                                  <p
+                                    className="mt-2 text-sm text-red-600"
+                                    id="email-error"
+                                    key={item}
+                                  >
+                                    {item}
+                                  </p>
+                                ))}
+                            </dd>
+                          </div>
+                          <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:py-5">
+                            <dt className="text-sm font-medium text-gray-500">
+                              Sms From
+                            </dt>
+                            <dd>
+                              <div className="relative rounded-md min-w-[260px]">
+                                <select
+                                  id="smsFrom"
+                                  name="smsFrom"
+                                  disabled={
+                                    !integrationsData.smsAccountSid ||
+                                    !integrationsData.smsAuthToken ||
+                                    possibleNumbers.length === 0
+                                  }
+                                  value={integrationsData.smsFrom}
+                                  onChange={handleFormDataChange}
+                                  className={`mt-1 block w-full rounded-md py-2 pl-3 pr-10 text-base focus:outline-none sm:text-sm ${
+                                    smsErrors.smsFrom.length > 0 &&
+                                    showErrors.smsFrom
+                                      ? "focus:!border-red-500 !border-red-300 shadow-sm focus:!ring-red-500"
+                                      : "border-gray-300 focus:border-cyan-500 focus:ring-cyan-500"
+                                  }`}
+                                  onBlur={handleSMSBlur}
+                                >
+                                  <option value={integrationsData.smsFrom}>
+                                    {integrationsData.smsFrom}
+                                  </option>
+                                  {possibleNumbers.map((item) => (
+                                    <option value={item}>{item}</option>
+                                  ))}
+                                </select>
+                                {showErrors.smsFrom &&
+                                  smsErrors.smsFrom.length > 0 && (
+                                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center">
+                                      <ExclamationCircleIcon
+                                        className="h-5 w-5 text-red-500"
+                                        aria-hidden="true"
+                                      />
+                                    </div>
+                                  )}
+                              </div>
+                              {showErrors.smsFrom &&
+                                smsErrors.smsFrom.map((item) => (
+                                  <p
+                                    className="mt-2 text-sm text-red-600"
+                                    id="email-error"
+                                    key={item}
+                                  >
+                                    {item}
+                                  </p>
+                                ))}
+                            </dd>
+                          </div>
+                        </dl>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="bg-gray-50 px-4 py-3 text-right sm:px-6">
+                    <GenericButton
+                      id="saveEmailConfiguration"
+                      onClick={handleSubmit}
+                      customClasses="inline-flex justify-center rounded-md border border-transparent bg-cyan-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2"
+                      disabled={isSMSError || isLoading}
                     >
                       Save
                     </GenericButton>
