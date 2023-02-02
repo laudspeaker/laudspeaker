@@ -2569,10 +2569,670 @@ const DEFAULT_TEMPLATES: Template[] = [
   },
   {
     ...new Template(),
-    name: 'example-template-onboarding-simple',
-    subject: 'Welcome to ',
-    text: `<body id="i1nu"><div class="text_droppable" id="i2yf">Hey <br id="inue" draggable="true"/><br id="izpm" draggable="true"/>Welcome to . If you have any questions or feedback shoot us an email at <br id="iapj" draggable="true"/><br id="ixgi" draggable="true"/>Thanks!</div></body>`,
-    style: `* { box-sizing: border-box; } body {margin: 0;}#i2yf{padding:10px;}`,
+    name: 'example-template-newsletter',
+    subject: 'Here\'s what happened while you were away! ',
+    text: `<body style="box-sizing: border-box; margin: 0; margin-top: 0px; margin-right: 0px; margin-bottom: 0px; margin-left: 0px; padding-top: 0px; padding-right: 0px; padding-bottom: 0px; padding-left: 0px; background-color: rgb(247, 247, 253);">
+    <title class="text_droppable">
+    </title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700" rel="stylesheet" type="text/css">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700" rel="stylesheet" type="text/css">
+    <div style="box-sizing: border-box;">
+      <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" id="i90n" style="box-sizing: border-box; border-collapse: collapse; background: #2B31BE; background-color: #2B31BE; width: 100%;" width="100%" bgcolor="#2B31BE">
+        <tbody style="box-sizing: border-box;">
+          <tr style="box-sizing: border-box;">
+            <td style="box-sizing: border-box; border-collapse: collapse;">
+              <!--[if mso | IE]><table align="center" border="0" cellpadding="0" cellspacing="0" class="" role="presentation" style="width:600px;" width="600" bgcolor="#2B31BE" ><tr><td style="line-height:0px;font-size:0px;mso-line-height-rule:exactly;"><![endif]-->
+              <div id="idmbw" style="box-sizing: border-box; margin: 0px auto; max-width: 600px;">
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" id="irhfc" style="box-sizing: border-box; border-collapse: collapse; width: 100%;" width="100%">
+                  <tbody style="box-sizing: border-box;">
+                    <tr style="box-sizing: border-box;">
+                      <td id="ifjlu" style="box-sizing: border-box; border-collapse: collapse; direction: ltr; font-size: 0px; padding: 32px 20px; text-align: center;" align="center">
+                        <!--[if mso | IE]><table role="presentation" border="0" cellpadding="0" cellspacing="0"><tr><td class="gutter-outlook" width="600px" ><table align="center" border="0" cellpadding="0" cellspacing="0" class="gutter-outlook" role="presentation" style="width:560px;" width="560" ><tr><td style="line-height:0px;font-size:0px;mso-line-height-rule:exactly;"><![endif]-->
+                        <div class="gutter" id="iv3ug" style="box-sizing: border-box; margin: 0px auto; max-width: 560px; padding-left: 20px; padding-right: 20px;">
+                          <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" id="iqvcg" style="box-sizing: border-box; border-collapse: collapse; width: 100%;" width="100%">
+                            <tbody style="box-sizing: border-box;">
+                              <tr style="box-sizing: border-box;">
+                                <td id="iszhx" style="box-sizing: border-box; border-collapse: collapse; direction: ltr; font-size: 0px; padding: 0px; text-align: center;" align="center">
+                                  <!--[if mso | IE]><table role="presentation" border="0" cellpadding="0" cellspacing="0"><tr><td class="" style="vertical-align:top;width:560px;" ><![endif]-->
+                                  <div class="mj-column-per-100 mj-outlook-group-fix" id="itewg" style="box-sizing: border-box; font-size: 0px; text-align: left; direction: ltr; display: inline-block; vertical-align: top; width: 100%;">
+                                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="box-sizing: border-box; border-collapse: collapse;">
+                                      <tbody style="box-sizing: border-box;">
+                                        <tr style="box-sizing: border-box;">
+                                          <td id="if4ff" style="box-sizing: border-box; border-collapse: collapse; vertical-align: top; padding: 0px;" valign="top">
+                                            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="box-sizing: border-box; border-collapse: collapse;">
+                                              <tbody style="box-sizing: border-box;">
+                                                <tr style="box-sizing: border-box;">
+                                                  <td align="center" id="i5l1o" style="box-sizing: border-box; border-collapse: collapse; font-size: 0px; padding: 0px; padding-bottom: 16px; word-break: break-word;">
+                                                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" id="irg5h" style="box-sizing: border-box; border-collapse: collapse; border-spacing: 0px;">
+                                                      <tbody style="box-sizing: border-box;">
+                                                        <tr style="box-sizing: border-box;">
+                                                          <td id="io6sa" style="box-sizing: border-box; border-collapse: collapse; width: 190px;" width="190">
+                                                            <img src="https://bgf1zhnwzwfrzxi.vercel.app/assets/logo-full.png" width="190" height="48" id="itm6i" style="box-sizing: border-box; border-top-color: currentcolor; border-top-style: none; border-top-width: 0px; border-right-color: currentcolor; border-right-style: none; border-right-width: 0px; border-bottom-color: currentcolor; border-bottom-style: none; border-bottom-width: 0px; border-left-color: currentcolor; border-left-style: none; border-left-width: 0px; border-image-outset: 0; border-image-repeat: stretch; border-image-slice: 100%; border-image-source: none; border-image-width: 1; line-height: 100%; outline-color: currentcolor; outline-style: none; outline-width: medium; text-decoration-line: none; text-decoration-style: solid; text-decoration-color: currentcolor; text-decoration-thickness: auto; border: 0; display: block; outline: none; text-decoration: none; height: 48px; width: 100%; font-size: 16px;">
+                                                          </td>
+                                                        </tr>
+                                                      </tbody>
+                                                    </table>
+                                                  </td>
+                                                </tr>
+                                                <tr style="box-sizing: border-box;">
+                                                  <td align="center" id="i8566" style="box-sizing: border-box; border-collapse: collapse; font-size: 0px; padding: 0px; word-break: break-word;">
+                                                    <div class="text_droppable" id="iqdor" style="box-sizing: border-box; font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px; font-weight: 500; line-height: 140%; text-align: center; color: #BABCEA;">Newsletter brought to you by Laudspeaker
+                                                    </div>
+                                                  </td>
+                                                </tr>
+                                              </tbody>
+                                            </table>
+                                          </td>
+                                        </tr>
+                                      </tbody>
+                                    </table>
+                                  </div>
+                                  <!--[if mso | IE]></td></tr></table><![endif]-->
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                        <!--[if mso | IE]></td></tr></table></td></tr></table><![endif]-->
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <!--[if mso | IE]></td></tr></table><![endif]-->
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" class="gutter newsletter-gutter" id="ibocj" style="box-sizing: border-box; border-collapse: collapse; background: #2B31BE; background-color: #2B31BE; width: 100%; padding-left: 20px; padding-right: 20px;" width="100%" bgcolor="#2B31BE">
+        <tbody style="box-sizing: border-box;">
+          <tr style="box-sizing: border-box;">
+            <td style="box-sizing: border-box; border-collapse: collapse;">
+              <!--[if mso | IE]><table align="center" border="0" cellpadding="0" cellspacing="0" class="gutter-outlook newsletter-gutter-outlook" role="presentation" style="width:600px;" width="600" bgcolor="#2B31BE" ><tr><td style="line-height:0px;font-size:0px;mso-line-height-rule:exactly;"><![endif]-->
+              <div id="ieh8w" style="box-sizing: border-box; margin: 0px auto; max-width: 600px;">
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" id="i36mf" style="box-sizing: border-box; border-collapse: collapse; width: 100%;" width="100%">
+                  <tbody style="box-sizing: border-box;">
+                    <tr style="box-sizing: border-box;">
+                      <td id="i1hwy" style="box-sizing: border-box; border-collapse: collapse; direction: ltr; font-size: 0px; padding: 0px; padding-bottom: 32px; text-align: center;" align="center">
+                        <!--[if mso | IE]><table role="presentation" border="0" cellpadding="0" cellspacing="0"><tr><td class="margin-gutter-outlook gutter-outlook" width="600px" ><table align="center" border="0" cellpadding="0" cellspacing="0" class="margin-gutter-outlook gutter-outlook" role="presentation" style="width:600px;" width="600" bgcolor="#FFFFFF" ><tr><td style="line-height:0px;font-size:0px;mso-line-height-rule:exactly;"><![endif]-->
+                        <div class="margin-gutter gutter" id="i3jd9" style="box-sizing: border-box; background: #FFFFFF; background-color: #FFFFFF; margin: 0px auto; border-radius: 9px; max-width: 600px; padding-left: 20px; padding-right: 20px; margin-left: 20px; margin-right: 20px;">
+                          <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" id="ilb53" style="box-sizing: border-box; border-collapse: collapse; background: #FFFFFF; background-color: #FFFFFF; width: 100%; border-radius: 9px;" width="100%" bgcolor="#FFFFFF">
+                            <tbody style="box-sizing: border-box;">
+                              <tr style="box-sizing: border-box;">
+                                <td id="iy4i9" style="box-sizing: border-box; border-collapse: collapse; direction: ltr; font-size: 0px; padding: 0px; text-align: center;" align="center">
+                                  <!--[if mso | IE]><table role="presentation" border="0" cellpadding="0" cellspacing="0"><tr><td class="" style="vertical-align:top;width:600px;" ><![endif]-->
+                                  <div class="mj-column-per-100 mj-outlook-group-fix" id="irgkj" style="box-sizing: border-box; font-size: 0px; text-align: left; direction: ltr; display: inline-block; vertical-align: top; width: 100%;">
+                                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="box-sizing: border-box; border-collapse: collapse;">
+                                      <tbody style="box-sizing: border-box;">
+                                        <tr style="box-sizing: border-box;">
+                                          <td id="ijf23" style="box-sizing: border-box; border-collapse: collapse; vertical-align: top; padding: 0px; padding-top: 40px; padding-bottom: 40px;" valign="top">
+                                            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="box-sizing: border-box; border-collapse: collapse;">
+                                              <tbody style="box-sizing: border-box;">
+                                                <tr style="box-sizing: border-box;">
+                                                  <td align="left" class="lg-hidden" id="ibkj1" style="box-sizing: border-box; border-collapse: collapse; display: none; max-width: 0px; max-height: 0px; overflow-x: hidden; overflow-y: hidden; font-size: 0px; padding: 0px; padding-bottom: 32px; word-break: break-word;">
+                                                    <div class="text_droppable" id="imzyo" style="box-sizing: border-box; font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 32px; font-weight: 700; line-height: 115%; text-align: left; color: #0B0A24;">Here’s space for a headline
+                                                    </div>
+                                                  </td>
+                                                </tr>
+                                                <tr style="box-sizing: border-box;">
+                                                  <td align="left" class="sm-hidden" id="im8cu" style="box-sizing: border-box; border-collapse: collapse; font-size: 0px; padding: 0px; padding-bottom: 32px; word-break: break-word;">
+                                                    <div class="text_droppable" id="il633" style="box-sizing: border-box; font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 32px; font-weight: 700; line-height: 115%; text-align: left; color: #0B0A24;">Here’s space for a headline
+                                                    </div>
+                                                  </td>
+                                                </tr>
+                                                <tr style="box-sizing: border-box;">
+                                                  <td align="center" id="iyhoe" style="box-sizing: border-box; border-collapse: collapse; font-size: 0px; padding: 0px; padding-bottom: 28px; word-break: break-word;">
+                                                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" id="ieyol" style="box-sizing: border-box; border-collapse: collapse; border-spacing: 0px;">
+                                                      <tbody style="box-sizing: border-box;">
+                                                        <tr style="box-sizing: border-box;">
+                                                          <td id="ihm8m" style="box-sizing: border-box; border-collapse: collapse; width: 536px;" width="536">
+                                                            <img src="https://bgf1zhnwzwfrzxi.vercel.app/assets/placeholder-image.png" width="536" height="auto" id="iixax" style="box-sizing: border-box; border-top-color: currentcolor; border-top-style: none; border-top-width: 0px; border-right-color: currentcolor; border-right-style: none; border-right-width: 0px; border-bottom-color: currentcolor; border-bottom-style: none; border-bottom-width: 0px; border-left-color: currentcolor; border-left-style: none; border-left-width: 0px; border-image-outset: 0; border-image-repeat: stretch; border-image-slice: 100%; border-image-source: none; border-image-width: 1; line-height: 100%; outline-color: currentcolor; outline-style: none; outline-width: medium; text-decoration-line: none; text-decoration-style: solid; text-decoration-color: currentcolor; text-decoration-thickness: auto; border: 0; display: block; outline: none; text-decoration: none; height: auto; width: 100%; font-size: 16px;">
+                                                          </td>
+                                                        </tr>
+                                                      </tbody>
+                                                    </table>
+                                                  </td>
+                                                </tr>
+                                                <tr style="box-sizing: border-box;">
+                                                  <td align="left" id="ioopz" style="box-sizing: border-box; border-collapse: collapse; font-size: 0px; padding: 0px; padding-bottom: 20px; word-break: break-word;">
+                                                    <div class="text_droppable" id="igcvs" style="box-sizing: border-box; font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 18px; font-weight: 500; line-height: 155%; text-align: left; color: #0B0A24;">Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.
+                                                    </div>
+                                                  </td>
+                                                </tr>
+                                                <tr style="box-sizing: border-box;">
+                                                  <td align="left" id="i394c" style="box-sizing: border-box; border-collapse: collapse; font-size: 0px; padding: 0px; padding-bottom: 20px; word-break: break-word;">
+                                                    <div class="text_droppable" id="ihrb6" style="box-sizing: border-box; font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 18px; font-weight: 500; line-height: 155%; text-align: left; color: #0B0A24;">
+                                                      <strong class="text_droppable" style="box-sizing: border-box;">Nemo enim ipsam voluptatem.</strong> Quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit, sed quia non numquam eius modi tempora incidunt ut labore et dolore magnam aliquam quaerat voluptatem. Ut enim ad minima veniam, quis nostrum exercitationem ullam corporis suscipit laboriosam, nisi ut aliquid ex ea commodi consequatur? Quis autem vel eum iure reprehenderit qui in ea voluptate velit esse quam nihil molestiae consequatur, vel illum qui dolorem eum fugiat quo voluptas nulla pariatur?
+                                                    </div>
+                                                  </td>
+                                                </tr>
+                                                <tr style="box-sizing: border-box;">
+                                                  <td style="box-sizing: border-box; border-collapse: collapse;">
+                                                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="box-sizing: border-box; border-collapse: collapse;">
+                                                      <tbody style="box-sizing: border-box;">
+                                                        <tr id="if100r" style="box-sizing: border-box; height: 28px;">
+                                                          <td width="40" valign="top" align="center" id="igro2t" style="box-sizing: border-box; border-collapse: collapse; font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 140%; font-weight: 500; font-size: 18px; color: #0B0A24; padding: 0;">•
+                                                          </td>
+                                                          <td id="ius8jg" style="box-sizing: border-box; border-collapse: collapse; font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 140%; font-weight: 500; font-size: 18px; color: #0B0A24; padding: 0;">Temporibus autem quibusdam et aut
+                                                          </td>
+                                                        </tr>
+                                                        <tr id="i44l2c" style="box-sizing: border-box; height: 28px;">
+                                                          <td width="40" valign="top" align="center" id="iajvi4" style="box-sizing: border-box; border-collapse: collapse; font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 140%; font-weight: 500; font-size: 18px; color: #0B0A24; padding: 0;">•
+                                                          </td>
+                                                          <td id="i9lysg" style="box-sizing: border-box; border-collapse: collapse; font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 140%; font-weight: 500; font-size: 18px; color: #0B0A24; padding: 0;">Officiis debitis aut rerumnecessitatibus
+                                                          </td>
+                                                        </tr>
+                                                        <tr id="ihhfcs" style="box-sizing: border-box; height: 28px;">
+                                                          <td width="40" valign="top" align="center" id="i2tc8c" style="box-sizing: border-box; border-collapse: collapse; font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 140%; font-weight: 500; font-size: 18px; color: #0B0A24; padding: 0;">•
+                                                          </td>
+                                                          <td id="iby7tk" style="box-sizing: border-box; border-collapse: collapse; font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 140%; font-weight: 500; font-size: 18px; color: #0B0A24; padding: 0;">Saepe eveniet ut et voluptates repudiandae
+                                                          </td>
+                                                        </tr>
+                                                        <tr id="iqqv2a" style="box-sizing: border-box; height: 28px;">
+                                                          <td width="40" valign="top" align="center" id="i7s97j" style="box-sizing: border-box; border-collapse: collapse; font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 140%; font-weight: 500; font-size: 18px; color: #0B0A24; padding: 0;">•
+                                                          </td>
+                                                          <td id="ihp8t2" style="box-sizing: border-box; border-collapse: collapse; font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 140%; font-weight: 500; font-size: 18px; color: #0B0A24; padding: 0;">Sint et molestiae non recusandae
+                                                          </td>
+                                                        </tr>
+                                                      </tbody>
+                                                    </table>
+                                                  </td>
+                                                </tr>
+                                                <tr style="box-sizing: border-box;">
+                                                  <td align="left" id="ijum09" style="box-sizing: border-box; border-collapse: collapse; font-size: 0px; padding: 0px; padding-top: 20px; padding-bottom: 32px; word-break: break-word;">
+                                                    <div class="text_droppable" id="i1v4oj" style="box-sizing: border-box; font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 18px; font-weight: 500; line-height: 155%; text-align: left; color: #0B0A24;">Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.
+                                                    </div>
+                                                  </td>
+                                                </tr>
+                                                <tr style="box-sizing: border-box;">
+                                                  <td vertical-align="middle" align="left" id="iwlo3g" style="box-sizing: border-box; border-collapse: collapse; font-size: 0px; padding: 0px; word-break: break-word;">
+                                                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" id="iy7azs" style="box-sizing: border-box; border-collapse: separate; line-height: 100%;">
+                                                      <tbody style="box-sizing: border-box;">
+                                                        <tr style="box-sizing: border-box;">
+                                                          <td role="presentation" valign="middle" bgcolor="#FC8131" align="center" id="ijez7d" style="box-sizing: border-box; border-collapse: collapse; border: none; border-radius: 9px; cursor: auto; mso-padding-alt: 16px 24px; background: #FC8131;">
+                                                            <a href="https://app.laudspeaker.com" target="_blank" id="i8dk3p" style="box-sizing: border-box; display: inline-block; background: #FC8131; color: #FFFFFF; font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 18px; font-weight: 500; line-height: 115%; margin: 0; text-decoration: none; text-transform: none; padding: 16px 24px; mso-padding-alt: 0px; border-radius: 9px;">
+                                                              Call to action
+                                                            </a>
+                                                          </td>
+                                                        </tr>
+                                                      </tbody>
+                                                    </table>
+                                                  </td>
+                                                </tr>
+                                              </tbody>
+                                            </table>
+                                          </td>
+                                        </tr>
+                                      </tbody>
+                                    </table>
+                                  </div>
+                                  <!--[if mso | IE]></td></tr></table><![endif]-->
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                        <!--[if mso | IE]></td></tr></table></td></tr><tr><td class="" width="600px" ><table align="center" border="0" cellpadding="0" cellspacing="0" class="" role="presentation" style="width:600px;" width="600" ><tr><td style="line-height:0px;font-size:0px;mso-line-height-rule:exactly;"><![endif]-->
+                        <div id="ii6z1x" style="box-sizing: border-box; margin: 0px auto; max-width: 600px;">
+                          <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" id="i8j36g" style="box-sizing: border-box; border-collapse: collapse; width: 100%;" width="100%">
+                            <tbody style="box-sizing: border-box;">
+                              <tr style="box-sizing: border-box;">
+                                <td id="ihe6vg" style="box-sizing: border-box; border-collapse: collapse; direction: ltr; font-size: 0px; padding: 0px; text-align: center;" align="center">
+                                  <!--[if mso | IE]><table role="presentation" border="0" cellpadding="0" cellspacing="0"><tr><td class="" style="vertical-align:top;width:600px;" ><![endif]-->
+                                  <div class="mj-column-per-100 mj-outlook-group-fix" id="iepf6r" style="box-sizing: border-box; font-size: 0px; text-align: left; direction: ltr; display: inline-block; vertical-align: top; width: 100%;">
+                                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="box-sizing: border-box; border-collapse: collapse;">
+                                      <tbody style="box-sizing: border-box;">
+                                        <tr style="box-sizing: border-box;">
+                                          <td id="i07hic" style="box-sizing: border-box; border-collapse: collapse; vertical-align: top; padding: 0px;" valign="top">
+                                            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="box-sizing: border-box; border-collapse: collapse;">
+                                              <tbody style="box-sizing: border-box;">
+                                                <tr style="box-sizing: border-box;">
+                                                  <td class="lg-hidden" id="i0etsl" style="box-sizing: border-box; border-collapse: collapse; display: none; max-width: 0px; max-height: 0px; overflow-x: hidden; overflow-y: hidden; font-size: 0px; padding: 0px; word-break: break-word;">
+                                                    <div class="text_droppable" id="igq79k" style="box-sizing: border-box; height: 24px; line-height: 24px;"> 
+                                                    </div>
+                                                  </td>
+                                                </tr>
+                                                <tr style="box-sizing: border-box;">
+                                                  <td class="sm-hidden" id="il7j0l" style="box-sizing: border-box; border-collapse: collapse; font-size: 0px; padding: 0px; word-break: break-word;">
+                                                    <div class="text_droppable" id="iytcpg" style="box-sizing: border-box; height: 24px; line-height: 24px;"> 
+                                                    </div>
+                                                  </td>
+                                                </tr>
+                                              </tbody>
+                                            </table>
+                                          </td>
+                                        </tr>
+                                      </tbody>
+                                    </table>
+                                  </div>
+                                  <!--[if mso | IE]></td></tr></table><![endif]-->
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                        <!--[if mso | IE]></td></tr></table></td></tr><tr><td class="margin-gutter-outlook gutter-outlook" width="600px" ><table align="center" border="0" cellpadding="0" cellspacing="0" class="margin-gutter-outlook gutter-outlook" role="presentation" style="width:600px;" width="600" bgcolor="#FFFFFF" ><tr><td style="line-height:0px;font-size:0px;mso-line-height-rule:exactly;"><![endif]-->
+                        <div class="margin-gutter gutter" id="iq9qkt" style="box-sizing: border-box; background: #FFFFFF; background-color: #FFFFFF; margin: 0px auto; border-radius: 9px; max-width: 600px; padding-left: 20px; padding-right: 20px; margin-left: 20px; margin-right: 20px;">
+                          <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" id="iikd36" style="box-sizing: border-box; border-collapse: collapse; background: #FFFFFF; background-color: #FFFFFF; width: 100%; border-radius: 9px;" width="100%" bgcolor="#FFFFFF">
+                            <tbody style="box-sizing: border-box;">
+                              <tr style="box-sizing: border-box;">
+                                <td id="ib4azd" style="box-sizing: border-box; border-collapse: collapse; direction: ltr; font-size: 0px; padding: 0px; text-align: center;" align="center">
+                                  <!--[if mso | IE]><table role="presentation" border="0" cellpadding="0" cellspacing="0"><tr><td class="" style="vertical-align:top;width:600px;" ><![endif]-->
+                                  <div class="mj-column-per-100 mj-outlook-group-fix" id="in98uj" style="box-sizing: border-box; font-size: 0px; text-align: left; direction: ltr; display: inline-block; vertical-align: top; width: 100%;">
+                                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="box-sizing: border-box; border-collapse: collapse;">
+                                      <tbody style="box-sizing: border-box;">
+                                        <tr style="box-sizing: border-box;">
+                                          <td id="irsxsj" style="box-sizing: border-box; border-collapse: collapse; vertical-align: top; padding: 0px; padding-top: 40px; padding-bottom: 40px;" valign="top">
+                                            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="box-sizing: border-box; border-collapse: collapse;">
+                                              <tbody style="box-sizing: border-box;">
+                                                <tr style="box-sizing: border-box;">
+                                                  <td align="left" class="lg-hidden" id="i7zwl6" style="box-sizing: border-box; border-collapse: collapse; display: none; max-width: 0px; max-height: 0px; overflow-x: hidden; overflow-y: hidden; font-size: 0px; padding: 0px; padding-bottom: 24px; padding-left: 8px; word-break: break-word;">
+                                                    <div class="text_droppable" id="i0gfhn" style="box-sizing: border-box; font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; font-weight: 700; line-height: 115%; text-align: left; text-transform: uppercase; color: #FC8131;">Keyword
+                                                    </div>
+                                                  </td>
+                                                </tr>
+                                                <tr style="box-sizing: border-box;">
+                                                  <td align="left" class="sm-hidden" id="ikr7hj" style="box-sizing: border-box; border-collapse: collapse; font-size: 0px; padding: 0px; padding-bottom: 24px; word-break: break-word;">
+                                                    <div class="text_droppable" id="i4p5j4" style="box-sizing: border-box; font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; font-weight: 700; line-height: 115%; text-align: left; text-transform: uppercase; color: #FC8131;">Keyword
+                                                    </div>
+                                                  </td>
+                                                </tr>
+                                                <tr style="box-sizing: border-box;">
+                                                  <td align="center" id="ic8v22" style="box-sizing: border-box; border-collapse: collapse; font-size: 0px; padding: 0px; padding-bottom: 28px; word-break: break-word;">
+                                                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" id="i6sz2m" style="box-sizing: border-box; border-collapse: collapse; border-spacing: 0px;">
+                                                      <tbody style="box-sizing: border-box;">
+                                                        <tr style="box-sizing: border-box;">
+                                                          <td id="ijj6x1" style="box-sizing: border-box; border-collapse: collapse; width: 536px;" width="536">
+                                                            <img src="https://bgf1zhnwzwfrzxi.vercel.app/assets/placeholder-image.png" width="536" height="auto" id="ic1kg7" style="box-sizing: border-box; border-top-color: currentcolor; border-top-style: none; border-top-width: 0px; border-right-color: currentcolor; border-right-style: none; border-right-width: 0px; border-bottom-color: currentcolor; border-bottom-style: none; border-bottom-width: 0px; border-left-color: currentcolor; border-left-style: none; border-left-width: 0px; border-image-outset: 0; border-image-repeat: stretch; border-image-slice: 100%; border-image-source: none; border-image-width: 1; line-height: 100%; outline-color: currentcolor; outline-style: none; outline-width: medium; text-decoration-line: none; text-decoration-style: solid; text-decoration-color: currentcolor; text-decoration-thickness: auto; border: 0; display: block; outline: none; text-decoration: none; height: auto; width: 100%; font-size: 16px;">
+                                                          </td>
+                                                        </tr>
+                                                      </tbody>
+                                                    </table>
+                                                  </td>
+                                                </tr>
+                                                <tr style="box-sizing: border-box;">
+                                                  <td align="left" id="i2rx9a" style="box-sizing: border-box; border-collapse: collapse; font-size: 0px; padding: 0px; word-break: break-word;">
+                                                    <div id="icnub1" style="box-sizing: border-box; font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 18px; font-weight: 500; line-height: 155%; text-align: left; color: #0B0A24;">Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, 
+                                                      <mj-text href="https://laudspeaker.com" style="box-sizing: border-box;">
+                                                        <a target="_blank" rel="noopener" href="https://laudspeaker.com" id="iyjjca" style="box-sizing: border-box; color: #2B31BE; text-decoration: none;">eaque ipsa quae</a>
+                                                      </mj-text> ab illo 
+                                                      <mj-text href="https://laudspeaker.com" style="box-sizing: border-box;">
+                                                        <a target="_blank" rel="noopener" href="https://laudspeaker.com" id="iozx5x" style="box-sizing: border-box; color: #2B31BE; text-decoration: none;">inventore veritatis</a>
+                                                      </mj-text> et quasi architecto beatae vitae dicta sunt explicabo.
+                                                    </div>
+                                                  </td>
+                                                </tr>
+                                              </tbody>
+                                            </table>
+                                          </td>
+                                        </tr>
+                                      </tbody>
+                                    </table>
+                                  </div>
+                                  <!--[if mso | IE]></td></tr></table><![endif]-->
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                        <!--[if mso | IE]></td></tr></table></td></tr><tr><td class="" width="600px" ><table align="center" border="0" cellpadding="0" cellspacing="0" class="" role="presentation" style="width:600px;" width="600" ><tr><td style="line-height:0px;font-size:0px;mso-line-height-rule:exactly;"><![endif]-->
+                        <div id="isxmhe" style="box-sizing: border-box; margin: 0px auto; max-width: 600px;">
+                          <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" id="i724sy" style="box-sizing: border-box; border-collapse: collapse; width: 100%;" width="100%">
+                            <tbody style="box-sizing: border-box;">
+                              <tr style="box-sizing: border-box;">
+                                <td id="i0p0fz" style="box-sizing: border-box; border-collapse: collapse; direction: ltr; font-size: 0px; padding: 0px; text-align: center;" align="center">
+                                  <!--[if mso | IE]><table role="presentation" border="0" cellpadding="0" cellspacing="0"><tr><td class="" style="vertical-align:top;width:600px;" ><![endif]-->
+                                  <div class="mj-column-per-100 mj-outlook-group-fix" id="i7h67e" style="box-sizing: border-box; font-size: 0px; text-align: left; direction: ltr; display: inline-block; vertical-align: top; width: 100%;">
+                                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="box-sizing: border-box; border-collapse: collapse;">
+                                      <tbody style="box-sizing: border-box;">
+                                        <tr style="box-sizing: border-box;">
+                                          <td id="ieq6ui" style="box-sizing: border-box; border-collapse: collapse; vertical-align: top; padding: 0px;" valign="top">
+                                            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="box-sizing: border-box; border-collapse: collapse;">
+                                              <tbody style="box-sizing: border-box;">
+                                                <tr style="box-sizing: border-box;">
+                                                  <td class="lg-hidden" id="in7m8o" style="box-sizing: border-box; border-collapse: collapse; display: none; max-width: 0px; max-height: 0px; overflow-x: hidden; overflow-y: hidden; font-size: 0px; padding: 0px; word-break: break-word;">
+                                                    <div class="text_droppable" id="ieou4j" style="box-sizing: border-box; height: 24px; line-height: 24px;"> 
+                                                    </div>
+                                                  </td>
+                                                </tr>
+                                                <tr style="box-sizing: border-box;">
+                                                  <td class="sm-hidden" id="iw7gux" style="box-sizing: border-box; border-collapse: collapse; font-size: 0px; padding: 0px; word-break: break-word;">
+                                                    <div class="text_droppable" id="iby31r" style="box-sizing: border-box; height: 24px; line-height: 24px;"> 
+                                                    </div>
+                                                  </td>
+                                                </tr>
+                                              </tbody>
+                                            </table>
+                                          </td>
+                                        </tr>
+                                      </tbody>
+                                    </table>
+                                  </div>
+                                  <!--[if mso | IE]></td></tr></table><![endif]-->
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                        <!--[if mso | IE]></td></tr></table></td></tr><tr><td class="margin-gutter-outlook gutter-outlook" width="600px" ><table align="center" border="0" cellpadding="0" cellspacing="0" class="margin-gutter-outlook gutter-outlook" role="presentation" style="width:600px;" width="600" bgcolor="#FFFFFF" ><tr><td style="line-height:0px;font-size:0px;mso-line-height-rule:exactly;"><![endif]-->
+                        <div class="margin-gutter gutter" id="idt6p3" style="box-sizing: border-box; background: #FFFFFF; background-color: #FFFFFF; margin: 0px auto; border-radius: 9px; max-width: 600px; padding-left: 20px; padding-right: 20px; margin-left: 20px; margin-right: 20px;">
+                          <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" id="iwni18" style="box-sizing: border-box; border-collapse: collapse; background: #FFFFFF; background-color: #FFFFFF; width: 100%; border-radius: 9px;" width="100%" bgcolor="#FFFFFF">
+                            <tbody style="box-sizing: border-box;">
+                              <tr style="box-sizing: border-box;">
+                                <td id="i28j1s" style="box-sizing: border-box; border-collapse: collapse; direction: ltr; font-size: 0px; padding: 0px; text-align: center;" align="center">
+                                  <!--[if mso | IE]><table role="presentation" border="0" cellpadding="0" cellspacing="0"><tr><td class="" style="vertical-align:top;width:600px;" ><![endif]-->
+                                  <div class="mj-column-per-100 mj-outlook-group-fix" id="ii7bfh" style="box-sizing: border-box; font-size: 0px; text-align: left; direction: ltr; display: inline-block; vertical-align: top; width: 100%;">
+                                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="box-sizing: border-box; border-collapse: collapse;">
+                                      <tbody style="box-sizing: border-box;">
+                                        <tr style="box-sizing: border-box;">
+                                          <td id="in2w3b" style="box-sizing: border-box; border-collapse: collapse; vertical-align: top; padding: 0px; padding-top: 40px; padding-bottom: 40px;" valign="top">
+                                            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="box-sizing: border-box; border-collapse: collapse;">
+                                              <tbody style="box-sizing: border-box;">
+                                                <tr style="box-sizing: border-box;">
+                                                  <td align="left" class="lg-hidden" id="il1cyt" style="box-sizing: border-box; border-collapse: collapse; display: none; max-width: 0px; max-height: 0px; overflow-x: hidden; overflow-y: hidden; font-size: 0px; padding: 0px; padding-bottom: 24px; word-break: break-word;">
+                                                    <div class="text_droppable" id="iqnt1g" style="box-sizing: border-box; font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 32px; font-weight: 700; line-height: 115%; text-align: left; color: #0B0A24;">Here’s space for a headline
+                                                    </div>
+                                                  </td>
+                                                </tr>
+                                                <tr style="box-sizing: border-box;">
+                                                  <td align="left" class="sm-hidden" id="iqpqq4" style="box-sizing: border-box; border-collapse: collapse; font-size: 0px; padding: 0px; padding-bottom: 24px; word-break: break-word;">
+                                                    <div class="text_droppable" id="i1yzb9" style="box-sizing: border-box; font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 32px; font-weight: 700; line-height: 115%; text-align: left; color: #0B0A24;">Here’s space for a headline
+                                                    </div>
+                                                  </td>
+                                                </tr>
+                                                <tr style="box-sizing: border-box;">
+                                                  <td align="left" id="iuatr2" style="box-sizing: border-box; border-collapse: collapse; font-size: 0px; padding: 0px; padding-bottom: 28px; word-break: break-word;">
+                                                    <div class="text_droppable" id="ixygdl" style="box-sizing: border-box; font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 18px; font-weight: 500; line-height: 155%; text-align: left; color: #0B0A24;">Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.
+                                                    </div>
+                                                  </td>
+                                                </tr>
+                                                <tr style="box-sizing: border-box;">
+                                                  <td vertical-align="middle" align="left" id="iv65ay" style="box-sizing: border-box; border-collapse: collapse; font-size: 0px; padding: 0px; word-break: break-word;">
+                                                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" id="ipwacv" style="box-sizing: border-box; border-collapse: separate; width: 100%; line-height: 100%;" width="100%">
+                                                      <tbody style="box-sizing: border-box;">
+                                                        <tr style="box-sizing: border-box;">
+                                                          <td role="presentation" valign="middle" bgcolor="#FFF0E6" align="center" id="iufptn" style="box-sizing: border-box; border-collapse: collapse; border: none; border-radius: 9px; cursor: auto; mso-padding-alt: 16px 24px; background: #FFF0E6;">
+                                                            <a href="https://app.laudspeaker.com" target="_blank" id="i95z1g" style="box-sizing: border-box; display: inline-block; background: #FFF0E6; color: #FC8131; font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 18px; font-weight: 500; line-height: 115%; margin: 0; text-decoration: none; text-transform: none; padding: 16px 24px; mso-padding-alt: 0px; border-radius: 9px;">
+                                                              Read more →
+                                                            </a>
+                                                          </td>
+                                                        </tr>
+                                                      </tbody>
+                                                    </table>
+                                                  </td>
+                                                </tr>
+                                              </tbody>
+                                            </table>
+                                          </td>
+                                        </tr>
+                                      </tbody>
+                                    </table>
+                                  </div>
+                                  <!--[if mso | IE]></td></tr></table><![endif]-->
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                        <!--[if mso | IE]></td></tr></table></td></tr><tr><td class="" width="600px" ><table align="center" border="0" cellpadding="0" cellspacing="0" class="" role="presentation" style="width:600px;" width="600" ><tr><td style="line-height:0px;font-size:0px;mso-line-height-rule:exactly;"><![endif]-->
+                        <div id="iv7nfb" style="box-sizing: border-box; margin: 0px auto; max-width: 600px;">
+                          <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" id="iu37ug" style="box-sizing: border-box; border-collapse: collapse; width: 100%;" width="100%">
+                            <tbody style="box-sizing: border-box;">
+                              <tr style="box-sizing: border-box;">
+                                <td id="ispvz5" style="box-sizing: border-box; border-collapse: collapse; direction: ltr; font-size: 0px; padding: 0px; text-align: center;" align="center">
+                                  <!--[if mso | IE]><table role="presentation" border="0" cellpadding="0" cellspacing="0"><tr><td class="" style="vertical-align:top;width:600px;" ><![endif]-->
+                                  <div class="mj-column-per-100 mj-outlook-group-fix" id="i61bfr" style="box-sizing: border-box; font-size: 0px; text-align: left; direction: ltr; display: inline-block; vertical-align: top; width: 100%;">
+                                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="box-sizing: border-box; border-collapse: collapse;">
+                                      <tbody style="box-sizing: border-box;">
+                                        <tr style="box-sizing: border-box;">
+                                          <td id="iwjpre" style="box-sizing: border-box; border-collapse: collapse; vertical-align: top; padding: 0px;" valign="top">
+                                            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="box-sizing: border-box; border-collapse: collapse;">
+                                              <tbody style="box-sizing: border-box;">
+                                                <tr style="box-sizing: border-box;">
+                                                  <td class="lg-hidden" id="ixn5e2" style="box-sizing: border-box; border-collapse: collapse; display: none; max-width: 0px; max-height: 0px; overflow-x: hidden; overflow-y: hidden; font-size: 0px; padding: 0px; word-break: break-word;">
+                                                    <div class="text_droppable" id="iyg7vj" style="box-sizing: border-box; height: 24px; line-height: 24px;"> 
+                                                    </div>
+                                                  </td>
+                                                </tr>
+                                                <tr style="box-sizing: border-box;">
+                                                  <td class="sm-hidden" id="iceneg" style="box-sizing: border-box; border-collapse: collapse; font-size: 0px; padding: 0px; word-break: break-word;">
+                                                    <div class="text_droppable" id="ixrcwi" style="box-sizing: border-box; height: 24px; line-height: 24px;"> 
+                                                    </div>
+                                                  </td>
+                                                </tr>
+                                              </tbody>
+                                            </table>
+                                          </td>
+                                        </tr>
+                                      </tbody>
+                                    </table>
+                                  </div>
+                                  <!--[if mso | IE]></td></tr></table><![endif]-->
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                        <!--[if mso | IE]></td></tr></table></td></tr></table><![endif]-->
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <!--[if mso | IE]></td></tr></table><![endif]-->
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" id="il2d49" style="box-sizing: border-box; border-collapse: collapse; background: #F7F7FD; background-color: #F7F7FD; width: 100%;" width="100%" bgcolor="#F7F7FD">
+        <tbody style="box-sizing: border-box;">
+          <tr style="box-sizing: border-box;">
+            <td style="box-sizing: border-box; border-collapse: collapse;">
+              <!--[if mso | IE]><table align="center" border="0" cellpadding="0" cellspacing="0" class="" role="presentation" style="width:600px;" width="600" bgcolor="#F7F7FD" ><tr><td style="line-height:0px;font-size:0px;mso-line-height-rule:exactly;"><![endif]-->
+              <div id="i4eiql" style="box-sizing: border-box; margin: 0px auto; max-width: 600px;">
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" id="imsi4r" style="box-sizing: border-box; border-collapse: collapse; width: 100%;" width="100%">
+                  <tbody style="box-sizing: border-box;">
+                    <tr style="box-sizing: border-box;">
+                      <td id="iwdsra" style="box-sizing: border-box; border-collapse: collapse; direction: ltr; font-size: 0px; padding: 0px; text-align: center;" align="center">
+                        <!--[if mso | IE]><table role="presentation" border="0" cellpadding="0" cellspacing="0"><tr><td class="gutter-outlook" width="600px" ><table align="center" border="0" cellpadding="0" cellspacing="0" class="gutter-outlook" role="presentation" style="width:600px;" width="600" ><tr><td style="line-height:0px;font-size:0px;mso-line-height-rule:exactly;"><![endif]-->
+                        <div class="gutter" id="idxs2c" style="box-sizing: border-box; margin: 0px auto; max-width: 600px; padding-left: 20px; padding-right: 20px;">
+                          <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" id="ilwrm4" style="box-sizing: border-box; border-collapse: collapse; width: 100%;" width="100%">
+                            <tbody style="box-sizing: border-box;">
+                              <tr style="box-sizing: border-box;">
+                                <td id="i9ribo" style="box-sizing: border-box; border-collapse: collapse; direction: ltr; font-size: 0px; padding: 0px; padding-bottom: 48px; padding-top: 48px; text-align: center;" align="center">
+                                  <!--[if mso | IE]><table role="presentation" border="0" cellpadding="0" cellspacing="0"><tr><td class="" style="vertical-align:top;width:600px;" ><![endif]-->
+                                  <div class="mj-column-per-100 mj-outlook-group-fix" id="iir5sp" style="box-sizing: border-box; font-size: 0px; text-align: left; direction: ltr; display: inline-block; vertical-align: top; width: 100%;">
+                                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="box-sizing: border-box; border-collapse: collapse;">
+                                      <tbody style="box-sizing: border-box;">
+                                        <tr style="box-sizing: border-box;">
+                                          <td id="iim98n" style="box-sizing: border-box; border-collapse: collapse; vertical-align: top; padding: 0px;" valign="top">
+                                            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="box-sizing: border-box; border-collapse: collapse;">
+                                              <tbody style="box-sizing: border-box;">
+                                                <tr style="box-sizing: border-box;">
+                                                  <td style="box-sizing: border-box; border-collapse: collapse;">
+                                                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="box-sizing: border-box; border-collapse: collapse;">
+                                                      <tbody style="box-sizing: border-box;">
+                                                        <tr style="box-sizing: border-box;">
+                                                          <td style="box-sizing: border-box; border-collapse: collapse;">
+                                                            <a href="https://laudspeaker.com" style="box-sizing: border-box;"><img src="https://bgf1zhnwzwfrzxi.vercel.app/assets/logo.png" alt="Laudspeaker Logo" width="35" height="48" id="i0nuvt" style="box-sizing: border-box; border-top-color: currentcolor; border-top-style: none; border-top-width: 0px; border-right-color: currentcolor; border-right-style: none; border-right-width: 0px; border-bottom-color: currentcolor; border-bottom-style: none; border-bottom-width: 0px; border-left-color: currentcolor; border-left-style: none; border-left-width: 0px; border-image-outset: 0; border-image-repeat: stretch; border-image-slice: 100%; border-image-source: none; border-image-width: 1; line-height: 100%; outline-color: currentcolor; outline-style: none; outline-width: medium; text-decoration-line: none; text-decoration-style: solid; text-decoration-color: currentcolor; text-decoration-thickness: auto; border: 0; display: block; outline: none; text-decoration: none; font-size: 16px; height: 48px; width: 35px;"></a>
+                                                          </td>
+                                                          <td width="31px" align="left" style="box-sizing: border-box; border-collapse: collapse;">
+                                                            <a href="https://twitter.com/laudspeaker" style="box-sizing: border-box;"><img src="https://bgf1zhnwzwfrzxi.vercel.app/assets/twitter.png" alt="Twitter Logo" id="iz7vks" style="box-sizing: border-box; border-top-color: currentcolor; border-top-style: none; border-top-width: 0px; border-right-color: currentcolor; border-right-style: none; border-right-width: 0px; border-bottom-color: currentcolor; border-bottom-style: none; border-bottom-width: 0px; border-left-color: currentcolor; border-left-style: none; border-left-width: 0px; border-image-outset: 0; border-image-repeat: stretch; border-image-slice: 100%; border-image-source: none; border-image-width: 1; line-height: 100%; outline-color: currentcolor; outline-style: none; outline-width: medium; text-decoration-line: none; text-decoration-style: solid; text-decoration-color: currentcolor; text-decoration-thickness: auto; border: 0; display: block; outline: none; text-decoration: none; font-size: 16px; height: 18px; width: 20px;" width="20" height="18"></a>
+                                                          </td>
+                                                          <td width="31px" align="right" style="box-sizing: border-box; border-collapse: collapse;">
+                                                            <a href="https://www.linkedin.com/company/laudspeaker/about/" style="box-sizing: border-box;"><img src="https://bgf1zhnwzwfrzxi.vercel.app/assets/linkedin.png" alt="Linkedin Logo" id="ie65il" style="box-sizing: border-box; border-top-color: currentcolor; border-top-style: none; border-top-width: 0px; border-right-color: currentcolor; border-right-style: none; border-right-width: 0px; border-bottom-color: currentcolor; border-bottom-style: none; border-bottom-width: 0px; border-left-color: currentcolor; border-left-style: none; border-left-width: 0px; border-image-outset: 0; border-image-repeat: stretch; border-image-slice: 100%; border-image-source: none; border-image-width: 1; line-height: 100%; outline-color: currentcolor; outline-style: none; outline-width: medium; text-decoration-line: none; text-decoration-style: solid; text-decoration-color: currentcolor; text-decoration-thickness: auto; border: 0; display: block; outline: none; text-decoration: none; font-size: 16px; height: 18px; width: 18px;" width="18" height="18"></a>
+                                                          </td>
+                                                        </tr>
+                                                      </tbody>
+                                                    </table>
+                                                  </td>
+                                                </tr>
+                                              </tbody>
+                                            </table>
+                                          </td>
+                                        </tr>
+                                      </tbody>
+                                    </table>
+                                  </div>
+                                  <!--[if mso | IE]></td></tr></table><![endif]-->
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                        <!--[if mso | IE]></td></tr></table></td></tr><tr><td class="gutter-outlook" width="600px" ><table align="center" border="0" cellpadding="0" cellspacing="0" class="gutter-outlook" role="presentation" style="width:600px;" width="600" ><tr><td style="line-height:0px;font-size:0px;mso-line-height-rule:exactly;"><![endif]-->
+                        <div class="gutter" id="imc33y" style="box-sizing: border-box; margin: 0px auto; max-width: 600px; padding-left: 20px; padding-right: 20px;">
+                          <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" id="ij6xo3" style="box-sizing: border-box; border-collapse: collapse; width: 100%;" width="100%">
+                            <tbody style="box-sizing: border-box;">
+                              <tr style="box-sizing: border-box;">
+                                <td id="i5b2qk" style="box-sizing: border-box; border-collapse: collapse; direction: ltr; font-size: 0px; padding: 0px; padding-bottom: 32px; text-align: center;" align="center">
+                                  <!--[if mso | IE]><table role="presentation" border="0" cellpadding="0" cellspacing="0"><tr><td class="" style="vertical-align:top;width:600px;" ><![endif]-->
+                                  <div class="mj-column-per-100 mj-outlook-group-fix" id="im9ifg" style="box-sizing: border-box; font-size: 0px; text-align: left; direction: ltr; display: inline-block; vertical-align: top; width: 100%;">
+                                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="box-sizing: border-box; border-collapse: collapse;">
+                                      <tbody style="box-sizing: border-box;">
+                                        <tr style="box-sizing: border-box;">
+                                          <td id="isfqg5" style="box-sizing: border-box; border-collapse: collapse; vertical-align: top; padding: 0px;" valign="top">
+                                            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="box-sizing: border-box; border-collapse: collapse;">
+                                              <tbody style="box-sizing: border-box;">
+                                                <tr style="box-sizing: border-box;">
+                                                  <td align="left" id="ite9z3" style="box-sizing: border-box; border-collapse: collapse; font-size: 0px; padding: 0px; padding-bottom: 28px; word-break: break-word;">
+                                                    <div id="ivf4nw" style="box-sizing: border-box; font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; font-weight: 500; line-height: 140%; text-align: left; color: #6B7185;">This email was sent to youremail@example.com. If you don&#039;t want to receive these emails in the future, you can 
+                                                      <mj-text href="https://laudspeaker.com/settings" color="#2B31BE" style="box-sizing: border-box;">
+                                                        <a target="_blank" rel="noopener" href="https://laudspeaker.com/settings" id="ig81z8" style="box-sizing: border-box; color: #2B31BE; text-decoration: none;">manage your settings</a>
+                                                      </mj-text> or 
+                                                      <mj-text href="https://laudspeaker.com/unsubscribe" color="#2B31BE" style="box-sizing: border-box;">
+                                                        <a target="_blank" rel="noopener" href="https://laudspeaker.com/unsubscribe" id="ixgj9u" style="box-sizing: border-box; color: #2B31BE; text-decoration: none;">unsubscribe</a>
+                                                      </mj-text>.
+                                                    </div>
+                                                  </td>
+                                                </tr>
+                                                <tr style="box-sizing: border-box;">
+                                                  <td align="left" id="icjfro" style="box-sizing: border-box; border-collapse: collapse; font-size: 0px; padding: 0px; padding-bottom: 21px; word-break: break-word;">
+                                                    <div id="imun4n" style="box-sizing: border-box; font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; font-weight: 500; line-height: 140%; text-align: left; color: #6B7185;">
+                                                      <mj-text color="#6B7185" href="https://laudspeaker.com/terms" style="box-sizing: border-box;">
+                                                        <a target="_blank" rel="noopener" href="https://laudspeaker.com/terms" id="i5kgyx" style="box-sizing: border-box; color: #6B7185; text-decoration: none;">Terms</a>
+                                                      </mj-text>  ·  
+                                                      <mj-text color="#6B7185" href="https://laudspeaker.com/privacy" style="box-sizing: border-box;">
+                                                        <a target="_blank" rel="noopener" href="https://laudspeaker.com/privacy" id="imeqe9" style="box-sizing: border-box; color: #6B7185; text-decoration: none;">Privacy</a>
+                                                      </mj-text>  ·  
+                                                      <mj-text color="#6B7185" href="https://laudspeaker.com/contact-us" style="box-sizing: border-box;">
+                                                        <a target="_blank" rel="noopener" href="https://laudspeaker.com/contact-us" id="iqx9li" style="box-sizing: border-box; color: #6B7185; text-decoration: none;">Contact Us</a>
+                                                      </mj-text>
+                                                    </div>
+                                                  </td>
+                                                </tr>
+                                                <tr style="box-sizing: border-box;">
+                                                  <td align="left" id="isjvml" style="box-sizing: border-box; border-collapse: collapse; font-size: 0px; padding: 0px; word-break: break-word;">
+                                                    <div class="text_droppable" id="iz24yy" style="box-sizing: border-box; font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; font-weight: 500; line-height: 140%; text-align: left; color: #6B7185;">Laudspeaker, 1800 Broadway, New York, NY 10007, USA
+                                                    </div>
+                                                  </td>
+                                                </tr>
+                                              </tbody>
+                                            </table>
+                                          </td>
+                                        </tr>
+                                      </tbody>
+                                    </table>
+                                  </div>
+                                  <!--[if mso | IE]></td></tr></table><![endif]-->
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                        <!--[if mso | IE]></td></tr></table></td></tr></table><![endif]-->
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <!--[if mso | IE]></td></tr></table><![endif]-->
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </body>`,
+    style: `* @media only screen and (max-width: 640px) {
+      body {
+        padding-top: 0px !important;
+        padding-right: 0px !important;
+        padding-bottom: 0px !important;
+        padding-left: 0px !important;
+      }
+      h1 {
+        font-weight: 800 !important;
+        margin-top: 20px !important;
+        margin-right: 0px !important;
+        margin-bottom: 5px !important;
+        margin-left: 0px !important;
+        font-size: 22px !important;
+      }
+      h2 {
+        font-weight: 800 !important;
+        margin-top: 20px !important;
+        margin-right: 0px !important;
+        margin-bottom: 5px !important;
+        margin-left: 0px !important;
+        font-size: 18px !important;
+      }
+      h3 {
+        font-weight: 800 !important;
+        margin-top: 20px !important;
+        margin-right: 0px !important;
+        margin-bottom: 5px !important;
+        margin-left: 0px !important;
+        font-size: 16px !important;
+      }
+      h4 {
+        font-weight: 800 !important;
+        margin-top: 20px !important;
+        margin-right: 0px !important;
+        margin-bottom: 5px !important;
+        margin-left: 0px !important;
+      }
+    }
+    @media only screen and (min-width: 480px) {
+      .mj-column-per-100 {
+        width: 100% !important;
+        max-width: 100%;
+      }
+    }
+    @media only screen and (max-width: 480px) {
+      table.mj-full-width-mobile {
+        width: 100% !important;
+      }
+      td.mj-full-width-mobile {
+        width: auto !important;
+      }
+    }
+    @media (min-width: 480px) {
+      .gutter {
+        padding-left: 32px !important;
+        padding-right: 32px !important;
+      }
+      .margin-gutter {
+        margin-left: 32px !important;
+        margin-right: 32px !important;
+      }
+      .sm-hidden {
+        display: none;
+        max-width: 0px;
+        max-height: 0px;
+        overflow-x: hidden;
+        overflow-y: hidden;
+      }
+      .lg-hidden {
+        display: block !important;
+        max-width: none !important;
+        max-height: none !important;
+        overflow-x: visible !important;
+        overflow-y: visible !important;
+      }
+    }`,
     type: 'email',
   },
 ];
