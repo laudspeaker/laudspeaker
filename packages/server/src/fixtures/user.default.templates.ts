@@ -2567,6 +2567,14 @@ const DEFAULT_TEMPLATES: Template[] = [
     }`,
     type: 'email',
   },
+  {
+    ...new Template(),
+    name: 'example-template-onboarding-simple',
+    subject: 'Welcome to ',
+    text: `<body id="i1nu"><div class="text_droppable" id="i2yf">Hey <br id="inue" draggable="true"/><br id="izpm" draggable="true"/>Welcome to . If you have any questions or feedback shoot us an email at <br id="iapj" draggable="true"/><br id="ixgi" draggable="true"/>Thanks!</div></body>`,
+    style: `* { box-sizing: border-box; } body {margin: 0;}#i2yf{padding:10px;}`,
+    type: 'email',
+  },
 ];
 
 export { DEFAULT_TEMPLATES };
