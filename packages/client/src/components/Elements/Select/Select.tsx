@@ -99,7 +99,7 @@ const Select = <T extends string | number | undefined>(
             leaveFrom="opacity-100"
             leaveTo="opacity-0"
           >
-            <Listbox.Options className="absolute mt-1 overflow-y-scroll max-h-[300px] rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm !z-[1] top-[100%]">
+            <Listbox.Options className="absolute mt-1 overflow-y-scroll max-h-[300px] rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm !z-[10000] top-[100%]">
               {options.map((option, i) => (
                 <Listbox.Option
                   key={i}
