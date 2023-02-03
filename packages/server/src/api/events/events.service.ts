@@ -89,6 +89,15 @@ export class EventsService {
         ).exec();
       }
     }
+    for (const { name, displayName, type, event } of posthogEventMappings) {
+      if (name && displayName && type && event) {
+        this.PosthogEventTypeModel.updateOne(
+          { name: name },
+          { name: name, displayName: displayName, type: type, event: event },
+          { upsert: true }
+        ).exec();
+      }
+    }
   }
 
   async correlate(
