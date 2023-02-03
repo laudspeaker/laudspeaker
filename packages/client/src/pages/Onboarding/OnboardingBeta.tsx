@@ -389,7 +389,6 @@ export default function OnboardingBeta() {
       setDomainName(sendingDomain);
       setVerified(verifiedFromRequest);
       setIsNextItemAvailable(!!emailProvider || !!smsAccountSid);
-      console.log(apiKey);
       setUserApiKey(apiKey);
     })();
   }, []);

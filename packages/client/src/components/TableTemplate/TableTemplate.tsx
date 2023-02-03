@@ -424,6 +424,8 @@ export interface TableTemplateProps<T extends TableDataItem> {
   sortOptions?: SortOptions;
   setSortOptions?: (sortOptions: SortOptions) => void;
   refresh?: () => void;
+  setTemplateToDelete?: (name: string) => void;
+  showDeletedToggle?: boolean;
 }
 
 export default function TableTemplate<T extends TableDataItem>({
@@ -438,6 +440,8 @@ export default function TableTemplate<T extends TableDataItem>({
   sortOptions,
   setSortOptions,
   refresh = () => {},
+  setTemplateToDelete = () => {},
+  showDeletedToggle = true,
 }: TableTemplateProps<T>) {
   const isSkipped = (num?: number) => {
     if (!num) return false;
@@ -503,6 +507,19 @@ export default function TableTemplate<T extends TableDataItem>({
                 >
                   Duplicate
                 </button>,
+                ...(row.isDeleted
+                  ? []
+                  : [
+                      <button
+                        className="w-full text-center cursor-pointer outline-none text-red-500"
+                        onClick={() => {
+                          if (row?.id) setTemplateToDelete(row.id as string);
+                        }}
+                        data-delete-button
+                      >
+                        Delete
+                      </button>,
+                    ]),
               ].map((el, i) => (
                 <Menu.Item>
                   <div
@@ -522,7 +539,66 @@ export default function TableTemplate<T extends TableDataItem>({
         </Link>
       );
     } else if (row.type == "sms") {
-      return (
+      return isButton ? (
+        <Menu as="div" className="relative">
+          <Menu.Button className="outline-none">
+            <PencilSquareIcon className="text-gray-400 hover:text-gray-500 ml-[10px] text-[16px] w-[24px]" />
+          </Menu.Button>
+          <Transition
+            as={Fragment}
+            enter="transition ease-out duration-100"
+            enterFrom="transform opacity-0 scale-95"
+            enterTo="transform opacity-100 scale-100"
+            leave="transition ease-in duration-75"
+            leaveFrom="transform opacity-100 scale-100"
+            leaveTo="transform opacity-0 scale-95"
+          >
+            <Menu.Items className="absolute outline-none w-auto flex flex-col bg-gray-50 shadow-md rounded-[8px] border-[1px] border-gray-200 items-center right-1/2 top-full z-[1000]">
+              {[
+                <Link
+                  className="!no-underline"
+                  href={`templates/sms/${row.name}`}
+                >
+                  <div className="w-full">Edit</div>
+                </Link>,
+                <button
+                  onClick={async () => {
+                    await ApiService.post({
+                      url: `/templates/${row.name}/duplicate`,
+                      options: {},
+                    });
+                    window.location.reload();
+                  }}
+                >
+                  Duplicate
+                </button>,
+                ...(row.isDeleted
+                  ? []
+                  : [
+                      <button
+                        className="w-full text-center cursor-pointer outline-none text-red-500"
+                        onClick={() => {
+                          if (row?.id) setTemplateToDelete(row.id as string);
+                        }}
+                        data-delete-button
+                      >
+                        Delete
+                      </button>,
+                    ]),
+              ].map((el, i) => (
+                <Menu.Item>
+                  <div
+                    key={i}
+                    className="w-full text-center hover:bg-gray-200 transition-all px-[6px] py-[4px] border-b-[1px] border-b-gray-200"
+                  >
+                    {el}
+                  </div>
+                </Menu.Item>
+              ))}
+            </Menu.Items>
+          </Transition>
+        </Menu>
+      ) : (
         <Link href={`templates/sms/${row.name}`}>
           {isButton ? <div>Edit</div> : row.name}
         </Link>
@@ -561,6 +637,19 @@ export default function TableTemplate<T extends TableDataItem>({
                 >
                   Duplicate
                 </button>,
+                ...(row.isDeleted
+                  ? []
+                  : [
+                      <button
+                        className="w-full text-center cursor-pointer outline-none text-red-500"
+                        onClick={() => {
+                          if (row?.id) setTemplateToDelete(row.id as string);
+                        }}
+                        data-delete-button
+                      >
+                        Delete
+                      </button>,
+                    ]),
               ].map((el, i) => (
                 <Menu.Item>
                   <div
@@ -677,9 +766,9 @@ export default function TableTemplate<T extends TableDataItem>({
       {/*<div className="mt-8 flex flex-col">*/}
       <div className="relative mb-[15px] mt-[10px] flex items-center justify-between">
         <div>
-          {setIsShowDisabled && (
+          {setIsShowDisabled && showDeletedToggle && (
             <div className="flex items-center justify-center gap-[10px]">
-              Show deleted journey's:
+              Show deleted:
               <ToggleSwitch
                 checked={isShowDisabled}
                 onChange={() => setIsShowDisabled(!isShowDisabled)}
@@ -800,7 +889,7 @@ export default function TableTemplate<T extends TableDataItem>({
                 <span
                   className={`${
                     isSelected
-                      ? "bg-[linear-gradient(96.63deg,_#6BCDB5_10.79%,_#307179_67.24%,_#122F5C_87.43%)] !bg-clip-text text-transparent"
+                      ? "bg-cyan-500 !bg-clip-text text-transparent"
                       : ""
                   }  font-[Poppins] font-medium text-[14px] leading-[26px]`}
                 >
@@ -809,7 +898,7 @@ export default function TableTemplate<T extends TableDataItem>({
                 <div
                   className={`${
                     !isSelected && "opacity-0"
-                  } transition-all absolute top-[-1px] h-[2px] left-0 w-full bg-[linear-gradient(96.63deg,_#6BCDB5_10.79%,_#307179_67.24%,_#122F5C_87.43%)]`}
+                  } transition-all absolute top-[-1px] h-[2px] left-0 w-full bg-cyan-500`}
                 />
               </div>
             );

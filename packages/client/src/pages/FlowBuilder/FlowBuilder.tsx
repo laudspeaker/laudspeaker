@@ -690,6 +690,7 @@ const Flow = () => {
               selectedNode={selectedNode}
               onClick={performAction}
               flowName={flowName}
+              handleFlowName={(e) => setFlowName(e.target.value)}
               afterMenuContent={
                 <div className="w-full">
                   <GenericButton

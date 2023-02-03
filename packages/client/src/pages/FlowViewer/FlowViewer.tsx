@@ -220,8 +220,11 @@ const Flow = () => {
     setSelectedNode("");
   }, []);
 
+  const [isGrabbing, setIsGrabbing] = useState(false);
+
   const rfStyle = {
     backgroundColor: "rgba(112,112,112, 0.06)",
+    cursor: isGrabbing ? "grabbing" : "grab",
   };
 
   const nodeTypes = useMemo(() => ({ special: ViewNode }), []);
@@ -253,6 +256,8 @@ const Flow = () => {
         zoomOnPinch={false}
         defaultZoom={1}
         zoomOnDoubleClick={false}
+        onMoveStart={() => setIsGrabbing(true)}
+        onMoveEnd={() => setIsGrabbing(false)}
       >
         <div
           style={{

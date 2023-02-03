@@ -7,9 +7,8 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { Account } from '../accounts/entities/accounts.entity';
-import { CustomersService } from '../customers/customers.service';
 import { CustomerDocument } from '../customers/schemas/customer.schema';
 import { CreateTemplateDto } from './dto/create-template.dto';
 import { UpdateTemplateDto } from './dto/update-template.dto';
@@ -20,6 +19,8 @@ import { Installation } from '../slack/entities/installation.entity';
 import { SlackService } from '../slack/slack.service';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { EventDto } from '../events/dto/event.dto';
+import { AudiencesService } from '../audiences/audiences.service';
+import { Audience } from '../audiences/entities/audience.entity';
 
 @Injectable()
 export class TemplatesService {
@@ -28,7 +29,8 @@ export class TemplatesService {
     private readonly logger: LoggerService,
     @InjectRepository(Template)
     public templatesRepository: Repository<Template>,
-    @Inject(CustomersService) private customersService: CustomersService,
+    @InjectRepository(Audience)
+    private audiencesRepository: Repository<Audience>,
     @Inject(SlackService) private slackService: SlackService,
     @InjectQueue('email') private readonly emailQueue: Queue,
     @InjectQueue('slack') private readonly slackQueue: Queue,
@@ -177,7 +179,8 @@ export class TemplatesService {
     take = 100,
     skip = 0,
     orderBy?: keyof Template,
-    orderType?: 'asc' | 'desc'
+    orderType?: 'asc' | 'desc',
+    showDeleted?: boolean
   ): Promise<{ data: Template[]; totalPages: number }> {
     const totalPages = Math.ceil(
       (await this.templatesRepository.count({
@@ -189,7 +192,10 @@ export class TemplatesService {
       orderOptions[orderBy] = orderType;
     }
     const templates = await this.templatesRepository.find({
-      where: { owner: { id: account.id } },
+      where: {
+        owner: { id: account.id },
+        isDeleted: In([!!showDeleted, false]),
+      },
       order: orderOptions,
       take: take < 100 ? take : 100,
       skip,
@@ -200,7 +206,7 @@ export class TemplatesService {
   findOne(account: Account, name: string): Promise<Template> {
     return this.templatesRepository.findOneBy({
       owner: { id: account.id },
-      name: name,
+      name,
     });
   }
 
@@ -228,18 +234,28 @@ export class TemplatesService {
     );
   }
 
-  async remove(account: Account, name: string): Promise<void> {
-    await this.templatesRepository.delete({
-      owner: { id: (<Account>account).id },
-      name,
-    });
+  async remove(account: Account, id: string): Promise<void> {
+    await this.templatesRepository.update(
+      {
+        owner: { id: (<Account>account).id },
+        id,
+      },
+      { isDeleted: true }
+    );
   }
 
   async duplicate(account: Account, name: string) {
-    const foundTemplate = await this.findOne(account, name);
+    const foundTemplate = await this.templatesRepository.findOne({
+      where: {
+        owner: { id: account.id },
+        name,
+      },
+      relations: ['owner'],
+    });
     if (!foundTemplate) throw new NotFoundException('Template not found');
 
-    const { owner, slackMessage, style, subject, text, type } = foundTemplate;
+    const { owner, slackMessage, style, subject, text, type, smsText } =
+      foundTemplate;
 
     const ownerId = owner.id;
 
@@ -262,12 +278,38 @@ export class TemplatesService {
 
     await this.templatesRepository.save({
       name: newName,
-      ownerId,
+      owner: { id: ownerId },
       slackMessage,
       style,
       subject,
       text,
       type,
+      smsText,
     });
+  }
+
+  async findUsedInJourneys(account: Account, id: string) {
+    const template = await this.templatesRepository.findOneBy({
+      id,
+      owner: { id: account.id },
+    });
+    if (!template) throw new NotFoundException('Template not found');
+
+    const data = await this.audiencesRepository
+      .createQueryBuilder('audience')
+      .select(`DISTINCT(workflow."name")`)
+      .leftJoin(
+        'audience_templates_template',
+        'audience_templates_template',
+        'audience_templates_template."audienceId" = audience.id'
+      )
+      .leftJoin('workflow', 'workflow', 'workflow.id = audience."workflowId"')
+      .where(
+        `workflow."isDeleted" = false AND audience."ownerId" = :ownerId AND audience_templates_template."templateId" = :templateId`,
+        { ownerId: account.id, templateId: template.id }
+      )
+      .execute();
+
+    return data.map((item) => item.name);
   }
 }
