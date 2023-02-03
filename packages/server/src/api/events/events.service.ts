@@ -35,6 +35,7 @@ import {
 } from './schemas/posthog-event-type.schema';
 import { WorkflowTick } from '../workflows/interfaces/workflow-tick.interface';
 import { DataSource } from 'typeorm';
+import posthogEventMappings from '@/fixtures/posthogEventMappings';
 
 @Injectable()
 export class EventsService {
@@ -64,6 +65,15 @@ export class EventsService {
         this.EventKeysModel.updateOne(
           { key: name },
           { key: name, type: property_type, providerSpecific: 'posthog' },
+          { upsert: true }
+        ).exec();
+      }
+    }
+    for (const { name, displayName, type, event } of posthogEventMappings) {
+      if (name && displayName && type && event) {
+        this.PosthogEventTypeModel.updateOne(
+          { name: name },
+          { name: name, displayName: displayName, type: type, event: event },
           { upsert: true }
         ).exec();
       }
@@ -137,7 +147,11 @@ export class EventsService {
         if (
           currentEvent.type === 'track' &&
           currentEvent.event &&
-          currentEvent.event !== 'clicked'
+          currentEvent.event !== 'change' &&
+          currentEvent.event !== 'click' &&
+          currentEvent.event !== 'submit' &&
+          currentEvent.event !== '$pageleave' &&
+          currentEvent.event !== '$rageclick'
         ) {
           const found = await this.PosthogEventTypeModel.findOne({
             name: currentEvent.event,
@@ -148,6 +162,9 @@ export class EventsService {
             await this.PosthogEventTypeModel.create(
               {
                 name: currentEvent.event,
+                type: currentEvent.type,
+                displayName: currentEvent.event,
+                event: currentEvent.event,
               },
               { session: transactionSession }
             );
@@ -353,6 +370,6 @@ export class EventsService {
     })
       .limit(10)
       .exec();
-    return types.map((type) => type.name);
+    return types.map((type) => type.displayName);
   }
 }

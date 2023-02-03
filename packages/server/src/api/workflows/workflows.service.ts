@@ -705,20 +705,26 @@ export class WorkflowsService {
             event.source === ProviderTypes.Posthog &&
             trigger.providerType === ProviderTypes.Posthog &&
             !(
-              //for autocapture
-              (
-                (event.payload.type === PosthogTriggerParams.Track &&
-                  event.payload.event === 'click' &&
-                  trigger.providerParams ===
-                    PosthogTriggerParams.Autocapture) ||
-                // for page
-                (event.payload.type === PosthogTriggerParams.Page &&
-                  trigger.providerParams === PosthogTriggerParams.Page) ||
-                // for custom
-                (event.payload.type === PosthogTriggerParams.Track &&
-                  event.payload.event !== 'click' &&
-                  event.payload.event === trigger.providerParams)
-              )
+              (event.payload.type === PosthogTriggerParams.Track &&
+                event.payload.event === 'change' &&
+                trigger.providerParams === PosthogTriggerParams.Typed) ||
+              (event.payload.type === PosthogTriggerParams.Track &&
+                event.payload.event === 'click' &&
+                trigger.providerParams === PosthogTriggerParams.Autocapture) ||
+              (event.payload.type === PosthogTriggerParams.Track &&
+                event.payload.event === 'submit' &&
+                trigger.providerParams === PosthogTriggerParams.Submit) ||
+              (event.payload.type === PosthogTriggerParams.Track &&
+                event.payload.event === '$pageleave' &&
+                trigger.providerParams === PosthogTriggerParams.Pageleave) ||
+              (event.payload.type === PosthogTriggerParams.Track &&
+                event.payload.event === '$rageclick' &&
+                trigger.providerParams === PosthogTriggerParams.Rageclick) ||
+              (event.payload.type === PosthogTriggerParams.Page &&
+                event.payload.event === '$pageview' &&
+                trigger.providerParams === PosthogTriggerParams.Pageview) ||
+              (event.payload.type === PosthogTriggerParams.Track &&
+                event.payload.event === trigger.providerParams)
             )
           ) {
             continue;
