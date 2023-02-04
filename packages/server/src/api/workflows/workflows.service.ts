@@ -70,7 +70,7 @@ export class WorkflowsService {
     @InjectQueue(JobTypes.events)
     private readonly eventsQueue: Queue,
     @InjectConnection() private readonly connection: mongoose.Connection
-  ) {}
+  ) { }
 
   /**
    * Finds all workflows
@@ -773,23 +773,41 @@ export class WorkflowsService {
                   );
                   if (conditions && conditions.length > 0) {
                     const compareResults = conditions.map((condition) => {
-                      this.logger.debug(
-                        `Comparing: ${event?.event?.[condition.key] || ''} ${
-                          condition.comparisonType || ''
-                        } ${condition.value || ''}`
-                      );
-                      return ['exists', 'doesNotExist'].includes(
-                        condition.comparisonType
-                      )
-                        ? operableCompare(
+                      if (condition.key == 'current_url' && trigger.providerType == ProviderTypes.Posthog && trigger.providerParams === PosthogTriggerParams.Pageview) {
+                        this.logger.debug(
+                          `Comparing: ${event?.event?.page?.url || ''} ${condition.comparisonType || ''
+                          } ${condition.value || ''}`
+                        );
+                        return ['exists', 'doesNotExist'].includes(
+                          condition.comparisonType
+                        )
+                          ? operableCompare(
+                            event?.event?.page?.url,
+                            condition.comparisonType
+                          )
+                          : conditionalCompare(
+                            event?.event?.page?.url,
+                            condition.value,
+                            condition.comparisonType
+                          );
+                      } else {
+                        this.logger.debug(
+                          `Comparing: ${event?.event?.[condition.key] || ''} ${condition.comparisonType || ''
+                          } ${condition.value || ''}`
+                        );
+                        return ['exists', 'doesNotExist'].includes(
+                          condition.comparisonType
+                        )
+                          ? operableCompare(
                             event?.event?.[condition.key],
                             condition.comparisonType
                           )
-                        : conditionalCompare(
+                          : conditionalCompare(
                             event?.event?.[condition.key],
                             condition.value,
                             condition.comparisonType
                           );
+                      }
                     });
                     this.logger.debug(
                       'Compare result: ' + JSON.stringify(compareResults)
@@ -827,12 +845,12 @@ export class WorkflowsService {
                           workflow.id
                         );
                       this.logger.debug(
-                        'Moving ' +
-                          customer?.id +
-                          ' out of ' +
-                          from?.id +
-                          ' and into ' +
-                          to?.id
+                        'Moved ' +
+                        customer?.id +
+                        ' out of ' +
+                        from?.id +
+                        ' and into ' +
+                        to?.id
                       );
                       jobId.jobIds = jobIdArr;
                       jobId.templates = templates;
@@ -913,8 +931,8 @@ export class WorkflowsService {
               ...item,
               executionTime: new Date(
                 new Date().getTime() -
-                  found.latestPause.getTime() +
-                  item.executionTime.getTime()
+                found.latestPause.getTime() +
+                item.executionTime.getTime()
               ),
             }))
           );
