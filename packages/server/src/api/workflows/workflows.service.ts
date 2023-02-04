@@ -71,7 +71,7 @@ export class WorkflowsService {
     @InjectQueue(JobTypes.events)
     private readonly eventsQueue: Queue,
     @InjectConnection() private readonly connection: mongoose.Connection
-  ) {}
+  ) { }
 
   /**
    * Finds all workflows
@@ -792,18 +792,17 @@ export class WorkflowsService {
                           condition.comparisonType
                         )
                           ? operableCompare(
-                              event?.event?.page?.url,
-                              condition.comparisonType
-                            )
+                            event?.event?.page?.url,
+                            condition.comparisonType
+                          )
                           : conditionalCompare(
-                              event?.event?.page?.url,
-                              condition.value,
-                              condition.comparisonType
-                            );
+                            event?.event?.page?.url,
+                            condition.value,
+                            condition.comparisonType
+                          );
                       } else {
                         this.logger.debug(
-                          `Comparing: ${event?.event?.[condition.key] || ''} ${
-                            condition.comparisonType || ''
+                          `Comparing: ${event?.event?.[condition.key] || ''} ${condition.comparisonType || ''
                           } ${condition.value || ''}`
                         );
                         return ['exists', 'doesNotExist'].includes(
@@ -942,8 +941,8 @@ export class WorkflowsService {
               ...item,
               executionTime: new Date(
                 new Date().getTime() -
-                  found.latestPause.getTime() +
-                  item.executionTime.getTime()
+                found.latestPause.getTime() +
+                item.executionTime.getTime()
               ),
             }))
           );
