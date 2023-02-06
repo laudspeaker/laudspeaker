@@ -5,7 +5,6 @@
 import credentials from "../fixtures/credentials";
 import createNewSegment from "../test-helpers/createNewSegment";
 import { loginFunc } from "../test-helpers/loginFunc";
-import runEmailJourney from "../test-helpers/runEmailJourney";
 import setupDelayTrigger from "../test-helpers/setupDelayTrigger";
 import setupEventTrigger from "../test-helpers/setupEventTrigger";
 import { templatesFunc } from "../test-helpers/templatesFunc";

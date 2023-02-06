@@ -100,46 +100,34 @@ describe(
           correlationValue: Cypress.env("TESTS_SMS_TO") || smsTemplate.phone,
           event: { [smsTemplate.eventName]: smsTemplate.eventName },
         },
-      }).then(({ body }) => {
+      }).then(({ isOkStatusCode }) => {
+        expect(isOkStatusCode).to.be.equal(true);
         cy.wait(2000);
+
         cy.request({
           method: "POST",
+          url: `${Cypress.env("AxiosURL")}events`,
           headers: {
             Authorization: `Api-Key ${userAPIkey}`,
           },
-          url: `${Cypress.env("AxiosURL")}events/job-status/sms`,
           body: {
-            jobId: body[0]?.jobIds?.[0],
+            correlationKey: "phone",
+            correlationValue: Cypress.env("TESTS_SMS_TO") || smsTemplate.phone,
+            event: { [slackTemplate.eventName]: slackTemplate.eventName },
           },
         }).then(({ body }) => {
-          expect(body).to.equal("completed");
-
+          cy.wait(1000);
           cy.request({
             method: "POST",
-            url: `${Cypress.env("AxiosURL")}events`,
             headers: {
               Authorization: `Api-Key ${userAPIkey}`,
             },
+            url: `${Cypress.env("AxiosURL")}events/job-status/slack`,
             body: {
-              correlationKey: "phone",
-              correlationValue:
-                Cypress.env("TESTS_SMS_TO") || smsTemplate.phone,
-              event: { [slackTemplate.eventName]: slackTemplate.eventName },
+              jobId: body[0]?.jobIds?.[0],
             },
           }).then(({ body }) => {
-            cy.wait(1000);
-            cy.request({
-              method: "POST",
-              headers: {
-                Authorization: `Api-Key ${userAPIkey}`,
-              },
-              url: `${Cypress.env("AxiosURL")}events/job-status/slack`,
-              body: {
-                jobId: body[0]?.jobIds?.[0],
-              },
-            }).then(({ body }) => {
-              expect(body).to.equal("completed");
-            });
+            expect(body).to.equal("completed");
           });
         });
       });

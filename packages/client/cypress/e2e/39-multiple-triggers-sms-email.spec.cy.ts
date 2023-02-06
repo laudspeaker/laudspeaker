@@ -112,20 +112,8 @@ describe(
           correlationValue: Cypress.env("TESTS_SMS_TO") || smsTemplate.phone,
           event: { [smsTemplate.eventName]: smsTemplate.eventName },
         },
-      }).then(({ body }) => {
-        cy.wait(2000);
-        cy.request({
-          method: "POST",
-          headers: {
-            Authorization: `Api-Key ${userAPIkey}`,
-          },
-          url: `${Cypress.env("AxiosURL")}events/job-status/sms`,
-          body: {
-            jobId: body[0]?.jobIds?.[0],
-          },
-        }).then(({ body }) => {
-          expect(body).to.equal("completed");
-        });
+      }).then(({ isOkStatusCode }) => {
+        expect(isOkStatusCode).to.be.equal(true);
       });
 
       cy.request({

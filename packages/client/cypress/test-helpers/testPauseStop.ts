@@ -102,6 +102,7 @@ export default (type: PauseStopTestType = PauseStopTestType.email) => {
   cy.wait(5000);
   cy.contains("Pause").click();
   cy.wait(5000);
+
   cy.request({
     method: "POST",
     url: `${Cypress.env("AxiosURL")}events`,

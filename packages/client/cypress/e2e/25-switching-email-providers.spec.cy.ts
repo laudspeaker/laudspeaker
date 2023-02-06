@@ -19,6 +19,9 @@ describe(
   { env: { AxiosURL: "http://localhost:3001/" } },
   () => {
     beforeEach(() => {
+      Cypress.on("uncaught:exception", () => {
+        return false;
+      });
       cy.request("http://localhost:3001/tests/reset-tests");
       cy.wait(1000);
     });

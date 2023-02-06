@@ -217,7 +217,7 @@ export class TemplatesService {
         }
         break;
     }
-    return Promise.resolve(message ? message.sid : job.id);
+    return Promise.resolve(message ? message?.sid : job?.id);
   }
 
   async findAll(
