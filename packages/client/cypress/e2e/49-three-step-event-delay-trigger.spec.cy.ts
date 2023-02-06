@@ -4,14 +4,15 @@
 import credentials from "../fixtures/credentials";
 import createNewSegment from "../test-helpers/createNewSegment";
 import { loginFunc } from "../test-helpers/loginFunc";
+import setupDelayTrigger from "../test-helpers/setupDelayTrigger";
 import setupEventTrigger from "../test-helpers/setupEventTrigger";
 import { templatesFunc } from "../test-helpers/templatesFunc";
 
-const { email, password, emailTemplate, smsTemplate, userAPIkey } =
+const { email, password, emailTemplate, userAPIkey } =
   credentials.MessageHitUser;
 
 describe(
-  "Journey with three steps",
+  "Journey with three steps with event and delay trigger",
   { env: { AxiosURL: "http://localhost:3001/" } },
   () => {
     beforeEach(() => {
@@ -39,13 +40,8 @@ describe(
         deltaX: 100,
         deltaY: 300,
       });
-      cy.get('[data-isprimary]:not([data-isprimary="true"])').click();
-      cy.get("#sms > .p-0 > .justify-between").click();
-      cy.get("#activeJourney").click();
-      cy.contains(smsTemplate.name).click();
-      cy.get("#exportSelectedTemplate").click();
       cy.get('[data-isprimary="true"]').click();
-      setupEventTrigger(smsTemplate.eventName, smsTemplate.eventName);
+      setupEventTrigger(emailTemplate.eventName, emailTemplate.eventName);
       cy.get(
         '[style="display: flex; height: 22px; position: absolute; left: 0px; bottom: 0px; align-items: center; width: 100%; justify-content: space-around;"] > .react-flow__handle'
       ).drag('[data-isprimary]:not([data-isprimary="true"])', {
@@ -65,7 +61,7 @@ describe(
       cy.get("#exportSelectedTemplate").click();
 
       cy.contains("Second").click();
-      setupEventTrigger(emailTemplate.eventName, emailTemplate.eventName);
+      setupDelayTrigger();
       cy.get(
         '.text-updater-node:not([data-isprimary="true"]) > [style="display: flex; height: 22px; position: absolute; left: 0px; bottom: 0px; align-items: center; width: 100%; justify-content: space-around;"] > .react-flow__handle'
       ).drag('[data-isprimary]:not([data-isprimary="true"])', { force: true });
@@ -87,52 +83,27 @@ describe(
           Authorization: `Api-Key ${userAPIkey}`,
         },
         body: {
-          correlationKey: "phone",
-          correlationValue: Cypress.env("TESTS_SMS_TO") || smsTemplate.phone,
-          event: { [smsTemplate.eventName]: smsTemplate.eventName },
+          correlationKey: "email",
+          correlationValue: emailTemplate.correlationValue,
+          event: { [emailTemplate.eventName]: emailTemplate.eventName },
         },
-      }).then(({ body }) => {
-        cy.wait(2000);
-        cy.request({
-          method: "POST",
-          headers: {
-            Authorization: `Api-Key ${userAPIkey}`,
-          },
-          url: `${Cypress.env("AxiosURL")}events/job-status/sms`,
-          body: {
-            jobId: body[0]?.jobIds?.[0],
-          },
-        }).then(({ body }) => {
-          expect(body).to.equal("completed");
-
-          cy.request({
-            method: "POST",
-            url: `${Cypress.env("AxiosURL")}events`,
-            headers: {
-              Authorization: `Api-Key ${userAPIkey}`,
-            },
-            body: {
-              correlationKey: "phone",
-              correlationValue:
-                Cypress.env("TESTS_SMS_TO") || smsTemplate.phone,
-              event: { [emailTemplate.eventName]: emailTemplate.eventName },
-            },
-          }).then(({ body }) => {
-            cy.wait(1000);
-            cy.request({
-              method: "POST",
-              headers: {
-                Authorization: `Api-Key ${userAPIkey}`,
-              },
-              url: `${Cypress.env("AxiosURL")}events/job-status/email`,
-              body: {
-                jobId: body[0]?.jobIds?.[0],
-              },
-            }).then(({ body }) => {
-              expect(body).to.equal("completed");
+      }).then(() => {
+        cy.request(`${Cypress.env("AxiosURL")}tests/test-customer-id`).then(
+          ({ body: id }) => {
+            cy.wait(5000);
+            cy.request(
+              `${Cypress.env("AxiosURL")}tests/audience-by-customer/${id}`
+            ).then(({ body: { name } }) => {
+              expect(name).to.equal("Second");
             });
-          });
-        });
+            cy.wait(80000);
+            cy.request(
+              `${Cypress.env("AxiosURL")}tests/audience-by-customer/${id}`
+            ).then(({ body: { name } }) => {
+              expect(name).to.equal("Step 3");
+            });
+          }
+        );
       });
     });
   }
