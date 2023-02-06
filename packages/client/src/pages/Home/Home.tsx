@@ -1,9 +1,21 @@
 import Header from "components/Header";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import ApiService from "services/api.service";
+import Account from "types/Account";
 
 const Home = () => {
   const navigate = useNavigate();
+
+  const [firstName, setFirstName] = useState("");
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await ApiService.get<Account>({ url: "/accounts" });
+
+      setFirstName(data?.firstName || "");
+    })();
+  }, []);
 
   return (
     <div>
@@ -15,7 +27,7 @@ const Home = () => {
               <div className="pt-10 pb-16">
                 <div className="px-4 sm:px-6 md:px-0">
                   <h1 className="text-3xl font-bold tracking-tight text-gray-900">
-                    Welcome home
+                    Welcome Home {firstName}
                   </h1>
                 </div>
                 <div className="px-4 sm:px-6 md:px-0">
