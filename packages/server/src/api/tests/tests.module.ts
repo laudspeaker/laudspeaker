@@ -29,9 +29,9 @@ import { TestsService } from './tests.service';
     TypeOrmModule.forFeature([
       Account,
       Audience,
-      Workflow,
-      Template,
       Installation,
+      Template,
+      Workflow,
     ]),
     MongooseModule.forFeature([
       { name: Customer.name, schema: CustomerSchema },
@@ -49,4 +49,4 @@ import { TestsService } from './tests.service';
   controllers: [TestsController],
   providers: [TestsService],
 })
-export class TestsModule {}
+export class TestsModule { }

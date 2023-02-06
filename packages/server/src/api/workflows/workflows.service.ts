@@ -18,6 +18,7 @@ import {
   TriggerType,
   Workflow,
 } from './entities/workflow.entity';
+import errors from '@/shared/utils/errors';
 import { Audience } from '../audiences/entities/audience.entity';
 import { CustomersService } from '../customers/customers.service';
 import { CustomerDocument } from '../customers/schemas/customer.schema';
@@ -38,13 +39,12 @@ import {
   operableCompare,
 } from '../audiences/audiences.helper';
 import { Segment } from '../segments/entities/segment.entity';
-import { AppDataSource } from '@/data-source';
 import { Template } from '../templates/entities/template.entity';
 import { InjectQueue } from '@nestjs/bull';
 import { JobTypes } from '../events/interfaces/event.interface';
 import { Queue } from 'bull';
 import { BadRequestException } from '@nestjs/common/exceptions';
-import { Job } from '../jobs/entities/job.entity';
+import { Job, TimeJobType } from '../jobs/entities/job.entity';
 
 @Injectable()
 export class WorkflowsService {
@@ -55,6 +55,7 @@ export class WorkflowsService {
   });
 
   constructor(
+    private dataSource: DataSource,
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
     private readonly logger: LoggerService,
     @InjectRepository(Workflow)
@@ -66,11 +67,10 @@ export class WorkflowsService {
     @Inject(CustomersService) private customersService: CustomersService,
     @InjectModel(EventKeys.name)
     private EventKeysModel: Model<EventKeysDocument>,
-    private dataSource: DataSource,
     @InjectQueue(JobTypes.events)
     private readonly eventsQueue: Queue,
     @InjectConnection() private readonly connection: mongoose.Connection
-  ) {}
+  ) { }
 
   /**
    * Finds all workflows
@@ -86,28 +86,35 @@ export class WorkflowsService {
     orderType?: 'asc' | 'desc',
     showDisabled?: boolean
   ): Promise<{ data: Workflow[]; totalPages: number }> {
-    const totalPages = Math.ceil(
-      (await this.workflowsRepository.count({
+    try {
+      const totalPages = Math.ceil(
+        (await this.workflowsRepository.count({
+          where: {
+            owner: { id: account.id },
+            isDeleted: In([!!showDisabled, false]),
+          },
+        })) / take || 1
+      );
+      const orderOptions = {};
+      if (orderBy && orderType) {
+        orderOptions[orderBy] = orderType;
+      }
+      const workflows = await this.workflowsRepository.find({
         where: {
           owner: { id: account.id },
           isDeleted: In([!!showDisabled, false]),
         },
-      })) / take || 1
-    );
-    const orderOptions = {};
-    if (orderBy && orderType) {
-      orderOptions[orderBy] = orderType;
+        order: orderOptions,
+        take: take < 100 ? take : 100,
+        skip,
+      });
+      return { data: workflows, totalPages };
+    } catch (err) {
+      this.logger.error(
+        `workflows.service.ts:WorkflowsService.findAll: Error: ${err}`
+      );
+      return Promise.reject(err);
     }
-    const workflows = await this.workflowsRepository.find({
-      where: {
-        owner: { id: account.id },
-        isDeleted: In([!!showDisabled, false]),
-      },
-      order: orderOptions,
-      take: take < 100 ? take : 100,
-      skip,
-    });
-    return { data: workflows, totalPages };
   }
 
   /**
@@ -180,7 +187,9 @@ export class WorkflowsService {
         relations: ['segment'],
       });
     } catch (err) {
-      this.logger.error('Error: ' + err);
+      this.logger.error(
+        `workflows.service.ts:WorkflowsService.findOne: Error: ${err}`
+      );
       return Promise.reject(err);
     }
 
@@ -197,7 +206,9 @@ export class WorkflowsService {
         );
       }
     } catch (e: any) {
-      console.error(e);
+      this.logger.error(
+        `workflows.service.ts:WorkflowsService.findOne: Error: ${e}`
+      );
     }
 
     this.logger.debug('Found workflow: ' + found?.id);
@@ -214,7 +225,9 @@ export class WorkflowsService {
       });
       this.logger.debug('Created workflow: ' + ret?.id);
     } catch (err) {
-      this.logger.error('Error: ' + err);
+      this.logger.error(
+        `workflows.service.ts:WorkflowsService.findOne: Error: ${err}`
+      );
       return Promise.reject(err);
     }
     return Promise.resolve(ret); //await this.workflowsRepository.save(workflow)
@@ -233,7 +246,7 @@ export class WorkflowsService {
   async update(
     account: Account,
     updateWorkflowDto: UpdateWorkflowDto,
-    queryRunner = AppDataSource.createQueryRunner()
+    queryRunner = this.dataSource.createQueryRunner()
   ): Promise<void> {
     const alreadyInsideTransaction = queryRunner.isTransactionActive;
     if (!alreadyInsideTransaction) {
@@ -323,6 +336,9 @@ export class WorkflowsService {
 
       if (!alreadyInsideTransaction) await queryRunner.commitTransaction();
     } catch (e) {
+      this.logger.error(
+        `workflows.service.ts:WorkflowsService.update: Error: ${e}`
+      );
       if (!alreadyInsideTransaction) await queryRunner.rollbackTransaction();
     } finally {
       if (!alreadyInsideTransaction) await queryRunner.release();
@@ -361,7 +377,7 @@ export class WorkflowsService {
       relations: ['workflow', 'owner'],
     });
 
-    const queryRunner = AppDataSource.createQueryRunner();
+    const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
     try {
@@ -411,6 +427,9 @@ export class WorkflowsService {
 
       await queryRunner.commitTransaction();
     } catch (e) {
+      this.logger.error(
+        `workflows.service.ts:WorkflowsService.duplicate: Error: ${e}`
+      );
       await queryRunner.rollbackTransaction();
       throw e;
     } finally {
@@ -434,18 +453,105 @@ export class WorkflowsService {
     account: Account,
     workflowID: string
   ): Promise<(string | number)[]> {
-    const job = await this.eventsQueue.add('start', {
-      accountId: account.id,
-      workflowID,
-    });
+    let workflow: Workflow; // Workflow to update
+    let customers: CustomerDocument[]; // Customers to add to primary audience
+    let jobIDs: (string | number)[] = [];
+
+    const transactionSession = await this.connection.startSession();
+    await transactionSession.startTransaction();
+    const queryRunner = await this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
 
     try {
-      const data = await job.finished();
-      return data;
-    } catch (e) {
-      if (e instanceof Error)
-        throw new HttpException(e.message, HttpStatus.BAD_REQUEST);
+      if (!account) throw new HttpException('User not found', 404);
+
+      workflow = await queryRunner.manager.findOne(Workflow, {
+        where: {
+          owner: { id: account?.id },
+          id: workflowID,
+        },
+        relations: ['segment'],
+      });
+      if (!workflow) {
+        this.logger.debug('Workflow does not exist');
+        return Promise.reject(errors.ERROR_DOES_NOT_EXIST);
+      }
+
+      if (workflow.isActive) {
+        this.logger.debug('Workflow already active');
+        return Promise.reject(new Error('Workflow already active'));
+      }
+      if (workflow?.isStopped)
+        return Promise.reject(
+          new Error('The workflow has already been stopped')
+        );
+      if (!workflow?.segment)
+        return Promise.reject(
+          new Error('To start workflow segment should be defined')
+        );
+
+      const audiences = await queryRunner.manager.findBy(Audience, {
+        workflow: { id: workflow.id },
+      });
+
+      for (let audience of audiences) {
+        audience = await this.audiencesService.freeze(
+          account,
+          audience.id,
+          queryRunner
+        );
+        this.logger.debug('Freezing audience ' + audience?.id);
+
+        if (audience.isPrimary) {
+          customers = await this.customersService.findByInclusionCriteria(
+            account,
+            workflow.segment.inclusionCriteria,
+            transactionSession
+          );
+          this.logger.debug(
+            'Customers to include in workflow: ' + customers.length
+          );
+
+          jobIDs = await this.audiencesService.moveCustomers(
+            account,
+            null,
+            audience,
+            customers,
+            null,
+            queryRunner,
+            workflow.rules,
+            workflow.id
+          );
+          this.logger.debug('Finished moving customers into workflow');
+
+          await queryRunner.manager.save(Workflow, {
+            ...workflow,
+            isActive: true,
+          });
+          this.logger.debug('Started workflow ' + workflow?.id);
+        }
+      }
+
+      const segment = await queryRunner.manager.findOneBy(Segment, {
+        id: workflow.segment.id,
+      });
+      await queryRunner.manager.save(Segment, { ...segment, isFreezed: true });
+
+      await transactionSession.commitTransaction();
+      await queryRunner.commitTransaction();
+    } catch (err) {
+      await transactionSession.abortTransaction();
+      await queryRunner.rollbackTransaction();
+      this.logger.error('Error: ' + err);
+      throw err;
+    } finally {
+      await transactionSession.endSession();
+      await queryRunner.release();
     }
+
+    return Promise.resolve(jobIDs);
+
   }
 
   /**
@@ -511,7 +617,9 @@ export class WorkflowsService {
         }
       }
     } catch (err) {
-      this.logger.error('Error: ' + err);
+      this.logger.error(
+        `workflows.service.ts:WorkflowsService.enrollCustomer: Error: ${err}`
+      );
       return Promise.reject(err);
     }
   }
@@ -603,7 +711,7 @@ export class WorkflowsService {
                 (event.payload.type === PosthogTriggerParams.Track &&
                   event.payload.event === 'click' &&
                   trigger.providerParams ===
-                    PosthogTriggerParams.Autocapture) ||
+                  PosthogTriggerParams.Autocapture) ||
                 // for page
                 (event.payload.type === PosthogTriggerParams.Page &&
                   trigger.providerParams === PosthogTriggerParams.Page) ||
@@ -661,22 +769,21 @@ export class WorkflowsService {
                   if (conditions && conditions.length > 0) {
                     const compareResults = conditions.map((condition) => {
                       this.logger.debug(
-                        `Comparing: ${event?.event?.[condition.key] || ''} ${
-                          condition.comparisonType || ''
+                        `Comparing: ${event?.event?.[condition.key] || ''} ${condition.comparisonType || ''
                         } ${condition.value || ''}`
                       );
                       return ['exists', 'doesNotExist'].includes(
                         condition.comparisonType
                       )
                         ? operableCompare(
-                            event?.event?.[condition.key],
-                            condition.comparisonType
-                          )
+                          event?.event?.[condition.key],
+                          condition.comparisonType
+                        )
                         : conditionalCompare(
-                            event?.event?.[condition.key],
-                            condition.value,
-                            condition.comparisonType
-                          );
+                          event?.event?.[condition.key],
+                          condition.value,
+                          condition.comparisonType
+                        );
                     });
                     this.logger.debug(
                       'Compare result: ' + JSON.stringify(compareResults)
@@ -715,11 +822,11 @@ export class WorkflowsService {
                         );
                       this.logger.debug(
                         'Moving ' +
-                          customer?.id +
-                          ' out of ' +
-                          from?.id +
-                          ' and into ' +
-                          to?.id
+                        customer?.id +
+                        ' out of ' +
+                        from?.id +
+                        ' and into ' +
+                        to?.id
                       );
                       jobId.jobIds = jobIdArr;
                       jobId.templates = templates;
@@ -747,7 +854,9 @@ export class WorkflowsService {
         }
       }
     } catch (err) {
-      this.logger.error('Error: ' + err);
+      this.logger.error(
+        `workflows.service.ts:WorkflowsService.tick Error: ${err}`
+      );
       return Promise.reject(err);
     }
     return Promise.resolve(jobIds);
@@ -770,18 +879,58 @@ export class WorkflowsService {
     });
   }
 
-  async setPaused(account: Account, id: string, value: boolean) {
-    const found: Workflow = await this.workflowsRepository.findOneBy({
-      owner: { id: account.id },
-      id,
-    });
-    if (found?.isStopped)
-      throw new HttpException('The workflow has already been stopped', 400);
-    await this.workflowsRepository.save({
-      ...found,
-      isPaused: value,
-    });
-    return value;
+  async setPaused(
+    account: Account,
+    id: string,
+    value: boolean,
+    queryRunner = this.dataSource.createQueryRunner()
+  ) {
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const found: Workflow = await queryRunner.manager.findOneBy(Workflow, {
+        owner: { id: account.id },
+        id,
+      });
+
+      if (value) {
+        found.latestPause = new Date();
+      } else {
+        if (found.latestPause) {
+          const jobs = await queryRunner.manager.findBy(Job, {
+            workflow: { id: found.id },
+            type: TimeJobType.DELAY,
+          });
+          await queryRunner.manager.save(
+            jobs.map((item) => ({
+              ...item,
+              executionTime: new Date(
+                new Date().getTime() -
+                found.latestPause.getTime() +
+                item.executionTime.getTime()
+              ),
+            }))
+          );
+        }
+        found.latestPause = null;
+      }
+
+      if (found?.isStopped)
+        throw new HttpException('The workflow has already been stopped', 400);
+      await queryRunner.manager.save(Workflow, {
+        ...found,
+        isPaused: value,
+      });
+
+      await queryRunner.commitTransaction();
+
+      return value;
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+    } finally {
+      await queryRunner.release();
+    }
   }
 
   async setStopped(account: Account, id: string, value: boolean) {
@@ -812,15 +961,15 @@ export class WorkflowsService {
   }
 
   async timeTick(job: Job) {
-    const queryRunner = AppDataSource.createQueryRunner();
+    const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
     try {
-      const acct: Account = await queryRunner.manager.findOneBy(Account, {
-        id: job.owner,
+      const acct = await queryRunner.manager.findOneBy(Account, {
+        id: job.owner.id,
       });
       const found = await queryRunner.manager.findOne(Workflow, {
-        where: { id: job.workflow },
+        where: { id: job.workflow.id },
       });
       this.logger.debug('Found Workflow for Job: ' + found.id);
       if (found.isActive) {
@@ -832,8 +981,8 @@ export class WorkflowsService {
         this.logger.debug('Found customer for Job: ' + customer.id);
         await this.audiencesService.moveCustomer(
           acct,
-          job.from,
-          job.to,
+          job.from.id,
+          job.to.id,
           customer,
           null,
           queryRunner,

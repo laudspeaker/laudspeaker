@@ -1,7 +1,6 @@
 import * as React from "react";
 import { dataSubArray } from "./SideDrawer.fixtures";
 import { useLocation } from "react-router-dom";
-import { useParams } from "react-router-dom";
 import ApiService from "services/api.service";
 import Tooltip from "components/Elements/Tooltip";
 import { ForwardedRef, ReactNode } from "react";

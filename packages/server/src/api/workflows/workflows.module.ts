@@ -32,13 +32,13 @@ import { SlackModule } from '../slack/slack.module';
 @Module({
   imports: [
     TypeOrmModule.forFeature([
-      Workflow,
       Account,
       Audience,
-      Template,
       Installation,
-      State,
       Segment,
+      State,
+      Template,
+      Workflow,
     ]),
     MongooseModule.forFeature([
       { name: Customer.name, schema: CustomerSchema },
@@ -68,4 +68,4 @@ import { SlackModule } from '../slack/slack.module';
   providers: [WorkflowsService],
   exports: [WorkflowsService],
 })
-export class WorkflowsModule {}
+export class WorkflowsModule { }

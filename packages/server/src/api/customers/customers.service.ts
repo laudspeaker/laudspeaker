@@ -32,7 +32,8 @@ import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { createClient } from '@clickhouse/client';
 import { Workflow } from '../workflows/entities/workflow.entity';
 import { attributeConditions } from '@/fixtures/attributeConditions';
-import { AppDataSource } from '@/data-source';
+import { getType } from 'tst-reflect';
+import { isDateString, isEmail } from 'class-validator';
 
 export type Correlation = {
   cust: CustomerDocument;
@@ -43,6 +44,8 @@ const eventsMap = {
   sent: 'delivered',
   clicked: 'clicked',
 };
+
+const KEYS_TO_SKIP = ['__v', '_id', 'audiences', 'ownerId'];
 
 @Injectable()
 export class CustomersService {
@@ -64,7 +67,7 @@ export class CustomersService {
     @InjectRepository(Workflow)
     private workflowsRepository: Repository<Workflow>,
     private dataSource: DataSource
-  ) {}
+  ) { }
 
   async create(
     account: Account,
@@ -72,9 +75,9 @@ export class CustomersService {
     transactionSession?: ClientSession
   ): Promise<
     Customer &
-      mongoose.Document & {
-        _id: Types.ObjectId;
-      }
+    mongoose.Document & {
+      _id: Types.ObjectId;
+    }
   > {
     const createdCustomer = new this.CustomerModel({
       ownerId: (<Account>account).id,
@@ -82,7 +85,35 @@ export class CustomersService {
     });
     const ret = await createdCustomer.save({ session: transactionSession });
 
-    await AppDataSource.transaction(async (transactionManager) => {
+    for (const key of Object.keys(ret.toObject()).filter(
+      (item) => !KEYS_TO_SKIP.includes(item)
+    )) {
+      const value = ret[key];
+      if (value === '' || value === undefined || value === null) continue;
+
+      const keyType = getType(value);
+      const isArray = keyType.isArray();
+      let type = isArray ? getType(value[0]).name : keyType.name;
+
+      if (type === 'String') {
+        if (isEmail(value)) type = 'Email';
+        if (isDateString(value)) type = 'Date';
+      }
+
+      await this.CustomerKeysModel.updateOne(
+        { key },
+        {
+          $set: {
+            key,
+            type,
+            isArray,
+          },
+        },
+        { upsert: true }
+      ).exec();
+    }
+
+    await this.dataSource.transaction(async (transactionManager) => {
       // Already started (isEditable = false), dynamic (isDyanmic = true),push
       // Not started (isEditable = true), dynamic (isDyanmic = true), push
       const dynamicWkfs = await transactionManager.find(Workflow, {
@@ -266,10 +297,39 @@ export class CustomersService {
     delete newCustomerData.ownerId;
     delete newCustomerData._id;
     delete newCustomerData.__v;
+    delete newCustomerData.audiences;
     const customer = await this.findOne(account, id);
 
     if (customer.ownerId != account.id) {
       throw new HttpException("You can't update this customer.", 400);
+    }
+
+    for (const key of Object.keys(newCustomerData).filter(
+      (item) => !KEYS_TO_SKIP.includes(item)
+    )) {
+      const value = newCustomerData[key];
+      if (value === '' || value === undefined || value === null) continue;
+
+      const keyType = getType(value);
+      const isArray = keyType.isArray();
+      let type = isArray ? getType(value[0]).name : keyType.name;
+
+      if (type === 'String') {
+        if (isEmail(value)) type = 'Email';
+        if (isDateString(value)) type = 'Date';
+      }
+
+      await this.CustomerKeysModel.updateOne(
+        { key },
+        {
+          $set: {
+            key,
+            type,
+            isArray,
+          },
+        },
+        { upsert: true }
+      ).exec();
     }
 
     const newCustomer = Object.fromEntries(
@@ -296,10 +356,10 @@ export class CustomersService {
         (info['salient'] = person['email']
           ? person['email']
           : person['slackEmail']
-          ? person['slackEmail']
-          : person['slackRealName']
-          ? person['slackRealName']
-          : '...');
+            ? person['slackEmail']
+            : person['slackRealName']
+              ? person['slackRealName']
+              : '...');
       return info;
     });
     return { data: listInfo, totalPages };
@@ -368,9 +428,9 @@ export class CustomersService {
     customerId: string
   ): Promise<
     Customer &
-      mongoose.Document & {
-        _id: Types.ObjectId;
-      }
+    mongoose.Document & {
+      _id: Types.ObjectId;
+    }
   > {
     const found = await this.CustomerModel.findById(customerId).exec();
     if (found && found?.ownerId == (<Account>account).id) return found;
@@ -504,6 +564,9 @@ export class CustomersService {
         )
           .session(transactionSession)
           .exec();
+
+      this.logger.warn('\n findBySpecifiedEvent 569', customer);
+
       this.logger.debug('Customer found: ' + customer.id);
       return { cust: customer, found: true };
     }

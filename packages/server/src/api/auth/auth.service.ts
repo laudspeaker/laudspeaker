@@ -1,7 +1,7 @@
 import { HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Account, PlanType } from '../accounts/entities/accounts.entity';
-import { EntityManager, Repository } from 'typeorm';
+import { DataSource, EntityManager, Repository } from 'typeorm';
 import { RegisterDto } from '@/api/auth/dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { AuthHelper } from './auth.helper';
@@ -9,13 +9,13 @@ import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
 import { Verification } from './entities/verification.entity';
 import { CustomersService } from '../customers/customers.service';
-import { AppDataSource } from '@/data-source';
 import mongoose from 'mongoose';
 import { InjectConnection } from '@nestjs/mongoose';
 
 @Injectable()
 export class AuthService {
   constructor(
+    private dataSource: DataSource,
     @InjectQueue('email') private readonly emailQueue: Queue,
     @InjectRepository(Account)
     public readonly repository: Repository<Account>,
@@ -25,7 +25,7 @@ export class AuthService {
     public readonly helper: AuthHelper,
     @Inject(CustomersService) private customersService: CustomersService,
     @InjectConnection() private readonly connection: mongoose.Connection
-  ) {}
+  ) { }
 
   public async register(body: RegisterDto) {
     const { firstName, lastName, email, password }: RegisterDto = body;
@@ -38,7 +38,7 @@ export class AuthService {
     }
 
     let ret: Account;
-    await AppDataSource.manager.transaction(async (transactionManager) => {
+    await this.dataSource.manager.transaction(async (transactionManager) => {
       user = new Account();
 
       user.firstName = firstName;
@@ -99,7 +99,7 @@ export class AuthService {
 
   public async requestVerification(
     user: Account,
-    transactionManager: EntityManager = AppDataSource.manager
+    transactionManager: EntityManager = this.dataSource.manager
   ) {
     let verification = new Verification();
     verification.email = user.email;
@@ -170,7 +170,7 @@ export class AuthService {
         account.customerId = customer.id;
       }
 
-      await AppDataSource.transaction(async (transactionSession) => {
+      await this.dataSource.transaction(async (transactionSession) => {
         await transactionSession.save(account);
         await transactionSession.save(verification);
       });

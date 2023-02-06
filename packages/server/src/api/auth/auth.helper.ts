@@ -49,6 +49,7 @@ export class AuthHelper extends BaseJwtHelper {
 
   // Get User by User ID we get from decode()
   public async validateUser(decoded: { id: string }): Promise<Account> {
+    this.logger.debug(`auth.helper.ts:AuthHelper.validateUser: Validating user with id ${decoded.id}`);
     return this.repository.findOne({ where: { id: decoded.id } });
   }
 
@@ -66,7 +67,6 @@ export class AuthHelper extends BaseJwtHelper {
     }
 
     const user: Account = await this.validateUser(decoded);
-
     if (!user) {
       throw new UnauthorizedException();
     }

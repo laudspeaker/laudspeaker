@@ -17,11 +17,10 @@ import { Workflow } from '../workflows/entities/workflow.entity';
   imports: [
     TypeOrmModule.forFeature([
       Account,
-      State,
-      Installation,
       Audience,
-      Workflow,
       Job,
+      State,
+      Workflow,
     ]),
     MongooseModule.forFeature([
       { name: Customer.name, schema: CustomerSchema },

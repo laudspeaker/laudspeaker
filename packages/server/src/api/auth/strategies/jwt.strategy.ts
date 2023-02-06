@@ -3,9 +3,13 @@ import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { AuthHelper } from '../auth.helper';
 import { Account } from '../../accounts/entities/accounts.entity';
+import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
+import { LoggerService } from '@nestjs/common/services';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
+  @Inject(WINSTON_MODULE_NEST_PROVIDER)
+  private readonly logger: LoggerService;
   @Inject(AuthHelper)
   private readonly helper: AuthHelper;
 

@@ -40,11 +40,11 @@ export class AccountsController {
       .leftJoin(
         'verification',
         'vr',
-        `ac.id = CAST(vr.accountId as INTEGER) and extract ('epoch' from (now() - "vr"."createdAt")::interval) < 300 AND vr.status = 'sent'`
+        `ac.id = vr.accountId and extract ('epoch' from (now() - "vr"."createdAt")::interval) < 300 AND vr.status = 'sent'`
       )
       .where(`ac.id = :userId`, {
         // @ts-ignore
-        userId: user.id,
+        userId: <Account>user.id,
       })
       .orderBy('vr.createdAt', 'DESC')
       .limit(1)

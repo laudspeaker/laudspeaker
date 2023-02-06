@@ -346,10 +346,6 @@ const Flow = () => {
     setSelectedNode("");
   }, []);
 
-  const rfStyle = {
-    backgroundColor: "rgba(112,112,112, 0.06)",
-  };
-
   const nodeTypes = useMemo(() => ({ special: TextUpdaterNode }), [triggers]);
   const { setViewport } = useReactFlow();
   const { x: viewX, y: viewY } = useViewport();
@@ -635,6 +631,13 @@ const Flow = () => {
     }
   };
 
+  const [isGrabbing, setIsGrabbing] = useState(false);
+
+  const rfStyle = {
+    backgroundColor: "rgba(112,112,112, 0.06)",
+    cursor: isGrabbing ? "grabbing" : "grab",
+  };
+
   const onToggleChange = async () => {
     await ApiService.patch({
       url: "/workflows/" + name,
@@ -689,6 +692,16 @@ const Flow = () => {
               flowName={flowName}
               afterMenuContent={
                 <div className="w-full">
+                  <GenericButton
+                    id="useExistingSegment"
+                    customClasses="mt-[10px] !p-[4px] !w-full !block !text-center text-[12px]"
+                    onClick={() => {
+                      setSegmentModalMode(SegmentModalMode.EDIT);
+                      setSegmentModalOpen(true);
+                    }}
+                  >
+                    Define segment
+                  </GenericButton>
                   <h3 className="pt-[20px] font-bold">Journey type</h3>
                   <div className={segmentTypeStyle}>
                     <Grid
@@ -715,16 +728,6 @@ const Flow = () => {
                       </div>
                     </Tooltip>
                   </div>
-                  <GenericButton
-                    id="useExistingSegment"
-                    customClasses="mt-[10px] !p-[4px] !w-full !block !text-center text-[12px]"
-                    onClick={() => {
-                      setSegmentModalMode(SegmentModalMode.EDIT);
-                      setSegmentModalOpen(true);
-                    }}
-                  >
-                    Define segment
-                  </GenericButton>
                 </div>
               }
             />
@@ -732,10 +735,19 @@ const Flow = () => {
         </div>
         <div className="w-full h-full">
           {!segmentId && (
-            <AlertBanner
-              title="Customer Segment is not defined"
-              text="Please specify which users are eligible to receive messages by defining a segment"
-            />
+            <AlertBanner title="Customer Segment is not defined">
+              Please specify which users are eligible to receive messages by{" "}
+              <u
+                className="cursor-pointer"
+                onClick={() => {
+                  setSegmentModalMode(SegmentModalMode.EDIT);
+                  setSegmentModalOpen(true);
+                }}
+              >
+                defining
+              </u>{" "}
+              a segment
+            </AlertBanner>
           )}
           <div className={`${!segmentId ? "h-[calc(100%-80px)]" : "h-full"}`}>
             <ReactFlow
@@ -755,6 +767,8 @@ const Flow = () => {
               zoomOnPinch={false}
               defaultZoom={1}
               zoomOnDoubleClick={false}
+              onMoveStart={() => setIsGrabbing(true)}
+              onMoveEnd={() => setIsGrabbing(false)}
             >
               <div
                 style={{

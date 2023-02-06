@@ -134,6 +134,7 @@ export class WorkflowsController {
       const res = await this.workflowsService.start(<Account>user, id);
       return Promise.resolve(res);
     } catch (err) {
+      this.logger.error(`workflows.controller.ts:WorkflowsController.start: Error: ${err}`);
       return Promise.reject(err);
     }
   }
@@ -152,6 +153,7 @@ export class WorkflowsController {
       );
       return Promise.resolve(res);
     } catch (err) {
+      this.logger.error(`workflows.controller.ts:WorkflowsController.startPatch: Error: ${err}`);
       return Promise.reject(err);
     }
   }

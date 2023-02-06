@@ -8,7 +8,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { UpdateAccountDto } from './dto/update-account.dto';
 import { Account } from './entities/accounts.entity';
 import * as bcrypt from 'bcryptjs';
@@ -19,7 +19,6 @@ import { Client } from '@sendgrid/client';
 import { RemoveAccountDto } from './dto/remove-account.dto';
 import { InjectConnection } from '@nestjs/mongoose';
 import mongoose from 'mongoose';
-import { AppDataSource } from '@/data-source';
 
 @Injectable()
 export class AccountsService extends BaseJwtHelper {
@@ -27,6 +26,7 @@ export class AccountsService extends BaseJwtHelper {
   private sgClient = new Client();
 
   constructor(
+    private dataSource:DataSource,
     @InjectRepository(Account)
     public accountsRepository: Repository<Account>,
     @Inject(CustomersService) private customersService: CustomersService,
@@ -188,7 +188,7 @@ export class AccountsService extends BaseJwtHelper {
 
     try {
       let updatedUser: Account;
-      await AppDataSource.manager.transaction(async (transactionManager) => {
+      await this.dataSource.manager.transaction(async (transactionManager) => {
         for (const key of Object.keys(updateUserDto)) {
           oldUser[key] = updateUserDto[key];
         }

@@ -12,9 +12,9 @@ import { TemplatesService } from '../templates/templates.service';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { Workflow } from '../workflows/entities/workflow.entity';
 import { EventDto } from '../events/dto/event.dto';
-import { AppDataSource } from '@/data-source';
 import { JobsService } from '../jobs/jobs.service';
 import { DateTime } from 'luxon';
+import { TimeJobType } from '../jobs/entities/job.entity';
 
 @Injectable()
 export class AudiencesService {
@@ -247,6 +247,8 @@ export class AudiencesService {
     encodedRules: string[],
     workflowID: string
   ): Promise<{ jobIds: (string | number)[]; templates: Template[] }> {
+    this.logger.warn('\nmoveCustomer 251', customer);
+
     const customerId = customer.id;
     let index = -1; // Index of the customer ID in the fromAud.customers array
     const jobIds: (string | number)[] = [];
@@ -322,6 +324,7 @@ export class AudiencesService {
           const trigger = JSON.parse(
             Buffer.from(encodedRules[rulesIndex], 'base64').toString('ascii')
           );
+
           if (
             to == trigger?.source &&
             (trigger.properties.fromTime ||
@@ -329,6 +332,13 @@ export class AudiencesService {
               trigger.properties.specificTime ||
               trigger.properties.delayTime)
           ) {
+            const type =
+              trigger.properties.eventTime === 'SpecificTime'
+                ? TimeJobType.SPECIFIC_TIME
+                : trigger.properties.eventTime === 'Delay'
+                ? TimeJobType.DELAY
+                : TimeJobType.TIME_WINDOW;
+
             const now = DateTime.now();
             this.jobsService.create(account, {
               customer: customerId,
@@ -344,6 +354,7 @@ export class AudiencesService {
                       hours: trigger.properties.delayTime?.split(':')?.[0],
                       minutes: trigger.properties.delayTime?.split(':')?.[1],
                     }),
+              type,
             });
           }
         }

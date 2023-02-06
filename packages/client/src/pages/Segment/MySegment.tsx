@@ -547,10 +547,7 @@ const MySegment = ({
             ref={elementRef}
           >
             <div className="mb-[10px]">
-              <AlertBanner
-                title="Don't specify conditions is you want any user to be eligible to be enrolled in this journey"
-                text=""
-              />
+              <AlertBanner title="Don't specify conditions is you want any user to be eligible to be enrolled in this journey" />
             </div>
             <div className="relative after:absolute after:z-[1] after:top-[63px] after:bottom-[0px] after:ml-[45px] after:border-l-[2px] after:border-dashed after:h-full">
               <div className="relative z-[10000] flex items-center gap-[15px]">

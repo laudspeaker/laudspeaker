@@ -1,9 +1,8 @@
-import { AppDataSource } from '@/data-source';
 import { HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Model } from 'mongoose';
-import { In, Repository } from 'typeorm';
+import { DataSource, In, Repository } from 'typeorm';
 import { AccountsService } from '../accounts/accounts.service';
 import { Account } from '../accounts/entities/accounts.entity';
 import { Audience } from '../audiences/entities/audience.entity';
@@ -21,6 +20,7 @@ import { Workflow } from '../workflows/entities/workflow.entity';
 @Injectable()
 export class TestsService {
   constructor(
+    private dataSource: DataSource,
     @Inject(CustomersService)
     private readonly customersService: CustomersService,
     @Inject(AccountsService)
@@ -37,7 +37,7 @@ export class TestsService {
     private readonly authService: AuthService,
     @InjectModel(CustomerKeys.name)
     private CustomerKeysModel: Model<CustomerKeysDocument>
-  ) {}
+  ) { }
 
   async posthogsynctest(user: Express.User) {
     if (process.env.NODE_ENV !== 'development')
@@ -66,7 +66,7 @@ export class TestsService {
       });
 
       await this.authService.verificationRepository.delete({
-        account: { id: '-1000' },
+        account: { id: '00000000-0000-0000-0000-000000000000' },
       });
 
       const userCreated = await this.authService.repository.findOne({
@@ -103,27 +103,33 @@ export class TestsService {
       await this.authService.repository.update(
         { id: ret.id },
         {
-          id: '-1000',
+          id: '00000000-0000-0000-0000-000000000000',
         }
       );
-      ret.id = '-1000';
+      ret.id = '00000000-0000-0000-0000-000000000000';
 
-      await this.workflowsRepository.delete({ owner: { id: '-1000' } });
-      await this.templateRepository.delete({ owner: { id: '-1000' } });
-      await this.audienceRepository.delete({ owner: { id: '-1000' } });
+      await this.workflowsRepository.delete({
+        owner: { id: '00000000-0000-0000-0000-000000000000' },
+      });
+      await this.templateRepository.delete({
+        owner: { id: '00000000-0000-0000-0000-000000000000' },
+      });
+      await this.audienceRepository.delete({
+        owner: { id: '00000000-0000-0000-0000-000000000000' },
+      });
 
       await this.authService.helper.generateDefaultData(
         ret,
-        AppDataSource.manager
+        this.dataSource.manager
       );
 
       await this.authService.helper.generateDefaultData(
         ret,
-        AppDataSource.manager
+        this.dataSource.manager
       );
 
       await this.customersService.CustomerModel.deleteMany({
-        ownerId: '-1000',
+        ownerId: '00000000-0000-0000-0000-000000000000',
       });
 
       const exists = await this.CustomerKeysModel.findOne({
@@ -219,14 +225,17 @@ export class TestsService {
 
   public async getTestCustomerId() {
     const customer = await this.customersService.CustomerModel.findOne({
-      ownerId: '-1000',
+      ownerId: '00000000-0000-0000-0000-000000000000',
     });
     return customer.id;
   }
 
   public async getAudienceByCustomerId(id: string) {
     const audiences = await this.audienceRepository.findBy({
-      owner: { id: '-1000', email: 'testmail@gmail.com' },
+      owner: {
+        id: '00000000-0000-0000-0000-000000000000',
+        email: 'testmail@gmail.com',
+      },
     });
 
     return audiences.find((audience) => audience.customers.includes(id));

@@ -8,6 +8,8 @@ import setSendgrid from "../test-helpers/setSendgrid";
 import setSMS from "../test-helpers/setSMS";
 import { templatesFunc } from "../test-helpers/templatesFunc";
 import testDelayTrigger from "../test-helpers/testDelayTrigger";
+import testSpecificTimeTrigger from "../test-helpers/testSpecificTimeTrigger";
+import testTimeWindowTrigger from "../test-helpers/testTimeWindowTrigger";
 import verifyAccount from "../test-helpers/verifyAccount";
 
 const { email, password, emailTemplate, slackTemplate, smsTemplate } =
@@ -16,7 +18,7 @@ const { email, password, emailTemplate, slackTemplate, smsTemplate } =
 const { TESTS_SENDGRID_API_KEY, TESTS_SENDGRID_FROM_EMAIL } = Cypress.env();
 
 describe(
-  "Journey with email and two step delay triggered",
+  "Journey with email and two step time window triggered",
   { env: { AxiosURL: "http://localhost:3001/" } },
   () => {
     beforeEach(() => {
@@ -30,14 +32,14 @@ describe(
       setFree3();
       cy.contains("Messaging").click();
 
-      testDelayTrigger();
+      testTimeWindowTrigger();
     });
 
     it("passes for mailgun", () => {
       loginFunc(email, password);
       templatesFunc(slackTemplate, emailTemplate);
       verifyAccount();
-      testDelayTrigger();
+      testTimeWindowTrigger();
     });
 
     it("passes for sendgrid", () => {
@@ -47,7 +49,7 @@ describe(
       setSendgrid(TESTS_SENDGRID_API_KEY, TESTS_SENDGRID_FROM_EMAIL);
 
       cy.contains("Messaging").click();
-      testDelayTrigger();
+      testTimeWindowTrigger();
     });
 
     it("passes for slack", () => {
@@ -55,7 +57,7 @@ describe(
       verifyAccount();
       templatesFunc(slackTemplate, emailTemplate);
 
-      testDelayTrigger("13141414", "124we1414", () => {
+      testTimeWindowTrigger("13141414", "124we1414", () => {
         cy.get("#slack").click();
 
         cy.get("#activeJourney").click();
@@ -70,7 +72,7 @@ describe(
       templatesFunc(slackTemplate, emailTemplate, smsTemplate);
       setSMS();
       cy.contains("Messaging").click();
-      testDelayTrigger("13141414", "124we1414", () => {
+      testTimeWindowTrigger("13141414", "124we1414", () => {
         cy.get("#sms > .p-0 > .justify-between").click();
         cy.get("#activeJourney").click();
         cy.contains(smsTemplate.name).click();
