@@ -788,11 +788,7 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
                       <div className="relative">
                         <AC
                           getItemValue={(item) => item}
-                          items={[
-                            "page",
-                            "autocapture",
-                            ...possiblePosthogEventTypes,
-                          ]}
+                          items={[...possiblePosthogEventTypes]}
                           autoHighlight={false}
                           // eslint-disable-next-line @typescript-eslint/no-shadow
                           renderInput={(props) => (

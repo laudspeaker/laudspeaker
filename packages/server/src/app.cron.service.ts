@@ -48,7 +48,7 @@ interface ClickHouseMessage {
   customerId: string;
   messageId: string;
   event: string;
-  eventProvider: 'mailgun' | 'sendgrid' | 'twillio';
+  eventProvider: 'mailgun' | 'sendgrid' | 'twilio';
   createdAt: string;
 }
 
@@ -385,7 +385,7 @@ export class CronService {
       }
 
       /**
-       * sendgrid & twillio
+       * sendgrid & twilio
        */
 
       let batch = await this.webhookEventRepository.find({

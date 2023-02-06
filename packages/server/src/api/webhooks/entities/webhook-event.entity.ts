@@ -25,8 +25,8 @@ export class WebhookEvent {
   @Column()
   event: string;
 
-  @Column({ type: 'enum', enum: ['mailgun', 'sendgrid', 'twillio'] })
-  eventProvider: 'mailgun' | 'sendgrid' | 'twillio';
+  @Column({ type: 'enum', enum: ['mailgun', 'sendgrid', 'twilio'] })
+  eventProvider: 'mailgun' | 'sendgrid' | 'twilio';
 
   @Column()
   createdAt: string;

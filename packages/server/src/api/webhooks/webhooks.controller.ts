@@ -18,8 +18,8 @@ export class WebhooksController {
     this.webhooksService.processSendgridData(signature, timestamp, data);
   }
 
-  @Post('twillio')
-  public processTwillioData(
+  @Post('twilio')
+  public processTwilioData(
     @Body()
     body: {
       SmsSid: string;
@@ -34,7 +34,7 @@ export class WebhooksController {
     @Query('audienceId') audienceId: string,
     @Query('customerId') customerId: string
   ) {
-    this.webhooksService.processTwillioData({
+    this.webhooksService.processTwilioData({
       ...body,
       audienceId,
       customerId,
