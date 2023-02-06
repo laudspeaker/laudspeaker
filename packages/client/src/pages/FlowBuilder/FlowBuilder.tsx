@@ -622,6 +622,10 @@ const Flow = () => {
         audienceId: data.id,
         data: {},
       };
+
+      if (!nodes.find((node) => node.data.primary))
+        setViewport({ x: 0, y: 0, zoom: zoomState });
+
       setNodes([...nodes, generateNode(newNode, triggers)]);
       setAudienceModalOpen(false);
     } catch (error) {
