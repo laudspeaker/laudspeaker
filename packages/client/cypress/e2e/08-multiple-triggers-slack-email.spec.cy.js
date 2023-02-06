@@ -61,7 +61,9 @@ describe(
 
       cy.get('[data-isprimary="true"]')
         .get('[data-handlepos="bottom"]')
-        .drag('[data-isprimary="false"] [data-handlepos="top"]');
+        .drag('[data-isprimary="false"] [data-handlepos="top"]', {
+          force: true,
+        });
 
       cy.get('[data-isprimary="false"] [data-handlepos="top"]').click();
 
@@ -70,7 +72,9 @@ describe(
       cy.get("#name").type("email audience");
       cy.get("#description").type("email description");
       cy.get("#saveNewSegment").click();
-      cy.contains("email audience").move({ deltaX: 450, deltaY: 300 }).click();
+      cy.contains("email audience")
+        .move({ deltaX: 450, deltaY: 300, force: true })
+        .click();
       cy.get("#email").click();
       cy.get("#activeJourney").click();
       cy.contains(emailTemplate.name).click();

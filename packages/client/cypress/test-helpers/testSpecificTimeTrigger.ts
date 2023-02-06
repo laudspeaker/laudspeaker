@@ -40,7 +40,7 @@ export default (
   cy.get('[data-isprimary="true"]').click();
   setupSpecificTimeTrigger();
   cy.get(
-    '[style="display: flex; height: 15px; position: absolute; left: 0px; bottom: 0px; align-items: center; width: 100%; justify-content: space-around;"] > .react-flow__handle'
+    '[style="display: flex; height: 22px; position: absolute; left: 0px; bottom: 0px; align-items: center; width: 100%; justify-content: space-around;"] > .react-flow__handle'
   ).drag('[data-isprimary]:not([data-isprimary="true"])', { force: true });
   cy.get('[data-isprimary]:not([data-isprimary="true"])').click();
 

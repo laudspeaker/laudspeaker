@@ -135,7 +135,7 @@ const TextUpdaterNode = ({ data }: { data: NodeData }) => {
         <Handle
           type="target"
           position={Position.Top}
-          className="!bg-transparent !h-full !border-0 !z-[99999]"
+          className="triggerIn !bg-transparent !h-full !border-0 !z-[99999]"
           isConnectable={!!isTarget}
         />
         <div
@@ -202,6 +202,7 @@ const TextUpdaterNode = ({ data }: { data: NodeData }) => {
                   position={Position.Bottom}
                   id={trigger.id}
                   onClick={(e) => handleTriggerClick(e, trigger.id)}
+                  className="triggerOut"
                   style={{
                     height: "22px",
                     background: "transparent",

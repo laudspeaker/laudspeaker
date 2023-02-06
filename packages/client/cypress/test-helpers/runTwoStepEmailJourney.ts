@@ -28,9 +28,9 @@ export default (name: string, eventName: string, flowName = "Email flow") => {
   cy.get("#exportSelectedTemplate").click();
   cy.get('[data-isprimary="true"]').click();
   setupEventTrigger(eventName, eventName);
-  cy.get(
-    '[style="display: flex; height: 15px; position: absolute; left: 0px; bottom: 0px; align-items: center; width: 100%; justify-content: space-around;"] > .react-flow__handle'
-  ).drag('[data-isprimary]:not([data-isprimary="true"])', { force: true });
+  cy.get(".triggerOut").drag('[data-isprimary]:not([data-isprimary="true"])', {
+    force: true,
+  });
   cy.get('[data-isprimary]:not([data-isprimary="true"])').click();
 
   createNewSegment();
