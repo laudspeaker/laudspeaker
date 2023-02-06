@@ -32,6 +32,7 @@ import Modal from "components/Elements/Modal";
 import ApiService from "services/api.service";
 import Account from "types/Account";
 import { GenericButton } from "components/Elements";
+import Home from "pages/Home";
 
 interface IProtected {
   children: ReactElement;
@@ -149,7 +150,7 @@ const RouteComponent: React.FC = () => {
                 setHidden={(value) => setShowWelcomeBanner(!value)}
               >
                 <DrawerLayout>
-                  <FlowTable />
+                  <Home />
                 </DrawerLayout>
               </WelcomeBannerProvider>
             </Protected>
@@ -324,7 +325,7 @@ const RouteComponent: React.FC = () => {
                 setHidden={(value) => setShowWelcomeBanner(!value)}
               >
                 <DrawerLayout>
-                  <OnboardingBeta />
+                  <Home />
                 </DrawerLayout>
               </WelcomeBannerProvider>
             </Protected>

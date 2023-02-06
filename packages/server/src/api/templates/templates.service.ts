@@ -175,6 +175,7 @@ export class TemplatesService {
         //   customerId,
         // });
         try {
+          if (!customer.phPhoneNumber && !customer.phone) return;
           this.logger.debug(
             `Starting SMS sending from ${account?.smsFrom} to ${
               customer.phPhoneNumber || customer.phone
