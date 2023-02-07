@@ -61,7 +61,6 @@ const TextUpdaterNode = ({ data }: { data: NodeData }) => {
   const handleTemplateModalOpen = (val?: {
     activeTemplate: number | undefined;
   }) => {
-    onTemplateModalClose();
     if (val?.activeTemplate) {
       const message = data.messages.find(
         (m) =>
@@ -72,6 +71,7 @@ const TextUpdaterNode = ({ data }: { data: NodeData }) => {
 
       message.templateId = val.activeTemplate;
     }
+    onTemplateModalClose();
   };
 
   useEffect(() => {
