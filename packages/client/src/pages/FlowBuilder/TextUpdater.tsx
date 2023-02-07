@@ -58,8 +58,20 @@ const TextUpdaterNode = ({ data }: { data: NodeData }) => {
     onTemplateModalClose();
   };
 
-  const handleTemplateModalOpen = () => {
+  const handleTemplateModalOpen = (val?: {
+    activeTemplate: number | undefined;
+  }) => {
     onTemplateModalClose();
+    if (val?.activeTemplate) {
+      const message = data.messages.find(
+        (m) =>
+          m.templateId === selectedTemplateId && m.type === selectedMessageType
+      );
+
+      if (!message) return;
+
+      message.templateId = val.activeTemplate;
+    }
   };
 
   useEffect(() => {
