@@ -80,6 +80,7 @@ export interface NodeData {
   isExit?: boolean;
   isNew?: boolean;
   stats?: { sent: number; clickedPercentage: number };
+  isConnecting?: boolean;
 }
 
 const convertLayoutToTable = (
@@ -180,6 +181,7 @@ const Flow = () => {
   );
   const [isFlowLoading, setIsFlowLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isConnecting, setIsConnecting] = useState(false);
 
   const onHandleClick = (e: unknown, triggerId: string) => {
     return { e, triggerId };
@@ -297,6 +299,12 @@ const Flow = () => {
     );
   }, [selectedNode, needsUpdate]);
 
+  useEffect(() => {
+    setNodes(
+      nodes.map((node) => ({ ...node, data: { ...node.data, isConnecting } }))
+    );
+  }, [isConnecting]);
+
   const onNodeDragStart = useCallback(
     (event: React.MouseEvent, node: Node) => {
       setSelectedNode(node.id);
@@ -311,6 +319,7 @@ const Flow = () => {
   const onConnect = useCallback(
     (connection: Connection | Edge) =>
       setEdges((eds) => {
+        console.warn(connection);
         if (connection.target === connection.source) return eds;
         const edge: Edge | Connection = {
           ...connection,
@@ -774,6 +783,8 @@ const Flow = () => {
               zoomOnDoubleClick={false}
               onMoveStart={() => setIsGrabbing(true)}
               onMoveEnd={() => setIsGrabbing(false)}
+              onConnectStart={() => setIsConnecting(true)}
+              onConnectEnd={() => setIsConnecting(false)}
             >
               <div
                 style={{
