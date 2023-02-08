@@ -45,7 +45,9 @@ services:
           name: laudspeaker-db
           property: host
       - key: DATABASE_NAME
-        value: laudspeaker
+        fromDatabase:
+          name: laudspeaker-db
+          property: database
   - type: redis
     name: laudspeaker
     ipAllowList:
@@ -69,4 +71,3 @@ services:
       sizeGB: 10
 databases:
 - name: laudspeaker-db
-  databaseName: laudspeaker
