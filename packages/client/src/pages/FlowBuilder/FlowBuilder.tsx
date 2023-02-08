@@ -53,11 +53,13 @@ import { AxiosError } from "axios";
 import Progress from "components/Progress";
 import { useDebounce } from "react-use";
 import CustomEdge from "./CustomEdge";
+import { INameSegmentForm } from "pages/Segment/NameSegment";
+import Template from "types/Template";
 
 const segmentTypeStyle =
   "border-[1px] border-[#D1D5DB] rouded-[6px] shadow-[0px_1px_2px_rgba(0,0,0,0.05)] w-full mt-[20px] p-[15px]";
 
-interface INameSegmentForm {
+interface IisDynamicSegmentForm {
   isDynamic: boolean;
 }
 
@@ -177,7 +179,7 @@ const Flow = () => {
   const [selectedMessageType, setSelectedMessageType] = useState("");
   const [tutorialOpen, setTutorialOpen] = useState(false);
   const [segmentId, setSegmentId] = useState<string>();
-  const [segmentForm, setSegmentForm] = useState<INameSegmentForm>({
+  const [segmentForm, setSegmentForm] = useState<IisDynamicSegmentForm>({
     isDynamic: true,
   });
   const [segmentModalOpen, setSegmentModalOpen] = useState(false);
@@ -188,6 +190,8 @@ const Flow = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const [moveEvent, setMoveEvent] = useState<MouseEvent<HTMLDivElement>>();
+  const [triggerToOpenNextRender, setTriggerToOpenNextRender] =
+    useState<TriggerType>();
 
   const onHandleClick = (e: unknown, triggerId: string) => {
     return { e, triggerId };
@@ -523,6 +527,13 @@ const Flow = () => {
     }
   };
 
+  useEffect(() => {
+    if (!triggerToOpenNextRender) return;
+
+    performAction(triggerToOpenNextRender);
+    setTriggerToOpenNextRender(undefined);
+  }, [triggerToOpenNextRender]);
+
   const handleTutorialOpen = () => {
     setTutorialOpen(true);
   };
@@ -657,7 +668,10 @@ const Flow = () => {
   const handleAudienceSubmit = async (segment: INameSegmentForm) => {
     setIsSaving(true);
     try {
-      const { data } = await ApiService.post({
+      const { data } = await ApiService.post<{
+        id: string;
+        templates: Template[];
+      }>({
         url: `${ApiConfig.createSegment}`,
         options: {
           ...segment,
@@ -667,7 +681,10 @@ const Flow = () => {
       const newNode = {
         id: uuid(),
         triggers: [],
-        messages: [],
+        messages: data.templates.map((template) => ({
+          type: template.type,
+          templateId: template.id,
+        })),
         position: { x: 0, y: 0 },
         audienceId: data.id,
         data: {},
@@ -676,8 +693,15 @@ const Flow = () => {
       if (!nodes.find((node) => node.data.primary))
         setViewport({ x: 0, y: 0, zoom: zoomState });
 
-      setNodes([...nodes, generateNode(newNode, triggers)]);
+      const node = generateNode(newNode, triggers);
+
+      setNodes([...nodes, node]);
       setAudienceModalOpen(false);
+      setSelectedNode(node.id);
+
+      if (segment.triggerType) setTriggerToOpenNextRender(segment.triggerType);
+
+      if (segment.messageType) performAction(segment.messageType);
     } catch (error) {
       toast.error("Error, saving segment");
     } finally {
