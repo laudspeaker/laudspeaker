@@ -149,6 +149,9 @@ const TextUpdaterNode = ({ data }: { data: NodeData }) => {
           opacity: hidden ? 0 : 1,
         }}
       >
+        {isNearToCursor && connectionNodeId !== nodeId && (
+          <div className="absolute w-[55%] h-[65%] rounded-md z-[-1] animate-ping border-[2px] border-cyan-600 left-[22.5%] top-[20%]" />
+        )}
         <Handle
           type="target"
           position={Position.Top}
@@ -158,9 +161,7 @@ const TextUpdaterNode = ({ data }: { data: NodeData }) => {
           <div
             className={`!w-[15px] !h-[15px] ${
               edges.find((edge) => edge.target === nodeId)
-                ? "!bg-black"
-                : isNearToCursor
-                ? "!border-[1px] !border-black"
+                ? "!bg-cyan-400"
                 : "!bg-transparent !border-0"
             } rounded-full absolute left-1/2 top-0 -translate-x-1/2`}
           ></div>

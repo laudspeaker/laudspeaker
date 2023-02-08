@@ -52,6 +52,7 @@ import { ProviderTypes, Trigger, TriggerType, Workflow } from "types/Workflow";
 import { AxiosError } from "axios";
 import Progress from "components/Progress";
 import { useDebounce } from "react-use";
+import CustomEdge from "./CustomEdge";
 
 const segmentTypeStyle =
   "border-[1px] border-[#D1D5DB] rouded-[6px] shadow-[0px_1px_2px_rgba(0,0,0,0.05)] w-full mt-[20px] p-[15px]";
@@ -198,7 +199,7 @@ const Flow = () => {
     triggersList: Trigger[]
   ) => {
     const trigger = triggersList.find((item) => item.id === triggerId);
-    console.log("onselecttrigger", triggersList, trigger);
+
     setSelectedTrigger(trigger);
     settriggerModalOpen(true);
   };
@@ -325,6 +326,7 @@ const Flow = () => {
     (connection: Connection | Edge) =>
       setEdges((eds) => {
         if (connection.target === connection.source) return eds;
+
         const edge: Edge | Connection = {
           ...connection,
           id: uuid(),
@@ -334,7 +336,7 @@ const Flow = () => {
             height: 20,
             width: 20,
           },
-          type: ConnectionLineType.SmoothStep,
+          type: "custom",
         };
         return addEdge(edge, eds);
       }),
@@ -361,7 +363,7 @@ const Flow = () => {
 
   const nodeTypes = useMemo(() => ({ special: TextUpdaterNode }), [triggers]);
   const { setViewport } = useReactFlow();
-  const { x: viewX, y: viewY } = useViewport();
+  const { x: viewX, y: viewY, zoom } = useViewport();
   const [zoomState, setZoomState] = useState(1);
   const possibleViewZoomValues = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
 
@@ -375,11 +377,11 @@ const Flow = () => {
           if (!height || !width || !moveEvent || !reactFlowRef.current)
             return node;
 
-          const maskLeftTopCornerX = position.x - 40;
-          const maskLeftTopCornerY = position.y - 40;
+          const maskLeftTopCornerX = position.x - 60;
+          const maskLeftTopCornerY = position.y - 60;
 
-          const maskRightBottomCornerX = position.x + width + 40;
-          const maskRightBottomCornerY = position.y + height + 40;
+          const maskRightBottomCornerX = position.x + width + 60;
+          const maskRightBottomCornerY = position.y + height + 60;
 
           const canvasMouseX =
             moveEvent.clientX - viewX - reactFlowRef.current.offsetLeft;
@@ -387,16 +389,16 @@ const Flow = () => {
             moveEvent.clientY - viewY - reactFlowRef.current.offsetTop;
 
           const isNearToCursor =
-            canvasMouseX > maskLeftTopCornerX &&
-            canvasMouseX < maskRightBottomCornerX &&
-            canvasMouseY > maskLeftTopCornerY &&
-            canvasMouseY < maskRightBottomCornerY;
+            canvasMouseX > maskLeftTopCornerX * zoom &&
+            canvasMouseX < maskRightBottomCornerX * zoom &&
+            canvasMouseY > maskLeftTopCornerY * zoom &&
+            canvasMouseY < maskRightBottomCornerY * zoom;
 
           return { ...node, data: { ...node.data, isNearToCursor } };
         })
       );
     },
-    100,
+    10,
     [moveEvent]
   );
 
@@ -807,6 +809,9 @@ const Flow = () => {
               ref={reactFlowRef}
               nodes={nodes}
               edges={edges}
+              edgeTypes={{
+                custom: CustomEdge,
+              }}
               onNodeDoubleClick={onNodeDoubleClick}
               onNodesChange={onNodesChange}
               onEdgesChange={onEdgesChange}

@@ -56,3 +56,15 @@ body,
   min-height: 30px;
   font-size: 12px;
 }
+
+.react-flow__edge-path-selector:hover { 
+  cursor: pointer;
+}
+.react-flow__edge-path-selector:hover + .react-flow__edge-path, .react-flow__edge-path:hover   {
+    stroke: rgb(0 172 193);
+    cursor: pointer;
+}
+.react-flow__edge-path-selector {
+    opacity: 0;
+    stroke-width: 40;
+}
