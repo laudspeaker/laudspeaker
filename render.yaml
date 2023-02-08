@@ -12,6 +12,10 @@ services:
     envVars:
       - key: PORT
         value: 80
+      - key: JWT_KEY
+        generateValue: true
+      - key: JWT_EXPIRES
+        value: 365d
       - key: MONGOOSE_URL
         fromService:
           type: pserv
