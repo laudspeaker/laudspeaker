@@ -15,7 +15,6 @@ import { Email, SlackMsg, Mobile, SMS } from "../../components/Icons/Icons";
 import ChooseTemplateModal from "./ChooseTemplateModal";
 import LinesEllipsis from "react-lines-ellipsis";
 import { NodeData } from "./FlowBuilder";
-import { useHover } from "react-use";
 
 const textStyle = "text-[#111827] font-[Inter] font-middle text-[14px]";
 const subTitleTextStyle = "text-[#6B7280] font-[Inter] text-[14px]";
@@ -30,7 +29,7 @@ const TextUpdaterNode = ({ data }: { data: NodeData }) => {
     isSelected,
     needsUpdate,
     nodeId,
-    isConnecting,
+    isNearToCursor,
   } = data;
   const [nodeData, setNodeData] = useState<{
     id?: string;
@@ -44,13 +43,6 @@ const TextUpdaterNode = ({ data }: { data: NodeData }) => {
   const [selectedTemplateId, setSelectedTemplateId] = useState<number>();
   const [updateTemplateModalOpen, setUpdateTemplateModalOpen] = useState(false);
   const [descriptionCollaped, setDescriptionCollaped] = useState(true);
-
-  const element = () => (
-    <div className="cursor-crosshair absolute test-handle !h-[calc(100%+80px)] !w-[430px] !-translate-x-[40px] !-translate-y-[40px] !bg-transparent !border-0" />
-  );
-
-  const [hoverable, isHovered] = useHover(element);
-  const [isMainBodyHovered, setIsMainBodyHovered] = useState(false);
 
   const edges = useEdges();
 
@@ -157,7 +149,6 @@ const TextUpdaterNode = ({ data }: { data: NodeData }) => {
           opacity: hidden ? 0 : 1,
         }}
       >
-        {isConnecting && <>{hoverable}</>}
         <Handle
           type="target"
           position={Position.Top}
@@ -168,7 +159,7 @@ const TextUpdaterNode = ({ data }: { data: NodeData }) => {
             className={`!w-[15px] !h-[15px] ${
               edges.find((edge) => edge.target === nodeId)
                 ? "!bg-black"
-                : isHovered
+                : isNearToCursor
                 ? "!border-[1px] !border-black"
                 : "!bg-transparent !border-0"
             } rounded-full absolute left-1/2 top-0 -translate-x-1/2`}

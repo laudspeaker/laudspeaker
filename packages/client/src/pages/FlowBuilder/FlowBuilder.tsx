@@ -1,8 +1,10 @@
 import {
+  MouseEvent,
   useCallback,
   useEffect,
   useLayoutEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import ReactFlow, {
@@ -49,6 +51,7 @@ import SegmentModal, { SegmentModalMode } from "./SegmentModal";
 import { ProviderTypes, Trigger, TriggerType, Workflow } from "types/Workflow";
 import { AxiosError } from "axios";
 import Progress from "components/Progress";
+import { useDebounce } from "react-use";
 
 const segmentTypeStyle =
   "border-[1px] border-[#D1D5DB] rouded-[6px] shadow-[0px_1px_2px_rgba(0,0,0,0.05)] w-full mt-[20px] p-[15px]";
@@ -81,6 +84,7 @@ export interface NodeData {
   isNew?: boolean;
   stats?: { sent: number; clickedPercentage: number };
   isConnecting?: boolean;
+  isNearToCursor?: boolean;
 }
 
 const convertLayoutToTable = (
@@ -182,6 +186,7 @@ const Flow = () => {
   const [isFlowLoading, setIsFlowLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [moveEvent, setMoveEvent] = useState<MouseEvent<HTMLDivElement>>();
 
   const onHandleClick = (e: unknown, triggerId: string) => {
     return { e, triggerId };
@@ -319,7 +324,6 @@ const Flow = () => {
   const onConnect = useCallback(
     (connection: Connection | Edge) =>
       setEdges((eds) => {
-        console.warn(connection);
         if (connection.target === connection.source) return eds;
         const edge: Edge | Connection = {
           ...connection,
@@ -360,6 +364,41 @@ const Flow = () => {
   const { x: viewX, y: viewY } = useViewport();
   const [zoomState, setZoomState] = useState(1);
   const possibleViewZoomValues = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
+
+  const reactFlowRef = useRef<HTMLDivElement>(null);
+
+  useDebounce(
+    () => {
+      setNodes(
+        nodes.map((node) => {
+          const { height, width, position } = node;
+          if (!height || !width || !moveEvent || !reactFlowRef.current)
+            return node;
+
+          const maskLeftTopCornerX = position.x - 40;
+          const maskLeftTopCornerY = position.y - 40;
+
+          const maskRightBottomCornerX = position.x + width + 40;
+          const maskRightBottomCornerY = position.y + height + 40;
+
+          const canvasMouseX =
+            moveEvent.clientX - viewX - reactFlowRef.current.offsetLeft;
+          const canvasMouseY =
+            moveEvent.clientY - viewY - reactFlowRef.current.offsetTop;
+
+          const isNearToCursor =
+            canvasMouseX > maskLeftTopCornerX &&
+            canvasMouseX < maskRightBottomCornerX &&
+            canvasMouseY > maskLeftTopCornerY &&
+            canvasMouseY < maskRightBottomCornerY;
+
+          return { ...node, data: { ...node.data, isNearToCursor } };
+        })
+      );
+    },
+    100,
+    [moveEvent]
+  );
 
   const performAction = (actionId: string) => {
     switch (actionId) {
@@ -765,6 +804,7 @@ const Flow = () => {
           )}
           <div className={`${!segmentId ? "h-[calc(100%-80px)]" : "h-full"}`}>
             <ReactFlow
+              ref={reactFlowRef}
               nodes={nodes}
               edges={edges}
               onNodeDoubleClick={onNodeDoubleClick}
@@ -784,7 +824,20 @@ const Flow = () => {
               onMoveStart={() => setIsGrabbing(true)}
               onMoveEnd={() => setIsGrabbing(false)}
               onConnectStart={() => setIsConnecting(true)}
-              onConnectEnd={() => setIsConnecting(false)}
+              onConnectEnd={() => {
+                setIsConnecting(false);
+                setNodes(
+                  nodes.map((node) => ({
+                    ...node,
+                    data: { ...node.data, isNearToCursor: false },
+                  }))
+                );
+              }}
+              onMouseMove={(e) => {
+                if (!isConnecting || !reactFlowRef.current) return;
+
+                setMoveEvent(e);
+              }}
             >
               <div
                 style={{
