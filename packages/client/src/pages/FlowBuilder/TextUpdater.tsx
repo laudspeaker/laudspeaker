@@ -11,6 +11,7 @@ import { v4 as uuid } from "uuid";
 import thunderbolt from "../../assets/images/thunderbolt.svg";
 import { getAudienceDetails } from "./FlowHelpers";
 
+import ArrowDown from "@heroicons/react/24/solid/ArrowLongDownIcon";
 import { Email, SlackMsg, Mobile, SMS } from "../../components/Icons/Icons";
 import ChooseTemplateModal from "./ChooseTemplateModal";
 import LinesEllipsis from "react-lines-ellipsis";
@@ -30,6 +31,7 @@ const TextUpdaterNode = ({ data }: { data: NodeData }) => {
     needsUpdate,
     nodeId,
     isNearToCursor,
+    isConnecting,
   } = data;
   const [nodeData, setNodeData] = useState<{
     id?: string;
@@ -45,7 +47,6 @@ const TextUpdaterNode = ({ data }: { data: NodeData }) => {
   const [descriptionCollaped, setDescriptionCollaped] = useState(true);
 
   const edges = useEdges();
-
   const onTemplateModalClose = () => {
     setUpdateTemplateModalOpen(false);
     setSelectedMessageType("");
@@ -139,6 +140,7 @@ const TextUpdaterNode = ({ data }: { data: NodeData }) => {
 
   const connectionNodeId = useStore((state) => state.connectionNodeId);
   const isTarget = connectionNodeId && connectionNodeId !== nodeData.id;
+  const isSourceForSome = !!edges.find((edge) => edge.source === nodeId);
 
   return (
     <>
@@ -227,27 +229,32 @@ const TextUpdaterNode = ({ data }: { data: NodeData }) => {
                 <Handle
                   type="source"
                   key={index}
-                  position={Position.Bottom}
+                  position={Position.Top}
                   id={trigger.id}
                   onClick={(e) => handleTriggerClick(e, trigger.id)}
-                  className="triggerOut"
-                  style={{
-                    height: "22px",
-                    background: "transparent",
-                    width: "30px",
-                    transform: "unset",
-                    bottom: "-4px",
-                    top: "auto",
-                    left: "auto",
-                    right: "auto",
-                    position: "relative",
-                  }}
+                  className={`triggerOut !relative !left-auto !right-auto !border-[0px] !z-[1000] ${
+                    isSourceForSome ? "!h-[22px]" : "!h-[44px]"
+                  } !bg-transparent !w-[30px] !transform-none  ${
+                    isSourceForSome ? "!top-[11px]" : "!top-[22px]"
+                  }
+                   `}
                 >
-                  <img
-                    src={thunderbolt}
-                    width="30"
-                    style={{ pointerEvents: "none" }}
-                  />
+                  <div className="pointer-events-none absolute left-1/2 top-0 -translate-x-1/2 w-[30px] h-[22px]">
+                    <img
+                      src={thunderbolt}
+                      width="30"
+                      height="22"
+                      className=""
+                    />
+                    {!isConnecting && !isSourceForSome && (
+                      <div className="absolute z-[-1] left-1/2 top-[24px] -translate-x-1/2 w-[20px] h-full">
+                        <ArrowDown className="text-[#bdbdc1]" />
+                        <div className="circle-to-display-hover absolute transition-all flex justify-center items-center w-full h-full opacity-0 left-0 top-[-2px] ">
+                          <div className="border-[1px] border-cyan-600 rounded-full w-[10px] h-[10px]" />
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </Handle>
               );
             })}

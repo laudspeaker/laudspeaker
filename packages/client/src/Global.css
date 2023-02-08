@@ -68,3 +68,7 @@ body,
     opacity: 0;
     stroke-width: 40;
 }
+
+.triggerOut:hover .circle-to-display-hover{
+  opacity: 1;
+}
