@@ -108,7 +108,9 @@ const myFormat = winston.format.printf(function ({
       rootPath: process.env.CLIENT_PATH ? process.env.CLIENT_PATH : join(__dirname, '../../../', 'client/build/'),
       exclude: ['api/*'],
     })] : []),
-    MongooseModule.forRoot(process.env.MONGOOSE_URL),
+    MongooseModule.forRoot(
+      process.env.MONGOOSE_URL ? (process.env.MONGOOSE_URL.includes('mongodb') ? process.env.MONGOOSE_URL : `mongodb://${process.env.MONGOOSE_URL}`) : 'mongodb://127.0.0.1:27017',
+    ),
     BullModule.forRoot({
       redis: {
         host: process.env.REDIS_HOST ?? 'localhost',
