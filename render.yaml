@@ -54,6 +54,7 @@ services:
   - type: pserv
     name: clickhouse
     env: docker
+    dockerfilePath: ./Dockerfile.clickhouse
     disk:
       name: data
       mountPath: /var/lib/clickhouse
@@ -61,6 +62,7 @@ services:
   - type: pserv
     name: mongo
     env: docker
+    dockerfilePath: ./Dockerfile.mongo
     disk:
       name: data
       mountPath: /data/db
