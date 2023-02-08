@@ -32,10 +32,20 @@ services:
           type: redis
           name: laudspeaker
           property: port
-      - key: DATABASE_URL
+      - key: DATABASE_USER
         fromDatabase:
           name: laudspeaker-db
-          property: connectionString
+          property: user
+      - key: DATABASE_PASSWORD
+        fromDatabase:
+          name: laudspeaker-db
+          property: password
+      - key: DATABASE_HOST
+        fromDatabase:
+          name: laudspeaker-db
+          property: host
+      - key: DATABASE_NAME
+        value: laudspeaker
   - type: redis
     name: laudspeaker
     ipAllowList:
