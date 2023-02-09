@@ -1,9 +1,12 @@
 # To build: docker build -f Dockerfile -t laudspeaker:latest .
 # To run: docker run -it -p 80:80 -p 3001:3001 --rm laudspeaker:latest
 FROM node:16 as frontend_build
-ENV REACT_APP_API_BASE_URL http://localhost/api
-ENV REACT_APP_POSTHOG_HOST https://app.posthog.com
-ENV REACT_APP_POSTHOG_KEY RxdBl8vjdTwic7xTzoKTdbmeSC1PCzV6sw-x-FKSB-k
+ARG RENDER_EXTERNAL_URL
+ARG REACT_APP_POSTHOG_HOST
+ARG REACT_APP_POSTHOG_KEY
+ENV REACT_APP_API_BASE_URL=${RENDER_EXTERNAL_URL}/api
+ENV REACT_APP_POSTHOG_HOST=${REACT_APP_POSTHOG_HOST}
+ENV REACT_APP_POSTHOG_KEY=${REACT_APP_POSTHOG_KEY}
 WORKDIR /app
 COPY ./packages/client/package.json /app/
 COPY ./package-lock.json /app/
