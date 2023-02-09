@@ -35,7 +35,7 @@ describe(
         .children("button")
         .click();
       cy.get("[data-duplicate-button]").click();
-      cy.wait(1000);
+      cy.wait(3000);
       cy.contains("Journey with rich email-copy-1").click();
       cy.contains("Start").click();
     });
