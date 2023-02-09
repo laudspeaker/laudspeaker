@@ -10,8 +10,11 @@ services:
       name: data
       mountPath: /data
     envVars:
+      - fromGroup: laudspeaker
       - key: PORT
         value: 80
+      - key: SYNCHRONIZE
+        value: true
       - key: JWT_KEY
         generateValue: true
       - key: JWT_EXPIRES

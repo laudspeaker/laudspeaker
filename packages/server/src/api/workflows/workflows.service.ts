@@ -49,7 +49,7 @@ import { Job, TimeJobType } from '../jobs/entities/job.entity';
 @Injectable()
 export class WorkflowsService {
   private clickhouseClient = createClient({
-    host: 'http://localhost:8123', //process.env.CLICKHOUSE_HOST ? (process.env.CLICKHOUSE_HOST.includes('http') ? process.env.CLICKHOUSE_HOST : `http://${process.env.CLICKHOUSE_HOST}`) : 'http://localhost:8123',
+    host: process.env.CLICKHOUSE_HOST ? (process.env.CLICKHOUSE_HOST.includes('http') ? process.env.CLICKHOUSE_HOST : `http://${process.env.CLICKHOUSE_HOST}`) : 'http://localhost:8123',
     username: process.env.CLICKHOUSE_USER ?? 'default',
     password: process.env.CLICKHOUSE_PASSWORD ?? '',
   });
