@@ -277,7 +277,9 @@ const SegmentModal: FC<SegmentModalProps> = ({
             )}
             {mode === SegmentModalMode.NEW && (
               <Tooltip
-                title={!newSegmentName.trim() ? "Name of segment required" : ""}
+                content={
+                  !newSegmentName.trim() ? "Name of segment required" : ""
+                }
                 placement="left"
                 className="!z-[2000000000]"
               >

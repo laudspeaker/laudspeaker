@@ -797,7 +797,7 @@ const Flow = () => {
                         onChange={onToggleChange}
                       />
                     </Grid>
-                    <Tooltip title="Dynamic journeys will enroll new customers that satisfy the conditions of the Journey. Static journeys will only enroll customers that satisfy the conditions of the journey when it is started.">
+                    <Tooltip content="Dynamic journeys will enroll new customers that satisfy the conditions of the Journey. Static journeys will only enroll customers that satisfy the conditions of the journey when it is started.">
                       {/* <IconButton> */}
                       <div className="flex items-center cursor-default mt-[8px]">
                         <img src={InfoIcon} width="20px" />
@@ -910,7 +910,7 @@ const Flow = () => {
                 </div>
                 <div className="m-[0_7.5px]" data-startflowbutton>
                   <Tooltip
-                    title={
+                    content={
                       startDisabledReason ||
                       "Once you start a journey users can be messaged"
                     }

@@ -272,7 +272,7 @@ const Flow = () => {
         >
           <div className="p-[0px_7.5px]" data-saveflowbutton>
             <Tooltip
-              title={
+              content={
                 !isPaused && isDataLoaded && !isStopped
                   ? "Users won't move between steps or get messages temporarily"
                   : ""
@@ -294,7 +294,7 @@ const Flow = () => {
           </div>
           <div className="p-[0px_7.5px]" data-startflowbutton>
             <Tooltip
-              title={
+              content={
                 !isDataLoaded && !isStopped
                   ? ""
                   : "Once you stop a journey no more messages are sent, and users don't move steps"
