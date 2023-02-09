@@ -1,1 +1,3 @@
 FROM mongo:latest
+CMD ["--replSet", "rs0", "--bind_ip_all"]
+HEALTHCHECK --interval=5s --timeout=5s --start-period=1s --retries=3 CMD mongosh --eval "rs.initiate()"; mongosh --eval "rs.status().ok" || exit 1
