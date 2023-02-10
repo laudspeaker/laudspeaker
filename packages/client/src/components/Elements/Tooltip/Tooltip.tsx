@@ -5,14 +5,14 @@ interface CustomTooltipProps {
   children: ReactNode;
   content: ReactNode;
   placement?: string;
-  // className?: string;
+  className?: string;
 }
 
 const Tooltip: FC<CustomTooltipProps & TooltipProps> = ({
   children,
   content,
   placement = "top",
-  // className,
+  className,
 }) => {
   return (
     <MTTooltip

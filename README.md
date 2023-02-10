@@ -17,7 +17,6 @@
   
 </p>
 
-
 ## Deploy Laudspeaker on Render.com
 
 <a href="https://render.com/deploy?repo=https://github.com/laudspeaker/laudspeaker/tree/docker_optimise">

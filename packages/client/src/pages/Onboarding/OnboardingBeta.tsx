@@ -158,6 +158,8 @@ const expectedFields: Record<string, string[]> = {
   sendgrid: ["sendgridApiKey", "sendgridFromEmail"],
 };
 
+const tabNames = ["Channels", "Events", "Customers"];
+
 interface IntegrationsData {
   sendingName: string;
   sendingEmail: string;
@@ -388,7 +390,9 @@ export default function OnboardingBeta() {
       setPrivateApiKey(mailgunAPIKey);
       setDomainName(sendingDomain);
       setVerified(verifiedFromRequest);
-      setIsNextItemAvailable(!!emailProvider || !!smsAccountSid);
+      setCurrentStep(
+        !!posthogApiKey ? 2 : !!emailProvider || !!smsAccountSid ? 1 : 0
+      );
       setUserApiKey(apiKey);
     })();
   }, []);
@@ -1618,9 +1622,71 @@ export default function OnboardingBeta() {
                 ></iframe>
               </div>
             </Modal>
-            {/* Page header */}
-            <div className="bg-white shadow">
-              <div className="px-4 sm:px-6 lg:mx-auto lg:max-w-6xl lg:px-8"></div>
+            <div className="px-4 sm:px-6 lg:mx-auto lg:max-w-6xl lg:px-8">
+              <div className="lg:hidden">
+                <label htmlFor="selected-tab" className="sr-only">
+                  Select a tab
+                </label>
+                <select
+                  id="selected-tab"
+                  name="selected-tab"
+                  className="mt-1 block w-full rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-cyan-500 focus:outline-none focus:ring-cyan-500 sm:text-sm"
+                  value={currentStep}
+                  onChange={(e) => {
+                    if (+e.currentTarget.value > currentStep)
+                      setIsNextItemAvailable(false);
+                    setCurrentStep(+e.currentTarget.value);
+                  }}
+                >
+                  {[0, 1, 2].map((tab) => (
+                    <option
+                      key={tab}
+                      value={tab}
+                      disabled={
+                        tab > currentStep &&
+                        !(tab === currentStep + 1 && isNextItemAvailable)
+                      }
+                    >
+                      {tabNames[tab]}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="hidden lg:block">
+                <div className="border-b border-gray-200">
+                  <nav className="-mb-px flex space-x-8">
+                    {[0, 1, 2].map((tab) => (
+                      <div
+                        key={tab}
+                        className={classNames(
+                          tab === currentStep
+                            ? "border-cyan-500 text-cyan-600"
+                            : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700",
+                          "whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm cursor-pointer",
+                          `${
+                            tab > currentStep &&
+                            !(tab === currentStep + 1 && isNextItemAvailable)
+                              ? "grayscale"
+                              : ""
+                          }`
+                        )}
+                        onClick={
+                          tab > currentStep &&
+                          !(tab === currentStep + 1 && isNextItemAvailable)
+                            ? undefined
+                            : () => {
+                                if (tab > currentStep)
+                                  setIsNextItemAvailable(false);
+                                setCurrentStep(tab);
+                              }
+                        }
+                      >
+                        {tabNames[tab]}
+                      </div>
+                    ))}
+                  </nav>
+                </div>
+              </div>
             </div>
             <div className="relative mx-auto max-w-4xl md:px-8 xl:px-0">
               <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8"></div>

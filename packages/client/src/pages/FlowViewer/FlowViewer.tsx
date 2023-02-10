@@ -18,6 +18,8 @@ import ReactFlow, {
   ReactFlowProvider,
   useReactFlow,
   useViewport,
+  NodeChange,
+  applyNodeChanges,
 } from "react-flow-renderer";
 import { useParams } from "react-router-dom";
 import ViewNode from "./ViewNode";
@@ -111,7 +113,16 @@ const Flow = () => {
     setIsDataLoaded(true);
   }, []);
 
-  const onNodesChange = () => {};
+  const onNodesChange = useCallback(
+    (changes: NodeChange[]) =>
+      setNodes((nds) =>
+        applyNodeChanges(
+          changes.filter((change) => change.type === "position"),
+          nds
+        )
+      ),
+    [setNodes, nodes]
+  );
 
   useEffect(() => {
     const filteredNewNodes = nodes.filter((node) => node.data.isNew);

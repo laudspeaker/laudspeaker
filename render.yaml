@@ -77,4 +77,4 @@ services:
       mountPath: /data/db
       sizeGB: 10
 databases:
-- name: laudspeaker-db
+  - name: laudspeaker-db

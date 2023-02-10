@@ -94,13 +94,22 @@ const WelcomeBannerProvider: FC<WelcomeBannerProviderProps> = ({
             things
             <ol className="list-decimal pl-[30px] py-[10px]">
               <li>Set up messaging channels</li>
-              <li>Set up event sending</li>
+              <li>Set up event streaming</li>
               <li>Optionally import your customers</li>
             </ol>
-            If you get stuck and need help - join our{" "}
-            <a href="" target="_blank">
-              slack group
-            </a>
+            <div>
+              <p>
+                If you get stuck and need help - join our{" "}
+                <span className="underline decoration-dashed">
+                  <a
+                    href="https://join.slack.com/t/laudspeakerusers/shared_invite/zt-1li25huaq-BljJUA1Zm8dXvbZViAbMwg"
+                    target="_blank"
+                  >
+                    slack group
+                  </a>
+                </span>
+              </p>
+            </div>
           </p>
           <div className="flex justify-end items-center gap-[10px] mt-[20px]">
             <GenericButton
