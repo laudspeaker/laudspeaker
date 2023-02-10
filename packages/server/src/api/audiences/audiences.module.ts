@@ -55,4 +55,4 @@ import { Job } from '../jobs/entities/job.entity';
   providers: [AudiencesService, JobsService],
   exports: [AudiencesService],
 })
-export class AudiencesModule { }
+export class AudiencesModule {}

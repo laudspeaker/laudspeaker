@@ -42,7 +42,7 @@ export class EventsController {
 
   @Post('job-status/sms')
   @UseInterceptors(ClassSerializerInterceptor)
-  async getJobSMSStatus(@Body() body: StatusJobDto): Promise<string> {
+  async getJobSmsStatus(@Body() body: StatusJobDto): Promise<string> {
     return this.eventsService.getJobStatus(body, JobTypes.sms);
   }
 

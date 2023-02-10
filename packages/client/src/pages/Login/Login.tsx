@@ -1,4 +1,4 @@
-import { ChangeEvent, MouseEvent, useState } from "react";
+import { ChangeEvent, FC, MouseEvent, useState } from "react";
 import { useDispatch } from "react-redux";
 import { ILoginForm, loginUser } from "../../reducers/auth";
 import { useNavigate } from "react-router-dom";
@@ -10,7 +10,11 @@ import githubIcon from "../../assets/images/github.svg";
 import googleIcon from "../../assets/images/google.svg";
 import gitlabIcon from "../../assets/images/gitlab.svg";
 
-const Login = () => {
+export interface LoginProps {
+  setShowWelcomeBanner: (value: boolean) => void;
+}
+
+const Login: FC<LoginProps> = ({ setShowWelcomeBanner }) => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
@@ -36,6 +40,10 @@ const Login = () => {
           laudspeakerId: response.data.id,
         },
       });
+
+      if (!response?.data?.verified && !localStorage.getItem("dontShowAgain")) {
+        setShowWelcomeBanner(true);
+      }
 
       navigate("/");
     }

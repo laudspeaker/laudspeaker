@@ -22,7 +22,7 @@ describe(
     it("passes", () => {
       loginFunc(email, password);
       templatesFunc(slackTemplate, emailTemplate);
-      runEmailJourney("Journey with rich email", "example-template-bill");
+      runEmailJourney("Journey with rich email", "example-template-review");
 
       cy.wait(3000);
       cy.contains("Journey Builder").click();

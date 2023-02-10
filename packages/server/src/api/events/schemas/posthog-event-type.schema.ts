@@ -7,6 +7,15 @@ export type PosthogEventTypeDocument = PosthogEventType & Document;
 export class PosthogEventType {
   @Prop()
   name: string;
+
+  @Prop()
+  displayName: string;
+
+  @Prop()
+  type: string;
+
+  @Prop()
+  event: string;
 }
 
 export const PosthogEventTypeSchema =

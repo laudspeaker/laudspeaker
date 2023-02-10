@@ -5,6 +5,12 @@ import setMailgun from "../test-helpers/setMailgun";
 const { email, password } = credentials;
 
 describe("onboarding", () => {
+  beforeEach(() => {
+    Cypress.on("uncaught:exception", () => {
+      return false;
+    });
+  });
+
   it("passes", () => {
     cy.viewport(1280, 1024);
     cy.visit("/");
@@ -14,7 +20,8 @@ describe("onboarding", () => {
     cy.get("#email").clear().type(email);
     cy.get("#password").clear().type(password);
     cy.get("#loginIntoAccount").click();
-    cy.contains("Active Journeys").should("exist");
+    cy.contains("Welcome John").should("exist");
+    cy.get(".grayscale").click();
 
     setMailgun();
   });

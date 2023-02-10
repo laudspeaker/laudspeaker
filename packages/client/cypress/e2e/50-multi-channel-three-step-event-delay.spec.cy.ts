@@ -2,24 +2,17 @@
 /* eslint-disable jest/valid-describe-callback */
 /* eslint-disable @typescript-eslint/no-shadow */
 import credentials from "../fixtures/credentials";
-import checkSuccessfulEmailEventHit from "../test-helpers/checkSuccessfulEmailEventHit";
 import createNewSegment from "../test-helpers/createNewSegment";
 import { loginFunc } from "../test-helpers/loginFunc";
-import runTwoStepEmailJourney from "../test-helpers/runTwoStepEmailJourney";
+import setupDelayTrigger from "../test-helpers/setupDelayTrigger";
 import setupEventTrigger from "../test-helpers/setupEventTrigger";
 import { templatesFunc } from "../test-helpers/templatesFunc";
 
-const {
-  email,
-  password,
-  emailTemplate,
-  slackTemplate,
-  journeyName,
-  userAPIkey,
-} = credentials.MessageHitUser;
+const { email, password, emailTemplate, userAPIkey, smsTemplate } =
+  credentials.MessageHitUser;
 
 describe(
-  "Journey with three steps and pause after first event hit",
+  "Journey with three steps with event and delay trigger",
   { env: { AxiosURL: "http://localhost:3001/" } },
   () => {
     beforeEach(() => {
@@ -35,7 +28,7 @@ describe(
       cy.get(".mt-6 > .inline-flex").click();
       cy.get("#name").type("Email flow");
       cy.get("#createJourneySubmit").click();
-      cy.wait(5000);
+      cy.wait(3000);
       cy.get("#audience > .p-0 > .justify-between").click();
       cy.get("#name").type("Initial");
       cy.get("#saveNewSegment").click();
@@ -47,11 +40,12 @@ describe(
         deltaX: 100,
         deltaY: 300,
       });
-      cy.get('[data-isprimary]:not([data-isprimary="true"])').click();
+
       cy.get("#email > .p-0 > .justify-between").click();
       cy.get("#activeJourney").click();
       cy.contains(emailTemplate.name).click();
       cy.get("#exportSelectedTemplate").click();
+
       cy.get('[data-isprimary="true"]').click();
       setupEventTrigger(emailTemplate.eventName, emailTemplate.eventName);
       cy.get(
@@ -64,16 +58,17 @@ describe(
       cy.get("#audience > .p-0 > .justify-between").click();
       cy.get("#name").clear().type("Step 3");
       cy.get("#saveNewSegment").click();
-      cy.wait(3000);
-      cy.contains("Step 3").move({ deltaX: 100, deltaY: 500 });
-      cy.get("#slack > .p-0 > .justify-between").click();
 
+      cy.contains("Step 3").move({ deltaX: 100, deltaY: 500 });
+
+      cy.get("#sms > .p-0 > .justify-between").click();
       cy.get("#activeJourney").click();
-      cy.contains(slackTemplate.name).click();
+      cy.contains(smsTemplate.name).click();
       cy.get("#exportSelectedTemplate").click();
+      cy.get('[data-isprimary="true"]').click();
 
       cy.contains("Second").click();
-      setupEventTrigger(slackTemplate.eventName, slackTemplate.eventName);
+      setupDelayTrigger();
       cy.get(
         '.text-updater-node:not([data-isprimary="true"]) > [style="display: flex; height: 22px; position: absolute; left: 0px; bottom: 0px; align-items: center; width: 100%; justify-content: space-around;"] > .react-flow__handle'
       ).drag('[data-isprimary]:not([data-isprimary="true"])', { force: true });
@@ -88,33 +83,35 @@ describe(
       cy.contains("Start").click();
       cy.wait(3000);
 
-      checkSuccessfulEmailEventHit(
-        userAPIkey,
-        emailTemplate.eventName,
-        "email",
-        emailTemplate.correlationValue,
-        () => {
-          cy.wait(10000);
-          cy.contains("Pause").click();
-          cy.wait(10000);
-
-          cy.request({
-            method: "POST",
-            url: `${Cypress.env("AxiosURL")}events`,
-            headers: {
-              Authorization: `Api-Key ${userAPIkey}`,
-            },
-            body: {
-              correlationKey: "email",
-              correlationValue: emailTemplate.correlationValue,
-              event: { [slackTemplate.eventName]: slackTemplate.eventName },
-            },
-          }).then(({ body }) => {
-            cy.wait(1000);
-            expect(body[0]?.jobIds?.[0]).to.equal(undefined);
-          });
-        }
-      );
+      cy.request({
+        method: "POST",
+        url: `${Cypress.env("AxiosURL")}events`,
+        headers: {
+          Authorization: `Api-Key ${userAPIkey}`,
+        },
+        body: {
+          correlationKey: "email",
+          correlationValue: emailTemplate.correlationValue,
+          event: { [emailTemplate.eventName]: emailTemplate.eventName },
+        },
+      }).then(() => {
+        cy.request(`${Cypress.env("AxiosURL")}tests/test-customer-id`).then(
+          ({ body: id }) => {
+            cy.wait(5000);
+            cy.request(
+              `${Cypress.env("AxiosURL")}tests/audience-by-customer/${id}`
+            ).then(({ body: { name } }) => {
+              expect(name).to.equal("Second");
+            });
+            cy.wait(80000);
+            cy.request(
+              `${Cypress.env("AxiosURL")}tests/audience-by-customer/${id}`
+            ).then(({ body: { name } }) => {
+              expect(name).to.equal("Step 3");
+            });
+          }
+        );
+      });
     });
   }
 );

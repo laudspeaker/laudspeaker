@@ -159,9 +159,6 @@ const myFormat = winston.format.printf(function ({
     BullModule.registerQueue({
       name: 'slack',
     }),
-    BullModule.registerQueue({
-      name: 'sms',
-    }),
   ],
   controllers: [AppController],
   providers: [

@@ -10,6 +10,7 @@ import { getAudienceDetails } from "pages/FlowBuilder/FlowHelpers";
 import ChooseTemplateModal from "pages/FlowBuilder/ChooseTemplateModal";
 import StatModal from "./StatModal";
 import { NodeData } from "pages/FlowBuilder/FlowBuilder";
+import LinesEllipsis from "react-lines-ellipsis";
 
 const textStyle =
   "text-[#223343] font-[Poppins] font-normal text-[14px] leading-[30px]";
@@ -31,6 +32,7 @@ const ViewNode = ({ data }: { data: NodeData }) => {
   const [updateTemplateModalOpen, setUpdateTemplateModalOpen] = useState(false);
   const [sentStatModalOpen, setSentStatModalOpen] = useState(false);
   const [clickedStatModalOpen, setClickedStatModalOpen] = useState(false);
+  const [descriptionCollaped, setDescriptionCollaped] = useState(true);
 
   const onTemplateModalClose = () => {
     setUpdateTemplateModalOpen(false);
@@ -139,9 +141,9 @@ const ViewNode = ({ data }: { data: NodeData }) => {
           isConnectable={false}
         />
         <div
-          className={`view-node bg-white rounded-[8px] ${
+          className={`view-node bg-white overflow-hidden rounded-[8px] ${
             nodeData.width ? `w-[${nodeData.width}]` : "w-[350px]"
-          }`}
+          } ${descriptionCollaped ? "max-h-[88px]" : "min-h-[80px]"}`}
         >
           <div className="flex justify-start items-center p-[8px_20px]">
             <div className="flex justify-evenly items-center">
@@ -154,7 +156,30 @@ const ViewNode = ({ data }: { data: NodeData }) => {
                 )}
                 {nodeData.name}
               </p>
-              <p className={subTitleTextStyle}>{nodeData.description}</p>
+              {descriptionCollaped && nodeData.description ? (
+                <LinesEllipsis
+                  onClick={() => {
+                    setDescriptionCollaped(!descriptionCollaped);
+                  }}
+                  text={nodeData.description}
+                  className={
+                    subTitleTextStyle + " h-full text-ellipsis cursor-pointer"
+                  }
+                  maxLine="2"
+                  ellipsis="..."
+                  trimRight
+                  basedOn="letters"
+                />
+              ) : (
+                <p
+                  onClick={() => setDescriptionCollaped(!descriptionCollaped)}
+                  className={
+                    subTitleTextStyle + " h-full text-ellipsis cursor-pointer"
+                  }
+                >
+                  {nodeData.description}
+                </p>
+              )}
             </div>
           </div>
           <Divider />
@@ -212,7 +237,7 @@ const ViewNode = ({ data }: { data: NodeData }) => {
             </div>
           )}
         </div>
-        <div className="flex h-[15px] absolute left-0 bottom-0 items-center w-full justify-around">
+        <div className="flex h-[22px] absolute left-0 bottom-0 items-center w-full justify-around">
           {!isExit &&
             data?.triggers?.map((trigger, index) => {
               return (
@@ -222,12 +247,12 @@ const ViewNode = ({ data }: { data: NodeData }) => {
                   position={Position.Bottom}
                   id={trigger.id}
                   onClick={(e) => handleTriggerClick(e, trigger.id)}
-                  className="!pointer-events-auto !outline-none !h-[15px] !bg-transparent !w-[20px] !transform-none !bottom-[-4px] !top-auto !left-auto !right-auto !relative"
+                  className="!pointer-events-auto !outline-none !h-[22px] !bg-transparent !w-[30px] !transform-none !bottom-[-4px] !top-auto !left-auto !right-auto !relative"
                   isConnectable={false}
                 >
                   <img
                     src={thunderbolt}
-                    width="20"
+                    width="30"
                     style={{ pointerEvents: "none" }}
                   />
                 </Handle>

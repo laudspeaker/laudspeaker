@@ -23,7 +23,10 @@ describe(
     it("passes", () => {
       loginFunc(email, password);
       cy.contains("Messaging").click();
-      runTwoStepEmailJourney("example-template-bill", emailTemplate.eventName);
+      runTwoStepEmailJourney(
+        "example-template-review",
+        emailTemplate.eventName
+      );
 
       checkSuccessfulEmailEventHit(
         userAPIkey,

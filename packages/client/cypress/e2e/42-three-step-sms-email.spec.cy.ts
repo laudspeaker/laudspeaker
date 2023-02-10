@@ -47,7 +47,7 @@ describe(
       cy.get('[data-isprimary="true"]').click();
       setupEventTrigger(smsTemplate.eventName, smsTemplate.eventName);
       cy.get(
-        '[style="display: flex; height: 15px; position: absolute; left: 0px; bottom: 0px; align-items: center; width: 100%; justify-content: space-around;"] > .react-flow__handle'
+        '[style="display: flex; height: 22px; position: absolute; left: 0px; bottom: 0px; align-items: center; width: 100%; justify-content: space-around;"] > .react-flow__handle'
       ).drag('[data-isprimary]:not([data-isprimary="true"])', {
         force: true,
       });
@@ -67,7 +67,7 @@ describe(
       cy.contains("Second").click();
       setupEventTrigger(emailTemplate.eventName, emailTemplate.eventName);
       cy.get(
-        '.text-updater-node:not([data-isprimary="true"]) > [style="display: flex; height: 15px; position: absolute; left: 0px; bottom: 0px; align-items: center; width: 100%; justify-content: space-around;"] > .react-flow__handle'
+        '.text-updater-node:not([data-isprimary="true"]) > [style="display: flex; height: 22px; position: absolute; left: 0px; bottom: 0px; align-items: center; width: 100%; justify-content: space-around;"] > .react-flow__handle'
       ).drag('[data-isprimary]:not([data-isprimary="true"])', { force: true });
       cy.get(
         '[data-isprimary]:not([data-isprimary="true"]):contains("Step 3")'
@@ -91,46 +91,34 @@ describe(
           correlationValue: Cypress.env("TESTS_SMS_TO") || smsTemplate.phone,
           event: { [smsTemplate.eventName]: smsTemplate.eventName },
         },
-      }).then(({ body }) => {
+      }).then(({ isOkStatusCode }) => {
         cy.wait(2000);
+        expect(isOkStatusCode).to.be.equal(true);
+
         cy.request({
           method: "POST",
+          url: `${Cypress.env("AxiosURL")}events`,
           headers: {
             Authorization: `Api-Key ${userAPIkey}`,
           },
-          url: `${Cypress.env("AxiosURL")}events/job-status/sms`,
           body: {
-            jobId: body[0]?.jobIds?.[0],
+            correlationKey: "phone",
+            correlationValue: Cypress.env("TESTS_SMS_TO") || smsTemplate.phone,
+            event: { [emailTemplate.eventName]: emailTemplate.eventName },
           },
         }).then(({ body }) => {
-          expect(body).to.equal("completed");
-
+          cy.wait(1000);
           cy.request({
             method: "POST",
-            url: `${Cypress.env("AxiosURL")}events`,
             headers: {
               Authorization: `Api-Key ${userAPIkey}`,
             },
+            url: `${Cypress.env("AxiosURL")}events/job-status/email`,
             body: {
-              correlationKey: "phone",
-              correlationValue:
-                Cypress.env("TESTS_SMS_TO") || smsTemplate.phone,
-              event: { [emailTemplate.eventName]: emailTemplate.eventName },
+              jobId: body[0]?.jobIds?.[0],
             },
           }).then(({ body }) => {
-            cy.wait(1000);
-            cy.request({
-              method: "POST",
-              headers: {
-                Authorization: `Api-Key ${userAPIkey}`,
-              },
-              url: `${Cypress.env("AxiosURL")}events/job-status/email`,
-              body: {
-                jobId: body[0]?.jobIds?.[0],
-              },
-            }).then(({ body }) => {
-              expect(body).to.equal("completed");
-            });
+            expect(body).to.equal("completed");
           });
         });
       });

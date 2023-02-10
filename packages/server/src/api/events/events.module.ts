@@ -57,9 +57,6 @@ import { EventsProcessor } from './events.processor';
       name: 'customers',
     }),
     BullModule.registerQueue({
-      name: 'sms',
-    }),
-    BullModule.registerQueue({
       name: 'events',
     }),
     AuthModule,
@@ -74,4 +71,4 @@ import { EventsProcessor } from './events.processor';
   providers: [EventsService, EventsProcessor],
   exports: [EventsService],
 })
-export class EventsModule { }
+export class EventsModule {}

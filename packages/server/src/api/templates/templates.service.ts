@@ -7,9 +7,8 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { Account } from '../accounts/entities/accounts.entity';
-import { CustomersService } from '../customers/customers.service';
 import { CustomerDocument } from '../customers/schemas/customer.schema';
 import { CreateTemplateDto } from './dto/create-template.dto';
 import { UpdateTemplateDto } from './dto/update-template.dto';
@@ -20,19 +19,26 @@ import { Installation } from '../slack/entities/installation.entity';
 import { SlackService } from '../slack/slack.service';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { EventDto } from '../events/dto/event.dto';
+import { Audience } from '../audiences/entities/audience.entity';
+import { Liquid } from 'liquidjs';
+import twilio from 'twilio';
 
 @Injectable()
 export class TemplatesService {
+  private tagEngine = new Liquid();
+
+  private MAXIMUM_SMS_LENGTH = 1600;
+
   constructor(
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
     private readonly logger: LoggerService,
     @InjectRepository(Template)
     public templatesRepository: Repository<Template>,
-    @Inject(CustomersService) private customersService: CustomersService,
+    @InjectRepository(Audience)
+    private audiencesRepository: Repository<Audience>,
     @Inject(SlackService) private slackService: SlackService,
     @InjectQueue('email') private readonly emailQueue: Queue,
-    @InjectQueue('slack') private readonly slackQueue: Queue,
-    @InjectQueue('sms') private readonly smsQueue: Queue
+    @InjectQueue('slack') private readonly slackQueue: Queue
   ) {}
 
   create(account: Account, createTemplateDto: CreateTemplateDto) {
@@ -81,7 +87,8 @@ export class TemplatesService {
     const customerId = customer.id;
     let template: Template,
       job: Job<any>, // created jobId
-      installation: Installation;
+      installation: Installation,
+      message: any;
     try {
       template = await this.findOneById(account, templateId);
       this.logger.debug(
@@ -157,19 +164,60 @@ export class TemplatesService {
         });
         break;
       case 'sms':
-        job = await this.smsQueue.add('send', {
-          sid: account.smsAccountSid,
-          token: account.smsAuthToken,
-          from: account.smsFrom,
-          to: customer.phPhoneNumber || customer.phone,
-          tags,
-          text: template.smsText,
-          audienceId,
-          customerId,
-        });
+        // job = await this.smsQueue.add('send', {
+        //   sid: account.smsAccountSid,
+        //   token: account.smsAuthToken,
+        //   from: account.smsFrom,
+        //   to: customer.phPhoneNumber || customer.phone,
+        //   tags,
+        //   text: template.smsText,
+        //   audienceId,
+        //   customerId,
+        // });
+        try {
+          if (!customer.phPhoneNumber && !customer.phone) return;
+          this.logger.debug(
+            `Starting SMS sending from ${account?.smsFrom} to ${
+              customer.phPhoneNumber || customer.phone
+            }`
+          );
+          let textWithInsertedTags: string | undefined;
+
+          if (template.smsText) {
+            textWithInsertedTags = await this.tagEngine.parseAndRender(
+              template.smsText,
+              tags || {}
+            );
+          }
+
+          this.logger.debug(
+            `Finished rendering tags in SMS from ${account?.smsFrom} to ${
+              customer.phPhoneNumber || customer.phone
+            }`
+          );
+          const twilioClient = twilio(
+            account.smsAccountSid,
+            account.smsAuthToken
+          );
+
+          message = await twilioClient.messages.create({
+            body: textWithInsertedTags?.slice(0, this.MAXIMUM_SMS_LENGTH),
+            from: account.smsFrom,
+            to: customer.phPhoneNumber || customer.phone,
+            statusCallback: `${process.env.TWILIO_WEBHOOK_ENDPOINT}?audienceId=${audienceId}&customerId=${customerId}`,
+          });
+
+          this.logger.debug(
+            `Sms with sid ${message.sid} status: ${JSON.stringify(
+              message.status
+            )}`
+          );
+        } catch (e) {
+          this.logger.error(e);
+        }
         break;
     }
-    return Promise.resolve(job.id);
+    return Promise.resolve(message ? message?.sid : job?.id);
   }
 
   async findAll(
@@ -177,7 +225,8 @@ export class TemplatesService {
     take = 100,
     skip = 0,
     orderBy?: keyof Template,
-    orderType?: 'asc' | 'desc'
+    orderType?: 'asc' | 'desc',
+    showDeleted?: boolean
   ): Promise<{ data: Template[]; totalPages: number }> {
     const totalPages = Math.ceil(
       (await this.templatesRepository.count({
@@ -189,7 +238,10 @@ export class TemplatesService {
       orderOptions[orderBy] = orderType;
     }
     const templates = await this.templatesRepository.find({
-      where: { owner: { id: account.id } },
+      where: {
+        owner: { id: account.id },
+        isDeleted: In([!!showDeleted, false]),
+      },
       order: orderOptions,
       take: take < 100 ? take : 100,
       skip,
@@ -200,7 +252,7 @@ export class TemplatesService {
   findOne(account: Account, name: string): Promise<Template> {
     return this.templatesRepository.findOneBy({
       owner: { id: account.id },
-      name: name,
+      name,
     });
   }
 
@@ -228,18 +280,28 @@ export class TemplatesService {
     );
   }
 
-  async remove(account: Account, name: string): Promise<void> {
-    await this.templatesRepository.delete({
-      owner: { id: (<Account>account).id },
-      name,
-    });
+  async remove(account: Account, id: string): Promise<void> {
+    await this.templatesRepository.update(
+      {
+        owner: { id: (<Account>account).id },
+        id,
+      },
+      { isDeleted: true }
+    );
   }
 
   async duplicate(account: Account, name: string) {
-    const foundTemplate = await this.findOne(account, name);
+    const foundTemplate = await this.templatesRepository.findOne({
+      where: {
+        owner: { id: account.id },
+        name,
+      },
+      relations: ['owner'],
+    });
     if (!foundTemplate) throw new NotFoundException('Template not found');
 
-    const { owner, slackMessage, style, subject, text, type } = foundTemplate;
+    const { owner, slackMessage, style, subject, text, type, smsText } =
+      foundTemplate;
 
     const ownerId = owner.id;
 
@@ -262,12 +324,38 @@ export class TemplatesService {
 
     await this.templatesRepository.save({
       name: newName,
-      ownerId,
+      owner: { id: ownerId },
       slackMessage,
       style,
       subject,
       text,
       type,
+      smsText,
     });
+  }
+
+  async findUsedInJourneys(account: Account, id: string) {
+    const template = await this.templatesRepository.findOneBy({
+      id,
+      owner: { id: account.id },
+    });
+    if (!template) throw new NotFoundException('Template not found');
+
+    const data = await this.audiencesRepository
+      .createQueryBuilder('audience')
+      .select(`DISTINCT(workflow."name")`)
+      .leftJoin(
+        'audience_templates_template',
+        'audience_templates_template',
+        'audience_templates_template."audienceId" = audience.id'
+      )
+      .leftJoin('workflow', 'workflow', 'workflow.id = audience."workflowId"')
+      .where(
+        `workflow."isDeleted" = false AND audience."ownerId" = :ownerId AND audience_templates_template."templateId" = :templateId`,
+        { ownerId: account.id, templateId: template.id }
+      )
+      .execute();
+
+    return data.map((item) => item.name);
   }
 }

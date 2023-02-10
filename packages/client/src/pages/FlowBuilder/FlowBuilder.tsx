@@ -622,6 +622,10 @@ const Flow = () => {
         audienceId: data.id,
         data: {},
       };
+
+      if (!nodes.find((node) => node.data.primary))
+        setViewport({ x: 0, y: 0, zoom: zoomState });
+
       setNodes([...nodes, generateNode(newNode, triggers)]);
       setAudienceModalOpen(false);
     } catch (error) {
@@ -690,6 +694,7 @@ const Flow = () => {
               selectedNode={selectedNode}
               onClick={performAction}
               flowName={flowName}
+              handleFlowName={(e) => setFlowName(e.target.value)}
               afterMenuContent={
                 <div className="w-full">
                   <GenericButton
