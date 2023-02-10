@@ -10,13 +10,11 @@ export class CreateTemplateDto {
   @IsString()
   @IsNotEmpty()
   @IsOptional()
-  @MaxLength(2000)
   public subject: string;
 
   @IsString()
   @IsNotEmpty()
   @IsOptional()
-  @MaxLength(2000)
   public text: string;
 
   @IsString()

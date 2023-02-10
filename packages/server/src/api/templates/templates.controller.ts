@@ -38,14 +38,16 @@ export class TemplatesController {
     @Query('take') take?: string,
     @Query('skip') skip?: string,
     @Query('orderBy') orderBy?: keyof Template,
-    @Query('orderType') orderType?: 'asc' | 'desc'
+    @Query('orderType') orderType?: 'asc' | 'desc',
+    @Query('showDeleted') showDeleted?: boolean
   ): Promise<{ data: Template[]; totalPages: number }> {
     return this.templatesService.findAll(
       <Account>user,
       take && +take,
       skip && +skip,
       orderBy,
-      orderType
+      orderType,
+      showDeleted
     );
   }
 
@@ -57,6 +59,13 @@ export class TemplatesController {
     @Body() createTemplateDto: CreateTemplateDto
   ) {
     return this.templatesService.create(<Account>user, createTemplateDto);
+  }
+
+  @Get(':id/usedInJourneys')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor)
+  findUsedInJourneys(@Req() { user }: Request, @Param('id') id: string) {
+    return this.templatesService.findUsedInJourneys(<Account>user, id);
   }
 
   @Get(':name')
@@ -77,11 +86,11 @@ export class TemplatesController {
     return this.templatesService.update(<Account>user, name, updateTemplateDto);
   }
 
-  @Delete(':name')
+  @Delete(':id')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
-  remove(@Req() { user }: Request, @Param('name') name: string) {
-    return this.templatesService.remove(<Account>user, name);
+  remove(@Req() { user }: Request, @Param('id') id: string) {
+    return this.templatesService.remove(<Account>user, id);
   }
 
   @Post(':name/duplicate')

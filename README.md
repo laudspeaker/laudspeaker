@@ -28,16 +28,15 @@
 
 ![app laudspeaker com_flow_onboarding-example (1)](https://user-images.githubusercontent.com/7728266/208761386-5dfe6803-16d1-47ca-98f4-45d77ff6058e.png)
 
-* **Multiple messaging channels like email and slack** Send product or event-triggered emails, sms and more to your customers and users at scale
-* **Visual Journey Builder** Build complex messaging workflows the whole team can understand in a visual tool, and see stats once a journey is started
-* **Easy WYSIWYG Template builder** Build nice emails and more with our template builder
-* **Run on your own infra** Deploy and run on your own infrastructure to keep control of your data.
-* **Integrate with PostHog analytics** Easily trigger journeys with PostHog, the open source product analytics platform
-* 🔜 **1-Click Deploy** to Render
-* 🔜 **Database / datalake / data warehouse import** ingest user data from your databases
-* 🔜 **Build and save segments of users**
-* 🔜 **Trigger journeys from segment/rudderstack/mixpanel events**
-
+- **Multiple messaging channels like email and slack** Send product or event-triggered emails, sms and more to your customers and users at scale
+- **Visual Journey Builder** Build complex messaging workflows the whole team can understand in a visual tool, and see stats once a journey is started
+- **Easy WYSIWYG Template builder** Build nice emails and more with our template builder
+- **Run on your own infra** Deploy and run on your own infrastructure to keep control of your data.
+- **Integrate with PostHog analytics** Easily trigger journeys with PostHog, the open source product analytics platform
+- 🔜 **1-Click Deploy** to Render
+- 🔜 **Database / datalake / data warehouse import** ingest user data from your databases
+- 🔜 **Build and save segments of users**
+- 🔜 **Trigger journeys from segment/rudderstack/mixpanel events**
 
 ## 🚀 Get Started
 
@@ -93,12 +92,12 @@ We're currently in Public Alpha.
 
 **Laudspeaker** is open source and released under the [MIT License][mit_license], and AGPLv3 licenses (code in separate directories) with the exception of our ee directory (which is currently empty!) but will be under the Laudspeaker Enterprise Edition license. If you can only use MIT licencsed code, you can still use Laudspeaker but with a few fewer features.
 
-## 🌱 Contribute 
+## 🌱 Contribute
 
 We would love to see you contribute to Laudspeaker. Join our slack to get involved.
 
 A quick how to for contribution:
-    
+
 1. Fork the project
 2. Create your feature branch (`git checkout -b feature/some-feature`)
 3. Make your changes

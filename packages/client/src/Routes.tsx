@@ -1,4 +1,11 @@
-import React, { ReactElement, useLayoutEffect, useState } from "react";
+import React, {
+  FC,
+  ReactElement,
+  ReactNode,
+  useEffect,
+  useLayoutEffect,
+  useState,
+} from "react";
 import { BrowserRouter, Routes, Route, useNavigate } from "react-router-dom";
 import tokenService from "./services/token.service";
 import Login from "./pages/Login";
@@ -21,6 +28,11 @@ import Settings from "pages/Settings/Settings";
 import Person from "pages/Person";
 import Verify from "pages/Verify";
 import SmsBuilder from "pages/SmsBuilder";
+import Modal from "components/Elements/Modal";
+import ApiService from "services/api.service";
+import Account from "types/Account";
+import { GenericButton } from "components/Elements";
+import Home from "pages/Home";
 
 interface IProtected {
   children: ReactElement;
@@ -46,19 +58,101 @@ const Protected = ({ children }: IProtected) => {
   return isLoggedIn ? children : <></>;
 };
 
+export interface WelcomeBannerProviderProps {
+  children: ReactNode;
+  hidden: boolean;
+  setHidden: (value: boolean) => void;
+}
+
+const WelcomeBannerProvider: FC<WelcomeBannerProviderProps> = ({
+  children,
+  hidden,
+  setHidden,
+}) => {
+  const [firstName, setFirstName] = useState("");
+
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await ApiService.get<Account>({ url: "/accounts" });
+
+      setFirstName(data?.firstName || "");
+    })();
+  }, []);
+
+  return (
+    <>
+      {children}
+      <Modal isOpen={!hidden} onClose={() => setHidden(true)}>
+        <div>
+          <h3 className="font-[Inter] font-semibold text-[20px] leading-[38px]">
+            Welcome {firstName}
+          </h3>
+          <p>
+            Thank you for trying Laudspeaker. To get started we need to do 3
+            things
+            <ol className="list-decimal pl-[30px] py-[10px]">
+              <li>Set up messaging channels</li>
+              <li>Set up event sending</li>
+              <li>Optionally import your customers</li>
+            </ol>
+            If you get stuck and need help - join our{" "}
+            <a href="" target="_blank">
+              slack group
+            </a>
+          </p>
+          <div className="flex justify-end items-center gap-[10px] mt-[20px]">
+            <GenericButton
+              customClasses="grayscale"
+              onClick={() => {
+                localStorage.setItem("dontShowAgain", "true");
+                setHidden(true);
+              }}
+            >
+              I no longer need this
+            </GenericButton>
+            <GenericButton
+              onClick={() => {
+                setHidden(true);
+                navigate("/onboarding");
+              }}
+            >
+              Next
+            </GenericButton>
+          </div>
+        </div>
+      </Modal>
+    </>
+  );
+};
+
 const RouteComponent: React.FC = () => {
+  const [showWelcomeBanner, setShowWelcomeBanner] = useState(false);
+
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
+        <Route
+          path="/login"
+          element={<Login setShowWelcomeBanner={setShowWelcomeBanner} />}
+        />
+        <Route
+          path="/signup"
+          element={<Signup setShowWelcomeBanner={setShowWelcomeBanner} />}
+        />
         <Route
           path="/"
           element={
             <Protected>
-              <DrawerLayout>
-                <FlowTable />
-              </DrawerLayout>
+              <WelcomeBannerProvider
+                hidden={!showWelcomeBanner}
+                setHidden={(value) => setShowWelcomeBanner(!value)}
+              >
+                <DrawerLayout>
+                  <Home />
+                </DrawerLayout>
+              </WelcomeBannerProvider>
             </Protected>
           }
         />
@@ -226,9 +320,29 @@ const RouteComponent: React.FC = () => {
           path="/home"
           element={
             <Protected>
-              <DrawerLayout>
-                <OnboardingBeta />
-              </DrawerLayout>
+              <WelcomeBannerProvider
+                hidden={!showWelcomeBanner}
+                setHidden={(value) => setShowWelcomeBanner(!value)}
+              >
+                <DrawerLayout>
+                  <Home />
+                </DrawerLayout>
+              </WelcomeBannerProvider>
+            </Protected>
+          }
+        />
+        <Route
+          path="/onboarding"
+          element={
+            <Protected>
+              <WelcomeBannerProvider
+                hidden={!showWelcomeBanner}
+                setHidden={(value) => setShowWelcomeBanner(!value)}
+              >
+                <DrawerLayout>
+                  <OnboardingBeta />
+                </DrawerLayout>
+              </WelcomeBannerProvider>
             </Protected>
           }
         />

@@ -185,7 +185,7 @@ export default function SettingsSMSBeta() {
           <dl className="divide-y divide-gray-200">
             <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:py-5">
               <dt className="text-sm font-medium text-gray-500">
-                Twillio account sid
+                Twilio account sid
               </dt>
               <dd>
                 <div className="relative rounded-md min-w-[260px]">
@@ -227,7 +227,7 @@ export default function SettingsSMSBeta() {
             </div>
             <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:py-5">
               <dt className="text-sm font-medium text-gray-500">
-                Twillio auth token
+                Twilio auth token
               </dt>
               <dd>
                 <div className="relative rounded-md min-w-[260px]">

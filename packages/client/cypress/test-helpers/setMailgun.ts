@@ -7,6 +7,7 @@ const {
 
 export default () => {
   cy.get('[data-disclosure-link="Home"]').click();
+  cy.contains("Complete onboarding").click();
   cy.get("#email_config_select").click();
   cy.get('[data-option="mailgun"]').click();
   cy.get("#sendingName").clear().type("SendingName");
@@ -19,6 +20,7 @@ export default () => {
   cy.get('[href^="https://slack.com/oauth"]').should("exist");
 
   // add mock endpoint for this one
+  cy.get(":nth-child(2) > .px-6 > .ml-4").click();
   cy.get("#events_config_select").click();
   cy.get('[data-option="posthog"]').click();
   cy.get("#posthogApiKey").clear().type(TESTS_POSTHOG_API_KEY);
@@ -26,7 +28,7 @@ export default () => {
   cy.get("#posthogHostUrl").clear().type(TESTS_POSTHOG_HOST_URL);
   cy.get("#posthogSmsKey").clear().type("phoneNumber");
   cy.get("#posthogEmailKey").clear().type("email");
-  cy.get(".mt-5 > .bg-gray-50 > .inline-flex").click();
+  cy.get(":nth-child(2) > .mt-5 > .bg-gray-50 > .inline-flex").click();
 
   cy.reload();
   cy.wait(5000);
@@ -34,6 +36,7 @@ export default () => {
   cy.get("#sendingName").should("contain.value", "SendingName");
   cy.get("#sendingEmail").should("contain.value", "SendingEmail");
   cy.get("#privateApiKey").should("contain.value", TESTS_MAILGUN_API_KEY);
+  cy.get(":nth-child(2) > .px-6 > .ml-4").click();
   cy.get("#posthogApiKey").should("contain.value", TESTS_POSTHOG_API_KEY);
   cy.get("#posthogProjectId").should("contain.value", TESTS_POSTHOG_PROJECT_ID);
   cy.get("#posthogHostUrl").should("contain.value", TESTS_POSTHOG_HOST_URL);

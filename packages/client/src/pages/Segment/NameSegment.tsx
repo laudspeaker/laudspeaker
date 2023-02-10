@@ -1,13 +1,17 @@
 import { ChangeEvent, MouseEvent, useState } from "react";
 import { Grid, FormControl } from "@mui/material";
-import { GenericButton, Input } from "components/Elements";
+import { GenericButton, Input, Select } from "components/Elements";
+import { TriggerType } from "types/Workflow";
 
 export interface INameSegmentForm {
   name: string;
   description: string;
   isDynamic: boolean;
   isPrimary: boolean;
+  templates: string[];
   workflowId: string;
+  messageType?: string;
+  triggerType?: TriggerType;
 }
 
 interface INameSegment {
@@ -36,7 +40,9 @@ const NameSegment = ({
     description: isPrimary ? "initial step" : "",
     isPrimary: isPrimary,
     workflowId,
+    templates: [],
   });
+  const [isSetupPage, setIsSetupPage] = useState(false);
 
   // Handling Name and Description Fields
   const handleSegmentFormChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -59,64 +65,112 @@ const NameSegment = ({
   return (
     <div>
       <div className="flex items-start justify-center pt-[18px] mb-[50px]">
-        <div
-          className="w-full max-w-[1138px]"
-          // sx={{
-          //   padding: "22px 30px 77px 30px",
-          //   width: "100%",
-          //   maxWidth: "1138px",
-          //   position: "relative",
-          // }}
-        >
-          <h3>Name Your Step</h3>
-          <Grid container direction={"row"} padding={"10px 0px"}>
-            <FormControl variant="standard">
-              <Input
-                isRequired
-                label="Name"
-                value={segmentForm.name}
-                placeholder={"Enter name"}
-                name="name"
-                id="name"
-                className="w-full p-[16px] bg-white border-[1px] border-[#D1D5DB] font-[Inter] text-[16px]"
-                onChange={handleSegmentFormChange}
-              />
-            </FormControl>
-          </Grid>
-          <Grid container direction={"row"} padding={"10px 0px"}>
-            <FormControl variant="standard">
-              <Input
-                isRequired
-                label="Description"
-                value={segmentForm.description}
-                placeholder={"Add an optional description of your segment..."}
-                name="description"
-                id="description"
-                onChange={handleSegmentFormChange}
-                style={{
-                  padding: "15px 16px",
-                  background: "#fff",
-                  border: "1px solid #D1D5DB",
-                  fontFamily: "Inter",
-                  fontWeight: 400,
-                  fontSize: "16px",
-                }}
-              />
-            </FormControl>
-          </Grid>
-          <div className="flex justify-end" data-namesegmentbox>
-            <GenericButton
-              id="saveNewSegment"
-              onClick={handleSubmit}
-              loading={isSaving}
-              style={{
-                maxWidth: "200px",
-              }}
-              disabled={!segmentForm.name || isSaving}
-            >
-              Save
-            </GenericButton>
-          </div>
+        <div className="w-full max-w-[1138px]">
+          {isSetupPage ? (
+            <>
+              <h3>Setup your step</h3>
+              <div className="py-4 flex flex-col gap-[10px]">
+                <div>
+                  <h4>Add message</h4>
+                  <Select
+                    options={[
+                      { value: "email" },
+                      { value: "slack" },
+                      { value: "sms" },
+                    ]}
+                    value={segmentForm.messageType}
+                    onChange={(value) =>
+                      setSegmentForm({ ...segmentForm, messageType: value })
+                    }
+                  />
+                </div>
+                <div>
+                  <h4>Add a trigger</h4>
+                  <Select
+                    options={[
+                      { value: TriggerType.EVENT, title: "event based" },
+                      { value: TriggerType.TIME_DELAY, title: "time delay" },
+                      { value: TriggerType.TIME_WINDOW, title: "time window" },
+                    ]}
+                    value={segmentForm.triggerType}
+                    onChange={(value) =>
+                      setSegmentForm({ ...segmentForm, triggerType: value })
+                    }
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-[20px]" data-namesegmentbox>
+                <GenericButton onClick={handleSubmit} customClasses="grayscale">
+                  Finish later
+                </GenericButton>
+                <GenericButton
+                  id="saveNewSegment"
+                  onClick={handleSubmit}
+                  loading={isSaving}
+                  style={{
+                    maxWidth: "200px",
+                  }}
+                >
+                  Save
+                </GenericButton>
+              </div>
+            </>
+          ) : (
+            <>
+              <h3>Name Your Step</h3>
+              <Grid container direction={"row"} padding={"10px 0px"}>
+                <FormControl variant="standard">
+                  <Input
+                    isRequired
+                    label="Name"
+                    value={segmentForm.name}
+                    placeholder={"Enter name"}
+                    name="name"
+                    id="name"
+                    className="w-full p-[16px] bg-white border-[1px] border-[#D1D5DB] font-[Inter] text-[16px]"
+                    onChange={handleSegmentFormChange}
+                  />
+                </FormControl>
+              </Grid>
+              <Grid container direction={"row"} padding={"10px 0px"}>
+                <FormControl variant="standard">
+                  <Input
+                    isRequired
+                    label="Description"
+                    value={segmentForm.description}
+                    placeholder={
+                      "Add an optional description of your segment..."
+                    }
+                    name="description"
+                    id="description"
+                    onChange={handleSegmentFormChange}
+                    style={{
+                      padding: "15px 16px",
+                      background: "#fff",
+                      border: "1px solid #D1D5DB",
+                      fontFamily: "Inter",
+                      fontWeight: 400,
+                      fontSize: "16px",
+                    }}
+                  />
+                </FormControl>
+              </Grid>
+              <div className="flex justify-end" data-namesegmentbox>
+                <GenericButton
+                  id="saveNewSegment"
+                  onClick={() => setIsSetupPage(true)}
+                  loading={isSaving}
+                  style={{
+                    maxWidth: "200px",
+                  }}
+                  disabled={!segmentForm.name || isSaving}
+                >
+                  Next
+                </GenericButton>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>

@@ -16,6 +16,7 @@ export default (
   cy.get("#name").type("init");
   cy.get("#description").type("init description text");
   cy.get("#saveNewSegment").click();
+  cy.contains("Finish later").click();
 
   cy.get(".react-flow__viewport")
     .get('[data-isprimary="true"]')

@@ -67,7 +67,7 @@ export class CustomersService {
     @InjectRepository(Workflow)
     private workflowsRepository: Repository<Workflow>,
     private dataSource: DataSource
-  ) { }
+  ) {}
 
   async create(
     account: Account,
@@ -75,9 +75,9 @@ export class CustomersService {
     transactionSession?: ClientSession
   ): Promise<
     Customer &
-    mongoose.Document & {
-      _id: Types.ObjectId;
-    }
+      mongoose.Document & {
+        _id: Types.ObjectId;
+      }
   > {
     const createdCustomer = new this.CustomerModel({
       ownerId: (<Account>account).id,
@@ -356,10 +356,10 @@ export class CustomersService {
         (info['salient'] = person['email']
           ? person['email']
           : person['slackEmail']
-            ? person['slackEmail']
-            : person['slackRealName']
-              ? person['slackRealName']
-              : '...');
+          ? person['slackEmail']
+          : person['slackRealName']
+          ? person['slackRealName']
+          : '...');
       return info;
     });
     return { data: listInfo, totalPages };
@@ -428,9 +428,9 @@ export class CustomersService {
     customerId: string
   ): Promise<
     Customer &
-    mongoose.Document & {
-      _id: Types.ObjectId;
-    }
+      mongoose.Document & {
+        _id: Types.ObjectId;
+      }
   > {
     const found = await this.CustomerModel.findById(customerId).exec();
     if (found && found?.ownerId == (<Account>account).id) return found;

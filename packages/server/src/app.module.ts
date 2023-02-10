@@ -184,9 +184,6 @@ const formatMongoConnectionString = (mongoConnectionString: string) => {
     BullModule.registerQueue({
       name: 'slack',
     }),
-    BullModule.registerQueue({
-      name: 'sms',
-    }),
   ],
   controllers: [AppController],
   providers: [

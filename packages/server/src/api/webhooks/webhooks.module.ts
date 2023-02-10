@@ -21,6 +21,6 @@ export class WebhooksModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     consumer
       .apply(twilio.webhook())
-      .forRoutes({ path: '/webhooks/twillio', method: RequestMethod.POST });
+      .forRoutes({ path: '/webhooks/twilio', method: RequestMethod.POST });
   }
 }
