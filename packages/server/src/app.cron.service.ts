@@ -32,7 +32,11 @@ import { WorkflowsService } from './api/workflows/workflows.service';
 import { TimeJobStatus } from './api/jobs/entities/job.entity';
 
 const client = createClient({
-  host: process.env.CLICKHOUSE_HOST ?? 'http://localhost:8123',
+  host: process.env.CLICKHOUSE_HOST
+    ? process.env.CLICKHOUSE_HOST.includes('http')
+      ? process.env.CLICKHOUSE_HOST
+      : `http://${process.env.CLICKHOUSE_HOST}`
+    : 'http://localhost:8123',
   username: process.env.CLICKHOUSE_USER ?? 'default',
   password: process.env.CLICKHOUSE_PASSWORD ?? '',
 });

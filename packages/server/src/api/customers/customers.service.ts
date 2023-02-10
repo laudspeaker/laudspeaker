@@ -50,7 +50,11 @@ const KEYS_TO_SKIP = ['__v', '_id', 'audiences', 'ownerId'];
 @Injectable()
 export class CustomersService {
   private clickhouseClient = createClient({
-    host: process.env.CLICKHOUSE_HOST ?? 'http://localhost:8123',
+    host: process.env.CLICKHOUSE_HOST
+      ? process.env.CLICKHOUSE_HOST.includes('http')
+        ? process.env.CLICKHOUSE_HOST
+        : `http://${process.env.CLICKHOUSE_HOST}`
+      : 'http://localhost:8123',
     username: process.env.CLICKHOUSE_USER ?? 'default',
     password: process.env.CLICKHOUSE_PASSWORD ?? '',
   });
