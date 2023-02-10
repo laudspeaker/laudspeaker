@@ -23,10 +23,12 @@ export default (
   cy.get("#audience > .p-0 > .justify-between").click();
   cy.get("#name").type(audience1Name);
   cy.get("#saveNewSegment").click();
+  cy.contains("Finish later").click();
   cy.get(".text-updater").move({ deltaX: 100, deltaY: 100 });
   cy.get("#audience > .p-0 > .justify-between").click();
   cy.get("#name").type(audience2Name);
   cy.get("#saveNewSegment").click();
+  cy.contains("Finish later").click();
   cy.get('[data-isprimary]:not([data-isprimary="true"])').move({
     deltaX: 100,
     deltaY: 300,

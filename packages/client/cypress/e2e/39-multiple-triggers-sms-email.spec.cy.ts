@@ -40,6 +40,7 @@ describe(
       cy.get("#name").type("init");
       cy.get("#description").type("init description text");
       cy.get("#saveNewSegment").click();
+      cy.contains("Finish later").click();
 
       cy.get(".react-flow__viewport")
         .get('[data-isprimary="true"]')
@@ -50,6 +51,7 @@ describe(
       cy.get("#name").type("sms audience");
       cy.get("#description").type("sms description");
       cy.get("#saveNewSegment").click();
+      cy.contains("Finish later").click();
 
       cy.get(".react-flow__viewport")
         .get('[data-isprimary="false"]')
@@ -65,18 +67,19 @@ describe(
       setupEventTrigger(smsTemplate.eventName, smsTemplate.eventName);
 
       cy.get('[data-isprimary="true"]')
-        .get('[data-handlepos="bottom"]')
-        .drag('[data-isprimary="false"] [data-handlepos="top"]', {
+        .get("[data-handle-bottom]")
+        .drag('[data-isprimary="false"] [data-handle-top]', {
           force: true,
         });
 
-      cy.get('[data-isprimary="false"] [data-handlepos="top"]').click();
+      cy.get('[data-isprimary="false"] [data-handle-top]').click();
 
       cy.wait(3000);
       cy.get("#audience").click();
       cy.get("#name").type("email audience");
       cy.get("#description").type("email description");
       cy.get("#saveNewSegment").click();
+      cy.contains("Finish later").click();
       cy.contains("email audience").move({ deltaX: 450, deltaY: 300 }).click();
       cy.get("#email").click();
       cy.get("#activeJourney").click();
@@ -85,11 +88,11 @@ describe(
       cy.get(".react-flow__viewport").get('[data-isprimary="true"]').click();
       setupEventTrigger(emailTemplate.eventName, emailTemplate.eventName);
 
-      cy.get('[data-handlepos="bottom"]:last').drag(
-        '[data-isprimary="false"] [data-handlepos="top"]:last',
+      cy.get("[data-handle-bottom]:last").drag(
+        '[data-isprimary="false"] [data-handle-top]:last',
         { force: true }
       );
-      cy.get('[data-isprimary="false"] [data-handlepos="top"]:last').click();
+      cy.get('[data-isprimary="false"] [data-handle-top]:last').click();
 
       createNewSegment();
 

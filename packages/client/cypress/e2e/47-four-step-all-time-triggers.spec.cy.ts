@@ -44,11 +44,13 @@ describe(
       cy.get("#audience > .p-0 > .justify-between").click();
       cy.get("#name").type(step1Name);
       cy.get("#saveNewSegment").click();
+      cy.contains("Finish later").click();
       cy.get(".text-updater").move({ deltaX: 100, deltaY: 100 });
       createNewSegment();
       cy.get("#audience > .p-0 > .justify-between").click({ force: true });
       cy.get("#name").type(step2Name);
       cy.get("#saveNewSegment").click();
+      cy.contains("Finish later").click();
       cy.get('[data-isprimary]:not([data-isprimary="true"])').move({
         deltaX: 100,
         deltaY: 300,
@@ -70,6 +72,7 @@ describe(
       cy.get("#audience > .p-0 > .justify-between").click();
       cy.get("#name").clear().type(step3Name);
       cy.get("#saveNewSegment").click();
+      cy.contains("Finish later").click();
 
       cy.contains(step3Name).move({ deltaX: 100, deltaY: 500 });
       cy.get("#slack > .p-0 > .justify-between").click();
@@ -90,6 +93,7 @@ describe(
       cy.get("#audience > .p-0 > .justify-between").click();
       cy.get("#name").clear().type(step4Name);
       cy.get("#saveNewSegment").click();
+      cy.contains("Finish later").click();
 
       cy.contains(step4Name).move({ deltaX: 100, deltaY: 700 });
       cy.get("#slack > .p-0 > .justify-between").click();

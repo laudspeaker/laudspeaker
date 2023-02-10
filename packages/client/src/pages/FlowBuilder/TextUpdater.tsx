@@ -159,6 +159,7 @@ const TextUpdaterNode = ({ data }: { data: NodeData }) => {
           position={Position.Top}
           className="triggerIn !bg-transparent !h-full !border-0 !z-[99999] relative"
           isConnectable={!!isTarget}
+          data-handle-top
         >
           <div
             className={`!w-[15px] !h-[15px] ${
@@ -238,6 +239,7 @@ const TextUpdaterNode = ({ data }: { data: NodeData }) => {
                     isSourceForSome ? "!top-[11px]" : "!top-[22px]"
                   }
                    `}
+                  data-handle-bottom
                 >
                   <div className="pointer-events-none absolute left-1/2 top-0 -translate-x-1/2 w-[30px] h-[22px]">
                     <img
