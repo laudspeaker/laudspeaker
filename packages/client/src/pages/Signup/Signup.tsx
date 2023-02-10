@@ -267,7 +267,7 @@ const Signup: FC<SignupProps> = ({ setShowWelcomeBanner }) => {
 
             <div>
               <Tooltip
-                title={isInvalid ? "Fill all fields" : ""}
+                content={isInvalid ? "Fill all fields" : ""}
                 placement="bottom"
               >
                 <button
@@ -306,7 +306,7 @@ const Signup: FC<SignupProps> = ({ setShowWelcomeBanner }) => {
 
             <div className="mt-6 grid grid-cols-3 gap-3">
               <div className="relative grayscale">
-                <Tooltip title="coming soon">
+                <Tooltip content="coming soon">
                   <a
                     href="#"
                     className="inline-flex w-full justify-center rounded-md border border-gray-300 bg-white py-2 px-4 text-sm font-medium text-gray-500 shadow-sm hover:bg-gray-50"
@@ -318,7 +318,7 @@ const Signup: FC<SignupProps> = ({ setShowWelcomeBanner }) => {
               </div>
 
               <div className="relative grayscale">
-                <Tooltip title="coming soon">
+                <Tooltip content="coming soon">
                   <a
                     href="#"
                     className="inline-flex w-full justify-center rounded-md border border-gray-300 bg-white py-2 px-4 text-sm font-medium text-gray-500 shadow-sm hover:bg-gray-50"
@@ -330,7 +330,7 @@ const Signup: FC<SignupProps> = ({ setShowWelcomeBanner }) => {
               </div>
 
               <div className="relative grayscale">
-                <Tooltip title="coming soon">
+                <Tooltip content="coming soon">
                   <a
                     href="#"
                     className="inline-flex w-full justify-center rounded-md border border-gray-300 bg-white py-2 px-4 text-sm font-medium text-gray-500 shadow-sm hover:bg-gray-50"

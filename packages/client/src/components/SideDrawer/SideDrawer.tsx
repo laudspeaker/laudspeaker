@@ -21,8 +21,8 @@ interface IMenuItemChildren {
   alwaysDisabled?: boolean;
   canBeDisabled?: boolean;
   requiredOnboarding?: string;
-  disabledToolTip?: string;
-  enabledToolTip?: string;
+  disabledToolTip?: string | ReactNode;
+  enabledToolTip?: string | ReactNode;
 }
 
 interface Props {
@@ -154,7 +154,7 @@ export default function ResponsiveDrawer(props: Props) {
     return (
       <>
         <Tooltip
-          title={
+          content={
             (isDisabled && item.disabledToolTip) ||
             (!isDisabled && item.enabledToolTip) ||
             ""

@@ -114,7 +114,10 @@ const Select = <T extends string | number | undefined>(
                   disabled={option.disabled || false}
                   data-option={option.value}
                 >
-                  <Tooltip className="![z-100001]" title={option.tooltip || ""}>
+                  <Tooltip
+                    className="![z-100001]"
+                    content={option.tooltip || ""}
+                  >
                     <div
                       className="flex justify-between"
                       id={`data-option-${option.value}`}

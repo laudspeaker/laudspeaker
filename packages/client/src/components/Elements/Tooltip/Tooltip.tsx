@@ -3,22 +3,23 @@ import { Tooltip as MTTooltip, TooltipProps } from "@material-tailwind/react";
 
 interface CustomTooltipProps {
   children: ReactNode;
-  title: string;
+  content: ReactNode;
   placement?: string;
   className?: string;
 }
 
 const Tooltip: FC<CustomTooltipProps & TooltipProps> = ({
   children,
-  title,
+  content,
   placement = "top",
   className,
 }) => {
   return (
     <MTTooltip
-      className={`${className} text-center z-[10]`}
-      content={title}
+      className={`${className} text-center z-[10] border-[1px] shadow-lg`}
+      content={content}
       placement={placement}
+      color="red"
     >
       <div>{children}</div>
     </MTTooltip>
