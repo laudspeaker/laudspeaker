@@ -10,7 +10,7 @@ import { AuthMiddleware } from './api/auth/middleware/auth.middleware';
 import { EventsController } from './api/events/events.controller';
 import { SlackMiddleware } from './api/slack/middleware/slack.middleware';
 import { AppController } from './app.controller';
-import { resolve } from 'path';
+import { join, resolve } from 'path';
 import { CronService } from './app.cron.service';
 import { ScheduleModule } from '@nestjs/schedule';
 import {
@@ -50,6 +50,8 @@ const papertrail = new winston.transports.Http({
   auth: { username: 'papertrail', password: process.env.PAPERTRAIL_API_KEY },
   ssl: true,
 });
+
+import { ServeStaticModule } from '@nestjs/serve-static';
 
 const myFormat = winston.format.printf(function ({
   level,
@@ -100,12 +102,35 @@ const myFormat = winston.format.printf(function ({
   }
 });
 
+const formatMongoConnectionString = (mongoConnectionString: string) => {
+  if (mongoConnectionString) {
+    if (mongoConnectionString.includes('mongodb+srv')) {
+      return mongoConnectionString;
+    }
+    else if (!mongoConnectionString.includes('mongodb') && !mongoConnectionString.includes('?directConnection=true')){
+      return `mongodb://${mongoConnectionString}/?directConnection=true`;
+    } else if (!mongoConnectionString.includes('mongodb')){
+      return `mongodb://${mongoConnectionString}`
+    } else if (!mongoConnectionString.includes('?directConnection=true')){
+  return `${mongoConnectionString}/?directConnection=true`;
+    }
+    else return mongoConnectionString;
+  }
+}
+
+
 @Module({
   imports: [
-    MongooseModule.forRoot(process.env.MONGOOSE_URL),
+    ...(process.env.SERVE_CLIENT_FROM_NEST ? [ServeStaticModule.forRoot({
+      rootPath: process.env.CLIENT_PATH ? process.env.CLIENT_PATH : join(__dirname, '../../../', 'client/build/'),
+      exclude: ['api/*'],
+    })] : []),
+    MongooseModule.forRoot( 
+      process.env.MONGOOSE_URL ? formatMongoConnectionString(process.env.MONGOOSE_URL) : 'mongodb://127.0.0.1:27017/?directConnection=true',
+    ),
     BullModule.forRoot({
       redis: {
-        host: process.env.REDIS_HOST,
+        host: process.env.REDIS_HOST ?? 'localhost',
         port: parseInt(process.env.REDIS_PORT),
         password: process.env.REDIS_PASSWORD,
       },
