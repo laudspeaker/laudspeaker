@@ -131,9 +131,7 @@ describe(
                 '[data-isprimary="false"] [data-handle-top]:last',
                 { force: true }
               );
-              cy.get(
-                '[data-isprimary="false"] [data-handle-top]:last'
-              ).click({
+              cy.get('[data-isprimary="false"] [data-handle-top]:last').click({
                 force: true,
               });
 

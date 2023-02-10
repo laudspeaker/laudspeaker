@@ -176,7 +176,7 @@ const TextUpdaterNode = ({ data }: { data: NodeData }) => {
             nodeData.width ? `w-[${nodeData.width}]` : "w-[350px]"
           } ${isSelected ? "border-cyan-500 !shadow-xl" : ""}`}
         >
-          <div>
+          <div className="max-w-full">
             <p className={textStyle}>
               {nodeData.preIcon && (
                 <img src={nodeData.preIcon} style={{ marginRight: "10px" }} />
@@ -190,7 +190,8 @@ const TextUpdaterNode = ({ data }: { data: NodeData }) => {
                 }}
                 text={nodeData.description}
                 className={
-                  subTitleTextStyle + " h-full text-ellipsis cursor-pointer"
+                  subTitleTextStyle +
+                  " !break-all !whitespace-pre-line h-full text-ellipsis cursor-pointer"
                 }
                 maxLine="2"
                 ellipsis="..."

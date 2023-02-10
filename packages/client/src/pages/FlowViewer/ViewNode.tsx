@@ -131,7 +131,7 @@ const ViewNode = ({ data }: { data: NodeData }) => {
         data-isPrimary={nodeData.isPrimary}
         style={{
           opacity: hidden ? 0 : 1,
-          cursor: "default",
+          cursor: "grab",
         }}
       >
         <Handle
@@ -141,9 +141,9 @@ const ViewNode = ({ data }: { data: NodeData }) => {
           isConnectable={false}
         />
         <div
-          className={`view-node bg-white overflow-hidden rounded-[8px] ${
+          className={`view-node bg-white overflow-hidden rounded-[8px] min-h-[80px] ${
             nodeData.width ? `w-[${nodeData.width}]` : "w-[350px]"
-          } ${descriptionCollaped ? "max-h-[88px]" : "min-h-[80px]"}`}
+          }`}
         >
           <div className="flex justify-start items-center p-[8px_20px]">
             <div className="flex justify-evenly items-center">
