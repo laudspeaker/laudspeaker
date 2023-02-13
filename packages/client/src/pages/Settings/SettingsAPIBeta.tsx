@@ -6,6 +6,7 @@ import {
 } from "@heroicons/react/20/solid";
 import ApiService from "services/api.service";
 import { toast } from "react-toastify";
+import SnippetPicker from "components/SnippetPicker/SnippetPicker";
 
 export default function SettingsAPIBeta() {
   const [privateAPIKey, setPrivateAPIKey] = useState("");
@@ -90,6 +91,37 @@ export default function SettingsAPIBeta() {
               </dd>
             </div>
           </dl>
+          <dl className="divide-y divide-gray-200">
+            <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:py-5">
+              <dt className="text-sm font-medium text-gray-500">Test event</dt>
+              <div className="md:col-span-2 pd-5">
+                <div>
+                  <div className="shadow sm:rounded-md">
+                    <SnippetPicker userApiKey={privateAPIKey} />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </dl>
+          {/* <div className="md:grid md:grid-cols-3 md:gap-6">
+            <div className="md:col-span-1 p-5">
+              <div className="px-4 sm:px-0">
+                <h3 className="text-lg font-medium leading-6 text-gray-900">
+                  Test event
+                </h3>
+                <p className="mt-1 text-sm text-gray-600">
+                  If you want to just test an event, copy this javascript
+                  snippet and add it below whereever you are tracking events on
+                  your site currently
+                </p>
+              </div>
+            </div>
+            <div className="mt-5 md:col-span-2 pd-5">
+              <div>
+                <div className="shadow sm:rounded-md"></div>
+              </div>
+            </div>
+          </div> */}
         </div>
       </div>
     </>
