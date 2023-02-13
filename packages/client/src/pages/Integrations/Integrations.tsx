@@ -158,7 +158,7 @@ const Integrations = () => {
                                   </td>
                                   <td className="w-[100px] whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
                                     <Tooltip
-                                      title={
+                                      content={
                                         item.status === IntegrationStatus.FAILED
                                           ? (item.errorMessage || "") +
                                             " Please update integration settings."
