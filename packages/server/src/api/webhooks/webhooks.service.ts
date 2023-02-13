@@ -68,7 +68,7 @@ export class WebhooksService {
     }
   }
 
-  public async processTwillioData({
+  public async processTwilioData({
     audienceId,
     customerId,
     SmsStatus,
@@ -84,7 +84,7 @@ export class WebhooksService {
       customerId,
       messageId: MessageSid,
       event: SmsStatus,
-      eventProvider: 'twillio',
+      eventProvider: 'twilio',
       createdAt: new Date().toUTCString(),
     });
   }

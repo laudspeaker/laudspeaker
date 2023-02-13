@@ -4,7 +4,6 @@ import {
   Injectable,
   HttpException,
   NotFoundException,
-  HttpStatus,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, In, QueryRunner, Repository } from 'typeorm';
@@ -49,7 +48,11 @@ import { Job, TimeJobType } from '../jobs/entities/job.entity';
 @Injectable()
 export class WorkflowsService {
   private clickhouseClient = createClient({
-    host: process.env.CLICKHOUSE_HOST ?? 'http://localhost:8123',
+    host: process.env.CLICKHOUSE_HOST
+      ? process.env.CLICKHOUSE_HOST.includes('http')
+        ? process.env.CLICKHOUSE_HOST
+        : `http://${process.env.CLICKHOUSE_HOST}`
+      : 'http://localhost:8123',
     username: process.env.CLICKHOUSE_USER ?? 'default',
     password: process.env.CLICKHOUSE_PASSWORD ?? '',
   });
@@ -59,10 +62,7 @@ export class WorkflowsService {
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
     private readonly logger: LoggerService,
     @InjectRepository(Workflow)
-    private workflowsRepository: Repository<Workflow>,
-    @InjectRepository(Segment) private segmentsRepository: Repository<Segment>,
-    @InjectRepository(Account)
-    private usersRepository: Repository<Account>,
+    public workflowsRepository: Repository<Workflow>,
     @Inject(AudiencesService) private audiencesService: AudiencesService,
     @Inject(CustomersService) private customersService: CustomersService,
     @InjectModel(EventKeys.name)
@@ -705,20 +705,26 @@ export class WorkflowsService {
             event.source === ProviderTypes.Posthog &&
             trigger.providerType === ProviderTypes.Posthog &&
             !(
-              //for autocapture
-              (
-                (event.payload.type === PosthogTriggerParams.Track &&
-                  event.payload.event === 'click' &&
-                  trigger.providerParams ===
-                    PosthogTriggerParams.Autocapture) ||
-                // for page
-                (event.payload.type === PosthogTriggerParams.Page &&
-                  trigger.providerParams === PosthogTriggerParams.Page) ||
-                // for custom
-                (event.payload.type === PosthogTriggerParams.Track &&
-                  event.payload.event !== 'click' &&
-                  event.payload.event === trigger.providerParams)
-              )
+              (event.payload.type === PosthogTriggerParams.Track &&
+                event.payload.event === 'change' &&
+                trigger.providerParams === PosthogTriggerParams.Typed) ||
+              (event.payload.type === PosthogTriggerParams.Track &&
+                event.payload.event === 'click' &&
+                trigger.providerParams === PosthogTriggerParams.Autocapture) ||
+              (event.payload.type === PosthogTriggerParams.Track &&
+                event.payload.event === 'submit' &&
+                trigger.providerParams === PosthogTriggerParams.Submit) ||
+              (event.payload.type === PosthogTriggerParams.Track &&
+                event.payload.event === '$pageleave' &&
+                trigger.providerParams === PosthogTriggerParams.Pageleave) ||
+              (event.payload.type === PosthogTriggerParams.Track &&
+                event.payload.event === '$rageclick' &&
+                trigger.providerParams === PosthogTriggerParams.Rageclick) ||
+              (event.payload.type === PosthogTriggerParams.Page &&
+                event.payload.event === '$pageview' &&
+                trigger.providerParams === PosthogTriggerParams.Pageview) ||
+              (event.payload.type === PosthogTriggerParams.Track &&
+                event.payload.event === trigger.providerParams)
             )
           ) {
             continue;
@@ -767,23 +773,47 @@ export class WorkflowsService {
                   );
                   if (conditions && conditions.length > 0) {
                     const compareResults = conditions.map((condition) => {
-                      this.logger.debug(
-                        `Comparing: ${event?.event?.[condition.key] || ''} ${
-                          condition.comparisonType || ''
-                        } ${condition.value || ''}`
-                      );
-                      return ['exists', 'doesNotExist'].includes(
-                        condition.comparisonType
-                      )
-                        ? operableCompare(
-                            event?.event?.[condition.key],
-                            condition.comparisonType
-                          )
-                        : conditionalCompare(
-                            event?.event?.[condition.key],
-                            condition.value,
-                            condition.comparisonType
-                          );
+                      if (
+                        condition.key == 'current_url' &&
+                        trigger.providerType == ProviderTypes.Posthog &&
+                        trigger.providerParams === PosthogTriggerParams.Pageview
+                      ) {
+                        this.logger.debug(
+                          `Comparing: ${event?.event?.page?.url || ''} ${
+                            condition.comparisonType || ''
+                          } ${condition.value || ''}`
+                        );
+                        return ['exists', 'doesNotExist'].includes(
+                          condition.comparisonType
+                        )
+                          ? operableCompare(
+                              event?.event?.page?.url,
+                              condition.comparisonType
+                            )
+                          : conditionalCompare(
+                              event?.event?.page?.url,
+                              condition.value,
+                              condition.comparisonType
+                            );
+                      } else {
+                        this.logger.debug(
+                          `Comparing: ${event?.event?.[condition.key] || ''} ${
+                            condition.comparisonType || ''
+                          } ${condition.value || ''}`
+                        );
+                        return ['exists', 'doesNotExist'].includes(
+                          condition.comparisonType
+                        )
+                          ? operableCompare(
+                              event?.event?.[condition.key],
+                              condition.comparisonType
+                            )
+                          : conditionalCompare(
+                              event?.event?.[condition.key],
+                              condition.value,
+                              condition.comparisonType
+                            );
+                      }
                     });
                     this.logger.debug(
                       'Compare result: ' + JSON.stringify(compareResults)
@@ -821,7 +851,7 @@ export class WorkflowsService {
                           workflow.id
                         );
                       this.logger.debug(
-                        'Moving ' +
+                        'Moved ' +
                           customer?.id +
                           ' out of ' +
                           from?.id +

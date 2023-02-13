@@ -28,9 +28,6 @@ import { Workflow } from '../workflows/entities/workflow.entity';
     BullModule.registerQueue({
       name: 'customers',
     }),
-    BullModule.registerQueue({
-      name: 'sms',
-    }),
     CustomersModule,
   ],
   providers: [JobsService],

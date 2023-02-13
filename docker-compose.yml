@@ -7,6 +7,8 @@ services:
       - "6379:6379"
     environment:
       - REDIS_REPLICATION_MODE=master
+    networks:
+      - laudspeaker_default
 
   postgres:
     image: postgres:14.4-alpine
@@ -17,6 +19,8 @@ services:
     ports:
       - "5432:5432"
     restart: unless-stopped
+    networks:
+      - laudspeaker_default
 
   mongo:
     image: "mongo:latest"
@@ -27,6 +31,8 @@ services:
       interval: 10s
       start_period: 30s
     command: "--bind_ip_all --replSet rs0"
+    networks:
+      - laudspeaker_default
 
   clickhouse:
     image: clickhouse/clickhouse-server:latest
@@ -34,3 +40,10 @@ services:
     ports:
       - "8123:8123"
       - "9000:9000"
+    networks:
+      - laudspeaker_default
+
+networks:
+  laudspeaker_default:
+    driver: bridge
+    name: laudspeaker_default

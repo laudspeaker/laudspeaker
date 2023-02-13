@@ -31,7 +31,7 @@ async function bootstrap() {
     }
   };
   app.use(urlencoded({ verify: rawBodyBuffer, extended: true }));
-
+  if (process.env.SERVE_CLIENT_FROM_NEST) app.setGlobalPrefix('api');
   app.set('trust proxy', 1);
   app.enableCors();
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));

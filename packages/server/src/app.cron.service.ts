@@ -36,7 +36,11 @@ import { TimeJobStatus } from './api/jobs/entities/job.entity';
 import { IntegrationsService } from './api/integrations/integrations.service';
 
 const client = createClient({
-  host: process.env.CLICKHOUSE_HOST ?? 'http://localhost:8123',
+  host: process.env.CLICKHOUSE_HOST
+    ? process.env.CLICKHOUSE_HOST.includes('http')
+      ? process.env.CLICKHOUSE_HOST
+      : `http://${process.env.CLICKHOUSE_HOST}`
+    : 'http://localhost:8123',
   username: process.env.CLICKHOUSE_USER ?? 'default',
   password: process.env.CLICKHOUSE_PASSWORD ?? '',
 });
@@ -52,7 +56,7 @@ interface ClickHouseMessage {
   customerId: string;
   messageId: string;
   event: string;
-  eventProvider: 'mailgun' | 'sendgrid' | 'twillio';
+  eventProvider: 'mailgun' | 'sendgrid' | 'twilio';
   createdAt: string;
 }
 
@@ -393,7 +397,7 @@ export class CronService {
       }
 
       /**
-       * sendgrid & twillio
+       * sendgrid & twilio
        */
 
       let batch = await this.webhookEventRepository.find({

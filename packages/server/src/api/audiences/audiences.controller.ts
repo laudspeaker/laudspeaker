@@ -17,7 +17,6 @@ import { AudiencesService } from './audiences.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CreateAudienceDto } from './dto/create-audience.dto';
 import { UpdateAudienceDto } from './dto/update-audience.dto';
-import { AddTemplateDto } from './dto/add-template.dto';
 import { Request } from 'express';
 import { Account } from '../accounts/entities/accounts.entity';
 

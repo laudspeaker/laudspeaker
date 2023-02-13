@@ -41,9 +41,6 @@ import { SlackModule } from '../slack/slack.module';
     BullModule.registerQueue({
       name: 'customers',
     }),
-    BullModule.registerQueue({
-      name: 'sms',
-    }),
     CustomersModule,
     SlackModule,
   ],

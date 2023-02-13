@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import twillio from 'twilio';
+import twilio from 'twilio';
 
 @Injectable()
 export class SmsService {
@@ -7,8 +7,8 @@ export class SmsService {
     smsAccountSid: string,
     smsAuthToken: string
   ) {
-    const twillioClient = twillio(smsAccountSid, smsAuthToken);
-    const results = await twillioClient.incomingPhoneNumbers.list({
+    const twilioClient = twilio(smsAccountSid, smsAuthToken);
+    const results = await twilioClient.incomingPhoneNumbers.list({
       limit: 20,
     });
 

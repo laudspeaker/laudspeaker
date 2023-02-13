@@ -8,4 +8,3 @@ const config = new TypeOrmConfigService().createTypeOrmOptions();
 const DS = new DataSource(config as DataSourceOptions);
 
 export default DS;
-

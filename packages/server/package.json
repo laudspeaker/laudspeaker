@@ -39,6 +39,7 @@
     "@nestjs/passport": "^8.2.2",
     "@nestjs/platform-express": "^8.0.0",
     "@nestjs/schedule": "^2.1.0",
+    "@nestjs/serve-static": "2.2.2",
     "@nestjs/typeorm": "^8.0.3",
     "@sendgrid/mail": "^7.7.0",
     "@slack/oauth": "^2.5.4",

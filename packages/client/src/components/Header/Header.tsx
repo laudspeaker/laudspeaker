@@ -18,7 +18,7 @@ const Header = () => {
   const dispatch = useDispatch();
 
   const handleLogout = () => {
-    localStorage.clear();
+    localStorage.removeItem("userData");
     document.cookie = "";
     window.location.reload();
   };

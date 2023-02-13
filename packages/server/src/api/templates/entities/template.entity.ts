@@ -36,4 +36,7 @@ export class Template {
 
   @Column({ nullable: true })
   smsText: string;
+
+  @Column({ default: false })
+  isDeleted: boolean;
 }

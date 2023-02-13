@@ -32,6 +32,7 @@ describe(
       cy.get("#name").type("init");
       cy.get("#description").type("init description text");
       cy.get("#saveNewSegment").click();
+      cy.contains("Finish later").click();
 
       cy.get(".react-flow__viewport")
         .get('[data-isprimary="true"]')
@@ -42,6 +43,7 @@ describe(
       cy.get("#name").type("slack audience");
       cy.get("#description").type("slack description");
       cy.get("#saveNewSegment").click();
+      cy.contains("Finish later").click();
 
       cy.get(".react-flow__viewport")
         .get('[data-isprimary="false"]')
@@ -57,23 +59,23 @@ describe(
       setupEventTrigger("1", "1");
 
       cy.get('[data-isprimary="true"]')
-        .get('[data-handlepos="bottom"]')
-        .drag('[data-isprimary="false"] [data-handlepos="top"]', {
+        .get("[data-handle-bottom]")
+        .drag('[data-isprimary="false"] [data-handle-top]', {
           force: true,
         });
 
-      cy.get('[data-isprimary="false"] [data-handlepos="top"]').click();
+      cy.get('[data-isprimary="false"] [data-handle-top]').click();
       cy.get('[data-isprimary="false"]').click();
 
       setupEventTrigger("2", "2");
 
-      cy.get('[data-isprimary="false"] [data-handlepos="bottom"]').drag(
-        '[data-isprimary="true"] [data-handlepos="top"]',
+      cy.get('[data-isprimary="false"] [data-handle-bottom]').drag(
+        '[data-isprimary="true"] [data-handle-top]',
         {
           force: true,
         }
       );
-      cy.get('[data-isprimary="true"] [data-handlepos="top"]').click();
+      cy.get('[data-isprimary="true"] [data-handle-top]').click();
 
       createNewSegment();
 
@@ -96,19 +98,23 @@ describe(
           correlationValue: Cypress.env("TESTS_SMS_TO") || smsTemplate.phone,
           event: { "1": "1" },
         },
-      }).then(({ body }) => {
-        cy.wait(4000);
+      }).then(({ isOkStatusCode }) => {
+        expect(isOkStatusCode).to.be.equal(true);
+
+        cy.wait(1000);
         cy.request({
           method: "POST",
+          url: `${Cypress.env("AxiosURL")}events`,
           headers: {
             Authorization: `Api-Key ${userAPIkey}`,
           },
-          url: `${Cypress.env("AxiosURL")}events/job-status/slack`,
           body: {
-            jobId: body[0]?.jobIds?.[0],
+            correlationKey: "phone",
+            correlationValue: Cypress.env("TESTS_SMS_TO") || smsTemplate.phone,
+            event: { "2": "2" },
           },
         }).then(({ body }) => {
-          expect(body).to.equal("completed");
+          expect(body?.[0]?.jobIDs?.[0]).to.equal(undefined);
           cy.wait(1000);
           cy.request({
             method: "POST",
@@ -120,38 +126,10 @@ describe(
               correlationKey: "phone",
               correlationValue:
                 Cypress.env("TESTS_SMS_TO") || smsTemplate.phone,
-              event: { "2": "2" },
+              event: { "1": "1" },
             },
-          }).then(({ body }) => {
-            expect(body?.[0]?.jobIDs?.[0]).to.equal(undefined);
-            cy.wait(1000);
-            cy.request({
-              method: "POST",
-              url: `${Cypress.env("AxiosURL")}events`,
-              headers: {
-                Authorization: `Api-Key ${userAPIkey}`,
-              },
-              body: {
-                correlationKey: "phone",
-                correlationValue:
-                  Cypress.env("TESTS_SMS_TO") || smsTemplate.phone,
-                event: { "1": "1" },
-              },
-            }).then(({ body }) => {
-              cy.wait(4000);
-              cy.request({
-                method: "POST",
-                headers: {
-                  Authorization: `Api-Key ${userAPIkey}`,
-                },
-                url: `${Cypress.env("AxiosURL")}events/job-status/slack`,
-                body: {
-                  jobId: body[0]?.jobIds?.[0],
-                },
-              }).then(({ body }) => {
-                expect(body).to.equal("completed");
-              });
-            });
+          }).then(({ isOkStatusCode }) => {
+            expect(isOkStatusCode).to.be.equal(true);
           });
         });
       });

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Header from "../../components/Header";
 import { TableTemplate } from "../../components/TableTemplate/index";
 import { Grid } from "@mui/material";
@@ -8,6 +8,9 @@ import NameTemplate from "./NameTemplate";
 import Modal from "../../components/Elements/Modal";
 import Template from "types/Template";
 import Progress from "components/Progress";
+import { GenericButton } from "components/Elements";
+import { Workflow } from "types/Workflow";
+import { toast } from "react-toastify";
 
 const TemplateTable = () => {
   const [loading, setLoading] = useState(false);
@@ -18,35 +21,66 @@ const TemplateTable = () => {
   const [currentPage, setCurrentPage] = useState(0);
   const [nameModalOpen, setNameModalOpen] = useState<boolean>(false);
   const [sortOptions, setSortOptions] = useState({});
+  const [showDeleted, setShowDeleted] = useState(false);
+  const [templateToDelete, setTemplateToDelete] = useState("");
+  const [usedJourneysByTemplateToDelete, setUsedJourneysByTemplateToDelete] =
+    useState<string[]>([]);
 
-  React.useEffect(() => {
-    const setLoadingAsync = async () => {
-      setLoading(true);
-      try {
-        const { data } = await ApiService.get({
-          url: `${ApiConfig.getAllTemplates}?take=${itemsPerPage}&skip=${
-            itemsPerPage * currentPage
-          }&orderBy=${Object.keys(sortOptions)[0] || ""}&orderType=${
-            Object.values(sortOptions)[0] || ""
-          }`,
-        });
-        const { data: fetchedTemplates, totalPages } = data;
-        setPagesCount(totalPages);
-        setTemplates(fetchedTemplates);
-      } catch (err) {
-        setError(true);
-      } finally {
-        setLoading(false);
-      }
-    };
-    setLoadingAsync();
-  }, [itemsPerPage, currentPage, sortOptions]);
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      const { data } = await ApiService.get({
+        url: `${ApiConfig.getAllTemplates}?take=${itemsPerPage}&skip=${
+          itemsPerPage * currentPage
+        }&orderBy=${Object.keys(sortOptions)[0] || ""}&orderType=${
+          Object.values(sortOptions)[0] || ""
+        }&showDeleted=${showDeleted}`,
+      });
+      const { data: fetchedTemplates, totalPages } = data;
+      setPagesCount(totalPages);
+      setTemplates(fetchedTemplates);
+    } catch (err) {
+      setError(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadData();
+  }, [itemsPerPage, currentPage, sortOptions, showDeleted]);
+
+  useEffect(() => {
+    if (!templateToDelete) return;
+
+    (async () => {
+      const { data } = await ApiService.get<string[]>({
+        url: `/templates/${templateToDelete}/usedInJourneys`,
+      });
+
+      setUsedJourneysByTemplateToDelete(data);
+    })();
+  }, [templateToDelete]);
 
   const redirectUses = () => {
     setNameModalOpen(true);
   };
 
   const handleNameSubmit = () => {};
+
+  const handleDeleteTemplate = async () => {
+    await toast.promise(
+      ApiService.delete({ url: `/templates/${templateToDelete}` }),
+      {
+        pending: { render: "Deleting template...", type: "info" },
+        success: { render: "Delete success!", type: "success" },
+        error: { render: "Delete failed!", type: "error" },
+      }
+    );
+
+    setTemplateToDelete("");
+    await loadData();
+  };
 
   //getAlltemplatesData();
 
@@ -102,7 +136,59 @@ const TemplateTable = () => {
             setItemsPerPage={setItemsPerPage}
             sortOptions={sortOptions}
             setSortOptions={setSortOptions}
+            isShowDisabled={showDeleted}
+            setIsShowDisabled={setShowDeleted}
+            setTemplateToDelete={setTemplateToDelete}
           />
+          <Modal
+            isOpen={!!templateToDelete}
+            onClose={() => setTemplateToDelete("")}
+          >
+            <div>
+              {usedJourneysByTemplateToDelete.length > 0 ? (
+                <>
+                  <div>
+                    <p>
+                      To delete template remove it from journeys and stop active
+                      journeys which use this template:
+                    </p>
+                    <div className="max-h-[100px] overflow-y-scroll">
+                      <ul className="list-disc pl-[30px]">
+                        {usedJourneysByTemplateToDelete.map((name) => (
+                          <li>{name}</li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div className="mt-[10px]">
+                      <GenericButton onClick={() => setTemplateToDelete("")}>
+                        Close
+                      </GenericButton>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div>
+                    <div>Are you sure you want to delete this template?</div>
+                    <div className="flex justify-between items-center mt-[10px]">
+                      <GenericButton
+                        customClasses="bg-red-600 hover:bg-red-700 focus:ring-red-500"
+                        onClick={handleDeleteTemplate}
+                      >
+                        Yes
+                      </GenericButton>
+                      <GenericButton
+                        customClasses="grayscale"
+                        onClick={() => setTemplateToDelete("")}
+                      >
+                        No
+                      </GenericButton>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          </Modal>
         </div>
       </div>
     </div>

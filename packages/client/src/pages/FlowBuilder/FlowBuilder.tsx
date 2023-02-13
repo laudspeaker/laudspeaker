@@ -1,8 +1,10 @@
 import {
+  MouseEvent,
   useCallback,
   useEffect,
   useLayoutEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import ReactFlow, {
@@ -49,16 +51,22 @@ import SegmentModal, { SegmentModalMode } from "./SegmentModal";
 import { ProviderTypes, Trigger, TriggerType, Workflow } from "types/Workflow";
 import { AxiosError } from "axios";
 import Progress from "components/Progress";
+import { useDebounce } from "react-use";
+import CustomEdge from "./CustomEdge";
+import { INameSegmentForm } from "pages/Segment/NameSegment";
+import Template from "types/Template";
+import { PlusCircleIcon } from "@heroicons/react/24/outline";
 
 const segmentTypeStyle =
   "border-[1px] border-[#D1D5DB] rouded-[6px] shadow-[0px_1px_2px_rgba(0,0,0,0.05)] w-full mt-[20px] p-[15px]";
 
-interface INameSegmentForm {
+interface IisDynamicSegmentForm {
   isDynamic: boolean;
 }
 
 export interface NodeData {
   audienceId: string;
+  flowId: string;
   dataTriggers: Trigger[];
   isDynamic?: boolean;
   isSelected?: boolean;
@@ -80,6 +88,8 @@ export interface NodeData {
   isExit?: boolean;
   isNew?: boolean;
   stats?: { sent: number; clickedPercentage: number };
+  isConnecting?: boolean;
+  isNearToCursor?: boolean;
 }
 
 const convertLayoutToTable = (
@@ -171,7 +181,7 @@ const Flow = () => {
   const [selectedMessageType, setSelectedMessageType] = useState("");
   const [tutorialOpen, setTutorialOpen] = useState(false);
   const [segmentId, setSegmentId] = useState<string>();
-  const [segmentForm, setSegmentForm] = useState<INameSegmentForm>({
+  const [segmentForm, setSegmentForm] = useState<IisDynamicSegmentForm>({
     isDynamic: true,
   });
   const [segmentModalOpen, setSegmentModalOpen] = useState(false);
@@ -180,6 +190,10 @@ const Flow = () => {
   );
   const [isFlowLoading, setIsFlowLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isConnecting, setIsConnecting] = useState(false);
+  const [moveEvent, setMoveEvent] = useState<MouseEvent<HTMLDivElement>>();
+  const [triggerToOpenNextRender, setTriggerToOpenNextRender] =
+    useState<TriggerType>();
 
   const onHandleClick = (e: unknown, triggerId: string) => {
     return { e, triggerId };
@@ -191,7 +205,7 @@ const Flow = () => {
     triggersList: Trigger[]
   ) => {
     const trigger = triggersList.find((item) => item.id === triggerId);
-    console.log("onselecttrigger", triggersList, trigger);
+
     setSelectedTrigger(trigger);
     settriggerModalOpen(true);
   };
@@ -218,6 +232,7 @@ const Flow = () => {
                 ...item.data,
                 onTriggerSelect,
                 dataTriggers: item.data.dataTriggers || [],
+                flowId,
               },
             };
           });
@@ -231,7 +246,7 @@ const Flow = () => {
       }
     };
     populateFlowBuilder();
-  }, []);
+  }, [flowId]);
 
   const generateNode = (
     node: Node<
@@ -266,6 +281,7 @@ const Flow = () => {
         onHandleClick,
         dataTriggers,
         onTriggerSelect,
+        flowId,
         ...data,
       },
     };
@@ -297,6 +313,12 @@ const Flow = () => {
     );
   }, [selectedNode, needsUpdate]);
 
+  useEffect(() => {
+    setNodes(
+      nodes.map((node) => ({ ...node, data: { ...node.data, isConnecting } }))
+    );
+  }, [isConnecting]);
+
   const onNodeDragStart = useCallback(
     (event: React.MouseEvent, node: Node) => {
       setSelectedNode(node.id);
@@ -312,6 +334,7 @@ const Flow = () => {
     (connection: Connection | Edge) =>
       setEdges((eds) => {
         if (connection.target === connection.source) return eds;
+
         const edge: Edge | Connection = {
           ...connection,
           id: uuid(),
@@ -321,7 +344,7 @@ const Flow = () => {
             height: 20,
             width: 20,
           },
-          type: ConnectionLineType.SmoothStep,
+          type: "custom",
         };
         return addEdge(edge, eds);
       }),
@@ -348,9 +371,44 @@ const Flow = () => {
 
   const nodeTypes = useMemo(() => ({ special: TextUpdaterNode }), [triggers]);
   const { setViewport } = useReactFlow();
-  const { x: viewX, y: viewY } = useViewport();
+  const { x: viewX, y: viewY, zoom } = useViewport();
   const [zoomState, setZoomState] = useState(1);
   const possibleViewZoomValues = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
+
+  const reactFlowRef = useRef<HTMLDivElement>(null);
+
+  useDebounce(
+    () => {
+      setNodes(
+        nodes.map((node) => {
+          const { height, width, position } = node;
+          if (!height || !width || !moveEvent || !reactFlowRef.current)
+            return node;
+
+          const maskLeftTopCornerX = position.x - 60;
+          const maskLeftTopCornerY = position.y - 60;
+
+          const maskRightBottomCornerX = position.x + width + 60;
+          const maskRightBottomCornerY = position.y + height + 60;
+
+          const canvasMouseX =
+            moveEvent.clientX - viewX - reactFlowRef.current.offsetLeft;
+          const canvasMouseY =
+            moveEvent.clientY - viewY - reactFlowRef.current.offsetTop;
+
+          const isNearToCursor =
+            canvasMouseX > maskLeftTopCornerX * zoom &&
+            canvasMouseX < maskRightBottomCornerX * zoom &&
+            canvasMouseY > maskLeftTopCornerY * zoom &&
+            canvasMouseY < maskRightBottomCornerY * zoom;
+
+          return { ...node, data: { ...node.data, isNearToCursor } };
+        })
+      );
+    },
+    10,
+    [moveEvent]
+  );
 
   const performAction = (actionId: string) => {
     switch (actionId) {
@@ -472,6 +530,13 @@ const Flow = () => {
         break;
     }
   };
+
+  useEffect(() => {
+    if (!triggerToOpenNextRender) return;
+
+    performAction(triggerToOpenNextRender);
+    setTriggerToOpenNextRender(undefined);
+  }, [triggerToOpenNextRender]);
 
   const handleTutorialOpen = () => {
     setTutorialOpen(true);
@@ -607,7 +672,10 @@ const Flow = () => {
   const handleAudienceSubmit = async (segment: INameSegmentForm) => {
     setIsSaving(true);
     try {
-      const { data } = await ApiService.post({
+      const { data } = await ApiService.post<{
+        id: string;
+        templates: Template[];
+      }>({
         url: `${ApiConfig.createSegment}`,
         options: {
           ...segment,
@@ -617,13 +685,27 @@ const Flow = () => {
       const newNode = {
         id: uuid(),
         triggers: [],
-        messages: [],
+        messages: data.templates.map((template) => ({
+          type: template.type,
+          templateId: template.id,
+        })),
         position: { x: 0, y: 0 },
         audienceId: data.id,
         data: {},
       };
-      setNodes([...nodes, generateNode(newNode, triggers)]);
+
+      if (!nodes.find((node) => node.data.primary))
+        setViewport({ x: 0, y: 0, zoom: zoomState });
+
+      const node = generateNode(newNode, triggers);
+
+      setNodes([...nodes, node]);
       setAudienceModalOpen(false);
+      setSelectedNode(node.id);
+
+      if (segment.triggerType) setTriggerToOpenNextRender(segment.triggerType);
+
+      if (segment.messageType) performAction(segment.messageType);
     } catch (error) {
       toast.error("Error, saving segment");
     } finally {
@@ -690,6 +772,7 @@ const Flow = () => {
               selectedNode={selectedNode}
               onClick={performAction}
               flowName={flowName}
+              handleFlowName={(e) => setFlowName(e.target.value)}
               afterMenuContent={
                 <div className="w-full">
                   <GenericButton
@@ -718,7 +801,7 @@ const Flow = () => {
                         onChange={onToggleChange}
                       />
                     </Grid>
-                    <Tooltip title="Dynamic journeys will enroll new customers that satisfy the conditions of the Journey. Static journeys will only enroll customers that satisfy the conditions of the journey when it is started.">
+                    <Tooltip content="Dynamic journeys will enroll new customers that satisfy the conditions of the Journey. Static journeys will only enroll customers that satisfy the conditions of the journey when it is started.">
                       {/* <IconButton> */}
                       <div className="flex items-center cursor-default mt-[8px]">
                         <img src={InfoIcon} width="20px" />
@@ -749,10 +832,40 @@ const Flow = () => {
               a segment
             </AlertBanner>
           )}
-          <div className={`${!segmentId ? "h-[calc(100%-80px)]" : "h-full"}`}>
+          <div
+            className={`relative ${
+              !segmentId ? "h-[calc(100%-80px)]" : "h-full"
+            }`}
+          >
+            {nodes.length === 0 && !audienceModalOpen && (
+              <div className="w-[75%] absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[99999]">
+                <button
+                  type="button"
+                  className="relative block w-full rounded-lg border-2 border-dashed border-gray-300 p-12 text-center hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                  onClick={() => setAudienceModalOpen(true)}
+                >
+                  <PlusCircleIcon
+                    className="mx-auto h-12 w-12 text-gray-400"
+                    strokeWidth="1"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                    fill="none"
+                  />
+                  <span className="mt-2 block text-sm font-medium text-gray-900">
+                    Create first step
+                  </span>
+                </button>
+              </div>
+            )}
+
             <ReactFlow
+              ref={reactFlowRef}
               nodes={nodes}
               edges={edges}
+              edgeTypes={{
+                custom: CustomEdge,
+              }}
               onNodeDoubleClick={onNodeDoubleClick}
               onNodesChange={onNodesChange}
               onEdgesChange={onEdgesChange}
@@ -769,6 +882,21 @@ const Flow = () => {
               zoomOnDoubleClick={false}
               onMoveStart={() => setIsGrabbing(true)}
               onMoveEnd={() => setIsGrabbing(false)}
+              onConnectStart={() => setIsConnecting(true)}
+              onConnectEnd={() => {
+                setIsConnecting(false);
+                setNodes(
+                  nodes.map((node) => ({
+                    ...node,
+                    data: { ...node.data, isNearToCursor: false },
+                  }))
+                );
+              }}
+              onMouseMove={(e) => {
+                if (!isConnecting || !reactFlowRef.current) return;
+
+                setMoveEvent(e);
+              }}
             >
               <div
                 style={{
@@ -812,7 +940,7 @@ const Flow = () => {
                 </div>
                 <div className="m-[0_7.5px]" data-startflowbutton>
                   <Tooltip
-                    title={
+                    content={
                       startDisabledReason ||
                       "Once you start a journey users can be messaged"
                     }

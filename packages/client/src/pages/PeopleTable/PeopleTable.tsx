@@ -90,6 +90,7 @@ const PeopleTable = () => {
             currentPage={currentPage}
             itemsPerPage={itemsPerPage}
             setItemsPerPage={setItemsPerPage}
+            showDeletedToggle={false}
           />
         </div>
       </div>

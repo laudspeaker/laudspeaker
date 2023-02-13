@@ -4,6 +4,8 @@ import { useLocation } from "react-router-dom";
 import ApiService from "services/api.service";
 import Tooltip from "components/Elements/Tooltip";
 import { ForwardedRef, ReactNode } from "react";
+import { Input } from "components/Elements";
+import EditIcon from "@mui/icons-material/Edit";
 
 interface IMenuItem {
   type: string;
@@ -19,8 +21,8 @@ interface IMenuItemChildren {
   alwaysDisabled?: boolean;
   canBeDisabled?: boolean;
   requiredOnboarding?: string;
-  disabledToolTip?: string;
-  enabledToolTip?: string;
+  disabledToolTip?: string | ReactNode;
+  enabledToolTip?: string | ReactNode;
 }
 
 interface Props {
@@ -33,14 +35,27 @@ interface Props {
   onClick: (id: string) => void;
   afterMenuContent?: React.ReactNode;
   flowName: string;
+  handleFlowName: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
 export default function ResponsiveDrawer(props: Props) {
-  const { selectedNode, onClick } = props;
+  const { selectedNode, onClick, handleFlowName, flowName } = props;
   const location = useLocation();
   const [expectedOnboarding, setExpectedOnboarding] = React.useState<string[]>(
     []
   );
+
+  const [titleEdit, setTitleEdit] = React.useState(false);
+
+  const handleTitleEdit = () => {
+    setTitleEdit(!titleEdit);
+  };
+
+  const handleTitleEnter = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === "Enter") {
+      handleTitleEdit();
+    }
+  };
 
   React.useLayoutEffect(() => {
     (async () => {
@@ -139,7 +154,7 @@ export default function ResponsiveDrawer(props: Props) {
     return (
       <>
         <Tooltip
-          title={
+          content={
             (isDisabled && item.disabledToolTip) ||
             (!isDisabled && item.enabledToolTip) ||
             ""
@@ -174,7 +189,26 @@ export default function ResponsiveDrawer(props: Props) {
     return (
       <>
         <div className="text-[16px] bg-cyan-700 w-full min-h-[50px] text-white text-ellipsis overflow-hidden px-[20px] py-[15px]">
-          {props.flowName}
+          {!titleEdit ? (
+            <h3 className="flex justify-between items-center">
+              {flowName}
+              <EditIcon
+                sx={{ fontSize: "25px", cursor: "pointer" }}
+                onClick={handleTitleEdit}
+              />
+            </h3>
+          ) : (
+            <Input
+              value={flowName}
+              placeholder={"Enter segment title"}
+              name="title"
+              id="title"
+              onChange={handleFlowName}
+              onKeyDown={handleTitleEnter}
+              autoFocus
+              className="p-0 bg-white font-[Inter] font-[600] text-[25px] text-[#28282E]"
+            />
+          )}
         </div>
         <div className="min-h-screen flex-col justify-between px-[20px] py-[15px]">
           {generateMenu(dataSubArray)}

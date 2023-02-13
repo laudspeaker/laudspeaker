@@ -5,7 +5,6 @@
 import credentials from "../fixtures/credentials";
 import createNewSegment from "../test-helpers/createNewSegment";
 import { loginFunc } from "../test-helpers/loginFunc";
-import runEmailJourney from "../test-helpers/runEmailJourney";
 import setupDelayTrigger from "../test-helpers/setupDelayTrigger";
 import setupEventTrigger from "../test-helpers/setupEventTrigger";
 import { templatesFunc } from "../test-helpers/templatesFunc";
@@ -62,6 +61,7 @@ describe(
               cy.get("#name").type(audience1Name);
               cy.get("#description").type("init description text");
               cy.get("#saveNewSegment").click();
+              cy.contains("Finish later").click();
 
               cy.get(".react-flow__viewport")
                 .get('[data-isprimary="true"]')
@@ -72,6 +72,7 @@ describe(
               cy.get("#name").type(audience2Name);
               cy.get("#description").type("slack description");
               cy.get("#saveNewSegment").click();
+              cy.contains("Finish later").click();
 
               cy.get(".react-flow__viewport")
                 .get('[data-isprimary="false"]')
@@ -94,12 +95,12 @@ describe(
               setupDelayTrigger();
 
               cy.get('[data-isprimary="true"]')
-                .get('[data-handlepos="bottom"]')
-                .drag('[data-isprimary="false"] [data-handlepos="top"]', {
+                .get("[data-handle-bottom]")
+                .drag('[data-isprimary="false"] [data-handle-top]', {
                   force: true,
                 });
 
-              cy.get('[data-isprimary="false"] [data-handlepos="top"]').click({
+              cy.get('[data-isprimary="false"] [data-handle-top]').click({
                 force: true,
               });
 
@@ -108,6 +109,7 @@ describe(
               cy.get("#name").type(audience3Name);
               cy.get("#description").type("email description");
               cy.get("#saveNewSegment").click();
+              cy.contains("Finish later").click();
               cy.contains(audience3Name)
                 .move({ deltaX: 450, deltaY: 300, force: true })
                 .click();
@@ -125,13 +127,11 @@ describe(
                 emailTemplate.eventName
               );
 
-              cy.get('[data-handlepos="bottom"]:last').drag(
-                '[data-isprimary="false"] [data-handlepos="top"]:last',
+              cy.get("[data-handle-bottom]:last").drag(
+                '[data-isprimary="false"] [data-handle-top]:last',
                 { force: true }
               );
-              cy.get(
-                '[data-isprimary="false"] [data-handlepos="top"]:last'
-              ).click({
+              cy.get('[data-isprimary="false"] [data-handle-top]:last').click({
                 force: true,
               });
 

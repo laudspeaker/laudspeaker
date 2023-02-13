@@ -13,10 +13,12 @@ export default (name: string, eventName: string, flowName = "Email flow") => {
   cy.get("#audience > .p-0 > .justify-between").click();
   cy.get("#name").type("Initial");
   cy.get("#saveNewSegment").click();
+  cy.contains("Finish later").click();
   cy.get(".text-updater").move({ deltaX: 100, deltaY: 100 });
   cy.get("#audience > .p-0 > .justify-between").click();
   cy.get("#name").type("Second");
   cy.get("#saveNewSegment").click();
+  cy.contains("Finish later").click();
   cy.get('[data-isprimary]:not([data-isprimary="true"])').move({
     deltaX: 100,
     deltaY: 300,
@@ -28,9 +30,9 @@ export default (name: string, eventName: string, flowName = "Email flow") => {
   cy.get("#exportSelectedTemplate").click();
   cy.get('[data-isprimary="true"]').click();
   setupEventTrigger(eventName, eventName);
-  cy.get(
-    '[style="display: flex; height: 15px; position: absolute; left: 0px; bottom: 0px; align-items: center; width: 100%; justify-content: space-around;"] > .react-flow__handle'
-  ).drag('[data-isprimary]:not([data-isprimary="true"])', { force: true });
+  cy.get(".triggerOut").drag('[data-isprimary]:not([data-isprimary="true"])', {
+    force: true,
+  });
   cy.get('[data-isprimary]:not([data-isprimary="true"])').click();
 
   createNewSegment();

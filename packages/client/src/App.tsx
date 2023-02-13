@@ -15,7 +15,10 @@ import "./Global.css";
 import posthog from "posthog-js";
 import { AppConfig } from "./constants";
 import { ToastContainer } from "react-toastify";
-import { ThemeProvider as MTThemeProvider } from "@material-tailwind/react";
+import {
+  ThemeProvider as MTThemeProvider,
+  TooltipStylesType,
+} from "@material-tailwind/react";
 
 interface IApp {
   children: React.ReactNode;
@@ -38,6 +41,17 @@ const App = ({ children }: IApp) => {
     [mode]
   );
 
+  const MTTheme: { tooltip: TooltipStylesType } = {
+    tooltip: {
+      styles: {
+        base: {
+          bg: "bg-white",
+          color: "text-black",
+        },
+      },
+    },
+  };
+
   posthog.init(AppConfig.POSTHOG_KEY ? AppConfig.POSTHOG_KEY : "", {
     api_host: AppConfig.POSTHOG_HOST
       ? AppConfig.POSTHOG_HOST
@@ -47,7 +61,7 @@ const App = ({ children }: IApp) => {
   return (
     <ColorContext.Provider value={colorMode}>
       <ThemeProvider theme={theme}>
-        <MTThemeProvider>
+        <MTThemeProvider value={MTTheme}>
           <CssBaseline enableColorScheme />
           <ToastContainer
             position="bottom-center"

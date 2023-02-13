@@ -3,6 +3,7 @@ import { MouseEvent, useEffect, useState } from "react";
 import {
   Handle,
   Position,
+  useEdges,
   useStore,
   useUpdateNodeInternals,
 } from "react-flow-renderer";
@@ -10,10 +11,17 @@ import { v4 as uuid } from "uuid";
 import thunderbolt from "../../assets/images/thunderbolt.svg";
 import { getAudienceDetails } from "./FlowHelpers";
 
+import ArrowDown from "@heroicons/react/24/solid/ArrowLongDownIcon";
 import { Email, SlackMsg, Mobile, SMS } from "../../components/Icons/Icons";
 import ChooseTemplateModal from "./ChooseTemplateModal";
 import LinesEllipsis from "react-lines-ellipsis";
 import { NodeData } from "./FlowBuilder";
+import Modal from "components/Elements/Modal";
+import { NameSegment } from "pages/Segment";
+import { INameSegmentForm } from "pages/Segment/NameSegment";
+import ApiService from "services/api.service";
+import { toast } from "react-toastify";
+import useClickPreventionOnDoubleClick from "hooks/useClickPreventionOnDoubleClick";
 
 const textStyle = "text-[#111827] font-[Inter] font-middle text-[14px]";
 const subTitleTextStyle = "text-[#6B7280] font-[Inter] text-[14px]";
@@ -28,6 +36,9 @@ const TextUpdaterNode = ({ data }: { data: NodeData }) => {
     isSelected,
     needsUpdate,
     nodeId,
+    isNearToCursor,
+    isConnecting,
+    flowId,
   } = data;
   const [nodeData, setNodeData] = useState<{
     id?: string;
@@ -41,7 +52,9 @@ const TextUpdaterNode = ({ data }: { data: NodeData }) => {
   const [selectedTemplateId, setSelectedTemplateId] = useState<number>();
   const [updateTemplateModalOpen, setUpdateTemplateModalOpen] = useState(false);
   const [descriptionCollaped, setDescriptionCollaped] = useState(true);
+  const [audienceModalOpen, setAudienceModalOpen] = useState(false);
 
+  const edges = useEdges();
   const onTemplateModalClose = () => {
     setUpdateTemplateModalOpen(false);
     setSelectedMessageType("");
@@ -58,7 +71,19 @@ const TextUpdaterNode = ({ data }: { data: NodeData }) => {
     onTemplateModalClose();
   };
 
-  const handleTemplateModalOpen = () => {
+  const handleTemplateModalOpen = (val?: {
+    activeTemplate: number | undefined;
+  }) => {
+    if (val?.activeTemplate) {
+      const message = data.messages.find(
+        (m) =>
+          m.templateId === selectedTemplateId && m.type === selectedMessageType
+      );
+
+      if (!message) return;
+
+      message.templateId = val.activeTemplate;
+    }
     onTemplateModalClose();
   };
 
@@ -123,21 +148,59 @@ const TextUpdaterNode = ({ data }: { data: NodeData }) => {
 
   const connectionNodeId = useStore((state) => state.connectionNodeId);
   const isTarget = connectionNodeId && connectionNodeId !== nodeData.id;
+  const isSourceForSome = !!edges.find((edge) => edge.source === nodeId);
+
+  const handleAudienceSubmit = async (formData: INameSegmentForm) => {
+    const { name, description } = formData;
+
+    try {
+      await ApiService.patch({
+        url: "/audiences",
+        options: { id: audienceId, name, description },
+      });
+      setAudienceModalOpen(false);
+      setNodeData({ ...nodeData, name, description });
+    } catch (e) {
+      toast.error("Error while saving");
+    }
+  };
+
+  const [handleDescriptionClick, handleDescriptionDoubleClick] =
+    useClickPreventionOnDoubleClick(
+      () => setDescriptionCollaped(!descriptionCollaped),
+      () => setAudienceModalOpen(true)
+    );
+
   return (
     <>
       <div
-        className="text-updater-node"
+        className="text-updater-node relative"
         data-isPrimary={nodeData.isPrimary}
         style={{
           opacity: hidden ? 0 : 1,
         }}
+        onDoubleClick={() => {
+          setAudienceModalOpen(true);
+        }}
       >
+        {isNearToCursor && connectionNodeId !== nodeId && (
+          <div className="absolute w-[55%] h-[65%] rounded-md z-[-1] animate-ping border-[2px] border-cyan-600 left-[22.5%] top-[20%]" />
+        )}
         <Handle
           type="target"
           position={Position.Top}
-          className="!bg-transparent !h-full !border-0 !z-[99999]"
+          className="triggerIn !bg-transparent !h-full !border-0 !z-[99999] relative"
           isConnectable={!!isTarget}
-        />
+          data-handle-top
+        >
+          <div
+            className={`!w-[15px] !h-[15px] ${
+              edges.find((edge) => edge.target === nodeId)
+                ? "!bg-cyan-400"
+                : "!bg-transparent !border-0"
+            } rounded-full absolute left-1/2 top-0 -translate-x-1/2`}
+          ></div>
+        </Handle>
         <div
           className={`relative text-updater overflow-hidden bg-white ${
             descriptionCollaped ? "max-h-[88px]" : "min-h-[80px]"
@@ -145,37 +208,43 @@ const TextUpdaterNode = ({ data }: { data: NodeData }) => {
             nodeData.width ? `w-[${nodeData.width}]` : "w-[350px]"
           } ${isSelected ? "border-cyan-500 !shadow-xl" : ""}`}
         >
-          <div>
+          <div className="max-w-full">
             <p className={textStyle}>
               {nodeData.preIcon && (
                 <img src={nodeData.preIcon} style={{ marginRight: "10px" }} />
               )}
               {nodeData.name}
             </p>
-            {descriptionCollaped && nodeData.description ? (
-              <LinesEllipsis
-                onClick={() => {
-                  setDescriptionCollaped(!descriptionCollaped);
-                }}
-                text={nodeData.description}
-                className={
-                  subTitleTextStyle + " h-full text-ellipsis cursor-pointer"
-                }
-                maxLine="2"
-                ellipsis="..."
-                trimRight
-                basedOn="letters"
-              />
-            ) : (
-              <p
-                onClick={() => setDescriptionCollaped(!descriptionCollaped)}
-                className={
-                  subTitleTextStyle + " h-full text-ellipsis cursor-pointer"
-                }
-              >
-                {nodeData.description}
-              </p>
-            )}
+            <div
+              onClick={handleDescriptionClick}
+              onDoubleClick={handleDescriptionDoubleClick}
+            >
+              {descriptionCollaped && nodeData.description ? (
+                <LinesEllipsis
+                  onClick={() => {
+                    setDescriptionCollaped(!descriptionCollaped);
+                  }}
+                  text={nodeData.description}
+                  className={
+                    subTitleTextStyle +
+                    " !break-all !whitespace-pre-line h-full text-ellipsis cursor-pointer"
+                  }
+                  maxLine="2"
+                  ellipsis="..."
+                  trimRight
+                  basedOn="letters"
+                />
+              ) : (
+                <p
+                  className={
+                    subTitleTextStyle +
+                    " !break-all !whitespace-pre-line h-full text-ellipsis cursor-pointer"
+                  }
+                >
+                  {nodeData.description}
+                </p>
+              )}
+            </div>
           </div>
           <div className="flex justify-evenly items-center">
             {generateMsgIcons()}
@@ -199,26 +268,33 @@ const TextUpdaterNode = ({ data }: { data: NodeData }) => {
                 <Handle
                   type="source"
                   key={index}
-                  position={Position.Bottom}
+                  position={Position.Top}
                   id={trigger.id}
                   onClick={(e) => handleTriggerClick(e, trigger.id)}
-                  style={{
-                    height: "22px",
-                    background: "transparent",
-                    width: "30px",
-                    transform: "unset",
-                    bottom: "-4px",
-                    top: "auto",
-                    left: "auto",
-                    right: "auto",
-                    position: "relative",
-                  }}
+                  className={`triggerOut !relative !left-auto !right-auto !border-[0px] !z-[1000] ${
+                    isSourceForSome ? "!h-[22px]" : "!h-[44px]"
+                  } !bg-transparent !w-[30px] !transform-none  ${
+                    isSourceForSome ? "!top-[11px]" : "!top-[22px]"
+                  }
+                   `}
+                  data-handle-bottom
                 >
-                  <img
-                    src={thunderbolt}
-                    width="30"
-                    style={{ pointerEvents: "none" }}
-                  />
+                  <div className="pointer-events-none absolute left-1/2 top-0 -translate-x-1/2 w-[30px] h-[22px]">
+                    <img
+                      src={thunderbolt}
+                      width="30"
+                      height="22"
+                      className=""
+                    />
+                    {!isConnecting && !isSourceForSome && (
+                      <div className="absolute z-[-1] left-1/2 top-[24px] -translate-x-1/2 w-[20px] h-full">
+                        <ArrowDown className="text-[#bdbdc1]" />
+                        <div className="circle-to-display-hover absolute transition-all flex justify-center items-center w-full h-full opacity-0 left-0 top-[-2px] ">
+                          <div className="border-[1px] border-cyan-600 rounded-full w-[10px] h-[10px]" />
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </Handle>
               );
             })}
@@ -234,6 +310,23 @@ const TextUpdaterNode = ({ data }: { data: NodeData }) => {
           onClose={onTemplateModalClose}
           onTemplateDelete={onTemplateDelete}
         />
+      )}
+
+      {audienceModalOpen && (
+        <Modal
+          isOpen={audienceModalOpen}
+          onClose={() => setAudienceModalOpen(false)}
+        >
+          <NameSegment
+            onSubmit={handleAudienceSubmit}
+            isPrimary={data.primary}
+            isCollapsible={true}
+            onClose={() => setAudienceModalOpen(false)}
+            workflowId={flowId}
+            edit={true}
+            audienceId={audienceId}
+          />
+        </Modal>
       )}
     </>
   );

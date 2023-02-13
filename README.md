@@ -11,9 +11,17 @@
   <a href="https://laudspeaker.com/docs/guides/overview/intro/">Docs</a> |
   <a href="https://laudspeaker.com/">Website</a> |
   <a href="https://www.producthunt.com/posts/laudspeaker/">Product Hunt</a>
+  <a href='https://img.shields.io/github/commit-activity/m/laudspeaker/laudspeaker'><img alt="Commits" src="https://img.shields.io/github/commit-activity/m/laudspeaker/laudspeaker"/></a>
+<a href='https://hub.docker.com/repository/docker/laudspeaker/laudspeaker'><img alt="Docker Pulls" src="https://img.shields.io/docker/pulls/laudspeaker/laudspeaker"></a>
 </h4>
   
 </p>
+
+## Deploy Laudspeaker on Render.com
+
+<a href="https://render.com/deploy?repo=https://github.com/laudspeaker/laudspeaker/tree/docker_optimise">
+<img src="https://render.com/images/deploy-to-render-button.svg" alt="Deploy to Render">
+</a>
 
 ## Laudspeaker - Open Source omni-channel customer messaging. Alternative to Braze / Iterable / One Signal / Customer Io
 

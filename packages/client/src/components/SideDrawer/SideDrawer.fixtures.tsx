@@ -94,6 +94,16 @@ export const dataSubArray = [
         link: "/email",
         canBeDisabled: true,
         requiredOnboarding: "Email",
+        // enabledToolTip: (
+        //   <div className="p-5 flex flex-col justify-between gap-[20px] items-center">
+        //     <img
+        //       className="w-[200px]"
+        //       src="https://thumbs.dreamstime.com/b/glass-clean-drinking-water-44066082.jpg"
+        //       alt=""
+        //     />
+        //     Some text
+        //   </div>
+        // ),
         disabledToolTip:
           "Make sure there are steps and configure email in settings and step selected",
       },

@@ -226,6 +226,7 @@ export class TestsService {
   public async getTestCustomerId() {
     const customer = await this.customersService.CustomerModel.findOne({
       ownerId: '00000000-0000-0000-0000-000000000000',
+      email: 'testmail@gmail.com',
     });
     return customer.id;
   }

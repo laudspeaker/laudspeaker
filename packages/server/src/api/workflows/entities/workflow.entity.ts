@@ -41,7 +41,12 @@ export enum ProviderTypes {
 export enum PosthogTriggerParams {
   Track = 'track',
   Page = 'page',
-  Autocapture = 'autocapture',
+  Rageclick = 'Rageclick',
+  Typed = 'Typed (Change)',
+  Autocapture = 'Autocapture (Click)',
+  Submit = 'Submit',
+  Pageview = 'Pageview',
+  Pageleave = 'Pageleave',
 }
 
 export class Trigger {

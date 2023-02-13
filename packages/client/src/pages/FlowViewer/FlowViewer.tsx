@@ -18,6 +18,8 @@ import ReactFlow, {
   ReactFlowProvider,
   useReactFlow,
   useViewport,
+  NodeChange,
+  applyNodeChanges,
 } from "react-flow-renderer";
 import { useParams } from "react-router-dom";
 import ViewNode from "./ViewNode";
@@ -94,6 +96,7 @@ const Flow = () => {
               data: {
                 ...item.data,
                 onTriggerSelect,
+                flowId,
                 dataTriggers: item.data.dataTriggers || [],
               },
             };
@@ -111,7 +114,16 @@ const Flow = () => {
     setIsDataLoaded(true);
   }, []);
 
-  const onNodesChange = () => {};
+  const onNodesChange = useCallback(
+    (changes: NodeChange[]) =>
+      setNodes((nds) =>
+        applyNodeChanges(
+          changes.filter((change) => change.type === "position"),
+          nds
+        )
+      ),
+    [setNodes, nodes]
+  );
 
   useEffect(() => {
     const filteredNewNodes = nodes.filter((node) => node.data.isNew);
@@ -220,8 +232,11 @@ const Flow = () => {
     setSelectedNode("");
   }, []);
 
+  const [isGrabbing, setIsGrabbing] = useState(false);
+
   const rfStyle = {
     backgroundColor: "rgba(112,112,112, 0.06)",
+    cursor: isGrabbing ? "grabbing" : "grab",
   };
 
   const nodeTypes = useMemo(() => ({ special: ViewNode }), []);
@@ -253,6 +268,8 @@ const Flow = () => {
         zoomOnPinch={false}
         defaultZoom={1}
         zoomOnDoubleClick={false}
+        onMoveStart={() => setIsGrabbing(true)}
+        onMoveEnd={() => setIsGrabbing(false)}
       >
         <div
           style={{
@@ -267,7 +284,7 @@ const Flow = () => {
         >
           <div className="p-[0px_7.5px]" data-saveflowbutton>
             <Tooltip
-              title={
+              content={
                 !isPaused && isDataLoaded && !isStopped
                   ? "Users won't move between steps or get messages temporarily"
                   : ""
@@ -289,7 +306,7 @@ const Flow = () => {
           </div>
           <div className="p-[0px_7.5px]" data-startflowbutton>
             <Tooltip
-              title={
+              content={
                 !isDataLoaded && !isStopped
                   ? ""
                   : "Once you stop a journey no more messages are sent, and users don't move steps"
