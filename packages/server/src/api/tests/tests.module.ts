@@ -48,5 +48,6 @@ import { TestsService } from './tests.service';
   ],
   controllers: [TestsController],
   providers: [TestsService],
+  exports: [TestsService],
 })
 export class TestsModule {}

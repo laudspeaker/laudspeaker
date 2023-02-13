@@ -9,6 +9,7 @@ export default () => {
   cy.get('[data-disclosure-link="Home"]').click();
   cy.contains("Complete onboarding").click();
   cy.get("#email_config_select").click();
+  cy.get(".-mb-px > :nth-child(1)").click();
   cy.get('[data-option="mailgun"]').click();
   cy.get("#sendingName").clear().type("SendingName");
   cy.get("#sendingEmail").clear().type("SendingEmail");
@@ -33,10 +34,11 @@ export default () => {
   cy.reload();
   cy.wait(5000);
 
+  cy.get(".-mb-px > :nth-child(1)").click();
   cy.get("#sendingName").should("contain.value", "SendingName");
   cy.get("#sendingEmail").should("contain.value", "SendingEmail");
   cy.get("#privateApiKey").should("contain.value", TESTS_MAILGUN_API_KEY);
-  cy.get(":nth-child(2) > .px-6 > .ml-4").click();
+  cy.get(".-mb-px > :nth-child(2)").click();
   cy.get("#posthogApiKey").should("contain.value", TESTS_POSTHOG_API_KEY);
   cy.get("#posthogProjectId").should("contain.value", TESTS_POSTHOG_PROJECT_ID);
   cy.get("#posthogHostUrl").should("contain.value", TESTS_POSTHOG_HOST_URL);
