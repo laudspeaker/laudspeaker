@@ -309,7 +309,7 @@ export class WorkflowsService {
                 })
               )
             )
-          ).filter((item) => item.id);
+          ).filter((item) => item?.id);
 
           await queryRunner.manager.save(Audience, {
             id: audienceId,

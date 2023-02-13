@@ -12,6 +12,7 @@ import { Trigger } from '../entities/workflow.entity';
 
 export class UpdateWorkflowDto {
   @IsString()
+  @IsNotEmpty()
   id: string;
 
   @Trim()
