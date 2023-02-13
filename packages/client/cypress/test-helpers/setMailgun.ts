@@ -8,6 +8,7 @@ const {
 export default () => {
   cy.get('[data-disclosure-link="Home"]').click();
   cy.contains("Complete onboarding").click();
+  cy.wait(3000);
   cy.get("#email_config_select").click();
   cy.get(".-mb-px > :nth-child(1)").click();
   cy.get('[data-option="mailgun"]').click();
@@ -21,6 +22,7 @@ export default () => {
   cy.get('[href^="https://slack.com/oauth"]').should("exist");
 
   // add mock endpoint for this one
+  cy.wait(3000);
   cy.get(":nth-child(2) > .px-6 > .ml-4").click();
   cy.get("#events_config_select").click();
   cy.get('[data-option="posthog"]').click();
