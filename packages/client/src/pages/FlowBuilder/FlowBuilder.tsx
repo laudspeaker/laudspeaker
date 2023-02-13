@@ -66,6 +66,7 @@ interface IisDynamicSegmentForm {
 
 export interface NodeData {
   audienceId: string;
+  flowId: string;
   dataTriggers: Trigger[];
   isDynamic?: boolean;
   isSelected?: boolean;
@@ -231,6 +232,7 @@ const Flow = () => {
                 ...item.data,
                 onTriggerSelect,
                 dataTriggers: item.data.dataTriggers || [],
+                flowId,
               },
             };
           });
@@ -244,7 +246,7 @@ const Flow = () => {
       }
     };
     populateFlowBuilder();
-  }, []);
+  }, [flowId]);
 
   const generateNode = (
     node: Node<
@@ -279,6 +281,7 @@ const Flow = () => {
         onHandleClick,
         dataTriggers,
         onTriggerSelect,
+        flowId,
         ...data,
       },
     };

@@ -163,7 +163,8 @@ const ViewNode = ({ data }: { data: NodeData }) => {
                   }}
                   text={nodeData.description}
                   className={
-                    subTitleTextStyle + " h-full text-ellipsis cursor-pointer"
+                    subTitleTextStyle +
+                    " !break-all !whitespace-pre-line h-full text-ellipsis cursor-pointer"
                   }
                   maxLine="2"
                   ellipsis="..."
@@ -174,7 +175,8 @@ const ViewNode = ({ data }: { data: NodeData }) => {
                 <p
                   onClick={() => setDescriptionCollaped(!descriptionCollaped)}
                   className={
-                    subTitleTextStyle + " h-full text-ellipsis cursor-pointer"
+                    subTitleTextStyle +
+                    " !break-all !whitespace-pre-line h-full text-ellipsis cursor-pointer"
                   }
                 >
                   {nodeData.description}

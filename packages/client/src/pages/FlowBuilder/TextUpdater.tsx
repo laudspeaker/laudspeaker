@@ -16,6 +16,12 @@ import { Email, SlackMsg, Mobile, SMS } from "../../components/Icons/Icons";
 import ChooseTemplateModal from "./ChooseTemplateModal";
 import LinesEllipsis from "react-lines-ellipsis";
 import { NodeData } from "./FlowBuilder";
+import Modal from "components/Elements/Modal";
+import { NameSegment } from "pages/Segment";
+import { INameSegmentForm } from "pages/Segment/NameSegment";
+import ApiService from "services/api.service";
+import { toast } from "react-toastify";
+import useClickPreventionOnDoubleClick from "hooks/useClickPreventionOnDoubleClick";
 
 const textStyle = "text-[#111827] font-[Inter] font-middle text-[14px]";
 const subTitleTextStyle = "text-[#6B7280] font-[Inter] text-[14px]";
@@ -32,6 +38,7 @@ const TextUpdaterNode = ({ data }: { data: NodeData }) => {
     nodeId,
     isNearToCursor,
     isConnecting,
+    flowId,
   } = data;
   const [nodeData, setNodeData] = useState<{
     id?: string;
@@ -45,6 +52,7 @@ const TextUpdaterNode = ({ data }: { data: NodeData }) => {
   const [selectedTemplateId, setSelectedTemplateId] = useState<number>();
   const [updateTemplateModalOpen, setUpdateTemplateModalOpen] = useState(false);
   const [descriptionCollaped, setDescriptionCollaped] = useState(true);
+  const [audienceModalOpen, setAudienceModalOpen] = useState(false);
 
   const edges = useEdges();
   const onTemplateModalClose = () => {
@@ -142,6 +150,27 @@ const TextUpdaterNode = ({ data }: { data: NodeData }) => {
   const isTarget = connectionNodeId && connectionNodeId !== nodeData.id;
   const isSourceForSome = !!edges.find((edge) => edge.source === nodeId);
 
+  const handleAudienceSubmit = async (formData: INameSegmentForm) => {
+    const { name, description } = formData;
+
+    try {
+      await ApiService.patch({
+        url: "/audiences",
+        options: { id: audienceId, name, description },
+      });
+      setAudienceModalOpen(false);
+      setNodeData({ ...nodeData, name, description });
+    } catch (e) {
+      toast.error("Error while saving");
+    }
+  };
+
+  const [handleDescriptionClick, handleDescriptionDoubleClick] =
+    useClickPreventionOnDoubleClick(
+      () => setDescriptionCollaped(!descriptionCollaped),
+      () => setAudienceModalOpen(true)
+    );
+
   return (
     <>
       <div
@@ -149,6 +178,9 @@ const TextUpdaterNode = ({ data }: { data: NodeData }) => {
         data-isPrimary={nodeData.isPrimary}
         style={{
           opacity: hidden ? 0 : 1,
+        }}
+        onDoubleClick={() => {
+          setAudienceModalOpen(true);
         }}
       >
         {isNearToCursor && connectionNodeId !== nodeId && (
@@ -183,31 +215,36 @@ const TextUpdaterNode = ({ data }: { data: NodeData }) => {
               )}
               {nodeData.name}
             </p>
-            {descriptionCollaped && nodeData.description ? (
-              <LinesEllipsis
-                onClick={() => {
-                  setDescriptionCollaped(!descriptionCollaped);
-                }}
-                text={nodeData.description}
-                className={
-                  subTitleTextStyle +
-                  " !break-all !whitespace-pre-line h-full text-ellipsis cursor-pointer"
-                }
-                maxLine="2"
-                ellipsis="..."
-                trimRight
-                basedOn="letters"
-              />
-            ) : (
-              <p
-                onClick={() => setDescriptionCollaped(!descriptionCollaped)}
-                className={
-                  subTitleTextStyle + " h-full text-ellipsis cursor-pointer"
-                }
-              >
-                {nodeData.description}
-              </p>
-            )}
+            <div
+              onClick={handleDescriptionClick}
+              onDoubleClick={handleDescriptionDoubleClick}
+            >
+              {descriptionCollaped && nodeData.description ? (
+                <LinesEllipsis
+                  onClick={() => {
+                    setDescriptionCollaped(!descriptionCollaped);
+                  }}
+                  text={nodeData.description}
+                  className={
+                    subTitleTextStyle +
+                    " !break-all !whitespace-pre-line h-full text-ellipsis cursor-pointer"
+                  }
+                  maxLine="2"
+                  ellipsis="..."
+                  trimRight
+                  basedOn="letters"
+                />
+              ) : (
+                <p
+                  className={
+                    subTitleTextStyle +
+                    " !break-all !whitespace-pre-line h-full text-ellipsis cursor-pointer"
+                  }
+                >
+                  {nodeData.description}
+                </p>
+              )}
+            </div>
           </div>
           <div className="flex justify-evenly items-center">
             {generateMsgIcons()}
@@ -273,6 +310,23 @@ const TextUpdaterNode = ({ data }: { data: NodeData }) => {
           onClose={onTemplateModalClose}
           onTemplateDelete={onTemplateDelete}
         />
+      )}
+
+      {audienceModalOpen && (
+        <Modal
+          isOpen={audienceModalOpen}
+          onClose={() => setAudienceModalOpen(false)}
+        >
+          <NameSegment
+            onSubmit={handleAudienceSubmit}
+            isPrimary={data.primary}
+            isCollapsible={true}
+            onClose={() => setAudienceModalOpen(false)}
+            workflowId={flowId}
+            edit={true}
+            audienceId={audienceId}
+          />
+        </Modal>
       )}
     </>
   );

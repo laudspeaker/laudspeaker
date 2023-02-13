@@ -96,6 +96,7 @@ const Flow = () => {
               data: {
                 ...item.data,
                 onTriggerSelect,
+                flowId,
                 dataTriggers: item.data.dataTriggers || [],
               },
             };

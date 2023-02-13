@@ -1,4 +1,4 @@
-import { SnippetMode } from "./OnboardingBeta";
+import { SnippetMode } from "./SnippetPicker";
 
 export const createSnippet = (apiKey: string, mode: SnippetMode) => {
   switch (mode) {

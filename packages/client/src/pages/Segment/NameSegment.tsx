@@ -1,7 +1,8 @@
-import { ChangeEvent, MouseEvent, useState } from "react";
+import { ChangeEvent, MouseEvent, useEffect, useState } from "react";
 import { Grid, FormControl } from "@mui/material";
 import { GenericButton, Input, Select } from "components/Elements";
 import { TriggerType } from "types/Workflow";
+import ApiService from "services/api.service";
 
 export interface INameSegmentForm {
   name: string;
@@ -21,6 +22,8 @@ interface INameSegment {
   isSaving?: boolean;
   onClose: () => void;
   workflowId: string;
+  edit?: boolean;
+  audienceId?: string;
 }
 
 const NameSegment = ({
@@ -28,6 +31,8 @@ const NameSegment = ({
   isPrimary,
   workflowId,
   isSaving = false,
+  edit = false,
+  audienceId,
 }: INameSegment) => {
   // A Segment initally has three Properties:
   //      1. Dynamic: whether new customers are added
@@ -43,6 +48,27 @@ const NameSegment = ({
     templates: [],
   });
   const [isSetupPage, setIsSetupPage] = useState(false);
+
+  const loadData = async () => {
+    const { data } = await ApiService.get<{
+      name: string;
+      description: string;
+    }>({
+      url: "/audiences/" + audienceId,
+    });
+
+    setSegmentForm({
+      ...segmentForm,
+      name: data.name,
+      description: data.description,
+    });
+  };
+
+  useEffect(() => {
+    if (edit) {
+      loadData();
+    }
+  }, [edit, workflowId]);
 
   // Handling Name and Description Fields
   const handleSegmentFormChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -156,19 +182,34 @@ const NameSegment = ({
                   />
                 </FormControl>
               </Grid>
-              <div className="flex justify-end" data-namesegmentbox>
-                <GenericButton
-                  id="saveNewSegment"
-                  onClick={() => setIsSetupPage(true)}
-                  loading={isSaving}
-                  style={{
-                    maxWidth: "200px",
-                  }}
-                  disabled={!segmentForm.name || isSaving}
-                >
-                  Next
-                </GenericButton>
-              </div>
+              {edit ? (
+                <div className="flex justify-end" data-namesegmentbox>
+                  <GenericButton
+                    id="saveNewSegment"
+                    onClick={handleSubmit}
+                    style={{
+                      maxWidth: "200px",
+                    }}
+                    disabled={!segmentForm.name}
+                  >
+                    Save
+                  </GenericButton>
+                </div>
+              ) : (
+                <div className="flex justify-end" data-namesegmentbox>
+                  <GenericButton
+                    id="saveNewSegment"
+                    onClick={() => setIsSetupPage(true)}
+                    loading={isSaving}
+                    style={{
+                      maxWidth: "200px",
+                    }}
+                    disabled={!segmentForm.name || isSaving}
+                  >
+                    Next
+                  </GenericButton>
+                </div>
+              )}
             </>
           )}
         </div>

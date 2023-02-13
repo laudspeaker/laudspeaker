@@ -30,13 +30,7 @@ import { CheckIcon, ExclamationCircleIcon } from "@heroicons/react/24/solid";
 import { useNavigate } from "react-router-dom";
 import { useDebounce } from "react-use";
 import { RadioGroup } from "@headlessui/react";
-import AceEditor from "react-ace";
-import "ace-builds/src-noconflict/ext-language_tools";
-import "ace-builds/src-noconflict/mode-javascript";
-import "ace-builds/src-noconflict/mode-python";
-import "ace-builds/src-noconflict/mode-plain_text";
-import "ace-builds/src-noconflict/theme-monokai";
-import { createSnippet } from "./snippets.fixture";
+import SnippetPicker from "components/SnippetPicker/SnippetPicker";
 
 export const allEmailChannels = [
   {
@@ -96,32 +90,6 @@ export const allEventChannels = [
     disabled: true,
   },
 ];
-
-export enum SnippetMode {
-  JS_FETCH,
-  JS_JQUERY,
-  JS_XHR,
-  NODEJS_AXIOS,
-  NODEJS_NATIVE,
-  NODEJS_REQUEST,
-  PYTHON_HTTP_CLIENT,
-  PYTHON_REQUESTS,
-  CURL,
-}
-
-export type EditorType = "javascript" | "python" | "plain_text";
-
-const snippetModeToEditorModeMap: Record<SnippetMode, EditorType> = {
-  [SnippetMode.JS_FETCH]: "javascript",
-  [SnippetMode.JS_JQUERY]: "javascript",
-  [SnippetMode.JS_XHR]: "javascript",
-  [SnippetMode.NODEJS_AXIOS]: "javascript",
-  [SnippetMode.NODEJS_NATIVE]: "javascript",
-  [SnippetMode.NODEJS_REQUEST]: "javascript",
-  [SnippetMode.PYTHON_HTTP_CLIENT]: "python",
-  [SnippetMode.PYTHON_REQUESTS]: "python",
-  [SnippetMode.CURL]: "plain_text",
-};
 
 const smsMemoryOptions: Record<
   string,
@@ -206,12 +174,7 @@ export default function OnboardingBeta() {
   });
   const [userApiKey, setUserApiKey] = useState("");
 
-  const [snippet, setSnippet] = useState("");
-  const [snippetMode, setSnippetMode] = useState(SnippetMode.JS_FETCH);
-
-  useEffect(() => {
-    setSnippet(createSnippet(userApiKey, snippetMode));
-  }, [userApiKey, snippetMode]);
+  const [stepsCompletion, setStepsCompletion] = useState([false, false, false]);
 
   const dispatch = useDispatch();
   const [slackInstallUrl, setSlackInstallUrl] = useState<string>("");
@@ -231,7 +194,6 @@ export default function OnboardingBeta() {
   const [isLoading, setIsLoading] = useState(false);
 
   const [currentStep, setCurrentStep] = useState(0);
-  const [isNextItemAvailable, setIsNextItemAvailable] = useState(false);
 
   const [smsProvider, setSmsProvider] = useState("twilio");
   const smsMem = smsMemoryOptions[smsProvider];
@@ -342,59 +304,62 @@ export default function OnboardingBeta() {
     func();
   }, []);
 
+  const loadData = async () => {
+    const { data } = await ApiService.get({ url: "/accounts" });
+    const {
+      sendingName,
+      sendingEmail,
+      slackTeamId,
+      mailgunAPIKey,
+      posthogApiKey,
+      posthogProjectId,
+      posthogHostUrl,
+      posthogSmsKey,
+      posthogEmailKey,
+      emailProvider,
+      testSendingEmail,
+      testSendingName,
+      sendingDomain,
+      verified: verifiedFromRequest,
+      sendgridApiKey,
+      sendgridFromEmail,
+      smsAccountSid,
+      smsAuthToken,
+      smsFrom,
+      apiKey,
+    } = data;
+    setIntegrationsData({
+      ...integrationsData,
+      posthogApiKey: posthogApiKey || integrationsData.posthogApiKey,
+      posthogProjectId: posthogProjectId || integrationsData.posthogProjectId,
+      posthogHostUrl: posthogHostUrl || integrationsData.posthogHostUrl,
+      posthogSmsKey: posthogSmsKey || integrationsData.posthogSmsKey,
+      posthogEmailKey: posthogEmailKey || integrationsData.posthogEmailKey,
+      sendingName: sendingName || integrationsData.sendingName,
+      sendingEmail: sendingEmail || integrationsData.sendingEmail,
+      emailProvider: emailProvider || integrationsData.emailProvider,
+      testSendingEmail: testSendingEmail || integrationsData.testSendingEmail,
+      testSendingName: testSendingName || integrationsData.testSendingName,
+      slackId: slackTeamId?.[0] || integrationsData.slackId,
+      sendgridApiKey: sendgridApiKey || integrationsData.sendgridApiKey,
+      sendgridFromEmail:
+        sendgridFromEmail || integrationsData.sendgridFromEmail,
+      smsAccountSid: smsAccountSid || integrationsData.smsAccountSid,
+      smsAuthToken: smsAuthToken || integrationsData.smsAuthToken,
+      smsFrom: smsFrom || integrationsData.smsFrom,
+    });
+    setPrivateApiKey(mailgunAPIKey);
+    setDomainName(sendingDomain);
+    setVerified(verifiedFromRequest);
+    const isStepOneFinished = !!emailProvider || !!smsAccountSid;
+    const isStepTwoFinished = !!posthogApiKey;
+    setCurrentStep(isStepTwoFinished ? 2 : isStepOneFinished ? 1 : 0);
+    setStepsCompletion([isStepOneFinished, isStepTwoFinished, false]);
+    setUserApiKey(apiKey);
+  };
+
   useEffect(() => {
-    (async () => {
-      const { data } = await ApiService.get({ url: "/accounts" });
-      const {
-        sendingName,
-        sendingEmail,
-        slackTeamId,
-        mailgunAPIKey,
-        posthogApiKey,
-        posthogProjectId,
-        posthogHostUrl,
-        posthogSmsKey,
-        posthogEmailKey,
-        emailProvider,
-        testSendingEmail,
-        testSendingName,
-        sendingDomain,
-        verified: verifiedFromRequest,
-        sendgridApiKey,
-        sendgridFromEmail,
-        smsAccountSid,
-        smsAuthToken,
-        smsFrom,
-        apiKey,
-      } = data;
-      setIntegrationsData({
-        ...integrationsData,
-        posthogApiKey: posthogApiKey || integrationsData.posthogApiKey,
-        posthogProjectId: posthogProjectId || integrationsData.posthogProjectId,
-        posthogHostUrl: posthogHostUrl || integrationsData.posthogHostUrl,
-        posthogSmsKey: posthogSmsKey || integrationsData.posthogSmsKey,
-        posthogEmailKey: posthogEmailKey || integrationsData.posthogEmailKey,
-        sendingName: sendingName || integrationsData.sendingName,
-        sendingEmail: sendingEmail || integrationsData.sendingEmail,
-        emailProvider: emailProvider || integrationsData.emailProvider,
-        testSendingEmail: testSendingEmail || integrationsData.testSendingEmail,
-        testSendingName: testSendingName || integrationsData.testSendingName,
-        slackId: slackTeamId?.[0] || integrationsData.slackId,
-        sendgridApiKey: sendgridApiKey || integrationsData.sendgridApiKey,
-        sendgridFromEmail:
-          sendgridFromEmail || integrationsData.sendgridFromEmail,
-        smsAccountSid: smsAccountSid || integrationsData.smsAccountSid,
-        smsAuthToken: smsAuthToken || integrationsData.smsAuthToken,
-        smsFrom: smsFrom || integrationsData.smsFrom,
-      });
-      setPrivateApiKey(mailgunAPIKey);
-      setDomainName(sendingDomain);
-      setVerified(verifiedFromRequest);
-      setCurrentStep(
-        !!posthogApiKey ? 2 : !!emailProvider || !!smsAccountSid ? 1 : 0
-      );
-      setUserApiKey(apiKey);
-    })();
+    loadData();
   }, []);
 
   const errorCheck = (e: {
@@ -516,7 +481,7 @@ export default function OnboardingBeta() {
           mailgunAPIKey: privateApiKey,
         },
       });
-      setIsNextItemAvailable(true);
+      await loadData();
     } catch (e) {
       let message = "Unexpected error";
       if (e instanceof AxiosError) message = e.response?.data?.message;
@@ -1328,68 +1293,7 @@ export default function OnboardingBeta() {
             <div className="mt-5 md:col-span-2 pd-5">
               <div>
                 <div className="shadow sm:rounded-md">
-                  <div className="space-y-6 bg-white px-4 py-5 sm:p-6">
-                    <Select
-                      options={[
-                        {
-                          value: SnippetMode.JS_FETCH,
-                          title: "Javascript - Fetch",
-                        },
-                        {
-                          value: SnippetMode.JS_JQUERY,
-                          title: "Javascript - JQuery",
-                        },
-                        {
-                          value: SnippetMode.JS_XHR,
-                          title: "Javascript - XHR",
-                        },
-                        {
-                          value: SnippetMode.NODEJS_AXIOS,
-                          title: "Node.js - Axios",
-                        },
-                        {
-                          value: SnippetMode.NODEJS_NATIVE,
-                          title: "Node.js - Native",
-                        },
-                        {
-                          value: SnippetMode.NODEJS_REQUEST,
-                          title: "Node.js - Request",
-                        },
-                        {
-                          value: SnippetMode.PYTHON_HTTP_CLIENT,
-                          title: "Python - http.client",
-                        },
-                        {
-                          value: SnippetMode.PYTHON_REQUESTS,
-                          title: "Python - requests",
-                        },
-                        { value: SnippetMode.CURL, title: "cURL" },
-                      ]}
-                      onChange={(val) => setSnippetMode(val)}
-                      value={snippetMode}
-                    />
-                    <AceEditor
-                      aria-label="editor"
-                      mode={snippetModeToEditorModeMap[snippetMode]}
-                      theme="monokai"
-                      name="editor"
-                      fontSize={12}
-                      minLines={15}
-                      maxLines={40}
-                      width="100%"
-                      showPrintMargin={false}
-                      showGutter
-                      placeholder="Write your Query here..."
-                      editorProps={{ $blockScrolling: true }}
-                      setOptions={{
-                        enableBasicAutocompletion: true,
-                        enableLiveAutocompletion: true,
-                        enableSnippets: true,
-                      }}
-                      value={snippet}
-                      onChange={(val) => setSnippet(val)}
-                    />
-                  </div>
+                  <SnippetPicker userApiKey={userApiKey} />
                 </div>
               </div>
               <div className="bg-gray-50 px-4 py-3 text-right sm:px-6">
@@ -1520,7 +1424,7 @@ export default function OnboardingBeta() {
             >
               {steps.map((step, stepIdx) => (
                 <li key={step.name} className="relative md:flex md:flex-1">
-                  {stepIdx < currentStep ? (
+                  {stepsCompletion[stepIdx] ? (
                     <a
                       href={step.href}
                       className="group flex w-full items-center"
@@ -1537,13 +1441,12 @@ export default function OnboardingBeta() {
                         </span>
                       </span>
                     </a>
-                  ) : stepIdx === currentStep ||
-                    (isNextItemAvailable && stepIdx === currentStep + 1) ? (
+                  ) : stepIdx === currentStep ? (
                     <a
                       href="#"
                       onClick={() => {
                         setCurrentStep(stepIdx);
-                        setIsNextItemAvailable(false);
+                        loadData();
                       }}
                       className="flex items-center px-6 py-4 text-sm font-medium"
                       aria-current="step"
@@ -1633,20 +1536,11 @@ export default function OnboardingBeta() {
                   className="mt-1 block w-full rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-cyan-500 focus:outline-none focus:ring-cyan-500 sm:text-sm"
                   value={currentStep}
                   onChange={(e) => {
-                    if (+e.currentTarget.value > currentStep)
-                      setIsNextItemAvailable(false);
                     setCurrentStep(+e.currentTarget.value);
                   }}
                 >
                   {[0, 1, 2].map((tab) => (
-                    <option
-                      key={tab}
-                      value={tab}
-                      disabled={
-                        tab > currentStep &&
-                        !(tab === currentStep + 1 && isNextItemAvailable)
-                      }
-                    >
+                    <option key={tab} value={tab}>
                       {tabNames[tab]}
                     </option>
                   ))}
@@ -1662,24 +1556,11 @@ export default function OnboardingBeta() {
                           tab === currentStep
                             ? "border-cyan-500 text-cyan-600"
                             : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700",
-                          "whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm cursor-pointer",
-                          `${
-                            tab > currentStep &&
-                            !(tab === currentStep + 1 && isNextItemAvailable)
-                              ? "grayscale"
-                              : ""
-                          }`
+                          "whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm cursor-pointer"
                         )}
-                        onClick={
-                          tab > currentStep &&
-                          !(tab === currentStep + 1 && isNextItemAvailable)
-                            ? undefined
-                            : () => {
-                                if (tab > currentStep)
-                                  setIsNextItemAvailable(false);
-                                setCurrentStep(tab);
-                              }
-                        }
+                        onClick={() => {
+                          setCurrentStep(tab);
+                        }}
                       >
                         {tabNames[tab]}
                       </div>
