@@ -2,7 +2,7 @@ import { HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Model } from 'mongoose';
-import { DataSource, In, Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { AccountsService } from '../accounts/accounts.service';
 import { Account } from '../accounts/entities/accounts.entity';
 import { Audience } from '../audiences/entities/audience.entity';
@@ -16,6 +16,7 @@ import {
 import { Installation } from '../slack/entities/installation.entity';
 import { Template } from '../templates/entities/template.entity';
 import { Workflow } from '../workflows/entities/workflow.entity';
+import mockCustomers from './mockCustomers.json';
 
 @Injectable()
 export class TestsService {
@@ -155,6 +156,15 @@ export class TestsService {
       sanitizedMember.phone = process.env.TESTS_SMS_TO;
 
       await this.customersService.create(ret, sanitizedMember);
+
+      for (const mockCustomer of mockCustomers) {
+        const newCustomer = new CreateCustomerDto();
+        for (const key of Object.keys(mockCustomer)) {
+          newCustomer[key] = mockCustomer[key];
+        }
+
+        await this.customersService.create(ret, newCustomer);
+      }
 
       const installationId = process.env.TESTS_INSTALLATION_ID;
       const installationJson =
