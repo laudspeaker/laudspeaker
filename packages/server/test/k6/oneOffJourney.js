@@ -5,8 +5,12 @@ import { uuidv4 } from 'https://jslib.k6.io/k6-utils/1.4.0/index.js';
 import jsonpath from 'https://jslib.k6.io/jsonpath/1.0.2/index.js';
 
 export const options = {
-  vus: 10,
-  duration: '5m',
+  stages: [
+    { target: 1, duration: '1m' },
+    { target: 10, duration: '5m' },
+    { target: 5, duration: '3m' },
+    { target: 1, duration: '1m' },
+  ],
 };
 
 export default function main() {
