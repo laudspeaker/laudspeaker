@@ -279,12 +279,14 @@ export class WorkflowsService {
                 key,
                 type,
                 isArray,
+                ownerId:account.id,
               }).exec();
               if (!eventKey)
                 await this.EventKeysModel.create({
                   key,
                   type,
                   isArray,
+                  ownerId:account.id
                 });
             }
           }

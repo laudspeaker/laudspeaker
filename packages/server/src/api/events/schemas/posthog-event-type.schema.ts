@@ -16,6 +16,12 @@ export class PosthogEventType {
 
   @Prop()
   event: string;
+
+  @Prop()
+  isDefault?: boolean;
+
+  @Prop()
+  ownerId: string;
 }
 
 export const PosthogEventTypeSchema =

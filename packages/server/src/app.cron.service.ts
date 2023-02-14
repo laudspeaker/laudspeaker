@@ -244,6 +244,7 @@ export class CronService {
             key,
             type,
             isArray,
+            ownerId: validItem,
           };
 
           const foundEventKey = await this.eventKeysModel
