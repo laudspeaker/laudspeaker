@@ -126,14 +126,23 @@ const NameSegment = ({
                 </div>
               </div>
 
-              <div className="flex justify-end gap-[20px]" data-namesegmentbox>
-                <GenericButton onClick={handleSubmit} customClasses="grayscale">
+              <div
+                className="flex justify-between gap-[20px]"
+                data-namesegmentbox
+              >
+                <GenericButton
+                  onClick={handleSubmit}
+                  customClasses="grayscale !bg-transparent !text-[14px] !text-gray-500 hover:!text-black transition-all !p-[5px] !shadow-none"
+                >
                   Finish later
                 </GenericButton>
                 <GenericButton
                   id="saveNewSegment"
                   onClick={handleSubmit}
                   loading={isSaving}
+                  disabled={
+                    !segmentForm.messageType && !segmentForm.triggerType
+                  }
                   style={{
                     maxWidth: "200px",
                   }}
