@@ -3,7 +3,7 @@ services:
     name: laudspeaker
     healthCheckPath: /login
     env: docker
-    dockerfilePath: ./Dockerfile
+    dockerfilePath: ./Dockerfile.laudspeaker
     dockerContext: .
     autoDeploy: false
     disk:
