@@ -174,6 +174,8 @@ const convertLayoutToTable = (
 };
 
 const Flow = () => {
+  const navigate = useNavigate();
+
   const { id } = useParams();
   const [flowId, setFlowId] = useState<string>("");
   const [flowName, setFlowName] = useState("");
@@ -218,33 +220,6 @@ const Flow = () => {
     settriggerModalOpen(true);
   };
 
-  const onDragOver = useCallback((e: DragEvent) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = "move";
-  }, []);
-
-  const onDrop = useCallback((e: DragEvent) => {
-    e.preventDefault();
-
-    setIsTriggerDragging(false);
-
-    const type = e.dataTransfer.getData("application/reactflow");
-
-    // check if the dropped element is valid
-    if (typeof type === "undefined" || !type) {
-      return;
-    }
-
-    switch (type) {
-      case "audience":
-        setAudienceModalOpen(true);
-        break;
-      default:
-        break;
-    }
-  }, []);
-
-  const navigate = useNavigate();
   useLayoutEffect(() => {
     const populateFlowBuilder = async () => {
       try {
@@ -500,6 +475,7 @@ const Flow = () => {
       }
       case TriggerType.TIME_DELAY: {
         const selectedNodeData = nodes.find((node) => node.id === selectedNode);
+        if (!selectedNodeData) return;
         const triggerId = uuid();
         const trigger: Trigger = {
           id: triggerId,
@@ -518,6 +494,7 @@ const Flow = () => {
       }
       case TriggerType.TIME_WINDOW: {
         const selectedNodeData = nodes.find((node) => node.id === selectedNode);
+        if (!selectedNodeData) return;
         const triggerId = uuid();
         const trigger = {
           id: triggerId,
@@ -534,6 +511,7 @@ const Flow = () => {
       }
       case TriggerType.EVENT: {
         const selectedNodeData = nodes.find((node) => node.id === selectedNode);
+        if (!selectedNodeData) return;
         const triggerId = uuid();
         const trigger = {
           id: triggerId,
@@ -556,6 +534,8 @@ const Flow = () => {
       case "push":
       case "sms":
       case "slack": {
+        const selectedNodeData = nodes.find((node) => node.id === selectedNode);
+        if (!selectedNodeData) return;
         setSelectedMessageType(actionId);
         setTemplateModalOpen(true);
         break;
@@ -652,6 +632,98 @@ const Flow = () => {
 
     setNodes([...nodes]);
     setTemplateModalOpen(!templateModalOpen);
+  };
+
+  const onDragOver = useCallback((e: DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+  }, []);
+
+  const onDrop = (e: DragEvent) => {
+    e.preventDefault();
+
+    setIsTriggerDragging(false);
+
+    const type = e.dataTransfer.getData("application/reactflow");
+
+    // check if the dropped element is valid
+    if (typeof type === "undefined" || !type) {
+      return;
+    }
+
+    switch (type) {
+      case "audience":
+        setAudienceModalOpen(true);
+        break;
+      case TriggerType.EVENT:
+      case TriggerType.TIME_DELAY:
+      case TriggerType.TIME_WINDOW:
+        const newSelectedNodeWithTrigger = nodes.find((node) => {
+          const { height, width, position } = node;
+          if (!height || !width || !reactFlowRef.current) return node;
+
+          const maskLeftTopCornerX = position.x;
+          const maskLeftTopCornerY = position.y;
+
+          const maskRightBottomCornerX = position.x + width;
+          const maskRightBottomCornerY = position.y + height;
+
+          const boudingClientRect =
+            reactFlowRef.current.getBoundingClientRect();
+
+          const canvasMouseX = e.clientX - viewX - boudingClientRect.left;
+          const canvasMouseY = e.clientY - viewY - boudingClientRect.top;
+
+          const isDroppedOver =
+            canvasMouseX > maskLeftTopCornerX * zoom &&
+            canvasMouseX < maskRightBottomCornerX * zoom &&
+            canvasMouseY > maskLeftTopCornerY * zoom &&
+            canvasMouseY < maskRightBottomCornerY * zoom;
+
+          return isDroppedOver;
+        });
+
+        if (!newSelectedNodeWithTrigger) return;
+
+        setSelectedNode(newSelectedNodeWithTrigger.id);
+        setTriggerToOpenNextRender(type);
+        break;
+      case "email":
+      case "push":
+      case "sms":
+      case "slack":
+        const newSelectedNodeWithMessage = nodes.find((node) => {
+          const { height, width, position } = node;
+          if (!height || !width || !reactFlowRef.current) return node;
+
+          const maskLeftTopCornerX = position.x;
+          const maskLeftTopCornerY = position.y;
+
+          const maskRightBottomCornerX = position.x + width;
+          const maskRightBottomCornerY = position.y + height;
+
+          const boudingClientRect =
+            reactFlowRef.current.getBoundingClientRect();
+
+          const canvasMouseX = e.clientX - viewX - boudingClientRect.left;
+          const canvasMouseY = e.clientY - viewY - boudingClientRect.top;
+
+          const isDroppedOver =
+            canvasMouseX > maskLeftTopCornerX * zoom &&
+            canvasMouseX < maskRightBottomCornerX * zoom &&
+            canvasMouseY > maskLeftTopCornerY * zoom &&
+            canvasMouseY < maskRightBottomCornerY * zoom;
+
+          return isDroppedOver;
+        });
+
+        if (!newSelectedNodeWithMessage) return;
+        setSelectedNode(newSelectedNodeWithMessage.id);
+        performAction(type);
+        break;
+      default:
+        break;
+    }
   };
 
   const handleSaveJourney = async () => {
@@ -829,6 +901,9 @@ const Flow = () => {
                 }
                 e.dataTransfer.setData("application/reactflow", itemId);
                 e.dataTransfer.effectAllowed = "move";
+              }}
+              onDragEnd={() => {
+                setIsTriggerDragging(false);
               }}
               flowName={flowName}
               handleFlowName={(e) => setFlowName(e.target.value)}

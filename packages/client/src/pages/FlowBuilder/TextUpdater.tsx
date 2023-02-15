@@ -42,7 +42,6 @@ const TextUpdaterNode = ({ data }: { data: NodeData }) => {
     isTriggerDragging,
     isDraggedOver,
   } = data;
-  console.log(isTriggerDragging);
   const [nodeData, setNodeData] = useState<{
     id?: string;
     isPrimary?: boolean;
@@ -302,9 +301,33 @@ const TextUpdaterNode = ({ data }: { data: NodeData }) => {
               );
             })}
           {isTriggerDragging && (
-            <div className="pointer-events-none absolute left-1/2 top-0 -translate-x-1/2 w-[30px] h-[22px]">
-              <img src={thunderbolt} width="30" height="22" className="" />
-            </div>
+            <Handle
+              type="source"
+              position={Position.Top}
+              className={`triggerOut !relative !left-auto !right-auto !border-[0px] !z-[1000] ${
+                isSourceForSome ? "!h-[22px]" : "!h-[44px]"
+              } !bg-transparent !w-[30px] !transform-none  ${
+                isSourceForSome ? "!top-[11px]" : "!top-[22px]"
+              }`}
+              data-handle-bottom
+            >
+              <div className="pointer-events-none absolute left-1/2 top-0 -translate-x-1/2 w-[30px] h-[22px]">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                  className="w-[30px] h-[30px]"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M12 9v6m3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+              </div>
+            </Handle>
           )}
         </div>
       </div>

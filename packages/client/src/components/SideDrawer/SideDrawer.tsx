@@ -34,14 +34,21 @@ interface Props {
   selectedNode: string;
   onClick: (id: string) => void;
   onDragStart?: (e: React.DragEvent<HTMLDivElement>, itemId: string) => void;
+  onDragEnd?: () => void;
   afterMenuContent?: React.ReactNode;
   flowName: string;
   handleFlowName: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
 export default function ResponsiveDrawer(props: Props) {
-  const { selectedNode, onClick, onDragStart, handleFlowName, flowName } =
-    props;
+  const {
+    selectedNode,
+    onClick,
+    onDragStart,
+    onDragEnd,
+    handleFlowName,
+    flowName,
+  } = props;
   const location = useLocation();
   const [expectedOnboarding, setExpectedOnboarding] = React.useState<string[]>(
     []
@@ -117,6 +124,7 @@ export default function ResponsiveDrawer(props: Props) {
             ? undefined
             : (e) => onDragStart(e, item.id)
         }
+        onDragEnd={onDragEnd}
         draggable={!isDisabled && !!onDragStart}
         style={
           location.pathname.includes(item.link)

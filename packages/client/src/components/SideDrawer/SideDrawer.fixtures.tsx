@@ -56,7 +56,7 @@ export const dataSubArray = [
         text: "Event Based",
         type: "menu",
         link: "/eventBased",
-        canBeDisabled: true,
+        canBeDisabled: false,
         disabledToolTip: "Add step first or select if added",
       },
       {
@@ -65,7 +65,7 @@ export const dataSubArray = [
         text: "Time Delay",
         type: "menu",
         link: "/timeDelay",
-        canBeDisabled: true,
+        canBeDisabled: false,
         disabledToolTip: "Add step first or select if added",
         enabledToolTip:
           "This trigger moves a user from one step to another some time after an action",
@@ -76,7 +76,7 @@ export const dataSubArray = [
         text: "Time Window",
         type: "menu",
         link: "/timeWindow",
-        canBeDisabled: true,
+        canBeDisabled: false,
         disabledToolTip: "Add step first or select if added",
       },
     ],
@@ -92,7 +92,7 @@ export const dataSubArray = [
         text: "Email",
         type: "menu",
         link: "/email",
-        canBeDisabled: true,
+        canBeDisabled: false,
         requiredOnboarding: "Email",
         // enabledToolTip: (
         //   <div className="p-5 flex flex-col justify-between gap-[20px] items-center">
@@ -113,7 +113,7 @@ export const dataSubArray = [
         text: "Push Notification",
         type: "menu",
         link: "/push",
-        canBeDisabled: true,
+        canBeDisabled: false,
         alwaysDisabled: true,
         disabledToolTip:
           "Make sure there are steps and configure push notification in settings and step selected",
@@ -124,7 +124,7 @@ export const dataSubArray = [
         text: "Sms",
         type: "menu",
         link: "/twilio",
-        canBeDisabled: true,
+        canBeDisabled: false,
         requiredOnboarding: "Sms",
         disabledToolTip:
           "Make sure there are steps and configure sms in settings and step selected",
@@ -135,7 +135,7 @@ export const dataSubArray = [
         text: "Slack Message",
         type: "menu",
         link: "/slack",
-        canBeDisabled: true,
+        canBeDisabled: false,
         requiredOnboarding: "Slack",
         disabledToolTip:
           "Make sure there are steps and configure slack in settings and step selected",
