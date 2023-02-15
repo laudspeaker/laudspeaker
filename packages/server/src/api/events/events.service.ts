@@ -64,7 +64,12 @@ export class EventsService {
       if (name && property_type) {
         this.EventKeysModel.updateOne(
           { key: name },
-          { key: name, type: property_type, providerSpecific: 'posthog' },
+          {
+            key: name,
+            type: property_type,
+            providerSpecific: 'posthog',
+            isDefault: true,
+          },
           { upsert: true }
         ).exec();
       }
@@ -73,7 +78,13 @@ export class EventsService {
       if (name && displayName && type && event) {
         this.PosthogEventTypeModel.updateOne(
           { name: name },
-          { name: name, displayName: displayName, type: type, event: event },
+          {
+            name: name,
+            displayName: displayName,
+            type: type,
+            event: event,
+            isDefault: true,
+          },
           { upsert: true }
         ).exec();
       }
@@ -155,6 +166,7 @@ export class EventsService {
         ) {
           const found = await this.PosthogEventTypeModel.findOne({
             name: currentEvent.event,
+            ownerId: account.id,
           })
             .session(transactionSession)
             .exec();
@@ -165,6 +177,7 @@ export class EventsService {
                 type: currentEvent.type,
                 displayName: currentEvent.event,
                 event: currentEvent.event,
+                ownerId: account.id,
               },
               { session: transactionSession }
             );
@@ -279,6 +292,7 @@ export class EventsService {
       if (eventDto) {
         await this.EventModel.create({
           ...eventDto,
+          ownerId: account.id,
           createdAt: new Date().toUTCString(),
         });
       }
@@ -329,13 +343,18 @@ export class EventsService {
     );
   }
 
-  async getAttributes(resourceId: string, providerSpecific?: string) {
+  async getAttributes(
+    resourceId: string,
+    ownerId: string,
+    providerSpecific?: string
+  ) {
     const attributes = await this.EventKeysModel.find({
-      key: RegExp(`.*${resourceId}.*`, 'i'),
+      $and: [
+        { key: RegExp(`.*${resourceId}.*`, 'i') },
+        { $or: [{ ownerId }, { isDefault: true }] },
+      ],
       providerSpecific,
-    })
-      .limit(10)
-      .exec();
+    }).exec();
 
     return attributes.map((el) => ({
       key: el.key,
@@ -363,13 +382,15 @@ export class EventsService {
     return docs.map((doc) => doc?.['event']?.[key]).filter((item) => item);
   }
 
-  async getPossiblePosthogTypes(search = '') {
+  async getPossiblePosthogTypes(search = '', ownerId: string) {
     const searchRegExp = new RegExp(`.*${search}.*`, 'i');
+    // TODO: need to recheck, filtering not working in a correct way
     const types = await this.PosthogEventTypeModel.find({
-      name: searchRegExp,
-    })
-      .limit(10)
-      .exec();
+      $and: [
+        { name: searchRegExp },
+        { $or: [{ ownerId }, { isDefault: true }] },
+      ],
+    }).exec();
     return types.map((type) => type.displayName);
   }
 }

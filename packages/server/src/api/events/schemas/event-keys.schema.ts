@@ -15,7 +15,13 @@ export class EventKeys {
   providerSpecific: string;
 
   @Prop()
+  ownerId: string;
+
+  @Prop()
   isArray: boolean;
+
+  @Prop()
+  isDefault?: boolean;
 }
 
 export const EventKeysSchema = SchemaFactory.createForClass(EventKeys);

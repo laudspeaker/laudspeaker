@@ -279,12 +279,16 @@ export class WorkflowsService {
                 key,
                 type,
                 isArray,
+                ownerId: account.id,
+                providerSpecific: trigger.providerType,
               }).exec();
               if (!eventKey)
                 await this.EventKeysModel.create({
                   key,
                   type,
                   isArray,
+                  ownerId: account.id,
+                  providerSpecific: trigger.providerType,
                 });
             }
           }

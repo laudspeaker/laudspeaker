@@ -722,7 +722,9 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
 
   const loadPossiblePosthogEventTypes = async () => {
     const { data } = await ApiService.get({
-      url: "/events/possible-posthog-types",
+      url:
+        "/events/possible-posthog-types?search=" +
+        (eventTrigger.providerParams || ""),
     });
     setPossiblePosthogEventTypes(data);
   };

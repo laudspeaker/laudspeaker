@@ -196,7 +196,7 @@ export class CronService {
         .estimatedDocumentCount()
         .exec();
 
-      const keys: Record<string, any[]> = {};
+      const keys: Record<string, { value: any; ownerId: string }[]> = {};
 
       while (current < documentsCount) {
         const batch = await this.eventModel
@@ -206,16 +206,17 @@ export class CronService {
           .exec();
 
         batch.forEach((event) => {
+          const ownerId = event.ownerId;
           const obj = event.toObject()?.event || {};
           for (const key of Object.keys(obj)) {
             if (KEYS_TO_SKIP.includes(key)) continue;
 
             if (keys[key]) {
-              keys[key].push(obj[key]);
+              keys[key].push({ value: obj[key], ownerId });
               continue;
             }
 
-            keys[key] = [obj[key]];
+            keys[key] = [{ value: obj[key], ownerId }];
           }
         });
 
@@ -224,26 +225,28 @@ export class CronService {
 
       for (const key of Object.keys(keys)) {
         const validItems = keys[key].filter(
-          (item) => item !== '' && item !== undefined && item !== null
+          (item) =>
+            item.value !== '' && item.value !== undefined && item.value !== null
         );
 
         if (!validItems.length) continue;
 
         let batchToSave = [];
         for (const validItem of validItems) {
-          const keyType = getType(validItem);
+          const keyType = getType(validItem.value);
           const isArray = keyType.isArray();
-          let type = isArray ? getType(validItem[0]).name : keyType.name;
+          let type = isArray ? getType(validItem.value[0]).name : keyType.name;
 
           if (type === 'String') {
-            if (isEmail(validItem)) type = 'Email';
-            if (isDateString(validItem)) type = 'Date';
+            if (isEmail(validItem.value)) type = 'Email';
+            if (isDateString(validItem.value)) type = 'Date';
           }
 
           const eventKey = {
             key,
             type,
             isArray,
+            ownerId: validItem.ownerId,
           };
 
           const foundEventKey = await this.eventKeysModel
