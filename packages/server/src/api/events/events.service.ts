@@ -292,6 +292,7 @@ export class EventsService {
       if (eventDto) {
         await this.EventModel.create({
           ...eventDto,
+          ownerId: account.id,
           createdAt: new Date().toUTCString(),
         });
       }
@@ -383,9 +384,9 @@ export class EventsService {
     const searchRegExp = new RegExp(`.*${search}.*`, 'i');
     // TODO: need to recheck, filtering not working in a correct way
     const types = await this.PosthogEventTypeModel.find({
-      $or: [
-        { $and: [{ ownerId }, { name: searchRegExp }] },
-        { $and: [{ ownerId }, { isDefault: true }] },
+      $and: [
+        { name: searchRegExp },
+        { $or: [{ ownerId }, { isDefault: true }] },
       ],
     }).exec();
     return types.map((type) => type.displayName);
