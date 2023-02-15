@@ -349,8 +349,10 @@ export class EventsService {
     providerSpecific?: string
   ) {
     const attributes = await this.EventKeysModel.find({
-      key: RegExp(`.*${resourceId}.*`, 'i'),
-      ownerId,
+      $and: [
+        { key: RegExp(`.*${resourceId}.*`, 'i') },
+        { $or: [{ ownerId }, { isDefault: true }] },
+      ],
       providerSpecific,
     }).exec();
 
