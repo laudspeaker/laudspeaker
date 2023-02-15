@@ -1,4 +1,5 @@
 import {
+  DragEvent,
   MouseEvent,
   useCallback,
   useEffect,
@@ -56,6 +57,10 @@ import CustomEdge from "./CustomEdge";
 import { INameSegmentForm } from "pages/Segment/NameSegment";
 import Template from "types/Template";
 import { PlusCircleIcon } from "@heroicons/react/24/outline";
+import TriggerDrag from "../../assets/images/TriggerDrag.svg";
+
+const triggerDragImage = new Image();
+triggerDragImage.src = TriggerDrag;
 
 const segmentTypeStyle =
   "border-[1px] border-[#D1D5DB] rouded-[6px] shadow-[0px_1px_2px_rgba(0,0,0,0.05)] w-full mt-[20px] p-[15px]";
@@ -90,6 +95,8 @@ export interface NodeData {
   stats?: { sent: number; clickedPercentage: number };
   isConnecting?: boolean;
   isNearToCursor?: boolean;
+  isTriggerDragging?: boolean;
+  isDraggedOver?: boolean;
 }
 
 const convertLayoutToTable = (
@@ -194,6 +201,7 @@ const Flow = () => {
   const [moveEvent, setMoveEvent] = useState<MouseEvent<HTMLDivElement>>();
   const [triggerToOpenNextRender, setTriggerToOpenNextRender] =
     useState<TriggerType>();
+  const [isTriggerDragging, setIsTriggerDragging] = useState(false);
 
   const onHandleClick = (e: unknown, triggerId: string) => {
     return { e, triggerId };
@@ -209,6 +217,32 @@ const Flow = () => {
     setSelectedTrigger(trigger);
     settriggerModalOpen(true);
   };
+
+  const onDragOver = useCallback((e: DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+  }, []);
+
+  const onDrop = useCallback((e: DragEvent) => {
+    e.preventDefault();
+
+    setIsTriggerDragging(false);
+
+    const type = e.dataTransfer.getData("application/reactflow");
+
+    // check if the dropped element is valid
+    if (typeof type === "undefined" || !type) {
+      return;
+    }
+
+    switch (type) {
+      case "audience":
+        setAudienceModalOpen(true);
+        break;
+      default:
+        break;
+    }
+  }, []);
 
   const navigate = useNavigate();
   useLayoutEffect(() => {
@@ -538,6 +572,15 @@ const Flow = () => {
     setTriggerToOpenNextRender(undefined);
   }, [triggerToOpenNextRender]);
 
+  useEffect(() => {
+    setNodes(
+      nodes.map((node) => ({
+        ...node,
+        data: { ...node.data, isTriggerDragging },
+      }))
+    );
+  }, [isTriggerDragging]);
+
   const handleTutorialOpen = () => {
     setTutorialOpen(true);
   };
@@ -771,6 +814,22 @@ const Flow = () => {
             <SideDrawer
               selectedNode={selectedNode}
               onClick={performAction}
+              onDragStart={(e, itemId) => {
+                if (
+                  itemId === TriggerType.EVENT ||
+                  itemId === TriggerType.TIME_DELAY ||
+                  itemId === TriggerType.TIME_WINDOW
+                ) {
+                  e.dataTransfer.setDragImage(
+                    triggerDragImage,
+                    triggerDragImage.width / 2,
+                    triggerDragImage.height / 2
+                  );
+                  setIsTriggerDragging(true);
+                }
+                e.dataTransfer.setData("application/reactflow", itemId);
+                e.dataTransfer.effectAllowed = "move";
+              }}
               flowName={flowName}
               handleFlowName={(e) => setFlowName(e.target.value)}
               afterMenuContent={
@@ -843,6 +902,8 @@ const Flow = () => {
                   type="button"
                   className="relative block w-full rounded-lg border-2 border-dashed border-gray-300 p-12 text-center hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                   onClick={() => setAudienceModalOpen(true)}
+                  onDragOver={onDragOver}
+                  onDrop={onDrop}
                 >
                   <PlusCircleIcon
                     className="mx-auto h-12 w-12 text-gray-400"
@@ -853,7 +914,7 @@ const Flow = () => {
                     fill="none"
                   />
                   <span className="mt-2 block text-sm font-medium text-gray-900">
-                    Create first step
+                    Add first step by dragging or clicking
                   </span>
                 </button>
               </div>
@@ -882,6 +943,8 @@ const Flow = () => {
               zoomOnDoubleClick={false}
               onMoveStart={() => setIsGrabbing(true)}
               onMoveEnd={() => setIsGrabbing(false)}
+              onDragOver={onDragOver}
+              onDrop={onDrop}
               onConnectStart={() => setIsConnecting(true)}
               onConnectEnd={() => {
                 setIsConnecting(false);

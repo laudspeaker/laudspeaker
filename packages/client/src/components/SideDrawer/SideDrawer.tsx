@@ -33,13 +33,15 @@ interface Props {
   window?: () => Window;
   selectedNode: string;
   onClick: (id: string) => void;
+  onDragStart?: (e: React.DragEvent<HTMLDivElement>, itemId: string) => void;
   afterMenuContent?: React.ReactNode;
   flowName: string;
   handleFlowName: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
 export default function ResponsiveDrawer(props: Props) {
-  const { selectedNode, onClick, handleFlowName, flowName } = props;
+  const { selectedNode, onClick, onDragStart, handleFlowName, flowName } =
+    props;
   const location = useLocation();
   const [expectedOnboarding, setExpectedOnboarding] = React.useState<string[]>(
     []
@@ -110,6 +112,12 @@ export default function ResponsiveDrawer(props: Props) {
       <div
         id={item.id}
         onClick={isDisabled ? undefined : () => handleMenuItemClick(item.id)}
+        onDragStart={
+          isDisabled || !onDragStart
+            ? undefined
+            : (e) => onDragStart(e, item.id)
+        }
+        draggable={!isDisabled && !!onDragStart}
         style={
           location.pathname.includes(item.link)
             ? {
@@ -128,7 +136,7 @@ export default function ResponsiveDrawer(props: Props) {
       >
         <div className="p-0" key={item.text}>
           <button
-            className={`flex justify-between items-center cursor-pointer relative w-full hover:bg-gray-200 disabled:opacity-50`}
+            className={`flex justify-between items-center cursor-grab relative w-full hover:bg-gray-200 disabled:opacity-50`}
             disabled={isDisabled}
           >
             <div className="w-[50px] h-[50px] flex justify-center items-center">

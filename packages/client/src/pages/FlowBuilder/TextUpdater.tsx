@@ -39,7 +39,10 @@ const TextUpdaterNode = ({ data }: { data: NodeData }) => {
     isNearToCursor,
     isConnecting,
     flowId,
+    isTriggerDragging,
+    isDraggedOver,
   } = data;
+  console.log(isTriggerDragging);
   const [nodeData, setNodeData] = useState<{
     id?: string;
     isPrimary?: boolean;
@@ -298,6 +301,11 @@ const TextUpdaterNode = ({ data }: { data: NodeData }) => {
                 </Handle>
               );
             })}
+          {isTriggerDragging && (
+            <div className="pointer-events-none absolute left-1/2 top-0 -translate-x-1/2 w-[30px] h-[22px]">
+              <img src={thunderbolt} width="30" height="22" className="" />
+            </div>
+          )}
         </div>
       </div>
       {updateTemplateModalOpen && selectedMessageType && selectedTemplateId && (
