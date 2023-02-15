@@ -40,6 +40,7 @@ const TextUpdaterNode = ({ data }: { data: NodeData }) => {
     isConnecting,
     flowId,
     isTriggerDragging,
+    isMessagesDragging,
     isDraggedOver,
   } = data;
   const [nodeData, setNodeData] = useState<{
@@ -136,16 +137,38 @@ const TextUpdaterNode = ({ data }: { data: NodeData }) => {
   };
 
   const generateMsgIcons = () => {
-    return data?.messages?.map((message) => {
-      return (
-        <div
-          className="p-[0px_10px]"
-          onClick={handleIconClick(message.type, message.templateId)}
-        >
-          {messageIcons[message.type as string]}
-        </div>
-      );
-    });
+    return (
+      <>
+        {isMessagesDragging && (
+          <div className="p-[0px_10px]">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={1.5}
+              stroke="currentColor"
+              className="w-[30px] h-[30px]"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M12 9v6m3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+          </div>
+        )}
+        {data?.messages?.map((message) => {
+          return (
+            <div
+              className="p-[0px_10px]"
+              onClick={handleIconClick(message.type, message.templateId)}
+            >
+              {messageIcons[message.type as string]}
+            </div>
+          );
+        })}
+      </>
+    );
   };
 
   const connectionNodeId = useStore((state) => state.connectionNodeId);

@@ -10,7 +10,7 @@ export class TypeOrmConfigService implements TypeOrmOptionsFactory {
       port: +process.env.DATABASE_PORT || 5432,
       database: process.env.DATABASE_NAME || 'laudspeaker',
       username: process.env.DATABASE_USER || 'postgres',
-      password: process.env.DATABASE_PASSWORD || 'password',
+      password: process.env.DATABASE_PASSWORD || 'Qcezadwx311',
       entities: ['dist/**/*.entity.{ts,js}'],
       migrations: ['dist/**/migrations/*.{ts,js}'],
       migrationsTableName: 'typeorm_migrations',

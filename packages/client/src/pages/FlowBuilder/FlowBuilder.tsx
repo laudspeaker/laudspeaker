@@ -49,7 +49,13 @@ import { Grid } from "@mui/material";
 import ToggleSwitch from "components/Elements/ToggleSwitch";
 import AlertBanner from "components/AlertBanner";
 import SegmentModal, { SegmentModalMode } from "./SegmentModal";
-import { ProviderTypes, Trigger, TriggerType, Workflow } from "types/Workflow";
+import {
+  MessagesTypes,
+  ProviderTypes,
+  Trigger,
+  TriggerType,
+  Workflow,
+} from "types/Workflow";
 import { AxiosError } from "axios";
 import Progress from "components/Progress";
 import { useDebounce } from "react-use";
@@ -96,6 +102,7 @@ export interface NodeData {
   isConnecting?: boolean;
   isNearToCursor?: boolean;
   isTriggerDragging?: boolean;
+  isMessagesDragging?: boolean;
   isDraggedOver?: boolean;
 }
 
@@ -204,6 +211,7 @@ const Flow = () => {
   const [triggerToOpenNextRender, setTriggerToOpenNextRender] =
     useState<TriggerType>();
   const [isTriggerDragging, setIsTriggerDragging] = useState(false);
+  const [isMessagesDragging, setIsMessagesDragging] = useState(false);
 
   const onHandleClick = (e: unknown, triggerId: string) => {
     return { e, triggerId };
@@ -400,10 +408,13 @@ const Flow = () => {
           const maskRightBottomCornerX = position.x + width + 60;
           const maskRightBottomCornerY = position.y + height + 60;
 
+          const boudingClientRect =
+            reactFlowRef.current.getBoundingClientRect();
+
           const canvasMouseX =
-            moveEvent.clientX - viewX - reactFlowRef.current.offsetLeft;
+            moveEvent.clientX - viewX - boudingClientRect.left;
           const canvasMouseY =
-            moveEvent.clientY - viewY - reactFlowRef.current.offsetTop;
+            moveEvent.clientY - viewY - boudingClientRect.top;
 
           const isNearToCursor =
             canvasMouseX > maskLeftTopCornerX * zoom &&
@@ -556,10 +567,10 @@ const Flow = () => {
     setNodes(
       nodes.map((node) => ({
         ...node,
-        data: { ...node.data, isTriggerDragging },
+        data: { ...node.data, isTriggerDragging, isMessagesDragging },
       }))
     );
-  }, [isTriggerDragging]);
+  }, [isTriggerDragging, isMessagesDragging]);
 
   const handleTutorialOpen = () => {
     setTutorialOpen(true);
@@ -567,12 +578,11 @@ const Flow = () => {
 
   const onSaveTrigger = (data: Trigger) => {
     settriggerModalOpen(false);
-    console.log(data);
+
     if (!selectedTrigger) return;
     selectedTrigger.providerParams = data.providerParams;
     selectedTrigger.providerType = data.providerType;
     selectedTrigger.properties = data.properties;
-    console.log(selectedTrigger);
   };
 
   const onDeleteTrigger = (data: string) => {
@@ -643,6 +653,7 @@ const Flow = () => {
     e.preventDefault();
 
     setIsTriggerDragging(false);
+    setIsMessagesDragging(false);
 
     const type = e.dataTransfer.getData("application/reactflow");
 
@@ -847,6 +858,45 @@ const Flow = () => {
     setSegmentForm({ isDynamic: !segmentForm.isDynamic });
   };
 
+  const onDragStart = (e: DragEvent<HTMLDivElement>, itemId: string) => {
+    if (
+      itemId === TriggerType.EVENT ||
+      itemId === TriggerType.TIME_DELAY ||
+      itemId === TriggerType.TIME_WINDOW
+    ) {
+      setTimeout(() => {
+        setIsTriggerDragging(true);
+      }, 0);
+      e.dataTransfer.setDragImage(
+        triggerDragImage,
+        triggerDragImage.width / 2,
+        triggerDragImage.height / 2
+      );
+    } else if (
+      itemId === MessagesTypes.SMS ||
+      itemId === MessagesTypes.EMAIL ||
+      itemId === MessagesTypes.SLACK ||
+      itemId === MessagesTypes.PUSH
+    ) {
+      setTimeout(() => {
+        setIsMessagesDragging(true);
+      }, 0);
+    }
+
+    e.dataTransfer.setData("application/reactflow", itemId);
+    e.dataTransfer.effectAllowed = "move";
+  };
+
+  const onConnectEnd = () => {
+    setIsConnecting(false);
+    setNodes(
+      nodes.map((node) => ({
+        ...node,
+        data: { ...node.data, isNearToCursor: false },
+      }))
+    );
+  };
+
   let startDisabledReason = "";
 
   if (!nodes.some((node) => node.data.primary))
@@ -886,24 +936,10 @@ const Flow = () => {
             <SideDrawer
               selectedNode={selectedNode}
               onClick={performAction}
-              onDragStart={(e, itemId) => {
-                if (
-                  itemId === TriggerType.EVENT ||
-                  itemId === TriggerType.TIME_DELAY ||
-                  itemId === TriggerType.TIME_WINDOW
-                ) {
-                  e.dataTransfer.setDragImage(
-                    triggerDragImage,
-                    triggerDragImage.width / 2,
-                    triggerDragImage.height / 2
-                  );
-                  setIsTriggerDragging(true);
-                }
-                e.dataTransfer.setData("application/reactflow", itemId);
-                e.dataTransfer.effectAllowed = "move";
-              }}
+              onDragStart={onDragStart}
               onDragEnd={() => {
                 setIsTriggerDragging(false);
+                setIsMessagesDragging(false);
               }}
               flowName={flowName}
               handleFlowName={(e) => setFlowName(e.target.value)}
@@ -1021,15 +1057,7 @@ const Flow = () => {
               onDragOver={onDragOver}
               onDrop={onDrop}
               onConnectStart={() => setIsConnecting(true)}
-              onConnectEnd={() => {
-                setIsConnecting(false);
-                setNodes(
-                  nodes.map((node) => ({
-                    ...node,
-                    data: { ...node.data, isNearToCursor: false },
-                  }))
-                );
-              }}
+              onConnectEnd={onConnectEnd}
               onMouseMove={(e) => {
                 if (!isConnecting || !reactFlowRef.current) return;
 
