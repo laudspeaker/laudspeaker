@@ -64,6 +64,7 @@ import { INameSegmentForm } from "pages/Segment/NameSegment";
 import Template from "types/Template";
 import { PlusCircleIcon } from "@heroicons/react/24/outline";
 import TriggerDrag from "../../assets/images/TriggerDrag.svg";
+import CancelDropZone from "./CancelDropZone";
 
 const triggerDragImage = new Image();
 triggerDragImage.src = TriggerDrag;
@@ -740,9 +741,6 @@ const Flow = () => {
   const handleSaveJourney = async () => {
     setIsSaving(true);
     try {
-      console.log(nodes);
-      console.log(edges);
-      console.log(triggers);
       const dto = convertLayoutToTable(
         flowName,
         nodes,
@@ -911,6 +909,15 @@ const Flow = () => {
 
   return (
     <div>
+      {(isMessagesDragging || isTriggerDragging) && (
+        <CancelDropZone
+          countRef={reactFlowRef}
+          onDrop={() => {
+            setIsMessagesDragging(false);
+            setIsTriggerDragging(false);
+          }}
+        />
+      )}
       <div className="h-[calc(100vh-64px)] flex w-full">
         <Helmet>
           <script>
