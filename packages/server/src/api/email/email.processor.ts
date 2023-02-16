@@ -13,10 +13,12 @@ import { MailService } from '@sendgrid/mail';
 export class EmailProcessor {
   private tagEngine = new Liquid();
   private sgMailService = new MailService();
+
   constructor(
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
     private readonly logger: LoggerService
   ) {}
+
   @Process('send')
   async handleSend(job: Job) {
     this.logger.debug(JSON.stringify(job, null, 2));
@@ -52,6 +54,7 @@ export class EmailProcessor {
                 customArgs: {
                   audienceId: job.data.audienceId,
                   customerId: job.data.customerId,
+                  templateId: job.data.templateId,
                 },
               },
             ],
@@ -66,6 +69,8 @@ export class EmailProcessor {
             html: textWithInsertedTags,
             'v:audienceId': job.data.audienceId,
             'v:customerId': job.data.customerId,
+            'v:templateId': job.data.templateId,
+            'v:accountId': job.data.accountId,
           });
           break;
       }

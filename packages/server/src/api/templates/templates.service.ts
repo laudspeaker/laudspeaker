@@ -144,6 +144,8 @@ export class TemplatesService {
           tags,
           subject: template.subject,
           text: template.text,
+          templateId,
+          accountId: account.id,
         });
         if (account.emailProvider === 'free3') await account.save();
         break;
@@ -204,7 +206,7 @@ export class TemplatesService {
             body: textWithInsertedTags?.slice(0, this.MAXIMUM_SMS_LENGTH),
             from: account.smsFrom,
             to: customer.phPhoneNumber || customer.phone,
-            statusCallback: `${process.env.TWILIO_WEBHOOK_ENDPOINT}?audienceId=${audienceId}&customerId=${customerId}`,
+            statusCallback: `${process.env.TWILIO_WEBHOOK_ENDPOINT}?audienceId=${audienceId}&customerId=${customerId}&templateId=${templateId}`,
           });
 
           this.logger.debug(

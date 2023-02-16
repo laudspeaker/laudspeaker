@@ -8,18 +8,18 @@ export class WebhooksController {
   constructor(private webhooksService: WebhooksService) {}
 
   @Post('sendgrid')
-  public processSendgridData(@Req() req: Request, @Body() data: any) {
+  public async processSendgridData(@Req() req: Request, @Body() data: any) {
     const signature = req.headers[
       'x-twilio-email-event-webhook-signature'
     ] as string;
     const timestamp = req.headers[
       'x-twilio-email-event-webhook-timestamp'
     ] as string;
-    this.webhooksService.processSendgridData(signature, timestamp, data);
+    await this.webhooksService.processSendgridData(signature, timestamp, data);
   }
 
   @Post('twilio')
-  public processTwilioData(
+  public async processTwilioData(
     @Body()
     body: {
       SmsSid: string;
@@ -32,12 +32,19 @@ export class WebhooksController {
       ApiVersion: string;
     },
     @Query('audienceId') audienceId: string,
-    @Query('customerId') customerId: string
+    @Query('customerId') customerId: string,
+    @Query('templateId') templateId: string
   ) {
-    this.webhooksService.processTwilioData({
+    await this.webhooksService.processTwilioData({
       ...body,
       audienceId,
       customerId,
+      templateId,
     });
+  }
+
+  @Post('mailgun')
+  public async processMailgunData(@Body() body: any) {
+    await this.webhooksService.processMailgunData(body);
   }
 }

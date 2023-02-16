@@ -1,10 +1,65 @@
-import { ForbiddenException, Injectable } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Inject,
+  Injectable,
+  LoggerService,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { WebhookEvent } from './entities/webhook-event.entity';
 import { PublicKey, Signature, Ecdsa } from 'starkbank-ecdsa';
 import { Audience } from '../audiences/entities/audience.entity';
 import { Account } from '../accounts/entities/accounts.entity';
+import { createHmac } from 'crypto';
+import {
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common/exceptions';
+import { createClient } from '@clickhouse/client';
+import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
+
+const client = createClient({
+  host: process.env.CLICKHOUSE_HOST
+    ? process.env.CLICKHOUSE_HOST.includes('http')
+      ? process.env.CLICKHOUSE_HOST
+      : `http://${process.env.CLICKHOUSE_HOST}`
+    : 'http://localhost:8123',
+  username: process.env.CLICKHOUSE_USER ?? 'default',
+  password: process.env.CLICKHOUSE_PASSWORD ?? '',
+});
+
+const createTableQuery = `
+CREATE TABLE IF NOT EXISTS message_status
+(audienceId UUID, customerId String, templateId String, messageId String, event String, eventProvider String, createdAt DateTime) 
+ENGINE = ReplacingMergeTree
+PRIMARY KEY (audienceId, customerId, templateId, messageId, event)`;
+
+export enum ClickHouseEventProvider {
+  MAILGUN = 'mailgun',
+  SENDGRID = 'sendgrid',
+  TWILIO = 'twilio',
+}
+
+export interface ClickHouseMessage {
+  audienceId: string;
+  customerId: string;
+  templateId: string;
+  messageId: string;
+  event: string;
+  eventProvider: ClickHouseEventProvider;
+  createdAt: string;
+}
+
+const createTable = async () => {
+  await client.query({ query: createTableQuery });
+};
+
+const insertMessages = async (values: ClickHouseMessage[]) => {
+  await client.insert<ClickHouseMessage>({
+    table: 'message_status',
+    values,
+    format: 'JSONEachRow',
+  });
+};
 
 const sendgridEventsMap = {
   click: 'clicked',
@@ -14,13 +69,21 @@ const sendgridEventsMap = {
 @Injectable()
 export class WebhooksService {
   constructor(
-    @InjectRepository(WebhookEvent)
-    private webhookEventRepository: Repository<WebhookEvent>,
+    @Inject(WINSTON_MODULE_NEST_PROVIDER)
+    private readonly logger: LoggerService,
     @InjectRepository(Audience)
     private audienceRepository: Repository<Audience>,
     @InjectRepository(Account)
     private accountRepository: Repository<Account>
-  ) {}
+  ) {
+    (async () => {
+      try {
+        await createTable();
+      } catch (e) {
+        console.error(e);
+      }
+    })();
+  }
 
   public async processSendgridData(
     signature: string,
@@ -28,18 +91,26 @@ export class WebhooksService {
     data?: any[]
   ) {
     const audienceId = data?.[0]?.audienceId;
-    if (!audienceId) return;
+    if (!audienceId)
+      throw new BadRequestException('No audienceId was passed to request');
+
+    const audience = await this.audienceRepository.findOne({
+      where: {
+        id: audienceId,
+      },
+      relations: ['owner'],
+    });
+
+    if (!audience) throw new NotFoundException('Audience not found');
 
     const {
-      owner: { id: accountId },
-    } = await this.audienceRepository.findOneBy({
-      id: audienceId,
-    });
+      owner: { sendgridVerificationKey },
+    } = audience;
 
-    const { sendgridVerificationKey } = await this.accountRepository.findOneBy({
-      id: accountId,
-    });
-    if (!sendgridVerificationKey) return;
+    if (!sendgridVerificationKey)
+      throw new BadRequestException(
+        'No sendgridVerificationKey was found to check signature'
+      );
 
     const publicKey = PublicKey.fromPem(sendgridVerificationKey);
 
@@ -54,38 +125,121 @@ export class WebhooksService {
     if (!validSignature) throw new ForbiddenException('Invalid signature');
 
     for (const item of data) {
-      const { audienceId, customerId, event, sg_message_id, timestamp } = item;
-      if (!audienceId || !customerId || !event || !sg_message_id || !timestamp)
-        continue;
-      await this.webhookEventRepository.save({
-        audience: { id: audienceId },
+      const {
+        audienceId,
         customerId,
+        templateId,
+        event,
+        sg_message_id,
+        timestamp,
+      } = item;
+      if (
+        !audienceId ||
+        !customerId ||
+        !templateId ||
+        !event ||
+        !sg_message_id ||
+        !timestamp
+      )
+        continue;
+
+      const clickHouseRecord: ClickHouseMessage = {
+        audienceId,
+        customerId,
+        templateId: String(templateId),
         messageId: sg_message_id,
         event: sendgridEventsMap[event] || event,
-        eventProvider: 'sendgrid',
-        createdAt: new Date(timestamp * 1000).toUTCString(),
-      });
+        eventProvider: ClickHouseEventProvider.SENDGRID,
+        createdAt: new Date().toUTCString(),
+      };
+
+      this.logger.debug('Sendgrid webhooK result:');
+      console.dir(clickHouseRecord, { depth: null });
+
+      await insertMessages([clickHouseRecord]);
     }
   }
 
   public async processTwilioData({
     audienceId,
     customerId,
+    templateId,
     SmsStatus,
     MessageSid,
   }: {
     audienceId: string;
     customerId: string;
+    templateId: string;
     SmsStatus: string;
     MessageSid: string;
   }) {
-    await this.webhookEventRepository.save({
-      audience: { id: audienceId },
+    const clickHouseRecord: ClickHouseMessage = {
+      audienceId,
       customerId,
+      templateId: String(templateId),
       messageId: MessageSid,
       event: SmsStatus,
-      eventProvider: 'twilio',
+      eventProvider: ClickHouseEventProvider.TWILIO,
       createdAt: new Date().toUTCString(),
-    });
+    };
+
+    this.logger.debug('Twilio webhooK result:');
+    console.dir(clickHouseRecord, { depth: null });
+
+    await insertMessages([clickHouseRecord]);
+  }
+
+  public async processMailgunData(body: {
+    signature: { token: string; timestamp: string; signature: string };
+    'event-data': {
+      event: string;
+      id: string;
+      'user-variables': {
+        audienceId: string;
+        customerId: string;
+        templateId: string;
+        accountId: string;
+      };
+    };
+  }) {
+    const {
+      timestamp: signatureTimestamp,
+      token: signatureToken,
+      signature,
+    } = body.signature;
+
+    const {
+      event,
+      id,
+      'user-variables': { audienceId, customerId, templateId, accountId },
+    } = body['event-data'];
+
+    const account = await this.accountRepository.findOneBy({ id: accountId });
+    if (!account) throw new NotFoundException('Account not found');
+
+    const value = signatureTimestamp + signatureToken;
+
+    const hash = createHmac('sha256', account.mailgunAPIKey)
+      .update(value)
+      .digest('hex');
+
+    if (hash !== signature) {
+      throw new ForbiddenException('Invalid signature');
+    }
+
+    const clickHouseRecord: ClickHouseMessage = {
+      audienceId,
+      customerId,
+      templateId: String(templateId),
+      messageId: id,
+      event: event,
+      eventProvider: ClickHouseEventProvider.MAILGUN,
+      createdAt: new Date().toUTCString(),
+    };
+
+    this.logger.debug('Mailgun webhooK result:');
+    console.dir(clickHouseRecord, { depth: null });
+
+    await insertMessages([clickHouseRecord]);
   }
 }
