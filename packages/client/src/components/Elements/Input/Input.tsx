@@ -31,6 +31,7 @@ export interface InputProps {
   onBlur?: FocusEventHandler;
   ref?: LegacyRef<HTMLInputElement>;
   endText?: string;
+  wrapperClasses?: string;
   [key: string]: any;
 }
 
@@ -60,12 +61,13 @@ const Input = (props: InputProps) => {
     onBlur,
     style,
     endText,
+    wrapperClasses,
     ...otherProps
   } = props;
 
   return (
     <>
-      <div className="w-full">
+      <div className={`w-full ${wrapperClasses || ""}`}>
         <label
           htmlFor={name}
           className="block text-sm font-medium text-gray-700"

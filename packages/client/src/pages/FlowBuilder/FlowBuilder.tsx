@@ -838,7 +838,7 @@ const Flow = () => {
             }`}
           >
             {nodes.length === 0 && !audienceModalOpen && (
-              <div className="w-[75%] absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[99999]">
+              <div className="w-[75%] absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[999]">
                 <button
                   type="button"
                   className="relative block w-full rounded-lg border-2 border-dashed border-gray-300 p-12 text-center hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"

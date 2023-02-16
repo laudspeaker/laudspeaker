@@ -22,6 +22,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   private validate(payload: { id: string }): Promise<Account | never> {
+    this.logger.debug(
+      `jwt.strategy.ts:JwtStrategy.validate:Validating user with id ${payload.id}`
+    );
     return this.helper.validateUser(payload);
   }
 }

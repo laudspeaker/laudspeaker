@@ -4,7 +4,6 @@ import {
   Injectable,
   HttpException,
   NotFoundException,
-  HttpStatus,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, In, QueryRunner, Repository } from 'typeorm';
