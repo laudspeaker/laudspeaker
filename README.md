@@ -41,33 +41,36 @@
 
 Run yourself (instructions below) or use [Laudspeaker Cloud](https://app.laudspeaker.com/login) . Docs are [here](https://laudspeaker.com/docs/guides/overview/intro/)
 
-run services:
+Run services:
 
 - `docker-compose up` or `docker compose up` depending on your version of docker
 
-run backend and front end:
+Instantiate Mongo:
+
+- `mongosh --eval "rs.inititate()"`
+
+Run backend and front end:
 
 - `npm install`
 - `npm run start`
 
-stop all running services:
+To stop runnging system services (Linux):
 
-- `postgres: sudo systemctl stop postgresql.service`
-  redis:
-- `/etc/init.d/redis-server stop`
-- `mongo: sudo systemctl stop mongod`
+- Postgres: `sudo systemctl stop postgresql.service`
+- Redis: `/etc/init.d/redis-server stop`
+- Mongo: `sudo systemctl stop mongod`
 
-remove compose conatiners:
+To remove compose conatiners:
 
 - `docker-compose down --volumes`
 
-Add a `.env` file to both server and client in packages
+Add a `.env` file to both `packages/server` and `packages/client`.
 
 We have provided examples which you can use:
 
 `mv env-server-example packages/server/.env` and `mv env-client-example packages/client/.env`
 
-Make sure you fill in the fields in the env files before trying to run laudspeaker
+Make sure you fill in the fields in the env files before running.
 
 Questions? Please join our [Slack channel](https://join.slack.com/t/laudspeakerusers/shared_invite/zt-1io0f6u50-rSCnNtqkJT6QIdbPOyJh6g) or visit our [site](https://laudspeaker.com/).
 
