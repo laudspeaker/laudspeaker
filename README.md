@@ -37,7 +37,7 @@ Run yourself (instructions below) or use [Laudspeaker Cloud](https://app.laudspe
 
 ### Deploy Laudspeaker on Render.com
 
-If you want a one-click render option READ THIS <a href="https://laudspeaker.com/docs/guides/deploy/options">DOC</a> and try it out here:
+If you want a one-click render option **READ THIS** <a href="https://laudspeaker.com/docs/guides/deploy/options">**DOC**</a> and try it out here:
 
 NB: Create environment group with name "laudspeaker" 
 
