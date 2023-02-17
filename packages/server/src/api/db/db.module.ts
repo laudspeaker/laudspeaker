@@ -20,7 +20,6 @@ import { Database } from '../integrations/entities/database.entity';
       Segment,
       Installation,
       State,
-      WebhookEvent,
       Workflow,
       Template,
       Audience,

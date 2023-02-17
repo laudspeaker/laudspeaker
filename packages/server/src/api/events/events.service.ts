@@ -12,7 +12,7 @@ import {
   JobTypes,
 } from './interfaces/event.interface';
 import { Account } from '../accounts/entities/accounts.entity';
-impor { PosthogBatchEventDto } from './dto/posthog-batch-event.dto';
+import { PosthogBatchEventDto } from './dto/posthog-batch-event.dto';
 import { EventDto } from './dto/event.dto';
 import { AccountsService } from '../accounts/accounts.service';
 import { WorkflowsService } from '../workflows/workflows.service';

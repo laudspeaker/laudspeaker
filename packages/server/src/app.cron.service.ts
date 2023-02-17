@@ -24,6 +24,7 @@ import { JobsService } from './api/jobs/jobs.service';
 import { WorkflowsService } from './api/workflows/workflows.service';
 import { TimeJobStatus } from './api/jobs/entities/job.entity';
 import { IntegrationsService } from './api/integrations/integrations.service';
+import { Integration, IntegrationStatus } from './api/integrations/entities/integration.entity';
 
 const BATCH_SIZE = 500;
 const KEYS_TO_SKIP = ['__v', '_id', 'audiences', 'ownerId'];
@@ -44,13 +45,14 @@ export class CronService {
     private eventModel: Model<EventDocument>,
     @InjectModel(EventKeys.name)
     private eventKeysModel: Model<EventKeysDocument>,
-    @InjectRepository(Account)
-    private accountRepository: Repository<Account>,
+    @InjectRepository(Integration)
+    private integrationsRepository: Repository<Integration>,
     @InjectRepository(Verification)
     private verificationRepository: Repository<Verification>,
     @Inject(JobsService) private jobsService: JobsService,
+    @Inject(IntegrationsService) private integrationsService: IntegrationsService,
     @Inject(WorkflowsService) private workflowsService: WorkflowsService
-  ) {}
+  ) { }
 
   @Cron(CronExpression.EVERY_HOUR)
   async handleCustomerKeysCron() {
@@ -119,8 +121,7 @@ export class CronService {
       }
 
       this.logger.log(
-        `Cron customer keys job finished, checked ${documentsCount} records, found ${
-          Object.keys(keys).length
+        `Cron customer keys job finished, checked ${documentsCount} records, found ${Object.keys(keys).length
         } keys`
       );
     } catch (e) {
@@ -218,8 +219,7 @@ export class CronService {
       }
 
       this.logger.log(
-        `Cron event keys job finished, checked ${documentsCount} records, found ${
-          Object.keys(keys).length
+        `Cron event keys job finished, checked ${documentsCount} records, found ${Object.keys(keys).length
         } keys`
       );
     } catch (e) {
