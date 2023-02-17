@@ -130,7 +130,7 @@ const SegmentModal: FC<SegmentModalProps> = ({
     <Modal
       panelClass={`${
         isSegmentEditModalOpen &&
-        "w-full !max-w-[90%] h-full max-h-full overflow-y-scroll"
+        "w-full !max-w-[90%] h-full max-h-full overflow-y-scroll z-[99999]"
       } `}
       isOpen={isOpen}
       onClose={onClose}

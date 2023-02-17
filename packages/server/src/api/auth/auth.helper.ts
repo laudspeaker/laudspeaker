@@ -49,6 +49,9 @@ export class AuthHelper extends BaseJwtHelper {
 
   // Get User by User ID we get from decode()
   public async validateUser(decoded: { id: string }): Promise<Account> {
+    this.logger.debug(
+      `auth.helper.ts:AuthHelper.validateUser: Validating user with id ${decoded.id}`
+    );
     return this.repository.findOne({ where: { id: decoded.id } });
   }
 
@@ -59,6 +62,9 @@ export class AuthHelper extends BaseJwtHelper {
 
   // Validate JWT Token, throw forbidden error if JWT Token is invalid
   private async validate(token: string): Promise<boolean | never> {
+    this.logger.debug(
+      `auth.helper.ts:AuthHelper.validate: Validating user with token ${token}`
+    );
     const decoded: { id: string } = this.jwt.verify(token);
 
     if (!decoded) {
@@ -66,6 +72,13 @@ export class AuthHelper extends BaseJwtHelper {
     }
 
     const user: Account = await this.validateUser(decoded);
+    this.logger.debug(
+      `auth.helper.ts:AuthHelper.validate: Found user: ${JSON.stringify(
+        user,
+        null,
+        2
+      )}`
+    );
     if (!user) {
       throw new UnauthorizedException();
     }

@@ -23,13 +23,17 @@ import { WebhookEvent } from './api/webhooks/entities/webhook-event.entity';
 import { EventDocument } from './api/events/schemas/event.schema';
 import { EventKeysDocument } from './api/events/schemas/event-keys.schema';
 import { Event } from './api/events/schemas/event.schema';
+import { Queue } from 'bull';
+import { InjectQueue } from '@nestjs/bull';
 import {
-  EventKeys,
-  EventKeysSchema,
-} from './api/events/schemas/event-keys.schema';
+  Integration,
+  IntegrationStatus,
+} from './api/integrations/entities/integration.entity';
+import { EventKeys } from './api/events/schemas/event-keys.schema';
 import { JobsService } from './api/jobs/jobs.service';
 import { WorkflowsService } from './api/workflows/workflows.service';
 import { TimeJobStatus } from './api/jobs/entities/job.entity';
+import { IntegrationsService } from './api/integrations/integrations.service';
 
 const client = createClient({
   host: process.env.CLICKHOUSE_HOST
@@ -99,6 +103,10 @@ export class CronService {
     private verificationRepository: Repository<Verification>,
     @InjectRepository(WebhookEvent)
     private webhookEventRepository: Repository<WebhookEvent>,
+    @InjectRepository(Integration)
+    private integrationsRepository: Repository<Integration>,
+    private integrationsService: IntegrationsService,
+    @InjectQueue('integrations') private readonly integrationsQueue: Queue,
     @Inject(JobsService) private jobsService: JobsService,
     @Inject(WorkflowsService) private workflowsService: WorkflowsService
   ) {
@@ -435,6 +443,30 @@ export class CronService {
         .execute();
     } catch (e) {
       this.logger.error('Cron error: ' + e);
+    }
+  }
+
+  @Cron(CronExpression.EVERY_HOUR)
+  async handleIntegrations() {
+    const integrationsNumber = await this.integrationsRepository.countBy({
+      status: IntegrationStatus.ACTIVE,
+    });
+
+    let offset = 0;
+
+    while (offset < integrationsNumber) {
+      const integrationsBatch = await this.integrationsRepository.find({
+        where: { status: IntegrationStatus.ACTIVE },
+        relations: ['database', 'owner'],
+        take: BATCH_SIZE,
+        skip: offset,
+      });
+
+      for (const integration of integrationsBatch) {
+        await this.integrationsService.handleIntegration(integration);
+      }
+
+      offset += BATCH_SIZE;
     }
   }
 
