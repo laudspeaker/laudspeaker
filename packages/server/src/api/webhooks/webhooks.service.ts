@@ -16,6 +16,8 @@ import {
 } from '@nestjs/common/exceptions';
 import { createClient } from '@clickhouse/client';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
+import Mailgun from 'mailgun.js';
+import formData from 'form-data';
 
 const client = createClient({
   host: process.env.CLICKHOUSE_HOST
@@ -68,6 +70,8 @@ const sendgridEventsMap = {
 
 @Injectable()
 export class WebhooksService {
+  private MAILGUN_HOOKS_TO_INSTALL = ['clicked', 'delivered', 'opened'];
+
   constructor(
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
     private readonly logger: LoggerService,
@@ -79,6 +83,10 @@ export class WebhooksService {
     (async () => {
       try {
         await createTable();
+        await this.setupMailgunWebhook(
+          process.env.MAILGUN_API_KEY,
+          process.env.MAILGUN_TEST_DOMAIN
+        );
       } catch (e) {
         console.error(e);
       }
@@ -219,7 +227,10 @@ export class WebhooksService {
 
     const value = signatureTimestamp + signatureToken;
 
-    const hash = createHmac('sha256', account.mailgunAPIKey)
+    const hash = createHmac(
+      'sha256',
+      account.mailgunAPIKey || process.env.MAILGUN_API_KEY
+    )
       .update(value)
       .digest('hex');
 
@@ -241,5 +252,43 @@ export class WebhooksService {
     console.dir(clickHouseRecord, { depth: null });
 
     await insertMessages([clickHouseRecord]);
+  }
+
+  public async setupMailgunWebhook(
+    mailgunAPIKey: string,
+    sendingDomain: string
+  ) {
+    const mailgun = new Mailgun(formData);
+    const mg = mailgun.client({
+      username: 'api',
+      key: mailgunAPIKey,
+    });
+
+    let installedWebhooks = await mg.webhooks.list(sendingDomain, {});
+
+    for (const webhookToInstall of this.MAILGUN_HOOKS_TO_INSTALL) {
+      if (!installedWebhooks?.[webhookToInstall]) {
+        await mg.webhooks.create(
+          sendingDomain,
+          webhookToInstall,
+          process.env.MAILGUN_WEBHOOK_ENDPOINT
+        );
+        installedWebhooks = await mg.webhooks.list(sendingDomain, {});
+      }
+
+      if (
+        installedWebhooks?.[webhookToInstall]?.urls &&
+        installedWebhooks[webhookToInstall].urls.includes(
+          process.env.MAILGUN_WEBHOOK_ENDPOINT
+        )
+      )
+        continue;
+
+      await mg.webhooks.update(
+        sendingDomain,
+        webhookToInstall,
+        process.env.MAILGUN_WEBHOOK_ENDPOINT
+      );
+    }
   }
 }

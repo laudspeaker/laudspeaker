@@ -18,16 +18,13 @@ import { MailService } from '@sendgrid/mail';
 import { Client } from '@sendgrid/client';
 import { RemoveAccountDto } from './dto/remove-account.dto';
 import { InjectConnection } from '@nestjs/mongoose';
-import Mailgun from 'mailgun.js';
-import formData from 'form-data';
 import mongoose from 'mongoose';
+import { WebhooksService } from '../webhooks/webhooks.service';
 
 @Injectable()
 export class AccountsService extends BaseJwtHelper {
   private sgMailService = new MailService();
   private sgClient = new Client();
-
-  private MAILGUN_HOOKS_TO_INSTALL = ['clicked', 'delivered', 'opened'];
 
   constructor(
     private dataSource: DataSource,
@@ -35,7 +32,8 @@ export class AccountsService extends BaseJwtHelper {
     public accountsRepository: Repository<Account>,
     @Inject(CustomersService) private customersService: CustomersService,
     @Inject(AuthService) private authService: AuthService,
-    @InjectConnection() private readonly connection: mongoose.Connection
+    @InjectConnection() private readonly connection: mongoose.Connection,
+    private webhookService: WebhooksService
   ) {
     super();
   }
@@ -69,29 +67,15 @@ export class AccountsService extends BaseJwtHelper {
     let verificationKey = '';
 
     if (updateUserDto.emailProvider === 'mailgun') {
-      const mailgun = new Mailgun(formData);
-      const mg = mailgun.client({
-        username: 'api',
-        key: updateUserDto.mailgunAPIKey,
-      });
-
-      const installedWebhooks = await mg.webhooks.list(
-        updateUserDto.sendingDomain,
-        {}
-      );
-
-      for (const webhookToInstall of this.MAILGUN_HOOKS_TO_INSTALL) {
-        if (
-          installedWebhooks?.[webhookToInstall]?.urls?.includes(
-            process.env.MAILGUN_WEBHOOK_ENDPOINT
-          )
-        )
-          continue;
-
-        await mg.webhooks.create(
-          updateUserDto.sendingDomain,
-          webhookToInstall,
-          process.env.MAILGUN_WEBHOOK_ENDPOINT
+      try {
+        await this.webhookService.setupMailgunWebhook(
+          updateUserDto.mailgunAPIKey,
+          updateUserDto.sendingDomain
+        );
+      } catch (e) {
+        console.error(e);
+        throw new BadRequestException(
+          'There is something wrong with your mailgun'
         );
       }
     }
