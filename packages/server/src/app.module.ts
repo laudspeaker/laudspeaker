@@ -28,7 +28,6 @@ import {
   EventKeys,
   EventKeysSchema,
 } from './api/events/schemas/event-keys.schema';
-import { WebhookEvent } from './api/webhooks/entities/webhook-event.entity';
 import { Integration } from './api/integrations/entities/integration.entity';
 import { Workflow } from './api/workflows/entities/workflow.entity';
 import { WorkflowsService } from './api/workflows/workflows.service';
@@ -168,7 +167,6 @@ const formatMongoConnectionString = (mongoConnectionString: string) => {
     TypeOrmModule.forFeature([
       Account,
       Verification,
-      WebhookEvent,
       Integration,
       Workflow,
       Job,

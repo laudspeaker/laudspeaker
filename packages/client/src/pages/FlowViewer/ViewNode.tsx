@@ -184,60 +184,70 @@ const ViewNode = ({ data }: { data: NodeData }) => {
               )}
             </div>
           </div>
-          <Divider />
-          {stats && (
-            <div className="flex justify-between font-[Poppins] p-[8px_10px] font-normal leading-[30px] text-[14px]">
-              <div
-                className="w-full p-[0px_10px] cursor-pointer"
-                onClick={() => setSentStatModalOpen(true)}
-              >
-                <div>Sent</div>
-                <div className="font-medium text-[#333333]">
-                  {new Intl.NumberFormat("en", { notation: "compact" }).format(
-                    stats.sent
+          {stats &&
+            data.messages.length > 0 &&
+            data.messages.filter((message) => message.type !== "slack").length >
+              0 && (
+              <>
+                <Divider />
+                <div className="flex justify-between font-[Poppins] p-[8px_10px] font-normal leading-[30px] text-[14px]">
+                  <div
+                    className="w-full p-[0px_10px] cursor-pointer"
+                    onClick={() => setSentStatModalOpen(true)}
+                  >
+                    <div>Sent</div>
+                    <div className="font-medium text-[#333333]">
+                      {new Intl.NumberFormat("en", {
+                        notation: "compact",
+                      }).format(stats.sent)}
+                    </div>
+                  </div>
+                  <Divider
+                    sx={{
+                      height: "auto",
+                    }}
+                    variant="middle"
+                    orientation="vertical"
+                  />
+                  <div className="w-full p-[0px_10px]">
+                    <div>Opened</div>
+                    <div className="font-medium text-[#333333]">0%</div>
+                  </div>
+                  <Divider
+                    sx={{
+                      height: "auto",
+                    }}
+                    variant="middle"
+                    orientation="vertical"
+                  />
+                  {data.messages.filter((message) => message.type === "email")
+                    .length > 0 && (
+                    <>
+                      <div
+                        className="w-full p-[0px_10px] cursor-pointer"
+                        onClick={() => setClickedStatModalOpen(true)}
+                      >
+                        <div>Clicked</div>
+                        <div className="font-medium text-[#333333]">
+                          {stats.clickedPercentage}%
+                        </div>
+                      </div>
+                      <Divider
+                        sx={{
+                          height: "auto",
+                        }}
+                        variant="middle"
+                        orientation="vertical"
+                      />
+                    </>
                   )}
+                  <div className="w-full p-[0px_10px]">
+                    <div>Converted</div>
+                    <div className="font-medium text-[#333333]">0%</div>
+                  </div>
                 </div>
-              </div>
-              <Divider
-                sx={{
-                  height: "auto",
-                }}
-                variant="middle"
-                orientation="vertical"
-              />
-              <div className="w-full p-[0px_10px]">
-                <div>Opened</div>
-                <div className="font-medium text-[#333333]">0%</div>
-              </div>
-              <Divider
-                sx={{
-                  height: "auto",
-                }}
-                variant="middle"
-                orientation="vertical"
-              />
-              <div
-                className="w-full p-[0px_10px] cursor-pointer"
-                onClick={() => setClickedStatModalOpen(true)}
-              >
-                <div>Clicked</div>
-                <div className="font-medium text-[#333333]">
-                  {stats.clickedPercentage}%
-                </div>
-              </div>
-              <Divider
-                sx={{
-                  height: "auto",
-                }}
-                variant="middle"
-                orientation="vertical"
-              />
-              <div className="w-full p-[0px_10px]">
-                <div>Converted</div>
-                <div className="font-medium text-[#333333]">0%</div>
-              </div>
-            </div>
-          )}
+              </>
+            )}
         </div>
         <div className="flex h-[22px] absolute left-0 bottom-0 items-center w-full justify-around">
           {!isExit &&

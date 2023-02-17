@@ -8,7 +8,6 @@ import { Template } from '../templates/entities/template.entity';
 import { Job } from '../jobs/entities/job.entity';
 import { Segment } from '../segments/entities/segment.entity';
 import { Installation } from '../slack/entities/installation.entity';
-import { WebhookEvent } from '../webhooks/entities/webhook-event.entity';
 import { State } from '../slack/entities/state.entity';
 import { Integration } from '../integrations/entities/integration.entity';
 import { Database } from '../integrations/entities/database.entity';
