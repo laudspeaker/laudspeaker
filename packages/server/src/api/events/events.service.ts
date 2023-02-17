@@ -12,7 +12,7 @@ import {
   JobTypes,
 } from './interfaces/event.interface';
 import { Account } from '../accounts/entities/accounts.entity';
-import { PosthogBatchEventDto } from './dto/posthog-batch-event.dto';
+impor { PosthogBatchEventDto } from './dto/posthog-batch-event.dto';
 import { EventDto } from './dto/event.dto';
 import { AccountsService } from '../accounts/accounts.service';
 import { WorkflowsService } from '../workflows/workflows.service';
@@ -85,24 +85,6 @@ export class EventsService {
             event: event,
             isDefault: true,
           },
-          { upsert: true }
-        ).exec();
-      }
-    }
-    for (const { name, displayName, type, event } of posthogEventMappings) {
-      if (name && displayName && type && event) {
-        this.PosthogEventTypeModel.updateOne(
-          { name: name },
-          { name: name, displayName: displayName, type: type, event: event },
-          { upsert: true }
-        ).exec();
-      }
-    }
-    for (const { name, displayName, type, event } of posthogEventMappings) {
-      if (name && displayName && type && event) {
-        this.PosthogEventTypeModel.updateOne(
-          { name: name },
-          { name: name, displayName: displayName, type: type, event: event },
           { upsert: true }
         ).exec();
       }

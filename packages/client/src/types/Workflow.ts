@@ -6,6 +6,13 @@ export enum TriggerType {
   TIME_WINDOW = "timeWindow",
 }
 
+export enum MessagesTypes {
+  EMAIL = "email",
+  SLACK = "slack",
+  SMS = "sms",
+  PUSH = "push",
+}
+
 export interface EventCondition {
   value: any;
   attribute?: string;

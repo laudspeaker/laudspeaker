@@ -1,4 +1,5 @@
 import {
+  DragEvent,
   MouseEvent,
   useCallback,
   useEffect,
@@ -48,7 +49,13 @@ import { Grid } from "@mui/material";
 import ToggleSwitch from "components/Elements/ToggleSwitch";
 import AlertBanner from "components/AlertBanner";
 import SegmentModal, { SegmentModalMode } from "./SegmentModal";
-import { ProviderTypes, Trigger, TriggerType, Workflow } from "types/Workflow";
+import {
+  MessagesTypes,
+  ProviderTypes,
+  Trigger,
+  TriggerType,
+  Workflow,
+} from "types/Workflow";
 import { AxiosError } from "axios";
 import Progress from "components/Progress";
 import { useDebounce } from "react-use";
@@ -56,6 +63,11 @@ import CustomEdge from "./CustomEdge";
 import { INameSegmentForm } from "pages/Segment/NameSegment";
 import Template from "types/Template";
 import { PlusCircleIcon } from "@heroicons/react/24/outline";
+import TriggerDrag from "../../assets/images/TriggerDrag.svg";
+import CancelDropZone from "./CancelDropZone";
+
+const triggerDragImage = new Image();
+triggerDragImage.src = TriggerDrag;
 
 const segmentTypeStyle =
   "border-[1px] border-[#D1D5DB] rouded-[6px] shadow-[0px_1px_2px_rgba(0,0,0,0.05)] w-full mt-[20px] p-[15px]";
@@ -90,6 +102,9 @@ export interface NodeData {
   stats?: { sent: number; clickedPercentage: number };
   isConnecting?: boolean;
   isNearToCursor?: boolean;
+  isTriggerDragging?: boolean;
+  isMessagesDragging?: boolean;
+  isDraggedOver?: boolean;
 }
 
 const convertLayoutToTable = (
@@ -167,6 +182,8 @@ const convertLayoutToTable = (
 };
 
 const Flow = () => {
+  const navigate = useNavigate();
+
   const { id } = useParams();
   const [flowId, setFlowId] = useState<string>("");
   const [flowName, setFlowName] = useState("");
@@ -194,6 +211,8 @@ const Flow = () => {
   const [moveEvent, setMoveEvent] = useState<MouseEvent<HTMLDivElement>>();
   const [triggerToOpenNextRender, setTriggerToOpenNextRender] =
     useState<TriggerType>();
+  const [isTriggerDragging, setIsTriggerDragging] = useState(false);
+  const [isMessagesDragging, setIsMessagesDragging] = useState(false);
 
   const onHandleClick = (e: unknown, triggerId: string) => {
     return { e, triggerId };
@@ -210,7 +229,6 @@ const Flow = () => {
     settriggerModalOpen(true);
   };
 
-  const navigate = useNavigate();
   useLayoutEffect(() => {
     const populateFlowBuilder = async () => {
       try {
@@ -391,10 +409,13 @@ const Flow = () => {
           const maskRightBottomCornerX = position.x + width + 60;
           const maskRightBottomCornerY = position.y + height + 60;
 
+          const boudingClientRect =
+            reactFlowRef.current.getBoundingClientRect();
+
           const canvasMouseX =
-            moveEvent.clientX - viewX - reactFlowRef.current.offsetLeft;
+            moveEvent.clientX - viewX - boudingClientRect.left;
           const canvasMouseY =
-            moveEvent.clientY - viewY - reactFlowRef.current.offsetTop;
+            moveEvent.clientY - viewY - boudingClientRect.top;
 
           const isNearToCursor =
             canvasMouseX > maskLeftTopCornerX * zoom &&
@@ -466,6 +487,7 @@ const Flow = () => {
       }
       case TriggerType.TIME_DELAY: {
         const selectedNodeData = nodes.find((node) => node.id === selectedNode);
+        if (!selectedNodeData) return;
         const triggerId = uuid();
         const trigger: Trigger = {
           id: triggerId,
@@ -484,6 +506,7 @@ const Flow = () => {
       }
       case TriggerType.TIME_WINDOW: {
         const selectedNodeData = nodes.find((node) => node.id === selectedNode);
+        if (!selectedNodeData) return;
         const triggerId = uuid();
         const trigger = {
           id: triggerId,
@@ -500,6 +523,7 @@ const Flow = () => {
       }
       case TriggerType.EVENT: {
         const selectedNodeData = nodes.find((node) => node.id === selectedNode);
+        if (!selectedNodeData) return;
         const triggerId = uuid();
         const trigger = {
           id: triggerId,
@@ -522,6 +546,8 @@ const Flow = () => {
       case "push":
       case "sms":
       case "slack": {
+        const selectedNodeData = nodes.find((node) => node.id === selectedNode);
+        if (!selectedNodeData) return;
         setSelectedMessageType(actionId);
         setTemplateModalOpen(true);
         break;
@@ -538,18 +564,26 @@ const Flow = () => {
     setTriggerToOpenNextRender(undefined);
   }, [triggerToOpenNextRender]);
 
+  useEffect(() => {
+    setNodes(
+      nodes.map((node) => ({
+        ...node,
+        data: { ...node.data, isTriggerDragging, isMessagesDragging },
+      }))
+    );
+  }, [isTriggerDragging, isMessagesDragging]);
+
   const handleTutorialOpen = () => {
     setTutorialOpen(true);
   };
 
   const onSaveTrigger = (data: Trigger) => {
     settriggerModalOpen(false);
-    console.log(data);
+
     if (!selectedTrigger) return;
     selectedTrigger.providerParams = data.providerParams;
     selectedTrigger.providerType = data.providerType;
     selectedTrigger.properties = data.properties;
-    console.log(selectedTrigger);
   };
 
   const onDeleteTrigger = (data: string) => {
@@ -611,12 +645,102 @@ const Flow = () => {
     setTemplateModalOpen(!templateModalOpen);
   };
 
+  const onDragOver = useCallback((e: DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+  }, []);
+
+  const onDrop = (e: DragEvent) => {
+    e.preventDefault();
+
+    setIsTriggerDragging(false);
+    setIsMessagesDragging(false);
+
+    const type = e.dataTransfer.getData("application/reactflow");
+
+    // check if the dropped element is valid
+    if (typeof type === "undefined" || !type) {
+      return;
+    }
+
+    switch (type) {
+      case "audience":
+        setAudienceModalOpen(true);
+        break;
+      case TriggerType.EVENT:
+      case TriggerType.TIME_DELAY:
+      case TriggerType.TIME_WINDOW:
+        const newSelectedNodeWithTrigger = nodes.find((node) => {
+          const { height, width, position } = node;
+          if (!height || !width || !reactFlowRef.current) return node;
+
+          const maskLeftTopCornerX = position.x;
+          const maskLeftTopCornerY = position.y;
+
+          const maskRightBottomCornerX = position.x + width;
+          const maskRightBottomCornerY = position.y + height;
+
+          const boudingClientRect =
+            reactFlowRef.current.getBoundingClientRect();
+
+          const canvasMouseX = e.clientX - viewX - boudingClientRect.left;
+          const canvasMouseY = e.clientY - viewY - boudingClientRect.top;
+
+          const isDroppedOver =
+            canvasMouseX > maskLeftTopCornerX * zoom &&
+            canvasMouseX < maskRightBottomCornerX * zoom &&
+            canvasMouseY > maskLeftTopCornerY * zoom &&
+            canvasMouseY < maskRightBottomCornerY * zoom;
+
+          return isDroppedOver;
+        });
+
+        if (!newSelectedNodeWithTrigger) return;
+
+        setSelectedNode(newSelectedNodeWithTrigger.id);
+        setTriggerToOpenNextRender(type);
+        break;
+      case "email":
+      case "push":
+      case "sms":
+      case "slack":
+        const newSelectedNodeWithMessage = nodes.find((node) => {
+          const { height, width, position } = node;
+          if (!height || !width || !reactFlowRef.current) return node;
+
+          const maskLeftTopCornerX = position.x;
+          const maskLeftTopCornerY = position.y;
+
+          const maskRightBottomCornerX = position.x + width;
+          const maskRightBottomCornerY = position.y + height;
+
+          const boudingClientRect =
+            reactFlowRef.current.getBoundingClientRect();
+
+          const canvasMouseX = e.clientX - viewX - boudingClientRect.left;
+          const canvasMouseY = e.clientY - viewY - boudingClientRect.top;
+
+          const isDroppedOver =
+            canvasMouseX > maskLeftTopCornerX * zoom &&
+            canvasMouseX < maskRightBottomCornerX * zoom &&
+            canvasMouseY > maskLeftTopCornerY * zoom &&
+            canvasMouseY < maskRightBottomCornerY * zoom;
+
+          return isDroppedOver;
+        });
+
+        if (!newSelectedNodeWithMessage) return;
+        setSelectedNode(newSelectedNodeWithMessage.id);
+        performAction(type);
+        break;
+      default:
+        break;
+    }
+  };
+
   const handleSaveJourney = async () => {
     setIsSaving(true);
     try {
-      console.log(nodes);
-      console.log(edges);
-      console.log(triggers);
       const dto = convertLayoutToTable(
         flowName,
         nodes,
@@ -732,6 +856,45 @@ const Flow = () => {
     setSegmentForm({ isDynamic: !segmentForm.isDynamic });
   };
 
+  const onDragStart = (e: DragEvent<HTMLDivElement>, itemId: string) => {
+    if (
+      itemId === TriggerType.EVENT ||
+      itemId === TriggerType.TIME_DELAY ||
+      itemId === TriggerType.TIME_WINDOW
+    ) {
+      setTimeout(() => {
+        setIsTriggerDragging(true);
+      }, 0);
+      e.dataTransfer.setDragImage(
+        triggerDragImage,
+        triggerDragImage.width / 2,
+        triggerDragImage.height / 2
+      );
+    } else if (
+      itemId === MessagesTypes.SMS ||
+      itemId === MessagesTypes.EMAIL ||
+      itemId === MessagesTypes.SLACK ||
+      itemId === MessagesTypes.PUSH
+    ) {
+      setTimeout(() => {
+        setIsMessagesDragging(true);
+      }, 0);
+    }
+
+    e.dataTransfer.setData("application/reactflow", itemId);
+    e.dataTransfer.effectAllowed = "move";
+  };
+
+  const onConnectEnd = () => {
+    setIsConnecting(false);
+    setNodes(
+      nodes.map((node) => ({
+        ...node,
+        data: { ...node.data, isNearToCursor: false },
+      }))
+    );
+  };
+
   let startDisabledReason = "";
 
   if (!nodes.some((node) => node.data.primary))
@@ -746,6 +909,15 @@ const Flow = () => {
 
   return (
     <div>
+      {(isMessagesDragging || isTriggerDragging) && (
+        <CancelDropZone
+          countRef={reactFlowRef}
+          onDrop={() => {
+            setIsMessagesDragging(false);
+            setIsTriggerDragging(false);
+          }}
+        />
+      )}
       <div className="h-[calc(100vh-64px)] flex w-full">
         <Helmet>
           <script>
@@ -771,6 +943,11 @@ const Flow = () => {
             <SideDrawer
               selectedNode={selectedNode}
               onClick={performAction}
+              onDragStart={onDragStart}
+              onDragEnd={() => {
+                setIsTriggerDragging(false);
+                setIsMessagesDragging(false);
+              }}
               flowName={flowName}
               handleFlowName={(e) => setFlowName(e.target.value)}
               afterMenuContent={
@@ -843,6 +1020,8 @@ const Flow = () => {
                   type="button"
                   className="relative block w-full rounded-lg border-2 border-dashed border-gray-300 p-12 text-center hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                   onClick={() => setAudienceModalOpen(true)}
+                  onDragOver={onDragOver}
+                  onDrop={onDrop}
                 >
                   <PlusCircleIcon
                     className="mx-auto h-12 w-12 text-gray-400"
@@ -853,7 +1032,7 @@ const Flow = () => {
                     fill="none"
                   />
                   <span className="mt-2 block text-sm font-medium text-gray-900">
-                    Create first step
+                    Add first step by dragging or clicking
                   </span>
                 </button>
               </div>
@@ -882,16 +1061,10 @@ const Flow = () => {
               zoomOnDoubleClick={false}
               onMoveStart={() => setIsGrabbing(true)}
               onMoveEnd={() => setIsGrabbing(false)}
+              onDragOver={onDragOver}
+              onDrop={onDrop}
               onConnectStart={() => setIsConnecting(true)}
-              onConnectEnd={() => {
-                setIsConnecting(false);
-                setNodes(
-                  nodes.map((node) => ({
-                    ...node,
-                    data: { ...node.data, isNearToCursor: false },
-                  }))
-                );
-              }}
+              onConnectEnd={onConnectEnd}
               onMouseMove={(e) => {
                 if (!isConnecting || !reactFlowRef.current) return;
 
