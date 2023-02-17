@@ -13,7 +13,10 @@ import {
   LoggerService,
   HttpException,
   Put,
+  UploadedFile,
+  BadRequestException,
 } from '@nestjs/common';
+import { Multer } from 'multer';
 import { CreateCustomerDto } from './dto/create-customer.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CustomersService } from './customers.service';
@@ -21,6 +24,8 @@ import { AccountsService } from '../accounts/accounts.service';
 import { Request } from 'express';
 import { Account } from '../accounts/entities/accounts.entity';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { parse } from 'csv-parse';
 
 @Controller('customers')
 export class CustomersController {
@@ -144,6 +149,17 @@ export class CustomersController {
       this.logger.error('Error:' + e);
       return new HttpException(e, 500);
     }
+  }
+
+  @Post('/importcsv')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(FileInterceptor('file'))
+  async getCSVPeople(
+    @Req() { user }: Request,
+    @UploadedFile() file: Express.Multer.File
+  ) {
+    return this.customersService.loadCSV(<Account>user, file);
   }
 
   @Post('/delete/:custId')
