@@ -133,7 +133,7 @@ const Home = () => {
                             or drag and drop
                           </p>
                           <p className="text-xs text-gray-500 dark:text-gray-400 px-[10px] inline-block">
-                            Youre csv should include one of these fields, email,
+                            Your csv should include one of these fields, email,
                             sms, slackId. For personalization include First
                             Name, and Last Name and other fields
                           </p>

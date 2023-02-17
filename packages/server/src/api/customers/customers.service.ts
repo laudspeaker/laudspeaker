@@ -758,15 +758,9 @@ export class CustomersService {
     });
 
     for await (const record of records) {
-      const keyProps: Record<string, any> = {};
-
-      if (record.email) keyProps.email = record.email;
-      if (record.phone) keyProps.phone = record.phone;
-      if (record.slackId) keyProps.slackId = record.slackId;
-
-      if (Object.values(keyProps).some((item) => !!item)) {
+      if (!!record.email) {
         const customer = await this.CustomerModel.findOne({
-          ...keyProps,
+          email: record.email,
           ownerId: account.id,
         });
 
