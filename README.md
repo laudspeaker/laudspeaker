@@ -26,7 +26,7 @@
 - **Easy WYSIWYG Template builder** Build nice emails and more with our template builder
 - **Run on your own infra** Deploy and run on your own infrastructure to keep control of your data.
 - **Integrate with PostHog analytics** Easily trigger journeys with PostHog, the open source product analytics platform
-- 🔜 **1-Click Deploy** to Render
+- **1-Click Deploy** to Render
 - 🔜 **Database / datalake / data warehouse import** ingest user data from your databases
 - 🔜 **Build and save segments of users**
 - 🔜 **Trigger journeys from segment/rudderstack/mixpanel events**
