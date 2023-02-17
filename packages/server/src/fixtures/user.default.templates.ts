@@ -2570,7 +2570,7 @@ const DEFAULT_TEMPLATES: Template[] = [
   {
     ...new Template(),
     name: 'example-template-newsletter',
-    subject: 'Here\'s what happened while you were away! ',
+    subject: "Here's what happened while you were away! ",
     text: `<body style="box-sizing: border-box; margin: 0; margin-top: 0px; margin-right: 0px; margin-bottom: 0px; margin-left: 0px; padding-top: 0px; padding-right: 0px; padding-bottom: 0px; padding-left: 0px; background-color: rgb(247, 247, 253);">
     <title class="text_droppable">
     </title>

@@ -15,6 +15,7 @@ import twilio from 'twilio';
   imports: [TypeOrmModule.forFeature([Account, Audience])],
   providers: [WebhooksService],
   controllers: [WebhooksController],
+  exports: [WebhooksService],
 })
 export class WebhooksModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
