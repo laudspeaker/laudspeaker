@@ -11,7 +11,6 @@ import tokenService from "./services/token.service";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import FlowBuilder from "pages/FlowBuilder";
-import EmailConfig from "pages/EmailConfig";
 import EmailBuilder from "pages/EmailBuilder";
 import { getUserPermissions } from "reducers/auth";
 import SlackBuilder from "pages/SlackBuilder";
@@ -28,6 +27,8 @@ import Settings from "pages/Settings/Settings";
 import Person from "pages/Person";
 import Verify from "pages/Verify";
 import SmsBuilder from "pages/SmsBuilder";
+import Database from "pages/Integrations/Database";
+import Integrations from "pages/Integrations/Integrations";
 import Modal from "components/Elements/Modal";
 import ApiService from "services/api.service";
 import Account from "types/Account";
@@ -226,16 +227,6 @@ const RouteComponent: React.FC = () => {
           }
         />
         <Route
-          path="/emailconfig"
-          element={
-            <Protected>
-              <DrawerLayout>
-                <EmailConfig />
-              </DrawerLayout>
-            </Protected>
-          }
-        />
-        <Route
           path="/email-builder"
           element={
             <Protected>
@@ -301,6 +292,36 @@ const RouteComponent: React.FC = () => {
             <Protected>
               <DrawerLayout>
                 <TemplateTable />
+              </DrawerLayout>
+            </Protected>
+          }
+        />
+        <Route
+          path="/integrations"
+          element={
+            <Protected>
+              <DrawerLayout>
+                <Integrations />
+              </DrawerLayout>
+            </Protected>
+          }
+        />
+        <Route
+          path="/integrations/db"
+          element={
+            <Protected>
+              <DrawerLayout>
+                <Database />
+              </DrawerLayout>
+            </Protected>
+          }
+        />
+        <Route
+          path="/integrations/db/:id"
+          element={
+            <Protected>
+              <DrawerLayout>
+                <Database />
               </DrawerLayout>
             </Protected>
           }

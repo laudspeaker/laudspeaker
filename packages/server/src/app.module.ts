@@ -28,6 +28,7 @@ import {
   EventKeys,
   EventKeysSchema,
 } from './api/events/schemas/event-keys.schema';
+import { Integration } from './api/integrations/entities/integration.entity';
 import { Workflow } from './api/workflows/entities/workflow.entity';
 import { WorkflowsService } from './api/workflows/workflows.service';
 import { Job } from './api/jobs/entities/job.entity';
@@ -41,7 +42,7 @@ import { Template } from './api/templates/entities/template.entity';
 import { SlackService } from './api/slack/slack.service';
 import { Installation } from './api/slack/entities/installation.entity';
 import { State } from './api/slack/entities/state.entity';
-import { DataSource } from 'typeorm';
+import { IntegrationsModule } from './api/integrations/integrations.module';
 
 const papertrail = new winston.transports.Http({
   host: 'logs.collector.solarwinds.com',
@@ -166,6 +167,7 @@ const formatMongoConnectionString = (mongoConnectionString: string) => {
     TypeOrmModule.forFeature([
       Account,
       Verification,
+      Integration,
       Workflow,
       Job,
       Segment,
@@ -174,6 +176,9 @@ const formatMongoConnectionString = (mongoConnectionString: string) => {
       Installation,
       State,
     ]),
+    BullModule.registerQueue({
+      name: 'integrations',
+    }),
     BullModule.registerQueue({
       name: 'events',
     }),
@@ -186,6 +191,10 @@ const formatMongoConnectionString = (mongoConnectionString: string) => {
     BullModule.registerQueue({
       name: 'slack',
     }),
+    BullModule.registerQueue({
+      name: 'sms',
+    }),
+    IntegrationsModule,
   ],
   controllers: [AppController],
   providers: [

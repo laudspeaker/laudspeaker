@@ -1,16 +1,30 @@
 import Header from "components/Header";
-import React, { useState } from "react";
+import React, { ReactNode, useState } from "react";
 import SettingsAPIBeta from "./SettingsAPIBeta";
 import SettingsBillingBeta from "./SettingsBillingBeta";
 import SettingsEmailBeta from "./SettingsEmailBeta";
 import SettingsEventsBeta from "./SettingsEventsBeta";
 import SettingsGeneralBeta from "./SettingsGeneralBeta";
+import SettingsIntegrationsBeta from "./SettingsIntegrationsBeta";
 import SettingsPlanBeta from "./SettingsPlanBeta";
 import SettingsSlackBeta from "./SettingsSlackBeta";
 import SettingsSMSBeta from "./SettingsSMSBeta";
 import SettingsTeamBeta from "./SettingsTeamBeta";
 
-const tabComponents = {
+enum TabName {
+  ACCOUNT = "Account",
+  API = "API",
+  EMAIL = "Email",
+  SMS = "SMS",
+  SLACK = "Slack",
+  EVENTS = "Events",
+  PLAN = "Plan",
+  BILLING = "Billing",
+  TEAM_MEMBERS = "Team Members",
+  INTEGRATIONS = "Integrations",
+}
+
+const tabComponents: Record<TabName, ReactNode> = {
   Account: <SettingsGeneralBeta />,
   API: <SettingsAPIBeta />,
   Email: <SettingsEmailBeta />,
@@ -20,16 +34,17 @@ const tabComponents = {
   Plan: <SettingsPlanBeta />,
   Billing: <SettingsBillingBeta />,
   "Team Members": <SettingsTeamBeta />,
+  Integrations: <SettingsIntegrationsBeta />,
 };
 
-type TabName = keyof typeof tabComponents;
+// type TabName = keyof typeof tabComponents;
 
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(" ");
 }
 
 const Settings = () => {
-  const [currentTab, setCurrentTab] = useState<TabName>("Account");
+  const [currentTab, setCurrentTab] = useState<TabName>(TabName.ACCOUNT);
 
   return (
     <div>

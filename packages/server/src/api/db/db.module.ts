@@ -9,6 +9,8 @@ import { Job } from '../jobs/entities/job.entity';
 import { Segment } from '../segments/entities/segment.entity';
 import { Installation } from '../slack/entities/installation.entity';
 import { State } from '../slack/entities/state.entity';
+import { Integration } from '../integrations/entities/integration.entity';
+import { Database } from '../integrations/entities/database.entity';
 
 @Module({
   imports: [
@@ -18,10 +20,13 @@ import { State } from '../slack/entities/state.entity';
       Segment,
       Installation,
       State,
+      WebhookEvent,
       Workflow,
       Template,
       Audience,
       Verification,
+      Integration,
+      Database,
     ]),
   ],
 })

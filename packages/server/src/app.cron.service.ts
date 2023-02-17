@@ -23,6 +23,7 @@ import { EventKeys } from './api/events/schemas/event-keys.schema';
 import { JobsService } from './api/jobs/jobs.service';
 import { WorkflowsService } from './api/workflows/workflows.service';
 import { TimeJobStatus } from './api/jobs/entities/job.entity';
+import { IntegrationsService } from './api/integrations/integrations.service';
 
 const BATCH_SIZE = 500;
 const KEYS_TO_SKIP = ['__v', '_id', 'audiences', 'ownerId'];
@@ -238,6 +239,30 @@ export class CronService {
         .execute();
     } catch (e) {
       this.logger.error('Cron error: ' + e);
+    }
+  }
+
+  @Cron(CronExpression.EVERY_HOUR)
+  async handleIntegrations() {
+    const integrationsNumber = await this.integrationsRepository.countBy({
+      status: IntegrationStatus.ACTIVE,
+    });
+
+    let offset = 0;
+
+    while (offset < integrationsNumber) {
+      const integrationsBatch = await this.integrationsRepository.find({
+        where: { status: IntegrationStatus.ACTIVE },
+        relations: ['database', 'owner'],
+        take: BATCH_SIZE,
+        skip: offset,
+      });
+
+      for (const integration of integrationsBatch) {
+        await this.integrationsService.handleIntegration(integration);
+      }
+
+      offset += BATCH_SIZE;
     }
   }
 

@@ -123,11 +123,6 @@ export class TestsService {
         this.dataSource.manager
       );
 
-      await this.authService.helper.generateDefaultData(
-        ret,
-        this.dataSource.manager
-      );
-
       await this.customersService.CustomerModel.deleteMany({
         ownerId: '00000000-0000-0000-0000-000000000000',
       });
