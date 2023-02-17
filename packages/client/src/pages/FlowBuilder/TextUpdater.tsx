@@ -22,6 +22,8 @@ import { INameSegmentForm } from "pages/Segment/NameSegment";
 import ApiService from "services/api.service";
 import { toast } from "react-toastify";
 import useClickPreventionOnDoubleClick from "hooks/useClickPreventionOnDoubleClick";
+import HourglassSplit from "assets/images/HourglassSplit.svg";
+import { TriggerType } from "types/Workflow";
 
 const textStyle = "text-[#111827] font-[Inter] font-middle text-[14px]";
 const subTitleTextStyle = "text-[#6B7280] font-[Inter] text-[14px]";
@@ -305,12 +307,22 @@ const TextUpdaterNode = ({ data }: { data: NodeData }) => {
                   data-handle-bottom
                 >
                   <div className="pointer-events-none absolute left-1/2 top-0 -translate-x-1/2 w-[30px] h-[22px]">
-                    <img
-                      src={thunderbolt}
-                      width="30"
-                      height="22"
-                      className=""
-                    />
+                    {trigger.type === TriggerType.EVENT ? (
+                      <img
+                        src={thunderbolt}
+                        width="30"
+                        height="22"
+                        className=""
+                      />
+                    ) : (
+                      <img
+                        src={HourglassSplit}
+                        width="30"
+                        height="22"
+                        className="border-black border-[1px] rounded-lg bg-white scale-90 p-[3px]"
+                      />
+                    )}
+
                     {!isConnecting && !isSourceForSome && (
                       <div className="absolute z-[-1] left-1/2 top-[24px] -translate-x-1/2 w-[20px] h-full">
                         <ArrowDown className="text-[#bdbdc1]" />
