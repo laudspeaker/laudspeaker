@@ -6,6 +6,7 @@ import mongoose, {
   Types,
 } from 'mongoose';
 import {
+  BadRequestException,
   HttpException,
   HttpStatus,
   Inject,
@@ -19,7 +20,7 @@ import mockData from '../../fixtures/mockData';
 import { Account } from '../accounts/entities/accounts.entity';
 import { Audience } from '../audiences/entities/audience.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Any, DataSource, In, Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { checkInclusion } from '../audiences/audiences.helper';
 import { EventDto } from '../events/dto/event.dto';
 import {
@@ -34,6 +35,7 @@ import { Workflow } from '../workflows/entities/workflow.entity';
 import { attributeConditions } from '@/fixtures/attributeConditions';
 import { getType } from 'tst-reflect';
 import { isDateString, isEmail } from 'class-validator';
+import { parse } from 'csv-parse';
 
 export type Correlation = {
   cust: CustomerDocument;
@@ -742,5 +744,50 @@ export class CustomersService {
     return (
       mockData.resources.find((resource) => resource.id === resourceId) || {}
     );
+  }
+
+  async loadCSV(account: Account, csvFile: Express.Multer.File) {
+    if (csvFile.mimetype !== 'text/csv')
+      throw new BadRequestException('Only CSV files are allowed');
+
+    const stats = { created: 0, updated: 0, skipped: 0 };
+
+    const records = parse(csvFile.buffer, {
+      columns: true,
+      skipEmptyLines: true,
+    });
+
+    for await (const record of records) {
+      const keyProps: Record<string, any> = {};
+
+      if (record.email) keyProps.email = record.email;
+      if (record.phone) keyProps.phone = record.phone;
+      if (record.slackId) keyProps.slackId = record.slackId;
+
+      if (Object.values(keyProps).some((item) => !!item)) {
+        const customer = await this.CustomerModel.findOne({
+          ...keyProps,
+          ownerId: account.id,
+        });
+
+        if (customer) {
+          await this.update(account, customer.id, record);
+          stats.updated++;
+        } else {
+          delete record.verified;
+          delete record.ownerId;
+          delete record._id;
+          delete record.__v;
+          delete record.audiences;
+
+          await this.create(account, { ...record });
+          stats.created++;
+        }
+      } else {
+        stats.skipped++;
+      }
+    }
+
+    return { stats };
   }
 }
