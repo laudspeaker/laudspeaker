@@ -16,8 +16,11 @@ REDIS_PORT=6379
 
 MONGOOSE_URL=mongodb://localhost/nest
 
-MAGIC_EMAIL_KEY=[your mail gun key]
+MAGIC_EMAIL_KEY=[your magic link email api key]
 MAGIC_EMAIL_DOMAIN=[your mail gun key]
+
+MAILGUN_API_KEY=[your mail gun key]
+MAILGUN_TEST_DOMAIN=[your mail gun domain]
 
 SLACK_CLIENT_ID=[your slack client id]
 SLACK_CLIENT_SECRET=[your slack client secret]
