@@ -53,7 +53,7 @@ Run services:
 
 Instantiate Mongo:
 
-- `mongosh --eval "rs.inititate()"`
+- `mongosh --eval "rs.initiate()"`
 
 Run backend and front end:
 
