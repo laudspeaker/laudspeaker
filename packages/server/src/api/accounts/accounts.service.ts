@@ -20,6 +20,7 @@ import { RemoveAccountDto } from './dto/remove-account.dto';
 import { InjectConnection } from '@nestjs/mongoose';
 import mongoose from 'mongoose';
 import { WebhooksService } from '../webhooks/webhooks.service';
+import { deleteApp, getApp } from 'firebase-admin/app';
 
 @Injectable()
 export class AccountsService extends BaseJwtHelper {
@@ -184,6 +185,15 @@ export class AccountsService extends BaseJwtHelper {
 
         customer.verified = false;
         await customer.save({ session: transactionSession });
+      }
+    }
+
+    if (updateUserDto.firebaseCredentials) {
+      try {
+        const app = getApp(oldUser.id);
+        if (app) deleteApp(app);
+      } catch (e) {
+        // do nothing
       }
     }
 

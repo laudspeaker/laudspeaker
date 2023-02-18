@@ -102,6 +102,18 @@ export default function ResponsiveDrawer(props: Props) {
     })();
   }, []);
 
+  React.useLayoutEffect(() => {
+    (async () => {
+      const { data } = await ApiService.get({ url: "/accounts" });
+      const { firebaseCredentials } = data;
+      if (firebaseCredentials)
+        setExpectedOnboarding((expectedOnboardingArr) => [
+          "Firebase",
+          ...expectedOnboardingArr,
+        ]);
+    })();
+  }, []);
+
   const handleMenuItemClick = (id: string) => {
     onClick(id);
   };
@@ -226,7 +238,7 @@ export default function ResponsiveDrawer(props: Props) {
             />
           )}
         </div>
-        <div className="min-h-screen flex-col justify-between px-[20px] py-[15px]">
+        <div className="min-h-screen flex-col justify-between px-[20px] py-[15px] z-50">
           {generateMenu(dataSubArray)}
           {props.afterMenuContent}
         </div>

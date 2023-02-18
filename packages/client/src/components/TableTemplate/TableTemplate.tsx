@@ -603,6 +603,71 @@ export default function TableTemplate<T extends TableDataItem>({
           {isButton ? <div>Edit</div> : row.name}
         </Link>
       );
+    } else if (row.type == "firebase") {
+      return isButton ? (
+        <Menu as="div" className="relative">
+          <Menu.Button className="outline-none">
+            <PencilSquareIcon className="text-gray-400 hover:text-gray-500 ml-[10px] text-[16px] w-[24px]" />
+          </Menu.Button>
+          <Transition
+            as={Fragment}
+            enter="transition ease-out duration-100"
+            enterFrom="transform opacity-0 scale-95"
+            enterTo="transform opacity-100 scale-100"
+            leave="transition ease-in duration-75"
+            leaveFrom="transform opacity-100 scale-100"
+            leaveTo="transform opacity-0 scale-95"
+          >
+            <Menu.Items className="absolute outline-none w-auto flex flex-col bg-gray-50 shadow-md rounded-[8px] border-[1px] border-gray-200 items-center right-1/2 top-full z-[1000]">
+              {[
+                <Link
+                  className="!no-underline"
+                  href={`templates/firebase/${row.name}`}
+                >
+                  <div className="w-full">Edit</div>
+                </Link>,
+                <button
+                  onClick={async () => {
+                    await ApiService.post({
+                      url: `/templates/${row.name}/duplicate`,
+                      options: {},
+                    });
+                    window.location.reload();
+                  }}
+                >
+                  Duplicate
+                </button>,
+                ...(row.isDeleted
+                  ? []
+                  : [
+                      <button
+                        className="w-full text-center cursor-pointer outline-none text-red-500"
+                        onClick={() => {
+                          if (row?.id) setTemplateToDelete(row.id as string);
+                        }}
+                        data-delete-button
+                      >
+                        Delete
+                      </button>,
+                    ]),
+              ].map((el, i) => (
+                <Menu.Item>
+                  <div
+                    key={i}
+                    className="w-full text-center hover:bg-gray-200 transition-all px-[6px] py-[4px] border-b-[1px] border-b-gray-200"
+                  >
+                    {el}
+                  </div>
+                </Menu.Item>
+              ))}
+            </Menu.Items>
+          </Transition>
+        </Menu>
+      ) : (
+        <Link href={`templates/firebase/${row.name}`}>
+          {isButton ? <div>Edit</div> : row.name}
+        </Link>
+      );
     } else if (row.type == "slack") {
       return isButton ? (
         <Menu as="div" className="relative">

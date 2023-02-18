@@ -108,6 +108,17 @@ export const dataSubArray = [
           "Make sure there are steps and configure email in settings and step selected",
       },
       {
+        id: "firebase",
+        imgIcon: Mobile(),
+        text: "Firebase Messaging",
+        type: "menu",
+        link: "/firebase",
+        canBeDisabled: false,
+        requiredOnboarding: "Firebase",
+        disabledToolTip:
+          "Make sure there are steps and configure firebase in settings and step selected",
+      },
+      {
         id: "push",
         imgIcon: Mobile(),
         text: "Push Notification",

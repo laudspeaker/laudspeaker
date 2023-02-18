@@ -31,11 +31,23 @@ export class CreateTemplateDto {
   //todo for sms
 
   @IsNotEmpty()
-  public type: 'email' | 'slack' | 'sms';
+  public type: 'email' | 'slack' | 'sms' | 'firebase';
 
   @IsString()
   @IsNotEmpty()
   @IsOptional()
   @MaxLength(2000)
   public smsText: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @IsOptional()
+  @MaxLength(256)
+  public pushText: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @IsOptional()
+  @MaxLength(48)
+  public pushTitle: string;
 }

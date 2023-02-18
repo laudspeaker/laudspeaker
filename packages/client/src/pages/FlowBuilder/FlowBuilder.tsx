@@ -545,6 +545,7 @@ const Flow = () => {
       case "email":
       case "push":
       case "sms":
+      case "firebase":
       case "slack": {
         const selectedNodeData = nodes.find((node) => node.id === selectedNode);
         if (!selectedNodeData) return;
@@ -703,6 +704,7 @@ const Flow = () => {
       case "email":
       case "push":
       case "sms":
+      case "firebase":
       case "slack":
         const newSelectedNodeWithMessage = nodes.find((node) => {
           const { height, width, position } = node;
@@ -874,7 +876,8 @@ const Flow = () => {
       itemId === MessagesTypes.SMS ||
       itemId === MessagesTypes.EMAIL ||
       itemId === MessagesTypes.SLACK ||
-      itemId === MessagesTypes.PUSH
+      itemId === MessagesTypes.PUSH ||
+      itemId === MessagesTypes.FIREBASE
     ) {
       setTimeout(() => {
         setIsMessagesDragging(true);

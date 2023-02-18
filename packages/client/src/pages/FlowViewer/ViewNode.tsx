@@ -75,6 +75,7 @@ const ViewNode = ({ data }: { data: NodeData }) => {
   const messageIcons: { [key: string]: JSX.Element } = {
     sms: <SMS />,
     push: <Mobile />,
+    firebase: <Mobile />,
     email: <Email />,
     slack: <SlackMsg />,
   };

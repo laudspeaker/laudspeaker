@@ -28,6 +28,7 @@ export default function SettingsEventsBeta() {
     posthogHostUrl: "app.posthog.com",
     posthogSmsKey: "",
     posthogEmailKey: "",
+    posthogFirebaseDeviceTokenKey: "",
   });
 
   const [errors, setErrors] = useState<{ [key: string]: string[] }>({
@@ -72,6 +73,7 @@ export default function SettingsEventsBeta() {
         posthogHostUrl,
         posthogSmsKey,
         posthogEmailKey,
+        posthogFirebaseDeviceTokenKey,
       } = data;
       const newData = {
         posthogApiKey: posthogApiKey || "",
@@ -79,6 +81,7 @@ export default function SettingsEventsBeta() {
         posthogHostUrl: posthogHostUrl || "",
         posthogSmsKey: posthogSmsKey || "",
         posthogEmailKey: posthogEmailKey || "",
+        posthogFirebaseDeviceTokenKey: posthogFirebaseDeviceTokenKey || "",
       };
       setFormData(newData);
     })();
@@ -103,6 +106,8 @@ export default function SettingsEventsBeta() {
           posthogApiKey: formData.posthogApiKey || "",
           posthogProjectId: formData.posthogProjectId || "",
           posthogHostUrl: formData.posthogHostUrl || "",
+          posthogFirebaseDeviceTokenKey:
+            formData.posthogFirebaseDeviceTokenKey || "",
         },
       });
       await startPosthogImport();
@@ -352,6 +357,23 @@ export default function SettingsEventsBeta() {
                   id="posthogEmailKey"
                   className="rounded-md border-gray-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm"
                   placeholder="$email"
+                />
+              </dd>
+            </div>
+
+            <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:py-5">
+              <dt className="text-sm font-medium text-gray-500">
+                Name of Firebase Device Token field on your Posthog person
+              </dt>
+              <dd>
+                <Input
+                  type="text"
+                  value={formData.posthogFirebaseDeviceTokenKey}
+                  onChange={handleFormDataChange}
+                  name="posthogFirebaseDeviceTokenKey"
+                  id="posthogFirebaseDeviceTokenKey"
+                  className="rounded-md border-gray-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm"
+                  placeholder="deviceToken"
                 />
               </dd>
             </div>

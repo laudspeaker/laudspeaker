@@ -34,6 +34,7 @@ import ApiService from "services/api.service";
 import Account from "types/Account";
 import { GenericButton } from "components/Elements";
 import Home from "pages/Home";
+import FirebaseBuilder from "pages/FirebaseBuilder/FirebaseBuilder";
 
 interface IProtected {
   children: ReactElement;
@@ -282,6 +283,16 @@ const RouteComponent: React.FC = () => {
             <Protected>
               <DrawerLayout>
                 <SmsBuilder />
+              </DrawerLayout>
+            </Protected>
+          }
+        />
+        <Route
+          path="/templates/firebase/:name"
+          element={
+            <Protected>
+              <DrawerLayout>
+                <FirebaseBuilder />
               </DrawerLayout>
             </Protected>
           }

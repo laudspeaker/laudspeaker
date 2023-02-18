@@ -218,6 +218,15 @@ export class CustomersService {
           createdCustomer['phEmail'] = data[index]?.properties[emailKey];
         }
       }
+
+      if (account['posthogFirebaseDeviceTokenKey'] != null) {
+        const firebaseDeviceTokenKey =
+          account['posthogFirebaseDeviceTokenKey'][0];
+        if (data[index]?.properties[firebaseDeviceTokenKey]) {
+          createdCustomer['phDeviceToken'] =
+            data[index]?.properties[firebaseDeviceTokenKey];
+        }
+      }
       await createdCustomer.save();
     }
   }
@@ -758,7 +767,7 @@ export class CustomersService {
     });
 
     for await (const record of records) {
-      if (!!record.email) {
+      if (record.email) {
         const customer = await this.CustomerModel.findOne({
           email: record.email,
           ownerId: account.id,
