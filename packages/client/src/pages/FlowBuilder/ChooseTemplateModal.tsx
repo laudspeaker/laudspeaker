@@ -4,6 +4,7 @@ import ApiService from "services/api.service";
 import { ApiConfig } from "../../constants";
 import Modal from "../../components/Elements/Modal";
 import Template from "types/Template";
+import SideModal from "components/Elements/SideModal";
 
 interface IChooseTemplateModal {
   templateModalOpen: boolean;
@@ -87,20 +88,21 @@ const ChooseTemplateModal = ({
     setActiveTemplate(value);
   };
 
+  const getAllTemplates = async () => {
+    const { data: templates } = await ApiService.get({
+      url: `${ApiConfig.getAllTemplates}`,
+    });
+    const filteredTemplates = templates?.data?.filter(
+      (item: { type?: string }) => item.type === selectedMessageType
+    );
+    setTemplatesList(filteredTemplates);
+  };
+
   useEffect(() => {
-    const getAllTemplates = async () => {
-      const { data: templates } = await ApiService.get({
-        url: `${ApiConfig.getAllTemplates}`,
-      });
-      const filteredTemplates = templates?.data?.filter(
-        (item: { type?: string }) => item.type === selectedMessageType
-      );
-      setTemplatesList(filteredTemplates);
-    };
     getAllTemplates();
-  }, []);
+  }, [selectedMessageType]);
   return (
-    <Modal isOpen={templateModalOpen} onClose={onClose}>
+    <SideModal isOpen={templateModalOpen} onClose={onClose}>
       <div className="w-full">
         <h6 id="modal-modal-title">
           {isViewMode
@@ -130,7 +132,7 @@ const ChooseTemplateModal = ({
           <div data-slackexporttemplate>{renderButton(templatesList)}</div>
         )}
       </div>
-    </Modal>
+    </SideModal>
   );
 };
 

@@ -5,13 +5,11 @@ import AC from "react-autocomplete";
 import { useDebounce } from "react-use";
 import ApiService from "services/api.service";
 import DynamicField from "./DynamicField";
-import MinusIcon from "../../assets/images/MinusIcon.svg";
 import { EventCondition, ProviderTypes } from "types/Workflow";
 
 export interface ConditionCreaterProps {
   condition: EventCondition;
   onChange: (condition: EventCondition) => void;
-  onDelete: () => void;
   possibleTypes: string[];
   isViewMode?: boolean;
   specificProvider: ProviderTypes;
@@ -20,7 +18,6 @@ export interface ConditionCreaterProps {
 const ConditionCreater: FC<ConditionCreaterProps> = ({
   condition,
   onChange,
-  onDelete,
   possibleTypes,
   isViewMode,
   specificProvider,
@@ -41,7 +38,9 @@ const ConditionCreater: FC<ConditionCreaterProps> = ({
       id: string;
     }[]
   >([]);
-  const [dynamicDataToRender, setDynamicDataToRender] = useState({});
+  const [dynamicDataToRender, setDynamicDataToRender] = useState<
+    Record<string, string>
+  >({});
   const [newKey, setNewKey] = useState(key);
   const [possibleValues, setPossibleValues] = useState<string[]>([]);
   const [newValue, setNewValue] = useState(value);
@@ -139,7 +138,7 @@ const ConditionCreater: FC<ConditionCreaterProps> = ({
   );
 
   return (
-    <div className="grid grid-cols-4 gap-[10px] items-center m-[10px_0px]">
+    <div className="flex flex-col gap-[10px] m-[10px_0px]">
       <div className="relative">
         <AC
           getItemValue={(item) => JSON.stringify(item)}
@@ -154,6 +153,7 @@ const ConditionCreater: FC<ConditionCreaterProps> = ({
               aria-expanded={props["aria-expanded"]}
               disabled={isViewMode}
               id="keyInput"
+              label="Customer key"
               {...props}
             />
           )}
@@ -189,6 +189,7 @@ const ConditionCreater: FC<ConditionCreaterProps> = ({
         />
       </div>
       <Select
+        label="Key type"
         id="keyType"
         options={possibleTypes.map((item) => ({ value: item }))}
         value={type || ""}
@@ -198,8 +199,10 @@ const ConditionCreater: FC<ConditionCreaterProps> = ({
           handleConditionChange("value", "");
         }}
         disabled={isViewMode}
+        wrapperClassnames="max-w-[200px]"
       />
       <Select
+        label="Condition"
         id="comparisonType"
         value={comparisonType || ""}
         options={possibleComparisonTypes.map((item) => ({
@@ -211,17 +214,24 @@ const ConditionCreater: FC<ConditionCreaterProps> = ({
           handleConditionChange("value", "");
         }}
         disabled={isViewMode}
+        wrapperClassnames="max-w-[200px]"
       />
-      <div className="flex gap-[10px]">
-        <DynamicField
-          value={newValue}
-          data={dynamicDataToRender}
-          possibleValues={possibleValues}
-          onChange={(val) => setNewValue(val)}
-          disabled={isViewMode}
-        />
-        {!isViewMode && <img onClick={onDelete} src={MinusIcon} />}
-      </div>
+      {dynamicDataToRender.type && (
+        <div>
+          <label className="block text-sm font-medium text-gray-700">
+            Value
+          </label>
+          <div className="flex items-center gap-[10px]">
+            <DynamicField
+              value={newValue}
+              data={dynamicDataToRender}
+              possibleValues={possibleValues}
+              onChange={(val) => setNewValue(val)}
+              disabled={isViewMode}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

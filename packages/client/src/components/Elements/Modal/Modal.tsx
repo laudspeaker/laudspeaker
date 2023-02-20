@@ -1,8 +1,8 @@
 import { Dialog, Transition } from "@headlessui/react";
-import { Fragment, KeyboardEvent } from "react";
+import { FC, Fragment, KeyboardEvent } from "react";
 import { XMarkIcon } from "@heroicons/react/20/solid";
 
-interface IModalProps {
+export interface ModalProps {
   isOpen: boolean;
   title?: JSX.Element;
   children?: JSX.Element;
@@ -14,7 +14,7 @@ interface IModalProps {
   onEnterPress?: (e: KeyboardEvent<HTMLDivElement>) => void;
 }
 
-const Modal = ({
+const Modal: FC<ModalProps> = ({
   isOpen,
   onClose = () => null,
   children,
@@ -24,7 +24,7 @@ const Modal = ({
   titleClass = "",
   closeButtonNeed = true,
   onEnterPress,
-}: IModalProps) => {
+}) => {
   return (
     <Transition appear show={isOpen} as={Fragment}>
       <Dialog as="div" className="relative z-[1000]" onClose={onClose}>

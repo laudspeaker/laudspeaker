@@ -65,6 +65,8 @@ import Template from "types/Template";
 import { PlusCircleIcon } from "@heroicons/react/24/outline";
 import TriggerDrag from "../../assets/images/TriggerDrag.svg";
 import CancelDropZone from "./CancelDropZone";
+import SideModal from "components/Elements/SideModal";
+import { createPortal } from "react-dom";
 
 const triggerDragImage = new Image();
 triggerDragImage.src = TriggerDrag;
@@ -581,9 +583,12 @@ const Flow = () => {
     settriggerModalOpen(false);
 
     if (!selectedTrigger) return;
+    selectedTrigger.type = data.type;
     selectedTrigger.providerParams = data.providerParams;
     selectedTrigger.providerType = data.providerType;
     selectedTrigger.properties = data.properties;
+    setTriggers([...triggers]);
+    console.log(triggers);
   };
 
   const onDeleteTrigger = (data: string) => {
@@ -678,7 +683,7 @@ const Flow = () => {
           const maskLeftTopCornerY = position.y;
 
           const maskRightBottomCornerX = position.x + width;
-          const maskRightBottomCornerY = position.y + height;
+          const maskRightBottomCornerY = position.y + height + 20;
 
           const boudingClientRect =
             reactFlowRef.current.getBoundingClientRect();
@@ -918,7 +923,10 @@ const Flow = () => {
           }}
         />
       )}
-      <div className="h-[calc(100vh-64px)] flex w-full">
+      <div
+        className="h-[calc(100vh-64px)] flex w-full relative"
+        id="flow-builder"
+      >
         <Helmet>
           <script>
             {`
@@ -1155,39 +1163,40 @@ const Flow = () => {
             </ReactFlow>
           </div>
         </div>
-        {templateModalOpen ? (
-          <ChooseTemplateModal
-            templateModalOpen={templateModalOpen}
-            handleTemplateModalOpen={handleTemplateModalOpen}
-            selectedMessageType={selectedMessageType}
+        {/* {templateModalOpen ? ( */}
+        <ChooseTemplateModal
+          templateModalOpen={templateModalOpen}
+          handleTemplateModalOpen={handleTemplateModalOpen}
+          selectedMessageType={selectedMessageType}
+          isCollapsible={true}
+          onClose={() => setTemplateModalOpen(false)}
+        />
+        {/* ) : null} */}
+        {/* {audienceModalOpen ? ( */}
+        <SideModal
+          isOpen={audienceModalOpen}
+          onClose={() => setAudienceModalOpen(false)}
+        >
+          <NameSegment
+            onSubmit={handleAudienceSubmit}
+            isPrimary={!nodes.some((item) => item.data.primary)}
             isCollapsible={true}
-            onClose={() => setTemplateModalOpen(false)}
-          />
-        ) : null}
-        {audienceModalOpen ? (
-          <Modal
-            isOpen={audienceModalOpen}
+            isSaving={isSaving}
             onClose={() => setAudienceModalOpen(false)}
-          >
-            <NameSegment
-              onSubmit={handleAudienceSubmit}
-              isPrimary={!nodes.some((item) => item.data.primary)}
-              isCollapsible={true}
-              isSaving={isSaving}
-              onClose={() => setAudienceModalOpen(false)}
-              workflowId={flowId}
-            />
-          </Modal>
-        ) : null}
-        {triggerModalOpen && (
-          <TriggerModal
-            selectedTrigger={selectedTrigger}
-            onSaveTrigger={onSaveTrigger}
-            onDeleteTrigger={onDeleteTrigger}
-            isCollapsible={true}
-            onClose={() => settriggerModalOpen(false)}
+            workflowId={flowId}
           />
-        )}
+        </SideModal>
+        {/* ) : null} */}
+        {/* {triggerModalOpen && ( */}
+        <TriggerModal
+          selectedTrigger={selectedTrigger}
+          onSaveTrigger={onSaveTrigger}
+          onDeleteTrigger={onDeleteTrigger}
+          isCollapsible={true}
+          isOpen={triggerModalOpen}
+          onClose={() => settriggerModalOpen(false)}
+        />
+        {/* )} */}
         {segmentModalOpen && (
           <SegmentModal
             isOpen={segmentModalOpen}
@@ -1241,6 +1250,10 @@ function FlowBuilder() {
       <ReactFlowProvider>
         <Flow />
       </ReactFlowProvider>
+      {createPortal(
+        <div className="w-[100px] h-[100px] bg-red-500"></div>,
+        document.body
+      )}
     </>
   );
 }

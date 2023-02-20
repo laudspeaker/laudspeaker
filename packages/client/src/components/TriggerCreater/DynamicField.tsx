@@ -31,6 +31,7 @@ const DynamicField: FC<DynamicFieldProps> = ({
             title: item.label,
           }))}
           disabled={disabled}
+          wrapperClassnames="max-w-[200px]"
         />
       );
     case "inputText":
