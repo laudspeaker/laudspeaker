@@ -41,7 +41,7 @@ If you want a one-click render option **READ THIS** <a href="https://laudspeaker
 
 NB: Create environment group with name "laudspeaker" 
 
-<a href="https://render.com/deploy?repo=https://github.com/laudspeaker/laudspeaker/tree/docker_optimise">
+<a href="https://render.com/deploy?repo=https://github.com/laudspeaker/laudspeaker/tree/production">
 <img src="https://render.com/images/deploy-to-render-button.svg" alt="Deploy to Render">
 </a>
 
