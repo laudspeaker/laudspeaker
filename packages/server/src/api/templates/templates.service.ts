@@ -22,12 +22,16 @@ import { EventDto } from '../events/dto/event.dto';
 import { Audience } from '../audiences/entities/audience.entity';
 import { Liquid } from 'liquidjs';
 import twilio from 'twilio';
+import { cert, App, getApp, initializeApp } from 'firebase-admin/app';
+import { getMessaging } from 'firebase-admin/messaging';
 
 @Injectable()
 export class TemplatesService {
   private tagEngine = new Liquid();
 
   private MAXIMUM_SMS_LENGTH = 1600;
+  private MAXIMUM_PUSH_LENGTH = 256;
+  private MAXIMUM_PUSH_TITLE_LENGTH = 48;
 
   constructor(
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
@@ -56,6 +60,10 @@ export class TemplatesService {
         break;
       case 'sms':
         template.smsText = createTemplateDto.smsText;
+        break;
+      case 'firebase':
+        template.pushText = createTemplateDto.pushText;
+        template.pushTitle = createTemplateDto.pushTitle;
         break;
       //TODO
     }
@@ -218,6 +226,81 @@ export class TemplatesService {
             `Sms with sid ${message.sid} status: ${JSON.stringify(
               message.status
             )}`
+          );
+        } catch (e) {
+          this.logger.error(e);
+        }
+        break;
+      case 'firebase':
+        try {
+          if (!customer.phDeviceToken) {
+            this.logger.warn(
+              `Customer ${customer.id} has no device token; skipping`
+            );
+            return;
+          }
+          this.logger.debug(
+            `Starting PUSH sending to ${customer.phDeviceToken}`
+          );
+
+          const textWithInsertedTags = await this.tagEngine.parseAndRender(
+            template.pushText,
+            tags || {}
+          );
+
+          const titleWithInsertedTags = await this.tagEngine.parseAndRender(
+            template.pushTitle,
+            tags || {}
+          );
+
+          this.logger.debug(
+            `Finished rendering tags in PUSH to ${customer.phDeviceToken} with title: \`${titleWithInsertedTags}\` and text: \`${textWithInsertedTags}\``
+          );
+
+          let firebaseApp: App;
+
+          try {
+            firebaseApp = getApp(account.id);
+          } catch (e: any) {
+            if (e.code == 'app/no-app') {
+              firebaseApp = initializeApp(
+                {
+                  credential: cert(JSON.parse(account.firebaseCredentials)),
+                },
+                account.id
+              );
+            } else throw e;
+          }
+
+          const messaging = getMessaging(firebaseApp);
+
+          const messageId = await messaging.send({
+            token: customer.phDeviceToken,
+            notification: {
+              title: titleWithInsertedTags.slice(
+                0,
+                this.MAXIMUM_PUSH_TITLE_LENGTH
+              ),
+              body: textWithInsertedTags.slice(0, this.MAXIMUM_PUSH_LENGTH),
+            },
+            android: {
+              notification: {
+                sound: 'default',
+                clickAction: 'FLUTTER_NOTIFICATION_CLICK',
+              },
+            },
+            apns: {
+              payload: {
+                aps: {
+                  badge: 1,
+                  sound: 'default',
+                },
+              },
+            },
+          });
+
+          this.logger.debug(
+            `Push for template id ${templateId} to customer ${customer.id} sent with message id ${messageId}`
           );
         } catch (e) {
           this.logger.error(e);

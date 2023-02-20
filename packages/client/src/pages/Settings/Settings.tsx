@@ -4,6 +4,7 @@ import SettingsAPIBeta from "./SettingsAPIBeta";
 import SettingsBillingBeta from "./SettingsBillingBeta";
 import SettingsEmailBeta from "./SettingsEmailBeta";
 import SettingsEventsBeta from "./SettingsEventsBeta";
+import SettingsFirebaseBeta from "./SettingsFirebaseBeta";
 import SettingsGeneralBeta from "./SettingsGeneralBeta";
 import SettingsIntegrationsBeta from "./SettingsIntegrationsBeta";
 import SettingsPlanBeta from "./SettingsPlanBeta";
@@ -16,6 +17,7 @@ enum TabName {
   API = "API",
   EMAIL = "Email",
   SMS = "SMS",
+  FIREBASE = "Firebase",
   SLACK = "Slack",
   EVENTS = "Events",
   PLAN = "Plan",
@@ -29,6 +31,7 @@ const tabComponents: Record<TabName, ReactNode> = {
   API: <SettingsAPIBeta />,
   Email: <SettingsEmailBeta />,
   SMS: <SettingsSMSBeta />,
+  Firebase: <SettingsFirebaseBeta />,
   Slack: <SettingsSlackBeta />,
   Events: <SettingsEventsBeta />,
   Plan: <SettingsPlanBeta />,

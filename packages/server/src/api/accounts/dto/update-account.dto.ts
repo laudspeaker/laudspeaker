@@ -73,6 +73,16 @@ export class UpdateAccountDto {
   @IsOptional()
   public posthogEmailKey: [string];
 
+  @IsString({ each: true })
+  @IsNotEmpty()
+  @IsOptional()
+  public posthogFirebaseDeviceTokenKey: [string];
+
+  @IsString()
+  @IsNotEmpty()
+  @IsOptional()
+  public firebaseCredentials: string;
+
   @IsArray()
   @IsOptional()
   public expectedOnboarding: string[];

@@ -24,6 +24,7 @@ interface MergeTagInputProps {
   inputRef?: RefObject<HTMLInputElement>;
   isPreview: boolean;
   setIsPreview: React.Dispatch<React.SetStateAction<boolean>>;
+  onFocus?: any;
 }
 
 const MergeTagInput = ({
@@ -38,6 +39,7 @@ const MergeTagInput = ({
   isPreview,
   setIsPreview,
   inputRef,
+  onFocus,
 }: MergeTagInputProps) => {
   const [items, setItems] = useState<(string | JSX.Element)[]>([]);
   const handleValueReplace = (regExp: RegExp | string, str: string) => {
@@ -91,7 +93,7 @@ const MergeTagInput = ({
         {items.length > 0 ? (
           items
         ) : (
-          <div className="h-[1.4375em] text-[20px] text-[#a3a4a5] pb-[2px]">
+          <div className="h-[1.4375em] text-[20px] text-[#a3a4a5] pb-[2px] select-none">
             {placeholder}
           </div>
         )}
@@ -108,6 +110,7 @@ const MergeTagInput = ({
         } !text-[20px] bg-[#E5E5E5] outline-none text-[#000] py-[18px] px-[29px] z-[1000] rounded-[8px] whitespace-nowrap`}
         onChange={onChange}
         inputRef={inputRef}
+        onFocus={onFocus}
       />
     </div>
   );

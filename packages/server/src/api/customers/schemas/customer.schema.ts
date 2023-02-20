@@ -33,6 +33,9 @@ export class Customer {
   phEmail: string;
 
   @Prop()
+  phDeviceToken: string;
+
+  @Prop()
   phCustom: string;
 
   @Prop()
