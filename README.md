@@ -30,6 +30,7 @@
 - 🔜 **Database / datalake / data warehouse import** ingest user data from your databases
 - 🔜 **Build and save segments of users**
 - 🔜 **Trigger journeys from segment/rudderstack/mixpanel events**
+- 🔜 **Comprehensive journey testing** - simulate user actions, differents dates, and times and test and debug messages before you start journeys
 
 ## 🚀 Get Started
 
