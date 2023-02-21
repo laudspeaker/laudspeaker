@@ -60,7 +60,6 @@ describe(
               cy.get("#audience").click();
               cy.get("#name").type(audience1Name);
               cy.get("#description").type("init description text");
-              cy.get("#saveNewSegment").click();
               cy.contains("Finish later").click();
 
               cy.get(".react-flow__viewport")
@@ -71,14 +70,11 @@ describe(
               cy.get("#audience").click();
               cy.get("#name").type(audience2Name);
               cy.get("#description").type("slack description");
-              cy.get("#saveNewSegment").click();
               cy.contains("Finish later").click();
 
               cy.get(".react-flow__viewport")
                 .get('[data-isprimary="false"]')
                 .move({ deltaX: 50, deltaY: 300, force: true });
-
-              createNewSegment();
 
               cy.get('[data-isprimary="false"]').click({ force: true });
               cy.get("#slack").click();
@@ -108,7 +104,6 @@ describe(
               cy.get("#audience").click();
               cy.get("#name").type(audience3Name);
               cy.get("#description").type("email description");
-              cy.get("#saveNewSegment").click();
               cy.contains("Finish later").click();
               cy.contains(audience3Name)
                 .move({ deltaX: 450, deltaY: 300, force: true })
@@ -134,6 +129,8 @@ describe(
               cy.get('[data-isprimary="false"] [data-handle-top]:last').click({
                 force: true,
               });
+
+              createNewSegment();
 
               cy.contains("Save").click();
               cy.wait(500);

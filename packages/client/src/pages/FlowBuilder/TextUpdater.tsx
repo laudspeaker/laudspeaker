@@ -16,7 +16,6 @@ import { Email, SlackMsg, Mobile, SMS } from "../../components/Icons/Icons";
 import ChooseTemplateModal from "./ChooseTemplateModal";
 import LinesEllipsis from "react-lines-ellipsis";
 import { NodeData } from "./FlowBuilder";
-import Modal from "components/Elements/Modal";
 import { NameSegment } from "pages/Segment";
 import { INameSegmentForm } from "pages/Segment/NameSegment";
 import ApiService from "services/api.service";
@@ -24,6 +23,8 @@ import { toast } from "react-toastify";
 import useClickPreventionOnDoubleClick from "hooks/useClickPreventionOnDoubleClick";
 import HourglassSplit from "assets/images/HourglassSplit.svg";
 import { TriggerType } from "types/Workflow";
+import SideModal from "components/Elements/SideModal";
+import { createPortal } from "react-dom";
 
 const textStyle = "text-[#111827] font-[Inter] font-middle text-[14px]";
 const subTitleTextStyle = "text-[#6B7280] font-[Inter] text-[14px]";
@@ -199,6 +200,8 @@ const TextUpdaterNode = ({ data }: { data: NodeData }) => {
       () => setAudienceModalOpen(true)
     );
 
+  const flowBuilder = document.getElementById("flow-builder");
+
   return (
     <>
       <div
@@ -367,34 +370,43 @@ const TextUpdaterNode = ({ data }: { data: NodeData }) => {
           )}
         </div>
       </div>
-      {updateTemplateModalOpen && selectedMessageType && selectedTemplateId && (
-        <ChooseTemplateModal
-          templateModalOpen={updateTemplateModalOpen}
-          selectedMessageType={selectedMessageType}
-          handleTemplateModalOpen={handleTemplateModalOpen}
-          selectedTemplateId={selectedTemplateId}
-          isCollapsible={true}
-          onClose={onTemplateModalClose}
-          onTemplateDelete={onTemplateDelete}
-        />
-      )}
+      {flowBuilder &&
+        createPortal(
+          <>
+            {selectedMessageType && selectedTemplateId && (
+              <ChooseTemplateModal
+                templateModalOpen={updateTemplateModalOpen}
+                selectedMessageType={selectedMessageType}
+                handleTemplateModalOpen={handleTemplateModalOpen}
+                selectedTemplateId={selectedTemplateId}
+                isCollapsible={true}
+                onClose={onTemplateModalClose}
+                onTemplateDelete={onTemplateDelete}
+              />
+            )}
+          </>,
 
-      {audienceModalOpen && (
-        <Modal
-          isOpen={audienceModalOpen}
-          onClose={() => setAudienceModalOpen(false)}
-        >
-          <NameSegment
-            onSubmit={handleAudienceSubmit}
-            isPrimary={data.primary}
-            isCollapsible={true}
+          flowBuilder
+        )}
+
+      {flowBuilder &&
+        createPortal(
+          <SideModal
+            isOpen={audienceModalOpen}
             onClose={() => setAudienceModalOpen(false)}
-            workflowId={flowId}
-            edit={true}
-            audienceId={audienceId}
-          />
-        </Modal>
-      )}
+          >
+            <NameSegment
+              onSubmit={handleAudienceSubmit}
+              isPrimary={data.primary}
+              isCollapsible={true}
+              onClose={() => setAudienceModalOpen(false)}
+              workflowId={flowId}
+              edit={true}
+              audienceId={audienceId}
+            />
+          </SideModal>,
+          flowBuilder
+        )}
     </>
   );
 };

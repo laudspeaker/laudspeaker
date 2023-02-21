@@ -15,13 +15,13 @@ export default (
   cy.get("#audience > .p-0 > .justify-between").click();
   cy.get("#name").type("init");
   cy.get("#description").type("init description text");
-  cy.get("#saveNewSegment").click();
   cy.contains("Finish later").click();
 
   cy.get(".react-flow__viewport")
     .get('[data-isprimary="true"]')
     .move({ deltaX: 100, deltaY: 100 })
     .click();
+  cy.wait(3000);
   cy.get("#email").click();
   cy.get("#activeJourney").click();
   cy.contains(templateName).click();

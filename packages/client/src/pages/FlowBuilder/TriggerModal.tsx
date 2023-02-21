@@ -1,6 +1,6 @@
-import Modal from "../../components/Elements/Modal";
 import TriggerCreater from "components/TriggerCreater";
 import { Trigger, TriggerType } from "types/Workflow";
+import SideModal from "components/Elements/SideModal";
 
 interface ITriggerModal {
   selectedTrigger?: Trigger;
@@ -8,6 +8,7 @@ interface ITriggerModal {
   onDeleteTrigger?: (data: string) => void;
   isCollapsible: boolean;
   isViewMode?: boolean;
+  isOpen?: boolean;
   onClose: () => void;
 }
 const TriggerModal = ({
@@ -17,6 +18,7 @@ const TriggerModal = ({
   onClose,
   isViewMode = false,
   isCollapsible = true,
+  isOpen,
 }: ITriggerModal) => {
   const handleClose = () => {
     const triggerType = selectedTrigger?.type as TriggerType;
@@ -46,14 +48,14 @@ const TriggerModal = ({
   };
 
   return (
-    <Modal
-      isOpen={!!selectedTrigger}
-      panelClass="w-full !max-w-[90%] h-full max-h-full overflow-y-scroll"
+    <SideModal
+      isOpen={!!isOpen && !!selectedTrigger}
+      panelClass="h-full max-h-full overflow-y-scroll"
       closeButtonNeed={isCollapsible}
       onClose={handleClose}
     >
       <div className="w-full bg-[background.paper] border-0 ">
-        {selectedTrigger ? (
+        {selectedTrigger && (
           <TriggerCreater
             triggerType={selectedTrigger.type as TriggerType}
             trigger={selectedTrigger}
@@ -63,9 +65,9 @@ const TriggerModal = ({
               onDeleteTrigger && onDeleteTrigger(triggerId)
             }
           />
-        ) : null}
+        )}
       </div>
-    </Modal>
+    </SideModal>
   );
 };
 

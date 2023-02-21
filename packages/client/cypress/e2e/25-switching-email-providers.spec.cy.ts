@@ -26,36 +26,36 @@ describe(
       cy.wait(1000);
     });
 
-    // it("free3 -> sendgrid", () => {
-    //   loginFunc(email, password);
-    //   templatesFunc();
+    it("free3 -> sendgrid", () => {
+      loginFunc(email, password);
+      templatesFunc();
 
-    //   setFree3();
-    //   cy.contains("Messaging").click();
-    //   runTwoStepEmailJourney(emailTemplate.name, emailTemplate.eventName);
+      setFree3();
+      cy.contains("Messaging").click();
+      runTwoStepEmailJourney(emailTemplate.name, emailTemplate.eventName);
 
-    //   checkSuccessfulEmailEventHit(
-    //     userAPIkey,
-    //     emailTemplate.eventName,
-    //     "email",
-    //     emailTemplate.correlationValue
-    //   );
+      checkSuccessfulEmailEventHit(
+        userAPIkey,
+        emailTemplate.eventName,
+        "email",
+        emailTemplate.correlationValue
+      );
 
-    //   setSendgrid();
-    //   cy.contains("Messaging").click();
+      setSendgrid();
+      cy.contains("Messaging").click();
 
-    //   runTwoStepEmailJourney(
-    //     emailTemplate.name,
-    //     emailTemplate.eventName + "2",
-    //     "2"
-    //   );
-    //   checkSuccessfulEmailEventHit(
-    //     userAPIkey,
-    //     emailTemplate.eventName + "2",
-    //     "email",
-    //     emailTemplate.correlationValue
-    //   );
-    // });
+      runTwoStepEmailJourney(
+        emailTemplate.name,
+        emailTemplate.eventName + "2",
+        "2"
+      );
+      checkSuccessfulEmailEventHit(
+        userAPIkey,
+        emailTemplate.eventName + "2",
+        "email",
+        emailTemplate.correlationValue
+      );
+    });
 
     it("free3 -> mailgun", () => {
       loginFunc(email, password);
@@ -88,33 +88,33 @@ describe(
       );
     });
 
-    // it("mailgun -> sendgrid", () => {
-    //   loginFunc(email, password);
-    //   templatesFunc();
+    it("mailgun -> sendgrid", () => {
+      loginFunc(email, password);
+      templatesFunc();
 
-    //   runTwoStepEmailJourney(emailTemplate.name, emailTemplate.eventName);
+      runTwoStepEmailJourney(emailTemplate.name, emailTemplate.eventName);
 
-    //   checkSuccessfulEmailEventHit(
-    //     userAPIkey,
-    //     emailTemplate.eventName,
-    //     "email",
-    //     emailTemplate.correlationValue
-    //   );
+      checkSuccessfulEmailEventHit(
+        userAPIkey,
+        emailTemplate.eventName,
+        "email",
+        emailTemplate.correlationValue
+      );
 
-    //   setSendgrid();
-    //   cy.contains("Messaging").click();
+      setSendgrid();
+      cy.contains("Messaging").click();
 
-    //   runTwoStepEmailJourney(
-    //     emailTemplate.name,
-    //     emailTemplate.eventName + "2",
-    //     "2"
-    //   );
-    //   checkSuccessfulEmailEventHit(
-    //     userAPIkey,
-    //     emailTemplate.eventName + "2",
-    //     "email",
-    //     emailTemplate.correlationValue
-    //   );
-    // });
+      runTwoStepEmailJourney(
+        emailTemplate.name,
+        emailTemplate.eventName + "2",
+        "2"
+      );
+      checkSuccessfulEmailEventHit(
+        userAPIkey,
+        emailTemplate.eventName + "2",
+        "email",
+        emailTemplate.correlationValue
+      );
+    });
   }
 );

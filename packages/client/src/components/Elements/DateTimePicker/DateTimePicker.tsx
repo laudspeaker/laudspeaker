@@ -18,6 +18,7 @@ export default function DateTimePicker({
   handleChange,
   value,
   disabled = false,
+  label,
 }: IDateTimePickerProps) {
   const onChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (disabled) return;
@@ -28,6 +29,9 @@ export default function DateTimePicker({
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns}>
       <Stack spacing={3}>
+        <label className="block text-sm font-medium text-gray-700">
+          {label}
+        </label>
         <input
           disabled={!!disabled}
           value={value}

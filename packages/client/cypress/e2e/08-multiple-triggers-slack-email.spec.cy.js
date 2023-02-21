@@ -33,23 +33,21 @@ describe(
       cy.get("#audience").click();
       cy.get("#name").type("init");
       cy.get("#description").type("init description text");
-      cy.get("#saveNewSegment").click();
       cy.contains("Finish later").click();
 
       cy.get(".react-flow__viewport")
         .get('[data-isprimary="true"]')
-        .move({ deltaX: 100, deltaY: 100 });
+        .move({ deltaX: 100, deltaY: 100, force: true });
 
       cy.wait(3000);
       cy.get("#audience").click();
       cy.get("#name").type("slack audience");
       cy.get("#description").type("slack description");
-      cy.get("#saveNewSegment").click();
       cy.contains("Finish later").click();
 
       cy.get(".react-flow__viewport")
         .get('[data-isprimary="false"]')
-        .move({ deltaX: 50, deltaY: 300 });
+        .move({ deltaX: 50, deltaY: 300, force: true });
 
       cy.get('[data-isprimary="false"]').click();
       cy.get("#slack").click();
@@ -73,7 +71,6 @@ describe(
       cy.get("#audience").click();
       cy.get("#name").type("email audience");
       cy.get("#description").type("email description");
-      cy.get("#saveNewSegment").click();
       cy.contains("Finish later").click();
       cy.contains("email audience")
         .move({ deltaX: 450, deltaY: 300, force: true })
@@ -86,9 +83,12 @@ describe(
       setupEventTrigger(emailTemplate.eventName, emailTemplate.eventName);
 
       cy.get("[data-handle-bottom]:last").drag(
-        '[data-isprimary="false"] [data-handle-top]:last'
+        '[data-isprimary="false"] [data-handle-top]:last',
+        { force: true }
       );
-      cy.get('[data-isprimary="false"] [data-handle-top]:last').click();
+      cy.get('[data-isprimary="false"] [data-handle-top]:last').click({
+        force: true,
+      });
 
       createNewSegment();
 
@@ -112,7 +112,7 @@ describe(
           event: { [slackTemplate.eventName]: slackTemplate.eventName },
         },
       }).then(({ body }) => {
-        cy.wait(2000);
+        cy.wait(5000);
         cy.request({
           method: "POST",
           headers: {
@@ -138,7 +138,7 @@ describe(
           event: { [emailTemplate.eventName]: emailTemplate.eventName },
         },
       }).then(({ body }) => {
-        cy.wait(2000);
+        cy.wait(5000);
         cy.request({
           method: "POST",
           headers: {

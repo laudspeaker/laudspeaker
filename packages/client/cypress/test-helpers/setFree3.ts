@@ -26,10 +26,10 @@ export default () => {
 
         cy.get("#testSendingName").type("TestName");
         cy.get("#testSendingEmail").type("test-email");
-        cy.get(".inline-flex").click();
+        cy.contains("Save").click();
 
-        cy.reload();
         cy.wait(1000);
+        cy.reload();
         cy.get(".-mb-px > :nth-child(3)").click();
         cy.contains("Free3").click();
 

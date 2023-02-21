@@ -1,12 +1,10 @@
 import React, { useState, useEffect, MouseEvent } from "react";
-import { FormControl } from "@mui/material";
 import { GenericButton, Input, Select } from "components/Elements";
 import AC from "react-autocomplete";
 import {
   getConditions,
   getEventResources,
 } from "../../pages/Segment/SegmentHelpers";
-import Card from "components/Cards/Card";
 import DateTimePicker from "components/Elements/DateTimePicker";
 import ConditionCreater from "./ConditionCreator";
 import ApiService from "services/api.service";
@@ -20,6 +18,7 @@ import {
 } from "types/Workflow";
 import { FormDataItem, IResource } from "pages/Segment/MySegment";
 import { Resource } from "pages/EmailBuilder/EmailBuilder";
+import MinusIcon from "../../assets/images/MinusIcon.svg";
 
 interface ITriggerCreaterProp {
   triggerType: TriggerType;
@@ -194,6 +193,7 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
 
   const handleTriggerType = (value: TriggerType) => {
     setTriggerType(value);
+    setEventTrigger({ ...eventTrigger, type: value });
   };
 
   const handleSpecificTimeChange = (value: string | null) => {
@@ -466,14 +466,8 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
       case "timeDelay": {
         jsx = (
           <>
-            <div className="flex items-center">
-              <FormControl
-                sx={{
-                  padding: "0 15px",
-                  marging: "auto 0",
-                  width: "auto",
-                }}
-              >
+            <div className="flex flex-col">
+              <div>
                 <Select
                   id="eventTime"
                   name="eventTime"
@@ -488,49 +482,24 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
                   customButtonClass={`${
                     isViewMode && "!bg-gray-200 !cursor-auto opacity-[0.7]"
                   }`}
-                  sx={{
-                    height: "44px",
-                    "& .MuiSelect-select": {
-                      padding: "9px 15px",
-                      border: "1px solid #DEDEDE",
-                      paddingRight: "50px !important",
-                      boxShadow: "none",
-                    },
-                  }}
+                  wrapperClassnames="max-w-[200px]"
                 />
-              </FormControl>
+              </div>
               {eventTimeSelect ? (
                 <>
-                  <FormControl
-                    sx={{
-                      padding: "0 15px",
-                      width: "auto",
-                    }}
-                  >
+                  <div>
                     {eventTimeSelect == "SpecificTime" && (
-                      <FormControl
-                        sx={{
-                          padding: "0 15px",
-                          marging: "auto 0",
-                          width: "auto",
-                        }}
-                      >
+                      <div>
                         <DateTimePicker
                           value={datePickerSpecificTimeValue || ""}
                           handleChange={handleSpecificTimeChange}
                           dateStyle="short"
                           timeStyle="short"
                         />
-                      </FormControl>
+                      </div>
                     )}
-                  </FormControl>
-                  <FormControl
-                    sx={{
-                      padding: "0 15px",
-                      marging: "auto 0",
-                      width: "auto",
-                    }}
-                  >
+                  </div>
+                  <div>
                     {eventTimeSelect !== "SpecificTime" && (
                       <Input
                         name="delayTime"
@@ -538,19 +507,15 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
                         value={delayInputTime}
                         onChange={(e) => handleTimeDelayChange(e.target.value)}
                         placeholder="HH:MM"
+                        className="mt-[24px] max-w-[200px]"
                       />
                     )}
-                  </FormControl>
-                  <FormControl
-                    sx={{
-                      padding: "0 15px",
-                      width: "auto",
-                    }}
-                  >
-                    {eventTimeSelect == "SpecificTime" ? undefined : (
-                      <FormControl
-                        sx={{
-                          margin: "auto 0",
+                  </div>
+                  <div>
+                    {eventTimeSelect !== "SpecificTime" && (
+                      <div
+                        style={{
+                          margin: "10px 0",
                           width: "auto",
                           height: "44px",
                           borderRadius: "24px",
@@ -562,12 +527,13 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
                           textOverflow: "ellipsis",
                           overflow: "hidden",
                           whiteSpace: "nowrap",
+                          maxWidth: "200px",
                         }}
                       >
                         after user entered state
-                      </FormControl>
+                      </div>
                     )}
-                  </FormControl>
+                  </div>
                 </>
               ) : (
                 <></>
@@ -581,25 +547,18 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
         jsx = (
           <div className="flex flex-col flex-wrap">
             {toPart ? (
-              <div className="flex items-center mt-[10px]">
-                <FormControl
-                  sx={{
-                    padding: "0 15px",
-                    marging: "auto 0",
-                    width: "auto",
-                  }}
-                  id="toValueDate"
-                >
+              <div className="flex flex-col mt-[10px]">
+                <div id="toValueDate">
                   <DateTimePicker
                     value={datePickerToValue || ""}
                     handleChange={handleToTimeChange}
                     dateStyle="short"
                     timeStyle="short"
                   />
-                </FormControl>
-                <FormControl
-                  sx={{
-                    margin: "auto 0",
+                </div>
+                <div
+                  style={{
+                    margin: "10px 0",
                     width: "auto",
                     height: "44px",
                     borderRadius: "24px",
@@ -611,30 +570,24 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
                     textOverflow: "ellipsis",
                     overflow: "hidden",
                     whiteSpace: "nowrap",
+                    maxWidth: "200px",
                   }}
                 >
                   after user has left audience state
-                </FormControl>
+                </div>
               </div>
             ) : (
-              <div className="flex items-center">
-                <FormControl
-                  sx={{
-                    padding: "0 15px",
-                    marging: "auto 0",
-                    width: "auto",
-                  }}
-                  id="fromValueDate"
-                >
+              <div className="flex flex-col gap-[15px] mb-[20px]">
+                <div id="fromValueDate">
                   <DateTimePicker
                     value={datePickerFromValue || ""}
                     handleChange={handleFromTimeChange}
                     dateStyle="short"
                     timeStyle="short"
                   />
-                </FormControl>
-                <FormControl
-                  sx={{
+                </div>
+                <div
+                  style={{
                     margin: "auto 0",
                     width: "auto",
                     height: "44px",
@@ -647,10 +600,11 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
                     textOverflow: "ellipsis",
                     overflow: "hidden",
                     whiteSpace: "nowrap",
+                    maxWidth: "200px",
                   }}
                 >
                   after user has entered audience state
-                </FormControl>
+                </div>
               </div>
             )}
           </div>
@@ -759,19 +713,28 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
 
   return (
     <>
-      <Card
-        sx={{
-          padding: "30px",
-          width: "100%",
-        }}
-      >
-        <div className="rounded-[10px] border-[1px] border-[#D1D5DB] my-[25px] mx-[0px] py-[20px] px-[25px] relative shadow-[0px_1px_2px_rgba(0,0,0,0.05)]">
+      <div className="h-full">
+        <div className="mb-5">
+          <Select
+            label="Trigger type"
+            value={triggerType}
+            options={[
+              { value: TriggerType.EVENT, title: "Event Based" },
+              { value: TriggerType.TIME_DELAY, title: "Time Delay" },
+              { value: TriggerType.TIME_WINDOW, title: "Time Window" },
+            ]}
+            onChange={handleTriggerType}
+            wrapperClassnames="max-w-[200px]"
+          />
+        </div>
+        <div className="rounded-[10px] relative shadow-[0px_1px_2px_rgba(0,0,0,0.05)]">
           <div className="flex items-center relative">
-            <div className="rounded-[10px] my-[25px] mx-[0px] pt-[10px] pb-[25px] px-[20px] bg-[#F9F9FA] flex items-center cursor-pointer w-full">
+            <div className="rounded-[10px] flex items-center cursor-pointer w-full">
               <div className="flex flex-[1] flex-wrap flex-col">
                 {eventTrigger.type === TriggerType.EVENT && (
-                  <div className="w-full flex mb-[10px]">
+                  <div className="w-full flex flex-col mb-[10px]">
                     <Select
+                      label="Event type"
                       onChange={(val) =>
                         setEventTrigger({
                           ...eventTrigger,
@@ -783,7 +746,7 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
                         { value: ProviderTypes.Custom, title: "Custom" },
                       ]}
                       disabled={isViewMode}
-                      wrapperClassnames="max-w-[120px] mr-[15px]"
+                      wrapperClassnames="max-w-[200px] w-full mr-[15px]"
                       value={eventTrigger.providerType || ProviderTypes.Custom}
                     />
                     {eventTrigger.providerType === ProviderTypes.Posthog && (
@@ -847,6 +810,7 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
                       options={[{ value: "From" }]}
                       value="From"
                       onChange={() => {}}
+                      wrapperClassnames="w-full max-w-[200px]"
                     />
                   </div>
                 )}
@@ -856,12 +820,22 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
                       {eventTrigger.properties?.conditions?.map(
                         (condition, i) => (
                           <>
+                            <div className="flex items-center">
+                              <span className="mr-[5px]">{i + 1}</span>
+                              <div className="h-[1px] w-full bg-blue-gray-300" />
+                              {!isViewMode && (
+                                <img
+                                  className="ml-[5px]"
+                                  onClick={() => handleDeleteCondition(i)}
+                                  src={MinusIcon}
+                                />
+                              )}
+                            </div>
                             <ConditionCreater
                               condition={condition}
                               onChange={(updatedCondition) =>
                                 handleConditionsChange(i, updatedCondition)
                               }
-                              onDelete={() => handleDeleteCondition(i)}
                               possibleTypes={possibleTypes}
                               isViewMode={isViewMode}
                               specificProvider={
@@ -935,14 +909,8 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
           </div>
           {triggerType === "timeWindow" && (
             <>
-              <div className="flex items-center gap-[15px]">
-                <FormControl
-                  sx={{
-                    maxWidth: "135px",
-                    paddingLeft: "15px",
-                    minWidth: "112px",
-                  }}
-                >
+              <div className="flex flex-col gap-[15px]">
+                <div>
                   <Select
                     id="activeJourney"
                     value={triggerType}
@@ -953,11 +921,12 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
                     customButtonClass={`${
                       isViewMode && "!bg-gray-200 !cursor-auto opacity-[0.7]"
                     }`}
+                    wrapperClassnames="max-w-[200px]"
                   />
-                </FormControl>
+                </div>
               </div>
               <div className="flex items-center relative">
-                <div className="rounded-[10px] my-[25px] mx-[0px] pt-[10px] pb-[25px] px-[20px] bg-[#F9F9FA] flex items-center cursor-pointer w-full">
+                <div className="rounded-[10px] flex items-center cursor-pointer w-full">
                   <div className="flex flex-[1] flex-wrap">
                     {generateTriggerUI({ toPart: true })}
                   </div>
@@ -966,26 +935,13 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
             </>
           )}
         </div>
-        {triggerType === "eventBased" ? (
-          <span className="text-red-500">{eventBasedErrorMessage}</span>
-        ) : (
-          <></>
+        {triggerType === "eventBased" && (
+          <div className="text-red-500 max-w-[200px] overflow-hidden">
+            {eventBasedErrorMessage}
+          </div>
         )}
         {!isViewMode && (
-          <div className="flex gap-[10px] justify-end">
-            <div>
-              <GenericButton
-                onClick={deleteRow}
-                style={{
-                  maxWidth: "200px",
-                  background: "#D3D3D3",
-                  width: "200px",
-                  color: "#28282E",
-                }}
-              >
-                Delete
-              </GenericButton>
-            </div>
+          <div className="mt-[10px] flex flex-col gap-[20px]">
             <div data-savetriggerreator>
               <GenericButton
                 onClick={handleSubmit}
@@ -998,9 +954,20 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
                 Save
               </GenericButton>
             </div>
+            <GenericButton
+              onClick={deleteRow}
+              style={{
+                maxWidth: "200px",
+                background: "#D3D3D3",
+                width: "200px",
+                color: "#28282E",
+              }}
+            >
+              Delete
+            </GenericButton>
           </div>
         )}
-      </Card>
+      </div>
     </>
   );
 };

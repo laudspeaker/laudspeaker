@@ -7,8 +7,6 @@ import setFree3 from "../test-helpers/setFree3";
 import setSendgrid from "../test-helpers/setSendgrid";
 import setSMS from "../test-helpers/setSMS";
 import { templatesFunc } from "../test-helpers/templatesFunc";
-import testDelayTrigger from "../test-helpers/testDelayTrigger";
-import testSpecificTimeTrigger from "../test-helpers/testSpecificTimeTrigger";
 import testTimeWindowTrigger from "../test-helpers/testTimeWindowTrigger";
 import verifyAccount from "../test-helpers/verifyAccount";
 

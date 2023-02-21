@@ -64,10 +64,17 @@ const Select = <T extends string | number | undefined>(
     tick,
     wrapperClassnames,
     placeholder,
+    label,
   } = props;
   return (
     <>
       <div id={id} className={`relative ${wrapperClassnames}`}>
+        <label
+          htmlFor={name}
+          className="block text-sm font-medium text-gray-700"
+        >
+          {label}
+        </label>
         <Listbox
           defaultValue={defaultValue}
           disabled={disabled}

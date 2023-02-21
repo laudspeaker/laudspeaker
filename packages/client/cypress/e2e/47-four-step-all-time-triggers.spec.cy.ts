@@ -43,13 +43,10 @@ describe(
       cy.wait(3000);
       cy.get("#audience > .p-0 > .justify-between").click();
       cy.get("#name").type(step1Name);
-      cy.get("#saveNewSegment").click();
       cy.contains("Finish later").click();
       cy.get(".text-updater").move({ deltaX: 100, deltaY: 100 });
-      createNewSegment();
       cy.get("#audience > .p-0 > .justify-between").click({ force: true });
       cy.get("#name").type(step2Name);
-      cy.get("#saveNewSegment").click();
       cy.contains("Finish later").click();
       cy.get('[data-isprimary]:not([data-isprimary="true"])').move({
         deltaX: 100,
@@ -71,7 +68,6 @@ describe(
 
       cy.get("#audience > .p-0 > .justify-between").click();
       cy.get("#name").clear().type(step3Name);
-      cy.get("#saveNewSegment").click();
       cy.contains("Finish later").click();
 
       cy.contains(step3Name).move({ deltaX: 100, deltaY: 500 });
@@ -85,14 +81,16 @@ describe(
       setupSpecificTimeTrigger(180000);
       cy.get(
         '.text-updater-node:not([data-isprimary="true"]) > [style="display: flex; height: 22px; position: absolute; left: 0px; bottom: 0px; align-items: center; width: 100%; justify-content: space-around;"] > .react-flow__handle'
-      ).drag('[data-isprimary]:not([data-isprimary="true"])', { force: true });
+      ).drag(
+        `[data-isprimary]:not([data-isprimary="true"]):contains("${step3Name}")`,
+        { force: true }
+      );
       cy.get(
         `[data-isprimary]:not([data-isprimary="true"]):contains("${step3Name}")`
       ).click();
 
       cy.get("#audience > .p-0 > .justify-between").click();
       cy.get("#name").clear().type(step4Name);
-      cy.get("#saveNewSegment").click();
       cy.contains("Finish later").click();
 
       cy.contains(step4Name).move({ deltaX: 100, deltaY: 700 });
@@ -108,6 +106,8 @@ describe(
         '.text-updater-node:not([data-isprimary="true"]) > [style="display: flex; height: 22px; position: absolute; left: 0px; bottom: 0px; align-items: center; width: 100%; justify-content: space-around;"] > .react-flow__handle:last'
       ).drag("[data-isprimary]:nth(3)", { force: true });
       cy.get("[data-isprimary]:nth(3)").click();
+
+      createNewSegment();
 
       cy.contains("Save").click();
       cy.wait(1000);
