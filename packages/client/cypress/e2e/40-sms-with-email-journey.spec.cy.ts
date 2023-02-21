@@ -109,7 +109,7 @@ describe(
           },
           url: `${Cypress.env("AxiosURL")}events/job-status/email`,
           body: {
-            jobId: body[0]?.jobIds?.[0] || body[0]?.jobIds?.[1],
+            jobId: body[0]?.jobIds?.[1],
           },
         }).then(({ body }) => {
           expect(body).to.equal("completed");
