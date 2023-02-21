@@ -194,6 +194,9 @@ export class EventsService {
           if (event?.phEmail) {
             cust['phEmail'] = event.phEmail;
           }
+          if (event?.phDeviceToken) {
+            cust['phDeviceToken'] = event.phDeviceToken;
+          }
           if (event?.phCustom) {
             cust['phCustom'] = event.phCustom;
           }

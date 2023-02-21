@@ -224,7 +224,7 @@ const Person = () => {
                             <dt className="text-sm font-medium text-gray-500">
                               {key}
                             </dt>
-                            <dd className="mt-1 text-sm text-gray-900 flex gap-[5px] items-center">
+                            <dd className="mt-1 text-sm text-gray-900 flex gap-[5px] items-center overflow-auto">
                               {isEditingMode ? (
                                 <>
                                   <Input

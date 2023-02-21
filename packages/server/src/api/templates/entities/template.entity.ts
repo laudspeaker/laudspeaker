@@ -32,10 +32,16 @@ export class Template {
   slackMessage: string;
 
   @Column()
-  type: 'email' | 'slack' | 'sms';
+  type: 'email' | 'slack' | 'sms' | 'firebase';
 
   @Column({ nullable: true })
   smsText: string;
+
+  @Column({ nullable: true })
+  pushText: string;
+
+  @Column({ nullable: true })
+  pushTitle: string;
 
   @Column({ default: false })
   isDeleted: boolean;

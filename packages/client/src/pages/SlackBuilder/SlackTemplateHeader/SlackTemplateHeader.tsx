@@ -36,7 +36,7 @@ const SlackTemplateHeader = (props: IEmailHeaderProps) => {
   return (
     <div>
       <div className="flex text-center justify-between ml-[10px] h-[80px]">
-        <h6 className="font-[Poppins] font-medium text-[14px] leading-[30px] flex items-center">
+        <div className="font-[Poppins] font-medium text-[14px] leading-[30px] flex items-center">
           <div
             id="turnBackFromTemplate"
             className="min-w-[16px] pr-[16px] cursor-pointer"
@@ -73,7 +73,7 @@ const SlackTemplateHeader = (props: IEmailHeaderProps) => {
               }}
             />
           )}
-        </h6>
+        </div>
         <Divider />
 
         <div className="flex text-center justify-end items-center w-[400px] pr-[50px] gap-[10px]">

@@ -10,6 +10,7 @@ export enum MessagesTypes {
   EMAIL = "email",
   SLACK = "slack",
   SMS = "sms",
+  FIREBASE = "firebase",
   PUSH = "push",
 }
 

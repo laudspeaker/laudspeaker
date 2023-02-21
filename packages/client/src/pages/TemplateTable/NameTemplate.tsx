@@ -49,6 +49,9 @@ const NameTemplate = ({ onSubmit, isPrimary }: INameSegment) => {
       } else if (day === "sms") {
         const navigationLink = "/templates/sms/" + segmentForm.name;
         navigate(navigationLink);
+      } else if (day === "firebase") {
+        const navigationLink = "/templates/firebase/" + segmentForm.name;
+        navigate(navigationLink);
       }
       e.preventDefault();
       if (onSubmit) {
@@ -97,6 +100,7 @@ const NameTemplate = ({ onSubmit, isPrimary }: INameSegment) => {
                   { value: "email" },
                   { value: "slack" },
                   { value: "sms" },
+                  { value: "firebase" },
                 ]}
                 displayEmpty
               />

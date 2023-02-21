@@ -130,6 +130,7 @@ const TextUpdaterNode = ({ data }: { data: NodeData }) => {
     sms: <SMS />,
     push: <Mobile />,
     email: <Email />,
+    firebase: <Mobile />,
     slack: <SlackMsg />,
   };
 

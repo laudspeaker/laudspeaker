@@ -91,6 +91,12 @@ export class Account extends BaseEntity {
   @Column('simple-array', { nullable: true })
   public posthogEmailKey: string[];
 
+  @Column('simple-array', { nullable: true })
+  public posthogFirebaseDeviceTokenKey: string[];
+
+  @Column({ type: 'varchar', nullable: true })
+  public firebaseCredentials: string;
+
   @Column({ type: 'varchar', array: true, default: [] })
   public expectedOnboarding: string[];
 
