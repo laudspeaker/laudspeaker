@@ -21,11 +21,11 @@
 
 ![app laudspeaker com_flow_onboarding-example (1)](https://user-images.githubusercontent.com/7728266/208761386-5dfe6803-16d1-47ca-98f4-45d77ff6058e.png)
 
-- **Multiple messaging channels like email and slack** Send product or event-triggered emails, sms and more to your customers and users at scale
+- **Multiple messaging channels like email, sms and push** Send product or event-triggered emails, sms and more to your customers and users at scale
 - **Visual Journey Builder** Build complex messaging workflows the whole team can understand in a visual tool, and see stats once a journey is started
-- **Easy WYSIWYG Template builder** Build nice emails and more with our template builder
 - **Run on your own infra** Deploy and run on your own infrastructure to keep control of your data.
 - **Integrate with PostHog analytics** Easily trigger journeys with PostHog, the open source product analytics platform
+- **Easy WYSIWYG Template builder** Build nice emails and more with our template builder
 - **1-Click Deploy** to Render
 - 🔜 **Database / datalake / data warehouse import** ingest user data from your databases
 - 🔜 **Build and save segments of users**
