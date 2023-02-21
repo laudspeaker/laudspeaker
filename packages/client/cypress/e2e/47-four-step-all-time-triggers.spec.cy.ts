@@ -81,7 +81,10 @@ describe(
       setupSpecificTimeTrigger(180000);
       cy.get(
         '.text-updater-node:not([data-isprimary="true"]) > [style="display: flex; height: 22px; position: absolute; left: 0px; bottom: 0px; align-items: center; width: 100%; justify-content: space-around;"] > .react-flow__handle'
-      ).drag('[data-isprimary]:not([data-isprimary="true"])', { force: true });
+      ).drag(
+        `[data-isprimary]:not([data-isprimary="true"]):contains("${step3Name}")`,
+        { force: true }
+      );
       cy.get(
         `[data-isprimary]:not([data-isprimary="true"]):contains("${step3Name}")`
       ).click();

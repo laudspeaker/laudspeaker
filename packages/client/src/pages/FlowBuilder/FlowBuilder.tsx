@@ -1302,6 +1302,34 @@ const Flow = () => {
           mode={segmentModalMode}
           setMode={setSegmentModalMode}
           setSegmentId={setSegmentId}
+          afterContent={
+            <>
+              <div className="flex justify-end m-[10px_0]" data-nextstep>
+                <Tooltip
+                  content={
+                    stepsCompletion[currentStep] ? "" : startDisabledReason
+                  }
+                  placement="bottom"
+                >
+                  <GenericButton
+                    customClasses={`inline-flex items-center rounded-md border border-transparent bg-cyan-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-cyan-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500 ${
+                      stepsCompletion[currentStep] ? "" : "grayscale"
+                    }`}
+                    onClick={handleNextStep}
+                    style={{
+                      maxWidth: "158px",
+                      maxHeight: "48px",
+                      padding: "13px 25px",
+                    }}
+                    disabled={isSaving || !stepsCompletion[currentStep]}
+                    loading={isSaving}
+                  >
+                    Next
+                  </GenericButton>
+                </Tooltip>
+              </div>
+            </>
+          }
         />
         <SideModal
           isOpen={journeyTypeModalOpen}
@@ -1335,6 +1363,34 @@ const Flow = () => {
                     What is a dynamic segment?
                   </p>
                 </div>
+              </Tooltip>
+            </div>
+            <div
+              className="flex justify-end m-[10px_7.5px]"
+              data-startflowbutton
+            >
+              <Tooltip
+                content={
+                  startDisabledReason ||
+                  "Once you start a journey users can be messaged"
+                }
+                placement="bottom"
+              >
+                <GenericButton
+                  customClasses={`inline-flex items-center rounded-md border border-transparent bg-cyan-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-cyan-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500 ${
+                    !!startDisabledReason ? "grayscale" : ""
+                  }`}
+                  onClick={handleStartJourney}
+                  style={{
+                    maxWidth: "158px",
+                    maxHeight: "48px",
+                    padding: "13px 25px",
+                  }}
+                  disabled={!!startDisabledReason || isSaving}
+                  loading={isSaving}
+                >
+                  Start
+                </GenericButton>
               </Tooltip>
             </div>
           </div>

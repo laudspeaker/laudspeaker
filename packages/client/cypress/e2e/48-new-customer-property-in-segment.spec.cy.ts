@@ -39,7 +39,23 @@ describe(
       cy.contains("Create Journey").click();
       cy.get("#name").clear().type("Segment with new property test");
       cy.get("#createJourneySubmit").click();
-      cy.get("#useExistingSegment").click();
+      cy.wait(3000);
+      cy.get("#audience > .p-0 > .justify-between").click();
+      cy.get("#name").type("init");
+      cy.get("#description").type("init description text");
+      cy.contains("Finish later").click();
+
+      cy.get(".react-flow__viewport")
+        .get('[data-isprimary="true"]')
+        .move({ deltaX: 100, deltaY: 100 })
+        .click();
+      cy.get("#email").click();
+      cy.get("#activeJourney").click();
+      cy.contains(emailTemplate.name).click();
+      cy.wait(3000);
+      cy.get("#exportSelectedTemplate").click();
+
+      cy.contains("Next").click();
       cy.get("#segmentName").click();
       cy.contains("Create new").click();
       cy.get("#segmentName").type("New property test segment");
@@ -58,20 +74,7 @@ describe(
       cy.get("#isEqual").clear().type(value);
       cy.get("#saveSegmentParams").click();
       cy.wait(1000);
-      cy.get("#audience > .p-0 > .justify-between").click();
-      cy.get("#name").type("init");
-      cy.get("#description").type("init description text");
-      cy.contains("Finish later").click();
-
-      cy.get(".react-flow__viewport")
-        .get('[data-isprimary="true"]')
-        .move({ deltaX: 100, deltaY: 100 })
-        .click();
-      cy.get("#email").click();
-      cy.get("#activeJourney").click();
-      cy.contains(emailTemplate.name).click();
-      cy.wait(3000);
-      cy.get("#exportSelectedTemplate").click();
+      cy.contains("Next").click();
 
       cy.contains("Save").click();
       cy.contains("Start").click();

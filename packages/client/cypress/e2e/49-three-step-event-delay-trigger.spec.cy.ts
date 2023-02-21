@@ -63,8 +63,11 @@ describe(
       cy.contains("Second").click();
       setupDelayTrigger();
       cy.get(
-        '.text-updater-node:not([data-isprimary="true"]) > [style="display: flex; height: 22px; position: absolute; left: 0px; bottom: 0px; align-items: center; width: 100%; justify-content: space-around;"] > .react-flow__handle'
-      ).drag('[data-isprimary]:not([data-isprimary="true"])', { force: true });
+        '[data-testid] > .text-updater-node > [style="display: flex; height: 22px; position: absolute; left: 0px; bottom: 0px; align-items: center; width: 100%; justify-content: space-around;"] > .react-flow__handle:nth(1)'
+      ).drag(
+        '[data-isprimary]:not([data-isprimary="true"]):contains("Step 3")',
+        { force: true }
+      );
       cy.get(
         '[data-isprimary]:not([data-isprimary="true"]):contains("Step 3")'
       ).click();
