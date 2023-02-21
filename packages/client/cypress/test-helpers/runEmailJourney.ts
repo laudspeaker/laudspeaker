@@ -21,6 +21,7 @@ export default (
     .get('[data-isprimary="true"]')
     .move({ deltaX: 100, deltaY: 100 })
     .click();
+  cy.wait(3000);
   cy.get("#email").click();
   cy.get("#activeJourney").click();
   cy.contains(templateName).click();
