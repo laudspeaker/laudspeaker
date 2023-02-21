@@ -9,6 +9,8 @@ export default () => {
   cy.get('[data-disclosure-link="Home"]').click();
   cy.contains("Complete onboarding").click();
   cy.wait(3000);
+  cy.get(".-mb-px > :nth-child(1)").click();
+  cy.wait(1000);
   cy.get("#email_config_select").click();
   cy.get(".-mb-px > :nth-child(1)").click();
   cy.get('[data-option="mailgun"]').click();
