@@ -78,8 +78,6 @@ describe(
                 .get('[data-isprimary="false"]')
                 .move({ deltaX: 50, deltaY: 300, force: true });
 
-              createNewSegment();
-
               cy.get('[data-isprimary="false"]').click({ force: true });
               cy.get("#slack").click();
 
@@ -134,6 +132,8 @@ describe(
               cy.get('[data-isprimary="false"] [data-handle-top]:last').click({
                 force: true,
               });
+
+              createNewSegment();
 
               cy.contains("Save").click();
               cy.wait(500);

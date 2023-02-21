@@ -45,7 +45,6 @@ describe(
       cy.get("#name").type(step1Name);
       cy.contains("Finish later").click();
       cy.get(".text-updater").move({ deltaX: 100, deltaY: 100 });
-      createNewSegment();
       cy.get("#audience > .p-0 > .justify-between").click({ force: true });
       cy.get("#name").type(step2Name);
       cy.contains("Finish later").click();
@@ -104,6 +103,8 @@ describe(
         '.text-updater-node:not([data-isprimary="true"]) > [style="display: flex; height: 22px; position: absolute; left: 0px; bottom: 0px; align-items: center; width: 100%; justify-content: space-around;"] > .react-flow__handle:last'
       ).drag("[data-isprimary]:nth(3)", { force: true });
       cy.get("[data-isprimary]:nth(3)").click();
+
+      createNewSegment();
 
       cy.contains("Save").click();
       cy.wait(1000);
