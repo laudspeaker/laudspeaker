@@ -38,12 +38,10 @@ describe(
       cy.wait(3000);
       cy.get("#audience > .p-0 > .justify-between").click();
       cy.get("#name").type("Initial");
-      cy.get("#saveNewSegment").click();
       cy.contains("Finish later").click();
       cy.get(".text-updater").move({ deltaX: 100, deltaY: 100 });
       cy.get("#audience > .p-0 > .justify-between").click();
       cy.get("#name").type("Second");
-      cy.get("#saveNewSegment").click();
       cy.contains("Finish later").click();
       cy.get('[data-isprimary]:not([data-isprimary="true"])').move({
         deltaX: 100,
@@ -65,7 +63,6 @@ describe(
 
       cy.get("#audience > .p-0 > .justify-between").click();
       cy.get("#name").clear().type("Step 3");
-      cy.get("#saveNewSegment").click();
       cy.contains("Finish later").click();
 
       cy.contains("Step 3").move({ deltaX: 100, deltaY: 500 });

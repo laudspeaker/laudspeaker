@@ -47,7 +47,6 @@ import Tooltip from "components/Elements/Tooltip";
 import { Helmet } from "react-helmet";
 import { Grid } from "@mui/material";
 import ToggleSwitch from "components/Elements/ToggleSwitch";
-import AlertBanner from "components/AlertBanner";
 import SegmentModal, { SegmentModalMode } from "./SegmentModal";
 import {
   MessagesTypes,
@@ -62,11 +61,10 @@ import { useDebounce } from "react-use";
 import CustomEdge from "./CustomEdge";
 import { INameSegmentForm } from "pages/Segment/NameSegment";
 import Template from "types/Template";
-import { PlusCircleIcon } from "@heroicons/react/24/outline";
+import { CheckIcon, PlusCircleIcon } from "@heroicons/react/24/outline";
 import TriggerDrag from "../../assets/images/TriggerDrag.svg";
 import CancelDropZone from "./CancelDropZone";
 import SideModal from "components/Elements/SideModal";
-import { createPortal } from "react-dom";
 
 const triggerDragImage = new Image();
 triggerDragImage.src = TriggerDrag;
@@ -215,6 +213,9 @@ const Flow = () => {
     useState<TriggerType>();
   const [isTriggerDragging, setIsTriggerDragging] = useState(false);
   const [isMessagesDragging, setIsMessagesDragging] = useState(false);
+  const [journeyTypeModalOpen, setJourneyTypeModalOpen] = useState(false);
+  const [currentStep, setCurrentStep] = useState(0);
+  const [stepsCompletion, setStepsCompletion] = useState([false, false, false]);
 
   const onHandleClick = (e: unknown, triggerId: string) => {
     return { e, triggerId };
@@ -231,40 +232,51 @@ const Flow = () => {
     settriggerModalOpen(true);
   };
 
-  useLayoutEffect(() => {
-    const populateFlowBuilder = async () => {
-      try {
-        const { data }: { data: Workflow } = await getFlow(id);
-        if (data.isActive) {
-          return navigate(`/flow/${data.id}/view`);
-        }
-        setSegmentForm({
-          isDynamic: data.isDynamic ?? true,
-        });
-        setSegmentId(data.segment?.id);
-        setFlowId(data.id);
-        setFlowName(data.name);
-        if (data.visualLayout) {
-          const updatedNodes = data.visualLayout.nodes.map((item) => {
-            return {
-              ...item,
-              data: {
-                ...item.data,
-                onTriggerSelect,
-                dataTriggers: item.data.dataTriggers || [],
-                flowId,
-              },
-            };
-          });
-          setNodes(updatedNodes);
-          setEdges(data.visualLayout.edges);
-        }
-      } catch (e) {
-        toast.error("Error while loading workflow");
-      } finally {
-        setIsFlowLoading(false);
+  const populateFlowBuilder = async () => {
+    try {
+      const { data }: { data: Workflow } = await getFlow(id);
+      if (data.isActive) {
+        return navigate(`/flow/${data.id}/view`);
       }
-    };
+      setSegmentForm({
+        isDynamic: data.isDynamic ?? true,
+      });
+      setSegmentId(data.segment?.id);
+      setFlowId(data.id);
+      setFlowName(data.name);
+      if (data.visualLayout) {
+        const updatedNodes = data.visualLayout.nodes.map((item) => {
+          return {
+            ...item,
+            data: {
+              ...item.data,
+              onTriggerSelect,
+              dataTriggers: item.data.dataTriggers || [],
+              flowId,
+            },
+          };
+        });
+        setNodes(updatedNodes);
+        setEdges(data.visualLayout.edges);
+        setCurrentStep(
+          !!segmentId &&
+            updatedNodes.length > 0 &&
+            updatedNodes.some((node) => node.data.messages.length > 0)
+            ? 2
+            : updatedNodes.length > 0 &&
+              updatedNodes.some((node) => node.data.messages.length > 0)
+            ? 1
+            : 0
+        );
+      }
+    } catch (e) {
+      toast.error("Error while loading workflow");
+    } finally {
+      setIsFlowLoading(false);
+    }
+  };
+
+  useLayoutEffect(() => {
     populateFlowBuilder();
   }, [flowId]);
 
@@ -574,6 +586,36 @@ const Flow = () => {
       }))
     );
   }, [isTriggerDragging, isMessagesDragging]);
+
+  useEffect(() => {
+    setStepsCompletion([
+      nodes.length > 0 && nodes.some((node) => node.data.messages.length > 0),
+      !!segmentId,
+      nodes.length > 0 &&
+        nodes.some((node) => node.data.messages.length > 0) &&
+        !!segmentId &&
+        currentStep === 2,
+    ]);
+  }, [nodes, segmentId]);
+
+  useEffect(() => {
+    switch (currentStep) {
+      case 0:
+        setSegmentModalOpen(false);
+        setJourneyTypeModalOpen(false);
+        break;
+      case 1:
+        setSegmentModalMode(SegmentModalMode.EDIT);
+        setSegmentModalOpen(true);
+        break;
+      case 2:
+        setSegmentModalOpen(false);
+        setJourneyTypeModalOpen(true);
+        break;
+      default:
+        break;
+    }
+  }, [currentStep]);
 
   const handleTutorialOpen = () => {
     setTutorialOpen(true);
@@ -910,6 +952,16 @@ const Flow = () => {
   else if (!segmentId)
     startDisabledReason = "You have to define segment for journey";
 
+  const steps = [
+    { label: "01", name: "Design journey" },
+    { label: "02", name: "Define filters or segments" },
+    { label: "03", name: "Review" },
+  ];
+
+  const handleNextStep = () => {
+    setCurrentStep(currentStep + 1);
+  };
+
   if (isFlowLoading) return <Progress />;
 
   return (
@@ -958,65 +1010,85 @@ const Flow = () => {
               }}
               flowName={flowName}
               handleFlowName={(e) => setFlowName(e.target.value)}
-              afterMenuContent={
-                <div className="w-full">
-                  <GenericButton
-                    id="useExistingSegment"
-                    customClasses="mt-[10px] !p-[4px] !w-full !block !text-center text-[12px]"
-                    onClick={() => {
-                      setSegmentModalMode(SegmentModalMode.EDIT);
-                      setSegmentModalOpen(true);
-                    }}
-                  >
-                    Define segment
-                  </GenericButton>
-                  <h3 className="pt-[20px] font-bold">Journey type</h3>
-                  <div className={segmentTypeStyle}>
-                    <Grid
-                      sx={{
-                        width: "100%",
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                      }}
-                    >
-                      <p className="font-semibold text-[#111827]">Dynamic</p>
-                      <ToggleSwitch
-                        checked={segmentForm.isDynamic}
-                        onChange={onToggleChange}
-                      />
-                    </Grid>
-                    <Tooltip content="Dynamic journeys will enroll new customers that satisfy the conditions of the Journey. Static journeys will only enroll customers that satisfy the conditions of the journey when it is started.">
-                      {/* <IconButton> */}
-                      <div className="flex items-center cursor-default mt-[8px]">
-                        <img src={InfoIcon} width="20px" />
-                        <p className="text-[#4FA198] text-[12px] pl-[5px] break-all">
-                          What is a dynamic segment?
-                        </p>
-                      </div>
-                    </Tooltip>
-                  </div>
-                </div>
-              }
             />
           </div>
         </div>
         <div className="w-full h-full">
-          {!segmentId && (
-            <AlertBanner title="Customer Segment is not defined">
-              Please specify which users are eligible to receive messages by{" "}
-              <u
-                className="cursor-pointer"
-                onClick={() => {
-                  setSegmentModalMode(SegmentModalMode.EDIT);
-                  setSegmentModalOpen(true);
-                }}
-              >
-                defining
-              </u>{" "}
-              a segment
-            </AlertBanner>
-          )}
+          <nav aria-label="Progress">
+            <ol
+              role="list"
+              className="divide-y divide-gray-300 rounded-md border border-gray-300 md:flex md:divide-y-0"
+            >
+              {steps.map((step, stepIdx) => (
+                <li key={step.name} className="relative md:flex md:flex-1">
+                  {stepsCompletion[stepIdx] ? (
+                    <div className="group flex w-full items-center">
+                      <span className="flex items-center px-6 py-4 text-sm font-medium">
+                        <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-indigo-600 group-hover:bg-indigo-800">
+                          <CheckIcon
+                            className="h-6 w-6 text-white"
+                            aria-hidden="true"
+                          />
+                        </span>
+                        <span className="ml-4 text-sm font-medium text-gray-900">
+                          {step.name}
+                        </span>
+                      </span>
+                    </div>
+                  ) : stepIdx === currentStep ? (
+                    <div
+                      className="flex items-center px-6 py-4 text-sm font-medium"
+                      aria-current="step"
+                    >
+                      <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border-2 border-indigo-600">
+                        <span className="text-indigo-600">{step.label}</span>
+                      </span>
+                      <span className="ml-4 text-sm font-medium text-indigo-600">
+                        {step.name}
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="group flex items-center">
+                      <span className="flex items-center px-6 py-4 text-sm font-medium">
+                        <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border-2 border-gray-300 group-hover:border-gray-400">
+                          <span className="text-gray-500 group-hover:text-gray-900">
+                            {step.label}
+                          </span>
+                        </span>
+                        <span className="ml-4 text-sm font-medium text-gray-500 group-hover:text-gray-900">
+                          {step.name}
+                        </span>
+                      </span>
+                    </div>
+                  )}
+
+                  {stepIdx !== steps.length - 1 ? (
+                    <>
+                      {/* Arrow separator for lg screens and up */}
+                      <div
+                        className="absolute top-0 right-0 hidden h-full w-5 md:block"
+                        aria-hidden="true"
+                      >
+                        <svg
+                          className="h-full w-full text-gray-300"
+                          viewBox="0 0 22 80"
+                          fill="none"
+                          preserveAspectRatio="none"
+                        >
+                          <path
+                            d="M0 -2L20 40L0 82"
+                            vectorEffect="non-scaling-stroke"
+                            stroke="currentcolor"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      </div>
+                    </>
+                  ) : null}
+                </li>
+              ))}
+            </ol>
+          </nav>
           <div
             className={`relative ${
               !segmentId ? "h-[calc(100%-80px)]" : "h-full"
@@ -1119,31 +1191,59 @@ const Flow = () => {
                     Save
                   </GenericButton>
                 </div>
-                <div className="m-[0_7.5px]" data-startflowbutton>
-                  <Tooltip
-                    content={
-                      startDisabledReason ||
-                      "Once you start a journey users can be messaged"
-                    }
-                    placement="bottom"
-                  >
-                    <GenericButton
-                      customClasses={`inline-flex items-center rounded-md border border-transparent bg-cyan-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-cyan-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500 ${
-                        !!startDisabledReason ? "grayscale" : ""
-                      }`}
-                      onClick={handleStartJourney}
-                      style={{
-                        maxWidth: "158px",
-                        maxHeight: "48px",
-                        padding: "13px 25px",
-                      }}
-                      disabled={!!startDisabledReason || isSaving}
-                      loading={isSaving}
+                {currentStep === 2 ? (
+                  <div className="m-[0_7.5px]" data-startflowbutton>
+                    <Tooltip
+                      content={
+                        startDisabledReason ||
+                        "Once you start a journey users can be messaged"
+                      }
+                      placement="bottom"
                     >
-                      Start
-                    </GenericButton>
-                  </Tooltip>
-                </div>
+                      <GenericButton
+                        customClasses={`inline-flex items-center rounded-md border border-transparent bg-cyan-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-cyan-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500 ${
+                          !!startDisabledReason ? "grayscale" : ""
+                        }`}
+                        onClick={handleStartJourney}
+                        style={{
+                          maxWidth: "158px",
+                          maxHeight: "48px",
+                          padding: "13px 25px",
+                        }}
+                        disabled={!!startDisabledReason || isSaving}
+                        loading={isSaving}
+                      >
+                        Start
+                      </GenericButton>
+                    </Tooltip>
+                  </div>
+                ) : (
+                  <div className="m-[0_7.5px]" data-nextstep>
+                    <Tooltip
+                      content={
+                        stepsCompletion[currentStep] ? "" : startDisabledReason
+                      }
+                      placement="bottom"
+                    >
+                      <GenericButton
+                        customClasses={`inline-flex items-center rounded-md border border-transparent bg-cyan-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-cyan-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500 ${
+                          stepsCompletion[currentStep] ? "" : "grayscale"
+                        }`}
+                        onClick={handleNextStep}
+                        style={{
+                          maxWidth: "158px",
+                          maxHeight: "48px",
+                          padding: "13px 25px",
+                        }}
+                        disabled={isSaving || !stepsCompletion[currentStep]}
+                        loading={isSaving}
+                      >
+                        Next
+                      </GenericButton>
+                    </Tooltip>
+                  </div>
+                )}
+
                 <Select
                   id="zoomSelect"
                   value={zoomState}
@@ -1163,7 +1263,6 @@ const Flow = () => {
             </ReactFlow>
           </div>
         </div>
-        {/* {templateModalOpen ? ( */}
         <ChooseTemplateModal
           templateModalOpen={templateModalOpen}
           handleTemplateModalOpen={handleTemplateModalOpen}
@@ -1171,8 +1270,6 @@ const Flow = () => {
           isCollapsible={true}
           onClose={() => setTemplateModalOpen(false)}
         />
-        {/* ) : null} */}
-        {/* {audienceModalOpen ? ( */}
         <SideModal
           isOpen={audienceModalOpen}
           onClose={() => setAudienceModalOpen(false)}
@@ -1186,8 +1283,6 @@ const Flow = () => {
             workflowId={flowId}
           />
         </SideModal>
-        {/* ) : null} */}
-        {/* {triggerModalOpen && ( */}
         <TriggerModal
           selectedTrigger={selectedTrigger}
           onSaveTrigger={onSaveTrigger}
@@ -1196,20 +1291,54 @@ const Flow = () => {
           isOpen={triggerModalOpen}
           onClose={() => settriggerModalOpen(false)}
         />
-        {/* )} */}
-        {segmentModalOpen && (
-          <SegmentModal
-            isOpen={segmentModalOpen}
-            onClose={() => {
-              setSegmentModalOpen(false);
-            }}
-            segmentId={segmentId}
-            workflowId={flowId}
-            mode={segmentModalMode}
-            setMode={setSegmentModalMode}
-            setSegmentId={setSegmentId}
-          />
-        )}
+        <SegmentModal
+          isOpen={segmentModalOpen}
+          onClose={() => {
+            setSegmentModalOpen(false);
+            setCurrentStep(0);
+          }}
+          segmentId={segmentId}
+          workflowId={flowId}
+          mode={segmentModalMode}
+          setMode={setSegmentModalMode}
+          setSegmentId={setSegmentId}
+        />
+        <SideModal
+          isOpen={journeyTypeModalOpen}
+          onClose={() => {
+            setJourneyTypeModalOpen(false);
+            setCurrentStep(0);
+          }}
+        >
+          <div>
+            <h3 className="pt-[20px] font-bold">Journey type</h3>
+            <div className={segmentTypeStyle}>
+              <Grid
+                sx={{
+                  width: "100%",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <p className="font-semibold text-[#111827]">Dynamic</p>
+                <ToggleSwitch
+                  checked={segmentForm.isDynamic}
+                  onChange={onToggleChange}
+                />
+              </Grid>
+              <Tooltip content="Dynamic journeys will enroll new customers that satisfy the conditions of the Journey. Static journeys will only enroll customers that satisfy the conditions of the journey when it is started.">
+                {/* <IconButton> */}
+                <div className="flex items-center cursor-default mt-[8px]">
+                  <img src={InfoIcon} width="20px" />
+                  <p className="text-[#4FA198] text-[12px] pl-[5px] break-all">
+                    What is a dynamic segment?
+                  </p>
+                </div>
+              </Tooltip>
+            </div>
+          </div>
+        </SideModal>
         <Modal
           isOpen={tutorialOpen}
           onClose={() => {
@@ -1250,10 +1379,6 @@ function FlowBuilder() {
       <ReactFlowProvider>
         <Flow />
       </ReactFlowProvider>
-      {createPortal(
-        <div className="w-[100px] h-[100px] bg-red-500"></div>,
-        document.body
-      )}
     </>
   );
 }

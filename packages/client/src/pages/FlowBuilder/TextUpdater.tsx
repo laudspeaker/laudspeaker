@@ -16,7 +16,6 @@ import { Email, SlackMsg, Mobile, SMS } from "../../components/Icons/Icons";
 import ChooseTemplateModal from "./ChooseTemplateModal";
 import LinesEllipsis from "react-lines-ellipsis";
 import { NodeData } from "./FlowBuilder";
-import Modal from "components/Elements/Modal";
 import { NameSegment } from "pages/Segment";
 import { INameSegmentForm } from "pages/Segment/NameSegment";
 import ApiService from "services/api.service";

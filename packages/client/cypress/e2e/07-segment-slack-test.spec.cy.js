@@ -33,7 +33,6 @@ describe(
       cy.get("#audience").click();
       cy.get("#name").type("init");
       cy.get("#description").type("init description text");
-      cy.get("#saveNewSegment").click();
       cy.contains("Finish later").click();
 
       cy.get(".react-flow__viewport")
@@ -61,6 +60,7 @@ describe(
       cy.get('[data-option="contains"]').click();
       cy.get("#contains").clear().type("mad Cha");
       cy.get("#saveSegmentParams").click();
+      cy.contains("Next").click();
 
       cy.contains("Save").click();
       cy.wait(500);

@@ -11,6 +11,7 @@ import Chip from "components/Elements/Chip";
 import { ChevronUpDownIcon } from "@heroicons/react/20/solid";
 import Tooltip from "components/Elements/Tooltip";
 import { Segment } from "types/Segment";
+import SideModal from "components/Elements/SideModal";
 
 export enum SegmentModalMode {
   EDIT = "edit",
@@ -127,10 +128,11 @@ const SegmentModal: FC<SegmentModalProps> = ({
   }, []);
 
   return (
-    <Modal
+    <SideModal
       panelClass={`${
-        isSegmentEditModalOpen &&
-        "w-full !max-w-[90%] h-full max-h-full overflow-y-scroll z-[99999]"
+        isSegmentEditModalOpen
+          ? "w-[full] h-full max-h-full overflow-y-scroll z-[99999]"
+          : ""
       } `}
       isOpen={isOpen}
       onClose={onClose}
@@ -148,7 +150,6 @@ const SegmentModal: FC<SegmentModalProps> = ({
             if (id) {
               setSegmentId(id);
               updateSegmentData();
-              onClose();
             }
           }}
         />
@@ -241,7 +242,7 @@ const SegmentModal: FC<SegmentModalProps> = ({
               }}
             />
           )}
-          <div className="flex justify-end gap-[10px]">
+          <div className="flex justify-between gap-[10px]">
             {mode === SegmentModalMode.EDIT && (
               <>
                 <GenericButton
@@ -295,7 +296,7 @@ const SegmentModal: FC<SegmentModalProps> = ({
           </div>
         </div>
       )}
-    </Modal>
+    </SideModal>
   );
 };
 

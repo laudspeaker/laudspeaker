@@ -9,7 +9,6 @@ const SideModal: FC<ModalProps> = ({
   childrenClass = "",
   closeButtonNeed = true,
   onClose = () => null,
-  onEnterPress,
   panelClass = "",
   title,
   titleClass = "",
