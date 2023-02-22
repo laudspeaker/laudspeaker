@@ -1,4 +1,4 @@
-import { Node } from "react-flow-renderer";
+import { Node } from "reactflow";
 
 const initialNodes: Node[] = [
   {

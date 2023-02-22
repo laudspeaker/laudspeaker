@@ -6,7 +6,7 @@ import {
   useEdges,
   useStore,
   useUpdateNodeInternals,
-} from "react-flow-renderer";
+} from "reactflow";
 import { v4 as uuid } from "uuid";
 import thunderbolt from "../../assets/images/thunderbolt.svg";
 import { getAudienceDetails } from "./FlowHelpers";
@@ -299,7 +299,7 @@ const TextUpdaterNode = ({ data }: { data: NodeData }) => {
                 <Handle
                   type="source"
                   key={index}
-                  position={Position.Top}
+                  position={Position.Bottom}
                   id={trigger.id}
                   onClick={(e) => handleTriggerClick(e, trigger.id)}
                   className={`triggerOut !relative !left-auto !right-auto !border-[0px] !z-[1000] ${

@@ -1,4 +1,4 @@
-import { Edge, MarkerType } from "react-flow-renderer";
+import { Edge, MarkerType } from "reactflow";
 
 const initialEdges: Edge[] = [
   {

@@ -1,5 +1,5 @@
 import React from "react";
-import { getSmoothStepPath, EdgeProps } from "react-flow-renderer";
+import { getSmoothStepPath, EdgeProps } from "reactflow";
 
 export default function CustomEdge({
   id,
@@ -20,7 +20,7 @@ export default function CustomEdge({
     targetX,
     targetY,
     targetPosition,
-  });
+  })[0];
 
   return (
     <>

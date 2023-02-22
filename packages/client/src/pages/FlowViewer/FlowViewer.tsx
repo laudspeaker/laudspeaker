@@ -20,7 +20,7 @@ import ReactFlow, {
   useViewport,
   NodeChange,
   applyNodeChanges,
-} from "react-flow-renderer";
+} from "reactflow";
 import { useParams } from "react-router-dom";
 import ViewNode from "./ViewNode";
 import ApiService from "services/api.service";
@@ -266,7 +266,8 @@ const Flow = () => {
         nodeTypes={nodeTypes}
         zoomOnScroll={false}
         zoomOnPinch={false}
-        defaultZoom={1}
+        maxZoom={2}
+        minZoom={0.25}
         zoomOnDoubleClick={false}
         onMoveStart={() => setIsGrabbing(true)}
         onMoveEnd={() => setIsGrabbing(false)}

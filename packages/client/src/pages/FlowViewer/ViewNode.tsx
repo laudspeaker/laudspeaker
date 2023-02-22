@@ -1,7 +1,7 @@
 import { Divider } from "@mui/material";
 import { StatusCodes } from "./../../constants";
 import { useEffect, useState } from "react";
-import { Handle, Position } from "react-flow-renderer";
+import { Handle, Position } from "reactflow";
 import { v4 as uuid } from "uuid";
 import thunderbolt from "../../assets/images/thunderbolt.svg";
 

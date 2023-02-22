@@ -17,13 +17,13 @@ import ReactFlow, {
   EdgeChange,
   Node,
   NodeChange,
-  Background,
   useReactFlow,
   ReactFlowProvider,
   useViewport,
   MarkerType,
   ConnectionLineType,
-} from "react-flow-renderer";
+} from "reactflow";
+import { SmartStepEdge } from "@tisoap/react-flow-smart-edge";
 import { v4 as uuid } from "uuid";
 import { useParams, useNavigate } from "react-router-dom";
 import InfoIcon from "assets/images/info.svg";
@@ -365,8 +365,6 @@ const Flow = () => {
   const onConnect = useCallback(
     (connection: Connection | Edge) =>
       setEdges((eds) => {
-        if (connection.target === connection.source) return eds;
-
         const edge: Edge | Connection = {
           ...connection,
           id: uuid(),
@@ -384,7 +382,7 @@ const Flow = () => {
   );
 
   const onClickConnectionStart = useCallback(
-    (event: React.MouseEvent, arg2: unknown) => {
+    (event: React.MouseEvent | React.TouchEvent, arg2: unknown) => {
       console.log(event, arg2);
     },
     [triggers]
@@ -1126,7 +1124,7 @@ const Flow = () => {
               nodes={nodes}
               edges={edges}
               edgeTypes={{
-                custom: CustomEdge,
+                custom: SmartStepEdge,
               }}
               onNodeDoubleClick={onNodeDoubleClick}
               onNodesChange={onNodesChange}
@@ -1140,7 +1138,8 @@ const Flow = () => {
               nodeTypes={nodeTypes}
               zoomOnScroll={false}
               zoomOnPinch={false}
-              defaultZoom={1}
+              minZoom={0.25}
+              maxZoom={2}
               zoomOnDoubleClick={false}
               onMoveStart={() => setIsGrabbing(true)}
               onMoveEnd={() => setIsGrabbing(false)}
@@ -1262,7 +1261,6 @@ const Flow = () => {
                   sx={{ margin: "0 7.5px" }}
                 />
               </div>
-              <Background size={0} />
             </ReactFlow>
           </div>
         </div>

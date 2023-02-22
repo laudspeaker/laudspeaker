@@ -1,5 +1,5 @@
 import React from "react";
-import { MarkerType } from "react-flow-renderer";
+import { MarkerType } from "reactflow";
 
 export const nodes = [
   {
