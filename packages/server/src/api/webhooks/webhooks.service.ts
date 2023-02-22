@@ -19,21 +19,11 @@ import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import Mailgun from 'mailgun.js';
 import formData from 'form-data';
 
-const client = createClient({
-  host: process.env.CLICKHOUSE_HOST
-    ? process.env.CLICKHOUSE_HOST.includes('http')
-      ? process.env.CLICKHOUSE_HOST
-      : `http://${process.env.CLICKHOUSE_HOST}`
-    : 'http://localhost:8123',
-  username: process.env.CLICKHOUSE_USER ?? 'default',
-  password: process.env.CLICKHOUSE_PASSWORD ?? '',
-});
-
 const createTableQuery = `
 CREATE TABLE IF NOT EXISTS message_status
 (audienceId UUID, customerId String, templateId String, messageId String, event String, eventProvider String, createdAt DateTime) 
 ENGINE = ReplacingMergeTree
-PRIMARY KEY (audienceId, customerId, templateId, messageId, event)`;
+PRIMARY KEY (audienceId, customerId, templateId, messageId, event, eventProvider)`;
 
 export enum ClickHouseEventProvider {
   MAILGUN = 'mailgun',
@@ -51,26 +41,36 @@ export interface ClickHouseMessage {
   createdAt: string;
 }
 
-const createTable = async () => {
-  await client.query({ query: createTableQuery });
-};
-
-const insertMessages = async (values: ClickHouseMessage[]) => {
-  await client.insert<ClickHouseMessage>({
-    table: 'message_status',
-    values,
-    format: 'JSONEachRow',
-  });
-};
-
-const sendgridEventsMap = {
-  click: 'clicked',
-  open: 'opened',
-};
-
 @Injectable()
 export class WebhooksService {
   private MAILGUN_HOOKS_TO_INSTALL = ['clicked', 'delivered', 'opened'];
+
+  private clickHouseClient = createClient({
+    host: process.env.CLICKHOUSE_HOST
+      ? process.env.CLICKHOUSE_HOST.includes('http')
+        ? process.env.CLICKHOUSE_HOST
+        : `http://${process.env.CLICKHOUSE_HOST}`
+      : 'http://localhost:8123',
+    username: process.env.CLICKHOUSE_USER ?? 'default',
+    password: process.env.CLICKHOUSE_PASSWORD ?? '',
+  });
+
+  private createClickHouseTable = async () => {
+    await this.clickHouseClient.query({ query: createTableQuery });
+  };
+
+  public insertClickHouseMessages = async (values: ClickHouseMessage[]) => {
+    await this.clickHouseClient.insert<ClickHouseMessage>({
+      table: 'message_status',
+      values,
+      format: 'JSONEachRow',
+    });
+  };
+
+  private sendgridEventsMap = {
+    click: 'clicked',
+    open: 'opened',
+  };
 
   constructor(
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
@@ -82,7 +82,7 @@ export class WebhooksService {
   ) {
     (async () => {
       try {
-        await createTable();
+        await this.createClickHouseTable();
         await this.setupMailgunWebhook(
           process.env.MAILGUN_API_KEY,
           process.env.MAILGUN_TEST_DOMAIN
@@ -98,19 +98,22 @@ export class WebhooksService {
     timestamp: string,
     data?: any[]
   ) {
-    const audienceId = data?.[0]?.audienceId;
-    if (!audienceId)
-      throw new BadRequestException('No audienceId was passed to request');
+    let audience: Audience = null;
 
-    const audience = await this.audienceRepository.findOne({
-      where: {
-        id: audienceId,
-      },
-      relations: ['owner'],
-    });
+    for (const item of data) {
+      if (!item.audienceId) continue;
 
-    if (!audience) throw new NotFoundException('Audience not found');
+      audience = await this.audienceRepository.findOne({
+        where: {
+          id: item.audienceId,
+        },
+        relations: ['owner'],
+      });
 
+      if (audience) break;
+    }
+
+    if (!audience) return;
     const {
       owner: { sendgridVerificationKey },
     } = audience;
@@ -131,6 +134,8 @@ export class WebhooksService {
       publicKey
     );
     if (!validSignature) throw new ForbiddenException('Invalid signature');
+
+    const messagesToInsert: ClickHouseMessage[] = [];
 
     for (const item of data) {
       const {
@@ -155,8 +160,8 @@ export class WebhooksService {
         audienceId,
         customerId,
         templateId: String(templateId),
-        messageId: sg_message_id,
-        event: sendgridEventsMap[event] || event,
+        messageId: sg_message_id.split('.')[0],
+        event: this.sendgridEventsMap[event] || event,
         eventProvider: ClickHouseEventProvider.SENDGRID,
         createdAt: new Date().toUTCString(),
       };
@@ -164,8 +169,9 @@ export class WebhooksService {
       this.logger.debug('Sendgrid webhooK result:');
       console.dir(clickHouseRecord, { depth: null });
 
-      await insertMessages([clickHouseRecord]);
+      messagesToInsert.push(clickHouseRecord);
     }
+    await this.insertClickHouseMessages(messagesToInsert);
   }
 
   public async processTwilioData({
@@ -194,14 +200,14 @@ export class WebhooksService {
     this.logger.debug('Twilio webhooK result:');
     console.dir(clickHouseRecord, { depth: null });
 
-    await insertMessages([clickHouseRecord]);
+    await this.insertClickHouseMessages([clickHouseRecord]);
   }
 
   public async processMailgunData(body: {
     signature: { token: string; timestamp: string; signature: string };
     'event-data': {
       event: string;
-      id: string;
+      message: { headers: { 'message-id': string } };
       'user-variables': {
         audienceId: string;
         customerId: string;
@@ -218,7 +224,9 @@ export class WebhooksService {
 
     const {
       event,
-      id,
+      message: {
+        headers: { 'message-id': id },
+      },
       'user-variables': { audienceId, customerId, templateId, accountId },
     } = body['event-data'];
 
@@ -238,6 +246,8 @@ export class WebhooksService {
       throw new ForbiddenException('Invalid signature');
     }
 
+    if (!audienceId || !customerId || !templateId || !id) return;
+
     const clickHouseRecord: ClickHouseMessage = {
       audienceId,
       customerId,
@@ -251,7 +261,7 @@ export class WebhooksService {
     this.logger.debug('Mailgun webhooK result:');
     console.dir(clickHouseRecord, { depth: null });
 
-    await insertMessages([clickHouseRecord]);
+    await this.insertClickHouseMessages([clickHouseRecord]);
   }
 
   public async setupMailgunWebhook(

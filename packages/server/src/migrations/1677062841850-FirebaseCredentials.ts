@@ -1,17 +1,17 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class FirebaseDeviceToken1676686342536 implements MigrationInterface {
-  name = 'FirebaseDeviceToken1676686342536';
+export class FirebaseCredentials1677062841850 implements MigrationInterface {
+  name = 'FirebaseCredentials1677062841850';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(
-      `ALTER TABLE "account" ADD "posthogFirebaseDeviceTokenKey" text`
+      `ALTER TABLE "account" ADD "firebaseCredentials" character varying`
     );
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(
-      `ALTER TABLE "account" DROP COLUMN "posthogFirebaseDeviceTokenKey"`
+      `ALTER TABLE "account" DROP COLUMN "firebaseCredentials"`
     );
   }
 }

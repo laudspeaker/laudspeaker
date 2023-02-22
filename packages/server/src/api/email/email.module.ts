@@ -12,6 +12,7 @@ import {
   CustomerKeysSchema,
 } from '../customers/schemas/customer-keys.schema';
 import { CustomersModule } from '../customers/customers.module';
+import { WebhooksModule } from '../webhooks/webhooks.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { CustomersModule } from '../customers/customers.module';
       name: 'customers',
     }),
     CustomersModule,
+    WebhooksModule,
   ],
   controllers: [EmailController],
   providers: [EmailProcessor],

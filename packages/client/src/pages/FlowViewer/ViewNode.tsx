@@ -211,19 +211,34 @@ const ViewNode = ({ data }: { data: NodeData }) => {
                     orientation="vertical"
                   />
                   <div className="w-full p-[0px_10px]">
-                    <div>Opened</div>
-                    <div className="font-medium text-[#333333]">0%</div>
+                    <div>Delivered</div>
+                    <div className="font-medium text-[#333333]">
+                      {new Intl.NumberFormat("en", {
+                        notation: "compact",
+                      }).format(stats.delivered)}
+                    </div>
                   </div>
-                  <Divider
-                    sx={{
-                      height: "auto",
-                    }}
-                    variant="middle"
-                    orientation="vertical"
-                  />
                   {data.messages.filter((message) => message.type === "email")
                     .length > 0 && (
                     <>
+                      <Divider
+                        sx={{
+                          height: "auto",
+                        }}
+                        variant="middle"
+                        orientation="vertical"
+                      />
+                      <div className="w-full p-[0px_10px]">
+                        <div>Opened</div>
+                        <div className="font-medium text-[#333333]">0%</div>
+                      </div>
+                      <Divider
+                        sx={{
+                          height: "auto",
+                        }}
+                        variant="middle"
+                        orientation="vertical"
+                      />
                       <div
                         className="w-full p-[0px_10px] cursor-pointer"
                         onClick={() => setClickedStatModalOpen(true)}
@@ -233,19 +248,8 @@ const ViewNode = ({ data }: { data: NodeData }) => {
                           {stats.clickedPercentage}%
                         </div>
                       </div>
-                      <Divider
-                        sx={{
-                          height: "auto",
-                        }}
-                        variant="middle"
-                        orientation="vertical"
-                      />
                     </>
                   )}
-                  <div className="w-full p-[0px_10px]">
-                    <div>Converted</div>
-                    <div className="font-medium text-[#333333]">0%</div>
-                  </div>
                 </div>
               </>
             )}

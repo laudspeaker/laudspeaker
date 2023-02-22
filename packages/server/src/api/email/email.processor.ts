@@ -1,3 +1,4 @@
+/* eslint-disable no-case-declarations */
 import { Process, Processor } from '@nestjs/bull';
 import { Inject, LoggerService } from '@nestjs/common';
 import { Job } from 'bull';
@@ -7,6 +8,11 @@ import Mailgun from 'mailgun.js';
 import formData from 'form-data';
 import { Liquid } from 'liquidjs';
 import { MailService } from '@sendgrid/mail';
+import { createClient } from '@clickhouse/client';
+import {
+  ClickHouseEventProvider,
+  WebhooksService,
+} from '../webhooks/webhooks.service';
 
 @Processor('email')
 @Injectable()
@@ -14,9 +20,20 @@ export class EmailProcessor {
   private tagEngine = new Liquid();
   private sgMailService = new MailService();
 
+  private clickhouseClient = createClient({
+    host: process.env.CLICKHOUSE_HOST
+      ? process.env.CLICKHOUSE_HOST.includes('http')
+        ? process.env.CLICKHOUSE_HOST
+        : `http://${process.env.CLICKHOUSE_HOST}`
+      : 'http://localhost:8123',
+    username: process.env.CLICKHOUSE_USER ?? 'default',
+    password: process.env.CLICKHOUSE_PASSWORD ?? '',
+  });
+
   constructor(
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
-    private readonly logger: LoggerService
+    private readonly logger: LoggerService,
+    private readonly webhooksService: WebhooksService
   ) {}
 
   @Process('send')
@@ -43,7 +60,7 @@ export class EmailProcessor {
       switch (job.data.eventProvider) {
         case 'sendgrid':
           this.sgMailService.setApiKey(job.data.key);
-          msg = await this.sgMailService.send({
+          const sendgridMessage = await this.sgMailService.send({
             from: job.data.from,
             to: job.data.to,
             subject: subjectWithInsertedTags,
@@ -59,10 +76,23 @@ export class EmailProcessor {
               },
             ],
           });
+          msg = sendgridMessage;
+
+          await this.webhooksService.insertClickHouseMessages([
+            {
+              event: 'sent',
+              createdAt: new Date().toUTCString(),
+              eventProvider: ClickHouseEventProvider.SENDGRID,
+              messageId: sendgridMessage[0].headers['x-message-id'],
+              audienceId: job.data.audienceId,
+              customerId: job.data.customerId,
+              templateId: String(job.data.templateId),
+            },
+          ]);
           break;
         case 'mailgun':
         default:
-          msg = await mg.messages.create(job.data.domain, {
+          const mailgunMessage = await mg.messages.create(job.data.domain, {
             from: `${job.data.from} <${job.data.email}@${job.data.domain}>`,
             to: job.data.to,
             subject: subjectWithInsertedTags,
@@ -72,6 +102,20 @@ export class EmailProcessor {
             'v:templateId': job.data.templateId,
             'v:accountId': job.data.accountId,
           });
+          msg = mailgunMessage;
+          await this.webhooksService.insertClickHouseMessages([
+            {
+              event: 'sent',
+              createdAt: new Date().toUTCString(),
+              eventProvider: ClickHouseEventProvider.MAILGUN,
+              messageId: mailgunMessage.id
+                ? mailgunMessage.id.substring(1, mailgunMessage.id.length - 1)
+                : '',
+              audienceId: job.data.audienceId,
+              customerId: job.data.customerId,
+              templateId: String(job.data.templateId),
+            },
+          ]);
           break;
       }
 

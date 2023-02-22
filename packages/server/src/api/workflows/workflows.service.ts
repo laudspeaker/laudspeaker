@@ -138,23 +138,34 @@ export class WorkflowsService {
   private async getStats(audienceId?: string) {
     if (!audienceId) return {};
     const sentResponse = await this.clickhouseClient.query({
-      query: `SELECT COUNT(*) FROM message_status WHERE event = 'delivered' AND audienceId = {audienceId:UUID}`,
+      query: `SELECT COUNT(*) FROM message_status WHERE event = 'sent' AND audienceId = {audienceId:UUID}`,
       query_params: { audienceId },
     });
     const sentData = (await sentResponse.json<any>())?.data;
     const sent = +sentData?.[0]?.['count()'] || 0;
 
+    const deliveredResponse = await this.clickhouseClient.query({
+      query: `SELECT COUNT(*) FROM message_status WHERE event = 'delivered' AND audienceId = {audienceId:UUID}`,
+      query_params: { audienceId },
+    });
+    const deliveredData = (await deliveredResponse.json<any>())?.data;
+    const delivered = +deliveredData?.[0]?.['count()'] || 0;
+
     const clickedResponse = await this.clickhouseClient.query({
-      query: `SELECT COUNT(*) FROM message_status WHERE event = 'clicked' AND audienceId = {audienceId:UUID}`,
+      query: `SELECT COUNT(DISTINCT(audienceId, customerId, templateId, messageId, event, eventProvider)) FROM message_status WHERE event = 'clicked' AND audienceId = {audienceId:UUID}`,
       query_params: { audienceId },
     });
     const clickedData = (await clickedResponse.json<any>())?.data;
-    const clicked = +clickedData?.[0]?.['count()'];
+    const clicked =
+      +clickedData?.[0]?.[
+        'uniqExact(tuple(audienceId, customerId, templateId, messageId, event, eventProvider))'
+      ];
 
     const clickedPercentage = (clicked / sent) * 100;
 
     return {
       sent,
+      delivered,
       clickedPercentage,
     };
   }
