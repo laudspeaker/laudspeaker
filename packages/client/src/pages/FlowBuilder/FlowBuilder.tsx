@@ -1348,6 +1348,18 @@ const Flow = () => {
         >
           <div>
             <h3 className="pt-[20px] font-bold">Journey type</h3>
+            <Tooltip
+              className="max-w-[300px]"
+              content="Dynamic journeys will enroll new customers that satisfy the conditions of the Journey. Static journeys will only enroll customers that satisfy the conditions of the journey when it is started."
+              placement="bottom"
+            >
+              <div className="flex items-center cursor-default mt-[8px]">
+                <img src={InfoIcon} width="20px" />
+                <p className="text-[#4FA198] text-[12px] pl-[5px] break-all">
+                  What is a dynamic segment?
+                </p>
+              </div>
+            </Tooltip>
             <div className={segmentTypeStyle}>
               <Grid
                 sx={{
@@ -1364,17 +1376,6 @@ const Flow = () => {
                 />
               </Grid>
               {/* <IconButton> */}
-              <Tooltip
-                className="-translate-y-[40px]"
-                content="Dynamic journeys will enroll new customers that satisfy the conditions of the Journey. Static journeys will only enroll customers that satisfy the conditions of the journey when it is started."
-              >
-                <div className="flex items-center cursor-default mt-[8px]">
-                  <img src={InfoIcon} width="20px" />
-                  <p className="text-[#4FA198] text-[12px] pl-[5px] break-all">
-                    What is a dynamic segment?
-                  </p>
-                </div>
-              </Tooltip>
             </div>
 
             <div className="m-[10px_0] flex justify-end" data-saveflowbutton>

@@ -376,7 +376,6 @@ const Flow = () => {
             sx={{ margin: "0 7.5px" }}
           />
         </div>
-        <Background size={0} />
       </ReactFlow>
       {triggerModalOpen && (
         <TriggerModal
