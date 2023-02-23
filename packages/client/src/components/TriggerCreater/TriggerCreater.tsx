@@ -151,7 +151,7 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
 
   const [triggerType, setTriggerType] = useState<TriggerType>(triggerProp);
   const [eventTimeSelect, setEventTimeSelect] = useState(
-    trigger.properties?.eventTime || ""
+    trigger.properties?.eventTime || "Delay"
   );
   const [delayInputTime, setDelayInputTime] = useState(
     trigger.properties?.delayTime
@@ -724,6 +724,19 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
               { value: TriggerType.TIME_WINDOW, title: "Time Window" },
             ]}
             onChange={handleTriggerType}
+            wrapperClassnames="max-w-[200px]"
+          />
+        </div>
+        <div className="mb-5">
+          <Select
+            label="Branching Options"
+            value="single"
+            options={[
+              { value: "single", title: "Single branch" },
+              { value: "truefalse", title: "True/False", disabled: true },
+              { value: "multibranch", title: "Multibranch", disabled: true },
+            ]}
+            onChange={() => {}}
             wrapperClassnames="max-w-[200px]"
           />
         </div>
