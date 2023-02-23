@@ -49,8 +49,8 @@ describe(
 
       // cy.get(".react-flow__viewport").get('[data-isprimary="true"]').dblclick();
       createNewSegment(false);
-
-      cy.contains("select").click();
+      cy.wait(3000);
+      cy.get("button.false").click();
       cy.get('[data-option="attributes"]').click();
       cy.wait(1000);
       cy.get("#event-conditions:first > div:last").click();

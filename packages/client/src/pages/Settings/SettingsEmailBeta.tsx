@@ -211,6 +211,10 @@ export default function SettingsEmailBeta() {
     })();
   }, []);
 
+  useEffect(() => {
+    callDomains();
+  }, [formData.mailgunAPIKey]);
+
   const handleFormDataChange = (
     e: ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
@@ -313,9 +317,6 @@ export default function SettingsEmailBeta() {
               <select
                 id="sendingDomain"
                 name="sendingDomain"
-                disabled={
-                  !formData.mailgunAPIKey || possibleDomains.length === 0
-                }
                 value={formData.sendingDomain}
                 onChange={handleFormDataChange}
                 className={`mt-1 block w-full rounded-md py-2 pl-3 pr-10 text-base focus:outline-none sm:text-sm ${

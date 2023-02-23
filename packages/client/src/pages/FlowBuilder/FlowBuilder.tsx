@@ -17,13 +17,13 @@ import ReactFlow, {
   EdgeChange,
   Node,
   NodeChange,
-  Background,
   useReactFlow,
   ReactFlowProvider,
   useViewport,
   MarkerType,
   ConnectionLineType,
-} from "react-flow-renderer";
+} from "reactflow";
+import { SmartStepEdge } from "@tisoap/react-flow-smart-edge";
 import { v4 as uuid } from "uuid";
 import { useParams, useNavigate } from "react-router-dom";
 import InfoIcon from "assets/images/info.svg";
@@ -365,8 +365,6 @@ const Flow = () => {
   const onConnect = useCallback(
     (connection: Connection | Edge) =>
       setEdges((eds) => {
-        if (connection.target === connection.source) return eds;
-
         const edge: Edge | Connection = {
           ...connection,
           id: uuid(),
@@ -384,7 +382,7 @@ const Flow = () => {
   );
 
   const onClickConnectionStart = useCallback(
-    (event: React.MouseEvent, arg2: unknown) => {
+    (event: React.MouseEvent | React.TouchEvent, arg2: unknown) => {
       console.log(event, arg2);
     },
     [triggers]
@@ -597,7 +595,9 @@ const Flow = () => {
         !!segmentId &&
         currentStep === 2,
     ]);
-  }, [nodes, segmentId]);
+  }, [nodes, segmentId, currentStep]);
+
+  const stepsAvailability = [true, stepsCompletion[0], stepsCompletion[1]];
 
   useEffect(() => {
     switch (currentStep) {
@@ -608,6 +608,7 @@ const Flow = () => {
       case 1:
         setSegmentModalMode(SegmentModalMode.EDIT);
         setSegmentModalOpen(true);
+        setJourneyTypeModalOpen(false);
         break;
       case 2:
         setSegmentModalOpen(false);
@@ -1025,7 +1026,10 @@ const Flow = () => {
               {steps.map((step, stepIdx) => (
                 <li key={step.name} className="relative md:flex md:flex-1">
                   {stepsCompletion[stepIdx] ? (
-                    <div className="group flex w-full items-center">
+                    <div
+                      className="group flex w-full items-center cursor-pointer"
+                      onClick={() => setCurrentStep(stepIdx)}
+                    >
                       <span className="flex items-center px-6 py-4 text-sm font-medium">
                         <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-indigo-600 group-hover:bg-indigo-800">
                           <CheckIcon
@@ -1038,10 +1042,11 @@ const Flow = () => {
                         </span>
                       </span>
                     </div>
-                  ) : stepIdx === currentStep ? (
+                  ) : stepIdx === currentStep || stepsAvailability[stepIdx] ? (
                     <div
-                      className="flex items-center px-6 py-4 text-sm font-medium"
+                      className="flex items-center px-6 py-4 text-sm font-medium cursor-pointer"
                       aria-current="step"
+                      onClick={() => setCurrentStep(stepIdx)}
                     >
                       <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border-2 border-indigo-600">
                         <span className="text-indigo-600">{step.label}</span>
@@ -1126,7 +1131,7 @@ const Flow = () => {
               nodes={nodes}
               edges={edges}
               edgeTypes={{
-                custom: CustomEdge,
+                custom: SmartStepEdge,
               }}
               onNodeDoubleClick={onNodeDoubleClick}
               onNodesChange={onNodesChange}
@@ -1140,7 +1145,8 @@ const Flow = () => {
               nodeTypes={nodeTypes}
               zoomOnScroll={false}
               zoomOnPinch={false}
-              defaultZoom={1}
+              minZoom={0.25}
+              maxZoom={2}
               zoomOnDoubleClick={false}
               onMoveStart={() => setIsGrabbing(true)}
               onMoveEnd={() => setIsGrabbing(false)}
@@ -1262,7 +1268,6 @@ const Flow = () => {
                   sx={{ margin: "0 7.5px" }}
                 />
               </div>
-              <Background size={0} />
             </ReactFlow>
           </div>
         </div>
@@ -1343,6 +1348,18 @@ const Flow = () => {
         >
           <div>
             <h3 className="pt-[20px] font-bold">Journey type</h3>
+            <Tooltip
+              className="max-w-[300px]"
+              content="Dynamic journeys will enroll new customers that satisfy the conditions of the Journey. Static journeys will only enroll customers that satisfy the conditions of the journey when it is started."
+              placement="bottom"
+            >
+              <div className="flex items-center cursor-default mt-[8px]">
+                <img src={InfoIcon} width="20px" />
+                <p className="text-[#4FA198] text-[12px] pl-[5px] break-all">
+                  What is a dynamic segment?
+                </p>
+              </div>
+            </Tooltip>
             <div className={segmentTypeStyle}>
               <Grid
                 sx={{
@@ -1358,43 +1375,23 @@ const Flow = () => {
                   onChange={onToggleChange}
                 />
               </Grid>
-              <Tooltip content="Dynamic journeys will enroll new customers that satisfy the conditions of the Journey. Static journeys will only enroll customers that satisfy the conditions of the journey when it is started.">
-                {/* <IconButton> */}
-                <div className="flex items-center cursor-default mt-[8px]">
-                  <img src={InfoIcon} width="20px" />
-                  <p className="text-[#4FA198] text-[12px] pl-[5px] break-all">
-                    What is a dynamic segment?
-                  </p>
-                </div>
-              </Tooltip>
+              {/* <IconButton> */}
             </div>
-            <div
-              className="flex justify-end m-[10px_7.5px]"
-              data-startflowbutton
-            >
-              <Tooltip
-                content={
-                  startDisabledReason ||
-                  "Once you start a journey users can be messaged"
-                }
-                placement="bottom"
+
+            <div className="m-[10px_0] flex justify-end" data-saveflowbutton>
+              <GenericButton
+                customClasses="inline-flex items-center rounded-md border border-transparent bg-cyan-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-cyan-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500"
+                onClick={handleSaveJourney}
+                style={{
+                  maxWidth: "158px",
+                  maxHeight: "48px",
+                  padding: "13px 25px",
+                }}
+                disabled={isSaving}
+                loading={isSaving}
               >
-                <GenericButton
-                  customClasses={`inline-flex items-center rounded-md border border-transparent bg-cyan-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-cyan-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500 ${
-                    !!startDisabledReason ? "grayscale" : ""
-                  }`}
-                  onClick={handleStartJourney}
-                  style={{
-                    maxWidth: "158px",
-                    maxHeight: "48px",
-                    padding: "13px 25px",
-                  }}
-                  disabled={!!startDisabledReason || isSaving}
-                  loading={isSaving}
-                >
-                  Start
-                </GenericButton>
-              </Tooltip>
+                Save
+              </GenericButton>
             </div>
           </div>
         </SideModal>

@@ -12,7 +12,6 @@ export default () => {
   cy.get(".-mb-px > :nth-child(1)").click();
   cy.wait(1000);
   cy.get("#email_config_select").click();
-  cy.get(".-mb-px > :nth-child(1)").click();
   cy.get('[data-option="mailgun"]').click();
   cy.get("#sendingName").clear().type("SendingName");
   cy.get("#sendingEmail").clear().type("SendingEmail");
@@ -25,7 +24,7 @@ export default () => {
 
   // add mock endpoint for this one
   cy.wait(3000);
-  cy.get(":nth-child(2) > .px-6 > .ml-4").click();
+  cy.get(".-mb-px > :nth-child(2)").click();
   cy.get("#events_config_select").click();
   cy.get('[data-option="posthog"]').click();
   cy.get("#posthogApiKey").clear().type(TESTS_POSTHOG_API_KEY);

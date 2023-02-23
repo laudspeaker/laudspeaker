@@ -226,6 +226,13 @@ export class TestsService {
     return customer.id;
   }
 
+  public async getAnyTestCustomerId() {
+    const customer = await this.customersService.CustomerModel.findOne({
+      ownerId: '00000000-0000-0000-0000-000000000000',
+    });
+    return customer.id;
+  }
+
   public async getAudienceByCustomerId(id: string) {
     const audiences = await this.audienceRepository.findBy({
       owner: {

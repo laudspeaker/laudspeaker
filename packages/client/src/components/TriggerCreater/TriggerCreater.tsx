@@ -1,4 +1,4 @@
-import React, { useState, useEffect, MouseEvent } from "react";
+import React, { useState, useEffect, MouseEvent, ChangeEvent } from "react";
 import { GenericButton, Input, Select } from "components/Elements";
 import AC from "react-autocomplete";
 import {
@@ -19,6 +19,7 @@ import {
 import { FormDataItem, IResource } from "pages/Segment/MySegment";
 import { Resource } from "pages/EmailBuilder/EmailBuilder";
 import MinusIcon from "../../assets/images/MinusIcon.svg";
+import { setHours, setMinutes } from "date-fns";
 
 interface ITriggerCreaterProp {
   triggerType: TriggerType;
@@ -151,11 +152,63 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
 
   const [triggerType, setTriggerType] = useState<TriggerType>(triggerProp);
   const [eventTimeSelect, setEventTimeSelect] = useState(
-    trigger.properties?.eventTime || ""
+    trigger.properties?.eventTime || "Delay"
   );
-  const [delayInputTime, setDelayInputTime] = useState(
-    trigger.properties?.delayTime
-  );
+  const [delayTime, setDelayTime] = useState(trigger.properties?.delayTime);
+
+  let initialDelayDays = 0;
+  let initialDelayHours = 1;
+  let initialDelayMinutes = 0;
+
+  if (trigger.properties?.delayTime) {
+    const [hours, minutes] = trigger.properties.delayTime.split(":");
+
+    initialDelayMinutes = +minutes;
+    if (+hours >= 24) {
+      const fullHours = +hours % 24;
+      initialDelayHours = fullHours;
+      initialDelayDays = (+hours - fullHours) / 24;
+    } else {
+      initialDelayHours = +hours;
+    }
+  }
+
+  const [delayDays, setDelayDays] = useState(initialDelayDays);
+  const [delayHours, setDelayHours] = useState(initialDelayHours);
+  const [delayMinutes, setDelayMinutes] = useState(initialDelayMinutes);
+
+  useEffect(() => {
+    if (!delayTime) return;
+
+    const [hours, minutes] = delayTime.split(":");
+
+    setDelayMinutes(+minutes);
+    if (+hours >= 24) {
+      const fullHours = +hours % 24;
+      setDelayHours(fullHours);
+      setDelayDays((+hours - fullHours) / 24);
+    } else {
+      setDelayHours(+hours);
+    }
+  }, [delayTime]);
+
+  useEffect(() => {
+    let hours = delayHours + delayDays * 24;
+    let minutes = 0;
+
+    if (delayMinutes >= 60) {
+      minutes = delayMinutes % 60;
+      hours += (delayMinutes - minutes) / 60;
+    } else {
+      minutes = delayMinutes;
+    }
+
+    const newDelayTime = `${hours < 10 ? `0${hours}` : hours}:${
+      minutes < 10 ? `0${minutes}` : minutes
+    }`;
+    setDelayTime(newDelayTime);
+  }, [delayDays, delayHours, delayMinutes]);
+
   const [datePickerSpecificTimeValue, setDatePickerSpecificTimeValue] =
     useState(trigger.properties?.specificTime);
 
@@ -168,22 +221,40 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
 
   const [isButtonDisabled, setIsButtonDisabled] = useState(true);
 
-  const handleTimeDelayChange = (value: string) => {
-    const arr: string[] = value.split(":");
-    setIsButtonDisabled(!value.match(/\d\d:\d\d/));
+  // const handleTimeDelayChange = (value: string) => {
+  //   const arr: string[] = value.split(":");
+  //   setIsButtonDisabled(!value.match(/\d\d:\d\d/));
 
-    if (
-      arr?.length > 2 ||
-      (arr[0] && arr[0]?.length > 2) ||
-      (arr[1] && arr[1]?.length > 2) ||
-      arr.some((part: string) => isNaN(+part)) ||
-      +arr[0] > 23 ||
-      +arr[1] > 59
-    ) {
-      return;
-    }
+  //   if (
+  //     arr?.length > 2 ||
+  //     (arr[0] && arr[0]?.length > 2) ||
+  //     (arr[1] && arr[1]?.length > 2) ||
+  //     arr.some((part: string) => isNaN(+part)) ||
+  //     +arr[0] > 23 ||
+  //     +arr[1] > 59
+  //   ) {
+  //     return;
+  //   }
 
-    setDelayInputTime(value);
+  //   setDelayInputTime(value);
+  // };
+
+  const handleDelayDaysChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const newValue = +e.target.value;
+    if (newValue < 0) return;
+    setDelayDays(newValue);
+  };
+
+  const handleDelayHoursChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const newValue = +e.target.value;
+    if (newValue < 0) return;
+    setDelayHours(+e.target.value);
+  };
+
+  const handleDelayMinutesChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const newValue = +e.target.value;
+    if (newValue < 0) return;
+    setDelayMinutes(+e.target.value);
   };
 
   const handleTimeSelectChange = (value: string) => {
@@ -436,7 +507,7 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
         properties: {
           conditions: [],
           specificTime: datePickerSpecificTimeValue,
-          delayTime: delayInputTime,
+          delayTime: delayTime,
           eventTime: eventTimeSelect,
         },
       });
@@ -499,18 +570,55 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
                       </div>
                     )}
                   </div>
-                  <div>
-                    {eventTimeSelect !== "SpecificTime" && (
-                      <Input
-                        name="delayTime"
-                        id="delayTime"
-                        value={delayInputTime}
-                        onChange={(e) => handleTimeDelayChange(e.target.value)}
-                        placeholder="HH:MM"
-                        className="mt-[24px] max-w-[200px]"
-                      />
-                    )}
-                  </div>
+                  {eventTimeSelect !== "SpecificTime" && (
+                    <div className="flex flex-col justify-between gap-[5px]">
+                      <div className="block text-sm font-medium text-gray-700 mt-[20px]">
+                        Wait
+                      </div>
+                      <div className="flex justify-between items-center w-full">
+                        <div className="block text-sm font-medium text-black">
+                          Days
+                        </div>
+                        <Input
+                          type="number"
+                          name="days"
+                          id="days"
+                          placeholder="days"
+                          className="max-w-[100px] ml-auto"
+                          value={delayDays}
+                          onChange={handleDelayDaysChange}
+                        />
+                      </div>
+                      <div className="flex justify-between items-center w-full">
+                        <div className="block text-sm font-medium text-black">
+                          Hours
+                        </div>
+                        <Input
+                          type="number"
+                          name="hours"
+                          id="hours"
+                          placeholder="hours"
+                          className="max-w-[100px] ml-auto"
+                          value={delayHours}
+                          onChange={handleDelayHoursChange}
+                        />
+                      </div>
+                      <div className="flex justify-between items-center w-full">
+                        <div className="block text-sm font-medium text-black">
+                          Minutes
+                        </div>
+                        <Input
+                          type="number"
+                          name="minutes"
+                          id="minutes"
+                          placeholder="minutes"
+                          className="max-w-[100px] ml-auto"
+                          value={delayMinutes}
+                          onChange={handleDelayMinutesChange}
+                        />
+                      </div>
+                    </div>
+                  )}
                   <div>
                     {eventTimeSelect !== "SpecificTime" && (
                       <div
@@ -701,7 +809,7 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
       isError =
         eventTimeSelect === "SpecificTime"
           ? !datePickerSpecificTimeValue
-          : !delayInputTime || !delayInputTime.match(/\d\d:\d\d/);
+          : !delayDays && !delayHours && !delayMinutes;
       break;
     case TriggerType.TIME_WINDOW:
       isError =
@@ -724,6 +832,19 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
               { value: TriggerType.TIME_WINDOW, title: "Time Window" },
             ]}
             onChange={handleTriggerType}
+            wrapperClassnames="max-w-[200px]"
+          />
+        </div>
+        <div className="mb-5">
+          <Select
+            label="Branching Options"
+            value="single"
+            options={[
+              { value: "single", title: "Single branch" },
+              { value: "truefalse", title: "True/False", disabled: true },
+              { value: "multibranch", title: "Multibranch", disabled: true },
+            ]}
+            onChange={() => {}}
             wrapperClassnames="max-w-[200px]"
           />
         </div>

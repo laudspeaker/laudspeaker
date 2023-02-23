@@ -6,7 +6,6 @@ import SettingsEmailBeta from "./SettingsEmailBeta";
 import SettingsEventsBeta from "./SettingsEventsBeta";
 import SettingsFirebaseBeta from "./SettingsFirebaseBeta";
 import SettingsGeneralBeta from "./SettingsGeneralBeta";
-import SettingsIntegrationsBeta from "./SettingsIntegrationsBeta";
 import SettingsPlanBeta from "./SettingsPlanBeta";
 import SettingsSlackBeta from "./SettingsSlackBeta";
 import SettingsSMSBeta from "./SettingsSMSBeta";
@@ -23,7 +22,6 @@ enum TabName {
   PLAN = "Plan",
   BILLING = "Billing",
   TEAM_MEMBERS = "Team Members",
-  INTEGRATIONS = "Integrations",
 }
 
 const tabComponents: Record<TabName, ReactNode> = {
@@ -37,7 +35,6 @@ const tabComponents: Record<TabName, ReactNode> = {
   Plan: <SettingsPlanBeta />,
   Billing: <SettingsBillingBeta />,
   "Team Members": <SettingsTeamBeta />,
-  Integrations: <SettingsIntegrationsBeta />,
 };
 
 // type TabName = keyof typeof tabComponents;

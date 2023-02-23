@@ -52,7 +52,7 @@ describe(
         force: true,
       });
       cy.get('[data-isprimary]:not([data-isprimary="true"])').click();
-
+      cy.wait(3000);
       cy.get("#audience > .p-0 > .justify-between").click();
       cy.get("#name").clear().type("Step 3");
       cy.contains("Finish later").click();
@@ -66,9 +66,13 @@ describe(
 
       cy.contains("Second").click();
       setupEventTrigger(emailTemplate.eventName, emailTemplate.eventName);
+      cy.wait(1000);
       cy.get(
-        '.text-updater-node:not([data-isprimary="true"]) > [style="display: flex; height: 22px; position: absolute; left: 0px; bottom: 0px; align-items: center; width: 100%; justify-content: space-around;"] > .react-flow__handle'
-      ).drag('[data-isprimary]:not([data-isprimary="true"])', { force: true });
+        '.text-updater-node:nth(1) > [style="display: flex; height: 22px; position: absolute; left: 0px; bottom: 0px; align-items: center; width: 100%; justify-content: space-around;"] > .react-flow__handle'
+      ).drag(
+        '[data-isprimary]:not([data-isprimary="true"]):contains("Step 3")',
+        { force: true }
+      );
       cy.get(
         '[data-isprimary]:not([data-isprimary="true"]):contains("Step 3")'
       ).click();
@@ -107,7 +111,7 @@ describe(
             event: { [emailTemplate.eventName]: emailTemplate.eventName },
           },
         }).then(({ body }) => {
-          cy.wait(1000);
+          cy.wait(5000);
           cy.request({
             method: "POST",
             headers: {
