@@ -58,6 +58,7 @@ describe(
       cy.contains(emailTemplate.name).click();
       cy.get("#exportSelectedTemplate").click();
       cy.get('[data-isprimary="true"]').click();
+      cy.wait(3000);
       setupDelayTrigger();
       cy.get(
         '[style="display: flex; height: 22px; position: absolute; left: 0px; bottom: 0px; align-items: center; width: 100%; justify-content: space-around;"] > .react-flow__handle'
@@ -65,7 +66,7 @@ describe(
         force: true,
       });
       cy.get('[data-isprimary]:not([data-isprimary="true"])').click();
-
+      cy.wait(3000);
       cy.get("#audience > .p-0 > .justify-between").click();
       cy.get("#name").clear().type(step3Name);
       cy.contains("Finish later").click();
@@ -78,9 +79,10 @@ describe(
       cy.get("#exportSelectedTemplate").click();
 
       cy.contains(step2Name).click();
+      cy.wait(3000);
       setupSpecificTimeTrigger(180000);
       cy.get(
-        '.text-updater-node:not([data-isprimary="true"]) > [style="display: flex; height: 22px; position: absolute; left: 0px; bottom: 0px; align-items: center; width: 100%; justify-content: space-around;"] > .react-flow__handle'
+        '.text-updater-node:nth(1) > [style="display: flex; height: 22px; position: absolute; left: 0px; bottom: 0px; align-items: center; width: 100%; justify-content: space-around;"] > .react-flow__handle'
       ).drag(
         `[data-isprimary]:not([data-isprimary="true"]):contains("${step3Name}")`,
         { force: true }
@@ -88,12 +90,13 @@ describe(
       cy.get(
         `[data-isprimary]:not([data-isprimary="true"]):contains("${step3Name}")`
       ).click();
-
+      cy.wait(3000);
       cy.get("#audience > .p-0 > .justify-between").click();
       cy.get("#name").clear().type(step4Name);
       cy.contains("Finish later").click();
 
       cy.contains(step4Name).move({ deltaX: 100, deltaY: 700 });
+      cy.wait(3000);
       cy.get("#slack > .p-0 > .justify-between").click();
 
       cy.get("#activeJourney").click();
@@ -101,9 +104,10 @@ describe(
       cy.get("#exportSelectedTemplate").click();
 
       cy.contains(step3Name).click();
+      cy.wait(3000);
       setupTimeWindowTrigger();
       cy.get(
-        '.text-updater-node:not([data-isprimary="true"]) > [style="display: flex; height: 22px; position: absolute; left: 0px; bottom: 0px; align-items: center; width: 100%; justify-content: space-around;"] > .react-flow__handle:last'
+        '.text-updater-node:nth(2) > [style="display: flex; height: 22px; position: absolute; left: 0px; bottom: 0px; align-items: center; width: 100%; justify-content: space-around;"] > .react-flow__handle'
       ).drag("[data-isprimary]:nth(3)", { force: true });
       cy.get("[data-isprimary]:nth(3)").click();
 
@@ -113,7 +117,7 @@ describe(
       cy.wait(1000);
       cy.contains("Start").click();
       cy.wait(3000);
-      cy.request(`${Cypress.env("AxiosURL")}tests/test-customer-id`).then(
+      cy.request(`${Cypress.env("AxiosURL")}tests/any-test-customer-id`).then(
         ({ body: id }) => {
           cy.wait(5 * 60 * 1000);
           cy.request(
