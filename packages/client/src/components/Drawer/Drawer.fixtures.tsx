@@ -7,6 +7,7 @@ import {
   Settings,
   Messaging,
   People,
+  Integrations,
 } from "../Icons/Icons";
 
 export default [
@@ -77,28 +78,28 @@ export const dataSubArray = [
       },
     ],
   },
-  // {
-  //   id: "data",
-  //   imgIcon: Integrations(),
-  //   text: "Data",
-  //   type: "group",
-  //   children: [
-  //     {
-  //       id: "integrations",
-  //       imgIcon: Integrations(),
-  //       text: "Integrations",
-  //       type: "menu",
-  //       link: "/settings/integrations",
-  //     },
-  //     // {
-  //     //   id: "analysis",
-  //     //   imgIcon: Analysis(),
-  //     //   text: "Analysis",
-  //     //   type: "menu",
-  //     //   link: "/analysis",
-  //     // },
-  //   ],
-  // },
+  {
+    id: "integrations",
+    imgIcon: Integrations(),
+    text: "Data",
+    type: "group",
+    children: [
+      {
+        id: "integrations",
+        imgIcon: Integrations(),
+        text: "Database import",
+        type: "menu",
+        link: "/integrations",
+      },
+      // {
+      //   id: "analysis",
+      //   imgIcon: Analysis(),
+      //   text: "Analysis",
+      //   type: "menu",
+      //   link: "/analysis",
+      // },
+    ],
+  },
   {
     id: "settings",
     imgIcon: Settings(),
