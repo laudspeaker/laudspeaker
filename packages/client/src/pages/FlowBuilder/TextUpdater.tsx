@@ -114,10 +114,6 @@ const TextUpdaterNode = ({ data }: { data: NodeData }) => {
 
   const updateNodeInternals = useUpdateNodeInternals();
 
-  useEffect(() => {
-    updateNodeInternals(nodeId || "");
-  }, [triggers]);
-
   const handleTriggerClick = (
     e: MouseEvent<HTMLDivElement>,
     triggerId: string
@@ -178,6 +174,10 @@ const TextUpdaterNode = ({ data }: { data: NodeData }) => {
   const connectionNodeId = useStore((state) => state.connectionNodeId);
   const isTarget = connectionNodeId && connectionNodeId !== nodeData.id;
   const isSourceForSome = !!edges.find((edge) => edge.source === nodeId);
+
+  useEffect(() => {
+    updateNodeInternals(nodeId || "");
+  }, [triggers, isSourceForSome]);
 
   const handleAudienceSubmit = async (formData: INameSegmentForm) => {
     const { name, description } = formData;

@@ -299,16 +299,6 @@ export class AudiencesService {
         );
       }
 
-      if (
-        toAud?.customers?.length &&
-        toAud?.customers?.indexOf(customerId) > -1
-      ) {
-        this.logger.debug(
-          'Customer ' + customerId + ' is already in audience ' + toAud.id
-        );
-        return Promise.resolve({ jobIds: [], templates: [] });
-      }
-
       if (toAud && !toAud.isEditable) {
         this.logger.debug('To before: ' + toAud?.customers?.length);
         toAud.customers = [...toAud.customers, customerId];
