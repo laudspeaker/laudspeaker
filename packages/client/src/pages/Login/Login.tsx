@@ -4,11 +4,12 @@ import { ILoginForm, loginUser } from "../../reducers/auth";
 import { useNavigate } from "react-router-dom";
 import posthog from "posthog-js";
 import laudspeakerLogo from "../../assets/images/laudspeaker.svg";
-import Link from "components/Link/Link";
+import CustomLink from "components/Link/Link";
 import Tooltip from "components/Elements/Tooltip";
 import githubIcon from "../../assets/images/github.svg";
 import googleIcon from "../../assets/images/google.svg";
 import gitlabIcon from "../../assets/images/gitlab.svg";
+import { Link } from "react-router-dom";
 
 export interface LoginProps {
   setShowWelcomeBanner: (value: boolean) => void;
@@ -107,6 +108,14 @@ const Login: FC<LoginProps> = ({ setShowWelcomeBanner }) => {
                   />
                 </div>
               </div>
+              <div className="text-sm flex items-center justify-end">
+                <Link
+                  to="/reset-password"
+                  className="font-medium text-cyan-600 hover:text-cyan-500"
+                >
+                  Forgot your password?
+                </Link>
+              </div>
               <div>
                 <button
                   id="loginIntoAccount"
@@ -120,12 +129,12 @@ const Login: FC<LoginProps> = ({ setShowWelcomeBanner }) => {
             </form>
             <p className="pt-[24px] mb-[34px] text-center">
               Want to create an account?
-              <Link
+              <CustomLink
                 href="/signup"
                 className="no-underline text-[#4FA198] m-[0_10px]"
               >
                 Sign Up
-              </Link>
+              </CustomLink>
             </p>
             <div className="mt-6">
               <div className="relative">

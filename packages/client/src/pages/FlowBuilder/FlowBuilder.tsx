@@ -216,6 +216,7 @@ const Flow = () => {
   const [journeyTypeModalOpen, setJourneyTypeModalOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [stepsCompletion, setStepsCompletion] = useState([false, false, false]);
+  const [mockNodeId, setMockNodeId] = useState<string>();
 
   const onHandleClick = (e: unknown, triggerId: string) => {
     return { e, triggerId };
@@ -388,7 +389,7 @@ const Flow = () => {
     [triggers]
   );
 
-  const onNodeDoubleClick = useCallback(
+  const onNodeClick = useCallback(
     (event: React.MouseEvent, node: Node) => {
       setSelectedNode(node.id);
     },
@@ -446,6 +447,25 @@ const Flow = () => {
   const performAction = (actionId: string) => {
     switch (actionId) {
       case "audience": {
+        const mockId = uuid();
+        setMockNodeId(mockId);
+
+        setNodes([
+          ...nodes,
+          generateNode(
+            {
+              id: mockId,
+              triggers: [],
+              messages: [],
+              position: { x: 0, y: 0 },
+              audienceId: "-1",
+              data: {},
+            },
+            triggers
+          ),
+        ]);
+        setSelectedNode(mockId);
+
         setAudienceModalOpen(true);
         break;
       }
@@ -714,7 +734,7 @@ const Flow = () => {
 
     switch (type) {
       case "audience":
-        setAudienceModalOpen(true);
+        performAction(type);
         break;
       case TriggerType.EVENT:
       case TriggerType.TIME_DELAY:
@@ -873,7 +893,8 @@ const Flow = () => {
 
       const node = generateNode(newNode, triggers);
 
-      setNodes([...nodes, node]);
+      setNodes([...nodes, node].filter((n) => n.id !== mockNodeId));
+      setMockNodeId(undefined);
       setAudienceModalOpen(false);
       setSelectedNode(node.id);
 
@@ -1006,7 +1027,9 @@ const Flow = () => {
           <div className="flex flex-col">
             <SideDrawer
               selectedNode={selectedNode}
-              onClick={performAction}
+              onClick={(action) => {
+                if (action === "audience") performAction(action);
+              }}
               onDragStart={onDragStart}
               onDragEnd={() => {
                 setIsTriggerDragging(false);
@@ -1133,7 +1156,7 @@ const Flow = () => {
               edgeTypes={{
                 custom: SmartStepEdge,
               }}
-              onNodeDoubleClick={onNodeDoubleClick}
+              onNodeClick={onNodeClick}
               onNodesChange={onNodesChange}
               onEdgesChange={onEdgesChange}
               onPaneClick={onPaneClick}
@@ -1280,14 +1303,17 @@ const Flow = () => {
         />
         <SideModal
           isOpen={audienceModalOpen}
-          onClose={() => setAudienceModalOpen(false)}
+          onClose={() => {
+            setNodes(nodes.filter((n) => n.id !== mockNodeId));
+            setMockNodeId(undefined);
+            setAudienceModalOpen(false);
+          }}
         >
           <NameSegment
             onSubmit={handleAudienceSubmit}
             isPrimary={!nodes.some((item) => item.data.primary)}
             isCollapsible={true}
             isSaving={isSaving}
-            onClose={() => setAudienceModalOpen(false)}
             workflowId={flowId}
           />
         </SideModal>

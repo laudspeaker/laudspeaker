@@ -17,6 +17,8 @@ import { RegisterDto } from '../auth/dto/register.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { AuthService } from './auth.service';
 import { Request } from 'express';
+import { RequestResetPasswordDto } from './dto/request-reset-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -59,5 +61,22 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   public async resendEmail(@Req() { user }: Request) {
     return this.service.requestVerification(<Account>user);
+  }
+
+  @Post('reset-password')
+  @UseInterceptors(ClassSerializerInterceptor)
+  public async requestResetPassword(
+    @Body() requestResetPasswordDto: RequestResetPasswordDto
+  ) {
+    return this.service.requestResetPassword(requestResetPasswordDto);
+  }
+
+  @Post('reset-password/:id')
+  @UseInterceptors(ClassSerializerInterceptor)
+  public async resetPassword(
+    @Body() resetPasswordDto: ResetPasswordDto,
+    @Param('id') id: string
+  ) {
+    return this.service.resetPassword(resetPasswordDto, id);
   }
 }

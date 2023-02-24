@@ -210,7 +210,7 @@ const TextUpdaterNode = ({ data }: { data: NodeData }) => {
         style={{
           opacity: hidden ? 0 : 1,
         }}
-        onDoubleClick={() => {
+        onClick={() => {
           setAudienceModalOpen(true);
         }}
       >
@@ -399,10 +399,10 @@ const TextUpdaterNode = ({ data }: { data: NodeData }) => {
               onSubmit={handleAudienceSubmit}
               isPrimary={data.primary}
               isCollapsible={true}
-              onClose={() => setAudienceModalOpen(false)}
               workflowId={flowId}
               edit={true}
               audienceId={audienceId}
+              showAdditionalSetup={false}
             />
           </SideModal>,
           flowBuilder

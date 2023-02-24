@@ -20,10 +20,10 @@ interface INameSegment {
   isPrimary: boolean;
   isCollapsible: boolean;
   isSaving?: boolean;
-  onClose: () => void;
   workflowId: string;
   edit?: boolean;
   audienceId?: string;
+  showAdditionalSetup?: boolean;
 }
 
 const NameSegment = ({
@@ -33,6 +33,7 @@ const NameSegment = ({
   isSaving = false,
   edit = false,
   audienceId,
+  showAdditionalSetup = true,
 }: INameSegment) => {
   // A Segment initally has three Properties:
   //      1. Dynamic: whether new customers are added
@@ -128,37 +129,42 @@ const NameSegment = ({
               />
             </FormControl>
           </Grid>
-          <h3>Setup your step</h3>
-          <div className="py-4 flex flex-col gap-[10px]">
-            <div>
-              <Select
-                label="Add message"
-                options={[
-                  { value: "email" },
-                  { value: "slack" },
-                  { value: "sms" },
-                ]}
-                value={segmentForm.messageType}
-                onChange={(value) =>
-                  setSegmentForm({ ...segmentForm, messageType: value })
-                }
-              />
-            </div>
-            <div>
-              <Select
-                label="Add a trigger"
-                options={[
-                  { value: TriggerType.EVENT, title: "event based" },
-                  { value: TriggerType.TIME_DELAY, title: "time delay" },
-                  { value: TriggerType.TIME_WINDOW, title: "time window" },
-                ]}
-                value={segmentForm.triggerType}
-                onChange={(value) =>
-                  setSegmentForm({ ...segmentForm, triggerType: value })
-                }
-              />
-            </div>
-          </div>
+          {showAdditionalSetup && (
+            <>
+              <h3>Setup your step</h3>
+              <div className="py-4 flex flex-col gap-[10px]">
+                <div>
+                  <Select
+                    label="Add message"
+                    options={[
+                      { value: "email" },
+                      { value: "slack" },
+                      { value: "sms" },
+                    ]}
+                    value={segmentForm.messageType}
+                    onChange={(value) =>
+                      setSegmentForm({ ...segmentForm, messageType: value })
+                    }
+                  />
+                </div>
+                <div>
+                  <Select
+                    label="Add a trigger"
+                    options={[
+                      { value: TriggerType.EVENT, title: "event based" },
+                      { value: TriggerType.TIME_DELAY, title: "time delay" },
+                      { value: TriggerType.TIME_WINDOW, title: "time window" },
+                    ]}
+                    value={segmentForm.triggerType}
+                    onChange={(value) =>
+                      setSegmentForm({ ...segmentForm, triggerType: value })
+                    }
+                  />
+                </div>
+              </div>
+            </>
+          )}
+
           {edit ? (
             <div className="flex justify-end" data-namesegmentbox>
               <GenericButton

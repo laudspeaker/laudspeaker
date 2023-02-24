@@ -2,11 +2,12 @@ import { HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Model } from 'mongoose';
-import { DataSource, In, Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { AccountsService } from '../accounts/accounts.service';
 import { Account } from '../accounts/entities/accounts.entity';
 import { Audience } from '../audiences/entities/audience.entity';
 import { AuthService } from '../auth/auth.service';
+import { Recovery } from '../auth/entities/recovery.entity';
 import { CustomersService } from '../customers/customers.service';
 import { CreateCustomerDto } from '../customers/dto/create-customer.dto';
 import {
@@ -33,6 +34,8 @@ export class TestsService {
     private templateRepository: Repository<Template>,
     @InjectRepository(Installation)
     private installationRepository: Repository<Installation>,
+    @InjectRepository(Recovery)
+    private recoveryRepository: Repository<Recovery>,
     @Inject(AuthService)
     private readonly authService: AuthService,
     @InjectModel(CustomerKeys.name)
@@ -242,5 +245,11 @@ export class TestsService {
     });
 
     return audiences.find((audience) => audience.customers.includes(id));
+  }
+
+  public async getTestRecovery() {
+    return this.recoveryRepository.findOneBy({
+      account: { id: '00000000-0000-0000-0000-000000000000' },
+    });
   }
 }
