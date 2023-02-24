@@ -10,6 +10,7 @@ import { Audience } from '../audiences/entities/audience.entity';
 import { AuthHelper } from '../auth/auth.helper';
 import { AuthModule } from '../auth/auth.module';
 import { AuthService } from '../auth/auth.service';
+import { Recovery } from '../auth/entities/recovery.entity';
 import { CustomersModule } from '../customers/customers.module';
 import { CustomersService } from '../customers/customers.service';
 import {
@@ -32,6 +33,7 @@ import { TestsService } from './tests.service';
       Installation,
       Template,
       Workflow,
+      Recovery,
     ]),
     MongooseModule.forFeature([
       { name: Customer.name, schema: CustomerSchema },

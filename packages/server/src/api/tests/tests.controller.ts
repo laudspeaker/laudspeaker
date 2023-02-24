@@ -65,4 +65,9 @@ export class TestsController {
   async getAudienceByCustomerId(@Param('id') id: string) {
     return this.testsService.getAudienceByCustomerId(id);
   }
+
+  @Get('test-recovery')
+  async getTestRecovery() {
+    return this.testsService.getTestRecovery();
+  }
 }

@@ -5,7 +5,8 @@ const { email, password } = credentials;
 
 export const loginFunc = (
   _email: string = email,
-  _password: string = password
+  _password: string = password,
+  firstLogin = true
 ) => {
   cy.viewport(1280, 1024);
   cy.visit("/");
@@ -16,5 +17,5 @@ export const loginFunc = (
   cy.get("#password").type(_password);
   cy.get("#loginIntoAccount").click();
   cy.contains("Welcome").should("exist");
-  cy.get(".grayscale").click();
+  if (firstLogin) cy.get(".grayscale").click();
 };
