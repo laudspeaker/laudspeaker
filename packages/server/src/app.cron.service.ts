@@ -28,6 +28,7 @@ import {
   Integration,
   IntegrationStatus,
 } from './api/integrations/entities/integration.entity';
+import { Recovery } from './api/auth/entities/recovery.entity';
 
 const BATCH_SIZE = 500;
 const KEYS_TO_SKIP = ['__v', '_id', 'audiences', 'ownerId'];
@@ -52,6 +53,8 @@ export class CronService {
     private integrationsRepository: Repository<Integration>,
     @InjectRepository(Verification)
     private verificationRepository: Repository<Verification>,
+    @InjectRepository(Recovery)
+    public readonly recoveryRepository: Repository<Recovery>,
     @Inject(JobsService) private jobsService: JobsService,
     @Inject(IntegrationsService)
     private integrationsService: IntegrationsService,
@@ -308,6 +311,19 @@ export class CronService {
       }
     } catch (e) {
       this.logger.error('Cron error: ' + e);
+    }
+  }
+
+  @Cron(CronExpression.EVERY_MINUTE)
+  async handleRecovery() {
+    try {
+      await this.recoveryRepository
+        .createQueryBuilder()
+        .where(`now() > recovery."createdAt"::TIMESTAMP + INTERVAL '1 HOUR'`)
+        .delete()
+        .execute();
+    } catch (e) {
+      this.logger.error('Recovery cron error: ' + e);
     }
   }
 }

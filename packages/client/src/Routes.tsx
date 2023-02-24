@@ -35,6 +35,7 @@ import Account from "types/Account";
 import { GenericButton } from "components/Elements";
 import Home from "pages/Home";
 import FirebaseBuilder from "pages/FirebaseBuilder/FirebaseBuilder";
+import ResetPassword from "pages/ResetPassword";
 
 interface IProtected {
   children: ReactElement;
@@ -177,6 +178,8 @@ const RouteComponent: React.FC = () => {
             </Protected>
           }
         />
+        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/reset-password/:id" element={<ResetPassword />} />
         <Route
           path="/flow"
           element={

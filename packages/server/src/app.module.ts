@@ -52,6 +52,7 @@ const papertrail = new winston.transports.Http({
 });
 
 import { ServeStaticModule } from '@nestjs/serve-static';
+import { Recovery } from './api/auth/entities/recovery.entity';
 
 const myFormat = winston.format.printf(function ({
   level,
@@ -175,6 +176,7 @@ const formatMongoConnectionString = (mongoConnectionString: string) => {
       Template,
       Installation,
       State,
+      Recovery,
     ]),
     BullModule.registerQueue({
       name: 'integrations',

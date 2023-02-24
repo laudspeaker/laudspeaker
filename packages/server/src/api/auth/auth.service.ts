@@ -1,4 +1,10 @@
-import { HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
+import {
+  HttpException,
+  HttpStatus,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Account, PlanType } from '../accounts/entities/accounts.entity';
 import { DataSource, EntityManager, Repository } from 'typeorm';
@@ -11,6 +17,9 @@ import { Verification } from './entities/verification.entity';
 import { CustomersService } from '../customers/customers.service';
 import mongoose from 'mongoose';
 import { InjectConnection } from '@nestjs/mongoose';
+import { RequestResetPasswordDto } from './dto/request-reset-password.dto';
+import { Recovery } from './entities/recovery.entity';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 
 @Injectable()
 export class AuthService {
@@ -21,6 +30,8 @@ export class AuthService {
     public readonly repository: Repository<Account>,
     @InjectRepository(Verification)
     public readonly verificationRepository: Repository<Verification>,
+    @InjectRepository(Recovery)
+    public readonly recoveryRepository: Repository<Recovery>,
     @Inject(AuthHelper)
     public readonly helper: AuthHelper,
     @Inject(CustomersService) private customersService: CustomersService,
@@ -180,5 +191,45 @@ export class AuthService {
     } finally {
       await transactionSession.endSession();
     }
+  }
+
+  public async requestResetPassword({ email }: RequestResetPasswordDto) {
+    const account = await this.repository.findOneBy({ email });
+
+    if (!account)
+      throw new NotFoundException('There is no account with this email');
+
+    await this.dataSource.transaction(async (transactionSession) => {
+      const recovery = await transactionSession.save(Recovery, { account });
+      const recoveryLink = `${process.env.FRONTEND_URL}/reset-password/${recovery.id}`;
+
+      await this.emailQueue.add('send', {
+        key: process.env.MAILGUN_API_KEY,
+        from: 'Laudspeaker',
+        domain: process.env.MAILGUN_DOMAIN,
+        email: 'noreply',
+        to: account.email,
+        subject: 'Password recovery',
+        text: `Recovery link: <a href="${recoveryLink}">${recoveryLink}</a>`,
+      });
+    });
+  }
+
+  public async resetPassword({ password }: ResetPasswordDto, id: string) {
+    const recovery = await this.recoveryRepository.findOne({
+      where: { id },
+      relations: ['account'],
+    });
+
+    if (!recovery?.account) throw new NotFoundException('Recover id not found');
+
+    await this.dataSource.transaction(async (transactionSession) => {
+      await transactionSession.save(Account, {
+        id: recovery.account.id,
+        password: this.helper.encodePassword(password),
+      });
+
+      await transactionSession.delete(Recovery, { id: recovery.id });
+    });
   }
 }

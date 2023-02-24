@@ -11,6 +11,7 @@ import { Installation } from '../slack/entities/installation.entity';
 import { State } from '../slack/entities/state.entity';
 import { Integration } from '../integrations/entities/integration.entity';
 import { Database } from '../integrations/entities/database.entity';
+import { Recovery } from '../auth/entities/recovery.entity';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { Database } from '../integrations/entities/database.entity';
       Verification,
       Integration,
       Database,
+      Recovery,
     ]),
   ],
 })
