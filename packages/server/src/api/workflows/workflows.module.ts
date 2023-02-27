@@ -19,11 +19,11 @@ import {
   EventKeys,
   EventKeysSchema,
 } from '../events/schemas/event-keys.schema';
-import { Segment } from '../segments/entities/segment.entity';
 import { AudiencesModule } from '../audiences/audiences.module';
 import { CustomersModule } from '../customers/customers.module';
 import { TemplatesModule } from '../templates/templates.module';
 import { SlackModule } from '../slack/slack.module';
+import { Filter } from '../filter/entities/filter.entity';
 
 @Module({
   imports: [
@@ -31,7 +31,7 @@ import { SlackModule } from '../slack/slack.module';
       Account,
       Audience,
       Installation,
-      Segment,
+      Filter,
       State,
       Template,
       Workflow,

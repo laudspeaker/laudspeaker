@@ -1,83 +1,133 @@
 import {
-  HttpException,
-  HttpStatus,
+  ConflictException,
   Injectable,
-  LoggerService,
   NotFoundException,
 } from '@nestjs/common';
-import { BadRequestException } from '@nestjs/common/exceptions';
 import { InjectRepository } from '@nestjs/typeorm';
-import { isUUID } from 'class-validator';
-import { FindManyOptions, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { Account } from '../accounts/entities/accounts.entity';
 import { CreateSegmentDTO } from './dto/create-segment.dto';
 import { UpdateSegmentDTO } from './dto/update-segment.dto';
+import { SegmentCustomers } from './entities/segment-customers.entity';
 import { Segment } from './entities/segment.entity';
 
 @Injectable()
 export class SegmentsService {
-  private readonly logger: LoggerService;
-
   constructor(
-    @InjectRepository(Segment) private segmentsRepository: Repository<Segment>
+    @InjectRepository(Segment) private segmentRepository: Repository<Segment>,
+    @InjectRepository(SegmentCustomers)
+    private segmentCustomersRepository: Repository<SegmentCustomers>
   ) {}
 
-  public async findAll(options: FindManyOptions<Segment>) {
-    return this.segmentsRepository.find(options);
-  }
-
   public async findOne(account: Account, id: string) {
-    if (!isUUID(id)) throw new BadRequestException('Invalid id');
-    const segment = await this.segmentsRepository.findOneBy({
-      user: { id: account.id },
+    const segment = await this.segmentRepository.findOneBy({
       id,
+      user: { id: account.id },
     });
+
     if (!segment) throw new NotFoundException('Segment not found');
 
     return segment;
   }
 
-  /**
-   * Create new segment by passing name and inclusion criteria
-   */
-  public async createSegment(
-    createSegmentDTO: CreateSegmentDTO,
-    userId: string
-  ) {
-    const { name, inclusionCriteria, resources } = createSegmentDTO;
-
-    try {
-      return await this.segmentsRepository.save({
-        name,
-        inclusionCriteria,
-        resources,
-        user: { id: userId },
-      });
-    } catch (error) {
-      this.logger.error(error);
-      throw new HttpException(
-        'Error on segment creation.',
-        HttpStatus.BAD_REQUEST
-      );
-    }
+  public async findAll(account: Account) {
+    return this.segmentRepository.findBy({ user: { id: account.id } });
   }
 
-  public async updateSegment(
+  public async create(account: Account, createSegmentDTO: CreateSegmentDTO) {
+    return this.segmentRepository.create({
+      ...createSegmentDTO,
+      user: { id: account.id },
+    });
+  }
+
+  public async update(
     account: Account,
     id: string,
     updateSegmentDTO: UpdateSegmentDTO
   ) {
-    const segment = await this.findOne(account, id);
-    await this.segmentsRepository.save({ ...segment, ...updateSegmentDTO });
+    await this.segmentRepository.update(
+      { id, user: { id: account.id } },
+      { ...updateSegmentDTO, user: { id: account.id } }
+    );
   }
 
-  public async duplicateSegment(account: Account, id: string) {
+  public async delete(account: Account, id: string) {
+    await this.segmentRepository.delete({ id, user: { id: account.id } });
+  }
+
+  public async getCustomers(account: Account, id: string) {
     const segment = await this.findOne(account, id);
-    const { inclusionCriteria, name, resources } = segment;
-    const newSegment = await this.createSegment(
-      { name: name + '-copy', inclusionCriteria, resources },
-      account.id
+
+    return this.segmentCustomersRepository.findBy({
+      segment: { id: segment.id },
+    });
+  }
+
+  public async assignCustomer(
+    account: Account,
+    id: string,
+    customerId: string
+  ) {
+    const segment = await this.findOne(account, id);
+
+    const foundRecord = await this.segmentCustomersRepository.findOneBy({
+      segment: { id: segment.id },
+      customerId,
+    });
+
+    if (foundRecord)
+      throw new ConflictException('Customer already in this segment');
+
+    await this.segmentCustomersRepository.save({
+      segment: { id: segment.id },
+      customerId,
+    });
+  }
+
+  public async assignCustomers(
+    account: Account,
+    id: string,
+    customerIds: string[]
+  ) {
+    for (const customerId of customerIds) {
+      await this.assignCustomer(account, id, customerId);
+    }
+  }
+
+  public async putCustomers(
+    account: Account,
+    id: string,
+    customerIds: string[]
+  ) {
+    const segment = await this.findOne(account, id);
+    await this.clearCustomers(account, id);
+
+    return this.segmentCustomersRepository.save(
+      customerIds.map((customerId) => ({
+        segment: { id: segment.id },
+        customerId,
+      }))
     );
-    return newSegment;
+  }
+
+  public async clearCustomers(account: Account, id: string) {
+    const segment = await this.findOne(account, id);
+    await this.segmentCustomersRepository.delete({
+      segment: { id: segment.id },
+    });
+  }
+
+  public async deleteCustomer(
+    account: Account,
+    id: string,
+    customerId: string
+  ) {
+    const segment = await this.findOne(account, id);
+
+    await this.segmentCustomersRepository.delete({
+      segment: { id: segment.id },
+      customerId,
+    });
   }
 }

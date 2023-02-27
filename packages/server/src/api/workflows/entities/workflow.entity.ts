@@ -1,12 +1,13 @@
 import { Account } from '@/api/accounts/entities/accounts.entity';
+import { Filter } from '@/api/filter/entities/filter.entity';
 import {
   Entity,
   Column,
   PrimaryGeneratedColumn,
   JoinColumn,
   ManyToOne,
+  OneToOne,
 } from 'typeorm';
-import { Segment } from '../../segments/entities/segment.entity';
 
 export enum TriggerType {
   EVENT = 'eventBased',
@@ -145,7 +146,7 @@ export class Workflow {
   @Column({ default: true })
   isDynamic: boolean;
 
-  @ManyToOne(() => Segment, (segment) => segment.id, { onDelete: 'CASCADE' })
+  @ManyToOne(() => Filter, (filter) => filter.id, { onDelete: 'CASCADE' })
   @JoinColumn()
-  segment?: Segment;
+  filter?: Filter;
 }

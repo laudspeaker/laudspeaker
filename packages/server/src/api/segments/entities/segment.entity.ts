@@ -1,5 +1,6 @@
 import { Account } from '@/api/accounts/entities/accounts.entity';
 import {
+  BaseEntity,
   Column,
   Entity,
   JoinColumn,
@@ -8,7 +9,7 @@ import {
 } from 'typeorm';
 
 @Entity()
-export class Segment {
+export class Segment extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
   public id: string;
 
@@ -18,29 +19,4 @@ export class Segment {
 
   @Column()
   public name: string;
-
-  /*
-      {
-          conditionalType: ...,
-          conditions: [
-            {
-              attribute: "email",
-              "value": "doesNotExist"
-            },
-            {
-              "attribute": "lastName",
-              "condition": "isEqual",
-              "value": "hello"
-            }
-          ]
-        }
-  */
-  @Column('jsonb', { default: { conditionalType: 'and', conditions: [] } })
-  public inclusionCriteria: any;
-
-  @Column({ default: false })
-  public isFreezed: boolean;
-
-  @Column('jsonb')
-  public resources: any;
 }

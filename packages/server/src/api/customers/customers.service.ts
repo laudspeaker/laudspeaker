@@ -127,12 +127,12 @@ export class CustomersService {
           owner: { id: account.id },
           isDynamic: true,
         },
-        relations: ['segment'],
+        relations: ['filter'],
       });
       for (let index = 0; index < dynamicWkfs.length; index++) {
         const workflow = dynamicWkfs[index];
-        if (workflow.segment) {
-          if (checkInclusion(ret, workflow.segment.inclusionCriteria)) {
+        if (workflow.filter) {
+          if (checkInclusion(ret, workflow.filter.inclusionCriteria)) {
             const audiences = await transactionManager.findBy(Audience, {
               workflow: { id: workflow.id },
             });
@@ -158,12 +158,12 @@ export class CustomersService {
           owner: { id: account.id },
           isDynamic: false,
         },
-        relations: ['segment'],
+        relations: ['filter'],
       });
       for (let index = 0; index < staticWkfs.length; index++) {
         const workflow = staticWkfs[index];
-        if (workflow.segment) {
-          if (checkInclusion(ret, workflow.segment.inclusionCriteria)) {
+        if (workflow.filter) {
+          if (checkInclusion(ret, workflow.filter.inclusionCriteria)) {
             const audiences = await transactionManager.findBy(Audience, {
               workflow: { id: workflow.id },
               isEditable: false,

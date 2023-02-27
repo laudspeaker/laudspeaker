@@ -33,7 +33,6 @@ import { Workflow } from './api/workflows/entities/workflow.entity';
 import { WorkflowsService } from './api/workflows/workflows.service';
 import { Job } from './api/jobs/entities/job.entity';
 import { JobsService } from './api/jobs/jobs.service';
-import { Segment } from './api/segments/entities/segment.entity';
 import { AudiencesService } from './api/audiences/audiences.service';
 import { CustomersService } from './api/customers/customers.service';
 import { Audience } from './api/audiences/entities/audience.entity';
@@ -53,6 +52,7 @@ const papertrail = new winston.transports.Http({
 
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { Recovery } from './api/auth/entities/recovery.entity';
+import { Segment } from './api/segments/entities/segment.entity';
 
 const myFormat = winston.format.printf(function ({
   level,

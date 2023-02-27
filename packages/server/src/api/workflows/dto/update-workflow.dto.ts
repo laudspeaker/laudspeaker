@@ -33,7 +33,7 @@ export class UpdateWorkflowDto {
 
   @IsUUID()
   @IsOptional()
-  public segmentId?: string;
+  public filterId?: string;
 
   @IsBoolean()
   @IsOptional()

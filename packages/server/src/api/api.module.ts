@@ -25,6 +25,7 @@ import { SmsModule } from './sms/sms.module';
 import { IntegrationsModule } from './integrations/integrations.module';
 import { JobsModule } from './jobs/jobs.module';
 import { TestsService } from './tests/tests.service';
+import { FilterModule } from './filter/filter.module';
 
 @Module({
   imports: [
@@ -45,6 +46,7 @@ import { TestsService } from './tests/tests.service';
     IntegrationsModule,
     JobsModule,
     TestsModule,
+    FilterModule,
   ],
 })
 export class ApiModule {

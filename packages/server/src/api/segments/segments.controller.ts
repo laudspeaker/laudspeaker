@@ -2,25 +2,24 @@ import {
   Body,
   ClassSerializerInterceptor,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
   Post,
   Put,
-  Query,
   Req,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { SegmentsService } from './segments.service';
 import { Request } from 'express';
 import { Account } from '../accounts/entities/accounts.entity';
-import { Like } from 'typeorm';
-import { SearchQueryDTO } from './dto/search-query.dto';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { AssignCustomerDTO } from './dto/assign-customer.dto';
 import { CreateSegmentDTO } from './dto/create-segment.dto';
+import { PutCutomersDTO } from './dto/put-customers.dto';
 import { UpdateSegmentDTO } from './dto/update-segment.dto';
-import { Segment } from './entities/segment.entity';
+import { SegmentsService } from './segments.service';
 
 @Controller('segments')
 export class SegmentsController {
@@ -29,37 +28,25 @@ export class SegmentsController {
   @Get()
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
-  public async findAll(
-    @Req() { user }: Request,
-    @Query() { searchText }: SearchQueryDTO
-  ): Promise<Segment[]> {
-    return this.segmentsService.findAll({
-      where: {
-        user: { id: (<Account>user).id },
-        name: Like(`%${searchText || ''}%`),
-      },
-      take: 10,
-    });
+  public async findAll(@Req() { user }: Request) {
+    return this.segmentsService.findAll(<Account>user);
   }
 
   @Get('/:id')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
-  public async findOne(
-    @Req() { user }: Request,
-    @Param('id') id: string
-  ): Promise<Segment> {
+  public async findOne(@Req() { user }: Request, @Param('id') id: string) {
     return this.segmentsService.findOne(<Account>user, id);
   }
 
-  @Put()
+  @Post()
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
   public async create(
     @Req() { user }: Request,
-    @Body() body: CreateSegmentDTO
-  ): Promise<Segment> {
-    return this.segmentsService.createSegment(body, (<Account>user).id);
+    @Body() createSegmentDTO: CreateSegmentDTO
+  ) {
+    return this.segmentsService.create(<Account>user, createSegmentDTO);
   }
 
   @Patch('/:id')
@@ -69,21 +56,72 @@ export class SegmentsController {
     @Req() { user }: Request,
     @Param('id') id: string,
     @Body() updateSegmentDTO: UpdateSegmentDTO
-  ): Promise<void> {
-    return this.segmentsService.updateSegment(
+  ) {
+    return this.segmentsService.update(<Account>user, id, updateSegmentDTO);
+  }
+
+  @Delete('/:id')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor)
+  public async delete(@Req() { user }: Request, @Param('id') id: string) {
+    return this.segmentsService.delete(<Account>user, id);
+  }
+
+  @Get('/:id/customers')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor)
+  public async getCustomers(@Req() { user }: Request, @Param('id') id: string) {
+    return this.segmentsService.getCustomers(<Account>user, id);
+  }
+
+  @Post('/:id/customers')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor)
+  public async assignCustomer(
+    @Req() { user }: Request,
+    @Param('id') id: string,
+    @Body() assignCustomerDTO: AssignCustomerDTO
+  ) {
+    return this.segmentsService.assignCustomer(
       <Account>user,
       id,
-      updateSegmentDTO
+      assignCustomerDTO.customerId
     );
   }
 
-  @Post('/:id/duplicate')
+  @Put('/:id/customers')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
-  public async duplicate(
+  public async putCustomers(
+    @Req() { user }: Request,
+    @Param('id') id: string,
+    @Body() putCutomersDTO: PutCutomersDTO
+  ) {
+    return this.segmentsService.putCustomers(
+      <Account>user,
+      id,
+      putCutomersDTO.customerIds
+    );
+  }
+
+  @Delete('/:id/customers')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor)
+  public async clearCustomers(
     @Req() { user }: Request,
     @Param('id') id: string
-  ): Promise<Segment> {
-    return this.segmentsService.duplicateSegment(<Account>user, id);
+  ) {
+    return this.segmentsService.clearCustomers(<Account>user, id);
+  }
+
+  @Delete('/:id/customers/:customerId')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor)
+  public async deleteCustomer(
+    @Req() { user }: Request,
+    @Param('id') id: string,
+    @Param('customerId') customerId: string
+  ) {
+    return this.segmentsService.deleteCustomer(<Account>user, id, customerId);
   }
 }
