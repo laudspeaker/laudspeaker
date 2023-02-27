@@ -124,15 +124,17 @@ const formatMongoConnectionString = (mongoConnectionString: string) => {
   imports: [
     ...(process.env.SERVE_CLIENT_FROM_NEST
       ? [
-          ServeStaticModule.forRoot({
-            rootPath: process.env.CLIENT_PATH
-              ? process.env.CLIENT_PATH
-              : join(__dirname, '../../../', 'client/build/'),
-            exclude: ['api/*'],
-          }),
-        ]
+        ServeStaticModule.forRoot({
+          rootPath: process.env.CLIENT_PATH
+            ? process.env.CLIENT_PATH
+            : join(__dirname, '../../../', 'client/build/'),
+          exclude: ['api/*'],
+        }),
+      ]
       : []),
-    MongooseModule.forRoot(process.env.MONGOOSE_URL),
+    MongooseModule.forRoot(process.env.MONGOOSE_URL
+      ? formatMongoConnectionString(process.env.MONGOOSE_URL)
+      : 'mongodb://127.0.0.1:27017/?directConnection=true'),
     BullModule.forRoot({
       redis: {
         host: process.env.REDIS_HOST ?? 'localhost',
@@ -188,13 +190,10 @@ const formatMongoConnectionString = (mongoConnectionString: string) => {
       name: 'customers',
     }),
     BullModule.registerQueue({
-      name: 'email',
+      name: 'message',
     }),
     BullModule.registerQueue({
       name: 'slack',
-    }),
-    BullModule.registerQueue({
-      name: 'sms',
     }),
     IntegrationsModule,
   ],

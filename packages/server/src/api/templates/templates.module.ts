@@ -33,7 +33,7 @@ import { SlackModule } from '../slack/slack.module';
       { name: CustomerKeys.name, schema: CustomerKeysSchema },
     ]),
     BullModule.registerQueue({
-      name: 'email',
+      name: 'message',
     }),
     BullModule.registerQueue({
       name: 'slack',

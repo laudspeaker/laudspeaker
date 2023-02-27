@@ -8,7 +8,7 @@ import { Audience } from '../audiences/entities/audience.entity';
 import { CustomersService } from '../customers/customers.service';
 import { Customer, CustomerSchema } from '../customers/schemas/customer.schema';
 import { EmailController } from './email.controller';
-import { EmailProcessor } from './email.processor';
+import { MessageProcessor } from './email.processor';
 import { WinstonModule } from 'nest-winston';
 import * as winston from 'winston';
 
@@ -42,7 +42,7 @@ describe('EmailController', () => {
         }),
         TypeOrmModule.forRootAsync({ useClass: TypeOrmConfigService }),
         BullModule.registerQueue({
-          name: 'email',
+          name: 'message',
         }),
         TypeOrmModule.forFeature([Account]),
         TypeOrmModule.forFeature([Audience]),
@@ -51,7 +51,7 @@ describe('EmailController', () => {
         ]),
       ],
       controllers: [EmailController],
-      providers: [EmailProcessor, CustomersService],
+      providers: [MessageProcessor, CustomersService],
     }).compile();
 
     controller = module.get<EmailController>(EmailController);

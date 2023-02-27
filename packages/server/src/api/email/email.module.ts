@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { EmailController } from './email.controller';
-import { EmailProcessor } from './email.processor';
+import { MessageProcessor } from './email.processor';
 import { BullModule } from '@nestjs/bull';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Account } from '../accounts/entities/accounts.entity';
@@ -17,7 +17,7 @@ import { WebhooksModule } from '../webhooks/webhooks.module';
 @Module({
   imports: [
     BullModule.registerQueue({
-      name: 'email',
+      name: 'message',
     }),
     TypeOrmModule.forFeature([Account, Audience]),
     MongooseModule.forFeature([
@@ -33,6 +33,6 @@ import { WebhooksModule } from '../webhooks/webhooks.module';
     WebhooksModule,
   ],
   controllers: [EmailController],
-  providers: [EmailProcessor],
+  providers: [MessageProcessor],
 })
 export class EmailModule {}

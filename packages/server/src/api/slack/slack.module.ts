@@ -22,7 +22,7 @@ import { CustomersModule } from '../customers/customers.module';
       name: 'slack',
     }),
     BullModule.registerQueue({
-      name: 'email',
+      name: 'message',
     }),
     BullModule.registerQueue({
       name: 'customers',

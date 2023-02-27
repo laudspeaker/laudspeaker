@@ -48,7 +48,7 @@ import { EventsProcessor } from './events.processor';
       { name: PosthogEventType.name, schema: PosthogEventTypeSchema },
     ]),
     BullModule.registerQueue({
-      name: 'email',
+      name: 'message',
     }),
     BullModule.registerQueue({
       name: 'slack',

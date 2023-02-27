@@ -13,10 +13,14 @@ import {
   ClickHouseEventProvider,
   WebhooksService,
 } from '../webhooks/webhooks.service';
+import twilio from 'twilio';
 
-@Processor('email')
+
+
+@Processor('message')
 @Injectable()
-export class EmailProcessor {
+export class MessageProcessor {
+  private MAXIMUM_SMS_LENGTH = 1600;
   private tagEngine = new Liquid();
   private sgMailService = new MailService();
 
@@ -34,11 +38,10 @@ export class EmailProcessor {
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
     private readonly logger: LoggerService,
     private readonly webhooksService: WebhooksService
-  ) {}
+  ) { }
 
-  @Process('send')
-  async handleSend(job: Job) {
-    this.logger.debug(JSON.stringify(job, null, 2));
+  @Process('email')
+  async handleEmail(job: Job) {
     const mailgun = new Mailgun(formData);
     const mg = mailgun.client({ username: 'api', key: job.data.key });
 
@@ -118,13 +121,58 @@ export class EmailProcessor {
           ]);
           break;
       }
-
-      console.log('Email id: ' + msg?.id);
       this.logger.debug(
         'Response from message sending: ' + JSON.stringify(msg)
       );
     } catch (err) {
       this.logger.error('Error attempting to send email: ' + err);
     }
+  }
+
+  @Process('sms')
+  async handleSMS(job: Job) {
+    try {
+      if (!job.data.to) {
+        this.logger.warn(
+          `Customer ${job.data.customerId} has no phone number; skipping`
+        );
+        return;
+      }
+      this.logger.debug(
+        `Starting SMS sending from ${job.data.from} to ${job.data.to}`
+      );
+      let textWithInsertedTags: string | undefined;
+
+      if (job.data.text) {
+        textWithInsertedTags = await this.tagEngine.parseAndRender(
+          job.data.text,
+          job.data.tags || {}
+        );
+      }
+
+      this.logger.debug(
+        `Finished rendering tags in SMS from ${job.data.from} to ${job.data.to}`
+      );
+      const twilioClient = twilio(
+        job.data.sid,
+        job.data.token
+      );
+
+      const message = await twilioClient.messages.create({
+        body: textWithInsertedTags?.slice(0, this.MAXIMUM_SMS_LENGTH),
+        from: job.data.from,
+        to: job.data.to,
+        statusCallback: `${process.env.TWILIO_WEBHOOK_ENDPOINT}?audienceId=${job.data.audienceId}&customerId=${job.data.customerId}&templateId=${job.data.templateId}`,
+      });
+
+      this.logger.debug(
+        `Sms with sid ${message.sid} status: ${JSON.stringify(
+          message.status
+        )}`
+      );
+    } catch (e) {
+      this.logger.error(e);
+    }
+
   }
 }

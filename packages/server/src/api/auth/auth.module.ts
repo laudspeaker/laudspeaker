@@ -34,7 +34,7 @@ import { Recovery } from './entities/recovery.entity';
       Recovery,
     ]),
     BullModule.registerQueue({
-      name: 'email',
+      name: 'message',
     }),
     CustomersModule,
   ],
