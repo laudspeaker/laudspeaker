@@ -30,8 +30,21 @@ export class SegmentsService {
     return segment;
   }
 
-  public async findAll(account: Account) {
-    return this.segmentRepository.findBy({ user: { id: account.id } });
+  public async findAll(account: Account, take = 100, skip = 0) {
+    const totalPages = Math.ceil(
+      (await this.segmentRepository.count({
+        where: {
+          user: { id: account.id },
+        },
+      })) / take || 1
+    );
+    const segments = await this.segmentRepository.find({
+      where: { user: { id: account.id } },
+      take: take < 100 ? take : 100,
+      skip,
+    });
+
+    return { data: segments, totalPages };
   }
 
   public async create(account: Account, createSegmentDTO: CreateSegmentDTO) {
@@ -56,12 +69,31 @@ export class SegmentsService {
     await this.segmentRepository.delete({ id, user: { id: account.id } });
   }
 
-  public async getCustomers(account: Account, id: string) {
+  public async getCustomers(
+    account: Account,
+    id: string,
+    take = 100,
+    skip = 0
+  ) {
     const segment = await this.findOne(account, id);
 
-    return this.segmentCustomersRepository.findBy({
-      segment: { id: segment.id },
+    const totalPages = Math.ceil(
+      (await this.segmentCustomersRepository.count({
+        where: {
+          segment: { id: segment.id },
+        },
+      })) / take || 1
+    );
+
+    const customers = this.segmentCustomersRepository.find({
+      where: {
+        segment: { id: segment.id },
+      },
+      take: take < 100 ? take : 100,
+      skip,
     });
+
+    return { data: customers, totalPages };
   }
 
   public async assignCustomer(

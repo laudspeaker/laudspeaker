@@ -8,6 +8,7 @@ import {
   Patch,
   Post,
   Put,
+  Query,
   Req,
   UseGuards,
   UseInterceptors,
@@ -28,8 +29,16 @@ export class SegmentsController {
   @Get()
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
-  public async findAll(@Req() { user }: Request) {
-    return this.segmentsService.findAll(<Account>user);
+  public async findAll(
+    @Req() { user }: Request,
+    @Query('take') take?: string,
+    @Query('skip') skip?: string
+  ) {
+    return this.segmentsService.findAll(
+      <Account>user,
+      take && +take,
+      skip && +skip
+    );
   }
 
   @Get('/:id')
@@ -70,8 +79,18 @@ export class SegmentsController {
   @Get('/:id/customers')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
-  public async getCustomers(@Req() { user }: Request, @Param('id') id: string) {
-    return this.segmentsService.getCustomers(<Account>user, id);
+  public async getCustomers(
+    @Req() { user }: Request,
+    @Param('id') id: string,
+    @Query('take') take?: string,
+    @Query('skip') skip?: string
+  ) {
+    return this.segmentsService.getCustomers(
+      <Account>user,
+      id,
+      take && +take,
+      skip && +skip
+    );
   }
 
   @Post('/:id/customers')
