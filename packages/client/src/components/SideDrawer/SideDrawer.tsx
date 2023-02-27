@@ -35,6 +35,8 @@ interface Props {
   onClick: (id: string) => void;
   onDragStart?: (e: React.DragEvent<HTMLDivElement>, itemId: string) => void;
   onDragEnd?: () => void;
+  onMouseUp?: (action: string) => void;
+  onMouseDown?: () => void;
   afterMenuContent?: React.ReactNode;
   flowName: string;
   handleFlowName: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -46,6 +48,8 @@ export default function ResponsiveDrawer(props: Props) {
     onClick,
     onDragStart,
     onDragEnd,
+    onMouseUp,
+    onMouseDown,
     handleFlowName,
     flowName,
   } = props;
@@ -137,6 +141,8 @@ export default function ResponsiveDrawer(props: Props) {
             : (e) => onDragStart(e, item.id)
         }
         onDragEnd={onDragEnd}
+        onMouseUp={isDisabled ? undefined : () => onMouseUp?.(item.id)}
+        onMouseDown={onMouseDown}
         draggable={!isDisabled && !!onDragStart}
         style={
           location.pathname.includes(item.link)
