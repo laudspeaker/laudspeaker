@@ -459,7 +459,9 @@ const Flow = () => {
               messages: [],
               position: { x: 0, y: 0 },
               audienceId: "-1",
-              data: {},
+              data: {
+                primary: false,
+              },
             },
             triggers
           ),
@@ -827,6 +829,9 @@ const Flow = () => {
           id: flowId,
         },
       });
+
+      setJourneyTypeModalOpen(false);
+      setSegmentModalOpen(false);
     } catch (e) {
       toast.error("Error while saving");
     } finally {
@@ -1032,6 +1037,23 @@ const Flow = () => {
               }}
               onDragStart={onDragStart}
               onDragEnd={() => {
+                setIsTriggerDragging(false);
+                setIsMessagesDragging(false);
+              }}
+              onMouseUp={(action) => {
+                if (["email", "sms", "slack"].includes(action))
+                  setIsMessagesDragging(true);
+
+                if (
+                  [
+                    TriggerType.EVENT,
+                    TriggerType.TIME_DELAY,
+                    TriggerType.TIME_WINDOW,
+                  ].includes(action as TriggerType)
+                )
+                  setIsTriggerDragging(true);
+              }}
+              onMouseDown={() => {
                 setIsTriggerDragging(false);
                 setIsMessagesDragging(false);
               }}
