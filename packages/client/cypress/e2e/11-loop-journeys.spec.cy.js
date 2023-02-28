@@ -49,7 +49,7 @@ describe(
         .move({ deltaX: 100, deltaY: 300 }, { force: true });
 
       cy.get('[data-isprimary="false"]').click();
-      cy.get("#slack").click();
+      cy.get("#slack").drag('[data-isprimary="false"]', { force: true });
 
       cy.get("#activeJourney").click();
       cy.contains(slackTemplate.name).click();
