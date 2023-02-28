@@ -113,11 +113,6 @@ A quick how to for contribution:
 5. Push to the branch (`git push origin feature/some-feature`)
 6. Open a pull request
 
-## 🎥 Video Walkthrough
-
-- Check out how to set up and trigger an email with posthog in our [video](https://vimeo.com/763728112)
-- Check out how to trigger a slack message with a custom event in this [video](https://www.loom.com/share/8e1d349ceed24d2bb50280db36b19214)
-
 ## Follow Us
 
 - [Slack][slack]
@@ -131,28 +126,3 @@ Come help us make Laudspeaker better. Email us at hey [at] laudspeaker [dot] com
 
 If you're interested have a look at this repo and feel free to raise an issue!
 
-<!---
--  [Laudspeaker Blog][laudspeaker-blog]
-
--  [LinkedIn][linkedin]
-
--  [dev.to][devto]
-
--  [Medium][medium]
-
--  [YouTube][youtube]
-
--  [HackerNews][hackernews]
-
--  [Product Hunt][producthunt]
--->
-
-<!---[devto]: https://dev.to/rudderstack
-[youtube]: https://www.youtube.com/channel/UCgV-B77bV_-LOmKYHw8jvBw
-[laudspeaker-blog]: https://laudspeaker.com/blog/
-[hackernews]: https://news.ycombinator.com/
-[producthunt]: https://www.producthunt.com/posts/laudspeaker
-[agplv3_license]: https://www.gnu.org/licenses/agpl-3.0-standalone.html
-[laudspeaker_ee_license]: https://www.mongodb.com/licensing/server-side-public-license
-
--->
