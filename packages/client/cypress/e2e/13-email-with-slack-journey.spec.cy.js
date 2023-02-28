@@ -54,13 +54,16 @@ describe(
       cy.contains(slackTemplate.name).click();
       cy.get("#exportSelectedTemplate").click();
       cy.wait(3000);
-      cy.get("#email").click();
+      cy.get("#email").drag('[data-isprimary="false"]', { force: true });
       cy.get("#activeJourney").click();
       cy.contains(emailTemplate.name).click();
       cy.get("#exportSelectedTemplate").click();
 
-      cy.get(".react-flow__viewport").get('[data-isprimary="true"]').click();
-      setupEventTrigger(slackTemplate.eventName, slackTemplate.eventName);
+      setupEventTrigger(
+        '[data-isprimary="true"]',
+        slackTemplate.eventName,
+        slackTemplate.eventName
+      );
 
       cy.get('[data-isprimary="true"]')
         .get("[data-handle-bottom]")
@@ -69,7 +72,7 @@ describe(
         });
 
       cy.get('[data-isprimary="false"] [data-handle-top]').click();
-
+      cy.get("#saveNewSegment").click();
       createNewSegment();
 
       cy.contains("Save").click();

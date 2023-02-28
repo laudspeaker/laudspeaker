@@ -5,6 +5,7 @@ export default (selector: string, key: string, value: string) => {
   cy.contains("Add new condition").click();
   cy.get("#keyInput").clear().type(key);
   cy.get(".h-8").click();
+  cy.wait(1000);
   cy.get("#keyType").click();
   cy.contains("String").click();
   cy.get("#comparisonType").click();
