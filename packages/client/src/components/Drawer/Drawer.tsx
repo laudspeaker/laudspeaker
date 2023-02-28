@@ -120,7 +120,7 @@ export default function ResponsiveDrawer() {
                           <path d="M6 6L14 10L6 14V6Z" fill="currentColor" />
                         </svg>
                       </Disclosure.Button>
-                      <Disclosure.Panel className="space-y-1">
+                      <Disclosure.Panel className="space-y-1 ml-3">
                         {item.children?.map((subItem) => (
                           <>
                             {userState.userPermissions?.includes(
@@ -237,7 +237,7 @@ export default function ResponsiveDrawer() {
           </Transition.Root>
 
           <div
-            className={`flex-grow flex-col bg-cyan-700 pt-5 pb-4 h-full transition-all duration-500 ease-in-out max-w-[225px] hidden lg:flex`}
+            className={`flex-grow flex-col bg-cyan-700 pt-5 pb-4 h-full transition-all duration-500 ease-in-out min-w-[225px] max-w-[300px] hidden lg:flex`}
           >
             <div className="flex flex-shrink-0 items-center px-4">
               <img className="h-8" src={LaudspeakerIcon} alt="Laudspeaker" />
