@@ -129,6 +129,8 @@ A quick how to for contribution:
 ## We’re hiring!
 Come help us make Laudspeaker better. Email us at hey [at] laudspeaker [dot] com
 
+If you're interested have a look at this repo and feel free to raise an issue!
+
 <!---
 -  [Laudspeaker Blog][laudspeaker-blog]
 
