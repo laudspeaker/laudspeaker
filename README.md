@@ -126,6 +126,9 @@ A quick how to for contribution:
 [twitter]: https://twitter.com/laudspeaker
 [mit_license]: https://opensource.org/licenses/MIT
 
+## We’re hiring!
+Come help us make Laudspeaker better. Email us at hey [at] laudspeaker [dot] com
+
 <!---
 -  [Laudspeaker Blog][laudspeaker-blog]
 
