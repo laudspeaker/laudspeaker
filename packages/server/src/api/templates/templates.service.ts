@@ -41,7 +41,7 @@ export class TemplatesService {
     @Inject(SlackService) private slackService: SlackService,
     @InjectQueue('message') private readonly messageQueue: Queue,
     @InjectQueue('slack') private readonly slackQueue: Queue
-  ) { }
+  ) {}
 
   create(account: Account, createTemplateDto: CreateTemplateDto) {
     const template = new Template();

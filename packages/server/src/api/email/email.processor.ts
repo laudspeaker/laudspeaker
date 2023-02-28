@@ -15,8 +15,6 @@ import {
 } from '../webhooks/webhooks.service';
 import twilio from 'twilio';
 
-
-
 @Processor('message')
 @Injectable()
 export class MessageProcessor {
@@ -38,7 +36,7 @@ export class MessageProcessor {
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
     private readonly logger: LoggerService,
     private readonly webhooksService: WebhooksService
-  ) { }
+  ) {}
 
   @Process('email')
   async handleEmail(job: Job) {
@@ -153,10 +151,7 @@ export class MessageProcessor {
       this.logger.debug(
         `Finished rendering tags in SMS from ${job.data.from} to ${job.data.to}`
       );
-      const twilioClient = twilio(
-        job.data.sid,
-        job.data.token
-      );
+      const twilioClient = twilio(job.data.sid, job.data.token);
 
       const message = await twilioClient.messages.create({
         body: textWithInsertedTags?.slice(0, this.MAXIMUM_SMS_LENGTH),
@@ -166,13 +161,10 @@ export class MessageProcessor {
       });
 
       this.logger.debug(
-        `Sms with sid ${message.sid} status: ${JSON.stringify(
-          message.status
-        )}`
+        `Sms with sid ${message.sid} status: ${JSON.stringify(message.status)}`
       );
     } catch (e) {
       this.logger.error(e);
     }
-
   }
 }
