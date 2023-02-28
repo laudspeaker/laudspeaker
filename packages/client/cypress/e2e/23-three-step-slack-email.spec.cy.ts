@@ -35,45 +35,63 @@ describe(
       cy.get(".mt-6 > .inline-flex").click();
       cy.get("#name").type("Email flow");
       cy.get("#createJourneySubmit").click();
-      cy.wait(3000);
+      cy.wait(5000);
       cy.get("#audience > .p-0 > .justify-between").click();
       cy.get("#name").type("Initial");
       cy.contains("Finish later").click();
-      cy.get(".text-updater").move({ deltaX: 100, deltaY: 100 });
+      cy.wait(3000);
+      cy.get(".text-updater").move({ deltaX: 100, deltaY: 100, force: true });
+      cy.wait(3000);
       cy.get("#audience > .p-0 > .justify-between").click();
       cy.get("#name").type("Second");
       cy.contains("Finish later").click();
       cy.get('[data-isprimary]:not([data-isprimary="true"])').move({
         deltaX: 100,
         deltaY: 300,
+        force: true,
       });
-      cy.get('[data-isprimary]:not([data-isprimary="true"])').click();
-      cy.get("#email > .p-0 > .justify-between").click();
+      cy.get("#email > .p-0 > .justify-between").drag(
+        '[data-isprimary]:not([data-isprimary="true"])',
+        { force: true }
+      );
       cy.get("#activeJourney").click();
       cy.contains(emailTemplate.name).click();
       cy.get("#exportSelectedTemplate").click();
+      setupEventTrigger(
+        '[data-isprimary="true"]',
+        emailTemplate.eventName,
+        emailTemplate.eventName
+      );
       cy.get('[data-isprimary="true"]').click();
-      setupEventTrigger(emailTemplate.eventName, emailTemplate.eventName);
+      cy.get("#saveNewSegment").click();
       cy.get(
         '[style="display: flex; height: 22px; position: absolute; left: 0px; bottom: 0px; align-items: center; width: 100%; justify-content: space-around;"] > .react-flow__handle'
       ).drag('[data-isprimary]:not([data-isprimary="true"])', {
         force: true,
       });
+      cy.wait(100);
       cy.get('[data-isprimary]:not([data-isprimary="true"])').click();
-
+      cy.get("#saveNewSegment").click();
+      cy.contains("Delete").click();
+      cy.wait(3000);
       cy.get("#audience > .p-0 > .justify-between").click();
       cy.get("#name").clear().type("Step 3");
       cy.contains("Finish later").click();
-
-      cy.contains("Step 3").move({ deltaX: 100, deltaY: 500 });
-      cy.get("#slack > .p-0 > .justify-between").click();
+      cy.get(".text-updater:last").move({ deltaX: 100, deltaY: 500 });
+      cy.wait(1000);
+      cy.get("#slack").drag(".text-updater:last", {
+        force: true,
+      });
 
       cy.get("#activeJourney").click();
       cy.contains(slackTemplate.name).click();
       cy.get("#exportSelectedTemplate").click();
 
-      cy.contains("Second").click();
-      setupEventTrigger(slackTemplate.eventName, slackTemplate.eventName);
+      setupEventTrigger(
+        ".text-updater:nth(1)",
+        slackTemplate.eventName,
+        slackTemplate.eventName
+      );
       cy.get(
         '.text-updater-node:not([data-isprimary="true"]) > [style="display: flex; height: 22px; position: absolute; left: 0px; bottom: 0px; align-items: center; width: 100%; justify-content: space-around;"] > .react-flow__handle'
       ).drag(
@@ -83,7 +101,7 @@ describe(
       cy.get(
         '[data-isprimary]:not([data-isprimary="true"]):contains("Step 3")'
       ).click();
-
+      cy.get("#saveNewSegment").click();
       createNewSegment();
 
       cy.contains("Save").click();
