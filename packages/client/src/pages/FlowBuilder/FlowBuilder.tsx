@@ -95,6 +95,7 @@ export interface NodeData {
     triggersList: Trigger[]
   ) => void;
   primary: boolean;
+  mock?: boolean;
   triggers: Trigger[];
   hidden?: boolean;
   isExit?: boolean;
@@ -216,7 +217,6 @@ const Flow = () => {
   const [journeyTypeModalOpen, setJourneyTypeModalOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [stepsCompletion, setStepsCompletion] = useState([false, false, false]);
-  const [mockNodeId, setMockNodeId] = useState<string>();
 
   const onHandleClick = (e: unknown, triggerId: string) => {
     return { e, triggerId };
@@ -444,11 +444,20 @@ const Flow = () => {
     [moveEvent]
   );
 
-  const performAction = (actionId: string) => {
+  const performAction = (actionId: string, e?: DragEvent) => {
     switch (actionId) {
       case "audience": {
         const mockId = uuid();
-        setMockNodeId(mockId);
+        const position = { x: 0, y: 0 };
+
+        if (reactFlowRef.current && e) {
+          const boudingClientRect =
+            reactFlowRef.current.getBoundingClientRect();
+
+          position.x = e.clientX - viewX - boudingClientRect.left - 175;
+          position.y = e.clientY - viewY - boudingClientRect.top;
+          console.log(position);
+        }
 
         setNodes([
           ...nodes,
@@ -457,10 +466,11 @@ const Flow = () => {
               id: mockId,
               triggers: [],
               messages: [],
-              position: { x: 0, y: 0 },
+              position: position,
               audienceId: "-1",
               data: {
                 primary: false,
+                mock: true,
               },
             },
             triggers
@@ -736,7 +746,7 @@ const Flow = () => {
 
     switch (type) {
       case "audience":
-        performAction(type);
+        performAction(type, e);
         break;
       case TriggerType.EVENT:
       case TriggerType.TIME_DELAY:
@@ -881,6 +891,7 @@ const Flow = () => {
         },
       });
       setAudienceModalOpen(true);
+      const mockNode = nodes.find((n) => n.data.mock);
       const newNode = {
         id: uuid(),
         triggers: [],
@@ -888,7 +899,7 @@ const Flow = () => {
           type: template.type,
           templateId: template.id,
         })),
-        position: { x: 0, y: 0 },
+        position: mockNode?.position || { x: 0, y: 0 },
         audienceId: data.id,
         data: {},
       };
@@ -898,8 +909,7 @@ const Flow = () => {
 
       const node = generateNode(newNode, triggers);
 
-      setNodes([...nodes, node].filter((n) => n.id !== mockNodeId));
-      setMockNodeId(undefined);
+      setNodes([...nodes, node].filter((n) => !n.data.mock));
       setAudienceModalOpen(false);
       setSelectedNode(node.id);
 
@@ -1326,8 +1336,7 @@ const Flow = () => {
         <SideModal
           isOpen={audienceModalOpen}
           onClose={() => {
-            setNodes(nodes.filter((n) => n.id !== mockNodeId));
-            setMockNodeId(undefined);
+            setNodes(nodes.filter((n) => !n.data.mock));
             setAudienceModalOpen(false);
           }}
         >

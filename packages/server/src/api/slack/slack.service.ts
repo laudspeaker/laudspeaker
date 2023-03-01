@@ -51,7 +51,7 @@ export class SlackService {
     @InjectRepository(Account)
     private readonly accountsRepository: Repository<Account>,
     @InjectQueue('slack') private readonly slackQueue: Queue,
-    @InjectQueue('email') private readonly emailQueue: Queue,
+    @InjectQueue('message') private readonly messageQueue: Queue,
     @Inject(CustomersService)
     private readonly customersService: CustomersService
   ) {
@@ -334,7 +334,7 @@ export class SlackService {
   async sendMagicEmail(install_id: string, toEmail: string) {
     const textLink = 'https://app.laudspeaker.com/slack/cor/' + install_id;
 
-    await this.emailQueue.add('send', {
+    await this.messageQueue.add('email', {
       key: process.env.MAGIC_EMAIL_KEY,
       from: 'Laudspeaker Team',
       domain: process.env.MAGIC_EMAIL_DOMAIN,

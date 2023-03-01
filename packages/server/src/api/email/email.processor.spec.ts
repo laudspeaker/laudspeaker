@@ -8,7 +8,7 @@ import { Audience } from '../audiences/entities/audience.entity';
 import { CustomersService } from '../customers/customers.service';
 import { Customer, CustomerSchema } from '../customers/schemas/customer.schema';
 import { EmailController } from './email.controller';
-import { EmailProcessor } from './email.processor';
+import { MessageProcessor } from './email.processor';
 import { WinstonModule } from 'nest-winston';
 import * as winston from 'winston';
 
@@ -20,7 +20,7 @@ const papertrail = new winston.transports.Http({
 });
 
 describe('EmailService', () => {
-  let service: EmailProcessor;
+  let service: MessageProcessor;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -42,7 +42,7 @@ describe('EmailService', () => {
         }),
         TypeOrmModule.forRootAsync({ useClass: TypeOrmConfigService }),
         BullModule.registerQueue({
-          name: 'email',
+          name: 'message',
         }),
         TypeOrmModule.forFeature([Account]),
         TypeOrmModule.forFeature([Audience]),
@@ -51,10 +51,10 @@ describe('EmailService', () => {
         ]),
       ],
       controllers: [EmailController],
-      providers: [EmailProcessor, CustomersService],
+      providers: [MessageProcessor, CustomersService],
     }).compile();
 
-    service = module.get<EmailProcessor>(EmailProcessor);
+    service = module.get<MessageProcessor>(MessageProcessor);
   });
 
   it('should be defined', () => {

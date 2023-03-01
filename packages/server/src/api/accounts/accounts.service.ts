@@ -5,6 +5,7 @@ import {
   HttpStatus,
   Inject,
   Injectable,
+  LoggerService,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -21,6 +22,7 @@ import { InjectConnection } from '@nestjs/mongoose';
 import mongoose from 'mongoose';
 import { WebhooksService } from '../webhooks/webhooks.service';
 import { deleteApp, getApp } from 'firebase-admin/app';
+import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 
 @Injectable()
 export class AccountsService extends BaseJwtHelper {
@@ -28,6 +30,8 @@ export class AccountsService extends BaseJwtHelper {
   private sgClient = new Client();
 
   constructor(
+    @Inject(WINSTON_MODULE_NEST_PROVIDER)
+    private readonly logger: LoggerService,
     private dataSource: DataSource,
     @InjectRepository(Account)
     public accountsRepository: Repository<Account>,
@@ -74,7 +78,7 @@ export class AccountsService extends BaseJwtHelper {
           updateUserDto.sendingDomain
         );
       } catch (e) {
-        console.error(e);
+        this.logger.error(e);
         throw new BadRequestException(
           'There is something wrong with your mailgun'
         );

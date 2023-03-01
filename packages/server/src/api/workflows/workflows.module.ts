@@ -44,7 +44,7 @@ import { Filter } from '../filter/entities/filter.entity';
       { name: CustomerKeys.name, schema: CustomerKeysSchema },
     ]),
     BullModule.registerQueue({
-      name: 'email',
+      name: 'message',
     }),
     BullModule.registerQueue({
       name: 'slack',

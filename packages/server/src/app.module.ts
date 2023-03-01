@@ -188,13 +188,10 @@ const formatMongoConnectionString = (mongoConnectionString: string) => {
       name: 'customers',
     }),
     BullModule.registerQueue({
-      name: 'email',
+      name: 'message',
     }),
     BullModule.registerQueue({
       name: 'slack',
-    }),
-    BullModule.registerQueue({
-      name: 'sms',
     }),
     IntegrationsModule,
   ],

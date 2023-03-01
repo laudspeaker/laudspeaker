@@ -26,7 +26,7 @@ import { CustomersService } from '../customers/customers.service';
 @Controller('email')
 export class EmailController {
   constructor(
-    @InjectQueue('email') private readonly emailQueue: Queue,
+    @InjectQueue('message') private readonly messageQueue: Queue,
     @InjectRepository(Account)
     private usersRepository: Repository<Account>,
     @InjectRepository(Audience)
@@ -41,7 +41,7 @@ export class EmailController {
     const found: Account = await this.usersRepository.findOneBy({
       id: (<Account>user).id,
     });
-    await this.emailQueue.add('send', {
+    await this.messageQueue.add('email', {
       key: found.mailgunAPIKey,
       from: found.sendingName,
       domain: found.sendingDomain,
@@ -81,7 +81,7 @@ export class EmailController {
         ).toObject();
 
         return {
-          name: 'send',
+          name: 'email',
           data: {
             key: found.mailgunAPIKey,
             from: found.sendingName,
@@ -94,6 +94,6 @@ export class EmailController {
         };
       })
     );
-    await this.emailQueue.addBulk(jobs);
+    await this.messageQueue.addBulk(jobs);
   }
 }

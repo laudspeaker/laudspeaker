@@ -25,7 +25,7 @@ import { ResetPasswordDto } from './dto/reset-password.dto';
 export class AuthService {
   constructor(
     private dataSource: DataSource,
-    @InjectQueue('email') private readonly emailQueue: Queue,
+    @InjectQueue('message') private readonly messageQueue: Queue,
     @InjectRepository(Account)
     public readonly repository: Repository<Account>,
     @InjectRepository(Verification)
@@ -121,7 +121,7 @@ export class AuthService {
 
     const verificationLink = `${process.env.FRONTEND_URL}/verify-email/${verification.id}`;
 
-    await this.emailQueue.add('send', {
+    await this.messageQueue.add('email', {
       key: process.env.MAILGUN_API_KEY,
       from: 'Laudspeaker',
       domain: process.env.MAILGUN_DOMAIN,
@@ -203,7 +203,7 @@ export class AuthService {
       const recovery = await transactionSession.save(Recovery, { account });
       const recoveryLink = `${process.env.FRONTEND_URL}/reset-password/${recovery.id}`;
 
-      await this.emailQueue.add('send', {
+      await this.messageQueue.add('email', {
         key: process.env.MAILGUN_API_KEY,
         from: 'Laudspeaker',
         domain: process.env.MAILGUN_DOMAIN,

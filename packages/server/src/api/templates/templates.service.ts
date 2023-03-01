@@ -21,7 +21,6 @@ import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { EventDto } from '../events/dto/event.dto';
 import { Audience } from '../audiences/entities/audience.entity';
 import { Liquid } from 'liquidjs';
-import twilio from 'twilio';
 import { cert, App, getApp, initializeApp } from 'firebase-admin/app';
 import { getMessaging } from 'firebase-admin/messaging';
 
@@ -29,7 +28,6 @@ import { getMessaging } from 'firebase-admin/messaging';
 export class TemplatesService {
   private tagEngine = new Liquid();
 
-  private MAXIMUM_SMS_LENGTH = 1600;
   private MAXIMUM_PUSH_LENGTH = 256;
   private MAXIMUM_PUSH_TITLE_LENGTH = 48;
 
@@ -41,7 +39,7 @@ export class TemplatesService {
     @InjectRepository(Audience)
     private audiencesRepository: Repository<Audience>,
     @Inject(SlackService) private slackService: SlackService,
-    @InjectQueue('email') private readonly emailQueue: Queue,
+    @InjectQueue('message') private readonly messageQueue: Queue,
     @InjectQueue('slack') private readonly slackQueue: Queue
   ) {}
 
@@ -140,7 +138,7 @@ export class TemplatesService {
           from = sendgridFromEmail;
         }
 
-        job = await this.emailQueue.add('send', {
+        job = await this.messageQueue.add('email', {
           eventProvider: account.emailProvider,
           key,
           from,
@@ -174,62 +172,18 @@ export class TemplatesService {
         });
         break;
       case 'sms':
-        // job = await this.smsQueue.add('send', {
-        //   sid: account.smsAccountSid,
-        //   token: account.smsAuthToken,
-        //   from: account.smsFrom,
-        //   to: customer.phPhoneNumber || customer.phone,
-        //   tags,
-        //   text: template.smsText,
-        //   audienceId,
-        //   customerId,
-        // });
-        try {
-          if (!customer.phPhoneNumber && !customer.phone) {
-            this.logger.warn(
-              `Customer ${customer.id} has no phone number; skipping`
-            );
-            return;
-          }
-          this.logger.debug(
-            `Starting SMS sending from ${account?.smsFrom} to ${
-              customer.phPhoneNumber || customer.phone
-            }`
-          );
-          let textWithInsertedTags: string | undefined;
+        job = await this.messageQueue.add('sms', {
+          sid: account.smsAccountSid,
+          token: account.smsAuthToken,
+          from: account.smsFrom,
+          to: customer.phPhoneNumber || customer.phone,
+          tags,
+          text: template.smsText,
+          templateId: template.id,
+          audienceId,
+          customerId,
+        });
 
-          if (template.smsText) {
-            textWithInsertedTags = await this.tagEngine.parseAndRender(
-              template.smsText,
-              tags || {}
-            );
-          }
-
-          this.logger.debug(
-            `Finished rendering tags in SMS from ${account?.smsFrom} to ${
-              customer.phPhoneNumber || customer.phone
-            }`
-          );
-          const twilioClient = twilio(
-            account.smsAccountSid,
-            account.smsAuthToken
-          );
-
-          message = await twilioClient.messages.create({
-            body: textWithInsertedTags?.slice(0, this.MAXIMUM_SMS_LENGTH),
-            from: account.smsFrom,
-            to: customer.phPhoneNumber || customer.phone,
-            statusCallback: `${process.env.TWILIO_WEBHOOK_ENDPOINT}?audienceId=${audienceId}&customerId=${customerId}&templateId=${templateId}`,
-          });
-
-          this.logger.debug(
-            `Sms with sid ${message.sid} status: ${JSON.stringify(
-              message.status
-            )}`
-          );
-        } catch (e) {
-          this.logger.error(e);
-        }
         break;
       case 'firebase':
         try {

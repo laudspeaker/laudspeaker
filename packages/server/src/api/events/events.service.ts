@@ -48,7 +48,7 @@ export class EventsService {
     private readonly customersService: CustomersService,
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
     private readonly logger: LoggerService,
-    @InjectQueue(JobTypes.email) private readonly emailQueue: Queue,
+    @InjectQueue('message') private readonly messageQueue: Queue,
     @InjectQueue(JobTypes.slack) private readonly slackQueue: Queue,
     @InjectQueue(JobTypes.events)
     private readonly eventsQueue: Queue,
@@ -110,7 +110,7 @@ export class EventsService {
 
   async getJobStatus(body: StatusJobDto, type: JobTypes) {
     const jobQueues = {
-      [JobTypes.email]: this.emailQueue,
+      [JobTypes.email]: this.messageQueue,
       [JobTypes.slack]: this.slackQueue,
       [JobTypes.events]: this.eventsQueue,
     };
