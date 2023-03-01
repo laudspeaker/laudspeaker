@@ -7,4 +7,9 @@ export class UpdateSegmentDTO {
   @IsNotEmpty()
   @IsOptional()
   public name: string;
+
+  @IsString()
+  @Trim()
+  @IsOptional()
+  public description: string;
 }

@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { WorkflowsController } from './workflows.controller';
 import { WorkflowsService } from './workflows.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -56,7 +56,7 @@ import { Filter } from '../filter/entities/filter.entity';
       name: 'events',
     }),
     AudiencesModule,
-    CustomersModule,
+    forwardRef(() => CustomersModule),
     TemplatesModule,
     SlackModule,
   ],

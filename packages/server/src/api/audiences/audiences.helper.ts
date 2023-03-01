@@ -27,6 +27,8 @@ export const conditionalCompare = (
       return custAttr > Number(checkVal);
     case 'isLessThan':
       return custAttr < Number(checkVal);
+    case 'memberOf':
+      return false; // TODO: check if customer is member of segment
     default:
       return false;
   }

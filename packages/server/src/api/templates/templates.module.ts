@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { TemplatesService } from './templates.service';
 import { TemplatesController } from './templates.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -41,7 +41,7 @@ import { SlackModule } from '../slack/slack.module';
     BullModule.registerQueue({
       name: 'customers',
     }),
-    CustomersModule,
+    forwardRef(() => CustomersModule),
     SlackModule,
   ],
   providers: [TemplatesService],

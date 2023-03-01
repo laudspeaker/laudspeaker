@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bull';
 import { SlackProcessor } from './slack.processor';
 import { SlackController } from './slack.controller';
@@ -32,7 +32,7 @@ import { CustomersModule } from '../customers/customers.module';
       { name: Customer.name, schema: CustomerSchema },
       { name: CustomerKeys.name, schema: CustomerKeysSchema },
     ]),
-    CustomersModule,
+    forwardRef(() => CustomersModule),
   ],
   controllers: [SlackController],
   providers: [SlackProcessor, SlackService],

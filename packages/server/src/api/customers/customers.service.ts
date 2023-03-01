@@ -36,6 +36,7 @@ import { attributeConditions } from '@/fixtures/attributeConditions';
 import { getType } from 'tst-reflect';
 import { isDateString, isEmail } from 'class-validator';
 import { parse } from 'csv-parse';
+import { SegmentsService } from '../segments/segments.service';
 
 export type Correlation = {
   cust: CustomerDocument;
@@ -68,12 +69,32 @@ export class CustomersService {
     @InjectModel(Customer.name) public CustomerModel: Model<CustomerDocument>,
     @InjectModel(CustomerKeys.name)
     private CustomerKeysModel: Model<CustomerKeysDocument>,
-    @InjectRepository(Audience)
-    private audiencesRepository: Repository<Audience>,
-    @InjectRepository(Workflow)
-    private workflowsRepository: Repository<Workflow>,
-    private dataSource: DataSource
-  ) {}
+    private dataSource: DataSource,
+    private segmentsService: SegmentsService,
+    @InjectRepository(Account)
+    public accountsRepository: Repository<Account>
+  ) {
+    this.CustomerModel.watch().on('change', async (data: any) => {
+      try {
+        const customerId = data?.documentKey?._id;
+        if (!customerId) return;
+
+        const customer = await this.CustomerModel.findById(customerId).exec();
+        if (!customer?.ownerId) return;
+
+        const account = await this.accountsRepository.findOneBy({
+          id: customer.ownerId,
+        });
+
+        await this.segmentsService.updateAutomaticSegmentCustomerInclusion(
+          account,
+          customer.id
+        );
+      } catch (e) {
+        this.logger.error(e);
+      }
+    });
+  }
 
   async create(
     account: Account,
@@ -755,11 +776,17 @@ export class CustomersService {
     );
   }
 
+  // TODO: optimize
   async loadCSV(account: Account, csvFile: Express.Multer.File) {
     if (csvFile.mimetype !== 'text/csv')
       throw new BadRequestException('Only CSV files are allowed');
 
-    const stats = { created: 0, updated: 0, skipped: 0 };
+    const stats: { created: 0; updated: 0; skipped: 0; customers: string[] } = {
+      created: 0,
+      updated: 0,
+      skipped: 0,
+      customers: [],
+    };
 
     const records = parse(csvFile.buffer, {
       columns: true,
@@ -768,7 +795,7 @@ export class CustomersService {
 
     for await (const record of records) {
       if (record.email) {
-        const customer = await this.CustomerModel.findOne({
+        let customer = await this.CustomerModel.findOne({
           email: record.email,
           ownerId: account.id,
         });
@@ -783,9 +810,10 @@ export class CustomersService {
           delete record.__v;
           delete record.audiences;
 
-          await this.create(account, { ...record });
+          customer = await this.create(account, { ...record });
           stats.created++;
         }
+        stats.customers.push(customer.id);
       } else {
         stats.skipped++;
       }

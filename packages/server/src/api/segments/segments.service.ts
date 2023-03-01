@@ -1,28 +1,41 @@
 import {
   ConflictException,
+  forwardRef,
+  Inject,
   Injectable,
+  LoggerService,
   NotFoundException,
 } from '@nestjs/common';
+import { BadRequestException } from '@nestjs/common/exceptions';
 import { InjectRepository } from '@nestjs/typeorm';
+import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { Repository } from 'typeorm';
 import { Account } from '../accounts/entities/accounts.entity';
+import { checkInclusion } from '../audiences/audiences.helper';
+import { CustomersService } from '../customers/customers.service';
+import { WorkflowsService } from '../workflows/workflows.service';
 import { CreateSegmentDTO } from './dto/create-segment.dto';
 import { UpdateSegmentDTO } from './dto/update-segment.dto';
 import { SegmentCustomers } from './entities/segment-customers.entity';
-import { Segment } from './entities/segment.entity';
+import { Segment, SegmentType } from './entities/segment.entity';
 
 @Injectable()
 export class SegmentsService {
   constructor(
+    @Inject(WINSTON_MODULE_NEST_PROVIDER)
+    private readonly logger: LoggerService,
     @InjectRepository(Segment) private segmentRepository: Repository<Segment>,
     @InjectRepository(SegmentCustomers)
-    private segmentCustomersRepository: Repository<SegmentCustomers>
+    private segmentCustomersRepository: Repository<SegmentCustomers>,
+    @Inject(forwardRef(() => CustomersService))
+    private customersService: CustomersService,
+    private workflowsService: WorkflowsService
   ) {}
 
   public async findOne(account: Account, id: string) {
     const segment = await this.segmentRepository.findOneBy({
       id,
-      user: { id: account.id },
+      owner: { id: account.id },
     });
 
     if (!segment) throw new NotFoundException('Segment not found');
@@ -34,12 +47,12 @@ export class SegmentsService {
     const totalPages = Math.ceil(
       (await this.segmentRepository.count({
         where: {
-          user: { id: account.id },
+          owner: { id: account.id },
         },
       })) / take || 1
     );
     const segments = await this.segmentRepository.find({
-      where: { user: { id: account.id } },
+      where: { owner: { id: account.id } },
       take: take < 100 ? take : 100,
       skip,
     });
@@ -50,7 +63,7 @@ export class SegmentsService {
   public async create(account: Account, createSegmentDTO: CreateSegmentDTO) {
     return this.segmentRepository.create({
       ...createSegmentDTO,
-      user: { id: account.id },
+      owner: { id: account.id },
     });
   }
 
@@ -60,13 +73,13 @@ export class SegmentsService {
     updateSegmentDTO: UpdateSegmentDTO
   ) {
     await this.segmentRepository.update(
-      { id, user: { id: account.id } },
-      { ...updateSegmentDTO, user: { id: account.id } }
+      { id, owner: { id: account.id } },
+      { ...updateSegmentDTO, owner: { id: account.id } }
     );
   }
 
   public async delete(account: Account, id: string) {
-    await this.segmentRepository.delete({ id, user: { id: account.id } });
+    await this.segmentRepository.delete({ id, owner: { id: account.id } });
   }
 
   public async getCustomers(
@@ -123,7 +136,11 @@ export class SegmentsService {
     customerIds: string[]
   ) {
     for (const customerId of customerIds) {
-      await this.assignCustomer(account, id, customerId);
+      try {
+        await this.assignCustomer(account, id, customerId);
+      } catch (e) {
+        this.logger.error(e);
+      }
     }
   }
 
@@ -161,5 +178,77 @@ export class SegmentsService {
       segment: { id: segment.id },
       customerId,
     });
+  }
+
+  public async deleteCustomerFromAllSegments(
+    account: Account,
+    customerId: string
+  ) {
+    const records = await this.segmentCustomersRepository.find({
+      where: {
+        segment: { owner: { id: account.id } },
+        customerId,
+      },
+      relations: ['segment'],
+    });
+
+    await Promise.all(records.map((record) => record.remove()));
+  }
+
+  public async duplicate(account: Account, id: string) {
+    const { name, description, type, inclusionCriteria, resources, owner } =
+      await this.findOne(account, id);
+
+    return this.segmentRepository.save({
+      name,
+      description,
+      type,
+      inclusionCriteria,
+      resources,
+      owner,
+    });
+  }
+
+  public async loadCSVToManualSegment(
+    account: Account,
+    id: string,
+    csvFile: Express.Multer.File
+  ) {
+    const segment = await this.findOne(account, id);
+
+    if (segment.type !== SegmentType.MANUAL)
+      throw new BadRequestException("This segment isn't manual");
+
+    const {
+      stats: { customers },
+    } = await this.customersService.loadCSV(account, csvFile);
+
+    await this.assignCustomers(account, segment.id, customers);
+  }
+
+  public async updateAutomaticSegmentCustomerInclusion(
+    account: Account,
+    customerId: string
+  ) {
+    await this.deleteCustomerFromAllSegments(account, customerId);
+
+    const customer = await this.customersService.CustomerModel.findById(
+      customerId
+    ).exec();
+
+    const segments = await this.segmentRepository.findBy({
+      owner: { id: account.id },
+      type: SegmentType.AUTOMATIC,
+    });
+
+    for (const segment of segments) {
+      try {
+        if (checkInclusion(customer, segment.inclusionCriteria))
+          await this.assignCustomer(account, segment.id, customerId);
+      } catch (e) {
+        this.logger.error(e);
+      }
+    }
+    await this.workflowsService.enrollCustomer(account, customer);
   }
 }

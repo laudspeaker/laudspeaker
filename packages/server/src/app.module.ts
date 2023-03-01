@@ -53,6 +53,12 @@ const papertrail = new winston.transports.Http({
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { Recovery } from './api/auth/entities/recovery.entity';
 import { Segment } from './api/segments/entities/segment.entity';
+import { WorkflowsModule } from './api/workflows/workflows.module';
+import { JobsModule } from './api/jobs/jobs.module';
+import { AudiencesModule } from './api/audiences/audiences.module';
+import { CustomersModule } from './api/customers/customers.module';
+import { TemplatesModule } from './api/templates/templates.module';
+import { SlackModule } from './api/slack/slack.module';
 
 const myFormat = winston.format.printf(function ({
   level,
@@ -194,17 +200,15 @@ const formatMongoConnectionString = (mongoConnectionString: string) => {
       name: 'slack',
     }),
     IntegrationsModule,
+    WorkflowsModule,
+    JobsModule,
+    AudiencesModule,
+    CustomersModule,
+    TemplatesModule,
+    SlackModule,
   ],
   controllers: [AppController],
-  providers: [
-    CronService,
-    WorkflowsService,
-    JobsService,
-    AudiencesService,
-    CustomersService,
-    TemplatesService,
-    SlackService,
-  ],
+  providers: [CronService],
 })
 export class AppModule {
   configure(consumer: MiddlewareConsumer) {

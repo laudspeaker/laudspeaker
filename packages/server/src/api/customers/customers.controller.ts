@@ -25,7 +25,6 @@ import { Request } from 'express';
 import { Account } from '../accounts/entities/accounts.entity';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { parse } from 'csv-parse';
 
 @Controller('customers')
 export class CustomersController {

@@ -4,6 +4,7 @@ import {
   Injectable,
   HttpException,
   NotFoundException,
+  forwardRef,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, In, QueryRunner, Repository } from 'typeorm';
@@ -64,7 +65,8 @@ export class WorkflowsService {
     @InjectRepository(Workflow)
     public workflowsRepository: Repository<Workflow>,
     @Inject(AudiencesService) private audiencesService: AudiencesService,
-    @Inject(CustomersService) private customersService: CustomersService,
+    @Inject(forwardRef(() => CustomersService))
+    private customersService: CustomersService,
     @InjectModel(EventKeys.name)
     private EventKeysModel: Model<EventKeysDocument>,
     @InjectQueue(JobTypes.events)
@@ -583,7 +585,7 @@ export class WorkflowsService {
   async enrollCustomer(
     account: Account,
     customer: CustomerDocument,
-    queryRunner: QueryRunner
+    queryRunner: QueryRunner = this.dataSource.createQueryRunner()
   ): Promise<void> {
     try {
       const workflows = await queryRunner.manager.find(Workflow, {
