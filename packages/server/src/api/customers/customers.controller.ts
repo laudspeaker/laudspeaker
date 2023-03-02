@@ -14,7 +14,6 @@ import {
   HttpException,
   Put,
   UploadedFile,
-  BadRequestException,
 } from '@nestjs/common';
 import { Multer } from 'multer';
 import { CreateCustomerDto } from './dto/create-customer.dto';

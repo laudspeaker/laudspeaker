@@ -24,6 +24,8 @@ import { CustomersModule } from '../customers/customers.module';
 import { TemplatesModule } from '../templates/templates.module';
 import { SlackModule } from '../slack/slack.module';
 import { Filter } from '../filter/entities/filter.entity';
+import { AudiencesHelper } from '../audiences/audiences.helper';
+import { SegmentsModule } from '../segments/segments.module';
 
 @Module({
   imports: [
@@ -57,11 +59,12 @@ import { Filter } from '../filter/entities/filter.entity';
     }),
     AudiencesModule,
     forwardRef(() => CustomersModule),
+    forwardRef(() => SegmentsModule),
     TemplatesModule,
     SlackModule,
   ],
   controllers: [WorkflowsController],
-  providers: [WorkflowsService],
+  providers: [WorkflowsService, AudiencesHelper],
   exports: [WorkflowsService],
 })
 export class WorkflowsModule {}

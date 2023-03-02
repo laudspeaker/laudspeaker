@@ -9,7 +9,6 @@ import Modal from "../../components/Elements/Modal";
 import Template from "types/Template";
 import Progress from "components/Progress";
 import { GenericButton } from "components/Elements";
-import { Workflow } from "types/Workflow";
 import { toast } from "react-toastify";
 
 const TemplateTable = () => {

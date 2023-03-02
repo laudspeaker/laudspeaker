@@ -21,7 +21,6 @@ import { Account } from '../accounts/entities/accounts.entity';
 import { Audience } from '../audiences/entities/audience.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
-import { checkInclusion } from '../audiences/audiences.helper';
 import { EventDto } from '../events/dto/event.dto';
 import {
   CustomerKeys,
@@ -37,6 +36,7 @@ import { getType } from 'tst-reflect';
 import { isDateString, isEmail } from 'class-validator';
 import { parse } from 'csv-parse';
 import { SegmentsService } from '../segments/segments.service';
+import { AudiencesHelper } from '../audiences/audiences.helper';
 
 export type Correlation = {
   cust: CustomerDocument;
@@ -72,7 +72,8 @@ export class CustomersService {
     private dataSource: DataSource,
     private segmentsService: SegmentsService,
     @InjectRepository(Account)
-    public accountsRepository: Repository<Account>
+    public accountsRepository: Repository<Account>,
+    private readonly audiencesHelper: AudiencesHelper
   ) {
     this.CustomerModel.watch().on('change', async (data: any) => {
       try {
@@ -88,7 +89,7 @@ export class CustomersService {
 
         await this.segmentsService.updateAutomaticSegmentCustomerInclusion(
           account,
-          customer.id
+          customer
         );
       } catch (e) {
         this.logger.error(e);
@@ -153,7 +154,12 @@ export class CustomersService {
       for (let index = 0; index < dynamicWkfs.length; index++) {
         const workflow = dynamicWkfs[index];
         if (workflow.filter) {
-          if (checkInclusion(ret, workflow.filter.inclusionCriteria)) {
+          if (
+            await this.audiencesHelper.checkInclusion(
+              ret,
+              workflow.filter.inclusionCriteria
+            )
+          ) {
             const audiences = await transactionManager.findBy(Audience, {
               workflow: { id: workflow.id },
             });
@@ -184,7 +190,12 @@ export class CustomersService {
       for (let index = 0; index < staticWkfs.length; index++) {
         const workflow = staticWkfs[index];
         if (workflow.filter) {
-          if (checkInclusion(ret, workflow.filter.inclusionCriteria)) {
+          if (
+            await this.audiencesHelper.checkInclusion(
+              ret,
+              workflow.filter.inclusionCriteria
+            )
+          ) {
             const audiences = await transactionManager.findBy(Audience, {
               workflow: { id: workflow.id },
               isEditable: false,
@@ -635,14 +646,25 @@ export class CustomersService {
     } catch (err) {
       return Promise.reject(err);
     }
-    customers.forEach((customer) => {
-      if (checkInclusion(customer, criteria)) ret.push(customer);
-    });
+
+    for (const customer of customers) {
+      if (await this.audiencesHelper.checkInclusion(customer, criteria))
+        ret.push(customer);
+    }
+
     return Promise.resolve(ret);
   }
 
-  checkInclusion(customer: CustomerDocument, inclusionCriteria: any): boolean {
-    return checkInclusion(customer, inclusionCriteria);
+  checkInclusion(
+    customer: CustomerDocument,
+    inclusionCriteria: any,
+    account?: Account
+  ) {
+    return this.audiencesHelper.checkInclusion(
+      customer,
+      inclusionCriteria,
+      account
+    );
   }
 
   /**

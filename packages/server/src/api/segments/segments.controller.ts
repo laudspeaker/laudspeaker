@@ -10,9 +10,11 @@ import {
   Put,
   Query,
   Req,
+  UploadedFile,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { Request } from 'express';
 import { Account } from '../accounts/entities/accounts.entity';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -74,6 +76,13 @@ export class SegmentsController {
   @UseInterceptors(ClassSerializerInterceptor)
   public async delete(@Req() { user }: Request, @Param('id') id: string) {
     return this.segmentsService.delete(<Account>user, id);
+  }
+
+  @Post('/:id/duplicate')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor)
+  public async duplicate(@Req() { user }: Request, @Param('id') id: string) {
+    return this.segmentsService.duplicate(<Account>user, id);
   }
 
   @Get('/:id/customers')
@@ -142,5 +151,17 @@ export class SegmentsController {
     @Param('customerId') customerId: string
   ) {
     return this.segmentsService.deleteCustomer(<Account>user, id, customerId);
+  }
+
+  @Post('/:id/importcsv')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(FileInterceptor('file'))
+  async getCSVPeople(
+    @Req() { user }: Request,
+    @Param('id') id: string,
+    @UploadedFile() file: Express.Multer.File
+  ) {
+    return this.segmentsService.loadCSVToManualSegment(<Account>user, id, file);
   }
 }

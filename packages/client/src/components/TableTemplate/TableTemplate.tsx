@@ -472,6 +472,30 @@ export default function TableTemplate<T extends TableDataItem>({
     });
   };
 
+  const handleDeleteSegment = (segmentId: string) => {
+    confirmAlert({
+      title: "Confirm delete?",
+      message: "Are you sure you want to delete journey?",
+      buttons: [
+        {
+          label: "Yes",
+          onClick: async () => {
+            await ApiService.delete({
+              url: `/segments/${segmentId}`,
+              options: {
+                segmentId,
+              },
+            });
+            refresh();
+          },
+        },
+        {
+          label: "No",
+        },
+      ],
+    });
+  };
+
   function renderCorrectLink(row: TableDataItem, isButton = false) {
     if (row.type == "email") {
       return isButton ? (
@@ -730,6 +754,68 @@ export default function TableTemplate<T extends TableDataItem>({
         </Menu>
       ) : (
         <Link href={`templates/slack/${row.name}`}>
+          {isButton ? <div>Edit</div> : row.name}
+        </Link>
+      );
+    } else if (["automatic", "manual"].includes(row.type || "")) {
+      return isButton ? (
+        <Menu as="div" className="relative">
+          <Menu.Button className="outline-none">
+            <PencilSquareIcon className="text-gray-400 hover:text-gray-500 ml-[10px] text-[16px] w-[24px]" />
+          </Menu.Button>
+          <Transition
+            as={Fragment}
+            enter="transition ease-out duration-100"
+            enterFrom="transform opacity-0 scale-95"
+            enterTo="transform opacity-100 scale-100"
+            leave="transition ease-in duration-75"
+            leaveFrom="transform opacity-100 scale-100"
+            leaveTo="transform opacity-0 scale-95"
+          >
+            <Menu.Items className="absolute outline-none w-auto flex flex-col bg-gray-50 shadow-md rounded-[8px] border-[1px] border-gray-200 items-center right-1/2 top-full z-[1000]">
+              {[
+                <Link className="!no-underline" href={`segment/${row.id}`}>
+                  <div className="w-full">Edit</div>
+                </Link>,
+                <button
+                  onClick={async () => {
+                    await ApiService.post({
+                      url: `/segments/${row.id}/duplicate`,
+                      options: {},
+                    });
+                    refresh();
+                  }}
+                >
+                  Duplicate
+                </button>,
+                ...(row.isDeleted
+                  ? []
+                  : [
+                      <button
+                        className="w-full text-center cursor-pointer outline-none text-red-500"
+                        onClick={() =>
+                          handleDeleteSegment(String(row.id || ""))
+                        }
+                        data-delete-button
+                      >
+                        Delete
+                      </button>,
+                    ]),
+              ].map((el, i) => (
+                <Menu.Item>
+                  <div
+                    key={i}
+                    className="w-full text-center hover:bg-gray-200 transition-all px-[6px] py-[4px] border-b-[1px] border-b-gray-200"
+                  >
+                    {el}
+                  </div>
+                </Menu.Item>
+              ))}
+            </Menu.Items>
+          </Transition>
+        </Menu>
+      ) : (
+        <Link href={`segment/${row.id}`}>
           {isButton ? <div>Edit</div> : row.name}
         </Link>
       );

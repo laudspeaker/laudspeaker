@@ -33,11 +33,7 @@ import {
 } from '../events/schemas/event-keys.schema';
 import mongoose, { ClientSession, Model } from 'mongoose';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
-import {
-  conditionalCompare,
-  conditionalComposition,
-  operableCompare,
-} from '../audiences/audiences.helper';
+import { AudiencesHelper } from '../audiences/audiences.helper';
 import { Template } from '../templates/entities/template.entity';
 import { InjectQueue } from '@nestjs/bull';
 import { JobTypes } from '../events/interfaces/event.interface';
@@ -71,7 +67,8 @@ export class WorkflowsService {
     private EventKeysModel: Model<EventKeysDocument>,
     @InjectQueue(JobTypes.events)
     private readonly eventsQueue: Queue,
-    @InjectConnection() private readonly connection: mongoose.Connection
+    @InjectConnection() private readonly connection: mongoose.Connection,
+    private readonly audiencesHelper: AudiencesHelper
   ) {}
 
   /**
@@ -613,10 +610,11 @@ export class WorkflowsService {
           if (
             audience.isPrimary &&
             workflow.isDynamic &&
-            this.customersService.checkInclusion(
+            (await this.customersService.checkInclusion(
               customer,
-              workflow.filter.inclusionCriteria
-            )
+              workflow.filter.inclusionCriteria,
+              account
+            ))
           ) {
             await this.audiencesService.moveCustomer(
               account,
@@ -789,49 +787,54 @@ export class WorkflowsService {
                     'Event conditions: ' + JSON.stringify(conditions)
                   );
                   if (conditions && conditions.length > 0) {
-                    const compareResults = conditions.map((condition) => {
-                      if (
-                        condition.key == 'current_url' &&
-                        trigger.providerType == ProviderTypes.Posthog &&
-                        trigger.providerParams === PosthogTriggerParams.Pageview
-                      ) {
-                        this.logger.debug(
-                          `Comparing: ${event?.event?.page?.url || ''} ${
-                            condition.comparisonType || ''
-                          } ${condition.value || ''}`
-                        );
-                        return ['exists', 'doesNotExist'].includes(
-                          condition.comparisonType
-                        )
-                          ? operableCompare(
-                              event?.event?.page?.url,
-                              condition.comparisonType
-                            )
-                          : conditionalCompare(
-                              event?.event?.page?.url,
-                              condition.value,
-                              condition.comparisonType
-                            );
-                      } else {
-                        this.logger.debug(
-                          `Comparing: ${event?.event?.[condition.key] || ''} ${
-                            condition.comparisonType || ''
-                          } ${condition.value || ''}`
-                        );
-                        return ['exists', 'doesNotExist'].includes(
-                          condition.comparisonType
-                        )
-                          ? operableCompare(
-                              event?.event?.[condition.key],
-                              condition.comparisonType
-                            )
-                          : conditionalCompare(
-                              event?.event?.[condition.key],
-                              condition.value,
-                              condition.comparisonType
-                            );
-                      }
-                    });
+                    const compareResults = await Promise.all(
+                      conditions.map(async (condition) => {
+                        if (
+                          condition.key == 'current_url' &&
+                          trigger.providerType == ProviderTypes.Posthog &&
+                          trigger.providerParams ===
+                            PosthogTriggerParams.Pageview
+                        ) {
+                          this.logger.debug(
+                            `Comparing: ${event?.event?.page?.url || ''} ${
+                              condition.comparisonType || ''
+                            } ${condition.value || ''}`
+                          );
+                          return ['exists', 'doesNotExist'].includes(
+                            condition.comparisonType
+                          )
+                            ? this.audiencesHelper.operableCompare(
+                                event?.event?.page?.url,
+                                condition.comparisonType
+                              )
+                            : await this.audiencesHelper.conditionalCompare(
+                                event?.event?.page?.url,
+                                condition.value,
+                                condition.comparisonType
+                              );
+                        } else {
+                          this.logger.debug(
+                            `Comparing: ${
+                              event?.event?.[condition.key] || ''
+                            } ${condition.comparisonType || ''} ${
+                              condition.value || ''
+                            }`
+                          );
+                          return ['exists', 'doesNotExist'].includes(
+                            condition.comparisonType
+                          )
+                            ? this.audiencesHelper.operableCompare(
+                                event?.event?.[condition.key],
+                                condition.comparisonType
+                              )
+                            : await this.audiencesHelper.conditionalCompare(
+                                event?.event?.[condition.key],
+                                condition.value,
+                                condition.comparisonType
+                              );
+                        }
+                      })
+                    );
                     this.logger.debug(
                       'Compare result: ' + JSON.stringify(compareResults)
                     );
@@ -840,10 +843,11 @@ export class WorkflowsService {
                       const compareTypes = conditions.map(
                         (condition) => condition.relationWithNext
                       );
-                      eventIncluded = conditionalComposition(
-                        compareResults,
-                        compareTypes
-                      );
+                      eventIncluded =
+                        this.audiencesHelper.conditionalComposition(
+                          compareResults,
+                          compareTypes
+                        );
                     } else {
                       eventIncluded = compareResults[0];
                     }

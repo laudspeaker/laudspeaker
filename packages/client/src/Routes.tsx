@@ -36,6 +36,8 @@ import { GenericButton } from "components/Elements";
 import Home from "pages/Home";
 import FirebaseBuilder from "pages/FirebaseBuilder/FirebaseBuilder";
 import ResetPassword from "pages/ResetPassword";
+import SegmentTable from "pages/SegmentTable";
+import SegmentViewer from "pages/SegmentViewer";
 
 interface IProtected {
   children: ReactElement;
@@ -226,6 +228,26 @@ const RouteComponent: React.FC = () => {
             <Protected>
               <DrawerLayout>
                 <Person />
+              </DrawerLayout>
+            </Protected>
+          }
+        />
+        <Route
+          path="/segment"
+          element={
+            <Protected>
+              <DrawerLayout>
+                <SegmentTable />
+              </DrawerLayout>
+            </Protected>
+          }
+        />
+        <Route
+          path="/segment/:id"
+          element={
+            <Protected>
+              <DrawerLayout>
+                <SegmentViewer />
               </DrawerLayout>
             </Protected>
           }

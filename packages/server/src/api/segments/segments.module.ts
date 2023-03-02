@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { forwardRef } from '@nestjs/common/utils';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { AudiencesHelper } from '../audiences/audiences.helper';
 import { CustomersModule } from '../customers/customers.module';
 import { WorkflowsModule } from '../workflows/workflows.module';
 import { SegmentCustomers } from './entities/segment-customers.entity';
@@ -15,7 +16,7 @@ import { SegmentsService } from './segments.service';
     forwardRef(() => WorkflowsModule),
   ],
   controllers: [SegmentsController],
-  providers: [SegmentsService],
+  providers: [SegmentsService, AudiencesHelper],
   exports: [SegmentsService],
 })
 export class SegmentsModule {}

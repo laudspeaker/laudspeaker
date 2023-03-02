@@ -37,6 +37,6 @@ export class Segment extends BaseEntity {
   @Column({ default: true })
   public isFreezed: boolean;
 
-  @Column('jsonb')
+  @Column('jsonb', { default: {} })
   public resources: any;
 }
