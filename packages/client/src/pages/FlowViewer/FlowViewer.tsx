@@ -248,7 +248,7 @@ const Flow = () => {
   if (isLoading) return <Progress />;
 
   return (
-    <div className="h-[100vh] flex w-full">
+    <div id="flow-viewer" className="relative h-[100vh] flex w-full">
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -377,16 +377,16 @@ const Flow = () => {
           />
         </div>
       </ReactFlow>
-      {triggerModalOpen && (
-        <TriggerModal
-          selectedTrigger={selectedTrigger}
-          onSaveTrigger={onSaveTrigger}
-          onDeleteTrigger={onDeleteTrigger}
-          isCollapsible={true}
-          isViewMode={true}
-          onClose={() => settriggerModalOpen(false)}
-        />
-      )}
+      <TriggerModal
+        selectedTrigger={selectedTrigger}
+        onSaveTrigger={onSaveTrigger}
+        onDeleteTrigger={onDeleteTrigger}
+        isCollapsible={true}
+        isViewMode={true}
+        isOpen={triggerModalOpen}
+        onClose={() => settriggerModalOpen(false)}
+      />
+      )
     </div>
   );
 };

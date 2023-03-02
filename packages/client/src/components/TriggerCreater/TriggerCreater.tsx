@@ -826,6 +826,7 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
           <Select
             label="Trigger type"
             value={triggerType}
+            disabled={isViewMode}
             options={[
               { value: TriggerType.EVENT, title: "Event Based" },
               { value: TriggerType.TIME_DELAY, title: "Time Delay" },
@@ -839,6 +840,7 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
           <Select
             label="Branching Options"
             value="single"
+            disabled={isViewMode}
             options={[
               { value: "single", title: "Single branch" },
               { value: "truefalse", title: "True/False", disabled: true },
@@ -930,6 +932,7 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
                     <Select
                       options={[{ value: "From" }]}
                       value="From"
+                      disabled={isViewMode}
                       onChange={() => {}}
                       wrapperClassnames="w-full max-w-[200px]"
                     />
