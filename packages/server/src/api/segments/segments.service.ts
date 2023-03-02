@@ -188,19 +188,25 @@ export class SegmentsService {
     });
   }
 
-  public async deleteCustomerFromAllSegments(
+  public async deleteCustomerFromAllAutomaticSegments(
     account: Account,
     customerId: string
   ) {
-    const records = await this.segmentCustomersRepository.find({
-      where: {
-        segment: { owner: { id: account.id } },
-        customerId,
-      },
-      relations: ['segment'],
-    });
-
-    await Promise.all(records.map((record) => record.remove()));
+    await this.segmentCustomersRepository
+      .createQueryBuilder()
+      .delete()
+      .where(
+        `segment_customers."id" in (select sc.id from public.segment_customers as sc 
+          left join Segment as seg on sc."segmentId" = seg."id" 
+          where seg."ownerId" = :ownerId
+            and sc."customerId" = :customerId
+            and seg."type" = 'automatic')`,
+        {
+          ownerId: account.id,
+          customerId,
+        }
+      )
+      .execute();
   }
 
   public async duplicate(account: Account, id: string) {
@@ -237,8 +243,7 @@ export class SegmentsService {
     account: Account,
     customer: CustomerDocument
   ) {
-    console.log('BEFORE DELETE FROM ALL SEGMENTS');
-    await this.deleteCustomerFromAllSegments(account, customer.id);
+    await this.deleteCustomerFromAllAutomaticSegments(account, customer.id);
 
     const segments = await this.segmentRepository.findBy({
       owner: { id: account.id },
