@@ -582,7 +582,7 @@ export class WorkflowsService {
   async enrollCustomer(
     account: Account,
     customer: CustomerDocument,
-    queryRunner: QueryRunner = this.dataSource.createQueryRunner()
+    queryRunner: QueryRunner
   ): Promise<void> {
     try {
       const workflows = await queryRunner.manager.find(Workflow, {

@@ -9,7 +9,7 @@ import {
 import { BadRequestException } from '@nestjs/common/exceptions';
 import { InjectRepository } from '@nestjs/typeorm';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { Account } from '../accounts/entities/accounts.entity';
 import { AudiencesHelper } from '../audiences/audiences.helper';
 import { CustomersService } from '../customers/customers.service';
@@ -23,6 +23,7 @@ import { Segment, SegmentType } from './entities/segment.entity';
 @Injectable()
 export class SegmentsService {
   constructor(
+    private dataSource: DataSource,
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
     private readonly logger: LoggerService,
     @InjectRepository(Segment) private segmentRepository: Repository<Segment>,
@@ -263,7 +264,14 @@ export class SegmentsService {
         this.logger.error(e);
       }
     }
-    await this.workflowsService.enrollCustomer(account, customer);
+    const runner = this.dataSource.createQueryRunner();
+    try {
+      await this.workflowsService.enrollCustomer(account, customer, runner);
+    } catch (error) {
+      this.logger.error(error);
+    } finally {
+      runner.release();
+    }
   }
 
   public async isCustomerMemberOf(
