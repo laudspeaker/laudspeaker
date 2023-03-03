@@ -26,7 +26,7 @@ export class SegmentsService {
     private dataSource: DataSource,
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
     private readonly logger: LoggerService,
-    @InjectRepository(Segment) private segmentRepository: Repository<Segment>,
+    @InjectRepository(Segment) public segmentRepository: Repository<Segment>,
     @InjectRepository(SegmentCustomers)
     private segmentCustomersRepository: Repository<SegmentCustomers>,
     @Inject(forwardRef(() => CustomersService))

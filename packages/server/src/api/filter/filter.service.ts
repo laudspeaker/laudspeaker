@@ -41,11 +41,10 @@ export class FilterService {
    * Create new segment by passing name and inclusion criteria
    */
   public async createFilter(createFilterDTO: CreateFilterDTO, userId: string) {
-    const { name, inclusionCriteria, resources } = createFilterDTO;
+    const { inclusionCriteria, resources } = createFilterDTO;
 
     try {
       return await this.filterRepository.save({
-        name,
         inclusionCriteria,
         resources,
         user: { id: userId },

@@ -109,8 +109,11 @@ export class CustomersController {
   @Get('/attributes/:resourceId')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
-  getAttributes(@Param('resourceId') resourceId: string) {
-    return this.customersService.getAttributes(resourceId);
+  getAttributes(
+    @Req() { user }: Request,
+    @Param('resourceId') resourceId: string
+  ) {
+    return this.customersService.getAttributes(<Account>user, resourceId);
   }
 
   @Get('/:id/events')

@@ -23,6 +23,23 @@ export const getConditions = async () => {
   });
 };
 
+export const getFilterConditions = async () => {
+  return new Promise<Resource>((resolve) => {
+    resolve({
+      id: "conditions",
+      type: "select",
+      label: "",
+      options: [
+        { label: "filter on", id: "filteron" },
+        { label: "member of", id: "memberof" },
+        // { label: "Events", id: "events" },
+        // { label: "select", id: "", isPlaceholder: true },
+        // { label: "Attributes", id: "attributes" },
+      ],
+    });
+  });
+};
+
 export const getResources = async (id: string) => {
   return ApiService.get({
     url: `${ApiConfig.resources}/${id}`,

@@ -37,6 +37,7 @@ import { isDateString, isEmail } from 'class-validator';
 import { parse } from 'csv-parse';
 import { SegmentsService } from '../segments/segments.service';
 import { AudiencesHelper } from '../audiences/audiences.helper';
+import { SegmentType } from '../segments/entities/segment.entity';
 
 export type Correlation = {
   cust: CustomerDocument;
@@ -768,7 +769,7 @@ export class CustomersService {
     await this.CustomerModel.remove(cust);
   }
 
-  async getAttributes(resourceId: string) {
+  async getAttributes(account: Account, resourceId: string) {
     const attributes = await this.CustomerKeysModel.find().exec();
     if (resourceId === 'attributes') {
       return {
@@ -792,6 +793,20 @@ export class CustomersService {
         options: attributeConditions(attribute.type, attribute.isArray),
         type: 'select',
       };
+
+    if (resourceId === 'memberof') {
+      const segments = await this.segmentsService.segmentRepository.findBy({
+        owner: { id: account.id },
+      });
+      return {
+        id: resourceId,
+        options: segments.map((segment) => ({
+          id: segment.id,
+          label: segment.name,
+        })),
+        type: 'select',
+      };
+    }
 
     return (
       mockData.resources.find((resource) => resource.id === resourceId) || {}

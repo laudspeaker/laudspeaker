@@ -6,18 +6,14 @@ import {
   Param,
   Patch,
   Post,
-  Put,
-  Query,
   Req,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { Request } from 'express';
-import { Like } from 'typeorm';
 import { Account } from '../accounts/entities/accounts.entity';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CreateFilterDTO } from './dto/create-filter.dto';
-import { SearchQueryDTO } from './dto/search-query.dto';
 import { UpdateFilterDTO } from './dto/update-filter.dto';
 import { Filter } from './entities/filter.entity';
 import { FilterService } from './filter.service';
@@ -48,7 +44,7 @@ export class FilterController {
     return this.filterService.findOne(<Account>user, id);
   }
 
-  @Put()
+  @Post()
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
   public async create(
