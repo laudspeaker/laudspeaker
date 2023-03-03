@@ -54,7 +54,7 @@ interface ISegmentMutationData {
 }
 
 export const createSegment = async (data: ISegmentMutationData) => {
-  return ApiService.put({
+  return ApiService.post({
     url: ApiConfig.segments,
     options: {
       ...data,

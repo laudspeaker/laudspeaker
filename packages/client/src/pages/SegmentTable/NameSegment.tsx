@@ -5,6 +5,7 @@ import TokenService from "../../services/token.service";
 import { toast } from "react-toastify";
 import Progress from "components/Progress";
 import ApiService from "services/api.service";
+import { useNavigate } from "react-router-dom";
 
 export enum SegmentType {
   AUTOMATIC = "automatic",
@@ -22,6 +23,8 @@ interface NameSegmentProps {
 }
 
 const NameSegment: FC<NameSegmentProps> = ({ onSubmit }) => {
+  const navigate = useNavigate();
+
   const [segmentForm, setSegmentForm] = useState<INameSegmentForm>({
     name: "",
     description: "",
@@ -66,6 +69,7 @@ const NameSegment: FC<NameSegmentProps> = ({ onSubmit }) => {
       toast.success(
         `Successfully loaded your customers from csv file.\nCreated: ${created}.\nUpdated: ${updated}.\nSkipped: ${skipped}`
       );
+      navigate("/segment/" + id);
     } catch (e) {
       console.error(e);
       if (e instanceof Error) toast.error(e.message);
@@ -236,10 +240,10 @@ const NameSegment: FC<NameSegmentProps> = ({ onSubmit }) => {
             <div className="flex justify-end">
               <GenericButton
                 id="submitTemplateCreation"
-                onClick={
+                onClick={(e) =>
                   segmentForm.type === "automatic"
-                    ? handleSubmit
-                    : () => setIsCSVImportModalOpen(true)
+                    ? handleSubmit(e)
+                    : setIsCSVImportModalOpen(true)
                 }
                 style={{
                   maxWidth: "200px",

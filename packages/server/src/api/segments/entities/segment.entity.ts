@@ -37,6 +37,25 @@ export class Segment extends BaseEntity {
   @Column({ default: true })
   public isFreezed: boolean;
 
-  @Column('jsonb', { default: {} })
+  @Column('jsonb', {
+    default: {
+      conditions: {
+        id: 'conditions',
+        type: 'select',
+        label: 'filter on',
+        options: [
+          {
+            label: 'select',
+            id: '',
+            isPlaceholder: true,
+          },
+          {
+            label: 'Attributes',
+            id: 'attributes',
+          },
+        ],
+      },
+    },
+  })
   public resources: any;
 }
