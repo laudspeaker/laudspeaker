@@ -112,6 +112,7 @@ export class TemplatesService {
       testSendingName,
       sendgridApiKey,
       sendgridFromEmail,
+      email
     } = account;
     let { sendingDomain, sendingEmail } = account;
 
@@ -140,6 +141,7 @@ export class TemplatesService {
 
         job = await this.messageQueue.add('email', {
           eventProvider: account.emailProvider,
+          trackingEmail: email,
           key,
           from,
           domain: sendingDomain,
@@ -173,6 +175,7 @@ export class TemplatesService {
         break;
       case 'sms':
         job = await this.messageQueue.add('sms', {
+          trackingEmail: email,
           sid: account.smsAccountSid,
           token: account.smsAuthToken,
           from: account.smsFrom,
