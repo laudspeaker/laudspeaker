@@ -132,7 +132,7 @@ export class AuthHelper extends BaseJwtHelper {
 
     const defRules = [
       {
-        type: 0,
+        type: 'eventBased',
         source: data[0].id,
         dest: [data[1].id],
         providerType: 'custom',
@@ -159,6 +159,77 @@ export class AuthHelper extends BaseJwtHelper {
 
     ret.rules = rules;
     ret.visualLayout = {
+      nodes: [
+        {
+          id: nodeIds[0],
+          position: { x: 105, y: 99 },
+          type: 'special',
+          data: {
+            primary: true,
+            audienceId: data[0].id,
+            triggers: [
+              {
+                id: triggerId,
+                title: 'Event Based',
+                type: TriggerType.EVENT,
+                properties: {
+                  conditions: [
+                    {
+                      key: 'Event',
+                      value: 'SignUp',
+                      comparisonType: 'isEqual',
+                      type: 'String',
+                      relationWithNext: 'and',
+                      isArray: false,
+                    },
+                  ],
+                },
+                providerType: ProviderTypes.Custom,
+              },
+            ],
+            messages: [],
+            dataTriggers: [],
+            flowId: ret.id,
+            isSelected: false,
+            nodeId: nodeIds[0],
+            needsUpdate: false,
+            isTriggerDragging: false,
+            isMessagesDragging: false,
+            isConnecting: false,
+            isNearToCursor: false,
+          },
+          width: 350,
+          height: 88,
+          selected: false,
+          positionAbsolute: { x: 105, y: 99 },
+          dragging: false,
+        },
+        {
+          id: nodeIds[1],
+          position: { x: 105, y: 282 },
+          type: 'special',
+          data: {
+            primary: false,
+            audienceId: data[1].id,
+            triggers: [],
+            messages: [],
+            dataTriggers: [],
+            flowId: ret.id,
+            isSelected: false,
+            nodeId: nodeIds[1],
+            needsUpdate: false,
+            isTriggerDragging: false,
+            isMessagesDragging: false,
+            isConnecting: false,
+            isNearToCursor: false,
+          },
+          width: 350,
+          height: 88,
+          selected: false,
+          positionAbsolute: { x: 105, y: 282 },
+          dragging: false,
+        },
+      ],
       edges: [
         {
           source: nodeIds[0],
@@ -172,99 +243,8 @@ export class AuthHelper extends BaseJwtHelper {
             height: 20,
             width: 20,
           },
-          type: 'smoothstep',
-        },
-      ],
-      nodes: [
-        {
-          id: nodeIds[0],
-          data: {
-            nodeId: nodeIds[0],
-            primary: true,
-            triggers: [
-              {
-                id: triggerId,
-                properties: {
-                  conditions: [
-                    {
-                      key: 'Event',
-                      comparisonType: 'isEqual',
-                      type: 'String',
-                      value: eventName,
-                      relationWithNext: 'and',
-                      isArray: false,
-                    },
-                  ],
-                },
-                providerType: ProviderTypes.Custom,
-                title: 'Event Based',
-                type: TriggerType.EVENT,
-              },
-            ],
-            messages: [],
-            audienceId: data[0].id,
-            isSelected: false,
-            needsUpdate: true,
-            dataTriggers: [],
-          },
-          type: 'special',
-          width: 350,
-          height: 79,
-          dragging: false,
-          position: {
-            x: 252,
-            y: 231,
-          },
+          type: 'custom',
           selected: false,
-          positionAbsolute: {
-            x: 252,
-            y: 231,
-          },
-        },
-        {
-          id: nodeIds[1],
-          data: {
-            nodeId: nodeIds[1],
-            primary: true,
-            triggers: [],
-            messages: [],
-            audienceId: data[1].id,
-            isSelected: false,
-            needsUpdate: true,
-            dataTriggers: [
-              {
-                id: triggerId,
-                properties: {
-                  conditions: [
-                    {
-                      key: 'Event',
-                      comparisonType: 'isEqual',
-                      type: 'String',
-                      value: eventName,
-                      relationWithNext: 'and',
-                      isArray: false,
-                    },
-                  ],
-                },
-                providerType: ProviderTypes.Custom,
-                title: 'Event Based',
-                type: TriggerType.EVENT,
-              },
-            ],
-          },
-          type: 'special',
-          width: 350,
-          height: 79,
-          dragging: false,
-          position: {
-            x: 252,
-            y: 531,
-          },
-          selected: false,
-          positionAbsolute: {
-            x: 252,
-            y: 531,
-          },
         },
       ],
     };
@@ -319,29 +299,28 @@ export class AuthHelper extends BaseJwtHelper {
       nodes: [
         {
           id: nodeId,
+          position: { x: 100, y: 300 },
+          type: 'special',
           data: {
-            nodeId: nodeId,
             primary: true,
+            audienceId: data[0].id,
             triggers: [],
             messages: [],
-            audienceId: data[0].id,
-            isSelected: false,
-            needsUpdate: true,
             dataTriggers: [],
+            flowId: ret.id,
+            isSelected: false,
+            nodeId: nodeId,
+            needsUpdate: true,
+            isTriggerDragging: false,
+            isMessagesDragging: false,
+            isConnecting: false,
+            isNearToCursor: false,
           },
-          type: 'special',
           width: 350,
-          height: 79,
-          dragging: false,
-          position: {
-            x: 252,
-            y: 231,
-          },
+          height: 88,
           selected: false,
-          positionAbsolute: {
-            x: 252,
-            y: 231,
-          },
+          positionAbsolute: { x: 100, y: 300 },
+          dragging: false,
         },
       ],
     };

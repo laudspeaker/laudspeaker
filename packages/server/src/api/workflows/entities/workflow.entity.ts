@@ -62,7 +62,7 @@ export class Trigger {
 
 export interface Edge {
   id: string;
-  type: 'smoothstep';
+  type: string;
   source: string;
   target: string;
   markerEnd: {
@@ -73,6 +73,7 @@ export interface Edge {
   };
   sourceHandle: string;
   targetHandle: string | null;
+  selected: boolean;
 }
 
 export interface Node {
@@ -86,6 +87,11 @@ export interface Node {
     isSelected: boolean;
     needsUpdate: boolean;
     dataTriggers?: Trigger[];
+    flowId: string;
+    isTriggerDragging: boolean;
+    isMessagesDragging: boolean;
+    isConnecting: boolean;
+    isNearToCursor: boolean;
   };
   type: string;
   width: number;
