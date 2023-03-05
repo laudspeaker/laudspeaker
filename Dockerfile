@@ -25,6 +25,7 @@ RUN npm run build:server
 
 FROM node:16 As final
 # Env vars
+ARG RENDER_EXTERNAL_URL
 ENV NODE_ENV=production
 ENV ENVIRONMENT=production
 ENV SERVE_CLIENT_FROM_NEST=true
