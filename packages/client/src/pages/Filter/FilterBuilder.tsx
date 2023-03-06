@@ -424,6 +424,7 @@ const FilterBuilder: FC<FilterProps> = ({ onSubmit, filterId }) => {
         generatedConditions.push({
           condition: "memberof",
           value: item.conditions.children.memberof.value,
+          attribute: "id",
         });
       }
     });

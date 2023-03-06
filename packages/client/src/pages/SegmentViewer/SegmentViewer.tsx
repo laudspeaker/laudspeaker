@@ -2,7 +2,7 @@ import { GenericButton, Input } from "components/Elements";
 import Header from "components/Header";
 import Progress from "components/Progress";
 import { TableTemplate } from "components/TableTemplate";
-import React, { useEffect, useState } from "react";
+import React, { DragEvent, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -10,6 +10,7 @@ import PencilIcon from "@heroicons/react/24/solid/PencilIcon";
 import ApiService from "services/api.service";
 import { SegmentType } from "pages/SegmentTable/NameSegment";
 import { MySegment } from "pages/Segment";
+import TokenService from "../../services/token.service";
 
 const SegmentViewer = () => {
   const navigate = useNavigate();
@@ -27,6 +28,9 @@ const SegmentViewer = () => {
   const [sortOptions, setSortOptions] = useState({});
   const [showDeleted, setShowDeleted] = useState(false);
   const [titleEdit, setTitleEdit] = useState(false);
+
+  const [isCSVDragActive, setIsCSVDragActive] = useState(false);
+  const [isCSVLoading, setIsCSVLoading] = useState(false);
 
   const loadData = async () => {
     setLoading(true);
@@ -70,6 +74,71 @@ const SegmentViewer = () => {
       toast.error("Error while saving segment");
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const deleteCustomerFromSegment = async (customerId: string) => {
+    await ApiService.delete({ url: `/segments/${id}/customers/${customerId}` });
+    await loadData();
+  };
+
+  const handleCSVFile = async (file: File) => {
+    if (file.type !== "text/csv") {
+      toast.error("File must have .csv extension");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    setIsCSVLoading(true);
+    try {
+      const res = await fetch(
+        `${process.env.REACT_APP_API_BASE_URL}/segments/${id}/importcsv`,
+        {
+          method: "POST",
+          body: formData,
+          headers: {
+            Authorization: `Bearer ${TokenService.getLocalAccessToken()}`,
+          },
+        }
+      );
+
+      if (!res.ok) throw new Error("Error while loading csv");
+      const {
+        stats: { created, updated, skipped },
+      } = await res.json();
+
+      toast.success(
+        `Successfully loaded your customers from csv file.\nCreated: ${created}.\nUpdated: ${updated}.\nSkipped: ${skipped}`
+      );
+      navigate("/segment/" + id);
+    } catch (e) {
+      console.error(e);
+      if (e instanceof Error) toast.error(e.message);
+    } finally {
+      setIsCSVLoading(false);
+      loadData();
+    }
+  };
+
+  const handleDrag = function (e: DragEvent<HTMLDivElement>) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setIsCSVDragActive(true);
+    } else if (e.type === "dragleave") {
+      setIsCSVDragActive(false);
+    }
+  };
+
+  const handleDrop = (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsCSVDragActive(false);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      const file = e.dataTransfer.files[0];
+      handleCSVFile(file);
     }
   };
 
@@ -138,31 +207,102 @@ const SegmentViewer = () => {
                 </div>
               )}
 
-              <div className="mt-6 flex space-x-3 md:mt-0 md:ml-4">
-                <GenericButton
-                  id="createTemplate"
-                  customClasses="inline-flex items-center border border-transparent bg-cyan-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-cyan-500 focus:outline-none focus:ring-2 focus:ring-offset-2 rounded-md focus:ring-cyan-500"
-                  onClick={handleSave}
-                  loading={isSaving || loading}
-                >
-                  Save Segment
-                </GenericButton>
-              </div>
+              {titleEdit && (
+                <div className="mt-6 flex space-x-3 md:mt-0 md:ml-4">
+                  <GenericButton
+                    id="createTemplate"
+                    customClasses="inline-flex items-center border border-transparent bg-cyan-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-cyan-500 focus:outline-none focus:ring-2 focus:ring-offset-2 rounded-md focus:ring-cyan-500"
+                    onClick={handleSave}
+                    loading={isSaving || loading}
+                  >
+                    Save Segment
+                  </GenericButton>
+                </div>
+              )}
             </div>
-            <TableTemplate
-              data={customers}
-              pagesCount={pagesCount}
-              setCurrentPage={setCurrentPage}
-              currentPage={currentPage}
-              itemsPerPage={itemsPerPage}
-              setItemsPerPage={setItemsPerPage}
-              sortOptions={sortOptions}
-              setSortOptions={setSortOptions}
-              isShowDisabled={showDeleted}
-              setIsShowDisabled={setShowDeleted}
-              refresh={loadData}
-              showDeletedToggle={false}
-            />
+
+            {customers.length > 0 ? (
+              <TableTemplate
+                data={customers}
+                pagesCount={pagesCount}
+                setCurrentPage={setCurrentPage}
+                currentPage={currentPage}
+                itemsPerPage={itemsPerPage}
+                setItemsPerPage={setItemsPerPage}
+                sortOptions={sortOptions}
+                setSortOptions={setSortOptions}
+                isShowDisabled={showDeleted}
+                setIsShowDisabled={setShowDeleted}
+                refresh={loadData}
+                showDeletedToggle={false}
+                deleteCustomerFromSegment={deleteCustomerFromSegment}
+              />
+            ) : (
+              <div className="rounded-lg bg-white opacity-100">
+                {isCSVLoading ? (
+                  <Progress />
+                ) : (
+                  <div
+                    className="relative flex items-center justify-center"
+                    onDragEnter={handleDrag}
+                  >
+                    <label
+                      htmlFor="dropzone-file"
+                      className={`flex flex-col items-center justify-center w-full h-full border-2 ${
+                        isCSVDragActive ? "border-cyan-300" : "border-gray-300"
+                      } border-dashed rounded-lg cursor-pointer bg-gray-50 dark:hover:bg-bray-800 dark:bg-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:hover:border-gray-500 dark:hover:bg-gray-600`}
+                    >
+                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                        <svg
+                          aria-hidden="true"
+                          className="w-10 h-10 mb-3 text-gray-400"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                          ></path>
+                        </svg>
+                        <p className="mb-2 text-sm text-gray-500 dark:text-gray-400">
+                          <span className="font-semibold">Click to upload</span>{" "}
+                          or drag and drop
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 px-[10px] inline-block">
+                          Your csv should include one of these fields, email,
+                          sms, slackId. For personalization include First Name,
+                          and Last Name and other fields
+                        </p>
+                      </div>
+                      <input
+                        id="dropzone-file"
+                        type="file"
+                        accept=".csv"
+                        className="hidden"
+                        onChange={(e) => {
+                          if (e.target.files && e.target.files[0]) {
+                            handleCSVFile(e.target.files[0]);
+                          }
+                        }}
+                      />
+                    </label>
+                    {isCSVDragActive && (
+                      <div
+                        className="absolute w-full h-full top-0 right-0 bottom-0 left-0"
+                        onDragEnter={handleDrag}
+                        onDragLeave={handleDrag}
+                        onDragOver={handleDrag}
+                        onDrop={handleDrop}
+                      ></div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
       </div>

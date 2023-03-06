@@ -164,4 +164,14 @@ export class SegmentsController {
   ) {
     return this.segmentsService.loadCSVToManualSegment(<Account>user, id, file);
   }
+
+  @Get('/:id/user-in-workflows')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor)
+  public async checkUsedInWorkflows(
+    @Req() { user }: Request,
+    @Param('id') id: string
+  ) {
+    return this.segmentsService.checkUsedInWorkflows(<Account>user, id);
+  }
 }

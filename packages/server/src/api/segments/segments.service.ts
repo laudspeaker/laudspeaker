@@ -9,11 +9,12 @@ import {
 import { BadRequestException } from '@nestjs/common/exceptions';
 import { InjectRepository } from '@nestjs/typeorm';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, In, Repository } from 'typeorm';
 import { Account } from '../accounts/entities/accounts.entity';
 import { AudiencesHelper } from '../audiences/audiences.helper';
 import { CustomersService } from '../customers/customers.service';
 import { CustomerDocument } from '../customers/schemas/customer.schema';
+import { Filter } from '../filter/entities/filter.entity';
 import { WorkflowsService } from '../workflows/workflows.service';
 import { CreateSegmentDTO } from './dto/create-segment.dto';
 import { UpdateSegmentDTO } from './dto/update-segment.dto';
@@ -64,10 +65,24 @@ export class SegmentsService {
   }
 
   public async create(account: Account, createSegmentDTO: CreateSegmentDTO) {
-    return this.segmentRepository.save({
+    const segment = await this.segmentRepository.save({
       ...createSegmentDTO,
       owner: { id: account.id },
     });
+
+    if (segment.type === SegmentType.AUTOMATIC) {
+      this.customersService.CustomerModel.find({
+        ownerId: account.id,
+      })
+        .exec()
+        .then((customers) => {
+          for (const customer of customers) {
+            this.updateAutomaticSegmentCustomerInclusion(account, customer);
+          }
+        });
+    }
+
+    return segment;
   }
 
   public async update(
@@ -115,7 +130,14 @@ export class SegmentsService {
       )
     );
 
-    return { data: customers, totalPages };
+    return {
+      data: customers.map((customer) => ({
+        ...(customer?.toObject() || {}),
+        id: customer.id,
+        dataSource: 'segmentPeople',
+      })),
+      totalPages,
+    };
   }
 
   public async assignCustomer(
@@ -285,5 +307,39 @@ export class SegmentsService {
     });
 
     return !!record;
+  }
+
+  public async checkUsedInWorkflows(account: Account, id: string) {
+    const segment = await this.findOne(account, id);
+
+    let names: string[] = [];
+
+    await this.dataSource.transaction(async (transactionManager) => {
+      const filters = await transactionManager.find(Filter, {
+        select: ['inclusionCriteria', 'id'],
+        where: { user: { id: account.id } },
+      });
+
+      const filterIds = filters
+        .filter((filter) =>
+          filter?.inclusionCriteria?.conditions?.some(
+            (condition) => condition?.value === segment.id
+          )
+        )
+        .map((filter) => filter.id);
+
+      names = (
+        await this.workflowsService.workflowsRepository.find({
+          select: ['name'],
+          where: {
+            filter: { id: In(filterIds) },
+            owner: { id: account.id },
+            isDeleted: false,
+          },
+        })
+      ).map((workflow) => workflow.name);
+    });
+
+    return names;
   }
 }

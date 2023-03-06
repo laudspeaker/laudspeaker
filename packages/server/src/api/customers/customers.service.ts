@@ -37,7 +37,7 @@ import { isDateString, isEmail } from 'class-validator';
 import { parse } from 'csv-parse';
 import { SegmentsService } from '../segments/segments.service';
 import { AudiencesHelper } from '../audiences/audiences.helper';
-import { SegmentType } from '../segments/entities/segment.entity';
+import { SegmentCustomers } from '../segments/entities/segment-customers.entity';
 
 export type Correlation = {
   cust: CustomerDocument;
@@ -80,18 +80,22 @@ export class CustomersService {
       try {
         const customerId = data?.documentKey?._id;
         if (!customerId) return;
+        if (data.operationType === 'delete') {
+          await this.deleteEverywhere(customerId.toString());
+        } else {
+          const customer = await this.CustomerModel.findById(customerId).exec();
 
-        const customer = await this.CustomerModel.findById(customerId).exec();
-        if (!customer?.ownerId) return;
+          if (!customer?.ownerId) return;
 
-        const account = await this.accountsRepository.findOneBy({
-          id: customer.ownerId,
-        });
+          const account = await this.accountsRepository.findOneBy({
+            id: customer.ownerId,
+          });
 
-        await this.segmentsService.updateAutomaticSegmentCustomerInclusion(
-          account,
-          customer
-        );
+          await this.segmentsService.updateAutomaticSegmentCustomerInclusion(
+            account,
+            customer
+          );
+        }
       } catch (e) {
         this.logger.error(e);
       }
@@ -312,6 +316,7 @@ export class CustomersService {
       }>()
     )?.data;
 
+    //TODO: fix
     const result = await Promise.all(
       data.map(async (el) => {
         const query = await this.dataSource
@@ -649,7 +654,9 @@ export class CustomersService {
     }
 
     for (const customer of customers) {
-      if (await this.audiencesHelper.checkInclusion(customer, criteria))
+      if (
+        await this.audiencesHelper.checkInclusion(customer, criteria, account)
+      )
         ret.push(customer);
     }
 
@@ -857,5 +864,15 @@ export class CustomersService {
     }
 
     return { stats };
+  }
+
+  public async deleteEverywhere(id: string) {
+    await this.dataSource.transaction(async (transactionManager) => {
+      await transactionManager.delete(SegmentCustomers, { customerId: id });
+      await transactionManager.query(
+        'UPDATE audience SET customers = array_remove(audience."customers", $1) WHERE $2 = ANY(audience."customers")',
+        [id, id]
+      );
+    });
   }
 }

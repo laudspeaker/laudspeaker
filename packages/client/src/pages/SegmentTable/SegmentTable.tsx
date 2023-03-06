@@ -5,6 +5,7 @@ import Header from "components/Header";
 import Progress from "components/Progress";
 import { TableTemplate } from "components/TableTemplate";
 import React, { useEffect, useState } from "react";
+import { confirmAlert } from "react-confirm-alert";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import ApiService from "services/api.service";
@@ -16,13 +17,15 @@ const SegmentTable = () => {
   const [loading, setLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState(false);
-  const [segments, setSegments] = useState([]);
+  const [segments, setSegments] = useState<{ name: string; id: string }[]>([]);
   const [itemsPerPage, setItemsPerPage] = useState(20);
   const [pagesCount, setPagesCount] = useState<number>(1);
   const [currentPage, setCurrentPage] = useState(0);
   const [nameModalOpen, setNameModalOpen] = useState<boolean>(false);
   const [sortOptions, setSortOptions] = useState({});
   const [showDeleted, setShowDeleted] = useState(false);
+  const [segmentToDelete, setSegmentToDelete] = useState<string>();
+  const [usedInWorkflow, setUsedInWorkflow] = useState<string[]>([]);
 
   const loadData = async () => {
     setLoading(true);
@@ -47,6 +50,49 @@ const SegmentTable = () => {
   useEffect(() => {
     loadData();
   }, [itemsPerPage, currentPage, sortOptions, showDeleted]);
+
+  const handleDeleteSegment = (segmentId: string) => {
+    confirmAlert({
+      title: "",
+      message: `Are you sure you want to delete segment ${
+        segments.find((segment) => segment.id === segmentId)?.name
+      }?`,
+      buttons: [
+        {
+          label: "Yes",
+          onClick: async () => {
+            await ApiService.delete({
+              url: `/segments/${segmentId}`,
+              options: {
+                segmentId,
+              },
+            });
+            loadData();
+          },
+        },
+        {
+          label: "No",
+        },
+      ],
+    });
+    setSegmentToDelete("");
+  };
+
+  useEffect(() => {
+    if (!segmentToDelete) return;
+
+    (async () => {
+      const { data } = await ApiService.get({
+        url: `/segments/${segmentToDelete}/user-in-workflows`,
+      });
+
+      if (data.length > 0) {
+        setUsedInWorkflow(data);
+      } else {
+        handleDeleteSegment(segmentToDelete);
+      }
+    })();
+  }, [segmentToDelete]);
 
   const handleNameSubmit = async (segmentForm: INameSegmentForm) => {
     setIsSaving(true);
@@ -122,8 +168,39 @@ const SegmentTable = () => {
             setIsShowDisabled={setShowDeleted}
             refresh={loadData}
             showDeletedToggle={false}
+            setSegmentToDelete={setSegmentToDelete}
           />
         </div>
+
+        <Modal
+          isOpen={!!segmentToDelete}
+          onClose={() => setSegmentToDelete("")}
+        >
+          <div>
+            {usedInWorkflow.length > 0 && (
+              <>
+                <div>
+                  <p>
+                    To delete segment remove it from journeys and stop active
+                    journeys which use this segment:
+                  </p>
+                  <div className="max-h-[100px] overflow-y-scroll">
+                    <ul className="list-disc pl-[30px]">
+                      {usedInWorkflow.map((name) => (
+                        <li>{name}</li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div className="mt-[10px]">
+                    <GenericButton onClick={() => setSegmentToDelete("")}>
+                      Close
+                    </GenericButton>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </Modal>
       </div>
     </div>
   );

@@ -14,6 +14,8 @@ import ApiService from "services/api.service";
 import ToggleSwitch from "components/Elements/ToggleSwitch";
 
 export interface TableDataItem {
+  email?: string;
+  phone?: string;
   id?: string | number | null;
   name?: string;
   isActive?: boolean;
@@ -86,6 +88,29 @@ function renderCorrectColumnNames(
           className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6 w-[100px]"
         >
           Status
+        </th>
+        <th
+          scope="col"
+          className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6 w-[100px]"
+        >
+          Action
+        </th>
+      </>
+    );
+  } else if (data[0].dataSource === "segmentPeople") {
+    return (
+      <>
+        <th
+          scope="col"
+          className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6"
+        >
+          Email
+        </th>
+        <th
+          scope="col"
+          className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6"
+        >
+          Phone
         </th>
         <th
           scope="col"
@@ -178,7 +203,14 @@ function renderSecondColumn(row: TableDataItem) {
         </td>
       </>
     );
-    //journey vs template
+  } else if (row.dataSource === "segmentPeople") {
+    return (
+      <>
+        <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
+          {row.phone}
+        </td>
+      </>
+    );
   } else if (row.isActive != null) {
     //this is a test for checking if this is the journeys table or the template table
     let status: JOURNEY_STATUS = JOURNEY_STATUS.EDITABLE;
@@ -398,8 +430,13 @@ function transformJourneyData(data: TableDataItem[]): TableDataItem[] {
       createdBy: element.createdBy,
       customersEnrolled: element.customersEnrolled,
       audiences: element.audiences,
-      dataSource: element.hasOwnProperty("salient") ? "people" : "j",
+      dataSource:
+        element.dataSource || element.hasOwnProperty("salient")
+          ? "people"
+          : "j",
       salient: element.salient,
+      email: element.email,
+      phone: element.phone,
     });
   }
 
@@ -426,6 +463,8 @@ export interface TableTemplateProps<T extends TableDataItem> {
   refresh?: () => void;
   setTemplateToDelete?: (name: string) => void;
   showDeletedToggle?: boolean;
+  deleteCustomerFromSegment?: (customerId: string) => void;
+  setSegmentToDelete?: (segmentId?: string) => void;
 }
 
 export default function TableTemplate<T extends TableDataItem>({
@@ -442,6 +481,8 @@ export default function TableTemplate<T extends TableDataItem>({
   refresh = () => {},
   setTemplateToDelete = () => {},
   showDeletedToggle = true,
+  deleteCustomerFromSegment = () => {},
+  setSegmentToDelete = () => {},
 }: TableTemplateProps<T>) {
   const isSkipped = (num?: number) => {
     if (!num) return false;
@@ -460,30 +501,6 @@ export default function TableTemplate<T extends TableDataItem>({
               url: ApiConfig.deleteFlow,
               options: {
                 workflowId,
-              },
-            });
-            refresh();
-          },
-        },
-        {
-          label: "No",
-        },
-      ],
-    });
-  };
-
-  const handleDeleteSegment = (segmentId: string) => {
-    confirmAlert({
-      title: "Confirm delete?",
-      message: "Are you sure you want to delete journey?",
-      buttons: [
-        {
-          label: "Yes",
-          onClick: async () => {
-            await ApiService.delete({
-              url: `/segments/${segmentId}`,
-              options: {
-                segmentId,
               },
             });
             refresh();
@@ -561,6 +578,55 @@ export default function TableTemplate<T extends TableDataItem>({
         <Link href={`templates/email/${row.name}`}>
           {isButton ? <div>Edit</div> : row.name}
         </Link>
+      );
+    } else if (data[0].dataSource === "segmentPeople") {
+      return isButton ? (
+        <Menu as="div" className="relative">
+          <Menu.Button className="outline-none">
+            <PencilSquareIcon className="text-gray-400 hover:text-gray-500 ml-[10px] text-[16px] w-[24px]" />
+          </Menu.Button>
+          <Transition
+            as={Fragment}
+            enter="transition ease-out duration-100"
+            enterFrom="transform opacity-0 scale-95"
+            enterTo="transform opacity-100 scale-100"
+            leave="transition ease-in duration-75"
+            leaveFrom="transform opacity-100 scale-100"
+            leaveTo="transform opacity-0 scale-95"
+          >
+            <Menu.Items className="absolute outline-none w-auto flex flex-col bg-gray-50 shadow-md rounded-[8px] border-[1px] border-gray-200 items-center right-1/2 top-full z-[1000]">
+              {[
+                <Link className="!no-underline" href={`/person/${row.id}`}>
+                  <div className="w-full">Edit</div>
+                </Link>,
+                ...(row.isDeleted
+                  ? []
+                  : [
+                      <button
+                        className="w-full text-center cursor-pointer outline-none text-red-500"
+                        onClick={() =>
+                          deleteCustomerFromSegment(String(row.id || ""))
+                        }
+                        data-delete-button
+                      >
+                        Delete
+                      </button>,
+                    ]),
+              ].map((el, i) => (
+                <Menu.Item>
+                  <div
+                    key={i}
+                    className="w-full text-center hover:bg-gray-200 transition-all px-[6px] py-[4px] border-b-[1px] border-b-gray-200"
+                  >
+                    {el}
+                  </div>
+                </Menu.Item>
+              ))}
+            </Menu.Items>
+          </Transition>
+        </Menu>
+      ) : (
+        <Link href={`/person/${row.id}`}>{row.email}</Link>
       );
     } else if (row.type == "sms") {
       return isButton ? (
@@ -793,9 +859,7 @@ export default function TableTemplate<T extends TableDataItem>({
                   : [
                       <button
                         className="w-full text-center cursor-pointer outline-none text-red-500"
-                        onClick={() =>
-                          handleDeleteSegment(String(row.id || ""))
-                        }
+                        onClick={() => setSegmentToDelete(String(row.id || ""))}
                         data-delete-button
                       >
                         Delete

@@ -40,7 +40,7 @@ export class AudiencesHelper {
         return custAttr > Number(checkVal);
       case 'isLessThan':
         return custAttr < Number(checkVal);
-      case 'memberOf':
+      case 'memberof':
         if (!segmentData?.account) return false;
 
         return this.segmentsService.isCustomerMemberOf(
