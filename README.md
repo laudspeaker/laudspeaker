@@ -289,7 +289,7 @@ Previous experience could include:
 Technologies you should be familiar with:
 - Typescript, job queues, postgres
 
-Some Other Details:
+### Some Other Details:
 
 - We work in Typescript with Nest.js for the backend and react for the frontend - We use technologies like: clickhouse, postgres, bullmq, docker, mongo - technologies we will likely use soon: kafka, celery, temporal - We are a remote team out of NY/Mountain View and Ukraine (and are open to gmt +2 to gmt + 8 timezones) - Did we mention we are open source :D. We raised our seed round from top tier investors (including YC) and will announce the funding in a future press release.
 
