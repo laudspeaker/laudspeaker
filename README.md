@@ -1,34 +1,18 @@
-<p align="center"><a  href="https://laudspeaker.com/"><img  src="https://user-images.githubusercontent.com/7728266/194206039-0faecc9d-c500-4c64-8401-dfbefe501e4a.png"  height="100"/></a></p>
-
-<p align="center">
-<a href='https://laudspeakerusers.slack.com/ssb/redirect'><img alt="Join Slack Community" src="https://img.shields.io/badge/slack%20community-join-green"/></a>
-<a href='https://twitter.com/laudspeaker'><img alt="Follow Laudspeaker" src="https://img.shields.io/badge/%40laudspeaker-follow-blue"/></a>
-<a href='https://img.shields.io/github/commit-activity/m/laudspeaker/laudspeaker'><img alt="Commits" src="https://img.shields.io/github/commit-activity/m/laudspeaker/laudspeaker"/></a>
-<a href='https://hub.docker.com/repository/docker/laudspeaker/laudspeaker'><img alt="Docker Pulls" src="https://img.shields.io/docker/pulls/laudspeaker/laudspeaker"></a>
-
-<h4 align="center">
-  <a href="https://join.slack.com/t/laudspeakerusers/shared_invite/zt-1li25huaq-BljJUA1Zm8dXvbZViAbMwg">Slack</a> |
-  <a href="https://app.laudspeaker.com/login/">Laudspeaker Cloud</a> |
-  <a href="https://laudspeaker.com/docs/guides/category/deploy">Self-Hosting</a> |
-  <a href="https://laudspeaker.com/docs/guides/overview/intro/">Docs</a> |
-  <a href="https://laudspeaker.com/">Website</a>
-</h4>
-  
-</p>
 
 ## Laudspeaker - Open Source omni-channel customer messaging. Alternative to Braze / Iterable / One Signal / Customer Io
 
-![app laudspeaker com_flow_onboarding-example (1)](https://user-images.githubusercontent.com/7728266/208761386-5dfe6803-16d1-47ca-98f4-45d77ff6058e.png)
+## Laudspeaker's mission and roadmap
 
-## 🔥 What makes Laudspeaker cool?
+Our mission is to build a new, open source suite of software tools to completely handle the "customer journey". After successful launches on Product Hunt and on HN, we've been inundated with demand for our products and are building as fast as possible to keep up. We have a very ambitious roadmap, our team is small but mighty, and we are looking for people who can ship high quality code quickly, take immense pride in their work, and love open source to join us.
 
-Lauspeaker is the only multi-channel open-source customer messaging workflow software, which is focused on being event triggered, has been built with a visual journey feature from day one and is focused on scalability.
+In terms of how we think about product we categorise our work into 4 major buckets. 
 
-We support email, sms and slack as a channel and have many more channels on our roadmap.
+- Reaching Parity
+- Responding to customer requests
+- Making Big Bets
+- Building a Scalable System
 
-We are planning to build Laudspeaker to work well with the Modern Data Stack, integrating with data warehouses and other services so you can easily import and export data with no fear of lock in or losing control of your data.
-
-## Product Features
+Here's a more detailed breakdown of the state of the product, and what parity means.
 
 <table>
 <tr>
@@ -247,18 +231,7 @@ We are planning to build Laudspeaker to work well with the Modern Data Stack, in
 </tr>
 </table>
 
-## Laudspeaker's mission and roadmap
 
-Our mission is to build a new, open source suite of software tools to completely handle the "customer journey". After successful launches on Product Hunt and on HN, we've been inundated with demand for our products and are building as fast as possible to keep up. We have a very ambitious roadmap, our team is small but mighty, and we are looking for people who can ship high quality code quickly, take immense pride in their work, and love open source to join us.
-
-In terms of how we think about product we categorise our work into 4 major buckets. 
-
-- Reaching Parity
-- Responding to customer requests
-- Making Big Bets
-- Building a Scalable System
-
-Here's a more detailed breakdown of the state of the product, and what parity means.
 
 We are focused on the first two buckets of work right now, and to acheive them we rougly need to build everything in the "soon" category quickly and well.
 
