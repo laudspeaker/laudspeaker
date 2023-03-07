@@ -271,6 +271,7 @@ Some characteristics you may share:
 Previous experience could include:
 - Working as one of the first engineers at a growing startup, where you built a major part of the product from scratch
 - Working on a no code tool
+- You have a portfolio of work we can see
 
 Technologies you should be familiar with:
 - React, node, typescript
