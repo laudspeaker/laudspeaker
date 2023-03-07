@@ -6,6 +6,7 @@ import { toast } from "react-toastify";
 import Progress from "components/Progress";
 import ApiService from "services/api.service";
 import { useNavigate } from "react-router-dom";
+import MySegment from "pages/Segment/MySegment";
 
 export enum SegmentType {
   AUTOMATIC = "automatic",
@@ -30,6 +31,9 @@ const NameSegment: FC<NameSegmentProps> = ({ onSubmit }) => {
     description: "",
     type: SegmentType.AUTOMATIC,
   });
+
+  const [isAutomaticSegmentModalOpen, setIsAutomaticSegmentModalOpen] =
+    useState(false);
 
   const [isCSVImportModalOpen, setIsCSVImportModalOpen] = useState(false);
   const [isCSVDragActive, setIsCSVDragActive] = useState(false);
@@ -120,7 +124,15 @@ const NameSegment: FC<NameSegmentProps> = ({ onSubmit }) => {
         if (e.key === "Enter") handleSubmit(e);
       }}
     >
-      {isCSVImportModalOpen ? (
+      {isAutomaticSegmentModalOpen ? (
+        <MySegment
+          isCollapsible={true}
+          onClose={() => setIsAutomaticSegmentModalOpen(false)}
+          workflowId=""
+          defaultTitle={segmentForm.name}
+          onSubmit={(segmentId) => navigate("/segment/" + segmentId)}
+        />
+      ) : isCSVImportModalOpen ? (
         <>
           <div className="rounded-lg bg-white opacity-100">
             {isCSVLoading ? (
@@ -240,9 +252,9 @@ const NameSegment: FC<NameSegmentProps> = ({ onSubmit }) => {
             <div className="flex justify-end">
               <GenericButton
                 id="submitTemplateCreation"
-                onClick={(e) =>
+                onClick={() =>
                   segmentForm.type === "automatic"
-                    ? handleSubmit(e)
+                    ? setIsAutomaticSegmentModalOpen(true)
                     : setIsCSVImportModalOpen(true)
                 }
                 style={{
@@ -250,7 +262,7 @@ const NameSegment: FC<NameSegmentProps> = ({ onSubmit }) => {
                 }}
                 disabled={!segmentForm.name || !segmentForm.type}
               >
-                {segmentForm.type === "automatic" ? "Create" : "Next"}
+                Next
               </GenericButton>
             </div>
           </div>

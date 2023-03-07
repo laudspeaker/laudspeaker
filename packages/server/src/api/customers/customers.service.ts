@@ -771,7 +771,10 @@ export class CustomersService {
     await oldCustomer.save();
   }
 
-  async removeById(custId: string) {
+  async removeById(account: Account, custId: string) {
+    if (account.customerId === custId)
+      throw new BadRequestException("You can't delete yourself as a customer");
+
     const cust = await this.CustomerModel.findById(custId);
     await this.CustomerModel.remove(cust);
   }
@@ -874,5 +877,9 @@ export class CustomersService {
         [id, id]
       );
     });
+  }
+
+  public async searchByValue(value: string) {
+    const searchRegExp = new RegExp(`.*${value}.*`, 'i');
   }
 }

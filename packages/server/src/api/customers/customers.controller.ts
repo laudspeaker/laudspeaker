@@ -166,7 +166,10 @@ export class CustomersController {
   @Post('/delete/:custId')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
-  async deletePerson(@Param('custId') custId: string) {
-    await this.customersService.removeById(custId);
+  async deletePerson(
+    @Req() { user }: Request,
+    @Param('custId') custId: string
+  ) {
+    await this.customersService.removeById(<Account>user, custId);
   }
 }

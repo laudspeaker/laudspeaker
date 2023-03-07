@@ -3,6 +3,7 @@ import { FormControl } from "@mui/material";
 import DateRangePicker from "components/DateRangePicker";
 import DateTimePicker from "components/Elements/DateTimePicker";
 import { Resource } from "pages/EmailBuilder/EmailBuilder";
+import { SegmentType } from "pages/SegmentTable/NameSegment";
 import { Select, Input } from "../../components/Elements";
 import { ApiConfig } from "../../constants";
 import ApiService from "../../services/api.service";
@@ -70,7 +71,9 @@ interface ISegmentMutationData {
   resources: IResource;
 }
 
-export const createSegment = async (data: ISegmentMutationData) => {
+export const createSegment = async (
+  data: ISegmentMutationData & { type: SegmentType }
+) => {
   return ApiService.post({
     url: ApiConfig.segments,
     options: {

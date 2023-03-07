@@ -90,10 +90,25 @@ export class SegmentsService {
     id: string,
     updateSegmentDTO: UpdateSegmentDTO
   ) {
+    const segment = await this.findOne(account, id);
+
     await this.segmentRepository.update(
       { id, owner: { id: account.id } },
       { ...updateSegmentDTO, owner: { id: account.id } }
     );
+
+    (async () => {
+      const records = await this.segmentCustomersRepository.findBy({
+        segment: { id: segment.id },
+      });
+
+      for (const { customerId } of records) {
+        const customer = await this.customersService.CustomerModel.findById(
+          customerId
+        ).exec();
+        await this.updateAutomaticSegmentCustomerInclusion(account, customer);
+      }
+    })();
   }
 
   public async delete(account: Account, id: string) {
@@ -335,6 +350,7 @@ export class SegmentsService {
             filter: { id: In(filterIds) },
             owner: { id: account.id },
             isDeleted: false,
+            isStopped: false,
           },
         })
       ).map((workflow) => workflow.name);
