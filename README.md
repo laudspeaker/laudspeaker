@@ -263,7 +263,7 @@ Right now we are looking for two senior engineers.
 
 Some characteristics you may share:
 - You obsess over how our users interact with our product, are experienced with front end technologies and love talking to users
-- You proactively figure out how to make our product "feel" better
+- You proactively figure out how to make our product "feel" better and can take vague requests and get them done without needing too much help
 - You love the challenge of working on complex drag and drop editors and no code tools, and think building software like webflow, figma, or lucidchart is interesting
 - You are excited by the idea of having a big say in the product direction
 
