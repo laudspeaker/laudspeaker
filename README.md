@@ -236,6 +236,7 @@ We are focused on the first two buckets of work right now (reaching feature pari
 The advantage of building an open source product and company is the code base is there for everyone to see! As a first step we encourage all would be candidates to 
 - Sign up and play around with Laudspeaker cloud 
 - Have a look at our code base (the production and staging branches are your friends) 
+- Watch, follow, and star to keep up with updates
 - Raise an issue or two
 - Join our slack group
 - Fix those issues, submit a PR
@@ -244,7 +245,7 @@ The advantage of building an open source product and company is the code base is
 We are looking for proactive developers who take pride in their work and can ship high quality code quickly, and we think one of the best ways of seeing that is through contributions!
 
 - If there's a fit we'll email you back, and set up time for a call with one of the founders
-- After that we'll typically engage in a paid trial, after which we both have the chance to decide whether to work together!
+- After that we'll typically engage in a paid trial work period, after which we both have the chance to decide whether to work together!
 
 ## A quick how to for contribution:
 
