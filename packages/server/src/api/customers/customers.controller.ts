@@ -42,12 +42,14 @@ export class CustomersController {
   findAll(
     @Req() { user }: Request,
     @Query('take') take?: string,
-    @Query('skip') skip?: string
+    @Query('skip') skip?: string,
+    @Query('checkInSegment') checkInSegment?: string
   ) {
     return this.customersService.returnAllPeopleInfo(
       <Account>user,
       take && +take,
-      skip && +skip
+      skip && +skip,
+      checkInSegment
     );
   }
 

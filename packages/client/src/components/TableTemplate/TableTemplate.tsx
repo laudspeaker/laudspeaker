@@ -12,8 +12,10 @@ import { confirmAlert } from "react-confirm-alert";
 import { ApiConfig } from "../../constants";
 import ApiService from "services/api.service";
 import ToggleSwitch from "components/Elements/ToggleSwitch";
+import { GenericButton } from "components/Elements";
 
 export interface TableDataItem {
+  isInsideSegment?: boolean;
   email?: string;
   phone?: string;
   id?: string | number | null;
@@ -134,7 +136,13 @@ function renderCorrectColumnNames(
           scope="col"
           className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6"
         >
-          Info
+          Email
+        </th>
+        <th
+          scope="col"
+          className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6"
+        >
+          Actions
         </th>
       </>
     );
@@ -437,6 +445,7 @@ function transformJourneyData(data: TableDataItem[]): TableDataItem[] {
       salient: element.salient,
       email: element.email,
       phone: element.phone,
+      isInsideSegment: element.isInsideSegment,
     });
   }
 
@@ -465,10 +474,16 @@ export interface TableTemplateProps<T extends TableDataItem> {
   showDeletedToggle?: boolean;
   deleteCustomerFromSegment?: (customerId: string) => void;
   setSegmentToDelete?: (segmentId?: string) => void;
+  onPersonAdd?: (row: TableDataItem) => void;
+  onPersonDelete?: (row: TableDataItem) => void;
+  className?: string;
 }
 
 export default function TableTemplate<T extends TableDataItem>({
   data,
+  onPersonAdd,
+  onPersonDelete,
+  className,
   pagesCount = 1,
   setCurrentPage = () => {},
   currentPage = 0,
@@ -884,7 +899,18 @@ export default function TableTemplate<T extends TableDataItem>({
         </Link>
       );
     } else if (row.dataSource == "people") {
-      return (
+      return isButton && onPersonAdd && onPersonDelete ? (
+        row.isInsideSegment ? (
+          <GenericButton
+            customClasses="!bg-red-600 hover:!bg-red-700 focus:!ring-red-500"
+            onClick={() => onPersonDelete(row)}
+          >
+            Delete
+          </GenericButton>
+        ) : (
+          <GenericButton onClick={() => onPersonAdd(row)}>Add</GenericButton>
+        )
+      ) : (
         <Link href={`person/${row.name}`}>
           {isButton ? <div>Edit</div> : row.name}
         </Link>
@@ -977,7 +1003,9 @@ export default function TableTemplate<T extends TableDataItem>({
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+    <div
+      className={`mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 overflow-y-scroll ${className}`}
+    >
       {/*<div className="mt-8 flex flex-col">*/}
       <div className="relative mb-[15px] mt-[10px] flex items-center justify-between">
         <div>
@@ -1042,10 +1070,12 @@ export default function TableTemplate<T extends TableDataItem>({
           </div>
         ))} */}
       </div>
-      <div className="-my-2 -mx-4 sm:-mx-6 lg:-mx-8 overflow-visible">
-        <div className="inline-block min-w-full py-2 align-middle md:px-6 lg:px-8 overflow-visible">
-          <div className="overflow-visible shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
-            <table className="min-w-full divide-y divide-gray-300 md:rounded-lg">
+      <div className="-my-2 -mx-4 sm:-mx-6 lg:-mx-8">
+        <div className="inline-block min-w-full py-2 align-middle md:px-6 lg:px-8">
+          <div className="shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
+            <table
+              className={`min-w-full divide-y divide-gray-300 md:rounded-lg`}
+            >
               <thead className="bg-gray-50">
                 <tr className="bg-gray-50 px-6 py-3 text-right text-sm font-semibold text-gray-900">
                   {renderCorrectColumnNames(
@@ -1055,7 +1085,9 @@ export default function TableTemplate<T extends TableDataItem>({
                   )}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200 bg-white">
+              <tbody
+                className={`divide-y divide-gray-200 bg-white overflow-y-scroll`}
+              >
                 {transformJourneyData(data).map((row) => (
                   <Row key={row.id} row={row} />
                 ))}

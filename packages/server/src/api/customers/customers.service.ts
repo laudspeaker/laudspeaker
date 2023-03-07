@@ -397,24 +397,45 @@ export class CustomersService {
     return newCustomerData;
   }
 
-  async returnAllPeopleInfo(account: Account, take = 100, skip = 0) {
+  async returnAllPeopleInfo(
+    account: Account,
+    take = 100,
+    skip = 0,
+    checkInSegment?: string
+  ) {
     const { data, totalPages } = await this.findAll(
       <Account>account,
       take,
       skip
     );
-    const listInfo = data.map((person) => {
-      const info = {};
-      (info['id'] = person['_id'].toString()),
-        (info['salient'] = person['email']
-          ? person['email']
-          : person['slackEmail']
-          ? person['slackEmail']
-          : person['slackRealName']
-          ? person['slackRealName']
-          : '...');
-      return info;
-    });
+
+    const listInfo = await Promise.all(
+      data.map(async (person) => {
+        const info: Record<string, any> = {};
+        (info['id'] = person['_id'].toString()),
+          (info['salient'] = person['email']
+            ? person['email']
+            : person['slackEmail']
+            ? person['slackEmail']
+            : person['slackRealName']
+            ? person['slackRealName']
+            : '...');
+
+        info.email = person.email;
+        info.phone = person.phone;
+        info.dataSource = 'people';
+
+        if (checkInSegment)
+          info.isInsideSegment = await this.segmentsService.isCustomerMemberOf(
+            account,
+            checkInSegment,
+            person.id
+          );
+
+        return info;
+      })
+    );
+
     return { data: listInfo, totalPages };
   }
 
