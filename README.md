@@ -1,5 +1,5 @@
 
-## Laudspeaker's mission and roadmap
+## 🚀 Laudspeaker's mission and roadmap
 
 Our mission is to build a new, open source suite of software tools to completely handle the "customer journey". After successful launches on Product Hunt and on HN, we've been inundated with demand for our products and are building as fast as possible to keep up. We have a very ambitious roadmap, our team is small but mighty, and we are looking for people who can ship high quality code quickly, who take immense pride in their work, and love open source to join us.
 
@@ -231,7 +231,7 @@ Here's a more detailed breakdown of the state of the product, and what parity me
 
 We are focused on the first two buckets of work right now (reaching feature parity, and responding to our customers), and to achieve them we roughly need to build everything in the "soon" category quickly and well.
 
-## How we hire
+## 🌱 How we hire
 
 The advantage of building an open source product and company is the code base is there for everyone to see! As a first step we encourage all would be candidates to 
 - Sign up and play around with Laudspeaker cloud 
