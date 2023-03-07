@@ -247,15 +247,24 @@ We are planning to build Laudspeaker to work well with the Modern Data Stack, in
 </tr>
 </table>
 
-We're currently in Public Alpha.
+## Laudspeaker's mission and roadmap
 
-## License
+Our mission is to build a new, open source suite of software tools to completely handle the "customer journey". After successful launches on Product Hunt and on HN, we've been inundated with demand for our products and are building as fast as possible to keep up. We have a very ambitious roadmap, our team is small but mighty, and we are looking for people who can ship high quality code quickly, take immense pride in their work, and love open source to join us.
 
-**Laudspeaker** is open source and released under the [MIT License][mit_license], and AGPLv3 licenses (code in separate directories) with the exception of our ee directory (which is currently empty!) but will be under the Laudspeaker Enterprise Edition license. If you can only use MIT licencsed code, you can still use Laudspeaker but with a few fewer features.
+In terms of how we think about product we categorise our work into 4 major buckets. 
 
-## 🌱 Contribute
+- Reaching Parity
+- Responding to customer requests
+- Making Big Bets
+- Building a Scalable System
 
-We would love to see you contribute to Laudspeaker. Join our slack to get involved.
+Here's a more detailed breakdown of the state of the product, and what parity means.
+
+We are focused on the first two buckets of work right now, and to acheive them we rougly need to build everything in the "soon" category quickly and well.
+
+## How we hire
+
+The advantage of building an open source product and company is the code base is there for everyone to see! We thi
 
 A quick how to for contribution:
 
