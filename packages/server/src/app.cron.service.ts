@@ -296,14 +296,15 @@ export class CronService {
         ],
         relations: ['owner', 'from', 'to', 'workflow'],
       });
-      this.logger.debug('Found jobs:' + JSON.stringify(jobs));
       for (const job of jobs) {
         try {
           await this.jobsService.jobsRepository.save({
             ...job,
             status: TimeJobStatus.IN_PROGRESS,
           });
-          await this.workflowsService.timeTick(job);
+          if (await this.customerModel.findById(job.customer).exec()) {
+            await this.workflowsService.timeTick(job);
+          }
           await this.jobsService.jobsRepository.delete({ id: job.id });
         } catch (e) {
           this.logger.error('Time job error: ' + e);

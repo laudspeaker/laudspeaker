@@ -13,15 +13,15 @@ const memoryOptions: Record<
   string,
   { id: DBType; name: string; inStock: boolean }
 > = {
-  databricks: {
-    id: DBType.DATABRICKS,
-    name: "Databricks",
-    inStock: true,
-  },
   postgresql: {
     id: DBType.POSTGRESQL,
     name: "PostgreSQL",
     inStock: true,
+  },
+  databricks: {
+    id: DBType.DATABRICKS,
+    name: "Databricks",
+    inStock: false,
   },
   // mysql: { id: "mysql", name: "MySQL", inStock: false },
   // sqlServer: { id: "sqlServer", name: "SQL Server", inStock: false },
@@ -113,7 +113,7 @@ const DatabaseStep3: FC<DatabaseStepProps> = ({
       <div className="space-y-10 mb-[10px]">
         <RadioGroup
           value={mem}
-          onChange={(m) =>
+          onChange={(m: { id: DBType }) =>
             setFormData({
               ...formData,
               dbType: m.id,

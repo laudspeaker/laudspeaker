@@ -231,7 +231,9 @@ export class AudiencesService {
    * to remove/add customers from audiences. The audience must no longer
    * be editable. If the toAud is primary and static, the customer will
    * not be moved to that audience. If the toAud already contains that customerID,
-   * the customer will not be moved into that audience
+   * the customer will not be moved into that audience. If the fromAud exists but
+   * does not contain that customer the customer will not be moved into
+   * the toAud.
    *
    * @param fromAud - The audience entity to remove the customer ID from
    * @param toAud - The audience entity to add the customer ID to
@@ -248,9 +250,13 @@ export class AudiencesService {
     encodedRules: string[],
     workflowID: string
   ): Promise<{ jobIds: (string | number)[]; templates: Template[] }> {
-    this.logger.warn('\nmoveCustomer 251', customer);
+    // Base case: customer document must exist
+    if (!customer || !customer.id) {
+      this.logger.warn(`Warning: No customer to move from ${from} to ${to}`);
+      return Promise.resolve({ jobIds: [], templates: [] });
+    }
 
-    const customerId = customer.id;
+    const customerId = customer?.id;
     let index = -1; // Index of the customer ID in the fromAud.customers array
     const jobIds: (string | number)[] = [];
     let jobId: string | number;
@@ -283,21 +289,28 @@ export class AudiencesService {
         );
       }
 
-      if (fromAud && !fromAud.isEditable && index > -1) {
-        this.logger.debug(
-          'From customers before: ' + fromAud?.customers?.length
-        );
-        fromAud?.customers?.splice(index, 1);
-        await queryRunner.manager.update(
-          Audience,
-          { id: fromAud.id, isEditable: false },
-          {
-            customers: fromAud?.customers,
-          }
-        );
-        this.logger.debug(
-          'From customers after: ' + fromAud?.customers?.length
-        );
+      if (fromAud && !fromAud.isEditable) {
+        if (index > -1) {
+          this.logger.debug(
+            'From customers before: ' + fromAud?.customers?.length
+          );
+          fromAud?.customers?.splice(index, 1);
+          await queryRunner.manager.update(
+            Audience,
+            { id: fromAud.id, isEditable: false },
+            {
+              customers: fromAud?.customers,
+            }
+          );
+          this.logger.debug(
+            'From customers after: ' + fromAud?.customers?.length
+          );
+        } else {
+          this.logger.warn(
+            `Customer ${customerId} is not in ${from}, skipping`
+          );
+          return Promise.resolve({ jobIds: [], templates: [] });
+        }
       }
 
       if (toAud && !toAud.isEditable && !toAud.customers.includes(customerId)) {

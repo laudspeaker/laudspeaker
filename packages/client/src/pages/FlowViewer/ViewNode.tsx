@@ -11,6 +11,7 @@ import ChooseTemplateModal from "pages/FlowBuilder/ChooseTemplateModal";
 import StatModal from "./StatModal";
 import { NodeData } from "pages/FlowBuilder/FlowBuilder";
 import LinesEllipsis from "react-lines-ellipsis";
+import { createPortal } from "react-dom";
 
 const textStyle =
   "text-[#223343] font-[Poppins] font-normal text-[14px] leading-[30px]";
@@ -45,6 +46,8 @@ const ViewNode = ({ data }: { data: NodeData }) => {
     setUpdateTemplateModalOpen(true);
     setSelectedTemplateId(templateId);
   };
+
+  const flowBuilder = document.getElementById("flow-viewer");
 
   useEffect(() => {
     if (isExit) setNodeData({});
@@ -263,6 +266,7 @@ const ViewNode = ({ data }: { data: NodeData }) => {
                   key={index}
                   position={Position.Bottom}
                   id={trigger.id}
+                  contentEditable={false}
                   onClick={(e) => handleTriggerClick(e, trigger.id)}
                   className="!pointer-events-auto !outline-none !h-[22px] !bg-transparent !w-[30px] !transform-none !bottom-[-4px] !top-auto !left-auto !right-auto !relative"
                   isConnectable={false}
@@ -277,18 +281,25 @@ const ViewNode = ({ data }: { data: NodeData }) => {
             })}
         </div>
       </div>
-      {updateTemplateModalOpen && selectedMessageType && selectedTemplateId && (
-        <ChooseTemplateModal
-          templateModalOpen={updateTemplateModalOpen}
-          selectedMessageType={selectedMessageType}
-          handleTemplateModalOpen={handleTemplateModalOpen}
-          selectedTemplateId={selectedTemplateId}
-          isCollapsible={true}
-          isViewMode={true}
-          onClose={onTemplateModalClose}
-          onTemplateDelete={onTemplateDelete}
-        />
-      )}
+      {flowBuilder &&
+        createPortal(
+          <>
+            {selectedMessageType && selectedTemplateId && (
+              <ChooseTemplateModal
+                templateModalOpen={updateTemplateModalOpen}
+                selectedMessageType={selectedMessageType}
+                handleTemplateModalOpen={handleTemplateModalOpen}
+                selectedTemplateId={selectedTemplateId}
+                isCollapsible={true}
+                isViewMode={true}
+                onClose={onTemplateModalClose}
+                onTemplateDelete={onTemplateDelete}
+              />
+            )}
+          </>,
+
+          flowBuilder
+        )}
       <StatModal
         isOpen={sentStatModalOpen}
         event="sent"

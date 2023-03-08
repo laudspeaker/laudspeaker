@@ -25,11 +25,15 @@ RUN npm run build:server
 
 FROM node:16 As final
 # Env vars
+ARG RENDER_EXTERNAL_URL
 ENV NODE_ENV=production
 ENV ENVIRONMENT=production
 ENV SERVE_CLIENT_FROM_NEST=true
 ENV CLIENT_PATH=/app/client
 ENV PATH /app/node_modules/.bin:$PATH
+ENV FRONTEND_URL=${RENDER_EXTERNAL_URL}
+ENV POSTHOG_HOST=https://app.posthog.com
+ENV POSTHOG_KEY=phc_tXijmIHCxuV8CnUJUtbXbI7ZivlGIWfxURJwEpP3N9F
 
 # Setting working directory
 WORKDIR /app

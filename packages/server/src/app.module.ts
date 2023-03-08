@@ -30,15 +30,9 @@ import {
 } from './api/events/schemas/event-keys.schema';
 import { Integration } from './api/integrations/entities/integration.entity';
 import { Workflow } from './api/workflows/entities/workflow.entity';
-import { WorkflowsService } from './api/workflows/workflows.service';
 import { Job } from './api/jobs/entities/job.entity';
-import { JobsService } from './api/jobs/jobs.service';
-import { AudiencesService } from './api/audiences/audiences.service';
-import { CustomersService } from './api/customers/customers.service';
 import { Audience } from './api/audiences/entities/audience.entity';
-import { TemplatesService } from './api/templates/templates.service';
 import { Template } from './api/templates/entities/template.entity';
-import { SlackService } from './api/slack/slack.service';
 import { Installation } from './api/slack/entities/installation.entity';
 import { State } from './api/slack/entities/state.entity';
 import { IntegrationsModule } from './api/integrations/integrations.module';
@@ -138,7 +132,11 @@ const formatMongoConnectionString = (mongoConnectionString: string) => {
           }),
         ]
       : []),
-    MongooseModule.forRoot(process.env.MONGOOSE_URL),
+    MongooseModule.forRoot(
+      process.env.MONGOOSE_URL
+        ? formatMongoConnectionString(process.env.MONGOOSE_URL)
+        : 'mongodb://127.0.0.1:27017/?directConnection=true'
+    ),
     BullModule.forRoot({
       redis: {
         host: process.env.REDIS_HOST ?? 'localhost',

@@ -3,71 +3,80 @@
 <p align="center">
 <a href='https://laudspeakerusers.slack.com/ssb/redirect'><img alt="Join Slack Community" src="https://img.shields.io/badge/slack%20community-join-green"/></a>
 <a href='https://twitter.com/laudspeaker'><img alt="Follow Laudspeaker" src="https://img.shields.io/badge/%40laudspeaker-follow-blue"/></a>
+<a href='https://img.shields.io/github/commit-activity/m/laudspeaker/laudspeaker'><img alt="Commits" src="https://img.shields.io/github/commit-activity/m/laudspeaker/laudspeaker"/></a>
+<a href='https://hub.docker.com/repository/docker/laudspeaker/laudspeaker'><img alt="Docker Pulls" src="https://img.shields.io/docker/pulls/laudspeaker/laudspeaker"></a>
 
 <h4 align="center">
   <a href="https://join.slack.com/t/laudspeakerusers/shared_invite/zt-1li25huaq-BljJUA1Zm8dXvbZViAbMwg">Slack</a> |
   <a href="https://app.laudspeaker.com/login/">Laudspeaker Cloud</a> |
   <a href="https://laudspeaker.com/docs/guides/category/deploy">Self-Hosting</a> |
   <a href="https://laudspeaker.com/docs/guides/overview/intro/">Docs</a> |
-  <a href="https://laudspeaker.com/">Website</a> |
-  <a href="https://www.producthunt.com/posts/laudspeaker/">Product Hunt</a>
-  <a href='https://img.shields.io/github/commit-activity/m/laudspeaker/laudspeaker'><img alt="Commits" src="https://img.shields.io/github/commit-activity/m/laudspeaker/laudspeaker"/></a>
-<a href='https://hub.docker.com/repository/docker/laudspeaker/laudspeaker'><img alt="Docker Pulls" src="https://img.shields.io/docker/pulls/laudspeaker/laudspeaker"></a>
+  <a href="https://laudspeaker.com/">Website</a>
 </h4>
   
 </p>
-
-## Deploy Laudspeaker on Render.com
-
-<a href="https://render.com/deploy?repo=https://github.com/laudspeaker/laudspeaker/tree/docker_optimise">
-<img src="https://render.com/images/deploy-to-render-button.svg" alt="Deploy to Render">
-</a>
 
 ## Laudspeaker - Open Source omni-channel customer messaging. Alternative to Braze / Iterable / One Signal / Customer Io
 
 ![app laudspeaker com_flow_onboarding-example (1)](https://user-images.githubusercontent.com/7728266/208761386-5dfe6803-16d1-47ca-98f4-45d77ff6058e.png)
 
-- **Multiple messaging channels like email and slack** Send product or event-triggered emails, sms and more to your customers and users at scale
+- **Multiple messaging channels like email, sms and push** Send product or event-triggered emails, sms and more to your customers and users at scale
 - **Visual Journey Builder** Build complex messaging workflows the whole team can understand in a visual tool, and see stats once a journey is started
-- **Easy WYSIWYG Template builder** Build nice emails and more with our template builder
 - **Run on your own infra** Deploy and run on your own infrastructure to keep control of your data.
 - **Integrate with PostHog analytics** Easily trigger journeys with PostHog, the open source product analytics platform
-- 🔜 **1-Click Deploy** to Render
+- **Easy WYSIWYG Template builder** Build nice emails and more with our template builder
+- **1-Click Deploy** to Render
 - 🔜 **Database / datalake / data warehouse import** ingest user data from your databases
 - 🔜 **Build and save segments of users**
 - 🔜 **Trigger journeys from segment/rudderstack/mixpanel events**
+- 🔜 **Comprehensive journey testing** - simulate user actions, differents dates, and times and test and debug messages before you start journeys
 
 ## 🚀 Get Started
 
 Run yourself (instructions below) or use [Laudspeaker Cloud](https://app.laudspeaker.com/login) . Docs are [here](https://laudspeaker.com/docs/guides/overview/intro/)
 
-run services:
+### Deploy Laudspeaker on Render.com
+
+If you want a one-click render option **READ THIS** <a href="https://laudspeaker.com/docs/guides/deploy/options">**DOC**</a> and try it out here:
+
+NB: Create environment group with name "laudspeaker"
+
+<a href="https://render.com/deploy?repo=https://github.com/laudspeaker/laudspeaker/tree/production">
+<img src="https://render.com/images/deploy-to-render-button.svg" alt="Deploy to Render">
+</a>
+
+### Setting up with docker:
+
+Run services:
 
 - `docker-compose up` or `docker compose up` depending on your version of docker
 
-run backend and front end:
+Instantiate Mongo:
+
+- `mongosh --eval "rs.initiate()"`
+
+Run backend and front end:
 
 - `npm install`
 - `npm run start`
 
-stop all running services:
+To stop running system services (Linux):
 
-- `postgres: sudo systemctl stop postgresql.service`
-  redis:
-- `/etc/init.d/redis-server stop`
-- `mongo: sudo systemctl stop mongod`
+- Postgres: `sudo systemctl stop postgresql.service`
+- Redis: `/etc/init.d/redis-server stop`
+- Mongo: `sudo systemctl stop mongod`
 
-remove compose conatiners:
+To remove compose containers:
 
 - `docker-compose down --volumes`
 
-Add a `.env` file to both server and client in packages
+Add a `.env` file to both `packages/server` and `packages/client`.
 
 We have provided examples which you can use:
 
 `mv env-server-example packages/server/.env` and `mv env-client-example packages/client/.env`
 
-Make sure you fill in the fields in the env files before trying to run laudspeaker
+Make sure you fill in the fields in the env files before running.
 
 Questions? Please join our [Slack channel](https://join.slack.com/t/laudspeakerusers/shared_invite/zt-1io0f6u50-rSCnNtqkJT6QIdbPOyJh6g) or visit our [site](https://laudspeaker.com/).
 
@@ -116,6 +125,12 @@ A quick how to for contribution:
 [slack]: https://join.slack.com/t/laudspeakerusers/shared_invite/zt-1li25huaq-BljJUA1Zm8dXvbZViAbMwg
 [twitter]: https://twitter.com/laudspeaker
 [mit_license]: https://opensource.org/licenses/MIT
+
+## We’re hiring!
+
+Come help us make Laudspeaker better. Email us at hey [at] laudspeaker [dot] com
+
+If you're interested have a look at this repo and feel free to raise an issue!
 
 <!---
 -  [Laudspeaker Blog][laudspeaker-blog]

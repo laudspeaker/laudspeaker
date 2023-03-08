@@ -14,6 +14,7 @@ import {
   WebhooksService,
 } from '../webhooks/webhooks.service';
 import twilio from 'twilio';
+import { PostHog } from 'posthog-node';
 
 @Processor('message')
 @Injectable()
@@ -21,6 +22,10 @@ export class MessageProcessor {
   private MAXIMUM_SMS_LENGTH = 1600;
   private tagEngine = new Liquid();
   private sgMailService = new MailService();
+  private phClient = new PostHog(
+    process.env.POSTHOG_KEY,
+    { host: process.env.POSTHOG_HOST } // You can omit this line if using PostHog Cloud
+  );
 
   private clickhouseClient = createClient({
     host: process.env.CLICKHOUSE_HOST
@@ -119,6 +124,18 @@ export class MessageProcessor {
           ]);
           break;
       }
+      if (job.data.trackingEmail) {
+        this.phClient.capture({
+          distinctId: job.data.trackingEmail,
+          event: 'message sent',
+          properties: {
+            type: 'email',
+            audience: job.data.audienceId,
+            customer: job.data.customerId,
+            template: job.data.templateId,
+          },
+        });
+      }
       this.logger.debug(
         'Response from message sending: ' + JSON.stringify(msg)
       );
@@ -159,7 +176,18 @@ export class MessageProcessor {
         to: job.data.to,
         statusCallback: `${process.env.TWILIO_WEBHOOK_ENDPOINT}?audienceId=${job.data.audienceId}&customerId=${job.data.customerId}&templateId=${job.data.templateId}`,
       });
-
+      if (job.data.trackingEmail) {
+        this.phClient.capture({
+          distinctId: job.data.trackingEmail,
+          event: 'message sent',
+          properties: {
+            type: 'sms',
+            audience: job.data.audienceId,
+            customer: job.data.customerId,
+            template: job.data.templateId,
+          },
+        });
+      }
       this.logger.debug(
         `Sms with sid ${message.sid} status: ${JSON.stringify(message.status)}`
       );
