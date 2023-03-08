@@ -43,13 +43,31 @@ export class CustomersController {
     @Req() { user }: Request,
     @Query('take') take?: string,
     @Query('skip') skip?: string,
-    @Query('checkInSegment') checkInSegment?: string
+    @Query('checkInSegment') checkInSegment?: string,
+    @Query('searchKey') searchKey?: string,
+    @Query('searchValue') searchValue?: string
   ) {
     return this.customersService.returnAllPeopleInfo(
       <Account>user,
       take && +take,
       skip && +skip,
-      checkInSegment
+      checkInSegment,
+      searchKey,
+      searchValue
+    );
+  }
+  @Get('/possible-attributes')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor)
+  async getPossibleAttributes(
+    @Query('key') key = '',
+    @Query('type') type = null,
+    @Query('isArray') isArray = null
+  ) {
+    return await this.customersService.getPossibleAttributes(
+      key,
+      type,
+      isArray
     );
   }
 
@@ -173,18 +191,5 @@ export class CustomersController {
     @Param('custId') custId: string
   ) {
     await this.customersService.removeById(<Account>user, custId);
-  }
-
-  @Get('/possible-attributes/:resourceId')
-  @UseGuards(JwtAuthGuard)
-  @UseInterceptors(ClassSerializerInterceptor)
-  async getPossibleAttributes(
-    @Req() { user }: Request,
-    @Param('resourceId') resourceId = ''
-  ) {
-    await this.customersService.getPossibleAttributes(
-      <Account>user,
-      resourceId
-    );
   }
 }

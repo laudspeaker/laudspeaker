@@ -275,7 +275,9 @@ export class CustomersService {
   async findAll(
     account: Account,
     take = 100,
-    skip = 0
+    skip = 0,
+    key = '',
+    search = ''
   ): Promise<{ data: CustomerDocument[]; totalPages: number }> {
     const totalPages =
       Math.ceil(
@@ -285,6 +287,11 @@ export class CustomersService {
       ) || 1;
     const customers = await this.CustomerModel.find({
       ownerId: (<Account>account).id,
+      ...(key && search
+        ? {
+            [key]: new RegExp(`.*${search}.*`, 'i'),
+          }
+        : {}),
     })
       .skip(skip)
       .limit(take <= 100 ? take : 100)
@@ -405,12 +412,16 @@ export class CustomersService {
     account: Account,
     take = 100,
     skip = 0,
-    checkInSegment?: string
+    checkInSegment?: string,
+    searchKey?: string,
+    searchValue?: string
   ) {
     const { data, totalPages } = await this.findAll(
       <Account>account,
       take,
-      skip
+      skip,
+      searchKey,
+      searchValue
     );
 
     const listInfo = await Promise.all(
@@ -913,10 +924,6 @@ export class CustomersService {
     );
   }
 
-  public async searchByValue(value: string) {
-    const searchRegExp = new RegExp(`.*${value}.*`, 'i');
-  }
-
   public async recheckDynamicInclusion(
     account: Account,
     customer: CustomerDocument
@@ -952,13 +959,22 @@ export class CustomersService {
     );
   }
 
-  public async getPossibleAttributes(account: Account, resourceId: string) {
+  public async getPossibleAttributes(
+    key: string = '',
+    type?: string,
+    isArray?: boolean
+  ) {
     const attributes = await this.CustomerKeysModel.find({
       $and: [
-        { key: RegExp(`.*${resourceId}.*`, 'i') },
-        { $or: [{ ownerId: account.id }, { isDefault: true }] },
+        {
+          key: RegExp(`.*${key}.*`, 'i'),
+          ...(type !== null ? { type } : {}),
+          ...(isArray !== null ? { isArray } : {}),
+        },
       ],
-    }).exec();
+    })
+      .limit(20)
+      .exec();
 
     return attributes.map((el) => ({
       key: el.key,

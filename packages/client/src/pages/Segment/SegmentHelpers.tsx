@@ -59,6 +59,19 @@ export const getEventKeys = async (id: string, provider = "") => {
   });
 };
 
+export const getCustomerKeys = async (
+  key: string,
+  type?: string | null,
+  isArray?: boolean | null
+) => {
+  const { data } = await ApiService.get({
+    url: `${ApiConfig.customersAttributes}?key=${key}${
+      type ? `&type=${type}` : ""
+    }${isArray ? `&isArray=${isArray}` : ""}`,
+  });
+  return data;
+};
+
 export const getSegment = async (id: string) => {
   return ApiService.get({
     url: `${ApiConfig.segments}/${id}`,
