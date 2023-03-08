@@ -59,7 +59,7 @@ export class CronService {
     @Inject(IntegrationsService)
     private integrationsService: IntegrationsService,
     @Inject(WorkflowsService) private workflowsService: WorkflowsService
-  ) {}
+  ) { }
 
   @Cron(CronExpression.EVERY_HOUR)
   async handleCustomerKeysCron() {
@@ -128,8 +128,7 @@ export class CronService {
       }
 
       this.logger.log(
-        `Cron customer keys job finished, checked ${documentsCount} records, found ${
-          Object.keys(keys).length
+        `Cron customer keys job finished, checked ${documentsCount} records, found ${Object.keys(keys).length
         } keys`
       );
     } catch (e) {
@@ -227,8 +226,7 @@ export class CronService {
       }
 
       this.logger.log(
-        `Cron event keys job finished, checked ${documentsCount} records, found ${
-          Object.keys(keys).length
+        `Cron event keys job finished, checked ${documentsCount} records, found ${Object.keys(keys).length
         } keys`
       );
     } catch (e) {
@@ -296,14 +294,15 @@ export class CronService {
         ],
         relations: ['owner', 'from', 'to', 'workflow'],
       });
-      this.logger.debug('Found jobs:' + JSON.stringify(jobs));
       for (const job of jobs) {
         try {
           await this.jobsService.jobsRepository.save({
             ...job,
             status: TimeJobStatus.IN_PROGRESS,
           });
-          await this.workflowsService.timeTick(job);
+          if (await this.customerModel.findById(job.customer).exec()) {
+            await this.workflowsService.timeTick(job);
+          }
           await this.jobsService.jobsRepository.delete({ id: job.id });
         } catch (e) {
           this.logger.error('Time job error: ' + e);
