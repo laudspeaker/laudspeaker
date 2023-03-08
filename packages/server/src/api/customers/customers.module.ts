@@ -15,6 +15,7 @@ import { SegmentsModule } from '../segments/segments.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Account } from '../accounts/entities/accounts.entity';
 import { AudiencesHelper } from '../audiences/audiences.helper';
+import { AudiencesModule } from '../audiences/audiences.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { AudiencesHelper } from '../audiences/audiences.helper';
     }),
     AccountsModule,
     SegmentsModule,
+    AudiencesModule,
     TypeOrmModule.forFeature([Account]),
   ],
   controllers: [CustomersController],

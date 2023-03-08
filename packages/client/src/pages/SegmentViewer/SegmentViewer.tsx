@@ -330,7 +330,11 @@ const SegmentViewer = () => {
                 setAddCustomerPickedOption(undefined);
                 loadData();
               }}
-              panelClass="!max-w-full"
+              panelClass={`${
+                addCustomerPickedOption === "existing"
+                  ? "!max-w-full"
+                  : "!max-w-auto"
+              }`}
             >
               {!addCustomerPickedOption ? (
                 <div className="flex items-center justify-center gap-[10px]">

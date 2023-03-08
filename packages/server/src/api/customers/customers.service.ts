@@ -20,7 +20,7 @@ import mockData from '../../fixtures/mockData';
 import { Account } from '../accounts/entities/accounts.entity';
 import { Audience } from '../audiences/entities/audience.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, Repository } from 'typeorm';
+import { Any, DataSource, Repository } from 'typeorm';
 import { EventDto } from '../events/dto/event.dto';
 import {
   CustomerKeys,
@@ -38,6 +38,7 @@ import { parse } from 'csv-parse';
 import { SegmentsService } from '../segments/segments.service';
 import { AudiencesHelper } from '../audiences/audiences.helper';
 import { SegmentCustomers } from '../segments/entities/segment-customers.entity';
+import { AudiencesService } from '../audiences/audiences.service';
 
 export type Correlation = {
   cust: CustomerDocument;
@@ -74,7 +75,8 @@ export class CustomersService {
     private segmentsService: SegmentsService,
     @InjectRepository(Account)
     public accountsRepository: Repository<Account>,
-    private readonly audiencesHelper: AudiencesHelper
+    private readonly audiencesHelper: AudiencesHelper,
+    private readonly audiencesService: AudiencesService
   ) {
     this.CustomerModel.watch().on('change', async (data: any) => {
       try {
@@ -90,6 +92,8 @@ export class CustomersService {
           const account = await this.accountsRepository.findOneBy({
             id: customer.ownerId,
           });
+
+          await this.recheckDynamicInclusion(account, customer);
 
           await this.segmentsService.updateAutomaticSegmentCustomerInclusion(
             account,
@@ -900,7 +904,51 @@ export class CustomersService {
     });
   }
 
+  public async getDynamicAudiencesWithCustomer(
+    customerId: string
+  ): Promise<Audience[]> {
+    return this.dataSource.query(
+      'SELECT * FROM audience WHERE $1 = ANY(audience."customers") AND (SELECT workflow."isDynamic" FROM workflow WHERE workflow."id" = audience."workflowId") = true',
+      [customerId]
+    );
+  }
+
   public async searchByValue(value: string) {
     const searchRegExp = new RegExp(`.*${value}.*`, 'i');
+  }
+
+  public async recheckDynamicInclusion(
+    account: Account,
+    customer: CustomerDocument
+  ) {
+    const audiences = await this.getDynamicAudiencesWithCustomer(customer.id);
+    for (const audience of audiences) {
+      const inclusionCriteria = await this.audiencesService.getFilter(
+        account,
+        audience.id
+      );
+
+      if (!inclusionCriteria) continue;
+
+      const custIndex = audience.customers.indexOf(customer.id);
+
+      if (
+        custIndex > -1 &&
+        !(await this.audiencesHelper.checkInclusion(
+          customer,
+          inclusionCriteria,
+          account
+        ))
+      ) {
+        audience.customers.splice(custIndex, 1);
+      }
+    }
+
+    await this.audiencesService.audiencesRepository.save(
+      audiences.map((audience) => ({
+        id: audience.id,
+        customers: audience.customers,
+      }))
+    );
   }
 }

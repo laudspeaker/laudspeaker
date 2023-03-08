@@ -106,6 +106,7 @@ export class SegmentsService {
         const customer = await this.customersService.CustomerModel.findById(
           customerId
         ).exec();
+        await this.customersService.recheckDynamicInclusion(account, customer);
         await this.updateAutomaticSegmentCustomerInclusion(account, customer);
       }
     })();
@@ -174,6 +175,18 @@ export class SegmentsService {
       segment: { id: segment.id },
       customerId,
     });
+
+    const runner = this.dataSource.createQueryRunner();
+    try {
+      const customer = await this.customersService.CustomerModel.findById(
+        customerId
+      ).exec();
+      await this.workflowsService.enrollCustomer(account, customer, runner);
+    } catch (error) {
+      this.logger.error(error);
+    } finally {
+      runner.release();
+    }
   }
 
   public async assignCustomers(
@@ -224,6 +237,14 @@ export class SegmentsService {
       segment: { id: segment.id },
       customerId,
     });
+
+    (async () => {
+      const customer = await this.customersService.findById(
+        account,
+        customerId
+      );
+      await this.customersService.recheckDynamicInclusion(account, customer);
+    })();
   }
 
   public async deleteCustomerFromAllAutomaticSegments(

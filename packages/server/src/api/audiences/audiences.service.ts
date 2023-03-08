@@ -15,6 +15,7 @@ import { EventDto } from '../events/dto/event.dto';
 import { JobsService } from '../jobs/jobs.service';
 import { DateTime } from 'luxon';
 import { TimeJobType } from '../jobs/entities/job.entity';
+import { InclusionCriteria } from '../segments/types/segment.type';
 
 @Injectable()
 export class AudiencesService {
@@ -299,7 +300,7 @@ export class AudiencesService {
         );
       }
 
-      if (toAud && !toAud.isEditable) {
+      if (toAud && !toAud.isEditable && !toAud.customers.includes(customerId)) {
         this.logger.debug('To before: ' + toAud?.customers?.length);
         toAud.customers = [...toAud.customers, customerId];
         const saved = await queryRunner.manager.save(toAud);
@@ -458,5 +459,17 @@ export class AudiencesService {
     // TODO: remove
     console.warn("jobId's ==============\n", jobIds);
     return Promise.resolve(jobIds);
+  }
+
+  public async getFilter(
+    account: Account,
+    id: string
+  ): Promise<InclusionCriteria | null> {
+    const res = await this.audiencesRepository.query(
+      'SELECT filter."inclusionCriteria" FROM audience LEFT JOIN workflow ON workflow.id = audience."workflowId" LEFT JOIN filter ON filter.id = workflow."filterId" WHERE audience.id = $1 AND audience."ownerId" = $2 LIMIT 1;',
+      [id, account.id]
+    );
+
+    return res?.[0]?.inclusionCriteria || null;
   }
 }
