@@ -174,4 +174,17 @@ export class CustomersController {
   ) {
     await this.customersService.removeById(<Account>user, custId);
   }
+
+  @Get('/possible-attributes/:resourceId')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor)
+  async getPossibleAttributes(
+    @Req() { user }: Request,
+    @Param('resourceId') resourceId = ''
+  ) {
+    await this.customersService.getPossibleAttributes(
+      <Account>user,
+      resourceId
+    );
+  }
 }

@@ -951,4 +951,19 @@ export class CustomersService {
       }))
     );
   }
+
+  public async getPossibleAttributes(account: Account, resourceId: string) {
+    const attributes = await this.CustomerKeysModel.find({
+      $and: [
+        { key: RegExp(`.*${resourceId}.*`, 'i') },
+        { $or: [{ ownerId: account.id }, { isDefault: true }] },
+      ],
+    }).exec();
+
+    return attributes.map((el) => ({
+      key: el.key,
+      type: el.type,
+      isArray: el.isArray,
+    }));
+  }
 }
