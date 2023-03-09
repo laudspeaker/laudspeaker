@@ -40,7 +40,10 @@ const SideModal: FC<ModalProps> = ({
                   className="absolute top-[10px] right-[20px] border-0 bg-transparent outline-none text-[24px] cursor-pointer"
                   onClick={onClose}
                 >
-                  <XMarkIcon className="h-[30px] w-[30px]" />
+                  <XMarkIcon
+                    id="close-side-modal"
+                    className="h-[30px] w-[30px]"
+                  />
                 </button>
               )}
             </div>

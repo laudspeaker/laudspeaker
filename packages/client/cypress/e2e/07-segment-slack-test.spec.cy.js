@@ -65,7 +65,7 @@ describe(
       cy.get('[data-option="contains"]').click();
       cy.get("#contains").clear().type("mad Cha");
       cy.get("#saveSegmentParams").click();
-      cy.contains("Next").click();
+      cy.contains("Save").click();
 
       cy.contains("Save").click();
       cy.wait(500);

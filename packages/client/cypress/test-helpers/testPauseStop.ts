@@ -114,8 +114,11 @@ export default (type: PauseStopTestType = PauseStopTestType.email) => {
       correlationValue: correlationValues[type],
       event: { A: "A" },
     },
-  }).then(({ body }) => {
-    expect(body?.[0]?.jobIDs?.[0]).to.equal(undefined);
+  }).then(({ body, isOkStatusCode }) => {
+    if (type === PauseStopTestType.sms)
+      expect(isOkStatusCode).to.be.equal(true);
+    else expect(body?.[0]?.jobIDs?.[0]).to.equal(undefined);
+
     cy.wait(5000);
     cy.contains("Resume").click();
     cy.wait(5000);
@@ -130,35 +133,28 @@ export default (type: PauseStopTestType = PauseStopTestType.email) => {
         correlationValue: correlationValues[type],
         event: { A: "A" },
       },
-    }).then(({ body }) => {
+    }).then(({ body, isOkStatusCode }) => {
       cy.wait(5000);
-      cy.request({
-        method: "POST",
-        headers: {
-          Authorization: `Api-Key ${userAPIkey}`,
-        },
-        url: `${Cypress.env("AxiosURL")}events/job-status/${type}`,
-        body: {
-          jobId: body[0]?.jobIds?.[0],
-        },
-      }).then(({ body }) => {
-        expect(body).to.equal("completed");
-        cy.request({
-          method: "POST",
-          url: `${Cypress.env("AxiosURL")}events`,
-          headers: {
-            Authorization: `Api-Key ${userAPIkey}`,
-          },
-          body: {
-            correlationKey: correlationKeys[type],
-            correlationValue: correlationValues[type],
-            event: { B: "B" },
-          },
-        }).then(() => {
-          cy.contains("Stop").click();
-          cy.wait(5000);
-          cy.contains("Yes").click();
-          cy.wait(5000);
+
+      (type !== PauseStopTestType.sms
+        ? cy.request({
+            method: "POST",
+            headers: {
+              Authorization: `Api-Key ${userAPIkey}`,
+            },
+            url: `${Cypress.env("AxiosURL")}events/job-status/${type}`,
+            body: {
+              jobId: body[0]?.jobIds?.[0],
+            },
+          })
+        : new Promise((res) => res({ body, isOkStatusCode }))
+      )
+        //@ts-ignore
+        .then(({ body, isOkStatusCode }) => {
+          if (type === PauseStopTestType.sms)
+            expect(isOkStatusCode).to.be.equal(true);
+          else expect(body).to.equal("completed");
+
           cy.request({
             method: "POST",
             url: `${Cypress.env("AxiosURL")}events`,
@@ -168,13 +164,31 @@ export default (type: PauseStopTestType = PauseStopTestType.email) => {
             body: {
               correlationKey: correlationKeys[type],
               correlationValue: correlationValues[type],
-              event: { A: "A" },
+              event: { B: "B" },
             },
-          }).then(({ body }) => {
-            expect(body?.[0]?.jobIDs?.[0]).to.equal(undefined);
+          }).then(() => {
+            cy.contains("Stop").click();
+            cy.wait(5000);
+            cy.contains("Yes").click();
+            cy.wait(5000);
+            cy.request({
+              method: "POST",
+              url: `${Cypress.env("AxiosURL")}events`,
+              headers: {
+                Authorization: `Api-Key ${userAPIkey}`,
+              },
+              body: {
+                correlationKey: correlationKeys[type],
+                correlationValue: correlationValues[type],
+                event: { A: "A" },
+              },
+            }).then(({ body, isOkStatusCode }) => {
+              if (type === PauseStopTestType.sms)
+                expect(isOkStatusCode).to.be.equal(true);
+              else expect(body?.[0]?.jobIDs?.[0]).to.equal(undefined);
+            });
           });
         });
-      });
     });
   });
 };

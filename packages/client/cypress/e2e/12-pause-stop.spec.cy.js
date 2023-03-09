@@ -29,7 +29,8 @@ describe(
   () => {
     beforeEach(() => {
       cy.request("http://localhost:3001/tests/reset-tests");
-      cy.wait(2000);
+      cy.wait(5000);
+      cy.reload();
       Cypress.on("uncaught:exception", () => {
         return false;
       });
@@ -61,14 +62,13 @@ describe(
       testPauseStop();
     });
 
-    // TODO: fix
-    // it("passes for sms", () => {
-    //   loginFunc(email, password);
-    //   verifyAccount();
-    //   templatesFunc(slackTemplate, emailTemplate, smsTemplate);
-    //   setSMS();
-    //   cy.contains("Messaging").click();
-    //   testPauseStop(PauseStopTestType.sms);
-    // });
+    it("passes for sms", () => {
+      loginFunc(email, password);
+      verifyAccount();
+      templatesFunc(slackTemplate, emailTemplate, smsTemplate);
+      setSMS();
+      cy.contains("Messaging").click();
+      testPauseStop(PauseStopTestType.sms);
+    });
   }
 );
