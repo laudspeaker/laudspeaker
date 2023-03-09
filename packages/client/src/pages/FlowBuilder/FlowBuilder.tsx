@@ -47,7 +47,7 @@ import Tooltip from "components/Elements/Tooltip";
 import { Helmet } from "react-helmet";
 import { Grid } from "@mui/material";
 import ToggleSwitch from "components/Elements/ToggleSwitch";
-import SegmentModal, { SegmentModalMode } from "./SegmentModal";
+import { SegmentModalMode } from "./SegmentModal";
 import {
   MessagesTypes,
   ProviderTypes,
@@ -65,6 +65,7 @@ import { CheckIcon, PlusCircleIcon } from "@heroicons/react/24/outline";
 import TriggerDrag from "../../assets/images/TriggerDrag.svg";
 import CancelDropZone from "./CancelDropZone";
 import SideModal from "components/Elements/SideModal";
+import FilterModal from "./FilterModal";
 
 const triggerDragImage = new Image();
 triggerDragImage.src = TriggerDrag;
@@ -95,6 +96,7 @@ export interface NodeData {
     triggersList: Trigger[]
   ) => void;
   primary: boolean;
+  mock?: boolean;
   triggers: Trigger[];
   hidden?: boolean;
   isExit?: boolean;
@@ -112,7 +114,7 @@ const convertLayoutToTable = (
   nodes: Node<NodeData>[],
   edges: Edge[],
   isDynamic: boolean,
-  segmentId?: string
+  filterId?: string
 ) => {
   const dto: {
     name: string;
@@ -132,14 +134,14 @@ const convertLayoutToTable = (
       edges: Edge<undefined>[];
     };
     isDynamic?: boolean;
-    segmentId?: string;
+    filterId?: string;
   } = {
     name: name,
     audiences: [],
     rules: [],
     visualLayout: { nodes: nodes, edges: edges },
     isDynamic,
-    segmentId,
+    filterId,
   };
   for (let index = 0; index < edges.length; index++) {
     const fromNode = _.filter(nodes, (node) => {
@@ -197,7 +199,7 @@ const Flow = () => {
   const [triggerModalOpen, settriggerModalOpen] = useState<boolean>(false);
   const [selectedMessageType, setSelectedMessageType] = useState("");
   const [tutorialOpen, setTutorialOpen] = useState(false);
-  const [segmentId, setSegmentId] = useState<string>();
+  const [filterId, setFilterId] = useState<string>();
   const [segmentForm, setSegmentForm] = useState<IisDynamicSegmentForm>({
     isDynamic: true,
   });
@@ -216,7 +218,6 @@ const Flow = () => {
   const [journeyTypeModalOpen, setJourneyTypeModalOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [stepsCompletion, setStepsCompletion] = useState([false, false, false]);
-  const [mockNodeId, setMockNodeId] = useState<string>();
 
   const onHandleClick = (e: unknown, triggerId: string) => {
     return { e, triggerId };
@@ -242,7 +243,7 @@ const Flow = () => {
       setSegmentForm({
         isDynamic: data.isDynamic ?? true,
       });
-      setSegmentId(data.segment?.id);
+      setFilterId(data.filter?.id);
       setFlowId(data.id);
       setFlowName(data.name);
       if (data.visualLayout) {
@@ -260,7 +261,7 @@ const Flow = () => {
         setNodes(updatedNodes);
         setEdges(data.visualLayout.edges);
         setCurrentStep(
-          !!segmentId &&
+          !!filterId &&
             updatedNodes.length > 0 &&
             updatedNodes.some((node) => node.data.messages.length > 0)
             ? 2
@@ -444,11 +445,20 @@ const Flow = () => {
     [moveEvent]
   );
 
-  const performAction = (actionId: string) => {
+  const performAction = (actionId: string, e?: DragEvent) => {
     switch (actionId) {
       case "audience": {
         const mockId = uuid();
-        setMockNodeId(mockId);
+        const position = { x: 0, y: 0 };
+
+        if (reactFlowRef.current && e) {
+          const boudingClientRect =
+            reactFlowRef.current.getBoundingClientRect();
+
+          position.x = e.clientX - viewX - boudingClientRect.left - 175;
+          position.y = e.clientY - viewY - boudingClientRect.top;
+          console.log(position);
+        }
 
         setNodes([
           ...nodes,
@@ -457,10 +467,11 @@ const Flow = () => {
               id: mockId,
               triggers: [],
               messages: [],
-              position: { x: 0, y: 0 },
+              position: position,
               audienceId: "-1",
               data: {
                 primary: false,
+                mock: true,
               },
             },
             triggers
@@ -611,13 +622,13 @@ const Flow = () => {
   useEffect(() => {
     setStepsCompletion([
       nodes.length > 0 && nodes.some((node) => node.data.messages.length > 0),
-      !!segmentId,
+      !!filterId,
       nodes.length > 0 &&
         nodes.some((node) => node.data.messages.length > 0) &&
-        !!segmentId &&
+        !!filterId &&
         currentStep === 2,
     ]);
-  }, [nodes, segmentId, currentStep]);
+  }, [nodes, filterId, currentStep]);
 
   const stepsAvailability = [true, stepsCompletion[0], stepsCompletion[1]];
 
@@ -736,7 +747,7 @@ const Flow = () => {
 
     switch (type) {
       case "audience":
-        performAction(type);
+        performAction(type, e);
         break;
       case TriggerType.EVENT:
       case TriggerType.TIME_DELAY:
@@ -818,7 +829,7 @@ const Flow = () => {
         nodes,
         edges,
         segmentForm.isDynamic,
-        segmentId
+        filterId
       );
       dto.audiences = (dto.audiences as string[]).filter((item) => !!item);
 
@@ -881,6 +892,7 @@ const Flow = () => {
         },
       });
       setAudienceModalOpen(true);
+      const mockNode = nodes.find((n) => n.data.mock);
       const newNode = {
         id: uuid(),
         triggers: [],
@@ -888,7 +900,7 @@ const Flow = () => {
           type: template.type,
           templateId: template.id,
         })),
-        position: { x: 0, y: 0 },
+        position: mockNode?.position || { x: 0, y: 0 },
         audienceId: data.id,
         data: {},
       };
@@ -898,8 +910,7 @@ const Flow = () => {
 
       const node = generateNode(newNode, triggers);
 
-      setNodes([...nodes, node].filter((n) => n.id !== mockNodeId));
-      setMockNodeId(undefined);
+      setNodes([...nodes, node].filter((n) => !n.data.mock));
       setAudienceModalOpen(false);
       setSelectedNode(node.id);
 
@@ -979,8 +990,8 @@ const Flow = () => {
   else if (!nodes.some((node) => node.data.messages.length > 0))
     startDisabledReason =
       "Add a message to a step to be able to start a journey";
-  else if (!segmentId)
-    startDisabledReason = "You have to define segment for journey";
+  else if (!filterId)
+    startDisabledReason = "You have to define filter for journey";
 
   const steps = [
     { label: "01", name: "Design journey" },
@@ -1144,7 +1155,7 @@ const Flow = () => {
           </nav>
           <div
             className={`relative ${
-              !segmentId ? "h-[calc(100%-80px)]" : "h-full"
+              !filterId ? "h-[calc(100%-80px)]" : "h-full"
             }`}
           >
             {nodes.length === 0 && !audienceModalOpen && (
@@ -1326,8 +1337,7 @@ const Flow = () => {
         <SideModal
           isOpen={audienceModalOpen}
           onClose={() => {
-            setNodes(nodes.filter((n) => n.id !== mockNodeId));
-            setMockNodeId(undefined);
+            setNodes(nodes.filter((n) => !n.data.mock));
             setAudienceModalOpen(false);
           }}
         >
@@ -1347,17 +1357,19 @@ const Flow = () => {
           isOpen={triggerModalOpen}
           onClose={() => settriggerModalOpen(false)}
         />
-        <SegmentModal
+        <FilterModal
           isOpen={segmentModalOpen}
           onClose={() => {
             setSegmentModalOpen(false);
             setCurrentStep(0);
           }}
-          segmentId={segmentId}
+          onSubmit={(fId) => {
+            setFilterId(fId);
+            setSegmentModalOpen(false);
+            setCurrentStep(2);
+          }}
+          filterId={filterId}
           workflowId={flowId}
-          mode={segmentModalMode}
-          setMode={setSegmentModalMode}
-          setSegmentId={setSegmentId}
           afterContent={
             <>
               <div className="flex justify-end m-[10px_0]" data-nextstep>

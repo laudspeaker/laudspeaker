@@ -1,5 +1,6 @@
 import { Account } from '@/api/accounts/entities/accounts.entity';
 import {
+  BaseEntity,
   Column,
   Entity,
   JoinColumn,
@@ -7,40 +8,54 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
+export enum SegmentType {
+  AUTOMATIC = 'automatic',
+  MANUAL = 'manual',
+}
+
 @Entity()
-export class Segment {
+export class Segment extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
   public id: string;
 
   @JoinColumn()
   @ManyToOne(() => Account, (account) => account.id, { onDelete: 'CASCADE' })
-  public user: Account;
+  public owner: Account;
 
   @Column()
   public name: string;
 
-  /*
-      {
-          conditionalType: ...,
-          conditions: [
-            {
-              attribute: "email",
-              "value": "doesNotExist"
-            },
-            {
-              "attribute": "lastName",
-              "condition": "isEqual",
-              "value": "hello"
-            }
-          ]
-        }
-  */
+  @Column({ nullable: true })
+  public description: string;
+
+  @Column({ enum: SegmentType })
+  public type: SegmentType;
+
   @Column('jsonb', { default: { conditionalType: 'and', conditions: [] } })
   public inclusionCriteria: any;
 
-  @Column({ default: false })
+  @Column({ default: true })
   public isFreezed: boolean;
 
-  @Column('jsonb')
+  @Column('jsonb', {
+    default: {
+      conditions: {
+        id: 'conditions',
+        type: 'select',
+        label: 'filter on',
+        options: [
+          {
+            label: 'select',
+            id: '',
+            isPlaceholder: true,
+          },
+          {
+            label: 'Attributes',
+            id: 'attributes',
+          },
+        ],
+      },
+    },
+  })
   public resources: any;
 }

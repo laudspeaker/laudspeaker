@@ -59,7 +59,7 @@ export class CronService {
     @Inject(IntegrationsService)
     private integrationsService: IntegrationsService,
     @Inject(WorkflowsService) private workflowsService: WorkflowsService
-  ) { }
+  ) {}
 
   @Cron(CronExpression.EVERY_HOUR)
   async handleCustomerKeysCron() {
@@ -128,7 +128,8 @@ export class CronService {
       }
 
       this.logger.log(
-        `Cron customer keys job finished, checked ${documentsCount} records, found ${Object.keys(keys).length
+        `Cron customer keys job finished, checked ${documentsCount} records, found ${
+          Object.keys(keys).length
         } keys`
       );
     } catch (e) {
@@ -226,7 +227,8 @@ export class CronService {
       }
 
       this.logger.log(
-        `Cron event keys job finished, checked ${documentsCount} records, found ${Object.keys(keys).length
+        `Cron event keys job finished, checked ${documentsCount} records, found ${
+          Object.keys(keys).length
         } keys`
       );
     } catch (e) {

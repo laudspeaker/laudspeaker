@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { WorkflowsController } from './workflows.controller';
 import { WorkflowsService } from './workflows.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -19,11 +19,13 @@ import {
   EventKeys,
   EventKeysSchema,
 } from '../events/schemas/event-keys.schema';
-import { Segment } from '../segments/entities/segment.entity';
 import { AudiencesModule } from '../audiences/audiences.module';
 import { CustomersModule } from '../customers/customers.module';
 import { TemplatesModule } from '../templates/templates.module';
 import { SlackModule } from '../slack/slack.module';
+import { Filter } from '../filter/entities/filter.entity';
+import { AudiencesHelper } from '../audiences/audiences.helper';
+import { SegmentsModule } from '../segments/segments.module';
 
 @Module({
   imports: [
@@ -31,7 +33,7 @@ import { SlackModule } from '../slack/slack.module';
       Account,
       Audience,
       Installation,
-      Segment,
+      Filter,
       State,
       Template,
       Workflow,
@@ -56,12 +58,13 @@ import { SlackModule } from '../slack/slack.module';
       name: 'events',
     }),
     AudiencesModule,
-    CustomersModule,
+    forwardRef(() => CustomersModule),
+    forwardRef(() => SegmentsModule),
     TemplatesModule,
     SlackModule,
   ],
   controllers: [WorkflowsController],
-  providers: [WorkflowsService],
+  providers: [WorkflowsService, AudiencesHelper],
   exports: [WorkflowsService],
 })
 export class WorkflowsModule {}

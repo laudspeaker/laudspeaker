@@ -14,7 +14,6 @@ import {
   HttpException,
   Put,
   UploadedFile,
-  BadRequestException,
 } from '@nestjs/common';
 import { Multer } from 'multer';
 import { CreateCustomerDto } from './dto/create-customer.dto';
@@ -25,7 +24,6 @@ import { Request } from 'express';
 import { Account } from '../accounts/entities/accounts.entity';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { parse } from 'csv-parse';
 
 @Controller('customers')
 export class CustomersController {
@@ -44,12 +42,32 @@ export class CustomersController {
   findAll(
     @Req() { user }: Request,
     @Query('take') take?: string,
-    @Query('skip') skip?: string
+    @Query('skip') skip?: string,
+    @Query('checkInSegment') checkInSegment?: string,
+    @Query('searchKey') searchKey?: string,
+    @Query('searchValue') searchValue?: string
   ) {
     return this.customersService.returnAllPeopleInfo(
       <Account>user,
       take && +take,
-      skip && +skip
+      skip && +skip,
+      checkInSegment,
+      searchKey,
+      searchValue
+    );
+  }
+  @Get('/possible-attributes')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor)
+  async getPossibleAttributes(
+    @Query('key') key = '',
+    @Query('type') type = null,
+    @Query('isArray') isArray = null
+  ) {
+    return await this.customersService.getPossibleAttributes(
+      key,
+      type,
+      isArray
     );
   }
 
@@ -111,8 +129,11 @@ export class CustomersController {
   @Get('/attributes/:resourceId')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
-  getAttributes(@Param('resourceId') resourceId: string) {
-    return this.customersService.getAttributes(resourceId);
+  getAttributes(
+    @Req() { user }: Request,
+    @Param('resourceId') resourceId: string
+  ) {
+    return this.customersService.getAttributes(<Account>user, resourceId);
   }
 
   @Get('/:id/events')
@@ -165,7 +186,10 @@ export class CustomersController {
   @Post('/delete/:custId')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
-  async deletePerson(@Param('custId') custId: string) {
-    await this.customersService.removeById(custId);
+  async deletePerson(
+    @Req() { user }: Request,
+    @Param('custId') custId: string
+  ) {
+    await this.customersService.removeById(<Account>user, custId);
   }
 }

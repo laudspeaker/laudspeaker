@@ -107,5 +107,5 @@ export interface Workflow {
   rules: string[];
   visualLayout: VisualLayout;
   isDynamic: boolean;
-  segment?: { id: string };
+  filter?: { id: string };
 }

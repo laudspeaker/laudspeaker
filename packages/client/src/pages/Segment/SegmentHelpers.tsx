@@ -3,6 +3,7 @@ import { FormControl } from "@mui/material";
 import DateRangePicker from "components/DateRangePicker";
 import DateTimePicker from "components/Elements/DateTimePicker";
 import { Resource } from "pages/EmailBuilder/EmailBuilder";
+import { SegmentType } from "pages/SegmentTable/NameSegment";
 import { Select, Input } from "../../components/Elements";
 import { ApiConfig } from "../../constants";
 import ApiService from "../../services/api.service";
@@ -18,6 +19,23 @@ export const getConditions = async () => {
         { label: "select", id: "", isPlaceholder: true },
         { label: "Events", id: "events" },
         { label: "Attributes", id: "attributes" },
+      ],
+    });
+  });
+};
+
+export const getFilterConditions = async () => {
+  return new Promise<Resource>((resolve) => {
+    resolve({
+      id: "conditions",
+      type: "select",
+      label: "",
+      options: [
+        { label: "filter on", id: "filteron" },
+        { label: "member of", id: "memberof" },
+        // { label: "Events", id: "events" },
+        // { label: "select", id: "", isPlaceholder: true },
+        // { label: "Attributes", id: "attributes" },
       ],
     });
   });
@@ -41,6 +59,19 @@ export const getEventKeys = async (id: string, provider = "") => {
   });
 };
 
+export const getCustomerKeys = async (
+  key: string,
+  type?: string | null,
+  isArray?: boolean | null
+) => {
+  const { data } = await ApiService.get({
+    url: `${ApiConfig.customersAttributes}?key=${key}${
+      type ? `&type=${type}` : ""
+    }${isArray ? `&isArray=${isArray}` : ""}`,
+  });
+  return data;
+};
+
 export const getSegment = async (id: string) => {
   return ApiService.get({
     url: `${ApiConfig.segments}/${id}`,
@@ -53,8 +84,10 @@ interface ISegmentMutationData {
   resources: IResource;
 }
 
-export const createSegment = async (data: ISegmentMutationData) => {
-  return ApiService.put({
+export const createSegment = async (
+  data: ISegmentMutationData & { type: SegmentType }
+) => {
+  return ApiService.post({
     url: ApiConfig.segments,
     options: {
       ...data,

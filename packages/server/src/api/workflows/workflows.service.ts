@@ -4,6 +4,7 @@ import {
   Injectable,
   HttpException,
   NotFoundException,
+  forwardRef,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, In, QueryRunner, Repository } from 'typeorm';
@@ -32,18 +33,14 @@ import {
 } from '../events/schemas/event-keys.schema';
 import mongoose, { ClientSession, Model } from 'mongoose';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
-import {
-  conditionalCompare,
-  conditionalComposition,
-  operableCompare,
-} from '../audiences/audiences.helper';
-import { Segment } from '../segments/entities/segment.entity';
+import { AudiencesHelper } from '../audiences/audiences.helper';
 import { Template } from '../templates/entities/template.entity';
 import { InjectQueue } from '@nestjs/bull';
 import { JobTypes } from '../events/interfaces/event.interface';
 import { Queue } from 'bull';
 import { BadRequestException } from '@nestjs/common/exceptions';
 import { Job, TimeJobType } from '../jobs/entities/job.entity';
+import { Filter } from '../filter/entities/filter.entity';
 
 @Injectable()
 export class WorkflowsService {
@@ -64,12 +61,14 @@ export class WorkflowsService {
     @InjectRepository(Workflow)
     public workflowsRepository: Repository<Workflow>,
     @Inject(AudiencesService) private audiencesService: AudiencesService,
-    @Inject(CustomersService) private customersService: CustomersService,
+    @Inject(forwardRef(() => CustomersService))
+    private customersService: CustomersService,
     @InjectModel(EventKeys.name)
     private EventKeysModel: Model<EventKeysDocument>,
     @InjectQueue(JobTypes.events)
     private readonly eventsQueue: Queue,
-    @InjectConnection() private readonly connection: mongoose.Connection
+    @InjectConnection() private readonly connection: mongoose.Connection,
+    private readonly audiencesHelper: AudiencesHelper
   ) {}
 
   /**
@@ -131,7 +130,7 @@ export class WorkflowsService {
         isStopped: false,
         isPaused: false,
       },
-      relations: ['segment'],
+      relations: ['filter'],
     });
   }
 
@@ -195,7 +194,7 @@ export class WorkflowsService {
           owner: { id: account.id },
           id,
         },
-        relations: ['segment'],
+        relations: ['filter'],
       });
     } catch (err) {
       this.logger.error(
@@ -270,7 +269,7 @@ export class WorkflowsService {
         where: {
           id: updateWorkflowDto.id,
         },
-        relations: ['segment'],
+        relations: ['filter'],
       });
 
       if (!workflow) throw new NotFoundException('Workflow not found');
@@ -334,14 +333,14 @@ export class WorkflowsService {
         }
       }
 
-      let segmentId = workflow.segment?.id;
-      if (updateWorkflowDto.segmentId !== undefined) {
-        segmentId = updateWorkflowDto.segmentId;
+      let filterId = workflow.filter?.id;
+      if (updateWorkflowDto.filterId !== undefined) {
+        filterId = updateWorkflowDto.filterId;
       }
 
       await queryRunner.manager.save(Workflow, {
         ...workflow,
-        segment: { id: segmentId },
+        filter: { id: filterId },
         audiences,
         visualLayout,
         isDynamic,
@@ -366,7 +365,7 @@ export class WorkflowsService {
         owner: { id: user.id },
         id,
       },
-      relations: ['segment'],
+      relations: ['filter'],
     });
     if (!oldWorkflow) throw new NotFoundException('Workflow not found');
 
@@ -434,7 +433,7 @@ export class WorkflowsService {
           name: newName,
           visualLayout,
           rules: triggers,
-          segmentId: oldWorkflow.segment?.id,
+          filterId: oldWorkflow.filter?.id,
           isDynamic: oldWorkflow.isDynamic,
         },
         queryRunner
@@ -486,7 +485,7 @@ export class WorkflowsService {
           owner: { id: account?.id },
           id: workflowID,
         },
-        relations: ['segment'],
+        relations: ['filter'],
       });
       if (!workflow) {
         this.logger.debug('Workflow does not exist');
@@ -501,9 +500,9 @@ export class WorkflowsService {
         return Promise.reject(
           new Error('The workflow has already been stopped')
         );
-      if (!workflow?.segment)
+      if (!workflow?.filter)
         return Promise.reject(
-          new Error('To start workflow segment should be defined')
+          new Error('To start workflow filter should be defined')
         );
 
       const audiences = await queryRunner.manager.findBy(Audience, {
@@ -521,7 +520,7 @@ export class WorkflowsService {
         if (audience.isPrimary) {
           customers = await this.customersService.findByInclusionCriteria(
             account,
-            workflow.segment.inclusionCriteria,
+            workflow.filter.inclusionCriteria,
             transactionSession
           );
           this.logger.debug(
@@ -548,10 +547,10 @@ export class WorkflowsService {
         }
       }
 
-      const segment = await queryRunner.manager.findOneBy(Segment, {
-        id: workflow.segment.id,
+      const filter = await queryRunner.manager.findOneBy(Filter, {
+        id: workflow.filter.id,
       });
-      await queryRunner.manager.save(Segment, { ...segment, isFreezed: true });
+      await queryRunner.manager.save(Filter, { ...filter, isFreezed: true });
 
       await transactionSession.commitTransaction();
       await queryRunner.commitTransaction();
@@ -593,7 +592,7 @@ export class WorkflowsService {
           isStopped: false,
           isPaused: false,
         },
-        relations: ['segment'],
+        relations: ['filter'],
       });
       this.logger.debug('Active workflows: ' + workflows?.length);
 
@@ -611,10 +610,11 @@ export class WorkflowsService {
           if (
             audience.isPrimary &&
             workflow.isDynamic &&
-            this.customersService.checkInclusion(
+            (await this.customersService.checkInclusion(
               customer,
-              workflow.segment.inclusionCriteria
-            )
+              workflow.filter.inclusionCriteria,
+              account
+            ))
           ) {
             await this.audiencesService.moveCustomer(
               account,
@@ -684,7 +684,7 @@ export class WorkflowsService {
           isStopped: false,
           isPaused: false,
         },
-        relations: ['segment'],
+        relations: ['filter'],
       });
       this.logger.debug('Found active workflows: ' + workflows.length);
 
@@ -787,49 +787,54 @@ export class WorkflowsService {
                     'Event conditions: ' + JSON.stringify(conditions)
                   );
                   if (conditions && conditions.length > 0) {
-                    const compareResults = conditions.map((condition) => {
-                      if (
-                        condition.key == 'current_url' &&
-                        trigger.providerType == ProviderTypes.Posthog &&
-                        trigger.providerParams === PosthogTriggerParams.Pageview
-                      ) {
-                        this.logger.debug(
-                          `Comparing: ${event?.event?.page?.url || ''} ${
-                            condition.comparisonType || ''
-                          } ${condition.value || ''}`
-                        );
-                        return ['exists', 'doesNotExist'].includes(
-                          condition.comparisonType
-                        )
-                          ? operableCompare(
-                              event?.event?.page?.url,
-                              condition.comparisonType
-                            )
-                          : conditionalCompare(
-                              event?.event?.page?.url,
-                              condition.value,
-                              condition.comparisonType
-                            );
-                      } else {
-                        this.logger.debug(
-                          `Comparing: ${event?.event?.[condition.key] || ''} ${
-                            condition.comparisonType || ''
-                          } ${condition.value || ''}`
-                        );
-                        return ['exists', 'doesNotExist'].includes(
-                          condition.comparisonType
-                        )
-                          ? operableCompare(
-                              event?.event?.[condition.key],
-                              condition.comparisonType
-                            )
-                          : conditionalCompare(
-                              event?.event?.[condition.key],
-                              condition.value,
-                              condition.comparisonType
-                            );
-                      }
-                    });
+                    const compareResults = await Promise.all(
+                      conditions.map(async (condition) => {
+                        if (
+                          condition.key == 'current_url' &&
+                          trigger.providerType == ProviderTypes.Posthog &&
+                          trigger.providerParams ===
+                            PosthogTriggerParams.Pageview
+                        ) {
+                          this.logger.debug(
+                            `Comparing: ${event?.event?.page?.url || ''} ${
+                              condition.comparisonType || ''
+                            } ${condition.value || ''}`
+                          );
+                          return ['exists', 'doesNotExist'].includes(
+                            condition.comparisonType
+                          )
+                            ? this.audiencesHelper.operableCompare(
+                                event?.event?.page?.url,
+                                condition.comparisonType
+                              )
+                            : await this.audiencesHelper.conditionalCompare(
+                                event?.event?.page?.url,
+                                condition.value,
+                                condition.comparisonType
+                              );
+                        } else {
+                          this.logger.debug(
+                            `Comparing: ${
+                              event?.event?.[condition.key] || ''
+                            } ${condition.comparisonType || ''} ${
+                              condition.value || ''
+                            }`
+                          );
+                          return ['exists', 'doesNotExist'].includes(
+                            condition.comparisonType
+                          )
+                            ? this.audiencesHelper.operableCompare(
+                                event?.event?.[condition.key],
+                                condition.comparisonType
+                              )
+                            : await this.audiencesHelper.conditionalCompare(
+                                event?.event?.[condition.key],
+                                condition.value,
+                                condition.comparisonType
+                              );
+                        }
+                      })
+                    );
                     this.logger.debug(
                       'Compare result: ' + JSON.stringify(compareResults)
                     );
@@ -838,10 +843,11 @@ export class WorkflowsService {
                       const compareTypes = conditions.map(
                         (condition) => condition.relationWithNext
                       );
-                      eventIncluded = conditionalComposition(
-                        compareResults,
-                        compareTypes
-                      );
+                      eventIncluded =
+                        this.audiencesHelper.conditionalComposition(
+                          compareResults,
+                          compareTypes
+                        );
                     } else {
                       eventIncluded = compareResults[0];
                     }

@@ -66,14 +66,15 @@ export default (type: PauseStopTestType = PauseStopTestType.email) => {
     .get('[data-isprimary="false"]')
     .move({ deltaX: 100, deltaY: 300 });
 
-  cy.get('[data-isprimary="false"]').click();
-  cy.get(`#${type} > .p-0 > .justify-between`).click();
+  cy.get(`#${type} > .p-0 > .justify-between`).drag(
+    '[data-isprimary="false"]',
+    { force: true }
+  );
   cy.get("#activeJourney").click();
   cy.contains(templates[type].name).click();
   cy.get("#exportSelectedTemplate").click();
 
-  cy.get(".react-flow__viewport").get('[data-isprimary="true"]').click();
-  setupEventTrigger("A", "A");
+  setupEventTrigger('[data-isprimary="true"]', "A", "A");
 
   cy.get('[data-isprimary="true"]')
     .get("[data-handle-bottom]")
@@ -82,16 +83,15 @@ export default (type: PauseStopTestType = PauseStopTestType.email) => {
     });
 
   cy.get('[data-isprimary="false"] [data-handle-top]').click();
-  cy.get('[data-isprimary="false"]').click();
-
-  setupEventTrigger("B", "B");
+  cy.get("#saveNewSegment").click();
+  setupEventTrigger('[data-isprimary="false"]', "B", "B");
 
   cy.get('[data-isprimary="false"] [data-handle-bottom]').drag(
     '[data-isprimary="true"] [data-handle-top]',
     { force: true }
   );
   cy.get('[data-isprimary="true"] [data-handle-top]').click();
-
+  cy.get("#saveNewSegment").click();
   createNewSegment();
 
   cy.contains("Save").click();

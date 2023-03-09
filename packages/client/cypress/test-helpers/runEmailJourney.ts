@@ -19,10 +19,9 @@ export default (
 
   cy.get(".react-flow__viewport")
     .get('[data-isprimary="true"]')
-    .move({ deltaX: 100, deltaY: 100 })
-    .click();
+    .move({ deltaX: 100, deltaY: 100 });
   cy.wait(3000);
-  cy.get("#email").click();
+  cy.get("#email").drag('[data-isprimary="true"]', { force: true });
   cy.get("#activeJourney").click();
   cy.contains(templateName).click();
   cy.wait(3000);

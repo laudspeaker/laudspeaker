@@ -20,8 +20,7 @@ import mockData from '../../fixtures/mockData';
 import { Account } from '../accounts/entities/accounts.entity';
 import { Audience } from '../audiences/entities/audience.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, Repository } from 'typeorm';
-import { checkInclusion } from '../audiences/audiences.helper';
+import { Any, DataSource, Repository } from 'typeorm';
 import { EventDto } from '../events/dto/event.dto';
 import {
   CustomerKeys,
@@ -36,6 +35,10 @@ import { attributeConditions } from '@/fixtures/attributeConditions';
 import { getType } from 'tst-reflect';
 import { isDateString, isEmail } from 'class-validator';
 import { parse } from 'csv-parse';
+import { SegmentsService } from '../segments/segments.service';
+import { AudiencesHelper } from '../audiences/audiences.helper';
+import { SegmentCustomers } from '../segments/entities/segment-customers.entity';
+import { AudiencesService } from '../audiences/audiences.service';
 
 export type Correlation = {
   cust: CustomerDocument;
@@ -68,12 +71,40 @@ export class CustomersService {
     @InjectModel(Customer.name) public CustomerModel: Model<CustomerDocument>,
     @InjectModel(CustomerKeys.name)
     private CustomerKeysModel: Model<CustomerKeysDocument>,
-    @InjectRepository(Audience)
-    private audiencesRepository: Repository<Audience>,
-    @InjectRepository(Workflow)
-    private workflowsRepository: Repository<Workflow>,
-    private dataSource: DataSource
-  ) {}
+    private dataSource: DataSource,
+    private segmentsService: SegmentsService,
+    @InjectRepository(Account)
+    public accountsRepository: Repository<Account>,
+    private readonly audiencesHelper: AudiencesHelper,
+    private readonly audiencesService: AudiencesService
+  ) {
+    this.CustomerModel.watch().on('change', async (data: any) => {
+      try {
+        const customerId = data?.documentKey?._id;
+        if (!customerId) return;
+        if (data.operationType === 'delete') {
+          await this.deleteEverywhere(customerId.toString());
+        } else {
+          const customer = await this.CustomerModel.findById(customerId).exec();
+
+          if (!customer?.ownerId) return;
+
+          const account = await this.accountsRepository.findOneBy({
+            id: customer.ownerId,
+          });
+
+          await this.recheckDynamicInclusion(account, customer);
+
+          await this.segmentsService.updateAutomaticSegmentCustomerInclusion(
+            account,
+            customer
+          );
+        }
+      } catch (e) {
+        this.logger.error(e);
+      }
+    });
+  }
 
   async create(
     account: Account,
@@ -127,12 +158,17 @@ export class CustomersService {
           owner: { id: account.id },
           isDynamic: true,
         },
-        relations: ['segment'],
+        relations: ['filter'],
       });
       for (let index = 0; index < dynamicWkfs.length; index++) {
         const workflow = dynamicWkfs[index];
-        if (workflow.segment) {
-          if (checkInclusion(ret, workflow.segment.inclusionCriteria)) {
+        if (workflow.filter) {
+          if (
+            await this.audiencesHelper.checkInclusion(
+              ret,
+              workflow.filter.inclusionCriteria
+            )
+          ) {
             const audiences = await transactionManager.findBy(Audience, {
               workflow: { id: workflow.id },
             });
@@ -158,12 +194,17 @@ export class CustomersService {
           owner: { id: account.id },
           isDynamic: false,
         },
-        relations: ['segment'],
+        relations: ['filter'],
       });
       for (let index = 0; index < staticWkfs.length; index++) {
         const workflow = staticWkfs[index];
-        if (workflow.segment) {
-          if (checkInclusion(ret, workflow.segment.inclusionCriteria)) {
+        if (workflow.filter) {
+          if (
+            await this.audiencesHelper.checkInclusion(
+              ret,
+              workflow.filter.inclusionCriteria
+            )
+          ) {
             const audiences = await transactionManager.findBy(Audience, {
               workflow: { id: workflow.id },
               isEditable: false,
@@ -234,7 +275,9 @@ export class CustomersService {
   async findAll(
     account: Account,
     take = 100,
-    skip = 0
+    skip = 0,
+    key = '',
+    search = ''
   ): Promise<{ data: CustomerDocument[]; totalPages: number }> {
     const totalPages =
       Math.ceil(
@@ -244,6 +287,11 @@ export class CustomersService {
       ) || 1;
     const customers = await this.CustomerModel.find({
       ownerId: (<Account>account).id,
+      ...(key && search
+        ? {
+            [key]: new RegExp(`.*${search}.*`, 'i'),
+          }
+        : {}),
     })
       .skip(skip)
       .limit(take <= 100 ? take : 100)
@@ -279,6 +327,7 @@ export class CustomersService {
       }>()
     )?.data;
 
+    //TODO: fix
     const result = await Promise.all(
       data.map(async (el) => {
         const query = await this.dataSource
@@ -359,24 +408,49 @@ export class CustomersService {
     return newCustomerData;
   }
 
-  async returnAllPeopleInfo(account: Account, take = 100, skip = 0) {
+  async returnAllPeopleInfo(
+    account: Account,
+    take = 100,
+    skip = 0,
+    checkInSegment?: string,
+    searchKey?: string,
+    searchValue?: string
+  ) {
     const { data, totalPages } = await this.findAll(
       <Account>account,
       take,
-      skip
+      skip,
+      searchKey,
+      searchValue
     );
-    const listInfo = data.map((person) => {
-      const info = {};
-      (info['id'] = person['_id'].toString()),
-        (info['salient'] = person['email']
-          ? person['email']
-          : person['slackEmail']
-          ? person['slackEmail']
-          : person['slackRealName']
-          ? person['slackRealName']
-          : '...');
-      return info;
-    });
+
+    const listInfo = await Promise.all(
+      data.map(async (person) => {
+        const info: Record<string, any> = {};
+        (info['id'] = person['_id'].toString()),
+          (info['salient'] = person['email']
+            ? person['email']
+            : person['slackEmail']
+            ? person['slackEmail']
+            : person['slackRealName']
+            ? person['slackRealName']
+            : '...');
+
+        info.email = person.email;
+        info.phone = person.phone;
+        info.dataSource = 'people';
+
+        if (checkInSegment)
+          info.isInsideSegment = await this.segmentsService.isCustomerMemberOf(
+            account,
+            checkInSegment,
+            person.id
+          );
+
+        return info;
+      })
+    );
+
     return { data: listInfo, totalPages };
   }
 
@@ -614,14 +688,27 @@ export class CustomersService {
     } catch (err) {
       return Promise.reject(err);
     }
-    customers.forEach((customer) => {
-      if (checkInclusion(customer, criteria)) ret.push(customer);
-    });
+
+    for (const customer of customers) {
+      if (
+        await this.audiencesHelper.checkInclusion(customer, criteria, account)
+      )
+        ret.push(customer);
+    }
+
     return Promise.resolve(ret);
   }
 
-  checkInclusion(customer: CustomerDocument, inclusionCriteria: any): boolean {
-    return checkInclusion(customer, inclusionCriteria);
+  checkInclusion(
+    customer: CustomerDocument,
+    inclusionCriteria: any,
+    account?: Account
+  ) {
+    return this.audiencesHelper.checkInclusion(
+      customer,
+      inclusionCriteria,
+      account
+    );
   }
 
   /**
@@ -720,12 +807,15 @@ export class CustomersService {
     await oldCustomer.save();
   }
 
-  async removeById(custId: string) {
+  async removeById(account: Account, custId: string) {
+    if (account.customerId === custId)
+      throw new BadRequestException("You can't delete yourself as a customer");
+
     const cust = await this.CustomerModel.findById(custId);
     await this.CustomerModel.remove(cust);
   }
 
-  async getAttributes(resourceId: string) {
+  async getAttributes(account: Account, resourceId: string) {
     const attributes = await this.CustomerKeysModel.find().exec();
     if (resourceId === 'attributes') {
       return {
@@ -750,16 +840,36 @@ export class CustomersService {
         type: 'select',
       };
 
+    if (resourceId === 'memberof') {
+      const segments = await this.segmentsService.segmentRepository.findBy({
+        owner: { id: account.id },
+      });
+      return {
+        id: resourceId,
+        options: segments.map((segment) => ({
+          id: segment.id,
+          label: segment.name,
+        })),
+        type: 'select',
+      };
+    }
+
     return (
       mockData.resources.find((resource) => resource.id === resourceId) || {}
     );
   }
 
+  // TODO: optimize
   async loadCSV(account: Account, csvFile: Express.Multer.File) {
     if (csvFile.mimetype !== 'text/csv')
       throw new BadRequestException('Only CSV files are allowed');
 
-    const stats = { created: 0, updated: 0, skipped: 0 };
+    const stats: { created: 0; updated: 0; skipped: 0; customers: string[] } = {
+      created: 0,
+      updated: 0,
+      skipped: 0,
+      customers: [],
+    };
 
     const records = parse(csvFile.buffer, {
       columns: true,
@@ -768,7 +878,7 @@ export class CustomersService {
 
     for await (const record of records) {
       if (record.email) {
-        const customer = await this.CustomerModel.findOne({
+        let customer = await this.CustomerModel.findOne({
           email: record.email,
           ownerId: account.id,
         });
@@ -783,14 +893,93 @@ export class CustomersService {
           delete record.__v;
           delete record.audiences;
 
-          await this.create(account, { ...record });
+          customer = await this.create(account, { ...record });
           stats.created++;
         }
+        stats.customers.push(customer.id);
       } else {
         stats.skipped++;
       }
     }
 
     return { stats };
+  }
+
+  public async deleteEverywhere(id: string) {
+    await this.dataSource.transaction(async (transactionManager) => {
+      await transactionManager.delete(SegmentCustomers, { customerId: id });
+      await transactionManager.query(
+        'UPDATE audience SET customers = array_remove(audience."customers", $1) WHERE $2 = ANY(audience."customers")',
+        [id, id]
+      );
+    });
+  }
+
+  public async getDynamicAudiencesWithCustomer(
+    customerId: string
+  ): Promise<Audience[]> {
+    return this.dataSource.query(
+      'SELECT * FROM audience WHERE $1 = ANY(audience."customers") AND (SELECT workflow."isDynamic" FROM workflow WHERE workflow."id" = audience."workflowId") = true',
+      [customerId]
+    );
+  }
+
+  public async recheckDynamicInclusion(
+    account: Account,
+    customer: CustomerDocument
+  ) {
+    const audiences = await this.getDynamicAudiencesWithCustomer(customer.id);
+    for (const audience of audiences) {
+      const inclusionCriteria = await this.audiencesService.getFilter(
+        account,
+        audience.id
+      );
+
+      if (!inclusionCriteria) continue;
+
+      const custIndex = audience.customers.indexOf(customer.id);
+
+      if (
+        custIndex > -1 &&
+        !(await this.audiencesHelper.checkInclusion(
+          customer,
+          inclusionCriteria,
+          account
+        ))
+      ) {
+        audience.customers.splice(custIndex, 1);
+      }
+    }
+
+    await this.audiencesService.audiencesRepository.save(
+      audiences.map((audience) => ({
+        id: audience.id,
+        customers: audience.customers,
+      }))
+    );
+  }
+
+  public async getPossibleAttributes(
+    key: string = '',
+    type?: string,
+    isArray?: boolean
+  ) {
+    const attributes = await this.CustomerKeysModel.find({
+      $and: [
+        {
+          key: RegExp(`.*${key}.*`, 'i'),
+          ...(type !== null ? { type } : {}),
+          ...(isArray !== null ? { isArray } : {}),
+        },
+      ],
+    })
+      .limit(20)
+      .exec();
+
+    return attributes.map((el) => ({
+      key: el.key,
+      type: el.type,
+      isArray: el.isArray,
+    }));
   }
 }

@@ -26,7 +26,6 @@ import { AudiencesService } from '../audiences/audiences.service';
 import { Workflow } from '../workflows/entities/workflow.entity';
 import { Audience } from '../audiences/entities/audience.entity';
 import { CustomerDocument } from '../customers/schemas/customer.schema';
-import { Segment } from '../segments/entities/segment.entity';
 import errors from '@/shared/utils/errors';
 import { DataSource } from 'typeorm';
 

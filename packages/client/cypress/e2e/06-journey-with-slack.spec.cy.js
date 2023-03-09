@@ -56,8 +56,9 @@ describe(
 
       cy.get(".react-flow__viewport")
         .get('[data-isprimary="true"]')
-        .move({ deltaX: 100, deltaY: 100 });
+        .move({ deltaX: 100, deltaY: 100, force: true });
 
+      cy.wait(100);
       cy.get("#audience > .p-0 > .justify-between").click();
       cy.get("#name").type("slack audience");
       cy.get("#description").type("slack description");
@@ -65,17 +66,19 @@ describe(
 
       cy.get(".react-flow__viewport")
         .get('[data-isprimary="false"]')
-        .move({ deltaX: 100, deltaY: 300 });
+        .move({ deltaX: 100, deltaY: 300, force: true });
 
-      cy.get('[data-isprimary="false"]').click();
-      cy.get("#slack").click();
+      cy.get("#slack").drag('[data-isprimary="false"]', { force: true });
 
       cy.get("#activeJourney").click();
       cy.contains(slackTemplate.name).click();
       cy.get("#exportSelectedTemplate").click();
 
-      cy.get(".react-flow__viewport").get('[data-isprimary="true"]').click();
-      setupEventTrigger(slackTemplate.eventName, slackTemplate.eventName);
+      setupEventTrigger(
+        '[data-isprimary="true"]',
+        slackTemplate.eventName,
+        slackTemplate.eventName
+      );
 
       cy.get('[data-isprimary="true"]')
         .get("[data-handle-bottom]")
@@ -84,7 +87,7 @@ describe(
         });
 
       cy.get('[data-isprimary="false"] [data-handle-top]').click();
-
+      cy.get("#saveNewSegment").click();
       createNewSegment();
 
       cy.contains("Save").click();

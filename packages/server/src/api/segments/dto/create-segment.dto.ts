@@ -1,6 +1,6 @@
 import { Trim } from 'class-sanitizer';
-import { IsString, IsOptional, IsNotEmpty, IsObject } from 'class-validator';
-import { InclusionCriteria } from '../types/segment.type';
+import { IsString, IsNotEmpty, IsEnum, IsOptional } from 'class-validator';
+import { SegmentType } from '../entities/segment.entity';
 
 export class CreateSegmentDTO {
   @IsString()
@@ -8,10 +8,13 @@ export class CreateSegmentDTO {
   @IsNotEmpty()
   public name: string;
 
-  @IsObject()
   @IsOptional()
-  public inclusionCriteria: InclusionCriteria;
+  @IsString()
+  @Trim()
+  public description: string;
 
-  @IsObject()
-  public resources: any;
+  @IsString()
+  @IsNotEmpty()
+  @IsEnum(SegmentType)
+  public type: SegmentType;
 }

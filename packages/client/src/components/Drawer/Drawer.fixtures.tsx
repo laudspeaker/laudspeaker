@@ -62,19 +62,19 @@ export const dataSubArray = [
     text: "Audience",
     type: "group",
     children: [
-      // {
-      //   id: "segments",
-      //   imgIcon: Segments(),
-      //   text: "Segments",
-      //   type: "menu",
-      //   link: "/mysegment",
-      // },
       {
         id: "users",
         imgIcon: Users(),
         text: "People",
         type: "menu",
         link: "/people",
+      },
+      {
+        id: "segments",
+        imgIcon: Segments(),
+        text: "Segments",
+        type: "menu",
+        link: "/segment",
       },
     ],
   },

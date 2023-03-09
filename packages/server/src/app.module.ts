@@ -30,16 +30,9 @@ import {
 } from './api/events/schemas/event-keys.schema';
 import { Integration } from './api/integrations/entities/integration.entity';
 import { Workflow } from './api/workflows/entities/workflow.entity';
-import { WorkflowsService } from './api/workflows/workflows.service';
 import { Job } from './api/jobs/entities/job.entity';
-import { JobsService } from './api/jobs/jobs.service';
-import { Segment } from './api/segments/entities/segment.entity';
-import { AudiencesService } from './api/audiences/audiences.service';
-import { CustomersService } from './api/customers/customers.service';
 import { Audience } from './api/audiences/entities/audience.entity';
-import { TemplatesService } from './api/templates/templates.service';
 import { Template } from './api/templates/entities/template.entity';
-import { SlackService } from './api/slack/slack.service';
 import { Installation } from './api/slack/entities/installation.entity';
 import { State } from './api/slack/entities/state.entity';
 import { IntegrationsModule } from './api/integrations/integrations.module';
@@ -53,6 +46,13 @@ const papertrail = new winston.transports.Http({
 
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { Recovery } from './api/auth/entities/recovery.entity';
+import { Segment } from './api/segments/entities/segment.entity';
+import { WorkflowsModule } from './api/workflows/workflows.module';
+import { JobsModule } from './api/jobs/jobs.module';
+import { AudiencesModule } from './api/audiences/audiences.module';
+import { CustomersModule } from './api/customers/customers.module';
+import { TemplatesModule } from './api/templates/templates.module';
+import { SlackModule } from './api/slack/slack.module';
 
 const myFormat = winston.format.printf(function ({
   level,
@@ -124,17 +124,19 @@ const formatMongoConnectionString = (mongoConnectionString: string) => {
   imports: [
     ...(process.env.SERVE_CLIENT_FROM_NEST
       ? [
-        ServeStaticModule.forRoot({
-          rootPath: process.env.CLIENT_PATH
-            ? process.env.CLIENT_PATH
-            : join(__dirname, '../../../', 'client/build/'),
-          exclude: ['api/*'],
-        }),
-      ]
+          ServeStaticModule.forRoot({
+            rootPath: process.env.CLIENT_PATH
+              ? process.env.CLIENT_PATH
+              : join(__dirname, '../../../', 'client/build/'),
+            exclude: ['api/*'],
+          }),
+        ]
       : []),
-    MongooseModule.forRoot(process.env.MONGOOSE_URL
-      ? formatMongoConnectionString(process.env.MONGOOSE_URL)
-      : 'mongodb://127.0.0.1:27017/?directConnection=true'),
+    MongooseModule.forRoot(
+      process.env.MONGOOSE_URL
+        ? formatMongoConnectionString(process.env.MONGOOSE_URL)
+        : 'mongodb://127.0.0.1:27017/?directConnection=true'
+    ),
     BullModule.forRoot({
       redis: {
         host: process.env.REDIS_HOST ?? 'localhost',
@@ -196,17 +198,15 @@ const formatMongoConnectionString = (mongoConnectionString: string) => {
       name: 'slack',
     }),
     IntegrationsModule,
+    WorkflowsModule,
+    JobsModule,
+    AudiencesModule,
+    CustomersModule,
+    TemplatesModule,
+    SlackModule,
   ],
   controllers: [AppController],
-  providers: [
-    CronService,
-    WorkflowsService,
-    JobsService,
-    AudiencesService,
-    CustomersService,
-    TemplatesService,
-    SlackService,
-  ],
+  providers: [CronService],
 })
 export class AppModule {
   configure(consumer: MiddlewareConsumer) {

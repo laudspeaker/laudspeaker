@@ -39,7 +39,7 @@ Run yourself (instructions below) or use [Laudspeaker Cloud](https://app.laudspe
 
 If you want a one-click render option **READ THIS** <a href="https://laudspeaker.com/docs/guides/deploy/options">**DOC**</a> and try it out here:
 
-NB: Create environment group with name "laudspeaker" 
+NB: Create environment group with name "laudspeaker"
 
 <a href="https://render.com/deploy?repo=https://github.com/laudspeaker/laudspeaker/tree/production">
 <img src="https://render.com/images/deploy-to-render-button.svg" alt="Deploy to Render">
@@ -127,6 +127,7 @@ A quick how to for contribution:
 [mit_license]: https://opensource.org/licenses/MIT
 
 ## We’re hiring!
+
 Come help us make Laudspeaker better. Email us at hey [at] laudspeaker [dot] com
 
 If you're interested have a look at this repo and feel free to raise an issue!

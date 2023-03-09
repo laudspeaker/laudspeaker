@@ -23,6 +23,7 @@ import { toast } from "react-toastify";
 import { Resource } from "pages/EmailBuilder/EmailBuilder";
 import { AxiosError } from "axios";
 import AlertBanner from "components/AlertBanner";
+import { SegmentType } from "pages/SegmentTable/NameSegment";
 
 interface Condition {
   attribute: string;
@@ -424,6 +425,7 @@ const MySegment = ({
           name: segmentForm.title,
           inclusionCriteria: requestBody,
           resources,
+          type: SegmentType.AUTOMATIC,
         });
 
         if (data.id) segmentId = data.id;

@@ -45,6 +45,7 @@ const TextUpdaterNode = ({ data }: { data: NodeData }) => {
     isTriggerDragging,
     isMessagesDragging,
     isDraggedOver,
+    mock,
   } = data;
   const [nodeData, setNodeData] = useState<{
     id?: string;
@@ -97,12 +98,13 @@ const TextUpdaterNode = ({ data }: { data: NodeData }) => {
     if (isExit) setNodeData({});
     // audienceId is present when we are just dispalying the existing node data
     else if (audienceId) {
-      getAudienceDetails(audienceId).then((response) => {
-        if (response.status === StatusCodes.OK) {
-          setNodeData(response.data);
-          data.isDynamic = response.data.isDynamic;
-        }
-      });
+      if (!mock)
+        getAudienceDetails(audienceId).then((response) => {
+          if (response.status === StatusCodes.OK) {
+            setNodeData(response.data);
+            data.isDynamic = response.data.isDynamic;
+          }
+        });
     } else {
       setNodeData({
         id: uuid(),

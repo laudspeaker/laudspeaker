@@ -97,5 +97,13 @@ export default {
       ],
       type: 'select',
     },
+    {
+      id: 'filteron',
+      type: 'select',
+      options: [
+        { label: 'select', id: '', isPlaceholder: true },
+        { label: 'Attributes', id: 'attributes' },
+      ],
+    },
   ],
 };

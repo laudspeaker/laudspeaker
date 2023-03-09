@@ -22,14 +22,6 @@ export interface IResourceOptions {
   isPlaceholder?: boolean;
 }
 
-export interface IResourceOptions {
-  label: string;
-  id?: string;
-  where?: string;
-  nextResourceURL?: string;
-  isPlaceholder?: boolean;
-}
-
 export interface Resource {
   label: string;
   id: string;

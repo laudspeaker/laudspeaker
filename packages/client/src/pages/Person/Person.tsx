@@ -14,6 +14,7 @@ import { useNavigate } from "react-router-dom";
 import { ApiConfig } from "./../../constants";
 import Progress from "components/Progress";
 import { toast } from "react-toastify";
+import { AxiosError } from "axios";
 
 const eventTypes = {
   applied: { icon: UserIcon, bgColorClass: "bg-gray-400" },
@@ -119,7 +120,9 @@ const Person = () => {
     try {
       await ApiService.put({ url: "/customers/" + id, options: personInfo });
     } catch (e) {
-      toast.error("Error while saving");
+      let message = "Error while saving";
+      if (e instanceof AxiosError) message = e.response?.data?.message;
+      toast.error(message);
     } finally {
       setIsSaving(false);
       setIsEditingMode(false);
@@ -142,7 +145,9 @@ const Person = () => {
               });
               navigate("/people");
             } catch (e) {
-              toast.error("Error while deleting");
+              let message = "Error while deleting";
+              if (e instanceof AxiosError) message = e.response?.data?.message;
+              toast.error(message);
             } finally {
               setIsSaving(false);
             }

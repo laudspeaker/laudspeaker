@@ -28,7 +28,7 @@ describe(
       cy.get("button").contains("Create Journey").click();
       cy.get("#name").should("exist").type("Loop journeys flow");
       cy.get("#createJourneySubmit").click();
-      cy.wait(3000);
+      cy.wait(5000);
       cy.get("#audience").click();
       cy.get("#name").type("init");
       cy.get("#description").type("init description text");
@@ -48,15 +48,13 @@ describe(
         .get('[data-isprimary="false"]')
         .move({ deltaX: 100, deltaY: 300 }, { force: true });
 
-      cy.get('[data-isprimary="false"]').click();
-      cy.get("#slack").click();
+      cy.get("#slack").drag('[data-isprimary="false"]', { force: true });
 
       cy.get("#activeJourney").click();
       cy.contains(slackTemplate.name).click();
       cy.get("#exportSelectedTemplate").click();
 
-      cy.get(".react-flow__viewport").get('[data-isprimary="true"]').click();
-      setupEventTrigger("1", "1");
+      setupEventTrigger('[data-isprimary="true"]', "1", "1");
 
       cy.get('[data-isprimary="true"]')
         .get("[data-handle-bottom]")
@@ -65,9 +63,8 @@ describe(
         });
 
       cy.get('[data-isprimary="false"] [data-handle-top]').click();
-      cy.get('[data-isprimary="false"]').click();
 
-      setupEventTrigger("2", "2");
+      setupEventTrigger('[data-isprimary="false"]', "2", "2");
 
       cy.get('[data-isprimary="false"] [data-handle-bottom]').drag(
         '[data-isprimary="true"] [data-handle-top]',
@@ -76,7 +73,7 @@ describe(
         }
       );
       cy.get('[data-isprimary="true"] [data-handle-top]').click();
-
+      cy.get("#saveNewSegment").click();
       createNewSegment();
 
       cy.contains("Save").click();

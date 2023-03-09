@@ -37,15 +37,17 @@ describe(
 
       cy.get(".react-flow__viewport")
         .get('[data-isprimary="true"]')
-        .move({ deltaX: 100, deltaY: 100 })
-        .click();
-      cy.get("#slack").click();
+        .move({ deltaX: 100, deltaY: 100 });
+      cy.get("#slack").drag('[data-isprimary="true"]', { force: true });
       cy.get("#activeJourney").click();
       cy.get("[data-option]").click();
       cy.get("#exportSelectedTemplate").click();
 
-      cy.get(".react-flow__viewport").get('[data-isprimary="true"]').click();
-      setupEventTrigger(slackTemplate.eventName, slackTemplate.eventName);
+      setupEventTrigger(
+        '[data-isprimary="true"]',
+        slackTemplate.eventName,
+        slackTemplate.eventName
+      );
 
       // cy.get(".react-flow__viewport").get('[data-isprimary="true"]').dblclick();
       createNewSegment(false);

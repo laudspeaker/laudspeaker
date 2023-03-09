@@ -1,4 +1,4 @@
-import { Injectable, Inject, LoggerService } from '@nestjs/common';
+import { Injectable, Inject, LoggerService, forwardRef } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Installation } from './entities/installation.entity';
@@ -52,7 +52,7 @@ export class SlackService {
     private readonly accountsRepository: Repository<Account>,
     @InjectQueue('slack') private readonly slackQueue: Queue,
     @InjectQueue('message') private readonly messageQueue: Queue,
-    @Inject(CustomersService)
+    @Inject(forwardRef(() => CustomersService))
     private readonly customersService: CustomersService
   ) {
     this.client = new WebClient();

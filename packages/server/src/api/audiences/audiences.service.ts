@@ -15,6 +15,7 @@ import { EventDto } from '../events/dto/event.dto';
 import { JobsService } from '../jobs/jobs.service';
 import { DateTime } from 'luxon';
 import { TimeJobType } from '../jobs/entities/job.entity';
+import { InclusionCriteria } from '../segments/types/segment.type';
 
 @Injectable()
 export class AudiencesService {
@@ -32,7 +33,7 @@ export class AudiencesService {
     private workflowRepository: Repository<Workflow>,
     @Inject(TemplatesService) public templatesService: TemplatesService,
     @Inject(JobsService) public jobsService: JobsService
-  ) { }
+  ) {}
 
   /**
    * Find all audiences that belong to a given account. If
@@ -230,7 +231,7 @@ export class AudiencesService {
    * to remove/add customers from audiences. The audience must no longer
    * be editable. If the toAud is primary and static, the customer will
    * not be moved to that audience. If the toAud already contains that customerID,
-   * the customer will not be moved into that audience. If the fromAud exists but 
+   * the customer will not be moved into that audience. If the fromAud exists but
    * does not contain that customer the customer will not be moved into
    * the toAud.
    *
@@ -249,7 +250,6 @@ export class AudiencesService {
     encodedRules: string[],
     workflowID: string
   ): Promise<{ jobIds: (string | number)[]; templates: Template[] }> {
-
     // Base case: customer document must exist
     if (!customer || !customer.id) {
       this.logger.warn(`Warning: No customer to move from ${from} to ${to}`);
@@ -305,14 +305,15 @@ export class AudiencesService {
           this.logger.debug(
             'From customers after: ' + fromAud?.customers?.length
           );
-        }
-        else {
-          this.logger.warn(`Customer ${customerId} is not in ${from}, skipping`);
+        } else {
+          this.logger.warn(
+            `Customer ${customerId} is not in ${from}, skipping`
+          );
           return Promise.resolve({ jobIds: [], templates: [] });
         }
       }
 
-      if (toAud && !toAud.isEditable) {
+      if (toAud && !toAud.isEditable && !toAud.customers.includes(customerId)) {
         this.logger.debug('To before: ' + toAud?.customers?.length);
         toAud.customers = [...toAud.customers, customerId];
         const saved = await queryRunner.manager.save(toAud);
@@ -339,8 +340,8 @@ export class AudiencesService {
               trigger.properties.eventTime === 'SpecificTime'
                 ? TimeJobType.SPECIFIC_TIME
                 : trigger.properties.eventTime === 'Delay'
-                  ? TimeJobType.DELAY
-                  : TimeJobType.TIME_WINDOW;
+                ? TimeJobType.DELAY
+                : TimeJobType.TIME_WINDOW;
 
             const now = DateTime.now();
             this.jobsService.create(account, {
@@ -354,9 +355,9 @@ export class AudiencesService {
                 trigger.properties.eventTime === 'SpecificTime'
                   ? trigger.properties.specificTime
                   : now.plus({
-                    hours: trigger.properties.delayTime?.split(':')?.[0],
-                    minutes: trigger.properties.delayTime?.split(':')?.[1],
-                  }),
+                      hours: trigger.properties.delayTime?.split(':')?.[0],
+                      minutes: trigger.properties.delayTime?.split(':')?.[1],
+                    }),
               type,
             });
           }
@@ -391,8 +392,8 @@ export class AudiencesService {
             );
             this.logger.warn(
               'Templates: [' +
-              dataIds.join(',') +
-              "] was skipped to send because test mail's can't be sent to external account."
+                dataIds.join(',') +
+                "] was skipped to send because test mail's can't be sent to external account."
             );
           }
         }
@@ -471,5 +472,17 @@ export class AudiencesService {
     // TODO: remove
     console.warn("jobId's ==============\n", jobIds);
     return Promise.resolve(jobIds);
+  }
+
+  public async getFilter(
+    account: Account,
+    id: string
+  ): Promise<InclusionCriteria | null> {
+    const res = await this.audiencesRepository.query(
+      'SELECT filter."inclusionCriteria" FROM audience LEFT JOIN workflow ON workflow.id = audience."workflowId" LEFT JOIN filter ON filter.id = workflow."filterId" WHERE audience.id = $1 AND audience."ownerId" = $2 LIMIT 1;',
+      [id, account.id]
+    );
+
+    return res?.[0]?.inclusionCriteria || null;
   }
 }

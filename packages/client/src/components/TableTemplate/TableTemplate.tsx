@@ -12,8 +12,12 @@ import { confirmAlert } from "react-confirm-alert";
 import { ApiConfig } from "../../constants";
 import ApiService from "services/api.service";
 import ToggleSwitch from "components/Elements/ToggleSwitch";
+import { GenericButton } from "components/Elements";
 
 export interface TableDataItem {
+  isInsideSegment?: boolean;
+  email?: string;
+  phone?: string;
   id?: string | number | null;
   name?: string;
   isActive?: boolean;
@@ -95,6 +99,29 @@ function renderCorrectColumnNames(
         </th>
       </>
     );
+  } else if (data[0].dataSource === "segmentPeople") {
+    return (
+      <>
+        <th
+          scope="col"
+          className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6"
+        >
+          Email
+        </th>
+        <th
+          scope="col"
+          className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6"
+        >
+          Phone
+        </th>
+        <th
+          scope="col"
+          className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6 w-[100px]"
+        >
+          Action
+        </th>
+      </>
+    );
   } else if (data[0].dataSource == "people") {
     //this is a test for checking if this is the journeys table or the template table
     return (
@@ -109,7 +136,13 @@ function renderCorrectColumnNames(
           scope="col"
           className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6"
         >
-          Info
+          Email
+        </th>
+        <th
+          scope="col"
+          className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6"
+        >
+          Actions
         </th>
       </>
     );
@@ -178,7 +211,14 @@ function renderSecondColumn(row: TableDataItem) {
         </td>
       </>
     );
-    //journey vs template
+  } else if (row.dataSource === "segmentPeople") {
+    return (
+      <>
+        <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
+          {row.phone}
+        </td>
+      </>
+    );
   } else if (row.isActive != null) {
     //this is a test for checking if this is the journeys table or the template table
     let status: JOURNEY_STATUS = JOURNEY_STATUS.EDITABLE;
@@ -398,8 +438,14 @@ function transformJourneyData(data: TableDataItem[]): TableDataItem[] {
       createdBy: element.createdBy,
       customersEnrolled: element.customersEnrolled,
       audiences: element.audiences,
-      dataSource: element.hasOwnProperty("salient") ? "people" : "j",
+      dataSource:
+        element.dataSource || element.hasOwnProperty("salient")
+          ? "people"
+          : "j",
       salient: element.salient,
+      email: element.email,
+      phone: element.phone,
+      isInsideSegment: element.isInsideSegment,
     });
   }
 
@@ -426,10 +472,18 @@ export interface TableTemplateProps<T extends TableDataItem> {
   refresh?: () => void;
   setTemplateToDelete?: (name: string) => void;
   showDeletedToggle?: boolean;
+  deleteCustomerFromSegment?: (customerId: string) => void;
+  setSegmentToDelete?: (segmentId?: string) => void;
+  onPersonAdd?: (row: TableDataItem) => void;
+  onPersonDelete?: (row: TableDataItem) => void;
+  className?: string;
 }
 
 export default function TableTemplate<T extends TableDataItem>({
   data,
+  onPersonAdd,
+  onPersonDelete,
+  className,
   pagesCount = 1,
   setCurrentPage = () => {},
   currentPage = 0,
@@ -442,6 +496,8 @@ export default function TableTemplate<T extends TableDataItem>({
   refresh = () => {},
   setTemplateToDelete = () => {},
   showDeletedToggle = true,
+  deleteCustomerFromSegment = () => {},
+  setSegmentToDelete = () => {},
 }: TableTemplateProps<T>) {
   const isSkipped = (num?: number) => {
     if (!num) return false;
@@ -537,6 +593,55 @@ export default function TableTemplate<T extends TableDataItem>({
         <Link href={`templates/email/${row.name}`}>
           {isButton ? <div>Edit</div> : row.name}
         </Link>
+      );
+    } else if (data[0].dataSource === "segmentPeople") {
+      return isButton ? (
+        <Menu as="div" className="relative">
+          <Menu.Button className="outline-none">
+            <PencilSquareIcon className="text-gray-400 hover:text-gray-500 ml-[10px] text-[16px] w-[24px]" />
+          </Menu.Button>
+          <Transition
+            as={Fragment}
+            enter="transition ease-out duration-100"
+            enterFrom="transform opacity-0 scale-95"
+            enterTo="transform opacity-100 scale-100"
+            leave="transition ease-in duration-75"
+            leaveFrom="transform opacity-100 scale-100"
+            leaveTo="transform opacity-0 scale-95"
+          >
+            <Menu.Items className="absolute outline-none w-auto flex flex-col bg-gray-50 shadow-md rounded-[8px] border-[1px] border-gray-200 items-center right-1/2 top-full z-[1000]">
+              {[
+                <Link className="!no-underline" href={`/person/${row.id}`}>
+                  <div className="w-full">Edit</div>
+                </Link>,
+                ...(row.isDeleted
+                  ? []
+                  : [
+                      <button
+                        className="w-full text-center cursor-pointer outline-none text-red-500"
+                        onClick={() =>
+                          deleteCustomerFromSegment(String(row.id || ""))
+                        }
+                        data-delete-button
+                      >
+                        Delete
+                      </button>,
+                    ]),
+              ].map((el, i) => (
+                <Menu.Item>
+                  <div
+                    key={i}
+                    className="w-full text-center hover:bg-gray-200 transition-all px-[6px] py-[4px] border-b-[1px] border-b-gray-200"
+                  >
+                    {el}
+                  </div>
+                </Menu.Item>
+              ))}
+            </Menu.Items>
+          </Transition>
+        </Menu>
+      ) : (
+        <Link href={`/person/${row.id}`}>{row.email}</Link>
       );
     } else if (row.type == "sms") {
       return isButton ? (
@@ -733,8 +838,79 @@ export default function TableTemplate<T extends TableDataItem>({
           {isButton ? <div>Edit</div> : row.name}
         </Link>
       );
+    } else if (["automatic", "manual"].includes(row.type || "")) {
+      return isButton ? (
+        <Menu as="div" className="relative">
+          <Menu.Button className="outline-none">
+            <PencilSquareIcon className="text-gray-400 hover:text-gray-500 ml-[10px] text-[16px] w-[24px]" />
+          </Menu.Button>
+          <Transition
+            as={Fragment}
+            enter="transition ease-out duration-100"
+            enterFrom="transform opacity-0 scale-95"
+            enterTo="transform opacity-100 scale-100"
+            leave="transition ease-in duration-75"
+            leaveFrom="transform opacity-100 scale-100"
+            leaveTo="transform opacity-0 scale-95"
+          >
+            <Menu.Items className="absolute outline-none w-auto flex flex-col bg-gray-50 shadow-md rounded-[8px] border-[1px] border-gray-200 items-center right-1/2 top-full z-[1000]">
+              {[
+                <Link className="!no-underline" href={`segment/${row.id}`}>
+                  <div className="w-full">Edit</div>
+                </Link>,
+                <button
+                  onClick={async () => {
+                    await ApiService.post({
+                      url: `/segments/${row.id}/duplicate`,
+                      options: {},
+                    });
+                    refresh();
+                  }}
+                >
+                  Duplicate
+                </button>,
+                ...(row.isDeleted
+                  ? []
+                  : [
+                      <button
+                        className="w-full text-center cursor-pointer outline-none text-red-500"
+                        onClick={() => setSegmentToDelete(String(row.id || ""))}
+                        data-delete-button
+                      >
+                        Delete
+                      </button>,
+                    ]),
+              ].map((el, i) => (
+                <Menu.Item>
+                  <div
+                    key={i}
+                    className="w-full text-center hover:bg-gray-200 transition-all px-[6px] py-[4px] border-b-[1px] border-b-gray-200"
+                  >
+                    {el}
+                  </div>
+                </Menu.Item>
+              ))}
+            </Menu.Items>
+          </Transition>
+        </Menu>
+      ) : (
+        <Link href={`segment/${row.id}`}>
+          {isButton ? <div>Edit</div> : row.name}
+        </Link>
+      );
     } else if (row.dataSource == "people") {
-      return (
+      return isButton && onPersonAdd && onPersonDelete ? (
+        row.isInsideSegment ? (
+          <GenericButton
+            customClasses="!bg-red-600 hover:!bg-red-700 focus:!ring-red-500"
+            onClick={() => onPersonDelete(row)}
+          >
+            Delete
+          </GenericButton>
+        ) : (
+          <GenericButton onClick={() => onPersonAdd(row)}>Add</GenericButton>
+        )
+      ) : (
         <Link href={`person/${row.name}`}>
           {isButton ? <div>Edit</div> : row.name}
         </Link>
@@ -827,7 +1003,9 @@ export default function TableTemplate<T extends TableDataItem>({
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+    <div
+      className={`mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 overflow-y-scroll ${className}`}
+    >
       {/*<div className="mt-8 flex flex-col">*/}
       <div className="relative mb-[15px] mt-[10px] flex items-center justify-between">
         <div>
@@ -892,10 +1070,12 @@ export default function TableTemplate<T extends TableDataItem>({
           </div>
         ))} */}
       </div>
-      <div className="-my-2 -mx-4 sm:-mx-6 lg:-mx-8 overflow-visible">
-        <div className="inline-block min-w-full py-2 align-middle md:px-6 lg:px-8 overflow-visible">
-          <div className="overflow-visible shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
-            <table className="min-w-full divide-y divide-gray-300 md:rounded-lg">
+      <div className="-my-2 -mx-4 sm:-mx-6 lg:-mx-8">
+        <div className="inline-block min-w-full py-2 align-middle md:px-6 lg:px-8">
+          <div className="shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
+            <table
+              className={`min-w-full divide-y divide-gray-300 md:rounded-lg`}
+            >
               <thead className="bg-gray-50">
                 <tr className="bg-gray-50 px-6 py-3 text-right text-sm font-semibold text-gray-900">
                   {renderCorrectColumnNames(
@@ -905,7 +1085,9 @@ export default function TableTemplate<T extends TableDataItem>({
                   )}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200 bg-white">
+              <tbody
+                className={`divide-y divide-gray-200 bg-white overflow-y-scroll`}
+              >
                 {transformJourneyData(data).map((row) => (
                   <Row key={row.id} row={row} />
                 ))}
@@ -933,8 +1115,8 @@ export default function TableTemplate<T extends TableDataItem>({
             }}
           >
             <path
-              fill-rule="evenodd"
-              clip-rule="evenodd"
+              fillRule="evenodd"
+              clipRule="evenodd"
               d="M5.70711 9.70711C5.31658 10.0976 4.68342 10.0976 4.2929 9.70711L0.292894 5.70711C-0.0976312 5.31658 -0.0976312 4.68342 0.292894 4.29289L4.29289 0.292894C4.68342 -0.0976312 5.31658 -0.0976312 5.70711 0.292894C6.09763 0.683417 6.09763 1.31658 5.70711 1.70711L3.41421 4L15 4C15.5523 4 16 4.44771 16 5C16 5.55228 15.5523 6 15 6L3.41421 6L5.70711 8.29289C6.09763 8.68342 6.09763 9.31658 5.70711 9.70711Z"
               fill="#E5E5E5"
             />
