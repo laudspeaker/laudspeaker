@@ -53,6 +53,9 @@ describe(
       createNewSegment(false);
       cy.wait(3000);
       cy.get("button.false").click();
+      cy.get("#data-option-filteron > :nth-child(1) > div").click();
+      cy.wait(1000);
+      cy.get("#event-conditions button:last").click();
       cy.get('[data-option="attributes"]').click();
       cy.wait(1000);
       cy.get("#event-conditions:first > div:last").click();
