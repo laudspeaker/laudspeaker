@@ -72,11 +72,11 @@ describe(
       cy.wait(100);
       cy.get('[data-isprimary]:not([data-isprimary="true"])').click();
       cy.get("#saveNewSegment").click();
-      cy.contains("Delete").click();
       cy.wait(3000);
       cy.get("#audience > .p-0 > .justify-between").click();
       cy.get("#name").clear().type("Step 3");
       cy.contains("Finish later").click();
+      cy.wait(300);
       cy.get(".text-updater:last").move({ deltaX: 100, deltaY: 500 });
       cy.wait(1000);
       cy.get("#slack").drag(".text-updater:last", {

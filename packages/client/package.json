@@ -93,7 +93,7 @@
     ]
   },
   "devDependencies": {
-    "@4tw/cypress-drag-drop": "^2.2.1",
+    "@4tw/cypress-drag-drop": "^2.2.3",
     "@types/lodash": "^4.14.184",
     "@types/papaparse": "^5.3.7",
     "@types/react-google-recaptcha": "^2.1.5",
