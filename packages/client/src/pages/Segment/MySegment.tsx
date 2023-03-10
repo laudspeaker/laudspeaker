@@ -508,7 +508,7 @@ const MySegment = ({
 
   return (
     <div className="w-full">
-      <div className="w-full flex justify-center items-start pt-[18px]">
+      <div className="w-full min-w-full flex justify-center items-start pt-[18px]">
         <div className="w-full overflow-visible relative ">
           <div className="flex items-start justify-between">
             {!titleEdit ? (

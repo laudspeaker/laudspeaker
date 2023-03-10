@@ -348,7 +348,7 @@ const SegmentViewer = () => {
                     customClasses="w-[200px] h-[80px] justify-center"
                     onClick={() => setAddCustomerPickedOption("existing")}
                   >
-                    Add exististing customer
+                    Add existing customer
                   </GenericButton>
                 </div>
               ) : addCustomerPickedOption === "csv" ? (

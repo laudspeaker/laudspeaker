@@ -71,6 +71,7 @@ const Modal: FC<ModalProps> = ({
                 </div>
                 {closeButtonNeed && (
                   <button
+                    id="close-modal"
                     className="absolute top-[10px] right-[20px] border-0 bg-transparent outline-none text-[24px] cursor-pointer"
                     onClick={onClose}
                   >

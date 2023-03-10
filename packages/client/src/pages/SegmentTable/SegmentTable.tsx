@@ -129,6 +129,7 @@ const SegmentTable = () => {
           isOpen={nameModalOpen}
           onClose={() => setNameModalOpen(false)}
           onEnterPress={() => setNameModalOpen(false)}
+          panelClass="!max-w-none"
         >
           <NameSegment onSubmit={handleNameSubmit} />
         </Modal>

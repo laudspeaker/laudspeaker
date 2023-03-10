@@ -98,6 +98,43 @@ export class SegmentsService {
     );
 
     (async () => {
+      const forDelete = await this.segmentCustomersRepository.findBy({
+        segment: { id: segment.id },
+      });
+
+      for (const { customerId } of forDelete) {
+        const customer = await this.customersService.CustomerModel.findById(
+          customerId
+        ).exec();
+        await this.updateAutomaticSegmentCustomerInclusion(account, customer);
+        await this.customersService.recheckDynamicInclusion(account, customer);
+      }
+
+      const amount = await this.customersService.CustomerModel.count({
+        ownerId: account.id,
+      });
+
+      const batchOptions = {
+        current: 0,
+        documentsCount: amount || 0,
+        batchSize: 500,
+      };
+
+      while (batchOptions.current < batchOptions.documentsCount) {
+        const batch = await this.customersService.CustomerModel.find({
+          ownerId: account.id,
+        })
+          .skip(batchOptions.current)
+          .limit(batchOptions.batchSize)
+          .exec();
+
+        for (const customer of batch) {
+          await this.updateAutomaticSegmentCustomerInclusion(account, customer);
+        }
+
+        batchOptions.current += batchOptions.batchSize;
+      }
+
       const records = await this.segmentCustomersRepository.findBy({
         segment: { id: segment.id },
       });
@@ -107,7 +144,6 @@ export class SegmentsService {
           customerId
         ).exec();
         await this.customersService.recheckDynamicInclusion(account, customer);
-        await this.updateAutomaticSegmentCustomerInclusion(account, customer);
       }
     })();
   }
