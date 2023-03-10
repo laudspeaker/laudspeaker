@@ -49,7 +49,7 @@ describe(
       setFree3();
       cy.contains("Messaging").click();
 
-      testPauseStop();
+      testPauseStop(PauseStopTestType.email, true);
     });
 
     it("passes for sendgrid", () => {
@@ -59,7 +59,7 @@ describe(
       setSendgrid(TESTS_SENDGRID_API_KEY, TESTS_SENDGRID_FROM_EMAIL);
 
       cy.contains("Messaging").click();
-      testPauseStop();
+      testPauseStop(PauseStopTestType.email, true);
     });
 
     it("passes for sms", () => {
@@ -68,7 +68,7 @@ describe(
       templatesFunc(slackTemplate, emailTemplate, smsTemplate);
       setSMS();
       cy.contains("Messaging").click();
-      testPauseStop(PauseStopTestType.sms);
+      testPauseStop(PauseStopTestType.sms, true);
     });
   }
 );

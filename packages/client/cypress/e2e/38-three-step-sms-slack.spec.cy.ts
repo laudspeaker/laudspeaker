@@ -40,44 +40,64 @@ describe(
       cy.get("#audience > .p-0 > .justify-between").click();
       cy.get("#name").type("Initial");
       cy.contains("Finish later").click();
-      cy.get(".text-updater").move({ deltaX: 100, deltaY: 100 });
+      cy.wait(1000);
+      cy.get(".text-updater").move({ deltaX: 100, deltaY: 100, force: true });
+      cy.wait(1000);
       cy.get("#audience > .p-0 > .justify-between").click();
       cy.get("#name").type("Second");
       cy.contains("Finish later").click();
+      cy.wait(1000);
       cy.get('[data-isprimary]:not([data-isprimary="true"])').move({
         deltaX: 100,
         deltaY: 300,
+        force: true,
       });
-      cy.get('[data-isprimary]:not([data-isprimary="true"])').click();
-      cy.get("#sms > .p-0 > .justify-between").click();
+      cy.wait(1000);
+      cy.get("#sms > .p-0 > .justify-between").drag(
+        '[data-isprimary]:not([data-isprimary="true"])'
+      );
       cy.get("#activeJourney").click();
       cy.contains(smsTemplate.name).click();
       cy.get("#exportSelectedTemplate").click();
-      cy.get('[data-isprimary="true"]').click();
-      setupEventTrigger(smsTemplate.eventName, smsTemplate.eventName);
+      setupEventTrigger(
+        '[data-isprimary="true"]',
+        smsTemplate.eventName,
+        smsTemplate.eventName
+      );
       cy.get(
         '[style="display: flex; height: 22px; position: absolute; left: 0px; bottom: 0px; align-items: center; width: 100%; justify-content: space-around;"] > .react-flow__handle'
       ).drag('[data-isprimary]:not([data-isprimary="true"])', {
         force: true,
       });
+      cy.wait(1000);
       cy.get('[data-isprimary]:not([data-isprimary="true"])').click();
-
+      cy.wait(3000);
+      cy.get("#saveNewSegment").click();
+      cy.wait(3000);
+      cy.contains("Delete").click();
+      cy.wait(1000);
       cy.get("#audience > .p-0 > .justify-between").click();
       cy.get("#name").clear().type("Step 3");
       cy.contains("Finish later").click();
 
       cy.contains("Step 3").move({ deltaX: 100, deltaY: 500 });
-      cy.get("#slack > .p-0 > .justify-between").click();
+      cy.get("#slack > .p-0 > .justify-between").drag(".text-updater:last");
 
       cy.get("#activeJourney").click();
       cy.contains(slackTemplate.name).click();
       cy.get("#exportSelectedTemplate").click();
-
-      cy.contains("Second").click();
-      setupEventTrigger(slackTemplate.eventName, slackTemplate.eventName);
-      cy.get(
-        '.text-updater-node:not([data-isprimary="true"]) > [style="display: flex; height: 22px; position: absolute; left: 0px; bottom: 0px; align-items: center; width: 100%; justify-content: space-around;"] > .react-flow__handle'
-      ).drag('[data-isprimary]:not([data-isprimary="true"])', { force: true });
+      cy.wait(3000);
+ц
+      setupEventTrigger(
+        ".text-updater:nth(1)",
+        slackTemplate.eventName,
+        slackTemplate.eventName
+      );
+      cy.get(".text-updater-node:nth(1) .react-flow__handle").drag(
+        '[data-isprimary]:not([data-isprimary="true"]):contains("Step 3")',
+        { force: true }
+      );
+      cy.wait(3000);
       cy.get(
         '[data-isprimary]:not([data-isprimary="true"]):contains("Step 3")'
       ).click();

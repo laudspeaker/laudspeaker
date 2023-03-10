@@ -7,8 +7,8 @@ const { emailTemplate } = credentials.MessageHitUser;
 export default (
   audience1Name = "23232323",
   audience2Name = "23212414151323",
-  setupTemplate = () => {
-    cy.get("#email > .p-0 > .justify-between").click();
+  setupTemplate = (selector: string) => {
+    cy.get("#email > .p-0 > .justify-between").drag(selector, { force: true });
     cy.get("#activeJourney").click();
     cy.contains(emailTemplate.name).click();
     cy.get("#exportSelectedTemplate").click();
@@ -23,24 +23,27 @@ export default (
   cy.get("#audience > .p-0 > .justify-between").click();
   cy.get("#name").type(audience1Name);
   cy.contains("Finish later").click();
-  cy.get(".text-updater").move({ deltaX: 100, deltaY: 100 });
+  cy.wait(1000);
+  cy.get(".text-updater").move({ deltaX: 100, deltaY: 100, force: true });
+  cy.wait(2000);
   cy.get("#audience > .p-0 > .justify-between").click();
   cy.get("#name").type(audience2Name);
   cy.contains("Finish later").click();
+  cy.wait(1000);
   cy.get('[data-isprimary]:not([data-isprimary="true"])').move({
     deltaX: 100,
     deltaY: 300,
+    force: true,
   });
-
-  cy.get('[data-isprimary]:not([data-isprimary="true"])').click();
-  setupTemplate();
-
-  cy.get('[data-isprimary="true"]').click();
-  setupDelayTrigger();
-
+  cy.wait(2000);
+  setupTemplate('[data-isprimary]:not([data-isprimary="true"])');
+  cy.wait(2000);
+  setupDelayTrigger('[data-isprimary="true"]');
+  cy.wait(2000);
   cy.get(
     '[style="display: flex; height: 22px; position: absolute; left: 0px; bottom: 0px; align-items: center; width: 100%; justify-content: space-around;"] > .react-flow__handle'
   ).drag('[data-isprimary]:not([data-isprimary="true"])', { force: true });
+  cy.wait(2000);
   cy.get('[data-isprimary]:not([data-isprimary="true"])').click();
 
   createNewSegment();

@@ -32,7 +32,8 @@ describe(
       runTwoStepEmailJourney(
         "example-template-review",
         emailTemplate.eventName,
-        "flow2"
+        "flow2",
+        true
       );
       cy.wait(3000);
       cy.request({

@@ -39,7 +39,10 @@ const correlationValues = {
   [PauseStopTestType.sms]: smsTemplate.phone,
 };
 
-export default (type: PauseStopTestType = PauseStopTestType.email) => {
+export default (
+  type: PauseStopTestType = PauseStopTestType.email,
+  fixTrigger = false
+) => {
   cy.wait(1000);
   cy.get('[data-disclosure-link="Journey Builder"]').click();
   cy.wait(3000);
@@ -51,12 +54,12 @@ export default (type: PauseStopTestType = PauseStopTestType.email) => {
   cy.get("#name").type("init");
   cy.get("#description").type("init description text");
   cy.contains("Finish later").click();
-
   cy.get(".react-flow__viewport")
     .get('[data-isprimary="true"]')
-    .move({ deltaX: 100, deltaY: 100 });
+    .move({ deltaX: 100, deltaY: 100, force: true });
 
-  cy.wait(1000);
+  if (fixTrigger) cy.contains("Delete").click();
+  cy.wait(3000);
   cy.get("#audience").click();
   cy.get("#name").type("audience");
   cy.get("#description").type("description");
@@ -64,8 +67,9 @@ export default (type: PauseStopTestType = PauseStopTestType.email) => {
 
   cy.get(".react-flow__viewport")
     .get('[data-isprimary="false"]')
-    .move({ deltaX: 100, deltaY: 300 });
-
+    .move({ deltaX: 100, deltaY: 300, force: true });
+  if (fixTrigger) cy.contains("Delete").click();
+  cy.wait(3000);
   cy.get(`#${type} > .p-0 > .justify-between`).drag(
     '[data-isprimary="false"]',
     { force: true }
@@ -73,7 +77,7 @@ export default (type: PauseStopTestType = PauseStopTestType.email) => {
   cy.get("#activeJourney").click();
   cy.contains(templates[type].name).click();
   cy.get("#exportSelectedTemplate").click();
-
+  cy.wait(3000);
   setupEventTrigger('[data-isprimary="true"]', "A", "A");
 
   cy.get('[data-isprimary="true"]')
