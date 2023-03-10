@@ -32,49 +32,59 @@ describe(
       cy.get("#audience > .p-0 > .justify-between").click();
       cy.get("#name").type("Initial");
       cy.contains("Finish later").click();
+      cy.wait(1000);
       cy.get(".text-updater").move({ deltaX: 100, deltaY: 100 });
+      cy.wait(1000);
       cy.get("#audience > .p-0 > .justify-between").click();
       cy.get("#name").type("Second");
       cy.contains("Finish later").click();
+      cy.wait(1000);
       cy.get('[data-isprimary]:not([data-isprimary="true"])').move({
         deltaX: 100,
         deltaY: 300,
       });
+      cy.wait(1000);
 
-      cy.get("#email > .p-0 > .justify-between").click();
+      cy.get("#email > .p-0 > .justify-between").drag(
+        '[data-isprimary]:not([data-isprimary="true"])'
+      );
       cy.get("#activeJourney").click();
       cy.contains(emailTemplate.name).click();
       cy.get("#exportSelectedTemplate").click();
 
-      cy.get('[data-isprimary="true"]').click();
-      setupEventTrigger(emailTemplate.eventName, emailTemplate.eventName);
+      setupEventTrigger(
+        '[data-isprimary="true"]',
+        emailTemplate.eventName,
+        emailTemplate.eventName
+      );
       cy.get(
         '[style="display: flex; height: 22px; position: absolute; left: 0px; bottom: 0px; align-items: center; width: 100%; justify-content: space-around;"] > .react-flow__handle'
       ).drag('[data-isprimary]:not([data-isprimary="true"])', {
         force: true,
       });
+      cy.wait(1000);
       cy.get('[data-isprimary]:not([data-isprimary="true"])').click();
+      cy.get("#saveNewSegment").click();
       cy.wait(1000);
       cy.get("#audience > .p-0 > .justify-between").click();
       cy.get("#name").clear().type("Step 3");
       cy.contains("Finish later").click();
-
+      cy.wait(1000);
       cy.contains("Step 3").move({ deltaX: 100, deltaY: 500 });
+      cy.wait(1000);
 
-      cy.get("#sms > .p-0 > .justify-between").click();
+      cy.get("#sms > .p-0 > .justify-between").drag(".text-updater:last");
       cy.get("#activeJourney").click();
       cy.contains(smsTemplate.name).click();
       cy.get("#exportSelectedTemplate").click();
-      cy.get('[data-isprimary="true"]').click();
-
-      cy.contains("Second").click();
-      setupDelayTrigger();
+      setupDelayTrigger(".text-updater:nth(1)");
       cy.get(
         '[data-testid] > .text-updater-node > [style="display: flex; height: 22px; position: absolute; left: 0px; bottom: 0px; align-items: center; width: 100%; justify-content: space-around;"] > .react-flow__handle:nth(1)'
       ).drag(
         '[data-isprimary]:not([data-isprimary="true"]):contains("Step 3")',
         { force: true }
       );
+      cy.wait(1000);
       cy.get(
         '[data-isprimary]:not([data-isprimary="true"]):contains("Step 3")'
       ).click();
