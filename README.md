@@ -31,7 +31,7 @@
 - 🔜 **Trigger journeys from segment/rudderstack/mixpanel events**
 - 🔜 **Comprehensive journey testing** - simulate user actions, differents dates, and times and test and debug messages before you start journeys
 
-## 🚀 Get Started
+## 🚀 Get Started up
 
 Run yourself (instructions below) or use [Laudspeaker Cloud](https://app.laudspeaker.com/login) . Docs are [here](https://laudspeaker.com/docs/guides/overview/intro/)
 
