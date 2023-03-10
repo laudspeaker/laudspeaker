@@ -119,7 +119,7 @@ const NameSegment: FC<NameSegmentProps> = ({ onSubmit }) => {
 
   return (
     <div
-      className="relative"
+      className="relative w-full"
       onKeyDown={(e) => {
         if (e.key === "Enter") handleSubmit(e);
       }}

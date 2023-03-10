@@ -14,6 +14,7 @@ import {
   CustomerKeys,
   CustomerKeysDocument,
 } from '../customers/schemas/customer-keys.schema';
+import { SegmentCustomers } from '../segments/entities/segment-customers.entity';
 import { Installation } from '../slack/entities/installation.entity';
 import { Template } from '../templates/entities/template.entity';
 import { Workflow } from '../workflows/entities/workflow.entity';
@@ -39,13 +40,12 @@ export class TestsService {
     @Inject(AuthService)
     private readonly authService: AuthService,
     @InjectModel(CustomerKeys.name)
-    private CustomerKeysModel: Model<CustomerKeysDocument>
+    private CustomerKeysModel: Model<CustomerKeysDocument>,
+    @InjectRepository(SegmentCustomers)
+    private segmentCustomersRepository: Repository<SegmentCustomers>
   ) {}
 
   async posthogsynctest(user: Express.User) {
-    if (process.env.NODE_ENV !== 'development')
-      throw new HttpException('Not found', HttpStatus.NOT_FOUND);
-
     const account = await this.accountService.findOne(user);
 
     await this.customersService.ingestPosthogPersons(
@@ -251,5 +251,33 @@ export class TestsService {
     return this.recoveryRepository.findOneBy({
       account: { id: '00000000-0000-0000-0000-000000000000' },
     });
+  }
+
+  public async isCustomerInSegment(customerId: string) {
+    const cust = await this.segmentCustomersRepository.findOne({
+      where: {
+        customerId,
+      },
+    });
+    return !!cust?.id;
+  }
+
+  public async getSegmentSize(segmentId: string) {
+    return await this.segmentCustomersRepository.count({
+      where: {
+        segment: {
+          id: segmentId,
+        },
+      },
+    });
+  }
+
+  public async getWorkflowCustomersAmount(workflowId: string) {
+    const sum = await this.workflowsRepository.query(
+      'select sum(array_length(audience."customers",1)) from audience where audience."workflowId" = $1',
+      [workflowId]
+    );
+
+    return sum?.[0]?.sum || 0;
   }
 }

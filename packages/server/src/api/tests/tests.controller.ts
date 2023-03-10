@@ -14,8 +14,10 @@ import {
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { Request } from 'express';
 import { TestsService } from './tests.service';
+import { DevelopmentGuard } from '../auth/guards/development.guard';
 
 @Controller('tests')
+@UseGuards(DevelopmentGuard)
 export class TestsController {
   constructor(@Inject(TestsService) private testsService: TestsService) {}
 
@@ -69,5 +71,20 @@ export class TestsController {
   @Get('test-recovery')
   async getTestRecovery() {
     return this.testsService.getTestRecovery();
+  }
+
+  @Get('is-customer-in-segment/:customerId')
+  async isCustomerInSegment(@Param('customerId') customerId: string) {
+    return this.testsService.isCustomerInSegment(customerId);
+  }
+
+  @Get('get-segment-size/:segmentId')
+  async getSegmentSize(@Param('segmentId') segmentId: string) {
+    return this.testsService.getSegmentSize(segmentId);
+  }
+
+  @Get('get-workflow-customer-amount/:workflowId')
+  async getWorkflowCustomersAmount(@Param('workflowId') workflowId: string) {
+    return this.testsService.getWorkflowCustomersAmount(workflowId);
   }
 }

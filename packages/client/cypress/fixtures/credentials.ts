@@ -30,4 +30,8 @@ export default {
       phone: TESTS_SMS_TO || "+111111111111",
     },
   },
+  segments: {
+    manual: { name: "Manual 1", description: "Manual segment" },
+    automatic: { name: "Automatic 1", description: "Automatic segment" },
+  },
 };

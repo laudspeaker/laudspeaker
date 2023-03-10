@@ -1,5 +1,11 @@
 import { Trim } from 'class-sanitizer';
-import { IsString, IsNotEmpty, IsEnum, IsOptional } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsEnum,
+  IsOptional,
+  IsObject,
+} from 'class-validator';
 import { SegmentType } from '../entities/segment.entity';
 
 export class CreateSegmentDTO {
@@ -17,4 +23,12 @@ export class CreateSegmentDTO {
   @IsNotEmpty()
   @IsEnum(SegmentType)
   public type: SegmentType;
+
+  @IsObject()
+  @IsOptional()
+  public inclusionCriteria: any;
+
+  @IsObject()
+  @IsOptional()
+  public resources: any;
 }
