@@ -105,35 +105,33 @@ describe(
 
       // slack admin true
       cy.contains("select").click();
-      cy.get("#data-option-attributes > :nth-child(1) > div").click();
-      cy.get("#event-conditions > :nth-child(2)").last().click();
-      cy.get("#data-option-slackAdmin > :nth-child(1) > div").click();
-      cy.wait(200);
-      cy.get("#event-conditions > :nth-child(3)").last().click();
-      cy.get("#data-option-isBoolEqual > :nth-child(1) > div").click();
-      cy.get("#event-conditions > :nth-child(4)").last().click();
+      cy.get("#data-option-attributes > :nth-child(1) > div").click().wait(500);
+      cy.get("#event-conditions > :nth-child(2)").last().click().wait(500);
+      cy.get("#data-option-slackAdmin > :nth-child(1) > div").click().wait(500);
+      cy.get("#event-conditions > :nth-child(3)").last().click().wait(500);
+      cy.get("#data-option-isBoolEqual > :nth-child(1) > div")
+        .click()
+        .wait(500);
+      cy.get("#event-conditions > :nth-child(4)").last().click().wait(500);
       cy.get("#data-option-true > :nth-child(1) > div").click();
       cy.wait(1000);
 
       // phone exist
-      cy.contains("select").click();
-      cy.get("#data-option-attributes > :nth-child(1) > div").click();
-      cy.get("#event-conditions > :nth-child(2)").last().click();
-      cy.get("#data-option-phone > :nth-child(1) > div").click();
-      cy.wait(200);
-      cy.get("#event-conditions > :nth-child(3)").last().click();
+      cy.contains("select").click().wait(500);
+      cy.get("#data-option-attributes > :nth-child(1) > div").click().wait(500);
+      cy.get("#event-conditions > :nth-child(2)").last().click().wait(500);
+      cy.get("#data-option-phone > :nth-child(1) > div").click().wait(500);
+      cy.get("#event-conditions > :nth-child(3)").last().click().wait(500);
       cy.get("#data-option-exists > :nth-child(1) > div").click();
       cy.wait(1000);
 
       // slackId not equal to U00000
       cy.contains("select").click();
-      cy.get("#data-option-attributes > :nth-child(1) > div").click();
-      cy.wait(200);
-      cy.get("#event-conditions > :nth-child(2)").last().click();
-      cy.get("#data-option-slackId > :nth-child(1) > div").click();
-      cy.wait(200);
-      cy.get("#event-conditions > :nth-child(3)").last().click();
-      cy.get("#data-option-isNotEqual > :nth-child(1) > div").click();
+      cy.get("#data-option-attributes > :nth-child(1) > div").click().wait(500);
+      cy.get("#event-conditions > :nth-child(2)").last().click().wait(500);
+      cy.get("#data-option-slackId > :nth-child(1) > div").click().wait(500);
+      cy.get("#event-conditions > :nth-child(3)").last().click().wait(500);
+      cy.get("#data-option-isNotEqual > :nth-child(1) > div").click().wait(500);
       cy.get("#isNotEqual").type("U00000");
 
       cy.get("#saveSegmentParams")
