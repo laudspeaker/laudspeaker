@@ -47,7 +47,8 @@ describe(
       runTwoStepEmailJourney(
         emailTemplate.name,
         emailTemplate.eventName + "2",
-        "2"
+        "2",
+        true
       );
       checkSuccessfulEmailEventHit(
         userAPIkey,
@@ -78,7 +79,8 @@ describe(
       runTwoStepEmailJourney(
         emailTemplate.name,
         emailTemplate.eventName + "2",
-        "2"
+        "2",
+        true
       );
       checkSuccessfulEmailEventHit(
         userAPIkey,
@@ -107,7 +109,8 @@ describe(
       runTwoStepEmailJourney(
         emailTemplate.name,
         emailTemplate.eventName + "2",
-        "2"
+        "2",
+        true
       );
       checkSuccessfulEmailEventHit(
         userAPIkey,

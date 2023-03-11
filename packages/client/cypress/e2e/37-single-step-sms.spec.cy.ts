@@ -32,8 +32,10 @@ describe(
       cy.get("#audience > .p-0 > .justify-between").click();
       cy.get("#name").type("Initial");
       cy.contains("Finish later").click();
-      cy.get(".text-updater").move({ deltaX: 100, deltaY: 100 });
-      cy.get("#sms > .p-0 > .justify-between").click();
+      cy.wait(1000);
+      cy.get(".text-updater").move({ deltaX: 100, deltaY: 100, force: true });
+      cy.wait(1000);
+      cy.get("#sms > .p-0 > .justify-between").drag(".text-updater");
       cy.get("#activeJourney").click();
       cy.contains(smsTemplate.name).click();
       cy.get("#exportSelectedTemplate").click();

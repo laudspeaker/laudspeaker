@@ -61,7 +61,7 @@ describe(
               cy.get("#name").type(audience1Name);
               cy.get("#description").type("init description text");
               cy.contains("Finish later").click();
-
+              cy.wait(1000);
               cy.get(".react-flow__viewport")
                 .get('[data-isprimary="true"]')
                 .move({ deltaX: 100, deltaY: 100, force: true });
@@ -71,53 +71,50 @@ describe(
               cy.get("#name").type(audience2Name);
               cy.get("#description").type("slack description");
               cy.contains("Finish later").click();
-
+              cy.wait(1000);
               cy.get(".react-flow__viewport")
                 .get('[data-isprimary="false"]')
                 .move({ deltaX: 50, deltaY: 300, force: true });
-
-              cy.get('[data-isprimary="false"]').click({ force: true });
-              cy.get("#slack").click();
+              cy.wait(1000);
+              cy.get("#slack").drag('[data-isprimary="false"]');
 
               cy.get("#activeJourney").click();
               cy.contains(slackTemplate.name).click();
               cy.get("#exportSelectedTemplate").click();
-
-              cy.get(".react-flow__viewport")
-                .get('[data-isprimary="true"]')
-                .click({
-                  force: true,
-                });
-              setupDelayTrigger();
-
+              cy.wait(1000);
+              setupDelayTrigger('[data-isprimary="true"]');
+              cy.wait(1000);
               cy.get('[data-isprimary="true"]')
                 .get("[data-handle-bottom]")
                 .drag('[data-isprimary="false"] [data-handle-top]', {
                   force: true,
                 });
-
+              cy.wait(1000);
               cy.get('[data-isprimary="false"] [data-handle-top]').click({
                 force: true,
               });
+              cy.get("#saveNewSegment").click();
 
               cy.wait(3000);
               cy.get("#audience").click();
               cy.get("#name").type(audience3Name);
               cy.get("#description").type("email description");
               cy.contains("Finish later").click();
-              cy.contains(audience3Name)
-                .move({ deltaX: 450, deltaY: 300, force: true })
-                .click();
-              cy.get("#email").click();
+              cy.wait(3000);
+              cy.contains(audience3Name).move({
+                deltaX: 450,
+                deltaY: 300,
+                force: true,
+              });
+              cy.wait(3000);
+
+              cy.get("#email").drag(".text-updater:last");
               cy.get("#activeJourney").click();
               cy.contains(emailTemplate.name).click();
               cy.get("#exportSelectedTemplate").click();
-              cy.get(".react-flow__viewport")
-                .get('[data-isprimary="true"]')
-                .click({
-                  force: true,
-                });
+
               setupEventTrigger(
+                '[data-isprimary="true"]',
                 emailTemplate.eventName,
                 emailTemplate.eventName
               );
@@ -126,6 +123,7 @@ describe(
                 '[data-isprimary="false"] [data-handle-top]:last',
                 { force: true }
               );
+              cy.wait(1000);
               cy.get('[data-isprimary="false"] [data-handle-top]:last').click({
                 force: true,
               });

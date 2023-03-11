@@ -93,12 +93,12 @@ export class CustomersService {
             id: customer.ownerId,
           });
 
-          await this.recheckDynamicInclusion(account, customer);
-
           await this.segmentsService.updateAutomaticSegmentCustomerInclusion(
             account,
             customer
           );
+
+          await this.recheckDynamicInclusion(account, customer);
         }
       } catch (e) {
         this.logger.error(e);

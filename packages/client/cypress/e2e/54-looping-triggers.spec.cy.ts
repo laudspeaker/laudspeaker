@@ -35,18 +35,17 @@ describe(
       cy.get("#description").type("init description text");
       cy.contains("Finish later").click();
 
-      cy.get(".react-flow__viewport")
-        .get('[data-isprimary="true"]')
-        .move({ deltaX: 100, deltaY: 100 })
-        .click();
       cy.wait(1000);
-      cy.get("#slack").click();
+      cy.get("#slack").drag('[data-isprimary="true"]');
       cy.get("#activeJourney").click();
       cy.get("[data-option]").click();
       cy.get("#exportSelectedTemplate").click();
 
-      cy.get(".react-flow__viewport").get('[data-isprimary="true"]').click();
-      setupEventTrigger(slackTemplate.eventName, slackTemplate.eventName);
+      setupEventTrigger(
+        '[data-isprimary="true"]',
+        slackTemplate.eventName,
+        slackTemplate.eventName
+      );
       cy.get(
         '[style="display: flex; height: 22px; position: absolute; left: 0px; bottom: 0px; align-items: center; width: 100%; justify-content: space-around;"] > .react-flow__handle'
       ).drag(".text-updater", { force: true });

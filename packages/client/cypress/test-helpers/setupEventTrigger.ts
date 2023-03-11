@@ -4,6 +4,7 @@ export default (selector: string, key: string, value: string) => {
   cy.contains("Event Based").drag(selector, { force: true });
   cy.contains("Add new condition").click();
   cy.get("#keyInput").clear().type(key);
+  cy.wait(1000);
   cy.get(".h-8").click();
   cy.wait(1000);
   cy.get("#keyType").click();

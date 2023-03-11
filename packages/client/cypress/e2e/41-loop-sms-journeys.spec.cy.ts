@@ -47,14 +47,12 @@ describe(
         .get('[data-isprimary="false"]')
         .move({ deltaX: 100, deltaY: 300 });
 
-      cy.get('[data-isprimary="false"]').click();
-      cy.get("#sms > .p-0 > .justify-between").click();
+      cy.get("#sms > .p-0 > .justify-between").drag('[data-isprimary="false"]');
       cy.get("#activeJourney").click();
       cy.contains(smsTemplate.name).click();
       cy.get("#exportSelectedTemplate").click();
 
-      cy.get(".react-flow__viewport").get('[data-isprimary="true"]').click();
-      setupEventTrigger("1", "1");
+      setupEventTrigger('[data-isprimary="true"]', "1", "1");
 
       cy.get('[data-isprimary="true"]')
         .get("[data-handle-bottom]")
@@ -63,9 +61,8 @@ describe(
         });
 
       cy.get('[data-isprimary="false"] [data-handle-top]').click();
-      cy.get('[data-isprimary="false"]').click();
-
-      setupEventTrigger("2", "2");
+      cy.get("#saveNewSegment").click();
+      setupEventTrigger('[data-isprimary="false"]', "2", "2");
 
       cy.get('[data-isprimary="false"] [data-handle-bottom]').drag(
         '[data-isprimary="true"] [data-handle-top]',

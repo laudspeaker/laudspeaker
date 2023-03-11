@@ -72,14 +72,24 @@ describe(
       cy.wait(100);
       cy.get('[data-isprimary]:not([data-isprimary="true"])').click();
       cy.get("#saveNewSegment").click();
-      cy.contains("Delete").click();
       cy.wait(3000);
       cy.get("#audience > .p-0 > .justify-between").click();
       cy.get("#name").clear().type("Step 3");
       cy.contains("Finish later").click();
+      cy.wait(3000);
       cy.get(".text-updater:last").move({ deltaX: 100, deltaY: 500 });
-      cy.wait(1000);
-      cy.get("#slack").drag(".text-updater:last", {
+      cy.wait(3000);
+      cy.contains("Save").click();
+      cy.wait(3000);
+      cy.reload();
+      cy.wait(3000);
+      cy.get("#saveSegmentParams").click();
+      cy.get(":nth-child(1) > .group > .px-6 > .ml-4").click();
+      cy.wait(3000);
+      cy.get("#slack > .p-0 > .justify-between").drag(".text-updater:last", {
+        force: true,
+      });
+      cy.get("#slack > .p-0 > .justify-between").drag(".text-updater:last", {
         force: true,
       });
 
@@ -92,12 +102,11 @@ describe(
         slackTemplate.eventName,
         slackTemplate.eventName
       );
-      cy.get(
-        '.text-updater-node:not([data-isprimary="true"]) > [style="display: flex; height: 22px; position: absolute; left: 0px; bottom: 0px; align-items: center; width: 100%; justify-content: space-around;"] > .react-flow__handle'
-      ).drag(
+      cy.get(".text-updater-node .react-flow__handle:nth(3)").drag(
         '[data-isprimary]:not([data-isprimary="true"]):contains("Step 3")',
         { force: true }
       );
+      cy.wait(3000);
       cy.get(
         '[data-isprimary]:not([data-isprimary="true"]):contains("Step 3")'
       ).click();
@@ -107,7 +116,7 @@ describe(
       cy.contains("Save").click();
       cy.wait(1000);
       cy.contains("Start").click();
-      cy.wait(3000);
+      cy.wait(5000);
 
       checkSuccessfulEmailEventHit(
         userAPIkey,
@@ -127,7 +136,7 @@ describe(
               event: { [slackTemplate.eventName]: slackTemplate.eventName },
             },
           }).then(({ body }) => {
-            cy.wait(1000);
+            cy.wait(5000);
             cy.request({
               method: "POST",
               headers: {

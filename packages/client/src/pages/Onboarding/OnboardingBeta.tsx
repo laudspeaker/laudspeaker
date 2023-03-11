@@ -351,16 +351,26 @@ export default function OnboardingBeta() {
     setPrivateApiKey(mailgunAPIKey);
     setDomainName(sendingDomain);
     setVerified(verifiedFromRequest);
+    setUserApiKey(apiKey);
+
+    return data;
+  };
+
+  const firstLoad = async () => {
+    const { emailProvider, smsAccountSid, posthogApiKey } = await loadData();
     const isStepOneFinished = !!emailProvider || !!smsAccountSid;
     const isStepTwoFinished = !!posthogApiKey;
     setCurrentStep(isStepTwoFinished ? 2 : isStepOneFinished ? 1 : 0);
     setStepsCompletion([isStepOneFinished, isStepTwoFinished, false]);
-    setUserApiKey(apiKey);
   };
 
   useEffect(() => {
-    loadData();
+    firstLoad();
   }, []);
+
+  useEffect(() => {
+    loadData();
+  }, [currentStep]);
 
   const errorCheck = (e: {
     target: {

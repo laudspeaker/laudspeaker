@@ -19,6 +19,7 @@ import {
 } from '../customers/schemas/customer-keys.schema';
 import { Customer, CustomerSchema } from '../customers/schemas/customer.schema';
 import { EventsModule } from '../events/events.module';
+import { SegmentCustomers } from '../segments/entities/segment-customers.entity';
 import { Installation } from '../slack/entities/installation.entity';
 import { Template } from '../templates/entities/template.entity';
 import { Workflow } from '../workflows/entities/workflow.entity';
@@ -34,6 +35,7 @@ import { TestsService } from './tests.service';
       Template,
       Workflow,
       Recovery,
+      SegmentCustomers,
     ]),
     MongooseModule.forFeature([
       { name: Customer.name, schema: CustomerSchema },

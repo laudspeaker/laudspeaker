@@ -13,24 +13,34 @@ export default (name: string, eventName: string, flowName = "SMS flow") => {
   cy.get("#audience > .p-0 > .justify-between").click();
   cy.get("#name").type("Initial");
   cy.contains("Finish later").click();
-  cy.get(".text-updater").move({ deltaX: 100, deltaY: 100 });
+  cy.wait(1000);
+  cy.get(".text-updater").move({ deltaX: 100, deltaY: 100, force: true });
+  cy.wait(3000);
   cy.get("#audience > .p-0 > .justify-between").click();
   cy.get("#name").type("Second");
   cy.contains("Finish later").click();
+  cy.wait(1000);
   cy.get('[data-isprimary]:not([data-isprimary="true"])').move({
     deltaX: 100,
     deltaY: 300,
   });
-  cy.get('[data-isprimary]:not([data-isprimary="true"])').click();
-  cy.get("#sms > .p-0 > .justify-between").click();
+  cy.wait(1000);
+  cy.contains("Save").click();
+  cy.wait(1000);
+  cy.get("#sms > .p-0 > .justify-between").drag(
+    '[data-isprimary]:not([data-isprimary="true"])',
+    { force: true }
+  );
+  cy.wait(1000);
   cy.get("#activeJourney").click();
   cy.contains(name).click();
   cy.get("#exportSelectedTemplate").click();
-  cy.get('[data-isprimary="true"]').click();
-  setupEventTrigger(eventName, eventName);
+  setupEventTrigger('[data-isprimary="true"]', eventName, eventName);
+  cy.wait(1000);
   cy.get(".triggerOut").drag('[data-isprimary]:not([data-isprimary="true"])', {
     force: true,
   });
+  cy.wait(1000);
   cy.get('[data-isprimary]:not([data-isprimary="true"])').click();
 
   createNewSegment();

@@ -44,23 +44,17 @@ describe(
       cy.get("#name").type("init");
       cy.get("#description").type("init description text");
       cy.contains("Finish later").click();
-
-      cy.get(".react-flow__viewport")
-        .get('[data-isprimary="true"]')
-        .move({ deltaX: 100, deltaY: 100 })
-        .click();
-      cy.get("#email").click();
+      cy.wait(1000);
+      cy.get("#email").drag('[data-isprimary="true"]', { force: true });
       cy.get("#activeJourney").click();
       cy.contains(emailTemplate.name).click();
       cy.wait(3000);
       cy.get("#exportSelectedTemplate").click();
 
       cy.contains("Next").click();
-      cy.get("#segmentName").click();
-      cy.contains("Create new").click();
-      cy.get("#segmentName").type("New property test segment");
-      cy.get("#submitSegmentCreate").click();
       cy.get("#event-conditions button").click();
+      cy.get("#data-option-filteron").click();
+      cy.get("#event-conditions button:nth(1)").click();
       cy.contains("Attributes").click();
       cy.wait(1000);
       cy.get("#event-conditions:first > div:last").click();
