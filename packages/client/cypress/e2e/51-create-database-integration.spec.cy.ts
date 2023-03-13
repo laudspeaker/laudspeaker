@@ -5,6 +5,7 @@
 
 import credentials from "../fixtures/credentials";
 import createDatabaseIntegration from "../test-helpers/createDatabaseIntegration";
+import createMysqlIntegration from "../test-helpers/createMysqlIntegration";
 import createPostgresqlIntegration from "../test-helpers/createPostgresqlIntegration";
 import { loginFunc } from "../test-helpers/loginFunc";
 
@@ -65,6 +66,22 @@ describe(
         "randomDatabase",
         false
       );
+    });
+
+    it("passes for mysql and valid data", () => {
+      loginFunc(email, password);
+
+      createMysqlIntegration();
+      cy.wait(10000);
+      cy.contains("Audience").click();
+      cy.contains("People").click();
+      cy.get("td").should("have.length.above", 10);
+    });
+
+    it("doesn't pass for mysql and invalid data", () => {
+      loginFunc(email, password);
+
+      createMysqlIntegration(false);
     });
   }
 );

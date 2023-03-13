@@ -7,6 +7,7 @@ import { DatabaseStepProps } from "../Database";
 export enum DBType {
   DATABRICKS = "databricks",
   POSTGRESQL = "postgresql",
+  MYSQL = "mysql",
 }
 
 const memoryOptions: Record<
@@ -21,16 +22,16 @@ const memoryOptions: Record<
   databricks: {
     id: DBType.DATABRICKS,
     name: "Databricks",
-    inStock: false,
+    inStock: true,
   },
-  // mysql: { id: "mysql", name: "MySQL", inStock: false },
+  mysql: { id: DBType.MYSQL, name: "MySQL", inStock: true },
   // sqlServer: { id: "sqlServer", name: "SQL Server", inStock: false },
 };
 
 const protocols: Record<string, string> = {
   databricks: "",
   postgresql: "postgresql://",
-  // mysql: "mysqlx://",
+  mysql: "mysql://",
 };
 
 function classNames(...classes: string[]) {
@@ -272,7 +273,7 @@ const DatabaseStep3: FC<DatabaseStepProps> = ({
                 </p>
               ))}
           </div>
-        ) : (
+        ) : dbType === DBType.POSTGRESQL ? (
           <div>
             <div>
               <b>Connection string</b>
@@ -334,6 +335,17 @@ const DatabaseStep3: FC<DatabaseStepProps> = ({
                 onChange={handleConnectionData}
               />
             </div>
+          </div>
+        ) : (
+          <div>
+            <Input
+              value={formData.connectionString}
+              onChange={(e) =>
+                setFormData({ ...formData, connectionString: e.target.value })
+              }
+              name="connectionString"
+              id="connectionString"
+            />
           </div>
         ))}
     </div>
