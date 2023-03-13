@@ -24,6 +24,7 @@ export enum PeopleIdentification {
 export enum DBType {
   DATABRICKS = 'databricks',
   POSTGRESQL = 'postgresql',
+  MYSQL = 'mysql',
 }
 
 @Entity()
