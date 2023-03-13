@@ -17,8 +17,7 @@ export default (
   exists = true
 ) => {
   cy.contains("Settings").click();
-  cy.contains("Data").click();
-  cy.contains("Database import").click();
+  cy.get(".-mb-px > :nth-child(10)").click();
   cy.contains("Add new DB").click();
 
   cy.get("#name").clear().type(dbName);
@@ -42,7 +41,9 @@ export default (
   cy.wait(5000);
 
   if (exists) {
-    cy.get("tr").should("have.length.above", 5);
+    cy.contains("Sutherlan").should("exist");
+    cy.contains("Kynder").should("exist");
+    cy.contains("skynder0@bandcamp.com").should("exist");
     cy.contains("Save").click();
 
     cy.contains(dbName).should("exist");

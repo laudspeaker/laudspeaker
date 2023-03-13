@@ -21,7 +21,6 @@ import {
 import handleDatabricks from './databricks.worker';
 import { Pool } from 'pg';
 import Cursor from 'pg-cursor';
-import handleMySql from './mysql.worker';
 
 @Injectable()
 export class IntegrationsService {
@@ -270,22 +269,6 @@ export class IntegrationsService {
         } catch (e) {
           throw new BadRequestException(
             'Something wrong with connection to postgresql'
-          );
-        }
-      case DBType.MYSQL:
-        try {
-          const result = handleMySql(
-            {
-              connectionString: createDBDto.connectionString,
-              query: createDBDto.query,
-            },
-            account,
-            true
-          );
-          return result;
-        } catch (e) {
-          throw new BadRequestException(
-            'Something wrong with connection to mysql'
           );
         }
 

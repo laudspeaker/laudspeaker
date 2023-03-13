@@ -18,8 +18,6 @@ import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Pool } from 'pg';
 import Cursor from 'pg-cursor';
-import mysql from 'mysql2';
-import handleMySql from './mysql.worker';
 
 const hourMs = 60 * 60 * 1000;
 const dayMs = 24 * hourMs;
@@ -55,12 +53,6 @@ export class IntegrationsProcessor {
     },
     [DBType.POSTGRESQL]: async (database, owner) => {
       await this.handlePostgreSQLSync(database, owner);
-    },
-    [DBType.MYSQL]: async (database, owner) => {
-      await handleMySql(
-        { connectionString: database.connectionString, query: database.query },
-        owner
-      );
     },
   };
 
