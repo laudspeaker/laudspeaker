@@ -24,6 +24,8 @@ import { Request } from 'express';
 import { Account } from '../accounts/entities/accounts.entity';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiKeyAuthGuard } from '../auth/guards/apikey-auth.guard';
+import { CustomerDocument } from './schemas/customer.schema';
 
 @Controller('customers')
 export class CustomersController {
@@ -122,6 +124,34 @@ export class CustomersController {
       <Account>user,
       createCustomerDto
     );
+
+    return cust.id;
+  }
+
+  @Post('/upsert/')
+  @UseGuards(ApiKeyAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor)
+  async upsert(
+    @Req() { user }: Request,
+    @Body() createCustomerDto: CreateCustomerDto
+  ) {
+    let cust: CustomerDocument;
+    try {
+      cust = await this.customersService.findByCorrelationKVPair(
+        <Account>user,
+        createCustomerDto.correlationKey,
+        createCustomerDto.correlationValue
+      );
+
+      await this.customersService.update(<Account>user, cust.id, {
+        ...createCustomerDto,
+      });
+    } catch (err) {
+      cust = await this.customersService.create(
+        <Account>user,
+        createCustomerDto
+      );
+    }
 
     return cust.id;
   }
