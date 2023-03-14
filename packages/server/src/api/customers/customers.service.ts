@@ -727,7 +727,7 @@ export class CustomersService {
     account: Account,
     correlationKey: string,
     correlationValue: string | [],
-    transactionSession: ClientSession
+    transactionSession?: ClientSession
   ): Promise<CustomerDocument> {
     let customer: CustomerDocument; // Found customer
     const queryParam = {
@@ -735,9 +735,13 @@ export class CustomersService {
       [correlationKey]: correlationValue,
     };
     try {
-      customer = await this.CustomerModel.findOne(queryParam)
-        .session(transactionSession)
-        .exec();
+      if (transactionSession) {
+        customer = await this.CustomerModel.findOne(queryParam)
+          .session(transactionSession)
+          .exec();
+      } else {
+        customer = await this.CustomerModel.findOne(queryParam).exec();
+      }
       this.logger.debug('Found customer in correlationKVPair:' + customer.id);
     } catch (err) {
       return Promise.reject(err);
