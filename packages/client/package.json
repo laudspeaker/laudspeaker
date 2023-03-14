@@ -41,6 +41,7 @@
     "react-autocomplete": "^1.8.1",
     "react-confirm-alert": "^3.0.6",
     "react-dom": "18.2.0",
+    "react-draggable": "^4.4.5",
     "react-google-recaptcha": "^2.1.0",
     "react-helmet": "^6.1.0",
     "react-lines-ellipsis": "^0.15.3",

@@ -120,10 +120,24 @@ export enum DismissType {
 
 export enum DismissPosition {
   OUTSIDE_RIGHT = "Outside right",
+  OUTSIDE_LEFT = "Outside left",
+  INSIDE_RIGHT = "Inside right",
+  INSIDE_LEFT = "Inside left",
+  CENTER_RIGHT = "Center right",
+  CENTER_LEFT = "Center Left",
+}
+
+export interface TimedDismiss {
+  enabled: boolean;
+  duration: number;
+  displayTimer: boolean;
+  timerColor: Color;
 }
 
 export interface CommonDismiss {
   position: DismissPosition;
+  color: Color;
+  timedDismiss: TimedDismiss;
 }
 
 export interface CrossDismiss extends CommonDismiss {
@@ -203,7 +217,14 @@ We've made some changes to our styling and our navigation. We did this to speed 
     dismiss: {
       type: DismissType.CROSS,
       crossSize: { value: 14, unit: SizeUnit.PIXEL },
-      position: DismissPosition.OUTSIDE_RIGHT,
+      color: "#FFFFFF",
+      position: DismissPosition.INSIDE_RIGHT,
+      timedDismiss: {
+        enabled: false,
+        duration: 3,
+        displayTimer: false,
+        timerColor: "#1CC88A",
+      },
     },
   });
 
