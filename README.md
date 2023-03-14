@@ -74,7 +74,7 @@ Add a `.env` file to both `packages/server` and `packages/client`.
 
 We have provided examples which you can use:
 
-`mv env-server-example packages/server/.env` and `mv env-client-example packages/client/.env`
+`cp env-server-example packages/server/.env` and `cp env-client-example packages/client/.env`
 
 Make sure you fill in the fields in the env files before running.
 
