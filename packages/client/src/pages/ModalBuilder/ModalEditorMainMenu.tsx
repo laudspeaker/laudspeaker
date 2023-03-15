@@ -71,7 +71,7 @@ const editorMenu = [
   },
 ];
 
-const MainMenu = ({ onOptionPick }: IMainMenuProps) => {
+const ModalEditorMainMenu = ({ onOptionPick }: IMainMenuProps) => {
   return (
     <>
       {editorMenu.map((block) => (
@@ -109,4 +109,4 @@ const MainMenu = ({ onOptionPick }: IMainMenuProps) => {
   );
 };
 
-export default MainMenu;
+export default ModalEditorMainMenu;

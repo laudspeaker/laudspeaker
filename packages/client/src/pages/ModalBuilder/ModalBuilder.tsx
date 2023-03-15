@@ -166,6 +166,24 @@ export interface ModalState {
   primaryButton: PrimaryButton;
 }
 
+export const defaultSolidBackground: SolidBackground = {
+  type: BackgroundType.SOLID,
+  color: "#003C80",
+  opacity: 1,
+};
+
+export const defaultGradientBackground: GradientBackground = {
+  type: BackgroundType.GRADIENT,
+  color1: "#FFFFFF",
+  color2: "#767676",
+  opacity: 1,
+};
+
+export const defaultImageBackground: ImageBackground = {
+  type: BackgroundType.IMAGE,
+  imageSrc: "",
+};
+
 const ModalBuilder = () => {
   const [modalState, setModalState] = useState<ModalState>({
     position: ModalPosition.CENTER,
@@ -173,11 +191,7 @@ const ModalBuilder = () => {
     yOffset: { value: 0, unit: SizeUnit.PIXEL },
     width: { value: 400, unit: SizeUnit.PIXEL },
     borderRadius: { value: 20, unit: SizeUnit.PIXEL },
-    background: {
-      type: BackgroundType.SOLID,
-      color: "#003C80",
-      opacity: 1,
-    },
+    background: defaultSolidBackground,
     title: {
       hidden: true,
       alignment: Alignment.CENTER,
