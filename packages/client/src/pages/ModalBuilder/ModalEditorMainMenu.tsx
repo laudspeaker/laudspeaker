@@ -74,36 +74,32 @@ const editorMenu = [
 const ModalEditorMainMenu = ({ onOptionPick }: IMainMenuProps) => {
   return (
     <>
-      {editorMenu.map((block) => (
-        <>
-          <div className="text-[#BAC3C0] min-w-full mb-[4px]">
-            {block.title}
-          </div>
+      {editorMenu.map((block, i) => (
+        <span key={i}>
+          <div className="text-white/80 min-w-full mb-[4px]">{block.title}</div>
           <div className="flex flex-wrap w-full ">
-            {block.elements.map((el) => (
-              <>
-                <div className="w-1/2 pr-[6px] pb-[6px]">
-                  <GenericButton
-                    customClasses={`relative w-full flex text-[12px] !border-[2px] !border-[#2f4a43] !outline-none !ring-transparent !focus:!ring-transparent !font-normal !rounded-[8px] !p-[6px] flex align-center whitespace-nowrap overflow-hidden ${
-                      false ? "!bg-[#19362e]" : "!bg-[#2f4a43]" //TODO: add style change when option added to layout
-                    }`}
-                    onClick={onOptionPick(el.option)}
-                  >
-                    <span className="min-w-[16px] max-w-[16px] block mr-[4px]">
-                      {el.icon}
-                    </span>
-                    <span className="!pr-[30px] text-ellipsis w-full block text-left overflow-hidden">
-                      {el.name}
-                    </span>
-                    <div className="absolute opacity-0 hover:!opacity-100 bg-opacity-40 bg-white top-0 left-0 w-full h-full !rounded-[8px] transition-all border-[2px] border-white">
-                      <EditIconSVG className="absolute w-[20px] right-[10px] top-1/2 -translate-y-1/2 !text-white shadow-2xl rounded-full" />
-                    </div>
-                  </GenericButton>
-                </div>
-              </>
+            {block.elements.map((el, i2) => (
+              <div key={i2} className="w-1/2 pr-[6px] pb-[6px]">
+                <GenericButton
+                  customClasses={`relative w-full flex text-[12px] !border-[2px] !border-[#2f4a43] !outline-none !ring-transparent !focus:!ring-transparent !font-normal !rounded-[8px] !p-[6px] flex align-center whitespace-nowrap overflow-hidden ${
+                    false ? "!bg-[#19362e]" : "!bg-[#2f4a43]" //TODO: add style change when option added to layout
+                  }`}
+                  onClick={onOptionPick(el.option)}
+                >
+                  <span className="min-w-[16px] max-w-[16px] block mr-[4px]">
+                    {el.icon}
+                  </span>
+                  <span className="!pr-[30px] text-ellipsis w-full block text-left overflow-hidden">
+                    {el.name}
+                  </span>
+                  <div className="absolute opacity-0 hover:!opacity-100 bg-opacity-40 bg-white top-0 left-0 w-full h-full !rounded-[8px] transition-all border-[2px] border-white">
+                    <EditIconSVG className="absolute w-[20px] right-[10px] top-1/2 -translate-y-1/2 !text-white shadow-2xl rounded-full" />
+                  </div>
+                </GenericButton>
+              </div>
             ))}
           </div>
-        </>
+        </span>
       ))}
     </>
   );

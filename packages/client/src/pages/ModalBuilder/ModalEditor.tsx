@@ -1,16 +1,27 @@
 import React, { FC, ReactNode, useState } from "react";
 import {
+  Alignment,
   BackgroundType,
   defaultGradientBackground,
   defaultImageBackground,
   defaultSolidBackground,
   GradientBackground,
+  MediaClickActions,
+  MediaPositionMap,
+  MediaType,
+  mediaTypes,
   ModalPosition,
   ModalState,
   SizeUnit,
   SolidBackground,
+  textStyles,
+  textStylesIcons,
 } from "./ModalBuilder";
 import LeftArrowSVG from "@heroicons/react/20/solid/ChevronLeftIcon";
+import AlignCenterSVG from "@heroicons/react/20/solid/Bars3Icon";
+import UploadSVG from "@heroicons/react/20/solid/CloudArrowUpIcon";
+import AlignLeftSVG from "@heroicons/react/20/solid/Bars3BottomLeftIcon";
+import AlignRightSVG from "@heroicons/react/20/solid/Bars3BottomRightIcon";
 import Draggable from "react-draggable";
 import ModalEditorMainMenu, { EditorMenuOptions } from "./ModalEditorMainMenu";
 import ModalBuilderNumberInput from "./Elements/ModalBuilderNumberInput";
@@ -26,6 +37,7 @@ import {
 } from "./Icons/ModalBuilderIcons";
 import ReactSlider from "react-slider";
 import ModalBuilderColorPicker from "./Elements/ModalBuilderColorPicker";
+import { toast } from "react-toastify";
 
 interface ModalEditorProps {
   modalState: ModalState;
@@ -54,6 +66,22 @@ const ModalEditor: FC<ModalEditorProps> = ({ modalState, setModalState }) => {
     };
   };
 
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files?.length) {
+      return;
+    } else if ((e.target.files?.length || 0) > 1) {
+      toast.error("Only one file can be uploaded!");
+      return;
+    } else if ((e.target.files?.[0]?.size || 0) > 10485760) {
+      toast.error("Max file size 10mb");
+      return;
+    }
+
+    // TODO: add file upload and token saving
+  };
+
+  const bodyWidth = document.body.clientWidth;
+
   const modalPositions = [
     ModalPosition.TOP_LEFT,
     ModalPosition.TOP_CENTER,
@@ -74,7 +102,13 @@ const ModalEditor: FC<ModalEditorProps> = ({ modalState, setModalState }) => {
     [ModalPosition.BOTTOM_RIGHT]: <ModalPositionBottomRightIcon />,
   };
 
-  const bodyWidth = document.body.clientWidth;
+  const textAlignment = [Alignment.LEFT, Alignment.CENTER, Alignment.RIGHT];
+
+  const textAlignmentIcons: Record<Alignment, ReactNode> = {
+    [Alignment.LEFT]: <AlignLeftSVG className="!text-white" />,
+    [Alignment.CENTER]: <AlignCenterSVG className="!text-white" />,
+    [Alignment.RIGHT]: <AlignRightSVG className="!text-white" />,
+  };
 
   const menuOptions: { [key: string]: IMenuOption } = {
     [EditorMenuOptions.MAIN]: {
@@ -86,15 +120,54 @@ const ModalEditor: FC<ModalEditorProps> = ({ modalState, setModalState }) => {
       description: "Sometimes this is all that a user will read; make it count",
       layout: (
         <div className="text-white text-[14px] font-normal">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between pb-[4px] pt-[20px]">
             <div>Alignment:</div>
-            <div className="flex items-center gap-[10px]">...</div>
+
+            <ul className="flex items-center justify-between">
+              {textAlignment.map((alignment) => (
+                <li key={alignment}>
+                  <div
+                    className={`flex justify-center items-center p-[2px] relative w-[32px] h-[32px] hover:bg-white hover:bg-opacity-25 rounded-md cursor-pointer ${
+                      alignment === modalState.title.alignment
+                        ? "border-white border-[2px] bg-white bg-opacity-25"
+                        : ""
+                    }`}
+                    onClick={() =>
+                      setModalState({
+                        ...modalState,
+                        title: { ...modalState.title, alignment },
+                      })
+                    }
+                  >
+                    {textAlignmentIcons[alignment]}
+                  </div>
+                </li>
+              ))}
+            </ul>
           </div>
           <div className="border-t-[1px] border-[#5D726D] my-[15px]" />
           <div className="flex items-center justify-between">
             <div>Styles:</div>
-            <div className="flex items-center gap-[10px]">...</div>
+            <div className="flex items-center gap-[10px]">
+              <ul className="flex items-center justify-between">
+                {textStyles.map((style) => (
+                  <li key={style}>
+                    <div
+                      className={`flex justify-center items-center p-[2px] relative w-[32px] h-[32px] hover:bg-white hover:bg-opacity-25 rounded-md cursor-pointer`}
+                      onClick={() => {
+                        // TODO: add format to layout
+                      }}
+                    >
+                      {textStylesIcons[style]}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
+          <small className="w-full mt-[10px] text-[#BAC3C0]">
+            Select text before applying
+          </small>
           <div className="border-t-[1px] border-[#5D726D] my-[15px]" />
           <div className="flex items-center justify-between mb-[10px]">
             <div>Text:</div>
@@ -154,20 +227,124 @@ const ModalEditor: FC<ModalEditorProps> = ({ modalState, setModalState }) => {
     [EditorMenuOptions.BODY]: {
       name: "Body",
       description: "Keep it succinct; we recommend max 2-3 lines",
-      layout: <span>Body</span>,
+      layout: (
+        <div className="text-white text-[14px] font-normal">
+          <div className="flex items-center justify-between pb-[4px] pt-[20px]">
+            <div>Alignment:</div>
+
+            <ul className="flex items-center justify-between">
+              {textAlignment.map((alignment) => (
+                <li key={alignment}>
+                  <div
+                    className={`flex justify-center items-center p-[2px] relative w-[32px] h-[32px] hover:bg-white hover:bg-opacity-25 rounded-md cursor-pointer ${
+                      alignment === modalState.body.alignment
+                        ? "border-white border-[2px] bg-white bg-opacity-25"
+                        : ""
+                    }`}
+                    onClick={() =>
+                      setModalState({
+                        ...modalState,
+                        body: { ...modalState.body, alignment },
+                      })
+                    }
+                  >
+                    {textAlignmentIcons[alignment]}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div className="border-t-[1px] border-[#5D726D] my-[15px]" />
+          <div className="flex items-center justify-between">
+            <div>Styles:</div>
+            <div className="flex items-center gap-[10px]">
+              <ul className="flex items-center justify-between">
+                {textStyles.map((style) => (
+                  <li key={style}>
+                    <div
+                      className={`flex justify-center items-center p-[2px] relative w-[32px] h-[32px] hover:bg-white hover:bg-opacity-25 rounded-md cursor-pointer`}
+                      onClick={() => {
+                        // TODO: add format to layout
+                      }}
+                    >
+                      {textStylesIcons[style]}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+          <small className="w-full mt-[10px] text-[#BAC3C0]">
+            Select text before applying
+          </small>
+          <div className="border-t-[1px] border-[#5D726D] my-[15px]" />
+          <div className="flex items-center justify-between mb-[10px]">
+            <div>Text:</div>
+            <div className="flex items-center gap-[10px]">
+              <ModalBuilderColorPicker
+                className="min-w-[155px]"
+                color={modalState.body.textColor}
+                onChange={(color) =>
+                  setModalState({
+                    ...modalState,
+                    body: { ...modalState.body, textColor: color },
+                  })
+                }
+              />
+            </div>
+          </div>
+          <div className="flex items-center justify-between">
+            <div>Link:</div>
+            <div className="flex items-center gap-[10px]">
+              <ModalBuilderColorPicker
+                className="min-w-[155px]"
+                color={modalState.body.linkColor}
+                onChange={(color) =>
+                  setModalState({
+                    ...modalState,
+                    body: { ...modalState.body, linkColor: color },
+                  })
+                }
+              />
+            </div>
+          </div>
+          <div className="border-t-[1px] border-[#5D726D] my-[15px]" />
+          <div className="flex items-center justify-between">
+            <div>Font size:</div>
+            <div className="flex items-center gap-[10px]">
+              <ModalBuilderNumberInput
+                className="min-w-[155px]"
+                id="fontSize"
+                name="fontSize"
+                unit={SizeUnit.PIXEL}
+                value={modalState.body.fontSize}
+                onChange={(value) =>
+                  setModalState({
+                    ...modalState,
+                    body: {
+                      ...modalState.body,
+                      fontSize: value,
+                    },
+                  })
+                }
+              />
+            </div>
+          </div>
+        </div>
+      ),
     },
     [EditorMenuOptions.CANVAS]: {
       name: "Canvas",
       description: "Configure Step background and size",
       layout: (
         <div className="text-white text-[14px] font-normal">
-          <div className="flex items-center justify-between mb-[20px]">
+          <div className="flex items-start justify-between mb-[20px]">
             <div>Width:</div>
             <div>
               <div>
                 <ReactSlider
-                  className="h-[20px] flex items-center justify-center"
-                  trackClassName="h-[5px] bg-[#22C55E]"
+                  className="h-[20px] flex items-center justify-center mb-[8px]"
+                  trackClassName="h-[5px] bg-[#22C55E] rounded-[4px]"
                   min={modalState.width.unit === SizeUnit.PIXEL ? 100 : 1}
                   max={
                     modalState.width.unit === SizeUnit.PIXEL ? bodyWidth : 100
@@ -414,7 +591,7 @@ const ModalEditor: FC<ModalEditorProps> = ({ modalState, setModalState }) => {
             <div>Position:</div>
             <ul className="flex items-center justify-between py-[20px]">
               {modalPositions.map((position) => (
-                <li>
+                <li key={position}>
                   <div
                     className={`flex justify-center items-center p-[2px] relative w-[35px] h-[35px] hover:bg-white hover:bg-opacity-25 rounded-md cursor-pointer text-transparent hover:text-white ${
                       position === modalState.position
@@ -424,7 +601,7 @@ const ModalEditor: FC<ModalEditorProps> = ({ modalState, setModalState }) => {
                     onClick={() => setModalState({ ...modalState, position })}
                   >
                     {modalPositionIconMap[position]}
-                    <div className="absolute text-[12px] font-normal whitespace-nowrap top-[101%] left-[-50%]">
+                    <div className="absolute text-[12px] font-normal whitespace-nowrap bottom-[-20px] left-[50%] -translate-x-1/2">
                       {position}
                     </div>
                   </div>
@@ -490,7 +667,237 @@ const ModalEditor: FC<ModalEditorProps> = ({ modalState, setModalState }) => {
     [EditorMenuOptions.MEDIA]: {
       name: "Media",
       description: "Use to engage, not to explain",
-      layout: <span>Media</span>,
+      layout: (
+        <div className="text-white text-[14px] font-normal">
+          <div className="flex flex-col gap-[10px]">
+            <div>Type:</div>
+            <div className="flex select-none">
+              {mediaTypes.map((el, i) => (
+                <div
+                  key={el}
+                  className={`flex justify-center items-center w-full h-[26px] border-white border-[1px] cursor-pointer ${
+                    modalState.media.type === el
+                      ? "bg-white text-[#2f4a43]"
+                      : "hover:bg-white hover:bg-opacity-25"
+                  } ${
+                    i === 0
+                      ? "rounded-l-md"
+                      : i === mediaTypes.length - 1
+                      ? "rounded-r-md"
+                      : 0
+                  }`}
+                  onClick={() =>
+                    setModalState({
+                      ...modalState,
+                      media: { ...modalState.media, type: el },
+                    })
+                  }
+                >
+                  {el}
+                </div>
+              ))}
+            </div>
+            {modalState.media.type === MediaType.IMAGE && (
+              <>
+                <span className="text-[14px] font-thin">Select image:</span>
+                <label className="cursor-pointer" htmlFor="pick-image">
+                  <div className="text-[#22C55E] hover:bg-[#105529] transition-colors border-[1px] border-[#22C55E] rounded-md inline-flex justify-center items-center px-[6px] py-[4px]">
+                    <UploadSVG className="w-[20px] h-[20px] mr-[6px]" />
+                    <small>Upload</small>
+                  </div>
+                  <input
+                    id="pick-image"
+                    hidden
+                    type="file"
+                    accept="image/*"
+                    multiple={false}
+                    onChange={(e) => handleImageUpload(e)}
+                  />
+                </label>
+                <span className="text-[14px] font-thin">Alt text:</span>
+                <input
+                  placeholder="Image alt text"
+                  className="bg-transparent text-[12px] border-[1px] border-white rounded-[5px] px-[6px] py-[2px] outline-none"
+                  value={modalState.media.altText}
+                  onChange={(el) =>
+                    setModalState({
+                      ...modalState,
+                      media: {
+                        ...modalState.media,
+                        altText: el.target.value || "",
+                      },
+                    })
+                  }
+                />
+                <div className="border-t-[1px] border-[#5D726D] my-[10px]" />
+              </>
+            )}
+            {modalState.media.type === MediaType.VIDEO && (
+              <>
+                <span className="text-[14px] font-thin">Video URL:</span>
+                <textarea
+                  value={modalState.media.videoUrl || ""}
+                  className="resize-none border-[1px] border-white focus:border-white rounded-[5px] bg-transparent outline-none focus:outline-none shadow-none text-[12px]"
+                  placeholder="Video URL (YouTube, Vimeo, etc...)"
+                  onChange={(el) =>
+                    setModalState({
+                      ...modalState,
+                      media: {
+                        ...modalState.media,
+                        videoUrl: el.target.value || "",
+                      },
+                    })
+                  }
+                />
+                <div className="border-t-[1px] border-[#5D726D] my-[10px]" />
+              </>
+            )}
+
+            <div className="flex w-full justify-between items-center">
+              <div className="flex w-full flex-col">
+                <span>Position:</span>
+                <small className="w-full mt-[5px] text-[#BAC3C0]">
+                  Relative to the Body component
+                </small>
+              </div>
+              <div className="w-full flex">
+                <ul className="flex w-full items-center justify-between py-[20px]">
+                  {MediaPositionMap.map((el) => (
+                    <li key={el.position}>
+                      <div
+                        className={`flex justify-center items-center p-[2px] relative w-[35px] h-[35px] hover:bg-white hover:bg-opacity-25 rounded-md cursor-pointer text-transparent hover:text-white ${
+                          el.position === modalState.media.position
+                            ? "border-white border-[2px] bg-white bg-opacity-25"
+                            : ""
+                        }`}
+                        onClick={() =>
+                          setModalState({
+                            ...modalState,
+                            media: {
+                              ...modalState.media,
+                              position: el.position,
+                            },
+                          })
+                        }
+                      >
+                        {el.icon}
+                        <div className="absolute text-[12px] font-normal whitespace-nowrap bottom-[-20px] left-[50%] -translate-x-1/2">
+                          {el.position}
+                        </div>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+            <div className="flex items-start justify-between mb-[10px]">
+              <div>Media height:</div>
+              <div>
+                <div>
+                  <ReactSlider
+                    className="h-[20px] flex items-center justify-center mb-[8px]"
+                    trackClassName="h-[5px] bg-[#22C55E] rounded-[4px]"
+                    min={
+                      modalState.media.height.unit === SizeUnit.PIXEL ? 20 : 1
+                    }
+                    max={
+                      modalState.media.height.unit === SizeUnit.PIXEL
+                        ? 600 // TODO: add max size based on uploaded image / for video 600
+                        : 100
+                    }
+                    value={modalState.media.height.value}
+                    onChange={(value) =>
+                      setModalState({
+                        ...modalState,
+                        media: {
+                          ...modalState.media,
+                          height: { ...modalState.media.height, value },
+                        },
+                      })
+                    }
+                    renderThumb={(props) => (
+                      <div
+                        {...props}
+                        className="rounded-[100%] w-[16px] h-[16px] cursor-grab bg-white"
+                      />
+                    )}
+                  />
+                </div>
+                <div className="flex items-center gap-[10px]">
+                  <ModalBuilderNumberInput
+                    id="width"
+                    name="width"
+                    value={modalState.media.height.value}
+                    // TODO: percentage convert based on uploaded image / for video always 600
+                    unit={modalState.media.height.unit}
+                    onChange={(value) =>
+                      setModalState({
+                        ...modalState,
+                        media: {
+                          ...modalState.media,
+                          height: { ...modalState.media.height, value },
+                        },
+                      })
+                    }
+                  />
+                  <SizeUnitPicker
+                    value={modalState.media.height.unit}
+                    onChange={(unit) =>
+                      setModalState({
+                        ...modalState,
+                        media: {
+                          ...modalState.media,
+                          height: { ...modalState.media.height, unit },
+                        },
+                      })
+                    }
+                  />
+                </div>
+              </div>
+            </div>
+            {modalState.media.type === MediaType.IMAGE && (
+              <>
+                <div className="border-t-[1px] border-[#5D726D]" />
+                <div className="flex w-full justify-between items-center">
+                  <div className="flex w-full flex-col">
+                    <span>Action when clicked:</span>
+                  </div>
+                  <div className="w-full flex">
+                    <ul className="flex w-full items-center justify-start gap-[10px] py-[10px]">
+                      {MediaClickActions.map((el) => (
+                        <li key={el.actionOnClick}>
+                          <div
+                            className={`flex justify-center items-center p-[2px] relative w-[35px] h-[35px] hover:bg-white hover:bg-opacity-25 rounded-md cursor-pointer text-transparent hover:text-white ${
+                              el.actionOnClick ===
+                              modalState.media.actionOnClick
+                                ? "border-white border-[2px] bg-white bg-opacity-25"
+                                : ""
+                            }`}
+                            onClick={() =>
+                              setModalState({
+                                ...modalState,
+                                media: {
+                                  ...modalState.media,
+                                  actionOnClick: el.actionOnClick,
+                                },
+                              })
+                            }
+                          >
+                            {el.icon}
+                            <div className="absolute text-[12px] font-normal whitespace-nowrap bottom-[-20px] left-[50%] -translate-x-1/2">
+                              {el.actionOnClick}
+                            </div>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      ),
     },
     [EditorMenuOptions.DISMISS]: {
       name: "Dismiss",
@@ -513,7 +920,7 @@ const ModalEditor: FC<ModalEditorProps> = ({ modalState, setModalState }) => {
         y: 40,
       }}
     >
-      <div className="fixed w-[360px] z-[999999999] h-[600px] rounded-xl shadow-lg bg-[#19362e]">
+      <div className="fixed w-[360px] z-[999999999] h-auto pb-[20px] rounded-xl shadow-lg bg-[#19362e]">
         <div className="w-full p-[4px] mb-[10px]">
           <div
             id="draggableHead"
@@ -533,7 +940,7 @@ const ModalEditor: FC<ModalEditorProps> = ({ modalState, setModalState }) => {
             </small>
           </div>
         </div>
-        <div className="px-[24px] h-full overflow-y-scroll overflow-x-hidden">
+        <div className="px-[24px] h-full overflow-y-scroll overflow-x-hidden max-h-[70vh]">
           {menuOptions[editorMode].layout}
         </div>
         <div></div>

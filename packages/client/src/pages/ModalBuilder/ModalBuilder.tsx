@@ -1,7 +1,19 @@
 import Header from "components/Header";
-import React, { useState } from "react";
+import React, { ReactNode, useState } from "react";
 import ModalEditor from "./ModalEditor";
 import ModalViewer from "./ModalViewer";
+import {
+  ModalBoldTextStyleIcon,
+  ModalItalicTextStyleIcon,
+  ModalH1TextStyleIcon,
+  ModalLinkTextStyleIcon,
+  ModalMediaPositionTopIcon,
+  ModalMediaPositionRightIcon,
+  ModalMediaPositionBotIcon,
+  ModalMediaPositionLeftIcon,
+  ModalMediaActionClickNone,
+  ModalMediaActionClickComplete,
+} from "./Icons/ModalBuilderIcons";
 
 export enum ModalPosition {
   TOP_LEFT = "Top-left",
@@ -82,20 +94,34 @@ export interface CommonMedia {
   hidden: boolean;
   position: MediaPosition;
   height: Size;
+  type: MediaType;
+}
+
+export enum GeneralClickActions {
+  NONE = "None",
+  COMPLETE = "Complete Tour",
+}
+
+export enum MediaClickAction {
+  NONE = "None",
+  COMPLETE = "Complete Tour",
 }
 
 export interface ImageMedia extends CommonMedia {
-  type: MediaType.IMAGE;
-  imageSrc: string;
+  imageSrc?: string | null;
+  actionOnClick: MediaClickAction;
   altText: string;
 }
 
-export interface VideoMedia extends CommonMedia {
-  type: MediaType.VIDEO;
-  videoUrl: string;
+export enum AdditionalClickOptions {
+  
 }
 
-export type Media = ImageMedia | VideoMedia;
+export interface VideoMedia extends CommonMedia {
+  videoUrl: string | null;
+}
+
+export type Media = ImageMedia & VideoMedia;
 
 export enum PrimaryButtonPosition {
   BOTTOM_LEFT = "Bottom left",
@@ -125,6 +151,13 @@ export enum DismissPosition {
   INSIDE_LEFT = "Inside left",
   CENTER_RIGHT = "Center right",
   CENTER_LEFT = "Center Left",
+}
+
+export enum StylesVariants {
+  BOLD = "BOLD",
+  ITALIC = "ITALIC",
+  H1 = "H1",
+  LINK = "LINK",
 }
 
 export interface TimedDismiss {
@@ -184,6 +217,52 @@ export const defaultImageBackground: ImageBackground = {
   imageSrc: "",
 };
 
+export const textStyles = [
+  StylesVariants.BOLD,
+  StylesVariants.ITALIC,
+  StylesVariants.H1,
+  StylesVariants.LINK,
+];
+
+export const textStylesIcons: Record<StylesVariants, ReactNode> = {
+  [StylesVariants.BOLD]: <ModalBoldTextStyleIcon />,
+  [StylesVariants.ITALIC]: <ModalItalicTextStyleIcon />,
+  [StylesVariants.H1]: <ModalH1TextStyleIcon />,
+  [StylesVariants.LINK]: <ModalLinkTextStyleIcon />,
+};
+
+export const mediaTypes = [MediaType.IMAGE, MediaType.VIDEO];
+
+export const MediaPositionMap = [
+  {
+    position: MediaPosition.TOP,
+    icon: <ModalMediaPositionTopIcon />,
+  },
+  {
+    position: MediaPosition.RIGHT,
+    icon: <ModalMediaPositionRightIcon />,
+  },
+  {
+    position: MediaPosition.BOTTOM,
+    icon: <ModalMediaPositionBotIcon />,
+  },
+  {
+    position: MediaPosition.LEFT,
+    icon: <ModalMediaPositionLeftIcon />,
+  },
+];
+
+export const MediaClickActions = [
+  {
+    actionOnClick: MediaClickAction.NONE,
+    icon: <ModalMediaActionClickNone />,
+  },
+  {
+    actionOnClick: MediaClickAction.COMPLETE,
+    icon: <ModalMediaActionClickComplete />,
+  },
+];
+
 const ModalBuilder = () => {
   const [modalState, setModalState] = useState<ModalState>({
     position: ModalPosition.CENTER,
@@ -217,8 +296,10 @@ We've made some changes to our styling and our navigation. We did this to speed 
       imageSrc:
         "https://fast.chmln-cdn.com/attachments/6139382e12c3e30011a475f5/original.svg",
       altText: "",
+      actionOnClick: MediaClickAction.NONE,
       height: { value: 60, unit: SizeUnit.PERCENTAGE },
       position: MediaPosition.TOP,
+      videoUrl: null,
     },
     primaryButton: {
       hidden: false,
