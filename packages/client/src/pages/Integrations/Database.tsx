@@ -64,7 +64,7 @@ const Database = () => {
     peopleIdentification: PeopleIdentification.BY_ID,
     connectionString: "",
     query: "",
-    dbType: DBType.DATABRICKS,
+    dbType: DBType.POSTGRESQL,
     databricksData: {},
   });
 
