@@ -23,6 +23,11 @@ import { Audience } from '../audiences/entities/audience.entity';
 import { Liquid } from 'liquidjs';
 import { cert, App, getApp, initializeApp } from 'firebase-admin/app';
 import { getMessaging } from 'firebase-admin/messaging';
+import { cleanTagsForSending } from '@/shared/utils/helpers';
+import {
+  ClickHouseEventProvider,
+  WebhooksService,
+} from '../webhooks/webhooks.service';
 
 @Injectable()
 export class TemplatesService {
@@ -38,6 +43,7 @@ export class TemplatesService {
     public templatesRepository: Repository<Template>,
     @InjectRepository(Audience)
     private audiencesRepository: Repository<Audience>,
+    private readonly webhooksService: WebhooksService,
     @Inject(SlackService) private slackService: SlackService,
     @InjectQueue('message') private readonly messageQueue: Queue,
     @InjectQueue('slack') private readonly slackQueue: Queue
@@ -105,6 +111,8 @@ export class TemplatesService {
     }
     const { _id, ownerId, audiences, ...tags } = customer.toObject();
 
+    const filteredTags = cleanTagsForSending(tags);
+
     const {
       mailgunAPIKey,
       sendingName,
@@ -149,7 +157,7 @@ export class TemplatesService {
           to: customer.phEmail ? customer.phEmail : customer.email,
           audienceId,
           customerId,
-          tags,
+          tags: filteredTags,
           subject: template.subject,
           text: template.text,
           templateId,
@@ -169,7 +177,10 @@ export class TemplatesService {
           args: {
             channel: customer.slackId,
             text: event?.payload ? event.payload : template.slackMessage,
-            tags,
+            tags: filteredTags,
+            templateId,
+            audienceId,
+            customerId,
           },
         });
         break;
@@ -180,7 +191,7 @@ export class TemplatesService {
           token: account.smsAuthToken,
           from: account.smsFrom,
           to: customer.phPhoneNumber || customer.phone,
-          tags,
+          tags: filteredTags,
           text: template.smsText,
           templateId: template.id,
           audienceId,
@@ -199,16 +210,34 @@ export class TemplatesService {
           this.logger.debug(
             `Starting PUSH sending to ${customer.phDeviceToken}`
           );
+          let textWithInsertedTags, titleWithInsertedTags;
+          try {
+            textWithInsertedTags = await this.tagEngine.parseAndRender(
+              template.pushText,
+              filteredTags || {},
+              { strictVariables: true }
+            );
 
-          const textWithInsertedTags = await this.tagEngine.parseAndRender(
-            template.pushText,
-            tags || {}
-          );
-
-          const titleWithInsertedTags = await this.tagEngine.parseAndRender(
-            template.pushTitle,
-            tags || {}
-          );
+            titleWithInsertedTags = await this.tagEngine.parseAndRender(
+              template.pushTitle,
+              filteredTags || {},
+              { strictVariables: true }
+            );
+          } catch (error) {
+            this.logger.warn("Merge tag can't be used, skipping sending...");
+            await this.webhooksService.insertClickHouseMessages([
+              {
+                event: 'error',
+                createdAt: new Date().toUTCString(),
+                eventProvider: ClickHouseEventProvider.FIREBASE,
+                messageId: '',
+                audienceId: job.data.args.audienceId,
+                customerId: job.data.args.customerId,
+                templateId: String(job.data.args.templateId),
+              },
+            ]);
+            return;
+          }
 
           this.logger.debug(
             `Finished rendering tags in PUSH to ${customer.phDeviceToken} with title: \`${titleWithInsertedTags}\` and text: \`${textWithInsertedTags}\``

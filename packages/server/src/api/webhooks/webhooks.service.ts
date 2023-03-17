@@ -29,6 +29,8 @@ export enum ClickHouseEventProvider {
   MAILGUN = 'mailgun',
   SENDGRID = 'sendgrid',
   TWILIO = 'twilio',
+  SLACK = 'slack',
+  FIREBASE = 'firebase',
 }
 
 export interface ClickHouseMessage {
