@@ -1,5 +1,5 @@
 import React, { FC } from "react";
-import { SizeUnit } from "./ModalBuilder";
+import { SizeUnit } from "./types";
 
 interface SizeUnitPickerProps {
   value: SizeUnit;

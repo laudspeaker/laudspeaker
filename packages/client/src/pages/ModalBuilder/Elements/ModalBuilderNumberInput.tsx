@@ -1,6 +1,6 @@
 import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/outline";
 import React, { FC, useEffect, useState } from "react";
-import { SizeUnit } from "../ModalBuilder";
+import { SizeUnit } from "../types";
 
 interface ModalBuilderNumberInputProps {
   name: string;
