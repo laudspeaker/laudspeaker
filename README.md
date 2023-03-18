@@ -47,7 +47,7 @@ NB: Create environment group with name "laudspeaker"
 
 ### Want help deploying?
 
-<a href="https://cal.com/laudspeaker-mahamad/20min-set-up" target="_blank"><img src="https://user-images.githubusercontent.com/7728266/226135023-e484e408-4434-4282-ae66-5c224fb65e20.png" height=150 /> </a>
+<a href="https://cal.com/laudspeaker-mahamad/20min-set-up" target="_blank"><img src="https://user-images.githubusercontent.com/7728266/226135023-e484e408-4434-4282-ae66-5c224fb65e20.png" /> </a>
 
 **Book time with the team** <a href="https://cal.com/laudspeaker-mahamad/20min-set-up">**here**</a> 
 
