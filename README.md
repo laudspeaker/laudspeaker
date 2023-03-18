@@ -47,7 +47,7 @@ NB: Create environment group with name "laudspeaker"
 
 ### Want help deploying?
 
-**Book time with the team ** <a href="https://cal.com/laudspeaker-mahamad/20min-set-up">**here**</a> 
+**Book time with the team** <a href="https://cal.com/laudspeaker-mahamad/20min-set-up">**here**</a> 
 
 ### Setting up with docker:
 
