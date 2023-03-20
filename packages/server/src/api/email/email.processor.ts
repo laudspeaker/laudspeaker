@@ -49,17 +49,35 @@ export class MessageProcessor {
     const mg = mailgun.client({ username: 'api', key: job.data.key });
 
     let textWithInsertedTags, subjectWithInsertedTags;
-    if (job.data.text)
-      textWithInsertedTags = await this.tagEngine.parseAndRender(
-        job.data.text,
-        job.data.tags || {}
-      );
+    try {
+      if (job.data.text)
+        textWithInsertedTags = await this.tagEngine.parseAndRender(
+          job.data.text,
+          job.data.tags || {},
+          { strictVariables: true }
+        );
 
-    if (job.data.subject)
-      subjectWithInsertedTags = await this.tagEngine.parseAndRender(
-        job.data.subject,
-        job.data.tags || {}
-      );
+      if (job.data.subject)
+        subjectWithInsertedTags = await this.tagEngine.parseAndRender(
+          job.data.subject,
+          job.data.tags || {},
+          { strictVariables: true }
+        );
+    } catch (error) {
+      this.logger.warn("Merge tag can't be used, skipping sending...");
+      await this.webhooksService.insertClickHouseMessages([
+        {
+          event: 'error',
+          createdAt: new Date().toUTCString(),
+          eventProvider: job.data.eventProvider,
+          messageId: '',
+          audienceId: job.data.audienceId,
+          customerId: job.data.customerId,
+          templateId: String(job.data.templateId),
+        },
+      ]);
+      return;
+    }
 
     try {
       let msg: any;
@@ -158,11 +176,28 @@ export class MessageProcessor {
       );
       let textWithInsertedTags: string | undefined;
 
-      if (job.data.text) {
-        textWithInsertedTags = await this.tagEngine.parseAndRender(
-          job.data.text,
-          job.data.tags || {}
-        );
+      try {
+        if (job.data.text) {
+          textWithInsertedTags = await this.tagEngine.parseAndRender(
+            job.data.text,
+            job.data.tags || {},
+            { strictVariables: true }
+          );
+        }
+      } catch (error) {
+        this.logger.warn("Merge tag can't be used, skipping sending...");
+        await this.webhooksService.insertClickHouseMessages([
+          {
+            event: 'error',
+            createdAt: new Date().toUTCString(),
+            eventProvider: ClickHouseEventProvider.TWILIO,
+            messageId: '',
+            audienceId: job.data.audienceId,
+            customerId: job.data.customerId,
+            templateId: String(job.data.templateId),
+          },
+        ]);
+        return;
       }
 
       this.logger.debug(

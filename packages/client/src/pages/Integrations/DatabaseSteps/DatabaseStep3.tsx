@@ -22,9 +22,9 @@ const memoryOptions: Record<
   databricks: {
     id: DBType.DATABRICKS,
     name: "Databricks",
-    inStock: true,
+    inStock: false,
   },
-  mysql: { id: DBType.MYSQL, name: "MySQL", inStock: true },
+  mysql: { id: DBType.MYSQL, name: "MySQL", inStock: false },
   // sqlServer: { id: "sqlServer", name: "SQL Server", inStock: false },
 };
 
