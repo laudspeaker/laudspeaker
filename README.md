@@ -27,7 +27,7 @@
 - **Easy WYSIWYG Template builder** Build nice emails and more with our template builder
 - **1-Click Deploy** to Render
 - **Database / datalake / data warehouse import** ingest user data from your databases
-- 🔜 **Build and save segments of users**
+- **Build and save segments of users**
 - 🔜 **Trigger journeys from segment/rudderstack/mixpanel events**
 - 🔜 **Comprehensive journey testing** - simulate user actions, differents dates, and times and test and debug messages before you start journeys
 
