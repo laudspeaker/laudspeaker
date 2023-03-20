@@ -62,7 +62,7 @@ Here's a more detailed breakdown of the state of the product, and what parity me
     </tr>
     <tr>
       <td align="left" valign="middle">
-        🔜 Segmentation (User Attributes)
+        ✔ Segmentation (User Attributes)
       </td>
       <td align="left" valign="middle">
         🔜️ Segmentation (User Attribute Change History)
