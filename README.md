@@ -318,7 +318,7 @@ We are focused on the first two buckets of work right now (reaching feature pari
     </tr>
     <tr>
       <td align="left" valign="middle">
-          
+          🔜️
       </td>
       <td align="left" valign="middle">
           🔜️  Push (via APNS)
