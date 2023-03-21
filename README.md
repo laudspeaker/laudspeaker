@@ -31,7 +31,7 @@ In terms of how we think about product we categorise our work into 4 major bucke
       </td>
       <td align="left" valign="middle">
         <a href="https://laudspeaker.com/docs/guides/product-manual/Journey-Builder">
-          ✔️ Triggers (Time Delays)
+          ✔️  Triggers (Time Delays)
         </a>
       </td>
       <td align="left" valign="middle">
@@ -40,10 +40,10 @@ In terms of how we think about product we categorise our work into 4 major bucke
     </tr>
     <tr>
       <td align="left" valign="middle">
-         ✔ Triggers (Looping)
+         🔜 Triggers (Message Events)
       </td>
       <td align="left" valign="middle">
-         ✔ 
+          ✔  Triggers (Looping)
       </td>
       <td align="left" valign="middle">
          🔜 
@@ -54,7 +54,7 @@ In terms of how we think about product we categorise our work into 4 major bucke
           🔜️ Branching ( True / False) 
       </td>
       <td align="left" valign="middle">
-          ✔️ 
+          ✔️ Branching ( Multi Branching)
       </td>
       <td align="left" valign="middle">
           🔜️ Branching ( Random Branching)
@@ -95,7 +95,7 @@ In terms of how we think about product we categorise our work into 4 major bucke
     </tr>
     <tr>
       <td align="left" valign="middle">
-         ✔️ Push (via Firebase Push)
+         🔜 Journey Simulator
       </td>
       <td align="left" valign="middle">
           🔜 Journeys as code
@@ -115,29 +115,29 @@ In terms of how we think about product we categorise our work into 4 major bucke
   <tbody>
     <tr>
       <td align="left" valign="middle">
-         🔜️ In App (web modals)
+          ✔️ Email (via  Mailgun)
       </td>
       <td align="left" valign="middle">
-         🔜️ In App (banners)
+          ✔️  Email (via  Sendgrid)
       </td>
             <td align="left" valign="middle">
-          🔜️ Email (via  Smtp)
+          🔜️  Email (via  Smtp)
       </td>
     </tr>
     <tr>
       <td align="left" valign="middle">
-         
+          ✔️ SMS (via Twilio)
       </td>
       <td align="left" valign="middle">
-          🔜️ Triggers (Message Events)
+          🔜️
       </td>
       <td align="left" valign="middle">
-          🔜️ Branching ( Multi Branching)
+          🔜️
       </td>
     </tr>
     <tr>
       <td align="left" valign="middle">
-         🔜️ Branching ( True / False) 
+          ✔️  Push (via Firebase Push)
       </td>
       <td align="left" valign="middle">
           🔜️  Push (via APNS)
@@ -149,13 +149,13 @@ In terms of how we think about product we categorise our work into 4 major bucke
     </tr>
     <tr>
       <td align="left" valign="middle">
-          Push (via APNS)
+          🔜️ In App (web modals)
       </td>
       <td align="left" valign="middle">
-          Push (via APNS)
+          🔜️  In App (banners)
       </td>
       <td align="left" valign="middle">
-          Push (via APNS)
+          🔜️  In App (content cards
       </td>
     </tr>
     <tr>
@@ -196,7 +196,7 @@ In terms of how we think about product we categorise our work into 4 major bucke
           🔜️ Customer Data Platform (Rudderstack)
       </td>
       <td align="left" valign="middle">
-          🔜️ In App (content cards
+          🔜️
       </td>
     </tr>
     <tr>
@@ -216,7 +216,7 @@ In terms of how we think about product we categorise our work into 4 major bucke
           ✔️ Database (Postgres)
       </td>
       <td align="left" valign="middle">
-        Journey Simulator
+        And more...
       </td>
       <td align="left" valign="middle">
         And Even more...
