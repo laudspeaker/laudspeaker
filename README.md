@@ -10,6 +10,137 @@ In terms of how we think about product we categorise our work into 4 major bucke
 - Making big bets
 - Building a scalable system
 
+
+## Roadmap
+
+<table>
+<tr>
+  <th>Q2</th>
+  <th>Q3</th>
+</tr>
+<tr>
+  <td>
+
+<table>
+  <tbody>
+    <tr>
+      <td align="left" valign="middle">
+         🔜 Triggers (Message Events)
+      </td>
+      <td align="left" valign="middle">
+          ✔  Triggers (Looping)
+      </td>
+      <td align="left" valign="middle">
+         🔜 
+      </td>
+    </tr>
+    <tr>
+      <td align="left" valign="middle">
+          🔜️ Branching ( True / False) 
+      </td>
+      <td align="left" valign="middle">
+          ✔️ Branching ( Multi Branching)
+      </td>
+      <td align="left" valign="middle">
+          🔜️ Branching ( Random Branching)
+      </td>
+    </tr>
+    <tr>
+      <td align="left" valign="middle">
+        ✔ Segmentation (User Attributes)
+      </td>
+      <td align="left" valign="middle">
+        🔜️ Segmentation (User Attribute Change History)
+      </td>
+      <td align="left" valign="middle">
+        🔜 Segmentation (Event History)
+      </td>
+    </tr>
+    <tr>
+      <td align="left" valign="middle">
+        ✔ Metrics (email open rate)
+      </td>
+      <td align="left" valign="middle">
+        ✔ Metrics (email click through rate)
+      </td>
+      <td align="left" valign="middle">
+        🔜 Metrics (step to step conversion)
+      </td>
+    </tr>
+    <tr>
+      <td align="left" valign="middle">
+         🔜 A/B Tests v1
+      </td>
+      <td align="left" valign="middle">
+          ✔ Personalization (Liquid)
+      </td>
+      <td align="left" valign="middle">
+         🔜 Webhooks
+      </td>
+    </tr>
+    
+  </tbody>
+</table>
+
+  </td>
+<td>
+
+<table>
+  <tbody>
+    <tr>
+      <td align="left" valign="middle">
+          ✔️ SMS (via Twilio)
+      </td>
+      <td align="left" valign="middle">
+          🔜️  Email (via  Smtp)
+      </td>
+      <td align="left" valign="middle">
+          ✔️  Push (via Firebase Push)
+      </td>
+    </tr>
+    <tr>
+      <td align="left" valign="middle">
+          🔜️
+      </td>
+      <td align="left" valign="middle">
+          🔜️  Push (via APNS)
+      </td>
+      <td align="left" valign="middle">
+          🔜️  Push ( React Native)
+      </td>
+    </tr>
+    <tr>
+      <td align="left" valign="middle">
+          🔜️ In App (web modals)
+      </td>
+      <td align="left" valign="middle">
+          🔜️  In App (banners)
+      </td>
+      <td align="left" valign="middle">
+          🔜️  In App (content cards
+      </td>
+    </tr>
+    <tr>
+      <td align="left" valign="middle">
+          🔜  Webhook
+      </td>
+      <td align="left" valign="middle">
+        And more...
+      </td>
+      <td align="left" valign="middle">
+        And Even more...
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+</td>
+<td>
+
+</td>       
+</tr>
+</table>
+
 ## Current State of the Product
 
 <table>
@@ -229,135 +360,6 @@ In terms of how we think about product we categorise our work into 4 major bucke
 </tr>
 </table>
 
-## Roadmap
-
-<table>
-<tr>
-  <th>Q2</th>
-  <th>Q3</th>
-</tr>
-<tr>
-  <td>
-
-<table>
-  <tbody>
-    <tr>
-      <td align="left" valign="middle">
-         🔜 Triggers (Message Events)
-      </td>
-      <td align="left" valign="middle">
-          ✔  Triggers (Looping)
-      </td>
-      <td align="left" valign="middle">
-         🔜 
-      </td>
-    </tr>
-    <tr>
-      <td align="left" valign="middle">
-          🔜️ Branching ( True / False) 
-      </td>
-      <td align="left" valign="middle">
-          ✔️ Branching ( Multi Branching)
-      </td>
-      <td align="left" valign="middle">
-          🔜️ Branching ( Random Branching)
-      </td>
-    </tr>
-    <tr>
-      <td align="left" valign="middle">
-        ✔ Segmentation (User Attributes)
-      </td>
-      <td align="left" valign="middle">
-        🔜️ Segmentation (User Attribute Change History)
-      </td>
-      <td align="left" valign="middle">
-        🔜 Segmentation (Event History)
-      </td>
-    </tr>
-    <tr>
-      <td align="left" valign="middle">
-        ✔ Metrics (email open rate)
-      </td>
-      <td align="left" valign="middle">
-        ✔ Metrics (email click through rate)
-      </td>
-      <td align="left" valign="middle">
-        🔜 Metrics (step to step conversion)
-      </td>
-    </tr>
-    <tr>
-      <td align="left" valign="middle">
-         🔜 A/B Tests v1
-      </td>
-      <td align="left" valign="middle">
-          ✔ Personalization (Liquid)
-      </td>
-      <td align="left" valign="middle">
-         🔜 Webhooks
-      </td>
-    </tr>
-    
-  </tbody>
-</table>
-
-  </td>
-<td>
-
-<table>
-  <tbody>
-    <tr>
-      <td align="left" valign="middle">
-          ✔️ SMS (via Twilio)
-      </td>
-      <td align="left" valign="middle">
-          🔜️  Email (via  Smtp)
-      </td>
-      <td align="left" valign="middle">
-          ✔️  Push (via Firebase Push)
-      </td>
-    </tr>
-    <tr>
-      <td align="left" valign="middle">
-          🔜️
-      </td>
-      <td align="left" valign="middle">
-          🔜️  Push (via APNS)
-      </td>
-      <td align="left" valign="middle">
-          🔜️  Push ( React Native)
-      </td>
-    </tr>
-    <tr>
-      <td align="left" valign="middle">
-          🔜️ In App (web modals)
-      </td>
-      <td align="left" valign="middle">
-          🔜️  In App (banners)
-      </td>
-      <td align="left" valign="middle">
-          🔜️  In App (content cards
-      </td>
-    </tr>
-    <tr>
-      <td align="left" valign="middle">
-          🔜  Webhook
-      </td>
-      <td align="left" valign="middle">
-        And more...
-      </td>
-      <td align="left" valign="middle">
-        And Even more...
-      </td>
-    </tr>
-  </tbody>
-</table>
-
-</td>
-<td>
-
-</td>       
-</tr>
-</table>
 
 ## 
 
