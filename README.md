@@ -10,7 +10,7 @@ In terms of how we think about product we categorise our work into 4 major bucke
 - Making big bets
 - Building a scalable system
 
-Here's a more detailed breakdown of the state of the product, and what parity means.
+### Current State of the Product
 
 <table>
 <tr>
@@ -230,6 +230,8 @@ Here's a more detailed breakdown of the state of the product, and what parity me
 </table>
 
 We are focused on the first two buckets of work right now (reaching feature parity, and responding to our customers), and to achieve them we roughly need to build everything in the "soon" category quickly and well.
+
+### Roadmap
 
 <table>
 <tr>
