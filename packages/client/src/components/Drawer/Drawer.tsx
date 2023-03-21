@@ -169,7 +169,7 @@ export default function ResponsiveDrawer() {
           <Transition.Root show={!!isNavOpened} as={Fragment}>
             <Dialog
               as="div"
-              className="relative z-[1000] lg:hidden"
+              className="relative z-[2000] lg:hidden"
               onClose={handleCloseClick}
             >
               <Transition.Child
@@ -184,7 +184,7 @@ export default function ResponsiveDrawer() {
                 <div className="fixed inset-0 bg-gray-600 bg-opacity-75" />
               </Transition.Child>
 
-              <div className="fixed inset-0 z-[1000] flex">
+              <div className="fixed inset-0 z-[2000] flex">
                 <Transition.Child
                   as={Fragment}
                   enter="transition ease-in-out duration-300 transform"
