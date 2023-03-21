@@ -16,6 +16,8 @@ import ModalBuilderColorPicker from "./Elements/ModalBuilderColorPicker";
 import AdditionalActionOption from "./AdditionalActionOption";
 import { EditorMenuOptions } from "./ModalEditorMainMenu";
 import { IAdditionalActionData } from "./ModalEditor";
+import { useEffect } from "react";
+import RemoveComponentButton from "./Elements/RemoveComponentButton";
 
 interface IModalEditorPrimaryMenuProps {
   modalState: ModalState;
@@ -26,6 +28,7 @@ interface IModalEditorPrimaryMenuProps {
   ) => () => void;
   currentMainMode: EditorMenuOptions;
   actionData: IAdditionalActionData;
+  returnBack: () => void;
 }
 
 export const mediaDismissTypes = [DismissType.CROSS, DismissType.TEXT];
@@ -59,7 +62,15 @@ const ModalEditorPrimaryMenu = ({
   actionData,
   currentMainMode,
   onOptionPick,
+  returnBack,
 }: IModalEditorPrimaryMenuProps) => {
+  useEffect(() => {
+    setModalState({
+      ...modalState,
+      primaryButton: { ...modalState.primaryButton, hidden: false },
+    });
+  }, []);
+
   return (
     <div className="text-white flex flex-col text-[14px] font-normal">
       <div className="flex items-center justify-between mb-[10px]">
@@ -210,6 +221,21 @@ const ModalEditorPrimaryMenu = ({
         currentMainMode={currentMainMode}
         onOptionPick={onOptionPick}
       />
+
+      <RemoveComponentButton
+        onClick={() => {
+          setModalState({
+            ...modalState,
+            primaryButton: {
+              ...modalState.primaryButton,
+              hidden: true,
+            },
+          });
+          returnBack();
+        }}
+      >
+        Remove primary button
+      </RemoveComponentButton>
     </div>
   );
 };

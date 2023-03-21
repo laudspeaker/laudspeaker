@@ -169,6 +169,7 @@ export interface TimedDismiss {
 }
 
 export interface CommonDismiss {
+  hidden: boolean;
   position: DismissPosition;
   color: Color;
   timedDismiss: TimedDismiss;

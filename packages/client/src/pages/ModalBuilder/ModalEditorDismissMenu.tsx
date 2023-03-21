@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { ReactNode, useEffect } from "react";
 import ModalBuilderNumberInput from "./Elements/ModalBuilderNumberInput";
 import { ModalState } from "./ModalBuilder";
 import {
@@ -18,10 +18,12 @@ import {
 } from "./types";
 import ModalBuilderColorPicker from "./Elements/ModalBuilderColorPicker";
 import ReactSlider from "react-slider";
+import RemoveComponentButton from "./Elements/RemoveComponentButton";
 
 interface IModalEditorDismissMenuProps {
   modalState: ModalState;
   setModalState: (modalState: ModalState) => void;
+  returnBack: () => void;
 }
 
 export const modalPositions = [
@@ -60,7 +62,15 @@ const timedDismissList = [
 const ModalEditorDismissMenu = ({
   modalState,
   setModalState,
+  returnBack,
 }: IModalEditorDismissMenuProps) => {
+  useEffect(() => {
+    setModalState({
+      ...modalState,
+      dismiss: { ...modalState.dismiss, hidden: false },
+    });
+  }, []);
+
   return (
     <div className="text-white flex flex-col text-[14px] font-normal">
       <div>Type:</div>
@@ -333,6 +343,20 @@ const ModalEditorDismissMenu = ({
           )}
         </>
       )}
+      <RemoveComponentButton
+        onClick={() => {
+          setModalState({
+            ...modalState,
+            dismiss: {
+              ...modalState.dismiss,
+              hidden: true,
+            },
+          });
+          returnBack();
+        }}
+      >
+        Remove dismiss
+      </RemoveComponentButton>
     </div>
   );
 };

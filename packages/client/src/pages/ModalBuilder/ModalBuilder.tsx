@@ -182,6 +182,7 @@ We've made some changes to our styling and our navigation. We did this to speed 
       additionalClick: JSON.parse(JSON.stringify(defaultAdditionalClicksObj)),
     },
     dismiss: {
+      hidden: true,
       type: DismissType.CROSS,
       crossSize: { value: 14, unit: SizeUnit.PIXEL },
       color: "#FFFFFF",

@@ -12,6 +12,8 @@ import { MediaType, mediaTypes, SizeUnit, SubMenuOptions } from "./types";
 import { EditorMenuOptions } from "./ModalEditorMainMenu";
 import { IAdditionalActionData } from "./ModalEditor";
 import AdditionalActionOption from "./AdditionalActionOption";
+import { useEffect } from "react";
+import RemoveComponentButton from "./Elements/RemoveComponentButton";
 
 interface IModalEditorMediaMenuProps {
   modalState: ModalState;
@@ -22,6 +24,7 @@ interface IModalEditorMediaMenuProps {
   ) => () => void;
   currentMainMode: EditorMenuOptions;
   actionData: IAdditionalActionData;
+  returnBack: () => void;
 }
 
 const ModalEditorMediaMenu = ({
@@ -30,7 +33,15 @@ const ModalEditorMediaMenu = ({
   onOptionPick,
   actionData,
   currentMainMode,
+  returnBack,
 }: IModalEditorMediaMenuProps) => {
+  useEffect(() => {
+    setModalState({
+      ...modalState,
+      media: { ...modalState.media, hidden: false },
+    });
+  }, []);
+
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files?.length) {
       return;
@@ -276,6 +287,20 @@ const ModalEditorMediaMenu = ({
           </>
         )}
       </div>
+      <RemoveComponentButton
+        onClick={() => {
+          setModalState({
+            ...modalState,
+            media: {
+              ...modalState.media,
+              hidden: true,
+            },
+          });
+          returnBack();
+        }}
+      >
+        Remove media
+      </RemoveComponentButton>
     </div>
   );
 };

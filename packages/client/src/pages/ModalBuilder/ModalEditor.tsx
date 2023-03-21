@@ -6,7 +6,7 @@ import AlignLeftSVG from "@heroicons/react/20/solid/Bars3BottomLeftIcon";
 import AlignRightSVG from "@heroicons/react/20/solid/Bars3BottomRightIcon";
 import Draggable from "react-draggable";
 import ModalEditorMainMenu, { EditorMenuOptions } from "./ModalEditorMainMenu";
-import ModalEditorTitleMenu from "./ModalEditorTitileMenu";
+import ModalEditorTitleMenu from "./ModalEditorTitleMenu";
 import ModalEditorBodyMenu from "./ModalEditorBodyMenu";
 import ModalEditorCanvasMenu from "./ModalEditorCanvasMenu";
 import ModalPositionBodyMenu from "./ModalEditorPositionMenu";
@@ -21,6 +21,7 @@ import ModalEditorDismissMenu from "./ModalEditorDismissMenu";
 import ModalEditorPrimaryMenu from "./ModalEditorPrimaryMenu";
 import ModalEditorAdditionalClicks from "./ModalEditorAdditionalClicks";
 import ModalEditorOpenURL from "./ModalEditorOpenURL";
+import { Scrollbars } from "react-custom-scrollbars";
 
 interface ModalEditorProps {
   modalState: ModalState;
@@ -109,7 +110,12 @@ const ModalEditor: FC<ModalEditorProps> = ({ modalState, setModalState }) => {
   const menuOptions: { [key: string]: IMenuOption } = {
     [EditorMenuOptions.MAIN]: {
       name: "Menu",
-      layout: <ModalEditorMainMenu onOptionPick={handleEditorModeSet} />,
+      layout: (
+        <ModalEditorMainMenu
+          modalState={modalState}
+          onOptionPick={handleEditorModeSet}
+        />
+      ),
     },
     [EditorMenuOptions.TITLE]: {
       name: "Title",
@@ -118,6 +124,7 @@ const ModalEditor: FC<ModalEditorProps> = ({ modalState, setModalState }) => {
         <ModalEditorTitleMenu
           modalState={modalState}
           setModalState={setModalState}
+          returnBack={handleBackClick}
         />
       ),
     },
@@ -128,6 +135,7 @@ const ModalEditor: FC<ModalEditorProps> = ({ modalState, setModalState }) => {
         <ModalEditorBodyMenu
           modalState={modalState}
           setModalState={setModalState}
+          returnBack={handleBackClick}
         />
       ),
     },
@@ -161,6 +169,7 @@ const ModalEditor: FC<ModalEditorProps> = ({ modalState, setModalState }) => {
           onOptionPick={handleEditorModeSet}
           actionData={actionData}
           currentMainMode={currentMainMode}
+          returnBack={handleBackClick}
         />
       ),
     },
@@ -171,6 +180,7 @@ const ModalEditor: FC<ModalEditorProps> = ({ modalState, setModalState }) => {
         <ModalEditorDismissMenu
           modalState={modalState}
           setModalState={setModalState}
+          returnBack={handleBackClick}
         />
       ),
     },
@@ -184,6 +194,7 @@ const ModalEditor: FC<ModalEditorProps> = ({ modalState, setModalState }) => {
           onOptionPick={handleEditorModeSet}
           actionData={actionData}
           currentMainMode={currentMainMode}
+          returnBack={handleBackClick}
         />
       ),
     },
@@ -231,7 +242,7 @@ const ModalEditor: FC<ModalEditorProps> = ({ modalState, setModalState }) => {
         y: 40,
       }}
     >
-      <div className="fixed w-[360px] z-[999999999] max-h-[80vh]  pb-[20px] rounded-xl shadow-lg bg-[#19362e]">
+      <div className="fixed w-[360px] z-[999999999] max-h-[80vh] pb-[20px] rounded-xl shadow-lg bg-[#19362e]">
         <div className="w-full p-[4px] mb-[10px]">
           <div
             id="draggableHead"
@@ -251,9 +262,16 @@ const ModalEditor: FC<ModalEditorProps> = ({ modalState, setModalState }) => {
             </small>
           </div>
         </div>
-        <div className="px-[24px] h-full overflow-y-scroll overflow-x-hidden">
-          {menuOptions[editorMode]?.layout}
-        </div>
+        <Scrollbars
+          className="w-full min-h-[400px] max-h-[400px]"
+          renderThumbVertical={(props) => (
+            <div {...props} className="!bg-blue-gray-300/20" />
+          )}
+        >
+          <div className="px-[24px] overflow-x-hidden">
+            {menuOptions[editorMode]?.layout}
+          </div>
+        </Scrollbars>
         <div></div>
       </div>
     </Draggable>

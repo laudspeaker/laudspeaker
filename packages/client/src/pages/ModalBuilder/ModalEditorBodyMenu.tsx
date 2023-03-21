@@ -1,5 +1,7 @@
+import { useEffect } from "react";
 import ModalBuilderColorPicker from "./Elements/ModalBuilderColorPicker";
 import ModalBuilderNumberInput from "./Elements/ModalBuilderNumberInput";
+import RemoveComponentButton from "./Elements/RemoveComponentButton";
 import { ModalState, textStyles, textStylesIcons } from "./ModalBuilder";
 import { textAlignment, textAlignmentIcons } from "./ModalEditor";
 import { SizeUnit } from "./types";
@@ -7,12 +9,21 @@ import { SizeUnit } from "./types";
 interface IModalEditorBodyMenuProps {
   modalState: ModalState;
   setModalState: (modalState: ModalState) => void;
+  returnBack: () => void;
 }
 
 const ModalEditorBodyMenu = ({
   modalState,
   setModalState,
+  returnBack,
 }: IModalEditorBodyMenuProps) => {
+  useEffect(() => {
+    setModalState({
+      ...modalState,
+      body: { ...modalState.body, hidden: false },
+    });
+  }, []);
+
   return (
     <div className="text-white text-[14px] font-normal">
       <div className="flex items-center justify-between pb-[4px] pt-[20px]">
@@ -116,6 +127,20 @@ const ModalEditorBodyMenu = ({
           />
         </div>
       </div>
+      <RemoveComponentButton
+        onClick={() => {
+          setModalState({
+            ...modalState,
+            body: {
+              ...modalState.body,
+              hidden: true,
+            },
+          });
+          returnBack();
+        }}
+      >
+        Remove body
+      </RemoveComponentButton>
     </div>
   );
 };
