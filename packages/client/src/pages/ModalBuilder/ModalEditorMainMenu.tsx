@@ -20,7 +20,7 @@ export enum EditorMenuOptions {
 }
 
 interface IMainMenuProps {
-  onOptionPick: (mode: EditorMenuOptions) => () => void;
+  onOptionPick: (mode: EditorMenuOptions, isNewTab: boolean) => () => void;
 }
 
 const editorMenu = [
@@ -84,7 +84,7 @@ const ModalEditorMainMenu = ({ onOptionPick }: IMainMenuProps) => {
                   customClasses={`relative w-full flex text-[12px] !border-[2px] !border-[#2f4a43] !outline-none !ring-transparent !focus:!ring-transparent !font-normal !rounded-[8px] !p-[6px] flex align-center whitespace-nowrap overflow-hidden ${
                     false ? "!bg-[#19362e]" : "!bg-[#2f4a43]" //TODO: add style change when option added to layout
                   }`}
-                  onClick={onOptionPick(el.option)}
+                  onClick={onOptionPick(el.option, true)}
                 >
                   <span className="min-w-[16px] max-w-[16px] block mr-[4px]">
                     {el.icon}

@@ -6,12 +6,26 @@ import {
   ModalPrimaryPositionBottomRight,
   ModalPrimaryPositionCenterRight,
 } from "./Icons/ModalBuilderIcons";
-import { DismissType, PrimaryButtonPosition, SizeUnit } from "./types";
+import {
+  DismissType,
+  PrimaryButtonPosition,
+  SizeUnit,
+  SubMenuOptions,
+} from "./types";
 import ModalBuilderColorPicker from "./Elements/ModalBuilderColorPicker";
+import AdditionalActionOption from "./AdditionalActionOption";
+import { EditorMenuOptions } from "./ModalEditorMainMenu";
+import { IAdditionalActionData } from "./ModalEditor";
 
 interface IModalEditorPrimaryMenuProps {
   modalState: ModalState;
   setModalState: (modalState: ModalState) => void;
+  onOptionPick: (
+    mode: EditorMenuOptions | SubMenuOptions,
+    setPrevious?: boolean
+  ) => () => void;
+  currentMainMode: EditorMenuOptions;
+  actionData: IAdditionalActionData;
 }
 
 export const mediaDismissTypes = [DismissType.CROSS, DismissType.TEXT];
@@ -39,22 +53,12 @@ export const primaryPostions = [
   },
 ];
 
-const timedDismissList = [
-  {
-    name: "On",
-    displayTimerText: "Yes",
-    value: true,
-  },
-  {
-    name: "Off",
-    displayTimerText: "No",
-    value: false,
-  },
-];
-
 const ModalEditorPrimaryMenu = ({
   modalState,
   setModalState,
+  actionData,
+  currentMainMode,
+  onOptionPick,
 }: IModalEditorPrimaryMenuProps) => {
   return (
     <div className="text-white flex flex-col text-[14px] font-normal">
@@ -201,6 +205,11 @@ const ModalEditorPrimaryMenu = ({
         </div>
       </div>
       <div className="border-t-[1px] border-[#5D726D] my-[10px]" />
+      <AdditionalActionOption
+        actionData={actionData}
+        currentMainMode={currentMainMode}
+        onOptionPick={onOptionPick}
+      />
     </div>
   );
 };

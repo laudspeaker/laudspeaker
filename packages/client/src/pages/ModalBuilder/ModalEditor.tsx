@@ -33,6 +33,8 @@ interface IMenuOption {
   layout: React.ReactNode;
 }
 
+export type PreviousModes = (EditorMenuOptions | SubMenuOptions)[] | [];
+
 export const textAlignment = [
   Alignment.LEFT,
   Alignment.CENTER,
@@ -45,7 +47,7 @@ export const textAlignmentIcons: Record<Alignment, ReactNode> = {
   [Alignment.RIGHT]: <AlignRightSVG className="!text-white" />,
 };
 
-export interface IActionOpenURLData {
+export interface IAdditionalActionData {
   [key: string]: {
     [AdditionalClickOptions.OPENURL]: IAdditionalClick;
     [AdditionalClickOptions.NOACTION]: IAdditionalClick;
@@ -56,22 +58,31 @@ const ModalEditor: FC<ModalEditorProps> = ({ modalState, setModalState }) => {
   const [editorMode, setEditorMode] = useState<
     EditorMenuOptions | SubMenuOptions
   >(EditorMenuOptions.MAIN);
-  const [previousMode, setPreviousMode] = useState<
-    EditorMenuOptions | SubMenuOptions | null
-  >(null);
+  const [previousModes, setPreviousModes] = useState<PreviousModes>([
+    EditorMenuOptions.MAIN,
+  ]);
   const [currentMainMode, setCurrentMainMode] = useState<EditorMenuOptions>(
     EditorMenuOptions.MAIN
   );
 
-  const actionData: IActionOpenURLData = {
+  const actionData: IAdditionalActionData = {
     [EditorMenuOptions.MEDIA]: {
       OPENURL: modalState.media.additionalClick.OPENURL,
       NOACTION: modalState.media.additionalClick.NOACTION,
     },
+    [EditorMenuOptions.PRIMARY]: {
+      OPENURL: modalState.primaryButton.additionalClick.OPENURL,
+      NOACTION: modalState.primaryButton.additionalClick.NOACTION,
+    },
   };
 
+  const handleBackClick = () => {
+    const prev = [...previousModes];
+    prev.pop();
+    setPreviousModes(prev);
+    setEditorMode(prev[prev.length - 1]);
+  };
 
-  // TODO: fix routing between tabs for no action as example
   const handleEditorModeSet = (
     mode: EditorMenuOptions | SubMenuOptions,
     setPrevious = false
@@ -85,14 +96,12 @@ const ModalEditor: FC<ModalEditorProps> = ({ modalState, setModalState }) => {
       //   });
 
       if (
-        Object.values(EditorMenuOptions).some((el) => el === editorMode) &&
+        Object.values(EditorMenuOptions).some((el) => el === mode) &&
         mode !== EditorMenuOptions.MAIN
       )
-        setCurrentMainMode(editorMode as EditorMenuOptions);
+        setCurrentMainMode(mode as EditorMenuOptions);
 
-      if (setPrevious) setPreviousMode(editorMode);
-      else if (editorMode !== SubMenuOptions.OpenUrl) setPreviousMode(null);
-
+      if (setPrevious) setPreviousModes((prev) => [...prev, mode]);
       setEditorMode(mode);
     };
   };
@@ -150,6 +159,8 @@ const ModalEditor: FC<ModalEditorProps> = ({ modalState, setModalState }) => {
           modalState={modalState}
           setModalState={setModalState}
           onOptionPick={handleEditorModeSet}
+          actionData={actionData}
+          currentMainMode={currentMainMode}
         />
       ),
     },
@@ -170,6 +181,9 @@ const ModalEditor: FC<ModalEditorProps> = ({ modalState, setModalState }) => {
         <ModalEditorPrimaryMenu
           modalState={modalState}
           setModalState={setModalState}
+          onOptionPick={handleEditorModeSet}
+          actionData={actionData}
+          currentMainMode={currentMainMode}
         />
       ),
     },
@@ -180,10 +194,10 @@ const ModalEditor: FC<ModalEditorProps> = ({ modalState, setModalState }) => {
         <ModalEditorAdditionalClicks
           modalState={modalState}
           setModalState={setModalState}
-          previousMode={previousMode}
           onOptionPick={handleEditorModeSet}
           actionData={actionData}
           currentMainMode={currentMainMode}
+          handleBackClick={handleBackClick}
         />
       ),
     },
@@ -201,7 +215,7 @@ const ModalEditor: FC<ModalEditorProps> = ({ modalState, setModalState }) => {
           setModalState={setModalState}
           currentMainMode={currentMainMode}
           onOptionPick={handleEditorModeSet}
-          previousMode={previousMode}
+          previousModes={previousModes}
           actionData={actionData}
         />
       ),
@@ -227,11 +241,7 @@ const ModalEditor: FC<ModalEditorProps> = ({ modalState, setModalState }) => {
               {editorMode !== EditorMenuOptions.MAIN && (
                 <LeftArrowSVG
                   className="min-w-[34px] max-w-[34px] text-left cursor-pointer pr-[6px]"
-                  onClick={
-                    previousMode !== null
-                      ? handleEditorModeSet(previousMode)
-                      : handleEditorModeSet(EditorMenuOptions.MAIN)
-                  }
+                  onClick={handleBackClick}
                 />
               )}
               <span>{menuOptions[editorMode]?.name}</span>

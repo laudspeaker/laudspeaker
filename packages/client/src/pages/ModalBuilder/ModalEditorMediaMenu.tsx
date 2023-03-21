@@ -1,4 +1,3 @@
-import { GenericButton } from "components/Elements";
 import ReactSlider from "react-slider";
 import { toast } from "react-toastify";
 import ModalBuilderNumberInput from "./Elements/ModalBuilderNumberInput";
@@ -9,9 +8,10 @@ import {
 } from "./ModalBuilder";
 import SizeUnitPicker from "./SizeUnitPicker";
 import UploadSVG from "@heroicons/react/20/solid/CloudArrowUpIcon";
-import EditIconSVG from "@heroicons/react/20/solid/EllipsisHorizontalIcon";
 import { MediaType, mediaTypes, SizeUnit, SubMenuOptions } from "./types";
 import { EditorMenuOptions } from "./ModalEditorMainMenu";
+import { IAdditionalActionData } from "./ModalEditor";
+import AdditionalActionOption from "./AdditionalActionOption";
 
 interface IModalEditorMediaMenuProps {
   modalState: ModalState;
@@ -20,12 +20,16 @@ interface IModalEditorMediaMenuProps {
     mode: EditorMenuOptions | SubMenuOptions,
     setPrevious?: boolean
   ) => () => void;
+  currentMainMode: EditorMenuOptions;
+  actionData: IAdditionalActionData;
 }
 
 const ModalEditorMediaMenu = ({
   modalState,
   setModalState,
   onOptionPick,
+  actionData,
+  currentMainMode,
 }: IModalEditorMediaMenuProps) => {
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files?.length) {
@@ -264,25 +268,11 @@ const ModalEditorMediaMenu = ({
                 </ul>
               </div>
             </div>
-            <div className="flex w-full justify-between items-center">
-              <div className="w-full">Additional action:</div>
-              <GenericButton
-                customClasses={`relative w-full flex text-[12px] !border-[2px] !border-[#2f4a43] !outline-none !ring-transparent !focus:!ring-transparent !font-normal !rounded-[8px] !p-[6px] flex align-center whitespace-nowrap overflow-hidden ${
-                  false ? "!bg-[#19362e]" : "!bg-[#2f4a43]"
-                }`}
-                onClick={onOptionPick(SubMenuOptions.AdditionalClicks, true)}
-              >
-                <span className="min-w-[16px] max-w-[16px] block mr-[4px]">
-                  {/* {el.icon} */} icon
-                </span>
-                <span className="!pr-[30px] text-ellipsis w-full block text-left overflow-hidden">
-                  {/* {el.name} */} name
-                </span>
-                <div className="absolute opacity-0 hover:!opacity-100 bg-opacity-40 bg-white top-0 left-0 w-full h-full !rounded-[8px] transition-all border-[2px] border-white">
-                  <EditIconSVG className="absolute w-[20px] right-[10px] top-1/2 -translate-y-1/2 !text-white shadow-2xl rounded-full" />
-                </div>
-              </GenericButton>
-            </div>
+            <AdditionalActionOption
+              actionData={actionData}
+              currentMainMode={currentMainMode}
+              onOptionPick={onOptionPick}
+            />
           </>
         )}
       </div>

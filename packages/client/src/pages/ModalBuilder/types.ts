@@ -102,7 +102,7 @@ export interface AdditionalClickOpenURLOption {
 }
 
 export interface IAdditionalClick {
-  enabled: boolean;
+  hidden: boolean;
   action: AdditionalClickOptions;
   object: undefined | AdditionalClickOpenURLOption; // When new types arrive add -> | NewClickOptionParams
 }
@@ -113,7 +113,7 @@ export interface ImageMedia extends CommonMedia {
   imageSrc?: string | null;
   actionOnClick: MediaClickAction;
   altText: string;
-  additionalClick: Record<AdditionalClickOptions, IAdditionalClick>;
+  additionalClick: AdditionalClicks;
 }
 
 export interface VideoMedia extends CommonMedia {
@@ -137,6 +137,7 @@ export interface PrimaryButton {
   borderRadius: Size;
   position: PrimaryButtonPosition;
   clickAction: GeneralClickActions;
+  additionalClick: AdditionalClicks;
 }
 
 export enum DismissType {

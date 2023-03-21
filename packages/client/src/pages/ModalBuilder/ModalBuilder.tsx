@@ -116,10 +116,10 @@ export const MediaClickActions = [
   },
 ];
 
-const defaultAdditionalClicksObj: AdditionalClicks = {
+export const defaultAdditionalClicksObj: AdditionalClicks = {
   [AdditionalClickOptions.OPENURL]: {
     action: AdditionalClickOptions.OPENURL,
-    enabled: false,
+    hidden: true,
     object: {
       openNewTab: true,
       url: "google.com",
@@ -127,7 +127,7 @@ const defaultAdditionalClicksObj: AdditionalClicks = {
   },
   [AdditionalClickOptions.NOACTION]: {
     action: AdditionalClickOptions.NOACTION,
-    enabled: true,
+    hidden: true,
     object: undefined,
   },
 };
@@ -169,7 +169,7 @@ We've made some changes to our styling and our navigation. We did this to speed 
       height: { value: 60, unit: SizeUnit.PERCENTAGE },
       position: MediaPosition.TOP,
       videoUrl: null,
-      additionalClick: defaultAdditionalClicksObj,
+      additionalClick: JSON.parse(JSON.stringify(defaultAdditionalClicksObj)),
     },
     primaryButton: {
       hidden: false,
@@ -179,6 +179,7 @@ We've made some changes to our styling and our navigation. We did this to speed 
       borderRadius: { value: 8, unit: SizeUnit.PIXEL },
       position: PrimaryButtonPosition.BOTTOM_CENTER,
       clickAction: GeneralClickActions.NONE,
+      additionalClick: JSON.parse(JSON.stringify(defaultAdditionalClicksObj)),
     },
     dismiss: {
       type: DismissType.CROSS,

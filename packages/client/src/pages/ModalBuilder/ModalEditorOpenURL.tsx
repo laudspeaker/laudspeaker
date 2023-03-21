@@ -1,26 +1,26 @@
-import CheckBox from "components/Elements/Checkbox/Checkbox";
+import { Switch } from "@headlessui/react";
 import { useEffect } from "react";
 import { ModalState } from "./ModalBuilder";
-import { IActionOpenURLData } from "./ModalEditor";
+import { IAdditionalActionData, PreviousModes } from "./ModalEditor";
 import { EditorMenuOptions } from "./ModalEditorMainMenu";
 import { SubMenuOptions } from "./types";
 
 interface IModalEditorOpenURLProps {
   modalState: ModalState;
-  previousMode: EditorMenuOptions | SubMenuOptions | null;
+  previousModes: PreviousModes;
   setModalState: (modalState: ModalState) => void;
   onOptionPick: (
     mode: EditorMenuOptions | SubMenuOptions,
     setPrevious?: boolean
   ) => () => void;
   currentMainMode: EditorMenuOptions;
-  actionData: IActionOpenURLData;
+  actionData: IAdditionalActionData;
 }
 
 const ModalEditorOpenURL = ({
   modalState,
   onOptionPick,
-  previousMode,
+  previousModes,
   setModalState,
   currentMainMode,
   actionData,
@@ -32,7 +32,7 @@ const ModalEditorOpenURL = ({
     link?: string;
     isNewTab?: boolean;
   }) => {
-    actionData[currentMainMode].OPENURL.enabled = true;
+    actionData[currentMainMode].OPENURL.hidden = false;
 
     if (link !== undefined)
       actionData[currentMainMode].OPENURL.object!.url = link;
@@ -43,8 +43,8 @@ const ModalEditorOpenURL = ({
   };
 
   useEffect(() => {
-    actionData[currentMainMode].NOACTION.enabled = false;
-    actionData[currentMainMode].OPENURL.enabled = true;
+    actionData[currentMainMode].NOACTION.hidden = true;
+    actionData[currentMainMode].OPENURL.hidden = false;
 
     setModalState({ ...modalState });
   }, []);
@@ -60,7 +60,26 @@ const ModalEditorOpenURL = ({
       />
       <div className="flex mt-[16px] w-full">
         <div className="text-white text-[14px] w-full">Open in a new Tab:</div>
-        <div className="w-full"></div>
+        <div className="w-full flex justify-end">
+          <Switch
+            checked={actionData[currentMainMode].OPENURL.object!.openNewTab}
+            onChange={(ev: boolean) => handleOpenURLChange({ isNewTab: ev })}
+            className={`${
+              actionData[currentMainMode].OPENURL.object!.openNewTab
+                ? "bg-[#22c55d]"
+                : "bg-[#bac3c0]"
+            } relative inline-flex h-6 w-11 items-center rounded-full`}
+          >
+            <span className="sr-only">Enable notifications</span>
+            <span
+              className={`${
+                actionData[currentMainMode].OPENURL.object!.openNewTab
+                  ? "translate-x-6"
+                  : "translate-x-1"
+              } inline-block h-4 w-4 transform rounded-full bg-white transition`}
+            />
+          </Switch>
+        </div>
       </div>
     </>
   );
