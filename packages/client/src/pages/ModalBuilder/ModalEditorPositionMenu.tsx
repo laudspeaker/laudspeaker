@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import ModalBuilderNumberInput from "./Elements/ModalBuilderNumberInput";
-import {  ModalState } from "./ModalBuilder";
+import { ModalState } from "./ModalBuilder";
 import {
   ModalPositionBottomCenterIcon,
   ModalPositionBottomLeftIcon,
@@ -46,7 +46,7 @@ const ModalPositionBodyMenu = ({
     <div className="text-white text-[14px] font-normal">
       <div className="mt-[20px]">
         <div>Position:</div>
-        <ul className="flex items-center justify-between py-[20px]">
+        <ul className="flex items-center justify-between pt-[10px] pb-[20px]">
           {modalPositions.map((position) => (
             <li key={position}>
               <div

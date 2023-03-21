@@ -22,7 +22,7 @@ const ModalBuilderNumberInput: FC<ModalBuilderNumberInputProps> = ({
   const [isFirstRender, setIsFirstRender] = useState(true);
 
   useEffect(() => {
-    if (isFirstRender) {
+    if (isFirstRender || unit === SizeUnit.NONE) {
       setIsFirstRender(false);
       return;
     }
@@ -53,7 +53,7 @@ const ModalBuilderNumberInput: FC<ModalBuilderNumberInputProps> = ({
           )
         }
       />
-      <div className="absolute h-full w-[10px] top-1/2 right-[2px] -translate-y-1/2 flex flex-col justify-center items-center">
+      <div className="absolute h-full w-[10px] top-1/2 right-[6px] -translate-y-1/2 flex flex-col justify-center items-center">
         <ChevronUpIcon
           className="cursor-pointer"
           onClick={() => onChange(value + 1)}

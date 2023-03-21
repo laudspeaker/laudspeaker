@@ -1,10 +1,6 @@
 import ModalBuilderColorPicker from "./Elements/ModalBuilderColorPicker";
 import ModalBuilderNumberInput from "./Elements/ModalBuilderNumberInput";
-import {
-  ModalState,
-  textStyles,
-  textStylesIcons,
-} from "./ModalBuilder";
+import { ModalState, textStyles, textStylesIcons } from "./ModalBuilder";
 import { textAlignment, textAlignmentIcons } from "./ModalEditor";
 import { SizeUnit } from "./types";
 

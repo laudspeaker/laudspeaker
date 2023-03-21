@@ -5,22 +5,27 @@ import ModalBuilderNumberInput from "./Elements/ModalBuilderNumberInput";
 import {
   MediaClickActions,
   MediaPositionMap,
-  mediaTypes,
   ModalState,
 } from "./ModalBuilder";
 import SizeUnitPicker from "./SizeUnitPicker";
 import UploadSVG from "@heroicons/react/20/solid/CloudArrowUpIcon";
 import EditIconSVG from "@heroicons/react/20/solid/EllipsisHorizontalIcon";
-import { MediaType, SizeUnit } from "./types";
+import { MediaType, mediaTypes, SizeUnit, SubMenuOptions } from "./types";
+import { EditorMenuOptions } from "./ModalEditorMainMenu";
 
 interface IModalEditorMediaMenuProps {
   modalState: ModalState;
   setModalState: (modalState: ModalState) => void;
+  onOptionPick: (
+    mode: EditorMenuOptions | SubMenuOptions,
+    setPrevious?: boolean
+  ) => () => void;
 }
 
 const ModalEditorMediaMenu = ({
   modalState,
   setModalState,
+  onOptionPick,
 }: IModalEditorMediaMenuProps) => {
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files?.length) {
@@ -265,7 +270,7 @@ const ModalEditorMediaMenu = ({
                 customClasses={`relative w-full flex text-[12px] !border-[2px] !border-[#2f4a43] !outline-none !ring-transparent !focus:!ring-transparent !font-normal !rounded-[8px] !p-[6px] flex align-center whitespace-nowrap overflow-hidden ${
                   false ? "!bg-[#19362e]" : "!bg-[#2f4a43]"
                 }`}
-                onClick={() => null}
+                onClick={onOptionPick(SubMenuOptions.AdditionalClicks, true)}
               >
                 <span className="min-w-[16px] max-w-[16px] block mr-[4px]">
                   {/* {el.icon} */} icon

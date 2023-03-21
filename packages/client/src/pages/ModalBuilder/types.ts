@@ -17,6 +17,7 @@ export enum ModalPosition {
 export enum SizeUnit {
   PIXEL = "px",
   PERCENTAGE = "%",
+  NONE = "",
 }
 
 export interface Size {
@@ -103,14 +104,16 @@ export interface AdditionalClickOpenURLOption {
 export interface IAdditionalClick {
   enabled: boolean;
   action: AdditionalClickOptions;
-  object?: AdditionalClickOpenURLOption;
+  object: undefined | AdditionalClickOpenURLOption; // When new types arrive add -> | NewClickOptionParams
 }
+
+export type AdditionalClicks = Record<AdditionalClickOptions, IAdditionalClick>;
 
 export interface ImageMedia extends CommonMedia {
   imageSrc?: string | null;
   actionOnClick: MediaClickAction;
   altText: string;
-  additionalClick: IAdditionalClick[];
+  additionalClick: Record<AdditionalClickOptions, IAdditionalClick>;
 }
 
 export interface VideoMedia extends CommonMedia {
@@ -133,6 +136,7 @@ export interface PrimaryButton {
   textColor: Color;
   borderRadius: Size;
   position: PrimaryButtonPosition;
+  clickAction: GeneralClickActions;
 }
 
 export enum DismissType {
@@ -167,16 +171,23 @@ export interface CommonDismiss {
   position: DismissPosition;
   color: Color;
   timedDismiss: TimedDismiss;
+  type: DismissType;
 }
 
 export interface CrossDismiss extends CommonDismiss {
-  type: DismissType.CROSS;
   crossSize: Size;
 }
 
 export interface TextDismiss extends CommonDismiss {
-  type: DismissType.TEXT;
   textSize: number;
 }
 
 export type Dismiss = CrossDismiss | TextDismiss;
+
+export const mediaTypes = [MediaType.IMAGE, MediaType.VIDEO];
+
+export enum SubMenuOptions {
+  AdditionalClicks = "ADDITIONALCLICKOPTIONS",
+  Personalization = "PERSONALIZATION",
+  OpenUrl = "OPENURL",
+}

@@ -8,7 +8,12 @@ import {
   ModalState,
 } from "./ModalBuilder";
 import SizeUnitPicker from "./SizeUnitPicker";
-import { BackgroundType, GradientBackground, SizeUnit, SolidBackground } from "./types";
+import {
+  BackgroundType,
+  GradientBackground,
+  SizeUnit,
+  SolidBackground,
+} from "./types";
 
 interface IModalEditorCanvasMenuProps {
   modalState: ModalState;

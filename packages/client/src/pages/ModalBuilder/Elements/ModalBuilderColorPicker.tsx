@@ -1,5 +1,7 @@
-import React, { FC, useState } from "react";
+import React, { FC, useRef, useState } from "react";
 import { SketchPicker } from "react-color";
+import ArrowRight from "@heroicons/react/20/solid/ChevronRightIcon";
+import { useClickAway } from "react-use";
 
 interface ModalBuilderColorPickerProps {
   color: string;
@@ -15,9 +17,14 @@ const ModalBuilderColorPicker: FC<ModalBuilderColorPickerProps> = ({
   className,
 }) => {
   const [isColorPickerModalOpen, setIsColorPickerModalOpen] = useState(false);
+  const ref = useRef(null);
+
+  useClickAway(ref, () => {
+    setIsColorPickerModalOpen(false);
+  });
 
   return (
-    <div className="relative">
+    <div ref={ref} className="relative">
       <input
         type="text"
         className={`!m-0 max-w-[70px] max-h-[26px] text-[12px] rounded-md bg-transparent border-white focus:border-white focus:ring-transparent p-[4px] pl-[20px] ${
@@ -39,7 +46,7 @@ const ModalBuilderColorPicker: FC<ModalBuilderColorPickerProps> = ({
       <div
         className="absolute w-[15px] h-[15px] top-1/2 left-[4px] -translate-y-1/2 rounded cursor-pointer"
         style={{ backgroundColor: color }}
-        onClick={() => setIsColorPickerModalOpen(true)}
+        onClick={() => setIsColorPickerModalOpen((prev) => !prev)}
       />
       {isColorPickerModalOpen && (
         <div className="absolute select-none left-[-100%] z-[9999999] bg-white text-black">
@@ -55,6 +62,10 @@ const ModalBuilderColorPicker: FC<ModalBuilderColorPickerProps> = ({
           />
         </div>
       )}
+      <ArrowRight
+        className="absolute w-[20px] h-[16px]  cursor-pointer right-[2px] top-[50%] -translate-y-1/2"
+        onClick={() => setIsColorPickerModalOpen((prev) => !prev)}
+      />
     </div>
   );
 };

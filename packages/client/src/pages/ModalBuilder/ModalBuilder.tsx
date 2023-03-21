@@ -15,17 +15,15 @@ import {
   ModalMediaActionClickComplete,
 } from "./Icons/ModalBuilderIcons";
 import {
-  NoSymbolIcon,
-  ArrowTopRightOnSquareIcon,
-} from "@heroicons/react/20/solid";
-import {
   AdditionalClickOptions,
+  AdditionalClicks,
   Alignment,
   Background,
   BackgroundType,
   Dismiss,
   DismissPosition,
   DismissType,
+  GeneralClickActions,
   GradientBackground,
   ImageBackground,
   Media,
@@ -88,8 +86,6 @@ export const textStylesIcons: Record<StylesVariants, ReactNode> = {
   [StylesVariants.LINK]: <ModalLinkTextStyleIcon />,
 };
 
-export const mediaTypes = [MediaType.IMAGE, MediaType.VIDEO];
-
 export const MediaPositionMap = [
   {
     position: MediaPosition.TOP,
@@ -120,30 +116,21 @@ export const MediaClickActions = [
   },
 ];
 
-export const AdditionalClickOptionsMenu = [
-  {
-    blockTitle: null,
-    blockDescription: null,
-    options: [
-      {
-        name: "No action",
-        icon: <NoSymbolIcon />,
-        option: AdditionalClickOptions.NOACTION,
-      },
-    ],
+const defaultAdditionalClicksObj: AdditionalClicks = {
+  [AdditionalClickOptions.OPENURL]: {
+    action: AdditionalClickOptions.OPENURL,
+    enabled: false,
+    object: {
+      openNewTab: true,
+      url: "google.com",
+    },
   },
-  {
-    blockTitle: "Product navigation",
-    blockDescription: "You can only select one",
-    options: [
-      {
-        name: "Open URL",
-        icon: <ArrowTopRightOnSquareIcon />,
-        option: AdditionalClickOptions.OPENURL,
-      },
-    ],
+  [AdditionalClickOptions.NOACTION]: {
+    action: AdditionalClickOptions.NOACTION,
+    enabled: true,
+    object: undefined,
   },
-];
+};
 
 const ModalBuilder = () => {
   const [modalState, setModalState] = useState<ModalState>({
@@ -182,12 +169,7 @@ We've made some changes to our styling and our navigation. We did this to speed 
       height: { value: 60, unit: SizeUnit.PERCENTAGE },
       position: MediaPosition.TOP,
       videoUrl: null,
-      additionalClick: [
-        {
-          action: AdditionalClickOptions.NOACTION,
-          enabled: true,
-        },
-      ],
+      additionalClick: defaultAdditionalClicksObj,
     },
     primaryButton: {
       hidden: false,
@@ -196,12 +178,14 @@ We've made some changes to our styling and our navigation. We did this to speed 
       textColor: "#FFFFFF",
       borderRadius: { value: 8, unit: SizeUnit.PIXEL },
       position: PrimaryButtonPosition.BOTTOM_CENTER,
+      clickAction: GeneralClickActions.NONE,
     },
     dismiss: {
       type: DismissType.CROSS,
       crossSize: { value: 14, unit: SizeUnit.PIXEL },
       color: "#FFFFFF",
       position: DismissPosition.INSIDE_RIGHT,
+      textSize: 14,
       timedDismiss: {
         enabled: false,
         duration: 3,
