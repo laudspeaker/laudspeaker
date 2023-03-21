@@ -13,6 +13,9 @@ export class CustomerKeys {
 
   @Prop()
   isArray: boolean;
+
+  @Prop()
+  ownerId: string;
 }
 
 export const CustomerKeysSchema = SchemaFactory.createForClass(CustomerKeys);

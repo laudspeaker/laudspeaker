@@ -134,6 +134,7 @@ export class TestsService {
         key: 'slackRealName',
         type: 'String',
         isArray: false,
+        ownerId: '00000000-0000-0000-0000-000000000000',
       }).exec();
 
       if (!exists)
@@ -141,6 +142,7 @@ export class TestsService {
           key: 'slackRealName',
           type: 'String',
           isArray: false,
+          ownerId: '00000000-0000-0000-0000-000000000000',
         });
 
       const sanitizedMember = new CreateCustomerDto();
