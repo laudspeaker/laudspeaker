@@ -71,6 +71,7 @@ export class CronService {
         .exec();
 
       const keys: Record<string, any[]> = {};
+      const keyCustomerMap: Record<string, Set<string>> = {};
 
       while (current < documentsCount) {
         const batch = await this.customerModel
@@ -86,10 +87,12 @@ export class CronService {
 
             if (keys[key]) {
               keys[key].push(obj[key]);
+              keyCustomerMap[key].add(customer.ownerId);
               continue;
             }
 
             keys[key] = [obj[key]];
+            keyCustomerMap[key] = new Set([customer.ownerId]);
           }
         });
         current += BATCH_SIZE;
@@ -112,19 +115,22 @@ export class CronService {
           if (isDateString(validItem)) type = 'Date';
         }
 
-        await this.customerKeysModel
-          .updateOne(
-            { key },
-            {
-              $set: {
-                key,
-                type,
-                isArray,
+        for (const ownerId of keyCustomerMap[key].values()) {
+          await this.customerKeysModel
+            .updateOne(
+              { key, ownerId },
+              {
+                $set: {
+                  key,
+                  type,
+                  isArray,
+                  ownerId,
+                },
               },
-            },
-            { upsert: true }
-          )
-          .exec();
+              { upsert: true }
+            )
+            .exec();
+        }
       }
 
       this.logger.log(

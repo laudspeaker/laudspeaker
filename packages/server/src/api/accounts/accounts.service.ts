@@ -282,6 +282,15 @@ export class AccountsService extends BaseJwtHelper {
       .session(transactionSession)
       .exec();
 
+    await this.customersService.CustomerKeysModel.deleteMany(
+      {
+        ownerId: account.id,
+      },
+      { session: transactionSession }
+    )
+      .session(transactionSession)
+      .exec();
+
     try {
       await this.accountsRepository.delete(account.id);
       await transactionSession.commitTransaction();

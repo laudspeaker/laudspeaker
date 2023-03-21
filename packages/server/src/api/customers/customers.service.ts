@@ -20,7 +20,7 @@ import mockData from '../../fixtures/mockData';
 import { Account } from '../accounts/entities/accounts.entity';
 import { Audience } from '../audiences/entities/audience.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Any, DataSource, Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { EventDto } from '../events/dto/event.dto';
 import {
   CustomerKeys,
@@ -70,7 +70,7 @@ export class CustomersService {
     @InjectQueue('customers') private readonly customersQueue: Queue,
     @InjectModel(Customer.name) public CustomerModel: Model<CustomerDocument>,
     @InjectModel(CustomerKeys.name)
-    private CustomerKeysModel: Model<CustomerKeysDocument>,
+    public CustomerKeysModel: Model<CustomerKeysDocument>,
     private dataSource: DataSource,
     private segmentsService: SegmentsService,
     @InjectRepository(Account)
@@ -138,12 +138,13 @@ export class CustomersService {
       }
 
       await this.CustomerKeysModel.updateOne(
-        { key },
+        { key, ownerId: account.id },
         {
           $set: {
             key,
             type,
             isArray,
+            ownerId: account.id,
           },
         },
         { upsert: true }
@@ -384,12 +385,13 @@ export class CustomersService {
       }
 
       await this.CustomerKeysModel.updateOne(
-        { key },
+        { key, ownerId: account.id },
         {
           $set: {
             key,
             type,
             isArray,
+            ownerId: account.id,
           },
         },
         { upsert: true }
@@ -820,7 +822,9 @@ export class CustomersService {
   }
 
   async getAttributes(account: Account, resourceId: string) {
-    const attributes = await this.CustomerKeysModel.find().exec();
+    const attributes = await this.CustomerKeysModel.find({
+      ownerId: account.id,
+    }).exec();
     if (resourceId === 'attributes') {
       return {
         id: resourceId,
@@ -964,7 +968,8 @@ export class CustomersService {
   }
 
   public async getPossibleAttributes(
-    key: string = '',
+    account: Account,
+    key = '',
     type?: string,
     isArray?: boolean
   ) {
@@ -972,6 +977,7 @@ export class CustomersService {
       $and: [
         {
           key: RegExp(`.*${key}.*`, 'i'),
+          ownerId: account.id,
           ...(type !== null ? { type } : {}),
           ...(isArray !== null ? { isArray } : {}),
         },
