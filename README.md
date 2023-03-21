@@ -327,7 +327,6 @@ We are focused on the first two buckets of work right now (reaching feature pari
           🔜️  Push ( React Native)
       </td>
     </tr>
-    </tr>
     <tr>
       <td align="left" valign="middle">
           🔜️ In App (web modals)
