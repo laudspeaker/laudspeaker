@@ -243,21 +243,6 @@ We are focused on the first two buckets of work right now (reaching feature pari
   <tbody>
     <tr>
       <td align="left" valign="middle">
-        <a href="https://laudspeaker.com/docs/guides/product-manual/Journey-Builder">
-          ✔️ Triggers ( Event Triggers)
-        </a>
-      </td>
-      <td align="left" valign="middle">
-        <a href="https://laudspeaker.com/docs/guides/product-manual/Journey-Builder">
-          ✔️  Triggers (Time Delays)
-        </a>
-      </td>
-      <td align="left" valign="middle">
-          ✔️ Triggers ( Time Windows)
-      </td>
-    </tr>
-    <tr>
-      <td align="left" valign="middle">
          🔜 Triggers (Message Events)
       </td>
       <td align="left" valign="middle">
@@ -311,17 +296,6 @@ We are focused on the first two buckets of work right now (reaching feature pari
          🔜 Webhooks
       </td>
     </tr>
-    <tr>
-      <td align="left" valign="middle">
-         🔜 Journey Simulator
-      </td>
-      <td align="left" valign="middle">
-          🔜 Journeys as code
-      </td>
-      <td align="left" valign="middle">
-         And other cool things..
-      </td>
-    </tr>
     
   </tbody>
 </table>
@@ -333,29 +307,18 @@ We are focused on the first two buckets of work right now (reaching feature pari
   <tbody>
     <tr>
       <td align="left" valign="middle">
-          ✔️ Email (via  Mailgun)
-      </td>
-      <td align="left" valign="middle">
-          ✔️  Email (via  Sendgrid)
-      </td>
-            <td align="left" valign="middle">
-          🔜️  Email (via  Smtp)
-      </td>
-    </tr>
-    <tr>
-      <td align="left" valign="middle">
           ✔️ SMS (via Twilio)
       </td>
       <td align="left" valign="middle">
-          🔜️
+          🔜️  Email (via  Smtp)
       </td>
       <td align="left" valign="middle">
-          🔜️
+          ✔️  Push (via Firebase Push)
       </td>
     </tr>
     <tr>
       <td align="left" valign="middle">
-          ✔️  Push (via Firebase Push)
+          
       </td>
       <td align="left" valign="middle">
           🔜️  Push (via APNS)
