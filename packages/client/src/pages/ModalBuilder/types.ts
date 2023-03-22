@@ -51,7 +51,12 @@ export interface ImageBackground {
   imageSrc: string;
 }
 
-export type Background = SolidBackground | GradientBackground | ImageBackground;
+export interface Background {
+  selected: BackgroundType;
+  [BackgroundType.SOLID]: SolidBackground;
+  [BackgroundType.GRADIENT]: GradientBackground;
+  [BackgroundType.IMAGE]: ImageBackground;
+}
 
 export interface TextBox {
   hidden: boolean;

@@ -101,17 +101,17 @@ const ModalEditorCanvasMenu = ({
         <div className="flex select-none">
           <div
             className={`flex justify-center items-center w-full h-[26px] border-white border-[1px] rounded-l-md cursor-pointer ${
-              modalState.background.type === BackgroundType.SOLID
+              modalState.background.selected === BackgroundType.SOLID
                 ? "bg-white text-[#2f4a43]"
                 : "hover:bg-white hover:bg-opacity-25"
             }`}
             onClick={() =>
               setModalState({
                 ...modalState,
-                background:
-                  modalState.background.type === BackgroundType.SOLID
-                    ? modalState.background
-                    : defaultSolidBackground,
+                background: {
+                  ...modalState.background,
+                  selected: BackgroundType.SOLID,
+                },
               })
             }
           >
@@ -119,17 +119,17 @@ const ModalEditorCanvasMenu = ({
           </div>
           <div
             className={`flex justify-center items-center w-full h-[26px] border-white border-[1px] cursor-pointer ${
-              modalState.background.type === BackgroundType.GRADIENT
+              modalState.background.selected === BackgroundType.GRADIENT
                 ? "bg-white text-[#2f4a43]"
                 : "hover:bg-white hover:bg-opacity-25"
             }`}
             onClick={() =>
               setModalState({
                 ...modalState,
-                background:
-                  modalState.background.type === BackgroundType.GRADIENT
-                    ? modalState.background
-                    : defaultGradientBackground,
+                background: {
+                  ...modalState.background,
+                  selected: BackgroundType.GRADIENT,
+                },
               })
             }
           >
@@ -137,37 +137,40 @@ const ModalEditorCanvasMenu = ({
           </div>
           <div
             className={`flex justify-center items-center w-full h-[26px] border-white border-[1px] rounded-r-md cursor-pointer ${
-              modalState.background.type === BackgroundType.IMAGE
+              modalState.background.selected === BackgroundType.IMAGE
                 ? "bg-white text-[#2f4a43]"
                 : "hover:bg-white hover:bg-opacity-25"
             }`}
             onClick={() =>
               setModalState({
                 ...modalState,
-                background:
-                  modalState.background.type === BackgroundType.IMAGE
-                    ? modalState.background
-                    : defaultImageBackground,
+                background: {
+                  ...modalState.background,
+                  selected: BackgroundType.IMAGE,
+                },
               })
             }
           >
             Image
           </div>
         </div>
-        {modalState.background.type === BackgroundType.SOLID && (
+        {modalState.background.selected === BackgroundType.SOLID && (
           <>
             <div className="flex items-center justify-between">
               <div>Color:</div>
               <div className="flex items-center gap-[10px]">
                 <ModalBuilderColorPicker
                   className="!min-w-[122px]"
-                  color={modalState.background.color}
+                  color={modalState.background[BackgroundType.SOLID].color}
                   onChange={(color) =>
                     setModalState({
                       ...modalState,
                       background: {
-                        ...(modalState.background as SolidBackground),
-                        color,
+                        ...modalState.background,
+                        [BackgroundType.SOLID]: {
+                          ...modalState.background[BackgroundType.SOLID],
+                          color,
+                        },
                       },
                     })
                   }
@@ -181,13 +184,18 @@ const ModalEditorCanvasMenu = ({
                   id="opacity"
                   name="opacity"
                   unit={SizeUnit.PERCENTAGE}
-                  value={modalState.background.opacity * 100}
+                  value={
+                    modalState.background[BackgroundType.SOLID].opacity * 100
+                  }
                   onChange={(val) =>
                     setModalState({
                       ...modalState,
                       background: {
-                        ...(modalState.background as SolidBackground),
-                        opacity: val / 100,
+                        ...modalState.background,
+                        [BackgroundType.SOLID]: {
+                          ...modalState.background[BackgroundType.SOLID],
+                          opacity: val / 100,
+                        },
                       },
                     })
                   }
@@ -196,20 +204,23 @@ const ModalEditorCanvasMenu = ({
             </div>
           </>
         )}
-        {modalState.background.type === BackgroundType.GRADIENT && (
+        {modalState.background.selected === BackgroundType.GRADIENT && (
           <>
             <div className="flex items-center justify-between">
               <div>Color 1:</div>
               <div className="flex items-center gap-[10px]">
                 <ModalBuilderColorPicker
                   className="!min-w-[122px]"
-                  color={modalState.background.color1}
+                  color={modalState.background[BackgroundType.GRADIENT].color1}
                   onChange={(color) =>
                     setModalState({
                       ...modalState,
                       background: {
-                        ...(modalState.background as GradientBackground),
-                        color1: color,
+                        ...modalState.background,
+                        [BackgroundType.GRADIENT]: {
+                          ...modalState.background[BackgroundType.GRADIENT],
+                          color1: color,
+                        },
                       },
                     })
                   }
@@ -221,13 +232,16 @@ const ModalEditorCanvasMenu = ({
               <div className="flex items-center gap-[10px]">
                 <ModalBuilderColorPicker
                   className="!min-w-[122px]"
-                  color={modalState.background.color2}
+                  color={modalState.background[BackgroundType.GRADIENT].color2}
                   onChange={(color) =>
                     setModalState({
                       ...modalState,
                       background: {
-                        ...(modalState.background as GradientBackground),
-                        color2: color,
+                        ...modalState.background,
+                        [BackgroundType.GRADIENT]: {
+                          ...modalState.background[BackgroundType.GRADIENT],
+                          color2: color,
+                        },
                       },
                     })
                   }
@@ -241,13 +255,18 @@ const ModalEditorCanvasMenu = ({
                   id="opacity"
                   name="opacity"
                   unit={SizeUnit.PERCENTAGE}
-                  value={modalState.background.opacity * 100}
+                  value={
+                    modalState.background[BackgroundType.GRADIENT].opacity * 100
+                  }
                   onChange={(val) =>
                     setModalState({
                       ...modalState,
                       background: {
-                        ...(modalState.background as SolidBackground),
-                        opacity: val / 100,
+                        ...modalState.background,
+                        [BackgroundType.GRADIENT]: {
+                          ...modalState.background[BackgroundType.GRADIENT],
+                          opacity: val / 100,
+                        },
                       },
                     })
                   }
@@ -256,12 +275,12 @@ const ModalEditorCanvasMenu = ({
             </div>
           </>
         )}
-        {modalState.background.type === BackgroundType.IMAGE && (
+        {modalState.background.selected === BackgroundType.IMAGE && (
           <>
             <div className="flex items-center justify-between">
               <div>Image source:</div>
               <div className="flex items-center gap-[10px]">
-                {modalState.background.imageSrc}
+                {modalState.background[BackgroundType.IMAGE].imageSrc}
               </div>
             </div>
           </>

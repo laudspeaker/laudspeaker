@@ -2,6 +2,7 @@ import React, { FC, useRef, useState } from "react";
 import { SketchPicker } from "react-color";
 import ArrowRight from "@heroicons/react/20/solid/ChevronRightIcon";
 import { useClickAway } from "react-use";
+import { createPortal } from "react-dom";
 
 interface ModalBuilderColorPickerProps {
   color: string;
@@ -17,11 +18,16 @@ const ModalBuilderColorPicker: FC<ModalBuilderColorPickerProps> = ({
   className,
 }) => {
   const [isColorPickerModalOpen, setIsColorPickerModalOpen] = useState(false);
-  const ref = useRef(null);
+  const ref = useRef<HTMLDivElement>(null);
+  const pickerRef = useRef(null);
 
-  useClickAway(ref, () => {
+  useClickAway(pickerRef, () => {
     setIsColorPickerModalOpen(false);
   });
+
+  const inputRect = ref.current?.getBoundingClientRect();
+  const left = inputRect ? inputRect.left - (220 - inputRect.width) : 0;
+  const top = (inputRect?.top || 0) + 30;
 
   return (
     <div ref={ref} className="relative">
@@ -48,20 +54,31 @@ const ModalBuilderColorPicker: FC<ModalBuilderColorPickerProps> = ({
         style={{ backgroundColor: color }}
         onClick={() => setIsColorPickerModalOpen((prev) => !prev)}
       />
-      {isColorPickerModalOpen && (
-        <div className="absolute select-none left-[-100%] z-[9999999] bg-white text-black">
+      {isColorPickerModalOpen &&
+        createPortal(
           <div
-            className="flex justify-end items-center px-[10px] cursor-pointer"
-            onClick={() => setIsColorPickerModalOpen(false)}
+            ref={pickerRef}
+            style={{
+              left: left + "px",
+              ...(top + 332 > document.body.clientHeight
+                ? { bottom: "0px" }
+                : { top: top + "px" }),
+            }}
+            className="absolute select-none z-[2147483647] bg-white text-black"
           >
-            X
-          </div>
-          <SketchPicker
-            color={color}
-            onChange={(newColor) => onChange(newColor.hex)}
-          />
-        </div>
-      )}
+            <div
+              className="flex justify-end items-center px-[10px] cursor-pointer"
+              onClick={() => setIsColorPickerModalOpen(false)}
+            >
+              X
+            </div>
+            <SketchPicker
+              color={color}
+              onChange={(newColor) => onChange(newColor.hex)}
+            />
+          </div>,
+          document.body
+        )}
       <ArrowRight
         className="absolute w-[20px] h-[16px]  cursor-pointer right-[2px] top-[50%] -translate-y-1/2"
         onClick={() => setIsColorPickerModalOpen((prev) => !prev)}

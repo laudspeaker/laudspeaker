@@ -242,7 +242,7 @@ const ModalEditor: FC<ModalEditorProps> = ({ modalState, setModalState }) => {
         y: 40,
       }}
     >
-      <div className="fixed w-[360px] z-[999999999] max-h-[80vh] pb-[20px] rounded-xl shadow-lg bg-[#19362e]">
+      <div className="fixed w-[360px] z-[2147483646] max-h-[80vh] pb-[20px] rounded-xl shadow-lg bg-[#19362e]">
         <div className="w-full p-[4px] mb-[10px]">
           <div
             id="draggableHead"

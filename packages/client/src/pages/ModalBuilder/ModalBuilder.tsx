@@ -139,7 +139,12 @@ const ModalBuilder = () => {
     yOffset: { value: 0, unit: SizeUnit.PIXEL },
     width: { value: 400, unit: SizeUnit.PIXEL },
     borderRadius: { value: 20, unit: SizeUnit.PIXEL },
-    background: defaultSolidBackground,
+    background: {
+      selected: BackgroundType.SOLID,
+      [BackgroundType.SOLID]: defaultSolidBackground,
+      [BackgroundType.GRADIENT]: defaultGradientBackground,
+      [BackgroundType.IMAGE]: defaultImageBackground,
+    },
     title: {
       hidden: true,
       alignment: Alignment.CENTER,
