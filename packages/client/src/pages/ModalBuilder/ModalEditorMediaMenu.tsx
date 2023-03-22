@@ -1,5 +1,4 @@
 import ReactSlider from "react-slider";
-import { toast } from "react-toastify";
 import ModalBuilderNumberInput from "./Elements/ModalBuilderNumberInput";
 import {
   MediaClickActions,
@@ -7,13 +6,13 @@ import {
   ModalState,
 } from "./ModalBuilder";
 import SizeUnitPicker from "./SizeUnitPicker";
-import UploadSVG from "@heroicons/react/20/solid/CloudArrowUpIcon";
 import { MediaType, mediaTypes, SizeUnit, SubMenuOptions } from "./types";
 import { EditorMenuOptions } from "./ModalEditorMainMenu";
 import { IAdditionalActionData } from "./ModalEditor";
 import AdditionalActionOption from "./AdditionalActionOption";
 import { useEffect } from "react";
 import RemoveComponentButton from "./Elements/RemoveComponentButton";
+import ModalMediaUploader from "./Elements/ModalMediaUploader";
 
 interface IModalEditorMediaMenuProps {
   modalState: ModalState;
@@ -41,20 +40,6 @@ const ModalEditorMediaMenu = ({
       media: { ...modalState.media, hidden: false },
     });
   }, []);
-
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files?.length) {
-      return;
-    } else if ((e.target.files?.length || 0) > 1) {
-      toast.error("Only one file can be uploaded!");
-      return;
-    } else if ((e.target.files?.[0]?.size || 0) > 10485760) {
-      toast.error("Max file size 10mb");
-      return;
-    }
-
-    // TODO: add file upload and token saving
-  };
 
   return (
     <div className="text-white text-[14px] font-normal">
@@ -89,20 +74,11 @@ const ModalEditorMediaMenu = ({
         {modalState.media.type === MediaType.IMAGE && (
           <>
             <span className="text-[14px] font-thin">Select image:</span>
-            <label className="cursor-pointer" htmlFor="pick-image">
-              <div className="text-[#22C55E] hover:bg-[#105529] transition-colors border-[1px] border-[#22C55E] rounded-md inline-flex justify-center items-center px-[6px] py-[4px]">
-                <UploadSVG className="w-[20px] h-[20px] mr-[6px]" />
-                <small>Upload</small>
-              </div>
-              <input
-                id="pick-image"
-                hidden
-                type="file"
-                accept="image/*"
-                multiple={false}
-                onChange={(e) => handleImageUpload(e)}
-              />
-            </label>
+            <ModalMediaUploader
+              modalState={modalState}
+              setModalState={setModalState}
+              currentMainMode={currentMainMode}
+            />
             <span className="text-[14px] font-thin">Alt text:</span>
             <input
               placeholder="Image alt text"

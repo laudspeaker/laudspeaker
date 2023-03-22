@@ -35,6 +35,8 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "@types/aws-sdk": "^2.7.0",
+    "aws-sdk": "^2.1340.0",
     "concurrently": "^7.4.0",
     "logform": "^2.4.2",
     "luxon": "^3.2.1"

@@ -62,9 +62,11 @@ const App = ({ children }: IApp) => {
   return (
     <ColorContext.Provider value={colorMode}>
       <ThemeProvider theme={theme}>
+        {/* @ts-ignore */}
         <MTThemeProvider value={MTTheme}>
           <CssBaseline enableColorScheme />
           <ToastContainer
+            className={"z-[2147483647]"}
             position="bottom-center"
             autoClose={5000}
             hideProgressBar={false}

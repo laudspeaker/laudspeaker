@@ -169,8 +169,8 @@ We've made some changes to our styling and our navigation. We did this to speed 
     media: {
       hidden: false,
       type: MediaType.IMAGE,
-      imageSrc:
-        "https://fast.chmln-cdn.com/attachments/6139382e12c3e30011a475f5/original.svg",
+      imageSrc: "",
+      // "https://fast.chmln-cdn.com/attachments/6139382e12c3e30011a475f5/original.svg",
       altText: "",
       actionOnClick: MediaClickAction.NONE,
       height: { value: 60, unit: SizeUnit.PERCENTAGE },

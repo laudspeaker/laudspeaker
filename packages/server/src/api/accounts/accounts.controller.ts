@@ -11,6 +11,8 @@ import {
   UseGuards,
   ClassSerializerInterceptor,
   UseInterceptors,
+  Post,
+  UploadedFile,
 } from '@nestjs/common';
 import { AccountsService } from './accounts.service';
 import { UpdateAccountDto } from './dto/update-account.dto';
@@ -19,13 +21,18 @@ import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { transformToObject } from '../../common/helper/transformers';
 import { AccountSettingsResponse } from './response/acccountSettings.response';
 import { RemoveAccountDto } from './dto/remove-account.dto';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { Account } from './entities/accounts.entity';
+import { imageFileFilter } from '../auth/middleware/file.validation';
+import { S3Service } from '../s3/s3.service';
 
 @Controller('accounts')
 export class AccountsController {
   constructor(
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
     private readonly logger: LoggerService,
-    private readonly accountsService: AccountsService
+    private readonly accountsService: AccountsService,
+    private readonly s3Service: S3Service
   ) {}
 
   @Get()
@@ -84,5 +91,23 @@ export class AccountsController {
   @UseInterceptors(ClassSerializerInterceptor)
   remove(@Req() { user }: Request, @Body() removeAccountDto: RemoveAccountDto) {
     return this.accountsService.remove(user, removeAccountDto);
+  }
+
+  @Post('/upload-public-media')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(
+    FileInterceptor('file', {
+      limits: {
+        fileSize: 10485760,
+      },
+      fileFilter: imageFileFilter,
+    })
+  )
+  async uploadMedia(
+    @Req() { user }: Request,
+    @UploadedFile() file: Express.Multer.File
+  ) {
+    // return this.s3Service .uploadMedia(<Account>user, file);
   }
 }
