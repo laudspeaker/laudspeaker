@@ -89,13 +89,13 @@ In terms of how we think about product we categorise our work into 4 major bucke
   <tbody>
     <tr>
       <td align="left" valign="middle">
-          ✔️ SMS (via Twilio)
+          ✔️ 
       </td>
       <td align="left" valign="middle">
           🔜️  Email (via  Smtp)
       </td>
       <td align="left" valign="middle">
-          ✔️  Push (via Firebase Push)
+          ✔️  
       </td>
     </tr>
     <tr>
@@ -111,10 +111,10 @@ In terms of how we think about product we categorise our work into 4 major bucke
     </tr>
     <tr>
       <td align="left" valign="middle">
-          🔜️ In App (web modals)
+          🔜️ 
       </td>
       <td align="left" valign="middle">
-          🔜️  In App (banners)
+          🔜️ 
       </td>
       <td align="left" valign="middle">
           🔜️  In App (content cards
