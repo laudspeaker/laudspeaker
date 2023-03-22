@@ -1,4 +1,4 @@
-import React, { FC, ReactNode, useState } from "react";
+import React, { FC, ReactNode } from "react";
 import { ModalState } from "./ModalBuilder";
 import LeftArrowSVG from "@heroicons/react/20/solid/ChevronLeftIcon";
 import AlignCenterSVG from "@heroicons/react/20/solid/Bars3Icon";
@@ -26,6 +26,15 @@ import { Scrollbars } from "react-custom-scrollbars";
 interface ModalEditorProps {
   modalState: ModalState;
   setModalState: (modalState: ModalState) => void;
+  editorMode: EditorMenuOptions | SubMenuOptions;
+  setEditorMode: (mode: EditorMenuOptions | SubMenuOptions) => void;
+  previousModes: PreviousModes;
+  currentMainMode: EditorMenuOptions;
+  handleEditorModeSet: (
+    mode: EditorMenuOptions | SubMenuOptions,
+    setPrevious?: boolean
+  ) => () => void;
+  setPreviousModes: (prevModes: PreviousModes) => void;
 }
 
 interface IMenuOption {
@@ -55,17 +64,16 @@ export interface IAdditionalActionData {
   };
 }
 
-const ModalEditor: FC<ModalEditorProps> = ({ modalState, setModalState }) => {
-  const [editorMode, setEditorMode] = useState<
-    EditorMenuOptions | SubMenuOptions
-  >(EditorMenuOptions.MAIN);
-  const [previousModes, setPreviousModes] = useState<PreviousModes>([
-    EditorMenuOptions.MAIN,
-  ]);
-  const [currentMainMode, setCurrentMainMode] = useState<EditorMenuOptions>(
-    EditorMenuOptions.MAIN
-  );
-
+const ModalEditor: FC<ModalEditorProps> = ({
+  modalState,
+  setModalState,
+  editorMode,
+  setEditorMode,
+  currentMainMode,
+  handleEditorModeSet,
+  previousModes,
+  setPreviousModes,
+}) => {
   const actionData: IAdditionalActionData = {
     [EditorMenuOptions.MEDIA]: {
       OPENURL: modalState.media.additionalClick.OPENURL,
@@ -82,29 +90,6 @@ const ModalEditor: FC<ModalEditorProps> = ({ modalState, setModalState }) => {
     prev.pop();
     setPreviousModes(prev);
     setEditorMode(prev[prev.length - 1]);
-  };
-
-  const handleEditorModeSet = (
-    mode: EditorMenuOptions | SubMenuOptions,
-    setPrevious = false
-  ) => {
-    return () => {
-      // TODO: hidden property update
-      // if (mode === EditorMenuOptions.TITLE)
-      //   setModalState({
-      //     ...modalState,
-      //     title: { ...modalState.title, hidden: false },
-      //   });
-
-      if (
-        Object.values(EditorMenuOptions).some((el) => el === mode) &&
-        mode !== EditorMenuOptions.MAIN
-      )
-        setCurrentMainMode(mode as EditorMenuOptions);
-
-      if (setPrevious) setPreviousModes((prev) => [...prev, mode]);
-      setEditorMode(mode);
-    };
   };
 
   const menuOptions: { [key: string]: IMenuOption } = {

@@ -1,6 +1,6 @@
 import Header from "components/Header";
 import React, { ReactNode, useState } from "react";
-import ModalEditor from "./ModalEditor";
+import ModalEditor, { PreviousModes } from "./ModalEditor";
 import ModalViewer from "./ModalViewer";
 import {
   ModalBoldTextStyleIcon,
@@ -37,8 +37,10 @@ import {
   SizeUnit,
   SolidBackground,
   StylesVariants,
+  SubMenuOptions,
   TextBox,
 } from "./types";
+import { EditorMenuOptions } from "./ModalEditorMainMenu";
 
 export interface ModalState {
   position: ModalPosition;
@@ -202,11 +204,64 @@ We've made some changes to our styling and our navigation. We did this to speed 
     },
   });
 
+  const [editorMode, setEditorMode] = useState<
+    EditorMenuOptions | SubMenuOptions
+  >(EditorMenuOptions.MAIN);
+
+  const [previousModes, setPreviousModes] = useState<PreviousModes>([
+    EditorMenuOptions.MAIN,
+  ]);
+
+  const [currentMainMode, setCurrentMainMode] = useState<EditorMenuOptions>(
+    EditorMenuOptions.MAIN
+  );
+
+  const handleEditorModeSet = (
+    mode: EditorMenuOptions | SubMenuOptions,
+    setPrevious = false
+  ) => {
+    return () => {
+      if (
+        Object.values(EditorMenuOptions).some((el) => el === mode) &&
+        mode !== EditorMenuOptions.MAIN
+      )
+        setCurrentMainMode(mode as EditorMenuOptions);
+
+      if (setPrevious) setPreviousModes((prev) => [...prev, mode]);
+      setEditorMode(mode);
+    };
+  };
+
   return (
     <div className="relative">
       <Header />
-      <ModalEditor modalState={modalState} setModalState={setModalState} />
-      <ModalViewer modalState={modalState} />
+      <ModalEditor
+        editorMode={editorMode}
+        setEditorMode={setEditorMode}
+        modalState={modalState}
+        setModalState={setModalState}
+        previousModes={previousModes}
+        currentMainMode={currentMainMode}
+        handleEditorModeSet={handleEditorModeSet}
+        setPreviousModes={setPreviousModes}
+      />
+      <ModalViewer
+        modalState={modalState}
+        handleTitleChange={(title) =>
+          setModalState({
+            ...modalState,
+            title: { ...modalState.title, content: title },
+          })
+        }
+        handleBodyChange={(body) =>
+          setModalState({
+            ...modalState,
+            body: { ...modalState.body, content: body },
+          })
+        }
+        handleEditorModeSet={handleEditorModeSet}
+        editorMode={editorMode}
+      />
     </div>
   );
 };
