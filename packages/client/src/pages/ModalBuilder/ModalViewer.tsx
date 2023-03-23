@@ -7,12 +7,14 @@ import {
   DismissType,
   MediaPosition,
   ModalPosition,
+  PrimaryButtonPosition,
   SizeUnit,
   SubMenuOptions,
 } from "./types";
 import ReactMarkdown from "react-markdown";
 import ModalViewerTextArea from "./Elements/ModalViewerTextArea";
 import { EditorMenuOptions } from "./ModalEditorMainMenu";
+import { PlusIcon } from "@heroicons/react/24/outline";
 
 interface ModalViewerProps {
   modalState: ModalState;
@@ -64,12 +66,19 @@ const mediaPositionMap: Record<MediaPosition, string> = {
 };
 
 const dismissPositionMap: Record<DismissPosition, string> = {
-  [DismissPosition.CENTER_LEFT]: "left-[20px] top-1/2 -translate-y-1/2",
-  [DismissPosition.CENTER_RIGHT]: "right-[20px] top-1/2 -translate-y-1/2",
-  [DismissPosition.INSIDE_LEFT]: "left-[20px] top-[20px]",
-  [DismissPosition.INSIDE_RIGHT]: "right-[20px] top-[20px]",
+  [DismissPosition.CENTER_LEFT]: "left-[10px] top-1/2 -translate-y-1/2",
+  [DismissPosition.CENTER_RIGHT]: "right-[10px] top-1/2 -translate-y-1/2",
+  [DismissPosition.INSIDE_LEFT]: "left-[20px] top-[10px]",
+  [DismissPosition.INSIDE_RIGHT]: "right-[20px] top-[10px]",
   [DismissPosition.OUTSIDE_LEFT]: "left-[-20px] top-0",
   [DismissPosition.OUTSIDE_RIGHT]: "right-[-20px] top-0",
+};
+
+const primaryButtomPositionMap: Record<PrimaryButtonPosition, string> = {
+  [PrimaryButtonPosition.BOTTOM_CENTER]: "w-fit mx-auto",
+  [PrimaryButtonPosition.BOTTOM_LEFT]: "float-left",
+  [PrimaryButtonPosition.BOTTOM_RIGHT]: "float-right",
+  [PrimaryButtonPosition.CENTER_RIGHT]: "",
 };
 
 const alignmentStyleMap: Record<Alignment, "left" | "center" | "right"> = {
@@ -160,7 +169,30 @@ const ModalViewer: FC<ModalViewerProps> = ({
             )();
           }}
         >
-          {modalState.dismiss.type === DismissType.CROSS ? "x" : "close"}
+          {modalState.dismiss.type === DismissType.CROSS ? (
+            <div
+              className="rotate-45"
+              style={
+                modalState.dismiss.timedDismiss.displayTimer
+                  ? {
+                      borderRadius: "100%",
+                      border: `3px solid ${modalState.dismiss.timedDismiss.timerColor}`,
+                    }
+                  : {}
+              }
+            >
+              <PlusIcon width={modalState.dismiss.textSize} />
+            </div>
+          ) : (
+            <div
+              className="rounded p-[5px]"
+              style={{
+                background: modalState.dismiss.timedDismiss.timerColor,
+              }}
+            >
+              close
+            </div>
+          )}
         </div>
         <div>
           <div className={modalState.title.hidden ? "hidden" : undefined}>
@@ -198,44 +230,73 @@ const ModalViewer: FC<ModalViewerProps> = ({
             )}
           </div>
           <div
-            className={`flex ${mediaPositionMap[modalState.media.position]}`}
+            className={
+              modalState.primaryButton.position ===
+              PrimaryButtonPosition.CENTER_RIGHT
+                ? "flex items-center justify-between gap-[10px]"
+                : ""
+            }
           >
             <div
-              className={modalState.media.hidden ? "hidden" : undefined}
-            ></div>
-            <div className={modalState.body.hidden ? "hidden" : undefined}>
-              {editorMode === EditorMenuOptions.BODY ? (
-                <ModalViewerTextArea
-                  value={modalState.body.content}
-                  onChange={handleBodyChange}
-                  style={{
-                    textAlign: alignmentStyleMap[modalState.body.alignment],
-                    color: modalState.body.textColor,
-                    fontSize: modalState.body.fontSize,
-                  }}
-                  id="modal-builder-body-textarea"
-                />
-              ) : (
-                <p
-                  style={{
-                    textAlign: alignmentStyleMap[modalState.body.alignment],
-                    color: modalState.body.textColor,
-                    fontSize: modalState.body.fontSize,
-                  }}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleEditorModeSet(
-                      EditorMenuOptions.BODY,
-                      editorMode === EditorMenuOptions.MAIN
-                    )();
-                  }}
-                  className="min-h-[20px]"
-                >
-                  <ReactMarkdown className="whitespace-pre-line">
-                    {modalState.body.content}
-                  </ReactMarkdown>
-                </p>
-              )}
+              className={`flex ${mediaPositionMap[modalState.media.position]}`}
+            >
+              <div
+                className={modalState.media.hidden ? "hidden" : undefined}
+              ></div>
+              <div className={modalState.body.hidden ? "hidden" : undefined}>
+                {editorMode === EditorMenuOptions.BODY ? (
+                  <ModalViewerTextArea
+                    value={modalState.body.content}
+                    onChange={handleBodyChange}
+                    style={{
+                      textAlign: alignmentStyleMap[modalState.body.alignment],
+                      color: modalState.body.textColor,
+                      fontSize: modalState.body.fontSize,
+                    }}
+                    id="modal-builder-body-textarea"
+                  />
+                ) : (
+                  <p
+                    style={{
+                      textAlign: alignmentStyleMap[modalState.body.alignment],
+                      color: modalState.body.textColor,
+                      fontSize: modalState.body.fontSize,
+                    }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleEditorModeSet(
+                        EditorMenuOptions.BODY,
+                        editorMode === EditorMenuOptions.MAIN
+                      )();
+                    }}
+                    className="min-h-[20px]"
+                  >
+                    <ReactMarkdown className="whitespace-pre-line">
+                      {modalState.body.content}
+                    </ReactMarkdown>
+                  </p>
+                )}
+              </div>
+            </div>
+            <div
+              onClick={(e) => {
+                e.stopPropagation();
+                handleEditorModeSet(
+                  EditorMenuOptions.PRIMARY,
+                  editorMode === EditorMenuOptions.MAIN
+                )();
+              }}
+              className={`flex justify-center items-center whitespace-nowrap h-fit p-[5px_9px_3px_9px] select-none cursor-pointer border-[2px] mt-[18px] ${
+                primaryButtomPositionMap[modalState.primaryButton.position]
+              }`}
+              style={{
+                backgroundColor: modalState.primaryButton.fillColor,
+                color: modalState.primaryButton.textColor,
+                borderColor: modalState.primaryButton.borderColor,
+                borderRadius: `${modalState.primaryButton.borderRadius.value}${modalState.primaryButton.borderRadius.unit}`,
+              }}
+            >
+              <button>Read more</button>
             </div>
           </div>
         </div>
