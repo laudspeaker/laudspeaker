@@ -87,7 +87,7 @@ describe(
       cy.contains(slackTemplate.name).click();
       cy.get("#exportSelectedTemplate").click();
       cy.wait(3000);
-      ц;
+
       setupEventTrigger(
         ".text-updater:nth(1)",
         slackTemplate.eventName,
