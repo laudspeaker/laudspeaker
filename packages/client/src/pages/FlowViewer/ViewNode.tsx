@@ -12,6 +12,8 @@ import StatModal from "./StatModal";
 import { NodeData } from "pages/FlowBuilder/FlowBuilder";
 import LinesEllipsis from "react-lines-ellipsis";
 import { createPortal } from "react-dom";
+import HourglassSplit from "assets/images/HourglassSplit.svg";
+import { TriggerType } from "types/Workflow";
 
 const textStyle =
   "text-[#223343] font-[Poppins] font-normal text-[14px] leading-[30px]";
@@ -271,11 +273,21 @@ const ViewNode = ({ data }: { data: NodeData }) => {
                   className="!pointer-events-auto !outline-none !h-[22px] !bg-transparent !w-[30px] !transform-none !bottom-[-4px] !top-auto !left-auto !right-auto !relative"
                   isConnectable={false}
                 >
-                  <img
-                    src={thunderbolt}
-                    width="30"
-                    style={{ pointerEvents: "none" }}
-                  />
+                  {trigger.type === TriggerType.EVENT ? (
+                    <img
+                      src={thunderbolt}
+                      width="30"
+                      height="22"
+                      className=""
+                    />
+                  ) : (
+                    <img
+                      src={HourglassSplit}
+                      width="30"
+                      height="22"
+                      className="border-black border-[1px] rounded-lg bg-white scale-90 p-[3px]"
+                    />
+                  )}
                 </Handle>
               );
             })}
