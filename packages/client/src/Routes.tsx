@@ -366,11 +366,9 @@ const RouteComponent: React.FC = () => {
         <Route
           path="/modal-builder"
           element={
-            <Protected>
-              <DrawerLayout>
-                <ModalBuilder />
-              </DrawerLayout>
-            </Protected>
+            <DrawerLayout>
+              <ModalBuilder />
+            </DrawerLayout>
           }
         />
         <Route

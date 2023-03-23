@@ -173,23 +173,14 @@ export interface TimedDismiss {
   timerColor: Color;
 }
 
-export interface CommonDismiss {
+export interface Dismiss {
   hidden: boolean;
   position: DismissPosition;
   color: Color;
   timedDismiss: TimedDismiss;
+  textSize: number;
   type: DismissType;
 }
-
-export interface CrossDismiss extends CommonDismiss {
-  crossSize: Size;
-}
-
-export interface TextDismiss extends CommonDismiss {
-  textSize: number;
-}
-
-export type Dismiss = CrossDismiss | TextDismiss;
 
 export const mediaTypes = [MediaType.IMAGE, MediaType.VIDEO];
 

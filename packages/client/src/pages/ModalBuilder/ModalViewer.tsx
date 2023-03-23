@@ -3,6 +3,9 @@ import { ModalState } from "./ModalBuilder";
 import {
   Alignment,
   BackgroundType,
+  DismissPosition,
+  DismissType,
+  MediaPosition,
   ModalPosition,
   SizeUnit,
   SubMenuOptions,
@@ -53,6 +56,22 @@ const modalPositionMap: Record<ModalPosition, CSSProperties> = {
   },
 };
 
+const mediaPositionMap: Record<MediaPosition, string> = {
+  [MediaPosition.TOP]: "flex-col",
+  [MediaPosition.BOTTOM]: "flex-col-reverse",
+  [MediaPosition.LEFT]: "flex-row",
+  [MediaPosition.RIGHT]: "flex-row-reverse",
+};
+
+const dismissPositionMap: Record<DismissPosition, string> = {
+  [DismissPosition.CENTER_LEFT]: "left-[20px] top-1/2 -translate-y-1/2",
+  [DismissPosition.CENTER_RIGHT]: "right-[20px] top-1/2 -translate-y-1/2",
+  [DismissPosition.INSIDE_LEFT]: "left-[20px] top-[20px]",
+  [DismissPosition.INSIDE_RIGHT]: "right-[20px] top-[20px]",
+  [DismissPosition.OUTSIDE_LEFT]: "left-[-20px] top-0",
+  [DismissPosition.OUTSIDE_RIGHT]: "right-[-20px] top-0",
+};
+
 const alignmentStyleMap: Record<Alignment, "left" | "center" | "right"> = {
   [Alignment.LEFT]: "left",
   [Alignment.CENTER]: "center",
@@ -64,8 +83,6 @@ const ModalViewer: FC<ModalViewerProps> = ({
   handleBodyChange,
   handleTitleChange,
   handleEditorModeSet,
-  // setBodyEditorMode,
-  // setTitleEditorMode,
   editorMode,
 }) => {
   const CanvasBackground: Record<BackgroundType, string> = {
@@ -127,6 +144,24 @@ const ModalViewer: FC<ModalViewerProps> = ({
           )();
         }}
       >
+        <div
+          className={`absolute select-none cursor-pointer ${
+            dismissPositionMap[modalState.dismiss.position]
+          }`}
+          style={{
+            color: modalState.dismiss.color,
+            fontSize: modalState.dismiss.textSize,
+          }}
+          onClick={(e) => {
+            e.stopPropagation();
+            handleEditorModeSet(
+              EditorMenuOptions.DISMISS,
+              editorMode === EditorMenuOptions.MAIN
+            )();
+          }}
+        >
+          {modalState.dismiss.type === DismissType.CROSS ? "x" : "close"}
+        </div>
         <div>
           <div className={modalState.title.hidden ? "hidden" : undefined}>
             {editorMode === EditorMenuOptions.TITLE ? (
@@ -162,40 +197,46 @@ const ModalViewer: FC<ModalViewerProps> = ({
               </p>
             )}
           </div>
-
-          <div className={modalState.body.hidden ? "hidden" : undefined}>
-            {editorMode === EditorMenuOptions.BODY ? (
-              <ModalViewerTextArea
-                value={modalState.body.content}
-                onChange={handleBodyChange}
-                style={{
-                  textAlign: alignmentStyleMap[modalState.body.alignment],
-                  color: modalState.body.textColor,
-                  fontSize: modalState.body.fontSize,
-                }}
-                id="modal-builder-body-textarea"
-              />
-            ) : (
-              <p
-                style={{
-                  textAlign: alignmentStyleMap[modalState.body.alignment],
-                  color: modalState.body.textColor,
-                  fontSize: modalState.body.fontSize,
-                }}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleEditorModeSet(
-                    EditorMenuOptions.BODY,
-                    editorMode === EditorMenuOptions.MAIN
-                  )();
-                }}
-                className="min-h-[20px]"
-              >
-                <ReactMarkdown className="whitespace-pre-line">
-                  {modalState.body.content}
-                </ReactMarkdown>
-              </p>
-            )}
+          <div
+            className={`flex ${mediaPositionMap[modalState.media.position]}`}
+          >
+            <div
+              className={modalState.media.hidden ? "hidden" : undefined}
+            ></div>
+            <div className={modalState.body.hidden ? "hidden" : undefined}>
+              {editorMode === EditorMenuOptions.BODY ? (
+                <ModalViewerTextArea
+                  value={modalState.body.content}
+                  onChange={handleBodyChange}
+                  style={{
+                    textAlign: alignmentStyleMap[modalState.body.alignment],
+                    color: modalState.body.textColor,
+                    fontSize: modalState.body.fontSize,
+                  }}
+                  id="modal-builder-body-textarea"
+                />
+              ) : (
+                <p
+                  style={{
+                    textAlign: alignmentStyleMap[modalState.body.alignment],
+                    color: modalState.body.textColor,
+                    fontSize: modalState.body.fontSize,
+                  }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleEditorModeSet(
+                      EditorMenuOptions.BODY,
+                      editorMode === EditorMenuOptions.MAIN
+                    )();
+                  }}
+                  className="min-h-[20px]"
+                >
+                  <ReactMarkdown className="whitespace-pre-line">
+                    {modalState.body.content}
+                  </ReactMarkdown>
+                </p>
+              )}
+            </div>
           </div>
         </div>
       </div>

@@ -108,6 +108,6 @@ export class AccountsController {
     @Req() { user }: Request,
     @UploadedFile() file: Express.Multer.File
   ) {
-    // return this.s3Service .uploadMedia(<Account>user, file);
+    return this.s3Service.uploadFile(file);
   }
 }

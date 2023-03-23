@@ -9,13 +9,7 @@ import {
   ModalDismissPositionCenterRight,
   ModalDismissPositionCenterLeft,
 } from "./Icons/ModalBuilderIcons";
-import {
-  CrossDismiss,
-  DismissPosition,
-  DismissType,
-  SizeUnit,
-  TextDismiss,
-} from "./types";
+import { DismissPosition, DismissType, SizeUnit } from "./types";
 import ModalBuilderColorPicker from "./Elements/ModalBuilderColorPicker";
 import ReactSlider from "react-slider";
 import RemoveComponentButton from "./Elements/RemoveComponentButton";
@@ -155,16 +149,13 @@ const ModalEditorDismissMenu = ({
                 trackClassName="h-[5px] bg-[#22C55E] rounded-[4px]"
                 min={5}
                 max={25}
-                value={(modalState.dismiss as CrossDismiss).crossSize.value}
+                value={modalState.dismiss.textSize}
                 onChange={(value) =>
                   setModalState({
                     ...modalState,
                     dismiss: {
                       ...modalState.dismiss,
-                      crossSize: {
-                        unit: SizeUnit.PIXEL,
-                        value,
-                      },
+                      textSize: value,
                     },
                   })
                 }
@@ -180,17 +171,14 @@ const ModalEditorDismissMenu = ({
               <ModalBuilderNumberInput
                 id="crossSize"
                 name="crossSize"
-                value={(modalState.dismiss as CrossDismiss).crossSize.value}
-                unit={(modalState.dismiss as CrossDismiss).crossSize.unit}
+                value={modalState.dismiss.textSize}
+                unit={SizeUnit.PIXEL}
                 onChange={(value) =>
                   setModalState({
                     ...modalState,
                     dismiss: {
                       ...modalState.dismiss,
-                      crossSize: {
-                        unit: SizeUnit.PIXEL,
-                        value,
-                      },
+                      textSize: value,
                     },
                   })
                 }
@@ -207,7 +195,7 @@ const ModalEditorDismissMenu = ({
               id="fontSize"
               name="fontSize"
               unit={SizeUnit.PIXEL}
-              value={(modalState.dismiss as TextDismiss).textSize}
+              value={modalState.dismiss.textSize}
               onChange={(value) =>
                 setModalState({
                   ...modalState,

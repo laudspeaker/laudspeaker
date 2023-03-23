@@ -191,10 +191,9 @@ We've made some changes to our styling and our navigation. We did this to speed 
     dismiss: {
       hidden: true,
       type: DismissType.CROSS,
-      crossSize: { value: 14, unit: SizeUnit.PIXEL },
+      textSize: 14,
       color: "#FFFFFF",
       position: DismissPosition.INSIDE_RIGHT,
-      textSize: 14,
       timedDismiss: {
         enabled: false,
         duration: 3,
