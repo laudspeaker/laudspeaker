@@ -176,9 +176,8 @@ We've made some changes to our styling and our navigation. We did this to speed 
     media: {
       hidden: false,
       type: MediaType.IMAGE,
-      imageSrc:
-        "https://laudspeaker-user-media.s3.amazonaws.com/e9b5c8fb-2791-487d-a88f-2fb76f40467c16796714236921.jpg",
-      key: "key",
+      imageSrc: "",
+      key: null,
       altText: "",
       actionOnClick: MediaClickAction.NONE,
       height: { value: 60, unit: SizeUnit.PERCENTAGE },

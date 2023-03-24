@@ -1,4 +1,4 @@
-import React, { CSSProperties, FC } from "react";
+import React, { CSSProperties, FC, ReactNode } from "react";
 import { ModalState } from "./ModalBuilder";
 import {
   Alignment,
@@ -16,6 +16,13 @@ import ReactMarkdown from "react-markdown";
 import ModalViewerTextArea from "./Elements/ModalViewerTextArea";
 import { EditorMenuOptions } from "./ModalEditorMainMenu";
 import { PlusIcon } from "@heroicons/react/24/outline";
+import {
+  YouTubeEmbed,
+  FacebookEmbed,
+  InstagramEmbed,
+  TwitterEmbed,
+} from "react-social-media-embed";
+import { getSocialMediaPlatform, SocialMedia } from "helpers/socialMedia";
 
 interface ModalViewerProps {
   modalState: ModalState;
@@ -294,6 +301,62 @@ const ModalViewer: FC<ModalViewerProps> = ({
                     src={modalState.media.imageSrc || ""}
                     alt={modalState.media.altText}
                   />
+                )}
+                {modalState.media.type === MediaType.VIDEO && (
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "center",
+                    }}
+                  >
+                    {(() => {
+                      const platform = getSocialMediaPlatform(
+                        modalState.media.videoUrl || ""
+                      );
+
+                      const coorelation: { [key: string]: ReactNode } = {
+                        [SocialMedia.YouTube]: (
+                          <YouTubeEmbed
+                            height={"100%"}
+                            url={modalState.media.videoUrl || ""}
+                            width={
+                              modalState.media.height.value +
+                              modalState.media.height.unit
+                            }
+                          />
+                        ),
+                        [SocialMedia.Facebook]: (
+                          <FacebookEmbed
+                            url={modalState.media.videoUrl || ""}
+                            width={
+                              modalState.media.height.value +
+                              modalState.media.height.unit
+                            }
+                          />
+                        ),
+                        [SocialMedia.Instagram]: (
+                          <InstagramEmbed
+                            url={modalState.media.videoUrl || ""}
+                            width={
+                              modalState.media.height.value +
+                              modalState.media.height.unit
+                            }
+                          />
+                        ),
+                        [SocialMedia.Twitter]: (
+                          <TwitterEmbed
+                            url={modalState.media.videoUrl || ""}
+                            width={
+                              modalState.media.height.value +
+                              modalState.media.height.unit
+                            }
+                          />
+                        ),
+                      };
+
+                      return coorelation[platform] || <></>;
+                    })()}
+                  </div>
                 )}
               </div>
               <div

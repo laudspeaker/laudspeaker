@@ -103,7 +103,7 @@ const ModalEditorMediaMenu = ({
             <textarea
               value={modalState.media.videoUrl || ""}
               className="resize-none border-[1px] border-white focus:border-white rounded-[5px] bg-transparent outline-none focus:outline-none shadow-none text-[12px]"
-              placeholder="Video URL (YouTube, Vimeo, etc...)"
+              placeholder="Video URL (YouTube, Facebook, Instagram, Twitter)"
               onChange={(el) =>
                 setModalState({
                   ...modalState,

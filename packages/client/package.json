@@ -53,6 +53,7 @@
     "react-router-dom": "6.3.0",
     "react-scripts": "5.0.1",
     "react-slider": "^2.0.4",
+    "react-social-media-embed": "^2.3.4",
     "react-toastify": "^9.0.8",
     "react-use": "^17.4.0",
     "reactflow": "^11.5.6",
