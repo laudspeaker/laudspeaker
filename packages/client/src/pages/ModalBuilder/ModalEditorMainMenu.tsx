@@ -7,6 +7,7 @@ import MediaSVG from "@heroicons/react/20/solid/VideoCameraIcon";
 import DismissSVG from "@heroicons/react/20/solid/XCircleIcon";
 import EditIconSVG from "@heroicons/react/20/solid/EllipsisHorizontalIcon";
 import PrimarySVG from "@heroicons/react/20/solid/CheckCircleIcon";
+import ShroudSVG from "@heroicons/react/20/solid/SunIcon";
 import { ModalState } from "./ModalBuilder";
 import { FC } from "react";
 
@@ -19,6 +20,7 @@ export enum EditorMenuOptions {
   MEDIA = "MEDIA",
   DISMISS = "DISMISS",
   PRIMARY = "PRIMARY",
+  SHROUD = "SHROUD",
 }
 
 interface MainMenuProps {
@@ -63,6 +65,12 @@ const ModalEditorMainMenu: FC<MainMenuProps> = ({
           icon: <MediaSVG />,
           option: EditorMenuOptions.MEDIA,
           hidden: modalState.media.hidden,
+        },
+        {
+          name: "Shroud",
+          icon: <ShroudSVG />,
+          option: EditorMenuOptions.SHROUD,
+          hidden: modalState.shroud.hidden,
         },
       ],
     },

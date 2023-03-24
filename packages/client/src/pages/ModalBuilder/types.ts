@@ -191,3 +191,10 @@ export enum SubMenuOptions {
   Personalization = "PERSONALIZATION",
   OpenUrl = "OPENURL",
 }
+
+export interface Shroud {
+  hidden: boolean;
+  color: Color;
+  opacity: number;
+  blur: number;
+}

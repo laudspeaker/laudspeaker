@@ -6,6 +6,7 @@ import {
   DismissPosition,
   DismissType,
   MediaPosition,
+  MediaType,
   ModalPosition,
   PrimaryButtonPosition,
   SizeUnit,
@@ -120,8 +121,18 @@ const ModalViewer: FC<ModalViewerProps> = ({
 
   return (
     <div
-      style={{ ...modalPositionMap[modalState.position] }}
-      className="left-0 top-0 min-h-screen w-screen flex fixed z-[2147483645] p-[20px]"
+      style={{
+        ...modalPositionMap[modalState.position],
+        ...(modalState.shroud.hidden
+          ? {}
+          : {
+              backgroundColor: `${modalState.shroud.color}${
+                (modalState.shroud.opacity * 255).toString(16).split(".")[0]
+              }`,
+              backdropFilter: `blur(${modalState.shroud.blur}px)`,
+            }),
+      }}
+      className="h-full w-screen flex z-[2147483645] p-[20px]"
     >
       <style>
         {`
@@ -160,6 +171,7 @@ const ModalViewer: FC<ModalViewerProps> = ({
           borderRadius: `${modalState.borderRadius.value}${modalState.borderRadius.unit}`,
           background: CanvasBackground[modalState.background.selected],
         }}
+        id="modalView"
         className={`relative p-[18px]`}
         onClick={(e) => {
           e.stopPropagation();
@@ -262,11 +274,28 @@ const ModalViewer: FC<ModalViewerProps> = ({
             }
           >
             <div
-              className={`flex ${mediaPositionMap[modalState.media.position]}`}
+              className={`flex ${
+                mediaPositionMap[modalState.media.position]
+              } justify-center items-center`}
             >
               <div
-                className={modalState.media.hidden ? "hidden" : undefined}
-              ></div>
+                className={
+                  modalState.media.hidden
+                    ? "hidden"
+                    : "flex justify-center items-center"
+                }
+                style={{
+                  width: `${modalState.media.height.value}${modalState.media.height.unit}`,
+                }}
+              >
+                {modalState.media.type === MediaType.IMAGE && (
+                  <img
+                    className="w-full"
+                    src={modalState.media.imageSrc || ""}
+                    alt={modalState.media.altText}
+                  />
+                )}
+              </div>
               <div
                 id="modal-viewer-body-wrapper"
                 className={modalState.body.hidden ? "hidden" : undefined}

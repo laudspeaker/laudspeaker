@@ -13,7 +13,6 @@ import {
 } from './api/customers/schemas/customer-keys.schema';
 import { isDateString, isEmail } from 'class-validator';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Account } from './api/accounts/entities/accounts.entity';
 import { Between, Repository } from 'typeorm';
 import { Verification } from './api/auth/entities/verification.entity';
 import { EventDocument } from './api/events/schemas/event.schema';
