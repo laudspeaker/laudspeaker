@@ -88,6 +88,8 @@
   "devDependencies": {
     "@nestjs/schematics": "^8.0.0",
     "@nestjs/testing": "^8.4.7",
+    "@types/aws-sdk": "^2.7.0",
+    "aws-sdk": "^2.1340.0",
     "@types/bull": "^3.15.8",
     "@types/cron": "^2.0.0",
     "@types/express": "^4.17.13",

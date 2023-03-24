@@ -48,6 +48,7 @@ export interface GradientBackground {
 
 export interface ImageBackground {
   type: BackgroundType.IMAGE;
+  key: string | null;
   imageSrc: string;
 }
 
@@ -84,6 +85,7 @@ export interface CommonMedia {
   position: MediaPosition;
   height: Size;
   type: MediaType;
+  key: string | null;
 }
 
 export enum GeneralClickActions {

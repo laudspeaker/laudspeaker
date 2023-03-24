@@ -1,3 +1,5 @@
+import ApiService from "services/api.service";
+import { ApiConfig } from "../../../constants";
 import { toast } from "react-toastify";
 import UploadSVG from "@heroicons/react/20/solid/CloudArrowUpIcon";
 import { ModalState } from "../ModalBuilder";
@@ -6,6 +8,8 @@ import { ImageBackground, Media } from "../types";
 import CloseSVG from "@heroicons/react/20/solid/XMarkIcon";
 import { useState } from "react";
 import tokenService from "services/token.service";
+import { AxiosError } from "axios";
+import { LinearProgress } from "@mui/material";
 
 interface IModalMediaUploaderProps {
   modalState: ModalState;
@@ -19,6 +23,11 @@ const ModalMediaUploader = ({
   currentMainMode,
 }: IModalMediaUploaderProps) => {
   const [isMediaLoading, setIsMediaLoading] = useState(false);
+
+  const imageList: { [key: string]: ImageBackground | Media } = {
+    [EditorMenuOptions.CANVAS]: modalState.background.image,
+    [EditorMenuOptions.MEDIA]: modalState.media,
+  };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -52,9 +61,11 @@ const ModalMediaUploader = ({
 
       if (!res.ok) throw new Error("Error while loading csv");
 
-      //   const {
-      //     stats: { created, updated, skipped },
-      //   } = await res.json();
+      const { url, key } = await res.json();
+
+      imageList[currentMainMode].imageSrc = url;
+      imageList[currentMainMode].key = key;
+      setModalState({ ...modalState });
 
       toast.success("Image loaded");
     } catch (error) {
@@ -65,20 +76,36 @@ const ModalMediaUploader = ({
     }
   };
 
-  const handleImageDelete = () => {};
+  const handleImageDelete = async () => {
+    if (!imageList[currentMainMode].key) {
+      return;
+    }
+    setIsMediaLoading(true);
 
-  const imageList: { [key: string]: ImageBackground | Media } = {
-    [EditorMenuOptions.CANVAS]: modalState.background.image,
-    [EditorMenuOptions.MEDIA]: modalState.media,
+    try {
+      await ApiService.post({
+        url: ApiConfig.deleteMedia + imageList[currentMainMode].key,
+      });
+
+      imageList[currentMainMode].imageSrc = "";
+      imageList[currentMainMode].key = null;
+      setModalState({ ...modalState });
+
+      toast.success("Image deleted");
+    } catch (error) {
+      toast.error((error as AxiosError).message);
+    } finally {
+      setIsMediaLoading(false);
+    }
   };
 
   return isMediaLoading ? (
-    <>Loading ...</>
+    <LinearProgress color="success" className="w-full h-[10px]" />
   ) : (
     <label className="cursor-pointer" htmlFor="pick-image">
       {!imageList[currentMainMode].imageSrc ? (
         <>
-          <div className="text-[#22C55E] hover:bg-[#105529] transition-colors border-[1px] border-[#22C55E] rounded-md inline-flex justify-center items-center px-[6px] py-[4px]">
+          <div className="text-[#22C55E]  hover:bg-[#105529] transition-colors border-[1px] border-[#22C55E] rounded-md inline-flex justify-center items-center px-[6px] py-[4px]">
             <UploadSVG className="w-[20px] h-[20px] mr-[6px]" />
             <small>Upload</small>
           </div>
@@ -92,9 +119,9 @@ const ModalMediaUploader = ({
           />
         </>
       ) : (
-        <div className="relative border-[1px] min-h-[20px] min-w-[20px] rounded-sm border-[#bac3c0]">
+        <div className="relative inline-block border-[2px] min-h-[20px] min-w-[20px] rounded-md border-[#bac3c0]">
           <img
-            className="max-h-[120px] max-w-full"
+            className="max-h-[120px] max-w-full rounded-md"
             src={imageList[currentMainMode].imageSrc || ""}
           />
           <CloseSVG

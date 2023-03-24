@@ -1,5 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import {
+  HttpException,
+  Inject,
+  Injectable,
+  LoggerService,
+} from '@nestjs/common';
 import * as AWS from 'aws-sdk';
+import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
+import { Account } from '../accounts/entities/accounts.entity';
 
 @Injectable()
 export class S3Service {
@@ -9,21 +16,26 @@ export class S3Service {
     secretAccessKey: process.env.AWS_S3_KEY_SECRET,
   });
 
-  async uploadFile(file) {
+  constructor(
+    @Inject(WINSTON_MODULE_NEST_PROVIDER)
+    private readonly logger: LoggerService
+  ) {}
+
+  async uploadFile(file, account: Account) {
     const { originalname } = file;
 
-    await this.s3_upload(
+    return await this.s3_upload(
       file.buffer,
       this.AWS_S3_BUCKET,
-      originalname,
+      String(account.id) + Date.now().toString() + originalname,
       file.mimetype
     );
   }
 
-  async s3_upload(file, bucket, name, mimetype) {
+  async s3_upload(file, bucket, key, mimetype) {
     const params = {
       Bucket: bucket,
-      Key: String(name),
+      Key: key,
       Body: file,
       ACL: 'public-read',
       ContentType: mimetype,
@@ -33,14 +45,36 @@ export class S3Service {
       },
     };
 
-    console.log(params);
+    try {
+      this.logger.log(
+        `Upload file: Bucket: ${params.Bucket}, Key: ${params.Key}`
+      );
+      const s3Response = await this.s3.upload(params).promise();
+      this.logger.log('File uploaded');
+
+      return { url: s3Response.Location, key: s3Response.Key };
+    } catch (e) {
+      this.logger.error(e);
+      throw new HttpException('Error while trying to delete file.', 500);
+    }
+  }
+
+  async deleteFile(key: string, account: Account) {
+    if (!key.startsWith(account.id)) {
+      throw new HttpException('You are not allowed to delete this file.', 500);
+    }
 
     try {
-      const s3Response = await this.s3.upload(params).promise();
-
-      console.log(s3Response);
-    } catch (e) {
-      console.log(e);
+      await this.s3
+        .deleteObject({
+          Bucket: this.AWS_S3_BUCKET,
+          Key: key,
+        })
+        .promise();
+    } catch (error) {
+      this.logger.error(error);
+      throw new HttpException('Error while trying to delete file.', 500);
     }
   }
 }
+

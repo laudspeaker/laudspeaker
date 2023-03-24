@@ -131,6 +131,7 @@ const ModalEditor: FC<ModalEditorProps> = ({
         <ModalEditorCanvasMenu
           modalState={modalState}
           setModalState={setModalState}
+          currentMainMode={currentMainMode}
         />
       ),
     },

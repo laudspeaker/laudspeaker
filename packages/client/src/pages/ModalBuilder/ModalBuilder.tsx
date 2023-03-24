@@ -72,6 +72,7 @@ export const defaultGradientBackground: GradientBackground = {
 export const defaultImageBackground: ImageBackground = {
   type: BackgroundType.IMAGE,
   imageSrc: "",
+  key: null,
 };
 
 export const textStyles = [
@@ -170,7 +171,7 @@ We've made some changes to our styling and our navigation. We did this to speed 
       hidden: false,
       type: MediaType.IMAGE,
       imageSrc: "",
-      // "https://fast.chmln-cdn.com/attachments/6139382e12c3e30011a475f5/original.svg",
+      key: null,
       altText: "",
       actionOnClick: MediaClickAction.NONE,
       height: { value: 60, unit: SizeUnit.PERCENTAGE },

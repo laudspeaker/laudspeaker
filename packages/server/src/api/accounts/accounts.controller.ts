@@ -13,6 +13,7 @@ import {
   UseInterceptors,
   Post,
   UploadedFile,
+  Param,
 } from '@nestjs/common';
 import { AccountsService } from './accounts.service';
 import { UpdateAccountDto } from './dto/update-account.dto';
@@ -108,6 +109,13 @@ export class AccountsController {
     @Req() { user }: Request,
     @UploadedFile() file: Express.Multer.File
   ) {
-    return this.s3Service.uploadFile(file);
+    return this.s3Service.uploadFile(file, <Account>user);
+  }
+
+  @Post('/delete-media/:key')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor)
+  async deleteMedia(@Req() { user }: Request, @Param('key') key: string) {
+    return this.s3Service.deleteFile(key, <Account>user);
   }
 }

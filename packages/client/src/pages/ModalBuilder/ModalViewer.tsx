@@ -113,9 +113,9 @@ const ModalViewer: FC<ModalViewerProps> = ({
         .toString(16)
         .split(".")[0]
     }) 100%`,
-    // TODO: update when will work with image upload
-    [BackgroundType.IMAGE]:
-      "url(https://cdn.pixabay.com/photo/2015/04/19/08/32/marguerite-729510__340.jpg)",
+    [BackgroundType.IMAGE]: `url(${
+      modalState.background[BackgroundType.IMAGE].imageSrc
+    })`,
   };
 
   return (

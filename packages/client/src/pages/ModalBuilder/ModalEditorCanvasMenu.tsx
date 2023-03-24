@@ -1,18 +1,22 @@
 import ReactSlider from "react-slider";
 import ModalBuilderColorPicker from "./Elements/ModalBuilderColorPicker";
 import ModalBuilderNumberInput from "./Elements/ModalBuilderNumberInput";
+import ModalMediaUploader from "./Elements/ModalMediaUploader";
 import { ModalState } from "./ModalBuilder";
+import { EditorMenuOptions } from "./ModalEditorMainMenu";
 import SizeUnitPicker from "./SizeUnitPicker";
 import { BackgroundType, SizeUnit } from "./types";
 
 interface IModalEditorCanvasMenuProps {
   modalState: ModalState;
   setModalState: (modalState: ModalState) => void;
+  currentMainMode: EditorMenuOptions;
 }
 
 const ModalEditorCanvasMenu = ({
   modalState,
   setModalState,
+  currentMainMode,
 }: IModalEditorCanvasMenuProps) => {
   const bodyWidth = document.body.clientWidth;
 
@@ -267,11 +271,17 @@ const ModalEditorCanvasMenu = ({
         )}
         {modalState.background.selected === BackgroundType.IMAGE && (
           <>
-            <div className="flex items-center justify-between">
-              <div>Image source:</div>
-              <div className="flex items-center gap-[10px]">
-                {modalState.background[BackgroundType.IMAGE].imageSrc}
-              </div>
+            <div className="flex flex-col items-start gap-[6px] justify-center">
+              <div>Select image:</div>
+              <small className="w-full text-[#BAC3C0] text-[12px]">
+                Tip: Images that are the same (or similar) width as the Canvas
+                look best.
+              </small>
+              <ModalMediaUploader
+                modalState={modalState}
+                setModalState={setModalState}
+                currentMainMode={currentMainMode}
+              />
             </div>
           </>
         )}
