@@ -131,6 +131,12 @@ const ModalViewer: FC<ModalViewerProps> = ({
         h2 {
           font-size: 1.4em;
         }
+        #modal-viewer-title-wrapper a {
+          color: ${modalState.title.linkColor} !important
+        }
+        #modal-viewer-body-wrapper a {
+          color: ${modalState.body.linkColor} !important
+        }
         `}
       </style>
       <div
@@ -210,7 +216,10 @@ const ModalViewer: FC<ModalViewerProps> = ({
           )}
         </div>
         <div>
-          <div className={modalState.title.hidden ? "hidden" : undefined}>
+          <div
+            id="modal-viewer-title-wrapper"
+            className={modalState.title.hidden ? "hidden" : undefined}
+          >
             {editorMode === EditorMenuOptions.TITLE ? (
               <ModalViewerTextArea
                 value={modalState.title.content}
@@ -258,7 +267,10 @@ const ModalViewer: FC<ModalViewerProps> = ({
               <div
                 className={modalState.media.hidden ? "hidden" : undefined}
               ></div>
-              <div className={modalState.body.hidden ? "hidden" : undefined}>
+              <div
+                id="modal-viewer-body-wrapper"
+                className={modalState.body.hidden ? "hidden" : undefined}
+              >
                 {editorMode === EditorMenuOptions.BODY ? (
                   <ModalViewerTextArea
                     value={modalState.body.content}
