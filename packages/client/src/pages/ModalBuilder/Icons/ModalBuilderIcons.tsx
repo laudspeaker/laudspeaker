@@ -343,7 +343,7 @@ export const ModalPrimaryPositionBottomCenter = () => (
 export const ModalPrimaryPositionBottomRight = () => (
   <svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
     <g stroke="#fff" fill="none" fill-rule="evenodd">
-      <path d="M24.25 41c-.69 0-1.25-.283-1.25-.632v-4.736c0-.35.56-.632 1.25-.632h12.5c.69 0 1.25.283 1.25.632v4.736c0 .35-.56.632-1.25.632h-12.5z"></path>
+      <path d="M32.25 41c-.69 0-1.25-.283-1.25-.632v-4.736c0-.35.56-.632 1.25-.632h12.5c.69 0 1.25.283 1.25.632v4.736c0 .35-.56.632-1.25.632h-12.5z"></path>
       <path
         d="M45.833 44H14.167C12.417 44 11 42.68 11 41.053V18.947C11 17.32 12.418 16 14.167 16h31.666C47.583 16 49 17.32 49 18.947v22.106C49 42.68 47.582 44 45.833 44z"
         stroke-width="1.5"

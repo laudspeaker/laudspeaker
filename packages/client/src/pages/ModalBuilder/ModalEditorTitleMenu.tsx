@@ -4,7 +4,7 @@ import ModalBuilderNumberInput from "./Elements/ModalBuilderNumberInput";
 import RemoveComponentButton from "./Elements/RemoveComponentButton";
 import { ModalState, textStyles, textStylesIcons } from "./ModalBuilder";
 import { textAlignment, textAlignmentIcons } from "./ModalEditor";
-import { SizeUnit } from "./types";
+import { SizeUnit, StylesVariants } from "./types";
 
 interface IModalEditorTitleMenuProps {
   modalState: ModalState;
@@ -23,6 +23,62 @@ const ModalEditorTitleMenu = ({
       title: { ...modalState.title, hidden: false },
     });
   }, []);
+
+  const handleAddStyles = (style: StylesVariants) => {
+    const element = document.getElementById(
+      "modal-builder-title-textarea"
+    ) as HTMLTextAreaElement;
+
+    if (!element) return;
+    const indexStart = element.selectionStart;
+    const indexEnd = element.selectionEnd;
+
+    let newContent: string = modalState.title.content;
+    let line = 0;
+    for (const char of newContent.slice(0, indexStart)) {
+      if (char === "\n") line++;
+    }
+
+    switch (style) {
+      case StylesVariants.BOLD:
+        newContent =
+          newContent.slice(0, indexStart) +
+          "**" +
+          newContent.slice(indexStart, indexEnd) +
+          "**" +
+          newContent.slice(indexEnd);
+        break;
+      case StylesVariants.H1:
+        const lines = newContent.split("\n");
+        lines[line] = "# " + lines[line];
+        newContent = lines.join("\n");
+        break;
+      case StylesVariants.ITALIC:
+        newContent =
+          newContent.slice(0, indexStart) +
+          "_" +
+          newContent.slice(indexStart, indexEnd) +
+          "_" +
+          newContent.slice(indexEnd);
+        break;
+      case StylesVariants.LINK:
+        newContent =
+          newContent.slice(0, indexStart) +
+          "[" +
+          newContent.slice(indexStart, indexEnd) +
+          "](link here)" +
+          newContent.slice(indexEnd);
+        break;
+    }
+
+    setModalState({
+      ...modalState,
+      title: {
+        ...modalState.title,
+        content: newContent,
+      },
+    });
+  };
 
   return (
     <div className="text-white text-[14px] font-normal">
@@ -61,7 +117,7 @@ const ModalEditorTitleMenu = ({
                 <div
                   className={`flex justify-center items-center p-[2px] relative w-[32px] h-[32px] hover:bg-white hover:bg-opacity-25 rounded-md cursor-pointer`}
                   onClick={() => {
-                    // TODO: add format to layout
+                    handleAddStyles(style);
                   }}
                 >
                   {textStylesIcons[style]}

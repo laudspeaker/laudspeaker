@@ -45,7 +45,7 @@ export const primaryPostions = [
     name: "Bottom center",
   },
   {
-    type: PrimaryButtonPosition.BOTTOM_LEFT,
+    type: PrimaryButtonPosition.BOTTOM_RIGHT,
     icon: <ModalPrimaryPositionBottomRight />,
     name: "Bottom right",
   },

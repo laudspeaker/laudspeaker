@@ -24,6 +24,62 @@ const ModalEditorBodyMenu = ({
     });
   }, []);
 
+  const handleAddStyles = (style: StylesVariants) => {
+    const element = document.getElementById(
+      "modal-builder-body-textarea"
+    ) as HTMLTextAreaElement;
+
+    if (!element) return;
+    const indexStart = element.selectionStart;
+    const indexEnd = element.selectionEnd;
+
+    let newContent: string = modalState.body.content;
+    let line = 0;
+    for (const char of newContent.slice(0, indexStart)) {
+      if (char === "\n") line++;
+    }
+
+    switch (style) {
+      case StylesVariants.BOLD:
+        newContent =
+          newContent.slice(0, indexStart) +
+          "**" +
+          newContent.slice(indexStart, indexEnd) +
+          "**" +
+          newContent.slice(indexEnd);
+        break;
+      case StylesVariants.H1:
+        const lines = newContent.split("\n");
+        lines[line] = "# " + lines[line];
+        newContent = lines.join("\n");
+        break;
+      case StylesVariants.ITALIC:
+        newContent =
+          newContent.slice(0, indexStart) +
+          "_" +
+          newContent.slice(indexStart, indexEnd) +
+          "_" +
+          newContent.slice(indexEnd);
+        break;
+      case StylesVariants.LINK:
+        newContent =
+          newContent.slice(0, indexStart) +
+          "[" +
+          newContent.slice(indexStart, indexEnd) +
+          "](link here)" +
+          newContent.slice(indexEnd);
+        break;
+    }
+
+    setModalState({
+      ...modalState,
+      body: {
+        ...modalState.body,
+        content: newContent,
+      },
+    });
+  };
+
   return (
     <div className="text-white text-[14px] font-normal">
       <div className="flex items-center justify-between pb-[4px] pt-[20px]">
@@ -61,59 +117,7 @@ const ModalEditorBodyMenu = ({
                 <div
                   className={`flex justify-center items-center p-[2px] relative w-[32px] h-[32px] hover:bg-white hover:bg-opacity-25 rounded-md cursor-pointer`}
                   onClick={() => {
-                    const element = document.getElementById(
-                      "modal-builder-body-textarea"
-                    ) as HTMLTextAreaElement;
-
-                    if (!element) return;
-                    const indexStart = element.selectionStart;
-                    const indexEnd = element.selectionEnd;
-
-                    let newContent: string = modalState.body.content;
-                    let line = 0;
-                    for (const char of newContent.slice(0, indexStart)) {
-                      if (char === "\n") line++;
-                    }
-
-                    switch (style) {
-                      case StylesVariants.BOLD:
-                        newContent =
-                          newContent.slice(0, indexStart) +
-                          "**" +
-                          newContent.slice(indexStart, indexEnd) +
-                          "**" +
-                          newContent.slice(indexEnd);
-                        break;
-                      case StylesVariants.H1:
-                        const lines = newContent.split("\n");
-                        lines[line] = "# " + lines[line];
-                        newContent = lines.join("\n");
-                        break;
-                      case StylesVariants.ITALIC:
-                        newContent =
-                          newContent.slice(0, indexStart) +
-                          "_" +
-                          newContent.slice(indexStart, indexEnd) +
-                          "_" +
-                          newContent.slice(indexEnd);
-                        break;
-                      case StylesVariants.LINK:
-                        newContent =
-                          newContent.slice(0, indexStart) +
-                          "[" +
-                          newContent.slice(indexStart, indexEnd) +
-                          "](link here)" +
-                          newContent.slice(indexEnd);
-                        break;
-                    }
-
-                    setModalState({
-                      ...modalState,
-                      body: {
-                        ...modalState.body,
-                        content: newContent,
-                      },
-                    });
+                    handleAddStyles(style);
                   }}
                 >
                   {textStylesIcons[style]}

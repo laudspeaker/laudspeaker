@@ -123,6 +123,16 @@ const ModalViewer: FC<ModalViewerProps> = ({
       style={{ ...modalPositionMap[modalState.position] }}
       className="left-0 top-0 min-h-screen w-screen flex fixed z-[2147483645] p-[20px]"
     >
+      <style>
+        {`
+        h1 {
+          font-size: 2em;
+        }
+        h2 {
+          font-size: 1.4em;
+        }
+        `}
+      </style>
       <div
         style={{
           top: `${modalState.yOffset.value}${
@@ -156,7 +166,7 @@ const ModalViewer: FC<ModalViewerProps> = ({
         <div
           className={`absolute select-none cursor-pointer ${
             dismissPositionMap[modalState.dismiss.position]
-          }`}
+          } ${modalState.dismiss.hidden && "hidden"}`}
           style={{
             color: modalState.dismiss.color,
             fontSize: modalState.dismiss.textSize,
@@ -173,6 +183,7 @@ const ModalViewer: FC<ModalViewerProps> = ({
             <div
               className="rotate-45"
               style={
+                modalState.dismiss.timedDismiss.enabled &&
                 modalState.dismiss.timedDismiss.displayTimer
                   ? {
                       borderRadius: "100%",
@@ -187,7 +198,11 @@ const ModalViewer: FC<ModalViewerProps> = ({
             <div
               className="rounded p-[5px]"
               style={{
-                background: modalState.dismiss.timedDismiss.timerColor,
+                background:
+                  modalState.dismiss.timedDismiss.enabled &&
+                  modalState.dismiss.timedDismiss.displayTimer
+                    ? modalState.dismiss.timedDismiss.timerColor
+                    : "",
               }}
             >
               close
@@ -288,7 +303,7 @@ const ModalViewer: FC<ModalViewerProps> = ({
               }}
               className={`flex justify-center items-center whitespace-nowrap h-fit p-[5px_9px_3px_9px] select-none cursor-pointer border-[2px] mt-[18px] ${
                 primaryButtomPositionMap[modalState.primaryButton.position]
-              }`}
+              } ${modalState.primaryButton.hidden && "hidden"}`}
               style={{
                 backgroundColor: modalState.primaryButton.fillColor,
                 color: modalState.primaryButton.textColor,
