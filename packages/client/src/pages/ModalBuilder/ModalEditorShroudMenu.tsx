@@ -6,13 +6,13 @@ import RemoveComponentButton from "./Elements/RemoveComponentButton";
 import { ModalState } from "./ModalBuilder";
 import { SizeUnit } from "./types";
 
-interface ModalEditorShraudMenuProps {
+interface ModalEditorShroudMenuProps {
   modalState: ModalState;
   setModalState: (modalState: ModalState) => void;
   returnBack: () => void;
 }
 
-const ModalEditorShraudMenu: FC<ModalEditorShraudMenuProps> = ({
+const ModalEditorShroudMenu: FC<ModalEditorShroudMenuProps> = ({
   modalState,
   setModalState,
   returnBack,
@@ -65,26 +65,43 @@ const ModalEditorShraudMenu: FC<ModalEditorShraudMenuProps> = ({
       <div className="flex items-center justify-between gap-[10px]">
         <div className="w-full">Blur:</div>
         <div className="!min-w-[150px]">
-          <ReactSlider
-            className="h-[20px] flex items-center justify-center mb-[8px]"
-            trackClassName="h-[5px] bg-[#22C55E] rounded-[4px]"
-            min={0}
-            max={6}
-            value={modalState.shroud.blur}
-            onChange={(blur) =>
-              setModalState({
-                ...modalState,
-                shroud: { ...modalState.shroud, blur },
-              })
-            }
-            step={1}
-            renderThumb={(props) => (
-              <div
-                {...props}
-                className="rounded-[100%] w-[16px] h-[16px] cursor-grab bg-white"
-              />
-            )}
-          />
+          <div>
+            <ReactSlider
+              className="h-[20px] flex items-center justify-center mb-[8px]"
+              trackClassName="h-[5px] bg-[#22C55E] rounded-[4px]"
+              min={0}
+              max={6}
+              value={modalState.shroud.blur}
+              onChange={(blur) =>
+                setModalState({
+                  ...modalState,
+                  shroud: { ...modalState.shroud, blur },
+                })
+              }
+              step={1}
+              renderThumb={(props) => (
+                <div
+                  {...props}
+                  className="rounded-[100%] w-[16px] h-[16px] cursor-grab bg-white"
+                />
+              )}
+            />
+          </div>
+          <div className="text-[#BAC3C0]">
+            <div className="flex justify-between items-center text-[4px] px-[6px] pb-[5px]">
+              <span>|</span>
+              <span>|</span>
+              <span>|</span>
+              <span>|</span>
+              <span>|</span>
+              <span>|</span>
+              <span>|</span>
+            </div>
+            <div className="flex justify-between items-center text-[14px]">
+              <span>Off</span>
+              <span>Max</span>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -108,4 +125,4 @@ const ModalEditorShraudMenu: FC<ModalEditorShraudMenuProps> = ({
   );
 };
 
-export default ModalEditorShraudMenu;
+export default ModalEditorShroudMenu;

@@ -22,7 +22,7 @@ import ModalEditorPrimaryMenu from "./ModalEditorPrimaryMenu";
 import ModalEditorAdditionalClicks from "./ModalEditorAdditionalClicks";
 import ModalEditorOpenURL from "./ModalEditorOpenURL";
 import { Scrollbars } from "react-custom-scrollbars";
-import ModalEditorShraudMenu from "./ModalEditorShraudMenu";
+import ModalEditorShroudMenu from "./ModalEditorShroudMenu";
 
 interface ModalEditorProps {
   modalState: ModalState;
@@ -189,7 +189,7 @@ const ModalEditor: FC<ModalEditorProps> = ({
       name: "Shroud",
       description: "Add a non-clickable overlay behind your Experience",
       layout: (
-        <ModalEditorShraudMenu
+        <ModalEditorShroudMenu
           modalState={modalState}
           setModalState={setModalState}
           returnBack={handleBackClick}
