@@ -17,6 +17,7 @@ import { GenericButton } from "components/Elements";
 export interface TableDataItem {
   isInsideSegment?: boolean;
   email?: string;
+  phEmail?: string;
   phone?: string;
   id?: string | number | null;
   name?: string;
@@ -207,7 +208,7 @@ function renderSecondColumn(row: TableDataItem) {
     return (
       <>
         <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
-          {row.type}
+          {row.type || row.email || row.phEmail}
         </td>
       </>
     );
@@ -444,6 +445,7 @@ function transformJourneyData(data: TableDataItem[]): TableDataItem[] {
           : "j",
       salient: element.salient,
       email: element.email,
+      phEmail: element.phEmail,
       phone: element.phone,
       isInsideSegment: element.isInsideSegment,
     });
