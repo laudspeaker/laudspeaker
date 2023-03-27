@@ -58,6 +58,7 @@ export class CustomersController {
       searchValue
     );
   }
+
   @Get('/possible-attributes')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)

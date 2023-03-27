@@ -328,18 +328,12 @@ export class CustomersService {
       }>()
     )?.data;
 
-    //TODO: fix
     const result = await Promise.all(
       data.map(async (el) => {
         const query = await this.dataSource
-          .createQueryBuilder(Workflow, 'workflow')
+          .createQueryBuilder(Audience, 'audience')
           .select('workflow.id, workflow.name, audience.name as audname')
-          .where(':id=ANY(audiences)', {
-            id: el.audienceId,
-          })
-          .leftJoin('audience', 'audience', 'audience.id = :id', {
-            id: el.audienceId,
-          })
+          .leftJoin('workflow', 'workflow', 'workflow.id = audience.workflowId')
           .execute();
         return {
           ...el,
@@ -430,15 +424,14 @@ export class CustomersService {
       data.map(async (person) => {
         const info: Record<string, any> = {};
         (info['id'] = person['_id'].toString()),
-          (info['salient'] = person['email']
-            ? person['email']
-            : person['slackEmail']
-            ? person['slackEmail']
-            : person['slackRealName']
-            ? person['slackRealName']
-            : '...');
+          (info['salient'] =
+            person['phEmail'] ||
+            person['email'] ||
+            person['slackEmail'] ||
+            person['slackRealName'] ||
+            '...');
 
-        info.email = person.email;
+        info.email = person.email || person.phEmail;
         info.phone = person.phone;
         info.dataSource = 'people';
 
