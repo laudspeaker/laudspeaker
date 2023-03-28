@@ -1,5 +1,13 @@
 import Account from "./Account";
 
+export enum TemplateType {
+  EMAIL = "email",
+  SLACK = "slack",
+  SMS = "sms",
+  FIREBASE = "firebase",
+  WEBHOOK = "webhook",
+}
+
 export default interface Template {
   id: number;
   name: string;
@@ -8,6 +16,6 @@ export default interface Template {
   style: string;
   subject: string;
   slackMessage: string;
-  type: "email" | "slack" | "sms";
+  type: TemplateType;
   smsText: string;
 }
