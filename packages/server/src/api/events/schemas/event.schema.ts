@@ -7,6 +7,9 @@ export type EventDocument = Event & Document;
 export class Event {
   @Prop()
   ownerId: string;
+
+  @Prop({ type: 'object' })
+  event: Record<string, any>;
 }
 
 export const EventSchema = SchemaFactory.createForClass(Event);
