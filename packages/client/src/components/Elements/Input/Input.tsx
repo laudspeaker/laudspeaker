@@ -1,4 +1,5 @@
 import React, {
+  FocusEvent,
   FocusEventHandler,
   KeyboardEvent,
   LegacyRef,
@@ -32,6 +33,7 @@ export interface InputProps {
   ref?: LegacyRef<HTMLInputElement>;
   endText?: string;
   wrapperClasses?: string;
+  onFocus?: (e: FocusEvent<HTMLInputElement>) => void;
   [key: string]: any;
 }
 
@@ -62,6 +64,7 @@ const Input = (props: InputProps) => {
     style,
     endText,
     wrapperClasses,
+    onFocus,
     ...otherProps
   } = props;
 
@@ -84,6 +87,7 @@ const Input = (props: InputProps) => {
             value={value || ""}
             onChange={onChange}
             onKeyDown={onKeyDown}
+            onFocus={onFocus}
             onBlur={onBlur}
             disabled={disabled}
             className={`mt-1 block w-full rounded-md shadow-sm sm:text-sm ${
