@@ -88,6 +88,9 @@ const WebhookBuilder = () => {
   const [bodyType, setBodyType] = useState(BodyType.JSON);
   const [headersString, setHeadersString] = useState("");
 
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+
   const bearerTokenRef = useRef<HTMLInputElement>(null);
   const basicUserNameRef = useRef<HTMLInputElement>(null);
   const basicPasswordRef = useRef<HTMLInputElement>(null);
@@ -130,6 +133,8 @@ const WebhookBuilder = () => {
               name="basic-username"
               inputRef={basicUserNameRef}
               onFocus={() => setSelectedRef(basicUserNameRef)}
+              value={username}
+              onChange={(el) => setUsername(el.target.value || "")}
             />
           </div>
         </div>
@@ -140,6 +145,8 @@ const WebhookBuilder = () => {
               name="basic-password"
               inputRef={basicPasswordRef}
               onFocus={() => setSelectedRef(basicPasswordRef)}
+              value={password}
+              onChange={(el) => setPassword(el.target.value)}
             />
           </div>
         </div>
@@ -294,6 +301,17 @@ const WebhookBuilder = () => {
       },
     });
   }, [headersString]);
+
+  useEffect(() => {
+    if (!username || !password) return;
+
+    setWebhookState({
+      ...webhookState,
+      headers: {
+        Authorization: `Basic ${btoa(`${username}:${password}`)}`,
+      },
+    });
+  }, [username, password]);
 
   const onSave = async () => {
     setIsSaving(true);
