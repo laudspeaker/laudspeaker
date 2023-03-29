@@ -40,7 +40,7 @@
     "@nestjs/platform-express": "^8.0.0",
     "@nestjs/schedule": "^2.1.0",
     "@nestjs/serve-static": "2.2.2",
-    "@nestjs/typeorm": "^8.0.3",
+    "@nestjs/typeorm": "^9.0.1",
     "@sendgrid/mail": "^7.7.0",
     "@slack/oauth": "^2.5.4",
     "@slack/web-api": "^6.7.2",
@@ -80,7 +80,7 @@
     "tr-nestjs-clickhouse": "^1.1.1",
     "tst-reflect": "^0.12.0",
     "twilio": "^3.84.0",
-    "typeorm": "^0.3.7",
+    "typeorm": "^0.3.12",
     "winston": "^3.8.1",
     "winston-papertrail": "^1.0.5",
     "winston-syslog": "^2.6.0"
@@ -135,3 +135,4 @@
     "testEnvironment": "node"
   }
 }
+
