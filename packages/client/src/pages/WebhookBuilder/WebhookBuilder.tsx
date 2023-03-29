@@ -361,23 +361,34 @@ const WebhookBuilder = () => {
   }
 
   const rawRequest = `${webhookState.method} ${path} HTTP/1.1
-Host: ${host}
-${Object.entries(webhookState.headers)
-  .map(([key, value]) => `${key || ""}: ${value || ""}`)
-  .join("\n")}
-${
-  [
-    WebhookMethod.GET,
-    WebhookMethod.DELETE,
-    WebhookMethod.HEAD,
-    WebhookMethod.OPTIONS,
-  ].includes(webhookState.method)
-    ? ""
-    : `Content-Type: ${mimeTypeMap[bodyType]}
-Content-Length: ${webhookState.body.length}
+    Host: ${host}
+    ${Object.entries(webhookState.headers)
+      .map(([key, value]) => `${key || ""}: ${value || ""}`)
+      .join("\n")}
+    ${
+      [
+        WebhookMethod.GET,
+        WebhookMethod.DELETE,
+        WebhookMethod.HEAD,
+        WebhookMethod.OPTIONS,
+      ].includes(webhookState.method)
+        ? ""
+        : `Content-Type: ${mimeTypeMap[bodyType]}
+    Content-Length: ${webhookState.body.length}
 
-${webhookState.body}`
-}`;
+    ${webhookState.body}`
+    }`;
+
+  const handleRetriesChange = (ret: number) => {
+    let retries = ret;
+    if (retries < 6 && retries >= 0) retries = ret;
+    else if (retries === 6) {
+      retries = 5;
+    } else {
+      retries = 0;
+    }
+    setWebhookState({ ...webhookState, retries });
+  };
 
   return (
     <div className="w-full">
@@ -426,10 +437,10 @@ ${webhookState.body}`
                 name="retries"
                 id="retries"
                 type="number"
+                max={5}
+                min={0}
                 value={webhookState.retries}
-                onChange={(e) =>
-                  setWebhookState({ ...webhookState, retries: +e.target.value })
-                }
+                onChange={(e) => handleRetriesChange(+e.target.value)}
               />
             </div>
           </div>
@@ -494,9 +505,23 @@ ${webhookState.body}`
             {tabComponents[currentTab]}
           </div>
           <div>
-            <div>Raw:</div>
+            <div className="relative mb-[6px] ">
+              <div
+                className="absolute inset-0 flex items-center"
+                aria-hidden="true"
+              >
+                <div className="w-full border-t border-gray-300" />
+              </div>
+              <div className="relative flex justify-center">
+                <span className="bg-white border-[1px] border-cyan-100 px-3 text-base rounded-md font-semibold leading-6 text-gray-700">
+                  Raw
+                </span>
+              </div>
+            </div>
             {isValidURL ? (
-              <div className="whitespace-pre-line">{rawRequest}</div>
+              <div className="whitespace-pre-line border-[2px] border-cyan-200 p-[10px] rounded-md bg-white">
+                {rawRequest}
+              </div>
             ) : (
               <div>Type valid url to see raw request</div>
             )}
