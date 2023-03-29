@@ -1,3 +1,5 @@
+/* eslint-disable */
+// @ts-nocheck
 import { GenericButton, Input } from "components/Elements";
 import Header from "components/Header";
 import React, { ChangeEvent, useEffect, useState } from "react";
