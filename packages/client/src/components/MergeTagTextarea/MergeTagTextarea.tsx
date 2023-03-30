@@ -1,46 +1,44 @@
-import { Input } from "components/Elements";
+import { Textarea } from "components/Elements";
+import MergeTagPicker from "components/MergeTagPicker";
 import React, {
-  useEffect,
-  useState,
-  RefObject,
-  useRef,
   ChangeEvent,
-  FocusEvent,
   FC,
+  FocusEvent,
+  RefObject,
+  useEffect,
+  useRef,
+  useState,
 } from "react";
-import MergeTagPicker from "../MergeTagPicker/MergeTagPicker";
 import { useClickAway } from "react-use";
 
-interface MergeTagInputProps {
+interface MergeTagTextareaProps {
   value: string;
-  onChange: (e: ChangeEvent<HTMLInputElement>) => void;
+  onChange: (e: ChangeEvent<HTMLTextAreaElement>) => void;
   setValue: (value: string) => void;
   name: string;
   id: string;
   placeholder: string;
   isRequired?: boolean;
-  fullWidth?: boolean;
   labelShrink?: boolean;
   sx?: object;
   possibleAttributes: string[];
-  inputRef?: RefObject<HTMLInputElement>;
+  textareaRef?: RefObject<HTMLTextAreaElement>;
   isPreview: boolean;
-  setIsPreview: (state: boolean) => void;
-  onFocus?: (e: FocusEvent<HTMLInputElement>) => void;
+  setIsPreview: React.Dispatch<React.SetStateAction<boolean>>;
+  onFocus?: (e: FocusEvent<HTMLTextAreaElement>) => void;
 }
 
-const MergeTagInput: FC<MergeTagInputProps> = ({
+const MergeTagTextarea: FC<MergeTagTextareaProps> = ({
   value,
   onChange,
   setValue,
   placeholder,
   name,
   id,
-  fullWidth,
   possibleAttributes,
   isPreview,
   setIsPreview,
-  inputRef,
+  textareaRef,
   onFocus,
 }) => {
   const [items, setItems] = useState<(string | JSX.Element)[]>([]);
@@ -86,7 +84,7 @@ const MergeTagInput: FC<MergeTagInputProps> = ({
       <div
         className={`${
           !isPreview && "hidden"
-        } w-full bg-[#E5E5E5] max-w-full overflow-x-scroll py-[18px] px-[29px] z-[1000] rounded-[8px] text-[20px] whitespace-nowrap `}
+        } w-full bg-[#E5E5E5] max-w-full overflow-x-scroll py-[18px] px-[29px] z-[1000] rounded-[8px] text-[20px] whitespace-pre-line `}
         onClick={() => {
           setIsPreview(false);
         }}
@@ -100,22 +98,21 @@ const MergeTagInput: FC<MergeTagInputProps> = ({
           </div>
         )}
       </div>
-      <Input
+      <Textarea
         isRequired
         value={value}
         placeholder={placeholder}
         name={name}
         id={id}
-        fullWidth={fullWidth}
         className={`${
           isPreview && "hidden"
-        } !text-[20px] bg-[#E5E5E5] outline-none text-[#000] py-[18px] px-[29px] z-[1000] rounded-[8px] whitespace-nowrap`}
+        } w-full !text-[20px] bg-[#E5E5E5] outline-none text-[#000] py-[18px] px-[29px] z-[1000] rounded-[8px] whitespace-pre-line`}
         onChange={onChange}
-        inputRef={inputRef}
+        textareaRef={textareaRef}
         onFocus={onFocus}
       />
     </div>
   );
 };
 
-export default MergeTagInput;
+export default MergeTagTextarea;

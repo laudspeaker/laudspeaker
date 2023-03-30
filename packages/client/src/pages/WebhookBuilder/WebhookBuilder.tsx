@@ -14,7 +14,10 @@ import Template, { TemplateType } from "types/Template";
 import { AxiosError } from "axios";
 import { toast } from "react-toastify";
 import Progress from "components/Progress";
-import { GenericButton, Input, Select, Textarea } from "components/Elements";
+import { GenericButton, Input, Select } from "components/Elements";
+import { getResources } from "pages/Segment/SegmentHelpers";
+import MergeTagInput from "components/MergeTagInput";
+import MergeTagTextarea from "components/MergeTagTextarea";
 
 export enum WebhookMethod {
   GET = "GET",
@@ -88,15 +91,68 @@ const WebhookBuilder = () => {
   const [bodyType, setBodyType] = useState(BodyType.JSON);
   const [headersString, setHeadersString] = useState("");
 
+  const [isURLPreview, setIsURLPreview] = useState(false);
+  const [isBearerTokenPreview, setIsBearerTokenPreview] = useState(false);
+  const [isBasicUserNamePreview, setIsBasicUserNamePreview] = useState(false);
+  const [isBasicPasswordPreview, setIsBasicPasswordPreview] = useState(false);
+  const [isCustomHeaderPreview, setIsCustomHeaderPreview] = useState(false);
+  const [isBodyPreview, setIsBodyPreview] = useState(false);
+  const [isHeadersPreview, setIsHeadersPreview] = useState(false);
+
+  const [possibleAttributes, setPossibleAttributes] = useState<string[]>([]);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
 
+  const urlRef = useRef<HTMLInputElement>(null);
   const bearerTokenRef = useRef<HTMLInputElement>(null);
   const basicUserNameRef = useRef<HTMLInputElement>(null);
   const basicPasswordRef = useRef<HTMLInputElement>(null);
   const customHeaderRef = useRef<HTMLInputElement>(null);
   const bodyRef = useRef<HTMLTextAreaElement>(null);
   const headersRef = useRef<HTMLTextAreaElement>(null);
+
+  const handleUrl = (value: string) =>
+    setWebhookState({ ...webhookState, url: value });
+
+  const handleBearerToken = (value: string) =>
+    setWebhookState({
+      ...webhookState,
+      headers: {
+        ...webhookState.headers,
+        Authorization: `Bearer ${value}`,
+      },
+    });
+
+  const handleBasicUserName = (value: string) => setUsername(value);
+
+  const handleBasicPassword = (value: string) => setPassword(value);
+
+  const handleCustomHeader = (value: string) =>
+    setWebhookState({
+      ...webhookState,
+      headers: {
+        ...webhookState.headers,
+        Authorization: value,
+      },
+    });
+
+  const handleBody = (value: string) =>
+    setWebhookState({ ...webhookState, body: value });
+
+  const handleHeaders = (value: string) => setHeadersString(value);
+
+  const refSetterMap = new Map<
+    RefObject<HTMLInputElement | HTMLTextAreaElement>,
+    (value: string) => void
+  >([
+    [urlRef, handleUrl],
+    [bearerTokenRef, handleBearerToken],
+    [basicUserNameRef, handleBasicUserName],
+    [basicPasswordRef, handleBasicPassword],
+    [customHeaderRef, handleCustomHeader],
+    [bodyRef, handleBody],
+    [headersRef, handleHeaders],
+  ]);
 
   const [selectedRef, setSelectedRef] =
     useState<RefObject<HTMLInputElement | HTMLTextAreaElement>>();
@@ -106,20 +162,20 @@ const WebhookBuilder = () => {
       <div className="flex justify-between items-center">
         <div>Token</div>
         <div>
-          <Input
-            value={webhookState.headers.Authorization?.split(" ")?.[1] || ""}
-            onChange={(e) =>
-              setWebhookState({
-                ...webhookState,
-                headers: {
-                  ...webhookState.headers,
-                  Authorization: `Bearer ${e.target.value}`,
-                },
-              })
+          <MergeTagInput
+            value={
+              webhookState.headers.Authorization?.replace("Bearer ", "") || ""
             }
+            onChange={(e) => handleBearerToken(e.target.value)}
             inputRef={bearerTokenRef}
             onFocus={() => setSelectedRef(bearerTokenRef)}
             name="bearer-token"
+            id="bearer-token"
+            isPreview={isBearerTokenPreview}
+            setIsPreview={setIsBearerTokenPreview}
+            placeholder="Bearer token"
+            possibleAttributes={possibleAttributes}
+            setValue={handleBearerToken}
           />
         </div>
       </div>
@@ -129,24 +185,36 @@ const WebhookBuilder = () => {
         <div className="flex justify-between items-center">
           <div>Username</div>
           <div>
-            <Input
+            <MergeTagInput
               name="basic-username"
+              id="basic-username"
               inputRef={basicUserNameRef}
               onFocus={() => setSelectedRef(basicUserNameRef)}
               value={username}
-              onChange={(el) => setUsername(el.target.value || "")}
+              onChange={(e) => handleBasicUserName(e.target.value)}
+              isPreview={isBasicUserNamePreview}
+              placeholder="Username"
+              possibleAttributes={possibleAttributes}
+              setIsPreview={setIsBasicUserNamePreview}
+              setValue={handleBasicUserName}
             />
           </div>
         </div>
         <div className="flex justify-between items-center">
           <div>Password</div>
           <div>
-            <Input
+            <MergeTagInput
               name="basic-password"
+              id="basic-password"
               inputRef={basicPasswordRef}
               onFocus={() => setSelectedRef(basicPasswordRef)}
               value={password}
-              onChange={(el) => setPassword(el.target.value)}
+              onChange={(e) => handleBasicPassword(e.target.value)}
+              isPreview={isBasicPasswordPreview}
+              placeholder="Password"
+              possibleAttributes={possibleAttributes}
+              setIsPreview={setIsBasicPasswordPreview}
+              setValue={handleBasicPassword}
             />
           </div>
         </div>
@@ -156,20 +224,18 @@ const WebhookBuilder = () => {
       <div className="flex justify-between items-center">
         <div>Header</div>
         <div>
-          <Input
+          <MergeTagInput
             name="custom-header"
+            id="custom-header"
             value={webhookState.headers.Authorization || ""}
-            onChange={(e) =>
-              setWebhookState({
-                ...webhookState,
-                headers: {
-                  ...webhookState.headers,
-                  Authorization: e.target.value,
-                },
-              })
-            }
+            onChange={(e) => handleCustomHeader(e.target.value)}
             inputRef={customHeaderRef}
             onFocus={() => setSelectedRef(customHeaderRef)}
+            isPreview={isCustomHeaderPreview}
+            placeholder="Custom header"
+            possibleAttributes={possibleAttributes}
+            setIsPreview={setIsCustomHeaderPreview}
+            setValue={handleCustomHeader}
           />
         </div>
       </div>
@@ -208,6 +274,7 @@ const WebhookBuilder = () => {
               name="authtype"
               checked={authType === AuthType.BEARER}
               className="text-cyan-600 focus:ring-cyan-600 mr-[10px]"
+              readOnly
             />
             <label htmlFor="authtype">Bearer Token</label>
           </div>
@@ -218,6 +285,7 @@ const WebhookBuilder = () => {
               value="Basic auth"
               checked={authType === AuthType.BASIC}
               className="text-cyan-600 focus:ring-cyan-600 mr-[10px]"
+              readOnly
             />
             Basic Auth
           </div>
@@ -228,6 +296,7 @@ const WebhookBuilder = () => {
               value="Custom"
               checked={authType === AuthType.CUSTOM}
               className="text-cyan-600 focus:ring-cyan-600 mr-[10px]"
+              readOnly
             />
             Custom
           </div>
@@ -246,23 +315,35 @@ const WebhookBuilder = () => {
           ]}
           onChange={(val) => handleBodyType(val)}
         />
-        <Textarea
+        <MergeTagTextarea
+          id="webhook-body"
+          name="webhook-body"
           value={webhookState.body}
-          onChange={(e) =>
-            setWebhookState({ ...webhookState, body: e.target.value })
-          }
+          onChange={(e) => handleBody(e.target.value)}
           textareaRef={bodyRef}
           onFocus={() => setSelectedRef(bodyRef)}
+          isPreview={isBodyPreview}
+          placeholder="Content"
+          possibleAttributes={possibleAttributes}
+          setIsPreview={setIsBodyPreview}
+          setValue={handleBody}
         />
       </>
     ),
     Headers: (
       <>
-        <Textarea
+        <MergeTagTextarea
+          id="webhook-headers"
+          name="webhook-headers"
           value={headersString}
-          onChange={(e) => setHeadersString(e.target.value)}
+          onChange={(e) => handleHeaders(e.target.value)}
           textareaRef={headersRef}
           onFocus={() => setSelectedRef(headersRef)}
+          isPreview={isHeadersPreview}
+          placeholder="Headers"
+          possibleAttributes={possibleAttributes}
+          setIsPreview={setIsHeadersPreview}
+          setValue={handleHeaders}
         />
       </>
     ),
@@ -279,6 +360,13 @@ const WebhookBuilder = () => {
 
         setTemplateId(data.id);
         setTemplateName(name);
+
+        const { data: attributesData } = await getResources("attributes");
+        setPossibleAttributes(
+          attributesData.options.map(
+            (option: { label: string }) => option.label
+          )
+        );
       } catch (e) {
         toast.error("Error while loading");
       } finally {
@@ -351,13 +439,17 @@ const WebhookBuilder = () => {
   };
 
   const onPersonalizeClick = () => {
-    if (selectedRef && selectedRef.current) {
-      const indexToInsert = selectedRef.current.selectionStart || 0;
-      selectedRef.current.value =
-        selectedRef.current.value.slice(0, indexToInsert) +
+    if (!selectedRef || !selectedRef.current) return;
+
+    const setValue = refSetterMap.get(selectedRef);
+    if (!setValue) return;
+
+    const indexToInsert = selectedRef.current.selectionStart || 0;
+    setValue(
+      selectedRef.current.value.slice(0, indexToInsert) +
         "{{ email }}" +
-        selectedRef.current.value.slice(indexToInsert);
-    }
+        selectedRef.current.value.slice(indexToInsert)
+    );
   };
 
   if (isLoading) return <Progress />;
@@ -419,14 +511,18 @@ const WebhookBuilder = () => {
       />
       <div className="w-[490px] m-auto">
         <div className="flex justify-center items-center gap-[10px]">
-          <Input
+          <MergeTagInput
             name="webhookURL"
             id="webhookURL"
             placeholder="URL"
+            inputRef={urlRef}
+            onFocus={() => setSelectedRef(urlRef)}
             value={webhookState.url}
-            onChange={(e) =>
-              setWebhookState({ ...webhookState, url: e.target.value })
-            }
+            onChange={(e) => handleUrl(e.target.value)}
+            isPreview={isURLPreview}
+            possibleAttributes={possibleAttributes}
+            setIsPreview={setIsURLPreview}
+            setValue={handleUrl}
           />
           <Select
             value={webhookState.method}

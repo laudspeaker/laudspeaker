@@ -6,6 +6,10 @@ interface TextareaProps {
   className?: string;
   textareaRef?: RefObject<HTMLTextAreaElement>;
   onFocus?: (e: FocusEvent<HTMLTextAreaElement>) => void;
+  isRequired?: boolean;
+  placeholder?: string;
+  name?: string;
+  id?: string;
 }
 
 const Textarea: FC<TextareaProps> = ({
@@ -14,6 +18,10 @@ const Textarea: FC<TextareaProps> = ({
   className = "",
   textareaRef,
   onFocus,
+  isRequired,
+  placeholder,
+  name,
+  id,
 }) => {
   return (
     <textarea
@@ -22,6 +30,10 @@ const Textarea: FC<TextareaProps> = ({
       className={`focus:ring-cyan-600 rounded-md ${className}`}
       ref={textareaRef}
       onFocus={onFocus}
+      required={isRequired}
+      placeholder={placeholder}
+      name={name}
+      id={id}
     />
   );
 };
