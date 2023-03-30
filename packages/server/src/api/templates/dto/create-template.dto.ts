@@ -1,5 +1,12 @@
 import { Trim } from 'class-sanitizer';
-import { IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsObject,
+  IsOptional,
+  IsString,
+  MaxLength,
+} from 'class-validator';
+import { TemplateType, WebhookData } from '../entities/template.entity';
 
 export class CreateTemplateDto {
   @Trim()
@@ -10,44 +17,46 @@ export class CreateTemplateDto {
   @IsString()
   @IsNotEmpty()
   @IsOptional()
-  public subject: string;
+  public subject?: string;
 
   @IsString()
   @IsNotEmpty()
   @IsOptional()
-  public text: string;
+  public text?: string;
 
   @IsString()
   @IsNotEmpty()
   @IsOptional()
-  public style: string;
-
-  @IsString()
-  @IsNotEmpty()
-  @IsOptional()
-  @MaxLength(2000)
-  public slackMessage: string;
-
-  //todo for sms
-
-  @IsNotEmpty()
-  public type: 'email' | 'slack' | 'sms' | 'firebase';
+  public style?: string;
 
   @IsString()
   @IsNotEmpty()
   @IsOptional()
   @MaxLength(2000)
-  public smsText: string;
+  public slackMessage?: string;
+
+  @IsNotEmpty()
+  public type: TemplateType;
+
+  @IsString()
+  @IsNotEmpty()
+  @IsOptional()
+  @MaxLength(2000)
+  public smsText?: string;
 
   @IsString()
   @IsNotEmpty()
   @IsOptional()
   @MaxLength(256)
-  public pushText: string;
+  public pushText?: string;
 
   @IsString()
   @IsNotEmpty()
   @IsOptional()
   @MaxLength(48)
-  public pushTitle: string;
+  public pushTitle?: string;
+
+  @IsObject()
+  @IsOptional()
+  public webhookData?: WebhookData;
 }

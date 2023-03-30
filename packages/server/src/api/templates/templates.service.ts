@@ -12,7 +12,7 @@ import { Account } from '../accounts/entities/accounts.entity';
 import { CustomerDocument } from '../customers/schemas/customer.schema';
 import { CreateTemplateDto } from './dto/create-template.dto';
 import { UpdateTemplateDto } from './dto/update-template.dto';
-import { Template } from './entities/template.entity';
+import { Template, TemplateType } from './entities/template.entity';
 import { Job, Queue } from 'bull';
 import { InjectQueue } from '@nestjs/bull';
 import { Installation } from '../slack/entities/installation.entity';
@@ -339,10 +339,7 @@ export class TemplatesService {
     });
   }
 
-  findBy(
-    account: Account,
-    type: 'email' | 'slack' | 'sms'
-  ): Promise<Template[]> {
+  findBy(account: Account, type: TemplateType): Promise<Template[]> {
     return this.templatesRepository.findBy({
       owner: { id: account.id },
       type: type,
