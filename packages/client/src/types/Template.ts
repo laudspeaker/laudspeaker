@@ -1,3 +1,7 @@
+import {
+  WebhookMethod,
+  WebhookState,
+} from "pages/WebhookBuilder/WebhookBuilder";
 import Account from "./Account";
 
 export enum TemplateType {
@@ -18,4 +22,5 @@ export default interface Template {
   slackMessage: string;
   type: TemplateType;
   smsText: string;
+  webhookData: WebhookState;
 }

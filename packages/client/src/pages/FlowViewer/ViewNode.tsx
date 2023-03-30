@@ -83,6 +83,7 @@ const ViewNode = ({ data }: { data: NodeData }) => {
     firebase: <Mobile />,
     email: <Email />,
     slack: <SlackMsg />,
+    webhook: <SlackMsg />,
   };
 
   const generateMsgIcons = () => {

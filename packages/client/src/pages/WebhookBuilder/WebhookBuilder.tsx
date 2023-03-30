@@ -29,13 +29,16 @@ export enum WebhookMethod {
   OPTIONS = "OPTIONS",
 }
 
-type WebhookHeaders = { Authorization?: string } & Record<string, string>;
+export type WebhookHeaders = { Authorization?: string } & Record<
+  string,
+  string
+>;
 
-enum FallBackAction {
+export enum FallBackAction {
   NOTHING,
 }
 
-interface WebhookState {
+export interface WebhookState {
   url: string;
   method: WebhookMethod;
   body: string;
@@ -87,7 +90,7 @@ const WebhookBuilder = () => {
   const [templateName, setTemplateName] = useState("My webhook template");
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [authType, setAuthType] = useState<AuthType>(AuthType.BEARER);
+  const [authType, setAuthType] = useState<AuthType>(AuthType.CUSTOM);
   const [bodyType, setBodyType] = useState(BodyType.JSON);
   const [headersString, setHeadersString] = useState("");
 
@@ -360,6 +363,7 @@ const WebhookBuilder = () => {
 
         setTemplateId(data.id);
         setTemplateName(name);
+        setWebhookState(data.webhookData || webhookState);
 
         const { data: attributesData } = await getResources("attributes");
         setPossibleAttributes(

@@ -19,7 +19,7 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "env-cmd -f src/common/envs/development.env jest --config ./test/jest-e2e.json",
-    "typeorm": "npm run build && typeorm-ts-node-commonjs -d ./src/data-source.ts",
+    "typeorm": "typeorm-ts-node-commonjs -d ./src/data-source.ts",
     "typeorm:generate": "npm run typeorm migration:generate",
     "typeorm:run": "npm run typeorm migration:run",
     "typeorm:revert": "npm run typeorm migration:revert"
@@ -81,6 +81,7 @@
     "tst-reflect": "^0.12.0",
     "twilio": "^3.84.0",
     "typeorm": "^0.3.12",
+    "undici": "^5.21.0",
     "winston": "^3.8.1",
     "winston-papertrail": "^1.0.5",
     "winston-syslog": "^2.6.0"

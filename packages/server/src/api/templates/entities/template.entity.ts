@@ -17,9 +17,12 @@ export enum WebhookMethod {
   OPTIONS = 'OPTIONS',
 }
 
-type WebhookHeaders = { Authorization?: string } & Record<string, string>;
+export type WebhookHeaders = { Authorization?: string } & Record<
+  string,
+  string
+>;
 
-enum FallBackAction {
+export enum FallBackAction {
   NOTHING,
 }
 

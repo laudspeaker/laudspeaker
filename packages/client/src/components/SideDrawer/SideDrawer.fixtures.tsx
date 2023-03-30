@@ -152,6 +152,16 @@ export const dataSubArray = [
           "Make sure there are steps and configure slack in settings and step selected",
         //alwaysDisabled: true,
       },
+      {
+        id: "webhook",
+        imgIcon: SlackMsg(),
+        text: "Webhook Message",
+        type: "menu",
+        link: "/webhook",
+        canBeDisabled: false,
+        disabledToolTip:
+          "Make sure there are steps and configure webhook in settings and step selected",
+      },
     ],
   },
 ];

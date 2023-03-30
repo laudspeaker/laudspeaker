@@ -12,7 +12,12 @@ import { Account } from '../accounts/entities/accounts.entity';
 import { CustomerDocument } from '../customers/schemas/customer.schema';
 import { CreateTemplateDto } from './dto/create-template.dto';
 import { UpdateTemplateDto } from './dto/update-template.dto';
-import { Template, TemplateType } from './entities/template.entity';
+import {
+  FallBackAction,
+  Template,
+  TemplateType,
+  WebhookMethod,
+} from './entities/template.entity';
 import { Job, Queue } from 'bull';
 import { InjectQueue } from '@nestjs/bull';
 import { Installation } from '../slack/entities/installation.entity';
@@ -28,6 +33,8 @@ import {
   ClickHouseEventProvider,
   WebhooksService,
 } from '../webhooks/webhooks.service';
+import { fetch } from 'undici';
+import wait from '@/utils/wait';
 
 @Injectable()
 export class TemplatesService {
@@ -54,22 +61,24 @@ export class TemplatesService {
     template.type = createTemplateDto.type;
     template.name = createTemplateDto.name;
     switch (template.type) {
-      case 'email':
+      case TemplateType.EMAIL:
         template.subject = createTemplateDto.subject;
         template.text = createTemplateDto.text;
         template.style = createTemplateDto.style;
         break;
-      case 'slack':
+      case TemplateType.SLACK:
         template.slackMessage = createTemplateDto.slackMessage;
         break;
-      case 'sms':
+      case TemplateType.SMS:
         template.smsText = createTemplateDto.smsText;
         break;
-      case 'firebase':
+      case TemplateType.FIREBASE:
         template.pushText = createTemplateDto.pushText;
         template.pushTitle = createTemplateDto.pushTitle;
         break;
-      //TODO
+      case TemplateType.WEBHOOK:
+        template.webhookData = createTemplateDto.webhookData;
+        break;
     }
     return this.templatesRepository.save({
       ...template,
@@ -128,7 +137,7 @@ export class TemplatesService {
     let from = sendingName;
 
     switch (template.type) {
-      case 'email':
+      case TemplateType.EMAIL:
         if (account.emailProvider === 'free3') {
           if (account.freeEmailsCount === 0)
             throw new HttpException(
@@ -165,7 +174,7 @@ export class TemplatesService {
         });
         if (account.emailProvider === 'free3') await account.save();
         break;
-      case 'slack':
+      case TemplateType.SLACK:
         try {
           installation = await this.slackService.getInstallation(customer);
         } catch (err) {
@@ -184,7 +193,7 @@ export class TemplatesService {
           },
         });
         break;
-      case 'sms':
+      case TemplateType.SMS:
         job = await this.messageQueue.add('sms', {
           trackingEmail: email,
           sid: account.smsAccountSid,
@@ -199,7 +208,7 @@ export class TemplatesService {
         });
 
         break;
-      case 'firebase':
+      case TemplateType.FIREBASE:
         try {
           if (!customer.phDeviceToken) {
             this.logger.warn(
@@ -290,6 +299,85 @@ export class TemplatesService {
           );
         } catch (e) {
           this.logger.error(e);
+        }
+        break;
+      case TemplateType.WEBHOOK:
+        if (template.webhookData) {
+          const { body, fallBackAction, headers, method, retries, url } =
+            template.webhookData;
+
+          let retriesCount = 0;
+          let success = false;
+
+          this.logger.debug(
+            'Sending webhook requst: \n' +
+              JSON.stringify(template.webhookData, null, 2)
+          );
+          while (!success && retriesCount < retries) {
+            try {
+              const res = await fetch(
+                await this.tagEngine.parseAndRender(url, filteredTags || {}, {
+                  strictVariables: true,
+                }),
+                {
+                  method,
+                  body: [
+                    WebhookMethod.GET,
+                    WebhookMethod.HEAD,
+                    WebhookMethod.DELETE,
+                    WebhookMethod.OPTIONS,
+                  ].includes(method)
+                    ? undefined
+                    : await this.tagEngine.parseAndRender(
+                        body,
+                        filteredTags || {},
+                        {
+                          strictVariables: true,
+                        }
+                      ),
+                  headers: Object.fromEntries(
+                    Object.entries(headers).map(([key, value]) => [
+                      this.tagEngine.parseAndRenderSync(
+                        key,
+                        filteredTags || {},
+                        {
+                          strictVariables: true,
+                        }
+                      ),
+                      this.tagEngine.parseAndRenderSync(
+                        value,
+                        filteredTags || {},
+                        {
+                          strictVariables: true,
+                        }
+                      ),
+                    ])
+                  ),
+                }
+              );
+
+              if (!res.ok) throw new Error('NOT OK');
+              this.logger.debug('Successful webhook request!');
+              success = true;
+            } catch (e) {
+              retriesCount++;
+              this.logger.warn(
+                'Unsuccessfull webhook request. Retries: ' +
+                  retriesCount +
+                  '. Error: ' +
+                  e
+              );
+              await wait(5000);
+            }
+          }
+
+          if (!success) {
+            switch (fallBackAction) {
+              case FallBackAction.NOTHING:
+                this.logger.error('Failed to send webhook request');
+                break;
+            }
+          }
         }
         break;
     }
