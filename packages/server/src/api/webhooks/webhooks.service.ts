@@ -31,6 +31,7 @@ export enum ClickHouseEventProvider {
   TWILIO = 'twilio',
   SLACK = 'slack',
   FIREBASE = 'firebase',
+  WEBHOOKS = 'webhooks',
 }
 
 export interface ClickHouseMessage {

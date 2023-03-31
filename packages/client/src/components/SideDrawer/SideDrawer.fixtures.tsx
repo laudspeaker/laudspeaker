@@ -9,6 +9,7 @@ import {
   Email,
   SlackMsg,
   Mobile,
+  Webhook,
   SMS,
   BackButtonIcon,
 } from "../Icons/Icons";
@@ -154,7 +155,11 @@ export const dataSubArray = [
       },
       {
         id: "webhook",
-        imgIcon: SlackMsg(),
+        imgIcon: (
+          <div className="max-w-[30px] max-h-[30px] w-full h-full">
+            {Webhook()}
+          </div>
+        ),
         text: "Webhook Message",
         type: "menu",
         link: "/webhook",

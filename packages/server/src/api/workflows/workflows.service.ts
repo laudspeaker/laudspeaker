@@ -41,6 +41,7 @@ import { Queue } from 'bull';
 import { BadRequestException } from '@nestjs/common/exceptions';
 import { Job, TimeJobType } from '../jobs/entities/job.entity';
 import { Filter } from '../filter/entities/filter.entity';
+import { ClickHouseEventProvider } from '../webhooks/webhooks.service';
 
 @Injectable()
 export class WorkflowsService {
@@ -162,10 +163,20 @@ export class WorkflowsService {
 
     const clickedPercentage = (clicked / sent) * 100;
 
+    const whResponse = await this.clickhouseClient.query({
+      query: `SELECT COUNT(*) FROM message_status WHERE event = 'sent' AND audienceId = {audienceId:UUID} AND eventProvider = 'webhooks' `,
+      query_params: {
+        audienceId,
+      },
+    });
+    const wsData = (await whResponse.json<any>())?.data;
+    const wssent = +wsData?.[0]?.['count()'] || 0;
+
     return {
       sent,
       delivered,
       clickedPercentage,
+      wssent,
     };
   }
 

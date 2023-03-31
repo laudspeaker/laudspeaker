@@ -42,6 +42,9 @@ import { WebhooksService } from '../webhooks/webhooks.service';
     BullModule.registerQueue({
       name: 'customers',
     }),
+    BullModule.registerQueue({
+      name: 'webhooks',
+    }),
     forwardRef(() => CustomersModule),
     SlackModule,
   ],

@@ -13,7 +13,7 @@ interface SegmentCustomerPickerProps {
   segmentId: string;
 }
 
-interface ICustomerKey {
+export interface ICustomerKey {
   key: string;
   type: "String" | "Number" | "Boolean" | "Email";
   isArray: boolean;

@@ -100,7 +100,12 @@ export interface NodeData {
   hidden?: boolean;
   isExit?: boolean;
   isNew?: boolean;
-  stats?: { sent: number; delivered: number; clickedPercentage: number };
+  stats?: {
+    sent: number;
+    delivered: number;
+    clickedPercentage: number;
+    wssent: number;
+  };
   isConnecting?: boolean;
   isNearToCursor?: boolean;
   isTriggerDragging?: boolean;

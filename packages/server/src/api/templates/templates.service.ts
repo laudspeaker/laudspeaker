@@ -12,12 +12,7 @@ import { Account } from '../accounts/entities/accounts.entity';
 import { CustomerDocument } from '../customers/schemas/customer.schema';
 import { CreateTemplateDto } from './dto/create-template.dto';
 import { UpdateTemplateDto } from './dto/update-template.dto';
-import {
-  FallBackAction,
-  Template,
-  TemplateType,
-  WebhookMethod,
-} from './entities/template.entity';
+import { Template, TemplateType } from './entities/template.entity';
 import { Job, Queue } from 'bull';
 import { InjectQueue } from '@nestjs/bull';
 import { Installation } from '../slack/entities/installation.entity';
@@ -33,8 +28,6 @@ import {
   ClickHouseEventProvider,
   WebhooksService,
 } from '../webhooks/webhooks.service';
-import { fetch } from 'undici';
-import wait from '@/utils/wait';
 
 @Injectable()
 export class TemplatesService {
@@ -53,7 +46,8 @@ export class TemplatesService {
     private readonly webhooksService: WebhooksService,
     @Inject(SlackService) private slackService: SlackService,
     @InjectQueue('message') private readonly messageQueue: Queue,
-    @InjectQueue('slack') private readonly slackQueue: Queue
+    @InjectQueue('slack') private readonly slackQueue: Queue,
+    @InjectQueue('webhooks') private readonly webhooksQueue: Queue
   ) {}
 
   create(account: Account, createTemplateDto: CreateTemplateDto) {
@@ -303,81 +297,12 @@ export class TemplatesService {
         break;
       case TemplateType.WEBHOOK:
         if (template.webhookData) {
-          const { body, fallBackAction, headers, method, retries, url } =
-            template.webhookData;
-
-          let retriesCount = 0;
-          let success = false;
-
-          this.logger.debug(
-            'Sending webhook requst: \n' +
-              JSON.stringify(template.webhookData, null, 2)
-          );
-          while (!success && retriesCount < retries) {
-            try {
-              const res = await fetch(
-                await this.tagEngine.parseAndRender(url, filteredTags || {}, {
-                  strictVariables: true,
-                }),
-                {
-                  method,
-                  body: [
-                    WebhookMethod.GET,
-                    WebhookMethod.HEAD,
-                    WebhookMethod.DELETE,
-                    WebhookMethod.OPTIONS,
-                  ].includes(method)
-                    ? undefined
-                    : await this.tagEngine.parseAndRender(
-                        body,
-                        filteredTags || {},
-                        {
-                          strictVariables: true,
-                        }
-                      ),
-                  headers: Object.fromEntries(
-                    Object.entries(headers).map(([key, value]) => [
-                      this.tagEngine.parseAndRenderSync(
-                        key,
-                        filteredTags || {},
-                        {
-                          strictVariables: true,
-                        }
-                      ),
-                      this.tagEngine.parseAndRenderSync(
-                        value,
-                        filteredTags || {},
-                        {
-                          strictVariables: true,
-                        }
-                      ),
-                    ])
-                  ),
-                }
-              );
-
-              if (!res.ok) throw new Error('NOT OK');
-              this.logger.debug('Successful webhook request!');
-              success = true;
-            } catch (e) {
-              retriesCount++;
-              this.logger.warn(
-                'Unsuccessfull webhook request. Retries: ' +
-                  retriesCount +
-                  '. Error: ' +
-                  e
-              );
-              await wait(5000);
-            }
-          }
-
-          if (!success) {
-            switch (fallBackAction) {
-              case FallBackAction.NOTHING:
-                this.logger.error('Failed to send webhook request');
-                break;
-            }
-          }
+          job = await this.webhooksQueue.add('whapicall', {
+            template,
+            filteredTags,
+            audienceId,
+            customerId,
+          });
         }
         break;
     }

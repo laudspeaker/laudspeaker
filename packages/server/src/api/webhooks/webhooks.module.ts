@@ -10,10 +10,17 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Account } from '../accounts/entities/accounts.entity';
 import { Audience } from '../audiences/entities/audience.entity';
 import twilio from 'twilio';
+import { WebhooksProcessor } from './webhooks.processor';
+import { BullModule } from '@nestjs/bull';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Account, Audience])],
-  providers: [WebhooksService],
+  imports: [
+    TypeOrmModule.forFeature([Account, Audience]),
+    BullModule.registerQueue({
+      name: 'webhooks',
+    }),
+  ],
+  providers: [WebhooksService, WebhooksProcessor],
   controllers: [WebhooksController],
   exports: [WebhooksService],
 })
