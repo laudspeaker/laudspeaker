@@ -23,6 +23,9 @@ interface MergeTagInputProps {
   fullWidth?: boolean;
   labelShrink?: boolean;
   sx?: object;
+  viewerClassNames?: string;
+  inputClassNames?: string;
+  placeholderClassNames?: string;
   possibleAttributes: string[];
   inputRef?: RefObject<HTMLInputElement>;
   isPreview: boolean;
@@ -40,6 +43,9 @@ const MergeTagInput: FC<MergeTagInputProps> = ({
   fullWidth,
   possibleAttributes,
   isPreview,
+  inputClassNames = "",
+  viewerClassNames = "",
+  placeholderClassNames = "",
   setIsPreview,
   inputRef,
   onFocus,
@@ -62,7 +68,6 @@ const MergeTagInput: FC<MergeTagInputProps> = ({
       return;
     }
 
-    // asfafa ,{{ assfasfaf }},safasfasf
     const nextItems = value
       .split(/([\{\[][\{\[].*?[\}\]][\}\]])/)
       .map((item, index) => {
@@ -105,7 +110,7 @@ const MergeTagInput: FC<MergeTagInputProps> = ({
       <div
         className={`${
           !isPreview && "hidden"
-        } w-full bg-[#E5E5E5] max-w-full overflow-x-scroll py-[18px] px-[29px] z-[1000] rounded-[8px] text-[20px] whitespace-nowrap `}
+        } ${viewerClassNames} w-full bg-[#E5E5E5] max-w-full overflow-x-scroll py-[18px] px-[29px] z-[1000] rounded-[8px] text-[20px] whitespace-nowrap `}
         onClick={() => {
           setIsPreview(false);
         }}
@@ -114,7 +119,9 @@ const MergeTagInput: FC<MergeTagInputProps> = ({
         {items.length > 0 ? (
           items
         ) : (
-          <div className="h-[1.4375em] text-[20px] text-[#a3a4a5] pb-[2px] select-none">
+          <div
+            className={`${placeholderClassNames} h-[1.4375em] text-[20px] text-[#a3a4a5] pb-[2px] select-none`}
+          >
             {placeholder}
           </div>
         )}
@@ -128,7 +135,7 @@ const MergeTagInput: FC<MergeTagInputProps> = ({
         fullWidth={fullWidth}
         className={`${
           isPreview && "hidden"
-        } !text-[20px] bg-[#E5E5E5] outline-none text-[#000] py-[18px] px-[29px] z-[1000] rounded-[8px] whitespace-nowrap`}
+        } ${inputClassNames} !text-[20px] bg-[#E5E5E5] outline-none text-[#000] py-[18px] px-[29px] z-[1000] rounded-[8px] whitespace-nowrap`}
         onChange={onChange}
         inputRef={inputRef}
         onFocus={onFocus}

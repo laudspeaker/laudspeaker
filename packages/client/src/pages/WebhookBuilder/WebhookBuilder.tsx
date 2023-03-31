@@ -547,6 +547,7 @@ const WebhookBuilder = () => {
             possibleAttributes={possibleAttributes}
             setIsPreview={setIsURLPreview}
             setValue={handleUrl}
+            inputClassNames="!bg-white"
           />
           <Select
             value={webhookState.method}
