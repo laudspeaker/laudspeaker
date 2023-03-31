@@ -58,6 +58,7 @@ export class TemplatesService {
         template.subject = createTemplateDto.subject;
         template.text = createTemplateDto.text;
         template.style = createTemplateDto.style;
+        template.cc = createTemplateDto.cc;
         break;
       case 'slack':
         template.slackMessage = createTemplateDto.slackMessage;
