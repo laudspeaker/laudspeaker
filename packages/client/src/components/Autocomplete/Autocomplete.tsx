@@ -44,7 +44,7 @@ const Autocomplete = <T extends any>({
 
   return (
     <div className={`${wrapperClassNames} relative`}>
-      <Combobox disabled={disabled}>
+      <Combobox disabled={disabled} value={inputValue}>
         {label && (
           <Combobox.Label
             className={`${customLabelClassNames} block text-sm font-medium text-gray-700 max-w-[200px]`}
