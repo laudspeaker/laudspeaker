@@ -10,6 +10,7 @@ import React, {
 } from "react";
 import MergeTagPicker from "../MergeTagPicker/MergeTagPicker";
 import { useClickAway } from "react-use";
+import TemplateTagPicker from "components/TemplateTagPicker";
 
 interface MergeTagInputProps {
   value: string;
@@ -61,22 +62,40 @@ const MergeTagInput: FC<MergeTagInputProps> = ({
       return;
     }
 
-    const nextItems = value.split(/(\{\{.*?\}\})/).map((item, index) => {
-      if (item.match(/{{(.*?)}}/)) {
-        const itemContent = item.replace("{{", "").replace("}}", "");
-        return (
-          <MergeTagPicker
-            tagContent={itemContent}
-            key={index}
-            possibleAttributes={possibleAttributes.map(
-              (str) => " " + str + " "
-            )}
-            handleValueReplace={handleValueReplace}
-          />
-        );
-      }
-      return item;
-    });
+    // asfafa ,{{ assfasfaf }},safasfasf
+    const nextItems = value
+      .split(/([\{\[][\{\[].*?[\}\]][\}\]])/)
+      .map((item, index) => {
+        if (item.match(/{{(.*?)}}/)) {
+          const itemContent = item.replace("{{", "").replace("}}", "");
+          return (
+            <MergeTagPicker
+              tagContent={itemContent}
+              key={index}
+              possibleAttributes={possibleAttributes.map(
+                (str) => " " + str + " "
+              )}
+              handleValueReplace={handleValueReplace}
+            />
+          );
+        }
+
+        if (
+          item.match(
+            /\[\[\s(email|sms|slack|firebase);[a-zA-Z0-9-\s]+;[a-zA-Z]+\s\]\]/g
+          )
+        ) {
+          const itemContent = item.replace("[[", "").replace("]]", "");
+
+          return (
+            <TemplateTagPicker
+              itemContent={itemContent}
+              handleValueReplace={handleValueReplace}
+            />
+          );
+        }
+        return item;
+      });
 
     setItems(nextItems);
   }, [value, possibleAttributes]);

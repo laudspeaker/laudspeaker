@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   HttpException,
   HttpStatus,
   Inject,
@@ -9,10 +10,17 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import { Account } from '../accounts/entities/accounts.entity';
-import { CustomerDocument } from '../customers/schemas/customer.schema';
+import {
+  Customer,
+  CustomerDocument,
+} from '../customers/schemas/customer.schema';
 import { CreateTemplateDto } from './dto/create-template.dto';
 import { UpdateTemplateDto } from './dto/update-template.dto';
-import { Template, TemplateType } from './entities/template.entity';
+import {
+  Template,
+  TemplateType,
+  WebhookMethod,
+} from './entities/template.entity';
 import { Job, Queue } from 'bull';
 import { InjectQueue } from '@nestjs/bull';
 import { Installation } from '../slack/entities/installation.entity';
@@ -28,6 +36,9 @@ import {
   ClickHouseEventProvider,
   WebhooksService,
 } from '../webhooks/webhooks.service';
+import { fetch } from 'undici';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
 
 @Injectable()
 export class TemplatesService {
@@ -41,6 +52,7 @@ export class TemplatesService {
     private readonly logger: LoggerService,
     @InjectRepository(Template)
     public templatesRepository: Repository<Template>,
+    @InjectModel(Customer.name) public CustomerModel: Model<CustomerDocument>,
     @InjectRepository(Audience)
     private audiencesRepository: Repository<Audience>,
     private readonly webhooksService: WebhooksService,
@@ -443,5 +455,100 @@ export class TemplatesService {
       .execute();
 
     return data.map((item) => item.name);
+  }
+
+  public async parseTemplateTags(str: string) {
+    for (const match of str.match(
+      /\[\[\s(email|sms|slack|firebase);[a-zA-Z0-9]+;[a-zA-Z]+\s\]\]/g
+    )) {
+      const [type, templateName, templateProperty] = match.split(';');
+
+      const template = await this.templatesRepository.findOneBy({
+        type: <TemplateType>type,
+        name: templateName,
+      });
+
+      str = str.replace(match, template?.[templateProperty] || '');
+    }
+
+    return str;
+  }
+
+  async testWebhookTemplate(
+    account: Account,
+    id: string,
+    testCustomerEmail: string
+  ) {
+    const template = await this.templatesRepository.findOneBy({
+      owner: { id: account.id },
+      id,
+      type: TemplateType.WEBHOOK,
+    });
+
+    if (!template || !template.webhookData)
+      throw new NotFoundException('Webhook template not found');
+
+    const customer = await this.CustomerModel.findOne({
+      email: testCustomerEmail,
+    });
+
+    if (!customer) throw new NotFoundException('Customer not found');
+
+    const { _id, ownerId, audiences, ...tags } = customer.toObject();
+    const filteredTags = cleanTagsForSending(tags);
+
+    const { method } = template.webhookData;
+
+    let { body, headers, url } = template.webhookData;
+
+    url = await this.tagEngine.parseAndRender(url, filteredTags || {}, {
+      strictVariables: true,
+    });
+    url = await this.parseTemplateTags(url);
+
+    body = [
+      WebhookMethod.GET,
+      WebhookMethod.HEAD,
+      WebhookMethod.DELETE,
+      WebhookMethod.OPTIONS,
+    ].includes(method)
+      ? undefined
+      : await this.tagEngine.parseAndRender(body, filteredTags || {}, {
+          strictVariables: true,
+        });
+    body = await this.parseTemplateTags(body);
+
+    headers = Object.fromEntries(
+      await Promise.all(
+        Object.entries(headers).map(async ([key, value]) => [
+          await this.parseTemplateTags(
+            await this.tagEngine.parseAndRender(key, filteredTags || {}, {
+              strictVariables: true,
+            })
+          ),
+          await this.parseTemplateTags(
+            await this.tagEngine.parseAndRender(value, filteredTags || {}, {
+              strictVariables: true,
+            })
+          ),
+        ])
+      )
+    );
+
+    try {
+      const res = await fetch(url, {
+        method,
+        body,
+        headers,
+      });
+
+      return {
+        body: await res.text(),
+        headers: res.headers,
+        status: res.status,
+      };
+    } catch (e) {
+      throw new BadRequestException(e);
+    }
   }
 }

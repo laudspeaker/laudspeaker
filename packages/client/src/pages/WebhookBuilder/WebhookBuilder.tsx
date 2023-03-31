@@ -18,6 +18,7 @@ import { GenericButton, Input, Select } from "components/Elements";
 import { getResources } from "pages/Segment/SegmentHelpers";
 import MergeTagInput from "components/MergeTagInput";
 import MergeTagTextarea from "components/MergeTagTextarea";
+import Modal from "components/Elements/Modal";
 
 export enum WebhookMethod {
   GET = "GET",
@@ -75,6 +76,12 @@ const mimeTypeMap: Record<BodyType, MIMEType> = {
   [BodyType.XML]: MIMEType.XML,
 };
 
+export interface TestResponseData {
+  body: string;
+  headers: Record<string, string>;
+  status: number;
+}
+
 const WebhookBuilder = () => {
   const { name } = useParams();
 
@@ -101,6 +108,8 @@ const WebhookBuilder = () => {
   const [isCustomHeaderPreview, setIsCustomHeaderPreview] = useState(false);
   const [isBodyPreview, setIsBodyPreview] = useState(false);
   const [isHeadersPreview, setIsHeadersPreview] = useState(false);
+  const [testCustomerEmail, setTestCustomerEmail] = useState("");
+  const [testResponseData, setTestResponseData] = useState<TestResponseData>();
 
   const [possibleAttributes, setPossibleAttributes] = useState<string[]>([]);
   const [username, setUsername] = useState("");
@@ -456,6 +465,17 @@ const WebhookBuilder = () => {
     );
   };
 
+  const handleTest = async () => {
+    await onSave();
+
+    const { data } = await ApiService.post<TestResponseData>({
+      url: `/templates/${templateId}/test-webhook`,
+      options: { testCustomerEmail },
+    });
+
+    setTestResponseData(data);
+  };
+
   if (isLoading) return <Progress />;
 
   const urlRegExp = new RegExp(
@@ -543,11 +563,22 @@ const WebhookBuilder = () => {
               setWebhookState({ ...webhookState, method: val })
             }
           />
-          <GenericButton customClasses="!h-[36px]" onClick={() => {}}>
+          <GenericButton customClasses="!h-[36px]" onClick={handleTest}>
             Test
           </GenericButton>
         </div>
         <div className="flex flex-col gap-[10px]">
+          <div className="flex justify-between items-center">
+            <div>Test customer email:</div>
+            <div>
+              <Input
+                name="testCustomerEmail"
+                id="testCustomerEmail"
+                value={testCustomerEmail}
+                onChange={(e) => setTestCustomerEmail(e.target.value)}
+              />
+            </div>
+          </div>
           <div className="flex justify-between items-center">
             <div>Retries:</div>
             <div>
@@ -646,6 +677,65 @@ const WebhookBuilder = () => {
           </div>
         </div>
       </div>
+      <Modal
+        isOpen={!!testResponseData}
+        onClose={() => setTestResponseData(undefined)}
+        panelClass="min-w-[90vw]"
+      >
+        {testResponseData && (
+          <div>
+            <div className="relative mb-[6px] ">
+              <div
+                className="absolute inset-0 flex items-center"
+                aria-hidden="true"
+              >
+                <div className="w-full border-t border-gray-300" />
+              </div>
+              <div className="relative flex justify-center">
+                <span className="bg-white border-[1px] border-cyan-100 px-3 text-base rounded-md font-semibold leading-6 text-gray-700">
+                  Status: {testResponseData.status}
+                </span>
+              </div>
+            </div>
+            <div className="relative mb-[6px] ">
+              <div
+                className="absolute inset-0 flex items-center"
+                aria-hidden="true"
+              >
+                <div className="w-full border-t border-gray-300" />
+              </div>
+              <div className="relative flex justify-center">
+                <span className="bg-white border-[1px] border-cyan-100 px-3 text-base rounded-md font-semibold leading-6 text-gray-700">
+                  Headers
+                </span>
+              </div>
+            </div>
+            <div className="w-max-full max-h-[60vh] overflow-y-scroll">
+              {Object.entries(testResponseData.headers).map(([key, value]) => (
+                <div>
+                  {key}: {value}
+                </div>
+              ))}
+            </div>
+            <div className="relative mb-[6px] ">
+              <div
+                className="absolute inset-0 flex items-center"
+                aria-hidden="true"
+              >
+                <div className="w-full border-t border-gray-300" />
+              </div>
+              <div className="relative flex justify-center">
+                <span className="bg-white border-[1px] border-cyan-100 px-3 text-base rounded-md font-semibold leading-6 text-gray-700">
+                  Body
+                </span>
+              </div>
+            </div>
+            <div className="w-max-full max-h-[60vh] overflow-y-scroll">
+              {testResponseData.body}
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 };

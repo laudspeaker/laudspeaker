@@ -12,6 +12,7 @@ import { Audience } from '../audiences/entities/audience.entity';
 import twilio from 'twilio';
 import { WebhooksProcessor } from './webhooks.processor';
 import { BullModule } from '@nestjs/bull';
+import { TemplatesModule } from '../templates/templates.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { BullModule } from '@nestjs/bull';
     BullModule.registerQueue({
       name: 'webhooks',
     }),
+    TemplatesModule,
   ],
   providers: [WebhooksService, WebhooksProcessor],
   controllers: [WebhooksController],

@@ -47,6 +47,9 @@ import { WebhooksService } from '../webhooks/webhooks.service';
     }),
     forwardRef(() => CustomersModule),
     SlackModule,
+    MongooseModule.forFeature([
+      { name: Customer.name, schema: CustomerSchema },
+    ]),
   ],
   providers: [TemplatesService, WebhooksService],
   controllers: [TemplatesController],
