@@ -6,8 +6,8 @@ import Progress from "components/Progress";
 import { TableDataItem } from "components/TableTemplate/TableTemplate";
 import { getCustomerKeys } from "pages/Segment/SegmentHelpers";
 import { useDebounce } from "react-use";
-import AC from "react-autocomplete";
 import { Input } from "components/Elements";
+import Autocomplete from "components/Autocomplete";
 
 interface SegmentCustomerPickerProps {
   segmentId: string;
@@ -108,53 +108,18 @@ const SegmentCustomerPicker: FC<SegmentCustomerPickerProps> = ({
 
   return (
     <div>
-      <div className="relative px-[32px] flex w-full max-w-full gap-[10px]">
-        <AC
-          getItemValue={(item) => JSON.stringify(item)}
+      <div className="relative px-[32px] flex w-full max-w-full items-end gap-[10px]">
+        <Autocomplete
+          inputId="keyInput"
           items={possibleKeys}
-          autoHighlight={false}
-          wrapperStyle={{
-            width: "100%",
+          inputValue={searchKey}
+          onInputChange={(e) => setSearchKey(e.target.value)}
+          label="Customer key (String only)"
+          onOptionSelect={(el) => {
+            setSearchKey(el.key);
           }}
-          renderInput={(props) => (
-            <Input
-              name={props.name || ""}
-              value={props.value}
-              onChange={props.onChange}
-              inputRef={props.ref}
-              aria-expanded={props["aria-expanded"]}
-              id="keyInput"
-              label="Customer key (String only)"
-              className="!w-full"
-              {...props}
-            />
-          )}
-          renderItem={(item, isHighlighted) => (
-            <div
-              className={`${
-                isHighlighted ? "bg-cyan-100" : ""
-              } p-[2px] rounded-[6px] relative max-w-full break-all`}
-            >
-              {item.key} ({item.type})
-            </div>
-          )}
-          renderMenu={(items) => {
-            if (!items.length) return <></>;
-
-            return (
-              <div className="max-h-[200px] overflow-y-scroll shadow-md  border-[1px] bg-white border-cyan-500 absolute top-[calc(100%+4px)] w-full rounded-[6px] z-[9999999999]">
-                {items}
-              </div>
-            );
-          }}
-          value={searchKey}
-          onChange={(e) => {
-            setSearchKey(e.target.value);
-          }}
-          onSelect={(e) => {
-            const val = JSON.parse(e);
-            setSearchKey(val.key);
-          }}
+          optionKey={(el) => `${el.key}(${el.type})`}
+          optionRender={(el) => `${el.key} (${el.type})`}
         />
         <Input
           name={"search-value"}

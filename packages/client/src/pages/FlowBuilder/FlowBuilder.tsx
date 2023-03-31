@@ -47,7 +47,6 @@ import Tooltip from "components/Elements/Tooltip";
 import { Helmet } from "react-helmet";
 import { Grid } from "@mui/material";
 import ToggleSwitch from "components/Elements/ToggleSwitch";
-import { SegmentModalMode } from "./SegmentModal";
 import {
   MessagesTypes,
   ProviderTypes,
@@ -204,9 +203,6 @@ const Flow = () => {
     isDynamic: true,
   });
   const [segmentModalOpen, setSegmentModalOpen] = useState(false);
-  const [segmentModalMode, setSegmentModalMode] = useState(
-    SegmentModalMode.EDIT
-  );
   const [isFlowLoading, setIsFlowLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
@@ -639,7 +635,6 @@ const Flow = () => {
         setJourneyTypeModalOpen(false);
         break;
       case 1:
-        setSegmentModalMode(SegmentModalMode.EDIT);
         setSegmentModalOpen(true);
         setJourneyTypeModalOpen(false);
         break;
