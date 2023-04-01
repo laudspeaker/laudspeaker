@@ -1,4 +1,4 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, LoggerService } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { Model } from 'mongoose';
@@ -13,7 +13,6 @@ import {
 } from './api/customers/schemas/customer-keys.schema';
 import { isDateString, isEmail } from 'class-validator';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Account } from './api/accounts/entities/accounts.entity';
 import { Between, Repository } from 'typeorm';
 import { Verification } from './api/auth/entities/verification.entity';
 import { EventDocument } from './api/events/schemas/event.schema';
@@ -29,6 +28,18 @@ import {
   IntegrationStatus,
 } from './api/integrations/entities/integration.entity';
 import { Recovery } from './api/auth/entities/recovery.entity';
+import { WebhookJobsService } from './api/webhook-jobs/webhook-jobs.service';
+import { WebhookJobStatus, WebhookProvider } from './api/webhook-jobs/entities/webhook-job.entity';
+import { AccountsService } from './api/accounts/accounts.service';
+import Mailgun from 'mailgun.js';
+import formData from 'form-data';
+import { createClient } from '@clickhouse/client';
+import { ClickHouseEventProvider, ClickHouseMessage } from './api/webhooks/webhooks.service';
+import twilio from 'twilio';
+import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
+import client from '@sendgrid/client';
+import { ClientResponse } from '@sendgrid/mail';
+
 
 const BATCH_SIZE = 500;
 const KEYS_TO_SKIP = ['__v', '_id', 'audiences', 'ownerId'];
@@ -38,9 +49,19 @@ const MIN_DATE = new Date(0);
 
 @Injectable()
 export class CronService {
-  private readonly logger = new Logger(CronService.name);
+  private clickHouseClient = createClient({
+    host: process.env.CLICKHOUSE_HOST
+      ? process.env.CLICKHOUSE_HOST.includes('http')
+        ? process.env.CLICKHOUSE_HOST
+        : `http://${process.env.CLICKHOUSE_HOST}`
+      : 'http://localhost:8123',
+    username: process.env.CLICKHOUSE_USER ?? 'default',
+    password: process.env.CLICKHOUSE_PASSWORD ?? '',
+  });
 
   constructor(
+    @Inject(WINSTON_MODULE_NEST_PROVIDER)
+    private readonly logger: LoggerService,
     @InjectModel(Customer.name)
     private customerModel: Model<CustomerDocument>,
     @InjectModel(CustomerKeys.name)
@@ -58,8 +79,10 @@ export class CronService {
     @Inject(JobsService) private jobsService: JobsService,
     @Inject(IntegrationsService)
     private integrationsService: IntegrationsService,
-    @Inject(WorkflowsService) private workflowsService: WorkflowsService
-  ) {}
+    @Inject(WorkflowsService) private workflowsService: WorkflowsService,
+    @Inject(WebhookJobsService) private webhookJobsService: WebhookJobsService,
+    @Inject(AccountsService) private accountsService: AccountsService
+  ) { }
 
   @Cron(CronExpression.EVERY_HOUR)
   async handleCustomerKeysCron() {
@@ -134,8 +157,7 @@ export class CronService {
       }
 
       this.logger.log(
-        `Cron customer keys job finished, checked ${documentsCount} records, found ${
-          Object.keys(keys).length
+        `Cron customer keys job finished, checked ${documentsCount} records, found ${Object.keys(keys).length
         } keys`
       );
     } catch (e) {
@@ -233,8 +255,7 @@ export class CronService {
       }
 
       this.logger.log(
-        `Cron event keys job finished, checked ${documentsCount} records, found ${
-          Object.keys(keys).length
+        `Cron event keys job finished, checked ${documentsCount} records, found ${Object.keys(keys).length
         } keys`
       );
     } catch (e) {
@@ -318,6 +339,278 @@ export class CronService {
       }
     } catch (e) {
       this.logger.error('Cron error: ' + e);
+    }
+  }
+
+  @Cron(CronExpression.EVERY_MINUTE)
+  async handleMissedMailgunEvents() {
+    try {
+      // Get all pending Mailgun Jobs and accounts
+      const mailgunJobs = await this.webhookJobsService.findAllByProvider(WebhookProvider.MAILGUN);
+      const accounts = await this.accountsService.findAll();
+
+      // Create new pending Mailgun Job 
+      await this.webhookJobsService.create({ provider: WebhookProvider.MAILGUN, status: WebhookJobStatus.PENDING })
+
+      // Iterate through Jobs
+      for (let i = 0; i < mailgunJobs.length; i++) {
+        const startTime = mailgunJobs[i].createdAt;
+
+        // Update job status
+        await this.webhookJobsService.update(mailgunJobs[i].id, { status: WebhookJobStatus.IN_PROGRESS });
+
+        //Iterate through accounts
+        for (let j = 0; j < accounts.length; j++) {
+
+          if (accounts[j].mailgunAPIKey && accounts[j].sendingDomain) {
+            const mailgun = new Mailgun(formData);
+            const mg = mailgun.client({
+              username: 'api',
+              key: accounts[j].mailgunAPIKey,
+            });
+            let query, events;
+            query = { begin: startTime.toUTCString(), limit: 300, ascending: 'yes' };
+            do {
+              events = await mg.events.get(accounts[j].sendingDomain, query);
+              for (let k = 0; k < events.items.length; k++) {
+                const existsCheck = await this.clickHouseClient.query({
+                  query: `SELECT * FROM message_status WHERE event = {event:String} AND messageId = {messageId:String}`,
+                  query_params: { event: events.items[k].event, messageId: events.items[k].message.headers['message-id'] },
+                });
+                const existsRows = JSON.parse(await existsCheck.text());
+                if (existsRows.data.length == 0) {
+                  const messageInfo = await this.clickHouseClient.query({
+                    query: `SELECT * FROM message_status WHERE messageId = {messageId:String} AND audienceId IS NOT NULL AND customerId IS NOT NULL AND templateId IS NOT NULL LIMIT 1`,
+                    query_params: { messageId: events.items[k].message.headers['message-id'] },
+                  });
+                  const messageRow = JSON.parse(await messageInfo.text()).data;
+                  const messagesToInsert: ClickHouseMessage[] = [];
+                  const clickHouseRecord: ClickHouseMessage = {
+                    userId: accounts[j].id,
+                    audienceId: messageRow[0]?.audienceId,
+                    customerId: messageRow[0]?.customerId,
+                    templateId: messageRow[0]?.templateId,
+                    messageId: events.items[k].message.headers['message-id'],
+                    event: events.items[k].event,
+                    eventProvider: ClickHouseEventProvider.MAILGUN,
+                    createdAt: new Date(events.items[k].timestamp * 1000).toUTCString(),
+                  };
+                  messagesToInsert.push(clickHouseRecord);
+                  await this.clickHouseClient.insert<ClickHouseMessage>({
+                    table: 'message_status',
+                    values: messagesToInsert,
+                    format: 'JSONEachRow',
+                  });
+                }
+              }
+              query = { page: events.pages.next.number };
+            } while (events?.items?.length > 0)
+          }
+        }
+        await this.webhookJobsService.remove(mailgunJobs[i].id)
+      }
+    }
+    catch (err) {
+      this.logger.error(`app.cron.service.ts:CronService.handleMissedMailgunEvents: Error: ${err}`
+      )
+    }
+  }
+
+  @Cron(CronExpression.EVERY_MINUTE)
+  async handleMissedSendgridEvents() {
+    try {
+      // Get all pending Twilio Jobs and accounts
+      const sendgridJobs = await this.webhookJobsService.findAllByProvider(WebhookProvider.SENDGRID);
+      const accounts = await this.accountsService.findAll();
+
+      // Create new pending Twilio Job 
+      await this.webhookJobsService.create({ provider: WebhookProvider.SENDGRID, status: WebhookJobStatus.PENDING })
+
+      // Iterate through Jobs
+      for (let i = 0; i < sendgridJobs.length; i++) {
+
+        // Update job status
+        await this.webhookJobsService.update(sendgridJobs[i].id, { status: WebhookJobStatus.IN_PROGRESS });
+
+        //Iterate through accounts
+        for (let j = 0; j < accounts.length; j++) {
+
+          if (accounts[j].sendgridApiKey) {
+            client.setApiKey(accounts[j].sendgridApiKey);
+            const resultSet = await this.clickHouseClient.query({
+              query: `SELECT * FROM message_status WHERE processed = false AND eventProvider = 'sendgrid' AND userId = {userId:String}`,
+              query_params: { userId: accounts[j].id },
+              format: 'JSONEachRow',
+            })
+            for await (const rows of resultSet.stream()) {
+              rows.forEach(async (row) => {
+                const rowObject = JSON.parse(row.text);
+                // Step 1: Check if the message has already reached an end state: delivered, undelivered, failed, canceled
+                const existsCheck = await this.clickHouseClient.query({
+                  query: `SELECT * FROM message_status WHERE event IN ('dropped', 'bounce', 'blocked', 'open', 'click', 'spamreport', 'unsubscribe','group_unsubscribe','group_resubscribe') AND messageId = {messageId:String}`,
+                  query_params: { messageId: rowObject.messageId },
+                });
+                const existsRows = JSON.parse(await existsCheck.text());
+
+                // If not reached end state, check if reached end state using API
+                if (existsRows.data.length === 0) {
+                  let message;
+                  try {
+                    const response: any = await client.request({
+                      url: `/v3/messages`,
+                      method: "GET",
+                      qs: {
+                        "query": `msg_id=${rowObject.messageId}`,
+                      }
+                    });
+                    message = response.body.messages[0];
+                  } catch (err) {
+                    // User is unauthorized to use events api, so we return
+                    return;
+                  }
+
+                  // Reached end state using API; update end state and set as processed in clickhouse 
+                  if (['delivered', 'dropped', 'bounce', 'blocked'].includes(message.status)) {
+                    const messagesToInsert: ClickHouseMessage[] = [];
+                    const clickHouseRecord: ClickHouseMessage = {
+                      audienceId: rowObject.audienceId,
+                      customerId: rowObject.customerId,
+                      templateId: rowObject.templateId,
+                      messageId: rowObject.messageId,
+                      event: message.status,
+                      eventProvider: ClickHouseEventProvider.TWILIO,
+                      createdAt: new Date().toUTCString(),
+                      userId: accounts[j].id,
+                    };
+                    messagesToInsert.push(clickHouseRecord);
+                    await this.clickHouseClient.insert<ClickHouseMessage>({
+                      table: 'message_status',
+                      values: messagesToInsert,
+                      format: 'JSONEachRow',
+                    });
+                    await this.clickHouseClient.query({
+                      query: `ALTER TABLE message_status UPDATE processed=true WHERE eventProvider='sendgrid' AND event = 'sent' AND messageId = {messageId:String} AND templateId = {templateId:String} AND customerId = {customerId:String} AND audienceId = {audienceId:String}`,
+                      query_params: {
+                        messageId: rowObject.messageId,
+                        templateId: rowObject.templateId,
+                        customerId: rowObject.customerId,
+                        audienceId: rowObject.audienceId,
+                      },
+                    });
+                  }
+                  //Has not reached end state; do nothing
+                }
+                // Has reached end state using webhooks; update processed = true
+                else {
+                  await this.clickHouseClient.query({
+                    query: `ALTER TABLE message_status UPDATE processed=true WHERE eventProvider='sendgrid' AND event = 'sent' AND messageId = {messageId:String} AND templateId = {templateId:String} AND customerId = {customerId:String} AND audienceId = {audienceId:String}`,
+                    query_params: {
+                      messageId: rowObject.messageId,
+                      templateId: rowObject.templateId,
+                      customerId: rowObject.customerId,
+                      audienceId: rowObject.audienceId,
+                    },
+                  });
+                }
+              })
+            }
+          }
+        }
+        await this.webhookJobsService.remove(sendgridJobs[i].id)
+      }
+    }
+    catch (err) {
+      this.logger.error(`app.cron.service.ts:CronService.handleMissedSendgridEvents: Error: ${err}`
+      )
+    }
+  }
+
+  @Cron(CronExpression.EVERY_MINUTE)
+  async handleMissedTwilioEvents() {
+    try {
+      // Get all pending Twilio Jobs and accounts
+      const twilioJobs = await this.webhookJobsService.findAllByProvider(WebhookProvider.TWILIO_SMS);
+      const accounts = await this.accountsService.findAll();
+
+      // Create new pending Twilio Job 
+      await this.webhookJobsService.create({ provider: WebhookProvider.TWILIO_SMS, status: WebhookJobStatus.PENDING })
+
+      // Iterate through Jobs
+      for (let i = 0; i < twilioJobs.length; i++) {
+
+        // Update job status
+        await this.webhookJobsService.update(twilioJobs[i].id, { status: WebhookJobStatus.IN_PROGRESS });
+
+        //Iterate through accounts
+        for (let j = 0; j < accounts.length; j++) {
+
+          if (accounts[j].smsAccountSid && accounts[j].smsAuthToken) {
+            const twilioClient = twilio(accounts[j].smsAccountSid, accounts[j].smsAuthToken);
+            const resultSet = await this.clickHouseClient.query({
+              query: `SELECT * FROM message_status WHERE processed = false AND eventProvider = 'twilio' AND userId = {userId:String}`,
+              query_params: { userId: accounts[j].id },
+              format: 'JSONEachRow',
+            })
+            for await (const rows of resultSet.stream()) {
+              rows.forEach(async (row) => {
+                const rowObject = JSON.parse(row.text);
+                // Step 1: Check if the message has already reached an end state: delivered, undelivered, failed, canceled
+                const existsCheck = await this.clickHouseClient.query({
+                  query: `SELECT * FROM message_status WHERE event IN ('delivered', 'undelivered', 'failed', 'canceled') AND messageId = {messageId:String}`,
+                  query_params: { messageId: rowObject.messageId },
+                });
+                const existsRows = JSON.parse(await existsCheck.text());
+                if (existsRows.data.length === 0) {
+                  const message = await twilioClient.messages(rowObject.messageId).fetch()
+                  if (['delivered', 'undelivered', 'failed', 'canceled'].includes(message.status)) {
+                    const messagesToInsert: ClickHouseMessage[] = [];
+                    const clickHouseRecord: ClickHouseMessage = {
+                      audienceId: rowObject.audienceId,
+                      customerId: rowObject.customerId,
+                      templateId: rowObject.templateId,
+                      messageId: rowObject.messageId,
+                      event: message.status,
+                      eventProvider: ClickHouseEventProvider.TWILIO,
+                      createdAt: new Date().toUTCString(),
+                      userId: accounts[j].id,
+                    };
+                    messagesToInsert.push(clickHouseRecord);
+                    await this.clickHouseClient.insert<ClickHouseMessage>({
+                      table: 'message_status',
+                      values: messagesToInsert,
+                      format: 'JSONEachRow',
+                    });
+                    await this.clickHouseClient.query({
+                      query: `ALTER TABLE message_status UPDATE processed=true WHERE eventProvider='twilio' AND event = 'sent' AND messageId = {messageId:String} AND templateId = {templateId:String} AND customerId = {customerId:String} AND audienceId = {audienceId:String}`,
+                      query_params: {
+                        messageId: rowObject.messageId,
+                        templateId: rowObject.templateId,
+                        customerId: rowObject.customerId,
+                        audienceId: rowObject.audienceId,
+                      },
+                    });
+                  }
+                } else {
+                  await this.clickHouseClient.query({
+                    query: `ALTER TABLE message_status UPDATE processed=true WHERE eventProvider='twilio' AND event = 'sent' AND messageId = {messageId:String} AND templateId = {templateId:String} AND customerId = {customerId:String} AND audienceId = {audienceId:String}`,
+                    query_params: {
+                      messageId: rowObject.messageId,
+                      templateId: rowObject.templateId,
+                      customerId: rowObject.customerId,
+                      audienceId: rowObject.audienceId,
+                    },
+                  });
+                }
+              })
+            }
+          }
+        }
+        await this.webhookJobsService.remove(twilioJobs[i].id)
+      }
+    }
+    catch (err) {
+      this.logger.error(`app.cron.service.ts:CronService.handleMissedTwilioEvents: Error: ${err}`
+      )
     }
   }
 

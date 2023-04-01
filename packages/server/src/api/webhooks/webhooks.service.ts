@@ -18,10 +18,11 @@ import { createClient } from '@clickhouse/client';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import Mailgun from 'mailgun.js';
 import formData from 'form-data';
+import axios from 'axios';
 
 const createTableQuery = `
 CREATE TABLE IF NOT EXISTS message_status
-(audienceId UUID, customerId String, templateId String, messageId String, event String, eventProvider String, createdAt DateTime) 
+(audienceId UUID, customerId String, templateId String, messageId String, event String, eventProvider String, createdAt DateTime, processed Boolean, userId String) 
 ENGINE = ReplacingMergeTree
 PRIMARY KEY (audienceId, customerId, templateId, messageId, event, eventProvider, createdAt)`;
 
@@ -35,17 +36,26 @@ export enum ClickHouseEventProvider {
 
 export interface ClickHouseMessage {
   audienceId: string;
+  createdAt: string;
   customerId: string;
-  templateId: string;
-  messageId: string;
   event: string;
   eventProvider: ClickHouseEventProvider;
-  createdAt: string;
+  messageId: string;
+  templateId: string;
+  userId: string;
 }
 
 @Injectable()
 export class WebhooksService {
-  private MAILGUN_HOOKS_TO_INSTALL = ['clicked', 'delivered', 'opened'];
+  private MAILGUN_HOOKS_TO_INSTALL = [
+    'clicked',
+    'complained',
+    'delivered',
+    'opened',
+    'permanent_fail',
+    'temporary_fail',
+    'unsubscribed',
+  ];
 
   private clickHouseClient = createClient({
     host: process.env.CLICKHOUSE_HOST
@@ -159,6 +169,7 @@ export class WebhooksService {
         continue;
 
       const clickHouseRecord: ClickHouseMessage = {
+        userId: audience.owner.id,
         audienceId,
         customerId,
         templateId: String(templateId),
@@ -168,7 +179,7 @@ export class WebhooksService {
         createdAt: new Date().toUTCString(),
       };
 
-      this.logger.debug('Sendgrid webhooK result:');
+      this.logger.debug('Sendgrid webhook result:');
       console.dir(clickHouseRecord, { depth: null });
 
       messagesToInsert.push(clickHouseRecord);
@@ -189,7 +200,14 @@ export class WebhooksService {
     SmsStatus: string;
     MessageSid: string;
   }) {
+    const audience = await this.audienceRepository.findOne({
+      where: {
+        id: audienceId,
+      },
+      relations: ['owner'],
+    }); 
     const clickHouseRecord: ClickHouseMessage = {
+      userId: audience.owner.id,
       audienceId,
       customerId,
       templateId: String(templateId),
@@ -198,10 +216,6 @@ export class WebhooksService {
       eventProvider: ClickHouseEventProvider.TWILIO,
       createdAt: new Date().toUTCString(),
     };
-
-    this.logger.debug('Twilio webhooK result:');
-    console.dir(clickHouseRecord, { depth: null });
-
     await this.insertClickHouseMessages([clickHouseRecord]);
   }
 
@@ -251,6 +265,7 @@ export class WebhooksService {
     if (!audienceId || !customerId || !templateId || !id) return;
 
     const clickHouseRecord: ClickHouseMessage = {
+      userId: account.id,
       audienceId,
       customerId,
       templateId: String(templateId),
@@ -275,32 +290,60 @@ export class WebhooksService {
       username: 'api',
       key: mailgunAPIKey,
     });
+    try {
+      let installedWebhooks = await mg.webhooks.list(sendingDomain, {});
+      this.logger.log(JSON.stringify(installedWebhooks))
 
-    let installedWebhooks = await mg.webhooks.list(sendingDomain, {});
+      for (const webhookToInstall of this.MAILGUN_HOOKS_TO_INSTALL) {
+        //Webhook does not exist on domain
+        if (!installedWebhooks?.[webhookToInstall]) {
+          await mg.webhooks.create(
+            sendingDomain,
+            webhookToInstall,
+            process.env.MAILGUN_WEBHOOK_ENDPOINT
+          );
+          installedWebhooks = await mg.webhooks.list(sendingDomain, {});
+        }
 
-    for (const webhookToInstall of this.MAILGUN_HOOKS_TO_INSTALL) {
-      if (!installedWebhooks?.[webhookToInstall]) {
-        await mg.webhooks.create(
-          sendingDomain,
-          webhookToInstall,
-          process.env.MAILGUN_WEBHOOK_ENDPOINT
-        );
-        installedWebhooks = await mg.webhooks.list(sendingDomain, {});
-      }
-
-      if (
-        installedWebhooks?.[webhookToInstall]?.urls &&
-        installedWebhooks[webhookToInstall].urls.includes(
-          process.env.MAILGUN_WEBHOOK_ENDPOINT
+        // Webhook exists on domain and is set to current endpoint
+        if (
+          installedWebhooks?.[webhookToInstall]?.urls &&
+          installedWebhooks[webhookToInstall].urls.includes(
+            process.env.MAILGUN_WEBHOOK_ENDPOINT
+          )
         )
-      )
-        continue;
+          continue;
+        else {
+          // Webhooks exist on domain but are not set to current endpoint:
+          // truncate webhooks to two and add third
+          const urls = new FormData();
+          urls.append('url', process.env.MAILGUN_WEBHOOK_ENDPOINT);
+          urls.append('url', installedWebhooks?.[webhookToInstall]?.urls[0]);
+          if (installedWebhooks?.[webhookToInstall]?.urls?.length > 1)
+            urls.append('url', installedWebhooks?.[webhookToInstall]?.urls[1]);
 
-      await mg.webhooks.update(
-        sendingDomain,
-        webhookToInstall,
-        process.env.MAILGUN_WEBHOOK_ENDPOINT
+          const r = axios.create({});
+          await r({
+            method: 'put',
+            url: `https://api.mailgun.net/v3/domains/${sendingDomain}/webhooks/${webhookToInstall}`,
+            data: urls,
+            headers: {
+              'Content-Type': 'multipart/form-data',
+            },
+            auth: {
+              username: 'api',
+              password: mailgunAPIKey,
+            },
+          });
+          installedWebhooks = await mg.webhooks.list(sendingDomain, {});
+        }
+      }
+      return Promise.resolve();
+    } catch (err) {
+      this.logger.error(
+        `webhooks.service.ts:WebhooksService.setupMailgunWebhook: Error: ${err}`
       );
+      return Promise.reject(err);
     }
   }
 }

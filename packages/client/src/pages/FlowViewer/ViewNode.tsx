@@ -235,7 +235,9 @@ const ViewNode = ({ data }: { data: NodeData }) => {
                       />
                       <div className="w-full p-[0px_10px]">
                         <div>Opened</div>
-                        <div className="font-medium text-[#333333]">0%</div>
+                        <div className="font-medium text-[#333333]">
+                          {stats.openedPercentage}%
+                        </div>
                       </div>
                       <Divider
                         sx={{

@@ -43,6 +43,7 @@ export class EmailController {
     });
     await this.messageQueue.add('email', {
       trackingEmail: found.email,
+      accountId: found.id,
       key: found.mailgunAPIKey,
       from: found.sendingName,
       domain: found.sendingDomain,
@@ -84,6 +85,7 @@ export class EmailController {
         return {
           name: 'email',
           data: {
+            accountId: found.id,
             key: found.mailgunAPIKey,
             from: found.sendingName,
             domain: found.sendingDomain,

@@ -41,6 +41,7 @@ export class SlackProcessor {
         this.logger.warn("Merge tag can't be used, skipping sending...");
         await this.webhooksService.insertClickHouseMessages([
           {
+            userId: job.data.accountId,
             event: 'error',
             createdAt: new Date().toUTCString(),
             eventProvider: ClickHouseEventProvider.SLACK,
