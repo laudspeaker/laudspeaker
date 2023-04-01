@@ -7,6 +7,11 @@ import NameTemplate from "./NamePerson";
 import Modal from "components/Elements/Modal";
 import { useEffect, useState } from "react";
 import Progress from "components/Progress";
+import { Input } from "components/Elements";
+import { useDebounce } from "react-use";
+import { getCustomerKeys } from "pages/Segment/SegmentHelpers";
+import { ICustomerKey } from "pages/SegmentViewer/SegmentCustomerPicker";
+import AutoComplete from "components/Autocomplete";
 
 const PeopleTable = () => {
   const [loading, setLoading] = useState(false);
@@ -16,27 +21,61 @@ const PeopleTable = () => {
   const [pagesCount, setPagesCount] = useState<number>(1);
   const [currentPage, setCurrentPage] = useState(0);
   const [nameModalOpen, setNameModalOpen] = useState<boolean>(false);
+  const [possibleKeys, setPossibleKeys] = useState<ICustomerKey[]>([]);
+  const [searchKey, setSearchKey] = useState("");
+  const [searchValue, setSearchValue] = useState("");
+  const [isFirstRender, setIsFirstRender] = useState(true);
+
+  const setLoadingAsync = async () => {
+    setLoading(true);
+    try {
+      const { data } = await ApiService.get({
+        url: `${ApiConfig.getAllPeople}?take=${itemsPerPage}&skip=${
+          itemsPerPage * currentPage
+        }&searchKey=${searchKey}&searchValue=${searchValue}`,
+      });
+      const { data: fetchedPeople, totalPages } = data;
+      setPagesCount(totalPages);
+      setPeople(fetchedPeople);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const setLoadingAsync = async () => {
-      setLoading(true);
-      try {
-        const { data } = await ApiService.get({
-          url: `${ApiConfig.getAllPeople}?take=${itemsPerPage}&skip=${
-            itemsPerPage * currentPage
-          }`,
-        });
-        const { data: fetchedPeople, totalPages } = data;
-        setPagesCount(totalPages);
-        setPeople(fetchedPeople);
-      } catch (err) {
-        setError(true);
-      } finally {
-        setLoading(false);
-      }
-    };
     setLoadingAsync();
+    setIsFirstRender(false);
   }, [itemsPerPage, currentPage]);
+
+  useDebounce(
+    () => {
+      if (isFirstRender) return;
+      setLoadingAsync();
+    },
+    800,
+    [searchValue]
+  );
+
+  useDebounce(
+    () => {
+      (async () => {
+        const data = await getCustomerKeys(searchKey, null, false);
+        setPossibleKeys(
+          data.filter((el: any) =>
+            ["Email", "Number", "String"].includes(el.type)
+          )
+        );
+        console.log(searchKey);
+        if (searchKey === "") {
+          setSearchValue("");
+        }
+      })();
+    },
+    800,
+    [searchKey]
+  );
 
   const redirectUses = () => {
     setNameModalOpen(true);
@@ -83,6 +122,31 @@ const PeopleTable = () => {
               </button>
             </div>
           </Grid>
+          <div className="flex w-full gap-[10px] lg:px-8">
+            <AutoComplete
+              inputId="keyInput"
+              items={possibleKeys}
+              inputValue={searchKey}
+              wrapperClassNames="w-full"
+              customLabelClassNames="mb-[4px]"
+              customInputClassNames="!shadow-sm !border-[1px] !border-gray-300"
+              onInputChange={(e) => setSearchKey(e.target.value)}
+              label="Customer key (String only)"
+              onOptionSelect={(el) => {
+                setSearchKey(el.key);
+              }}
+              optionKey={(el) => `${el.key}(${el.type})`}
+              optionRender={(el) => `${el.key} (${el.type})`}
+            />
+            <Input
+              name={"search-value"}
+              value={searchValue}
+              onChange={(el) => setSearchValue(el.target.value || "")}
+              label="Value"
+              disabled={!searchKey}
+              wrapperClasses={!searchKey ? "opacity-[0.5]" : ""}
+            />
+          </div>
           <TableTemplate
             data={people}
             pagesCount={pagesCount}
