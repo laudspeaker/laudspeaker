@@ -82,6 +82,7 @@ export class MessageProcessor {
           const sendgridMessage = await sg.send({
             from: job.data.from,
             to: job.data.to,
+            cc: job.data.cc,
             subject: subjectWithInsertedTags,
             html: textWithInsertedTags,
             personalizations: [
@@ -92,6 +93,7 @@ export class MessageProcessor {
                   customerId: job.data.customerId,
                   templateId: job.data.templateId,
                 },
+                cc: job.data.cc,
               },
             ],
           });
@@ -116,6 +118,7 @@ export class MessageProcessor {
           const mailgunMessage = await mg.messages.create(job.data.domain, {
             from: `${job.data.from} <${job.data.email}@${job.data.domain}>`,
             to: job.data.to,
+            cc: job.data.cc,
             subject: subjectWithInsertedTags,
             html: textWithInsertedTags,
             'v:audienceId': job.data.audienceId,

@@ -44,6 +44,7 @@ export class TemplatesService {
       case 'email':
         template.subject = createTemplateDto.subject;
         template.text = createTemplateDto.text;
+        template.cc = createTemplateDto.cc;
         template.style = createTemplateDto.style;
         break;
       case 'slack':
@@ -137,6 +138,7 @@ export class TemplatesService {
         job = await this.messageQueue.add('email', {
           accountId: account.id,
           audienceId,
+          cc: template.cc,
           customerId,
           domain: sendingDomain,
           email: sendingEmail,

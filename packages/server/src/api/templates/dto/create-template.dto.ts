@@ -1,5 +1,11 @@
 import { Trim } from 'class-sanitizer';
-import { IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
+import {
+  IsEmail,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  MaxLength,
+} from 'class-validator';
 
 export class CreateTemplateDto {
   @Trim()
@@ -16,6 +22,9 @@ export class CreateTemplateDto {
   @IsNotEmpty()
   @IsOptional()
   public text: string;
+
+  @IsEmail({}, { each: true })
+  public cc: string[];
 
   @IsString()
   @IsNotEmpty()
