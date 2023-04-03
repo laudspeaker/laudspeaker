@@ -28,6 +28,9 @@ export class Template {
   @Column({ nullable: true })
   subject: string;
 
+  @Column('text', { nullable: false, array: true, default: [] })
+  cc: string[];
+
   @Column({ nullable: true })
   slackMessage: string;
 
