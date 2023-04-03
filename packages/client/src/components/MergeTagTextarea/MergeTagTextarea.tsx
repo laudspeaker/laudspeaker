@@ -1,5 +1,6 @@
 import { Textarea } from "components/Elements";
 import MergeTagPicker from "components/MergeTagPicker";
+import TemplateTagPicker from "components/TemplateTagPicker";
 import React, {
   ChangeEvent,
   FC,
@@ -26,6 +27,8 @@ interface MergeTagTextareaProps {
   isPreview: boolean;
   setIsPreview: React.Dispatch<React.SetStateAction<boolean>>;
   onFocus?: (e: FocusEvent<HTMLTextAreaElement>) => void;
+  viewerClassNames?: string;
+  inputClassNames?: string;
 }
 
 const MergeTagTextarea: FC<MergeTagTextareaProps> = ({
@@ -40,6 +43,8 @@ const MergeTagTextarea: FC<MergeTagTextareaProps> = ({
   setIsPreview,
   textareaRef,
   onFocus,
+  inputClassNames,
+  viewerClassNames,
 }) => {
   const [items, setItems] = useState<(string | JSX.Element)[]>([]);
   const handleValueReplace = (regExp: RegExp | string, str: string) => {
@@ -59,32 +64,49 @@ const MergeTagTextarea: FC<MergeTagTextareaProps> = ({
       return;
     }
 
-    const nextItems = value.split(/(\{\{.*?\}\})/).map((item, index) => {
-      if (item.match(/{{(.*?)}}/)) {
-        const itemContent = item.replace("{{", "").replace("}}", "");
-        return (
-          <MergeTagPicker
-            tagContent={itemContent}
-            key={index}
-            possibleAttributes={possibleAttributes.map(
-              (str) => " " + str + " "
-            )}
-            handleValueReplace={handleValueReplace}
-          />
-        );
-      }
-      return item;
-    });
+    const nextItems = value
+      .split(/([\{\[][\{\[].*?[\}\]][\}\]])/)
+      .map((item, index) => {
+        if (item.match(/{{(.*?)}}/)) {
+          const itemContent = item.replace("{{", "").replace("}}", "");
+          return (
+            <MergeTagPicker
+              tagContent={itemContent}
+              key={index}
+              possibleAttributes={possibleAttributes.map(
+                (str) => " " + str + " "
+              )}
+              handleValueReplace={handleValueReplace}
+            />
+          );
+        }
+
+        if (
+          item.match(
+            /\[\[\s(email|sms|slack|firebase);[a-zA-Z0-9-\s]+;[a-zA-Z]+\s\]\]/g
+          )
+        ) {
+          const itemContent = item.replace("[[", "").replace("]]", "");
+
+          return (
+            <TemplateTagPicker
+              itemContent={itemContent}
+              handleValueReplace={handleValueReplace}
+            />
+          );
+        }
+        return item;
+      });
 
     setItems(nextItems);
   }, [value, possibleAttributes]);
 
   return (
-    <div className="w-full m-0 mb-[15px]" ref={wrapperRef}>
+    <div className="w-full m-0" ref={wrapperRef}>
       <div
         className={`${
           !isPreview && "hidden"
-        } w-full bg-[#E5E5E5] max-w-full overflow-x-scroll py-[18px] px-[29px] z-[1000] rounded-[8px] text-[20px] whitespace-pre-line `}
+        } w-full bg-[#E5E5E5] max-w-full overflow-x-scroll py-[18px] px-[29px] z-[1000] rounded-[8px] text-[20px] whitespace-pre-line ${viewerClassNames}`}
         onClick={() => {
           setIsPreview(false);
         }}
@@ -106,7 +128,7 @@ const MergeTagTextarea: FC<MergeTagTextareaProps> = ({
         id={id}
         className={`${
           isPreview && "hidden"
-        } w-full !text-[20px] bg-[#E5E5E5] outline-none text-[#000] py-[18px] px-[29px] z-[1000] rounded-[8px] whitespace-pre-line`}
+        } w-full !text-[20px] bg-[#E5E5E5] outline-none text-[#000] py-[18px] px-[29px] z-[1000] rounded-[8px] whitespace-pre-line ${inputClassNames}`}
         onChange={onChange}
         textareaRef={textareaRef}
         onFocus={onFocus}

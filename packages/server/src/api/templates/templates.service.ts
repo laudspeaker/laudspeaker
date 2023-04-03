@@ -110,7 +110,7 @@ export class TemplatesService {
     customer: CustomerDocument,
     event: EventDto,
     audienceId?: string
-  ): Promise<string | number> {
+  ): Promise<{ jobData: any; jobId: string | number }> {
     const customerId = customer.id;
     let template: Template,
       job: Job<any>, // created jobId
@@ -141,6 +141,8 @@ export class TemplatesService {
 
     let key = mailgunAPIKey;
     let from = sendingName;
+
+    let jobData: any;
 
     switch (template.type) {
       case TemplateType.EMAIL:
@@ -315,10 +317,18 @@ export class TemplatesService {
             audienceId,
             customerId,
           });
+          try {
+            jobData = await job.finished();
+          } catch {
+            this.logger.warn('Error while retrieving webhook job data');
+          }
         }
         break;
     }
-    return Promise.resolve(message ? message?.sid : job?.id);
+    return Promise.resolve({
+      jobData,
+      jobId: message ? message?.sid : job?.id,
+    });
   }
 
   async findAll(
@@ -458,10 +468,18 @@ export class TemplatesService {
   }
 
   public async parseTemplateTags(str: string) {
-    for (const match of str.match(
-      /\[\[\s(email|sms|slack|firebase);[a-zA-Z0-9]+;[a-zA-Z]+\s\]\]/g
-    )) {
-      const [type, templateName, templateProperty] = match.split(';');
+    const matches = str.match(
+      /\[\[\s(email|sms|slack|firebase);[a-zA-Z0-9-\s]+;[a-zA-Z]+\s\]\]/g
+    );
+
+    if (!matches) return str;
+
+    for (const match of matches) {
+      const [type, templateName, templateProperty] = match
+        .replace('[[ ', '')
+        .replace(' ]]', '')
+        .trim()
+        .split(';');
 
       const template = await this.templatesRepository.findOneBy({
         type: <TemplateType>type,
@@ -506,17 +524,21 @@ export class TemplatesService {
     });
     url = await this.parseTemplateTags(url);
 
-    body = [
-      WebhookMethod.GET,
-      WebhookMethod.HEAD,
-      WebhookMethod.DELETE,
-      WebhookMethod.OPTIONS,
-    ].includes(method)
-      ? undefined
-      : await this.tagEngine.parseAndRender(body, filteredTags || {}, {
-          strictVariables: true,
-        });
-    body = await this.parseTemplateTags(body);
+    if (
+      [
+        WebhookMethod.GET,
+        WebhookMethod.HEAD,
+        WebhookMethod.DELETE,
+        WebhookMethod.OPTIONS,
+      ].includes(method)
+    ) {
+      body = undefined;
+    } else {
+      body = await this.parseTemplateTags(body);
+      body = await this.tagEngine.parseAndRender(body, filteredTags || {}, {
+        strictVariables: true,
+      });
+    }
 
     headers = Object.fromEntries(
       await Promise.all(

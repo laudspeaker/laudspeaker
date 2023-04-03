@@ -82,8 +82,8 @@ const NameTemplate = ({ onSubmit, isPrimary }: INameSegment) => {
                 Type of template:
               </label>
               <Select
-                id="handletemplateType"
-                name="handletemplateType"
+                id="handleTemplateType"
+                name="handleTemplateType"
                 value={templateType}
                 onChange={handleType}
                 options={[

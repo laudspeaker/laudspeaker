@@ -45,17 +45,21 @@ export class WebhooksProcessor {
     });
     url = await this.templatesService.parseTemplateTags(url);
 
-    body = [
-      WebhookMethod.GET,
-      WebhookMethod.HEAD,
-      WebhookMethod.DELETE,
-      WebhookMethod.OPTIONS,
-    ].includes(method)
-      ? undefined
-      : await this.tagEngine.parseAndRender(body, filteredTags || {}, {
-          strictVariables: true,
-        });
-    body = await this.templatesService.parseTemplateTags(body);
+    if (
+      [
+        WebhookMethod.GET,
+        WebhookMethod.HEAD,
+        WebhookMethod.DELETE,
+        WebhookMethod.OPTIONS,
+      ].includes(method)
+    ) {
+      body = undefined;
+    } else {
+      body = await this.templatesService.parseTemplateTags(body);
+      body = await this.tagEngine.parseAndRender(body, filteredTags || {}, {
+        strictVariables: true,
+      });
+    }
 
     headers = Object.fromEntries(
       await Promise.all(
@@ -81,6 +85,7 @@ export class WebhooksProcessor {
       'Sending webhook requst: \n' +
         JSON.stringify(template.webhookData, null, 2)
     );
+    let error: string | null = null;
     while (!success && retriesCount < retries) {
       try {
         const res = await fetch(url, {
@@ -100,6 +105,7 @@ export class WebhooksProcessor {
             '. Error: ' +
             e
         );
+        if (e instanceof Error) error = e.message;
         await wait(5000);
       }
     }
@@ -111,29 +117,41 @@ export class WebhooksProcessor {
           break;
       }
 
-      await this.webhooksService.insertClickHouseMessages([
-        {
-          event: 'error',
-          createdAt: new Date().toUTCString(),
-          eventProvider: ClickHouseEventProvider.WEBHOOKS,
-          messageId: '',
-          audienceId: job.data.audienceId,
-          customerId: job.data.customerId,
-          templateId: String(job.data.template.id),
-        },
-      ]);
+      try {
+        await this.webhooksService.insertClickHouseMessages([
+          {
+            event: 'error',
+            createdAt: new Date().toUTCString(),
+            eventProvider: ClickHouseEventProvider.WEBHOOKS,
+            messageId: '',
+            audienceId: job.data.audienceId,
+            customerId: job.data.customerId,
+            templateId: String(job.data.template.id),
+          },
+        ]);
+      } catch (e) {
+        this.logger.error('Failed to insert into clickhouse: ' + e);
+      }
+
+      throw new Error(error);
     } else {
-      await this.webhooksService.insertClickHouseMessages([
-        {
-          event: 'sent',
-          createdAt: new Date().toUTCString(),
-          eventProvider: ClickHouseEventProvider.WEBHOOKS,
-          messageId: '',
-          audienceId: job.data.audienceId,
-          customerId: job.data.customerId,
-          templateId: String(job.data.template.id),
-        },
-      ]);
+      try {
+        await this.webhooksService.insertClickHouseMessages([
+          {
+            event: 'sent',
+            createdAt: new Date().toUTCString(),
+            eventProvider: ClickHouseEventProvider.WEBHOOKS,
+            messageId: '',
+            audienceId: job.data.audienceId,
+            customerId: job.data.customerId,
+            templateId: String(job.data.template.id),
+          },
+        ]);
+      } catch (e) {
+        this.logger.error('Failed to insert into clickhouse: ' + e);
+      }
     }
+
+    return { url, body, headers };
   }
 }

@@ -249,7 +249,11 @@ export class AudiencesService {
     queryRunner: QueryRunner,
     encodedRules: string[],
     workflowID: string
-  ): Promise<{ jobIds: (string | number)[]; templates: Template[] }> {
+  ): Promise<{
+    jobIds: (string | number)[];
+    templates: Template[];
+    allJobData?: any[];
+  }> {
     // Base case: customer document must exist
     if (!customer || !customer.id) {
       this.logger.warn(`Warning: No customer to move from ${from} to ${to}`);
@@ -259,7 +263,7 @@ export class AudiencesService {
     const customerId = customer?.id;
     let index = -1; // Index of the customer ID in the fromAud.customers array
     const jobIds: (string | number)[] = [];
-    let jobId: string | number;
+    const allJobData: any[] = [];
     let fromAud: Audience, toAud: Audience;
     const templates: Template[] = [];
     try {
@@ -404,7 +408,7 @@ export class AudiencesService {
             templateIndex < toTemplates?.length;
             templateIndex++
           ) {
-            jobId = await this.templatesService.queueMessage(
+            const { jobId, jobData } = await this.templatesService.queueMessage(
               account,
               toTemplates[templateIndex],
               customer,
@@ -416,6 +420,7 @@ export class AudiencesService {
                 id: toTemplates[templateIndex],
               })
             );
+            allJobData.push(jobData);
             this.logger.debug('Queued Message');
             jobIds.push(jobId);
           }
@@ -426,7 +431,7 @@ export class AudiencesService {
       return Promise.reject(err);
     }
 
-    return Promise.resolve({ jobIds, templates });
+    return Promise.resolve({ jobIds, templates, allJobData });
   }
 
   /**

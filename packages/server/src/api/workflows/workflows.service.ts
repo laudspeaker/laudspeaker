@@ -871,17 +871,20 @@ export class WorkflowsService {
                     eventIncluded
                   ) {
                     try {
-                      const { jobIds: jobIdArr, templates } =
-                        await this.audiencesService.moveCustomer(
-                          account,
-                          from?.id,
-                          to?.id,
-                          customer,
-                          event,
-                          queryRunner,
-                          workflow.rules,
-                          workflow.id
-                        );
+                      const {
+                        jobIds: jobIdArr,
+                        templates,
+                        allJobData,
+                      } = await this.audiencesService.moveCustomer(
+                        account,
+                        from?.id,
+                        to?.id,
+                        customer,
+                        event,
+                        queryRunner,
+                        workflow.rules,
+                        workflow.id
+                      );
                       this.logger.debug(
                         'Moved ' +
                           customer?.id +
@@ -892,6 +895,7 @@ export class WorkflowsService {
                       );
                       jobId.jobIds = jobIdArr;
                       jobId.templates = templates;
+                      jobId.allJobData = allJobData;
                       jobIds.push(jobId);
                     } catch (err: any) {
                       this.logger.error('Error: ' + err);

@@ -59,6 +59,9 @@ import { EventsProcessor } from './events.processor';
     BullModule.registerQueue({
       name: 'events',
     }),
+    BullModule.registerQueue({
+      name: 'webhooks',
+    }),
     AuthModule,
     CustomersModule,
     AccountsModule,

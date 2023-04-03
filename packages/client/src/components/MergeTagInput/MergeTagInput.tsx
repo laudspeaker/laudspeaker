@@ -106,7 +106,7 @@ const MergeTagInput: FC<MergeTagInputProps> = ({
   }, [value, possibleAttributes]);
 
   return (
-    <div className="w-full m-0 mb-[15px]" ref={wrapperRef}>
+    <div className="w-full m-0" ref={wrapperRef}>
       <div
         className={`${
           !isPreview && "hidden"

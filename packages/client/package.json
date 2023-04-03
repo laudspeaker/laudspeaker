@@ -102,7 +102,7 @@
     "@typescript-eslint/eslint-plugin": "^5.30.5",
     "@typescript-eslint/parser": "^5.30.5",
     "autoprefixer": "^10.4.12",
-    "cypress": "^10.8.0",
+    "cypress": "^12.9.0",
     "env-cmd": "10.1.0",
     "eslint": "^8.2.0",
     "eslint-config-airbnb": "19.0.4",

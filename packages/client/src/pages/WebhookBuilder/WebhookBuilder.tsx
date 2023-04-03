@@ -188,6 +188,8 @@ const WebhookBuilder = () => {
             placeholder="Bearer token"
             possibleAttributes={possibleAttributes}
             setValue={handleBearerToken}
+            inputClassNames="!bg-white max-h-[36px] !p-[8px_12px] !text-[1rem]"
+            viewerClassNames="max-h-[60px] !p-[8px_12px] !text-[1rem] !max-w-[310px] !min-w-[310px]"
           />
         </div>
       </div>
@@ -209,6 +211,8 @@ const WebhookBuilder = () => {
               possibleAttributes={possibleAttributes}
               setIsPreview={setIsBasicUserNamePreview}
               setValue={handleBasicUserName}
+              inputClassNames="!bg-white max-h-[36px] !p-[8px_12px] !text-[1rem]"
+              viewerClassNames="max-h-[60px] !p-[8px_12px] !text-[1rem] !max-w-[310px] !min-w-[310px]"
             />
           </div>
         </div>
@@ -227,6 +231,8 @@ const WebhookBuilder = () => {
               possibleAttributes={possibleAttributes}
               setIsPreview={setIsBasicPasswordPreview}
               setValue={handleBasicPassword}
+              inputClassNames="!bg-white max-h-[36px] !p-[8px_12px] !text-[1rem]"
+              viewerClassNames="max-h-[60px] !p-[8px_12px] !text-[1rem] !max-w-[310px] !min-w-[310px]"
             />
           </div>
         </div>
@@ -248,6 +254,8 @@ const WebhookBuilder = () => {
             possibleAttributes={possibleAttributes}
             setIsPreview={setIsCustomHeaderPreview}
             setValue={handleCustomHeader}
+            inputClassNames="!bg-white max-h-[36px] !p-[8px_12px] !text-[1rem]"
+            viewerClassNames="max-h-[60px] !p-[8px_12px] !text-[1rem] !max-w-[310px] !min-w-[310px]"
           />
         </div>
       </div>
@@ -339,6 +347,8 @@ const WebhookBuilder = () => {
           possibleAttributes={possibleAttributes}
           setIsPreview={setIsBodyPreview}
           setValue={handleBody}
+          inputClassNames="!bg-white !p-[8px_12px] !text-[1rem]"
+          viewerClassNames="!p-[8px_12px] !text-[1rem]"
         />
       </>
     ),
@@ -356,6 +366,8 @@ const WebhookBuilder = () => {
           possibleAttributes={possibleAttributes}
           setIsPreview={setIsHeadersPreview}
           setValue={handleHeaders}
+          inputClassNames="!bg-white !p-[8px_12px] !text-[1rem]"
+          viewerClassNames="!p-[8px_12px] !text-[1rem]"
         />
       </>
     ),
@@ -547,7 +559,8 @@ const WebhookBuilder = () => {
             possibleAttributes={possibleAttributes}
             setIsPreview={setIsURLPreview}
             setValue={handleUrl}
-            inputClassNames="!bg-white"
+            inputClassNames="!bg-white max-h-[36px] !p-[8px_12px] !text-[1rem]"
+            viewerClassNames="max-h-[60px] !p-[8px_12px] !text-[1rem] !max-w-[310px] !min-w-[310px]"
           />
           <Select
             value={webhookState.method}
