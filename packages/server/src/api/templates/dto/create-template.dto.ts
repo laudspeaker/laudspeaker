@@ -23,6 +23,7 @@ export class CreateTemplateDto {
   @IsOptional()
   public text: string;
 
+  @IsOptional()
   @IsEmail({}, { each: true })
   public cc: string[];
 

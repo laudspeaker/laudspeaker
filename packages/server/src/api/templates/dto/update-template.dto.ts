@@ -19,6 +19,7 @@ export class UpdateTemplateDto {
   @MaxLength(2000)
   public subject: string;
 
+  @IsOptional()
   @IsEmail({}, { each: true })
   public cc: string[];
 
