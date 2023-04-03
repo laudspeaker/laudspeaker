@@ -32,7 +32,13 @@ import Accounts from 'twilio/lib/rest/Accounts';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Audience, Template, Workflow, WebhookJob, Accounts]),
+    TypeOrmModule.forFeature([
+      Audience,
+      Template,
+      Workflow,
+      WebhookJob,
+      Accounts,
+    ]),
     AccountsModule,
     AuthModule,
     CustomersModule,
@@ -50,7 +56,7 @@ import Accounts from 'twilio/lib/rest/Accounts';
     JobsModule,
     TestsModule,
     FilterModule,
-    WebhookJobsModule
+    WebhookJobsModule,
   ],
 })
 export class ApiModule {

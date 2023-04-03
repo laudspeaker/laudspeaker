@@ -120,6 +120,7 @@ const SegmentCustomerPicker: FC<SegmentCustomerPickerProps> = ({
           }}
           optionKey={(el) => `${el.key}(${el.type})`}
           optionRender={(el) => `${el.key} (${el.type})`}
+          wrapperClassNames="w-full"
         />
         <Input
           name={"search-value"}

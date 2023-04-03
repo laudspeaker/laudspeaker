@@ -127,18 +127,18 @@ const formatMongoConnectionString = (mongoConnectionString: string) => {
   imports: [
     ...(process.env.SERVE_CLIENT_FROM_NEST
       ? [
-        ServeStaticModule.forRoot({
-          rootPath: process.env.CLIENT_PATH
-            ? process.env.CLIENT_PATH
-            : join(__dirname, '../../../', 'client/build/'),
-          exclude: ['api/*'],
-        }),
-      ]
+          ServeStaticModule.forRoot({
+            rootPath: process.env.CLIENT_PATH
+              ? process.env.CLIENT_PATH
+              : join(__dirname, '../../../', 'client/build/'),
+            exclude: ['api/*'],
+          }),
+        ]
       : []),
     MongooseModule.forRoot(
       process.env.MONGOOSE_URL
-      // ? formatMongoConnectionString(process.env.MONGOOSE_URL)
-      // : 'mongodb://127.0.0.1:27017/?directConnection=true'
+        ? formatMongoConnectionString(process.env.MONGOOSE_URL)
+        : 'mongodb://127.0.0.1:27017/?directConnection=true'
     ),
     BullModule.forRoot({
       redis: {
@@ -184,7 +184,7 @@ const formatMongoConnectionString = (mongoConnectionString: string) => {
       Installation,
       State,
       Recovery,
-      WebhookJob
+      WebhookJob,
     ]),
     BullModule.registerQueue({
       name: 'integrations',
@@ -209,7 +209,7 @@ const formatMongoConnectionString = (mongoConnectionString: string) => {
     TemplatesModule,
     SlackModule,
     WebhookJobsModule,
-    AccountsModule
+    AccountsModule,
   ],
   controllers: [AppController],
   providers: [CronService],

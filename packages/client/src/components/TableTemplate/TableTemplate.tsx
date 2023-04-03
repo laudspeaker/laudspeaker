@@ -913,7 +913,7 @@ export default function TableTemplate<T extends TableDataItem>({
           <GenericButton onClick={() => onPersonAdd(row)}>Add</GenericButton>
         )
       ) : (
-        <Link href={`person/${row.name}`}>
+        <Link href={`/person/${row.name}`}>
           {isButton ? <div>Edit</div> : row.name}
         </Link>
       );

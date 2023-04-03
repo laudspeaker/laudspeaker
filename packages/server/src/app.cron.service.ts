@@ -29,17 +29,22 @@ import {
 } from './api/integrations/entities/integration.entity';
 import { Recovery } from './api/auth/entities/recovery.entity';
 import { WebhookJobsService } from './api/webhook-jobs/webhook-jobs.service';
-import { WebhookJobStatus, WebhookProvider } from './api/webhook-jobs/entities/webhook-job.entity';
+import {
+  WebhookJobStatus,
+  WebhookProvider,
+} from './api/webhook-jobs/entities/webhook-job.entity';
 import { AccountsService } from './api/accounts/accounts.service';
 import Mailgun from 'mailgun.js';
 import formData from 'form-data';
 import { createClient } from '@clickhouse/client';
-import { ClickHouseEventProvider, ClickHouseMessage } from './api/webhooks/webhooks.service';
+import {
+  ClickHouseEventProvider,
+  ClickHouseMessage,
+} from './api/webhooks/webhooks.service';
 import twilio from 'twilio';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import client from '@sendgrid/client';
 import { ClientResponse } from '@sendgrid/mail';
-
 
 const BATCH_SIZE = 500;
 const KEYS_TO_SKIP = ['__v', '_id', 'audiences', 'ownerId'];
@@ -82,7 +87,7 @@ export class CronService {
     @Inject(WorkflowsService) private workflowsService: WorkflowsService,
     @Inject(WebhookJobsService) private webhookJobsService: WebhookJobsService,
     @Inject(AccountsService) private accountsService: AccountsService
-  ) { }
+  ) {}
 
   @Cron(CronExpression.EVERY_HOUR)
   async handleCustomerKeysCron() {
@@ -157,7 +162,8 @@ export class CronService {
       }
 
       this.logger.log(
-        `Cron customer keys job finished, checked ${documentsCount} records, found ${Object.keys(keys).length
+        `Cron customer keys job finished, checked ${documentsCount} records, found ${
+          Object.keys(keys).length
         } keys`
       );
     } catch (e) {
@@ -255,7 +261,8 @@ export class CronService {
       }
 
       this.logger.log(
-        `Cron event keys job finished, checked ${documentsCount} records, found ${Object.keys(keys).length
+        `Cron event keys job finished, checked ${documentsCount} records, found ${
+          Object.keys(keys).length
         } keys`
       );
     } catch (e) {
@@ -346,22 +353,28 @@ export class CronService {
   async handleMissedMailgunEvents() {
     try {
       // Get all pending Mailgun Jobs and accounts
-      const mailgunJobs = await this.webhookJobsService.findAllByProvider(WebhookProvider.MAILGUN);
+      const mailgunJobs = await this.webhookJobsService.findAllByProvider(
+        WebhookProvider.MAILGUN
+      );
       const accounts = await this.accountsService.findAll();
 
-      // Create new pending Mailgun Job 
-      await this.webhookJobsService.create({ provider: WebhookProvider.MAILGUN, status: WebhookJobStatus.PENDING })
+      // Create new pending Mailgun Job
+      await this.webhookJobsService.create({
+        provider: WebhookProvider.MAILGUN,
+        status: WebhookJobStatus.PENDING,
+      });
 
       // Iterate through Jobs
       for (let i = 0; i < mailgunJobs.length; i++) {
         const startTime = mailgunJobs[i].createdAt;
 
         // Update job status
-        await this.webhookJobsService.update(mailgunJobs[i].id, { status: WebhookJobStatus.IN_PROGRESS });
+        await this.webhookJobsService.update(mailgunJobs[i].id, {
+          status: WebhookJobStatus.IN_PROGRESS,
+        });
 
         //Iterate through accounts
         for (let j = 0; j < accounts.length; j++) {
-
           if (accounts[j].mailgunAPIKey && accounts[j].sendingDomain) {
             const mailgun = new Mailgun(formData);
             const mg = mailgun.client({
@@ -369,19 +382,28 @@ export class CronService {
               key: accounts[j].mailgunAPIKey,
             });
             let query, events;
-            query = { begin: startTime.toUTCString(), limit: 300, ascending: 'yes' };
+            query = {
+              begin: startTime.toUTCString(),
+              limit: 300,
+              ascending: 'yes',
+            };
             do {
               events = await mg.events.get(accounts[j].sendingDomain, query);
               for (let k = 0; k < events.items.length; k++) {
                 const existsCheck = await this.clickHouseClient.query({
                   query: `SELECT * FROM message_status WHERE event = {event:String} AND messageId = {messageId:String}`,
-                  query_params: { event: events.items[k].event, messageId: events.items[k].message.headers['message-id'] },
+                  query_params: {
+                    event: events.items[k].event,
+                    messageId: events.items[k].message.headers['message-id'],
+                  },
                 });
                 const existsRows = JSON.parse(await existsCheck.text());
                 if (existsRows.data.length == 0) {
                   const messageInfo = await this.clickHouseClient.query({
                     query: `SELECT * FROM message_status WHERE messageId = {messageId:String} AND audienceId IS NOT NULL AND customerId IS NOT NULL AND templateId IS NOT NULL LIMIT 1`,
-                    query_params: { messageId: events.items[k].message.headers['message-id'] },
+                    query_params: {
+                      messageId: events.items[k].message.headers['message-id'],
+                    },
                   });
                   const messageRow = JSON.parse(await messageInfo.text()).data;
                   const messagesToInsert: ClickHouseMessage[] = [];
@@ -393,7 +415,9 @@ export class CronService {
                     messageId: events.items[k].message.headers['message-id'],
                     event: events.items[k].event,
                     eventProvider: ClickHouseEventProvider.MAILGUN,
-                    createdAt: new Date(events.items[k].timestamp * 1000).toUTCString(),
+                    createdAt: new Date(
+                      events.items[k].timestamp * 1000
+                    ).toUTCString(),
                   };
                   messagesToInsert.push(clickHouseRecord);
                   await this.clickHouseClient.insert<ClickHouseMessage>({
@@ -404,15 +428,15 @@ export class CronService {
                 }
               }
               query = { page: events.pages.next.number };
-            } while (events?.items?.length > 0)
+            } while (events?.items?.length > 0);
           }
         }
-        await this.webhookJobsService.remove(mailgunJobs[i].id)
+        await this.webhookJobsService.remove(mailgunJobs[i].id);
       }
-    }
-    catch (err) {
-      this.logger.error(`app.cron.service.ts:CronService.handleMissedMailgunEvents: Error: ${err}`
-      )
+    } catch (err) {
+      this.logger.error(
+        `app.cron.service.ts:CronService.handleMissedMailgunEvents: Error: ${err}`
+      );
     }
   }
 
@@ -420,28 +444,33 @@ export class CronService {
   async handleMissedSendgridEvents() {
     try {
       // Get all pending Twilio Jobs and accounts
-      const sendgridJobs = await this.webhookJobsService.findAllByProvider(WebhookProvider.SENDGRID);
+      const sendgridJobs = await this.webhookJobsService.findAllByProvider(
+        WebhookProvider.SENDGRID
+      );
       const accounts = await this.accountsService.findAll();
 
-      // Create new pending Twilio Job 
-      await this.webhookJobsService.create({ provider: WebhookProvider.SENDGRID, status: WebhookJobStatus.PENDING })
+      // Create new pending Twilio Job
+      await this.webhookJobsService.create({
+        provider: WebhookProvider.SENDGRID,
+        status: WebhookJobStatus.PENDING,
+      });
 
       // Iterate through Jobs
       for (let i = 0; i < sendgridJobs.length; i++) {
-
         // Update job status
-        await this.webhookJobsService.update(sendgridJobs[i].id, { status: WebhookJobStatus.IN_PROGRESS });
+        await this.webhookJobsService.update(sendgridJobs[i].id, {
+          status: WebhookJobStatus.IN_PROGRESS,
+        });
 
         //Iterate through accounts
         for (let j = 0; j < accounts.length; j++) {
-
           if (accounts[j].sendgridApiKey) {
             client.setApiKey(accounts[j].sendgridApiKey);
             const resultSet = await this.clickHouseClient.query({
               query: `SELECT * FROM message_status WHERE processed = false AND eventProvider = 'sendgrid' AND userId = {userId:String}`,
               query_params: { userId: accounts[j].id },
               format: 'JSONEachRow',
-            })
+            });
             for await (const rows of resultSet.stream()) {
               rows.forEach(async (row) => {
                 const rowObject = JSON.parse(row.text);
@@ -458,10 +487,10 @@ export class CronService {
                   try {
                     const response: any = await client.request({
                       url: `/v3/messages`,
-                      method: "GET",
+                      method: 'GET',
                       qs: {
-                        "query": `msg_id=${rowObject.messageId}`,
-                      }
+                        query: `msg_id=${rowObject.messageId}`,
+                      },
                     });
                     message = response.body.messages[0];
                   } catch (err) {
@@ -469,8 +498,12 @@ export class CronService {
                     return;
                   }
 
-                  // Reached end state using API; update end state and set as processed in clickhouse 
-                  if (['delivered', 'dropped', 'bounce', 'blocked'].includes(message.status)) {
+                  // Reached end state using API; update end state and set as processed in clickhouse
+                  if (
+                    ['delivered', 'dropped', 'bounce', 'blocked'].includes(
+                      message.status
+                    )
+                  ) {
                     const messagesToInsert: ClickHouseMessage[] = [];
                     const clickHouseRecord: ClickHouseMessage = {
                       audienceId: rowObject.audienceId,
@@ -512,16 +545,16 @@ export class CronService {
                     },
                   });
                 }
-              })
+              });
             }
           }
         }
-        await this.webhookJobsService.remove(sendgridJobs[i].id)
+        await this.webhookJobsService.remove(sendgridJobs[i].id);
       }
-    }
-    catch (err) {
-      this.logger.error(`app.cron.service.ts:CronService.handleMissedSendgridEvents: Error: ${err}`
-      )
+    } catch (err) {
+      this.logger.error(
+        `app.cron.service.ts:CronService.handleMissedSendgridEvents: Error: ${err}`
+      );
     }
   }
 
@@ -529,28 +562,36 @@ export class CronService {
   async handleMissedTwilioEvents() {
     try {
       // Get all pending Twilio Jobs and accounts
-      const twilioJobs = await this.webhookJobsService.findAllByProvider(WebhookProvider.TWILIO_SMS);
+      const twilioJobs = await this.webhookJobsService.findAllByProvider(
+        WebhookProvider.TWILIO_SMS
+      );
       const accounts = await this.accountsService.findAll();
 
-      // Create new pending Twilio Job 
-      await this.webhookJobsService.create({ provider: WebhookProvider.TWILIO_SMS, status: WebhookJobStatus.PENDING })
+      // Create new pending Twilio Job
+      await this.webhookJobsService.create({
+        provider: WebhookProvider.TWILIO_SMS,
+        status: WebhookJobStatus.PENDING,
+      });
 
       // Iterate through Jobs
       for (let i = 0; i < twilioJobs.length; i++) {
-
         // Update job status
-        await this.webhookJobsService.update(twilioJobs[i].id, { status: WebhookJobStatus.IN_PROGRESS });
+        await this.webhookJobsService.update(twilioJobs[i].id, {
+          status: WebhookJobStatus.IN_PROGRESS,
+        });
 
         //Iterate through accounts
         for (let j = 0; j < accounts.length; j++) {
-
           if (accounts[j].smsAccountSid && accounts[j].smsAuthToken) {
-            const twilioClient = twilio(accounts[j].smsAccountSid, accounts[j].smsAuthToken);
+            const twilioClient = twilio(
+              accounts[j].smsAccountSid,
+              accounts[j].smsAuthToken
+            );
             const resultSet = await this.clickHouseClient.query({
               query: `SELECT * FROM message_status WHERE processed = false AND eventProvider = 'twilio' AND userId = {userId:String}`,
               query_params: { userId: accounts[j].id },
               format: 'JSONEachRow',
-            })
+            });
             for await (const rows of resultSet.stream()) {
               rows.forEach(async (row) => {
                 const rowObject = JSON.parse(row.text);
@@ -561,8 +602,14 @@ export class CronService {
                 });
                 const existsRows = JSON.parse(await existsCheck.text());
                 if (existsRows.data.length === 0) {
-                  const message = await twilioClient.messages(rowObject.messageId).fetch()
-                  if (['delivered', 'undelivered', 'failed', 'canceled'].includes(message.status)) {
+                  const message = await twilioClient
+                    .messages(rowObject.messageId)
+                    .fetch();
+                  if (
+                    ['delivered', 'undelivered', 'failed', 'canceled'].includes(
+                      message.status
+                    )
+                  ) {
                     const messagesToInsert: ClickHouseMessage[] = [];
                     const clickHouseRecord: ClickHouseMessage = {
                       audienceId: rowObject.audienceId,
@@ -601,16 +648,16 @@ export class CronService {
                     },
                   });
                 }
-              })
+              });
             }
           }
         }
-        await this.webhookJobsService.remove(twilioJobs[i].id)
+        await this.webhookJobsService.remove(twilioJobs[i].id);
       }
-    }
-    catch (err) {
-      this.logger.error(`app.cron.service.ts:CronService.handleMissedTwilioEvents: Error: ${err}`
-      )
+    } catch (err) {
+      this.logger.error(
+        `app.cron.service.ts:CronService.handleMissedTwilioEvents: Error: ${err}`
+      );
     }
   }
 

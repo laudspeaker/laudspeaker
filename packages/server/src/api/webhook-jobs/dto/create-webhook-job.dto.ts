@@ -1,13 +1,13 @@
+import { IsEnum } from 'class-validator';
 import {
-    IsEnum,
-  } from 'class-validator';
-  import { WebhookJobStatus, WebhookProvider } from '../entities/webhook-job.entity';
-  
-  export class CreateWebhookJobDto {
-    @IsEnum(WebhookJobStatus)
-    public status: WebhookJobStatus;
+  WebhookJobStatus,
+  WebhookProvider,
+} from '../entities/webhook-job.entity';
 
-    @IsEnum(WebhookProvider)
-    public provider: WebhookProvider;
-  }
-  
+export class CreateWebhookJobDto {
+  @IsEnum(WebhookJobStatus)
+  public status: WebhookJobStatus;
+
+  @IsEnum(WebhookProvider)
+  public provider: WebhookProvider;
+}

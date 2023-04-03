@@ -24,21 +24,25 @@ export class MessageProcessor {
   private MAXIMUM_PUSH_LENGTH = 256;
   private MAXIMUM_PUSH_TITLE_LENGTH = 48;
   private tagEngine = new Liquid();
-  private phClient = new PostHog(
-    process.env.POSTHOG_KEY,
-    { host: process.env.POSTHOG_HOST }
-  );
+  private phClient = new PostHog(process.env.POSTHOG_KEY, {
+    host: process.env.POSTHOG_HOST,
+  });
 
   constructor(
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
     private readonly logger: LoggerService,
     private readonly webhooksService: WebhooksService
-  ) { }
+  ) {}
 
   @Process('email')
   async handleEmail(job: Job) {
     if (!job.data.to) {
-      this.logger.error(`Error: Skipping sending for ${job.data.customerId}, no email; job ${JSON.stringify(job.data)}`, `email.processor.ts:MessageProcessor.handleEmail()`);
+      this.logger.error(
+        `Error: Skipping sending for ${
+          job.data.customerId
+        }, no email; job ${JSON.stringify(job.data)}`,
+        `email.processor.ts:MessageProcessor.handleEmail()`
+      );
       return;
     }
     let textWithInsertedTags, subjectWithInsertedTags: string | undefined;
@@ -57,7 +61,12 @@ export class MessageProcessor {
           { strictVariables: true }
         );
     } catch (err) {
-      this.logger.error(`Error: ${err} while parsing merge tags for job ${JSON.stringify(job.data)}`, `email.processor.ts:MessageProcessor.handleEmail()`);
+      this.logger.error(
+        `Error: ${err} while parsing merge tags for job ${JSON.stringify(
+          job.data
+        )}`,
+        `email.processor.ts:MessageProcessor.handleEmail()`
+      );
       await this.webhooksService.insertClickHouseMessages([
         {
           audienceId: job.data.audienceId,
@@ -152,20 +161,31 @@ export class MessageProcessor {
             audience: job.data.audienceId,
             customer: job.data.customerId,
             template: job.data.templateId,
-            provider: job.data.eventProvider
+            provider: job.data.eventProvider,
           },
         });
       }
-      this.logger.debug(`${msg},${JSON.stringify(job.data)}`, `email.processor.ts:MessageProcessor.handleEmail()`);
+      this.logger.debug(
+        `${msg},${JSON.stringify(job.data)}`,
+        `email.processor.ts:MessageProcessor.handleEmail()`
+      );
     } catch (err) {
-      this.logger.error(`Error: ${err} while processing job ${JSON.stringify(job.data)}`, `email.processor.ts:MessageProcessor.handleEmail()`);
+      this.logger.error(
+        `Error: ${err} while processing job ${JSON.stringify(job.data)}`,
+        `email.processor.ts:MessageProcessor.handleEmail()`
+      );
     }
   }
 
   @Process('sms')
   async handleSMS(job: Job) {
     if (!job.data.to) {
-      this.logger.error(`Error: Skipping sending for ${job.data.customerId}, no phone; job ${JSON.stringify(job.data)}`, `email.processor.ts:MessageProcessor.handleSMS()`);
+      this.logger.error(
+        `Error: Skipping sending for ${
+          job.data.customerId
+        }, no phone; job ${JSON.stringify(job.data)}`,
+        `email.processor.ts:MessageProcessor.handleSMS()`
+      );
       return;
     }
     let textWithInsertedTags: string | undefined;
@@ -178,7 +198,12 @@ export class MessageProcessor {
         );
       }
     } catch (err) {
-      this.logger.error(`Error: ${err} while parsing merge tags for job ${JSON.stringify(job.data)}`, `email.processor.ts:MessageProcessor.handleSMS()`);
+      this.logger.error(
+        `Error: ${err} while parsing merge tags for job ${JSON.stringify(
+          job.data
+        )}`,
+        `email.processor.ts:MessageProcessor.handleSMS()`
+      );
       await this.webhooksService.insertClickHouseMessages([
         {
           audienceId: job.data.audienceId,
@@ -225,16 +250,27 @@ export class MessageProcessor {
           },
         });
       }
-      this.logger.debug(`${JSON.stringify(message)},${JSON.stringify(job.data)}`, `email.processor.ts:MessageProcessor.handleSMS()`);
+      this.logger.debug(
+        `${JSON.stringify(message)},${JSON.stringify(job.data)}`,
+        `email.processor.ts:MessageProcessor.handleSMS()`
+      );
     } catch (err) {
-      this.logger.error(`Error: ${err} while processing job ${JSON.stringify(job.data)}`, `email.processor.ts:MessageProcessor.handleSMS()`);
+      this.logger.error(
+        `Error: ${err} while processing job ${JSON.stringify(job.data)}`,
+        `email.processor.ts:MessageProcessor.handleSMS()`
+      );
     }
   }
 
   @Process('firebase')
   async handleFirebase(job: Job) {
     if (!job.data.phDeviceToken) {
-      this.logger.error(`Error: Skipping sending for ${job.data.customerId}, no device token; job ${JSON.stringify(job.data)}`, `email.processor.ts:MessageProcessor.handleFirebase()`);
+      this.logger.error(
+        `Error: Skipping sending for ${
+          job.data.customerId
+        }, no device token; job ${JSON.stringify(job.data)}`,
+        `email.processor.ts:MessageProcessor.handleFirebase()`
+      );
       return;
     }
 
@@ -252,7 +288,12 @@ export class MessageProcessor {
         { strictVariables: true }
       );
     } catch (err) {
-      this.logger.error(`Error: ${err} while parsing merge tags for job ${JSON.stringify(job.data)}`, `email.processor.ts:MessageProcessor.handleFirebase()`);
+      this.logger.error(
+        `Error: ${err} while parsing merge tags for job ${JSON.stringify(
+          job.data
+        )}`,
+        `email.processor.ts:MessageProcessor.handleFirebase()`
+      );
       await this.webhooksService.insertClickHouseMessages([
         {
           userId: job.data.accountId,
@@ -287,10 +328,7 @@ export class MessageProcessor {
       const messageId = await messaging.send({
         token: job.data.phDeviceToken,
         notification: {
-          title: titleWithInsertedTags.slice(
-            0,
-            this.MAXIMUM_PUSH_TITLE_LENGTH
-          ),
+          title: titleWithInsertedTags.slice(0, this.MAXIMUM_PUSH_TITLE_LENGTH),
           body: textWithInsertedTags.slice(0, this.MAXIMUM_PUSH_LENGTH),
         },
         android: {
@@ -332,9 +370,15 @@ export class MessageProcessor {
           },
         });
       }
-      this.logger.debug(`${messageId},${JSON.stringify(job.data)}`, `email.processor.ts:MessageProcessor.handleFirebase()`);
+      this.logger.debug(
+        `${messageId},${JSON.stringify(job.data)}`,
+        `email.processor.ts:MessageProcessor.handleFirebase()`
+      );
     } catch (err) {
-      this.logger.error(`Error: ${err} while processing job ${JSON.stringify(job.data)}`, `email.processor.ts:MessageProcessor.handleFirebase()`);
+      this.logger.error(
+        `Error: ${err} while processing job ${JSON.stringify(job.data)}`,
+        `email.processor.ts:MessageProcessor.handleFirebase()`
+      );
     }
   }
 }
