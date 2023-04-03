@@ -1,6 +1,13 @@
 import { Trim } from 'class-sanitizer';
 import { Type } from 'class-transformer';
-import { IsArray, IsEmail, IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
+import {
+  IsArray,
+  IsEmail,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  MaxLength,
+} from 'class-validator';
 
 export class CreateTemplateDto {
   @Trim()
@@ -18,8 +25,7 @@ export class CreateTemplateDto {
   @IsOptional()
   public text: string;
 
-  @IsArray()
-  @IsEmail({each:true})
+  @IsEmail({}, { each: true })
   public cc: string[];
 
   @IsString()

@@ -1,5 +1,13 @@
 import { Trim } from 'class-sanitizer';
-import { IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  MaxLength,
+  IsArray,
+  IsEmail,
+  ValidateNested,
+} from 'class-validator';
 
 export class UpdateTemplateDto {
   @Trim()
@@ -12,6 +20,9 @@ export class UpdateTemplateDto {
   @IsOptional()
   @MaxLength(2000)
   public subject: string;
+
+  @IsEmail({}, { each: true })
+  public cc: string[];
 
   @IsString()
   @IsNotEmpty()
