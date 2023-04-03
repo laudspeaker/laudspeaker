@@ -205,7 +205,7 @@ export class WebhooksService {
         id: audienceId,
       },
       relations: ['owner'],
-    }); 
+    });
     const clickHouseRecord: ClickHouseMessage = {
       userId: audience.owner.id,
       audienceId,
@@ -292,7 +292,7 @@ export class WebhooksService {
     });
     try {
       let installedWebhooks = await mg.webhooks.list(sendingDomain, {});
-      this.logger.log(JSON.stringify(installedWebhooks))
+      this.logger.log(JSON.stringify(installedWebhooks));
 
       for (const webhookToInstall of this.MAILGUN_HOOKS_TO_INSTALL) {
         //Webhook does not exist on domain
