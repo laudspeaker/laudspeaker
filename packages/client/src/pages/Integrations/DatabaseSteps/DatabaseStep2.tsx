@@ -40,15 +40,14 @@ const DatabaseStep2: FC<DatabaseStepProps> = ({
                   : "rounded-md sm:text-sm focus:border-cyan-500 border-gray-300 shadow-sm focus:ring-cyan-500 "
               )}
             />
-            {errors.frequencyNumber.length > 0 &&
-              showErrors.frequencyNumber && (
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center">
-                  <ExclamationCircleIcon
-                    className="h-5 w-5 text-red-500"
-                    aria-hidden="true"
-                  />
-                </div>
-              )}
+            {errors.frequencyNumber.length > 0 && showErrors.frequencyNumber && (
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center">
+                <ExclamationCircleIcon
+                  className="h-5 w-5 text-red-500"
+                  aria-hidden="true"
+                />
+              </div>
+            )}
           </dd>
           <dd className="relative">
             <Select
