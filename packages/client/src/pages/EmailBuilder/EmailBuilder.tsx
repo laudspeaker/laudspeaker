@@ -185,6 +185,15 @@ const EmailBuilder = () => {
     component[0]?.move(el, {});
   };
 
+  const onAddApiCallClick = () => {
+    const indexToInsert = subjectRef.current?.selectionStart || title.length;
+    const newTitleArr = title.split("");
+    newTitleArr.splice(indexToInsert, 0, "[{[ dW5kZWZpbmVk;response.data ]}]");
+    setTitle(newTitleArr.join(""));
+    setIsPreview(true);
+    return;
+  };
+
   return (
     <>
       <div hidden={isLoading} className="w-full">
@@ -209,6 +218,7 @@ const EmailBuilder = () => {
         </Helmet>
         <EmailHeader
           onPersonalize={onPersonalize}
+          onAddApiCallClick={onAddApiCallClick}
           onSave={onSave}
           loading={isSaving}
           templateName={templateName}

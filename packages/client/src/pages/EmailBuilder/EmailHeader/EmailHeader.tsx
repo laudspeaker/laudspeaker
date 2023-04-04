@@ -6,6 +6,7 @@ import { BackButtonIcon } from "../../../components/Icons/Icons";
 
 export interface IEmailHeaderProps {
   onPersonalize: (e: MouseEvent<HTMLButtonElement>) => void;
+  onAddApiCallClick?: (e: MouseEvent<HTMLButtonElement>) => void;
   onSave: (e: MouseEvent<HTMLButtonElement>) => void;
   templateName: string;
   handleTemplateNameChange: (e: ChangeEvent<HTMLInputElement>) => void;
@@ -15,6 +16,7 @@ export interface IEmailHeaderProps {
 const EmailHeader = (props: IEmailHeaderProps) => {
   const {
     onPersonalize,
+    onAddApiCallClick,
     templateName,
     handleTemplateNameChange,
     onSave,
@@ -100,6 +102,20 @@ const EmailHeader = (props: IEmailHeaderProps) => {
           >
             Personalize
           </GenericButton>
+          {onAddApiCallClick && (
+            <GenericButton
+              onClick={onAddApiCallClick}
+              customClasses="ml-[10px]"
+              style={{
+                maxWidth: "158px",
+                maxHeight: "48px",
+              }}
+              disabled={loading}
+              loading={loading}
+            >
+              Add Api Call
+            </GenericButton>
+          )}
         </div>
       </div>
     </div>

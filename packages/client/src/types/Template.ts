@@ -1,7 +1,4 @@
-import {
-  WebhookMethod,
-  WebhookState,
-} from "pages/WebhookBuilder/WebhookBuilder";
+import { WebhookState } from "pages/WebhookBuilder/WebhookSettings";
 import Account from "./Account";
 
 export enum TemplateType {

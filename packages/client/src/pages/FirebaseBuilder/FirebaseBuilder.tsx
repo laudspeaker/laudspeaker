@@ -108,12 +108,31 @@ const FirebaseBuilder = () => {
     setIsPreview({ title: true, text: true });
   };
 
+  const onAddApiCallClick = () => {
+    const focusRef = focusedInput === "title" ? titleRef : textRef;
+    const [get, set] =
+      focusedInput === "title"
+        ? [pushTitle, setPushTitle]
+        : [pushText, setPushText];
+    const indexToInsert =
+      (focusRef.current?.selectionStart || pushText?.length) ?? 0;
+    const newSlackMessageArr = get?.split("") ?? [];
+    newSlackMessageArr.splice(
+      indexToInsert,
+      0,
+      "[{[ dW5kZWZpbmVk;response.data ]}]"
+    );
+    set(newSlackMessageArr.join(""));
+    setIsPreview({ title: true, text: true });
+  };
+
   if (isLoading) return <Progress />;
 
   return (
     <div className="w-full">
       <SlackTemplateHeader
         onPersonalizeClick={onPersonalizeClick}
+        onAddApiCallClick={onAddApiCallClick}
         onSave={onSave}
         loading={isSaving}
         templateName={templateName}

@@ -62,7 +62,7 @@ const SlackBuilder = () => {
     const populateSlackBuilder = async () => {
       try {
         const { data } = await getTemplate(name);
-        setSlackMessage(data.slackMessage);
+        setSlackMessage(data.slackMessage || "");
         setTemplateName(name);
         setSlackTemplateId(data.id);
       } catch (e) {
@@ -85,9 +85,26 @@ const SlackBuilder = () => {
     const focusedInput = document.querySelector(
       "#slackMessage"
     ) as HTMLInputElement;
-    const indexToInsert = focusedInput?.selectionStart || slackMessage.length;
+    const indexToInsert =
+      focusedInput?.selectionStart || slackMessage?.length || 0;
     const newSlackMessageArr = slackMessage.split("");
     newSlackMessageArr.splice(indexToInsert, 0, "{{}}");
+    setSlackMessage(newSlackMessageArr.join(""));
+    setIsPreview(true);
+  };
+
+  const onAddApiCallClick = () => {
+    const focusedInput = document.querySelector(
+      "#slackMessage"
+    ) as HTMLInputElement;
+    const indexToInsert =
+      focusedInput?.selectionStart || slackMessage?.length || 0;
+    const newSlackMessageArr = slackMessage.split("");
+    newSlackMessageArr.splice(
+      indexToInsert,
+      0,
+      "[{[ dW5kZWZpbmVk;response.data ]}]"
+    );
     setSlackMessage(newSlackMessageArr.join(""));
     setIsPreview(true);
   };
@@ -98,6 +115,7 @@ const SlackBuilder = () => {
     <div className="w-full">
       <SlackTemplateHeader
         onPersonalizeClick={onPersonalizeClick}
+        onAddApiCallClick={onAddApiCallClick}
         onSave={onSave}
         loading={isSaving}
         templateName={templateName}

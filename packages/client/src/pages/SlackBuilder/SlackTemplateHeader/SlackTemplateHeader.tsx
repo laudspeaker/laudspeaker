@@ -8,6 +8,7 @@ import { BackButtonIcon } from "../../../components/Icons/Icons";
 export interface IEmailHeaderProps {
   onPersonalizeClick: (e: MouseEvent<HTMLButtonElement>) => void;
   onAddTemplateClick?: (e: MouseEvent<HTMLButtonElement>) => void;
+  onAddApiCallClick?: (e: MouseEvent<HTMLButtonElement>) => void;
   onSave: (e: MouseEvent<HTMLButtonElement>) => void;
   templateName: string;
   handleTemplateNameChange: (e: ChangeEvent<HTMLInputElement>) => void;
@@ -18,6 +19,7 @@ const SlackTemplateHeader = (props: IEmailHeaderProps) => {
   const {
     onPersonalizeClick,
     onAddTemplateClick,
+    onAddApiCallClick,
     templateName,
     handleTemplateNameChange,
     onSave,
@@ -122,6 +124,23 @@ const SlackTemplateHeader = (props: IEmailHeaderProps) => {
                 loading={loading}
               >
                 Add Template
+              </GenericButton>
+            </div>
+          )}
+          {onAddApiCallClick && (
+            <div>
+              <GenericButton
+                id="saveDraftTemplate"
+                onClick={onAddApiCallClick}
+                style={{
+                  whiteSpace: "nowrap",
+                  maxWidth: "158px",
+                  maxHeight: "48px",
+                }}
+                disabled={loading}
+                loading={loading}
+              >
+                Add Api Call
               </GenericButton>
             </div>
           )}
