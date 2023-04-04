@@ -28,24 +28,15 @@ import { SlackService } from '../slack/slack.service';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { EventDto } from '../events/dto/event.dto';
 import { Audience } from '../audiences/entities/audience.entity';
-import { Liquid } from 'liquidjs';
-import { cert, App, getApp, initializeApp } from 'firebase-admin/app';
-import { getMessaging } from 'firebase-admin/messaging';
 import { cleanTagsForSending } from '@/shared/utils/helpers';
-import {
-  ClickHouseEventProvider,
-  WebhooksService,
-} from '../webhooks/webhooks.service';
 import { fetch } from 'undici';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import { Liquid } from 'liquidjs';
 
 @Injectable()
 export class TemplatesService {
   private tagEngine = new Liquid();
-
-  private MAXIMUM_PUSH_LENGTH = 256;
-  private MAXIMUM_PUSH_TITLE_LENGTH = 48;
 
   constructor(
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
@@ -55,7 +46,6 @@ export class TemplatesService {
     @InjectModel(Customer.name) public CustomerModel: Model<CustomerDocument>,
     @InjectRepository(Audience)
     private audiencesRepository: Repository<Audience>,
-    private readonly webhooksService: WebhooksService,
     @Inject(SlackService) private slackService: SlackService,
     @InjectQueue('message') private readonly messageQueue: Queue,
     @InjectQueue('slack') private readonly slackQueue: Queue,
@@ -70,6 +60,7 @@ export class TemplatesService {
       case TemplateType.EMAIL:
         template.subject = createTemplateDto.subject;
         template.text = createTemplateDto.text;
+        if (createTemplateDto.cc) template.cc = createTemplateDto.cc;
         template.style = createTemplateDto.style;
         break;
       case TemplateType.SLACK:
@@ -165,20 +156,21 @@ export class TemplatesService {
         }
 
         job = await this.messageQueue.add('email', {
-          eventProvider: account.emailProvider,
-          trackingEmail: email,
-          key,
-          from,
+          accountId: account.id,
+          audienceId,
+          cc: template.cc,
+          customerId,
           domain: sendingDomain,
           email: sendingEmail,
-          to: customer.phEmail ? customer.phEmail : customer.email,
-          audienceId,
-          customerId,
-          tags: filteredTags,
+          eventProvider: account.emailProvider,
+          from,
+          trackingEmail: email,
+          key,
           subject: template.subject,
-          text: template.text,
+          tags: filteredTags,
           templateId,
-          accountId: account.id,
+          text: template.text,
+          to: customer.phEmail ? customer.phEmail : customer.email,
         });
         if (account.emailProvider === 'free3') await account.save();
         break;
@@ -189,125 +181,48 @@ export class TemplatesService {
           return Promise.reject(err);
         }
         job = await this.slackQueue.add('send', {
-          methodName: 'chat.postMessage',
-          token: installation.installation.bot.token,
+          accountId: account.id,
           args: {
+            audienceId,
             channel: customer.slackId,
-            text: event?.payload ? event.payload : template.slackMessage,
+            customerId,
             tags: filteredTags,
             templateId,
-            audienceId,
-            customerId,
+            text: event?.payload ? event.payload : template.slackMessage,
           },
+          methodName: 'chat.postMessage',
+          token: installation.installation.bot.token,
+          trackingEmail: email,
         });
         break;
       case TemplateType.SMS:
         job = await this.messageQueue.add('sms', {
-          trackingEmail: email,
-          sid: account.smsAccountSid,
-          token: account.smsAuthToken,
-          from: account.smsFrom,
-          to: customer.phPhoneNumber || customer.phone,
-          tags: filteredTags,
-          text: template.smsText,
-          templateId: template.id,
+          accountId: account.id,
           audienceId,
           customerId,
+          from: account.smsFrom,
+          sid: account.smsAccountSid,
+          tags: filteredTags,
+          templateId: template.id,
+          text: template.smsText,
+          to: customer.phPhoneNumber || customer.phone,
+          token: account.smsAuthToken,
+          trackingEmail: email,
         });
-
         break;
       case TemplateType.FIREBASE:
-        try {
-          if (!customer.phDeviceToken) {
-            this.logger.warn(
-              `Customer ${customer.id} has no device token; skipping`
-            );
-            return;
-          }
-          this.logger.debug(
-            `Starting PUSH sending to ${customer.phDeviceToken}`
-          );
-          let textWithInsertedTags, titleWithInsertedTags;
-          try {
-            textWithInsertedTags = await this.tagEngine.parseAndRender(
-              template.pushText,
-              filteredTags || {},
-              { strictVariables: true }
-            );
-
-            titleWithInsertedTags = await this.tagEngine.parseAndRender(
-              template.pushTitle,
-              filteredTags || {},
-              { strictVariables: true }
-            );
-          } catch (error) {
-            this.logger.warn("Merge tag can't be used, skipping sending...");
-            await this.webhooksService.insertClickHouseMessages([
-              {
-                event: 'error',
-                createdAt: new Date().toUTCString(),
-                eventProvider: ClickHouseEventProvider.FIREBASE,
-                messageId: '',
-                audienceId: job.data.args.audienceId,
-                customerId: job.data.args.customerId,
-                templateId: String(job.data.args.templateId),
-              },
-            ]);
-            return;
-          }
-
-          this.logger.debug(
-            `Finished rendering tags in PUSH to ${customer.phDeviceToken} with title: \`${titleWithInsertedTags}\` and text: \`${textWithInsertedTags}\``
-          );
-
-          let firebaseApp: App;
-
-          try {
-            firebaseApp = getApp(account.id);
-          } catch (e: any) {
-            if (e.code == 'app/no-app') {
-              firebaseApp = initializeApp(
-                {
-                  credential: cert(JSON.parse(account.firebaseCredentials)),
-                },
-                account.id
-              );
-            } else throw e;
-          }
-
-          const messaging = getMessaging(firebaseApp);
-
-          const messageId = await messaging.send({
-            token: customer.phDeviceToken,
-            notification: {
-              title: titleWithInsertedTags.slice(
-                0,
-                this.MAXIMUM_PUSH_TITLE_LENGTH
-              ),
-              body: textWithInsertedTags.slice(0, this.MAXIMUM_PUSH_LENGTH),
-            },
-            android: {
-              notification: {
-                sound: 'default',
-                clickAction: 'FLUTTER_NOTIFICATION_CLICK',
-              },
-            },
-            apns: {
-              payload: {
-                aps: {
-                  badge: 1,
-                  sound: 'default',
-                },
-              },
-            },
-          });
-
-          this.logger.debug(
-            `Push for template id ${templateId} to customer ${customer.id} sent with message id ${messageId}`
-          );
-        } catch (e) {
-          this.logger.error(e);
-        }
+        job = await this.messageQueue.add('firebase', {
+          accountId: account.id,
+          audienceId,
+          customerId,
+          firebaseCredentials: account.firebaseCredentials,
+          phDeviceToken: customer.phDeviceToken,
+          pushText: template.pushText,
+          pushTitle: template.pushTitle,
+          trackingEmail: email,
+          tags: filteredTags,
+          templateId: template.id,
+        });
         break;
       case TemplateType.WEBHOOK:
         if (template.webhookData) {
@@ -316,6 +231,7 @@ export class TemplatesService {
             filteredTags,
             audienceId,
             customerId,
+            accountId: account.id,
           });
           try {
             jobData = await job.finished();

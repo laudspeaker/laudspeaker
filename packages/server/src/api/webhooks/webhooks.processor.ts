@@ -127,6 +127,7 @@ export class WebhooksProcessor {
             audienceId: job.data.audienceId,
             customerId: job.data.customerId,
             templateId: String(job.data.template.id),
+            userId: job.data.accountId,
           },
         ]);
       } catch (e) {
@@ -145,6 +146,7 @@ export class WebhooksProcessor {
             audienceId: job.data.audienceId,
             customerId: job.data.customerId,
             templateId: String(job.data.template.id),
+            userId: job.data.accountId,
           },
         ]);
       } catch (e) {

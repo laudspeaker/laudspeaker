@@ -24,6 +24,7 @@ const PeopleTable = () => {
   const [possibleKeys, setPossibleKeys] = useState<ICustomerKey[]>([]);
   const [searchKey, setSearchKey] = useState("");
   const [searchValue, setSearchValue] = useState("");
+  const [isFirstRender, setIsFirstRender] = useState(true);
 
   const setLoadingAsync = async () => {
     setLoading(true);
@@ -45,10 +46,12 @@ const PeopleTable = () => {
 
   useEffect(() => {
     setLoadingAsync();
+    setIsFirstRender(false);
   }, [itemsPerPage, currentPage]);
 
   useDebounce(
     () => {
+      if (isFirstRender) return;
       setLoadingAsync();
     },
     800,
@@ -59,7 +62,12 @@ const PeopleTable = () => {
     () => {
       (async () => {
         const data = await getCustomerKeys(searchKey, null, false);
-        setPossibleKeys(data);
+        setPossibleKeys(
+          data.filter((el: any) =>
+            ["Email", "Number", "String"].includes(el.type)
+          )
+        );
+        console.log(searchKey);
         if (searchKey === "") {
           setSearchValue("");
         }
@@ -114,7 +122,7 @@ const PeopleTable = () => {
               </button>
             </div>
           </Grid>
-          <div className="flex w-full gap-[10px]">
+          <div className="flex w-full gap-[10px] lg:px-8">
             <AutoComplete
               inputId="keyInput"
               items={possibleKeys}

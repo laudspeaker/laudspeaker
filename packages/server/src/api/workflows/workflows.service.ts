@@ -151,6 +151,18 @@ export class WorkflowsService {
     const deliveredData = (await deliveredResponse.json<any>())?.data;
     const delivered = +deliveredData?.[0]?.['count()'] || 0;
 
+    const openedResponse = await this.clickhouseClient.query({
+      query: `SELECT COUNT(DISTINCT(audienceId, customerId, templateId, messageId, event, eventProvider)) FROM message_status WHERE event = 'opened' AND audienceId = {audienceId:UUID}`,
+      query_params: { audienceId },
+    });
+    const openedData = (await openedResponse.json<any>())?.data;
+    const opened =
+      +openedData?.[0]?.[
+        'uniqExact(tuple(audienceId, customerId, templateId, messageId, event, eventProvider))'
+      ];
+
+    const openedPercentage = (opened / sent) * 100;
+
     const clickedResponse = await this.clickhouseClient.query({
       query: `SELECT COUNT(DISTINCT(audienceId, customerId, templateId, messageId, event, eventProvider)) FROM message_status WHERE event = 'clicked' AND audienceId = {audienceId:UUID}`,
       query_params: { audienceId },
@@ -175,6 +187,7 @@ export class WorkflowsService {
     return {
       sent,
       delivered,
+      openedPercentage,
       clickedPercentage,
       wssent,
     };

@@ -57,7 +57,6 @@ import {
 import { AxiosError } from "axios";
 import Progress from "components/Progress";
 import { useDebounce } from "react-use";
-import CustomEdge from "./CustomEdge";
 import { INameSegmentForm } from "pages/Segment/NameSegment";
 import Template, { TemplateType } from "types/Template";
 import { CheckIcon, PlusCircleIcon } from "@heroicons/react/24/outline";
@@ -105,6 +104,7 @@ export interface NodeData {
     delivered: number;
     clickedPercentage: number;
     wssent: number;
+    openedPercentage: number;
   };
   isConnecting?: boolean;
   isNearToCursor?: boolean;

@@ -37,9 +37,10 @@ export interface Resource {
 const EmailBuilder = () => {
   const { name } = useParams();
   const [title, setTitle] = useState<string>("");
-  const [templateName, setTemplateName] = useState<string>("My email template");
+  const [cc, setCC] = useState<string>("");
+  const [templateName, setTemplateName] = useState<string>(name);
   const [editor, setEditor] = useState<grapesjs.Editor>();
-  const [emailTemplateId, setEmailTemplateId] = useState<string>("");
+  const [emailTemplateId, setEmailTemplateId] = useState<string>();
   const [text, setText] = useState<string>("");
   const [style, setStyle] = useState<string>("");
   const [possibleAttributes, setPossibleAttributes] = useState<string[]>([]);
@@ -111,6 +112,7 @@ const EmailBuilder = () => {
     const populateEmailBuilder = async () => {
       const { data } = await getTemplate(name);
       setTitle(data.subject);
+      setCC(data.cc.join());
       setTemplateName(name);
       setEmailTemplateId(data.id);
       setText(data.text);
@@ -125,6 +127,9 @@ const EmailBuilder = () => {
       const reqBody = {
         name: templateName,
         subject: title,
+        cc: cc.split(",").filter(function (entry) {
+          return /\S/.test(entry);
+        }),
         text: editor?.getHtml(),
         style: editor?.getCss(),
         type: "email",
@@ -226,6 +231,19 @@ const EmailBuilder = () => {
             setIsPreview={setIsPreview}
             possibleAttributes={possibleAttributes}
             inputRef={subjectRef}
+          />
+          <MergeTagInput
+            value={cc}
+            placeholder={"email@email.com,email_two@email.com"}
+            name="cc"
+            id="title"
+            fullWidth
+            setValue={setCC}
+            onChange={(e) => setCC(e.target.value)}
+            labelShrink
+            isPreview={false}
+            setIsPreview={() => {}}
+            possibleAttributes={possibleAttributes}
           />
           <div id="emailBuilder" className="gjs-dashed" />
         </div>

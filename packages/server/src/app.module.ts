@@ -53,6 +53,9 @@ import { AudiencesModule } from './api/audiences/audiences.module';
 import { CustomersModule } from './api/customers/customers.module';
 import { TemplatesModule } from './api/templates/templates.module';
 import { SlackModule } from './api/slack/slack.module';
+import { WebhookJobsModule } from './api/webhook-jobs/webhook-jobs.module';
+import { WebhookJob } from './api/webhook-jobs/entities/webhook-job.entity';
+import { AccountsModule } from './api/accounts/accounts.module';
 
 const myFormat = winston.format.printf(function ({
   level,
@@ -134,8 +137,8 @@ const formatMongoConnectionString = (mongoConnectionString: string) => {
       : []),
     MongooseModule.forRoot(
       process.env.MONGOOSE_URL
-      // ? formatMongoConnectionString(process.env.MONGOOSE_URL)
-      // : 'mongodb://127.0.0.1:27017/?directConnection=true'
+        ? formatMongoConnectionString(process.env.MONGOOSE_URL)
+        : 'mongodb://127.0.0.1:27017/?directConnection=true'
     ),
     BullModule.forRoot({
       redis: {
@@ -181,6 +184,7 @@ const formatMongoConnectionString = (mongoConnectionString: string) => {
       Installation,
       State,
       Recovery,
+      WebhookJob,
     ]),
     BullModule.registerQueue({
       name: 'integrations',
@@ -204,6 +208,8 @@ const formatMongoConnectionString = (mongoConnectionString: string) => {
     CustomersModule,
     TemplatesModule,
     SlackModule,
+    WebhookJobsModule,
+    AccountsModule,
   ],
   controllers: [AppController],
   providers: [CronService],

@@ -18,7 +18,6 @@ import {
 import { FormDataItem, IResource } from "pages/Segment/MySegment";
 import { Resource } from "pages/EmailBuilder/EmailBuilder";
 import MinusIcon from "../../assets/images/MinusIcon.svg";
-import { setHours, setMinutes } from "date-fns";
 import Autocomplete from "components/Autocomplete";
 
 interface ITriggerCreaterProp {

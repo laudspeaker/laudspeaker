@@ -2,6 +2,7 @@ import { Trim } from 'class-sanitizer';
 import {
   IsNotEmpty,
   IsObject,
+  IsEmail,
   IsOptional,
   IsString,
   MaxLength,
@@ -23,6 +24,10 @@ export class CreateTemplateDto {
   @IsNotEmpty()
   @IsOptional()
   public text?: string;
+
+  @IsOptional()
+  @IsEmail({}, { each: true })
+  public cc?: string[];
 
   @IsString()
   @IsNotEmpty()

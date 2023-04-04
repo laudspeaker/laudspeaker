@@ -1,4 +1,4 @@
-import React, { ChangeEvent, FC, Fragment, ReactNode, useRef } from "react";
+import React, { ChangeEvent, Fragment, ReactNode, useRef } from "react";
 import { Combobox } from "@headlessui/react";
 import { ChevronUpDownIcon } from "@heroicons/react/20/solid";
 
@@ -44,7 +44,7 @@ const Autocomplete = <T extends any>({
 
   return (
     <div className={`${wrapperClassNames} relative`}>
-      <Combobox disabled={disabled}>
+      <Combobox disabled={disabled} value={inputValue}>
         {label && (
           <Combobox.Label
             className={`${customLabelClassNames} block text-sm font-medium text-gray-700 max-w-[200px]`}

@@ -59,7 +59,7 @@
     "form-data": "^4.0.0",
     "liquidjs": "^9.42.0",
     "lodash": "^4.17.21",
-    "mailgun.js": "^7.0.4",
+    "mailgun.js": "^8.2.1",
     "mongoose": "^6.4.7",
     "multer": "^1.4.5-lts.1",
     "mysql2": "^2.3.3",
