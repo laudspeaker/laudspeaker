@@ -19,6 +19,7 @@ import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import Mailgun from 'mailgun.js';
 import formData from 'form-data';
 import axios from 'axios';
+import FormData from 'form-data';
 
 const createTableQuery = `
 CREATE TABLE IF NOT EXISTS message_status
@@ -44,6 +45,7 @@ export interface ClickHouseMessage {
   messageId: string;
   templateId: string;
   userId: string;
+  processed: boolean;
 }
 
 @Injectable()
@@ -177,6 +179,7 @@ export class WebhooksService {
         messageId: sg_message_id.split('.')[0],
         event: this.sendgridEventsMap[event] || event,
         eventProvider: ClickHouseEventProvider.SENDGRID,
+        processed: false,
         createdAt: new Date().toUTCString(),
       };
 
@@ -215,6 +218,7 @@ export class WebhooksService {
       messageId: MessageSid,
       event: SmsStatus,
       eventProvider: ClickHouseEventProvider.TWILIO,
+      processed: false,
       createdAt: new Date().toUTCString(),
     };
     await this.insertClickHouseMessages([clickHouseRecord]);
@@ -273,6 +277,7 @@ export class WebhooksService {
       messageId: id,
       event: event,
       eventProvider: ClickHouseEventProvider.MAILGUN,
+      processed: false,
       createdAt: new Date().toUTCString(),
     };
 
