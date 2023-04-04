@@ -1,7 +1,7 @@
 /* eslint-disable no-case-declarations */
-import { Process, Processor } from '@nestjs/bull';
+import { OnWorkerEvent, Processor, WorkerHost } from '@nestjs/bullmq';
 import { Inject, LoggerService } from '@nestjs/common';
-import { Job } from 'bull';
+import { Job } from 'bullmq';
 import { Injectable } from '@nestjs/common';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import Mailgun from 'mailgun.js';
@@ -17,9 +17,15 @@ import { PostHog } from 'posthog-node';
 import { cert, App, getApp, initializeApp } from 'firebase-admin/app';
 import { getMessaging } from 'firebase-admin/messaging';
 
-@Processor('message')
+export enum MessageType {
+  SMS = 'sms',
+  EMAIL = 'email',
+  FIREBASE = 'firebase',
+}
+
 @Injectable()
-export class MessageProcessor {
+@Processor('message')
+export class MessageProcessor extends WorkerHost {
   private MAXIMUM_SMS_LENGTH = 1600;
   private MAXIMUM_PUSH_LENGTH = 256;
   private MAXIMUM_PUSH_TITLE_LENGTH = 48;
@@ -27,15 +33,44 @@ export class MessageProcessor {
   private phClient = new PostHog(process.env.POSTHOG_KEY, {
     host: process.env.POSTHOG_HOST,
   });
+  private messagesMap: Record<
+    MessageType,
+    (job: Job<any, any, string>) => Promise<void>
+  > = {
+    [MessageType.EMAIL]: async (job) => {
+      await this.handleEmail(job);
+    },
+    [MessageType.SMS]: async (job) => {
+      await this.handleSMS(job);
+    },
+    [MessageType.FIREBASE]: async (job) => {
+      await this.handleFirebase(job);
+    },
+  };
 
   constructor(
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
     private readonly logger: LoggerService,
     private readonly webhooksService: WebhooksService
-  ) {}
+  ) {
+    super();
+  }
 
-  @Process('email')
-  async handleEmail(job: Job) {
+  async process(job: Job<any, any, string>): Promise<any> {
+    await this.messagesMap[job.name](job);
+  }
+
+  @OnWorkerEvent('error')
+  onError() {
+    console.log("There was an error...")
+  }
+
+  @OnWorkerEvent('completed')
+  onCompleted() {
+    console.log("Job Completed...")
+  }
+
+  async handleEmail(job: Job<any, any, string>): Promise<any> {
     if (!job.data.to) {
       this.logger.error(
         `Error: Skipping sending for ${
@@ -86,12 +121,13 @@ export class MessageProcessor {
       let msg: any;
       switch (job.data.eventProvider) {
         case 'sendgrid':
+          console.log('Inside of message sending');
           const sg = new MailService();
           sg.setApiKey(job.data.key);
           const sendgridMessage = await sg.send({
             from: job.data.from,
             to: job.data.to,
-            cc: job.data.cc,
+            // cc: job.data.cc,
             subject: subjectWithInsertedTags,
             html: textWithInsertedTags,
             personalizations: [
@@ -102,11 +138,12 @@ export class MessageProcessor {
                   customerId: job.data.customerId,
                   templateId: job.data.templateId,
                 },
-                cc: job.data.cc,
+                // cc: job.data.cc,
               },
             ],
           });
           msg = sendgridMessage;
+          console.log('Inside of message sending');
           await this.webhooksService.insertClickHouseMessages([
             {
               audienceId: job.data.audienceId,
@@ -127,7 +164,7 @@ export class MessageProcessor {
           const mailgunMessage = await mg.messages.create(job.data.domain, {
             from: `${job.data.from} <${job.data.email}@${job.data.domain}>`,
             to: job.data.to,
-            cc: job.data.cc,
+            // cc: job.data.cc,
             subject: subjectWithInsertedTags,
             html: textWithInsertedTags,
             'v:audienceId': job.data.audienceId,
@@ -177,7 +214,6 @@ export class MessageProcessor {
     }
   }
 
-  @Process('sms')
   async handleSMS(job: Job) {
     if (!job.data.to) {
       this.logger.error(
@@ -262,7 +298,6 @@ export class MessageProcessor {
     }
   }
 
-  @Process('firebase')
   async handleFirebase(job: Job) {
     if (!job.data.phDeviceToken) {
       this.logger.error(

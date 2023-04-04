@@ -13,17 +13,20 @@ import { CustomerDocument } from '../customers/schemas/customer.schema';
 import { CreateTemplateDto } from './dto/create-template.dto';
 import { UpdateTemplateDto } from './dto/update-template.dto';
 import { Template } from './entities/template.entity';
-import { Job, Queue } from 'bull';
-import { InjectQueue } from '@nestjs/bull';
+import { Job, Queue, QueueEvents } from 'bullmq';
+import { InjectQueue } from '@nestjs/bullmq';
 import { Installation } from '../slack/entities/installation.entity';
 import { SlackService } from '../slack/slack.service';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { EventDto } from '../events/dto/event.dto';
 import { Audience } from '../audiences/entities/audience.entity';
 import { cleanTagsForSending } from '@/shared/utils/helpers';
+import { MessageType } from '../email/email.processor';
 
 @Injectable()
 export class TemplatesService {
+  private queueEvents: QueueEvents;
+
   constructor(
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
     private readonly logger: LoggerService,
@@ -34,7 +37,15 @@ export class TemplatesService {
     @Inject(SlackService) private slackService: SlackService,
     @InjectQueue('message') private readonly messageQueue: Queue,
     @InjectQueue('slack') private readonly slackQueue: Queue
-  ) { }
+  ) {
+    this.queueEvents = new QueueEvents('messages', {
+      connection: {
+        host: process.env.REDIS_HOST ?? 'localhost',
+        port: parseInt(process.env.REDIS_PORT),
+        password: process.env.REDIS_PASSWORD,
+      },
+    });
+  }
 
   create(account: Account, createTemplateDto: CreateTemplateDto) {
     const template = new Template();
@@ -135,10 +146,10 @@ export class TemplatesService {
           from = sendgridFromEmail;
         }
 
-        job = await this.messageQueue.add('email', {
+        job = await this.messageQueue.add(MessageType.EMAIL, {
           accountId: account.id,
           audienceId,
-          cc: template.cc,
+          // cc: template.cc,
           customerId,
           domain: sendingDomain,
           email: sendingEmail,
@@ -176,7 +187,7 @@ export class TemplatesService {
         });
         break;
       case 'sms':
-        job = await this.messageQueue.add('sms', {
+        job = await this.messageQueue.add(MessageType.SMS, {
           accountId: account.id,
           audienceId,
           customerId,
@@ -191,7 +202,7 @@ export class TemplatesService {
         });
         break;
       case 'firebase':
-        job = await this.messageQueue.add('firebase', {
+        job = await this.messageQueue.add(MessageType.FIREBASE, {
           accountId: account.id,
           audienceId,
           customerId,

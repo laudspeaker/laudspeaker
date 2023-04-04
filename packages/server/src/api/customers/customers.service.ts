@@ -26,8 +26,8 @@ import {
   CustomerKeys,
   CustomerKeysDocument,
 } from './schemas/customer-keys.schema';
-import { InjectQueue } from '@nestjs/bull';
-import { Queue } from 'bull';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { createClient } from '@clickhouse/client';
 import { Workflow } from '../workflows/entities/workflow.entity';
@@ -112,9 +112,9 @@ export class CustomersService {
     transactionSession?: ClientSession
   ): Promise<
     Customer &
-      mongoose.Document & {
-        _id: Types.ObjectId;
-      }
+    mongoose.Document & {
+      _id: Types.ObjectId;
+    }
   > {
     const createdCustomer = new this.CustomerModel({
       ownerId: (<Account>account).id,
@@ -290,8 +290,8 @@ export class CustomersService {
       ownerId: (<Account>account).id,
       ...(key && search
         ? {
-            [key]: new RegExp(`.*${search}.*`, 'i'),
-          }
+          [key]: new RegExp(`.*${search}.*`, 'i'),
+        }
         : {}),
     })
       .skip(skip)
@@ -487,7 +487,7 @@ export class CustomersService {
     }
     const authString = 'Bearer ' + phAuth;
     try {
-      const job = await this.customersQueue.add({
+      await this.customersQueue.add('sync', {
         url: posthogUrl,
         auth: authString,
         account: account,
@@ -512,9 +512,9 @@ export class CustomersService {
     customerId: string
   ): Promise<
     Customer &
-      mongoose.Document & {
-        _id: Types.ObjectId;
-      }
+    mongoose.Document & {
+      _id: Types.ObjectId;
+    }
   > {
     const found = await this.CustomerModel.findById(customerId).exec();
     if (found && found?.ownerId == (<Account>account).id) return found;
