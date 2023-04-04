@@ -477,6 +477,20 @@ const WebhookBuilder = () => {
     );
   };
 
+  const onAddTemplateClick = () => {
+    if (!selectedRef || !selectedRef.current) return;
+
+    const setValue = refSetterMap.get(selectedRef);
+    if (!setValue) return;
+
+    const indexToInsert = selectedRef.current.selectionStart || 0;
+    setValue(
+      selectedRef.current.value.slice(0, indexToInsert) +
+        "[[ email;template-name;templateProperty ]]" +
+        selectedRef.current.value.slice(indexToInsert)
+    );
+  };
+
   const handleTest = async () => {
     await onSave();
 
@@ -540,6 +554,7 @@ const WebhookBuilder = () => {
     <div className="w-full">
       <SlackTemplateHeader
         onPersonalizeClick={onPersonalizeClick}
+        onAddTemplateClick={onAddTemplateClick}
         onSave={onSave}
         loading={isSaving}
         templateName={templateName}

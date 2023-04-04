@@ -7,6 +7,7 @@ import { BackButtonIcon } from "../../../components/Icons/Icons";
 
 export interface IEmailHeaderProps {
   onPersonalizeClick: (e: MouseEvent<HTMLButtonElement>) => void;
+  onAddTemplateClick?: (e: MouseEvent<HTMLButtonElement>) => void;
   onSave: (e: MouseEvent<HTMLButtonElement>) => void;
   templateName: string;
   handleTemplateNameChange: (e: ChangeEvent<HTMLInputElement>) => void;
@@ -16,6 +17,7 @@ export interface IEmailHeaderProps {
 const SlackTemplateHeader = (props: IEmailHeaderProps) => {
   const {
     onPersonalizeClick,
+    onAddTemplateClick,
     templateName,
     handleTemplateNameChange,
     onSave,
@@ -106,6 +108,23 @@ const SlackTemplateHeader = (props: IEmailHeaderProps) => {
               Personalize
             </GenericButton>
           </div>
+          {onAddTemplateClick && (
+            <div>
+              <GenericButton
+                id="saveDraftTemplate"
+                onClick={onAddTemplateClick}
+                style={{
+                  whiteSpace: "nowrap",
+                  maxWidth: "158px",
+                  maxHeight: "48px",
+                }}
+                disabled={loading}
+                loading={loading}
+              >
+                Add Template
+              </GenericButton>
+            </div>
+          )}
         </div>
       </div>
     </div>
