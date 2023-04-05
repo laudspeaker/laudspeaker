@@ -54,8 +54,8 @@ describe(
       cy.contains("Template Builder").click();
       cy.contains("Create Template").click();
       cy.get("#name").clear().type("Rich email");
-      cy.get("#handleDay").click();
-      cy.get("#handleDay").find('[data-option="email"]').click();
+      cy.get("#handleTemplateType").click();
+      cy.get("#handleTemplateType").find('[data-option="email"]').click();
       cy.get("#submitTemplateCreation").click();
       cy.get('[data-custominput-placeholder="Subject"]')
         .click("left")

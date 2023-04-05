@@ -7,6 +7,42 @@ import {
   JoinColumn,
 } from 'typeorm';
 
+export enum WebhookMethod {
+  GET = 'GET',
+  POST = 'POST',
+  PUT = 'PUT',
+  PATCH = 'PATCH',
+  DELETE = 'DELETE',
+  HEAD = 'HEAD',
+  OPTIONS = 'OPTIONS',
+}
+
+export type WebhookHeaders = { Authorization?: string } & Record<
+  string,
+  string
+>;
+
+export enum FallBackAction {
+  NOTHING,
+}
+
+export interface WebhookData {
+  url: string;
+  method: WebhookMethod;
+  body: string;
+  headers: WebhookHeaders;
+  retries: number;
+  fallBackAction: FallBackAction;
+}
+
+export enum TemplateType {
+  EMAIL = 'email',
+  SLACK = 'slack',
+  SMS = 'sms',
+  FIREBASE = 'firebase',
+  WEBHOOK = 'webhook',
+}
+
 @Entity()
 export class Template {
   @PrimaryGeneratedColumn()
@@ -34,8 +70,8 @@ export class Template {
   @Column({ nullable: true })
   slackMessage: string;
 
-  @Column()
-  type: 'email' | 'slack' | 'sms' | 'firebase';
+  @Column({ enum: TemplateType })
+  type: TemplateType;
 
   @Column({ nullable: true })
   smsText: string;
@@ -48,4 +84,7 @@ export class Template {
 
   @Column({ default: false })
   isDeleted: boolean;
+
+  @Column({ type: 'jsonb', nullable: true })
+  webhookData?: WebhookData;
 }

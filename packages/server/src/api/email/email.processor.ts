@@ -24,9 +24,10 @@ export class MessageProcessor {
   private MAXIMUM_PUSH_LENGTH = 256;
   private MAXIMUM_PUSH_TITLE_LENGTH = 48;
   private tagEngine = new Liquid();
-  private phClient = new PostHog(process.env.POSTHOG_KEY, {
-    host: process.env.POSTHOG_HOST,
-  });
+  private phClient = new PostHog(
+    process.env.POSTHOG_KEY,
+    { host: process.env.POSTHOG_HOST } // You can omit this line if using PostHog Cloud
+  );
 
   constructor(
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
@@ -77,6 +78,7 @@ export class MessageProcessor {
           messageId: null,
           templateId: String(job.data.templateId),
           userId: job.data.accountId,
+          processed: false,
         },
       ]);
       return;
@@ -117,6 +119,7 @@ export class MessageProcessor {
               messageId: sendgridMessage[0].headers['x-message-id'],
               templateId: String(job.data.templateId),
               userId: job.data.accountId,
+              processed: false,
             },
           ]);
           break;
@@ -148,6 +151,7 @@ export class MessageProcessor {
                 : '',
               templateId: String(job.data.templateId),
               userId: job.data.accountId,
+              processed: false,
             },
           ]);
           break;
@@ -214,6 +218,7 @@ export class MessageProcessor {
           messageId: null,
           templateId: String(job.data.templateId),
           userId: job.data.accountId,
+          processed: false,
         },
       ]);
       return;
@@ -236,6 +241,7 @@ export class MessageProcessor {
           messageId: message.sid,
           templateId: String(job.data.templateId),
           userId: job.data.accountId,
+          processed: false,
         },
       ]);
       if (job.data.trackingEmail) {
@@ -304,6 +310,7 @@ export class MessageProcessor {
           audienceId: job.data.args.audienceId,
           customerId: job.data.args.customerId,
           templateId: String(job.data.args.templateId),
+          processed: false,
         },
       ]);
       return;
@@ -356,6 +363,7 @@ export class MessageProcessor {
           messageId: messageId,
           templateId: String(job.data.templateId),
           userId: job.data.accountId,
+          processed: false,
         },
       ]);
       if (job.data.trackingEmail) {

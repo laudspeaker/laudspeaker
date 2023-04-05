@@ -5,7 +5,13 @@ import { Handle, Position } from "reactflow";
 import { v4 as uuid } from "uuid";
 import thunderbolt from "../../assets/images/thunderbolt.svg";
 
-import { Email, SlackMsg, Mobile, SMS } from "../../components/Icons/Icons";
+import {
+  Email,
+  SlackMsg,
+  Mobile,
+  SMS,
+  Webhook,
+} from "../../components/Icons/Icons";
 import { getAudienceDetails } from "pages/FlowBuilder/FlowHelpers";
 import ChooseTemplateModal from "pages/FlowBuilder/ChooseTemplateModal";
 import StatModal from "./StatModal";
@@ -83,13 +89,14 @@ const ViewNode = ({ data }: { data: NodeData }) => {
     firebase: <Mobile />,
     email: <Email />,
     slack: <SlackMsg />,
+    webhook: <Webhook />,
   };
 
   const generateMsgIcons = () => {
     return data?.messages?.map((message) => {
       return (
         <div
-          className="p-[0px_10px] cursor-pointer"
+          className="max-w-[30px] max-h-[30px] min-w-[30px] min-h-[30px] flex justify-center items-center cursor-pointer"
           onClick={handleIconClick(message.type, message.templateId)}
         >
           {messageIcons[message.type as string]}
@@ -129,6 +136,8 @@ const ViewNode = ({ data }: { data: NodeData }) => {
 
     onTemplateModalClose();
   };
+
+  console.log(stats);
 
   return (
     <>
@@ -253,6 +262,26 @@ const ViewNode = ({ data }: { data: NodeData }) => {
                         <div>Clicked</div>
                         <div className="font-medium text-[#333333]">
                           {stats.clickedPercentage}%
+                        </div>
+                      </div>
+                    </>
+                  )}
+                  {data.messages.filter((message) => message.type === "webhook")
+                    .length > 0 && (
+                    <>
+                      <Divider
+                        sx={{
+                          height: "auto",
+                        }}
+                        variant="middle"
+                        orientation="vertical"
+                      />
+                      <div className="w-full p-[0px_10px]">
+                        <div>WH Sent</div>
+                        <div className="font-medium text-[#333333]">
+                          {new Intl.NumberFormat("en", {
+                            notation: "compact",
+                          }).format(stats.wssent)}
                         </div>
                       </div>
                     </>

@@ -57,9 +57,8 @@ import {
 import { AxiosError } from "axios";
 import Progress from "components/Progress";
 import { useDebounce } from "react-use";
-import CustomEdge from "./CustomEdge";
 import { INameSegmentForm } from "pages/Segment/NameSegment";
-import Template from "types/Template";
+import Template, { TemplateType } from "types/Template";
 import { CheckIcon, PlusCircleIcon } from "@heroicons/react/24/outline";
 import TriggerDrag from "../../assets/images/TriggerDrag.svg";
 import CancelDropZone from "./CancelDropZone";
@@ -101,10 +100,11 @@ export interface NodeData {
   isExit?: boolean;
   isNew?: boolean;
   stats?: {
-    openedPercentage: number;
     sent: number;
     delivered: number;
     clickedPercentage: number;
+    wssent: number;
+    openedPercentage: number;
   };
   isConnecting?: boolean;
   isNearToCursor?: boolean;
@@ -588,11 +588,12 @@ const Flow = () => {
         settriggerModalOpen(true);
         break;
       }
-      case "email":
+      case TemplateType.EMAIL:
       case "push":
-      case "sms":
-      case "firebase":
-      case "slack": {
+      case TemplateType.SMS:
+      case TemplateType.FIREBASE:
+      case TemplateType.SLACK:
+      case TemplateType.WEBHOOK: {
         const selectedNodeData = nodes.find((node) => node.id === selectedNode);
         if (!selectedNodeData) return;
         setSelectedMessageType(actionId);
@@ -782,11 +783,12 @@ const Flow = () => {
         setSelectedNode(newSelectedNodeWithTrigger.id);
         setTriggerToOpenNextRender(type);
         break;
-      case "email":
+      case TemplateType.EMAIL:
       case "push":
-      case "sms":
-      case "firebase":
-      case "slack":
+      case TemplateType.SMS:
+      case TemplateType.FIREBASE:
+      case TemplateType.SLACK:
+      case TemplateType.WEBHOOK:
         const newSelectedNodeWithMessage = nodes.find((node) => {
           const { height, width, position } = node;
           if (!height || !width || !reactFlowRef.current) return node;
@@ -962,7 +964,8 @@ const Flow = () => {
       itemId === MessagesTypes.EMAIL ||
       itemId === MessagesTypes.SLACK ||
       itemId === MessagesTypes.PUSH ||
-      itemId === MessagesTypes.FIREBASE
+      itemId === MessagesTypes.FIREBASE ||
+      itemId === MessagesTypes.WEBHOOK
     ) {
       setTimeout(() => {
         setIsMessagesDragging(true);
@@ -1052,7 +1055,11 @@ const Flow = () => {
                 setIsMessagesDragging(false);
               }}
               onMouseUp={(action) => {
-                if (["email", "sms", "slack"].includes(action))
+                if (
+                  ["email", "sms", "slack", "firebase", "webhook"].includes(
+                    action
+                  )
+                )
                   setIsMessagesDragging(true);
 
                 if (

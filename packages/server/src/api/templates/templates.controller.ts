@@ -22,6 +22,8 @@ import { CreateTemplateDto } from './dto/create-template.dto';
 import { UpdateTemplateDto } from './dto/update-template.dto';
 import { Account } from '../accounts/entities/accounts.entity';
 import { Template } from './entities/template.entity';
+import { TestWebhookDto } from './dto/test-webhook.dto';
+
 @Controller('templates')
 export class TemplatesController {
   constructor(
@@ -98,5 +100,20 @@ export class TemplatesController {
   @UseInterceptors(ClassSerializerInterceptor)
   duplicate(@Req() { user }: Request, @Param('name') name: string) {
     return this.templatesService.duplicate(<Account>user, name);
+  }
+
+  @Post(':id/test-webhook')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor)
+  testWebhookTemplate(
+    @Req() { user }: Request,
+    @Param('id') id: string,
+    @Body() testWebhookDto: TestWebhookDto
+  ) {
+    return this.templatesService.testWebhookTemplate(
+      <Account>user,
+      id,
+      testWebhookDto.testCustomerEmail
+    );
   }
 }

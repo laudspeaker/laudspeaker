@@ -1,11 +1,13 @@
 import { Trim } from 'class-sanitizer';
 import {
+  IsEmail,
   IsNotEmpty,
+  IsObject,
   IsOptional,
   IsString,
   MaxLength,
-  IsEmail,
 } from 'class-validator';
+import { TemplateType, WebhookData } from '../entities/template.entity';
 
 export class UpdateTemplateDto {
   @Trim()
@@ -17,36 +19,38 @@ export class UpdateTemplateDto {
   @IsNotEmpty()
   @IsOptional()
   @MaxLength(2000)
-  public subject: string;
+  public subject?: string;
 
   @IsOptional()
   @IsEmail({}, { each: true })
-  public cc: string[];
+  public cc?: string[];
 
   @IsString()
   @IsNotEmpty()
   @IsOptional()
-  public text: string;
+  public text?: string;
 
   @IsString()
   @IsNotEmpty()
   @IsOptional()
-  public style: string;
-
-  @IsString()
-  @IsNotEmpty()
-  @IsOptional()
-  @MaxLength(2000)
-  public slackMessage: string;
-
-  //todo for sms
-
-  @IsNotEmpty()
-  public type: 'email' | 'slack' | 'sms';
+  public style?: string;
 
   @IsString()
   @IsNotEmpty()
   @IsOptional()
   @MaxLength(2000)
-  public smsText: string;
+  public slackMessage?: string;
+
+  @IsNotEmpty()
+  public type: TemplateType;
+
+  @IsString()
+  @IsNotEmpty()
+  @IsOptional()
+  @MaxLength(2000)
+  public smsText?: string;
+
+  @IsObject()
+  @IsOptional()
+  public webhookData?: WebhookData;
 }

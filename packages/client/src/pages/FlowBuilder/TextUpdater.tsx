@@ -12,7 +12,13 @@ import thunderbolt from "../../assets/images/thunderbolt.svg";
 import { getAudienceDetails } from "./FlowHelpers";
 
 import ArrowDown from "@heroicons/react/24/solid/ArrowLongDownIcon";
-import { Email, SlackMsg, Mobile, SMS } from "../../components/Icons/Icons";
+import {
+  Email,
+  SlackMsg,
+  Mobile,
+  SMS,
+  Webhook,
+} from "../../components/Icons/Icons";
 import ChooseTemplateModal from "./ChooseTemplateModal";
 import LinesEllipsis from "react-lines-ellipsis";
 import { NodeData } from "./FlowBuilder";
@@ -130,6 +136,7 @@ const TextUpdaterNode = ({ data }: { data: NodeData }) => {
     email: <Email />,
     firebase: <Mobile />,
     slack: <SlackMsg />,
+    webhook: <Webhook />,
   };
 
   const handleIconClick = (messageType: string, templateId: number) => () => {
@@ -162,7 +169,7 @@ const TextUpdaterNode = ({ data }: { data: NodeData }) => {
         {data?.messages?.map((message) => {
           return (
             <div
-              className="p-[0px_10px]"
+              className="max-w-[30px] max-h-[30px] min-w-[30px] min-h-[30px] flex justify-center items-center"
               onClick={handleIconClick(message.type, message.templateId)}
             >
               {messageIcons[message.type as string]}

@@ -58,7 +58,8 @@ export class EventsService {
     private EventKeysModel: Model<EventKeysDocument>,
     @InjectModel(PosthogEventType.name)
     private PosthogEventTypeModel: Model<PosthogEventTypeDocument>,
-    @InjectConnection() private readonly connection: mongoose.Connection
+    @InjectConnection() private readonly connection: mongoose.Connection,
+    @InjectQueue('webhooks') private readonly webhooksQueue: Queue
   ) {
     for (const { name, property_type } of defaultEventKeys) {
       if (name && property_type) {
@@ -113,6 +114,7 @@ export class EventsService {
       [JobTypes.email]: this.messageQueue,
       [JobTypes.slack]: this.slackQueue,
       [JobTypes.events]: this.eventsQueue,
+      [JobTypes.webhooks]: this.webhooksQueue,
     };
 
     try {

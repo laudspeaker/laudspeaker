@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   HttpException,
   HttpStatus,
   Inject,
@@ -9,10 +10,17 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import { Account } from '../accounts/entities/accounts.entity';
-import { CustomerDocument } from '../customers/schemas/customer.schema';
+import {
+  Customer,
+  CustomerDocument,
+} from '../customers/schemas/customer.schema';
 import { CreateTemplateDto } from './dto/create-template.dto';
 import { UpdateTemplateDto } from './dto/update-template.dto';
-import { Template } from './entities/template.entity';
+import {
+  Template,
+  TemplateType,
+  WebhookMethod,
+} from './entities/template.entity';
 import { Job, Queue } from 'bull';
 import { InjectQueue } from '@nestjs/bull';
 import { Installation } from '../slack/entities/installation.entity';
@@ -21,43 +29,53 @@ import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { EventDto } from '../events/dto/event.dto';
 import { Audience } from '../audiences/entities/audience.entity';
 import { cleanTagsForSending } from '@/shared/utils/helpers';
+import { fetch } from 'undici';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { Liquid } from 'liquidjs';
 
 @Injectable()
 export class TemplatesService {
+  private tagEngine = new Liquid();
+
   constructor(
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
     private readonly logger: LoggerService,
     @InjectRepository(Template)
     public templatesRepository: Repository<Template>,
+    @InjectModel(Customer.name) public CustomerModel: Model<CustomerDocument>,
     @InjectRepository(Audience)
     private audiencesRepository: Repository<Audience>,
     @Inject(SlackService) private slackService: SlackService,
     @InjectQueue('message') private readonly messageQueue: Queue,
-    @InjectQueue('slack') private readonly slackQueue: Queue
-  ) { }
+    @InjectQueue('slack') private readonly slackQueue: Queue,
+    @InjectQueue('webhooks') private readonly webhooksQueue: Queue
+  ) {}
 
   create(account: Account, createTemplateDto: CreateTemplateDto) {
     const template = new Template();
     template.type = createTemplateDto.type;
     template.name = createTemplateDto.name;
     switch (template.type) {
-      case 'email':
+      case TemplateType.EMAIL:
         template.subject = createTemplateDto.subject;
         template.text = createTemplateDto.text;
         if (createTemplateDto.cc) template.cc = createTemplateDto.cc;
         template.style = createTemplateDto.style;
         break;
-      case 'slack':
+      case TemplateType.SLACK:
         template.slackMessage = createTemplateDto.slackMessage;
         break;
-      case 'sms':
+      case TemplateType.SMS:
         template.smsText = createTemplateDto.smsText;
         break;
-      case 'firebase':
+      case TemplateType.FIREBASE:
         template.pushText = createTemplateDto.pushText;
         template.pushTitle = createTemplateDto.pushTitle;
         break;
-      //TODO
+      case TemplateType.WEBHOOK:
+        template.webhookData = createTemplateDto.webhookData;
+        break;
     }
     return this.templatesRepository.save({
       ...template,
@@ -83,7 +101,7 @@ export class TemplatesService {
     customer: CustomerDocument,
     event: EventDto,
     audienceId?: string
-  ): Promise<string | number> {
+  ): Promise<{ jobData: any; jobId: string | number }> {
     const customerId = customer.id;
     let template: Template,
       job: Job<any>, // created jobId
@@ -115,8 +133,10 @@ export class TemplatesService {
     let key = mailgunAPIKey;
     let from = sendingName;
 
+    let jobData: any;
+
     switch (template.type) {
-      case 'email':
+      case TemplateType.EMAIL:
         if (account.emailProvider === 'free3') {
           if (account.freeEmailsCount === 0)
             throw new HttpException(
@@ -154,7 +174,7 @@ export class TemplatesService {
         });
         if (account.emailProvider === 'free3') await account.save();
         break;
-      case 'slack':
+      case TemplateType.SLACK:
         try {
           installation = await this.slackService.getInstallation(customer);
         } catch (err) {
@@ -175,7 +195,7 @@ export class TemplatesService {
           trackingEmail: email,
         });
         break;
-      case 'sms':
+      case TemplateType.SMS:
         job = await this.messageQueue.add('sms', {
           accountId: account.id,
           audienceId,
@@ -190,7 +210,7 @@ export class TemplatesService {
           trackingEmail: email,
         });
         break;
-      case 'firebase':
+      case TemplateType.FIREBASE:
         job = await this.messageQueue.add('firebase', {
           accountId: account.id,
           audienceId,
@@ -204,8 +224,27 @@ export class TemplatesService {
           templateId: template.id,
         });
         break;
+      case TemplateType.WEBHOOK:
+        if (template.webhookData) {
+          job = await this.webhooksQueue.add('whapicall', {
+            template,
+            filteredTags,
+            audienceId,
+            customerId,
+            accountId: account.id,
+          });
+          try {
+            jobData = await job.finished();
+          } catch {
+            this.logger.warn('Error while retrieving webhook job data');
+          }
+        }
+        break;
     }
-    return Promise.resolve(message ? message?.sid : job?.id);
+    return Promise.resolve({
+      jobData,
+      jobId: message ? message?.sid : job?.id,
+    });
   }
 
   async findAll(
@@ -251,10 +290,7 @@ export class TemplatesService {
     });
   }
 
-  findBy(
-    account: Account,
-    type: 'email' | 'slack' | 'sms'
-  ): Promise<Template[]> {
+  findBy(account: Account, type: TemplateType): Promise<Template[]> {
     return this.templatesRepository.findBy({
       owner: { id: account.id },
       type: type,
@@ -345,5 +381,112 @@ export class TemplatesService {
       .execute();
 
     return data.map((item) => item.name);
+  }
+
+  public async parseTemplateTags(str: string) {
+    const matches = str.match(
+      /\[\[\s(email|sms|slack|firebase);[a-zA-Z0-9-\s]+;[a-zA-Z]+\s\]\]/g
+    );
+
+    if (!matches) return str;
+
+    for (const match of matches) {
+      const [type, templateName, templateProperty] = match
+        .replace('[[ ', '')
+        .replace(' ]]', '')
+        .trim()
+        .split(';');
+
+      const template = await this.templatesRepository.findOneBy({
+        type: <TemplateType>type,
+        name: templateName,
+      });
+
+      str = str.replace(match, template?.[templateProperty] || '');
+    }
+
+    return str;
+  }
+
+  async testWebhookTemplate(
+    account: Account,
+    id: string,
+    testCustomerEmail: string
+  ) {
+    const template = await this.templatesRepository.findOneBy({
+      owner: { id: account.id },
+      id,
+      type: TemplateType.WEBHOOK,
+    });
+
+    if (!template || !template.webhookData)
+      throw new NotFoundException('Webhook template not found');
+
+    const customer = await this.CustomerModel.findOne({
+      email: testCustomerEmail,
+    });
+
+    if (!customer) throw new NotFoundException('Customer not found');
+
+    const { _id, ownerId, audiences, ...tags } = customer.toObject();
+    const filteredTags = cleanTagsForSending(tags);
+
+    const { method } = template.webhookData;
+
+    let { body, headers, url } = template.webhookData;
+
+    url = await this.tagEngine.parseAndRender(url, filteredTags || {}, {
+      strictVariables: true,
+    });
+    url = await this.parseTemplateTags(url);
+
+    if (
+      [
+        WebhookMethod.GET,
+        WebhookMethod.HEAD,
+        WebhookMethod.DELETE,
+        WebhookMethod.OPTIONS,
+      ].includes(method)
+    ) {
+      body = undefined;
+    } else {
+      body = await this.parseTemplateTags(body);
+      body = await this.tagEngine.parseAndRender(body, filteredTags || {}, {
+        strictVariables: true,
+      });
+    }
+
+    headers = Object.fromEntries(
+      await Promise.all(
+        Object.entries(headers).map(async ([key, value]) => [
+          await this.parseTemplateTags(
+            await this.tagEngine.parseAndRender(key, filteredTags || {}, {
+              strictVariables: true,
+            })
+          ),
+          await this.parseTemplateTags(
+            await this.tagEngine.parseAndRender(value, filteredTags || {}, {
+              strictVariables: true,
+            })
+          ),
+        ])
+      )
+    );
+
+    try {
+      const res = await fetch(url, {
+        method,
+        body,
+        headers,
+      });
+
+      return {
+        body: await res.text(),
+        headers: res.headers,
+        status: res.status,
+      };
+    } catch (e) {
+      throw new BadRequestException(e);
+    }
   }
 }

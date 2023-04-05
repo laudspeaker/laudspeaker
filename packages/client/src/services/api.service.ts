@@ -2,9 +2,9 @@ import axios from "axios";
 import { ApiConfig, AppConfig } from "../constants";
 import TokenService from "./token.service";
 
-export interface ApiServiceArgs<T> {
+export interface ApiServiceArgs<T extends Record<string, any>> {
   url: string;
-  options?: Record<string, T> & { fakeAPI?: boolean; jsonServer?: boolean };
+  options?: T & { fakeAPI?: boolean; jsonServer?: boolean };
 }
 
 const instance = axios.create({
@@ -54,7 +54,10 @@ instance.interceptors.response.use(
 );
 
 const ApiService = {
-  async get<T = any, R = any>({ url, options }: ApiServiceArgs<R>) {
+  async get<T = any, R extends Record<string, any> = Record<string, any>>({
+    url,
+    options,
+  }: ApiServiceArgs<R>) {
     const { fakeAPI = false, jsonServer = false, ...rest } = options || {};
     return instance.get<T>(url, {
       ...(fakeAPI && { baseURL: AppConfig.FAKE_SERVER_URL }),
@@ -62,7 +65,10 @@ const ApiService = {
       ...rest,
     });
   },
-  async post<T = any, R = any>({ url, options }: ApiServiceArgs<R>) {
+  async post<T = any, R extends Record<string, any> = Record<string, any>>({
+    url,
+    options,
+  }: ApiServiceArgs<R>) {
     const { fakeAPI = false, jsonServer = false, ...rest } = options || {};
     return instance.post<T>(url, {
       ...(fakeAPI && { baseURL: AppConfig.FAKE_SERVER_URL }),
@@ -70,21 +76,30 @@ const ApiService = {
       ...rest,
     });
   },
-  async put<T = any, R = any>({ url, options }: ApiServiceArgs<R>) {
+  async put<T = any, R extends Record<string, any> = Record<string, any>>({
+    url,
+    options,
+  }: ApiServiceArgs<R>) {
     const { fakeAPI = false, ...rest } = options || {};
     return instance.put<T>(url, {
       ...(fakeAPI && { baseURL: AppConfig.FAKE_SERVER_URL }),
       ...rest,
     });
   },
-  async delete<T = any, R = any>({ url, options }: ApiServiceArgs<R>) {
+  async delete<T = any, R extends Record<string, any> = Record<string, any>>({
+    url,
+    options,
+  }: ApiServiceArgs<R>) {
     const { fakeAPI = false, ...rest } = options || {};
     return instance.delete<T>(url, {
       ...(fakeAPI && { baseURL: AppConfig.FAKE_SERVER_URL }),
       ...rest,
     });
   },
-  async patch<T = any, R = any>({ url, options }: ApiServiceArgs<R>) {
+  async patch<T = any, R extends Record<string, any> = any>({
+    url,
+    options,
+  }: ApiServiceArgs<R>) {
     const { fakeAPI = false, ...rest } = options || {};
     return instance.patch<T>(url, {
       ...(fakeAPI && { baseURL: AppConfig.FAKE_SERVER_URL }),

@@ -41,6 +41,7 @@ import { Queue } from 'bull';
 import { BadRequestException } from '@nestjs/common/exceptions';
 import { Job, TimeJobType } from '../jobs/entities/job.entity';
 import { Filter } from '../filter/entities/filter.entity';
+import { ClickHouseEventProvider } from '../webhooks/webhooks.service';
 
 @Injectable()
 export class WorkflowsService {
@@ -174,11 +175,21 @@ export class WorkflowsService {
 
     const clickedPercentage = (clicked / sent) * 100;
 
+    const whResponse = await this.clickhouseClient.query({
+      query: `SELECT COUNT(*) FROM message_status WHERE event = 'sent' AND audienceId = {audienceId:UUID} AND eventProvider = 'webhooks' `,
+      query_params: {
+        audienceId,
+      },
+    });
+    const wsData = (await whResponse.json<any>())?.data;
+    const wssent = +wsData?.[0]?.['count()'] || 0;
+
     return {
       sent,
       delivered,
       openedPercentage,
       clickedPercentage,
+      wssent,
     };
   }
 
@@ -873,17 +884,20 @@ export class WorkflowsService {
                     eventIncluded
                   ) {
                     try {
-                      const { jobIds: jobIdArr, templates } =
-                        await this.audiencesService.moveCustomer(
-                          account,
-                          from?.id,
-                          to?.id,
-                          customer,
-                          event,
-                          queryRunner,
-                          workflow.rules,
-                          workflow.id
-                        );
+                      const {
+                        jobIds: jobIdArr,
+                        templates,
+                        allJobData,
+                      } = await this.audiencesService.moveCustomer(
+                        account,
+                        from?.id,
+                        to?.id,
+                        customer,
+                        event,
+                        queryRunner,
+                        workflow.rules,
+                        workflow.id
+                      );
                       this.logger.debug(
                         'Moved ' +
                           customer?.id +
@@ -894,6 +908,7 @@ export class WorkflowsService {
                       );
                       jobId.jobIds = jobIdArr;
                       jobId.templates = templates;
+                      jobId.allJobData = allJobData;
                       jobIds.push(jobId);
                     } catch (err: any) {
                       this.logger.error('Error: ' + err);

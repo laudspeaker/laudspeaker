@@ -38,6 +38,7 @@ import FirebaseBuilder from "pages/FirebaseBuilder/FirebaseBuilder";
 import ResetPassword from "pages/ResetPassword";
 import SegmentTable from "pages/SegmentTable";
 import SegmentViewer from "pages/SegmentViewer";
+import WebhookBuilder from "pages/WebhookBuilder";
 
 interface IProtected {
   children: ReactElement;
@@ -318,6 +319,16 @@ const RouteComponent: React.FC = () => {
             <Protected>
               <DrawerLayout>
                 <FirebaseBuilder />
+              </DrawerLayout>
+            </Protected>
+          }
+        />
+        <Route
+          path="/templates/webhook/:name"
+          element={
+            <Protected>
+              <DrawerLayout>
+                <WebhookBuilder />
               </DrawerLayout>
             </Protected>
           }
