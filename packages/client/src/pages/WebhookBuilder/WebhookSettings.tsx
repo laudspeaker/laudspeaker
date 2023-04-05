@@ -2,15 +2,9 @@ import { GenericButton, Input, Select } from "components/Elements";
 import Modal from "components/Elements/Modal";
 import MergeTagInput from "components/MergeTagInput";
 import MergeTagTextarea from "components/MergeTagTextarea";
-import React, {
-  FC,
-  ReactNode,
-  RefObject,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import React, { FC, ReactNode, RefObject, useEffect, useState } from "react";
 import ApiService from "services/api.service";
+import { Buffer } from "buffer";
 
 export enum WebhookMethod {
   GET = "GET",
@@ -77,52 +71,61 @@ function classNames(...classes: string[]) {
 interface WebhookSettingsProps {
   webhookState: WebhookState;
   setWebhookState: (state: WebhookState) => void;
-  possibleAttributes: string[];
-  selectedRef?: RefObject<HTMLInputElement | HTMLTextAreaElement>;
-  setSelectedRef: (
+  possibleAttributes?: string[];
+  setSelectedRef?: (
     ref?: RefObject<HTMLInputElement | HTMLTextAreaElement>
   ) => void;
-  setSelectedRefValueHandler: (
-    selectedRefValueHandler?: (value: string) => void
-  ) => void;
   onSave?: () => Promise<void>;
-  templateId?: number;
+  urlRef?: RefObject<HTMLInputElement>;
+  bearerTokenRef?: RefObject<HTMLInputElement>;
+  basicUserNameRef?: RefObject<HTMLInputElement>;
+  basicPasswordRef?: RefObject<HTMLInputElement>;
+  customHeaderRef?: RefObject<HTMLInputElement>;
+  bodyRef?: RefObject<HTMLTextAreaElement>;
+  headersRef?: RefObject<HTMLTextAreaElement>;
+  selectedRef?: RefObject<HTMLInputElement | HTMLTextAreaElement>;
+  setSelectedRefValueSetter?: (setter: {
+    set: (value: string) => void;
+  }) => void;
 }
 
 const WebhookSettings: FC<WebhookSettingsProps> = ({
   webhookState,
   setWebhookState,
   possibleAttributes,
-  selectedRef,
   setSelectedRef,
-  setSelectedRefValueHandler,
   onSave,
-  templateId,
+  urlRef,
+  bearerTokenRef,
+  basicUserNameRef,
+  basicPasswordRef,
+  customHeaderRef,
+  bodyRef,
+  headersRef,
+  selectedRef,
+  setSelectedRefValueSetter,
 }) => {
   const [authType, setAuthType] = useState<AuthType>(AuthType.CUSTOM);
   const [bodyType, setBodyType] = useState(BodyType.JSON);
-  const [headersString, setHeadersString] = useState("");
+  const [headersString, setHeadersString] = useState(
+    Object.entries(webhookState.headers)
+      .filter(([key]) => key !== "Authorization")
+      .map(([key, value]) => `${key}: ${value}`)
+      .join("\n") || ""
+  );
 
-  const [isURLPreview, setIsURLPreview] = useState(false);
-  const [isBearerTokenPreview, setIsBearerTokenPreview] = useState(false);
-  const [isBasicUserNamePreview, setIsBasicUserNamePreview] = useState(false);
-  const [isBasicPasswordPreview, setIsBasicPasswordPreview] = useState(false);
-  const [isCustomHeaderPreview, setIsCustomHeaderPreview] = useState(false);
-  const [isBodyPreview, setIsBodyPreview] = useState(false);
-  const [isHeadersPreview, setIsHeadersPreview] = useState(false);
+  const [isURLPreview, setIsURLPreview] = useState(true);
+  const [isBearerTokenPreview, setIsBearerTokenPreview] = useState(true);
+  const [isBasicUserNamePreview, setIsBasicUserNamePreview] = useState(true);
+  const [isBasicPasswordPreview, setIsBasicPasswordPreview] = useState(true);
+  const [isCustomHeaderPreview, setIsCustomHeaderPreview] = useState(true);
+  const [isBodyPreview, setIsBodyPreview] = useState(true);
+  const [isHeadersPreview, setIsHeadersPreview] = useState(true);
   const [testCustomerEmail, setTestCustomerEmail] = useState("");
   const [testResponseData, setTestResponseData] = useState<TestResponseData>();
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-
-  const urlRef = useRef<HTMLInputElement>(null);
-  const bearerTokenRef = useRef<HTMLInputElement>(null);
-  const basicUserNameRef = useRef<HTMLInputElement>(null);
-  const basicPasswordRef = useRef<HTMLInputElement>(null);
-  const customHeaderRef = useRef<HTMLInputElement>(null);
-  const bodyRef = useRef<HTMLTextAreaElement>(null);
-  const headersRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     setWebhookState({
@@ -183,7 +186,7 @@ const WebhookSettings: FC<WebhookSettingsProps> = ({
   const handleHeaders = (value: string) => setHeadersString(value);
 
   const refSetterMap = new Map<
-    RefObject<HTMLInputElement | HTMLTextAreaElement>,
+    RefObject<HTMLInputElement | HTMLTextAreaElement> | undefined,
     (value: string) => void
   >([
     [urlRef, handleUrl],
@@ -196,7 +199,10 @@ const WebhookSettings: FC<WebhookSettingsProps> = ({
   ]);
 
   useEffect(() => {
-    setSelectedRefValueHandler(refSetterMap.get(selectedRef || urlRef));
+    if (setSelectedRefValueSetter)
+      setSelectedRefValueSetter({
+        set: refSetterMap.get(selectedRef) || (() => {}),
+      });
   }, [selectedRef]);
 
   const authComonents: Record<AuthType, ReactNode> = {
@@ -210,13 +216,13 @@ const WebhookSettings: FC<WebhookSettingsProps> = ({
             }
             onChange={(e) => handleBearerToken(e.target.value)}
             inputRef={bearerTokenRef}
-            onFocus={() => setSelectedRef(bearerTokenRef)}
+            onFocus={() => setSelectedRef?.(bearerTokenRef)}
             name="bearer-token"
             id="bearer-token"
             isPreview={isBearerTokenPreview}
             setIsPreview={setIsBearerTokenPreview}
             placeholder="Bearer token"
-            possibleAttributes={possibleAttributes}
+            possibleAttributes={possibleAttributes || []}
             setValue={handleBearerToken}
             inputClassNames="!bg-white max-h-[36px] !p-[8px_12px] !text-[1rem]"
             viewerClassNames="max-h-[60px] !p-[8px_12px] !text-[1rem] !max-w-[310px] !min-w-[310px]"
@@ -233,12 +239,12 @@ const WebhookSettings: FC<WebhookSettingsProps> = ({
               name="basic-username"
               id="basic-username"
               inputRef={basicUserNameRef}
-              onFocus={() => setSelectedRef(basicUserNameRef)}
+              onFocus={() => setSelectedRef?.(basicUserNameRef)}
               value={username}
               onChange={(e) => handleBasicUserName(e.target.value)}
               isPreview={isBasicUserNamePreview}
               placeholder="Username"
-              possibleAttributes={possibleAttributes}
+              possibleAttributes={possibleAttributes || []}
               setIsPreview={setIsBasicUserNamePreview}
               setValue={handleBasicUserName}
               inputClassNames="!bg-white max-h-[36px] !p-[8px_12px] !text-[1rem]"
@@ -253,12 +259,12 @@ const WebhookSettings: FC<WebhookSettingsProps> = ({
               name="basic-password"
               id="basic-password"
               inputRef={basicPasswordRef}
-              onFocus={() => setSelectedRef(basicPasswordRef)}
+              onFocus={() => setSelectedRef?.(basicPasswordRef)}
               value={password}
               onChange={(e) => handleBasicPassword(e.target.value)}
               isPreview={isBasicPasswordPreview}
               placeholder="Password"
-              possibleAttributes={possibleAttributes}
+              possibleAttributes={possibleAttributes || []}
               setIsPreview={setIsBasicPasswordPreview}
               setValue={handleBasicPassword}
               inputClassNames="!bg-white max-h-[36px] !p-[8px_12px] !text-[1rem]"
@@ -278,10 +284,10 @@ const WebhookSettings: FC<WebhookSettingsProps> = ({
             value={webhookState.headers.Authorization || ""}
             onChange={(e) => handleCustomHeader(e.target.value)}
             inputRef={customHeaderRef}
-            onFocus={() => setSelectedRef(customHeaderRef)}
+            onFocus={() => setSelectedRef?.(customHeaderRef)}
             isPreview={isCustomHeaderPreview}
             placeholder="Custom header"
-            possibleAttributes={possibleAttributes}
+            possibleAttributes={possibleAttributes || []}
             setIsPreview={setIsCustomHeaderPreview}
             setValue={handleCustomHeader}
             inputClassNames="!bg-white max-h-[36px] !p-[8px_12px] !text-[1rem]"
@@ -371,10 +377,10 @@ const WebhookSettings: FC<WebhookSettingsProps> = ({
           value={webhookState.body}
           onChange={(e) => handleBody(e.target.value)}
           textareaRef={bodyRef}
-          onFocus={() => setSelectedRef(bodyRef)}
+          onFocus={() => setSelectedRef?.(bodyRef)}
           isPreview={isBodyPreview}
           placeholder="Content"
-          possibleAttributes={possibleAttributes}
+          possibleAttributes={possibleAttributes || []}
           setIsPreview={setIsBodyPreview}
           setValue={handleBody}
           inputClassNames="!bg-white !p-[8px_12px] !text-[1rem]"
@@ -390,10 +396,10 @@ const WebhookSettings: FC<WebhookSettingsProps> = ({
           value={headersString}
           onChange={(e) => handleHeaders(e.target.value)}
           textareaRef={headersRef}
-          onFocus={() => setSelectedRef(headersRef)}
+          onFocus={() => setSelectedRef?.(headersRef)}
           isPreview={isHeadersPreview}
           placeholder="Headers"
-          possibleAttributes={possibleAttributes}
+          possibleAttributes={possibleAttributes || []}
           setIsPreview={setIsHeadersPreview}
           setValue={handleHeaders}
           inputClassNames="!bg-white !p-[8px_12px] !text-[1rem]"
@@ -453,11 +459,10 @@ const WebhookSettings: FC<WebhookSettingsProps> = ({
 
   const handleTest = async () => {
     if (onSave) await onSave();
-    if (!templateId) return;
 
     const { data } = await ApiService.post<TestResponseData>({
-      url: `/templates/${templateId}/test-webhook`,
-      options: { testCustomerEmail },
+      url: `/templates/test-webhook`,
+      options: { webhookData: webhookState, testCustomerEmail },
     });
 
     setTestResponseData(data);
@@ -472,11 +477,11 @@ const WebhookSettings: FC<WebhookSettingsProps> = ({
             id="webhookURL"
             placeholder="URL"
             inputRef={urlRef}
-            onFocus={() => setSelectedRef(urlRef)}
+            onFocus={() => setSelectedRef?.(urlRef)}
             value={webhookState.url}
             onChange={(e) => handleUrl(e.target.value)}
             isPreview={isURLPreview}
-            possibleAttributes={possibleAttributes}
+            possibleAttributes={possibleAttributes || []}
             setIsPreview={setIsURLPreview}
             setValue={handleUrl}
             inputClassNames="!bg-white max-h-[36px] !p-[8px_12px] !text-[1rem]"

@@ -188,7 +188,11 @@ const EmailBuilder = () => {
   const onAddApiCallClick = () => {
     const indexToInsert = subjectRef.current?.selectionStart || title.length;
     const newTitleArr = title.split("");
-    newTitleArr.splice(indexToInsert, 0, "[{[ dW5kZWZpbmVk;response.data ]}]");
+    newTitleArr.splice(
+      indexToInsert,
+      0,
+      "[{[ eyAidXJsIjogImh0dHBzOi8vanNvbnBsYWNlaG9sZGVyLnR5cGljb2RlLmNvbS9wb3N0cyIsICJib2R5IjogInt9IiwgIm1ldGhvZCI6ICJHRVQiLCAiaGVhZGVycyI6IHsgIkF1dGhvcml6YXRpb24iOiAiIiB9LCAicmV0cmllcyI6IDUsICJmYWxsQmFja0FjdGlvbiI6IDAgfQ==;response.data ]}]"
+    );
     setTitle(newTitleArr.join(""));
     setIsPreview(true);
     return;

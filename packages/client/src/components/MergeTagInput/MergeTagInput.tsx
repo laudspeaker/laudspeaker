@@ -11,6 +11,7 @@ import React, {
 import MergeTagPicker from "../MergeTagPicker/MergeTagPicker";
 import { useClickAway } from "react-use";
 import TemplateTagPicker from "components/TemplateTagPicker";
+import ApiCallTagPicker from "components/ApiCallTagPicker";
 
 interface MergeTagInputProps {
   value: string;
@@ -69,7 +70,7 @@ const MergeTagInput: FC<MergeTagInputProps> = ({
     }
 
     const nextItems = value
-      .split(/([\{\[][\{\[].*?[\}\]][\}\]])/)
+      .split(/([\{\[]\{?[\{\[].*?[\}\]]\}?[\}\]])/)
       .map((item, index) => {
         if (item.match(/{{(.*?)}}/)) {
           const itemContent = item.replace("{{", "").replace("}}", "");
@@ -99,6 +100,18 @@ const MergeTagInput: FC<MergeTagInputProps> = ({
             />
           );
         }
+
+        if (item.match(/\[\{\[\s[^\s]+;[^\s]+\s\]\}\]/)) {
+          const itemContent = item.replace("[{[", "").replace("]}]", "");
+
+          return (
+            <ApiCallTagPicker
+              itemContent={itemContent}
+              handleValueReplace={handleValueReplace}
+            />
+          );
+        }
+
         return item;
       });
 

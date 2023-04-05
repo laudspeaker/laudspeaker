@@ -1,6 +1,6 @@
 import { ApiConfig } from "../../constants";
 import SlackTemplateHeader from "pages/SlackBuilder/SlackTemplateHeader";
-import React, { RefObject, useLayoutEffect, useState } from "react";
+import React, { RefObject, useLayoutEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import ApiService from "services/api.service";
 import Template, { TemplateType } from "types/Template";
@@ -33,8 +33,17 @@ const WebhookBuilder = () => {
   const [possibleAttributes, setPossibleAttributes] = useState<string[]>([]);
   const [selectedRef, setSelectedRef] =
     useState<RefObject<HTMLInputElement | HTMLTextAreaElement>>();
-  const [selectedRefValueHandler, setSelectedRefValueHandler] =
-    useState<(value: string) => void>();
+  const [selectedRefValueSetter, setSelectedRefValueSetter] = useState<{
+    set: (value: string) => void;
+  }>({ set: () => {} });
+
+  const urlRef = useRef<HTMLInputElement>(null);
+  const bearerTokenRef = useRef<HTMLInputElement>(null);
+  const basicUserNameRef = useRef<HTMLInputElement>(null);
+  const basicPasswordRef = useRef<HTMLInputElement>(null);
+  const customHeaderRef = useRef<HTMLInputElement>(null);
+  const bodyRef = useRef<HTMLTextAreaElement>(null);
+  const headersRef = useRef<HTMLTextAreaElement>(null);
 
   useLayoutEffect(() => {
     (async () => {
@@ -101,10 +110,10 @@ const WebhookBuilder = () => {
   const onPersonalizeClick = () => {
     if (!selectedRef || !selectedRef.current) return;
 
-    if (!selectedRefValueHandler) return;
+    if (!selectedRefValueSetter) return;
 
     const indexToInsert = selectedRef.current.selectionStart || 0;
-    selectedRefValueHandler(
+    selectedRefValueSetter.set(
       selectedRef.current.value.slice(0, indexToInsert) +
         "{{ email }}" +
         selectedRef.current.value.slice(indexToInsert)
@@ -114,10 +123,10 @@ const WebhookBuilder = () => {
   const onAddTemplateClick = () => {
     if (!selectedRef || !selectedRef.current) return;
 
-    if (!selectedRefValueHandler) return;
+    if (!selectedRefValueSetter) return;
 
     const indexToInsert = selectedRef.current.selectionStart || 0;
-    selectedRefValueHandler(
+    selectedRefValueSetter.set(
       selectedRef.current.value.slice(0, indexToInsert) +
         "[[ email;template-name;templateProperty ]]" +
         selectedRef.current.value.slice(indexToInsert)
@@ -140,11 +149,17 @@ const WebhookBuilder = () => {
         webhookState={webhookState}
         setWebhookState={setWebhookState}
         possibleAttributes={possibleAttributes}
-        selectedRef={selectedRef}
         setSelectedRef={setSelectedRef}
-        setSelectedRefValueHandler={setSelectedRefValueHandler}
         onSave={onSave}
-        templateId={templateId}
+        urlRef={urlRef}
+        bearerTokenRef={bearerTokenRef}
+        basicUserNameRef={basicUserNameRef}
+        basicPasswordRef={basicPasswordRef}
+        customHeaderRef={customHeaderRef}
+        bodyRef={bodyRef}
+        headersRef={headersRef}
+        setSelectedRefValueSetter={setSelectedRefValueSetter}
+        selectedRef={selectedRef}
       />
     </div>
   );

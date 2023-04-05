@@ -17,8 +17,10 @@ import {
 import { CreateTemplateDto } from './dto/create-template.dto';
 import { UpdateTemplateDto } from './dto/update-template.dto';
 import {
+  FallBackAction,
   Template,
   TemplateType,
+  WebhookData,
   WebhookMethod,
 } from './entities/template.entity';
 import { Job, Queue } from 'bull';
@@ -29,10 +31,13 @@ import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { EventDto } from '../events/dto/event.dto';
 import { Audience } from '../audiences/entities/audience.entity';
 import { cleanTagsForSending } from '@/shared/utils/helpers';
-import { fetch } from 'undici';
+import { Response, fetch } from 'undici';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Liquid } from 'liquidjs';
+import { TestWebhookDto } from './dto/test-webhook.dto';
+import { WebhooksService } from '../webhooks/webhooks.service';
+import wait from '@/utils/wait';
 
 @Injectable()
 export class TemplatesService {
@@ -47,6 +52,7 @@ export class TemplatesService {
     @InjectRepository(Audience)
     private audiencesRepository: Repository<Audience>,
     @Inject(SlackService) private slackService: SlackService,
+    @Inject(WebhooksService) private webhooksService: WebhooksService,
     @InjectQueue('message') private readonly messageQueue: Queue,
     @InjectQueue('slack') private readonly slackQueue: Queue,
     @InjectQueue('webhooks') private readonly webhooksQueue: Queue
@@ -166,10 +172,10 @@ export class TemplatesService {
           from,
           trackingEmail: email,
           key,
-          subject: template.subject,
+          subject: await this.parseApiCallTags(template.subject, filteredTags),
           tags: filteredTags,
           templateId,
-          text: template.text,
+          text: await this.parseApiCallTags(template.text, filteredTags),
           to: customer.phEmail ? customer.phEmail : customer.email,
         });
         if (account.emailProvider === 'free3') await account.save();
@@ -188,7 +194,10 @@ export class TemplatesService {
             customerId,
             tags: filteredTags,
             templateId,
-            text: event?.payload ? event.payload : template.slackMessage,
+            text: await this.parseApiCallTags(
+              event?.payload ? event.payload : template.slackMessage,
+              filteredTags
+            ),
           },
           methodName: 'chat.postMessage',
           token: installation.installation.bot.token,
@@ -204,7 +213,7 @@ export class TemplatesService {
           sid: account.smsAccountSid,
           tags: filteredTags,
           templateId: template.id,
-          text: template.smsText,
+          text: await this.parseApiCallTags(template.smsText, filteredTags),
           to: customer.phPhoneNumber || customer.phone,
           token: account.smsAuthToken,
           trackingEmail: email,
@@ -217,8 +226,14 @@ export class TemplatesService {
           customerId,
           firebaseCredentials: account.firebaseCredentials,
           phDeviceToken: customer.phDeviceToken,
-          pushText: template.pushText,
-          pushTitle: template.pushTitle,
+          pushText: await this.parseApiCallTags(
+            template.pushText,
+            filteredTags
+          ),
+          pushTitle: await this.parseApiCallTags(
+            template.pushTitle,
+            filteredTags
+          ),
           trackingEmail: email,
           tags: filteredTags,
           templateId: template.id,
@@ -408,22 +423,62 @@ export class TemplatesService {
     return str;
   }
 
-  async testWebhookTemplate(
-    account: Account,
-    id: string,
-    testCustomerEmail: string
+  public async parseApiCallTags(
+    str: string,
+    filteredTags: { [key: string]: any } = {}
   ) {
-    const template = await this.templatesRepository.findOneBy({
-      owner: { id: account.id },
-      id,
-      type: TemplateType.WEBHOOK,
-    });
+    const matches = str.match(/\[\{\[\s[^\s]+;[^\s]+\s\]\}\]/);
 
-    if (!template || !template.webhookData)
-      throw new NotFoundException('Webhook template not found');
+    if (!matches) return str;
 
+    for (const match of matches) {
+      try {
+        const [webhookDataBase64, webhookProps] = match
+          .replace('[{[ ', '')
+          .replace(' ]}]', '')
+          .trim()
+          .split(';');
+        const webhookData: WebhookData = JSON.parse(
+          Buffer.from(webhookDataBase64, 'base64').toString('utf8')
+        );
+
+        const { body, error, headers, success } = await this.handleApiCall(
+          webhookData,
+          filteredTags
+        );
+
+        if (!success) return str.replace(match, '');
+
+        const webhookPath = webhookProps.replace('response.', '').split('.');
+
+        let retrievedData = '';
+        if (webhookPath.length === 1) {
+          retrievedData = ['data', 'body'].includes(webhookPath[0])
+            ? body
+            : webhookPath[0] === 'headers'
+            ? JSON.stringify(headers)
+            : '';
+        } else {
+          const objectToRetrievе = ['data', 'body'].includes(webhookPath[0])
+            ? JSON.parse(body)
+            : webhookPath[0] === 'headers'
+            ? headers
+            : {};
+          retrievedData = objectToRetrievе[webhookPath[1]];
+        }
+
+        str = str.replace(match, retrievedData);
+      } catch (e) {
+        this.logger.error('Api call error: ' + e);
+      }
+    }
+
+    return str;
+  }
+
+  async testWebhookTemplate(testWebhookDto: TestWebhookDto) {
     const customer = await this.CustomerModel.findOne({
-      email: testCustomerEmail,
+      email: testWebhookDto.testCustomerEmail,
     });
 
     if (!customer) throw new NotFoundException('Customer not found');
@@ -431,9 +486,9 @@ export class TemplatesService {
     const { _id, ownerId, audiences, ...tags } = customer.toObject();
     const filteredTags = cleanTagsForSending(tags);
 
-    const { method } = template.webhookData;
+    const { method } = testWebhookDto.webhookData;
 
-    let { body, headers, url } = template.webhookData;
+    let { body, headers, url } = testWebhookDto.webhookData;
 
     url = await this.tagEngine.parseAndRender(url, filteredTags || {}, {
       strictVariables: true,
@@ -488,5 +543,94 @@ export class TemplatesService {
     } catch (e) {
       throw new BadRequestException(e);
     }
+  }
+
+  public async handleApiCall(
+    webhookData: WebhookData,
+    filteredTags: { [key: string]: any } = {}
+  ) {
+    const { method, retries, fallBackAction } = webhookData;
+
+    let { body, headers, url } = webhookData;
+
+    url = await this.tagEngine.parseAndRender(url, filteredTags || {}, {
+      strictVariables: true,
+    });
+    url = await this.parseTemplateTags(url);
+
+    if (
+      [
+        WebhookMethod.GET,
+        WebhookMethod.HEAD,
+        WebhookMethod.DELETE,
+        WebhookMethod.OPTIONS,
+      ].includes(method)
+    ) {
+      body = undefined;
+    } else {
+      body = await this.parseTemplateTags(body);
+      body = await this.tagEngine.parseAndRender(body, filteredTags || {}, {
+        strictVariables: true,
+      });
+    }
+
+    headers = Object.fromEntries(
+      await Promise.all(
+        Object.entries(headers).map(async ([key, value]) => [
+          await this.parseTemplateTags(
+            await this.tagEngine.parseAndRender(key, filteredTags || {}, {
+              strictVariables: true,
+            })
+          ),
+          await this.parseTemplateTags(
+            await this.tagEngine.parseAndRender(value, filteredTags || {}, {
+              strictVariables: true,
+            })
+          ),
+        ])
+      )
+    );
+
+    let retriesCount = 0;
+    let success = false;
+
+    this.logger.debug(
+      'Sending api call request: \n' + JSON.stringify(webhookData, null, 2)
+    );
+    let error: string | null = null;
+    let res: Response;
+    while (!success && retriesCount < retries) {
+      try {
+        res = await fetch(url, {
+          method,
+          body,
+          headers,
+        });
+
+        if (!res.ok) throw new Error('Error sending API request');
+        this.logger.debug('Successful api call request!');
+        success = true;
+      } catch (e) {
+        retriesCount++;
+        this.logger.warn(
+          'Unsuccessfull webhook request. Retries: ' +
+            retriesCount +
+            '. Error: ' +
+            e
+        );
+        if (e instanceof Error) error = e.message;
+        await wait(5000);
+      }
+    }
+
+    if (!success) {
+      switch (fallBackAction) {
+        case FallBackAction.NOTHING:
+          this.logger.error('Failed to send webhook request: ' + error);
+          break;
+      }
+    }
+
+    return { success, body: await res.text(), headers: res.headers, error };
   }
 }
