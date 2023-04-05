@@ -423,6 +423,20 @@ export class TemplatesService {
     return str;
   }
 
+  private recursivelyRetrieveData(
+    object: unknown,
+    path: string[]
+  ): string | null {
+    if (!object) return null;
+
+    const key = path.shift();
+    if (!key)
+      return typeof object === 'object'
+        ? JSON.stringify(object)
+        : String(object);
+    return this.recursivelyRetrieveData(object[key], path);
+  }
+
   public async parseApiCallTags(
     str: string,
     filteredTags: { [key: string]: any } = {}
@@ -464,7 +478,10 @@ export class TemplatesService {
             : webhookPath[0] === 'headers'
             ? headers
             : {};
-          retrievedData = objectToRetrievе[webhookPath[1]];
+          retrievedData = this.recursivelyRetrieveData(
+            objectToRetrievе,
+            webhookPath.slice(1)
+          );
         }
 
         str = str.replace(match, retrievedData);
