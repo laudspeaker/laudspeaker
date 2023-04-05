@@ -669,8 +669,8 @@ const WebhookSettings: FC<WebhookSettingsProps> = ({
                 </span>
               </div>
             </div>
-            <div className="w-max-full max-h-[60vh] overflow-y-scroll">
-              {testResponseData.body}
+            <div className="w-max-full max-h-[60vh] overflow-y-scroll whitespace-pre-wrap">
+              {JSON.parse(JSON.stringify(testResponseData.body, null, 10))}
             </div>
           </div>
         )}
