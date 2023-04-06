@@ -14,7 +14,12 @@ import { CreateTemplateDto } from './dto/create-template.dto';
 import { UpdateTemplateDto } from './dto/update-template.dto';
 import { Template } from './entities/template.entity';
 import { Job, Queue, QueueEvents } from 'bullmq';
-import { InjectQueue } from '@nestjs/bullmq';
+import {
+  InjectQueue,
+  OnQueueEvent,
+  QueueEventsHost,
+  QueueEventsListener,
+} from '@nestjs/bullmq';
 import { Installation } from '../slack/entities/installation.entity';
 import { SlackService } from '../slack/slack.service';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
@@ -24,9 +29,8 @@ import { cleanTagsForSending } from '@/shared/utils/helpers';
 import { MessageType } from '../email/email.processor';
 
 @Injectable()
-export class TemplatesService {
-  private queueEvents: QueueEvents;
-
+@QueueEventsListener('message')
+export class TemplatesService extends QueueEventsHost {
   constructor(
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
     private readonly logger: LoggerService,
@@ -38,13 +42,92 @@ export class TemplatesService {
     @InjectQueue('message') private readonly messageQueue: Queue,
     @InjectQueue('slack') private readonly slackQueue: Queue
   ) {
-    this.queueEvents = new QueueEvents('messages', {
-      connection: {
-        host: process.env.REDIS_HOST ?? 'localhost',
-        port: parseInt(process.env.REDIS_PORT),
-        password: process.env.REDIS_PASSWORD,
-      },
-    });
+    super();
+  }
+
+  @OnQueueEvent('active')
+  onActive(args: { jobId: string; prev?: string }, id: string) {
+    this.logger.debug(`${args.jobId} ${args.prev} ${id}`,`templates.service.ts:TemplatesService.onActive()`);
+  }
+
+  @OnQueueEvent('added')
+  onAdded(args: { jobId: string; name: string }, id: string) {
+    this.logger.debug(`${args.jobId} ${args.name} ${id}`,`templates.service.ts:TemplatesService.onAdded()`);
+  }
+
+  @OnQueueEvent('cleaned')
+  onCleaned(args: { count: string }, id: string) {
+    this.logger.debug(`${args.count} ${id}`,`templates.service.ts:TemplatesService.onCleaned()`);
+  }
+
+  @OnQueueEvent('completed')
+  onCompleted(args: { jobId: string; returnvalue: string; prev?: string; }, id: string) {
+    this.logger.debug(`${args.jobId} ${args.returnvalue} ${args.prev} ${id}`,`templates.service.ts:TemplatesService.onCompleted()`);
+  }
+
+  @OnQueueEvent('delayed')
+  onDelayed(args: { jobId: string; delay: number; }, id: string) {
+    this.logger.debug(`${args.jobId} ${args.delay} ${id}`,`templates.service.ts:TemplatesService.onDelayed()`);
+  }
+
+  @OnQueueEvent('drained')
+  onDrained(id: string) {
+    this.logger.debug(`${id}`,`templates.service.ts:TemplatesService.onDrained()`);
+  }
+
+  @OnQueueEvent('duplicated')
+  onDuplicated(args: { jobId: string; }, id: string) {
+    this.logger.debug(`${args.jobId} ${id}`,`templates.service.ts:TemplatesService.onDuplicated()`);
+  }
+
+  @OnQueueEvent('error')
+  onError(args: Error) {
+    this.logger.debug(`${args}`,`templates.service.ts:TemplatesService.onError()`);
+  }
+
+  @OnQueueEvent('failed')
+  onFailed(args: { jobId: string; failedReason: string; prev?: string; }, id: string) {
+    this.logger.debug(`${args.jobId} ${args.failedReason} ${args.prev} ${id}`,`templates.service.ts:TemplatesService.onFailed()`);
+  }
+
+  @OnQueueEvent('paused')
+  onPaused(args: {}, id: string) {
+    this.logger.debug(`${id}`,`templates.service.ts:TemplatesService.onPaused()`);
+  }
+
+  @OnQueueEvent('progress')
+  onProgress(args: { jobId: string; data: number | object; }, id: string) {
+    this.logger.debug(`${args.jobId} ${args.data} ${id}`,`templates.service.ts:TemplatesService.onProgress()`);
+  }
+
+  @OnQueueEvent('removed')
+  onRemoved(args: { jobId: string; prev: string; }, id: string) {
+    this.logger.debug(`${args.jobId} ${args.prev} ${id}`,`templates.service.ts:TemplatesService.onRemoved()`);
+  }
+
+  @OnQueueEvent('resumed')
+  onResumed(args: {}, id: string) {
+    this.logger.debug(`${id}`,`templates.service.ts:TemplatesService.onResumed()`);
+  }
+
+  @OnQueueEvent('retries-exhausted')
+  onRetriesExhausted(args: { jobId: string; attemptsMade: string; }, id: string) {
+    this.logger.debug(`${args.jobId} ${args.attemptsMade} ${id}`,`templates.service.ts:TemplatesService.onRetriesExhausted()`);
+  }
+
+  @OnQueueEvent('stalled')
+  onStalled(args: { jobId: string; }, id: string) {
+    this.logger.debug(`${args.jobId} ${id}`,`templates.service.ts:TemplatesService.onStalled()`);
+  }
+
+  @OnQueueEvent('waiting')
+  onWaiting(args: { jobId: string; prev?: string; }, id: string) {
+    this.logger.debug(`${args.jobId} ${args.prev} ${id}`,`templates.service.ts:TemplatesService.onWaiting()`);
+  }
+
+  @OnQueueEvent('waiting-children')
+  onWaitingChildren(args: { jobId: string; }, id: string) {
+    this.logger.debug(`${args.jobId} ${id}`,`templates.service.ts:TemplatesService.onWaitingChildren()`);
   }
 
   create(account: Account, createTemplateDto: CreateTemplateDto) {
@@ -146,23 +229,27 @@ export class TemplatesService {
           from = sendgridFromEmail;
         }
 
-        job = await this.messageQueue.add(MessageType.EMAIL, {
-          accountId: account.id,
-          audienceId,
-          // cc: template.cc,
-          customerId,
-          domain: sendingDomain,
-          email: sendingEmail,
-          eventProvider: account.emailProvider,
-          from,
-          trackingEmail: email,
-          key,
-          subject: template.subject,
-          tags: filteredTags,
-          templateId,
-          text: template.text,
-          to: customer.phEmail ? customer.phEmail : customer.email,
-        });
+        job = await this.messageQueue.add(
+          MessageType.EMAIL,
+          {
+            accountId: account.id,
+            audienceId,
+            cc: template.cc,
+            customerId,
+            domain: sendingDomain,
+            email: sendingEmail,
+            eventProvider: account.emailProvider,
+            from,
+            trackingEmail: email,
+            key,
+            subject: template.subject,
+            tags: filteredTags,
+            templateId,
+            text: template.text,
+            to: customer.phEmail ? customer.phEmail : customer.email,
+          },
+          { attempts: Number.MAX_SAFE_INTEGER }
+        );
         if (account.emailProvider === 'free3') await account.save();
         break;
       case 'slack':

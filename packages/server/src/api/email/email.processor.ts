@@ -37,16 +37,16 @@ export class MessageProcessor extends WorkerHost {
     MessageType,
     (job: Job<any, any, string>) => Promise<void>
   > = {
-    [MessageType.EMAIL]: async (job) => {
-      await this.handleEmail(job);
-    },
-    [MessageType.SMS]: async (job) => {
-      await this.handleSMS(job);
-    },
-    [MessageType.FIREBASE]: async (job) => {
-      await this.handleFirebase(job);
-    },
-  };
+      [MessageType.EMAIL]: async (job) => {
+        await this.handleEmail(job);
+      },
+      [MessageType.SMS]: async (job) => {
+        await this.handleSMS(job);
+      },
+      [MessageType.FIREBASE]: async (job) => {
+        await this.handleFirebase(job);
+      },
+    };
 
   constructor(
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
@@ -60,21 +60,70 @@ export class MessageProcessor extends WorkerHost {
     await this.messagesMap[job.name](job);
   }
 
-  @OnWorkerEvent('error')
-  onError() {
-    console.log("There was an error...")
+  @OnWorkerEvent('active')
+  onActive(job: Job<any, any, any>, prev: string) {
+    this.logger.debug(`${JSON.stringify(job)} ${prev}`, `email.processor.ts:MessageProcessor.onActive()`);
+  }
+
+  @OnWorkerEvent('closed')
+  onClosed() {
+    this.logger.debug(``, `email.processor.ts:MessageProcessor.onClosed()`);
+  }
+
+  @OnWorkerEvent('closing')
+  onClosing(msg: string) {
+    this.logger.debug(`${msg}`, `email.processor.ts:MessageProcessor.onClosing()`);
   }
 
   @OnWorkerEvent('completed')
-  onCompleted() {
-    console.log("Job Completed...")
+  onCompleted(job: Job<any, any, any>, result: any, prev: string) {
+    this.logger.debug(`${JSON.stringify(job)} ${result} ${prev}`, `email.processor.ts:MessageProcessor.onCompleted()`);
+  }
+
+  @OnWorkerEvent('drained')
+  onDrained() {
+    this.logger.debug(``, `email.processor.ts:MessageProcessor.onDrained()`);
+  }
+
+  @OnWorkerEvent('error')
+  onError(failedReason: Error) {
+    this.logger.debug(`${failedReason}`, `templates.service.ts.ts:MessageProcessor.onError()`);
+  }
+
+  @OnWorkerEvent('failed')
+  onFailed(job: Job<any, any, any> | undefined, error: Error, prev: string) {
+    this.logger.debug(`${JSON.stringify(job)} ${error} ${prev}`, `email.processor.ts:MessageProcessor.onFailed()`);
+  }
+
+  @OnWorkerEvent('paused')
+  onPaused() {
+    this.logger.debug(``, `email.processor.ts:MessageProcessor.onPaused()`);
+  }
+
+  @OnWorkerEvent('progress')
+  onProgress(job: Job<any, any, any>, progress: number | object) {
+    this.logger.debug(`${JSON.stringify(job)} ${progress}`, `email.processor.ts:MessageProcessor.onProgress()`);
+  }
+
+  @OnWorkerEvent('ready')
+  onReady() {
+    this.logger.debug(``, `email.processor.ts:MessageProcessor.onReady()`);
+  }
+
+  @OnWorkerEvent('resumed')
+  onResumed() {
+    this.logger.debug(``, `email.processor.ts:MessageProcessor.onResumed()`);
+  }
+
+  @OnWorkerEvent('stalled')
+  onStalled(jobId: string, prev: string) {
+    this.logger.debug(`${jobId} ${prev}`, `email.processor.ts:MessageProcessor.onStalled()`);
   }
 
   async handleEmail(job: Job<any, any, string>): Promise<any> {
     if (!job.data.to) {
       this.logger.error(
-        `Error: Skipping sending for ${
-          job.data.customerId
+        `Error: Skipping sending for ${job.data.customerId
         }, no email; job ${JSON.stringify(job.data)}`,
         `email.processor.ts:MessageProcessor.handleEmail()`
       );
@@ -127,7 +176,7 @@ export class MessageProcessor extends WorkerHost {
           const sendgridMessage = await sg.send({
             from: job.data.from,
             to: job.data.to,
-            // cc: job.data.cc,
+            cc: job.data.cc,
             subject: subjectWithInsertedTags,
             html: textWithInsertedTags,
             personalizations: [
@@ -138,7 +187,7 @@ export class MessageProcessor extends WorkerHost {
                   customerId: job.data.customerId,
                   templateId: job.data.templateId,
                 },
-                // cc: job.data.cc,
+                cc: job.data.cc,
               },
             ],
           });
@@ -164,7 +213,7 @@ export class MessageProcessor extends WorkerHost {
           const mailgunMessage = await mg.messages.create(job.data.domain, {
             from: `${job.data.from} <${job.data.email}@${job.data.domain}>`,
             to: job.data.to,
-            // cc: job.data.cc,
+            cc: job.data.cc,
             subject: subjectWithInsertedTags,
             html: textWithInsertedTags,
             'v:audienceId': job.data.audienceId,
@@ -217,8 +266,7 @@ export class MessageProcessor extends WorkerHost {
   async handleSMS(job: Job) {
     if (!job.data.to) {
       this.logger.error(
-        `Error: Skipping sending for ${
-          job.data.customerId
+        `Error: Skipping sending for ${job.data.customerId
         }, no phone; job ${JSON.stringify(job.data)}`,
         `email.processor.ts:MessageProcessor.handleSMS()`
       );
@@ -301,8 +349,7 @@ export class MessageProcessor extends WorkerHost {
   async handleFirebase(job: Job) {
     if (!job.data.phDeviceToken) {
       this.logger.error(
-        `Error: Skipping sending for ${
-          job.data.customerId
+        `Error: Skipping sending for ${job.data.customerId
         }, no device token; job ${JSON.stringify(job.data)}`,
         `email.processor.ts:MessageProcessor.handleFirebase()`
       );

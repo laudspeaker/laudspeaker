@@ -137,6 +137,11 @@ const formatMongoConnectionString = (mongoConnectionString: string) => {
         host: process.env.REDIS_HOST ?? 'localhost',
         port: parseInt(process.env.REDIS_PORT),
         password: process.env.REDIS_PASSWORD,
+        retryStrategy: (times: number) => {
+          return Math.max(Math.min(Math.exp(times), 20000), 1000);
+        },
+        maxRetriesPerRequest: null,
+        enableOfflineQueue: true,
       },
     }),
     WinstonModule.forRootAsync({
