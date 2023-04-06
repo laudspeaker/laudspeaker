@@ -5,6 +5,7 @@ import {
   ChevronDownIcon,
   MinusIcon,
   PencilSquareIcon,
+  EllipsisHorizontalCircleIcon,
 } from "@heroicons/react/20/solid";
 import Chip from "components/Elements/Chip";
 import { Menu, Transition } from "@headlessui/react";
@@ -921,7 +922,11 @@ export default function TableTemplate<T extends TableDataItem>({
       return isButton ? (
         <Menu as="div" className="relative">
           <Menu.Button className="outline-none">
-            <PencilSquareIcon className="text-gray-400 hover:text-gray-500 ml-[10px] text-[16px] w-[24px]" />
+            {row.isStopped ? (
+              <EllipsisHorizontalCircleIcon className="text-gray-400 hover:text-gray-500 ml-[10px] text-[16px] w-[24px]" />
+            ) : (
+              <PencilSquareIcon className="text-gray-400 hover:text-gray-500 ml-[10px] text-[16px] w-[24px]" />
+            )}
           </Menu.Button>
           <Transition
             as={Fragment}
@@ -938,7 +943,9 @@ export default function TableTemplate<T extends TableDataItem>({
                   className="!no-underline"
                   href={`flow/${row.id}${row.isActive ? "/view" : ""}`}
                 >
-                  <div className="w-full">Edit</div>
+                  <div className="w-full">
+                    {row.isStopped ? "View" : "Edit"}
+                  </div>
                 </Link>,
                 <button
                   onClick={async () => {
