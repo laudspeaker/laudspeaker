@@ -194,37 +194,21 @@ const LiveEvents = () => {
     })();
   }, []);
 
-  const handlePersonInfoChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setPersonInfo({ ...personInfo, [e.target.name]: e.target.value });
-  };
-
   const handleShowEvent = async (json: object) => {
     setIsShowJson(true);
     setSnippet(JSON.stringify(json, null, 2));
   };
 
-  const handleDeletePerson = () => {
+  const handleRefresh = () => {
     confirmAlert({
-      title: "Confirm delete?",
-      message: "Are you sure you want to delete this person?",
+      title: "Confirm Refresh?",
+      message: "Are you sure you want to refresh?",
       buttons: [
         {
           label: "Yes",
           onClick: async () => {
             setIsSaving(true);
-            try {
-              await ApiService.post({
-                url: ApiConfig.customerDelete + id,
-                options: {},
-              });
-              navigate("/people");
-            } catch (e) {
-              let message = "Error while deleting";
-              if (e instanceof AxiosError) message = e.response?.data?.message;
-              toast.error(message);
-            } finally {
-              setIsSaving(false);
-            }
+            setTimeline([]);
           },
         },
         {
@@ -232,12 +216,6 @@ const LiveEvents = () => {
         },
       ],
     });
-  };
-
-  const handleDeleteAttribute = (key: string) => {
-    const newPersonInfo = { ...personInfo };
-    newPersonInfo[key] = null;
-    setPersonInfo(newPersonInfo);
   };
 
   function classNames(...classes: string[]) {
@@ -257,7 +235,7 @@ const LiveEvents = () => {
           </div>
           <div className="flex h-[50px] gap-[10px]">
             <GenericButton
-              onClick={handleDeletePerson}
+              onClick={handleRefresh}
               loading={isSaving}
               disabled={isSaving}
             >
