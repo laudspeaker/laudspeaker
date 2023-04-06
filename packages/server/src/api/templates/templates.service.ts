@@ -406,8 +406,16 @@ export class TemplatesService extends QueueEventsHost {
     });
     if (!foundTemplate) throw new NotFoundException('Template not found');
 
-    const { owner, slackMessage, style, subject, text, type, smsText } =
-      foundTemplate;
+    const {
+      owner,
+      slackMessage,
+      style,
+      subject,
+      text,
+      type,
+      smsText,
+      webhookData,
+    } = foundTemplate;
 
     const ownerId = owner.id;
 
@@ -437,6 +445,7 @@ export class TemplatesService extends QueueEventsHost {
       text,
       type,
       smsText,
+      webhookData,
     });
   }
 
