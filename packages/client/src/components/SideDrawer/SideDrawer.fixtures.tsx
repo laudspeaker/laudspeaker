@@ -9,6 +9,7 @@ import {
   Email,
   SlackMsg,
   Mobile,
+  Webhook,
   SMS,
   BackButtonIcon,
 } from "../Icons/Icons";
@@ -151,6 +152,20 @@ export const dataSubArray = [
         disabledToolTip:
           "Make sure there are steps and configure slack in settings and step selected",
         //alwaysDisabled: true,
+      },
+      {
+        id: "webhook",
+        imgIcon: (
+          <div className="max-w-[30px] max-h-[30px] w-full h-full">
+            {Webhook()}
+          </div>
+        ),
+        text: "Webhook Message",
+        type: "menu",
+        link: "/webhook",
+        canBeDisabled: false,
+        disabledToolTip:
+          "Make sure there are steps and configure webhook in settings and step selected",
       },
     ],
   },

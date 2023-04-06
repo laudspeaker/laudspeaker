@@ -2,6 +2,7 @@ import { ChangeEvent, useState } from "react";
 import { Grid, FormControl } from "@mui/material";
 import { GenericButton, Input, Select } from "components/Elements";
 import { useNavigate } from "react-router-dom";
+import { TemplateType } from "types/Template";
 
 export interface INameSegmentForm {
   name: string;
@@ -23,7 +24,7 @@ const NameTemplate = ({ onSubmit, isPrimary }: INameSegment) => {
     name: "",
     isPrimary: isPrimary,
   });
-  const [day, setDay] = useState("");
+  const [templateType, setTemplateType] = useState(TemplateType.EMAIL);
   const navigate = useNavigate();
 
   // Handling Name and Description Fields
@@ -33,26 +34,15 @@ const NameTemplate = ({ onSubmit, isPrimary }: INameSegment) => {
     }
   };
 
-  const handleType = (value: string) => {
-    setDay(value);
+  const handleType = (value: TemplateType) => {
+    setTemplateType(value);
   };
 
   // Pushing state back up to the flow builder
   const handleSubmit = (e: { preventDefault: () => void }) => {
-    if (segmentForm.name && day) {
-      if (day === "slack") {
-        const navigationLink = "/templates/slack/" + segmentForm.name;
-        navigate(navigationLink);
-      } else if (day === "email") {
-        const navigationLink = "/templates/email/" + segmentForm.name;
-        navigate(navigationLink);
-      } else if (day === "sms") {
-        const navigationLink = "/templates/sms/" + segmentForm.name;
-        navigate(navigationLink);
-      } else if (day === "firebase") {
-        const navigationLink = "/templates/firebase/" + segmentForm.name;
-        navigate(navigationLink);
-      }
+    if (segmentForm.name && templateType) {
+      navigate(`/templates/${templateType}/${segmentForm.name}`);
+
       e.preventDefault();
       if (onSubmit) {
         onSubmit(segmentForm);
@@ -86,21 +76,22 @@ const NameTemplate = ({ onSubmit, isPrimary }: INameSegment) => {
               onSubmit={handleSubmit}
             >
               <label
-                htmlFor="handleDay"
+                htmlFor="handletemplateType"
                 className="font-[Inter] text-[16px] font-medium mr-1"
               >
                 Type of template:
               </label>
               <Select
-                id="handleDay"
-                name="handleDay"
-                value={day}
+                id="handleTemplateType"
+                name="handleTemplateType"
+                value={templateType}
                 onChange={handleType}
                 options={[
-                  { value: "email" },
-                  { value: "slack" },
-                  { value: "sms" },
-                  { value: "firebase" },
+                  { value: TemplateType.EMAIL },
+                  { value: TemplateType.SLACK },
+                  { value: TemplateType.SMS },
+                  { value: TemplateType.FIREBASE },
+                  { value: TemplateType.WEBHOOK },
                 ]}
                 displayEmpty
               />
@@ -113,7 +104,7 @@ const NameTemplate = ({ onSubmit, isPrimary }: INameSegment) => {
               style={{
                 maxWidth: "200px",
               }}
-              disabled={!segmentForm.name || !day}
+              disabled={!segmentForm.name || !templateType}
             >
               Create
             </GenericButton>

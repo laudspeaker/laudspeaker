@@ -1,3 +1,4 @@
+// eslint-disable-next-line import/no-extraneous-dependencies
 import "@4tw/cypress-drag-drop";
 export interface ISlackTemplate {
   name: string;
@@ -17,18 +18,15 @@ export interface IEmailTemplate {
 export const templatesFunc = (
   slackTemplate: ISlackTemplate = {
     name: "TestTemplateForSlackSending",
-    message:
-      "Test slack message by cypress. Unknown tag: {{ randomText }}, known tag: {{ slackEmail }}",
+    message: "Test slack message by cypress. Known tag: {{ email }}",
   },
   emailTemplate: IEmailTemplate = {
     name: "TestTemplateForEmailSending",
-    subject:
-      "Test email message by cypress. Unknown tag: {{ randomText }}, known tag: {{ slackEmail }}",
+    subject: "Test email message by cypress. Known tag: {{ email }}",
   },
   smsTemplate: ISMSTemplate = {
     name: "TestTemplateForSMSSending",
-    message:
-      "Test SMS message by cypress. Unknown tag: {{ randomText }}, known tag: {{ slackEmail }}",
+    message: "Test SMS message by cypress. Known tag: {{ email }}",
   }
 ) => {
   cy.reload();
@@ -42,8 +40,8 @@ export const templatesFunc = (
   cy.url().should("include", "/templates");
   cy.get("#createTemplate").click();
   cy.get("#name").clear().type(slackTemplate.name);
-  cy.get("#handleDay").click();
-  cy.get("#handleDay").find('[data-option="slack"]').click();
+  cy.get("#handleTemplateType").click();
+  cy.get("#handleTemplateType").find('[data-option="slack"]').click();
   cy.get("#submitTemplateCreation").click();
   cy.url().should("include", `templates/slack/${slackTemplate.name}`);
   cy.get('[data-custominput-placeholder="Slack Message"]').click("left");
@@ -58,8 +56,8 @@ export const templatesFunc = (
   // create email template
   cy.get("#createTemplate").click();
   cy.get("#name").clear().type(emailTemplate.name);
-  cy.get("#handleDay").click();
-  cy.get("#handleDay").find('[data-option="email"]').click();
+  cy.get("#handleTemplateType").click();
+  cy.get("#handleTemplateType").find('[data-option="email"]').click();
   cy.get("#submitTemplateCreation").click();
   cy.get('[data-custominput-placeholder="Subject"]').click("left", {
     force: true,
@@ -77,8 +75,8 @@ export const templatesFunc = (
   // create sms template
   cy.get("#createTemplate").click();
   cy.get("#name").clear().type(smsTemplate.name);
-  cy.get("#handleDay").click();
-  cy.get("#handleDay").find('[data-option="sms"]').click();
+  cy.get("#handleTemplateType").click();
+  cy.get("#handleTemplateType").find('[data-option="sms"]').click();
   cy.get("#submitTemplateCreation").click();
   cy.url().should("include", `templates/sms/${smsTemplate.name}`);
   cy.get('[data-custominput-placeholder="SMS Message"]').click("left");

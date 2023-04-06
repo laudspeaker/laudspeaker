@@ -418,6 +418,7 @@ export class CronService {
                     createdAt: new Date(
                       events.items[k].timestamp * 1000
                     ).toUTCString(),
+                    processed: false,
                   };
                   messagesToInsert.push(clickHouseRecord);
                   await this.clickHouseClient.insert<ClickHouseMessage>({
@@ -514,6 +515,7 @@ export class CronService {
                       eventProvider: ClickHouseEventProvider.TWILIO,
                       createdAt: new Date().toUTCString(),
                       userId: accounts[j].id,
+                      processed: false,
                     };
                     messagesToInsert.push(clickHouseRecord);
                     await this.clickHouseClient.insert<ClickHouseMessage>({
@@ -620,6 +622,7 @@ export class CronService {
                       eventProvider: ClickHouseEventProvider.TWILIO,
                       createdAt: new Date().toUTCString(),
                       userId: accounts[j].id,
+                      processed: false,
                     };
                     messagesToInsert.push(clickHouseRecord);
                     await this.clickHouseClient.insert<ClickHouseMessage>({

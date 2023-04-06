@@ -49,6 +49,7 @@ export class SlackProcessor extends WorkerHost {
             audienceId: job.data.args.audienceId,
             customerId: job.data.args.customerId,
             templateId: String(job.data.args.templateId),
+            processed: false,
           },
         ]);
         return;

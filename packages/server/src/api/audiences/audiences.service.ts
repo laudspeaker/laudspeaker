@@ -6,7 +6,7 @@ import { CreateAudienceDto } from './dto/create-audience.dto';
 import { UpdateAudienceDto } from './dto/update-audience.dto';
 import { Account } from '../accounts/entities/accounts.entity';
 import { CustomerDocument } from '../customers/schemas/customer.schema';
-import { Template } from '../templates/entities/template.entity';
+import { Template, TemplateType } from '../templates/entities/template.entity';
 import Errors from '../../shared/utils/errors';
 import { TemplatesService } from '../templates/templates.service';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
@@ -249,7 +249,11 @@ export class AudiencesService {
     queryRunner: QueryRunner,
     encodedRules: string[],
     workflowID: string
-  ): Promise<{ jobIds: (string | number)[]; templates: Template[] }> {
+  ): Promise<{
+    jobIds: (string | number)[];
+    templates: Template[];
+    allJobData?: any[];
+  }> {
     // Base case: customer document must exist
     if (!customer || !customer.id) {
       this.logger.warn(`Warning: No customer to move from ${from} to ${to}`);
@@ -259,7 +263,7 @@ export class AudiencesService {
     const customerId = customer?.id;
     let index = -1; // Index of the customer ID in the fromAud.customers array
     const jobIds: (string | number)[] = [];
-    let jobId: string | number;
+    const allJobData: any[] = [];
     let fromAud: Audience, toAud: Audience;
     const templates: Template[] = [];
     try {
@@ -373,7 +377,7 @@ export class AudiencesService {
           const data = await queryRunner.manager.find(Template, {
             where: {
               owner: { id: account.id },
-              type: 'email',
+              type: TemplateType.EMAIL,
               id: In(toTemplates),
             },
           });
@@ -404,7 +408,7 @@ export class AudiencesService {
             templateIndex < toTemplates?.length;
             templateIndex++
           ) {
-            jobId = await this.templatesService.queueMessage(
+            const { jobId, jobData } = await this.templatesService.queueMessage(
               account,
               toTemplates[templateIndex],
               customer,
@@ -416,6 +420,7 @@ export class AudiencesService {
                 id: toTemplates[templateIndex],
               })
             );
+            allJobData.push(jobData);
             this.logger.debug('Queued Message');
             jobIds.push(jobId);
           }
@@ -426,7 +431,7 @@ export class AudiencesService {
       return Promise.reject(err);
     }
 
-    return Promise.resolve({ jobIds, templates });
+    return Promise.resolve({ jobIds, templates, allJobData });
   }
 
   /**

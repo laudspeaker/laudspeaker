@@ -1,4 +1,4 @@
-import React, { ChangeEvent, FC, Fragment, ReactNode, useRef } from "react";
+import React, { ChangeEvent, Fragment, ReactNode, useRef } from "react";
 import { Combobox } from "@headlessui/react";
 import { ChevronUpDownIcon } from "@heroicons/react/20/solid";
 

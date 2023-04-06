@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { GenericButton, Select } from "components/Elements";
 import ApiService from "services/api.service";
 import { ApiConfig } from "../../constants";
-import Modal from "../../components/Elements/Modal";
 import Template from "types/Template";
 import SideModal from "components/Elements/SideModal";
 

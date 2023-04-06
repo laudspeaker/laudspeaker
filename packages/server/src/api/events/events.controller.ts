@@ -43,6 +43,12 @@ export class EventsController {
     return this.eventsService.getJobStatus(body, JobTypes.slack);
   }
 
+  @Post('job-status/webhook')
+  @UseInterceptors(ClassSerializerInterceptor)
+  async getJobWebhookStatus(@Body() body: StatusJobDto): Promise<string> {
+    return this.eventsService.getJobStatus(body, JobTypes.webhooks);
+  }
+
   @Post('/posthog/')
   @UseInterceptors(ClassSerializerInterceptor)
   @UseGuards(ApiKeyAuthGuard)

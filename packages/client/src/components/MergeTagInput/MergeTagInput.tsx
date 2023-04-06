@@ -5,14 +5,17 @@ import React, {
   RefObject,
   useRef,
   ChangeEvent,
+  FocusEvent,
+  FC,
 } from "react";
 import MergeTagPicker from "../MergeTagPicker/MergeTagPicker";
 import { useClickAway } from "react-use";
+import TemplateTagPicker from "components/TemplateTagPicker";
 
 interface MergeTagInputProps {
   value: string;
   onChange: (e: ChangeEvent<HTMLInputElement>) => void;
-  setValue: React.Dispatch<React.SetStateAction<string>>;
+  setValue: (value: string) => void;
   name: string;
   id: string;
   placeholder: string;
@@ -20,14 +23,17 @@ interface MergeTagInputProps {
   fullWidth?: boolean;
   labelShrink?: boolean;
   sx?: object;
+  viewerClassNames?: string;
+  inputClassNames?: string;
+  placeholderClassNames?: string;
   possibleAttributes: string[];
   inputRef?: RefObject<HTMLInputElement>;
   isPreview: boolean;
-  setIsPreview: React.Dispatch<React.SetStateAction<boolean>>;
-  onFocus?: any;
+  setIsPreview: (state: boolean) => void;
+  onFocus?: (e: FocusEvent<HTMLInputElement>) => void;
 }
 
-const MergeTagInput = ({
+const MergeTagInput: FC<MergeTagInputProps> = ({
   value,
   onChange,
   setValue,
@@ -37,10 +43,13 @@ const MergeTagInput = ({
   fullWidth,
   possibleAttributes,
   isPreview,
+  inputClassNames = "",
+  viewerClassNames = "",
+  placeholderClassNames = "",
   setIsPreview,
   inputRef,
   onFocus,
-}: MergeTagInputProps) => {
+}) => {
   const [items, setItems] = useState<(string | JSX.Element)[]>([]);
   const handleValueReplace = (regExp: RegExp | string, str: string) => {
     setValue(value.replace(regExp, str));
@@ -59,32 +68,49 @@ const MergeTagInput = ({
       return;
     }
 
-    const nextItems = value.split(/(\{\{.*?\}\})/).map((item, index) => {
-      if (item.match(/{{(.*?)}}/)) {
-        const itemContent = item.replace("{{", "").replace("}}", "");
-        return (
-          <MergeTagPicker
-            tagContent={itemContent}
-            key={index}
-            possibleAttributes={possibleAttributes.map(
-              (str) => " " + str + " "
-            )}
-            handleValueReplace={handleValueReplace}
-          />
-        );
-      }
-      return item;
-    });
+    const nextItems = value
+      .split(/([\{\[][\{\[].*?[\}\]][\}\]])/)
+      .map((item, index) => {
+        if (item.match(/{{(.*?)}}/)) {
+          const itemContent = item.replace("{{", "").replace("}}", "");
+          return (
+            <MergeTagPicker
+              tagContent={itemContent}
+              key={index}
+              possibleAttributes={possibleAttributes.map(
+                (str) => " " + str + " "
+              )}
+              handleValueReplace={handleValueReplace}
+            />
+          );
+        }
+
+        if (
+          item.match(
+            /\[\[\s(email|sms|slack|firebase);[a-zA-Z0-9-\s]+;[a-zA-Z]+\s\]\]/g
+          )
+        ) {
+          const itemContent = item.replace("[[", "").replace("]]", "");
+
+          return (
+            <TemplateTagPicker
+              itemContent={itemContent}
+              handleValueReplace={handleValueReplace}
+            />
+          );
+        }
+        return item;
+      });
 
     setItems(nextItems);
   }, [value, possibleAttributes]);
 
   return (
-    <div className="w-full m-0 mb-[15px]" ref={wrapperRef}>
+    <div className="w-full m-0" ref={wrapperRef}>
       <div
         className={`${
           !isPreview && "hidden"
-        } w-full bg-[#E5E5E5] max-w-full overflow-x-scroll py-[18px] px-[29px] z-[1000] rounded-[8px] text-[20px] whitespace-nowrap `}
+        } ${viewerClassNames} w-full bg-[#E5E5E5] max-w-full overflow-x-scroll py-[18px] px-[29px] z-[1000] rounded-[8px] text-[20px] whitespace-nowrap `}
         onClick={() => {
           setIsPreview(false);
         }}
@@ -93,7 +119,9 @@ const MergeTagInput = ({
         {items.length > 0 ? (
           items
         ) : (
-          <div className="h-[1.4375em] text-[20px] text-[#a3a4a5] pb-[2px] select-none">
+          <div
+            className={`${placeholderClassNames} h-[1.4375em] text-[20px] text-[#a3a4a5] pb-[2px] select-none`}
+          >
             {placeholder}
           </div>
         )}
@@ -107,7 +135,7 @@ const MergeTagInput = ({
         fullWidth={fullWidth}
         className={`${
           isPreview && "hidden"
-        } !text-[20px] bg-[#E5E5E5] outline-none text-[#000] py-[18px] px-[29px] z-[1000] rounded-[8px] whitespace-nowrap`}
+        } ${inputClassNames} !text-[20px] bg-[#E5E5E5] outline-none text-[#000] py-[18px] px-[29px] z-[1000] rounded-[8px] whitespace-nowrap`}
         onChange={onChange}
         inputRef={inputRef}
         onFocus={onFocus}

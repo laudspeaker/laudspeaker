@@ -180,14 +180,15 @@ const DatabaseStep3: FC<DatabaseStepProps> = ({
                   placeholder="host"
                   label="Host"
                 />
-                {errors.databricksData.length > 0 && showErrors.databricksData && (
-                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center">
-                    <ExclamationCircleIcon
-                      className="h-5 w-5 text-red-500"
-                      aria-hidden="true"
-                    />
-                  </div>
-                )}
+                {errors.databricksData.length > 0 &&
+                  showErrors.databricksData && (
+                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center">
+                      <ExclamationCircleIcon
+                        className="h-5 w-5 text-red-500"
+                        aria-hidden="true"
+                      />
+                    </div>
+                  )}
               </dd>
             </div>
             <div>
@@ -215,14 +216,15 @@ const DatabaseStep3: FC<DatabaseStepProps> = ({
                   placeholder="http path"
                   label="Http path"
                 />
-                {errors.databricksData.length > 0 && showErrors.databricksData && (
-                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center">
-                    <ExclamationCircleIcon
-                      className="h-5 w-5 text-red-500"
-                      aria-hidden="true"
-                    />
-                  </div>
-                )}
+                {errors.databricksData.length > 0 &&
+                  showErrors.databricksData && (
+                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center">
+                      <ExclamationCircleIcon
+                        className="h-5 w-5 text-red-500"
+                        aria-hidden="true"
+                      />
+                    </div>
+                  )}
               </dd>
             </div>
             <div>
@@ -252,14 +254,15 @@ const DatabaseStep3: FC<DatabaseStepProps> = ({
                   placeholder="token"
                   label="Token"
                 />
-                {errors.databricksData.length > 0 && showErrors.databricksData && (
-                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center">
-                    <ExclamationCircleIcon
-                      className="h-5 w-5 text-red-500"
-                      aria-hidden="true"
-                    />
-                  </div>
-                )}
+                {errors.databricksData.length > 0 &&
+                  showErrors.databricksData && (
+                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center">
+                      <ExclamationCircleIcon
+                        className="h-5 w-5 text-red-500"
+                        aria-hidden="true"
+                      />
+                    </div>
+                  )}
               </dd>
             </div>
             {showErrors.databricksData &&

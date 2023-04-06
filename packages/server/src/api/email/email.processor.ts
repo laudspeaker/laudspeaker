@@ -161,6 +161,7 @@ export class MessageProcessor extends WorkerHost {
           messageId: null,
           templateId: String(job.data.templateId),
           userId: job.data.accountId,
+          processed: false,
         },
       ]);
       return;
@@ -203,6 +204,7 @@ export class MessageProcessor extends WorkerHost {
               messageId: sendgridMessage[0].headers['x-message-id'],
               templateId: String(job.data.templateId),
               userId: job.data.accountId,
+              processed: false,
             },
           ]);
           break;
@@ -234,6 +236,7 @@ export class MessageProcessor extends WorkerHost {
                 : '',
               templateId: String(job.data.templateId),
               userId: job.data.accountId,
+              processed: false,
             },
           ]);
           break;
@@ -298,6 +301,7 @@ export class MessageProcessor extends WorkerHost {
           messageId: null,
           templateId: String(job.data.templateId),
           userId: job.data.accountId,
+          processed: false,
         },
       ]);
       return;
@@ -320,6 +324,7 @@ export class MessageProcessor extends WorkerHost {
           messageId: message.sid,
           templateId: String(job.data.templateId),
           userId: job.data.accountId,
+          processed: false,
         },
       ]);
       if (job.data.trackingEmail) {
@@ -386,6 +391,7 @@ export class MessageProcessor extends WorkerHost {
           audienceId: job.data.args.audienceId,
           customerId: job.data.args.customerId,
           templateId: String(job.data.args.templateId),
+          processed: false,
         },
       ]);
       return;
@@ -438,6 +444,7 @@ export class MessageProcessor extends WorkerHost {
           messageId: messageId,
           templateId: String(job.data.templateId),
           userId: job.data.accountId,
+          processed: false,
         },
       ]);
       if (job.data.trackingEmail) {

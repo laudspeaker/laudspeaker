@@ -202,14 +202,15 @@ export default function SettingsEventsBeta() {
                     aria-describedby="password-error"
                     onBlur={handleBlur}
                   />
-                  {showErrors.posthogApiKey && errors.posthogApiKey.length > 0 && (
-                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center">
-                      <ExclamationCircleIcon
-                        className="h-5 w-5 text-red-500"
-                        aria-hidden="true"
-                      />
-                    </div>
-                  )}
+                  {showErrors.posthogApiKey &&
+                    errors.posthogApiKey.length > 0 && (
+                      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center">
+                        <ExclamationCircleIcon
+                          className="h-5 w-5 text-red-500"
+                          aria-hidden="true"
+                        />
+                      </div>
+                    )}
                 </div>
                 {showErrors.posthogApiKey &&
                   errors.posthogApiKey.map((item) => (
