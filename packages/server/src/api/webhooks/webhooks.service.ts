@@ -20,7 +20,6 @@ import Mailgun from 'mailgun.js';
 import formData from 'form-data';
 import axios from 'axios';
 import FormData from 'form-data';
-import { WebhookData } from '../templates/entities/template.entity';
 
 const createTableQuery = `
 CREATE TABLE IF NOT EXISTS message_status

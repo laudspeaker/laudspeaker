@@ -339,8 +339,16 @@ export class TemplatesService {
     });
     if (!foundTemplate) throw new NotFoundException('Template not found');
 
-    const { owner, slackMessage, style, subject, text, type, smsText } =
-      foundTemplate;
+    const {
+      owner,
+      slackMessage,
+      style,
+      subject,
+      text,
+      type,
+      smsText,
+      webhookData,
+    } = foundTemplate;
 
     const ownerId = owner.id;
 
@@ -370,6 +378,7 @@ export class TemplatesService {
       text,
       type,
       smsText,
+      webhookData,
     });
   }
 
