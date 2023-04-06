@@ -1,7 +1,7 @@
 /* eslint-disable no-case-declarations */
-import { Process, Processor } from '@nestjs/bull';
+import { OnWorkerEvent, Processor, WorkerHost } from '@nestjs/bullmq';
 import { Inject, LoggerService } from '@nestjs/common';
-import { Job } from 'bull';
+import { Job } from 'bullmq';
 import { Injectable } from '@nestjs/common';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import Mailgun from 'mailgun.js';
@@ -17,30 +17,113 @@ import { PostHog } from 'posthog-node';
 import { cert, App, getApp, initializeApp } from 'firebase-admin/app';
 import { getMessaging } from 'firebase-admin/messaging';
 
-@Processor('message')
+export enum MessageType {
+  SMS = 'sms',
+  EMAIL = 'email',
+  FIREBASE = 'firebase',
+}
+
 @Injectable()
-export class MessageProcessor {
+@Processor('message')
+export class MessageProcessor extends WorkerHost {
   private MAXIMUM_SMS_LENGTH = 1600;
   private MAXIMUM_PUSH_LENGTH = 256;
   private MAXIMUM_PUSH_TITLE_LENGTH = 48;
   private tagEngine = new Liquid();
-  private phClient = new PostHog(
-    process.env.POSTHOG_KEY,
-    { host: process.env.POSTHOG_HOST } // You can omit this line if using PostHog Cloud
-  );
+  private phClient = new PostHog(process.env.POSTHOG_KEY, {
+    host: process.env.POSTHOG_HOST,
+  });
+  private messagesMap: Record<
+    MessageType,
+    (job: Job<any, any, string>) => Promise<void>
+  > = {
+      [MessageType.EMAIL]: async (job) => {
+        await this.handleEmail(job);
+      },
+      [MessageType.SMS]: async (job) => {
+        await this.handleSMS(job);
+      },
+      [MessageType.FIREBASE]: async (job) => {
+        await this.handleFirebase(job);
+      },
+    };
 
   constructor(
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
     private readonly logger: LoggerService,
     private readonly webhooksService: WebhooksService
-  ) {}
+  ) {
+    super();
+  }
 
-  @Process('email')
-  async handleEmail(job: Job) {
+  async process(job: Job<any, any, string>): Promise<any> {
+    await this.messagesMap[job.name](job);
+  }
+
+  @OnWorkerEvent('active')
+  onActive(job: Job<any, any, any>, prev: string) {
+    this.logger.debug(`${JSON.stringify(job)} ${prev}`, `email.processor.ts:MessageProcessor.onActive()`);
+  }
+
+  @OnWorkerEvent('closed')
+  onClosed() {
+    this.logger.debug(``, `email.processor.ts:MessageProcessor.onClosed()`);
+  }
+
+  @OnWorkerEvent('closing')
+  onClosing(msg: string) {
+    this.logger.debug(`${msg}`, `email.processor.ts:MessageProcessor.onClosing()`);
+  }
+
+  @OnWorkerEvent('completed')
+  onCompleted(job: Job<any, any, any>, result: any, prev: string) {
+    this.logger.debug(`${JSON.stringify(job)} ${result} ${prev}`, `email.processor.ts:MessageProcessor.onCompleted()`);
+  }
+
+  @OnWorkerEvent('drained')
+  onDrained() {
+    this.logger.debug(``, `email.processor.ts:MessageProcessor.onDrained()`);
+  }
+
+  @OnWorkerEvent('error')
+  onError(failedReason: Error) {
+    this.logger.debug(`${failedReason}`, `templates.service.ts.ts:MessageProcessor.onError()`);
+  }
+
+  @OnWorkerEvent('failed')
+  onFailed(job: Job<any, any, any> | undefined, error: Error, prev: string) {
+    this.logger.debug(`${JSON.stringify(job)} ${error} ${prev}`, `email.processor.ts:MessageProcessor.onFailed()`);
+  }
+
+  @OnWorkerEvent('paused')
+  onPaused() {
+    this.logger.debug(``, `email.processor.ts:MessageProcessor.onPaused()`);
+  }
+
+  @OnWorkerEvent('progress')
+  onProgress(job: Job<any, any, any>, progress: number | object) {
+    this.logger.debug(`${JSON.stringify(job)} ${progress}`, `email.processor.ts:MessageProcessor.onProgress()`);
+  }
+
+  @OnWorkerEvent('ready')
+  onReady() {
+    this.logger.debug(``, `email.processor.ts:MessageProcessor.onReady()`);
+  }
+
+  @OnWorkerEvent('resumed')
+  onResumed() {
+    this.logger.debug(``, `email.processor.ts:MessageProcessor.onResumed()`);
+  }
+
+  @OnWorkerEvent('stalled')
+  onStalled(jobId: string, prev: string) {
+    this.logger.debug(`${jobId} ${prev}`, `email.processor.ts:MessageProcessor.onStalled()`);
+  }
+
+  async handleEmail(job: Job<any, any, string>): Promise<any> {
     if (!job.data.to) {
       this.logger.error(
-        `Error: Skipping sending for ${
-          job.data.customerId
+        `Error: Skipping sending for ${job.data.customerId
         }, no email; job ${JSON.stringify(job.data)}`,
         `email.processor.ts:MessageProcessor.handleEmail()`
       );
@@ -88,6 +171,7 @@ export class MessageProcessor {
       let msg: any;
       switch (job.data.eventProvider) {
         case 'sendgrid':
+          console.log('Inside of message sending');
           const sg = new MailService();
           sg.setApiKey(job.data.key);
           const sendgridMessage = await sg.send({
@@ -109,6 +193,7 @@ export class MessageProcessor {
             ],
           });
           msg = sendgridMessage;
+          console.log('Inside of message sending');
           await this.webhooksService.insertClickHouseMessages([
             {
               audienceId: job.data.audienceId,
@@ -181,12 +266,10 @@ export class MessageProcessor {
     }
   }
 
-  @Process('sms')
   async handleSMS(job: Job) {
     if (!job.data.to) {
       this.logger.error(
-        `Error: Skipping sending for ${
-          job.data.customerId
+        `Error: Skipping sending for ${job.data.customerId
         }, no phone; job ${JSON.stringify(job.data)}`,
         `email.processor.ts:MessageProcessor.handleSMS()`
       );
@@ -268,12 +351,10 @@ export class MessageProcessor {
     }
   }
 
-  @Process('firebase')
   async handleFirebase(job: Job) {
     if (!job.data.phDeviceToken) {
       this.logger.error(
-        `Error: Skipping sending for ${
-          job.data.customerId
+        `Error: Skipping sending for ${job.data.customerId
         }, no device token; job ${JSON.stringify(job.data)}`,
         `email.processor.ts:MessageProcessor.handleFirebase()`
       );

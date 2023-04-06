@@ -1,7 +1,7 @@
 /* eslint-disable no-case-declarations */
-import { Process, Processor } from '@nestjs/bull';
+import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Inject, LoggerService } from '@nestjs/common';
-import { Job } from 'bull';
+import { Job } from 'bullmq';
 import { Injectable } from '@nestjs/common';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { Liquid } from 'liquidjs';
@@ -20,7 +20,7 @@ import { TemplatesService } from '../templates/templates.service';
 
 @Processor('webhooks')
 @Injectable()
-export class WebhooksProcessor {
+export class WebhooksProcessor extends WorkerHost {
   private tagEngine = new Liquid();
 
   constructor(
@@ -28,11 +28,12 @@ export class WebhooksProcessor {
     private readonly logger: LoggerService,
     private readonly webhooksService: WebhooksService,
     private readonly templatesService: TemplatesService
-  ) {}
+  ) {
+    super();
+  }
 
-  @Process('whapicall')
-  async handleWebhookTemplate(
-    job: Job<{ template: Template; [key: string]: any }>
+  async process(
+    job: Job<{ template: Template;[key: string]: any }>
   ) {
     const { template, filteredTags } = job.data;
 
@@ -83,7 +84,7 @@ export class WebhooksProcessor {
 
     this.logger.debug(
       'Sending webhook requst: \n' +
-        JSON.stringify(template.webhookData, null, 2)
+      JSON.stringify(template.webhookData, null, 2)
     );
     let error: string | null = null;
     while (!success && retriesCount < retries) {
@@ -101,9 +102,9 @@ export class WebhooksProcessor {
         retriesCount++;
         this.logger.warn(
           'Unsuccessfull webhook request. Retries: ' +
-            retriesCount +
-            '. Error: ' +
-            e
+          retriesCount +
+          '. Error: ' +
+          e
         );
         if (e instanceof Error) error = e.message;
         await wait(5000);

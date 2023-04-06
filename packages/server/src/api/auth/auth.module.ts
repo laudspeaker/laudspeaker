@@ -11,7 +11,7 @@ import { ApiKeyStrategy } from './strategies/apiKey.strategy';
 import { Template } from '../templates/entities/template.entity';
 import { Workflow } from '../workflows/entities/workflow.entity';
 import { Audience } from '../audiences/entities/audience.entity';
-import { BullModule } from '@nestjs/bull';
+import { BullModule } from '@nestjs/bullmq';
 import { Verification } from './entities/verification.entity';
 import { CustomersModule } from '../customers/customers.module';
 import { Recovery } from './entities/recovery.entity';

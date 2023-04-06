@@ -26,8 +26,8 @@ import {
   CustomerKeys,
   CustomerKeysDocument,
 } from './schemas/customer-keys.schema';
-import { InjectQueue } from '@nestjs/bull';
-import { Queue } from 'bull';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { createClient } from '@clickhouse/client';
 import { Workflow } from '../workflows/entities/workflow.entity';
@@ -487,7 +487,7 @@ export class CustomersService {
     }
     const authString = 'Bearer ' + phAuth;
     try {
-      const job = await this.customersQueue.add({
+      await this.customersQueue.add('sync', {
         url: posthogUrl,
         auth: authString,
         account: account,

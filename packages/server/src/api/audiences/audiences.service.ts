@@ -33,7 +33,7 @@ export class AudiencesService {
     private workflowRepository: Repository<Workflow>,
     @Inject(TemplatesService) public templatesService: TemplatesService,
     @Inject(JobsService) public jobsService: JobsService
-  ) {}
+  ) { }
 
   /**
    * Find all audiences that belong to a given account. If
@@ -252,7 +252,6 @@ export class AudiencesService {
   ): Promise<{
     jobIds: (string | number)[];
     templates: Template[];
-    allJobData?: any[];
   }> {
     // Base case: customer document must exist
     if (!customer || !customer.id) {
@@ -263,7 +262,7 @@ export class AudiencesService {
     const customerId = customer?.id;
     let index = -1; // Index of the customer ID in the fromAud.customers array
     const jobIds: (string | number)[] = [];
-    const allJobData: any[] = [];
+    let jobId: string | number;
     let fromAud: Audience, toAud: Audience;
     const templates: Template[] = [];
     try {
@@ -344,8 +343,8 @@ export class AudiencesService {
               trigger.properties.eventTime === 'SpecificTime'
                 ? TimeJobType.SPECIFIC_TIME
                 : trigger.properties.eventTime === 'Delay'
-                ? TimeJobType.DELAY
-                : TimeJobType.TIME_WINDOW;
+                  ? TimeJobType.DELAY
+                  : TimeJobType.TIME_WINDOW;
 
             const now = DateTime.now();
             this.jobsService.create(account, {
@@ -359,9 +358,9 @@ export class AudiencesService {
                 trigger.properties.eventTime === 'SpecificTime'
                   ? trigger.properties.specificTime
                   : now.plus({
-                      hours: trigger.properties.delayTime?.split(':')?.[0],
-                      minutes: trigger.properties.delayTime?.split(':')?.[1],
-                    }),
+                    hours: trigger.properties.delayTime?.split(':')?.[0],
+                    minutes: trigger.properties.delayTime?.split(':')?.[1],
+                  }),
               type,
             });
           }
@@ -396,8 +395,8 @@ export class AudiencesService {
             );
             this.logger.warn(
               'Templates: [' +
-                dataIds.join(',') +
-                "] was skipped to send because test mail's can't be sent to external account."
+              dataIds.join(',') +
+              "] was skipped to send because test mail's can't be sent to external account."
             );
           }
         }
@@ -408,7 +407,7 @@ export class AudiencesService {
             templateIndex < toTemplates?.length;
             templateIndex++
           ) {
-            const { jobId, jobData } = await this.templatesService.queueMessage(
+            jobId = await this.templatesService.queueMessage(
               account,
               toTemplates[templateIndex],
               customer,
@@ -420,7 +419,6 @@ export class AudiencesService {
                 id: toTemplates[templateIndex],
               })
             );
-            allJobData.push(jobData);
             this.logger.debug('Queued Message');
             jobIds.push(jobId);
           }
@@ -431,7 +429,7 @@ export class AudiencesService {
       return Promise.reject(err);
     }
 
-    return Promise.resolve({ jobIds, templates, allJobData });
+    return Promise.resolve({ jobIds, templates });
   }
 
   /**

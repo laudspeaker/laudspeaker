@@ -3,7 +3,7 @@ import { TemplatesService } from './templates.service';
 import { TemplatesController } from './templates.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Template } from './entities/template.entity';
-import { BullModule } from '@nestjs/bull';
+import { BullModule } from '@nestjs/bullmq';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Customer, CustomerSchema } from '../customers/schemas/customer.schema';
 import { Audience } from '../audiences/entities/audience.entity';
