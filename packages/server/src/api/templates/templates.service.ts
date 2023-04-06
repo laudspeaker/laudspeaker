@@ -14,9 +14,10 @@ import {
   Customer,
   CustomerDocument,
 } from '../customers/schemas/customer.schema';
+import { InjectModel } from '@nestjs/mongoose';
 import { CreateTemplateDto } from './dto/create-template.dto';
 import { UpdateTemplateDto } from './dto/update-template.dto';
-import { Template } from './entities/template.entity';
+import { Template, TemplateType, WebhookMethod } from './entities/template.entity';
 import { Job, Queue } from 'bullmq';
 import {
   InjectQueue,
@@ -31,6 +32,8 @@ import { EventDto } from '../events/dto/event.dto';
 import { Audience } from '../audiences/entities/audience.entity';
 import { cleanTagsForSending } from '@/shared/utils/helpers';
 import { MessageType } from '../email/email.processor';
+import { Model } from 'mongoose';
+import { Liquid } from 'liquidjs';
 
 @Injectable()
 @QueueEventsListener('message')
@@ -40,11 +43,12 @@ export class TemplatesService extends QueueEventsHost {
     private readonly logger: LoggerService,
     @InjectRepository(Template)
     public templatesRepository: Repository<Template>,
-    @InjectModel(Customer.name) public CustomerModel: Model<CustomerDocument>,
+    @InjectModel(Customer.name) private customerModel: Model<CustomerDocument>,
     @InjectRepository(Audience)
     private audiencesRepository: Repository<Audience>,
     @Inject(SlackService) private slackService: SlackService,
     @InjectQueue('message') private readonly messageQueue: Queue,
+    @InjectQueue('webhooks') private readonly webhooksQueue: Queue,
     @InjectQueue('slack') private readonly slackQueue: Queue
   ) {
     super();
@@ -184,7 +188,7 @@ export class TemplatesService extends QueueEventsHost {
     customer: CustomerDocument,
     event: EventDto,
     audienceId?: string
-  ): Promise<{ jobData: any; jobId: string | number }> {
+  ): Promise<string | number> {
     const customerId = customer.id;
     let template: Template,
       job: Job<any>, // created jobId
@@ -216,7 +220,6 @@ export class TemplatesService extends QueueEventsHost {
     let key = mailgunAPIKey;
     let from = sendingName;
 
-    let jobData: any;
 
     switch (template.type) {
       case TemplateType.EMAIL:
@@ -282,7 +285,7 @@ export class TemplatesService extends QueueEventsHost {
           trackingEmail: email,
         });
         break;
-      case 'sms':
+      case TemplateType.SMS:
         job = await this.messageQueue.add(MessageType.SMS, {
           accountId: account.id,
           audienceId,
@@ -297,7 +300,7 @@ export class TemplatesService extends QueueEventsHost {
           trackingEmail: email,
         });
         break;
-      case 'firebase':
+      case TemplateType.FIREBASE:
         job = await this.messageQueue.add(MessageType.FIREBASE, {
           accountId: account.id,
           audienceId,
@@ -320,18 +323,10 @@ export class TemplatesService extends QueueEventsHost {
             customerId,
             accountId: account.id,
           });
-          try {
-            jobData = await job.finished();
-          } catch {
-            this.logger.warn('Error while retrieving webhook job data');
-          }
         }
         break;
     }
-    return Promise.resolve({
-      jobData,
-      jobId: message ? message?.sid : job?.id,
-    });
+    return Promise.resolve(message ? message?.sid : job?.id);
   }
 
   async findAll(
@@ -500,6 +495,7 @@ export class TemplatesService extends QueueEventsHost {
     id: string,
     testCustomerEmail: string
   ) {
+    const tagEngine = new Liquid();
     const template = await this.templatesRepository.findOneBy({
       owner: { id: account.id },
       id,
@@ -509,7 +505,7 @@ export class TemplatesService extends QueueEventsHost {
     if (!template || !template.webhookData)
       throw new NotFoundException('Webhook template not found');
 
-    const customer = await this.CustomerModel.findOne({
+    const customer = await this.customerModel.findOne({
       email: testCustomerEmail,
     });
 
@@ -522,7 +518,7 @@ export class TemplatesService extends QueueEventsHost {
 
     let { body, headers, url } = template.webhookData;
 
-    url = await this.tagEngine.parseAndRender(url, filteredTags || {}, {
+    url = await tagEngine.parseAndRender(url, filteredTags || {}, {
       strictVariables: true,
     });
     url = await this.parseTemplateTags(url);
@@ -538,7 +534,7 @@ export class TemplatesService extends QueueEventsHost {
       body = undefined;
     } else {
       body = await this.parseTemplateTags(body);
-      body = await this.tagEngine.parseAndRender(body, filteredTags || {}, {
+      body = await tagEngine.parseAndRender(body, filteredTags || {}, {
         strictVariables: true,
       });
     }
@@ -547,12 +543,12 @@ export class TemplatesService extends QueueEventsHost {
       await Promise.all(
         Object.entries(headers).map(async ([key, value]) => [
           await this.parseTemplateTags(
-            await this.tagEngine.parseAndRender(key, filteredTags || {}, {
+            await tagEngine.parseAndRender(key, filteredTags || {}, {
               strictVariables: true,
             })
           ),
           await this.parseTemplateTags(
-            await this.tagEngine.parseAndRender(value, filteredTags || {}, {
+            await tagEngine.parseAndRender(value, filteredTags || {}, {
               strictVariables: true,
             })
           ),

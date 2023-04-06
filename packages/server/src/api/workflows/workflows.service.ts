@@ -66,11 +66,9 @@ export class WorkflowsService {
     private customersService: CustomersService,
     @InjectModel(EventKeys.name)
     private EventKeysModel: Model<EventKeysDocument>,
-    @InjectQueue(JobTypes.events)
-    private readonly eventsQueue: Queue,
     @InjectConnection() private readonly connection: mongoose.Connection,
     private readonly audiencesHelper: AudiencesHelper
-  ) {}
+  ) { }
 
   /**
    * Finds all workflows
@@ -158,7 +156,7 @@ export class WorkflowsService {
     const openedData = (await openedResponse.json<any>())?.data;
     const opened =
       +openedData?.[0]?.[
-        'uniqExact(tuple(audienceId, customerId, templateId, messageId, event, eventProvider))'
+      'uniqExact(tuple(audienceId, customerId, templateId, messageId, event, eventProvider))'
       ];
 
     const openedPercentage = (opened / sent) * 100;
@@ -170,7 +168,7 @@ export class WorkflowsService {
     const clickedData = (await clickedResponse.json<any>())?.data;
     const clicked =
       +clickedData?.[0]?.[
-        'uniqExact(tuple(audienceId, customerId, templateId, messageId, event, eventProvider))'
+      'uniqExact(tuple(audienceId, customerId, templateId, messageId, event, eventProvider))'
       ];
 
     const clickedPercentage = (clicked / sent) * 100;
@@ -817,45 +815,42 @@ export class WorkflowsService {
                           condition.key == 'current_url' &&
                           trigger.providerType == ProviderTypes.Posthog &&
                           trigger.providerParams ===
-                            PosthogTriggerParams.Pageview
+                          PosthogTriggerParams.Pageview
                         ) {
                           this.logger.debug(
-                            `Comparing: ${event?.event?.page?.url || ''} ${
-                              condition.comparisonType || ''
+                            `Comparing: ${event?.event?.page?.url || ''} ${condition.comparisonType || ''
                             } ${condition.value || ''}`
                           );
                           return ['exists', 'doesNotExist'].includes(
                             condition.comparisonType
                           )
                             ? this.audiencesHelper.operableCompare(
-                                event?.event?.page?.url,
-                                condition.comparisonType
-                              )
+                              event?.event?.page?.url,
+                              condition.comparisonType
+                            )
                             : await this.audiencesHelper.conditionalCompare(
-                                event?.event?.page?.url,
-                                condition.value,
-                                condition.comparisonType
-                              );
+                              event?.event?.page?.url,
+                              condition.value,
+                              condition.comparisonType
+                            );
                         } else {
                           this.logger.debug(
-                            `Comparing: ${
-                              event?.event?.[condition.key] || ''
-                            } ${condition.comparisonType || ''} ${
-                              condition.value || ''
+                            `Comparing: ${event?.event?.[condition.key] || ''
+                            } ${condition.comparisonType || ''} ${condition.value || ''
                             }`
                           );
                           return ['exists', 'doesNotExist'].includes(
                             condition.comparisonType
                           )
                             ? this.audiencesHelper.operableCompare(
-                                event?.event?.[condition.key],
-                                condition.comparisonType
-                              )
+                              event?.event?.[condition.key],
+                              condition.comparisonType
+                            )
                             : await this.audiencesHelper.conditionalCompare(
-                                event?.event?.[condition.key],
-                                condition.value,
-                                condition.comparisonType
-                              );
+                              event?.event?.[condition.key],
+                              condition.value,
+                              condition.comparisonType
+                            );
                         }
                       })
                     );
@@ -887,7 +882,6 @@ export class WorkflowsService {
                       const {
                         jobIds: jobIdArr,
                         templates,
-                        allJobData,
                       } = await this.audiencesService.moveCustomer(
                         account,
                         from?.id,
@@ -900,15 +894,14 @@ export class WorkflowsService {
                       );
                       this.logger.debug(
                         'Moved ' +
-                          customer?.id +
-                          ' out of ' +
-                          from?.id +
-                          ' and into ' +
-                          to?.id
+                        customer?.id +
+                        ' out of ' +
+                        from?.id +
+                        ' and into ' +
+                        to?.id
                       );
                       jobId.jobIds = jobIdArr;
                       jobId.templates = templates;
-                      jobId.allJobData = allJobData;
                       jobIds.push(jobId);
                     } catch (err: any) {
                       this.logger.error('Error: ' + err);
@@ -986,8 +979,8 @@ export class WorkflowsService {
               ...item,
               executionTime: new Date(
                 new Date().getTime() -
-                  found.latestPause.getTime() +
-                  item.executionTime.getTime()
+                found.latestPause.getTime() +
+                item.executionTime.getTime()
               ),
             }))
           );
