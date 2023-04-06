@@ -5,6 +5,8 @@ import MergeTagTextarea from "components/MergeTagTextarea";
 import React, { FC, ReactNode, RefObject, useEffect, useState } from "react";
 import ApiService from "services/api.service";
 import { Buffer } from "buffer";
+import { toast } from "react-toastify";
+import { AxiosError } from "axios";
 
 export enum WebhookMethod {
   GET = "GET",
@@ -108,7 +110,7 @@ const WebhookSettings: FC<WebhookSettingsProps> = ({
   const [authType, setAuthType] = useState<AuthType>(AuthType.CUSTOM);
   const [bodyType, setBodyType] = useState(BodyType.JSON);
   const [headersString, setHeadersString] = useState(
-    Object.entries(webhookState.headers)
+    Object.entries(webhookState.headers || {})
       .filter(([key]) => key !== "Authorization")
       .map(([key, value]) => `${key}: ${value}`)
       .join("\n") || ""
@@ -458,14 +460,23 @@ const WebhookSettings: FC<WebhookSettingsProps> = ({
   };
 
   const handleTest = async () => {
-    if (onSave) await onSave();
+    try {
+      if (onSave) await onSave();
 
-    const { data } = await ApiService.post<TestResponseData>({
-      url: `/templates/test-webhook`,
-      options: { webhookData: webhookState, testCustomerEmail },
-    });
+      const { data } = await ApiService.post<TestResponseData>({
+        url: `/templates/test-webhook`,
+        options: { webhookData: webhookState, testCustomerEmail },
+      });
 
-    setTestResponseData(data);
+      setTestResponseData(data);
+      toast.success("Successfully sent test request");
+    } catch (e) {
+      let message = "Error while doing test";
+      if (e instanceof AxiosError) {
+        message = String(e.response?.data?.message || message);
+      }
+      toast.error(message);
+    }
   };
 
   return (

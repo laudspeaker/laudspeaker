@@ -399,6 +399,8 @@ export class TemplatesService {
   }
 
   public async parseTemplateTags(str: string) {
+    this.logger.debug('Parsing template tags...');
+
     const matches = str.match(
       /\[\[\s(email|sms|slack|firebase);[a-zA-Z0-9-\s]+;[a-zA-Z]+\s\]\]/g
     );
@@ -416,6 +418,8 @@ export class TemplatesService {
         type: <TemplateType>type,
         name: templateName,
       });
+
+      if (template) this.logger.debug('Found template: ' + template.name);
 
       str = str.replace(match, template?.[templateProperty] || '');
     }

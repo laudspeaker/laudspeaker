@@ -54,7 +54,7 @@ const WebhookBuilder = () => {
 
         setTemplateId(data.id);
         setTemplateName(name);
-        setWebhookState({ ...data.webhookData } || { ...webhookState });
+        setWebhookState(data.webhookData || webhookState);
 
         const { data: attributesData } = await getResources("attributes");
         setPossibleAttributes(
