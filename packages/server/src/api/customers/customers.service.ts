@@ -345,6 +345,77 @@ export class CustomersService {
     return result;
   }
 
+  addPrefixToKeys(obj: Record<string, any>, prefix: string): Record<string, any> {
+    const newObj: Record<string, any> = {};
+  
+    for (const [key, value] of Object.entries(obj)) {
+      newObj[`${prefix}${key}`] = value;
+    }
+  
+    return newObj;
+  }
+
+  filterFalsyAndDuplicates<T>(arr: T[]): T[] {
+    return Array.from(new Set(arr.filter(Boolean)));
+  }
+
+  //update posthog users after an identify
+  async phIdentifyUpdate(
+    account: Account,
+    identifyEvent: any,
+  ){
+
+    this.logger.debug("here 2");
+
+    try{
+    delete identifyEvent.verified;
+    delete identifyEvent.ownerId;
+    delete identifyEvent._id;
+    delete identifyEvent.__v;
+    delete identifyEvent.audiences;
+    //const customer = await this.findOne(account, identifyEvent.userId);
+
+    const addedBefore = await this.CustomerModel.find({
+      ownerId: (<Account>account).id,
+        $or: [
+          {posthogId:{$in: [identifyEvent.userId]} },
+          {posthogId: {$in: [identifyEvent.anonymousId]} }
+        ]
+      ,
+    }).exec();
+
+    if(addedBefore.length === 1){
+      //this.logger.debug("here a");
+      //this.logger.debug("user is " + JSON.stringify(addedBefore[0]));
+      //this.logger.debug("new traits should be " + JSON.stringify(this.addPrefixToKeys(identifyEvent.context.traits, "_postHog_")));
+
+      const a = await this.CustomerModel.updateOne({
+        _id: addedBefore[0]._id
+      }, this.addPrefixToKeys(identifyEvent.context.traits, "_postHog_")
+      ).exec();
+
+      //this.logger.debug("customer update response is" + JSON.stringify(a));
+
+    } else if (addedBefore.length === 0){
+      //this.logger.debug("here b");
+
+      const createdCustomer = new this.CustomerModel({
+        ownerId: (<Account>account).id,
+        posthogId: this.filterFalsyAndDuplicates([identifyEvent.userId? identifyEvent.userId : identifyEvent.anonymousId, identifyEvent.anonymousId]),
+        ...this.addPrefixToKeys(identifyEvent.context.traits, "_postHog_"),
+      });
+      return createdCustomer.save();
+    }
+    else{
+      //this.logger.debug("here c");
+
+      this.logger.warn(`${JSON.stringify(addedBefore)}`, `customers.service.ts: CustomersService.phIdentifyUpdate` );
+    }
+    } catch (e){
+      this.logger.error(`${e}`, `customers.service.ts: CustomersService.phIdentifyUpdate` );
+    }
+  }
+
   async update(
     account: Account,
     id: string,

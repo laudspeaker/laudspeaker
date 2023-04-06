@@ -157,6 +157,14 @@ export class EventsService {
           'Processing posthog event: ' + JSON.stringify(currentEvent, null, 2)
         );
 
+        //update customer properties on every identify call as per best practice
+        if(currentEvent.type === 'identify'){
+          this.logger.debug("here 1");
+
+          this.customersService.phIdentifyUpdate(account,currentEvent);
+          continue;
+        }
+
         if (
           currentEvent.type === 'track' &&
           currentEvent.event &&
@@ -166,6 +174,7 @@ export class EventsService {
           currentEvent.event !== '$pageleave' &&
           currentEvent.event !== '$rageclick'
         ) {
+          //checks to see if we have seen this event before (otherwise we update the events dropdown)
           const found = await this.PosthogEventTypeModel.findOne({
             name: currentEvent.event,
             ownerId: account.id,
