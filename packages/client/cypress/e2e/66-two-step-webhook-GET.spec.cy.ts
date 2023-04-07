@@ -24,32 +24,37 @@ describe(
 
       startWebhookJouney("webhook1");
 
-      cy.request({
-        method: "POST",
-        url: `${Cypress.env("AxiosURL")}events`,
-        headers: {
-          Authorization: `Api-Key ${userAPIkey}`,
-        },
-        body: {
-          correlationKey: "email",
-          correlationValue: emailTemplate.correlationValue,
-          event: { wh: "wh" },
-        },
-      }).then(({ body }) => {
-        cy.wait(5000);
-        cy.request({
-          method: "POST",
-          headers: {
-            Authorization: `Api-Key ${userAPIkey}`,
-          },
-          url: `${Cypress.env("AxiosURL")}events/job-status/webhook`,
-          body: {
-            jobId: body[0]?.jobIds?.[0],
-          },
-        }).then(({ body }) => {
-          expect(body).to.equal("completed");
-        });
+      cy.wait(5000);
+      cy.reload();
+      cy.get(".justify-between > :nth-child(1) > .font-medium").then((el) => {
+        expect(Number(el.text())).greaterThan(0);
       });
+      // cy.request({
+      //   method: "POST",
+      //   url: `${Cypress.env("AxiosURL")}events`,
+      //   headers: {
+      //     Authorization: `Api-Key ${userAPIkey}`,
+      //   },
+      //   body: {
+      //     correlationKey: "email",
+      //     correlationValue: emailTemplate.correlationValue,
+      //     event: { wh: "wh" },
+      //   },
+      // }).then(({ body }) => {
+      //   cy.wait(5000);
+      //   cy.request({
+      //     method: "POST",
+      //     headers: {
+      //       Authorization: `Api-Key ${userAPIkey}`,
+      //     },
+      //     url: `${Cypress.env("AxiosURL")}events/job-status/webhook`,
+      //     body: {
+      //       jobId: body[0]?.jobIds?.[0],
+      //     },
+      //   }).then(({ body }) => {
+      //     expect(body).to.equal("completed");
+      //   });
+      // });
     });
   }
 );

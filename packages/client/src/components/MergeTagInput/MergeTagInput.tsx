@@ -128,6 +128,7 @@ const MergeTagInput: FC<MergeTagInputProps> = ({
           setIsPreview(false);
         }}
         data-custominput-placeholder={placeholder}
+        id={id}
       >
         {items.length > 0 ? (
           items

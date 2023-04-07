@@ -110,6 +110,7 @@ const MergeTagTextarea: FC<MergeTagTextareaProps> = ({
         onClick={() => {
           setIsPreview(false);
         }}
+        id={id}
         data-custominput-placeholder={placeholder}
       >
         {items.length > 0 ? (

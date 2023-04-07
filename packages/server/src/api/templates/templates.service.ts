@@ -248,11 +248,6 @@ export class TemplatesService {
             customerId,
             accountId: account.id,
           });
-          try {
-            jobData = await job.finished();
-          } catch {
-            this.logger.warn('Error while retrieving webhook job data');
-          }
         }
         break;
     }
