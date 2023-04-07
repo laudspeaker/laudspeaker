@@ -159,10 +159,7 @@ export class EventsService {
 
         //update customer properties on every identify call as per best practice
         if(currentEvent.type === 'identify'){
-          this.logger.debug("here 1");
-
           this.customersService.phIdentifyUpdate(account,currentEvent);
-          continue;
         }
         //checking for a custom tracked posthog event here
         if (
