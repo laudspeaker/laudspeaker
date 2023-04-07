@@ -164,7 +164,7 @@ export class EventsService {
           this.customersService.phIdentifyUpdate(account,currentEvent);
           continue;
         }
-
+        //checking for a custom tracked posthog event here
         if (
           currentEvent.type === 'track' &&
           currentEvent.event &&
@@ -193,6 +193,7 @@ export class EventsService {
               { session: transactionSession }
             );
           }
+          //to do: check if the event sets props, if so we need to update the person traits
         }
 
         let jobIDs: WorkflowTick[] = [];

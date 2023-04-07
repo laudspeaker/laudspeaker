@@ -385,19 +385,20 @@ export class CustomersService {
     }).exec();
 
     if(addedBefore.length === 1){
-      //this.logger.debug("here a");
-      //this.logger.debug("user is " + JSON.stringify(addedBefore[0]));
-      //this.logger.debug("new traits should be " + JSON.stringify(this.addPrefixToKeys(identifyEvent.context.traits, "_postHog_")));
+      this.logger.debug("here a");
+      this.logger.debug("user is " + JSON.stringify(addedBefore[0]));
+      this.logger.debug("new traits should be " + JSON.stringify(this.addPrefixToKeys(identifyEvent.context.traits, "_postHog_")));
 
       const a = await this.CustomerModel.updateOne({
         _id: addedBefore[0]._id
-      }, this.addPrefixToKeys(identifyEvent.context.traits, "_postHog_")
+      }, {posthogId: this.filterFalsyAndDuplicates([identifyEvent.userId? identifyEvent.userId : identifyEvent.anonymousId, identifyEvent.anonymousId]),
+      ...this.addPrefixToKeys(identifyEvent.context.traits, "_postHog_")}
       ).exec();
 
-      //this.logger.debug("customer update response is" + JSON.stringify(a));
+      this.logger.debug("customer update response is" + JSON.stringify(a));
 
     } else if (addedBefore.length === 0){
-      //this.logger.debug("here b");
+      this.logger.debug("here b");
 
       const createdCustomer = new this.CustomerModel({
         ownerId: (<Account>account).id,
@@ -407,7 +408,7 @@ export class CustomersService {
       return createdCustomer.save();
     }
     else{
-      //this.logger.debug("here c");
+      this.logger.debug("here c");
 
       this.logger.warn(`${JSON.stringify(addedBefore)}`, `customers.service.ts: CustomersService.phIdentifyUpdate` );
     }
