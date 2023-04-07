@@ -1,22 +1,23 @@
-import Chip from "components/Elements/Chip";
-import React, { FC, RefObject, useEffect, useRef, useState } from "react";
-import { Buffer } from "buffer";
+import Modal from "components/Elements/Modal";
+import SlackTemplateHeader from "pages/SlackBuilder/SlackTemplateHeader";
 import WebhookSettings, {
   FallBackAction,
   WebhookMethod,
   WebhookState,
 } from "pages/WebhookBuilder/WebhookSettings";
-import Modal from "components/Elements/Modal";
-import SlackTemplateHeader from "pages/SlackBuilder/SlackTemplateHeader";
+import React, { FC, RefObject, useEffect, useRef, useState } from "react";
+import { Buffer } from "buffer";
 
-interface ApiCallTagPickerProps {
+interface ApiCallMergeTagModalProps {
   itemContent: string;
-  handleValueReplace: (regExp: RegExp | string, str: string) => void;
+  handleUpdateTag: (state: WebhookState) => void;
+  onClose: () => void;
 }
 
-const ApiCallTagPicker: FC<ApiCallTagPickerProps> = ({
+const ApiCallMergeTagModal: FC<ApiCallMergeTagModalProps> = ({
   itemContent,
-  handleValueReplace,
+  handleUpdateTag,
+  onClose,
 }) => {
   const [webhookStateBase64, webhookProps] = itemContent.trim().split(";");
 
@@ -37,7 +38,6 @@ const ApiCallTagPicker: FC<ApiCallTagPickerProps> = ({
 
   const [webhookState, setWebhookState] =
     useState<WebhookState>(initialWebhookState);
-  const [isWebhookModalOpen, setIsWebhookModalOpen] = useState(false);
 
   const [selectedRef, setSelectedRef] =
     useState<RefObject<HTMLInputElement | HTMLTextAreaElement>>();
@@ -80,56 +80,41 @@ const ApiCallTagPicker: FC<ApiCallTagPickerProps> = ({
   };
 
   useEffect(() => {
-    handleValueReplace(
-      `[{[${itemContent}]}]`,
-      `[{[ ${Buffer.from(JSON.stringify(webhookState)).toString(
-        "base64"
-      )};${webhookProps} ]}]`
-    );
+    handleUpdateTag(webhookState);
+    // handleValueReplace(
+    //   `[{[${itemContent}]}]`,
+    //   `[{[ ${Buffer.from(JSON.stringify(webhookState)).toString(
+    //     "base64"
+    //   )};${webhookProps} ]}]`
+    // );
   }, [webhookState]);
 
   return (
-    <>
-      <span className="h-full" onClick={() => setIsWebhookModalOpen(true)}>
-        <Chip
-          label={
-            webhookState && webhookProps
-              ? `${webhookState.method} ${webhookState.url} (${webhookProps})`
-              : "specify the property here"
-          }
-          textClass="text-[20px]"
-        />
-      </span>
-      <Modal
-        isOpen={isWebhookModalOpen}
-        onClose={() => setIsWebhookModalOpen(false)}
-        panelClass="min-w-[90vw]"
-      >
-        <div className="py-[20px] px-[15px] outline-none max-h-[75vh] overflow-y-scroll">
-          <div className="w-full flex justify-end items-center">
-            <SlackTemplateHeader
-              onPersonalizeClick={onPersonalizeClick}
-              onAddTemplateClick={onAddTemplateClick}
-            />
-          </div>
-          <WebhookSettings
-            webhookState={webhookState}
-            setWebhookState={setWebhookState}
-            urlRef={urlRef}
-            bearerTokenRef={bearerTokenRef}
-            basicUserNameRef={basicUserNameRef}
-            basicPasswordRef={basicPasswordRef}
-            customHeaderRef={customHeaderRef}
-            bodyRef={bodyRef}
-            headersRef={headersRef}
-            setSelectedRef={setSelectedRef}
-            selectedRef={selectedRef}
-            setSelectedRefValueSetter={setSelectedRefValueSetter}
+    <Modal isOpen={true} onClose={onClose} panelClass="min-w-[90vw]">
+      <div className="py-[20px] px-[15px] outline-none max-h-[75vh] overflow-y-scroll">
+        <div className="w-full flex justify-end items-center">
+          <SlackTemplateHeader
+            onPersonalizeClick={onPersonalizeClick}
+            onAddTemplateClick={onAddTemplateClick}
           />
         </div>
-      </Modal>
-    </>
+        <WebhookSettings
+          webhookState={webhookState}
+          setWebhookState={setWebhookState}
+          urlRef={urlRef}
+          bearerTokenRef={bearerTokenRef}
+          basicUserNameRef={basicUserNameRef}
+          basicPasswordRef={basicPasswordRef}
+          customHeaderRef={customHeaderRef}
+          bodyRef={bodyRef}
+          headersRef={headersRef}
+          setSelectedRef={setSelectedRef}
+          selectedRef={selectedRef}
+          setSelectedRefValueSetter={setSelectedRefValueSetter}
+        />
+      </div>
+    </Modal>
   );
 };
 
-export default ApiCallTagPicker;
+export default ApiCallMergeTagModal;

@@ -1,12 +1,14 @@
 import grapesjs from "grapesjs";
 import { Resource } from "../EmailBuilder";
 import generateTagPicker from "./TagPickerGenerator";
+import { Buffer } from "buffer";
+import ReactDOM from "react-dom";
+import ApiCallMergeTagModal from "./ApiCallMergeTagModal";
 import {
   FallBackAction,
   WebhookMethod,
   WebhookState,
 } from "pages/WebhookBuilder/WebhookSettings";
-import { Buffer } from "buffer";
 
 interface ICustomView extends grapesjs.ComponentViewDefinition {
   isDropdownOpen?: boolean;
@@ -15,11 +17,12 @@ interface ICustomView extends grapesjs.ComponentViewDefinition {
   togglePicker?: () => void;
 }
 
-interface ICustomTemplateTagView extends grapesjs.ComponentViewDefinition {
+interface ICustomApiCallTagView extends grapesjs.ComponentViewDefinition {
   isDropdownOpen?: boolean;
   tagPiker?: HTMLElement;
   handleUpdateTag?: (webkookState: WebhookState) => void;
   togglePicker?: () => void;
+  getContent?: () => string;
 }
 
 const defaultWebhookState: WebhookState = {
@@ -183,7 +186,7 @@ const MergeTagType = (
   domc.addType("api-call-tag", {
     isComponent: (el) =>
       el.classList?.contains("api_call_m_t") ||
-      (el?.hasAttribute && el.hasAttribute("picked-attribute")),
+      (el?.hasAttribute && el.hasAttribute("webhookState")),
     model: {
       defaults: {
         tagName: "span",
@@ -196,7 +199,7 @@ const MergeTagType = (
         attributes: {
           class: "api_call_m_t default_api_call_m_t",
           contenteditable: "false",
-          webhookState: defaultWebhookState,
+          webhookState: JSON.stringify(defaultWebhookState),
           webhookProps: "response.data",
         },
         content: `[{[ eyAidXJsIjogImh0dHBzOi8vanNvbnBsYWNlaG9sZGVyLnR5cGljb2RlLmNvbS9wb3N0cyIsICJib2R5IjogInt9IiwgIm1ldGhvZCI6ICJHRVQiLCAiaGVhZGVycyI6IHsgIkF1dGhvcml6YXRpb24iOiAiIiB9LCAicmV0cmllcyI6IDUsICJmYWxsQmFja0FjdGlvbiI6IDAgfQ==;response.data ]}]`,
@@ -216,48 +219,93 @@ const MergeTagType = (
           "min-height",
           "text-align",
         ],
-        traits: [
-          {
-            type: "input",
-            label: "URL",
-            name: "url",
-            default: "https://jsonplaceholder.typicode.com/posts",
-          },
-          {
-            type: "select",
-            label: "Method",
-            name: "method",
-            default: WebhookMethod.GET,
-            options: [
-              { id: WebhookMethod.GET, name: WebhookMethod.GET },
-              { id: WebhookMethod.POST, name: WebhookMethod.POST },
-              { id: WebhookMethod.PATCH, name: WebhookMethod.PATCH },
-              { id: WebhookMethod.PUT, name: WebhookMethod.PUT },
-              { id: WebhookMethod.DELETE, name: WebhookMethod.DELETE },
-              { id: WebhookMethod.HEAD, name: WebhookMethod.HEAD },
-              { id: WebhookMethod.OPTIONS, name: WebhookMethod.OPTIONS },
-            ],
-          },
-          {
-            type: "input",
-            label: "Body",
-            name: "body",
-            default: "{}",
-          },
-          {
-            type: "input",
-            label: "Headers",
-            name: "headers",
-            default: "",
-          },
-        ],
+        // traits: [
+        //   {
+        //     type: "input",
+        //     label: "URL",
+        //     name: "url",
+        //     default: "https://jsonplaceholder.typicode.com/posts",
+        //   },
+        //   {
+        //     type: "select",
+        //     label: "Method",
+        //     name: "method",
+        //     default: WebhookMethod.GET,
+        //     options: [
+        //       { id: WebhookMethod.GET, name: WebhookMethod.GET },
+        //       { id: WebhookMethod.POST, name: WebhookMethod.POST },
+        //       { id: WebhookMethod.PATCH, name: WebhookMethod.PATCH },
+        //       { id: WebhookMethod.PUT, name: WebhookMethod.PUT },
+        //       { id: WebhookMethod.DELETE, name: WebhookMethod.DELETE },
+        //       { id: WebhookMethod.HEAD, name: WebhookMethod.HEAD },
+        //       { id: WebhookMethod.OPTIONS, name: WebhookMethod.OPTIONS },
+        //     ],
+        //   },
+        //   {
+        //     type: "input",
+        //     label: "Body",
+        //     name: "body",
+        //     default: "{}",
+        //   },
+        //   {
+        //     type: "input",
+        //     label: "Headers",
+        //     name: "headers",
+        //     default: "",
+        //   },
+        //   {
+        //     type: "number",
+        //     label: "Retries",
+        //     name: "retries",
+        //     default: "5",
+        //   },
+        //   {
+        //     type: "select",
+        //     label: "Fallback action",
+        //     name: "fallBackAction",
+        //     default: "Nothing",
+        //     options: [
+        //       { id: FallBackAction.NOTHING.toString(), name: "Nothing" },
+        //     ],
+        //   },
+        // ],
       },
       init() {
         // setTimeout(() => {
         //   this.getEl().innerHTML =
-        //     "Customer: " +
-        //     (this.attributes.attributes?.["picked-attribute"] || "-");
+        //     "Api call: " +
+        //     `${this.attributes.attributes?.method} ${this.attributes.attributes?.url}`;
         // }, 100);
+
+        if (this.attributes.attributes?.webhookstate) {
+          const { url, method, body, headers, retries, fallBackAction } =
+            JSON.parse(this.attributes.attributes.webhookstate);
+
+          const newWebhookState = {
+            ...JSON.parse(this.attributes.attributes.webhookstate),
+            url,
+            method,
+            body,
+            headers,
+            retries,
+            fallBackAction,
+          };
+
+          this.attributes.attributes.webhookState =
+            JSON.stringify(newWebhookState);
+
+          const webhookStateBase64 = Buffer.from(
+            JSON.stringify(newWebhookState)
+          ).toString("base64");
+
+          const newValue = `[{[ ${webhookStateBase64};${
+            this.attributes.attributes?.webhookProps || "response.data"
+          } ]}]`;
+
+          this.set("content", newValue);
+          this.components(newValue);
+        }
+        console.log(this.attributes.attributes);
 
         this.on("component:update", (ev) => {
           const changed = ev?.changed;
@@ -265,8 +313,11 @@ const MergeTagType = (
 
           if (!component) return;
 
-          const webhookState: WebhookState =
-            this.attributes.attributes?.webhookState;
+          if (!this.attributes.attributes?.webhookState) return;
+
+          const webhookState: WebhookState = JSON.parse(
+            this.attributes.attributes.webhookState
+          );
 
           if (!webhookState) return;
 
@@ -278,29 +329,29 @@ const MergeTagType = (
           if (changed?.attributes?.url)
             webhookState.url = changed.attributes.url;
 
-          if (changed?.attributes?.method) {
+          if (changed?.attributes?.method)
             webhookState.method = changed.attributes.method;
-          }
-          if (changed?.attributes?.body) {
+
+          if (changed?.attributes?.body)
             webhookState.body = changed.attributes.body;
-          }
-          if (changed?.attributes?.headers) {
-            webhookState.headers = {
-              Authorization: webhookState.headers.Authorization,
-              ...Object.fromEntries(
-                (changed.attributes.headers as string)
-                  .split("\n")
-                  .map((row) => row.split(":").map((el) => el.trim()))
-                  .filter((entry) => entry.length === 2)
-              ),
-            };
-          }
+
+          if (changed?.attributes?.headers)
+            webhookState.headers = changed.attributes.headers;
+
+          if (changed?.attributes?.retries)
+            webhookState.retries = changed.attributes.retries;
+
+          if (changed?.attributes?.fallBackAction)
+            webhookState.fallBackAction = changed.attributes.fallBackAction;
 
           const webhookStateBase64 = Buffer.from(
             JSON.stringify(webhookState)
           ).toString("base64");
 
           if (oldWebhookStateBase64 === webhookStateBase64) return;
+
+          this.attributes.attributes.webhookState =
+            JSON.stringify(webhookState);
 
           const newValue = `[{[ ${webhookStateBase64};${
             this.attributes.attributes?.webhookProps || "response.data"
@@ -319,10 +370,16 @@ const MergeTagType = (
       init({ model }) {
         this.isDropdownOpen = false;
 
-        this.handleUpdateTag = (webkookState: WebhookState) => {
-          model.addAttributes({ webkookState }, {});
+        this.handleUpdateTag = (webhookState: WebhookState) => {
+          model.addAttributes(webhookState, {});
           this.isDropdownOpen = false;
+          // model.getEl().innerHTML =
+          //   "Api call: " +
+          //   `${model.attributes.attributes?.method} ${model.attributes.attributes?.url}`;
         };
+
+        this.getContent = () =>
+          model.get("content")?.replace("[{[", "")?.replace("]}]", "") || "";
       },
 
       //@ts-ignore
@@ -332,21 +389,30 @@ const MergeTagType = (
       },
 
       togglePicker() {
-        // const picker = this.tagPiker || document.createElement("div");
-        // if (this.isDropdownOpen && this.handleUpdateTag) {
-        //   //@ts-ignore
-        //   const el = this.$el as HTMLElement[];
-        //   picker.appendChild(
-        //     generateTagPicker({ options, onClick: this.handleUpdateTag })
-        //   );
-        //   el[0].appendChild(picker);
-        //   this.tagPiker = picker;
-        // } else {
-        //   picker.remove();
-        //   this.tagPiker = undefined;
-        // }
+        const rootElement = document.getElementById("email-apicall-modal-root");
+        if (!rootElement) return;
+
+        ReactDOM.unmountComponentAtNode(rootElement);
+
+        if (!this.isDropdownOpen) return;
+
+        console.log(this.getContent?.());
+
+        console.log(
+          "Api call tag content: ",
+          Buffer.from(this.getContent?.() || "", "base64").toString("utf8")
+        );
+
+        ReactDOM.render(
+          <ApiCallMergeTagModal
+            itemContent={this.getContent?.() || ""}
+            handleUpdateTag={this.handleUpdateTag || (() => {})}
+            onClose={() => ReactDOM.unmountComponentAtNode(rootElement)}
+          />,
+          rootElement
+        );
       },
-    } as ICustomTemplateTagView),
+    } as ICustomApiCallTagView),
   });
 };
 

@@ -282,6 +282,7 @@ const EmailBuilder = () => {
           />
           <div id="emailBuilder" className="gjs-dashed" />
         </div>
+        <div id="email-apicall-modal-root"></div>
       </div>
       {isLoading && <Progress />}
     </>
