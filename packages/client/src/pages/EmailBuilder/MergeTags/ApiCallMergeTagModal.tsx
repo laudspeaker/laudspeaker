@@ -10,7 +10,7 @@ import { Buffer } from "buffer";
 
 interface ApiCallMergeTagModalProps {
   itemContent: string;
-  handleUpdateTag: (state: WebhookState) => void;
+  handleUpdateTag: (state: WebhookState, webhookProps: string) => void;
   onClose: () => void;
 }
 
@@ -19,7 +19,9 @@ const ApiCallMergeTagModal: FC<ApiCallMergeTagModalProps> = ({
   handleUpdateTag,
   onClose,
 }) => {
-  const [webhookStateBase64, webhookProps] = itemContent.trim().split(";");
+  const [webhookStateBase64, initialWebhookProps] = itemContent
+    .trim()
+    .split(";");
 
   let initialWebhookState: WebhookState = {
     url: "https://jsonplaceholder.typicode.com/posts",
@@ -38,6 +40,9 @@ const ApiCallMergeTagModal: FC<ApiCallMergeTagModalProps> = ({
 
   const [webhookState, setWebhookState] =
     useState<WebhookState>(initialWebhookState);
+  const [webhookProps, setWebhookProps] = useState(
+    initialWebhookProps || "response.data"
+  );
 
   const [selectedRef, setSelectedRef] =
     useState<RefObject<HTMLInputElement | HTMLTextAreaElement>>();
@@ -80,38 +85,36 @@ const ApiCallMergeTagModal: FC<ApiCallMergeTagModalProps> = ({
   };
 
   useEffect(() => {
-    handleUpdateTag(webhookState);
-    // handleValueReplace(
-    //   `[{[${itemContent}]}]`,
-    //   `[{[ ${Buffer.from(JSON.stringify(webhookState)).toString(
-    //     "base64"
-    //   )};${webhookProps} ]}]`
-    // );
-  }, [webhookState]);
+    handleUpdateTag(webhookState, webhookProps);
+  }, [webhookState, webhookProps, handleUpdateTag]);
 
   return (
     <Modal isOpen={true} onClose={onClose} panelClass="min-w-[90vw]">
-      <div className="py-[20px] px-[15px] outline-none max-h-[75vh] overflow-y-scroll">
-        <div className="w-full flex justify-end items-center">
-          <SlackTemplateHeader
-            onPersonalizeClick={onPersonalizeClick}
-            onAddTemplateClick={onAddTemplateClick}
+      <div className="py-[20px] px-[15px] outline-none max-h-[75vh] overflow-y-scroll flex justify-center items-center">
+        <div className="w-[490px] max-h-[75vh]">
+          <div className="w-full flex justify-end items-center">
+            <SlackTemplateHeader
+              onPersonalizeClick={onPersonalizeClick}
+              onAddTemplateClick={onAddTemplateClick}
+            />
+          </div>
+          <WebhookSettings
+            webhookState={webhookState}
+            setWebhookState={setWebhookState}
+            webhookProps={webhookProps}
+            setWebhookProps={setWebhookProps}
+            urlRef={urlRef}
+            bearerTokenRef={bearerTokenRef}
+            basicUserNameRef={basicUserNameRef}
+            basicPasswordRef={basicPasswordRef}
+            customHeaderRef={customHeaderRef}
+            bodyRef={bodyRef}
+            headersRef={headersRef}
+            setSelectedRef={setSelectedRef}
+            selectedRef={selectedRef}
+            setSelectedRefValueSetter={setSelectedRefValueSetter}
           />
         </div>
-        <WebhookSettings
-          webhookState={webhookState}
-          setWebhookState={setWebhookState}
-          urlRef={urlRef}
-          bearerTokenRef={bearerTokenRef}
-          basicUserNameRef={basicUserNameRef}
-          basicPasswordRef={basicPasswordRef}
-          customHeaderRef={customHeaderRef}
-          bodyRef={bodyRef}
-          headersRef={headersRef}
-          setSelectedRef={setSelectedRef}
-          selectedRef={selectedRef}
-          setSelectedRefValueSetter={setSelectedRefValueSetter}
-        />
       </div>
     </Modal>
   );

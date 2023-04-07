@@ -20,7 +20,7 @@ interface ICustomView extends grapesjs.ComponentViewDefinition {
 interface ICustomApiCallTagView extends grapesjs.ComponentViewDefinition {
   isDropdownOpen?: boolean;
   tagPiker?: HTMLElement;
-  handleUpdateTag?: (webkookState: WebhookState) => void;
+  handleUpdateTag?: (webkookState: WebhookState, webhookProps: string) => void;
   togglePicker?: () => void;
   getContent?: () => string;
 }
@@ -271,11 +271,11 @@ const MergeTagType = (
         // ],
       },
       init() {
-        // setTimeout(() => {
-        //   this.getEl().innerHTML =
-        //     "Api call: " +
-        //     `${this.attributes.attributes?.method} ${this.attributes.attributes?.url}`;
-        // }, 100);
+        setTimeout(() => {
+          this.getEl().innerHTML =
+            "Api call: " +
+            `${this.attributes.attributes?.method} ${this.attributes.attributes?.url}`;
+        }, 100);
 
         if (this.attributes.attributes?.webhookstate) {
           const { url, method, body, headers, retries, fallBackAction } =
@@ -298,6 +298,11 @@ const MergeTagType = (
             JSON.stringify(newWebhookState)
           ).toString("base64");
 
+          if (this.attributes.attributes?.webhookprops) {
+            this.attributes.attributes.webhookProps =
+              this.attributes.attributes.webhookprops;
+          }
+
           const newValue = `[{[ ${webhookStateBase64};${
             this.attributes.attributes?.webhookProps || "response.data"
           } ]}]`;
@@ -307,6 +312,8 @@ const MergeTagType = (
         }
         console.log(this.attributes.attributes);
 
+        let oldWebhookProps =
+          this.attributes.attributes?.webhookProps || "response.data";
         this.on("component:update", (ev) => {
           const changed = ev?.changed;
           const component: grapesjs.ComponentModelProperties = ev?.component;
@@ -324,7 +331,6 @@ const MergeTagType = (
           const oldWebhookStateBase64 = Buffer.from(
             JSON.stringify(webhookState)
           ).toString("base64");
-          const oldWebhookProps = this.attributes.attributes?.oldWebhookProps;
 
           if (changed?.attributes?.url)
             webhookState.url = changed.attributes.url;
@@ -344,18 +350,28 @@ const MergeTagType = (
           if (changed?.attributes?.fallBackAction)
             webhookState.fallBackAction = changed.attributes.fallBackAction;
 
+          if (changed?.attributes?.webhookProps)
+            this.attributes.attributes.webhookProps =
+              changed.attributes.webhookProps;
+
           const webhookStateBase64 = Buffer.from(
             JSON.stringify(webhookState)
           ).toString("base64");
 
-          if (oldWebhookStateBase64 === webhookStateBase64) return;
+          const newWebhookProps =
+            this.attributes.attributes.webhookProps || "response.data";
+
+          if (
+            oldWebhookStateBase64 === webhookStateBase64 &&
+            oldWebhookProps === newWebhookProps
+          )
+            return;
 
           this.attributes.attributes.webhookState =
             JSON.stringify(webhookState);
 
-          const newValue = `[{[ ${webhookStateBase64};${
-            this.attributes.attributes?.webhookProps || "response.data"
-          } ]}]`;
+          const newValue = `[{[ ${webhookStateBase64};${newWebhookProps} ]}]`;
+          oldWebhookProps = newWebhookProps;
 
           this.set("content", newValue);
           this.components(newValue);
@@ -370,8 +386,11 @@ const MergeTagType = (
       init({ model }) {
         this.isDropdownOpen = false;
 
-        this.handleUpdateTag = (webhookState: WebhookState) => {
-          model.addAttributes(webhookState, {});
+        this.handleUpdateTag = (
+          webhookState: WebhookState,
+          webhookProps: string
+        ) => {
+          model.addAttributes({ ...webhookState, webhookProps }, {});
           this.isDropdownOpen = false;
           // model.getEl().innerHTML =
           //   "Api call: " +

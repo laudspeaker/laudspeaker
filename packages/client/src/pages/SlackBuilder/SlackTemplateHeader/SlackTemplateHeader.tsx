@@ -84,7 +84,7 @@ const SlackTemplateHeader = (props: IEmailHeaderProps) => {
           </>
         )}
 
-        <div className="flex text-center justify-end items-center w-[400px] pr-[50px] gap-[10px]">
+        <div className="flex text-center justify-end items-center w-[400px] gap-[10px]">
           {onSave && (
             <div>
               <GenericButton

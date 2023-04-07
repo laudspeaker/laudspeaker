@@ -73,6 +73,8 @@ function classNames(...classes: string[]) {
 interface WebhookSettingsProps {
   webhookState: WebhookState;
   setWebhookState: (state: WebhookState) => void;
+  webhookProps?: string;
+  setWebhookProps?: (value: string) => void;
   possibleAttributes?: string[];
   setSelectedRef?: (
     ref?: RefObject<HTMLInputElement | HTMLTextAreaElement>
@@ -89,11 +91,14 @@ interface WebhookSettingsProps {
   setSelectedRefValueSetter?: (setter: {
     set: (value: string) => void;
   }) => void;
+  className?: string;
 }
 
 const WebhookSettings: FC<WebhookSettingsProps> = ({
   webhookState,
   setWebhookState,
+  webhookProps,
+  setWebhookProps,
   possibleAttributes,
   setSelectedRef,
   onSave,
@@ -106,6 +111,7 @@ const WebhookSettings: FC<WebhookSettingsProps> = ({
   headersRef,
   selectedRef,
   setSelectedRefValueSetter,
+  className,
 }) => {
   const [authType, setAuthType] = useState<AuthType>(AuthType.CUSTOM);
   const [bodyType, setBodyType] = useState(BodyType.JSON);
@@ -481,7 +487,7 @@ const WebhookSettings: FC<WebhookSettingsProps> = ({
 
   return (
     <>
-      <div className="w-[490px] m-auto">
+      <div className={`w-[490px] m-auto ${className}`}>
         <div className="flex justify-center items-center gap-[10px]">
           <MergeTagInput
             name="webhookURL"
@@ -529,6 +535,23 @@ const WebhookSettings: FC<WebhookSettingsProps> = ({
               />
             </div>
           </div>
+          {webhookProps && setWebhookProps && (
+            <div className="flex justify-between items-center">
+              <div>Data to retrieve:</div>
+              <div>
+                <Input
+                  name="webhookProps"
+                  id="webhookProps"
+                  value={webhookProps}
+                  onChange={(e) => {
+                    if (/^response\..*/.test(e.target.value) && setWebhookProps)
+                      setWebhookProps(e.target.value);
+                  }}
+                />
+              </div>
+            </div>
+          )}
+
           <div className="flex justify-between items-center">
             <div>Retries:</div>
             <div>
