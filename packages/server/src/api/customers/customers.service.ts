@@ -626,7 +626,7 @@ export class CustomersService {
   async findBySpecifiedEvent(
     account: Account,
     correlationKey: string,
-    correlationValue: string | [],
+    correlationValue: string | string[],
     event: any,
     transactionSession: ClientSession,
     mapping?: (event: any) => any
@@ -666,10 +666,21 @@ export class CustomersService {
     //   return { cust: customer, found: false };
     // }
     let customer: CustomerDocument;
-    const queryParam = {
+    let queryParam : any = {
       ownerId: (<Account>account).id,
-      [correlationKey]: correlationValue,
     };
+    if(Array.isArray(correlationValue)){
+      queryParam.$or = [];
+      for (let i = 0; i< correlationValue.length; i++){
+        queryParam.$or.push({ posthogId: { $in: [correlationValue[i]] } })
+      }
+    } else{
+      queryParam[correlationKey] = correlationValue;
+    }
+    //const queryParam = {
+    //  ownerId: (<Account>account).id,
+    //  [correlationKey]: correlationValue,
+    //};
     this.logger.debug('QueryParam: ' + JSON.stringify(queryParam));
     customer = await this.CustomerModel.findOne(queryParam)
       .session(transactionSession)

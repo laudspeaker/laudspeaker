@@ -215,7 +215,7 @@ export class EventsService {
         const correlation = await this.customersService.findBySpecifiedEvent(
           account,
           'posthogId',
-          currentEvent.userId,
+          [currentEvent.userId, currentEvent.anonymousId],
           currentEvent,
           transactionSession,
           postHogEventMapping
