@@ -112,9 +112,9 @@ export class CustomersService {
     transactionSession?: ClientSession
   ): Promise<
     Customer &
-      mongoose.Document & {
-        _id: Types.ObjectId;
-      }
+    mongoose.Document & {
+      _id: Types.ObjectId;
+    }
   > {
     const createdCustomer = new this.CustomerModel({
       ownerId: (<Account>account).id,
@@ -290,8 +290,8 @@ export class CustomersService {
       ownerId: (<Account>account).id,
       ...(key && search
         ? {
-            [key]: new RegExp(`.*${search}.*`, 'i'),
-          }
+          [key]: new RegExp(`.*${search}.*`, 'i'),
+        }
         : {}),
     })
       .skip(skip)
@@ -343,6 +343,65 @@ export class CustomersService {
     );
 
     return result;
+  }
+
+  addPrefixToKeys(obj: Record<string, any>, prefix: string): Record<string, any> {
+    const newObj: Record<string, any> = {};
+
+    for (const [key, value] of Object.entries(obj)) {
+      newObj[`${prefix}${key}`] = value;
+    }
+
+    return newObj;
+  }
+
+  filterFalsyAndDuplicates<T>(arr: T[]): T[] {
+    return Array.from(new Set(arr.filter(Boolean)));
+  }
+
+  //update posthog users after an identify
+  async phIdentifyUpdate(
+    account: Account,
+    identifyEvent: any,
+  ) {
+    try {
+      delete identifyEvent.verified;
+      delete identifyEvent.ownerId;
+      delete identifyEvent._id;
+      delete identifyEvent.__v;
+      delete identifyEvent.audiences;
+
+      const addedBefore = await this.CustomerModel.find({
+        ownerId: (<Account>account).id,
+        $or: [
+          { posthogId: { $in: [identifyEvent.userId] } },
+          { posthogId: { $in: [identifyEvent.anonymousId] } }
+        ]
+        ,
+      }).exec();
+
+      if (addedBefore.length === 1) {
+        const a = await this.CustomerModel.updateOne({
+          _id: addedBefore[0]._id
+        }, {
+          posthogId: this.filterFalsyAndDuplicates([identifyEvent.userId ? identifyEvent.userId : identifyEvent.anonymousId, identifyEvent.anonymousId]),
+          ...this.addPrefixToKeys(identifyEvent.context.traits, "_postHog_")
+        }
+        ).exec();
+      } else if (addedBefore.length === 0) {
+        const createdCustomer = new this.CustomerModel({
+          ownerId: (<Account>account).id,
+          posthogId: this.filterFalsyAndDuplicates([identifyEvent.userId ? identifyEvent.userId : identifyEvent.anonymousId, identifyEvent.anonymousId]),
+          ...this.addPrefixToKeys(identifyEvent.context.traits, "_postHog_"),
+        });
+        return createdCustomer.save();
+      }
+      else {
+        this.logger.warn(`${JSON.stringify(addedBefore)}`, `customers.service.ts:CustomersService.phIdentifyUpdate()`);
+      }
+    } catch (e) {
+      this.logger.error(`${e}`, `customers.service.ts:CustomersService.phIdentifyUpdate()`);
+    }
   }
 
   async update(
@@ -512,9 +571,9 @@ export class CustomersService {
     customerId: string
   ): Promise<
     Customer &
-      mongoose.Document & {
-        _id: Types.ObjectId;
-      }
+    mongoose.Document & {
+      _id: Types.ObjectId;
+    }
   > {
     const found = await this.CustomerModel.findById(customerId).exec();
     if (found && found?.ownerId == (<Account>account).id) return found;
