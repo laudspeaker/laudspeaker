@@ -360,6 +360,7 @@ export class CustomersService {
   }
 
   //update posthog users after an identify
+  // add the "traits" and also update phEmail, phPhone
   async phIdentifyUpdate(
     account: Account,
     identifyEvent: any,
@@ -385,7 +386,11 @@ export class CustomersService {
           _id: addedBefore[0]._id
         }, {
           posthogId: this.filterFalsyAndDuplicates([identifyEvent.userId ? identifyEvent.userId : identifyEvent.anonymousId, identifyEvent.anonymousId]),
-          ...this.addPrefixToKeys(identifyEvent.context.traits, "_postHog_")
+          ...this.addPrefixToKeys(identifyEvent.context.traits, "_postHog_"),
+          ...(identifyEvent.phEmail && { phEmail: identifyEvent.phEmail }),
+          ...(identifyEvent.phPhoneNumber && { phPhoneNumber: identifyEvent.phPhoneNumber }),
+          ...(identifyEvent.phDeviceToken && { phDeviceToken: identifyEvent.phDeviceToken }),
+ 
         }
         ).exec();
       } else if (addedBefore.length === 0) {
@@ -393,6 +398,9 @@ export class CustomersService {
           ownerId: (<Account>account).id,
           posthogId: this.filterFalsyAndDuplicates([identifyEvent.userId ? identifyEvent.userId : identifyEvent.anonymousId, identifyEvent.anonymousId]),
           ...this.addPrefixToKeys(identifyEvent.context.traits, "_postHog_"),
+          ...(identifyEvent.phEmail && { phEmail: identifyEvent.phEmail }),
+          ...(identifyEvent.phPhoneNumber && { phPhoneNumber: identifyEvent.phPhoneNumber }),
+          ...(identifyEvent.phDeviceToken && { phDeviceToken: identifyEvent.phDeviceToken }),
         });
         return createdCustomer.save();
       }
