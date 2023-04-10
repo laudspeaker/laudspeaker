@@ -16,7 +16,7 @@ export default (templateName = "webhook1", fixTrigger = false) => {
   cy.wait(1000);
   if (fixTrigger) cy.contains("Delete").click();
   cy.wait(3000);
-  cy.get("#audience > .p-0 > .justify-between").click();
+  cy.get("#audience > .p-0 > .justify-between").click({ force: true });
   cy.get("#name").type("Second");
   cy.contains("Finish later").click();
   cy.get('[data-isprimary]:not([data-isprimary="true"])').move({
