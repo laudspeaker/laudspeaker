@@ -15,7 +15,7 @@ import { TemplatesService } from '../templates/templates.service';
 import { WorkflowsService } from '../workflows/workflows.service';
 import { AudiencesService } from '../audiences/audiences.service';
 import { EventsController } from './events.controller';
-import { BullModule } from '@nestjs/bull';
+import { BullModule } from '@nestjs/bullmq';
 import { WinstonModule } from 'nest-winston';
 import * as winston from 'winston';
 
@@ -45,7 +45,7 @@ describe('EventsService', () => {
           { name: Customer.name, schema: CustomerSchema },
         ]),
         BullModule.forRoot({
-          redis: {
+          connection: {
             host: process.env.REDIS_HOST,
             port: parseInt(process.env.REDIS_PORT),
             password: process.env.REDIS_PASSWORD,

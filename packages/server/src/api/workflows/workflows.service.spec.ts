@@ -1,5 +1,5 @@
 import { TypeOrmConfigService } from '../../shared/typeorm/typeorm.service';
-import { BullModule } from '@nestjs/bull';
+import { BullModule } from '@nestjs/bullmq';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -28,7 +28,7 @@ describe('WorkflowsService', () => {
       imports: [
         MongooseModule.forRoot(process.env.MONGOOSE_URL),
         BullModule.forRoot({
-          redis: {
+          connection: {
             host: process.env.REDIS_HOST,
             port: parseInt(process.env.REDIS_PORT),
             password: process.env.REDIS_PASSWORD,

@@ -9,7 +9,7 @@ import { PassportModule } from '@nestjs/passport';
 import { Account } from '../accounts/entities/accounts.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MongooseModule } from '@nestjs/mongoose';
-import { BullModule } from '@nestjs/bull';
+import { BullModule } from '@nestjs/bullmq';
 import { WinstonModule } from 'nest-winston';
 import { TypeOrmConfigService } from '../../shared/typeorm/typeorm.service';
 import * as winston from 'winston';
@@ -23,14 +23,13 @@ const papertrail = new winston.transports.Http({
 
 describe('AuthController', () => {
   let usersController: AuthController;
-  let usersService: AuthService;
 
   beforeEach(async () => {
     const app: TestingModule = await Test.createTestingModule({
       imports: [
         MongooseModule.forRoot(process.env.MONGOOSE_URL),
         BullModule.forRoot({
-          redis: {
+          connection: {
             host: process.env.REDIS_HOST,
             port: parseInt(process.env.REDIS_PORT),
             password: process.env.REDIS_PASSWORD,

@@ -18,8 +18,8 @@ import { AccountsService } from '../accounts/accounts.service';
 import { WorkflowsService } from '../workflows/workflows.service';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { StatusJobDto } from './dto/status-event.dto';
-import { Queue } from 'bull';
-import { InjectQueue } from '@nestjs/bull';
+import { Queue } from 'bullmq';
+import { InjectQueue } from '@nestjs/bullmq';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import mongoose, { Model } from 'mongoose';
 import { EventDocument, Event } from './schemas/event.schema';
@@ -157,6 +157,11 @@ export class EventsService {
           'Processing posthog event: ' + JSON.stringify(currentEvent, null, 2)
         );
 
+        //update customer properties on every identify call as per best practice
+        if (currentEvent.type === 'identify') {
+          this.customersService.phIdentifyUpdate(account, currentEvent);
+        }
+        //checking for a custom tracked posthog event here
         if (
           currentEvent.type === 'track' &&
           currentEvent.event &&
@@ -166,6 +171,7 @@ export class EventsService {
           currentEvent.event !== '$pageleave' &&
           currentEvent.event !== '$rageclick'
         ) {
+          //checks to see if we have seen this event before (otherwise we update the events dropdown)
           const found = await this.PosthogEventTypeModel.findOne({
             name: currentEvent.event,
             ownerId: account.id,
@@ -184,6 +190,7 @@ export class EventsService {
               { session: transactionSession }
             );
           }
+          //to do: check if the event sets props, if so we need to update the person traits
         }
 
         let jobIDs: WorkflowTick[] = [];
@@ -208,7 +215,7 @@ export class EventsService {
         const correlation = await this.customersService.findBySpecifiedEvent(
           account,
           'posthogId',
-          currentEvent.userId,
+          [currentEvent.userId, currentEvent.anonymousId],
           currentEvent,
           transactionSession,
           postHogEventMapping

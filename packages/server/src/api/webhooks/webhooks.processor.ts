@@ -1,7 +1,7 @@
 /* eslint-disable no-case-declarations */
-import { Process, Processor } from '@nestjs/bull';
+import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Inject, LoggerService } from '@nestjs/common';
-import { Job } from 'bull';
+import { Job } from 'bullmq';
 import { Injectable } from '@nestjs/common';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { Liquid } from 'liquidjs';
@@ -20,7 +20,7 @@ import { TemplatesService } from '../templates/templates.service';
 
 @Processor('webhooks')
 @Injectable()
-export class WebhooksProcessor {
+export class WebhooksProcessor extends WorkerHost {
   private tagEngine = new Liquid();
 
   constructor(
@@ -28,12 +28,11 @@ export class WebhooksProcessor {
     private readonly logger: LoggerService,
     private readonly webhooksService: WebhooksService,
     private readonly templatesService: TemplatesService
-  ) {}
-
-  @Process('whapicall')
-  async handleWebhookTemplate(
-    job: Job<{ template: Template; [key: string]: any }>
   ) {
+    super();
+  }
+
+  async process(job: Job<{ template: Template; [key: string]: any }>) {
     const { template, filteredTags } = job.data;
 
     const { method, retries, fallBackAction } = template.webhookData;

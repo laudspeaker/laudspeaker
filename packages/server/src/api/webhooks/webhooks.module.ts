@@ -11,7 +11,7 @@ import { Account } from '../accounts/entities/accounts.entity';
 import { Audience } from '../audiences/entities/audience.entity';
 import twilio from 'twilio';
 import { WebhooksProcessor } from './webhooks.processor';
-import { BullModule } from '@nestjs/bull';
+import { BullModule } from '@nestjs/bullmq';
 import { TemplatesModule } from '../templates/templates.module';
 
 @Module({

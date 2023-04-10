@@ -26,8 +26,8 @@ import {
   CustomerKeys,
   CustomerKeysDocument,
 } from './schemas/customer-keys.schema';
-import { InjectQueue } from '@nestjs/bull';
-import { Queue } from 'bull';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { createClient } from '@clickhouse/client';
 import { Workflow } from '../workflows/entities/workflow.entity';
@@ -345,6 +345,96 @@ export class CustomersService {
     return result;
   }
 
+  addPrefixToKeys(
+    obj: Record<string, any>,
+    prefix: string
+  ): Record<string, any> {
+    const newObj: Record<string, any> = {};
+
+    for (const [key, value] of Object.entries(obj)) {
+      newObj[`${prefix}${key}`] = value;
+    }
+
+    return newObj;
+  }
+
+  filterFalsyAndDuplicates<T>(arr: T[]): T[] {
+    return Array.from(new Set(arr.filter(Boolean)));
+  }
+
+  //update posthog users after an identify
+  // add the "traits" and also update phEmail, phPhone
+  async phIdentifyUpdate(account: Account, identifyEvent: any) {
+    try {
+      delete identifyEvent.verified;
+      delete identifyEvent.ownerId;
+      delete identifyEvent._id;
+      delete identifyEvent.__v;
+      delete identifyEvent.audiences;
+
+      const addedBefore = await this.CustomerModel.find({
+        ownerId: (<Account>account).id,
+        $or: [
+          { posthogId: { $in: [identifyEvent.userId] } },
+          { posthogId: { $in: [identifyEvent.anonymousId] } },
+        ],
+      }).exec();
+
+      if (addedBefore.length === 1) {
+        const a = await this.CustomerModel.updateOne(
+          {
+            _id: addedBefore[0]._id,
+          },
+          {
+            posthogId: this.filterFalsyAndDuplicates([
+              identifyEvent.userId
+                ? identifyEvent.userId
+                : identifyEvent.anonymousId,
+              identifyEvent.anonymousId,
+            ]),
+            ...this.addPrefixToKeys(identifyEvent.context.traits, '_postHog_'),
+            ...(identifyEvent.phEmail && { phEmail: identifyEvent.phEmail }),
+            ...(identifyEvent.phPhoneNumber && {
+              phPhoneNumber: identifyEvent.phPhoneNumber,
+            }),
+            ...(identifyEvent.phDeviceToken && {
+              phDeviceToken: identifyEvent.phDeviceToken,
+            }),
+          }
+        ).exec();
+      } else if (addedBefore.length === 0) {
+        const createdCustomer = new this.CustomerModel({
+          ownerId: (<Account>account).id,
+          posthogId: this.filterFalsyAndDuplicates([
+            identifyEvent.userId
+              ? identifyEvent.userId
+              : identifyEvent.anonymousId,
+            identifyEvent.anonymousId,
+          ]),
+          ...this.addPrefixToKeys(identifyEvent.context.traits, '_postHog_'),
+          ...(identifyEvent.phEmail && { phEmail: identifyEvent.phEmail }),
+          ...(identifyEvent.phPhoneNumber && {
+            phPhoneNumber: identifyEvent.phPhoneNumber,
+          }),
+          ...(identifyEvent.phDeviceToken && {
+            phDeviceToken: identifyEvent.phDeviceToken,
+          }),
+        });
+        return createdCustomer.save();
+      } else {
+        this.logger.warn(
+          `${JSON.stringify(addedBefore)}`,
+          `customers.service.ts:CustomersService.phIdentifyUpdate()`
+        );
+      }
+    } catch (e) {
+      this.logger.error(
+        `${e}`,
+        `customers.service.ts:CustomersService.phIdentifyUpdate()`
+      );
+    }
+  }
+
   async update(
     account: Account,
     id: string,
@@ -487,7 +577,7 @@ export class CustomersService {
     }
     const authString = 'Bearer ' + phAuth;
     try {
-      const job = await this.customersQueue.add({
+      await this.customersQueue.add('sync', {
         url: posthogUrl,
         auth: authString,
         account: account,
@@ -567,7 +657,7 @@ export class CustomersService {
   async findBySpecifiedEvent(
     account: Account,
     correlationKey: string,
-    correlationValue: string | [],
+    correlationValue: string | string[],
     event: any,
     transactionSession: ClientSession,
     mapping?: (event: any) => any
@@ -607,10 +697,21 @@ export class CustomersService {
     //   return { cust: customer, found: false };
     // }
     let customer: CustomerDocument;
-    const queryParam = {
+    let queryParam: any = {
       ownerId: (<Account>account).id,
-      [correlationKey]: correlationValue,
     };
+    if (Array.isArray(correlationValue)) {
+      queryParam.$or = [];
+      for (let i = 0; i < correlationValue.length; i++) {
+        queryParam.$or.push({ posthogId: { $in: [correlationValue[i]] } });
+      }
+    } else {
+      queryParam[correlationKey] = correlationValue;
+    }
+    //const queryParam = {
+    //  ownerId: (<Account>account).id,
+    //  [correlationKey]: correlationValue,
+    //};
     this.logger.debug('QueryParam: ' + JSON.stringify(queryParam));
     customer = await this.CustomerModel.findOne(queryParam)
       .session(transactionSession)

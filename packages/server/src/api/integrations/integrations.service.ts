@@ -1,5 +1,5 @@
 /* eslint-disable no-case-declarations */
-import { InjectQueue } from '@nestjs/bull';
+import { InjectQueue } from '@nestjs/bullmq';
 import {
   BadRequestException,
   Injectable,
@@ -7,7 +7,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Queue } from 'bull';
+import { Queue, QueueEvents } from 'bullmq';
 import { DataSource, Repository } from 'typeorm';
 import { AccountsService } from '../accounts/accounts.service';
 import { CreateDBDto } from './dto/create-db.dto';
@@ -26,6 +26,7 @@ import handleMySql from './mysql.worker';
 @Injectable()
 export class IntegrationsService {
   private readonly logger = new Logger(IntegrationsService.name);
+  private queueEvents: QueueEvents;
 
   constructor(
     private AppDataSource: DataSource,
@@ -35,7 +36,15 @@ export class IntegrationsService {
     @InjectRepository(Database)
     private databaseRepository: Repository<Database>,
     @InjectQueue('integrations') private readonly integrationsQueue: Queue
-  ) {}
+  ) {
+    this.queueEvents = new QueueEvents('integrations', {
+      connection: {
+        host: process.env.REDIS_HOST ?? 'localhost',
+        port: parseInt(process.env.REDIS_PORT),
+        password: process.env.REDIS_PASSWORD,
+      },
+    });
+  }
 
   public integrationsMap: Record<
     IntegrationType,
@@ -43,7 +52,7 @@ export class IntegrationsService {
   > = {
     [IntegrationType.DATABASE]: async (integration) => {
       const job = await this.integrationsQueue.add('db', { integration });
-      await job.finished();
+      await job.waitUntilFinished(this.queueEvents);
     },
   };
 
