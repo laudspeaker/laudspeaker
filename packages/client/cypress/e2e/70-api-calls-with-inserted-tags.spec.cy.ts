@@ -4,8 +4,10 @@
 import credentials from "../fixtures/credentials";
 import { loginFunc } from "../test-helpers/loginFunc";
 import runEmailJourney from "../test-helpers/runEmailJourney";
+import runFirebaseJourney from "../test-helpers/runFirebaseJourney";
 import runSlackJourney from "../test-helpers/runSlackJourney";
 import runSmsJourney from "../test-helpers/runSmsJourney";
+import setFirebase from "../test-helpers/setFirebase";
 import setupWebhookTemplates from "../test-helpers/setupWebhookTemplates";
 import startWebhookJouney from "../test-helpers/startWebhookJouney";
 
@@ -95,6 +97,29 @@ describe(
       });
     });
 
-    // it("passes for firebase", () => {});
+    it("passes for firebase", () => {
+      loginFunc(email, password);
+      setFirebase();
+
+      cy.contains("Messaging").click();
+      cy.get('[data-disclosure-link="Template Builder"]').click();
+      cy.url().should("include", "/templates");
+      cy.get("#createTemplate").click();
+      cy.get("#name").clear().type("ApiCallsFirebase");
+      cy.get("#handleTemplateType").click();
+      cy.get("#handleTemplateType").find('[data-option="firebase"]').click();
+      cy.get("#submitTemplateCreation").click();
+      cy.get(":nth-child(1) > .false:nth(0)").click();
+      cy.get(".relative > #pushTitle").clear().type(apiCallTagToInsert, {
+        parseSpecialCharSequences: false,
+      });
+      cy.get(":nth-child(2) > .false:nth(1)").click();
+      cy.get(".relative > #pushText").clear().type(apiCallTagToInsert, {
+        parseSpecialCharSequences: false,
+      });
+      cy.get("#saveDraftTemplate").click();
+
+      runFirebaseJourney("Api calls firebase test", "ApiCallsFirebase");
+    });
   }
 );

@@ -2,8 +2,8 @@
 import "@4tw/cypress-drag-drop";
 import createNewSegment from "./createNewSegment";
 export default (
-  JourneyName = "Single step sms flow",
-  templateName = "TestTemplateForSms"
+  JourneyName = "Single step firebase flow",
+  templateName = "TestTemplateForFirebase"
 ) => {
   cy.wait(3000);
   cy.get('[data-disclosure-link="Journey Builder"]').click();
@@ -21,7 +21,7 @@ export default (
     .get('[data-isprimary="true"]')
     .move({ deltaX: 100, deltaY: 100 });
   cy.wait(3000);
-  cy.get("#sms").drag('[data-isprimary="true"]', { force: true });
+  cy.get("#firebase").drag('[data-isprimary="true"]', { force: true });
   cy.get("#activeJourney").click();
   cy.contains(templateName).click();
   cy.wait(3000);
