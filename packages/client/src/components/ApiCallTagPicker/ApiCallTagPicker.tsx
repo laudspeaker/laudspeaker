@@ -18,7 +18,9 @@ const ApiCallTagPicker: FC<ApiCallTagPickerProps> = ({
   itemContent,
   handleValueReplace,
 }) => {
-  const [webhookStateBase64, webhookProps] = itemContent.trim().split(";");
+  const [webhookStateBase64, initialWebhookProps] = itemContent
+    .trim()
+    .split(";");
 
   let initialWebhookState: WebhookState = {
     url: "https://jsonplaceholder.typicode.com/posts",
@@ -37,6 +39,7 @@ const ApiCallTagPicker: FC<ApiCallTagPickerProps> = ({
 
   const [webhookState, setWebhookState] =
     useState<WebhookState>(initialWebhookState);
+  const [webhookProps, setWebhookProps] = useState(initialWebhookProps || "");
   const [isWebhookModalOpen, setIsWebhookModalOpen] = useState(false);
 
   const [selectedRef, setSelectedRef] =
@@ -86,7 +89,7 @@ const ApiCallTagPicker: FC<ApiCallTagPickerProps> = ({
         "base64"
       )};${webhookProps} ]}]`
     );
-  }, [webhookState]);
+  }, [webhookState, webhookProps]);
 
   return (
     <>
@@ -116,6 +119,8 @@ const ApiCallTagPicker: FC<ApiCallTagPickerProps> = ({
             <WebhookSettings
               webhookState={webhookState}
               setWebhookState={setWebhookState}
+              webhookProps={webhookProps}
+              setWebhookProps={setWebhookProps}
               urlRef={urlRef}
               bearerTokenRef={bearerTokenRef}
               basicUserNameRef={basicUserNameRef}
