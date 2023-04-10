@@ -390,7 +390,7 @@ export class CustomersService {
           ...(identifyEvent.phEmail && { phEmail: identifyEvent.phEmail }),
           ...(identifyEvent.phPhoneNumber && { phPhoneNumber: identifyEvent.phPhoneNumber }),
           ...(identifyEvent.phDeviceToken && { phDeviceToken: identifyEvent.phDeviceToken }),
- 
+
         }
         ).exec();
       } else if (addedBefore.length === 0) {
@@ -402,7 +402,7 @@ export class CustomersService {
           ...(identifyEvent.phPhoneNumber && { phPhoneNumber: identifyEvent.phPhoneNumber }),
           ...(identifyEvent.phDeviceToken && { phDeviceToken: identifyEvent.phDeviceToken }),
         });
-        return createdCustomer.save();
+        return await createdCustomer.save();
       }
       else {
         this.logger.warn(`${JSON.stringify(addedBefore)}`, `customers.service.ts:CustomersService.phIdentifyUpdate()`);
@@ -639,57 +639,19 @@ export class CustomersService {
     transactionSession: ClientSession,
     mapping?: (event: any) => any
   ): Promise<Correlation> {
-    // const queryParam: any = {
-    //   ownerId: (<Account>account).id,
-    //   [correlationKey]: correlationValue,
-    // };
-    // let customer: CustomerDocument = await this.CustomerModel.findOne(
-    //   queryParam
-    // ).exec();
-    // if (customer) {
-    //   if (mapping) {
-    //     customer = await this.CustomerModel.findOneAndUpdate(
-    //       queryParam,
-    //       mapping(event)
-    //     ).exec();
-    //     this.logger.debug('Customer found and updated: ' + JSON.stringify(customer));
-    //     return { cust: customer, found: true };
-    //   } else {
-    //     this.logger.debug('Customer found, no update needed: ' + customer.id);
-    //     return { cust: customer, found: true };
-    //   }
-    // } else {
-    //   if (mapping)
-    //     customer = await this.CustomerModel.findOneAndUpdate(
-    //       queryParam,
-    //       mapping(event),
-    //       { upsert: true }
-    //     ).exec();
-    //   else
-    //     customer = await this.CustomerModel.findOneAndUpdate(
-    //       queryParam,
-    //       undefined,
-    //       { upsert: true }
-    //     ).exec();
-    //   return { cust: customer, found: false };
-    // }
     let customer: CustomerDocument;
-    let queryParam : any = {
+    let queryParam: any = {
       ownerId: (<Account>account).id,
     };
-    if(Array.isArray(correlationValue)){
+    if (Array.isArray(correlationValue)) {
       queryParam.$or = [];
-      for (let i = 0; i< correlationValue.length; i++){
-        queryParam.$or.push({ posthogId: { $in: [correlationValue[i]] } })
+      for (let i = 0; i < correlationValue.length; i++) {
+        queryParam.$or.push({ [correlationKey]: { $in: [correlationValue[i]] } })
       }
-    } else{
+    } else {
       queryParam[correlationKey] = correlationValue;
     }
-    //const queryParam = {
-    //  ownerId: (<Account>account).id,
-    //  [correlationKey]: correlationValue,
-    //};
-    this.logger.debug('QueryParam: ' + JSON.stringify(queryParam));
+    this.logger.debug(`${JSON.stringify(queryParam, null, 2)}`, `customers.service.ts:CustomersService.findBySpecifiedEvent()`);
     customer = await this.CustomerModel.findOne(queryParam)
       .session(transactionSession)
       .exec();
@@ -698,9 +660,9 @@ export class CustomersService {
       if (mapping) {
         const newCust = mapping(event);
         newCust['ownerId'] = (<Account>account).id;
-        newCust[correlationKey] = [correlationValue];
+        newCust[correlationKey] = Array.isArray(correlationValue) ? this.filterFalsyAndDuplicates(correlationValue) : correlationValue;
         const createdCustomer = new this.CustomerModel(newCust);
-        this.logger.debug('New customer created: ' + createdCustomer.id);
+        this.logger.debug(`${JSON.stringify(createdCustomer, null, 2)}`, `customers.service.ts:CustomersService.findBySpecifiedEvent()`);
         return {
           cust: await createdCustomer.save({ session: transactionSession }),
           found: false,
@@ -708,9 +670,9 @@ export class CustomersService {
       } else {
         const createdCustomer = new this.CustomerModel({
           ownerId: (<Account>account).id,
-          correlationKey: correlationValue,
+          correlationKey: Array.isArray(correlationValue) ? this.filterFalsyAndDuplicates(correlationValue) : correlationValue,
         });
-        this.logger.debug('New customer created: ' + createdCustomer.id);
+        this.logger.debug(`${JSON.stringify(createdCustomer, null, 2)}`, `customers.service.ts:CustomersService.findBySpecifiedEvent()`);
         return {
           cust: await createdCustomer.save({ session: transactionSession }),
           found: false,
@@ -719,17 +681,13 @@ export class CustomersService {
 
       //to do cant just return [0] in the future
     } else {
-      if (mapping)
-        customer = await this.CustomerModel.findOneAndUpdate(
-          queryParam,
-          mapping(event)
-        )
-          .session(transactionSession)
-          .exec();
-
-      this.logger.warn('\n findBySpecifiedEvent 569', customer);
-
-      this.logger.debug('Customer found: ' + customer.id);
+      let updateObj: any = mapping ? mapping(event) : undefined;
+      if (Array.isArray(correlationValue)) {
+        updateObj.$addToSet = { [correlationKey]: { $each: this.filterFalsyAndDuplicates(correlationValue) } }
+      } else {
+        updateObj[correlationKey] = correlationValue;
+      }
+      customer = await this.CustomerModel.findOneAndUpdate(queryParam, updateObj).session(transactionSession).exec();
       return { cust: customer, found: true };
     }
   }
@@ -799,14 +757,22 @@ export class CustomersService {
   async findByCorrelationKVPair(
     account: Account,
     correlationKey: string,
-    correlationValue: string | [],
+    correlationValue: string | string[],
     transactionSession?: ClientSession
   ): Promise<CustomerDocument> {
     let customer: CustomerDocument; // Found customer
-    const queryParam = {
-      ownerId: (<Account>account).id,
-      [correlationKey]: correlationValue,
+    const queryParam: any = {
+      ownerId: (<Account>account).id
     };
+    if (Array.isArray(correlationValue)) {
+      queryParam.$or = [];
+      for (let i = 0; i < correlationValue.length; i++) {
+        queryParam.$or.push({ [correlationKey]: { $in: [correlationValue[i]] } })
+      }
+    } else {
+      queryParam[correlationKey] = correlationValue;
+    }
+    this.logger.debug(`${JSON.stringify(queryParam, null, 2)}`, `customers.service.ts:CustomersService.findByCorrelationKVPair()`);
     try {
       if (transactionSession) {
         customer = await this.CustomerModel.findOne(queryParam)
@@ -815,7 +781,7 @@ export class CustomersService {
       } else {
         customer = await this.CustomerModel.findOne(queryParam).exec();
       }
-      this.logger.debug('Found customer in correlationKVPair:' + customer.id);
+      this.logger.debug('Found customer in correlationKVPair:' + customer?.id);
     } catch (err) {
       return Promise.reject(err);
     }

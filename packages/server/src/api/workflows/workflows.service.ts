@@ -313,7 +313,13 @@ export class WorkflowsService {
                 ownerId: account.id,
                 providerSpecific: trigger.providerType,
               }).exec();
-              if (!eventKey)
+              const defaultKey = await this.EventKeysModel.findOne({
+                key,
+                type,
+                isDefault: true,
+                providerSpecific: trigger.providerType,
+              }).exec();
+              if (!eventKey && !defaultKey)
                 await this.EventKeysModel.create({
                   key,
                   type,
