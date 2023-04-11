@@ -155,4 +155,7 @@ export class Workflow {
   @ManyToOne(() => Filter, (filter) => filter.id, { onDelete: 'CASCADE' })
   @JoinColumn()
   filter?: Filter;
+
+  @Column({ type: 'timestamp', default: new Date(Date.now()) })
+  createdAt: Date;
 }
