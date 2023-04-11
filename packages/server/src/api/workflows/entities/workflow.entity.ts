@@ -156,6 +156,6 @@ export class Workflow {
   @JoinColumn()
   filter?: Filter;
 
-  @Column({ type: 'timestamp', default: new Date(Date.now()) })
+  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
 }

@@ -88,6 +88,6 @@ export class Template {
   @Column({ type: 'jsonb', nullable: true })
   webhookData?: WebhookData;
 
-  @Column({ type: 'timestamp', default: new Date(Date.now()) })
+  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
 }
