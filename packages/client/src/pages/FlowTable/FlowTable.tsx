@@ -9,6 +9,7 @@ import posthog from "posthog-js";
 import Modal from "components/Elements/Modal";
 import { Workflow } from "types/Workflow";
 import Progress from "components/Progress";
+import { SortOptions } from "components/TableTemplate/TableTemplate";
 
 const FlowTable = () => {
   const [loading, setLoading] = useState(false);
@@ -19,7 +20,9 @@ const FlowTable = () => {
   const [update, setUpdate] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
   const [nameModalOpen, setNameModalOpen] = useState<boolean>(false);
-  const [sortOptions, setSortOptions] = useState({});
+  const [sortOptions, setSortOptions] = useState<SortOptions>({
+    createdAt: "desc",
+  });
   const [isShowDisabled, setIsShowDisabled] = useState(false);
 
   useEffect(() => {

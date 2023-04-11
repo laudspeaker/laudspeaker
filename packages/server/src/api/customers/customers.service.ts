@@ -294,6 +294,7 @@ export class CustomersService {
           }
         : {}),
     })
+      .sort({ createdAt: 'desc' })
       .skip(skip)
       .limit(take <= 100 ? take : 100)
       .exec();
