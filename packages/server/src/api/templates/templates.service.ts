@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   HttpException,
   HttpStatus,
   Inject,
@@ -9,67 +10,232 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import { Account } from '../accounts/entities/accounts.entity';
-import { CustomerDocument } from '../customers/schemas/customer.schema';
+import {
+  Customer,
+  CustomerDocument,
+} from '../customers/schemas/customer.schema';
+import { InjectModel } from '@nestjs/mongoose';
 import { CreateTemplateDto } from './dto/create-template.dto';
 import { UpdateTemplateDto } from './dto/update-template.dto';
-import { Template } from './entities/template.entity';
-import { Job, Queue } from 'bull';
-import { InjectQueue } from '@nestjs/bull';
+import { Job, Queue } from 'bullmq';
+import {
+  FallBackAction,
+  Template,
+  TemplateType,
+  WebhookData,
+  WebhookMethod,
+} from './entities/template.entity';
+import {
+  InjectQueue,
+  OnQueueEvent,
+  QueueEventsHost,
+  QueueEventsListener,
+} from '@nestjs/bullmq';
 import { Installation } from '../slack/entities/installation.entity';
 import { SlackService } from '../slack/slack.service';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { EventDto } from '../events/dto/event.dto';
 import { Audience } from '../audiences/entities/audience.entity';
-import { Liquid } from 'liquidjs';
-import { cert, App, getApp, initializeApp } from 'firebase-admin/app';
-import { getMessaging } from 'firebase-admin/messaging';
 import { cleanTagsForSending } from '@/shared/utils/helpers';
-import {
-  ClickHouseEventProvider,
-  WebhooksService,
-} from '../webhooks/webhooks.service';
+import { MessageType } from '../email/email.processor';
+import { Response, fetch } from 'undici';
+import { Model } from 'mongoose';
+import { Liquid } from 'liquidjs';
+import { TestWebhookDto } from './dto/test-webhook.dto';
+import { WebhooksService } from '../webhooks/webhooks.service';
+import wait from '@/utils/wait';
 
 @Injectable()
-export class TemplatesService {
+@QueueEventsListener('message')
+export class TemplatesService extends QueueEventsHost {
   private tagEngine = new Liquid();
-
-  private MAXIMUM_PUSH_LENGTH = 256;
-  private MAXIMUM_PUSH_TITLE_LENGTH = 48;
 
   constructor(
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
     private readonly logger: LoggerService,
     @InjectRepository(Template)
     public templatesRepository: Repository<Template>,
+    @InjectModel(Customer.name) private customerModel: Model<CustomerDocument>,
     @InjectRepository(Audience)
     private audiencesRepository: Repository<Audience>,
-    private readonly webhooksService: WebhooksService,
     @Inject(SlackService) private slackService: SlackService,
+    @Inject(WebhooksService) private webhooksService: WebhooksService,
     @InjectQueue('message') private readonly messageQueue: Queue,
+    @InjectQueue('webhooks') private readonly webhooksQueue: Queue,
     @InjectQueue('slack') private readonly slackQueue: Queue
-  ) {}
+  ) {
+    super();
+  }
+
+  @OnQueueEvent('active')
+  onActive(args: { jobId: string; prev?: string }, id: string) {
+    this.logger.debug(
+      `${args.jobId} ${args.prev} ${id}`,
+      `templates.service.ts:TemplatesService.onActive()`
+    );
+  }
+
+  @OnQueueEvent('added')
+  onAdded(args: { jobId: string; name: string }, id: string) {
+    this.logger.debug(
+      `${args.jobId} ${args.name} ${id}`,
+      `templates.service.ts:TemplatesService.onAdded()`
+    );
+  }
+
+  @OnQueueEvent('cleaned')
+  onCleaned(args: { count: string }, id: string) {
+    this.logger.debug(
+      `${args.count} ${id}`,
+      `templates.service.ts:TemplatesService.onCleaned()`
+    );
+  }
+
+  @OnQueueEvent('completed')
+  onCompleted(
+    args: { jobId: string; returnvalue: string; prev?: string },
+    id: string
+  ) {
+    this.logger.debug(
+      `${args.jobId} ${args.returnvalue} ${args.prev} ${id}`,
+      `templates.service.ts:TemplatesService.onCompleted()`
+    );
+  }
+
+  @OnQueueEvent('delayed')
+  onDelayed(args: { jobId: string; delay: number }, id: string) {
+    this.logger.debug(
+      `${args.jobId} ${args.delay} ${id}`,
+      `templates.service.ts:TemplatesService.onDelayed()`
+    );
+  }
+
+  @OnQueueEvent('drained')
+  onDrained(id: string) {
+    this.logger.debug(
+      `${id}`,
+      `templates.service.ts:TemplatesService.onDrained()`
+    );
+  }
+
+  @OnQueueEvent('duplicated')
+  onDuplicated(args: { jobId: string }, id: string) {
+    this.logger.debug(
+      `${args.jobId} ${id}`,
+      `templates.service.ts:TemplatesService.onDuplicated()`
+    );
+  }
+
+  @OnQueueEvent('error')
+  onError(args: Error) {
+    this.logger.debug(
+      `${args}`,
+      `templates.service.ts:TemplatesService.onError()`
+    );
+  }
+
+  @OnQueueEvent('failed')
+  onFailed(
+    args: { jobId: string; failedReason: string; prev?: string },
+    id: string
+  ) {
+    this.logger.debug(
+      `${args.jobId} ${args.failedReason} ${args.prev} ${id}`,
+      `templates.service.ts:TemplatesService.onFailed()`
+    );
+  }
+
+  @OnQueueEvent('paused')
+  onPaused(args: unknown, id: string) {
+    this.logger.debug(
+      `${id}`,
+      `templates.service.ts:TemplatesService.onPaused()`
+    );
+  }
+
+  @OnQueueEvent('progress')
+  onProgress(args: { jobId: string; data: number | object }, id: string) {
+    this.logger.debug(
+      `${args.jobId} ${args.data} ${id}`,
+      `templates.service.ts:TemplatesService.onProgress()`
+    );
+  }
+
+  @OnQueueEvent('removed')
+  onRemoved(args: { jobId: string; prev: string }, id: string) {
+    this.logger.debug(
+      `${args.jobId} ${args.prev} ${id}`,
+      `templates.service.ts:TemplatesService.onRemoved()`
+    );
+  }
+
+  @OnQueueEvent('resumed')
+  onResumed(args: unknown, id: string) {
+    this.logger.debug(
+      `${id}`,
+      `templates.service.ts:TemplatesService.onResumed()`
+    );
+  }
+
+  @OnQueueEvent('retries-exhausted')
+  onRetriesExhausted(
+    args: { jobId: string; attemptsMade: string },
+    id: string
+  ) {
+    this.logger.debug(
+      `${args.jobId} ${args.attemptsMade} ${id}`,
+      `templates.service.ts:TemplatesService.onRetriesExhausted()`
+    );
+  }
+
+  @OnQueueEvent('stalled')
+  onStalled(args: { jobId: string }, id: string) {
+    this.logger.debug(
+      `${args.jobId} ${id}`,
+      `templates.service.ts:TemplatesService.onStalled()`
+    );
+  }
+
+  @OnQueueEvent('waiting')
+  onWaiting(args: { jobId: string; prev?: string }, id: string) {
+    this.logger.debug(
+      `${args.jobId} ${args.prev} ${id}`,
+      `templates.service.ts:TemplatesService.onWaiting()`
+    );
+  }
+
+  @OnQueueEvent('waiting-children')
+  onWaitingChildren(args: { jobId: string }, id: string) {
+    this.logger.debug(
+      `${args.jobId} ${id}`,
+      `templates.service.ts:TemplatesService.onWaitingChildren()`
+    );
+  }
 
   create(account: Account, createTemplateDto: CreateTemplateDto) {
     const template = new Template();
     template.type = createTemplateDto.type;
     template.name = createTemplateDto.name;
     switch (template.type) {
-      case 'email':
+      case TemplateType.EMAIL:
         template.subject = createTemplateDto.subject;
         template.text = createTemplateDto.text;
+        if (createTemplateDto.cc) template.cc = createTemplateDto.cc;
         template.style = createTemplateDto.style;
         break;
-      case 'slack':
+      case TemplateType.SLACK:
         template.slackMessage = createTemplateDto.slackMessage;
         break;
-      case 'sms':
+      case TemplateType.SMS:
         template.smsText = createTemplateDto.smsText;
         break;
-      case 'firebase':
+      case TemplateType.FIREBASE:
         template.pushText = createTemplateDto.pushText;
         template.pushTitle = createTemplateDto.pushTitle;
         break;
-      //TODO
+      case TemplateType.WEBHOOK:
+        template.webhookData = createTemplateDto.webhookData;
+        break;
     }
     return this.templatesRepository.save({
       ...template,
@@ -128,7 +294,7 @@ export class TemplatesService {
     let from = sendingName;
 
     switch (template.type) {
-      case 'email':
+      case TemplateType.EMAIL:
         if (account.emailProvider === 'free3') {
           if (account.freeEmailsCount === 0)
             throw new HttpException(
@@ -147,149 +313,100 @@ export class TemplatesService {
           from = sendgridFromEmail;
         }
 
-        job = await this.messageQueue.add('email', {
-          eventProvider: account.emailProvider,
-          trackingEmail: email,
-          key,
-          from,
-          domain: sendingDomain,
-          email: sendingEmail,
-          to: customer.phEmail ? customer.phEmail : customer.email,
-          audienceId,
-          customerId,
-          tags: filteredTags,
-          subject: template.subject,
-          text: template.text,
-          templateId,
-          accountId: account.id,
-        });
+        job = await this.messageQueue.add(
+          MessageType.EMAIL,
+          {
+            accountId: account.id,
+            audienceId,
+            cc: template.cc,
+            customerId,
+            domain: sendingDomain,
+            email: sendingEmail,
+            eventProvider: account.emailProvider,
+            from,
+            trackingEmail: email,
+            key,
+            subject: await this.parseApiCallTags(
+              template.subject,
+              filteredTags
+            ),
+            tags: filteredTags,
+            templateId,
+            text: await this.parseApiCallTags(template.text, filteredTags),
+            to: customer.phEmail ? customer.phEmail : customer.email,
+          },
+          { attempts: Number.MAX_SAFE_INTEGER }
+        );
         if (account.emailProvider === 'free3') await account.save();
         break;
-      case 'slack':
+      case TemplateType.SLACK:
         try {
           installation = await this.slackService.getInstallation(customer);
         } catch (err) {
           return Promise.reject(err);
         }
         job = await this.slackQueue.add('send', {
-          methodName: 'chat.postMessage',
-          token: installation.installation.bot.token,
+          accountId: account.id,
           args: {
+            audienceId,
             channel: customer.slackId,
-            text: event?.payload ? event.payload : template.slackMessage,
+            customerId,
             tags: filteredTags,
             templateId,
-            audienceId,
-            customerId,
+            text: await this.parseApiCallTags(
+              event?.payload ? event.payload : template.slackMessage,
+              filteredTags
+            ),
           },
+          methodName: 'chat.postMessage',
+          token: installation.installation.bot.token,
+          trackingEmail: email,
         });
         break;
-      case 'sms':
-        job = await this.messageQueue.add('sms', {
-          trackingEmail: email,
-          sid: account.smsAccountSid,
-          token: account.smsAuthToken,
-          from: account.smsFrom,
-          to: customer.phPhoneNumber || customer.phone,
-          tags: filteredTags,
-          text: template.smsText,
-          templateId: template.id,
+      case TemplateType.SMS:
+        job = await this.messageQueue.add(MessageType.SMS, {
+          accountId: account.id,
           audienceId,
           customerId,
+          from: account.smsFrom,
+          sid: account.smsAccountSid,
+          tags: filteredTags,
+          templateId: template.id,
+          text: await this.parseApiCallTags(template.smsText, filteredTags),
+          to: customer.phPhoneNumber || customer.phone,
+          token: account.smsAuthToken,
+          trackingEmail: email,
         });
-
         break;
-      case 'firebase':
-        try {
-          if (!customer.phDeviceToken) {
-            this.logger.warn(
-              `Customer ${customer.id} has no device token; skipping`
-            );
-            return;
-          }
-          this.logger.debug(
-            `Starting PUSH sending to ${customer.phDeviceToken}`
-          );
-          let textWithInsertedTags, titleWithInsertedTags;
-          try {
-            textWithInsertedTags = await this.tagEngine.parseAndRender(
-              template.pushText,
-              filteredTags || {},
-              { strictVariables: true }
-            );
-
-            titleWithInsertedTags = await this.tagEngine.parseAndRender(
-              template.pushTitle,
-              filteredTags || {},
-              { strictVariables: true }
-            );
-          } catch (error) {
-            this.logger.warn("Merge tag can't be used, skipping sending...");
-            await this.webhooksService.insertClickHouseMessages([
-              {
-                event: 'error',
-                createdAt: new Date().toUTCString(),
-                eventProvider: ClickHouseEventProvider.FIREBASE,
-                messageId: '',
-                audienceId: job.data.args.audienceId,
-                customerId: job.data.args.customerId,
-                templateId: String(job.data.args.templateId),
-              },
-            ]);
-            return;
-          }
-
-          this.logger.debug(
-            `Finished rendering tags in PUSH to ${customer.phDeviceToken} with title: \`${titleWithInsertedTags}\` and text: \`${textWithInsertedTags}\``
-          );
-
-          let firebaseApp: App;
-
-          try {
-            firebaseApp = getApp(account.id);
-          } catch (e: any) {
-            if (e.code == 'app/no-app') {
-              firebaseApp = initializeApp(
-                {
-                  credential: cert(JSON.parse(account.firebaseCredentials)),
-                },
-                account.id
-              );
-            } else throw e;
-          }
-
-          const messaging = getMessaging(firebaseApp);
-
-          const messageId = await messaging.send({
-            token: customer.phDeviceToken,
-            notification: {
-              title: titleWithInsertedTags.slice(
-                0,
-                this.MAXIMUM_PUSH_TITLE_LENGTH
-              ),
-              body: textWithInsertedTags.slice(0, this.MAXIMUM_PUSH_LENGTH),
-            },
-            android: {
-              notification: {
-                sound: 'default',
-                clickAction: 'FLUTTER_NOTIFICATION_CLICK',
-              },
-            },
-            apns: {
-              payload: {
-                aps: {
-                  badge: 1,
-                  sound: 'default',
-                },
-              },
-            },
+      case TemplateType.FIREBASE:
+        job = await this.messageQueue.add(MessageType.FIREBASE, {
+          accountId: account.id,
+          audienceId,
+          customerId,
+          firebaseCredentials: account.firebaseCredentials,
+          phDeviceToken: customer.phDeviceToken,
+          pushText: await this.parseApiCallTags(
+            template.pushText,
+            filteredTags
+          ),
+          pushTitle: await this.parseApiCallTags(
+            template.pushTitle,
+            filteredTags
+          ),
+          trackingEmail: email,
+          tags: filteredTags,
+          templateId: template.id,
+        });
+        break;
+      case TemplateType.WEBHOOK:
+        if (template.webhookData) {
+          job = await this.webhooksQueue.add('whapicall', {
+            template,
+            filteredTags,
+            audienceId,
+            customerId,
+            accountId: account.id,
           });
-
-          this.logger.debug(
-            `Push for template id ${templateId} to customer ${customer.id} sent with message id ${messageId}`
-          );
-        } catch (e) {
-          this.logger.error(e);
         }
         break;
     }
@@ -339,10 +456,7 @@ export class TemplatesService {
     });
   }
 
-  findBy(
-    account: Account,
-    type: 'email' | 'slack' | 'sms'
-  ): Promise<Template[]> {
+  findBy(account: Account, type: TemplateType): Promise<Template[]> {
     return this.templatesRepository.findBy({
       owner: { id: account.id },
       type: type,
@@ -376,8 +490,16 @@ export class TemplatesService {
     });
     if (!foundTemplate) throw new NotFoundException('Template not found');
 
-    const { owner, slackMessage, style, subject, text, type, smsText } =
-      foundTemplate;
+    const {
+      owner,
+      slackMessage,
+      style,
+      subject,
+      text,
+      type,
+      smsText,
+      webhookData,
+    } = foundTemplate;
 
     const ownerId = owner.id;
 
@@ -407,6 +529,7 @@ export class TemplatesService {
       text,
       type,
       smsText,
+      webhookData,
     });
   }
 
@@ -433,5 +556,262 @@ export class TemplatesService {
       .execute();
 
     return data.map((item) => item.name);
+  }
+
+  public async parseTemplateTags(str: string) {
+    this.logger.debug('Parsing template tags...');
+
+    const matches = str.match(
+      /\[\[\s(email|sms|slack|firebase);[a-zA-Z0-9-\s]+;[a-zA-Z]+\s\]\]/g
+    );
+
+    if (!matches) return str;
+
+    for (const match of matches) {
+      const [type, templateName, templateProperty] = match
+        .replace('[[ ', '')
+        .replace(' ]]', '')
+        .trim()
+        .split(';');
+
+      const template = await this.templatesRepository.findOneBy({
+        type: <TemplateType>type,
+        name: templateName,
+      });
+
+      if (template) this.logger.debug('Found template: ' + template.name);
+
+      str = str.replace(match, template?.[templateProperty] || '');
+    }
+
+    return str;
+  }
+
+  private recursivelyRetrieveData(
+    object: unknown,
+    path: string[]
+  ): string | null {
+    if (!object) return null;
+
+    const key = path.shift();
+    if (!key)
+      return typeof object === 'object'
+        ? JSON.stringify(object)
+        : String(object);
+    return this.recursivelyRetrieveData(object[key], path);
+  }
+
+  public async parseApiCallTags(
+    str: string,
+    filteredTags: { [key: string]: any } = {}
+  ) {
+    const matches = str.match(/\[\{\[\s[^\s]+;[^\s]+\s\]\}\]/);
+
+    if (!matches) return str;
+
+    for (const match of matches) {
+      try {
+        const [webhookDataBase64, webhookProps] = match
+          .replace('[{[ ', '')
+          .replace(' ]}]', '')
+          .trim()
+          .split(';');
+        const webhookData: WebhookData = JSON.parse(
+          Buffer.from(webhookDataBase64, 'base64').toString('utf8')
+        );
+
+        const { body, error, headers, success } = await this.handleApiCall(
+          webhookData,
+          filteredTags
+        );
+
+        if (!success) return str.replace(match, '');
+
+        const webhookPath = webhookProps.replace('response.', '').split('.');
+
+        let retrievedData = '';
+        if (webhookPath.length === 1) {
+          retrievedData = ['data', 'body'].includes(webhookPath[0])
+            ? body
+            : webhookPath[0] === 'headers'
+            ? JSON.stringify(headers)
+            : '';
+        } else {
+          const objectToRetrievе = ['data', 'body'].includes(webhookPath[0])
+            ? JSON.parse(body)
+            : webhookPath[0] === 'headers'
+            ? headers
+            : {};
+          retrievedData = this.recursivelyRetrieveData(
+            objectToRetrievе,
+            webhookPath.slice(1)
+          );
+        }
+
+        str = str.replace(match, retrievedData);
+      } catch (e) {
+        this.logger.error('Api call error: ' + e);
+      }
+    }
+
+    return str;
+  }
+
+  async testWebhookTemplate(testWebhookDto: TestWebhookDto) {
+    const customer = await this.customerModel.findOne({
+      email: testWebhookDto.testCustomerEmail,
+    });
+
+    if (!customer) throw new NotFoundException('Customer not found');
+
+    const { _id, ownerId, audiences, ...tags } = customer.toObject();
+    const filteredTags = cleanTagsForSending(tags);
+
+    const { method } = testWebhookDto.webhookData;
+
+    let { body, headers, url } = testWebhookDto.webhookData;
+
+    url = await this.tagEngine.parseAndRender(url, filteredTags || {}, {
+      strictVariables: true,
+    });
+    url = await this.parseTemplateTags(url);
+
+    if (
+      [
+        WebhookMethod.GET,
+        WebhookMethod.HEAD,
+        WebhookMethod.DELETE,
+        WebhookMethod.OPTIONS,
+      ].includes(method)
+    ) {
+      body = undefined;
+    } else {
+      body = await this.parseTemplateTags(body);
+      body = await this.tagEngine.parseAndRender(body, filteredTags || {}, {
+        strictVariables: true,
+      });
+    }
+
+    headers = Object.fromEntries(
+      await Promise.all(
+        Object.entries(headers).map(async ([key, value]) => [
+          await this.parseTemplateTags(
+            await this.tagEngine.parseAndRender(key, filteredTags || {}, {
+              strictVariables: true,
+            })
+          ),
+          await this.parseTemplateTags(
+            await this.tagEngine.parseAndRender(value, filteredTags || {}, {
+              strictVariables: true,
+            })
+          ),
+        ])
+      )
+    );
+
+    try {
+      const res = await fetch(url, {
+        method,
+        body,
+        headers,
+      });
+
+      return {
+        body: await res.text(),
+        headers: res.headers,
+        status: res.status,
+      };
+    } catch (e) {
+      throw new BadRequestException(e);
+    }
+  }
+
+  public async handleApiCall(
+    webhookData: WebhookData,
+    filteredTags: { [key: string]: any } = {}
+  ) {
+    const { method, retries, fallBackAction } = webhookData;
+
+    let { body, headers, url } = webhookData;
+
+    url = await this.tagEngine.parseAndRender(url, filteredTags || {}, {
+      strictVariables: true,
+    });
+    url = await this.parseTemplateTags(url);
+
+    if (
+      [
+        WebhookMethod.GET,
+        WebhookMethod.HEAD,
+        WebhookMethod.DELETE,
+        WebhookMethod.OPTIONS,
+      ].includes(method)
+    ) {
+      body = undefined;
+    } else {
+      body = await this.parseTemplateTags(body);
+      body = await this.tagEngine.parseAndRender(body, filteredTags || {}, {
+        strictVariables: true,
+      });
+    }
+
+    headers = Object.fromEntries(
+      await Promise.all(
+        Object.entries(headers).map(async ([key, value]) => [
+          await this.parseTemplateTags(
+            await this.tagEngine.parseAndRender(key, filteredTags || {}, {
+              strictVariables: true,
+            })
+          ),
+          await this.parseTemplateTags(
+            await this.tagEngine.parseAndRender(value, filteredTags || {}, {
+              strictVariables: true,
+            })
+          ),
+        ])
+      )
+    );
+
+    let retriesCount = 0;
+    let success = false;
+
+    this.logger.debug(
+      'Sending api call request: \n' + JSON.stringify(webhookData, null, 2)
+    );
+    let error: string | null = null;
+    let res: Response;
+    while (!success && retriesCount < retries) {
+      try {
+        res = await fetch(url, {
+          method,
+          body,
+          headers,
+        });
+
+        if (!res.ok) throw new Error('Error sending API request');
+        this.logger.debug('Successful api call request!');
+        success = true;
+      } catch (e) {
+        retriesCount++;
+        this.logger.warn(
+          'Unsuccessfull webhook request. Retries: ' +
+            retriesCount +
+            '. Error: ' +
+            e
+        );
+        if (e instanceof Error) error = e.message;
+        await wait(5000);
+      }
+    }
+
+    if (!success) {
+      switch (fallBackAction) {
+        case FallBackAction.NOTHING:
+          this.logger.error('Failed to send webhook request: ' + error);
+          break;
+      }
+    }
+
+    return { success, body: await res.text(), headers: res.headers, error };
   }
 }

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useMemo, useState } from "react";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import "reactflow/dist/style.css";

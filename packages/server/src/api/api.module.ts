@@ -8,14 +8,8 @@ import { AudiencesModule } from './audiences/audiences.module';
 import { EventsModule } from './events/events.module';
 import { TemplatesModule } from './templates/templates.module';
 import { SlackModule } from './slack/slack.module';
-import { Account } from './accounts/entities/accounts.entity';
-import { AuthService } from './auth/auth.service';
-import { AccountsService } from './accounts/accounts.service';
-import { CustomersService } from './customers/customers.service';
-import { CreateCustomerDto } from './customers/dto/create-customer.dto';
-import { InjectRepository, TypeOrmModule } from '@nestjs/typeorm';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { Workflow } from './workflows/entities/workflow.entity';
-import { Repository } from 'typeorm';
 import { Template } from './templates/entities/template.entity';
 import { Audience } from './audiences/entities/audience.entity';
 import { TestsModule } from './tests/tests.module';
@@ -26,10 +20,19 @@ import { IntegrationsModule } from './integrations/integrations.module';
 import { JobsModule } from './jobs/jobs.module';
 import { TestsService } from './tests/tests.service';
 import { FilterModule } from './filter/filter.module';
+import { WebhookJob } from './webhook-jobs/entities/webhook-job.entity';
+import { WebhookJobsModule } from './webhook-jobs/webhook-jobs.module';
+import Accounts from 'twilio/lib/rest/Accounts';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Audience, Template, Workflow]),
+    TypeOrmModule.forFeature([
+      Audience,
+      Template,
+      Workflow,
+      WebhookJob,
+      Accounts,
+    ]),
     AccountsModule,
     AuthModule,
     CustomersModule,
@@ -47,6 +50,7 @@ import { FilterModule } from './filter/filter.module';
     JobsModule,
     TestsModule,
     FilterModule,
+    WebhookJobsModule,
   ],
 })
 export class ApiModule {

@@ -28,8 +28,8 @@ describe(
       cy.url().should("include", "/templates");
       cy.get("#createTemplate").click();
       cy.get("#name").type(slackTemplate.name);
-      cy.get("#handleDay").click();
-      cy.get("#handleDay").find('[data-option="slack"]').click();
+      cy.get("#handleTemplateType").click();
+      cy.get("#handleTemplateType").find('[data-option="slack"]').click();
       cy.get("#submitTemplateCreation").click();
       cy.url().should("include", "templates/slack");
 

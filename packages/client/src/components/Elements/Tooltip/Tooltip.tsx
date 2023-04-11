@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { FC, ReactNode } from "react";
 import { Tooltip as MTTooltip, TooltipProps } from "@material-tailwind/react";
 

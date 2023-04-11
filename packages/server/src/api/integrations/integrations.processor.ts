@@ -1,12 +1,11 @@
-import { Integration } from './entities/integration.entity';
-import { Process, Processor } from '@nestjs/bull';
+import { Processor, WorkerHost } from '@nestjs/bullmq';
 import handleDatabricks from './databricks.worker';
 import {
   Database,
   DBType,
   FrequencyUnit,
 } from '../../api/integrations/entities/database.entity';
-import { Job } from 'bull';
+import { Job } from 'bullmq';
 import { Account } from '../accounts/entities/accounts.entity';
 import { InjectModel } from '@nestjs/mongoose';
 import {
@@ -18,8 +17,8 @@ import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Pool } from 'pg';
 import Cursor from 'pg-cursor';
-import mysql from 'mysql2';
 import handleMySql from './mysql.worker';
+import { Injectable } from '@nestjs/common';
 
 const hourMs = 60 * 60 * 1000;
 const dayMs = 24 * hourMs;
@@ -37,14 +36,17 @@ const frequencyUnitToMsMap: Record<FrequencyUnit, number> = {
 
 const BATCH_SiZE = 10_000_000;
 
+@Injectable()
 @Processor('integrations')
-export class IntegrationsProcessor {
+export class IntegrationsProcessor extends WorkerHost {
   constructor(
     @InjectModel(Customer.name)
     private customerModel: Model<CustomerDocument>,
     @InjectRepository(Database)
     private databasesRepository: Repository<Database>
-  ) {}
+  ) {
+    super();
+  }
 
   private databasesMap: Record<
     DBType,
@@ -64,8 +66,7 @@ export class IntegrationsProcessor {
     },
   };
 
-  @Process('db')
-  async handleDatabaseSync(job: Job<{ integration: Integration }>) {
+  async process(job: Job<any, any, string>): Promise<any> {
     const integration = job.data.integration;
     if (!integration || !integration.database)
       throw new Error('Wrong integration was passed to job');

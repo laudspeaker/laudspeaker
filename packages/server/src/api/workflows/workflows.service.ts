@@ -35,9 +35,6 @@ import mongoose, { ClientSession, Model } from 'mongoose';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { AudiencesHelper } from '../audiences/audiences.helper';
 import { Template } from '../templates/entities/template.entity';
-import { InjectQueue } from '@nestjs/bull';
-import { JobTypes } from '../events/interfaces/event.interface';
-import { Queue } from 'bull';
 import { BadRequestException } from '@nestjs/common/exceptions';
 import { Job, TimeJobType } from '../jobs/entities/job.entity';
 import { Filter } from '../filter/entities/filter.entity';
@@ -65,8 +62,6 @@ export class WorkflowsService {
     private customersService: CustomersService,
     @InjectModel(EventKeys.name)
     private EventKeysModel: Model<EventKeysDocument>,
-    @InjectQueue(JobTypes.events)
-    private readonly eventsQueue: Queue,
     @InjectConnection() private readonly connection: mongoose.Connection,
     private readonly audiencesHelper: AudiencesHelper
   ) {}
@@ -150,6 +145,18 @@ export class WorkflowsService {
     const deliveredData = (await deliveredResponse.json<any>())?.data;
     const delivered = +deliveredData?.[0]?.['count()'] || 0;
 
+    const openedResponse = await this.clickhouseClient.query({
+      query: `SELECT COUNT(DISTINCT(audienceId, customerId, templateId, messageId, event, eventProvider)) FROM message_status WHERE event = 'opened' AND audienceId = {audienceId:UUID}`,
+      query_params: { audienceId },
+    });
+    const openedData = (await openedResponse.json<any>())?.data;
+    const opened =
+      +openedData?.[0]?.[
+        'uniqExact(tuple(audienceId, customerId, templateId, messageId, event, eventProvider))'
+      ];
+
+    const openedPercentage = (opened / sent) * 100;
+
     const clickedResponse = await this.clickhouseClient.query({
       query: `SELECT COUNT(DISTINCT(audienceId, customerId, templateId, messageId, event, eventProvider)) FROM message_status WHERE event = 'clicked' AND audienceId = {audienceId:UUID}`,
       query_params: { audienceId },
@@ -162,10 +169,21 @@ export class WorkflowsService {
 
     const clickedPercentage = (clicked / sent) * 100;
 
+    const whResponse = await this.clickhouseClient.query({
+      query: `SELECT COUNT(*) FROM message_status WHERE event = 'sent' AND audienceId = {audienceId:UUID} AND eventProvider = 'webhooks' `,
+      query_params: {
+        audienceId,
+      },
+    });
+    const wsData = (await whResponse.json<any>())?.data;
+    const wssent = +wsData?.[0]?.['count()'] || 0;
+
     return {
       sent,
       delivered,
+      openedPercentage,
       clickedPercentage,
+      wssent,
     };
   }
 
@@ -291,7 +309,13 @@ export class WorkflowsService {
                 ownerId: account.id,
                 providerSpecific: trigger.providerType,
               }).exec();
-              if (!eventKey)
+              const defaultKey = await this.EventKeysModel.findOne({
+                key,
+                type,
+                isDefault: true,
+                providerSpecific: trigger.providerType,
+              }).exec();
+              if (!eventKey && !defaultKey)
                 await this.EventKeysModel.create({
                   key,
                   type,

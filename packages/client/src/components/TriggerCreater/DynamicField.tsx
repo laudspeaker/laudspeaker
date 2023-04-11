@@ -1,6 +1,6 @@
 import { Input, Select } from "components/Elements";
 import DateTimePicker from "components/Elements/DateTimePicker";
-import AC from "react-autocomplete";
+import Autocomplete from "components/Autocomplete";
 import React, { FC } from "react";
 
 export interface DynamicFieldProps {
@@ -37,41 +37,17 @@ const DynamicField: FC<DynamicFieldProps> = ({
     case "inputText":
       return (
         <div className="relative">
-          <AC
+          <Autocomplete
+            inputId="dynamicInput"
             items={possibleValues}
-            getItemValue={(item) => JSON.stringify(item)}
-            renderItem={(item, isHighlighted) => (
-              <div
-                className={`${
-                  isHighlighted ? "bg-cyan-100" : ""
-                } p-[2px] rounded-[6px] overflow-hidden text-ellipsis`}
-              >
-                {item}
-              </div>
-            )}
-            autoHighlight={false}
-            renderInput={(props) => (
-              <Input
-                className="!col-span-1"
-                name="dynamic-input"
-                inputRef={props.ref}
-                disabled={disabled}
-                id="dynamicInput"
-                {...props}
-              />
-            )}
-            renderMenu={(items) => {
-              if (!items.length) return <></>;
-
-              return (
-                <div className="shadow-md  border-[1px] bg-white border-cyan-500 absolute top-[calc(100%+4px)] w-full rounded-[6px] z-[9999999999]">
-                  {items}
-                </div>
-              );
+            inputValue={value}
+            onInputChange={(e) => onChange(e.target.value)}
+            disabled={disabled}
+            onOptionSelect={(el) => {
+              onChange(el);
             }}
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-            onSelect={(val) => onChange(JSON.parse(val))}
+            optionKey={(el) => el}
+            optionRender={(el) => el}
           />
         </div>
       );

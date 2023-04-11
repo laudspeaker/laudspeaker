@@ -10,22 +10,19 @@ export default {
     journeyName: "Test Journey For Hitting Events",
     slackTemplate: {
       name: "TestTemplateForSlackSending",
-      message:
-        "Test slack message by cypress. Unknown tag: {{ randomText }}, known tag: {{ slackEmail }}",
+      message: "Test slack message by cypress. Known tag: {{ email }}",
       eventName: "testEventName1",
       slackUid: "U04323JCL5A",
     },
     emailTemplate: {
       name: "TestTemplateForEmailSending",
-      subject:
-        "Test email message by cypress. Unknown tag: {{ randomText }}, known tag: {{ slackEmail }}",
+      subject: "Test email message by cypress. Known tag: {{ email }}",
       eventName: "testEventName2",
       correlationValue: "testmail@gmail.com",
     },
     smsTemplate: {
       name: "TestTemplateForSMSSending",
-      message:
-        "Test SMS message by cypress. Unknown tag: {{ randomText }}, known tag: {{ slackEmail }}",
+      message: "Test SMS message by cypress. Known tag: {{ email }}",
       eventName: "testEventName3",
       phone: TESTS_SMS_TO || "+111111111111",
     },

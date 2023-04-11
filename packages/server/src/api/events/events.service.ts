@@ -18,8 +18,8 @@ import { AccountsService } from '../accounts/accounts.service';
 import { WorkflowsService } from '../workflows/workflows.service';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { StatusJobDto } from './dto/status-event.dto';
-import { Queue } from 'bull';
-import { InjectQueue } from '@nestjs/bull';
+import { Queue } from 'bullmq';
+import { InjectQueue } from '@nestjs/bullmq';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import mongoose, { Model } from 'mongoose';
 import { EventDocument, Event } from './schemas/event.schema';
@@ -58,7 +58,8 @@ export class EventsService {
     private EventKeysModel: Model<EventKeysDocument>,
     @InjectModel(PosthogEventType.name)
     private PosthogEventTypeModel: Model<PosthogEventTypeDocument>,
-    @InjectConnection() private readonly connection: mongoose.Connection
+    @InjectConnection() private readonly connection: mongoose.Connection,
+    @InjectQueue('webhooks') private readonly webhooksQueue: Queue
   ) {
     for (const { name, property_type } of defaultEventKeys) {
       if (name && property_type) {
@@ -113,6 +114,7 @@ export class EventsService {
       [JobTypes.email]: this.messageQueue,
       [JobTypes.slack]: this.slackQueue,
       [JobTypes.events]: this.eventsQueue,
+      [JobTypes.webhooks]: this.webhooksQueue,
     };
 
     try {
@@ -155,6 +157,11 @@ export class EventsService {
           'Processing posthog event: ' + JSON.stringify(currentEvent, null, 2)
         );
 
+        //update customer properties on every identify call as per best practice
+        if (currentEvent.type === 'identify') {
+          await this.customersService.phIdentifyUpdate(account, currentEvent);
+        }
+        //checking for a custom tracked posthog event here
         if (
           currentEvent.type === 'track' &&
           currentEvent.event &&
@@ -164,6 +171,7 @@ export class EventsService {
           currentEvent.event !== '$pageleave' &&
           currentEvent.event !== '$rageclick'
         ) {
+          //checks to see if we have seen this event before (otherwise we update the events dropdown)
           const found = await this.PosthogEventTypeModel.findOne({
             name: currentEvent.event,
             ownerId: account.id,
@@ -182,6 +190,7 @@ export class EventsService {
               { session: transactionSession }
             );
           }
+          //to do: check if the event sets props, if so we need to update the person traits
         }
 
         let jobIDs: WorkflowTick[] = [];
@@ -206,7 +215,7 @@ export class EventsService {
         const correlation = await this.customersService.findBySpecifiedEvent(
           account,
           'posthogId',
-          currentEvent.userId,
+          [currentEvent.userId, currentEvent.anonymousId],
           currentEvent,
           transactionSession,
           postHogEventMapping
@@ -222,7 +231,7 @@ export class EventsService {
         //need to change posthogeventdto to eventdo
         const convertedEventDto: EventDto = {
           correlationKey: 'posthogId',
-          correlationValue: currentEvent.userId,
+          correlationValue: [currentEvent.userId, currentEvent.anonymousId],
           event: currentEvent.context,
           source: 'posthog',
           payload: {

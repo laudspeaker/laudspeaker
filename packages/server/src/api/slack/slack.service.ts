@@ -8,8 +8,8 @@ import {
   InstallURLOptions,
   InvalidStateError,
 } from '@slack/oauth';
-import { Queue } from 'bull';
-import { InjectQueue } from '@nestjs/bull';
+import { Queue } from 'bullmq';
+import { InjectQueue } from '@nestjs/bullmq';
 import { Request, Response } from 'express';
 import { onboardingBlock } from './blocks/onboarding.block';
 import { syncBlock } from './blocks/sync.block';

@@ -37,9 +37,10 @@ export interface Resource {
 const EmailBuilder = () => {
   const { name } = useParams();
   const [title, setTitle] = useState<string>("");
-  const [templateName, setTemplateName] = useState<string>("My email template");
+  const [cc, setCC] = useState<string>("");
+  const [templateName, setTemplateName] = useState<string>(name);
   const [editor, setEditor] = useState<grapesjs.Editor>();
-  const [emailTemplateId, setEmailTemplateId] = useState<string>("");
+  const [emailTemplateId, setEmailTemplateId] = useState<string>();
   const [text, setText] = useState<string>("");
   const [style, setStyle] = useState<string>("");
   const [possibleAttributes, setPossibleAttributes] = useState<string[]>([]);
@@ -111,6 +112,7 @@ const EmailBuilder = () => {
     const populateEmailBuilder = async () => {
       const { data } = await getTemplate(name);
       setTitle(data.subject);
+      setCC(data.cc.join());
       setTemplateName(name);
       setEmailTemplateId(data.id);
       setText(data.text);
@@ -125,6 +127,9 @@ const EmailBuilder = () => {
       const reqBody = {
         name: templateName,
         subject: title,
+        cc: cc.split(",").filter(function (entry) {
+          return /\S/.test(entry);
+        }),
         text: editor?.getHtml(),
         style: editor?.getCss(),
         type: "email",
@@ -153,7 +158,6 @@ const EmailBuilder = () => {
   };
 
   const onPersonalize = async () => {
-    if (!editor) return;
     if (!isPreview) {
       const indexToInsert = subjectRef.current?.selectionStart || title.length;
       const newTitleArr = title.split("");
@@ -162,6 +166,8 @@ const EmailBuilder = () => {
       setIsPreview(true);
       return;
     }
+
+    if (!editor) return;
     const availableComponents = ["Text", "Text Section", "Texto"];
     const el = editor.getSelected();
 
@@ -173,6 +179,39 @@ const EmailBuilder = () => {
     const component = editor.addComponents(
       {
         type: "merge-tag",
+      },
+      {}
+    );
+    //
+    component[0]?.move(el, {});
+  };
+
+  const onAddApiCallClick = () => {
+    if (!isPreview) {
+      const indexToInsert = subjectRef.current?.selectionStart || title.length;
+      const newTitleArr = title.split("");
+      newTitleArr.splice(
+        indexToInsert,
+        0,
+        "[{[ eyAidXJsIjogImh0dHBzOi8vanNvbnBsYWNlaG9sZGVyLnR5cGljb2RlLmNvbS9wb3N0cyIsICJib2R5IjogInt9IiwgIm1ldGhvZCI6ICJHRVQiLCAiaGVhZGVycyI6IHsgIkF1dGhvcml6YXRpb24iOiAiIiB9LCAicmV0cmllcyI6IDUsICJmYWxsQmFja0FjdGlvbiI6IDAgfQ==;response.data ]}]"
+      );
+      setTitle(newTitleArr.join(""));
+      setIsPreview(true);
+      return;
+    }
+
+    if (!editor) return;
+    const availableComponents = ["Text", "Text Section", "Texto"];
+    const el = editor.getSelected();
+
+    if (!el) return;
+
+    if (!availableComponents.includes(el?.getName() || "")) {
+      return;
+    }
+    const component = editor.addComponents(
+      {
+        type: "api-call-tag",
       },
       {}
     );
@@ -204,6 +243,7 @@ const EmailBuilder = () => {
         </Helmet>
         <EmailHeader
           onPersonalize={onPersonalize}
+          onAddApiCallClick={onAddApiCallClick}
           onSave={onSave}
           loading={isSaving}
           templateName={templateName}
@@ -227,8 +267,22 @@ const EmailBuilder = () => {
             possibleAttributes={possibleAttributes}
             inputRef={subjectRef}
           />
+          <MergeTagInput
+            value={cc}
+            placeholder={"email@email.com,email_two@email.com"}
+            name="cc"
+            id="title"
+            fullWidth
+            setValue={setCC}
+            onChange={(e) => setCC(e.target.value)}
+            labelShrink
+            isPreview={false}
+            setIsPreview={() => {}}
+            possibleAttributes={possibleAttributes}
+          />
           <div id="emailBuilder" className="gjs-dashed" />
         </div>
+        <div id="email-apicall-modal-root"></div>
       </div>
       {isLoading && <Progress />}
     </>

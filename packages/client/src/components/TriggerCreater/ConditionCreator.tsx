@@ -1,11 +1,11 @@
-import { Input, Select } from "components/Elements";
+import { Select } from "components/Elements";
 import { getEventKeys } from "pages/Segment/SegmentHelpers";
 import React, { FC, useEffect, useState } from "react";
-import AC from "react-autocomplete";
 import { useDebounce } from "react-use";
 import ApiService from "services/api.service";
 import DynamicField from "./DynamicField";
 import { EventCondition, ProviderTypes } from "types/Workflow";
+import Autocomplete from "components/Autocomplete";
 
 export interface ConditionCreaterProps {
   condition: EventCondition;
@@ -13,6 +13,13 @@ export interface ConditionCreaterProps {
   possibleTypes: string[];
   isViewMode?: boolean;
   specificProvider: ProviderTypes;
+}
+
+interface PossibleKey {
+  key: string;
+  type: string;
+  isArray: boolean;
+  options: { label: string; id: string };
 }
 
 const ConditionCreater: FC<ConditionCreaterProps> = ({
@@ -24,14 +31,7 @@ const ConditionCreater: FC<ConditionCreaterProps> = ({
 }) => {
   const { key, value, type, comparisonType } = condition;
 
-  const [possibleKeys, setPossibleKeys] = useState<
-    {
-      key: string;
-      type: string;
-      isArray: boolean;
-      options: { label: string; id: string };
-    }[]
-  >([]);
+  const [possibleKeys, setPossibleKeys] = useState<PossibleKey[]>([]);
   const [possibleComparisonTypes, setPossibleComparisonTypes] = useState<
     {
       label: string;
@@ -41,7 +41,7 @@ const ConditionCreater: FC<ConditionCreaterProps> = ({
   const [dynamicDataToRender, setDynamicDataToRender] = useState<
     Record<string, string>
   >({});
-  const [newKey, setNewKey] = useState(key);
+  const [newKey, setNewKey] = useState(key || "");
   const [possibleValues, setPossibleValues] = useState<string[]>([]);
   const [newValue, setNewValue] = useState(value);
 
@@ -96,7 +96,7 @@ const ConditionCreater: FC<ConditionCreaterProps> = ({
   }, [comparisonType]);
 
   useEffect(() => {
-    setNewKey(key);
+    setNewKey(key || "");
   }, [key]);
 
   useEffect(() => {
@@ -140,52 +140,21 @@ const ConditionCreater: FC<ConditionCreaterProps> = ({
   return (
     <div className="flex flex-col gap-[10px] m-[10px_0px]">
       <div className="relative">
-        <AC
-          getItemValue={(item) => JSON.stringify(item)}
+        <Autocomplete
+          inputId="keyInput"
           items={possibleKeys}
-          autoHighlight={false}
-          renderInput={(props) => (
-            <Input
-              name={props.name || ""}
-              value={props.value}
-              onChange={props.onChange}
-              inputRef={props.ref}
-              aria-expanded={props["aria-expanded"]}
-              disabled={isViewMode}
-              id="keyInput"
-              label="Customer key"
-              {...props}
-            />
-          )}
-          renderItem={(item, isHighlighted) => (
-            <div
-              className={`${
-                isHighlighted ? "bg-cyan-100" : ""
-              } p-[2px] rounded-[6px] relative max-w-full break-all`}
-            >
-              {item.key} ({item.type})
-            </div>
-          )}
-          renderMenu={(items) => {
-            if (!items.length) return <></>;
-
-            return (
-              <div className="max-h-[200px] overflow-y-scroll shadow-md  border-[1px] bg-white border-cyan-500 absolute top-[calc(100%+4px)] w-full rounded-[6px] z-[9999999999]">
-                {items}
-              </div>
-            );
-          }}
-          value={newKey}
-          onChange={(e) => {
-            setNewKey(e.target.value);
-          }}
-          onSelect={(e) => {
-            const val = JSON.parse(e);
-            setNewKey(val.key);
-            handleConditionChange("type", val.type);
+          inputValue={newKey}
+          onInputChange={(event) => setNewKey(event.target.value || "")}
+          label="Customer key:"
+          disabled={isViewMode}
+          onOptionSelect={(el) => {
+            setNewKey(el.key);
+            handleConditionChange("type", el.type);
             handleConditionChange("comparisonType", "");
             handleConditionChange("value", "");
           }}
+          optionKey={(el) => el.key}
+          optionRender={(el) => `${el.key} (${el.type})`}
         />
       </div>
       <Select

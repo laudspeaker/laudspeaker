@@ -1,4 +1,7 @@
-import { Template } from '@/api/templates/entities/template.entity';
+import {
+  Template,
+  TemplateType,
+} from '@/api/templates/entities/template.entity';
 
 const DEFAULT_TEMPLATES: Template[] = [
   {
@@ -378,7 +381,7 @@ const DEFAULT_TEMPLATES: Template[] = [
         overflow-y: visible !important;
       }
     }`,
-    type: 'email',
+    type: TemplateType.EMAIL,
   },
   {
     ...new Template(),
@@ -943,7 +946,7 @@ const DEFAULT_TEMPLATES: Template[] = [
         overflow-y: visible !important;
       }
     }`,
-    type: 'email',
+    type: TemplateType.EMAIL,
   },
   {
     ...new Template(),
@@ -1897,7 +1900,7 @@ const DEFAULT_TEMPLATES: Template[] = [
         overflow-y: visible !important;
       }
     }`,
-    type: 'email',
+    type: TemplateType.EMAIL,
   },
   {
     ...new Template(),
@@ -2565,7 +2568,7 @@ const DEFAULT_TEMPLATES: Template[] = [
         overflow-y: visible !important;
       }
     }`,
-    type: 'email',
+    type: TemplateType.EMAIL,
   },
   {
     ...new Template(),
@@ -3233,7 +3236,7 @@ const DEFAULT_TEMPLATES: Template[] = [
         overflow-y: visible !important;
       }
     }`,
-    type: 'email',
+    type: TemplateType.EMAIL,
   },
   {
     ...new Template(),
@@ -3241,7 +3244,7 @@ const DEFAULT_TEMPLATES: Template[] = [
     subject: 'Welcome to ',
     text: `<body id="i1nu"><div class="text_droppable" id="i2yf">Hey <br id="inue" draggable="true"/><br id="izpm" draggable="true"/>Welcome to . If you have any questions or feedback shoot us an email at <br id="iapj" draggable="true"/><br id="ixgi" draggable="true"/>Thanks!</div></body>`,
     style: `* { box-sizing: border-box; } body {margin: 0;}#i2yf{padding:10px;}`,
-    type: 'email',
+    type: TemplateType.EMAIL,
   },
 ];
 

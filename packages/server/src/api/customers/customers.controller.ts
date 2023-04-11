@@ -58,15 +58,18 @@ export class CustomersController {
       searchValue
     );
   }
+
   @Get('/possible-attributes')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
   async getPossibleAttributes(
+    @Req() { user }: Request,
     @Query('key') key = '',
     @Query('type') type = null,
     @Query('isArray') isArray = null
   ) {
     return await this.customersService.getPossibleAttributes(
+      <Account>user,
       key,
       type,
       isArray

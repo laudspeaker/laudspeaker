@@ -108,4 +108,5 @@ export enum JobTypes {
   slack = 'slack',
   sms = 'sms',
   events = 'events',
+  webhooks = 'webhooks',
 }

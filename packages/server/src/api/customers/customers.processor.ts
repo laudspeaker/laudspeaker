@@ -1,20 +1,19 @@
-import { Process, Processor } from '@nestjs/bull';
-import { Job } from 'bull';
-import { Inject } from '@nestjs/common';
+import { Processor, WorkerHost } from '@nestjs/bullmq';
+import { Job } from 'bullmq';
+import { Inject, Injectable } from '@nestjs/common';
 import { CustomersService } from './customers.service';
 import axios from 'axios';
-import { InjectConnection } from '@nestjs/mongoose';
-import mongoose from 'mongoose';
 
+@Injectable()
 @Processor('customers')
-export class CustomersProcessor {
+export class CustomersProcessor extends WorkerHost {
   constructor(
-    @Inject(CustomersService) private customersService: CustomersService,
-    @InjectConnection() private readonly connection: mongoose.Connection
-  ) {}
+    @Inject(CustomersService) private customersService: CustomersService
+  ) {
+    super();
+  }
 
-  @Process()
-  async handleSync(job: Job) {
+  async process(job: Job<any, any, string>): Promise<any> {
     try {
       let res = await axios({
         method: 'get',

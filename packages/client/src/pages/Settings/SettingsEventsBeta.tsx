@@ -106,8 +106,6 @@ export default function SettingsEventsBeta() {
           posthogApiKey: formData.posthogApiKey || "",
           posthogProjectId: formData.posthogProjectId || "",
           posthogHostUrl: formData.posthogHostUrl || "",
-          posthogFirebaseDeviceTokenKey:
-            formData.posthogFirebaseDeviceTokenKey || "",
         },
       });
       await startPosthogImport();

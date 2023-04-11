@@ -107,17 +107,17 @@ export class AccountsService extends BaseJwtHelper {
           body: {
             enabled: true,
             url: process.env.SENDGRID_WEBHOOK_ENDPOINT,
-            group_resubscribe: false,
+            group_resubscribe: true,
             delivered: true,
-            group_unsubscribe: false,
-            spam_report: false,
-            bounce: false,
-            deferred: false,
-            unsubscribe: false,
-            processed: false,
+            group_unsubscribe: true,
+            spam_report: true,
+            bounce: true,
+            deferred: true,
+            unsubscribe: true,
+            processed: true,
             open: true,
             click: true,
-            dropped: false,
+            dropped: true,
           },
         });
         const [_, body] = await this.sgClient.request({
@@ -274,6 +274,15 @@ export class AccountsService extends BaseJwtHelper {
     transactionSession.startTransaction();
 
     await this.customersService.CustomerModel.deleteMany(
+      {
+        ownerId: account.id,
+      },
+      { session: transactionSession }
+    )
+      .session(transactionSession)
+      .exec();
+
+    await this.customersService.CustomerKeysModel.deleteMany(
       {
         ownerId: account.id,
       },

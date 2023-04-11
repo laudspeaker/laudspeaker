@@ -8,8 +8,8 @@ import {
   Req,
   Inject,
 } from '@nestjs/common';
-import { Queue } from 'bull';
-import { InjectQueue } from '@nestjs/bull';
+import { Queue } from 'bullmq';
+import { InjectQueue } from '@nestjs/bullmq';
 import Mailgun from 'mailgun.js';
 import FormData from 'form-data';
 import * as _ from 'lodash';
@@ -43,6 +43,7 @@ export class EmailController {
     });
     await this.messageQueue.add('email', {
       trackingEmail: found.email,
+      accountId: found.id,
       key: found.mailgunAPIKey,
       from: found.sendingName,
       domain: found.sendingDomain,
@@ -84,6 +85,7 @@ export class EmailController {
         return {
           name: 'email',
           data: {
+            accountId: found.id,
             key: found.mailgunAPIKey,
             from: found.sendingName,
             domain: found.sendingDomain,

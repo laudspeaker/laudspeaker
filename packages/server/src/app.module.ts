@@ -3,7 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { TypeOrmConfigService } from './shared/typeorm/typeorm.service';
 import { ApiModule } from './api/api.module';
 import { WinstonModule } from 'nest-winston';
-import { BullModule } from '@nestjs/bull';
+import { BullModule } from '@nestjs/bullmq';
 import * as winston from 'winston';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AuthMiddleware } from './api/auth/middleware/auth.middleware';
@@ -36,14 +36,6 @@ import { Template } from './api/templates/entities/template.entity';
 import { Installation } from './api/slack/entities/installation.entity';
 import { State } from './api/slack/entities/state.entity';
 import { IntegrationsModule } from './api/integrations/integrations.module';
-
-const papertrail = new winston.transports.Http({
-  host: 'logs.collector.solarwinds.com',
-  path: '/v1/log',
-  auth: { username: 'papertrail', password: process.env.PAPERTRAIL_API_KEY },
-  ssl: true,
-});
-
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { Recovery } from './api/auth/entities/recovery.entity';
 import { Segment } from './api/segments/entities/segment.entity';
@@ -53,6 +45,9 @@ import { AudiencesModule } from './api/audiences/audiences.module';
 import { CustomersModule } from './api/customers/customers.module';
 import { TemplatesModule } from './api/templates/templates.module';
 import { SlackModule } from './api/slack/slack.module';
+import { WebhookJobsModule } from './api/webhook-jobs/webhook-jobs.module';
+import { WebhookJob } from './api/webhook-jobs/entities/webhook-job.entity';
+import { AccountsModule } from './api/accounts/accounts.module';
 
 const myFormat = winston.format.printf(function ({
   level,
@@ -134,10 +129,15 @@ const formatMongoConnectionString = (mongoConnectionString: string) => {
       : []),
     MongooseModule.forRoot(process.env.MONGOOSE_URL),
     BullModule.forRoot({
-      redis: {
+      connection: {
         host: process.env.REDIS_HOST ?? 'localhost',
         port: parseInt(process.env.REDIS_PORT),
         password: process.env.REDIS_PASSWORD,
+        retryStrategy: (times: number) => {
+          return Math.max(Math.min(Math.exp(times), 20000), 1000);
+        },
+        maxRetriesPerRequest: null,
+        enableOfflineQueue: true,
       },
     }),
     WinstonModule.forRootAsync({
@@ -177,6 +177,7 @@ const formatMongoConnectionString = (mongoConnectionString: string) => {
       Installation,
       State,
       Recovery,
+      WebhookJob,
     ]),
     BullModule.registerQueue({
       name: 'integrations',
@@ -200,6 +201,8 @@ const formatMongoConnectionString = (mongoConnectionString: string) => {
     CustomersModule,
     TemplatesModule,
     SlackModule,
+    WebhookJobsModule,
+    AccountsModule,
   ],
   controllers: [AppController],
   providers: [CronService],

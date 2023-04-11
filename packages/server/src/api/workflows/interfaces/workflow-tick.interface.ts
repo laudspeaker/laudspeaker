@@ -7,6 +7,7 @@ export interface WorkflowTick {
   templates?: Template[];
   status: string;
   failureReason: string;
+  allJobData?: any[];
 }
 
 export interface PosthogKeysPayload {

@@ -47,7 +47,6 @@ import Tooltip from "components/Elements/Tooltip";
 import { Helmet } from "react-helmet";
 import { Grid } from "@mui/material";
 import ToggleSwitch from "components/Elements/ToggleSwitch";
-import { SegmentModalMode } from "./SegmentModal";
 import {
   MessagesTypes,
   ProviderTypes,
@@ -58,9 +57,8 @@ import {
 import { AxiosError } from "axios";
 import Progress from "components/Progress";
 import { useDebounce } from "react-use";
-import CustomEdge from "./CustomEdge";
 import { INameSegmentForm } from "pages/Segment/NameSegment";
-import Template from "types/Template";
+import Template, { TemplateType } from "types/Template";
 import { CheckIcon, PlusCircleIcon } from "@heroicons/react/24/outline";
 import TriggerDrag from "../../assets/images/TriggerDrag.svg";
 import CancelDropZone from "./CancelDropZone";
@@ -101,7 +99,13 @@ export interface NodeData {
   hidden?: boolean;
   isExit?: boolean;
   isNew?: boolean;
-  stats?: { sent: number; delivered: number; clickedPercentage: number };
+  stats?: {
+    sent: number;
+    delivered: number;
+    clickedPercentage: number;
+    wssent: number;
+    openedPercentage: number;
+  };
   isConnecting?: boolean;
   isNearToCursor?: boolean;
   isTriggerDragging?: boolean;
@@ -204,9 +208,6 @@ const Flow = () => {
     isDynamic: true,
   });
   const [segmentModalOpen, setSegmentModalOpen] = useState(false);
-  const [segmentModalMode, setSegmentModalMode] = useState(
-    SegmentModalMode.EDIT
-  );
   const [isFlowLoading, setIsFlowLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
@@ -587,11 +588,12 @@ const Flow = () => {
         settriggerModalOpen(true);
         break;
       }
-      case "email":
+      case TemplateType.EMAIL:
       case "push":
-      case "sms":
-      case "firebase":
-      case "slack": {
+      case TemplateType.SMS:
+      case TemplateType.FIREBASE:
+      case TemplateType.SLACK:
+      case TemplateType.WEBHOOK: {
         const selectedNodeData = nodes.find((node) => node.id === selectedNode);
         if (!selectedNodeData) return;
         setSelectedMessageType(actionId);
@@ -639,7 +641,6 @@ const Flow = () => {
         setJourneyTypeModalOpen(false);
         break;
       case 1:
-        setSegmentModalMode(SegmentModalMode.EDIT);
         setSegmentModalOpen(true);
         setJourneyTypeModalOpen(false);
         break;
@@ -782,11 +783,12 @@ const Flow = () => {
         setSelectedNode(newSelectedNodeWithTrigger.id);
         setTriggerToOpenNextRender(type);
         break;
-      case "email":
+      case TemplateType.EMAIL:
       case "push":
-      case "sms":
-      case "firebase":
-      case "slack":
+      case TemplateType.SMS:
+      case TemplateType.FIREBASE:
+      case TemplateType.SLACK:
+      case TemplateType.WEBHOOK:
         const newSelectedNodeWithMessage = nodes.find((node) => {
           const { height, width, position } = node;
           if (!height || !width || !reactFlowRef.current) return node;
@@ -962,7 +964,8 @@ const Flow = () => {
       itemId === MessagesTypes.EMAIL ||
       itemId === MessagesTypes.SLACK ||
       itemId === MessagesTypes.PUSH ||
-      itemId === MessagesTypes.FIREBASE
+      itemId === MessagesTypes.FIREBASE ||
+      itemId === MessagesTypes.WEBHOOK
     ) {
       setTimeout(() => {
         setIsMessagesDragging(true);
@@ -1052,7 +1055,11 @@ const Flow = () => {
                 setIsMessagesDragging(false);
               }}
               onMouseUp={(action) => {
-                if (["email", "sms", "slack"].includes(action))
+                if (
+                  ["email", "sms", "slack", "firebase", "webhook"].includes(
+                    action
+                  )
+                )
                   setIsMessagesDragging(true);
 
                 if (

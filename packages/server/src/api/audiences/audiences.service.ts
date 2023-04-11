@@ -6,7 +6,7 @@ import { CreateAudienceDto } from './dto/create-audience.dto';
 import { UpdateAudienceDto } from './dto/update-audience.dto';
 import { Account } from '../accounts/entities/accounts.entity';
 import { CustomerDocument } from '../customers/schemas/customer.schema';
-import { Template } from '../templates/entities/template.entity';
+import { Template, TemplateType } from '../templates/entities/template.entity';
 import Errors from '../../shared/utils/errors';
 import { TemplatesService } from '../templates/templates.service';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
@@ -249,7 +249,10 @@ export class AudiencesService {
     queryRunner: QueryRunner,
     encodedRules: string[],
     workflowID: string
-  ): Promise<{ jobIds: (string | number)[]; templates: Template[] }> {
+  ): Promise<{
+    jobIds: (string | number)[];
+    templates: Template[];
+  }> {
     // Base case: customer document must exist
     if (!customer || !customer.id) {
       this.logger.warn(`Warning: No customer to move from ${from} to ${to}`);
@@ -373,7 +376,7 @@ export class AudiencesService {
           const data = await queryRunner.manager.find(Template, {
             where: {
               owner: { id: account.id },
-              type: 'email',
+              type: TemplateType.EMAIL,
               id: In(toTemplates),
             },
           });

@@ -1,5 +1,5 @@
-import { Process, Processor } from '@nestjs/bull';
-import { Job } from 'bull';
+import { WorkerHost, Processor } from '@nestjs/bullmq';
+import { Job } from 'bullmq';
 import { LoggerService, Injectable, Inject } from '@nestjs/common';
 import { WebClient } from '@slack/web-api';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
@@ -9,29 +9,29 @@ import {
   WebhooksService,
 } from '../webhooks/webhooks.service';
 
-const tagEngine = new Liquid();
-
-@Processor('slack')
 @Injectable()
-export class SlackProcessor {
+@Processor('slack')
+export class SlackProcessor extends WorkerHost {
   client: WebClient;
+  tagEngine: Liquid;
 
   constructor(
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
     private readonly logger: LoggerService,
     private readonly webhooksService: WebhooksService
   ) {
+    super();
     this.client = new WebClient();
+    this.tagEngine = new Liquid();
   }
 
-  @Process('send')
-  async handleSend(job: Job) {
+  async process(job: Job<any, any, string>): Promise<any> {
     try {
       let textWithInsertedTags;
       const { tags, text, ...args } = job.data.args;
       try {
         if (text) {
-          textWithInsertedTags = await tagEngine.parseAndRender(
+          textWithInsertedTags = await this.tagEngine.parseAndRender(
             text,
             tags || {},
             { strictVariables: true }
@@ -41,6 +41,7 @@ export class SlackProcessor {
         this.logger.warn("Merge tag can't be used, skipping sending...");
         await this.webhooksService.insertClickHouseMessages([
           {
+            userId: job.data.accountId,
             event: 'error',
             createdAt: new Date().toUTCString(),
             eventProvider: ClickHouseEventProvider.SLACK,
@@ -48,6 +49,7 @@ export class SlackProcessor {
             audienceId: job.data.args.audienceId,
             customerId: job.data.args.customerId,
             templateId: String(job.data.args.templateId),
+            processed: false,
           },
         ]);
         return;
