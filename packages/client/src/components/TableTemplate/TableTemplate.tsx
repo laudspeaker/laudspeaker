@@ -457,7 +457,8 @@ function transformJourneyData(data: TableDataItem[]): TableDataItem[] {
 const itemsPerPageOptions = [10, 20, 50, 80, 100];
 
 export interface SortOptions {
-  name?: string;
+  name?: "asc" | "desc";
+  createdAt?: "asc" | "desc";
 }
 
 export interface TableTemplateProps<T extends TableDataItem> {

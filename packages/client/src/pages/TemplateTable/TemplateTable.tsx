@@ -10,6 +10,7 @@ import Template from "types/Template";
 import Progress from "components/Progress";
 import { GenericButton } from "components/Elements";
 import { toast } from "react-toastify";
+import { SortOptions } from "components/TableTemplate/TableTemplate";
 
 const TemplateTable = () => {
   const [loading, setLoading] = useState(false);
@@ -19,7 +20,9 @@ const TemplateTable = () => {
   const [pagesCount, setPagesCount] = useState<number>(1);
   const [currentPage, setCurrentPage] = useState(0);
   const [nameModalOpen, setNameModalOpen] = useState<boolean>(false);
-  const [sortOptions, setSortOptions] = useState({});
+  const [sortOptions, setSortOptions] = useState<SortOptions>({
+    createdAt: "desc",
+  });
   const [showDeleted, setShowDeleted] = useState(false);
   const [templateToDelete, setTemplateToDelete] = useState("");
   const [usedJourneysByTemplateToDelete, setUsedJourneysByTemplateToDelete] =
