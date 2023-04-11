@@ -26,7 +26,6 @@ import { Account } from '../accounts/entities/accounts.entity';
 import { Request } from 'express';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 
-
 @Controller('events')
 export class EventsController {
   constructor(
@@ -34,26 +33,35 @@ export class EventsController {
     private readonly logger: LoggerService,
     @Inject(EventsService)
     private readonly eventsService: EventsService
-  ) { }
+  ) {}
 
   @Post('job-status/email')
   @UseInterceptors(ClassSerializerInterceptor)
   async getJobEmailStatus(@Body() body: StatusJobDto): Promise<string> {
-    this.logger.debug(``,`events.controller.ts:EventsController.getJobEmailStatus()`);
+    this.logger.debug(
+      ``,
+      `events.controller.ts:EventsController.getJobEmailStatus()`
+    );
     return this.eventsService.getJobStatus(body, JobTypes.email);
   }
 
   @Post('job-status/slack')
   @UseInterceptors(ClassSerializerInterceptor)
   async getJobSlackStatus(@Body() body: StatusJobDto): Promise<string> {
-    this.logger.debug(``,`events.controller.ts:EventsController.getJobSlackStatus()`);
+    this.logger.debug(
+      ``,
+      `events.controller.ts:EventsController.getJobSlackStatus()`
+    );
     return this.eventsService.getJobStatus(body, JobTypes.slack);
   }
 
   @Post('job-status/webhook')
   @UseInterceptors(ClassSerializerInterceptor)
   async getJobWebhookStatus(@Body() body: StatusJobDto): Promise<string> {
-    this.logger.debug(``,`events.controller.ts:EventsController.getWebhookStatus()`);
+    this.logger.debug(
+      ``,
+      `events.controller.ts:EventsController.getWebhookStatus()`
+    );
     return this.eventsService.getJobStatus(body, JobTypes.webhooks);
   }
 
@@ -64,7 +72,10 @@ export class EventsController {
     @Headers('Authorization') apiKey: string,
     @Body() body: PosthogBatchEventDto
   ): Promise<WorkflowTick[] | HttpException> {
-    this.logger.debug(`${JSON.stringify(body)}`, `events.controller.ts:EventsController.getPosthogPayload()`)
+    this.logger.debug(
+      `${JSON.stringify(body)}`,
+      `events.controller.ts:EventsController.getPosthogPayload()`
+    );
     return this.eventsService.getPostHogPayload(apiKey, body);
   }
 
@@ -75,7 +86,10 @@ export class EventsController {
     @Headers('Authorization') apiKey: string,
     @Body() body: EventDto
   ): Promise<WorkflowTick[] | HttpException> {
-    this.logger.debug(``,`events.controller.ts:EventsController.enginePayload()`);
+    this.logger.debug(
+      ``,
+      `events.controller.ts:EventsController.enginePayload()`
+    );
     return this.eventsService.enginePayload(apiKey, body);
   }
 
@@ -87,7 +101,10 @@ export class EventsController {
     @Param('resourceId') resourceId = '',
     @Query('provider') provider
   ) {
-    this.logger.debug(``,`events.controller.ts:EventsController.getAttributes()`);
+    this.logger.debug(
+      ``,
+      `events.controller.ts:EventsController.getAttributes()`
+    );
     return this.eventsService.getAttributes(
       resourceId,
       (<Account>user).id,
@@ -99,7 +116,10 @@ export class EventsController {
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
   async getOrUpdateAttributes(@Param('resourceId') resourceId = '') {
-    this.logger.debug(``,`events.controller.ts:EventsController.getOrUpdateAttributes()`);
+    this.logger.debug(
+      ``,
+      `events.controller.ts:EventsController.getOrUpdateAttributes()`
+    );
     return this.eventsService.getOrUpdateAttributes(resourceId);
   }
 
@@ -107,7 +127,10 @@ export class EventsController {
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
   async getPossibleTypes() {
-    this.logger.debug(``,`events.controller.ts:EventsController.getPossibleTypes()`);
+    this.logger.debug(
+      ``,
+      `events.controller.ts:EventsController.getPossibleTypes()`
+    );
     return this.eventsService.getPossibleTypes();
   }
 
@@ -115,7 +138,10 @@ export class EventsController {
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
   async getPossibleComparison(@Param('type') type: string) {
-    this.logger.debug(``,`events.controller.ts:EventsController.getPossibleComparison()`);
+    this.logger.debug(
+      ``,
+      `events.controller.ts:EventsController.getPossibleComparison()`
+    );
     return this.eventsService.getPossibleComparisonTypes(type);
   }
 
@@ -126,7 +152,10 @@ export class EventsController {
     @Param('key') key: string,
     @Query('search') search: string
   ) {
-    this.logger.debug(``,`events.controller.ts:EventsController.getPossibleValues()`);
+    this.logger.debug(
+      ``,
+      `events.controller.ts:EventsController.getPossibleValues()`
+    );
     return this.eventsService.getPossibleValues(key, search);
   }
 
@@ -137,7 +166,10 @@ export class EventsController {
     @Query('search') search: string,
     @Req() { user }: Request
   ) {
-    this.logger.debug(``,`events.controller.ts:EventsController.getPossiblePothogTypes()`);
+    this.logger.debug(
+      ``,
+      `events.controller.ts:EventsController.getPossiblePothogTypes()`
+    );
     return this.eventsService.getPossiblePosthogTypes(
       search,
       (<Account>user).id

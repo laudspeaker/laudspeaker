@@ -158,8 +158,8 @@ export class EventsService {
         );
 
         //update customer properties on every identify call as per best practice
-        if(currentEvent.type === 'identify'){
-          await this.customersService.phIdentifyUpdate(account,currentEvent);
+        if (currentEvent.type === 'identify') {
+          await this.customersService.phIdentifyUpdate(account, currentEvent);
         }
         //checking for a custom tracked posthog event here
         if (
@@ -231,7 +231,7 @@ export class EventsService {
         //need to change posthogeventdto to eventdo
         const convertedEventDto: EventDto = {
           correlationKey: 'posthogId',
-          correlationValue: [currentEvent.userId,currentEvent.anonymousId],
+          correlationValue: [currentEvent.userId, currentEvent.anonymousId],
           event: currentEvent.context,
           source: 'posthog',
           payload: {

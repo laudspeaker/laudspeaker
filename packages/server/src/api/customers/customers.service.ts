@@ -112,9 +112,9 @@ export class CustomersService {
     transactionSession?: ClientSession
   ): Promise<
     Customer &
-    mongoose.Document & {
-      _id: Types.ObjectId;
-    }
+      mongoose.Document & {
+        _id: Types.ObjectId;
+      }
   > {
     const createdCustomer = new this.CustomerModel({
       ownerId: (<Account>account).id,
@@ -290,8 +290,8 @@ export class CustomersService {
       ownerId: (<Account>account).id,
       ...(key && search
         ? {
-          [key]: new RegExp(`.*${search}.*`, 'i'),
-        }
+            [key]: new RegExp(`.*${search}.*`, 'i'),
+          }
         : {}),
     })
       .skip(skip)
@@ -345,7 +345,10 @@ export class CustomersService {
     return result;
   }
 
-  addPrefixToKeys(obj: Record<string, any>, prefix: string): Record<string, any> {
+  addPrefixToKeys(
+    obj: Record<string, any>,
+    prefix: string
+  ): Record<string, any> {
     const newObj: Record<string, any> = {};
 
     for (const [key, value] of Object.entries(obj)) {
@@ -361,10 +364,7 @@ export class CustomersService {
 
   //update posthog users after an identify
   // add the "traits" and also update phEmail, phPhone
-  async phIdentifyUpdate(
-    account: Account,
-    identifyEvent: any,
-  ) {
+  async phIdentifyUpdate(account: Account, identifyEvent: any) {
     try {
       delete identifyEvent.verified;
       delete identifyEvent.ownerId;
@@ -376,39 +376,62 @@ export class CustomersService {
         ownerId: (<Account>account).id,
         $or: [
           { posthogId: { $in: [identifyEvent.userId] } },
-          { posthogId: { $in: [identifyEvent.anonymousId] } }
-        ]
-        ,
+          { posthogId: { $in: [identifyEvent.anonymousId] } },
+        ],
       }).exec();
 
       if (addedBefore.length === 1) {
-        const a = await this.CustomerModel.updateOne({
-          _id: addedBefore[0]._id
-        }, {
-          posthogId: this.filterFalsyAndDuplicates([identifyEvent.userId ? identifyEvent.userId : identifyEvent.anonymousId, identifyEvent.anonymousId]),
-          ...this.addPrefixToKeys(identifyEvent.context.traits, "_postHog_"),
-          ...(identifyEvent.phEmail && { phEmail: identifyEvent.phEmail }),
-          ...(identifyEvent.phPhoneNumber && { phPhoneNumber: identifyEvent.phPhoneNumber }),
-          ...(identifyEvent.phDeviceToken && { phDeviceToken: identifyEvent.phDeviceToken }),
-
-        }
+        const a = await this.CustomerModel.updateOne(
+          {
+            _id: addedBefore[0]._id,
+          },
+          {
+            posthogId: this.filterFalsyAndDuplicates([
+              identifyEvent.userId
+                ? identifyEvent.userId
+                : identifyEvent.anonymousId,
+              identifyEvent.anonymousId,
+            ]),
+            ...this.addPrefixToKeys(identifyEvent.context.traits, '_postHog_'),
+            ...(identifyEvent.phEmail && { phEmail: identifyEvent.phEmail }),
+            ...(identifyEvent.phPhoneNumber && {
+              phPhoneNumber: identifyEvent.phPhoneNumber,
+            }),
+            ...(identifyEvent.phDeviceToken && {
+              phDeviceToken: identifyEvent.phDeviceToken,
+            }),
+          }
         ).exec();
       } else if (addedBefore.length === 0) {
         const createdCustomer = new this.CustomerModel({
           ownerId: (<Account>account).id,
-          posthogId: this.filterFalsyAndDuplicates([identifyEvent.userId ? identifyEvent.userId : identifyEvent.anonymousId, identifyEvent.anonymousId]),
-          ...this.addPrefixToKeys(identifyEvent.context.traits, "_postHog_"),
+          posthogId: this.filterFalsyAndDuplicates([
+            identifyEvent.userId
+              ? identifyEvent.userId
+              : identifyEvent.anonymousId,
+            identifyEvent.anonymousId,
+          ]),
+          ...this.addPrefixToKeys(identifyEvent.context.traits, '_postHog_'),
           ...(identifyEvent.phEmail && { phEmail: identifyEvent.phEmail }),
-          ...(identifyEvent.phPhoneNumber && { phPhoneNumber: identifyEvent.phPhoneNumber }),
-          ...(identifyEvent.phDeviceToken && { phDeviceToken: identifyEvent.phDeviceToken }),
+          ...(identifyEvent.phPhoneNumber && {
+            phPhoneNumber: identifyEvent.phPhoneNumber,
+          }),
+          ...(identifyEvent.phDeviceToken && {
+            phDeviceToken: identifyEvent.phDeviceToken,
+          }),
         });
         return await createdCustomer.save();
-      }
-      else {
-        this.logger.warn(`${JSON.stringify(addedBefore)}`, `customers.service.ts:CustomersService.phIdentifyUpdate()`);
+      } else {
+        this.logger.warn(
+          `${JSON.stringify(addedBefore)}`,
+          `customers.service.ts:CustomersService.phIdentifyUpdate()`
+        );
       }
     } catch (e) {
-      this.logger.error(`${e}`, `customers.service.ts:CustomersService.phIdentifyUpdate()`);
+      this.logger.error(
+        `${e}`,
+        `customers.service.ts:CustomersService.phIdentifyUpdate()`
+      );
     }
   }
 
@@ -579,9 +602,9 @@ export class CustomersService {
     customerId: string
   ): Promise<
     Customer &
-    mongoose.Document & {
-      _id: Types.ObjectId;
-    }
+      mongoose.Document & {
+        _id: Types.ObjectId;
+      }
   > {
     const found = await this.CustomerModel.findById(customerId).exec();
     if (found && found?.ownerId == (<Account>account).id) return found;
@@ -640,18 +663,23 @@ export class CustomersService {
     mapping?: (event: any) => any
   ): Promise<Correlation> {
     let customer: CustomerDocument;
-    let queryParam: any = {
+    const queryParam: any = {
       ownerId: (<Account>account).id,
     };
     if (Array.isArray(correlationValue)) {
       queryParam.$or = [];
       for (let i = 0; i < correlationValue.length; i++) {
-        queryParam.$or.push({ [correlationKey]: { $in: [correlationValue[i]] } })
+        queryParam.$or.push({
+          [correlationKey]: { $in: [correlationValue[i]] },
+        });
       }
     } else {
       queryParam[correlationKey] = correlationValue;
     }
-    this.logger.debug(`${JSON.stringify(queryParam, null, 2)}`, `customers.service.ts:CustomersService.findBySpecifiedEvent()`);
+    this.logger.debug(
+      `${JSON.stringify(queryParam, null, 2)}`,
+      `customers.service.ts:CustomersService.findBySpecifiedEvent()`
+    );
     customer = await this.CustomerModel.findOne(queryParam)
       .session(transactionSession)
       .exec();
@@ -660,9 +688,14 @@ export class CustomersService {
       if (mapping) {
         const newCust = mapping(event);
         newCust['ownerId'] = (<Account>account).id;
-        newCust[correlationKey] = Array.isArray(correlationValue) ? this.filterFalsyAndDuplicates(correlationValue) : correlationValue;
+        newCust[correlationKey] = Array.isArray(correlationValue)
+          ? this.filterFalsyAndDuplicates(correlationValue)
+          : correlationValue;
         const createdCustomer = new this.CustomerModel(newCust);
-        this.logger.debug(`${JSON.stringify(createdCustomer, null, 2)}`, `customers.service.ts:CustomersService.findBySpecifiedEvent()`);
+        this.logger.debug(
+          `${JSON.stringify(createdCustomer, null, 2)}`,
+          `customers.service.ts:CustomersService.findBySpecifiedEvent()`
+        );
         return {
           cust: await createdCustomer.save({ session: transactionSession }),
           found: false,
@@ -670,9 +703,14 @@ export class CustomersService {
       } else {
         const createdCustomer = new this.CustomerModel({
           ownerId: (<Account>account).id,
-          correlationKey: Array.isArray(correlationValue) ? this.filterFalsyAndDuplicates(correlationValue) : correlationValue,
+          correlationKey: Array.isArray(correlationValue)
+            ? this.filterFalsyAndDuplicates(correlationValue)
+            : correlationValue,
         });
-        this.logger.debug(`${JSON.stringify(createdCustomer, null, 2)}`, `customers.service.ts:CustomersService.findBySpecifiedEvent()`);
+        this.logger.debug(
+          `${JSON.stringify(createdCustomer, null, 2)}`,
+          `customers.service.ts:CustomersService.findBySpecifiedEvent()`
+        );
         return {
           cust: await createdCustomer.save({ session: transactionSession }),
           found: false,
@@ -681,13 +719,22 @@ export class CustomersService {
 
       //to do cant just return [0] in the future
     } else {
-      let updateObj: any = mapping ? mapping(event) : undefined;
+      const updateObj: any = mapping ? mapping(event) : undefined;
       if (Array.isArray(correlationValue)) {
-        updateObj.$addToSet = { [correlationKey]: { $each: this.filterFalsyAndDuplicates(correlationValue) } }
+        updateObj.$addToSet = {
+          [correlationKey]: {
+            $each: this.filterFalsyAndDuplicates(correlationValue),
+          },
+        };
       } else {
         updateObj[correlationKey] = correlationValue;
       }
-      customer = await this.CustomerModel.findOneAndUpdate(queryParam, updateObj).session(transactionSession).exec();
+      customer = await this.CustomerModel.findOneAndUpdate(
+        queryParam,
+        updateObj
+      )
+        .session(transactionSession)
+        .exec();
       return { cust: customer, found: true };
     }
   }
@@ -762,17 +809,22 @@ export class CustomersService {
   ): Promise<CustomerDocument> {
     let customer: CustomerDocument; // Found customer
     const queryParam: any = {
-      ownerId: (<Account>account).id
+      ownerId: (<Account>account).id,
     };
     if (Array.isArray(correlationValue)) {
       queryParam.$or = [];
       for (let i = 0; i < correlationValue.length; i++) {
-        queryParam.$or.push({ [correlationKey]: { $in: [correlationValue[i]] } })
+        queryParam.$or.push({
+          [correlationKey]: { $in: [correlationValue[i]] },
+        });
       }
     } else {
       queryParam[correlationKey] = correlationValue;
     }
-    this.logger.debug(`${JSON.stringify(queryParam, null, 2)}`, `customers.service.ts:CustomersService.findByCorrelationKVPair()`);
+    this.logger.debug(
+      `${JSON.stringify(queryParam, null, 2)}`,
+      `customers.service.ts:CustomersService.findByCorrelationKVPair()`
+    );
     try {
       if (transactionSession) {
         customer = await this.CustomerModel.findOne(queryParam)

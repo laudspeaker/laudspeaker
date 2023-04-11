@@ -17,7 +17,9 @@ const FirebaseBuilder = () => {
   const [templateName, setTemplateName] = useState<string>("My push template");
   const [firebaseTemplateId, setFirebaseTemplateId] = useState<string>("");
   const [possibleAttributes, setPossibleAttributes] = useState<string[]>([]);
-  const [isPreview, setIsPreview] = useState({ title: true, text: true });
+  const [isTitlePreview, setIsTitlePreview] = useState(true);
+  const [isTextPreview, setIsTextPreview] = useState(true);
+
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -105,7 +107,27 @@ const FirebaseBuilder = () => {
     const newSlackMessageArr = get?.split("") ?? [];
     newSlackMessageArr.splice(indexToInsert, 0, "{{}}");
     set(newSlackMessageArr.join(""));
-    setIsPreview({ title: true, text: true });
+    setIsTitlePreview(true);
+    setIsTextPreview(true);
+  };
+
+  const onAddApiCallClick = () => {
+    const focusRef = focusedInput === "title" ? titleRef : textRef;
+    const [get, set] =
+      focusedInput === "title"
+        ? [pushTitle, setPushTitle]
+        : [pushText, setPushText];
+    const indexToInsert =
+      (focusRef.current?.selectionStart || pushText?.length) ?? 0;
+    const newSlackMessageArr = get?.split("") ?? [];
+    newSlackMessageArr.splice(
+      indexToInsert,
+      0,
+      "[{[ eyAidXJsIjogImh0dHBzOi8vanNvbnBsYWNlaG9sZGVyLnR5cGljb2RlLmNvbS9wb3N0cyIsICJib2R5IjogInt9IiwgIm1ldGhvZCI6ICJHRVQiLCAiaGVhZGVycyI6IHsgIkF1dGhvcml6YXRpb24iOiAiIiB9LCAicmV0cmllcyI6IDUsICJmYWxsQmFja0FjdGlvbiI6IDAgfQ==;response.data ]}]"
+    );
+    set(newSlackMessageArr.join(""));
+    setIsTitlePreview(true);
+    setIsTextPreview(true);
   };
 
   if (isLoading) return <Progress />;
@@ -114,6 +136,7 @@ const FirebaseBuilder = () => {
     <div className="w-full">
       <SlackTemplateHeader
         onPersonalizeClick={onPersonalizeClick}
+        onAddApiCallClick={onAddApiCallClick}
         onSave={onSave}
         loading={isSaving}
         templateName={templateName}
@@ -130,13 +153,8 @@ const FirebaseBuilder = () => {
           setValue={setPushTitle}
           onChange={(e) => setPushTitle(e.target.value)}
           labelShrink
-          isPreview={isPreview.title}
-          setIsPreview={(_isPreview) =>
-            setIsPreview({
-              title: _isPreview.valueOf() as boolean,
-              text: isPreview.text,
-            })
-          }
+          isPreview={isTitlePreview}
+          setIsPreview={setIsTitlePreview}
           possibleAttributes={possibleAttributes}
           inputRef={titleRef}
           onFocus={() => setFocusedInput("title")}
@@ -151,13 +169,8 @@ const FirebaseBuilder = () => {
           setValue={setPushText}
           onChange={(e) => setPushText(e.target.value)}
           labelShrink
-          isPreview={isPreview.text}
-          setIsPreview={(_isPreview) =>
-            setIsPreview({
-              text: _isPreview.valueOf() as boolean,
-              title: isPreview.title,
-            })
-          }
+          isPreview={isTextPreview}
+          setIsPreview={setIsTextPreview}
           possibleAttributes={possibleAttributes}
           inputRef={textRef}
           onFocus={() => setFocusedInput("text")}

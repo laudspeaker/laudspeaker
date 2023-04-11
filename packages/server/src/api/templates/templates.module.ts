@@ -17,6 +17,7 @@ import {
 import { CustomersModule } from '../customers/customers.module';
 import { SlackModule } from '../slack/slack.module';
 import { WebhooksService } from '../webhooks/webhooks.service';
+import { WebhooksModule } from '../webhooks/webhooks.module';
 
 @Module({
   imports: [
@@ -50,6 +51,7 @@ import { WebhooksService } from '../webhooks/webhooks.service';
     MongooseModule.forFeature([
       { name: Customer.name, schema: CustomerSchema },
     ]),
+    forwardRef(() => WebhooksModule),
   ],
   providers: [TemplatesService, WebhooksService],
   controllers: [TemplatesController],

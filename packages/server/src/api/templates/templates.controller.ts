@@ -102,18 +102,10 @@ export class TemplatesController {
     return this.templatesService.duplicate(<Account>user, name);
   }
 
-  @Post(':id/test-webhook')
+  @Post('/test-webhook')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
-  testWebhookTemplate(
-    @Req() { user }: Request,
-    @Param('id') id: string,
-    @Body() testWebhookDto: TestWebhookDto
-  ) {
-    return this.templatesService.testWebhookTemplate(
-      <Account>user,
-      id,
-      testWebhookDto.testCustomerEmail
-    );
+  testWebhookTemplate(@Body() testWebhookDto: TestWebhookDto) {
+    return this.templatesService.testWebhookTemplate(testWebhookDto);
   }
 }

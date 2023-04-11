@@ -1,4 +1,3 @@
-import { ChangeEvent, FormEvent } from "react";
 import { Resource } from "../EmailBuilder";
 
 interface IMergeTagPickerProps {

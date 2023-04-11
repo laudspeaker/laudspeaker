@@ -14,7 +14,7 @@ export default () => {
   cy.get("#handleTemplateType").find('[data-option="webhook"]').click();
   cy.get("#submitTemplateCreation").click();
   cy.get("#webhookURL").click();
-  cy.get("#webhookURL")
+  cy.get(".relative > #webhookURL")
     .clear()
     .type("https://jsonplaceholder.typicode.com/posts");
   cy.get("#saveDraftTemplate").click();
@@ -28,14 +28,15 @@ export default () => {
   cy.get("#handleTemplateType").find('[data-option="webhook"]').click();
   cy.get("#submitTemplateCreation").click();
   cy.get("#webhookURL").click();
-  cy.get("#webhookURL")
+  cy.wait(1000);
+  cy.get(".relative > #webhookURL")
     .clear()
     .type("https://jsonplaceholder.typicode.com/posts");
   cy.contains("GET").click();
   cy.get("#data-option-POST").click();
   cy.get(".-mb-px > :nth-child(2)").click();
-  cy.get("#webhook-body")
-    .click()
+  cy.get("#webhook-body").click();
+  cy.get(".relative #webhook-body:nth(1)")
     .clear()
     .type(
       `{
@@ -57,7 +58,7 @@ export default () => {
   cy.get("#handleTemplateType").find('[data-option="webhook"]').click();
   cy.get("#submitTemplateCreation").click();
   cy.get("#webhookURL").click();
-  cy.get("#webhookURL")
+  cy.get(".relative > #webhookURL")
     .clear()
     .type("https://www.random-site-asf%safi14148ad.com");
   cy.get("#saveDraftTemplate").click();

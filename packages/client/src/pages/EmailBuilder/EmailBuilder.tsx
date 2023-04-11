@@ -158,7 +158,6 @@ const EmailBuilder = () => {
   };
 
   const onPersonalize = async () => {
-    if (!editor) return;
     if (!isPreview) {
       const indexToInsert = subjectRef.current?.selectionStart || title.length;
       const newTitleArr = title.split("");
@@ -167,6 +166,8 @@ const EmailBuilder = () => {
       setIsPreview(true);
       return;
     }
+
+    if (!editor) return;
     const availableComponents = ["Text", "Text Section", "Texto"];
     const el = editor.getSelected();
 
@@ -178,6 +179,39 @@ const EmailBuilder = () => {
     const component = editor.addComponents(
       {
         type: "merge-tag",
+      },
+      {}
+    );
+    //
+    component[0]?.move(el, {});
+  };
+
+  const onAddApiCallClick = () => {
+    if (!isPreview) {
+      const indexToInsert = subjectRef.current?.selectionStart || title.length;
+      const newTitleArr = title.split("");
+      newTitleArr.splice(
+        indexToInsert,
+        0,
+        "[{[ eyAidXJsIjogImh0dHBzOi8vanNvbnBsYWNlaG9sZGVyLnR5cGljb2RlLmNvbS9wb3N0cyIsICJib2R5IjogInt9IiwgIm1ldGhvZCI6ICJHRVQiLCAiaGVhZGVycyI6IHsgIkF1dGhvcml6YXRpb24iOiAiIiB9LCAicmV0cmllcyI6IDUsICJmYWxsQmFja0FjdGlvbiI6IDAgfQ==;response.data ]}]"
+      );
+      setTitle(newTitleArr.join(""));
+      setIsPreview(true);
+      return;
+    }
+
+    if (!editor) return;
+    const availableComponents = ["Text", "Text Section", "Texto"];
+    const el = editor.getSelected();
+
+    if (!el) return;
+
+    if (!availableComponents.includes(el?.getName() || "")) {
+      return;
+    }
+    const component = editor.addComponents(
+      {
+        type: "api-call-tag",
       },
       {}
     );
@@ -209,6 +243,7 @@ const EmailBuilder = () => {
         </Helmet>
         <EmailHeader
           onPersonalize={onPersonalize}
+          onAddApiCallClick={onAddApiCallClick}
           onSave={onSave}
           loading={isSaving}
           templateName={templateName}
@@ -247,6 +282,7 @@ const EmailBuilder = () => {
           />
           <div id="emailBuilder" className="gjs-dashed" />
         </div>
+        <div id="email-apicall-modal-root"></div>
       </div>
       {isLoading && <Progress />}
     </>

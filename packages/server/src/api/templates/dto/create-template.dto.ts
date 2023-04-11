@@ -52,13 +52,11 @@ export class CreateTemplateDto {
   @IsString()
   @IsNotEmpty()
   @IsOptional()
-  @MaxLength(256)
   public pushText?: string;
 
   @IsString()
   @IsNotEmpty()
   @IsOptional()
-  @MaxLength(48)
   public pushTitle?: string;
 
   @IsObject()

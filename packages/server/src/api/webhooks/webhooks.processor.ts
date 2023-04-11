@@ -32,9 +32,7 @@ export class WebhooksProcessor extends WorkerHost {
     super();
   }
 
-  async process(
-    job: Job<{ template: Template;[key: string]: any }>
-  ) {
+  async process(job: Job<{ template: Template; [key: string]: any }>) {
     const { template, filteredTags } = job.data;
 
     const { method, retries, fallBackAction } = template.webhookData;
@@ -84,7 +82,7 @@ export class WebhooksProcessor extends WorkerHost {
 
     this.logger.debug(
       'Sending webhook requst: \n' +
-      JSON.stringify(template.webhookData, null, 2)
+        JSON.stringify(template.webhookData, null, 2)
     );
     let error: string | null = null;
     while (!success && retriesCount < retries) {
@@ -102,9 +100,9 @@ export class WebhooksProcessor extends WorkerHost {
         retriesCount++;
         this.logger.warn(
           'Unsuccessfull webhook request. Retries: ' +
-          retriesCount +
-          '. Error: ' +
-          e
+            retriesCount +
+            '. Error: ' +
+            e
         );
         if (e instanceof Error) error = e.message;
         await wait(5000);

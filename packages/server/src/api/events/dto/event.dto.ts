@@ -1,11 +1,23 @@
 import { Trim } from 'class-sanitizer';
-import { IsString, IsNotEmpty, IsOptional, IsObject, ValidatorConstraint, ValidatorConstraintInterface, Validate } from 'class-validator';
-import { ValidationArguments } from "class-validator";
+import {
+  IsString,
+  IsNotEmpty,
+  IsOptional,
+  IsObject,
+  ValidatorConstraint,
+  ValidatorConstraintInterface,
+  Validate,
+} from 'class-validator';
+import { ValidationArguments } from 'class-validator';
 
 @ValidatorConstraint({ name: 'array-or-string', async: false })
 export class IsArrayOrString implements ValidatorConstraintInterface {
   validate(text: any, args: ValidationArguments) {
-    return (Array.isArray(text) && text.every( (val, i, arr) => typeof val === 'string')) || typeof text === 'string';
+    return (
+      (Array.isArray(text) &&
+        text.every((val, i, arr) => typeof val === 'string')) ||
+      typeof text === 'string'
+    );
   }
 
   defaultMessage(args: ValidationArguments) {

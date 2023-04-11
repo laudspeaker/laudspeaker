@@ -33,7 +33,7 @@ export class AudiencesService {
     private workflowRepository: Repository<Workflow>,
     @Inject(TemplatesService) public templatesService: TemplatesService,
     @Inject(JobsService) public jobsService: JobsService
-  ) { }
+  ) {}
 
   /**
    * Find all audiences that belong to a given account. If
@@ -343,8 +343,8 @@ export class AudiencesService {
               trigger.properties.eventTime === 'SpecificTime'
                 ? TimeJobType.SPECIFIC_TIME
                 : trigger.properties.eventTime === 'Delay'
-                  ? TimeJobType.DELAY
-                  : TimeJobType.TIME_WINDOW;
+                ? TimeJobType.DELAY
+                : TimeJobType.TIME_WINDOW;
 
             const now = DateTime.now();
             this.jobsService.create(account, {
@@ -358,9 +358,9 @@ export class AudiencesService {
                 trigger.properties.eventTime === 'SpecificTime'
                   ? trigger.properties.specificTime
                   : now.plus({
-                    hours: trigger.properties.delayTime?.split(':')?.[0],
-                    minutes: trigger.properties.delayTime?.split(':')?.[1],
-                  }),
+                      hours: trigger.properties.delayTime?.split(':')?.[0],
+                      minutes: trigger.properties.delayTime?.split(':')?.[1],
+                    }),
               type,
             });
           }
@@ -395,8 +395,8 @@ export class AudiencesService {
             );
             this.logger.warn(
               'Templates: [' +
-              dataIds.join(',') +
-              "] was skipped to send because test mail's can't be sent to external account."
+                dataIds.join(',') +
+                "] was skipped to send because test mail's can't be sent to external account."
             );
           }
         }

@@ -168,3 +168,4 @@ node_modules
 cypress.env.json
 .env
 /data
+test-firebase-credentials.json

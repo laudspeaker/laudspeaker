@@ -1,12 +1,12 @@
-import { Menu } from "@mui/material";
-import Autocomplete from "components/Autocomplete";
 import { Select } from "components/Elements";
 import Chip from "components/Elements/Chip";
+import Modal from "components/Elements/Modal";
 import React, {
   ChangeEvent,
   FC,
   useEffect,
   useLayoutEffect,
+  useRef,
   useState,
 } from "react";
 import ApiService from "services/api.service";
@@ -36,19 +36,18 @@ const TemplateTagPicker: FC<TemplateTagPickerProps> = ({
   const [templateProperty, setTemplateProperty] = useState(
     initialTemplateProperty.trim()
   );
-  const [possibleTemplates, setPossibleTemplates] = useState<string[]>([]);
+  const [possibleTemplates, setPossibleTemplates] = useState<Template[]>([]);
+  const [isTemplateTagModalOpen, setIsTemplateTagModalOpen] = useState(false);
 
-  const [anchorEl, setAnchorEl] = useState<HTMLElement>();
+  const spanRef = useRef<HTMLSpanElement>(null);
   const [searchStr, setSearchStr] = useState("");
-  const open = Boolean(anchorEl);
 
   useLayoutEffect(() => {
     (async () => {
       const { data: body } = await ApiService.get<{ data: Template[] }>({
         url: "/templates",
       });
-      console.log(body.data);
-      setPossibleTemplates(body.data.map((template) => template.name));
+      setPossibleTemplates(body.data);
     })();
   }, []);
 
@@ -60,14 +59,6 @@ const TemplateTagPicker: FC<TemplateTagPickerProps> = ({
       } ]]`
     );
   }, [templateType, templateName, templateProperty]);
-
-  const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    event.stopPropagation();
-    setAnchorEl(event.currentTarget);
-  };
-  const handleClose = () => {
-    setAnchorEl(undefined);
-  };
 
   const handleInputChange = (
     e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -83,7 +74,11 @@ const TemplateTagPicker: FC<TemplateTagPickerProps> = ({
 
   return (
     <>
-      <span className="h-full" onClick={handleClick}>
+      <span
+        className="h-full"
+        onClick={() => setIsTemplateTagModalOpen(true)}
+        ref={spanRef}
+      >
         <Chip
           label={
             templateType && templateName && templateProperty
@@ -93,14 +88,9 @@ const TemplateTagPicker: FC<TemplateTagPickerProps> = ({
           textClass="text-[20px]"
         />
       </span>
-      <Menu
-        id="merge-tag-menu"
-        anchorEl={anchorEl}
-        open={open}
-        onClose={handleClose}
-        MenuListProps={{
-          "aria-labelledby": "basic-button",
-        }}
+      <Modal
+        isOpen={isTemplateTagModalOpen}
+        onClose={() => setIsTemplateTagModalOpen(false)}
       >
         <div className="py-[20px] px-[15px] outline-none">
           <div>Type:</div>
@@ -118,7 +108,9 @@ const TemplateTagPicker: FC<TemplateTagPickerProps> = ({
           <Select
             value={templateName}
             onChange={(val) => setTemplateName(val)}
-            options={possibleTemplates.map((value) => ({ value }))}
+            options={possibleTemplates
+              .filter((template) => template.type === templateType)
+              .map((template) => ({ value: template.name }))}
           />
           <div>Subtype:</div>
           <Select
@@ -173,7 +165,7 @@ const TemplateTagPicker: FC<TemplateTagPickerProps> = ({
               ))}
           </div> */}
         </div>
-      </Menu>
+      </Modal>
     </>
   );
 };

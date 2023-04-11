@@ -17,8 +17,14 @@ import {
 import { InjectModel } from '@nestjs/mongoose';
 import { CreateTemplateDto } from './dto/create-template.dto';
 import { UpdateTemplateDto } from './dto/update-template.dto';
-import { Template, TemplateType, WebhookMethod } from './entities/template.entity';
 import { Job, Queue } from 'bullmq';
+import {
+  FallBackAction,
+  Template,
+  TemplateType,
+  WebhookData,
+  WebhookMethod,
+} from './entities/template.entity';
 import {
   InjectQueue,
   OnQueueEvent,
@@ -32,12 +38,18 @@ import { EventDto } from '../events/dto/event.dto';
 import { Audience } from '../audiences/entities/audience.entity';
 import { cleanTagsForSending } from '@/shared/utils/helpers';
 import { MessageType } from '../email/email.processor';
+import { Response, fetch } from 'undici';
 import { Model } from 'mongoose';
 import { Liquid } from 'liquidjs';
+import { TestWebhookDto } from './dto/test-webhook.dto';
+import { WebhooksService } from '../webhooks/webhooks.service';
+import wait from '@/utils/wait';
 
 @Injectable()
 @QueueEventsListener('message')
 export class TemplatesService extends QueueEventsHost {
+  private tagEngine = new Liquid();
+
   constructor(
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
     private readonly logger: LoggerService,
@@ -47,6 +59,7 @@ export class TemplatesService extends QueueEventsHost {
     @InjectRepository(Audience)
     private audiencesRepository: Repository<Audience>,
     @Inject(SlackService) private slackService: SlackService,
+    @Inject(WebhooksService) private webhooksService: WebhooksService,
     @InjectQueue('message') private readonly messageQueue: Queue,
     @InjectQueue('webhooks') private readonly webhooksQueue: Queue,
     @InjectQueue('slack') private readonly slackQueue: Queue
@@ -56,87 +69,147 @@ export class TemplatesService extends QueueEventsHost {
 
   @OnQueueEvent('active')
   onActive(args: { jobId: string; prev?: string }, id: string) {
-    this.logger.debug(`${args.jobId} ${args.prev} ${id}`,`templates.service.ts:TemplatesService.onActive()`);
+    this.logger.debug(
+      `${args.jobId} ${args.prev} ${id}`,
+      `templates.service.ts:TemplatesService.onActive()`
+    );
   }
 
   @OnQueueEvent('added')
   onAdded(args: { jobId: string; name: string }, id: string) {
-    this.logger.debug(`${args.jobId} ${args.name} ${id}`,`templates.service.ts:TemplatesService.onAdded()`);
+    this.logger.debug(
+      `${args.jobId} ${args.name} ${id}`,
+      `templates.service.ts:TemplatesService.onAdded()`
+    );
   }
 
   @OnQueueEvent('cleaned')
   onCleaned(args: { count: string }, id: string) {
-    this.logger.debug(`${args.count} ${id}`,`templates.service.ts:TemplatesService.onCleaned()`);
+    this.logger.debug(
+      `${args.count} ${id}`,
+      `templates.service.ts:TemplatesService.onCleaned()`
+    );
   }
 
   @OnQueueEvent('completed')
-  onCompleted(args: { jobId: string; returnvalue: string; prev?: string; }, id: string) {
-    this.logger.debug(`${args.jobId} ${args.returnvalue} ${args.prev} ${id}`,`templates.service.ts:TemplatesService.onCompleted()`);
+  onCompleted(
+    args: { jobId: string; returnvalue: string; prev?: string },
+    id: string
+  ) {
+    this.logger.debug(
+      `${args.jobId} ${args.returnvalue} ${args.prev} ${id}`,
+      `templates.service.ts:TemplatesService.onCompleted()`
+    );
   }
 
   @OnQueueEvent('delayed')
-  onDelayed(args: { jobId: string; delay: number; }, id: string) {
-    this.logger.debug(`${args.jobId} ${args.delay} ${id}`,`templates.service.ts:TemplatesService.onDelayed()`);
+  onDelayed(args: { jobId: string; delay: number }, id: string) {
+    this.logger.debug(
+      `${args.jobId} ${args.delay} ${id}`,
+      `templates.service.ts:TemplatesService.onDelayed()`
+    );
   }
 
   @OnQueueEvent('drained')
   onDrained(id: string) {
-    this.logger.debug(`${id}`,`templates.service.ts:TemplatesService.onDrained()`);
+    this.logger.debug(
+      `${id}`,
+      `templates.service.ts:TemplatesService.onDrained()`
+    );
   }
 
   @OnQueueEvent('duplicated')
-  onDuplicated(args: { jobId: string; }, id: string) {
-    this.logger.debug(`${args.jobId} ${id}`,`templates.service.ts:TemplatesService.onDuplicated()`);
+  onDuplicated(args: { jobId: string }, id: string) {
+    this.logger.debug(
+      `${args.jobId} ${id}`,
+      `templates.service.ts:TemplatesService.onDuplicated()`
+    );
   }
 
   @OnQueueEvent('error')
   onError(args: Error) {
-    this.logger.debug(`${args}`,`templates.service.ts:TemplatesService.onError()`);
+    this.logger.debug(
+      `${args}`,
+      `templates.service.ts:TemplatesService.onError()`
+    );
   }
 
   @OnQueueEvent('failed')
-  onFailed(args: { jobId: string; failedReason: string; prev?: string; }, id: string) {
-    this.logger.debug(`${args.jobId} ${args.failedReason} ${args.prev} ${id}`,`templates.service.ts:TemplatesService.onFailed()`);
+  onFailed(
+    args: { jobId: string; failedReason: string; prev?: string },
+    id: string
+  ) {
+    this.logger.debug(
+      `${args.jobId} ${args.failedReason} ${args.prev} ${id}`,
+      `templates.service.ts:TemplatesService.onFailed()`
+    );
   }
 
   @OnQueueEvent('paused')
-  onPaused(args: {}, id: string) {
-    this.logger.debug(`${id}`,`templates.service.ts:TemplatesService.onPaused()`);
+  onPaused(args: unknown, id: string) {
+    this.logger.debug(
+      `${id}`,
+      `templates.service.ts:TemplatesService.onPaused()`
+    );
   }
 
   @OnQueueEvent('progress')
-  onProgress(args: { jobId: string; data: number | object; }, id: string) {
-    this.logger.debug(`${args.jobId} ${args.data} ${id}`,`templates.service.ts:TemplatesService.onProgress()`);
+  onProgress(args: { jobId: string; data: number | object }, id: string) {
+    this.logger.debug(
+      `${args.jobId} ${args.data} ${id}`,
+      `templates.service.ts:TemplatesService.onProgress()`
+    );
   }
 
   @OnQueueEvent('removed')
-  onRemoved(args: { jobId: string; prev: string; }, id: string) {
-    this.logger.debug(`${args.jobId} ${args.prev} ${id}`,`templates.service.ts:TemplatesService.onRemoved()`);
+  onRemoved(args: { jobId: string; prev: string }, id: string) {
+    this.logger.debug(
+      `${args.jobId} ${args.prev} ${id}`,
+      `templates.service.ts:TemplatesService.onRemoved()`
+    );
   }
 
   @OnQueueEvent('resumed')
-  onResumed(args: {}, id: string) {
-    this.logger.debug(`${id}`,`templates.service.ts:TemplatesService.onResumed()`);
+  onResumed(args: unknown, id: string) {
+    this.logger.debug(
+      `${id}`,
+      `templates.service.ts:TemplatesService.onResumed()`
+    );
   }
 
   @OnQueueEvent('retries-exhausted')
-  onRetriesExhausted(args: { jobId: string; attemptsMade: string; }, id: string) {
-    this.logger.debug(`${args.jobId} ${args.attemptsMade} ${id}`,`templates.service.ts:TemplatesService.onRetriesExhausted()`);
+  onRetriesExhausted(
+    args: { jobId: string; attemptsMade: string },
+    id: string
+  ) {
+    this.logger.debug(
+      `${args.jobId} ${args.attemptsMade} ${id}`,
+      `templates.service.ts:TemplatesService.onRetriesExhausted()`
+    );
   }
 
   @OnQueueEvent('stalled')
-  onStalled(args: { jobId: string; }, id: string) {
-    this.logger.debug(`${args.jobId} ${id}`,`templates.service.ts:TemplatesService.onStalled()`);
+  onStalled(args: { jobId: string }, id: string) {
+    this.logger.debug(
+      `${args.jobId} ${id}`,
+      `templates.service.ts:TemplatesService.onStalled()`
+    );
   }
 
   @OnQueueEvent('waiting')
-  onWaiting(args: { jobId: string; prev?: string; }, id: string) {
-    this.logger.debug(`${args.jobId} ${args.prev} ${id}`,`templates.service.ts:TemplatesService.onWaiting()`);
+  onWaiting(args: { jobId: string; prev?: string }, id: string) {
+    this.logger.debug(
+      `${args.jobId} ${args.prev} ${id}`,
+      `templates.service.ts:TemplatesService.onWaiting()`
+    );
   }
 
   @OnQueueEvent('waiting-children')
-  onWaitingChildren(args: { jobId: string; }, id: string) {
-    this.logger.debug(`${args.jobId} ${id}`,`templates.service.ts:TemplatesService.onWaitingChildren()`);
+  onWaitingChildren(args: { jobId: string }, id: string) {
+    this.logger.debug(
+      `${args.jobId} ${id}`,
+      `templates.service.ts:TemplatesService.onWaitingChildren()`
+    );
   }
 
   create(account: Account, createTemplateDto: CreateTemplateDto) {
@@ -220,7 +293,6 @@ export class TemplatesService extends QueueEventsHost {
     let key = mailgunAPIKey;
     let from = sendingName;
 
-
     switch (template.type) {
       case TemplateType.EMAIL:
         if (account.emailProvider === 'free3') {
@@ -254,10 +326,13 @@ export class TemplatesService extends QueueEventsHost {
             from,
             trackingEmail: email,
             key,
-            subject: template.subject,
+            subject: await this.parseApiCallTags(
+              template.subject,
+              filteredTags
+            ),
             tags: filteredTags,
             templateId,
-            text: template.text,
+            text: await this.parseApiCallTags(template.text, filteredTags),
             to: customer.phEmail ? customer.phEmail : customer.email,
           },
           { attempts: Number.MAX_SAFE_INTEGER }
@@ -278,7 +353,10 @@ export class TemplatesService extends QueueEventsHost {
             customerId,
             tags: filteredTags,
             templateId,
-            text: event?.payload ? event.payload : template.slackMessage,
+            text: await this.parseApiCallTags(
+              event?.payload ? event.payload : template.slackMessage,
+              filteredTags
+            ),
           },
           methodName: 'chat.postMessage',
           token: installation.installation.bot.token,
@@ -294,7 +372,7 @@ export class TemplatesService extends QueueEventsHost {
           sid: account.smsAccountSid,
           tags: filteredTags,
           templateId: template.id,
-          text: template.smsText,
+          text: await this.parseApiCallTags(template.smsText, filteredTags),
           to: customer.phPhoneNumber || customer.phone,
           token: account.smsAuthToken,
           trackingEmail: email,
@@ -307,8 +385,14 @@ export class TemplatesService extends QueueEventsHost {
           customerId,
           firebaseCredentials: account.firebaseCredentials,
           phDeviceToken: customer.phDeviceToken,
-          pushText: template.pushText,
-          pushTitle: template.pushTitle,
+          pushText: await this.parseApiCallTags(
+            template.pushText,
+            filteredTags
+          ),
+          pushTitle: await this.parseApiCallTags(
+            template.pushTitle,
+            filteredTags
+          ),
           trackingEmail: email,
           tags: filteredTags,
           templateId: template.id,
@@ -475,6 +559,8 @@ export class TemplatesService extends QueueEventsHost {
   }
 
   public async parseTemplateTags(str: string) {
+    this.logger.debug('Parsing template tags...');
+
     const matches = str.match(
       /\[\[\s(email|sms|slack|firebase);[a-zA-Z0-9-\s]+;[a-zA-Z]+\s\]\]/g
     );
@@ -493,29 +579,87 @@ export class TemplatesService extends QueueEventsHost {
         name: templateName,
       });
 
+      if (template) this.logger.debug('Found template: ' + template.name);
+
       str = str.replace(match, template?.[templateProperty] || '');
     }
 
     return str;
   }
 
-  async testWebhookTemplate(
-    account: Account,
-    id: string,
-    testCustomerEmail: string
+  private recursivelyRetrieveData(
+    object: unknown,
+    path: string[]
+  ): string | null {
+    if (!object) return null;
+
+    const key = path.shift();
+    if (!key)
+      return typeof object === 'object'
+        ? JSON.stringify(object)
+        : String(object);
+    return this.recursivelyRetrieveData(object[key], path);
+  }
+
+  public async parseApiCallTags(
+    str: string,
+    filteredTags: { [key: string]: any } = {}
   ) {
-    const tagEngine = new Liquid();
-    const template = await this.templatesRepository.findOneBy({
-      owner: { id: account.id },
-      id,
-      type: TemplateType.WEBHOOK,
-    });
+    const matches = str.match(/\[\{\[\s[^\s]+;[^\s]+\s\]\}\]/);
 
-    if (!template || !template.webhookData)
-      throw new NotFoundException('Webhook template not found');
+    if (!matches) return str;
 
+    for (const match of matches) {
+      try {
+        const [webhookDataBase64, webhookProps] = match
+          .replace('[{[ ', '')
+          .replace(' ]}]', '')
+          .trim()
+          .split(';');
+        const webhookData: WebhookData = JSON.parse(
+          Buffer.from(webhookDataBase64, 'base64').toString('utf8')
+        );
+
+        const { body, error, headers, success } = await this.handleApiCall(
+          webhookData,
+          filteredTags
+        );
+
+        if (!success) return str.replace(match, '');
+
+        const webhookPath = webhookProps.replace('response.', '').split('.');
+
+        let retrievedData = '';
+        if (webhookPath.length === 1) {
+          retrievedData = ['data', 'body'].includes(webhookPath[0])
+            ? body
+            : webhookPath[0] === 'headers'
+            ? JSON.stringify(headers)
+            : '';
+        } else {
+          const objectToRetrievе = ['data', 'body'].includes(webhookPath[0])
+            ? JSON.parse(body)
+            : webhookPath[0] === 'headers'
+            ? headers
+            : {};
+          retrievedData = this.recursivelyRetrieveData(
+            objectToRetrievе,
+            webhookPath.slice(1)
+          );
+        }
+
+        str = str.replace(match, retrievedData);
+      } catch (e) {
+        this.logger.error('Api call error: ' + e);
+      }
+    }
+
+    return str;
+  }
+
+  async testWebhookTemplate(testWebhookDto: TestWebhookDto) {
     const customer = await this.customerModel.findOne({
-      email: testCustomerEmail,
+      email: testWebhookDto.testCustomerEmail,
     });
 
     if (!customer) throw new NotFoundException('Customer not found');
@@ -523,11 +667,11 @@ export class TemplatesService extends QueueEventsHost {
     const { _id, ownerId, audiences, ...tags } = customer.toObject();
     const filteredTags = cleanTagsForSending(tags);
 
-    const { method } = template.webhookData;
+    const { method } = testWebhookDto.webhookData;
 
-    let { body, headers, url } = template.webhookData;
+    let { body, headers, url } = testWebhookDto.webhookData;
 
-    url = await tagEngine.parseAndRender(url, filteredTags || {}, {
+    url = await this.tagEngine.parseAndRender(url, filteredTags || {}, {
       strictVariables: true,
     });
     url = await this.parseTemplateTags(url);
@@ -543,7 +687,7 @@ export class TemplatesService extends QueueEventsHost {
       body = undefined;
     } else {
       body = await this.parseTemplateTags(body);
-      body = await tagEngine.parseAndRender(body, filteredTags || {}, {
+      body = await this.tagEngine.parseAndRender(body, filteredTags || {}, {
         strictVariables: true,
       });
     }
@@ -552,12 +696,12 @@ export class TemplatesService extends QueueEventsHost {
       await Promise.all(
         Object.entries(headers).map(async ([key, value]) => [
           await this.parseTemplateTags(
-            await tagEngine.parseAndRender(key, filteredTags || {}, {
+            await this.tagEngine.parseAndRender(key, filteredTags || {}, {
               strictVariables: true,
             })
           ),
           await this.parseTemplateTags(
-            await tagEngine.parseAndRender(value, filteredTags || {}, {
+            await this.tagEngine.parseAndRender(value, filteredTags || {}, {
               strictVariables: true,
             })
           ),
@@ -580,5 +724,94 @@ export class TemplatesService extends QueueEventsHost {
     } catch (e) {
       throw new BadRequestException(e);
     }
+  }
+
+  public async handleApiCall(
+    webhookData: WebhookData,
+    filteredTags: { [key: string]: any } = {}
+  ) {
+    const { method, retries, fallBackAction } = webhookData;
+
+    let { body, headers, url } = webhookData;
+
+    url = await this.tagEngine.parseAndRender(url, filteredTags || {}, {
+      strictVariables: true,
+    });
+    url = await this.parseTemplateTags(url);
+
+    if (
+      [
+        WebhookMethod.GET,
+        WebhookMethod.HEAD,
+        WebhookMethod.DELETE,
+        WebhookMethod.OPTIONS,
+      ].includes(method)
+    ) {
+      body = undefined;
+    } else {
+      body = await this.parseTemplateTags(body);
+      body = await this.tagEngine.parseAndRender(body, filteredTags || {}, {
+        strictVariables: true,
+      });
+    }
+
+    headers = Object.fromEntries(
+      await Promise.all(
+        Object.entries(headers).map(async ([key, value]) => [
+          await this.parseTemplateTags(
+            await this.tagEngine.parseAndRender(key, filteredTags || {}, {
+              strictVariables: true,
+            })
+          ),
+          await this.parseTemplateTags(
+            await this.tagEngine.parseAndRender(value, filteredTags || {}, {
+              strictVariables: true,
+            })
+          ),
+        ])
+      )
+    );
+
+    let retriesCount = 0;
+    let success = false;
+
+    this.logger.debug(
+      'Sending api call request: \n' + JSON.stringify(webhookData, null, 2)
+    );
+    let error: string | null = null;
+    let res: Response;
+    while (!success && retriesCount < retries) {
+      try {
+        res = await fetch(url, {
+          method,
+          body,
+          headers,
+        });
+
+        if (!res.ok) throw new Error('Error sending API request');
+        this.logger.debug('Successful api call request!');
+        success = true;
+      } catch (e) {
+        retriesCount++;
+        this.logger.warn(
+          'Unsuccessfull webhook request. Retries: ' +
+            retriesCount +
+            '. Error: ' +
+            e
+        );
+        if (e instanceof Error) error = e.message;
+        await wait(5000);
+      }
+    }
+
+    if (!success) {
+      switch (fallBackAction) {
+        case FallBackAction.NOTHING:
+          this.logger.error('Failed to send webhook request: ' + error);
+          break;
+      }
+    }
+
+    return { success, body: await res.text(), headers: res.headers, error };
   }
 }

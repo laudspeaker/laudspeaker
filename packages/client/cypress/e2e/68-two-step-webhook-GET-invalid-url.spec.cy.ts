@@ -24,6 +24,8 @@ describe(
 
       startWebhookJouney("webhook3");
 
+      cy.wait(5000);
+
       cy.request({
         method: "POST",
         url: `${Cypress.env("AxiosURL")}events`,
@@ -35,19 +37,11 @@ describe(
           correlationValue: emailTemplate.correlationValue,
           event: { wh: "wh" },
         },
-      }).then(({ body }) => {
+      }).then(() => {
         cy.wait(5000);
-        cy.request({
-          method: "POST",
-          headers: {
-            Authorization: `Api-Key ${userAPIkey}`,
-          },
-          url: `${Cypress.env("AxiosURL")}events/job-status/webhook`,
-          body: {
-            jobId: body[0]?.jobIds?.[0],
-          },
-        }).then(({ body }) => {
-          expect(body).to.equal("failed");
+        cy.reload();
+        cy.get(".justify-between > :nth-child(1) > .font-medium").then((el) => {
+          expect(Number(el.text())).eq(0);
         });
       });
     });
