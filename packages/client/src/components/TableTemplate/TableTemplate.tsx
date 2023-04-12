@@ -187,7 +187,7 @@ function renderCorrectColumnNames(
   }
 }
 
-export enum JOURNEY_STATUS {
+export enum JourneyStatus {
   ACTIVE = "Active",
   PAUSED = "Paused",
   STOPPED = "Stopped",
@@ -196,11 +196,11 @@ export enum JOURNEY_STATUS {
 }
 
 const statusStyles = {
-  [JOURNEY_STATUS.ACTIVE]: "",
-  [JOURNEY_STATUS.PAUSED]: "!bg-yellow-200 !text-yellow-600",
-  [JOURNEY_STATUS.STOPPED]: "!bg-red-200 !text-red-600",
-  [JOURNEY_STATUS.DELETED]: "!bg-red-200 !text-red-600",
-  [JOURNEY_STATUS.EDITABLE]: "!bg-gray-200 !text-gray-600",
+  [JourneyStatus.ACTIVE]: "",
+  [JourneyStatus.PAUSED]: "!bg-yellow-200 !text-yellow-600",
+  [JourneyStatus.STOPPED]: "!bg-red-200 !text-red-600",
+  [JourneyStatus.DELETED]: "!bg-red-200 !text-red-600",
+  [JourneyStatus.EDITABLE]: "!bg-gray-200 !text-gray-600",
 };
 
 function renderSecondColumn(row: TableDataItem) {
@@ -222,12 +222,12 @@ function renderSecondColumn(row: TableDataItem) {
     );
   } else if (row.isActive != null) {
     //this is a test for checking if this is the journeys table or the template table
-    let status: JOURNEY_STATUS = JOURNEY_STATUS.EDITABLE;
+    let status: JourneyStatus = JourneyStatus.EDITABLE;
 
-    if (row.isActive) status = JOURNEY_STATUS.ACTIVE;
-    if (row.isPaused) status = JOURNEY_STATUS.PAUSED;
-    if (row.isStopped) status = JOURNEY_STATUS.STOPPED;
-    if (row.isDeleted) status = JOURNEY_STATUS.DELETED;
+    if (row.isActive) status = JourneyStatus.ACTIVE;
+    if (row.isPaused) status = JourneyStatus.PAUSED;
+    if (row.isStopped) status = JourneyStatus.STOPPED;
+    if (row.isDeleted) status = JourneyStatus.DELETED;
 
     return (
       <>

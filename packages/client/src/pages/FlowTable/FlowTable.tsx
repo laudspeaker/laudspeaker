@@ -9,7 +9,13 @@ import posthog from "posthog-js";
 import Modal from "components/Elements/Modal";
 import { Workflow } from "types/Workflow";
 import Progress from "components/Progress";
-import { SortOptions } from "components/TableTemplate/TableTemplate";
+import {
+  JourneyStatus,
+  SortOptions,
+} from "components/TableTemplate/TableTemplate";
+import AutoComplete from "components/Autocomplete";
+import { Select } from "components/Elements";
+import { useDebounce } from "react-use";
 
 const FlowTable = () => {
   const [loading, setLoading] = useState(false);
@@ -24,35 +30,56 @@ const FlowTable = () => {
     createdAt: "desc",
   });
   const [isShowDisabled, setIsShowDisabled] = useState(false);
+  const [possibleNames, setPossibleNames] = useState<string[]>([]);
+  const [searchName, setSearchName] = useState("");
+  const [searchStatuses, setSearchStatuses] = useState<JourneyStatus[]>([]);
+
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      const { data } = await ApiService.get({
+        url: `${ApiConfig.flow}?take=${itemsPerPage}&skip=${
+          itemsPerPage * currentPage
+        }&orderBy=${Object.keys(sortOptions)[0] || ""}&orderType=${
+          Object.values(sortOptions)[0] || ""
+        }${
+          isShowDisabled ? "&showDisabled=true" : ""
+        }&search=${searchName}&filterStatuses=${searchStatuses.join(",")}`,
+      });
+      const {
+        data: fetchedJourneys,
+        totalPages,
+      }: { data: Workflow[]; totalPages: number } = data;
+      setPagesCount(totalPages);
+      setJourneys(fetchedJourneys);
+    } catch (err) {
+      posthog.capture("flowTableError", {
+        flowTableError: err,
+      });
+      setError(true);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const setLoadingAsync = async () => {
-      setLoading(true);
-      try {
-        const { data } = await ApiService.get({
-          url: `${ApiConfig.flow}?take=${itemsPerPage}&skip=${
-            itemsPerPage * currentPage
-          }&orderBy=${Object.keys(sortOptions)[0] || ""}&orderType=${
-            Object.values(sortOptions)[0] || ""
-          }${isShowDisabled ? "&showDisabled=true" : ""}`,
-        });
-        const {
-          data: fetchedJourneys,
-          totalPages,
-        }: { data: Workflow[]; totalPages: number } = data;
-        setPagesCount(totalPages);
-        setJourneys(fetchedJourneys);
-      } catch (err) {
-        posthog.capture("flowTableError", {
-          flowTableError: err,
-        });
-        setError(true);
-      } finally {
-        setLoading(false);
-      }
-    };
-    setLoadingAsync();
-  }, [update, isShowDisabled, itemsPerPage, currentPage, sortOptions]);
+    loadData();
+  }, [
+    update,
+    isShowDisabled,
+    itemsPerPage,
+    currentPage,
+    sortOptions,
+    searchStatuses,
+  ]);
+
+  useDebounce(
+    () => {
+      loadData();
+    },
+    800,
+    [searchName]
+  );
 
   const redirectUses = () => {
     setNameModalOpen(true);
@@ -100,6 +127,35 @@ const FlowTable = () => {
                 </button>
               </div>
             </Grid>
+            <div className="flex w-full justify-between items-center gap-[10px] lg:px-8 my-[20px]">
+              <AutoComplete
+                inputId="keyInput"
+                items={possibleNames}
+                inputValue={searchName}
+                wrapperClassNames="w-full"
+                customLabelClassNames="mb-[4px]"
+                customInputClassNames="!shadow-sm !border-[1px] !border-gray-300"
+                onInputChange={(e) => setSearchName(e.target.value)}
+                label="Name"
+                onOptionSelect={(name) => {
+                  setSearchName(name);
+                }}
+                optionKey={(name) => name}
+                optionRender={(name) => name}
+              />
+              <Select
+                value={searchStatuses}
+                options={[
+                  { value: JourneyStatus.ACTIVE },
+                  { value: JourneyStatus.DELETED },
+                  { value: JourneyStatus.EDITABLE },
+                  { value: JourneyStatus.PAUSED },
+                  { value: JourneyStatus.STOPPED },
+                ]}
+                multipleSelections={true}
+                onChange={(val) => setSearchStatuses(val)}
+              />
+            </div>
             <TableTemplate
               data={journeys}
               pagesCount={pagesCount}

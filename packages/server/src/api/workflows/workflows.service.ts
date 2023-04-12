@@ -7,7 +7,14 @@ import {
   forwardRef,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, In, QueryRunner, Repository } from 'typeorm';
+import {
+  DataSource,
+  FindOptionsWhere,
+  In,
+  Like,
+  QueryRunner,
+  Repository,
+} from 'typeorm';
 import { Account } from '../accounts/entities/accounts.entity';
 import { AudiencesService } from '../audiences/audiences.service';
 import { UpdateWorkflowDto } from './dto/update-workflow.dto';
@@ -38,6 +45,14 @@ import { Template } from '../templates/entities/template.entity';
 import { BadRequestException } from '@nestjs/common/exceptions';
 import { Job, TimeJobType } from '../jobs/entities/job.entity';
 import { Filter } from '../filter/entities/filter.entity';
+
+export enum JourneyStatus {
+  ACTIVE = 'Active',
+  PAUSED = 'Paused',
+  STOPPED = 'Stopped',
+  DELETED = 'Deleted',
+  EDITABLE = 'Editable',
+}
 
 @Injectable()
 export class WorkflowsService {
@@ -78,15 +93,61 @@ export class WorkflowsService {
     skip = 0,
     orderBy?: keyof Workflow,
     orderType?: 'asc' | 'desc',
-    showDisabled?: boolean
+    showDisabled?: boolean,
+    search = '',
+    filterStatusesString = ''
   ): Promise<{ data: Workflow[]; totalPages: number }> {
     try {
+      const filterStatusesParts = filterStatusesString.split(',');
+      const isActive = filterStatusesParts.includes(JourneyStatus.ACTIVE);
+      const isPaused = filterStatusesParts.includes(JourneyStatus.PAUSED);
+      const isStopped = filterStatusesParts.includes(JourneyStatus.STOPPED);
+      const isDeleted = filterStatusesParts.includes(JourneyStatus.DELETED);
+      const isEditable = filterStatusesParts.includes(JourneyStatus.EDITABLE);
+
+      const whereOrParts: FindOptionsWhere<Workflow>[] = [];
+
+      if (isEditable) {
+        whereOrParts.push({
+          name: Like(`%${search}%`),
+          owner: { id: account.id },
+          isDeleted: false,
+          isActive: false,
+          isPaused: false,
+          isStopped: false,
+        });
+      }
+
+      const filterStatuses = {
+        isActive,
+        isPaused,
+        isStopped,
+        isDeleted,
+      };
+
+      if (isActive || isPaused || isStopped || isDeleted || isEditable) {
+        for (const [key, value] of Object.entries(filterStatuses)) {
+          if (value)
+            whereOrParts.push({
+              name: Like(`%${search}%`),
+              owner: { id: account.id },
+              isDeleted: In([!!showDisabled, false]),
+              [key]: value,
+            });
+        }
+      } else {
+        whereOrParts.push({
+          name: Like(`%${search}%`),
+          owner: { id: account.id },
+          isDeleted: In([!!showDisabled, false]),
+        });
+      }
+
+      console.log(whereOrParts);
+
       const totalPages = Math.ceil(
         (await this.workflowsRepository.count({
-          where: {
-            owner: { id: account.id },
-            isDeleted: In([!!showDisabled, false]),
-          },
+          where: whereOrParts,
         })) / take || 1
       );
       const orderOptions = {};
@@ -94,10 +155,7 @@ export class WorkflowsService {
         orderOptions[orderBy] = orderType;
       }
       const workflows = await this.workflowsRepository.find({
-        where: {
-          owner: { id: account.id },
-          isDeleted: In([!!showDisabled, false]),
-        },
+        where: whereOrParts,
         order: orderOptions,
         take: take < 100 ? take : 100,
         skip,

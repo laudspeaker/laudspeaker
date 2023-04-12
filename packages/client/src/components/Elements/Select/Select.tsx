@@ -4,8 +4,7 @@ import { Listbox, Transition } from "@headlessui/react";
 import { ChevronUpDownIcon } from "@heroicons/react/20/solid";
 import Tooltip from "../Tooltip";
 
-export interface SelectProps<T extends string | number | undefined> {
-  value: T;
+interface CommonSelectProps<T extends string | number | undefined> {
   options: {
     title?: string;
     value: T;
@@ -37,14 +36,28 @@ export interface SelectProps<T extends string | number | undefined> {
   variant?: "filled" | "outlined" | "standard";
   // SelectDisplayProps?: boolean,
   // renderValue?: ReactNode,
-  onChange: (v: T) => void;
   onClose?: (e: object) => void;
   onOpen?: (e: object) => void;
   renderValue?: (value: T) => React.ReactNode;
   disabled?: boolean;
   wrapperClassnames?: string;
+  onChange: (v: any) => void;
   tick?: boolean;
 }
+
+interface SingleSelectProps<T extends string | number | undefined>
+  extends CommonSelectProps<T> {
+  value: T;
+}
+
+interface MultipleSelectProps<T extends string | number | undefined>
+  extends CommonSelectProps<T> {
+  value: T[];
+}
+
+export type SelectProps<T extends string | number | undefined> =
+  | SingleSelectProps<T>
+  | MultipleSelectProps<T>;
 
 const Select = <T extends string | number | undefined>(
   props: SelectProps<T>
@@ -87,9 +100,12 @@ const Select = <T extends string | number | undefined>(
             className={`${customButtonClass} relative min-h-[30px] cursor-pointer w-full rounded-lg bg-white py-2 pl-3 pr-10 text-left shadow-md focus:outline-none focus-visible:border-cyan-500 focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-opacity-75 focus-visible:ring-offset-2 focus-visible:ring-offset-cyan-300 sm:text-sm`}
           >
             <>
-              {(renderValue && renderValue(value)) ||
+              {(renderValue &&
+                renderValue(
+                  Array.isArray(value) ? (value.toString() as T) : value
+                )) ||
                 options.find((item) => item.value === value)?.title ||
-                value ||
+                (Array.isArray(value) ? value.join(", ") : value) ||
                 placeholder}
               {children}
               <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
