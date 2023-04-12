@@ -46,8 +46,9 @@ export type Correlation = {
 };
 
 const eventsMap = {
-  sent: 'delivered',
+  sent: 'sent',
   clicked: 'clicked',
+  delivered: 'delivered',
 };
 
 const KEYS_TO_SKIP = ['__v', '_id', 'audiences', 'ownerId'];
@@ -547,7 +548,20 @@ export class CustomersService {
     event?: string,
     audienceId?: string
   ) {
+    if (take > 100) take = 100;
+
     if (eventsMap[event] && audienceId) {
+      const customersCountResponse = await this.clickhouseClient.query({
+        query: `SELECT COUNT(*) FROM message_status WHERE audienceId = {audienceId:UUID} AND event = {event:String}`,
+        query_params: { audienceId, event: eventsMap[event] },
+      });
+      const customersCountResponseData = (
+        await customersCountResponse.json<{ data: { 'count()': string }[] }>()
+      )?.data;
+      const customersCount = +customersCountResponseData?.[0]?.['count()'] || 1;
+
+      const totalPages = Math.ceil(customersCount / take);
+
       const response = await this.clickhouseClient.query({
         query: `SELECT customerId FROM message_status WHERE audienceId = {audienceId:UUID} AND event = {event:String} ORDER BY createdAt LIMIT {take:Int32} OFFSET {skip:Int32}`,
         query_params: { audienceId, event: eventsMap[event], take, skip },
@@ -556,11 +570,15 @@ export class CustomersService {
         ?.data;
       const customerIds = data?.map((item) => item.customerId) || [];
 
-      return Promise.all(
-        customerIds.map(async (id) =>
-          (await this.findById(account, id)).toObject()
-        )
-      );
+      return {
+        totalPages,
+        data: await Promise.all(
+          customerIds.map(async (id) => ({
+            ...(await this.findById(account, id)).toObject(),
+            id,
+          }))
+        ),
+      };
     }
   }
 
