@@ -566,6 +566,7 @@ export class WorkflowsService {
           await queryRunner.manager.save(Workflow, {
             ...workflow,
             isActive: true,
+            startedAt: new Date(Date.now()),
           });
           this.logger.debug('Started workflow ' + workflow?.id);
         }
