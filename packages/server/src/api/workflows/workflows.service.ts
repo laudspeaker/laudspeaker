@@ -133,6 +133,11 @@ export class WorkflowsService {
               owner: { id: account.id },
               isDeleted: In([!!showDisabled, false]),
               [key]: value,
+              ...(key === 'isActive'
+                ? { isStopped: false, isPaused: false }
+                : key === 'isPaused'
+                ? { isStopped: false }
+                : {}),
             });
         }
       } else {
@@ -142,8 +147,6 @@ export class WorkflowsService {
           isDeleted: In([!!showDisabled, false]),
         });
       }
-
-      console.log(whereOrParts);
 
       const totalPages = Math.ceil(
         (await this.workflowsRepository.count({

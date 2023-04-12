@@ -52,6 +52,7 @@ const FlowTable = () => {
       }: { data: Workflow[]; totalPages: number } = data;
       setPagesCount(totalPages);
       setJourneys(fetchedJourneys);
+      setPossibleNames(fetchedJourneys.map((journey) => journey.name));
     } catch (err) {
       posthog.capture("flowTableError", {
         flowTableError: err,
@@ -127,7 +128,7 @@ const FlowTable = () => {
                 </button>
               </div>
             </Grid>
-            <div className="flex w-full justify-between items-center gap-[10px] lg:px-8 my-[20px]">
+            <div className="flex w-full justify-between items-center gap-[10px] mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 my-[20px]">
               <AutoComplete
                 inputId="keyInput"
                 items={possibleNames}
@@ -152,8 +153,10 @@ const FlowTable = () => {
                   { value: JourneyStatus.PAUSED },
                   { value: JourneyStatus.STOPPED },
                 ]}
+                label="Filter by statuses"
                 multipleSelections={true}
                 onChange={(val) => setSearchStatuses(val)}
+                wrapperClassnames="min-w-[10vw]"
               />
             </div>
             <TableTemplate
