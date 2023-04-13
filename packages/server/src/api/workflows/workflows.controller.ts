@@ -43,7 +43,9 @@ export class WorkflowsController {
     @Query('skip') skip?: string,
     @Query('orderBy') orderBy?: keyof Workflow,
     @Query('orderType') orderType?: 'asc' | 'desc',
-    @Query('showDisabled') showDisabled?: boolean
+    @Query('showDisabled') showDisabled?: boolean,
+    @Query('search') search?: string,
+    @Query('filterStatuses') filterStatuses?: string
   ) {
     return this.workflowsService.findAll(
       <Account>user,
@@ -51,7 +53,9 @@ export class WorkflowsController {
       skip && +skip,
       orderBy,
       orderType,
-      showDisabled
+      showDisabled,
+      search,
+      filterStatuses
     );
   }
 
