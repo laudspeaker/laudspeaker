@@ -522,15 +522,25 @@ export class CustomersService {
     updateCustomerDto: Record<string, unknown>,
     transactionSession: ClientSession
   ) {
+    this.logger.debug(`In Trasactional Update`, `customers.service.ts:CustomersService.transactionalUpdate()`)
+
     const { ...newCustomerData } = updateCustomerDto;
+    this.logger.debug(`New customer data: ${JSON.stringify(newCustomerData)}`, `customers.service.ts:CustomersService.transactionalUpdate()`)
 
     delete newCustomerData.verified;
-    delete newCustomerData.ownerId;
-    delete newCustomerData._id;
-    delete newCustomerData.__v;
-    delete newCustomerData.audiences;
+    this.logger.debug(`Deleting verified: ${JSON.stringify(newCustomerData)}`, `customers.service.ts:CustomersService.transactionalUpdate()`)
 
-    console.log(newCustomerData)
+    delete newCustomerData.ownerId;
+    this.logger.debug(`Deleting ownerId: ${JSON.stringify(newCustomerData)}`, `customers.service.ts:CustomersService.transactionalUpdate()`)
+
+    delete newCustomerData._id;
+    this.logger.debug(`Deleting id: ${JSON.stringify(newCustomerData)}`, `customers.service.ts:CustomersService.transactionalUpdate()`)
+
+    delete newCustomerData.__v;
+    this.logger.debug(`Deleting v: ${JSON.stringify(newCustomerData)}`, `customers.service.ts:CustomersService.transactionalUpdate()`)
+
+    delete newCustomerData.audiences;
+    this.logger.debug(`Deleting audiences: ${JSON.stringify(newCustomerData)}`, `customers.service.ts:CustomersService.transactionalUpdate()`)
 
     const customer = await this.transactionalFindOne(account, id, transactionSession);
 
@@ -992,8 +1002,17 @@ export class CustomersService {
       this.logger.debug(`${JSON.stringify(correlation)} ${JSON.stringify(eventDto)}`, `customers.service.ts:CustomersService.upsert()`)
 
       let left = correlation.cust.toObject();
+      this.logger.debug(`Left: ${JSON.stringify(left)}`, `customers.service.ts:CustomersService.upsert()`)
+
       let right = structuredClone(dto);
+      this.logger.debug(`Right: ${JSON.stringify(right)}`, `customers.service.ts:CustomersService.upsert()`)
+
       delete right.correlationKey;
+      this.logger.debug(`Delete correlation key`, `customers.service.ts:CustomersService.upsert()`)
+
+      delete right.correlationValue;
+      this.logger.debug(`Delete correlation value`, `customers.service.ts:CustomersService.upsert()`)
+
       await this.transactionalUpdate(account, correlation.cust.id, _.merge(left, right), transactionSession);
 
       if (!correlation.found)
