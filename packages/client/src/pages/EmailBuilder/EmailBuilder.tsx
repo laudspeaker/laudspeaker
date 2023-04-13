@@ -130,7 +130,7 @@ const EmailBuilder = () => {
         cc: cc.split(",").filter(function (entry) {
           return /\S/.test(entry);
         }),
-        text: editor?.getHtml(),
+        text: editor?.runCommand("gjs-get-inlined-html", {}),
         style: editor?.getCss(),
         type: "email",
       };
