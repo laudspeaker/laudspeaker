@@ -1,7 +1,7 @@
 import {
   Template,
   TemplateType,
-} from '@/api/templates/entities/template.entity';
+} from '../api/templates/entities/template.entity';
 
 const DEFAULT_TEMPLATES: Template[] = [
   {

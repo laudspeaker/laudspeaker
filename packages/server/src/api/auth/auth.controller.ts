@@ -11,7 +11,7 @@ import {
   Patch,
   Param,
 } from '@nestjs/common';
-import { Account } from '@/api/accounts/entities/accounts.entity';
+import { Account } from '../accounts/entities/accounts.entity';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from '../auth/dto/register.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';

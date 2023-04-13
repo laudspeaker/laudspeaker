@@ -36,14 +36,14 @@ import { SlackService } from '../slack/slack.service';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { EventDto } from '../events/dto/event.dto';
 import { Audience } from '../audiences/entities/audience.entity';
-import { cleanTagsForSending } from '@/shared/utils/helpers';
+import { cleanTagsForSending } from '../../shared/utils/helpers';
 import { MessageType } from '../email/email.processor';
 import { Response, fetch } from 'undici';
 import { Model } from 'mongoose';
 import { Liquid } from 'liquidjs';
 import { TestWebhookDto } from './dto/test-webhook.dto';
 import { WebhooksService } from '../webhooks/webhooks.service';
-import wait from '@/utils/wait';
+import wait from '../../utils/wait';
 
 @Injectable()
 @QueueEventsListener('message')

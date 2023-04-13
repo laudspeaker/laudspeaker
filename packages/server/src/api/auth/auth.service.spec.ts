@@ -13,6 +13,7 @@ import { BullModule } from '@nestjs/bullmq';
 import { WinstonModule } from 'nest-winston';
 import { TypeOrmConfigService } from '../../shared/typeorm/typeorm.service';
 import * as winston from 'winston';
+import { Verification } from './entities/verification.entity';
 
 const papertrail = new winston.transports.Http({
   host: 'logs.collector.solarwinds.com',
@@ -42,6 +43,9 @@ describe('AuthService', () => {
           }),
           inject: [],
         }),
+        BullModule.registerQueue({
+          name: 'message',
+        }),
         TypeOrmModule.forRootAsync({ useClass: TypeOrmConfigService }),
         PassportModule.register({
           defaultStrategy: 'jwt',
@@ -51,7 +55,7 @@ describe('AuthService', () => {
           secret: 'JWT_KEY',
           signOptions: { expiresIn: '60s' },
         }),
-        TypeOrmModule.forFeature([Account]),
+        TypeOrmModule.forFeature([Account, Verification]),
       ],
       controllers: [AuthController],
       providers: [AuthService, AuthHelper, JwtStrategy, ApiKeyStrategy],

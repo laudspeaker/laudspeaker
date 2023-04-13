@@ -6,6 +6,8 @@ import { TemplatesController } from './templates.controller';
 import { TemplatesService } from './templates.service';
 import { WinstonModule } from 'nest-winston';
 import * as winston from 'winston';
+import { MongooseModule } from '@nestjs/mongoose';
+import { Customer, CustomerSchema } from '../customers/schemas/customer.schema';
 
 const papertrail = new winston.transports.Http({
   host: 'logs.collector.solarwinds.com',
@@ -27,6 +29,10 @@ describe('TemplatesController', () => {
           }),
           inject: [],
         }),
+        MongooseModule.forRoot(process.env.MONGOOSE_URL),
+        MongooseModule.forFeature([
+          { name: Customer.name, schema: CustomerSchema },
+        ]),
         TypeOrmModule.forRootAsync({ useClass: TypeOrmConfigService }),
         TypeOrmModule.forFeature([Template]),
       ],

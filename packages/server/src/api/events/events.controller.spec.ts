@@ -57,6 +57,9 @@ describe('EventsController', () => {
         BullModule.registerQueue({
           name: 'slack',
         }),
+        BullModule.registerQueue({
+          name: 'events',
+        }),
         WinstonModule.forRootAsync({
           useFactory: () => ({
             level: 'debug',

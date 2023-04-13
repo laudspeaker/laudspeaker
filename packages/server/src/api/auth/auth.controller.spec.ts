@@ -13,6 +13,9 @@ import { BullModule } from '@nestjs/bullmq';
 import { WinstonModule } from 'nest-winston';
 import { TypeOrmConfigService } from '../../shared/typeorm/typeorm.service';
 import * as winston from 'winston';
+import { Verification } from './entities/verification.entity';
+import { Recovery } from './entities/recovery.entity';
+import { CustomersModule } from '../customers/customers.module';
 
 const papertrail = new winston.transports.Http({
   host: 'logs.collector.solarwinds.com',
@@ -35,6 +38,9 @@ describe('AuthController', () => {
             password: process.env.REDIS_PASSWORD,
           },
         }),
+        BullModule.registerQueue({
+          name: 'message',
+        }),
         WinstonModule.forRootAsync({
           useFactory: () => ({
             level: 'debug',
@@ -51,7 +57,8 @@ describe('AuthController', () => {
           secret: 'JWT_KEY',
           signOptions: { expiresIn: '60s' },
         }),
-        TypeOrmModule.forFeature([Account]),
+        TypeOrmModule.forFeature([Account, Recovery, Verification]),
+        CustomersModule
       ],
       controllers: [AuthController],
       providers: [AuthService, AuthHelper, JwtStrategy, ApiKeyStrategy],

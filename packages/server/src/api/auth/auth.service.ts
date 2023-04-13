@@ -8,7 +8,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Account, PlanType } from '../accounts/entities/accounts.entity';
 import { DataSource, EntityManager, Repository } from 'typeorm';
-import { RegisterDto } from '@/api/auth/dto/register.dto';
+import { RegisterDto } from '../auth/dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { AuthHelper } from './auth.helper';
 import { InjectQueue } from '@nestjs/bullmq';

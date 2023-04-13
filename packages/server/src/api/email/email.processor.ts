@@ -14,8 +14,7 @@ import {
 } from '../webhooks/webhooks.service';
 import twilio from 'twilio';
 import { PostHog } from 'posthog-node';
-import { cert, App, getApp, initializeApp } from 'firebase-admin/app';
-import { getMessaging } from 'firebase-admin/messaging';
+import * as admin from 'firebase-admin';
 
 export enum MessageType {
   SMS = 'sms',
@@ -37,16 +36,16 @@ export class MessageProcessor extends WorkerHost {
     MessageType,
     (job: Job<any, any, string>) => Promise<void>
   > = {
-    [MessageType.EMAIL]: async (job) => {
-      await this.handleEmail(job);
-    },
-    [MessageType.SMS]: async (job) => {
-      await this.handleSMS(job);
-    },
-    [MessageType.FIREBASE]: async (job) => {
-      await this.handleFirebase(job);
-    },
-  };
+      [MessageType.EMAIL]: async (job) => {
+        await this.handleEmail(job);
+      },
+      [MessageType.SMS]: async (job) => {
+        await this.handleSMS(job);
+      },
+      [MessageType.FIREBASE]: async (job) => {
+        await this.handleFirebase(job);
+      },
+    };
 
   constructor(
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
@@ -144,8 +143,7 @@ export class MessageProcessor extends WorkerHost {
   async handleEmail(job: Job<any, any, string>): Promise<any> {
     if (!job.data.to) {
       this.logger.error(
-        `Error: Skipping sending for ${
-          job.data.customerId
+        `Error: Skipping sending for ${job.data.customerId
         }, no email; job ${JSON.stringify(job.data)}`,
         `email.processor.ts:MessageProcessor.handleEmail()`
       );
@@ -291,8 +289,7 @@ export class MessageProcessor extends WorkerHost {
   async handleSMS(job: Job) {
     if (!job.data.to) {
       this.logger.error(
-        `Error: Skipping sending for ${
-          job.data.customerId
+        `Error: Skipping sending for ${job.data.customerId
         }, no phone; job ${JSON.stringify(job.data)}`,
         `email.processor.ts:MessageProcessor.handleSMS()`
       );
@@ -377,8 +374,7 @@ export class MessageProcessor extends WorkerHost {
   async handleFirebase(job: Job) {
     if (!job.data.phDeviceToken) {
       this.logger.error(
-        `Error: Skipping sending for ${
-          job.data.customerId
+        `Error: Skipping sending for ${job.data.customerId
         }, no device token; job ${JSON.stringify(job.data)}`,
         `email.processor.ts:MessageProcessor.handleFirebase()`
       );
@@ -421,21 +417,21 @@ export class MessageProcessor extends WorkerHost {
       return;
     }
     try {
-      let firebaseApp: App;
+      let firebaseApp: admin.app.App;
       try {
-        firebaseApp = getApp(job.data.accountId);
+        firebaseApp =  admin.app(job.data.accountId);
       } catch (e: any) {
         if (e.code == 'app/no-app') {
-          firebaseApp = initializeApp(
+          firebaseApp = admin.initializeApp(
             {
-              credential: cert(JSON.parse(job.data.firebaseCredentials)),
+              credential: admin.credential.cert(JSON.parse(job.data.firebaseCredentials)),
             },
             job.data.accountId
           );
         } else throw e;
       }
 
-      const messaging = getMessaging(firebaseApp);
+      const messaging = admin.messaging(firebaseApp);
 
       const messageId = await messaging.send({
         token: job.data.phDeviceToken,

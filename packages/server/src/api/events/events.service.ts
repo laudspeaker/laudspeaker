@@ -23,19 +23,19 @@ import { InjectQueue } from '@nestjs/bullmq';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import mongoose, { Model } from 'mongoose';
 import { EventDocument, Event } from './schemas/event.schema';
-import mockData from '@/fixtures/mockData';
+import mockData from '../../fixtures/mockData';
 import { EventKeys, EventKeysDocument } from './schemas/event-keys.schema';
-import { attributeConditions } from '@/fixtures/attributeConditions';
-import keyTypes from '@/fixtures/keyTypes';
+import { attributeConditions } from '../../fixtures/attributeConditions';
+import keyTypes from '../../fixtures/keyTypes';
 import { PostHogEventDto } from './dto/posthog-event.dto';
-import defaultEventKeys from '@/fixtures/defaultEventKeys';
+import defaultEventKeys from '../../fixtures/defaultEventKeys';
 import {
   PosthogEventType,
   PosthogEventTypeDocument,
 } from './schemas/posthog-event-type.schema';
 import { WorkflowTick } from '../workflows/interfaces/workflow-tick.interface';
 import { DataSource } from 'typeorm';
-import posthogEventMappings from '@/fixtures/posthogEventMappings';
+import posthogEventMappings from '../../fixtures/posthogEventMappings';
 
 @Injectable()
 export class EventsService {
@@ -320,8 +320,6 @@ export class EventsService {
       await transactionSession.endSession();
       await queryRunner.release();
     }
-
-    console.log(jobIDs);
     return jobIDs;
   }
 

@@ -21,7 +21,7 @@ import { RemoveAccountDto } from './dto/remove-account.dto';
 import { InjectConnection } from '@nestjs/mongoose';
 import mongoose from 'mongoose';
 import { WebhooksService } from '../webhooks/webhooks.service';
-import { deleteApp, getApp } from 'firebase-admin/app';
+import * as admin from 'firebase-admin';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 
 @Injectable()
@@ -194,8 +194,8 @@ export class AccountsService extends BaseJwtHelper {
 
     if (updateUserDto.firebaseCredentials) {
       try {
-        const app = getApp(oldUser.id);
-        if (app) deleteApp(app);
+        const app = admin.app(oldUser.id);
+        if (app) app.delete();
       } catch (e) {
         // do nothing
       }

@@ -10,7 +10,7 @@ import {
   WebhooksService,
 } from '../webhooks/webhooks.service';
 import { fetch } from 'undici';
-import wait from '@/utils/wait';
+import wait from '../../utils/wait';
 import {
   FallBackAction,
   Template,

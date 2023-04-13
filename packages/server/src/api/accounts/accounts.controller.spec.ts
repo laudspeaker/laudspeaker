@@ -18,8 +18,8 @@ const papertrail = new winston.transports.Http({
 });
 
 describe('UsersController', () => {
-  let usersController: AccountsController;
-  let usersService: AccountsService;
+  let accountsController: AccountsController;
+  let accountsService: AccountsService;
 
   beforeEach(async () => {
     const app: TestingModule = await Test.createTestingModule({
@@ -74,11 +74,11 @@ describe('UsersController', () => {
       ],
     }).compile();
 
-    usersController = app.get<AccountsController>(AccountsController);
-    usersService = app.get<AccountsService>(AccountsService);
+    accountsController = app.get<AccountsController>(AccountsController);
+    accountsService = app.get<AccountsService>(AccountsService);
   });
 
   it('should be defined', () => {
-    expect(usersController).toBeDefined();
+    expect(accountsController).toBeDefined();
   });
 });

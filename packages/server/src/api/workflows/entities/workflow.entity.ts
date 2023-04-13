@@ -1,5 +1,5 @@
-import { Account } from '@/api/accounts/entities/accounts.entity';
-import { Filter } from '@/api/filter/entities/filter.entity';
+import { Account } from '../../accounts/entities/accounts.entity';
+import { Filter } from '../../filter/entities/filter.entity';
 import {
   Entity,
   Column,

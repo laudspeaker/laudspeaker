@@ -13,7 +13,7 @@ import {
   Injectable,
   LoggerService,
 } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
+import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { Customer, CustomerDocument } from './schemas/customer.schema';
 import { CreateCustomerDto } from './dto/create-customer.dto';
 import mockData from '../../fixtures/mockData';
@@ -31,7 +31,7 @@ import { Queue } from 'bullmq';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { createClient } from '@clickhouse/client';
 import { Workflow } from '../workflows/entities/workflow.entity';
-import { attributeConditions } from '@/fixtures/attributeConditions';
+import { attributeConditions } from '../../fixtures/attributeConditions';
 import { getType } from 'tst-reflect';
 import { isDateString, isEmail } from 'class-validator';
 import { parse } from 'csv-parse';
@@ -39,6 +39,8 @@ import { SegmentsService } from '../segments/segments.service';
 import { AudiencesHelper } from '../audiences/audiences.helper';
 import { SegmentCustomers } from '../segments/entities/segment-customers.entity';
 import { AudiencesService } from '../audiences/audiences.service';
+import { WorkflowsService } from '../workflows/workflows.service';
+import * as _ from 'lodash';
 
 export type Correlation = {
   cust: CustomerDocument;
@@ -76,7 +78,9 @@ export class CustomersService {
     @InjectRepository(Account)
     public accountsRepository: Repository<Account>,
     private readonly audiencesHelper: AudiencesHelper,
-    private readonly audiencesService: AudiencesService
+    private readonly audiencesService: AudiencesService,
+    @Inject(WorkflowsService) private readonly workflowsService: WorkflowsService,
+    @InjectConnection() private readonly connection: mongoose.Connection,
   ) {
     this.CustomerModel.watch().on('change', async (data: any) => {
       try {
@@ -112,9 +116,9 @@ export class CustomersService {
     transactionSession?: ClientSession
   ): Promise<
     Customer &
-      mongoose.Document & {
-        _id: Types.ObjectId;
-      }
+    mongoose.Document & {
+      _id: Types.ObjectId;
+    }
   > {
     const createdCustomer = new this.CustomerModel({
       ownerId: (<Account>account).id,
@@ -290,8 +294,8 @@ export class CustomersService {
       ownerId: (<Account>account).id,
       ...(key && search
         ? {
-            [key]: new RegExp(`.*${search}.*`, 'i'),
-          }
+          [key]: new RegExp(`.*${search}.*`, 'i'),
+        }
         : {}),
     })
       .sort({ createdAt: 'desc' })
@@ -309,6 +313,22 @@ export class CustomersService {
       _id: new Types.ObjectId(id),
       ownerId: account.id,
     }).exec();
+    if (!customer)
+      throw new HttpException('Person not found', HttpStatus.NOT_FOUND);
+    return {
+      ...customer.toObject<mongoose.LeanDocument<CustomerDocument>>(),
+      _id: id,
+    };
+  }
+
+  async transactionalFindOne(account: Account, id: string, transactionSession: ClientSession) {
+    if (!isValidObjectId(id))
+      throw new HttpException('Id is not valid', HttpStatus.BAD_REQUEST);
+
+    const customer = await this.CustomerModel.findOne({
+      _id: new Types.ObjectId(id),
+      ownerId: account.id,
+    }).session(transactionSession).exec();
     if (!customer)
       throw new HttpException('Person not found', HttpStatus.NOT_FOUND);
     return {
@@ -495,6 +515,69 @@ export class CustomersService {
     return newCustomerData;
   }
 
+  async transactionalUpdate(
+    account: Account,
+    id: string,
+    updateCustomerDto: Record<string, unknown>,
+    transactionSession: ClientSession
+  ) {
+    const { ...newCustomerData } = updateCustomerDto;
+
+    delete newCustomerData.verified;
+    delete newCustomerData.ownerId;
+    delete newCustomerData._id;
+    delete newCustomerData.__v;
+    delete newCustomerData.audiences;
+
+    console.log(newCustomerData)
+
+    const customer = await this.transactionalFindOne(account, id, transactionSession);
+
+    if (customer.ownerId != account.id) {
+      throw new HttpException("You can't update this customer.", 400);
+    }
+
+    for (const key of Object.keys(newCustomerData).filter(
+      (item) => !KEYS_TO_SKIP.includes(item)
+    )) {
+      const value = newCustomerData[key];
+      if (value === '' || value === undefined || value === null) continue;
+
+      const keyType = getType(value);
+      const isArray = keyType.isArray();
+      let type = isArray ? getType(value[0]).name : keyType.name;
+
+      if (type === 'String') {
+        if (isEmail(value)) type = 'Email';
+        if (isDateString(value)) type = 'Date';
+      }
+
+      await this.CustomerKeysModel.updateOne(
+        { key, ownerId: account.id },
+        {
+          $set: {
+            key,
+            type,
+            isArray,
+            ownerId: account.id,
+          },
+        },
+        { upsert: true }
+      ).session(transactionSession).exec();
+    }
+
+    const newCustomer = Object.fromEntries(
+      Object.entries({
+        ...customer,
+        ...newCustomerData,
+      }).filter(([_, v]) => v != null)
+    );
+
+    await this.CustomerModel.replaceOne(customer, newCustomer).session(transactionSession).exec();
+
+    return newCustomerData;
+  }
+
   async returnAllPeopleInfo(
     account: Account,
     take = 100,
@@ -603,9 +686,9 @@ export class CustomersService {
     customerId: string
   ): Promise<
     Customer &
-      mongoose.Document & {
-        _id: Types.ObjectId;
-      }
+    mongoose.Document & {
+      _id: Types.ObjectId;
+    }
   > {
     const found = await this.CustomerModel.findById(customerId).exec();
     if (found && found?.ownerId == (<Account>account).id) return found;
@@ -863,6 +946,56 @@ export class CustomersService {
         found: false,
       };
     } else return { cust: customer, found: true };
+  }
+
+  async upsert(
+    account: Account,
+    dto: Record<string, unknown>,
+  ): Promise<string> {
+    let correlation: Correlation;
+
+    const transactionSession = await this.connection.startSession();
+    transactionSession.startTransaction();
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const eventDto: any = {
+        correlationKey: dto.correlationKey,
+        correlationValue: dto.correlationValue,
+        source: null
+      };
+      correlation = await this.findOrCreateByCorrelationKVPair(
+        account,
+        eventDto,
+        transactionSession
+      );
+      this.logger.debug(`${JSON.stringify(correlation)} ${JSON.stringify(eventDto)}`, `customers.service.ts:CustomersService.upsert()`)
+
+      let left = correlation.cust.toObject();
+      let right = structuredClone(dto);
+      delete right.correlationKey;
+      await this.transactionalUpdate(account, correlation.cust.id, _.merge(left, right), transactionSession);
+
+      if (!correlation.found)
+        await this.workflowsService.enrollCustomer(
+          account,
+          correlation.cust,
+          queryRunner
+        );
+
+      await transactionSession.commitTransaction();
+      await queryRunner.commitTransaction();
+    } catch (err) {
+      await transactionSession.abortTransaction();
+      await queryRunner.rollbackTransaction();
+      throw err;
+    } finally {
+      await transactionSession.endSession();
+      await queryRunner.release();
+      return Promise.resolve(correlation.cust.id)
+    }
   }
 
   async mergeCustomers(
