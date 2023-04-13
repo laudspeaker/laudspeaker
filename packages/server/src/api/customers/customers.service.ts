@@ -522,71 +522,76 @@ export class CustomersService {
     updateCustomerDto: Record<string, unknown>,
     transactionSession: ClientSession
   ) {
-    this.logger.debug(`In Trasactional Update`, `customers.service.ts:CustomersService.transactionalUpdate()`)
+    try {
+      this.logger.debug(`In Trasactional Update`, `customers.service.ts:CustomersService.transactionalUpdate()`)
 
-    const { ...newCustomerData } = updateCustomerDto;
-    this.logger.debug(`New customer data: ${JSON.stringify(newCustomerData)}`, `customers.service.ts:CustomersService.transactionalUpdate()`)
+      const { ...newCustomerData } = updateCustomerDto;
+      this.logger.debug(`New customer data: ${JSON.stringify(newCustomerData)}`, `customers.service.ts:CustomersService.transactionalUpdate()`)
 
-    delete newCustomerData.verified;
-    this.logger.debug(`Deleting verified: ${JSON.stringify(newCustomerData)}`, `customers.service.ts:CustomersService.transactionalUpdate()`)
+      delete newCustomerData.verified;
+      this.logger.debug(`Deleting verified: ${JSON.stringify(newCustomerData)}`, `customers.service.ts:CustomersService.transactionalUpdate()`)
 
-    delete newCustomerData.ownerId;
-    this.logger.debug(`Deleting ownerId: ${JSON.stringify(newCustomerData)}`, `customers.service.ts:CustomersService.transactionalUpdate()`)
+      delete newCustomerData.ownerId;
+      this.logger.debug(`Deleting ownerId: ${JSON.stringify(newCustomerData)}`, `customers.service.ts:CustomersService.transactionalUpdate()`)
 
-    delete newCustomerData._id;
-    this.logger.debug(`Deleting id: ${JSON.stringify(newCustomerData)}`, `customers.service.ts:CustomersService.transactionalUpdate()`)
+      delete newCustomerData._id;
+      this.logger.debug(`Deleting id: ${JSON.stringify(newCustomerData)}`, `customers.service.ts:CustomersService.transactionalUpdate()`)
 
-    delete newCustomerData.__v;
-    this.logger.debug(`Deleting v: ${JSON.stringify(newCustomerData)}`, `customers.service.ts:CustomersService.transactionalUpdate()`)
+      delete newCustomerData.__v;
+      this.logger.debug(`Deleting v: ${JSON.stringify(newCustomerData)}`, `customers.service.ts:CustomersService.transactionalUpdate()`)
 
-    delete newCustomerData.audiences;
-    this.logger.debug(`Deleting audiences: ${JSON.stringify(newCustomerData)}`, `customers.service.ts:CustomersService.transactionalUpdate()`)
+      delete newCustomerData.audiences;
+      this.logger.debug(`Deleting audiences: ${JSON.stringify(newCustomerData)}`, `customers.service.ts:CustomersService.transactionalUpdate()`)
 
-    const customer = await this.transactionalFindOne(account, id, transactionSession);
+      const customer = await this.transactionalFindOne(account, id, transactionSession);
 
-    if (customer.ownerId != account.id) {
-      throw new HttpException("You can't update this customer.", 400);
-    }
-
-    for (const key of Object.keys(newCustomerData).filter(
-      (item) => !KEYS_TO_SKIP.includes(item)
-    )) {
-      const value = newCustomerData[key];
-      if (value === '' || value === undefined || value === null) continue;
-
-      const keyType = getType(value);
-      const isArray = keyType.isArray();
-      let type = isArray ? getType(value[0]).name : keyType.name;
-
-      if (type === 'String') {
-        if (isEmail(value)) type = 'Email';
-        if (isDateString(value)) type = 'Date';
+      if (customer.ownerId != account.id) {
+        throw new HttpException("You can't update this customer.", 400);
       }
 
-      await this.CustomerKeysModel.updateOne(
-        { key, ownerId: account.id },
-        {
-          $set: {
-            key,
-            type,
-            isArray,
-            ownerId: account.id,
+      for (const key of Object.keys(newCustomerData).filter(
+        (item) => !KEYS_TO_SKIP.includes(item)
+      )) {
+        const value = newCustomerData[key];
+        if (value === '' || value === undefined || value === null) continue;
+
+        const keyType = getType(value);
+        const isArray = keyType.isArray();
+        let type = isArray ? getType(value[0]).name : keyType.name;
+
+        if (type === 'String') {
+          if (isEmail(value)) type = 'Email';
+          if (isDateString(value)) type = 'Date';
+        }
+
+        await this.CustomerKeysModel.updateOne(
+          { key, ownerId: account.id },
+          {
+            $set: {
+              key,
+              type,
+              isArray,
+              ownerId: account.id,
+            },
           },
-        },
-        { upsert: true }
-      ).session(transactionSession).exec();
+          { upsert: true }
+        ).session(transactionSession).exec();
+      }
+
+      const newCustomer = Object.fromEntries(
+        Object.entries({
+          ...customer,
+          ...newCustomerData,
+        }).filter(([_, v]) => v != null)
+      );
+
+      await this.CustomerModel.replaceOne(customer, newCustomer).session(transactionSession).exec();
+
+      return newCustomerData;
     }
-
-    const newCustomer = Object.fromEntries(
-      Object.entries({
-        ...customer,
-        ...newCustomerData,
-      }).filter(([_, v]) => v != null)
-    );
-
-    await this.CustomerModel.replaceOne(customer, newCustomer).session(transactionSession).exec();
-
-    return newCustomerData;
+    catch (err) {
+      this.logger.error(`${err}`, `customers.service.ts:CustomersService.transactionalUpdate()`);
+    }
   }
 
   async returnAllPeopleInfo(
@@ -1004,7 +1009,8 @@ export class CustomersService {
       let left = correlation.cust.toObject();
       this.logger.debug(`Left: ${JSON.stringify(left)}`, `customers.service.ts:CustomersService.upsert()`)
 
-      let right = structuredClone(dto);
+      let right = _.cloneDeep(dto);
+      //let right = structuredClone(dto);
       this.logger.debug(`Right: ${JSON.stringify(right)}`, `customers.service.ts:CustomersService.upsert()`)
 
       delete right.correlationKey;
@@ -1027,6 +1033,7 @@ export class CustomersService {
     } catch (err) {
       await transactionSession.abortTransaction();
       await queryRunner.rollbackTransaction();
+      this.logger.error(`${JSON.stringify(err)}`, `customers.service.ts:CustomersService.upsert()`)
       throw err;
     } finally {
       await transactionSession.endSession();
