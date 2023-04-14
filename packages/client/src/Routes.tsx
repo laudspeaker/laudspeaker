@@ -39,6 +39,7 @@ import ResetPassword from "pages/ResetPassword";
 import SegmentTable from "pages/SegmentTable";
 import SegmentViewer from "pages/SegmentViewer";
 import WebhookBuilder from "pages/WebhookBuilder";
+import EventTracker from "pages/EventTracker";
 
 interface IProtected {
   children: ReactElement;
@@ -199,6 +200,16 @@ const RouteComponent: React.FC = () => {
             <Protected>
               <DrawerLayout>
                 <FlowBuilder />
+              </DrawerLayout>
+            </Protected>
+          }
+        />
+        <Route
+          path="/event-tracker"
+          element={
+            <Protected>
+              <DrawerLayout>
+                <EventTracker />
               </DrawerLayout>
             </Protected>
           }

@@ -17,8 +17,14 @@ import { Installation } from '../slack/entities/installation.entity';
 import { Filter } from '../filter/entities/filter.entity';
 import { State } from '../slack/entities/state.entity';
 import { Template } from '../templates/entities/template.entity';
-import { EventKeys, EventKeysSchema } from '../events/schemas/event-keys.schema';
-import { CustomerKeys, CustomerKeysSchema } from '../customers/schemas/customer-keys.schema';
+import {
+  EventKeys,
+  EventKeysSchema,
+} from '../events/schemas/event-keys.schema';
+import {
+  CustomerKeys,
+  CustomerKeysSchema,
+} from '../customers/schemas/customer-keys.schema';
 
 describe('WorkflowsController', () => {
   let controller: WorkflowsController;
@@ -60,7 +66,7 @@ describe('WorkflowsController', () => {
         }),
         BullModule.registerQueue({
           name: 'events',
-        })
+        }),
       ],
       controllers: [WorkflowsController],
       providers: [WorkflowsService, AudiencesService, CustomersService],
