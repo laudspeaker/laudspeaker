@@ -5,6 +5,7 @@ import ApiService from "services/api.service";
 import tickIcon from "assets/images/tick.svg";
 import { useDebounce } from "react-use";
 import AceEditor from "react-ace";
+import "ace-builds/webpack-resolver";
 import "ace-builds/src-noconflict/ext-language_tools";
 import "ace-builds/src-noconflict/mode-json";
 import Autocomplete from "components/Autocomplete";
@@ -248,6 +249,7 @@ const EventTracker = () => {
                   enableSnippets: true,
                 }}
                 value={selectedPosthogEvent?.payload}
+                onChange={() => {}}
               />
             </div>
           </div>

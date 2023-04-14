@@ -1,6 +1,7 @@
 import React, { FC, useEffect, useState } from "react";
 import { createSnippet } from "./snippets.fixture";
 import AceEditor from "react-ace";
+import "ace-builds/webpack-resolver";
 import "ace-builds/src-noconflict/ext-language_tools";
 import "ace-builds/src-noconflict/mode-javascript";
 import "ace-builds/src-noconflict/mode-python";
