@@ -313,7 +313,7 @@ export class CustomersService {
     if (!customer)
       throw new HttpException('Person not found', HttpStatus.NOT_FOUND);
     return {
-      ...customer.toObject<mongoose.LeanDocument<CustomerDocument>>(),
+      ...customer.toObject(),
       _id: id,
     };
   }
@@ -491,7 +491,10 @@ export class CustomersService {
       }).filter(([_, v]) => v != null)
     );
 
-    await this.CustomerModel.replaceOne(customer, newCustomer).exec();
+    await this.CustomerModel.replaceOne(
+      { id: customer.id },
+      newCustomer
+    ).exec();
 
     return newCustomerData;
   }
@@ -926,7 +929,7 @@ export class CustomersService {
       throw new BadRequestException("You can't delete yourself as a customer");
 
     const cust = await this.CustomerModel.findById(custId);
-    await this.CustomerModel.remove(cust);
+    await this.CustomerModel.deleteOne({ id: cust.id });
   }
 
   async getAttributes(account: Account, resourceId: string) {

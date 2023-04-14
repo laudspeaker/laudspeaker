@@ -191,7 +191,7 @@ export class CronService {
 
         batch.forEach((event) => {
           const ownerId = event.ownerId;
-          const obj = event.toObject()?.event || {};
+          const obj = (event.toObject() as any)?.event || {};
           for (const key of Object.keys(obj)) {
             if (KEYS_TO_SKIP.includes(key)) continue;
 
