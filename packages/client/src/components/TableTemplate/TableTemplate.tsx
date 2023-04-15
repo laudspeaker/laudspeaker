@@ -922,7 +922,7 @@ export default function TableTemplate<T extends TableDataItem>({
       return isButton ? (
         <Menu as="div" className="relative">
           <Menu.Button className="outline-none">
-            {row.isStopped ? (
+            {row.isStopped || row.isActive ? (
               <EllipsisHorizontalCircleIcon className="text-gray-400 hover:text-gray-500 ml-[10px] text-[16px] w-[24px]" />
             ) : (
               <PencilSquareIcon className="text-gray-400 hover:text-gray-500 ml-[10px] text-[16px] w-[24px]" />
@@ -944,7 +944,7 @@ export default function TableTemplate<T extends TableDataItem>({
                   href={`flow/${row.id}${row.isActive ? "/view" : ""}`}
                 >
                   <div className="w-full">
-                    {row.isStopped ? "View" : "Edit"}
+                    {row.isStopped || row.isActive ? "View" : "Edit"}
                   </div>
                 </Link>,
                 <button
