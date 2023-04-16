@@ -2,8 +2,9 @@
 /* eslint-disable jest/valid-describe-callback */
 /* eslint-disable @typescript-eslint/no-shadow */
 import credentials from "../fixtures/credentials";
+import { loginFunc } from "../test-helpers/loginFunc";
 
-const { userAPIkey } = credentials.MessageHitUser;
+const { userAPIkey, email, password } = credentials.MessageHitUser;
 
 const mockPosthogEvent = {
   userId: "1",
@@ -44,6 +45,13 @@ describe(
           "http://localhost:3001/tests/test-posthog-customer/" + randomId
         ).then(({ body }) => {
           expect(body?.posthogId?.[0]).to.equal(randomId);
+
+          cy.visit("/");
+          loginFunc(email, password);
+
+          cy.contains("Messaging").click();
+          cy.get('[data-disclosure-link="Event Tracker"]').click();
+          cy.contains("clicked").should("exist");
         });
       });
     });
