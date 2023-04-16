@@ -52,14 +52,19 @@ const Signup: FC<SignupProps> = ({ setShowWelcomeBanner }) => {
     const response = await dispatch(signUpUser(signUpForm));
 
     if (response?.data?.access_token) {
-      posthog.capture("SignUpProps", {
-        $set: {
-          email: signUpForm.email,
-          firstName: signUpForm.firstName,
-          lastName: signUpForm.lastName,
-          laudspeakerId: response.data.id,
-        },
+      posthog.identify( signUpForm.email, { 
+        firstName: signUpForm.firstName,
+        lastName: signUpForm.lastName,
+        laudspeakerId: response.data.id,
       });
+      // posthog.capture("SignUpProps", {
+      //   $set: {
+      //     email: signUpForm.email,
+      //     firstName: signUpForm.firstName,
+      //     lastName: signUpForm.lastName,
+      //     laudspeakerId: response.data.id,
+      //   },
+      // });
       toast.info(
         "You need to verify your email. We've sent you a verification email",
         {
