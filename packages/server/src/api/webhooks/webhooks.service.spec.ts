@@ -21,7 +21,7 @@ describe('WebhooksService', () => {
                 handleExceptions: true,
                 format: winston.format.combine(
                   winston.format.colorize(),
-                  winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
+                  winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' })
                 ),
               }),
             ],
@@ -29,7 +29,7 @@ describe('WebhooksService', () => {
           inject: [],
         }),
         TypeOrmModule.forRootAsync({ useClass: TypeOrmConfigService }),
-        TypeOrmModule.forFeature([Account, Audience])
+        TypeOrmModule.forFeature([Account, Audience]),
       ],
       providers: [WebhooksService],
     }).compile();

@@ -58,7 +58,7 @@ describe('AuthController', () => {
           signOptions: { expiresIn: '60s' },
         }),
         TypeOrmModule.forFeature([Account, Recovery, Verification]),
-        CustomersModule
+        CustomersModule,
       ],
       controllers: [AuthController],
       providers: [AuthService, AuthHelper, JwtStrategy, ApiKeyStrategy],

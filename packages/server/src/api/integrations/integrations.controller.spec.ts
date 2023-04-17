@@ -8,7 +8,7 @@ describe('IntegrationsController', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [IntegrationsController],
-      providers: [IntegrationsService]
+      providers: [IntegrationsService],
     }).compile();
 
     controller = module.get<IntegrationsController>(IntegrationsController);

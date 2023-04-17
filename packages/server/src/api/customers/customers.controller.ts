@@ -36,7 +36,7 @@ export class CustomersController {
     private readonly customersService: CustomersService,
     @Inject(AccountsService)
     private readonly userService: AccountsService
-  ) { }
+  ) {}
 
   @Get()
   @UseGuards(JwtAuthGuard)
@@ -137,7 +137,10 @@ export class CustomersController {
     @Req() { user }: Request,
     @Body() updateCustomerDto: Record<string, unknown>
   ) {
-    this.logger.debug(`${JSON.stringify(user)} ${JSON.stringify(updateCustomerDto)}`,`customers.controller.ts:CustomersController.upsert()`)
+    this.logger.debug(
+      `${JSON.stringify(user)} ${JSON.stringify(updateCustomerDto)}`,
+      `customers.controller.ts:CustomersController.upsert()`
+    );
     return await this.customersService.upsert(<Account>user, updateCustomerDto);
   }
 

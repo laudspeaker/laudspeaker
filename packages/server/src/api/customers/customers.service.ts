@@ -80,8 +80,9 @@ export class CustomersService {
     public accountsRepository: Repository<Account>,
     private readonly audiencesHelper: AudiencesHelper,
     private readonly audiencesService: AudiencesService,
-    @Inject(WorkflowsService) private readonly workflowsService: WorkflowsService,
-    @InjectConnection() private readonly connection: mongoose.Connection,
+    @Inject(WorkflowsService)
+    private readonly workflowsService: WorkflowsService,
+    @InjectConnection() private readonly connection: mongoose.Connection
   ) {
     this.CustomerModel.watch().on('change', async (data: any) => {
       try {
@@ -117,9 +118,9 @@ export class CustomersService {
     transactionSession?: ClientSession
   ): Promise<
     Customer &
-    mongoose.Document & {
-      _id: Types.ObjectId;
-    }
+      mongoose.Document & {
+        _id: Types.ObjectId;
+      }
   > {
     const createdCustomer = new this.CustomerModel({
       ownerId: (<Account>account).id,
@@ -295,8 +296,8 @@ export class CustomersService {
       ownerId: (<Account>account).id,
       ...(key && search
         ? {
-          [key]: new RegExp(`.*${search}.*`, 'i'),
-        }
+            [key]: new RegExp(`.*${search}.*`, 'i'),
+          }
         : {}),
     })
       .sort({ createdAt: 'desc' })
@@ -322,14 +323,20 @@ export class CustomersService {
     };
   }
 
-  async transactionalFindOne(account: Account, id: string, transactionSession: ClientSession) {
+  async transactionalFindOne(
+    account: Account,
+    id: string,
+    transactionSession: ClientSession
+  ) {
     if (!isValidObjectId(id))
       throw new HttpException('Id is not valid', HttpStatus.BAD_REQUEST);
 
     const customer = await this.CustomerModel.findOne({
       _id: new Types.ObjectId(id),
       ownerId: account.id,
-    }).session(transactionSession).exec();
+    })
+      .session(transactionSession)
+      .exec();
     if (!customer)
       throw new HttpException('Person not found', HttpStatus.NOT_FOUND);
     return {
@@ -523,27 +530,52 @@ export class CustomersService {
     transactionSession: ClientSession
   ) {
     try {
-      this.logger.debug(`In Trasactional Update`, `customers.service.ts:CustomersService.transactionalUpdate()`)
+      this.logger.debug(
+        `In Trasactional Update`,
+        `customers.service.ts:CustomersService.transactionalUpdate()`
+      );
 
       const { ...newCustomerData } = updateCustomerDto;
-      this.logger.debug(`New customer data: ${JSON.stringify(newCustomerData)}`, `customers.service.ts:CustomersService.transactionalUpdate()`)
+      this.logger.debug(
+        `New customer data: ${JSON.stringify(newCustomerData)}`,
+        `customers.service.ts:CustomersService.transactionalUpdate()`
+      );
 
       delete newCustomerData.verified;
-      this.logger.debug(`Deleting verified: ${JSON.stringify(newCustomerData)}`, `customers.service.ts:CustomersService.transactionalUpdate()`)
+      this.logger.debug(
+        `Deleting verified: ${JSON.stringify(newCustomerData)}`,
+        `customers.service.ts:CustomersService.transactionalUpdate()`
+      );
 
       delete newCustomerData.ownerId;
-      this.logger.debug(`Deleting ownerId: ${JSON.stringify(newCustomerData)}`, `customers.service.ts:CustomersService.transactionalUpdate()`)
+      this.logger.debug(
+        `Deleting ownerId: ${JSON.stringify(newCustomerData)}`,
+        `customers.service.ts:CustomersService.transactionalUpdate()`
+      );
 
       delete newCustomerData._id;
-      this.logger.debug(`Deleting id: ${JSON.stringify(newCustomerData)}`, `customers.service.ts:CustomersService.transactionalUpdate()`)
+      this.logger.debug(
+        `Deleting id: ${JSON.stringify(newCustomerData)}`,
+        `customers.service.ts:CustomersService.transactionalUpdate()`
+      );
 
       delete newCustomerData.__v;
-      this.logger.debug(`Deleting v: ${JSON.stringify(newCustomerData)}`, `customers.service.ts:CustomersService.transactionalUpdate()`)
+      this.logger.debug(
+        `Deleting v: ${JSON.stringify(newCustomerData)}`,
+        `customers.service.ts:CustomersService.transactionalUpdate()`
+      );
 
       delete newCustomerData.audiences;
-      this.logger.debug(`Deleting audiences: ${JSON.stringify(newCustomerData)}`, `customers.service.ts:CustomersService.transactionalUpdate()`)
+      this.logger.debug(
+        `Deleting audiences: ${JSON.stringify(newCustomerData)}`,
+        `customers.service.ts:CustomersService.transactionalUpdate()`
+      );
 
-      const customer = await this.transactionalFindOne(account, id, transactionSession);
+      const customer = await this.transactionalFindOne(
+        account,
+        id,
+        transactionSession
+      );
 
       if (customer.ownerId != account.id) {
         throw new HttpException("You can't update this customer.", 400);
@@ -575,7 +607,9 @@ export class CustomersService {
             },
           },
           { upsert: true }
-        ).session(transactionSession).exec();
+        )
+          .session(transactionSession)
+          .exec();
       }
 
       const newCustomer = Object.fromEntries(
@@ -585,12 +619,16 @@ export class CustomersService {
         }).filter(([_, v]) => v != null)
       );
 
-      await this.CustomerModel.replaceOne(customer, newCustomer).session(transactionSession).exec();
+      await this.CustomerModel.replaceOne(customer, newCustomer)
+        .session(transactionSession)
+        .exec();
 
       return newCustomerData;
-    }
-    catch (err) {
-      this.logger.error(`${err}`, `customers.service.ts:CustomersService.transactionalUpdate()`);
+    } catch (err) {
+      this.logger.error(
+        `${err}`,
+        `customers.service.ts:CustomersService.transactionalUpdate()`
+      );
     }
   }
 
@@ -719,9 +757,9 @@ export class CustomersService {
     customerId: string
   ): Promise<
     Customer &
-    mongoose.Document & {
-      _id: Types.ObjectId;
-    }
+      mongoose.Document & {
+        _id: Types.ObjectId;
+      }
   > {
     const found = await this.CustomerModel.findById(customerId).exec();
     if (found && found?.ownerId == (<Account>account).id) return found;
@@ -983,7 +1021,7 @@ export class CustomersService {
 
   async upsert(
     account: Account,
-    dto: Record<string, unknown>,
+    dto: Record<string, unknown>
   ): Promise<string> {
     let correlation: Correlation;
 
@@ -997,29 +1035,49 @@ export class CustomersService {
       const eventDto: any = {
         correlationKey: dto.correlationKey,
         correlationValue: dto.correlationValue,
-        source: null
+        source: null,
       };
       correlation = await this.findOrCreateByCorrelationKVPair(
         account,
         eventDto,
         transactionSession
       );
-      this.logger.debug(`${JSON.stringify(correlation)} ${JSON.stringify(eventDto)}`, `customers.service.ts:CustomersService.upsert()`)
+      this.logger.debug(
+        `${JSON.stringify(correlation)} ${JSON.stringify(eventDto)}`,
+        `customers.service.ts:CustomersService.upsert()`
+      );
 
       let left = correlation.cust.toObject();
-      this.logger.debug(`Left: ${JSON.stringify(left)}`, `customers.service.ts:CustomersService.upsert()`)
+      this.logger.debug(
+        `Left: ${JSON.stringify(left)}`,
+        `customers.service.ts:CustomersService.upsert()`
+      );
 
       let right = _.cloneDeep(dto);
       //let right = structuredClone(dto);
-      this.logger.debug(`Right: ${JSON.stringify(right)}`, `customers.service.ts:CustomersService.upsert()`)
+      this.logger.debug(
+        `Right: ${JSON.stringify(right)}`,
+        `customers.service.ts:CustomersService.upsert()`
+      );
 
       delete right.correlationKey;
-      this.logger.debug(`Delete correlation key`, `customers.service.ts:CustomersService.upsert()`)
+      this.logger.debug(
+        `Delete correlation key`,
+        `customers.service.ts:CustomersService.upsert()`
+      );
 
       delete right.correlationValue;
-      this.logger.debug(`Delete correlation value`, `customers.service.ts:CustomersService.upsert()`)
+      this.logger.debug(
+        `Delete correlation value`,
+        `customers.service.ts:CustomersService.upsert()`
+      );
 
-      await this.transactionalUpdate(account, correlation.cust.id, _.merge(left, right), transactionSession);
+      await this.transactionalUpdate(
+        account,
+        correlation.cust.id,
+        _.merge(left, right),
+        transactionSession
+      );
 
       if (!correlation.found)
         await this.workflowsService.enrollCustomer(
@@ -1033,12 +1091,15 @@ export class CustomersService {
     } catch (err) {
       await transactionSession.abortTransaction();
       await queryRunner.rollbackTransaction();
-      this.logger.error(`${JSON.stringify(err)}`, `customers.service.ts:CustomersService.upsert()`)
+      this.logger.error(
+        `${JSON.stringify(err)}`,
+        `customers.service.ts:CustomersService.upsert()`
+      );
       throw err;
     } finally {
       await transactionSession.endSession();
       await queryRunner.release();
-      return Promise.resolve(correlation.cust.id)
+      return Promise.resolve(correlation.cust.id);
     }
   }
 
