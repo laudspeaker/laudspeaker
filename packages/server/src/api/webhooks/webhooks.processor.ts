@@ -39,8 +39,6 @@ export class WebhooksProcessor extends WorkerHost {
 
     let { body, headers, url } = template.webhookData;
 
-    //console.log("filteredTags are ", JSON.stringify(filteredTags, null, 2));
-    //console.log("url is ", url);
     url = await this.tagEngine.parseAndRender(url, filteredTags || {}, {
       strictVariables: true,
     });
@@ -57,7 +55,6 @@ export class WebhooksProcessor extends WorkerHost {
       body = undefined;
     } else {
       body = await this.templatesService.parseTemplateTags(body);
-      //console.log("body is are ",body);
       body = await this.tagEngine.parseAndRender(body, filteredTags || {}, {
         strictVariables: true,
       });
