@@ -662,15 +662,10 @@ export class TemplatesService extends QueueEventsHost {
       email: testWebhookDto.testCustomerEmail,
     });
 
-    //console.log("yo")
     if (!customer) throw new NotFoundException('Customer not found');
 
     const { _id, ownerId, audiences, ...tags } = customer.toObject();
-    //console.log("tags before filtering are " , tags);
     const filteredTags = cleanTagsForSending(tags);
-
-    //console.log("filteredTags are ", JSON.stringify(filteredTags, null, 2));
-    //console.log("url is ", url);
 
     const { method } = testWebhookDto.webhookData;
 
@@ -692,12 +687,9 @@ export class TemplatesService extends QueueEventsHost {
       body = undefined;
     } else {
       body = await this.parseTemplateTags(body);
-      //console.log("filteredbody are ", JSON.stringify(body, null, 2));
       body = await this.tagEngine.parseAndRender(body, filteredTags || {}, {
         strictVariables: true,
       });
-      //console.log("filteredbody is now ", JSON.stringify(body, null, 2));
-
     }
 
     headers = Object.fromEntries(
