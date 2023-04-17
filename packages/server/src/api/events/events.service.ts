@@ -36,6 +36,10 @@ import {
 import { WorkflowTick } from '../workflows/interfaces/workflow-tick.interface';
 import { DataSource } from 'typeorm';
 import posthogEventMappings from '../../fixtures/posthogEventMappings';
+import {
+  PosthogEvent,
+  PosthogEventDocument,
+} from './schemas/posthog-event.schema';
 
 @Injectable()
 export class EventsService {
@@ -54,6 +58,8 @@ export class EventsService {
     private readonly eventsQueue: Queue,
     @InjectModel(Event.name)
     private EventModel: Model<EventDocument>,
+    @InjectModel(PosthogEvent.name)
+    private PosthogEventModel: Model<PosthogEventDocument>,
     @InjectModel(EventKeys.name)
     private EventKeysModel: Model<EventKeysDocument>,
     @InjectModel(PosthogEventType.name)
@@ -152,103 +158,123 @@ export class EventsService {
         numEvent < chronologicalEvents.length;
         numEvent++
       ) {
-        const currentEvent = chronologicalEvents[numEvent];
-        this.logger.debug(
-          'Processing posthog event: ' + JSON.stringify(currentEvent, null, 2)
-        );
+        let postHogEvent = new PosthogEvent();
+        let err: Error | undefined;
+        try {
+          const currentEvent = chronologicalEvents[numEvent];
+          this.logger.debug(
+            'Processing posthog event: ' + JSON.stringify(currentEvent, null, 2)
+          );
 
-        //update customer properties on every identify call as per best practice
-        if (currentEvent.type === 'identify') {
-          await this.customersService.phIdentifyUpdate(account, currentEvent);
-        }
-        //checking for a custom tracked posthog event here
-        if (
-          currentEvent.type === 'track' &&
-          currentEvent.event &&
-          currentEvent.event !== 'change' &&
-          currentEvent.event !== 'click' &&
-          currentEvent.event !== 'submit' &&
-          currentEvent.event !== '$pageleave' &&
-          currentEvent.event !== '$rageclick'
-        ) {
-          //checks to see if we have seen this event before (otherwise we update the events dropdown)
-          const found = await this.PosthogEventTypeModel.findOne({
+          postHogEvent = {
+            ...postHogEvent,
             name: currentEvent.event,
+            type: currentEvent.type,
+            payload: JSON.stringify(currentEvent, null, 2),
             ownerId: account.id,
-          })
-            .session(transactionSession)
-            .exec();
-          if (!found) {
-            await this.PosthogEventTypeModel.create(
-              {
-                name: currentEvent.event,
-                type: currentEvent.type,
-                displayName: currentEvent.event,
-                event: currentEvent.event,
-                ownerId: account.id,
-              },
-              { session: transactionSession }
+          };
+
+          //update customer properties on every identify call as per best practice
+          if (currentEvent.type === 'identify') {
+            await this.customersService.phIdentifyUpdate(account, currentEvent);
+          }
+          //checking for a custom tracked posthog event here
+          if (
+            currentEvent.type === 'track' &&
+            currentEvent.event &&
+            currentEvent.event !== 'change' &&
+            currentEvent.event !== 'click' &&
+            currentEvent.event !== 'submit' &&
+            currentEvent.event !== '$pageleave' &&
+            currentEvent.event !== '$rageclick'
+          ) {
+            //checks to see if we have seen this event before (otherwise we update the events dropdown)
+            const found = await this.PosthogEventTypeModel.findOne({
+              name: currentEvent.event,
+              ownerId: account.id,
+            })
+              .session(transactionSession)
+              .exec();
+            if (!found) {
+              await this.PosthogEventTypeModel.create(
+                {
+                  name: currentEvent.event,
+                  type: currentEvent.type,
+                  displayName: currentEvent.event,
+                  event: currentEvent.event,
+                  ownerId: account.id,
+                },
+                { session: transactionSession }
+              );
+            }
+            //to do: check if the event sets props, if so we need to update the person traits
+          }
+
+          let jobIDs: WorkflowTick[] = [];
+          //Step 2: Create/Correlate customer for each eventTemplatesService.queueMessage
+          const postHogEventMapping = (event: any) => {
+            const cust = {};
+            if (event?.phPhoneNumber) {
+              cust['phPhoneNumber'] = event.phPhoneNumber;
+            }
+            if (event?.phEmail) {
+              cust['phEmail'] = event.phEmail;
+            }
+            if (event?.phDeviceToken) {
+              cust['phDeviceToken'] = event.phDeviceToken;
+            }
+            if (event?.phCustom) {
+              cust['phCustom'] = event.phCustom;
+            }
+            return cust;
+          };
+
+          const correlation = await this.customersService.findBySpecifiedEvent(
+            account,
+            'posthogId',
+            [currentEvent.userId, currentEvent.anonymousId],
+            currentEvent,
+            transactionSession,
+            postHogEventMapping
+          );
+
+          if (!correlation.found) {
+            await this.workflowsService.enrollCustomer(
+              account,
+              correlation.cust,
+              queryRunner
             );
           }
-          //to do: check if the event sets props, if so we need to update the person traits
-        }
+          //need to change posthogeventdto to eventdo
+          const convertedEventDto: EventDto = {
+            correlationKey: 'posthogId',
+            correlationValue: [currentEvent.userId, currentEvent.anonymousId],
+            event: currentEvent.context,
+            source: 'posthog',
+            payload: {
+              type: currentEvent.type,
+              event: currentEvent.event,
+            },
+          };
 
-        let jobIDs: WorkflowTick[] = [];
-        //Step 2: Create/Correlate customer for each eventTemplatesService.queueMessage
-        const postHogEventMapping = (event: any) => {
-          const cust = {};
-          if (event?.phPhoneNumber) {
-            cust['phPhoneNumber'] = event.phPhoneNumber;
-          }
-          if (event?.phEmail) {
-            cust['phEmail'] = event.phEmail;
-          }
-          if (event?.phDeviceToken) {
-            cust['phDeviceToken'] = event.phDeviceToken;
-          }
-          if (event?.phCustom) {
-            cust['phCustom'] = event.phCustom;
-          }
-          return cust;
-        };
-
-        const correlation = await this.customersService.findBySpecifiedEvent(
-          account,
-          'posthogId',
-          [currentEvent.userId, currentEvent.anonymousId],
-          currentEvent,
-          transactionSession,
-          postHogEventMapping
-        );
-
-        if (!correlation.found) {
-          await this.workflowsService.enrollCustomer(
+          //currentEvent
+          jobIDs = await this.workflowsService.tick(
             account,
-            correlation.cust,
-            queryRunner
+            convertedEventDto,
+            queryRunner,
+            transactionSession
           );
+          this.logger.debug('Queued messages with jobIDs ' + jobIDs);
+          jobArray = [...jobArray, ...jobIDs];
+        } catch (e) {
+          if (e instanceof Error) {
+            postHogEvent.errorMessage = e.message;
+            err = e;
+          }
+        } finally {
+          await this.PosthogEventModel.create(postHogEvent);
         }
-        //need to change posthogeventdto to eventdo
-        const convertedEventDto: EventDto = {
-          correlationKey: 'posthogId',
-          correlationValue: [currentEvent.userId, currentEvent.anonymousId],
-          event: currentEvent.context,
-          source: 'posthog',
-          payload: {
-            type: currentEvent.type,
-            event: currentEvent.event,
-          },
-        };
-
-        //currentEvent
-        jobIDs = await this.workflowsService.tick(
-          account,
-          convertedEventDto,
-          queryRunner,
-          transactionSession
-        );
-        this.logger.debug('Queued messages with jobIDs ' + jobIDs);
-        jobArray = [...jobArray, ...jobIDs];
+        if (err) throw err;
       }
 
       await transactionSession.commitTransaction();
@@ -402,5 +428,34 @@ export class EventsService {
       ],
     }).exec();
     return types.map((type) => type.displayName);
+  }
+
+  async getPosthogEvents(account: Account, take = 100, skip = 0, search = '') {
+    const searchRegExp = new RegExp(`.*${search}.*`, 'i');
+
+    const totalPages =
+      Math.ceil(
+        (await this.PosthogEventModel.count({
+          name: searchRegExp,
+          ownerId: (<Account>account).id,
+        }).exec()) / take
+      ) || 1;
+
+    const posthogEvents = await this.PosthogEventModel.find({
+      name: searchRegExp,
+      ownerId: (<Account>account).id,
+    })
+      .sort({ createdAt: 'desc' })
+      .skip(skip)
+      .limit(take > 100 ? 100 : take)
+      .exec();
+
+    return {
+      data: posthogEvents.map((posthogEvent) => ({
+        ...posthogEvent.toObject(),
+        createdAt: posthogEvent._id.getTimestamp(),
+      })),
+      totalPages,
+    };
   }
 }

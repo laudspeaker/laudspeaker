@@ -29,13 +29,13 @@ describe('CustomersController', () => {
                 handleExceptions: true,
                 format: winston.format.combine(
                   winston.format.colorize(),
-                  winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
+                  winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' })
                 ),
               }),
             ],
           }),
           inject: [],
-        })
+        }),
       ],
       controllers: [CustomersController],
       providers: [CustomersService],

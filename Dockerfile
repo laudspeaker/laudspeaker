@@ -1,5 +1,5 @@
-# To build: docker build -f Dockerfile -t laudspeaker:latest .
-# To run: docker run -it -p 80:80 -p 3001:3001 --rm laudspeaker:latest
+# To build: docker build -f Dockerfile -t laudspeaker/laudspeaker:latest .
+# To run: docker run -it -p 80:80 --env-file packages/server/.env --rm laudspeaker/laudspeaker:latest
 FROM node:16 as frontend_build
 ARG EXTERNAL_URL
 ARG REACT_APP_POSTHOG_HOST
@@ -50,4 +50,4 @@ COPY --from=backend_build /app/packages /app/packages
 EXPOSE 80
 
 # Run migrations and serve app
-CMD ["sh", "-c", "typeorm-ts-node-commonjs migration:run -d packages/server/src/data-source.ts && node dist/src/main.js"]
+CMD ["sh", "-c", "clickhouse-migrations migrate && typeorm-ts-node-commonjs migration:run -d packages/server/src/data-source.ts && node dist/src/main.js"]

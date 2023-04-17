@@ -175,4 +175,21 @@ export class EventsController {
       (<Account>user).id
     );
   }
+
+  @Get('/posthog-events')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor)
+  async getPosthogEvents(
+    @Req() { user }: Request,
+    @Query('take') take?: string,
+    @Query('skip') skip?: string,
+    @Query('search') search?: string
+  ) {
+    return this.eventsService.getPosthogEvents(
+      <Account>user,
+      take && +take,
+      skip && +skip,
+      search
+    );
+  }
 }

@@ -38,4 +38,4 @@ import { WorkflowsModule } from '../workflows/workflows.module';
   providers: [CustomersService, CustomersProcessor, AudiencesHelper],
   exports: [CustomersService],
 })
-export class CustomersModule { }
+export class CustomersModule {}

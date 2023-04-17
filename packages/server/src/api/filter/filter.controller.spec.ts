@@ -12,7 +12,7 @@ describe('FilterController', () => {
     const module: TestingModule = await Test.createTestingModule({
       imports: [
         TypeOrmModule.forRootAsync({ useClass: TypeOrmConfigService }),
-        TypeOrmModule.forFeature([Filter])
+        TypeOrmModule.forFeature([Filter]),
       ],
       controllers: [FilterController],
       providers: [FilterService],
