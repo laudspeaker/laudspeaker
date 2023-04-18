@@ -48,6 +48,8 @@ import { SlackModule } from './api/slack/slack.module';
 import { WebhookJobsModule } from './api/webhook-jobs/webhook-jobs.module';
 import { WebhookJob } from './api/webhook-jobs/entities/webhook-job.entity';
 import { AccountsModule } from './api/accounts/accounts.module';
+import { WebsocketGateway } from './websocket.gateway';
+import { CookiesModule } from './api/cookies/cookies.module';
 
 const myFormat = winston.format.printf(function ({
   level,
@@ -129,8 +131,8 @@ const formatMongoConnectionString = (mongoConnectionString: string) => {
       : []),
     MongooseModule.forRoot(
       process.env.MONGOOSE_URL
-        ? formatMongoConnectionString(process.env.MONGOOSE_URL)
-        : 'mongodb://127.0.0.1:27017/?directConnection=true'
+      // ? formatMongoConnectionString(process.env.MONGOOSE_URL)
+      // : 'mongodb://127.0.0.1:27017/?directConnection=true'
     ),
     BullModule.forRoot({
       connection: {
@@ -207,9 +209,10 @@ const formatMongoConnectionString = (mongoConnectionString: string) => {
     SlackModule,
     WebhookJobsModule,
     AccountsModule,
+    CookiesModule,
   ],
   controllers: [AppController],
-  providers: [CronService],
+  providers: [CronService, WebsocketGateway],
 })
 export class AppModule {
   configure(consumer: MiddlewareConsumer) {
