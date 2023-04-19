@@ -118,6 +118,9 @@ export class Customer {
 
   @Prop()
   phone: string;
+
+  @Prop()
+  isAnonymous?: boolean;
 }
 
 export const CustomerSchema = SchemaFactory.createForClass(Customer);

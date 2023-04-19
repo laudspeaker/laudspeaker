@@ -23,7 +23,6 @@ import { FilterModule } from './filter/filter.module';
 import { WebhookJob } from './webhook-jobs/entities/webhook-job.entity';
 import { WebhookJobsModule } from './webhook-jobs/webhook-jobs.module';
 import Accounts from 'twilio/lib/rest/Accounts';
-import { CookiesModule } from './cookies/cookies.module';
 
 @Module({
   imports: [
@@ -52,7 +51,6 @@ import { CookiesModule } from './cookies/cookies.module';
     TestsModule,
     FilterModule,
     WebhookJobsModule,
-    CookiesModule,
   ],
 })
 export class ApiModule {
