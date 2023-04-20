@@ -41,6 +41,7 @@ export enum TemplateType {
   SMS = 'sms',
   FIREBASE = 'firebase',
   WEBHOOK = 'webhook',
+  MODAL = 'modal',
 }
 
 @Entity()
@@ -87,6 +88,9 @@ export class Template {
 
   @Column({ type: 'jsonb', nullable: true })
   webhookData?: WebhookData;
+
+  @Column({ type: 'jsonb', nullable: true })
+  modalState?: Record<string, unknown>;
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;

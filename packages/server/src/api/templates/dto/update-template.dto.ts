@@ -53,4 +53,8 @@ export class UpdateTemplateDto {
   @IsObject()
   @IsOptional()
   public webhookData?: WebhookData;
+
+  @IsObject()
+  @IsOptional()
+  public modalState?: Record<string, unknown>;
 }

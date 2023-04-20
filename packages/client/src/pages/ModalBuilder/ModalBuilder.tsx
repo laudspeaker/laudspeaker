@@ -1,5 +1,4 @@
-import Header from "components/Header";
-import React, { ReactNode, useState } from "react";
+import React, { ReactNode, useEffect, useLayoutEffect, useState } from "react";
 import ModalEditor, { PreviousModes } from "./ModalEditor";
 import ModalViewer from "./ModalViewer";
 import {
@@ -42,8 +41,14 @@ import {
   TextBox,
 } from "./types";
 import { EditorMenuOptions } from "./ModalEditorMainMenu";
-import { GenericButton } from "components/Elements";
 import { useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
+import { toast } from "react-toastify";
+import { ApiConfig } from "../../constants";
+import ApiService from "services/api.service";
+import { TemplateType } from "types/Template";
+import { useDebounce } from "react-use";
+import ModalPreview from "./ModalPreview";
 
 export interface ModalState {
   position: ModalPosition;
@@ -139,7 +144,15 @@ export const defaultAdditionalClicksObj: AdditionalClicks = {
   },
 };
 
+export enum SaveState {
+  EDITING = "Editing",
+  SAVING = "Saving",
+  SAVED = "Saved",
+  ERROR = "Error",
+}
+
 const ModalBuilder = () => {
+  const { name } = useParams();
   const navigate = useNavigate();
 
   const [modalState, setModalState] = useState<ModalState>({
@@ -215,18 +228,67 @@ We've made some changes to our styling and our navigation. We did this to speed 
       blur: 2,
     },
   });
-
   const [editorMode, setEditorMode] = useState<
     EditorMenuOptions | SubMenuOptions
   >(EditorMenuOptions.MAIN);
-
   const [previousModes, setPreviousModes] = useState<PreviousModes>([
     EditorMenuOptions.MAIN,
   ]);
-
   const [currentMainMode, setCurrentMainMode] = useState<EditorMenuOptions>(
     EditorMenuOptions.MAIN
   );
+  const [templateId, setTemplateId] = useState<string>();
+  const [saveState, setSaveState] = useState<SaveState>(SaveState.SAVED);
+  const [isPreview, setIsPreview] = useState(false);
+
+  useLayoutEffect(() => {
+    (async () => {
+      const { data } = await ApiService.get({
+        url: `${ApiConfig.getAllTemplates}/${name}`,
+      });
+
+      setTemplateId(data.id);
+      setModalState(data.modalState || modalState);
+    })();
+  }, []);
+
+  const onSave = async () => {
+    setSaveState(SaveState.SAVING);
+    try {
+      const reqBody = {
+        name,
+        type: TemplateType.MODAL,
+        modalState,
+      };
+
+      if (templateId) {
+        await ApiService.patch({
+          url: `${ApiConfig.getAllTemplates}/${name}`,
+          options: {
+            ...reqBody,
+          },
+        });
+      } else {
+        const { data } = await ApiService.post({
+          url: `${ApiConfig.createTemplate}`,
+          options: {
+            ...reqBody,
+          },
+        });
+        setTemplateId(data.id);
+      }
+      setSaveState(SaveState.SAVED);
+    } catch (e) {
+      toast.error("Error while saving");
+      setSaveState(SaveState.ERROR);
+    }
+  };
+
+  useEffect(() => {
+    setSaveState(SaveState.EDITING);
+  }, [modalState]);
+
+  useDebounce(onSave, 500, [modalState]);
 
   const handleEditorModeSet = (
     mode: EditorMenuOptions | SubMenuOptions,
@@ -252,7 +314,7 @@ We've made some changes to our styling and our navigation. We did this to speed 
         >
           <button
             className="w-[60px] border-r-[1px] border-white hover:text-white"
-            onClick={() => navigate("/home")}
+            onClick={() => navigate("/templates")}
           >
             <div className="flex flex-col justify-between items-center">
               <svg
@@ -272,13 +334,15 @@ We've made some changes to our styling and our navigation. We did this to speed 
             </div>
           </button>
           <button
-            className="w-[60px] text-white flex justify-center items-center hover:text-white"
-            onClick={() => {}}
+            className={`w-[60px] flex justify-center items-center hover:text-white ${
+              isPreview ? "" : "text-white"
+            }`}
+            onClick={() => setIsPreview(false)}
           >
-            <div className="border-b-[1px] w-fit">
+            <div className={`w-fit ${isPreview ? "" : "border-b-[1px]"}`}>
               <div>
                 <svg viewBox="0 0 48 38" xmlns="http://www.w3.org/2000/svg">
-                  <g fill="#FFF" fill-rule="evenodd">
+                  <g fill="currentColor" fill-rule="evenodd">
                     <path
                       d="M44 38H4a4 4 0 0 1-4-4V4a4 4 0 0 1 4-4h40a4 4 0 0 1 4 4v30a4 4 0 0 1-4 4zm-2.5-3c1.933 0 3.5-1.508 3.5-3.368V6.368C45 4.508 43.433 3 41.5 3h-35C4.567 3 3 4.508 3 6.368v25.264C3 33.492 4.567 35 6.5 35h35z"
                       fill-rule="nonzero"
@@ -291,10 +355,16 @@ We've made some changes to our styling and our navigation. We did this to speed 
             </div>
           </button>
           <button
-            className="w-[60px] flex justify-center items-center hover:text-white"
-            onClick={() => {}}
+            className={`w-[60px] flex justify-center items-center hover:text-white ${
+              isPreview ? "text-white" : ""
+            }`}
+            onClick={() => setIsPreview(true)}
           >
-            <div className="w-fit flex justify-center items-center flex-col">
+            <div
+              className={`w-fit flex justify-center items-center flex-col ${
+                isPreview ? "border-b-[1px]" : ""
+              }`}
+            >
               <svg
                 viewBox="0 0 48 38"
                 xmlns="http://www.w3.org/2000/svg"
@@ -312,35 +382,42 @@ We've made some changes to our styling and our navigation. We did this to speed 
               <div>PREVIEW</div>
             </div>
           </button>
+          <div className="ml-auto mr-[10px]">Status: {saveState}</div>
         </div>
         <div className="relative h-[calc(100vh-60px)]">
-          <ModalEditor
-            editorMode={editorMode}
-            setEditorMode={setEditorMode}
-            modalState={modalState}
-            setModalState={setModalState}
-            previousModes={previousModes}
-            currentMainMode={currentMainMode}
-            handleEditorModeSet={handleEditorModeSet}
-            setPreviousModes={setPreviousModes}
-          />
-          <ModalViewer
-            modalState={modalState}
-            handleTitleChange={(title) =>
-              setModalState({
-                ...modalState,
-                title: { ...modalState.title, content: title },
-              })
-            }
-            handleBodyChange={(body) =>
-              setModalState({
-                ...modalState,
-                body: { ...modalState.body, content: body },
-              })
-            }
-            handleEditorModeSet={handleEditorModeSet}
-            editorMode={editorMode}
-          />
+          {isPreview ? (
+            <ModalPreview modalState={modalState} />
+          ) : (
+            <>
+              <ModalEditor
+                editorMode={editorMode}
+                setEditorMode={setEditorMode}
+                modalState={modalState}
+                setModalState={setModalState}
+                previousModes={previousModes}
+                currentMainMode={currentMainMode}
+                handleEditorModeSet={handleEditorModeSet}
+                setPreviousModes={setPreviousModes}
+              />
+              <ModalViewer
+                modalState={modalState}
+                handleTitleChange={(title) =>
+                  setModalState({
+                    ...modalState,
+                    title: { ...modalState.title, content: title },
+                  })
+                }
+                handleBodyChange={(body) =>
+                  setModalState({
+                    ...modalState,
+                    body: { ...modalState.body, content: body },
+                  })
+                }
+                handleEditorModeSet={handleEditorModeSet}
+                editorMode={editorMode}
+              />
+            </>
+          )}
         </div>
       </div>
     </div>

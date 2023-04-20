@@ -335,6 +335,14 @@ const RouteComponent: React.FC = () => {
           }
         />
         <Route
+          path="/templates/modal/:name"
+          element={
+            <Protected>
+              <ModalBuilder />
+            </Protected>
+          }
+        />
+        <Route
           path="/templates"
           element={
             <Protected>
@@ -371,14 +379,6 @@ const RouteComponent: React.FC = () => {
               <DrawerLayout>
                 <Database />
               </DrawerLayout>
-            </Protected>
-          }
-        />
-        <Route
-          path="/modal-builder"
-          element={
-            <Protected>
-              <ModalBuilder />
             </Protected>
           }
         />

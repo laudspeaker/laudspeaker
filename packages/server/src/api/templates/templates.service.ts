@@ -236,6 +236,9 @@ export class TemplatesService extends QueueEventsHost {
       case TemplateType.WEBHOOK:
         template.webhookData = createTemplateDto.webhookData;
         break;
+      case TemplateType.MODAL:
+        template.modalState = createTemplateDto.modalState;
+        break;
     }
     return this.templatesRepository.save({
       ...template,
@@ -499,6 +502,7 @@ export class TemplatesService extends QueueEventsHost {
       type,
       smsText,
       webhookData,
+      modalState,
     } = foundTemplate;
 
     const ownerId = owner.id;
@@ -530,6 +534,7 @@ export class TemplatesService extends QueueEventsHost {
       type,
       smsText,
       webhookData,
+      modalState,
     });
   }
 
