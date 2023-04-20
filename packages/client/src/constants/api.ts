@@ -28,4 +28,5 @@ export default {
   deleteFlow: "/workflows/delete",
   slackInstall: "/slack/install",
   syncPosthog: "/customers/importph",
+  deleteMedia: "accounts/delete-media/",
 };

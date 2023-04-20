@@ -38,6 +38,7 @@ import FirebaseBuilder from "pages/FirebaseBuilder/FirebaseBuilder";
 import ResetPassword from "pages/ResetPassword";
 import SegmentTable from "pages/SegmentTable";
 import SegmentViewer from "pages/SegmentViewer";
+import ModalBuilder from "pages/ModalBuilder";
 import WebhookBuilder from "pages/WebhookBuilder";
 
 interface IProtected {
@@ -370,6 +371,14 @@ const RouteComponent: React.FC = () => {
               <DrawerLayout>
                 <Database />
               </DrawerLayout>
+            </Protected>
+          }
+        />
+        <Route
+          path="/modal-builder"
+          element={
+            <Protected>
+              <ModalBuilder />
             </Protected>
           }
         />
