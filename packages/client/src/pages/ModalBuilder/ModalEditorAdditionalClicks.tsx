@@ -63,11 +63,13 @@ const ModalEditorAdditionalClicks = ({
   ) => {
     return () => {
       if (page === null && action === AdditionalClickOptions.NOACTION) {
-        for (const key in actionData[currentMainMode]) {
-          actionData[currentMainMode][key as AdditionalClickOptions].hidden =
-            true;
+        if (actionData[currentMainMode]) {
+          for (const key in actionData[currentMainMode]) {
+            actionData[currentMainMode][key as AdditionalClickOptions].hidden =
+              true;
+          }
+          actionData[currentMainMode].NOACTION.hidden = false;
         }
-        actionData[currentMainMode].NOACTION.hidden = false;
 
         setModalState({ ...modalState });
 
@@ -90,7 +92,7 @@ const ModalEditorAdditionalClicks = ({
               <div key={i2} className="w-1/2 pr-[6px] pb-[6px]">
                 <GenericButton
                   customClasses={`relative w-full flex text-[12px] !border-[2px] !border-[#2f4a43] !outline-none !ring-transparent !focus:!ring-transparent !font-normal !rounded-[8px] !p-[6px] flex align-center whitespace-nowrap overflow-hidden ${
-                    actionData[currentMainMode][el.action].hidden
+                    actionData[currentMainMode]?.[el.action]?.hidden
                       ? "!bg-[#19362e]"
                       : "!bg-[#2f4a43]"
                   }`}
