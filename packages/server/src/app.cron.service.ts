@@ -429,7 +429,7 @@ export class CronService {
                 }
               }
               query = { page: events.pages.next.number };
-            } while (events?.items?.length > 0);
+            } while (events?.items?.length > 0 && query.page);
           }
         }
         await this.webhookJobsService.remove(mailgunJobs[i].id);
