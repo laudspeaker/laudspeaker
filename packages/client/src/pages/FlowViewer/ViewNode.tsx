@@ -39,8 +39,7 @@ const ViewNode = ({ data }: { data: NodeData }) => {
   const [selectedMessageType, setSelectedMessageType] = useState("");
   const [selectedTemplateId, setSelectedTemplateId] = useState<number>();
   const [updateTemplateModalOpen, setUpdateTemplateModalOpen] = useState(false);
-  const [sentStatModalOpen, setSentStatModalOpen] = useState(false);
-  const [clickedStatModalOpen, setClickedStatModalOpen] = useState(false);
+  const [statModalEvent, setStatModalEvent] = useState<string>();
   const [descriptionCollaped, setDescriptionCollaped] = useState(true);
 
   const onTemplateModalClose = () => {
@@ -208,7 +207,7 @@ const ViewNode = ({ data }: { data: NodeData }) => {
                 <div className="flex justify-between font-[Poppins] p-[8px_10px] font-normal leading-[30px] text-[14px]">
                   <div
                     className="w-full p-[0px_10px] cursor-pointer"
-                    onClick={() => setSentStatModalOpen(true)}
+                    onClick={() => setStatModalEvent("sent")}
                   >
                     <div>Sent</div>
                     <div className="font-medium text-[#333333]">
@@ -224,7 +223,10 @@ const ViewNode = ({ data }: { data: NodeData }) => {
                     variant="middle"
                     orientation="vertical"
                   />
-                  <div className="w-full p-[0px_10px]">
+                  <div
+                    className="w-full p-[0px_10px]"
+                    onClick={() => setStatModalEvent("delivered")}
+                  >
                     <div>Delivered</div>
                     <div className="font-medium text-[#333333]">
                       {new Intl.NumberFormat("en", {
@@ -242,7 +244,10 @@ const ViewNode = ({ data }: { data: NodeData }) => {
                         variant="middle"
                         orientation="vertical"
                       />
-                      <div className="w-full p-[0px_10px]">
+                      <div
+                        className="w-full p-[0px_10px]"
+                        onClick={() => setStatModalEvent("opened")}
+                      >
                         <div>Opened</div>
                         <div className="font-medium text-[#333333]">
                           {stats.openedPercentage}%
@@ -257,7 +262,7 @@ const ViewNode = ({ data }: { data: NodeData }) => {
                       />
                       <div
                         className="w-full p-[0px_10px] cursor-pointer"
-                        onClick={() => setClickedStatModalOpen(true)}
+                        onClick={() => setStatModalEvent("clicked")}
                       >
                         <div>Clicked</div>
                         <div className="font-medium text-[#333333]">
@@ -343,18 +348,14 @@ const ViewNode = ({ data }: { data: NodeData }) => {
 
           flowBuilder
         )}
-      <StatModal
-        isOpen={sentStatModalOpen}
-        event="sent"
-        audienceId={audienceId}
-        onClose={() => setSentStatModalOpen(false)}
-      />
-      <StatModal
-        isOpen={clickedStatModalOpen}
-        event="clicked"
-        audienceId={audienceId}
-        onClose={() => setClickedStatModalOpen(false)}
-      />
+      {statModalEvent && (
+        <StatModal
+          isOpen={!!statModalEvent}
+          event={statModalEvent}
+          audienceId={audienceId}
+          onClose={() => setStatModalEvent(undefined)}
+        />
+      )}
     </>
   );
 };
