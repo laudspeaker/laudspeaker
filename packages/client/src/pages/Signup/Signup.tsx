@@ -56,6 +56,7 @@ const Signup: FC<SignupProps> = ({ setShowWelcomeBanner }) => {
         firstName: signUpForm.firstName,
         lastName: signUpForm.lastName,
         laudspeakerId: response.data.id,
+        email: signUpForm.email,
       });
       toast.info(
         "You need to verify your email. We've sent you a verification email",
