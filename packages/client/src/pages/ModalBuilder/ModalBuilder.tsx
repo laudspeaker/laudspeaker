@@ -22,7 +22,7 @@ import {
   Dismiss,
   DismissPosition,
   DismissType,
-  GeneralClickActions,
+  GeneralClickAction,
   GradientBackground,
   ImageBackground,
   Media,
@@ -205,7 +205,7 @@ We've made some changes to our styling and our navigation. We did this to speed 
       textColor: "#FFFFFF",
       borderRadius: { value: 8, unit: SizeUnit.PIXEL },
       position: PrimaryButtonPosition.BOTTOM_CENTER,
-      clickAction: GeneralClickActions.NONE,
+      clickAction: GeneralClickAction.NONE,
       additionalClick: JSON.parse(JSON.stringify(defaultAdditionalClicksObj)),
     },
     dismiss: {
@@ -306,10 +306,10 @@ We've made some changes to our styling and our navigation. We did this to speed 
     };
   };
   return (
-    <div className="min-h-screen fixed top-0 left-0">
-      <div className="relative">
+    <div className="min-h-screen w-full fixed top-0 left-0">
+      <div className="relative w-full">
         <div
-          className="h-[60px] flex items-center bg-[#19362e] text-[#BAC3C0] text-[10px]"
+          className="w-full h-[60px] flex items-center bg-[#19362e] text-[#BAC3C0] text-[10px]"
           id="modalHeader"
         >
           <button

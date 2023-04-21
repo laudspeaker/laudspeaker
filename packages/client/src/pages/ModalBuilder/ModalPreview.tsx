@@ -1,6 +1,6 @@
 import { PlusIcon } from "@heroicons/react/24/outline";
 import { getSocialMediaPlatform, SocialMedia } from "helpers/socialMedia";
-import React, { CSSProperties, FC, ReactNode } from "react";
+import React, { CSSProperties, FC, ReactNode, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import {
   FacebookEmbed,
@@ -14,6 +14,8 @@ import {
   BackgroundType,
   DismissPosition,
   DismissType,
+  GeneralClickAction,
+  MediaClickAction,
   MediaPosition,
   MediaType,
   ModalPosition,
@@ -86,6 +88,8 @@ interface ModalPreviewProps {
 }
 
 const ModalPreview: FC<ModalPreviewProps> = ({ modalState }) => {
+  const [isModalOpen, setIsModalOpen] = useState(true);
+
   const CanvasBackground: Record<BackgroundType, string> = {
     [BackgroundType.SOLID]: `${
       modalState.background[BackgroundType.SOLID].color
@@ -123,7 +127,9 @@ const ModalPreview: FC<ModalPreviewProps> = ({ modalState }) => {
               backdropFilter: `blur(${modalState.shroud.blur}px)`,
             }),
       }}
-      className="h-full w-screen flex z-[2147483645] p-[20px]"
+      className={`h-full w-screen flex z-[2147483645] p-[20px] ${
+        isModalOpen ? "" : "hidden"
+      }`}
     >
       <style>
         {`
@@ -173,6 +179,7 @@ const ModalPreview: FC<ModalPreviewProps> = ({ modalState }) => {
             color: modalState.dismiss.color,
             fontSize: modalState.dismiss.textSize,
           }}
+          onClick={() => setIsModalOpen(false)}
         >
           {modalState.dismiss.type === DismissType.CROSS ? (
             <div
@@ -250,6 +257,24 @@ const ModalPreview: FC<ModalPreviewProps> = ({ modalState }) => {
                     className="w-full"
                     src={modalState.media.imageSrc || ""}
                     alt={modalState.media.altText}
+                    onClick={() => {
+                      if (
+                        modalState.media.actionOnClick ===
+                        MediaClickAction.COMPLETE
+                      ) {
+                        setIsModalOpen(false);
+                      }
+
+                      const { hidden: openURLHidden, object: openURLObject } =
+                        modalState.media.additionalClick.OPENURL;
+
+                      if (!openURLHidden && openURLObject) {
+                        window.open(
+                          openURLObject.url,
+                          openURLObject.openNewTab ? "_blank" : "_self"
+                        );
+                      }
+                    }}
                   />
                 )}
                 {modalState.media.type === MediaType.VIDEO && (
@@ -336,6 +361,23 @@ const ModalPreview: FC<ModalPreviewProps> = ({ modalState }) => {
                 color: modalState.primaryButton.textColor,
                 borderColor: modalState.primaryButton.borderColor,
                 borderRadius: `${modalState.primaryButton.borderRadius.value}${modalState.primaryButton.borderRadius.unit}`,
+              }}
+              onClick={() => {
+                if (
+                  modalState.primaryButton.clickAction ===
+                  GeneralClickAction.COMPLETE
+                )
+                  setIsModalOpen(false);
+
+                const { hidden: openURLHidden, object: openURLObject } =
+                  modalState.primaryButton.additionalClick.OPENURL;
+
+                if (!openURLHidden && openURLObject) {
+                  window.open(
+                    openURLObject.url,
+                    openURLObject.openNewTab ? "_blank" : "_self"
+                  );
+                }
               }}
             >
               <button>Read more</button>

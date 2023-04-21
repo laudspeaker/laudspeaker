@@ -88,7 +88,7 @@ export interface CommonMedia {
   key: string | null;
 }
 
-export enum GeneralClickActions {
+export enum GeneralClickAction {
   NONE = "None",
   COMPLETE = "Complete Tour",
 }
@@ -143,7 +143,7 @@ export interface PrimaryButton {
   textColor: Color;
   borderRadius: Size;
   position: PrimaryButtonPosition;
-  clickAction: GeneralClickActions;
+  clickAction: GeneralClickAction;
   additionalClick: AdditionalClicks;
 }
 
