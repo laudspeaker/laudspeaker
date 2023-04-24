@@ -44,6 +44,7 @@ import { Liquid } from 'liquidjs';
 import { TestWebhookDto } from './dto/test-webhook.dto';
 import { WebhooksService } from '../webhooks/webhooks.service';
 import wait from '@/utils/wait';
+import { ModalsService } from '../modals/modals.service';
 
 @Injectable()
 @QueueEventsListener('message')
@@ -60,6 +61,7 @@ export class TemplatesService extends QueueEventsHost {
     private audiencesRepository: Repository<Audience>,
     @Inject(SlackService) private slackService: SlackService,
     @Inject(WebhooksService) private webhooksService: WebhooksService,
+    @Inject(ModalsService) private modalsService: ModalsService,
     @InjectQueue('message') private readonly messageQueue: Queue,
     @InjectQueue('webhooks') private readonly webhooksQueue: Queue,
     @InjectQueue('slack') private readonly slackQueue: Queue
@@ -410,6 +412,11 @@ export class TemplatesService extends QueueEventsHost {
             customerId,
             accountId: account.id,
           });
+        }
+        break;
+      case TemplateType.MODAL:
+        if (template.modalState) {
+          await this.modalsService.queueModalEvent(customerId, template);
         }
         break;
     }

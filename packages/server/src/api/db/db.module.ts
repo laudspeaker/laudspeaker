@@ -13,7 +13,7 @@ import { Database } from '../integrations/entities/database.entity';
 import { Recovery } from '../auth/entities/recovery.entity';
 import { Segment } from '../segments/entities/segment.entity';
 import { Filter } from '../filter/entities/filter.entity';
-import { ModalEvent } from '../modals/entities/modal.entity';
+import { ModalEvent } from '../modals/entities/modal-event.entity';
 
 @Module({
   imports: [

@@ -50,6 +50,7 @@ import { WebhookJob } from './api/webhook-jobs/entities/webhook-job.entity';
 import { AccountsModule } from './api/accounts/accounts.module';
 import { WebsocketGateway } from './websocket.gateway';
 import { EventsModule } from './api/events/events.module';
+import { ModalsModule } from './api/modals/modals.module';
 
 const myFormat = winston.format.printf(function ({
   level,
@@ -206,6 +207,7 @@ const formatMongoConnectionString = (mongoConnectionString: string) => {
     WebhookJobsModule,
     AccountsModule,
     EventsModule,
+    ModalsModule,
   ],
   controllers: [AppController],
   providers: [CronService, WebsocketGateway],
