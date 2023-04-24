@@ -47,7 +47,7 @@ const StatModal: FC<StatModalProps> = ({
             (currentPage - 1) * ITEMS_PER_PAGE
           }`,
         });
-        setCustomers(data);
+        setCustomers(data || []);
         setPagesCount(totalPages);
         setIsLoading(false);
       } catch (e) {

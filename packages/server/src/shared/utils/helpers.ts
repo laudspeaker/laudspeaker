@@ -23,4 +23,3 @@ export const cleanTagsForSending = (obj) => {
   }
   return obj;
 };
-

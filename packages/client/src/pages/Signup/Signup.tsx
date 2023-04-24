@@ -52,7 +52,7 @@ const Signup: FC<SignupProps> = ({ setShowWelcomeBanner }) => {
     const response = await dispatch(signUpUser(signUpForm));
 
     if (response?.data?.access_token) {
-      posthog.identify( signUpForm.email, { 
+      posthog.identify(signUpForm.email, {
         firstName: signUpForm.firstName,
         lastName: signUpForm.lastName,
         laudspeakerId: response.data.id,
