@@ -1,6 +1,12 @@
 import { PlusIcon } from "@heroicons/react/24/outline";
 import { getSocialMediaPlatform, SocialMedia } from "helpers/socialMedia";
-import React, { CSSProperties, FC, ReactNode, useState } from "react";
+import React, {
+  CSSProperties,
+  FC,
+  ReactNode,
+  useEffect,
+  useState,
+} from "react";
 import ReactMarkdown from "react-markdown";
 import {
   FacebookEmbed,
@@ -22,6 +28,7 @@ import {
   PrimaryButtonPosition,
   SizeUnit,
 } from "./types";
+import "../../App.css";
 
 const modalPositionMap: Record<ModalPosition, CSSProperties> = {
   [ModalPosition.BOTTOM_CENTER]: {
@@ -89,6 +96,7 @@ interface ModalPreviewProps {
 
 const ModalPreview: FC<ModalPreviewProps> = ({ modalState }) => {
   const [isModalOpen, setIsModalOpen] = useState(true);
+  const [dismissProgress, setDismissProgress] = useState(0);
 
   const CanvasBackground: Record<BackgroundType, string> = {
     [BackgroundType.SOLID]: `${
@@ -113,6 +121,22 @@ const ModalPreview: FC<ModalPreviewProps> = ({ modalState }) => {
       modalState.background[BackgroundType.IMAGE].imageSrc
     })`,
   };
+
+  useEffect(() => {
+    if (modalState.dismiss.hidden || !modalState.dismiss.timedDismiss.enabled)
+      return;
+    const start = Date.now();
+    const finish = start + modalState.dismiss.timedDismiss.duration * 1000;
+    const interval = setInterval(() => {
+      const now = Date.now();
+      setDismissProgress((now - start) / (finish - start));
+
+      if (now > finish) {
+        setIsModalOpen(false);
+        clearInterval(interval);
+      }
+    }, 20);
+  }, []);
 
   return (
     <div
@@ -183,31 +207,87 @@ const ModalPreview: FC<ModalPreviewProps> = ({ modalState }) => {
         >
           {modalState.dismiss.type === DismissType.CROSS ? (
             <div
-              className="rotate-45"
+              id="dismiss-wrapper"
               style={
                 modalState.dismiss.timedDismiss.enabled &&
                 modalState.dismiss.timedDismiss.displayTimer
                   ? {
                       borderRadius: "100%",
-                      border: `3px solid ${modalState.dismiss.timedDismiss.timerColor}`,
+                      position: "relative",
                     }
                   : {}
               }
             >
-              <PlusIcon width={modalState.dismiss.textSize} />
-            </div>
-          ) : (
-            <div
-              className="rounded p-[5px]"
-              style={{
-                background:
+              <svg
+                className={`absolute top-1/2 left-1/2 -translate-x-[calc(50%-0.5px)] -translate-y-[calc(50%-1px)] -rotate-90 ${
                   modalState.dismiss.timedDismiss.enabled &&
                   modalState.dismiss.timedDismiss.displayTimer
-                    ? modalState.dismiss.timedDismiss.timerColor
-                    : "",
-              }}
-            >
-              close
+                    ? ""
+                    : "hidden"
+                }`}
+                style={{
+                  width: modalState.dismiss.textSize + 2,
+                  height: modalState.dismiss.textSize + 2,
+                }}
+              >
+                <circle
+                  style={{
+                    color: modalState.dismiss.color,
+                  }}
+                  strokeWidth="2"
+                  stroke="currentColor"
+                  fill="transparent"
+                  r={modalState.dismiss.textSize / 2}
+                  cx={modalState.dismiss.textSize / 2 + 1}
+                  cy={modalState.dismiss.textSize / 2 + 1}
+                />
+                <circle
+                  style={{
+                    color: modalState.dismiss.timedDismiss.timerColor,
+                  }}
+                  strokeWidth="2"
+                  strokeDasharray={modalState.dismiss.textSize * Math.PI}
+                  strokeDashoffset={
+                    modalState.dismiss.textSize * Math.PI -
+                    dismissProgress * modalState.dismiss.textSize * Math.PI
+                  }
+                  strokeLinecap="round"
+                  stroke="currentColor"
+                  fill="transparent"
+                  r={modalState.dismiss.textSize / 2}
+                  cx={modalState.dismiss.textSize / 2 + 1}
+                  cy={modalState.dismiss.textSize / 2 + 1}
+                />
+              </svg>
+              <span
+                className="text-xl"
+                style={{
+                  color: modalState.dismiss.color,
+                }}
+              >
+                <PlusIcon
+                  className="rotate-45"
+                  width={modalState.dismiss.textSize}
+                />
+              </span>
+            </div>
+          ) : (
+            <div className="relative">
+              <div className="p-[5px]">close</div>
+
+              <div
+                className="absolute rounded top-0 left-0 h-full"
+                style={{
+                  background:
+                    modalState.dismiss.timedDismiss.enabled &&
+                    modalState.dismiss.timedDismiss.displayTimer
+                      ? modalState.dismiss.timedDismiss.timerColor
+                      : "",
+                  width: `${dismissProgress * 100}%`,
+                }}
+              >
+                <div className="p-[5px]">close</div>
+              </div>
             </div>
           )}
         </div>
