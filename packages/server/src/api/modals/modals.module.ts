@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ModalEvent } from './entities/ModalEvent';
+import { ModalEvent } from './entities/modal.entity';
 import { ModalsController } from './modals.controller';
 import { ModalsService } from './modals.service';
 
@@ -11,3 +11,4 @@ import { ModalsService } from './modals.service';
   exports: [ModalsService],
 })
 export class ModalsModule {}
+

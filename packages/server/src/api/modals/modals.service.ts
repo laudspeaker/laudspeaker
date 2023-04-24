@@ -2,7 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Template, TemplateType } from '../templates/entities/template.entity';
-import { ModalEvent } from './entities/ModalEvent';
+import { ModalEvent } from './entities/modal.entity';
 
 @Injectable()
 export class ModalsService {
@@ -39,3 +39,4 @@ export class ModalsService {
     return modalEvent.template.modalState;
   }
 }
+
