@@ -386,7 +386,6 @@ const Flow = () => {
         isOpen={triggerModalOpen}
         onClose={() => settriggerModalOpen(false)}
       />
-      )
     </div>
   );
 };

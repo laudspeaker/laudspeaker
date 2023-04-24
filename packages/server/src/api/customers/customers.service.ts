@@ -51,6 +51,7 @@ const eventsMap = {
   sent: 'sent',
   clicked: 'clicked',
   delivered: 'delivered',
+  opened: 'opened',
 };
 
 const KEYS_TO_SKIP = ['__v', '_id', 'audiences', 'ownerId'];
@@ -688,7 +689,7 @@ export class CustomersService {
 
     if (eventsMap[event] && audienceId) {
       const customersCountResponse = await this.clickhouseClient.query({
-        query: `SELECT COUNT(*) FROM message_status WHERE audienceId = {audienceId:UUID} AND event = {event:String}`,
+        query: `SELECT COUNT(DISTINCT(customerId)) FROM message_status WHERE audienceId = {audienceId:UUID} AND event = {event:String}`,
         query_params: { audienceId, event: eventsMap[event] },
       });
       const customersCountResponseData = (
@@ -699,7 +700,7 @@ export class CustomersService {
       const totalPages = Math.ceil(customersCount / take);
 
       const response = await this.clickhouseClient.query({
-        query: `SELECT customerId FROM message_status WHERE audienceId = {audienceId:UUID} AND event = {event:String} ORDER BY createdAt LIMIT {take:Int32} OFFSET {skip:Int32}`,
+        query: `SELECT DISTINCT(customerId) FROM message_status WHERE audienceId = {audienceId:UUID} AND event = {event:String} ORDER BY createdAt LIMIT {take:Int32} OFFSET {skip:Int32}`,
         query_params: { audienceId, event: eventsMap[event], take, skip },
       });
       const data = (await response.json<{ data: { customerId: string }[] }>())
@@ -710,7 +711,7 @@ export class CustomersService {
         totalPages,
         data: await Promise.all(
           customerIds.map(async (id) => ({
-            ...(await this.findById(account, id)).toObject(),
+            ...(await this.findById(account, id))?.toObject(),
             id,
           }))
         ),
