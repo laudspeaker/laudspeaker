@@ -1,6 +1,7 @@
 import { BaseJwtHelper } from '../../common/helper/base-jwt.helper';
 import {
   BadRequestException,
+  forwardRef,
   HttpException,
   HttpStatus,
   Inject,
@@ -35,8 +36,9 @@ export class AccountsService extends BaseJwtHelper {
     private dataSource: DataSource,
     @InjectRepository(Account)
     public accountsRepository: Repository<Account>,
-    @Inject(CustomersService) private customersService: CustomersService,
-    @Inject(AuthService) private authService: AuthService,
+    @Inject(forwardRef(() => CustomersService))
+    private customersService: CustomersService,
+    @Inject(forwardRef(() => AuthService)) private authService: AuthService,
     @InjectConnection() private readonly connection: mongoose.Connection,
     private webhookService: WebhooksService
   ) {

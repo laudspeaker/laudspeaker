@@ -1,3 +1,5 @@
+import { Template } from '@/api/templates/entities/template.entity';
+import { forwardRef, Inject } from '@nestjs/common';
 import {
   ConnectedSocket,
   MessageBody,
@@ -8,10 +10,10 @@ import {
 } from '@nestjs/websockets';
 import { isValidObjectId } from 'mongoose';
 import { Server, Socket } from 'socket.io';
-import { AccountsService } from './api/accounts/accounts.service';
-import { Account } from './api/accounts/entities/accounts.entity';
-import { CustomersService } from './api/customers/customers.service';
-import { EventsService } from './api/events/events.service';
+import { AccountsService } from '../api/accounts/accounts.service';
+import { Account } from '../api/accounts/entities/accounts.entity';
+import { CustomersService } from '../api/customers/customers.service';
+import { EventsService } from '../api/events/events.service';
 
 interface SocketData {
   account: Account;
@@ -24,8 +26,11 @@ export class WebsocketGateway implements OnGatewayConnection {
   private server: Server;
 
   constructor(
+    @Inject(forwardRef(() => AccountsService))
     private accountsService: AccountsService,
+    @Inject(forwardRef(() => CustomersService))
     private customersService: CustomersService,
+    @Inject(forwardRef(() => EventsService))
     private eventsService: EventsService
   ) {}
 
@@ -208,5 +213,20 @@ export class WebsocketGateway implements OnGatewayConnection {
 
     socket.emit('log', 'Successful fire');
     socket.emit('workflowTick', workflowTick);
+  }
+
+  public async sendModal(
+    customerId: string,
+    template: Template
+  ): Promise<boolean> {
+    const sockets = await this.server.fetchSockets();
+    for (const socket of sockets) {
+      if (socket.data.customerId === customerId) {
+        socket.emit('modal', template.modalState);
+        return true;
+      }
+    }
+
+    return false;
   }
 }

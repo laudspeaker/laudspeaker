@@ -60,7 +60,7 @@ import { SegmentsModule } from '../segments/segments.module';
     AudiencesModule,
     forwardRef(() => CustomersModule),
     forwardRef(() => SegmentsModule),
-    TemplatesModule,
+    forwardRef(() => TemplatesModule),
     SlackModule,
   ],
   controllers: [WorkflowsController],

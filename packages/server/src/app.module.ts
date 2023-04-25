@@ -48,9 +48,9 @@ import { SlackModule } from './api/slack/slack.module';
 import { WebhookJobsModule } from './api/webhook-jobs/webhook-jobs.module';
 import { WebhookJob } from './api/webhook-jobs/entities/webhook-job.entity';
 import { AccountsModule } from './api/accounts/accounts.module';
-import { WebsocketGateway } from './websocket.gateway';
 import { EventsModule } from './api/events/events.module';
 import { ModalsModule } from './api/modals/modals.module';
+import { WebsocketsModule } from './websockets/websockets.module';
 
 const myFormat = winston.format.printf(function ({
   level,
@@ -208,9 +208,10 @@ const formatMongoConnectionString = (mongoConnectionString: string) => {
     AccountsModule,
     EventsModule,
     ModalsModule,
+    WebsocketsModule,
   ],
   controllers: [AppController],
-  providers: [CronService, WebsocketGateway],
+  providers: [CronService],
 })
 export class AppModule {
   configure(consumer: MiddlewareConsumer) {

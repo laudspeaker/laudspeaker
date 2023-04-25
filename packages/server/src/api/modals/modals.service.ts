@@ -1,6 +1,8 @@
 import {
   BadRequestException,
   ForbiddenException,
+  forwardRef,
+  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -22,6 +24,7 @@ export class ModalsService {
 
   constructor(
     private accountsService: AccountsService,
+    @Inject(forwardRef(() => CustomersService))
     private customersService: CustomersService,
     @InjectRepository(ModalEvent)
     private modalEventRepository: Repository<ModalEvent>

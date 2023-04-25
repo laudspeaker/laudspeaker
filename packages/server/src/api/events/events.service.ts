@@ -3,6 +3,7 @@ import {
   Inject,
   LoggerService,
   HttpException,
+  forwardRef,
 } from '@nestjs/common';
 import { Correlation, CustomersService } from '../customers/customers.service';
 import { CustomerDocument } from '../customers/schemas/customer.schema';
@@ -42,9 +43,9 @@ export class EventsService {
   constructor(
     private dataSource: DataSource,
     @Inject(AccountsService) private readonly userService: AccountsService,
-    @Inject(WorkflowsService)
+    @Inject(forwardRef(() => WorkflowsService))
     private readonly workflowsService: WorkflowsService,
-    @Inject(CustomersService)
+    @Inject(forwardRef(() => CustomersService))
     private readonly customersService: CustomersService,
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
     private readonly logger: LoggerService,
