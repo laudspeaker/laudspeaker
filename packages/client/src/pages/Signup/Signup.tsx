@@ -93,7 +93,7 @@ const Signup: FC<SignupProps> = ({ setShowWelcomeBanner }) => {
       signUpForm.confirmPassword.trim().length <= 8 ||
       signUpForm.confirmPassword.trim() !== signUpForm.password.trim(),
     mail: !signUpForm.email.match(
-      /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/
+      /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,})+$/
     ),
   };
 

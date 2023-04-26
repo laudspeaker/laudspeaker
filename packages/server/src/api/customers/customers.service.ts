@@ -1043,35 +1043,12 @@ export class CustomersService {
         eventDto,
         transactionSession
       );
-      this.logger.debug(
-        `${JSON.stringify(correlation)} ${JSON.stringify(eventDto)}`,
-        `customers.service.ts:CustomersService.upsert()`
-      );
 
       let left = correlation.cust.toObject();
-      this.logger.debug(
-        `Left: ${JSON.stringify(left)}`,
-        `customers.service.ts:CustomersService.upsert()`
-      );
-
       let right = _.cloneDeep(dto);
-      //let right = structuredClone(dto);
-      this.logger.debug(
-        `Right: ${JSON.stringify(right)}`,
-        `customers.service.ts:CustomersService.upsert()`
-      );
 
       delete right.correlationKey;
-      this.logger.debug(
-        `Delete correlation key`,
-        `customers.service.ts:CustomersService.upsert()`
-      );
-
       delete right.correlationValue;
-      this.logger.debug(
-        `Delete correlation value`,
-        `customers.service.ts:CustomersService.upsert()`
-      );
 
       await this.transactionalUpdate(
         account,
