@@ -21,7 +21,7 @@ import ModalEditorDismissMenu from "./ModalEditorDismissMenu";
 import ModalEditorPrimaryMenu from "./ModalEditorPrimaryMenu";
 import ModalEditorAdditionalClicks from "./ModalEditorAdditionalClicks";
 import ModalEditorOpenURL from "./ModalEditorOpenURL";
-import { Scrollbars } from "react-custom-scrollbars";
+import { Scrollbars } from "react-custom-scrollbars-2";
 import ModalEditorShroudMenu from "./ModalEditorShroudMenu";
 
 interface ModalEditorProps {
