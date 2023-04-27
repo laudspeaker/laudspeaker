@@ -137,6 +137,7 @@ export enum PrimaryButtonPosition {
 }
 
 export interface PrimaryButton {
+  content: string;
   hidden: boolean;
   fillColor: Color;
   borderColor: Color;
@@ -181,6 +182,7 @@ export interface Dismiss {
   color: Color;
   timedDismiss: TimedDismiss;
   textSize: number;
+  content: string;
   type: DismissType;
 }
 

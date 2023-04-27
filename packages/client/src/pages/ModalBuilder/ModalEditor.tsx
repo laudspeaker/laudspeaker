@@ -23,6 +23,7 @@ import ModalEditorAdditionalClicks from "./ModalEditorAdditionalClicks";
 import ModalEditorOpenURL from "./ModalEditorOpenURL";
 import { Scrollbars } from "react-custom-scrollbars-2";
 import ModalEditorShroudMenu from "./ModalEditorShroudMenu";
+import ModalEditorPersonalization from "./ModalEditorPersonalization";
 
 interface ModalEditorProps {
   modalState: ModalState;
@@ -111,6 +112,7 @@ const ModalEditor: FC<ModalEditorProps> = ({
           modalState={modalState}
           setModalState={setModalState}
           returnBack={handleBackClick}
+          handleEditorModeSet={handleEditorModeSet}
         />
       ),
     },
@@ -122,6 +124,7 @@ const ModalEditor: FC<ModalEditorProps> = ({
           modalState={modalState}
           setModalState={setModalState}
           returnBack={handleBackClick}
+          handleEditorModeSet={handleEditorModeSet}
         />
       ),
     },
@@ -214,7 +217,16 @@ const ModalEditor: FC<ModalEditorProps> = ({
       name: "Inset Variable",
       description:
         "Personalize text for each user by inserting a user property",
-      layout: <>person</>, // TODO: add on pearson initialization
+      layout: (
+        <ModalEditorPersonalization
+          modalState={modalState}
+          setModalState={setModalState}
+          currentMainMode={currentMainMode}
+          onOptionPick={handleEditorModeSet}
+          previousModes={previousModes}
+          actionData={actionData}
+        />
+      ),
     },
     [SubMenuOptions.OpenUrl]: {
       name: "Open URL",

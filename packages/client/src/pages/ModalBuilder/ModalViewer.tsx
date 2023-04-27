@@ -28,6 +28,8 @@ interface ModalViewerProps {
   modalState: ModalState;
   handleBodyChange: (body: string) => void;
   handleTitleChange: (title: string) => void;
+  handlePrimaryButtonTextChange: (text: string) => void;
+  handleDismissTextChange: (text: string) => void;
   handleEditorModeSet: (
     mode: EditorMenuOptions | SubMenuOptions,
     setPrevious?: boolean
@@ -101,6 +103,8 @@ const ModalViewer: FC<ModalViewerProps> = ({
   handleTitleChange,
   handleEditorModeSet,
   editorMode,
+  handleDismissTextChange,
+  handlePrimaryButtonTextChange,
 }) => {
   const CanvasBackground: Record<BackgroundType, string> = {
     [BackgroundType.SOLID]: `${
@@ -272,7 +276,7 @@ const ModalViewer: FC<ModalViewerProps> = ({
             </div>
           ) : (
             <div className="relative">
-              <div className="p-[5px]">close</div>
+              <div className="p-[5px]">{modalState.dismiss.content}</div>
 
               <div
                 className="absolute rounded top-0 left-0 h-full"
@@ -285,7 +289,20 @@ const ModalViewer: FC<ModalViewerProps> = ({
                   width: "100%",
                 }}
               >
-                <div className="p-[5px]">close</div>
+                {editorMode === EditorMenuOptions.DISMISS ? (
+                  <input
+                    type="text"
+                    value={modalState.dismiss.content}
+                    onChange={(e) => handleDismissTextChange(e.target.value)}
+                    style={{
+                      fontSize: "inherit",
+                      fontWeight: "inherit",
+                    }}
+                    className="bg-transparent p-0 max-w-full h-full border-transparent"
+                  />
+                ) : (
+                  <div className="p-[5px]">{modalState.dismiss.content}</div>
+                )}
               </div>
             </div>
           )}
@@ -471,7 +488,18 @@ const ModalViewer: FC<ModalViewerProps> = ({
                 borderRadius: `${modalState.primaryButton.borderRadius.value}${modalState.primaryButton.borderRadius.unit}`,
               }}
             >
-              <button>Read more</button>
+              {editorMode === EditorMenuOptions.PRIMARY ? (
+                <input
+                  type="text"
+                  value={modalState.primaryButton.content}
+                  onChange={(e) =>
+                    handlePrimaryButtonTextChange(e.target.value)
+                  }
+                  className="bg-transparent p-0 max-w-full h-full border-transparent"
+                />
+              ) : (
+                <button>{modalState.primaryButton.content}</button>
+              )}
             </div>
           </div>
         </div>

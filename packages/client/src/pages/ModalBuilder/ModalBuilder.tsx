@@ -200,6 +200,7 @@ We've made some changes to our styling and our navigation. We did this to speed 
     },
     primaryButton: {
       hidden: false,
+      content: "Read more",
       fillColor: "#1A86FF",
       borderColor: "#64CF67",
       textColor: "#FFFFFF",
@@ -210,6 +211,7 @@ We've made some changes to our styling and our navigation. We did this to speed 
     },
     dismiss: {
       hidden: true,
+      content: "close",
       type: DismissType.CROSS,
       textSize: 14,
       color: "#FFFFFF",
@@ -240,19 +242,25 @@ We've made some changes to our styling and our navigation. We did this to speed 
   const [templateId, setTemplateId] = useState<string>();
   const [saveState, setSaveState] = useState<SaveState>(SaveState.SAVED);
   const [isPreview, setIsPreview] = useState(false);
+  const [firstRender, setFirstRender] = useState(true);
 
   useLayoutEffect(() => {
     (async () => {
-      const { data } = await ApiService.get({
-        url: `${ApiConfig.getAllTemplates}/${name}`,
-      });
+      try {
+        const { data } = await ApiService.get({
+          url: `${ApiConfig.getAllTemplates}/${name}`,
+        });
 
-      setTemplateId(data.id);
-      setModalState(data.modalState || modalState);
+        setTemplateId(data.id);
+        setModalState(data.modalState || modalState);
+      } finally {
+        setFirstRender(false);
+      }
     })();
   }, []);
 
   const onSave = async () => {
+    if (firstRender) return;
     setSaveState(SaveState.SAVING);
     try {
       const reqBody = {
@@ -285,6 +293,7 @@ We've made some changes to our styling and our navigation. We did this to speed 
   };
 
   useEffect(() => {
+    if (firstRender) return;
     setSaveState(SaveState.EDITING);
   }, [modalState]);
 
@@ -411,6 +420,21 @@ We've made some changes to our styling and our navigation. We did this to speed 
                   setModalState({
                     ...modalState,
                     body: { ...modalState.body, content: body },
+                  })
+                }
+                handleDismissTextChange={(text) =>
+                  setModalState({
+                    ...modalState,
+                    dismiss: { ...modalState.dismiss, content: text },
+                  })
+                }
+                handlePrimaryButtonTextChange={(text) =>
+                  setModalState({
+                    ...modalState,
+                    primaryButton: {
+                      ...modalState.primaryButton,
+                      content: text,
+                    },
                   })
                 }
                 handleEditorModeSet={handleEditorModeSet}

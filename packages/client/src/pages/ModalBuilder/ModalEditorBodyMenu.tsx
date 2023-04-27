@@ -1,21 +1,28 @@
 import { useEffect } from "react";
 import ModalBuilderColorPicker from "./Elements/ModalBuilderColorPicker";
 import ModalBuilderNumberInput from "./Elements/ModalBuilderNumberInput";
+import ModalBuilderPersonalizationButton from "./Elements/ModalBuilderPersonalizationButton";
 import RemoveComponentButton from "./Elements/RemoveComponentButton";
 import { ModalState, textStyles, textStylesIcons } from "./ModalBuilder";
 import { textAlignment, textAlignmentIcons } from "./ModalEditor";
-import { SizeUnit, StylesVariants } from "./types";
+import { EditorMenuOptions } from "./ModalEditorMainMenu";
+import { SizeUnit, StylesVariants, SubMenuOptions } from "./types";
 
 interface IModalEditorBodyMenuProps {
   modalState: ModalState;
   setModalState: (modalState: ModalState) => void;
   returnBack: () => void;
+  handleEditorModeSet: (
+    mode: EditorMenuOptions | SubMenuOptions,
+    setPrevious?: boolean
+  ) => () => void;
 }
 
 const ModalEditorBodyMenu = ({
   modalState,
   setModalState,
   returnBack,
+  handleEditorModeSet,
 }: IModalEditorBodyMenuProps) => {
   useEffect(() => {
     setModalState({
@@ -180,6 +187,15 @@ const ModalEditorBodyMenu = ({
                 },
               })
             }
+          />
+        </div>
+      </div>
+      <div className="border-t-[1px] border-[#5D726D] my-[15px]" />
+      <div className="flex items-center justify-between">
+        <div>Personalization:</div>
+        <div className="flex items-center gap-[10px]">
+          <ModalBuilderPersonalizationButton
+            onClick={handleEditorModeSet(SubMenuOptions.Personalization, true)}
           />
         </div>
       </div>
