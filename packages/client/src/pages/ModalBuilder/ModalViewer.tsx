@@ -222,7 +222,7 @@ const ModalViewer: FC<ModalViewerProps> = ({
               }
             >
               <svg
-                className={`absolute top-1/2 left-1/2 -translate-x-[calc(50%-0.5px)] -translate-y-[calc(50%-1px)] -rotate-90 ${
+                className={`absolute top-1/2 left-1/2 -translate-x-[calc(50%-0.5px)] -translate-y-[calc(50%-1px)] ${
                   modalState.dismiss.timedDismiss.enabled &&
                   modalState.dismiss.timedDismiss.displayTimer
                     ? ""
@@ -235,24 +235,13 @@ const ModalViewer: FC<ModalViewerProps> = ({
               >
                 <circle
                   style={{
-                    color: modalState.dismiss.color,
-                  }}
-                  strokeWidth="2"
-                  stroke="currentColor"
-                  fill="transparent"
-                  r={modalState.dismiss.textSize / 2}
-                  cx={modalState.dismiss.textSize / 2 + 1}
-                  cy={modalState.dismiss.textSize / 2 + 1}
-                />
-                <circle
-                  style={{
                     color: modalState.dismiss.timedDismiss.timerColor,
                   }}
                   strokeWidth="2"
                   strokeDasharray={modalState.dismiss.textSize * Math.PI}
                   strokeDashoffset={
                     modalState.dismiss.textSize * Math.PI -
-                    100 * modalState.dismiss.textSize * Math.PI
+                    1 * modalState.dismiss.textSize * Math.PI
                   }
                   strokeLinecap="round"
                   stroke="currentColor"
@@ -275,8 +264,27 @@ const ModalViewer: FC<ModalViewerProps> = ({
               </span>
             </div>
           ) : (
-            <div className="relative">
-              <div className="p-[5px]">{modalState.dismiss.content}</div>
+            <div className="relative rotate-180">
+              <div className="text-transparent p-[5px] rotate-180">
+                {modalState.dismiss.content}
+              </div>
+
+              {editorMode === EditorMenuOptions.DISMISS ? (
+                <input
+                  type="text"
+                  value={modalState.dismiss.content}
+                  onChange={(e) => handleDismissTextChange(e.target.value)}
+                  style={{
+                    fontSize: "inherit",
+                    fontWeight: "inherit",
+                  }}
+                  className="absolute z-[9999] top-0 left-0 bg-transparent p-[5px] max-w-full h-full border-transparent rotate-180"
+                />
+              ) : (
+                <div className="absolute z-[9999] top-0 left-0 h-full p-[5px] rotate-180">
+                  {modalState.dismiss.content}
+                </div>
+              )}
 
               <div
                 className="absolute rounded top-0 left-0 h-full"
@@ -288,22 +296,7 @@ const ModalViewer: FC<ModalViewerProps> = ({
                       : "",
                   width: "100%",
                 }}
-              >
-                {editorMode === EditorMenuOptions.DISMISS ? (
-                  <input
-                    type="text"
-                    value={modalState.dismiss.content}
-                    onChange={(e) => handleDismissTextChange(e.target.value)}
-                    style={{
-                      fontSize: "inherit",
-                      fontWeight: "inherit",
-                    }}
-                    className="bg-transparent p-0 max-w-full h-full border-transparent"
-                  />
-                ) : (
-                  <div className="p-[5px]">{modalState.dismiss.content}</div>
-                )}
-              </div>
+              />
             </div>
           )}
         </div>
