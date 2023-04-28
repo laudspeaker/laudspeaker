@@ -21,7 +21,7 @@ const ModalEditorCanvasMenu = ({
   const bodyWidth = document.body.clientWidth;
 
   return (
-    <div className="text-white text-[14px] font-normal">
+    <div className="text-[14px] font-normal">
       <div className="flex items-start justify-between mb-[20px]">
         <div>Width:</div>
         <div>
@@ -94,9 +94,9 @@ const ModalEditorCanvasMenu = ({
         <div>Background:</div>
         <div className="flex select-none">
           <div
-            className={`flex justify-center items-center w-full h-[26px] border-white border-[1px] rounded-l-md cursor-pointer ${
+            className={`flex p-[5px_16px] justify-center items-center w-full border-[#E5E7EB] border-[1px] rounded-l-md cursor-pointer ${
               modalState.background.selected === BackgroundType.SOLID
-                ? "bg-white text-[#2f4a43]"
+                ? "bg-[#6366F1] text-white"
                 : "hover:bg-white hover:bg-opacity-25"
             }`}
             onClick={() =>
@@ -112,9 +112,9 @@ const ModalEditorCanvasMenu = ({
             Solid
           </div>
           <div
-            className={`flex justify-center items-center w-full h-[26px] border-white border-[1px] cursor-pointer ${
+            className={`flex p-[5px_16px] justify-center items-center w-full border-[#E5E7EB] border-[1px] cursor-pointer ${
               modalState.background.selected === BackgroundType.GRADIENT
-                ? "bg-white text-[#2f4a43]"
+                ? "bg-[#6366F1] text-white"
                 : "hover:bg-white hover:bg-opacity-25"
             }`}
             onClick={() =>
@@ -130,9 +130,9 @@ const ModalEditorCanvasMenu = ({
             Gradient
           </div>
           <div
-            className={`flex justify-center items-center w-full h-[26px] border-white border-[1px] rounded-r-md cursor-pointer ${
+            className={`flex p-[5px_16px] justify-center items-center w-full border-[#E5E7EB] border-[1px] rounded-r-md cursor-pointer ${
               modalState.background.selected === BackgroundType.IMAGE
-                ? "bg-white text-[#2f4a43]"
+                ? "bg-[#6366F1] text-white"
                 : "hover:bg-white hover:bg-opacity-25"
             }`}
             onClick={() =>

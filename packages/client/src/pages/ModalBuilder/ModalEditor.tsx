@@ -252,37 +252,50 @@ const ModalEditor: FC<ModalEditorProps> = ({
         y: 40,
       }}
     >
-      <div className="fixed w-[360px] z-[2147483646] max-h-[80vh] pb-[20px] rounded-xl shadow-lg bg-[#19362e]">
-        <div className="w-full p-[4px] mb-[10px]">
+      <div
+        className="fixed rounded-[8px] w-[360px] z-[2147483646] min-h-[475px] max-h-[600px] pb-[20px] shadow-lg bg-[#F9FAFB] text-[#111827] font-semibold leading-[28px]"
+        style={{
+          fontFamily: "Segoe UI",
+        }}
+      >
+        <div className="h-[8px] bg-[#4338CA] rounded-t-[8px]" />
+        <div className="w-full border-b-[1px] border-[#E5E7EB]">
           <div
             id="draggableHead"
-            className="w-full bg-[url(pages/ModalBuilder/Icons/DraggerBG.svg)] bg-no-repeat bg-right cursor-move py-[20px] flex flex-col px-[20px] font-medium text-white justify-center bg-[#2f4a43] rounded-xl"
+            className="w-full cursor-move flex flex-col font-medium justify-center"
           >
-            <div className="flex items-center text-[18px] mb-[4px]">
-              {editorMode !== EditorMenuOptions.MAIN && (
-                <LeftArrowSVG
-                  className="min-w-[34px] max-w-[34px] text-left cursor-pointer pr-[6px]"
-                  onClick={handleBackClick}
-                />
-              )}
-              <span>{menuOptions[editorMode]?.name}</span>
+            <div className="flex items-center text-[20px] px-[20px] py-[15px]">
+              <div>
+                <div className="flex">
+                  {editorMode !== EditorMenuOptions.MAIN && (
+                    <LeftArrowSVG
+                      className="min-w-[34px] max-w-[34px] text-left cursor-pointer pr-[6px]"
+                      onClick={handleBackClick}
+                    />
+                  )}
+                  <span className="mb-[5px]">
+                    {menuOptions[editorMode]?.name}
+                  </span>
+                </div>
+                <span className="block min-w-full text-[12px] leading-[20px] font-normal text-[#4B5563]">
+                  {menuOptions[editorMode]?.description}
+                </span>
+              </div>
             </div>
-            <small className="block min-w-full text-[11px]">
-              {menuOptions[editorMode]?.description}
-            </small>
           </div>
         </div>
-        <Scrollbars
-          className="w-full min-h-[400px] max-h-[400px]"
-          renderThumbVertical={(props) => (
-            <div {...props} className="!bg-blue-gray-300/20" />
-          )}
-        >
-          <div className="px-[24px] overflow-x-hidden">
-            {menuOptions[editorMode]?.layout}
-          </div>
-        </Scrollbars>
-        <div></div>
+        <div>
+          <Scrollbars
+            className="w-full min-h-[400px] max-h-[530px]"
+            renderThumbVertical={(props) => (
+              <div {...props} className="!bg-[#E5E7EB]/20" />
+            )}
+          >
+            <div className="p-[20px] w-[360px] overflow-x-hidden">
+              {menuOptions[editorMode]?.layout}
+            </div>
+          </Scrollbars>
+        </div>
       </div>
     </Draggable>
   );

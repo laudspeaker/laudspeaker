@@ -34,7 +34,7 @@ const ModalEditorMainMenu: FC<MainMenuProps> = ({
 }) => {
   const editorMenu = [
     {
-      title: "DESIGN",
+      title: "Design",
       elements: [
         {
           name: "Position",
@@ -75,7 +75,7 @@ const ModalEditorMainMenu: FC<MainMenuProps> = ({
       ],
     },
     {
-      title: "INTERACTIONS",
+      title: "Interactions",
       elements: [
         {
           name: "Dismiss",
@@ -97,13 +97,17 @@ const ModalEditorMainMenu: FC<MainMenuProps> = ({
     <>
       {editorMenu.map((block, i) => (
         <span key={i}>
-          <div className="text-white/80 min-w-full mb-[4px]">{block.title}</div>
-          <div className="flex flex-wrap w-full ">
+          <div className={`min-w-full ${i === 0 ? "" : "mt-[10px]"}`}>
+            {block.title}
+          </div>
+          <div className="flex justify-between flex-wrap w-full">
             {block.elements.map((el, i2) => (
-              <div key={i2} className="w-1/2 pr-[6px] pb-[6px]">
+              <div key={i2} className="w-[155px] mt-[10px]">
                 <GenericButton
-                  customClasses={`relative w-full flex text-[12px] !border-[2px] !border-[#2f4a43] !outline-none !ring-transparent !focus:!ring-transparent !font-normal !rounded-[8px] !p-[6px] flex align-center whitespace-nowrap overflow-hidden ${
-                    el.hidden ? "!bg-[#19362e]" : "!bg-[#2f4a43]"
+                  customClasses={`relative w-full flex text-[12px] !border-[2px] !outline-none !ring-transparent !focus:!ring-transparent !font-normal !rounded-[8px] !p-[6px] flex align-center whitespace-nowrap overflow-hidden border-[1px] ${
+                    el.hidden
+                      ? "!bg-[#FFFFFF] border-[#E5E7EB] text-[#4B5563] hover:border-[#6366F1] hover:text-[#6366F1]"
+                      : "!bg-[#EEF2FF] border-[#6366F1] !text-[#4338CA]"
                   }`}
                   onClick={onOptionPick(el.option, true)}
                 >
@@ -113,8 +117,8 @@ const ModalEditorMainMenu: FC<MainMenuProps> = ({
                   <span className="!pr-[30px] text-ellipsis w-full block text-left overflow-hidden">
                     {el.name}
                   </span>
-                  <div className="absolute opacity-0 hover:!opacity-100 bg-opacity-40 bg-white top-0 left-0 w-full h-full !rounded-[8px] transition-all border-[2px] border-white">
-                    <EditIconSVG className="absolute w-[20px] right-[10px] top-1/2 -translate-y-1/2 !text-white shadow-2xl rounded-full" />
+                  <div className="absolute opacity-0 hover:!opacity-100 bg-opacity-40 top-0 left-0 w-full h-full !rounded-[8px] transition-all border-[2px] border-white">
+                    <EditIconSVG className="absolute w-[20px] right-[10px] top-1/2 -translate-y-1/2 shadow-2xl rounded-full" />
                   </div>
                 </GenericButton>
               </div>

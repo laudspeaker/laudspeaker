@@ -8,11 +8,11 @@ interface SizeUnitPickerProps {
 
 const SizeUnitPicker: FC<SizeUnitPickerProps> = ({ value, onChange }) => {
   return (
-    <div className="flex items-center text-[#BAC3C0] gap-[5px] select-none min-w-[42px]">
+    <div className="flex items-center text-[#9CA3AF] gap-[5px] select-none min-w-[42px]">
       <span
         onClick={() => onChange(SizeUnit.PIXEL)}
-        className={`cursor-pointer hover:text-white ${
-          value === SizeUnit.PIXEL ? "text-white" : ""
+        className={`cursor-pointer hover:text-[#111827] ${
+          value === SizeUnit.PIXEL ? "text-[#111827]" : ""
         }`}
       >
         PX
@@ -20,8 +20,8 @@ const SizeUnitPicker: FC<SizeUnitPickerProps> = ({ value, onChange }) => {
       <span>|</span>
       <span
         onClick={() => onChange(SizeUnit.PERCENTAGE)}
-        className={`cursor-pointer hover:text-white ${
-          value === SizeUnit.PERCENTAGE ? "text-white" : ""
+        className={`cursor-pointer hover:text-[#111827] ${
+          value === SizeUnit.PERCENTAGE ? "text-[#111827]" : ""
         }`}
       >
         %

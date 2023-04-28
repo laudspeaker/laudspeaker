@@ -35,7 +35,7 @@ const ModalBuilderNumberInput: FC<ModalBuilderNumberInputProps> = ({
   }, [unit]);
 
   return (
-    <div className="relative">
+    <div className="relative border-[1px] rounded-[2px] border-[#E5E7EB]">
       <input
         id={id}
         name={name}
