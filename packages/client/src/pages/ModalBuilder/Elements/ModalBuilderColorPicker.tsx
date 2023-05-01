@@ -33,7 +33,7 @@ const ModalBuilderColorPicker: FC<ModalBuilderColorPickerProps> = ({
     <div ref={ref} className="relative">
       <input
         type="text"
-        className={`!m-0 max-w-[70px] max-h-[26px] text-[12px] rounded-md bg-transparent border-white focus:border-white focus:ring-transparent p-[4px] pl-[20px] ${
+        className={`!m-0 w-[180px] h-[32px] text-[14px] rounded-[2px] bg-transparent border-[#E5E7EB] focus:border-[#E5E7EB] focus:ring-transparent py-[5px] pl-[30px] pr-[12px] ${
           className ? className : ""
         }`}
         value={color}
@@ -50,7 +50,7 @@ const ModalBuilderColorPicker: FC<ModalBuilderColorPickerProps> = ({
         }
       />
       <div
-        className="absolute w-[15px] h-[15px] top-1/2 left-[4px] -translate-y-1/2 rounded cursor-pointer"
+        className="absolute w-[15px] h-[15px] top-1/2 left-[12px] -translate-y-1/2 rounded cursor-pointer"
         style={{ backgroundColor: color }}
         onClick={() => setIsColorPickerModalOpen((prev) => !prev)}
       />
@@ -79,10 +79,6 @@ const ModalBuilderColorPicker: FC<ModalBuilderColorPickerProps> = ({
           </div>,
           document.body
         )}
-      <ArrowRight
-        className="absolute w-[20px] h-[16px]  cursor-pointer right-[2px] top-[50%] -translate-y-1/2"
-        onClick={() => setIsColorPickerModalOpen((prev) => !prev)}
-      />
     </div>
   );
 };

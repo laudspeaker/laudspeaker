@@ -17,8 +17,9 @@ const RemoveComponentButton: FC<RemoveComponentButtonProps> = ({
       customClasses="!bg-transparent !text-red-500 !text-[14px] !font-normal !p-0 !mt-[10px] !ring-0"
     >
       <div className="flex justify-between items-center">
-        <TrashIcon width={20} height={20} />
-        <span className="whitespace-nowrap">{children}</span>
+        <span className="whitespace-nowrap !text-[#EB5757] underline">
+          {children}
+        </span>
       </div>
     </GenericButton>
   );

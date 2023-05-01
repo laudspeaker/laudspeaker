@@ -40,7 +40,7 @@ const ModalBuilderNumberInput: FC<ModalBuilderNumberInputProps> = ({
         id={id}
         name={name}
         type="text"
-        className={`!m-0 max-w-[70px] max-h-[26px] text-[12px] rounded-md bg-transparent border-white focus:border-white focus:ring-transparent p-[4px] ${
+        className={`!m-0 w-[180px] h-[32px] text-[14px] rounded-md bg-transparent border-white focus:border-white focus:ring-transparent p-[4px_12px] ${
           className || ""
         }`}
         value={value + unit}

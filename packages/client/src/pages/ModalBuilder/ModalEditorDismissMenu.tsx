@@ -66,21 +66,21 @@ const ModalEditorDismissMenu = ({
   }, []);
 
   return (
-    <div className="text-white flex flex-col text-[14px] font-normal">
+    <div className="flex flex-col text-[14px] font-normal">
       <div>Type:</div>
       <div className="flex select-none">
         {mediaDismissTypes.map((el, i) => (
           <div
             key={el}
-            className={`flex justify-center items-center w-full h-[26px] border-white border-[1px] cursor-pointer ${
+            className={`flex justify-center items-center w-full h-[32px] border-[#E5E7EB] border-[1px] cursor-pointer ${
               modalState.dismiss.type === el
-                ? "bg-white text-[#2f4a43]"
+                ? "bg-[#6366F1] text-white"
                 : "hover:bg-white hover:bg-opacity-25"
             } ${
               i === 0
-                ? "rounded-l-md"
+                ? "rounded-l-[2px]"
                 : i === mediaDismissTypes.length - 1
-                ? "rounded-r-md"
+                ? "rounded-r-[2px]"
                 : 0
             }`}
             onClick={() =>
@@ -100,10 +100,8 @@ const ModalEditorDismissMenu = ({
           {modalPositions.map((position) => (
             <li key={position}>
               <div
-                className={`flex justify-center items-center p-[2px] relative w-[35px] h-[35px] hover:bg-white hover:bg-opacity-25 rounded-md cursor-pointer text-transparent hover:text-white ${
-                  position === modalState.dismiss.position
-                    ? "border-white border-[2px] bg-white bg-opacity-25"
-                    : ""
+                className={`flex justify-center items-center p-[2px] relative w-[35px] h-[35px] hover:border-[1px] hover:border-[#818CF8] hover:bg-opacity-25 rounded-md cursor-pointer text-transparent hover:text-white ${
+                  position === modalState.dismiss.position ? "bg-[#C7D2FE]" : ""
                 }`}
                 onClick={() =>
                   setModalState({
@@ -146,7 +144,7 @@ const ModalEditorDismissMenu = ({
             <div className="w-full pl-[5px]">
               <ReactSlider
                 className="h-[20px] flex items-center justify-center mb-[8px]"
-                trackClassName="h-[5px] bg-[#22C55E] rounded-[4px]"
+                trackClassName="h-[4px] bg-[#818CF8] rounded-[4px]"
                 min={5}
                 max={25}
                 value={modalState.dismiss.textSize}
@@ -162,7 +160,7 @@ const ModalEditorDismissMenu = ({
                 renderThumb={(props) => (
                   <div
                     {...props}
-                    className="rounded-[100%] w-[16px] h-[16px] cursor-grab bg-white"
+                    className="rounded-[100%] w-[14px] h-[14px] cursor-grab bg-white border-[2px] border-[#818CF8]"
                   />
                 )}
               />
@@ -211,20 +209,20 @@ const ModalEditorDismissMenu = ({
       )}
       <div className="border-t-[1px] border-[#5D726D] my-[10px]" />
       <div className="w-full flex items-center justify-between gap-[10px]">
-        <div className="w-full">Timed Dismiss:</div>
-        <div className="flex w-full select-none">
+        <div className="">Timed Dismiss:</div>
+        <div className="flex w-[180px] select-none">
           {timedDismissList.map((el, i) => (
             <div
               key={el.name}
-              className={`flex justify-center items-center w-full h-[26px] border-white border-[1px] cursor-pointer ${
+              className={`flex justify-center items-center w-full h-[32px] border-[#E5E7EB] border-[1px] cursor-pointer ${
                 modalState.dismiss.timedDismiss.enabled === el.value
-                  ? "bg-white text-[#2f4a43]"
-                  : "hover:bg-white hover:bg-opacity-25"
+                  ? "bg-[#6366F1] text-white"
+                  : ""
               } ${
                 i === 0
-                  ? "rounded-l-md"
+                  ? "rounded-l-[2px]"
                   : i === mediaDismissTypes.length - 1
-                  ? "rounded-r-md"
+                  ? "rounded-r-[2px]"
                   : 0
               }`}
               onClick={() =>
@@ -272,20 +270,20 @@ const ModalEditorDismissMenu = ({
             </div>
           </div>
           <div className="w-full flex justify-between items-center mt-[10px] gap-[10px]">
-            <div className="w-full">Display Timer:</div>
-            <div className="flex w-full select-none">
+            <div className="">Display Timer:</div>
+            <div className="flex w-[180px] select-none">
               {timedDismissList.map((el, i) => (
                 <div
                   key={el.displayTimerText}
-                  className={`flex justify-center items-center w-full h-[26px] border-white border-[1px] cursor-pointer ${
+                  className={`flex justify-center items-center w-full h-[32px] border-[#E5E7EB] border-[1px] cursor-pointer ${
                     modalState.dismiss.timedDismiss.displayTimer === el.value
-                      ? "bg-white text-[#2f4a43]"
-                      : "hover:bg-white hover:bg-opacity-25"
+                      ? "bg-[#6366F1] text-white"
+                      : ""
                   } ${
                     i === 0
-                      ? "rounded-l-md"
+                      ? "rounded-l-[2px]"
                       : i === mediaDismissTypes.length - 1
-                      ? "rounded-r-md"
+                      ? "rounded-r-[2px]"
                       : 0
                   }`}
                   onClick={() =>

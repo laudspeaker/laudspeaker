@@ -1,5 +1,5 @@
 import React, { FC } from "react";
-import { SizeUnit } from "./types";
+import { SizeUnit } from "../types";
 
 interface SizeUnitPickerProps {
   value: SizeUnit;
@@ -8,7 +8,7 @@ interface SizeUnitPickerProps {
 
 const SizeUnitPicker: FC<SizeUnitPickerProps> = ({ value, onChange }) => {
   return (
-    <div className="flex items-center text-[#9CA3AF] gap-[5px] select-none min-w-[42px]">
+    <div className="flex items-center text-[#9CA3AF] gap-[5px] select-none w-[50px]">
       <span
         onClick={() => onChange(SizeUnit.PIXEL)}
         className={`cursor-pointer hover:text-[#111827] ${

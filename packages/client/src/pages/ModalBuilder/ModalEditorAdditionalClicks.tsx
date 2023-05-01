@@ -91,10 +91,10 @@ const ModalEditorAdditionalClicks = ({
             {block.options.map((el, i2) => (
               <div key={i2} className="w-1/2 pr-[6px] pb-[6px]">
                 <GenericButton
-                  customClasses={`relative w-full flex text-[12px] !border-[2px] !border-[#2f4a43] !outline-none !ring-transparent !focus:!ring-transparent !font-normal !rounded-[8px] !p-[6px] flex align-center whitespace-nowrap overflow-hidden ${
+                  customClasses={`relative w-full flex text-[12px] !border-[2px] !outline-none !ring-transparent !focus:!ring-transparent !font-normal !rounded-[8px] !p-[6px] flex align-center whitespace-nowrap overflow-hidden ${
                     actionData[currentMainMode]?.[el.action]?.hidden
-                      ? "!bg-[#19362e]"
-                      : "!bg-[#2f4a43]"
+                      ? "!bg-white !border-[#E5E7EB] !text-black"
+                      : "!bg-[#EEF2FF] !border-[#6366F1] !text-[#4338CA]"
                   }`}
                   onClick={handleOptionClick(el.pageType, el.action)}
                 >
@@ -104,9 +104,6 @@ const ModalEditorAdditionalClicks = ({
                   <span className="!pr-[30px] text-ellipsis w-full block text-left overflow-hidden">
                     {el.name}
                   </span>
-                  <div className="absolute opacity-0 hover:!opacity-100 bg-opacity-40 bg-white top-0 left-0 w-full h-full !rounded-[8px] transition-all border-[2px] border-white">
-                    <EditIconSVG className="absolute w-[20px] right-[10px] top-1/2 -translate-y-1/2 !text-white shadow-2xl rounded-full" />
-                  </div>
                 </GenericButton>
               </div>
             ))}

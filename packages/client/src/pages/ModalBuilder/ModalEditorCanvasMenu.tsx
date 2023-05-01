@@ -4,7 +4,7 @@ import ModalBuilderNumberInput from "./Elements/ModalBuilderNumberInput";
 import ModalMediaUploader from "./Elements/ModalMediaUploader";
 import { ModalState } from "./ModalBuilder";
 import { EditorMenuOptions } from "./ModalEditorMainMenu";
-import SizeUnitPicker from "./SizeUnitPicker";
+import SizeUnitPicker from "./Elements/SizeUnitPicker";
 import { BackgroundType, SizeUnit } from "./types";
 
 interface IModalEditorCanvasMenuProps {
@@ -28,7 +28,7 @@ const ModalEditorCanvasMenu = ({
           <div>
             <ReactSlider
               className="h-[20px] flex items-center justify-center mb-[8px]"
-              trackClassName="h-[5px] bg-[#22C55E] rounded-[4px]"
+              trackClassName="h-[4px] bg-[#818CF8] rounded-[4px]"
               min={modalState.width.unit === SizeUnit.PIXEL ? 100 : 1}
               max={modalState.width.unit === SizeUnit.PIXEL ? bodyWidth : 100}
               value={modalState.width.value}
@@ -41,7 +41,7 @@ const ModalEditorCanvasMenu = ({
               renderThumb={(props) => (
                 <div
                   {...props}
-                  className="rounded-[100%] w-[16px] h-[16px] cursor-grab bg-white"
+                  className="rounded-[100%] w-[14px] h-[14px] cursor-grab bg-white border-[2px] border-[#818CF8]"
                 />
               )}
             />
@@ -58,6 +58,7 @@ const ModalEditorCanvasMenu = ({
                   width: { ...modalState.width, value },
                 })
               }
+              className="!w-[120px]"
             />
             <SizeUnitPicker
               value={modalState.width.unit}
@@ -94,7 +95,7 @@ const ModalEditorCanvasMenu = ({
         <div>Background:</div>
         <div className="flex select-none">
           <div
-            className={`flex p-[5px_16px] justify-center items-center w-full border-[#E5E7EB] border-[1px] rounded-l-md cursor-pointer ${
+            className={`flex p-[5px_16px] justify-center items-center w-full border-[#E5E7EB] border-[1px] rounded-[2px] cursor-pointer ${
               modalState.background.selected === BackgroundType.SOLID
                 ? "bg-[#6366F1] text-white"
                 : "hover:bg-white hover:bg-opacity-25"
@@ -130,7 +131,7 @@ const ModalEditorCanvasMenu = ({
             Gradient
           </div>
           <div
-            className={`flex p-[5px_16px] justify-center items-center w-full border-[#E5E7EB] border-[1px] rounded-r-md cursor-pointer ${
+            className={`flex p-[5px_16px] justify-center items-center w-full border-[#E5E7EB] border-[1px] rounded-[2px] cursor-pointer ${
               modalState.background.selected === BackgroundType.IMAGE
                 ? "bg-[#6366F1] text-white"
                 : "hover:bg-white hover:bg-opacity-25"

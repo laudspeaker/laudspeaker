@@ -72,7 +72,7 @@ const ModalEditorPrimaryMenu = ({
   }, []);
 
   return (
-    <div className="text-white flex flex-col text-[14px] font-normal">
+    <div className="flex flex-col text-[14px] font-normal">
       <div className="flex items-center justify-between mb-[10px]">
         <div>Fill:</div>
         <div className="flex items-center pl-[5px] gap-[10px]">
@@ -151,15 +151,15 @@ const ModalEditorPrimaryMenu = ({
           />
         </div>
       </div>
-      <div className="flex w-full">
-        <div className="w-full flex items-center">Position:</div>
-        <ul className="flex w-full items-center justify-between pb-[10px] pt-[20px]">
+      <div className="flex justify-between items-center w-full pt-[10px]">
+        <div className="flex items-center">Position:</div>
+        <ul className="flex w-[180px] items-center justify-between">
           {primaryPostions.map((el) => (
             <li key={el.type}>
               <div
-                className={`flex justify-center items-center p-[2px] relative w-[35px] h-[35px] hover:bg-white hover:bg-opacity-25 rounded-md cursor-pointer text-transparent hover:text-white ${
+                className={`flex justify-center items-center p-[2px] relative w-[35px] h-[35px] hover:border-[1px] hover:border-[#818CF8] rounded-md cursor-pointer text-transparent hover:text-white ${
                   el.type === modalState.primaryButton.position
-                    ? "border-white border-[2px] bg-white bg-opacity-25"
+                    ? "bg-[#C7D2FE]"
                     : ""
                 }`}
                 onClick={() =>
@@ -190,9 +190,9 @@ const ModalEditorPrimaryMenu = ({
             {MediaClickActions.map((el) => (
               <li key={el.actionOnClick}>
                 <div
-                  className={`flex justify-center items-center p-[2px] relative w-[35px] h-[35px] hover:bg-white hover:bg-opacity-25 rounded-md cursor-pointer text-transparent hover:text-white ${
+                  className={`flex justify-center items-center p-[2px] relative w-[35px] h-[35px] hover:border-[1px] hover:border-[#818CF8] rounded-md cursor-pointer text-transparent hover:text-white ${
                     el.actionOnClick === modalState.media.actionOnClick
-                      ? "border-white border-[2px] bg-white bg-opacity-25"
+                      ? "bg-[#C7D2FE]"
                       : ""
                   }`}
                   onClick={() =>

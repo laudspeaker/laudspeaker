@@ -10,7 +10,7 @@ import {
   ModalPositionTopLeftIcon,
   ModalPositionTopRightIcon,
 } from "./Icons/ModalBuilderIcons";
-import SizeUnitPicker from "./SizeUnitPicker";
+import SizeUnitPicker from "./Elements/SizeUnitPicker";
 import { ModalPosition } from "./types";
 
 interface IModalPositionBodyMenuProps {
@@ -80,6 +80,7 @@ const ModalPositionBodyMenu = ({
               })
             }
             unit={modalState.xOffset.unit}
+            className="!w-[130px]"
           />
           <SizeUnitPicker
             value={modalState.xOffset.unit}
@@ -106,6 +107,7 @@ const ModalPositionBodyMenu = ({
               })
             }
             unit={modalState.yOffset.unit}
+            className="!w-[130px]"
           />
           <SizeUnitPicker
             value={modalState.yOffset.unit}

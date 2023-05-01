@@ -104,10 +104,10 @@ const ModalEditorMainMenu: FC<MainMenuProps> = ({
             {block.elements.map((el, i2) => (
               <div key={i2} className="w-[155px] mt-[10px]">
                 <GenericButton
-                  customClasses={`relative w-full flex text-[12px] !border-[2px] !outline-none !ring-transparent !focus:!ring-transparent !font-normal !rounded-[8px] !p-[6px] flex align-center whitespace-nowrap overflow-hidden border-[1px] ${
+                  customClasses={`relative w-full flex text-[12px] !border-[2px] !outline-none !ring-transparent !focus:!ring-transparent !font-normal !rounded-[8px] !p-[6px] flex align-center whitespace-nowrap overflow-hidden ${
                     el.hidden
-                      ? "!bg-[#FFFFFF] border-[#E5E7EB] text-[#4B5563] hover:border-[#6366F1] hover:text-[#6366F1]"
-                      : "!bg-[#EEF2FF] border-[#6366F1] !text-[#4338CA]"
+                      ? "!bg-[#FFFFFF] border-[#E5E7EB] !text-[#4B5563] hover:border-[#6366F1] hover:!text-[#6366F1]"
+                      : "!bg-[#EEF2FF] !border-[#6366F1] hover:border-[#6366F1] !text-[#4338CA]"
                   }`}
                   onClick={onOptionPick(el.option, true)}
                 >

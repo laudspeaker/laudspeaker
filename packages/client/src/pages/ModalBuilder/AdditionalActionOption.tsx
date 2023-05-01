@@ -61,21 +61,20 @@ const AdditionalActionOption = ({
 
   return (
     <div className="flex w-full justify-between items-center">
-      <div className="w-full">Additional action:</div>
+      <div className="">Additional action:</div>
       <GenericButton
-        customClasses={`relative w-full flex text-[12px] !border-[2px] !border-[#2f4a43] !outline-none !ring-transparent !focus:!ring-transparent !font-normal !rounded-[8px] !p-[6px] flex align-center whitespace-nowrap overflow-hidden ${
-          false ? "!bg-[#19362e]" : "!bg-[#2f4a43]"
+        customClasses={`relative w-[180px] h-[32px] flex text-[12px] !border-[2px] !border-[#E5E7EB] !outline-none !ring-transparent !focus:!ring-transparent !font-normal !rounded-[8px] !p-[6px] flex align-center whitespace-nowrap overflow-hidden ${
+          false ? "" : "!bg-white"
         }`}
         onClick={onOptionPick(SubMenuOptions.AdditionalClicks, true)}
       >
-        <span className="min-w-[16px] max-w-[16px] block mr-[8px]">
-          {actionsMeta.action.icon}
-        </span>
-        <span className="!pr-[30px] text-ellipsis w-full block text-left overflow-hidden">
-          {actionsMeta.action.name}
-        </span>
-        <div className="absolute opacity-0 hover:!opacity-100 bg-opacity-40 bg-white top-0 left-0 w-full h-full !rounded-[8px] transition-all border-[2px] border-white">
-          <EditIconSVG className="absolute w-[20px] right-[10px] top-1/2 -translate-y-1/2 !text-white shadow-2xl rounded-full" />
+        <div className="px-[12px] py-[5px] flex items-center">
+          <span className="min-w-[16px] max-w-[16px] block mr-[8px] text-[#111827]">
+            {actionsMeta.action.icon}
+          </span>
+          <span className="!pr-[30px] text-ellipsis w-full block text-left overflow-hidden text-[#111827]">
+            {actionsMeta.action.name}
+          </span>
         </div>
       </GenericButton>
     </div>

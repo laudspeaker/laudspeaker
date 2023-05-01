@@ -55,22 +55,22 @@ const ModalEditorOpenURL = ({
 
   return (
     <>
-      <div className="text-white text-[14px] my-[10px]">Action URL:</div>
+      <div className="text-[14px] my-[10px]">Action URL:</div>
       <textarea
         value={actionData[currentMainMode]?.OPENURL.object?.url || ""}
-        className="resize-none w-full border-[1px] text-white border-white focus:border-white rounded-[5px] bg-transparent outline-none focus:outline-none shadow-none text-[12px]"
+        className="resize-none w-full border-[1px] border-[#D9D9D9] rounded-[5px] bg-transparent outline-none focus:outline-none shadow-none text-[12px]"
         placeholder="URL (google.com)"
         onChange={(ev) => handleOpenURLChange({ link: ev.target.value || "" })}
       />
       <div className="flex mt-[16px] w-full">
-        <div className="text-white text-[14px] w-full">Open in a new Tab:</div>
+        <div className="text-[14px] w-full">Open in a new Tab:</div>
         <div className="w-full flex justify-end">
           <Switch
             checked={actionData[currentMainMode]?.OPENURL.object?.openNewTab}
             onChange={(ev: boolean) => handleOpenURLChange({ isNewTab: ev })}
             className={`${
               actionData[currentMainMode]?.OPENURL.object?.openNewTab
-                ? "bg-[#22c55d]"
+                ? "bg-[#6366F1]"
                 : "bg-[#bac3c0]"
             } relative inline-flex h-6 w-11 items-center rounded-full`}
           >

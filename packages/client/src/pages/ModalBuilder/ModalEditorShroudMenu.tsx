@@ -25,7 +25,7 @@ const ModalEditorShroudMenu: FC<ModalEditorShroudMenuProps> = ({
   }, []);
 
   return (
-    <div className="text-white flex flex-col text-[14px] font-normal">
+    <div className="flex flex-col text-[14px] font-normal">
       <div className="flex items-center justify-between mb-[10px]">
         <div>Color:</div>
         <div className="flex items-center pl-[5px] gap-[10px]">
@@ -64,11 +64,11 @@ const ModalEditorShroudMenu: FC<ModalEditorShroudMenuProps> = ({
       </div>
       <div className="flex items-center justify-between gap-[10px]">
         <div className="w-full">Blur:</div>
-        <div className="!min-w-[150px]">
+        <div className="w-[180px]">
           <div>
             <ReactSlider
-              className="h-[20px] flex items-center justify-center mb-[8px]"
-              trackClassName="h-[5px] bg-[#22C55E] rounded-[4px]"
+              className="h-[20px] flex items-center justify-center mb-[8px] w-[180px]"
+              trackClassName="h-[4px] bg-[#818CF8] rounded-[4px]"
               min={0}
               max={6}
               value={modalState.shroud.blur}
@@ -82,30 +82,13 @@ const ModalEditorShroudMenu: FC<ModalEditorShroudMenuProps> = ({
               renderThumb={(props) => (
                 <div
                   {...props}
-                  className="rounded-[100%] w-[16px] h-[16px] cursor-grab bg-white"
+                  className="rounded-[100%] w-[16px] h-[16px] cursor-grab bg-white border-[2px] border-[#818CF8]"
                 />
               )}
             />
           </div>
-          <div className="text-[#BAC3C0]">
-            <div className="flex justify-between items-center text-[4px] px-[6px] pb-[5px]">
-              <span>|</span>
-              <span>|</span>
-              <span>|</span>
-              <span>|</span>
-              <span>|</span>
-              <span>|</span>
-              <span>|</span>
-            </div>
-            <div className="flex justify-between items-center text-[14px]">
-              <span>Off</span>
-              <span>Max</span>
-            </div>
-          </div>
         </div>
       </div>
-
-      <div className="border-t-[1px] border-[#5D726D] my-[10px]" />
 
       <RemoveComponentButton
         onClick={() => {

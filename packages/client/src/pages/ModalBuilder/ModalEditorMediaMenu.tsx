@@ -5,7 +5,7 @@ import {
   MediaPositionMap,
   ModalState,
 } from "./ModalBuilder";
-import SizeUnitPicker from "./SizeUnitPicker";
+import SizeUnitPicker from "./Elements/SizeUnitPicker";
 import { MediaType, mediaTypes, SizeUnit, SubMenuOptions } from "./types";
 import { EditorMenuOptions } from "./ModalEditorMainMenu";
 import { IAdditionalActionData } from "./ModalEditor";
@@ -42,22 +42,20 @@ const ModalEditorMediaMenu = ({
   }, []);
 
   return (
-    <div className="text-white text-[14px] font-normal">
+    <div className="text-[14px] font-normal">
       <div className="flex flex-col gap-[10px]">
         <div>Type:</div>
         <div className="flex select-none">
           {mediaTypes.map((el, i) => (
             <div
               key={el}
-              className={`flex justify-center items-center w-full h-[26px] border-white border-[1px] cursor-pointer ${
-                modalState.media.type === el
-                  ? "bg-white text-[#2f4a43]"
-                  : "hover:bg-white hover:bg-opacity-25"
+              className={`flex justify-center items-center w-full h-[32px] border-[#E5E7EB] border-[1px] cursor-pointer ${
+                modalState.media.type === el ? "bg-[#6366F1] text-white" : ""
               } ${
                 i === 0
-                  ? "rounded-l-md"
+                  ? "rounded-l-[2px]"
                   : i === mediaTypes.length - 1
-                  ? "rounded-r-md"
+                  ? "rounded-r-[2px]"
                   : 0
               }`}
               onClick={() =>
@@ -102,7 +100,7 @@ const ModalEditorMediaMenu = ({
             <span className="text-[14px] font-thin">Video URL:</span>
             <textarea
               value={modalState.media.videoUrl || ""}
-              className="resize-none border-[1px] border-white focus:border-white rounded-[5px] bg-transparent outline-none focus:outline-none shadow-none text-[12px]"
+              className="resize-none border-[1px] border-[#D9D9D9] rounded-[5px] bg-transparent outline-none focus:outline-none shadow-none text-[12px]"
               placeholder="Video URL (YouTube, Facebook, Instagram, Twitter)"
               onChange={(el) =>
                 setModalState({
@@ -130,9 +128,9 @@ const ModalEditorMediaMenu = ({
               {MediaPositionMap.map((el) => (
                 <li key={el.position}>
                   <div
-                    className={`flex justify-center items-center p-[2px] relative w-[35px] h-[35px] hover:bg-white hover:bg-opacity-25 rounded-md cursor-pointer text-transparent hover:text-white ${
+                    className={`flex justify-center items-center p-[2px] relative w-[35px] h-[35px] hover:border-[1px] hover:border-[#818CF8] rounded-md cursor-pointer text-transparent hover:text-white ${
                       el.position === modalState.media.position
-                        ? "border-white border-[2px] bg-white bg-opacity-25"
+                        ? "bg-[#C7D2FE]"
                         : ""
                     }`}
                     onClick={() =>
@@ -157,11 +155,11 @@ const ModalEditorMediaMenu = ({
         </div>
         <div className="flex items-start justify-between mb-[10px]">
           <div>Media height:</div>
-          <div>
+          <div className="w-[180px]">
             <div>
               <ReactSlider
                 className="h-[20px] flex items-center justify-center mb-[8px]"
-                trackClassName="h-[5px] bg-[#22C55E] rounded-[4px]"
+                trackClassName="h-[4px] bg-[#818CF8] rounded-[4px]"
                 min={modalState.media.height.unit === SizeUnit.PIXEL ? 20 : 1}
                 max={
                   modalState.media.height.unit === SizeUnit.PIXEL
@@ -181,7 +179,7 @@ const ModalEditorMediaMenu = ({
                 renderThumb={(props) => (
                   <div
                     {...props}
-                    className="rounded-[100%] w-[16px] h-[16px] cursor-grab bg-white"
+                    className="rounded-[100%] w-[14px] h-[14px] cursor-grab bg-white border-[1px] border-[#818CF8]"
                   />
                 )}
               />
@@ -202,6 +200,7 @@ const ModalEditorMediaMenu = ({
                     },
                   })
                 }
+                className="!w-[120px]"
               />
               <SizeUnitPicker
                 value={modalState.media.height.unit}

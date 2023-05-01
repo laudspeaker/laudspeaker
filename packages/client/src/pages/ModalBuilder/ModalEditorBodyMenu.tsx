@@ -88,18 +88,16 @@ const ModalEditorBodyMenu = ({
   };
 
   return (
-    <div className="text-white text-[14px] font-normal">
-      <div className="flex items-center justify-between pb-[4px] pt-[20px]">
+    <div className="text-[14px] font-normal">
+      <div className="flex items-center justify-between pb-[4px]">
         <div>Alignment:</div>
 
-        <ul className="flex items-center justify-between">
+        <ul className="flex items-center justify-between w-[180px]">
           {textAlignment.map((alignment) => (
             <li key={alignment}>
               <div
-                className={`flex justify-center items-center p-[2px] relative w-[32px] h-[32px] hover:bg-white hover:bg-opacity-25 rounded-md cursor-pointer ${
-                  alignment === modalState.body.alignment
-                    ? "border-white border-[2px] bg-white bg-opacity-25"
-                    : ""
+                className={`flex justify-center items-center p-[2px] relative w-[32px] h-[32px] hover:border-[1px] hover:border-[#818CF8] rounded-md cursor-pointer ${
+                  alignment === modalState.body.alignment ? "bg-[#C7D2FE]" : ""
                 }`}
                 onClick={() =>
                   setModalState({
@@ -114,11 +112,11 @@ const ModalEditorBodyMenu = ({
           ))}
         </ul>
       </div>
-      <div className="border-t-[1px] border-[#5D726D] my-[15px]" />
+      <div className="border-t-[1px] border-[#5D726D] my-[10px]" />
       <div className="flex items-center justify-between">
         <div>Styles:</div>
         <div className="flex items-center gap-[10px]">
-          <ul className="flex items-center justify-between">
+          <ul className="flex items-center justify-between w-[180px]">
             {textStyles.map((style) => (
               <li key={style}>
                 <div
@@ -137,7 +135,7 @@ const ModalEditorBodyMenu = ({
       <small className="w-full mt-[10px] text-[#BAC3C0]">
         Select text before applying
       </small>
-      <div className="border-t-[1px] border-[#5D726D] my-[15px]" />
+      <div className="border-t-[1px] border-[#5D726D] my-[10px]" />
       <div className="flex items-center justify-between mb-[10px]">
         <div>Text:</div>
         <div className="flex items-center gap-[10px]">
@@ -168,7 +166,7 @@ const ModalEditorBodyMenu = ({
           />
         </div>
       </div>
-      <div className="border-t-[1px] border-[#5D726D] my-[15px]" />
+      <div className="border-t-[1px] border-[#5D726D] my-[10px]" />
       <div className="flex items-center justify-between">
         <div>Font size:</div>
         <div className="flex items-center gap-[10px]">
@@ -190,7 +188,7 @@ const ModalEditorBodyMenu = ({
           />
         </div>
       </div>
-      <div className="border-t-[1px] border-[#5D726D] my-[15px]" />
+      <div className="border-t-[1px] border-[#5D726D] my-[10px]" />
       <div className="flex items-center justify-between">
         <div>Personalization:</div>
         <div className="flex items-center gap-[10px]">
