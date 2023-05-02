@@ -58,9 +58,6 @@ const ModalMediaUploader = ({
         },
         onUploadProgress: ({ loaded, total }) => {
           if (total) setProgress(loaded / total);
-          //this.setState({
-          //fileprogress: p.loaded / p.total
-          //})
         },
       });
 
@@ -110,7 +107,9 @@ const ModalMediaUploader = ({
 
   return isMediaLoading ? (
     <div className="relative flex flex-col justify-center items-center gap-[10px] border-dashed border-[2px] p-[10px] h-[100px] w-[100px] rounded-md border-[#D9D9D9]">
-      <div>Uploading...</div>
+      <div>
+        {imageList[currentMainMode].key ? "Deleting..." : "Uploading..."}
+      </div>
 
       <div className="w-full bg-gray-200 rounded-full h-1 dark:bg-gray-700">
         <div

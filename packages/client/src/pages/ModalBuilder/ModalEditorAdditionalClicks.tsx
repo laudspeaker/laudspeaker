@@ -84,7 +84,12 @@ const ModalEditorAdditionalClicks = ({
     <div className="p-[20px]">
       {AdditionClickMenu.map((block, i) => (
         <span key={i}>
-          <div className="text-white/80 min-w-full mb-[6px] mt-[10px]">
+          <div
+            className="text-[#111827] text-[14px] min-w-full mb-[6px] mt-[10px]"
+            style={{
+              fontFamily: "Segoe UI",
+            }}
+          >
             {block.blockLabel}
           </div>
           <div className="flex flex-wrap w-full ">

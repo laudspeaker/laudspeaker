@@ -7,7 +7,7 @@
     "@emotion/styled": "11.9.3",
     "@headlessui/react": "^1.7.3",
     "@heroicons/react": "^2.0.12",
-    "@laudspeaker/laudspeaker-js": "^0.1.2",
+    "@laudspeaker/laudspeaker-js": "^0.1.5",
     "@material-tailwind/react": "^1.2.4",
     "@mui/icons-material": "^5.8.4",
     "@mui/lab": "^5.0.0-alpha.89",
