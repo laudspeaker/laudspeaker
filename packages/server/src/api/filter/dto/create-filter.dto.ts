@@ -1,4 +1,4 @@
-import { InclusionCriteria } from '@/api/segments/types/segment.type';
+import { InclusionCriteria } from '../../segments/types/segment.type';
 import { IsOptional, IsObject } from 'class-validator';
 
 export class CreateFilterDTO {

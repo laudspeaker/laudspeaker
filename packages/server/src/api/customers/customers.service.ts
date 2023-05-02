@@ -13,7 +13,7 @@ import {
   Injectable,
   LoggerService,
 } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
+import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { Customer, CustomerDocument } from './schemas/customer.schema';
 import { CreateCustomerDto } from './dto/create-customer.dto';
 import mockData from '../../fixtures/mockData';
@@ -31,7 +31,7 @@ import { Queue } from 'bullmq';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { createClient } from '@clickhouse/client';
 import { Workflow } from '../workflows/entities/workflow.entity';
-import { attributeConditions } from '@/fixtures/attributeConditions';
+import { attributeConditions } from '../../fixtures/attributeConditions';
 import { getType } from 'tst-reflect';
 import { isDateString, isEmail } from 'class-validator';
 import { parse } from 'csv-parse';
@@ -39,6 +39,8 @@ import { SegmentsService } from '../segments/segments.service';
 import { AudiencesHelper } from '../audiences/audiences.helper';
 import { SegmentCustomers } from '../segments/entities/segment-customers.entity';
 import { AudiencesService } from '../audiences/audiences.service';
+import { WorkflowsService } from '../workflows/workflows.service';
+import * as _ from 'lodash';
 
 export type Correlation = {
   cust: CustomerDocument;
@@ -49,6 +51,7 @@ const eventsMap = {
   sent: 'sent',
   clicked: 'clicked',
   delivered: 'delivered',
+  opened: 'opened',
 };
 
 const KEYS_TO_SKIP = ['__v', '_id', 'audiences', 'ownerId'];
@@ -77,7 +80,10 @@ export class CustomersService {
     @InjectRepository(Account)
     public accountsRepository: Repository<Account>,
     private readonly audiencesHelper: AudiencesHelper,
-    private readonly audiencesService: AudiencesService
+    private readonly audiencesService: AudiencesService,
+    @Inject(WorkflowsService)
+    private readonly workflowsService: WorkflowsService,
+    @InjectConnection() private readonly connection: mongoose.Connection
   ) {
     this.CustomerModel.watch().on('change', async (data: any) => {
       try {
@@ -318,6 +324,30 @@ export class CustomersService {
     };
   }
 
+  async transactionalFindOne(
+    account: Account,
+    id: string,
+    transactionSession: ClientSession
+  ) {
+    if (!isValidObjectId(id))
+      throw new HttpException('Id is not valid', HttpStatus.BAD_REQUEST);
+
+    const customer = await this.CustomerModel.findOne({
+      _id: new Types.ObjectId(id),
+      ownerId: account.id,
+    })
+      .session(transactionSession)
+      .exec();
+    if (!customer)
+      throw new HttpException('Person not found', HttpStatus.NOT_FOUND);
+
+    // TODO: fix issue with lean document, check old document and find replacement
+    return {
+      ...customer.toObject<mongoose.LeanDocument<CustomerDocument>>(),
+      _id: id,
+    };
+  }
+
   async findCustomerEvents(account: Account, customerId: string) {
     await this.findOne(account, customerId);
     const response = await this.clickhouseClient.query({
@@ -499,6 +529,115 @@ export class CustomersService {
     return newCustomerData;
   }
 
+  async transactionalUpdate(
+    account: Account,
+    id: string,
+    updateCustomerDto: Record<string, unknown>,
+    transactionSession: ClientSession
+  ) {
+    try {
+      this.logger.debug(
+        `In Trasactional Update`,
+        `customers.service.ts:CustomersService.transactionalUpdate()`
+      );
+
+      const { ...newCustomerData } = updateCustomerDto;
+      this.logger.debug(
+        `New customer data: ${JSON.stringify(newCustomerData)}`,
+        `customers.service.ts:CustomersService.transactionalUpdate()`
+      );
+
+      delete newCustomerData.verified;
+      this.logger.debug(
+        `Deleting verified: ${JSON.stringify(newCustomerData)}`,
+        `customers.service.ts:CustomersService.transactionalUpdate()`
+      );
+
+      delete newCustomerData.ownerId;
+      this.logger.debug(
+        `Deleting ownerId: ${JSON.stringify(newCustomerData)}`,
+        `customers.service.ts:CustomersService.transactionalUpdate()`
+      );
+
+      delete newCustomerData._id;
+      this.logger.debug(
+        `Deleting id: ${JSON.stringify(newCustomerData)}`,
+        `customers.service.ts:CustomersService.transactionalUpdate()`
+      );
+
+      delete newCustomerData.__v;
+      this.logger.debug(
+        `Deleting v: ${JSON.stringify(newCustomerData)}`,
+        `customers.service.ts:CustomersService.transactionalUpdate()`
+      );
+
+      delete newCustomerData.audiences;
+      this.logger.debug(
+        `Deleting audiences: ${JSON.stringify(newCustomerData)}`,
+        `customers.service.ts:CustomersService.transactionalUpdate()`
+      );
+
+      const customer = await this.transactionalFindOne(
+        account,
+        id,
+        transactionSession
+      );
+
+      if (customer.ownerId != account.id) {
+        throw new HttpException("You can't update this customer.", 400);
+      }
+
+      for (const key of Object.keys(newCustomerData).filter(
+        (item) => !KEYS_TO_SKIP.includes(item)
+      )) {
+        const value = newCustomerData[key];
+        if (value === '' || value === undefined || value === null) continue;
+
+        const keyType = getType(value);
+        const isArray = keyType.isArray();
+        let type = isArray ? getType(value[0]).name : keyType.name;
+
+        if (type === 'String') {
+          if (isEmail(value)) type = 'Email';
+          if (isDateString(value)) type = 'Date';
+        }
+
+        await this.CustomerKeysModel.updateOne(
+          { key, ownerId: account.id },
+          {
+            $set: {
+              key,
+              type,
+              isArray,
+              ownerId: account.id,
+            },
+          },
+          { upsert: true }
+        )
+          .session(transactionSession)
+          .exec();
+      }
+
+      const newCustomer = Object.fromEntries(
+        Object.entries({
+          ...customer,
+          ...newCustomerData,
+        }).filter(([_, v]) => v != null)
+      );
+
+      await this.CustomerModel.replaceOne(customer, newCustomer)
+        .session(transactionSession)
+        .exec();
+
+      return newCustomerData;
+    } catch (err) {
+      this.logger.error(
+        `${err}`,
+        `customers.service.ts:CustomersService.transactionalUpdate()`
+      );
+    }
+  }
+
   async returnAllPeopleInfo(
     account: Account,
     take = 100,
@@ -555,7 +694,7 @@ export class CustomersService {
 
     if (eventsMap[event] && audienceId) {
       const customersCountResponse = await this.clickhouseClient.query({
-        query: `SELECT COUNT(*) FROM message_status WHERE audienceId = {audienceId:UUID} AND event = {event:String}`,
+        query: `SELECT COUNT(DISTINCT(customerId)) FROM message_status WHERE audienceId = {audienceId:UUID} AND event = {event:String}`,
         query_params: { audienceId, event: eventsMap[event] },
       });
       const customersCountResponseData = (
@@ -566,7 +705,7 @@ export class CustomersService {
       const totalPages = Math.ceil(customersCount / take);
 
       const response = await this.clickhouseClient.query({
-        query: `SELECT customerId FROM message_status WHERE audienceId = {audienceId:UUID} AND event = {event:String} ORDER BY createdAt LIMIT {take:Int32} OFFSET {skip:Int32}`,
+        query: `SELECT DISTINCT(customerId) FROM message_status WHERE audienceId = {audienceId:UUID} AND event = {event:String} ORDER BY createdAt LIMIT {take:Int32} OFFSET {skip:Int32}`,
         query_params: { audienceId, event: eventsMap[event], take, skip },
       });
       const data = (await response.json<{ data: { customerId: string }[] }>())
@@ -577,7 +716,7 @@ export class CustomersService {
         totalPages,
         data: await Promise.all(
           customerIds.map(async (id) => ({
-            ...(await this.findById(account, id)).toObject(),
+            ...(await this.findById(account, id))?.toObject(),
             id,
           }))
         ),
@@ -884,6 +1023,67 @@ export class CustomersService {
         found: false,
       };
     } else return { cust: customer, found: true };
+  }
+
+  async upsert(
+    account: Account,
+    dto: Record<string, unknown>
+  ): Promise<string> {
+    let correlation: Correlation;
+
+    const transactionSession = await this.connection.startSession();
+    transactionSession.startTransaction();
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const eventDto: any = {
+        correlationKey: dto.correlationKey,
+        correlationValue: dto.correlationValue,
+        source: null,
+      };
+      correlation = await this.findOrCreateByCorrelationKVPair(
+        account,
+        eventDto,
+        transactionSession
+      );
+
+      let left = correlation.cust.toObject();
+      let right = _.cloneDeep(dto);
+
+      delete right.correlationKey;
+      delete right.correlationValue;
+
+      await this.transactionalUpdate(
+        account,
+        correlation.cust.id,
+        _.merge(left, right),
+        transactionSession
+      );
+
+      if (!correlation.found)
+        await this.workflowsService.enrollCustomer(
+          account,
+          correlation.cust,
+          queryRunner
+        );
+
+      await transactionSession.commitTransaction();
+      await queryRunner.commitTransaction();
+    } catch (err) {
+      await transactionSession.abortTransaction();
+      await queryRunner.rollbackTransaction();
+      this.logger.error(
+        `${JSON.stringify(err)}`,
+        `customers.service.ts:CustomersService.upsert()`
+      );
+      throw err;
+    } finally {
+      await transactionSession.endSession();
+      await queryRunner.release();
+      return Promise.resolve(correlation.cust.id);
+    }
   }
 
   async mergeCustomers(

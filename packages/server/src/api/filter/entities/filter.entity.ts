@@ -1,4 +1,4 @@
-import { Account } from '@/api/accounts/entities/accounts.entity';
+import { Account } from '../../accounts/entities/accounts.entity';
 import {
   BaseEntity,
   Column,

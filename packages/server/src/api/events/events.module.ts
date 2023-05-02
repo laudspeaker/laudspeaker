@@ -29,6 +29,10 @@ import {
   PosthogEventTypeSchema,
 } from './schemas/posthog-event-type.schema';
 import { EventsProcessor } from './events.processor';
+import {
+  PosthogEvent,
+  PosthogEventSchema,
+} from './schemas/posthog-event.schema';
 
 @Module({
   imports: [
@@ -44,6 +48,7 @@ import { EventsProcessor } from './events.processor';
       { name: Customer.name, schema: CustomerSchema },
       { name: CustomerKeys.name, schema: CustomerKeysSchema },
       { name: Event.name, schema: EventSchema },
+      { name: PosthogEvent.name, schema: PosthogEventSchema },
       { name: EventKeys.name, schema: EventKeysSchema },
       { name: PosthogEventType.name, schema: PosthogEventTypeSchema },
     ]),

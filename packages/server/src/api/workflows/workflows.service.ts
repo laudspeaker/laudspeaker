@@ -25,7 +25,7 @@ import {
   TriggerType,
   Workflow,
 } from './entities/workflow.entity';
-import errors from '@/shared/utils/errors';
+import errors from '../../shared/utils/errors';
 import { Audience } from '../audiences/entities/audience.entity';
 import { CustomersService } from '../customers/customers.service';
 import { CustomerDocument } from '../customers/schemas/customer.schema';

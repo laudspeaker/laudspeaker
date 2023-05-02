@@ -1,6 +1,6 @@
-import { Account } from '@/api/accounts/entities/accounts.entity';
-import { Template } from '@/api/templates/entities/template.entity';
-import { Workflow } from '@/api/workflows/entities/workflow.entity';
+import { Account } from '../../accounts/entities/accounts.entity';
+import { Template } from '../../templates/entities/template.entity';
+import { Workflow } from '../../workflows/entities/workflow.entity';
 import {
   Entity,
   Column,

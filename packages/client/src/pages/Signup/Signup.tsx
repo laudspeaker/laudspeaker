@@ -52,13 +52,11 @@ const Signup: FC<SignupProps> = ({ setShowWelcomeBanner }) => {
     const response = await dispatch(signUpUser(signUpForm));
 
     if (response?.data?.access_token) {
-      posthog.capture("SignUpProps", {
-        $set: {
-          email: signUpForm.email,
-          firstName: signUpForm.firstName,
-          lastName: signUpForm.lastName,
-          laudspeakerId: response.data.id,
-        },
+      posthog.identify(signUpForm.email, {
+        firstName: signUpForm.firstName,
+        lastName: signUpForm.lastName,
+        laudspeakerId: response.data.id,
+        email: signUpForm.email,
       });
       toast.info(
         "You need to verify your email. We've sent you a verification email",
@@ -95,7 +93,7 @@ const Signup: FC<SignupProps> = ({ setShowWelcomeBanner }) => {
       signUpForm.confirmPassword.trim().length <= 8 ||
       signUpForm.confirmPassword.trim() !== signUpForm.password.trim(),
     mail: !signUpForm.email.match(
-      /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/
+      /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,})+$/
     ),
   };
 

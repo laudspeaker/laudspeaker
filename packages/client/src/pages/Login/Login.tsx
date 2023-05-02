@@ -35,10 +35,14 @@ const Login: FC<LoginProps> = ({ setShowWelcomeBanner }) => {
     e.preventDefault();
     const response = await dispatch(loginUser(loginForm));
     if (response?.data?.access_token) {
+      posthog.identify(loginForm.email, {
+        //laudspeakerId: response.data.id,
+        email: loginForm.email,
+      });
       posthog.capture("LogInProps", {
         $set: {
           email: loginForm.email,
-          laudspeakerId: response.data.id,
+          //laudspeakerId: response.data.id,
         },
       });
 

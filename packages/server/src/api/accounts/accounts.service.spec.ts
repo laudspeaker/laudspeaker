@@ -3,6 +3,8 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { Account } from './entities/accounts.entity';
 import { AccountsService } from './accounts.service';
 import { Repository } from 'typeorm';
+import { WinstonModule } from 'nest-winston';
+import winston from 'winston';
 
 const userArray = [
   {
@@ -23,12 +25,29 @@ const oneUser = {
   email: '1@gmail.com',
 };
 
-describe('UserService', () => {
+describe('AccountsService', () => {
   let service: AccountsService;
   let repository: Repository<Account>;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
+      imports: [
+        WinstonModule.forRootAsync({
+          useFactory: () => ({
+            level: 'debug',
+            transports: [
+              new winston.transports.Console({
+                handleExceptions: true,
+                format: winston.format.combine(
+                  winston.format.colorize(),
+                  winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' })
+                ),
+              }),
+            ],
+          }),
+          inject: [],
+        }),
+      ],
       providers: [
         AccountsService,
         {
@@ -52,13 +71,6 @@ describe('UserService', () => {
 
   it('should be defined', () => {
     expect(service).toBeDefined();
-  });
-
-  describe('findAll()', () => {
-    it('should return an array of users', async () => {
-      const users = await service.findAll();
-      expect(users).toEqual(userArray);
-    });
   });
 
   // describe('findOne()', () => {

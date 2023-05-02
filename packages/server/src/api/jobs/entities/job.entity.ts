@@ -6,9 +6,9 @@ import {
   ManyToOne,
 } from 'typeorm';
 import { IsDate, IsDefined, ValidateIf } from 'class-validator';
-import { Account } from '@/api/accounts/entities/accounts.entity';
-import { Audience } from '@/api/audiences/entities/audience.entity';
-import { Workflow } from '@/api/workflows/entities/workflow.entity';
+import { Account } from '../../accounts/entities/accounts.entity';
+import { Audience } from '../../audiences/entities/audience.entity';
+import { Workflow } from '../../workflows/entities/workflow.entity';
 
 export enum TimeJobType {
   DELAY,

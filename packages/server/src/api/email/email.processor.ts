@@ -14,8 +14,7 @@ import {
 } from '../webhooks/webhooks.service';
 import twilio from 'twilio';
 import { PostHog } from 'posthog-node';
-import { cert, App, getApp, initializeApp } from 'firebase-admin/app';
-import { getMessaging } from 'firebase-admin/messaging';
+import * as admin from 'firebase-admin';
 
 export enum MessageType {
   SMS = 'sms',
@@ -421,21 +420,23 @@ export class MessageProcessor extends WorkerHost {
       return;
     }
     try {
-      let firebaseApp: App;
+      let firebaseApp: admin.app.App;
       try {
-        firebaseApp = getApp(job.data.accountId);
+        firebaseApp = admin.app(job.data.accountId);
       } catch (e: any) {
         if (e.code == 'app/no-app') {
-          firebaseApp = initializeApp(
+          firebaseApp = admin.initializeApp(
             {
-              credential: cert(JSON.parse(job.data.firebaseCredentials)),
+              credential: admin.credential.cert(
+                JSON.parse(job.data.firebaseCredentials)
+              ),
             },
             job.data.accountId
           );
         } else throw e;
       }
 
-      const messaging = getMessaging(firebaseApp);
+      const messaging = admin.messaging(firebaseApp);
 
       const messageId = await messaging.send({
         token: job.data.phDeviceToken,

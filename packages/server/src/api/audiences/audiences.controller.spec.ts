@@ -9,6 +9,7 @@ import { AudiencesService } from './audiences.service';
 import { Audience } from './entities/audience.entity';
 import { WinstonModule } from 'nest-winston';
 import * as winston from 'winston';
+import { Workflow } from '../workflows/entities/workflow.entity';
 
 const papertrail = new winston.transports.Http({
   host: 'logs.collector.solarwinds.com',
@@ -32,7 +33,7 @@ describe('AudiencesController', () => {
           }),
           inject: [],
         }),
-        TypeOrmModule.forFeature([Audience]),
+        TypeOrmModule.forFeature([Audience, Workflow]),
         MongooseModule.forFeature([
           { name: Customer.name, schema: CustomerSchema },
         ]),

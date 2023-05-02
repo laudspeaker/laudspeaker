@@ -9,6 +9,13 @@ export const cleanTagsForSending = (obj) => {
         ) {
           delete obj[propName];
         }
+      } else if (Array.isArray(propValue)) {
+        const arr = propValue.filter((element) => typeof element === 'string');
+        if (arr.length === 0) {
+          delete obj[propName];
+        } else {
+          obj[propName] = arr;
+        }
       } else {
         delete obj[propName];
       }

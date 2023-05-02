@@ -18,6 +18,7 @@ import { EventsController } from './events.controller';
 import { BullModule } from '@nestjs/bullmq';
 import { WinstonModule } from 'nest-winston';
 import * as winston from 'winston';
+import { Event, EventSchema } from './schemas/event.schema';
 
 const papertrail = new winston.transports.Http({
   host: 'logs.collector.solarwinds.com',
@@ -43,6 +44,7 @@ describe('EventsService', () => {
         ]),
         MongooseModule.forFeature([
           { name: Customer.name, schema: CustomerSchema },
+          { name: Event.name, schema: EventSchema },
         ]),
         BullModule.forRoot({
           connection: {
@@ -56,6 +58,9 @@ describe('EventsService', () => {
         }),
         BullModule.registerQueue({
           name: 'slack',
+        }),
+        BullModule.registerQueue({
+          name: 'events',
         }),
         WinstonModule.forRootAsync({
           useFactory: () => ({

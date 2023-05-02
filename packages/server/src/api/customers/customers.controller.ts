@@ -127,7 +127,6 @@ export class CustomersController {
       <Account>user,
       createCustomerDto
     );
-
     return cust.id;
   }
 
@@ -136,27 +135,13 @@ export class CustomersController {
   @UseInterceptors(ClassSerializerInterceptor)
   async upsert(
     @Req() { user }: Request,
-    @Body() createCustomerDto: CreateCustomerDto
+    @Body() updateCustomerDto: Record<string, unknown>
   ) {
-    let cust: CustomerDocument;
-    try {
-      cust = await this.customersService.findByCorrelationKVPair(
-        <Account>user,
-        createCustomerDto.correlationKey,
-        createCustomerDto.correlationValue
-      );
-
-      await this.customersService.update(<Account>user, cust.id, {
-        ...createCustomerDto,
-      });
-    } catch (err) {
-      cust = await this.customersService.create(
-        <Account>user,
-        createCustomerDto
-      );
-    }
-
-    return cust.id;
+    this.logger.debug(
+      `${JSON.stringify(user)} ${JSON.stringify(updateCustomerDto)}`,
+      `customers.controller.ts:CustomersController.upsert()`
+    );
+    return await this.customersService.upsert(<Account>user, updateCustomerDto);
   }
 
   @Get('/attributes/:resourceId')

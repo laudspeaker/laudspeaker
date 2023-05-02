@@ -6,13 +6,8 @@ import { TemplatesController } from './templates.controller';
 import { TemplatesService } from './templates.service';
 import { WinstonModule } from 'nest-winston';
 import * as winston from 'winston';
-
-const papertrail = new winston.transports.Http({
-  host: 'logs.collector.solarwinds.com',
-  path: '/v1/log',
-  auth: { username: 'papertrail', password: process.env.PAPERTRAIL_API_KEY },
-  ssl: true,
-});
+import { MongooseModule } from '@nestjs/mongoose';
+import { Customer, CustomerSchema } from '../customers/schemas/customer.schema';
 
 describe('TemplatesService', () => {
   let service: TemplatesService;
@@ -23,12 +18,23 @@ describe('TemplatesService', () => {
         WinstonModule.forRootAsync({
           useFactory: () => ({
             level: 'debug',
-            transports: [papertrail],
+            transports: [
+              new winston.transports.Console({
+                handleExceptions: true,
+                format: winston.format.combine(
+                  winston.format.colorize(),
+                  winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' })
+                ),
+              }),
+            ],
           }),
           inject: [],
         }),
         TypeOrmModule.forRootAsync({ useClass: TypeOrmConfigService }),
         TypeOrmModule.forFeature([Template]),
+        MongooseModule.forFeature([
+          { name: Customer.name, schema: CustomerSchema },
+        ]),
       ],
       providers: [TemplatesService],
       controllers: [TemplatesController],

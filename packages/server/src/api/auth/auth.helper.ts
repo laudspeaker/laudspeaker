@@ -9,7 +9,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { EntityManager, Repository } from 'typeorm';
 import { Account } from '../accounts/entities/accounts.entity';
 import { BaseJwtHelper } from '../../common/helper/base-jwt.helper';
-import { DEFAULT_TEMPLATES } from '@/fixtures/user.default.templates';
+import { DEFAULT_TEMPLATES } from '../../fixtures/user.default.templates';
 import { Template } from '../templates/entities/template.entity';
 import {
   ProviderTypes,

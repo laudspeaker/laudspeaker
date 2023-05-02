@@ -36,7 +36,7 @@ import { SlackService } from '../slack/slack.service';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { EventDto } from '../events/dto/event.dto';
 import { Audience } from '../audiences/entities/audience.entity';
-import { cleanTagsForSending } from '@/shared/utils/helpers';
+import { cleanTagsForSending } from '../../shared/utils/helpers';
 import { MessageType } from '../email/email.processor';
 import { Response, fetch } from 'undici';
 import { Model } from 'mongoose';
