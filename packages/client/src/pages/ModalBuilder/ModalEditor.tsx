@@ -292,7 +292,7 @@ const ModalEditor: FC<ModalEditorProps> = ({
       }}
     >
       <div
-        className="fixed rounded-[8px] w-[360px] z-[2147483646] min-h-[475px] max-h-[600px] pb-[20px] shadow-lg bg-[#F9FAFB] text-[#111827] font-semibold leading-[22px]"
+        className="fixed rounded-[8px] w-[360px] z-[2147483646] min-h-[475px] max-h-[600px] shadow-lg bg-[#F9FAFB] text-[#111827] font-semibold leading-[22px]"
         style={{
           fontFamily: "Segoe UI",
         }}
@@ -325,12 +325,12 @@ const ModalEditor: FC<ModalEditorProps> = ({
         </div>
         <div>
           <Scrollbars
-            className="w-full min-h-[400px] max-h-[530px]"
+            className="w-full min-h-[400px] max-h-[520px]"
             renderThumbVertical={(props) => (
               <div {...props} className="!bg-[#E5E7EB] rounded-md" />
             )}
           >
-            <div className="p-[20px] w-[360px] overflow-x-hidden">
+            <div className="w-[360px] overflow-x-hidden font-normal">
               {menuOptions[editorMode]?.layout}
             </div>
           </Scrollbars>

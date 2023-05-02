@@ -14,7 +14,7 @@ const RemoveComponentButton: FC<RemoveComponentButtonProps> = ({
   return (
     <GenericButton
       onClick={onClick}
-      customClasses="!bg-transparent !text-red-500 !text-[14px] !font-normal !p-0 !mt-[10px] !ring-0"
+      customClasses="!bg-transparent !text-red-500 !text-[14px] !font-normal !p-0 !ring-0"
     >
       <div className="flex justify-between items-center">
         <span className="whitespace-nowrap !text-[#EB5757] underline">

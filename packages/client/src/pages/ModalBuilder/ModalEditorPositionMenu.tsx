@@ -43,7 +43,7 @@ const ModalPositionBodyMenu = ({
   };
 
   return (
-    <div className="text-[14px] font-normal">
+    <div className="w-full p-[20px] text-[14px] font-normal">
       <div className="mt-[20px]">
         <div>Position:</div>
         <ul className="flex items-center justify-between pt-[10px] pb-[20px]">

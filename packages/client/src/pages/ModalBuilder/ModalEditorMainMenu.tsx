@@ -94,17 +94,21 @@ const ModalEditorMainMenu: FC<MainMenuProps> = ({
   ];
 
   return (
-    <>
+    <div className="w-full p-[20px]">
       {editorMenu.map((block, i) => (
         <span key={i}>
-          <div className={`min-w-full ${i === 0 ? "" : "mt-[10px]"}`}>
+          <div
+            className={`min-w-full font-semibold leading-[24px] ${
+              i === 0 ? "" : "mt-[10px]"
+            }`}
+          >
             {block.title}
           </div>
           <div className="flex justify-between flex-wrap w-full">
             {block.elements.map((el, i2) => (
               <div key={i2} className="w-[155px] mt-[10px]">
                 <GenericButton
-                  customClasses={`relative w-full flex text-[12px] !border-[2px] !outline-none !ring-transparent !focus:!ring-transparent !font-normal !rounded-[8px] !p-[6px] flex align-center whitespace-nowrap overflow-hidden ${
+                  customClasses={`relative w-full flex !text-[14px] !leading-[22px] !border-[2px] !outline-none !ring-transparent !focus:!ring-transparent !font-normal !rounded-[8px] !p-[6px] flex align-center whitespace-nowrap overflow-hidden ${
                     el.hidden
                       ? "!bg-[#FFFFFF] border-[#E5E7EB] !text-[#4B5563] hover:border-[#6366F1] hover:!text-[#6366F1]"
                       : "!bg-[#EEF2FF] !border-[#6366F1] hover:border-[#6366F1] !text-[#4338CA]"
@@ -126,7 +130,7 @@ const ModalEditorMainMenu: FC<MainMenuProps> = ({
           </div>
         </span>
       ))}
-    </>
+    </div>
   );
 };
 

@@ -54,7 +54,7 @@ const ModalEditorOpenURL = ({
   }, []);
 
   return (
-    <>
+    <div className="p-[20px]">
       <div className="text-[14px] my-[10px]">Action URL:</div>
       <textarea
         value={actionData[currentMainMode]?.OPENURL.object?.url || ""}
@@ -85,7 +85,7 @@ const ModalEditorOpenURL = ({
           </Switch>
         </div>
       </div>
-    </>
+    </div>
   );
 };
 

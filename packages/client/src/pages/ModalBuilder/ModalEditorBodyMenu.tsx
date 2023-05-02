@@ -89,7 +89,7 @@ const ModalEditorBodyMenu = ({
 
   return (
     <div className="text-[14px] font-normal">
-      <div className="flex items-center justify-between pb-[4px]">
+      <div className="p-[20px] flex items-center justify-between">
         <div>Alignment:</div>
 
         <ul className="flex items-center justify-between w-[180px]">
@@ -112,62 +112,72 @@ const ModalEditorBodyMenu = ({
           ))}
         </ul>
       </div>
-      <div className="border-t-[1px] border-[#5D726D] my-[10px]" />
-      <div className="flex items-center justify-between">
-        <div>Styles:</div>
-        <div className="flex items-center gap-[10px]">
-          <ul className="flex items-center justify-between w-[180px]">
-            {textStyles.map((style) => (
-              <li key={style}>
-                <div
-                  className={`flex justify-center items-center p-[2px] relative w-[32px] h-[32px] hover:bg-white hover:bg-opacity-25 rounded-md cursor-pointer`}
-                  onClick={() => {
-                    handleAddStyles(style);
-                  }}
-                >
-                  {textStylesIcons[style]}
-                </div>
-              </li>
-            ))}
-          </ul>
+
+      <div className="border-t-[1px] border-[#E5E7EB]" />
+
+      <div className="p-[20px]">
+        <div className="flex items-center justify-between">
+          <div>Styles:</div>
+          <div className="flex items-center gap-[10px]">
+            <ul className="flex items-center justify-between w-[180px]">
+              {textStyles.map((style) => (
+                <li key={style}>
+                  <div
+                    className={`flex justify-center items-center p-[2px] relative w-[32px] h-[32px] hover:bg-white hover:bg-opacity-25 rounded-md cursor-pointer`}
+                    onClick={() => {
+                      handleAddStyles(style);
+                    }}
+                  >
+                    {textStylesIcons[style]}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+        <small className="w-full mt-[10px] text-[#BAC3C0]">
+          Select text before applying
+        </small>
+      </div>
+
+      <div className="border-t-[1px] border-[#E5E7EB]" />
+
+      <div className="p-[20px]">
+        <div className="flex items-center justify-between mb-[10px]">
+          <div>Text:</div>
+          <div className="flex items-center gap-[10px]">
+            <ModalBuilderColorPicker
+              className="min-w-[155px]"
+              color={modalState.body.textColor}
+              onChange={(color) =>
+                setModalState({
+                  ...modalState,
+                  body: { ...modalState.body, textColor: color },
+                })
+              }
+            />
+          </div>
+        </div>
+        <div className="flex items-center justify-between">
+          <div>Link:</div>
+          <div className="flex items-center gap-[10px]">
+            <ModalBuilderColorPicker
+              className="min-w-[155px]"
+              color={modalState.body.linkColor}
+              onChange={(color) =>
+                setModalState({
+                  ...modalState,
+                  body: { ...modalState.body, linkColor: color },
+                })
+              }
+            />
+          </div>
         </div>
       </div>
-      <small className="w-full mt-[10px] text-[#BAC3C0]">
-        Select text before applying
-      </small>
-      <div className="border-t-[1px] border-[#5D726D] my-[10px]" />
-      <div className="flex items-center justify-between mb-[10px]">
-        <div>Text:</div>
-        <div className="flex items-center gap-[10px]">
-          <ModalBuilderColorPicker
-            className="min-w-[155px]"
-            color={modalState.body.textColor}
-            onChange={(color) =>
-              setModalState({
-                ...modalState,
-                body: { ...modalState.body, textColor: color },
-              })
-            }
-          />
-        </div>
-      </div>
-      <div className="flex items-center justify-between">
-        <div>Link:</div>
-        <div className="flex items-center gap-[10px]">
-          <ModalBuilderColorPicker
-            className="min-w-[155px]"
-            color={modalState.body.linkColor}
-            onChange={(color) =>
-              setModalState({
-                ...modalState,
-                body: { ...modalState.body, linkColor: color },
-              })
-            }
-          />
-        </div>
-      </div>
-      <div className="border-t-[1px] border-[#5D726D] my-[10px]" />
-      <div className="flex items-center justify-between">
+
+      <div className="border-t-[1px] border-[#E5E7EB]" />
+
+      <div className="p-[20px] flex items-center justify-between">
         <div>Font size:</div>
         <div className="flex items-center gap-[10px]">
           <ModalBuilderNumberInput
@@ -188,29 +198,36 @@ const ModalEditorBodyMenu = ({
           />
         </div>
       </div>
-      <div className="border-t-[1px] border-[#5D726D] my-[10px]" />
-      <div className="flex items-center justify-between">
-        <div>Personalization:</div>
-        <div className="flex items-center gap-[10px]">
-          <ModalBuilderPersonalizationButton
-            onClick={handleEditorModeSet(SubMenuOptions.Personalization, true)}
-          />
+
+      <div className="border-t-[1px] border-[#E5E7EB]" />
+
+      <div className="p-[20px]">
+        <div className="flex items-center justify-between">
+          <div>Personalization:</div>
+          <div className="flex items-center gap-[10px]">
+            <ModalBuilderPersonalizationButton
+              onClick={handleEditorModeSet(
+                SubMenuOptions.Personalization,
+                true
+              )}
+            />
+          </div>
         </div>
+        <RemoveComponentButton
+          onClick={() => {
+            setModalState({
+              ...modalState,
+              body: {
+                ...modalState.body,
+                hidden: true,
+              },
+            });
+            returnBack();
+          }}
+        >
+          Remove body
+        </RemoveComponentButton>
       </div>
-      <RemoveComponentButton
-        onClick={() => {
-          setModalState({
-            ...modalState,
-            body: {
-              ...modalState.body,
-              hidden: true,
-            },
-          });
-          returnBack();
-        }}
-      >
-        Remove body
-      </RemoveComponentButton>
     </div>
   );
 };

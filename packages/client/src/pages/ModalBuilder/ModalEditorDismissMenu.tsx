@@ -67,258 +67,211 @@ const ModalEditorDismissMenu = ({
 
   return (
     <div className="flex flex-col text-[14px] font-normal">
-      <div>Type:</div>
-      <div className="flex select-none">
-        {mediaDismissTypes.map((el, i) => (
-          <div
-            key={el}
-            className={`flex justify-center items-center w-full h-[32px] border-[#E5E7EB] border-[1px] cursor-pointer ${
-              modalState.dismiss.type === el
-                ? "bg-[#6366F1] text-white"
-                : "hover:bg-white hover:bg-opacity-25"
-            } ${
-              i === 0
-                ? "rounded-l-[2px]"
-                : i === mediaDismissTypes.length - 1
-                ? "rounded-r-[2px]"
-                : 0
-            }`}
-            onClick={() =>
-              setModalState({
-                ...modalState,
-                dismiss: { ...modalState.dismiss, type: el },
-              })
-            }
-          >
-            {el}
-          </div>
-        ))}
-      </div>
-      <div className="mt-[20px]">
-        <div>Position:</div>
-        <ul className="flex w-full items-center justify-between pt-[10px] pb-[20px]">
-          {modalPositions.map((position) => (
-            <li key={position}>
+      <div className="p-[20px] flex flex-col gap-[10px]">
+        <div>
+          <div>Type:</div>
+          <div className="flex select-none">
+            {mediaDismissTypes.map((el, i) => (
               <div
-                className={`flex justify-center items-center p-[2px] relative w-[35px] h-[35px] hover:border-[1px] hover:border-[#818CF8] hover:bg-opacity-25 rounded-md cursor-pointer text-transparent hover:text-white ${
-                  position === modalState.dismiss.position ? "bg-[#C7D2FE]" : ""
+                key={el}
+                className={`flex justify-center items-center w-full h-[32px] border-[#E5E7EB] border-[1px] cursor-pointer ${
+                  modalState.dismiss.type === el
+                    ? "bg-[#6366F1] text-white"
+                    : "hover:bg-white hover:bg-opacity-25"
+                } ${
+                  i === 0
+                    ? "rounded-l-[2px]"
+                    : i === mediaDismissTypes.length - 1
+                    ? "rounded-r-[2px]"
+                    : 0
                 }`}
                 onClick={() =>
                   setModalState({
                     ...modalState,
-                    dismiss: { ...modalState.dismiss, position: position },
+                    dismiss: { ...modalState.dismiss, type: el },
                   })
                 }
               >
-                {modalPositionIconMap[position]}
-                <div className="absolute text-[12px] font-normal whitespace-nowrap bottom-[-20px] left-[50%] -translate-x-1/2">
-                  {position}
-                </div>
+                {el}
               </div>
-            </li>
-          ))}
-        </ul>
-      </div>
-      <div className="flex items-center justify-between mb-[10px]">
-        <div>Color:</div>
-        <div className="flex items-center pl-[5px] gap-[10px]">
-          <ModalBuilderColorPicker
-            className="!min-w-[150px]"
-            color={modalState.dismiss.color}
-            onChange={(color) =>
-              setModalState({
-                ...modalState,
-                dismiss: {
-                  ...modalState.dismiss,
-                  color,
-                },
-              })
-            }
-          />
-        </div>
-      </div>
-      {modalState.dismiss.type === DismissType.CROSS ? (
-        <div className="flex w-full items-start justify-between">
-          <div className="w-full">Cross size:</div>
-          <div className="w-full flex flex-col">
-            <div className="w-full pl-[5px]">
-              <ReactSlider
-                className="h-[20px] flex items-center justify-center mb-[8px]"
-                trackClassName="h-[4px] bg-[#818CF8] rounded-[4px]"
-                min={5}
-                max={25}
-                value={modalState.dismiss.textSize}
-                onChange={(value) =>
-                  setModalState({
-                    ...modalState,
-                    dismiss: {
-                      ...modalState.dismiss,
-                      textSize: value,
-                    },
-                  })
-                }
-                renderThumb={(props) => (
-                  <div
-                    {...props}
-                    className="rounded-[100%] w-[14px] h-[14px] cursor-grab bg-white border-[2px] border-[#818CF8]"
-                  />
-                )}
-              />
-            </div>
-            <div className="flex w-full items-center pl-[5px] gap-[10px]">
-              <ModalBuilderNumberInput
-                id="crossSize"
-                name="crossSize"
-                value={modalState.dismiss.textSize}
-                unit={SizeUnit.PIXEL}
-                onChange={(value) =>
-                  setModalState({
-                    ...modalState,
-                    dismiss: {
-                      ...modalState.dismiss,
-                      textSize: value,
-                    },
-                  })
-                }
-              />
-            </div>
+            ))}
           </div>
         </div>
-      ) : (
+
+        <div className="mt-[20px]">
+          <div>Position:</div>
+          <ul className="flex w-full items-center justify-between pt-[10px] pb-[20px]">
+            {modalPositions.map((position) => (
+              <li key={position}>
+                <div
+                  className={`flex justify-center items-center p-[2px] relative w-[35px] h-[35px] hover:border-[1px] hover:border-[#818CF8] rounded-md cursor-pointer text-transparent hover:text-[#111827] ${
+                    position === modalState.dismiss.position
+                      ? "bg-[#C7D2FE]"
+                      : ""
+                  }`}
+                  onClick={() =>
+                    setModalState({
+                      ...modalState,
+                      dismiss: { ...modalState.dismiss, position: position },
+                    })
+                  }
+                >
+                  {modalPositionIconMap[position]}
+                  <div className="absolute text-[12px] font-normal whitespace-nowrap bottom-[-20px] left-[50%] -translate-x-1/2">
+                    {position}
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
         <div className="flex items-center justify-between">
-          <div>Text size:</div>
+          <div>Color:</div>
           <div className="flex items-center pl-[5px] gap-[10px]">
-            <ModalBuilderNumberInput
-              className="min-w-[150px]"
-              id="fontSize"
-              name="fontSize"
-              unit={SizeUnit.PIXEL}
-              value={modalState.dismiss.textSize}
-              onChange={(value) =>
+            <ModalBuilderColorPicker
+              className="!min-w-[150px]"
+              color={modalState.dismiss.color}
+              onChange={(color) =>
                 setModalState({
                   ...modalState,
                   dismiss: {
                     ...modalState.dismiss,
-                    textSize: value,
+                    color,
                   },
                 })
               }
             />
           </div>
         </div>
-      )}
-      <div className="border-t-[1px] border-[#5D726D] my-[10px]" />
-      <div className="w-full flex items-center justify-between gap-[10px]">
-        <div className="">Timed Dismiss:</div>
-        <div className="flex w-[180px] select-none">
-          {timedDismissList.map((el, i) => (
-            <div
-              key={el.name}
-              className={`flex justify-center items-center w-full h-[32px] border-[#E5E7EB] border-[1px] cursor-pointer ${
-                modalState.dismiss.timedDismiss.enabled === el.value
-                  ? "bg-[#6366F1] text-white"
-                  : ""
-              } ${
-                i === 0
-                  ? "rounded-l-[2px]"
-                  : i === mediaDismissTypes.length - 1
-                  ? "rounded-r-[2px]"
-                  : 0
-              }`}
-              onClick={() =>
-                setModalState({
-                  ...modalState,
-                  dismiss: {
-                    ...modalState.dismiss,
-                    timedDismiss: {
-                      ...modalState.dismiss.timedDismiss,
-                      enabled: el.value,
-                    },
-                  },
-                })
-              }
-            >
-              {el.name}
+        {modalState.dismiss.type === DismissType.CROSS ? (
+          <div className="flex w-full items-start justify-between">
+            <div className="w-full">Cross size:</div>
+            <div className="w-full flex flex-col">
+              <div className="w-full pl-[5px]">
+                <ReactSlider
+                  className="h-[20px] flex items-center justify-center mb-[8px]"
+                  trackClassName="h-[4px] bg-[#818CF8] rounded-[4px]"
+                  min={5}
+                  max={25}
+                  value={modalState.dismiss.textSize}
+                  onChange={(value) =>
+                    setModalState({
+                      ...modalState,
+                      dismiss: {
+                        ...modalState.dismiss,
+                        textSize: value,
+                      },
+                    })
+                  }
+                  renderThumb={(props) => (
+                    <div
+                      {...props}
+                      className="rounded-[100%] w-[14px] h-[14px] cursor-grab bg-white border-[2px] border-[#818CF8]"
+                    />
+                  )}
+                />
+              </div>
+              <div className="flex w-full items-center pl-[5px] gap-[10px]">
+                <ModalBuilderNumberInput
+                  id="crossSize"
+                  name="crossSize"
+                  value={modalState.dismiss.textSize}
+                  unit={SizeUnit.PIXEL}
+                  onChange={(value) =>
+                    setModalState({
+                      ...modalState,
+                      dismiss: {
+                        ...modalState.dismiss,
+                        textSize: value,
+                      },
+                    })
+                  }
+                />
+              </div>
             </div>
-          ))}
-        </div>
-      </div>
-      {modalState.dismiss.timedDismiss.enabled && (
-        <>
-          <div className="flex items-center justify-between mt-[10px] gap-[10px]">
-            <div className="w-full">Duration in seconds:</div>
-            <div className="flex w-full items-center gap-[10px]">
+          </div>
+        ) : (
+          <div className="flex items-center justify-between">
+            <div>Text size:</div>
+            <div className="flex items-center pl-[5px] gap-[10px]">
               <ModalBuilderNumberInput
                 className="min-w-[150px]"
                 id="fontSize"
                 name="fontSize"
-                unit={SizeUnit.NONE}
-                value={modalState.dismiss.timedDismiss.duration}
+                unit={SizeUnit.PIXEL}
+                value={modalState.dismiss.textSize}
                 onChange={(value) =>
                   setModalState({
                     ...modalState,
                     dismiss: {
                       ...modalState.dismiss,
-                      timedDismiss: {
-                        ...modalState.dismiss.timedDismiss,
-                        duration: value,
-                      },
+                      textSize: value,
                     },
                   })
                 }
               />
             </div>
           </div>
-          <div className="w-full flex justify-between items-center mt-[10px] gap-[10px]">
-            <div className="">Display Timer:</div>
-            <div className="flex w-[180px] select-none">
-              {timedDismissList.map((el, i) => (
-                <div
-                  key={el.displayTimerText}
-                  className={`flex justify-center items-center w-full h-[32px] border-[#E5E7EB] border-[1px] cursor-pointer ${
-                    modalState.dismiss.timedDismiss.displayTimer === el.value
-                      ? "bg-[#6366F1] text-white"
-                      : ""
-                  } ${
-                    i === 0
-                      ? "rounded-l-[2px]"
-                      : i === mediaDismissTypes.length - 1
-                      ? "rounded-r-[2px]"
-                      : 0
-                  }`}
-                  onClick={() =>
-                    setModalState({
-                      ...modalState,
-                      dismiss: {
-                        ...modalState.dismiss,
-                        timedDismiss: {
-                          ...modalState.dismiss.timedDismiss,
-                          displayTimer: el.value,
-                        },
+        )}
+      </div>
+
+      <div className="border-t-[1px] border-[#E5E7EB]" />
+
+      <div className="p-[20px] flex flex-col gap-[10px]">
+        <div className="w-full flex items-center justify-between gap-[10px]">
+          <div className="">Timed Dismiss:</div>
+          <div className="flex w-[180px] select-none">
+            {timedDismissList.map((el, i) => (
+              <div
+                key={el.name}
+                className={`flex justify-center items-center w-full h-[32px] border-[#E5E7EB] border-[1px] cursor-pointer ${
+                  modalState.dismiss.timedDismiss.enabled === el.value
+                    ? "bg-[#6366F1] text-white"
+                    : ""
+                } ${
+                  i === 0
+                    ? "rounded-l-[2px]"
+                    : i === mediaDismissTypes.length - 1
+                    ? "rounded-r-[2px]"
+                    : 0
+                }`}
+                onClick={() =>
+                  setModalState({
+                    ...modalState,
+                    dismiss: {
+                      ...modalState.dismiss,
+                      timedDismiss: {
+                        ...modalState.dismiss.timedDismiss,
+                        enabled: el.value,
                       },
-                    })
-                  }
-                >
-                  {el.displayTimerText}
-                </div>
-              ))}
-            </div>
+                    },
+                  })
+                }
+              >
+                {el.name}
+              </div>
+            ))}
           </div>
-          {modalState.dismiss.timedDismiss.displayTimer && (
-            <div className="flex items-center justify-between mt-[10px]">
-              <div className="w-full">Timer Color:</div>
-              <div className="flex w-full pl-[5px] items-center gap-[10px]">
-                <ModalBuilderColorPicker
-                  className="!min-w-[150px] w-full"
-                  color={modalState.dismiss.timedDismiss.timerColor}
-                  onChange={(color) =>
+        </div>
+        {modalState.dismiss.timedDismiss.enabled && (
+          <>
+            <div className="flex items-center justify-between mt-[10px] gap-[10px]">
+              <div className="w-full">Duration in seconds:</div>
+              <div className="flex w-full items-center gap-[10px]">
+                <ModalBuilderNumberInput
+                  className="min-w-[150px]"
+                  id="fontSize"
+                  name="fontSize"
+                  unit={SizeUnit.NONE}
+                  value={modalState.dismiss.timedDismiss.duration}
+                  onChange={(value) =>
                     setModalState({
                       ...modalState,
                       dismiss: {
                         ...modalState.dismiss,
                         timedDismiss: {
                           ...modalState.dismiss.timedDismiss,
-                          timerColor: color,
+                          duration: value,
                         },
                       },
                     })
@@ -326,23 +279,81 @@ const ModalEditorDismissMenu = ({
                 />
               </div>
             </div>
-          )}
-        </>
-      )}
-      <RemoveComponentButton
-        onClick={() => {
-          setModalState({
-            ...modalState,
-            dismiss: {
-              ...modalState.dismiss,
-              hidden: true,
-            },
-          });
-          returnBack();
-        }}
-      >
-        Remove dismiss
-      </RemoveComponentButton>
+            <div className="w-full flex justify-between items-center mt-[10px] gap-[10px]">
+              <div className="">Display Timer:</div>
+              <div className="flex w-[180px] select-none">
+                {timedDismissList.map((el, i) => (
+                  <div
+                    key={el.displayTimerText}
+                    className={`flex justify-center items-center w-full h-[32px] border-[#E5E7EB] border-[1px] cursor-pointer ${
+                      modalState.dismiss.timedDismiss.displayTimer === el.value
+                        ? "bg-[#6366F1] text-white"
+                        : ""
+                    } ${
+                      i === 0
+                        ? "rounded-l-[2px]"
+                        : i === mediaDismissTypes.length - 1
+                        ? "rounded-r-[2px]"
+                        : 0
+                    }`}
+                    onClick={() =>
+                      setModalState({
+                        ...modalState,
+                        dismiss: {
+                          ...modalState.dismiss,
+                          timedDismiss: {
+                            ...modalState.dismiss.timedDismiss,
+                            displayTimer: el.value,
+                          },
+                        },
+                      })
+                    }
+                  >
+                    {el.displayTimerText}
+                  </div>
+                ))}
+              </div>
+            </div>
+            {modalState.dismiss.timedDismiss.displayTimer && (
+              <div className="flex items-center justify-between mt-[10px]">
+                <div className="w-full">Timer Color:</div>
+                <div className="flex w-full pl-[5px] items-center gap-[10px]">
+                  <ModalBuilderColorPicker
+                    className="!min-w-[150px] w-full"
+                    color={modalState.dismiss.timedDismiss.timerColor}
+                    onChange={(color) =>
+                      setModalState({
+                        ...modalState,
+                        dismiss: {
+                          ...modalState.dismiss,
+                          timedDismiss: {
+                            ...modalState.dismiss.timedDismiss,
+                            timerColor: color,
+                          },
+                        },
+                      })
+                    }
+                  />
+                </div>
+              </div>
+            )}
+          </>
+        )}
+        <RemoveComponentButton
+          onClick={() => {
+            setModalState({
+              ...modalState,
+              dismiss: {
+                ...modalState.dismiss,
+                hidden: true,
+              },
+            });
+            returnBack();
+          }}
+        >
+          Remove dismiss
+        </RemoveComponentButton>
+      </div>
     </div>
   );
 };

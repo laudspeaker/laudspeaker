@@ -318,11 +318,11 @@ We've made some changes to our styling and our navigation. We did this to speed 
     <div className="min-h-screen w-full fixed top-0 left-0">
       <div className="relative w-full">
         <div
-          className="w-full h-[60px] flex items-center bg-[#19362e] text-[#BAC3C0] text-[10px]"
+          className="w-full h-[60px] flex items-center bg-[#F9FAFB] text-[#4B5563] text-[10px]"
           id="modalHeader"
         >
           <button
-            className="w-[60px] border-r-[1px] border-white hover:text-white"
+            className="w-[60px] border-r-[1px] hover:text-[#6366F1]"
             onClick={() => navigate("/templates")}
           >
             <div className="flex flex-col justify-between items-center">
@@ -343,8 +343,8 @@ We've made some changes to our styling and our navigation. We did this to speed 
             </div>
           </button>
           <button
-            className={`w-[60px] flex justify-center items-center hover:text-white ${
-              isPreview ? "" : "text-white"
+            className={`w-[60px] flex justify-center items-center hover:text-[#6366F1] ${
+              isPreview ? "" : "text-[#4338CA]"
             }`}
             onClick={() => setIsPreview(false)}
           >
@@ -364,8 +364,8 @@ We've made some changes to our styling and our navigation. We did this to speed 
             </div>
           </button>
           <button
-            className={`w-[60px] flex justify-center items-center hover:text-white ${
-              isPreview ? "text-white" : ""
+            className={`w-[60px] flex justify-center items-center hover:text-[#6366F1] ${
+              isPreview ? "text-[#4338CA]" : ""
             }`}
             onClick={() => setIsPreview(true)}
           >

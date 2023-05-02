@@ -81,7 +81,7 @@ const ModalEditorAdditionalClicks = ({
   };
 
   return (
-    <>
+    <div className="p-[20px]">
       {AdditionClickMenu.map((block, i) => (
         <span key={i}>
           <div className="text-white/80 min-w-full mb-[6px] mt-[10px]">
@@ -110,7 +110,7 @@ const ModalEditorAdditionalClicks = ({
           </div>
         </span>
       ))}
-    </>
+    </div>
   );
 };
 

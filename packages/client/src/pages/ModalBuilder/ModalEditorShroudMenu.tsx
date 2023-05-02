@@ -25,7 +25,7 @@ const ModalEditorShroudMenu: FC<ModalEditorShroudMenuProps> = ({
   }, []);
 
   return (
-    <div className="flex flex-col text-[14px] font-normal">
+    <div className="p-[20px] flex flex-col text-[14px] gap-[10px] font-normal">
       <div className="flex items-center justify-between mb-[10px]">
         <div>Color:</div>
         <div className="flex items-center pl-[5px] gap-[10px]">

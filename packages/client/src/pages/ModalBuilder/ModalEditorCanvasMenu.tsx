@@ -21,77 +21,80 @@ const ModalEditorCanvasMenu = ({
   const bodyWidth = document.body.clientWidth;
 
   return (
-    <div className="text-[14px] font-normal">
-      <div className="flex items-start justify-between mb-[20px]">
-        <div>Width:</div>
-        <div>
+    <div className="w-full text-[14px] font-normal">
+      <div className="p-[20px]">
+        <div className="flex items-start justify-between mb-[20px]">
+          <div>Width:</div>
           <div>
-            <ReactSlider
-              className="h-[20px] flex items-center justify-center mb-[8px]"
-              trackClassName="h-[4px] bg-[#818CF8] rounded-[4px]"
-              min={modalState.width.unit === SizeUnit.PIXEL ? 100 : 1}
-              max={modalState.width.unit === SizeUnit.PIXEL ? bodyWidth : 100}
-              value={modalState.width.value}
-              onChange={(value) =>
-                setModalState({
-                  ...modalState,
-                  width: { ...modalState.width, value },
-                })
-              }
-              renderThumb={(props) => (
-                <div
-                  {...props}
-                  className="rounded-[100%] w-[14px] h-[14px] cursor-grab bg-white border-[2px] border-[#818CF8]"
-                />
-              )}
-            />
+            <div>
+              <ReactSlider
+                className="h-[20px] flex items-center justify-center mb-[8px]"
+                trackClassName="h-[4px] bg-[#818CF8] rounded-[4px]"
+                min={modalState.width.unit === SizeUnit.PIXEL ? 100 : 1}
+                max={modalState.width.unit === SizeUnit.PIXEL ? bodyWidth : 100}
+                value={modalState.width.value}
+                onChange={(value) =>
+                  setModalState({
+                    ...modalState,
+                    width: { ...modalState.width, value },
+                  })
+                }
+                renderThumb={(props) => (
+                  <div
+                    {...props}
+                    className="rounded-[100%] w-[14px] h-[14px] cursor-grab bg-white border-[2px] border-[#818CF8]"
+                  />
+                )}
+              />
+            </div>
+            <div className="flex items-center gap-[10px]">
+              <ModalBuilderNumberInput
+                id="width"
+                name="width"
+                value={modalState.width.value}
+                unit={modalState.width.unit}
+                onChange={(value) =>
+                  setModalState({
+                    ...modalState,
+                    width: { ...modalState.width, value },
+                  })
+                }
+                className="!w-[120px]"
+              />
+              <SizeUnitPicker
+                value={modalState.width.unit}
+                onChange={(unit) =>
+                  setModalState({
+                    ...modalState,
+                    width: { ...modalState.width, unit },
+                  })
+                }
+              />
+            </div>
           </div>
+        </div>
+        <div className="flex items-center justify-between">
+          <div>Corner:</div>
           <div className="flex items-center gap-[10px]">
             <ModalBuilderNumberInput
-              id="width"
-              name="width"
-              value={modalState.width.value}
-              unit={modalState.width.unit}
+              id="corner"
+              name="corner"
+              value={modalState.borderRadius.value}
+              unit={modalState.borderRadius.unit}
               onChange={(value) =>
                 setModalState({
                   ...modalState,
-                  width: { ...modalState.width, value },
+                  borderRadius: { ...modalState.borderRadius, value },
                 })
               }
-              className="!w-[120px]"
-            />
-            <SizeUnitPicker
-              value={modalState.width.unit}
-              onChange={(unit) =>
-                setModalState({
-                  ...modalState,
-                  width: { ...modalState.width, unit },
-                })
-              }
+              className="!min-w-[122px]"
             />
           </div>
         </div>
       </div>
-      <div className="flex items-center justify-between">
-        <div>Corner:</div>
-        <div className="flex items-center gap-[10px]">
-          <ModalBuilderNumberInput
-            id="corner"
-            name="corner"
-            value={modalState.borderRadius.value}
-            unit={modalState.borderRadius.unit}
-            onChange={(value) =>
-              setModalState({
-                ...modalState,
-                borderRadius: { ...modalState.borderRadius, value },
-              })
-            }
-            className="!min-w-[122px]"
-          />
-        </div>
-      </div>
-      <div className="border-t-[1px] border-[#5D726D] my-[15px]" />
-      <div className="flex flex-col gap-[10px]">
+
+      <div className="border-t-[1px] border-[#E5E7EB]" />
+      <div className="p-[20px] flex flex-col gap-[10px]">
         <div>Background:</div>
         <div className="flex select-none">
           <div

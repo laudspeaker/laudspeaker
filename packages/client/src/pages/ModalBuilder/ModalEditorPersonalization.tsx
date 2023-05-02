@@ -43,7 +43,7 @@ const ModalEditorPersonalization: FC<ModalEditorPersonalizationProps> = ({
   useDebounce(fetchKeys, 200, [searchStr]);
 
   return (
-    <div className="">
+    <div className="p-[20px]">
       <div className="w-full relative mb-[20px]">
         <svg
           width="14"
@@ -71,7 +71,9 @@ const ModalEditorPersonalization: FC<ModalEditorPersonalizationProps> = ({
           viewBox="0 0 16 16"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
-          className="absolute top-1/2 right-[10px] -translate-y-1/2 cursor-pointer"
+          className={`absolute top-1/2 right-[10px] -translate-y-1/2 cursor-pointer ${
+            searchStr ? "" : "hidden"
+          }`}
           onClick={() => setSeatchStr("")}
         >
           <path
@@ -120,7 +122,7 @@ const ModalEditorPersonalization: FC<ModalEditorPersonalizationProps> = ({
           No results for "{searchStr}"
         </div>
       ) : (
-        <div className="w-full flex justify-center items-center text-[#4B5563] text-[14px] font-normal">
+        <div className="w-full flex flex-col justify-center items-center text-[#4B5563] text-[14px] font-normal">
           <div>No variable defined</div>
           <div>Please define one in [xxx] to continue.</div>
         </div>
