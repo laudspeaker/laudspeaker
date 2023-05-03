@@ -593,7 +593,8 @@ const Flow = () => {
       case TemplateType.SMS:
       case TemplateType.FIREBASE:
       case TemplateType.SLACK:
-      case TemplateType.WEBHOOK: {
+      case TemplateType.WEBHOOK:
+      case TemplateType.MODAL: {
         const selectedNodeData = nodes.find((node) => node.id === selectedNode);
         if (!selectedNodeData) return;
         setSelectedMessageType(actionId);
@@ -789,6 +790,7 @@ const Flow = () => {
       case TemplateType.FIREBASE:
       case TemplateType.SLACK:
       case TemplateType.WEBHOOK:
+      case TemplateType.MODAL:
         const newSelectedNodeWithMessage = nodes.find((node) => {
           const { height, width, position } = node;
           if (!height || !width || !reactFlowRef.current) return node;
@@ -960,12 +962,17 @@ const Flow = () => {
         triggerDragImage.height / 2
       );
     } else if (
-      itemId === MessagesTypes.SMS ||
-      itemId === MessagesTypes.EMAIL ||
-      itemId === MessagesTypes.SLACK ||
-      itemId === MessagesTypes.PUSH ||
-      itemId === MessagesTypes.FIREBASE ||
-      itemId === MessagesTypes.WEBHOOK
+      (
+        [
+          MessagesTypes.SMS,
+          MessagesTypes.EMAIL,
+          MessagesTypes.SLACK,
+          MessagesTypes.PUSH,
+          MessagesTypes.FIREBASE,
+          MessagesTypes.WEBHOOK,
+          MessagesTypes.MODAL,
+        ] as string[]
+      ).includes(itemId)
     ) {
       setTimeout(() => {
         setIsMessagesDragging(true);
@@ -1056,9 +1063,14 @@ const Flow = () => {
               }}
               onMouseUp={(action) => {
                 if (
-                  ["email", "sms", "slack", "firebase", "webhook"].includes(
-                    action
-                  )
+                  [
+                    "email",
+                    "sms",
+                    "slack",
+                    "firebase",
+                    "webhook",
+                    "modal",
+                  ].includes(action)
                 )
                   setIsMessagesDragging(true);
 

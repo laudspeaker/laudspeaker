@@ -25,6 +25,7 @@ const PeopleTable = () => {
   const [searchKey, setSearchKey] = useState("");
   const [searchValue, setSearchValue] = useState("");
   const [isFirstRender, setIsFirstRender] = useState(true);
+  const [showFreezed, setShowFreezed] = useState(false);
 
   const setLoadingAsync = async () => {
     setLoading(true);
@@ -32,7 +33,7 @@ const PeopleTable = () => {
       const { data } = await ApiService.get({
         url: `${ApiConfig.getAllPeople}?take=${itemsPerPage}&skip=${
           itemsPerPage * currentPage
-        }&searchKey=${searchKey}&searchValue=${searchValue}`,
+        }&searchKey=${searchKey}&searchValue=${searchValue}&showFreezed=${showFreezed}`,
       });
       const { data: fetchedPeople, totalPages } = data;
       setPagesCount(totalPages);
@@ -47,7 +48,7 @@ const PeopleTable = () => {
   useEffect(() => {
     setLoadingAsync();
     setIsFirstRender(false);
-  }, [itemsPerPage, currentPage]);
+  }, [itemsPerPage, currentPage, showFreezed]);
 
   useDebounce(
     () => {
@@ -154,7 +155,9 @@ const PeopleTable = () => {
             currentPage={currentPage}
             itemsPerPage={itemsPerPage}
             setItemsPerPage={setItemsPerPage}
-            showDeletedToggle={false}
+            isShowDisabled={showFreezed}
+            setIsShowDisabled={setShowFreezed}
+            showDisabledText="Show freezed"
           />
         </div>
       </div>

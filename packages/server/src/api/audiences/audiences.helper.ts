@@ -94,6 +94,8 @@ export class AudiencesHelper {
     inclusionCriteria: InclusionCriteria,
     account?: Account
   ) {
+    if (cust.isFreezed) return false;
+
     if (
       !inclusionCriteria ||
       !inclusionCriteria.conditions ||

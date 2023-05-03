@@ -167,6 +167,20 @@ export const dataSubArray = [
         disabledToolTip:
           "Make sure there are steps and configure webhook in settings and step selected",
       },
+      {
+        id: "modal",
+        imgIcon: (
+          <div className="max-w-[30px] max-h-[30px] w-full h-full">
+            {Webhook()}
+          </div>
+        ),
+        text: "Modal Popup",
+        type: "menu",
+        link: "/modal",
+        canBeDisabled: false,
+        disabledToolTip:
+          "Make sure there are steps and configure modal in settings and step selected",
+      },
     ],
   },
 ];

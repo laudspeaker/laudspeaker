@@ -18,6 +18,8 @@ import { CustomersModule } from '../customers/customers.module';
 import { SlackModule } from '../slack/slack.module';
 import { WebhooksService } from '../webhooks/webhooks.service';
 import { WebhooksModule } from '../webhooks/webhooks.module';
+import { ModalsModule } from '../modals/modals.module';
+import { WebsocketsModule } from '@/websockets/websockets.module';
 
 @Module({
   imports: [
@@ -52,6 +54,8 @@ import { WebhooksModule } from '../webhooks/webhooks.module';
       { name: Customer.name, schema: CustomerSchema },
     ]),
     forwardRef(() => WebhooksModule),
+    ModalsModule,
+    forwardRef(() => WebsocketsModule),
   ],
   providers: [TemplatesService, WebhooksService],
   controllers: [TemplatesController],

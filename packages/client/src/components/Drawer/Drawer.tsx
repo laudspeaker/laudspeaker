@@ -122,7 +122,7 @@ export default function ResponsiveDrawer() {
                       </Disclosure.Button>
                       <Disclosure.Panel className="space-y-1 ml-3">
                         {item.children?.map((subItem) => (
-                          <>
+                          <React.Fragment key={subItem.id}>
                             {userState.userPermissions?.includes(
                               subItem.id
                             ) && (
@@ -154,7 +154,7 @@ export default function ResponsiveDrawer() {
                                 {subItem.text}
                               </Disclosure.Button>
                             )}
-                          </>
+                          </React.Fragment>
                         ))}
                       </Disclosure.Panel>
                     </>

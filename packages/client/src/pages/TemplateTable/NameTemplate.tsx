@@ -92,6 +92,7 @@ const NameTemplate = ({ onSubmit, isPrimary }: INameSegment) => {
                   { value: TemplateType.SMS },
                   { value: TemplateType.FIREBASE },
                   { value: TemplateType.WEBHOOK },
+                  { value: TemplateType.MODAL },
                 ]}
                 displayEmpty
               />

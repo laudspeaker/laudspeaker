@@ -43,7 +43,9 @@ import { Model } from 'mongoose';
 import { Liquid } from 'liquidjs';
 import { TestWebhookDto } from './dto/test-webhook.dto';
 import { WebhooksService } from '../webhooks/webhooks.service';
-import wait from '../../utils/wait';
+import wait from '@/utils/wait';
+import { ModalsService } from '../modals/modals.service';
+import { WebsocketGateway } from '@/websockets/websocket.gateway';
 
 @Injectable()
 @QueueEventsListener('message')
@@ -58,8 +60,11 @@ export class TemplatesService extends QueueEventsHost {
     @InjectModel(Customer.name) private customerModel: Model<CustomerDocument>,
     @InjectRepository(Audience)
     private audiencesRepository: Repository<Audience>,
+    @Inject(WebsocketGateway)
+    private websocketGateway: WebsocketGateway,
     @Inject(SlackService) private slackService: SlackService,
     @Inject(WebhooksService) private webhooksService: WebhooksService,
+    @Inject(ModalsService) private modalsService: ModalsService,
     @InjectQueue('message') private readonly messageQueue: Queue,
     @InjectQueue('webhooks') private readonly webhooksQueue: Queue,
     @InjectQueue('slack') private readonly slackQueue: Queue
@@ -299,6 +304,9 @@ export class TemplatesService extends QueueEventsHost {
       case TemplateType.WEBHOOK:
         template.webhookData = createTemplateDto.webhookData;
         break;
+      case TemplateType.MODAL:
+        template.modalState = createTemplateDto.modalState;
+        break;
     }
     return this.templatesRepository.save({
       ...template,
@@ -472,6 +480,16 @@ export class TemplatesService extends QueueEventsHost {
           });
         }
         break;
+      case TemplateType.MODAL:
+        if (template.modalState) {
+          const isSent = await this.websocketGateway.sendModal(
+            customerId,
+            template
+          );
+          if (!isSent)
+            await this.modalsService.queueModalEvent(customerId, template);
+        }
+        break;
     }
     return Promise.resolve(message ? message?.sid : job?.id);
   }
@@ -568,6 +586,7 @@ export class TemplatesService extends QueueEventsHost {
       type,
       smsText,
       webhookData,
+      modalState,
     } = foundTemplate;
 
     const ownerId = owner.id;
@@ -599,6 +618,7 @@ export class TemplatesService extends QueueEventsHost {
       type,
       smsText,
       webhookData,
+      modalState,
     });
   }
 

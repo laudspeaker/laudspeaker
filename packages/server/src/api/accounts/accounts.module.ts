@@ -6,6 +6,7 @@ import { AccountsService } from './accounts.service';
 import { AuthModule } from '../auth/auth.module';
 import { CustomersModule } from '../customers/customers.module';
 import { WebhooksModule } from '../webhooks/webhooks.module';
+import { S3Service } from '../s3/s3.service';
 
 @Module({
   imports: [
@@ -15,7 +16,7 @@ import { WebhooksModule } from '../webhooks/webhooks.module';
     WebhooksModule,
   ],
   controllers: [AccountsController],
-  providers: [AccountsService],
+  providers: [AccountsService, S3Service],
   exports: [AccountsService],
 })
 export class AccountsModule {}
