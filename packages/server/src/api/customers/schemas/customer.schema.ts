@@ -121,6 +121,9 @@ export class Customer {
 
   @Prop()
   isAnonymous?: boolean;
+
+  @Prop()
+  isFreezed?: boolean;
 }
 
 export const CustomerSchema = SchemaFactory.createForClass(Customer);

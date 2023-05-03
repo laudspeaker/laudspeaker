@@ -51,6 +51,7 @@ export class WebsocketGateway implements OnGatewayConnection {
       let customer: {
         id?: string;
         isAnonymous?: boolean;
+        isFreezed?: boolean;
       };
       if (customerId && isValidObjectId(customerId)) {
         customer = await this.customersService.CustomerModel.findOne({
@@ -58,7 +59,7 @@ export class WebsocketGateway implements OnGatewayConnection {
           ownerId: account.id,
         }).exec();
 
-        if (!customer) {
+        if (!customer || customer.isFreezed) {
           socket.emit(
             'error',
             'Invalid customer id. Creating new anonymous customer...'
@@ -114,7 +115,7 @@ export class WebsocketGateway implements OnGatewayConnection {
       ownerId,
     });
 
-    if (!customer) {
+    if (!customer || customer.isFreezed) {
       socket.emit(
         'error',
         'Invalid customer id. Creating new anonymous customer...'
@@ -140,22 +141,11 @@ export class WebsocketGateway implements OnGatewayConnection {
       }).exec();
 
     if (identifiedCustomer) {
-      const { id, _id, __v, ...customerData } = customer.toObject();
+      await this.customersService.deleteEverywhere(customer.id);
 
-      await this.customersService.CustomerModel.findByIdAndUpdate(
-        identifiedCustomer.id,
-        {
-          ...customerData,
-          ...optionalProperties,
-          ...uniqueProperties,
-          ownerId,
-          isAnonymous: false,
-        }
-      ).exec();
-
-      await this.customersService.CustomerModel.findByIdAndRemove(
-        customer.id
-      ).exec();
+      await this.customersService.CustomerModel.findByIdAndUpdate(customer.id, {
+        isFreezed: true,
+      }).exec();
 
       socket.data.customerId = identifiedCustomer.id;
       socket.emit('customerId', identifiedCustomer.id);
@@ -187,7 +177,7 @@ export class WebsocketGateway implements OnGatewayConnection {
       ownerId,
     });
 
-    if (!customer) {
+    if (!customer || customer.isFreezed) {
       socket.emit(
         'error',
         'Invalid customer id. Creating new anonymous customer...'

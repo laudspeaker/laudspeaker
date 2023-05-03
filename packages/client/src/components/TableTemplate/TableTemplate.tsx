@@ -481,6 +481,7 @@ export interface TableTemplateProps<T extends TableDataItem> {
   onPersonAdd?: (row: TableDataItem) => void;
   onPersonDelete?: (row: TableDataItem) => void;
   className?: string;
+  showDisabledText?: string;
 }
 
 export default function TableTemplate<T extends TableDataItem>({
@@ -502,6 +503,7 @@ export default function TableTemplate<T extends TableDataItem>({
   showDeletedToggle = true,
   deleteCustomerFromSegment = () => {},
   setSegmentToDelete = () => {},
+  showDisabledText = "Show deleted",
 }: TableTemplateProps<T>) {
   const isSkipped = (num?: number) => {
     if (!num) return false;
@@ -1151,7 +1153,7 @@ export default function TableTemplate<T extends TableDataItem>({
         <div>
           {setIsShowDisabled && showDeletedToggle && (
             <div className="flex items-center justify-center gap-[10px]">
-              Show deleted:
+              {showDisabledText}:
               <ToggleSwitch
                 checked={isShowDisabled}
                 onChange={() => setIsShowDisabled(!isShowDisabled)}

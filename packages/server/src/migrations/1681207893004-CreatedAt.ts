@@ -17,4 +17,3 @@ export class CreatedAt1681207893004 implements MigrationInterface {
     await queryRunner.query(`ALTER TABLE "template" DROP COLUMN "createdAt"`);
   }
 }
-

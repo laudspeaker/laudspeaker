@@ -11,4 +11,3 @@ export class WorkflowStartedAt1681295761871 implements MigrationInterface {
     await queryRunner.query(`ALTER TABLE "workflow" DROP COLUMN "startedAt"`);
   }
 }
-

@@ -291,12 +291,7 @@ const ModalEditor: FC<ModalEditorProps> = ({
         y: 40,
       }}
     >
-      <div
-        className="fixed rounded-[8px] w-[360px] z-[2147483646] min-h-[475px] max-h-[600px] shadow-lg bg-[#F9FAFB] text-[#111827] font-semibold leading-[22px]"
-        style={{
-          fontFamily: "Segoe UI",
-        }}
-      >
+      <div className="fixed rounded-[8px] w-[360px] z-[2147483646] min-h-[475px] max-h-[600px] shadow-lg bg-[#F9FAFB] text-[#111827] font-semibold leading-[22px] font-segoe">
         <div className="h-[8px] bg-[#4338CA] rounded-t-[8px]" />
         <div className="w-full border-b-[1px] border-[#E5E7EB]">
           <div

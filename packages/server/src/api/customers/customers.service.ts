@@ -54,7 +54,7 @@ const eventsMap = {
   opened: 'opened',
 };
 
-const KEYS_TO_SKIP = ['__v', '_id', 'audiences', 'ownerId'];
+const KEYS_TO_SKIP = ['__v', '_id', 'audiences', 'ownerId', 'isFreezed'];
 
 @Injectable()
 export class CustomersService {
@@ -285,7 +285,8 @@ export class CustomersService {
     take = 100,
     skip = 0,
     key = '',
-    search = ''
+    search = '',
+    showFreezed = false
   ): Promise<{ data: CustomerDocument[]; totalPages: number }> {
     const totalPages =
       Math.ceil(
@@ -300,6 +301,7 @@ export class CustomersService {
             [key]: new RegExp(`.*${search}.*`, 'i'),
           }
         : {}),
+      ...(showFreezed ? {} : { isFreezed: { $ne: true } }),
     })
       .sort({ createdAt: 'desc' })
       .skip(skip)
@@ -341,9 +343,8 @@ export class CustomersService {
     if (!customer)
       throw new HttpException('Person not found', HttpStatus.NOT_FOUND);
 
-    // TODO: fix issue with lean document, check old document and find replacement
     return {
-      ...customer.toObject<mongoose.LeanDocument<CustomerDocument>>(),
+      ...customer.toObject(),
       _id: id,
     };
   }
@@ -479,7 +480,12 @@ export class CustomersService {
     delete newCustomerData._id;
     delete newCustomerData.__v;
     delete newCustomerData.audiences;
+    delete newCustomerData.isFreezed;
+    delete newCustomerData.id;
     const customer = await this.findOne(account, id);
+
+    if (customer.isFreezed)
+      throw new BadRequestException('Customer is freezed');
 
     if (customer.ownerId != account.id) {
       throw new HttpException("You can't update this customer.", 400);
@@ -513,6 +519,8 @@ export class CustomersService {
         { upsert: true }
       ).exec();
     }
+
+    delete customer._id;
 
     const newCustomer = Object.fromEntries(
       Object.entries({
@@ -576,12 +584,17 @@ export class CustomersService {
         `Deleting audiences: ${JSON.stringify(newCustomerData)}`,
         `customers.service.ts:CustomersService.transactionalUpdate()`
       );
+      delete newCustomerData.isFreezed;
+      delete newCustomerData.id;
 
       const customer = await this.transactionalFindOne(
         account,
         id,
         transactionSession
       );
+
+      if (customer.isFreezed)
+        throw new BadRequestException('Customer is freezed');
 
       if (customer.ownerId != account.id) {
         throw new HttpException("You can't update this customer.", 400);
@@ -625,7 +638,7 @@ export class CustomersService {
         }).filter(([_, v]) => v != null)
       );
 
-      await this.CustomerModel.replaceOne(customer, newCustomer)
+      await this.CustomerModel.replaceOne({ id: customer.id }, newCustomer)
         .session(transactionSession)
         .exec();
 
@@ -644,14 +657,16 @@ export class CustomersService {
     skip = 0,
     checkInSegment?: string,
     searchKey?: string,
-    searchValue?: string
+    searchValue?: string,
+    showFreezed?: boolean
   ) {
     const { data, totalPages } = await this.findAll(
       <Account>account,
       take,
       skip,
       searchKey,
-      searchValue
+      searchValue,
+      showFreezed
     );
 
     const listInfo = await Promise.all(
@@ -986,6 +1001,7 @@ export class CustomersService {
       `${JSON.stringify(queryParam, null, 2)}`,
       `customers.service.ts:CustomersService.findByCorrelationKVPair()`
     );
+    queryParam.isFreezed = { $ne: true };
     try {
       if (transactionSession) {
         customer = await this.CustomerModel.findOne(queryParam)
@@ -1049,8 +1065,8 @@ export class CustomersService {
         transactionSession
       );
 
-      let left = correlation.cust.toObject();
-      let right = _.cloneDeep(dto);
+      const left = correlation.cust.toObject();
+      const right = _.cloneDeep(dto);
 
       delete right.correlationKey;
       delete right.correlationValue;
@@ -1082,8 +1098,8 @@ export class CustomersService {
     } finally {
       await transactionSession.endSession();
       await queryRunner.release();
-      return Promise.resolve(correlation.cust.id);
     }
+    return Promise.resolve(correlation.cust.id);
   }
 
   async mergeCustomers(
@@ -1129,6 +1145,9 @@ export class CustomersService {
       throw new BadRequestException("You can't delete yourself as a customer");
 
     const cust = await this.CustomerModel.findById(custId);
+
+    if (cust.isFreezed) throw new BadRequestException('Customer is freezed');
+
     await this.CustomerModel.deleteOne({ id: cust.id });
   }
 
