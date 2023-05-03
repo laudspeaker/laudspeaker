@@ -62,4 +62,8 @@ export class CreateTemplateDto {
   @IsObject()
   @IsOptional()
   public webhookData?: WebhookData;
+
+  @IsObject()
+  @IsOptional()
+  public modalState?: Record<string, unknown>;
 }

@@ -13,6 +13,7 @@ export enum MessagesTypes {
   FIREBASE = "firebase",
   PUSH = "push",
   WEBHOOK = "webhook",
+  MODAL = "modal",
 }
 
 export interface EventCondition {

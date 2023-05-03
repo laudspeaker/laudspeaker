@@ -23,6 +23,7 @@ import { FilterModule } from './filter/filter.module';
 import { WebhookJob } from './webhook-jobs/entities/webhook-job.entity';
 import { WebhookJobsModule } from './webhook-jobs/webhook-jobs.module';
 import Accounts from 'twilio/lib/rest/Accounts';
+import { ModalsModule } from './modals/modals.module';
 import { randomUUID } from 'crypto';
 
 @Module({
@@ -52,6 +53,7 @@ import { randomUUID } from 'crypto';
     TestsModule,
     FilterModule,
     WebhookJobsModule,
+    ModalsModule,
   ],
 })
 export class ApiModule {

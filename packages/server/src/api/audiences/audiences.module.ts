@@ -48,7 +48,7 @@ import { Job } from '../jobs/entities/job.entity';
       name: 'customers',
     }),
     forwardRef(() => CustomersModule),
-    TemplatesModule,
+    forwardRef(() => TemplatesModule),
     SlackModule,
   ],
   controllers: [AudiencesController],

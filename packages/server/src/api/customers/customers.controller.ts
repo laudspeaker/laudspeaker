@@ -106,7 +106,8 @@ export class CustomersController {
     @Query('skip') skip?: string,
     @Query('checkInSegment') checkInSegment?: string,
     @Query('searchKey') searchKey?: string,
-    @Query('searchValue') searchValue?: string
+    @Query('searchValue') searchValue?: string,
+    @Query('showFreezed') showFreezed?: string
   ) {
     const session = randomUUID();
 
@@ -117,7 +118,8 @@ export class CustomersController {
       skip && +skip,
       checkInSegment,
       searchKey,
-      searchValue
+      searchValue,
+      showFreezed === 'true'
     );
   }
 

@@ -45,6 +45,7 @@ import twilio from 'twilio';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import client from '@sendgrid/client';
 import { ClientResponse } from '@sendgrid/mail';
+import { ModalsService } from './api/modals/modals.service';
 import { randomUUID } from 'crypto';
 
 const BATCH_SIZE = 500;
@@ -87,7 +88,8 @@ export class CronService {
     private integrationsService: IntegrationsService,
     @Inject(WorkflowsService) private workflowsService: WorkflowsService,
     @Inject(WebhookJobsService) private webhookJobsService: WebhookJobsService,
-    @Inject(AccountsService) private accountsService: AccountsService
+    @Inject(AccountsService) private accountsService: AccountsService,
+    @Inject(ModalsService) private modalsService: ModalsService
   ) {}
 
   @Cron(CronExpression.EVERY_HOUR)
@@ -192,7 +194,7 @@ export class CronService {
 
         batch.forEach((event) => {
           const ownerId = event.ownerId;
-          const obj = event.toObject()?.event || {};
+          const obj = (event.toObject() as any)?.event || {};
           for (const key of Object.keys(obj)) {
             if (KEYS_TO_SKIP.includes(key)) continue;
 
@@ -676,6 +678,15 @@ export class CronService {
         .execute();
     } catch (e) {
       this.logger.error('Recovery cron error: ' + e);
+    }
+  }
+
+  @Cron(CronExpression.EVERY_MINUTE)
+  async handleExpiredModalEvents() {
+    try {
+      await this.modalsService.deleteExpiredModalEvents();
+    } catch (e) {
+      this.logger.error('Expired modal events cron error: ' + e);
     }
   }
 }

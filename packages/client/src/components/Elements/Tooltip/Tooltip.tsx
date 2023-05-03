@@ -21,6 +21,9 @@ const Tooltip: FC<CustomTooltipProps & TooltipProps> = ({
       content={content}
       placement={placement}
       color="red"
+      nonce={null}
+      onResize={() => null}
+      onResizeCapture={() => null}
     >
       <div>{children}</div>
     </MTTooltip>

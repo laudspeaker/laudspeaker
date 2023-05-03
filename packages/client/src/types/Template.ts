@@ -7,6 +7,7 @@ export enum TemplateType {
   SMS = "sms",
   FIREBASE = "firebase",
   WEBHOOK = "webhook",
+  MODAL = "modal",
 }
 
 export default interface Template {

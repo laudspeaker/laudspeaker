@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MongooseModule } from '@nestjs/mongoose';
 import { BullModule } from '@nestjs/bullmq';
@@ -67,11 +67,11 @@ import {
     BullModule.registerQueue({
       name: 'webhooks',
     }),
-    AuthModule,
-    CustomersModule,
-    AccountsModule,
-    TemplatesModule,
-    WorkflowsModule,
+    forwardRef(() => AuthModule),
+    forwardRef(() => CustomersModule),
+    forwardRef(() => AccountsModule),
+    forwardRef(() => TemplatesModule),
+    forwardRef(() => WorkflowsModule),
     AudiencesModule,
     SlackModule,
   ],

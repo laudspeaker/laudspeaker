@@ -48,6 +48,9 @@ import { SlackModule } from './api/slack/slack.module';
 import { WebhookJobsModule } from './api/webhook-jobs/webhook-jobs.module';
 import { WebhookJob } from './api/webhook-jobs/entities/webhook-job.entity';
 import { AccountsModule } from './api/accounts/accounts.module';
+import { EventsModule } from './api/events/events.module';
+import { ModalsModule } from './api/modals/modals.module';
+import { WebsocketsModule } from './websockets/websockets.module';
 import traverse from 'traverse';
 import { klona } from 'klona/full';
 
@@ -136,11 +139,7 @@ const formatMongoConnectionString = (mongoConnectionString: string) => {
           }),
         ]
       : []),
-    MongooseModule.forRoot(
-      process.env.MONGOOSE_URL
-        ? formatMongoConnectionString(process.env.MONGOOSE_URL)
-        : 'mongodb://127.0.0.1:27017/?directConnection=true'
-    ),
+    MongooseModule.forRoot(process.env.MONGOOSE_URL),
     BullModule.forRoot({
       connection: {
         host: process.env.REDIS_HOST ?? 'localhost',
@@ -221,6 +220,9 @@ const formatMongoConnectionString = (mongoConnectionString: string) => {
     SlackModule,
     WebhookJobsModule,
     AccountsModule,
+    EventsModule,
+    ModalsModule,
+    WebsocketsModule,
   ],
   controllers: [AppController],
   providers: [CronService],

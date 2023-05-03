@@ -137,6 +137,7 @@ const TextUpdaterNode = ({ data }: { data: NodeData }) => {
     firebase: <Mobile />,
     slack: <SlackMsg />,
     webhook: <Webhook />,
+    modal: <Webhook />,
   };
 
   const handleIconClick = (messageType: string, templateId: number) => () => {

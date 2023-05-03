@@ -1,4 +1,3 @@
-import { Integration } from './entities/integration.entity';
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import handleDatabricks from './databricks.worker';
 import {

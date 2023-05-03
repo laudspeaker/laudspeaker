@@ -66,6 +66,7 @@ const Person = () => {
   const [timeline, setTimeline] = useState<ITimeline[]>([
     {
       id: "1",
+      // @ts-ignore   TODO: also fix with timeline fix
       type: eventTypes.applied,
       content: "First seen in laudspeaker",
       date: "Sep 20",
@@ -93,18 +94,20 @@ const Person = () => {
         const { data: eventsData } = await ApiService.get<IEventsFetchData[]>({
           url: `/customers/${id}/events`,
         });
-        setTimeline([
-          ...timeline,
-          ...eventsData.map((item) => ({
-            id: item.id + item.name + item.audName + item.event,
-            type: eventTypes.completed,
-            content: "Email " + item.event,
-            datetime: item.createdAt,
-            name: item.name,
-            audName: item.audname,
-            date: new Date(item.createdAt).toLocaleString(),
-          })),
-        ]);
+
+        // TODO: Fix with timeline fix
+        // setTimeline([
+        //   ...timeline,
+        //   ...eventsData.map((item) => ({
+        //     id: item.id + item.name + item.audName + item.event,
+        //     type: eventTypes.completed,
+        //     content: "Email " + item.event,
+        //     datetime: item.createdAt,
+        //     name: item.name,
+        //     audName: item.audname,
+        //     date: new Date(item.createdAt).toLocaleString(),
+        //   })),
+        // ]);
       } catch (e) {
         console.error(e);
       } finally {

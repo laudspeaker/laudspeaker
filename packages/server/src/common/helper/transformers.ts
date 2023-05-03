@@ -3,6 +3,7 @@ import {
   ClassConstructor,
   ClassTransformOptions,
 } from 'class-transformer/types/interfaces';
+import { Types } from 'mongoose';
 
 export function transformToObject<T, R>(
   item: T,

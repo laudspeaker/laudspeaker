@@ -206,14 +206,16 @@ export default function ResponsiveDrawer(props: Props) {
       <>
         {arr.map((item) => {
           return (
-            <>
+            <React.Fragment key={item.text}>
               <div className="text-left font-medium mt-[26px] ml-[18px] text-[14px] font-[Inter]">
                 {item.text}
               </div>
               {item?.children?.map((menuItem) => (
-                <>{generateMenuItem(menuItem)}</>
+                <React.Fragment key={menuItem.id}>
+                  {generateMenuItem(menuItem)}
+                </React.Fragment>
               ))}
-            </>
+            </React.Fragment>
           );
         })}
       </>
