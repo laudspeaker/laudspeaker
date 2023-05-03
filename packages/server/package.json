@@ -57,6 +57,7 @@
     "env-cmd": "^10.1.0",
     "firebase-admin": "^11.6.0",
     "form-data": "^4.0.0",
+    "klona": "2.0.6",
     "liquidjs": "^9.42.0",
     "lodash": "^4.17.21",
     "mailgun.js": "^8.2.1",
