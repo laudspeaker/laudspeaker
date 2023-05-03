@@ -10,6 +10,7 @@ import {
   Get,
   Patch,
   Param,
+  Logger,
 } from '@nestjs/common';
 import { Account } from '../accounts/entities/accounts.entity';
 import { LoginDto } from './dto/login.dto';
@@ -19,33 +20,130 @@ import { AuthService } from './auth.service';
 import { Request } from 'express';
 import { RequestResetPasswordDto } from './dto/request-reset-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
+import { randomUUID } from 'crypto';
 
 @Controller('auth')
 export class AuthController {
-  @Inject(AuthService)
-  public readonly service: AuthService;
+  constructor(
+    @Inject(AuthService)
+    public readonly service: AuthService,
+    @Inject(WINSTON_MODULE_NEST_PROVIDER)
+    private readonly logger: Logger
+  ) {}
+
+  log(message, method, session, user = 'ANONYMOUS') {
+    this.logger.log(
+      message,
+      JSON.stringify({
+        class: AuthController.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+  debug(message, method, session, user = 'ANONYMOUS') {
+    this.logger.debug(
+      message,
+      JSON.stringify({
+        class: AuthController.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+  warn(message, method, session, user = 'ANONYMOUS') {
+    this.logger.warn(
+      message,
+      JSON.stringify({
+        class: AuthController.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+  error(error, method, session, user = 'ANONYMOUS') {
+    this.logger.error(
+      error.message,
+      error.stack,
+      JSON.stringify({
+        class: AuthController.name,
+        method: method,
+        session: session,
+        cause: error.cause,
+        name: error.name,
+        user: user,
+      })
+    );
+  }
+  verbose(message, method, session, user = 'ANONYMOUS') {
+    this.logger.verbose(
+      message,
+      JSON.stringify({
+        class: AuthController.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
 
   @Post('register')
   @UseInterceptors(ClassSerializerInterceptor)
   public async register(@Body() body: RegisterDto) {
-    return this.service.register(body);
+    const session = randomUUID();
+    this.debug(
+      `Registering user ${JSON.stringify(body)}`,
+      this.register.name,
+      session
+    );
+    try {
+      return await this.service.register(body, session);
+    } catch (e) {
+      this.error(e, this.register.name, session);
+      throw e;
+    }
   }
 
   @Post('login')
   public async login(@Body() body: LoginDto) {
-    return this.service.login(body);
+    const session = randomUUID();
+    this.debug(`Logging in: ${JSON.stringify(body)}`, this.login.name, session);
+    try {
+      return await this.service.login(body, session);
+    } catch (e) {
+      this.error(e, this.login.name, session);
+      throw e;
+    }
   }
 
   @Post('refresh')
   @UseGuards(JwtAuthGuard)
   public async refresh(@Req() { user }: Request): Promise<string | never> {
-    return this.service.refresh(<Account>user);
+    const session = randomUUID();
+    this.debug(
+      `Refreshing JWT: ${JSON.stringify({ id: (<Account>user).id })}`,
+      this.refresh.name,
+      session,
+      (<Account>user).id
+    );
+    try {
+      return await this.service.refresh(<Account>user, session);
+    } catch (e) {
+      this.error(e, this.refresh.name, session, (<Account>user).id);
+      throw e;
+    }
   }
 
   @Get()
   @UseInterceptors(ClassSerializerInterceptor)
   @UseGuards(JwtAuthGuard)
   public async verify() {
+    const session = randomUUID();
+    this.debug(`GET /auth/verify`, this.verify.name, session);
     return;
   }
 
@@ -53,14 +151,45 @@ export class AuthController {
   @UseInterceptors(ClassSerializerInterceptor)
   @UseGuards(JwtAuthGuard)
   public async verifyEmail(@Req() { user }: Request, @Param('id') id: string) {
-    return this.service.verifyEmail(<Account>user, id);
+    const session = randomUUID();
+    this.debug(
+      `Verifying email: ${JSON.stringify({
+        user: (<Account>user).id,
+        id: id,
+      })}`,
+      this.verifyEmail.name,
+      session,
+      (<Account>user).id
+    );
+    try {
+      return await this.service.verifyEmail(<Account>user, id, session);
+    } catch (e) {
+      this.error(e, this.verifyEmail.name, session, (<Account>user).id);
+      throw e;
+    }
   }
 
   @Patch('resend-email')
   @UseInterceptors(ClassSerializerInterceptor)
   @UseGuards(JwtAuthGuard)
   public async resendEmail(@Req() { user }: Request) {
-    return this.service.requestVerification(<Account>user);
+    const session = randomUUID();
+    this.debug(
+      `Resending email: ${JSON.stringify({ id: (<Account>user).id })}`,
+      this.resendEmail.name,
+      session,
+      (<Account>user).id
+    );
+    try {
+      return await this.service.requestVerification(
+        <Account>user,
+        undefined,
+        session
+      );
+    } catch (e) {
+      this.error(e, this.resendEmail.name, session, (<Account>user).id);
+      throw e;
+    }
   }
 
   @Post('reset-password')
@@ -68,7 +197,21 @@ export class AuthController {
   public async requestResetPassword(
     @Body() requestResetPasswordDto: RequestResetPasswordDto
   ) {
-    return this.service.requestResetPassword(requestResetPasswordDto);
+    const session = randomUUID();
+    this.debug(
+      `Reset password request: ${JSON.stringify(requestResetPasswordDto)}`,
+      this.requestResetPassword.name,
+      session
+    );
+    try {
+      return await this.service.requestResetPassword(
+        requestResetPasswordDto,
+        session
+      );
+    } catch (e) {
+      this.error(e, this.requestResetPassword.name, session);
+      throw e;
+    }
   }
 
   @Post('reset-password/:id')
@@ -77,6 +220,20 @@ export class AuthController {
     @Body() resetPasswordDto: ResetPasswordDto,
     @Param('id') id: string
   ) {
-    return this.service.resetPassword(resetPasswordDto, id);
+    const session = randomUUID();
+    this.debug(
+      `Resetting password: ${JSON.stringify({
+        id: id,
+        dto: resetPasswordDto,
+      })}`,
+      this.resetPassword.name,
+      session
+    );
+    try {
+      return await this.service.resetPassword(resetPasswordDto, id, session);
+    } catch (e) {
+      this.error(e, this.resetPassword.name, session);
+      throw e;
+    }
   }
 }

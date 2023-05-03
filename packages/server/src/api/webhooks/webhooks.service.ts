@@ -1,9 +1,4 @@
-import {
-  ForbiddenException,
-  Inject,
-  Injectable,
-  LoggerService,
-} from '@nestjs/common';
+import { ForbiddenException, Inject, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { PublicKey, Signature, Ecdsa } from 'starkbank-ecdsa';
@@ -20,6 +15,7 @@ import Mailgun from 'mailgun.js';
 import formData from 'form-data';
 import axios from 'axios';
 import FormData from 'form-data';
+import { randomUUID } from 'crypto';
 
 export enum ClickHouseEventProvider {
   MAILGUN = 'mailgun',
@@ -79,12 +75,13 @@ export class WebhooksService {
 
   constructor(
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
-    private readonly logger: LoggerService,
+    private readonly logger: Logger,
     @InjectRepository(Audience)
     private audienceRepository: Repository<Audience>,
     @InjectRepository(Account)
     private accountRepository: Repository<Account>
   ) {
+    const session = randomUUID();
     (async () => {
       try {
         await this.setupMailgunWebhook(
@@ -92,14 +89,74 @@ export class WebhooksService {
           process.env.MAILGUN_TEST_DOMAIN
         );
       } catch (e) {
-        console.error(e);
+        this.error(e, WebhooksService.name, session);
       }
     })();
+  }
+
+  log(message, method, session, user = 'ANONYMOUS') {
+    this.logger.log(
+      message,
+      JSON.stringify({
+        class: WebhooksService.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+  debug(message, method, session, user = 'ANONYMOUS') {
+    this.logger.debug(
+      message,
+      JSON.stringify({
+        class: WebhooksService.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+  warn(message, method, session, user = 'ANONYMOUS') {
+    this.logger.warn(
+      message,
+      JSON.stringify({
+        class: WebhooksService.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+  error(error, method, session, user = 'ANONYMOUS') {
+    this.logger.error(
+      error.message,
+      error.stack,
+      JSON.stringify({
+        class: WebhooksService.name,
+        method: method,
+        session: session,
+        cause: error.cause,
+        name: error.name,
+        user: user,
+      })
+    );
+  }
+  verbose(message, method, session, user = 'ANONYMOUS') {
+    this.logger.verbose(
+      message,
+      JSON.stringify({
+        class: WebhooksService.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
   }
 
   public async processSendgridData(
     signature: string,
     timestamp: string,
+    session: string,
     data?: any[]
   ) {
     let audience: Audience = null;
@@ -180,19 +237,22 @@ export class WebhooksService {
     await this.insertClickHouseMessages(messagesToInsert);
   }
 
-  public async processTwilioData({
-    audienceId,
-    customerId,
-    templateId,
-    SmsStatus,
-    MessageSid,
-  }: {
-    audienceId: string;
-    customerId: string;
-    templateId: string;
-    SmsStatus: string;
-    MessageSid: string;
-  }) {
+  public async processTwilioData(
+    {
+      audienceId,
+      customerId,
+      templateId,
+      SmsStatus,
+      MessageSid,
+    }: {
+      audienceId: string;
+      customerId: string;
+      templateId: string;
+      SmsStatus: string;
+      MessageSid: string;
+    },
+    session: string
+  ) {
     const audience = await this.audienceRepository.findOne({
       where: {
         id: audienceId,
@@ -213,19 +273,22 @@ export class WebhooksService {
     await this.insertClickHouseMessages([clickHouseRecord]);
   }
 
-  public async processMailgunData(body: {
-    signature: { token: string; timestamp: string; signature: string };
-    'event-data': {
-      event: string;
-      message: { headers: { 'message-id': string } };
-      'user-variables': {
-        audienceId: string;
-        customerId: string;
-        templateId: string;
-        accountId: string;
+  public async processMailgunData(
+    body: {
+      signature: { token: string; timestamp: string; signature: string };
+      'event-data': {
+        event: string;
+        message: { headers: { 'message-id': string } };
+        'user-variables': {
+          audienceId: string;
+          customerId: string;
+          templateId: string;
+          accountId: string;
+        };
       };
-    };
-  }) {
+    },
+    session: string
+  ) {
     const {
       timestamp: signatureTimestamp,
       token: signatureToken,

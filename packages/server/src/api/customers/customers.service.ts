@@ -41,6 +41,7 @@ import { SegmentCustomers } from '../segments/entities/segment-customers.entity'
 import { AudiencesService } from '../audiences/audiences.service';
 import { WorkflowsService } from '../workflows/workflows.service';
 import * as _ from 'lodash';
+import { randomUUID } from 'crypto';
 
 export type Correlation = {
   cust: CustomerDocument;
@@ -86,6 +87,7 @@ export class CustomersService {
     @InjectConnection() private readonly connection: mongoose.Connection
   ) {
     this.CustomerModel.watch().on('change', async (data: any) => {
+      const session = randomUUID();
       try {
         const customerId = data?.documentKey?._id;
         if (!customerId) return;
@@ -102,10 +104,11 @@ export class CustomersService {
 
           await this.segmentsService.updateAutomaticSegmentCustomerInclusion(
             account,
-            customer
+            customer,
+            session
           );
 
-          await this.recheckDynamicInclusion(account, customer);
+          await this.recheckDynamicInclusion(account, customer, session);
         }
       } catch (e) {
         this.logger.error(e);
@@ -116,6 +119,7 @@ export class CustomersService {
   async create(
     account: Account,
     createCustomerDto: CreateCustomerDto,
+    session: string,
     transactionSession?: ClientSession
   ): Promise<
     Customer &
@@ -310,7 +314,7 @@ export class CustomersService {
     return { data: customers, totalPages };
   }
 
-  async findOne(account: Account, id: string) {
+  async findOne(account: Account, id: string, session: string) {
     if (!isValidObjectId(id))
       throw new HttpException('Id is not valid', HttpStatus.BAD_REQUEST);
 
@@ -349,8 +353,12 @@ export class CustomersService {
     };
   }
 
-  async findCustomerEvents(account: Account, customerId: string) {
-    await this.findOne(account, customerId);
+  async findCustomerEvents(
+    account: Account,
+    customerId: string,
+    session: string
+  ) {
+    await this.findOne(account, customerId, session);
     const response = await this.clickhouseClient.query({
       query: `SELECT audienceId, event, createdAt FROM message_status WHERE customerId = {customerId:String} LIMIT 4`,
       query_params: { customerId },
@@ -471,7 +479,8 @@ export class CustomersService {
   async update(
     account: Account,
     id: string,
-    updateCustomerDto: Record<string, unknown>
+    updateCustomerDto: Record<string, unknown>,
+    session: string
   ) {
     const { ...newCustomerData } = updateCustomerDto;
 
@@ -482,7 +491,7 @@ export class CustomersService {
     delete newCustomerData.audiences;
     delete newCustomerData.isFreezed;
     delete newCustomerData.id;
-    const customer = await this.findOne(account, id);
+    const customer = await this.findOne(account, id, session);
 
     if (customer.isFreezed)
       throw new BadRequestException('Customer is freezed');
@@ -653,6 +662,7 @@ export class CustomersService {
 
   async returnAllPeopleInfo(
     account: Account,
+    session: string,
     take = 100,
     skip = 0,
     checkInSegment?: string,
@@ -700,6 +710,7 @@ export class CustomersService {
 
   async findAudienceStatsCustomers(
     account: Account,
+    session: string,
     take = 100,
     skip = 0,
     event?: string,
@@ -743,7 +754,8 @@ export class CustomersService {
     proj: string,
     phAuth: string,
     phUrl: string,
-    account: Account
+    account: Account,
+    session: string
   ) {
     let posthogUrl: string;
     if (phUrl[phUrl.length - 1] == '/') {
@@ -1043,7 +1055,8 @@ export class CustomersService {
 
   async upsert(
     account: Account,
-    dto: Record<string, unknown>
+    dto: Record<string, unknown>,
+    session: string
   ): Promise<string> {
     let correlation: Correlation;
 
@@ -1082,7 +1095,8 @@ export class CustomersService {
         await this.workflowsService.enrollCustomer(
           account,
           correlation.cust,
-          queryRunner
+          queryRunner,
+          session
         );
 
       await transactionSession.commitTransaction();
@@ -1140,7 +1154,7 @@ export class CustomersService {
     await oldCustomer.save();
   }
 
-  async removeById(account: Account, custId: string) {
+  async removeById(account: Account, custId: string, session: string) {
     if (account.customerId === custId)
       throw new BadRequestException("You can't delete yourself as a customer");
 
@@ -1151,7 +1165,7 @@ export class CustomersService {
     await this.CustomerModel.deleteOne({ id: cust.id });
   }
 
-  async getAttributes(account: Account, resourceId: string) {
+  async getAttributes(account: Account, resourceId: string, session: string) {
     const attributes = await this.CustomerKeysModel.find({
       ownerId: account.id,
     }).exec();
@@ -1198,7 +1212,11 @@ export class CustomersService {
   }
 
   // TODO: optimize
-  async loadCSV(account: Account, csvFile: Express.Multer.File) {
+  async loadCSV(
+    account: Account,
+    csvFile: Express.Multer.File,
+    session: string
+  ) {
     if (csvFile.mimetype !== 'text/csv')
       throw new BadRequestException('Only CSV files are allowed');
 
@@ -1222,7 +1240,7 @@ export class CustomersService {
         });
 
         if (customer) {
-          await this.update(account, customer.id, record);
+          await this.update(account, customer.id, record, session);
           stats.updated++;
         } else {
           delete record.verified;
@@ -1231,7 +1249,7 @@ export class CustomersService {
           delete record.__v;
           delete record.audiences;
 
-          customer = await this.create(account, { ...record });
+          customer = await this.create(account, { ...record }, session);
           stats.created++;
         }
         stats.customers.push(customer.id);
@@ -1264,13 +1282,15 @@ export class CustomersService {
 
   public async recheckDynamicInclusion(
     account: Account,
-    customer: CustomerDocument
+    customer: CustomerDocument,
+    session: string
   ) {
     const audiences = await this.getDynamicAudiencesWithCustomer(customer.id);
     for (const audience of audiences) {
       const inclusionCriteria = await this.audiencesService.getFilter(
         account,
-        audience.id
+        audience.id,
+        session
       );
 
       if (!inclusionCriteria) continue;
@@ -1299,6 +1319,7 @@ export class CustomersService {
 
   public async getPossibleAttributes(
     account: Account,
+    session: string,
     key = '',
     type?: string,
     isArray?: boolean

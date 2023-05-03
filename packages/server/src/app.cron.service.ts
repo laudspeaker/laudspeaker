@@ -46,6 +46,7 @@ import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import client from '@sendgrid/client';
 import { ClientResponse } from '@sendgrid/mail';
 import { ModalsService } from './api/modals/modals.service';
+import { randomUUID } from 'crypto';
 
 const BATCH_SIZE = 500;
 const KEYS_TO_SKIP = ['__v', '_id', 'audiences', 'ownerId'];
@@ -313,6 +314,7 @@ export class CronService {
 
   @Cron(CronExpression.EVERY_10_SECONDS)
   async handleTimeTriggers() {
+    const session = randomUUID();
     try {
       const date = new Date();
       const jobs = await this.jobsService.jobsRepository.find({
@@ -339,7 +341,7 @@ export class CronService {
             status: TimeJobStatus.IN_PROGRESS,
           });
           if (await this.customerModel.findById(job.customer).exec()) {
-            await this.workflowsService.timeTick(job);
+            await this.workflowsService.timeTick(job, session);
           }
           await this.jobsService.jobsRepository.delete({ id: job.id });
         } catch (e) {

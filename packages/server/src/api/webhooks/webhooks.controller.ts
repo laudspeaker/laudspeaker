@@ -1,21 +1,99 @@
-import { Body, Controller, Post, Req } from '@nestjs/common';
-import { Query } from '@nestjs/common/decorators';
+import {
+  Body,
+  Controller,
+  Logger,
+  Post,
+  Req,
+  Inject,
+  Query,
+} from '@nestjs/common';
 import { Request } from 'express';
 import { WebhooksService } from './webhooks.service';
+import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
+import { randomUUID } from 'crypto';
 
 @Controller('webhooks')
 export class WebhooksController {
-  constructor(private webhooksService: WebhooksService) {}
+  constructor(
+    @Inject(WINSTON_MODULE_NEST_PROVIDER)
+    private readonly logger: Logger,
+    private webhooksService: WebhooksService
+  ) {}
+
+  log(message, method, session, user = 'ANONYMOUS') {
+    this.logger.log(
+      message,
+      JSON.stringify({
+        class: WebhooksController.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+  debug(message, method, session, user = 'ANONYMOUS') {
+    this.logger.debug(
+      message,
+      JSON.stringify({
+        class: WebhooksController.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+  warn(message, method, session, user = 'ANONYMOUS') {
+    this.logger.warn(
+      message,
+      JSON.stringify({
+        class: WebhooksController.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+  error(error, method, session, user = 'ANONYMOUS') {
+    this.logger.error(
+      error.message,
+      error.stack,
+      JSON.stringify({
+        class: WebhooksController.name,
+        method: method,
+        session: session,
+        cause: error.cause,
+        name: error.name,
+        user: user,
+      })
+    );
+  }
+  verbose(message, method, session, user = 'ANONYMOUS') {
+    this.logger.verbose(
+      message,
+      JSON.stringify({
+        class: WebhooksController.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
 
   @Post('sendgrid')
   public async processSendgridData(@Req() req: Request, @Body() data: any) {
+    const session = randomUUID();
     const signature = req.headers[
       'x-twilio-email-event-webhook-signature'
     ] as string;
     const timestamp = req.headers[
       'x-twilio-email-event-webhook-timestamp'
     ] as string;
-    await this.webhooksService.processSendgridData(signature, timestamp, data);
+    await this.webhooksService.processSendgridData(
+      signature,
+      timestamp,
+      session,
+      data
+    );
   }
 
   @Post('twilio')
@@ -35,16 +113,21 @@ export class WebhooksController {
     @Query('customerId') customerId: string,
     @Query('templateId') templateId: string
   ) {
-    await this.webhooksService.processTwilioData({
-      ...body,
-      audienceId,
-      customerId,
-      templateId,
-    });
+    const session = randomUUID();
+    await this.webhooksService.processTwilioData(
+      {
+        ...body,
+        audienceId,
+        customerId,
+        templateId,
+      },
+      session
+    );
   }
 
   @Post('mailgun')
   public async processMailgunData(@Body() body: any) {
-    await this.webhooksService.processMailgunData(body);
+    const session = randomUUID();
+    await this.webhooksService.processMailgunData(body, session);
   }
 }

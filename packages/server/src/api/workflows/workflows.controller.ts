@@ -2,7 +2,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import {
   Controller,
   Inject,
-  LoggerService,
+  Logger,
   Get,
   Body,
   Patch,
@@ -25,14 +25,74 @@ import { WorkflowStatusUpdateDTO } from './dto/workflow-status-update.dto';
 import { Workflow } from './entities/workflow.entity';
 import { DeleteWorkflowDto } from './dto/delete-flow.dto';
 import { CreateWorkflowDto } from './dto/create-workflow.dto';
+import { randomUUID } from 'crypto';
 
 @Controller('workflows')
 export class WorkflowsController {
   constructor(
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
-    private readonly logger: LoggerService,
+    private readonly logger: Logger,
     private readonly workflowsService: WorkflowsService
   ) {}
+
+  log(message, method, session, user = 'ANONYMOUS') {
+    this.logger.log(
+      message,
+      JSON.stringify({
+        class: WorkflowsController.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+  debug(message, method, session, user = 'ANONYMOUS') {
+    this.logger.debug(
+      message,
+      JSON.stringify({
+        class: WorkflowsController.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+  warn(message, method, session, user = 'ANONYMOUS') {
+    this.logger.warn(
+      message,
+      JSON.stringify({
+        class: WorkflowsController.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+  error(error, method, session, user = 'ANONYMOUS') {
+    this.logger.error(
+      error.message,
+      error.stack,
+      JSON.stringify({
+        class: WorkflowsController.name,
+        method: method,
+        session: session,
+        cause: error.cause,
+        name: error.name,
+        user: user,
+      })
+    );
+  }
+  verbose(message, method, session, user = 'ANONYMOUS') {
+    this.logger.verbose(
+      message,
+      JSON.stringify({
+        class: WorkflowsController.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
 
   @Get()
   @UseGuards(JwtAuthGuard)
@@ -47,8 +107,10 @@ export class WorkflowsController {
     @Query('search') search?: string,
     @Query('filterStatuses') filterStatuses?: string
   ) {
+    const session = randomUUID();
     return this.workflowsService.findAll(
       <Account>user,
+      session,
       take && +take,
       skip && +skip,
       orderBy,
@@ -67,7 +129,13 @@ export class WorkflowsController {
     @Param('id') id: string,
     @Query('needsStats') needsStats: boolean
   ) {
-    return await this.workflowsService.findOne(<Account>user, id, needsStats);
+    const session = randomUUID();
+    return await this.workflowsService.findOne(
+      <Account>user,
+      id,
+      needsStats,
+      session
+    );
   }
 
   @Post()
@@ -77,9 +145,11 @@ export class WorkflowsController {
     @Req() { user }: Request,
     @Body() createWorkflowDto: CreateWorkflowDto
   ) {
+    const session = randomUUID();
     return await this.workflowsService.create(
       <Account>user,
-      createWorkflowDto.name
+      createWorkflowDto.name,
+      session
     );
   }
 
@@ -90,7 +160,13 @@ export class WorkflowsController {
     @Req() { user }: Request,
     @Body() { id }: WorkflowStatusUpdateDTO
   ) {
-    return await this.workflowsService.setPaused(<Account>user, id, true);
+    const session = randomUUID();
+    return await this.workflowsService.setPaused(
+      <Account>user,
+      id,
+      true,
+      session
+    );
   }
 
   @Patch('resume')
@@ -100,7 +176,13 @@ export class WorkflowsController {
     @Req() { user }: Request,
     @Body() { id }: WorkflowStatusUpdateDTO
   ) {
-    return await this.workflowsService.setPaused(<Account>user, id, false);
+    const session = randomUUID();
+    return await this.workflowsService.setPaused(
+      <Account>user,
+      id,
+      false,
+      session
+    );
   }
 
   @Patch('stop')
@@ -110,7 +192,13 @@ export class WorkflowsController {
     @Req() { user }: Request,
     @Body() { id }: WorkflowStatusUpdateDTO
   ) {
-    return await this.workflowsService.setStopped(<Account>user, id, true);
+    const session = randomUUID();
+    return await this.workflowsService.setStopped(
+      <Account>user,
+      id,
+      true,
+      session
+    );
   }
 
   @Patch()
@@ -120,22 +208,29 @@ export class WorkflowsController {
     @Req() { user }: Request,
     @Body() updateWorkflowDto: UpdateWorkflowDto
   ) {
-    return await this.workflowsService.update(<Account>user, updateWorkflowDto);
+    const session = randomUUID();
+    return await this.workflowsService.update(
+      <Account>user,
+      updateWorkflowDto,
+      session
+    );
   }
 
   @Post('duplicate/:id')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
   async duplicate(@Req() { user }: Request, @Param('id') id: string) {
-    return await this.workflowsService.duplicate(<Account>user, id);
+    const session = randomUUID();
+    return await this.workflowsService.duplicate(<Account>user, id, session);
   }
 
   @Get('start/:id')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
   async start(@Req() { user }: Request, @Param('id') id: string) {
+    const session = randomUUID();
     try {
-      const res = await this.workflowsService.start(<Account>user, id);
+      const res = await this.workflowsService.start(<Account>user, id, session);
       return Promise.resolve(res);
     } catch (err) {
       this.logger.error(
@@ -152,10 +247,12 @@ export class WorkflowsController {
     @Req() { user }: Request,
     @Body() startWorkflowDto: StartWorkflowDto
   ) {
+    const session = randomUUID();
     try {
       const res = await this.workflowsService.start(
         <Account>user,
-        startWorkflowDto.id
+        startWorkflowDto.id,
+        session
       );
       return Promise.resolve(res);
     } catch (err) {
@@ -170,8 +267,10 @@ export class WorkflowsController {
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
   async delete(@Body() deleteWorkflowDto: DeleteWorkflowDto) {
+    const session = randomUUID();
     return await this.workflowsService.markFlowDeleted(
-      deleteWorkflowDto.workflowId
+      deleteWorkflowDto.workflowId,
+      session
     );
   }
 
@@ -179,6 +278,7 @@ export class WorkflowsController {
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
   async remove(@Req() { user }: Request, @Param('name') name: string) {
-    return this.workflowsService.remove(<Account>user, name);
+    const session = randomUUID();
+    return this.workflowsService.remove(<Account>user, name, session);
   }
 }

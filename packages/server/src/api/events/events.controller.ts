@@ -12,7 +12,7 @@ import {
   Get,
   Query,
   Req,
-  LoggerService,
+  Logger,
 } from '@nestjs/common';
 import { StatusJobDto } from './dto/status-event.dto';
 import { PosthogBatchEventDto } from './dto/posthog-batch-event.dto';
@@ -25,44 +25,95 @@ import { ApiKeyAuthGuard } from '../auth/guards/apikey-auth.guard';
 import { Account } from '../accounts/entities/accounts.entity';
 import { Request } from 'express';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
+import { randomUUID } from 'crypto';
 
 @Controller('events')
 export class EventsController {
   constructor(
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
-    private readonly logger: LoggerService,
+    private readonly logger: Logger,
     @Inject(EventsService)
     private readonly eventsService: EventsService
   ) {}
 
+  log(message, method, session, user = 'ANONYMOUS') {
+    this.logger.log(
+      message,
+      JSON.stringify({
+        class: EventsController.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+  debug(message, method, session, user = 'ANONYMOUS') {
+    this.logger.debug(
+      message,
+      JSON.stringify({
+        class: EventsController.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+  warn(message, method, session, user = 'ANONYMOUS') {
+    this.logger.warn(
+      message,
+      JSON.stringify({
+        class: EventsController.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+  error(error, method, session, user = 'ANONYMOUS') {
+    this.logger.error(
+      error.message,
+      error.stack,
+      JSON.stringify({
+        class: EventsController.name,
+        method: method,
+        session: session,
+        cause: error.cause,
+        name: error.name,
+        user: user,
+      })
+    );
+  }
+  verbose(message, method, session, user = 'ANONYMOUS') {
+    this.logger.verbose(
+      message,
+      JSON.stringify({
+        class: EventsController.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+
   @Post('job-status/email')
   @UseInterceptors(ClassSerializerInterceptor)
   async getJobEmailStatus(@Body() body: StatusJobDto): Promise<string> {
-    this.logger.debug(
-      ``,
-      `events.controller.ts:EventsController.getJobEmailStatus()`
-    );
-    return this.eventsService.getJobStatus(body, JobTypes.email);
+    const session = randomUUID();
+    return this.eventsService.getJobStatus(body, JobTypes.email, session);
   }
 
   @Post('job-status/slack')
   @UseInterceptors(ClassSerializerInterceptor)
   async getJobSlackStatus(@Body() body: StatusJobDto): Promise<string> {
-    this.logger.debug(
-      ``,
-      `events.controller.ts:EventsController.getJobSlackStatus()`
-    );
-    return this.eventsService.getJobStatus(body, JobTypes.slack);
+    const session = randomUUID();
+    return this.eventsService.getJobStatus(body, JobTypes.slack, session);
   }
 
   @Post('job-status/webhook')
   @UseInterceptors(ClassSerializerInterceptor)
   async getJobWebhookStatus(@Body() body: StatusJobDto): Promise<string> {
-    this.logger.debug(
-      ``,
-      `events.controller.ts:EventsController.getWebhookStatus()`
-    );
-    return this.eventsService.getJobStatus(body, JobTypes.webhooks);
+    const session = randomUUID();
+    return this.eventsService.getJobStatus(body, JobTypes.webhooks, session);
   }
 
   @Post('/posthog/')
@@ -72,11 +123,8 @@ export class EventsController {
     @Headers('Authorization') apiKey: string,
     @Body() body: PosthogBatchEventDto
   ): Promise<WorkflowTick[] | HttpException> {
-    this.logger.debug(
-      `${JSON.stringify(body)}`,
-      `events.controller.ts:EventsController.getPosthogPayload()`
-    );
-    return this.eventsService.getPostHogPayload(apiKey, body);
+    const session = randomUUID();
+    return this.eventsService.getPostHogPayload(apiKey, body, session);
   }
 
   @Post()
@@ -86,11 +134,8 @@ export class EventsController {
     @Headers('Authorization') apiKey: string,
     @Body() body: EventDto
   ): Promise<WorkflowTick[] | HttpException> {
-    this.logger.debug(
-      ``,
-      `events.controller.ts:EventsController.enginePayload()`
-    );
-    return this.eventsService.enginePayload(apiKey, body);
+    const session = randomUUID();
+    return this.eventsService.enginePayload(apiKey, body, session);
   }
 
   @Get('/possible-attributes/:resourceId?')
@@ -101,13 +146,11 @@ export class EventsController {
     @Param('resourceId') resourceId = '',
     @Query('provider') provider
   ) {
-    this.logger.debug(
-      ``,
-      `events.controller.ts:EventsController.getAttributes()`
-    );
+    const session = randomUUID();
     return this.eventsService.getAttributes(
       resourceId,
       (<Account>user).id,
+      session,
       provider || undefined
     );
   }
@@ -116,33 +159,24 @@ export class EventsController {
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
   async getOrUpdateAttributes(@Param('resourceId') resourceId = '') {
-    this.logger.debug(
-      ``,
-      `events.controller.ts:EventsController.getOrUpdateAttributes()`
-    );
-    return this.eventsService.getOrUpdateAttributes(resourceId);
+    const session = randomUUID();
+    return this.eventsService.getOrUpdateAttributes(resourceId, session);
   }
 
   @Get('/possible-types')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
   async getPossibleTypes() {
-    this.logger.debug(
-      ``,
-      `events.controller.ts:EventsController.getPossibleTypes()`
-    );
-    return this.eventsService.getPossibleTypes();
+    const session = randomUUID();
+    return this.eventsService.getPossibleTypes(session);
   }
 
   @Get('/possible-comparison/:type')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
   async getPossibleComparison(@Param('type') type: string) {
-    this.logger.debug(
-      ``,
-      `events.controller.ts:EventsController.getPossibleComparison()`
-    );
-    return this.eventsService.getPossibleComparisonTypes(type);
+    const session = randomUUID();
+    return this.eventsService.getPossibleComparisonTypes(type, session);
   }
 
   @Get('/possible-values/:key')
@@ -152,11 +186,8 @@ export class EventsController {
     @Param('key') key: string,
     @Query('search') search: string
   ) {
-    this.logger.debug(
-      ``,
-      `events.controller.ts:EventsController.getPossibleValues()`
-    );
-    return this.eventsService.getPossibleValues(key, search);
+    const session = randomUUID();
+    return this.eventsService.getPossibleValues(key, search, session);
   }
 
   @Get('/possible-posthog-types')
@@ -166,13 +197,11 @@ export class EventsController {
     @Query('search') search: string,
     @Req() { user }: Request
   ) {
-    this.logger.debug(
-      ``,
-      `events.controller.ts:EventsController.getPossiblePothogTypes()`
-    );
+    const session = randomUUID();
     return this.eventsService.getPossiblePosthogTypes(
-      search,
-      (<Account>user).id
+      (<Account>user).id,
+      session,
+      search
     );
   }
 
@@ -185,8 +214,10 @@ export class EventsController {
     @Query('skip') skip?: string,
     @Query('search') search?: string
   ) {
+    const session = randomUUID();
     return this.eventsService.getPosthogEvents(
       <Account>user,
+      session,
       take && +take,
       skip && +skip,
       search

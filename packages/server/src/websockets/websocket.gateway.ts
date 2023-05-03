@@ -8,6 +8,7 @@ import {
   WebSocketServer,
   OnGatewayConnection,
 } from '@nestjs/websockets';
+import { randomUUID } from 'crypto';
 import { isValidObjectId } from 'mongoose';
 import { Server, Socket } from 'socket.io';
 import { AccountsService } from '../api/accounts/accounts.service';
@@ -47,6 +48,7 @@ export class WebsocketGateway implements OnGatewayConnection {
       }
 
       socket.data.account = account;
+      socket.data.session = randomUUID();
 
       let customer: {
         id?: string;
@@ -198,7 +200,8 @@ export class WebsocketGateway implements OnGatewayConnection {
         correlationValue: customer.id,
         source: 'custom',
         event,
-      }
+      },
+      socket.data.session
     );
 
     socket.emit('log', 'Successful fire');
@@ -220,3 +223,4 @@ export class WebsocketGateway implements OnGatewayConnection {
     return false;
   }
 }
+

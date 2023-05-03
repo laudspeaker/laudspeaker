@@ -1,4 +1,4 @@
-import { Injectable, Inject, LoggerService, forwardRef } from '@nestjs/common';
+import { Injectable, Inject, Logger, forwardRef } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Installation } from './entities/installation.entity';
@@ -43,7 +43,7 @@ export class SlackService {
 
   constructor(
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
-    private readonly logger: LoggerService,
+    private readonly logger: Logger,
     @InjectRepository(Installation)
     private installationRepository: Repository<Installation>,
     @InjectRepository(State)
@@ -178,7 +178,7 @@ export class SlackService {
     });
   }
 
-  async handleInstallPath(): Promise<string> {
+  async handleInstallPath(session: string): Promise<string> {
     try {
       const url = await this.installer.generateInstallUrl({
         scopes: [
@@ -230,7 +230,7 @@ export class SlackService {
     }
   }
 
-  handleOAuthRedirect(req: Request, res: Response) {
+  handleOAuthRedirect(req: Request, res: Response, session: string) {
     this.installer.handleCallback(req, res, {
       success: async (installation, installOptions, req, res) => {
         let tok;
@@ -261,7 +261,7 @@ export class SlackService {
   }
 
   //need to test what happens if user is not there
-  async handleCorrelation(teamid: string, user: Account) {
+  async handleCorrelation(teamid: string, user: Account, session: string) {
     const found: Account = await this.accountsRepository.findOneBy({
       id: (<Account>user).id,
     });
@@ -418,7 +418,7 @@ export class SlackService {
     });
   }
 
-  async syncAction(body: any) {
+  async syncAction(body: any, session: string) {
     let tok = null;
     let teamOrEnterpriseId = null;
     let install_id = null;
@@ -503,7 +503,7 @@ export class SlackService {
         sanitizedMember.slackId
       );
       if (!data) {
-        this.customersService.create(account, sanitizedMember);
+        this.customersService.create(account, sanitizedMember, session);
       } else {
         //the old data is what is already in the database
         this.customersService.mergeCustomers(account, data, sanitizedMember);
@@ -551,7 +551,12 @@ export class SlackService {
     });
   }
 
-  async sanitizeMembers(members: any, tok: string, teamOrEnterpriseId: string) {
+  async sanitizeMembers(
+    members: any,
+    tok: string,
+    teamOrEnterpriseId: string,
+    session: string
+  ) {
     try {
       const newMembers = [];
       for (let index = 0; index < members.length; index++) {
@@ -608,7 +613,7 @@ export class SlackService {
           sanitizedMember.slackId
         );
         if (!data) {
-          await this.customersService.create(account, sanitizedMember);
+          await this.customersService.create(account, sanitizedMember, session);
         } else {
           await this.customersService.mergeCustomers(
             account,
@@ -623,7 +628,7 @@ export class SlackService {
     }
   }
 
-  async syncChannels(channels: any, body: any) {
+  async syncChannels(channels: any, body: any, session: string) {
     let tok = null;
     let teamOrEnterpriseId = null;
     let install_id = null;
@@ -665,7 +670,7 @@ export class SlackService {
 
           //try empty args
         });
-        this.sanitizeMembers(members, tok, teamOrEnterpriseId);
+        this.sanitizeMembers(members, tok, teamOrEnterpriseId, session);
       } catch (e: any) {
         this.logger.error('Error: ' + e);
       }
@@ -695,7 +700,7 @@ export class SlackService {
     }
   }
 
-  async handleEvent(res: Response, body: any) {
+  async handleEvent(res: Response, body: any, session: string) {
     const ack = this.generateAck();
     if (body.type == 'url_verification') {
       ack(res, undefined, { content: body.challenge });
@@ -716,7 +721,7 @@ export class SlackService {
             const data = {
               cs: view.state.values.cs.ab.selected_conversations,
             };
-            await this.syncChannels(data, json);
+            await this.syncChannels(data, json, session);
             //displayHome(user.id, data);
           }
 
@@ -727,7 +732,7 @@ export class SlackService {
             json.actions?.length &&
             json.actions[0].action_id == 'Sync_Slack_Contacts'
           ) {
-            await this.syncAction(json);
+            await this.syncAction(json, session);
           }
           if (
             json.actions?.length &&
@@ -758,7 +763,7 @@ export class SlackService {
             body.payload.actions?.length &&
             body.payload.actions[0].action_id == 'Sync_Slack_Contacts'
           ) {
-            await this.syncAction(body);
+            await this.syncAction(body, session);
           }
 
           if (

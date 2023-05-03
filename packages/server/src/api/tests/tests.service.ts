@@ -1,4 +1,10 @@
-import { HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
+import {
+  HttpException,
+  HttpStatus,
+  Inject,
+  Injectable,
+  Logger,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Model } from 'mongoose';
@@ -18,10 +24,13 @@ import { SegmentCustomers } from '../segments/entities/segment-customers.entity'
 import { Installation } from '../slack/entities/installation.entity';
 import { Template } from '../templates/entities/template.entity';
 import { Workflow } from '../workflows/entities/workflow.entity';
+import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 
 @Injectable()
 export class TestsService {
   constructor(
+    @Inject(WINSTON_MODULE_NEST_PROVIDER)
+    private readonly logger: Logger,
     private dataSource: DataSource,
     @Inject(CustomersService)
     private readonly customersService: CustomersService,
@@ -45,18 +54,78 @@ export class TestsService {
     private segmentCustomersRepository: Repository<SegmentCustomers>
   ) {}
 
-  async posthogsynctest(user: Express.User) {
-    const account = await this.accountService.findOne(user);
+  log(message, method, session, user = 'ANONYMOUS') {
+    this.logger.log(
+      message,
+      JSON.stringify({
+        class: TestsService.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+  debug(message, method, session, user = 'ANONYMOUS') {
+    this.logger.debug(
+      message,
+      JSON.stringify({
+        class: TestsService.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+  warn(message, method, session, user = 'ANONYMOUS') {
+    this.logger.warn(
+      message,
+      JSON.stringify({
+        class: TestsService.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+  error(error, method, session, user = 'ANONYMOUS') {
+    this.logger.error(
+      error.message,
+      error.stack,
+      JSON.stringify({
+        class: TestsService.name,
+        method: method,
+        session: session,
+        cause: error.cause,
+        name: error.name,
+        user: user,
+      })
+    );
+  }
+  verbose(message, method, session, user = 'ANONYMOUS') {
+    this.logger.verbose(
+      message,
+      JSON.stringify({
+        class: TestsService.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+
+  async posthogsynctest(user: Express.User, session: string) {
+    const account = await this.accountService.findOne(user, session);
 
     await this.customersService.ingestPosthogPersons(
       process.env.TESTS_POSTHOG_PROJECT_ID,
       process.env.TESTS_POSTHOG_API_KEY,
       process.env.TESTS_POSTHOG_HOST_URL,
-      account
+      account,
+      session
     );
   }
 
-  async resetTestData() {
+  async resetTestData(session: string) {
     if (process.env.NODE_ENV !== 'development')
       throw new HttpException('Not found', HttpStatus.NOT_FOUND);
     try {
@@ -159,7 +228,7 @@ export class TestsService {
       sanitizedMember.slackTeamMember = true;
       sanitizedMember.phone = process.env.TESTS_SMS_TO;
 
-      await this.customersService.create(ret, sanitizedMember);
+      await this.customersService.create(ret, sanitizedMember, session);
 
       const installationId = process.env.TESTS_INSTALLATION_ID;
       const installationJson =
@@ -181,7 +250,7 @@ export class TestsService {
     }
   }
 
-  public async getTestVerification() {
+  public async getTestVerification(session: string) {
     const verification = await this.authService.verificationRepository.findOne({
       where: {
         email: 'testmail@gmail.com',
@@ -196,7 +265,7 @@ export class TestsService {
     };
   }
 
-  public async updateTestAccount(data: Record<string, any>) {
+  public async updateTestAccount(data: Record<string, any>, session: string) {
     const account = await this.accountService.accountsRepository.findOneBy({
       email: 'testmail@gmail.com',
     });
@@ -209,21 +278,21 @@ export class TestsService {
     );
   }
 
-  public async verifyTestAccount(id: string) {
+  public async verifyTestAccount(id: string, session: string) {
     const account = await this.accountService.accountsRepository.findOneBy({
       email: 'testmail@gmail.com',
     });
 
-    await this.authService.verifyEmail(account, id);
+    await this.authService.verifyEmail(account, id, session);
   }
 
-  public async getTestPosthogCustomer(id: string) {
+  public async getTestPosthogCustomer(id: string, session: string) {
     return this.customersService.CustomerModel.findOne({
       posthogId: [id],
     }).exec();
   }
 
-  public async getTestCustomerId() {
+  public async getTestCustomerId(session: string) {
     const customer = await this.customersService.CustomerModel.findOne({
       ownerId: '00000000-0000-0000-0000-000000000000',
       email: 'testmail@gmail.com',
@@ -231,14 +300,14 @@ export class TestsService {
     return customer.id;
   }
 
-  public async getAnyTestCustomerId() {
+  public async getAnyTestCustomerId(session: string) {
     const customer = await this.customersService.CustomerModel.findOne({
       ownerId: '00000000-0000-0000-0000-000000000000',
     });
     return customer.id;
   }
 
-  public async getAudienceByCustomerId(id: string) {
+  public async getAudienceByCustomerId(id: string, session: string) {
     const audiences = await this.audienceRepository.findBy({
       owner: {
         id: '00000000-0000-0000-0000-000000000000',
@@ -249,13 +318,13 @@ export class TestsService {
     return audiences.find((audience) => audience.customers.includes(id));
   }
 
-  public async getTestRecovery() {
+  public async getTestRecovery(session: string) {
     return this.recoveryRepository.findOneBy({
       account: { id: '00000000-0000-0000-0000-000000000000' },
     });
   }
 
-  public async isCustomerInSegment(customerId: string) {
+  public async isCustomerInSegment(customerId: string, session: string) {
     const cust = await this.segmentCustomersRepository.findOne({
       where: {
         customerId,
@@ -264,7 +333,7 @@ export class TestsService {
     return !!cust?.id;
   }
 
-  public async getSegmentSize(segmentId: string) {
+  public async getSegmentSize(segmentId: string, session: string) {
     return await this.segmentCustomersRepository.count({
       where: {
         segment: {
@@ -274,7 +343,7 @@ export class TestsService {
     });
   }
 
-  public async getWorkflowCustomersAmount(workflowId: string) {
+  public async getWorkflowCustomersAmount(workflowId: string, session: string) {
     const sum = await this.workflowsRepository.query(
       'select sum(array_length(audience."customers",1)) from audience where audience."workflowId" = $1',
       [workflowId]

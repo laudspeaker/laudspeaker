@@ -20,7 +20,7 @@ import { MailService } from '@sendgrid/mail';
 import { Client } from '@sendgrid/client';
 import { RemoveAccountDto } from './dto/remove-account.dto';
 import { InjectConnection } from '@nestjs/mongoose';
-import mongoose from 'mongoose';
+import mongoose, { ClientSession } from 'mongoose';
 import { WebhooksService } from '../webhooks/webhooks.service';
 import * as admin from 'firebase-admin';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
@@ -45,18 +45,94 @@ export class AccountsService extends BaseJwtHelper {
     super();
   }
 
+  log(message, method, session, user = 'ANONYMOUS') {
+    this.logger.log(
+      message,
+      JSON.stringify({
+        class: AccountsService.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+  debug(message, method, session, user = 'ANONYMOUS') {
+    this.logger.debug(
+      message,
+      JSON.stringify({
+        class: AccountsService.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+  warn(message, method, session, user = 'ANONYMOUS') {
+    this.logger.warn(
+      message,
+      JSON.stringify({
+        class: AccountsService.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+  error(error, method, session, user = 'ANONYMOUS') {
+    this.logger.error(
+      error.message,
+      error.stack,
+      JSON.stringify({
+        class: AccountsService.name,
+        method: method,
+        session: session,
+        cause: error.cause,
+        name: error.name,
+        user: user,
+      })
+    );
+  }
+  verbose(message, method, session, user = 'ANONYMOUS') {
+    this.logger.verbose(
+      message,
+      JSON.stringify({
+        class: AccountsService.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+
   findAll(): Promise<Account[]> {
     return this.accountsRepository.find();
   }
 
-  async findOne(user: Express.User | { id: string }): Promise<Account> {
-    const account = await this.accountsRepository.findOneBy({
-      id: (<Account>user).id,
-    });
+  async findOne(
+    user: Express.User | { id: string },
+    session: string
+  ): Promise<Account> {
+    try {
+      const account = await this.accountsRepository.findOneBy({
+        id: (<Account>user).id,
+      });
 
-    if (!account) throw new NotFoundException('Account not found');
+      if (!account) {
+        const e = new NotFoundException('Account not found');
+        throw e;
+      }
 
-    return account;
+      this.debug(
+        `Found ${JSON.stringify(account)}`,
+        this.findOne.name,
+        session,
+        (<Account>user).id
+      );
+      return account;
+    } catch (e) {
+      this.error(e, this.findOne.name, session, (<Account>user).id);
+      throw e;
+    }
   }
 
   findOneByAPIKey(apiKey: string): Promise<Account> {
@@ -65,9 +141,10 @@ export class AccountsService extends BaseJwtHelper {
 
   async update(
     user: Express.User,
-    updateUserDto: UpdateAccountDto
+    updateUserDto: UpdateAccountDto,
+    session: string
   ): Promise<Account> {
-    const oldUser = await this.findOne(user);
+    const oldUser = await this.findOne(user, session);
     // if user change password
     let password = oldUser.password;
 
@@ -236,7 +313,8 @@ export class AccountsService extends BaseJwtHelper {
         if (needEmailUpdate)
           await this.authService.requestVerification(
             updatedUser,
-            transactionManager
+            transactionManager,
+            session
           );
       });
 
@@ -251,53 +329,105 @@ export class AccountsService extends BaseJwtHelper {
     }
   }
 
-  async updateApiKey(user: Express.User): Promise<string> {
-    const newKey = this.generateApiKey();
-    const oldUser = await this.findOne(user);
-
-    await this.accountsRepository.save({
-      ...oldUser,
-      apiKey: newKey,
-    });
-
-    return newKey;
+  async updateApiKey(user: Express.User, session: string): Promise<string> {
+    try {
+      const newKey = this.generateApiKey();
+      this.debug(
+        `Generated API Key ${JSON.stringify({ apiKey: newKey })}`,
+        this.updateApiKey.name,
+        session,
+        (<Account>user).id
+      );
+      const oldUser = await this.findOne(user, session);
+      this.debug(
+        `Found user: ${JSON.stringify({ id: oldUser.id })}`,
+        this.updateApiKey.name,
+        session,
+        (<Account>user).id
+      );
+      await this.accountsRepository.save({
+        ...oldUser,
+        apiKey: newKey,
+      });
+      this.debug(
+        `Updated User's API Key ${JSON.stringify({
+          apiKey: newKey,
+          id: oldUser.id,
+        })}`,
+        this.updateApiKey.name,
+        session,
+        (<Account>user).id
+      );
+      return newKey;
+    } catch (e) {
+      this.error(e, this.updateApiKey.name, session, (<Account>user).id);
+      throw e;
+    }
   }
 
   async remove(
     user: Express.User,
-    removeAccountDto: RemoveAccountDto
+    removeAccountDto: RemoveAccountDto,
+    session: string
   ): Promise<void> {
-    const account = await this.findOne(user);
-
-    if (!bcrypt.compareSync(removeAccountDto.password, account.password))
-      throw new BadRequestException('Password is incorrect');
-
-    const transactionSession = await this.connection.startSession();
-    transactionSession.startTransaction();
-
-    await this.customersService.CustomerModel.deleteMany(
-      {
-        ownerId: account.id,
-      },
-      { session: transactionSession }
-    )
-      .session(transactionSession)
-      .exec();
-
-    await this.customersService.CustomerKeysModel.deleteMany(
-      {
-        ownerId: account.id,
-      },
-      { session: transactionSession }
-    )
-      .session(transactionSession)
-      .exec();
-
+    let transactionSession: ClientSession;
     try {
+      const account = await this.findOne(user, session);
+      this.debug(
+        `Found ${JSON.stringify({ id: account.id })}`,
+        this.remove.name,
+        session,
+        (<Account>user).id
+      );
+
+      if (!bcrypt.compareSync(removeAccountDto.password, account.password))
+        throw new BadRequestException('Password is incorrect');
+
+      transactionSession = await this.connection.startSession();
+      transactionSession.startTransaction();
+
+      await this.customersService.CustomerModel.deleteMany(
+        {
+          ownerId: account.id,
+        },
+        { session: transactionSession }
+      )
+        .session(transactionSession)
+        .exec();
+      this.debug(
+        `Deleted customers for ${JSON.stringify({ id: account.id })}`,
+        this.remove.name,
+        session,
+        (<Account>user).id
+      );
+
+      await this.customersService.CustomerKeysModel.deleteMany(
+        {
+          ownerId: account.id,
+        },
+        { session: transactionSession }
+      )
+        .session(transactionSession)
+        .exec();
+      this.debug(
+        `Deleted customer keys for ${JSON.stringify({ id: account.id })}`,
+        this.remove.name,
+        session,
+        (<Account>user).id
+      );
+
       await this.accountsRepository.delete(account.id);
+      this.debug(
+        `Deleted ${JSON.stringify({ id: account.id })}`,
+        this.remove.name,
+        session,
+        (<Account>user).id
+      );
+
       await transactionSession.commitTransaction();
     } catch (e) {
       await transactionSession.abortTransaction();
+      this.error(e, this.remove.name, session, (<Account>user).id);
       throw e;
     } finally {
       await transactionSession.endSession();

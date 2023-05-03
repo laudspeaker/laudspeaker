@@ -7,6 +7,7 @@ import { AppModule } from './app.module';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { urlencoded } from 'body-parser';
 import { readFileSync } from 'fs';
+const morgan = require('morgan');
 
 async function bootstrap() {
   const httpsOptions = {
@@ -35,7 +36,18 @@ async function bootstrap() {
   app.set('trust proxy', 1);
   app.enableCors();
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
-  app.useLogger(app.get(WINSTON_MODULE_NEST_PROVIDER));
+  const logger = app.get(WINSTON_MODULE_NEST_PROVIDER);
+  const morganMiddleware = morgan(
+    ':method :url :status :res[content-length] :remote-addr :user-agent - :response-time ms :total-time ms',
+    {
+      stream: {
+        // Configure Morgan to use our custom logger with the http severity
+        write: (message) => logger.log(message.trim(), AppModule.name),
+      },
+    }
+  );
+  app.useLogger(logger);
+  app.use(morganMiddleware);
 
   await app.listen(port, () => {
     console.log('[WEB]', `http://localhost:${port}`);

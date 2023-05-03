@@ -10,7 +10,7 @@ import { AuthMiddleware } from './api/auth/middleware/auth.middleware';
 import { EventsController } from './api/events/events.controller';
 import { SlackMiddleware } from './api/slack/middleware/slack.middleware';
 import { AppController } from './app.controller';
-import { join, resolve } from 'path';
+import { join } from 'path';
 import { CronService } from './app.cron.service';
 import { ScheduleModule } from '@nestjs/schedule';
 import {
@@ -51,54 +51,63 @@ import { AccountsModule } from './api/accounts/accounts.module';
 import { EventsModule } from './api/events/events.module';
 import { ModalsModule } from './api/modals/modals.module';
 import { WebsocketsModule } from './websockets/websockets.module';
+import traverse from 'traverse';
+import { klona } from 'klona/full';
+
+const sensitiveKeys = [
+  /cookie/i,
+  /passw(or)?d/i,
+  /^pw$/,
+  /^pass$/i,
+  /secret/i,
+  /token/i,
+  /api[-._]?key/i,
+];
+
+function isSensitiveKey(keyStr) {
+  if (keyStr) {
+    return sensitiveKeys.some((regex) => regex.test(keyStr));
+  }
+}
+
+function redactObject(obj: any) {
+  traverse(obj).forEach(function redactor(this: any) {
+    if (isSensitiveKey(this.key)) {
+      this.update('[REDACTED]');
+    }
+  });
+}
+
+function redact(obj) {
+  const copy = klona(obj); // Making a deep copy to prevent side effects
+  redactObject(copy);
+
+  const splat = copy[Symbol.for('splat')];
+  redactObject(splat); // Specifically redact splat Symbol
+
+  return copy;
+}
 
 const myFormat = winston.format.printf(function ({
+  timestamp,
+  context,
   level,
   message,
-  timestamp,
-  ...metadata
+  stack,
 }) {
-  let filename;
-  const oldStackTrace = Error.prepareStackTrace;
-
-  const boilerplateLines = (line) =>
-    line &&
-    line.getFileName() &&
-    // in the following line you may want to "play" with adding a '/' as a prefix/postfix to your module name
-    line.getFileName().indexOf('<The Name of This Module>') &&
-    line.getFileName().indexOf('/node_modules/') < 0;
-
+  let ctx: any = {};
   try {
-    // eslint-disable-next-line handle-callback-err
-    Error.prepareStackTrace = (err, structuredStackTrace) =>
-      structuredStackTrace;
-    // @ts-ignore
-    Error.captureStackTrace(this);
-    // we need to "peel" the first CallSites (frames) in order to get to the caller we're looking for
-    // in our case we're removing frames that come from logger module or from winston
-    // @ts-ignore
-    const callSites = this.stack.filter(boilerplateLines);
-    if (callSites.length === 0) {
-      // bail gracefully: even though we shouldn't get here, we don't want to crash for a log print!
-      return null;
-    }
-    const results = [];
-    for (let i = 0; i < 1; i++) {
-      const callSite = callSites[i];
-      let fileName = callSite.getFileName();
-      // BASE_DIR_NAME is the path to the project root folder
-      fileName = fileName.includes(resolve('.'))
-        ? fileName.substring(resolve('.').length + 1)
-        : fileName;
-      results.push(fileName + ':' + callSite.getLineNumber());
-    }
-    filename = results.join('\n');
-    return `[${level}] [${filename}] [${timestamp}] ${message} ${JSON.stringify(
-      metadata
-    )}`;
-  } finally {
-    Error.prepareStackTrace = oldStackTrace;
-  }
+    ctx = JSON.parse(context);
+  } catch (e) {}
+  return `[${timestamp}] [${level}]${
+    ctx?.class ? ' [Class: ' + ctx?.class + ']' : ''
+  }${ctx?.method ? ' [Method: ' + ctx?.method + ']' : ''}${
+    ctx?.session ? ' [User: ' + ctx?.user + ']' : ''
+  }${ctx?.session ? ' [Session: ' + ctx?.session + ']' : ''}: ${message} ${
+    stack ? '{stack: ' + stack : ''
+  } ${ctx.cause ? 'cause: ' + ctx.cause : ''} ${
+    ctx.message ? 'message: ' + ctx.message : ''
+  } ${ctx.name ? 'name: ' + ctx.name + '}' : ''}`;
 });
 
 const formatMongoConnectionString = (mongoConnectionString: string) => {
@@ -143,15 +152,20 @@ const formatMongoConnectionString = (mongoConnectionString: string) => {
         enableOfflineQueue: true,
       },
     }),
+    // MorganLoggerModule,
+    // MorganLoggerModule.forRoot({ name: 'HTTPLogger', format: "combined" }),
     WinstonModule.forRootAsync({
       useFactory: () => ({
-        level: 'debug',
+        level: process.env.LOG_LEVEL || 'debug',
         transports: [
           new winston.transports.Console({
             handleExceptions: true,
             format: winston.format.combine(
-              winston.format.colorize(),
-              winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
+              winston.format((info) => redact(info))(), // Prevent logging sensitive data
+              winston.format.colorize({ all: true }),
+              winston.format.align(),
+              winston.format.errors({ stack: true }),
+              winston.format.timestamp({ format: 'YYYY-MM-DD hh:mm:ss.SSS A' }),
               myFormat
             ),
           }),

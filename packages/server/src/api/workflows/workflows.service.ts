@@ -1,5 +1,5 @@
 import {
-  LoggerService,
+  Logger,
   Inject,
   Injectable,
   HttpException,
@@ -69,7 +69,7 @@ export class WorkflowsService {
   constructor(
     private dataSource: DataSource,
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
-    private readonly logger: LoggerService,
+    private readonly logger: Logger,
     @InjectRepository(Workflow)
     public workflowsRepository: Repository<Workflow>,
     @Inject(AudiencesService) private audiencesService: AudiencesService,
@@ -81,6 +81,65 @@ export class WorkflowsService {
     private readonly audiencesHelper: AudiencesHelper
   ) {}
 
+  log(message, method, session, user = 'ANONYMOUS') {
+    this.logger.log(
+      message,
+      JSON.stringify({
+        class: WorkflowsService.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+  debug(message, method, session, user = 'ANONYMOUS') {
+    this.logger.debug(
+      message,
+      JSON.stringify({
+        class: WorkflowsService.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+  warn(message, method, session, user = 'ANONYMOUS') {
+    this.logger.warn(
+      message,
+      JSON.stringify({
+        class: WorkflowsService.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+  error(error, method, session, user = 'ANONYMOUS') {
+    this.logger.error(
+      error.message,
+      error.stack,
+      JSON.stringify({
+        class: WorkflowsService.name,
+        method: method,
+        session: session,
+        cause: error.cause,
+        name: error.name,
+        user: user,
+      })
+    );
+  }
+  verbose(message, method, session, user = 'ANONYMOUS') {
+    this.logger.verbose(
+      message,
+      JSON.stringify({
+        class: WorkflowsService.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+
   /**
    * Finds all workflows
    *
@@ -89,6 +148,7 @@ export class WorkflowsService {
    */
   async findAll(
     account: Account,
+    session: string,
     take = 100,
     skip = 0,
     orderBy?: keyof Workflow,
@@ -262,7 +322,8 @@ export class WorkflowsService {
   async findOne(
     account: Account,
     id: string,
-    needStats: boolean
+    needStats: boolean,
+    session: string
   ): Promise<Workflow> {
     if (!isUUID(id)) throw new BadRequestException('Id is not valid uuid');
 
@@ -304,7 +365,7 @@ export class WorkflowsService {
     return found;
   }
 
-  async create(account: Account, name: string) {
+  async create(account: Account, name: string, session: string) {
     let ret: Workflow;
     try {
       ret = await this.workflowsRepository.save({
@@ -335,6 +396,7 @@ export class WorkflowsService {
   async update(
     account: Account,
     updateWorkflowDto: UpdateWorkflowDto,
+    session: string,
     queryRunner = this.dataSource.createQueryRunner()
   ): Promise<void> {
     const alreadyInsideTransaction = queryRunner.isTransactionActive;
@@ -444,7 +506,7 @@ export class WorkflowsService {
     }
   }
 
-  async duplicate(user: Account, id: string) {
+  async duplicate(user: Account, id: string, session: string) {
     const oldWorkflow = await this.workflowsRepository.findOne({
       where: {
         owner: { id: user.id },
@@ -469,7 +531,7 @@ export class WorkflowsService {
       oldWorkflow.name.substring(0, copyEraseIndex) +
       '-copy-' +
       (res?.[0]?.count || '0');
-    const newWorkflow = await this.create(user, newName);
+    const newWorkflow = await this.create(user, newName, session);
 
     const oldAudiences = await this.audiencesService.audiencesRepository.find({
       where: { workflow: { id: oldWorkflow.id } },
@@ -521,6 +583,7 @@ export class WorkflowsService {
           filterId: oldWorkflow.filter?.id,
           isDynamic: oldWorkflow.isDynamic,
         },
+        session,
         queryRunner
       );
 
@@ -550,7 +613,8 @@ export class WorkflowsService {
    */
   async start(
     account: Account,
-    workflowID: string
+    workflowID: string,
+    session: string
   ): Promise<(string | number)[]> {
     let workflow: Workflow; // Workflow to update
     let customers: CustomerDocument[]; // Customers to add to primary audience
@@ -598,7 +662,8 @@ export class WorkflowsService {
         audience = await this.audiencesService.freeze(
           account,
           audience.id,
-          queryRunner
+          queryRunner,
+          session
         );
         this.logger.debug('Freezing audience ' + audience?.id);
 
@@ -620,7 +685,8 @@ export class WorkflowsService {
             null,
             queryRunner,
             workflow.rules,
-            workflow.id
+            workflow.id,
+            session
           );
           this.logger.debug('Finished moving customers into workflow');
 
@@ -668,7 +734,8 @@ export class WorkflowsService {
   async enrollCustomer(
     account: Account,
     customer: CustomerDocument,
-    queryRunner: QueryRunner
+    queryRunner: QueryRunner,
+    session: string
   ): Promise<void> {
     try {
       const workflows = await queryRunner.manager.find(Workflow, {
@@ -710,7 +777,8 @@ export class WorkflowsService {
               null,
               queryRunner,
               workflow.rules,
-              workflow.id
+              workflow.id,
+              session
             );
             this.logger.debug('Enrolled customer in dynamic primary audience.');
           }
@@ -742,7 +810,8 @@ export class WorkflowsService {
     account: Account,
     event: EventDto | null | undefined,
     queryRunner: QueryRunner,
-    transactionSession: ClientSession
+    transactionSession: ClientSession,
+    session: string
   ): Promise<WorkflowTick[]> {
     let workflows: Workflow[], // Active workflows for this account
       workflow: Workflow, // Workflow being updated
@@ -955,7 +1024,8 @@ export class WorkflowsService {
                           event,
                           queryRunner,
                           workflow.rules,
-                          workflow.id
+                          workflow.id,
+                          session
                         );
                       this.logger.debug(
                         'Moved ' +
@@ -1009,7 +1079,7 @@ export class WorkflowsService {
    * @param name - the name of the workflow to delete
    *
    */
-  async remove(account: Account, name: string): Promise<void> {
+  async remove(account: Account, name: string, session: string): Promise<void> {
     await this.workflowsRepository.delete({
       owner: { id: account.id },
       name,
@@ -1020,6 +1090,7 @@ export class WorkflowsService {
     account: Account,
     id: string,
     value: boolean,
+    session: string,
     queryRunner = this.dataSource.createQueryRunner()
   ) {
     await queryRunner.connect();
@@ -1070,7 +1141,12 @@ export class WorkflowsService {
     }
   }
 
-  async setStopped(account: Account, id: string, value: boolean) {
+  async setStopped(
+    account: Account,
+    id: string,
+    value: boolean,
+    session: string
+  ) {
     const found: Workflow = await this.workflowsRepository.findOneBy({
       owner: { id: account.id },
       id,
@@ -1084,7 +1160,7 @@ export class WorkflowsService {
     return value;
   }
 
-  async markFlowDeleted(workflowId: string) {
+  async markFlowDeleted(workflowId: string, session: string) {
     await this.workflowsRepository.update(
       { id: workflowId },
       {
@@ -1097,7 +1173,7 @@ export class WorkflowsService {
     return;
   }
 
-  async timeTick(job: Job) {
+  async timeTick(job: Job, session: string) {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -1124,7 +1200,8 @@ export class WorkflowsService {
           null,
           queryRunner,
           found.rules,
-          found.id
+          found.id,
+          session
         );
       }
       await queryRunner.commitTransaction();

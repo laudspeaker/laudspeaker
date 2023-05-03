@@ -8,13 +8,14 @@ import {
   Body,
   Param,
   UseGuards,
-  LoggerService,
+  Logger,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { SlackService } from './slack.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { Account } from '../accounts/entities/accounts.entity';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
+import { randomUUID } from 'crypto';
 
 enum ResponseStatus {
   Ok = 200,
@@ -27,18 +28,79 @@ enum ResponseStatus {
 export class SlackController {
   constructor(
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
-    private readonly logger: LoggerService,
+    private readonly logger: Logger,
     @Inject(SlackService) private readonly slackService: SlackService
   ) {}
 
+  log(message, method, session, user = 'ANONYMOUS') {
+    this.logger.log(
+      message,
+      JSON.stringify({
+        class: SlackController.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+  debug(message, method, session, user = 'ANONYMOUS') {
+    this.logger.debug(
+      message,
+      JSON.stringify({
+        class: SlackController.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+  warn(message, method, session, user = 'ANONYMOUS') {
+    this.logger.warn(
+      message,
+      JSON.stringify({
+        class: SlackController.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+  error(error, method, session, user = 'ANONYMOUS') {
+    this.logger.error(
+      error.message,
+      error.stack,
+      JSON.stringify({
+        class: SlackController.name,
+        method: method,
+        session: session,
+        cause: error.cause,
+        name: error.name,
+        user: user,
+      })
+    );
+  }
+  verbose(message, method, session, user = 'ANONYMOUS') {
+    this.logger.verbose(
+      message,
+      JSON.stringify({
+        class: SlackController.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+
   @Get('install')
   async install() {
-    return await this.slackService.handleInstallPath();
+    const session = randomUUID();
+    return await this.slackService.handleInstallPath(session);
   }
 
   @Get('oauth_redirect')
   redirect(@Req() req: Request, @Res() res: Response) {
-    this.slackService.handleOAuthRedirect(req, res);
+    const session = randomUUID();
+    this.slackService.handleOAuthRedirect(req, res, session);
   }
 
   /*
@@ -49,11 +111,17 @@ export class SlackController {
   @Get('cor/:teamid')
   @UseGuards(JwtAuthGuard)
   async cor(@Param('teamid') teamid: string, @Req() { user }: Request) {
-    return await this.slackService.handleCorrelation(teamid, <Account>user);
+    const session = randomUUID();
+    return await this.slackService.handleCorrelation(
+      teamid,
+      <Account>user,
+      session
+    );
   }
 
   @Post('events')
   handleEvents(@Body() body: any, @Res() res: Response) {
-    this.slackService.handleEvent(res, body);
+    const session = randomUUID();
+    this.slackService.handleEvent(res, body, session);
   }
 }
