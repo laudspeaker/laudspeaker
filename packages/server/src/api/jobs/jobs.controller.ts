@@ -2,7 +2,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import {
   Controller,
   Inject,
-  LoggerService,
+  Logger,
   Get,
   Body,
   Patch,
@@ -23,14 +23,74 @@ import { UpdateJobDto } from './dto/update-job.dto';
 import { Account } from '../accounts/entities/accounts.entity';
 import { Job } from './entities/job.entity';
 import { UpdateResult } from 'typeorm';
+import { randomUUID } from 'crypto';
 
 @Controller('jobs')
 export class JobsController {
   constructor(
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
-    private readonly logger: LoggerService,
+    private readonly logger: Logger,
     private readonly jobsService: JobsService
   ) {}
+
+  log(message, method, session, user = 'ANONYMOUS') {
+    this.logger.log(
+      message,
+      JSON.stringify({
+        class: JobsController.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+  debug(message, method, session, user = 'ANONYMOUS') {
+    this.logger.debug(
+      message,
+      JSON.stringify({
+        class: JobsController.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+  warn(message, method, session, user = 'ANONYMOUS') {
+    this.logger.warn(
+      message,
+      JSON.stringify({
+        class: JobsController.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+  error(error, method, session, user = 'ANONYMOUS') {
+    this.logger.error(
+      error.message,
+      error.stack,
+      JSON.stringify({
+        class: JobsController.name,
+        method: method,
+        session: session,
+        cause: error.cause,
+        name: error.name,
+        user: user,
+      })
+    );
+  }
+  verbose(message, method, session, user = 'ANONYMOUS') {
+    this.logger.verbose(
+      message,
+      JSON.stringify({
+        class: JobsController.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
 
   @Post()
   @UseGuards(JwtAuthGuard)
@@ -39,21 +99,24 @@ export class JobsController {
     @Req() { user }: Request,
     @Body() createJobDto: CreateJobDto
   ): Promise<Job> {
-    return this.jobsService.create(<Account>user, createJobDto);
+    const session = randomUUID();
+    return this.jobsService.create(<Account>user, createJobDto, session);
   }
 
   @Get()
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
   findAll(@Req() { user }: Request): Promise<Job[]> {
-    return this.jobsService.findAll(<Account>user);
+    const session = randomUUID();
+    return this.jobsService.findAll(<Account>user, session);
   }
 
   @Get(':id')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
   findOne(@Req() { user }: Request, @Param('id') id: string): Promise<Job> {
-    return this.jobsService.findOneById(<Account>user, id);
+    const session = randomUUID();
+    return this.jobsService.findOneById(<Account>user, id, session);
   }
 
   @Patch(':id')
@@ -64,6 +127,7 @@ export class JobsController {
     @Param('id') id: string,
     @Body() updateJobDto: UpdateJobDto
   ): Promise<UpdateResult> {
+    const session = randomUUID();
     return; //this.jobsService.update(<Account>user, id, updateJobDto);
   }
 
@@ -74,6 +138,7 @@ export class JobsController {
     @Req() { user }: Request,
     @Param('id') id: string
   ): Promise<void | HttpException> {
-    return this.jobsService.remove(<Account>user, id);
+    const session = randomUUID();
+    return this.jobsService.remove(<Account>user, id, session);
   }
 }

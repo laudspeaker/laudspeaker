@@ -36,7 +36,7 @@ export class SegmentsService {
     private readonly audiencesHelper: AudiencesHelper
   ) {}
 
-  public async findOne(account: Account, id: string) {
+  public async findOne(account: Account, id: string, session: string) {
     const segment = await this.segmentRepository.findOneBy({
       id,
       owner: { id: account.id },
@@ -47,7 +47,12 @@ export class SegmentsService {
     return segment;
   }
 
-  public async findAll(account: Account, take = 100, skip = 0) {
+  public async findAll(
+    account: Account,
+    take = 100,
+    skip = 0,
+    session: string
+  ) {
     const totalPages = Math.ceil(
       (await this.segmentRepository.count({
         where: {
@@ -64,7 +69,11 @@ export class SegmentsService {
     return { data: segments, totalPages };
   }
 
-  public async create(account: Account, createSegmentDTO: CreateSegmentDTO) {
+  public async create(
+    account: Account,
+    createSegmentDTO: CreateSegmentDTO,
+    session: string
+  ) {
     const segment = await this.segmentRepository.save({
       ...createSegmentDTO,
       owner: { id: account.id },
@@ -77,7 +86,11 @@ export class SegmentsService {
         .exec()
         .then((customers) => {
           for (const customer of customers) {
-            this.updateAutomaticSegmentCustomerInclusion(account, customer);
+            this.updateAutomaticSegmentCustomerInclusion(
+              account,
+              customer,
+              session
+            );
           }
         });
     }
@@ -88,9 +101,10 @@ export class SegmentsService {
   public async update(
     account: Account,
     id: string,
-    updateSegmentDTO: UpdateSegmentDTO
+    updateSegmentDTO: UpdateSegmentDTO,
+    session: string
   ) {
-    const segment = await this.findOne(account, id);
+    const segment = await this.findOne(account, id, session);
 
     await this.segmentRepository.update(
       { id, owner: { id: account.id } },
@@ -106,8 +120,16 @@ export class SegmentsService {
         const customer = await this.customersService.CustomerModel.findById(
           customerId
         ).exec();
-        await this.updateAutomaticSegmentCustomerInclusion(account, customer);
-        await this.customersService.recheckDynamicInclusion(account, customer);
+        await this.updateAutomaticSegmentCustomerInclusion(
+          account,
+          customer,
+          session
+        );
+        await this.customersService.recheckDynamicInclusion(
+          account,
+          customer,
+          session
+        );
       }
 
       const amount = await this.customersService.CustomerModel.count({
@@ -129,7 +151,11 @@ export class SegmentsService {
           .exec();
 
         for (const customer of batch) {
-          await this.updateAutomaticSegmentCustomerInclusion(account, customer);
+          await this.updateAutomaticSegmentCustomerInclusion(
+            account,
+            customer,
+            session
+          );
         }
 
         batchOptions.current += batchOptions.batchSize;
@@ -143,12 +169,16 @@ export class SegmentsService {
         const customer = await this.customersService.CustomerModel.findById(
           customerId
         ).exec();
-        await this.customersService.recheckDynamicInclusion(account, customer);
+        await this.customersService.recheckDynamicInclusion(
+          account,
+          customer,
+          session
+        );
       }
     })();
   }
 
-  public async delete(account: Account, id: string) {
+  public async delete(account: Account, id: string, session: string) {
     await this.segmentRepository.delete({ id, owner: { id: account.id } });
   }
 
@@ -156,9 +186,10 @@ export class SegmentsService {
     account: Account,
     id: string,
     take = 100,
-    skip = 0
+    skip = 0,
+    session: string
   ) {
-    const segment = await this.findOne(account, id);
+    const segment = await this.findOne(account, id, session);
 
     const totalPages = Math.ceil(
       (await this.segmentCustomersRepository.count({
@@ -195,9 +226,10 @@ export class SegmentsService {
   public async assignCustomer(
     account: Account,
     id: string,
-    customerId: string
+    customerId: string,
+    session: string
   ) {
-    const segment = await this.findOne(account, id);
+    const segment = await this.findOne(account, id, session);
 
     const foundRecord = await this.segmentCustomersRepository.findOneBy({
       segment: { id: segment.id },
@@ -217,7 +249,12 @@ export class SegmentsService {
       const customer = await this.customersService.CustomerModel.findById(
         customerId
       ).exec();
-      await this.workflowsService.enrollCustomer(account, customer, runner);
+      await this.workflowsService.enrollCustomer(
+        account,
+        customer,
+        runner,
+        session
+      );
     } catch (error) {
       this.logger.error(error);
     } finally {
@@ -228,11 +265,12 @@ export class SegmentsService {
   public async assignCustomers(
     account: Account,
     id: string,
-    customerIds: string[]
+    customerIds: string[],
+    session: string
   ) {
     for (const customerId of customerIds) {
       try {
-        await this.assignCustomer(account, id, customerId);
+        await this.assignCustomer(account, id, customerId, session);
       } catch (e) {
         this.logger.error(e);
       }
@@ -242,10 +280,11 @@ export class SegmentsService {
   public async putCustomers(
     account: Account,
     id: string,
-    customerIds: string[]
+    customerIds: string[],
+    session: string
   ) {
-    const segment = await this.findOne(account, id);
-    await this.clearCustomers(account, id);
+    const segment = await this.findOne(account, id, session);
+    await this.clearCustomers(account, id, session);
 
     return this.segmentCustomersRepository.save(
       customerIds.map((customerId) => ({
@@ -255,8 +294,8 @@ export class SegmentsService {
     );
   }
 
-  public async clearCustomers(account: Account, id: string) {
-    const segment = await this.findOne(account, id);
+  public async clearCustomers(account: Account, id: string, session: string) {
+    const segment = await this.findOne(account, id, session);
     await this.segmentCustomersRepository.delete({
       segment: { id: segment.id },
     });
@@ -265,9 +304,10 @@ export class SegmentsService {
   public async deleteCustomer(
     account: Account,
     id: string,
-    customerId: string
+    customerId: string,
+    session: string
   ) {
-    const segment = await this.findOne(account, id);
+    const segment = await this.findOne(account, id, session);
 
     await this.segmentCustomersRepository.delete({
       segment: { id: segment.id },
@@ -279,7 +319,11 @@ export class SegmentsService {
         account,
         customerId
       );
-      await this.customersService.recheckDynamicInclusion(account, customer);
+      await this.customersService.recheckDynamicInclusion(
+        account,
+        customer,
+        session
+      );
     })();
   }
 
@@ -304,9 +348,9 @@ export class SegmentsService {
       .execute();
   }
 
-  public async duplicate(account: Account, id: string) {
+  public async duplicate(account: Account, id: string, session: string) {
     const { name, description, type, inclusionCriteria, resources } =
-      await this.findOne(account, id);
+      await this.findOne(account, id, session);
 
     return this.segmentRepository.save({
       name,
@@ -321,22 +365,28 @@ export class SegmentsService {
   public async loadCSVToManualSegment(
     account: Account,
     id: string,
-    csvFile: Express.Multer.File
+    csvFile: Express.Multer.File,
+    session: string
   ) {
-    const segment = await this.findOne(account, id);
+    const segment = await this.findOne(account, id, session);
 
     if (segment.type !== SegmentType.MANUAL)
       throw new BadRequestException("This segment isn't manual");
 
-    const { stats } = await this.customersService.loadCSV(account, csvFile);
+    const { stats } = await this.customersService.loadCSV(
+      account,
+      csvFile,
+      session
+    );
 
-    await this.assignCustomers(account, segment.id, stats.customers);
+    await this.assignCustomers(account, segment.id, stats.customers, session);
     return { stats };
   }
 
   public async updateAutomaticSegmentCustomerInclusion(
     account: Account,
-    customer: CustomerDocument
+    customer: CustomerDocument,
+    session: string
   ) {
     await this.deleteCustomerFromAllAutomaticSegments(account, customer.id);
 
@@ -353,14 +403,19 @@ export class SegmentsService {
             segment.inclusionCriteria
           )
         )
-          await this.assignCustomer(account, segment.id, customer.id);
+          await this.assignCustomer(account, segment.id, customer.id, session);
       } catch (e) {
         this.logger.error(e);
       }
     }
     const runner = this.dataSource.createQueryRunner();
     try {
-      await this.workflowsService.enrollCustomer(account, customer, runner);
+      await this.workflowsService.enrollCustomer(
+        account,
+        customer,
+        runner,
+        session
+      );
     } catch (error) {
       this.logger.error(error);
     } finally {
@@ -381,8 +436,12 @@ export class SegmentsService {
     return !!record;
   }
 
-  public async checkUsedInWorkflows(account: Account, id: string) {
-    const segment = await this.findOne(account, id);
+  public async checkUsedInWorkflows(
+    account: Account,
+    id: string,
+    session: string
+  ) {
+    const segment = await this.findOne(account, id, session);
 
     let names: string[] = [];
 

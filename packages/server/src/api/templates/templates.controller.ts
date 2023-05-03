@@ -2,7 +2,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import {
   Controller,
   Inject,
-  LoggerService,
+  Logger,
   Get,
   Body,
   Patch,
@@ -23,14 +23,74 @@ import { UpdateTemplateDto } from './dto/update-template.dto';
 import { Account } from '../accounts/entities/accounts.entity';
 import { Template } from './entities/template.entity';
 import { TestWebhookDto } from './dto/test-webhook.dto';
+import { randomUUID } from 'crypto';
 
 @Controller('templates')
 export class TemplatesController {
   constructor(
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
-    private readonly logger: LoggerService,
+    private readonly logger: Logger,
     private readonly templatesService: TemplatesService
   ) {}
+
+  log(message, method, session, user = 'ANONYMOUS') {
+    this.logger.log(
+      message,
+      JSON.stringify({
+        class: TemplatesController.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+  debug(message, method, session, user = 'ANONYMOUS') {
+    this.logger.debug(
+      message,
+      JSON.stringify({
+        class: TemplatesController.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+  warn(message, method, session, user = 'ANONYMOUS') {
+    this.logger.warn(
+      message,
+      JSON.stringify({
+        class: TemplatesController.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+  error(error, method, session, user = 'ANONYMOUS') {
+    this.logger.error(
+      error.message,
+      error.stack,
+      JSON.stringify({
+        class: TemplatesController.name,
+        method: method,
+        session: session,
+        cause: error.cause,
+        name: error.name,
+        user: user,
+      })
+    );
+  }
+  verbose(message, method, session, user = 'ANONYMOUS') {
+    this.logger.verbose(
+      message,
+      JSON.stringify({
+        class: TemplatesController.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
 
   @Get()
   @UseGuards(JwtAuthGuard)
@@ -43,8 +103,10 @@ export class TemplatesController {
     @Query('orderType') orderType?: 'asc' | 'desc',
     @Query('showDeleted') showDeleted?: boolean
   ): Promise<{ data: Template[]; totalPages: number }> {
+    const session = randomUUID();
     return this.templatesService.findAll(
       <Account>user,
+      session,
       take && +take,
       skip && +skip,
       orderBy,
@@ -60,21 +122,28 @@ export class TemplatesController {
     @Req() { user }: Request,
     @Body() createTemplateDto: CreateTemplateDto
   ) {
-    return this.templatesService.create(<Account>user, createTemplateDto);
+    const session = randomUUID();
+    return this.templatesService.create(
+      <Account>user,
+      createTemplateDto,
+      session
+    );
   }
 
   @Get(':id/usedInJourneys')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
   findUsedInJourneys(@Req() { user }: Request, @Param('id') id: string) {
-    return this.templatesService.findUsedInJourneys(<Account>user, id);
+    const session = randomUUID();
+    return this.templatesService.findUsedInJourneys(<Account>user, id, session);
   }
 
   @Get(':name')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
   findOne(@Req() { user }: Request, @Param('name') name: string) {
-    return this.templatesService.findOne(<Account>user, name);
+    const session = randomUUID();
+    return this.templatesService.findOne(<Account>user, name, session);
   }
 
   @Patch(':name')
@@ -85,27 +154,36 @@ export class TemplatesController {
     @Param('name') name: string,
     @Body() updateTemplateDto: UpdateTemplateDto
   ) {
-    return this.templatesService.update(<Account>user, name, updateTemplateDto);
+    const session = randomUUID();
+    return this.templatesService.update(
+      <Account>user,
+      name,
+      updateTemplateDto,
+      session
+    );
   }
 
   @Delete(':id')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
   remove(@Req() { user }: Request, @Param('id') id: string) {
-    return this.templatesService.remove(<Account>user, id);
+    const session = randomUUID();
+    return this.templatesService.remove(<Account>user, id, session);
   }
 
   @Post(':name/duplicate')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
   duplicate(@Req() { user }: Request, @Param('name') name: string) {
-    return this.templatesService.duplicate(<Account>user, name);
+    const session = randomUUID();
+    return this.templatesService.duplicate(<Account>user, name, session);
   }
 
   @Post('/test-webhook')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
   testWebhookTemplate(@Body() testWebhookDto: TestWebhookDto) {
-    return this.templatesService.testWebhookTemplate(testWebhookDto);
+    const session = randomUUID();
+    return this.templatesService.testWebhookTemplate(testWebhookDto, session);
   }
 }

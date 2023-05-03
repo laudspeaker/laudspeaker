@@ -3,6 +3,7 @@ import {
   HttpStatus,
   Inject,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -20,11 +21,14 @@ import { InjectConnection } from '@nestjs/mongoose';
 import { RequestResetPasswordDto } from './dto/request-reset-password.dto';
 import { Recovery } from './entities/recovery.entity';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 
 @Injectable()
 export class AuthService {
   constructor(
     private dataSource: DataSource,
+    @Inject(WINSTON_MODULE_NEST_PROVIDER)
+    private readonly logger: Logger,
     @InjectQueue('message') private readonly messageQueue: Queue,
     @InjectRepository(Account)
     public readonly repository: Repository<Account>,
@@ -38,39 +42,103 @@ export class AuthService {
     @InjectConnection() private readonly connection: mongoose.Connection
   ) {}
 
-  public async register(body: RegisterDto) {
-    const { firstName, lastName, email, password }: RegisterDto = body;
-    let user: Account = await this.repository.findOne({ where: { email } });
-    if (user) {
-      throw new HttpException(
-        'This account already exists',
-        HttpStatus.CONFLICT
-      );
-    }
-
-    let ret: Account;
-    await this.dataSource.manager.transaction(async (transactionManager) => {
-      user = new Account();
-
-      user.firstName = firstName;
-      user.lastName = lastName;
-      user.email = email;
-      user.password = this.helper.encodePassword(password);
-      user.apiKey = this.helper.generateApiKey();
-      user.accountCreatedAt = new Date();
-      user.plan = PlanType.FREE;
-      ret = await transactionManager.save(user);
-      await this.helper.generateDefaultData(ret, transactionManager);
-
-      user.id = ret.id;
-
-      await this.requestVerification(ret, transactionManager);
-    });
-
-    return { ...ret, access_token: this.helper.generateToken(ret) };
+  log(message, method, session, user = 'ANONYMOUS') {
+    this.logger.log(
+      message,
+      JSON.stringify({
+        class: AuthService.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+  debug(message, method, session, user = 'ANONYMOUS') {
+    this.logger.debug(
+      message,
+      JSON.stringify({
+        class: AuthService.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+  warn(message, method, session, user = 'ANONYMOUS') {
+    this.logger.warn(
+      message,
+      JSON.stringify({
+        class: AuthService.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+  error(error, method, session, user = 'ANONYMOUS') {
+    this.logger.error(
+      error.message,
+      error.stack,
+      JSON.stringify({
+        class: AuthService.name,
+        method: method,
+        session: session,
+        cause: error.cause,
+        name: error.name,
+        user: user,
+      })
+    );
+  }
+  verbose(message, method, session, user = 'ANONYMOUS') {
+    this.logger.verbose(
+      message,
+      JSON.stringify({
+        class: AuthService.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
   }
 
-  public async login(body: LoginDto) {
+  public async register(body: RegisterDto, session: string) {
+    try {
+      const { firstName, lastName, email, password }: RegisterDto = body;
+      let user: Account = await this.repository.findOne({ where: { email } });
+      if (user) {
+        throw new HttpException(
+          'This account already exists',
+          HttpStatus.CONFLICT
+        );
+      }
+
+      let ret: Account;
+      await this.dataSource.manager.transaction(async (transactionManager) => {
+        user = new Account();
+
+        user.firstName = firstName;
+        user.lastName = lastName;
+        user.email = email;
+        user.password = this.helper.encodePassword(password);
+        user.apiKey = this.helper.generateApiKey();
+        user.accountCreatedAt = new Date();
+        user.plan = PlanType.FREE;
+        ret = await transactionManager.save(user);
+        await this.helper.generateDefaultData(ret, transactionManager);
+
+        user.id = ret.id;
+
+        await this.requestVerification(ret, transactionManager, session);
+      });
+
+      return { ...ret, access_token: this.helper.generateToken(ret) };
+    } catch (e) {
+      this.debug(e, this.register.name, session);
+      throw e;
+    }
+  }
+
+  public async login(body: LoginDto, session: string) {
     const { email, password }: LoginDto = body;
     const user: Account = await this.repository.findOne({ where: { email } });
 
@@ -102,7 +170,7 @@ export class AuthService {
     return user;
   }
 
-  public async refresh(user: Account): Promise<string> {
+  public async refresh(user: Account, session: string): Promise<string> {
     this.repository.update(user.id, { lastLoginAt: new Date() });
 
     return this.helper.generateToken(user);
@@ -110,7 +178,8 @@ export class AuthService {
 
   public async requestVerification(
     user: Account,
-    transactionManager: EntityManager = this.dataSource.manager
+    transactionManager: EntityManager = this.dataSource.manager,
+    session: string
   ) {
     let verification = new Verification();
     verification.email = user.email;
@@ -134,7 +203,11 @@ export class AuthService {
     return verification;
   }
 
-  public async verifyEmail(user: Account, verificationId: string) {
+  public async verifyEmail(
+    user: Account,
+    verificationId: string,
+    session: string
+  ) {
     const account = await this.repository.findOneBy({ id: user.id });
     if (!account)
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
@@ -176,6 +249,7 @@ export class AuthService {
             lastName,
             verified,
           },
+          session,
           transactionSession
         );
         account.customerId = customer.id;
@@ -193,7 +267,10 @@ export class AuthService {
     }
   }
 
-  public async requestResetPassword({ email }: RequestResetPasswordDto) {
+  public async requestResetPassword(
+    { email }: RequestResetPasswordDto,
+    session: string
+  ) {
     const account = await this.repository.findOneBy({ email });
 
     if (!account)
@@ -215,7 +292,11 @@ export class AuthService {
     });
   }
 
-  public async resetPassword({ password }: ResetPasswordDto, id: string) {
+  public async resetPassword(
+    { password }: ResetPasswordDto,
+    id: string,
+    session: string
+  ) {
     const recovery = await this.recoveryRepository.findOne({
       where: { id },
       relations: ['account'],

@@ -4,7 +4,7 @@ import {
   HttpStatus,
   Inject,
   Injectable,
-  LoggerService,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -52,7 +52,7 @@ export class TemplatesService extends QueueEventsHost {
 
   constructor(
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
-    private readonly logger: LoggerService,
+    private readonly logger: Logger,
     @InjectRepository(Template)
     public templatesRepository: Repository<Template>,
     @InjectModel(Customer.name) private customerModel: Model<CustomerDocument>,
@@ -65,6 +65,65 @@ export class TemplatesService extends QueueEventsHost {
     @InjectQueue('slack') private readonly slackQueue: Queue
   ) {
     super();
+  }
+
+  log(message, method, session, user = 'ANONYMOUS') {
+    this.logger.log(
+      message,
+      JSON.stringify({
+        class: TemplatesService.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+  debug(message, method, session, user = 'ANONYMOUS') {
+    this.logger.debug(
+      message,
+      JSON.stringify({
+        class: TemplatesService.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+  warn(message, method, session, user = 'ANONYMOUS') {
+    this.logger.warn(
+      message,
+      JSON.stringify({
+        class: TemplatesService.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+  error(error, method, session, user = 'ANONYMOUS') {
+    this.logger.error(
+      error.message,
+      error.stack,
+      JSON.stringify({
+        class: TemplatesService.name,
+        method: method,
+        session: session,
+        cause: error.cause,
+        name: error.name,
+        user: user,
+      })
+    );
+  }
+  verbose(message, method, session, user = 'ANONYMOUS') {
+    this.logger.verbose(
+      message,
+      JSON.stringify({
+        class: TemplatesService.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
   }
 
   @OnQueueEvent('active')
@@ -212,7 +271,11 @@ export class TemplatesService extends QueueEventsHost {
     );
   }
 
-  create(account: Account, createTemplateDto: CreateTemplateDto) {
+  create(
+    account: Account,
+    createTemplateDto: CreateTemplateDto,
+    session: string
+  ) {
     const template = new Template();
     template.type = createTemplateDto.type;
     template.name = createTemplateDto.name;
@@ -415,6 +478,7 @@ export class TemplatesService extends QueueEventsHost {
 
   async findAll(
     account: Account,
+    session: string,
     take = 100,
     skip = 0,
     orderBy?: keyof Template,
@@ -442,7 +506,7 @@ export class TemplatesService extends QueueEventsHost {
     return { data: templates, totalPages };
   }
 
-  findOne(account: Account, name: string): Promise<Template> {
+  findOne(account: Account, name: string, session: string): Promise<Template> {
     return this.templatesRepository.findOneBy({
       owner: { id: account.id },
       name,
@@ -463,14 +527,19 @@ export class TemplatesService extends QueueEventsHost {
     });
   }
 
-  update(account: Account, name: string, updateTemplateDto: UpdateTemplateDto) {
+  update(
+    account: Account,
+    name: string,
+    updateTemplateDto: UpdateTemplateDto,
+    session: string
+  ) {
     return this.templatesRepository.update(
       { owner: { id: (<Account>account).id }, name: name },
       { ...updateTemplateDto }
     );
   }
 
-  async remove(account: Account, id: string): Promise<void> {
+  async remove(account: Account, id: string, session: string): Promise<void> {
     await this.templatesRepository.update(
       {
         owner: { id: (<Account>account).id },
@@ -480,7 +549,7 @@ export class TemplatesService extends QueueEventsHost {
     );
   }
 
-  async duplicate(account: Account, name: string) {
+  async duplicate(account: Account, name: string, session: string) {
     const foundTemplate = await this.templatesRepository.findOne({
       where: {
         owner: { id: account.id },
@@ -533,7 +602,7 @@ export class TemplatesService extends QueueEventsHost {
     });
   }
 
-  async findUsedInJourneys(account: Account, id: string) {
+  async findUsedInJourneys(account: Account, id: string, session: string) {
     const template = await this.templatesRepository.findOneBy({
       id,
       owner: { id: account.id },
@@ -657,7 +726,7 @@ export class TemplatesService extends QueueEventsHost {
     return str;
   }
 
-  async testWebhookTemplate(testWebhookDto: TestWebhookDto) {
+  async testWebhookTemplate(testWebhookDto: TestWebhookDto, session: string) {
     const customer = await this.customerModel.findOne({
       email: testWebhookDto.testCustomerEmail,
     });

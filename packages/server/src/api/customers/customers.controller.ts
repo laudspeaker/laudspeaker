@@ -10,7 +10,7 @@ import {
   Param,
   Inject,
   Query,
-  LoggerService,
+  Logger,
   HttpException,
   Put,
   UploadedFile,
@@ -25,18 +25,77 @@ import { Account } from '../accounts/entities/accounts.entity';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiKeyAuthGuard } from '../auth/guards/apikey-auth.guard';
-import { CustomerDocument } from './schemas/customer.schema';
+import { randomUUID } from 'crypto';
 
 @Controller('customers')
 export class CustomersController {
   constructor(
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
-    private readonly logger: LoggerService,
+    private readonly logger: Logger,
     @Inject(CustomersService)
     private readonly customersService: CustomersService,
     @Inject(AccountsService)
     private readonly userService: AccountsService
   ) {}
+
+  log(message, method, session, user = 'ANONYMOUS') {
+    this.logger.log(
+      message,
+      JSON.stringify({
+        class: CustomersController.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+  debug(message, method, session, user = 'ANONYMOUS') {
+    this.logger.debug(
+      message,
+      JSON.stringify({
+        class: CustomersController.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+  warn(message, method, session, user = 'ANONYMOUS') {
+    this.logger.warn(
+      message,
+      JSON.stringify({
+        class: CustomersController.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+  error(error, method, session, user = 'ANONYMOUS') {
+    this.logger.error(
+      error.message,
+      error.stack,
+      JSON.stringify({
+        class: CustomersController.name,
+        method: method,
+        session: session,
+        cause: error.cause,
+        name: error.name,
+        user: user,
+      })
+    );
+  }
+  verbose(message, method, session, user = 'ANONYMOUS') {
+    this.logger.verbose(
+      message,
+      JSON.stringify({
+        class: CustomersController.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
 
   @Get()
   @UseGuards(JwtAuthGuard)
@@ -49,8 +108,11 @@ export class CustomersController {
     @Query('searchKey') searchKey?: string,
     @Query('searchValue') searchValue?: string
   ) {
+    const session = randomUUID();
+
     return this.customersService.returnAllPeopleInfo(
       <Account>user,
+      session,
       take && +take,
       skip && +skip,
       checkInSegment,
@@ -68,8 +130,11 @@ export class CustomersController {
     @Query('type') type = null,
     @Query('isArray') isArray = null
   ) {
+    const session = randomUUID();
+
     return await this.customersService.getPossibleAttributes(
       <Account>user,
+      session,
       key,
       type,
       isArray
@@ -86,8 +151,11 @@ export class CustomersController {
     @Query('event') event?: string,
     @Query('audienceId') audienceId?: string
   ) {
+    const session = randomUUID();
+
     return this.customersService.findAudienceStatsCustomers(
       <Account>user,
+      session,
       take && +take,
       skip && +skip,
       event,
@@ -99,8 +167,9 @@ export class CustomersController {
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
   async findOne(@Req() { user }: Request, @Param() { id }: { id: string }) {
+    const session = randomUUID();
     const { _id, __v, ownerId, verified, ...customer } =
-      await this.customersService.findOne(<Account>user, id);
+      await this.customersService.findOne(<Account>user, id, session);
     const createdAt = new Date(parseInt(_id.slice(0, 8), 16) * 1000).getTime();
     return { ...customer, createdAt };
   }
@@ -113,7 +182,13 @@ export class CustomersController {
     @Param() { id }: { id: string },
     @Body() updateCustomerDto: Record<string, unknown>
   ) {
-    return this.customersService.update(<Account>user, id, updateCustomerDto);
+    const session = randomUUID();
+    return this.customersService.update(
+      <Account>user,
+      id,
+      updateCustomerDto,
+      session
+    );
   }
 
   @Post('/create/')
@@ -123,9 +198,11 @@ export class CustomersController {
     @Req() { user }: Request,
     @Body() createCustomerDto: CreateCustomerDto
   ) {
+    const session = randomUUID();
     const cust = await this.customersService.create(
       <Account>user,
-      createCustomerDto
+      createCustomerDto,
+      session
     );
     return cust.id;
   }
@@ -137,11 +214,12 @@ export class CustomersController {
     @Req() { user }: Request,
     @Body() updateCustomerDto: Record<string, unknown>
   ) {
-    this.logger.debug(
-      `${JSON.stringify(user)} ${JSON.stringify(updateCustomerDto)}`,
-      `customers.controller.ts:CustomersController.upsert()`
+    const session = randomUUID();
+    return await this.customersService.upsert(
+      <Account>user,
+      updateCustomerDto,
+      session
     );
-    return await this.customersService.upsert(<Account>user, updateCustomerDto);
   }
 
   @Get('/attributes/:resourceId')
@@ -151,7 +229,12 @@ export class CustomersController {
     @Req() { user }: Request,
     @Param('resourceId') resourceId: string
   ) {
-    return this.customersService.getAttributes(<Account>user, resourceId);
+    const session = randomUUID();
+    return this.customersService.getAttributes(
+      <Account>user,
+      resourceId,
+      session
+    );
   }
 
   @Get('/:id/events')
@@ -161,16 +244,19 @@ export class CustomersController {
     @Req() { user }: Request,
     @Param() { id }: { id: string }
   ) {
-    return this.customersService.findCustomerEvents(<Account>user, id);
+    const session = randomUUID();
+    return this.customersService.findCustomerEvents(<Account>user, id, session);
   }
 
   @Post('/importph')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
   async getPostHogPersons(@Req() { user }: Request) {
+    const session = randomUUID();
+
     let account: Account; // Account associated with the caller
     try {
-      account = await this.userService.findOne(user);
+      account = await this.userService.findOne(user, session);
     } catch (e) {
       this.logger.error('Error:' + e);
       return new HttpException(e, 500);
@@ -182,7 +268,8 @@ export class CustomersController {
         account.posthogProjectId[0],
         account.posthogApiKey[0],
         account.posthogHostUrl[0],
-        account
+        account,
+        session
       );
     } catch (e) {
       this.logger.error('Error:' + e);
@@ -198,7 +285,8 @@ export class CustomersController {
     @Req() { user }: Request,
     @UploadedFile() file: Express.Multer.File
   ) {
-    return this.customersService.loadCSV(<Account>user, file);
+    const session = randomUUID();
+    return this.customersService.loadCSV(<Account>user, file, session);
   }
 
   @Post('/delete/:custId')
@@ -208,6 +296,7 @@ export class CustomersController {
     @Req() { user }: Request,
     @Param('custId') custId: string
   ) {
-    await this.customersService.removeById(<Account>user, custId);
+    const session = randomUUID();
+    await this.customersService.removeById(<Account>user, custId, session);
   }
 }

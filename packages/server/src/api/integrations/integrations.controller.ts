@@ -4,6 +4,8 @@ import {
   Controller,
   Delete,
   Get,
+  Inject,
+  Logger,
   Param,
   Patch,
   Post,
@@ -16,23 +18,92 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CreateDBDto } from './dto/create-db.dto';
 import { UpdateDBDto } from './dto/update-db.dto';
 import { IntegrationsService } from './integrations.service';
+import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
+import { randomUUID } from 'crypto';
 
 @Controller('integrations')
 export class IntegrationsController {
-  constructor(private integrationsService: IntegrationsService) {}
+  constructor(
+    @Inject(WINSTON_MODULE_NEST_PROVIDER)
+    private readonly logger: Logger,
+    private integrationsService: IntegrationsService
+  ) {}
+
+  log(message, method, session, user = 'ANONYMOUS') {
+    this.logger.log(
+      message,
+      JSON.stringify({
+        class: IntegrationsController.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+  debug(message, method, session, user = 'ANONYMOUS') {
+    this.logger.debug(
+      message,
+      JSON.stringify({
+        class: IntegrationsController.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+  warn(message, method, session, user = 'ANONYMOUS') {
+    this.logger.warn(
+      message,
+      JSON.stringify({
+        class: IntegrationsController.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+  error(error, method, session, user = 'ANONYMOUS') {
+    this.logger.error(
+      error.message,
+      error.stack,
+      JSON.stringify({
+        class: IntegrationsController.name,
+        method: method,
+        session: session,
+        cause: error.cause,
+        name: error.name,
+        user: user,
+      })
+    );
+  }
+  verbose(message, method, session, user = 'ANONYMOUS') {
+    this.logger.verbose(
+      message,
+      JSON.stringify({
+        class: IntegrationsController.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
 
   @Get()
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
   public async getAllIntegrations(@Req() { user }: Request) {
-    return this.integrationsService.getAllIntegrations(user);
+    const session = randomUUID();
+
+    return this.integrationsService.getAllIntegrations(user, session);
   }
 
   @Get('db')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
   public async getAllDatabases(@Req() { user }: Request) {
-    return this.integrationsService.getAllDatabases(user);
+    const session = randomUUID();
+
+    return this.integrationsService.getAllDatabases(user, session);
   }
 
   @Get('db/:id')
@@ -42,8 +113,8 @@ export class IntegrationsController {
     @Req() { user }: Request,
     @Param('id') id: string
   ) {
-    console.log(id);
-    return this.integrationsService.getOneDatabase(user, id);
+    const session = randomUUID();
+    return this.integrationsService.getOneDatabase(user, id, session);
   }
 
   @Post('db')
@@ -53,7 +124,9 @@ export class IntegrationsController {
     @Req() { user }: Request,
     @Body() createDBDto: CreateDBDto
   ) {
-    return this.integrationsService.createDatabase(user, createDBDto);
+    const session = randomUUID();
+
+    return this.integrationsService.createDatabase(user, createDBDto, session);
   }
 
   @Patch('/:id/pause')
@@ -63,7 +136,9 @@ export class IntegrationsController {
     @Req() { user }: Request,
     @Param('id') id: string
   ) {
-    return this.integrationsService.pauseIntegration(user, id);
+    const session = randomUUID();
+
+    return this.integrationsService.pauseIntegration(user, id, session);
   }
 
   @Patch('/:id/resume')
@@ -73,7 +148,9 @@ export class IntegrationsController {
     @Req() { user }: Request,
     @Param('id') id: string
   ) {
-    return this.integrationsService.resumeIntegration(user, id);
+    const session = randomUUID();
+
+    return this.integrationsService.resumeIntegration(user, id, session);
   }
 
   @Patch('db/:id')
@@ -84,7 +161,14 @@ export class IntegrationsController {
     @Body() updateDBDto: UpdateDBDto,
     @Param('id') id: string
   ) {
-    return this.integrationsService.updateDatabase(user, updateDBDto, id);
+    const session = randomUUID();
+
+    return this.integrationsService.updateDatabase(
+      user,
+      updateDBDto,
+      id,
+      session
+    );
   }
 
   @Delete('/:id')
@@ -94,7 +178,9 @@ export class IntegrationsController {
     @Req() { user }: Request,
     @Param('id') id: string
   ) {
-    return this.integrationsService.deleteIntegration(user, id);
+    const session = randomUUID();
+
+    return this.integrationsService.deleteIntegration(user, id, session);
   }
 
   @Post('db/review')
@@ -104,6 +190,8 @@ export class IntegrationsController {
     @Req() { user }: Request,
     @Body() createDBDto: CreateDBDto
   ) {
-    return this.integrationsService.reviewDB(user, createDBDto);
+    const session = randomUUID();
+
+    return this.integrationsService.reviewDB(user, createDBDto, session);
   }
 }

@@ -35,6 +35,65 @@ export class AudiencesService {
     @Inject(JobsService) public jobsService: JobsService
   ) {}
 
+  log(message, method, session, user = 'ANONYMOUS') {
+    this.logger.log(
+      message,
+      JSON.stringify({
+        class: AudiencesService.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+  debug(message, method, session, user = 'ANONYMOUS') {
+    this.logger.debug(
+      message,
+      JSON.stringify({
+        class: AudiencesService.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+  warn(message, method, session, user = 'ANONYMOUS') {
+    this.logger.warn(
+      message,
+      JSON.stringify({
+        class: AudiencesService.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+  error(error, method, session, user = 'ANONYMOUS') {
+    this.logger.error(
+      error.message,
+      error.stack,
+      JSON.stringify({
+        class: AudiencesService.name,
+        method: method,
+        session: session,
+        cause: error.cause,
+        name: error.name,
+        user: user,
+      })
+    );
+  }
+  verbose(message, method, session, user = 'ANONYMOUS') {
+    this.logger.verbose(
+      message,
+      JSON.stringify({
+        class: AudiencesService.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+
   /**
    * Find all audiences that belong to a given account. If
    * not found, returns empty array
@@ -42,10 +101,30 @@ export class AudiencesService {
    * @param account - The owner of the audiences
    *
    */
-  findAll(account: Account): Promise<Audience[]> {
-    return this.audiencesRepository.findBy({
-      owner: { id: account.id },
-    });
+  async findAll(account: Account, session: string): Promise<Audience[]> {
+    try {
+      this.debug(
+        `Finding all audiences`,
+        this.findByName.name,
+        session,
+        account.id
+      );
+
+      const audiences = await this.audiencesRepository.findBy({
+        owner: { id: account.id },
+      });
+
+      this.debug(
+        `Found audiences: ${JSON.stringify(audiences)}`,
+        this.findAll.name,
+        session,
+        account.id
+      );
+      return audiences;
+    } catch (e) {
+      this.error(e, this.findAll.name, session, account.id);
+      throw e;
+    }
   }
 
   /**
@@ -56,11 +135,34 @@ export class AudiencesService {
    * @param name - name used for lookup
    *
    */
-  findByName(account: Account, name: string): Promise<Audience | null> {
-    return this.audiencesRepository.findOneBy({
-      owner: { id: account.id },
-      name: name,
-    });
+  async findByName(
+    account: Account,
+    name: string,
+    session: string
+  ): Promise<Audience | null> {
+    try {
+      this.debug(
+        `Finding audience: ${JSON.stringify({ name: name })}`,
+        this.findByName.name,
+        session,
+        account.id
+      );
+      const audience = await this.audiencesRepository.findOneBy({
+        owner: { id: account.id },
+        name: name,
+      });
+
+      this.debug(
+        `Found audience: ${JSON.stringify(audience)}`,
+        this.findByName.name,
+        session,
+        account.id
+      );
+      return audience;
+    } catch (e) {
+      this.error(e, this.findByName.name, session, account.id);
+      throw e;
+    }
   }
 
   /**
@@ -71,11 +173,33 @@ export class AudiencesService {
    * @param id - ID used for lookup
    *
    */
-  findOne(account: Account, id: string): Promise<Audience> {
-    return this.audiencesRepository.findOneBy({
-      owner: { id: account.id },
-      id: id,
-    });
+  async findOne(
+    account: Account,
+    id: string,
+    session: string
+  ): Promise<Audience> {
+    try {
+      this.debug(
+        `Finding audience: ${JSON.stringify({ id: id })}`,
+        this.findOne.name,
+        session,
+        account.id
+      );
+      const audience = await this.audiencesRepository.findOneBy({
+        owner: { id: account.id },
+        id: id,
+      });
+      this.debug(
+        `Found audience: ${JSON.stringify(audience)}`,
+        this.findOne.name,
+        session,
+        account.id
+      );
+      return audience;
+    } catch (e) {
+      this.error(e, this.findOne.name, session, account.id);
+      throw e;
+    }
   }
 
   /**
@@ -93,11 +217,18 @@ export class AudiencesService {
    */
   async insert(
     account: Account,
-    createAudienceDto: CreateAudienceDto
+    createAudienceDto: CreateAudienceDto,
+    session: string
   ): Promise<Audience> {
-    const { name, isPrimary, description, templates, workflowId } =
-      createAudienceDto;
     try {
+      this.debug(
+        `Creating audience: ${JSON.stringify(createAudienceDto)}`,
+        this.insert.name,
+        session,
+        account.id
+      );
+      const { name, isPrimary, description, templates, workflowId } =
+        createAudienceDto;
       const resp = await this.audiencesRepository.save({
         customers: [],
         name,
@@ -113,9 +244,16 @@ export class AudiencesService {
         owner: { id: account.id },
         workflow: { id: workflowId },
       });
+      this.debug(
+        `Created audience: ${JSON.stringify(resp)}`,
+        this.insert.name,
+        session,
+        account.id
+      );
       return resp;
     } catch (e) {
-      console.error(e);
+      this.error(e, this.insert.name, session, account.id);
+      throw e;
     }
   }
 
@@ -134,36 +272,35 @@ export class AudiencesService {
    */
   async update(
     account: Account,
-    updateAudienceDto: UpdateAudienceDto
+    updateAudienceDto: UpdateAudienceDto,
+    session: string
   ): Promise<void> {
     let audience: Audience; // The found audience
     try {
+      this.debug(
+        `Updating audience ${JSON.stringify({
+          id: audience?.id,
+        })} with ${JSON.stringify(updateAudienceDto)}`,
+        this.update.name,
+        session,
+        account.id
+      );
+
       audience = await this.audiencesRepository.findOneBy({
         owner: { id: account.id },
         id: updateAudienceDto.id,
         isEditable: true,
       });
-
-      // const workflows = await this.workflowRepository.find({
-      //   where: {
-      //     audiences: Like('%' + audience.id + '%'),
-      //   },
-      // });
-
-      // if (workflows.some((wkf) => wkf.isActive)) {
-      //   throw new HttpException('This workflow is active', 400);
-      // }
-
-      this.logger.debug('Found audience: ' + audience.id);
       if (!audience) {
-        this.logger.error('Error: Audience not found');
-        return Promise.reject(new Error(Errors.ERROR_DOES_NOT_EXIST));
+        throw new Error(Errors.ERROR_DOES_NOT_EXIST);
       }
-    } catch (err) {
-      this.logger.error('Error: ' + err);
-      return Promise.reject(err);
-    }
-    try {
+      this.debug(
+        `Found audience to update: ${JSON.stringify({ id: audience?.id })}`,
+        this.update.name,
+        session,
+        account.id
+      );
+
       await this.audiencesRepository.update(
         { owner: { id: account.id }, id: updateAudienceDto.id },
         {
@@ -174,12 +311,18 @@ export class AudiencesService {
             : undefined,
         }
       );
-      this.logger.debug('Updated audience: ' + audience.id);
-    } catch (err) {
-      this.logger.error('Error: ' + err);
-      return Promise.reject(err);
+      this.debug(
+        `Updated audience ${JSON.stringify({
+          id: audience?.id,
+        })} with ${JSON.stringify(updateAudienceDto)}`,
+        this.update.name,
+        session,
+        account.id
+      );
+    } catch (e) {
+      this.error(e, this.update.name, session, account.id);
+      throw e;
     }
-    return;
   }
 
   /**
@@ -197,30 +340,42 @@ export class AudiencesService {
   async freeze(
     account: Account,
     id: string,
-    queryRunner: QueryRunner
+    queryRunner: QueryRunner,
+    session: string
   ): Promise<Audience> {
     let found: Audience, ret: Audience;
     try {
+      this.debug(
+        `Freezing audience: ${JSON.stringify({ id: id })}`,
+        this.freeze.name,
+        session,
+        account.id
+      );
       found = await queryRunner.manager.findOneBy(Audience, {
         owner: { id: account.id },
         id: id,
       });
-      this.logger.debug('Found audience to freeze: ' + found.id);
-    } catch (err) {
-      this.logger.error('Error: ' + err);
-      return Promise.reject(err);
-    }
-    try {
+      this.debug(
+        `Found audience to freeze: ${JSON.stringify({ id: found?.id })}`,
+        this.freeze.name,
+        session,
+        account.id
+      );
       ret = await queryRunner.manager.save(Audience, {
         ...found,
         isEditable: false,
       });
-      this.logger.debug('Froze audience: ' + ret.id);
+      this.debug(
+        `Froze audience: ${JSON.stringify({ id: found?.id })}`,
+        this.freeze.name,
+        session,
+        account.id
+      );
+      return ret;
     } catch (err) {
-      this.logger.error('Error: ' + err);
-      return Promise.reject(err);
+      this.error(err, this.freeze.name, session, account.id);
+      throw err;
     }
-    return ret;
   }
 
   /**
@@ -248,14 +403,20 @@ export class AudiencesService {
     event: EventDto,
     queryRunner: QueryRunner,
     encodedRules: string[],
-    workflowID: string
+    workflowID: string,
+    session: string
   ): Promise<{
     jobIds: (string | number)[];
     templates: Template[];
   }> {
     // Base case: customer document must exist
     if (!customer || !customer.id) {
-      this.logger.warn(`Warning: No customer to move from ${from} to ${to}`);
+      this.warn(
+        `Warning: No customer to move from ${from} to ${to}`,
+        this.moveCustomer.name,
+        session,
+        account.id
+      );
       return Promise.resolve({ jobIds: [], templates: [] });
     }
 
@@ -266,17 +427,28 @@ export class AudiencesService {
     let fromAud: Audience, toAud: Audience;
     const templates: Template[] = [];
     try {
+      this.debug(
+        `Moving customer ${JSON.stringify({
+          from: from,
+          to: to,
+          id: customer?.id,
+        })}`,
+        this.moveCustomer.name,
+        session,
+        account.id
+      );
       if (from) {
-        try {
-          fromAud = await queryRunner.manager.findOneBy(Audience, {
-            owner: { id: account.id },
-            id: from,
-          });
-        } catch (err) {
-          this.logger.error('Error: ' + err);
-          return Promise.reject(err);
-        }
+        fromAud = await queryRunner.manager.findOneBy(Audience, {
+          owner: { id: account.id },
+          id: from,
+        });
       }
+      this.debug(
+        `Found source audience: ${JSON.stringify(fromAud)}`,
+        this.moveCustomer.name,
+        session,
+        account.id
+      );
 
       if (to) {
         toAud = await queryRunner.manager.findOne(Audience, {
@@ -284,18 +456,36 @@ export class AudiencesService {
           relations: ['templates'],
         });
       }
+      this.debug(
+        `Found destination audience: ${JSON.stringify(toAud)}`,
+        this.moveCustomer.name,
+        session,
+        account.id
+      );
 
       if (fromAud?.customers?.length) {
         index = fromAud?.customers?.indexOf(customerId);
-        this.logger.debug(
-          'Index of customer ' + customerId + ' inside of from: ' + index
+        this.debug(
+          `Source Audience customer index: ${JSON.stringify({
+            audience: from,
+            customer: customerId,
+            index: index,
+          })}`,
+          this.moveCustomer.name,
+          session,
+          account.id
         );
       }
 
       if (fromAud && !fromAud.isEditable) {
         if (index > -1) {
-          this.logger.debug(
-            'From customers before: ' + fromAud?.customers?.length
+          this.debug(
+            `Source audience customer list length before move: ${JSON.stringify(
+              { length: fromAud?.customers?.length }
+            )}`,
+            this.moveCustomer.name,
+            session,
+            account.id
           );
           fromAud?.customers?.splice(index, 1);
           await queryRunner.manager.update(
@@ -305,22 +495,47 @@ export class AudiencesService {
               customers: fromAud?.customers,
             }
           );
-          this.logger.debug(
-            'From customers after: ' + fromAud?.customers?.length
+          this.debug(
+            `Source audience customer list length after move: ${JSON.stringify({
+              length: fromAud?.customers?.length,
+            })}`,
+            this.moveCustomer.name,
+            session,
+            account.id
           );
         } else {
-          this.logger.warn(
-            `Customer ${customerId} is not in ${from}, skipping`
+          this.warn(
+            `Customer not in source audience, skipping: ${JSON.stringify({
+              customer: customerId,
+              audience: from,
+            })}`,
+            this.moveCustomer.name,
+            session,
+            account.id
           );
           return Promise.resolve({ jobIds: [], templates: [] });
         }
       }
 
       if (toAud && !toAud.isEditable && !toAud.customers.includes(customerId)) {
-        this.logger.debug('To before: ' + toAud?.customers?.length);
+        this.debug(
+          `Destination audience customer list length before move: ${JSON.stringify(
+            { length: toAud?.customers?.length }
+          )}`,
+          this.moveCustomer.name,
+          session,
+          account.id
+        );
         toAud.customers = [...toAud.customers, customerId];
         const saved = await queryRunner.manager.save(toAud);
-        this.logger.debug('To after: ' + saved?.customers?.length);
+        this.debug(
+          `Destination audience customer list length after move: ${JSON.stringify(
+            { length: saved?.customers?.length }
+          )}`,
+          this.moveCustomer.name,
+          session,
+          account.id
+        );
 
         // Queue up any jobs for time based triggers based on this audience
         for (
@@ -346,23 +561,48 @@ export class AudiencesService {
                 ? TimeJobType.DELAY
                 : TimeJobType.TIME_WINDOW;
 
+            this.debug(
+              `Queuing time delay message: ${JSON.stringify({
+                recepient: customer.id,
+                from: trigger?.source,
+                to: trigger?.dest,
+              })}`,
+              this.moveCustomer.name,
+              session,
+              account.id
+            );
+
             const now = DateTime.now();
-            this.jobsService.create(account, {
-              customer: customerId,
-              from: trigger?.source,
-              to: trigger?.dest[0],
-              workflow: workflowID,
-              startTime: trigger.properties.fromTime,
-              endTime: trigger.properties.toTime,
-              executionTime:
-                trigger.properties.eventTime === 'SpecificTime'
-                  ? trigger.properties.specificTime
-                  : now.plus({
-                      hours: trigger.properties.delayTime?.split(':')?.[0],
-                      minutes: trigger.properties.delayTime?.split(':')?.[1],
-                    }),
-              type,
-            });
+            this.jobsService.create(
+              account,
+              {
+                customer: customerId,
+                from: trigger?.source,
+                to: trigger?.dest[0],
+                workflow: workflowID,
+                startTime: trigger.properties.fromTime,
+                endTime: trigger.properties.toTime,
+                executionTime:
+                  trigger.properties.eventTime === 'SpecificTime'
+                    ? trigger.properties.specificTime
+                    : now.plus({
+                        hours: trigger.properties.delayTime?.split(':')?.[0],
+                        minutes: trigger.properties.delayTime?.split(':')?.[1],
+                      }),
+                type,
+              },
+              session
+            );
+            this.debug(
+              `Queued time delay message: ${JSON.stringify({
+                recepient: customer.id,
+                from: trigger?.source,
+                to: trigger?.dest,
+              })}`,
+              this.moveCustomer.name,
+              session,
+              account.id
+            );
           }
         }
 
@@ -381,22 +621,17 @@ export class AudiencesService {
             },
           });
           if (data.length > 0) {
-            this.logger.debug(
-              'ToAud templates before template skip: ',
-              toTemplates
-            );
             const dataIds = data.map((el2) => String(el2.id));
             toTemplates = toTemplates.filter(
               (el) => !dataIds.includes(String(el))
             );
-            this.logger.debug(
-              'ToAud templates after template skip: ',
-              toTemplates
-            );
-            this.logger.warn(
-              'Templates: [' +
-                dataIds.join(',') +
-                "] was skipped to send because test mail's can't be sent to external account."
+            this.warn(
+              `Skipping sending templates to unverified customer using free3: ${JSON.stringify(
+                { customer: customer.id, templates: dataIds.join(',') }
+              )}`,
+              this.moveCustomer.name,
+              session,
+              account.id
             );
           }
         }
@@ -407,6 +642,15 @@ export class AudiencesService {
             templateIndex < toTemplates?.length;
             templateIndex++
           ) {
+            this.debug(
+              `Queuing message: ${JSON.stringify({
+                recepient: customer.id,
+                template: toTemplates[templateIndex],
+              })}`,
+              this.moveCustomer.name,
+              session,
+              account.id
+            );
             jobId = await this.templatesService.queueMessage(
               account,
               toTemplates[templateIndex],
@@ -419,14 +663,22 @@ export class AudiencesService {
                 id: toTemplates[templateIndex],
               })
             );
-            this.logger.debug('Queued Message');
             jobIds.push(jobId);
+            this.debug(
+              `Queued message: ${JSON.stringify({
+                recepient: customer.id,
+                template: toTemplates[templateIndex],
+              })}`,
+              this.moveCustomer.name,
+              session,
+              account.id
+            );
           }
         }
       }
     } catch (err) {
-      this.logger.error('Error: ' + err);
-      return Promise.reject(err);
+      this.error(err, this.moveCustomer.name, session, account.id);
+      throw err;
     }
 
     return Promise.resolve({ jobIds, templates });
@@ -451,11 +703,19 @@ export class AudiencesService {
     event: EventDto,
     queryRunner: QueryRunner,
     encodedRules: string[],
-    workflowId: string
+    workflowId: string,
+    session: string
   ): Promise<(string | number)[]> {
     let jobIds: (string | number)[] = [];
     for (let index = 0; index < customers?.length; index++) {
       try {
+        this.debug(
+          `Moving customers ${JSON.stringify({ customers: customers })}`,
+          this.moveCustomers.name,
+          session,
+          account.id
+        );
+
         const { jobIds: jobIdArr } = await this.moveCustomer(
           account,
           fromAud?.id,
@@ -464,28 +724,52 @@ export class AudiencesService {
           event,
           queryRunner,
           encodedRules,
-          workflowId
+          workflowId,
+          session
         );
+        this.debug(
+          `Moved customers ${JSON.stringify({ customers: customers })}`,
+          this.moveCustomers.name,
+          session,
+          account.id
+        );
+
         jobIds = [...jobIdArr, ...jobIds];
       } catch (err) {
-        this.logger.error('Error: ' + err);
-        return Promise.reject(err);
+        this.error(err, this.moveCustomers.name, session, account.id);
+        throw err;
       }
     }
-    // TODO: remove
-    console.warn("jobId's ==============\n", jobIds);
     return Promise.resolve(jobIds);
   }
 
   public async getFilter(
     account: Account,
-    id: string
+    id: string,
+    session: string
   ): Promise<InclusionCriteria | null> {
-    const res = await this.audiencesRepository.query(
-      'SELECT filter."inclusionCriteria" FROM audience LEFT JOIN workflow ON workflow.id = audience."workflowId" LEFT JOIN filter ON filter.id = workflow."filterId" WHERE audience.id = $1 AND audience."ownerId" = $2 LIMIT 1;',
-      [id, account.id]
-    );
+    try {
+      this.debug(
+        `Finding filters for ${JSON.stringify({ id: id })}`,
+        this.getFilter.name,
+        session,
+        account.id
+      );
+      const res = await this.audiencesRepository.query(
+        'SELECT filter."inclusionCriteria" FROM audience LEFT JOIN workflow ON workflow.id = audience."workflowId" LEFT JOIN filter ON filter.id = workflow."filterId" WHERE audience.id = $1 AND audience."ownerId" = $2 LIMIT 1;',
+        [id, account.id]
+      );
+      this.debug(
+        `Found filters for ${JSON.stringify({ id: id, res: res })}`,
+        this.getFilter.name,
+        session,
+        account.id
+      );
 
-    return res?.[0]?.inclusionCriteria || null;
+      return res?.[0]?.inclusionCriteria || null;
+    } catch (e) {
+      this.error(e, this.getFilter.name, session, account.id);
+      throw e;
+    }
   }
 }

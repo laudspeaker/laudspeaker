@@ -56,14 +56,14 @@ export class IntegrationsService {
     },
   };
 
-  public async getAllIntegrations(user: Express.User) {
-    const databases = await this.getAllDatabases(user);
+  public async getAllIntegrations(user: Express.User, session: string) {
+    const databases = await this.getAllDatabases(user, session);
 
     return { databases };
   }
 
-  public async getAllDatabases(user: Express.User) {
-    const account = await this.accountsService.findOne(user);
+  public async getAllDatabases(user: Express.User, session: string) {
+    const account = await this.accountsService.findOne(user, session);
 
     const integrations = await this.integrationsRepository.find({
       where: { owner: { id: account.id }, type: IntegrationType.DATABASE },
@@ -80,8 +80,8 @@ export class IntegrationsService {
     }));
   }
 
-  public async getOneDatabase(user: Express.User, id: string) {
-    const account = await this.accountsService.findOne(user);
+  public async getOneDatabase(user: Express.User, id: string, session: string) {
+    const account = await this.accountsService.findOne(user, session);
 
     const integration = await this.integrationsRepository.findOne({
       where: { id, owner: { id: account.id }, type: IntegrationType.DATABASE },
@@ -99,8 +99,12 @@ export class IntegrationsService {
     };
   }
 
-  public async createDatabase(user: Express.User, createDBDto: CreateDBDto) {
-    const account = await this.accountsService.findOne(user);
+  public async createDatabase(
+    user: Express.User,
+    createDBDto: CreateDBDto,
+    session
+  ) {
+    const account = await this.accountsService.findOne(user, session);
 
     const { name, description, ...dbProperties } = createDBDto;
     const {
@@ -147,9 +151,10 @@ export class IntegrationsService {
   public async updateDatabase(
     user: Express.User,
     updateDBDto: UpdateDBDto,
-    id: string
+    id: string,
+    session: string
   ) {
-    const account = await this.accountsService.findOne(user);
+    const account = await this.accountsService.findOne(user, session);
     const integration = await this.integrationsRepository.findOne({
       where: {
         id,
@@ -198,8 +203,12 @@ export class IntegrationsService {
     });
   }
 
-  public async pauseIntegration(user: Express.User, id: string) {
-    const account = await this.accountsService.findOne(user);
+  public async pauseIntegration(
+    user: Express.User,
+    id: string,
+    session: string
+  ) {
+    const account = await this.accountsService.findOne(user, session);
     await this.integrationsRepository.update(
       {
         id,
@@ -211,8 +220,12 @@ export class IntegrationsService {
     );
   }
 
-  public async resumeIntegration(user: Express.User, id: string) {
-    const account = await this.accountsService.findOne(user);
+  public async resumeIntegration(
+    user: Express.User,
+    id: string,
+    session: string
+  ) {
+    const account = await this.accountsService.findOne(user, session);
     await this.integrationsRepository.update(
       {
         id,
@@ -224,8 +237,8 @@ export class IntegrationsService {
     );
   }
 
-  public async deleteIntegration(user: Express.User, id: string) {
-    const account = await this.accountsService.findOne(user);
+  public async deleteIntegration(user: Express.User, id: string, session) {
+    const account = await this.accountsService.findOne(user, session);
     const integration = await this.integrationsRepository.findOne({
       where: {
         id,
@@ -238,8 +251,12 @@ export class IntegrationsService {
     await integration.remove();
   }
 
-  public async reviewDB(user: Express.User, createDBDto: CreateDBDto) {
-    const account = await this.accountsService.findOne(user);
+  public async reviewDB(
+    user: Express.User,
+    createDBDto: CreateDBDto,
+    session: string
+  ) {
+    const account = await this.accountsService.findOne(user, session);
     switch (createDBDto.dbType) {
       case DBType.DATABRICKS:
         try {

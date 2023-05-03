@@ -23,6 +23,7 @@ import { FilterModule } from './filter/filter.module';
 import { WebhookJob } from './webhook-jobs/entities/webhook-job.entity';
 import { WebhookJobsModule } from './webhook-jobs/webhook-jobs.module';
 import Accounts from 'twilio/lib/rest/Accounts';
+import { randomUUID } from 'crypto';
 
 @Module({
   imports: [
@@ -56,7 +57,7 @@ import Accounts from 'twilio/lib/rest/Accounts';
 export class ApiModule {
   constructor(private readonly testsService: TestsService) {
     if (process.env.NODE_ENV === 'development') {
-      this.testsService.resetTestData();
+      this.testsService.resetTestData(randomUUID());
     }
   }
 }

@@ -1,9 +1,4 @@
-import {
-  Injectable,
-  Inject,
-  LoggerService,
-  HttpException,
-} from '@nestjs/common';
+import { Injectable, Inject, Logger, HttpException } from '@nestjs/common';
 import { Correlation, CustomersService } from '../customers/customers.service';
 import { CustomerDocument } from '../customers/schemas/customer.schema';
 import {
@@ -51,7 +46,7 @@ export class EventsService {
     @Inject(CustomersService)
     private readonly customersService: CustomersService,
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
-    private readonly logger: LoggerService,
+    private readonly logger: Logger,
     @InjectQueue('message') private readonly messageQueue: Queue,
     @InjectQueue(JobTypes.slack) private readonly slackQueue: Queue,
     @InjectQueue(JobTypes.events)
@@ -98,6 +93,65 @@ export class EventsService {
     }
   }
 
+  log(message, method, session, user = 'ANONYMOUS') {
+    this.logger.log(
+      message,
+      JSON.stringify({
+        class: EventsService.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+  debug(message, method, session, user = 'ANONYMOUS') {
+    this.logger.debug(
+      message,
+      JSON.stringify({
+        class: EventsService.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+  warn(message, method, session, user = 'ANONYMOUS') {
+    this.logger.warn(
+      message,
+      JSON.stringify({
+        class: EventsService.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+  error(error, method, session, user = 'ANONYMOUS') {
+    this.logger.error(
+      error.message,
+      error.stack,
+      JSON.stringify({
+        class: EventsService.name,
+        method: method,
+        session: session,
+        cause: error.cause,
+        name: error.name,
+        user: user,
+      })
+    );
+  }
+  verbose(message, method, session, user = 'ANONYMOUS') {
+    this.logger.verbose(
+      message,
+      JSON.stringify({
+        class: EventsService.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+
   async correlate(
     account: Account,
     ev: EventsTable
@@ -115,7 +169,7 @@ export class EventsService {
     return this.customersService.findByCustomEvent(account, ev.slackId);
   }
 
-  async getJobStatus(body: StatusJobDto, type: JobTypes) {
+  async getJobStatus(body: StatusJobDto, type: JobTypes, session: string) {
     const jobQueues = {
       [JobTypes.email]: this.messageQueue,
       [JobTypes.slack]: this.slackQueue,
@@ -133,7 +187,11 @@ export class EventsService {
     }
   }
 
-  async getPostHogPayload(apiKey: string, eventDto: PosthogBatchEventDto) {
+  async getPostHogPayload(
+    apiKey: string,
+    eventDto: PosthogBatchEventDto,
+    session: string
+  ) {
     let account: Account, jobIds: WorkflowTick[]; // Account associated with the caller
     const transactionSession = await this.connection.startSession();
     transactionSession.startTransaction();
@@ -242,7 +300,8 @@ export class EventsService {
             await this.workflowsService.enrollCustomer(
               account,
               correlation.cust,
-              queryRunner
+              queryRunner,
+              session
             );
           }
           //need to change posthogeventdto to eventdo
@@ -262,7 +321,8 @@ export class EventsService {
             account,
             convertedEventDto,
             queryRunner,
-            transactionSession
+            transactionSession,
+            session
           );
           this.logger.debug('Queued messages with jobIDs ' + jobIDs);
           jobArray = [...jobArray, ...jobIDs];
@@ -292,7 +352,7 @@ export class EventsService {
     return jobArray;
   }
 
-  async enginePayload(apiKey: string, eventDto: EventDto) {
+  async enginePayload(apiKey: string, eventDto: EventDto, session: string) {
     let account: Account, correlation: Correlation, jobIDs: WorkflowTick[];
 
     const transactionSession = await this.connection.startSession();
@@ -317,14 +377,16 @@ export class EventsService {
         await this.workflowsService.enrollCustomer(
           account,
           correlation.cust,
-          queryRunner
+          queryRunner,
+          session
         );
 
       jobIDs = await this.workflowsService.tick(
         account,
         eventDto,
         queryRunner,
-        transactionSession
+        transactionSession,
+        session
       );
       this.logger.debug('Queued messages with jobID ' + jobIDs);
       if (eventDto) {
@@ -349,7 +411,7 @@ export class EventsService {
     return jobIDs;
   }
 
-  async getOrUpdateAttributes(resourceId: string) {
+  async getOrUpdateAttributes(resourceId: string, session: string) {
     const attributes = await this.EventKeysModel.find().exec();
     if (resourceId === 'attributes') {
       return {
@@ -382,6 +444,7 @@ export class EventsService {
   async getAttributes(
     resourceId: string,
     ownerId: string,
+    session: string,
     providerSpecific?: string
   ) {
     const attributes = await this.EventKeysModel.find({
@@ -400,15 +463,19 @@ export class EventsService {
     }));
   }
 
-  async getPossibleTypes() {
+  async getPossibleTypes(session: string) {
     return keyTypes;
   }
 
-  async getPossibleComparisonTypes(type: string, isArray = false) {
+  async getPossibleComparisonTypes(
+    type: string,
+    session: string,
+    isArray = false
+  ) {
     return attributeConditions(type, isArray);
   }
 
-  async getPossibleValues(key: string, search: string) {
+  async getPossibleValues(key: string, search: string, session: string) {
     const searchRegExp = new RegExp(`.*${search}.*`, 'i');
     const docs = await this.EventModel.aggregate([
       { $match: { [`event.${key}`]: searchRegExp } },
@@ -418,7 +485,7 @@ export class EventsService {
     return docs.map((doc) => doc?.['event']?.[key]).filter((item) => item);
   }
 
-  async getPossiblePosthogTypes(search = '', ownerId: string) {
+  async getPossiblePosthogTypes(ownerId: string, session: string, search = '') {
     const searchRegExp = new RegExp(`.*${search}.*`, 'i');
     // TODO: need to recheck, filtering not working in a correct way
     const types = await this.PosthogEventTypeModel.find({
@@ -430,7 +497,13 @@ export class EventsService {
     return types.map((type) => type.displayName);
   }
 
-  async getPosthogEvents(account: Account, take = 100, skip = 0, search = '') {
+  async getPosthogEvents(
+    account: Account,
+    session: string,
+    take = 100,
+    skip = 0,
+    search = ''
+  ) {
     const searchRegExp = new RegExp(`.*${search}.*`, 'i');
 
     const totalPages =
