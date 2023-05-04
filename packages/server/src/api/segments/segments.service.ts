@@ -20,6 +20,8 @@ import { CreateSegmentDTO } from './dto/create-segment.dto';
 import { UpdateSegmentDTO } from './dto/update-segment.dto';
 import { SegmentCustomers } from './entities/segment-customers.entity';
 import { Segment, SegmentType } from './entities/segment.entity';
+import { InjectConnection } from '@nestjs/mongoose';
+import mongoose from 'mongoose';
 
 @Injectable()
 export class SegmentsService {
@@ -33,8 +35,9 @@ export class SegmentsService {
     @Inject(forwardRef(() => CustomersService))
     private customersService: CustomersService,
     private workflowsService: WorkflowsService,
-    private readonly audiencesHelper: AudiencesHelper
-  ) {}
+    private readonly audiencesHelper: AudiencesHelper,
+    @InjectConnection() private readonly connection: mongoose.Connection,
+  ) { }
 
   public async findOne(account: Account, id: string, session: string) {
     const segment = await this.segmentRepository.findOneBy({
@@ -243,8 +246,11 @@ export class SegmentsService {
       segment: { id: segment.id },
       customerId,
     });
-
     const runner = this.dataSource.createQueryRunner();
+    await runner.connect();
+    await runner.startTransaction();
+    const transactionSession = await this.connection.startSession();
+    transactionSession.startTransaction();
     try {
       const customer = await this.customersService.CustomerModel.findById(
         customerId
@@ -253,12 +259,18 @@ export class SegmentsService {
         account,
         customer,
         runner,
+        transactionSession,
         session
       );
+      await runner.commitTransaction();
+      await transactionSession.commitTransaction();
     } catch (error) {
       this.logger.error(error);
+      await transactionSession.abortTransaction();
+      await runner.rollbackTransaction();
     } finally {
-      runner.release();
+      await transactionSession.endSession();
+      await runner.release();
     }
   }
 
@@ -409,17 +421,27 @@ export class SegmentsService {
       }
     }
     const runner = this.dataSource.createQueryRunner();
+    await runner.connect();
+    await runner.startTransaction();
+    const transactionSession = await this.connection.startSession();
+    transactionSession.startTransaction();
     try {
       await this.workflowsService.enrollCustomer(
         account,
         customer,
         runner,
+        transactionSession,
         session
       );
+      await runner.commitTransaction();
+      await transactionSession.commitTransaction();
     } catch (error) {
       this.logger.error(error);
+      await transactionSession.abortTransaction();
+      await runner.rollbackTransaction();
     } finally {
-      runner.release();
+      await transactionSession.endSession();
+      await runner.release();
     }
   }
 

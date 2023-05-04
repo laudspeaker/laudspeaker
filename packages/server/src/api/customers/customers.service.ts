@@ -1096,6 +1096,7 @@ export class CustomersService {
           account,
           correlation.cust,
           queryRunner,
+          transactionSession,
           session
         );
 

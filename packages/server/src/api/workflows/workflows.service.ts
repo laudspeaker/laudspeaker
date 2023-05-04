@@ -28,7 +28,7 @@ import {
 import errors from '../../shared/utils/errors';
 import { Audience } from '../audiences/entities/audience.entity';
 import { CustomersService } from '../customers/customers.service';
-import { CustomerDocument } from '../customers/schemas/customer.schema';
+import { Customer, CustomerDocument } from '../customers/schemas/customer.schema';
 import { EventDto } from '../events/dto/event.dto';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { createClient } from '@clickhouse/client';
@@ -73,13 +73,14 @@ export class WorkflowsService {
     @InjectRepository(Workflow)
     public workflowsRepository: Repository<Workflow>,
     @Inject(AudiencesService) private audiencesService: AudiencesService,
+    @InjectModel(Customer.name) public CustomerModel: Model<CustomerDocument>,
     @Inject(forwardRef(() => CustomersService))
     private customersService: CustomersService,
     @InjectModel(EventKeys.name)
     private EventKeysModel: Model<EventKeysDocument>,
     @InjectConnection() private readonly connection: mongoose.Connection,
     private readonly audiencesHelper: AudiencesHelper
-  ) {}
+  ) { }
 
   log(message, method, session, user = 'ANONYMOUS') {
     this.logger.log(
@@ -196,8 +197,8 @@ export class WorkflowsService {
               ...(key === 'isActive'
                 ? { isStopped: false, isPaused: false }
                 : key === 'isPaused'
-                ? { isStopped: false }
-                : {}),
+                  ? { isStopped: false }
+                  : {}),
             });
         }
       } else {
@@ -273,7 +274,7 @@ export class WorkflowsService {
     const openedData = (await openedResponse.json<any>())?.data;
     const opened =
       +openedData?.[0]?.[
-        'uniqExact(tuple(audienceId, customerId, templateId, messageId, event, eventProvider))'
+      'uniqExact(tuple(audienceId, customerId, templateId, messageId, event, eventProvider))'
       ];
 
     const openedPercentage = (opened / sent) * 100;
@@ -285,7 +286,7 @@ export class WorkflowsService {
     const clickedData = (await clickedResponse.json<any>())?.data;
     const clicked =
       +clickedData?.[0]?.[
-        'uniqExact(tuple(audienceId, customerId, templateId, messageId, event, eventProvider))'
+      'uniqExact(tuple(audienceId, customerId, templateId, messageId, event, eventProvider))'
       ];
 
     const clickedPercentage = (clicked / sent) * 100;
@@ -735,6 +736,7 @@ export class WorkflowsService {
     account: Account,
     customer: CustomerDocument,
     queryRunner: QueryRunner,
+    clientSession: ClientSession,
     session: string
   ): Promise<void> {
     try {
@@ -767,7 +769,8 @@ export class WorkflowsService {
               customer,
               workflow.filter.inclusionCriteria,
               account
-            ))
+            )) &&
+            (customer.workflows.indexOf(workflow.id) > -1)
           ) {
             await this.audiencesService.moveCustomer(
               account,
@@ -780,6 +783,11 @@ export class WorkflowsService {
               workflow.id,
               session
             );
+            await this.CustomerModel.updateOne(
+              { _id: customer._id },
+              { $push: { workflows: workflow.id } },
+            ).session(clientSession)
+              .exec();
             this.logger.debug('Enrolled customer in dynamic primary audience.');
           }
         }
@@ -948,45 +956,42 @@ export class WorkflowsService {
                           condition.key == 'current_url' &&
                           trigger.providerType == ProviderTypes.Posthog &&
                           trigger.providerParams ===
-                            PosthogTriggerParams.Pageview
+                          PosthogTriggerParams.Pageview
                         ) {
                           this.logger.debug(
-                            `Comparing: ${event?.event?.page?.url || ''} ${
-                              condition.comparisonType || ''
+                            `Comparing: ${event?.event?.page?.url || ''} ${condition.comparisonType || ''
                             } ${condition.value || ''}`
                           );
                           return ['exists', 'doesNotExist'].includes(
                             condition.comparisonType
                           )
                             ? this.audiencesHelper.operableCompare(
-                                event?.event?.page?.url,
-                                condition.comparisonType
-                              )
+                              event?.event?.page?.url,
+                              condition.comparisonType
+                            )
                             : await this.audiencesHelper.conditionalCompare(
-                                event?.event?.page?.url,
-                                condition.value,
-                                condition.comparisonType
-                              );
+                              event?.event?.page?.url,
+                              condition.value,
+                              condition.comparisonType
+                            );
                         } else {
                           this.logger.debug(
-                            `Comparing: ${
-                              event?.event?.[condition.key] || ''
-                            } ${condition.comparisonType || ''} ${
-                              condition.value || ''
+                            `Comparing: ${event?.event?.[condition.key] || ''
+                            } ${condition.comparisonType || ''} ${condition.value || ''
                             }`
                           );
                           return ['exists', 'doesNotExist'].includes(
                             condition.comparisonType
                           )
                             ? this.audiencesHelper.operableCompare(
-                                event?.event?.[condition.key],
-                                condition.comparisonType
-                              )
+                              event?.event?.[condition.key],
+                              condition.comparisonType
+                            )
                             : await this.audiencesHelper.conditionalCompare(
-                                event?.event?.[condition.key],
-                                condition.value,
-                                condition.comparisonType
-                              );
+                              event?.event?.[condition.key],
+                              condition.value,
+                              condition.comparisonType
+                            );
                         }
                       })
                     );
@@ -1029,11 +1034,11 @@ export class WorkflowsService {
                         );
                       this.logger.debug(
                         'Moved ' +
-                          customer?.id +
-                          ' out of ' +
-                          from?.id +
-                          ' and into ' +
-                          to?.id
+                        customer?.id +
+                        ' out of ' +
+                        from?.id +
+                        ' and into ' +
+                        to?.id
                       );
                       jobId.jobIds = jobIdArr;
                       jobId.templates = templates;
@@ -1115,8 +1120,8 @@ export class WorkflowsService {
               ...item,
               executionTime: new Date(
                 new Date().getTime() -
-                  found.latestPause.getTime() +
-                  item.executionTime.getTime()
+                found.latestPause.getTime() +
+                item.executionTime.getTime()
               ),
             }))
           );

@@ -307,6 +307,7 @@ export class EventsService {
               account,
               correlation.cust,
               queryRunner,
+              transactionSession,
               session
             );
           }
@@ -384,6 +385,7 @@ export class EventsService {
           account,
           correlation.cust,
           queryRunner,
+          transactionSession,
           session
         );
 

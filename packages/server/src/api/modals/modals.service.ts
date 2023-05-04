@@ -28,7 +28,7 @@ export class ModalsService {
     private customersService: CustomersService,
     @InjectRepository(ModalEvent)
     private modalEventRepository: Repository<ModalEvent>
-  ) {}
+  ) { }
 
   public async queueModalEvent(customerId: string, template: Template) {
     if (template?.type !== TemplateType.MODAL)
@@ -71,7 +71,7 @@ export class ModalsService {
     if (!modalEvent) return;
 
     const modalState = modalEvent.template.modalState;
-    const { _id, ownerId, audiences, ...tags } = customer.toObject();
+    const { _id, ownerId, workflows, ...tags } = customer.toObject();
     const filteredTags = cleanTagsForSending(tags);
 
     recursivelyUpdateObject(modalState, (item, type) => {
