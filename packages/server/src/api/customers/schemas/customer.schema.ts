@@ -15,7 +15,7 @@ export class Customer {
   email: string;
 
   @Prop()
-  audiences: string[];
+  workflows: string[];
 
   @Prop()
   ownerId: string;

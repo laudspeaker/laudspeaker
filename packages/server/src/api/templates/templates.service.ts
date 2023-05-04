@@ -346,7 +346,7 @@ export class TemplatesService extends QueueEventsHost {
     } catch (err) {
       return Promise.reject(err);
     }
-    const { _id, ownerId, audiences, ...tags } = customer.toObject();
+    const { _id, ownerId, workflows, ...tags } = customer.toObject();
 
     const filteredTags = cleanTagsForSending(tags);
 
@@ -723,14 +723,14 @@ export class TemplatesService extends QueueEventsHost {
           retrievedData = ['data', 'body'].includes(webhookPath[0])
             ? body
             : webhookPath[0] === 'headers'
-            ? JSON.stringify(headers)
-            : '';
+              ? JSON.stringify(headers)
+              : '';
         } else {
           const objectToRetrievе = ['data', 'body'].includes(webhookPath[0])
             ? JSON.parse(body)
             : webhookPath[0] === 'headers'
-            ? headers
-            : {};
+              ? headers
+              : {};
           retrievedData = this.recursivelyRetrieveData(
             objectToRetrievе,
             webhookPath.slice(1)
@@ -753,7 +753,7 @@ export class TemplatesService extends QueueEventsHost {
 
     if (!customer) throw new NotFoundException('Customer not found');
 
-    const { _id, ownerId, audiences, ...tags } = customer.toObject();
+    const { _id, ownerId, workflows, ...tags } = customer.toObject();
     const filteredTags = cleanTagsForSending(tags);
 
     const { method } = testWebhookDto.webhookData;
@@ -884,9 +884,9 @@ export class TemplatesService extends QueueEventsHost {
         retriesCount++;
         this.logger.warn(
           'Unsuccessfull webhook request. Retries: ' +
-            retriesCount +
-            '. Error: ' +
-            e
+          retriesCount +
+          '. Error: ' +
+          e
         );
         if (e instanceof Error) error = e.message;
         await wait(5000);

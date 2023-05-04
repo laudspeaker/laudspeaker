@@ -71,7 +71,7 @@ export class ModalsService {
     if (!modalEvent) return;
 
     const modalState = modalEvent.template.modalState;
-    const { _id, ownerId, audiences, ...tags } = customer.toObject();
+    const { _id, ownerId, workflows, ...tags } = customer.toObject();
     const filteredTags = cleanTagsForSending(tags);
 
     recursivelyUpdateObject(modalState, (item, type) => {
@@ -96,3 +96,4 @@ export class ModalsService {
       .execute();
   }
 }
+

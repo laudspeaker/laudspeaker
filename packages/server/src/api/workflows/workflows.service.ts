@@ -28,7 +28,7 @@ import {
 import errors from '../../shared/utils/errors';
 import { Audience } from '../audiences/entities/audience.entity';
 import { CustomersService } from '../customers/customers.service';
-import { CustomerDocument } from '../customers/schemas/customer.schema';
+import { Customer, CustomerDocument } from '../customers/schemas/customer.schema';
 import { EventDto } from '../events/dto/event.dto';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { createClient } from '@clickhouse/client';
@@ -73,13 +73,14 @@ export class WorkflowsService {
     @InjectRepository(Workflow)
     public workflowsRepository: Repository<Workflow>,
     @Inject(AudiencesService) private audiencesService: AudiencesService,
+    @InjectModel(Customer.name) public CustomerModel: Model<CustomerDocument>,
     @Inject(forwardRef(() => CustomersService))
     private customersService: CustomersService,
     @InjectModel(EventKeys.name)
     private EventKeysModel: Model<EventKeysDocument>,
     @InjectConnection() private readonly connection: mongoose.Connection,
     private readonly audiencesHelper: AudiencesHelper
-  ) {}
+  ) { }
 
   log(message, method, session, user = 'ANONYMOUS') {
     this.logger.log(
@@ -196,8 +197,8 @@ export class WorkflowsService {
               ...(key === 'isActive'
                 ? { isStopped: false, isPaused: false }
                 : key === 'isPaused'
-                ? { isStopped: false }
-                : {}),
+                  ? { isStopped: false }
+                  : {}),
             });
         }
       } else {
@@ -273,7 +274,7 @@ export class WorkflowsService {
     const openedData = (await openedResponse.json<any>())?.data;
     const opened =
       +openedData?.[0]?.[
-        'uniqExact(tuple(audienceId, customerId, templateId, messageId, event, eventProvider))'
+      'uniqExact(tuple(audienceId, customerId, templateId, messageId, event, eventProvider))'
       ];
 
     const openedPercentage = (opened / sent) * 100;
@@ -285,7 +286,7 @@ export class WorkflowsService {
     const clickedData = (await clickedResponse.json<any>())?.data;
     const clicked =
       +clickedData?.[0]?.[
-        'uniqExact(tuple(audienceId, customerId, templateId, messageId, event, eventProvider))'
+      'uniqExact(tuple(audienceId, customerId, templateId, messageId, event, eventProvider))'
       ];
 
     const clickedPercentage = (clicked / sent) * 100;
@@ -673,6 +674,13 @@ export class WorkflowsService {
             workflow.filter.inclusionCriteria,
             transactionSession
           );
+
+          let unenrolledCustomers = customers.filter(customer => customer.workflows.indexOf(workflowID) < 0);
+          await this.CustomerModel.updateMany(
+            { _id: { $in: unenrolledCustomers.map(customer => customer.id) } },
+            { $addToSet: { workflows: workflowID } },
+          ).session(transactionSession).exec()
+
           this.logger.debug(
             'Customers to include in workflow: ' + customers.length
           );
@@ -681,7 +689,7 @@ export class WorkflowsService {
             account,
             null,
             audience,
-            customers,
+            unenrolledCustomers,
             null,
             queryRunner,
             workflow.rules,
@@ -735,9 +743,12 @@ export class WorkflowsService {
     account: Account,
     customer: CustomerDocument,
     queryRunner: QueryRunner,
+    clientSession: ClientSession,
     session: string
   ): Promise<void> {
     try {
+      this.debug(`Finding active workflows...`, this.enrollCustomer.name, session, account.id);
+
       const workflows = await queryRunner.manager.find(Workflow, {
         where: {
           owner: { id: account.id },
@@ -747,7 +758,7 @@ export class WorkflowsService {
         },
         relations: ['filter'],
       });
-      this.logger.debug('Active workflows: ' + workflows?.length);
+      this.debug(`Number of active workflows ${JSON.stringify({ length: workflows?.length })}`, this.enrollCustomer.name, session, account.id);
 
       for (
         let workflowsIndex = 0;
@@ -767,7 +778,8 @@ export class WorkflowsService {
               customer,
               workflow.filter.inclusionCriteria,
               account
-            ))
+            )) &&
+            (customer.workflows.indexOf(workflow.id) > -1)
           ) {
             await this.audiencesService.moveCustomer(
               account,
@@ -780,14 +792,17 @@ export class WorkflowsService {
               workflow.id,
               session
             );
-            this.logger.debug('Enrolled customer in dynamic primary audience.');
+            const updateResult = await this.CustomerModel.updateOne(
+              { _id: customer._id },
+              { $addToSet: { workflows: workflow.id } },
+            ).session(clientSession)
+              .exec();
+            this.debug(`Customer enrolled: ${JSON.stringify(updateResult)}`, this.enrollCustomer.name, session, account.id);
           }
         }
       }
     } catch (err) {
-      this.logger.error(
-        `workflows.service.ts:WorkflowsService.enrollCustomer: Error: ${err}`
-      );
+      this.error(err, this.enrollCustomer.name, session, account.id);
       return Promise.reject(err);
     }
   }
@@ -948,45 +963,42 @@ export class WorkflowsService {
                           condition.key == 'current_url' &&
                           trigger.providerType == ProviderTypes.Posthog &&
                           trigger.providerParams ===
-                            PosthogTriggerParams.Pageview
+                          PosthogTriggerParams.Pageview
                         ) {
                           this.logger.debug(
-                            `Comparing: ${event?.event?.page?.url || ''} ${
-                              condition.comparisonType || ''
+                            `Comparing: ${event?.event?.page?.url || ''} ${condition.comparisonType || ''
                             } ${condition.value || ''}`
                           );
                           return ['exists', 'doesNotExist'].includes(
                             condition.comparisonType
                           )
                             ? this.audiencesHelper.operableCompare(
-                                event?.event?.page?.url,
-                                condition.comparisonType
-                              )
+                              event?.event?.page?.url,
+                              condition.comparisonType
+                            )
                             : await this.audiencesHelper.conditionalCompare(
-                                event?.event?.page?.url,
-                                condition.value,
-                                condition.comparisonType
-                              );
+                              event?.event?.page?.url,
+                              condition.value,
+                              condition.comparisonType
+                            );
                         } else {
                           this.logger.debug(
-                            `Comparing: ${
-                              event?.event?.[condition.key] || ''
-                            } ${condition.comparisonType || ''} ${
-                              condition.value || ''
+                            `Comparing: ${event?.event?.[condition.key] || ''
+                            } ${condition.comparisonType || ''} ${condition.value || ''
                             }`
                           );
                           return ['exists', 'doesNotExist'].includes(
                             condition.comparisonType
                           )
                             ? this.audiencesHelper.operableCompare(
-                                event?.event?.[condition.key],
-                                condition.comparisonType
-                              )
+                              event?.event?.[condition.key],
+                              condition.comparisonType
+                            )
                             : await this.audiencesHelper.conditionalCompare(
-                                event?.event?.[condition.key],
-                                condition.value,
-                                condition.comparisonType
-                              );
+                              event?.event?.[condition.key],
+                              condition.value,
+                              condition.comparisonType
+                            );
                         }
                       })
                     );
@@ -1029,11 +1041,11 @@ export class WorkflowsService {
                         );
                       this.logger.debug(
                         'Moved ' +
-                          customer?.id +
-                          ' out of ' +
-                          from?.id +
-                          ' and into ' +
-                          to?.id
+                        customer?.id +
+                        ' out of ' +
+                        from?.id +
+                        ' and into ' +
+                        to?.id
                       );
                       jobId.jobIds = jobIdArr;
                       jobId.templates = templates;
@@ -1115,8 +1127,8 @@ export class WorkflowsService {
               ...item,
               executionTime: new Date(
                 new Date().getTime() -
-                  found.latestPause.getTime() +
-                  item.executionTime.getTime()
+                found.latestPause.getTime() +
+                item.executionTime.getTime()
               ),
             }))
           );
