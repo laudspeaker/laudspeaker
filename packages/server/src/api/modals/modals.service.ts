@@ -28,7 +28,7 @@ export class ModalsService {
     private customersService: CustomersService,
     @InjectRepository(ModalEvent)
     private modalEventRepository: Repository<ModalEvent>
-  ) { }
+  ) {}
 
   public async queueModalEvent(customerId: string, template: Template) {
     if (template?.type !== TemplateType.MODAL)
@@ -96,3 +96,4 @@ export class ModalsService {
       .execute();
   }
 }
+

@@ -322,7 +322,7 @@ We've made some changes to our styling and our navigation. We did this to speed 
           id="modalHeader"
         >
           <button
-            className="w-[60px] border-r-[1px] hover:text-[#6366F1]"
+            className="w-[60px] h-[35px] border-r-[1px] hover:text-[#6366F1]"
             onClick={() => navigate("/templates")}
           >
             <div className="flex flex-col justify-between items-center">
@@ -343,14 +343,23 @@ We've made some changes to our styling and our navigation. We did this to speed 
             </div>
           </button>
           <button
-            className={`w-[60px] flex justify-center items-center hover:text-[#6366F1] ${
+            className={`w-[60px] h-[35px] flex justify-center items-center hover:text-[#6366F1] ${
               isPreview ? "" : "text-[#4338CA]"
             }`}
             onClick={() => setIsPreview(false)}
           >
-            <div className={`w-fit ${isPreview ? "" : "border-b-[1px]"}`}>
+            <div
+              className={`w-fit pb-[5px] ${
+                isPreview ? "" : "border-[#4338CA] border-b-[1px]"
+              }`}
+            >
               <div>
-                <svg viewBox="0 0 48 38" xmlns="http://www.w3.org/2000/svg">
+                <svg
+                  viewBox="0 0 48 38"
+                  xmlns="http://www.w3.org/2000/svg"
+                  width={20}
+                  height={20}
+                >
                   <g fill="currentColor" fillRule="evenodd">
                     <path
                       d="M44 38H4a4 4 0 0 1-4-4V4a4 4 0 0 1 4-4h40a4 4 0 0 1 4 4v30a4 4 0 0 1-4 4zm-2.5-3c1.933 0 3.5-1.508 3.5-3.368V6.368C45 4.508 43.433 3 41.5 3h-35C4.567 3 3 4.508 3 6.368v25.264C3 33.492 4.567 35 6.5 35h35z"
@@ -364,14 +373,14 @@ We've made some changes to our styling and our navigation. We did this to speed 
             </div>
           </button>
           <button
-            className={`w-[60px] flex justify-center items-center hover:text-[#6366F1] ${
+            className={`w-[60px] h-[35px] flex justify-center items-center hover:text-[#6366F1] ${
               isPreview ? "text-[#4338CA]" : ""
             }`}
             onClick={() => setIsPreview(true)}
           >
             <div
-              className={`w-fit flex justify-center items-center flex-col ${
-                isPreview ? "border-b-[1px]" : ""
+              className={`w-fit flex justify-center items-center flex-col pb-[5px] ${
+                isPreview ? "border-[#4338CA] border-b-[1px]" : ""
               }`}
             >
               <svg

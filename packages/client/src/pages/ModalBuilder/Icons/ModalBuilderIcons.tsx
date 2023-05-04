@@ -1,5 +1,10 @@
 export const ModalPositionTopLeftIcon = () => (
-  <svg viewBox="0 0 48 38" xmlns="http://www.w3.org/2000/svg">
+  <svg
+    viewBox="0 0 48 38"
+    xmlns="http://www.w3.org/2000/svg"
+    width={32}
+    height={32}
+  >
     <g fill="none" fillRule="evenodd">
       <path
         d="M44 38H4a4 4 0 0 1-4-4V4a4 4 0 0 1 4-4h40a4 4 0 0 1 4 4v30a4 4 0 0 1-4 4zm-2.5-3c1.933 0 3.5-1.508 3.5-3.368V6.368C45 4.508 43.433 3 41.5 3h-35C4.567 3 3 4.508 3 6.368v25.264C3 33.492 4.567 35 6.5 35h35z"
@@ -15,7 +20,12 @@ export const ModalPositionTopLeftIcon = () => (
 );
 
 export const ModalPositionTopCenterIcon = () => (
-  <svg viewBox="0 0 48 38" xmlns="http://www.w3.org/2000/svg">
+  <svg
+    viewBox="0 0 48 38"
+    xmlns="http://www.w3.org/2000/svg"
+    width={32}
+    height={32}
+  >
     <g fill="none" fillRule="evenodd">
       <path
         d="M44 38H4a4 4 0 0 1-4-4V4a4 4 0 0 1 4-4h40a4 4 0 0 1 4 4v30a4 4 0 0 1-4 4zm-2.5-3c1.933 0 3.5-1.508 3.5-3.368V6.368C45 4.508 43.433 3 41.5 3h-35C4.567 3 3 4.508 3 6.368v25.264C3 33.492 4.567 35 6.5 35h35z"
@@ -31,7 +41,12 @@ export const ModalPositionTopCenterIcon = () => (
 );
 
 export const ModalPositionTopRightIcon = () => (
-  <svg viewBox="0 0 48 38" xmlns="http://www.w3.org/2000/svg">
+  <svg
+    viewBox="0 0 48 38"
+    xmlns="http://www.w3.org/2000/svg"
+    width={32}
+    height={32}
+  >
     <g fill="none" fillRule="evenodd">
       <path
         d="M44 38H4a4 4 0 0 1-4-4V4a4 4 0 0 1 4-4h40a4 4 0 0 1 4 4v30a4 4 0 0 1-4 4zm-2.5-3c1.933 0 3.5-1.508 3.5-3.368V6.368C45 4.508 43.433 3 41.5 3h-35C4.567 3 3 4.508 3 6.368v25.264C3 33.492 4.567 35 6.5 35h35z"
@@ -47,7 +62,12 @@ export const ModalPositionTopRightIcon = () => (
 );
 
 export const ModalPositionCenterIcon = () => (
-  <svg viewBox="0 0 48 38" xmlns="http://www.w3.org/2000/svg">
+  <svg
+    viewBox="0 0 48 38"
+    xmlns="http://www.w3.org/2000/svg"
+    width={32}
+    height={32}
+  >
     <g fill="none" fillRule="evenodd">
       <path
         d="M44 38H4a4 4 0 0 1-4-4V4a4 4 0 0 1 4-4h40a4 4 0 0 1 4 4v30a4 4 0 0 1-4 4zm-2.5-3c1.933 0 3.5-1.508 3.5-3.368V6.368C45 4.508 43.433 3 41.5 3h-35C4.567 3 3 4.508 3 6.368v25.264C3 33.492 4.567 35 6.5 35h35z"
@@ -63,7 +83,12 @@ export const ModalPositionCenterIcon = () => (
 );
 
 export const ModalPositionBottomLeftIcon = () => (
-  <svg viewBox="0 0 48 38" xmlns="http://www.w3.org/2000/svg">
+  <svg
+    viewBox="0 0 48 38"
+    xmlns="http://www.w3.org/2000/svg"
+    width={32}
+    height={32}
+  >
     <g fill="none" fillRule="evenodd">
       <path
         d="M44 38H4a4 4 0 0 1-4-4V4a4 4 0 0 1 4-4h40a4 4 0 0 1 4 4v30a4 4 0 0 1-4 4zm-2.5-3c1.933 0 3.5-1.508 3.5-3.368V6.368C45 4.508 43.433 3 41.5 3h-35C4.567 3 3 4.508 3 6.368v25.264C3 33.492 4.567 35 6.5 35h35z"
@@ -79,7 +104,12 @@ export const ModalPositionBottomLeftIcon = () => (
 );
 
 export const ModalPositionBottomCenterIcon = () => (
-  <svg viewBox="0 0 48 38" xmlns="http://www.w3.org/2000/svg">
+  <svg
+    viewBox="0 0 48 38"
+    xmlns="http://www.w3.org/2000/svg"
+    width={32}
+    height={32}
+  >
     <g fill="none" fillRule="evenodd">
       <path
         d="M44 38H4a4 4 0 0 1-4-4V4a4 4 0 0 1 4-4h40a4 4 0 0 1 4 4v30a4 4 0 0 1-4 4zm-2.5-3c1.933 0 3.5-1.508 3.5-3.368V6.368C45 4.508 43.433 3 41.5 3h-35C4.567 3 3 4.508 3 6.368v25.264C3 33.492 4.567 35 6.5 35h35z"
@@ -95,7 +125,12 @@ export const ModalPositionBottomCenterIcon = () => (
 );
 
 export const ModalPositionBottomRightIcon = () => (
-  <svg viewBox="0 0 48 38" xmlns="http://www.w3.org/2000/svg">
+  <svg
+    viewBox="0 0 48 38"
+    xmlns="http://www.w3.org/2000/svg"
+    width={32}
+    height={32}
+  >
     <g fill="none" fillRule="evenodd">
       <path
         d="M44 38H4a4 4 0 0 1-4-4V4a4 4 0 0 1 4-4h40a4 4 0 0 1 4 4v30a4 4 0 0 1-4 4zm-2.5-3c1.933 0 3.5-1.508 3.5-3.368V6.368C45 4.508 43.433 3 41.5 3h-35C4.567 3 3 4.508 3 6.368v25.264C3 33.492 4.567 35 6.5 35h35z"
