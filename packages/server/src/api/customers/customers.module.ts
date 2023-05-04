@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { CustomersController } from './customers.controller';
 import { CustomersService } from './customers.service';
 import { CustomersProcessor } from './customers.processor';
@@ -28,7 +28,7 @@ import { WorkflowsModule } from '../workflows/workflows.module';
     BullModule.registerQueue({
       name: 'customers',
     }),
-    AccountsModule,
+    forwardRef(() => AccountsModule),
     SegmentsModule,
     AudiencesModule,
     WorkflowsModule,

@@ -1,4 +1,5 @@
 import {
+  forwardRef,
   MiddlewareConsumer,
   Module,
   NestModule,
@@ -20,7 +21,7 @@ import { TemplatesModule } from '../templates/templates.module';
     BullModule.registerQueue({
       name: 'webhooks',
     }),
-    TemplatesModule,
+    forwardRef(() => TemplatesModule),
   ],
   providers: [WebhooksService, WebhooksProcessor],
   controllers: [WebhooksController],

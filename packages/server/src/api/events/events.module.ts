@@ -72,7 +72,7 @@ import {
     forwardRef(() => AccountsModule),
     forwardRef(() => TemplatesModule),
     forwardRef(() => WorkflowsModule),
-    AudiencesModule,
+    forwardRef(() => AudiencesModule),
     SlackModule,
   ],
   controllers: [EventsController],
