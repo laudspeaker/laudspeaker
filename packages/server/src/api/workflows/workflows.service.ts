@@ -674,6 +674,13 @@ export class WorkflowsService {
             workflow.filter.inclusionCriteria,
             transactionSession
           );
+
+          let unenrolledCustomerIDs = customers.filter(customer => customer.workflows.indexOf(workflowID) < 0).map(customer => customer.id);
+          await this.CustomerModel.updateMany(
+            { _id: { $in: unenrolledCustomerIDs } },
+            { $addToSet: { workflows: workflowID } },
+          ).session(transactionSession).exec()
+
           this.logger.debug(
             'Customers to include in workflow: ' + customers.length
           );
@@ -740,6 +747,8 @@ export class WorkflowsService {
     session: string
   ): Promise<void> {
     try {
+      this.debug(`Finding active workflows...`, this.enrollCustomer.name, session, account.id);
+
       const workflows = await queryRunner.manager.find(Workflow, {
         where: {
           owner: { id: account.id },
@@ -749,7 +758,7 @@ export class WorkflowsService {
         },
         relations: ['filter'],
       });
-      this.logger.debug('Active workflows: ' + workflows?.length);
+      this.debug(`Number of active workflows ${JSON.stringify({ length: workflows?.length })}`, this.enrollCustomer.name, session, account.id);
 
       for (
         let workflowsIndex = 0;
@@ -783,19 +792,17 @@ export class WorkflowsService {
               workflow.id,
               session
             );
-            await this.CustomerModel.updateOne(
+            const updateResult = await this.CustomerModel.updateOne(
               { _id: customer._id },
-              { $push: { workflows: workflow.id } },
+              { $addToSet: { workflows: workflow.id } },
             ).session(clientSession)
               .exec();
-            this.logger.debug('Enrolled customer in dynamic primary audience.');
+            this.debug(`Customer enrolled: ${JSON.stringify(updateResult)}`, this.enrollCustomer.name, session, account.id);
           }
         }
       }
     } catch (err) {
-      this.logger.error(
-        `workflows.service.ts:WorkflowsService.enrollCustomer: Error: ${err}`
-      );
+      this.error(err, this.enrollCustomer.name, session, account.id);
       return Promise.reject(err);
     }
   }
