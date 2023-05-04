@@ -24,6 +24,7 @@ import ModalEditorOpenURL from "./ModalEditorOpenURL";
 import { Scrollbars } from "react-custom-scrollbars-2";
 import ModalEditorShroudMenu from "./ModalEditorShroudMenu";
 import ModalEditorPersonalization from "./ModalEditorPersonalization";
+import getWidth from "utils/getWidth";
 
 interface ModalEditorProps {
   modalState: ModalState;
@@ -287,8 +288,8 @@ const ModalEditor: FC<ModalEditorProps> = ({
       axis="both"
       handle="#draggableHead"
       defaultPosition={{
-        x: 40,
-        y: 40,
+        x: getWidth() - 370,
+        y: 10,
       }}
     >
       <div className="fixed rounded-[8px] w-[360px] z-[2147483646] min-h-[475px] max-h-[600px] shadow-lg bg-[#F9FAFB] text-[#111827] font-semibold leading-[22px] font-segoe">

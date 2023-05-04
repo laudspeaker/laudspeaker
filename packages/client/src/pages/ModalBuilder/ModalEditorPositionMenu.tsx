@@ -44,28 +44,26 @@ const ModalPositionBodyMenu = ({
 
   return (
     <div className="w-full p-[20px] text-[14px] font-normal">
-      <div className="mt-[20px]">
-        <div>Position:</div>
-        <ul className="flex items-center justify-between pt-[10px] pb-[20px]">
-          {modalPositions.map((position) => (
-            <li key={position}>
-              <div
-                className={`flex justify-center items-center p-[2px] relative w-[35px] h-[35px] hover:border-[1px] rounded-md cursor-pointer text-transparent hover:text-[#374151] ${
-                  position === modalState.position
-                    ? "bg-[#C7D2FE]"
-                    : "hover:border-[#818CF8]"
-                }`}
-                onClick={() => setModalState({ ...modalState, position })}
-              >
-                {modalPositionIconMap[position]}
-                <div className="absolute text-[12px] font-normal whitespace-nowrap bottom-[-20px] left-[50%] -translate-x-1/2">
-                  {position}
-                </div>
+      <div className="mb-[10px]">Position</div>
+      <ul className="flex items-center justify-between mb-[10px]">
+        {modalPositions.map((position) => (
+          <li key={position}>
+            <div
+              className={`flex justify-center items-center p-[2px] relative w-[32px] h-[32px] hover:border-[1px] rounded-md cursor-pointer text-transparent hover:text-[#374151] ${
+                position === modalState.position
+                  ? "bg-[#C7D2FE]"
+                  : "hover:border-[#818CF8]"
+              }`}
+              onClick={() => setModalState({ ...modalState, position })}
+            >
+              {modalPositionIconMap[position]}
+              <div className="absolute z-[1111] text-[12px] font-normal whitespace-nowrap bottom-[-20px] left-[50%] -translate-x-1/2">
+                {position}
               </div>
-            </li>
-          ))}
-        </ul>
-      </div>
+            </div>
+          </li>
+        ))}
+      </ul>
       <div className="flex items-center justify-between mb-[10px]">
         <div>X axis offset:</div>
         <div className="flex items-center gap-[10px]">
