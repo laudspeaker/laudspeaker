@@ -1,6 +1,6 @@
-import { AccountsModule } from '@/api/accounts/accounts.module';
-import { CustomersModule } from '@/api/customers/customers.module';
-import { EventsModule } from '@/api/events/events.module';
+import { AccountsModule } from '../api/accounts/accounts.module';
+import { CustomersModule } from '../api/customers/customers.module';
+import { EventsModule } from '../api/events/events.module';
 import { forwardRef, Module } from '@nestjs/common';
 import { WebsocketGateway } from './websocket.gateway';
 
@@ -14,3 +14,4 @@ import { WebsocketGateway } from './websocket.gateway';
   exports: [WebsocketGateway],
 })
 export class WebsocketsModule {}
+

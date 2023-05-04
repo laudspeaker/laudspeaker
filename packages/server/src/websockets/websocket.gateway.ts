@@ -1,4 +1,4 @@
-import { Template } from '@/api/templates/entities/template.entity';
+import { Template } from '../api/templates/entities/template.entity';
 import { forwardRef, Inject } from '@nestjs/common';
 import {
   ConnectedSocket,
@@ -223,3 +223,4 @@ export class WebsocketGateway implements OnGatewayConnection {
     return false;
   }
 }
+

@@ -1,4 +1,4 @@
-import { Template } from '@/api/templates/entities/template.entity';
+import { Template } from '../../templates/entities/template.entity';
 import {
   BaseEntity,
   Column,
@@ -23,3 +23,4 @@ export class ModalEvent extends BaseEntity {
   @Column('timestamp')
   public expiresAt: Date | null;
 }
+

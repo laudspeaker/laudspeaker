@@ -43,9 +43,9 @@ import { Model } from 'mongoose';
 import { Liquid } from 'liquidjs';
 import { TestWebhookDto } from './dto/test-webhook.dto';
 import { WebhooksService } from '../webhooks/webhooks.service';
-import wait from '@/utils/wait';
+import wait from '../../utils/wait';
 import { ModalsService } from '../modals/modals.service';
-import { WebsocketGateway } from '@/websockets/websocket.gateway';
+import { WebsocketGateway } from '../../websockets/websocket.gateway';
 
 @Injectable()
 @QueueEventsListener('message')
