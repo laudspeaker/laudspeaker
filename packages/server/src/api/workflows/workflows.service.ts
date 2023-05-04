@@ -675,9 +675,9 @@ export class WorkflowsService {
             transactionSession
           );
 
-          let unenrolledCustomerIDs = customers.filter(customer => customer.workflows.indexOf(workflowID) < 0).map(customer => customer.id);
+          let unenrolledCustomers = customers.filter(customer => customer.workflows.indexOf(workflowID) < 0);
           await this.CustomerModel.updateMany(
-            { _id: { $in: unenrolledCustomerIDs } },
+            { _id: { $in: unenrolledCustomers.map(customer => customer.id) } },
             { $addToSet: { workflows: workflowID } },
           ).session(transactionSession).exec()
 
@@ -689,7 +689,7 @@ export class WorkflowsService {
             account,
             null,
             audience,
-            customers,
+            unenrolledCustomers,
             null,
             queryRunner,
             workflow.rules,
