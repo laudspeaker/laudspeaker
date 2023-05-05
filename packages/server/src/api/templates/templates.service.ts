@@ -723,14 +723,14 @@ export class TemplatesService extends QueueEventsHost {
           retrievedData = ['data', 'body'].includes(webhookPath[0])
             ? body
             : webhookPath[0] === 'headers'
-              ? JSON.stringify(headers)
-              : '';
+            ? JSON.stringify(headers)
+            : '';
         } else {
           const objectToRetrievе = ['data', 'body'].includes(webhookPath[0])
             ? JSON.parse(body)
             : webhookPath[0] === 'headers'
-              ? headers
-              : {};
+            ? headers
+            : {};
           retrievedData = this.recursivelyRetrieveData(
             objectToRetrievе,
             webhookPath.slice(1)
@@ -884,9 +884,9 @@ export class TemplatesService extends QueueEventsHost {
         retriesCount++;
         this.logger.warn(
           'Unsuccessfull webhook request. Retries: ' +
-          retriesCount +
-          '. Error: ' +
-          e
+            retriesCount +
+            '. Error: ' +
+            e
         );
         if (e instanceof Error) error = e.message;
         await wait(5000);

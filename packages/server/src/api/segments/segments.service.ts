@@ -36,8 +36,8 @@ export class SegmentsService {
     private customersService: CustomersService,
     private workflowsService: WorkflowsService,
     private readonly audiencesHelper: AudiencesHelper,
-    @InjectConnection() private readonly connection: mongoose.Connection,
-  ) { }
+    @InjectConnection() private readonly connection: mongoose.Connection
+  ) {}
 
   public async findOne(account: Account, id: string, session: string) {
     const segment = await this.segmentRepository.findOneBy({

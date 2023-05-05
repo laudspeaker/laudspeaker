@@ -199,6 +199,7 @@ export class EventsService {
     session: string
   ) {
     let account: Account, jobIds: WorkflowTick[]; // Account associated with the caller
+    let found: boolean;
     const transactionSession = await this.connection.startSession();
     transactionSession.startTransaction();
     const queryRunner = this.dataSource.createQueryRunner();
@@ -209,12 +210,24 @@ export class EventsService {
     let jobArray: WorkflowTick[] = []; // created jobId
     try {
       account = await this.userService.findOneByAPIKey(apiKey.substring(8));
-      this.logger.debug('Found account: ' + account?.id);
+      this.debug(
+        `Found account: ${JSON.stringify({ id: account.id })}`,
+        this.getPostHogPayload.name,
+        session,
+        account.id
+      );
 
       const chronologicalEvents: PostHogEventDto[] = eventDto.batch.sort(
         (a, b) =>
           new Date(a.originalTimestamp).getTime() -
           new Date(b.originalTimestamp).getTime()
+      );
+
+      this.debug(
+        `Sorted events: ${JSON.stringify({ events: chronologicalEvents })}`,
+        this.getPostHogPayload.name,
+        session,
+        account.id
       );
 
       for (
@@ -226,8 +239,13 @@ export class EventsService {
         let err: Error | undefined;
         try {
           const currentEvent = chronologicalEvents[numEvent];
-          this.logger.debug(
-            'Processing posthog event: ' + JSON.stringify(currentEvent, null, 2)
+          this.debug(
+            `Processing PostHog event: ${JSON.stringify({
+              event: currentEvent,
+            })}`,
+            this.getPostHogPayload.name,
+            session,
+            account.id
           );
 
           postHogEvent = {
@@ -240,7 +258,20 @@ export class EventsService {
 
           //update customer properties on every identify call as per best practice
           if (currentEvent.type === 'identify') {
-            await this.customersService.phIdentifyUpdate(account, currentEvent);
+            this.debug(
+              `Updating customer on Identify event: ${JSON.stringify({
+                event: currentEvent,
+              })}`,
+              this.getPostHogPayload.name,
+              session,
+              account.id
+            );
+            found = await this.customersService.phIdentifyUpdate(
+              account,
+              currentEvent,
+              transactionSession,
+              session
+            );
           }
           //checking for a custom tracked posthog event here
           if (
@@ -259,8 +290,31 @@ export class EventsService {
             })
               .session(transactionSession)
               .exec();
+            this.debug(
+              `Check if event exists in events DB: ${JSON.stringify({
+                event: found,
+              })}`,
+              this.getPostHogPayload.name,
+              session,
+              account.id
+            );
+
             if (!found) {
-              await this.PosthogEventTypeModel.create(
+              this.debug(
+                `Event does not exist, creating: ${JSON.stringify({
+                  event: {
+                    name: currentEvent.event,
+                    type: currentEvent.type,
+                    displayName: currentEvent.event,
+                    event: currentEvent.event,
+                    ownerId: account.id,
+                  },
+                })}`,
+                this.getPostHogPayload.name,
+                session,
+                account.id
+              );
+              const res = await this.PosthogEventTypeModel.create(
                 {
                   name: currentEvent.event,
                   type: currentEvent.type,
@@ -270,8 +324,14 @@ export class EventsService {
                 },
                 { session: transactionSession }
               );
+              this.debug(
+                `Added event to events DB: ${JSON.stringify({ event: res })}`,
+                this.getPostHogPayload.name,
+                session,
+                account.id
+              );
             }
-            //to do: check if the event sets props, if so we need to update the person traits
+            //TODO: check if the event sets props, if so we need to update the person traits
           }
 
           let jobIDs: WorkflowTick[] = [];
@@ -299,10 +359,11 @@ export class EventsService {
             [currentEvent.userId, currentEvent.anonymousId],
             currentEvent,
             transactionSession,
+            session,
             postHogEventMapping
           );
 
-          if (!correlation.found) {
+          if (!correlation.found || !found) {
             await this.workflowsService.enrollCustomer(
               account,
               correlation.cust,
@@ -331,13 +392,19 @@ export class EventsService {
             transactionSession,
             session
           );
-          this.logger.debug('Queued messages with jobIDs ' + jobIDs);
+          this.debug(
+            `Queued messages ${JSON.stringify({ jobIDs: jobIDs })}`,
+            this.getPostHogPayload.name,
+            session,
+            account.id
+          );
           jobArray = [...jobArray, ...jobIDs];
         } catch (e) {
           if (e instanceof Error) {
             postHogEvent.errorMessage = e.message;
             err = e;
           }
+          this.error(e, this.getPostHogPayload.name, session, account.id);
         } finally {
           await this.PosthogEventModel.create(postHogEvent);
         }
@@ -349,7 +416,7 @@ export class EventsService {
     } catch (e) {
       await transactionSession.abortTransaction();
       await queryRunner.rollbackTransaction();
-      this.logger.error('Error 340 processor: ' + e);
+      this.error(e, this.getPostHogPayload.name, session, account.id);
       throw e;
     } finally {
       await transactionSession.endSession();

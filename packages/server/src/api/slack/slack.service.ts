@@ -197,7 +197,6 @@ export class SlackService {
           'groups:history',
           'groups:read',
           'groups:write',
-          'im:history',
           'im:read',
           'im:write',
           'incoming-webhook',
