@@ -322,24 +322,26 @@ We've made some changes to our styling and our navigation. We did this to speed 
           id="modalHeader"
         >
           <button
-            className="w-[60px] h-[35px] border-r-[1px] hover:text-[#6366F1]"
+            className={`w-[60px] h-[35px] flex justify-center items-center hover:text-[#6366F1]`}
             onClick={() => navigate("/templates")}
           >
-            <div className="flex flex-col justify-between items-center">
-              <svg
-                className="rotate-180"
-                viewBox="989 17 20 16"
-                xmlns="http://www.w3.org/2000/svg"
-                width={20}
-                height={20}
-              >
-                <path
-                  d="M1007.051 33h-16.41c-.906 0-1.641-.716-1.641-1.6V18.6c0-.884.735-1.6 1.641-1.6h16.41c.907 0 1.641.716 1.641 1.6v12.8c0 .884-.734 1.6-1.64 1.6zm-8.387-8.33l-4.081-2.796a.43.43 0 0 0-.434-.031.409.409 0 0 0-.23.359v5.591a.41.41 0 0 0 .23.36.43.43 0 0 0 .434-.032l4.08-2.796a.396.396 0 0 0 .177-.328.396.396 0 0 0-.176-.327zm8.387-5.67c0-.22-.183-.4-.41-.4h-3.282c-.227 0-.41.18-.41.4v12c0 .22.183.4.41.4h3.282c.227 0 .41-.18.41-.4V19z"
-                  fill="currentColor"
-                  fillRule="evenodd"
-                ></path>
-              </svg>
-              <div>BACK</div>
+            <div className={`w-fit pb-[5px]`}>
+              <div className="flex flex-col justify-center items-center">
+                <svg
+                  className="rotate-180"
+                  viewBox="989 17 20 16"
+                  xmlns="http://www.w3.org/2000/svg"
+                  width={20}
+                  height={20}
+                >
+                  <path
+                    d="M1007.051 33h-16.41c-.906 0-1.641-.716-1.641-1.6V18.6c0-.884.735-1.6 1.641-1.6h16.41c.907 0 1.641.716 1.641 1.6v12.8c0 .884-.734 1.6-1.64 1.6zm-8.387-8.33l-4.081-2.796a.43.43 0 0 0-.434-.031.409.409 0 0 0-.23.359v5.591a.41.41 0 0 0 .23.36.43.43 0 0 0 .434-.032l4.08-2.796a.396.396 0 0 0 .177-.328.396.396 0 0 0-.176-.327zm8.387-5.67c0-.22-.183-.4-.41-.4h-3.282c-.227 0-.41.18-.41.4v12c0 .22.183.4.41.4h3.282c.227 0 .41-.18.41-.4V19z"
+                    fill="currentColor"
+                    fillRule="evenodd"
+                  ></path>
+                </svg>
+                <div>BACK</div>
+              </div>
             </div>
           </button>
           <button

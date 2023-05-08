@@ -33,7 +33,7 @@ const ModalBuilderColorPicker: FC<ModalBuilderColorPickerProps> = ({
     <div ref={ref} className="relative">
       <input
         type="text"
-        className={`!m-0 w-[180px] h-[32px] text-[14px] rounded-[2px] bg-transparent border-[#E5E7EB] focus:border-[#E5E7EB] focus:ring-transparent py-[5px] pl-[30px] pr-[12px] ${
+        className={`!m-0 w-[180px] h-[32px] text-[14px] rounded-[2px] bg-white border-[#E5E7EB] focus:border-[#E5E7EB] focus:ring-transparent py-[5px] pl-[30px] pr-[12px] ${
           className ? className : ""
         }`}
         value={color}

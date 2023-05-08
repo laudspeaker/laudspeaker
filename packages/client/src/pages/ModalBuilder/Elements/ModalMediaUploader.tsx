@@ -111,9 +111,9 @@ const ModalMediaUploader = ({
         {imageList[currentMainMode].key ? "Deleting..." : "Uploading..."}
       </div>
 
-      <div className="w-full bg-gray-200 rounded-full h-1 dark:bg-gray-700">
+      <div className="w-full bg-[#D1D5DB] rounded-full h-1">
         <div
-          className="bg-blue-600 h-1 rounded-full"
+          className="bg-[#6366F1] h-1 rounded-full"
           style={{
             width: `${progress * 100}%`,
           }}
@@ -153,7 +153,7 @@ const ModalMediaUploader = ({
         <div className="relative inline-block border-[2px] p-[10px] min-h-[20px] min-w-[20px] rounded-md border-[#D9D9D9]">
           <div className="relative">
             <img
-              className="max-h-[80px] max-w-full rounded-md"
+              className="min-h-[80px] max-h-[80px] max-w-full rounded-md"
               src={imageList[currentMainMode].imageSrc || ""}
             />
 
