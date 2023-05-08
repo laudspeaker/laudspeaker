@@ -41,6 +41,7 @@ import SegmentViewer from "pages/SegmentViewer";
 import ModalBuilder from "pages/ModalBuilder";
 import WebhookBuilder from "pages/WebhookBuilder";
 import EventTracker from "pages/EventTracker";
+import ModalBackgroundProvider from "pages/ModalBuilder/ModalBackgroundProvider";
 
 interface IProtected {
   children: ReactElement;
@@ -349,7 +350,9 @@ const RouteComponent: React.FC = () => {
           path="/templates/modal/:name"
           element={
             <Protected>
-              <ModalBuilder />
+              <ModalBackgroundProvider>
+                <ModalBuilder />
+              </ModalBackgroundProvider>
             </Protected>
           }
         />

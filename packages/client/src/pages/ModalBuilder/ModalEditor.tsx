@@ -57,8 +57,8 @@ export const textAlignment = [
 export const textAlignmentIcons: Record<Alignment, ReactNode> = {
   [Alignment.LEFT]: (
     <svg
-      width="26"
-      height="24"
+      width="28"
+      height="28"
       viewBox="0 0 26 24"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
@@ -71,8 +71,8 @@ export const textAlignmentIcons: Record<Alignment, ReactNode> = {
   ),
   [Alignment.CENTER]: (
     <svg
-      width="26"
-      height="24"
+      width="28"
+      height="28"
       viewBox="0 0 26 24"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
@@ -85,8 +85,8 @@ export const textAlignmentIcons: Record<Alignment, ReactNode> = {
   ),
   [Alignment.RIGHT]: (
     <svg
-      width="26"
-      height="24"
+      width="28"
+      height="28"
       viewBox="0 0 26 24"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
@@ -321,7 +321,17 @@ const ModalEditor: FC<ModalEditorProps> = ({
         </div>
         <div>
           <Scrollbars
-            className="w-full min-h-[400px] max-h-[520px]"
+            className={`w-full ${
+              (
+                [
+                  EditorMenuOptions.TITLE,
+                  EditorMenuOptions.BODY,
+                  EditorMenuOptions.MEDIA,
+                ] as (EditorMenuOptions | SubMenuOptions)[]
+              ).includes(editorMode)
+                ? "min-h-[520px]"
+                : "min-h-[400px]"
+            } max-h-[520px]`}
             renderThumbVertical={(props) => (
               <div {...props} className="!bg-[#E5E7EB] rounded-md" />
             )}

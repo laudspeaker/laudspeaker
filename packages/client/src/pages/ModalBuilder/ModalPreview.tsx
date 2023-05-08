@@ -11,6 +11,6 @@ const ModalPreview: FC<ModalPreviewProps> = ({ modalState }) => {
     ls._renderModalState(modalState);
   }, []);
 
-  return <div className="w-full h-screen bg-blue-gray-100"></div>;
+  return <div className="w-full h-screen"></div>;
 };
 export default ModalPreview;

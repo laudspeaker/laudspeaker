@@ -147,9 +147,9 @@ export const ModalPositionBottomRightIcon = () => (
 
 export const ModalBoldTextStyleIcon = () => (
   <svg
-    className="w-[20px] h-[20px]"
-    width="17"
-    height="22"
+    className="w-[28px] h-[28px]"
+    width="28"
+    height="28"
     viewBox="0 0 17 22"
     fill="none"
     xmlns="http://www.w3.org/2000/svg"
@@ -163,9 +163,9 @@ export const ModalBoldTextStyleIcon = () => (
 
 export const ModalItalicTextStyleIcon = () => (
   <svg
-    className="w-[20px] h-[20px]"
-    width="17"
-    height="20"
+    className="w-[28px] h-[28px]"
+    width="28"
+    height="28"
     viewBox="0 0 17 20"
     fill="none"
     xmlns="http://www.w3.org/2000/svg"
@@ -179,9 +179,9 @@ export const ModalItalicTextStyleIcon = () => (
 
 export const ModalH1TextStyleIcon = () => (
   <svg
-    className="w-[20px] h-[20px]"
-    width="22"
-    height="20"
+    className="w-[28px] h-[28px]"
+    width="28"
+    height="28"
     viewBox="0 0 22 20"
     fill="none"
     xmlns="http://www.w3.org/2000/svg"
@@ -197,9 +197,9 @@ export const ModalH1TextStyleIcon = () => (
 
 export const ModalLinkTextStyleIcon = () => (
   <svg
-    className="w-[20px] h-[20px]"
-    width="22"
-    height="22"
+    className="w-[28px] h-[28px]"
+    width="28"
+    height="28"
     viewBox="0 0 22 22"
     fill="none"
     xmlns="http://www.w3.org/2000/svg"

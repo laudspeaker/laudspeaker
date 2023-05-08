@@ -1,3 +1,4 @@
+import { CircularProgress } from "@mui/material";
 import Progress from "components/Progress";
 import { getCustomerKeys } from "pages/Segment/SegmentHelpers";
 import React, { FC, useState } from "react";
@@ -33,14 +34,14 @@ const ModalEditorPersonalization: FC<ModalEditorPersonalizationProps> = ({
   >([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const fetchKeys = async () => {
-    setIsLoading(true);
-    const data = await getCustomerKeys(searchStr, null, false);
-    setFetchedCustomerKeys(data);
-    setIsLoading(false);
-  };
+  // const fetchKeys = async () => {
+  //   setIsLoading(true);
+  //   const data = await getCustomerKeys(searchStr, null, false);
+  //   setFetchedCustomerKeys(data);
+  //   setIsLoading(false);
+  // };
 
-  useDebounce(fetchKeys, 200, [searchStr]);
+  // useDebounce(fetchKeys, 200, [searchStr]);
 
   return (
     <div className="p-[20px]">
@@ -62,7 +63,7 @@ const ModalEditorPersonalization: FC<ModalEditorPersonalizationProps> = ({
           type="text"
           value={searchStr}
           onChange={(e) => setSeatchStr(e.target.value)}
-          className="w-full bg-transparent border-[1px] border-[#E5E7EB] text-[14px] leading-[22px] font-normal py-[5px] px-[28px]"
+          className="w-full bg-white border-[1px] border-[#E5E7EB] focus:border-[#6366F1] text-[14px] leading-[22px] font-normal py-[5px] px-[28px]"
           placeholder="search variables"
         />
         <svg
@@ -84,12 +85,19 @@ const ModalEditorPersonalization: FC<ModalEditorPersonalizationProps> = ({
       </div>
 
       {isLoading ? (
-        <Progress />
+        <div className="flex justify-center items-center">
+          <CircularProgress
+            size={30}
+            sx={{
+              color: "#4B5563",
+            }}
+          />
+        </div>
       ) : fetchedCustomerKeys.length > 0 ? (
         <div className="select-none">
           {fetchedCustomerKeys.map((item) => (
             <div
-              className="cursor-pointer w-full h-[42px] bg-white hover:!bg-[#E0E7FF] p-[10px] !text-[14px]"
+              className="cursor-pointer w-full h-[40px] bg-white hover:!bg-[#E0E7FF] p-[10px] !text-[14px]"
               onClick={() => {
                 if (currentMainMode === EditorMenuOptions.BODY) {
                   setModalState({
@@ -108,9 +116,6 @@ const ModalEditorPersonalization: FC<ModalEditorPersonalizationProps> = ({
                     },
                   });
                 }
-
-                previousModes.pop();
-                onOptionPick(currentMainMode, true)();
               }}
             >
               {item.key}
