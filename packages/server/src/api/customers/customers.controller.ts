@@ -299,6 +299,17 @@ export class CustomersController {
     @Param('custId') custId: string
   ) {
     const session = randomUUID();
-    await this.customersService.removeById(<Account>user, custId, session);
+    try {
+      this.debug(
+        `Removing customer ${JSON.stringify({ id: custId })}`,
+        this.deletePerson.name,
+        session,
+        (<Account>user).id
+      );
+      await this.customersService.removeById(<Account>user, custId, session);
+    } catch (e) {
+      this.error(e, this.deletePerson.name, session, (<Account>user).id);
+      throw e;
+    }
   }
 }

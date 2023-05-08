@@ -28,7 +28,10 @@ import {
 import errors from '../../shared/utils/errors';
 import { Audience } from '../audiences/entities/audience.entity';
 import { CustomersService } from '../customers/customers.service';
-import { Customer, CustomerDocument } from '../customers/schemas/customer.schema';
+import {
+  Customer,
+  CustomerDocument,
+} from '../customers/schemas/customer.schema';
 import { EventDto } from '../events/dto/event.dto';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { createClient } from '@clickhouse/client';
@@ -80,7 +83,7 @@ export class WorkflowsService {
     private EventKeysModel: Model<EventKeysDocument>,
     @InjectConnection() private readonly connection: mongoose.Connection,
     private readonly audiencesHelper: AudiencesHelper
-  ) { }
+  ) {}
 
   log(message, method, session, user = 'ANONYMOUS') {
     this.logger.log(
@@ -197,8 +200,8 @@ export class WorkflowsService {
               ...(key === 'isActive'
                 ? { isStopped: false, isPaused: false }
                 : key === 'isPaused'
-                  ? { isStopped: false }
-                  : {}),
+                ? { isStopped: false }
+                : {}),
             });
         }
       } else {
@@ -274,7 +277,7 @@ export class WorkflowsService {
     const openedData = (await openedResponse.json<any>())?.data;
     const opened =
       +openedData?.[0]?.[
-      'uniqExact(tuple(audienceId, customerId, templateId, messageId, event, eventProvider))'
+        'uniqExact(tuple(audienceId, customerId, templateId, messageId, event, eventProvider))'
       ];
 
     const openedPercentage = (opened / sent) * 100;
@@ -286,7 +289,7 @@ export class WorkflowsService {
     const clickedData = (await clickedResponse.json<any>())?.data;
     const clicked =
       +clickedData?.[0]?.[
-      'uniqExact(tuple(audienceId, customerId, templateId, messageId, event, eventProvider))'
+        'uniqExact(tuple(audienceId, customerId, templateId, messageId, event, eventProvider))'
       ];
 
     const clickedPercentage = (clicked / sent) * 100;
@@ -675,11 +678,17 @@ export class WorkflowsService {
             transactionSession
           );
 
-          let unenrolledCustomers = customers.filter(customer => customer.workflows.indexOf(workflowID) < 0);
+          let unenrolledCustomers = customers.filter(
+            (customer) => customer.workflows.indexOf(workflowID) < 0
+          );
           await this.CustomerModel.updateMany(
-            { _id: { $in: unenrolledCustomers.map(customer => customer.id) } },
-            { $addToSet: { workflows: workflowID } },
-          ).session(transactionSession).exec()
+            {
+              _id: { $in: unenrolledCustomers.map((customer) => customer.id) },
+            },
+            { $addToSet: { workflows: workflowID } }
+          )
+            .session(transactionSession)
+            .exec();
 
           this.logger.debug(
             'Customers to include in workflow: ' + customers.length
@@ -732,11 +741,9 @@ export class WorkflowsService {
    * and sends them any relevant messages. Similar to  start,
    * one customer -> many workflows
    *
-   * @remarks
-   * Throws an error if the workflow is not found
-   *
-   * @param account - The owner of the workflow
-   * @param updateAudienceDto - DTO with the updated information
+   * @remarks Throws an error if the workflow is not found
+   * @param account The owner of the workflow
+   * @param updateAudienceDto DTO with the updated information
    *
    */
   async enrollCustomer(
@@ -747,7 +754,12 @@ export class WorkflowsService {
     session: string
   ): Promise<void> {
     try {
-      this.debug(`Finding active workflows...`, this.enrollCustomer.name, session, account.id);
+      this.debug(
+        `Finding active workflows...`,
+        this.enrollCustomer.name,
+        session,
+        account.id
+      );
 
       const workflows = await queryRunner.manager.find(Workflow, {
         where: {
@@ -758,7 +770,14 @@ export class WorkflowsService {
         },
         relations: ['filter'],
       });
-      this.debug(`Number of active workflows ${JSON.stringify({ length: workflows?.length })}`, this.enrollCustomer.name, session, account.id);
+      this.debug(
+        `Number of active workflows ${JSON.stringify({
+          length: workflows?.length,
+        })}`,
+        this.enrollCustomer.name,
+        session,
+        account.id
+      );
 
       for (
         let workflowsIndex = 0;
@@ -779,7 +798,7 @@ export class WorkflowsService {
               workflow.filter.inclusionCriteria,
               account
             )) &&
-            (customer.workflows.indexOf(workflow.id) > -1)
+            customer.workflows.indexOf(workflow.id) < 0
           ) {
             await this.audiencesService.moveCustomer(
               account,
@@ -794,10 +813,16 @@ export class WorkflowsService {
             );
             const updateResult = await this.CustomerModel.updateOne(
               { _id: customer._id },
-              { $addToSet: { workflows: workflow.id } },
-            ).session(clientSession)
+              { $addToSet: { workflows: workflow.id } }
+            )
+              .session(clientSession)
               .exec();
-            this.debug(`Customer enrolled: ${JSON.stringify(updateResult)}`, this.enrollCustomer.name, session, account.id);
+            this.debug(
+              `Customer enrolled: ${JSON.stringify(updateResult)}`,
+              this.enrollCustomer.name,
+              session,
+              account.id
+            );
           }
         }
       }
@@ -845,7 +870,12 @@ export class WorkflowsService {
           event.correlationValue,
           transactionSession
         );
-        this.logger.debug('Found customer: ' + customer?.id);
+        this.debug(
+          `Found customer: ${JSON.stringify(customer)}`,
+          this.tick.name,
+          session,
+          account.id
+        );
       }
       workflows = await queryRunner.manager.find(Workflow, {
         where: {
@@ -856,7 +886,14 @@ export class WorkflowsService {
         },
         relations: ['filter'],
       });
-      this.logger.debug('Found active workflows: ' + workflows.length);
+      this.debug(
+        `Number of active workflows: ${JSON.stringify({
+          length: workflows?.length,
+        })}`,
+        this.tick.name,
+        session,
+        account.id
+      );
 
       workflow_loop: for (
         let workflowsIndex = 0;
@@ -963,42 +1000,45 @@ export class WorkflowsService {
                           condition.key == 'current_url' &&
                           trigger.providerType == ProviderTypes.Posthog &&
                           trigger.providerParams ===
-                          PosthogTriggerParams.Pageview
+                            PosthogTriggerParams.Pageview
                         ) {
                           this.logger.debug(
-                            `Comparing: ${event?.event?.page?.url || ''} ${condition.comparisonType || ''
+                            `Comparing: ${event?.event?.page?.url || ''} ${
+                              condition.comparisonType || ''
                             } ${condition.value || ''}`
                           );
                           return ['exists', 'doesNotExist'].includes(
                             condition.comparisonType
                           )
                             ? this.audiencesHelper.operableCompare(
-                              event?.event?.page?.url,
-                              condition.comparisonType
-                            )
+                                event?.event?.page?.url,
+                                condition.comparisonType
+                              )
                             : await this.audiencesHelper.conditionalCompare(
-                              event?.event?.page?.url,
-                              condition.value,
-                              condition.comparisonType
-                            );
+                                event?.event?.page?.url,
+                                condition.value,
+                                condition.comparisonType
+                              );
                         } else {
                           this.logger.debug(
-                            `Comparing: ${event?.event?.[condition.key] || ''
-                            } ${condition.comparisonType || ''} ${condition.value || ''
+                            `Comparing: ${
+                              event?.event?.[condition.key] || ''
+                            } ${condition.comparisonType || ''} ${
+                              condition.value || ''
                             }`
                           );
                           return ['exists', 'doesNotExist'].includes(
                             condition.comparisonType
                           )
                             ? this.audiencesHelper.operableCompare(
-                              event?.event?.[condition.key],
-                              condition.comparisonType
-                            )
+                                event?.event?.[condition.key],
+                                condition.comparisonType
+                              )
                             : await this.audiencesHelper.conditionalCompare(
-                              event?.event?.[condition.key],
-                              condition.value,
-                              condition.comparisonType
-                            );
+                                event?.event?.[condition.key],
+                                condition.value,
+                                condition.comparisonType
+                              );
                         }
                       })
                     );
@@ -1041,11 +1081,11 @@ export class WorkflowsService {
                         );
                       this.logger.debug(
                         'Moved ' +
-                        customer?.id +
-                        ' out of ' +
-                        from?.id +
-                        ' and into ' +
-                        to?.id
+                          customer?.id +
+                          ' out of ' +
+                          from?.id +
+                          ' and into ' +
+                          to?.id
                       );
                       jobId.jobIds = jobIdArr;
                       jobId.templates = templates;
@@ -1127,8 +1167,8 @@ export class WorkflowsService {
               ...item,
               executionTime: new Date(
                 new Date().getTime() -
-                found.latestPause.getTime() +
-                item.executionTime.getTime()
+                  found.latestPause.getTime() +
+                  item.executionTime.getTime()
               ),
             }))
           );

@@ -11,7 +11,7 @@ import {
   HttpStatus,
   Inject,
   Injectable,
-  LoggerService,
+  Logger,
 } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { Customer, CustomerDocument } from './schemas/customer.schema';
@@ -55,7 +55,7 @@ const eventsMap = {
   opened: 'opened',
 };
 
-const KEYS_TO_SKIP = ['__v', '_id', 'audiences', 'ownerId', 'isFreezed'];
+const KEYS_TO_SKIP = ['__v', '_id', 'workflows', 'ownerId', 'isFreezed'];
 
 @Injectable()
 export class CustomersService {
@@ -71,7 +71,7 @@ export class CustomersService {
 
   constructor(
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
-    private readonly logger: LoggerService,
+    private readonly logger: Logger,
     @InjectQueue('customers') private readonly customersQueue: Queue,
     @InjectModel(Customer.name) public CustomerModel: Model<CustomerDocument>,
     @InjectModel(CustomerKeys.name)
@@ -114,6 +114,65 @@ export class CustomersService {
         this.logger.error(e);
       }
     });
+  }
+
+  log(message, method, session, user = 'ANONYMOUS') {
+    this.logger.log(
+      message,
+      JSON.stringify({
+        class: CustomersService.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+  debug(message, method, session, user = 'ANONYMOUS') {
+    this.logger.debug(
+      message,
+      JSON.stringify({
+        class: CustomersService.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+  warn(message, method, session, user = 'ANONYMOUS') {
+    this.logger.warn(
+      message,
+      JSON.stringify({
+        class: CustomersService.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+  error(error, method, session, user = 'ANONYMOUS') {
+    this.logger.error(
+      error.message,
+      error.stack,
+      JSON.stringify({
+        class: CustomersService.name,
+        method: method,
+        session: session,
+        cause: error.cause,
+        name: error.name,
+        user: user,
+      })
+    );
+  }
+  verbose(message, method, session, user = 'ANONYMOUS') {
+    this.logger.verbose(
+      message,
+      JSON.stringify({
+        class: CustomersService.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
   }
 
   async create(
@@ -403,15 +462,29 @@ export class CustomersService {
     return Array.from(new Set(arr.filter(Boolean)));
   }
 
-  //update posthog users after an identify
-  // add the "traits" and also update phEmail, phPhone
-  async phIdentifyUpdate(account: Account, identifyEvent: any) {
+  /**
+   * Update or create a customer based on a PostHog Identify event. Deletes protected keys if they are present on the event,
+   * looks up existing customers using the user ID and/or anonymous ID on the event, and sets properties on the user prepended
+   * with _posthog_. If the user ID and/or anonymous ID correlate to more than one customer, event is skipped.
+   *
+   * @param account Account associated with call
+   * @param identifyEvent Event Object
+   * @param transactionSession Mongo transaction session
+   * @param session HTTP session
+   * @returns Promise<boolean>
+   */
+  async phIdentifyUpdate(
+    account: Account,
+    identifyEvent: any,
+    transactionSession: ClientSession,
+    session: string
+  ): Promise<boolean> {
     try {
       delete identifyEvent.verified;
       delete identifyEvent.ownerId;
       delete identifyEvent._id;
       delete identifyEvent.__v;
-      delete identifyEvent.audiences;
+      delete identifyEvent.workflows;
 
       const addedBefore = await this.CustomerModel.find({
         ownerId: (<Account>account).id,
@@ -419,10 +492,20 @@ export class CustomersService {
           { posthogId: { $in: [identifyEvent.userId] } },
           { posthogId: { $in: [identifyEvent.anonymousId] } },
         ],
-      }).exec();
+      })
+        .session(transactionSession)
+        .exec();
 
       if (addedBefore.length === 1) {
-        const a = await this.CustomerModel.updateOne(
+        this.debug(
+          `Customer to update on Identify event: ${JSON.stringify({
+            customer: addedBefore,
+          })}`,
+          this.phIdentifyUpdate.name,
+          session,
+          account.id
+        );
+        const res = await this.CustomerModel.updateOne(
           {
             _id: addedBefore[0]._id,
           },
@@ -442,7 +525,18 @@ export class CustomersService {
               phDeviceToken: identifyEvent.phDeviceToken,
             }),
           }
-        ).exec();
+        )
+          .session(transactionSession)
+          .exec();
+        this.debug(
+          `Customer updated on Identify event: ${JSON.stringify({
+            result: res,
+          })}`,
+          this.phIdentifyUpdate.name,
+          session,
+          account.id
+        );
+        return true;
       } else if (addedBefore.length === 0) {
         const createdCustomer = new this.CustomerModel({
           ownerId: (<Account>account).id,
@@ -461,18 +555,27 @@ export class CustomersService {
             phDeviceToken: identifyEvent.phDeviceToken,
           }),
         });
-        return await createdCustomer.save();
+        const res = await createdCustomer.save({ session: transactionSession });
+        this.debug(
+          `Created new customer on Identify event: ${JSON.stringify(res)}`,
+          this.phIdentifyUpdate.name,
+          session,
+          account.id
+        );
+        return false;
       } else {
-        this.logger.warn(
-          `${JSON.stringify(addedBefore)}`,
-          `customers.service.ts:CustomersService.phIdentifyUpdate()`
+        this.warn(
+          `Found multiple customers with same posthog ID, skipping Identify event update: ${JSON.stringify(
+            { customers: addedBefore }
+          )}`,
+          this.phIdentifyUpdate.name,
+          session,
+          account.id
         );
       }
     } catch (e) {
-      this.logger.error(
-        `${e}`,
-        `customers.service.ts:CustomersService.phIdentifyUpdate()`
-      );
+      this.error(e, this.phIdentifyUpdate.name, session, account.id);
+      throw e;
     }
   }
 
@@ -842,15 +945,29 @@ export class CustomersService {
     } else return { cust: customers[0], found: true };
   }
 
+  /**
+   * Finds or creates a customer document based on a correlation key/value pair. Uses an event and mapping to add fields to the customer document.
+   *
+   * @param account Account that customer document is associated with
+   * @param correlationKey Document key to check against
+   * @param correlationValue If String, checks if document[correlationKey] equals correlation value; if Array, checks if document[correlationKey] contains any of correlationValue[i]
+   * @param event PostHog event to extract pH fields from
+   * @param transactionSession MongoDB transaction session
+   * @param session HTTP session
+   * @param mapping Mapping of pH fields to Customer Document fields
+   * @returns Correlation
+   */
+
   async findBySpecifiedEvent(
     account: Account,
     correlationKey: string,
     correlationValue: string | string[],
     event: any,
     transactionSession: ClientSession,
+    session: string,
     mapping?: (event: any) => any
   ): Promise<Correlation> {
-    let customer: CustomerDocument;
+    let customer, createdCustomer: CustomerDocument;
     const queryParam: any = {
       ownerId: (<Account>account).id,
     };
@@ -864,49 +981,57 @@ export class CustomersService {
     } else {
       queryParam[correlationKey] = correlationValue;
     }
-    this.logger.debug(
-      `${JSON.stringify(queryParam, null, 2)}`,
-      `customers.service.ts:CustomersService.findBySpecifiedEvent()`
+    this.debug(
+      `Looking for customer using query ${JSON.stringify({
+        query: queryParam,
+      })}`,
+      this.findBySpecifiedEvent.name,
+      session,
+      account.id
     );
     customer = await this.CustomerModel.findOne(queryParam)
       .session(transactionSession)
       .exec();
     if (!customer) {
-      this.logger.debug('Customer not found, creating new customer...');
+      this.debug(
+        `Customer not found, creating new customer...`,
+        this.findBySpecifiedEvent.name,
+        session,
+        account.id
+      );
       if (mapping) {
         const newCust = mapping(event);
         newCust['ownerId'] = (<Account>account).id;
         newCust[correlationKey] = Array.isArray(correlationValue)
           ? this.filterFalsyAndDuplicates(correlationValue)
           : correlationValue;
-        const createdCustomer = new this.CustomerModel(newCust);
-        this.logger.debug(
-          `${JSON.stringify(createdCustomer, null, 2)}`,
-          `customers.service.ts:CustomersService.findBySpecifiedEvent()`
-        );
-        return {
-          cust: await createdCustomer.save({ session: transactionSession }),
-          found: false,
-        };
+        createdCustomer = new this.CustomerModel(newCust);
       } else {
-        const createdCustomer = new this.CustomerModel({
+        createdCustomer = new this.CustomerModel({
           ownerId: (<Account>account).id,
           correlationKey: Array.isArray(correlationValue)
             ? this.filterFalsyAndDuplicates(correlationValue)
             : correlationValue,
         });
-        this.logger.debug(
-          `${JSON.stringify(createdCustomer, null, 2)}`,
-          `customers.service.ts:CustomersService.findBySpecifiedEvent()`
-        );
-        return {
-          cust: await createdCustomer.save({ session: transactionSession }),
-          found: false,
-        };
       }
-
+      this.debug(
+        `Created new customer ${JSON.stringify(createdCustomer)}`,
+        this.findBySpecifiedEvent.name,
+        session,
+        account.id
+      );
+      return {
+        cust: await createdCustomer.save({ session: transactionSession }),
+        found: false,
+      };
       //to do cant just return [0] in the future
     } else {
+      this.debug(
+        `Customer found: ${JSON.stringify(customer)}`,
+        this.findBySpecifiedEvent.name,
+        session,
+        account.id
+      );
       const updateObj: any = mapping ? mapping(event) : undefined;
       if (Array.isArray(correlationValue)) {
         updateObj.$addToSet = {
@@ -923,6 +1048,12 @@ export class CustomersService {
       )
         .session(transactionSession)
         .exec();
+      this.debug(
+        `Customer updated: ${JSON.stringify(customer)}`,
+        this.findBySpecifiedEvent.name,
+        session,
+        account.id
+      );
       return { cust: customer, found: true };
     }
   }
@@ -1156,14 +1287,34 @@ export class CustomersService {
   }
 
   async removeById(account: Account, custId: string, session: string) {
+    this.debug(
+      `Removing customer ${JSON.stringify({ id: custId })}`,
+      this.removeById.name,
+      session,
+      account.id
+    );
     if (account.customerId === custId)
       throw new BadRequestException("You can't delete yourself as a customer");
 
     const cust = await this.CustomerModel.findById(custId);
+    this.debug(
+      `Found customer ${JSON.stringify(cust)}`,
+      this.removeById.name,
+      session,
+      account.id
+    );
 
     if (cust.isFreezed) throw new BadRequestException('Customer is freezed');
 
-    await this.CustomerModel.deleteOne({ id: cust.id });
+    const res = await this.CustomerModel.deleteOne({
+      _id: new mongoose.Types.ObjectId(cust.id),
+    });
+    this.debug(
+      `Deleted customer ${JSON.stringify(res)}`,
+      this.removeById.name,
+      session,
+      account.id
+    );
   }
 
   async getAttributes(account: Account, resourceId: string, session: string) {
