@@ -11,6 +11,7 @@ import AndOrSelect from "./AndOrSelect";
 import { useDebounce } from "react-use";
 import {
   EventCondition,
+  FilterByOption,
   ProviderTypes,
   Trigger,
   TriggerType,
@@ -751,8 +752,16 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
     //   }
     // }
 
-    if (!condition?.key) {
+    if (
+      !condition?.key &&
+      condition?.filterBy === FilterByOption.CUSTOMER_KEY
+    ) {
       eventBasedErrorMessage = `Key is not defined at position ${i + 1}`;
+      break;
+    }
+
+    if (!condition?.filter && condition?.filterBy === FilterByOption.ELEMENTS) {
+      eventBasedErrorMessage = `Filter is not defined at position ${i + 1}`;
       break;
     }
 
@@ -975,6 +984,7 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
                                   ...(eventTrigger?.properties?.conditions ||
                                     []),
                                   {
+                                    filterBy: FilterByOption.CUSTOMER_KEY,
                                     key: "",
                                     value: "",
                                     comparisonType: "",

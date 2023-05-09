@@ -53,6 +53,8 @@ const TextUpdaterNode = ({ data }: { data: NodeData }) => {
     isDraggedOver,
     mock,
   } = data;
+  console.log(triggers);
+
   const [nodeData, setNodeData] = useState<{
     id?: string;
     isPrimary?: boolean;

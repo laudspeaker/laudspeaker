@@ -16,14 +16,27 @@ export enum MessagesTypes {
   MODAL = "modal",
 }
 
+export enum EventConditionElementsFilter {
+  TEXT = "text",
+  TAG_NAME = "tag name",
+}
+
+export enum FilterByOption {
+  CUSTOMER_KEY = "customer key",
+  ELEMENTS = "elements",
+}
+
 export interface EventCondition {
   value: any;
+  filterBy: FilterByOption;
   attribute?: string;
   condition?: string;
   key?: string;
   type?: string;
   comparisonType?: string;
   relationWithNext?: "and" | "or";
+  elementOrder?: number;
+  filter?: EventConditionElementsFilter;
   isArray?: boolean;
 }
 

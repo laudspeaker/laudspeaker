@@ -1,10 +1,15 @@
-import { Select } from "components/Elements";
+import { Input, Select } from "components/Elements";
 import { getEventKeys } from "pages/Segment/SegmentHelpers";
 import React, { FC, useEffect, useState } from "react";
 import { useDebounce } from "react-use";
 import ApiService from "services/api.service";
 import DynamicField from "./DynamicField";
-import { EventCondition, ProviderTypes } from "types/Workflow";
+import {
+  EventCondition,
+  EventConditionElementsFilter,
+  FilterByOption,
+  ProviderTypes,
+} from "types/Workflow";
 import Autocomplete from "components/Autocomplete";
 
 export interface ConditionCreaterProps {
@@ -29,7 +34,8 @@ const ConditionCreater: FC<ConditionCreaterProps> = ({
   isViewMode,
   specificProvider,
 }) => {
-  const { key, value, type, comparisonType } = condition;
+  const { key, value, type, comparisonType, elementOrder, filter, filterBy } =
+    condition;
 
   const [possibleKeys, setPossibleKeys] = useState<PossibleKey[]>([]);
   const [possibleComparisonTypes, setPossibleComparisonTypes] = useState<
@@ -58,10 +64,18 @@ const ConditionCreater: FC<ConditionCreaterProps> = ({
     }
   };
 
-  const handleConditionChange = (name: string, newValueToSet: string) => {
-    condition[name as keyof EventCondition] = newValueToSet;
+  const handleConditionChange = (
+    name: keyof EventCondition,
+    newValueToSet: unknown
+  ) => {
+    condition[name] = newValueToSet;
     onChange(condition);
   };
+
+  useEffect(() => {
+    if (specificProvider === ProviderTypes.Custom)
+      handleConditionChange("filterBy", FilterByOption.CUSTOMER_KEY);
+  }, [specificProvider]);
 
   useEffect(() => {
     (async () => {
@@ -139,67 +153,126 @@ const ConditionCreater: FC<ConditionCreaterProps> = ({
 
   return (
     <div className="flex flex-col gap-[10px] m-[10px_0px]">
-      <div className="relative">
-        <Autocomplete
-          inputId="keyInput"
-          items={possibleKeys}
-          inputValue={newKey}
-          onInputChange={(event) => setNewKey(event.target.value || "")}
-          label="Customer key:"
-          disabled={isViewMode}
-          onOptionSelect={(el) => {
-            setNewKey(el.key);
-            handleConditionChange("type", el.type);
-            handleConditionChange("comparisonType", "");
-            handleConditionChange("value", "");
-          }}
-          optionKey={(el) => el.key}
-          optionRender={(el) => `${el.key} (${el.type})`}
-        />
-      </div>
-      <Select
-        label="Key type"
-        id="keyType"
-        options={possibleTypes.map((item) => ({ value: item }))}
-        value={type || ""}
-        onChange={(val) => {
-          handleConditionChange("type", val);
-          handleConditionChange("comparisonType", "");
-          handleConditionChange("value", "");
-        }}
-        disabled={isViewMode}
-        wrapperClassnames="max-w-[200px]"
-      />
-      <Select
-        label="Condition"
-        id="comparisonType"
-        value={comparisonType || ""}
-        options={possibleComparisonTypes.map((item) => ({
-          value: item.id,
-          title: item.label,
-        }))}
-        onChange={(val) => {
-          handleConditionChange("comparisonType", val);
-          handleConditionChange("value", "");
-        }}
-        disabled={isViewMode}
-        wrapperClassnames="max-w-[200px]"
-      />
-      {dynamicDataToRender.type && (
-        <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Value
-          </label>
-          <div className="flex items-center gap-[10px]">
-            <DynamicField
-              value={newValue}
-              data={dynamicDataToRender}
-              possibleValues={possibleValues}
-              onChange={(val) => setNewValue(val)}
-              disabled={isViewMode}
-            />
-          </div>
+      {specificProvider === ProviderTypes.Posthog && (
+        <div className="relative">
+          <Select
+            label="Filter by"
+            id="filterby"
+            options={Object.values(FilterByOption).map((option) => ({
+              value: option,
+            }))}
+            value={filterBy}
+            onChange={(val) => handleConditionChange("filterBy", val)}
+            disabled={isViewMode}
+            wrapperClassnames="max-w-[200px]"
+          />
         </div>
+      )}
+
+      {filterBy && (
+        <>
+          {filterBy === FilterByOption.CUSTOMER_KEY ? (
+            <Autocomplete
+              inputId="keyInput"
+              items={possibleKeys}
+              inputValue={newKey}
+              onInputChange={(event) => setNewKey(event.target.value || "")}
+              label="Customer key:"
+              disabled={isViewMode}
+              onOptionSelect={(el) => {
+                setNewKey(el.key);
+                handleConditionChange("type", el.type);
+                handleConditionChange("comparisonType", "");
+                handleConditionChange("value", "");
+              }}
+              optionKey={(el) => el.key}
+              optionRender={(el) => `${el.key} (${el.type})`}
+            />
+          ) : (
+            <>
+              <Input
+                name="orderNumber"
+                id="orderNumber"
+                type="number"
+                label="Element order"
+                wrapperClasses="max-w-[200px]"
+                value={elementOrder || 0}
+                disabled={isViewMode}
+                pattern="[0-9]*"
+                onChange={(e) => {
+                  const newElementOrder = +e.target.value;
+
+                  if (newElementOrder < 0) return;
+
+                  handleConditionChange("elementOrder", newElementOrder);
+                }}
+              />
+              <Select
+                label="Filter"
+                id="filter"
+                options={Object.values(EventConditionElementsFilter).map(
+                  (item) => ({ value: item })
+                )}
+                value={filter}
+                onChange={(val) => {
+                  handleConditionChange("filter", val);
+
+                  if (filterBy !== FilterByOption.ELEMENTS) return;
+                  handleConditionChange("type", "String");
+                  handleConditionChange("comparisonType", "");
+                  handleConditionChange("value", "");
+                }}
+                disabled={isViewMode}
+                wrapperClassnames="max-w-[200px]"
+              />
+            </>
+          )}
+
+          <Select
+            label="Key type"
+            id="keyType"
+            options={possibleTypes.map((item) => ({ value: item }))}
+            value={type || ""}
+            onChange={(val) => {
+              handleConditionChange("type", val);
+              handleConditionChange("comparisonType", "");
+              handleConditionChange("value", "");
+            }}
+            disabled={isViewMode || filterBy === FilterByOption.ELEMENTS}
+            wrapperClassnames="max-w-[200px]"
+          />
+          <Select
+            label="Condition"
+            id="comparisonType"
+            value={comparisonType || ""}
+            options={possibleComparisonTypes.map((item) => ({
+              value: item.id,
+              title: item.label,
+            }))}
+            onChange={(val) => {
+              handleConditionChange("comparisonType", val);
+              handleConditionChange("value", "");
+            }}
+            disabled={isViewMode}
+            wrapperClassnames="max-w-[200px]"
+          />
+          {dynamicDataToRender.type && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Value
+              </label>
+              <div className="flex items-center gap-[10px]">
+                <DynamicField
+                  value={newValue}
+                  data={dynamicDataToRender}
+                  possibleValues={possibleValues}
+                  onChange={(val) => setNewValue(val)}
+                  disabled={isViewMode}
+                />
+              </div>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

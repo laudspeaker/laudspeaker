@@ -666,6 +666,7 @@ const Flow = () => {
     selectedTrigger.providerParams = data.providerParams;
     selectedTrigger.providerType = data.providerType;
     selectedTrigger.properties = data.properties;
+    console.log(data);
     setTriggers([...triggers]);
     console.log(triggers);
   };
