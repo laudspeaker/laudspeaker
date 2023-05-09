@@ -19,6 +19,8 @@ import { Account } from '../accounts/entities/accounts.entity';
 import { AudiencesService } from '../audiences/audiences.service';
 import { UpdateWorkflowDto } from './dto/update-workflow.dto';
 import {
+  EventConditionElementsFilter,
+  FilterByOption,
   PosthogTriggerParams,
   ProviderTypes,
   Trigger,
@@ -678,7 +680,7 @@ export class WorkflowsService {
             transactionSession
           );
 
-          let unenrolledCustomers = customers.filter(
+          const unenrolledCustomers = customers.filter(
             (customer) => customer.workflows.indexOf(workflowID) < 0
           );
           await this.CustomerModel.updateMany(
@@ -1019,6 +1021,27 @@ export class WorkflowsService {
                                 condition.value,
                                 condition.comparisonType
                               );
+                        } else if (
+                          condition.filterBy === FilterByOption.ELEMENTS
+                        ) {
+                          const elementToCompare = event?.event?.elements?.find(
+                            (el) => el?.order === condition.elementOrder
+                          )?.[
+                            condition.filter ===
+                            EventConditionElementsFilter.TEXT
+                              ? 'text'
+                              : 'tagtag_name_name'
+                          ];
+                          console.log(
+                            `Comparing: ${elementToCompare} ${
+                              condition.comparisonType || ''
+                            } ${condition.value || ''}`
+                          );
+                          return await this.audiencesHelper.conditionalCompare(
+                            elementToCompare,
+                            condition.value,
+                            condition.comparisonType
+                          );
                         } else {
                           this.logger.debug(
                             `Comparing: ${

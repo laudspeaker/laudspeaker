@@ -15,6 +15,16 @@ export enum TriggerType {
   TIME_WINDOW = 'timeWindow',
 }
 
+export enum EventConditionElementsFilter {
+  TEXT = 'text',
+  TAG_NAME = 'tag name',
+}
+
+export enum FilterByOption {
+  CUSTOMER_KEY = 'customer key',
+  ELEMENTS = 'elements',
+}
+
 export interface IEventConditions {
   value: any;
   attribute?: string;
@@ -24,6 +34,9 @@ export interface IEventConditions {
   comparisonType?: string;
   relationWithNext?: 'and' | 'or';
   isArray?: boolean;
+  filterBy?: FilterByOption;
+  elementOrder?: number;
+  filter?: EventConditionElementsFilter;
 }
 
 export class EventProps {
