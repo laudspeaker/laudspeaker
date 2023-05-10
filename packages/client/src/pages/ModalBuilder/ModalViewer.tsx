@@ -1,5 +1,4 @@
 import React, { CSSProperties, FC, ReactNode } from "react";
-import { ModalState } from "./ModalBuilder";
 import {
   Alignment,
   BackgroundType,
@@ -8,6 +7,7 @@ import {
   MediaPosition,
   MediaType,
   ModalPosition,
+  ModalState,
   PrimaryButtonPosition,
   SizeUnit,
   SubMenuOptions,

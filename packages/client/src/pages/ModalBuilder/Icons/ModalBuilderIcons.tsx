@@ -310,7 +310,12 @@ export const ModalMediaActionClickComplete = () => (
 );
 
 export const ModalDismissPositionOutRight = () => (
-  <svg viewBox="0 0 33 20" xmlns="http://www.w3.org/2000/svg">
+  <svg
+    width={32}
+    height={32}
+    viewBox="0 0 33 20"
+    xmlns="http://www.w3.org/2000/svg"
+  >
     <g fill="#374151" fillRule="evenodd">
       <path d="M22.916 19.5H2.083C.933 19.5 0 18.605 0 17.5v-15c0-1.105.932-2 2.083-2h20.833c1.15 0 2.084.895 2.084 2v15c0 1.105-.933 2-2.084 2zm-.833-1H2.916C1.858 18.5 1 17.699 1 16.71V3.29C1 2.3 1.858 1.5 2.916 1.5h19.167C23.14 1.5 24 2.301 24 3.29v13.42c0 .989-.859 1.79-1.917 1.79zM30.735 4.507l1.999 2.003a.873.873 0 1 1-1.233 1.235l-2-2.003-1.998 2.003A.873.873 0 0 1 26.27 6.51l1.999-2.003-2.013-2.017a.873.873 0 1 1 1.233-1.235l2.013 2.017 2.013-2.017a.873.873 0 0 1 1.232 1.235l-2.012 2.017z"></path>
     </g>
@@ -318,7 +323,12 @@ export const ModalDismissPositionOutRight = () => (
 );
 
 export const ModalDismissPositionOutLeft = () => (
-  <svg viewBox="0 0 33 20" xmlns="http://www.w3.org/2000/svg">
+  <svg
+    width={32}
+    height={32}
+    viewBox="0 0 33 20"
+    xmlns="http://www.w3.org/2000/svg"
+  >
     <g fill="#374151" fillRule="evenodd">
       <path d="M30.916 19.5H10.083c-1.15 0-2.083-.895-2.083-2v-15c0-1.105.932-2 2.083-2h20.833c1.15 0 2.084.895 2.084 2v15c0 1.105-.933 2-2.084 2zm-.833-1H10.916C9.858 18.5 9 17.699 9 16.71V3.29c0-.989.858-1.79 1.916-1.79h19.167C31.14 1.5 32 2.301 32 3.29v13.42c0 .989-.859 1.79-1.917 1.79zM6.747 2.49L4.735 4.507 6.734 6.51a.873.873 0 1 1-1.233 1.235l-2-2.003-1.998 2.003A.873.873 0 0 1 .27 6.51L2.27 4.507.256 2.49A.873.873 0 1 1 1.49 1.255l2.013 2.017 2.013-2.017A.873.873 0 0 1 6.747 2.49z"></path>
     </g>
@@ -326,7 +336,12 @@ export const ModalDismissPositionOutLeft = () => (
 );
 
 export const ModalDismissPositionInRight = () => (
-  <svg viewBox="0 0 25 19" xmlns="http://www.w3.org/2000/svg">
+  <svg
+    width={32}
+    height={32}
+    viewBox="0 0 25 19"
+    xmlns="http://www.w3.org/2000/svg"
+  >
     <g fill="#374151" fillRule="evenodd">
       <path d="M22.917 19H2.083C.933 19 0 18.105 0 17V2C0 .895.933 0 2.083 0h20.834C24.067 0 25 .895 25 2v15c0 1.105-.933 2-2.083 2zm-20-1C1.858 18 1 17.199 1 16.21V2.79C1 1.8 1.858 1 2.917 1h19.166C23.142 1 24 1.801 24 2.79v13.42c0 .989-.858 1.79-1.917 1.79H2.917z"></path>
       <path d="M20.735 5.507l1.999 2.003a.873.873 0 1 1-1.233 1.235l-2-2.003-1.998 2.003A.873.873 0 0 1 16.27 7.51l1.999-2.003-2.013-2.017a.873.873 0 1 1 1.233-1.235l2.013 2.017 2.013-2.017a.873.873 0 0 1 1.232 1.235l-2.012 2.017z"></path>
@@ -335,7 +350,12 @@ export const ModalDismissPositionInRight = () => (
 );
 
 export const ModalDismissPositionInLeft = () => (
-  <svg viewBox="0 0 25 19" xmlns="http://www.w3.org/2000/svg">
+  <svg
+    width={32}
+    height={32}
+    viewBox="0 0 25 19"
+    xmlns="http://www.w3.org/2000/svg"
+  >
     <g fill="#374151" fillRule="evenodd">
       <path d="M22.917 19H2.083C.933 19 0 18.105 0 17V2C0 .895.933 0 2.083 0h20.834C24.067 0 25 .895 25 2v15c0 1.105-.933 2-2.083 2zm-20-1C1.858 18 1 17.199 1 16.21V2.79C1 1.8 1.858 1 2.917 1h19.166C23.142 1 24 1.801 24 2.79v13.42c0 .989-.858 1.79-1.917 1.79H2.917z"></path>
       <path d="M6.735 5.507L8.734 7.51a.873.873 0 1 1-1.233 1.235l-2-2.003-1.998 2.003A.873.873 0 0 1 2.27 7.51L4.27 5.507 2.256 3.49A.873.873 0 1 1 3.49 2.255l2.013 2.017 2.013-2.017A.873.873 0 0 1 8.747 3.49L6.735 5.507z"></path>
@@ -344,7 +364,12 @@ export const ModalDismissPositionInLeft = () => (
 );
 
 export const ModalDismissPositionCenterRight = () => (
-  <svg viewBox="0 0 25 19" xmlns="http://www.w3.org/2000/svg">
+  <svg
+    width={32}
+    height={32}
+    viewBox="0 0 25 19"
+    xmlns="http://www.w3.org/2000/svg"
+  >
     <g fill="#374151" fillRule="evenodd">
       <path d="M22.917 19H2.083C.933 19 0 18.105 0 17V2C0 .895.933 0 2.083 0h20.834C24.067 0 25 .895 25 2v15c0 1.105-.933 2-2.083 2zm-20-1C1.858 18 1 17.199 1 16.21V2.79C1 1.8 1.858 1 2.917 1h19.166C23.142 1 24 1.801 24 2.79v13.42c0 .989-.858 1.79-1.917 1.79H2.917z"></path>
       <path d="M20.735 9.507l1.999 2.003a.873.873 0 1 1-1.233 1.235l-2-2.003-1.998 2.003a.873.873 0 0 1-1.233-1.235l1.999-2.003-2.013-2.017a.873.873 0 1 1 1.233-1.235l2.013 2.017 2.013-2.017a.873.873 0 0 1 1.232 1.235l-2.012 2.017z"></path>
@@ -353,7 +378,12 @@ export const ModalDismissPositionCenterRight = () => (
 );
 
 export const ModalDismissPositionCenterLeft = () => (
-  <svg viewBox="0 0 25 19" xmlns="http://www.w3.org/2000/svg">
+  <svg
+    width={32}
+    height={32}
+    viewBox="0 0 25 19"
+    xmlns="http://www.w3.org/2000/svg"
+  >
     <g fill="#374151" fillRule="evenodd">
       <path d="M22.917 19H2.083C.933 19 0 18.105 0 17V2C0 .895.933 0 2.083 0h20.834C24.067 0 25 .895 25 2v15c0 1.105-.933 2-2.083 2zm-20-1C1.858 18 1 17.199 1 16.21V2.79C1 1.8 1.858 1 2.917 1h19.166C23.142 1 24 1.801 24 2.79v13.42c0 .989-.858 1.79-1.917 1.79H2.917z"></path>
       <path d="M6.735 9.507l1.999 2.003a.873.873 0 1 1-1.233 1.235l-2-2.003-1.998 2.003A.873.873 0 0 1 2.27 11.51L4.27 9.507 2.256 7.49A.873.873 0 1 1 3.49 6.255l2.013 2.017 2.013-2.017A.873.873 0 0 1 8.747 7.49L6.735 9.507z"></path>
@@ -362,7 +392,12 @@ export const ModalDismissPositionCenterLeft = () => (
 );
 
 export const ModalPrimaryPositionBottomLeft = () => (
-  <svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+  <svg
+    width={32}
+    height={32}
+    viewBox="0 0 60 60"
+    xmlns="http://www.w3.org/2000/svg"
+  >
     <g stroke="#374151" fill="none" fillRule="evenodd">
       <path d="M15.25 41c-.69 0-1.25-.283-1.25-.632v-4.736c0-.35.56-.632 1.25-.632h12.5c.69 0 1.25.283 1.25.632v4.736c0 .35-.56.632-1.25.632h-12.5z"></path>
       <path

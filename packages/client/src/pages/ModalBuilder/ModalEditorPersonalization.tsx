@@ -3,10 +3,9 @@ import Progress from "components/Progress";
 import { getCustomerKeys } from "pages/Segment/SegmentHelpers";
 import React, { FC, useState } from "react";
 import { useDebounce } from "react-use";
-import { ModalState } from "./ModalBuilder";
 import { IAdditionalActionData, PreviousModes } from "./ModalEditor";
 import { EditorMenuOptions } from "./ModalEditorMainMenu";
-import { SubMenuOptions } from "./types";
+import { ModalState, SubMenuOptions } from "./types";
 
 interface ModalEditorPersonalizationProps {
   modalState: ModalState;

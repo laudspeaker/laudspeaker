@@ -1,8 +1,7 @@
-import { ModalState } from "./ModalBuilder";
 import { EditorMenuOptions } from "./ModalEditorMainMenu";
 import LinkSVG from "@heroicons/react/20/solid/ArrowTopRightOnSquareIcon";
 import NoSymbolIcon from "@heroicons/react/20/solid/NoSymbolIcon";
-import { AdditionalClickOptions, SubMenuOptions } from "./types";
+import { AdditionalClickOptions, ModalState, SubMenuOptions } from "./types";
 import { GenericButton } from "components/Elements";
 import EditIconSVG from "@heroicons/react/20/solid/EllipsisHorizontalIcon";
 import { IAdditionalActionData } from "./ModalEditor";
@@ -96,7 +95,7 @@ const ModalEditorAdditionalClicks = ({
             {block.options.map((el, i2) => (
               <div key={i2} className="w-1/2 pr-[6px] pb-[6px]">
                 <GenericButton
-                  customClasses={`relative w-full flex text-[12px] !border-[2px] !outline-none !ring-transparent !focus:!ring-transparent !font-normal !rounded-[8px] !p-[6px] flex align-center whitespace-nowrap overflow-hidden ${
+                  customClasses={`relative w-full flex text-[12px] !border-[1px] !shadow-none !outline-none !ring-transparent !focus:!ring-transparent !font-normal !rounded-[2px] !p-[6px] flex align-center whitespace-nowrap overflow-hidden ${
                     actionData[currentMainMode]?.[el.action]?.hidden
                       ? "!bg-white !border-[#E5E7EB] !text-black"
                       : "!bg-[#EEF2FF] !border-[#6366F1] !text-[#4338CA]"

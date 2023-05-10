@@ -1,5 +1,5 @@
 import ModalBuilderNumberInput from "./Elements/ModalBuilderNumberInput";
-import { MediaClickActions, ModalState } from "./ModalBuilder";
+import { MediaClickActions } from "./ModalBuilder";
 import {
   ModalPrimaryPositionBottomLeft,
   ModalPrimaryPositionBottomCenter,
@@ -8,6 +8,7 @@ import {
 } from "./Icons/ModalBuilderIcons";
 import {
   DismissType,
+  ModalState,
   PrimaryButtonPosition,
   SizeUnit,
   SubMenuOptions,

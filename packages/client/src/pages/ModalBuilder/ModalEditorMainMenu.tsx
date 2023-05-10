@@ -8,8 +8,8 @@ import DismissSVG from "@heroicons/react/20/solid/XCircleIcon";
 import EditIconSVG from "@heroicons/react/20/solid/EllipsisHorizontalIcon";
 import PrimarySVG from "@heroicons/react/20/solid/CheckCircleIcon";
 import ShroudSVG from "@heroicons/react/20/solid/SunIcon";
-import { ModalState } from "./ModalBuilder";
 import { FC } from "react";
+import { ModalState } from "./types";
 
 export enum EditorMenuOptions {
   MAIN = "MAIN",

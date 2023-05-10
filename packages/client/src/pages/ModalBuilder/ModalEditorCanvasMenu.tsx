@@ -2,10 +2,9 @@ import ReactSlider from "react-slider";
 import ModalBuilderColorPicker from "./Elements/ModalBuilderColorPicker";
 import ModalBuilderNumberInput from "./Elements/ModalBuilderNumberInput";
 import ModalMediaUploader from "./Elements/ModalMediaUploader";
-import { ModalState } from "./ModalBuilder";
 import { EditorMenuOptions } from "./ModalEditorMainMenu";
 import SizeUnitPicker from "./Elements/SizeUnitPicker";
-import { BackgroundType, SizeUnit } from "./types";
+import { BackgroundType, ModalState, SizeUnit } from "./types";
 
 interface IModalEditorCanvasMenuProps {
   modalState: ModalState;

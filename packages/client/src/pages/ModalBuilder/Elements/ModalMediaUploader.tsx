@@ -2,9 +2,8 @@ import ApiService from "services/api.service";
 import { ApiConfig } from "../../../constants";
 import { toast } from "react-toastify";
 import UploadSVG from "@heroicons/react/20/solid/CloudArrowUpIcon";
-import { ModalState } from "../ModalBuilder";
 import { EditorMenuOptions } from "../ModalEditorMainMenu";
-import { ImageBackground, Media } from "../types";
+import { ImageBackground, Media, ModalState } from "../types";
 import CloseSVG from "@heroicons/react/20/solid/XMarkIcon";
 import { useState } from "react";
 import tokenService from "services/token.service";
@@ -138,7 +137,9 @@ const ModalMediaUploader = ({
                 fill="#9CA3AF"
               />
             </svg>
-            <div className="text-[#111827]">Click to upload</div>
+            <div className="text-[#111827] font-normal leading-[22px] text-[14px]">
+              Click to upload
+            </div>
           </div>
           <input
             id="pick-image"

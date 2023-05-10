@@ -1,9 +1,8 @@
 import { Switch } from "@headlessui/react";
 import { useEffect } from "react";
-import { ModalState } from "./ModalBuilder";
 import { IAdditionalActionData, PreviousModes } from "./ModalEditor";
 import { EditorMenuOptions } from "./ModalEditorMainMenu";
-import { SubMenuOptions } from "./types";
+import { ModalState, SubMenuOptions } from "./types";
 
 interface IModalEditorOpenURLProps {
   modalState: ModalState;
@@ -55,10 +54,10 @@ const ModalEditorOpenURL = ({
 
   return (
     <div className="p-[20px]">
-      <div className="text-[14px] my-[10px]">Action URL:</div>
+      <div className="text-[14px] mb-[10px]">Action URL:</div>
       <textarea
         value={actionData[currentMainMode]?.OPENURL.object?.url || ""}
-        className="resize-none w-full border-[1px] border-[#D9D9D9] rounded-[5px] bg-transparent outline-none focus:outline-none shadow-none text-[12px]"
+        className="resize-none w-full border-[1px] border-[#D9D9D9] bg-white rounded-[2px] outline-none focus:outline-none shadow-none text-[12px]"
         placeholder="URL (google.com)"
         onChange={(ev) => handleOpenURLChange({ link: ev.target.value || "" })}
       />

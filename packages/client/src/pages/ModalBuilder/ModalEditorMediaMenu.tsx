@@ -1,12 +1,14 @@
 import ReactSlider from "react-slider";
 import ModalBuilderNumberInput from "./Elements/ModalBuilderNumberInput";
-import {
-  MediaClickActions,
-  MediaPositionMap,
-  ModalState,
-} from "./ModalBuilder";
+import { MediaClickActions, MediaPositionMap } from "./ModalBuilder";
 import SizeUnitPicker from "./Elements/SizeUnitPicker";
-import { MediaType, mediaTypes, SizeUnit, SubMenuOptions } from "./types";
+import {
+  MediaType,
+  mediaTypes,
+  ModalState,
+  SizeUnit,
+  SubMenuOptions,
+} from "./types";
 import { EditorMenuOptions } from "./ModalEditorMainMenu";
 import { IAdditionalActionData } from "./ModalEditor";
 import AdditionalActionOption from "./AdditionalActionOption";
@@ -50,8 +52,10 @@ const ModalEditorMediaMenu = ({
             {mediaTypes.map((el, i) => (
               <div
                 key={el}
-                className={`flex justify-center items-center w-full h-[32px] border-[#E5E7EB] border-[1px] cursor-pointer ${
-                  modalState.media.type === el ? "bg-[#6366F1] text-white" : ""
+                className={`flex justify-center items-center w-full h-[32px] cursor-pointer ${
+                  modalState.media.type === el
+                    ? "bg-[#6366F1] text-white"
+                    : "border-[#E5E7EB] border-[1px]"
                 } ${
                   i === 0
                     ? "rounded-l-[2px]"
@@ -72,16 +76,20 @@ const ModalEditorMediaMenu = ({
           </div>
           {modalState.media.type === MediaType.IMAGE && (
             <>
-              <span className="text-[14px] font-thin">Select image:</span>
+              <span className="text-[14px] text-[#111827] font-normal leading-[22px]">
+                Image
+              </span>
               <ModalMediaUploader
                 modalState={modalState}
                 setModalState={setModalState}
                 currentMainMode={currentMainMode}
               />
-              <span className="text-[14px] font-thin">Alt text:</span>
+              <span className="text-[14px] text-[#111827] font-normal leading-[22px]">
+                Alt text
+              </span>
               <input
                 placeholder="Image alt text"
-                className="bg-transparent text-[12px] border-[1px] border-white rounded-[5px] px-[6px] py-[2px] outline-none"
+                className="bg-white border-[1px] border-[#D9D9D9] rounded-[5px] px-[12px] py-[5px] outline-none font-normal text-[14px] placeholder:text-[#00000040] leading-[22px]"
                 value={modalState.media.altText}
                 onChange={(el) =>
                   setModalState({
@@ -119,43 +127,46 @@ const ModalEditorMediaMenu = ({
         <div className="border-t-[1px] border-[#E5E7EB]" />
 
         <div className="flex flex-col gap-[10px] p-[20px]">
-          <div className="flex w-full justify-between items-center">
-            <div className="flex w-full flex-col">
-              <span>Position:</span>
-              <small className="w-full mt-[5px] text-[#BAC3C0]">
-                Relative to the Body component
-              </small>
-            </div>
-            <div className="w-full flex">
-              <ul className="flex w-full items-center justify-between py-[20px]">
-                {MediaPositionMap.map((el) => (
-                  <li key={el.position}>
-                    <div
-                      className={`flex justify-center items-center p-[2px] relative w-[35px] h-[35px] hover:border-[1px] hover:border-[#818CF8] rounded-md cursor-pointer text-transparent hover:text-white ${
-                        el.position === modalState.media.position
-                          ? "bg-[#C7D2FE]"
-                          : ""
-                      }`}
-                      onClick={() =>
-                        setModalState({
-                          ...modalState,
-                          media: {
-                            ...modalState.media,
-                            position: el.position,
-                          },
-                        })
-                      }
-                    >
-                      {el.icon}
-                      <div className="absolute text-[12px] font-normal whitespace-nowrap bottom-[-20px] left-[50%] -translate-x-1/2">
-                        {el.position}
+          <div>
+            <div className="flex w-full justify-between items-center">
+              <div className="flex w-full flex-col">
+                <span>Position:</span>
+              </div>
+              <div className="w-full flex">
+                <ul className="flex w-full items-center justify-between">
+                  {MediaPositionMap.map((el) => (
+                    <li key={el.position}>
+                      <div
+                        className={`flex justify-center items-center p-[2px] relative w-[35px] h-[35px] hover:border-[1px] hover:border-[#818CF8] rounded-md cursor-pointer text-transparent hover:text-white ${
+                          el.position === modalState.media.position
+                            ? "bg-[#C7D2FE]"
+                            : ""
+                        }`}
+                        onClick={() =>
+                          setModalState({
+                            ...modalState,
+                            media: {
+                              ...modalState.media,
+                              position: el.position,
+                            },
+                          })
+                        }
+                      >
+                        {el.icon}
+                        <div className="absolute text-[12px] font-normal whitespace-nowrap bottom-[-20px] left-[50%] -translate-x-1/2">
+                          {el.position}
+                        </div>
                       </div>
-                    </div>
-                  </li>
-                ))}
-              </ul>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+            <div className="w-full mt-[10px] font-normal text-[12px] leading-[20px] text-[#4B5563]">
+              Relative to the Body component
             </div>
           </div>
+
           <div className="flex items-start justify-between">
             <div>Media height:</div>
             <div className="w-[180px]">
@@ -232,7 +243,7 @@ const ModalEditorMediaMenu = ({
                   <span>Action when clicked:</span>
                 </div>
                 <div className="w-full flex">
-                  <ul className="flex w-full items-center justify-start gap-[10px] py-[10px]">
+                  <ul className="flex w-full items-center justify-start gap-[10px]">
                     {MediaClickActions.map((el) => (
                       <li key={el.actionOnClick}>
                         <div
