@@ -201,12 +201,6 @@ const ModalEditorPrimaryMenu = ({
                     modalState.primaryButton.clickAction === el.actionOnClick
                       ? "bg-[#6366F1] text-white"
                       : ""
-                  } ${
-                    i === 0
-                      ? "rounded-l-[2px]"
-                      : i === mediaDismissTypes.length - 1
-                      ? "rounded-r-[2px]"
-                      : 0
                   }`}
                   onClick={() =>
                     setModalState({

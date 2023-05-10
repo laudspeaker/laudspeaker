@@ -240,33 +240,29 @@ const ModalEditorMediaMenu = ({
             <>
               <div className="flex w-full justify-between items-center">
                 <div className="flex w-full flex-col">
-                  <span>Action when clicked:</span>
+                  <span>Action:</span>
                 </div>
                 <div className="w-full flex">
-                  <ul className="flex w-full items-center justify-start gap-[10px]">
+                  <ul className="flex w-[214px] border-[#E5E7EB] border-[1px] items-center justify-start">
                     {MediaClickActions.map((el) => (
-                      <li key={el.actionOnClick}>
-                        <div
-                          className={`flex justify-center items-center p-[2px] relative w-[35px] h-[35px] hover:bg-white hover:bg-opacity-25 rounded-md cursor-pointer text-transparent hover:text-white ${
-                            el.actionOnClick === modalState.media.actionOnClick
-                              ? "border-white border-[2px] bg-white bg-opacity-25"
-                              : ""
-                          }`}
-                          onClick={() =>
-                            setModalState({
-                              ...modalState,
-                              media: {
-                                ...modalState.media,
-                                actionOnClick: el.actionOnClick,
-                              },
-                            })
-                          }
-                        >
-                          {el.icon}
-                          <div className="absolute text-[12px] font-normal whitespace-nowrap bottom-[-20px] left-[50%] -translate-x-1/2">
-                            {el.actionOnClick}
-                          </div>
-                        </div>
+                      <li
+                        key={el.actionOnClick}
+                        className={`flex text-[14px] justify-center items-center w-full h-[32px] cursor-pointer ${
+                          el.actionOnClick === modalState.media.actionOnClick
+                            ? "bg-[#6366F1] text-white"
+                            : ""
+                        }`}
+                        onClick={() =>
+                          setModalState({
+                            ...modalState,
+                            media: {
+                              ...modalState.media,
+                              actionOnClick: el.actionOnClick,
+                            },
+                          })
+                        }
+                      >
+                        {el.text}
                       </li>
                     ))}
                   </ul>

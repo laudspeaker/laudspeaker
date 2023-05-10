@@ -106,12 +106,12 @@ export const MediaPositionMap = [
 
 export const MediaClickActions = [
   {
+    text: "No action",
     actionOnClick: MediaClickAction.NONE,
-    icon: <ModalMediaActionClickNone />,
   },
   {
+    text: "Complete tour",
     actionOnClick: MediaClickAction.COMPLETE,
-    icon: <ModalMediaActionClickComplete />,
   },
 ];
 
