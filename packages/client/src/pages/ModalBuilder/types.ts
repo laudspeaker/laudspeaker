@@ -1,3 +1,18 @@
+export interface ModalState {
+  position: ModalPosition;
+  xOffset: Size;
+  yOffset: Size;
+  width: Size;
+  borderRadius: Size;
+  background: Background;
+  title: TextBox;
+  body: TextBox;
+  media: Media;
+  dismiss: Dismiss;
+  primaryButton: PrimaryButton;
+  shroud: Shroud;
+}
+
 export enum Alignment {
   LEFT = "align-left",
   CENTER = "align-center",

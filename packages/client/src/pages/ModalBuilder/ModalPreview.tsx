@@ -1,6 +1,6 @@
 import { FC, useEffect } from "react";
-import { ModalState } from "./ModalBuilder";
 import ls from "@laudspeaker/laudspeaker-js";
+import { ModalState } from "./types";
 
 interface ModalPreviewProps {
   modalState: ModalState;

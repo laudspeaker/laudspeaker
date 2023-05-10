@@ -3,10 +3,10 @@ import ModalBuilderColorPicker from "./Elements/ModalBuilderColorPicker";
 import ModalBuilderNumberInput from "./Elements/ModalBuilderNumberInput";
 import ModalBuilderPersonalizationButton from "./Elements/ModalBuilderPersonalizationButton";
 import RemoveComponentButton from "./Elements/RemoveComponentButton";
-import { ModalState, textStyles, textStylesIcons } from "./ModalBuilder";
+import { textStyles, textStylesIcons } from "./ModalBuilder";
 import { textAlignment, textAlignmentIcons } from "./ModalEditor";
 import { EditorMenuOptions } from "./ModalEditorMainMenu";
-import { SizeUnit, StylesVariants, SubMenuOptions } from "./types";
+import { ModalState, SizeUnit, StylesVariants, SubMenuOptions } from "./types";
 
 interface IModalEditorTitleMenuProps {
   modalState: ModalState;

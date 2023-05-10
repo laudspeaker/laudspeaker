@@ -1,5 +1,4 @@
 import React, { FC, ReactNode } from "react";
-import { ModalState } from "./ModalBuilder";
 import LeftArrowSVG from "@heroicons/react/20/solid/ChevronLeftIcon";
 import AlignCenterSVG from "@heroicons/react/20/solid/Bars3Icon";
 import AlignLeftSVG from "@heroicons/react/20/solid/Bars3BottomLeftIcon";
@@ -15,6 +14,7 @@ import {
   AdditionalClickOptions,
   Alignment,
   IAdditionalClick,
+  ModalState,
   SubMenuOptions,
 } from "./types";
 import ModalEditorDismissMenu from "./ModalEditorDismissMenu";
@@ -329,9 +329,9 @@ const ModalEditor: FC<ModalEditorProps> = ({
                   EditorMenuOptions.MEDIA,
                 ] as (EditorMenuOptions | SubMenuOptions)[]
               ).includes(editorMode)
-                ? "min-h-[520px]"
+                ? "min-h-[500px]"
                 : "min-h-[400px]"
-            } max-h-[520px]`}
+            } max-h-[500px]`}
             renderThumbVertical={(props) => (
               <div {...props} className="!bg-[#E5E7EB] rounded-md" />
             )}

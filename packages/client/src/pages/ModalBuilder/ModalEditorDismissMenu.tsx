@@ -1,6 +1,5 @@
 import { ReactNode, useEffect } from "react";
 import ModalBuilderNumberInput from "./Elements/ModalBuilderNumberInput";
-import { ModalState } from "./ModalBuilder";
 import {
   ModalDismissPositionOutRight,
   ModalDismissPositionOutLeft,
@@ -9,7 +8,7 @@ import {
   ModalDismissPositionCenterRight,
   ModalDismissPositionCenterLeft,
 } from "./Icons/ModalBuilderIcons";
-import { DismissPosition, DismissType, SizeUnit } from "./types";
+import { DismissPosition, DismissType, ModalState, SizeUnit } from "./types";
 import ModalBuilderColorPicker from "./Elements/ModalBuilderColorPicker";
 import ReactSlider from "react-slider";
 import RemoveComponentButton from "./Elements/RemoveComponentButton";
@@ -98,13 +97,13 @@ const ModalEditorDismissMenu = ({
           </div>
         </div>
 
-        <div className="mt-[20px]">
-          <div>Position:</div>
-          <ul className="flex w-full items-center justify-between pt-[10px] pb-[20px]">
+        <div>
+          <div className="mb-[10px]">Position</div>
+          <ul className="flex w-full items-center justify-between">
             {modalPositions.map((position) => (
               <li key={position}>
                 <div
-                  className={`flex justify-center items-center p-[2px] relative w-[35px] h-[35px] hover:border-[1px] hover:border-[#818CF8] rounded-md cursor-pointer text-transparent hover:text-[#111827] ${
+                  className={`flex justify-center items-center relative w-[35px] h-[35px] hover:border-[1px] hover:border-[#818CF8] rounded-md cursor-pointer text-transparent hover:text-[#111827] ${
                     position === modalState.dismiss.position
                       ? "bg-[#C7D2FE]"
                       : ""
@@ -117,7 +116,7 @@ const ModalEditorDismissMenu = ({
                   }
                 >
                   {modalPositionIconMap[position]}
-                  <div className="absolute text-[12px] font-normal whitespace-nowrap bottom-[-20px] left-[50%] -translate-x-1/2">
+                  <div className="absolute z-[123] text-[12px] font-normal whitespace-nowrap bottom-[-20px] left-[50%] -translate-x-1/2">
                     {position}
                   </div>
                 </div>
@@ -126,8 +125,8 @@ const ModalEditorDismissMenu = ({
           </ul>
         </div>
         <div className="flex items-center justify-between">
-          <div>Color:</div>
-          <div className="flex items-center pl-[5px] gap-[10px]">
+          <div>Color</div>
+          <div className="flex items-center gap-[10px]">
             <ModalBuilderColorPicker
               className="!min-w-[150px]"
               color={modalState.dismiss.color}
@@ -319,7 +318,7 @@ const ModalEditorDismissMenu = ({
                 <div className="w-full">Timer Color:</div>
                 <div className="flex w-full pl-[5px] items-center gap-[10px]">
                   <ModalBuilderColorPicker
-                    className="!min-w-[150px] w-full"
+                    className="!min-w-[180px] w-full"
                     color={modalState.dismiss.timedDismiss.timerColor}
                     onChange={(color) =>
                       setModalState({

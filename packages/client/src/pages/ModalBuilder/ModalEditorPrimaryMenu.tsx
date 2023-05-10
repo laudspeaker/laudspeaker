@@ -1,5 +1,5 @@
 import ModalBuilderNumberInput from "./Elements/ModalBuilderNumberInput";
-import { MediaClickActions, ModalState } from "./ModalBuilder";
+import { MediaClickActions, PrimaryButtonClickActions } from "./ModalBuilder";
 import {
   ModalPrimaryPositionBottomLeft,
   ModalPrimaryPositionBottomCenter,
@@ -8,6 +8,7 @@ import {
 } from "./Icons/ModalBuilderIcons";
 import {
   DismissType,
+  ModalState,
   PrimaryButtonPosition,
   SizeUnit,
   SubMenuOptions,
@@ -158,7 +159,7 @@ const ModalEditorPrimaryMenu = ({
             {primaryPostions.map((el) => (
               <li key={el.type}>
                 <div
-                  className={`flex justify-center items-center relative w-[35px] h-[35px] hover:border-[1px] hover:border-[#818CF8] rounded-md cursor-pointer text-transparent hover:text-white ${
+                  className={`flex justify-center items-center relative w-[28px] h-[28px] hover:border-[1px] hover:border-[#818CF8] rounded-[4px] cursor-pointer text-transparent hover:text-white ${
                     el.type === modalState.primaryButton.position
                       ? "bg-[#C7D2FE]"
                       : ""
@@ -182,45 +183,41 @@ const ModalEditorPrimaryMenu = ({
             ))}
           </ul>
         </div>
-        <div className="flex w-full justify-between items-center">
-          <div className="flex w-full flex-col">
-            <span>Action:</span>
-          </div>
-          <div className="w-full flex">
-            <ul className="flex w-full items-center justify-start gap-[10px]">
-              {MediaClickActions.map((el) => (
-                <li key={el.actionOnClick}>
-                  <div
-                    className={`flex justify-center items-center relative w-[35px] h-[35px] hover:border-[1px] hover:border-[#818CF8] rounded-md cursor-pointer text-transparent hover:text-white ${
-                      el.actionOnClick === modalState.media.actionOnClick
-                        ? "bg-[#C7D2FE]"
-                        : ""
-                    }`}
-                    onClick={() =>
-                      setModalState({
-                        ...modalState,
-                        media: {
-                          ...modalState.media,
-                          actionOnClick: el.actionOnClick,
-                        },
-                      })
-                    }
-                  >
-                    {el.icon}
-                    <div className="absolute text-[12px] font-normal whitespace-nowrap bottom-[-20px] left-[50%] -translate-x-1/2">
-                      {el.actionOnClick}
-                    </div>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
       </div>
 
       <div className="border-t-[1px] border-[#E5E7EB]" />
 
       <div className="p-[20px] flex flex-col gap-[10px]">
+        <div className="flex w-full justify-between items-center">
+          <div className="flex w-full flex-col">
+            <span>Action:</span>
+          </div>
+          <div className="w-full flex">
+            <ul className="flex w-[214px] border-[#E5E7EB] border-[1px] items-center justify-start">
+              {PrimaryButtonClickActions.map((el, i) => (
+                <li
+                  key={i}
+                  className={`flex text-[14px] justify-center items-center w-full h-[32px] cursor-pointer ${
+                    modalState.primaryButton.clickAction === el.actionOnClick
+                      ? "bg-[#6366F1] text-white"
+                      : ""
+                  }`}
+                  onClick={() =>
+                    setModalState({
+                      ...modalState,
+                      primaryButton: {
+                        ...modalState.primaryButton,
+                        clickAction: el.actionOnClick,
+                      },
+                    })
+                  }
+                >
+                  {el.text}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
         <AdditionalActionOption
           actionData={actionData}
           currentMainMode={currentMainMode}

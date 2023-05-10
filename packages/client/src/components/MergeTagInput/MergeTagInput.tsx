@@ -120,26 +120,28 @@ const MergeTagInput: FC<MergeTagInputProps> = ({
 
   return (
     <div className="w-full m-0" ref={wrapperRef}>
-      <div
-        className={`${
-          !isPreview && "hidden"
-        } ${viewerClassNames} w-full bg-[#E5E5E5] max-w-full overflow-x-scroll py-[18px] px-[29px] z-[1000] rounded-[8px] text-[20px] whitespace-nowrap `}
-        onClick={() => {
-          setIsPreview(false);
-        }}
-        data-custominput-placeholder={placeholder}
-        id={id}
-      >
-        {items.length > 0 ? (
-          items
-        ) : (
-          <div
-            className={`${placeholderClassNames} h-[1.4375em] text-[20px] text-[#a3a4a5] pb-[2px] select-none`}
-          >
-            {placeholder}
-          </div>
-        )}
-      </div>
+      {isPreview && (
+        <div
+          className={`${
+            !isPreview && "hidden"
+          } ${viewerClassNames} w-full bg-[#E5E5E5] max-w-full overflow-x-scroll py-[18px] px-[29px] z-[1000] rounded-[8px] text-[20px] whitespace-nowrap `}
+          onClick={() => {
+            setIsPreview(false);
+          }}
+          data-custominput-placeholder={placeholder}
+          id={id}
+        >
+          {items.length > 0 ? (
+            items
+          ) : (
+            <div
+              className={`${placeholderClassNames} h-[1.4375em] text-[20px] text-[#a3a4a5] pb-[2px] select-none`}
+            >
+              {placeholder}
+            </div>
+          )}
+        </div>
+      )}
       <Input
         isRequired
         value={value}

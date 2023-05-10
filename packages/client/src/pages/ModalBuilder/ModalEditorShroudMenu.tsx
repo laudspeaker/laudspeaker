@@ -3,8 +3,7 @@ import ReactSlider from "react-slider";
 import ModalBuilderColorPicker from "./Elements/ModalBuilderColorPicker";
 import ModalBuilderNumberInput from "./Elements/ModalBuilderNumberInput";
 import RemoveComponentButton from "./Elements/RemoveComponentButton";
-import { ModalState } from "./ModalBuilder";
-import { SizeUnit } from "./types";
+import { ModalState, SizeUnit } from "./types";
 
 interface ModalEditorShroudMenuProps {
   modalState: ModalState;
@@ -65,10 +64,10 @@ const ModalEditorShroudMenu: FC<ModalEditorShroudMenuProps> = ({
       <div className="flex items-center justify-between gap-[10px]">
         <div className="w-full">Blur:</div>
         <div className="w-[180px]">
-          <div>
+          <div className="relative">
             <ReactSlider
               className="h-[20px] flex items-center justify-center mb-[8px] w-[180px]"
-              trackClassName="h-[4px] bg-[#818CF8] rounded-[4px]"
+              trackClassName="h-[4px] bg-[#6366F1] rounded-[4px]"
               min={0}
               max={6}
               value={modalState.shroud.blur}
@@ -82,10 +81,19 @@ const ModalEditorShroudMenu: FC<ModalEditorShroudMenuProps> = ({
               renderThumb={(props) => (
                 <div
                   {...props}
-                  className="rounded-[100%] w-[16px] h-[16px] cursor-grab bg-white border-[2px] border-[#818CF8]"
+                  className="rounded-[100%] w-[16px] h-[16px] cursor-grab bg-white border-[2px] border-[#6366F1]"
                 />
               )}
             />
+            <div className="absolute top-0 left-0 w-full h-full flex justify-between items-center px-[7px]">
+              <div className="rounded-[100%] bg-white w-[2px] h-[2px]" />
+              <div className="rounded-[100%] bg-white w-[2px] h-[2px]" />
+              <div className="rounded-[100%] bg-white w-[2px] h-[2px]" />
+              <div className="rounded-[100%] bg-white w-[2px] h-[2px]" />
+              <div className="rounded-[100%] bg-white w-[2px] h-[2px]" />
+              <div className="rounded-[100%] bg-white w-[2px] h-[2px]" />
+              <div className="rounded-[100%] bg-white w-[2px] h-[2px]" />
+            </div>
           </div>
         </div>
       </div>

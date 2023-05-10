@@ -1,6 +1,5 @@
 import { ReactNode } from "react";
 import ModalBuilderNumberInput from "./Elements/ModalBuilderNumberInput";
-import { ModalState } from "./ModalBuilder";
 import {
   ModalPositionBottomCenterIcon,
   ModalPositionBottomLeftIcon,
@@ -11,7 +10,7 @@ import {
   ModalPositionTopRightIcon,
 } from "./Icons/ModalBuilderIcons";
 import SizeUnitPicker from "./Elements/SizeUnitPicker";
-import { ModalPosition } from "./types";
+import { ModalPosition, ModalState } from "./types";
 
 interface IModalPositionBodyMenuProps {
   modalState: ModalState;

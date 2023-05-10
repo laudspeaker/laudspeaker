@@ -30,6 +30,7 @@ import {
   MediaPosition,
   MediaType,
   ModalPosition,
+  ModalState,
   PrimaryButton,
   PrimaryButtonPosition,
   Shroud,
@@ -49,21 +50,7 @@ import ApiService from "services/api.service";
 import { TemplateType } from "types/Template";
 import { useDebounce } from "react-use";
 import ModalPreview from "./ModalPreview";
-
-export interface ModalState {
-  position: ModalPosition;
-  xOffset: Size;
-  yOffset: Size;
-  width: Size;
-  borderRadius: Size;
-  background: Background;
-  title: TextBox;
-  body: TextBox;
-  media: Media;
-  dismiss: Dismiss;
-  primaryButton: PrimaryButton;
-  shroud: Shroud;
-}
+import { Modal } from "./Elements/Modal";
 
 export const defaultSolidBackground: SolidBackground = {
   type: BackgroundType.SOLID,
@@ -119,12 +106,23 @@ export const MediaPositionMap = [
 
 export const MediaClickActions = [
   {
+    text: "No action",
     actionOnClick: MediaClickAction.NONE,
-    icon: <ModalMediaActionClickNone />,
   },
   {
+    text: "Complete tour",
     actionOnClick: MediaClickAction.COMPLETE,
-    icon: <ModalMediaActionClickComplete />,
+  },
+];
+
+export const PrimaryButtonClickActions = [
+  {
+    text: "No action",
+    actionOnClick: GeneralClickAction.NONE,
+  },
+  {
+    text: "Complete tour",
+    actionOnClick: GeneralClickAction.COMPLETE,
   },
 ];
 
@@ -406,7 +404,7 @@ We've made some changes to our styling and our navigation. We did this to speed 
         </div>
         <div className="relative h-[calc(100vh-60px)]">
           {isPreview ? (
-            <ModalPreview modalState={modalState} />
+            <Modal modalState={modalState} />
           ) : (
             <>
               <ModalEditor
