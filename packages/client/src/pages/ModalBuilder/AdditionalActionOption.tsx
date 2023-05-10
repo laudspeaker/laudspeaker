@@ -63,12 +63,12 @@ const AdditionalActionOption = ({
     <div className="flex w-full justify-between items-center">
       <div className="">Additional action:</div>
       <GenericButton
-        customClasses={`relative w-[180px] h-[32px] flex text-[12px] !border-[1px] !shadow-none !border-[#E5E7EB] !outline-none !ring-transparent !focus:!ring-transparent !font-normal !rounded-[2px] !p-[6px] flex align-center whitespace-nowrap overflow-hidden ${
+        customClasses={`relative w-[180px] !p-0 h-[32px] flex text-[12px] !border-[1px] !shadow-none !border-[#E5E7EB] !outline-none !ring-transparent !focus:!ring-transparent !font-normal !rounded-[2px] flex align-center whitespace-nowrap overflow-hidden ${
           false ? "" : "!bg-white"
         }`}
         onClick={onOptionPick(SubMenuOptions.AdditionalClicks, true)}
       >
-        <div className="px-[12px] py-[5px] flex items-center">
+        <div className="px-[15px] py-[2px] text-[14px] leading-[22px] flex items-center">
           <span className="min-w-[16px] max-w-[16px] block mr-[8px] text-[#111827]">
             {actionsMeta.action.icon}
           </span>

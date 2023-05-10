@@ -115,6 +115,17 @@ export const MediaClickActions = [
   },
 ];
 
+export const PrimaryButtonClickActions = [
+  {
+    text: "No action",
+    actionOnClick: GeneralClickAction.NONE,
+  },
+  {
+    text: "Complete tour",
+    actionOnClick: GeneralClickAction.COMPLETE,
+  },
+];
+
 export const defaultAdditionalClicksObj: AdditionalClicks = {
   [AdditionalClickOptions.OPENURL]: {
     action: AdditionalClickOptions.OPENURL,
