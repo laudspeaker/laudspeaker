@@ -5,7 +5,7 @@ const { email, password } = credentials;
 
 describe("signup", () => {
   beforeEach(() => {
-    cy.request(`${Cypress.env("TESTS_API_BASE_URL")}/tests/reset-tests`);
+    cy.request(`${Cypress.env("TESTS_API_BASE_URL")}/api/tests/reset-tests`);
     cy.wait(1000);
   });
 

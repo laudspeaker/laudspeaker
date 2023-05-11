@@ -15,15 +15,15 @@ export default (
   cy.get("#name").type(flowName);
   cy.get("#createJourneySubmit").click();
   cy.wait(3000);
-  cy.get("#audience > .p-0 > .justify-between").click();
+  cy.get("#audience > .p-0 > .justify-between").click({force:true});
   cy.get("#name").type("Initial");
-  cy.contains("Finish later").click();
+  cy.contains("Finish later").click({force:true});
   cy.wait(1000);
   cy.get(".text-updater").move({ deltaX: 100, deltaY: 100, force: true });
   cy.wait(1000);
-  if (fixTrigger) cy.contains("Delete").click();
+  if (fixTrigger) cy.contains("Delete").click({force:true});
   cy.wait(3000);
-  cy.get("#audience > .p-0 > .justify-between").click();
+  cy.get("#audience > .p-0 > .justify-between").click({force:true});
   cy.get("#name").type("Second");
   cy.contains("Finish later").click();
   cy.get('[data-isprimary]:not([data-isprimary="true"])').move({

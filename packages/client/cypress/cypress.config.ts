@@ -6,11 +6,12 @@ dotenv.config();
 module.exports = defineConfig({
   e2e: {
     retries: {
-      runMode: 2,
+      runMode: 0,
     },
     screenshotOnRunFailure: false,
-    baseUrl: process.env.TESTS_BASE_URL || "http://project_frontend_1:3000",
+    baseUrl: process.env.TESTS_BASE_URL || "http://laudspeaker-api-1:3001",
   },
+  video: false,
   env: {
     TESTS_POSTHOG_PROJECT_ID: process.env.TESTS_POSTHOG_PROJECT_ID,
     TESTS_POSTHOG_API_KEY: process.env.TESTS_POSTHOG_API_KEY,
@@ -20,7 +21,7 @@ module.exports = defineConfig({
     TESTS_SENDGRID_FROM_EMAIL: process.env.TESTS_SENDGRID_FROM_EMAIL,
     TESTS_BASE_URL: process.env.TESTS_BASE_URL,
     TESTS_API_BASE_URL:
-      process.env.TESTS_API_BASE_URL || "http://laudspeaker_backend_1:3001",
+      process.env.TESTS_API_BASE_URL || "http://laudspeaker-api-1:3001/api",
     TESTS_SMS_TO: process.env.TESTS_SMS_TO,
     TESTS_SMS_SID: process.env.TESTS_SMS_SID,
     TESTS_SMS_AUTH_TOKEN: process.env.TESTS_SMS_AUTH_TOKEN,

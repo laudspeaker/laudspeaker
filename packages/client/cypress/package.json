@@ -10,9 +10,12 @@
   "private": true,
   "devDependencies": {
     "cypress": "12.9.0",
-    "dotenv": "16.0.3"
+    "dotenv": "16.0.3",
+    "@types/node": "20.1.2"
   },
   "dependencies": {
-    "date-fns": "^2.29.3"
+    "date-fns": "^2.29.3",
+    "typescript": "5.0.4",
+    "@4tw/cypress-drag-drop": "2.2.3"
   }
 }

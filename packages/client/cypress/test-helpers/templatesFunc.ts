@@ -46,7 +46,7 @@ export const templatesFunc = (
   cy.url().should("include", `templates/slack/${slackTemplate.name}`);
   cy.get('[data-custominput-placeholder="Slack Message"]').click("left");
   cy.get("#slackMessage")
-    .clear()
+    .clear({ force: true })
     .type(slackTemplate.message, { parseSpecialCharSequences: false });
   cy.get("#saveDraftTemplate").click();
   cy.get("#turnBackFromTemplate").click();

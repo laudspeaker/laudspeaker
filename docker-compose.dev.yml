@@ -7,20 +7,13 @@ services:
       context: ./
     container_name: cypress
     depends_on:
-      - frontend
+      - api
     command: npx cypress run
 
-  frontend:
-    image: laudspeaker:latest
-    depends_on:
-      - backend
-    ports:
-      - "3000:3000"
-    stdin_open: true
-    tty: true
-
-  backend:
-    image: laudspeaker:api-latest
+  api:
+    env_file:
+      - ./packages/server/.env
+    image: laudspeaker/laudspeaker:latest
     ports:
       - "3001:3001"
     depends_on:
@@ -28,6 +21,8 @@ services:
       - postgres
       - mongo
       - clickhouse
+    stdin_open: true
+    tty: true
 
   redis:
     image: redis:alpine
@@ -41,7 +36,7 @@ services:
     image: postgres:14.4-alpine
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_PASSWORD: password
       POSTGRES_DB: laudspeaker
     ports:
       - "5432:5432"

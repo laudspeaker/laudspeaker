@@ -14,7 +14,7 @@ describe(
   { env: { AxiosURL: "http://localhost:3001/" } },
   () => {
     beforeEach(() => {
-      cy.request(`${Cypress.env("AxiosURL")}tests/reset-tests`);
+      cy.request(`${Cypress.env("TESTS_API_BASE_URL")}tests/reset-tests`);
       cy.wait(1000);
     });
 

@@ -5,7 +5,7 @@ WORKDIR /app
 COPY ./packages/client/cypress/package.json .
 COPY ./packages/client/cypress/package-lock.json .
 COPY ./packages/client/cypress /app/cypress
-COPY ./packages/client/cypress/cypress.config.js /app/cypress.config.js
+COPY ./packages/client/cypress/cypress.config.ts /app/cypress.config.ts
 
 
 # by setting CI environment variable we switch the Cypress install messages

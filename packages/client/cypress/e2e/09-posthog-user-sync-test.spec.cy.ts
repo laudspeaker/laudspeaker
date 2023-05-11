@@ -6,7 +6,7 @@ const { email, password } = credentials.MessageHitUser;
 
 describe("Posthog sync", () => {
   beforeEach(() => {
-    cy.request("http://localhost:3001/tests/reset-tests");
+    cy.request(`${Cypress.env("TESTS_API_BASE_URL")}/api/tests/reset-tests`);
     cy.wait(1000);
   });
 
@@ -18,7 +18,7 @@ describe("Posthog sync", () => {
       accessToken = JSON.parse(win.localStorage.userData).access_token;
 
       cy.request({
-        url: "http://localhost:3001/tests/posthogsynctest",
+        url: `${Cypress.env("TESTS_API_BASE_URL")}/api/tests/posthogsynctest`,
         method: "POST",
         headers: {
           Authorization: "Bearer " + accessToken,
