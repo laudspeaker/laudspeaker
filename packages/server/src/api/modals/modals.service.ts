@@ -12,9 +12,9 @@ import { AccountsService } from '../accounts/accounts.service';
 import { CustomersService } from '../customers/customers.service';
 import { Template, TemplateType } from '../templates/entities/template.entity';
 import { ModalEvent } from './entities/modal-event.entity';
-import { cleanTagsForSending } from '@/shared/utils/helpers';
+import { cleanTagsForSending } from '../../shared/utils/helpers';
 import { Liquid } from 'liquidjs';
-import recursivelyUpdateObject from '@/utils/recursivelyUpdateObject';
+import recursivelyUpdateObject from '../../utils/recursivelyUpdateObject';
 
 @Injectable()
 export class ModalsService {

@@ -81,10 +81,11 @@
     "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.2",
     "rxjs": "^7.2.0",
+    "socket.io-client": "^4.6.1",
     "starkbank-ecdsa": "^1.1.5",
     "sync-fetch": "^0.4.2",
-    "traverse": "0.6.7",
     "tr-nestjs-clickhouse": "^1.1.1",
+    "traverse": "0.6.7",
     "tst-reflect": "^0.12.0",
     "twilio": "^3.84.0",
     "typeorm": "^0.3.12",
@@ -131,6 +132,9 @@
       "json",
       "ts"
     ],
+    "moduleNameMapper": {
+      "axios": "axios/dist/node/axios.cjs"
+    },
     "rootDir": "src",
     "testRegex": ".*\\.spec\\.ts$",
     "transform": {
