@@ -1,4 +1,4 @@
-import { Template } from '@/api/templates/entities/template.entity';
+import { Template } from '../../templates/entities/template.entity';
 import {
   BaseEntity,
   Column,
