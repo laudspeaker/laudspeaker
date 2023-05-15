@@ -1,7 +1,6 @@
 import React, { Fragment, MouseEvent, useState } from "react";
 import { dataSubArray } from "./Drawer.fixtures";
-import { AuthState } from "../../reducers/auth";
-import { useTypedSelector } from "../../hooks/useTypeSelector";
+import { AuthState } from "../../reducers/auth.reducer";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Dialog, Disclosure, Menu, Transition } from "@headlessui/react";
 import LaudspeakerIcon from "../../assets/images/laudspeaker.svg";
@@ -30,6 +29,7 @@ import {
   ChevronDownIcon,
   ChevronRightIcon,
 } from "@heroicons/react/20/solid";
+import { useAppSelector } from "store/hooks";
 
 const drawerWidth = 200;
 
@@ -60,7 +60,7 @@ const secondaryNavigation = [
 ];
 
 export default function ResponsiveDrawerBeta() {
-  const userState = useTypedSelector<AuthState>((state) => state.auth);
+  const userState = useAppSelector<AuthState>((state) => state.auth);
   const location = useLocation();
   const navigate = useNavigate();
 

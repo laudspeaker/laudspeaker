@@ -1,13 +1,14 @@
-import React, { Fragment, MouseEvent } from "react";
+import React, { Fragment, MouseEvent, useEffect } from "react";
 import { dataSubArray } from "./Drawer.fixtures";
-import { AuthState } from "../../reducers/auth";
-import { useTypedSelector } from "../../hooks/useTypeSelector";
+import { AuthState } from "../../reducers/auth.reducer";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Dialog, Disclosure, Transition } from "@headlessui/react";
 import LaudspeakerIcon from "../../assets/images/icon_cyan_cyan.svg";
 import { XMarkIcon } from "@heroicons/react/20/solid";
 import { useDispatch } from "react-redux";
-import { toggleNavbar } from "reducers/settings";
+import { toggleNavbar } from "reducers/settings.reducer";
+import { useAppDispatch, useAppSelector } from "store/hooks";
+import { refreshFlowBuilder } from "reducers/flow-builder.reducer";
 
 const classNames = (...classes: string[]) => classes.filter(Boolean).join(" ");
 
@@ -23,11 +24,15 @@ interface NavigationItem {
 const navigation = dataSubArray as NavigationItem[];
 
 export default function ResponsiveDrawer() {
-  const userState = useTypedSelector<AuthState>((state) => state.auth);
-  const dispatch = useDispatch();
-  const isNavOpened = useTypedSelector((state) => state.settings.navbarOpened);
+  const userState = useAppSelector<AuthState>((state) => state.auth);
+  const dispatch = useAppDispatch();
+  const isNavOpened = useAppSelector((state) => state.settings.navbarOpened);
   const location = useLocation();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    dispatch(refreshFlowBuilder());
+  }, [location.pathname]);
 
   const handleCloseClick = () => {
     dispatch(toggleNavbar(false));

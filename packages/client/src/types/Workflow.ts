@@ -86,11 +86,8 @@ export interface Node {
     nodeId: string;
     primary: boolean;
     messages: { type: string; templateId: number }[];
-    triggers: Trigger[];
+    triggers: string[];
     audienceId: string;
-    isSelected: boolean;
-    needsUpdate: boolean;
-    dataTriggers?: Trigger[];
   };
   type: string;
   width: number;
@@ -110,6 +107,7 @@ export interface Node {
 export interface VisualLayout {
   edges: Edge[];
   nodes: Node[];
+  triggers: Trigger[];
 }
 
 export interface Workflow {
@@ -119,7 +117,6 @@ export interface Workflow {
   isPaused: boolean;
   isStopped: boolean;
   isDeleted: boolean;
-  rules: string[];
   visualLayout: VisualLayout;
   isDynamic: boolean;
   filter?: { id: string };

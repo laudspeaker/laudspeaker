@@ -28,10 +28,10 @@ import { ApiConfig } from "./../../constants";
 import TriggerModal from "pages/FlowBuilder/TriggerModal";
 import Tooltip from "components/Elements/Tooltip";
 import Header from "components/Header";
-import { NodeData } from "pages/FlowBuilder/FlowBuilder";
 import { Trigger, Workflow } from "types/Workflow";
 import { toast } from "react-toastify";
 import Progress from "components/Progress";
+import { NodeData } from "reducers/flow-builder.reducer";
 
 const Flow = () => {
   const { id } = useParams();
@@ -69,10 +69,10 @@ const Flow = () => {
 
   const onDeleteTrigger = (data: string) => {
     const selectedNodeData = nodes.find((node) =>
-      node.data.triggers.find((item) => item.id === data)
+      node.data.triggers.find((item) => item === data)
     );
     const newTriggersData = selectedNodeData?.data?.triggers.filter(
-      (item) => item.id !== data
+      (item) => item !== data
     );
     if (selectedNodeData !== undefined && newTriggersData) {
       selectedNodeData.data.triggers = newTriggersData;
@@ -97,7 +97,6 @@ const Flow = () => {
                 ...item.data,
                 onTriggerSelect,
                 flowId,
-                dataTriggers: item.data.dataTriggers || [],
               },
             };
           });
@@ -378,7 +377,6 @@ const Flow = () => {
         </div>
       </ReactFlow>
       <TriggerModal
-        selectedTrigger={selectedTrigger}
         onSaveTrigger={onSaveTrigger}
         onDeleteTrigger={onDeleteTrigger}
         isCollapsible={true}

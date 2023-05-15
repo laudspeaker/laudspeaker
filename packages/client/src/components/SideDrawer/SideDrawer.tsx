@@ -6,6 +6,7 @@ import Tooltip from "components/Elements/Tooltip";
 import { ForwardedRef, ReactNode } from "react";
 import { Input } from "components/Elements";
 import EditIcon from "@mui/icons-material/Edit";
+import { useAppSelector } from "store/hooks";
 
 interface IMenuItem {
   type: string;
@@ -31,7 +32,6 @@ interface Props {
    * You won't need it on your project.
    */
   window?: () => Window;
-  selectedNode: string;
   onClick: (id: string) => void;
   onDragStart?: (e: React.DragEvent<HTMLDivElement>, itemId: string) => void;
   onDragEnd?: () => void;
@@ -44,7 +44,6 @@ interface Props {
 
 export default function ResponsiveDrawer(props: Props) {
   const {
-    selectedNode,
     onClick,
     onDragStart,
     onDragEnd,
@@ -57,6 +56,12 @@ export default function ResponsiveDrawer(props: Props) {
   const [expectedOnboarding, setExpectedOnboarding] = React.useState<string[]>(
     []
   );
+
+  const { nodes, selectedNodeId } = useAppSelector(
+    (state) => state.flowBuilder
+  );
+
+  const selectedNode = nodes.find((node) => node.id === selectedNodeId);
 
   const [titleEdit, setTitleEdit] = React.useState(false);
 

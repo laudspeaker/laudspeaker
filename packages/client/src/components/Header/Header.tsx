@@ -5,10 +5,10 @@ import {
   ChevronDownIcon,
   MagnifyingGlassIcon,
 } from "@heroicons/react/20/solid";
-import { useTypedSelector } from "hooks/useTypeSelector";
 import { useDispatch } from "react-redux";
-import { toggleNavbar } from "reducers/settings";
+import { toggleNavbar } from "reducers/settings.reducer";
 import { Link } from "react-router-dom";
+import { useAppSelector } from "store/hooks";
 
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(" ");
@@ -23,7 +23,7 @@ const Header = () => {
     window.location.reload();
   };
 
-  const firstName = useTypedSelector((state) => state.auth.userData.firstName);
+  const firstName = useAppSelector((state) => state.auth.userData.firstName);
 
   return (
     <div className="sticky top-0 z-[120] flex h-16 flex-shrink-0 border-b border-gray-200 bg-white">

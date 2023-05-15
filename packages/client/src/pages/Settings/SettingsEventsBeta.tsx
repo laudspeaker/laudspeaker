@@ -3,7 +3,7 @@ import { ExclamationCircleIcon } from "@heroicons/react/20/solid";
 import { RadioGroup } from "@headlessui/react";
 import ApiService from "services/api.service";
 import { GenericButton, Input } from "components/Elements";
-import { startPosthogImport } from "reducers/settings";
+import { startPosthogImport } from "reducers/settings.reducer";
 import { toast } from "react-toastify";
 
 const memoryOptions = [

@@ -21,16 +21,17 @@ import {
 } from "../../components/Icons/Icons";
 import ChooseTemplateModal from "./ChooseTemplateModal";
 import LinesEllipsis from "react-lines-ellipsis";
-import { NodeData } from "./FlowBuilder";
 import { NameSegment } from "pages/Segment";
 import { INameSegmentForm } from "pages/Segment/NameSegment";
 import ApiService from "services/api.service";
 import { toast } from "react-toastify";
 import useClickPreventionOnDoubleClick from "hooks/useClickPreventionOnDoubleClick";
 import HourglassSplit from "assets/images/HourglassSplit.svg";
-import { TriggerType } from "types/Workflow";
+import { Trigger, TriggerType } from "types/Workflow";
 import SideModal from "components/Elements/SideModal";
 import { createPortal } from "react-dom";
+import { NodeData, selectTrigger } from "reducers/flow-builder.reducer";
+import { useAppDispatch, useAppSelector } from "store/hooks";
 
 const textStyle = "text-[#111827] font-[Inter] font-middle text-[14px]";
 const subTitleTextStyle = "text-[#6B7280] font-[Inter] text-[14px]";
@@ -39,7 +40,6 @@ const TextUpdaterNode = ({ data }: { data: NodeData }) => {
   const {
     audienceId,
     hidden,
-    onTriggerSelect,
     triggers,
     isExit,
     isSelected,
@@ -47,13 +47,19 @@ const TextUpdaterNode = ({ data }: { data: NodeData }) => {
     nodeId,
     isNearToCursor,
     isConnecting,
-    flowId,
-    isTriggerDragging,
-    isMessagesDragging,
     isDraggedOver,
     mock,
   } = data;
   console.log(triggers);
+
+  const {
+    isTriggerDragging,
+    isMessagesDragging,
+    triggers: allTriggers,
+    flowId,
+  } = useAppSelector((state) => state.flowBuilder);
+
+  const dispatch = useAppDispatch();
 
   const [nodeData, setNodeData] = useState<{
     id?: string;
@@ -107,12 +113,13 @@ const TextUpdaterNode = ({ data }: { data: NodeData }) => {
     // audienceId is present when we are just dispalying the existing node data
     else if (audienceId) {
       if (!mock)
-        getAudienceDetails(audienceId).then((response) => {
-          if (response.status === StatusCodes.OK) {
-            setNodeData(response.data);
-            data.isDynamic = response.data.isDynamic;
+        (async () => {
+          const res = await getAudienceDetails(audienceId);
+
+          if (res.status === StatusCodes.OK) {
+            setNodeData(res.data);
           }
-        });
+        })();
     } else {
       setNodeData({
         id: uuid(),
@@ -129,7 +136,7 @@ const TextUpdaterNode = ({ data }: { data: NodeData }) => {
     triggerId: string
   ) => {
     e.stopPropagation();
-    onTriggerSelect(e, triggerId, triggers);
+    dispatch(selectTrigger(triggerId));
   };
 
   const messageIcons: { [key: string]: JSX.Element } = {
@@ -306,14 +313,14 @@ const TextUpdaterNode = ({ data }: { data: NodeData }) => {
           }}
         >
           {!isExit &&
-            data?.triggers?.map((trigger, index) => {
+            data?.triggers?.map((triggerId, index) => {
               return (
                 <Handle
                   type="source"
                   key={index}
                   position={Position.Bottom}
-                  id={trigger.id}
-                  onClick={(e) => handleTriggerClick(e, trigger.id)}
+                  id={triggerId}
+                  onClick={(e) => handleTriggerClick(e, triggerId)}
                   className={`triggerOut !relative !left-auto !right-auto !border-[0px] !z-[1000] ${
                     isSourceForSome ? "!h-[22px]" : "!h-[44px]"
                   } !bg-transparent !w-[30px] !transform-none  ${
@@ -323,7 +330,8 @@ const TextUpdaterNode = ({ data }: { data: NodeData }) => {
                   data-handle-bottom
                 >
                   <div className="pointer-events-none absolute left-1/2 top-0 -translate-x-1/2 w-[30px] h-[22px]">
-                    {trigger.type === TriggerType.EVENT ? (
+                    {allTriggers.find(({ id }) => id === triggerId)?.type ===
+                    TriggerType.EVENT ? (
                       <img
                         src={thunderbolt}
                         width="30"

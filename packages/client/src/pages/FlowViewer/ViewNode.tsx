@@ -15,18 +15,25 @@ import {
 import { getAudienceDetails } from "pages/FlowBuilder/FlowHelpers";
 import ChooseTemplateModal from "pages/FlowBuilder/ChooseTemplateModal";
 import StatModal from "./StatModal";
-import { NodeData } from "pages/FlowBuilder/FlowBuilder";
 import LinesEllipsis from "react-lines-ellipsis";
 import { createPortal } from "react-dom";
 import HourglassSplit from "assets/images/HourglassSplit.svg";
-import { TriggerType } from "types/Workflow";
+import { Trigger, TriggerType } from "types/Workflow";
+import { NodeData, selectTrigger } from "reducers/flow-builder.reducer";
+import { useAppDispatch, useAppSelector } from "store/hooks";
 
 const textStyle =
   "text-[#223343] font-[Poppins] font-normal text-[14px] leading-[30px]";
 const subTitleTextStyle = "text-[#6B7280] font-[Poppins] text-[14px]";
 
 const ViewNode = ({ data }: { data: NodeData }) => {
-  const { audienceId, hidden, onTriggerSelect, triggers, isExit, stats } = data;
+  const dispatch = useAppDispatch();
+
+  const { triggers: allTriggers } = useAppSelector(
+    (state) => state.flowBuilder
+  );
+
+  const { audienceId, hidden, triggers, isExit, stats } = data;
   const [nodeData, setNodeData] = useState<{
     id?: string;
     isPrimary?: boolean;
@@ -79,7 +86,7 @@ const ViewNode = ({ data }: { data: NodeData }) => {
     triggerId: string
   ) => {
     e.stopPropagation();
-    onTriggerSelect(e, triggerId, triggers);
+    dispatch(selectTrigger(triggerId));
   };
 
   const messageIcons: { [key: string]: JSX.Element } = {
@@ -297,19 +304,20 @@ const ViewNode = ({ data }: { data: NodeData }) => {
         </div>
         <div className="flex h-[22px] absolute left-0 bottom-0 items-center w-full justify-around">
           {!isExit &&
-            data?.triggers?.map((trigger, index) => {
+            data?.triggers?.map((triggerId, index) => {
               return (
                 <Handle
                   type="source"
                   key={index}
                   position={Position.Bottom}
-                  id={trigger.id}
+                  id={triggerId}
                   contentEditable={false}
-                  onClick={(e) => handleTriggerClick(e, trigger.id)}
+                  onClick={(e) => handleTriggerClick(e, triggerId)}
                   className="!pointer-events-auto !outline-none !h-[22px] !bg-transparent !w-[30px] !transform-none !bottom-[-4px] !top-auto !left-auto !right-auto !relative"
                   isConnectable={false}
                 >
-                  {trigger.type === TriggerType.EVENT ? (
+                  {allTriggers.find((trigger) => trigger.id === triggerId)
+                    ?.type === TriggerType.EVENT ? (
                     <img
                       src={thunderbolt}
                       width="30"

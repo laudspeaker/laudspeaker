@@ -12,7 +12,7 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import FlowBuilder from "pages/FlowBuilder";
 import EmailBuilder from "pages/EmailBuilder";
-import { getUserPermissions } from "reducers/auth";
+import { getUserPermissions } from "reducers/auth.reducer";
 import SlackBuilder from "pages/SlackBuilder";
 import Cor from "pages/Cor";
 import FlowTable from "pages/FlowTable/FlowTable";
@@ -42,6 +42,7 @@ import ModalBuilder from "pages/ModalBuilder";
 import WebhookBuilder from "pages/WebhookBuilder";
 import EventTracker from "pages/EventTracker";
 import ModalBackgroundProvider from "pages/ModalBuilder/ModalBackgroundProvider";
+import FlowBuilderv2 from "pages/FlowBuilderv2/FlowBuilderv2";
 
 interface IProtected {
   children: ReactElement;
@@ -201,7 +202,7 @@ const RouteComponent: React.FC = () => {
           element={
             <Protected>
               <DrawerLayout>
-                <FlowBuilder />
+                <FlowBuilderv2 />
               </DrawerLayout>
             </Protected>
           }

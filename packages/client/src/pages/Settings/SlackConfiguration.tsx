@@ -1,13 +1,13 @@
 import { ApiConfig } from "../../constants";
-import { useTypedSelector } from "hooks/useTypeSelector";
 import React, { useLayoutEffect, useState } from "react";
 import ApiService from "services/api.service";
 import { FormControl, Grid } from "@mui/material";
 import Header from "components/Header";
 import Drawer from "components/Drawer";
+import { useAppSelector } from "store/hooks";
 
 const SlackConfiguration = () => {
-  const { settings } = useTypedSelector((state) => state.settings);
+  const { settings } = useAppSelector((state) => state.settings);
   const [slackInstallUrl, setSlackInstallUrl] = useState<string>("");
 
   useLayoutEffect(() => {

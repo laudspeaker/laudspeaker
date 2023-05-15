@@ -1,9 +1,9 @@
 import TriggerCreater from "components/TriggerCreater";
 import { Trigger, TriggerType } from "types/Workflow";
 import SideModal from "components/Elements/SideModal";
+import { useAppSelector } from "store/hooks";
 
 interface ITriggerModal {
-  selectedTrigger?: Trigger;
   onSaveTrigger: (data: Trigger) => void;
   onDeleteTrigger?: (data: string) => void;
   isCollapsible: boolean;
@@ -12,7 +12,6 @@ interface ITriggerModal {
   onClose: () => void;
 }
 const TriggerModal = ({
-  selectedTrigger,
   onSaveTrigger,
   onDeleteTrigger,
   onClose,
@@ -20,6 +19,14 @@ const TriggerModal = ({
   isCollapsible = true,
   isOpen,
 }: ITriggerModal) => {
+  const { triggers, selectedTriggerId } = useAppSelector(
+    (state) => state.flowBuilder
+  );
+
+  const selectedTrigger = triggers.find(
+    (trigger) => trigger.id === selectedTriggerId
+  );
+
   const handleClose = () => {
     const triggerType = selectedTrigger?.type as TriggerType;
     let initialValue: string | undefined = undefined;

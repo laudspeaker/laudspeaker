@@ -182,9 +182,9 @@ export class CustomersService {
     transactionSession?: ClientSession
   ): Promise<
     Customer &
-    mongoose.Document & {
-      _id: Types.ObjectId;
-    }
+      mongoose.Document & {
+        _id: Types.ObjectId;
+      }
   > {
     const createdCustomer = new this.CustomerModel({
       ownerId: (<Account>account).id,
@@ -361,8 +361,8 @@ export class CustomersService {
       ownerId: (<Account>account).id,
       ...(key && search
         ? {
-          [key]: new RegExp(`.*${search}.*`, 'i'),
-        }
+            [key]: new RegExp(`.*${search}.*`, 'i'),
+          }
         : {}),
       ...(showFreezed ? {} : { isFreezed: { $ne: true } }),
     })
@@ -479,7 +479,7 @@ export class CustomersService {
     transactionSession: ClientSession,
     session: string
   ): Promise<boolean> {
-    let query: any
+    let query: any;
     try {
       delete identifyEvent.verified;
       delete identifyEvent.ownerId;
@@ -493,8 +493,13 @@ export class CustomersService {
           { posthogId: { $in: [identifyEvent.userId] } },
           { posthogId: { $in: [identifyEvent.anonymousId] } },
         ],
-      }
-      this.debug(`Preexisting customers query: ${JSON.stringify({ query: query })}`, this.phIdentifyUpdate.name, session, account.id);
+      };
+      this.debug(
+        `Preexisting customers query: ${JSON.stringify({ query: query })}`,
+        this.phIdentifyUpdate.name,
+        session,
+        account.id
+      );
 
       const addedBefore = await this.CustomerModel.find(query)
         .session(transactionSession)
@@ -513,8 +518,11 @@ export class CustomersService {
         query = {
           $addToSet: {
             posthogId: {
-              $each: this.filterFalsyAndDuplicates([identifyEvent.userId, identifyEvent.anonymousId])
-            }
+              $each: this.filterFalsyAndDuplicates([
+                identifyEvent.userId,
+                identifyEvent.anonymousId,
+              ]),
+            },
           },
           ...this.addPrefixToKeys(identifyEvent.context.traits, '_postHog_'),
           ...(identifyEvent.phEmail && { phEmail: identifyEvent.phEmail }),
@@ -524,8 +532,13 @@ export class CustomersService {
           ...(identifyEvent.phDeviceToken && {
             phDeviceToken: identifyEvent.phDeviceToken,
           }),
-        }
-        this.debug(`Update one customer query: ${JSON.stringify({ query: query })}`, this.phIdentifyUpdate.name, session, account.id);
+        };
+        this.debug(
+          `Update one customer query: ${JSON.stringify({ query: query })}`,
+          this.phIdentifyUpdate.name,
+          session,
+          account.id
+        );
 
         const res = await this.CustomerModel.updateOne(
           {
@@ -561,8 +574,13 @@ export class CustomersService {
           ...(identifyEvent.phDeviceToken && {
             phDeviceToken: identifyEvent.phDeviceToken,
           }),
-        }
-        this.debug(`Create one customer query: ${JSON.stringify({ query: query })}`, this.phIdentifyUpdate.name, session, account.id);
+        };
+        this.debug(
+          `Create one customer query: ${JSON.stringify({ query: query })}`,
+          this.phIdentifyUpdate.name,
+          session,
+          account.id
+        );
         const createdCustomer = new this.CustomerModel(query);
         const res = await createdCustomer.save({ session: transactionSession });
         this.debug(
@@ -902,9 +920,9 @@ export class CustomersService {
     customerId: string
   ): Promise<
     Customer &
-    mongoose.Document & {
-      _id: Types.ObjectId;
-    }
+      mongoose.Document & {
+        _id: Types.ObjectId;
+      }
   > {
     const found = await this.CustomerModel.findById(customerId).exec();
     if (found && found?.ownerId == (<Account>account).id) return found;

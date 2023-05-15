@@ -8,17 +8,18 @@ import App from "./App";
 import { PersistGate } from "redux-persist/integration/react";
 import persistor from "./Store";
 import { Helmet } from "react-helmet";
+import { store } from "store/store";
 
 const root = ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement
 );
 root.render(
   // <React.StrictMode>
-  <Provider store={persistor.store}>
-    <PersistGate loading={null} persistor={persistor.persistor}>
-      <Helmet>
-        <script>
-          {`!function(e,t,n,s,u,a)
+  <Provider store={store}>
+    {/* <PersistGate loading={null} persistor={persistor.persistor}> */}
+    <Helmet>
+      <script>
+        {`!function(e,t,n,s,u,a)
           {e.twq ||
             ((s = e.twq =
               function () {
@@ -32,12 +33,12 @@ root.render(
             (a = t.getElementsByTagName(n)[0]),
             a.parentNode.insertBefore(u, a))}
           (window,document,'script'); twq('config','ociqx');`}
-        </script>
-      </Helmet>
-      <App>
-        <RouteComponent />
-      </App>
-    </PersistGate>
+      </script>
+    </Helmet>
+    <App>
+      <RouteComponent />
+    </App>
+    {/* </PersistGate> */}
   </Provider>
   // </React.StrictMode>
 );

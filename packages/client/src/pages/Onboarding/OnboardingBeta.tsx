@@ -11,12 +11,11 @@ import React, {
 import ApiService from "services/api.service";
 import Input from "../../components/Elements/Input";
 import Select from "../../components/Elements/Select";
-import { useTypedSelector } from "hooks/useTypeSelector";
 import {
   setDomainsList,
   setSettingsPrivateApiKey,
   startPosthogImport,
-} from "reducers/settings";
+} from "reducers/settings.reducer";
 import { useDispatch } from "react-redux";
 import { useState } from "react";
 import CSS from "csstype";
@@ -31,6 +30,7 @@ import { useNavigate } from "react-router-dom";
 import { useDebounce } from "react-use";
 import { RadioGroup } from "@headlessui/react";
 import SnippetPicker from "components/SnippetPicker/SnippetPicker";
+import { useAppSelector } from "store/hooks";
 
 export const allEmailChannels = [
   {
@@ -151,7 +151,7 @@ interface IntegrationsData {
 
 export default function OnboardingBeta() {
   const navigate = useNavigate();
-  const { settings, domainsList } = useTypedSelector((state) => state.settings);
+  const { settings, domainsList } = useAppSelector((state) => state.settings);
   const [integrationsData, setIntegrationsData] = useState<IntegrationsData>({
     sendingName: "",
     sendingEmail: "",

@@ -5,7 +5,10 @@ import { RadioGroup } from "@headlessui/react";
 import ApiService from "services/api.service";
 import { Input } from "components/Elements";
 import { toast } from "react-toastify";
-import { setDomainsList, setSettingsPrivateApiKey } from "reducers/settings";
+import {
+  setDomainsList,
+  setSettingsPrivateApiKey,
+} from "reducers/settings.reducer";
 import { useDispatch } from "react-redux";
 import { AxiosError } from "axios";
 

@@ -1,7 +1,7 @@
 import { Dispatch } from "redux";
 import { ApiConfig } from "../constants";
 import ApiService from "../services/api.service";
-import { AuthAction, ActionType } from "./auth";
+import { AuthAction, ActionType } from "./auth.reducer";
 
 export enum SettingsActionType {
   SET_SETTINGS_DATA = "SET_SETTINGS_DATA",
