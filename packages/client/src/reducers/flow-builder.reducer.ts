@@ -1,6 +1,11 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { Edge, Node } from "reactflow";
-import { ProviderTypes, Trigger, TriggerType } from "types/Workflow";
+import {
+  EventCondition,
+  ProviderTypes,
+  Trigger,
+  TriggerType,
+} from "types/Workflow";
 import { v4 as uuid } from "uuid";
 
 export interface NodeData {
@@ -113,9 +118,11 @@ const flowBuilderSlice = createSlice({
       const { type, providerParams, providerType, properties } = action.payload;
 
       selectedTrigger.type = type || selectedTrigger.type;
-      selectedTrigger.providerParams = providerParams;
-      selectedTrigger.providerType = providerType;
-      selectedTrigger.properties = properties;
+      selectedTrigger.providerParams =
+        providerParams || selectedTrigger.providerParams;
+      selectedTrigger.providerType =
+        providerType || selectedTrigger.providerType;
+      selectedTrigger.properties = properties || selectedTrigger.properties;
     },
     deleteSelectedTrigger(state) {
       state.triggers = state.triggers.filter(
@@ -132,6 +139,28 @@ const flowBuilderSlice = createSlice({
         (edge) => edge.sourceHandle !== state.selectedTriggerId
       );
       state.selectedTriggerId = "";
+    },
+    changeSelectedTriggerCondition(
+      state,
+      action: PayloadAction<[number, EventCondition]>
+    ) {
+      const selectedTrigger = state.triggers.find(
+        (trigger) => trigger.id === state.selectedTriggerId
+      );
+
+      if (!selectedTrigger?.properties) return;
+
+      selectedTrigger.properties.conditions[action.payload[0]] =
+        action.payload[1];
+    },
+    deleteSelectedTriggerCondition(state, action: PayloadAction<number>) {
+      const selectedTrigger = state.triggers.find(
+        (trigger) => trigger.id === state.selectedTriggerId
+      );
+
+      if (!selectedTrigger?.properties) return;
+
+      selectedTrigger.properties.conditions.splice(action.payload, 1);
     },
     setEdges(state, action: PayloadAction<Edge<undefined>[]>) {
       state.edges = action.payload;
@@ -172,6 +201,8 @@ export const {
   attachTrigger,
   updateSelectedTrigger,
   deleteSelectedTrigger,
+  changeSelectedTriggerCondition,
+  deleteSelectedTriggerCondition,
   setEdges,
   setTriggers,
   selectTrigger,

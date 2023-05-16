@@ -44,7 +44,7 @@ interface NavigationItem {
   children?: NavigationItem[];
 }
 
-const navigationA = dataSubArray as NavigationItem[];
+// const navigationA = dataSubArray as NavigationItem[];
 const navigation = [
   { name: "Home", href: "#", icon: HomeIcon, current: true },
   { name: "History", href: "#", icon: ClockIcon, current: false },

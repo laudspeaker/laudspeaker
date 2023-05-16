@@ -65,7 +65,6 @@ const TriggerModal = ({
         {selectedTrigger && (
           <TriggerCreater
             triggerType={selectedTrigger.type as TriggerType}
-            trigger={selectedTrigger}
             isViewMode={isViewMode}
             onSave={(trigger: Trigger) => onSaveTrigger(trigger)}
             onDelete={(triggerId: string) =>

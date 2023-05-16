@@ -20,10 +20,14 @@ import { FormDataItem, IResource } from "pages/Segment/MySegment";
 import { Resource } from "pages/EmailBuilder/EmailBuilder";
 import MinusIcon from "../../assets/images/MinusIcon.svg";
 import Autocomplete from "components/Autocomplete";
+import { useAppDispatch, useAppSelector } from "store/hooks";
+import {
+  deleteSelectedTriggerCondition,
+  updateSelectedTrigger,
+} from "reducers/flow-builder.reducer";
 
 interface ITriggerCreaterProp {
   triggerType: TriggerType;
-  trigger: Trigger;
   onSave: (trigger: Trigger) => void;
   onDelete: (triggerId: string) => void;
   isViewMode: boolean;
@@ -37,36 +41,44 @@ interface Condition {
 }
 
 const TriggerCreater = (props: ITriggerCreaterProp) => {
-  const {
-    triggerType: triggerProp,
-    onSave,
-    onDelete,
-    trigger,
-    isViewMode,
-  } = props;
+  const { triggerType: triggerProp, onSave, onDelete, isViewMode } = props;
 
   const getAllResources = async (id: string) => {
     const response = await getEventResources(id);
     return response;
   };
 
-  const [eventTrigger, setEventTrigger] = useState<Trigger>(trigger);
+  const { triggers, selectedTriggerId } = useAppSelector(
+    (state) => state.flowBuilder
+  );
+
+  const dispatch = useAppDispatch();
+
+  const selectedTrigger = triggers.find(
+    (trigger) => trigger.id === selectedTriggerId
+  ) || {
+    id: "",
+    title: "Unknown trigger",
+    type: TriggerType.EVENT,
+  };
 
   const handleConditionsChange = (
     index: number,
     newCondition: EventCondition
   ) => {
-    if (!eventTrigger?.properties?.conditions?.[index]) return;
+    if (!selectedTrigger?.properties?.conditions?.[index]) return;
 
-    eventTrigger.properties.conditions[index] = newCondition;
-    setEventTrigger((prev) => ({
-      ...prev,
-      conditions: [
-        ...(prev.properties?.conditions?.map((condition) => ({
-          ...condition,
-        })) || []),
-      ],
-    }));
+    console.log(newCondition);
+    // selectedTrigger.properties.conditions[index] = newCondition;
+    // setEventTrigger((prev) => ({
+    //   ...prev,
+
+    //   conditions: [
+    //     ...(prev.properties?.conditions?.map((condition) => ({
+    //       ...condition,
+    //     })) || []),
+    //   ],
+    // }));
   };
 
   const populateFormData = (criteria: Condition[]) => {
@@ -152,16 +164,18 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
 
   const [triggerType, setTriggerType] = useState<TriggerType>(triggerProp);
   const [eventTimeSelect, setEventTimeSelect] = useState(
-    trigger.properties?.eventTime || "Delay"
+    selectedTrigger.properties?.eventTime || "Delay"
   );
-  const [delayTime, setDelayTime] = useState(trigger.properties?.delayTime);
+  const [delayTime, setDelayTime] = useState(
+    selectedTrigger.properties?.delayTime
+  );
 
   let initialDelayDays = 0;
   let initialDelayHours = 1;
   let initialDelayMinutes = 0;
 
-  if (trigger.properties?.delayTime) {
-    const [hours, minutes] = trigger.properties.delayTime.split(":");
+  if (selectedTrigger.properties?.delayTime) {
+    const [hours, minutes] = selectedTrigger.properties.delayTime.split(":");
 
     initialDelayMinutes = +minutes;
     if (+hours >= 24) {
@@ -210,13 +224,13 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
   }, [delayDays, delayHours, delayMinutes]);
 
   const [datePickerSpecificTimeValue, setDatePickerSpecificTimeValue] =
-    useState(trigger.properties?.specificTime);
+    useState(selectedTrigger.properties?.specificTime);
 
   const [datePickerFromValue, setDatePickerFromValue] = useState(
-    trigger.properties?.fromTime
+    selectedTrigger.properties?.fromTime
   );
   const [datePickerToValue, setDatePickerToValue] = useState(
-    trigger.properties?.toTime
+    selectedTrigger.properties?.toTime
   );
 
   const [isButtonDisabled, setIsButtonDisabled] = useState(true);
@@ -264,7 +278,7 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
 
   const handleTriggerType = (value: TriggerType) => {
     setTriggerType(value);
-    setEventTrigger({ ...eventTrigger, type: value });
+    dispatch(updateSelectedTrigger({ type: value }));
   };
 
   const handleSpecificTimeChange = (value: string | null) => {
@@ -298,12 +312,12 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
           [response.id]: response,
         }));
         setIsButtonDisabled(
-          !(eventTrigger.properties?.conditions as { value: string }[])?.some(
-            (item) => item.value
-          ) || false
+          !(
+            selectedTrigger.properties?.conditions as { value: string }[]
+          )?.some((item) => item.value) || false
         );
         setFormData(
-          populateFormData(eventTrigger.properties?.conditions || []) || [
+          populateFormData(selectedTrigger.properties?.conditions || []) || [
             {
               [response.id]: {
                 value: "",
@@ -313,7 +327,7 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
             },
           ]
         );
-        eventTrigger?.properties?.conditions?.forEach((item) => {
+        selectedTrigger?.properties?.conditions?.forEach((item) => {
           for (const key of Object.keys(item)) {
             getAllResources(item[key as keyof EventCondition]).then(
               (resourceResponse) => {
@@ -333,7 +347,7 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
     if (triggerType === TriggerType.EVENT || "timeDelay") {
       getAllConditions();
     }
-  }, [triggerType, eventTrigger.properties?.conditions]);
+  }, [triggerType, selectedTrigger.properties?.conditions]);
 
   const [possibleTypes, setPossibleTypes] = useState<string[]>([]);
 
@@ -497,13 +511,13 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
   };
 
   const deleteRow = () => {
-    onDelete(trigger.id);
+    onDelete(selectedTrigger.id);
   };
 
   const handleData = async (func: (data: Trigger) => void) => {
     if (triggerType === TriggerType.TIME_DELAY)
       func({
-        ...eventTrigger,
+        ...selectedTrigger,
         properties: {
           conditions: [],
           specificTime: datePickerSpecificTimeValue,
@@ -513,7 +527,7 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
       });
     else if (triggerType === "timeWindow")
       func({
-        ...eventTrigger,
+        ...selectedTrigger,
         properties: {
           conditions: [],
           fromTime: datePickerFromValue,
@@ -521,7 +535,7 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
         },
       });
     else if (triggerType === TriggerType.EVENT) {
-      func(eventTrigger);
+      func(selectedTrigger);
     }
   };
 
@@ -726,26 +740,17 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
   };
 
   const handleDeleteCondition = (i: number) => {
-    setEventTrigger((prev) => ({
-      ...prev,
-      properties: {
-        conditions: [
-          ...(prev?.properties?.conditions?.filter(
-            (_condition, index) => index !== i
-          ) || []),
-        ],
-      },
-    }));
+    dispatch(deleteSelectedTriggerCondition(i));
   };
 
   let eventBasedErrorMessage = "";
 
   for (
     let i = 0;
-    i < (eventTrigger?.properties?.conditions?.length || 0);
+    i < (selectedTrigger?.properties?.conditions?.length || 0);
     i++
   ) {
-    const condition = eventTrigger?.properties?.conditions?.[i];
+    const condition = selectedTrigger?.properties?.conditions?.[i];
     // for (const key of Object.keys(condition)) {
     //   if (!condition[key as keyof EventCondition]) {
     //     eventBasedErrorMessage = `${key} is not defined at position ${i + 1}`;
@@ -794,7 +799,7 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
     const { data } = await ApiService.get({
       url:
         "/events/possible-posthog-types?search=" +
-        (eventTrigger.providerParams || ""),
+        (selectedTrigger.providerParams || ""),
     });
     setPossiblePosthogEventTypes(data);
   };
@@ -804,7 +809,7 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
       loadPossiblePosthogEventTypes();
     },
     1000,
-    [eventTrigger.providerParams]
+    [selectedTrigger.providerParams]
   );
 
   let isError = false;
@@ -862,15 +867,12 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
           <div className="flex items-center relative">
             <div className="rounded-[10px] flex items-center cursor-pointer w-full">
               <div className="flex flex-[1] flex-wrap flex-col">
-                {eventTrigger.type === TriggerType.EVENT && (
+                {selectedTrigger.type === TriggerType.EVENT && (
                   <div className="w-full flex flex-col mb-[10px]">
                     <Select
                       label="Event type"
                       onChange={(val) =>
-                        setEventTrigger({
-                          ...eventTrigger,
-                          providerType: val,
-                        })
+                        dispatch(updateSelectedTrigger({ providerType: val }))
                       }
                       options={[
                         { value: ProviderTypes.Posthog, title: "Posthog" },
@@ -878,26 +880,28 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
                       ]}
                       disabled={isViewMode}
                       wrapperClassnames="max-w-[200px] w-full mr-[15px]"
-                      value={eventTrigger.providerType || ProviderTypes.Custom}
+                      value={
+                        selectedTrigger.providerType || ProviderTypes.Custom
+                      }
                     />
-                    {eventTrigger.providerType === ProviderTypes.Posthog && (
+                    {selectedTrigger.providerType === ProviderTypes.Posthog && (
                       <div className="relative mt-[4px]">
                         <Autocomplete
                           inputId="keyInput"
                           items={[...possiblePosthogEventTypes]}
-                          inputValue={eventTrigger.providerParams || ""}
+                          inputValue={selectedTrigger.providerParams || ""}
                           onInputChange={(event) =>
-                            setEventTrigger({
-                              ...eventTrigger,
-                              providerParams: event.target.value || "",
-                            })
+                            dispatch(
+                              updateSelectedTrigger({
+                                providerParams: event.target.value || "",
+                              })
+                            )
                           }
                           disabled={isViewMode}
                           onOptionSelect={(el) => {
-                            setEventTrigger({
-                              ...eventTrigger,
-                              providerParams: el,
-                            });
+                            dispatch(
+                              updateSelectedTrigger({ providerParams: el })
+                            );
                           }}
                           optionKey={(el) => el}
                           optionRender={(el) => el}
@@ -920,7 +924,7 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
                 {triggerType === "eventBased" ? (
                   <>
                     <div>
-                      {eventTrigger.properties?.conditions?.map(
+                      {selectedTrigger.properties?.conditions?.map(
                         (condition, i) => (
                           <>
                             <div className="flex items-center">
@@ -942,13 +946,13 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
                               possibleTypes={possibleTypes}
                               isViewMode={isViewMode}
                               specificProvider={
-                                eventTrigger.providerType ||
+                                selectedTrigger.providerType ||
                                 ProviderTypes.Custom
                               }
                             />
                             {i !==
-                              (eventTrigger?.properties?.conditions?.length ||
-                                0) -
+                              (selectedTrigger?.properties?.conditions
+                                ?.length || 0) -
                                 1 && (
                               <div className="max-w-[7%]">
                                 <AndOrSelect
@@ -967,7 +971,7 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
                         )
                       )}
                     </div>
-                    {eventTrigger.properties?.conditions?.length === 10 && (
+                    {selectedTrigger.properties?.conditions?.length === 10 && (
                       <span className="text-red-500">
                         Maximum 10 conditions allowed
                       </span>
@@ -976,28 +980,30 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
                       <div>
                         <GenericButton
                           onClick={() =>
-                            setEventTrigger({
-                              ...eventTrigger,
-                              properties: {
-                                ...eventTrigger.properties,
-                                conditions: [
-                                  ...(eventTrigger?.properties?.conditions ||
-                                    []),
-                                  {
-                                    filterBy: FilterByOption.CUSTOMER_KEY,
-                                    key: "",
-                                    value: "",
-                                    comparisonType: "",
-                                    type: "",
-                                    relationWithNext: "and",
-                                    isArray: false,
-                                  },
-                                ],
-                              },
-                            })
+                            dispatch(
+                              updateSelectedTrigger({
+                                properties: {
+                                  ...selectedTrigger.properties,
+                                  conditions: [
+                                    ...(selectedTrigger?.properties
+                                      ?.conditions || []),
+                                    {
+                                      filterBy: FilterByOption.CUSTOMER_KEY,
+                                      key: "",
+                                      value: "",
+                                      comparisonType: "",
+                                      type: "",
+                                      relationWithNext: "and",
+                                      isArray: false,
+                                    },
+                                  ],
+                                },
+                              })
+                            )
                           }
                           disabled={
-                            eventTrigger.properties?.conditions?.length === 10
+                            selectedTrigger.properties?.conditions?.length ===
+                            10
                           }
                         >
                           Add new condition
