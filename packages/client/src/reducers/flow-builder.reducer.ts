@@ -9,18 +9,6 @@ import {
 import { v4 as uuid } from "uuid";
 
 export interface NodeData {
-  audienceId: string;
-  isDynamic?: boolean;
-  isSelected?: boolean;
-  messages: { type: string; templateId: number }[];
-  needsUpdate?: boolean;
-  nodeId?: string;
-  primary: boolean;
-  mock?: boolean;
-  triggers: string[];
-  hidden?: boolean;
-  isExit?: boolean;
-  isNew?: boolean;
   stats?: {
     sent: number;
     delivered: number;
@@ -28,13 +16,11 @@ export interface NodeData {
     wssent: number;
     openedPercentage: number;
   };
-  isConnecting?: boolean;
-  isNearToCursor?: boolean;
-  isDraggedOver?: boolean;
 }
 
 interface FlowBuilderState {
   flowId: string;
+  flowName: string;
   nodes: Node<NodeData>[];
   edges: Edge<undefined>[];
   triggers: Trigger[];
@@ -51,6 +37,7 @@ const initialTriggers: Trigger[] = [];
 
 const initialState: FlowBuilderState = {
   flowId: "",
+  flowName: "",
   nodes: initialNodes.slice(),
   edges: initialEdges.slice(),
   triggers: initialTriggers.slice(),
@@ -78,90 +65,90 @@ const flowBuilderSlice = createSlice({
     addNode(state, action: PayloadAction<Node<NodeData>>) {
       state.nodes.push(action.payload);
     },
-    attachTrigger(state, action: PayloadAction<TriggerType>) {
-      const selectedNode = state.nodes.find(
-        (node) => node.id === state.selectedNodeId
-      );
-      if (!selectedNode) return;
-      const triggerId = uuid();
-      const trigger: Trigger = {
-        id: triggerId,
-        title: triggerTitleMap[action.payload],
-        type: action.payload,
-        properties: {
-          conditions: [],
-        },
-        ...(action.payload === TriggerType.EVENT
-          ? { providerType: ProviderTypes.Custom, providerParams: undefined }
-          : {}),
-      };
-      state.triggers.push(trigger);
-      selectedNode.data.triggers.push(triggerId);
+    // attachTrigger(state, action: PayloadAction<TriggerType>) {
+    //   const selectedNode = state.nodes.find(
+    //     (node) => node.id === state.selectedNodeId
+    //   );
+    //   if (!selectedNode) return;
+    //   const triggerId = uuid();
+    //   const trigger: Trigger = {
+    //     id: triggerId,
+    //     title: triggerTitleMap[action.payload],
+    //     type: action.payload,
+    //     properties: {
+    //       conditions: [],
+    //     },
+    //     ...(action.payload === TriggerType.EVENT
+    //       ? { providerType: ProviderTypes.Custom, providerParams: undefined }
+    //       : {}),
+    //   };
+    //   state.triggers.push(trigger);
+    //   selectedNode.data.triggers.push(triggerId);
 
-      state.selectedTriggerId = trigger.id;
-    },
-    updateSelectedTrigger(
-      state,
-      action: PayloadAction<
-        Pick<
-          Partial<Trigger>,
-          "type" | "providerParams" | "providerType" | "properties"
-        >
-      >
-    ) {
-      const selectedTrigger = state.triggers.find(
-        (trigger) => trigger.id === state.selectedTriggerId
-      );
+    //   state.selectedTriggerId = trigger.id;
+    // },
+    // updateSelectedTrigger(
+    //   state,
+    //   action: PayloadAction<
+    //     Pick<
+    //       Partial<Trigger>,
+    //       "type" | "providerParams" | "providerType" | "properties"
+    //     >
+    //   >
+    // ) {
+    //   const selectedTrigger = state.triggers.find(
+    //     (trigger) => trigger.id === state.selectedTriggerId
+    //   );
 
-      if (!selectedTrigger) return;
+    //   if (!selectedTrigger) return;
 
-      const { type, providerParams, providerType, properties } = action.payload;
+    //   const { type, providerParams, providerType, properties } = action.payload;
 
-      selectedTrigger.type = type || selectedTrigger.type;
-      selectedTrigger.providerParams =
-        providerParams || selectedTrigger.providerParams;
-      selectedTrigger.providerType =
-        providerType || selectedTrigger.providerType;
-      selectedTrigger.properties = properties || selectedTrigger.properties;
-    },
-    deleteSelectedTrigger(state) {
-      state.triggers = state.triggers.filter(
-        (trigger) => trigger.id !== state.selectedTriggerId
-      );
+    //   selectedTrigger.type = type || selectedTrigger.type;
+    //   selectedTrigger.providerParams =
+    //     providerParams || selectedTrigger.providerParams;
+    //   selectedTrigger.providerType =
+    //     providerType || selectedTrigger.providerType;
+    //   selectedTrigger.properties = properties || selectedTrigger.properties;
+    // },
+    // deleteSelectedTrigger(state) {
+    //   state.triggers = state.triggers.filter(
+    //     (trigger) => trigger.id !== state.selectedTriggerId
+    //   );
 
-      for (const node of state.nodes) {
-        node.data.triggers = node.data.triggers.filter(
-          (triggerId) => triggerId !== state.selectedTriggerId
-        );
-      }
+    //   for (const node of state.nodes) {
+    //     node.data.triggers = node.data.triggers.filter(
+    //       (triggerId) => triggerId !== state.selectedTriggerId
+    //     );
+    //   }
 
-      state.edges = state.edges.filter(
-        (edge) => edge.sourceHandle !== state.selectedTriggerId
-      );
-      state.selectedTriggerId = "";
-    },
-    changeSelectedTriggerCondition(
-      state,
-      action: PayloadAction<[number, EventCondition]>
-    ) {
-      const selectedTrigger = state.triggers.find(
-        (trigger) => trigger.id === state.selectedTriggerId
-      );
+    //   state.edges = state.edges.filter(
+    //     (edge) => edge.sourceHandle !== state.selectedTriggerId
+    //   );
+    //   state.selectedTriggerId = "";
+    // },
+    // changeSelectedTriggerCondition(
+    //   state,
+    //   action: PayloadAction<[number, EventCondition]>
+    // ) {
+    //   const selectedTrigger = state.triggers.find(
+    //     (trigger) => trigger.id === state.selectedTriggerId
+    //   );
 
-      if (!selectedTrigger?.properties) return;
+    //   if (!selectedTrigger?.properties) return;
 
-      selectedTrigger.properties.conditions[action.payload[0]] =
-        action.payload[1];
-    },
-    deleteSelectedTriggerCondition(state, action: PayloadAction<number>) {
-      const selectedTrigger = state.triggers.find(
-        (trigger) => trigger.id === state.selectedTriggerId
-      );
+    //   selectedTrigger.properties.conditions[action.payload[0]] =
+    //     action.payload[1];
+    // },
+    // deleteSelectedTriggerCondition(state, action: PayloadAction<number>) {
+    //   const selectedTrigger = state.triggers.find(
+    //     (trigger) => trigger.id === state.selectedTriggerId
+    //   );
 
-      if (!selectedTrigger?.properties) return;
+    //   if (!selectedTrigger?.properties) return;
 
-      selectedTrigger.properties.conditions.splice(action.payload, 1);
-    },
+    //   selectedTrigger.properties.conditions.splice(action.payload, 1);
+    // },
     setEdges(state, action: PayloadAction<Edge<undefined>[]>) {
       state.edges = action.payload;
     },
@@ -198,11 +185,11 @@ export const {
   setFlowId,
   setNodes,
   addNode,
-  attachTrigger,
-  updateSelectedTrigger,
-  deleteSelectedTrigger,
-  changeSelectedTriggerCondition,
-  deleteSelectedTriggerCondition,
+  // attachTrigger,
+  // updateSelectedTrigger,
+  // deleteSelectedTrigger,
+  // changeSelectedTriggerCondition,
+  // deleteSelectedTriggerCondition,
   setEdges,
   setTriggers,
   selectTrigger,

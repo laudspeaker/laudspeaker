@@ -22,7 +22,6 @@ const SlackConfiguration = () => {
 
   return (
     <div className="pl-[154px] relative bg-[#E5E5E5] flex flex-col h-[100vh]">
-      <Header />
       <div className="flex justify-around m-[72px_50px_72px_50px] gap-[30px]">
         <div className="bg-white rounded-3xl p-[30px] w-full max-w-[930px]">
           <h3 className="flex items-center gap-[10px] text-[25px] font-semibold leading-[40px] mb-[10px]">

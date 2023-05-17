@@ -1,4 +1,10 @@
-import React, { Fragment, MouseEvent, useEffect, useState } from "react";
+import React, {
+  Fragment,
+  MouseEvent,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { dataSubArray } from "./Drawer.fixtures";
 import { AuthState } from "../../reducers/auth.reducer";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -10,6 +16,8 @@ import { toggleNavbar } from "reducers/settings.reducer";
 import { useAppDispatch, useAppSelector } from "store/hooks";
 import { refreshFlowBuilder } from "reducers/flow-builder.reducer";
 import laudspeakerIcon from "../../assets/images/laudspeakerHeaderIcon.svg";
+import useTimedHover from "hooks/useTimedHover";
+import useHover from "hooks/useHover";
 
 const classNames = (...classes: string[]) => classes.filter(Boolean).join(" ");
 
@@ -25,25 +33,24 @@ interface NavigationItem {
 const navigation = dataSubArray;
 
 export default function ResponsiveDrawer() {
-  const userState = useAppSelector<AuthState>((state) => state.auth);
   const dispatch = useAppDispatch();
-  const [isExpanded, setIsExpanded] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+
+  const drawerRef = useRef<HTMLDivElement>(null);
+
+  const isExpanded = useHover(drawerRef);
 
   useEffect(() => {
     dispatch(refreshFlowBuilder());
   }, [location.pathname]);
-
-  const handleCloseClick = () => {
-    dispatch(toggleNavbar(false));
-  };
 
   return (
     <div
       className={`fixed top-0 left-0 px-[10px] text-[14px] text-[#111827] leading-[22px] font-normal z-[9999999999] ${
         isExpanded ? "w-[200px]" : "w-[50px]"
       } bg-[#F3F4F6] border-[1px] border-[#E5E7EB] h-screen`}
+      ref={drawerRef}
     >
       <div className="flex flex-col gap-[8px]">
         <div

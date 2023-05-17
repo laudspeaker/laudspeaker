@@ -96,7 +96,6 @@ const FlowTable = () => {
   return (
     <div className="bg-gray-100">
       <div className="relative w-full h-full ">
-        <Header />
         <div className="py-[37px] px-[30px]">
           <Modal
             isOpen={nameModalOpen}

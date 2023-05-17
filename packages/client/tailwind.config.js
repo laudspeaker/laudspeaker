@@ -6,6 +6,7 @@ module.exports = withMT({
     extend: {
       fontFamily: {
         segoe: ["Segoe UI", "Roboto"],
+        roboto: ["Roboto"],
       },
     },
   },

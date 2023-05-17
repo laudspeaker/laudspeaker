@@ -1407,7 +1407,6 @@ export default function OnboardingBeta() {
     <>
       <div className="min-h-full">
         <div className="flex flex-1 flex-col">
-          <Header />
           {!verified && (
             <div className="flex items-center py-[10px] px-[10px] md:px-[30px] bg-[#fffde9]">
               <ExclamationTriangleIcon className="w-[30px] h-[30px] text-[#ffe30c] mr-[20px]" />

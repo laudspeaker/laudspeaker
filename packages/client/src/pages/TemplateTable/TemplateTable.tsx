@@ -95,7 +95,6 @@ const TemplateTable = () => {
   if (loading) return <Progress />;
   return (
     <div className="w-full relative">
-      <Header />
       <div className="py-[37px] px-[30px]">
         <Modal
           isOpen={nameModalOpen}
