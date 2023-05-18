@@ -14,13 +14,6 @@ body,
   margin: 0;
   padding: 0;
 }
-.react-flow__handle.connectable {
-  width: 100%;
-}
-
-.react-flow__attribution {
-  display: none !important;
-}
 
 .gjs-two-color {
   background-color: #223343;
@@ -55,21 +48,4 @@ body,
 .gjs-layer-title-c {
   min-height: 30px;
   font-size: 12px;
-}
-
-.react-flow__edge-path-selector:hover {
-  cursor: pointer;
-}
-.react-flow__edge-path-selector:hover + .react-flow__edge-path,
-.react-flow__edge-path:hover {
-  stroke: rgb(0 172 193);
-  cursor: pointer;
-}
-.react-flow__edge-path-selector {
-  opacity: 0;
-  stroke-width: 40;
-}
-
-.triggerOut:hover .circle-to-display-hover {
-  opacity: 1;
 }

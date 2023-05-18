@@ -1,6 +1,6 @@
 import React from "react";
-import FlowBuilderDrawer from "./FlowBuilderDrawer";
-import FlowBuilderHeader from "./FlowBuilderHeader";
+import FlowBuilderDrawer from "./Drawer/FlowBuilderDrawer";
+import FlowBuilderHeader from "./Header/FlowBuilderHeader";
 import FlowEditor from "./FlowEditor";
 
 const FlowBuilderv3 = () => {

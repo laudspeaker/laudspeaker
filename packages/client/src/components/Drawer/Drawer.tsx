@@ -78,7 +78,10 @@ export default function ResponsiveDrawer() {
         </div>
         <div className="flex flex-col gap-[8px]">
           {navigation.map((navigationItem) => (
-            <div className="w-full flex justify-center items-center">
+            <div
+              className="w-full flex justify-center items-center"
+              key={navigationItem.id}
+            >
               {navigationItem.children ? (
                 <div className="w-full">
                   <Disclosure>
@@ -109,7 +112,7 @@ export default function ResponsiveDrawer() {
                                 >
                                   <path
                                     fill-rule="evenodd"
-                                    clip-rule="evenodd"
+                                    clipRule="evenodd"
                                     d="M7.58573 6.94449C7.97626 7.33501 8.53028 7.41416 8.82317 7.12127C9.11606 6.82837 9.03692 6.27435 8.64639 5.88383L5.81797 3.0554C5.57464 2.81208 5.26784 2.68964 5.00029 2.70275C4.73263 2.68949 4.42564 2.81193 4.18218 3.05538L1.35376 5.88381C0.963233 6.27433 0.884088 6.82835 1.17698 7.12125C1.46987 7.41414 2.02389 7.33499 2.41442 6.94447L5.00007 4.35882L7.58573 6.94449Z"
                                     fill="#4B5563"
                                   />
@@ -126,6 +129,7 @@ export default function ResponsiveDrawer() {
                                   isExpanded ? "" : "justify-center"
                                 }`}
                                 onClick={() => navigate(child.link)}
+                                key={child.id}
                               >
                                 <div
                                   className={`rounded-[4px] flex items-center w-full gap-[16px] ${
