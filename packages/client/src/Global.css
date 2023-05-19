@@ -49,3 +49,7 @@ body,
   min-height: 30px;
   font-size: 12px;
 }
+
+.react-flow__controls-button > svg {
+  fill: #4B5563;
+}

@@ -6,7 +6,7 @@ export enum TriggerType {
   TIME_WINDOW = "timeWindow",
 }
 
-export enum MessagesTypes {
+export enum MessageType {
   EMAIL = "email",
   SLACK = "slack",
   SMS = "sms",

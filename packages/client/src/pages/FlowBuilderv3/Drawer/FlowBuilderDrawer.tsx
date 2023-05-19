@@ -1,10 +1,10 @@
 import React, { DragEvent } from "react";
 import Scrollbars from "react-custom-scrollbars-2";
-import flowBuilderFixtures from "./fixtures/drawer.fixtures";
+import flowBuilderFixtures, { DrawerAction } from "./drawer.fixtures";
 
 const FlowBuilderDrawer = () => {
-  const onDrag = (e: DragEvent<HTMLDivElement>) => {
-    console.log(e);
+  const onDragStart = (e: DragEvent<HTMLDivElement>, action: DrawerAction) => {
+    e.dataTransfer.setData("action", action);
   };
 
   return (
@@ -21,9 +21,10 @@ const FlowBuilderDrawer = () => {
               </div>
               {group.children.map((child) => (
                 <div
-                  className="w-full h-[44px] px-[15px] py-[10px] flex gap-[10px] border-[1px] border-[#E5E7EB] select-none items-end"
-                  onDrag={onDrag}
+                  className="w-full h-[44px] px-[15px] py-[10px] flex gap-[10px] border-[1px] border-[#E5E7EB] select-none items-end cursor-grab"
+                  onDragStart={(e) => onDragStart(e, child.id)}
                   key={child.id}
+                  draggable
                 >
                   <div>{child.icon}</div>
                   <div className="font-segoe font-normal text-[14px] leading-[22px]">

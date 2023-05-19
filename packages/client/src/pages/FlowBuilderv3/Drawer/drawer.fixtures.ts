@@ -1,15 +1,15 @@
 import {
   EmailIcon,
-  ExitIcon,
-  LoopIcon,
-  PushIcon,
-  SlackIcon,
   SMSIcon,
+  SlackIcon,
+  PushIcon,
+  WebhookIcon,
+  LoopIcon,
+  ExitIcon,
   TimeDelayIcon,
   TimeWindowIcon,
   WaitUntilIcon,
-  WebhookIcon,
-} from "./drawer.icons";
+} from "pages/FlowBuilderv3/Icons";
 
 export enum DrawerAction {
   EMAIL = "email",
@@ -37,37 +37,37 @@ const flowBuilderDrawerFixtures: {
     children: [
       {
         id: DrawerAction.EMAIL,
-        icon: EmailIcon,
+        icon: EmailIcon(),
         text: "Email",
       },
       {
         id: DrawerAction.SMS,
-        icon: SMSIcon,
+        icon: SMSIcon(),
         text: "SMS",
       },
       {
         id: DrawerAction.SLACK,
-        icon: SlackIcon,
+        icon: SlackIcon(),
         text: "Slack",
       },
       {
         id: DrawerAction.PUSH,
-        icon: PushIcon,
+        icon: PushIcon(),
         text: "Push Notification",
       },
       {
         id: DrawerAction.WEBHOOK,
-        icon: WebhookIcon,
+        icon: WebhookIcon(),
         text: "Webhook",
       },
       {
         id: DrawerAction.LOOP,
-        icon: LoopIcon,
+        icon: LoopIcon(),
         text: "Loop",
       },
       {
         id: DrawerAction.EXIT,
-        icon: ExitIcon,
+        icon: ExitIcon(),
         text: "Exit",
       },
     ],
@@ -75,11 +75,19 @@ const flowBuilderDrawerFixtures: {
   {
     groupName: "Trigger",
     children: [
-      { id: DrawerAction.WAIT_UNTIL, icon: WaitUntilIcon, text: "Wait Until" },
-      { id: DrawerAction.TIME_DELAY, icon: TimeDelayIcon, text: "Time Delay" },
+      {
+        id: DrawerAction.WAIT_UNTIL,
+        icon: WaitUntilIcon(),
+        text: "Wait Until",
+      },
+      {
+        id: DrawerAction.TIME_DELAY,
+        icon: TimeDelayIcon(),
+        text: "Time Delay",
+      },
       {
         id: DrawerAction.TIME_WINDOW,
-        icon: TimeWindowIcon,
+        icon: TimeWindowIcon(),
         text: "Time Window",
       },
     ],

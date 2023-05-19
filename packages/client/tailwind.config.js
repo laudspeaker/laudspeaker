@@ -7,6 +7,7 @@ module.exports = withMT({
       fontFamily: {
         segoe: ["Segoe UI", "Roboto"],
         roboto: ["Roboto"],
+        inter: ["Inter", "Roboto"],
       },
     },
   },

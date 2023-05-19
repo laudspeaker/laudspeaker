@@ -1,4 +1,4 @@
-export const EmailIcon = (
+export const EmailIcon = () => (
   <svg
     width="24"
     height="24"
@@ -21,7 +21,7 @@ export const EmailIcon = (
   </svg>
 );
 
-export const SMSIcon = (
+export const SMSIcon = () => (
   <svg
     width="24"
     height="24"
@@ -48,7 +48,7 @@ export const SMSIcon = (
   </svg>
 );
 
-export const SlackIcon = (
+export const SlackIcon = () => (
   <svg
     width="24"
     height="24"
@@ -68,7 +68,7 @@ export const SlackIcon = (
   </svg>
 );
 
-export const PushIcon = (
+export const PushIcon = () => (
   <svg
     width="24"
     height="24"
@@ -87,7 +87,7 @@ export const PushIcon = (
   </svg>
 );
 
-export const WebhookIcon = (
+export const WebhookIcon = () => (
   <svg
     width="24"
     height="24"
@@ -120,7 +120,7 @@ export const WebhookIcon = (
   </svg>
 );
 
-export const LoopIcon = (
+export const LoopIcon = () => (
   <svg
     width="24"
     height="24"
@@ -135,7 +135,7 @@ export const LoopIcon = (
   </svg>
 );
 
-export const ExitIcon = (
+export const ExitIcon = () => (
   <svg
     width="24"
     height="24"
@@ -157,7 +157,7 @@ export const ExitIcon = (
   </svg>
 );
 
-export const WaitUntilIcon = (
+export const WaitUntilIcon = () => (
   <svg
     width="24"
     height="24"
@@ -180,7 +180,7 @@ export const WaitUntilIcon = (
   </svg>
 );
 
-export const TimeDelayIcon = (
+export const TimeDelayIcon = () => (
   <svg
     width="24"
     height="24"
@@ -199,7 +199,7 @@ export const TimeDelayIcon = (
   </svg>
 );
 
-export const TimeWindowIcon = (
+export const TimeWindowIcon = () => (
   <svg
     width="24"
     height="24"
