@@ -363,8 +363,6 @@ In terms of how we think about product we categorise our work into 4 major bucke
 
 ## 
 
-## 🌱 How we hire
-
 
 
 
