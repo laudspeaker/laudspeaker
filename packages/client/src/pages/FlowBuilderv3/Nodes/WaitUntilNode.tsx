@@ -2,9 +2,15 @@ import React, { FC } from "react";
 import { Handle, NodeProps, Position } from "reactflow";
 import { WaitUntilIcon } from "../Icons";
 
-export const WaitUntilNode: FC<NodeProps> = ({ isConnectable }) => {
+export const WaitUntilNode: FC<NodeProps> = ({ isConnectable, selected }) => {
   return (
-    <div className="w-[260px] h-[80px] rounded-[4px] bg-white border-[1px] border-[#E5E7EB] font-inter">
+    <div
+      className={`w-[260px] h-[80px] rounded-[4px] bg-white font-inter ${
+        selected
+          ? "border-[2px] border-[#6366F1]"
+          : "border-[1px] border-[#E5E7EB]"
+      }`}
+    >
       <Handle
         position={Position.Top}
         type="target"

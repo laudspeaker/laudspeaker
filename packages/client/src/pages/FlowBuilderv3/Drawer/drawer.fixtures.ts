@@ -4,11 +4,12 @@ import {
   SlackIcon,
   PushIcon,
   WebhookIcon,
-  LoopIcon,
   ExitIcon,
   TimeDelayIcon,
   TimeWindowIcon,
   WaitUntilIcon,
+  JumpToIcon,
+  CustomModalIcon,
 } from "pages/FlowBuilderv3/Icons";
 
 export enum DrawerAction {
@@ -17,7 +18,8 @@ export enum DrawerAction {
   SLACK = "slack",
   PUSH = "push",
   WEBHOOK = "webhook",
-  LOOP = "loop",
+  CUSTOM_MODAL = "customModal",
+  JUMP_TO = "jumpTo",
   EXIT = "exit",
   WAIT_UNTIL = "waitUntil",
   TIME_DELAY = "timeDelay",
@@ -61,8 +63,13 @@ const flowBuilderDrawerFixtures: {
         text: "Webhook",
       },
       {
-        id: DrawerAction.LOOP,
-        icon: LoopIcon(),
+        id: DrawerAction.CUSTOM_MODAL,
+        icon: CustomModalIcon(),
+        text: "Custom Modal",
+      },
+      {
+        id: DrawerAction.JUMP_TO,
+        icon: JumpToIcon(),
         text: "Loop",
       },
       {

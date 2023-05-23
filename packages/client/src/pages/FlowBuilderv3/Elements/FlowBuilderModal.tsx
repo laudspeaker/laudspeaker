@@ -23,7 +23,7 @@ const FlowBuilderModal: FC<FlowBuilderModalProps> = ({
             onClick={onClose}
           >
             <div
-              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[416px] h-[192px] bg-white px-[32px] pt-[32px] pb-[24px] text-[#111827]"
+              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[416px] bg-white px-[32px] pt-[32px] pb-[24px] text-[#111827]"
               onClick={(e) => e.stopPropagation()}
             >
               {children}

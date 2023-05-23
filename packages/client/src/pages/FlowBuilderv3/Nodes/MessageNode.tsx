@@ -1,40 +1,49 @@
 import React, { FC, ReactNode } from "react";
 import { Handle, NodeProps, Position } from "reactflow";
 import { MessageType } from "types/Workflow";
-import { EmailIcon, PushIcon, SlackIcon, SMSIcon, WebhookIcon } from "../Icons";
+import {
+  CustomModalIcon,
+  EmailIcon,
+  PushIcon,
+  SlackIcon,
+  SMSIcon,
+  WebhookIcon,
+} from "../Icons";
 import NodeData from "./NodeData";
 
-const messageFixtures: Record<MessageType, { icon: ReactNode; text: string }> =
-  {
-    [MessageType.EMAIL]: {
-      icon: <EmailIcon />,
-      text: "Email",
-    },
-    [MessageType.FIREBASE]: {
-      icon: <></>,
-      text: "Filebase",
-    },
-    [MessageType.MODAL]: {
-      icon: <></>,
-      text: "Modal",
-    },
-    [MessageType.PUSH]: {
-      icon: <PushIcon />,
-      text: "Modal",
-    },
-    [MessageType.SLACK]: {
-      icon: <SlackIcon />,
-      text: "Slack",
-    },
-    [MessageType.SMS]: {
-      icon: <SMSIcon />,
-      text: "SMS",
-    },
-    [MessageType.WEBHOOK]: {
-      icon: <WebhookIcon />,
-      text: "Webhook",
-    },
-  };
+export const messageFixtures: Record<
+  MessageType,
+  { icon: ReactNode; text: string }
+> = {
+  [MessageType.EMAIL]: {
+    icon: <EmailIcon />,
+    text: "Email",
+  },
+  [MessageType.FIREBASE]: {
+    icon: <></>,
+    text: "Filebase",
+  },
+  [MessageType.MODAL]: {
+    icon: <CustomModalIcon />,
+    text: "Modal",
+  },
+  [MessageType.PUSH]: {
+    icon: <PushIcon />,
+    text: "Push",
+  },
+  [MessageType.SLACK]: {
+    icon: <SlackIcon />,
+    text: "Slack",
+  },
+  [MessageType.SMS]: {
+    icon: <SMSIcon />,
+    text: "SMS",
+  },
+  [MessageType.WEBHOOK]: {
+    icon: <WebhookIcon />,
+    text: "Webhook",
+  },
+};
 
 const unknownMessageFixtures: { icon: ReactNode; text: string } = {
   icon: <></>,
@@ -44,6 +53,7 @@ const unknownMessageFixtures: { icon: ReactNode; text: string } = {
 export const MessageNode: FC<NodeProps<NodeData>> = ({
   isConnectable,
   data,
+  selected,
 }) => {
   const { template } = data;
 
@@ -52,7 +62,13 @@ export const MessageNode: FC<NodeProps<NodeData>> = ({
     : unknownMessageFixtures;
 
   return (
-    <div className="w-[260px] h-[80px] rounded-[4px] border-[1px] border-[#E5E7EB] bg-white">
+    <div
+      className={`w-[260px] h-[80px] rounded-[4px] bg-white ${
+        selected
+          ? "border-[2px] border-[#6366F1]"
+          : "border-[1px] border-[#E5E7EB]"
+      }`}
+    >
       <Handle
         position={Position.Top}
         type="target"

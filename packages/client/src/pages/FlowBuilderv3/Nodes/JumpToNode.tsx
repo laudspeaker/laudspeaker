@@ -1,11 +1,20 @@
 import React, { FC } from "react";
 import { Handle, NodeProps, Position } from "reactflow";
-import { LoopIcon } from "../Icons";
+import { JumpToIcon } from "../Icons";
 import NodeData from "./NodeData";
 
-export const LoopNode: FC<NodeProps<NodeData>> = ({ isConnectable }) => {
+export const JumpToNode: FC<NodeProps<NodeData>> = ({
+  isConnectable,
+  selected,
+}) => {
   return (
-    <div className="w-[260px] h-[80px] rounded-[4px] border-[1px] border-[#E5E7EB] bg-white">
+    <div
+      className={`w-[260px] h-[80px] rounded-[4px]  bg-white ${
+        selected
+          ? "border-[2px] border-[#6366F1]"
+          : "border-[1px] border-[#E5E7EB]"
+      }`}
+    >
       <Handle
         position={Position.Top}
         type="target"
@@ -15,12 +24,12 @@ export const LoopNode: FC<NodeProps<NodeData>> = ({ isConnectable }) => {
       <div className="p-[16px] flex flex-col gap-[2px]">
         <div className="flex gap-[6px]">
           <div>
-            <LoopIcon />
+            <JumpToIcon />
           </div>
           <div
             className={`font-inter font-semibold text-[16px] leading-[24px]`}
           >
-            Loop
+            Jump to
           </div>
         </div>
         <div className="font-inter font-normal text-[14px] leading-[22px]">
