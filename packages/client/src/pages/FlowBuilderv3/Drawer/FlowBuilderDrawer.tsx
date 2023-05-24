@@ -1,10 +1,19 @@
 import React, { DragEvent } from "react";
 import Scrollbars from "react-custom-scrollbars-2";
+import { setIsDragging } from "reducers/flow-builder.reducer";
+import { useAppDispatch } from "store/hooks";
 import flowBuilderFixtures, { DrawerAction } from "./drawer.fixtures";
 
 const FlowBuilderDrawer = () => {
+  const dispatch = useAppDispatch();
+
   const onDragStart = (e: DragEvent<HTMLDivElement>, action: DrawerAction) => {
     e.dataTransfer.setData("action", action);
+    dispatch(setIsDragging(true));
+  };
+
+  const onDragEnd = () => {
+    dispatch(setIsDragging(false));
   };
 
   return (
@@ -23,6 +32,7 @@ const FlowBuilderDrawer = () => {
                 <div
                   className="w-full h-[44px] px-[15px] py-[10px] flex gap-[10px] border-[1px] border-[#E5E7EB] select-none items-end cursor-grab"
                   onDragStart={(e) => onDragStart(e, child.id)}
+                  onDragEnd={onDragEnd}
                   key={child.id}
                   draggable
                 >

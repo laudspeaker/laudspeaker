@@ -1,15 +1,9 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { DrawerAction } from "pages/FlowBuilderv3/Drawer/drawer.fixtures";
-import { NodeType } from "pages/FlowBuilderv3/FlowEditor";
+import { EdgeType, NodeType } from "pages/FlowBuilderv3/FlowEditor";
 import NodeData from "pages/FlowBuilderv3/Nodes/NodeData";
 import { applyNodeChanges, Edge, Node, NodeChange } from "reactflow";
-import {
-  EventCondition,
-  MessageType,
-  ProviderTypes,
-  Trigger,
-  TriggerType,
-} from "types/Workflow";
+import { MessageType } from "types/Workflow";
 import { v4 as uuid } from "uuid";
 
 interface FlowBuilderState {
@@ -41,7 +35,7 @@ const initialNodes: Node<NodeData>[] = [
 const initialEdges: Edge<undefined>[] = [
   {
     id: `e${startNodeUUID}-${nextNodeUUID}`,
-    type: "step",
+    type: EdgeType.PRIMARY,
     source: startNodeUUID,
     target: nextNodeUUID,
   },
@@ -69,6 +63,54 @@ const flowBuilderSlice = createSlice({
     setNodes(state, action: PayloadAction<Node<NodeData>[]>) {
       state.nodes = action.payload;
     },
+    addTemporaryEmptyNodeBetween(
+      state,
+      action: PayloadAction<{ source: string; target: string }>
+    ) {
+      const { source, target } = action.payload;
+
+      const edgeBetween = state.edges.find(
+        (edge) => edge.source === source && edge.target === target
+      );
+      if (!edgeBetween) return;
+
+      const newNodeUUID = uuid();
+
+      state.nodes.push({
+        id: newNodeUUID,
+        type: NodeType.EMPTY,
+        data: { temporary: true },
+        position: { x: 0, y: 0 },
+      });
+
+      state.edges.splice(state.edges.indexOf(edgeBetween), 1);
+
+      state.edges.push(
+        {
+          id: `e${source}-${newNodeUUID}`,
+          type: EdgeType.PRIMARY,
+          source,
+          target: newNodeUUID,
+        },
+        {
+          id: `e${newNodeUUID}-${target}`,
+          type: EdgeType.PRIMARY,
+          source: newNodeUUID,
+          target,
+        }
+      );
+    },
+    changeNodeData(
+      state,
+      action: PayloadAction<{ id: string; data: NodeData }>
+    ) {
+      const { id, data } = action.payload;
+
+      const nodeToChange = state.nodes.find((node) => node.id === id);
+      if (!nodeToChange) return;
+
+      nodeToChange.data = data;
+    },
     removeNode(state, action: PayloadAction<string>) {
       const node = state.nodes.find((n) => n.id === action.payload);
       if (!node) return;
@@ -95,9 +137,6 @@ const flowBuilderSlice = createSlice({
     },
     setEdges(state, action: PayloadAction<Edge<undefined>[]>) {
       state.edges = action.payload;
-    },
-    selectNode(state, action: PayloadAction<string | undefined>) {
-      state.selectedNodeId = action.payload;
     },
     handleDrawerAction(
       state,
@@ -169,7 +208,7 @@ const flowBuilderSlice = createSlice({
 
         state.edges.push({
           id: `${nodeToChange.id}-${newNodeId}`,
-          type: "step",
+          type: EdgeType.PRIMARY,
           source: nodeToChange.id,
           target: newNodeId,
         });
@@ -187,6 +226,19 @@ const flowBuilderSlice = createSlice({
         state.nodes
       );
     },
+    deselectNodes(state) {
+      state.nodes = applyNodeChanges(
+        state.nodes.map<NodeChange>((node) => ({
+          type: "select",
+          id: node.id,
+          selected: false,
+        })),
+        state.nodes
+      );
+    },
+    setIsDragging(state, action: PayloadAction<boolean>) {
+      state.isDragging = action.payload;
+    },
     refreshFlowBuilder(state) {
       state.flowId = "";
       state.flowName = "";
@@ -202,10 +254,13 @@ export const {
   setFlowId,
   setFlowName,
   setNodes,
+  addTemporaryEmptyNodeBetween,
+  changeNodeData,
   removeNode,
   setEdges,
-  selectNode,
   handleDrawerAction,
+  deselectNodes,
+  setIsDragging,
   refreshFlowBuilder,
 } = flowBuilderSlice.actions;
 

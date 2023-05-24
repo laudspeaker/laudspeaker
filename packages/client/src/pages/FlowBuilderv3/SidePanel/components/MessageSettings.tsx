@@ -6,15 +6,17 @@ import ApiService from "services/api.service";
 import Template from "types/Template";
 
 interface MessageSettingsProps {
-  node?: Node<NodeData>;
+  nodeData: NodeData;
+  setNodeData: (nodeData: NodeData) => void;
 }
 
-const MessageSettings: FC<MessageSettingsProps> = ({ node }) => {
-  const templateType = node?.data.template?.type;
+const MessageSettings: FC<MessageSettingsProps> = ({
+  nodeData,
+  setNodeData,
+}) => {
+  const templateType = nodeData.template?.type;
+  const selectedTemplateId = nodeData.template?.selected?.id;
 
-  const [selectedTemplate, setSelectedTemplate] = useState(
-    node?.data.template?.selected?.id
-  );
   const [templateList, setTemplateList] = useState<Template[]>([]);
 
   const getAllTemplates = async () => {
@@ -43,8 +45,22 @@ const MessageSettings: FC<MessageSettingsProps> = ({ node }) => {
         <select
           className="w-[200px] h-[32px] rounded-[2px] px-[12px] py-[4px] text-[14px] font-roboto leading-[22px]"
           placeholder="select template"
-          value={selectedTemplate || ""}
-          onChange={(e) => setSelectedTemplate(e.target.value)}
+          value={selectedTemplateId}
+          onChange={(e) =>
+            setNodeData({
+              ...nodeData,
+              template: {
+                type: templateType,
+                selected: {
+                  id: +e.target.value,
+                  name:
+                    templateList.find(
+                      (template) => template.id === +e.target.value
+                    )?.name || "",
+                },
+              },
+            })
+          }
         >
           {templateList.map((template) => (
             <option value={template.id} key={template.id}>

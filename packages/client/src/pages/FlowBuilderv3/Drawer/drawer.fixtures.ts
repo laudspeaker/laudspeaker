@@ -70,7 +70,7 @@ const flowBuilderDrawerFixtures: {
       {
         id: DrawerAction.JUMP_TO,
         icon: JumpToIcon(),
-        text: "Loop",
+        text: "Jump To",
       },
       {
         id: DrawerAction.EXIT,

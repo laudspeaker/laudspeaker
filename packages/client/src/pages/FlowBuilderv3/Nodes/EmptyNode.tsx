@@ -1,10 +1,15 @@
 import React, { FC, useState } from "react";
 import { Handle, NodeProps, Position } from "reactflow";
-import { handleDrawerAction } from "reducers/flow-builder.reducer";
+import { handleDrawerAction, removeNode } from "reducers/flow-builder.reducer";
 import { useAppDispatch, useAppSelector } from "store/hooks";
 import { NodeType } from "../FlowEditor";
+import NodeData from "./NodeData";
 
-export const EmptyNode: FC<NodeProps> = ({ isConnectable, id }) => {
+export const EmptyNode: FC<NodeProps<NodeData>> = ({
+  isConnectable,
+  id,
+  data: { temporary },
+}) => {
   const { nodes, edges } = useAppSelector((state) => state.flowBuilder);
   const dispatch = useAppDispatch();
 
@@ -26,7 +31,10 @@ export const EmptyNode: FC<NodeProps> = ({ isConnectable, id }) => {
         e.dataTransfer.dropEffect = "move";
       }}
       onDragEnter={() => setIsDraggedOver(true)}
-      onDragLeave={() => setIsDraggedOver(false)}
+      onDragLeave={() => {
+        setIsDraggedOver(false);
+        if (temporary) dispatch(removeNode(id));
+      }}
       onDrop={(e) => {
         dispatch(
           handleDrawerAction({ id, action: e.dataTransfer.getData("action") })
@@ -45,6 +53,12 @@ export const EmptyNode: FC<NodeProps> = ({ isConnectable, id }) => {
           {isTargetForStart ? "Drag a component to start" : "Next step"}
         </div>
       )}
+      <Handle
+        position={Position.Bottom}
+        type="source"
+        isConnectable={isConnectable}
+        className="!min-h-[1px] !h-[1px] !bottom-[1px] !opacity-0 !border-0 !pointer-events-none !cursor-default"
+      />
     </div>
   );
 };

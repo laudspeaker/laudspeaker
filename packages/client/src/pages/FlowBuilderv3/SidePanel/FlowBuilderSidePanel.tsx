@@ -1,5 +1,7 @@
-import React, { FC, ReactNode, useState } from "react";
+import React, { FC, ReactNode, useEffect, useState } from "react";
 import { Node } from "reactflow";
+import { changeNodeData, deselectNodes } from "reducers/flow-builder.reducer";
+import { useAppDispatch, useAppSelector } from "store/hooks";
 import FlowBuilderButton from "../Elements/FlowBuilderButton";
 import { NodeType } from "../FlowEditor";
 import FlowBuilderDeleteModal from "../Modals/FlowBuilderDeleteModal";
@@ -8,12 +10,21 @@ import NodeData from "../Nodes/NodeData";
 import MessageSettings from "./components/MessageSettings";
 
 interface FlowBuilderSidePanelProps {
-  selectedNode?: Node<NodeData>;
+  className?: string;
 }
 
-const FlowBuilderSidePanel: FC<FlowBuilderSidePanelProps> = ({
-  selectedNode,
-}) => {
+const FlowBuilderSidePanel: FC<FlowBuilderSidePanelProps> = ({ className }) => {
+  const { nodes } = useAppSelector((state) => state.flowBuilder);
+  const dispatch = useAppDispatch();
+
+  const selectedNode = nodes.find((node) => node.selected);
+
+  const [nodeData, setNodeData] = useState(selectedNode?.data || {});
+
+  useEffect(() => {
+    setNodeData(selectedNode?.data || {});
+  }, [selectedNode]);
+
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   const nodeTypeToNameMap: Record<NodeType, string> = {
@@ -27,7 +38,20 @@ const FlowBuilderSidePanel: FC<FlowBuilderSidePanelProps> = ({
   };
 
   const nodeToSettingsComponentMap: Record<string, ReactNode> = {
-    [NodeType.MESSAGE]: <MessageSettings node={selectedNode} />,
+    [NodeType.MESSAGE]: (
+      <MessageSettings nodeData={nodeData} setNodeData={setNodeData} />
+    ),
+  };
+
+  const onCancel = () => {
+    dispatch(deselectNodes());
+  };
+
+  const onSave = () => {
+    if (selectedNode)
+      dispatch(changeNodeData({ id: selectedNode.id, data: nodeData }));
+
+    dispatch(deselectNodes());
   };
 
   return (
@@ -39,7 +63,7 @@ const FlowBuilderSidePanel: FC<FlowBuilderSidePanelProps> = ({
         )
           ? "w-[360px] min-w-[360px]"
           : " w-0"
-      }`}
+      } ${className ? className : ""}`}
     >
       <div>
         <div className="p-[20px] border-b-[1px] flex flex-col gap-[5px]">
@@ -68,12 +92,12 @@ const FlowBuilderSidePanel: FC<FlowBuilderSidePanelProps> = ({
         </div>
         <div className="flex justify-end items-center gap-[10px]">
           <FlowBuilderButton
-            onClick={() => {}}
+            onClick={onCancel}
             className="!rounded-[2px] !text-[#111827] !bg-white !border-[1px] !border-[#E5E7EB]"
           >
             Cancel
           </FlowBuilderButton>
-          <FlowBuilderButton className="!rounded-[2px]" onClick={() => {}}>
+          <FlowBuilderButton className="!rounded-[2px]" onClick={onSave}>
             Save
           </FlowBuilderButton>
         </div>

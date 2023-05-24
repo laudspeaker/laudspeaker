@@ -1,7 +1,8 @@
 import { MessageType } from "types/Workflow";
 
 export default interface NodeData {
-  template?: { type: MessageType; selected?: { id: string; name: string } };
+  template?: { type: MessageType; selected?: { id: number; name: string } };
+  temporary?: boolean;
   stats?: {
     sent: number;
     delivered: number;
