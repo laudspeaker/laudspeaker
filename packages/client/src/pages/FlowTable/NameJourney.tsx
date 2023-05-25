@@ -5,15 +5,12 @@ import { AxiosError } from "axios";
 import { toast } from "react-toastify";
 import ApiService from "services/api.service";
 import { Workflow } from "types/Workflow";
-
-export interface INameSegmentForm {
-  name: string;
-  isPrimary: boolean;
-}
+import ToggleWithLabel from "components/ToggleWithLabel";
 
 const NameJourney = () => {
   const [name, setName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isUseNewUI, setIsUseNewUI] = useState(false);
 
   const navigate = useNavigate();
 
@@ -25,7 +22,7 @@ const NameJourney = () => {
         url: "/workflows",
         options: { name },
       });
-      navigate("/flow/" + data.id);
+      navigate("/flow/" + data.id + (isUseNewUI ? "/v2" : ""));
     } catch (err) {
       let message = "Unexpected error";
       if (err instanceof AxiosError) message = err.response?.data.message;
@@ -50,6 +47,11 @@ const NameJourney = () => {
             id="name"
             className="w-full p-[16px] bg-white border-[1px] border-[#D1D5DB] font-[Inter] text-[16px]"
             onChange={(e) => setName(e.target.value)}
+          />
+          <ToggleWithLabel
+            label="Use new UI (experimental)"
+            enabled={isUseNewUI}
+            onChange={setIsUseNewUI}
           />
           <div className="flex justify-end mt-[10px]">
             <GenericButton

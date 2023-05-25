@@ -86,7 +86,8 @@ export interface Node {
     nodeId: string;
     primary: boolean;
     messages: { type: string; templateId: number }[];
-    triggers: string[];
+    triggers: Trigger[];
+    dataTriggers?: Trigger[];
     audienceId: string;
   };
   type: string;

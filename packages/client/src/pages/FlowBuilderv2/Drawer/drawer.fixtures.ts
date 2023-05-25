@@ -10,7 +10,7 @@ import {
   WaitUntilIcon,
   JumpToIcon,
   CustomModalIcon,
-} from "pages/FlowBuilderv3/Icons";
+} from "pages/FlowBuilderv2/Icons";
 
 export enum DrawerAction {
   EMAIL = "email",

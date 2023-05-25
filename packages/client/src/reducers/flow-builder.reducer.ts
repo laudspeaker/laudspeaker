@@ -1,8 +1,16 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { DrawerAction } from "pages/FlowBuilderv3/Drawer/drawer.fixtures";
-import { EdgeType, NodeType } from "pages/FlowBuilderv3/FlowEditor";
-import NodeData from "pages/FlowBuilderv3/Nodes/NodeData";
-import { applyNodeChanges, Edge, Node, NodeChange } from "reactflow";
+import { DrawerAction } from "pages/FlowBuilderv2/Drawer/drawer.fixtures";
+import { NodeType, EdgeType } from "pages/FlowBuilderv2/FlowEditor";
+import { getLayoutedNodes } from "pages/FlowBuilderv2/layout.helper";
+import NodeData from "pages/FlowBuilderv2/Nodes/NodeData";
+import {
+  applyNodeChanges,
+  Edge,
+  getIncomers,
+  getOutgoers,
+  Node,
+  NodeChange,
+} from "reactflow";
 import { MessageType } from "types/Workflow";
 import { v4 as uuid } from "uuid";
 
@@ -23,13 +31,13 @@ const initialNodes: Node<NodeData>[] = [
     id: startNodeUUID,
     type: NodeType.START,
     data: {},
-    position: { x: 250, y: 0 },
+    position: { x: 0, y: 0 },
   },
   {
     id: nextNodeUUID,
     type: NodeType.EMPTY,
     data: {},
-    position: { x: 250, y: 105 },
+    position: { x: 0, y: 0 },
   },
 ];
 const initialEdges: Edge<undefined>[] = [
@@ -44,7 +52,7 @@ const initialEdges: Edge<undefined>[] = [
 const initialState: FlowBuilderState = {
   flowId: "",
   flowName: "",
-  nodes: initialNodes.slice(),
+  nodes: getLayoutedNodes(initialNodes.slice(), initialEdges.slice()),
   edges: initialEdges.slice(),
   selectedNodeId: undefined,
   isDragging: false,
@@ -61,7 +69,7 @@ const flowBuilderSlice = createSlice({
       state.flowName = action.payload;
     },
     setNodes(state, action: PayloadAction<Node<NodeData>[]>) {
-      state.nodes = action.payload;
+      state.nodes = getLayoutedNodes(action.payload, state.edges);
     },
     addTemporaryEmptyNodeBetween(
       state,
@@ -99,6 +107,8 @@ const flowBuilderSlice = createSlice({
           target,
         }
       );
+
+      state.nodes = getLayoutedNodes(state.nodes, state.edges);
     },
     changeNodeData(
       state,
@@ -113,30 +123,68 @@ const flowBuilderSlice = createSlice({
     },
     removeNode(state, action: PayloadAction<string>) {
       const node = state.nodes.find((n) => n.id === action.payload);
-      if (!node) return;
+      if (!node || node.type === NodeType.START) return;
+      const nodeIndex = state.nodes.indexOf(node);
 
-      const edgeIn = state.edges.find((edge) => edge.target === action.payload);
+      const incomers = getIncomers(node, state.nodes, state.edges);
+      const outgoers = getOutgoers(node, state.nodes, state.edges);
 
-      const edgeOut = state.edges.find(
-        (edge) => edge.source === action.payload
-      );
-
-      if (edgeIn) {
-        if (edgeOut) {
-          edgeIn.target = edgeOut.target;
-          edgeIn.targetHandle = edgeOut.targetHandle;
-          edgeIn.targetNode = edgeOut.targetNode;
-          edgeIn.id = `e${edgeIn.source}-${edgeIn.target}`;
-          state.edges.splice(state.edges.indexOf(edgeOut), 1);
-        } else {
-          state.edges.splice(state.edges.indexOf(edgeIn), 1);
-        }
+      if (incomers.length !== 1) {
+        return;
       }
 
-      state.nodes.splice(state.nodes.indexOf(node), 1);
+      if (outgoers.length > 1) {
+        this.pruneNodeTree(state, { type: "", payload: node.id });
+        return;
+      }
+
+      const nodeIn = incomers[0];
+
+      let nodeOut = outgoers[0];
+      if (!nodeOut) {
+        nodeOut = {
+          id: uuid(),
+          type: NodeType.EMPTY,
+          data: {},
+          position: { x: 0, y: 0 },
+        };
+        state.nodes.push(nodeOut);
+      }
+
+      state.edges = state.edges.filter(
+        (edge) => edge.source !== node.id && edge.target !== node.id
+      );
+      state.nodes.splice(nodeIndex, 1);
+
+      state.edges.push({
+        id: `e${nodeIn.id}-${nodeOut.id}`,
+        type: EdgeType.PRIMARY,
+        source: nodeIn.id,
+        target: nodeOut.id,
+      });
+
+      state.nodes = getLayoutedNodes(state.nodes, state.edges);
+    },
+    pruneNodeTree(state, action: PayloadAction<string>) {
+      const node = state.nodes.find((n) => n.id === action.payload);
+      if (!node) return;
+      const nodeIndex = state.nodes.indexOf(node);
+
+      const children = getOutgoers(node, state.nodes, state.edges);
+
+      state.edges.filter(
+        (edge) => edge.source !== node.id && edge.target !== node.id
+      );
+
+      state.nodes.splice(nodeIndex, 1);
+
+      for (const child of children) {
+        this.pruneNodeTree(state, { type: "", payload: child.id });
+      }
     },
     setEdges(state, action: PayloadAction<Edge<undefined>[]>) {
       state.edges = action.payload;
+      state.nodes = getLayoutedNodes(state.nodes, state.edges);
     },
     handleDrawerAction(
       state,
@@ -201,8 +249,8 @@ const flowBuilderSlice = createSlice({
           type: NodeType.EMPTY,
           data: {},
           position: {
-            x: nodeToChange.position.x,
-            y: nodeToChange.position.y + 125,
+            x: 0,
+            y: 0,
           },
         });
 
@@ -225,6 +273,8 @@ const flowBuilderSlice = createSlice({
         ],
         state.nodes
       );
+
+      state.nodes = getLayoutedNodes(state.nodes, state.edges);
     },
     deselectNodes(state) {
       state.nodes = applyNodeChanges(
@@ -257,6 +307,7 @@ export const {
   addTemporaryEmptyNodeBetween,
   changeNodeData,
   removeNode,
+  pruneNodeTree,
   setEdges,
   handleDrawerAction,
   deselectNodes,

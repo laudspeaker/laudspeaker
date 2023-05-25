@@ -1,16 +1,12 @@
 import { ApiConfig } from "../../../../constants";
-import NodeData from "pages/FlowBuilderv3/Nodes/NodeData";
+import NodeData from "pages/FlowBuilderv2/Nodes/NodeData";
 import React, { FC, useEffect, useState } from "react";
 import { Node } from "reactflow";
 import ApiService from "services/api.service";
 import Template from "types/Template";
+import { SidePanelComponentProps } from "../FlowBuilderSidePanel";
 
-interface MessageSettingsProps {
-  nodeData: NodeData;
-  setNodeData: (nodeData: NodeData) => void;
-}
-
-const MessageSettings: FC<MessageSettingsProps> = ({
+const MessageSettings: FC<SidePanelComponentProps> = ({
   nodeData,
   setNodeData,
 }) => {
@@ -44,7 +40,6 @@ const MessageSettings: FC<MessageSettingsProps> = ({
       <div>
         <select
           className="w-[200px] h-[32px] rounded-[2px] px-[12px] py-[4px] text-[14px] font-roboto leading-[22px]"
-          placeholder="select template"
           value={selectedTemplateId}
           onChange={(e) =>
             setNodeData({
@@ -62,6 +57,9 @@ const MessageSettings: FC<MessageSettingsProps> = ({
             })
           }
         >
+          <option disabled selected value={undefined}>
+            select template
+          </option>
           {templateList.map((template) => (
             <option value={template.id} key={template.id}>
               {template.name}

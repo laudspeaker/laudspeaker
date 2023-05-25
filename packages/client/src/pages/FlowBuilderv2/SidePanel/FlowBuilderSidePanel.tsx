@@ -1,5 +1,4 @@
 import React, { FC, ReactNode, useEffect, useState } from "react";
-import { Node } from "reactflow";
 import { changeNodeData, deselectNodes } from "reducers/flow-builder.reducer";
 import { useAppDispatch, useAppSelector } from "store/hooks";
 import FlowBuilderButton from "../Elements/FlowBuilderButton";
@@ -8,6 +7,12 @@ import FlowBuilderDeleteModal from "../Modals/FlowBuilderDeleteModal";
 import { messageFixtures } from "../Nodes/MessageNode";
 import NodeData from "../Nodes/NodeData";
 import MessageSettings from "./components/MessageSettings";
+import WaitUntilSettings from "./components/WaitUntilSettings";
+
+export interface SidePanelComponentProps {
+  nodeData: NodeData;
+  setNodeData: (nodeData: NodeData) => void;
+}
 
 interface FlowBuilderSidePanelProps {
   className?: string;
@@ -40,6 +45,9 @@ const FlowBuilderSidePanel: FC<FlowBuilderSidePanelProps> = ({ className }) => {
   const nodeToSettingsComponentMap: Record<string, ReactNode> = {
     [NodeType.MESSAGE]: (
       <MessageSettings nodeData={nodeData} setNodeData={setNodeData} />
+    ),
+    [NodeType.WAIT_UNTIL]: (
+      <WaitUntilSettings nodeData={nodeData} setNodeData={setNodeData} />
     ),
   };
 

@@ -42,8 +42,7 @@ import ModalBuilder from "pages/ModalBuilder";
 import WebhookBuilder from "pages/WebhookBuilder";
 import EventTracker from "pages/EventTracker";
 import ModalBackgroundProvider from "pages/ModalBuilder/ModalBackgroundProvider";
-import FlowBuilderv2 from "pages/FlowBuilderv2/FlowBuilderv2";
-import FlowBuilderv3 from "pages/FlowBuilderv3";
+import FlowBuilderv2 from "pages/FlowBuilderv2";
 
 interface IProtected {
   children: ReactElement;
@@ -210,7 +209,22 @@ const RouteComponent: React.FC = () => {
                   { text: "Create a journey" },
                 ]}
               >
-                <FlowBuilderv3 />
+                <FlowBuilder />
+              </DrawerLayout>
+            </Protected>
+          }
+        />
+        <Route
+          path="/flow/:id/v2"
+          element={
+            <Protected>
+              <DrawerLayout
+                crumbs={[
+                  { text: "Journey builder", link: "/flow" },
+                  { text: "Create a journey" },
+                ]}
+              >
+                <FlowBuilderv2 />
               </DrawerLayout>
             </Protected>
           }
