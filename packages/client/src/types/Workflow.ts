@@ -49,7 +49,7 @@ export interface EventProps {
   toTime?: string;
 }
 
-export enum ProviderTypes {
+export enum ProviderType {
   Posthog = "posthog",
   Custom = "custom",
 }
@@ -60,7 +60,7 @@ export interface Trigger {
   type: TriggerType;
   source?: string;
   dest?: string[];
-  providerType?: ProviderTypes;
+  providerType?: ProviderType;
   providerParams?: string | "track" | "page";
   properties?: EventProps;
 }

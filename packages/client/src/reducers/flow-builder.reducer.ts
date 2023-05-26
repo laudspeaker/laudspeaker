@@ -2,7 +2,7 @@ import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { DrawerAction } from "pages/FlowBuilderv2/Drawer/drawer.fixtures";
 import { NodeType, EdgeType } from "pages/FlowBuilderv2/FlowEditor";
 import { getLayoutedNodes } from "pages/FlowBuilderv2/layout.helper";
-import NodeData from "pages/FlowBuilderv2/Nodes/NodeData";
+import { BranchType, NodeData } from "pages/FlowBuilderv2/Nodes/NodeData";
 import {
   applyNodeChanges,
   Edge,
@@ -199,27 +199,45 @@ const flowBuilderSlice = createSlice({
       switch (action.payload.action) {
         case DrawerAction.EMAIL:
           nodeToChange.type = NodeType.MESSAGE;
-          nodeToChange.data.template = { type: MessageType.EMAIL };
+          nodeToChange.data = {
+            type: NodeType.MESSAGE,
+            template: { type: MessageType.EMAIL },
+          };
           break;
         case DrawerAction.SMS:
           nodeToChange.type = NodeType.MESSAGE;
-          nodeToChange.data.template = { type: MessageType.SMS };
+          nodeToChange.data = {
+            type: NodeType.MESSAGE,
+            template: { type: MessageType.SMS },
+          };
           break;
         case DrawerAction.SLACK:
           nodeToChange.type = NodeType.MESSAGE;
-          nodeToChange.data.template = { type: MessageType.SLACK };
+          nodeToChange.data = {
+            type: NodeType.MESSAGE,
+            template: { type: MessageType.SLACK },
+          };
           break;
         case DrawerAction.PUSH:
           nodeToChange.type = NodeType.MESSAGE;
-          nodeToChange.data.template = { type: MessageType.PUSH };
+          nodeToChange.data = {
+            type: NodeType.MESSAGE,
+            template: { type: MessageType.PUSH },
+          };
           break;
         case DrawerAction.WEBHOOK:
           nodeToChange.type = NodeType.MESSAGE;
-          nodeToChange.data.template = { type: MessageType.WEBHOOK };
+          nodeToChange.data = {
+            type: NodeType.MESSAGE,
+            template: { type: MessageType.WEBHOOK },
+          };
           break;
         case DrawerAction.CUSTOM_MODAL:
           nodeToChange.type = NodeType.MESSAGE;
-          nodeToChange.data.template = { type: MessageType.MODAL };
+          nodeToChange.data = {
+            type: NodeType.MESSAGE,
+            template: { type: MessageType.MODAL },
+          };
           break;
         case DrawerAction.JUMP_TO:
           nodeToChange.type = NodeType.JUMP_TO;
@@ -228,6 +246,10 @@ const flowBuilderSlice = createSlice({
           break;
         case DrawerAction.WAIT_UNTIL:
           nodeToChange.type = NodeType.WAIT_UNTIL;
+          nodeToChange.data = {
+            type: NodeType.WAIT_UNTIL,
+            branches: [],
+          };
           break;
         case DrawerAction.TIME_DELAY:
           nodeToChange.type = NodeType.TIME_DELAY;

@@ -1,4 +1,5 @@
-import { MessageType } from "types/Workflow";
+import { MessageType, ProviderType } from "types/Workflow";
+import { NodeType } from "../FlowEditor";
 
 export enum BranchType {
   EVENT = "event",
@@ -9,6 +10,10 @@ export enum ComparisonType {
   EQUALS = "equals",
 }
 
+export enum StatementValueType {
+  NUMBER = "number",
+}
+
 export enum LogicRelation {
   AND = "and",
   OR = "or",
@@ -17,10 +22,13 @@ export enum LogicRelation {
 export interface Statement {
   key: string;
   comparisonType: ComparisonType;
+  valueType: StatementValueType;
   value: string;
 }
 
 export interface Condition {
+  name: string;
+  providerType: ProviderType;
   statements: Statement[];
   relationToNext: LogicRelation;
 }
@@ -58,9 +66,7 @@ export type MaxTimeBranch = TimeDelayBranch | TimeWindowBranch;
 
 export type Branch = EventBranch | MaxTimeBranch;
 
-export default interface NodeData {
-  template?: { type: MessageType; selected?: { id: number; name: string } };
-  branches?: Branch[];
+export interface CommonNodeData {
   temporary?: boolean;
   stats?: {
     sent: number;
@@ -70,3 +76,31 @@ export default interface NodeData {
     openedPercentage: number;
   };
 }
+
+export interface MessageNodeData extends CommonNodeData {
+  type: NodeType.MESSAGE;
+  template: { type: MessageType; selected?: { id: number; name: string } };
+}
+
+export interface WaitUntilNodeData extends CommonNodeData {
+  type: NodeType.WAIT_UNTIL;
+  branches: Branch[];
+}
+
+export interface AnotherNodeData extends CommonNodeData {
+  type?: Exclude<NodeType, NodeType.MESSAGE | NodeType.WAIT_UNTIL>;
+}
+
+export type NodeData = MessageNodeData | WaitUntilNodeData | AnotherNodeData;
+//  {
+//   template?: { type: MessageType; selected?: { id: number; name: string } };
+//   branches?: Branch[];
+//   temporary?: boolean;
+//   stats?: {
+//     sent: number;
+//     delivered: number;
+//     clickedPercentage: number;
+//     wssent: number;
+//     openedPercentage: number;
+//   };
+// }

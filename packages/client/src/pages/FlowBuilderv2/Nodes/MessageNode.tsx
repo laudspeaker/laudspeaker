@@ -9,7 +9,7 @@ import {
   SMSIcon,
   WebhookIcon,
 } from "../Icons";
-import NodeData from "./NodeData";
+import { MessageNodeData } from "./NodeData";
 
 export const messageFixtures: Record<
   MessageType,
@@ -50,7 +50,7 @@ const unknownMessageFixtures: { icon: ReactNode; text: string } = {
   text: "Unknown message type",
 };
 
-export const MessageNode: FC<NodeProps<NodeData>> = ({
+export const MessageNode: FC<NodeProps<MessageNodeData>> = ({
   isConnectable,
   data,
   selected,

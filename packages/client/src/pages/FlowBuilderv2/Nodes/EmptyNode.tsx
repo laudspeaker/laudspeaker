@@ -3,7 +3,7 @@ import { Handle, NodeProps, Position } from "reactflow";
 import { handleDrawerAction, removeNode } from "reducers/flow-builder.reducer";
 import { useAppDispatch, useAppSelector } from "store/hooks";
 import { NodeType } from "../FlowEditor";
-import NodeData from "./NodeData";
+import { NodeData } from "./NodeData";
 
 export const EmptyNode: FC<NodeProps<NodeData>> = ({
   isConnectable,

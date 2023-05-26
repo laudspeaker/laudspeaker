@@ -12,7 +12,7 @@ import { useDebounce } from "react-use";
 import {
   EventCondition,
   FilterByOption,
-  ProviderTypes,
+  ProviderType,
   Trigger,
   TriggerType,
 } from "types/Workflow";
@@ -873,14 +873,14 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
                         })
                       }
                       options={[
-                        { value: ProviderTypes.Posthog, title: "Posthog" },
-                        { value: ProviderTypes.Custom, title: "Custom" },
+                        { value: ProviderType.Posthog, title: "Posthog" },
+                        { value: ProviderType.Custom, title: "Custom" },
                       ]}
                       disabled={isViewMode}
                       wrapperClassnames="max-w-[200px] w-full mr-[15px]"
-                      value={eventTrigger.providerType || ProviderTypes.Custom}
+                      value={eventTrigger.providerType || ProviderType.Custom}
                     />
-                    {eventTrigger.providerType === ProviderTypes.Posthog && (
+                    {eventTrigger.providerType === ProviderType.Posthog && (
                       <div className="relative mt-[4px]">
                         <Autocomplete
                           inputId="keyInput"
@@ -942,8 +942,7 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
                               possibleTypes={possibleTypes}
                               isViewMode={isViewMode}
                               specificProvider={
-                                eventTrigger.providerType ||
-                                ProviderTypes.Custom
+                                eventTrigger.providerType || ProviderType.Custom
                               }
                             />
                             {i !==

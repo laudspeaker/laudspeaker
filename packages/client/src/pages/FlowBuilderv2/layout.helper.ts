@@ -1,7 +1,7 @@
 import { hierarchy, HierarchyPointNode, tree } from "d3-hierarchy";
 import { Edge, getIncomers, getOutgoers, Node } from "reactflow";
 import { NodeType } from "./FlowEditor";
-import NodeData from "./Nodes/NodeData";
+import { NodeData } from "./Nodes/NodeData";
 
 export interface HierarchyObject {
   id: string;

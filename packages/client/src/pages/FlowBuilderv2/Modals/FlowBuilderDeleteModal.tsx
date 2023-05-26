@@ -4,7 +4,7 @@ import { removeNode } from "reducers/flow-builder.reducer";
 import { useAppDispatch } from "store/hooks";
 import FlowBuilderButton from "../Elements/FlowBuilderButton";
 import FlowBuilderModal from "../Elements/FlowBuilderModal";
-import NodeData from "../Nodes/NodeData";
+import { NodeData } from "../Nodes/NodeData";
 
 interface FlowBuilderDeleteModalProps {
   isOpen: boolean;

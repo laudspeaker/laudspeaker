@@ -8,7 +8,7 @@ import {
   EventCondition,
   EventConditionElementsFilter,
   FilterByOption,
-  ProviderTypes,
+  ProviderType,
 } from "types/Workflow";
 import Autocomplete from "components/Autocomplete";
 
@@ -17,7 +17,7 @@ export interface ConditionCreaterProps {
   onChange: (condition: EventCondition) => void;
   possibleTypes: string[];
   isViewMode?: boolean;
-  specificProvider: ProviderTypes;
+  specificProvider: ProviderType;
 }
 
 interface PossibleKey {
@@ -65,7 +65,7 @@ const ConditionCreater: FC<ConditionCreaterProps> = ({
   };
 
   useEffect(() => {
-    if (specificProvider === ProviderTypes.Custom)
+    if (specificProvider === ProviderType.Custom)
       onChange({ ...condition, filterBy: FilterByOption.CUSTOMER_KEY });
   }, [specificProvider]);
 
@@ -145,7 +145,7 @@ const ConditionCreater: FC<ConditionCreaterProps> = ({
 
   return (
     <div className="flex flex-col gap-[10px] m-[10px_0px]">
-      {specificProvider === ProviderTypes.Posthog && (
+      {specificProvider === ProviderType.Posthog && (
         <div className="relative">
           <Select
             label="Filter by"

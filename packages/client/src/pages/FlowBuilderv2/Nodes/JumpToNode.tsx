@@ -1,7 +1,7 @@
 import React, { FC } from "react";
 import { Handle, NodeProps, Position } from "reactflow";
 import { JumpToIcon } from "../Icons";
-import NodeData from "./NodeData";
+import { NodeData } from "./NodeData";
 
 export const JumpToNode: FC<NodeProps<NodeData>> = ({
   isConnectable,

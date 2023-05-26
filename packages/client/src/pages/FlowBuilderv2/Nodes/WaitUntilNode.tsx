@@ -1,8 +1,13 @@
 import React, { FC } from "react";
 import { Handle, NodeProps, Position } from "reactflow";
 import { WaitUntilIcon } from "../Icons";
+import { WaitUntilNodeData } from "./NodeData";
 
-export const WaitUntilNode: FC<NodeProps> = ({ isConnectable, selected }) => {
+export const WaitUntilNode: FC<NodeProps<WaitUntilNodeData>> = ({
+  isConnectable,
+  selected,
+  data: { branches },
+}) => {
   return (
     <div
       className={`w-[260px] h-[80px] rounded-[4px] bg-white font-inter ${
@@ -25,7 +30,7 @@ export const WaitUntilNode: FC<NodeProps> = ({ isConnectable, selected }) => {
           Wait until
         </div>
         <div className="font-normal text-[14px] leading-[22px] text-[#4B5563]">
-          Meet 2 conditions
+          Meet {branches.length} conditions
         </div>
       </div>
 

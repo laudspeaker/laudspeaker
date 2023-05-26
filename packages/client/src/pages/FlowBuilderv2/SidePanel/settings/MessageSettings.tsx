@@ -1,12 +1,11 @@
 import { ApiConfig } from "../../../../constants";
-import NodeData from "pages/FlowBuilderv2/Nodes/NodeData";
 import React, { FC, useEffect, useState } from "react";
-import { Node } from "reactflow";
 import ApiService from "services/api.service";
 import Template from "types/Template";
 import { SidePanelComponentProps } from "../FlowBuilderSidePanel";
+import { MessageNodeData } from "pages/FlowBuilderv2/Nodes/NodeData";
 
-const MessageSettings: FC<SidePanelComponentProps> = ({
+const MessageSettings: FC<SidePanelComponentProps<MessageNodeData>> = ({
   nodeData,
   setNodeData,
 }) => {

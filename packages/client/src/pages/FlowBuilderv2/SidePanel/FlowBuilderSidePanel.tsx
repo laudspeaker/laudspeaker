@@ -1,16 +1,17 @@
 import React, { FC, ReactNode, useEffect, useState } from "react";
 import { changeNodeData, deselectNodes } from "reducers/flow-builder.reducer";
 import { useAppDispatch, useAppSelector } from "store/hooks";
+import deepCopy from "utils/deepCopy";
 import FlowBuilderButton from "../Elements/FlowBuilderButton";
 import { NodeType } from "../FlowEditor";
 import FlowBuilderDeleteModal from "../Modals/FlowBuilderDeleteModal";
 import { messageFixtures } from "../Nodes/MessageNode";
-import NodeData from "../Nodes/NodeData";
-import MessageSettings from "./components/MessageSettings";
-import WaitUntilSettings from "./components/WaitUntilSettings";
+import { NodeData } from "../Nodes/NodeData";
+import MessageSettings from "./settings/MessageSettings";
+import WaitUntilSettings from "./settings/WaitUntilSettings";
 
-export interface SidePanelComponentProps {
-  nodeData: NodeData;
+export interface SidePanelComponentProps<T extends NodeData = NodeData> {
+  nodeData: T;
   setNodeData: (nodeData: NodeData) => void;
 }
 
@@ -24,10 +25,12 @@ const FlowBuilderSidePanel: FC<FlowBuilderSidePanelProps> = ({ className }) => {
 
   const selectedNode = nodes.find((node) => node.selected);
 
-  const [nodeData, setNodeData] = useState(selectedNode?.data || {});
+  const [nodeData, setNodeData] = useState<NodeData>(
+    deepCopy({ ...selectedNode?.data })
+  );
 
   useEffect(() => {
-    setNodeData(selectedNode?.data || {});
+    setNodeData(deepCopy({ ...selectedNode?.data }));
   }, [selectedNode]);
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -44,10 +47,18 @@ const FlowBuilderSidePanel: FC<FlowBuilderSidePanelProps> = ({ className }) => {
 
   const nodeToSettingsComponentMap: Record<string, ReactNode> = {
     [NodeType.MESSAGE]: (
-      <MessageSettings nodeData={nodeData} setNodeData={setNodeData} />
+      <>
+        {nodeData.type === NodeType.MESSAGE && (
+          <MessageSettings nodeData={nodeData} setNodeData={setNodeData} />
+        )}
+      </>
     ),
     [NodeType.WAIT_UNTIL]: (
-      <WaitUntilSettings nodeData={nodeData} setNodeData={setNodeData} />
+      <>
+        {nodeData.type === NodeType.WAIT_UNTIL && (
+          <WaitUntilSettings nodeData={nodeData} setNodeData={setNodeData} />
+        )}
+      </>
     ),
   };
 
@@ -77,7 +88,7 @@ const FlowBuilderSidePanel: FC<FlowBuilderSidePanelProps> = ({ className }) => {
         <div className="p-[20px] border-b-[1px] flex flex-col gap-[5px]">
           <div className="font-inter font-semibold text-[20px] leading-[28px]">
             {selectedNode?.type
-              ? selectedNode?.type === NodeType.MESSAGE &&
+              ? selectedNode.data.type === NodeType.MESSAGE &&
                 selectedNode.data.template
                 ? messageFixtures[selectedNode.data.template.type].text
                 : nodeTypeToNameMap[selectedNode.type as NodeType]
