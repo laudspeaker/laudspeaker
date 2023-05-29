@@ -3,7 +3,7 @@ import FlowBuilderDrawer from "./Drawer/FlowBuilderDrawer";
 import FlowBuilderHeader from "./Header/FlowBuilderHeader";
 import FlowEditor from "./FlowEditor";
 
-const FlowBuilderv3 = () => {
+const FlowBuilderv2 = () => {
   return (
     <div className="relative w-full h-full max-h-[calc(100%-46px)]">
       <FlowBuilderHeader />
@@ -15,4 +15,4 @@ const FlowBuilderv3 = () => {
   );
 };
 
-export default FlowBuilderv3;
+export default FlowBuilderv2;

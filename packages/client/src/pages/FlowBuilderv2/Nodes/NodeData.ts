@@ -33,7 +33,11 @@ export interface Condition {
   relationToNext: LogicRelation;
 }
 
-export interface EventBranch {
+export interface CommonBranch {
+  id: string;
+}
+
+export interface EventBranch extends CommonBranch {
   type: BranchType.EVENT;
   conditions: Condition[];
 }
@@ -43,7 +47,7 @@ export enum TimeType {
   TIME_WINDOW = "timeWindow",
 }
 
-export interface CommonMaxTimeBranch {
+export interface CommonMaxTimeBranch extends CommonBranch {
   type: BranchType.MAX_TIME;
 }
 

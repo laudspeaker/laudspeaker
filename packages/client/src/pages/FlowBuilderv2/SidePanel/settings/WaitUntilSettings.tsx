@@ -9,6 +9,7 @@ import React, { FC } from "react";
 import { ProviderType } from "types/Workflow";
 import EventBranchEditor from "../components/BranchEditor";
 import { SidePanelComponentProps } from "../FlowBuilderSidePanel";
+import { v4 as uuid } from "uuid";
 
 const WaitUntilSettings: FC<SidePanelComponentProps<WaitUntilNodeData>> = ({
   nodeData,
@@ -18,6 +19,7 @@ const WaitUntilSettings: FC<SidePanelComponentProps<WaitUntilNodeData>> = ({
 
   const handleAddBranch = () => {
     const newBranch: Branch = {
+      id: uuid(),
       type: BranchType.EVENT,
       conditions: [],
     };
@@ -76,7 +78,7 @@ const WaitUntilSettings: FC<SidePanelComponentProps<WaitUntilNodeData>> = ({
     <div>
       {branches.map((branch, i) => (
         <div key={i} className="mb-[20px] flex flex-col gap-[10px]">
-          <div>
+          <div className="font-inter font-semibold text-[16px] leading-[24px] text-[#18181B]">
             Branch {i + 1} -{" "}
             {branch.type === BranchType.EVENT ? "Event" : "Max time"}
           </div>
@@ -94,8 +96,15 @@ const WaitUntilSettings: FC<SidePanelComponentProps<WaitUntilNodeData>> = ({
         </div>
       ))}
       <div className="py-[20px] flex gap-[20px]">
-        <button onClick={handleAddBranch}>Add branch</button>
-        <button>Set max. time</button>
+        <button
+          onClick={handleAddBranch}
+          className="border-[1px] border-[#E5E7EB] bg-white px-[15px] py-[4px] rounded-[4px] font-roboto font-normal text-[14px] leading-[22px]"
+        >
+          Add branch
+        </button>
+        <button className="border-[1px] border-[#E5E7EB] bg-white px-[15px] py-[4px] rounded-[4px] font-roboto font-normal text-[14px] leading-[22px]">
+          Set max. time
+        </button>
       </div>
     </div>
   );

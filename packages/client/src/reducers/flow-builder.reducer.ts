@@ -1,8 +1,9 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { DrawerAction } from "pages/FlowBuilderv2/Drawer/drawer.fixtures";
+import { BranchEdgeData, EdgeData } from "pages/FlowBuilderv2/Edges/EdgeData";
 import { NodeType, EdgeType } from "pages/FlowBuilderv2/FlowEditor";
 import { getLayoutedNodes } from "pages/FlowBuilderv2/layout.helper";
-import { BranchType, NodeData } from "pages/FlowBuilderv2/Nodes/NodeData";
+import { NodeData } from "pages/FlowBuilderv2/Nodes/NodeData";
 import {
   applyNodeChanges,
   Edge,
@@ -18,7 +19,7 @@ interface FlowBuilderState {
   flowId: string;
   flowName: string;
   nodes: Node<NodeData>[];
-  edges: Edge<undefined>[];
+  edges: Edge<EdgeData>[];
   selectedNodeId?: string;
   isDragging?: boolean;
 }
@@ -40,7 +41,7 @@ const initialNodes: Node<NodeData>[] = [
     position: { x: 0, y: 0 },
   },
 ];
-const initialEdges: Edge<undefined>[] = [
+const initialEdges: Edge<EdgeData>[] = [
   {
     id: `e${startNodeUUID}-${nextNodeUUID}`,
     type: EdgeType.PRIMARY,
@@ -56,6 +57,24 @@ const initialState: FlowBuilderState = {
   edges: initialEdges.slice(),
   selectedNodeId: undefined,
   isDragging: false,
+};
+
+const handlePruneNodeTree = (state: FlowBuilderState, nodeId: string) => {
+  const node = state.nodes.find((n) => n.id === nodeId);
+  if (!node) return;
+  const nodeIndex = state.nodes.indexOf(node);
+
+  const children = getOutgoers(node, state.nodes, state.edges);
+
+  state.edges.filter(
+    (edge) => edge.source !== node.id && edge.target !== node.id
+  );
+
+  state.nodes.splice(nodeIndex, 1);
+
+  for (const child of children) {
+    handlePruneNodeTree(state, child.id);
+  }
 };
 
 const flowBuilderSlice = createSlice({
@@ -120,6 +139,64 @@ const flowBuilderSlice = createSlice({
       if (!nodeToChange) return;
 
       nodeToChange.data = data;
+
+      if (
+        nodeToChange.type === NodeType.WAIT_UNTIL &&
+        nodeToChange.data.type === NodeType.WAIT_UNTIL
+      ) {
+        const outgoers = getOutgoers(nodeToChange, state.nodes, state.edges);
+
+        const existedBranchEdges = state.edges.filter(
+          (edge) => edge.source === nodeToChange.id
+        );
+
+        // prune disconnected branches
+        for (const edge of existedBranchEdges) {
+          if (
+            !edge.data ||
+            edge.type !== EdgeType.BRANCH ||
+            edge.data.type !== EdgeType.BRANCH ||
+            !nodeToChange.data.branches.find(
+              (branch) =>
+                branch.id === (edge as Edge<BranchEdgeData>).data?.branch.id
+            )
+          ) {
+            handlePruneNodeTree(state, edge.target);
+          }
+        }
+
+        //connect new and update old branches
+        for (const branch of nodeToChange.data.branches) {
+          const existedChildrenEdge = existedBranchEdges.find(
+            (edge) =>
+              edge.data?.type === EdgeType.BRANCH &&
+              edge.data.branch.id === branch.id
+          );
+
+          if (!existedChildrenEdge) {
+            const newEmptyNodeUUID = uuid();
+            state.nodes.push({
+              id: newEmptyNodeUUID,
+              type: NodeType.EMPTY,
+              data: {},
+              position: { x: 0, y: 0 },
+            });
+            state.edges.push({
+              id: `b${branch.id}`,
+              type: EdgeType.BRANCH,
+              data: {
+                type: EdgeType.BRANCH,
+                branch,
+              },
+              source: nodeToChange.id,
+              target: newEmptyNodeUUID,
+            });
+            continue;
+          }
+
+          existedChildrenEdge.data = { type: EdgeType.BRANCH, branch };
+        }
+      }
     },
     removeNode(state, action: PayloadAction<string>) {
       const node = state.nodes.find((n) => n.id === action.payload);
@@ -134,7 +211,7 @@ const flowBuilderSlice = createSlice({
       }
 
       if (outgoers.length > 1) {
-        this.pruneNodeTree(state, { type: "", payload: node.id });
+        handlePruneNodeTree(state, node.id);
         return;
       }
 
@@ -166,21 +243,8 @@ const flowBuilderSlice = createSlice({
       state.nodes = getLayoutedNodes(state.nodes, state.edges);
     },
     pruneNodeTree(state, action: PayloadAction<string>) {
-      const node = state.nodes.find((n) => n.id === action.payload);
-      if (!node) return;
-      const nodeIndex = state.nodes.indexOf(node);
-
-      const children = getOutgoers(node, state.nodes, state.edges);
-
-      state.edges.filter(
-        (edge) => edge.source !== node.id && edge.target !== node.id
-      );
-
-      state.nodes.splice(nodeIndex, 1);
-
-      for (const child of children) {
-        this.pruneNodeTree(state, { type: "", payload: child.id });
-      }
+      handlePruneNodeTree(state, action.payload);
+      state.nodes = getLayoutedNodes(state.nodes, state.edges);
     },
     setEdges(state, action: PayloadAction<Edge<undefined>[]>) {
       state.edges = action.payload;
@@ -263,7 +327,9 @@ const flowBuilderSlice = createSlice({
 
       if (
         !state.edges.some((edge) => edge.source === nodeToChange.id) &&
-        nodeToChange.type !== NodeType.JUMP_TO
+        !([NodeType.JUMP_TO, NodeType.WAIT_UNTIL] as string[]).includes(
+          nodeToChange.type || ""
+        )
       ) {
         const newNodeId = uuid();
         state.nodes.push({

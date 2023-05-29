@@ -19,7 +19,7 @@ import {
   WaitUntilNode,
 } from "./Nodes";
 import FlowBuilderSidePanel from "./SidePanel/FlowBuilderSidePanel";
-import { PrimaryEdge } from "./Edges";
+import { BranchEdge, PrimaryEdge } from "./Edges";
 
 export enum NodeType {
   START = "start",
@@ -33,6 +33,7 @@ export enum NodeType {
 
 export enum EdgeType {
   PRIMARY = "primary",
+  BRANCH = "branch",
 }
 
 const nodeTypes = {
@@ -47,6 +48,7 @@ const nodeTypes = {
 
 const edgeTypes = {
   [EdgeType.PRIMARY]: PrimaryEdge,
+  [EdgeType.BRANCH]: BranchEdge,
 };
 
 const FlowEditor = () => {
@@ -64,10 +66,10 @@ const FlowEditor = () => {
     dispatch(setNodes(applyNodeChanges(changes, nodes)));
   };
 
-  const onEdgesChange = (changes: EdgeChange[]) => {
-    changes = changes.filter((change) => change.type === "select");
-    dispatch(setEdges(applyEdgeChanges(changes, edges)));
-  };
+  // const onEdgesChange = (changes: EdgeChange[]) => {
+  //   changes = changes.filter((change) => change.type === "select");
+  //   dispatch(setEdges(applyEdgeChanges(changes, edges)));
+  // };
 
   return (
     <div className="relative w-full h-full bg-[#F3F4F6] text-[#111827] flex">

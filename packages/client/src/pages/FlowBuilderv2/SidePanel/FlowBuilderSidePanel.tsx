@@ -1,4 +1,5 @@
 import React, { FC, ReactNode, useEffect, useState } from "react";
+import Scrollbars from "react-custom-scrollbars-2";
 import { changeNodeData, deselectNodes } from "reducers/flow-builder.reducer";
 import { useAppDispatch, useAppSelector } from "store/hooks";
 import deepCopy from "utils/deepCopy";
@@ -75,16 +76,16 @@ const FlowBuilderSidePanel: FC<FlowBuilderSidePanelProps> = ({ className }) => {
 
   return (
     <div
-      className={`h-full bg-white border-[1px] border-[#E5E7EB] flex flex-col justify-between overflow-hidden ${
+      className={`h-full relative bg-white border-[1px] border-[#E5E7EB] flex flex-col justify-between overflow-hidden ${
         selectedNode &&
         ![NodeType.EMPTY, NodeType.START].includes(
           selectedNode.type as NodeType
         )
           ? "w-[360px] min-w-[360px]"
-          : " w-0"
+          : "w-0"
       } ${className ? className : ""}`}
     >
-      <div>
+      <div className="h-full relative flex flex-col justify-stretch">
         <div className="p-[20px] border-b-[1px] flex flex-col gap-[5px]">
           <div className="font-inter font-semibold text-[20px] leading-[28px]">
             {selectedNode?.type
@@ -98,11 +99,13 @@ const FlowBuilderSidePanel: FC<FlowBuilderSidePanelProps> = ({ className }) => {
             Description Description Description Des
           </div>
         </div>
-        <div className="p-[20px]">
-          {nodeToSettingsComponentMap[selectedNode?.type || ""]}
+        <div className="p-[20px] h-full max-h-full mb-[60px] overflow-y-hidden">
+          <Scrollbars>
+            {nodeToSettingsComponentMap[selectedNode?.type || ""]}
+          </Scrollbars>
         </div>
       </div>
-      <div className="min-h-[60px] h-[60px] py-[14px] px-[20px] border-t-[1px] flex justify-between items-center">
+      <div className="absolute bottom-0 w-full min-h-[60px] h-[60px] py-[14px] px-[20px] border-t-[1px] flex justify-between items-center">
         <div
           className="font-roboto underline font-normal text-[14px] leading-[22px] select-none cursor-pointer"
           onClick={() => setIsDeleteModalOpen(true)}

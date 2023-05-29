@@ -25,8 +25,10 @@ const ConditionEditor: FC<ConditionEditorProps> = ({
   }, [initialCondition]);
 
   return (
-    <div className="flex flex-col gap-[10px] p-[10px]">
-      <div>Event</div>
+    <div className="flex flex-col gap-[10px] p-[10px] bg-[#F3F4F6]">
+      <div className="font-inter font-semibold text-[14px] leading-[22px]">
+        Event
+      </div>
       <div className="flex gap-[10px]">
         <select
           value={condition.providerType}
@@ -36,6 +38,7 @@ const ConditionEditor: FC<ConditionEditorProps> = ({
               providerType: e.target.value as ProviderType,
             })
           }
+          className="w-[145px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB]"
         >
           <option value={ProviderType.Posthog}>Posthog</option>
           <option value={ProviderType.Custom}>Custom</option>
@@ -45,14 +48,17 @@ const ConditionEditor: FC<ConditionEditorProps> = ({
           placeholder="Event name"
           value={condition.name}
           onChange={(e) => setCondition({ ...condition, name: e.target.value })}
+          className="w-[145px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB] placeholder:font-inter placeholder:font-normal placeholder:text-[14px] placeholder:leading-[22px] placeholder:text-[#9CA3AF]"
         />
       </div>
       {condition.statements.map((statement, i) => (
         <React.Fragment key={i}>
           <div className="flex justify-between items-center">
-            <div>Property {i + 1}</div>
+            <div className="font-inter font-semibold text-[14px] leading-[22px]">
+              Property {i + 1}
+            </div>
             <div
-              className="cursor-pointer"
+              className="cursor-pointer font-roboto font-normal text-[14px] leading-[22px] underline text-[#EB5757]"
               onClick={() => {
                 condition.statements.splice(i);
                 setCondition({ ...condition });
@@ -70,6 +76,7 @@ const ConditionEditor: FC<ConditionEditorProps> = ({
                 condition.statements[i].key = e.target.value;
                 setCondition({ ...condition });
               }}
+              className="w-full px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB] placeholder:font-inter placeholder:font-normal placeholder:text-[14px] placeholder:leading-[22px] placeholder:text-[#9CA3AF]"
             />
           </div>
           <div className="flex gap-[10px]">
@@ -80,6 +87,7 @@ const ConditionEditor: FC<ConditionEditorProps> = ({
                   .value as ComparisonType;
                 setCondition({ ...condition });
               }}
+              className="w-[145px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB]"
             >
               {Object.values(ComparisonType).map((comparisonType, j) => (
                 <option key={j} value={comparisonType}>
@@ -94,6 +102,7 @@ const ConditionEditor: FC<ConditionEditorProps> = ({
                   .value as StatementValueType;
                 setCondition({ ...condition });
               }}
+              className="w-[145px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB]"
             >
               {Object.values(StatementValueType).map((valueType, j) => (
                 <option key={j} value={valueType}>
@@ -111,13 +120,14 @@ const ConditionEditor: FC<ConditionEditorProps> = ({
                 condition.statements[i].value = e.target.value;
                 setCondition({ ...condition });
               }}
+              className="w-full px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB] placeholder:font-inter placeholder:font-normal placeholder:text-[14px] placeholder:leading-[22px] placeholder:text-[#9CA3AF]"
             />
           </div>
         </React.Fragment>
       ))}
       <div className="flex justify-between items-center">
         <div
-          className="cursor-pointer"
+          className="cursor-pointer font-inter text-[14px] leading-[22px] underline"
           onClick={() =>
             setCondition({
               ...condition,
