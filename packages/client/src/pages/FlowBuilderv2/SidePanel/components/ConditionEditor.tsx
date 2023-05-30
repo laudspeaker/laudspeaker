@@ -43,13 +43,17 @@ const ConditionEditor: FC<ConditionEditorProps> = ({
           <option value={ProviderType.Posthog}>Posthog</option>
           <option value={ProviderType.Custom}>Custom</option>
         </select>
-        <input
-          type="text"
-          placeholder="Event name"
-          value={condition.name}
-          onChange={(e) => setCondition({ ...condition, name: e.target.value })}
-          className="w-[145px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB] placeholder:font-inter placeholder:font-normal placeholder:text-[14px] placeholder:leading-[22px] placeholder:text-[#9CA3AF]"
-        />
+        {condition.providerType === ProviderType.Posthog && (
+          <input
+            type="text"
+            placeholder="Event name"
+            value={condition.name}
+            onChange={(e) =>
+              setCondition({ ...condition, name: e.target.value })
+            }
+            className="w-[145px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB] placeholder:font-inter placeholder:font-normal placeholder:text-[14px] placeholder:leading-[22px] placeholder:text-[#9CA3AF]"
+          />
+        )}
       </div>
       {condition.statements.map((statement, i) => (
         <React.Fragment key={i}>

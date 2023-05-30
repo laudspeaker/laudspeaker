@@ -75,6 +75,8 @@ const handlePruneNodeTree = (state: FlowBuilderState, nodeId: string) => {
   for (const child of children) {
     handlePruneNodeTree(state, child.id);
   }
+
+  state.nodes = getLayoutedNodes(state.nodes, state.edges);
 };
 
 const flowBuilderSlice = createSlice({
@@ -244,7 +246,6 @@ const flowBuilderSlice = createSlice({
     },
     pruneNodeTree(state, action: PayloadAction<string>) {
       handlePruneNodeTree(state, action.payload);
-      state.nodes = getLayoutedNodes(state.nodes, state.edges);
     },
     setEdges(state, action: PayloadAction<Edge<undefined>[]>) {
       state.edges = action.payload;

@@ -29,7 +29,8 @@ export const retrieveHierarchyObject = (
 
 export const retrieveNodesFromHierarchyObject = (
   object: HierarchyPointNode<HierarchyObject>,
-  nodes: Node[]
+  nodes: Node[],
+  previousNode?: Node
 ): Node[] => {
   const {
     data: { id },
@@ -38,16 +39,26 @@ export const retrieveNodesFromHierarchyObject = (
     children,
   } = object;
 
-  const nodeToChange = nodes.find((node) => node.id === id);
+  const nodeToChangeIndex = nodes.findIndex((node) => node.id === id);
+  const nodeToChange = nodes[nodeToChangeIndex];
 
   if (!nodeToChange) return [];
+  const newNodes = [...nodes];
 
-  const newNode: Node<NodeData> = { ...nodeToChange, position: { x, y } };
+  const newNode: Node<NodeData> = {
+    ...nodeToChange,
+    position: { x, y },
+  };
+
+  newNodes[nodeToChangeIndex] = newNode;
 
   if (!children) return [newNode];
 
   const anotherNodes = children.reduce<Node<NodeData>[]>(
-    (acc, item) => [...acc, ...retrieveNodesFromHierarchyObject(item, nodes)],
+    (acc, item) => [
+      ...acc,
+      ...retrieveNodesFromHierarchyObject(item, newNodes, newNode),
+    ],
     []
   );
 

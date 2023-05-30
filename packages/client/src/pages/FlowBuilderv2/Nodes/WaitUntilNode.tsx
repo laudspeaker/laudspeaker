@@ -1,7 +1,7 @@
 import React, { FC } from "react";
 import { Handle, NodeProps, Position } from "reactflow";
 import { WaitUntilIcon } from "../Icons";
-import { WaitUntilNodeData } from "./NodeData";
+import { EventBranch, WaitUntilNodeData } from "./NodeData";
 
 export const WaitUntilNode: FC<NodeProps<WaitUntilNodeData>> = ({
   isConnectable,
@@ -30,7 +30,14 @@ export const WaitUntilNode: FC<NodeProps<WaitUntilNodeData>> = ({
           Wait until
         </div>
         <div className="font-normal text-[14px] leading-[22px] text-[#4B5563]">
-          Meet {branches.length} conditions
+          {!branches.length || !(branches[0] as EventBranch)?.conditions?.length
+            ? "Wait ..."
+            : branches.length === 1 &&
+              (branches[0] as EventBranch).conditions.length
+            ? `Meet ${
+                (branches[0] as EventBranch).conditions.length
+              } conditions`
+            : "Meet below conditions"}
         </div>
       </div>
 

@@ -19,7 +19,7 @@ const FlowBuilderModal: FC<FlowBuilderModalProps> = ({
         isOpen &&
         createPortal(
           <div
-            className="fixed top-0 left-0 w-screen h-screen z-[999999999] bg-[#111827] bg-opacity-20"
+            className="fixed top-0 left-0 w-screen h-screen z-[9999999991] bg-[#111827] bg-opacity-20"
             onClick={onClose}
           >
             <div

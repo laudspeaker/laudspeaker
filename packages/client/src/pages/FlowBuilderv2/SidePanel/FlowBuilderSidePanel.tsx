@@ -1,3 +1,4 @@
+import { Transition } from "@headlessui/react";
 import React, { FC, ReactNode, useEffect, useState } from "react";
 import Scrollbars from "react-custom-scrollbars-2";
 import { changeNodeData, deselectNodes } from "reducers/flow-builder.reducer";
@@ -74,16 +75,23 @@ const FlowBuilderSidePanel: FC<FlowBuilderSidePanelProps> = ({ className }) => {
     dispatch(deselectNodes());
   };
 
+  const isOpen =
+    selectedNode &&
+    ![NodeType.EMPTY, NodeType.START].includes(selectedNode.type as NodeType);
+
   return (
-    <div
-      className={`h-full relative bg-white border-[1px] border-[#E5E7EB] flex flex-col justify-between overflow-hidden ${
-        selectedNode &&
-        ![NodeType.EMPTY, NodeType.START].includes(
-          selectedNode.type as NodeType
-        )
-          ? "w-[360px] min-w-[360px]"
-          : "w-0"
-      } ${className ? className : ""}`}
+    <Transition
+      show={!!isOpen}
+      as="div"
+      className={`h-[calc(100vh-108px)] min-w-[360px] w-[360px] fixed  right-[-100%] bg-white border-[1px] border-[#E5E7EB] flex flex-col justify-between overflow-hidden ${
+        className ? className : ""
+      }`}
+      enter="transition-all duration-300"
+      enterFrom="right-[-100%]"
+      enterTo="right-0"
+      leave="transition-all duration-500"
+      leaveTo="right-[-100%]"
+      leaveFrom="right-0"
     >
       <div className="h-full relative flex flex-col justify-stretch">
         <div className="p-[20px] border-b-[1px] flex flex-col gap-[5px]">
@@ -131,7 +139,7 @@ const FlowBuilderSidePanel: FC<FlowBuilderSidePanelProps> = ({ className }) => {
           selectedNode={selectedNode}
         />
       )}
-    </div>
+    </Transition>
   );
 };
 
