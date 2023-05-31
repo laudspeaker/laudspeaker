@@ -64,13 +64,19 @@ const handlePruneNodeTree = (state: FlowBuilderState, nodeId: string) => {
   if (!node) return;
   const nodeIndex = state.nodes.indexOf(node);
 
+  const incomer = getIncomers(node, state.nodes, state.edges)[0];
   const children = getOutgoers(node, state.nodes, state.edges);
 
   state.edges.filter(
     (edge) => edge.source !== node.id && edge.target !== node.id
   );
 
-  state.nodes.splice(nodeIndex, 1);
+  if (incomer.type === NodeType.EMPTY) {
+    state.nodes.splice(nodeIndex, 1);
+  } else {
+    node.type = NodeType.EMPTY;
+    node.data = {};
+  }
 
   for (const child of children) {
     handlePruneNodeTree(state, child.id);
@@ -230,17 +236,27 @@ const flowBuilderSlice = createSlice({
         state.nodes.push(nodeOut);
       }
 
-      state.edges = state.edges.filter(
-        (edge) => edge.source !== node.id && edge.target !== node.id
-      );
-      state.nodes.splice(nodeIndex, 1);
+      if (nodeIn.type === NodeType.WAIT_UNTIL) {
+        const branchEdge = state.edges.find(
+          (edge) => edge.source === nodeIn.id && edge.target === node.id
+        );
 
-      state.edges.push({
-        id: `e${nodeIn.id}-${nodeOut.id}`,
-        type: EdgeType.PRIMARY,
-        source: nodeIn.id,
-        target: nodeOut.id,
-      });
+        if (!branchEdge) return;
+
+        branchEdge.target = nodeOut.id;
+      } else {
+        state.edges = state.edges.filter(
+          (edge) => edge.source !== node.id && edge.target !== node.id
+        );
+        state.edges.push({
+          id: `e${nodeIn.id}-${nodeOut.id}`,
+          type: EdgeType.PRIMARY,
+          source: nodeIn.id,
+          target: nodeOut.id,
+        });
+      }
+
+      state.nodes.splice(nodeIndex, 1);
 
       state.nodes = getLayoutedNodes(state.nodes, state.edges);
     },
@@ -365,6 +381,19 @@ const flowBuilderSlice = createSlice({
 
       state.nodes = getLayoutedNodes(state.nodes, state.edges);
     },
+    selectNode(state, action: PayloadAction<string>) {
+      state.nodes = applyNodeChanges(
+        [
+          ...state.nodes.map<NodeChange>((node) => ({
+            type: "select",
+            id: node.id,
+            selected: false,
+          })),
+          { type: "select", id: action.payload, selected: true },
+        ],
+        state.nodes
+      );
+    },
     deselectNodes(state) {
       state.nodes = applyNodeChanges(
         state.nodes.map<NodeChange>((node) => ({
@@ -399,6 +428,7 @@ export const {
   pruneNodeTree,
   setEdges,
   handleDrawerAction,
+  selectNode,
   deselectNodes,
   setIsDragging,
   refreshFlowBuilder,

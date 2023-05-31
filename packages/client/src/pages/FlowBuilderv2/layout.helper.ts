@@ -29,8 +29,7 @@ export const retrieveHierarchyObject = (
 
 export const retrieveNodesFromHierarchyObject = (
   object: HierarchyPointNode<HierarchyObject>,
-  nodes: Node[],
-  previousNode?: Node
+  nodes: Node[]
 ): Node[] => {
   const {
     data: { id },
@@ -57,7 +56,7 @@ export const retrieveNodesFromHierarchyObject = (
   const anotherNodes = children.reduce<Node<NodeData>[]>(
     (acc, item) => [
       ...acc,
-      ...retrieveNodesFromHierarchyObject(item, newNodes, newNode),
+      ...retrieveNodesFromHierarchyObject(item, newNodes),
     ],
     []
   );
@@ -65,20 +64,75 @@ export const retrieveNodesFromHierarchyObject = (
   return [newNode, ...anotherNodes];
 };
 
+export const translateTree = (
+  treeRoot: Node,
+  nodes: Node[],
+  edges: Edge[],
+  offset: { x: number; y: number }
+) => {
+  treeRoot.position.x += offset.x;
+  treeRoot.position.y += offset.y;
+
+  const outgoers = getOutgoers(treeRoot, nodes, edges);
+
+  for (const child of outgoers) {
+    translateTree(child, nodes, edges, offset);
+  }
+};
+
+const NODE_WIDTH = 260;
+const HORIZONTAL_OFFSET = 45;
+
+export const applyLayoutCorrections = (
+  rootNode: Node,
+  nodes: Node[],
+  edges: Edge[]
+) => {
+  const children = getOutgoers(rootNode, nodes, edges);
+
+  if (children.length > 1) {
+    // const widthOffsetSum = NODE_WIDTH + HORIZONTAL_OFFSET;
+    // const globalOffset = -widthOffsetSum * (children.length - 1) * 0.5;
+
+    for (let i = 0; i < children.length; i++) {
+      translateTree(children[i], nodes, edges, {
+        // x: widthOffsetSum * i + globalOffset,
+        x: 0,
+        y: 145,
+      });
+    }
+  }
+
+  for (const child of children) {
+    applyLayoutCorrections(child, nodes, edges);
+  }
+};
+
 export const getLayoutedNodes = (nodes: Node[], edges: Edge[]) => {
-  const rootNode = nodes.find(
+  let rootNode = nodes.find(
     (node) =>
       getIncomers(node, nodes, edges).length === 0 &&
       node.type === NodeType.START
   );
-
   if (!rootNode) return nodes;
 
   const root = hierarchy(retrieveHierarchyObject(rootNode, nodes, edges));
-  const treeLayout = tree<HierarchyObject>();
-  treeLayout.nodeSize([260, 125]);
+  const treeLayout = tree<HierarchyObject>()
+    .nodeSize([260, 125])
+    .separation(() => 2);
 
   const layoutedNodes = treeLayout(root);
 
-  return retrieveNodesFromHierarchyObject(layoutedNodes, nodes);
+  nodes = retrieveNodesFromHierarchyObject(layoutedNodes, nodes);
+
+  rootNode = nodes.find(
+    (node) =>
+      getIncomers(node, nodes, edges).length === 0 &&
+      node.type === NodeType.START
+  );
+  if (!rootNode) return nodes;
+
+  applyLayoutCorrections(rootNode, nodes, edges);
+
+  return nodes;
 };

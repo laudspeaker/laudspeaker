@@ -84,6 +84,7 @@
     "react-lines-ellipsis": "^0.15.3",
     "react-login-github": "^1.0.8",
     "react-markdown": "^8.0.6",
+    "react-popper": "^2.3.0",
     "react-redux": "^8.0.2",
     "react-refresh": "^0.11.0",
     "react-router-dom": "6.3.0",
