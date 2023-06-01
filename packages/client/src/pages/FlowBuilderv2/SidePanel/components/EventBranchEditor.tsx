@@ -8,7 +8,7 @@ import {
 import React, { FC, useState } from "react";
 import ConditionEditor from "./ConditionEditor";
 
-interface BranchEditorProps {
+interface EventBranchEditorProps {
   branch: EventBranch;
   onAddCondition: () => void;
   onDeleteBranch: () => void;
@@ -16,7 +16,7 @@ interface BranchEditorProps {
   onDeleteCondition: (j: number) => void;
 }
 
-const BranchEditor: FC<BranchEditorProps> = ({
+const EventBranchEditor: FC<EventBranchEditorProps> = ({
   branch,
   onAddCondition,
   onDeleteBranch,
@@ -43,7 +43,7 @@ const BranchEditor: FC<BranchEditorProps> = ({
             <div className="p-[10px] flex flex-col gap-[10px] bg-[#F3F4F6]">
               <div className="flex justify-between items-center">
                 <div className="font-inter font-semibold text-[14px] leading-[22px]">
-                  {condition.name}
+                  {condition.name || "Custom Event"}
                 </div>
                 <div className="flex gap-[20px] items-center">
                   <div
@@ -135,4 +135,4 @@ const BranchEditor: FC<BranchEditorProps> = ({
   );
 };
 
-export default BranchEditor;
+export default EventBranchEditor;

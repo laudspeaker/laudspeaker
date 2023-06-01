@@ -62,8 +62,8 @@ export interface TimeDelayBranch extends CommonMaxTimeBranch {
 
 export interface TimeWindowBranch extends CommonMaxTimeBranch {
   timeType: TimeType.TIME_WINDOW;
-  waitFrom: Date;
-  waitTo: Date;
+  waitFrom: string;
+  waitTo: string;
 }
 
 export type MaxTimeBranch = TimeDelayBranch | TimeWindowBranch;
