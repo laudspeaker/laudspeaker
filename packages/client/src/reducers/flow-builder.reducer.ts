@@ -334,9 +334,22 @@ const flowBuilderSlice = createSlice({
           break;
         case DrawerAction.TIME_DELAY:
           nodeToChange.type = NodeType.TIME_DELAY;
+          nodeToChange.data = {
+            type: NodeType.TIME_DELAY,
+            delay: {
+              days: 0,
+              hours: 0,
+              minutes: 0,
+            },
+          };
           break;
         case DrawerAction.TIME_WINDOW:
           nodeToChange.type = NodeType.TIME_WINDOW;
+          nodeToChange.data = {
+            type: NodeType.TIME_WINDOW,
+            from: new Date().toUTCString(),
+            to: new Date().toUTCString(),
+          };
           break;
         default:
           break;

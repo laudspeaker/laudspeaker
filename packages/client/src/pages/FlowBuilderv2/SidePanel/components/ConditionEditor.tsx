@@ -1,3 +1,4 @@
+import FlowBuilderAutoComplete from "pages/FlowBuilderv2/Elements/FlowBuilderAutoComplete";
 import FlowBuilderButton from "pages/FlowBuilderv2/Elements/FlowBuilderButton";
 import {
   ComparisonType,
@@ -5,6 +6,7 @@ import {
   StatementValueType,
 } from "pages/FlowBuilderv2/Nodes/NodeData";
 import React, { FC, useEffect, useState } from "react";
+import ApiService from "services/api.service";
 import { ProviderType } from "types/Workflow";
 
 interface ConditionEditorProps {
@@ -23,6 +25,20 @@ const ConditionEditor: FC<ConditionEditorProps> = ({
   useEffect(() => {
     setCondition(initialCondition);
   }, [initialCondition]);
+
+  const loadPossibleKeys = async (query: string) => {
+    const { data } = await ApiService.get<
+      {
+        key: string;
+        type: "String" | "Number" | "Boolean" | "Email";
+        isArray: boolean;
+      }[]
+    >({
+      url: `/customers/possible-attributes?key=${query}`,
+    });
+
+    return data.map(({ key }) => key);
+  };
 
   return (
     <div className="flex flex-col gap-[10px] p-[10px] bg-[#F3F4F6]">
@@ -72,15 +88,19 @@ const ConditionEditor: FC<ConditionEditorProps> = ({
             </div>
           </div>
           <div>
-            <input
-              type="text"
-              placeholder="Property name"
+            <FlowBuilderAutoComplete
               value={statement.key}
-              onChange={(e) => {
-                condition.statements[i].key = e.target.value;
+              getItems={loadPossibleKeys}
+              retrieveLabel={(item) => item}
+              onQueryChange={(query) => {
+                condition.statements[i].key = query;
                 setCondition({ ...condition });
               }}
-              className="w-full px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB] placeholder:font-inter placeholder:font-normal placeholder:text-[14px] placeholder:leading-[22px] placeholder:text-[#9CA3AF]"
+              onSelect={(value) => {
+                condition.statements[i].key = value;
+                setCondition({ ...condition });
+              }}
+              placeholder="Property name"
             />
           </div>
           <div className="flex gap-[10px]">

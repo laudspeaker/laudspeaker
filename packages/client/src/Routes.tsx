@@ -239,7 +239,7 @@ const RouteComponent: React.FC = () => {
             </Protected>
           }
         />
-        {/* <Route
+        <Route
           path="/flow/:id/view"
           element={
             <Protected>
@@ -248,7 +248,7 @@ const RouteComponent: React.FC = () => {
               </DrawerLayout>
             </Protected>
           }
-        /> */}
+        />
         <Route
           path="/people"
           element={

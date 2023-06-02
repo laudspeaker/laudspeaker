@@ -51,13 +51,15 @@ export interface CommonMaxTimeBranch extends CommonBranch {
   type: BranchType.MAX_TIME;
 }
 
+export interface DelayData {
+  days: number;
+  hours: number;
+  minutes: number;
+}
+
 export interface TimeDelayBranch extends CommonMaxTimeBranch {
   timeType: TimeType.TIME_DELAY;
-  delay: {
-    days: number;
-    hours: number;
-    minutes: number;
-  };
+  delay: DelayData;
 }
 
 export interface TimeWindowBranch extends CommonMaxTimeBranch {
@@ -91,20 +93,30 @@ export interface WaitUntilNodeData extends CommonNodeData {
   branches: Branch[];
 }
 
-export interface AnotherNodeData extends CommonNodeData {
-  type?: Exclude<NodeType, NodeType.MESSAGE | NodeType.WAIT_UNTIL>;
+export interface TimeDelayNodeData extends CommonNodeData {
+  type: NodeType.TIME_DELAY;
+  delay: DelayData;
 }
 
-export type NodeData = MessageNodeData | WaitUntilNodeData | AnotherNodeData;
-//  {
-//   template?: { type: MessageType; selected?: { id: number; name: string } };
-//   branches?: Branch[];
-//   temporary?: boolean;
-//   stats?: {
-//     sent: number;
-//     delivered: number;
-//     clickedPercentage: number;
-//     wssent: number;
-//     openedPercentage: number;
-//   };
-// }
+export interface TimeWindowNodeData extends CommonNodeData {
+  type: NodeType.TIME_WINDOW;
+  from: string;
+  to: string;
+}
+
+export interface AnotherNodeData extends CommonNodeData {
+  type?: Exclude<
+    NodeType,
+    | NodeType.MESSAGE
+    | NodeType.WAIT_UNTIL
+    | NodeType.TIME_DELAY
+    | NodeType.TIME_WINDOW
+  >;
+}
+
+export type NodeData =
+  | MessageNodeData
+  | WaitUntilNodeData
+  | TimeDelayNodeData
+  | TimeWindowNodeData
+  | AnotherNodeData;

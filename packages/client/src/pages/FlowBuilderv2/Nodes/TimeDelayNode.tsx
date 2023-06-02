@@ -1,8 +1,13 @@
 import React, { FC } from "react";
 import { Handle, NodeProps, Position } from "reactflow";
 import { TimeDelayIcon } from "../Icons";
+import { TimeDelayNodeData } from "./NodeData";
 
-export const TimeDelayNode: FC<NodeProps> = ({ isConnectable, selected }) => {
+export const TimeDelayNode: FC<NodeProps<TimeDelayNodeData>> = ({
+  isConnectable,
+  selected,
+  data: { delay },
+}) => {
   return (
     <div
       className={`w-[260px] h-[80px] rounded-[4px] bg-white font-inter ${
@@ -25,7 +30,17 @@ export const TimeDelayNode: FC<NodeProps> = ({ isConnectable, selected }) => {
           Time delay
         </div>
         <div className="font-normal text-[14px] leading-[22px] text-[#4B5563]">
-          Description
+          Wait{" "}
+          {delay.days === delay.hours &&
+          delay.hours === delay.minutes &&
+          delay.minutes === 0 ? (
+            <>...</>
+          ) : (
+            <>
+              {delay.days} day{delay.days === 1 ? "" : "s"} {delay.hours} hour
+              {delay.hours === 1 ? "" : "s"} {delay.minutes} min
+            </>
+          )}
         </div>
       </div>
 

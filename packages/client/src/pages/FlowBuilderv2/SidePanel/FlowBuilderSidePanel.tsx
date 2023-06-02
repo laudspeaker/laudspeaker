@@ -10,11 +10,13 @@ import FlowBuilderDeleteModal from "../Modals/FlowBuilderDeleteModal";
 import { messageFixtures } from "../Nodes/MessageNode";
 import { NodeData } from "../Nodes/NodeData";
 import MessageSettings from "./settings/MessageSettings";
+import TimeDelaySettings from "./settings/TimeDelaySettings";
+import TimeWindowSettings from "./settings/TimeWindowSettings";
 import WaitUntilSettings from "./settings/WaitUntilSettings";
 
 export interface SidePanelComponentProps<T extends NodeData = NodeData> {
   nodeData: T;
-  setNodeData: (nodeData: NodeData) => void;
+  setNodeData: (nodeData: T) => void;
 }
 
 interface FlowBuilderSidePanelProps {
@@ -59,6 +61,20 @@ const FlowBuilderSidePanel: FC<FlowBuilderSidePanelProps> = ({ className }) => {
       <>
         {nodeData.type === NodeType.WAIT_UNTIL && (
           <WaitUntilSettings nodeData={nodeData} setNodeData={setNodeData} />
+        )}
+      </>
+    ),
+    [NodeType.TIME_DELAY]: (
+      <>
+        {nodeData.type === NodeType.TIME_DELAY && (
+          <TimeDelaySettings nodeData={nodeData} setNodeData={setNodeData} />
+        )}
+      </>
+    ),
+    [NodeType.TIME_WINDOW]: (
+      <>
+        {nodeData.type === NodeType.TIME_WINDOW && (
+          <TimeWindowSettings nodeData={nodeData} setNodeData={setNodeData} />
         )}
       </>
     ),
