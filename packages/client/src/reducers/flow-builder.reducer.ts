@@ -3,7 +3,7 @@ import { DrawerAction } from "pages/FlowBuilderv2/Drawer/drawer.fixtures";
 import { BranchEdgeData, EdgeData } from "pages/FlowBuilderv2/Edges/EdgeData";
 import { NodeType, EdgeType } from "pages/FlowBuilderv2/FlowEditor";
 import { getLayoutedNodes } from "pages/FlowBuilderv2/layout.helper";
-import { NodeData } from "pages/FlowBuilderv2/Nodes/NodeData";
+import { Branch, NodeData } from "pages/FlowBuilderv2/Nodes/NodeData";
 import {
   applyNodeChanges,
   Edge,
@@ -142,11 +142,11 @@ const flowBuilderSlice = createSlice({
       nodeToChange.data = data;
 
       if (
-        nodeToChange.type === NodeType.WAIT_UNTIL &&
-        nodeToChange.data.type === NodeType.WAIT_UNTIL
+        (nodeToChange.type === NodeType.WAIT_UNTIL &&
+          nodeToChange.data.type === NodeType.WAIT_UNTIL) ||
+        (nodeToChange.type === NodeType.USER_ATTRIBUTE &&
+          nodeToChange.data.type === NodeType.USER_ATTRIBUTE)
       ) {
-        const outgoers = getOutgoers(nodeToChange, state.nodes, state.edges);
-
         const existedBranchEdges = state.edges.filter(
           (edge) => edge.source === nodeToChange.id
         );
@@ -157,7 +157,7 @@ const flowBuilderSlice = createSlice({
             !edge.data ||
             edge.type !== EdgeType.BRANCH ||
             edge.data.type !== EdgeType.BRANCH ||
-            !nodeToChange.data.branches.find(
+            !(nodeToChange.data.branches as Branch[]).find(
               (branch) =>
                 branch.id === (edge as Edge<BranchEdgeData>).data?.branch.id
             )
@@ -236,7 +236,10 @@ const flowBuilderSlice = createSlice({
         state.nodes.push(nodeOut);
       }
 
-      if (nodeIn.type === NodeType.WAIT_UNTIL) {
+      if (
+        nodeIn.type === NodeType.WAIT_UNTIL ||
+        nodeIn.type === NodeType.USER_ATTRIBUTE
+      ) {
         const branchEdge = state.edges.find(
           (edge) => edge.source === nodeIn.id && edge.target === node.id
         );
@@ -324,6 +327,7 @@ const flowBuilderSlice = createSlice({
           nodeToChange.type = NodeType.JUMP_TO;
           break;
         case DrawerAction.EXIT:
+          nodeToChange.type = NodeType.EXIT;
           break;
         case DrawerAction.WAIT_UNTIL:
           nodeToChange.type = NodeType.WAIT_UNTIL;
@@ -351,15 +355,27 @@ const flowBuilderSlice = createSlice({
             to: new Date().toUTCString(),
           };
           break;
+        case DrawerAction.USER_ATTRIBUTE:
+          nodeToChange.type = NodeType.USER_ATTRIBUTE;
+          nodeToChange.data = {
+            type: NodeType.USER_ATTRIBUTE,
+            branches: [],
+          };
+          break;
         default:
           break;
       }
 
       if (
         !state.edges.some((edge) => edge.source === nodeToChange.id) &&
-        !([NodeType.JUMP_TO, NodeType.WAIT_UNTIL] as string[]).includes(
-          nodeToChange.type || ""
-        )
+        !(
+          [
+            NodeType.JUMP_TO,
+            NodeType.WAIT_UNTIL,
+            NodeType.USER_ATTRIBUTE,
+            NodeType.EXIT,
+          ] as string[]
+        ).includes(nodeToChange.type || "")
       ) {
         const newNodeId = uuid();
         state.nodes.push({

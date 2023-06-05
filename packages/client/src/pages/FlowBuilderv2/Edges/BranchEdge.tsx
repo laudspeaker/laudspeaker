@@ -1,5 +1,4 @@
-import { Popover, Transition } from "@headlessui/react";
-import React, { FC, Fragment, useEffect, useRef, useState } from "react";
+import React, { FC, Fragment, useState } from "react";
 import {
   BaseEdge,
   EdgeLabelRenderer,
@@ -9,13 +8,15 @@ import {
 import { selectNode } from "reducers/flow-builder.reducer";
 import { useAppDispatch, useAppSelector } from "store/hooks";
 import { NodeType } from "../FlowEditor";
-import { BranchType, LogicRelation, TimeType } from "../Nodes/NodeData";
+import { Branch, BranchType, LogicRelation, TimeType } from "../Nodes/NodeData";
 import { BranchEdgeData } from "./EdgeData";
 import { ProviderType } from "types/Workflow";
+import { Transition } from "@headlessui/react";
 
 const popperNameMap: Record<BranchType, string> = {
   [BranchType.EVENT]: "Wait people until",
   [BranchType.MAX_TIME]: "If wait until",
+  [BranchType.ATTRIBUTE]: "If attribute",
 };
 
 export const BranchEdge: FC<EdgeProps<BranchEdgeData>> = ({
@@ -48,15 +49,21 @@ export const BranchEdge: FC<EdgeProps<BranchEdgeData>> = ({
 
   if (
     !sourceNode ||
-    sourceNode.type !== NodeType.WAIT_UNTIL ||
-    sourceNode.data.type !== NodeType.WAIT_UNTIL ||
+    !(
+      sourceNode.type === NodeType.WAIT_UNTIL ||
+      sourceNode.type === NodeType.USER_ATTRIBUTE
+    ) ||
+    !(
+      sourceNode.data.type === NodeType.WAIT_UNTIL ||
+      sourceNode.data.type === NodeType.USER_ATTRIBUTE
+    ) ||
     !data?.branch
   )
     return <></>;
 
   const { branch } = data;
 
-  const branchIndex = sourceNode.data.branches.indexOf(branch);
+  const branchIndex = (sourceNode.data.branches as Branch[]).indexOf(branch);
 
   return (
     <>
@@ -110,6 +117,12 @@ export const BranchEdge: FC<EdgeProps<BranchEdgeData>> = ({
                 ) : (
                   `Meet ${branch.conditions.length} conditions`
                 )
+              ) : branch.type === BranchType.ATTRIBUTE ? (
+                branch.attributeConditions.length === 0 ? (
+                  <span className="text-red-500">Has no conditions</span>
+                ) : (
+                  `Meet ${branch.attributeConditions.length} conditions`
+                )
               ) : (
                 <>Wait max time</>
               )}
@@ -131,7 +144,7 @@ export const BranchEdge: FC<EdgeProps<BranchEdgeData>> = ({
                 </div>
                 {branch.type === BranchType.EVENT ? (
                   <>
-                    {branch.conditions.map((condition, i) => (
+                    {branch.conditions.slice(0, 3).map((condition, i) => (
                       <React.Fragment key={i}>
                         <div className="p-[10px] bg-[#F3F4F6] flex flex-col gap-[5px]">
                           <div className="font-inter font-semibold text-[14px] leading-[22px] text-[#18181B]">
@@ -146,7 +159,7 @@ export const BranchEdge: FC<EdgeProps<BranchEdgeData>> = ({
                             </div>
                           ))}
                         </div>
-                        {i !== branch.conditions.length - 1 && (
+                        {i !== branch.conditions.length - 1 && i !== 2 && (
                           <div className="font-inter font-normal text-[14px] leading-[22px]">
                             {condition.relationToNext === LogicRelation.AND
                               ? "And"
@@ -155,6 +168,31 @@ export const BranchEdge: FC<EdgeProps<BranchEdgeData>> = ({
                         )}
                       </React.Fragment>
                     ))}
+                  </>
+                ) : branch.type === BranchType.ATTRIBUTE ? (
+                  <>
+                    {branch.attributeConditions
+                      .slice(0, 3)
+                      .map((condition, i) => (
+                        <React.Fragment key={i}>
+                          <div className="p-[10px] bg-[#F3F4F6] flex flex-col gap-[5px]">
+                            {condition.statements.map((statement) => (
+                              <div className="font-inter font-normal text-[12px] leading-[20px] text-[#18181B]">
+                                {statement.key} {statement.comparisonType}{" "}
+                                {statement.value}
+                              </div>
+                            ))}
+                          </div>
+                          {i !== branch.attributeConditions.length - 1 &&
+                            i !== 2 && (
+                              <div className="font-inter font-normal text-[14px] leading-[22px]">
+                                {condition.relationToNext === LogicRelation.AND
+                                  ? "And"
+                                  : "Or"}
+                              </div>
+                            )}
+                        </React.Fragment>
+                      ))}
                   </>
                 ) : branch.timeType === TimeType.TIME_DELAY ? (
                   <div className="px-[8px] py-[10px] rounded-[4px] bg-[#F3F4F6] font-inter font-normal text-[14px] leading-[22px] text-[#18181B]">
@@ -189,11 +227,17 @@ export const BranchEdge: FC<EdgeProps<BranchEdgeData>> = ({
                     </div>
                   </div>
                 )}
-                {branch.type === BranchType.MAX_TIME && (
-                  <div className="font-inter font-normal text-[14px] leading-[22px]">
-                    Then move to the next step.
-                  </div>
-                )}
+
+                <div className="font-inter font-normal text-[14px] leading-[22px]">
+                  {(branch.type === BranchType.EVENT &&
+                    branch.conditions.length > 3) ||
+                  (branch.type === BranchType.ATTRIBUTE &&
+                    branch.attributeConditions.length > 3) ? (
+                    <>More conditions</>
+                  ) : (
+                    <>Then move to the next step.</>
+                  )}
+                </div>
               </div>
             </Transition>
           </div>

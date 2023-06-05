@@ -12,6 +12,7 @@ import { NodeData } from "../Nodes/NodeData";
 import MessageSettings from "./settings/MessageSettings";
 import TimeDelaySettings from "./settings/TimeDelaySettings";
 import TimeWindowSettings from "./settings/TimeWindowSettings";
+import UserAttributeSettings from "./settings/UserAttributeSettings";
 import WaitUntilSettings from "./settings/WaitUntilSettings";
 
 export interface SidePanelComponentProps<T extends NodeData = NodeData> {
@@ -40,13 +41,15 @@ const FlowBuilderSidePanel: FC<FlowBuilderSidePanelProps> = ({ className }) => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   const nodeTypeToNameMap: Record<NodeType, string> = {
-    [NodeType.EMPTY]: "",
-    [NodeType.JUMP_TO]: "Jump to",
-    [NodeType.MESSAGE]: "",
     [NodeType.START]: "",
+    [NodeType.EMPTY]: "",
+    [NodeType.MESSAGE]: "",
+    [NodeType.JUMP_TO]: "Jump to",
+    [NodeType.EXIT]: "",
     [NodeType.TIME_DELAY]: "Time delay",
     [NodeType.TIME_WINDOW]: "Time window",
     [NodeType.WAIT_UNTIL]: "Wait until",
+    [NodeType.USER_ATTRIBUTE]: "User attribute",
   };
 
   const nodeToSettingsComponentMap: Record<string, ReactNode> = {
@@ -75,6 +78,16 @@ const FlowBuilderSidePanel: FC<FlowBuilderSidePanelProps> = ({ className }) => {
       <>
         {nodeData.type === NodeType.TIME_WINDOW && (
           <TimeWindowSettings nodeData={nodeData} setNodeData={setNodeData} />
+        )}
+      </>
+    ),
+    [NodeType.USER_ATTRIBUTE]: (
+      <>
+        {nodeData.type === NodeType.USER_ATTRIBUTE && (
+          <UserAttributeSettings
+            nodeData={nodeData}
+            setNodeData={setNodeData}
+          />
         )}
       </>
     ),

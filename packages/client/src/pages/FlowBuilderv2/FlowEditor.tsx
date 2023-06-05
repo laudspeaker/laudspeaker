@@ -1,14 +1,12 @@
 import ReactFlow, {
-  applyEdgeChanges,
   applyNodeChanges,
   Controls,
-  EdgeChange,
   MarkerType,
   NodeChange,
 } from "reactflow";
 import { useAppDispatch, useAppSelector } from "store/hooks";
 import "reactflow/dist/style.css";
-import { setEdges, setNodes } from "reducers/flow-builder.reducer";
+import { setNodes } from "reducers/flow-builder.reducer";
 import {
   EmptyNode,
   JumpToNode,
@@ -20,15 +18,19 @@ import {
 } from "./Nodes";
 import FlowBuilderSidePanel from "./SidePanel/FlowBuilderSidePanel";
 import { BranchEdge, PrimaryEdge } from "./Edges";
+import { ExitNode } from "./Nodes/ExitNode";
+import { UserAttributeNode } from "./Nodes/UserAttributeNode";
 
 export enum NodeType {
   START = "start",
   EMPTY = "empty",
   MESSAGE = "message",
   JUMP_TO = "jumpTo",
+  EXIT = "exit",
   WAIT_UNTIL = "waitUntil",
   TIME_DELAY = "timeDelay",
   TIME_WINDOW = "timeWindow",
+  USER_ATTRIBUTE = "userAttribute",
 }
 
 export enum EdgeType {
@@ -41,9 +43,11 @@ const nodeTypes = {
   [NodeType.EMPTY]: EmptyNode,
   [NodeType.MESSAGE]: MessageNode,
   [NodeType.JUMP_TO]: JumpToNode,
+  [NodeType.EXIT]: ExitNode,
   [NodeType.WAIT_UNTIL]: WaitUntilNode,
   [NodeType.TIME_DELAY]: TimeDelayNode,
   [NodeType.TIME_WINDOW]: TimeWindowNode,
+  [NodeType.USER_ATTRIBUTE]: UserAttributeNode,
 };
 
 const edgeTypes = {

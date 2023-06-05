@@ -1,22 +1,21 @@
 import FlowBuilderAutoComplete from "pages/FlowBuilderv2/Elements/FlowBuilderAutoComplete";
 import FlowBuilderButton from "pages/FlowBuilderv2/Elements/FlowBuilderButton";
 import {
+  AttributeCondition,
   ComparisonType,
-  Condition,
   StatementValueType,
 } from "pages/FlowBuilderv2/Nodes/NodeData";
 import React, { FC, useEffect, useState } from "react";
 import { useDebounce } from "react-use";
 import ApiService from "services/api.service";
-import { ProviderType } from "types/Workflow";
 
-interface ConditionEditorProps {
-  condition: Condition;
+interface AttributeConditionEditorProps {
+  condition: AttributeCondition;
   onCancel: () => void;
-  onSave: (condition: Condition) => void;
+  onSave: (condition: AttributeCondition) => void;
 }
 
-const ConditionEditor: FC<ConditionEditorProps> = ({
+const AttributeConditionEditor: FC<AttributeConditionEditorProps> = ({
   condition: initialCondition,
   onCancel,
   onSave,
@@ -52,60 +51,17 @@ const ConditionEditor: FC<ConditionEditorProps> = ({
     () => {
       loadPossibleKeys(keysQuery);
     },
-    300,
+    100,
     [keysQuery]
   );
 
-  const loadPossiblePosthogEventTypes = async (query: string) => {
-    const { data } = await ApiService.get<string[]>({
-      url: `/events/possible-posthog-types?search=${query}`,
-    });
-
-    return data;
-  };
-
   return (
     <div className="flex flex-col gap-[10px] p-[10px] bg-[#F3F4F6]">
-      <div className="font-inter font-semibold text-[14px] leading-[22px]">
-        Event
-      </div>
-      <div className="flex gap-[10px]">
-        <select
-          value={condition.providerType}
-          onChange={(e) =>
-            setCondition({
-              ...condition,
-              providerType: e.target.value as ProviderType,
-            })
-          }
-          className="w-[145px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB]"
-        >
-          <option value={ProviderType.Posthog}>Posthog</option>
-          <option value={ProviderType.Custom}>Custom</option>
-        </select>
-        {condition.providerType === ProviderType.Posthog && (
-          <FlowBuilderAutoComplete
-            value={condition.name}
-            includedItems={{
-              type: "setter",
-              getItems: loadPossiblePosthogEventTypes,
-            }}
-            retrieveLabel={(item) => item}
-            onQueryChange={(query) => {
-              setCondition({ ...condition, name: query });
-            }}
-            onSelect={(value) => {
-              setCondition({ ...condition, name: value });
-            }}
-            placeholder="Event name"
-          />
-        )}
-      </div>
       {condition.statements.map((statement, i) => (
         <React.Fragment key={i}>
           <div className="flex justify-between items-center">
             <div className="font-inter font-semibold text-[14px] leading-[22px]">
-              Property {i + 1}
+              Attribute {i + 1}
             </div>
             <div
               className="cursor-pointer font-roboto font-normal text-[14px] leading-[22px] underline text-[#EB5757]"
@@ -133,9 +89,6 @@ const ConditionEditor: FC<ConditionEditorProps> = ({
               }}
               onSelect={(value) => {
                 condition.statements[i].key = value;
-                condition.statements[i].type =
-                  possibleKeys.find((item) => item.key === value)?.type ||
-                  condition.statements[i].type;
 
                 setKeysQuery(value);
                 setCondition({ ...condition });
@@ -157,21 +110,6 @@ const ConditionEditor: FC<ConditionEditorProps> = ({
               {Object.values(ComparisonType).map((comparisonType, j) => (
                 <option key={j} value={comparisonType}>
                   {comparisonType}
-                </option>
-              ))}
-            </select>
-            <select
-              value={statement.type}
-              onChange={(e) => {
-                condition.statements[i].type = e.target
-                  .value as StatementValueType;
-                setCondition({ ...condition });
-              }}
-              className="w-[145px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB]"
-            >
-              {Object.values(StatementValueType).map((valueType, j) => (
-                <option key={j} value={valueType}>
-                  {valueType}
                 </option>
               ))}
             </select>
@@ -201,7 +139,6 @@ const ConditionEditor: FC<ConditionEditorProps> = ({
                 {
                   key: "",
                   comparisonType: ComparisonType.EQUALS,
-                  type: StatementValueType.NUMBER,
                   value: "",
                 },
               ],
@@ -229,4 +166,4 @@ const ConditionEditor: FC<ConditionEditorProps> = ({
   );
 };
 
-export default ConditionEditor;
+export default AttributeConditionEditor;

@@ -10,6 +10,7 @@ import {
   WaitUntilIcon,
   JumpToIcon,
   CustomModalIcon,
+  UserAttributeIcon,
 } from "pages/FlowBuilderv2/Icons";
 
 export enum DrawerAction {
@@ -24,6 +25,7 @@ export enum DrawerAction {
   WAIT_UNTIL = "waitUntil",
   TIME_DELAY = "timeDelay",
   TIME_WINDOW = "timeWindow",
+  USER_ATTRIBUTE = "userAttribute",
 }
 
 const flowBuilderDrawerFixtures: {
@@ -96,6 +98,11 @@ const flowBuilderDrawerFixtures: {
         id: DrawerAction.TIME_WINDOW,
         icon: TimeWindowIcon(),
         text: "Time Window",
+      },
+      {
+        id: DrawerAction.USER_ATTRIBUTE,
+        icon: UserAttributeIcon(),
+        text: "User Attribute",
       },
     ],
   },

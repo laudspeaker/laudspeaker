@@ -4,6 +4,7 @@ import { NodeType } from "../FlowEditor";
 export enum BranchType {
   EVENT = "event",
   MAX_TIME = "maxTime",
+  ATTRIBUTE = "attribute",
 }
 
 export enum ComparisonType {
@@ -11,7 +12,10 @@ export enum ComparisonType {
 }
 
 export enum StatementValueType {
-  NUMBER = "number",
+  STRING = "String",
+  NUMBER = "Number",
+  BOOLEAN = "Boolean",
+  Email = "Email",
 }
 
 export enum LogicRelation {
@@ -22,7 +26,7 @@ export enum LogicRelation {
 export interface Statement {
   key: string;
   comparisonType: ComparisonType;
-  valueType: StatementValueType;
+  type: StatementValueType;
   value: string;
 }
 
@@ -70,7 +74,25 @@ export interface TimeWindowBranch extends CommonMaxTimeBranch {
 
 export type MaxTimeBranch = TimeDelayBranch | TimeWindowBranch;
 
-export type Branch = EventBranch | MaxTimeBranch;
+export type WaitUntilBranch = EventBranch | MaxTimeBranch;
+
+export interface AttributeStatement {
+  key: string;
+  comparisonType: ComparisonType;
+  value: string;
+}
+
+export interface AttributeCondition {
+  statements: AttributeStatement[];
+  relationToNext: LogicRelation;
+}
+
+export interface AttributeBranch extends CommonBranch {
+  type: BranchType.ATTRIBUTE;
+  attributeConditions: AttributeCondition[];
+}
+
+export type Branch = EventBranch | MaxTimeBranch | AttributeBranch;
 
 export interface CommonNodeData {
   temporary?: boolean;
@@ -90,7 +112,7 @@ export interface MessageNodeData extends CommonNodeData {
 
 export interface WaitUntilNodeData extends CommonNodeData {
   type: NodeType.WAIT_UNTIL;
-  branches: Branch[];
+  branches: WaitUntilBranch[];
 }
 
 export interface TimeDelayNodeData extends CommonNodeData {
@@ -104,6 +126,11 @@ export interface TimeWindowNodeData extends CommonNodeData {
   to: string;
 }
 
+export interface UserAttributeNodeData extends CommonNodeData {
+  type: NodeType.USER_ATTRIBUTE;
+  branches: AttributeBranch[];
+}
+
 export interface AnotherNodeData extends CommonNodeData {
   type?: Exclude<
     NodeType,
@@ -111,6 +138,7 @@ export interface AnotherNodeData extends CommonNodeData {
     | NodeType.WAIT_UNTIL
     | NodeType.TIME_DELAY
     | NodeType.TIME_WINDOW
+    | NodeType.USER_ATTRIBUTE
   >;
 }
 
@@ -119,4 +147,5 @@ export type NodeData =
   | WaitUntilNodeData
   | TimeDelayNodeData
   | TimeWindowNodeData
+  | UserAttributeNodeData
   | AnotherNodeData;

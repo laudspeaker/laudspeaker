@@ -3,6 +3,7 @@ import {
   BranchType,
   MaxTimeBranch,
   TimeType,
+  WaitUntilBranch,
 } from "pages/FlowBuilderv2/Nodes/NodeData";
 import React, { FC } from "react";
 import TimeDelayEditor from "./TimeDelayEditor";
@@ -11,7 +12,7 @@ import TimeWindowEditor from "./TimeWindowEditor";
 interface MaxTimeBranchEditorProps {
   branch: MaxTimeBranch;
   onDeleteBranch: () => void;
-  onChangeBranch: (branch: Branch) => void;
+  onChangeBranch: (branch: MaxTimeBranch) => void;
 }
 
 const MaxTimeBranchEditor: FC<MaxTimeBranchEditorProps> = ({

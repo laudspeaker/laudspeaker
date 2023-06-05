@@ -4,6 +4,7 @@ import {
   Condition,
   LogicRelation,
   TimeType,
+  WaitUntilBranch,
   WaitUntilNodeData,
 } from "pages/FlowBuilderv2/Nodes/NodeData";
 import React, { FC } from "react";
@@ -84,7 +85,7 @@ const WaitUntilSettings: FC<SidePanelComponentProps<WaitUntilNodeData>> = ({
     setNodeData({ ...nodeData, branches });
   };
 
-  const handleChangeBranch = (i: number, branch: Branch) => {
+  const handleChangeBranch = (i: number, branch: WaitUntilBranch) => {
     branches[i] = branch;
 
     setNodeData({ ...nodeData, branches });
@@ -96,7 +97,7 @@ const WaitUntilSettings: FC<SidePanelComponentProps<WaitUntilNodeData>> = ({
     handleChangeCondition(i, j, condition);
   const onDeleteCondition = (i: number) => (j: number) =>
     handleDeleteCondition(i, j);
-  const onChangeBranch = (i: number) => (branch: Branch) =>
+  const onChangeBranch = (i: number) => (branch: WaitUntilBranch) =>
     handleChangeBranch(i, branch);
 
   return (
