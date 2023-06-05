@@ -40,6 +40,14 @@ const ConditionEditor: FC<ConditionEditorProps> = ({
     return data.map(({ key }) => key);
   };
 
+  const loadPossiblePosthogEventTypes = async (query: string) => {
+    const { data } = await ApiService.get<string[]>({
+      url: `/events/possible-posthog-types?search=${query}`,
+    });
+
+    return data;
+  };
+
   return (
     <div className="flex flex-col gap-[10px] p-[10px] bg-[#F3F4F6]">
       <div className="font-inter font-semibold text-[14px] leading-[22px]">
@@ -60,14 +68,17 @@ const ConditionEditor: FC<ConditionEditorProps> = ({
           <option value={ProviderType.Custom}>Custom</option>
         </select>
         {condition.providerType === ProviderType.Posthog && (
-          <input
-            type="text"
-            placeholder="Event name"
+          <FlowBuilderAutoComplete
             value={condition.name}
-            onChange={(e) =>
-              setCondition({ ...condition, name: e.target.value })
-            }
-            className="w-[145px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB] placeholder:font-inter placeholder:font-normal placeholder:text-[14px] placeholder:leading-[22px] placeholder:text-[#9CA3AF]"
+            getItems={loadPossiblePosthogEventTypes}
+            retrieveLabel={(item) => item}
+            onQueryChange={(query) => {
+              setCondition({ ...condition, name: query });
+            }}
+            onSelect={(value) => {
+              setCondition({ ...condition, name: value });
+            }}
+            placeholder="Property name"
           />
         )}
       </div>

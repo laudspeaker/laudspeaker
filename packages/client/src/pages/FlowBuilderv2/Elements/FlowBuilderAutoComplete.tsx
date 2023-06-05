@@ -45,7 +45,6 @@ const FlowBuilderAutoComplete = <T,>({
           placeholder={placeholder}
           className="w-full px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB] placeholder:font-inter placeholder:font-normal placeholder:text-[14px] placeholder:leading-[22px] placeholder:text-[#9CA3AF] focus:border-[#6366F1]"
         />
-
         <Combobox.Options className="translate-y-[4px] absolute w-full">
           <div className="py-[4px] bg-white rounded-[2px]">
             {items.map((item) => (

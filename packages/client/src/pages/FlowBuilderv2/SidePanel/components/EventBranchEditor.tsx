@@ -6,6 +6,7 @@ import {
   StatementValueType,
 } from "pages/FlowBuilderv2/Nodes/NodeData";
 import React, { FC, useState } from "react";
+import { ProviderType } from "types/Workflow";
 import ConditionEditor from "./ConditionEditor";
 
 interface EventBranchEditorProps {
@@ -25,7 +26,6 @@ const EventBranchEditor: FC<EventBranchEditorProps> = ({
 }) => {
   const [conditionIndexToChange, setConditionIndexToChange] =
     useState<number>();
-
   return (
     <div className="flex flex-col gap-[10px]">
       {branch.conditions.map((condition, i) => (
@@ -43,7 +43,9 @@ const EventBranchEditor: FC<EventBranchEditorProps> = ({
             <div className="p-[10px] flex flex-col gap-[10px] bg-[#F3F4F6]">
               <div className="flex justify-between items-center">
                 <div className="font-inter font-semibold text-[14px] leading-[22px]">
-                  {condition.name || "Custom Event"}
+                  {condition.providerType === ProviderType.Custom
+                    ? "Custom Event"
+                    : "Posthog Event"}
                 </div>
                 <div className="flex gap-[20px] items-center">
                   <div

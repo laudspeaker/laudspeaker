@@ -4,15 +4,14 @@ import {
   BaseEdge,
   EdgeLabelRenderer,
   EdgeProps,
-  getIncomers,
   getSmoothStepPath,
 } from "reactflow";
-import { selectNode, setEdges, setNodes } from "reducers/flow-builder.reducer";
+import { selectNode } from "reducers/flow-builder.reducer";
 import { useAppDispatch, useAppSelector } from "store/hooks";
 import { NodeType } from "../FlowEditor";
 import { BranchType, LogicRelation, TimeType } from "../Nodes/NodeData";
 import { BranchEdgeData } from "./EdgeData";
-import { usePopper } from "react-popper";
+import { ProviderType } from "types/Workflow";
 
 const popperNameMap: Record<BranchType, string> = {
   [BranchType.EVENT]: "Wait people until",
@@ -136,7 +135,9 @@ export const BranchEdge: FC<EdgeProps<BranchEdgeData>> = ({
                       <React.Fragment key={i}>
                         <div className="p-[10px] bg-[#F3F4F6] flex flex-col gap-[5px]">
                           <div className="font-inter font-semibold text-[14px] leading-[22px] text-[#18181B]">
-                            {condition.name || "Custom Event"}
+                            {condition.providerType === ProviderType.Custom
+                              ? "Custom Event"
+                              : "Posthog Event"}
                           </div>
                           {condition.statements.map((statement) => (
                             <div className="font-inter font-normal text-[12px] leading-[20px] text-[#18181B]">
