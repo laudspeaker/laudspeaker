@@ -1,45 +1,52 @@
-import { TypeOrmConfigService } from '../../shared/typeorm/typeorm.service';
-import { MongooseModule } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
-import { TypeOrmModule } from '@nestjs/typeorm';
+import { getRepositoryToken } from '@nestjs/typeorm';
 import { CustomersService } from '../customers/customers.service';
-import { Customer, CustomerSchema } from '../customers/schemas/customer.schema';
-import { AudiencesController } from './audiences.controller';
 import { AudiencesService } from './audiences.service';
 import { Audience } from './entities/audience.entity';
-import { WinstonModule } from 'nest-winston';
-import * as winston from 'winston';
+import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { Workflow } from '../workflows/entities/workflow.entity';
-
-const papertrail = new winston.transports.Http({
-  host: 'logs.collector.solarwinds.com',
-  path: '/v1/log',
-  auth: { username: 'papertrail', password: process.env.PAPERTRAIL_API_KEY },
-  ssl: true,
-});
+import { createMock } from '@golevelup/ts-jest';
+import { TemplatesService } from '../templates/templates.service';
+import { Repository } from 'typeorm';
+import { JobsService } from '../jobs/jobs.service';
 
 describe('AudiencesService', () => {
   let service: AudiencesService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      imports: [
-        MongooseModule.forRoot(process.env.MONGOOSE_URL),
-        TypeOrmModule.forRootAsync({ useClass: TypeOrmConfigService }),
-        WinstonModule.forRootAsync({
-          useFactory: () => ({
-            level: 'debug',
-            transports: [papertrail],
-          }),
-          inject: [],
-        }),
-        TypeOrmModule.forFeature([Audience, Workflow]),
-        MongooseModule.forFeature([
-          { name: Customer.name, schema: CustomerSchema },
-        ]),
+      providers: [AudiencesService,
+        {
+          provide: CustomersService,
+          useValue: createMock<CustomersService>(),
+        },
+        {
+          provide: TemplatesService,
+          useValue: createMock<TemplatesService>(),
+        },
+        {
+          provide: JobsService,
+          useValue: createMock<JobsService>(),
+        },
+        {
+          provide: getRepositoryToken(Audience),
+          useClass: Repository
+        },
+        {
+          provide: getRepositoryToken(Workflow),
+          useClass: Repository
+        },
+        {
+          provide: WINSTON_MODULE_NEST_PROVIDER,
+          useValue: {
+            log: jest.fn(),
+            debug: jest.fn(),
+            info: jest.fn(),
+            warn: jest.fn(),
+            error: jest.fn(),
+          },
+        },
       ],
-      controllers: [AudiencesController],
-      providers: [AudiencesService, CustomersService],
     }).compile();
 
     service = module.get<AudiencesService>(AudiencesService);

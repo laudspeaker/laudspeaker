@@ -1,67 +1,73 @@
-import { JwtModule } from '@nestjs/jwt';
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuthService } from './auth.service';
-import { JwtStrategy } from './strategies/jwt.strategy';
-import { AuthHelper } from './auth.helper';
-import { ApiKeyStrategy } from './strategies/apiKey.strategy';
-import { AuthController } from './auth.controller';
-import { PassportModule } from '@nestjs/passport';
-import { Account } from '../accounts/entities/accounts.entity';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { MongooseModule } from '@nestjs/mongoose';
-import { BullModule } from '@nestjs/bullmq';
-import { WinstonModule } from 'nest-winston';
-import { TypeOrmConfigService } from '../../shared/typeorm/typeorm.service';
-import * as winston from 'winston';
+import { DataSource, Repository } from 'typeorm';
+import { createMock } from '@golevelup/ts-jest';
+import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
+import { getQueueToken } from '@nestjs/bullmq';
+import { getRepositoryToken } from '@nestjs/typeorm';
+import { Account } from 'aws-sdk';
 import { Verification } from './entities/verification.entity';
-
-const papertrail = new winston.transports.Http({
-  host: 'logs.collector.solarwinds.com',
-  path: '/v1/log',
-  auth: { username: 'papertrail', password: process.env.PAPERTRAIL_API_KEY },
-  ssl: true,
-});
+import { Recovery } from './entities/recovery.entity';
+import { AuthHelper } from './auth.helper';
+import { CustomersService } from '../customers/customers.service';
+import { getConnectionToken } from '@nestjs/mongoose';
 
 describe('AuthService', () => {
   let service: AuthService;
+  let repository: Repository<Account>;
 
   beforeEach(async () => {
     const moduleRef: TestingModule = await Test.createTestingModule({
-      imports: [
-        MongooseModule.forRoot(process.env.MONGOOSE_URL),
-        BullModule.forRoot({
-          connection: {
-            host: process.env.REDIS_HOST,
-            port: parseInt(process.env.REDIS_PORT),
-            password: process.env.REDIS_PASSWORD,
+      providers: [
+        AuthService,
+        {
+          provide: DataSource,
+          useValue: createMock<DataSource>(),
+        },
+        {
+          provide: WINSTON_MODULE_NEST_PROVIDER,
+          useValue: {
+            log: jest.fn(),
+            debug: jest.fn(),
+            info: jest.fn(),
+            warn: jest.fn(),
+            error: jest.fn(),
           },
-        }),
-        WinstonModule.forRootAsync({
-          useFactory: () => ({
-            level: 'debug',
-            transports: [papertrail],
-          }),
-          inject: [],
-        }),
-        BullModule.registerQueue({
-          name: 'message',
-        }),
-        TypeOrmModule.forRootAsync({ useClass: TypeOrmConfigService }),
-        PassportModule.register({
-          defaultStrategy: 'jwt',
-          property: 'user',
-        }),
-        JwtModule.register({
-          secret: 'JWT_KEY',
-          signOptions: { expiresIn: '60s' },
-        }),
-        TypeOrmModule.forFeature([Account, Verification]),
+        },
+        {
+          provide: getQueueToken('message'),
+          useValue: { add: jest.fn() },
+        },
+        {
+          provide: getRepositoryToken(Account),
+          useClass: Repository,
+        },
+        {
+          provide: getRepositoryToken(Verification),
+          useValue: {},
+        },
+        {
+          provide: getRepositoryToken(Recovery),
+          useValue: createMock(),
+        },
+        {
+          provide: AuthHelper,
+          useValue: createMock<AuthHelper>()
+        },
+        {
+          provide: CustomersService,
+          useValue: createMock<CustomersService>(),
+        },
+        {
+          provide: getConnectionToken(),
+          useValue: { add: jest.fn() },
+        },
       ],
-      controllers: [AuthController],
-      providers: [AuthService, AuthHelper, JwtStrategy, ApiKeyStrategy],
     }).compile();
 
     service = moduleRef.get<AuthService>(AuthService);
+    repository = moduleRef.get<Repository<Account>>(getRepositoryToken(Account));
+
   });
 
   it('should be defined', () => {

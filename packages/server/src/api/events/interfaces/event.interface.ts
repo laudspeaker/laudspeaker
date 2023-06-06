@@ -79,7 +79,7 @@ export interface CustomEventTable {
 /*
  * can change this as needed
  *
- * We may need to add a payloa param in the future if we need some payload information to be used in the workflow
+ * We may need to add a payload param in the future if we need some payload information to be used in the workflow
  *
  */
 export interface SpecifiedEventTable {

@@ -52,7 +52,7 @@ export class TestsService {
     private CustomerKeysModel: Model<CustomerKeysDocument>,
     @InjectRepository(SegmentCustomers)
     private segmentCustomersRepository: Repository<SegmentCustomers>
-  ) {}
+  ) { }
 
   log(message, method, session, user = 'ANONYMOUS') {
     this.logger.log(
@@ -141,14 +141,14 @@ export class TestsService {
         account: { id: '00000000-0000-0000-0000-000000000000' },
       });
 
-      const userCreated = await this.authService.repository.findOne({
+      const userCreated = await this.authService.accountRepository.findOne({
         where: {
           apiKey: 'dowkp5HD51tdEL4U09kFW2MKj3hCyT664Ol40000',
         },
       });
 
       if (userCreated?.id) {
-        await this.authService.repository.remove([userCreated]);
+        await this.authService.accountRepository.remove([userCreated]);
       }
 
       const user = new Account();
@@ -171,8 +171,8 @@ export class TestsService {
       user.smsAuthToken = process.env.TESTS_SMS_AUTH_TOKEN;
       user.smsFrom = process.env.TESTS_SMS_FROM;
 
-      const ret = await this.authService.repository.save(user);
-      await this.authService.repository.update(
+      const ret = await this.authService.accountRepository.save(user);
+      await this.authService.accountRepository.update(
         { id: ret.id },
         {
           id: '00000000-0000-0000-0000-000000000000',

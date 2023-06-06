@@ -31,7 +31,7 @@ export class AuthService {
     private readonly logger: Logger,
     @InjectQueue('message') private readonly messageQueue: Queue,
     @InjectRepository(Account)
-    public readonly repository: Repository<Account>,
+    public readonly accountRepository: Repository<Account>,
     @InjectRepository(Verification)
     public readonly verificationRepository: Repository<Verification>,
     @InjectRepository(Recovery)
@@ -40,7 +40,7 @@ export class AuthService {
     public readonly helper: AuthHelper,
     @Inject(CustomersService) private customersService: CustomersService,
     @InjectConnection() private readonly connection: mongoose.Connection
-  ) {}
+  ) { }
 
   log(message, method, session, user = 'ANONYMOUS') {
     this.logger.log(
@@ -104,7 +104,7 @@ export class AuthService {
   public async register(body: RegisterDto, session: string) {
     try {
       const { firstName, lastName, email, password }: RegisterDto = body;
-      let user: Account = await this.repository.findOne({ where: { email } });
+      let user: Account = await this.accountRepository.findOne({ where: { email } });
       if (user) {
         throw new HttpException(
           'This account already exists',
@@ -140,7 +140,7 @@ export class AuthService {
 
   public async login(body: LoginDto, session: string) {
     const { email, password }: LoginDto = body;
-    const user: Account = await this.repository.findOne({ where: { email } });
+    const user: Account = await this.accountRepository.findOne({ where: { email } });
 
     if (!user) {
       throw new HttpException('No user found', HttpStatus.NOT_FOUND);
@@ -155,7 +155,7 @@ export class AuthService {
       throw new HttpException('No user found', HttpStatus.NOT_FOUND);
     }
 
-    const ret = await this.repository.save({
+    const ret = await this.accountRepository.save({
       ...user,
       lastLoginAt: new Date(),
     });
@@ -164,14 +164,14 @@ export class AuthService {
   }
 
   public async validateAPIKey(apiKey: string): Promise<Account | never> {
-    const user: Account = await this.repository.findOne({
+    const user: Account = await this.accountRepository.findOne({
       where: { apiKey: apiKey },
     });
     return user;
   }
 
   public async refresh(user: Account, session: string): Promise<string> {
-    this.repository.update(user.id, { lastLoginAt: new Date() });
+    this.accountRepository.update(user.id, { lastLoginAt: new Date() });
 
     return this.helper.generateToken(user);
   }
@@ -208,7 +208,7 @@ export class AuthService {
     verificationId: string,
     session: string
   ) {
-    const account = await this.repository.findOneBy({ id: user.id });
+    const account = await this.accountRepository.findOneBy({ id: user.id });
     if (!account)
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
 
@@ -271,7 +271,7 @@ export class AuthService {
     { email }: RequestResetPasswordDto,
     session: string
   ) {
-    const account = await this.repository.findOneBy({ email });
+    const account = await this.accountRepository.findOneBy({ email });
 
     if (!account)
       throw new NotFoundException('There is no account with this email');

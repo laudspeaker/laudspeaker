@@ -18,6 +18,9 @@ export class Customer {
   workflows: string[];
 
   @Prop()
+  journeys: string[];
+
+  @Prop()
   ownerId: string;
 
   @Prop()
@@ -43,45 +46,6 @@ export class Customer {
 
   @Prop()
   phInitialOs: string;
-
-  // @Prop()
-  // phGeoIpTimeZone: string;
-
-  // @Prop()
-  // phGeoIp: {
-  //   type: {
-  //     type: String,
-  //     default: 'Point',
-  //   },
-  //   coordinates: {
-  //     type: [Number],
-  //     default: undefined,
-  //     required: true
-  //   },
-  //   index: '2dsphere'
-  // };
-
-  // @Prop()
-  // phInitialGeoIp:{
-  //   type: {
-  //     type: String,
-  //     default: 'Point',
-  //   },
-  //   coordinates: {
-  //     type: [Number],
-  //     default: undefined,
-  //     required: true
-  //   },
-  //   index: '2dsphere'
-  // }
-
-  //phGeoip_latitude
-  //phGeoip_longitude
-  //phInitial_geoip_latitude
-  //phInitial_geoip_longitude
-
-  // @Prop()
-  // posthogEmail: string;
 
   @Prop()
   rudderId: string;
