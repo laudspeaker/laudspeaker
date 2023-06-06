@@ -40,7 +40,7 @@ export class AuthService {
     public readonly helper: AuthHelper,
     @Inject(CustomersService) private customersService: CustomersService,
     @InjectConnection() private readonly connection: mongoose.Connection
-  ) { }
+  ) {}
 
   log(message, method, session, user = 'ANONYMOUS') {
     this.logger.log(
@@ -104,7 +104,9 @@ export class AuthService {
   public async register(body: RegisterDto, session: string) {
     try {
       const { firstName, lastName, email, password }: RegisterDto = body;
-      let user: Account = await this.accountRepository.findOne({ where: { email } });
+      let user: Account = await this.accountRepository.findOne({
+        where: { email },
+      });
       if (user) {
         throw new HttpException(
           'This account already exists',
@@ -140,7 +142,9 @@ export class AuthService {
 
   public async login(body: LoginDto, session: string) {
     const { email, password }: LoginDto = body;
-    const user: Account = await this.accountRepository.findOne({ where: { email } });
+    const user: Account = await this.accountRepository.findOne({
+      where: { email },
+    });
 
     if (!user) {
       throw new HttpException('No user found', HttpStatus.NOT_FOUND);

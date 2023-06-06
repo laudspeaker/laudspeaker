@@ -152,8 +152,11 @@ export const BranchEdge: FC<EdgeProps<BranchEdgeData>> = ({
                               ? "Custom Event"
                               : "Posthog Event"}
                           </div>
-                          {condition.statements.map((statement) => (
-                            <div className="font-inter font-normal text-[12px] leading-[20px] text-[#18181B]">
+                          {condition.statements.map((statement, j) => (
+                            <div
+                              key={j}
+                              className="font-inter font-normal text-[12px] leading-[20px] text-[#18181B]"
+                            >
                               {statement.key} {statement.comparisonType}{" "}
                               {statement.value}
                             </div>
@@ -176,8 +179,11 @@ export const BranchEdge: FC<EdgeProps<BranchEdgeData>> = ({
                       .map((condition, i) => (
                         <React.Fragment key={i}>
                           <div className="p-[10px] bg-[#F3F4F6] flex flex-col gap-[5px]">
-                            {condition.statements.map((statement) => (
-                              <div className="font-inter font-normal text-[12px] leading-[20px] text-[#18181B]">
+                            {condition.statements.map((statement, j) => (
+                              <div
+                                key={j}
+                                className="font-inter font-normal text-[12px] leading-[20px] text-[#18181B]"
+                              >
                                 {statement.key} {statement.comparisonType}{" "}
                                 {statement.value}
                               </div>

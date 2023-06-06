@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { WorkflowsService } from './workflows.service';
 import { DataSource, Repository } from 'typeorm';
-import { createMock, } from '@golevelup/ts-jest';
+import { createMock } from '@golevelup/ts-jest';
 import { AudiencesService } from '../audiences/audiences.service';
 import { getConnectionToken, getModelToken } from '@nestjs/mongoose';
 import { CustomersService } from '../customers/customers.service';
@@ -15,10 +15,10 @@ describe('WorkflowsService', () => {
   let service: WorkflowsService;
   let repository: Repository<Workflow>;
 
-
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [WorkflowsService,
+      providers: [
+        WorkflowsService,
         {
           provide: DataSource,
           useValue: createMock<DataSource>(),
@@ -65,251 +65,374 @@ describe('WorkflowsService', () => {
     }).compile();
 
     service = module.get<WorkflowsService>(WorkflowsService);
-    repository = module.get<Repository<Workflow>>(getRepositoryToken(Workflow))
+    repository = module.get<Repository<Workflow>>(getRepositoryToken(Workflow));
   });
 
   it('should be defined', () => {
     expect(service).toBeDefined();
   });
 
-  
   describe('findAll()', () => {
     it('should call with userID if present', () => {
       const acct = new Account();
-      const cd = new customersService.CustomerModel({ownerId: acct.id, userId: "string" })
-      customersService.findByExternalIdOrCreate.mockResolvedValueOnce(cd)
-      const serviceSpy = jest.spyOn(customersService, 'findByExternalIdOrCreate');
-      expect(service.correlate(acct,ev)).resolves.toEqual(cd);
-      expect(serviceSpy).toBeCalledWith(acct, "string");
+      const cd = new customersService.CustomerModel({
+        ownerId: acct.id,
+        userId: 'string',
+      });
+      customersService.findByExternalIdOrCreate.mockResolvedValueOnce(cd);
+      const serviceSpy = jest.spyOn(
+        customersService,
+        'findByExternalIdOrCreate'
+      );
+      expect(service.correlate(acct, ev)).resolves.toEqual(cd);
+      expect(serviceSpy).toBeCalledWith(acct, 'string');
     });
 
     it('should call with anonymousID if userID not present', () => {
-      const serviceSpy = jest.spyOn(customersService, 'findByExternalIdOrCreate');
-      expect(service.correlate("1@gmail.com")).resolves.toEqual(oneUser);
-      expect(repoSpy).toBeCalledWith(acct, "string");
+      const serviceSpy = jest.spyOn(
+        customersService,
+        'findByExternalIdOrCreate'
+      );
+      expect(service.correlate('1@gmail.com')).resolves.toEqual(oneUser);
+      expect(repoSpy).toBeCalledWith(acct, 'string');
     });
   });
 
   describe('findAllActive()', () => {
     it('should find all active journeys', () => {
       const acct = new Account();
-      const cd = new customersService.CustomerModel({ownerId: acct.id, userId: "string" })
-      customersService.findByExternalIdOrCreate.mockResolvedValueOnce(cd)
-      const serviceSpy = jest.spyOn(customersService, 'findByExternalIdOrCreate');
-      expect(service.correlate(acct,ev)).resolves.toEqual(cd);
-      expect(serviceSpy).toBeCalledWith(acct, "string");
+      const cd = new customersService.CustomerModel({
+        ownerId: acct.id,
+        userId: 'string',
+      });
+      customersService.findByExternalIdOrCreate.mockResolvedValueOnce(cd);
+      const serviceSpy = jest.spyOn(
+        customersService,
+        'findByExternalIdOrCreate'
+      );
+      expect(service.correlate(acct, ev)).resolves.toEqual(cd);
+      expect(serviceSpy).toBeCalledWith(acct, 'string');
     });
 
     it('should call with anonymousID if userID not present', () => {
-      const serviceSpy = jest.spyOn(customersService, 'findByExternalIdOrCreate');
-      expect(service.correlate("1@gmail.com")).resolves.toEqual(oneUser);
-      expect(repoSpy).toBeCalledWith(acct, "string");
+      const serviceSpy = jest.spyOn(
+        customersService,
+        'findByExternalIdOrCreate'
+      );
+      expect(service.correlate('1@gmail.com')).resolves.toEqual(oneUser);
+      expect(repoSpy).toBeCalledWith(acct, 'string');
     });
   });
 
   describe('findAllActive()', () => {
     it('should find all active journeys', () => {
       const acct = new Account();
-      const cd = new customersService.CustomerModel({ownerId: acct.id, userId: "string" })
-      customersService.findByExternalIdOrCreate.mockResolvedValueOnce(cd)
-      const serviceSpy = jest.spyOn(customersService, 'findByExternalIdOrCreate');
-      expect(service.correlate(acct,ev)).resolves.toEqual(cd);
-      expect(serviceSpy).toBeCalledWith(acct, "string");
+      const cd = new customersService.CustomerModel({
+        ownerId: acct.id,
+        userId: 'string',
+      });
+      customersService.findByExternalIdOrCreate.mockResolvedValueOnce(cd);
+      const serviceSpy = jest.spyOn(
+        customersService,
+        'findByExternalIdOrCreate'
+      );
+      expect(service.correlate(acct, ev)).resolves.toEqual(cd);
+      expect(serviceSpy).toBeCalledWith(acct, 'string');
     });
 
     it('should call with anonymousID if userID not present', () => {
-      const serviceSpy = jest.spyOn(customersService, 'findByExternalIdOrCreate');
-      expect(service.correlate("1@gmail.com")).resolves.toEqual(oneUser);
-      expect(repoSpy).toBeCalledWith(acct, "string");
+      const serviceSpy = jest.spyOn(
+        customersService,
+        'findByExternalIdOrCreate'
+      );
+      expect(service.correlate('1@gmail.com')).resolves.toEqual(oneUser);
+      expect(repoSpy).toBeCalledWith(acct, 'string');
     });
   });
 
   describe('create()', () => {
     it('should find all active journeys', () => {
       const acct = new Account();
-      const cd = new customersService.CustomerModel({ownerId: acct.id, userId: "string" })
-      customersService.findByExternalIdOrCreate.mockResolvedValueOnce(cd)
-      const serviceSpy = jest.spyOn(customersService, 'findByExternalIdOrCreate');
-      expect(service.correlate(acct,ev)).resolves.toEqual(cd);
-      expect(serviceSpy).toBeCalledWith(acct, "string");
+      const cd = new customersService.CustomerModel({
+        ownerId: acct.id,
+        userId: 'string',
+      });
+      customersService.findByExternalIdOrCreate.mockResolvedValueOnce(cd);
+      const serviceSpy = jest.spyOn(
+        customersService,
+        'findByExternalIdOrCreate'
+      );
+      expect(service.correlate(acct, ev)).resolves.toEqual(cd);
+      expect(serviceSpy).toBeCalledWith(acct, 'string');
     });
 
     it('should call with anonymousID if userID not present', () => {
-      const serviceSpy = jest.spyOn(customersService, 'findByExternalIdOrCreate');
-      expect(service.correlate("1@gmail.com")).resolves.toEqual(oneUser);
-      expect(repoSpy).toBeCalledWith(acct, "string");
+      const serviceSpy = jest.spyOn(
+        customersService,
+        'findByExternalIdOrCreate'
+      );
+      expect(service.correlate('1@gmail.com')).resolves.toEqual(oneUser);
+      expect(repoSpy).toBeCalledWith(acct, 'string');
     });
   });
 
   describe('update()', () => {
     it('should find all active journeys', () => {
       const acct = new Account();
-      const cd = new customersService.CustomerModel({ownerId: acct.id, userId: "string" })
-      customersService.findByExternalIdOrCreate.mockResolvedValueOnce(cd)
-      const serviceSpy = jest.spyOn(customersService, 'findByExternalIdOrCreate');
-      expect(service.correlate(acct,ev)).resolves.toEqual(cd);
-      expect(serviceSpy).toBeCalledWith(acct, "string");
+      const cd = new customersService.CustomerModel({
+        ownerId: acct.id,
+        userId: 'string',
+      });
+      customersService.findByExternalIdOrCreate.mockResolvedValueOnce(cd);
+      const serviceSpy = jest.spyOn(
+        customersService,
+        'findByExternalIdOrCreate'
+      );
+      expect(service.correlate(acct, ev)).resolves.toEqual(cd);
+      expect(serviceSpy).toBeCalledWith(acct, 'string');
     });
 
     it('should call with anonymousID if userID not present', () => {
-      const serviceSpy = jest.spyOn(customersService, 'findByExternalIdOrCreate');
-      expect(service.correlate("1@gmail.com")).resolves.toEqual(oneUser);
-      expect(repoSpy).toBeCalledWith(acct, "string");
+      const serviceSpy = jest.spyOn(
+        customersService,
+        'findByExternalIdOrCreate'
+      );
+      expect(service.correlate('1@gmail.com')).resolves.toEqual(oneUser);
+      expect(repoSpy).toBeCalledWith(acct, 'string');
     });
   });
 
-  
   describe('duplicate()', () => {
     it('should find all active journeys', () => {
       const acct = new Account();
-      const cd = new customersService.CustomerModel({ownerId: acct.id, userId: "string" })
-      customersService.findByExternalIdOrCreate.mockResolvedValueOnce(cd)
-      const serviceSpy = jest.spyOn(customersService, 'findByExternalIdOrCreate');
-      expect(service.correlate(acct,ev)).resolves.toEqual(cd);
-      expect(serviceSpy).toBeCalledWith(acct, "string");
+      const cd = new customersService.CustomerModel({
+        ownerId: acct.id,
+        userId: 'string',
+      });
+      customersService.findByExternalIdOrCreate.mockResolvedValueOnce(cd);
+      const serviceSpy = jest.spyOn(
+        customersService,
+        'findByExternalIdOrCreate'
+      );
+      expect(service.correlate(acct, ev)).resolves.toEqual(cd);
+      expect(serviceSpy).toBeCalledWith(acct, 'string');
     });
 
     it('should call with anonymousID if userID not present', () => {
-      const serviceSpy = jest.spyOn(customersService, 'findByExternalIdOrCreate');
-      expect(service.correlate("1@gmail.com")).resolves.toEqual(oneUser);
-      expect(repoSpy).toBeCalledWith(acct, "string");
+      const serviceSpy = jest.spyOn(
+        customersService,
+        'findByExternalIdOrCreate'
+      );
+      expect(service.correlate('1@gmail.com')).resolves.toEqual(oneUser);
+      expect(repoSpy).toBeCalledWith(acct, 'string');
     });
   });
 
   describe('start()', () => {
     it('should find all active journeys', () => {
       const acct = new Account();
-      const cd = new customersService.CustomerModel({ownerId: acct.id, userId: "string" })
-      customersService.findByExternalIdOrCreate.mockResolvedValueOnce(cd)
-      const serviceSpy = jest.spyOn(customersService, 'findByExternalIdOrCreate');
-      expect(service.correlate(acct,ev)).resolves.toEqual(cd);
-      expect(serviceSpy).toBeCalledWith(acct, "string");
+      const cd = new customersService.CustomerModel({
+        ownerId: acct.id,
+        userId: 'string',
+      });
+      customersService.findByExternalIdOrCreate.mockResolvedValueOnce(cd);
+      const serviceSpy = jest.spyOn(
+        customersService,
+        'findByExternalIdOrCreate'
+      );
+      expect(service.correlate(acct, ev)).resolves.toEqual(cd);
+      expect(serviceSpy).toBeCalledWith(acct, 'string');
     });
 
     it('should call with anonymousID if userID not present', () => {
-      const serviceSpy = jest.spyOn(customersService, 'findByExternalIdOrCreate');
-      expect(service.correlate("1@gmail.com")).resolves.toEqual(oneUser);
-      expect(repoSpy).toBeCalledWith(acct, "string");
+      const serviceSpy = jest.spyOn(
+        customersService,
+        'findByExternalIdOrCreate'
+      );
+      expect(service.correlate('1@gmail.com')).resolves.toEqual(oneUser);
+      expect(repoSpy).toBeCalledWith(acct, 'string');
     });
   });
 
   describe('enrollCustomer()', () => {
     it('should find all active journeys', () => {
       const acct = new Account();
-      const cd = new customersService.CustomerModel({ownerId: acct.id, userId: "string" })
-      customersService.findByExternalIdOrCreate.mockResolvedValueOnce(cd)
-      const serviceSpy = jest.spyOn(customersService, 'findByExternalIdOrCreate');
-      expect(service.correlate(acct,ev)).resolves.toEqual(cd);
-      expect(serviceSpy).toBeCalledWith(acct, "string");
+      const cd = new customersService.CustomerModel({
+        ownerId: acct.id,
+        userId: 'string',
+      });
+      customersService.findByExternalIdOrCreate.mockResolvedValueOnce(cd);
+      const serviceSpy = jest.spyOn(
+        customersService,
+        'findByExternalIdOrCreate'
+      );
+      expect(service.correlate(acct, ev)).resolves.toEqual(cd);
+      expect(serviceSpy).toBeCalledWith(acct, 'string');
     });
 
     it('should call with anonymousID if userID not present', () => {
-      const serviceSpy = jest.spyOn(customersService, 'findByExternalIdOrCreate');
-      expect(service.correlate("1@gmail.com")).resolves.toEqual(oneUser);
-      expect(repoSpy).toBeCalledWith(acct, "string");
+      const serviceSpy = jest.spyOn(
+        customersService,
+        'findByExternalIdOrCreate'
+      );
+      expect(service.correlate('1@gmail.com')).resolves.toEqual(oneUser);
+      expect(repoSpy).toBeCalledWith(acct, 'string');
     });
   });
 
   describe('tick()', () => {
     it('should find all active journeys', () => {
       const acct = new Account();
-      const cd = new customersService.CustomerModel({ownerId: acct.id, userId: "string" })
-      customersService.findByExternalIdOrCreate.mockResolvedValueOnce(cd)
-      const serviceSpy = jest.spyOn(customersService, 'findByExternalIdOrCreate');
-      expect(service.correlate(acct,ev)).resolves.toEqual(cd);
-      expect(serviceSpy).toBeCalledWith(acct, "string");
+      const cd = new customersService.CustomerModel({
+        ownerId: acct.id,
+        userId: 'string',
+      });
+      customersService.findByExternalIdOrCreate.mockResolvedValueOnce(cd);
+      const serviceSpy = jest.spyOn(
+        customersService,
+        'findByExternalIdOrCreate'
+      );
+      expect(service.correlate(acct, ev)).resolves.toEqual(cd);
+      expect(serviceSpy).toBeCalledWith(acct, 'string');
     });
 
     it('should call with anonymousID if userID not present', () => {
-      const serviceSpy = jest.spyOn(customersService, 'findByExternalIdOrCreate');
-      expect(service.correlate("1@gmail.com")).resolves.toEqual(oneUser);
-      expect(repoSpy).toBeCalledWith(acct, "string");
+      const serviceSpy = jest.spyOn(
+        customersService,
+        'findByExternalIdOrCreate'
+      );
+      expect(service.correlate('1@gmail.com')).resolves.toEqual(oneUser);
+      expect(repoSpy).toBeCalledWith(acct, 'string');
     });
   });
 
   describe('remove()', () => {
     it('should find all active journeys', () => {
       const acct = new Account();
-      const cd = new customersService.CustomerModel({ownerId: acct.id, userId: "string" })
-      customersService.findByExternalIdOrCreate.mockResolvedValueOnce(cd)
-      const serviceSpy = jest.spyOn(customersService, 'findByExternalIdOrCreate');
-      expect(service.correlate(acct,ev)).resolves.toEqual(cd);
-      expect(serviceSpy).toBeCalledWith(acct, "string");
+      const cd = new customersService.CustomerModel({
+        ownerId: acct.id,
+        userId: 'string',
+      });
+      customersService.findByExternalIdOrCreate.mockResolvedValueOnce(cd);
+      const serviceSpy = jest.spyOn(
+        customersService,
+        'findByExternalIdOrCreate'
+      );
+      expect(service.correlate(acct, ev)).resolves.toEqual(cd);
+      expect(serviceSpy).toBeCalledWith(acct, 'string');
     });
 
     it('should call with anonymousID if userID not present', () => {
-      const serviceSpy = jest.spyOn(customersService, 'findByExternalIdOrCreate');
-      expect(service.correlate("1@gmail.com")).resolves.toEqual(oneUser);
-      expect(repoSpy).toBeCalledWith(acct, "string");
+      const serviceSpy = jest.spyOn(
+        customersService,
+        'findByExternalIdOrCreate'
+      );
+      expect(service.correlate('1@gmail.com')).resolves.toEqual(oneUser);
+      expect(repoSpy).toBeCalledWith(acct, 'string');
     });
   });
 
   describe('setPaused()', () => {
     it('should find all active journeys', () => {
       const acct = new Account();
-      const cd = new customersService.CustomerModel({ownerId: acct.id, userId: "string" })
-      customersService.findByExternalIdOrCreate.mockResolvedValueOnce(cd)
-      const serviceSpy = jest.spyOn(customersService, 'findByExternalIdOrCreate');
-      expect(service.correlate(acct,ev)).resolves.toEqual(cd);
-      expect(serviceSpy).toBeCalledWith(acct, "string");
+      const cd = new customersService.CustomerModel({
+        ownerId: acct.id,
+        userId: 'string',
+      });
+      customersService.findByExternalIdOrCreate.mockResolvedValueOnce(cd);
+      const serviceSpy = jest.spyOn(
+        customersService,
+        'findByExternalIdOrCreate'
+      );
+      expect(service.correlate(acct, ev)).resolves.toEqual(cd);
+      expect(serviceSpy).toBeCalledWith(acct, 'string');
     });
 
     it('should call with anonymousID if userID not present', () => {
-      const serviceSpy = jest.spyOn(customersService, 'findByExternalIdOrCreate');
-      expect(service.correlate("1@gmail.com")).resolves.toEqual(oneUser);
-      expect(repoSpy).toBeCalledWith(acct, "string");
+      const serviceSpy = jest.spyOn(
+        customersService,
+        'findByExternalIdOrCreate'
+      );
+      expect(service.correlate('1@gmail.com')).resolves.toEqual(oneUser);
+      expect(repoSpy).toBeCalledWith(acct, 'string');
     });
   });
 
   describe('setStopped()', () => {
     it('should find all active journeys', () => {
       const acct = new Account();
-      const cd = new customersService.CustomerModel({ownerId: acct.id, userId: "string" })
-      customersService.findByExternalIdOrCreate.mockResolvedValueOnce(cd)
-      const serviceSpy = jest.spyOn(customersService, 'findByExternalIdOrCreate');
-      expect(service.correlate(acct,ev)).resolves.toEqual(cd);
-      expect(serviceSpy).toBeCalledWith(acct, "string");
+      const cd = new customersService.CustomerModel({
+        ownerId: acct.id,
+        userId: 'string',
+      });
+      customersService.findByExternalIdOrCreate.mockResolvedValueOnce(cd);
+      const serviceSpy = jest.spyOn(
+        customersService,
+        'findByExternalIdOrCreate'
+      );
+      expect(service.correlate(acct, ev)).resolves.toEqual(cd);
+      expect(serviceSpy).toBeCalledWith(acct, 'string');
     });
 
     it('should call with anonymousID if userID not present', () => {
-      const serviceSpy = jest.spyOn(customersService, 'findByExternalIdOrCreate');
-      expect(service.correlate("1@gmail.com")).resolves.toEqual(oneUser);
-      expect(repoSpy).toBeCalledWith(acct, "string");
+      const serviceSpy = jest.spyOn(
+        customersService,
+        'findByExternalIdOrCreate'
+      );
+      expect(service.correlate('1@gmail.com')).resolves.toEqual(oneUser);
+      expect(repoSpy).toBeCalledWith(acct, 'string');
     });
   });
-
 
   describe('markFlowDeleted()', () => {
     it('should find all active journeys', () => {
       const acct = new Account();
-      const cd = new customersService.CustomerModel({ownerId: acct.id, userId: "string" })
-      customersService.findByExternalIdOrCreate.mockResolvedValueOnce(cd)
-      const serviceSpy = jest.spyOn(customersService, 'findByExternalIdOrCreate');
-      expect(service.correlate(acct,ev)).resolves.toEqual(cd);
-      expect(serviceSpy).toBeCalledWith(acct, "string");
+      const cd = new customersService.CustomerModel({
+        ownerId: acct.id,
+        userId: 'string',
+      });
+      customersService.findByExternalIdOrCreate.mockResolvedValueOnce(cd);
+      const serviceSpy = jest.spyOn(
+        customersService,
+        'findByExternalIdOrCreate'
+      );
+      expect(service.correlate(acct, ev)).resolves.toEqual(cd);
+      expect(serviceSpy).toBeCalledWith(acct, 'string');
     });
 
     it('should call with anonymousID if userID not present', () => {
-      const serviceSpy = jest.spyOn(customersService, 'findByExternalIdOrCreate');
-      expect(service.correlate("1@gmail.com")).resolves.toEqual(oneUser);
-      expect(repoSpy).toBeCalledWith(acct, "string");
+      const serviceSpy = jest.spyOn(
+        customersService,
+        'findByExternalIdOrCreate'
+      );
+      expect(service.correlate('1@gmail.com')).resolves.toEqual(oneUser);
+      expect(repoSpy).toBeCalledWith(acct, 'string');
     });
   });
 
   describe('timeTick()', () => {
     it('should find all active journeys', () => {
       const acct = new Account();
-      const cd = new customersService.CustomerModel({ownerId: acct.id, userId: "string" })
-      customersService.findByExternalIdOrCreate.mockResolvedValueOnce(cd)
-      const serviceSpy = jest.spyOn(customersService, 'findByExternalIdOrCreate');
-      expect(service.correlate(acct,ev)).resolves.toEqual(cd);
-      expect(serviceSpy).toBeCalledWith(acct, "string");
+      const cd = new customersService.CustomerModel({
+        ownerId: acct.id,
+        userId: 'string',
+      });
+      customersService.findByExternalIdOrCreate.mockResolvedValueOnce(cd);
+      const serviceSpy = jest.spyOn(
+        customersService,
+        'findByExternalIdOrCreate'
+      );
+      expect(service.correlate(acct, ev)).resolves.toEqual(cd);
+      expect(serviceSpy).toBeCalledWith(acct, 'string');
     });
 
     it('should call with anonymousID if userID not present', () => {
-      const serviceSpy = jest.spyOn(customersService, 'findByExternalIdOrCreate');
-      expect(service.correlate("1@gmail.com")).resolves.toEqual(oneUser);
-      expect(repoSpy).toBeCalledWith(acct, "string");
+      const serviceSpy = jest.spyOn(
+        customersService,
+        'findByExternalIdOrCreate'
+      );
+      expect(service.correlate('1@gmail.com')).resolves.toEqual(oneUser);
+      expect(repoSpy).toBeCalledWith(acct, 'string');
     });
   });
 });

@@ -15,13 +15,38 @@ import {
 import { MessageType } from "types/Workflow";
 import { v4 as uuid } from "uuid";
 
+export enum SegmentsSettingsType {
+  ALL_CUSTOMERS = "allCustomers",
+  CONDITIONAL = "conditional",
+}
+
+export interface AllCustomersSegmentsSettings {
+  type: SegmentsSettingsType.ALL_CUSTOMERS;
+}
+
+export interface ConditionalSegmentsSettings {
+  type: SegmentsSettingsType.CONDITIONAL;
+  query: any;
+}
+
+export type SegmentsSettings =
+  | AllCustomersSegmentsSettings
+  | ConditionalSegmentsSettings;
+
+export enum JourneyType {
+  DYNAMIC = "dynamic",
+  STATIC = "static",
+}
+
 interface FlowBuilderState {
   flowId: string;
   flowName: string;
   nodes: Node<NodeData>[];
   edges: Edge<EdgeData>[];
-  selectedNodeId?: string;
   isDragging?: boolean;
+  stepperIndex: 0 | 1 | 2;
+  segments: SegmentsSettings;
+  journeyType?: JourneyType;
 }
 
 const startNodeUUID = uuid();
@@ -55,8 +80,11 @@ const initialState: FlowBuilderState = {
   flowName: "",
   nodes: getLayoutedNodes(initialNodes.slice(), initialEdges.slice()),
   edges: initialEdges.slice(),
-  selectedNodeId: undefined,
   isDragging: false,
+  stepperIndex: 0,
+  segments: {
+    type: SegmentsSettingsType.ALL_CUSTOMERS,
+  },
 };
 
 const handlePruneNodeTree = (state: FlowBuilderState, nodeId: string) => {
@@ -436,13 +464,24 @@ const flowBuilderSlice = createSlice({
     setIsDragging(state, action: PayloadAction<boolean>) {
       state.isDragging = action.payload;
     },
+    setStepperIndex(state, action: PayloadAction<0 | 1 | 2>) {
+      state.stepperIndex = action.payload;
+    },
+    setSegmentsSettings(state, action: PayloadAction<SegmentsSettings>) {
+      state.segments = action.payload;
+    },
+    setJourneyType(state, action: PayloadAction<JourneyType>) {
+      state.journeyType = action.payload;
+    },
     refreshFlowBuilder(state) {
       state.flowId = "";
       state.flowName = "";
       state.nodes = initialNodes.slice();
       state.edges = initialEdges.slice();
-      state.selectedNodeId = undefined;
       state.isDragging = false;
+      state.stepperIndex = 0;
+      state.segments = { type: SegmentsSettingsType.ALL_CUSTOMERS };
+      state.journeyType = undefined;
     },
   },
 });
@@ -460,6 +499,9 @@ export const {
   selectNode,
   deselectNodes,
   setIsDragging,
+  setStepperIndex,
+  setSegmentsSettings,
+  setJourneyType,
   refreshFlowBuilder,
 } = flowBuilderSlice.actions;
 

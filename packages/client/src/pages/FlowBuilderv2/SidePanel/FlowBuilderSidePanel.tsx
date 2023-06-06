@@ -106,7 +106,9 @@ const FlowBuilderSidePanel: FC<FlowBuilderSidePanelProps> = ({ className }) => {
 
   const isOpen =
     selectedNode &&
-    ![NodeType.EMPTY, NodeType.START].includes(selectedNode.type as NodeType);
+    ![NodeType.EMPTY, NodeType.START, NodeType.EXIT].includes(
+      selectedNode.type as NodeType
+    );
 
   return (
     <Transition

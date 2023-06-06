@@ -66,4 +66,4 @@ import { StepsModule } from '../steps/steps.module';
   providers: [JourneysService],
   exports: [JourneysService],
 })
-export class JourneysModule { }
+export class JourneysModule {}

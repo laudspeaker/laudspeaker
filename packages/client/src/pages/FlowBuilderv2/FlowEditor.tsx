@@ -20,6 +20,7 @@ import FlowBuilderSidePanel from "./SidePanel/FlowBuilderSidePanel";
 import { BranchEdge, PrimaryEdge } from "./Edges";
 import { ExitNode } from "./Nodes/ExitNode";
 import { UserAttributeNode } from "./Nodes/UserAttributeNode";
+import { FC } from "react";
 
 export enum NodeType {
   START = "start",
@@ -55,8 +56,14 @@ const edgeTypes = {
   [EdgeType.BRANCH]: BranchEdge,
 };
 
-const FlowEditor = () => {
-  const { nodes, edges } = useAppSelector((state) => state.flowBuilder);
+interface FlowEditorProps {
+  className?: string;
+}
+
+const FlowEditor: FC<FlowEditorProps> = ({ className }) => {
+  const { nodes, edges, stepperIndex } = useAppSelector(
+    (state) => state.flowBuilder
+  );
 
   const dispatch = useAppDispatch();
 
@@ -76,7 +83,11 @@ const FlowEditor = () => {
   // };
 
   return (
-    <div className="relative w-full h-full bg-[#F3F4F6] text-[#111827] flex">
+    <div
+      className={`relative w-full h-full bg-[#F3F4F6] text-[#111827] flex ${
+        className ? className : ""
+      }`}
+    >
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -92,7 +103,7 @@ const FlowEditor = () => {
       >
         <Controls showInteractive={false} position="top-left" />
       </ReactFlow>
-      <FlowBuilderSidePanel />
+      {stepperIndex === 0 && <FlowBuilderSidePanel />}
     </div>
   );
 };

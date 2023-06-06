@@ -26,7 +26,7 @@ export class StepsService {
     @InjectRepository(Step)
     public stepsRepository: Repository<Step>,
     @InjectQueue('transition') private readonly transitionQueue: Queue
-  ) { }
+  ) {}
 
   log(message, method, session, user = 'ANONYMOUS') {
     this.logger.log(
@@ -61,7 +61,7 @@ export class StepsService {
       })
     );
   }
-error(error, method, session, user = 'ANONYMOUS') {
+  error(error, method, session, user = 'ANONYMOUS') {
     this.logger.error(
       error.message,
       error.stack,
@@ -90,11 +90,11 @@ error(error, method, session, user = 'ANONYMOUS') {
   /**
    * Add array of customer documents to starting step of a journey. Calls
    * addToStart under the hood.
-   * @param account 
-   * @param journeyID 
-   * @param unenrolledCustomers 
-   * @param queryRunner 
-   * @param session 
+   * @param account
+   * @param journeyID
+   * @param unenrolledCustomers
+   * @param queryRunner
+   * @param session
    */
   async bulkAddToStart(
     account: Account,
@@ -104,18 +104,24 @@ error(error, method, session, user = 'ANONYMOUS') {
     session: string
   ) {
     for (let i = 0; i < customers.length; i++) {
-      await this.addToStart(account, journeyID, customers[i], queryRunner, session);
+      await this.addToStart(
+        account,
+        journeyID,
+        customers[i],
+        queryRunner,
+        session
+      );
     }
   }
 
   /**
- * Add array of customer documents to starting step of a journey
- * @param account 
- * @param journeyID 
- * @param unenrolledCustomers 
- * @param queryRunner 
- * @param session 
- */
+   * Add array of customer documents to starting step of a journey
+   * @param account
+   * @param journeyID
+   * @param unenrolledCustomers
+   * @param queryRunner
+   * @param session
+   */
   async addToStart(
     account: Account,
     journeyID: string,
@@ -123,26 +129,34 @@ error(error, method, session, user = 'ANONYMOUS') {
     queryRunner: QueryRunner,
     session: string
   ) {
-    const startStep = await queryRunner.manager.findBy(Step,
-      {
-        owner: { id: account.id },
-        journey: { id: journeyID },
-        type: StepType.START,
-      });
+    const startStep = await queryRunner.manager.findBy(Step, {
+      owner: { id: account.id },
+      journey: { id: journeyID },
+      type: StepType.START,
+    });
     if (startStep.length != 1)
       throw new Error('Can only have one start step per journey.');
 
-    startStep[0].customers = [...startStep[0].customers, JSON.stringify({ customerID: customer.id, timestamp: Temporal.Now.instant().toString() })];
+    startStep[0].customers = [
+      ...startStep[0].customers,
+      JSON.stringify({
+        customerID: customer.id,
+        timestamp: Temporal.Now.instant().toString(),
+      }),
+    ];
     const step = await queryRunner.manager.save(startStep[0]);
-    await this.transitionQueue.add("", { account: account, step: step, session: session });
+    await this.transitionQueue.add('', {
+      account: account,
+      step: step,
+      session: session,
+    });
   }
-
 
   /**
    * Find all steps belonging to an account.
-   * @param account 
-   * @param session 
-   * @returns 
+   * @param account
+   * @param session
+   * @returns
    */
   async findAll(account: Account, session: string): Promise<Step[]> {
     try {
@@ -156,17 +170,21 @@ error(error, method, session, user = 'ANONYMOUS') {
   }
 
   /**
- * Find all steps of a certain type (owner optional).
- * @param account 
- * @param type
- * @param session 
- * @returns 
- */
-  async findAllByType(account: Account, type: StepType, session: string): Promise<Step[]> {
+   * Find all steps of a certain type (owner optional).
+   * @param account
+   * @param type
+   * @param session
+   * @returns
+   */
+  async findAllByType(
+    account: Account,
+    type: StepType,
+    session: string
+  ): Promise<Step[]> {
     try {
       return await this.stepsRepository.findBy({
         owner: account ? { id: account.id } : undefined,
-        type: type
+        type: type,
       });
     } catch (e) {
       this.error(e, this.findAllByType.name, session, account.id);
@@ -176,10 +194,10 @@ error(error, method, session, user = 'ANONYMOUS') {
 
   /**
    * Find a step by its ID.
-   * @param account 
-   * @param id 
-   * @param session 
-   * @returns 
+   * @param account
+   * @param id
+   * @param session
+   * @returns
    */
   async findOne(
     account: Account,
@@ -200,10 +218,10 @@ error(error, method, session, user = 'ANONYMOUS') {
   /**
    * Insert a new step.
    * TODO: Check step metadata matches step type
-   * @param account 
-   * @param createStepDto 
-   * @param session 
-   * @returns 
+   * @param account
+   * @param createStepDto
+   * @param session
+   * @returns
    */
   async insert(
     account: Account,
@@ -211,8 +229,7 @@ error(error, method, session, user = 'ANONYMOUS') {
     session: string
   ): Promise<Step> {
     try {
-      const { journeyID, type, metadata } =
-        createStepDto;
+      const { journeyID, type, metadata } = createStepDto;
       return await this.stepsRepository.save({
         customers: [],
         owner: { id: account.id },
@@ -228,27 +245,31 @@ error(error, method, session, user = 'ANONYMOUS') {
 
   /**
    * Find all steps associated with a journey using DB transaction.
-   * @param account 
-   * @param id 
-   * @param queryRunner 
-   * @returns 
+   * @param account
+   * @param id
+   * @param queryRunner
+   * @returns
    */
-  async transactionalfindByJourneyID(account: Account, id: string, queryRunner: QueryRunner) {
+  async transactionalfindByJourneyID(
+    account: Account,
+    id: string,
+    queryRunner: QueryRunner
+  ) {
     return await queryRunner.manager.find(Step, {
       where: {
         owner: { id: account.id },
-        journey: { id: id }
+        journey: { id: id },
       },
-    })
+    });
   }
 
   /**
    * Update a step. If the step's journey is already started this throws an error.
    * TODO: Check that step metadta matches step type.
-   * @param account 
-   * @param updateStepDto 
-   * @param session 
-   * @returns 
+   * @param account
+   * @param updateStepDto
+   * @param session
+   * @returns
    */
   async update(
     account: Account,
@@ -263,14 +284,19 @@ error(error, method, session, user = 'ANONYMOUS') {
       if (!step) {
         throw new Error(Errors.ERROR_DOES_NOT_EXIST);
       }
-      if (step.journey.isActive || step.journey.isDeleted || step.journey.isStopped)
-        throw new Error('This step is part of a Journey that is already in progress.')
-
+      if (
+        step.journey.isActive ||
+        step.journey.isDeleted ||
+        step.journey.isStopped
+      )
+        throw new Error(
+          'This step is part of a Journey that is already in progress.'
+        );
 
       return await this.stepsRepository.save({
         ...step,
         type: updateStepDto.type,
-        metadata: updateStepDto.metadata
+        metadata: updateStepDto.metadata,
       });
     } catch (e) {
       this.error(e, this.update.name, session, account.id);
@@ -280,18 +306,16 @@ error(error, method, session, user = 'ANONYMOUS') {
 
   /**
    * Delete a step.
-   * @param account 
-   * @param id 
-   * @param session 
+   * @param account
+   * @param id
+   * @param session
    */
   async delete(account: Account, id: string, session: string): Promise<void> {
     try {
-      await this.stepsRepository.delete(
-        {
-          owner: { id: (<Account>account).id },
-          id,
-        }
-      );
+      await this.stepsRepository.delete({
+        owner: { id: (<Account>account).id },
+        id,
+      });
     } catch (e) {
       this.error(e, this.delete.name, session, account.email);
       throw e;

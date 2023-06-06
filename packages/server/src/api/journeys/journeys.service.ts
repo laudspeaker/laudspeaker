@@ -65,8 +65,8 @@ export class JourneysService {
     @InjectModel(Customer.name) public CustomerModel: Model<CustomerDocument>,
     @Inject(forwardRef(() => CustomersService))
     private customersService: CustomersService,
-    @InjectConnection() private readonly connection: mongoose.Connection,
-  ) { }
+    @InjectConnection() private readonly connection: mongoose.Connection
+  ) {}
 
   log(message, method, session, user = 'ANONYMOUS') {
     this.logger.log(
@@ -128,13 +128,13 @@ export class JourneysService {
   }
 
   /**
- * Creates a journey.
- * 
- * @param account 
- * @param name 
- * @param session 
- * @returns 
- */
+   * Creates a journey.
+   *
+   * @param account
+   * @param name
+   * @param session
+   * @returns
+   */
   async create(account: Account, name: string, session: string) {
     try {
       return await this.journeysRepository.save({
@@ -142,16 +142,16 @@ export class JourneysService {
         owner: { id: account.id },
       });
     } catch (err) {
-      this.error(err, this.create.name, session, account.email)
+      this.error(err, this.create.name, session, account.email);
       throw err;
     }
   }
 
   /**
    * Duplicate a journey.
-   * @param user 
-   * @param id 
-   * @param session 
+   * @param user
+   * @param id
+   * @param session
    */
   async duplicate(user: Account, id: string, session: string) {
     const queryRunner = this.dataSource.createQueryRunner();
@@ -159,7 +159,6 @@ export class JourneysService {
     await queryRunner.startTransaction();
     let err: any;
     try {
-
       const oldJourney = await queryRunner.manager.findOne(Journey, {
         where: {
           owner: { id: user.id },
@@ -186,7 +185,11 @@ export class JourneysService {
         (res?.[0]?.count || '0');
       const newJourney = await this.create(user, newName, session);
 
-      const oldSteps = await this.stepsService.transactionalfindByJourneyID(user, oldJourney.id, queryRunner);
+      const oldSteps = await this.stepsService.transactionalfindByJourneyID(
+        user,
+        oldJourney.id,
+        queryRunner
+      );
 
       const newSteps: Step[] = await queryRunner.manager.save(
         Step,
@@ -227,25 +230,24 @@ export class JourneysService {
       await queryRunner.commitTransaction();
     } catch (e) {
       err = e;
-      this.error(e, this.duplicate.name, session, user.email)
+      this.error(e, this.duplicate.name, session, user.email);
       await queryRunner.rollbackTransaction();
     } finally {
       await queryRunner.release();
-      if (err)
-        throw err;
+      if (err) throw err;
     }
   }
 
   /**
- * Adds a customer to dynamic primary audience of all active workflows,
- * and sends them any relevant messages. Similar to  start,
- * one customer -> many workflows
- *
- * @remarks Throws an error if the workflow is not found
- * @param account The owner of the workflow
- * @param updateAudienceDto DTO with the updated information
- *
- */
+   * Adds a customer to dynamic primary audience of all active workflows,
+   * and sends them any relevant messages. Similar to  start,
+   * one customer -> many workflows
+   *
+   * @remarks Throws an error if the workflow is not found
+   * @param account The owner of the workflow
+   * @param updateAudienceDto DTO with the updated information
+   *
+   */
   async enrollCustomer(
     account: Account,
     customer: CustomerDocument,
@@ -254,7 +256,6 @@ export class JourneysService {
     session: string
   ): Promise<void> {
     try {
-
       const journeys = await queryRunner.manager.find(Journey, {
         where: {
           owner: { id: account.id },
@@ -271,11 +272,22 @@ export class JourneysService {
         journeyIndex++
       ) {
         const journey = journeys[journeyIndex];
-        if (journey.isDynamic && (await this.customersService.checkInclusion(customer, journey.filter.inclusionCriteria, account)) && customer.workflows.indexOf(journey.id) < 0) {
+        if (
+          journey.isDynamic &&
+          (await this.customersService.checkInclusion(
+            customer,
+            journey.filter.inclusionCriteria,
+            account
+          )) &&
+          customer.workflows.indexOf(journey.id) < 0
+        ) {
           await this.stepsService.addToStart(
             account,
             journey.id,
-            customer, queryRunner, session);
+            customer,
+            queryRunner,
+            session
+          );
           await this.CustomerModel.updateOne(
             { _id: customer._id },
             { $addToSet: { journeys: journey.id } }
@@ -350,8 +362,8 @@ export class JourneysService {
               ...(key === 'isActive'
                 ? { isStopped: false, isPaused: false }
                 : key === 'isPaused'
-                  ? { isStopped: false }
-                  : {}),
+                ? { isStopped: false }
+                : {}),
             });
         }
       } else {
@@ -379,7 +391,7 @@ export class JourneysService {
       });
       return { data: journeys, totalPages };
     } catch (err) {
-      this.error(err, this.findAll.name, session, account.email)
+      this.error(err, this.findAll.name, session, account.email);
       throw err;
     }
   }
@@ -403,14 +415,14 @@ export class JourneysService {
   }
 
   /**
- * Finds a journey by ID.
- * 
- * @param account 
- * @param id 
- * @param needStats 
- * @param session 
- * @returns 
- */
+   * Finds a journey by ID.
+   *
+   * @param account
+   * @param id
+   * @param needStats
+   * @param session
+   * @returns
+   */
   async findOne(
     account: Account,
     id: string,
@@ -441,7 +453,7 @@ export class JourneysService {
       }
       return Promise.resolve(found);
     } catch (err) {
-      this.error(err, this.findOne.name, session, account.email)
+      this.error(err, this.findOne.name, session, account.email);
       throw err;
     }
   }
@@ -469,7 +481,7 @@ export class JourneysService {
     const openedData = (await openedResponse.json<any>())?.data;
     const opened =
       +openedData?.[0]?.[
-      'uniqExact(tuple(audienceId, customerId, templateId, messageId, event, eventProvider))'
+        'uniqExact(tuple(audienceId, customerId, templateId, messageId, event, eventProvider))'
       ];
 
     const openedPercentage = (opened / sent) * 100;
@@ -481,7 +493,7 @@ export class JourneysService {
     const clickedData = (await clickedResponse.json<any>())?.data;
     const clicked =
       +clickedData?.[0]?.[
-      'uniqExact(tuple(audienceId, customerId, templateId, messageId, event, eventProvider))'
+        'uniqExact(tuple(audienceId, customerId, templateId, messageId, event, eventProvider))'
       ];
 
     const clickedPercentage = (clicked / sent) * 100;
@@ -505,19 +517,20 @@ export class JourneysService {
   }
 
   /**
- * Mark a journey as deleted.
- * @param account 
- * @param id 
- * @param session 
- * @returns 
- */
+   * Mark a journey as deleted.
+   * @param account
+   * @param id
+   * @param session
+   * @returns
+   */
 
   async markDeleted(account: Account, id: string, session: string) {
     try {
-      return await this.journeysRepository.update({
-        owner: { id: account.id },
-        id: id
-      },
+      return await this.journeysRepository.update(
+        {
+          owner: { id: account.id },
+          id: id,
+        },
         {
           isActive: false,
           isDeleted: true,
@@ -525,8 +538,7 @@ export class JourneysService {
           isStopped: true,
         }
       );
-    }
-    catch (err) {
+    } catch (err) {
       this.error(err, this.markDeleted.name, session, account.email);
       throw err;
     }
@@ -534,12 +546,12 @@ export class JourneysService {
 
   /**
    * Pause a journey.
-   * @param account 
-   * @param id 
-   * @param value 
-   * @param session 
-   * @param queryRunner 
-   * @returns 
+   * @param account
+   * @param id
+   * @param value
+   * @param session
+   * @param queryRunner
+   * @returns
    */
   async setPaused(
     account: Account,
@@ -574,12 +586,12 @@ export class JourneysService {
   }
 
   /**
- * Start a journey.
- * @param account 
- * @param workflowID 
- * @param session 
- * @returns 
- */
+   * Start a journey.
+   * @param account
+   * @param workflowID
+   * @param session
+   * @returns
+   */
   async start(
     account: Account,
     journeyID: string,
@@ -587,7 +599,7 @@ export class JourneysService {
   ): Promise<(string | number)[]> {
     let journey: Journey; // Workflow to update
     let customers: CustomerDocument[]; // Customers to add to primary audience
-    let jobIDs: (string | number)[] = [];
+    const jobIDs: (string | number)[] = [];
 
     const transactionSession = await this.connection.startSession();
     await transactionSession.startTransaction();
@@ -616,18 +628,23 @@ export class JourneysService {
       if (!journey.filter)
         throw new Error('To start journey a filter should be defined');
 
-
       const graph = new Graph();
-      const steps = await this.stepsService.transactionalfindByJourneyID(account, journey.id, queryRunner)
+      const steps = await this.stepsService.transactionalfindByJourneyID(
+        account,
+        journey.id,
+        queryRunner
+      );
       for (let i = 0; i < steps.length; i++) {
-        graph.setNode(steps[i].id)
+        graph.setNode(steps[i].id);
         if (steps[i].metadata.branches) {
           for (let j = 0; j < steps[i].metadata.branches.length; j++) {
-            graph.setEdge(steps[i].id, steps[i].metadata.branches[j].destination)
+            graph.setEdge(
+              steps[i].id,
+              steps[i].metadata.branches[j].destination
+            );
           }
-        }
-        else if (steps[i].metadata.destination) {
-          graph.setEdge(steps[i].id, steps[i].metadata.destination)
+        } else if (steps[i].metadata.destination) {
+          graph.setEdge(steps[i].id, steps[i].metadata.destination);
         }
       }
       if (!alg.isAcyclic(graph))
@@ -665,7 +682,6 @@ export class JourneysService {
         startedAt: new Date(Date.now()),
       });
 
-
       const filter = await queryRunner.manager.findOneBy(Filter, {
         id: journey.filter.id,
       });
@@ -688,16 +704,12 @@ export class JourneysService {
 
   /**
    * Stops a journey.
-   * @param account 
-   * @param id 
-   * @param session 
-   * @returns 
+   * @param account
+   * @param id
+   * @param session
+   * @returns
    */
-  async stop(
-    account: Account,
-    id: string,
-    session: string
-  ) {
+  async stop(account: Account, id: string, session: string) {
     try {
       const found: Journey = await this.journeysRepository.findOneBy({
         owner: { id: account.id },
@@ -712,26 +724,25 @@ export class JourneysService {
         isPaused: true,
       });
     } catch (err) {
-      this.error(err, this.stop.name, session, account.email)
+      this.error(err, this.stop.name, session, account.email);
       throw err;
     }
   }
 
   /**
-* Update a journey using a DB transaction
-* @param account 
-* @param updateJourneyDto 
-* @param session
-* @param queryRunner
-* @returns 
-*/
+   * Update a journey using a DB transaction
+   * @param account
+   * @param updateJourneyDto
+   * @param session
+   * @param queryRunner
+   * @returns
+   */
   async transactionalUpdate(
     account: Account,
     updateJourneyDto: UpdateJourneyDto,
     session: string,
     queryRunner: QueryRunner
   ): Promise<Journey> {
-
     try {
       const journey = await queryRunner.manager.findOne(Journey, {
         where: {
@@ -740,13 +751,11 @@ export class JourneysService {
         relations: ['filter'],
       });
 
-      if (!journey)
-        throw new NotFoundException('Journey not found');
+      if (!journey) throw new NotFoundException('Journey not found');
       if (journey.isActive || journey.isDeleted || journey.isPaused)
         throw new Error('Journey is no longer editable.');
 
-      const { visualLayout, isDynamic, name, filterId } =
-        updateJourneyDto;
+      const { visualLayout, isDynamic, name, filterId } = updateJourneyDto;
 
       if (filterId && journey.filter) {
         journey.filter.id = filterId;
@@ -767,17 +776,16 @@ export class JourneysService {
 
   /**
    * Update a journey.
-   * @param account 
-   * @param updateJourneyDto 
-   * @param session 
-   * @returns 
+   * @param account
+   * @param updateJourneyDto
+   * @param session
+   * @returns
    */
   async update(
     account: Account,
     updateJourneyDto: UpdateJourneyDto,
-    session: string,
+    session: string
   ): Promise<Journey> {
-
     try {
       const journey = await this.journeysRepository.findOne({
         where: {
@@ -786,13 +794,11 @@ export class JourneysService {
         relations: ['filter'],
       });
 
-      if (!journey)
-        throw new NotFoundException('Journey not found');
+      if (!journey) throw new NotFoundException('Journey not found');
       if (journey.isActive || journey.isDeleted || journey.isPaused)
         throw new Error('Journey is no longer editable.');
 
-      const { visualLayout, isDynamic, name, filterId } =
-        updateJourneyDto;
+      const { visualLayout, isDynamic, name, filterId } = updateJourneyDto;
 
       if (filterId && journey.filter) {
         journey.filter.id = filterId;

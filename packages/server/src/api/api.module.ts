@@ -57,7 +57,7 @@ import { JourneysModule } from './journeys/journeys.module';
     WebhookJobsModule,
     ModalsModule,
     StepsModule,
-    JourneysModule
+    JourneysModule,
   ],
 })
 export class ApiModule {

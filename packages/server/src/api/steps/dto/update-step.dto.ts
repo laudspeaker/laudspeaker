@@ -1,4 +1,11 @@
-import { IsString, IsBoolean, IsOptional, IsObject, IsEnum, IsJSON } from 'class-validator';
+import {
+  IsString,
+  IsBoolean,
+  IsOptional,
+  IsObject,
+  IsEnum,
+  IsJSON,
+} from 'class-validator';
 import { StepType, StepTypeMetadata } from '../types/step.interface';
 
 export class UpdateStepDto {

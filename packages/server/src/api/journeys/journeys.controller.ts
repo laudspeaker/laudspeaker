@@ -27,7 +27,7 @@ export class JourneysController {
   constructor(
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
     private readonly journeysService: JourneysService
-  ) { }
+  ) {}
 
   @Get()
   @UseGuards(JwtAuthGuard)
@@ -114,9 +114,7 @@ export class JourneysController {
   @Patch('pause/:id')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
-  async pause(
-    @Req() { user }: Request,
-    @Param('id') id: string) {
+  async pause(@Req() { user }: Request, @Param('id') id: string) {
     const session = randomUUID();
     return await this.journeysService.setPaused(
       <Account>user,
@@ -129,9 +127,7 @@ export class JourneysController {
   @Patch('resume/:id')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
-  async resume(
-    @Req() { user }: Request,
-    @Param('id') id: string) {
+  async resume(@Req() { user }: Request, @Param('id') id: string) {
     const session = randomUUID();
     return await this.journeysService.setPaused(
       <Account>user,
@@ -144,9 +140,7 @@ export class JourneysController {
   @Patch('stop/:id')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
-  async stop(
-    @Req() { user }: Request,
-    @Param('id') id: string) {
+  async stop(@Req() { user }: Request, @Param('id') id: string) {
     const session = randomUUID();
     return await this.journeysService.stop(<Account>user, id, session);
   }

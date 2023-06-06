@@ -52,7 +52,7 @@ export class TestsService {
     private CustomerKeysModel: Model<CustomerKeysDocument>,
     @InjectRepository(SegmentCustomers)
     private segmentCustomersRepository: Repository<SegmentCustomers>
-  ) { }
+  ) {}
 
   log(message, method, session, user = 'ANONYMOUS') {
     this.logger.log(

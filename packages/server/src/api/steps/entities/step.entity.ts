@@ -8,7 +8,11 @@ import {
   JoinColumn,
   BaseEntity,
 } from 'typeorm';
-import { AllStepTypeMetadata, StepType, StepTypeMetadata } from '../types/step.interface';
+import {
+  AllStepTypeMetadata,
+  StepType,
+  StepTypeMetadata,
+} from '../types/step.interface';
 
 @Entity()
 export class Step extends BaseEntity {

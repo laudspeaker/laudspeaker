@@ -1,15 +1,25 @@
 import React, { useState } from "react";
-import { useAppSelector } from "store/hooks";
+import { setStepperIndex } from "reducers/flow-builder.reducer";
+import { useAppDispatch, useAppSelector } from "store/hooks";
 import FlowBuilderButton from "../Elements/FlowBuilderButton";
 import FlowBuilderStepper from "../Elements/FlowBuilderStepper";
 import FlowBuilderRenameModal from "../Modals/FlowBuilderRenameModal";
 
 const FlowBuilderHeader = () => {
+  const dispatch = useAppDispatch();
+
   const [isRenameModalOpen, setIsRenameModalOpen] = useState(false);
 
-  const { flowName } = useAppSelector((state) => state.flowBuilder);
+  const { flowName, stepperIndex } = useAppSelector(
+    (state) => state.flowBuilder
+  );
 
-  const handleNextStep = () => {};
+  const handleNextStep = () => {
+    if (stepperIndex !== 2)
+      dispatch(setStepperIndex((stepperIndex + 1) as 1 | 2));
+  };
+
+  const handleStartJourney = () => {};
 
   return (
     <div className="w-full flex justify-between items-center h-[60px] border-[1px] border-[#E5E7EB] bg-white font-segoe font-normal text-[16px] text-[#111827] leading-[24px]">
@@ -47,9 +57,15 @@ const FlowBuilderHeader = () => {
         />
       </div>
       <FlowBuilderStepper />
-      <FlowBuilderButton onClick={handleNextStep} className="mr-[20px]">
-        Next
-      </FlowBuilderButton>
+      {stepperIndex === 2 ? (
+        <FlowBuilderButton onClick={handleStartJourney} className="mr-[20px]">
+          Start journey
+        </FlowBuilderButton>
+      ) : (
+        <FlowBuilderButton onClick={handleNextStep} className="mr-[20px]">
+          Next
+        </FlowBuilderButton>
+      )}
     </div>
   );
 };

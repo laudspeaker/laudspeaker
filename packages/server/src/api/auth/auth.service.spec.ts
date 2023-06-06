@@ -52,7 +52,7 @@ describe('AuthService', () => {
         },
         {
           provide: AuthHelper,
-          useValue: createMock<AuthHelper>()
+          useValue: createMock<AuthHelper>(),
         },
         {
           provide: CustomersService,
@@ -66,8 +66,9 @@ describe('AuthService', () => {
     }).compile();
 
     service = moduleRef.get<AuthService>(AuthService);
-    repository = moduleRef.get<Repository<Account>>(getRepositoryToken(Account));
-
+    repository = moduleRef.get<Repository<Account>>(
+      getRepositoryToken(Account)
+    );
   });
 
   it('should be defined', () => {

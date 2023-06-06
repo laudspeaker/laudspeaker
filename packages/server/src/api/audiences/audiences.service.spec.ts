@@ -15,7 +15,8 @@ describe('AudiencesService', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [AudiencesService,
+      providers: [
+        AudiencesService,
         {
           provide: CustomersService,
           useValue: createMock<CustomersService>(),
@@ -30,11 +31,11 @@ describe('AudiencesService', () => {
         },
         {
           provide: getRepositoryToken(Audience),
-          useClass: Repository
+          useClass: Repository,
         },
         {
           provide: getRepositoryToken(Workflow),
-          useClass: Repository
+          useClass: Repository,
         },
         {
           provide: WINSTON_MODULE_NEST_PROVIDER,

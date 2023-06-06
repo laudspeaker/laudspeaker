@@ -30,11 +30,13 @@ const FlowBuilderDrawer = () => {
               </div>
               {group.children.map((child) => (
                 <div
-                  className="w-full h-[44px] px-[15px] py-[10px] flex gap-[10px] border-[1px] border-[#E5E7EB] select-none items-end cursor-grab"
+                  className={`w-full h-[44px] px-[15px] py-[10px] flex gap-[10px] border-[1px] border-[#E5E7EB] select-none items-end cursor-grab ${
+                    child.disabled ? "grayscale cursor-not-allowed" : ""
+                  }`}
                   onDragStart={(e) => onDragStart(e, child.id)}
                   onDragEnd={onDragEnd}
                   key={child.id}
-                  draggable
+                  draggable={!child.disabled}
                 >
                   <div>{child.icon}</div>
                   <div className="font-segoe font-normal text-[14px] leading-[22px]">

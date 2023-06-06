@@ -1,4 +1,11 @@
-import { IsString, IsBoolean, IsOptional, IsArray, IsEnum, IsJSON } from 'class-validator';
+import {
+  IsString,
+  IsBoolean,
+  IsOptional,
+  IsArray,
+  IsEnum,
+  IsJSON,
+} from 'class-validator';
 import { StepType, StepTypeMetadata } from '../types/step.interface';
 
 export class CreateStepDto {
@@ -6,7 +13,7 @@ export class CreateStepDto {
   public type: StepType;
 
   @IsJSON()
-  public metadata: StepTypeMetadata
+  public metadata: StepTypeMetadata;
 
   @IsString()
   public journeyID: string;
