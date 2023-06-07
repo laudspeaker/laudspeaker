@@ -24,9 +24,49 @@ export interface AllCustomersSegmentsSettings {
   type: SegmentsSettingsType.ALL_CUSTOMERS;
 }
 
+export enum QueryType {
+  ALL = "all",
+  ANY = "any",
+}
+
+export enum QueryStatementType {
+  ATTRIBUTE = "Attribute",
+  SEGMENT = "Segment",
+}
+
+export enum ComparisonType {
+  EQUALS = "equals",
+}
+
+export enum StatementValueType {
+  STRING = "String",
+  NUMBER = "Number",
+  BOOLEAN = "Boolean",
+  Email = "Email",
+}
+
+export interface AttributeQueryStatement {
+  type: QueryStatementType.ATTRIBUTE;
+  key: string;
+  comparisonType: ComparisonType;
+  value: string;
+}
+
+export interface SegmentQueryStatement {
+  type: QueryStatementType.SEGMENT;
+  segmentId: string;
+}
+
+export type QueryStatement = AttributeQueryStatement | SegmentQueryStatement;
+
+export interface Query {
+  type: QueryType;
+  statements: QueryStatement[];
+}
+
 export interface ConditionalSegmentsSettings {
   type: SegmentsSettingsType.CONDITIONAL;
-  query: any;
+  query: Query;
 }
 
 export type SegmentsSettings =
@@ -46,7 +86,7 @@ interface FlowBuilderState {
   isDragging?: boolean;
   stepperIndex: 0 | 1 | 2;
   segments: SegmentsSettings;
-  journeyType?: JourneyType;
+  journeyType: JourneyType;
 }
 
 const startNodeUUID = uuid();
@@ -85,6 +125,7 @@ const initialState: FlowBuilderState = {
   segments: {
     type: SegmentsSettingsType.ALL_CUSTOMERS,
   },
+  journeyType: JourneyType.DYNAMIC,
 };
 
 const handlePruneNodeTree = (state: FlowBuilderState, nodeId: string) => {
@@ -481,7 +522,7 @@ const flowBuilderSlice = createSlice({
       state.isDragging = false;
       state.stepperIndex = 0;
       state.segments = { type: SegmentsSettingsType.ALL_CUSTOMERS };
-      state.journeyType = undefined;
+      state.journeyType = JourneyType.DYNAMIC;
     },
   },
 });

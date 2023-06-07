@@ -1,12 +1,13 @@
 import React from "react";
 import {
   JourneyType,
+  QueryType,
   SegmentsSettingsType,
   setJourneyType,
   setSegmentsSettings,
 } from "reducers/flow-builder.reducer";
 import { useAppDispatch, useAppSelector } from "store/hooks";
-import QueryBuilder from "react-querybuilder";
+import FilterBuilder from "./FilterBuilder/FilterBuilder";
 
 const FlowBuilderSegmentEditor = () => {
   const { segments: segmentsSettings, journeyType } = useAppSelector(
@@ -15,7 +16,7 @@ const FlowBuilderSegmentEditor = () => {
   const dispatch = useAppDispatch();
 
   return (
-    <div className="m-[20px] w-full bg-white rounded-[4px] p-[20px] text-[#111827] font-inter">
+    <div className="m-[20px] max-h-full overflow-y-scroll w-full bg-white rounded-[4px] p-[20px] text-[#111827] font-inter">
       <div className="flex flex-col gap-[20px]">
         <div className="flex flex-col gap-[10px]">
           <div className="font-semibold text-[16px] leading-[24px]">
@@ -54,7 +55,10 @@ const FlowBuilderSegmentEditor = () => {
                 dispatch(
                   setSegmentsSettings({
                     type: SegmentsSettingsType.CONDITIONAL,
-                    query: {},
+                    query: {
+                      type: QueryType.ALL,
+                      statements: [],
+                    },
                   })
                 )
               }
@@ -74,9 +78,10 @@ const FlowBuilderSegmentEditor = () => {
             <div className="font-semibold text-[16px] leading-[24px]">
               Conditions
             </div>
-            <QueryBuilder
-              onQueryChange={(query) =>
-                dispatch(setSegmentsSettings({ ...segmentsSettings, query }))
+            <FilterBuilder
+              settings={segmentsSettings}
+              onSettingsChange={(settings) =>
+                dispatch(setSegmentsSettings(settings))
               }
             />
           </div>

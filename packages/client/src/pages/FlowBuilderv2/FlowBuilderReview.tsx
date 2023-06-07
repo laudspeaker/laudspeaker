@@ -1,6 +1,8 @@
 import React from "react";
 import {
   JourneyType,
+  QueryStatementType,
+  QueryType,
   SegmentsSettingsType,
 } from "reducers/flow-builder.reducer";
 import { useAppSelector } from "store/hooks";
@@ -39,6 +41,46 @@ const FlowBuilderReview = () => {
               </>
             )}
           </div>
+          {segmentsSettings.type === SegmentsSettingsType.CONDITIONAL && (
+            <div className="flex gap-[13px] max-h-[100px] overflow-y-scroll">
+              <div className="flex flex-col gap-[10px] w-full">
+                {segmentsSettings.query.statements.map((statement, i) => (
+                  <div className="flex items-center gap-[13px]">
+                    <div
+                      className={`w-fit px-[12px] py-[5px] border-[1px] border-[#E5E7EB] font-roboto text-[14px] leading-[22px] text-[#4B5563] select-none ${
+                        i === 0 ? "opacity-0" : ""
+                      }`}
+                    >
+                      {segmentsSettings.query.type === QueryType.ALL
+                        ? "And"
+                        : "Or"}
+                    </div>
+                    <div
+                      key={i}
+                      className="max-w-[600px] w-full flex items-center gap-[10px] font-inter font-normal text-[14px] leading-[22px] bg-[#F3F4F6] px-[20px] py-[6px]"
+                    >
+                      <div>{statement.type}</div>
+                      {statement.type === QueryStatementType.ATTRIBUTE ? (
+                        <>
+                          <div className="px-[12px] py-[5px] text-[#4B5563] border-[1px] border-[#E5E7EB] rounded-[2px] bg-white">
+                            {statement.key}
+                          </div>
+                          <div>{statement.comparisonType}</div>
+                          <div className="px-[12px] py-[5px] text-[#4B5563] border-[1px] border-[#E5E7EB] rounded-[2px] bg-white">
+                            {statement.value}
+                          </div>
+                        </>
+                      ) : (
+                        <div className="px-[12px] py-[5px] text-[#4B5563] border-[1px] border-[#E5E7EB] rounded-[2px] bg-white">
+                          {statement.segmentId}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
         <div className="bg-white p-[20px] flex flex-col gap-[10px]">
           <div className="font-inter font-semibold text-[20px] leading-[28px]">

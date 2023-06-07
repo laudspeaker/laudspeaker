@@ -1,12 +1,12 @@
 import FlowBuilderAutoComplete from "pages/FlowBuilderv2/Elements/FlowBuilderAutoComplete";
 import FlowBuilderButton from "pages/FlowBuilderv2/Elements/FlowBuilderButton";
-import {
-  AttributeCondition,
-  ComparisonType,
-  StatementValueType,
-} from "pages/FlowBuilderv2/Nodes/NodeData";
+import { AttributeCondition } from "pages/FlowBuilderv2/Nodes/NodeData";
 import React, { FC, useEffect, useState } from "react";
 import { useDebounce } from "react-use";
+import {
+  ComparisonType,
+  StatementValueType,
+} from "reducers/flow-builder.reducer";
 import ApiService from "services/api.service";
 
 interface AttributeConditionEditorProps {

@@ -1,12 +1,12 @@
 import FlowBuilderAutoComplete from "pages/FlowBuilderv2/Elements/FlowBuilderAutoComplete";
 import FlowBuilderButton from "pages/FlowBuilderv2/Elements/FlowBuilderButton";
-import {
-  ComparisonType,
-  Condition,
-  StatementValueType,
-} from "pages/FlowBuilderv2/Nodes/NodeData";
+import { Condition } from "pages/FlowBuilderv2/Nodes/NodeData";
 import React, { FC, useEffect, useState } from "react";
 import { useDebounce } from "react-use";
+import {
+  StatementValueType,
+  ComparisonType,
+} from "reducers/flow-builder.reducer";
 import ApiService from "services/api.service";
 import { ProviderType } from "types/Workflow";
 

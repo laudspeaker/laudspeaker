@@ -1,9 +1,7 @@
 import {
-  ComparisonType,
   Condition,
   EventBranch,
   LogicRelation,
-  StatementValueType,
 } from "pages/FlowBuilderv2/Nodes/NodeData";
 import React, { FC, useState } from "react";
 import { ProviderType } from "types/Workflow";

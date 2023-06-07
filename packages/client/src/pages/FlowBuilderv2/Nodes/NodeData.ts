@@ -1,3 +1,7 @@
+import {
+  ComparisonType,
+  StatementValueType,
+} from "reducers/flow-builder.reducer";
 import { MessageType, ProviderType } from "types/Workflow";
 import { NodeType } from "../FlowEditor";
 
@@ -5,17 +9,6 @@ export enum BranchType {
   EVENT = "event",
   MAX_TIME = "maxTime",
   ATTRIBUTE = "attribute",
-}
-
-export enum ComparisonType {
-  EQUALS = "equals",
-}
-
-export enum StatementValueType {
-  STRING = "String",
-  NUMBER = "Number",
-  BOOLEAN = "Boolean",
-  Email = "Email",
 }
 
 export enum LogicRelation {
