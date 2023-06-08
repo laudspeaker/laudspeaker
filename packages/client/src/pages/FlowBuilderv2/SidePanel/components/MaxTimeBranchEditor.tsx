@@ -56,7 +56,7 @@ const MaxTimeBranchEditor: FC<MaxTimeBranchEditorProps> = ({
 
   return (
     <div className="flex flex-col gap-[10px]">
-      <div className="font-inter font-normal text-[16px] leading-[24px] text-[#4B5563]">
+      <div className="font-inter font-normal text-[12px] leading-[20px] text-[#4B5563]">
         Description Description Description Des
       </div>
       <div>

@@ -91,17 +91,26 @@ const FlowEditor: FC<FlowEditorProps> = ({ className }) => {
       <ReactFlow
         nodes={nodes}
         edges={edges}
+        onInit={(ev) => {
+          ev.fitView();
+          ev.zoomTo(0.8);
+        }}
         onNodesChange={onNodesChange}
         // onEdgesChange={onEdgesChange}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
+        panOnScroll
+        selectionOnDrag
         nodeOrigin={[0.5, 0.5]}
         defaultEdgeOptions={{
           markerEnd: { type: MarkerType.Arrow },
         }}
-        fitView
       >
-        <Controls showInteractive={false} position="top-left" />
+        <Controls
+          showInteractive={false}
+          position="top-left"
+          className="rounded-[2px]"
+        />
       </ReactFlow>
       {stepperIndex === 0 && <FlowBuilderSidePanel />}
     </div>

@@ -47,7 +47,7 @@ export default function ResponsiveDrawer() {
 
   return (
     <div
-      className={`fixed hover:!w-[200px] w-[50px] transition-all [&_.notexapndable]:hover:!scale-100 top-0 left-0 px-[10px] text-[14px] text-[#111827] leading-[22px] font-normal z-[9999999999]  bg-[#F3F4F6] border-[1px] border-[#E5E7EB] h-screen`}
+      className={`fixed hover:!w-[200px] w-[50px] transition-[width] [&_.notexapndable]:hover:!scale-100 top-0 left-0 px-[10px] text-[14px] text-[#111827] leading-[22px] font-normal z-[9999999999] border-collapse bg-[#F3F4F6] border-[1px] border-[#E5E7EB] h-screen`}
       ref={drawerRef}
     >
       <div className="flex flex-col gap-[8px] ">
@@ -60,7 +60,7 @@ export default function ResponsiveDrawer() {
           </div>
 
           <svg
-            className={`notexapndable scale-0 transition-all delay-1000 whitespace-nowrap ${
+            className={`notexapndable scale-0 transition-[width] delay-1000 whitespace-nowrap ${
               !isExpanded && "hidden"
             }`}
             width="102"
@@ -94,14 +94,14 @@ export default function ResponsiveDrawer() {
                               <img src={navigationItem.imgIcon} />
                             </div>
                             <span
-                              className={`notexapndable scale-0 transition-all delay-150 whitespace-nowrap ${
+                              className={`notexapndable scale-0 transition-[width] delay-150 whitespace-nowrap ${
                                 !isExpanded && "hidden"
                               }`}
                             >
                               {navigationItem.text}
                             </span>
                             <div
-                              className={`notexapndable scale-0 transition-all delay-150 absolute top-1/2 -translate-y-1/2 right-[5px] ${
+                              className={`notexapndable scale-0 transition-[width] delay-150 absolute top-1/2 -translate-y-1/2 right-[5px] ${
                                 open ? "" : "rotate-180"
                               } ${isExpanded && "!delay-0"}`}
                             >
@@ -148,10 +148,17 @@ export default function ResponsiveDrawer() {
                                         : ""
                                     }`}
                                   >
-                                    <img src={child.imgIcon} />
+                                    <img
+                                      className={`${
+                                        location.pathname.includes(
+                                          child.link
+                                        ) && "invert"
+                                      }`}
+                                      src={child.imgIcon}
+                                    />
                                   </div>
                                   <span
-                                    className={`notexapndable scale-0 transition-all delay-1000 whitespace-nowrap ${
+                                    className={`notexapndable scale-0 transition-[width] delay-1000 whitespace-nowrap ${
                                       !isExpanded && "hidden"
                                     }`}
                                   >
@@ -189,10 +196,16 @@ export default function ResponsiveDrawer() {
                           : ""
                       }`}
                     >
-                      <img src={navigationItem.imgIcon} />
+                      <img
+                        className={`${
+                          location.pathname.includes(navigationItem.link) &&
+                          "invert"
+                        }`}
+                        src={navigationItem.imgIcon}
+                      />
                     </div>
                     <span
-                      className={`notexapndable scale-0 transition-all delay-1000 whitespace-nowrap ${
+                      className={`notexapndable scale-0 transition-[width] delay-1000 whitespace-nowrap ${
                         !isExpanded && "hidden"
                       }`}
                     >

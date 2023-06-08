@@ -32,7 +32,7 @@ const FlowBuilderHeader = () => {
   };
 
   return (
-    <div className="w-full flex justify-between items-center h-[60px] border-[1px] border-[#E5E7EB] bg-white font-segoe font-normal text-[16px] text-[#111827] leading-[24px]">
+    <div className="w-full flex justify-between items-center h-[60px] border-y-[1px] border-[#E5E7EB] bg-white font-segoe font-normal text-[16px] text-[#111827] leading-[24px]">
       <div className="flex items-center ml-[16px]">
         <div className="text-ellipsis max-w-[260px] overflow-hidden mr-[16px]">
           {flowName}

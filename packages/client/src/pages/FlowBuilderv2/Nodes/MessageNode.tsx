@@ -86,13 +86,14 @@ export const MessageNode: FC<NodeProps<MessageNodeData>> = ({
             {nodeFixtures.text}
           </div>
         </div>
-        <div className="font-inter font-normal text-[14px] leading-[22px]">
+        <div className="font-inter font-normal text-[14px] leading-[22px] whitespace-nowrap text-ellipsis max-w-full overflow-hidden">
           {template?.selected ? (
             <>
-              Send <span className="font-bold">{template.selected.name}</span>
+              <span className="#4B5563">Send </span>
+              <span className="font-medium">{template.selected.name}</span>
             </>
           ) : (
-            "Select a template"
+            <span className="text-[#4B5563]">Select a template</span>
           )}
         </div>
       </div>

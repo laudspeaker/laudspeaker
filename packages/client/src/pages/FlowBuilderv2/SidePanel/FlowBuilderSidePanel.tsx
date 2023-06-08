@@ -112,7 +112,7 @@ const FlowBuilderSidePanel: FC<FlowBuilderSidePanelProps> = ({ className }) => {
     <Transition
       show={!!isOpen}
       as="div"
-      className={`h-[calc(100vh-108px)] min-w-[360px] w-[360px] fixed  right-[-100%] bg-white border-[1px] border-[#E5E7EB] flex flex-col justify-between overflow-hidden ${
+      className={`h-[calc(100vh-108px)] min-w-[360px] w-[360px] fixed  right-[-100%] bg-white border-l-[1px] border-[#E5E7EB] flex flex-col justify-between overflow-hidden ${
         className ? className : ""
       }`}
       enter="transition-all duration-300"
@@ -132,7 +132,7 @@ const FlowBuilderSidePanel: FC<FlowBuilderSidePanelProps> = ({ className }) => {
                 : nodeTypeToNameMap[selectedNode.type as NodeType]
               : ""}
           </div>
-          <div className="font-inter font-normal text-[16px] leading-[24px] text-[#4B5563]">
+          <div className="font-inter font-normal text-[12px] leading-[20px] text-[#4B5563]">
             Description Description Description Des
           </div>
         </div>
