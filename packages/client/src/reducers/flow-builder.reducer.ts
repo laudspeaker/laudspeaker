@@ -35,19 +35,64 @@ export enum QueryStatementType {
 }
 
 export enum ComparisonType {
-  EQUALS = "equals",
+  EQUALS = "is equal to",
+  NOT_EQUALS = "is not equal to",
+  GREATER = "is greater than",
+  LESS = "is less than",
+  CONTAINS = "contains",
+  NOT_CONTAINS = "does not contain",
+  AFTER = "after",
+  BEFORE = "before",
+  BETWEEN = "between",
+  BOOL_EQUALS = "is equal to",
+  BOOL_NOT_EQUALS = "is not equal to",
 }
 
 export enum StatementValueType {
   STRING = "String",
   NUMBER = "Number",
   BOOLEAN = "Boolean",
-  Email = "Email",
+  EMAIL = "Email",
+  DATE = "Date",
 }
+
+export const valueTypeToComparisonTypesMap: Record<
+  StatementValueType,
+  ComparisonType[]
+> = {
+  [StatementValueType.STRING]: [
+    ComparisonType.EQUALS,
+    ComparisonType.NOT_EQUALS,
+    ComparisonType.CONTAINS,
+    ComparisonType.NOT_CONTAINS,
+  ],
+  [StatementValueType.NUMBER]: [
+    ComparisonType.GREATER,
+    ComparisonType.EQUALS,
+    ComparisonType.NOT_EQUALS,
+    ComparisonType.LESS,
+  ],
+  [StatementValueType.BOOLEAN]: [
+    ComparisonType.BOOL_EQUALS,
+    ComparisonType.BOOL_NOT_EQUALS,
+  ],
+  [StatementValueType.EMAIL]: [
+    ComparisonType.EQUALS,
+    ComparisonType.NOT_EQUALS,
+    ComparisonType.CONTAINS,
+    ComparisonType.NOT_CONTAINS,
+  ],
+  [StatementValueType.DATE]: [
+    ComparisonType.BEFORE,
+    ComparisonType.AFTER,
+    ComparisonType.BETWEEN,
+  ],
+};
 
 export interface AttributeQueryStatement {
   type: QueryStatementType.ATTRIBUTE;
   key: string;
+  valueType: StatementValueType;
   comparisonType: ComparisonType;
   value: string;
 }
@@ -159,6 +204,16 @@ const flowBuilderSlice = createSlice({
     },
     setNodes(state, action: PayloadAction<Node<NodeData>[]>) {
       state.nodes = getLayoutedNodes(action.payload, state.edges);
+    },
+    loadVisualLayout(
+      state,
+      action: PayloadAction<{
+        nodes: Node<NodeData>[];
+        edges: Edge<EdgeData>[];
+      }>
+    ) {
+      state.nodes = action.payload.nodes;
+      state.edges = action.payload.edges;
     },
     addTemporaryEmptyNodeBetween(
       state,
@@ -341,8 +396,10 @@ const flowBuilderSlice = createSlice({
     },
     handleDrawerAction(
       state,
-      action: PayloadAction<{ id: string; action: string }>
+      action: PayloadAction<{ id: string; action: string; stepId?: string }>
     ) {
+      const { stepId } = action.payload;
+
       const nodeToChange = state.nodes.find(
         (node) => node.id === action.payload.id
       );
@@ -355,6 +412,7 @@ const flowBuilderSlice = createSlice({
           nodeToChange.data = {
             type: NodeType.MESSAGE,
             template: { type: MessageType.EMAIL },
+            stepId,
           };
           break;
         case DrawerAction.SMS:
@@ -362,6 +420,7 @@ const flowBuilderSlice = createSlice({
           nodeToChange.data = {
             type: NodeType.MESSAGE,
             template: { type: MessageType.SMS },
+            stepId,
           };
           break;
         case DrawerAction.SLACK:
@@ -369,6 +428,7 @@ const flowBuilderSlice = createSlice({
           nodeToChange.data = {
             type: NodeType.MESSAGE,
             template: { type: MessageType.SLACK },
+            stepId,
           };
           break;
         case DrawerAction.PUSH:
@@ -376,6 +436,7 @@ const flowBuilderSlice = createSlice({
           nodeToChange.data = {
             type: NodeType.MESSAGE,
             template: { type: MessageType.PUSH },
+            stepId,
           };
           break;
         case DrawerAction.WEBHOOK:
@@ -383,6 +444,7 @@ const flowBuilderSlice = createSlice({
           nodeToChange.data = {
             type: NodeType.MESSAGE,
             template: { type: MessageType.WEBHOOK },
+            stepId,
           };
           break;
         case DrawerAction.CUSTOM_MODAL:
@@ -390,19 +452,27 @@ const flowBuilderSlice = createSlice({
           nodeToChange.data = {
             type: NodeType.MESSAGE,
             template: { type: MessageType.MODAL },
+            stepId,
           };
           break;
         case DrawerAction.JUMP_TO:
           nodeToChange.type = NodeType.JUMP_TO;
+          nodeToChange.data = {
+            stepId,
+          };
           break;
         case DrawerAction.EXIT:
           nodeToChange.type = NodeType.EXIT;
+          nodeToChange.data = {
+            stepId,
+          };
           break;
         case DrawerAction.WAIT_UNTIL:
           nodeToChange.type = NodeType.WAIT_UNTIL;
           nodeToChange.data = {
             type: NodeType.WAIT_UNTIL,
             branches: [],
+            stepId,
           };
           break;
         case DrawerAction.TIME_DELAY:
@@ -414,6 +484,7 @@ const flowBuilderSlice = createSlice({
               hours: 0,
               minutes: 0,
             },
+            stepId,
           };
           break;
         case DrawerAction.TIME_WINDOW:
@@ -422,6 +493,7 @@ const flowBuilderSlice = createSlice({
             type: NodeType.TIME_WINDOW,
             from: new Date().toUTCString(),
             to: new Date().toUTCString(),
+            stepId,
           };
           break;
         case DrawerAction.USER_ATTRIBUTE:
@@ -429,6 +501,7 @@ const flowBuilderSlice = createSlice({
           nodeToChange.data = {
             type: NodeType.USER_ATTRIBUTE,
             branches: [],
+            stepId,
           };
           break;
         default:
@@ -531,6 +604,7 @@ export const {
   setFlowId,
   setFlowName,
   setNodes,
+  loadVisualLayout,
   addTemporaryEmptyNodeBetween,
   changeNodeData,
   removeNode,

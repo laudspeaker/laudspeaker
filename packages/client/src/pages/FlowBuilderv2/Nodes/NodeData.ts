@@ -88,6 +88,7 @@ export interface AttributeBranch extends CommonBranch {
 export type Branch = EventBranch | MaxTimeBranch | AttributeBranch;
 
 export interface CommonNodeData {
+  stepId?: string;
   temporary?: boolean;
   stats?: {
     sent: number;

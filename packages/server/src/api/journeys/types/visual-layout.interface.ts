@@ -1,52 +1,46 @@
-
-import {
-  Edge,
-  Node,
-} from "reactflow";
-
+import { Edge, Node } from 'reactflow';
 
 export enum EdgeType {
-  PRIMARY = "primary",
-  BRANCH = "branch",
+  PRIMARY = 'primary',
+  BRANCH = 'branch',
 }
 
-
 export enum TriggerType {
-  EVENT = "eventBased",
-  TIME_DELAY = "timeDelay",
-  TIME_WINDOW = "timeWindow",
+  EVENT = 'eventBased',
+  TIME_DELAY = 'timeDelay',
+  TIME_WINDOW = 'timeWindow',
 }
 
 export enum NodeType {
-  START = "start",
-  EMPTY = "empty",
-  MESSAGE = "message",
-  JUMP_TO = "jumpTo",
-  EXIT = "exit",
-  WAIT_UNTIL = "waitUntil",
-  TIME_DELAY = "timeDelay",
-  TIME_WINDOW = "timeWindow",
-  USER_ATTRIBUTE = "userAttribute",
+  START = 'start',
+  EMPTY = 'empty',
+  MESSAGE = 'message',
+  JUMP_TO = 'jumpTo',
+  EXIT = 'exit',
+  WAIT_UNTIL = 'waitUntil',
+  TIME_DELAY = 'timeDelay',
+  TIME_WINDOW = 'timeWindow',
+  USER_ATTRIBUTE = 'userAttribute',
 }
 
 export enum MessageType {
-  EMAIL = "email",
-  SLACK = "slack",
-  SMS = "sms",
-  FIREBASE = "firebase",
-  PUSH = "push",
-  WEBHOOK = "webhook",
-  MODAL = "modal",
+  EMAIL = 'email',
+  SLACK = 'slack',
+  SMS = 'sms',
+  FIREBASE = 'firebase',
+  PUSH = 'push',
+  WEBHOOK = 'webhook',
+  MODAL = 'modal',
 }
 
 export enum EventConditionElementsFilter {
-  TEXT = "text",
-  TAG_NAME = "tag name",
+  TEXT = 'text',
+  TAG_NAME = 'tag name',
 }
 
 export enum FilterByOption {
-  CUSTOMER_KEY = "customer key",
-  ELEMENTS = "elements",
+  CUSTOMER_KEY = 'customer key',
+  ELEMENTS = 'elements',
 }
 
 export interface EventCondition {
@@ -57,7 +51,7 @@ export interface EventCondition {
   key?: string;
   type?: string;
   comparisonType?: string;
-  relationWithNext?: "and" | "or";
+  relationWithNext?: 'and' | 'or';
   elementOrder?: number;
   filter?: EventConditionElementsFilter;
   isArray?: boolean;
@@ -73,8 +67,8 @@ export interface EventProps {
 }
 
 export enum ProviderType {
-  Posthog = "posthog",
-  Custom = "custom",
+  Posthog = 'posthog',
+  Custom = 'custom',
 }
 
 export interface Trigger {
@@ -84,7 +78,7 @@ export interface Trigger {
   source?: string;
   dest?: string[];
   providerType?: ProviderType;
-  providerParams?: string | "track" | "page";
+  providerParams?: string | 'track' | 'page';
   properties?: EventProps;
 }
 
@@ -100,27 +94,26 @@ export interface Workflow {
   filter?: { id: string };
 }
 
-
 export enum ComparisonType {
-  EQUALS = "equals",
+  EQUALS = 'equals',
 }
 
 export enum StatementValueType {
-  STRING = "String",
-  NUMBER = "Number",
-  BOOLEAN = "Boolean",
-  Email = "Email",
+  STRING = 'String',
+  NUMBER = 'Number',
+  BOOLEAN = 'Boolean',
+  Email = 'Email',
 }
 
 export enum BranchType {
-  EVENT = "event",
-  MAX_TIME = "maxTime",
-  ATTRIBUTE = "attribute",
+  EVENT = 'event',
+  MAX_TIME = 'maxTime',
+  ATTRIBUTE = 'attribute',
 }
 
 export enum LogicRelation {
-  AND = "and",
-  OR = "or",
+  AND = 'and',
+  OR = 'or',
 }
 
 export interface Statement {
@@ -147,8 +140,8 @@ export interface EventBranch extends CommonBranch {
 }
 
 export enum TimeType {
-  TIME_DELAY = "timeDelay",
-  TIME_WINDOW = "timeWindow",
+  TIME_DELAY = 'timeDelay',
+  TIME_WINDOW = 'timeWindow',
 }
 
 export interface CommonMaxTimeBranch extends CommonBranch {
@@ -195,6 +188,7 @@ export interface AttributeBranch extends CommonBranch {
 export type Branch = EventBranch | MaxTimeBranch | AttributeBranch;
 
 export interface CommonNodeData {
+  stepId?: string;
   temporary?: boolean;
   stats?: {
     sent: number;

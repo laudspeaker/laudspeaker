@@ -7,6 +7,7 @@ import {
   QueryStatementType,
   QueryType,
   StatementValueType,
+  valueTypeToComparisonTypesMap,
 } from "reducers/flow-builder.reducer";
 import ApiService from "services/api.service";
 import { Segment } from "types/Segment";
@@ -77,6 +78,7 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
             type: QueryStatementType.ATTRIBUTE,
             key: "",
             comparisonType: ComparisonType.EQUALS,
+            valueType: StatementValueType.STRING,
             value: "",
           },
         ],
@@ -150,6 +152,7 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                             type: QueryStatementType.ATTRIBUTE,
                             key: "",
                             comparisonType: ComparisonType.EQUALS,
+                            valueType: StatementValueType.STRING,
                             value: "",
                           }
                         : e.target.value === QueryStatementType.SEGMENT
@@ -196,7 +199,35 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                   </div>
                   <div>
                     <select
-                      value={statement.comparisonType}
+                      value={statement.valueType}
+                      onChange={(e) =>
+                        handleChangeStatement(i, {
+                          ...statement,
+                          valueType: e.target.value as StatementValueType,
+                        })
+                      }
+                      className="w-[145px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB]"
+                    >
+                      {Object.values(StatementValueType).map(
+                        (comparisonType, j) => (
+                          <option key={j} value={comparisonType}>
+                            {comparisonType}
+                          </option>
+                        )
+                      )}
+                    </select>
+                  </div>
+                  <div>
+                    <select
+                      value={
+                        valueTypeToComparisonTypesMap[
+                          statement.valueType
+                        ].includes(statement.comparisonType)
+                          ? statement.comparisonType
+                          : valueTypeToComparisonTypesMap[
+                              statement.valueType
+                            ][0]
+                      }
                       onChange={(e) =>
                         handleChangeStatement(i, {
                           ...statement,
@@ -205,7 +236,7 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                       }
                       className="w-[145px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB]"
                     >
-                      {Object.values(ComparisonType).map(
+                      {valueTypeToComparisonTypesMap[statement.valueType].map(
                         (comparisonType, j) => (
                           <option key={j} value={comparisonType}>
                             {comparisonType}

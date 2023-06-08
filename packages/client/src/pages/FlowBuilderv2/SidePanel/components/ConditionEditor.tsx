@@ -6,6 +6,7 @@ import { useDebounce } from "react-use";
 import {
   StatementValueType,
   ComparisonType,
+  valueTypeToComparisonTypesMap,
 } from "reducers/flow-builder.reducer";
 import ApiService from "services/api.service";
 import { ProviderType } from "types/Workflow";
@@ -154,11 +155,13 @@ const ConditionEditor: FC<ConditionEditorProps> = ({
               }}
               className="w-[145px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB]"
             >
-              {Object.values(ComparisonType).map((comparisonType, j) => (
-                <option key={j} value={comparisonType}>
-                  {comparisonType}
-                </option>
-              ))}
+              {valueTypeToComparisonTypesMap[statement.type].map(
+                (comparisonType, j) => (
+                  <option key={j} value={comparisonType}>
+                    {comparisonType}
+                  </option>
+                )
+              )}
             </select>
             <select
               value={statement.type}

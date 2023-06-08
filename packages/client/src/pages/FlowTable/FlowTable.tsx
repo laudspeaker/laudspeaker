@@ -38,7 +38,7 @@ const FlowTable = () => {
     setLoading(true);
     try {
       const { data } = await ApiService.get({
-        url: `${ApiConfig.flow}?take=${itemsPerPage}&skip=${
+        url: `/journeys?take=${itemsPerPage}&skip=${
           itemsPerPage * currentPage
         }&orderBy=${Object.keys(sortOptions)[0] || ""}&orderType=${
           Object.values(sortOptions)[0] || ""

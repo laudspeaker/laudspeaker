@@ -51,12 +51,12 @@ export class Journey {
   latestSave?: Date;
 
   // {"nodes":[...list of nodes], "edges": [...list of edges]}
-  @Column('jsonb', { nullable: true })
+  @Column('jsonb', { default: { nodes: [], edges: [] } })
   visualLayout: VisualLayout;
 
   @Column({ default: true })
   isDynamic: boolean;
 
-  @Column('jsonb', { default: { conditionalType: 'and', conditions: [] } })
+  @Column('jsonb', { default: { type: 'allCustomers' } })
   inclusionCriteria: any;
 }

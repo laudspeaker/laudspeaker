@@ -34,6 +34,9 @@ import { StepsService } from '../steps/steps.service';
 import { Step } from '../steps/entities/step.entity';
 import { Graph, alg } from '@dagrejs/graphlib';
 import { UpdateJourneyLayoutDto } from './dto/update-journey-layout.dto';
+import { v4 as uuid } from 'uuid';
+import { EdgeType, NodeType } from './types/visual-layout.interface';
+import { StepType } from '../steps/types/step.interface';
 
 export enum JourneyStatus {
   ACTIVE = 'Active',
@@ -66,7 +69,7 @@ export class JourneysService {
     @Inject(forwardRef(() => CustomersService))
     private customersService: CustomersService,
     @InjectConnection() private readonly connection: mongoose.Connection
-  ) { }
+  ) {}
 
   log(message, method, session, user = 'ANONYMOUS') {
     this.logger.log(
@@ -137,10 +140,54 @@ export class JourneysService {
    */
   async create(account: Account, name: string, session: string) {
     try {
-      return await this.journeysRepository.save({
+      const startNodeUUID = uuid();
+      const nextNodeUUID = uuid();
+
+      const journey = await this.journeysRepository.create({
         name,
         owner: { id: account.id },
+        visualLayout: {
+          nodes: [],
+          edges: [
+            {
+              id: `e${startNodeUUID}-${nextNodeUUID}`,
+              type: EdgeType.PRIMARY,
+              source: startNodeUUID,
+              target: nextNodeUUID,
+            },
+          ],
+        },
       });
+
+      await this.journeysRepository.save(journey);
+
+      const step = await this.stepsService.insert(
+        account,
+        {
+          type: StepType.START,
+          journeyID: journey.id,
+        },
+        session
+      );
+
+      journey.visualLayout.nodes = [
+        {
+          id: startNodeUUID,
+          type: NodeType.START,
+          data: {
+            stepId: step.id,
+          },
+          position: { x: 0, y: 0 },
+        },
+        {
+          id: nextNodeUUID,
+          type: NodeType.EMPTY,
+          data: {},
+          position: { x: 0, y: 0 },
+        },
+      ];
+
+      return await this.journeysRepository.save(journey);
     } catch (err) {
       this.error(err, this.create.name, session, account.email);
       throw err;
@@ -359,8 +406,8 @@ export class JourneysService {
               ...(key === 'isActive'
                 ? { isStopped: false, isPaused: false }
                 : key === 'isPaused'
-                  ? { isStopped: false }
-                  : {}),
+                ? { isStopped: false }
+                : {}),
             });
         }
       } else {
@@ -419,11 +466,7 @@ export class JourneysService {
    * @param session
    * @returns
    */
-  async findOne(
-    account: Account,
-    id: string,
-    session: string
-  ): Promise<any> {
+  async findOne(account: Account, id: string, session: string): Promise<any> {
     if (!isUUID(id)) throw new BadRequestException('Id is not valid uuid');
 
     let found: Journey;
@@ -434,7 +477,14 @@ export class JourneysService {
           id,
         },
       });
-      return Promise.resolve({ name: found.name, nodes: found.visualLayout.nodes, edges: found.visualLayout.edges, segments: found.inclusionCriteria, isDynamic: found.isDynamic });
+
+      return Promise.resolve({
+        name: found.name,
+        nodes: found.visualLayout.nodes,
+        edges: found.visualLayout.edges,
+        segments: found.inclusionCriteria,
+        isDynamic: found.isDynamic,
+      });
     } catch (err) {
       this.error(err, this.findOne.name, session, account.email);
       throw err;
@@ -464,7 +514,7 @@ export class JourneysService {
     const openedData = (await openedResponse.json<any>())?.data;
     const opened =
       +openedData?.[0]?.[
-      'uniqExact(tuple(audienceId, customerId, templateId, messageId, event, eventProvider))'
+        'uniqExact(tuple(audienceId, customerId, templateId, messageId, event, eventProvider))'
       ];
 
     const openedPercentage = (opened / sent) * 100;
@@ -476,7 +526,7 @@ export class JourneysService {
     const clickedData = (await clickedResponse.json<any>())?.data;
     const clicked =
       +clickedData?.[0]?.[
-      'uniqExact(tuple(audienceId, customerId, templateId, messageId, event, eventProvider))'
+        'uniqExact(tuple(audienceId, customerId, templateId, messageId, event, eventProvider))'
       ];
 
     const clickedPercentage = (clicked / sent) * 100;
@@ -731,7 +781,8 @@ export class JourneysService {
       if (journey.isActive || journey.isDeleted || journey.isPaused)
         throw new Error('Journey is no longer editable.');
 
-      const { visualLayout, isDynamic, name, inclusionCriteria } = updateJourneyDto;
+      const { visualLayout, isDynamic, name, inclusionCriteria } =
+        updateJourneyDto;
 
       return await queryRunner.manager.save(Journey, {
         ...journey,
@@ -783,7 +834,6 @@ export class JourneysService {
     }
   }
 
-
   /**
    * Update a journey.
    * @param account
@@ -814,7 +864,7 @@ export class JourneysService {
         visualLayout: {
           nodes,
           edges,
-        }
+        },
       });
     } catch (e) {
       this.error(e, this.update.name, session, account.email);

@@ -26,7 +26,7 @@ import { UpdateJourneyLayoutDto } from './dto/update-journey-layout.dto';
 @Controller('journeys')
 export class JourneysController {
   constructor(
-    @Inject(WINSTON_MODULE_NEST_PROVIDER)
+    @Inject(JourneysService)
     private readonly journeysService: JourneysService
   ) {}
 
@@ -60,16 +60,9 @@ export class JourneysController {
   @Get(':id')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
-  async findOne(
-    @Req() { user }: Request,
-    @Param('id') id: string,
-  ) {
+  async findOne(@Req() { user }: Request, @Param('id') id: string) {
     const session = randomUUID();
-    return await this.journeysService.findOne(
-      <Account>user,
-      id,
-      session
-    );
+    return await this.journeysService.findOne(<Account>user, id, session);
   }
 
   @Post()

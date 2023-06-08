@@ -1,7 +1,9 @@
 import React, { FC, useState } from "react";
 import { Handle, NodeProps, Position } from "reactflow";
 import { handleDrawerAction, removeNode } from "reducers/flow-builder.reducer";
+import ApiService from "services/api.service";
 import { useAppDispatch, useAppSelector } from "store/hooks";
+import { DrawerAction } from "../Drawer/drawer.fixtures";
 import { NodeType } from "../FlowEditor";
 import { NodeData } from "./NodeData";
 
@@ -10,7 +12,22 @@ export const EmptyNode: FC<NodeProps<NodeData>> = ({
   id,
   data: { temporary },
 }) => {
-  const { nodes, edges } = useAppSelector((state) => state.flowBuilder);
+  const drawerActionToNodeTypeMap: Record<DrawerAction, NodeType> = {
+    [DrawerAction.CUSTOM_MODAL]: NodeType.MESSAGE,
+    [DrawerAction.EMAIL]: NodeType.MESSAGE,
+    [DrawerAction.EXIT]: NodeType.EXIT,
+    [DrawerAction.JUMP_TO]: NodeType.JUMP_TO,
+    [DrawerAction.PUSH]: NodeType.MESSAGE,
+    [DrawerAction.SLACK]: NodeType.MESSAGE,
+    [DrawerAction.SMS]: NodeType.MESSAGE,
+    [DrawerAction.TIME_DELAY]: NodeType.TIME_DELAY,
+    [DrawerAction.TIME_WINDOW]: NodeType.TIME_WINDOW,
+    [DrawerAction.USER_ATTRIBUTE]: NodeType.USER_ATTRIBUTE,
+    [DrawerAction.WAIT_UNTIL]: NodeType.WAIT_UNTIL,
+    [DrawerAction.WEBHOOK]: NodeType.MESSAGE,
+  };
+
+  const { nodes, edges, flowId } = useAppSelector((state) => state.flowBuilder);
   const dispatch = useAppDispatch();
 
   const [isDraggedOver, setIsDraggedOver] = useState(false);
@@ -35,10 +52,20 @@ export const EmptyNode: FC<NodeProps<NodeData>> = ({
         setIsDraggedOver(false);
         if (temporary) dispatch(removeNode(id));
       }}
-      onDrop={(e) => {
-        dispatch(
-          handleDrawerAction({ id, action: e.dataTransfer.getData("action") })
-        );
+      onDrop={async (e) => {
+        const action = e.dataTransfer.getData("action");
+
+        const {
+          data: { id: stepId },
+        } = await ApiService.post({
+          url: "/steps",
+          options: {
+            type: drawerActionToNodeTypeMap[action as DrawerAction],
+            journeyID: flowId,
+          },
+        });
+
+        dispatch(handleDrawerAction({ id, action, stepId }));
         setIsDraggedOver(false);
       }}
     >

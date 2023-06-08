@@ -8,16 +8,16 @@ export enum AnalyticsProviderTypes {
 }
 
 export enum StepType {
-  START,
-  EXIT,
-  MESSAGE,
-  TIME_WINDOW,
-  TIME_DELAY,
-  ATTRIBUTE_BRANCH,
-  LOOP,
-  AB_TEST,
-  RANDOM_COHORT_BRANCH,
-  WAIT_UNTIL_BRANCH,
+  START = 'start',
+  EXIT = 'exit',
+  MESSAGE = 'message',
+  TIME_WINDOW = 'timeWindow',
+  TIME_DELAY = 'timeDelay',
+  ATTRIBUTE_BRANCH = 'userAttribute',
+  LOOP = 'jumpTo',
+  AB_TEST = 'ABTest',
+  RANDOM_COHORT_BRANCH = 'randomCohort',
+  WAIT_UNTIL_BRANCH = 'waitUntil',
 }
 
 export class TimeWindow {

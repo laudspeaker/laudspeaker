@@ -1,5 +1,7 @@
 import React, { useState } from "react";
+import { toast } from "react-toastify";
 import { setStepperIndex } from "reducers/flow-builder.reducer";
+import ApiService from "services/api.service";
 import { useAppDispatch, useAppSelector } from "store/hooks";
 import FlowBuilderButton from "../Elements/FlowBuilderButton";
 import FlowBuilderStepper from "../Elements/FlowBuilderStepper";
@@ -10,7 +12,7 @@ const FlowBuilderHeader = () => {
 
   const [isRenameModalOpen, setIsRenameModalOpen] = useState(false);
 
-  const { flowName, stepperIndex } = useAppSelector(
+  const { flowName, stepperIndex, flowId } = useAppSelector(
     (state) => state.flowBuilder
   );
 
@@ -19,7 +21,15 @@ const FlowBuilderHeader = () => {
       dispatch(setStepperIndex((stepperIndex + 1) as 1 | 2));
   };
 
-  const handleStartJourney = () => {};
+  const handleStartJourney = async () => {
+    try {
+      await ApiService.patch({ url: "/journeys/start/" + flowId });
+
+      toast.success("Journey has been started");
+    } catch (e) {
+      toast.error("Failed to start journey");
+    }
+  };
 
   return (
     <div className="w-full flex justify-between items-center h-[60px] border-[1px] border-[#E5E7EB] bg-white font-segoe font-normal text-[16px] text-[#111827] leading-[24px]">

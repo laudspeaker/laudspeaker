@@ -209,7 +209,7 @@ const RouteComponent: React.FC = () => {
                   { text: "Create a journey" },
                 ]}
               >
-                <FlowBuilder />
+                <FlowBuilderv2 />
               </DrawerLayout>
             </Protected>
           }

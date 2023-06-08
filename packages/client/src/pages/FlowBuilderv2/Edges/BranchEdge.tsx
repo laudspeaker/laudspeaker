@@ -63,7 +63,9 @@ export const BranchEdge: FC<EdgeProps<BranchEdgeData>> = ({
 
   const { branch } = data;
 
-  const branchIndex = (sourceNode.data.branches as Branch[]).indexOf(branch);
+  const branchIndex = (sourceNode.data.branches as Branch[]).findIndex(
+    (b) => b.id === branch.id
+  );
 
   return (
     <>

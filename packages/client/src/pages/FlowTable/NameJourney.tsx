@@ -10,7 +10,7 @@ import ToggleWithLabel from "components/ToggleWithLabel";
 const NameJourney = () => {
   const [name, setName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [isUseNewUI, setIsUseNewUI] = useState(false);
+  // const [isUseNewUI, setIsUseNewUI] = useState(false);
 
   const navigate = useNavigate();
 
@@ -19,10 +19,10 @@ const NameJourney = () => {
     setIsLoading(true);
     try {
       const { data } = await ApiService.post<Workflow>({
-        url: "/workflows",
+        url: "/journeys",
         options: { name },
       });
-      navigate("/flow/" + data.id + (isUseNewUI ? "/v2" : ""));
+      navigate("/flow/" + data.id);
     } catch (err) {
       let message = "Unexpected error";
       if (err instanceof AxiosError) message = err.response?.data.message;
@@ -48,11 +48,11 @@ const NameJourney = () => {
             className="w-full p-[16px] bg-white border-[1px] border-[#D1D5DB] font-[Inter] text-[16px]"
             onChange={(e) => setName(e.target.value)}
           />
-          <ToggleWithLabel
+          {/* <ToggleWithLabel
             label="Use new UI (experimental)"
             enabled={isUseNewUI}
             onChange={setIsUseNewUI}
-          />
+          /> */}
           <div className="flex justify-end mt-[10px]">
             <GenericButton
               id="createJourneySubmit"
