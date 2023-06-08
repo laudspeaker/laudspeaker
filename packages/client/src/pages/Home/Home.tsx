@@ -275,6 +275,53 @@ const Home = () => {
                   </div>
                   <div
                     className="w-full border-r-[1px] border-b-[1px] border-[#E8EAED] p-[20px] cursor-pointer hover:bg-gray-100"
+                    onClick={() => navigate("/templates/modal/test_example")}
+                  >
+                    <div className="h-[80px] flex justify-between items-start">
+                      <div className="text-[#076da2] bg-[#f0f9ff] w-10 h-10 rounded-md flex justify-center items-center">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          strokeWidth="1.5"
+                          stroke="currentColor"
+                          className="w-6 h-6"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"
+                          />
+                        </svg>
+                      </div>
+                      <div className="text-[#D2D5DA]">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          strokeWidth={2}
+                          stroke="currentColor"
+                          className="w-6 h-6"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25"
+                          />
+                        </svg>
+                      </div>
+                    </div>
+                    <div>
+                      <h1 className="text-xl font-bold tracking-tight text-gray-900">
+                        Design a modal
+                      </h1>
+                      <p className="pl-[10px] py-[10px] text-[#A8ABB3]">
+                        Use our award winning modal designer.
+                      </p>
+                    </div>
+                  </div>
+                  <div
+                    className="w-full border-r-[1px] border-b-[1px] border-[#E8EAED] p-[20px] cursor-pointer hover:bg-gray-100"
                     onClick={() => setIsCSVImportModalOpen(true)}
                   >
                     <div className="h-[80px] flex justify-between items-start">
