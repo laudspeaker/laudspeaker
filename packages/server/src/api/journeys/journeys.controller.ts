@@ -21,6 +21,7 @@ import { Request } from 'express';
 import { Journey } from './entities/journey.entity';
 import { CreateJourneyDto } from './dto/create-journey.dto';
 import { randomUUID } from 'crypto';
+import { UpdateJourneyLayoutDto } from './dto/update-journey-layout.dto';
 
 @Controller('journeys')
 export class JourneysController {
@@ -62,13 +63,11 @@ export class JourneysController {
   async findOne(
     @Req() { user }: Request,
     @Param('id') id: string,
-    @Query('needsStats') needsStats: boolean
   ) {
     const session = randomUUID();
     return await this.journeysService.findOne(
       <Account>user,
       id,
-      needsStats,
       session
     );
   }
@@ -101,12 +100,27 @@ export class JourneysController {
   @UseInterceptors(ClassSerializerInterceptor)
   async update(
     @Req() { user }: Request,
-    @Body() updateWorkflowDto: UpdateJourneyDto
+    @Body() updateJourneyDto: UpdateJourneyDto
   ) {
     const session = randomUUID();
     return await this.journeysService.update(
       <Account>user,
-      updateWorkflowDto,
+      updateJourneyDto,
+      session
+    );
+  }
+
+  @Patch('visual-layout/')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor)
+  async updateLayout(
+    @Req() { user }: Request,
+    @Body() updateJourneyDto: UpdateJourneyLayoutDto
+  ) {
+    const session = randomUUID();
+    return await this.journeysService.updateLayout(
+      <Account>user,
+      updateJourneyDto,
       session
     );
   }

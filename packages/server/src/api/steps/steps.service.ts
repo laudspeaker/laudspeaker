@@ -26,7 +26,7 @@ export class StepsService {
     @InjectRepository(Step)
     public stepsRepository: Repository<Step>,
     @InjectQueue('transition') private readonly transitionQueue: Queue
-  ) {}
+  ) { }
 
   log(message, method, session, user = 'ANONYMOUS') {
     this.logger.log(
@@ -229,13 +229,12 @@ export class StepsService {
     session: string
   ): Promise<Step> {
     try {
-      const { journeyID, type, metadata } = createStepDto;
+      const { journeyID, type } = createStepDto;
       return await this.stepsRepository.save({
         customers: [],
         owner: { id: account.id },
         journey: { id: journeyID },
         type,
-        metadata,
       });
     } catch (e) {
       this.error(e, this.insert.name, session, account.id);

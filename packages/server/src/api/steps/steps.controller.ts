@@ -39,7 +39,7 @@ export class StepsController {
     return await this.stepsService.findOne(<Account>user, id, session);
   }
 
-  @Post('create/')
+  @Post()
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
   async create(@Req() { user }: Request, @Body() createStepDto: CreateStepDto) {

@@ -5,6 +5,7 @@ import {
   IsString,
   IsUUID,
   IsBoolean,
+  IsJSON,
 } from 'class-validator';
 
 export class UpdateJourneyDto {
@@ -19,9 +20,9 @@ export class UpdateJourneyDto {
   @IsOptional()
   public visualLayout?: any;
 
-  @IsUUID()
+  @IsJSON()
   @IsOptional()
-  public filterId?: string;
+  public inclusionCriteria?: any;
 
   @IsBoolean()
   @IsOptional()

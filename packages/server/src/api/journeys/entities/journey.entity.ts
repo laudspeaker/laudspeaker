@@ -1,5 +1,4 @@
 import { Account } from '../../accounts/entities/accounts.entity';
-import { Filter } from '../../filter/entities/filter.entity';
 import {
   Entity,
   Column,
@@ -58,7 +57,6 @@ export class Journey {
   @Column({ default: true })
   isDynamic: boolean;
 
-  @ManyToOne(() => Filter, (filter) => filter.id, { onDelete: 'CASCADE' })
-  @JoinColumn()
-  filter?: Filter;
+  @Column('jsonb', { default: { conditionalType: 'and', conditions: [] } })
+  inclusionCriteria: any;
 }

@@ -30,10 +30,10 @@ import { isUUID } from 'class-validator';
 import mongoose, { ClientSession, Model } from 'mongoose';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { BadRequestException } from '@nestjs/common/exceptions';
-import { Filter } from '../filter/entities/filter.entity';
 import { StepsService } from '../steps/steps.service';
 import { Step } from '../steps/entities/step.entity';
 import { Graph, alg } from '@dagrejs/graphlib';
+import { UpdateJourneyLayoutDto } from './dto/update-journey-layout.dto';
 
 export enum JourneyStatus {
   ACTIVE = 'Active',
@@ -66,7 +66,7 @@ export class JourneysService {
     @Inject(forwardRef(() => CustomersService))
     private customersService: CustomersService,
     @InjectConnection() private readonly connection: mongoose.Connection
-  ) {}
+  ) { }
 
   log(message, method, session, user = 'ANONYMOUS') {
     this.logger.log(
@@ -164,7 +164,6 @@ export class JourneysService {
           owner: { id: user.id },
           id,
         },
-        relations: ['filter'],
       });
       if (!oldJourney) throw new NotFoundException('Journey not found');
 
@@ -220,7 +219,6 @@ export class JourneysService {
           id: newJourney.id,
           name: newName,
           visualLayout,
-          filterId: oldJourney.filter?.id,
           isDynamic: oldJourney.isDynamic,
         },
         session,
@@ -263,7 +261,6 @@ export class JourneysService {
           isStopped: false,
           isPaused: false,
         },
-        relations: ['filter'],
       });
 
       for (
@@ -276,7 +273,7 @@ export class JourneysService {
           journey.isDynamic &&
           (await this.customersService.checkInclusion(
             customer,
-            journey.filter.inclusionCriteria,
+            journey.inclusionCriteria,
             account
           )) &&
           customer.workflows.indexOf(journey.id) < 0
@@ -362,8 +359,8 @@ export class JourneysService {
               ...(key === 'isActive'
                 ? { isStopped: false, isPaused: false }
                 : key === 'isPaused'
-                ? { isStopped: false }
-                : {}),
+                  ? { isStopped: false }
+                  : {}),
             });
         }
       } else {
@@ -410,7 +407,6 @@ export class JourneysService {
         isStopped: false,
         isPaused: false,
       },
-      relations: ['filter'],
     });
   }
 
@@ -426,9 +422,8 @@ export class JourneysService {
   async findOne(
     account: Account,
     id: string,
-    needStats: boolean,
     session: string
-  ): Promise<Journey> {
+  ): Promise<any> {
     if (!isUUID(id)) throw new BadRequestException('Id is not valid uuid');
 
     let found: Journey;
@@ -438,20 +433,8 @@ export class JourneysService {
           owner: { id: account.id },
           id,
         },
-        relations: ['filter'],
       });
-      if (needStats && found?.visualLayout) {
-        found.visualLayout.nodes = await Promise.all(
-          found?.visualLayout?.nodes?.map(async (node) => ({
-            ...node,
-            data: {
-              ...node.data,
-              stats: await this.getStats(node?.data?.audienceId),
-            },
-          }))
-        );
-      }
-      return Promise.resolve(found);
+      return Promise.resolve({ name: found.name, nodes: found.visualLayout.nodes, edges: found.visualLayout.edges, segments: found.inclusionCriteria, isDynamic: found.isDynamic });
     } catch (err) {
       this.error(err, this.findOne.name, session, account.email);
       throw err;
@@ -481,7 +464,7 @@ export class JourneysService {
     const openedData = (await openedResponse.json<any>())?.data;
     const opened =
       +openedData?.[0]?.[
-        'uniqExact(tuple(audienceId, customerId, templateId, messageId, event, eventProvider))'
+      'uniqExact(tuple(audienceId, customerId, templateId, messageId, event, eventProvider))'
       ];
 
     const openedPercentage = (opened / sent) * 100;
@@ -493,7 +476,7 @@ export class JourneysService {
     const clickedData = (await clickedResponse.json<any>())?.data;
     const clicked =
       +clickedData?.[0]?.[
-        'uniqExact(tuple(audienceId, customerId, templateId, messageId, event, eventProvider))'
+      'uniqExact(tuple(audienceId, customerId, templateId, messageId, event, eventProvider))'
       ];
 
     const clickedPercentage = (clicked / sent) * 100;
@@ -615,7 +598,6 @@ export class JourneysService {
           owner: { id: account?.id },
           id: journeyID,
         },
-        relations: ['filter'],
       });
       if (!journey) {
         throw new Error(errors.ERROR_DOES_NOT_EXIST);
@@ -625,7 +607,7 @@ export class JourneysService {
         throw new Error('This journey is no longer editable.');
       }
 
-      if (!journey.filter)
+      if (!journey.inclusionCriteria)
         throw new Error('To start journey a filter should be defined');
 
       const graph = new Graph();
@@ -652,7 +634,7 @@ export class JourneysService {
 
       customers = await this.customersService.findByInclusionCriteria(
         account,
-        journey.filter.inclusionCriteria,
+        journey.inclusionCriteria,
         transactionSession
       );
 
@@ -681,11 +663,6 @@ export class JourneysService {
         isActive: true,
         startedAt: new Date(Date.now()),
       });
-
-      const filter = await queryRunner.manager.findOneBy(Filter, {
-        id: journey.filter.id,
-      });
-      await queryRunner.manager.save(Filter, { ...filter, isFreezed: true });
 
       await transactionSession.commitTransaction();
       await queryRunner.commitTransaction();
@@ -748,25 +725,20 @@ export class JourneysService {
         where: {
           id: updateJourneyDto.id,
         },
-        relations: ['filter'],
       });
 
       if (!journey) throw new NotFoundException('Journey not found');
       if (journey.isActive || journey.isDeleted || journey.isPaused)
         throw new Error('Journey is no longer editable.');
 
-      const { visualLayout, isDynamic, name, filterId } = updateJourneyDto;
-
-      if (filterId && journey.filter) {
-        journey.filter.id = filterId;
-      }
+      const { visualLayout, isDynamic, name, inclusionCriteria } = updateJourneyDto;
 
       return await queryRunner.manager.save(Journey, {
         ...journey,
-        filter: { id: filterId },
         visualLayout,
         isDynamic,
         name,
+        inclusionCriteria,
       });
     } catch (e) {
       this.error(e, this.update.name, session, account.email);
@@ -791,25 +763,58 @@ export class JourneysService {
         where: {
           id: updateJourneyDto.id,
         },
-        relations: ['filter'],
       });
 
       if (!journey) throw new NotFoundException('Journey not found');
       if (journey.isActive || journey.isDeleted || journey.isPaused)
         throw new Error('Journey is no longer editable.');
 
-      const { visualLayout, isDynamic, name, filterId } = updateJourneyDto;
-
-      if (filterId && journey.filter) {
-        journey.filter.id = filterId;
-      }
+      const { isDynamic, name, inclusionCriteria } = updateJourneyDto;
 
       return await this.journeysRepository.save({
         ...journey,
-        filter: { id: filterId },
-        visualLayout,
         isDynamic,
         name,
+        inclusionCriteria,
+      });
+    } catch (e) {
+      this.error(e, this.update.name, session, account.email);
+      throw e;
+    }
+  }
+
+
+  /**
+   * Update a journey.
+   * @param account
+   * @param updateJourneyDto
+   * @param session
+   * @returns
+   */
+  async updateLayout(
+    account: Account,
+    updateJourneyDto: UpdateJourneyLayoutDto,
+    session: string
+  ): Promise<Journey> {
+    try {
+      const journey = await this.journeysRepository.findOne({
+        where: {
+          id: updateJourneyDto.id,
+        },
+      });
+
+      if (!journey) throw new NotFoundException('Journey not found');
+      if (journey.isActive || journey.isDeleted || journey.isPaused)
+        throw new Error('Journey is no longer editable.');
+
+      const { nodes, edges } = updateJourneyDto;
+
+      return await this.journeysRepository.save({
+        ...journey,
+        visualLayout: {
+          nodes,
+          edges,
+        }
       });
     } catch (e) {
       this.error(e, this.update.name, session, account.email);
