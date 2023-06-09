@@ -22,9 +22,13 @@ import {
   setNodes,
   setSegmentsSettings,
 } from "reducers/flow-builder.reducer";
+import { JourneyStatus } from "components/TableTemplate/TableTemplate";
+import { useNavigate } from "react-router-dom";
 
 const FlowBuilderv2 = () => {
   const { id } = useParams();
+
+  const navigate = useNavigate();
 
   const [isLoading, setIsLoading] = useState(true);
 
@@ -42,6 +46,10 @@ const FlowBuilderv2 = () => {
         edges: Edge<EdgeData>[];
         segments: SegmentsSettings;
         isDynamic: boolean;
+        isActive: boolean;
+        isPaused: boolean;
+        isStopped: boolean;
+        isDeleted: boolean;
       }>({
         url: "/journeys/" + id,
       });
@@ -61,6 +69,15 @@ const FlowBuilderv2 = () => {
         )
       );
       dispatch(setFlowId(id));
+
+      let status: JourneyStatus = JourneyStatus.EDITABLE;
+
+      if (data.isActive) status = JourneyStatus.ACTIVE;
+      if (data.isPaused) status = JourneyStatus.PAUSED;
+      if (data.isStopped) status = JourneyStatus.STOPPED;
+      if (data.isDeleted) status = JourneyStatus.DELETED;
+
+      if (status !== JourneyStatus.EDITABLE) navigate(`/flow/${id}/view`);
     } finally {
       setIsLoading(false);
     }

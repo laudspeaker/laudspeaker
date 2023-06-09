@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { setStepperIndex } from "reducers/flow-builder.reducer";
 import ApiService from "services/api.service";
@@ -9,6 +10,8 @@ import FlowBuilderRenameModal from "../Modals/FlowBuilderRenameModal";
 
 const FlowBuilderHeader = () => {
   const dispatch = useAppDispatch();
+
+  const navigate = useNavigate();
 
   const [isRenameModalOpen, setIsRenameModalOpen] = useState(false);
 
@@ -26,6 +29,8 @@ const FlowBuilderHeader = () => {
       await ApiService.patch({ url: "/journeys/start/" + flowId });
 
       toast.success("Journey has been started");
+
+      navigate(`/flow/${flowId}/view`);
     } catch (e) {
       toast.error("Failed to start journey");
     }

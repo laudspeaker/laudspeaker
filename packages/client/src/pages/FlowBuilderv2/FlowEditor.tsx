@@ -57,10 +57,11 @@ const edgeTypes = {
 };
 
 interface FlowEditorProps {
+  isViewMode?: boolean;
   className?: string;
 }
 
-const FlowEditor: FC<FlowEditorProps> = ({ className }) => {
+const FlowEditor: FC<FlowEditorProps> = ({ className, isViewMode }) => {
   const { nodes, edges, stepperIndex } = useAppSelector(
     (state) => state.flowBuilder
   );
@@ -112,7 +113,7 @@ const FlowEditor: FC<FlowEditorProps> = ({ className }) => {
           className="rounded-[2px]"
         />
       </ReactFlow>
-      {stepperIndex === 0 && <FlowBuilderSidePanel />}
+      {!isViewMode && stepperIndex === 0 && <FlowBuilderSidePanel />}
     </div>
   );
 };

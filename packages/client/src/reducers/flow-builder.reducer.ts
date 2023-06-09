@@ -1,4 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { JourneyStatus } from "components/TableTemplate/TableTemplate";
 import { DrawerAction } from "pages/FlowBuilderv2/Drawer/drawer.fixtures";
 import { BranchEdgeData, EdgeData } from "pages/FlowBuilderv2/Edges/EdgeData";
 import { NodeType, EdgeType } from "pages/FlowBuilderv2/FlowEditor";
@@ -132,6 +133,8 @@ interface FlowBuilderState {
   stepperIndex: 0 | 1 | 2;
   segments: SegmentsSettings;
   journeyType: JourneyType;
+  isViewMode: boolean;
+  flowStatus: JourneyStatus;
 }
 
 const startNodeUUID = uuid();
@@ -171,6 +174,8 @@ const initialState: FlowBuilderState = {
     type: SegmentsSettingsType.ALL_CUSTOMERS,
   },
   journeyType: JourneyType.DYNAMIC,
+  isViewMode: false,
+  flowStatus: JourneyStatus.EDITABLE,
 };
 
 const handlePruneNodeTree = (state: FlowBuilderState, nodeId: string) => {
@@ -587,6 +592,12 @@ const flowBuilderSlice = createSlice({
     setJourneyType(state, action: PayloadAction<JourneyType>) {
       state.journeyType = action.payload;
     },
+    setIsViewMode(state, action: PayloadAction<boolean>) {
+      state.isViewMode = action.payload;
+    },
+    setFlowStatus(state, action: PayloadAction<JourneyStatus>) {
+      state.flowStatus = action.payload;
+    },
     refreshFlowBuilder(state) {
       state.flowId = "";
       state.flowName = "";
@@ -596,6 +607,8 @@ const flowBuilderSlice = createSlice({
       state.stepperIndex = 0;
       state.segments = { type: SegmentsSettingsType.ALL_CUSTOMERS };
       state.journeyType = JourneyType.DYNAMIC;
+      state.isViewMode = false;
+      state.flowStatus = JourneyStatus.EDITABLE;
     },
   },
 });
@@ -617,6 +630,8 @@ export const {
   setStepperIndex,
   setSegmentsSettings,
   setJourneyType,
+  setIsViewMode,
+  setFlowStatus,
   refreshFlowBuilder,
 } = flowBuilderSlice.actions;
 

@@ -2,6 +2,7 @@ import {
   Condition,
   EventBranch,
   LogicRelation,
+  StatementType,
 } from "pages/FlowBuilderv2/Nodes/NodeData";
 import React, { FC, useState } from "react";
 import { ProviderType } from "types/Workflow";
@@ -90,12 +91,17 @@ const EventBranchEditor: FC<EventBranchEditorProps> = ({
                 </div>
               </div>
               {condition.statements.map((statement, k) => (
-                <div
-                  className="font-inter font-normal text-[14px] leading-[22px]"
-                  key={k}
-                >
-                  {statement.key} {statement.comparisonType} {statement.value}
-                </div>
+                <>
+                  {statement.type === StatementType.PROPERTY && (
+                    <div
+                      className="font-inter font-normal text-[14px] leading-[22px]"
+                      key={k}
+                    >
+                      {statement.key} {statement.comparisonType}{" "}
+                      {statement.value}
+                    </div>
+                  )}
+                </>
               ))}
             </div>
           )}

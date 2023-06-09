@@ -8,7 +8,13 @@ import {
 import { selectNode } from "reducers/flow-builder.reducer";
 import { useAppDispatch, useAppSelector } from "store/hooks";
 import { NodeType } from "../FlowEditor";
-import { Branch, BranchType, LogicRelation, TimeType } from "../Nodes/NodeData";
+import {
+  Branch,
+  BranchType,
+  LogicRelation,
+  StatementType,
+  TimeType,
+} from "../Nodes/NodeData";
 import { BranchEdgeData } from "./EdgeData";
 import { ProviderType } from "types/Workflow";
 import { Transition } from "@headlessui/react";
@@ -159,8 +165,14 @@ export const BranchEdge: FC<EdgeProps<BranchEdgeData>> = ({
                               key={j}
                               className="font-inter font-normal text-[12px] leading-[20px] text-[#18181B]"
                             >
-                              {statement.key} {statement.comparisonType}{" "}
-                              {statement.value}
+                              {statement.type === StatementType.PROPERTY ? (
+                                <>
+                                  {statement.key} {statement.comparisonType}{" "}
+                                  {statement.value}
+                                </>
+                              ) : (
+                                <></>
+                              )}
                             </div>
                           ))}
                         </div>

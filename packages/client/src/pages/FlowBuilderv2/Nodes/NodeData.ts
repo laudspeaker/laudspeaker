@@ -16,12 +16,34 @@ export enum LogicRelation {
   OR = "or",
 }
 
-export interface Statement {
+export enum StatementType {
+  PROPERTY = "property",
+  ELEMENT = "element",
+}
+
+export interface PropertyStatement {
+  type: StatementType.PROPERTY;
   key: string;
   comparisonType: ComparisonType;
-  type: StatementValueType;
+  valueType: StatementValueType;
   value: string;
 }
+
+export enum ElementKey {
+  TAG_NAME = "tagName",
+  TEXT = "text",
+}
+
+export interface ElementStatement {
+  type: StatementType.ELEMENT;
+  order: number;
+  elementKey: ElementKey;
+  comparisonType: ComparisonType;
+  valueType: StatementValueType;
+  value: string;
+}
+
+export type Statement = PropertyStatement | ElementStatement;
 
 export interface Condition {
   name: string;

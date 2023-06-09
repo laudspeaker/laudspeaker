@@ -35,8 +35,18 @@ import { Step } from '../steps/entities/step.entity';
 import { Graph, alg } from '@dagrejs/graphlib';
 import { UpdateJourneyLayoutDto } from './dto/update-journey-layout.dto';
 import { v4 as uuid } from 'uuid';
-import { BranchType, EdgeType, NodeType, TimeType } from './types/visual-layout.interface';
-import { AllStepTypeMetadata, AnalyticsEvent, StartStepMetadata, StepType } from '../steps/types/step.interface';
+import {
+  BranchType,
+  EdgeType,
+  NodeType,
+  TimeType,
+} from './types/visual-layout.interface';
+import {
+  AllStepTypeMetadata,
+  AnalyticsEvent,
+  StartStepMetadata,
+  StepType,
+} from '../steps/types/step.interface';
 import { MessageStepMetadata } from '../steps/types/step.interface';
 import { WaitUntilStepMetadata } from '../steps/types/step.interface';
 import { LoopStepMetadata } from '../steps/types/step.interface';
@@ -84,7 +94,7 @@ export class JourneysService {
     @Inject(forwardRef(() => CustomersService))
     private customersService: CustomersService,
     @InjectConnection() private readonly connection: mongoose.Connection
-  ) { }
+  ) {}
 
   log(message, method, session, user = 'ANONYMOUS') {
     this.logger.log(
@@ -421,8 +431,8 @@ export class JourneysService {
               ...(key === 'isActive'
                 ? { isStopped: false, isPaused: false }
                 : key === 'isPaused'
-                  ? { isStopped: false }
-                  : {}),
+                ? { isStopped: false }
+                : {}),
             });
         }
       } else {
@@ -499,6 +509,10 @@ export class JourneysService {
         edges: found.visualLayout.edges,
         segments: found.inclusionCriteria,
         isDynamic: found.isDynamic,
+        isActive: found.isActive,
+        isPaused: found.isPaused,
+        isStopped: found.isStopped,
+        isDeleted: found.isDeleted,
       });
     } catch (err) {
       this.error(err, this.findOne.name, session, account.email);
@@ -529,7 +543,7 @@ export class JourneysService {
     const openedData = (await openedResponse.json<any>())?.data;
     const opened =
       +openedData?.[0]?.[
-      'uniqExact(tuple(audienceId, customerId, templateId, messageId, event, eventProvider))'
+        'uniqExact(tuple(audienceId, customerId, templateId, messageId, event, eventProvider))'
       ];
 
     const openedPercentage = (opened / sent) * 100;
@@ -541,7 +555,7 @@ export class JourneysService {
     const clickedData = (await clickedResponse.json<any>())?.data;
     const clicked =
       +clickedData?.[0]?.[
-      'uniqExact(tuple(audienceId, customerId, templateId, messageId, event, eventProvider))'
+        'uniqExact(tuple(audienceId, customerId, templateId, messageId, event, eventProvider))'
       ];
 
     const clickedPercentage = (clicked / sent) * 100;
@@ -681,7 +695,12 @@ export class JourneysService {
         journey.id,
         queryRunner
       );
-      this.debug(`${JSON.stringify({ steps: steps })}`, this.start.name, session, account.email)
+      this.debug(
+        `${JSON.stringify({ steps: steps })}`,
+        this.start.name,
+        session,
+        account.email
+      );
       for (let i = 0; i < steps.length; i++) {
         graph.setNode(steps[i].id);
         if (steps[i].metadata?.branches) {
@@ -870,7 +889,7 @@ export class JourneysService {
         where: {
           id: updateJourneyDto.id,
         },
-      })
+      });
 
       if (!journey) throw new NotFoundException('Journey not found');
       if (journey.isActive || journey.isDeleted || journey.isPaused)
@@ -881,26 +900,38 @@ export class JourneysService {
       for (let i = 0; i < nodes.length; i++) {
         let step = await queryRunner.manager.findOne(Step, {
           where: {
-            id: nodes[i].data.stepId
-          }
+            id: nodes[i].data.stepId,
+          },
         });
-        let relevantEdges = edges.filter(edge => { return edge.source === nodes[i].id })
+        let relevantEdges = edges.filter((edge) => {
+          return edge.source === nodes[i].id;
+        });
         let metadata;
         switch (nodes[i].type) {
           case NodeType.START:
-            if (relevantEdges.length > 1) throw new Error("Cannot have more than one branch for Start Step")
+            if (relevantEdges.length > 1)
+              throw new Error(
+                'Cannot have more than one branch for Start Step'
+              );
             metadata = new StartStepMetadata();
-            metadata.destination = nodes.filter(node => { return node.id === relevantEdges[0].target })[0].data.stepId
+            metadata.destination = nodes.filter((node) => {
+              return node.id === relevantEdges[0].target;
+            })[0].data.stepId;
             break;
           case NodeType.EMPTY:
-            break
+            break;
           case NodeType.MESSAGE:
-            if (relevantEdges.length > 1) throw new Error("Cannot have more than one branch for Message Step")
+            if (relevantEdges.length > 1)
+              throw new Error(
+                'Cannot have more than one branch for Message Step'
+              );
             metadata = new MessageStepMetadata();
-            metadata.destination = nodes.filter(node => { return node.id === relevantEdges[0].target })[0].data.stepId
-            metadata.channel = nodes[i].data['template']['type']
+            metadata.destination = nodes.filter((node) => {
+              return node.id === relevantEdges[0].target;
+            })[0].data.stepId;
+            metadata.channel = nodes[i].data['template']['type'];
             metadata.template = nodes[i].data['template']['selected']['id'];
-            break
+            break;
           case NodeType.WAIT_UNTIL:
             // metadata = new WaitUntilStepMetadata();
             // let timeBranch = nodes[i].data['branches'].filter((branch) => { branch.type === BranchType.MAX_TIME })[0]
@@ -918,7 +949,7 @@ export class JourneysService {
             //   if (relevantEdges[i].data['branch'].type === BranchType.MAX_TIME) metadata.timeBranch.destination = relevantEdges[i].target;
             //   else if (relevantEdges[i].data['branch'].type === BranchType.EVENT) {
             //     const branch = new AnalyticsEvent();
-            //     branch.conditions = 
+            //     branch.conditions =
             //     branch.provider
             //     branch.providerParams
             //     branch.destination
@@ -927,27 +958,54 @@ export class JourneysService {
             // }
             break;
           case NodeType.JUMP_TO:
-            if (relevantEdges.length > 1) throw new Error("Cannot have more than one branch for Jump To Step")
+            if (relevantEdges.length > 1)
+              throw new Error(
+                'Cannot have more than one branch for Jump To Step'
+              );
             metadata = new LoopStepMetadata();
-            metadata.destination = nodes.filter(node => { return node.id === relevantEdges[0].target })[0].data.stepId
+            metadata.destination = nodes.filter((node) => {
+              return node.id === relevantEdges[0].target;
+            })[0].data.stepId;
             break;
           case NodeType.EXIT:
-            if (relevantEdges.length > 0) throw new Error("Cannot have any branches for Exit Step")
+            if (relevantEdges.length > 0)
+              throw new Error('Cannot have any branches for Exit Step');
             metadata = new ExitStepMetadata();
             break;
           case NodeType.TIME_DELAY:
-            if (relevantEdges.length > 1) throw new Error("Cannot have more than one branch for Time Delay Step")
+            if (relevantEdges.length > 1)
+              throw new Error(
+                'Cannot have more than one branch for Time Delay Step'
+              );
             metadata = new TimeDelayStepMetadata();
-            metadata.destination = nodes.filter(node => { return node.id === relevantEdges[0].target })[0].data.stepId
-            metadata.delay = new Temporal.Duration(nodes[i].data['delay']['years'], nodes[i].data['delay']['months'], nodes[i].data['delay']['weeks'], nodes[i].data['delay']['days'], nodes[i].data['delay']['hours'], nodes[i].data['delay']['minutes'])
+            metadata.destination = nodes.filter((node) => {
+              return node.id === relevantEdges[0].target;
+            })[0].data.stepId;
+            metadata.delay = new Temporal.Duration(
+              nodes[i].data['delay']['years'],
+              nodes[i].data['delay']['months'],
+              nodes[i].data['delay']['weeks'],
+              nodes[i].data['delay']['days'],
+              nodes[i].data['delay']['hours'],
+              nodes[i].data['delay']['minutes']
+            );
             break;
           case NodeType.TIME_WINDOW:
-            if (relevantEdges.length > 1) throw new Error("Cannot have more than one branch for Time Window Step")
+            if (relevantEdges.length > 1)
+              throw new Error(
+                'Cannot have more than one branch for Time Window Step'
+              );
             metadata = new TimeWindowStepMetadata();
-            metadata.destination = nodes.filter(node => { return node.id === relevantEdges[0].target })[0].data.stepId
-            metadata.window = new TimeWindow()
-            metadata.window.from = Temporal.Instant.from(new Date(nodes[i].data['from']).toISOString())
-            metadata.window.to = Temporal.Instant.from(new Date(nodes[i].data['to']).toISOString())
+            metadata.destination = nodes.filter((node) => {
+              return node.id === relevantEdges[0].target;
+            })[0].data.stepId;
+            metadata.window = new TimeWindow();
+            metadata.window.from = Temporal.Instant.from(
+              new Date(nodes[i].data['from']).toISOString()
+            );
+            metadata.window.to = Temporal.Instant.from(
+              new Date(nodes[i].data['to']).toISOString()
+            );
             break;
           case NodeType.USER_ATTRIBUTE:
             metadata = new MultiBranchMetadata();
@@ -955,8 +1013,8 @@ export class JourneysService {
         }
         await queryRunner.manager.save(Step, {
           ...step,
-          metadata
-        })
+          metadata,
+        });
       }
 
       journey = await queryRunner.manager.save(Journey, {
@@ -967,16 +1025,14 @@ export class JourneysService {
         },
       });
       await queryRunner.commitTransaction();
-      return Promise.resolve(journey)
+      return Promise.resolve(journey);
     } catch (e) {
       this.error(e, this.update.name, session, account.email);
       err = e;
       await queryRunner.rollbackTransaction();
-    }
-    finally {
+    } finally {
       await queryRunner.release();
-      if (err)
-        throw err;
+      if (err) throw err;
     }
   }
 }
