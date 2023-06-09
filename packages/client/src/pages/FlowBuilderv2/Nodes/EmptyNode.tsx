@@ -41,7 +41,7 @@ export const EmptyNode: FC<NodeProps<NodeData>> = ({
   return (
     <div
       className={`w-[260px] h-[80px] rounded-[8px] bg-[#F3F4F6] border-[2px] border-dashed border-[#9CA3AF] flex justify-center items-center ${
-        isDraggedOver ? "!border-[#6366F1] !bg-[#E0E7FF]" : ""
+        isDraggedOver || temporary ? "!border-[#6366F1] !bg-[#E0E7FF]" : ""
       }`}
       onDragOver={(e) => {
         e.preventDefault();
@@ -75,7 +75,7 @@ export const EmptyNode: FC<NodeProps<NodeData>> = ({
         isConnectable={isConnectable}
         className="!min-h-[1px] !h-[1px] !top-[1px] !opacity-0 !border-0 pointer-events-none cursor-default"
       />
-      {!isDraggedOver && (
+      {!isDraggedOver && !temporary && (
         <div>
           {isTargetForStart ? "Drag a component to start" : "Next step"}
         </div>

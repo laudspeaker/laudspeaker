@@ -17,7 +17,7 @@ const FlowBuilderDrawer = () => {
   };
 
   return (
-    <div className="min-w-[232px] w-[232px] border-[1px] border-[#E5E7EB] bg-white h-full">
+    <div className="min-w-[232px] w-[232px] border-col border-right-[1px] border-[#E5E7EB] bg-white h-full">
       <Scrollbars>
         <div className="px-[16px] py-[20px] flex flex-col gap-[20px]">
           {flowBuilderFixtures.map((group) => (
@@ -30,8 +30,10 @@ const FlowBuilderDrawer = () => {
               </div>
               {group.children.map((child) => (
                 <div
-                  className={`w-full h-[44px] px-[15px] py-[10px] flex gap-[10px] border-[1px] border-[#E5E7EB] select-none items-end cursor-grab ${
-                    child.disabled ? "grayscale cursor-not-allowed" : ""
+                  className={`w-full h-[44px] px-[15px] py-[10px] flex gap-[10px] border-[1px] border-[#E5E7EB]  rounded-[4px] select-none items-end cursor-grab ${
+                    child.disabled
+                      ? "grayscale cursor-not-allowed !text-[#9CA3AF] !bg-[#F3F4F6]"
+                      : ""
                   }`}
                   onDragStart={(e) => onDragStart(e, child.id)}
                   onDragEnd={onDragEnd}
