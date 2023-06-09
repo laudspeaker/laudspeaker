@@ -316,91 +316,75 @@ We've made some changes to our styling and our navigation. We did this to speed 
     <div className="min-h-screen w-full fixed top-0 left-0">
       <div className="relative w-full">
         <div
-          className="w-full h-[60px] flex items-center bg-[#F9FAFB] text-[#4B5563] text-[10px]"
+          className="w-full h-[60px] px-[20px] py-[19px] flex  justify-between items-center bg-[#F9FAFB] font-inter font-normal text-[14px] leading-[22px] text-[#111827]"
           id="modalHeader"
         >
-          <button
-            className={`w-[60px] h-[35px] flex justify-center items-center hover:text-[#6366F1]`}
-            onClick={() => navigate("/templates")}
-          >
-            <div className={`w-fit pb-[5px]`}>
-              <div className="flex flex-col justify-center items-center">
-                <svg
-                  className="rotate-180"
-                  viewBox="989 17 20 16"
-                  xmlns="http://www.w3.org/2000/svg"
-                  width={20}
-                  height={20}
-                >
-                  <path
-                    d="M1007.051 33h-16.41c-.906 0-1.641-.716-1.641-1.6V18.6c0-.884.735-1.6 1.641-1.6h16.41c.907 0 1.641.716 1.641 1.6v12.8c0 .884-.734 1.6-1.64 1.6zm-8.387-8.33l-4.081-2.796a.43.43 0 0 0-.434-.031.409.409 0 0 0-.23.359v5.591a.41.41 0 0 0 .23.36.43.43 0 0 0 .434-.032l4.08-2.796a.396.396 0 0 0 .177-.328.396.396 0 0 0-.176-.327zm8.387-5.67c0-.22-.183-.4-.41-.4h-3.282c-.227 0-.41.18-.41.4v12c0 .22.183.4.41.4h3.282c.227 0 .41-.18.41-.4V19z"
-                    fill="currentColor"
-                    fillRule="evenodd"
-                  ></path>
-                </svg>
-                <div>BACK</div>
-              </div>
-            </div>
-          </button>
-          <button
-            className={`w-[60px] h-[35px] flex justify-center items-center hover:text-[#6366F1] ${
-              isPreview ? "" : "text-[#4338CA]"
-            }`}
-            onClick={() => setIsPreview(false)}
-          >
+          {isPreview ? (
             <div
-              className={`w-fit pb-[5px] ${
-                isPreview ? "" : "border-[#4338CA] border-b-[1px]"
-              }`}
+              className="bg-[#6366F1] text-white border-[1px] border-[#6366F1] px-[15px] py-[4px] rounded-[4px] font-roboto select-none cursor-pointer"
+              onClick={() => setIsPreview(false)}
             >
-              <div>
-                <svg
-                  viewBox="0 0 48 38"
-                  xmlns="http://www.w3.org/2000/svg"
-                  width={20}
-                  height={20}
+              Back to edit
+            </div>
+          ) : (
+            <>
+              <div className="flex gap-[40px]">
+                <div
+                  className="flex gap-[5px] items-center select-none cursor-pointer"
+                  onClick={() => navigate("/templates")}
                 >
-                  <g fill="currentColor" fillRule="evenodd">
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 18 18"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
                     <path
-                      d="M44 38H4a4 4 0 0 1-4-4V4a4 4 0 0 1 4-4h40a4 4 0 0 1 4 4v30a4 4 0 0 1-4 4zm-2.5-3c1.933 0 3.5-1.508 3.5-3.368V6.368C45 4.508 43.433 3 41.5 3h-35C4.567 3 3 4.508 3 6.368v25.264C3 33.492 4.567 35 6.5 35h35z"
-                      fillRule="nonzero"
-                    ></path>
-                    <path d="M12.017 30.474l1.102-3.673a4.361 4.361 0 0 1 1.093-1.83l14-14.002a.545.545 0 0 1 .772 0l3.045 3.046a.545.545 0 0 1 0 .77l-14 14.002c-.51.51-1.14.887-1.833 1.095l-3.67 1.1a.41.41 0 0 1-.509-.508zM34.024 7.477l1.499 1.5a1.63 1.63 0 0 1 0 2.304l-1.827 1.826a.543.543 0 0 1-.769 0l-3.035-3.035a.543.543 0 0 1 0-.768l1.827-1.827a1.63 1.63 0 0 1 2.305 0z"></path>
-                  </g>
-                </svg>
-                <div>EDIT</div>
+                      d="M11.8125 14.625L6.1875 9L11.8125 3.375"
+                      stroke="black"
+                      strokeWidth="1.125"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                  <div>Back</div>
+                </div>
+
+                <div
+                  className="border-[1px] border-[#E5E7EB] py-[4px] px-[10px] flex items-center gap-[5px] select-none cursor-pointer"
+                  onClick={() => setIsPreview(true)}
+                >
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 18 18"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M1.5271 9.2415C1.47534 9.08594 1.47534 8.91781 1.5271 8.76225C2.56735 5.6325 5.5201 3.375 9.0001 3.375C12.4786 3.375 15.4298 5.63025 16.4723 8.7585C16.5248 8.91375 16.5248 9.08175 16.4723 9.23775C15.4328 12.3675 12.4801 14.625 9.0001 14.625C5.5216 14.625 2.5696 12.3697 1.5271 9.2415Z"
+                      stroke="#4B5563"
+                      stroke-width="1.125"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                    <path
+                      d="M11.25 9C11.25 9.59674 11.0129 10.169 10.591 10.591C10.169 11.0129 9.59674 11.25 9 11.25C8.40326 11.25 7.83097 11.0129 7.40901 10.591C6.98705 10.169 6.75 9.59674 6.75 9C6.75 8.40326 6.98705 7.83097 7.40901 7.40901C7.83097 6.98705 8.40326 6.75 9 6.75C9.59674 6.75 10.169 6.98705 10.591 7.40901C11.0129 7.83097 11.25 8.40326 11.25 9Z"
+                      stroke="#4B5563"
+                      stroke-width="1.125"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                  <div className="font-roboto">Preview</div>
+                </div>
               </div>
-            </div>
-          </button>
-          <button
-            className={`w-[60px] h-[35px] flex justify-center items-center hover:text-[#6366F1] ${
-              isPreview ? "text-[#4338CA]" : ""
-            }`}
-            onClick={() => setIsPreview(true)}
-          >
-            <div
-              className={`w-fit flex justify-center items-center flex-col pb-[5px] ${
-                isPreview ? "border-[#4338CA] border-b-[1px]" : ""
-              }`}
-            >
-              <svg
-                viewBox="0 0 48 38"
-                xmlns="http://www.w3.org/2000/svg"
-                width={20}
-                height={20}
-              >
-                <g fill="currentColor" fillRule="evenodd">
-                  <path
-                    d="M44 38H4a4 4 0 0 1-4-4V4a4 4 0 0 1 4-4h40a4 4 0 0 1 4 4v30a4 4 0 0 1-4 4zm-2.5-3c1.933 0 3.5-1.508 3.5-3.368V6.368C45 4.508 43.433 3 41.5 3h-35C4.567 3 3 4.508 3 6.368v25.264C3 33.492 4.567 35 6.5 35h35z"
-                    fillRule="nonzero"
-                  ></path>
-                  <path d="M16.375 10.1l17.1 8.55a.95.95 0 0 1 0 1.7l-17.1 8.55A.95.95 0 0 1 15 28.05v-17.1a.95.95 0 0 1 1.375-.85z"></path>
-                </g>
-              </svg>
-              <div>PREVIEW</div>
-            </div>
-          </button>
-          <div className="ml-auto mr-[10px]">Status: {saveState}</div>
+              <div className="ml-auto mr-[10px] text-[#4B5563]">
+                Status: {saveState}
+              </div>
+            </>
+          )}
         </div>
         <div className="relative h-[calc(100vh-60px)]">
           {isPreview ? (
