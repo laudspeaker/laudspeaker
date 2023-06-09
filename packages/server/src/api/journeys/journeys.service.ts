@@ -35,8 +35,19 @@ import { Step } from '../steps/entities/step.entity';
 import { Graph, alg } from '@dagrejs/graphlib';
 import { UpdateJourneyLayoutDto } from './dto/update-journey-layout.dto';
 import { v4 as uuid } from 'uuid';
-import { EdgeType, NodeType } from './types/visual-layout.interface';
-import { StepType } from '../steps/types/step.interface';
+import { BranchType, EdgeType, NodeType, TimeType } from './types/visual-layout.interface';
+import { AllStepTypeMetadata, AnalyticsEvent, StartStepMetadata, StepType } from '../steps/types/step.interface';
+import { MessageStepMetadata } from '../steps/types/step.interface';
+import { WaitUntilStepMetadata } from '../steps/types/step.interface';
+import { LoopStepMetadata } from '../steps/types/step.interface';
+import { ExitStepMetadata } from '../steps/types/step.interface';
+import { TimeDelayStepMetadata } from '../steps/types/step.interface';
+import { TimeWindow } from '../steps/types/step.interface';
+import { TimeWindowStepMetadata } from '../steps/types/step.interface';
+import { CustomerAttribute } from '../steps/types/step.interface';
+import { MultiBranchMetadata } from '../steps/types/step.interface';
+import { template } from 'lodash';
+import { Temporal } from '@js-temporal/polyfill';
 
 export enum JourneyStatus {
   ACTIVE = 'Active',
@@ -44,6 +55,10 @@ export enum JourneyStatus {
   STOPPED = 'Stopped',
   DELETED = 'Deleted',
   EDITABLE = 'Editable',
+}
+
+function isObjKey<T extends object>(key: PropertyKey, obj: T): key is keyof T {
+  return key in obj;
 }
 
 @Injectable()
@@ -69,7 +84,7 @@ export class JourneysService {
     @Inject(forwardRef(() => CustomersService))
     private customersService: CustomersService,
     @InjectConnection() private readonly connection: mongoose.Connection
-  ) {}
+  ) { }
 
   log(message, method, session, user = 'ANONYMOUS') {
     this.logger.log(
@@ -406,8 +421,8 @@ export class JourneysService {
               ...(key === 'isActive'
                 ? { isStopped: false, isPaused: false }
                 : key === 'isPaused'
-                ? { isStopped: false }
-                : {}),
+                  ? { isStopped: false }
+                  : {}),
             });
         }
       } else {
@@ -514,7 +529,7 @@ export class JourneysService {
     const openedData = (await openedResponse.json<any>())?.data;
     const opened =
       +openedData?.[0]?.[
-        'uniqExact(tuple(audienceId, customerId, templateId, messageId, event, eventProvider))'
+      'uniqExact(tuple(audienceId, customerId, templateId, messageId, event, eventProvider))'
       ];
 
     const openedPercentage = (opened / sent) * 100;
@@ -526,7 +541,7 @@ export class JourneysService {
     const clickedData = (await clickedResponse.json<any>())?.data;
     const clicked =
       +clickedData?.[0]?.[
-        'uniqExact(tuple(audienceId, customerId, templateId, messageId, event, eventProvider))'
+      'uniqExact(tuple(audienceId, customerId, templateId, messageId, event, eventProvider))'
       ];
 
     const clickedPercentage = (clicked / sent) * 100;
@@ -666,16 +681,17 @@ export class JourneysService {
         journey.id,
         queryRunner
       );
+      this.debug(`${JSON.stringify({ steps: steps })}`, this.start.name, session, account.email)
       for (let i = 0; i < steps.length; i++) {
         graph.setNode(steps[i].id);
-        if (steps[i].metadata.branches) {
+        if (steps[i].metadata?.branches) {
           for (let j = 0; j < steps[i].metadata.branches.length; j++) {
             graph.setEdge(
               steps[i].id,
               steps[i].metadata.branches[j].destination
             );
           }
-        } else if (steps[i].metadata.destination) {
+        } else if (steps[i].metadata?.destination) {
           graph.setEdge(steps[i].id, steps[i].metadata.destination);
         }
       }
@@ -846,12 +862,15 @@ export class JourneysService {
     updateJourneyDto: UpdateJourneyLayoutDto,
     session: string
   ): Promise<Journey> {
+    const queryRunner = this.dataSource.createQueryRunner();
+    queryRunner.startTransaction();
+    let err;
     try {
-      const journey = await this.journeysRepository.findOne({
+      let journey = await queryRunner.manager.findOne(Journey, {
         where: {
           id: updateJourneyDto.id,
         },
-      });
+      })
 
       if (!journey) throw new NotFoundException('Journey not found');
       if (journey.isActive || journey.isDeleted || journey.isPaused)
@@ -859,16 +878,105 @@ export class JourneysService {
 
       const { nodes, edges } = updateJourneyDto;
 
-      return await this.journeysRepository.save({
+      for (let i = 0; i < nodes.length; i++) {
+        let step = await queryRunner.manager.findOne(Step, {
+          where: {
+            id: nodes[i].data.stepId
+          }
+        });
+        let relevantEdges = edges.filter(edge => { return edge.source === nodes[i].id })
+        let metadata;
+        switch (nodes[i].type) {
+          case NodeType.START:
+            if (relevantEdges.length > 1) throw new Error("Cannot have more than one branch for Start Step")
+            metadata = new StartStepMetadata();
+            metadata.destination = nodes.filter(node => { return node.id === relevantEdges[0].target })[0].data.stepId
+            break;
+          case NodeType.EMPTY:
+            break
+          case NodeType.MESSAGE:
+            if (relevantEdges.length > 1) throw new Error("Cannot have more than one branch for Message Step")
+            metadata = new MessageStepMetadata();
+            metadata.destination = nodes.filter(node => { return node.id === relevantEdges[0].target })[0].data.stepId
+            metadata.channel = nodes[i].data['template']['type']
+            metadata.template = nodes[i].data['template']['selected']['id'];
+            break
+          case NodeType.WAIT_UNTIL:
+            // metadata = new WaitUntilStepMetadata();
+            // let timeBranch = nodes[i].data['branches'].filter((branch) => { branch.type === BranchType.MAX_TIME })[0]
+            // if (timeBranch.timeType === TimeType.TIME_DELAY) {
+            //   metadata.timeBranch = new TimeDelayStepMetadata();
+            //   metadata.timeBranch.delay = new Temporal.Duration(timeBranch.delay.years, timeBranch['delay']['months'], timeBranch['delay']['weeks'], timeBranch['delay']['days'], timeBranch['delay']['hours'], timeBranch['delay']['minutes'])
+            // } else if (timeBranch.timeType === TimeType.TIME_WINDOW) {
+            //   metadata.timeBranch = new TimeWindowStepMetadata();
+            //   metadata.timeBranch.window = new TimeWindow()
+            //   metadata.timeBranch.window.from = Temporal.Instant.from(new Date(timeBranch['from']).toISOString())
+            //   metadata.timeBranch.window.to = Temporal.Instant.from(new Date(timeBranch['to']).toISOString())
+            // }
+            // metadata.branches = [];
+            // for (let i = 0; i < relevantEdges.length; i++) {
+            //   if (relevantEdges[i].data['branch'].type === BranchType.MAX_TIME) metadata.timeBranch.destination = relevantEdges[i].target;
+            //   else if (relevantEdges[i].data['branch'].type === BranchType.EVENT) {
+            //     const branch = new AnalyticsEvent();
+            //     branch.conditions = 
+            //     branch.provider
+            //     branch.providerParams
+            //     branch.destination
+            //     metadata.branches.push(branch);
+            //   }
+            // }
+            break;
+          case NodeType.JUMP_TO:
+            if (relevantEdges.length > 1) throw new Error("Cannot have more than one branch for Jump To Step")
+            metadata = new LoopStepMetadata();
+            metadata.destination = nodes.filter(node => { return node.id === relevantEdges[0].target })[0].data.stepId
+            break;
+          case NodeType.EXIT:
+            if (relevantEdges.length > 0) throw new Error("Cannot have any branches for Exit Step")
+            metadata = new ExitStepMetadata();
+            break;
+          case NodeType.TIME_DELAY:
+            if (relevantEdges.length > 1) throw new Error("Cannot have more than one branch for Time Delay Step")
+            metadata = new TimeDelayStepMetadata();
+            metadata.destination = nodes.filter(node => { return node.id === relevantEdges[0].target })[0].data.stepId
+            metadata.delay = new Temporal.Duration(nodes[i].data['delay']['years'], nodes[i].data['delay']['months'], nodes[i].data['delay']['weeks'], nodes[i].data['delay']['days'], nodes[i].data['delay']['hours'], nodes[i].data['delay']['minutes'])
+            break;
+          case NodeType.TIME_WINDOW:
+            if (relevantEdges.length > 1) throw new Error("Cannot have more than one branch for Time Window Step")
+            metadata = new TimeWindowStepMetadata();
+            metadata.destination = nodes.filter(node => { return node.id === relevantEdges[0].target })[0].data.stepId
+            metadata.window = new TimeWindow()
+            metadata.window.from = Temporal.Instant.from(new Date(nodes[i].data['from']).toISOString())
+            metadata.window.to = Temporal.Instant.from(new Date(nodes[i].data['to']).toISOString())
+            break;
+          case NodeType.USER_ATTRIBUTE:
+            metadata = new MultiBranchMetadata();
+            break;
+        }
+        await queryRunner.manager.save(Step, {
+          ...step,
+          metadata
+        })
+      }
+
+      journey = await queryRunner.manager.save(Journey, {
         ...journey,
         visualLayout: {
           nodes,
           edges,
         },
       });
+      await queryRunner.commitTransaction();
+      return Promise.resolve(journey)
     } catch (e) {
       this.error(e, this.update.name, session, account.email);
-      throw e;
+      err = e;
+      await queryRunner.rollbackTransaction();
+    }
+    finally {
+      await queryRunner.release();
+      if (err)
+        throw err;
     }
   }
 }

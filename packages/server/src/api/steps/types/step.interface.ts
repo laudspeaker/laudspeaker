@@ -21,8 +21,8 @@ export enum StepType {
 }
 
 export class TimeWindow {
-  from: Date;
-  to: Date;
+  from: Temporal.Instant;
+  to: Temporal.Instant;
 }
 
 export enum EventConditionElementsFilter {
@@ -64,6 +64,16 @@ export enum PosthogProviderParams {
   SUBMIT = 'Submit',
   PAGEVIEW = 'Pageview',
   PAGELEAVE = 'Pageleave',
+}
+
+export enum Channel {
+  EMAIL = 'email',
+  SLACK = 'slack',
+  SMS = 'sms',
+  FIREBASE = 'firebase',
+  PUSH = 'push',
+  WEBHOOK = 'webhook',
+  MODAL = 'modal',
 }
 
 /*
@@ -188,8 +198,7 @@ export class LoopStepMetadata extends SingleBranchMetadata {}
  * template ID.
  */
 export class MessageStepMetadata extends SingleBranchMetadata {
-  /** TODO: Convert to Enum */
-  channel: string;
+  channel: Channel;
   /** Template ID (UUID) */
   template: string;
 }
@@ -207,7 +216,7 @@ export class MultiBranchMetadata extends StepTypeMetadata {
 }
 
 export class WaitUntilStepMetadata extends MultiBranchMetadata {
-  timeBranch: TimeWindow | Temporal.Duration;
+  timeBranch: TimeWindowStepMetadata | TimeDelayStepMetadata;
 }
 
 export type AllStepTypeMetadata =
