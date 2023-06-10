@@ -94,7 +94,7 @@ export class JourneysService {
     @Inject(forwardRef(() => CustomersService))
     private customersService: CustomersService,
     @InjectConnection() private readonly connection: mongoose.Connection
-  ) {}
+  ) { }
 
   log(message, method, session, user = 'ANONYMOUS') {
     this.logger.log(
@@ -431,8 +431,8 @@ export class JourneysService {
               ...(key === 'isActive'
                 ? { isStopped: false, isPaused: false }
                 : key === 'isPaused'
-                ? { isStopped: false }
-                : {}),
+                  ? { isStopped: false }
+                  : {}),
             });
         }
       } else {
@@ -543,7 +543,7 @@ export class JourneysService {
     const openedData = (await openedResponse.json<any>())?.data;
     const opened =
       +openedData?.[0]?.[
-        'uniqExact(tuple(audienceId, customerId, templateId, messageId, event, eventProvider))'
+      'uniqExact(tuple(audienceId, customerId, templateId, messageId, event, eventProvider))'
       ];
 
     const openedPercentage = (opened / sent) * 100;
@@ -555,7 +555,7 @@ export class JourneysService {
     const clickedData = (await clickedResponse.json<any>())?.data;
     const clicked =
       +clickedData?.[0]?.[
-        'uniqExact(tuple(audienceId, customerId, templateId, messageId, event, eventProvider))'
+      'uniqExact(tuple(audienceId, customerId, templateId, messageId, event, eventProvider))'
       ];
 
     const clickedPercentage = (clicked / sent) * 100;
@@ -896,7 +896,6 @@ export class JourneysService {
         throw new Error('Journey is no longer editable.');
 
       const { nodes, edges } = updateJourneyDto;
-
       for (let i = 0; i < nodes.length; i++) {
         let step = await queryRunner.manager.findOne(Step, {
           where: {
@@ -930,7 +929,8 @@ export class JourneysService {
               return node.id === relevantEdges[0].target;
             })[0].data.stepId;
             metadata.channel = nodes[i].data['template']['type'];
-            metadata.template = nodes[i].data['template']['selected']['id'];
+            if (nodes[i].data['template']['selected'])
+              metadata.template = nodes[i].data['template']['selected']['id'];
             break;
           case NodeType.WAIT_UNTIL:
             // metadata = new WaitUntilStepMetadata();
@@ -1027,7 +1027,7 @@ export class JourneysService {
       await queryRunner.commitTransaction();
       return Promise.resolve(journey);
     } catch (e) {
-      this.error(e, this.update.name, session, account.email);
+      this.error(e, this.updateLayout.name, session, account.email);
       err = e;
       await queryRunner.rollbackTransaction();
     } finally {

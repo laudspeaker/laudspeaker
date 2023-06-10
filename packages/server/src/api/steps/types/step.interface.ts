@@ -36,17 +36,17 @@ export enum FilterByOption {
 }
 
 export class AnalyticsEventConditions {
-  value: any;
+  value: any; // PropertyStatement.value
   attribute?: string;
   condition?: string; // exists,contains,isgreaterthan,etc
-  key?: string;
-  type?: string;
-  comparisonType?: string;
-  relationWithNext?: 'and' | 'or'; //todo: add grouping for conditions
+  key?: string; //PropertyStatement.key
+  type?: string; //PropertyStatement.valueType
+  comparisonType?: string; // PropertyStatement.comparisonType
+  relationWithNext?: 'and' | 'or'; // Condition.relationToNext
   isArray?: boolean;
-  filterBy?: FilterByOption;
-  elementOrder?: number;
-  filter?: EventConditionElementsFilter;
+  filterBy?: FilterByOption; //StatementType
+  elementOrder?: number; //ElementStatement.order
+  filter?: EventConditionElementsFilter; //ElementKey
 }
 
 export type AnalyticsProviderParams =
@@ -107,8 +107,8 @@ export class MessageEvent extends Event {}
  * or Amplitude.
  */
 export class AnalyticsEvent extends Event {
-  provider: AnalyticsProviderTypes;
-  providerParams: AnalyticsProviderParams;
+  provider: AnalyticsProviderTypes; // client/src/types/Workflow.ts: ProviderType
+  providerParams: AnalyticsProviderParams; //Condition.name
   conditions: AnalyticsEventConditions[];
 }
 
