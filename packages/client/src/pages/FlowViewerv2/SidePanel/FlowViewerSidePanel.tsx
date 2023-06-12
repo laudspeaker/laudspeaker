@@ -95,7 +95,7 @@ const FlowViewerSidePanel: FC<FlowViewerSidePanelProps> = ({ className }) => {
       leaveFrom="right-0"
     >
       <div>
-        <div className="p-[20px] flex flex-col gap-[10px] border-b-[1px] border-[#E5E7EB]">
+        <div className="px-[20px] pt-[20px] mb-[10px] flex flex-col gap-[10px]">
           <div className="font-inter font-semibold text-[20px] leading-[28px]">
             {selectedNode?.type
               ? selectedNode.data.type === NodeType.MESSAGE &&
@@ -108,9 +108,8 @@ const FlowViewerSidePanel: FC<FlowViewerSidePanelProps> = ({ className }) => {
           <div className="font-inter font-normal text-[14px] leading-[22px] text-[#111827]">
             Description Description Description Des
           </div>
-
-          {nodeTypeToComponentMap[nodeData.type || ""]}
         </div>
+        <div>{nodeTypeToComponentMap[nodeData.type || ""]}</div>
       </div>
     </Transition>
   );

@@ -96,7 +96,7 @@ export class CronService {
     @Inject(ModalsService) private modalsService: ModalsService,
     @Inject(StepsService) private stepsService: StepsService,
     @InjectQueue('transition') private readonly transitionQueue: Queue
-  ) { }
+  ) {}
 
   log(message, method, session, user = 'ANONYMOUS') {
     this.logger.log(
@@ -230,7 +230,8 @@ export class CronService {
       }
 
       this.logger.log(
-        `Cron customer keys job finished, checked ${documentsCount} records, found ${Object.keys(keys).length
+        `Cron customer keys job finished, checked ${documentsCount} records, found ${
+          Object.keys(keys).length
         } keys`
       );
     } catch (e) {
@@ -328,7 +329,8 @@ export class CronService {
       }
 
       this.logger.log(
-        `Cron event keys job finished, checked ${documentsCount} records, found ${Object.keys(keys).length
+        `Cron event keys job finished, checked ${documentsCount} records, found ${
+          Object.keys(keys).length
         } keys`
       );
     } catch (e) {
@@ -383,19 +385,37 @@ export class CronService {
     await queryRunner.connect();
     await queryRunner.startTransaction();
     try {
-      let steps = await this.stepsService.transactionalFindAllByType(null, StepType.TIME_DELAY, session, queryRunner);
-      steps.push(...(await this.stepsService.transactionalFindAllByType(null, StepType.TIME_WINDOW, session, queryRunner)));
-      steps.push(...(await this.stepsService.transactionalFindAllByType(null, StepType.WAIT_UNTIL_BRANCH, session, queryRunner)));
+      let steps = await this.stepsService.transactionalFindAllByType(
+        null,
+        StepType.TIME_DELAY,
+        session,
+        queryRunner
+      );
+      steps.push(
+        ...(await this.stepsService.transactionalFindAllByType(
+          null,
+          StepType.TIME_WINDOW,
+          session,
+          queryRunner
+        ))
+      );
+      steps.push(
+        ...(await this.stepsService.transactionalFindAllByType(
+          null,
+          StepType.WAIT_UNTIL_BRANCH,
+          session,
+          queryRunner
+        ))
+      );
       for (let i = 0; i < steps.length; i++) {
-        this.transitionQueue.add('', { stepID: steps[i].id, session: session })
+        this.transitionQueue.add('', { stepID: steps[i].id, session: session });
       }
       await queryRunner.commitTransaction();
     } catch (e) {
       err = e;
       this.error(e, this.handleTimeBasedSteps.name, session);
       await queryRunner.rollbackTransaction();
-    }
-    finally {
+    } finally {
       await queryRunner.release();
       if (err) throw err;
     }

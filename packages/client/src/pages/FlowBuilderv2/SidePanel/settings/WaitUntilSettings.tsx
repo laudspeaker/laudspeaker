@@ -2,7 +2,6 @@ import {
   Branch,
   BranchType,
   Condition,
-  LogicRelation,
   TimeType,
   WaitUntilBranch,
   WaitUntilNodeData,
@@ -51,7 +50,6 @@ const WaitUntilSettings: FC<SidePanelComponentProps<WaitUntilNodeData>> = ({
     branchToChange.conditions.push({
       name: "",
       providerType: ProviderType.Custom,
-      relationToNext: LogicRelation.AND,
       statements: [],
     });
 

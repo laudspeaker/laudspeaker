@@ -21,7 +21,7 @@ import { randomUUID } from 'crypto';
 
 @Controller('steps')
 export class StepsController {
-  constructor(private readonly stepsService: StepsService) { }
+  constructor(private readonly stepsService: StepsService) {}
 
   @Get()
   @UseGuards(JwtAuthGuard)

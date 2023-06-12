@@ -27,6 +27,7 @@ export interface PropertyStatement {
   comparisonType: ComparisonType;
   valueType: StatementValueType;
   value: string;
+  relationToNext: LogicRelation;
 }
 
 export enum ElementKey {
@@ -41,6 +42,7 @@ export interface ElementStatement {
   comparisonType: ComparisonType;
   valueType: StatementValueType;
   value: string;
+  relationToNext: LogicRelation;
 }
 
 export type Statement = PropertyStatement | ElementStatement;
@@ -49,7 +51,6 @@ export interface Condition {
   name: string;
   providerType: ProviderType;
   statements: Statement[];
-  relationToNext: LogicRelation;
 }
 
 export interface CommonBranch {
@@ -109,16 +110,18 @@ export interface AttributeBranch extends CommonBranch {
 
 export type Branch = EventBranch | MaxTimeBranch | AttributeBranch;
 
+export interface Stats {
+  sent?: number;
+  delivered?: number;
+  clickedPercentage?: number;
+  wssent?: number;
+  openedPercentage?: number;
+}
+
 export interface CommonNodeData {
   stepId?: string;
   temporary?: boolean;
-  stats?: {
-    sent: number;
-    delivered: number;
-    clickedPercentage: number;
-    wssent: number;
-    openedPercentage: number;
-  };
+  stats?: Stats;
 }
 
 export interface MessageNodeData extends CommonNodeData {

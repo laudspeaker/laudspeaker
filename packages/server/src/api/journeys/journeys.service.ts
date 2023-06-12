@@ -94,7 +94,7 @@ export class JourneysService {
     @Inject(forwardRef(() => CustomersService))
     private customersService: CustomersService,
     @InjectConnection() private readonly connection: mongoose.Connection
-  ) { }
+  ) {}
 
   log(message, method, session, user = 'ANONYMOUS') {
     this.logger.log(
@@ -431,8 +431,8 @@ export class JourneysService {
               ...(key === 'isActive'
                 ? { isStopped: false, isPaused: false }
                 : key === 'isPaused'
-                  ? { isStopped: false }
-                  : {}),
+                ? { isStopped: false }
+                : {}),
             });
         }
       } else {
@@ -894,7 +894,7 @@ export class JourneysService {
             //   else if (relevantEdges[i].data['branch'].type === BranchType.EVENT) {
             //     const branch = new AnalyticsEvent();
             //     branch.conditions = []
-            //     branch.provider = 
+            //     branch.provider =
             //     branch.providerParams
             //     branch.destination
             //     metadata.branches.push(branch);

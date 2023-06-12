@@ -1,7 +1,7 @@
 import { JourneyStatus } from "components/TableTemplate/TableTemplate";
 import { EdgeData } from "pages/FlowBuilderv2/Edges/EdgeData";
 import FlowEditor, { NodeType } from "pages/FlowBuilderv2/FlowEditor";
-import { NodeData } from "pages/FlowBuilderv2/Nodes/NodeData";
+import { NodeData, Stats } from "pages/FlowBuilderv2/Nodes/NodeData";
 import React, { ReactNode, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Edge, Node } from "reactflow";
@@ -151,7 +151,27 @@ const FlowViewerv2 = () => {
         data.nodes.length !== 0 &&
         data.nodes.some((node) => node.type === NodeType.START)
       ) {
-        dispatch(loadVisualLayout({ nodes: data.nodes, edges: data.edges }));
+        dispatch(
+          loadVisualLayout({
+            nodes: await Promise.all(
+              data.nodes.map(async (node) => {
+                if (!node.data.stepId || node.type !== NodeType.MESSAGE)
+                  return { ...node };
+
+                try {
+                  const { data: stats } = await ApiService.get<Stats>({
+                    url: "/steps/stats/" + node.data.stepId,
+                  });
+
+                  return { ...node, data: { ...node.data, stats } };
+                } catch (e) {
+                  return { ...node };
+                }
+              })
+            ),
+            edges: data.edges,
+          })
+        );
       }
 
       dispatch(setSegmentsSettings(data.segments));

@@ -1,9 +1,7 @@
 import {
-  Branch,
   BranchType,
   MaxTimeBranch,
   TimeType,
-  WaitUntilBranch,
 } from "pages/FlowBuilderv2/Nodes/NodeData";
 import React, { FC } from "react";
 import TimeDelayEditor from "./TimeDelayEditor";

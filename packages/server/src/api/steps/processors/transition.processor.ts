@@ -151,12 +151,12 @@ export class TransitionProcessor extends WorkerHost {
     session: string,
     queryRunner: QueryRunner,
     transactionSession: mongoose.mongo.ClientSession
-  ) { }
-  async handleAttributeBranch(job: Job<any, any, string>) { }
-  async handleExit(step: Step, account: Account, session: string) { }
-  async handleLoop(step: Step, account: Account, session: string) { }
-  async handleMessage(job: Job<any, any, string>) { }
-  async handleRandomCohortBranch(job: Job<any, any, string>) { }
+  ) {}
+  async handleAttributeBranch(job: Job<any, any, string>) {}
+  async handleExit(step: Step, account: Account, session: string) {}
+  async handleLoop(step: Step, account: Account, session: string) {}
+  async handleMessage(job: Job<any, any, string>) {}
+  async handleRandomCohortBranch(job: Job<any, any, string>) {}
 
   /**
    * Handle start step type; move all customers to next step and update
@@ -311,7 +311,7 @@ export class TransitionProcessor extends WorkerHost {
       });
   }
 
-  async handleWaitUntil(job: Job<any, any, string>) { }
+  async handleWaitUntil(job: Job<any, any, string>) {}
 
   @OnWorkerEvent('active')
   onActive(job: Job<any, any, any>, prev: string) {

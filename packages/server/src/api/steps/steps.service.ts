@@ -36,7 +36,7 @@ export class StepsService {
     @InjectRepository(Step)
     public stepsRepository: Repository<Step>,
     @InjectQueue('transition') private readonly transitionQueue: Queue
-  ) { }
+  ) {}
 
   log(message, method, session, user = 'ANONYMOUS') {
     this.logger.log(
@@ -203,12 +203,12 @@ export class StepsService {
   }
 
   /**
- * Find all steps of a certain type using db transaction(owner optional).
- * @param account
- * @param type
- * @param session
- * @returns
- */
+   * Find all steps of a certain type using db transaction(owner optional).
+   * @param account
+   * @param type
+   * @param session
+   * @returns
+   */
   async transactionalFindAllByType(
     account: Account,
     type: StepType,
@@ -357,8 +357,8 @@ export class StepsService {
 
   /**
    * Get sending statistics for a step.
-   * @param stepID 
-   * @returns 
+   * @param stepID
+   * @returns
    */
   async getStats(account: Account, session: string, stepId?: string) {
     if (!stepId) return {};
@@ -383,7 +383,7 @@ export class StepsService {
     const openedData = (await openedResponse.json<any>())?.data;
     const opened =
       +openedData?.[0]?.[
-      'uniqExact(tuple(stepId, customerId, templateId, messageId, event, eventProvider))'
+        'uniqExact(tuple(stepId, customerId, templateId, messageId, event, eventProvider))'
       ];
 
     const openedPercentage = (opened / sent) * 100;
@@ -395,7 +395,7 @@ export class StepsService {
     const clickedData = (await clickedResponse.json<any>())?.data;
     const clicked =
       +clickedData?.[0]?.[
-      'uniqExact(tuple(stepId, customerId, templateId, messageId, event, eventProvider))'
+        'uniqExact(tuple(stepId, customerId, templateId, messageId, event, eventProvider))'
       ];
 
     const clickedPercentage = (clicked / sent) * 100;

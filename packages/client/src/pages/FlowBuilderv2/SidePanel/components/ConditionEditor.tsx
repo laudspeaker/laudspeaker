@@ -1,6 +1,11 @@
 import FlowBuilderAutoComplete from "pages/FlowBuilderv2/Elements/FlowBuilderAutoComplete";
 import FlowBuilderButton from "pages/FlowBuilderv2/Elements/FlowBuilderButton";
-import { Condition, StatementType } from "pages/FlowBuilderv2/Nodes/NodeData";
+import {
+  Condition,
+  ElementKey,
+  LogicRelation,
+  StatementType,
+} from "pages/FlowBuilderv2/Nodes/NodeData";
 import React, { FC, useEffect, useState } from "react";
 import { useDebounce } from "react-use";
 import {
@@ -65,6 +70,33 @@ const ConditionEditor: FC<ConditionEditorProps> = ({
     return data;
   };
 
+  const handleAddStatement = (type: StatementType) => {
+    setCondition({
+      ...condition,
+      statements: [
+        ...condition.statements,
+        type === StatementType.PROPERTY
+          ? {
+              type,
+              key: "",
+              comparisonType: ComparisonType.EQUALS,
+              valueType: StatementValueType.NUMBER,
+              value: "",
+              relationToNext: LogicRelation.AND,
+            }
+          : {
+              type,
+              order: 0,
+              elementKey: ElementKey.TAG_NAME,
+              comparisonType: ComparisonType.EQUALS,
+              valueType: StatementValueType.NUMBER,
+              value: "",
+              relationToNext: LogicRelation.AND,
+            },
+      ],
+    });
+  };
+
   return (
     <div className="flex flex-col gap-[10px] p-[10px] bg-[#F3F4F6]">
       <div className="font-inter font-semibold text-[14px] leading-[22px]">
@@ -84,23 +116,25 @@ const ConditionEditor: FC<ConditionEditorProps> = ({
           <option value={ProviderType.Posthog}>Posthog</option>
           <option value={ProviderType.Custom}>Custom</option>
         </select>
-        {condition.providerType === ProviderType.Posthog && (
-          <FlowBuilderAutoComplete
-            value={condition.name}
-            includedItems={{
-              type: "setter",
-              getItems: loadPossiblePosthogEventTypes,
-            }}
-            retrieveLabel={(item) => item}
-            onQueryChange={(query) => {
-              setCondition({ ...condition, name: query });
-            }}
-            onSelect={(value) => {
-              setCondition({ ...condition, name: value });
-            }}
-            placeholder="Event name"
-          />
-        )}
+        <FlowBuilderAutoComplete
+          value={condition.name}
+          includedItems={
+            condition.providerType === ProviderType.Posthog
+              ? {
+                  type: "setter",
+                  getItems: loadPossiblePosthogEventTypes,
+                }
+              : { type: "getter", items: [] }
+          }
+          retrieveLabel={(item) => item}
+          onQueryChange={(query) => {
+            setCondition({ ...condition, name: query });
+          }}
+          onSelect={(value) => {
+            setCondition({ ...condition, name: value });
+          }}
+          placeholder="Event name"
+        />
       </div>
       {condition.statements.map((statement, i) => (
         <React.Fragment key={i}>
@@ -147,7 +181,53 @@ const ConditionEditor: FC<ConditionEditorProps> = ({
               />
             </div>
           ) : (
-            <></>
+            <>
+              <div className="flex items-center justify-between">
+                <div className="font-inter font-normal text-[14px] leading-[22px]">
+                  Order
+                </div>
+                <div>
+                  <input
+                    type="number"
+                    value={statement.order}
+                    onChange={(e) => {
+                      const order = +e.target.value;
+
+                      if (isNaN(order) || order < 0) return;
+
+                      const newStatements = [...condition.statements];
+
+                      newStatements[i] = {
+                        ...statement,
+                        order,
+                      };
+
+                      setCondition({ ...condition, statements: newStatements });
+                    }}
+                    className="w-full px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB] placeholder:font-inter placeholder:font-normal placeholder:text-[14px] placeholder:leading-[22px] placeholder:text-[#9CA3AF]"
+                  />
+                </div>
+              </div>
+              <div>
+                <select
+                  value={statement.elementKey}
+                  onChange={(e) => {
+                    const newStatements = [...condition.statements];
+
+                    newStatements[i] = {
+                      ...statement,
+                      elementKey: e.target.value as ElementKey,
+                    };
+
+                    setCondition({ ...condition, statements: newStatements });
+                  }}
+                  className="w-full px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB]"
+                >
+                  <option value={ElementKey.TAG_NAME}>Tag Name</option>
+                  <option value={ElementKey.TEXT}>Text</option>
+                </select>
+              </div>
+            </>
           )}
 
           <div className="flex gap-[10px]">
@@ -169,7 +249,7 @@ const ConditionEditor: FC<ConditionEditorProps> = ({
               )}
             </select>
             <select
-              value={statement.type}
+              value={statement.valueType}
               onChange={(e) => {
                 condition.statements[i].valueType = e.target
                   .value as StatementValueType;
@@ -196,29 +276,41 @@ const ConditionEditor: FC<ConditionEditorProps> = ({
               className="w-full px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB] placeholder:font-inter placeholder:font-normal placeholder:text-[14px] placeholder:leading-[22px] placeholder:text-[#9CA3AF]"
             />
           </div>
+
+          {i !== condition.statements.length - 1 && (
+            <select
+              value={statement.relationToNext}
+              onChange={(e) => {
+                const newStatements = [...condition.statements];
+
+                newStatements[i] = {
+                  ...statement,
+                  relationToNext: e.target.value as LogicRelation,
+                };
+
+                setCondition({ ...condition, statements: newStatements });
+              }}
+              className="border-[1px] border-[#E5E7EB] max-w-[80px] px-[15px] py-[4px] rounded-[4px] font-roboto font-normal text-[14px] leading-[22px]"
+            >
+              <option value={LogicRelation.AND}>And</option>
+              <option value={LogicRelation.OR}>Or</option>
+            </select>
+          )}
         </React.Fragment>
       ))}
       <div className="flex justify-between items-center">
-        <div
-          className="cursor-pointer font-inter text-[14px] leading-[22px] underline"
-          onClick={() =>
-            setCondition({
-              ...condition,
-              statements: [
-                ...condition.statements,
-                {
-                  type: StatementType.PROPERTY,
-                  key: "",
-                  comparisonType: ComparisonType.EQUALS,
-                  valueType: StatementValueType.NUMBER,
-                  value: "",
-                },
-              ],
-            })
-          }
+        <select
+          value="default"
+          onChange={(e) => handleAddStatement(e.target.value as StatementType)}
+          className="w-[145px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB]"
         >
-          Add property
-        </div>
+          <option value="default" disabled>
+            Add condition
+          </option>
+          <option value={StatementType.PROPERTY}>Property</option>
+          <option value={StatementType.ELEMENT}>Element</option>
+        </select>
+
         <div className="flex gap-[10px]">
           <FlowBuilderButton
             onClick={onCancel}
