@@ -212,6 +212,9 @@ const formatMongoConnectionString = (mongoConnectionString: string) => {
     BullModule.registerQueue({
       name: 'slack',
     }),
+    BullModule.registerQueue({
+      name: 'transition',
+    }),
     IntegrationsModule,
     WorkflowsModule,
     JobsModule,

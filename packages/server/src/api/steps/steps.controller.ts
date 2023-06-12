@@ -21,7 +21,7 @@ import { randomUUID } from 'crypto';
 
 @Controller('steps')
 export class StepsController {
-  constructor(private readonly stepsService: StepsService) {}
+  constructor(private readonly stepsService: StepsService) { }
 
   @Get()
   @UseGuards(JwtAuthGuard)
@@ -37,6 +37,14 @@ export class StepsController {
   async findOne(@Req() { user }: Request, @Param('id') id: string) {
     const session = randomUUID();
     return await this.stepsService.findOne(<Account>user, id, session);
+  }
+
+  @Get('stats/:id')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor)
+  async getStats(@Req() { user }: Request, @Param('id') id: string) {
+    const session = randomUUID();
+    return await this.stepsService.getStats(<Account>user, session, id);
   }
 
   @Post()

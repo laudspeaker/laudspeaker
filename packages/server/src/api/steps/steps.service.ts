@@ -12,9 +12,19 @@ import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { StepType } from './types/step.interface';
 import { Temporal } from '@js-temporal/polyfill';
+import { createClient } from '@clickhouse/client';
 
 @Injectable()
 export class StepsService {
+  private clickhouseClient = createClient({
+    host: process.env.CLICKHOUSE_HOST
+      ? process.env.CLICKHOUSE_HOST.includes('http')
+        ? process.env.CLICKHOUSE_HOST
+        : `http://${process.env.CLICKHOUSE_HOST}`
+      : 'http://localhost:8123',
+    username: process.env.CLICKHOUSE_USER ?? 'default',
+    password: process.env.CLICKHOUSE_PASSWORD ?? '',
+  });
   /**
    * Step service constructor; this class is the only class that should
    * be using the Steps repository (`Repository<Step>`) directly.
@@ -26,7 +36,7 @@ export class StepsService {
     @InjectRepository(Step)
     public stepsRepository: Repository<Step>,
     @InjectQueue('transition') private readonly transitionQueue: Queue
-  ) {}
+  ) { }
 
   log(message, method, session, user = 'ANONYMOUS') {
     this.logger.log(
@@ -193,6 +203,30 @@ export class StepsService {
   }
 
   /**
+ * Find all steps of a certain type using db transaction(owner optional).
+ * @param account
+ * @param type
+ * @param session
+ * @returns
+ */
+  async transactionalFindAllByType(
+    account: Account,
+    type: StepType,
+    session: string,
+    queryRunner: QueryRunner
+  ): Promise<Step[]> {
+    try {
+      return await queryRunner.manager.findBy(Step, {
+        owner: account ? { id: account.id } : undefined,
+        type: type,
+      });
+    } catch (e) {
+      this.error(e, this.findAllByType.name, session, account.id);
+      throw e;
+    }
+  }
+
+  /**
    * Find a step by its ID.
    * @param account
    * @param id
@@ -319,5 +353,68 @@ export class StepsService {
       this.error(e, this.delete.name, session, account.email);
       throw e;
     }
+  }
+
+  /**
+   * Get sending statistics for a step.
+   * @param stepID 
+   * @returns 
+   */
+  async getStats(account: Account, session: string, stepId?: string) {
+    if (!stepId) return {};
+    const sentResponse = await this.clickhouseClient.query({
+      query: `SELECT COUNT(*) FROM message_status WHERE event = 'sent' AND stepId = {stepId:UUID}`,
+      query_params: { stepId },
+    });
+    const sentData = (await sentResponse.json<any>())?.data;
+    const sent = +sentData?.[0]?.['count()'] || 0;
+
+    const deliveredResponse = await this.clickhouseClient.query({
+      query: `SELECT COUNT(*) FROM message_status WHERE event = 'delivered' AND stepId = {stepId:UUID}`,
+      query_params: { stepId },
+    });
+    const deliveredData = (await deliveredResponse.json<any>())?.data;
+    const delivered = +deliveredData?.[0]?.['count()'] || 0;
+
+    const openedResponse = await this.clickhouseClient.query({
+      query: `SELECT COUNT(DISTINCT(stepId, customerId, templateId, messageId, event, eventProvider)) FROM message_status WHERE event = 'opened' AND stepId = {stepId:UUID}`,
+      query_params: { stepId },
+    });
+    const openedData = (await openedResponse.json<any>())?.data;
+    const opened =
+      +openedData?.[0]?.[
+      'uniqExact(tuple(stepId, customerId, templateId, messageId, event, eventProvider))'
+      ];
+
+    const openedPercentage = (opened / sent) * 100;
+
+    const clickedResponse = await this.clickhouseClient.query({
+      query: `SELECT COUNT(DISTINCT(stepId, customerId, templateId, messageId, event, eventProvider)) FROM message_status WHERE event = 'clicked' AND stepId = {stepId:UUID}`,
+      query_params: { stepId },
+    });
+    const clickedData = (await clickedResponse.json<any>())?.data;
+    const clicked =
+      +clickedData?.[0]?.[
+      'uniqExact(tuple(stepId, customerId, templateId, messageId, event, eventProvider))'
+      ];
+
+    const clickedPercentage = (clicked / sent) * 100;
+
+    const whResponse = await this.clickhouseClient.query({
+      query: `SELECT COUNT(*) FROM message_status WHERE event = 'sent' AND stepId = {stepId:UUID} AND eventProvider = 'webhooks' `,
+      query_params: {
+        stepId,
+      },
+    });
+    const wsData = (await whResponse.json<any>())?.data;
+    const wssent = +wsData?.[0]?.['count()'] || 0;
+
+    return {
+      sent,
+      delivered,
+      openedPercentage,
+      clickedPercentage,
+      wssent,
+    };
   }
 }

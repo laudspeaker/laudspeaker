@@ -520,64 +520,6 @@ export class JourneysService {
     }
   }
 
-  private async getStats(audienceId?: string) {
-    if (!audienceId) return {};
-    const sentResponse = await this.clickhouseClient.query({
-      query: `SELECT COUNT(*) FROM message_status WHERE event = 'sent' AND audienceId = {audienceId:UUID}`,
-      query_params: { audienceId },
-    });
-    const sentData = (await sentResponse.json<any>())?.data;
-    const sent = +sentData?.[0]?.['count()'] || 0;
-
-    const deliveredResponse = await this.clickhouseClient.query({
-      query: `SELECT COUNT(*) FROM message_status WHERE event = 'delivered' AND audienceId = {audienceId:UUID}`,
-      query_params: { audienceId },
-    });
-    const deliveredData = (await deliveredResponse.json<any>())?.data;
-    const delivered = +deliveredData?.[0]?.['count()'] || 0;
-
-    const openedResponse = await this.clickhouseClient.query({
-      query: `SELECT COUNT(DISTINCT(audienceId, customerId, templateId, messageId, event, eventProvider)) FROM message_status WHERE event = 'opened' AND audienceId = {audienceId:UUID}`,
-      query_params: { audienceId },
-    });
-    const openedData = (await openedResponse.json<any>())?.data;
-    const opened =
-      +openedData?.[0]?.[
-      'uniqExact(tuple(audienceId, customerId, templateId, messageId, event, eventProvider))'
-      ];
-
-    const openedPercentage = (opened / sent) * 100;
-
-    const clickedResponse = await this.clickhouseClient.query({
-      query: `SELECT COUNT(DISTINCT(audienceId, customerId, templateId, messageId, event, eventProvider)) FROM message_status WHERE event = 'clicked' AND audienceId = {audienceId:UUID}`,
-      query_params: { audienceId },
-    });
-    const clickedData = (await clickedResponse.json<any>())?.data;
-    const clicked =
-      +clickedData?.[0]?.[
-      'uniqExact(tuple(audienceId, customerId, templateId, messageId, event, eventProvider))'
-      ];
-
-    const clickedPercentage = (clicked / sent) * 100;
-
-    const whResponse = await this.clickhouseClient.query({
-      query: `SELECT COUNT(*) FROM message_status WHERE event = 'sent' AND audienceId = {audienceId:UUID} AND eventProvider = 'webhooks' `,
-      query_params: {
-        audienceId,
-      },
-    });
-    const wsData = (await whResponse.json<any>())?.data;
-    const wssent = +wsData?.[0]?.['count()'] || 0;
-
-    return {
-      sent,
-      delivered,
-      openedPercentage,
-      clickedPercentage,
-      wssent,
-    };
-  }
-
   /**
    * Mark a journey as deleted.
    * @param account
@@ -934,6 +876,8 @@ export class JourneysService {
             break;
           case NodeType.WAIT_UNTIL:
             // metadata = new WaitUntilStepMetadata();
+
+            // //Time Branch configuration
             // let timeBranch = nodes[i].data['branches'].filter((branch) => { branch.type === BranchType.MAX_TIME })[0]
             // if (timeBranch.timeType === TimeType.TIME_DELAY) {
             //   metadata.timeBranch = new TimeDelayStepMetadata();
@@ -949,8 +893,8 @@ export class JourneysService {
             //   if (relevantEdges[i].data['branch'].type === BranchType.MAX_TIME) metadata.timeBranch.destination = relevantEdges[i].target;
             //   else if (relevantEdges[i].data['branch'].type === BranchType.EVENT) {
             //     const branch = new AnalyticsEvent();
-            //     branch.conditions =
-            //     branch.provider
+            //     branch.conditions = []
+            //     branch.provider = 
             //     branch.providerParams
             //     branch.destination
             //     metadata.branches.push(branch);

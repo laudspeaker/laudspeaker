@@ -37,13 +37,10 @@ export enum FilterByOption {
 
 export class AnalyticsEventConditions {
   value: any; // PropertyStatement.value
-  attribute?: string;
-  condition?: string; // exists,contains,isgreaterthan,etc
   key?: string; //PropertyStatement.key
   type?: string; //PropertyStatement.valueType
   comparisonType?: string; // PropertyStatement.comparisonType
   relationWithNext?: 'and' | 'or'; // Condition.relationToNext
-  isArray?: boolean;
   filterBy?: FilterByOption; //StatementType
   elementOrder?: number; //ElementStatement.order
   filter?: EventConditionElementsFilter; //ElementKey
