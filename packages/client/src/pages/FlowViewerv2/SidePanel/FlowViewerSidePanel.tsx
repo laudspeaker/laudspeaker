@@ -94,7 +94,7 @@ const FlowViewerSidePanel: FC<FlowViewerSidePanelProps> = ({ className }) => {
       leaveTo="right-[-100%]"
       leaveFrom="right-0"
     >
-      <div>
+      <div className="overflow-auto h-screen">
         <div className="px-[20px] pt-[20px] mb-[10px] flex flex-col gap-[10px]">
           <div className="font-inter font-semibold text-[20px] leading-[28px]">
             {selectedNode?.type
@@ -109,7 +109,9 @@ const FlowViewerSidePanel: FC<FlowViewerSidePanelProps> = ({ className }) => {
             Description Description Description Des
           </div>
         </div>
-        <div>{nodeTypeToComponentMap[nodeData.type || ""]}</div>
+        <div className="px-5">
+          {nodeTypeToComponentMap[nodeData.type || ""]}
+        </div>
       </div>
     </Transition>
   );
