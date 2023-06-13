@@ -1522,4 +1522,48 @@ export class CustomersService {
       isArray: el.isArray,
     }));
   }
+
+  public async getCustomersFromStepStatsByEvent(
+    account: Account,
+    session: string,
+    take = 100,
+    skip = 0,
+    event?: string,
+    stepId?: string
+  ) {
+    if (take > 100) take = 100;
+
+    if (eventsMap[event] && stepId) {
+      const customersCountResponse = await this.clickhouseClient.query({
+        query: `SELECT COUNT(DISTINCT(customerId)) FROM message_status WHERE stepId = {stepId:UUID} AND event = {event:String}`,
+        query_params: { stepId, event: eventsMap[event] },
+      });
+      const customersCountResponseData = (
+        await customersCountResponse.json<{ data: { 'count()': string }[] }>()
+      )?.data;
+      const customersCount = +customersCountResponseData?.[0]?.['count()'] || 1;
+
+      const totalPages = Math.ceil(customersCount / take);
+
+      const response = await this.clickhouseClient.query({
+        query: `SELECT DISTINCT(customerId) FROM message_status WHERE stepId = {stepId:UUID} AND event = {event:String} ORDER BY createdAt LIMIT {take:Int32} OFFSET {skip:Int32}`,
+        query_params: { stepId, event: eventsMap[event], take, skip },
+      });
+      const data = (await response.json<{ data: { customerId: string }[] }>())
+        ?.data;
+      const customerIds = data?.map((item) => item.customerId) || [];
+
+      console.log(customerIds);
+
+      return {
+        totalPages,
+        data: await Promise.all(
+          customerIds.map(async (id) => ({
+            ...(await this.findById(account, id))?.toObject(),
+            id,
+          }))
+        ),
+      };
+    }
+  }
 }

@@ -90,7 +90,12 @@ export class TransitionProcessor extends WorkerHost {
   }
 
   async process(job: Job<any, any, string>): Promise<any> {
-    this.debug(`${JSON.stringify({ job })}`, this.process.name, randomUUID(), '')
+    this.debug(
+      `${JSON.stringify({ job })}`,
+      this.process.name,
+      randomUUID(),
+      ''
+    );
     let err: any;
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
@@ -108,9 +113,9 @@ export class TransitionProcessor extends WorkerHost {
         case StepType.LOOP:
           break;
         case StepType.MESSAGE:
-          break
+          break;
         case StepType.RANDOM_COHORT_BRANCH:
-          break
+          break;
         case StepType.START:
           await this.handleStart(
             job.data.step.id,
@@ -146,11 +151,7 @@ export class TransitionProcessor extends WorkerHost {
     } catch (err) {
       await transactionSession.abortTransaction();
       await queryRunner.rollbackTransaction();
-      this.error(
-        err,
-        this.process.name,
-        job.data.session
-      );
+      this.error(err, this.process.name, job.data.session);
       err = err;
     } finally {
       await transactionSession.endSession();
@@ -165,18 +166,17 @@ export class TransitionProcessor extends WorkerHost {
     session: string,
     queryRunner: QueryRunner,
     transactionSession: mongoose.mongo.ClientSession
-  ) { }
-  async handleAttributeBranch(job: Job<any, any, string>) { }
-  async handleExit(step: Step, account: Account, session: string) { }
-  async handleLoop(step: Step, account: Account, session: string) { }
-
+  ) {}
+  async handleAttributeBranch(job: Job<any, any, string>) {}
+  async handleExit(step: Step, account: Account, session: string) {}
+  async handleLoop(step: Step, account: Account, session: string) {}
 
   /**
    * Handle message step;
-   * @param stepID 
-   * @param session 
-   * @param queryRunner 
-   * @param transactionSession 
+   * @param stepID
+   * @param session
+   * @param queryRunner
+   * @param transactionSession
    */
   async handleMessage(
     stepID: string,
@@ -194,13 +194,10 @@ export class TransitionProcessor extends WorkerHost {
     });
 
     for (let i = 0; i < currentStep.customers.length; i++) {
-      try { }
-      catch (err) { }
+      try {
+      } catch (err) {}
 
       //send message here
-
-
-
 
       nextStep.customers.push(
         JSON.stringify({
@@ -212,8 +209,7 @@ export class TransitionProcessor extends WorkerHost {
     currentStep.customers = [];
   }
 
-
-  async handleRandomCohortBranch(job: Job<any, any, string>) { }
+  async handleRandomCohortBranch(job: Job<any, any, string>) {}
 
   /**
    * Handle start step type; move all customers to next step and update
@@ -234,12 +230,20 @@ export class TransitionProcessor extends WorkerHost {
       id: stepID,
       type: StepType.START,
     });
-    this.debug(`${JSON.stringify({ currentStep: currentStep })}`, this.handleStart.name, session)
+    this.debug(
+      `${JSON.stringify({ currentStep: currentStep })}`,
+      this.handleStart.name,
+      session
+    );
 
     const nextStep = await queryRunner.manager.findOneBy(Step, {
       id: currentStep.metadata.destination,
     });
-    this.debug(`${JSON.stringify({ nextStep: nextStep })}`, this.handleStart.name, session)
+    this.debug(
+      `${JSON.stringify({ nextStep: nextStep })}`,
+      this.handleStart.name,
+      session
+    );
 
     for (let i = 0; i < currentStep.customers.length; i++) {
       nextStep.customers.push(
@@ -251,11 +255,19 @@ export class TransitionProcessor extends WorkerHost {
     }
     currentStep.customers = [];
 
-    this.debug(`${JSON.stringify({ currentStep: currentStep, nextStep: nextStep })}`, this.handleStart.name, session)
+    this.debug(
+      `${JSON.stringify({ currentStep: currentStep, nextStep: nextStep })}`,
+      this.handleStart.name,
+      session
+    );
 
     await queryRunner.manager.save(currentStep);
     const newNext = await queryRunner.manager.save(nextStep);
-    this.debug(`${JSON.stringify({ newNext: newNext })}`, this.handleStart.name, session)
+    this.debug(
+      `${JSON.stringify({ newNext: newNext })}`,
+      this.handleStart.name,
+      session
+    );
 
     await this.transitionQueue.add(newNext.type, {
       step: newNext,
@@ -282,13 +294,21 @@ export class TransitionProcessor extends WorkerHost {
       type: StepType.TIME_DELAY,
     });
 
-    this.debug(`${JSON.stringify({ currentStep: currentStep })}`, this.handleTimeDelay.name, session)
+    this.debug(
+      `${JSON.stringify({ currentStep: currentStep })}`,
+      this.handleTimeDelay.name,
+      session
+    );
 
     const nextStep = await queryRunner.manager.findOneBy(Step, {
       id: currentStep.metadata.destination,
     });
 
-    this.debug(`${JSON.stringify({ nextStep: nextStep })}`, this.handleTimeDelay.name, session)
+    this.debug(
+      `${JSON.stringify({ nextStep: nextStep })}`,
+      this.handleTimeDelay.name,
+      session
+    );
 
     const forDeletion = [];
     for (let i = 0; i < currentStep.customers.length; i++) {
@@ -379,7 +399,7 @@ export class TransitionProcessor extends WorkerHost {
       });
   }
 
-  async handleWaitUntil(job: Job<any, any, string>) { }
+  async handleWaitUntil(job: Job<any, any, string>) {}
 
   // @OnWorkerEvent('active')
   // onActive(job: Job<any, any, any>, prev: string) {

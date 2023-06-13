@@ -5,3 +5,6 @@ export { JumpToNode } from "./JumpToNode";
 export { WaitUntilNode } from "./WaitUntilNode";
 export { TimeDelayNode } from "./TimeDelayNode";
 export { TimeWindowNode } from "./TimeWindowNode";
+export { UserAttributeNode } from "./UserAttributeNode";
+export { ExitNode } from "./ExitNode";
+export { InsertNode } from "./InsertNode";

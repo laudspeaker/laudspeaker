@@ -95,7 +95,7 @@ export class JourneysService {
     @Inject(forwardRef(() => CustomersService))
     private customersService: CustomersService,
     @InjectConnection() private readonly connection: mongoose.Connection
-  ) { }
+  ) {}
 
   log(message, method, session, user = 'ANONYMOUS') {
     this.logger.log(
@@ -432,8 +432,8 @@ export class JourneysService {
               ...(key === 'isActive'
                 ? { isStopped: false, isPaused: false }
                 : key === 'isPaused'
-                  ? { isStopped: false }
-                  : {}),
+                ? { isStopped: false }
+                : {}),
             });
         }
       } else {
@@ -678,7 +678,12 @@ export class JourneysService {
         .session(transactionSession)
         .exec();
 
-      this.debug(`adding to start ${JSON.stringify(unenrolledCustomers)}`, this.start.name, session, account.email)
+      this.debug(
+        `adding to start ${JSON.stringify(unenrolledCustomers)}`,
+        this.start.name,
+        session,
+        account.email
+      );
       await this.stepsService.bulkAddToStart(
         account,
         journeyID,

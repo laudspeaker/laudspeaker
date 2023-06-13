@@ -40,6 +40,7 @@ const FlowViewerSidePanel: FC<FlowViewerSidePanelProps> = ({ className }) => {
     [NodeType.TIME_WINDOW]: "Time window",
     [NodeType.WAIT_UNTIL]: "Wait until",
     [NodeType.USER_ATTRIBUTE]: "User attribute",
+    [NodeType.INSERT_NODE]: "",
   };
 
   const nodeTypeToComponentMap: Record<string, ReactNode> = {

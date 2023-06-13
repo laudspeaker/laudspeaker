@@ -9,7 +9,9 @@ import formData from 'form-data';
 import { Liquid } from 'liquidjs';
 import { MailService } from '@sendgrid/mail';
 import {
-  ClickHouseEventProvider, ClickHouseMessage,
+  ClickHouseEventProvider,
+  ClickHouseMessage,
+  WebhooksService,
 } from '../../webhooks/webhooks.service';
 import twilio from 'twilio';
 import { PostHog } from 'posthog-node';
@@ -30,55 +32,65 @@ export class MessageSender {
   private phClient = new PostHog(process.env.POSTHOG_KEY, {
     host: process.env.POSTHOG_HOST,
   });
-  private messagesMap: Record<
-    MessageType,
-    (job: any) => Promise<void>
-  > = {
-      [MessageType.EMAIL]: async (job) => {
-        await this.handleEmail(job.);
-      },
-      [MessageType.SMS]: async (job) => {
-        await this.handleSMS(job);
-      },
-      [MessageType.FIREBASE]: async (job) => {
-        await this.handleFirebase(job);
-      },
-    };
+  private messagesMap: Record<MessageType, (job: any) => Promise<void>> = {
+    [MessageType.EMAIL]: async (job) => {
+      // await this.handleEmail(job);
+    },
+    [MessageType.SMS]: async (job) => {
+      // await this.handleSMS(job);
+    },
+    [MessageType.FIREBASE]: async (job) => {
+      await this.handleFirebase(job);
+    },
+  };
 
-  constructor(
-  ) {
-  }
+  constructor(private webhooksService: WebhooksService) {}
 
   async process(job: any): Promise<ClickHouseMessage[]> {
     return await this.messagesMap[job.name](job);
   }
 
-
   /**
    * Handle sending an email.
-   * @param subject 
-   * @param to 
-   * @param text 
-   * @param tags 
-   * @param eventProvider 
-   * @param key 
-   * @param from 
-   * @param stepID 
-   * @param customerID 
-   * @param templateID 
-   * @param accountID 
+   * @param subject
+   * @param to
+   * @param text
+   * @param tags
+   * @param eventProvider
+   * @param key
+   * @param from
+   * @param stepID
+   * @param customerID
+   * @param templateID
+   * @param accountID
    * @param email Optional: only for mailgun
    * @param domain: optional: only for mailgun
    * @param trackingEmail Optional
-   * @param cc 
-   * @returns 
+   * @param cc
+   * @returns
    */
-  async handleEmail(subject: string, to: string, text: string, tags: any, eventProvider: ClickHouseEventProvider, key: string, from: string, stepID: string, customerID: string, templateID: string, accountID: string, email?: string, domain?: string, trackingEmail?: string, cc?: string[]): Promise<any> {
+  async handleEmail(
+    subject: string,
+    to: string,
+    text: string,
+    tags: any,
+    eventProvider: ClickHouseEventProvider,
+    key: string,
+    from: string,
+    stepID: string,
+    customerID: string,
+    templateID: string,
+    accountID: string,
+    email?: string,
+    domain?: string,
+    trackingEmail?: string,
+    cc?: string[]
+  ): Promise<any> {
     if (!to) {
       return;
     }
     let textWithInsertedTags, subjectWithInsertedTags: string | undefined;
-    let ret: ClickHouseMessage[]
+    let ret: ClickHouseMessage[];
     try {
       if (text)
         textWithInsertedTags = await this.tagEngine.parseAndRender(
@@ -199,26 +211,38 @@ export class MessageSender {
 
   /**
    * Handle sending sms.
-   * @param from 
-   * @param sid 
-   * @param token 
-   * @param to 
-   * @param text 
-   * @param tags 
-   * @param stepID 
-   * @param customerID 
-   * @param templateID 
-   * @param accountID 
-   * @param trackingEmail 
-   * @returns 
+   * @param from
+   * @param sid
+   * @param token
+   * @param to
+   * @param text
+   * @param tags
+   * @param stepID
+   * @param customerID
+   * @param templateID
+   * @param accountID
+   * @param trackingEmail
+   * @returns
    */
-  async handleSMS(from: string, sid: string, token: string, to: string, text: string, tags: any, stepID: string, customerID: string, templateID: string, accountID: string, trackingEmail:string) {
+  async handleSMS(
+    from: string,
+    sid: string,
+    token: string,
+    to: string,
+    text: string,
+    tags: any,
+    stepID: string,
+    customerID: string,
+    templateID: string,
+    accountID: string,
+    trackingEmail: string
+  ) {
     if (!to) {
       return;
     }
     let textWithInsertedTags: string | undefined;
 
-    let ret: ClickHouseMessage[]
+    let ret: ClickHouseMessage[];
     try {
       if (text) {
         textWithInsertedTags = await this.tagEngine.parseAndRender(
@@ -241,7 +265,6 @@ export class MessageSender {
           processed: false,
         },
       ];
-
     }
     const twilioClient = twilio(sid, token);
     const message = await twilioClient.messages.create({

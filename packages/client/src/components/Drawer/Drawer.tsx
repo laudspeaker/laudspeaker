@@ -83,7 +83,11 @@ export default function ResponsiveDrawer() {
             >
               {navigationItem.children ? (
                 <div className="w-full">
-                  <Disclosure>
+                  <Disclosure
+                    defaultOpen={navigationItem.children.some((child) =>
+                      location.pathname.includes(child.link)
+                    )}
+                  >
                     {({ open }) => (
                       <div className="flex flex-col gap-[8px]">
                         <Disclosure.Button className="w-full">

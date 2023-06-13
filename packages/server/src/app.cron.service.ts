@@ -96,7 +96,7 @@ export class CronService {
     @Inject(ModalsService) private modalsService: ModalsService,
     @Inject(StepsService) private stepsService: StepsService,
     @InjectQueue('transition') private readonly transitionQueue: Queue
-  ) { }
+  ) {}
 
   log(message, method, session, user = 'ANONYMOUS') {
     this.logger.log(
@@ -230,7 +230,8 @@ export class CronService {
       }
 
       this.logger.log(
-        `Cron customer keys job finished, checked ${documentsCount} records, found ${Object.keys(keys).length
+        `Cron customer keys job finished, checked ${documentsCount} records, found ${
+          Object.keys(keys).length
         } keys`
       );
     } catch (e) {
@@ -328,7 +329,8 @@ export class CronService {
       }
 
       this.logger.log(
-        `Cron event keys job finished, checked ${documentsCount} records, found ${Object.keys(keys).length
+        `Cron event keys job finished, checked ${documentsCount} records, found ${
+          Object.keys(keys).length
         } keys`
       );
     } catch (e) {
@@ -407,7 +409,10 @@ export class CronService {
       );
       for (let i = 0; i < steps.length; i++) {
         if (steps[i].customers.length)
-          this.transitionQueue.add(steps[i].type, { step: steps[i], session: session });
+          this.transitionQueue.add(steps[i].type, {
+            step: steps[i],
+            session: session,
+          });
       }
       await queryRunner.commitTransaction();
     } catch (e) {

@@ -58,7 +58,7 @@ export const messageFixtures: Record<
   },
   [MessageType.MODAL]: {
     icon: <CustomModalIcon />,
-    text: "Modal",
+    text: "Custom Modal",
   },
   [MessageType.PUSH]: {
     icon: <PushIcon />,

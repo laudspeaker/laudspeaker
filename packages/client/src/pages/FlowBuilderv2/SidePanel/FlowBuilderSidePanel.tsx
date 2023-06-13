@@ -50,6 +50,7 @@ const FlowBuilderSidePanel: FC<FlowBuilderSidePanelProps> = ({ className }) => {
     [NodeType.TIME_WINDOW]: "Time window",
     [NodeType.WAIT_UNTIL]: "Wait until",
     [NodeType.USER_ATTRIBUTE]: "User attribute",
+    [NodeType.INSERT_NODE]: "",
   };
 
   const nodeToSettingsComponentMap: Record<string, ReactNode> = {
@@ -109,66 +110,75 @@ const FlowBuilderSidePanel: FC<FlowBuilderSidePanelProps> = ({ className }) => {
     ![NodeType.EMPTY, NodeType.START].includes(selectedNode.type as NodeType);
 
   return (
-    <Transition
-      show={!!isOpen}
-      as="div"
-      className={`h-[calc(100vh-108px)] min-w-[360px] w-[360px] fixed  right-[-100%] bg-white border-l-[1px] border-[#E5E7EB] flex flex-col justify-between overflow-hidden ${
-        className ? className : ""
-      }`}
-      enter="transition-all duration-300"
-      enterFrom="right-[-100%]"
-      enterTo="right-0"
-      leave="transition-all duration-500"
-      leaveTo="right-[-100%]"
-      leaveFrom="right-0"
-    >
-      <div className="h-full relative flex flex-col justify-stretch">
-        <div className="p-[20px] border-b-[1px] flex flex-col gap-[5px]">
-          <div className="font-inter font-semibold text-[20px] leading-[28px]">
-            {selectedNode?.type
-              ? selectedNode.data.type === NodeType.MESSAGE &&
-                selectedNode.data.template
-                ? messageFixtures[selectedNode.data.template.type].text
-                : nodeTypeToNameMap[selectedNode.type as NodeType]
-              : ""}
-          </div>
-          <div className="font-inter font-normal text-[12px] leading-[20px] text-[#4B5563]">
-            Description Description Description Des
-          </div>
-        </div>
-        <div className="p-[20px] h-full max-h-full mb-[60px] overflow-y-hidden">
-          <Scrollbars>
-            {nodeToSettingsComponentMap[selectedNode?.type || ""]}
-          </Scrollbars>
-        </div>
-      </div>
-      <div className="absolute bottom-0 w-full min-h-[60px] h-[60px] py-[14px] px-[20px] border-t-[1px] flex justify-between items-center">
+    <>
+      {isOpen && (
         <div
-          className="font-roboto underline font-normal text-[14px] leading-[22px] select-none cursor-pointer"
-          onClick={() => setIsDeleteModalOpen(true)}
-        >
-          Delete
-        </div>
-        <div className="flex justify-end items-center gap-[10px]">
-          <FlowBuilderButton
-            onClick={onCancel}
-            className="!rounded-[2px] !text-[#111827] !bg-white !border-[1px] !border-[#E5E7EB]"
-          >
-            Cancel
-          </FlowBuilderButton>
-          <FlowBuilderButton className="!rounded-[2px]" onClick={onSave}>
-            Save
-          </FlowBuilderButton>
-        </div>
-      </div>
-      {selectedNode && (
-        <FlowBuilderDeleteModal
-          isOpen={isDeleteModalOpen}
-          onClose={() => setIsDeleteModalOpen(false)}
-          selectedNode={selectedNode}
+          className="fixed top-[106px] left-0 bg-black bg-opacity-50 w-full h-screen"
+          onClick={onCancel}
         />
       )}
-    </Transition>
+
+      <Transition
+        show={!!isOpen}
+        as="div"
+        className={`h-[calc(100vh-108px)] min-w-[360px] w-[360px] fixed  right-[-100%] bg-white border-l-[1px] border-[#E5E7EB] flex flex-col justify-between overflow-hidden ${
+          className ? className : ""
+        }`}
+        enter="transition-all duration-300"
+        enterFrom="right-[-100%]"
+        enterTo="right-0"
+        leave="transition-all duration-500"
+        leaveTo="right-[-100%]"
+        leaveFrom="right-0"
+      >
+        <div className="h-full relative flex flex-col justify-stretch">
+          <div className="p-[20px] border-b-[1px] flex flex-col gap-[5px]">
+            <div className="font-inter font-semibold text-[20px] leading-[28px]">
+              {selectedNode?.type
+                ? selectedNode.data.type === NodeType.MESSAGE &&
+                  selectedNode.data.template
+                  ? messageFixtures[selectedNode.data.template.type].text
+                  : nodeTypeToNameMap[selectedNode.type as NodeType]
+                : ""}
+            </div>
+            <div className="font-inter font-normal text-[12px] leading-[20px] text-[#4B5563]">
+              Description Description Description Des
+            </div>
+          </div>
+          <div className="p-[20px] h-full max-h-full mb-[60px] overflow-y-hidden">
+            <Scrollbars>
+              {nodeToSettingsComponentMap[selectedNode?.type || ""]}
+            </Scrollbars>
+          </div>
+        </div>
+        <div className="absolute bottom-0 w-full min-h-[60px] h-[60px] py-[14px] px-[20px] border-t-[1px] flex justify-between items-center">
+          <div
+            className="font-roboto underline font-normal text-[14px] leading-[22px] select-none cursor-pointer"
+            onClick={() => setIsDeleteModalOpen(true)}
+          >
+            Delete
+          </div>
+          <div className="flex justify-end items-center gap-[10px]">
+            <FlowBuilderButton
+              onClick={onCancel}
+              className="!rounded-[2px] !text-[#111827] !bg-white !border-[1px] !border-[#E5E7EB]"
+            >
+              Cancel
+            </FlowBuilderButton>
+            <FlowBuilderButton className="!rounded-[2px]" onClick={onSave}>
+              Save
+            </FlowBuilderButton>
+          </div>
+        </div>
+        {selectedNode && (
+          <FlowBuilderDeleteModal
+            isOpen={isDeleteModalOpen}
+            onClose={() => setIsDeleteModalOpen(false)}
+            selectedNode={selectedNode}
+          />
+        )}
+      </Transition>
+    </>
   );
 };
 
