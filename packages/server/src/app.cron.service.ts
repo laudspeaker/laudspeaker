@@ -96,7 +96,7 @@ export class CronService {
     @Inject(ModalsService) private modalsService: ModalsService,
     @Inject(StepsService) private stepsService: StepsService,
     @InjectQueue('transition') private readonly transitionQueue: Queue
-  ) {}
+  ) { }
 
   log(message, method, session, user = 'ANONYMOUS') {
     this.logger.log(
@@ -230,8 +230,7 @@ export class CronService {
       }
 
       this.logger.log(
-        `Cron customer keys job finished, checked ${documentsCount} records, found ${
-          Object.keys(keys).length
+        `Cron customer keys job finished, checked ${documentsCount} records, found ${Object.keys(keys).length
         } keys`
       );
     } catch (e) {
@@ -329,8 +328,7 @@ export class CronService {
       }
 
       this.logger.log(
-        `Cron event keys job finished, checked ${documentsCount} records, found ${
-          Object.keys(keys).length
+        `Cron event keys job finished, checked ${documentsCount} records, found ${Object.keys(keys).length
         } keys`
       );
     } catch (e) {
@@ -385,14 +383,14 @@ export class CronService {
     await queryRunner.connect();
     await queryRunner.startTransaction();
     try {
-      let steps = await this.stepsService.transactionalFindAllByType(
+      let steps = await this.stepsService.transactionalFindAllActiveByType(
         null,
         StepType.TIME_DELAY,
         session,
         queryRunner
       );
       steps.push(
-        ...(await this.stepsService.transactionalFindAllByType(
+        ...(await this.stepsService.transactionalFindAllActiveByType(
           null,
           StepType.TIME_WINDOW,
           session,
@@ -400,7 +398,7 @@ export class CronService {
         ))
       );
       steps.push(
-        ...(await this.stepsService.transactionalFindAllByType(
+        ...(await this.stepsService.transactionalFindAllActiveByType(
           null,
           StepType.WAIT_UNTIL_BRANCH,
           session,
@@ -408,7 +406,8 @@ export class CronService {
         ))
       );
       for (let i = 0; i < steps.length; i++) {
-        this.transitionQueue.add('', { stepID: steps[i].id, session: session });
+        if (steps[i].customers.length)
+          this.transitionQueue.add(steps[i].type, { step: steps[i], session: session });
       }
       await queryRunner.commitTransaction();
     } catch (e) {

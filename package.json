@@ -41,6 +41,7 @@
     "concurrently": "^7.4.0",
     "logform": "^2.4.2",
     "luxon": "^3.2.1",
-    "p-map": "^5.5.0"
+    "p-map": "^5.5.0",
+    "taskforce-connector": "^1.24.3"
   }
 }

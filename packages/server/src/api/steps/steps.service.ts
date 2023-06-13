@@ -36,7 +36,7 @@ export class StepsService {
     @InjectRepository(Step)
     public stepsRepository: Repository<Step>,
     @InjectQueue('transition') private readonly transitionQueue: Queue
-  ) {}
+  ) { }
 
   log(message, method, session, user = 'ANONYMOUS') {
     this.logger.log(
@@ -155,7 +155,7 @@ export class StepsService {
       }),
     ];
     const step = await queryRunner.manager.save(startStep[0]);
-    await this.transitionQueue.add('', {
+    await this.transitionQueue.add('start', {
       account: account,
       step: step,
       session: session,
@@ -219,6 +219,31 @@ export class StepsService {
       return await queryRunner.manager.findBy(Step, {
         owner: account ? { id: account.id } : undefined,
         type: type,
+      });
+    } catch (e) {
+      this.error(e, this.findAllByType.name, session, account.id);
+      throw e;
+    }
+  }
+
+  /**
+ * Find all steps of a certain type using db transaction(owner optional).
+ * @param account
+ * @param type
+ * @param session
+ * @returns
+ */
+  async transactionalFindAllActiveByType(
+    account: Account,
+    type: StepType,
+    session: string,
+    queryRunner: QueryRunner
+  ): Promise<Step[]> {
+    try {
+      return await queryRunner.manager.findBy(Step, {
+        owner: account ? { id: account.id } : undefined,
+        type: type,
+        journey: { isActive: true, isDeleted: false, isPaused: false, isStopped: false }
       });
     } catch (e) {
       this.error(e, this.findAllByType.name, session, account.id);
@@ -383,7 +408,7 @@ export class StepsService {
     const openedData = (await openedResponse.json<any>())?.data;
     const opened =
       +openedData?.[0]?.[
-        'uniqExact(tuple(stepId, customerId, templateId, messageId, event, eventProvider))'
+      'uniqExact(tuple(stepId, customerId, templateId, messageId, event, eventProvider))'
       ];
 
     const openedPercentage = (opened / sent) * 100;
@@ -395,7 +420,7 @@ export class StepsService {
     const clickedData = (await clickedResponse.json<any>())?.data;
     const clicked =
       +clickedData?.[0]?.[
-        'uniqExact(tuple(stepId, customerId, templateId, messageId, event, eventProvider))'
+      'uniqExact(tuple(stepId, customerId, templateId, messageId, event, eventProvider))'
       ];
 
     const clickedPercentage = (clicked / sent) * 100;
