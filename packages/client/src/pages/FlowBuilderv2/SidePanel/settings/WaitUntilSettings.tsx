@@ -130,14 +130,16 @@ const WaitUntilSettings: FC<SidePanelComponentProps<WaitUntilNodeData>> = ({
         >
           Add branch
         </button>
-        {!branches.some((branch) => branch.type === BranchType.MAX_TIME) && (
-          <button
-            onClick={handleAddMaxTimeBranch}
-            className="border-[1px] border-[#E5E7EB] bg-white px-[15px] py-[4px] rounded-[4px] font-roboto font-normal text-[14px] leading-[22px]"
-          >
-            Set max. time
-          </button>
-        )}
+
+        <button
+          onClick={handleAddMaxTimeBranch}
+          className="border-[1px] border-[#E5E7EB] bg-white px-[15px] py-[4px] rounded-[4px] font-roboto font-normal text-[14px] leading-[22px] [&:disabled]:text-gray-500"
+          disabled={branches.some(
+            (branch) => branch.type === BranchType.MAX_TIME
+          )}
+        >
+          Set max. time
+        </button>
       </div>
     </div>
   );

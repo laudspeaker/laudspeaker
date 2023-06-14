@@ -147,7 +147,7 @@ export const BranchEdge: FC<EdgeProps<BranchEdgeData>> = ({
               leaveFrom="opacity-100 translate-y-0"
               leaveTo="opacity-0 translate-y-1"
             >
-              <div className="absolute w-[260px] px-[10px] py-[12px] bg-white z-[999999999] rounded-[4px] flex flex-col gap-[10px]">
+              <div className="absolute w-[260px] p-[10px] bg-white z-[999999999] rounded-[4px] flex flex-col gap-[10px]">
                 <div className="font-inter font-semibold text-[16px] leading-[24px]">
                   {popperNameMap[branch.type]}
                 </div>

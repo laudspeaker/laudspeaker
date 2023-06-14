@@ -45,7 +45,7 @@ const EventBranchEditor: FC<EventBranchEditorProps> = ({
                 <div className="font-inter font-semibold text-[14px] leading-[22px]">
                   {condition.providerType === ProviderType.Custom
                     ? "Custom Event"
-                    : "Posthog Event"}
+                    : `Posthog ${condition.name}`}
                 </div>
                 <div className="flex gap-[20px] items-center">
                   <div
