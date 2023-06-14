@@ -1,9 +1,4 @@
 /* eslint-disable no-case-declarations */
-import { OnWorkerEvent, Processor, WorkerHost } from '@nestjs/bullmq';
-import { Inject, LoggerService } from '@nestjs/common';
-import { Job } from 'bullmq';
-import { Injectable } from '@nestjs/common';
-import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import Mailgun from 'mailgun.js';
 import formData from 'form-data';
 import { Liquid } from 'liquidjs';
@@ -16,15 +11,21 @@ import {
 import twilio from 'twilio';
 import { PostHog } from 'posthog-node';
 import * as admin from 'firebase-admin';
-import { template } from 'lodash';
+import { WebClient } from '@slack/web-api';
+import { FallBackAction, WebhookMethod } from '@/api/templates/entities/template.entity';
+import wait from '@/utils/wait';
+
 
 export enum MessageType {
   SMS = 'sms',
   EMAIL = 'email',
   FIREBASE = 'firebase',
+  SLACK = 'slack',
+  // WEBHOOK = 'webhook',
 }
 
 export class MessageSender {
+  private client: WebClient = new WebClient();
   private MAXIMUM_SMS_LENGTH = 1600;
   private MAXIMUM_PUSH_LENGTH = 256;
   private MAXIMUM_PUSH_TITLE_LENGTH = 48;
@@ -32,19 +33,88 @@ export class MessageSender {
   private phClient = new PostHog(process.env.POSTHOG_KEY, {
     host: process.env.POSTHOG_HOST,
   });
-  private messagesMap: Record<MessageType, (job: any) => Promise<void>> = {
-    [MessageType.EMAIL]: async (job) => {
-      // await this.handleEmail(job);
-    },
-    [MessageType.SMS]: async (job) => {
-      // await this.handleSMS(job);
-    },
-    [MessageType.FIREBASE]: async (job) => {
-      await this.handleFirebase(job);
-    },
-  };
+  private messagesMap: Record<
+    MessageType,
+    (job: any) => Promise<ClickHouseMessage[] | void>
+  > = {
+      [MessageType.EMAIL]: async (job) => {
+        return await this.handleEmail(
+          job.subject,
+          job.to,
+          job.text,
+          job.tags,
+          job.eventProvider,
+          job.key,
+          job.from,
+          job.stepID,
+          job.customerID,
+          job.templateID,
+          job.accountID,
+          job.email,
+          job.domain,
+          job.trackingEmail,
+          job.cc
+        );
+      },
+      [MessageType.SMS]: async (job) => {
+        return await this.handleSMS(
+          job.from,
+          job.sid,
+          job.token,
+          job.to,
+          job.text,
+          job.tags,
+          job.stepID,
+          job.customerID,
+          job.templateID,
+          job.accountID,
+          job.trackingEmail
+        );
+      },
+      [MessageType.FIREBASE]: async (job) => {
+        await this.handleFirebase(
+          job.trackingEmail,
+          job.firebaseCredentials,
+          job.phDeviceToken,
+          job.pushText,
+          job.templateID,
+          job.pushTitle,
+          job.customerID,
+          job.stepID,
+          job.filteredTags,
+          job.accountID
+        );
+      },
+      [MessageType.SLACK]: async (job) => {
+        await this.handleSlack(
+          job.templateID,
+          job.accountID,
+          job.stepID,
+          job.methodName,
+          job.args,
+          job.filteredTags,
+          job.customerID,
+          job.trackingEmail,
+        );
+      },
+      // [MessageType.WEBHOOK]: async (job) => {
+      //   await this.handleWebhook(
+      //     job.trackingEmail,
+      //     job.firebaseCredentials,
+      //     job.phDeviceToken,
+      //     job.pushText,
+      //     job.templateID,
+      //     job.pushTitle,
+      //     job.customerID,
+      //     job.stepID,
+      //     job.filteredTags,
+      //     job.accountID
+      //   );
+      // },
+    };
 
-  constructor(private webhooksService: WebhooksService) {}
+  constructor() {
+  }
 
   async process(job: any): Promise<ClickHouseMessage[]> {
     return await this.messagesMap[job.name](job);
@@ -85,7 +155,7 @@ export class MessageSender {
     domain?: string,
     trackingEmail?: string,
     cc?: string[]
-  ): Promise<any> {
+  ): Promise<ClickHouseMessage[]> {
     if (!to) {
       return;
     }
@@ -106,7 +176,7 @@ export class MessageSender {
           { strictVariables: true }
         );
     } catch (err) {
-      ret = [
+      return [
         {
           stepId: stepID,
           createdAt: new Date().toUTCString(),
@@ -119,7 +189,6 @@ export class MessageSender {
           processed: false,
         },
       ];
-      return ret;
     }
 
     let msg: any;
@@ -236,7 +305,7 @@ export class MessageSender {
     templateID: string,
     accountID: string,
     trackingEmail: string
-  ) {
+  ): Promise<ClickHouseMessage[]> {
     if (!to) {
       return;
     }
@@ -301,59 +370,96 @@ export class MessageSender {
     return ret;
   }
 
-  async handleFirebase(job: Job) {
-    if (!job.data.phDeviceToken) {
+  /**
+   *
+   * @param trackingEmail
+   * @param firebaseCredentials
+   * @param phDeviceToken
+   * @param pushText
+   * @param templateID
+   * @param pushTitle
+   * @param customerID
+   * @param stepID
+   * @param filteredTags
+   * @param accountID
+   * @returns
+   */
+  async handleFirebase(
+    trackingEmail: string,
+    firebaseCredentials: string,
+    phDeviceToken: string,
+    pushText: string,
+    templateID: string,
+    pushTitle: string,
+    customerID: string,
+    stepID: string,
+    filteredTags: any,
+    accountID: string
+  ): Promise<ClickHouseMessage[]> {
+    if (!phDeviceToken) {
       return;
     }
     let textWithInsertedTags, titleWithInsertedTags: string | undefined;
+    let ret: ClickHouseMessage[];
     try {
       textWithInsertedTags = await this.tagEngine.parseAndRender(
-        job.data.pushText,
-        job.data.filteredTags || {},
+        pushText,
+        filteredTags || {},
         { strictVariables: true }
       );
 
       titleWithInsertedTags = await this.tagEngine.parseAndRender(
-        job.data.pushTitle,
-        job.data.filteredTags || {},
+        pushTitle,
+        filteredTags || {},
         { strictVariables: true }
       );
     } catch (err) {
-      await this.webhooksService.insertClickHouseMessages([
+      return [
         {
-          userId: job.data.accountId,
+          userId: accountID,
           event: 'error',
           createdAt: new Date().toUTCString(),
           eventProvider: ClickHouseEventProvider.FIREBASE,
           messageId: null,
-          audienceId: job.data.args.audienceId,
-          customerId: job.data.args.customerId,
-          templateId: String(job.data.args.templateId),
+          stepId: stepID,
+          customerId: customerID,
+          templateId: String(templateID),
           processed: false,
         },
-      ]);
-      throw err;
+      ];
     }
     let firebaseApp: admin.app.App;
     try {
-      firebaseApp = admin.app(job.data.accountId);
+      firebaseApp = admin.app(accountID);
     } catch (e: any) {
       if (e.code == 'app/no-app') {
         firebaseApp = admin.initializeApp(
           {
-            credential: admin.credential.cert(
-              JSON.parse(job.data.firebaseCredentials)
-            ),
+            credential: admin.credential.cert(JSON.parse(firebaseCredentials)),
           },
-          job.data.accountId
+          accountID
         );
-      } else throw e;
+      } else {
+        return [
+          {
+            userId: accountID,
+            event: 'error',
+            createdAt: new Date().toUTCString(),
+            eventProvider: ClickHouseEventProvider.FIREBASE,
+            messageId: null,
+            stepId: stepID,
+            customerId: customerID,
+            templateId: String(templateID),
+            processed: false,
+          },
+        ];
+      }
     }
 
     const messaging = admin.messaging(firebaseApp);
 
     const messageId = await messaging.send({
-      token: job.data.phDeviceToken,
+      token: phDeviceToken,
       notification: {
         title: titleWithInsertedTags.slice(0, this.MAXIMUM_PUSH_TITLE_LENGTH),
         body: textWithInsertedTags.slice(0, this.MAXIMUM_PUSH_LENGTH),
@@ -373,30 +479,199 @@ export class MessageSender {
         },
       },
     });
-    await this.webhooksService.insertClickHouseMessages([
+    ret = [
       {
-        audienceId: job.data.audienceId,
-        customerId: job.data.customerId,
+        stepId: stepID,
+        customerId: customerID,
         createdAt: new Date().toUTCString(),
         event: 'sent',
         eventProvider: ClickHouseEventProvider.FIREBASE,
         messageId: messageId,
-        templateId: String(job.data.templateId),
-        userId: job.data.accountId,
+        templateId: String(templateID),
+        userId: accountID,
         processed: false,
       },
-    ]);
-    if (job.data.trackingEmail) {
+    ];
+    if (trackingEmail) {
       this.phClient.capture({
-        distinctId: job.data.trackingEmail,
+        distinctId: trackingEmail,
         event: 'message sent',
         properties: {
           type: 'firebase',
-          audience: job.data.audienceId,
-          customer: job.data.customerId,
-          template: job.data.templateId,
+          step: stepID,
+          customer: customerID,
+          template: templateID,
         },
       });
     }
+    return ret;
   }
+
+  /**
+   * 
+   * @param templateID 
+   * @param accountID 
+   * @param stepID 
+   * @param methodName 
+   * @param args 
+   * @param tags 
+   * @param customerID 
+   * @returns 
+   */
+  async handleSlack(templateID: string, accountID: string, stepID: string, methodName: string, args: any, tags: any, customerID: string, trackingEmail: string): Promise<ClickHouseMessage[]> {
+    try {
+      if (args.text) {
+        args.text = await this.tagEngine.parseAndRender(
+          args.text,
+          tags || {},
+          { strictVariables: true }
+        );
+      }
+      const message = await this.client.apiCall(methodName, {
+        ...args,
+      });
+      return [{
+        userId: accountID,
+        event: 'sent',
+        createdAt: new Date().toUTCString(),
+        eventProvider: ClickHouseEventProvider.SLACK,
+        messageId: String(message.ts),
+        stepId: stepID,
+        customerId: customerID,
+        templateId: String(templateID),
+        processed: false,
+      }]
+    } catch (e) {
+      return [
+        {
+          userId: accountID,
+          event: 'error',
+          createdAt: new Date().toUTCString(),
+          eventProvider: ClickHouseEventProvider.SLACK,
+          messageId: '',
+          stepId: stepID,
+          customerId: customerID,
+          templateId: String(templateID),
+          processed: false,
+        },
+      ];
+    }
+  }
+
+  /**
+   * 
+   * @param webhookData 
+   * @param filteredTags 
+   * @returns 
+   */
+  // async handleWebhook(webhookData: any, filteredTags: any): Promise<ClickHouseMessage[]> {
+  //   const { method, retries, fallBackAction } = webhookData;
+
+  //   let { body, headers, url } = webhookData;
+
+  //   url = await this.tagEngine.parseAndRender(url, filteredTags || {}, {
+  //     strictVariables: true,
+  //   });
+  //   url = await this.templatesService.parseTemplateTags(url);
+
+  //   if (
+  //     [
+  //       WebhookMethod.GET,
+  //       WebhookMethod.HEAD,
+  //       WebhookMethod.DELETE,
+  //       WebhookMethod.OPTIONS,
+  //     ].includes(method)
+  //   ) {
+  //     body = undefined;
+  //   } else {
+  //     body = await this.templatesService.parseTemplateTags(body);
+  //     body = await this.tagEngine.parseAndRender(body, filteredTags || {}, {
+  //       strictVariables: true,
+  //     });
+  //   }
+
+  //   headers = Object.fromEntries(
+  //     await Promise.all(
+  //       Object.entries(headers).map(async ([key, value]) => [
+  //         await this.templatesService.parseTemplateTags(
+  //           await this.tagEngine.parseAndRender(key, filteredTags || {}, {
+  //             strictVariables: true,
+  //           })
+  //         ),
+  //         await this.templatesService.parseTemplateTags(
+  //           await this.tagEngine.parseAndRender(value, filteredTags || {}, {
+  //             strictVariables: true,
+  //           })
+  //         ),
+  //       ])
+  //     )
+  //   );
+
+  //   let retriesCount = 0;
+  //   let success = false;
+
+  //   let error: string | null = null;
+  //   while (!success && retriesCount < retries) {
+  //     try {
+  //       const res = await fetch(url, {
+  //         method,
+  //         body,
+  //         headers,
+  //       });
+
+  //       if (!res.ok) throw new Error('Error sending API request');
+  //       success = true;
+  //     } catch (e) {
+  //       retriesCount++;
+  //       if (e instanceof Error) error = e.message;
+  //       await wait(5000);
+  //     }
+  //   }
+
+  //   if (!success) {
+  //     switch (fallBackAction) {
+  //       case FallBackAction.NOTHING:
+  //         break;
+  //     }
+
+  //     try {
+  //       await this.webhooksService.insertClickHouseMessages([
+  //         {
+  //           event: 'error',
+  //           createdAt: new Date().toUTCString(),
+  //           eventProvider: ClickHouseEventProvider.WEBHOOKS,
+  //           messageId: '',
+  //           audienceId: job.data.audienceId,
+  //           customerId: job.data.customerId,
+  //           templateId: String(job.data.template.id),
+  //           userId: job.data.accountId,
+  //           processed: false,
+  //         },
+  //       ]);
+  //     } catch (e) {
+  //     }
+
+  //     throw new Error(error);
+  //   } else {
+  //     try {
+  //       await this.webhooksService.insertClickHouseMessages([
+  //         {
+  //           event: 'sent',
+  //           createdAt: new Date().toUTCString(),
+  //           eventProvider: ClickHouseEventProvider.WEBHOOKS,
+  //           messageId: '',
+  //           audienceId: job.data.audienceId,
+  //           customerId: job.data.customerId,
+  //           templateId: String(job.data.template.id),
+  //           userId: job.data.accountId,
+  //           processed: false,
+  //         },
+  //       ]);
+  //     } catch (e) {
+  //     }
+  //   }
+
+  //   return { url, body, headers };
+  // }
 }
+

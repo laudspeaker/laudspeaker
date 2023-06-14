@@ -22,6 +22,8 @@ import { Account } from '../accounts/entities/accounts.entity';
 import { AccountsModule } from '../accounts/accounts.module';
 import { EventsModule } from '../events/events.module';
 import { TransitionProcessor } from './processors/transition.processor';
+import { WebhooksModule } from '../webhooks/webhooks.module';
+import { ModalsModule } from '../modals/modals.module';
 
 @Module({
   imports: [
@@ -35,14 +37,19 @@ import { TransitionProcessor } from './processors/transition.processor';
     BullModule.registerQueue({
       name: 'transition',
     }),
+    BullModule.registerQueue({
+      name: 'webhooks',
+    }),
     forwardRef(() => CustomersModule),
+    forwardRef(() => WebhooksModule),
     forwardRef(() => TemplatesModule),
     forwardRef(() => AccountsModule),
     forwardRef(() => EventsModule),
+    forwardRef(() => ModalsModule),
     SlackModule,
   ],
   providers: [StepsService, JobsService, WebsocketGateway, TransitionProcessor],
   controllers: [StepsController],
   exports: [StepsService],
 })
-export class StepsModule {}
+export class StepsModule { }
