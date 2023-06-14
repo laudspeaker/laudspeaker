@@ -7,6 +7,37 @@ import { useAppDispatch, useAppSelector } from "store/hooks";
 import FlowBuilderButton from "../Elements/FlowBuilderButton";
 import FlowBuilderStepper from "../Elements/FlowBuilderStepper";
 import FlowBuilderRenameModal from "../Modals/FlowBuilderRenameModal";
+import FlowBuilderErrorNextModal from "../Modals/FlowBuilderErrorNextModal";
+import { Node } from "reactflow";
+import { BranchType, NodeData } from "../Nodes/NodeData";
+import { EdgeData } from "../Edges/EdgeData";
+import { NodeType } from "../FlowEditor";
+
+const isValidNodes = (nodes: Node<NodeData | EdgeData>[]): boolean => {
+  const filterNodeByType = nodes.filter(
+    ({ type }) =>
+      type !== NodeType.EMPTY &&
+      type !== NodeType.EXIT &&
+      type !== NodeType.START &&
+      type !== NodeType.JUMP_TO
+  );
+  const filterNodeByData = filterNodeByType.filter(
+    ({ data }) =>
+      (data.type === NodeType.MESSAGE && !data.template.selected) ||
+      (data.type === NodeType.WAIT_UNTIL &&
+        data.branches.some(
+          (branch) =>
+            branch.type === BranchType.EVENT && branch.conditions.length === 0
+        )) ||
+      (data.type === NodeType.USER_ATTRIBUTE &&
+        data.branches.some(
+          (branch) =>
+            branch.type === BranchType.ATTRIBUTE &&
+            branch.attributeConditions.length === 0
+        ))
+  );
+  return filterNodeByData.length === 0;
+};
 
 const FlowBuilderHeader = () => {
   const dispatch = useAppDispatch();
@@ -14,13 +45,16 @@ const FlowBuilderHeader = () => {
   const navigate = useNavigate();
 
   const [isRenameModalOpen, setIsRenameModalOpen] = useState(false);
+  const [isErrorNextModalOpen, setIsErrorNextModalOpen] = useState(false);
 
-  const { flowName, stepperIndex, flowId } = useAppSelector(
+  const { flowName, stepperIndex, flowId, nodes } = useAppSelector(
     (state) => state.flowBuilder
   );
 
   const handleNextStep = () => {
-    if (stepperIndex !== 2)
+    if (!isValidNodes(nodes) && stepperIndex === 0)
+      setIsErrorNextModalOpen(true);
+    if (stepperIndex !== 2 && isValidNodes(nodes))
       dispatch(setStepperIndex((stepperIndex + 1) as 1 | 2));
   };
 
@@ -69,6 +103,10 @@ const FlowBuilderHeader = () => {
         <FlowBuilderRenameModal
           isOpen={isRenameModalOpen}
           onClose={() => setIsRenameModalOpen(false)}
+        />
+        <FlowBuilderErrorNextModal
+          isOpen={isErrorNextModalOpen}
+          onClose={() => setIsErrorNextModalOpen(false)}
         />
       </div>
       <FlowBuilderStepper />

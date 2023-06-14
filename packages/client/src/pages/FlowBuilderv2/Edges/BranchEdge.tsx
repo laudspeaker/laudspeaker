@@ -122,13 +122,13 @@ export const BranchEdge: FC<EdgeProps<BranchEdgeData>> = ({
               </span>
               {branch.type === BranchType.EVENT ? (
                 branch.conditions.length === 0 ? (
-                  <span className="text-red-500">Has no conditions</span>
+                  <span className="text-[#E11D48]">Has no conditions</span>
                 ) : (
                   `Meet ${branch.conditions.length} conditions`
                 )
               ) : branch.type === BranchType.ATTRIBUTE ? (
                 branch.attributeConditions.length === 0 ? (
-                  <span className="text-red-500">Has no conditions</span>
+                  <span className="text-[#E11D48]">Has no conditions</span>
                 ) : (
                   `Meet ${branch.attributeConditions.length} conditions`
                 )

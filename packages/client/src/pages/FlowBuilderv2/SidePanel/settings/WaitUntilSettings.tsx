@@ -123,7 +123,7 @@ const WaitUntilSettings: FC<SidePanelComponentProps<WaitUntilNodeData>> = ({
           )}
         </div>
       ))}
-      <div className="py-[20px] flex gap-[20px]">
+      <div className="pb-[20px] flex gap-[20px]">
         <button
           onClick={handleAddEventBranch}
           className="border-[1px] border-[#E5E7EB] bg-white px-[15px] py-[4px] rounded-[4px] font-roboto font-normal text-[14px] leading-[22px]"

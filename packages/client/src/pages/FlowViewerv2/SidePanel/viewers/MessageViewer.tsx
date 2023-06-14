@@ -111,6 +111,11 @@ const MessageViewer: FC<SidePanelComponentProps<MessageNodeData>> = ({
                   <div>{customer.email}</div>
                 </div>
               ))}
+              {!statCustomers.length && (
+                <p className="py-3 block border-b mb-5 font-inter text-gray-600">
+                  0 emails sent
+                </p>
+              )}
               <div className="flex items-center justify-center">
                 <div
                   className={`p-[6px] cursor-pointer select-none ${

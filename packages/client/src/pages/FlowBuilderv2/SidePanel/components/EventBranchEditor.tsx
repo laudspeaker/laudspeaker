@@ -27,7 +27,7 @@ const EventBranchEditor: FC<EventBranchEditorProps> = ({
   const [conditionIndexToChange, setConditionIndexToChange] =
     useState<number>();
   return (
-    <div className="flex flex-col gap-[10px]">
+    <div className="flex flex-col gap-[10px] relative border-b pb-5">
       {branch.conditions.map((condition, i) => (
         <React.Fragment key={i}>
           {conditionIndexToChange === i ? (

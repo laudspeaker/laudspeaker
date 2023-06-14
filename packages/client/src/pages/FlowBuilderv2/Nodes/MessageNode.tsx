@@ -140,7 +140,7 @@ export const MessageNode: FC<NodeProps<MessageNodeData>> = ({
               <span className="font-medium">{template.selected.name}</span>
             </>
           ) : (
-            <span className="text-[#4B5563]">Select a template</span>
+            <span className="text-[#F43F5E]">Select a template</span>
           )}
         </div>
       </div>
