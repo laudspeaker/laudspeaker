@@ -209,7 +209,7 @@ export class TransitionProcessor extends WorkerHost {
         type: StepType.MESSAGE,
       },
       relations: ['owner'],
-      lock: { mode: 'pessimistic_write' }
+      // lock: { mode: 'pessimistic_write' }
     });
     this.debug(
       `${JSON.stringify({ currentStep: currentStep })}`,
@@ -221,7 +221,7 @@ export class TransitionProcessor extends WorkerHost {
         id: currentStep.metadata.destination
       },
       relations: ['owner'],
-      lock: { mode: 'pessimistic_write' }
+      // lock: { mode: 'pessimistic_write' }
     });
 
     for (let i = 0; i < currentStep.customers.length; i++) {
@@ -415,7 +415,7 @@ export class TransitionProcessor extends WorkerHost {
         type: StepType.START,
       },
       relations: ['owner'],
-      lock: { mode: 'pessimistic_write' }
+      // lock: { mode: 'pessimistic_write' }
     });
     this.debug(
       `${JSON.stringify({ currentStep: currentStep })}`,
@@ -428,7 +428,7 @@ export class TransitionProcessor extends WorkerHost {
         id: currentStep.metadata.destination,
       },
       relations: ['owner'],
-      lock: { mode: 'pessimistic_write' }
+      // lock: { mode: 'pessimistic_write' }
     });
     this.debug(
       `${JSON.stringify({ nextStep: nextStep })}`,
@@ -486,7 +486,7 @@ export class TransitionProcessor extends WorkerHost {
         type: StepType.TIME_DELAY,
       },
       relations: ['owner'],
-      lock: { mode: 'pessimistic_write' }
+      // lock: { mode: 'pessimistic_write' }
     });
 
     this.debug(
@@ -498,7 +498,7 @@ export class TransitionProcessor extends WorkerHost {
     const nextStep = await queryRunner.manager.findOne(Step, {
       where: { id: currentStep.metadata.destination, },
       relations: ['owner'],
-      lock: { mode: 'pessimistic_write' }
+      // lock: { mode: 'pessimistic_write' }
     });
 
     this.debug(
