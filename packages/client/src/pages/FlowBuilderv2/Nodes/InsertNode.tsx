@@ -7,6 +7,7 @@ export const InsertNode: FC<NodeProps<NodeData>> = ({ isConnectable, id }) => {
     <div
       className={`w-[260px] h-[80px] rounded-[8px] border-[2px] border-dashed flex justify-center items-center !border-[#6366F1] !bg-[#E0E7FF]`}
       onDragOver={(e) => {
+        e.stopPropagation();
         e.preventDefault();
         e.dataTransfer.dropEffect = "move";
       }}

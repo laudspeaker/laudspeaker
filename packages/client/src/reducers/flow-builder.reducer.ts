@@ -197,6 +197,81 @@ const handlePruneNodeTree = (state: FlowBuilderState, nodeId: string) => {
   state.nodes = getLayoutedNodes(state.nodes, state.edges);
 };
 
+const handleRemoveNode = (state: FlowBuilderState, nodeId: string) => {
+  const node = state.nodes.find((n) => n.id === nodeId);
+  if (!node || node.type === NodeType.START) return;
+  const nodeIndex = state.nodes.indexOf(node);
+
+  const incomers = getIncomers(node, state.nodes, state.edges);
+  const outgoers = getOutgoers(node, state.nodes, state.edges);
+
+  if (incomers.length !== 1) {
+    return;
+  }
+
+  if (outgoers.length > 1) {
+    node.type = NodeType.EMPTY;
+    node.data = {};
+
+    for (const outgoer of outgoers) {
+      handlePruneNodeTree(state, outgoer.id);
+    }
+    return;
+  }
+
+  const nodeIn = incomers[0];
+
+  let nodeOut = outgoers[0];
+  if (!nodeOut) {
+    nodeOut = {
+      id: uuid(),
+      type: NodeType.EMPTY,
+      data: {},
+      position: { x: 0, y: 0 },
+    };
+    state.nodes.push(nodeOut);
+  }
+
+  if (
+    nodeIn.type === NodeType.WAIT_UNTIL ||
+    nodeIn.type === NodeType.USER_ATTRIBUTE
+  ) {
+    const branchEdge = state.edges.find(
+      (edge) => edge.source === nodeIn.id && edge.target === node.id
+    );
+
+    if (!branchEdge) return;
+
+    branchEdge.target = nodeOut.id;
+  } else {
+    state.edges = state.edges.filter(
+      (edge) => edge.source !== node.id && edge.target !== node.id
+    );
+    state.edges.push({
+      id: `e${nodeIn.id}-${nodeOut.id}`,
+      type: EdgeType.PRIMARY,
+      source: nodeIn.id,
+      target: nodeOut.id,
+    });
+  }
+
+  state.nodes.splice(nodeIndex, 1);
+
+  state.nodes = getLayoutedNodes(state.nodes, state.edges);
+};
+
+const handleClearInsertNodes = (state: FlowBuilderState) => {
+  for (const node of state.nodes) {
+    if (node.type === NodeType.INSERT_NODE) {
+      if (getOutgoers(node, state.nodes, state.edges).length === 0) {
+        node.type = NodeType.EMPTY;
+      } else {
+        handleRemoveNode(state, node.id);
+      }
+    }
+  }
+};
+
 const flowBuilderSlice = createSlice({
   name: "flowBuilder",
   initialState,
@@ -220,10 +295,12 @@ const flowBuilderSlice = createSlice({
       state.nodes = action.payload.nodes;
       state.edges = action.payload.edges;
     },
-    addTemporaryEmptyNodeBetween(
+    addInsertNodeBetween(
       state,
       action: PayloadAction<{ source: string; target: string }>
     ) {
+      handleClearInsertNodes(state);
+
       const { source, target } = action.payload;
 
       const edgeBetween = state.edges.find(
@@ -235,13 +312,12 @@ const flowBuilderSlice = createSlice({
 
       state.nodes.push({
         id: newNodeUUID,
-        type: NodeType.EMPTY,
-        data: { temporary: true },
+        type: NodeType.INSERT_NODE,
+        data: {},
         position: { x: 0, y: 0 },
       });
 
       state.edges.splice(state.edges.indexOf(edgeBetween), 1);
-
       state.edges.push(
         {
           id: `e${source}-${newNodeUUID}`,
@@ -258,6 +334,33 @@ const flowBuilderSlice = createSlice({
       );
 
       state.nodes = getLayoutedNodes(state.nodes, state.edges);
+    },
+    transformEmptyNodeIntoInsertNode(state, action: PayloadAction<string>) {
+      const nodeToChange = state.nodes.find(
+        (node) => node.id === action.payload
+      );
+
+      if (!nodeToChange || nodeToChange.type !== NodeType.EMPTY) return;
+
+      handleClearInsertNodes(state);
+
+      nodeToChange.type = NodeType.INSERT_NODE;
+
+      state.nodes = getLayoutedNodes(state.nodes, state.edges);
+    },
+    transformInsertNodeIntoEmptyNode(state, action: PayloadAction<string>) {
+      const nodeToChange = state.nodes.find(
+        (node) => node.id === action.payload
+      );
+
+      if (!nodeToChange || nodeToChange.type !== NodeType.INSERT_NODE) return;
+
+      nodeToChange.type = NodeType.EMPTY;
+
+      state.nodes = getLayoutedNodes(state.nodes, state.edges);
+    },
+    clearInsertNodes(state) {
+      handleClearInsertNodes(state);
     },
     changeNodeData(
       state,
@@ -331,66 +434,7 @@ const flowBuilderSlice = createSlice({
       }
     },
     removeNode(state, action: PayloadAction<string>) {
-      const node = state.nodes.find((n) => n.id === action.payload);
-      if (!node || node.type === NodeType.START) return;
-      const nodeIndex = state.nodes.indexOf(node);
-
-      const incomers = getIncomers(node, state.nodes, state.edges);
-      const outgoers = getOutgoers(node, state.nodes, state.edges);
-
-      if (incomers.length !== 1) {
-        return;
-      }
-
-      if (outgoers.length > 1) {
-        node.type = NodeType.EMPTY;
-        node.data = {};
-
-        for (const outgoer of outgoers) {
-          handlePruneNodeTree(state, outgoer.id);
-        }
-        return;
-      }
-
-      const nodeIn = incomers[0];
-
-      let nodeOut = outgoers[0];
-      if (!nodeOut) {
-        nodeOut = {
-          id: uuid(),
-          type: NodeType.EMPTY,
-          data: {},
-          position: { x: 0, y: 0 },
-        };
-        state.nodes.push(nodeOut);
-      }
-
-      if (
-        nodeIn.type === NodeType.WAIT_UNTIL ||
-        nodeIn.type === NodeType.USER_ATTRIBUTE
-      ) {
-        const branchEdge = state.edges.find(
-          (edge) => edge.source === nodeIn.id && edge.target === node.id
-        );
-
-        if (!branchEdge) return;
-
-        branchEdge.target = nodeOut.id;
-      } else {
-        state.edges = state.edges.filter(
-          (edge) => edge.source !== node.id && edge.target !== node.id
-        );
-        state.edges.push({
-          id: `e${nodeIn.id}-${nodeOut.id}`,
-          type: EdgeType.PRIMARY,
-          source: nodeIn.id,
-          target: nodeOut.id,
-        });
-      }
-
-      state.nodes.splice(nodeIndex, 1);
-
-      state.nodes = getLayoutedNodes(state.nodes, state.edges);
+      handleRemoveNode(state, action.payload);
     },
     pruneNodeTree(state, action: PayloadAction<string>) {
       handlePruneNodeTree(state, action.payload);
@@ -618,7 +662,10 @@ export const {
   setFlowName,
   setNodes,
   loadVisualLayout,
-  addTemporaryEmptyNodeBetween,
+  addInsertNodeBetween,
+  transformEmptyNodeIntoInsertNode,
+  transformInsertNodeIntoEmptyNode,
+  clearInsertNodes,
   changeNodeData,
   removeNode,
   pruneNodeTree,

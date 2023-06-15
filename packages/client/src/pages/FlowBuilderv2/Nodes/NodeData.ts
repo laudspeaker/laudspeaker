@@ -120,7 +120,6 @@ export interface Stats {
 
 export interface CommonNodeData {
   stepId?: string;
-  temporary?: boolean;
   stats?: Stats;
 }
 
