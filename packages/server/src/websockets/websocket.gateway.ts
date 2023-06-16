@@ -36,6 +36,7 @@ export class WebsocketGateway implements OnGatewayConnection {
   ) {}
 
   public async handleConnection(socket: Socket) {
+    console.log(socket.id);
     try {
       const { apiKey, customerId } = socket.handshake.auth;
 

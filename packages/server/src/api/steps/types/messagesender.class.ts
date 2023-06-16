@@ -12,9 +12,11 @@ import twilio from 'twilio';
 import { PostHog } from 'posthog-node';
 import * as admin from 'firebase-admin';
 import { WebClient } from '@slack/web-api';
-import { FallBackAction, WebhookMethod } from '@/api/templates/entities/template.entity';
+import {
+  FallBackAction,
+  WebhookMethod,
+} from '@/api/templates/entities/template.entity';
 import wait from '@/utils/wait';
-
 
 export enum MessageType {
   SMS = 'sms',
@@ -37,84 +39,83 @@ export class MessageSender {
     MessageType,
     (job: any) => Promise<ClickHouseMessage[] | void>
   > = {
-      [MessageType.EMAIL]: async (job) => {
-        return await this.handleEmail(
-          job.subject,
-          job.to,
-          job.text,
-          job.tags,
-          job.eventProvider,
-          job.key,
-          job.from,
-          job.stepID,
-          job.customerID,
-          job.templateID,
-          job.accountID,
-          job.email,
-          job.domain,
-          job.trackingEmail,
-          job.cc
-        );
-      },
-      [MessageType.SMS]: async (job) => {
-        return await this.handleSMS(
-          job.from,
-          job.sid,
-          job.token,
-          job.to,
-          job.text,
-          job.tags,
-          job.stepID,
-          job.customerID,
-          job.templateID,
-          job.accountID,
-          job.trackingEmail
-        );
-      },
-      [MessageType.FIREBASE]: async (job) => {
-        await this.handleFirebase(
-          job.trackingEmail,
-          job.firebaseCredentials,
-          job.phDeviceToken,
-          job.pushText,
-          job.templateID,
-          job.pushTitle,
-          job.customerID,
-          job.stepID,
-          job.filteredTags,
-          job.accountID
-        );
-      },
-      [MessageType.SLACK]: async (job) => {
-        await this.handleSlack(
-          job.templateID,
-          job.accountID,
-          job.stepID,
-          job.methodName,
-          job.args,
-          job.filteredTags,
-          job.customerID,
-          job.trackingEmail,
-        );
-      },
-      // [MessageType.WEBHOOK]: async (job) => {
-      //   await this.handleWebhook(
-      //     job.trackingEmail,
-      //     job.firebaseCredentials,
-      //     job.phDeviceToken,
-      //     job.pushText,
-      //     job.templateID,
-      //     job.pushTitle,
-      //     job.customerID,
-      //     job.stepID,
-      //     job.filteredTags,
-      //     job.accountID
-      //   );
-      // },
-    };
+    [MessageType.EMAIL]: async (job) => {
+      return await this.handleEmail(
+        job.subject,
+        job.to,
+        job.text,
+        job.tags,
+        job.eventProvider,
+        job.key,
+        job.from,
+        job.stepID,
+        job.customerID,
+        job.templateID,
+        job.accountID,
+        job.email,
+        job.domain,
+        job.trackingEmail,
+        job.cc
+      );
+    },
+    [MessageType.SMS]: async (job) => {
+      return await this.handleSMS(
+        job.from,
+        job.sid,
+        job.token,
+        job.to,
+        job.text,
+        job.tags,
+        job.stepID,
+        job.customerID,
+        job.templateID,
+        job.accountID,
+        job.trackingEmail
+      );
+    },
+    [MessageType.FIREBASE]: async (job) => {
+      await this.handleFirebase(
+        job.trackingEmail,
+        job.firebaseCredentials,
+        job.phDeviceToken,
+        job.pushText,
+        job.templateID,
+        job.pushTitle,
+        job.customerID,
+        job.stepID,
+        job.filteredTags,
+        job.accountID
+      );
+    },
+    [MessageType.SLACK]: async (job) => {
+      await this.handleSlack(
+        job.templateID,
+        job.accountID,
+        job.stepID,
+        job.methodName,
+        job.args,
+        job.filteredTags,
+        job.customerID,
+        job.trackingEmail
+      );
+    },
+    // [MessageType.WEBHOOK]: async (job) => {
+    //   await this.handleWebhook(
+    //     job.trackingEmail,
+    //     job.firebaseCredentials,
+    //     job.phDeviceToken,
+    //     job.pushText,
+    //     job.templateID,
+    //     job.pushTitle,
+    //     job.customerID,
+    //     job.stepID,
+    //     job.filteredTags,
+    //     job.accountID
+    //   );
+    // },
+  };
 
-  constructor() {
-  }
+  constructor() {}
 
   async process(job: any): Promise<ClickHouseMessage[]> {
     return await this.messagesMap[job.name](job);
@@ -508,39 +509,48 @@ export class MessageSender {
   }
 
   /**
-   * 
-   * @param templateID 
-   * @param accountID 
-   * @param stepID 
-   * @param methodName 
-   * @param args 
-   * @param tags 
-   * @param customerID 
-   * @returns 
+   *
+   * @param templateID
+   * @param accountID
+   * @param stepID
+   * @param methodName
+   * @param args
+   * @param tags
+   * @param customerID
+   * @returns
    */
-  async handleSlack(templateID: string, accountID: string, stepID: string, methodName: string, args: any, tags: any, customerID: string, trackingEmail: string): Promise<ClickHouseMessage[]> {
+  async handleSlack(
+    templateID: string,
+    accountID: string,
+    stepID: string,
+    methodName: string,
+    args: any,
+    tags: any,
+    customerID: string,
+    trackingEmail: string
+  ): Promise<ClickHouseMessage[]> {
     try {
       if (args.text) {
-        args.text = await this.tagEngine.parseAndRender(
-          args.text,
-          tags || {},
-          { strictVariables: true }
-        );
+        args.text = await this.tagEngine.parseAndRender(args.text, tags || {}, {
+          strictVariables: true,
+        });
       }
       const message = await this.client.apiCall(methodName, {
         ...args,
       });
-      return [{
-        userId: accountID,
-        event: 'sent',
-        createdAt: new Date().toUTCString(),
-        eventProvider: ClickHouseEventProvider.SLACK,
-        messageId: String(message.ts),
-        stepId: stepID,
-        customerId: customerID,
-        templateId: String(templateID),
-        processed: false,
-      }]
+      return [
+        {
+          userId: accountID,
+          event: 'sent',
+          createdAt: new Date().toUTCString(),
+          eventProvider: ClickHouseEventProvider.SLACK,
+          messageId: String(message.ts),
+          stepId: stepID,
+          customerId: customerID,
+          templateId: String(templateID),
+          processed: false,
+        },
+      ];
     } catch (e) {
       return [
         {
@@ -559,10 +569,10 @@ export class MessageSender {
   }
 
   /**
-   * 
-   * @param webhookData 
-   * @param filteredTags 
-   * @returns 
+   *
+   * @param webhookData
+   * @param filteredTags
+   * @returns
    */
   // async handleWebhook(webhookData: any, filteredTags: any): Promise<ClickHouseMessage[]> {
   //   const { method, retries, fallBackAction } = webhookData;
@@ -674,4 +684,3 @@ export class MessageSender {
   //   return { url, body, headers };
   // }
 }
-

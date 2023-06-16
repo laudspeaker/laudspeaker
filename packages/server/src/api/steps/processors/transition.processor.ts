@@ -26,7 +26,6 @@ import { WebsocketGateway } from '@/websockets/websocket.gateway';
 import { ModalsService } from '@/api/modals/modals.service';
 import { SlackService } from '@/api/slack/slack.service';
 
-
 @Injectable()
 @Processor('transition', { concurrency: cpus().length })
 export class TransitionProcessor extends WorkerHost {
@@ -38,13 +37,14 @@ export class TransitionProcessor extends WorkerHost {
     @InjectQueue('webhooks') private readonly webhooksQueue: Queue,
     @InjectConnection() private readonly connection: mongoose.Connection,
     @Inject(WebhooksService) private readonly webhooksService: WebhooksService,
-    @Inject(CustomersService) private readonly customersService: CustomersService,
+    @Inject(CustomersService)
+    private readonly customersService: CustomersService,
     @Inject(TemplatesService)
     private readonly templatesService: TemplatesService,
     @Inject(WebsocketGateway)
     private websocketGateway: WebsocketGateway,
     @Inject(ModalsService) private modalsService: ModalsService,
-    @Inject(SlackService) private slackService: SlackService,
+    @Inject(SlackService) private slackService: SlackService
   ) {
     super();
   }
@@ -132,7 +132,12 @@ export class TransitionProcessor extends WorkerHost {
         case StepType.LOOP:
           break;
         case StepType.MESSAGE:
-          await this.handleMessage(job.data.step.id, job.data.session, queryRunner, transactionSession)
+          await this.handleMessage(
+            job.data.step.id,
+            job.data.session,
+            queryRunner,
+            transactionSession
+          );
           break;
         case StepType.RANDOM_COHORT_BRANCH:
           break;
@@ -186,9 +191,9 @@ export class TransitionProcessor extends WorkerHost {
     session: string,
     queryRunner: QueryRunner,
     transactionSession: mongoose.mongo.ClientSession
-  ) { }
-  async handleAttributeBranch(job: Job<any, any, string>) { }
-  async handleLoop(step: Step, account: Account, session: string) { }
+  ) {}
+  async handleAttributeBranch(job: Job<any, any, string>) {}
+  async handleLoop(step: Step, account: Account, session: string) {}
 
   /**
    * Handle message step;
@@ -218,7 +223,7 @@ export class TransitionProcessor extends WorkerHost {
     );
     const nextStep = await queryRunner.manager.findOne(Step, {
       where: {
-        id: currentStep.metadata.destination
+        id: currentStep.metadata.destination,
       },
       relations: ['owner'],
       // lock: { mode: 'pessimistic_write' }
@@ -246,8 +251,12 @@ export class TransitionProcessor extends WorkerHost {
 
         let key = mailgunAPIKey;
         let from = sendingName;
-        const customer: CustomerDocument = await this.customersService.findById(currentStep.owner, customerID);
-        const { _id, ownerId, workflows, journeys, ...tags } = customer.toObject();
+        const customer: CustomerDocument = await this.customersService.findById(
+          currentStep.owner,
+          customerID
+        );
+        const { _id, ownerId, workflows, journeys, ...tags } =
+          customer.toObject();
         const filteredTags = cleanTagsForSending(tags);
         const sender = new MessageSender();
 
@@ -280,18 +289,27 @@ export class TransitionProcessor extends WorkerHost {
               from: from,
               trackingEmail: email,
               key: key,
-              subject: await this.templatesService.parseApiCallTags(template.subject, filteredTags),
+              subject: await this.templatesService.parseApiCallTags(
+                template.subject,
+                filteredTags
+              ),
               to: customer.phEmail ? customer.phEmail : customer.email,
-              text: await this.templatesService.parseApiCallTags(template.text, filteredTags),
+              text: await this.templatesService.parseApiCallTags(
+                template.text,
+                filteredTags
+              ),
               tags: filteredTags,
               templateId: template.id,
-              eventProvider: currentStep.owner.emailProvider
-            })
-            this.debug(`${JSON.stringify(ret)}`, this.handleMessage.name, session)
-            await this.webhooksService.insertClickHouseMessages(
-              ret
+              eventProvider: currentStep.owner.emailProvider,
+            });
+            this.debug(
+              `${JSON.stringify(ret)}`,
+              this.handleMessage.name,
+              session
             );
-            if (currentStep.owner.emailProvider === 'free3') await currentStep.owner.save();
+            await this.webhooksService.insertClickHouseMessages(ret);
+            if (currentStep.owner.emailProvider === 'free3')
+              await currentStep.owner.save();
             break;
           case TemplateType.FIREBASE:
             await this.webhooksService.insertClickHouseMessages(
@@ -302,12 +320,19 @@ export class TransitionProcessor extends WorkerHost {
                 customerID: customerID,
                 firebaseCredentials: currentStep.owner.firebaseCredentials,
                 phDeviceToken: customer.phDeviceToken,
-                pushText: await this.templatesService.parseApiCallTags(template.pushText, filteredTags),
-                pushTitle: await this.templatesService.parseApiCallTags(template.pushTitle, filteredTags),
+                pushText: await this.templatesService.parseApiCallTags(
+                  template.pushText,
+                  filteredTags
+                ),
+                pushTitle: await this.templatesService.parseApiCallTags(
+                  template.pushTitle,
+                  filteredTags
+                ),
                 trackingEmail: email,
                 filteredTags: filteredTags,
                 templateID: template.id,
-              }));
+              })
+            );
             break;
           case TemplateType.MODAL:
             if (template.modalState) {
@@ -320,7 +345,9 @@ export class TransitionProcessor extends WorkerHost {
             }
             break;
           case TemplateType.SLACK:
-            const installation = await this.slackService.getInstallation(customer);
+            const installation = await this.slackService.getInstallation(
+              customer
+            );
             await this.webhooksService.insertClickHouseMessages(
               await sender.process({
                 name: TemplateType.SLACK,
@@ -337,7 +364,7 @@ export class TransitionProcessor extends WorkerHost {
                     template.slackMessage,
                     filteredTags
                   ),
-                }
+                },
               })
             );
             break;
@@ -352,7 +379,10 @@ export class TransitionProcessor extends WorkerHost {
                 from: currentStep.owner.smsFrom,
                 sid: currentStep.owner.smsAccountSid,
                 tags: filteredTags,
-                text: await this.templatesService.parseApiCallTags(template.smsText, filteredTags),
+                text: await this.templatesService.parseApiCallTags(
+                  template.smsText,
+                  filteredTags
+                ),
                 to: customer.phPhoneNumber || customer.phone,
                 token: currentStep.owner.smsAuthToken,
                 trackingEmail: email,
@@ -375,7 +405,6 @@ export class TransitionProcessor extends WorkerHost {
         this.error(err, this.handleMessage.name, session);
       }
 
-
       nextStep.customers.push(
         JSON.stringify({
           customerID: JSON.parse(currentStep.customers[i]).customerID,
@@ -392,7 +421,7 @@ export class TransitionProcessor extends WorkerHost {
     });
   }
 
-  async handleRandomCohortBranch(job: Job<any, any, string>) { }
+  async handleRandomCohortBranch(job: Job<any, any, string>) {}
 
   /**
    * Handle start step type; move all customers to next step and update
@@ -496,7 +525,7 @@ export class TransitionProcessor extends WorkerHost {
     );
 
     const nextStep = await queryRunner.manager.findOne(Step, {
-      where: { id: currentStep.metadata.destination, },
+      where: { id: currentStep.metadata.destination },
       relations: ['owner'],
       // lock: { mode: 'pessimistic_write' }
     });
@@ -596,7 +625,7 @@ export class TransitionProcessor extends WorkerHost {
       });
   }
 
-  async handleWaitUntil(job: Job<any, any, string>) { }
+  async handleWaitUntil(job: Job<any, any, string>) {}
 
   // @OnWorkerEvent('active')
   // onActive(job: Job<any, any, any>, prev: string) {

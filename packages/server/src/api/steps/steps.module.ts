@@ -24,6 +24,7 @@ import { EventsModule } from '../events/events.module';
 import { TransitionProcessor } from './processors/transition.processor';
 import { WebhooksModule } from '../webhooks/webhooks.module';
 import { ModalsModule } from '../modals/modals.module';
+import { WebsocketsModule } from '@/websockets/websockets.module';
 
 @Module({
   imports: [
@@ -46,10 +47,11 @@ import { ModalsModule } from '../modals/modals.module';
     forwardRef(() => AccountsModule),
     forwardRef(() => EventsModule),
     forwardRef(() => ModalsModule),
+    WebsocketsModule,
     SlackModule,
   ],
-  providers: [StepsService, JobsService, WebsocketGateway, TransitionProcessor],
+  providers: [StepsService, JobsService, TransitionProcessor],
   controllers: [StepsController],
   exports: [StepsService],
 })
-export class StepsModule { }
+export class StepsModule {}
