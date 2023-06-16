@@ -1,10 +1,6 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { toast } from "react-toastify";
 import { setStepperIndex } from "reducers/flow-builder.reducer";
-import ApiService from "services/api.service";
 import { useAppDispatch, useAppSelector } from "store/hooks";
-import FlowBuilderButton from "../Elements/FlowBuilderButton";
 import FlowBuilderStepper from "../Elements/FlowBuilderStepper";
 import FlowBuilderRenameModal from "../Modals/FlowBuilderRenameModal";
 import FlowBuilderErrorNextModal from "../Modals/FlowBuilderErrorNextModal";
@@ -12,6 +8,8 @@ import { Node } from "reactflow";
 import { BranchType, NodeData } from "../Nodes/NodeData";
 import { EdgeData } from "../Edges/EdgeData";
 import { NodeType } from "../FlowEditor";
+import Button, { ButtonType } from "../Elements/Button";
+import FlowBuilderStartModal from "../Modals/FlowBuilderStartModal";
 
 const isValidNodes = (nodes: Node<NodeData | EdgeData>[]): boolean => {
   const filterNodeByType = nodes.filter(
@@ -42,12 +40,11 @@ const isValidNodes = (nodes: Node<NodeData | EdgeData>[]): boolean => {
 const FlowBuilderHeader = () => {
   const dispatch = useAppDispatch();
 
-  const navigate = useNavigate();
-
   const [isRenameModalOpen, setIsRenameModalOpen] = useState(false);
   const [isErrorNextModalOpen, setIsErrorNextModalOpen] = useState(false);
+  const [isStartModalOpen, setIsStartModalOpen] = useState(false);
 
-  const { flowName, stepperIndex, flowId, nodes } = useAppSelector(
+  const { flowName, stepperIndex, nodes } = useAppSelector(
     (state) => state.flowBuilder
   );
 
@@ -56,18 +53,6 @@ const FlowBuilderHeader = () => {
       setIsErrorNextModalOpen(true);
     if (stepperIndex !== 2 && isValidNodes(nodes))
       dispatch(setStepperIndex((stepperIndex + 1) as 1 | 2));
-  };
-
-  const handleStartJourney = async () => {
-    try {
-      await ApiService.patch({ url: "/journeys/start/" + flowId });
-
-      toast.success("Journey has been started");
-
-      navigate(`/flow/${flowId}/view`);
-    } catch (e) {
-      toast.error("Failed to start journey");
-    }
   };
 
   return (
@@ -108,16 +93,28 @@ const FlowBuilderHeader = () => {
           isOpen={isErrorNextModalOpen}
           onClose={() => setIsErrorNextModalOpen(false)}
         />
+        <FlowBuilderStartModal
+          isOpen={isStartModalOpen}
+          onClose={() => setIsStartModalOpen(false)}
+        />
       </div>
       <FlowBuilderStepper />
       {stepperIndex === 2 ? (
-        <FlowBuilderButton onClick={handleStartJourney} className="mr-[20px]">
+        <Button
+          type={ButtonType.PRIMARY}
+          onClick={() => setIsStartModalOpen(true)}
+          className="mr-[20px]"
+        >
           Start journey
-        </FlowBuilderButton>
+        </Button>
       ) : (
-        <FlowBuilderButton onClick={handleNextStep} className="mr-[20px]">
+        <Button
+          type={ButtonType.PRIMARY}
+          onClick={handleNextStep}
+          className="mr-[20px]"
+        >
           Next
-        </FlowBuilderButton>
+        </Button>
       )}
     </div>
   );

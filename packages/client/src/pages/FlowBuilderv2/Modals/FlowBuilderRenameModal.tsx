@@ -1,7 +1,7 @@
 import React, { FC, useState } from "react";
 import { setFlowName } from "reducers/flow-builder.reducer";
 import { useAppDispatch, useAppSelector } from "store/hooks";
-import FlowBuilderButton from "../Elements/FlowBuilderButton";
+import Button, { ButtonType } from "../Elements/Button";
 import FlowBuilderInput from "../Elements/FlowBuilderInput";
 import FlowBuilderModal from "../Elements/FlowBuilderModal";
 
@@ -31,21 +31,18 @@ const FlowBuilderRenameModal: FC<FlowBuilderRenameModalProps> = ({
           />
         </div>
         <div className="flex justify-end items-center mt-[24px] gap-[8px]">
-          <FlowBuilderButton
-            onClick={onClose}
-            className="!rounded-[2px] !text-[#111827] !bg-white !border-[1px] !border-[#E5E7EB]"
-          >
+          <Button type={ButtonType.SECONDARY} onClick={onClose}>
             Cancel
-          </FlowBuilderButton>
-          <FlowBuilderButton
-            className="!rounded-[2px]"
+          </Button>
+          <Button
+            type={ButtonType.PRIMARY}
             onClick={() => {
               dispatch(setFlowName(name));
               onClose();
             }}
           >
             Save
-          </FlowBuilderButton>
+          </Button>
         </div>
       </div>
     </FlowBuilderModal>

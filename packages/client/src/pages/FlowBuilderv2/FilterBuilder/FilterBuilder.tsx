@@ -11,7 +11,9 @@ import {
 } from "reducers/flow-builder.reducer";
 import ApiService from "services/api.service";
 import { Segment } from "types/Segment";
+import Button, { ButtonType } from "../Elements/Button";
 import FlowBuilderAutoComplete from "../Elements/FlowBuilderAutoComplete";
+import FilterBuilderDynamicInput from "./FilterBuilderDynamicInput";
 
 interface FilterBuilderProps {
   settings: ConditionalSegmentsSettings;
@@ -120,7 +122,7 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                 query: { ...query, type: e.target.value as QueryType },
               })
             }
-            className="w-[100px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB] placeholder:font-inter placeholder:font-normal placeholder:text-[14px] placeholder:leading-[22px] placeholder:text-[#9CA3AF]"
+            className="w-[100px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB] placeholder:font-inter placeholder:font-normal placeholder:text-[14px] placeholder:leading-[22px] placeholder:text-[#9CA3AF] rounded-[2px]"
           >
             {Object.values(QueryType).map((comparisonType, j) => (
               <option key={j} value={comparisonType}>
@@ -133,7 +135,6 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
           of the following conditions match
         </div>
       </div>
-
       {query.statements.map((statement, i) => (
         <>
           <div
@@ -163,7 +164,7 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                         : statement
                     )
                   }
-                  className="w-[100px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB] placeholder:font-inter placeholder:font-normal placeholder:text-[14px] placeholder:leading-[22px] placeholder:text-[#9CA3AF]"
+                  className="w-[100px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB] placeholder:font-inter placeholder:font-normal placeholder:text-[14px] placeholder:leading-[22px] placeholder:text-[#9CA3AF] rounded-[2px]"
                 >
                   {Object.values(QueryStatementType).map(
                     (comparisonType, j) => (
@@ -204,9 +205,13 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                         handleChangeStatement(i, {
                           ...statement,
                           valueType: e.target.value as StatementValueType,
+                          comparisonType:
+                            valueTypeToComparisonTypesMap[
+                              e.target.value as StatementValueType
+                            ][0],
                         })
                       }
-                      className="w-[145px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB]"
+                      className="w-[145px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB] rounded-[2px]"
                     >
                       {Object.values(StatementValueType).map(
                         (comparisonType, j) => (
@@ -234,7 +239,7 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                           comparisonType: e.target.value as ComparisonType,
                         })
                       }
-                      className="w-[145px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB]"
+                      className="w-[145px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB] rounded-[2px]"
                     >
                       {valueTypeToComparisonTypesMap[statement.valueType].map(
                         (comparisonType, j) => (
@@ -246,17 +251,15 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                     </select>
                   </div>
                   <div>
-                    <input
-                      type="text"
-                      placeholder="value"
+                    <FilterBuilderDynamicInput
+                      type={statement.valueType}
                       value={statement.value}
-                      onChange={(e) =>
+                      onChange={(value) =>
                         handleChangeStatement(i, {
                           ...statement,
-                          value: e.target.value,
+                          value,
                         })
                       }
-                      className="w-full px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB] placeholder:font-inter placeholder:font-normal placeholder:text-[14px] placeholder:leading-[22px] placeholder:text-[#9CA3AF]"
                     />
                   </div>
                 </>
@@ -270,7 +273,7 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                         segmentId: e.target.value,
                       })
                     }
-                    className={`w-[140px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB] placeholder:font-inter placeholder:font-normal placeholder:text-[14px] placeholder:leading-[22px] placeholder:text-[#9CA3AF] ${
+                    className={`w-[140px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB] placeholder:font-inter placeholder:font-normal placeholder:text-[14px] placeholder:leading-[22px] placeholder:text-[#9CA3AF] rounded-[2px] ${
                       statement.segmentId ? "" : "text-[#9CA3AF]"
                     }`}
                   >
@@ -315,13 +318,13 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
           )}
         </>
       ))}
-
-      <div
-        className="max-w-[120px] px-[15px] py-[4px] border-[1px] border-[#E5E7EB] select-none cursor-pointer font-roboto font-normal text-[14px] leading-[22px]"
+      <Button
+        type={ButtonType.SECONDARY}
         onClick={handleAddStatement}
+        className="max-w-[120px]"
       >
         Add condition
-      </div>
+      </Button>
     </div>
   );
 };

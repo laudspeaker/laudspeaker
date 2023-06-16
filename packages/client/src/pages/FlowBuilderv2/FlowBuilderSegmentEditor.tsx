@@ -1,10 +1,13 @@
 import React from "react";
 import {
+  ComparisonType,
   JourneyType,
+  QueryStatementType,
   QueryType,
   SegmentsSettingsType,
   setJourneyType,
   setSegmentsSettings,
+  StatementValueType,
 } from "reducers/flow-builder.reducer";
 import { useAppDispatch, useAppSelector } from "store/hooks";
 import FilterBuilder from "./FilterBuilder/FilterBuilder";
@@ -57,7 +60,15 @@ const FlowBuilderSegmentEditor = () => {
                     type: SegmentsSettingsType.CONDITIONAL,
                     query: {
                       type: QueryType.ALL,
-                      statements: [],
+                      statements: [
+                        {
+                          type: QueryStatementType.ATTRIBUTE,
+                          key: "",
+                          comparisonType: ComparisonType.EQUALS,
+                          valueType: StatementValueType.STRING,
+                          value: "",
+                        },
+                      ],
                     },
                   })
                 )
@@ -97,7 +108,7 @@ const FlowBuilderSegmentEditor = () => {
           </div>
           <div className="flex font-roboto font-normal text-[16px] leading-[24px]">
             <div
-              className={`px-[16px] py-[8px] select-none cursor-pointer ${
+              className={`px-[16px] py-[8px] select-none cursor-pointer rounded-l-[2px] ${
                 journeyType === JourneyType.DYNAMIC
                   ? "bg-[#6366F1] text-white"
                   : "border-[1px] border-[#9CA3AF]"
@@ -107,7 +118,7 @@ const FlowBuilderSegmentEditor = () => {
               Dynamic journey
             </div>
             <div
-              className={`px-[16px] py-[8px] select-none cursor-pointer ${
+              className={`px-[16px] py-[8px] select-none cursor-pointer rounded-r-[2px] ${
                 journeyType === JourneyType.STATIC
                   ? "bg-[#6366F1] text-white"
                   : "border-[1px] border-[#9CA3AF]"

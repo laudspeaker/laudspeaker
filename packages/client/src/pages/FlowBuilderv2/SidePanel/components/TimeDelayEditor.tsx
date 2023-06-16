@@ -8,51 +8,43 @@ interface TimeDelayEditorProps {
 
 const TimeDelayEditor: FC<TimeDelayEditorProps> = ({ delay, onChange }) => {
   return (
-    <div className="flex gap-[10px]">
-      <div className="flex gap-[5px] items-center">
-        <input
-          type="number"
-          value={delay.days}
-          onChange={(e) =>
-            +e.target.value >= 0 &&
-            onChange({ ...delay, days: +e.target.value })
-          }
-          className="w-[63px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB] placeholder:font-inter placeholder:font-normal placeholder:text-[14px] placeholder:leading-[22px] placeholder:text-[#9CA3AF]"
-        />
-        <span className="font-inter font-normal text-[14px] leading-[22px]">
-          days
-        </span>
-      </div>
+    <div className="flex items-center gap-[10px] w-full h-[32px] mt-[1px] p-[1px]">
+      <div>Wait</div>
 
-      <div className="flex gap-[5px] items-center">
-        <input
-          type="number"
-          value={delay.hours}
-          onChange={(e) =>
-            +e.target.value >= 0 &&
-            onChange({ ...delay, hours: +e.target.value })
-          }
-          className="w-[57px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB] placeholder:font-inter placeholder:font-normal placeholder:text-[14px] placeholder:leading-[22px] placeholder:text-[#9CA3AF]"
-        />
-        <span className="font-inter font-normal text-[14px] leading-[22px]">
-          hours
-        </span>
-      </div>
+      <input
+        type="number"
+        value={delay.days}
+        onChange={(e) =>
+          +e.target.value >= 0 && onChange({ ...delay, days: +e.target.value })
+        }
+        placeholder="Days"
+        className="w-full px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB] placeholder:font-inter placeholder:font-normal placeholder:text-[14px] placeholder:leading-[22px] placeholder:text-[#9CA3AF] rounded-[2px]"
+      />
 
-      <div className="flex gap-[5px] items-center">
-        <input
-          type="number"
-          value={delay.minutes}
-          onChange={(e) =>
-            +e.target.value >= 0 &&
-            onChange({ ...delay, minutes: +e.target.value })
-          }
-          className="w-[71px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB] placeholder:font-inter placeholder:font-normal placeholder:text-[14px] placeholder:leading-[22px] placeholder:text-[#9CA3AF]"
-        />
-        <span className="font-inter font-normal text-[14px] leading-[22px]">
-          min
-        </span>
-      </div>
+      <div>:</div>
+
+      <input
+        type="number"
+        value={delay.hours}
+        onChange={(e) =>
+          +e.target.value >= 0 && onChange({ ...delay, hours: +e.target.value })
+        }
+        placeholder="Hours"
+        className="w-full px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB] placeholder:font-inter placeholder:font-normal placeholder:text-[14px] placeholder:leading-[22px] placeholder:text-[#9CA3AF] rounded-[2px]"
+      />
+
+      <div>:</div>
+
+      <input
+        type="number"
+        value={delay.minutes}
+        onChange={(e) =>
+          +e.target.value >= 0 &&
+          onChange({ ...delay, minutes: +e.target.value })
+        }
+        placeholder="Mins"
+        className="w-full px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB] placeholder:font-inter placeholder:font-normal placeholder:text-[14px] placeholder:leading-[22px] placeholder:text-[#9CA3AF] rounded-[2px]"
+      />
     </div>
   );
 };

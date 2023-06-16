@@ -14,9 +14,9 @@ const FlowBuilderReview = () => {
   );
 
   return (
-    <div className="relative w-full m-[20px] text-[#111827]">
+    <div className="relative w-full m-[20px] text-[#111827] overflow-y-scroll">
       <div className="h-full flex flex-col gap-[20px]">
-        <div className="relative bg-white h-full p-[20px]">
+        <div className="relative bg-white h-full p-[20px] flex flex-col gap-[10px]">
           <div className="font-inter font-semibold text-[16px] leading-[24px]">
             Journey
           </div>
@@ -42,7 +42,7 @@ const FlowBuilderReview = () => {
             )}
           </div>
           {segmentsSettings.type === SegmentsSettingsType.CONDITIONAL && (
-            <div className="flex gap-[13px] max-h-[100px] overflow-y-scroll">
+            <div className="flex gap-[13px]">
               <div className="flex flex-col gap-[10px] w-full">
                 {segmentsSettings.query.statements.map((statement, i) => (
                   <div className="flex items-center gap-[13px]">

@@ -115,6 +115,11 @@ export const MessageNode: FC<NodeProps<MessageNodeData>> = ({
           ? "border-[2px] border-[#6366F1]"
           : "border-[1px] border-[#E5E7EB]"
       }`}
+      onDragStart={(e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        console.log(e);
+      }}
     >
       <Handle
         position={Position.Top}

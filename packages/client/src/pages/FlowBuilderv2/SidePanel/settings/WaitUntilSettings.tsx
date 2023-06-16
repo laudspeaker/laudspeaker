@@ -12,6 +12,7 @@ import EventBranchEditor from "../components/EventBranchEditor";
 import { SidePanelComponentProps } from "../FlowBuilderSidePanel";
 import { v4 as uuid } from "uuid";
 import MaxTimeBranchEditor from "../components/MaxTimeBranchEditor";
+import Button, { ButtonType } from "pages/FlowBuilderv2/Elements/Button";
 
 const WaitUntilSettings: FC<SidePanelComponentProps<WaitUntilNodeData>> = ({
   nodeData,
@@ -124,22 +125,23 @@ const WaitUntilSettings: FC<SidePanelComponentProps<WaitUntilNodeData>> = ({
         </div>
       ))}
       <div className="pb-[20px] flex gap-[20px]">
-        <button
+        <Button
+          type={ButtonType.SECONDARY}
           onClick={handleAddEventBranch}
-          className="border-[1px] border-[#E5E7EB] bg-white px-[15px] py-[4px] rounded-[4px] font-roboto font-normal text-[14px] leading-[22px]"
+          disabled={nodeData.branches.length > 9}
         >
           Add branch
-        </button>
+        </Button>
 
-        <button
+        <Button
+          type={ButtonType.SECONDARY}
           onClick={handleAddMaxTimeBranch}
-          className="border-[1px] border-[#E5E7EB] bg-white px-[15px] py-[4px] rounded-[4px] font-roboto font-normal text-[14px] leading-[22px] [&:disabled]:text-gray-500"
           disabled={branches.some(
             (branch) => branch.type === BranchType.MAX_TIME
           )}
         >
           Set max. time
-        </button>
+        </Button>
       </div>
     </div>
   );

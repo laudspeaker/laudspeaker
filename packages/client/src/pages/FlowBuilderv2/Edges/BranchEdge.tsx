@@ -153,46 +153,54 @@ export const BranchEdge: FC<EdgeProps<BranchEdgeData>> = ({
                 </div>
                 {branch.type === BranchType.EVENT ? (
                   <>
-                    {branch.conditions.slice(0, 3).map((condition, i) => (
-                      <React.Fragment key={i}>
-                        <div className="p-[10px] bg-[#F3F4F6] flex flex-col gap-[5px]">
-                          <div className="font-inter font-semibold text-[14px] leading-[22px] text-[#18181B]">
-                            {condition.providerType === ProviderType.Custom
-                              ? "Custom Event"
-                              : "Posthog Event"}
-                          </div>
-                          {condition.statements.map((statement, j) => (
-                            <div
-                              key={j}
-                              className="font-inter font-normal text-[12px] leading-[20px] text-[#18181B]"
-                            >
-                              {statement.type === StatementType.PROPERTY ? (
-                                <div>
-                                  Property "{statement.key}"{" "}
-                                  {statement.comparisonType} "{statement.value}"
-                                </div>
-                              ) : (
-                                <div>
-                                  Element{" "}
-                                  <span className="font-bold">
-                                    #{statement.order}
-                                  </span>{" "}
-                                  "
-                                  {statement.elementKey === ElementKey.TAG_NAME
-                                    ? "Tag name"
-                                    : "Text"}
-                                  " {statement.comparisonType} "
-                                  {statement.value}"
-                                </div>
-                              )}
+                    {branch.conditions.length === 0 ? (
+                      <div className="bg-[#FFF1F2] p-[10px] font-inter font-normal text-[12px] leading-[20px] text-[#E11D48]">
+                        You need to set branch conditions
+                      </div>
+                    ) : (
+                      branch.conditions.slice(0, 3).map((condition, i) => (
+                        <React.Fragment key={i}>
+                          <div className="p-[10px] bg-[#F3F4F6] flex flex-col gap-[5px]">
+                            <div className="font-inter font-semibold text-[14px] leading-[22px] text-[#18181B]">
+                              {condition.providerType === ProviderType.Custom
+                                ? "Custom Event"
+                                : "Posthog Event"}
                             </div>
-                          ))}
-                        </div>
-                        {i !== branch.conditions.length - 1 && i !== 2 && (
-                          <div>Or</div>
-                        )}
-                      </React.Fragment>
-                    ))}
+                            {condition.statements.map((statement, j) => (
+                              <div
+                                key={j}
+                                className="font-inter font-normal text-[12px] leading-[20px] text-[#18181B]"
+                              >
+                                {statement.type === StatementType.PROPERTY ? (
+                                  <div>
+                                    Property "{statement.key}"{" "}
+                                    {statement.comparisonType} "
+                                    {statement.value}"
+                                  </div>
+                                ) : (
+                                  <div>
+                                    Element{" "}
+                                    <span className="font-bold">
+                                      #{statement.order}
+                                    </span>{" "}
+                                    "
+                                    {statement.elementKey ===
+                                    ElementKey.TAG_NAME
+                                      ? "Tag name"
+                                      : "Text"}
+                                    " {statement.comparisonType} "
+                                    {statement.value}"
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                          {i !== branch.conditions.length - 1 && i !== 2 && (
+                            <div>Or</div>
+                          )}
+                        </React.Fragment>
+                      ))
+                    )}
                   </>
                 ) : branch.type === BranchType.ATTRIBUTE ? (
                   <>

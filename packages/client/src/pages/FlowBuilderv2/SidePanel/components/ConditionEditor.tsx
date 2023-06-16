@@ -1,5 +1,5 @@
+import Button, { ButtonType } from "pages/FlowBuilderv2/Elements/Button";
 import FlowBuilderAutoComplete from "pages/FlowBuilderv2/Elements/FlowBuilderAutoComplete";
-import FlowBuilderButton from "pages/FlowBuilderv2/Elements/FlowBuilderButton";
 import {
   Condition,
   ElementKey,
@@ -15,6 +15,16 @@ import {
 } from "reducers/flow-builder.reducer";
 import ApiService from "services/api.service";
 import { ProviderType } from "types/Workflow";
+
+enum ConditionEditorError {
+  NO_PROPERTY_SPECIFIED,
+  NO_VALUE_SPECIFIED,
+}
+
+const errorToMessageMap: Record<ConditionEditorError, string> = {
+  [ConditionEditorError.NO_PROPERTY_SPECIFIED]: "No property specified",
+  [ConditionEditorError.NO_VALUE_SPECIFIED]: "No value specified",
+};
 
 interface ConditionEditorProps {
   condition: Condition;
@@ -97,6 +107,22 @@ const ConditionEditor: FC<ConditionEditorProps> = ({
     });
   };
 
+  const errors: ConditionEditorError[][] = [];
+
+  for (const statement of condition.statements) {
+    const statementErrors: ConditionEditorError[] = [];
+
+    if (!statement.value) {
+      statementErrors.push(ConditionEditorError.NO_VALUE_SPECIFIED);
+    }
+
+    if (statement.type === StatementType.PROPERTY && !statement.key) {
+      statementErrors.push(ConditionEditorError.NO_PROPERTY_SPECIFIED);
+    }
+
+    errors.push(statementErrors);
+  }
+
   return (
     <div className="flex flex-col gap-[10px] p-[10px] bg-[#F3F4F6]">
       <div className="font-inter font-semibold text-[14px] leading-[22px]">
@@ -153,7 +179,7 @@ const ConditionEditor: FC<ConditionEditorProps> = ({
             </div>
           </div>
           {statement.type === StatementType.PROPERTY ? (
-            <div>
+            <div className="flex flex-col gap-[10px]">
               <FlowBuilderAutoComplete
                 initialValue={statement.key}
                 value={statement.key}
@@ -179,6 +205,18 @@ const ConditionEditor: FC<ConditionEditorProps> = ({
                 getKey={(value) => value}
                 placeholder="Property name"
               />
+              {errors[i].some(
+                (statementError) =>
+                  statementError === ConditionEditorError.NO_PROPERTY_SPECIFIED
+              ) && (
+                <div className="font-inter font-normal text-[12px] leading-[20px] text-[#E11D48]">
+                  {
+                    errorToMessageMap[
+                      ConditionEditorError.NO_PROPERTY_SPECIFIED
+                    ]
+                  }
+                </div>
+              )}
             </div>
           ) : (
             <>
@@ -264,7 +302,7 @@ const ConditionEditor: FC<ConditionEditorProps> = ({
               ))}
             </select>
           </div>
-          <div>
+          <div className="flex flex-col gap-[10px]">
             <input
               type="text"
               placeholder="Value"
@@ -275,6 +313,14 @@ const ConditionEditor: FC<ConditionEditorProps> = ({
               }}
               className="w-full px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB] placeholder:font-inter placeholder:font-normal placeholder:text-[14px] placeholder:leading-[22px] placeholder:text-[#9CA3AF]"
             />
+            {errors[i].some(
+              (statementError) =>
+                statementError === ConditionEditorError.NO_VALUE_SPECIFIED
+            ) && (
+              <div className="font-inter font-normal text-[12px] leading-[20px] text-[#E11D48]">
+                {errorToMessageMap[ConditionEditorError.NO_VALUE_SPECIFIED]}
+              </div>
+            )}
           </div>
 
           {i !== condition.statements.length - 1 && (
@@ -312,18 +358,18 @@ const ConditionEditor: FC<ConditionEditorProps> = ({
         </select>
 
         <div className="flex gap-[10px]">
-          <FlowBuilderButton
-            onClick={onCancel}
-            className="!rounded-[2px] !text-[#111827] !bg-white !border-[1px] !border-[#E5E7EB]"
-          >
+          <Button type={ButtonType.SECONDARY} onClick={onCancel}>
             Cancel
-          </FlowBuilderButton>
-          <FlowBuilderButton
-            className="!rounded-[2px]"
+          </Button>
+          <Button
+            type={ButtonType.PRIMARY}
             onClick={() => onSave(condition)}
+            disabled={errors.some(
+              (statementErrors) => statementErrors.length > 0
+            )}
           >
             Save
-          </FlowBuilderButton>
+          </Button>
         </div>
       </div>
     </div>

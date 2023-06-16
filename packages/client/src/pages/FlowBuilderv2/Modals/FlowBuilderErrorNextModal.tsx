@@ -1,5 +1,5 @@
 import React, { FC } from "react";
-import FlowBuilderButton from "../Elements/FlowBuilderButton";
+import Button, { ButtonType } from "../Elements/Button";
 import FlowBuilderModal from "../Elements/FlowBuilderModal";
 
 interface FlowBuilderErrorNextModalProps {
@@ -53,12 +53,9 @@ const FlowBuilderErrorNextModal: FC<FlowBuilderErrorNextModalProps> = ({
           </div>
         </div>
         <div className="flex justify-end items-center mt-[24px] gap-[8px]">
-          <FlowBuilderButton
-            onClick={onClose}
-            className="!rounded-[2px] !text-white !bg-[#6366F1]"
-          >
+          <Button type={ButtonType.PRIMARY} onClick={onClose}>
             Ok
-          </FlowBuilderButton>
+          </Button>
         </div>
       </div>
     </FlowBuilderModal>

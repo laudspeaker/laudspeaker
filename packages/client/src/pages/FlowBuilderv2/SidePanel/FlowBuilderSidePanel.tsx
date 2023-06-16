@@ -4,7 +4,7 @@ import Scrollbars from "react-custom-scrollbars-2";
 import { changeNodeData, deselectNodes } from "reducers/flow-builder.reducer";
 import { useAppDispatch, useAppSelector } from "store/hooks";
 import deepCopy from "utils/deepCopy";
-import FlowBuilderButton from "../Elements/FlowBuilderButton";
+import Button, { ButtonType } from "../Elements/Button";
 import { NodeType } from "../FlowEditor";
 import FlowBuilderDeleteModal from "../Modals/FlowBuilderDeleteModal";
 import { messageFixtures } from "../Nodes/MessageNode";
@@ -107,7 +107,9 @@ const FlowBuilderSidePanel: FC<FlowBuilderSidePanelProps> = ({ className }) => {
 
   const isOpen =
     selectedNode &&
-    ![NodeType.EMPTY, NodeType.START].includes(selectedNode.type as NodeType);
+    ![NodeType.EMPTY, NodeType.START, NodeType.INSERT_NODE].includes(
+      selectedNode.type as NodeType
+    );
 
   return (
     <>
@@ -152,22 +154,20 @@ const FlowBuilderSidePanel: FC<FlowBuilderSidePanelProps> = ({ className }) => {
           </div>
         </div>
         <div className="absolute bottom-0 w-full min-h-[60px] h-[60px] py-[14px] px-[20px] border-t-[1px] flex justify-between items-center">
-          <div
-            className="font-roboto underline font-normal text-[14px] leading-[22px] select-none cursor-pointer"
+          <Button
+            type={ButtonType.LINK}
             onClick={() => setIsDeleteModalOpen(true)}
           >
             Delete
-          </div>
+          </Button>
+
           <div className="flex justify-end items-center gap-[10px]">
-            <FlowBuilderButton
-              onClick={onCancel}
-              className="!rounded-[2px] !text-[#111827] !bg-white !border-[1px] !border-[#E5E7EB]"
-            >
+            <Button type={ButtonType.SECONDARY} onClick={onCancel}>
               Cancel
-            </FlowBuilderButton>
-            <FlowBuilderButton className="!rounded-[2px]" onClick={onSave}>
+            </Button>
+            <Button type={ButtonType.PRIMARY} onClick={onSave}>
               Save
-            </FlowBuilderButton>
+            </Button>
           </div>
         </div>
         {selectedNode && (

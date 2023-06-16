@@ -9,6 +9,7 @@ import React, { FC } from "react";
 import { SidePanelComponentProps } from "../FlowBuilderSidePanel";
 import { v4 as uuid } from "uuid";
 import AttributeBranchEditor from "../components/AttributeBranchEditor";
+import Button, { ButtonType } from "pages/FlowBuilderv2/Elements/Button";
 
 const UserAttributeSettings: FC<
   SidePanelComponentProps<UserAttributeNodeData>
@@ -83,12 +84,9 @@ const UserAttributeSettings: FC<
         </div>
       ))}
       <div className="py-[20px] flex gap-[20px]">
-        <button
-          onClick={handleAddAttributeBranch}
-          className="border-[1px] border-[#E5E7EB] bg-white px-[15px] py-[4px] rounded-[4px] font-roboto font-normal text-[14px] leading-[22px]"
-        >
+        <Button type={ButtonType.SECONDARY} onClick={handleAddAttributeBranch}>
           Add branch
-        </button>
+        </Button>
       </div>
     </div>
   );

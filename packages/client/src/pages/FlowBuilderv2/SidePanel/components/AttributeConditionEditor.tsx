@@ -1,5 +1,5 @@
+import Button, { ButtonType } from "pages/FlowBuilderv2/Elements/Button";
 import FlowBuilderAutoComplete from "pages/FlowBuilderv2/Elements/FlowBuilderAutoComplete";
-import FlowBuilderButton from "pages/FlowBuilderv2/Elements/FlowBuilderButton";
 import { AttributeCondition } from "pages/FlowBuilderv2/Nodes/NodeData";
 import React, { FC, useEffect, useState } from "react";
 import { useDebounce } from "react-use";
@@ -148,18 +148,12 @@ const AttributeConditionEditor: FC<AttributeConditionEditorProps> = ({
           Add property
         </div>
         <div className="flex gap-[10px]">
-          <FlowBuilderButton
-            onClick={onCancel}
-            className="!rounded-[2px] !text-[#111827] !bg-white !border-[1px] !border-[#E5E7EB]"
-          >
+          <Button type={ButtonType.SECONDARY} onClick={onCancel}>
             Cancel
-          </FlowBuilderButton>
-          <FlowBuilderButton
-            className="!rounded-[2px]"
-            onClick={() => onSave(condition)}
-          >
+          </Button>
+          <Button type={ButtonType.PRIMARY} onClick={() => onSave(condition)}>
             Save
-          </FlowBuilderButton>
+          </Button>
         </div>
       </div>
     </div>

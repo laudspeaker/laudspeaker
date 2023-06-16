@@ -1,3 +1,4 @@
+import Button, { ButtonType } from "pages/FlowBuilderv2/Elements/Button";
 import {
   Condition,
   ElementKey,
@@ -154,18 +155,19 @@ const EventBranchEditor: FC<EventBranchEditorProps> = ({
       ))}
 
       <div className="flex gap-[10px]">
-        <div
-          className="cursor-pointer font-roboto font-normal text-[14px] leading-[22px] underline"
-          onClick={onAddCondition}
-        >
-          Add condition
-        </div>
-        <div
-          className="cursor-pointer font-roboto font-normal text-[14px] leading-[22px] underline text-[#EB5757]"
+        {conditionIndexToChange === undefined && (
+          <Button type={ButtonType.LINK} onClick={onAddCondition}>
+            Add condition
+          </Button>
+        )}
+
+        <Button
+          type={ButtonType.LINK}
           onClick={onDeleteBranch}
+          className="text-[#EB5757] hover:text-[#EB5757] focus:text-[#EB5757]"
         >
           Delete branch
-        </div>
+        </Button>
       </div>
     </div>
   );

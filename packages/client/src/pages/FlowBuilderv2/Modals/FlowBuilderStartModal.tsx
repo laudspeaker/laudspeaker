@@ -1,24 +1,34 @@
-import Button, { ButtonType } from "pages/FlowBuilderv2/Elements/Button";
-import FlowBuilderModal from "pages/FlowBuilderv2/Elements/FlowBuilderModal";
 import React, { FC } from "react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 import ApiService from "services/api.service";
 import { useAppSelector } from "store/hooks";
+import Button, { ButtonType } from "../Elements/Button";
+import FlowBuilderModal from "../Elements/FlowBuilderModal";
 
-interface FlowViewerStopModalProps {
+interface FlowBuilderStartModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-const FlowViewerStopModal: FC<FlowViewerStopModalProps> = ({
+const FlowBuilderStartModal: FC<FlowBuilderStartModalProps> = ({
   isOpen,
   onClose,
 }) => {
   const { flowId } = useAppSelector((state) => state.flowBuilder);
 
-  const handleStop = async () => {
-    await ApiService.patch({ url: "/journeys/stop/" + flowId });
+  const navigate = useNavigate();
 
-    window.location.reload();
+  const handleStartJourney = async () => {
+    try {
+      await ApiService.patch({ url: "/journeys/start/" + flowId });
+
+      toast.success("Journey has been started");
+
+      navigate(`/flow/${flowId}/view`);
+    } catch (e) {
+      toast.error("Failed to start journey");
+    }
   };
 
   return (
@@ -27,11 +37,10 @@ const FlowViewerStopModal: FC<FlowViewerStopModalProps> = ({
         <div className="flex gap-[16px]">
           <div className="flex flex-col gap-[8px]">
             <div className="font-medium text-[16px] leading-[24px]">
-              Are you sure to stop the journey?
+              Are you sure to start the journey?
             </div>
             <div className="font-normal text-[14px] leading-[22px]">
-              Please note that stopping the journey is an irreversible action,
-              and cannot be resumed
+              Once you start, eligible customers can be messaged.
             </div>
           </div>
         </div>
@@ -41,10 +50,12 @@ const FlowViewerStopModal: FC<FlowViewerStopModalProps> = ({
           </Button>
           <Button
             type={ButtonType.PRIMARY}
-            className="!rounded-[2px] bg-[#F43F5E] !border-[1px] !border-[#F43F5E] text-white"
-            onClick={handleStop}
+            onClick={() => {
+              handleStartJourney();
+              onClose();
+            }}
           >
-            Stop
+            Start
           </Button>
         </div>
       </div>
@@ -52,4 +63,4 @@ const FlowViewerStopModal: FC<FlowViewerStopModalProps> = ({
   );
 };
 
-export default FlowViewerStopModal;
+export default FlowBuilderStartModal;

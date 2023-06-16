@@ -2,7 +2,7 @@ import React, { FC } from "react";
 import { Node } from "reactflow";
 import { removeNode } from "reducers/flow-builder.reducer";
 import { useAppDispatch } from "store/hooks";
-import FlowBuilderButton from "../Elements/FlowBuilderButton";
+import Button, { ButtonType } from "../Elements/Button";
 import FlowBuilderModal from "../Elements/FlowBuilderModal";
 import { NodeData } from "../Nodes/NodeData";
 
@@ -59,21 +59,18 @@ const FlowBuilderDeleteModal: FC<FlowBuilderDeleteModalProps> = ({
           </div>
         </div>
         <div className="flex justify-end items-center mt-[24px] gap-[8px]">
-          <FlowBuilderButton
-            onClick={onClose}
-            className="!rounded-[2px] !text-[#111827] !bg-white !border-[1px] !border-[#E5E7EB]"
-          >
+          <Button type={ButtonType.SECONDARY} onClick={onClose}>
             No
-          </FlowBuilderButton>
-          <FlowBuilderButton
-            className="!rounded-[2px]"
+          </Button>
+          <Button
+            type={ButtonType.PRIMARY}
             onClick={() => {
               dispatch(removeNode(selectedNode.id));
               onClose();
             }}
           >
             Yes
-          </FlowBuilderButton>
+          </Button>
         </div>
       </div>
     </FlowBuilderModal>

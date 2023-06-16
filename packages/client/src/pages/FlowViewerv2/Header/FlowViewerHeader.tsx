@@ -43,7 +43,7 @@ const FlowViewerHeader: FC<FlowViewerHeaderProps> = ({
   };
 
   return (
-    <div className="relative h-[140px] bg-white border-[1px] border-[#E5E7EB] flex flex-col justify-between">
+    <div className="relative h-[140px] bg-white border-b-[1px] border-[#E5E7EB] flex flex-col justify-between">
       <div className="h-full px-[20px] flex justify-between items-center">
         <div className="flex items-center gap-[10px]">
           <div className="font-semibold text-[20px] leading-[28px]">
