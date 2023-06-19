@@ -9,11 +9,12 @@ import { CustomersService } from '../customers/customers.service';
 import { DataSource } from 'typeorm';
 import mongoose from 'mongoose';
 import { InjectConnection } from '@nestjs/mongoose';
-import { AccountsService } from '../accounts/accounts.service';
 import { Step } from '../steps/entities/step.entity';
 import {
   AnalyticsEvent,
   AnalyticsProviderTypes,
+  ElementConditionFilter,
+  FilterByOption,
   StepType,
 } from '../steps/types/step.interface';
 import { Journey } from '../journeys/entities/journey.entity';
@@ -21,6 +22,7 @@ import {
   PosthogTriggerParams,
   ProviderTypes,
 } from '../workflows/entities/workflow.entity';
+import { AudiencesHelper } from '../audiences/audiences.helper';
 
 export interface StartDto {
   account: Account;
@@ -45,8 +47,9 @@ export class EventsProcessor extends WorkerHost {
     @InjectConnection() private readonly connection: mongoose.Connection,
     @Inject(CustomersService)
     private readonly customersService: CustomersService,
-    @Inject(AccountsService) private readonly accountsService: AccountsService,
-    @InjectQueue('transition') private readonly transitionQueue: Queue
+    @InjectQueue('transition') private readonly transitionQueue: Queue,
+    private readonly audiencesHelper: AudiencesHelper
+
   ) {
     super();
   }
@@ -106,7 +109,7 @@ export class EventsProcessor extends WorkerHost {
             // Skip over invalid posthog events
             const analyticsEvent: AnalyticsEvent =
               steps[stepIndex].metadata.branches[branchIndex].events[
-                eventIndex
+              eventIndex
               ];
             if (
               job.data.event.source === AnalyticsProviderTypes.POSTHOG &&
@@ -155,11 +158,51 @@ export class EventsProcessor extends WorkerHost {
                 .length;
               conditionIndex++
             ) {
-              //step 1: find steps that match event
-              //Checking for posthog:
-              //step 2: see if customer is in those steps
-              //step 3: add step + customer to transition queue if they are
-              // step 4: error and retry if not
+              if (analyticsEvent.conditions[conditionIndex].type === FilterByOption.CUSTOMER_KEY) {
+                const { key, comparisonType, keyType, value } = analyticsEvent.conditions[conditionIndex].propertyCondition;
+                //specialcase: checking for url
+                if (key === 'current_url' && analyticsEvent.provider === AnalyticsProviderTypes.POSTHOG && analyticsEvent.event === PosthogTriggerParams.Pageview) {
+                  const matches: boolean = ['exists', 'doesNotExist'].includes(
+                    comparisonType
+                  )
+                    ? this.audiencesHelper.operableCompare(
+                      job.data.event?.event?.page?.url,
+                      comparisonType
+                    )
+                    : await this.audiencesHelper.conditionalCompare(
+                      job.data.event?.event?.page?.url,
+                      value,
+                      comparisonType
+                    );
+                  conditionEvalutation.push(matches);
+                }
+                else {
+                  const matches = ['exists', 'doesNotExist'].includes(comparisonType)
+                    ? this.audiencesHelper.operableCompare(
+                      job.data.event?.event?.[key],
+                      comparisonType
+                    )
+                    : await this.audiencesHelper.conditionalCompare(
+                      job.data.event?.event?.[key],
+                      value,
+                      comparisonType
+                    );
+                  conditionEvalutation.push(matches);
+                }
+              }
+              else if (analyticsEvent.conditions[conditionIndex].type === FilterByOption.ELEMENTS) {
+                const { order, filter, comparisonType, filterType, value } = analyticsEvent.conditions[conditionIndex].elementCondition;
+                const elementToCompare = job.data.event?.event?.elements?.find(
+                  (el) => el?.order === order
+                )?.[
+                  filter ===
+                    ElementConditionFilter.TEXT
+                    ? 'text'
+                    : 'tag_name'
+                ];
+                const matches: boolean = await this.audiencesHelper.conditionalCompare(elementToCompare, value, comparisonType);
+                conditionEvalutation.push(matches);
+              }
             }
             // If Analytics event conditions are grouped by or, check if any of the conditions match
             if (
@@ -215,13 +258,23 @@ export class EventsProcessor extends WorkerHost {
       }
 
       // If customer isn't in step, we throw error, otherwise we queue and consume event
-      if (stepToQueue)
-        await this.transitionQueue.add(stepToQueue.type, {
-          step: stepToQueue.id,
-          branch: branch,
-          customer: customer.id,
-          session: job.data.session,
-        });
+      if (stepToQueue) {
+        let found: boolean = false;
+        for (let i = 0; i < stepToQueue.customers.length; i++) {
+          if (JSON.parse(stepToQueue.customers[i]).customerID === customer.id)
+            found = true;
+        }
+        if (!found) throw new Error('Customer has not yet arrived in step.');
+        else
+          await this.transitionQueue.add(stepToQueue.type, {
+            step: stepToQueue.id,
+            branch: branch,
+            customer: customer.id,
+            session: job.data.session,
+          });
+      }
+      else return;
+
     } catch (e) {
       await transactionSession.abortTransaction();
       await queryRunner.rollbackTransaction();

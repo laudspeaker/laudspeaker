@@ -42,7 +42,6 @@ import {
   TimeType,
 } from './types/visual-layout.interface';
 import {
-  AllStepTypeMetadata,
   AnalyticsEvent,
   StartStepMetadata,
   StepType,
@@ -95,7 +94,7 @@ export class JourneysService {
     @Inject(forwardRef(() => CustomersService))
     private customersService: CustomersService,
     @InjectConnection() private readonly connection: mongoose.Connection
-  ) {}
+  ) { }
 
   log(message, method, session, user = 'ANONYMOUS') {
     this.logger.log(
@@ -432,8 +431,8 @@ export class JourneysService {
               ...(key === 'isActive'
                 ? { isStopped: false, isPaused: false }
                 : key === 'isPaused'
-                ? { isStopped: false }
-                : {}),
+                  ? { isStopped: false }
+                  : {}),
             });
         }
       } else {
@@ -882,31 +881,29 @@ export class JourneysService {
               metadata.template = nodes[i].data['template']['selected']['id'];
             break;
           case NodeType.WAIT_UNTIL:
-            // metadata = new WaitUntilStepMetadata();
+            metadata = new WaitUntilStepMetadata();
 
-            // //Time Branch configuration
-            // let timeBranch = nodes[i].data['branches'].filter((branch) => { branch.type === BranchType.MAX_TIME })[0]
-            // if (timeBranch.timeType === TimeType.TIME_DELAY) {
-            //   metadata.timeBranch = new TimeDelayStepMetadata();
-            //   metadata.timeBranch.delay = new Temporal.Duration(timeBranch.delay.years, timeBranch['delay']['months'], timeBranch['delay']['weeks'], timeBranch['delay']['days'], timeBranch['delay']['hours'], timeBranch['delay']['minutes'])
-            // } else if (timeBranch.timeType === TimeType.TIME_WINDOW) {
-            //   metadata.timeBranch = new TimeWindowStepMetadata();
-            //   metadata.timeBranch.window = new TimeWindow()
-            //   metadata.timeBranch.window.from = Temporal.Instant.from(new Date(timeBranch['from']).toISOString())
-            //   metadata.timeBranch.window.to = Temporal.Instant.from(new Date(timeBranch['to']).toISOString())
-            // }
-            // metadata.branches = [];
-            // for (let i = 0; i < relevantEdges.length; i++) {
-            //   if (relevantEdges[i].data['branch'].type === BranchType.MAX_TIME) metadata.timeBranch.destination = relevantEdges[i].target;
-            //   else if (relevantEdges[i].data['branch'].type === BranchType.EVENT) {
-            //     const branch = new AnalyticsEvent();
-            //     branch.conditions = []
-            //     branch.provider =
-            //     branch.providerParams
-            //     branch.destination
-            //     metadata.branches.push(branch);
-            //   }
-            // }
+            //Time Branch configuration
+            let timeBranch = nodes[i].data['branches'].filter((branch) => { return branch.type === BranchType.MAX_TIME })[0]
+            if (timeBranch.timeType === TimeType.TIME_DELAY) {
+              metadata.timeBranch = new TimeDelayStepMetadata();
+              metadata.timeBranch.delay = new Temporal.Duration(timeBranch.delay.years, timeBranch['delay']['months'], timeBranch['delay']['weeks'], timeBranch['delay']['days'], timeBranch['delay']['hours'], timeBranch['delay']['minutes'])
+            } else if (timeBranch.timeType === TimeType.TIME_WINDOW) {
+              metadata.timeBranch = new TimeWindowStepMetadata();
+              metadata.timeBranch.window = new TimeWindow()
+              metadata.timeBranch.window.from = Temporal.Instant.from(new Date(timeBranch['from']).toISOString())
+              metadata.timeBranch.window.to = Temporal.Instant.from(new Date(timeBranch['to']).toISOString())
+            }
+            metadata.branches = [];
+            for (let i = 0; i < relevantEdges.length; i++) {
+              if (relevantEdges[i].data['branch'].type === BranchType.MAX_TIME) metadata.timeBranch.destination = relevantEdges[i].target;
+              else if (relevantEdges[i].data['branch'].type === BranchType.EVENT) {
+                const branch = new AnalyticsEvent();
+                branch.conditions = []
+                branch.provider
+                metadata.branches.push(branch);
+              }
+            }
             break;
           case NodeType.JUMP_TO:
             if (relevantEdges.length > 1)

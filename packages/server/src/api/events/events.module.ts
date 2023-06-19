@@ -34,6 +34,8 @@ import {
   PosthogEventSchema,
 } from './schemas/posthog-event.schema';
 import { JourneysModule } from '../journeys/journeys.module';
+import { AudiencesHelper } from '../audiences/audiences.helper';
+import { SegmentsModule } from '../segments/segments.module';
 
 @Module({
   imports: [
@@ -77,11 +79,12 @@ import { JourneysModule } from '../journeys/journeys.module';
     forwardRef(() => TemplatesModule),
     forwardRef(() => WorkflowsModule),
     forwardRef(() => JourneysModule),
+    forwardRef(() => SegmentsModule),
     AudiencesModule,
     SlackModule,
   ],
   controllers: [EventsController],
-  providers: [EventsService, EventsProcessor],
+  providers: [EventsService, EventsProcessor, AudiencesHelper],
   exports: [EventsService],
 })
-export class EventsModule {}
+export class EventsModule { }
