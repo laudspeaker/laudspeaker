@@ -34,7 +34,7 @@ export class EventsController {
     private readonly logger: Logger,
     @Inject(EventsService)
     private readonly eventsService: EventsService
-  ) {}
+  ) { }
 
   log(message, method, session, user = 'ANONYMOUS') {
     this.logger.log(
@@ -119,23 +119,23 @@ export class EventsController {
   @Post('/posthog/')
   @UseInterceptors(ClassSerializerInterceptor)
   @UseGuards(ApiKeyAuthGuard)
-  async getPostHogPayload(
-    @Headers('Authorization') apiKey: string,
+  async posthogPayload(
+    @Req() { user }: Request,
     @Body() body: PosthogBatchEventDto
   ): Promise<WorkflowTick[] | HttpException> {
     const session = randomUUID();
-    return this.eventsService.getPostHogPayload(apiKey, body, session);
+    return this.eventsService.posthogPayload((<Account>user), body, session);
   }
 
   @Post()
   @UseInterceptors(ClassSerializerInterceptor)
   @UseGuards(ApiKeyAuthGuard)
-  async enginePayload(
-    @Headers('Authorization') apiKey: string,
+  async customPayload(
+    @Req() { user }: Request,
     @Body() body: EventDto
   ): Promise<WorkflowTick[] | HttpException> {
     const session = randomUUID();
-    return this.eventsService.enginePayload(apiKey, body, session);
+    return this.eventsService.customPayload((<Account>user), body, session);
   }
 
   @Get('/possible-attributes/:resourceId?')

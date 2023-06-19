@@ -47,11 +47,11 @@ import { WebsocketsModule } from '@/websockets/websockets.module';
     forwardRef(() => AccountsModule),
     forwardRef(() => EventsModule),
     forwardRef(() => ModalsModule),
-    WebsocketsModule,
+    forwardRef(() => WebsocketsModule),
     SlackModule,
   ],
   providers: [StepsService, JobsService, TransitionProcessor],
   controllers: [StepsController],
   exports: [StepsService],
 })
-export class StepsModule {}
+export class StepsModule { }

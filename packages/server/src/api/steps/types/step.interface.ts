@@ -25,7 +25,7 @@ export class TimeWindow {
   to: Temporal.Instant;
 }
 
-export enum EventConditionElementsFilter {
+export enum PropertyConditionFilter {
   TEXT = 'text',
   TAG_NAME = 'tag name',
 }
@@ -35,22 +35,31 @@ export enum FilterByOption {
   ELEMENTS = 'elements',
 }
 
+export class ElementCondition {
+  key: string;
+  comparisonType: string;
+  keyType: string;
+  value: any;
+}
+
+export class PropertyCondition {
+  order: number;
+  filter: PropertyConditionFilter;
+  comparisonType: string;
+  filterType: string;
+  value: string;
+}
+
 export class AnalyticsEventConditions {
-  value: any; // PropertyStatement.value
-  key?: string; //PropertyStatement.key
-  type?: string; //PropertyStatement.valueType
-  comparisonType?: string; // PropertyStatement.comparisonType
-  relationWithNext?: 'and' | 'or'; // Condition.relationToNext
-  filterBy?: FilterByOption; //StatementType
-  elementOrder?: number; //ElementStatement.order
-  filter?: EventConditionElementsFilter; //ElementKey
+  type?: FilterByOption;
+  condition?: ElementCondition | PropertyCondition;
 }
 
 export type AnalyticsProviderParams =
   | PosthogProviderParams
   | LaudspeakerProviderParams;
 
-export enum LaudspeakerProviderParams {}
+export enum LaudspeakerProviderParams { }
 
 export enum PosthogProviderParams {
   TRACK = 'track',
@@ -77,6 +86,7 @@ export enum Channel {
  * Top level interface for a branch.
  */
 export class Branch {
+  index: number;
   /** Step ID (UUID) */
   destination: string;
 }
@@ -91,13 +101,22 @@ export class RandomBranch extends Branch {
 /*
  * Top level interface for any type of event that can trigger a step
  */
-export class Event extends Branch {}
+export class EventBranch extends Branch {
+  events: Event[];
+  relation?: string;
+}
+
+/*
+ * Primary grouping of event information that can
+ * be grouped via and/or.
+ */
+export class Event { }
 
 /*
  * Events associated with messages; for example, if a customer
  * opens an email or receives a push notification.
  */
-export class MessageEvent extends Event {}
+export class MessageEvent extends Event { }
 
 /*
  * Events associated with product analytics, for example Posthog
@@ -105,21 +124,40 @@ export class MessageEvent extends Event {}
  */
 export class AnalyticsEvent extends Event {
   provider: AnalyticsProviderTypes; // client/src/types/Workflow.ts: ProviderType
-  providerParams: AnalyticsProviderParams; //Condition.name
+  event: string;
   conditions: AnalyticsEventConditions[];
+  relation?: string; // and/or
 }
 
 /*
  * Events associated with customer attributes changing, for example
  * a customer changing from a 'free' to a 'paid' plan.
  */
-export class AttributeChangeEvent extends Event {}
+export class AttributeChangeEvent extends Event { }
 
 /*
  * Top level interface for any platform data that we are
  * sorting/switching on.
  */
-export class Attribute extends Branch {}
+export class AttributeBranch extends Branch {
+  groups: AttributeGroup[];
+  relation: string;
+}
+
+/*
+ * Secondary grouping of platform data that shares relation
+ * (and/or)
+ */
+export class AttributeGroup {
+  attributes: Attribute[];
+  relation: string;
+}
+
+/*
+ * Primary grouping of platform data that shares relation 
+ * (and/or)
+ */
+export class Attribute { }
 
 /*
  * Customer attributes, for example
@@ -129,46 +167,47 @@ export class Attribute extends Branch {}
  * Sample Customer Document:
  *      {
  *          id: ObjectId('38nxu98xnu320zn3x98n83unx'),
- *          email: 'user@example.com',
+ *          email: 'user_two@example.com',
  *          _attribute_history:
  *              [
  *                {
  *                  field: 'email'
  *                  from: 'user_one@example.com'
- *                  to:'user@example.com'
+ *                  to:'user_two@example.com',
+ *                  timestamp: '12:34:56 7890 GMT'
  *                }
  *              ]
  *       }
  * Sample comparison: 'email' 'string' 'contains' 'laudspeaker'
  */
 export class CustomerAttribute extends Attribute {
-  attrID: string; // Primary key of customer attribute
-  comparisonType: string; // type of attribute you are checking, i.e. string
-  condition: string; // isEqual greaterThan etc
-  comparisonValue: string; // value to compare it to
+  key: string;// firstName,lastName etc.
+  keyType: string; //boolean,number,string,date,etc
+  comparisonType: string; // equals,doesnotequal,etc.
+  value: string; // mahamad, charawi,etc.
 }
 
 /*
  * Message event history, for example a customer
  * might have opened the 'Welcome' email twice.
  */
-export class MessageEventHistoryAttribute extends Attribute {}
+export class MessageEventHistoryAttribute extends Attribute { }
 
 /*
  * Analytics event history, for example a customer
  * might have opened the 'Welcome' email twice.
  */
-export class AnalyticsEventHistoryAttribute extends Attribute {}
+export class AnalyticsEventHistoryAttribute extends Attribute { }
 
 /*
  * Top level step metadata interface.
  */
-export class StepTypeMetadata {}
+export class StepTypeMetadata { }
 
 /*
  * Exit step metadata: no additional properties needed.
  */
-export class ExitStepMetadata extends StepTypeMetadata {}
+export class ExitStepMetadata extends StepTypeMetadata { }
 
 /*
  * Parent Metadata interface for steps with only a single
@@ -183,12 +222,12 @@ export class SingleBranchMetadata extends StepTypeMetadata {
 /*
  * Start step metadata: no additional properties needed.
  */
-export class StartStepMetadata extends SingleBranchMetadata {}
+export class StartStepMetadata extends SingleBranchMetadata { }
 
 /*
  * Loop step metadata: no additional properties needed.
  */
-export class LoopStepMetadata extends SingleBranchMetadata {}
+export class LoopStepMetadata extends SingleBranchMetadata { }
 
 /*
  * Message step metadata, includes messaging channel type and

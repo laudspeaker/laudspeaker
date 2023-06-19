@@ -173,11 +173,11 @@ export class TransitionProcessor extends WorkerHost {
       }
       await transactionSession.commitTransaction();
       await queryRunner.commitTransaction();
-    } catch (err) {
+    } catch (e) {
       await transactionSession.abortTransaction();
       await queryRunner.rollbackTransaction();
-      this.error(err, this.process.name, job.data.session);
-      err = err;
+      this.error(e, this.process.name, job.data.session);
+      err = e;
     } finally {
       await transactionSession.endSession();
       await queryRunner.release();

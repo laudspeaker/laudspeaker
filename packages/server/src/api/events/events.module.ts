@@ -33,6 +33,7 @@ import {
   PosthogEvent,
   PosthogEventSchema,
 } from './schemas/posthog-event.schema';
+import { JourneysModule } from '../journeys/journeys.module';
 
 @Module({
   imports: [
@@ -67,11 +68,15 @@ import {
     BullModule.registerQueue({
       name: 'webhooks',
     }),
+    BullModule.registerQueue({
+      name: 'transition',
+    }),
     forwardRef(() => AuthModule),
     forwardRef(() => CustomersModule),
     forwardRef(() => AccountsModule),
     forwardRef(() => TemplatesModule),
     forwardRef(() => WorkflowsModule),
+    forwardRef(() => JourneysModule),
     AudiencesModule,
     SlackModule,
   ],
@@ -79,4 +84,4 @@ import {
   providers: [EventsService, EventsProcessor],
   exports: [EventsService],
 })
-export class EventsModule {}
+export class EventsModule { }

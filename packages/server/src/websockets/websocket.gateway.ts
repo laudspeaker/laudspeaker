@@ -33,7 +33,7 @@ export class WebsocketGateway implements OnGatewayConnection {
     private customersService: CustomersService,
     @Inject(forwardRef(() => EventsService))
     private eventsService: EventsService
-  ) {}
+  ) { }
 
   public async handleConnection(socket: Socket) {
     console.log(socket.id);
@@ -196,8 +196,8 @@ export class WebsocketGateway implements OnGatewayConnection {
         socket.emit('customerId', customer.id);
       }
 
-      const workflowTick = await this.eventsService.enginePayload(
-        `Api-key ${apiKey}`,
+      const workflowTick = await this.eventsService.customPayload(
+        socket.data.account,
         {
           correlationKey: '_id',
           correlationValue: customer.id,

@@ -95,7 +95,7 @@ export class JourneysService {
     @Inject(forwardRef(() => CustomersService))
     private customersService: CustomersService,
     @InjectConnection() private readonly connection: mongoose.Connection
-  ) {}
+  ) { }
 
   log(message, method, session, user = 'ANONYMOUS') {
     this.logger.log(
@@ -432,8 +432,8 @@ export class JourneysService {
               ...(key === 'isActive'
                 ? { isStopped: false, isPaused: false }
                 : key === 'isPaused'
-                ? { isStopped: false }
-                : {}),
+                  ? { isStopped: false }
+                  : {}),
             });
         }
       } else {
@@ -960,6 +960,14 @@ export class JourneysService {
             break;
           case NodeType.USER_ATTRIBUTE:
             metadata = new MultiBranchMetadata();
+            metadata.branches = [];
+            for (let i = 0; i < relevantEdges.length; i++) {
+              if (relevantEdges[i].data['branch'].type === BranchType.ATTRIBUTE) {
+
+
+              }
+            }
+
             break;
         }
         await queryRunner.manager.save(Step, {
