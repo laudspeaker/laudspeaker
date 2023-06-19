@@ -92,7 +92,8 @@ const AttributeBranchEditor: FC<AttributeBranchEditorProps> = ({
                   className="font-inter font-normal text-[14px] leading-[22px]"
                   key={k}
                 >
-                  {statement.key} {statement.comparisonType} {statement.value}
+                  "{statement.key}" {statement.comparisonType} "
+                  {statement.value}"
                 </div>
               ))}
             </div>

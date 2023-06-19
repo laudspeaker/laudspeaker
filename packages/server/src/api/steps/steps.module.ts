@@ -54,4 +54,4 @@ import { WebsocketsModule } from '@/websockets/websockets.module';
   controllers: [StepsController],
   exports: [StepsService],
 })
-export class StepsModule { }
+export class StepsModule {}

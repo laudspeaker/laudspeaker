@@ -21,7 +21,7 @@ const FlowBuilderReview = () => {
             Journey
           </div>
           <div className="h-[calc(100%-24px)]">
-            <FlowEditor />
+            <FlowEditor isViewMode />
           </div>
         </div>
         <div className="bg-white p-[20px] flex flex-col gap-[10px]">

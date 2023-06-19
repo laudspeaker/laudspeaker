@@ -6,7 +6,7 @@ interface ValueChanger {
   onChange: (value: string) => void;
 }
 
-interface FilterBuilderDynamicInputProps extends ValueChanger {
+interface FlowBuilderDynamicInputProps extends ValueChanger {
   type: StatementValueType;
 }
 
@@ -105,7 +105,7 @@ const StringComponent: FC<ValueChanger> = ({ value, onChange }) => {
   );
 };
 
-const FilterBuilderDynamicInput: FC<FilterBuilderDynamicInputProps> = ({
+const FlowBuilderDynamicInput: FC<FlowBuilderDynamicInputProps> = ({
   type,
   value,
   onChange,
@@ -131,4 +131,4 @@ const FilterBuilderDynamicInput: FC<FilterBuilderDynamicInputProps> = ({
   return <>{valueTypeToComponentMap[type]}</>;
 };
 
-export default FilterBuilderDynamicInput;
+export default FlowBuilderDynamicInput;

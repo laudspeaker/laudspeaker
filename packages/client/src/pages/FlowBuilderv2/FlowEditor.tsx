@@ -2,6 +2,7 @@ import ReactFlow, {
   applyNodeChanges,
   Controls,
   Edge,
+  getOutgoers,
   MarkerType,
   Node,
   NodeChange,
@@ -11,8 +12,8 @@ import { useAppDispatch, useAppSelector } from "store/hooks";
 import "reactflow/dist/style.css";
 import {
   addInsertNodeBetween,
-  clearInsertNodes,
   handleDrawerAction,
+  removeNode,
   setNodes,
   transformEmptyNodeIntoInsertNode,
   transformInsertNodeIntoEmptyNode,
@@ -200,25 +201,34 @@ const NodeDraggingProvider: FC<NodeDraggingProviderProps> = ({ flowRef }) => {
 
   const onDrop = (e: DragEvent) => {
     const insertNode = nodes.find((node) => node.type === NodeType.INSERT_NODE);
-    if (!insertNode) return;
+    const action = e.dataTransfer?.getData("action");
+
+    if (
+      !insertNode ||
+      !action ||
+      (action === DrawerAction.EXIT &&
+        getOutgoers(insertNode, nodes, edges).length > 0)
+    )
+      return;
 
     dispatch(transformInsertNodeIntoEmptyNode(insertNode.id));
 
     (async () => {
-      const action = e.dataTransfer?.getData("action");
-      if (!action) return;
+      try {
+        const {
+          data: { id: stepId },
+        } = await ApiService.post({
+          url: "/steps",
+          options: {
+            type: drawerActionToNodeTypeMap[action as DrawerAction],
+            journeyID: flowId,
+          },
+        });
 
-      const {
-        data: { id: stepId },
-      } = await ApiService.post({
-        url: "/steps",
-        options: {
-          type: drawerActionToNodeTypeMap[action as DrawerAction],
-          journeyID: flowId,
-        },
-      });
-
-      dispatch(handleDrawerAction({ id: insertNode.id, action, stepId }));
+        dispatch(handleDrawerAction({ id: insertNode.id, action, stepId }));
+      } catch (err) {
+        dispatch(removeNode(insertNode.id));
+      }
     })();
   };
 
@@ -273,7 +283,11 @@ const FlowEditor: FC<FlowEditorProps> = ({ className, isViewMode }) => {
       }`}
     >
       <ReactFlow
-        nodes={nodes}
+        nodes={
+          isViewMode
+            ? nodes.filter((node) => node.type !== NodeType.EMPTY)
+            : nodes
+        }
         edges={edges}
         onInit={(ev) => {
           ev.fitView();

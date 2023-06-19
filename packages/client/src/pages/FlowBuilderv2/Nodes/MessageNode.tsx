@@ -106,7 +106,7 @@ export const MessageNode: FC<NodeProps<MessageNodeData>> = ({
 
   return (
     <div
-      className={`w-[260px] ${
+      className={`${isViewMode ? "w-[300px]" : "w-[260px]"} ${
         isViewMode && stats && nodeFixtures.statsToShow
           ? "h-[140px]"
           : "h-[80px]"
@@ -150,7 +150,7 @@ export const MessageNode: FC<NodeProps<MessageNodeData>> = ({
         </div>
       </div>
       {isViewMode && stats && nodeFixtures.statsToShow && (
-        <div className="px-[16px] py-[7px] flex justify-between gap-[10px] border-t-[1px] border-[#E5E7EB]">
+        <div className="px-[16px] py-[6px] flex justify-between gap-[10px] border-t-[1px] border-[#E5E7EB]">
           {nodeFixtures.statsToShow.map((stat, i) => (
             <div
               key={i}

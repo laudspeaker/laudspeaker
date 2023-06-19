@@ -33,7 +33,7 @@ export class WebsocketGateway implements OnGatewayConnection {
     private customersService: CustomersService,
     @Inject(forwardRef(() => EventsService))
     private eventsService: EventsService
-  ) { }
+  ) {}
 
   public async handleConnection(socket: Socket) {
     console.log(socket.id);

@@ -44,7 +44,6 @@ export enum ComparisonType {
   NOT_CONTAINS = "does not contain",
   AFTER = "after",
   BEFORE = "before",
-  BETWEEN = "between",
   BOOL_EQUALS = "is equal to",
   BOOL_NOT_EQUALS = "is not equal to",
 }
@@ -83,11 +82,7 @@ export const valueTypeToComparisonTypesMap: Record<
     ComparisonType.CONTAINS,
     ComparisonType.NOT_CONTAINS,
   ],
-  [StatementValueType.DATE]: [
-    ComparisonType.BEFORE,
-    ComparisonType.AFTER,
-    ComparisonType.BETWEEN,
-  ],
+  [StatementValueType.DATE]: [ComparisonType.BEFORE, ComparisonType.AFTER],
 };
 
 export interface AttributeQueryStatement {

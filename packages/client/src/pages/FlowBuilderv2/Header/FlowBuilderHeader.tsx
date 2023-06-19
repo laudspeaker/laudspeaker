@@ -1,5 +1,10 @@
 import React, { useState } from "react";
-import { setStepperIndex } from "reducers/flow-builder.reducer";
+import {
+  Query,
+  QueryStatementType,
+  SegmentsSettingsType,
+  setStepperIndex,
+} from "reducers/flow-builder.reducer";
 import { useAppDispatch, useAppSelector } from "store/hooks";
 import FlowBuilderStepper from "../Elements/FlowBuilderStepper";
 import FlowBuilderRenameModal from "../Modals/FlowBuilderRenameModal";
@@ -37,6 +42,18 @@ const isValidNodes = (nodes: Node<NodeData | EdgeData>[]): boolean => {
   return filterNodeByData.length === 0;
 };
 
+const isValidSegmentQuery = (query: Query) => {
+  for (const statement of query.statements) {
+    if (
+      (statement.type === QueryStatementType.ATTRIBUTE && !statement.key) ||
+      (statement.type === QueryStatementType.SEGMENT && !statement.segmentId)
+    )
+      return false;
+  }
+
+  return true;
+};
+
 const FlowBuilderHeader = () => {
   const dispatch = useAppDispatch();
 
@@ -44,14 +61,22 @@ const FlowBuilderHeader = () => {
   const [isErrorNextModalOpen, setIsErrorNextModalOpen] = useState(false);
   const [isStartModalOpen, setIsStartModalOpen] = useState(false);
 
-  const { flowName, stepperIndex, nodes } = useAppSelector(
+  const { flowName, stepperIndex, nodes, segments } = useAppSelector(
     (state) => state.flowBuilder
   );
 
   const handleNextStep = () => {
-    if (!isValidNodes(nodes) && stepperIndex === 0)
+    if (
+      (stepperIndex === 0 && !isValidNodes(nodes)) ||
+      (stepperIndex === 1 &&
+        segments.type === SegmentsSettingsType.CONDITIONAL &&
+        !isValidSegmentQuery(segments.query))
+    ) {
       setIsErrorNextModalOpen(true);
-    if (stepperIndex !== 2 && isValidNodes(nodes))
+      return;
+    }
+
+    if (stepperIndex !== 2)
       dispatch(setStepperIndex((stepperIndex + 1) as 1 | 2));
   };
 

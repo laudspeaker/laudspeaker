@@ -13,12 +13,22 @@ import ApiService from "services/api.service";
 import { Segment } from "types/Segment";
 import Button, { ButtonType } from "../Elements/Button";
 import FlowBuilderAutoComplete from "../Elements/FlowBuilderAutoComplete";
-import FilterBuilderDynamicInput from "./FilterBuilderDynamicInput";
+import FilterBuilderDynamicInput from "../Elements/FlowBuilderDynamicInput";
 
 interface FilterBuilderProps {
   settings: ConditionalSegmentsSettings;
   onSettingsChange: (settings: ConditionalSegmentsSettings) => void;
 }
+
+enum QueryStatementError {
+  NO_ATTRIBUTE_NAME,
+  NO_SEGMENT_SELECTED,
+}
+
+const queryStatementErrorToMessageMap: Record<QueryStatementError, string> = {
+  [QueryStatementError.NO_ATTRIBUTE_NAME]: "Attribute must be defined",
+  [QueryStatementError.NO_SEGMENT_SELECTED]: "Segment must be selected",
+};
 
 const FilterBuilder: FC<FilterBuilderProps> = ({
   settings,
@@ -109,6 +119,22 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
       query: { ...query, statements: newStatements },
     });
   };
+
+  const statementsErrors: QueryStatementError[][] = [];
+
+  for (const statement of query.statements) {
+    const statementErrors = [];
+
+    if (statement.type === QueryStatementType.ATTRIBUTE && !statement.key) {
+      statementErrors.push(QueryStatementError.NO_ATTRIBUTE_NAME);
+    }
+
+    if (statement.type === QueryStatementType.SEGMENT && !statement.segmentId) {
+      statementErrors.push(QueryStatementError.NO_SEGMENT_SELECTED);
+    }
+
+    statementsErrors.push(statementErrors);
+  }
 
   return (
     <div className="flex flex-col gap-[10px]">
@@ -311,6 +337,13 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
               </svg>
             </div>
           </div>
+
+          {statementsErrors[i].map((error) => (
+            <div className="font-inter font-normal text-[12px] leading-[20px] text-[#E11D48]">
+              {queryStatementErrorToMessageMap[error]}
+            </div>
+          ))}
+
           {i !== query.statements.length - 1 && (
             <div className="py-[5px] px-[12px] bg-[#F3F4F6] border-[1px] border-[#E5E7EB] rounded-[4px] w-fit font-roboto font-normal text-[14px] leading-[22px] text-[#4B5563]">
               {query.type === QueryType.ALL ? "And" : "Or"}

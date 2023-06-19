@@ -12,6 +12,7 @@ import {
   QueryType,
   SegmentsSettings,
   SegmentsSettingsType,
+  selectNode,
   setFlowId,
   setFlowName,
   setFlowStatus,
@@ -172,6 +173,14 @@ const FlowViewerv2 = () => {
             edges: data.edges,
           })
         );
+      }
+
+      const firstMessageNode = data.nodes.find(
+        (node) => node.type === NodeType.MESSAGE
+      );
+
+      if (firstMessageNode) {
+        dispatch(selectNode(firstMessageNode.id));
       }
 
       dispatch(setSegmentsSettings(data.segments));

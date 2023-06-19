@@ -84,4 +84,4 @@ import { JourneysModule } from '../journeys/journeys.module';
   providers: [EventsService, EventsProcessor],
   exports: [EventsService],
 })
-export class EventsModule { }
+export class EventsModule {}

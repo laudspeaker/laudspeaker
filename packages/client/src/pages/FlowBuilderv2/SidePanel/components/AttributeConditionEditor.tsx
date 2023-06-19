@@ -1,5 +1,6 @@
 import Button, { ButtonType } from "pages/FlowBuilderv2/Elements/Button";
 import FlowBuilderAutoComplete from "pages/FlowBuilderv2/Elements/FlowBuilderAutoComplete";
+import FlowBuilderDynamicInput from "pages/FlowBuilderv2/Elements/FlowBuilderDynamicInput";
 import { AttributeCondition } from "pages/FlowBuilderv2/Nodes/NodeData";
 import React, { FC, useEffect, useState } from "react";
 import { useDebounce } from "react-use";
@@ -133,15 +134,13 @@ const AttributeConditionEditor: FC<AttributeConditionEditorProps> = ({
             </select>
           </div>
           <div>
-            <input
-              type="text"
-              placeholder="Value"
+            <FlowBuilderDynamicInput
+              type={statement.valueType}
               value={statement.value}
-              onChange={(e) => {
-                condition.statements[i].value = e.target.value;
+              onChange={(value) => {
+                condition.statements[i].value = value;
                 setCondition({ ...condition });
               }}
-              className="w-full px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB] placeholder:font-inter placeholder:font-normal placeholder:text-[14px] placeholder:leading-[22px] placeholder:text-[#9CA3AF]"
             />
           </div>
         </React.Fragment>

@@ -70,7 +70,7 @@ export class EventsService {
     private PosthogEventTypeModel: Model<PosthogEventTypeDocument>,
     @InjectConnection() private readonly connection: mongoose.Connection,
     @InjectQueue('webhooks') private readonly webhooksQueue: Queue,
-    @Inject(JourneysService) private readonly journeysService: JourneysService,
+    @Inject(JourneysService) private readonly journeysService: JourneysService
   ) {
     for (const { name, property_type } of defaultEventKeys) {
       if (name && property_type) {
@@ -212,7 +212,6 @@ export class EventsService {
     // Step 1: Find corresponding account
     let jobArray: WorkflowTick[] = []; // created jobId
     try {
-
       const chronologicalEvents: PostHogEventDto[] = eventDto.batch.sort(
         (a, b) =>
           new Date(a.originalTimestamp).getTime() -
@@ -386,11 +385,15 @@ export class EventsService {
               isActive: true,
               isPaused: false,
               isStopped: false,
-              isDeleted: false
-            }
+              isDeleted: false,
+            },
           });
           for (let i = 0; i < journeys.length; i++)
-            await this.eventQueue.add('event', { accountID: account.id, event: convertedEventDto, journeyID: journeys[i].id })
+            await this.eventQueue.add('event', {
+              accountID: account.id,
+              event: convertedEventDto,
+              journeyID: journeys[i].id,
+            });
           this.debug(
             `Queued messages ${JSON.stringify({ jobIDs: jobIDs })}`,
             this.posthogPayload.name,
@@ -443,7 +446,13 @@ export class EventsService {
       );
 
       if (!correlation.found)
-        await this.journeysService.enrollCustomer(account, correlation.cust, queryRunner, transactionSession, session);
+        await this.journeysService.enrollCustomer(
+          account,
+          correlation.cust,
+          queryRunner,
+          transactionSession,
+          session
+        );
 
       const journeys = await queryRunner.manager.find(Journey, {
         where: {
@@ -451,11 +460,15 @@ export class EventsService {
           isActive: true,
           isPaused: false,
           isStopped: false,
-          isDeleted: false
-        }
+          isDeleted: false,
+        },
       });
       for (let i = 0; i < journeys.length; i++)
-        await this.eventQueue.add('event', { accountID: account.id, event: eventDto, journeyID: journeys[i].id })
+        await this.eventQueue.add('event', {
+          accountID: account.id,
+          event: eventDto,
+          journeyID: journeys[i].id,
+        });
       if (eventDto) {
         await this.EventModel.create({
           ...eventDto,
@@ -474,7 +487,7 @@ export class EventsService {
     } finally {
       await transactionSession.endSession();
       await queryRunner.release();
-      if (err) throw err
+      if (err) throw err;
     }
     return jobIDs;
   }
