@@ -97,6 +97,7 @@ export interface AttributeStatement {
   key: string;
   comparisonType: ComparisonType;
   valueType: StatementValueType;
+  relationToNext: LogicRelation;
   value: string;
 }
 

@@ -88,13 +88,40 @@ const AttributeBranchEditor: FC<AttributeBranchEditorProps> = ({
                 </div>
               </div>
               {condition.statements.map((statement, k) => (
-                <div
-                  className="font-inter font-normal text-[14px] leading-[22px]"
-                  key={k}
-                >
-                  "{statement.key}" {statement.comparisonType} "
-                  {statement.value}"
-                </div>
+                <React.Fragment key={k}>
+                  <div
+                    className="font-inter font-normal text-[14px] leading-[22px]"
+                    key={k}
+                  >
+                    "{statement.key}" {statement.comparisonType} "
+                    {statement.value}"
+                  </div>
+                  {k !== condition.statements.length - 1 && (
+                    <select
+                      value={statement.relationToNext}
+                      onChange={(e) => {
+                        const newStatements = [...condition.statements];
+
+                        newStatements[k] = {
+                          ...statement,
+                          relationToNext: e.target.value as LogicRelation,
+                        };
+
+                        onConditionChange(i, {
+                          ...condition,
+                          statements: newStatements.map((el) => ({
+                            ...el,
+                            relationToNext: e.target.value as LogicRelation,
+                          })),
+                        });
+                      }}
+                      className="border-[1px] border-[#E5E7EB] max-w-[80px] px-[15px] py-[4px] rounded-[4px] font-roboto font-normal text-[14px] leading-[22px]"
+                    >
+                      <option value={LogicRelation.AND}>And</option>
+                      <option value={LogicRelation.OR}>Or</option>
+                    </select>
+                  )}
+                </React.Fragment>
               ))}
             </div>
           )}

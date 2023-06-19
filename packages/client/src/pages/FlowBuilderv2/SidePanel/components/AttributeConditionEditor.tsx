@@ -1,7 +1,10 @@
 import Button, { ButtonType } from "pages/FlowBuilderv2/Elements/Button";
 import FlowBuilderAutoComplete from "pages/FlowBuilderv2/Elements/FlowBuilderAutoComplete";
 import FlowBuilderDynamicInput from "pages/FlowBuilderv2/Elements/FlowBuilderDynamicInput";
-import { AttributeCondition } from "pages/FlowBuilderv2/Nodes/NodeData";
+import {
+  AttributeCondition,
+  LogicRelation,
+} from "pages/FlowBuilderv2/Nodes/NodeData";
 import React, { FC, useEffect, useState } from "react";
 import { useDebounce } from "react-use";
 import {
@@ -143,6 +146,31 @@ const AttributeConditionEditor: FC<AttributeConditionEditorProps> = ({
               }}
             />
           </div>
+          {i !== condition.statements.length - 1 && (
+            <select
+              value={statement.relationToNext}
+              onChange={(e) => {
+                const newStatements = [...condition.statements];
+
+                newStatements[i] = {
+                  ...statement,
+                  relationToNext: e.target.value as LogicRelation,
+                };
+
+                setCondition({
+                  ...condition,
+                  statements: newStatements.map((el) => ({
+                    ...el,
+                    relationToNext: e.target.value as LogicRelation,
+                  })),
+                });
+              }}
+              className="border-[1px] border-[#E5E7EB] max-w-[80px] px-[15px] py-[4px] rounded-[4px] font-roboto font-normal text-[14px] leading-[22px]"
+            >
+              <option value={LogicRelation.AND}>And</option>
+              <option value={LogicRelation.OR}>Or</option>
+            </select>
+          )}
         </React.Fragment>
       ))}
       <div className="flex justify-between items-center">
@@ -158,6 +186,7 @@ const AttributeConditionEditor: FC<AttributeConditionEditorProps> = ({
                   comparisonType: ComparisonType.EQUALS,
                   value: "",
                   valueType: StatementValueType.STRING,
+                  relationToNext: LogicRelation.AND,
                 },
               ],
             })
