@@ -51,6 +51,7 @@ export interface Condition {
   name: string;
   providerType: ProviderType;
   statements: Statement[];
+  relationToNext: LogicRelation;
 }
 
 export interface CommonBranch {
@@ -95,6 +96,7 @@ export type WaitUntilBranch = EventBranch | MaxTimeBranch;
 export interface AttributeStatement {
   key: string;
   comparisonType: ComparisonType;
+  valueType: StatementValueType;
   value: string;
 }
 

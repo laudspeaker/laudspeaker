@@ -6,6 +6,7 @@ import { useDebounce } from "react-use";
 import {
   ComparisonType,
   StatementValueType,
+  valueTypeToComparisonTypesMap,
 } from "reducers/flow-builder.reducer";
 import ApiService from "services/api.service";
 
@@ -107,9 +108,26 @@ const AttributeConditionEditor: FC<AttributeConditionEditorProps> = ({
               }}
               className="w-[145px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB]"
             >
-              {Object.values(ComparisonType).map((comparisonType, j) => (
-                <option key={j} value={comparisonType}>
-                  {comparisonType}
+              {valueTypeToComparisonTypesMap[statement.valueType].map(
+                (comparisonType, j) => (
+                  <option key={j} value={comparisonType}>
+                    {comparisonType}
+                  </option>
+                )
+              )}
+            </select>
+            <select
+              value={statement.valueType}
+              onChange={(e) => {
+                condition.statements[i].valueType = e.target
+                  .value as StatementValueType;
+                setCondition({ ...condition });
+              }}
+              className="w-[145px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB]"
+            >
+              {Object.values(StatementValueType).map((valueType, j) => (
+                <option key={j} value={valueType}>
+                  {valueType}
                 </option>
               ))}
             </select>
@@ -140,6 +158,7 @@ const AttributeConditionEditor: FC<AttributeConditionEditorProps> = ({
                   key: "",
                   comparisonType: ComparisonType.EQUALS,
                   value: "",
+                  valueType: StatementValueType.STRING,
                 },
               ],
             })

@@ -14,6 +14,7 @@ import {
   valueTypeToComparisonTypesMap,
 } from "reducers/flow-builder.reducer";
 import ApiService from "services/api.service";
+import { useAppSelector } from "store/hooks";
 import { ProviderType } from "types/Workflow";
 
 enum ConditionEditorError {
@@ -45,6 +46,7 @@ const ConditionEditor: FC<ConditionEditorProps> = ({
       type: StatementValueType;
     }[]
   >([]);
+  const flowBuilderState = useAppSelector((state) => state.flowBuilder);
 
   useEffect(() => {
     setCondition(initialCondition);
@@ -334,7 +336,13 @@ const ConditionEditor: FC<ConditionEditorProps> = ({
                   relationToNext: e.target.value as LogicRelation,
                 };
 
-                setCondition({ ...condition, statements: newStatements });
+                setCondition({
+                  ...condition,
+                  statements: newStatements.map((el) => ({
+                    ...el,
+                    relationToNext: e.target.value as LogicRelation,
+                  })),
+                });
               }}
               className="border-[1px] border-[#E5E7EB] max-w-[80px] px-[15px] py-[4px] rounded-[4px] font-roboto font-normal text-[14px] leading-[22px]"
             >

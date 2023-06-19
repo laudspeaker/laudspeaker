@@ -14,7 +14,11 @@ interface EventBranchEditorProps {
   branch: EventBranch;
   onAddCondition: () => void;
   onDeleteBranch: () => void;
-  onConditionChange: (j: number, condition: Condition) => void;
+  onConditionChange: (
+    j: number,
+    condition: Condition,
+    needRelationCheck: boolean
+  ) => void;
   onDeleteCondition: (j: number) => void;
 }
 
@@ -27,6 +31,7 @@ const EventBranchEditor: FC<EventBranchEditorProps> = ({
 }) => {
   const [conditionIndexToChange, setConditionIndexToChange] =
     useState<number>();
+
   return (
     <div className="flex flex-col gap-[10px] relative border-b pb-5">
       {branch.conditions.map((condition, i) => (
@@ -36,7 +41,7 @@ const EventBranchEditor: FC<EventBranchEditorProps> = ({
               condition={condition}
               onCancel={() => setConditionIndexToChange(undefined)}
               onSave={(changedCondition) => {
-                onConditionChange(i, changedCondition);
+                onConditionChange(i, changedCondition, false);
                 setConditionIndexToChange(undefined);
               }}
             />
@@ -126,10 +131,17 @@ const EventBranchEditor: FC<EventBranchEditorProps> = ({
                           relationToNext: e.target.value as LogicRelation,
                         };
 
-                        onConditionChange(i, {
-                          ...condition,
-                          statements: newStatements,
-                        });
+                        onConditionChange(
+                          i,
+                          {
+                            ...condition,
+                            statements: newStatements.map((el) => ({
+                              ...el,
+                              relationToNext: e.target.value as LogicRelation,
+                            })),
+                          },
+                          false
+                        );
                       }}
                       className="border-[1px] border-[#E5E7EB] max-w-[80px] px-[15px] py-[4px] rounded-[4px] font-roboto font-normal text-[14px] leading-[22px]"
                     >
@@ -143,12 +155,21 @@ const EventBranchEditor: FC<EventBranchEditorProps> = ({
           )}
           {i !== branch.conditions.length - 1 && (
             <select
-              value={LogicRelation.OR}
-              onChange={() => {}}
+              value={condition.relationToNext}
+              onChange={(e) =>
+                onConditionChange(
+                  i,
+                  {
+                    ...condition,
+                    relationToNext: e.target.value as LogicRelation,
+                  },
+                  true
+                )
+              }
               className="border-[1px] border-[#E5E7EB] max-w-[80px] px-[15px] py-[4px] rounded-[4px] font-roboto font-normal text-[14px] leading-[22px]"
-              disabled
             >
               <option value={LogicRelation.OR}>Or</option>
+              <option value={LogicRelation.AND}>And</option>
             </select>
           )}
         </React.Fragment>

@@ -30,7 +30,10 @@ const UserAttributeSettings: FC<
 
     branchToChange.attributeConditions.push({
       statements: [],
-      relationToNext: LogicRelation.AND,
+      relationToNext:
+        branchToChange.attributeConditions[
+          branchToChange.attributeConditions.length - 1
+        ]?.relationToNext || LogicRelation.AND,
     });
 
     setNodeData({ ...nodeData, branches });
@@ -49,7 +52,14 @@ const UserAttributeSettings: FC<
     const branchToChange = branches[i];
 
     branchToChange.attributeConditions[j] = condition;
-    setNodeData({ ...nodeData, branches });
+    const branchesWithUpdatedConditions = branches.map((el) => ({
+      ...el,
+      attributeConditions: el.attributeConditions.map((at) => ({
+        ...at,
+        relationToNext: condition.relationToNext,
+      })),
+    }));
+    setNodeData({ ...nodeData, branches: branchesWithUpdatedConditions });
   };
 
   const handleDeleteCondition = (i: number, j: number) => {
