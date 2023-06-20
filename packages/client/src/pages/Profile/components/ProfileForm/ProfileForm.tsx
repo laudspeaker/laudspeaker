@@ -1,6 +1,6 @@
 import { FormControl, FormGroup } from "@mui/material";
 import { useEffect, useState } from "react";
-import { ISignUpForm } from "reducers/auth";
+import { ISignUpForm } from "reducers/auth.reducer";
 import { GenericButton } from "components/Elements";
 import ApiService from "services/api.service";
 import { toast } from "react-toastify";

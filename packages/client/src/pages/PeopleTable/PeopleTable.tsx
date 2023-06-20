@@ -91,7 +91,6 @@ const PeopleTable = () => {
   if (loading) return <Progress />;
   return (
     <div className="w-full relative">
-      <Header />
       <div className="p-[37px_30px]">
         <Modal
           isOpen={nameModalOpen}

@@ -13,7 +13,7 @@ import {
 } from './api/customers/schemas/customer-keys.schema';
 import { isDateString, isEmail } from 'class-validator';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Between, Repository } from 'typeorm';
+import { Between, DataSource, Repository } from 'typeorm';
 import { Verification } from './api/auth/entities/verification.entity';
 import { EventDocument } from './api/events/schemas/event.schema';
 import { EventKeysDocument } from './api/events/schemas/event-keys.schema';
@@ -44,9 +44,12 @@ import {
 import twilio from 'twilio';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import client from '@sendgrid/client';
-import { ClientResponse } from '@sendgrid/mail';
 import { ModalsService } from './api/modals/modals.service';
 import { randomUUID } from 'crypto';
+import { StepsService } from './api/steps/steps.service';
+import { StepType } from './api/steps/types/step.interface';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 
 const BATCH_SIZE = 500;
 const KEYS_TO_SKIP = ['__v', '_id', 'audiences', 'ownerId'];
@@ -67,6 +70,7 @@ export class CronService {
   });
 
   constructor(
+    private dataSource: DataSource,
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
     private readonly logger: LoggerService,
     @InjectModel(Customer.name)
@@ -89,8 +93,69 @@ export class CronService {
     @Inject(WorkflowsService) private workflowsService: WorkflowsService,
     @Inject(WebhookJobsService) private webhookJobsService: WebhookJobsService,
     @Inject(AccountsService) private accountsService: AccountsService,
-    @Inject(ModalsService) private modalsService: ModalsService
-  ) {}
+    @Inject(ModalsService) private modalsService: ModalsService,
+    @Inject(StepsService) private stepsService: StepsService,
+    @InjectQueue('transition') private readonly transitionQueue: Queue
+  ) { }
+
+  log(message, method, session, user = 'ANONYMOUS') {
+    this.logger.log(
+      message,
+      JSON.stringify({
+        class: CronService.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+  debug(message, method, session, user = 'ANONYMOUS') {
+    this.logger.debug(
+      message,
+      JSON.stringify({
+        class: CronService.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+  warn(message, method, session, user = 'ANONYMOUS') {
+    this.logger.warn(
+      message,
+      JSON.stringify({
+        class: CronService.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+  error(error, method, session, user = 'ANONYMOUS') {
+    this.logger.error(
+      error.message,
+      error.stack,
+      JSON.stringify({
+        class: CronService.name,
+        method: method,
+        session: session,
+        cause: error.cause,
+        name: error.name,
+        user: user,
+      })
+    );
+  }
+  verbose(message, method, session, user = 'ANONYMOUS') {
+    this.logger.verbose(
+      message,
+      JSON.stringify({
+        class: CronService.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
 
   @Cron(CronExpression.EVERY_HOUR)
   async handleCustomerKeysCron() {
@@ -165,8 +230,7 @@ export class CronService {
       }
 
       this.logger.log(
-        `Cron customer keys job finished, checked ${documentsCount} records, found ${
-          Object.keys(keys).length
+        `Cron customer keys job finished, checked ${documentsCount} records, found ${Object.keys(keys).length
         } keys`
       );
     } catch (e) {
@@ -264,8 +328,7 @@ export class CronService {
       }
 
       this.logger.log(
-        `Cron event keys job finished, checked ${documentsCount} records, found ${
-          Object.keys(keys).length
+        `Cron event keys job finished, checked ${documentsCount} records, found ${Object.keys(keys).length
         } keys`
       );
     } catch (e) {
@@ -309,6 +372,57 @@ export class CronService {
       }
 
       offset += BATCH_SIZE;
+    }
+  }
+
+  @Cron(CronExpression.EVERY_MINUTE)
+  async handleTimeBasedSteps() {
+    let err;
+    const session = randomUUID();
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
+      let steps = await this.stepsService.transactionalFindAllActiveByType(
+        null,
+        StepType.TIME_DELAY,
+        session,
+        queryRunner
+      );
+      steps.push(
+        ...(await this.stepsService.transactionalFindAllActiveByType(
+          null,
+          StepType.TIME_WINDOW,
+          session,
+          queryRunner
+        ))
+      );
+      steps.push(
+        ...(await this.stepsService.transactionalFindAllActiveByType(
+          null,
+          StepType.WAIT_UNTIL_BRANCH,
+          session,
+          queryRunner
+        ))
+      );
+      for (let i = 0; i < steps.length; i++) {
+        let branch;
+        if (steps[i].type === StepType.WAIT_UNTIL_BRANCH) branch = -1;
+        if (steps[i].customers.length)
+          this.transitionQueue.add(steps[i].type, {
+            step: steps[i],
+            session: session,
+            branch,
+          });
+      }
+      await queryRunner.commitTransaction();
+    } catch (e) {
+      err = e;
+      this.error(e, this.handleTimeBasedSteps.name, session);
+      await queryRunner.rollbackTransaction();
+    } finally {
+      await queryRunner.release();
+      if (err) throw err;
     }
   }
 

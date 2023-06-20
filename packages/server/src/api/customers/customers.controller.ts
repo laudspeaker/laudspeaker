@@ -165,6 +165,28 @@ export class CustomersController {
     );
   }
 
+  @Get('/stats-from-step')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor)
+  async getCustomersFromStepStatsByEvent(
+    @Req() { user }: Request,
+    @Query('take') take?: string,
+    @Query('skip') skip?: string,
+    @Query('event') event?: string,
+    @Query('stepId') stepId?: string
+  ) {
+    const session = randomUUID();
+
+    return this.customersService.getCustomersFromStepStatsByEvent(
+      <Account>user,
+      session,
+      take && +take,
+      skip && +skip,
+      event,
+      stepId
+    );
+  }
+
   @Get('/:id')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)

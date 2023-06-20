@@ -48,8 +48,8 @@ import { Helmet } from "react-helmet";
 import { Grid } from "@mui/material";
 import ToggleSwitch from "components/Elements/ToggleSwitch";
 import {
-  MessagesTypes,
-  ProviderTypes,
+  MessageType,
+  ProviderType,
   Trigger,
   TriggerType,
   Workflow,
@@ -130,7 +130,7 @@ const convertLayoutToTable = (
       properties: {
         conditions?: Record<string, any>;
       };
-      providerType: ProviderTypes;
+      providerType: ProviderType;
       providerParams?: string;
     }[];
     visualLayout: {
@@ -175,7 +175,7 @@ const convertLayoutToTable = (
       properties: {
         ...(trigger?.properties || {}),
       },
-      providerType: trigger?.providerType || ProviderTypes.Custom,
+      providerType: trigger?.providerType || ProviderType.Custom,
       providerParams: trigger?.providerParams,
     };
     dto.rules.push(rule);
@@ -578,7 +578,7 @@ const Flow = () => {
           properties: {
             conditions: [],
           },
-          providerType: ProviderTypes.Custom,
+          providerType: ProviderType.Custom,
           providerParams: undefined,
         };
         setTriggers([...triggers, trigger]);
@@ -965,13 +965,13 @@ const Flow = () => {
     } else if (
       (
         [
-          MessagesTypes.SMS,
-          MessagesTypes.EMAIL,
-          MessagesTypes.SLACK,
-          MessagesTypes.PUSH,
-          MessagesTypes.FIREBASE,
-          MessagesTypes.WEBHOOK,
-          MessagesTypes.MODAL,
+          MessageType.SMS,
+          MessageType.EMAIL,
+          MessageType.SLACK,
+          MessageType.PUSH,
+          MessageType.FIREBASE,
+          MessageType.WEBHOOK,
+          MessageType.MODAL,
         ] as string[]
       ).includes(itemId)
     ) {
@@ -1510,12 +1510,9 @@ const Flow = () => {
 // setNodes([...nodes]);
 function FlowBuilder() {
   return (
-    <>
-      <Header />
-      <ReactFlowProvider>
-        <Flow />
-      </ReactFlowProvider>
-    </>
+    <ReactFlowProvider>
+      <Flow />
+    </ReactFlowProvider>
   );
 }
 export default FlowBuilder;

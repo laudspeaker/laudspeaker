@@ -1,13 +1,13 @@
 import { ApiConfig } from "../../constants";
-import { useTypedSelector } from "hooks/useTypeSelector";
 import React, { useLayoutEffect, useState } from "react";
 import ApiService from "services/api.service";
 import { FormControl, Grid } from "@mui/material";
 import Header from "components/Header";
 import Drawer from "components/Drawer";
+import { useAppSelector } from "store/hooks";
 
 const SlackConfiguration = () => {
-  const { settings } = useTypedSelector((state) => state.settings);
+  const { settings } = useAppSelector((state) => state.settings);
   const [slackInstallUrl, setSlackInstallUrl] = useState<string>("");
 
   useLayoutEffect(() => {
@@ -22,7 +22,6 @@ const SlackConfiguration = () => {
 
   return (
     <div className="pl-[154px] relative bg-[#E5E5E5] flex flex-col h-[100vh]">
-      <Header />
       <div className="flex justify-around m-[72px_50px_72px_50px] gap-[30px]">
         <div className="bg-white rounded-3xl p-[30px] w-full max-w-[930px]">
           <h3 className="flex items-center gap-[10px] text-[25px] font-semibold leading-[40px] mb-[10px]">

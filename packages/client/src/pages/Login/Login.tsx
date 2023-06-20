@@ -1,6 +1,6 @@
 import { ChangeEvent, FC, MouseEvent, useState } from "react";
 import { useDispatch } from "react-redux";
-import { ILoginForm, loginUser } from "../../reducers/auth";
+import { ILoginForm, loginUser } from "../../reducers/auth.reducer";
 import { useNavigate } from "react-router-dom";
 import posthog from "posthog-js";
 import laudspeakerLogo from "../../assets/images/laudspeaker.svg";

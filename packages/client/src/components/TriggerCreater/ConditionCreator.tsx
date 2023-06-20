@@ -8,7 +8,7 @@ import {
   EventCondition,
   EventConditionElementsFilter,
   FilterByOption,
-  ProviderTypes,
+  ProviderType,
 } from "types/Workflow";
 import Autocomplete from "components/Autocomplete";
 
@@ -17,7 +17,7 @@ export interface ConditionCreaterProps {
   onChange: (condition: EventCondition) => void;
   possibleTypes: string[];
   isViewMode?: boolean;
-  specificProvider: ProviderTypes;
+  specificProvider: ProviderType;
 }
 
 interface PossibleKey {
@@ -64,17 +64,9 @@ const ConditionCreater: FC<ConditionCreaterProps> = ({
     }
   };
 
-  const handleConditionChange = (
-    name: keyof EventCondition,
-    newValueToSet: unknown
-  ) => {
-    condition[name] = newValueToSet;
-    onChange(condition);
-  };
-
   useEffect(() => {
-    if (specificProvider === ProviderTypes.Custom)
-      handleConditionChange("filterBy", FilterByOption.CUSTOMER_KEY);
+    if (specificProvider === ProviderType.Custom)
+      onChange({ ...condition, filterBy: FilterByOption.CUSTOMER_KEY });
   }, [specificProvider]);
 
   useEffect(() => {
@@ -129,7 +121,7 @@ const ConditionCreater: FC<ConditionCreaterProps> = ({
 
   useDebounce(
     () => {
-      handleConditionChange("key", newKey || "");
+      onChange({ ...condition, key: newKey || "" });
       getEventKeys(newKey || "", specificProvider)
         .then(({ data }) => {
           setPossibleKeys(data);
@@ -144,7 +136,7 @@ const ConditionCreater: FC<ConditionCreaterProps> = ({
 
   useDebounce(
     () => {
-      handleConditionChange("value", newValue || "");
+      onChange({ ...condition, value: newValue || "" });
       loadPossibleValues();
     },
     1000,
@@ -153,7 +145,7 @@ const ConditionCreater: FC<ConditionCreaterProps> = ({
 
   return (
     <div className="flex flex-col gap-[10px] m-[10px_0px]">
-      {specificProvider === ProviderTypes.Posthog && (
+      {specificProvider === ProviderType.Posthog && (
         <div className="relative">
           <Select
             label="Filter by"
@@ -162,7 +154,7 @@ const ConditionCreater: FC<ConditionCreaterProps> = ({
               value: option,
             }))}
             value={filterBy}
-            onChange={(val) => handleConditionChange("filterBy", val)}
+            onChange={(val) => onChange({ ...condition, filterBy: val })}
             disabled={isViewMode}
             wrapperClassnames="max-w-[200px]"
           />
@@ -181,9 +173,12 @@ const ConditionCreater: FC<ConditionCreaterProps> = ({
               disabled={isViewMode}
               onOptionSelect={(el) => {
                 setNewKey(el.key);
-                handleConditionChange("type", el.type);
-                handleConditionChange("comparisonType", "");
-                handleConditionChange("value", "");
+                onChange({
+                  ...condition,
+                  type: el.type,
+                  comparisonType: "",
+                  value: "",
+                });
               }}
               optionKey={(el) => el.key}
               optionRender={(el) => `${el.key} (${el.type})`}
@@ -204,7 +199,7 @@ const ConditionCreater: FC<ConditionCreaterProps> = ({
 
                   if (newElementOrder < 0) return;
 
-                  handleConditionChange("elementOrder", newElementOrder);
+                  onChange({ ...condition, elementOrder: newElementOrder });
                 }}
               />
               <Select
@@ -215,12 +210,17 @@ const ConditionCreater: FC<ConditionCreaterProps> = ({
                 )}
                 value={filter}
                 onChange={(val) => {
-                  handleConditionChange("filter", val);
-
-                  if (filterBy !== FilterByOption.ELEMENTS) return;
-                  handleConditionChange("type", "String");
-                  handleConditionChange("comparisonType", "");
-                  handleConditionChange("value", "");
+                  onChange({
+                    ...condition,
+                    filter: val,
+                    ...(filterBy === FilterByOption.ELEMENTS
+                      ? {}
+                      : {
+                          type: "String",
+                          comparisonType: "",
+                          value: "",
+                        }),
+                  });
                 }}
                 disabled={isViewMode}
                 wrapperClassnames="max-w-[200px]"
@@ -234,9 +234,12 @@ const ConditionCreater: FC<ConditionCreaterProps> = ({
             options={possibleTypes.map((item) => ({ value: item }))}
             value={type || ""}
             onChange={(val) => {
-              handleConditionChange("type", val);
-              handleConditionChange("comparisonType", "");
-              handleConditionChange("value", "");
+              onChange({
+                ...condition,
+                type: val,
+                comparisonType: "",
+                value: "",
+              });
             }}
             disabled={isViewMode || filterBy === FilterByOption.ELEMENTS}
             wrapperClassnames="max-w-[200px]"
@@ -250,8 +253,7 @@ const ConditionCreater: FC<ConditionCreaterProps> = ({
               title: item.label,
             }))}
             onChange={(val) => {
-              handleConditionChange("comparisonType", val);
-              handleConditionChange("value", "");
+              onChange({ ...condition, comparisonType: val, value: "" });
             }}
             disabled={isViewMode}
             wrapperClassnames="max-w-[200px]"

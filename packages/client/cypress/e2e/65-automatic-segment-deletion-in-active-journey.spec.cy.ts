@@ -14,7 +14,7 @@ const { email, password } = credentials.MessageHitUser;
 const { automatic } = credentials.segments;
 
 describe(
-  "Test automatic segment deletion blocking with active journey ",
+  "Test automatic segment deletion blocking with active journey",
   { env: { AxiosURL: "http://localhost:3001/" } },
   () => {
     beforeEach(() => {

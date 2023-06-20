@@ -160,7 +160,6 @@ const SegmentViewer = () => {
 
   return (
     <div className="w-full relative">
-      <Header />
       <div className="py-[37px] px-[30px]">
         {segmentType === SegmentType.AUTOMATIC ? (
           <div>

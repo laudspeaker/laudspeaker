@@ -27,7 +27,8 @@ export enum ClickHouseEventProvider {
 }
 
 export interface ClickHouseMessage {
-  audienceId: string;
+  audienceId?: string;
+  stepId?: string;
   createdAt: string;
   customerId: string;
   event: string;

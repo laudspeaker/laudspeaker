@@ -81,7 +81,6 @@ const Dashboard = () => {
 
   return (
     <div className="relative bg-white">
-      <Header />
       <div className="flex p-[30px]">
         <div className="border-b-[1px] border-b-[#D3D3D3] w-full flex justify-between flex-row">
           <div className="flex items-center pb-[30px]">

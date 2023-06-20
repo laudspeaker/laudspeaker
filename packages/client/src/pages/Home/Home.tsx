@@ -86,7 +86,6 @@ const Home = () => {
     <div>
       <div className="">
         <div className="mx-auto flex flex-col">
-          <Header />
           <main className="relative">
             {isCSVImportModalOpen && (
               <>

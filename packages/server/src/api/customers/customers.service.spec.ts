@@ -1,55 +1,56 @@
-import { TypeOrmConfigService } from '../../shared/typeorm/typeorm.service';
-import { MongooseModule } from '@nestjs/mongoose';
+import { getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { Audience } from '../audiences/entities/audience.entity';
-import { CustomersController } from './customers.controller';
 import { CustomersService } from './customers.service';
-import { Customer, CustomerSchema } from './schemas/customer.schema';
-import { WinstonModule } from 'nest-winston';
-import winston from 'winston';
-import { BullModule } from '@nestjs/bullmq';
+import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
+import { getQueueToken } from '@nestjs/bullmq';
+import { DataSource, Repository } from 'typeorm';
+import { createMock } from '@golevelup/ts-jest';
+import { SegmentsService } from '../segments/segments.service';
+import { Account } from 'aws-sdk';
+import { getRepositoryToken } from '@nestjs/typeorm';
 
 describe('CustomersService', () => {
   let service: CustomersService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      imports: [
-        BullModule.forRoot({
-          connection: {
-            host: process.env.REDIS_HOST,
-            port: parseInt(process.env.REDIS_PORT),
-            password: process.env.REDIS_PASSWORD,
+      providers: [
+        CustomersService,
+        {
+          provide: SegmentsService,
+          useValue: createMock<SegmentsService>(),
+        },
+        {
+          provide: WINSTON_MODULE_NEST_PROVIDER,
+          useValue: {
+            log: jest.fn(),
+            debug: jest.fn(),
+            info: jest.fn(),
+            warn: jest.fn(),
+            error: jest.fn(),
           },
-        }),
-        BullModule.registerQueue({
-          name: 'customers',
-        }),
-        WinstonModule.forRootAsync({
-          useFactory: () => ({
-            level: 'debug',
-            transports: [
-              new winston.transports.Console({
-                handleExceptions: true,
-                format: winston.format.combine(
-                  winston.format.colorize(),
-                  winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' })
-                ),
-              }),
-            ],
-          }),
-          inject: [],
-        }),
-        TypeOrmModule.forRootAsync({ useClass: TypeOrmConfigService }),
-        MongooseModule.forRoot(process.env.MONGOOSE_URL),
-        TypeOrmModule.forFeature([Audience]),
-        MongooseModule.forFeature([
-          { name: Customer.name, schema: CustomerSchema },
-        ]),
+        },
+        {
+          provide: getQueueToken('customers'),
+          useValue: { add: jest.fn() },
+        },
+        {
+          provide: getModelToken('Customer'),
+          useValue: { add: jest.fn() },
+        },
+        {
+          provide: getModelToken('CustomerKeys'),
+          useValue: { add: jest.fn() },
+        },
+        {
+          provide: DataSource,
+          useValue: createMock<DataSource>(),
+        },
+        {
+          provide: getRepositoryToken(Account),
+          useClass: Repository,
+        },
       ],
-      controllers: [CustomersController],
-      providers: [CustomersService],
     }).compile();
 
     service = module.get<CustomersService>(CustomersService);
