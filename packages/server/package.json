@@ -58,6 +58,7 @@
     "class-sanitizer": "^1.0.1",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.13.2",
+    "clickhouse-migrations": "^0.1.13",
     "csv-parse": "^5.3.5",
     "dd-trace": "^3.8.0",
     "env-cmd": "^10.1.0",
