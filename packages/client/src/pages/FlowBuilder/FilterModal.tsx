@@ -20,13 +20,7 @@ const FilterModal: FC<FilterModalProps> = ({
 }) => {
   return (
     <SideModal isOpen={isOpen} onClose={onClose}>
-      <FilterBuilder
-        onClose={onClose}
-        workflowId={workflowId}
-        isCollapsible={true}
-        filterId={filterId}
-        onSubmit={onSubmit}
-      />
+      <FilterBuilder filterId={filterId} onSubmit={onSubmit} />
     </SideModal>
   );
 };

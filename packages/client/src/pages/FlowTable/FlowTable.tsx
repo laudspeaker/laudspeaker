@@ -38,7 +38,7 @@ const FlowTable = () => {
     setLoading(true);
     try {
       const { data } = await ApiService.get({
-        url: `${ApiConfig.flow}?take=${itemsPerPage}&skip=${
+        url: `/journeys?take=${itemsPerPage}&skip=${
           itemsPerPage * currentPage
         }&orderBy=${Object.keys(sortOptions)[0] || ""}&orderType=${
           Object.values(sortOptions)[0] || ""
@@ -96,7 +96,6 @@ const FlowTable = () => {
   return (
     <div className="bg-gray-100">
       <div className="relative w-full h-full ">
-        <Header />
         <div className="py-[37px] px-[30px]">
           <Modal
             isOpen={nameModalOpen}

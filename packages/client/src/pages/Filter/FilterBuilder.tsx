@@ -60,12 +60,7 @@ export interface IResource {
 
 interface FilterProps {
   onSubmit?: (id?: string) => void;
-  defaultTitle?: string;
-  workflowId: string;
   filterId?: string;
-  audienceName?: string;
-  isCollapsible: boolean;
-  onClose: () => void;
 }
 
 const FilterBuilder: FC<FilterProps> = ({ onSubmit, filterId }) => {

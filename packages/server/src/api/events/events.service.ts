@@ -41,6 +41,8 @@ import {
   PosthogEvent,
   PosthogEventDocument,
 } from './schemas/posthog-event.schema';
+import { JourneysService } from '../journeys/journeys.service';
+import { Journey } from '../journeys/entities/journey.entity';
 
 @Injectable()
 export class EventsService {
@@ -54,6 +56,7 @@ export class EventsService {
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
     private readonly logger: Logger,
     @InjectQueue('message') private readonly messageQueue: Queue,
+    @InjectQueue('events') private readonly eventQueue: Queue,
     @InjectQueue(JobTypes.slack) private readonly slackQueue: Queue,
     @InjectQueue(JobTypes.events)
     private readonly eventsQueue: Queue,
@@ -66,7 +69,8 @@ export class EventsService {
     @InjectModel(PosthogEventType.name)
     private PosthogEventTypeModel: Model<PosthogEventTypeDocument>,
     @InjectConnection() private readonly connection: mongoose.Connection,
-    @InjectQueue('webhooks') private readonly webhooksQueue: Queue
+    @InjectQueue('webhooks') private readonly webhooksQueue: Queue,
+    @Inject(JourneysService) private readonly journeysService: JourneysService
   ) {
     for (const { name, property_type } of defaultEventKeys) {
       if (name && property_type) {
@@ -193,12 +197,11 @@ export class EventsService {
     }
   }
 
-  async getPostHogPayload(
-    apiKey: string,
+  async posthogPayload(
+    account: Account,
     eventDto: PosthogBatchEventDto,
     session: string
   ) {
-    let account: Account, jobIds: WorkflowTick[]; // Account associated with the caller
     let found: boolean;
     const transactionSession = await this.connection.startSession();
     transactionSession.startTransaction();
@@ -209,14 +212,6 @@ export class EventsService {
     // Step 1: Find corresponding account
     let jobArray: WorkflowTick[] = []; // created jobId
     try {
-      account = await this.userService.findOneByAPIKey(apiKey.substring(8));
-      this.debug(
-        `Found account: ${JSON.stringify({ id: account.id })}`,
-        this.getPostHogPayload.name,
-        session,
-        account.id
-      );
-
       const chronologicalEvents: PostHogEventDto[] = eventDto.batch.sort(
         (a, b) =>
           new Date(a.originalTimestamp).getTime() -
@@ -225,7 +220,7 @@ export class EventsService {
 
       this.debug(
         `Sorted events: ${JSON.stringify({ events: chronologicalEvents })}`,
-        this.getPostHogPayload.name,
+        this.posthogPayload.name,
         session,
         account.id
       );
@@ -243,7 +238,7 @@ export class EventsService {
             `Processing PostHog event: ${JSON.stringify({
               event: currentEvent,
             })}`,
-            this.getPostHogPayload.name,
+            this.posthogPayload.name,
             session,
             account.id
           );
@@ -262,7 +257,7 @@ export class EventsService {
               `Updating customer on Identify event: ${JSON.stringify({
                 event: currentEvent,
               })}`,
-              this.getPostHogPayload.name,
+              this.posthogPayload.name,
               session,
               account.id
             );
@@ -294,7 +289,7 @@ export class EventsService {
               `Check if event exists in events DB: ${JSON.stringify({
                 event: found,
               })}`,
-              this.getPostHogPayload.name,
+              this.posthogPayload.name,
               session,
               account.id
             );
@@ -310,7 +305,7 @@ export class EventsService {
                     ownerId: account.id,
                   },
                 })}`,
-                this.getPostHogPayload.name,
+                this.posthogPayload.name,
                 session,
                 account.id
               );
@@ -326,7 +321,7 @@ export class EventsService {
               );
               this.debug(
                 `Added event to events DB: ${JSON.stringify({ event: res })}`,
-                this.getPostHogPayload.name,
+                this.posthogPayload.name,
                 session,
                 account.id
               );
@@ -364,7 +359,7 @@ export class EventsService {
           );
 
           if (!correlation.found || !found) {
-            await this.workflowsService.enrollCustomer(
+            await this.journeysService.enrollCustomer(
               account,
               correlation.cust,
               queryRunner,
@@ -384,17 +379,24 @@ export class EventsService {
             },
           };
 
-          //currentEvent
-          jobIDs = await this.workflowsService.tick(
-            account,
-            convertedEventDto,
-            queryRunner,
-            transactionSession,
-            session
-          );
+          const journeys = await queryRunner.manager.find(Journey, {
+            where: {
+              owner: { id: account.id },
+              isActive: true,
+              isPaused: false,
+              isStopped: false,
+              isDeleted: false,
+            },
+          });
+          for (let i = 0; i < journeys.length; i++)
+            await this.eventQueue.add('event', {
+              accountID: account.id,
+              event: convertedEventDto,
+              journeyID: journeys[i].id,
+            });
           this.debug(
             `Queued messages ${JSON.stringify({ jobIDs: jobIDs })}`,
-            this.getPostHogPayload.name,
+            this.posthogPayload.name,
             session,
             account.id
           );
@@ -404,7 +406,7 @@ export class EventsService {
             postHogEvent.errorMessage = e.message;
             err = e;
           }
-          this.error(e, this.getPostHogPayload.name, session, account.id);
+          this.error(e, this.posthogPayload.name, session, account.id);
         } finally {
           await this.PosthogEventModel.create(postHogEvent);
         }
@@ -416,7 +418,7 @@ export class EventsService {
     } catch (e) {
       await transactionSession.abortTransaction();
       await queryRunner.rollbackTransaction();
-      this.error(e, this.getPostHogPayload.name, session, account.id);
+      this.error(e, this.posthogPayload.name, session, account.id);
       throw e;
     } finally {
       await transactionSession.endSession();
@@ -426,8 +428,9 @@ export class EventsService {
     return jobArray;
   }
 
-  async enginePayload(apiKey: string, eventDto: EventDto, session: string) {
-    let account: Account, correlation: Correlation, jobIDs: WorkflowTick[];
+  async customPayload(account: Account, eventDto: EventDto, session: string) {
+    let correlation: Correlation, jobIDs: WorkflowTick[];
+    let err: any;
 
     const transactionSession = await this.connection.startSession();
     transactionSession.startTransaction();
@@ -436,19 +439,14 @@ export class EventsService {
     await queryRunner.startTransaction();
 
     try {
-      account = await this.userService.findOneByAPIKey(apiKey.substring(8));
-      if (!account) this.logger.error('Account not found');
-      this.logger.debug('Found Account: ' + account.id);
-
       correlation = await this.customersService.findOrCreateByCorrelationKVPair(
         account,
         eventDto,
         transactionSession
       );
-      this.logger.debug('Correlation result:' + correlation.cust);
 
       if (!correlation.found)
-        await this.workflowsService.enrollCustomer(
+        await this.journeysService.enrollCustomer(
           account,
           correlation.cust,
           queryRunner,
@@ -456,14 +454,21 @@ export class EventsService {
           session
         );
 
-      jobIDs = await this.workflowsService.tick(
-        account,
-        eventDto,
-        queryRunner,
-        transactionSession,
-        session
-      );
-      this.logger.debug('Queued messages with jobID ' + jobIDs);
+      const journeys = await queryRunner.manager.find(Journey, {
+        where: {
+          owner: { id: account.id },
+          isActive: true,
+          isPaused: false,
+          isStopped: false,
+          isDeleted: false,
+        },
+      });
+      for (let i = 0; i < journeys.length; i++)
+        await this.eventQueue.add('event', {
+          accountID: account.id,
+          event: eventDto,
+          journeyID: journeys[i].id,
+        });
       if (eventDto) {
         await this.EventModel.create({
           ...eventDto,
@@ -474,14 +479,15 @@ export class EventsService {
 
       await transactionSession.commitTransaction();
       await queryRunner.commitTransaction();
-    } catch (err) {
+    } catch (e) {
       await transactionSession.abortTransaction();
       await queryRunner.rollbackTransaction();
-      this.logger.error('Error: ' + err);
-      throw err;
+      this.error(e, this.customPayload.name, session, account.email);
+      err = e;
     } finally {
       await transactionSession.endSession();
       await queryRunner.release();
+      if (err) throw err;
     }
     return jobIDs;
   }

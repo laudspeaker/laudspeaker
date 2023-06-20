@@ -6,7 +6,7 @@ export enum TriggerType {
   TIME_WINDOW = "timeWindow",
 }
 
-export enum MessagesTypes {
+export enum MessageType {
   EMAIL = "email",
   SLACK = "slack",
   SMS = "sms",
@@ -49,7 +49,7 @@ export interface EventProps {
   toTime?: string;
 }
 
-export enum ProviderTypes {
+export enum ProviderType {
   Posthog = "posthog",
   Custom = "custom",
 }
@@ -60,7 +60,7 @@ export interface Trigger {
   type: TriggerType;
   source?: string;
   dest?: string[];
-  providerType?: ProviderTypes;
+  providerType?: ProviderType;
   providerParams?: string | "track" | "page";
   properties?: EventProps;
 }
@@ -87,10 +87,8 @@ export interface Node {
     primary: boolean;
     messages: { type: string; templateId: number }[];
     triggers: Trigger[];
-    audienceId: string;
-    isSelected: boolean;
-    needsUpdate: boolean;
     dataTriggers?: Trigger[];
+    audienceId: string;
   };
   type: string;
   width: number;
@@ -110,6 +108,7 @@ export interface Node {
 export interface VisualLayout {
   edges: Edge[];
   nodes: Node[];
+  triggers: Trigger[];
 }
 
 export interface Workflow {
@@ -119,7 +118,6 @@ export interface Workflow {
   isPaused: boolean;
   isStopped: boolean;
   isDeleted: boolean;
-  rules: string[];
   visualLayout: VisualLayout;
   isDynamic: boolean;
   filter?: { id: string };

@@ -1,17 +1,21 @@
-import { useState } from "react";
+import { FC } from "react";
 import { Switch } from "@headlessui/react";
 
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(" ");
 }
 
-interface IToggleWithLabelProps {
+interface ToggleWithLabelProps {
   label: string;
-  default: boolean;
+  enabled: boolean;
+  onChange: (value: boolean) => void;
 }
 
-const ToggleWithLabel = (props: IToggleWithLabelProps) => {
-  const [enabled, setEnabled] = useState<boolean>(props.default);
+const ToggleWithLabel: FC<ToggleWithLabelProps> = ({
+  enabled,
+  label,
+  onChange,
+}) => {
   return (
     <Switch.Group
       as="div"
@@ -22,15 +26,15 @@ const ToggleWithLabel = (props: IToggleWithLabelProps) => {
         className="text-sm font-medium text-gray-500"
         passive
       >
-        {props.label}
+        {label}
       </Switch.Label>
       <dd className="mt-1 flex text-sm text-gray-900 sm:col-span-2 sm:mt-0">
         <Switch
           checked={enabled}
-          onChange={setEnabled}
+          onChange={onChange}
           className={classNames(
-            enabled ? "bg-purple-600" : "bg-gray-200",
-            "relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 sm:ml-auto"
+            enabled ? "bg-blue-500" : "bg-gray-200",
+            "relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 sm:ml-auto"
           )}
         >
           <span

@@ -48,6 +48,7 @@ import { SlackModule } from './api/slack/slack.module';
 import { WebhookJobsModule } from './api/webhook-jobs/webhook-jobs.module';
 import { WebhookJob } from './api/webhook-jobs/entities/webhook-job.entity';
 import { AccountsModule } from './api/accounts/accounts.module';
+import { StepsModule } from './api/steps/steps.module';
 import { EventsModule } from './api/events/events.module';
 import { ModalsModule } from './api/modals/modals.module';
 import { WebsocketsModule } from './websockets/websockets.module';
@@ -211,6 +212,9 @@ const formatMongoConnectionString = (mongoConnectionString: string) => {
     BullModule.registerQueue({
       name: 'slack',
     }),
+    BullModule.registerQueue({
+      name: 'transition',
+    }),
     IntegrationsModule,
     WorkflowsModule,
     JobsModule,
@@ -223,6 +227,7 @@ const formatMongoConnectionString = (mongoConnectionString: string) => {
     EventsModule,
     ModalsModule,
     WebsocketsModule,
+    StepsModule,
   ],
   controllers: [AppController],
   providers: [CronService],

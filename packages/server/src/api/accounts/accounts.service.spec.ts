@@ -2,9 +2,13 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Account } from './entities/accounts.entity';
 import { AccountsService } from './accounts.service';
-import { Repository } from 'typeorm';
-import { WinstonModule } from 'nest-winston';
-import winston from 'winston';
+import { DataSource, Repository } from 'typeorm';
+import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
+import { createMock } from '@golevelup/ts-jest';
+import { CustomersService } from '../customers/customers.service';
+import { AuthService } from '../auth/auth.service';
+import { getConnectionToken } from '@nestjs/mongoose';
+import { WebhooksService } from '../webhooks/webhooks.service';
 
 const userArray = [
   {
@@ -31,25 +35,38 @@ describe('AccountsService', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      imports: [
-        WinstonModule.forRootAsync({
-          useFactory: () => ({
-            level: 'debug',
-            transports: [
-              new winston.transports.Console({
-                handleExceptions: true,
-                format: winston.format.combine(
-                  winston.format.colorize(),
-                  winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' })
-                ),
-              }),
-            ],
-          }),
-          inject: [],
-        }),
-      ],
       providers: [
         AccountsService,
+        {
+          provide: DataSource,
+          useValue: createMock<DataSource>(),
+        },
+        {
+          provide: WINSTON_MODULE_NEST_PROVIDER,
+          useValue: {
+            log: jest.fn(),
+            debug: jest.fn(),
+            info: jest.fn(),
+            warn: jest.fn(),
+            error: jest.fn(),
+          },
+        },
+        {
+          provide: CustomersService,
+          useValue: createMock<CustomersService>(),
+        },
+        {
+          provide: WebhooksService,
+          useValue: createMock<CustomersService>(),
+        },
+        {
+          provide: AuthService,
+          useValue: createMock<AuthService>(),
+        },
+        {
+          provide: getConnectionToken(),
+          useValue: { add: jest.fn() },
+        },
         {
           provide: getRepositoryToken(Account),
           useValue: {

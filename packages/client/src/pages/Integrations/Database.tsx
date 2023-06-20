@@ -257,7 +257,6 @@ const Database = () => {
     <div>
       <div>
         <div className="mx-auto flex flex-col">
-          <Header />
           <main>
             <div className="relative mx-auto max-w-4xl md:px-8 xl:px-0">
               <div className="pt-10 pb-16">

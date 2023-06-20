@@ -1,4 +1,4 @@
-import { Dispatch } from "redux";
+import { AnyAction, Dispatch } from "redux";
 import { ApiConfig } from "../constants";
 import ApiService from "../services/api.service";
 import posthog from "posthog-js";
@@ -54,7 +54,10 @@ const initialState = {
   isDynamic: false,
 };
 
-const segmentReducer = (state: SegmentData = initialState, action: Action) => {
+const segmentReducer = (
+  state: SegmentData = initialState,
+  action: AnyAction
+) => {
   switch (action.type) {
     case ActionType.SET_SEGMENT_NAME:
       return {

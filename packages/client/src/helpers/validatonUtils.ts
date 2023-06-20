@@ -1,4 +1,4 @@
-import { ISignUpForm } from "../reducers/auth";
+import { ISignUpForm } from "../reducers/auth.reducer";
 // export const validateMobile = (value:string) => value.length === 10;
 export const validatePassword = (value: string) =>
   value.length >= 6 && value.length <= 15;

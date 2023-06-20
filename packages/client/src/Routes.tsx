@@ -12,7 +12,7 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import FlowBuilder from "pages/FlowBuilder";
 import EmailBuilder from "pages/EmailBuilder";
-import { getUserPermissions } from "reducers/auth";
+import { ActionType, getUserPermissions } from "reducers/auth.reducer";
 import SlackBuilder from "pages/SlackBuilder";
 import Cor from "pages/Cor";
 import FlowTable from "pages/FlowTable/FlowTable";
@@ -42,6 +42,8 @@ import ModalBuilder from "pages/ModalBuilder";
 import WebhookBuilder from "pages/WebhookBuilder";
 import EventTracker from "pages/EventTracker";
 import ModalBackgroundProvider from "pages/ModalBuilder/ModalBackgroundProvider";
+import FlowBuilderv2 from "pages/FlowBuilderv2";
+import FlowViewerv2 from "pages/FlowViewerv2";
 
 interface IProtected {
   children: ReactElement;
@@ -81,14 +83,6 @@ const WelcomeBannerProvider: FC<WelcomeBannerProviderProps> = ({
   const [firstName, setFirstName] = useState("");
 
   const navigate = useNavigate();
-
-  useEffect(() => {
-    (async () => {
-      const { data } = await ApiService.get<Account>({ url: "/accounts" });
-
-      setFirstName(data?.firstName || "");
-    })();
-  }, []);
 
   return (
     <>
@@ -147,6 +141,26 @@ const WelcomeBannerProvider: FC<WelcomeBannerProviderProps> = ({
 
 const RouteComponent: React.FC = () => {
   const [showWelcomeBanner, setShowWelcomeBanner] = useState(false);
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await ApiService.get<Account>({ url: "/accounts" });
+
+      dispatch({
+        type: ActionType.LOGIN_USER_SUCCESS,
+        payload: {
+          firstName: data.firstName,
+          lastName: data.lastName,
+          uId: data.id,
+          onboarded: data.onboarded,
+          email: data.email,
+          expectedOnboarding: data.expectedOnboarding,
+          verified: data.verified,
+        },
+      });
+    })();
+  }, []);
 
   return (
     <BrowserRouter>
@@ -190,7 +204,9 @@ const RouteComponent: React.FC = () => {
           path="/flow"
           element={
             <Protected>
-              <DrawerLayout>
+              <DrawerLayout
+                crumbs={[{ text: "Journey builder", link: "/flow" }]}
+              >
                 <FlowTable />
               </DrawerLayout>
             </Protected>
@@ -200,8 +216,28 @@ const RouteComponent: React.FC = () => {
           path="/flow/:id"
           element={
             <Protected>
-              <DrawerLayout>
-                <FlowBuilder />
+              <DrawerLayout
+                crumbs={[
+                  { text: "Journey builder", link: "/flow" },
+                  { text: "Create a journey" },
+                ]}
+              >
+                <FlowBuilderv2 />
+              </DrawerLayout>
+            </Protected>
+          }
+        />
+        <Route
+          path="/flow/:id/v2"
+          element={
+            <Protected>
+              <DrawerLayout
+                crumbs={[
+                  { text: "Journey builder", link: "/flow" },
+                  { text: "Create a journey" },
+                ]}
+              >
+                <FlowBuilderv2 />
               </DrawerLayout>
             </Protected>
           }
@@ -220,8 +256,13 @@ const RouteComponent: React.FC = () => {
           path="/flow/:id/view"
           element={
             <Protected>
-              <DrawerLayout>
-                <FlowViewer />
+              <DrawerLayout
+                crumbs={[
+                  { text: "Journey builder", link: "/flow" },
+                  { text: "Journey" },
+                ]}
+              >
+                <FlowViewerv2 />
               </DrawerLayout>
             </Protected>
           }

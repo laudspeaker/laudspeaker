@@ -36,6 +36,7 @@ export class WebsocketGateway implements OnGatewayConnection {
   ) {}
 
   public async handleConnection(socket: Socket) {
+    console.log(socket.id);
     try {
       const { apiKey, customerId } = socket.handshake.auth;
 
@@ -195,8 +196,8 @@ export class WebsocketGateway implements OnGatewayConnection {
         socket.emit('customerId', customer.id);
       }
 
-      const workflowTick = await this.eventsService.enginePayload(
-        `Api-key ${apiKey}`,
+      const workflowTick = await this.eventsService.customPayload(
+        socket.data.account,
         {
           correlationKey: '_id',
           correlationValue: customer.id,
