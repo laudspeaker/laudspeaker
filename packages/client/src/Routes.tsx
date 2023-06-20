@@ -12,7 +12,7 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import FlowBuilder from "pages/FlowBuilder";
 import EmailBuilder from "pages/EmailBuilder";
-import { getUserPermissions } from "reducers/auth.reducer";
+import { ActionType, getUserPermissions } from "reducers/auth.reducer";
 import SlackBuilder from "pages/SlackBuilder";
 import Cor from "pages/Cor";
 import FlowTable from "pages/FlowTable/FlowTable";
@@ -84,14 +84,6 @@ const WelcomeBannerProvider: FC<WelcomeBannerProviderProps> = ({
 
   const navigate = useNavigate();
 
-  useEffect(() => {
-    (async () => {
-      const { data } = await ApiService.get<Account>({ url: "/accounts" });
-
-      setFirstName(data?.firstName || "");
-    })();
-  }, []);
-
   return (
     <>
       {children}
@@ -149,6 +141,26 @@ const WelcomeBannerProvider: FC<WelcomeBannerProviderProps> = ({
 
 const RouteComponent: React.FC = () => {
   const [showWelcomeBanner, setShowWelcomeBanner] = useState(false);
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await ApiService.get<Account>({ url: "/accounts" });
+
+      dispatch({
+        type: ActionType.LOGIN_USER_SUCCESS,
+        payload: {
+          firstName: data.firstName,
+          lastName: data.lastName,
+          uId: data.id,
+          onboarded: data.onboarded,
+          email: data.email,
+          expectedOnboarding: data.expectedOnboarding,
+          verified: data.verified,
+        },
+      });
+    })();
+  }, []);
 
   return (
     <BrowserRouter>
