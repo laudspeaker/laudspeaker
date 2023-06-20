@@ -38,11 +38,16 @@ import { v4 as uuid } from 'uuid';
 import {
   BranchType,
   EdgeType,
+  FilterByOption,
   NodeType,
   TimeType,
 } from './types/visual-layout.interface';
 import {
   AnalyticsEvent,
+  AnalyticsEventCondition,
+  ElementCondition,
+  EventBranch,
+  PropertyCondition,
   StartStepMetadata,
   StepType,
 } from '../steps/types/step.interface';
@@ -885,10 +890,10 @@ export class JourneysService {
 
             //Time Branch configuration
             let timeBranch = nodes[i].data['branches'].filter((branch) => { return branch.type === BranchType.MAX_TIME })[0]
-            if (timeBranch.timeType === TimeType.TIME_DELAY) {
+            if (timeBranch?.timeType === TimeType.TIME_DELAY) {
               metadata.timeBranch = new TimeDelayStepMetadata();
               metadata.timeBranch.delay = new Temporal.Duration(timeBranch.delay.years, timeBranch['delay']['months'], timeBranch['delay']['weeks'], timeBranch['delay']['days'], timeBranch['delay']['hours'], timeBranch['delay']['minutes'])
-            } else if (timeBranch.timeType === TimeType.TIME_WINDOW) {
+            } else if (timeBranch?.timeType === TimeType.TIME_WINDOW) {
               metadata.timeBranch = new TimeWindowStepMetadata();
               metadata.timeBranch.window = new TimeWindow()
               metadata.timeBranch.window.from = Temporal.Instant.from(new Date(timeBranch['from']).toISOString())
@@ -898,9 +903,41 @@ export class JourneysService {
             for (let i = 0; i < relevantEdges.length; i++) {
               if (relevantEdges[i].data['branch'].type === BranchType.MAX_TIME) metadata.timeBranch.destination = relevantEdges[i].target;
               else if (relevantEdges[i].data['branch'].type === BranchType.EVENT) {
-                const branch = new AnalyticsEvent();
-                branch.conditions = []
-                branch.provider
+                const branch = new EventBranch();
+                branch.events = []
+                branch.relation = relevantEdges[i].data['branch'].conditions[0].relationToNext;
+                branch.index = i;
+                branch.destination = nodes.filter((node) => {
+                  return node.id === relevantEdges[i].target;
+                })[0].data.stepId;
+                for (let eventsIndex = 0; eventsIndex < relevantEdges[i].data['branch'].conditions.length; eventsIndex++) {
+                  const event = new AnalyticsEvent();
+                  event.conditions = []
+                  event.event = relevantEdges[i].data['branch'].conditions[eventsIndex].name
+                  event.provider = relevantEdges[i].data['branch'].conditions[eventsIndex].providerType
+                  event.relation = relevantEdges[i].data['branch'].conditions[eventsIndex].statements[0].relationToNext;
+                  for (let conditionsIndex = 0; conditionsIndex < relevantEdges[i].data['branch'].conditions[eventsIndex].statements.length; conditionsIndex++) {
+                    const condition = new AnalyticsEventCondition();
+                    condition.type = relevantEdges[i].data['branch'].conditions[eventsIndex].statements[conditionsIndex].type;
+                    if (condition.type === FilterByOption.ELEMENTS) {
+                      condition.elementCondition = new ElementCondition()
+                      condition.elementCondition.comparisonType = relevantEdges[i].data['branch'].conditions[eventsIndex].statements[conditionsIndex].comparisonType
+                      condition.elementCondition.filter = relevantEdges[i].data['branch'].conditions[eventsIndex].statements[conditionsIndex].elementKey
+                      condition.elementCondition.filterType = relevantEdges[i].data['branch'].conditions[eventsIndex].statements[conditionsIndex].valueType
+                      condition.elementCondition.order = relevantEdges[i].data['branch'].conditions[eventsIndex].statements[conditionsIndex].order
+                      condition.elementCondition.value = relevantEdges[i].data['branch'].conditions[eventsIndex].statements[conditionsIndex].value
+                    }
+                    else {
+                      condition.propertyCondition = new PropertyCondition()
+                      condition.propertyCondition.comparisonType = relevantEdges[i].data['branch'].conditions[eventsIndex].statements[conditionsIndex].comparisonType
+                      condition.propertyCondition.key = relevantEdges[i].data['branch'].conditions[eventsIndex].statements[conditionsIndex].key
+                      condition.propertyCondition.keyType = relevantEdges[i].data['branch'].conditions[eventsIndex].statements[conditionsIndex].valueType
+                      condition.propertyCondition.value = relevantEdges[i].data['branch'].conditions[eventsIndex].statements[conditionsIndex].value
+                    }
+                    event.conditions.push(condition)
+                  }
+                  branch.events.push(event)
+                }
                 metadata.branches.push(branch);
               }
             }

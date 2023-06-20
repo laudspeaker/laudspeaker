@@ -50,7 +50,7 @@ export class ElementCondition {
   value: string;
 }
 
-export class AnalyticsEventConditions {
+export class AnalyticsEventCondition {
   type?: FilterByOption;
   elementCondition?: ElementCondition;
   propertyCondition?: PropertyCondition;
@@ -126,7 +126,7 @@ export class MessageEvent extends Event { }
 export class AnalyticsEvent extends Event {
   provider: AnalyticsProviderTypes; // client/src/types/Workflow.ts: ProviderType
   event: string;
-  conditions: AnalyticsEventConditions[];
+  conditions: AnalyticsEventCondition[];
   relation?: string; // and/or
 }
 
