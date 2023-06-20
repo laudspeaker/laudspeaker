@@ -119,7 +119,11 @@ const BranchPopover: FC<BranchPopoverProps> = ({
                       ))}
                     </div>
                     {i !== branch.conditions.length - 1 && i !== 2 && (
-                      <div>Or</div>
+                      <div>
+                        {condition.relationToNext === LogicRelation.AND
+                          ? "And"
+                          : "Or"}
+                      </div>
                     )}
                   </React.Fragment>
                 ))
