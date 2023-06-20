@@ -45,15 +45,10 @@ jobs:
             export AWS_ACCESS_KEY_ID=$DEMO_AWS_KEY
             export AWS_SECRET_ACCESS_KEY=$DEMO_AWS_SECRET
             aws configure set region $DEMO_AWS_REGION
-            aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 427506656486.dkr.ecr.us-east-1.amazonaws.com
-            docker build -f Dockerfile.staging.client -t laudspeaker:staging-latest .
-            docker build -f Dockerfile.staging.server -t laudspeaker:api-staging-latest .
-            docker tag laudspeaker:api-staging-latest 427506656486.dkr.ecr.us-east-1.amazonaws.com/laudspeaker:api-staging-latest
-            docker tag laudspeaker:staging-latest 427506656486.dkr.ecr.us-east-1.amazonaws.com/laudspeaker:staging-latest
-            docker push 427506656486.dkr.ecr.us-east-1.amazonaws.com/laudspeaker:api-staging-latest
-            docker push 427506656486.dkr.ecr.us-east-1.amazonaws.com/laudspeaker:staging-latest
-            aws ecs update-service --cluster api-staging --service api-staging --force-new-deployment
-            aws ecs update-service --cluster frontend-staging --service frontend-staging --force-new-deployment
+            docker login -u $DOCKER_USER -p $DOCKER_PASS
+            docker build -f Dockerfile -t laudspeaker/laudspeaker:latest .
+            docker push laudspeaker/laudspeaker:latest
+            aws ecs update-service --cluster staging --service staging --force-new-deployment
   test:
     docker:
       - image: circleci/node:16
