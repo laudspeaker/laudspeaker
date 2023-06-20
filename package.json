@@ -35,8 +35,6 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "@dagrejs/graphlib": "^2.1.13",
-    "@js-temporal/polyfill": "^0.4.4",
     "clickhouse-migrations": "^0.1.13",
     "concurrently": "^7.4.0",
     "logform": "^2.4.2",
