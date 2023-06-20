@@ -3,10 +3,10 @@ import {
   BaseEdge,
   EdgeLabelRenderer,
   EdgeProps,
-  getSimpleBezierPath,
   getSmoothStepPath,
 } from "reactflow";
 import { useAppDispatch, useAppSelector } from "store/hooks";
+import { DrawerAction } from "../Drawer/drawer.fixtures";
 import { NodeType } from "../FlowEditor";
 
 export const PrimaryEdge: FC<EdgeProps> = ({
@@ -21,7 +21,9 @@ export const PrimaryEdge: FC<EdgeProps> = ({
   source,
   target,
 }) => {
-  const { isDragging, nodes } = useAppSelector((state) => state.flowBuilder);
+  const { isDragging, nodes, dragAction } = useAppSelector(
+    (state) => state.flowBuilder
+  );
   const dispatch = useAppDispatch();
   const [edgePath, labelX, labelY] = getSmoothStepPath({
     sourceX,
@@ -47,7 +49,9 @@ export const PrimaryEdge: FC<EdgeProps> = ({
         !isSourceEmptyNode &&
         !isTargetInsertNode &&
         !isSourceInsertNode &&
-        isDragging && (
+        isDragging &&
+        dragAction?.type !== DrawerAction.EXIT &&
+        dragAction?.type !== DrawerAction.JUMP_TO && (
           <EdgeLabelRenderer>
             <div
               style={{

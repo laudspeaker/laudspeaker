@@ -115,11 +115,6 @@ export const MessageNode: FC<NodeProps<MessageNodeData>> = ({
           ? "border-[2px] border-[#6366F1]"
           : "border-[1px] border-[#E5E7EB]"
       }`}
-      onDragStart={(e) => {
-        e.stopPropagation();
-        e.preventDefault();
-        console.log(e);
-      }}
     >
       <Handle
         position={Position.Top}
@@ -127,6 +122,11 @@ export const MessageNode: FC<NodeProps<MessageNodeData>> = ({
         isConnectable={isConnectable}
         className="!min-h-[1px] !h-[1px] !top-[1px] !opacity-0 !border-0 !pointer-events-none !cursor-default"
       />
+      {/* <Handle
+        position={Position.Left}
+        type="target"
+        isConnectable={isConnectable}
+      /> */}
       <div className="p-[16px] flex flex-col gap-[2px]">
         <div className="flex gap-[6px]">
           <div>{nodeFixtures.icon}</div>

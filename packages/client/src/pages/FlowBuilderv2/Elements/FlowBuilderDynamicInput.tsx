@@ -1,4 +1,4 @@
-import React, { FC, ReactNode, useEffect } from "react";
+import React, { FC, ReactNode, useEffect, useState } from "react";
 import { StatementValueType } from "reducers/flow-builder.reducer";
 
 interface ValueChanger {
@@ -11,10 +11,6 @@ interface FlowBuilderDynamicInputProps extends ValueChanger {
 }
 
 const BooleanComponent: FC<ValueChanger> = ({ value, onChange }) => {
-  useEffect(() => {
-    onChange("true");
-  }, []);
-
   return (
     <select
       placeholder="value"
@@ -32,10 +28,6 @@ const BooleanComponent: FC<ValueChanger> = ({ value, onChange }) => {
 };
 
 const DateComponent: FC<ValueChanger> = ({ value, onChange }) => {
-  useEffect(() => {
-    onChange(new Date().toUTCString());
-  }, []);
-
   let relativeValue = "";
 
   try {
@@ -58,10 +50,6 @@ const DateComponent: FC<ValueChanger> = ({ value, onChange }) => {
 };
 
 const EmailComponent: FC<ValueChanger> = ({ value, onChange }) => {
-  useEffect(() => {
-    onChange("email@gmail.com");
-  }, []);
-
   return (
     <input
       type="text"
@@ -74,10 +62,6 @@ const EmailComponent: FC<ValueChanger> = ({ value, onChange }) => {
 };
 
 const NumberComponent: FC<ValueChanger> = ({ value, onChange }) => {
-  useEffect(() => {
-    onChange("0");
-  }, []);
-
   return (
     <input
       type="number"
@@ -90,10 +74,6 @@ const NumberComponent: FC<ValueChanger> = ({ value, onChange }) => {
 };
 
 const StringComponent: FC<ValueChanger> = ({ value, onChange }) => {
-  useEffect(() => {
-    onChange("");
-  }, []);
-
   return (
     <input
       type="text"
@@ -110,6 +90,16 @@ const FlowBuilderDynamicInput: FC<FlowBuilderDynamicInputProps> = ({
   value,
   onChange,
 }) => {
+  const [isFirstRender, setIsFirstRender] = useState(true);
+
+  const defaultValuesMap: Record<StatementValueType, string> = {
+    [StatementValueType.BOOLEAN]: "true",
+    [StatementValueType.DATE]: new Date().toUTCString(),
+    [StatementValueType.EMAIL]: "email@gmail.com",
+    [StatementValueType.NUMBER]: "0",
+    [StatementValueType.STRING]: "",
+  };
+
   const valueTypeToComponentMap: Record<StatementValueType, ReactNode> = {
     [StatementValueType.BOOLEAN]: (
       <BooleanComponent value={value} onChange={onChange} />
@@ -127,6 +117,15 @@ const FlowBuilderDynamicInput: FC<FlowBuilderDynamicInputProps> = ({
       <StringComponent value={value} onChange={onChange} />
     ),
   };
+
+  useEffect(() => {
+    if (isFirstRender) {
+      setIsFirstRender(false);
+      return;
+    }
+
+    onChange(defaultValuesMap[type]);
+  }, [type]);
 
   return <>{valueTypeToComponentMap[type]}</>;
 };

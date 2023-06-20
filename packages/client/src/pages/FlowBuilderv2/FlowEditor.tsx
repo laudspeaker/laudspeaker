@@ -1,11 +1,15 @@
 import ReactFlow, {
+  applyEdgeChanges,
   applyNodeChanges,
   Controls,
   Edge,
+  EdgeChange,
+  EdgeProps,
   getOutgoers,
   MarkerType,
   Node,
   NodeChange,
+  NodeProps,
   useViewport,
 } from "reactflow";
 import { useAppDispatch, useAppSelector } from "store/hooks";
@@ -14,6 +18,7 @@ import {
   addInsertNodeBetween,
   handleDrawerAction,
   removeNode,
+  setEdges,
   setNodes,
   transformEmptyNodeIntoInsertNode,
   transformInsertNodeIntoEmptyNode,
@@ -31,7 +36,7 @@ import {
   WaitUntilNode,
 } from "./Nodes";
 import FlowBuilderSidePanel from "./SidePanel/FlowBuilderSidePanel";
-import { BranchEdge, PrimaryEdge } from "./Edges";
+import { BranchEdge, JumpToEdge, PrimaryEdge } from "./Edges";
 import { FC, RefObject, useEffect, useRef } from "react";
 import { EdgeData } from "./Edges/EdgeData";
 import { NodeData } from "./Nodes/NodeData";
@@ -54,9 +59,10 @@ export enum NodeType {
 export enum EdgeType {
   PRIMARY = "primary",
   BRANCH = "branch",
+  JUMP_TO = "jumpTo",
 }
 
-const nodeTypes = {
+const nodeTypes: Record<NodeType, FC<NodeProps<any>>> = {
   [NodeType.START]: StartNode,
   [NodeType.EMPTY]: EmptyNode,
   [NodeType.MESSAGE]: MessageNode,
@@ -69,9 +75,10 @@ const nodeTypes = {
   [NodeType.INSERT_NODE]: InsertNode,
 };
 
-const edgeTypes = {
+const edgeTypes: Record<EdgeType, FC<EdgeProps<any>>> = {
   [EdgeType.PRIMARY]: PrimaryEdge,
   [EdgeType.BRANCH]: BranchEdge,
+  [EdgeType.JUMP_TO]: JumpToEdge,
 };
 
 interface NodeDraggingProviderProps {
@@ -94,7 +101,7 @@ const NodeDraggingProvider: FC<NodeDraggingProviderProps> = ({ flowRef }) => {
     [DrawerAction.WEBHOOK]: NodeType.MESSAGE,
   };
 
-  const { nodes, edges, isDragging, flowId } = useAppSelector(
+  const { nodes, edges, isDragging, flowId, dragAction } = useAppSelector(
     (state) => state.flowBuilder
   );
 
@@ -136,34 +143,39 @@ const NodeDraggingProvider: FC<NodeDraggingProviderProps> = ({ flowRef }) => {
         }
       | undefined;
 
-    for (const edge of edges) {
-      if (edge.type !== EdgeType.PRIMARY) continue;
+    if (
+      dragAction?.type !== DrawerAction.EXIT &&
+      dragAction?.type !== DrawerAction.JUMP_TO
+    ) {
+      for (const edge of edges) {
+        if (edge.type !== EdgeType.PRIMARY) continue;
 
-      const nodeA = nodes.find((node) => node.id === edge.source);
-      const nodeB = nodes.find((node) => node.id === edge.target);
+        const nodeA = nodes.find((node) => node.id === edge.source);
+        const nodeB = nodes.find((node) => node.id === edge.target);
 
-      if (
-        !nodeA?.type ||
-        !nodeB?.type ||
-        ([NodeType.EMPTY, NodeType.INSERT_NODE] as string[]).includes(
-          nodeA.type
-        ) ||
-        ([NodeType.EMPTY, NodeType.INSERT_NODE] as string[]).includes(
-          nodeB.type
+        if (
+          !nodeA?.type ||
+          !nodeB?.type ||
+          ([NodeType.EMPTY, NodeType.INSERT_NODE] as string[]).includes(
+            nodeA.type
+          ) ||
+          ([NodeType.EMPTY, NodeType.INSERT_NODE] as string[]).includes(
+            nodeB.type
+          )
         )
-      )
-        continue;
+          continue;
 
-      const labelX = (nodeA.position.x + nodeB.position.x) / 2;
-      const labelY = (nodeA.position.y + nodeB.position.y) / 2;
+        const labelX = (nodeA.position.x + nodeB.position.x) / 2;
+        const labelY = (nodeA.position.y + nodeB.position.y) / 2;
 
-      const lengthToLabel = Math.sqrt(
-        (canvasMouseX - labelX) * (canvasMouseX - labelX) +
-          (canvasMouseY - labelY) * (canvasMouseY - labelY)
-      );
+        const lengthToLabel = Math.sqrt(
+          (canvasMouseX - labelX) * (canvasMouseX - labelX) +
+            (canvasMouseY - labelY) * (canvasMouseY - labelY)
+        );
 
-      if (!closestEdge || lengthToLabel < closestEdge.lengthToLabel)
-        closestEdge = { edge, lengthToLabel, nodeA, nodeB };
+        if (!closestEdge || lengthToLabel < closestEdge.lengthToLabel)
+          closestEdge = { edge, lengthToLabel, nodeA, nodeB };
+      }
     }
 
     let closestEmptyNode: { node: Node<NodeData>; length: number } | undefined;
@@ -269,10 +281,11 @@ const FlowEditor: FC<FlowEditorProps> = ({ className, isViewMode }) => {
     dispatch(setNodes(applyNodeChanges(changes, nodes)));
   };
 
-  // const onEdgesChange = (changes: EdgeChange[]) => {
-  //   changes = changes.filter((change) => change.type === "select");
-  //   dispatch(setEdges(applyEdgeChanges(changes, edges)));
-  // };
+  const onEdgesChange = (changes: EdgeChange[]) => {
+    console.log(changes);
+
+    // dispatch(setEdges(applyEdgeChanges(changes, edges)));
+  };
 
   const flowRef = useRef<HTMLDivElement>(null);
 
@@ -294,7 +307,7 @@ const FlowEditor: FC<FlowEditorProps> = ({ className, isViewMode }) => {
           ev.zoomTo(0.8);
         }}
         onNodesChange={onNodesChange}
-        // onEdgesChange={onEdgesChange}
+        onEdgesChange={onEdgesChange}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         panOnScroll

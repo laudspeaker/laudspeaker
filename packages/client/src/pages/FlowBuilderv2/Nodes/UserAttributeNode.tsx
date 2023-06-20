@@ -1,5 +1,7 @@
 import React, { FC } from "react";
-import { Handle, NodeProps, Position } from "reactflow";
+import { Handle, Node, NodeProps, Position } from "reactflow";
+import { useAppSelector } from "store/hooks";
+import BranchPopover from "../Edges/components/BranchPopover";
 import { UserAttributeIcon } from "../Icons";
 import { UserAttributeNodeData } from "./NodeData";
 
@@ -7,7 +9,14 @@ export const UserAttributeNode: FC<NodeProps<UserAttributeNodeData>> = ({
   isConnectable,
   selected,
   data: { branches },
+  id,
 }) => {
+  const { nodes } = useAppSelector((state) => state.flowBuilder);
+
+  const thisNode = nodes.find(
+    (node) => node.id === id
+  ) as Node<UserAttributeNodeData>;
+
   return (
     <div
       className={`w-[260px] h-[80px] rounded-[4px] bg-white font-inter ${
@@ -25,18 +34,44 @@ export const UserAttributeNode: FC<NodeProps<UserAttributeNodeData>> = ({
           <UserAttributeIcon />
         </div>
       </Handle>
-      <div className="p-[16px]">
-        <div className="font-semibold text-[16px] leading-[24px] mb-[2px]">
-          User attribute
+
+      {branches.length === 1 ? (
+        <BranchPopover
+          branch={branches[0]}
+          node={thisNode}
+          translateX={0}
+          translateY={0}
+          className="w-full"
+          popperClassName="right-[-265px] -top-1/2"
+        >
+          <div className="p-[16px]">
+            <div className="font-semibold text-[16px] leading-[24px] mb-[2px]">
+              User attribute
+            </div>
+            <div className="font-normal text-[14px] leading-[22px] text-[#4B5563]">
+              {!branches.length || !branches[0]?.attributeConditions?.length
+                ? "Set attribute condition"
+                : branches.length === 1 &&
+                  branches[0].attributeConditions.length
+                ? `Meet ${branches[0].attributeConditions.length} conditions`
+                : "Meet below conditions"}
+            </div>
+          </div>
+        </BranchPopover>
+      ) : (
+        <div className="p-[16px]">
+          <div className="font-semibold text-[16px] leading-[24px] mb-[2px]">
+            User attribute
+          </div>
+          <div className="font-normal text-[14px] leading-[22px] text-[#4B5563]">
+            {!branches.length || !branches[0]?.attributeConditions?.length
+              ? "Set attribute condition"
+              : branches.length === 1 && branches[0].attributeConditions.length
+              ? `Meet ${branches[0].attributeConditions.length} conditions`
+              : "Meet below conditions"}
+          </div>
         </div>
-        <div className="font-normal text-[14px] leading-[22px] text-[#4B5563]">
-          {!branches.length || !branches[0]?.attributeConditions?.length
-            ? "Set attribute condition"
-            : branches.length === 1 && branches[0].attributeConditions.length
-            ? `Meet ${branches[0].attributeConditions.length} conditions`
-            : "Meet below conditions"}
-        </div>
-      </div>
+      )}
 
       <Handle
         position={Position.Bottom}

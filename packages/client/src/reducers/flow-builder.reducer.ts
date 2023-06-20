@@ -119,12 +119,28 @@ export enum JourneyType {
   STATIC = "static",
 }
 
+export enum NodeAction {
+  SWAP = "swap",
+}
+
+export interface DrawerDragAction {
+  type: DrawerAction;
+}
+
+export interface SwapDragAction {
+  type: NodeAction.SWAP;
+  nodeId: string;
+}
+
+export type DragAction = DrawerDragAction | SwapDragAction;
+
 interface FlowBuilderState {
   flowId: string;
   flowName: string;
   nodes: Node<NodeData>[];
   edges: Edge<EdgeData>[];
-  isDragging?: boolean;
+  isDragging: boolean;
+  dragAction?: DragAction;
   stepperIndex: 0 | 1 | 2;
   segments: SegmentsSettings;
   journeyType: JourneyType;
@@ -622,6 +638,9 @@ const flowBuilderSlice = createSlice({
     setIsDragging(state, action: PayloadAction<boolean>) {
       state.isDragging = action.payload;
     },
+    setDragAction(state, action: PayloadAction<DragAction | undefined>) {
+      state.dragAction = action.payload;
+    },
     setStepperIndex(state, action: PayloadAction<0 | 1 | 2>) {
       state.stepperIndex = action.payload;
     },
@@ -643,6 +662,7 @@ const flowBuilderSlice = createSlice({
       state.nodes = initialNodes.slice();
       state.edges = initialEdges.slice();
       state.isDragging = false;
+      state.dragAction = undefined;
       state.stepperIndex = 0;
       state.segments = { type: SegmentsSettingsType.ALL_CUSTOMERS };
       state.journeyType = JourneyType.DYNAMIC;
@@ -669,6 +689,7 @@ export const {
   selectNode,
   deselectNodes,
   setIsDragging,
+  setDragAction,
   setStepperIndex,
   setSegmentsSettings,
   setJourneyType,

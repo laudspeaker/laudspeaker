@@ -1,6 +1,10 @@
 import React, { DragEvent } from "react";
 import Scrollbars from "react-custom-scrollbars-2";
-import { clearInsertNodes, setIsDragging } from "reducers/flow-builder.reducer";
+import {
+  clearInsertNodes,
+  setDragAction,
+  setIsDragging,
+} from "reducers/flow-builder.reducer";
 import { useAppDispatch } from "store/hooks";
 import flowBuilderFixtures, { DrawerAction } from "./drawer.fixtures";
 
@@ -10,10 +14,12 @@ const FlowBuilderDrawer = () => {
   const onDragStart = (e: DragEvent<HTMLDivElement>, action: DrawerAction) => {
     e.dataTransfer.setData("action", action);
     dispatch(setIsDragging(true));
+    dispatch(setDragAction({ type: action }));
   };
 
   const onDragEnd = () => {
     dispatch(setIsDragging(false));
+    dispatch(setDragAction());
     dispatch(clearInsertNodes());
   };
 
