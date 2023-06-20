@@ -467,7 +467,7 @@ export class CronService {
     }
   }
 
-  @Cron(CronExpression.EVERY_MINUTE)
+  @Cron(CronExpression.EVERY_DAY_AT_NOON)
   async handleMissedMailgunEvents() {
     try {
       // Get all pending Mailgun Jobs and accounts
@@ -559,7 +559,7 @@ export class CronService {
     }
   }
 
-  @Cron(CronExpression.EVERY_MINUTE)
+  @Cron(CronExpression.EVERY_DAY_AT_NOON)
   async handleMissedSendgridEvents() {
     try {
       // Get all pending Twilio Jobs and accounts
@@ -678,7 +678,7 @@ export class CronService {
     }
   }
 
-  @Cron(CronExpression.EVERY_MINUTE)
+  @Cron(CronExpression.EVERY_DAY_AT_NOON)
   async handleMissedTwilioEvents() {
     try {
       // Get all pending Twilio Jobs and accounts

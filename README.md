@@ -18,7 +18,7 @@
 
 ## Laudspeaker - Open source omni-channel customer messaging. Alternative to Braze / Iterable / One Signal / Customer Io
 
-![app laudspeaker com_flow_onboarding-example (1)](https://user-images.githubusercontent.com/7728266/208761386-5dfe6803-16d1-47ca-98f4-45d77ff6058e.png)
+<img width="1708" alt="UI2" src="https://github.com/laudspeaker/laudspeaker/assets/7728266/4c3c2917-6899-48f7-bcbe-a4bd92049c24">
 
 - **Multiple messaging channels like email, sms and push** Send product or event-triggered emails, sms and more to your customers and users at scale
 - **Visual Journey Builder** Build complex messaging workflows the whole team can understand in a visual tool, and see stats once a journey is started
