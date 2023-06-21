@@ -125,6 +125,12 @@ export class TransitionProcessor extends WorkerHost {
         case StepType.AB_TEST:
           break;
         case StepType.ATTRIBUTE_BRANCH:
+          this.handleAttributeBranch(
+            job.data.step.id,
+            job.data.session,
+            queryRunner,
+            transactionSession,
+          )
           break;
         case StepType.EXIT:
           break;
@@ -426,7 +432,8 @@ export class TransitionProcessor extends WorkerHost {
 
   /**
    * Handle start step type; move all customers to next step and update
-   * their step entry timestamps, then add next job to queue.
+   * their step entry timestamps, then add next job to queue if following
+   * step is not time based.
    * @param stepID
    * @param accountID
    * @param session
@@ -439,61 +446,44 @@ export class TransitionProcessor extends WorkerHost {
     queryRunner: QueryRunner,
     transactionSession: mongoose.mongo.ClientSession
   ) {
-    const currentStep = await queryRunner.manager.findOne(Step, {
+    const startStep = await queryRunner.manager.findOne(Step, {
       where: {
         id: stepID,
         type: StepType.START,
       },
-      relations: ['owner'],
-      // lock: { mode: 'pessimistic_write' }
+      lock: { mode: 'pessimistic_write' }
     });
-    this.debug(
-      `${JSON.stringify({ currentStep: currentStep })}`,
-      this.handleStart.name,
-      session
-    );
 
     const nextStep = await queryRunner.manager.findOne(Step, {
       where: {
-        id: currentStep.metadata.destination,
+        id: startStep.metadata.destination,
       },
-      relations: ['owner'],
-      // lock: { mode: 'pessimistic_write' }
+      lock: { mode: 'pessimistic_write' }
     });
-    this.debug(
-      `${JSON.stringify({ nextStep: nextStep })}`,
-      this.handleStart.name,
-      session
-    );
 
-    for (let i = 0; i < currentStep.customers.length; i++) {
+    const forDeletion = [];
+    for (let i = 0; i < startStep.customers.length; i++) {
       nextStep.customers.push(
         JSON.stringify({
-          customerID: JSON.parse(currentStep.customers[i]).customerID,
+          customerID: JSON.parse(startStep.customers[i]).customerID,
           timestamp: new Date(),
         })
       );
+      forDeletion.push(startStep.customers[i]);
     }
-    currentStep.customers = [];
-
-    this.debug(
-      `${JSON.stringify({ currentStep: currentStep, nextStep: nextStep })}`,
-      this.handleStart.name,
-      session
+    startStep.customers = startStep.customers.filter(
+      (item) => !forDeletion.includes(item)
     );
 
-    await queryRunner.manager.save(currentStep);
-    const newNext = await queryRunner.manager.save(nextStep);
-    this.debug(
-      `${JSON.stringify({ newNext: newNext })}`,
-      this.handleStart.name,
-      session
-    );
+    await queryRunner.manager.save(startStep);
+    const newNext: Step = await queryRunner.manager.save(nextStep);
 
-    await this.transitionQueue.add(newNext.type, {
-      step: newNext,
-      session: session,
-    });
+    if (newNext.type !== StepType.TIME_DELAY && newNext.type !== StepType.TIME_WINDOW && newNext.type !== StepType.WAIT_UNTIL_BRANCH) {
+      await this.transitionQueue.add(newNext.type, {
+        step: newNext,
+        session: session,
+      });
+    }
   }
 
   /**
@@ -644,50 +634,62 @@ export class TransitionProcessor extends WorkerHost {
     transactionSession: mongoose.mongo.ClientSession
   ) {
     let nextStep: Step, forDeletion: string[];
-    const currentStep = await queryRunner.manager.findOneBy(Step, {
-      id: stepID,
-      type: StepType.WAIT_UNTIL_BRANCH,
+    const waitUntilStep = await queryRunner.manager.findOne(Step, {
+      where: {
+        id: stepID,
+        type: StepType.WAIT_UNTIL_BRANCH,
+      },
+      lock: { mode: 'pessimistic_write' }
     });
-    if (branch < 0) {
-      nextStep = await queryRunner.manager.findOneBy(Step, {
-        id: currentStep.metadata.timeBranch.destination,
+    if (branch < 0 && waitUntilStep.metadata.timeBranch) {
+      nextStep = await queryRunner.manager.findOne(Step, {
+        where: {
+          id: waitUntilStep.metadata.timeBranch?.destination,
+        },
+        lock: { mode: 'pessimistic_write' }
       });
-      if (currentStep.metadata.timeBranch.delay) {
-        for (let i = 0; i < currentStep.customers.length; i++) {
+      if (waitUntilStep.metadata.timeBranch.delay) {
+        for (let i = 0; i < waitUntilStep.customers.length; i++) {
           if (
             Temporal.Duration.compare(
-              currentStep.metadata.timeBranch.delay,
+              waitUntilStep.metadata.timeBranch.delay,
               Temporal.Now.instant().since(
                 Temporal.Instant.from(
-                  JSON.parse(currentStep.customers[i]).timestamp
+                  JSON.parse(waitUntilStep.customers[i]).timestamp
                 )
               )
             ) < 0
           ) {
             nextStep.customers.push(
               JSON.stringify({
-                customerID: JSON.parse(currentStep.customers[i]).customerID,
+                customerID: JSON.parse(waitUntilStep.customers[i]).customerID,
                 timestamp: Temporal.Now.instant().toString(),
               })
             );
-            forDeletion.push(currentStep.customers[i]);
+            forDeletion.push(waitUntilStep.customers[i]);
           }
         }
-        currentStep.customers = currentStep.customers.filter(
+        waitUntilStep.customers = waitUntilStep.customers.filter(
           (item) => !forDeletion.includes(item)
         );
       }
-      else if (currentStep.metadata.timeBranch.window) {
+      else if (waitUntilStep.metadata.timeBranch.window) {
 
       }
-    } else {
+      await queryRunner.manager.save(waitUntilStep);
+      const newNext: Step = await queryRunner.manager.save(nextStep);
+      if (forDeletion.length > 0 && newNext.type !== StepType.TIME_DELAY && newNext.type !== StepType.TIME_WINDOW && newNext.type !== StepType.WAIT_UNTIL_BRANCH) {
+        this.transitionQueue.add(newNext.type, {
+          stepID: newNext.id,
+          session: session,
+        });
+      }
+    } else if (branch > -1 && waitUntilStep.metadata.branches.length > 0) {
       nextStep = await queryRunner.manager.findOneBy(Step, {
-        id: currentStep.metadata.branches.filter(branchItem => { return branchItem.index === branch })[0].destination,
+        id: waitUntilStep.metadata.branches.filter(branchItem => { return branchItem.index === branch })[0].destination,
       });
-      currentStep.customers=currentStep.customers.filter((item)=>{})
+      waitUntilStep.customers = waitUntilStep.customers.filter((item) => { })
     }
-    await queryRunner.manager.save(currentStep);
-    await queryRunner.manager.save(nextStep);
   }
 
   /**
