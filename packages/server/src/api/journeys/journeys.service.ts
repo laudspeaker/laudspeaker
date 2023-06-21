@@ -915,7 +915,7 @@ export class JourneysService {
                   event.conditions = []
                   event.event = relevantEdges[i].data['branch'].conditions[eventsIndex].name
                   event.provider = relevantEdges[i].data['branch'].conditions[eventsIndex].providerType
-                  event.relation = relevantEdges[i].data['branch'].conditions[eventsIndex].statements[0].relationToNext;
+                  event.relation = relevantEdges[i].data['branch'].conditions[eventsIndex].statements[0]?.relationToNext;
                   for (let conditionsIndex = 0; conditionsIndex < relevantEdges[i].data['branch'].conditions[eventsIndex].statements.length; conditionsIndex++) {
                     const condition = new AnalyticsEventCondition();
                     condition.type = relevantEdges[i].data['branch'].conditions[eventsIndex].statements[conditionsIndex].type;
