@@ -117,9 +117,9 @@ const FlowBuilderStepper = () => {
         <React.Fragment key={i}>
           <div className="px-[20px]">
             <div
-              className={`py-[18px] font-inter text-[16px] leading-[24px] font-normal select-none ${
+              className={`py-[18px] font-inter text-[14px] leading-[24px] font-normal select-none ${
                 stepperIndex === i
-                  ? "border-b-[2px] border-[#6366F1] text-[#6366F1] !font-semibold"
+                  ? "border-b-[4px] border-[#6366F1] text-[#6366F1] !font-semibold"
                   : stepperIndex < i
                   ? "text-[#9CA3AF]"
                   : "text-[#111827] cursor-pointer"

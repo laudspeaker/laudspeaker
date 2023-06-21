@@ -74,6 +74,7 @@ const flowBuilderDrawerFixtures: {
         id: DrawerAction.JUMP_TO,
         icon: JumpToIcon(),
         text: "Jump To",
+        disabled: true,
       },
       {
         id: DrawerAction.EXIT,

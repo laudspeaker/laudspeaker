@@ -4,7 +4,12 @@ import { DrawerAction } from "pages/FlowBuilderv2/Drawer/drawer.fixtures";
 import { BranchEdgeData, EdgeData } from "pages/FlowBuilderv2/Edges/EdgeData";
 import { NodeType, EdgeType } from "pages/FlowBuilderv2/FlowEditor";
 import { getLayoutedNodes } from "pages/FlowBuilderv2/layout.helper";
-import { Branch, NodeData } from "pages/FlowBuilderv2/Nodes/NodeData";
+import {
+  Branch,
+  BranchType,
+  LogicRelation,
+  NodeData,
+} from "pages/FlowBuilderv2/Nodes/NodeData";
 import {
   applyNodeChanges,
   Edge,
@@ -13,7 +18,7 @@ import {
   Node,
   NodeChange,
 } from "reactflow";
-import { MessageType } from "types/Workflow";
+import { MessageType, ProviderType } from "types/Workflow";
 import { v4 as uuid } from "uuid";
 
 export enum SegmentsSettingsType {
@@ -531,7 +536,20 @@ const flowBuilderSlice = createSlice({
           nodeToChange.type = NodeType.WAIT_UNTIL;
           nodeToChange.data = {
             type: NodeType.WAIT_UNTIL,
-            branches: [],
+            branches: [
+              {
+                id: uuid(),
+                type: BranchType.EVENT,
+                conditions: [
+                  {
+                    name: "",
+                    providerType: ProviderType.Custom,
+                    statements: [],
+                    relationToNext: LogicRelation.AND,
+                  },
+                ],
+              },
+            ],
             stepId,
           };
           break;
@@ -551,8 +569,8 @@ const flowBuilderSlice = createSlice({
           nodeToChange.type = NodeType.TIME_WINDOW;
           nodeToChange.data = {
             type: NodeType.TIME_WINDOW,
-            from: new Date().toUTCString(),
-            to: new Date().toUTCString(),
+            from: undefined,
+            to: undefined,
             stepId,
           };
           break;

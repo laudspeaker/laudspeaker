@@ -45,7 +45,7 @@ const FlowBuilderSidePanel: FC<FlowBuilderSidePanelProps> = ({ className }) => {
     [NodeType.EMPTY]: "",
     [NodeType.MESSAGE]: "",
     [NodeType.JUMP_TO]: "Jump to",
-    [NodeType.EXIT]: "",
+    [NodeType.EXIT]: "Exit",
     [NodeType.TIME_DELAY]: "Time delay",
     [NodeType.TIME_WINDOW]: "Time window",
     [NodeType.WAIT_UNTIL]: "Wait until",
@@ -115,7 +115,7 @@ const FlowBuilderSidePanel: FC<FlowBuilderSidePanelProps> = ({ className }) => {
     <>
       {isOpen && (
         <div
-          className="fixed top-[106px] left-0 bg-black bg-opacity-50 w-full h-screen"
+          className="fixed top-[106px] left-0 bg-[#111827] bg-opacity-20 w-full h-screen"
           onClick={onCancel}
         />
       )}

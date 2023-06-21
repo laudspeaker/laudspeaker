@@ -9,49 +9,13 @@ import TimeWindowEditor from "./TimeWindowEditor";
 
 interface MaxTimeBranchEditorProps {
   branch: MaxTimeBranch;
-  onDeleteBranch: () => void;
   onChangeBranch: (branch: MaxTimeBranch) => void;
 }
 
 const MaxTimeBranchEditor: FC<MaxTimeBranchEditorProps> = ({
   branch,
-  onDeleteBranch,
   onChangeBranch,
 }) => {
-  const handleWaitFromChange = (date: Date) => {
-    if (branch.timeType !== TimeType.TIME_WINDOW) return;
-
-    if (date > new Date(branch.waitTo)) {
-      onChangeBranch({
-        ...branch,
-        waitFrom: branch.waitTo,
-      });
-      return;
-    }
-
-    onChangeBranch({
-      ...branch,
-      waitFrom: date.toUTCString(),
-    });
-  };
-
-  const handleWaitToChange = (date: Date) => {
-    if (branch.timeType !== TimeType.TIME_WINDOW) return;
-
-    if (date < new Date(branch.waitFrom)) {
-      onChangeBranch({
-        ...branch,
-        waitTo: branch.waitFrom,
-      });
-      return;
-    }
-
-    onChangeBranch({
-      ...branch,
-      waitTo: date.toUTCString(),
-    });
-  };
-
   return (
     <div className="flex flex-col gap-[10px]">
       <div className="font-inter font-normal text-[12px] leading-[20px] text-[#4B5563]">
@@ -75,8 +39,8 @@ const MaxTimeBranchEditor: FC<MaxTimeBranchEditorProps> = ({
                   }
                 : {
                     timeType: TimeType.TIME_WINDOW,
-                    waitFrom: new Date().toUTCString(),
-                    waitTo: new Date().toUTCString(),
+                    waitFrom: undefined,
+                    waitTo: undefined,
                   }),
             })
           }
@@ -99,12 +63,6 @@ const MaxTimeBranchEditor: FC<MaxTimeBranchEditorProps> = ({
           onChangeTo={(to) => onChangeBranch({ ...branch, waitTo: to })}
         />
       )}
-      <div
-        className="cursor-pointer font-roboto font-normal text-[14px] leading-[22px] underline text-[#EB5757]"
-        onClick={onDeleteBranch}
-      >
-        Delete branch
-      </div>
     </div>
   );
 };

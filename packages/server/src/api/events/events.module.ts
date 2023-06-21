@@ -87,4 +87,4 @@ import { SegmentsModule } from '../segments/segments.module';
   providers: [EventsService, EventsProcessor, AudiencesHelper],
   exports: [EventsService],
 })
-export class EventsModule { }
+export class EventsModule {}

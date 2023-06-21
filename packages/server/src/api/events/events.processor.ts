@@ -49,7 +49,6 @@ export class EventsProcessor extends WorkerHost {
     private readonly customersService: CustomersService,
     @InjectQueue('transition') private readonly transitionQueue: Queue,
     private readonly audiencesHelper: AudiencesHelper
-
   ) {
     super();
   }
@@ -109,7 +108,7 @@ export class EventsProcessor extends WorkerHost {
             // Skip over invalid posthog events
             const analyticsEvent: AnalyticsEvent =
               steps[stepIndex].metadata.branches[branchIndex].events[
-              eventIndex
+                eventIndex
               ];
             if (
               job.data.event.source === AnalyticsProviderTypes.POSTHOG &&
@@ -158,49 +157,63 @@ export class EventsProcessor extends WorkerHost {
                 .length;
               conditionIndex++
             ) {
-              if (analyticsEvent.conditions[conditionIndex].type === FilterByOption.CUSTOMER_KEY) {
-                const { key, comparisonType, keyType, value } = analyticsEvent.conditions[conditionIndex].propertyCondition;
+              if (
+                analyticsEvent.conditions[conditionIndex].type ===
+                FilterByOption.CUSTOMER_KEY
+              ) {
+                const { key, comparisonType, keyType, value } =
+                  analyticsEvent.conditions[conditionIndex].propertyCondition;
                 //specialcase: checking for url
-                if (key === 'current_url' && analyticsEvent.provider === AnalyticsProviderTypes.POSTHOG && analyticsEvent.event === PosthogTriggerParams.Pageview) {
+                if (
+                  key === 'current_url' &&
+                  analyticsEvent.provider === AnalyticsProviderTypes.POSTHOG &&
+                  analyticsEvent.event === PosthogTriggerParams.Pageview
+                ) {
                   const matches: boolean = ['exists', 'doesNotExist'].includes(
                     comparisonType
                   )
                     ? this.audiencesHelper.operableCompare(
-                      job.data.event?.event?.page?.url,
-                      comparisonType
-                    )
+                        job.data.event?.event?.page?.url,
+                        comparisonType
+                      )
                     : await this.audiencesHelper.conditionalCompare(
-                      job.data.event?.event?.page?.url,
-                      value,
-                      comparisonType
-                    );
+                        job.data.event?.event?.page?.url,
+                        value,
+                        comparisonType
+                      );
                   conditionEvalutation.push(matches);
-                }
-                else {
-                  const matches = ['exists', 'doesNotExist'].includes(comparisonType)
+                } else {
+                  const matches = ['exists', 'doesNotExist'].includes(
+                    comparisonType
+                  )
                     ? this.audiencesHelper.operableCompare(
-                      job.data.event?.event?.[key],
-                      comparisonType
-                    )
+                        job.data.event?.event?.[key],
+                        comparisonType
+                      )
                     : await this.audiencesHelper.conditionalCompare(
-                      job.data.event?.event?.[key],
-                      value,
-                      comparisonType
-                    );
+                        job.data.event?.event?.[key],
+                        value,
+                        comparisonType
+                      );
                   conditionEvalutation.push(matches);
                 }
-              }
-              else if (analyticsEvent.conditions[conditionIndex].type === FilterByOption.ELEMENTS) {
-                const { order, filter, comparisonType, filterType, value } = analyticsEvent.conditions[conditionIndex].elementCondition;
+              } else if (
+                analyticsEvent.conditions[conditionIndex].type ===
+                FilterByOption.ELEMENTS
+              ) {
+                const { order, filter, comparisonType, filterType, value } =
+                  analyticsEvent.conditions[conditionIndex].elementCondition;
                 const elementToCompare = job.data.event?.event?.elements?.find(
                   (el) => el?.order === order
                 )?.[
-                  filter ===
-                    ElementConditionFilter.TEXT
-                    ? 'text'
-                    : 'tag_name'
+                  filter === ElementConditionFilter.TEXT ? 'text' : 'tag_name'
                 ];
-                const matches: boolean = await this.audiencesHelper.conditionalCompare(elementToCompare, value, comparisonType);
+                const matches: boolean =
+                  await this.audiencesHelper.conditionalCompare(
+                    elementToCompare,
+                    value,
+                    comparisonType
+                  );
                 conditionEvalutation.push(matches);
               }
             }
@@ -272,9 +285,7 @@ export class EventsProcessor extends WorkerHost {
             customer: customer.id,
             session: job.data.session,
           });
-      }
-      else return;
-
+      } else return;
     } catch (e) {
       await transactionSession.abortTransaction();
       await queryRunner.rollbackTransaction();
