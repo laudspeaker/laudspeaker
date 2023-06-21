@@ -24,6 +24,7 @@ import {
 } from "reducers/flow-builder.reducer";
 import { JourneyStatus } from "components/TableTemplate/TableTemplate";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 
 const FlowBuilderv2 = () => {
   const { id } = useParams();
@@ -88,14 +89,19 @@ const FlowBuilderv2 = () => {
   }, []);
 
   const handleSaveLayout = async () => {
-    await ApiService.patch({
-      url: "/journeys/visual-layout",
-      options: {
-        id,
-        nodes: flowBuilderState.nodes,
-        edges: flowBuilderState.edges,
-      },
-    });
+    try {
+      await ApiService.patch({
+        url: "/journeys/visual-layout",
+        options: {
+          id,
+          nodes: flowBuilderState.nodes,
+          edges: flowBuilderState.edges,
+        },
+      });
+    } catch (e) {
+      console.error(e);
+      toast.error("Error: failed to save layout");
+    }
   };
 
   useEffect(() => {

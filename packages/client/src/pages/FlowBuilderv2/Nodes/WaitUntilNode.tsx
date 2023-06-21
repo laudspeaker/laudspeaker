@@ -36,14 +36,7 @@ export const WaitUntilNode: FC<NodeProps<WaitUntilNodeData>> = ({
       </Handle>
 
       {branches.length === 1 ? (
-        <BranchPopover
-          branch={branches[0]}
-          node={thisNode}
-          translateX={0}
-          translateY={0}
-          className="w-full"
-          popperClassName="right-[-265px] -top-1/2"
-        >
+        <BranchPopover branch={branches[0]} node={thisNode}>
           <div className="p-[16px]">
             <div className="font-semibold text-[16px] leading-[24px] mb-[2px]">
               Wait until

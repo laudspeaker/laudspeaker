@@ -129,8 +129,8 @@ export class TransitionProcessor extends WorkerHost {
             job.data.step.id,
             job.data.session,
             queryRunner,
-            transactionSession,
-          )
+            transactionSession
+          );
           break;
         case StepType.EXIT:
           break;
@@ -140,7 +140,7 @@ export class TransitionProcessor extends WorkerHost {
             job.data.session,
             queryRunner,
             transactionSession
-          )
+          );
           break;
         case StepType.MESSAGE:
           await this.handleMessage(
@@ -429,7 +429,6 @@ export class TransitionProcessor extends WorkerHost {
     });
   }
 
-
   /**
    * Handle start step type; move all customers to next step and update
    * their step entry timestamps, then add next job to queue if following
@@ -451,14 +450,14 @@ export class TransitionProcessor extends WorkerHost {
         id: stepID,
         type: StepType.START,
       },
-      lock: { mode: 'pessimistic_write' }
+      lock: { mode: 'pessimistic_write' },
     });
 
     const nextStep = await queryRunner.manager.findOne(Step, {
       where: {
         id: startStep.metadata.destination,
       },
-      lock: { mode: 'pessimistic_write' }
+      lock: { mode: 'pessimistic_write' },
     });
 
     const forDeletion = [];
@@ -478,7 +477,11 @@ export class TransitionProcessor extends WorkerHost {
     await queryRunner.manager.save(startStep);
     const newNext: Step = await queryRunner.manager.save(nextStep);
 
-    if (newNext.type !== StepType.TIME_DELAY && newNext.type !== StepType.TIME_WINDOW && newNext.type !== StepType.WAIT_UNTIL_BRANCH) {
+    if (
+      newNext.type !== StepType.TIME_DELAY &&
+      newNext.type !== StepType.TIME_WINDOW &&
+      newNext.type !== StepType.WAIT_UNTIL_BRANCH
+    ) {
       await this.transitionQueue.add(newNext.type, {
         step: newNext,
         session: session,
@@ -617,13 +620,13 @@ export class TransitionProcessor extends WorkerHost {
   }
 
   /**
-   * 
-   * @param stepID 
-   * @param session 
-   * @param customerID 
-   * @param branch 
-   * @param queryRunner 
-   * @param transactionSession 
+   *
+   * @param stepID
+   * @param session
+   * @param customerID
+   * @param branch
+   * @param queryRunner
+   * @param transactionSession
    */
   async handleWaitUntil(
     stepID: string,
@@ -639,14 +642,14 @@ export class TransitionProcessor extends WorkerHost {
         id: stepID,
         type: StepType.WAIT_UNTIL_BRANCH,
       },
-      lock: { mode: 'pessimistic_write' }
+      lock: { mode: 'pessimistic_write' },
     });
     if (branch < 0 && waitUntilStep.metadata.timeBranch) {
       nextStep = await queryRunner.manager.findOne(Step, {
         where: {
           id: waitUntilStep.metadata.timeBranch?.destination,
         },
-        lock: { mode: 'pessimistic_write' }
+        lock: { mode: 'pessimistic_write' },
       });
       if (waitUntilStep.metadata.timeBranch.delay) {
         for (let i = 0; i < waitUntilStep.customers.length; i++) {
@@ -672,13 +675,16 @@ export class TransitionProcessor extends WorkerHost {
         waitUntilStep.customers = waitUntilStep.customers.filter(
           (item) => !forDeletion.includes(item)
         );
-      }
-      else if (waitUntilStep.metadata.timeBranch.window) {
-
+      } else if (waitUntilStep.metadata.timeBranch.window) {
       }
       await queryRunner.manager.save(waitUntilStep);
       const newNext: Step = await queryRunner.manager.save(nextStep);
-      if (forDeletion.length > 0 && newNext.type !== StepType.TIME_DELAY && newNext.type !== StepType.TIME_WINDOW && newNext.type !== StepType.WAIT_UNTIL_BRANCH) {
+      if (
+        forDeletion.length > 0 &&
+        newNext.type !== StepType.TIME_DELAY &&
+        newNext.type !== StepType.TIME_WINDOW &&
+        newNext.type !== StepType.WAIT_UNTIL_BRANCH
+      ) {
         this.transitionQueue.add(newNext.type, {
           stepID: newNext.id,
           session: session,
@@ -686,44 +692,45 @@ export class TransitionProcessor extends WorkerHost {
       }
     } else if (branch > -1 && waitUntilStep.metadata.branches.length > 0) {
       nextStep = await queryRunner.manager.findOneBy(Step, {
-        id: waitUntilStep.metadata.branches.filter(branchItem => { return branchItem.index === branch })[0].destination,
+        id: waitUntilStep.metadata.branches.filter((branchItem) => {
+          return branchItem.index === branch;
+        })[0].destination,
       });
-      waitUntilStep.customers = waitUntilStep.customers.filter((item) => { })
+      waitUntilStep.customers = waitUntilStep.customers.filter((item) => {});
     }
   }
 
   /**
-   * 
-   * @param stepID 
-   * @param session 
-   * @param queryRunner 
-   * @param transactionSession 
+   *
+   * @param stepID
+   * @param session
+   * @param queryRunner
+   * @param transactionSession
    */
   async handleAttributeBranch(
     stepID: string,
     session: string,
     queryRunner: QueryRunner,
     transactionSession: mongoose.mongo.ClientSession
-  ) { }
+  ) {}
 
   /**
-   * 
-   * @param stepID 
-   * @param session 
-   * @param queryRunner 
-   * @param transactionSession 
+   *
+   * @param stepID
+   * @param session
+   * @param queryRunner
+   * @param transactionSession
    */
   async handleLoop(
     stepID: string,
     session: string,
     queryRunner: QueryRunner,
     transactionSession: mongoose.mongo.ClientSession
-  ) { }
+  ) {}
 
   // TODO
-  async handleABTest(job: Job<any, any, string>) { }
-  async handleRandomCohortBranch(job: Job<any, any, string>) { }
-
+  async handleABTest(job: Job<any, any, string>) {}
+  async handleRandomCohortBranch(job: Job<any, any, string>) {}
 
   @OnWorkerEvent('active')
   onActive(job: Job<any, any, any>, prev: string) {
