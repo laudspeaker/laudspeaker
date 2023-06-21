@@ -22,9 +22,15 @@ const MaxTimeBranchView: FC<MaxTimeBranchViewProps> = ({ branch }) => {
             </div>
             <div className="flex flex-col font-semibold">
               <span>
-                {format(new Date(branch.waitFrom), "yyyy/MM/dd kk:mm")}
+                {branch.waitFrom
+                  ? format(new Date(branch.waitFrom), "yyyy/MM/dd kk:mm")
+                  : "not defined"}
               </span>
-              <span>{format(new Date(branch.waitTo), "yyyy/MM/dd kk:mm")}</span>
+              <span>
+                {branch.waitTo
+                  ? format(new Date(branch.waitTo), "yyyy/MM/dd kk:mm")
+                  : "not defined"}
+              </span>
             </div>
           </>
         )}

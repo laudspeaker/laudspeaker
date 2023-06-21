@@ -9,11 +9,13 @@ interface TimeDelayEditorProps {
 const TimeDelayEditor: FC<TimeDelayEditorProps> = ({ delay, onChange }) => {
   return (
     <div className="flex items-center gap-[10px] w-full h-[32px] mt-[1px] p-[1px]">
-      <div>Wait</div>
+      <div className="font-inter font-normal text-[14px] leading-[22px]">
+        Wait
+      </div>
 
       <input
         type="number"
-        value={delay.days}
+        value={delay.days || undefined}
         onChange={(e) =>
           +e.target.value >= 0 && onChange({ ...delay, days: +e.target.value })
         }
@@ -25,7 +27,7 @@ const TimeDelayEditor: FC<TimeDelayEditorProps> = ({ delay, onChange }) => {
 
       <input
         type="number"
-        value={delay.hours}
+        value={delay.hours || undefined}
         onChange={(e) =>
           +e.target.value >= 0 && onChange({ ...delay, hours: +e.target.value })
         }
@@ -37,7 +39,7 @@ const TimeDelayEditor: FC<TimeDelayEditorProps> = ({ delay, onChange }) => {
 
       <input
         type="number"
-        value={delay.minutes}
+        value={delay.minutes || undefined}
         onChange={(e) =>
           +e.target.value >= 0 &&
           onChange({ ...delay, minutes: +e.target.value })

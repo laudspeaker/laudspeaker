@@ -6,8 +6,12 @@ import { format } from "date-fns";
 const TimeWindowViewer: FC<SidePanelComponentProps<TimeWindowNodeData>> = ({
   nodeData,
 }) => {
-  const from = format(new Date(nodeData.from), "yyyy/MM/dd kk:mm");
-  const to = format(new Date(nodeData.to), "yyyy/MM/dd kk:mm");
+  const from = nodeData.from
+    ? format(new Date(nodeData.from), "yyyy/MM/dd kk:mm")
+    : "not defined";
+  const to = nodeData.to
+    ? format(new Date(nodeData.to), "yyyy/MM/dd kk:mm")
+    : "not defined";
   return (
     <div className="bg-gray-100 border border-gray-200 rounded gap-5 flex px-2 py-3">
       <div className="flex flex-col">

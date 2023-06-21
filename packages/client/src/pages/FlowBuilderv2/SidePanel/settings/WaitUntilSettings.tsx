@@ -173,22 +173,31 @@ const WaitUntilSettings: FC<SidePanelComponentProps<WaitUntilNodeData>> = ({
     <div>
       {branches.map((branch, i) => (
         <div key={i} className="mb-[20px] flex flex-col gap-[10px]">
-          <div className="font-inter font-semibold text-[16px] leading-[24px] text-[#18181B]">
-            Branch {i + 1} -{" "}
-            {branch.type === BranchType.EVENT ? "Event" : "Max time"}
+          <div className="font-inter font-semibold text-[16px] leading-[24px] text-[#18181B] flex items-center justify-between">
+            <div>
+              Branch {i + 1} -{" "}
+              {branch.type === BranchType.EVENT ? "Event" : "Max time"}
+            </div>
+
+            <Button
+              type={ButtonType.LINK}
+              onClick={onDeleteBranch(i)}
+              className="text-[#EB5757] hover:text-[#EB5757] focus:text-[#EB5757]"
+            >
+              Delete branch
+            </Button>
           </div>
           {branch.type === BranchType.EVENT ? (
             <EventBranchEditor
               onAddCondition={onAddCondition(i)}
-              onDeleteBranch={onDeleteBranch(i)}
               onConditionChange={onConditionChange(i)}
               onDeleteCondition={onDeleteCondition(i)}
               branch={branch}
+              isOnlyBranch={branches.length === 1}
             />
           ) : (
             <MaxTimeBranchEditor
               branch={branch}
-              onDeleteBranch={onDeleteBranch(i)}
               onChangeBranch={onChangeBranch(i)}
             />
           )}

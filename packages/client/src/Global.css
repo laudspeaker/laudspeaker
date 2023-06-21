@@ -50,6 +50,10 @@ body,
   font-size: 12px;
 }
 
+.react-flow__controls-button {
+  border-radius: 2px;
+}
+
 .react-flow__controls-button > svg {
   fill: #4b5563;
 }

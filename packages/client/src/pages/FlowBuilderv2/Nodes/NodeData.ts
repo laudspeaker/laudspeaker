@@ -85,8 +85,8 @@ export interface TimeDelayBranch extends CommonMaxTimeBranch {
 
 export interface TimeWindowBranch extends CommonMaxTimeBranch {
   timeType: TimeType.TIME_WINDOW;
-  waitFrom: string;
-  waitTo: string;
+  waitFrom?: string;
+  waitTo?: string;
 }
 
 export type MaxTimeBranch = TimeDelayBranch | TimeWindowBranch;
@@ -143,8 +143,8 @@ export interface TimeDelayNodeData extends CommonNodeData {
 
 export interface TimeWindowNodeData extends CommonNodeData {
   type: NodeType.TIME_WINDOW;
-  from: string;
-  to: string;
+  from?: string;
+  to?: string;
 }
 
 export interface UserAttributeNodeData extends CommonNodeData {

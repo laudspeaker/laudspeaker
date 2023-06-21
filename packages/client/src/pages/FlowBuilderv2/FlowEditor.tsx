@@ -16,6 +16,7 @@ import { useAppDispatch, useAppSelector } from "store/hooks";
 import "reactflow/dist/style.css";
 import {
   addInsertNodeBetween,
+  clearInsertNodes,
   handleDrawerAction,
   removeNode,
   setEdges,
@@ -85,6 +86,8 @@ interface NodeDraggingProviderProps {
   flowRef: RefObject<HTMLDivElement>;
 }
 
+const MAXIMUM_INSERT_RADIUS = 130;
+
 const NodeDraggingProvider: FC<NodeDraggingProviderProps> = ({ flowRef }) => {
   const drawerActionToNodeTypeMap: Record<DrawerAction, NodeType> = {
     [DrawerAction.CUSTOM_MODAL]: NodeType.MESSAGE,
@@ -125,7 +128,7 @@ const NodeDraggingProvider: FC<NodeDraggingProviderProps> = ({ flowRef }) => {
       e.dataTransfer.dropEffect = "move";
     }
 
-    const lengthToInsertNode = insertNode
+    let lengthToInsertNode = insertNode
       ? Math.sqrt(
           (canvasMouseX - insertNode.position.x) *
             (canvasMouseX - insertNode.position.x) +
@@ -133,6 +136,11 @@ const NodeDraggingProvider: FC<NodeDraggingProviderProps> = ({ flowRef }) => {
               (canvasMouseY - insertNode.position.y)
         )
       : Infinity;
+
+    if (lengthToInsertNode > MAXIMUM_INSERT_RADIUS) {
+      dispatch(clearInsertNodes());
+      lengthToInsertNode = Infinity;
+    }
 
     let closestEdge:
       | {
@@ -173,6 +181,8 @@ const NodeDraggingProvider: FC<NodeDraggingProviderProps> = ({ flowRef }) => {
             (canvasMouseY - labelY) * (canvasMouseY - labelY)
         );
 
+        if (lengthToLabel > 50) continue;
+
         if (!closestEdge || lengthToLabel < closestEdge.lengthToLabel)
           closestEdge = { edge, lengthToLabel, nodeA, nodeB };
       }
@@ -187,6 +197,8 @@ const NodeDraggingProvider: FC<NodeDraggingProviderProps> = ({ flowRef }) => {
         (canvasMouseX - node.position.x) * (canvasMouseX - node.position.x) +
           (canvasMouseY - node.position.y) * (canvasMouseY - node.position.y)
       );
+
+      if (length > MAXIMUM_INSERT_RADIUS) continue;
 
       if (!closestEmptyNode || closestEmptyNode.length > length)
         closestEmptyNode = { node, length };
