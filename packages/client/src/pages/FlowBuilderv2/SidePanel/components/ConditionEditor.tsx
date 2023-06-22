@@ -1,6 +1,7 @@
 import Button, { ButtonType } from "pages/FlowBuilderv2/Elements/Button";
 import FlowBuilderAutoComplete from "pages/FlowBuilderv2/Elements/FlowBuilderAutoComplete";
 import FlowBuilderDynamicInput from "pages/FlowBuilderv2/Elements/FlowBuilderDynamicInput";
+import Select from "pages/FlowBuilderv2/Elements/Select";
 import {
   Condition,
   ElementKey,
@@ -135,19 +136,20 @@ const ConditionEditor: FC<ConditionEditorProps> = ({
         Event
       </div>
       <div className="flex gap-[10px]">
-        <select
+        <Select
           value={condition.providerType}
-          onChange={(e) =>
+          options={[
+            { key: ProviderType.Posthog, title: "Posthog" },
+            { key: ProviderType.Custom, title: "Custom" },
+          ]}
+          onChange={(value) =>
             setCondition({
               ...condition,
-              providerType: e.target.value as ProviderType,
+              providerType: value,
             })
           }
-          className="w-[145px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB]"
-        >
-          <option value={ProviderType.Posthog}>Posthog</option>
-          <option value={ProviderType.Custom}>Custom</option>
-        </select>
+        />
+
         <FlowBuilderAutoComplete
           value={condition.name}
           includedItems={
@@ -372,17 +374,17 @@ const ConditionEditor: FC<ConditionEditorProps> = ({
             : "Or"}
         </div>
 
-        <select
-          value="default"
-          onChange={(e) => handleAddStatement(e.target.value as StatementType)}
-          className="w-[145px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB]"
-        >
-          <option value="default" disabled>
-            Add condition
-          </option>
-          <option value={StatementType.PROPERTY}>Property</option>
-          <option value={StatementType.ELEMENT}>Element</option>
-        </select>
+        <div className="w-[145px]">
+          <Select
+            value={undefined}
+            options={[
+              { key: StatementType.PROPERTY, title: "Property" },
+              { key: StatementType.ELEMENT, title: "Element" },
+            ]}
+            onChange={(value) => value && handleAddStatement(value)}
+            placeholder="Add condition"
+          />
+        </div>
       </div>
 
       <div className="flex justify-between items-center">

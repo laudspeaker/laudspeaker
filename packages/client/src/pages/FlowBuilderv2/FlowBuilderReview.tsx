@@ -20,7 +20,7 @@ const FlowBuilderReview = () => {
           <div className="font-inter font-semibold text-[16px] leading-[24px]">
             Journey
           </div>
-          <div className="h-[calc(100%-24px)]">
+          <div className="min-h-[420px]">
             <FlowEditor isViewMode />
           </div>
         </div>
@@ -46,15 +46,16 @@ const FlowBuilderReview = () => {
               <div className="flex flex-col gap-[10px] w-full">
                 {segmentsSettings.query.statements.map((statement, i) => (
                   <div className="flex items-center gap-[13px]">
-                    <div
-                      className={`w-fit px-[12px] py-[5px] border-[1px] border-[#E5E7EB] font-roboto text-[14px] leading-[22px] text-[#4B5563] select-none ${
-                        i === 0 ? "opacity-0" : ""
-                      }`}
-                    >
-                      {segmentsSettings.query.type === QueryType.ALL
-                        ? "And"
-                        : "Or"}
-                    </div>
+                    {i !== 0 && (
+                      <div
+                        className={`w-fit px-[12px] py-[5px] border-[1px] border-[#E5E7EB] font-roboto text-[14px] leading-[22px] text-[#4B5563] select-none`}
+                      >
+                        {segmentsSettings.query.type === QueryType.ALL
+                          ? "And"
+                          : "Or"}
+                      </div>
+                    )}
+
                     <div
                       key={i}
                       className="max-w-[600px] w-full flex items-center gap-[10px] font-inter font-normal text-[14px] leading-[22px] bg-[#F3F4F6] px-[20px] py-[6px]"

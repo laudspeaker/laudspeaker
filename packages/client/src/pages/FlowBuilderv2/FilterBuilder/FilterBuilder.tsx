@@ -10,6 +10,7 @@ import {
   valueTypeToComparisonTypesMap,
 } from "reducers/flow-builder.reducer";
 import ApiService from "services/api.service";
+import { useAppSelector } from "store/hooks";
 import { Segment } from "types/Segment";
 import Button, { ButtonType } from "../Elements/Button";
 import FlowBuilderAutoComplete from "../Elements/FlowBuilderAutoComplete";
@@ -34,6 +35,8 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
   settings,
   onSettingsChange,
 }) => {
+  const { showSegmentsErrors } = useAppSelector((state) => state.flowBuilder);
+
   const { query } = settings;
 
   const [segments, setSegments] = useState<Segment[]>([]);
@@ -338,11 +341,12 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
             </div>
           </div>
 
-          {statementsErrors[i].map((error) => (
-            <div className="font-inter font-normal text-[12px] leading-[20px] text-[#E11D48]">
-              {queryStatementErrorToMessageMap[error]}
-            </div>
-          ))}
+          {showSegmentsErrors &&
+            statementsErrors[i].map((error) => (
+              <div className="font-inter font-normal text-[12px] leading-[20px] text-[#E11D48]">
+                {queryStatementErrorToMessageMap[error]}
+              </div>
+            ))}
 
           {i !== query.statements.length - 1 && (
             <div className="py-[5px] px-[12px] bg-[#F3F4F6] border-[1px] border-[#E5E7EB] rounded-[4px] w-fit font-roboto font-normal text-[14px] leading-[22px] text-[#4B5563]">

@@ -1,6 +1,7 @@
 import React, { FC } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import { JourneyType } from "reducers/flow-builder.reducer";
 import ApiService from "services/api.service";
 import { useAppSelector } from "store/hooks";
 import Button, { ButtonType } from "../Elements/Button";
@@ -15,11 +16,43 @@ const FlowBuilderStartModal: FC<FlowBuilderStartModalProps> = ({
   isOpen,
   onClose,
 }) => {
-  const { flowId } = useAppSelector((state) => state.flowBuilder);
+  const { flowId, nodes, edges, flowName, segments, journeyType } =
+    useAppSelector((state) => state.flowBuilder);
 
   const navigate = useNavigate();
 
   const handleStartJourney = async () => {
+    try {
+      await ApiService.patch({
+        url: "/journeys/visual-layout",
+        options: {
+          id: flowId,
+          nodes,
+          edges,
+        },
+      });
+    } catch (e) {
+      console.error(e);
+      toast.error("Error: failed to save layout");
+      return;
+    }
+
+    try {
+      await ApiService.patch({
+        url: "/journeys",
+        options: {
+          id: flowId,
+          name: flowName,
+          inclusionCriteria: segments,
+          isDynamic: journeyType === JourneyType.DYNAMIC,
+        },
+      });
+    } catch (e) {
+      console.error(e);
+      toast.error("Error: failed to save journey properties");
+      return;
+    }
+
     try {
       await ApiService.patch({ url: "/journeys/start/" + flowId });
 

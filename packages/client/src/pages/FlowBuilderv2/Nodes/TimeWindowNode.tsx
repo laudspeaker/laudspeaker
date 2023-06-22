@@ -21,7 +21,7 @@ export const TimeWindowNode: FC<NodeProps<TimeWindowNodeData>> = ({
         type="target"
         isConnectable={isConnectable}
       >
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[#6366F1]">
           <TimeWindowIcon />
         </div>
       </Handle>
@@ -50,7 +50,9 @@ export const TimeWindowNode: FC<NodeProps<TimeWindowNodeData>> = ({
               }).format(new Date(to))}
             </div>
           ) : (
-            <>Wait ...</>
+            <span className="font-inter font-normal text-[12px] text-[#F43F5E] leading-[20px]">
+              Set time
+            </span>
           )}
         </div>
       </div>

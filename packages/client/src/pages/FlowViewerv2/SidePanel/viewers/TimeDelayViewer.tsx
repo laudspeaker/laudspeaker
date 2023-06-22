@@ -8,7 +8,7 @@ const TimeDelayViewer: FC<SidePanelComponentProps<TimeDelayNodeData>> = ({
   const { days, hours, minutes } = nodeData.delay;
 
   return (
-    <div className="gap-3 flex items-center">
+    <div className="gap-3 flex items-center px-5">
       <span>Wait</span>
       <span className="bg-gray-100 border border-gray-200 rounded px-2 py-3 font-semibold">
         {days === hours && hours === minutes && minutes === 0 ? (

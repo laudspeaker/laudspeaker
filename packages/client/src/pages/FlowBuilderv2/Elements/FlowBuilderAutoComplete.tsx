@@ -58,7 +58,7 @@ const FlowBuilderAutoComplete = <T,>({
   );
 
   return (
-    <div className="relative">
+    <div className="relative w-full">
       <Combobox
         value={value}
         onChange={(val) => {

@@ -21,7 +21,7 @@ export const TimeDelayNode: FC<NodeProps<TimeDelayNodeData>> = ({
         type="target"
         isConnectable={isConnectable}
       >
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[#6366F1]">
           <TimeDelayIcon />
         </div>
       </Handle>
@@ -30,14 +30,16 @@ export const TimeDelayNode: FC<NodeProps<TimeDelayNodeData>> = ({
           Time delay
         </div>
         <div className="font-normal text-[14px] leading-[22px] text-[#4B5563]">
-          Wait{" "}
           {delay.days === delay.hours &&
           delay.hours === delay.minutes &&
           delay.minutes === 0 ? (
-            <>...</>
+            <span className="font-inter font-normal text-[12px] text-[#F43F5E] leading-[20px]">
+              Set time
+            </span>
           ) : (
             <>
-              {delay.days} day{delay.days === 1 ? "" : "s"} {delay.hours} hour
+              Wait {delay.days} day{delay.days === 1 ? "" : "s"} {delay.hours}{" "}
+              hour
               {delay.hours === 1 ? "" : "s"} {delay.minutes} min
             </>
           )}

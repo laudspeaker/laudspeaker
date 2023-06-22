@@ -3,6 +3,7 @@ import {
   Query,
   QueryStatementType,
   SegmentsSettingsType,
+  setShowSegmentsErrors,
   setStepperIndex,
 } from "reducers/flow-builder.reducer";
 import { useAppDispatch, useAppSelector } from "store/hooks";
@@ -73,6 +74,11 @@ const FlowBuilderHeader = () => {
         !isValidSegmentQuery(segments.query))
     ) {
       setIsErrorNextModalOpen(true);
+
+      if (stepperIndex === 1) {
+        dispatch(setShowSegmentsErrors(true));
+      }
+
       return;
     }
 
