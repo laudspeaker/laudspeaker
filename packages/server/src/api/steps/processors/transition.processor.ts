@@ -179,9 +179,9 @@ export class TransitionProcessor extends WorkerHost {
         case StepType.WAIT_UNTIL_BRANCH:
           await this.handleWaitUntil(
             job.data.step.id,
+            job.data.session,
             job.data.customerID,
             job.data.branch,
-            job.data.session,
             queryRunner,
             transactionSession
           );
@@ -614,7 +614,7 @@ export class TransitionProcessor extends WorkerHost {
 
     if (forDeletion.length > 0)
       this.transitionQueue.add('', {
-        stepID: nextStep.id,
+        step: nextStep,
         session: session,
       });
   }
@@ -636,7 +636,8 @@ export class TransitionProcessor extends WorkerHost {
     queryRunner: QueryRunner,
     transactionSession: mongoose.mongo.ClientSession
   ) {
-    let nextStep: Step, forDeletion: string[];
+    let nextStep: Step,
+      forDeletion: string[] = [];
     const waitUntilStep = await queryRunner.manager.findOne(Step, {
       where: {
         id: stepID,
@@ -644,6 +645,17 @@ export class TransitionProcessor extends WorkerHost {
       },
       lock: { mode: 'pessimistic_write' },
     });
+    this.debug(
+      `${JSON.stringify({
+        stepID,
+        session,
+        customerID,
+        branch,
+        waitUntilStep,
+      })}`,
+      this.handleWaitUntil.name,
+      session
+    );
     if (branch < 0 && waitUntilStep.metadata.timeBranch) {
       nextStep = await queryRunner.manager.findOne(Step, {
         where: {
@@ -651,6 +663,11 @@ export class TransitionProcessor extends WorkerHost {
         },
         lock: { mode: 'pessimistic_write' },
       });
+      this.debug(
+        `${JSON.stringify({ nextStep: nextStep })}`,
+        this.handleWaitUntil.name,
+        session
+      );
       if (waitUntilStep.metadata.timeBranch.delay) {
         for (let i = 0; i < waitUntilStep.customers.length; i++) {
           if (
@@ -677,8 +694,18 @@ export class TransitionProcessor extends WorkerHost {
         );
       } else if (waitUntilStep.metadata.timeBranch.window) {
       }
+      this.debug(
+        `${JSON.stringify({ waitUntilStep: waitUntilStep })}`,
+        this.handleWaitUntil.name,
+        session
+      );
       await queryRunner.manager.save(waitUntilStep);
       const newNext: Step = await queryRunner.manager.save(nextStep);
+      this.debug(
+        `${JSON.stringify({ newNext: newNext })}`,
+        this.handleWaitUntil.name,
+        session
+      );
       if (
         forDeletion.length > 0 &&
         newNext.type !== StepType.TIME_DELAY &&
@@ -686,7 +713,7 @@ export class TransitionProcessor extends WorkerHost {
         newNext.type !== StepType.WAIT_UNTIL_BRANCH
       ) {
         this.transitionQueue.add(newNext.type, {
-          stepID: newNext.id,
+          step: newNext,
           session: session,
         });
       }
@@ -732,82 +759,82 @@ export class TransitionProcessor extends WorkerHost {
   async handleABTest(job: Job<any, any, string>) {}
   async handleRandomCohortBranch(job: Job<any, any, string>) {}
 
-  @OnWorkerEvent('active')
-  onActive(job: Job<any, any, any>, prev: string) {
-    this.debug(
-      `${JSON.stringify({ job: job })}`,
-      this.onActive.name,
-      job.data.session,
-      job.data.userID
-    );
-  }
+  // @OnWorkerEvent('active')
+  // onActive(job: Job<any, any, any>, prev: string) {
+  //   this.debug(
+  //     `${JSON.stringify({ job: job })}`,
+  //     this.onActive.name,
+  //     job.data.session,
+  //     job.data.userID
+  //   );
+  // }
 
-  @OnWorkerEvent('closed')
-  onClosed() {
-    this.debug(`${JSON.stringify({})}`, this.onClosed.name, '');
-  }
+  // @OnWorkerEvent('closed')
+  // onClosed() {
+  //   this.debug(`${JSON.stringify({})}`, this.onClosed.name, '');
+  // }
 
-  @OnWorkerEvent('closing')
-  onClosing(msg: string) {
-    this.debug(`${JSON.stringify({ message: msg })}`, this.onClosing.name, '');
-  }
+  // @OnWorkerEvent('closing')
+  // onClosing(msg: string) {
+  //   this.debug(`${JSON.stringify({ message: msg })}`, this.onClosing.name, '');
+  // }
 
-  @OnWorkerEvent('completed')
-  onCompleted(job: Job<any, any, any>, result: any, prev: string) {
-    this.debug(
-      `${JSON.stringify({ job: job, result: result })}`,
-      this.onProgress.name,
-      job.data.session,
-      job.data.userID
-    );
-  }
+  // @OnWorkerEvent('completed')
+  // onCompleted(job: Job<any, any, any>, result: any, prev: string) {
+  //   this.debug(
+  //     `${JSON.stringify({ job: job, result: result })}`,
+  //     this.onProgress.name,
+  //     job.data.session,
+  //     job.data.userID
+  //   );
+  // }
 
-  @OnWorkerEvent('drained')
-  onDrained() {
-    this.debug(`${JSON.stringify({})}`, this.onDrained.name, '');
-  }
+  // @OnWorkerEvent('drained')
+  // onDrained() {
+  //   this.debug(`${JSON.stringify({})}`, this.onDrained.name, '');
+  // }
 
-  @OnWorkerEvent('error')
-  onError(failedReason: Error) {
-    this.error(failedReason, this.onError.name, '');
-  }
+  // @OnWorkerEvent('error')
+  // onError(failedReason: Error) {
+  //   this.error(failedReason, this.onError.name, '');
+  // }
 
-  @OnWorkerEvent('failed')
-  onFailed(job: Job<any, any, any> | undefined, error: Error, prev: string) {
-    this.error(error, this.onFailed.name, job.data.session);
-  }
+  // @OnWorkerEvent('failed')
+  // onFailed(job: Job<any, any, any> | undefined, error: Error, prev: string) {
+  //   this.error(error, this.onFailed.name, job.data.session);
+  // }
 
-  @OnWorkerEvent('paused')
-  onPaused() {
-    this.debug(`${JSON.stringify({})}`, this.onPaused.name, '');
-  }
+  // @OnWorkerEvent('paused')
+  // onPaused() {
+  //   this.debug(`${JSON.stringify({})}`, this.onPaused.name, '');
+  // }
 
-  @OnWorkerEvent('progress')
-  onProgress(job: Job<any, any, any>, progress: number | object) {
-    this.debug(
-      `${JSON.stringify({ job: job, progress: progress })}`,
-      this.onProgress.name,
-      job.data.session,
-      job.data.userID
-    );
-  }
+  // @OnWorkerEvent('progress')
+  // onProgress(job: Job<any, any, any>, progress: number | object) {
+  //   this.debug(
+  //     `${JSON.stringify({ job: job, progress: progress })}`,
+  //     this.onProgress.name,
+  //     job.data.session,
+  //     job.data.userID
+  //   );
+  // }
 
-  @OnWorkerEvent('ready')
-  onReady() {
-    this.debug(`${JSON.stringify({})}`, this.onReady.name, '');
-  }
+  // @OnWorkerEvent('ready')
+  // onReady() {
+  //   this.debug(`${JSON.stringify({})}`, this.onReady.name, '');
+  // }
 
-  @OnWorkerEvent('resumed')
-  onResumed() {
-    this.debug(`${JSON.stringify({})}`, this.onResumed.name, '');
-  }
+  // @OnWorkerEvent('resumed')
+  // onResumed() {
+  //   this.debug(`${JSON.stringify({})}`, this.onResumed.name, '');
+  // }
 
-  @OnWorkerEvent('stalled')
-  onStalled(jobId: string, prev: string) {
-    this.debug(
-      `${JSON.stringify({ id: jobId, prev: prev })}`,
-      this.onStalled.name,
-      jobId
-    );
-  }
+  // @OnWorkerEvent('stalled')
+  // onStalled(jobId: string, prev: string) {
+  //   this.debug(
+  //     `${JSON.stringify({ id: jobId, prev: prev })}`,
+  //     this.onStalled.name,
+  //     jobId
+  //   );
+  // }
 }

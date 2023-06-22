@@ -915,7 +915,9 @@ export class JourneysService {
             metadata.branches = [];
             for (let i = 0; i < relevantEdges.length; i++) {
               if (relevantEdges[i].data['branch'].type === BranchType.MAX_TIME)
-                metadata.timeBranch.destination = relevantEdges[i].target;
+                metadata.timeBranch.destination = nodes.filter((node) => {
+                  return node.id === relevantEdges[i].target;
+                })[0].data.stepId;
               else if (
                 relevantEdges[i].data['branch'].type === BranchType.EVENT
               ) {
