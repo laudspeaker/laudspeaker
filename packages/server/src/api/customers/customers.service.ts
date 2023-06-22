@@ -668,12 +668,12 @@ export class CustomersService {
       }).filter(([_, v]) => v != null)
     );
 
-    await this.CustomerModel.replaceOne(
-      { id: customer.id },
+    const replacementRes = await this.CustomerModel.replaceOne(
+      { _id: id },
       newCustomer
     ).exec();
 
-    return newCustomerData;
+    return replacementRes;
   }
 
   async transactionalUpdate(
@@ -777,7 +777,7 @@ export class CustomersService {
         }).filter(([_, v]) => v != null)
       );
 
-      await this.CustomerModel.replaceOne({ id: customer.id }, newCustomer)
+      await this.CustomerModel.replaceOne({ _id: id }, newCustomer)
         .session(transactionSession)
         .exec();
 
