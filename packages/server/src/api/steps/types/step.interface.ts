@@ -275,4 +275,3 @@ export type AllStepTypeMetadata =
 const a = (a: AllStepTypeMetadata) => {
   if (a instanceof WaitUntilStepMetadata) console.log(a.timeBranch);
 };
-
