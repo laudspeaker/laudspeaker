@@ -2,7 +2,7 @@ import { Transition } from "@headlessui/react";
 import { NodeType } from "pages/FlowBuilderv2/FlowEditor";
 import { messageFixtures } from "pages/FlowBuilderv2/Nodes/MessageNode";
 import { NodeData } from "pages/FlowBuilderv2/Nodes/NodeData";
-import React, { FC, ReactNode } from "react";
+import React, { FC, ReactNode, useEffect } from "react";
 import { useAppSelector } from "store/hooks";
 import MessageViewer from "./viewers/MessageViewer";
 import TimeDelayViewer from "./viewers/TimeDelayViewer";
@@ -110,9 +110,7 @@ const FlowViewerSidePanel: FC<FlowViewerSidePanelProps> = ({ className }) => {
             Description Description Description Des
           </div>
         </div>
-        <div className="px-5">
-          {nodeTypeToComponentMap[nodeData.type || ""]}
-        </div>
+        <div>{nodeTypeToComponentMap[nodeData.type || ""]}</div>
       </div>
     </Transition>
   );

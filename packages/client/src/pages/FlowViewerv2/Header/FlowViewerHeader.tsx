@@ -1,4 +1,5 @@
 import { JourneyStatus } from "components/TableTemplate/TableTemplate";
+import Button, { ButtonType } from "pages/FlowBuilderv2/Elements/Button";
 import React, { FC, useState } from "react";
 import ApiService from "services/api.service";
 import { useAppSelector } from "store/hooks";
@@ -44,7 +45,7 @@ const FlowViewerHeader: FC<FlowViewerHeaderProps> = ({
 
   return (
     <div className="relative h-[140px] bg-white border-b-[1px] border-[#E5E7EB] flex flex-col justify-between">
-      <div className="h-full px-[20px] flex justify-between items-center">
+      <div className="h-full px-[20px] flex justify-between items-center border-[#E5E7EB] border-y-[1px]">
         <div className="flex items-center gap-[10px]">
           <div className="font-semibold text-[20px] leading-[28px]">
             {flowName}
@@ -58,22 +59,22 @@ const FlowViewerHeader: FC<FlowViewerHeaderProps> = ({
         {flowStatus !== JourneyStatus.STOPPED &&
           flowStatus !== JourneyStatus.DELETED && (
             <div className="flex items-center gap-[10px] font-roboto">
-              <div
-                className="px-[15px] py-[4px] border-[1px] border-[#E5E7EB] rounded-[4px] select-none cursor-pointer"
-                onClick={
-                  flowStatus === JourneyStatus.PAUSED
-                    ? handleResume
-                    : handlePause
-                }
-              >
-                {flowStatus === JourneyStatus.PAUSED ? "Resume" : "Pause"}
-              </div>
-              <div
-                className="px-[15px] py-[4px] border-[1px] border-[#EB5757] rounded-[4px] text-[#EB5757] select-none cursor-pointer"
+              {flowStatus === JourneyStatus.PAUSED ? (
+                <Button type={ButtonType.PRIMARY} onClick={handleResume}>
+                  Resume
+                </Button>
+              ) : (
+                <Button type={ButtonType.SECONDARY} onClick={handlePause}>
+                  Pause
+                </Button>
+              )}
+
+              <Button
+                type={ButtonType.DANGEROUS}
                 onClick={() => setIsStopModalOpen(true)}
               >
                 Stop
-              </div>
+              </Button>
             </div>
           )}
       </div>

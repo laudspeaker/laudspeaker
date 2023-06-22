@@ -15,11 +15,9 @@ import {
   JourneyType,
   loadVisualLayout,
   SegmentsSettings,
-  setEdges,
   setFlowId,
   setFlowName,
   setJourneyType,
-  setNodes,
   setSegmentsSettings,
 } from "reducers/flow-builder.reducer";
 import { JourneyStatus } from "components/TableTemplate/TableTemplate";
@@ -94,8 +92,8 @@ const FlowBuilderv2 = () => {
         url: "/journeys/visual-layout",
         options: {
           id,
-          nodes: flowBuilderState.nodes,
-          edges: flowBuilderState.edges,
+          nodes: throttledFlowBuilderState.nodes,
+          edges: throttledFlowBuilderState.edges,
         },
       });
     } catch (e) {

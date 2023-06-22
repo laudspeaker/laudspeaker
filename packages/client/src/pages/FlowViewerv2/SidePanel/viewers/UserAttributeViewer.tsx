@@ -8,7 +8,7 @@ const UserAttributeViewer: FC<
 > = ({ nodeData }) => {
   const { branches } = nodeData;
   return (
-    <div className="-mx-5">
+    <div className="-mx-5 px-5">
       {branches.map((branch, i) => (
         <div key={branch.id} className="p-5 border-t border-gray-200">
           <div className="font-inter font-semibold text-base text-gray-900 pb-3">
