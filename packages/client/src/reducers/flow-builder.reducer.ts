@@ -151,6 +151,7 @@ interface FlowBuilderState {
   journeyType: JourneyType;
   isViewMode: boolean;
   flowStatus: JourneyStatus;
+  showSegmentsErrors: boolean;
 }
 
 const startNodeUUID = uuid();
@@ -192,6 +193,7 @@ const initialState: FlowBuilderState = {
   journeyType: JourneyType.DYNAMIC,
   isViewMode: false,
   flowStatus: JourneyStatus.EDITABLE,
+  showSegmentsErrors: false,
 };
 
 const handlePruneNodeTree = (state: FlowBuilderState, nodeId: string) => {
@@ -674,6 +676,9 @@ const flowBuilderSlice = createSlice({
     setFlowStatus(state, action: PayloadAction<JourneyStatus>) {
       state.flowStatus = action.payload;
     },
+    setShowSegmentsErrors(state, action: PayloadAction<boolean>) {
+      state.showSegmentsErrors = action.payload;
+    },
     refreshFlowBuilder(state) {
       state.flowId = "";
       state.flowName = "";
@@ -686,6 +691,7 @@ const flowBuilderSlice = createSlice({
       state.journeyType = JourneyType.DYNAMIC;
       state.isViewMode = false;
       state.flowStatus = JourneyStatus.EDITABLE;
+      state.showSegmentsErrors = false;
     },
   },
 });
@@ -713,6 +719,7 @@ export const {
   setJourneyType,
   setIsViewMode,
   setFlowStatus,
+  setShowSegmentsErrors,
   refreshFlowBuilder,
 } = flowBuilderSlice.actions;
 

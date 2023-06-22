@@ -161,14 +161,16 @@ const FlowBuilderSidePanel: FC<FlowBuilderSidePanelProps> = ({ className }) => {
             Delete
           </Button>
 
-          <div className="flex justify-end items-center gap-[10px]">
-            <Button type={ButtonType.SECONDARY} onClick={onCancel}>
-              Cancel
-            </Button>
-            <Button type={ButtonType.PRIMARY} onClick={onSave}>
-              Save
-            </Button>
-          </div>
+          {selectedNode?.type !== NodeType.EXIT && (
+            <div className="flex justify-end items-center gap-[10px]">
+              <Button type={ButtonType.SECONDARY} onClick={onCancel}>
+                Cancel
+              </Button>
+              <Button type={ButtonType.PRIMARY} onClick={onSave}>
+                Save
+              </Button>
+            </div>
+          )}
         </div>
         {selectedNode && (
           <FlowBuilderDeleteModal

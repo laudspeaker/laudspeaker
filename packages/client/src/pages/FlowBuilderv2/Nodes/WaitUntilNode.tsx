@@ -30,7 +30,7 @@ export const WaitUntilNode: FC<NodeProps<WaitUntilNodeData>> = ({
         type="target"
         isConnectable={isConnectable}
       >
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[#6366F1]">
           <WaitUntilIcon />
         </div>
       </Handle>
@@ -43,14 +43,18 @@ export const WaitUntilNode: FC<NodeProps<WaitUntilNodeData>> = ({
             </div>
             <div className="font-normal text-[14px] leading-[22px] text-[#4B5563]">
               {!branches.length ||
-              !(branches[0] as EventBranch)?.conditions?.length
-                ? "Wait ..."
-                : branches.length === 1 &&
+              !(branches[0] as EventBranch)?.conditions?.length ? (
+                <span className="font-inter font-normal text-[12px] text-[#F43F5E] leading-[20px]">
+                  Set conditions
+                </span>
+              ) : branches.length === 1 &&
+                (branches[0] as EventBranch).conditions.length ? (
+                `Meet ${
                   (branches[0] as EventBranch).conditions.length
-                ? `Meet ${
-                    (branches[0] as EventBranch).conditions.length
-                  } conditions`
-                : "Meet below conditions"}
+                } conditions`
+              ) : (
+                "Meet below conditions"
+              )}
             </div>
           </div>
         </BranchPopover>
@@ -61,14 +65,18 @@ export const WaitUntilNode: FC<NodeProps<WaitUntilNodeData>> = ({
           </div>
           <div className="font-normal text-[14px] leading-[22px] text-[#4B5563]">
             {!branches.length ||
-            !(branches[0] as EventBranch)?.conditions?.length
-              ? "Wait ..."
-              : branches.length === 1 &&
+            !(branches[0] as EventBranch)?.conditions?.length ? (
+              <span className="font-inter font-normal text-[12px] text-[#F43F5E] leading-[20px]">
+                Set conditions
+              </span>
+            ) : branches.length === 1 &&
+              (branches[0] as EventBranch).conditions.length ? (
+              `Meet ${
                 (branches[0] as EventBranch).conditions.length
-              ? `Meet ${
-                  (branches[0] as EventBranch).conditions.length
-                } conditions`
-              : "Meet below conditions"}
+              } conditions`
+            ) : (
+              "Meet below conditions"
+            )}
           </div>
         </div>
       )}

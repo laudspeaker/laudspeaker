@@ -82,6 +82,7 @@
     "react-google-recaptcha": "^2.1.0",
     "react-helmet": "^6.1.0",
     "react-lines-ellipsis": "^0.15.3",
+    "react-loader-spinner": "^5.3.4",
     "react-login-github": "^1.0.8",
     "react-markdown": "^8.0.6",
     "react-popper": "^2.3.0",

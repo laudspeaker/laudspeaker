@@ -13,7 +13,7 @@ const TimeWindowViewer: FC<SidePanelComponentProps<TimeWindowNodeData>> = ({
     ? format(new Date(nodeData.to), "yyyy/MM/dd kk:mm")
     : "not defined";
   return (
-    <div className="bg-gray-100 border border-gray-200 rounded gap-5 flex px-2 py-3">
+    <div className="bg-gray-100 border border-gray-200 rounded gap-5 flex py-3 px-7">
       <div className="flex flex-col">
         <span>From</span>
         <span>To</span>

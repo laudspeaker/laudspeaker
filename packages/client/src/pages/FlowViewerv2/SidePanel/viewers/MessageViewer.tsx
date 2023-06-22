@@ -38,8 +38,8 @@ const MessageViewer: FC<SidePanelComponentProps<MessageNodeData>> = ({
       }&take=${ITEMS_PER_PAGE}&skip=${(currentPage - 1) * ITEMS_PER_PAGE}`,
     });
 
-    setStatCustomers(data);
-    setTotalPages(pagesCount);
+    setStatCustomers(data || []);
+    setTotalPages(pagesCount || 1);
   };
 
   useEffect(() => {
@@ -52,8 +52,10 @@ const MessageViewer: FC<SidePanelComponentProps<MessageNodeData>> = ({
     <div>
       <div className="px-[20px] pb-[20px] border-b-[1px] border-[#E5E7EB]">
         <div className="w-[200px] h-[60px] px-[8px] flex items-center gap-[5px] border-[1px] border-[#4B5563] rounded-[4px]">
-          <div>{fixtures.icon}</div>
-          <div>{nodeData.template.selected?.name || "Unknown template"}</div>
+          <div className="text-[#4B5563]">{fixtures.icon}</div>
+          <div className="font-inter font-normal text-[14px] leading-[22px] text-[#111827]">
+            {nodeData.template.selected?.name || "Unknown template"}
+          </div>
         </div>
       </div>
       <div className="p-[20px] flex flex-col gap-[20px]">
@@ -97,7 +99,7 @@ const MessageViewer: FC<SidePanelComponentProps<MessageNodeData>> = ({
               <div className="font-semibold">Email</div>
             </div>
             <div className="py-[10px]">
-              {statCustomers.map((customer, i) => (
+              {statCustomers?.map((customer, i) => (
                 <div
                   key={i}
                   className="py-[11px] flex justify-between gap-[30px] font-inter font-normal text-[14px] leading-[22px] border-b-[1px] border-[#E5E7EB]"

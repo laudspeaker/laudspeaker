@@ -47,7 +47,7 @@ const FlowBuilderDrawer = () => {
                   key={child.id}
                   draggable={!child.disabled}
                 >
-                  <div>{child.icon}</div>
+                  <div className="text-[#6366F1]">{child.icon}</div>
                   <div className="font-segoe font-normal text-[14px] leading-[22px]">
                     {child.text}
                   </div>
