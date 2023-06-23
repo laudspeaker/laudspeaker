@@ -7,6 +7,7 @@ import {
   transformInsertNodeIntoEmptyNode,
   handleDrawerAction,
   removeNode,
+  NodeAction,
 } from "reducers/flow-builder.reducer";
 import ApiService from "services/api.service";
 import { useAppSelector, useAppDispatch } from "store/hooks";
@@ -20,6 +21,17 @@ interface NodeDraggingProviderProps {
 }
 
 const MAXIMUM_INSERT_RADIUS = 130;
+
+export const dragActionsNotToDoBetweenNodes: (
+  | DrawerAction
+  | NodeAction
+  | undefined
+)[] = [
+  DrawerAction.EXIT,
+  DrawerAction.JUMP_TO,
+  DrawerAction.WAIT_UNTIL,
+  DrawerAction.USER_ATTRIBUTE,
+];
 
 const NodeDraggingProvider: FC<NodeDraggingProviderProps> = ({ flowRef }) => {
   const drawerActionToNodeTypeMap: Record<DrawerAction, NodeType> = {
@@ -84,10 +96,7 @@ const NodeDraggingProvider: FC<NodeDraggingProviderProps> = ({ flowRef }) => {
         }
       | undefined;
 
-    if (
-      dragAction?.type !== DrawerAction.EXIT &&
-      dragAction?.type !== DrawerAction.JUMP_TO
-    ) {
+    if (!dragActionsNotToDoBetweenNodes.includes(dragAction?.type)) {
       for (const edge of edges) {
         if (edge.type !== EdgeType.PRIMARY) continue;
 
