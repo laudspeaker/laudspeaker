@@ -1,6 +1,7 @@
 /* eslint-disable no-case-declarations */
 import mongoose, {
   ClientSession,
+  isObjectIdOrHexString,
   isValidObjectId,
   Model,
   Types,
@@ -924,6 +925,9 @@ export class CustomersService {
         _id: Types.ObjectId;
       }
   > {
+    if (!isValidObjectId(customerId))
+      throw new BadRequestException('Invalid object id');
+
     const found = await this.CustomerModel.findById(customerId).exec();
     if (found && found?.ownerId == (<Account>account).id) return found;
     return;
