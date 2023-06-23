@@ -518,11 +518,8 @@ export default function TableTemplate<T extends TableDataItem>({
         {
           label: "Yes",
           onClick: async () => {
-            await ApiService.post({
-              url: ApiConfig.deleteFlow,
-              options: {
-                workflowId,
-              },
+            await ApiService.patch({
+              url: "/journeys/delete/" + workflowId,
             });
             refresh();
           },
@@ -1083,7 +1080,7 @@ export default function TableTemplate<T extends TableDataItem>({
                 <button
                   onClick={async () => {
                     await ApiService.post({
-                      url: "/workflows/duplicate/" + row.id,
+                      url: "/journeys/duplicate/" + row.id,
                       options: {},
                     });
                     window.location.reload();
