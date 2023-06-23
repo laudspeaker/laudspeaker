@@ -107,7 +107,28 @@ const FlowViewerSidePanel: FC<FlowViewerSidePanelProps> = ({ className }) => {
           </div>
 
           <div className="font-inter font-normal text-[14px] leading-[22px] text-[#111827]">
-            Description Description Description Des
+            {(() => {
+              switch (selectedNode?.data.type) {
+                case NodeType.MESSAGE:
+                  return "Users in this step will receive a message with the following template";
+                case NodeType.START:
+                  return "";
+                case NodeType.JUMP_TO:
+                  return "Users who enter this step will jump to another step in this journey";
+                case NodeType.EXIT:
+                  return "Users who enter this step will exit the journey";
+                case NodeType.WAIT_UNTIL:
+                  return "Users on this trigger will move to another step only after an event, or some amount of time";
+                case NodeType.TIME_DELAY:
+                  return "Users on this trigger will move to another step only after a time delay";
+                case NodeType.TIME_WINDOW:
+                  return "Users on this trigger will move to another step only during a time window";
+                case NodeType.USER_ATTRIBUTE:
+                  return "Users on this trigger will move to another step only if they satisfy some user attribute condition";
+                default:
+                  return "";
+              }
+            })()}
           </div>
         </div>
         <div>{nodeTypeToComponentMap[nodeData.type || ""]}</div>

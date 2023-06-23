@@ -38,7 +38,7 @@ const flowBuilderDrawerFixtures: {
   }[];
 }[] = [
   {
-    groupName: "Message & Step",
+    groupName: "Messages & Step",
     children: [
       {
         id: DrawerAction.EMAIL,
