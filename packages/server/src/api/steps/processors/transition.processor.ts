@@ -290,7 +290,7 @@ export class TransitionProcessor extends WorkerHost {
               name: TemplateType.EMAIL,
               accountID: currentStep.owner.id,
               cc: template.cc,
-              customerId: customerID,
+              customerID: customerID,
               domain: sendingDomain,
               email: sendingEmail,
               stepID: currentStep.id,
@@ -307,7 +307,7 @@ export class TransitionProcessor extends WorkerHost {
                 filteredTags
               ),
               tags: filteredTags,
-              templateId: template.id,
+              templateID: template.id,
               eventProvider: currentStep.owner.emailProvider,
             });
             this.debug(

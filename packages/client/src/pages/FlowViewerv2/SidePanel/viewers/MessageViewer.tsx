@@ -94,9 +94,9 @@ const MessageViewer: FC<SidePanelComponentProps<MessageNodeData>> = ({
         </div>
         {pickedStat && (
           <div>
-            <div className="flex gap-[46px]">
-              <div className="font-semibold">Customer ID</div>
-              <div className="font-semibold">Email</div>
+            <div className="flex gap-[136px]">
+              <div className="font-semibold whitespace-nowrap">Customer ID</div>
+              <div className="font-semibold w-full">Email</div>
             </div>
             <div className="py-[10px]">
               {statCustomers?.map((customer, i) => (
@@ -110,7 +110,9 @@ const MessageViewer: FC<SidePanelComponentProps<MessageNodeData>> = ({
                   >
                     {customer.id}
                   </div>
-                  <div>{customer.email}</div>
+                  <div className="max-w-[180px] overflow-hidden text-ellipsis">
+                    {customer.email}
+                  </div>
                 </div>
               ))}
               {!statCustomers.length && (
