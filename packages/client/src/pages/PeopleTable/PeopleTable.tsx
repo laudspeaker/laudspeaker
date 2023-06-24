@@ -115,7 +115,7 @@ const PeopleTable = () => {
             <div className="mt-6 flex space-x-3 md:mt-0 md:ml-4">
               <button
                 type="button"
-                className="inline-flex items-center rounded-md border border-transparent bg-cyan-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-cyan-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500"
+                className="inline-flex items-center border border-transparent bg-[#6366F1] px-6 py-3 text-base font-medium text-white shadow-sm hover:border-[#818CF8] hover:bg-[#818CF8] focus:border-[#4338CA] focus:bg-[#4338CA] disabled:!bg-[#F3F4F6] rounded-md"
                 onClick={redirectUses}
               >
                 Create Person

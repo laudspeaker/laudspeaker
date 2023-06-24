@@ -56,7 +56,7 @@ const NameJourney = () => {
           <div className="flex justify-end mt-[10px]">
             <GenericButton
               id="createJourneySubmit"
-              customClasses="inline-flex items-center rounded-md border border-transparent bg-cyan-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-cyan-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500"
+              customClasses="inline-flex items-center rounded-md border inline-flex items-center border border-transparent bg-[#6366F1] px-6 py-3 text-base font-medium text-white shadow-sm hover:border-[#818CF8] hover:bg-[#818CF8] focus:border-[#4338CA] focus:bg-[#4338CA] disabled:!bg-[#F3F4F6] rounded-md"
               onClick={handleSubmit}
               style={{
                 maxWidth: "200px",
