@@ -202,7 +202,8 @@ export class WebsocketGateway implements OnGatewayConnection {
           correlationKey: '_id',
           correlationValue: customer.id,
           source: 'custom',
-          event,
+          event: '',
+          payload: event,
         },
         socket.data.session
       );

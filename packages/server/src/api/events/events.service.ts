@@ -371,11 +371,11 @@ export class EventsService {
           const convertedEventDto: EventDto = {
             correlationKey: 'posthogId',
             correlationValue: [currentEvent.userId, currentEvent.anonymousId],
-            event: currentEvent.context,
+            event: currentEvent.event,
             source: 'posthog',
             payload: {
               type: currentEvent.type,
-              event: currentEvent.event,
+              context: currentEvent.context,
             },
           };
 
@@ -431,7 +431,12 @@ export class EventsService {
   async customPayload(account: Account, eventDto: EventDto, session: string) {
     let correlation: Correlation, jobIDs: WorkflowTick[];
     let err: any;
-
+    this.debug(
+      `${JSON.stringify({ account, eventDto, session })}`,
+      this.customPayload.name,
+      session,
+      account.email
+    );
     const transactionSession = await this.connection.startSession();
     transactionSession.startTransaction();
     const queryRunner = this.dataSource.createQueryRunner();
@@ -443,6 +448,12 @@ export class EventsService {
         account,
         eventDto,
         transactionSession
+      );
+      this.debug(
+        `${JSON.stringify({ correlation })}`,
+        this.customPayload.name,
+        session,
+        account.email
       );
 
       if (!correlation.found)
