@@ -677,7 +677,8 @@ export class WorkflowsService {
           customers = await this.customersService.findByInclusionCriteria(
             account,
             workflow.filter.inclusionCriteria,
-            transactionSession
+            transactionSession,
+            session
           );
 
           const unenrolledCustomers = customers.filter(
@@ -798,6 +799,7 @@ export class WorkflowsService {
             (await this.customersService.checkInclusion(
               customer,
               workflow.filter.inclusionCriteria,
+              session,
               account
             )) &&
             customer.workflows.indexOf(workflow.id) < 0
@@ -1004,44 +1006,46 @@ export class WorkflowsService {
                           trigger.providerParams ===
                             PosthogTriggerParams.Pageview
                         ) {
-                          this.logger.debug(
-                            `Comparing: ${event?.event?.page?.url || ''} ${
-                              condition.comparisonType || ''
-                            } ${condition.value || ''}`
-                          );
-                          return ['exists', 'doesNotExist'].includes(
-                            condition.comparisonType
-                          )
-                            ? this.audiencesHelper.operableCompare(
-                                event?.event?.page?.url,
-                                condition.comparisonType
-                              )
-                            : await this.audiencesHelper.conditionalCompare(
-                                event?.event?.page?.url,
-                                condition.value,
-                                condition.comparisonType
-                              );
+                          // this.logger.debug(
+                          //   `Comparing: ${event?.event?.page?.url || ''} ${
+                          //     condition.comparisonType || ''
+                          //   } ${condition.value || ''}`
+                          // );
+                          return false;
+                          // ['exists', 'doesNotExist'].includes(
+                          //   condition.comparisonType
+                          // )
+                          //   ? this.audiencesHelper.operableCompare(
+                          //       event?.event?.page?.url,
+                          //       condition.comparisonType
+                          //     )
+                          //   : await this.audiencesHelper.conditionalCompare(
+                          //       event?.event?.page?.url,
+                          //       condition.value,
+                          //       condition.comparisonType
+                          //     );
                         } else if (
                           condition.filterBy === FilterByOption.ELEMENTS
                         ) {
-                          const elementToCompare = event?.event?.elements?.find(
-                            (el) => el?.order === condition.elementOrder
-                          )?.[
-                            condition.filter ===
-                            EventConditionElementsFilter.TEXT
-                              ? 'text'
-                              : 'tagtag_name_name'
-                          ];
-                          console.log(
-                            `Comparing: ${elementToCompare} ${
-                              condition.comparisonType || ''
-                            } ${condition.value || ''}`
-                          );
-                          return await this.audiencesHelper.conditionalCompare(
-                            elementToCompare,
-                            condition.value,
-                            condition.comparisonType
-                          );
+                          // const elementToCompare = event?.event?.elements?.find(
+                          //   (el) => el?.order === condition.elementOrder
+                          // )?.[
+                          //   condition.filter ===
+                          //   EventConditionElementsFilter.TEXT
+                          //     ? 'text'
+                          //     : 'tagtag_name_name'
+                          // ];
+                          // console.log(
+                          //   `Comparing: ${elementToCompare} ${
+                          //     condition.comparisonType || ''
+                          //   } ${condition.value || ''}`
+                          // );
+                          return false;
+                          // await this.audiencesHelper.conditionalCompare(
+                          //   elementToCompare,
+                          //   condition.value,
+                          //   condition.comparisonType
+                          // );
                         } else {
                           this.logger.debug(
                             `Comparing: ${

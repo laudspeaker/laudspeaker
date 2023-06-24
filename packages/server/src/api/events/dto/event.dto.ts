@@ -38,12 +38,12 @@ export class EventDto {
   @IsString()
   @IsNotEmpty()
   @IsOptional()
-  public source: string;
+  public source?: string;
 
   @IsOptional()
   public payload?: any;
 
   @IsNotEmpty()
-  @IsObject()
-  public event?: Record<string, any>;
+  @IsString()
+  public event: string;
 }

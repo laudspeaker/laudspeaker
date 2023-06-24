@@ -1,5 +1,5 @@
 import { InjectQueue, Processor, WorkerHost } from '@nestjs/bullmq';
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Job, Queue } from 'bullmq';
 import { Account } from '../accounts/entities/accounts.entity';
 import { EventDto } from './dto/event.dto';
@@ -23,6 +23,7 @@ import {
   ProviderTypes,
 } from '../workflows/entities/workflow.entity';
 import { AudiencesHelper } from '../audiences/audiences.helper';
+import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 
 export interface StartDto {
   account: Account;
@@ -43,6 +44,8 @@ export interface PosthogEventDto {
 @Processor('events')
 export class EventsProcessor extends WorkerHost {
   constructor(
+    @Inject(WINSTON_MODULE_NEST_PROVIDER)
+    private readonly logger: Logger,
     private dataSource: DataSource,
     @InjectConnection() private readonly connection: mongoose.Connection,
     @Inject(CustomersService)
@@ -53,6 +56,65 @@ export class EventsProcessor extends WorkerHost {
     super();
   }
 
+  log(message, method, session, user = 'ANONYMOUS') {
+    this.logger.log(
+      message,
+      JSON.stringify({
+        class: EventsProcessor.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+  debug(message, method, session, user = 'ANONYMOUS') {
+    this.logger.debug(
+      message,
+      JSON.stringify({
+        class: EventsProcessor.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+  warn(message, method, session, user = 'ANONYMOUS') {
+    this.logger.warn(
+      message,
+      JSON.stringify({
+        class: EventsProcessor.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+  error(error, method, session, user = 'ANONYMOUS') {
+    this.logger.error(
+      error.message,
+      error.stack,
+      JSON.stringify({
+        class: EventsProcessor.name,
+        method: method,
+        session: session,
+        cause: error.cause,
+        name: error.name,
+        user: user,
+      })
+    );
+  }
+  verbose(message, method, session, user = 'ANONYMOUS') {
+    this.logger.verbose(
+      message,
+      JSON.stringify({
+        class: EventsProcessor.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+
   async process(job: Job<any, any, string>): Promise<any> {
     let err: any, stepToQueue: Step, branch: number;
     const queryRunner = this.dataSource.createQueryRunner();
@@ -61,17 +123,32 @@ export class EventsProcessor extends WorkerHost {
     const transactionSession = await this.connection.startSession();
     await transactionSession.startTransaction();
     try {
+      this.debug(
+        `${JSON.stringify({ jobData: job.data })}`,
+        this.process.name,
+        job.data.session
+      );
       //Account associated with event
       const account: Account = await queryRunner.manager.findOneBy(Account, {
         id: job.data.accountID,
       });
 
+      this.debug(
+        `${JSON.stringify({ account: account })}`,
+        this.process.name,
+        job.data.session
+      );
       // Multiple journeys can consume the same event, but only one step per journey,
       // so we create an event job for every journey
       const journey: Journey = await queryRunner.manager.findOneBy(Journey, {
         id: job.data.journeyID,
       });
 
+      this.debug(
+        `${JSON.stringify({ journey: journey })}`,
+        this.process.name,
+        job.data.session
+      );
       //Customer associated with event
       const customer: CustomerDocument =
         await this.customersService.findByCorrelationKVPair(
@@ -81,6 +158,12 @@ export class EventsProcessor extends WorkerHost {
           transactionSession
         );
       // All steps in `journey` that might be listening for this event
+
+      this.debug(
+        `${JSON.stringify({ customer })}`,
+        this.process.name,
+        job.data.session
+      );
       const steps = await queryRunner.manager.find(Step, {
         where: {
           type: StepType.WAIT_UNTIL_BRANCH,

@@ -45,6 +45,8 @@ import {
 import {
   AnalyticsEvent,
   AnalyticsEventCondition,
+  AttributeBranch,
+  AttributeGroup,
   ElementCondition,
   EventBranch,
   PropertyCondition,
@@ -60,9 +62,7 @@ import { TimeWindow } from '../steps/types/step.interface';
 import { TimeWindowStepMetadata } from '../steps/types/step.interface';
 import { CustomerAttribute } from '../steps/types/step.interface';
 import { MultiBranchMetadata } from '../steps/types/step.interface';
-import { template } from 'lodash';
 import { Temporal } from '@js-temporal/polyfill';
-import { JOB_REF } from '@nestjs/bullmq';
 
 export enum JourneyStatus {
   ACTIVE = 'Active',
@@ -351,6 +351,7 @@ export class JourneysService {
           (await this.customersService.checkInclusion(
             customer,
             journey.inclusionCriteria,
+            session,
             account
           )) &&
           customer.workflows.indexOf(journey.id) < 0
@@ -609,7 +610,12 @@ export class JourneysService {
     let journey: Journey; // Workflow to update
     let customers: CustomerDocument[]; // Customers to add to primary audience
     const jobIDs: (string | number)[] = [];
-
+    this.debug(
+      `${JSON.stringify({ account, journeyID })}`,
+      this.start.name,
+      session,
+      account.email
+    );
     const transactionSession = await this.connection.startSession();
     await transactionSession.startTransaction();
     const queryRunner = await this.dataSource.createQueryRunner();
@@ -635,6 +641,13 @@ export class JourneysService {
 
       if (!journey.inclusionCriteria)
         throw new Error('To start journey a filter should be defined');
+
+      this.debug(
+        `${JSON.stringify({ journey })}`,
+        this.start.name,
+        session,
+        account.email
+      );
 
       const graph = new Graph();
       const steps = await this.stepsService.transactionalfindByJourneyID(
@@ -667,7 +680,15 @@ export class JourneysService {
       customers = await this.customersService.findByInclusionCriteria(
         account,
         journey.inclusionCriteria,
-        transactionSession
+        transactionSession,
+        session
+      );
+
+      this.debug(
+        `${JSON.stringify({ customers })}`,
+        this.start.name,
+        session,
+        account.email
       );
 
       const unenrolledCustomers = customers.filter(
@@ -1063,13 +1084,66 @@ export class JourneysService {
           case NodeType.USER_ATTRIBUTE:
             metadata = new MultiBranchMetadata();
             metadata.branches = [];
+            let index = 0;
             for (let i = 0; i < relevantEdges.length; i++) {
               if (
                 relevantEdges[i].data['branch'].type === BranchType.ATTRIBUTE
               ) {
+                const branch = new AttributeBranch();
+                branch.groups = [];
+                for (
+                  let groupsIndex = 0;
+                  groupsIndex <
+                  relevantEdges[i].data['branch'].attributeConditions.length;
+                  groupsIndex++
+                ) {
+                  const group = new AttributeGroup();
+                  group.attributes = [];
+                  for (
+                    let attributeIndex = 0;
+                    attributeIndex <
+                    relevantEdges[i].data['branch'].attributeConditions[
+                      groupsIndex
+                    ].statements.length;
+                    attributeIndex++
+                  ) {
+                    const attribute = new CustomerAttribute();
+                    attribute.comparisonType =
+                      relevantEdges[i].data['branch'].attributeConditions[
+                        groupsIndex
+                      ].statements[attributeIndex].comparisonType;
+                    attribute.key =
+                      relevantEdges[i].data['branch'].attributeConditions[
+                        groupsIndex
+                      ].statements[attributeIndex].key;
+                    attribute.keyType =
+                      relevantEdges[i].data['branch'].attributeConditions[
+                        groupsIndex
+                      ].statements[attributeIndex].valueType;
+                    attribute.value =
+                      relevantEdges[i].data['branch'].attributeConditions[
+                        groupsIndex
+                      ].statements[attributeIndex].value;
+                    group.attributes.push(attribute);
+                  }
+                  group.relation =
+                    relevantEdges[i].data['branch'].attributeConditions[
+                      groupsIndex
+                    ].statements[0].relationToNext;
+                  branch.groups.push(group);
+                }
+                branch.destination = nodes.filter((node) => {
+                  return node.id === relevantEdges[i].target;
+                })[0].data.stepId;
+                branch.index = index;
+                index++;
+                branch.relation =
+                  relevantEdges[i].data[
+                    'branch'
+                  ].attributeConditions[0].relationToNext;
+                metadata.branches.push(branch);
               }
             }
-
             break;
         }
         await queryRunner.manager.save(Step, {

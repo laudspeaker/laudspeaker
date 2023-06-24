@@ -238,7 +238,8 @@ export class CustomersService {
           if (
             await this.audiencesHelper.checkInclusion(
               ret,
-              workflow.filter.inclusionCriteria
+              workflow.filter.inclusionCriteria,
+              session
             )
           ) {
             const audiences = await transactionManager.findBy(Audience, {
@@ -274,7 +275,8 @@ export class CustomersService {
           if (
             await this.audiencesHelper.checkInclusion(
               ret,
-              workflow.filter.inclusionCriteria
+              workflow.filter.inclusionCriteria,
+              session
             )
           ) {
             const audiences = await transactionManager.findBy(Audience, {
@@ -1103,7 +1105,8 @@ export class CustomersService {
   async findByInclusionCriteria(
     account: Account,
     criteria: any,
-    transactionSession: ClientSession
+    transactionSession: ClientSession,
+    session: string
   ): Promise<CustomerDocument[]> {
     let customers: CustomerDocument[] = [];
     const ret: CustomerDocument[] = [];
@@ -1117,9 +1120,19 @@ export class CustomersService {
       return Promise.reject(err);
     }
 
+    this.debug(
+      `${JSON.stringify({ customers })}`,
+      this.findByInclusionCriteria.name,
+      session
+    );
     for (const customer of customers) {
       if (
-        await this.audiencesHelper.checkInclusion(customer, criteria, account)
+        await this.audiencesHelper.checkInclusion(
+          customer,
+          criteria,
+          session,
+          account
+        )
       )
         ret.push(customer);
     }
@@ -1130,11 +1143,13 @@ export class CustomersService {
   checkInclusion(
     customer: CustomerDocument,
     inclusionCriteria: any,
+    session: string,
     account?: Account
   ) {
     return this.audiencesHelper.checkInclusion(
       customer,
       inclusionCriteria,
+      session,
       account
     );
   }
@@ -1485,6 +1500,7 @@ export class CustomersService {
         !(await this.audiencesHelper.checkInclusion(
           customer,
           inclusionCriteria,
+          session,
           account
         ))
       ) {
