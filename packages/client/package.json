@@ -81,6 +81,7 @@
     "react-draggable": "^4.4.5",
     "react-google-recaptcha": "^2.1.0",
     "react-helmet": "^6.1.0",
+    "react-joyride": "^2.5.4",
     "react-lines-ellipsis": "^0.15.3",
     "react-loader-spinner": "^5.3.4",
     "react-login-github": "^1.0.8",

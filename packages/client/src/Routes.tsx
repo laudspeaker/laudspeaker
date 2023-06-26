@@ -33,7 +33,6 @@ import Modal from "components/Elements/Modal";
 import ApiService from "services/api.service";
 import Account from "types/Account";
 import { GenericButton } from "components/Elements";
-import Home from "pages/Home";
 import FirebaseBuilder from "pages/FirebaseBuilder/FirebaseBuilder";
 import ResetPassword from "pages/ResetPassword";
 import SegmentTable from "pages/SegmentTable";
@@ -44,6 +43,8 @@ import EventTracker from "pages/EventTracker";
 import ModalBackgroundProvider from "pages/ModalBuilder/ModalBackgroundProvider";
 import FlowBuilderv2 from "pages/FlowBuilderv2";
 import FlowViewerv2 from "pages/FlowViewerv2";
+import Onboardingv2 from "pages/Onboardingv2";
+import Homev2 from "pages/Homev2";
 
 interface IProtected {
   children: ReactElement;
@@ -178,7 +179,7 @@ const RouteComponent: React.FC = () => {
           element={
             <Protected>
               <DrawerLayout>
-                <Home />
+                <Homev2 />
               </DrawerLayout>
             </Protected>
           }
@@ -460,7 +461,7 @@ const RouteComponent: React.FC = () => {
           element={
             <Protected>
               <DrawerLayout>
-                <Home />
+                <Homev2 />
               </DrawerLayout>
             </Protected>
           }
@@ -469,9 +470,7 @@ const RouteComponent: React.FC = () => {
           path="/onboarding"
           element={
             <Protected>
-              <DrawerLayout>
-                <OnboardingBeta />
-              </DrawerLayout>
+              <Onboardingv2 />
             </Protected>
           }
         />
