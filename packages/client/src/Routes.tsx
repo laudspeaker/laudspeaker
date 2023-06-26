@@ -177,14 +177,9 @@ const RouteComponent: React.FC = () => {
           path="/"
           element={
             <Protected>
-              <WelcomeBannerProvider
-                hidden={!showWelcomeBanner}
-                setHidden={(value) => setShowWelcomeBanner(!value)}
-              >
-                <DrawerLayout>
-                  <Home />
-                </DrawerLayout>
-              </WelcomeBannerProvider>
+              <DrawerLayout>
+                <Home />
+              </DrawerLayout>
             </Protected>
           }
         />
@@ -221,6 +216,7 @@ const RouteComponent: React.FC = () => {
                   { text: "Journey builder", link: "/flow" },
                   { text: "Create a journey" },
                 ]}
+                expandable
               >
                 <FlowBuilderv2 />
               </DrawerLayout>
@@ -236,6 +232,7 @@ const RouteComponent: React.FC = () => {
                   { text: "Journey builder", link: "/flow" },
                   { text: "Create a journey" },
                 ]}
+                expandable
               >
                 <FlowBuilderv2 />
               </DrawerLayout>
@@ -257,6 +254,7 @@ const RouteComponent: React.FC = () => {
           element={
             <Protected>
               <DrawerLayout
+                expandable
                 crumbs={[
                   { text: "Journey builder", link: "/flow" },
                   { text: "Journey" },
@@ -461,14 +459,9 @@ const RouteComponent: React.FC = () => {
           path="/home"
           element={
             <Protected>
-              <WelcomeBannerProvider
-                hidden={!showWelcomeBanner}
-                setHidden={(value) => setShowWelcomeBanner(!value)}
-              >
-                <DrawerLayout>
-                  <Home />
-                </DrawerLayout>
-              </WelcomeBannerProvider>
+              <DrawerLayout>
+                <Home />
+              </DrawerLayout>
             </Protected>
           }
         />
@@ -476,14 +469,9 @@ const RouteComponent: React.FC = () => {
           path="/onboarding"
           element={
             <Protected>
-              <WelcomeBannerProvider
-                hidden={!showWelcomeBanner}
-                setHidden={(value) => setShowWelcomeBanner(!value)}
-              >
-                <DrawerLayout>
-                  <OnboardingBeta />
-                </DrawerLayout>
-              </WelcomeBannerProvider>
+              <DrawerLayout>
+                <OnboardingBeta />
+              </DrawerLayout>
             </Protected>
           }
         />

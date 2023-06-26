@@ -525,6 +525,7 @@ const flowBuilderSlice = createSlice({
         case DrawerAction.JUMP_TO:
           nodeToChange.type = NodeType.JUMP_TO;
           nodeToChange.data = {
+            type: NodeType.JUMP_TO,
             stepId,
           };
           break;

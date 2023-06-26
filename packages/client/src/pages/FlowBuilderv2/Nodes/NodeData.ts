@@ -152,6 +152,11 @@ export interface UserAttributeNodeData extends CommonNodeData {
   branches: AttributeBranch[];
 }
 
+export interface JumpToNodeData extends CommonNodeData {
+  type: NodeType.JUMP_TO;
+  targetId?: string;
+}
+
 export interface AnotherNodeData extends CommonNodeData {
   type?: Exclude<
     NodeType,
@@ -160,6 +165,7 @@ export interface AnotherNodeData extends CommonNodeData {
     | NodeType.TIME_DELAY
     | NodeType.TIME_WINDOW
     | NodeType.USER_ATTRIBUTE
+    | NodeType.JUMP_TO
   >;
 }
 
@@ -169,4 +175,5 @@ export type NodeData =
   | TimeDelayNodeData
   | TimeWindowNodeData
   | UserAttributeNodeData
+  | JumpToNodeData
   | AnotherNodeData;

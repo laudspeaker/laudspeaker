@@ -23,7 +23,7 @@ import {
   WaitUntilNode,
 } from "./Nodes";
 import FlowBuilderSidePanel from "./SidePanel/FlowBuilderSidePanel";
-import { BranchEdge, JumpToEdge, PrimaryEdge } from "./Edges";
+import { BranchEdge, PrimaryEdge } from "./Edges";
 import { FC, useRef } from "react";
 import NodeDraggingProvider from "./FlowPlugins/NodeDraggingProvider";
 
@@ -43,7 +43,6 @@ export enum NodeType {
 export enum EdgeType {
   PRIMARY = "primary",
   BRANCH = "branch",
-  JUMP_TO = "jumpTo",
 }
 
 const nodeTypes: Record<NodeType, FC<NodeProps<any>>> = {
@@ -62,7 +61,6 @@ const nodeTypes: Record<NodeType, FC<NodeProps<any>>> = {
 const edgeTypes: Record<EdgeType, FC<EdgeProps<any>>> = {
   [EdgeType.PRIMARY]: PrimaryEdge,
   [EdgeType.BRANCH]: BranchEdge,
-  [EdgeType.JUMP_TO]: JumpToEdge,
 };
 
 interface FlowEditorProps {

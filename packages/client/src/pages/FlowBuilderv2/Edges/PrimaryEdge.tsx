@@ -5,9 +5,11 @@ import {
   EdgeProps,
   getSmoothStepPath,
 } from "reactflow";
+import { NodeAction } from "reducers/flow-builder.reducer";
 import { useAppDispatch, useAppSelector } from "store/hooks";
 import { DrawerAction } from "../Drawer/drawer.fixtures";
 import { NodeType } from "../FlowEditor";
+import { dragActionsNotToDoBetweenNodes } from "../FlowPlugins/NodeDraggingProvider";
 
 export const PrimaryEdge: FC<EdgeProps> = ({
   sourceX,
@@ -50,8 +52,7 @@ export const PrimaryEdge: FC<EdgeProps> = ({
         !isTargetInsertNode &&
         !isSourceInsertNode &&
         isDragging &&
-        dragAction?.type !== DrawerAction.EXIT &&
-        dragAction?.type !== DrawerAction.JUMP_TO && (
+        !dragActionsNotToDoBetweenNodes.includes(dragAction?.type) && (
           <EdgeLabelRenderer>
             <div
               style={{
