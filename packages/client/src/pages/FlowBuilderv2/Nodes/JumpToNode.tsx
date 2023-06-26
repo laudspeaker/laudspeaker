@@ -1,11 +1,25 @@
 import React, { FC } from "react";
 import { Handle, NodeProps, Position } from "reactflow";
-import { NodeData } from "./NodeData";
+import { changeNodeData } from "reducers/flow-builder.reducer";
+import { useAppDispatch } from "store/hooks";
+import JumpToDraggableLine from "../Edges/components/JumpToDraggableLine";
+import { NodeType } from "../FlowEditor";
+import { JumpToNodeData } from "./NodeData";
 
-export const JumpToNode: FC<NodeProps<NodeData>> = ({
+export const JumpToNode: FC<NodeProps<JumpToNodeData>> = ({
   isConnectable,
   selected,
+  data,
+  id,
 }) => {
+  const dispatch = useAppDispatch();
+
+  const setTargetId = (targetId?: string) => {
+    dispatch(
+      changeNodeData({ id, data: { type: NodeType.JUMP_TO, targetId } })
+    );
+  };
+
   return (
     <div
       className={`w-[120px] h-[60px] rounded-[4px]  bg-white ${
@@ -20,7 +34,7 @@ export const JumpToNode: FC<NodeProps<NodeData>> = ({
         isConnectable={isConnectable}
         className="!min-h-[1px] !h-[1px] !top-[1px] !opacity-0 !border-0 !pointer-events-none !cursor-default"
       />
-      <div className="px-[15px] py-[18px] flex flex-col gap-[2px]">
+      <div className="relative px-[15px] py-[18px] flex flex-col gap-[2px]">
         <div className="flex gap-[5px] items-center">
           <div>
             <svg
@@ -54,29 +68,12 @@ export const JumpToNode: FC<NodeProps<NodeData>> = ({
             Jump to
           </div>
         </div>
+
+        <JumpToDraggableLine
+          targetId={data.targetId}
+          setTargetId={setTargetId}
+        />
       </div>
-
-      <div className="absoulte bottom-0 left-1/2 -translate-x-1/2"></div>
-
-      <Handle
-        position={Position.Bottom}
-        type="source"
-        isConnectable={isConnectable}
-        className="!bg-transparent !border-transparent"
-      >
-        <svg
-          width="16"
-          height="55"
-          viewBox="0 0 16 55"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            d="M0.166667 5.5C0.166667 8.44552 2.55448 10.8333 5.5 10.8333C8.44552 10.8333 10.8333 8.44552 10.8333 5.5C10.8333 2.55448 8.44552 0.166667 5.5 0.166667C2.55448 0.166667 0.166667 2.55448 0.166667 5.5ZM11.4173 54.9495C11.9417 55.1228 12.5073 54.8382 12.6806 54.3139L15.5053 45.7686C15.6787 45.2442 15.3941 44.6786 14.8697 44.5053C14.3453 44.332 13.7797 44.6165 13.6064 45.1409L11.0955 52.7367L3.49978 50.2258C2.9754 50.0525 2.40979 50.3371 2.23645 50.8615C2.06312 51.3858 2.34769 51.9515 2.87207 52.1248L11.4173 54.9495ZM5.5 5.5C4.52124 5.295 4.52116 5.2954 4.52105 5.29588C4.52099 5.29618 4.52087 5.29676 4.52075 5.29735C4.5205 5.29852 4.52018 5.30008 4.51978 5.30203C4.51897 5.30592 4.51785 5.31136 4.51643 5.31833C4.51358 5.33227 4.50951 5.35236 4.50431 5.37847C4.4939 5.43068 4.47897 5.50702 4.46018 5.60662C4.4226 5.8058 4.36961 6.09807 4.30666 6.47656C4.18077 7.23349 4.01499 8.33565 3.853 9.72821C3.52911 12.5126 3.21991 16.4621 3.27615 21.137C3.38853 30.4773 4.96035 42.7676 10.8379 54.4494L12.6245 53.5506C6.92998 42.2324 5.38621 30.2727 5.27601 21.113C5.22096 16.5379 5.52372 12.6749 5.83961 9.95929C5.99751 8.60185 6.15858 7.53213 6.27956 6.80469C6.34005 6.44099 6.3905 6.16295 6.42551 5.97737C6.44302 5.88458 6.45666 5.81492 6.46576 5.76924C6.47031 5.7464 6.47372 5.72955 6.47592 5.71881C6.47702 5.71344 6.47781 5.70959 6.47829 5.70729C6.47853 5.70613 6.47869 5.70536 6.47877 5.70498C6.47881 5.70479 6.4788 5.70479 6.47882 5.7047C6.4788 5.7048 6.47876 5.705 5.5 5.5Z"
-            fill="#4338CA"
-          />
-        </svg>
-      </Handle>
     </div>
   );
 };
