@@ -389,11 +389,18 @@ export class EventsService {
             },
           });
           for (let i = 0; i < journeys.length; i++)
-            await this.eventQueue.add('event', {
-              accountID: account.id,
-              event: convertedEventDto,
-              journeyID: journeys[i].id,
-            });
+            await this.eventQueue.add(
+              'event',
+              {
+                accountID: account.id,
+                event: convertedEventDto,
+                journeyID: journeys[i].id,
+              },
+              {
+                attempts: Number.MAX_SAFE_INTEGER,
+                backoff: { delay: 10000, type: 'fixed' },
+              }
+            );
           this.debug(
             `Queued messages ${JSON.stringify({ jobIDs: jobIDs })}`,
             this.posthogPayload.name,
@@ -429,7 +436,6 @@ export class EventsService {
   }
 
   async customPayload(account: Account, eventDto: EventDto, session: string) {
-    let correlation: Correlation, jobIDs: WorkflowTick[];
     let err: any;
     this.debug(
       `${JSON.stringify({ account, eventDto, session })}`,
@@ -444,11 +450,12 @@ export class EventsService {
     await queryRunner.startTransaction();
 
     try {
-      correlation = await this.customersService.findOrCreateByCorrelationKVPair(
-        account,
-        eventDto,
-        transactionSession
-      );
+      const correlation: Correlation =
+        await this.customersService.findOrCreateByCorrelationKVPair(
+          account,
+          eventDto,
+          transactionSession
+        );
       this.debug(
         `${JSON.stringify({ correlation })}`,
         this.customPayload.name,
@@ -475,11 +482,18 @@ export class EventsService {
         },
       });
       for (let i = 0; i < journeys.length; i++)
-        await this.eventQueue.add('event', {
-          accountID: account.id,
-          event: eventDto,
-          journeyID: journeys[i].id,
-        });
+        await this.eventQueue.add(
+          'event',
+          {
+            accountID: account.id,
+            event: eventDto,
+            journeyID: journeys[i].id,
+          },
+          {
+            attempts: Number.MAX_SAFE_INTEGER,
+            backoff: { delay: 10000, type: 'fixed' },
+          }
+        );
       if (eventDto) {
         await this.EventModel.create({
           ...eventDto,
@@ -500,7 +514,6 @@ export class EventsService {
       await queryRunner.release();
       if (err) throw err;
     }
-    return jobIDs;
   }
 
   async getOrUpdateAttributes(resourceId: string, session: string) {
