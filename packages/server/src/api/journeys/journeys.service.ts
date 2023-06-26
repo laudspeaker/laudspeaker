@@ -261,45 +261,26 @@ export class JourneysService {
         (res?.[0]?.count || '0');
       const newJourney = await this.create(user, newName, session);
 
-      const oldSteps = await this.stepsService.transactionalfindByJourneyID(
-        user,
-        oldJourney.id,
-        queryRunner
-      );
-
-      const newSteps: Step[] = await queryRunner.manager.save(
-        Step,
-        oldSteps.map((oldStep) => ({
-          createdAt: new Date(),
-          owner: oldStep.owner,
-          type: oldStep.type,
-          journey: newJourney,
-          customers: [],
-          metadata: oldStep.metadata,
-          isEditable: true,
-        }))
-      );
-
-      let visualLayout = JSON.stringify(oldJourney.visualLayout);
-
-      for (let i = 0; i < oldSteps.length; i++) {
-        const oldStepID = oldSteps[i].id;
-        const newStepID = newSteps[i].id;
-        visualLayout = visualLayout.replaceAll(oldStepID, newStepID);
-      }
-
-      visualLayout = JSON.parse(visualLayout);
-
       await this.transactionalUpdate(
         user,
         {
           id: newJourney.id,
           name: newName,
-          visualLayout,
           isDynamic: oldJourney.isDynamic,
         },
         session,
         queryRunner
+      );
+
+      await this.updateLayoutTransactional(
+        user,
+        {
+          id: newJourney.id,
+          nodes: oldJourney.visualLayout.nodes,
+          edges: oldJourney.visualLayout.edges,
+        },
+        queryRunner,
+        session
       );
 
       await queryRunner.commitTransaction();
@@ -1169,5 +1150,314 @@ export class JourneysService {
       await queryRunner.release();
       if (err) throw err;
     }
+  }
+
+  /**
+   * Update a journey.
+   * @param account
+   * @param updateJourneyDto
+   * @param session
+   * @returns
+   */
+  async updateLayoutTransactional(
+    account: Account,
+    updateJourneyDto: UpdateJourneyLayoutDto,
+    queryRunner: QueryRunner,
+    session: string
+  ): Promise<Journey> {
+    let journey = await queryRunner.manager.findOne(Journey, {
+      where: {
+        id: updateJourneyDto.id,
+      },
+    });
+
+    if (!journey) throw new NotFoundException('Journey not found');
+    if (journey.isActive || journey.isDeleted || journey.isPaused)
+      throw new Error('Journey is no longer editable.');
+
+    const { nodes, edges } = updateJourneyDto;
+    for (let i = 0; i < nodes.length; i++) {
+      let step = await queryRunner.manager.findOne(Step, {
+        where: {
+          id: nodes[i].data.stepId,
+        },
+      });
+      let relevantEdges = edges.filter((edge) => {
+        return edge.source === nodes[i].id;
+      });
+      let metadata;
+      switch (nodes[i].type) {
+        case NodeType.START:
+          if (relevantEdges.length > 1)
+            throw new Error('Cannot have more than one branch for Start Step');
+          metadata = new StartStepMetadata();
+          metadata.destination = nodes.filter((node) => {
+            return node.id === relevantEdges[0].target;
+          })[0].data.stepId;
+          break;
+        case NodeType.EMPTY:
+          break;
+        case NodeType.MESSAGE:
+          if (relevantEdges.length > 1)
+            throw new Error(
+              'Cannot have more than one branch for Message Step'
+            );
+          metadata = new MessageStepMetadata();
+          metadata.destination = nodes.filter((node) => {
+            return node.id === relevantEdges[0].target;
+          })[0].data.stepId;
+          metadata.channel = nodes[i].data['template']['type'];
+          if (nodes[i].data['template']['selected'])
+            metadata.template = nodes[i].data['template']['selected']['id'];
+          break;
+        case NodeType.WAIT_UNTIL:
+          metadata = new WaitUntilStepMetadata();
+
+          //Time Branch configuration
+          let timeBranch = nodes[i].data['branches'].filter((branch) => {
+            return branch.type === BranchType.MAX_TIME;
+          })[0];
+          if (timeBranch?.timeType === TimeType.TIME_DELAY) {
+            metadata.timeBranch = new TimeDelayStepMetadata();
+            metadata.timeBranch.delay = new Temporal.Duration(
+              timeBranch.delay.years,
+              timeBranch['delay']['months'],
+              timeBranch['delay']['weeks'],
+              timeBranch['delay']['days'],
+              timeBranch['delay']['hours'],
+              timeBranch['delay']['minutes']
+            );
+          } else if (timeBranch?.timeType === TimeType.TIME_WINDOW) {
+            metadata.timeBranch = new TimeWindowStepMetadata();
+            metadata.timeBranch.window = new TimeWindow();
+            metadata.timeBranch.window.from = Temporal.Instant.from(
+              new Date(timeBranch['from']).toISOString()
+            );
+            metadata.timeBranch.window.to = Temporal.Instant.from(
+              new Date(timeBranch['to']).toISOString()
+            );
+          }
+          metadata.branches = [];
+          for (let i = 0; i < relevantEdges.length; i++) {
+            if (relevantEdges[i].data['branch'].type === BranchType.MAX_TIME)
+              metadata.timeBranch.destination = nodes.filter((node) => {
+                return node.id === relevantEdges[i].target;
+              })[0].data.stepId;
+            else if (
+              relevantEdges[i].data['branch'].type === BranchType.EVENT
+            ) {
+              const branch = new EventBranch();
+              branch.events = [];
+              branch.relation =
+                relevantEdges[i].data['branch'].conditions[0].relationToNext;
+              branch.index = i;
+              branch.destination = nodes.filter((node) => {
+                return node.id === relevantEdges[i].target;
+              })[0].data.stepId;
+              for (
+                let eventsIndex = 0;
+                eventsIndex < relevantEdges[i].data['branch'].conditions.length;
+                eventsIndex++
+              ) {
+                const event = new AnalyticsEvent();
+                event.conditions = [];
+                event.event =
+                  relevantEdges[i].data['branch'].conditions[eventsIndex].name;
+                event.provider =
+                  relevantEdges[i].data['branch'].conditions[
+                    eventsIndex
+                  ].providerType;
+                event.relation =
+                  relevantEdges[i].data['branch'].conditions[
+                    eventsIndex
+                  ].statements[0]?.relationToNext;
+                for (
+                  let conditionsIndex = 0;
+                  conditionsIndex <
+                  relevantEdges[i].data['branch'].conditions[eventsIndex]
+                    .statements.length;
+                  conditionsIndex++
+                ) {
+                  const condition = new AnalyticsEventCondition();
+                  condition.type =
+                    relevantEdges[i].data['branch'].conditions[
+                      eventsIndex
+                    ].statements[conditionsIndex].type;
+                  if (condition.type === FilterByOption.ELEMENTS) {
+                    condition.elementCondition = new ElementCondition();
+                    condition.elementCondition.comparisonType =
+                      relevantEdges[i].data['branch'].conditions[
+                        eventsIndex
+                      ].statements[conditionsIndex].comparisonType;
+                    condition.elementCondition.filter =
+                      relevantEdges[i].data['branch'].conditions[
+                        eventsIndex
+                      ].statements[conditionsIndex].elementKey;
+                    condition.elementCondition.filterType =
+                      relevantEdges[i].data['branch'].conditions[
+                        eventsIndex
+                      ].statements[conditionsIndex].valueType;
+                    condition.elementCondition.order =
+                      relevantEdges[i].data['branch'].conditions[
+                        eventsIndex
+                      ].statements[conditionsIndex].order;
+                    condition.elementCondition.value =
+                      relevantEdges[i].data['branch'].conditions[
+                        eventsIndex
+                      ].statements[conditionsIndex].value;
+                  } else {
+                    condition.propertyCondition = new PropertyCondition();
+                    condition.propertyCondition.comparisonType =
+                      relevantEdges[i].data['branch'].conditions[
+                        eventsIndex
+                      ].statements[conditionsIndex].comparisonType;
+                    condition.propertyCondition.key =
+                      relevantEdges[i].data['branch'].conditions[
+                        eventsIndex
+                      ].statements[conditionsIndex].key;
+                    condition.propertyCondition.keyType =
+                      relevantEdges[i].data['branch'].conditions[
+                        eventsIndex
+                      ].statements[conditionsIndex].valueType;
+                    condition.propertyCondition.value =
+                      relevantEdges[i].data['branch'].conditions[
+                        eventsIndex
+                      ].statements[conditionsIndex].value;
+                  }
+                  event.conditions.push(condition);
+                }
+                branch.events.push(event);
+              }
+              metadata.branches.push(branch);
+            }
+          }
+          break;
+        case NodeType.JUMP_TO:
+          if (relevantEdges.length > 1)
+            throw new Error(
+              'Cannot have more than one branch for Jump To Step'
+            );
+          metadata = new LoopStepMetadata();
+          metadata.destination = nodes.filter((node) => {
+            return node.id === relevantEdges[0].target;
+          })[0].data.stepId;
+          break;
+        case NodeType.EXIT:
+          if (relevantEdges.length > 0)
+            throw new Error('Cannot have any branches for Exit Step');
+          metadata = new ExitStepMetadata();
+          break;
+        case NodeType.TIME_DELAY:
+          if (relevantEdges.length > 1)
+            throw new Error(
+              'Cannot have more than one branch for Time Delay Step'
+            );
+          metadata = new TimeDelayStepMetadata();
+          metadata.destination = nodes.filter((node) => {
+            return node.id === relevantEdges[0].target;
+          })[0].data.stepId;
+          metadata.delay = new Temporal.Duration(
+            nodes[i].data['delay']['years'],
+            nodes[i].data['delay']['months'],
+            nodes[i].data['delay']['weeks'],
+            nodes[i].data['delay']['days'],
+            nodes[i].data['delay']['hours'],
+            nodes[i].data['delay']['minutes']
+          );
+          break;
+        case NodeType.TIME_WINDOW:
+          if (relevantEdges.length > 1)
+            throw new Error(
+              'Cannot have more than one branch for Time Window Step'
+            );
+          metadata = new TimeWindowStepMetadata();
+          metadata.destination = nodes.filter((node) => {
+            return node.id === relevantEdges[0].target;
+          })[0].data.stepId;
+          metadata.window = new TimeWindow();
+          metadata.window.from = Temporal.Instant.from(
+            new Date(nodes[i].data['from']).toISOString()
+          );
+          metadata.window.to = Temporal.Instant.from(
+            new Date(nodes[i].data['to']).toISOString()
+          );
+          break;
+        case NodeType.USER_ATTRIBUTE:
+          metadata = new MultiBranchMetadata();
+          metadata.branches = [];
+          let index = 0;
+          for (let i = 0; i < relevantEdges.length; i++) {
+            if (relevantEdges[i].data['branch'].type === BranchType.ATTRIBUTE) {
+              const branch = new AttributeBranch();
+              branch.groups = [];
+              for (
+                let groupsIndex = 0;
+                groupsIndex <
+                relevantEdges[i].data['branch'].attributeConditions.length;
+                groupsIndex++
+              ) {
+                const group = new AttributeGroup();
+                group.attributes = [];
+                for (
+                  let attributeIndex = 0;
+                  attributeIndex <
+                  relevantEdges[i].data['branch'].attributeConditions[
+                    groupsIndex
+                  ].statements.length;
+                  attributeIndex++
+                ) {
+                  const attribute = new CustomerAttribute();
+                  attribute.comparisonType =
+                    relevantEdges[i].data['branch'].attributeConditions[
+                      groupsIndex
+                    ].statements[attributeIndex].comparisonType;
+                  attribute.key =
+                    relevantEdges[i].data['branch'].attributeConditions[
+                      groupsIndex
+                    ].statements[attributeIndex].key;
+                  attribute.keyType =
+                    relevantEdges[i].data['branch'].attributeConditions[
+                      groupsIndex
+                    ].statements[attributeIndex].valueType;
+                  attribute.value =
+                    relevantEdges[i].data['branch'].attributeConditions[
+                      groupsIndex
+                    ].statements[attributeIndex].value;
+                  group.attributes.push(attribute);
+                }
+                group.relation =
+                  relevantEdges[i].data['branch'].attributeConditions[
+                    groupsIndex
+                  ].statements[0].relationToNext;
+                branch.groups.push(group);
+              }
+              branch.destination = nodes.filter((node) => {
+                return node.id === relevantEdges[i].target;
+              })[0].data.stepId;
+              branch.index = index;
+              index++;
+              branch.relation =
+                relevantEdges[i].data[
+                  'branch'
+                ].attributeConditions[0].relationToNext;
+              metadata.branches.push(branch);
+            }
+          }
+          break;
+      }
+      await queryRunner.manager.save(Step, {
+        ...step,
+        metadata,
+      });
+    }
+
+    journey = await queryRunner.manager.save(Journey, {
+      ...journey,
+      visualLayout: {
+        nodes,
+        edges,
+      },
+    });
+    return Promise.resolve(journey);
   }
 }
