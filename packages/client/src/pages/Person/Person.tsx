@@ -179,7 +179,6 @@ const Person = () => {
 
   return (
     <div className="w-full min-h-screen">
-      <Header />
       <div className="p-[30px_50px]">
         <div className="flex justify-between items-center">
           <div className="">

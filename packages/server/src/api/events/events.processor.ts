@@ -1,9 +1,7 @@
 import { InjectQueue, Processor, WorkerHost } from '@nestjs/bullmq';
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Job, Queue } from 'bullmq';
 import { Account } from '../accounts/entities/accounts.entity';
-import { EventDto } from './dto/event.dto';
-import { PosthogBatchEventDto } from './dto/posthog-batch-event.dto';
 import { CustomerDocument } from '../customers/schemas/customer.schema';
 import { CustomersService } from '../customers/customers.service';
 import { DataSource } from 'typeorm';
@@ -23,26 +21,14 @@ import {
   ProviderTypes,
 } from '../workflows/entities/workflow.entity';
 import { AudiencesHelper } from '../audiences/audiences.helper';
-
-export interface StartDto {
-  account: Account;
-  workflowID: string;
-}
-
-export interface CustomEventDto {
-  apiKey: string;
-  eventDto: EventDto;
-}
-
-export interface PosthogEventDto {
-  apiKey: string;
-  eventDto: PosthogBatchEventDto;
-}
+import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 
 @Injectable()
 @Processor('events')
 export class EventsProcessor extends WorkerHost {
   constructor(
+    @Inject(WINSTON_MODULE_NEST_PROVIDER)
+    private readonly logger: Logger,
     private dataSource: DataSource,
     @InjectConnection() private readonly connection: mongoose.Connection,
     @Inject(CustomersService)
@@ -53,6 +39,65 @@ export class EventsProcessor extends WorkerHost {
     super();
   }
 
+  log(message, method, session, user = 'ANONYMOUS') {
+    this.logger.log(
+      message,
+      JSON.stringify({
+        class: EventsProcessor.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+  debug(message, method, session, user = 'ANONYMOUS') {
+    this.logger.debug(
+      message,
+      JSON.stringify({
+        class: EventsProcessor.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+  warn(message, method, session, user = 'ANONYMOUS') {
+    this.logger.warn(
+      message,
+      JSON.stringify({
+        class: EventsProcessor.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+  error(error, method, session, user = 'ANONYMOUS') {
+    this.logger.error(
+      error.message,
+      error.stack,
+      JSON.stringify({
+        class: EventsProcessor.name,
+        method: method,
+        session: session,
+        cause: error.cause,
+        name: error.name,
+        user: user,
+      })
+    );
+  }
+  verbose(message, method, session, user = 'ANONYMOUS') {
+    this.logger.verbose(
+      message,
+      JSON.stringify({
+        class: EventsProcessor.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+
   async process(job: Job<any, any, string>): Promise<any> {
     let err: any, stepToQueue: Step, branch: number;
     const queryRunner = this.dataSource.createQueryRunner();
@@ -61,17 +106,32 @@ export class EventsProcessor extends WorkerHost {
     const transactionSession = await this.connection.startSession();
     await transactionSession.startTransaction();
     try {
+      this.debug(
+        `${JSON.stringify({ jobData: job.data })}`,
+        this.process.name,
+        job.data.session
+      );
       //Account associated with event
       const account: Account = await queryRunner.manager.findOneBy(Account, {
         id: job.data.accountID,
       });
 
+      this.debug(
+        `${JSON.stringify({ account: account })}`,
+        this.process.name,
+        job.data.session
+      );
       // Multiple journeys can consume the same event, but only one step per journey,
       // so we create an event job for every journey
       const journey: Journey = await queryRunner.manager.findOneBy(Journey, {
         id: job.data.journeyID,
       });
 
+      this.debug(
+        `${JSON.stringify({ journey: journey })}`,
+        this.process.name,
+        job.data.session
+      );
       //Customer associated with event
       const customer: CustomerDocument =
         await this.customersService.findByCorrelationKVPair(
@@ -81,6 +141,12 @@ export class EventsProcessor extends WorkerHost {
           transactionSession
         );
       // All steps in `journey` that might be listening for this event
+
+      this.debug(
+        `${JSON.stringify({ customer })}`,
+        this.process.name,
+        job.data.session
+      );
       const steps = await queryRunner.manager.find(Step, {
         where: {
           type: StepType.WAIT_UNTIL_BRANCH,
@@ -105,7 +171,7 @@ export class EventsProcessor extends WorkerHost {
             steps[stepIndex].metadata.branches[branchIndex].events.length;
             eventIndex++
           ) {
-            // Skip over invalid posthog events
+            // Special posthog handling: Skip over invalid posthog events
             const analyticsEvent: AnalyticsEvent =
               steps[stepIndex].metadata.branches[branchIndex].events[
                 eventIndex
@@ -140,27 +206,54 @@ export class EventsProcessor extends WorkerHost {
               continue event_loop;
             }
 
-            //Skip over custom events that dont match
+            //Skip over events that dont match
             if (
-              job.data.event.source === ProviderTypes.Custom &&
-              analyticsEvent.provider === AnalyticsProviderTypes.LAUDSPEAKER &&
-              !(job.data.event.payload.event === analyticsEvent.event)
+              !(
+                job.data.event.source === analyticsEvent.provider &&
+                job.data.event.event === analyticsEvent.event
+              )
             ) {
               eventEvaluation.push(false);
               continue event_loop;
             }
+            this.warn(
+              `${JSON.stringify({
+                warning: 'Getting ready to loop over conditions',
+                conditions: analyticsEvent.conditions,
+                event: job.data.event,
+              })}`,
+              this.process.name,
+              job.data.session
+            );
             let conditionEvalutation: boolean[] = [];
             condition_loop: for (
               let conditionIndex = 0;
               conditionIndex <
               steps[stepIndex].metadata.branches[branchIndex].events[eventIndex]
-                .length;
+                .conditions.length;
               conditionIndex++
             ) {
+              this.warn(
+                `${JSON.stringify({
+                  warning: 'Checking if we filter by event property',
+                  conditions: analyticsEvent.conditions[conditionIndex].type,
+                })}`,
+                this.process.name,
+                job.data.session
+              );
               if (
                 analyticsEvent.conditions[conditionIndex].type ===
                 FilterByOption.CUSTOMER_KEY
               ) {
+                this.warn(
+                  `${JSON.stringify({
+                    warning: 'Filtering by event property',
+                    conditions: analyticsEvent.conditions[conditionIndex],
+                    event: job.data.event,
+                  })}`,
+                  this.process.name,
+                  job.data.session
+                );
                 const { key, comparisonType, keyType, value } =
                   analyticsEvent.conditions[conditionIndex].propertyCondition;
                 //specialcase: checking for url
@@ -173,11 +266,11 @@ export class EventsProcessor extends WorkerHost {
                     comparisonType
                   )
                     ? this.audiencesHelper.operableCompare(
-                        job.data.event?.event?.page?.url,
+                        job.data.event?.context?.page?.url,
                         comparisonType
                       )
                     : await this.audiencesHelper.conditionalCompare(
-                        job.data.event?.event?.page?.url,
+                        job.data.event?.context?.page?.url,
                         value,
                         comparisonType
                       );
@@ -187,14 +280,21 @@ export class EventsProcessor extends WorkerHost {
                     comparisonType
                   )
                     ? this.audiencesHelper.operableCompare(
-                        job.data.event?.event?.[key],
+                        job.data.event?.payload?.[key],
                         comparisonType
                       )
                     : await this.audiencesHelper.conditionalCompare(
-                        job.data.event?.event?.[key],
+                        job.data.event?.payload?.[key],
                         value,
                         comparisonType
                       );
+                  this.warn(
+                    `${JSON.stringify({
+                      checkMatchResult: matches,
+                    })}`,
+                    this.process.name,
+                    job.data.session
+                  );
                   conditionEvalutation.push(matches);
                 }
               } else if (
@@ -222,6 +322,16 @@ export class EventsProcessor extends WorkerHost {
               steps[stepIndex].metadata.branches[branchIndex].events[eventIndex]
                 .relation === 'or'
             ) {
+              this.warn(
+                `${JSON.stringify({
+                  warning: 'Checking if any event conditions match',
+                  conditions:
+                    steps[stepIndex].metadata.branches[branchIndex].events,
+                  event: job.data.event,
+                })}`,
+                this.process.name,
+                job.data.session
+              );
               if (
                 conditionEvalutation.some((element) => {
                   return element === true;
@@ -232,6 +342,16 @@ export class EventsProcessor extends WorkerHost {
             }
             // Otherwise,check if all of the events match
             else {
+              this.warn(
+                `${JSON.stringify({
+                  warning: 'Checking if all event conditions match',
+                  conditions:
+                    steps[stepIndex].metadata.branches[branchIndex].events,
+                  event: job.data.event,
+                })}`,
+                this.process.name,
+                job.data.session
+              );
               if (
                 conditionEvalutation.every((element) => {
                   return element === true;
@@ -245,6 +365,15 @@ export class EventsProcessor extends WorkerHost {
           if (
             steps[stepIndex].metadata.branches[branchIndex].relation === 'or'
           ) {
+            this.warn(
+              `${JSON.stringify({
+                warning: 'Checking if any branch events match',
+                branches: steps[stepIndex].metadata.branches,
+                event: job.data.event,
+              })}`,
+              this.process.name,
+              job.data.session
+            );
             if (
               eventEvaluation.some((element) => {
                 return element === true;
@@ -257,6 +386,15 @@ export class EventsProcessor extends WorkerHost {
           }
           // Otherwise,check if all of the events match
           else {
+            this.warn(
+              `${JSON.stringify({
+                warning: 'Checking if all branch events match',
+                branches: steps[stepIndex].metadata.branches,
+                event: job.data.event,
+              })}`,
+              this.process.name,
+              job.data.session
+            );
             if (
               eventEvaluation.every((element) => {
                 return element === true;
@@ -278,18 +416,35 @@ export class EventsProcessor extends WorkerHost {
             found = true;
         }
         if (!found) throw new Error('Customer has not yet arrived in step.');
-        else
+        else {
+          this.debug(
+            `${JSON.stringify({ stepToQueue, event: job.data.event })}`,
+            this.process.name,
+            job.data.session
+          );
           await this.transitionQueue.add(stepToQueue.type, {
-            step: stepToQueue.id,
+            step: stepToQueue,
             branch: branch,
             customer: customer.id,
             session: job.data.session,
           });
-      } else return;
+        }
+      } else {
+        this.warn(
+          `${JSON.stringify({
+            warning: 'No step matches event',
+            event: job.data.event,
+          })}`,
+          this.process.name,
+          job.data.session
+        );
+        return;
+      }
     } catch (e) {
       await transactionSession.abortTransaction();
       await queryRunner.rollbackTransaction();
-      err = err;
+      this.error(e, this.process.name, job.data.session);
+      err = e;
     } finally {
       await transactionSession.endSession();
       await queryRunner.release();

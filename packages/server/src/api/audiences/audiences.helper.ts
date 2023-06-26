@@ -1,17 +1,84 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { Inject } from '@nestjs/common/decorators';
 import { forwardRef } from '@nestjs/common/utils';
 import { Account } from '../accounts/entities/accounts.entity';
 import { CustomerDocument } from '../customers/schemas/customer.schema';
 import { SegmentsService } from '../segments/segments.service';
 import { InclusionCriteria } from '../segments/types/segment.type';
+import {
+  AttributeBranch,
+  AttributeGroup,
+  CustomerAttribute,
+} from '../steps/types/step.interface';
+import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 
 @Injectable()
 export class AudiencesHelper {
   constructor(
+    @Inject(WINSTON_MODULE_NEST_PROVIDER)
+    private readonly logger: Logger,
     @Inject(forwardRef(() => SegmentsService))
     private segmentsService: SegmentsService
   ) {}
+
+  log(message, method, session, user = 'ANONYMOUS') {
+    this.logger.log(
+      message,
+      JSON.stringify({
+        class: AudiencesHelper.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+  debug(message, method, session, user = 'ANONYMOUS') {
+    this.logger.debug(
+      message,
+      JSON.stringify({
+        class: AudiencesHelper.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+  warn(message, method, session, user = 'ANONYMOUS') {
+    this.logger.warn(
+      message,
+      JSON.stringify({
+        class: AudiencesHelper.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+  error(error, method, session, user = 'ANONYMOUS') {
+    this.logger.error(
+      error.message,
+      error.stack,
+      JSON.stringify({
+        class: AudiencesHelper.name,
+        method: method,
+        session: session,
+        cause: error.cause,
+        name: error.name,
+        user: user,
+      })
+    );
+  }
+  verbose(message, method, session, user = 'ANONYMOUS') {
+    this.logger.verbose(
+      message,
+      JSON.stringify({
+        class: AudiencesHelper.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
 
   public async conditionalCompare(
     custAttr: any,
@@ -20,25 +87,25 @@ export class AudiencesHelper {
     segmentData?: { account?: Account }
   ) {
     switch (operator) {
-      case 'isEqual':
+      case 'is equal to':
         return custAttr == checkVal;
-      case 'isNotEqual':
+      case 'is not equal to':
         return custAttr != checkVal;
       case 'contains':
         return (custAttr as any[])?.includes(checkVal) || false;
-      case 'doesNotContain':
+      case 'does not contain':
         return (custAttr && !(custAttr as any[]).includes(checkVal)) || false;
       case 'isBoolEqual':
         return custAttr === (checkVal === 'true');
       case 'isBoolNotEqual':
         return custAttr !== (checkVal === 'true');
-      case 'isTimestampBefore':
+      case 'before':
         return new Date(custAttr) < new Date(checkVal);
-      case 'isTimestampAfter':
+      case 'after':
         return new Date(custAttr) > new Date(checkVal);
-      case 'isGreaterThan':
+      case 'is greater than':
         return custAttr > Number(checkVal);
-      case 'isLessThan':
+      case 'is less than':
         return custAttr < Number(checkVal);
       case 'memberof':
         if (!segmentData?.account) return false;
@@ -89,76 +156,107 @@ export class AudiencesHelper {
     return res1 || res2;
   }
 
+  /**
+   * Check a customer document against an inclusion criteria.
+   *
+   * @param cust Customer Document to check
+   * @param inclusionCriteria Frontend inclusion criteria object
+   * @param account Owner of customer
+   * @returns boolean
+   */
   public async checkInclusion(
     cust: CustomerDocument,
-    inclusionCriteria: InclusionCriteria,
+    inclusionCriteria: any,
+    session: string,
     account?: Account
-  ) {
+  ): Promise<boolean> {
     if (cust.isFreezed) return false;
 
     if (
       !inclusionCriteria ||
-      !inclusionCriteria.conditions ||
-      !inclusionCriteria.conditions.length
+      inclusionCriteria.type === 'allCustomers' ||
+      !inclusionCriteria.query ||
+      !inclusionCriteria.query.statements ||
+      !inclusionCriteria.query.statements.length
     )
       return true;
-    switch (inclusionCriteria.conditionalType) {
-      case 'and':
+
+    this.debug(
+      `${JSON.stringify({ cust, inclusionCriteria })}`,
+      this.checkInclusion.name,
+      session
+    );
+    const ag: AttributeGroup = new AttributeGroup();
+    ag.attributes = [];
+    for (
+      let attributeIndex = 0;
+      attributeIndex < inclusionCriteria.query.statements.length;
+      attributeIndex++
+    ) {
+      const attribute = new CustomerAttribute();
+      attribute.comparisonType =
+        inclusionCriteria.query.statements[attributeIndex].comparisonType;
+      attribute.key = inclusionCriteria.query.statements[attributeIndex].key;
+      attribute.keyType =
+        inclusionCriteria.query.statements[attributeIndex].valueType;
+      attribute.value =
+        inclusionCriteria.query.statements[attributeIndex].value;
+      ag.attributes.push(attribute);
+    }
+    ag.relation = inclusionCriteria.query.type;
+    this.debug(
+      `${JSON.stringify({ attributeGroup: ag })}`,
+      this.checkInclusion.name,
+      session
+    );
+
+    switch (ag.relation) {
+      case 'all':
         for (
-          let index = 0;
-          index < inclusionCriteria.conditions.length;
-          index++
+          let attributesIndex = 0;
+          attributesIndex < ag.attributes.length;
+          attributesIndex++
         ) {
-          const custAttr = cust[inclusionCriteria.conditions[index].attribute];
-          if (inclusionCriteria.conditions[index].condition) {
+          const attr: any = ag.attributes[attributesIndex];
+          if (attr.value) {
             if (
               !(await this.conditionalCompare(
-                custAttr,
-                inclusionCriteria.conditions[index].value,
-                inclusionCriteria.conditions[index].condition,
+                cust[attr.key],
+                attr.value,
+                attr.comparisonType,
                 { account }
               ))
             ) {
               return false;
             }
           } else {
-            if (
-              !this.operableCompare(
-                custAttr,
-                inclusionCriteria.conditions[index].value
-              )
-            )
+            if (!this.operableCompare(cust[attr.key], attr.comparisonType))
               return false;
           }
         }
         return true;
-      case 'or':
+      case 'any':
         // eslint-disable-next-line no-case-declarations
         let found = false;
         for (
-          let index = 0;
-          index < inclusionCriteria.conditions.length;
-          index++
+          let attributesIndex = 0;
+          attributesIndex < ag.attributes.length;
+          attributesIndex++
         ) {
-          const custAttr = cust[inclusionCriteria.conditions[index].attribute];
-          if (inclusionCriteria.conditions[index].condition) {
+          const attr: any = ag.attributes[attributesIndex];
+          if (attr.value) {
             if (
               await this.conditionalCompare(
-                custAttr,
-                inclusionCriteria.conditions[index].value,
-                inclusionCriteria.conditions[index].condition,
+                cust[attr.key],
+                attr.value,
+                attr.comparisonType,
                 { account }
               )
             ) {
               found = true;
             }
           } else {
-            if (
-              this.operableCompare(
-                custAttr,
-                inclusionCriteria.conditions[index].value
-              )
-            )
+            if (this.operableCompare(cust[attr.key], attr.comparisonType))
               found = true;
           }
         }

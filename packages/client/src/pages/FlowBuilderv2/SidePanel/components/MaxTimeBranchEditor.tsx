@@ -19,7 +19,8 @@ const MaxTimeBranchEditor: FC<MaxTimeBranchEditorProps> = ({
   return (
     <div className="flex flex-col gap-[10px]">
       <div className="font-inter font-normal text-[12px] leading-[20px] text-[#4B5563]">
-        Description Description Description Des
+        Set a maximum amount of time or a time window before moving users to
+        another step
       </div>
       <div>
         <select

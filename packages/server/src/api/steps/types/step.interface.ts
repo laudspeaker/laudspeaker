@@ -1,10 +1,10 @@
 import { Temporal } from '@js-temporal/polyfill';
 
 export enum AnalyticsProviderTypes {
-  POSTHOG,
-  AMPLITUDE,
-  MIXPANEL,
-  LAUDSPEAKER,
+  POSTHOG = 'posthog',
+  AMPLITUDE = 'amplitude',
+  MIXPANEL = 'mixpanel',
+  LAUDSPEAKER = 'custom',
 }
 
 export enum StepType {
@@ -31,8 +31,8 @@ export enum ElementConditionFilter {
 }
 
 export enum FilterByOption {
-  CUSTOMER_KEY = 'customer key',
-  ELEMENTS = 'elements',
+  CUSTOMER_KEY = 'property',
+  ELEMENTS = 'element',
 }
 
 export class PropertyCondition {

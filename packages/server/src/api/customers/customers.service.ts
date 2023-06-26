@@ -1,6 +1,7 @@
 /* eslint-disable no-case-declarations */
 import mongoose, {
   ClientSession,
+  isObjectIdOrHexString,
   isValidObjectId,
   Model,
   Types,
@@ -237,7 +238,8 @@ export class CustomersService {
           if (
             await this.audiencesHelper.checkInclusion(
               ret,
-              workflow.filter.inclusionCriteria
+              workflow.filter.inclusionCriteria,
+              session
             )
           ) {
             const audiences = await transactionManager.findBy(Audience, {
@@ -273,7 +275,8 @@ export class CustomersService {
           if (
             await this.audiencesHelper.checkInclusion(
               ret,
-              workflow.filter.inclusionCriteria
+              workflow.filter.inclusionCriteria,
+              session
             )
           ) {
             const audiences = await transactionManager.findBy(Audience, {
@@ -668,12 +671,12 @@ export class CustomersService {
       }).filter(([_, v]) => v != null)
     );
 
-    await this.CustomerModel.replaceOne(
-      { id: customer.id },
+    const replacementRes = await this.CustomerModel.replaceOne(
+      { _id: id },
       newCustomer
     ).exec();
 
-    return newCustomerData;
+    return replacementRes;
   }
 
   async transactionalUpdate(
@@ -777,7 +780,7 @@ export class CustomersService {
         }).filter(([_, v]) => v != null)
       );
 
-      await this.CustomerModel.replaceOne({ id: customer.id }, newCustomer)
+      await this.CustomerModel.replaceOne({ _id: id }, newCustomer)
         .session(transactionSession)
         .exec();
 
@@ -924,6 +927,9 @@ export class CustomersService {
         _id: Types.ObjectId;
       }
   > {
+    if (!isValidObjectId(customerId))
+      throw new BadRequestException('Invalid object id');
+
     const found = await this.CustomerModel.findById(customerId).exec();
     if (found && found?.ownerId == (<Account>account).id) return found;
     return;
@@ -1099,7 +1105,8 @@ export class CustomersService {
   async findByInclusionCriteria(
     account: Account,
     criteria: any,
-    transactionSession: ClientSession
+    transactionSession: ClientSession,
+    session: string
   ): Promise<CustomerDocument[]> {
     let customers: CustomerDocument[] = [];
     const ret: CustomerDocument[] = [];
@@ -1113,9 +1120,19 @@ export class CustomersService {
       return Promise.reject(err);
     }
 
+    this.debug(
+      `${JSON.stringify({ customers })}`,
+      this.findByInclusionCriteria.name,
+      session
+    );
     for (const customer of customers) {
       if (
-        await this.audiencesHelper.checkInclusion(customer, criteria, account)
+        await this.audiencesHelper.checkInclusion(
+          customer,
+          criteria,
+          session,
+          account
+        )
       )
         ret.push(customer);
     }
@@ -1126,11 +1143,13 @@ export class CustomersService {
   checkInclusion(
     customer: CustomerDocument,
     inclusionCriteria: any,
+    session: string,
     account?: Account
   ) {
     return this.audiencesHelper.checkInclusion(
       customer,
       inclusionCriteria,
+      session,
       account
     );
   }
@@ -1481,6 +1500,7 @@ export class CustomersService {
         !(await this.audiencesHelper.checkInclusion(
           customer,
           inclusionCriteria,
+          session,
           account
         ))
       ) {

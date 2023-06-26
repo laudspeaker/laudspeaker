@@ -38,7 +38,7 @@ const flowBuilderDrawerFixtures: {
   }[];
 }[] = [
   {
-    groupName: "Message & Step",
+    groupName: "Messages & Step",
     children: [
       {
         id: DrawerAction.EMAIL,
@@ -74,6 +74,7 @@ const flowBuilderDrawerFixtures: {
         id: DrawerAction.JUMP_TO,
         icon: JumpToIcon(),
         text: "Jump To",
+        disabled: true,
       },
       {
         id: DrawerAction.EXIT,

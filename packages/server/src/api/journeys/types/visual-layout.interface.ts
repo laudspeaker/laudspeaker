@@ -39,8 +39,8 @@ export enum EventConditionElementsFilter {
 }
 
 export enum FilterByOption {
-  CUSTOMER_KEY = 'customer key',
-  ELEMENTS = 'elements',
+  CUSTOMER_KEY = 'property',
+  ELEMENTS = 'element',
 }
 
 export interface EventCondition {

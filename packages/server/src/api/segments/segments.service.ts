@@ -412,7 +412,8 @@ export class SegmentsService {
         if (
           await this.audiencesHelper.checkInclusion(
             customer,
-            segment.inclusionCriteria
+            segment.inclusionCriteria,
+            session
           )
         )
           await this.assignCustomer(account, segment.id, customer.id, session);

@@ -133,7 +133,7 @@ export class EventsController {
   async customPayload(
     @Req() { user }: Request,
     @Body() body: EventDto
-  ): Promise<WorkflowTick[] | HttpException> {
+  ): Promise<void | HttpException> {
     const session = randomUUID();
     return this.eventsService.customPayload(<Account>user, body, session);
   }

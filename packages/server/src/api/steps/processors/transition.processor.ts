@@ -180,7 +180,7 @@ export class TransitionProcessor extends WorkerHost {
           await this.handleWaitUntil(
             job.data.step.id,
             job.data.session,
-            job.data.customerID,
+            job.data.customer,
             job.data.branch,
             queryRunner,
             transactionSession
@@ -290,7 +290,7 @@ export class TransitionProcessor extends WorkerHost {
               name: TemplateType.EMAIL,
               accountID: currentStep.owner.id,
               cc: template.cc,
-              customerId: customerID,
+              customerID: customerID,
               domain: sendingDomain,
               email: sendingEmail,
               stepID: currentStep.id,
@@ -307,7 +307,7 @@ export class TransitionProcessor extends WorkerHost {
                 filteredTags
               ),
               tags: filteredTags,
-              templateId: template.id,
+              templateID: template.id,
               eventProvider: currentStep.owner.emailProvider,
             });
             this.debug(
@@ -694,11 +694,6 @@ export class TransitionProcessor extends WorkerHost {
         );
       } else if (waitUntilStep.metadata.timeBranch.window) {
       }
-      this.debug(
-        `${JSON.stringify({ waitUntilStep: waitUntilStep })}`,
-        this.handleWaitUntil.name,
-        session
-      );
       await queryRunner.manager.save(waitUntilStep);
       const newNext: Step = await queryRunner.manager.save(nextStep);
       this.debug(
@@ -723,7 +718,58 @@ export class TransitionProcessor extends WorkerHost {
           return branchItem.index === branch;
         })[0].destination,
       });
-      waitUntilStep.customers = waitUntilStep.customers.filter((item) => {});
+      for (
+        let customersIndex = 0;
+        customersIndex < waitUntilStep.customers.length;
+        customersIndex++
+      ) {
+        const customerTimestampTuple = JSON.parse(
+          waitUntilStep.customers[customersIndex]
+        );
+        if (customerTimestampTuple.customerID === customerID) {
+          forDeletion.push(waitUntilStep.customers[customersIndex]);
+          nextStep.customers.push(
+            JSON.stringify({
+              customerID: customerTimestampTuple.customerID,
+              timestamp: Temporal.Now.instant().toString(),
+            })
+          );
+        }
+      }
+      this.debug(
+        `${JSON.stringify({
+          waitUntilStep: waitUntilStep,
+          forDeletion: forDeletion,
+        })}`,
+        this.handleWaitUntil.name,
+        session
+      );
+      waitUntilStep.customers = waitUntilStep.customers.filter(
+        (item) => !forDeletion.includes(item)
+      );
+      this.debug(
+        `${JSON.stringify({ waitUntilStep: waitUntilStep })}`,
+        this.handleWaitUntil.name,
+        session
+      );
+      await queryRunner.manager.save(waitUntilStep);
+      const newNext: Step = await queryRunner.manager.save(nextStep);
+      this.debug(
+        `${JSON.stringify({ newNext: newNext })}`,
+        this.handleWaitUntil.name,
+        session
+      );
+      if (
+        forDeletion.length > 0 &&
+        newNext.type !== StepType.TIME_DELAY &&
+        newNext.type !== StepType.TIME_WINDOW &&
+        newNext.type !== StepType.WAIT_UNTIL_BRANCH
+      ) {
+        this.transitionQueue.add(newNext.type, {
+          step: newNext,
+          session: session,
+        });
+      }
     }
   }
 
