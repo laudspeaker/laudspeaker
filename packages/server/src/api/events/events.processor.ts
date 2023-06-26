@@ -174,32 +174,32 @@ export class EventsProcessor extends WorkerHost {
             // Special posthog handling: Skip over invalid posthog events
             const analyticsEvent: AnalyticsEvent =
               steps[stepIndex].metadata.branches[branchIndex].events[
-                eventIndex
+              eventIndex
               ];
             if (
               job.data.event.source === AnalyticsProviderTypes.POSTHOG &&
               analyticsEvent.provider === AnalyticsProviderTypes.POSTHOG &&
               !(
                 (job.data.event.payload.type === PosthogTriggerParams.Track &&
-                  job.data.event.payload.event === 'change' &&
+                  job.data.event.event === 'change' &&
                   analyticsEvent.event === PosthogTriggerParams.Typed) ||
                 (job.data.event.payload.type === PosthogTriggerParams.Track &&
-                  job.data.event.payload.event === 'click' &&
+                  job.data.event.event === 'click' &&
                   analyticsEvent.event === PosthogTriggerParams.Autocapture) ||
                 (job.data.event.payload.type === PosthogTriggerParams.Track &&
-                  job.data.event.payload.event === 'submit' &&
+                  job.data.event.event === 'submit' &&
                   analyticsEvent.event === PosthogTriggerParams.Submit) ||
                 (job.data.event.payload.type === PosthogTriggerParams.Track &&
-                  job.data.event.payload.event === '$pageleave' &&
+                  job.data.event.event === '$pageleave' &&
                   analyticsEvent.event === PosthogTriggerParams.Pageleave) ||
                 (job.data.event.payload.type === PosthogTriggerParams.Track &&
-                  job.data.event.payload.event === '$rageclick' &&
+                  job.data.event.event === '$rageclick' &&
                   analyticsEvent.event === PosthogTriggerParams.Rageclick) ||
                 (job.data.event.payload.type === PosthogTriggerParams.Page &&
-                  job.data.event.payload.event === '$pageview' &&
+                  job.data.event.event === '$pageview' &&
                   analyticsEvent.event === PosthogTriggerParams.Pageview) ||
                 (job.data.event.payload.type === PosthogTriggerParams.Track &&
-                  job.data.event.payload.event === analyticsEvent.event)
+                  job.data.event.event === analyticsEvent.event)
               )
             ) {
               eventEvaluation.push(false);
@@ -266,28 +266,28 @@ export class EventsProcessor extends WorkerHost {
                     comparisonType
                   )
                     ? this.audiencesHelper.operableCompare(
-                        job.data.event?.context?.page?.url,
-                        comparisonType
-                      )
+                      job.data.event?.context?.page?.url,
+                      comparisonType
+                    )
                     : await this.audiencesHelper.conditionalCompare(
-                        job.data.event?.context?.page?.url,
-                        value,
-                        comparisonType
-                      );
+                      job.data.event?.context?.page?.url,
+                      value,
+                      comparisonType
+                    );
                   conditionEvalutation.push(matches);
                 } else {
                   const matches = ['exists', 'doesNotExist'].includes(
                     comparisonType
                   )
                     ? this.audiencesHelper.operableCompare(
-                        job.data.event?.payload?.[key],
-                        comparisonType
-                      )
+                      job.data.event?.payload?.[key],
+                      comparisonType
+                    )
                     : await this.audiencesHelper.conditionalCompare(
-                        job.data.event?.payload?.[key],
-                        value,
-                        comparisonType
-                      );
+                      job.data.event?.payload?.[key],
+                      value,
+                      comparisonType
+                    );
                   this.warn(
                     `${JSON.stringify({
                       checkMatchResult: matches,
