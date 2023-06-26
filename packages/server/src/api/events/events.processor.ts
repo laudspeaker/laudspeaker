@@ -207,7 +207,8 @@ export class EventsProcessor extends WorkerHost {
             }
 
             //Skip over events that dont match
-            if (
+            if (job.data.event.source !== AnalyticsProviderTypes.POSTHOG &&
+              analyticsEvent.provider !== AnalyticsProviderTypes.POSTHOG &&
               !(
                 job.data.event.source === analyticsEvent.provider &&
                 job.data.event.event === analyticsEvent.event
@@ -266,11 +267,11 @@ export class EventsProcessor extends WorkerHost {
                     comparisonType
                   )
                     ? this.audiencesHelper.operableCompare(
-                      job.data.event?.context?.page?.url,
+                      job.data.event?.payload?.context?.page?.url,
                       comparisonType
                     )
                     : await this.audiencesHelper.conditionalCompare(
-                      job.data.event?.context?.page?.url,
+                      job.data.event?.payload?.context?.page?.url,
                       value,
                       comparisonType
                     );
