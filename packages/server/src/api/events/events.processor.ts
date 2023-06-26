@@ -2,8 +2,6 @@ import { InjectQueue, Processor, WorkerHost } from '@nestjs/bullmq';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Job, Queue } from 'bullmq';
 import { Account } from '../accounts/entities/accounts.entity';
-import { EventDto } from './dto/event.dto';
-import { PosthogBatchEventDto } from './dto/posthog-batch-event.dto';
 import { CustomerDocument } from '../customers/schemas/customer.schema';
 import { CustomersService } from '../customers/customers.service';
 import { DataSource } from 'typeorm';
@@ -24,21 +22,6 @@ import {
 } from '../workflows/entities/workflow.entity';
 import { AudiencesHelper } from '../audiences/audiences.helper';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
-
-export interface StartDto {
-  account: Account;
-  workflowID: string;
-}
-
-export interface CustomEventDto {
-  apiKey: string;
-  eventDto: EventDto;
-}
-
-export interface PosthogEventDto {
-  apiKey: string;
-  eventDto: PosthogBatchEventDto;
-}
 
 @Injectable()
 @Processor('events')
@@ -188,7 +171,7 @@ export class EventsProcessor extends WorkerHost {
             steps[stepIndex].metadata.branches[branchIndex].events.length;
             eventIndex++
           ) {
-            // Skip over invalid posthog events
+            // Special posthog handling: Skip over invalid posthog events
             const analyticsEvent: AnalyticsEvent =
               steps[stepIndex].metadata.branches[branchIndex].events[
                 eventIndex
@@ -223,27 +206,54 @@ export class EventsProcessor extends WorkerHost {
               continue event_loop;
             }
 
-            //Skip over custom events that dont match
+            //Skip over events that dont match
             if (
-              job.data.event.source === ProviderTypes.Custom &&
-              analyticsEvent.provider === AnalyticsProviderTypes.LAUDSPEAKER &&
-              !(job.data.event.payload.event === analyticsEvent.event)
+              !(
+                job.data.event.source === analyticsEvent.provider &&
+                job.data.event.event === analyticsEvent.event
+              )
             ) {
               eventEvaluation.push(false);
               continue event_loop;
             }
+            this.warn(
+              `${JSON.stringify({
+                warning: 'Getting ready to loop over conditions',
+                conditions: analyticsEvent.conditions,
+                event: job.data.event,
+              })}`,
+              this.process.name,
+              job.data.session
+            );
             let conditionEvalutation: boolean[] = [];
             condition_loop: for (
               let conditionIndex = 0;
               conditionIndex <
               steps[stepIndex].metadata.branches[branchIndex].events[eventIndex]
-                .length;
+                .conditions.length;
               conditionIndex++
             ) {
+              this.warn(
+                `${JSON.stringify({
+                  warning: 'Checking if we filter by event property',
+                  conditions: analyticsEvent.conditions[conditionIndex].type,
+                })}`,
+                this.process.name,
+                job.data.session
+              );
               if (
                 analyticsEvent.conditions[conditionIndex].type ===
                 FilterByOption.CUSTOMER_KEY
               ) {
+                this.warn(
+                  `${JSON.stringify({
+                    warning: 'Filtering by event property',
+                    conditions: analyticsEvent.conditions[conditionIndex],
+                    event: job.data.event,
+                  })}`,
+                  this.process.name,
+                  job.data.session
+                );
                 const { key, comparisonType, keyType, value } =
                   analyticsEvent.conditions[conditionIndex].propertyCondition;
                 //specialcase: checking for url
@@ -256,11 +266,11 @@ export class EventsProcessor extends WorkerHost {
                     comparisonType
                   )
                     ? this.audiencesHelper.operableCompare(
-                        job.data.event?.event?.page?.url,
+                        job.data.event?.context?.page?.url,
                         comparisonType
                       )
                     : await this.audiencesHelper.conditionalCompare(
-                        job.data.event?.event?.page?.url,
+                        job.data.event?.context?.page?.url,
                         value,
                         comparisonType
                       );
@@ -270,14 +280,21 @@ export class EventsProcessor extends WorkerHost {
                     comparisonType
                   )
                     ? this.audiencesHelper.operableCompare(
-                        job.data.event?.event?.[key],
+                        job.data.event?.payload?.[key],
                         comparisonType
                       )
                     : await this.audiencesHelper.conditionalCompare(
-                        job.data.event?.event?.[key],
+                        job.data.event?.payload?.[key],
                         value,
                         comparisonType
                       );
+                  this.warn(
+                    `${JSON.stringify({
+                      checkMatchResult: matches,
+                    })}`,
+                    this.process.name,
+                    job.data.session
+                  );
                   conditionEvalutation.push(matches);
                 }
               } else if (
@@ -305,6 +322,16 @@ export class EventsProcessor extends WorkerHost {
               steps[stepIndex].metadata.branches[branchIndex].events[eventIndex]
                 .relation === 'or'
             ) {
+              this.warn(
+                `${JSON.stringify({
+                  warning: 'Checking if any event conditions match',
+                  conditions:
+                    steps[stepIndex].metadata.branches[branchIndex].events,
+                  event: job.data.event,
+                })}`,
+                this.process.name,
+                job.data.session
+              );
               if (
                 conditionEvalutation.some((element) => {
                   return element === true;
@@ -315,6 +342,16 @@ export class EventsProcessor extends WorkerHost {
             }
             // Otherwise,check if all of the events match
             else {
+              this.warn(
+                `${JSON.stringify({
+                  warning: 'Checking if all event conditions match',
+                  conditions:
+                    steps[stepIndex].metadata.branches[branchIndex].events,
+                  event: job.data.event,
+                })}`,
+                this.process.name,
+                job.data.session
+              );
               if (
                 conditionEvalutation.every((element) => {
                   return element === true;
@@ -328,6 +365,15 @@ export class EventsProcessor extends WorkerHost {
           if (
             steps[stepIndex].metadata.branches[branchIndex].relation === 'or'
           ) {
+            this.warn(
+              `${JSON.stringify({
+                warning: 'Checking if any branch events match',
+                branches: steps[stepIndex].metadata.branches,
+                event: job.data.event,
+              })}`,
+              this.process.name,
+              job.data.session
+            );
             if (
               eventEvaluation.some((element) => {
                 return element === true;
@@ -340,6 +386,15 @@ export class EventsProcessor extends WorkerHost {
           }
           // Otherwise,check if all of the events match
           else {
+            this.warn(
+              `${JSON.stringify({
+                warning: 'Checking if all branch events match',
+                branches: steps[stepIndex].metadata.branches,
+                event: job.data.event,
+              })}`,
+              this.process.name,
+              job.data.session
+            );
             if (
               eventEvaluation.every((element) => {
                 return element === true;
@@ -361,18 +416,35 @@ export class EventsProcessor extends WorkerHost {
             found = true;
         }
         if (!found) throw new Error('Customer has not yet arrived in step.');
-        else
+        else {
+          this.debug(
+            `${JSON.stringify({ stepToQueue, event: job.data.event })}`,
+            this.process.name,
+            job.data.session
+          );
           await this.transitionQueue.add(stepToQueue.type, {
-            step: stepToQueue.id,
+            step: stepToQueue,
             branch: branch,
             customer: customer.id,
             session: job.data.session,
           });
-      } else return;
+        }
+      } else {
+        this.warn(
+          `${JSON.stringify({
+            warning: 'No step matches event',
+            event: job.data.event,
+          })}`,
+          this.process.name,
+          job.data.session
+        );
+        return;
+      }
     } catch (e) {
       await transactionSession.abortTransaction();
       await queryRunner.rollbackTransaction();
-      err = err;
+      this.error(e, this.process.name, job.data.session);
+      err = e;
     } finally {
       await transactionSession.endSession();
       await queryRunner.release();

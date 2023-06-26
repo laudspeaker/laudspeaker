@@ -240,15 +240,18 @@ export class StepsService {
     queryRunner: QueryRunner
   ): Promise<Step[]> {
     try {
-      return await queryRunner.manager.findBy(Step, {
-        owner: account ? { id: account.id } : undefined,
-        type: type,
-        journey: {
-          isActive: true,
-          isDeleted: false,
-          isPaused: false,
-          isStopped: false,
+      return await queryRunner.manager.find(Step, {
+        where: {
+          owner: account ? { id: account.id } : undefined,
+          type: type,
+          journey: {
+            isActive: true,
+            isDeleted: false,
+            isPaused: false,
+            isStopped: false,
+          },
         },
+        lock: { mode: 'pessimistic_write' },
       });
     } catch (e) {
       this.error(e, this.findAllByType.name, session, account.id);

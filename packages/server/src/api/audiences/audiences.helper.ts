@@ -87,25 +87,25 @@ export class AudiencesHelper {
     segmentData?: { account?: Account }
   ) {
     switch (operator) {
-      case 'isEqual':
+      case 'is equal to':
         return custAttr == checkVal;
-      case 'isNotEqual':
+      case 'is not equal to':
         return custAttr != checkVal;
       case 'contains':
         return (custAttr as any[])?.includes(checkVal) || false;
-      case 'doesNotContain':
+      case 'does not contain':
         return (custAttr && !(custAttr as any[]).includes(checkVal)) || false;
       case 'isBoolEqual':
         return custAttr === (checkVal === 'true');
       case 'isBoolNotEqual':
         return custAttr !== (checkVal === 'true');
-      case 'isTimestampBefore':
+      case 'before':
         return new Date(custAttr) < new Date(checkVal);
-      case 'isTimestampAfter':
+      case 'after':
         return new Date(custAttr) > new Date(checkVal);
-      case 'isGreaterThan':
+      case 'is greater than':
         return custAttr > Number(checkVal);
-      case 'isLessThan':
+      case 'is less than':
         return custAttr < Number(checkVal);
       case 'memberof':
         if (!segmentData?.account) return false;

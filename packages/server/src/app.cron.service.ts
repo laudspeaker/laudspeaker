@@ -409,7 +409,10 @@ export class CronService {
       );
       for (let i = 0; i < steps.length; i++) {
         let branch;
-        if (steps[i].type === StepType.WAIT_UNTIL_BRANCH) branch = -1;
+        if (steps[i].type === StepType.WAIT_UNTIL_BRANCH) {
+          if (!steps[i].metadata.timeBranch) continue;
+          branch = -1;
+        }
         if (steps[i].customers.length > 0)
           this.transitionQueue.add(steps[i].type, {
             step: steps[i],
