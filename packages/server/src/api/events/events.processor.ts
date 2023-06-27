@@ -152,8 +152,14 @@ export class EventsProcessor extends WorkerHost {
           type: StepType.WAIT_UNTIL_BRANCH,
           journey: { id: journey.id },
         },
-        relations: ['owner'],
+        relations: ['owner', 'journey'],
       });
+
+      this.debug(
+        `${JSON.stringify({ job: job.data, steps: steps })}`,
+        this.process.name,
+        job.data.session
+      );
 
       step_loop: for (
         let stepIndex = 0;

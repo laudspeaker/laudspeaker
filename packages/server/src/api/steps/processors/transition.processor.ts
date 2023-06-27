@@ -326,8 +326,7 @@ export class TransitionProcessor extends WorkerHost {
               session
             );
             await this.webhooksService.insertClickHouseMessages(ret);
-            if (owner.emailProvider === 'free3')
-              await owner.save();
+            if (owner.emailProvider === 'free3') await owner.save();
             break;
           case TemplateType.FIREBASE:
             await this.webhooksService.insertClickHouseMessages(
@@ -823,7 +822,7 @@ export class TransitionProcessor extends WorkerHost {
     session: string,
     queryRunner: QueryRunner,
     transactionSession: mongoose.mongo.ClientSession
-  ) { }
+  ) {}
 
   /**
    *
@@ -838,11 +837,11 @@ export class TransitionProcessor extends WorkerHost {
     session: string,
     queryRunner: QueryRunner,
     transactionSession: mongoose.mongo.ClientSession
-  ) { }
+  ) {}
 
   // TODO
-  async handleABTest(job: Job<any, any, string>) { }
-  async handleRandomCohortBranch(job: Job<any, any, string>) { }
+  async handleABTest(job: Job<any, any, string>) {}
+  async handleRandomCohortBranch(job: Job<any, any, string>) {}
 
   // @OnWorkerEvent('active')
   // onActive(job: Job<any, any, any>, prev: string) {
