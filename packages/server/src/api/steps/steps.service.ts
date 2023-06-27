@@ -326,7 +326,7 @@ export class StepsService {
         owner: { id: account.id },
         journey: { id: id },
       },
-      relations:['owner']
+      relations: ['owner'],
     });
   }
 

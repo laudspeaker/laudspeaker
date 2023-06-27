@@ -1,5 +1,5 @@
 import { JourneyStatus } from "components/TableTemplate/TableTemplate";
-import Button, { ButtonType } from "pages/FlowBuilderv2/Elements/Button";
+import Button, { ButtonType } from "components/Elements/Buttonv2/Button";
 import React, { FC, useState } from "react";
 import ApiService from "services/api.service";
 import { useAppSelector } from "store/hooks";

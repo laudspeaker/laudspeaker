@@ -1,4 +1,4 @@
-import Button, { ButtonType } from "pages/FlowBuilderv2/Elements/Button";
+import Button, { ButtonType } from "components/Elements/Buttonv2/Button";
 import FlowBuilderAutoComplete from "pages/FlowBuilderv2/Elements/FlowBuilderAutoComplete";
 import FlowBuilderDynamicInput from "pages/FlowBuilderv2/Elements/FlowBuilderDynamicInput";
 import Select from "pages/FlowBuilderv2/Elements/Select";

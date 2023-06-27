@@ -1,4 +1,4 @@
-import Button, { ButtonType } from "pages/FlowBuilderv2/Elements/Button";
+import Button, { ButtonType } from "components/Elements/Buttonv2/Button";
 import FlowBuilderModal from "pages/FlowBuilderv2/Elements/FlowBuilderModal";
 import React, { FC } from "react";
 import ApiService from "services/api.service";

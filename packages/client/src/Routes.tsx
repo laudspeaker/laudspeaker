@@ -46,6 +46,7 @@ import FlowBuilderv2 from "pages/FlowBuilderv2";
 import FlowViewerv2 from "pages/FlowViewerv2";
 import Verificationv2 from "pages/Verificationv2";
 import { toast } from "react-toastify";
+import JourneyTablev2 from "pages/JourneyTablev2";
 
 interface IProtected {
   children: ReactElement;
@@ -245,7 +246,7 @@ const RouteComponent: React.FC = () => {
                 <DrawerLayout
                   crumbs={[{ text: "Journey builder", link: "/flow" }]}
                 >
-                  <FlowTable />
+                  <JourneyTablev2 />
                 </DrawerLayout>
               </VerificationProtected>
             </Protected>
@@ -605,7 +606,7 @@ const RouteComponent: React.FC = () => {
             <Protected>
               <VerificationProtected>
                 <DrawerLayout>
-                  <FlowTable />
+                  <JourneyTablev2 />
                 </DrawerLayout>
               </VerificationProtected>
             </Protected>

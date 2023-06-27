@@ -99,7 +99,7 @@ export class JourneysService {
     @Inject(forwardRef(() => CustomersService))
     private customersService: CustomersService,
     @InjectConnection() private readonly connection: mongoose.Connection
-  ) { }
+  ) {}
 
   log(message, method, session, user = 'ANONYMOUS') {
     this.logger.log(
@@ -278,26 +278,32 @@ export class JourneysService {
         queryRunner
       );
 
-      const startStep = await this.stepsService.transactionalfindByJourneyID(user, newJourney.id, queryRunner)
+      const startStep = await this.stepsService.transactionalfindByJourneyID(
+        user,
+        newJourney.id,
+        queryRunner
+      );
       let startIndex;
       const newSteps: Step[] = await queryRunner.manager.save(
         Step,
-        oldSteps.filter((oldStep, index) => {
-          if (oldStep.type === StepType.START) {
-            startIndex = index;
-            return false;
-          }
-          return true;
-        }).map((oldStep) => {
-          return ({
-            createdAt: new Date(),
-            owner: oldStep.owner,
-            type: oldStep.type,
-            journey: newJourney,
-            customers: [],
-            isEditable: true,
+        oldSteps
+          .filter((oldStep, index) => {
+            if (oldStep.type === StepType.START) {
+              startIndex = index;
+              return false;
+            }
+            return true;
           })
-        })
+          .map((oldStep) => {
+            return {
+              createdAt: new Date(),
+              owner: oldStep.owner,
+              type: oldStep.type,
+              journey: newJourney,
+              customers: [],
+              isEditable: true,
+            };
+          })
       );
 
       newSteps.splice(startIndex, 0, startStep[0]);
@@ -457,8 +463,8 @@ export class JourneysService {
               ...(key === 'isActive'
                 ? { isStopped: false, isPaused: false }
                 : key === 'isPaused'
-                  ? { isStopped: false }
-                  : {}),
+                ? { isStopped: false }
+                : {}),
             });
         }
       } else {
