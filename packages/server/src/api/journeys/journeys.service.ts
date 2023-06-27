@@ -99,7 +99,7 @@ export class JourneysService {
     @Inject(forwardRef(() => CustomersService))
     private customersService: CustomersService,
     @InjectConnection() private readonly connection: mongoose.Connection
-  ) {}
+  ) { }
 
   log(message, method, session, user = 'ANONYMOUS') {
     this.logger.log(
@@ -272,12 +272,51 @@ export class JourneysService {
         queryRunner
       );
 
+      const oldSteps = await this.stepsService.transactionalfindByJourneyID(
+        user,
+        oldJourney.id,
+        queryRunner
+      );
+
+      const startStep = await this.stepsService.transactionalfindByJourneyID(user, newJourney.id, queryRunner)
+      let startIndex;
+      const newSteps: Step[] = await queryRunner.manager.save(
+        Step,
+        oldSteps.filter((oldStep, index) => {
+          if (oldStep.type === StepType.START) {
+            startIndex = index;
+            return false;
+          }
+          return true;
+        }).map((oldStep) => {
+          return ({
+            createdAt: new Date(),
+            owner: oldStep.owner,
+            type: oldStep.type,
+            journey: newJourney,
+            customers: [],
+            isEditable: true,
+          })
+        })
+      );
+
+      newSteps.splice(startIndex, 0, startStep[0]);
+
+      let visualLayout: any = JSON.stringify(oldJourney.visualLayout);
+
+      for (let i = 0; i < oldSteps.length; i++) {
+        const oldStepID = oldSteps[i].id;
+        const newStepID = newSteps[i].id;
+        visualLayout = visualLayout.replaceAll(oldStepID, newStepID);
+      }
+
+      visualLayout = JSON.parse(visualLayout);
       await this.updateLayoutTransactional(
         user,
         {
           id: newJourney.id,
-          nodes: oldJourney.visualLayout.nodes,
-          edges: oldJourney.visualLayout.edges,
+          nodes: visualLayout.nodes,
+          edges: visualLayout.edges,
         },
         queryRunner,
         session
@@ -418,8 +457,8 @@ export class JourneysService {
               ...(key === 'isActive'
                 ? { isStopped: false, isPaused: false }
                 : key === 'isPaused'
-                ? { isStopped: false }
-                : {}),
+                  ? { isStopped: false }
+                  : {}),
             });
         }
       } else {
