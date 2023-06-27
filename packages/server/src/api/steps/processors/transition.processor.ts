@@ -24,6 +24,7 @@ import { TemplateType } from '@/api/templates/entities/template.entity';
 import { WebsocketGateway } from '@/websockets/websocket.gateway';
 import { ModalsService } from '@/api/modals/modals.service';
 import { SlackService } from '@/api/slack/slack.service';
+import { Account } from '@/api/accounts/entities/accounts.entity';
 
 @Injectable()
 @Processor('transition', { concurrency: cpus().length })
@@ -126,6 +127,7 @@ export class TransitionProcessor extends WorkerHost {
           break;
         case StepType.ATTRIBUTE_BRANCH:
           this.handleAttributeBranch(
+            job.data.ownerID,
             job.data.step.id,
             job.data.session,
             queryRunner,
@@ -136,6 +138,7 @@ export class TransitionProcessor extends WorkerHost {
           break;
         case StepType.LOOP:
           await this.handleLoop(
+            job.data.ownerID,
             job.data.step.id,
             job.data.session,
             queryRunner,
@@ -144,6 +147,7 @@ export class TransitionProcessor extends WorkerHost {
           break;
         case StepType.MESSAGE:
           await this.handleMessage(
+            job.data.ownerID,
             job.data.step.id,
             job.data.session,
             queryRunner,
@@ -154,6 +158,7 @@ export class TransitionProcessor extends WorkerHost {
           break;
         case StepType.START:
           await this.handleStart(
+            job.data.ownerID,
             job.data.step.id,
             job.data.session,
             queryRunner,
@@ -162,6 +167,7 @@ export class TransitionProcessor extends WorkerHost {
           break;
         case StepType.TIME_DELAY:
           await this.handleTimeDelay(
+            job.data.ownerID,
             job.data.step.id,
             job.data.session,
             queryRunner,
@@ -170,6 +176,7 @@ export class TransitionProcessor extends WorkerHost {
           break;
         case StepType.TIME_WINDOW:
           await this.handleTimeWindow(
+            job.data.ownerID,
             job.data.step.id,
             job.data.session,
             queryRunner,
@@ -178,6 +185,7 @@ export class TransitionProcessor extends WorkerHost {
           break;
         case StepType.WAIT_UNTIL_BRANCH:
           await this.handleWaitUntil(
+            job.data.ownerID,
             job.data.step.id,
             job.data.session,
             job.data.customer,
@@ -211,18 +219,21 @@ export class TransitionProcessor extends WorkerHost {
    * @param transactionSession
    */
   async handleMessage(
+    ownerID: string,
     stepID: string,
     session: string,
     queryRunner: QueryRunner,
     transactionSession: mongoose.mongo.ClientSession
   ) {
+    const owner = await queryRunner.manager.findOne(Account, {
+      where: { id: ownerID },
+    });
     const currentStep = await queryRunner.manager.findOne(Step, {
       where: {
         id: stepID,
         type: StepType.MESSAGE,
       },
-      relations: ['owner'],
-      // lock: { mode: 'pessimistic_write' }
+      lock: { mode: 'pessimistic_write' },
     });
     this.debug(
       `${JSON.stringify({ currentStep: currentStep })}`,
@@ -233,8 +244,7 @@ export class TransitionProcessor extends WorkerHost {
       where: {
         id: currentStep.metadata.destination,
       },
-      relations: ['owner'],
-      // lock: { mode: 'pessimistic_write' }
+      lock: { mode: 'pessimistic_write' },
     });
 
     for (let i = 0; i < currentStep.customers.length; i++) {
@@ -243,7 +253,7 @@ export class TransitionProcessor extends WorkerHost {
         const customerID = JSON.parse(currentStep.customers[i]).customerID;
         const templateID = currentStep.metadata.template;
         const template = await this.templatesService.findOneById(
-          currentStep.owner,
+          owner,
           templateID.toString()
         );
         const {
@@ -254,13 +264,13 @@ export class TransitionProcessor extends WorkerHost {
           sendgridApiKey,
           sendgridFromEmail,
           email,
-        } = currentStep.owner;
-        let { sendingDomain, sendingEmail } = currentStep.owner;
+        } = owner;
+        let { sendingDomain, sendingEmail } = owner;
 
         let key = mailgunAPIKey;
         let from = sendingName;
         const customer: CustomerDocument = await this.customersService.findById(
-          currentStep.owner,
+          owner,
           customerID
         );
         const { _id, ownerId, workflows, journeys, ...tags } =
@@ -270,8 +280,8 @@ export class TransitionProcessor extends WorkerHost {
 
         switch (template.type) {
           case TemplateType.EMAIL:
-            if (currentStep.owner.emailProvider === 'free3') {
-              if (currentStep.owner.freeEmailsCount === 0)
+            if (owner.emailProvider === 'free3') {
+              if (owner.freeEmailsCount === 0)
                 throw new HttpException(
                   'You exceeded limit of 3 emails',
                   HttpStatus.PAYMENT_REQUIRED
@@ -280,15 +290,15 @@ export class TransitionProcessor extends WorkerHost {
               key = process.env.MAILGUN_API_KEY;
               from = testSendingName;
               sendingEmail = testSendingEmail;
-              currentStep.owner.freeEmailsCount--;
+              owner.freeEmailsCount--;
             }
-            if (currentStep.owner.emailProvider === 'sendgrid') {
+            if (owner.emailProvider === 'sendgrid') {
               key = sendgridApiKey;
               from = sendgridFromEmail;
             }
             let ret = await sender.process({
               name: TemplateType.EMAIL,
-              accountID: currentStep.owner.id,
+              accountID: owner.id,
               cc: template.cc,
               customerID: customerID,
               domain: sendingDomain,
@@ -308,7 +318,7 @@ export class TransitionProcessor extends WorkerHost {
               ),
               tags: filteredTags,
               templateID: template.id,
-              eventProvider: currentStep.owner.emailProvider,
+              eventProvider: owner.emailProvider,
             });
             this.debug(
               `${JSON.stringify(ret)}`,
@@ -316,17 +326,17 @@ export class TransitionProcessor extends WorkerHost {
               session
             );
             await this.webhooksService.insertClickHouseMessages(ret);
-            if (currentStep.owner.emailProvider === 'free3')
-              await currentStep.owner.save();
+            if (owner.emailProvider === 'free3')
+              await owner.save();
             break;
           case TemplateType.FIREBASE:
             await this.webhooksService.insertClickHouseMessages(
               await sender.process({
                 name: TemplateType.FIREBASE,
-                accountID: currentStep.owner.id,
+                accountID: owner.id,
                 stepID: currentStep.id,
                 customerID: customerID,
-                firebaseCredentials: currentStep.owner.firebaseCredentials,
+                firebaseCredentials: owner.firebaseCredentials,
                 phDeviceToken: customer.phDeviceToken,
                 pushText: await this.templatesService.parseApiCallTags(
                   template.pushText,
@@ -359,7 +369,7 @@ export class TransitionProcessor extends WorkerHost {
             await this.webhooksService.insertClickHouseMessages(
               await sender.process({
                 name: TemplateType.SLACK,
-                accountID: currentStep.owner.id,
+                accountID: owner.id,
                 stepID: currentStep.id,
                 customerID: customer.id,
                 templateID: template.id,
@@ -380,19 +390,19 @@ export class TransitionProcessor extends WorkerHost {
             await this.webhooksService.insertClickHouseMessages(
               await sender.process({
                 name: TemplateType.SMS,
-                accountID: currentStep.owner.id,
+                accountID: owner.id,
                 stepID: currentStep.id,
                 customerID: customer.id,
                 templateID: template.id,
-                from: currentStep.owner.smsFrom,
-                sid: currentStep.owner.smsAccountSid,
+                from: owner.smsFrom,
+                sid: owner.smsAccountSid,
                 tags: filteredTags,
                 text: await this.templatesService.parseApiCallTags(
                   template.smsText,
                   filteredTags
                 ),
                 to: customer.phPhoneNumber || customer.phone,
-                token: currentStep.owner.smsAuthToken,
+                token: owner.smsAuthToken,
                 trackingEmail: email,
               })
             );
@@ -404,7 +414,7 @@ export class TransitionProcessor extends WorkerHost {
                 filteredTags,
                 audienceId: stepID,
                 customerId: customerID,
-                accountId: currentStep.owner.id,
+                accountId: owner.id,
               });
             }
             break;
@@ -424,6 +434,7 @@ export class TransitionProcessor extends WorkerHost {
     await queryRunner.manager.save(currentStep);
     const newNext = await queryRunner.manager.save(nextStep);
     await this.transitionQueue.add(newNext.type, {
+      ownerID,
       step: newNext,
       session: session,
     });
@@ -440,11 +451,15 @@ export class TransitionProcessor extends WorkerHost {
    * @param transactionSession
    */
   async handleStart(
+    ownerID: string,
     stepID: string,
     session: string,
     queryRunner: QueryRunner,
     transactionSession: mongoose.mongo.ClientSession
   ) {
+    const owner = await queryRunner.manager.findOne(Account, {
+      where: { id: ownerID },
+    });
     const startStep = await queryRunner.manager.findOne(Step, {
       where: {
         id: stepID,
@@ -483,6 +498,7 @@ export class TransitionProcessor extends WorkerHost {
       newNext.type !== StepType.WAIT_UNTIL_BRANCH
     ) {
       await this.transitionQueue.add(newNext.type, {
+        ownerID,
         step: newNext,
         session: session,
       });
@@ -498,18 +514,21 @@ export class TransitionProcessor extends WorkerHost {
    * @param transactionSession
    */
   async handleTimeDelay(
+    ownerID: string,
     stepID: string,
     session: string,
     queryRunner: QueryRunner,
     transactionSession: mongoose.mongo.ClientSession
   ) {
+    const owner = await queryRunner.manager.findOne(Account, {
+      where: { id: ownerID },
+    });
     const currentStep = await queryRunner.manager.findOne(Step, {
       where: {
         id: stepID,
         type: StepType.TIME_DELAY,
       },
-      relations: ['owner'],
-      // lock: { mode: 'pessimistic_write' }
+      lock: { mode: 'pessimistic_write' },
     });
 
     this.debug(
@@ -520,8 +539,7 @@ export class TransitionProcessor extends WorkerHost {
 
     const nextStep = await queryRunner.manager.findOne(Step, {
       where: { id: currentStep.metadata.destination },
-      relations: ['owner'],
-      // lock: { mode: 'pessimistic_write' }
+      lock: { mode: 'pessimistic_write' },
     });
 
     this.debug(
@@ -559,6 +577,7 @@ export class TransitionProcessor extends WorkerHost {
 
     if (forDeletion.length > 0)
       await this.transitionQueue.add(newNext.type, {
+        ownerID,
         step: newNext,
         session: session,
       });
@@ -573,17 +592,25 @@ export class TransitionProcessor extends WorkerHost {
    * @param transactionSession
    */
   async handleTimeWindow(
+    ownerID: string,
     stepID: string,
     session: string,
     queryRunner: QueryRunner,
     transactionSession: mongoose.mongo.ClientSession
   ) {
-    const currentStep = await queryRunner.manager.findOneBy(Step, {
-      id: stepID,
-      type: StepType.TIME_WINDOW,
+    const owner = await queryRunner.manager.findOne(Account, {
+      where: { id: ownerID },
     });
-    const nextStep = await queryRunner.manager.findOneBy(Step, {
-      id: currentStep.metadata.destination,
+    const currentStep = await queryRunner.manager.findOne(Step, {
+      where: {
+        id: stepID,
+        type: StepType.TIME_WINDOW,
+      },
+      lock: { mode: 'pessimistic_write' },
+    });
+    const nextStep = await queryRunner.manager.findOne(Step, {
+      where: { id: currentStep.metadata.destination },
+      lock: { mode: 'pessimistic_write' },
     });
     const forDeletion = [];
     for (let i = 0; i < currentStep.customers.length; i++) {
@@ -614,6 +641,7 @@ export class TransitionProcessor extends WorkerHost {
 
     if (forDeletion.length > 0)
       this.transitionQueue.add('', {
+        ownerID,
         step: nextStep,
         session: session,
       });
@@ -629,6 +657,7 @@ export class TransitionProcessor extends WorkerHost {
    * @param transactionSession
    */
   async handleWaitUntil(
+    ownerID: string,
     stepID: string,
     session: string,
     customerID: string,
@@ -638,6 +667,9 @@ export class TransitionProcessor extends WorkerHost {
   ) {
     let nextStep: Step,
       forDeletion: string[] = [];
+    const owner = await queryRunner.manager.findOne(Account, {
+      where: { id: ownerID },
+    });
     const waitUntilStep = await queryRunner.manager.findOne(Step, {
       where: {
         id: stepID,
@@ -708,15 +740,19 @@ export class TransitionProcessor extends WorkerHost {
         newNext.type !== StepType.WAIT_UNTIL_BRANCH
       ) {
         this.transitionQueue.add(newNext.type, {
+          ownerID,
           step: newNext,
           session: session,
         });
       }
     } else if (branch > -1 && waitUntilStep.metadata.branches.length > 0) {
-      nextStep = await queryRunner.manager.findOneBy(Step, {
-        id: waitUntilStep.metadata.branches.filter((branchItem) => {
-          return branchItem.index === branch;
-        })[0].destination,
+      nextStep = await queryRunner.manager.findOne(Step, {
+        where: {
+          id: waitUntilStep.metadata.branches.filter((branchItem) => {
+            return branchItem.index === branch;
+          })[0].destination,
+        },
+        lock: { mode: 'pessimistic_write' },
       });
       for (
         let customersIndex = 0;
@@ -766,6 +802,7 @@ export class TransitionProcessor extends WorkerHost {
         newNext.type !== StepType.WAIT_UNTIL_BRANCH
       ) {
         this.transitionQueue.add(newNext.type, {
+          ownerID,
           step: newNext,
           session: session,
         });
@@ -781,11 +818,12 @@ export class TransitionProcessor extends WorkerHost {
    * @param transactionSession
    */
   async handleAttributeBranch(
+    ownerID: string,
     stepID: string,
     session: string,
     queryRunner: QueryRunner,
     transactionSession: mongoose.mongo.ClientSession
-  ) {}
+  ) { }
 
   /**
    *
@@ -795,15 +833,16 @@ export class TransitionProcessor extends WorkerHost {
    * @param transactionSession
    */
   async handleLoop(
+    ownerID: string,
     stepID: string,
     session: string,
     queryRunner: QueryRunner,
     transactionSession: mongoose.mongo.ClientSession
-  ) {}
+  ) { }
 
   // TODO
-  async handleABTest(job: Job<any, any, string>) {}
-  async handleRandomCohortBranch(job: Job<any, any, string>) {}
+  async handleABTest(job: Job<any, any, string>) { }
+  async handleRandomCohortBranch(job: Job<any, any, string>) { }
 
   // @OnWorkerEvent('active')
   // onActive(job: Job<any, any, any>, prev: string) {

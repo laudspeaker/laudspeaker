@@ -152,6 +152,7 @@ export class EventsProcessor extends WorkerHost {
           type: StepType.WAIT_UNTIL_BRANCH,
           journey: { id: journey.id },
         },
+        relations: ['owner'],
       });
 
       step_loop: for (
@@ -428,6 +429,7 @@ export class EventsProcessor extends WorkerHost {
             step: stepToQueue,
             branch: branch,
             customer: customer.id,
+            ownerID: stepToQueue.owner.id,
             session: job.data.session,
           });
         }
