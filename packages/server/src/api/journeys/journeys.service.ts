@@ -380,7 +380,7 @@ export class JourneysService {
             session,
             account
           )) &&
-          customer.workflows.indexOf(journey.id) < 0
+          customer.journeys.indexOf(journey.id) < 0
         ) {
           await this.stepsService.addToStart(
             account,

@@ -150,6 +150,7 @@ export class StepsService {
     if (startStep.length != 1)
       throw new Error('Can only have one start step per journey.');
 
+    // if (!startStep[0].customers.find((customerTuple) => { return JSON.parse(customerTuple).customerID === customer.id })) {
     startStep[0].customers = [
       ...startStep[0].customers,
       JSON.stringify({
@@ -157,6 +158,7 @@ export class StepsService {
         timestamp: Temporal.Now.instant().toString(),
       }),
     ];
+    // }
     const step = await queryRunner.manager.save(startStep[0]);
     await this.transitionQueue.add('start', {
       ownerID: account.id,

@@ -202,7 +202,7 @@ export class EventsService {
     eventDto: PosthogBatchEventDto,
     session: string
   ) {
-    let found: boolean;
+    let customerFound: boolean = true;
     const transactionSession = await this.connection.startSession();
     transactionSession.startTransaction();
     const queryRunner = this.dataSource.createQueryRunner();
@@ -261,7 +261,7 @@ export class EventsService {
               session,
               account.id
             );
-            found = await this.customersService.phIdentifyUpdate(
+            customerFound = await this.customersService.phIdentifyUpdate(
               account,
               currentEvent,
               transactionSession,
@@ -358,7 +358,15 @@ export class EventsService {
             postHogEventMapping
           );
 
-          if (!correlation.found || !found) {
+          if (!correlation.found || !customerFound) {
+            this.warn(
+              `${JSON.stringify({
+                warning: 'calling enroll customer because found is ',
+                found: customerFound,
+              })}`,
+              this.posthogPayload.name,
+              session
+            );
             await this.journeysService.enrollCustomer(
               account,
               correlation.cust,
@@ -457,7 +465,7 @@ export class EventsService {
           transactionSession
         );
       this.debug(
-        `${JSON.stringify({ correlation })}`,
+        `${JSON.stringify({ correlation: correlation })}`,
         this.customPayload.name,
         session,
         account.email
