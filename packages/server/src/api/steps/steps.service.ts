@@ -139,10 +139,13 @@ export class StepsService {
     queryRunner: QueryRunner,
     session: string
   ) {
-    const startStep = await queryRunner.manager.findBy(Step, {
-      owner: { id: account.id },
-      journey: { id: journeyID },
-      type: StepType.START,
+    const startStep = await queryRunner.manager.find(Step, {
+      where: {
+        owner: { id: account.id },
+        journey: { id: journeyID },
+        type: StepType.START,
+      },
+      lock: { mode: 'pessimistic_write' },
     });
     if (startStep.length != 1)
       throw new Error('Can only have one start step per journey.');
@@ -156,7 +159,7 @@ export class StepsService {
     ];
     const step = await queryRunner.manager.save(startStep[0]);
     await this.transitionQueue.add('start', {
-      account: account,
+      ownerID: account.id,
       step: step,
       session: session,
     });
@@ -251,7 +254,7 @@ export class StepsService {
             isStopped: false,
           },
         },
-        lock: { mode: 'pessimistic_write' },
+        relations: ['owner'],
       });
     } catch (e) {
       this.error(e, this.findAllByType.name, session, account.id);
@@ -326,7 +329,7 @@ export class StepsService {
         owner: { id: account.id },
         journey: { id: id },
       },
-      relations:['owner']
+      relations: ['owner'],
     });
   }
 
