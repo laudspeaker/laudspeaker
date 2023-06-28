@@ -69,7 +69,7 @@ export enum JourneyStatus {
   PAUSED = 'Paused',
   STOPPED = 'Stopped',
   DELETED = 'Deleted',
-  EDITABLE = 'Editable',
+  DRAFT = 'Draft',
 }
 
 function isObjKey<T extends object>(key: PropertyKey, obj: T): key is keyof T {
@@ -430,7 +430,7 @@ export class JourneysService {
       const isPaused = filterStatusesParts.includes(JourneyStatus.PAUSED);
       const isStopped = filterStatusesParts.includes(JourneyStatus.STOPPED);
       const isDeleted = filterStatusesParts.includes(JourneyStatus.DELETED);
-      const isEditable = filterStatusesParts.includes(JourneyStatus.EDITABLE);
+      const isEditable = filterStatusesParts.includes(JourneyStatus.DRAFT);
 
       const whereOrParts: FindOptionsWhere<Journey>[] = [];
 

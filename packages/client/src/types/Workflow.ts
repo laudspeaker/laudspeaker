@@ -121,4 +121,5 @@ export interface Workflow {
   visualLayout: VisualLayout;
   isDynamic: boolean;
   filter?: { id: string };
+  latestSave: string;
 }

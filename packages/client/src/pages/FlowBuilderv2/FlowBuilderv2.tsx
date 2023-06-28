@@ -20,9 +20,9 @@ import {
   setJourneyType,
   setSegmentsSettings,
 } from "reducers/flow-builder.reducer";
-import { JourneyStatus } from "components/TableTemplate/TableTemplate";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import { JourneyStatus } from "pages/JourneyTablev2/JourneyTablev2";
 
 const FlowBuilderv2 = () => {
   const { id } = useParams();
@@ -69,14 +69,14 @@ const FlowBuilderv2 = () => {
       );
       dispatch(setFlowId(id));
 
-      let status: JourneyStatus = JourneyStatus.EDITABLE;
+      let status: JourneyStatus = JourneyStatus.DRAFT;
 
       if (data.isActive) status = JourneyStatus.ACTIVE;
       if (data.isPaused) status = JourneyStatus.PAUSED;
       if (data.isStopped) status = JourneyStatus.STOPPED;
       if (data.isDeleted) status = JourneyStatus.DELETED;
 
-      if (status !== JourneyStatus.EDITABLE) navigate(`/flow/${id}/view`);
+      if (status !== JourneyStatus.DRAFT) navigate(`/flow/${id}/view`);
     } finally {
       setIsLoading(false);
     }

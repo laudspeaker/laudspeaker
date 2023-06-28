@@ -1,8 +1,8 @@
 import Progress from "components/Progress";
-import { JourneyStatus } from "components/TableTemplate/TableTemplate";
 import { EdgeData } from "pages/FlowBuilderv2/Edges/EdgeData";
 import FlowEditor, { NodeType } from "pages/FlowBuilderv2/FlowEditor";
 import { NodeData, Stats } from "pages/FlowBuilderv2/Nodes/NodeData";
+import { JourneyStatus } from "pages/JourneyTablev2/JourneyTablev2";
 import React, { ReactNode, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Edge, Node } from "reactflow";
@@ -193,7 +193,7 @@ const FlowViewerv2 = () => {
       );
       dispatch(setFlowId(id));
 
-      let status: JourneyStatus = JourneyStatus.EDITABLE;
+      let status: JourneyStatus = JourneyStatus.DRAFT;
 
       if (data.isActive) status = JourneyStatus.ACTIVE;
       if (data.isPaused) status = JourneyStatus.PAUSED;

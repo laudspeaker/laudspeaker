@@ -105,7 +105,7 @@ const VerificationProtected: FC<VerificationProtectedProps> = ({
 
   useEffect(() => {
     if (isLoaded && !isVerified) navigate("/verification");
-  }, [isVerified]);
+  }, [isVerified, isLoaded]);
 
   return isVerified ? <>{children}</> : <></>;
 };
