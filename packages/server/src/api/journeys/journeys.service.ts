@@ -718,7 +718,7 @@ export class JourneysService {
       );
 
       const unenrolledCustomers = customers.filter(
-        (customer) => customer.workflows.indexOf(journeyID) < 0
+        (customer) => customer.journeys.indexOf(journeyID) < 0
       );
       await this.CustomerModel.updateMany(
         {
