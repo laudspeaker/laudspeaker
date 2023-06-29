@@ -44,7 +44,7 @@ const Verify = () => {
         });
       }
       setLoading(false);
-      navigate("/verification");
+      navigate("/home");
     })();
   }, []);
 

@@ -416,6 +416,7 @@ export class CronService {
         if (steps[i].customers.length > 0)
           this.transitionQueue.add(steps[i].type, {
             step: steps[i],
+            ownerID: steps[i].owner.id,
             session: session,
             branch,
           });

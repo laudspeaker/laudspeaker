@@ -363,6 +363,7 @@ export class JourneysService {
           isActive: true,
           isStopped: false,
           isPaused: false,
+          isDynamic: true,
         },
       });
 
@@ -373,14 +374,13 @@ export class JourneysService {
       ) {
         const journey = journeys[journeyIndex];
         if (
-          journey.isDynamic &&
           (await this.customersService.checkInclusion(
             customer,
             journey.inclusionCriteria,
             session,
             account
           )) &&
-          customer.workflows.indexOf(journey.id) < 0
+          customer.journeys.indexOf(journey.id) < 0
         ) {
           await this.stepsService.addToStart(
             account,
