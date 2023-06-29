@@ -490,7 +490,17 @@ export class JourneysService {
         take: take < 100 ? take : 100,
         skip,
       });
-      return { data: journeys, totalPages };
+
+      const journeysWithEnrolledCustomersCount = await Promise.all(
+        journeys.map(async (journey) => ({
+          ...journey,
+          enrolledCustomers: await this.CustomerModel.count({
+            journeys: journey.id,
+          }),
+        }))
+      );
+
+      return { data: journeysWithEnrolledCustomersCount, totalPages };
     } catch (err) {
       this.error(err, this.findAll.name, session, account.email);
       throw err;

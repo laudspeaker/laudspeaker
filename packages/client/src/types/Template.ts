@@ -21,4 +21,5 @@ export default interface Template {
   type: TemplateType;
   smsText: string;
   webhookData: WebhookState;
+  createdAt: string;
 }

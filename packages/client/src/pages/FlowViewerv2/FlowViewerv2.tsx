@@ -212,7 +212,7 @@ const FlowViewerv2 = () => {
   }, []);
 
   return (
-    <div className="relative w-full h-full max-h-[calc(100%-46px)] text-[#111827] font-inter font-normal text-[14px] leading-[22px]">
+    <div className="relative w-full h-full text-[#111827] font-inter font-normal text-[14px] leading-[22px]">
       {isLoading && (
         <div className="w-full h-full absolute top-0 left-0 bg-[#111827] bg-opacity-20 z-[9999999999999]">
           <Progress />

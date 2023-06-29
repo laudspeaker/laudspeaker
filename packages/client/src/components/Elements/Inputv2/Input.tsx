@@ -20,13 +20,13 @@ const Input: FC<InputProps> = ({
     <div className="w-fit relative">
       <input
         className={`border-[1px] border-[#E5E7EB] rounded-[4px] px-[12px] py-[4px] font-roboto text-[14px] leading-[22px] text-[#111827] placeholder:text-[#9CA3AF] focus:border-[#6366F1] outline-none ${
-          showClearButton ? "!pr-[30px]" : ""
+          showClearButton && value !== "" ? "!pr-[30px]" : ""
         } ${className ? className : ""}`}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         {...props}
       />
-      {showClearButton && (
+      {showClearButton && value !== "" && (
         <button
           className="absolute top-1/2 -translate-y-1/2 right-[12px]"
           onClick={() => onChange("")}

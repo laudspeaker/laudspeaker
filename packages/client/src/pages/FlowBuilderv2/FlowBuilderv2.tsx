@@ -133,7 +133,7 @@ const FlowBuilderv2 = () => {
   ]);
 
   return (
-    <div className="relative w-full h-full max-h-[calc(100%-46px)]">
+    <div className="relative w-full h-full">
       <FlowBuilderHeader />
       <div className="relative flex w-full h-full max-h-[calc(100%-60px)]">
         {flowBuilderState.stepperIndex === 0 && <FlowBuilderDrawer />}

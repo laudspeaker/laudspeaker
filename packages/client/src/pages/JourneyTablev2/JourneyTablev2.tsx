@@ -13,6 +13,11 @@ import NameJourneyModal from "./Modals/NameJourneyModal";
 import searchIconImage from "./svg/search-icon.svg";
 import threeDotsIcon from "./svg/three-dots-icon.svg";
 import noJourneysBackgroundImage from "./svg/no-journeys-background.svg";
+import sortAscChevronsImage from "./svg/sort-asc-chevrons.svg";
+import sortDescChevronsImage from "./svg/sort-desc-chevrons.svg";
+import sortNoneChevronsImage from "./svg/sort-none-chevrons.svg";
+import Pagination from "components/Pagination";
+import DeleteJourneyModal from "./Modals/DeleteJourneyModal";
 
 enum FilterOption {
   ALL,
@@ -76,7 +81,22 @@ const filterOptionToJourneyStatusMap: Record<
   [FilterOption.STOPPED]: JourneyStatus.STOPPED,
 };
 
-const ITEMS_PER_PAGE = 10;
+enum SortProperty {
+  STATUS = "status",
+  LAST_UPDATE = "latestSave",
+}
+
+enum SortType {
+  ASC = "asc",
+  DESC = "desc",
+}
+
+interface SortOptions {
+  sortBy: SortProperty;
+  sortType: SortType;
+}
+
+const ITEMS_PER_PAGE = 5;
 
 const JourneyTablev2 = () => {
   const navigate = useNavigate();
@@ -93,6 +113,13 @@ const JourneyTablev2 = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pagesCount, setPagesCount] = useState(1);
 
+  const [sortOptions, setSortOptions] = useState<SortOptions>({
+    sortBy: SortProperty.LAST_UPDATE,
+    sortType: SortType.DESC,
+  });
+
+  const [journeyToDelete, setJourneyToDelete] = useState<string>();
+
   const loadData = async () => {
     setIsLoading(true);
 
@@ -102,7 +129,9 @@ const JourneyTablev2 = () => {
       } = await ApiService.get<{ data: Workflow[]; totalPages: number }>({
         url: `/journeys?take=${ITEMS_PER_PAGE}&skip=${
           (currentPage - 1) * ITEMS_PER_PAGE
-        }&search=${search}${
+        }&search=${search}&orderBy=${sortOptions.sortBy}&orderType=${
+          sortOptions.sortType
+        }${
           chosenFilter === FilterOption.ALL
             ? ""
             : `&filterStatuses=${chosenFilter
@@ -124,7 +153,7 @@ const JourneyTablev2 = () => {
             id: workflow.id,
             name: workflow.name,
             status,
-            enrolledCount: 0,
+            enrolledCount: workflow.enrolledCustomers || 0,
             lastUpdate: workflow.latestSave,
           };
         })
@@ -139,7 +168,11 @@ const JourneyTablev2 = () => {
 
   useEffect(() => {
     loadData();
-  }, [chosenFilter, search, currentPage]);
+  }, [chosenFilter, search, currentPage, sortOptions]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [chosenFilter, search, sortOptions]);
 
   useEffect(() => {
     setSearch("");
@@ -185,11 +218,6 @@ const JourneyTablev2 = () => {
     await loadData();
   };
 
-  const deleteJourney = async (id: string) => {
-    await ApiService.patch({ url: "/journeys/delete/" + id });
-    await loadData();
-  };
-
   return (
     <div className="bg-[#F3F4F6] p-[20px] flex flex-col gap-[20px] font-inter font-normal text-[14px] text-[#111827] leading-[22px]">
       <div className="flex justify-between">
@@ -201,11 +229,11 @@ const JourneyTablev2 = () => {
           Create journey
         </Button>
       </div>
-
       <div className="p-[20px] rounded-[8px] bg-white flex flex-col gap-[20px]">
         {rows.length === 0 &&
         chosenFilter === FilterOption.ALL &&
-        search === "" ? (
+        search === "" &&
+        !isLoading ? (
           <div className="w-full h-[300px] flex items-center justify-center select-none">
             <div>
               <img src={noJourneysBackgroundImage} />
@@ -260,11 +288,91 @@ const JourneyTablev2 = () => {
             <Table
               isLoading={isLoading}
               headings={[
-                <div>Name</div>,
-                <div>Status</div>,
-                <div>Enrolled customer</div>,
-                <div>Last update</div>,
-                <div></div>,
+                <div className="px-[20px] py-[10px] select-none">Name</div>,
+                <div
+                  className="px-[20px] py-[10px] select-none flex gap-[2px] items-center cursor-pointer"
+                  onClick={() => {
+                    if (sortOptions.sortBy !== SortProperty.STATUS) {
+                      setSortOptions({
+                        sortBy: SortProperty.STATUS,
+                        sortType: SortType.DESC,
+                      });
+
+                      return;
+                    }
+
+                    if (sortOptions.sortType === SortType.ASC) {
+                      setSortOptions({
+                        sortBy: SortProperty.STATUS,
+                        sortType: SortType.DESC,
+                      });
+
+                      return;
+                    }
+
+                    setSortOptions({
+                      sortBy: SortProperty.STATUS,
+                      sortType: SortType.ASC,
+                    });
+                  }}
+                >
+                  <div>Status</div>
+                  <div>
+                    <img
+                      src={
+                        sortOptions.sortBy === SortProperty.STATUS
+                          ? sortOptions.sortType === SortType.ASC
+                            ? sortAscChevronsImage
+                            : sortDescChevronsImage
+                          : sortNoneChevronsImage
+                      }
+                    />
+                  </div>
+                </div>,
+                <div className="px-[20px] py-[10px] select-none">
+                  Enrolled customer
+                </div>,
+                <div
+                  className="px-[20px] py-[10px] select-none flex gap-[2px] items-center cursor-pointer"
+                  onClick={() => {
+                    if (sortOptions.sortBy !== SortProperty.LAST_UPDATE) {
+                      setSortOptions({
+                        sortBy: SortProperty.LAST_UPDATE,
+                        sortType: SortType.DESC,
+                      });
+
+                      return;
+                    }
+
+                    if (sortOptions.sortType === SortType.ASC) {
+                      setSortOptions({
+                        sortBy: SortProperty.LAST_UPDATE,
+                        sortType: SortType.DESC,
+                      });
+
+                      return;
+                    }
+
+                    setSortOptions({
+                      sortBy: SortProperty.LAST_UPDATE,
+                      sortType: SortType.ASC,
+                    });
+                  }}
+                >
+                  <div>Last update</div>
+                  <div>
+                    <img
+                      src={
+                        sortOptions.sortBy === SortProperty.LAST_UPDATE
+                          ? sortOptions.sortType === SortType.ASC
+                            ? sortAscChevronsImage
+                            : sortDescChevronsImage
+                          : sortNoneChevronsImage
+                      }
+                    />
+                  </div>
+                </div>,
+                <div className="px-[20px] py-[10px] select-none"></div>,
               ]}
               rows={rows.map((row) => [
                 <button
@@ -288,7 +396,7 @@ const JourneyTablev2 = () => {
                   )}
                 </div>,
                 <div>
-                  {format(new Date(row.lastUpdate), "MM/dd/yyyy hh:mm")}
+                  {format(new Date(row.lastUpdate), "MM/dd/yyyy HH:mm")}
                 </div>,
                 <Menu as="div" className="relative">
                   <Menu.Button>
@@ -324,7 +432,7 @@ const JourneyTablev2 = () => {
                             className={`block w-full text-left py-[5px] px-[12px] text-[#F43F5E] ${
                               active ? "bg-[#F3F4F6]" : ""
                             }`}
-                            onClick={() => deleteJourney(row.id)}
+                            onClick={() => setJourneyToDelete(row.id)}
                           >
                             Delete
                           </button>
@@ -337,11 +445,30 @@ const JourneyTablev2 = () => {
             />
           </>
         )}
+
+        {pagesCount > 1 && (
+          <div className="flex justify-center items-center">
+            <Pagination
+              currentPage={currentPage}
+              setCurrentPage={setCurrentPage}
+              totalPages={pagesCount}
+            />
+          </div>
+        )}
       </div>
 
       <NameJourneyModal
         isOpen={isNameJourneyModalOpen}
         onClose={() => setIsNameJourneyModalOpen(false)}
+      />
+
+      <DeleteJourneyModal
+        isOpen={!!journeyToDelete}
+        journeyId={journeyToDelete}
+        onClose={() => {
+          setJourneyToDelete(undefined);
+          loadData();
+        }}
       />
     </div>
   );

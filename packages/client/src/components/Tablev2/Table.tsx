@@ -14,7 +14,7 @@ const Table: FC<TableProps> = ({ headings, rows, isLoading }) => {
         <thead>
           <tr className="bg-[#F3F4F6] border-b-[1px] border-[#E5E7EB] ">
             {headings.map((heading, i) => (
-              <th className="px-[20px] py-[10px] text-left" key={i}>
+              <th className="text-left" key={i}>
                 {heading}
               </th>
             ))}
@@ -25,9 +25,11 @@ const Table: FC<TableProps> = ({ headings, rows, isLoading }) => {
       {rows && (
         <tbody className="relative">
           {isLoading && (
-            <div className="absolute top-0 left-0 w-full h-full bg-white bg-opacity-75 flex items-center justify-center">
-              <Progress />
-            </div>
+            <tr className="absolute top-0 left-0 w-full h-full bg-white bg-opacity-75 flex items-center justify-center">
+              <td>
+                <Progress />
+              </td>
+            </tr>
           )}
           {rows.map((row, i) => (
             <tr

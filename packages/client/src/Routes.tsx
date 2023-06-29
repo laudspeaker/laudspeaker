@@ -47,6 +47,7 @@ import FlowViewerv2 from "pages/FlowViewerv2";
 import Verificationv2 from "pages/Verificationv2";
 import { toast } from "react-toastify";
 import JourneyTablev2 from "pages/JourneyTablev2";
+import TemplateTablev2 from "pages/TemplateTablev2";
 
 interface IProtected {
   children: ReactElement;
@@ -480,7 +481,7 @@ const RouteComponent: React.FC = () => {
             <Protected>
               <VerificationProtected>
                 <DrawerLayout>
-                  <TemplateTable />
+                  <TemplateTablev2 />
                 </DrawerLayout>
               </VerificationProtected>
             </Protected>
