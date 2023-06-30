@@ -183,9 +183,9 @@ export class CustomersService {
     transactionSession?: ClientSession
   ): Promise<
     Customer &
-    mongoose.Document & {
-      _id: Types.ObjectId;
-    }
+      mongoose.Document & {
+        _id: Types.ObjectId;
+      }
   > {
     const createdCustomer = new this.CustomerModel({
       ownerId: (<Account>account).id,
@@ -364,8 +364,8 @@ export class CustomersService {
       ownerId: (<Account>account).id,
       ...(key && search
         ? {
-          [key]: new RegExp(`.*${search}.*`, 'i'),
-        }
+            [key]: new RegExp(`.*${search}.*`, 'i'),
+          }
         : {}),
       ...(showFreezed ? {} : { isFreezed: { $ne: true } }),
     })
@@ -924,9 +924,9 @@ export class CustomersService {
     customerId: string
   ): Promise<
     Customer &
-    mongoose.Document & {
-      _id: Types.ObjectId;
-    }
+      mongoose.Document & {
+        _id: Types.ObjectId;
+      }
   > {
     if (!isValidObjectId(customerId))
       throw new BadRequestException('Invalid object id');

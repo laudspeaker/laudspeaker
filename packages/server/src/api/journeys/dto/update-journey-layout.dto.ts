@@ -8,9 +8,9 @@ export class UpdateJourneyLayoutDto {
 
   @IsArray()
   @IsOptional()
-  public nodes?: Node<NodeData>[];
+  public nodes?: any;
 
   @IsArray()
   @IsOptional()
-  public edges?: Edge<EdgeData>[];
+  public edges?: any;
 }

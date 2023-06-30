@@ -208,6 +208,32 @@ export class StepsService {
   }
 
   /**
+   * Find all steps of a certain type on a journey (owner optional).
+   * @param account
+   * @param type
+   * @param session
+   * @returns
+   */
+  async transactionalfindAllByTypeInJourney(
+    account: Account,
+    type: StepType,
+    journeyID: string,
+    queryRunner: QueryRunner,
+    session: string
+  ): Promise<Step[]> {
+    try {
+      return await queryRunner.manager.findBy(Step, {
+        owner: account ? { id: account.id } : undefined,
+        journey: { id: journeyID },
+        type: type,
+      });
+    } catch (e) {
+      this.error(e, this.findAllByType.name, session, account.id);
+      throw e;
+    }
+  }
+
+  /**
    * Find all steps of a certain type using db transaction(owner optional).
    * @param account
    * @param type
@@ -303,6 +329,34 @@ export class StepsService {
     try {
       const { journeyID, type } = createStepDto;
       return await this.stepsRepository.save({
+        customers: [],
+        owner: { id: account.id },
+        journey: { id: journeyID },
+        type,
+      });
+    } catch (e) {
+      this.error(e, this.insert.name, session, account.id);
+      throw e;
+    }
+  }
+
+  /**
+   * Insert a new step using a db transaction.
+   * TODO: Check step metadata matches step type
+   * @param account
+   * @param createStepDto
+   * @param session
+   * @returns
+   */
+  async transactionalInsert(
+    account: Account,
+    createStepDto: CreateStepDto,
+    queryRunner: QueryRunner,
+    session: string
+  ): Promise<Step> {
+    try {
+      const { journeyID, type } = createStepDto;
+      return await queryRunner.manager.save(Step, {
         customers: [],
         owner: { id: account.id },
         journey: { id: journeyID },

@@ -252,9 +252,25 @@ export class TransitionProcessor extends WorkerHost {
         //send message here
         const customerID = JSON.parse(currentStep.customers[i]).customerID;
         const templateID = currentStep.metadata.template;
-        const template = await this.templatesService.findOneById(
+        this.debug(
+          `${JSON.stringify({ metadata: currentStep.metadata.template })}`,
+          this.handleMessage.name,
+          session
+        );
+        this.debug(
+          `${JSON.stringify({ templateID: templateID })}`,
+          this.handleMessage.name,
+          session
+        );
+        const template = await this.templatesService.transactionalFindOneById(
           owner,
-          templateID.toString()
+          templateID.toString(),
+          queryRunner
+        );
+        this.debug(
+          `${JSON.stringify({ template: template })}`,
+          this.handleMessage.name,
+          session
         );
         const {
           mailgunAPIKey,
