@@ -130,7 +130,7 @@ const SegmentTablev2 = () => {
   return (
     <div className="p-[20px] flex flex-col gap-[20px] font-inter font-normal text-[14px] text-[#111827] leading-[22px]">
       <div className="flex justify-between items-center">
-        <div className="text-[20px] font-semibold leading-[28px]">User</div>
+        <div className="text-[20px] font-semibold leading-[28px]">Segments</div>
 
         <Button
           type={ButtonType.PRIMARY}
