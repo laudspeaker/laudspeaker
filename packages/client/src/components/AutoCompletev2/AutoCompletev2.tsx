@@ -12,7 +12,7 @@ interface ItemsGetter<T> {
   items: T[];
 }
 
-interface FlowBuilderAutoCompleteProps<T = unknown> {
+interface AutoCompleteProps<T = unknown> {
   initialValue?: string;
   value: T;
   retrieveLabel: (item: T) => string;
@@ -23,7 +23,7 @@ interface FlowBuilderAutoCompleteProps<T = unknown> {
   getKey?: (item: T) => string;
 }
 
-const FlowBuilderAutoComplete = <T,>({
+const AutoComplete = <T,>({
   initialValue,
   value,
   includedItems,
@@ -32,7 +32,7 @@ const FlowBuilderAutoComplete = <T,>({
   onSelect,
   placeholder,
   getKey,
-}: FlowBuilderAutoCompleteProps<T>) => {
+}: AutoCompleteProps<T>) => {
   const [query, setQuery] = useState(initialValue || "");
   const [items, setItems] = useState<T[]>(
     includedItems.type === "getter" ? includedItems.items : []
@@ -91,4 +91,4 @@ const FlowBuilderAutoComplete = <T,>({
   );
 };
 
-export default FlowBuilderAutoComplete;
+export default AutoComplete;

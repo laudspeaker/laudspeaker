@@ -12,7 +12,7 @@ import { Workflow } from "types/Workflow";
 import NameJourneyModal from "./Modals/NameJourneyModal";
 import searchIconImage from "./svg/search-icon.svg";
 import threeDotsIcon from "./svg/three-dots-icon.svg";
-import noJourneysBackgroundImage from "./svg/no-journeys-background.svg";
+import emptyDataImage from "./svg/empty-data.svg";
 import sortAscChevronsImage from "./svg/sort-asc-chevrons.svg";
 import sortDescChevronsImage from "./svg/sort-desc-chevrons.svg";
 import sortNoneChevronsImage from "./svg/sort-none-chevrons.svg";
@@ -101,7 +101,9 @@ const ITEMS_PER_PAGE = 5;
 const JourneyTablev2 = () => {
   const navigate = useNavigate();
 
+  const [isFirstRender, setIsFirstRender] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
   const [chosenFilter, setChosenFilter] = useState<ChosenFilter>(
     FilterOption.ALL
   );
@@ -159,6 +161,7 @@ const JourneyTablev2 = () => {
         })
       );
       setPagesCount(totalPages);
+      setIsLoaded(true);
     } catch (e) {
       toast.error("Failed to load data");
     } finally {
@@ -180,6 +183,10 @@ const JourneyTablev2 = () => {
 
   useDebounce(
     () => {
+      if (isFirstRender) {
+        setIsFirstRender(false);
+        return;
+      }
       loadData();
     },
     500,
@@ -233,10 +240,14 @@ const JourneyTablev2 = () => {
         {rows.length === 0 &&
         chosenFilter === FilterOption.ALL &&
         search === "" &&
-        !isLoading ? (
+        isLoaded ? (
           <div className="w-full h-[300px] flex items-center justify-center select-none">
-            <div>
-              <img src={noJourneysBackgroundImage} />
+            <div className="flex flex-col items-center gap-[20px]">
+              <img src={emptyDataImage} />
+
+              <div className="font-inter text-[16px] font-semibold leading-[24px] text-[#4B5563]">
+                Create a journey to engage your customers
+              </div>
             </div>
           </div>
         ) : (
@@ -289,46 +300,7 @@ const JourneyTablev2 = () => {
               isLoading={isLoading}
               headings={[
                 <div className="px-[20px] py-[10px] select-none">Name</div>,
-                <div
-                  className="px-[20px] py-[10px] select-none flex gap-[2px] items-center cursor-pointer"
-                  onClick={() => {
-                    if (sortOptions.sortBy !== SortProperty.STATUS) {
-                      setSortOptions({
-                        sortBy: SortProperty.STATUS,
-                        sortType: SortType.DESC,
-                      });
-
-                      return;
-                    }
-
-                    if (sortOptions.sortType === SortType.ASC) {
-                      setSortOptions({
-                        sortBy: SortProperty.STATUS,
-                        sortType: SortType.DESC,
-                      });
-
-                      return;
-                    }
-
-                    setSortOptions({
-                      sortBy: SortProperty.STATUS,
-                      sortType: SortType.ASC,
-                    });
-                  }}
-                >
-                  <div>Status</div>
-                  <div>
-                    <img
-                      src={
-                        sortOptions.sortBy === SortProperty.STATUS
-                          ? sortOptions.sortType === SortType.ASC
-                            ? sortAscChevronsImage
-                            : sortDescChevronsImage
-                          : sortNoneChevronsImage
-                      }
-                    />
-                  </div>
-                </div>,
+                <div className="px-[20px] py-[10px] select-none">Status</div>,
                 <div className="px-[20px] py-[10px] select-none">
                   Enrolled customer
                 </div>,

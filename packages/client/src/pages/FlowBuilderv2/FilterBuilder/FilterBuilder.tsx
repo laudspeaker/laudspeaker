@@ -15,7 +15,7 @@ import { Segment } from "types/Segment";
 import Button, {
   ButtonType,
 } from "../../../components/Elements/Buttonv2/Button";
-import FlowBuilderAutoComplete from "../Elements/FlowBuilderAutoComplete";
+import FlowBuilderAutoComplete from "../../../components/AutoCompletev2/AutoCompletev2";
 import FilterBuilderDynamicInput from "../Elements/FlowBuilderDynamicInput";
 
 interface FilterBuilderProps {

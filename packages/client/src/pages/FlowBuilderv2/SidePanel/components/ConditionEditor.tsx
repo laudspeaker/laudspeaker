@@ -1,5 +1,5 @@
 import Button, { ButtonType } from "components/Elements/Buttonv2/Button";
-import FlowBuilderAutoComplete from "pages/FlowBuilderv2/Elements/FlowBuilderAutoComplete";
+import FlowBuilderAutoComplete from "components/AutoCompletev2/AutoCompletev2";
 import FlowBuilderDynamicInput from "pages/FlowBuilderv2/Elements/FlowBuilderDynamicInput";
 import Select from "pages/FlowBuilderv2/Elements/Select";
 import {

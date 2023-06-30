@@ -8,7 +8,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
+import { In, Like, Repository } from 'typeorm';
 import { Account } from '../accounts/entities/accounts.entity';
 import {
   Customer,
@@ -499,6 +499,7 @@ export class TemplatesService extends QueueEventsHost {
     session: string,
     take = 100,
     skip = 0,
+    search = '',
     orderBy?: keyof Template,
     orderType?: 'asc' | 'desc',
     showDeleted?: boolean
@@ -514,6 +515,7 @@ export class TemplatesService extends QueueEventsHost {
     }
     const templates = await this.templatesRepository.find({
       where: {
+        name: Like(`%${search}%`),
         owner: { id: account.id },
         isDeleted: In([!!showDeleted, false]),
       },
@@ -553,7 +555,7 @@ export class TemplatesService extends QueueEventsHost {
   ) {
     return this.templatesRepository.update(
       { owner: { id: (<Account>account).id }, name: name },
-      { ...updateTemplateDto }
+      { ...updateTemplateDto, updatedAt: new Date() }
     );
   }
 
@@ -563,7 +565,7 @@ export class TemplatesService extends QueueEventsHost {
         owner: { id: (<Account>account).id },
         id,
       },
-      { isDeleted: true }
+      { isDeleted: true, updatedAt: new Date() }
     );
   }
 

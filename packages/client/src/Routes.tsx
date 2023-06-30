@@ -48,6 +48,8 @@ import Verificationv2 from "pages/Verificationv2";
 import { toast } from "react-toastify";
 import JourneyTablev2 from "pages/JourneyTablev2";
 import TemplateTablev2 from "pages/TemplateTablev2";
+import PeopleTablev2 from "pages/PeopleTablev2";
+import SegmentTablev2 from "pages/SegmentTablev2";
 
 interface IProtected {
   children: ReactElement;
@@ -325,7 +327,7 @@ const RouteComponent: React.FC = () => {
             <Protected>
               <VerificationProtected>
                 <DrawerLayout>
-                  <PeopleTable />
+                  <PeopleTablev2 />
                 </DrawerLayout>
               </VerificationProtected>
             </Protected>
@@ -349,7 +351,7 @@ const RouteComponent: React.FC = () => {
             <Protected>
               <VerificationProtected>
                 <DrawerLayout>
-                  <SegmentTable />
+                  <SegmentTablev2 />
                 </DrawerLayout>
               </VerificationProtected>
             </Protected>

@@ -2,31 +2,31 @@ import Button, { ButtonType } from "components/Elements/Buttonv2";
 import Input from "components/Elements/Inputv2";
 import searchIconImage from "./svg/search-icon.svg";
 import threeDotsIconImage from "./svg/three-dots-icon.svg";
-import emptyDataImage from "./svg/empty-data.svg";
 import React, { Fragment, useEffect, useState } from "react";
 import Table from "components/Tablev2";
 import { format } from "date-fns";
 import { Menu, Transition } from "@headlessui/react";
 import ApiService from "services/api.service";
-import Template from "types/Template";
 import { useNavigate } from "react-router-dom";
 import Pagination from "components/Pagination";
 import { toast } from "react-toastify";
-import NameTemplateModal from "./Modals/NameTemplateModal";
 import { useDebounce } from "react-use";
 import sortAscChevronsImage from "./svg/sort-asc-chevrons.svg";
 import sortDescChevronsImage from "./svg/sort-desc-chevrons.svg";
 import sortNoneChevronsImage from "./svg/sort-none-chevrons.svg";
+import emptyDataImage from "./svg/empty-data.svg";
+import NameSegmentModal from "./Modals/NameSegmentModal";
+import { Segment } from "types/Segment";
 
-interface TemplateRowData {
-  id: number;
+interface SegmentRowData {
+  id: string;
   name: string;
   type: string;
   lastUpdate: string;
 }
 
 enum SortProperty {
-  LAST_UPDATE = "updatedAt",
+  UPDATED_AT = "updatedAt",
 }
 
 enum SortType {
@@ -39,19 +39,18 @@ interface SortOptions {
   sortType: SortType;
 }
 
-const TemplateTablev2 = () => {
+const SegmentTablev2 = () => {
   const navigate = useNavigate();
 
-  const [isNameTemplateOpen, setIsNameTemplateOpen] = useState(false);
-
   const [isFirstRender, setIsFirstRender] = useState(true);
+  const [isNameSegmentModalOpen, setIsNameSegmentModalOpen] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [search, setSearch] = useState("");
-  const [rows, setRows] = useState<TemplateRowData[]>([]);
+  const [rows, setRows] = useState<SegmentRowData[]>([]);
   const [sortOptions, setSortOptions] = useState<SortOptions>({
-    sortBy: SortProperty.LAST_UPDATE,
+    sortBy: SortProperty.UPDATED_AT,
     sortType: SortType.DESC,
   });
 
@@ -65,8 +64,11 @@ const TemplateTablev2 = () => {
     try {
       const {
         data: { data, totalPages },
-      } = await ApiService.get<{ data: Template[]; totalPages: number }>({
-        url: `/templates?take=${ITEMS_PER_PAGE}&skip=${
+      } = await ApiService.get<{
+        data: Segment[];
+        totalPages: number;
+      }>({
+        url: `/segments?take=${ITEMS_PER_PAGE}&skip=${
           (currentPage - 1) * ITEMS_PER_PAGE
         }&search=${search}&orderBy=${sortOptions.sortBy}&orderType=${
           sortOptions.sortType
@@ -74,11 +76,11 @@ const TemplateTablev2 = () => {
       });
 
       setRows(
-        data.map((template) => ({
-          id: template.id,
-          name: template.name,
-          type: template.type,
-          lastUpdate: template.updatedAt,
+        data.map((segment) => ({
+          id: segment.id,
+          name: segment.name,
+          type: segment.type,
+          lastUpdate: new Date().toUTCString(),
         }))
       );
       setPagesCount(totalPages);
@@ -115,26 +117,26 @@ const TemplateTablev2 = () => {
     setSearch("");
   }, [showSearch]);
 
-  const handleDuplicateTemplate = async (name: string) => {
-    await ApiService.post({ url: `/templates/${name}/duplicate` });
+  const handleDuplicateSegment = async (id: string) => {
+    await ApiService.post({ url: `/segments/${id}/duplicate` });
     await loadData();
   };
 
-  const handleDeleteTemplate = async (id: number) => {
-    await ApiService.delete({ url: `/templates/${id}` });
+  const handleDeleteSegment = async (id: string) => {
+    await ApiService.delete({ url: "/segments/" + id });
     await loadData();
   };
 
   return (
     <div className="p-[20px] flex flex-col gap-[20px] font-inter font-normal text-[14px] text-[#111827] leading-[22px]">
       <div className="flex justify-between items-center">
-        <div className="text-[20px] font-semibold leading-[28px]">Template</div>
+        <div className="text-[20px] font-semibold leading-[28px]">User</div>
 
         <Button
           type={ButtonType.PRIMARY}
-          onClick={() => setIsNameTemplateOpen(true)}
+          onClick={() => setIsNameSegmentModalOpen(true)}
         >
-          Create template
+          Create segment
         </Button>
       </div>
       <div className="p-[20px] bg-white rounded-[8px] flex flex-col gap-[20px]">
@@ -144,7 +146,7 @@ const TemplateTablev2 = () => {
               <img src={emptyDataImage} />
 
               <div className="font-inter text-[16px] font-semibold leading-[24px] text-[#4B5563]">
-                Create a template for your messages
+                Create a segment
               </div>
             </div>
           </div>
@@ -156,7 +158,7 @@ const TemplateTablev2 = () => {
                   <Input
                     value={search}
                     onChange={setSearch}
-                    placeholder="Search all templates"
+                    placeholder="Search all segments"
                     showClearButton
                   />
 
@@ -182,9 +184,9 @@ const TemplateTablev2 = () => {
                 <div
                   className="px-[20px] py-[10px] select-none flex gap-[2px] items-center cursor-pointer"
                   onClick={() => {
-                    if (sortOptions.sortBy !== SortProperty.LAST_UPDATE) {
+                    if (sortOptions.sortBy !== SortProperty.UPDATED_AT) {
                       setSortOptions({
-                        sortBy: SortProperty.LAST_UPDATE,
+                        sortBy: SortProperty.UPDATED_AT,
                         sortType: SortType.DESC,
                       });
 
@@ -193,7 +195,7 @@ const TemplateTablev2 = () => {
 
                     if (sortOptions.sortType === SortType.ASC) {
                       setSortOptions({
-                        sortBy: SortProperty.LAST_UPDATE,
+                        sortBy: SortProperty.UPDATED_AT,
                         sortType: SortType.DESC,
                       });
 
@@ -201,7 +203,7 @@ const TemplateTablev2 = () => {
                     }
 
                     setSortOptions({
-                      sortBy: SortProperty.LAST_UPDATE,
+                      sortBy: SortProperty.UPDATED_AT,
                       sortType: SortType.ASC,
                     });
                   }}
@@ -210,7 +212,7 @@ const TemplateTablev2 = () => {
                   <div>
                     <img
                       src={
-                        sortOptions.sortBy === SortProperty.LAST_UPDATE
+                        sortOptions.sortBy === SortProperty.UPDATED_AT
                           ? sortOptions.sortType === SortType.ASC
                             ? sortAscChevronsImage
                             : sortDescChevronsImage
@@ -225,7 +227,7 @@ const TemplateTablev2 = () => {
               rows={rows.map((row) => [
                 <button
                   className="text-[#6366F1]"
-                  onClick={() => navigate(`/templates/${row.type}/${row.name}`)}
+                  onClick={() => navigate(`/segment/${row.id}`)}
                 >
                   {row.name}
                 </button>,
@@ -248,14 +250,14 @@ const TemplateTablev2 = () => {
                     leaveFrom="transform opacity-100 scale-100"
                     leaveTo="transform opacity-0 scale-95"
                   >
-                    <Menu.Items className="absolute z-[120] right-0 origin-top-right w-[200px] h-[72px] py-[4px] rounded-[2px] bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                    <Menu.Items className="absolute z-[120] right-0 origin-top-right w-[200px] py-[4px] rounded-[2px] bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
                       <Menu.Item>
                         {({ active }) => (
                           <button
                             className={`block w-full text-left py-[5px] px-[12px] ${
                               active ? "bg-[#F3F4F6]" : ""
                             }`}
-                            onClick={() => handleDuplicateTemplate(row.name)}
+                            onClick={() => handleDuplicateSegment(row.id)}
                           >
                             Duplicate
                           </button>
@@ -267,7 +269,7 @@ const TemplateTablev2 = () => {
                             className={`block w-full text-left py-[5px] px-[12px] text-[#F43F5E] ${
                               active ? "bg-[#F3F4F6]" : ""
                             }`}
-                            onClick={() => handleDeleteTemplate(row.id)}
+                            onClick={() => handleDeleteSegment(row.id)}
                           >
                             Delete
                           </button>
@@ -292,12 +294,12 @@ const TemplateTablev2 = () => {
         )}
       </div>
 
-      <NameTemplateModal
-        isOpen={isNameTemplateOpen}
-        onClose={() => setIsNameTemplateOpen(false)}
+      <NameSegmentModal
+        isOpen={isNameSegmentModalOpen}
+        onClose={() => setIsNameSegmentModalOpen(false)}
       />
     </div>
   );
 };
 
-export default TemplateTablev2;
+export default SegmentTablev2;
