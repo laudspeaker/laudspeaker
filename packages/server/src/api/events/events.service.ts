@@ -70,7 +70,8 @@ export class EventsService {
     private PosthogEventTypeModel: Model<PosthogEventTypeDocument>,
     @InjectConnection() private readonly connection: mongoose.Connection,
     @InjectQueue('webhooks') private readonly webhooksQueue: Queue,
-    @Inject(JourneysService) private readonly journeysService: JourneysService
+    @Inject(forwardRef(() => JourneysService))
+    private readonly journeysService: JourneysService
   ) {
     for (const { name, property_type } of defaultEventKeys) {
       if (name && property_type) {

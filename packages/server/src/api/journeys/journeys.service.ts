@@ -225,6 +225,76 @@ export class JourneysService {
   }
 
   /**
+   * Creates a journey using a db transaction.
+   *
+   * @param account
+   * @param name
+   * @param session
+   * @returns
+   */
+  async transactionalCreate(
+    account: Account,
+    name: string,
+    queryRunner: QueryRunner,
+    session: string
+  ) {
+    try {
+      const startNodeUUID = uuid();
+      const nextNodeUUID = uuid();
+
+      const journey = await queryRunner.manager.create(Journey, {
+        name,
+        owner: { id: account.id },
+        visualLayout: {
+          nodes: [],
+          edges: [
+            {
+              id: `e${startNodeUUID}-${nextNodeUUID}`,
+              type: EdgeType.PRIMARY,
+              source: startNodeUUID,
+              target: nextNodeUUID,
+            },
+          ],
+        },
+      });
+
+      await queryRunner.manager.save(journey);
+
+      const step = await this.stepsService.transactionalInsert(
+        account,
+        {
+          type: StepType.START,
+          journeyID: journey.id,
+        },
+        queryRunner,
+        session
+      );
+
+      journey.visualLayout.nodes = [
+        {
+          id: startNodeUUID,
+          type: NodeType.START,
+          data: {
+            stepId: step.id,
+          },
+          position: { x: 0, y: 0 },
+        },
+        {
+          id: nextNodeUUID,
+          type: NodeType.EMPTY,
+          data: {},
+          position: { x: 0, y: 0 },
+        },
+      ];
+
+      return await queryRunner.manager.save(journey);
+    } catch (err) {
+      this.error(err, this.create.name, session, account.email);
+      throw err;
+    }
+  }
+
+  /**
    * Duplicate a journey.
    * @param user
    * @param id
@@ -728,7 +798,7 @@ export class JourneysService {
       );
 
       const unenrolledCustomers = customers.filter(
-        (customer) => customer.workflows.indexOf(journeyID) < 0
+        (customer) => customer.journeys.indexOf(journeyID) < 0
       );
       await this.CustomerModel.updateMany(
         {

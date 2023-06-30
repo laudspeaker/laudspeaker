@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -15,6 +15,8 @@ import { BullModule } from '@nestjs/bullmq';
 import { Verification } from './entities/verification.entity';
 import { CustomersModule } from '../customers/customers.module';
 import { Recovery } from './entities/recovery.entity';
+import { JourneysModule } from '../journeys/journeys.module';
+import { StepsModule } from '../steps/steps.module';
 
 @Module({
   imports: [
@@ -37,6 +39,8 @@ import { Recovery } from './entities/recovery.entity';
       name: 'message',
     }),
     CustomersModule,
+    forwardRef(() => JourneysModule),
+    forwardRef(() => StepsModule),
   ],
   controllers: [AuthController],
   providers: [AuthService, AuthHelper, JwtStrategy, ApiKeyStrategy],

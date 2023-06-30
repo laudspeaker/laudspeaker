@@ -6,32 +6,26 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
-import { EntityManager, Repository } from 'typeorm';
+import { QueryRunner, Repository } from 'typeorm';
 import { Account } from '../accounts/entities/accounts.entity';
 import { BaseJwtHelper } from '../../common/helper/base-jwt.helper';
 import { DEFAULT_TEMPLATES } from '../../fixtures/user.default.templates';
 import { Template } from '../templates/entities/template.entity';
-import {
-  ProviderTypes,
-  TriggerType,
-  Workflow,
-} from '../workflows/entities/workflow.entity';
+import { Workflow } from '../workflows/entities/workflow.entity';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { LoggerService } from '@nestjs/common/services';
 import { Inject } from '@nestjs/common/decorators';
 import { Audience } from '../audiences/entities/audience.entity';
-import { randomUUID } from 'crypto';
+import { JourneysService } from '../journeys/journeys.service';
+import { StepsService } from '../steps/steps.service';
+import { StepType } from '../steps/types/step.interface';
 
 @Injectable()
 export class AuthHelper extends BaseJwtHelper {
+  @Inject(JourneysService) private readonly journeysService: JourneysService;
+  @Inject(StepsService) private readonly stepsService: StepsService;
   @InjectRepository(Account)
   private readonly repository: Repository<Account>;
-  @InjectRepository(Template)
-  private templateRepository: Repository<Template>;
-  @InjectRepository(Workflow)
-  private workflowRepository: Repository<Workflow>;
-  @InjectRepository(Audience)
-  private audienceRepository: Repository<Audience>;
   @Inject(WINSTON_MODULE_NEST_PROVIDER)
   private readonly logger: LoggerService;
 
@@ -75,264 +69,433 @@ export class AuthHelper extends BaseJwtHelper {
 
   private async generateExampleOnboardingJourney(
     account: Account,
-    transactionManager: EntityManager
+    queryRunner: QueryRunner,
+    session: string
   ) {
-    let ret = new Workflow();
-    ret.name = 'example-onboarding';
-    ret.owner = account;
-    ret = await transactionManager.save(ret);
-    this.logger.debug('Created workflow: ' + ret?.id);
-
-    const data = await Promise.all(
-      [
-        {
-          name: 'Pre-Signup',
-          customers: [],
-          templates: [],
-          isDynamic: true,
-          isPrimary: true,
-          inclusionCriteria: undefined,
-          description:
-            "User hasn't created an account yet. When a user creates an account, we receive the SignUp event, and they are moved to the next step in the Journey, where they will be sent a message. Users that we have never seen before are added to this step, and then we process their associated SignUp event.",
-          owner: account,
-        },
-        {
-          name: 'Post-Signup',
-          customers: [],
-          templates: [],
-          isDynamic: false,
-          isPrimary: false,
-          inclusionCriteria: undefined,
-          description:
-            'In this step, triggered immediately after the SignUp event, users are sent a Welcome Email. You can see the all available templates under the Templates tab in the Side Navigation Menu.',
-          owner: account,
-        },
-      ].map(async (el) => {
-        const { name, customers, templates, isPrimary, description, owner } =
-          el;
-
-        const audience = new Audience();
-        audience.name = name;
-        audience.customers = customers;
-        audience.templates = templates;
-        audience.isPrimary = isPrimary;
-        audience.description = description;
-        audience.owner = owner;
-        audience.workflow = ret;
-
-        const resp = await transactionManager.save(audience);
-
-        return resp;
-      })
+    const journey = await this.journeysService.transactionalCreate(
+      account,
+      'Basic Onboarding (Sample)',
+      queryRunner,
+      session
+    );
+    const waitUntil = await this.stepsService.transactionalInsert(
+      account,
+      { journeyID: journey.id, type: StepType.WAIT_UNTIL_BRANCH },
+      queryRunner,
+      session
+    );
+    const newsletter = await this.stepsService.transactionalInsert(
+      account,
+      { journeyID: journey.id, type: StepType.MESSAGE },
+      queryRunner,
+      session
+    );
+    const followUp = await this.stepsService.transactionalInsert(
+      account,
+      { journeyID: journey.id, type: StepType.MESSAGE },
+      queryRunner,
+      session
+    );
+    const newsletterExit = await this.stepsService.transactionalInsert(
+      account,
+      { journeyID: journey.id, type: StepType.EXIT },
+      queryRunner,
+      session
+    );
+    const followUpExit = await this.stepsService.transactionalInsert(
+      account,
+      { journeyID: journey.id, type: StepType.EXIT },
+      queryRunner,
+      session
     );
 
-    const nodeIds = [randomUUID(), randomUUID()];
-    const triggerId = randomUUID();
-    const eventName = 'SignUp';
-
-    const defRules = [
-      {
-        type: 'eventBased',
-        source: data[0].id,
-        dest: [data[1].id],
-        providerType: 'custom',
-        properties: {
-          conditions: [
-            {
-              key: 'Event',
-              comparisonType: 'isEqual',
-              type: 'String',
-              value: eventName,
-              relationWithNext: 'and',
-              isArray: false,
-            },
-          ],
-        },
-      },
-    ];
-
-    const rules: string[] = [];
-    for (let index = 0; index < defRules?.length; index++)
-      rules.push(
-        Buffer.from(JSON.stringify(defRules[index])).toString('base64')
+    const startstep =
+      await this.stepsService.transactionalfindAllByTypeInJourney(
+        account,
+        StepType.START,
+        journey.id,
+        queryRunner,
+        session
       );
-
-    ret.rules = rules;
-    ret.visualLayout = {
-      nodes: [
-        {
-          id: nodeIds[0],
-          position: { x: 105, y: 99 },
-          type: 'special',
-          data: {
-            primary: true,
-            audienceId: data[0].id,
-            triggers: [
-              {
-                id: triggerId,
-                title: 'Event Based',
-                type: TriggerType.EVENT,
-                properties: {
-                  conditions: [
-                    {
-                      key: 'Event',
-                      value: 'SignUp',
-                      comparisonType: 'isEqual',
-                      type: 'String',
-                      relationWithNext: 'and',
-                      isArray: false,
-                    },
-                  ],
-                },
-                providerType: ProviderTypes.Custom,
-              },
-            ],
-            messages: [],
-            dataTriggers: [],
-            flowId: ret.id,
-            isSelected: false,
-            nodeId: nodeIds[0],
-            needsUpdate: false,
-            isTriggerDragging: false,
-            isMessagesDragging: false,
-            isConnecting: false,
-            isNearToCursor: false,
-          },
-          width: 350,
-          height: 88,
-          selected: false,
-          positionAbsolute: { x: 105, y: 99 },
-          dragging: false,
-        },
-        {
-          id: nodeIds[1],
-          position: { x: 105, y: 282 },
-          type: 'special',
-          data: {
-            primary: false,
-            audienceId: data[1].id,
-            triggers: [],
-            messages: [],
-            dataTriggers: [],
-            flowId: ret.id,
-            isSelected: false,
-            nodeId: nodeIds[1],
-            needsUpdate: false,
-            isTriggerDragging: false,
-            isMessagesDragging: false,
-            isConnecting: false,
-            isNearToCursor: false,
-          },
-          width: 350,
-          height: 88,
-          selected: false,
-          positionAbsolute: { x: 105, y: 282 },
-          dragging: false,
-        },
-      ],
+    const visualLayout = {
       edges: [
         {
-          source: nodeIds[0],
-          sourceHandle: triggerId,
-          target: nodeIds[1],
-          targetHandle: null,
-          id: randomUUID(),
-          markerEnd: {
-            type: 'arrow',
-            strokeWidth: 2,
-            height: 20,
-            width: 20,
+          id: 'b27200da1-bdd3-4c46-8216-7a09184f7bc0',
+          data: {
+            type: 'branch',
+            branch: {
+              id: '27200da1-bdd3-4c46-8216-7a09184f7bc0',
+              type: 'event',
+              conditions: [
+                {
+                  name: 'verify',
+                  statements: [],
+                  providerType: 'custom',
+                  relationToNext: 'and',
+                },
+              ],
+            },
           },
-          type: 'custom',
+          type: 'branch',
+          source: 'ee979f0a-653f-4e58-a425-726cb8c3cf6a',
+          target: 'db24008a-c31e-4d9c-a3c0-ef255b5cdda5',
+        },
+        {
+          id: 'b986ba05b-2a75-4bd2-a597-f11ef29e7b00',
+          data: {
+            type: 'branch',
+            branch: {
+              id: '986ba05b-2a75-4bd2-a597-f11ef29e7b00',
+              type: 'maxTime',
+              delay: {
+                days: 2,
+                hours: 0,
+                minutes: 0,
+              },
+              timeType: 'timeDelay',
+            },
+          },
+          type: 'branch',
+          source: 'ee979f0a-653f-4e58-a425-726cb8c3cf6a',
+          target: '55cb7651-09ab-4280-8b46-9d0dc22baaef',
+        },
+        {
+          id: 'db24008a-c31e-4d9c-a3c0-ef255b5cdda5-a17820a5-3182-4cc5-8c4f-eda77d197ef8',
+          type: 'primary',
+          source: 'db24008a-c31e-4d9c-a3c0-ef255b5cdda5',
+          target: 'a17820a5-3182-4cc5-8c4f-eda77d197ef8',
+        },
+        {
+          id: 'ecc2333db-88d3-41d8-a22d-206ea092d8ab-ee979f0a-653f-4e58-a425-726cb8c3cf6a',
+          type: 'primary',
+          source: 'cc2333db-88d3-41d8-a22d-206ea092d8ab',
+          target: 'ee979f0a-653f-4e58-a425-726cb8c3cf6a',
+        },
+        {
+          id: '55cb7651-09ab-4280-8b46-9d0dc22baaef-3f6f7fc1-f0ca-41be-abba-1458fbd5ead4',
+          type: 'primary',
+          source: '55cb7651-09ab-4280-8b46-9d0dc22baaef',
+          target: '3f6f7fc1-f0ca-41be-abba-1458fbd5ead4',
+        },
+      ],
+      nodes: [
+        {
+          id: 'cc2333db-88d3-41d8-a22d-206ea092d8ab',
+          data: {
+            stepId: startstep[0].id,
+          },
+          type: 'start',
+          position: {
+            x: 0,
+            y: 0,
+          },
+          selected: false,
+        },
+        {
+          id: 'ee979f0a-653f-4e58-a425-726cb8c3cf6a',
+          data: {
+            type: 'waitUntil',
+            stepId: waitUntil.id,
+            branches: [
+              {
+                id: '27200da1-bdd3-4c46-8216-7a09184f7bc0',
+                type: 'event',
+                conditions: [
+                  {
+                    name: 'verify',
+                    statements: [],
+                    providerType: 'custom',
+                    relationToNext: 'and',
+                  },
+                ],
+              },
+              {
+                id: '986ba05b-2a75-4bd2-a597-f11ef29e7b00',
+                type: 'maxTime',
+                delay: {
+                  days: 2,
+                  hours: 0,
+                  minutes: 0,
+                },
+                timeType: 'timeDelay',
+              },
+            ],
+          },
+          type: 'waitUntil',
+          position: {
+            x: 0,
+            y: 125,
+          },
+          selected: false,
+        },
+        {
+          id: 'db24008a-c31e-4d9c-a3c0-ef255b5cdda5',
+          data: {
+            type: 'message',
+            stepId: newsletter.id,
+            template: {
+              type: 'email',
+            },
+          },
+          type: 'message',
+          position: {
+            x: -260,
+            y: 395,
+          },
+          selected: false,
+        },
+        {
+          id: 'a17820a5-3182-4cc5-8c4f-eda77d197ef8',
+          data: {
+            stepId: followUpExit.id,
+          },
+          type: 'exit',
+          position: {
+            x: -260,
+            y: 520,
+          },
+          selected: false,
+        },
+        {
+          id: '55cb7651-09ab-4280-8b46-9d0dc22baaef',
+          data: {
+            type: 'message',
+            stepId: followUp.id,
+            template: {
+              type: 'email',
+            },
+          },
+          type: 'message',
+          position: {
+            x: 260,
+            y: 395,
+          },
+          selected: false,
+        },
+        {
+          id: '3f6f7fc1-f0ca-41be-abba-1458fbd5ead4',
+          data: {
+            stepId: newsletterExit.id,
+          },
+          type: 'exit',
+          position: {
+            x: 260,
+            y: 520,
+          },
           selected: false,
         },
       ],
     };
-    await transactionManager.save(ret);
+
+    await this.journeysService.updateLayoutTransactional(
+      account,
+      { id: journey.id, nodes: visualLayout.nodes, edges: visualLayout.edges },
+      queryRunner,
+      session
+    );
   }
 
   private async generateExampleSingleCampaignJourney(
     account: Account,
-    transactionManager: EntityManager
+    queryRunner: QueryRunner,
+    session: string
   ) {
-    let ret = new Workflow();
-    ret.name = 'example-single-campaign';
-    ret.owner = account;
-    ret = await transactionManager.save(ret);
-    this.logger.debug('Created workflow: ' + ret?.id);
-
-    const data = await Promise.all(
-      [
-        {
-          name: 'One-Off Broadcast',
-          customers: [],
-          templates: [],
-          isDynamic: false,
-          isPrimary: true,
-          inclusionCriteria: undefined,
-          description:
-            "This email is sent to all your customers that exist at the moment that the Journey is started and meet the crtiteria for this Journey. It is not sent to customers who's profiles are created after this Journey is started (Static Journey).",
-          owner: account,
-        },
-      ].map(async (el) => {
-        const { name, customers, templates, isPrimary, description, owner } =
-          el;
-
-        const audience = new Audience();
-        audience.name = name;
-        audience.customers = customers;
-        audience.templates = templates;
-        audience.isPrimary = isPrimary;
-        audience.description = description;
-        audience.owner = owner;
-        audience.workflow = ret;
-
-        const resp = await transactionManager.save(audience);
-        return resp;
-      })
+    const journey = await this.journeysService.transactionalCreate(
+      account,
+      'General Email Campaign (Sample)',
+      queryRunner,
+      session
     );
-
-    const nodeId = randomUUID();
-
-    ret.visualLayout = {
-      edges: [],
+    const newsletter = await this.stepsService.transactionalInsert(
+      account,
+      { journeyID: journey.id, type: StepType.MESSAGE },
+      queryRunner,
+      session
+    );
+    const newsletterExit = await this.stepsService.transactionalInsert(
+      account,
+      { journeyID: journey.id, type: StepType.EXIT },
+      queryRunner,
+      session
+    );
+    const startstep =
+      await this.stepsService.transactionalfindAllByTypeInJourney(
+        account,
+        StepType.START,
+        journey.id,
+        queryRunner,
+        session
+      );
+    const visualLayout = {
+      edges: [
+        {
+          id: 'e64bb8b23-ed24-453a-a5f7-3d03f88f813b-d9526784-78dd-41a8-b679-aa55dacaedfe',
+          type: 'primary',
+          source: '64bb8b23-ed24-453a-a5f7-3d03f88f813b',
+          target: 'd9526784-78dd-41a8-b679-aa55dacaedfe',
+        },
+        {
+          id: 'd9526784-78dd-41a8-b679-aa55dacaedfe-9d76b90f-a791-444c-8295-e6839432e586',
+          type: 'primary',
+          source: 'd9526784-78dd-41a8-b679-aa55dacaedfe',
+          target: '9d76b90f-a791-444c-8295-e6839432e586',
+        },
+      ],
       nodes: [
         {
-          id: nodeId,
-          position: { x: 100, y: 300 },
-          type: 'special',
+          id: '64bb8b23-ed24-453a-a5f7-3d03f88f813b',
           data: {
-            primary: true,
-            audienceId: data[0].id,
-            triggers: [],
-            messages: [],
-            dataTriggers: [],
-            flowId: ret.id,
-            isSelected: false,
-            nodeId: nodeId,
-            needsUpdate: true,
-            isTriggerDragging: false,
-            isMessagesDragging: false,
-            isConnecting: false,
-            isNearToCursor: false,
+            stepId: startstep[0].id,
           },
-          width: 350,
-          height: 88,
+          type: 'start',
+          position: {
+            x: 0,
+            y: 0,
+          },
           selected: false,
-          positionAbsolute: { x: 100, y: 300 },
-          dragging: false,
+        },
+        {
+          id: 'd9526784-78dd-41a8-b679-aa55dacaedfe',
+          data: {
+            type: 'message',
+            stepId: newsletter.id,
+            template: {
+              type: 'email',
+            },
+          },
+          type: 'message',
+          position: {
+            x: 0,
+            y: 125,
+          },
+          selected: false,
+        },
+        {
+          id: '9d76b90f-a791-444c-8295-e6839432e586',
+          data: {
+            stepId: newsletterExit.id,
+          },
+          type: 'exit',
+          position: {
+            x: 0,
+            y: 250,
+          },
+          selected: false,
         },
       ],
     };
-    await transactionManager.save(ret);
+    await this.journeysService.updateLayoutTransactional(
+      account,
+      { id: journey.id, nodes: visualLayout.nodes, edges: visualLayout.edges },
+      queryRunner,
+      session
+    );
+  }
+
+  private async generateExampleModalJourney(
+    account: Account,
+    queryRunner: QueryRunner,
+    session: string
+  ) {
+    const journey = await this.journeysService.transactionalCreate(
+      account,
+      'Display Modal (Sample)',
+      queryRunner,
+      session
+    );
+    const newsletter = await this.stepsService.transactionalInsert(
+      account,
+      { journeyID: journey.id, type: StepType.MESSAGE },
+      queryRunner,
+      session
+    );
+    const newsletterExit = await this.stepsService.transactionalInsert(
+      account,
+      { journeyID: journey.id, type: StepType.EXIT },
+      queryRunner,
+      session
+    );
+    const startstep =
+      await this.stepsService.transactionalfindAllByTypeInJourney(
+        account,
+        StepType.START,
+        journey.id,
+        queryRunner,
+        session
+      );
+    const visualLayout = {
+      edges: [
+        {
+          id: 'e64bb8b23-ed24-453a-a5f7-3d03f88f813b-d9526784-78dd-41a8-b679-aa55dacaedfe',
+          type: 'primary',
+          source: '64bb8b23-ed24-453a-a5f7-3d03f88f813b',
+          target: 'd9526784-78dd-41a8-b679-aa55dacaedfe',
+        },
+        {
+          id: 'd9526784-78dd-41a8-b679-aa55dacaedfe-9d76b90f-a791-444c-8295-e6839432e586',
+          type: 'primary',
+          source: 'd9526784-78dd-41a8-b679-aa55dacaedfe',
+          target: '9d76b90f-a791-444c-8295-e6839432e586',
+        },
+      ],
+      nodes: [
+        {
+          id: '64bb8b23-ed24-453a-a5f7-3d03f88f813b',
+          data: {
+            stepId: startstep[0].id,
+          },
+          type: 'start',
+          position: {
+            x: 0,
+            y: 0,
+          },
+          selected: false,
+        },
+        {
+          id: 'd9526784-78dd-41a8-b679-aa55dacaedfe',
+          data: {
+            type: 'message',
+            stepId: newsletter.id,
+            template: {
+              type: 'modal',
+            },
+          },
+          type: 'message',
+          position: {
+            x: 0,
+            y: 125,
+          },
+          selected: false,
+        },
+        {
+          id: '9d76b90f-a791-444c-8295-e6839432e586',
+          data: {
+            stepId: newsletterExit.id,
+          },
+          type: 'exit',
+          position: {
+            x: 0,
+            y: 250,
+          },
+          selected: false,
+        },
+      ],
+    };
+    await this.journeysService.updateLayoutTransactional(
+      account,
+      { id: journey.id, nodes: visualLayout.nodes, edges: visualLayout.edges },
+      queryRunner,
+      session
+    );
   }
 
   // generate default templates and workflows for newly registered user
   public async generateDefaultData(
     account: Account,
-    transactionManager: EntityManager
+    queryRunner: QueryRunner,
+    session: string
   ) {
-    await transactionManager.save<Template>(
+    await queryRunner.manager.save(
       DEFAULT_TEMPLATES.map((el) => {
         const template = new Template();
         template.id = el.id;
@@ -349,10 +512,12 @@ export class AuthHelper extends BaseJwtHelper {
       })
     );
 
-    await this.generateExampleOnboardingJourney(account, transactionManager);
+    await this.generateExampleOnboardingJourney(account, queryRunner, session);
+    await this.generateExampleModalJourney(account, queryRunner, session);
     await this.generateExampleSingleCampaignJourney(
       account,
-      transactionManager
+      queryRunner,
+      session
     );
   }
 }

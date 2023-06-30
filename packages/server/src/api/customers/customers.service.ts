@@ -489,6 +489,7 @@ export class CustomersService {
       delete identifyEvent._id;
       delete identifyEvent.__v;
       delete identifyEvent.workflows;
+      delete identifyEvent.journeys;
 
       query = {
         ownerId: (<Account>account).id,

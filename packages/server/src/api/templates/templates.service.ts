@@ -8,7 +8,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, Like, Repository } from 'typeorm';
+import { In, QueryRunner, Like, Repository } from 'typeorm';
 import { Account } from '../accounts/entities/accounts.entity';
 import {
   Customer,
@@ -535,6 +535,17 @@ export class TemplatesService extends QueueEventsHost {
 
   findOneById(account: Account, id: string): Promise<Template> {
     return this.templatesRepository.findOneBy({
+      owner: { id: account.id },
+      id: id,
+    });
+  }
+
+  transactionalFindOneById(
+    account: Account,
+    id: string,
+    queryRunner: QueryRunner
+  ): Promise<Template> {
+    return queryRunner.manager.findOneBy(Template, {
       owner: { id: account.id },
       id: id,
     });
