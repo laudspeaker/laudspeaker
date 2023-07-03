@@ -28,7 +28,7 @@ const StaticDrawer = () => {
 
   return (
     <div
-      className={`block !min-w-[200px] px-[10px] text-[14px] text-[#111827] leading-[22px] font-normal z-[9999999999] bg-[#F3F4F6] border-[1px] border-[#E5E7EB] h-screen`}
+      className={`block !min-w-[200px] !w-[200px] px-[10px] text-[14px] text-[#111827] leading-[22px] font-normal z-[9999999999] bg-[#F3F4F6] border-r-[1px] border-[#E5E7EB] h-screen font-roboto`}
     >
       <div className="flex flex-col gap-[8px] ">
         <div className={`w-full h-[50px] flex items-center gap-[20px]`}>
@@ -104,7 +104,7 @@ const StaticDrawer = () => {
                           <div className="flex flex-col gap-[8px]">
                             {navigationItem.children.map((child) => (
                               <div
-                                className={`w-full h-[40px] flex items-center select-none cursor-pointer`}
+                                className={`w-full h-[40px] flex items-center select-none cursor-pointer pl-[22px]`}
                                 onClick={() => navigate(child.link)}
                                 key={child.id}
                               >

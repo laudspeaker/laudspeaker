@@ -248,6 +248,7 @@ export class AuthService {
         );
 
         foundCustomer.verified = true;
+        foundCustomer.email = email;
         await foundCustomer.save({ session: transactionSession });
       } else {
         const customer = await this.customersService.create(

@@ -66,7 +66,7 @@ const ResponsiveDrawer: FC<ResponsiveDrawerProps> = ({ expandable }) => {
 
   return (
     <div
-      className={`fixed hover:!w-[200px] w-[50px] transition-[width] [&_.notexapndable]:hover:!scale-100 top-0 left-0 px-[10px] text-[14px] text-[#111827] leading-[22px] font-normal z-[9999999999] border-collapse bg-[#F3F4F6] border-[1px] border-[#E5E7EB] h-screen`}
+      className={`fixed hover:!w-[200px] w-[50px] transition-[width] [&_.notexapndable]:hover:!scale-100 top-0 left-0 px-[10px] text-[14px] text-[#111827] leading-[22px] font-normal font-roboto z-[9999999999] border-collapse bg-[#F3F4F6] border-[1px] border-[#E5E7EB] h-screen`}
       ref={drawerRef}
     >
       <div className="flex flex-col gap-[8px] ">
@@ -150,7 +150,7 @@ const ResponsiveDrawer: FC<ResponsiveDrawerProps> = ({ expandable }) => {
                             {navigationItem.children.map((child) => (
                               <div
                                 className={`w-full h-[40px] flex items-center select-none cursor-pointer ${
-                                  isExpanded ? "" : "justify-center"
+                                  isExpanded ? "pl-[22px]" : "justify-center"
                                 }`}
                                 onClick={() => navigate(child.link)}
                                 key={child.id}
