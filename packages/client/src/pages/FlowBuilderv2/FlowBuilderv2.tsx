@@ -20,9 +20,9 @@ import {
   setJourneyType,
   setSegmentsSettings,
 } from "reducers/flow-builder.reducer";
-import { JourneyStatus } from "components/TableTemplate/TableTemplate";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import { JourneyStatus } from "pages/JourneyTablev2/JourneyTablev2";
 
 const FlowBuilderv2 = () => {
   const { id } = useParams();
@@ -69,14 +69,14 @@ const FlowBuilderv2 = () => {
       );
       dispatch(setFlowId(id));
 
-      let status: JourneyStatus = JourneyStatus.EDITABLE;
+      let status: JourneyStatus = JourneyStatus.DRAFT;
 
       if (data.isActive) status = JourneyStatus.ACTIVE;
       if (data.isPaused) status = JourneyStatus.PAUSED;
       if (data.isStopped) status = JourneyStatus.STOPPED;
       if (data.isDeleted) status = JourneyStatus.DELETED;
 
-      if (status !== JourneyStatus.EDITABLE) navigate(`/flow/${id}/view`);
+      if (status !== JourneyStatus.DRAFT) navigate(`/flow/${id}/view`);
     } finally {
       setIsLoading(false);
     }
@@ -133,7 +133,7 @@ const FlowBuilderv2 = () => {
   ]);
 
   return (
-    <div className="relative w-full h-full max-h-[calc(100%-46px)]">
+    <div className="relative w-full h-full">
       <FlowBuilderHeader />
       <div className="relative flex w-full h-full max-h-[calc(100%-60px)]">
         {flowBuilderState.stepperIndex === 0 && <FlowBuilderDrawer />}

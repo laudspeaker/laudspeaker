@@ -4,7 +4,9 @@ import Scrollbars from "react-custom-scrollbars-2";
 import { changeNodeData, deselectNodes } from "reducers/flow-builder.reducer";
 import { useAppDispatch, useAppSelector } from "store/hooks";
 import deepCopy from "utils/deepCopy";
-import Button, { ButtonType } from "../Elements/Button";
+import Button, {
+  ButtonType,
+} from "../../../components/Elements/Buttonv2/Button";
 import { NodeType } from "../FlowEditor";
 import FlowBuilderDeleteModal from "../Modals/FlowBuilderDeleteModal";
 import { messageFixtures } from "../Nodes/MessageNode";

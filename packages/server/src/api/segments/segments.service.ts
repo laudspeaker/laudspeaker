@@ -9,7 +9,7 @@ import {
 import { BadRequestException } from '@nestjs/common/exceptions';
 import { InjectRepository } from '@nestjs/typeorm';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
-import { DataSource, In, Repository } from 'typeorm';
+import { DataSource, In, Like, Repository } from 'typeorm';
 import { Account } from '../accounts/entities/accounts.entity';
 import { AudiencesHelper } from '../audiences/audiences.helper';
 import { CustomersService } from '../customers/customers.service';
@@ -54,6 +54,7 @@ export class SegmentsService {
     account: Account,
     take = 100,
     skip = 0,
+    search = '',
     session: string
   ) {
     const totalPages = Math.ceil(
@@ -64,7 +65,7 @@ export class SegmentsService {
       })) / take || 1
     );
     const segments = await this.segmentRepository.find({
-      where: { owner: { id: account.id } },
+      where: { name: Like(`%${search}%`), owner: { id: account.id } },
       take: take < 100 ? take : 100,
       skip,
     });

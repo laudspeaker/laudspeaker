@@ -14,6 +14,7 @@ import { ApiConfig } from "../../constants";
 import ApiService from "services/api.service";
 import ToggleSwitch from "components/Elements/ToggleSwitch";
 import { GenericButton } from "components/Elements";
+import { JourneyStatus } from "pages/JourneyTablev2/JourneyTablev2";
 
 export interface TableDataItem {
   isInsideSegment?: boolean;
@@ -188,20 +189,12 @@ function renderCorrectColumnNames(
   }
 }
 
-export enum JourneyStatus {
-  ACTIVE = "Active",
-  PAUSED = "Paused",
-  STOPPED = "Stopped",
-  DELETED = "Deleted",
-  EDITABLE = "Editable",
-}
-
 const statusStyles = {
   [JourneyStatus.ACTIVE]: "",
   [JourneyStatus.PAUSED]: "!bg-yellow-200 !text-yellow-600",
   [JourneyStatus.STOPPED]: "!bg-red-200 !text-red-600",
   [JourneyStatus.DELETED]: "!bg-red-200 !text-red-600",
-  [JourneyStatus.EDITABLE]: "!bg-gray-200 !text-gray-600",
+  [JourneyStatus.DRAFT]: "!bg-gray-200 !text-gray-600",
 };
 
 function renderSecondColumn(row: TableDataItem) {
@@ -223,7 +216,7 @@ function renderSecondColumn(row: TableDataItem) {
     );
   } else if (row.isActive != null) {
     //this is a test for checking if this is the journeys table or the template table
-    let status: JourneyStatus = JourneyStatus.EDITABLE;
+    let status: JourneyStatus = JourneyStatus.DRAFT;
 
     if (row.isActive) status = JourneyStatus.ACTIVE;
     if (row.isPaused) status = JourneyStatus.PAUSED;

@@ -69,7 +69,7 @@ export enum JourneyStatus {
   PAUSED = 'Paused',
   STOPPED = 'Stopped',
   DELETED = 'Deleted',
-  EDITABLE = 'Editable',
+  DRAFT = 'Draft',
 }
 
 function isObjKey<T extends object>(key: PropertyKey, obj: T): key is keyof T {
@@ -500,7 +500,7 @@ export class JourneysService {
       const isPaused = filterStatusesParts.includes(JourneyStatus.PAUSED);
       const isStopped = filterStatusesParts.includes(JourneyStatus.STOPPED);
       const isDeleted = filterStatusesParts.includes(JourneyStatus.DELETED);
-      const isEditable = filterStatusesParts.includes(JourneyStatus.EDITABLE);
+      const isEditable = filterStatusesParts.includes(JourneyStatus.DRAFT);
 
       const whereOrParts: FindOptionsWhere<Journey>[] = [];
 
@@ -560,7 +560,17 @@ export class JourneysService {
         take: take < 100 ? take : 100,
         skip,
       });
-      return { data: journeys, totalPages };
+
+      const journeysWithEnrolledCustomersCount = await Promise.all(
+        journeys.map(async (journey) => ({
+          ...journey,
+          enrolledCustomers: await this.CustomerModel.count({
+            journeys: journey.id,
+          }),
+        }))
+      );
+
+      return { data: journeysWithEnrolledCustomersCount, totalPages };
     } catch (err) {
       this.error(err, this.findAll.name, session, account.email);
       throw err;
