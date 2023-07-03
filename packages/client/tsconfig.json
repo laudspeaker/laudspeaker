@@ -18,5 +18,5 @@
     "baseUrl": "src",
     "types": ["node", "cypress", "@4tw/cypress-drag-drop"]
   },
-  "include": ["src", ".eslintrc.js"]
+  "include": ["src", ".eslintrc.js", "src/components/AutoCompletev2/.tsx"]
 }

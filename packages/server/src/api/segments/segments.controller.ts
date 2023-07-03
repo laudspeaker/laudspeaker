@@ -101,7 +101,8 @@ export class SegmentsController {
   public async findAll(
     @Req() { user }: Request,
     @Query('take') take?: string,
-    @Query('skip') skip?: string
+    @Query('skip') skip?: string,
+    @Query('search') search?: string
   ) {
     const session = randomUUID();
 
@@ -109,6 +110,7 @@ export class SegmentsController {
       <Account>user,
       take && +take,
       skip && +skip,
+      search,
       session
     );
   }

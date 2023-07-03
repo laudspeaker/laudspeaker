@@ -2,7 +2,9 @@ import React, { FC } from "react";
 import { Node } from "reactflow";
 import { removeNode } from "reducers/flow-builder.reducer";
 import { useAppDispatch } from "store/hooks";
-import Button, { ButtonType } from "../Elements/Button";
+import Button, {
+  ButtonType,
+} from "../../../components/Elements/Buttonv2/Button";
 import FlowBuilderModal from "../Elements/FlowBuilderModal";
 import { NodeData } from "../Nodes/NodeData";
 

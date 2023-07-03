@@ -13,7 +13,7 @@ import EventBranchEditor from "../components/EventBranchEditor";
 import { SidePanelComponentProps } from "../FlowBuilderSidePanel";
 import { v4 as uuid } from "uuid";
 import MaxTimeBranchEditor from "../components/MaxTimeBranchEditor";
-import Button, { ButtonType } from "pages/FlowBuilderv2/Elements/Button";
+import Button, { ButtonType } from "components/Elements/Buttonv2/Button";
 import { toast } from "react-toastify";
 import deepCopy from "utils/deepCopy";
 

@@ -1,7 +1,9 @@
 import React, { FC, useState } from "react";
 import { setFlowName } from "reducers/flow-builder.reducer";
 import { useAppDispatch, useAppSelector } from "store/hooks";
-import Button, { ButtonType } from "../Elements/Button";
+import Button, {
+  ButtonType,
+} from "../../../components/Elements/Buttonv2/Button";
 import FlowBuilderInput from "../Elements/FlowBuilderInput";
 import FlowBuilderModal from "../Elements/FlowBuilderModal";
 

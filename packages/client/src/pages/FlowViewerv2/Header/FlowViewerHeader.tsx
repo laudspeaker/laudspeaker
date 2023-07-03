@@ -1,5 +1,8 @@
-import { JourneyStatus } from "components/TableTemplate/TableTemplate";
-import Button, { ButtonType } from "pages/FlowBuilderv2/Elements/Button";
+import Button, { ButtonType } from "components/Elements/Buttonv2/Button";
+import {
+  JourneyStatus,
+  journeyStatusClassName,
+} from "pages/JourneyTablev2/JourneyTablev2";
 import React, { FC, useState } from "react";
 import ApiService from "services/api.service";
 import { useAppSelector } from "store/hooks";
@@ -11,14 +14,6 @@ interface FlowViewerHeaderProps {
   currentTab: FlowViewerTab;
   setCurrentTab: (tab: FlowViewerTab) => void;
 }
-
-const journeyStatusClassName: Record<JourneyStatus, string> = {
-  [JourneyStatus.ACTIVE]: "bg-[#DCFCE7] text-[#14532D]",
-  [JourneyStatus.DELETED]: "",
-  [JourneyStatus.EDITABLE]: "",
-  [JourneyStatus.PAUSED]: "bg-[#FEF9C3] text-[#713F12]",
-  [JourneyStatus.STOPPED]: "bg-[#F3F4F6] text-[#6B7280]",
-};
 
 const FlowViewerHeader: FC<FlowViewerHeaderProps> = ({
   tabs,

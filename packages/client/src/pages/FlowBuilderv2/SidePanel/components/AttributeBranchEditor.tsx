@@ -1,4 +1,4 @@
-import Button, { ButtonType } from "pages/FlowBuilderv2/Elements/Button";
+import Button, { ButtonType } from "components/Elements/Buttonv2/Button";
 import {
   AttributeBranch,
   AttributeCondition,

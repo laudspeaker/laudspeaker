@@ -8,7 +8,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Account, PlanType } from '../accounts/entities/accounts.entity';
-import { DataSource, EntityManager, Repository } from 'typeorm';
+import { DataSource, EntityManager, QueryRunner, Repository } from 'typeorm';
 import { RegisterDto } from '../auth/dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { AuthHelper } from './auth.helper';
@@ -102,9 +102,13 @@ export class AuthService {
   }
 
   public async register(body: RegisterDto, session: string) {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    let err;
     try {
       const { firstName, lastName, email, password }: RegisterDto = body;
-      let user: Account = await this.accountRepository.findOne({
+      let user: Account = await queryRunner.manager.findOne(Account, {
         where: { email },
       });
       if (user) {
@@ -114,29 +118,30 @@ export class AuthService {
         );
       }
 
-      let ret: Account;
-      await this.dataSource.manager.transaction(async (transactionManager) => {
-        user = new Account();
+      user = new Account();
 
-        user.firstName = firstName;
-        user.lastName = lastName;
-        user.email = email;
-        user.password = this.helper.encodePassword(password);
-        user.apiKey = this.helper.generateApiKey();
-        user.accountCreatedAt = new Date();
-        user.plan = PlanType.FREE;
-        ret = await transactionManager.save(user);
-        await this.helper.generateDefaultData(ret, transactionManager);
+      user.firstName = firstName;
+      user.lastName = lastName;
+      user.email = email;
+      user.password = this.helper.encodePassword(password);
+      user.apiKey = this.helper.generateApiKey();
+      user.accountCreatedAt = new Date();
+      user.plan = PlanType.FREE;
+      let ret = await queryRunner.manager.save(user);
+      await this.helper.generateDefaultData(ret, queryRunner, session);
 
-        user.id = ret.id;
+      user.id = ret.id;
 
-        await this.requestVerification(ret, transactionManager, session);
-      });
-
+      await this.requestVerification(ret, queryRunner, session);
+      await queryRunner.commitTransaction();
       return { ...ret, access_token: this.helper.generateToken(ret) };
     } catch (e) {
-      this.debug(e, this.register.name, session);
-      throw e;
+      err = e;
+      this.error(e, this.register.name, session);
+      await queryRunner.rollbackTransaction();
+    } finally {
+      await queryRunner.release();
+      if (err) throw err;
     }
   }
 
@@ -182,7 +187,7 @@ export class AuthService {
 
   public async requestVerification(
     user: Account,
-    transactionManager: EntityManager = this.dataSource.manager,
+    queryRunner: QueryRunner,
     session: string
   ) {
     let verification = new Verification();
@@ -190,7 +195,7 @@ export class AuthService {
     verification.account = user;
     verification.status = 'sent';
 
-    verification = await transactionManager.save(verification);
+    verification = await queryRunner.manager.save(verification);
 
     const verificationLink = `${process.env.FRONTEND_URL}/verify-email/${verification.id}`;
 
@@ -243,6 +248,7 @@ export class AuthService {
         );
 
         foundCustomer.verified = true;
+        foundCustomer.email = email;
         await foundCustomer.save({ session: transactionSession });
       } else {
         const customer = await this.customersService.create(

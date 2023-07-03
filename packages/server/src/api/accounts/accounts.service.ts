@@ -296,36 +296,42 @@ export class AccountsService extends BaseJwtHelper {
         HttpStatus.BAD_REQUEST
       );
 
+    const queryRunner = await this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    let err;
     try {
       let updatedUser: Account;
-      await this.dataSource.manager.transaction(async (transactionManager) => {
-        for (const key of Object.keys(updateUserDto)) {
-          oldUser[key] = updateUserDto[key];
-        }
+      for (const key of Object.keys(updateUserDto)) {
+        oldUser[key] = updateUserDto[key];
+      }
 
-        oldUser.password = password;
-        oldUser.verified = verified;
-        oldUser.sendgridVerificationKey =
-          verificationKey || oldUser.sendgridVerificationKey;
+      oldUser.password = password;
+      oldUser.verified = verified;
+      oldUser.sendgridVerificationKey =
+        verificationKey || oldUser.sendgridVerificationKey;
 
-        updatedUser = await transactionManager.save<Account>(oldUser);
+      updatedUser = await queryRunner.manager.save(oldUser);
 
-        if (needEmailUpdate)
-          await this.authService.requestVerification(
-            updatedUser,
-            transactionManager,
-            session
-          );
-      });
+      if (needEmailUpdate)
+        await this.authService.requestVerification(
+          updatedUser,
+          queryRunner,
+          session
+        );
 
       await transactionSession.commitTransaction();
 
       return updatedUser;
     } catch (e) {
       await transactionSession.abortTransaction();
-      throw e;
+      err = e;
+      this.error(e, this.update.name, session);
+      await queryRunner.rollbackTransaction();
     } finally {
+      await queryRunner.release();
       await transactionSession.endSession();
+      if (err) throw err;
     }
   }
 

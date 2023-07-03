@@ -4,7 +4,9 @@ import { toast } from "react-toastify";
 import { JourneyType } from "reducers/flow-builder.reducer";
 import ApiService from "services/api.service";
 import { useAppSelector } from "store/hooks";
-import Button, { ButtonType } from "../Elements/Button";
+import Button, {
+  ButtonType,
+} from "../../../components/Elements/Buttonv2/Button";
 import FlowBuilderModal from "../Elements/FlowBuilderModal";
 
 interface FlowBuilderStartModalProps {

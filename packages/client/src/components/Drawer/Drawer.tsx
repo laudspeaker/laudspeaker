@@ -1,4 +1,5 @@
 import React, {
+  FC,
   Fragment,
   MouseEvent,
   useEffect,
@@ -18,6 +19,7 @@ import { refreshFlowBuilder } from "reducers/flow-builder.reducer";
 import laudspeakerIcon from "../../assets/images/laudspeakerHeaderIcon.svg";
 import useTimedHover from "hooks/useTimedHover";
 import useHover from "hooks/useHover";
+import StaticDrawer from "./StaticDrawer";
 
 const classNames = (...classes: string[]) => classes.filter(Boolean).join(" ");
 
@@ -32,22 +34,39 @@ interface NavigationItem {
 
 const navigation = dataSubArray;
 
-export default function ResponsiveDrawer() {
+export interface ResponsiveDrawerProps {
+  expandable?: boolean;
+}
+
+const ResponsiveDrawer: FC<ResponsiveDrawerProps> = ({ expandable }) => {
   const dispatch = useAppDispatch();
   const location = useLocation();
   const navigate = useNavigate();
 
   const drawerRef = useRef<HTMLDivElement>(null);
 
-  const isExpanded = useHover(drawerRef);
+  const isHovered = useHover(drawerRef);
+
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  useEffect(() => {
+    if (!expandable) {
+      setIsExpanded(true);
+      return;
+    }
+
+    setIsExpanded(isHovered);
+  }, [isHovered]);
 
   useEffect(() => {
     dispatch(refreshFlowBuilder());
   }, [location.pathname]);
 
+  if (!expandable) return <StaticDrawer />;
+
   return (
     <div
-      className={`fixed hover:!w-[200px] w-[50px] transition-[width] [&_.notexapndable]:hover:!scale-100 top-0 left-0 px-[10px] text-[14px] text-[#111827] leading-[22px] font-normal z-[9999999999] border-collapse bg-[#F3F4F6] border-[1px] border-[#E5E7EB] h-screen`}
+      className={`fixed hover:!w-[200px] w-[50px] transition-[width] [&_.notexapndable]:hover:!scale-100 top-0 left-0 px-[10px] text-[14px] text-[#111827] leading-[22px] font-normal font-roboto z-[9999999999] border-collapse bg-[#F3F4F6] border-[1px] border-[#E5E7EB] h-screen`}
       ref={drawerRef}
     >
       <div className="flex flex-col gap-[8px] ">
@@ -131,7 +150,7 @@ export default function ResponsiveDrawer() {
                             {navigationItem.children.map((child) => (
                               <div
                                 className={`w-full h-[40px] flex items-center select-none cursor-pointer ${
-                                  isExpanded ? "" : "justify-center"
+                                  isExpanded ? "pl-[22px]" : "justify-center"
                                 }`}
                                 onClick={() => navigate(child.link)}
                                 key={child.id}
@@ -224,4 +243,5 @@ export default function ResponsiveDrawer() {
       </div>
     </div>
   );
-}
+};
+export default ResponsiveDrawer;
