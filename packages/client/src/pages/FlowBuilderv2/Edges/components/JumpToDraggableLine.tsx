@@ -1,29 +1,43 @@
-import React, { FC, useEffect, useRef, useState } from "react";
+import React, { DragEvent, FC, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import {
-  BaseEdge,
   getBezierPath,
-  MarkerType,
+  getSmoothStepPath,
   Position,
   useViewport,
-  getMarkerEnd,
   useNodes,
 } from "reactflow";
-import { getSmartEdge } from "@tisoap/react-flow-smart-edge";
-import { useAppSelector } from "store/hooks";
+import {
+  getSmartEdge,
+  pathfindingAStarNoDiagonal,
+  svgDrawSmoothLinePath,
+} from "@tisoap/react-flow-smart-edge";
+import { NodeType } from "pages/FlowBuilderv2/FlowEditor";
 
 interface JumpToDraggableLineProps {
+  jumpToNodeId: string;
   targetId?: string;
   setTargetId: (targetId?: string) => void;
 }
 
 const JumpToDraggableLine: FC<JumpToDraggableLineProps> = ({
+  jumpToNodeId,
   targetId,
   setTargetId,
 }) => {
+  const nodeTypesConnectableToJumpTo: (string | undefined)[] = [
+    NodeType.EMPTY,
+    NodeType.INSERT_NODE,
+    NodeType.JUMP_TO,
+    NodeType.START,
+  ];
+
   const nodes = useNodes();
 
+  const jumpToNode = nodes.find((node) => node.id === jumpToNodeId);
+
   const sourceRef = useRef<HTMLDivElement>(null);
+  const positionWrapperRef = useRef<HTMLDivElement>(null);
 
   const { x: viewX, y: viewY, zoom } = useViewport();
 
@@ -33,6 +47,8 @@ const JumpToDraggableLine: FC<JumpToDraggableLineProps> = ({
     y: number;
   }>();
   const [edgePath, setEdgePath] = useState<string>();
+  const [sourceTop, setSourceTop] = useState<number>();
+  const [sourceLeft, setSourceLeft] = useState<number>();
 
   const flowContainer = document.querySelector(".react-flow");
   const edgesContainer = document.querySelector(".react-flow__edges > g");
@@ -45,12 +61,16 @@ const JumpToDraggableLine: FC<JumpToDraggableLineProps> = ({
 
     const clientSourceX =
       (sourceBoundingRect.left + sourceBoundingRect.right) / 2;
-    const clientSourceY = sourceBoundingRect.bottom;
+    const clientSourceY =
+      (sourceBoundingRect.top + sourceBoundingRect.bottom) / 2;
 
     const canvasSourceX =
       (clientSourceX - viewX - boudingClientRect.left) / zoom;
     const canvasSourceY =
       (clientSourceY - viewY - boudingClientRect.top) / zoom;
+
+    const sourceX = canvasSourceX;
+    const sourceY = canvasSourceY;
 
     let targetX = canvasSourceX + 7;
     let targetY = canvasSourceY + 48;
@@ -63,12 +83,77 @@ const JumpToDraggableLine: FC<JumpToDraggableLineProps> = ({
     ) {
       targetX = (mousePosition.x - viewX - boudingClientRect.left) / zoom;
       targetY = (mousePosition.y - viewY - boudingClientRect.top) / zoom;
+
+      if (jumpToNode && jumpToNode.width && jumpToNode.height) {
+        const xPickFunction =
+          targetX < jumpToNode.position.x
+            ? Math.max.bind(null, 0)
+            : Math.min.bind(null, jumpToNode.width);
+
+        const yPickFunction =
+          targetY < jumpToNode.position.y
+            ? Math.max.bind(null, jumpToNode.height / 2)
+            : Math.min.bind(null, jumpToNode.height);
+
+        const jumpToClientLeft =
+          (jumpToNode.position.x - jumpToNode.width / 2) * zoom +
+          viewX +
+          boudingClientRect.left;
+
+        const jumpToClientTop =
+          (jumpToNode.position.y - jumpToNode.height / 2) * zoom +
+          viewY +
+          boudingClientRect.top;
+
+        const xResult = xPickFunction(
+          (mousePosition.x - jumpToClientLeft) / zoom
+        );
+        const yResult = yPickFunction(
+          (mousePosition.y - jumpToClientTop) / zoom
+        );
+
+        if (
+          yResult === jumpToNode.height ||
+          xResult === 0 ||
+          xResult === jumpToNode.width
+        )
+          setSourceLeft(xResult);
+
+        if (xResult === 0 || xResult === jumpToNode.width)
+          setSourceTop(yResult);
+      }
     }
 
-    const sourceX = canvasSourceX;
-    const sourceY = canvasSourceY;
+    if (targetId) {
+      const targetNode = nodes.find((node) => node.id === targetId);
+      if (!targetNode) {
+        setTargetId(undefined);
+        return;
+      }
 
-    const sourcePosition = Position.Bottom;
+      const halfWidth = (targetNode.width || 200) / 2;
+
+      const targetNodeLeftBorder = targetNode.position.x - halfWidth;
+      const targetNodeRightBorder = targetNode.position.x + halfWidth;
+
+      targetX =
+        targetY > canvasSourceY
+          ? targetX > canvasSourceX
+            ? targetNodeRightBorder
+            : targetNodeLeftBorder
+          : targetX > canvasSourceX
+          ? targetNodeLeftBorder
+          : targetNodeRightBorder;
+      targetY = targetNode.position.y;
+    }
+
+    const sourcePosition = sourceLeft
+      ? sourceLeft <= 0
+        ? Position.Left
+        : sourceLeft >= 120
+        ? Position.Right
+        : Position.Bottom
+      : Position.Bottom;
     const targetPosition =
       targetY > canvasSourceY
         ? targetX > canvasSourceX
@@ -85,20 +170,31 @@ const JumpToDraggableLine: FC<JumpToDraggableLineProps> = ({
       sourceY,
       targetX,
       targetY,
-      nodes,
+      nodes: nodes.map((node) => ({
+        ...node,
+        position: {
+          x: node.position.x - (node.width ? node.width / 2 : 0),
+          y: node.position.y + (node.height ? node.height / 2 : 0),
+        },
+        positionAbsolute: {
+          x: node.position.x - (node.width ? node.width / 2 : 0),
+          y: node.position.y + (node.height ? node.height / 2 : 0),
+        },
+      })),
       options: {
-        nodePadding: 100,
+        drawEdge: targetId ? svgDrawSmoothLinePath : undefined,
+        generatePath: targetId ? pathfindingAStarNoDiagonal : undefined,
       },
     });
 
-    console.log(nodes);
-
-    if (getSmartEdgeResponse) {
+    if (getSmartEdgeResponse && !targetId) {
       setEdgePath(getSmartEdgeResponse.svgPathString);
       return;
     }
 
-    const [newEdgePath] = getBezierPath({
+    const dumbPathFunction = targetId ? getSmoothStepPath : getBezierPath;
+
+    const [newEdgePath] = dumbPathFunction({
       sourceX,
       sourceY,
       targetX,
@@ -108,11 +204,67 @@ const JumpToDraggableLine: FC<JumpToDraggableLineProps> = ({
     });
 
     setEdgePath(newEdgePath);
-  }, [sourceRef.current, isDragging, mousePosition]);
+  }, [
+    sourceRef.current,
+    positionWrapperRef.current,
+    isDragging,
+    mousePosition,
+    targetId,
+  ]);
+
+  const onDrag = (e: DragEvent) => {
+    setMousePosition({ x: e.clientX, y: e.clientY });
+  };
+
+  const onDragEnd = (e: DragEvent) => {
+    setSourceLeft(undefined);
+    setSourceTop(undefined);
+    setIsDragging(false);
+
+    if (!flowContainer) return;
+
+    const boudingClientRect = flowContainer.getBoundingClientRect();
+
+    const canvasX = (e.clientX - viewX - boudingClientRect.left) / zoom;
+    const canvasY = (e.clientY - viewY - boudingClientRect.top) / zoom;
+
+    for (const node of nodes) {
+      if (
+        !node.width ||
+        !node.height ||
+        nodeTypesConnectableToJumpTo.includes(node.type)
+      )
+        continue;
+
+      const halfWidth = node.width / 2;
+      const halfHeight = node.height / 2;
+
+      const leftBorderX = node.position.x - halfWidth;
+      const rightBorderX = node.position.x + halfWidth;
+
+      const topBorderY = node.position.y - halfHeight;
+      const bottomBorderY = node.position.y + halfHeight;
+
+      const isInsideNode =
+        canvasX > leftBorderX &&
+        canvasX < rightBorderX &&
+        canvasY > topBorderY &&
+        canvasY < bottomBorderY;
+
+      if (!isInsideNode) continue;
+
+      setTargetId(node.id);
+      return;
+    }
+  };
 
   return (
     <div
-      className="absolute left-1/2 top-full -translate-x-1/2"
+      className="absolute -translate-x-1/2"
+      style={{
+        left: sourceLeft === undefined ? "50%" : sourceLeft,
+        top: sourceTop === undefined ? "100%" : sourceTop,
+      }}
       draggable
       onClick={(e) => {
         e.stopPropagation();
@@ -121,18 +273,12 @@ const JumpToDraggableLine: FC<JumpToDraggableLineProps> = ({
       onDragStart={(e) => {
         console.log("drag start");
         e.dataTransfer.effectAllowed = "move";
-        e.dataTransfer.setData("jumpTo", "true");
+        setTargetId(undefined);
         setIsDragging(true);
         setMousePosition({ x: e.clientX, y: e.clientY });
       }}
-      onDrag={(e) => {
-        setMousePosition({ x: e.clientX, y: e.clientY });
-        e.dataTransfer.setData("jumpTo", "true");
-      }}
-      onDragEnd={(e) => {
-        console.log("drag end", e.clientX, e.clientY);
-        setIsDragging(false);
-      }}
+      onDrag={onDrag}
+      onDragEnd={onDragEnd}
       onMouseDown={(e) => e.stopPropagation()}
       onMouseDownCapture={(e) => e.stopPropagation()}
     >

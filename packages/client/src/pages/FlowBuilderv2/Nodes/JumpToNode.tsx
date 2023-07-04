@@ -70,6 +70,7 @@ export const JumpToNode: FC<NodeProps<JumpToNodeData>> = ({
         </div>
 
         <JumpToDraggableLine
+          jumpToNodeId={id}
           targetId={data.targetId}
           setTargetId={setTargetId}
         />
