@@ -52,10 +52,7 @@ export const messageFixtures: Record<
       },
     ],
   },
-  [MessageType.FIREBASE]: {
-    icon: <></>,
-    text: "Filebase",
-  },
+
   [MessageType.MODAL]: {
     icon: <CustomModalIcon />,
     text: "Custom Modal",

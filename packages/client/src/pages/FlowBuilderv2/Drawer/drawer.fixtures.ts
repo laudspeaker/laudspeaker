@@ -17,7 +17,7 @@ export enum DrawerAction {
   EMAIL = "email",
   SMS = "sms",
   SLACK = "slack",
-  PUSH = "push",
+  PUSH = "firebase",
   WEBHOOK = "webhook",
   CUSTOM_MODAL = "customModal",
   JUMP_TO = "jumpTo",
