@@ -406,8 +406,8 @@ export class EventsService {
                 journeyID: journeys[i].id,
               },
               {
-                attempts: Number.MAX_SAFE_INTEGER,
-                backoff: { delay: 10000, type: 'fixed' },
+                attempts: 10,
+                backoff: { delay: 1000, type: 'exponential' },
               }
             );
           this.debug(
@@ -499,8 +499,8 @@ export class EventsService {
             journeyID: journeys[i].id,
           },
           {
-            attempts: Number.MAX_SAFE_INTEGER,
-            backoff: { delay: 10000, type: 'fixed' },
+            attempts: 10,
+            backoff: { delay: 1000, type: 'exponential' },
           }
         );
       if (eventDto) {

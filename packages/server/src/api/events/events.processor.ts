@@ -24,7 +24,10 @@ import { AudiencesHelper } from '../audiences/audiences.helper';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 
 @Injectable()
-@Processor('events')
+@Processor('events', {
+  removeOnComplete: { age: 0, count: 0 },
+  removeOnFail: { count: 0 },
+})
 export class EventsProcessor extends WorkerHost {
   constructor(
     @Inject(WINSTON_MODULE_NEST_PROVIDER)

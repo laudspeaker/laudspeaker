@@ -5,7 +5,7 @@ import { CustomersService } from './customers.service';
 import axios from 'axios';
 
 @Injectable()
-@Processor('customers')
+@Processor('customers', { removeOnComplete: { age: 0, count: 0 } })
 export class CustomersProcessor extends WorkerHost {
   constructor(
     @Inject(CustomersService) private customersService: CustomersService

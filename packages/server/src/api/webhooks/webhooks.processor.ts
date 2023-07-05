@@ -18,7 +18,7 @@ import {
 } from '../templates/entities/template.entity';
 import { TemplatesService } from '../templates/templates.service';
 
-@Processor('webhooks')
+@Processor('webhooks', { removeOnComplete: { age: 0, count: 0 } })
 @Injectable()
 export class WebhooksProcessor extends WorkerHost {
   private tagEngine = new Liquid();
