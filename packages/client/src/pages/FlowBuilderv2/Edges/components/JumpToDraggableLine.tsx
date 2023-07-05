@@ -13,6 +13,7 @@ import {
   svgDrawSmoothLinePath,
 } from "@tisoap/react-flow-smart-edge";
 import { NodeType } from "pages/FlowBuilderv2/FlowEditor";
+import { v4 as uuid } from "uuid";
 
 interface JumpToDraggableLineProps {
   jumpToNodeId: string;
@@ -75,6 +76,15 @@ const JumpToDraggableLine: FC<JumpToDraggableLineProps> = ({
     let targetX = canvasSourceX + 7;
     let targetY = canvasSourceY + 48;
 
+    let targetPosition =
+      targetY > canvasSourceY
+        ? targetX > canvasSourceX
+          ? Position.Left
+          : Position.Right
+        : targetX > canvasSourceX
+        ? Position.Right
+        : Position.Left;
+
     if (
       isDragging &&
       mousePosition &&
@@ -83,45 +93,6 @@ const JumpToDraggableLine: FC<JumpToDraggableLineProps> = ({
     ) {
       targetX = (mousePosition.x - viewX - boudingClientRect.left) / zoom;
       targetY = (mousePosition.y - viewY - boudingClientRect.top) / zoom;
-
-      if (jumpToNode && jumpToNode.width && jumpToNode.height) {
-        const xPickFunction =
-          targetX < jumpToNode.position.x
-            ? Math.max.bind(null, 0)
-            : Math.min.bind(null, jumpToNode.width);
-
-        const yPickFunction =
-          targetY < jumpToNode.position.y
-            ? Math.max.bind(null, jumpToNode.height / 2)
-            : Math.min.bind(null, jumpToNode.height);
-
-        const jumpToClientLeft =
-          (jumpToNode.position.x - jumpToNode.width / 2) * zoom +
-          viewX +
-          boudingClientRect.left;
-
-        const jumpToClientTop =
-          (jumpToNode.position.y - jumpToNode.height / 2) * zoom +
-          viewY +
-          boudingClientRect.top;
-
-        const xResult = xPickFunction(
-          (mousePosition.x - jumpToClientLeft) / zoom
-        );
-        const yResult = yPickFunction(
-          (mousePosition.y - jumpToClientTop) / zoom
-        );
-
-        if (
-          yResult === jumpToNode.height ||
-          xResult === 0 ||
-          xResult === jumpToNode.width
-        )
-          setSourceLeft(xResult);
-
-        if (xResult === 0 || xResult === jumpToNode.width)
-          setSourceTop(yResult);
-      }
     }
 
     if (targetId) {
@@ -136,32 +107,66 @@ const JumpToDraggableLine: FC<JumpToDraggableLineProps> = ({
       const targetNodeLeftBorder = targetNode.position.x - halfWidth;
       const targetNodeRightBorder = targetNode.position.x + halfWidth;
 
+      const lengthToLeftBorder = Math.abs(targetNodeLeftBorder - canvasSourceX);
+
+      const lengthToRightBorder = Math.abs(
+        targetNodeRightBorder - canvasSourceX
+      );
+
       targetX =
-        targetY > canvasSourceY
-          ? targetX > canvasSourceX
-            ? targetNodeRightBorder
-            : targetNodeLeftBorder
-          : targetX > canvasSourceX
+        lengthToLeftBorder < lengthToRightBorder
           ? targetNodeLeftBorder
           : targetNodeRightBorder;
+
+      targetPosition =
+        lengthToLeftBorder < lengthToRightBorder
+          ? Position.Left
+          : Position.Right;
+
       targetY = targetNode.position.y;
     }
 
-    const sourcePosition = sourceLeft
-      ? sourceLeft <= 0
+    if (
+      (isDragging || targetId) &&
+      jumpToNode &&
+      jumpToNode.width &&
+      jumpToNode.height
+    ) {
+      const xPickFunction =
+        targetX < jumpToNode.position.x
+          ? Math.max.bind(null, 0)
+          : Math.min.bind(null, jumpToNode.width);
+
+      const yPickFunction =
+        targetY < jumpToNode.position.y
+          ? Math.max.bind(null, jumpToNode.height / 2)
+          : Math.min.bind(null, jumpToNode.height);
+
+      const xResult = xPickFunction(
+        targetX - jumpToNode.position.x + jumpToNode.width / 2
+      );
+      const yResult = yPickFunction(
+        targetY - jumpToNode.position.y + jumpToNode.height / 2
+      );
+
+      if (
+        yResult === jumpToNode.height ||
+        xResult === 0 ||
+        xResult === jumpToNode.width
+      )
+        setSourceLeft(xResult);
+
+      if (xResult === 0 || xResult === jumpToNode.width) setSourceTop(yResult);
+    }
+
+    const sourcePosition =
+      sourceLeft === undefined
+        ? Position.Bottom
+        : sourceLeft <= 0
         ? Position.Left
         : sourceLeft >= 120
         ? Position.Right
-        : Position.Bottom
-      : Position.Bottom;
-    const targetPosition =
-      targetY > canvasSourceY
-        ? targetX > canvasSourceX
-          ? Position.Left
-          : Position.Right
-        : targetX > canvasSourceX
-        ? Position.Right
-        : Position.Left;
+        : Position.Bottom;
 
     const getSmartEdgeResponse = getSmartEdge({
       sourcePosition,
@@ -210,6 +215,10 @@ const JumpToDraggableLine: FC<JumpToDraggableLineProps> = ({
     isDragging,
     mousePosition,
     targetId,
+    sourceTop,
+    sourceLeft,
+    jumpToNode,
+    nodes,
   ]);
 
   const onDrag = (e: DragEvent) => {
@@ -258,6 +267,8 @@ const JumpToDraggableLine: FC<JumpToDraggableLineProps> = ({
     }
   };
 
+  const markerUUID = uuid();
+
   return (
     <div
       className="absolute -translate-x-1/2"
@@ -290,14 +301,96 @@ const JumpToDraggableLine: FC<JumpToDraggableLineProps> = ({
           createPortal(
             <>
               {edgePath && (
-                <g className="react-flow__edge outline-none">
+                <g className="react-flow__edge outline-none nopan">
+                  <defs>
+                    <marker
+                      id={`arrowhead${markerUUID}`}
+                      markerWidth="10"
+                      markerHeight="7"
+                      refX={targetId ? "10" : "0"}
+                      refY="3.5"
+                      orient="auto"
+                      markerUnits="strokeWidth"
+                    >
+                      {/* <line
+                        x1="0"
+                        y1="0"
+                        x2="10"
+                        y2="3.5"
+                        style={{
+                          stroke: "#4338CA",
+                          fill: "#4338CA",
+                        }}
+                      />
+                      <line
+                        x1="0"
+                        y1="7"
+                        x2="10"
+                        y2="3.5"
+                        style={{
+                          stroke: "#4338CA",
+                          fill: "#4338CA",
+                        }}
+                      /> */}
+                      <polygon
+                        points="0 0, 10 3.5, 0 7"
+                        style={{
+                          stroke: "#4338CA",
+                          fill: "#4338CA",
+                        }}
+                      />
+                    </marker>
+                  </defs>
                   <path
+                    onClick={() => {
+                      console.log("PATH CLICK");
+                    }}
                     className="react-flow__edge-path"
                     style={{
+                      strokeWidth: 1,
                       stroke: "#4338CA",
+                      outline: "none",
                     }}
                     d={edgePath}
+                    markerEnd={`url(#arrowhead${markerUUID})`}
                   />
+
+                  {/* <path
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      console.log("PATH INTERACTION CLICK");
+                    }}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      console.log("PATH MOUSE DOWN");
+                    }}
+                    onMouseDownCapture={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      console.log("PATH MOUSE DOWN CAPTURE");
+                    }}
+                    onDragStart={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      console.log("DRAG START");
+                    }}
+                    onDrag={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      console.log("PATH INTERACTION DRAG");
+                    }}
+                    className="react-flow__edge-interaction cursor-move"
+                    style={{
+                      strokeWidth: 10,
+                      stroke: "transparent",
+                      fill: "transparent",
+                      outline: "none",
+                      pointerEvents: "all",
+                    }}
+                    d={edgePath}
+                  /> */}
                 </g>
               )}
             </>,
