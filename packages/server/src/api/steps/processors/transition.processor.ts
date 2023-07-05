@@ -27,7 +27,10 @@ import { SlackService } from '@/api/slack/slack.service';
 import { Account } from '@/api/accounts/entities/accounts.entity';
 
 @Injectable()
-@Processor('transition', { concurrency: cpus().length })
+@Processor('transition', {
+  concurrency: cpus().length,
+  removeOnComplete: { age: 0, count: 0 },
+})
 export class TransitionProcessor extends WorkerHost {
   constructor(
     private dataSource: DataSource,

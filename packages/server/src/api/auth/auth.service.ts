@@ -195,7 +195,9 @@ export class AuthService {
     verification.account = user;
     verification.status = 'sent';
 
-    verification = await queryRunner.manager.save(verification);
+    if (queryRunner)
+      verification = await queryRunner.manager.save(verification);
+    else verification = await this.verificationRepository.save(verification);
 
     const verificationLink = `${process.env.FRONTEND_URL}/verify-email/${verification.id}`;
 

@@ -10,7 +10,7 @@ import {
 } from '../webhooks/webhooks.service';
 
 @Injectable()
-@Processor('slack')
+@Processor('slack', { removeOnComplete: { age: 0, count: 0 } })
 export class SlackProcessor extends WorkerHost {
   client: WebClient;
   tagEngine: Liquid;
