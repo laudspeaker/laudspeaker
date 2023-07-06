@@ -281,7 +281,7 @@ export class WebhooksService {
         event: string;
         message: { headers: { 'message-id': string } };
         'user-variables': {
-          audienceId: string;
+          stepId: string;
           customerId: string;
           templateId: string;
           accountId: string;
@@ -301,7 +301,7 @@ export class WebhooksService {
       message: {
         headers: { 'message-id': id },
       },
-      'user-variables': { audienceId, customerId, templateId, accountId },
+      'user-variables': { stepId, customerId, templateId, accountId },
     } = body['event-data'];
 
     const account = await this.accountRepository.findOneBy({ id: accountId });
@@ -320,11 +320,13 @@ export class WebhooksService {
       throw new ForbiddenException('Invalid signature');
     }
 
-    if (!audienceId || !customerId || !templateId || !id) return;
+    this.debug(`${JSON.stringify({ webhook: body })}`, this.processMailgunData.name, session);
+
+    if (!stepId || !customerId || !templateId || !id) return;
 
     const clickHouseRecord: ClickHouseMessage = {
       userId: account.id,
-      audienceId,
+      stepId,
       customerId,
       templateId: String(templateId),
       messageId: id,
@@ -334,8 +336,7 @@ export class WebhooksService {
       createdAt: new Date().toUTCString(),
     };
 
-    this.logger.debug('Mailgun webhooK result:');
-    console.dir(clickHouseRecord, { depth: null });
+    this.debug(`${JSON.stringify({ clickhouseMessage: clickHouseRecord })}`, this.processMailgunData.name, session);
 
     await this.insertClickHouseMessages([clickHouseRecord]);
   }
