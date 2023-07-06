@@ -164,7 +164,7 @@ export class WebhooksService {
     let step: Step = null;
 
     for (const item of data) {
-      if (!item.audienceId) continue;
+      if (!item.stepId) continue;
 
       step = await this.stepRepository.findOne({
         where: {
