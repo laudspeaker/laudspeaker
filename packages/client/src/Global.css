@@ -57,3 +57,7 @@ body,
 .react-flow__controls-button > svg {
   fill: #4b5563;
 }
+
+.react-flow__edges > g {
+  outline: none;
+}
