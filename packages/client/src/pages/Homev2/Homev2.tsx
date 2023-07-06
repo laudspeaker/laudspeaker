@@ -134,7 +134,7 @@ const Homev2 = () => {
             ))}
           </div>
         </div>
-        <div className="min-w-[360px] w-[360px]">3</div>
+        {/* <div className="min-w-[360px] w-[360px]">3</div> */}
       </div>
     </div>
   );

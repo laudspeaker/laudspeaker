@@ -1,3 +1,4 @@
+import { OnboardingAction } from "pages/Onboardingv2/OnboardingSandbox";
 import { RefObject, FC, useEffect } from "react";
 import { useViewport, Edge, getOutgoers, Node } from "reactflow";
 import {
@@ -25,6 +26,7 @@ const MAXIMUM_INSERT_RADIUS = 130;
 export const dragActionsNotToDoBetweenNodes: (
   | DrawerAction
   | NodeAction
+  | OnboardingAction
   | undefined
 )[] = [
   DrawerAction.EXIT,
@@ -49,9 +51,8 @@ const NodeDraggingProvider: FC<NodeDraggingProviderProps> = ({ flowRef }) => {
     [DrawerAction.WEBHOOK]: NodeType.MESSAGE,
   };
 
-  const { nodes, edges, isDragging, flowId, dragAction } = useAppSelector(
-    (state) => state.flowBuilder
-  );
+  const { nodes, edges, isDragging, flowId, dragAction, isOnboarding } =
+    useAppSelector((state) => state.flowBuilder);
 
   const dispatch = useAppDispatch();
 
@@ -96,7 +97,10 @@ const NodeDraggingProvider: FC<NodeDraggingProviderProps> = ({ flowRef }) => {
         }
       | undefined;
 
-    if (!dragActionsNotToDoBetweenNodes.includes(dragAction?.type)) {
+    if (
+      !dragActionsNotToDoBetweenNodes.includes(dragAction?.type) &&
+      !isOnboarding
+    ) {
       for (const edge of edges) {
         if (edge.type !== EdgeType.PRIMARY) continue;
 
@@ -178,6 +182,16 @@ const NodeDraggingProvider: FC<NodeDraggingProviderProps> = ({ flowRef }) => {
       return;
 
     dispatch(transformInsertNodeIntoEmptyNode(insertNode.id));
+
+    if (isOnboarding) {
+      if (action === OnboardingAction.NOTHING) return;
+      const targetId = e.dataTransfer?.getData("targetId");
+
+      if (targetId && insertNode.id !== targetId) return;
+
+      dispatch(handleDrawerAction({ id: insertNode.id, action }));
+      return;
+    }
 
     (async () => {
       try {

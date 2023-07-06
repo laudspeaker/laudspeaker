@@ -224,7 +224,7 @@ const RouteComponent: React.FC = () => {
             <Protected>
               <VerificationProtected>
                 <DrawerLayout>
-                  <Home />
+                  <Homev2 />
                 </DrawerLayout>
               </VerificationProtected>
             </Protected>

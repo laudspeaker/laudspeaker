@@ -1,28 +1,61 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import OnboardingSandbox from "./OnboardingSandbox";
+import OnboardingStepper from "./Stepper/OnboardingStepper";
 import buildJourneysBackgroundImage from "./svg/build-journeys-background.svg";
 import targetCustomersBackgroundImage from "./svg/target-customers-background.svg";
+
+export enum OnboardingStep {
+  CREATE_JOURNEY = "Create a journey",
+  SELECT_CUSTOMERS = "Select Customers",
+  START_JOURNEY = "Start the Journey",
+}
 
 const Onboardingv2 = () => {
   const navigate = useNavigate();
 
-  const [isSandboxAction, setIsSandboxActive] = useState(false);
+  const [currentStep, setCurrentStep] = useState<OnboardingStep>();
 
-  if (isSandboxAction)
-    return (
-      <>
+  return currentStep ? (
+    <div className="min-h-screen h-screen flex flex-col gap-[40px] p-[20px]">
+      <div className="flex justify-between px-[20px] pt-[20px]">
         <button
-          className="fixed top-[40px] left-[40px] underline text-black font-inter font-normal text-[16px] leading-[24px]"
-          onClick={() => setIsSandboxActive(false)}
+          className="underline text-black font-inter font-normal text-[16px] leading-[24px]"
+          onClick={() => {}}
         >
           Back
         </button>
-        <OnboardingSandbox />
-      </>
-    );
 
-  return (
+        <OnboardingStepper currentStep={currentStep} />
+
+        <button onClick={() => window.history.back()}>
+          <svg
+            width="28"
+            height="28"
+            viewBox="0 0 32 32"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M2 30L30 2M2 2L30 30"
+              stroke="#111827"
+              stroke-width="3.375"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </button>
+      </div>
+
+      {currentStep === OnboardingStep.CREATE_JOURNEY ? (
+        <OnboardingSandbox />
+      ) : currentStep === OnboardingStep.SELECT_CUSTOMERS ? (
+        <></>
+      ) : (
+        <></>
+      )}
+    </div>
+  ) : (
     <div className="bg-white w-full p-[40px]">
       <button
         className="fixed top-[40px] right-[40px]"
@@ -189,7 +222,7 @@ const Onboardingv2 = () => {
       <div className="mt-[20px] flex items-center justify-center">
         <button
           className="px-[30px] py-[10px] rounded-[30px] bg-[#6366F1] flex items-center justify-center text-white"
-          onClick={() => setIsSandboxActive(true)}
+          onClick={() => setCurrentStep(OnboardingStep.CREATE_JOURNEY)}
         >
           Let's start
         </button>
