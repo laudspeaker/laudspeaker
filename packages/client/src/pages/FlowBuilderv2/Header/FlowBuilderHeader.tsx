@@ -14,7 +14,9 @@ import { Node } from "reactflow";
 import { BranchType, NodeData } from "../Nodes/NodeData";
 import { EdgeData } from "../Edges/EdgeData";
 import { NodeType } from "../FlowEditor";
-import Button, { ButtonType } from "../Elements/Button";
+import Button, {
+  ButtonType,
+} from "../../../components/Elements/Buttonv2/Button";
 import FlowBuilderStartModal from "../Modals/FlowBuilderStartModal";
 
 const isValidNodes = (nodes: Node<NodeData | EdgeData>[]): boolean => {

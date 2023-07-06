@@ -489,6 +489,7 @@ export class CustomersService {
       delete identifyEvent._id;
       delete identifyEvent.__v;
       delete identifyEvent.workflows;
+      delete identifyEvent.journeys;
 
       query = {
         ownerId: (<Account>account).id,
@@ -825,6 +826,9 @@ export class CustomersService {
 
         info.email = person.email || person.phEmail;
         info.phone = person.phone;
+        info.createdAt = new Date(
+          parseInt(person._id.toString().slice(0, 8), 16) * 1000
+        ).toUTCString();
         info.dataSource = 'people';
 
         if (checkInSegment)

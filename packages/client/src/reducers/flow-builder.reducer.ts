@@ -1,5 +1,4 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { JourneyStatus } from "components/TableTemplate/TableTemplate";
 import { DrawerAction } from "pages/FlowBuilderv2/Drawer/drawer.fixtures";
 import { BranchEdgeData, EdgeData } from "pages/FlowBuilderv2/Edges/EdgeData";
 import { NodeType, EdgeType } from "pages/FlowBuilderv2/FlowEditor";
@@ -10,6 +9,7 @@ import {
   LogicRelation,
   NodeData,
 } from "pages/FlowBuilderv2/Nodes/NodeData";
+import { JourneyStatus } from "pages/JourneyTablev2/JourneyTablev2";
 import {
   applyNodeChanges,
   Edge,
@@ -192,7 +192,7 @@ const initialState: FlowBuilderState = {
   },
   journeyType: JourneyType.DYNAMIC,
   isViewMode: false,
-  flowStatus: JourneyStatus.EDITABLE,
+  flowStatus: JourneyStatus.DRAFT,
   showSegmentsErrors: false,
 };
 
@@ -691,7 +691,7 @@ const flowBuilderSlice = createSlice({
       state.segments = { type: SegmentsSettingsType.ALL_CUSTOMERS };
       state.journeyType = JourneyType.DYNAMIC;
       state.isViewMode = false;
-      state.flowStatus = JourneyStatus.EDITABLE;
+      state.flowStatus = JourneyStatus.DRAFT;
       state.showSegmentsErrors = false;
     },
   },

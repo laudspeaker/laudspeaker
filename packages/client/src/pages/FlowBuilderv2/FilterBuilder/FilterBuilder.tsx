@@ -12,8 +12,10 @@ import {
 import ApiService from "services/api.service";
 import { useAppSelector } from "store/hooks";
 import { Segment } from "types/Segment";
-import Button, { ButtonType } from "../Elements/Button";
-import FlowBuilderAutoComplete from "../Elements/FlowBuilderAutoComplete";
+import Button, {
+  ButtonType,
+} from "../../../components/Elements/Buttonv2/Button";
+import FlowBuilderAutoComplete from "../../../components/AutoCompletev2/AutoCompletev2";
 import FilterBuilderDynamicInput from "../Elements/FlowBuilderDynamicInput";
 
 interface FilterBuilderProps {

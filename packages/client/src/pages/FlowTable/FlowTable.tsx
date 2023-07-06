@@ -9,13 +9,11 @@ import posthog from "posthog-js";
 import Modal from "components/Elements/Modal";
 import { Workflow } from "types/Workflow";
 import Progress from "components/Progress";
-import {
-  JourneyStatus,
-  SortOptions,
-} from "components/TableTemplate/TableTemplate";
+import { SortOptions } from "components/TableTemplate/TableTemplate";
 import AutoComplete from "components/Autocomplete";
 import { Select } from "components/Elements";
 import { useDebounce } from "react-use";
+import { JourneyStatus } from "pages/JourneyTablev2/JourneyTablev2";
 
 const FlowTable = () => {
   const [loading, setLoading] = useState(false);
@@ -148,7 +146,7 @@ const FlowTable = () => {
                 options={[
                   { value: JourneyStatus.ACTIVE },
                   { value: JourneyStatus.DELETED },
-                  { value: JourneyStatus.EDITABLE },
+                  { value: JourneyStatus.DRAFT },
                   { value: JourneyStatus.PAUSED },
                   { value: JourneyStatus.STOPPED },
                 ]}

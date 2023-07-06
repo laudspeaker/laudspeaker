@@ -24,7 +24,10 @@ import { AudiencesHelper } from '../audiences/audiences.helper';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 
 @Injectable()
-@Processor('events')
+@Processor('events', {
+  removeOnComplete: { age: 0, count: 0 },
+  removeOnFail: { count: 0 },
+})
 export class EventsProcessor extends WorkerHost {
   constructor(
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
@@ -152,7 +155,14 @@ export class EventsProcessor extends WorkerHost {
           type: StepType.WAIT_UNTIL_BRANCH,
           journey: { id: journey.id },
         },
+        relations: ['owner', 'journey'],
       });
+
+      this.debug(
+        `${JSON.stringify({ job: job.data, steps: steps })}`,
+        this.process.name,
+        job.data.session
+      );
 
       step_loop: for (
         let stepIndex = 0;
@@ -181,25 +191,25 @@ export class EventsProcessor extends WorkerHost {
               analyticsEvent.provider === AnalyticsProviderTypes.POSTHOG &&
               !(
                 (job.data.event.payload.type === PosthogTriggerParams.Track &&
-                  job.data.event.payload.event === 'change' &&
+                  job.data.event.event === 'change' &&
                   analyticsEvent.event === PosthogTriggerParams.Typed) ||
                 (job.data.event.payload.type === PosthogTriggerParams.Track &&
-                  job.data.event.payload.event === 'click' &&
+                  job.data.event.event === 'click' &&
                   analyticsEvent.event === PosthogTriggerParams.Autocapture) ||
                 (job.data.event.payload.type === PosthogTriggerParams.Track &&
-                  job.data.event.payload.event === 'submit' &&
+                  job.data.event.event === 'submit' &&
                   analyticsEvent.event === PosthogTriggerParams.Submit) ||
                 (job.data.event.payload.type === PosthogTriggerParams.Track &&
-                  job.data.event.payload.event === '$pageleave' &&
+                  job.data.event.event === '$pageleave' &&
                   analyticsEvent.event === PosthogTriggerParams.Pageleave) ||
                 (job.data.event.payload.type === PosthogTriggerParams.Track &&
-                  job.data.event.payload.event === '$rageclick' &&
+                  job.data.event.event === '$rageclick' &&
                   analyticsEvent.event === PosthogTriggerParams.Rageclick) ||
                 (job.data.event.payload.type === PosthogTriggerParams.Page &&
-                  job.data.event.payload.event === '$pageview' &&
+                  job.data.event.event === '$pageview' &&
                   analyticsEvent.event === PosthogTriggerParams.Pageview) ||
                 (job.data.event.payload.type === PosthogTriggerParams.Track &&
-                  job.data.event.payload.event === analyticsEvent.event)
+                  job.data.event.event === analyticsEvent.event)
               )
             ) {
               eventEvaluation.push(false);
@@ -208,6 +218,8 @@ export class EventsProcessor extends WorkerHost {
 
             //Skip over events that dont match
             if (
+              job.data.event.source !== AnalyticsProviderTypes.POSTHOG &&
+              analyticsEvent.provider !== AnalyticsProviderTypes.POSTHOG &&
               !(
                 job.data.event.source === analyticsEvent.provider &&
                 job.data.event.event === analyticsEvent.event
@@ -266,11 +278,11 @@ export class EventsProcessor extends WorkerHost {
                     comparisonType
                   )
                     ? this.audiencesHelper.operableCompare(
-                        job.data.event?.context?.page?.url,
+                        job.data.event?.payload?.context?.page?.url,
                         comparisonType
                       )
                     : await this.audiencesHelper.conditionalCompare(
-                        job.data.event?.context?.page?.url,
+                        job.data.event?.payload?.context?.page?.url,
                         value,
                         comparisonType
                       );
@@ -426,6 +438,7 @@ export class EventsProcessor extends WorkerHost {
             step: stepToQueue,
             branch: branch,
             customer: customer.id,
+            ownerID: stepToQueue.owner.id,
             session: job.data.session,
           });
         }

@@ -15,6 +15,8 @@ export const JumpToNode: FC<NodeProps<JumpToNodeData>> = ({
   const dispatch = useAppDispatch();
 
   const setTargetId = (targetId?: string) => {
+    if (targetId === data.targetId) return;
+
     dispatch(
       changeNodeData({ id, data: { type: NodeType.JUMP_TO, targetId } })
     );
@@ -70,6 +72,7 @@ export const JumpToNode: FC<NodeProps<JumpToNodeData>> = ({
         </div>
 
         <JumpToDraggableLine
+          jumpToNodeId={id}
           targetId={data.targetId}
           setTargetId={setTargetId}
         />

@@ -1,5 +1,7 @@
 import React, { FC } from "react";
-import Button, { ButtonType } from "../Elements/Button";
+import Button, {
+  ButtonType,
+} from "../../../components/Elements/Buttonv2/Button";
 import FlowBuilderModal from "../Elements/FlowBuilderModal";
 
 interface FlowBuilderErrorNextModalProps {

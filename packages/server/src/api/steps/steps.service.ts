@@ -139,14 +139,18 @@ export class StepsService {
     queryRunner: QueryRunner,
     session: string
   ) {
-    const startStep = await queryRunner.manager.findBy(Step, {
-      owner: { id: account.id },
-      journey: { id: journeyID },
-      type: StepType.START,
+    const startStep = await queryRunner.manager.find(Step, {
+      where: {
+        owner: { id: account.id },
+        journey: { id: journeyID },
+        type: StepType.START,
+      },
+      lock: { mode: 'pessimistic_write' },
     });
     if (startStep.length != 1)
       throw new Error('Can only have one start step per journey.');
 
+    // if (!startStep[0].customers.find((customerTuple) => { return JSON.parse(customerTuple).customerID === customer.id })) {
     startStep[0].customers = [
       ...startStep[0].customers,
       JSON.stringify({
@@ -154,9 +158,10 @@ export class StepsService {
         timestamp: Temporal.Now.instant().toString(),
       }),
     ];
+    // }
     const step = await queryRunner.manager.save(startStep[0]);
     await this.transitionQueue.add('start', {
-      account: account,
+      ownerID: account.id,
       step: step,
       session: session,
     });
@@ -194,6 +199,32 @@ export class StepsService {
     try {
       return await this.stepsRepository.findBy({
         owner: account ? { id: account.id } : undefined,
+        type: type,
+      });
+    } catch (e) {
+      this.error(e, this.findAllByType.name, session, account.id);
+      throw e;
+    }
+  }
+
+  /**
+   * Find all steps of a certain type on a journey (owner optional).
+   * @param account
+   * @param type
+   * @param session
+   * @returns
+   */
+  async transactionalfindAllByTypeInJourney(
+    account: Account,
+    type: StepType,
+    journeyID: string,
+    queryRunner: QueryRunner,
+    session: string
+  ): Promise<Step[]> {
+    try {
+      return await queryRunner.manager.findBy(Step, {
+        owner: account ? { id: account.id } : undefined,
+        journey: { id: journeyID },
         type: type,
       });
     } catch (e) {
@@ -251,7 +282,7 @@ export class StepsService {
             isStopped: false,
           },
         },
-        lock: { mode: 'pessimistic_write' },
+        relations: ['owner'],
       });
     } catch (e) {
       this.error(e, this.findAllByType.name, session, account.id);
@@ -310,6 +341,34 @@ export class StepsService {
   }
 
   /**
+   * Insert a new step using a db transaction.
+   * TODO: Check step metadata matches step type
+   * @param account
+   * @param createStepDto
+   * @param session
+   * @returns
+   */
+  async transactionalInsert(
+    account: Account,
+    createStepDto: CreateStepDto,
+    queryRunner: QueryRunner,
+    session: string
+  ): Promise<Step> {
+    try {
+      const { journeyID, type } = createStepDto;
+      return await queryRunner.manager.save(Step, {
+        customers: [],
+        owner: { id: account.id },
+        journey: { id: journeyID },
+        type,
+      });
+    } catch (e) {
+      this.error(e, this.insert.name, session, account.id);
+      throw e;
+    }
+  }
+
+  /**
    * Find all steps associated with a journey using DB transaction.
    * @param account
    * @param id
@@ -326,6 +385,7 @@ export class StepsService {
         owner: { id: account.id },
         journey: { id: id },
       },
+      relations: ['owner'],
     });
   }
 

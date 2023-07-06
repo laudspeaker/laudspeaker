@@ -99,6 +99,7 @@ export class TemplatesController {
     @Req() { user }: Request,
     @Query('take') take?: string,
     @Query('skip') skip?: string,
+    @Query('search') search?: string,
     @Query('orderBy') orderBy?: keyof Template,
     @Query('orderType') orderType?: 'asc' | 'desc',
     @Query('showDeleted') showDeleted?: boolean
@@ -109,6 +110,7 @@ export class TemplatesController {
       session,
       take && +take,
       skip && +skip,
+      search,
       orderBy,
       orderType,
       showDeleted
