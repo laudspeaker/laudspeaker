@@ -20,6 +20,7 @@ import { WebhooksService } from '../webhooks/webhooks.service';
 import { WebhooksModule } from '../webhooks/webhooks.module';
 import { ModalsModule } from '../modals/modals.module';
 import { WebsocketsModule } from '../../websockets/websockets.module';
+import { Step } from '../steps/entities/step.entity';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { WebsocketsModule } from '../../websockets/websockets.module';
       Audience,
       Installation,
       State,
+      Step,
       Template,
     ]),
     MongooseModule.forFeature([

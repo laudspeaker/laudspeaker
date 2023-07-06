@@ -37,7 +37,7 @@ const frequencyUnitToMsMap: Record<FrequencyUnit, number> = {
 const BATCH_SiZE = 10_000_000;
 
 @Injectable()
-@Processor('integrations')
+@Processor('integrations', { removeOnComplete: { age: 0, count: 0 } })
 export class IntegrationsProcessor extends WorkerHost {
   constructor(
     @InjectModel(Customer.name)

@@ -109,7 +109,7 @@ export class WebhooksController {
       From: string;
       ApiVersion: string;
     },
-    @Query('audienceId') audienceId: string,
+    @Query('stepId') stepId: string,
     @Query('customerId') customerId: string,
     @Query('templateId') templateId: string
   ) {
@@ -117,7 +117,7 @@ export class WebhooksController {
     await this.webhooksService.processTwilioData(
       {
         ...body,
-        audienceId,
+        stepId,
         customerId,
         templateId,
       },

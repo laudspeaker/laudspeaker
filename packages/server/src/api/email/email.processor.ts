@@ -23,7 +23,7 @@ export enum MessageType {
 }
 
 @Injectable()
-@Processor('message')
+@Processor('message', { removeOnComplete: { age: 0, count: 0 } })
 export class MessageProcessor extends WorkerHost {
   private MAXIMUM_SMS_LENGTH = 1600;
   private MAXIMUM_PUSH_LENGTH = 256;
