@@ -12,12 +12,10 @@ export enum OnboardingStep {
 }
 
 const Onboardingv2 = () => {
-  const navigate = useNavigate();
-
   const [currentStep, setCurrentStep] = useState<OnboardingStep>();
 
   return currentStep ? (
-    <div className="min-h-screen h-screen flex flex-col gap-[40px] p-[20px]">
+    <div className="min-h-screen h-screen flex flex-col gap-[40px] p-[20px] font-inter text-[16px] font-normal text-[#111827] leading-[24px]">
       <div className="flex justify-between px-[20px] pt-[20px]">
         <button
           className="underline text-black font-inter font-normal text-[16px] leading-[24px]"
