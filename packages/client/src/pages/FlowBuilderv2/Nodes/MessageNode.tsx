@@ -71,6 +71,18 @@ export const messageFixtures: Record<
   [MessageType.SMS]: {
     icon: <SMSIcon />,
     text: "SMS",
+    statsToShow: [
+      {
+        key: "sent",
+        name: "Sent",
+        renderLabel: (value) => compatNumberFormatter.format(value),
+      },
+      {
+        key: "delivered",
+        name: "Delivered",
+        renderLabel: (value) => compatNumberFormatter.format(value),
+      },
+    ],
   },
   [MessageType.WEBHOOK]: {
     icon: <WebhookIcon />,
