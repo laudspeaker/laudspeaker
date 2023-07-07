@@ -50,6 +50,7 @@ import JourneyTablev2 from "pages/JourneyTablev2";
 import TemplateTablev2 from "pages/TemplateTablev2";
 import PeopleTablev2 from "pages/PeopleTablev2";
 import SegmentTablev2 from "pages/SegmentTablev2";
+import { useTreatments } from "@splitsoftware/splitio-react";
 
 interface IProtected {
   children: ReactElement;
@@ -187,22 +188,32 @@ const RouteComponent: React.FC = () => {
   const [showWelcomeBanner, setShowWelcomeBanner] = useState(false);
   const dispatch = useDispatch();
 
+  const treatments = useTreatments(["website_name"]);
+
+  useEffect(() => {
+    const websiteConfig = JSON.parse(treatments.website_name.config as string);
+
+    document.title = websiteConfig?.name || "Website";
+  }, [treatments]);
+
   useEffect(() => {
     (async () => {
-      const { data } = await ApiService.get<Account>({ url: "/accounts" });
+      try {
+        const { data } = await ApiService.get<Account>({ url: "/accounts" });
 
-      dispatch({
-        type: ActionType.LOGIN_USER_SUCCESS,
-        payload: {
-          firstName: data.firstName,
-          lastName: data.lastName,
-          uId: data.id,
-          onboarded: data.onboarded,
-          email: data.email,
-          expectedOnboarding: data.expectedOnboarding,
-          verified: data.verified,
-        },
-      });
+        dispatch({
+          type: ActionType.LOGIN_USER_SUCCESS,
+          payload: {
+            firstName: data.firstName,
+            lastName: data.lastName,
+            uId: data.id,
+            onboarded: data.onboarded,
+            email: data.email,
+            expectedOnboarding: data.expectedOnboarding,
+            verified: data.verified,
+          },
+        });
+      } catch (e) {}
     })();
   }, []);
 

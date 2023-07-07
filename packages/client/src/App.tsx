@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { useMemo, useState } from "react";
+import { useContext, useEffect, useMemo, useState } from "react";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import "reactflow/dist/style.css";
 import "react-toastify/dist/ReactToastify.css";
@@ -21,6 +21,17 @@ import {
   ThemeProvider as MTThemeProvider,
   TooltipStylesType,
 } from "@material-tailwind/react";
+
+// split io
+import { SplitSdk, SplitFactory } from "@splitsoftware/splitio-react";
+
+// Create the Split factory object with your custom settings, using the re-exported function.
+const factory: SplitIO.ISDK = SplitSdk({
+  core: {
+    authorizationKey: "pn5gq12e27h5ejbcjq0l3i8ah4blqauh6fhe",
+    key: "CUSTOMER_ID",
+  },
+});
 
 interface IApp {
   children: React.ReactNode;
@@ -53,38 +64,44 @@ const App = ({ children }: IApp) => {
       },
     },
   };
-
-  posthog.init(AppConfig.POSTHOG_KEY ? AppConfig.POSTHOG_KEY : "", {
-    api_host: AppConfig.POSTHOG_HOST
-      ? AppConfig.POSTHOG_HOST
-      : "https://app.posthog.com",
-  });
+  if (
+    AppConfig.POSTHOG_KEY !== "" &&
+    AppConfig.POSTHOG_KEY !== "[YOUR_VALUE]"
+  ) {
+    posthog.init(AppConfig.POSTHOG_KEY ? AppConfig.POSTHOG_KEY : "", {
+      api_host: AppConfig.POSTHOG_HOST
+        ? AppConfig.POSTHOG_HOST
+        : "https://app.posthog.com",
+    });
+  }
 
   return (
-    <ColorContext.Provider value={colorMode}>
-      <ThemeProvider theme={theme}>
-        {/* @ts-ignore */}
-        <MTThemeProvider value={MTTheme}>
-          <CssBaseline enableColorScheme />
-          <ToastContainer
-            className={"z-[2147483647]"}
-            position="bottom-center"
-            autoClose={5000}
-            hideProgressBar={false}
-            newestOnTop={false}
-            closeOnClick
-            rtl={false}
-            pauseOnFocusLoss
-            draggable
-            pauseOnHover
-            theme="colored"
-          />
-          <GoogleOAuthProvider clientId="31818866399-n6jktkbmj0o0tt7gbi8i8nosu61nakda.apps.googleusercontent.com">
-            {children}
-          </GoogleOAuthProvider>
-        </MTThemeProvider>
-      </ThemeProvider>
-    </ColorContext.Provider>
+    <SplitFactory factory={factory}>
+      <ColorContext.Provider value={colorMode}>
+        <ThemeProvider theme={theme}>
+          {/* @ts-ignore */}
+          <MTThemeProvider value={MTTheme}>
+            <CssBaseline enableColorScheme />
+            <ToastContainer
+              className={"z-[2147483647]"}
+              position="bottom-center"
+              autoClose={5000}
+              hideProgressBar={false}
+              newestOnTop={false}
+              closeOnClick
+              rtl={false}
+              pauseOnFocusLoss
+              draggable
+              pauseOnHover
+              theme="colored"
+            />
+            <GoogleOAuthProvider clientId="31818866399-n6jktkbmj0o0tt7gbi8i8nosu61nakda.apps.googleusercontent.com">
+              {children}
+            </GoogleOAuthProvider>
+          </MTThemeProvider>
+        </ThemeProvider>
+      </ColorContext.Provider>
+    </SplitFactory>
   );
 };
 
