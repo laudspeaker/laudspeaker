@@ -11,6 +11,7 @@ import { AxiosError } from "axios";
 import githubIcon from "../../assets/images/github.svg";
 import googleIcon from "../../assets/images/google.svg";
 import gitlabIcon from "../../assets/images/gitlab.svg";
+import { useTreatments } from "@splitsoftware/splitio-react";
 
 export interface SignupProps {
   setShowWelcomeBanner: (value: boolean) => void;
@@ -103,12 +104,16 @@ const Signup: FC<SignupProps> = ({ setShowWelcomeBanner }) => {
     isInvalids.pass ||
     isInvalids.mail;
 
+  const treatments = useTreatments(["website_name"]);
+
+  const websiteConfig = JSON.parse(treatments.website_name.config as string);
+
   return (
     <div className="flex min-h-full flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <img
           className="mx-auto h-12 w-auto"
-          src={laudspeakerLogo}
+          src={websiteConfig?.logo || laudspeakerLogo}
           alt="Laudspeaker"
         />
         <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">
