@@ -200,7 +200,7 @@ export default function SettingsSMSBeta() {
     try {
       await ApiService.patch({
         url: "/accounts",
-        options: { ...formData },
+        options: { ...formData, smsProvider },
       });
     } catch (e) {
       toast.error("Unexpected error");

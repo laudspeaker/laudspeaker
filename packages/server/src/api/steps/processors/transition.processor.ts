@@ -405,6 +405,19 @@ export class TransitionProcessor extends WorkerHost {
             );
             break;
           case TemplateType.SMS:
+            let smsSid, smsToken, smsFrom;
+            if (owner.smsProvider === 'twilio') {
+              smsSid = owner.smsAccountSid;
+              smsToken = owner.smsAuthToken;
+              smsFrom = owner.smsFrom;
+            } else if (owner.smsProvider === 'msegat') {
+              smsSid = owner.msegatUserName;
+              smsToken = owner.msegatApiKey;
+              smsFrom = owner.msegatUserSender;
+            } else {
+              return;
+            }
+
             await this.webhooksService.insertClickHouseMessages(
               await sender.process({
                 name: TemplateType.SMS,
@@ -412,16 +425,17 @@ export class TransitionProcessor extends WorkerHost {
                 stepID: currentStep.id,
                 customerID: customer.id,
                 templateID: template.id,
-                from: owner.smsFrom,
-                sid: owner.smsAccountSid,
+                from: smsFrom,
+                sid: smsSid,
                 tags: filteredTags,
                 text: await this.templatesService.parseApiCallTags(
                   template.smsText,
                   filteredTags
                 ),
                 to: customer.phPhoneNumber || customer.phone,
-                token: owner.smsAuthToken,
+                token: smsToken,
                 trackingEmail: email,
+                smsProvider: owner.smsProvider,
               })
             );
             break;

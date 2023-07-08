@@ -17,6 +17,7 @@ import {
   WebhookMethod,
 } from '@/api/templates/entities/template.entity';
 import wait from '@/utils/wait';
+import { fetch } from 'undici';
 
 export enum MessageType {
   SMS = 'sms',
@@ -70,7 +71,8 @@ export class MessageSender {
         job.customerID,
         job.templateID,
         job.accountID,
-        job.trackingEmail
+        job.trackingEmail,
+        job.smsProvider
       );
     },
     [MessageType.FIREBASE]: async (job) => {
@@ -306,7 +308,8 @@ export class MessageSender {
     customerID: string,
     templateID: string,
     accountID: string,
-    trackingEmail: string
+    trackingEmail: string,
+    smsProvider: string
   ): Promise<ClickHouseMessage[]> {
     if (!to) {
       return;
@@ -329,7 +332,7 @@ export class MessageSender {
           createdAt: new Date().toUTCString(),
           customerId: customerID,
           event: 'error',
-          eventProvider: ClickHouseEventProvider.TWILIO,
+          eventProvider: smsProvider as ClickHouseEventProvider,
           messageId: null,
           templateId: String(templateID),
           userId: accountID,
@@ -337,26 +340,51 @@ export class MessageSender {
         },
       ];
     }
-    const twilioClient = twilio(sid, token);
-    const message = await twilioClient.messages.create({
-      body: textWithInsertedTags?.slice(0, this.MAXIMUM_SMS_LENGTH),
-      from: from,
-      to: to,
-      statusCallback: `${process.env.TWILIO_WEBHOOK_ENDPOINT}?stepId=${stepID}&customerId=${customerID}&templateId=${templateID}`,
-    });
-    ret = [
-      {
-        stepId: stepID,
-        createdAt: new Date().toUTCString(),
-        customerId: customerID,
-        event: 'sent',
-        eventProvider: ClickHouseEventProvider.TWILIO,
-        messageId: message.sid,
-        templateId: String(templateID),
-        userId: accountID,
-        processed: false,
-      },
-    ];
+
+    switch (smsProvider) {
+      case 'twilio':
+        const twilioClient = twilio(sid, token);
+        const message = await twilioClient.messages.create({
+          body: textWithInsertedTags?.slice(0, this.MAXIMUM_SMS_LENGTH),
+          from: from,
+          to: to,
+          statusCallback: `${process.env.TWILIO_WEBHOOK_ENDPOINT}?stepId=${stepID}&customerId=${customerID}&templateId=${templateID}`,
+        });
+        ret = [
+          {
+            stepId: stepID,
+            createdAt: new Date().toUTCString(),
+            customerId: customerID,
+            event: 'sent',
+            eventProvider: ClickHouseEventProvider.TWILIO,
+            messageId: message.sid,
+            templateId: String(templateID),
+            userId: accountID,
+            processed: false,
+          },
+        ];
+        break;
+      case 'msegat':
+        const res = await fetch('https://www.msegat.com/gw/sendsms.php', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            userName: sid,
+            numbers: to,
+            userSender: from,
+            msg: textWithInsertedTags?.slice(0, this.MAXIMUM_SMS_LENGTH),
+            msgEncoding: 'UTF8',
+            apiKey: token,
+          }),
+        });
+
+        const msegatResponse = await res.json();
+
+        console.log(msegatResponse);
+    }
+
     if (trackingEmail) {
       this.phClient.capture({
         distinctId: trackingEmail,

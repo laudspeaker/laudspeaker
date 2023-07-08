@@ -144,6 +144,9 @@ export class AccountsService extends BaseJwtHelper {
     updateUserDto: UpdateAccountDto,
     session: string
   ): Promise<Account> {
+
+    console.log(updateUserDto);
+
     const oldUser = await this.findOne(user, session);
     // if user change password
     let password = oldUser.password;
