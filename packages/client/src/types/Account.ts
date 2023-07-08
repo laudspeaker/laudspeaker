@@ -26,6 +26,7 @@ export default interface Account {
   onboarded: boolean;
   customerId?: string;
   emailProvider?: string;
+  smsProvider?: string;
   testSendingEmail?: string;
   testSendingName?: string;
   freeEmailsCount: number;

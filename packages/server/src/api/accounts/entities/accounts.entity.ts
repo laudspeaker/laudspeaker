@@ -111,6 +111,9 @@ export class Account extends BaseEntity {
 
   @Column({ type: 'varchar', nullable: true, default: null })
   public emailProvider?: string;
+  
+  @Column({ type: 'varchar', nullable: true, default: null })
+  public smsProvider?: string;
 
   @Column({ type: 'varchar', nullable: true, default: null })
   public testSendingEmail?: string;

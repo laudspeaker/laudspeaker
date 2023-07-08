@@ -116,6 +116,10 @@ export class UpdateAccountDto {
 
   @IsString()
   @IsOptional()
+  public smsProvider: string;
+
+  @IsString()
+  @IsOptional()
   public testSendingName: string;
 
   @IsString()
