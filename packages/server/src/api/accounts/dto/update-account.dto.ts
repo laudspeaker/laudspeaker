@@ -145,4 +145,16 @@ export class UpdateAccountDto {
   @IsString()
   @IsOptional()
   public smsFrom: string;
+
+  @IsString()
+  @IsOptional()
+  public msegatApiKey: string;
+
+  @IsString()
+  @IsOptional()
+  public msegatUserName: string;
+
+  @IsString()
+  @IsOptional()
+  public msegatUserSender: string;
 }

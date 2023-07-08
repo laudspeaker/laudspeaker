@@ -111,7 +111,7 @@ export class Account extends BaseEntity {
 
   @Column({ type: 'varchar', nullable: true, default: null })
   public emailProvider?: string;
-  
+
   @Column({ type: 'varchar', nullable: true, default: null })
   public smsProvider?: string;
 
@@ -141,4 +141,13 @@ export class Account extends BaseEntity {
 
   @Column({ type: 'varchar', nullable: true })
   public smsFrom?: string;
+
+  @Column({ type: 'varchar', nullable: true })
+  public msegatApiKey?: string;
+
+  @Column({ type: 'varchar', nullable: true })
+  public msegatUserName?: string;
+
+  @Column({ type: 'varchar', nullable: true })
+  public msegatUserSender?: string;
 }
