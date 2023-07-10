@@ -10,10 +10,12 @@ const ITEMS_PER_PAGE = 5;
 const MessageViewer: FC<SidePanelComponentProps<MessageNodeData>> = ({
   nodeData,
 }) => {
+  const fixtures = messageFixtures[nodeData.template.type];
+
   const navigate = useNavigate();
 
   const [pickedStat, setPickedStat] = useState<keyof Stats | undefined>(
-    Object.keys(nodeData.stats || {})[0] as keyof Stats
+    fixtures.statsToShow?.[0].key
   );
   const [totalPages, setTotalPages] = useState(1);
   const [currentPage, setCurrentPage] = useState(1);
@@ -45,8 +47,6 @@ const MessageViewer: FC<SidePanelComponentProps<MessageNodeData>> = ({
   useEffect(() => {
     loadStatCustomers();
   }, [pickedStat]);
-
-  const fixtures = messageFixtures[nodeData.template.type];
 
   return (
     <div>
