@@ -266,7 +266,7 @@ export class MessageSender {
     if (trackingEmail) {
       this.phClient.capture({
         distinctId: trackingEmail,
-        event: 'message sent',
+        event: 'message_sent',
         properties: {
           type: 'email',
           step: stepID,
@@ -360,7 +360,7 @@ export class MessageSender {
     if (trackingEmail) {
       this.phClient.capture({
         distinctId: trackingEmail,
-        event: 'message sent',
+        event: 'message_sent',
         properties: {
           type: 'sms',
           step: stepID,
@@ -497,7 +497,7 @@ export class MessageSender {
     if (trackingEmail) {
       this.phClient.capture({
         distinctId: trackingEmail,
-        event: 'message sent',
+        event: 'message_sent',
         properties: {
           type: 'firebase',
           step: stepID,
