@@ -22,8 +22,9 @@ import {
   LogicRelation,
   TimeType,
 } from "pages/FlowBuilderv2/Nodes/NodeData";
-import React, { ReactNode, useEffect, useState } from "react";
+import React, { FC, ReactNode, useEffect, useState } from "react";
 import {
+  deselectNodes,
   refreshFlowBuilder,
   setEdges,
   setIsOnboarding,
@@ -31,6 +32,7 @@ import {
 } from "reducers/flow-builder.reducer";
 import { useAppDispatch, useAppSelector } from "store/hooks";
 import { MessageType, ProviderType } from "types/Workflow";
+import OnboardingSidePanel from "./OnboardingSidePanel/OnboardingSidePanel";
 import OnboardingDialog from "./OnbordingDialog/OnboardingDialog";
 import createJourneyColorfulHeaderImage from "./svg/create-journey-colorful-header.svg";
 import onboardingCursorImage from "./svg/onboarding-cursor.svg";
@@ -160,12 +162,22 @@ const drawerFixtures: FlowBuilderDrawerFixture[] = [
   },
 ];
 
-const OnboardingSandbox = () => {
+interface OnboardingSandboxProps {
+  onSandboxComplete: () => void;
+}
+
+const OnboardingSandbox: FC<OnboardingSandboxProps> = ({
+  onSandboxComplete,
+}) => {
   const flowBuilderState = useAppSelector((state) => state.flowBuilder);
   const dispatch = useAppDispatch();
 
   const emptyLeftNode = flowBuilderState.nodes.find(
     (node) => node.id === "emptyLeft"
+  );
+
+  const waitUntilNode = flowBuilderState.nodes.find(
+    (node) => node.type === NodeType.WAIT_UNTIL
   );
 
   const sanboxStepToFixtureMap: Record<SandboxStep, SandboxStepFixture> = {
@@ -234,14 +246,226 @@ const OnboardingSandbox = () => {
         emptyLeftNode.data.type === NodeType.MESSAGE &&
         emptyLeftNode.data.template.type === MessageType.EMAIL,
     },
-    [SandboxStep.SETTING_PANEL]: { checkStepFinished: () => false },
-    [SandboxStep.SELECT_TEMPLATE]: { checkStepFinished: () => false },
-    [SandboxStep.SAVE_SETTINGS]: { checkStepFinished: () => false },
-    [SandboxStep.TRIGGER]: { checkStepFinished: () => false },
-    [SandboxStep.MODIFY_TRIGGER]: { checkStepFinished: () => false },
-    [SandboxStep.CHANGE_TIME]: { checkStepFinished: () => false },
-    [SandboxStep.SAVE_TRIGGER]: { checkStepFinished: () => false },
-    [SandboxStep.FINISH]: { checkStepFinished: () => false },
+    [SandboxStep.SETTING_PANEL]: {
+      header: (
+        <div className="flex justify-center py-[20px]">
+          <div className="text-center max-w-[830px]">
+            Scenario: New users sign up for your platform and receive a
+            verification email. Verify within 1 day to receive a welcome email,
+            otherwise, get a reminder email.
+          </div>
+        </div>
+      ),
+      dialog: {
+        content: (
+          <>
+            <div className="font-inter text-[20px] font-semibold">
+              Setting panel
+            </div>
+            <p className="text-[#4B5563]">
+              Using the panel to customize email templates, define step
+              conditions, and set triggers to create tailored customer journeys
+              with ease.
+            </p>
+          </>
+        ),
+        position: { top: 260, left: document.body.clientWidth - 760 },
+      },
+      checkStepFinished: () => false,
+    },
+    [SandboxStep.SELECT_TEMPLATE]: {
+      header: (
+        <div className="flex justify-center py-[20px]">
+          <div className="text-center max-w-[830px]">
+            Scenario: New users sign up for your platform and receive a
+            verification email. Verify within 1 day to receive a welcome email,
+            otherwise, get a reminder email.
+          </div>
+        </div>
+      ),
+      tooltip: {
+        content: (
+          <div className="p-[10px] bg-black text-white font-medium">
+            Select Onboarding template
+          </div>
+        ),
+        position: { top: 200, left: document.body.clientWidth - 300 },
+      },
+      cursor: {
+        position: {
+          top: 400,
+          left: document.body.clientWidth - 230,
+        },
+      },
+      checkStepFinished: () =>
+        emptyLeftNode?.data.type === NodeType.MESSAGE &&
+        emptyLeftNode.data.template.type === MessageType.EMAIL &&
+        !!emptyLeftNode.data.template.selected,
+    },
+    [SandboxStep.SAVE_SETTINGS]: {
+      header: (
+        <div className="flex justify-center py-[20px]">
+          <div className="text-center max-w-[830px]">
+            Scenario: New users sign up for your platform and receive a
+            verification email. Verify within 1 day to receive a welcome email,
+            otherwise, get a reminder email.
+          </div>
+        </div>
+      ),
+      tooltip: {
+        content: (
+          <div className="p-[10px] bg-black text-white font-medium">
+            Don’t forget to save the setting
+          </div>
+        ),
+        position: {
+          top: document.body.clientHeight - 380,
+          left: document.body.clientWidth - 300,
+        },
+      },
+      cursor: {
+        position: {
+          top: document.body.clientHeight - 75,
+          left: document.body.clientWidth - 80,
+        },
+      },
+      checkStepFinished: () => false,
+    },
+    [SandboxStep.TRIGGER]: {
+      header: (
+        <div className="flex justify-center py-[20px]">
+          <div className="text-center max-w-[830px]">
+            Scenario: New users sign up for your platform and receive a
+            verification email. Verify within 1 day to receive a welcome email,
+            otherwise, get a reminder email.
+          </div>
+        </div>
+      ),
+      dialog: {
+        content: (
+          <>
+            <div className="font-inter text-[20px] font-semibold">Trigger</div>
+            <p className="text-[#4B5563]">
+              Initiate flows based on time, user actions, events, or attributes.
+            </p>
+          </>
+        ),
+        position: { top: document.body.clientHeight - 250, left: 276 },
+      },
+      checkStepFinished: () => false,
+    },
+    [SandboxStep.MODIFY_TRIGGER]: {
+      header: (
+        <div className="flex justify-center py-[20px]">
+          <div className="text-center max-w-[830px]">
+            Scenario: New users sign up for your platform and receive a
+            verification email. Verify within 1 day to receive a welcome email,
+            otherwise, get a reminder email.
+          </div>
+        </div>
+      ),
+      tooltip: {
+        content: (
+          <div className="p-[10px] bg-black text-white font-medium">
+            Click to modify the trigger
+          </div>
+        ),
+        position: {
+          top: document.body.clientHeight / 3,
+          left: document.body.clientWidth / 2,
+        },
+      },
+      // cursor: {
+      //   position: {
+      //     top: 0,
+      //     left: 0,
+      //   },
+      // },
+      checkStepFinished: () =>
+        flowBuilderState.nodes.find((node) => node.selected)?.type ===
+        NodeType.WAIT_UNTIL,
+    },
+    [SandboxStep.CHANGE_TIME]: {
+      header: (
+        <div className="flex justify-center py-[20px]">
+          <div className="text-center max-w-[830px]">
+            Scenario: New users sign up for your platform and receive a
+            verification email. Verify within 1 day to receive a welcome email,
+            otherwise, get a reminder email.
+          </div>
+        </div>
+      ),
+      tooltip: {
+        content: (
+          <div className="p-[10px] bg-black text-white font-medium">
+            Add 1 hour to Time Delay trigger
+          </div>
+        ),
+        position: {
+          top: document.body.clientHeight - 230,
+          left: document.body.clientWidth - 350,
+        },
+      },
+      checkStepFinished: () =>
+        waitUntilNode?.data.type === NodeType.WAIT_UNTIL &&
+        waitUntilNode.data.branches.some(
+          (branch) =>
+            branch.type === BranchType.MAX_TIME &&
+            branch.timeType === TimeType.TIME_DELAY &&
+            branch.delay.hours !== 0
+        ),
+    },
+    [SandboxStep.SAVE_TRIGGER]: {
+      header: (
+        <div className="flex justify-center py-[20px]">
+          <div className="text-center max-w-[830px]">
+            Scenario: New users sign up for your platform and receive a
+            verification email. Verify within 1 day to receive a welcome email,
+            otherwise, get a reminder email.
+          </div>
+        </div>
+      ),
+      tooltip: {
+        content: (
+          <div className="p-[10px] bg-black text-white font-medium text-center w-[260px]">
+            Don't forget to give that Save button some love, okay?
+          </div>
+        ),
+        position: {
+          top: document.body.clientHeight - 380,
+          left: document.body.clientWidth - 400,
+        },
+      },
+      checkStepFinished: () => false,
+    },
+    [SandboxStep.FINISH]: {
+      header: (
+        <div className="flex justify-center py-[20px]">
+          <div className="text-center max-w-[830px]">
+            Scenario: New users sign up for your platform and receive a
+            verification email. Verify within 1 day to receive a welcome email,
+            otherwise, get a reminder email.
+          </div>
+        </div>
+      ),
+      dialog: {
+        content: (
+          <>
+            <div className="font-inter text-[20px] font-semibold text-center w-full">
+              Congratulations on finishing the first Journey!
+            </div>
+            <p className="text-[#4B5563]">
+              You're now ready to take the next step and segment your customers.
+            </p>
+          </>
+        ),
+        position: {
+          top: document.body.clientHeight / 2 - 120,
+          left: document.body.clientWidth / 2 - 100,
+        },
+      },
+      checkStepFinished: () => false,
+    },
   };
 
   const [currentStep, setCurrentStep] = useState(SandboxStep.MESSAGE_AND_STEP);
@@ -365,12 +589,55 @@ const OnboardingSandbox = () => {
     setCurrentStep(currentStep + 1);
   }, [flowBuilderState]);
 
+  useEffect(() => {
+    const selectedNode = flowBuilderState.nodes.find((node) => node.selected);
+    if (!selectedNode) return;
+
+    if (
+      selectedNode.type === NodeType.MESSAGE &&
+      [
+        SandboxStep.DRAG_EMAIL,
+        SandboxStep.SETTING_PANEL,
+        SandboxStep.SELECT_TEMPLATE,
+        SandboxStep.SAVE_SETTINGS,
+      ].includes(currentStep)
+    )
+      return;
+
+    if (
+      selectedNode.type === NodeType.WAIT_UNTIL &&
+      [
+        SandboxStep.MODIFY_TRIGGER,
+        SandboxStep.CHANGE_TIME,
+        SandboxStep.SAVE_TRIGGER,
+      ].includes(currentStep)
+    )
+      return;
+
+    dispatch(deselectNodes());
+  }, [flowBuilderState, currentStep]);
+
   return (
     <>
       {currentSandboxFixture.header}
-      <div className="bg-[#F3F4F6] rounded-[25px] h-full overflow-hidden p-[20px] flex relative">
-        <FlowBuilderDrawer fixtures={drawerFixtures} />
+      <div className="bg-[#F3F4F6] rounded-[25px] h-full overflow-hidden flex relative">
+        <div className="py-[20px] pl-[20px]">
+          <FlowBuilderDrawer fixtures={drawerFixtures} />
+        </div>
         <FlowEditor />
+        <OnboardingSidePanel
+          isSaveDisabled={
+            ![SandboxStep.SAVE_SETTINGS, SandboxStep.SAVE_TRIGGER].includes(
+              currentStep
+            )
+          }
+          onSaveClick={() => {
+            if (currentStep === SandboxStep.FINISH) return;
+
+            setCurrentStep(currentStep + 1);
+          }}
+        />
+
         {currentSandboxFixture.cursor && (
           <div
             className="fixed"
@@ -396,7 +663,10 @@ const OnboardingSandbox = () => {
         {currentSandboxFixture.dialog && (
           <OnboardingDialog
             onNextClick={() => {
-              if (currentStep === SandboxStep.FINISH) return;
+              if (currentStep === SandboxStep.FINISH) {
+                onSandboxComplete();
+                return;
+              }
 
               setCurrentStep(currentStep + 1);
             }}

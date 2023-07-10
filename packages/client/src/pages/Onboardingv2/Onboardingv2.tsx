@@ -46,11 +46,15 @@ const Onboardingv2 = () => {
       </div>
 
       {currentStep === OnboardingStep.CREATE_JOURNEY ? (
-        <OnboardingSandbox />
+        <OnboardingSandbox
+          onSandboxComplete={() =>
+            setCurrentStep(OnboardingStep.SELECT_CUSTOMERS)
+          }
+        />
       ) : currentStep === OnboardingStep.SELECT_CUSTOMERS ? (
-        <></>
+        <>Select customers</>
       ) : (
-        <></>
+        <>Start journey</>
       )}
     </div>
   ) : (
