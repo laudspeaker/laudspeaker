@@ -11,7 +11,9 @@ export const WaitUntilNode: FC<NodeProps<WaitUntilNodeData>> = ({
   data: { branches },
   id,
 }) => {
-  const { nodes } = useAppSelector((state) => state.flowBuilder);
+  const { nodes, isOnboardingWaitUntilTooltipVisible } = useAppSelector(
+    (state) => state.flowBuilder
+  );
 
   const thisNode = nodes.find(
     (node) => node.id === id
@@ -78,6 +80,12 @@ export const WaitUntilNode: FC<NodeProps<WaitUntilNodeData>> = ({
               "Meet below conditions"
             )}
           </div>
+        </div>
+      )}
+
+      {isOnboardingWaitUntilTooltipVisible && (
+        <div className="absolute bottom-[-50px] left-1/2 -translate-x-1/2 w-[220px] p-[10px] bg-black text-white font-medium">
+          Click to modify the trigger
         </div>
       )}
 

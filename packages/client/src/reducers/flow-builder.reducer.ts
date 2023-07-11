@@ -162,6 +162,7 @@ interface FlowBuilderState {
   flowStatus: JourneyStatus;
   showSegmentsErrors: boolean;
   isOnboarding: boolean;
+  isOnboardingWaitUntilTooltipVisible: boolean;
 }
 
 const startNodeUUID = uuid();
@@ -205,6 +206,7 @@ const initialState: FlowBuilderState = {
   flowStatus: JourneyStatus.DRAFT,
   showSegmentsErrors: false,
   isOnboarding: false,
+  isOnboardingWaitUntilTooltipVisible: false,
 };
 
 const handlePruneNodeTree = (state: FlowBuilderState, nodeId: string) => {
@@ -694,6 +696,12 @@ const flowBuilderSlice = createSlice({
     setIsOnboarding(state, action: PayloadAction<boolean>) {
       state.isOnboarding = action.payload;
     },
+    setIsOnboardingWaitUntilTooltipVisible(
+      state,
+      action: PayloadAction<boolean>
+    ) {
+      state.isOnboardingWaitUntilTooltipVisible = action.payload;
+    },
     refreshFlowBuilder(state) {
       state.flowId = "";
       state.flowName = "";
@@ -708,6 +716,7 @@ const flowBuilderSlice = createSlice({
       state.flowStatus = JourneyStatus.DRAFT;
       state.showSegmentsErrors = false;
       state.isOnboarding = false;
+      state.isOnboardingWaitUntilTooltipVisible = false;
     },
   },
 });
@@ -737,6 +746,7 @@ export const {
   setFlowStatus,
   setShowSegmentsErrors,
   setIsOnboarding,
+  setIsOnboardingWaitUntilTooltipVisible,
   refreshFlowBuilder,
 } = flowBuilderSlice.actions;
 

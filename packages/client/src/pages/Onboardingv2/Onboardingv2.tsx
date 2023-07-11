@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import OnboardingSandbox from "./OnboardingSandbox";
+import SelectCustomers from "./SelectCustomers";
+import StartJourney from "./StartJourney";
 import OnboardingStepper from "./Stepper/OnboardingStepper";
 import buildJourneysBackgroundImage from "./svg/build-journeys-background.svg";
 import targetCustomersBackgroundImage from "./svg/target-customers-background.svg";
@@ -15,11 +17,24 @@ const Onboardingv2 = () => {
   const [currentStep, setCurrentStep] = useState<OnboardingStep>();
 
   return currentStep ? (
-    <div className="min-h-screen h-screen flex flex-col gap-[40px] p-[20px] font-inter text-[16px] font-normal text-[#111827] leading-[24px]">
+    <div className="min-h-screen h-screen flex flex-col gap-[20px] justify-between p-[20px] font-inter text-[16px] font-normal text-[#111827] leading-[24px]">
       <div className="flex justify-between px-[20px] pt-[20px]">
         <button
-          className="underline text-black font-inter font-normal text-[16px] leading-[24px]"
-          onClick={() => {}}
+          className={`underline text-black font-inter font-normal text-[16px] leading-[24px] ${
+            currentStep === OnboardingStep.START_JOURNEY
+              ? "opacity-0 pointer-events-none"
+              : ""
+          }`}
+          onClick={
+            currentStep === OnboardingStep.CREATE_JOURNEY
+              ? undefined
+              : () =>
+                  setCurrentStep(
+                    currentStep === OnboardingStep.SELECT_CUSTOMERS
+                      ? OnboardingStep.CREATE_JOURNEY
+                      : OnboardingStep.SELECT_CUSTOMERS
+                  )
+          }
         >
           Back
         </button>
@@ -52,9 +67,11 @@ const Onboardingv2 = () => {
           }
         />
       ) : currentStep === OnboardingStep.SELECT_CUSTOMERS ? (
-        <>Select customers</>
+        <SelectCustomers
+          onSendEmailClick={() => setCurrentStep(OnboardingStep.START_JOURNEY)}
+        />
       ) : (
-        <>Start journey</>
+        <StartJourney />
       )}
     </div>
   ) : (

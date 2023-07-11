@@ -59,7 +59,7 @@ const FlowBuilderDrawer: FC<FlowBuilderDrawerProps> = ({ fixtures }) => {
               <div className="text-[#111827] text-[16px] font-semibold leading-[24px] font-segoe">
                 {group.groupName}
               </div>
-              {group.children.map((child) => (
+              {group.children.map((child, i) => (
                 <div
                   className={`w-full h-[44px] px-[15px] py-[10px] flex gap-[10px] border-[1px] border-[#E5E7EB]  rounded-[4px] select-none items-end cursor-grab ${
                     child.disabled
@@ -68,7 +68,7 @@ const FlowBuilderDrawer: FC<FlowBuilderDrawerProps> = ({ fixtures }) => {
                   }`}
                   onDragStart={(e) => onDragStart(e, child.id, child.targetId)}
                   onDragEnd={onDragEnd}
-                  key={child.id}
+                  key={i}
                   draggable={!child.disabled}
                 >
                   <div className="text-[#6366F1]">{child.icon}</div>

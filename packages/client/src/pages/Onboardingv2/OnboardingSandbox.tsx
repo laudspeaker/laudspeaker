@@ -28,10 +28,12 @@ import {
   refreshFlowBuilder,
   setEdges,
   setIsOnboarding,
+  setIsOnboardingWaitUntilTooltipVisible,
   setNodes,
 } from "reducers/flow-builder.reducer";
 import { useAppDispatch, useAppSelector } from "store/hooks";
 import { MessageType, ProviderType } from "types/Workflow";
+import Confetti from "./Confetti";
 import OnboardingSidePanel from "./OnboardingSidePanel/OnboardingSidePanel";
 import OnboardingDialog from "./OnbordingDialog/OnboardingDialog";
 import createJourneyColorfulHeaderImage from "./svg/create-journey-colorful-header.svg";
@@ -224,12 +226,12 @@ const OnboardingSandbox: FC<OnboardingSandboxProps> = ({
           </div>
         </div>
       ),
-      cursor: {
-        position: {
-          top: 330,
-          left: 217,
-        },
-      },
+      // cursor: {
+      //   position: {
+      //     top: 330,
+      //     left: 217,
+      //   },
+      // },
       tooltip: {
         content: (
           <div className="p-[10px] bg-black text-white font-medium">
@@ -291,12 +293,12 @@ const OnboardingSandbox: FC<OnboardingSandboxProps> = ({
         ),
         position: { top: 200, left: document.body.clientWidth - 300 },
       },
-      cursor: {
-        position: {
-          top: 400,
-          left: document.body.clientWidth - 230,
-        },
-      },
+      // cursor: {
+      //   position: {
+      //     top: 400,
+      //     left: document.body.clientWidth - 230,
+      //   },
+      // },
       checkStepFinished: () =>
         emptyLeftNode?.data.type === NodeType.MESSAGE &&
         emptyLeftNode.data.template.type === MessageType.EMAIL &&
@@ -319,16 +321,16 @@ const OnboardingSandbox: FC<OnboardingSandboxProps> = ({
           </div>
         ),
         position: {
-          top: document.body.clientHeight - 380,
-          left: document.body.clientWidth - 300,
+          top: document.body.clientHeight - 340,
+          left: document.body.clientWidth - 320,
         },
       },
-      cursor: {
-        position: {
-          top: document.body.clientHeight - 75,
-          left: document.body.clientWidth - 80,
-        },
-      },
+      // cursor: {
+      //   position: {
+      //     top: document.body.clientHeight - 75,
+      //     left: document.body.clientWidth - 80,
+      //   },
+      // },
       checkStepFinished: () => false,
     },
     [SandboxStep.TRIGGER]: {
@@ -364,17 +366,6 @@ const OnboardingSandbox: FC<OnboardingSandboxProps> = ({
           </div>
         </div>
       ),
-      tooltip: {
-        content: (
-          <div className="p-[10px] bg-black text-white font-medium">
-            Click to modify the trigger
-          </div>
-        ),
-        position: {
-          top: document.body.clientHeight / 3,
-          left: document.body.clientWidth / 2,
-        },
-      },
       // cursor: {
       //   position: {
       //     top: 0,
@@ -395,17 +386,6 @@ const OnboardingSandbox: FC<OnboardingSandboxProps> = ({
           </div>
         </div>
       ),
-      tooltip: {
-        content: (
-          <div className="p-[10px] bg-black text-white font-medium">
-            Add 1 hour to Time Delay trigger
-          </div>
-        ),
-        position: {
-          top: document.body.clientHeight - 230,
-          left: document.body.clientWidth - 350,
-        },
-      },
       checkStepFinished: () =>
         waitUntilNode?.data.type === NodeType.WAIT_UNTIL &&
         waitUntilNode.data.branches.some(
@@ -460,8 +440,8 @@ const OnboardingSandbox: FC<OnboardingSandboxProps> = ({
           </>
         ),
         position: {
-          top: document.body.clientHeight / 2 - 120,
-          left: document.body.clientWidth / 2 - 100,
+          top: document.body.clientHeight / 2 - 80,
+          left: document.body.clientWidth / 2 - 174,
         },
       },
       checkStepFinished: () => false,
@@ -617,10 +597,21 @@ const OnboardingSandbox: FC<OnboardingSandboxProps> = ({
     dispatch(deselectNodes());
   }, [flowBuilderState, currentStep]);
 
+  useEffect(() => {
+    dispatch(
+      setIsOnboardingWaitUntilTooltipVisible(
+        currentStep === SandboxStep.MODIFY_TRIGGER ||
+          currentStep === SandboxStep.CHANGE_TIME
+      )
+    );
+  }, [currentStep]);
+
   return (
     <>
       {currentSandboxFixture.header}
       <div className="bg-[#F3F4F6] rounded-[25px] h-full overflow-hidden flex relative">
+        {currentStep === SandboxStep.FINISH && <Confetti />}
+
         <div className="py-[20px] pl-[20px]">
           <FlowBuilderDrawer fixtures={drawerFixtures} />
         </div>

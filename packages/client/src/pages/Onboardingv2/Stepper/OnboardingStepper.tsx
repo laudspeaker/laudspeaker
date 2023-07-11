@@ -3,6 +3,7 @@ import { OnboardingStep } from "../Onboardingv2";
 import stepperIconImage from "./svg/stepper-icon.svg";
 import stepperActiveIconImage from "./svg/stepper-active-icon.svg";
 import stepperDividerImage from "./svg/stepper-divider.svg";
+import stepperDoneIcon from "./svg/stepper-done-icon.svg";
 
 interface OnboardingStepperProps {
   currentStep: OnboardingStep;
@@ -25,6 +26,8 @@ const OnboardingStepper: FC<OnboardingStepperProps> = ({ currentStep }) => {
                 src={
                   currentStep === onboardingStep
                     ? stepperActiveIconImage
+                    : i < Object.values(OnboardingStep).indexOf(currentStep)
+                    ? stepperDoneIcon
                     : stepperIconImage
                 }
               />

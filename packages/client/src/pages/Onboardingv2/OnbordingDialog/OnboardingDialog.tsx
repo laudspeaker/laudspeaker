@@ -21,7 +21,7 @@ const OnboardingDialog: FC<OnboardingDialogProps> = ({
   return (
     <>
       {createPortal(
-        <div className="fixed w-full h-screen top-0 left-0 font-inter text-[16px] font-normal text-[#111827] leading-[24px]">
+        <div className="fixed w-full h-screen top-0 left-0 font-inter text-[16px] font-normal text-[#111827] leading-[24px] z-[20]">
           <div
             className="fixed p-[24px] flex flex-col gap-[16px] w-[348px] bg-white rounded-[8px]"
             style={{
