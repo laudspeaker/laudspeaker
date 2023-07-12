@@ -4,6 +4,7 @@ import {
   TimeType,
 } from "pages/FlowBuilderv2/Nodes/NodeData";
 import React, { FC } from "react";
+import { useAppSelector } from "store/hooks";
 import TimeDelayEditor from "./TimeDelayEditor";
 import TimeWindowEditor from "./TimeWindowEditor";
 
@@ -16,6 +17,8 @@ const MaxTimeBranchEditor: FC<MaxTimeBranchEditorProps> = ({
   branch,
   onChangeBranch,
 }) => {
+  const { isOnboarding } = useAppSelector((state) => state.flowBuilder);
+
   return (
     <div className="flex flex-col gap-[10px]">
       <div className="font-inter font-normal text-[12px] leading-[20px] text-[#4B5563]">
@@ -48,7 +51,9 @@ const MaxTimeBranchEditor: FC<MaxTimeBranchEditorProps> = ({
           className="w-full px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB]"
         >
           <option value={TimeType.TIME_DELAY}>Time delay</option>
-          <option value={TimeType.TIME_WINDOW}>Time window</option>
+          {!isOnboarding && (
+            <option value={TimeType.TIME_WINDOW}>Time window</option>
+          )}
         </select>
       </div>
       {branch.timeType === TimeType.TIME_DELAY ? (

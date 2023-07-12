@@ -20,16 +20,19 @@ import {
   Branch,
   BranchType,
   LogicRelation,
+  StatementType,
   TimeType,
 } from "pages/FlowBuilderv2/Nodes/NodeData";
 import React, { FC, ReactNode, useEffect, useState } from "react";
 import {
+  ComparisonType,
   deselectNodes,
   refreshFlowBuilder,
   setEdges,
   setIsOnboarding,
   setIsOnboardingWaitUntilTooltipVisible,
   setNodes,
+  StatementValueType,
 } from "reducers/flow-builder.reducer";
 import { useAppDispatch, useAppSelector } from "store/hooks";
 import { MessageType, ProviderType } from "types/Workflow";
@@ -198,7 +201,7 @@ const OnboardingSandbox: FC<OnboardingSandboxProps> = ({
         </div>
       ),
       dialog: {
-        position: { top: 307, left: 276 },
+        position: { top: 20, left: 256 },
         content: (
           <>
             <div className="font-inter text-[20px] font-medium">
@@ -239,7 +242,7 @@ const OnboardingSandbox: FC<OnboardingSandboxProps> = ({
           </div>
         ),
         position: {
-          top: 32,
+          top: 30,
           left: 213,
         },
       },
@@ -271,7 +274,7 @@ const OnboardingSandbox: FC<OnboardingSandboxProps> = ({
             </p>
           </>
         ),
-        position: { top: 260, left: document.body.clientWidth - 760 },
+        position: { top: 20, left: document.body.clientWidth - 780 },
       },
       checkStepFinished: () => false,
     },
@@ -352,7 +355,7 @@ const OnboardingSandbox: FC<OnboardingSandboxProps> = ({
             </p>
           </>
         ),
-        position: { top: document.body.clientHeight - 250, left: 276 },
+        position: { top: document.body.clientHeight - 420, left: 256 },
       },
       checkStepFinished: () => false,
     },
@@ -440,7 +443,7 @@ const OnboardingSandbox: FC<OnboardingSandboxProps> = ({
           </>
         ),
         position: {
-          top: document.body.clientHeight / 2 - 80,
+          top: document.body.clientHeight / 2 - 196,
           left: document.body.clientWidth / 2 - 174,
         },
       },
@@ -460,9 +463,18 @@ const OnboardingSandbox: FC<OnboardingSandboxProps> = ({
       type: BranchType.EVENT,
       conditions: [
         {
-          name: "event",
+          name: "Event_name",
           providerType: ProviderType.Custom,
-          statements: [],
+          statements: [
+            {
+              type: StatementType.PROPERTY,
+              key: "Property1_name",
+              comparisonType: ComparisonType.EQUALS,
+              valueType: StatementValueType.STRING,
+              value: "Value",
+              relationToNext: LogicRelation.AND,
+            },
+          ],
           relationToNext: LogicRelation.AND,
         },
       ],

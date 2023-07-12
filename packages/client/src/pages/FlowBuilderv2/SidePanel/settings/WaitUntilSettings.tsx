@@ -186,9 +186,8 @@ const WaitUntilSettings: FC<SidePanelComponentProps<WaitUntilNodeData>> = ({
 
             <Button
               type={ButtonType.LINK}
-              onClick={onDeleteBranch(i)}
+              onClick={isOnboarding ? () => {} : onDeleteBranch(i)}
               className="text-[#EB5757] hover:text-[#EB5757] focus:text-[#EB5757]"
-              disabled={isOnboarding}
             >
               Delete branch
             </Button>
@@ -211,7 +210,7 @@ const WaitUntilSettings: FC<SidePanelComponentProps<WaitUntilNodeData>> = ({
       ))}
 
       {isOnboarding && isOnboardingWaitUntilTooltipVisible && (
-        <div className="absolute w-full bottom-[-35px] left-0 p-[10px] bg-black text-white font-medium">
+        <div className="absolute w-full bottom-[-185px] left-0 p-[10px] bg-black text-white font-medium">
           Add 1 hour to Time Delay trigger
         </div>
       )}

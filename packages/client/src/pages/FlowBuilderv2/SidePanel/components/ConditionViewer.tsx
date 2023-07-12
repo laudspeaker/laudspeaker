@@ -5,6 +5,7 @@ import {
   StatementType,
 } from "pages/FlowBuilderv2/Nodes/NodeData";
 import React, { FC } from "react";
+import { useAppSelector } from "store/hooks";
 import { ProviderType } from "types/Workflow";
 
 interface ConditionViewerProps {
@@ -18,6 +19,8 @@ const ConditionViewer: FC<ConditionViewerProps> = ({
   onEdit,
   onDelete,
 }) => {
+  const { isOnboarding } = useAppSelector((state) => state.flowBuilder);
+
   return (
     <div className="p-[10px] flex flex-col gap-[10px] bg-[#F3F4F6]">
       <div className="flex justify-between items-center">
@@ -27,7 +30,10 @@ const ConditionViewer: FC<ConditionViewerProps> = ({
             : `Posthog ${condition.name}`}
         </div>
         <div className="flex gap-[20px] items-center">
-          <div className="cursor-pointer" onClick={onEdit}>
+          <div
+            className="cursor-pointer"
+            onClick={isOnboarding ? undefined : onEdit}
+          >
             <svg
               width="16"
               height="16"
@@ -48,7 +54,10 @@ const ConditionViewer: FC<ConditionViewerProps> = ({
               </defs>
             </svg>
           </div>
-          <div className="cursor-pointer" onClick={onDelete}>
+          <div
+            className="cursor-pointer"
+            onClick={isOnboarding ? undefined : onDelete}
+          >
             <svg
               width="16"
               height="16"

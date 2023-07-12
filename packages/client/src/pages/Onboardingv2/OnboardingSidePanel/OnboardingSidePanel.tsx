@@ -33,7 +33,9 @@ const OnboardingSidePanel: FC<OnboardingSidePanelProps> = ({
   isSaveDisabled,
   onSaveClick,
 }) => {
-  const { nodes } = useAppSelector((state) => state.flowBuilder);
+  const { nodes, isOnboardingWaitUntilTooltipVisible } = useAppSelector(
+    (state) => state.flowBuilder
+  );
   const dispatch = useAppDispatch();
 
   const selectedNode = nodes.find((node) => node.selected);
@@ -186,6 +188,12 @@ const OnboardingSidePanel: FC<OnboardingSidePanelProps> = ({
             <Scrollbars>
               {nodeToSettingsComponentMap[selectedNode?.type || ""]}
             </Scrollbars>
+            {/* {selectedNode?.type === NodeType.WAIT_UNTIL &&
+              isOnboardingWaitUntilTooltipVisible && (
+                <div className="absolute w-fit bottom-[50px] left-[10px] p-[10px] bg-black text-white font-medium z-[9]">
+                  Add 1 hour to Time Delay trigger
+                </div>
+              )} */}
           </div>
         </div>
         <div className="absolute bottom-0 w-full min-h-[60px] h-[60px] py-[14px] px-[20px] border-t-[1px] flex justify-between items-center">

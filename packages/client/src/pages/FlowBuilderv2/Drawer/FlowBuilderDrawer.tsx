@@ -6,7 +6,7 @@ import {
   setDragAction,
   setIsDragging,
 } from "reducers/flow-builder.reducer";
-import { useAppDispatch } from "store/hooks";
+import { useAppDispatch, useAppSelector } from "store/hooks";
 import defaultFixtures, { DrawerAction } from "./drawer.fixtures";
 
 export interface FlowBuilderDrawerFixture {
@@ -27,6 +27,8 @@ interface FlowBuilderDrawerProps {
 
 const FlowBuilderDrawer: FC<FlowBuilderDrawerProps> = ({ fixtures }) => {
   const fixturesToRender = fixtures || defaultFixtures;
+
+  const { isOnboarding } = useAppSelector((state) => state.flowBuilder);
 
   const dispatch = useAppDispatch();
 
@@ -62,7 +64,7 @@ const FlowBuilderDrawer: FC<FlowBuilderDrawerProps> = ({ fixtures }) => {
               {group.children.map((child, i) => (
                 <div
                   className={`w-full h-[44px] px-[15px] py-[10px] flex gap-[10px] border-[1px] border-[#E5E7EB]  rounded-[4px] select-none items-end cursor-grab ${
-                    child.disabled
+                    child.disabled && !isOnboarding
                       ? "grayscale cursor-not-allowed !text-[#9CA3AF] !bg-[#F3F4F6]"
                       : ""
                   }`}
