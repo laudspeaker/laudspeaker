@@ -140,7 +140,7 @@ const formatMongoConnectionString = (mongoConnectionString: string) => {
           }),
         ]
       : []),
-    MongooseModule.forRoot(process.env.MONGOOSE_URL),
+    MongooseModule.forRoot(formatMongoConnectionString(process.env.MONGOOSE_URL)),
     BullModule.forRoot({
       connection: {
         host: process.env.REDIS_HOST ?? 'localhost',
