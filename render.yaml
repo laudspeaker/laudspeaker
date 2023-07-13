@@ -19,6 +19,17 @@ services:
         generateValue: true
       - key: JWT_EXPIRES
         value: 365d
+      - key: CH_MIGRATIONS_HOST
+        fromService:
+          type: pserv
+          name: clickhouse
+          property: hostport
+      - key: CH_MIGRATIONS_USER
+        value: default
+      - key: CH_MIGRATIONS_DB
+        value: default
+      - key: CH_MIGRATIONS_HOME
+        value: packages/server/src/migrations/clickhouse
       - key: MONGOOSE_URL
         fromService:
           type: pserv
