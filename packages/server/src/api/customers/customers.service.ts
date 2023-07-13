@@ -87,6 +87,23 @@ export class CustomersService {
     private readonly workflowsService: WorkflowsService,
     @InjectConnection() private readonly connection: mongoose.Connection
   ) {
+    const indices = this.CustomerModel.schema.indexes();
+    let postHogIndexed: boolean = false;
+    for (let indicesIndex = 0; indicesIndex < indices.length; indicesIndex++) {
+      // if (indices[indicesIndex]) {
+      //   postHogIndexed = true;
+      //   break;
+      // }
+    }
+    if (!postHogIndexed) {
+      const res = this.CustomerModel.schema.index(
+        { __posthog__id: 1, ownerId: 1 },
+        { unique: true, background: false }
+      );
+      console.log('______________________________');
+      console.log(res.indexes());
+      console.log('______________________________');
+    }
     this.CustomerModel.watch().on('change', async (data: any) => {
       const session = randomUUID();
       try {
@@ -788,8 +805,8 @@ export class CustomersService {
             person['slackRealName'] ||
             '...');
 
-        info.email = person.email || person.phEmail;
-        info.phone = person.phone;
+        info.email = person.email || person['phEmail'];
+        info.phone = person['phone'];
         info.createdAt = new Date(
           parseInt(person._id.toString().slice(0, 8), 16) * 1000
         ).toUTCString();

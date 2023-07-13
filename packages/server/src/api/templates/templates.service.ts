@@ -404,7 +404,7 @@ export class TemplatesService extends QueueEventsHost {
             tags: filteredTags,
             templateId,
             text: await this.parseApiCallTags(template.text, filteredTags),
-            to: customer.phEmail ? customer.phEmail : customer.email,
+            to: customer['phEmail'] ? customer['phEmail'] : customer.email,
           },
           { attempts: Number.MAX_SAFE_INTEGER }
         );
@@ -420,7 +420,7 @@ export class TemplatesService extends QueueEventsHost {
           accountId: account.id,
           args: {
             audienceId,
-            channel: customer.slackId,
+            channel: customer['slackId'],
             customerId,
             tags: filteredTags,
             templateId,
@@ -444,7 +444,7 @@ export class TemplatesService extends QueueEventsHost {
           tags: filteredTags,
           templateId: template.id,
           text: await this.parseApiCallTags(template.smsText, filteredTags),
-          to: customer.phPhoneNumber || customer.phone,
+          to: customer['phPhoneNumber'] || customer['phone'],
           token: account.smsAuthToken,
           trackingEmail: email,
         });
@@ -455,7 +455,7 @@ export class TemplatesService extends QueueEventsHost {
           audienceId,
           customerId,
           firebaseCredentials: account.firebaseCredentials,
-          phDeviceToken: customer.phDeviceToken,
+          phDeviceToken: customer['phDeviceToken'],
           pushText: await this.parseApiCallTags(
             template.pushText,
             filteredTags
@@ -766,7 +766,7 @@ export class TemplatesService extends QueueEventsHost {
 
     if (!customer) throw new NotFoundException('Customer not found');
 
-    const { _id, ownerId, workflows, ...tags } = customer.toObject();
+    const { _id, ownerId, journeys, ...tags } = customer.toObject();
     const filteredTags = cleanTagsForSending(tags);
 
     const { method } = testWebhookDto.webhookData;

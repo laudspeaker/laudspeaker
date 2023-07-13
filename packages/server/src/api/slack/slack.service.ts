@@ -815,7 +815,7 @@ export class SlackService {
 
   async getInstallation(customer: CustomerDocument): Promise<Installation> {
     return await this.installationRepository.findOneBy({
-      id: customer?.slackTeamId[0]?.trim(),
+      id: customer?.['slackTeamId'][0]?.trim(),
     });
   }
 }

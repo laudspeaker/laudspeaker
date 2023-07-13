@@ -330,7 +330,7 @@ export class TransitionProcessor extends WorkerHost {
                 template.subject,
                 filteredTags
               ),
-              to: customer.phEmail ? customer.phEmail : customer.email,
+              to: customer['phEmail'] ? customer['phEmail'] : customer.email,
               text: await this.templatesService.parseApiCallTags(
                 template.text,
                 filteredTags
@@ -355,7 +355,7 @@ export class TransitionProcessor extends WorkerHost {
                 stepID: currentStep.id,
                 customerID: customerID,
                 firebaseCredentials: owner.firebaseCredentials,
-                phDeviceToken: customer.phDeviceToken,
+                phDeviceToken: customer['phDeviceToken'],
                 pushText: await this.templatesService.parseApiCallTags(
                   template.pushText,
                   filteredTags
@@ -395,7 +395,7 @@ export class TransitionProcessor extends WorkerHost {
                 filteredTags: filteredTags,
                 args: {
                   token: installation.installation.bot.token,
-                  channel: customer.slackId,
+                  channel: customer['slackId'],
                   text: await this.templatesService.parseApiCallTags(
                     template.slackMessage,
                     filteredTags
@@ -419,7 +419,7 @@ export class TransitionProcessor extends WorkerHost {
                   template.smsText,
                   filteredTags
                 ),
-                to: customer.phPhoneNumber || customer.phone,
+                to: customer['phPhoneNumber'] || customer['phone'],
                 token: owner.smsAuthToken,
                 trackingEmail: email,
               })

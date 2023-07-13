@@ -86,10 +86,10 @@ export class WebhooksService {
     const session = randomUUID();
     (async () => {
       try {
-        await this.setupMailgunWebhook(
-          process.env.MAILGUN_API_KEY,
-          process.env.MAILGUN_TEST_DOMAIN
-        );
+        // await this.setupMailgunWebhook(
+        //   process.env.MAILGUN_API_KEY,
+        //   process.env.MAILGUN_TEST_DOMAIN
+        // );
       } catch (e) {
         this.error(e, WebhooksService.name, session);
       }

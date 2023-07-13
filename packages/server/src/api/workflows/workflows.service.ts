@@ -682,7 +682,7 @@ export class WorkflowsService {
           );
 
           const unenrolledCustomers = customers.filter(
-            (customer) => customer.workflows.indexOf(workflowID) < 0
+            (customer) => customer.journeys.indexOf(workflowID) < 0
           );
           await this.CustomerModel.updateMany(
             {
@@ -802,7 +802,7 @@ export class WorkflowsService {
               session,
               account
             )) &&
-            customer.workflows.indexOf(workflow.id) < 0
+            customer.journeys.indexOf(workflow.id) < 0
           ) {
             await this.audiencesService.moveCustomer(
               account,
