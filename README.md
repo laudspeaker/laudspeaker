@@ -28,8 +28,10 @@
 - **1-Click Deploy** to Render
 - **Database / datalake / data warehouse import** ingest user data from your databases
 - **Build and save segments of users**
+- **Build custom modals with our modal designer**
+- 🔜 **Custom User onboarding components that can be added to journeys**
 - 🔜 **Trigger journeys from segment/rudderstack/mixpanel events**
-- 🔜 **Comprehensive journey testing** - simulate user actions, differents dates, and times and test and debug messages before you start journeys
+- 🔜 **Comprehensive versioning ** - simulate user actions, differents dates, and times and test and debug messages before you start journeys
 
 ## 🚀 Get Started
 
