@@ -23,7 +23,9 @@ services:
         fromService:
           type: pserv
           name: clickhouse
-          property: hostport
+          property: host
+      - key: CH_MIGRATIONS_PORT
+        value: 8123
       - key: CH_MIGRATIONS_USER
         value: default
       - key: CH_MIGRATIONS_PASSWORD
