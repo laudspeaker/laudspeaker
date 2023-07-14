@@ -1,7 +1,7 @@
 
 ## 🚀 Laudspeaker's mission and roadmap
 
-Our mission is to build a new, open source suite of software tools to completely handle the "customer journey". After successful launches on Product Hunt and on HN, we've been inundated with demand for our products and are building as fast as possible to keep up. We have a very ambitious roadmap, and are focusing on going broad first on features, before we go deep.
+Our mission is to build a new, open source suite of software tools to completely handle the "customer journey". This starts from user onboarding and continues with user engagement via messaging channels like emails, sms, push. After successful launches on Product Hunt and on HN, we've been inundated with demand for our products and are building as fast as possible to keep up. We have a very ambitious roadmap, and are focusing on going broad first on features, before we go deep.
 
 In terms of how we think about product we categorise our work into 4 major buckets. 
 
