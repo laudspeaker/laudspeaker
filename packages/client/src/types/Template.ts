@@ -8,6 +8,7 @@ export enum TemplateType {
   FIREBASE = "firebase",
   WEBHOOK = "webhook",
   MODAL = "modal",
+  CUSTOM_MODAL = "custom-modal",
 }
 
 export default interface Template {
