@@ -52,6 +52,7 @@ import TemplateTablev2 from "pages/TemplateTablev2";
 import PeopleTablev2 from "pages/PeopleTablev2";
 import SegmentTablev2 from "pages/SegmentTablev2";
 import CustomModalBuilder from "pages/CustomModalBuilder";
+import Settingsv2 from "pages/Settingsv2";
 
 interface IProtected {
   children: ReactElement;
@@ -553,7 +554,7 @@ const RouteComponent: React.FC = () => {
             <Protected>
               <VerificationProtected>
                 <DrawerLayout>
-                  <Settings />
+                  <Settingsv2 />
                 </DrawerLayout>
               </VerificationProtected>
             </Protected>
