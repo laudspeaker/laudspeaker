@@ -7,6 +7,7 @@ import {
   StatementType,
 } from "pages/FlowBuilderv2/Nodes/NodeData";
 import React, { FC, useEffect, useState } from "react";
+import { useAppSelector } from "store/hooks";
 import { ProviderType } from "types/Workflow";
 import ConditionEditor from "./ConditionEditor";
 import ConditionViewer from "./ConditionViewer";
@@ -30,6 +31,8 @@ const EventBranchEditor: FC<EventBranchEditorProps> = ({
   onDeleteCondition,
   isOnlyBranch,
 }) => {
+  const { isOnboarding } = useAppSelector((state) => state.flowBuilder);
+
   const [conditionIndexToChange, setConditionIndexToChange] =
     useState<number>();
 
@@ -83,7 +86,10 @@ const EventBranchEditor: FC<EventBranchEditorProps> = ({
 
       <div className="flex gap-[10px]">
         {conditionIndexToChange === undefined && (
-          <Button type={ButtonType.LINK} onClick={onAddCondition}>
+          <Button
+            type={ButtonType.LINK}
+            onClick={isOnboarding ? () => null : onAddCondition}
+          >
             Add condition
           </Button>
         )}

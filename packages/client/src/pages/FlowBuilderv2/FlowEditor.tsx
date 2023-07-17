@@ -69,7 +69,7 @@ interface FlowEditorProps {
 }
 
 const FlowEditor: FC<FlowEditorProps> = ({ className, isViewMode }) => {
-  const { nodes, edges, stepperIndex } = useAppSelector(
+  const { nodes, edges, stepperIndex, isOnboarding } = useAppSelector(
     (state) => state.flowBuilder
   );
 
@@ -134,7 +134,9 @@ const FlowEditor: FC<FlowEditorProps> = ({ className, isViewMode }) => {
           className="rounded-[2px]"
         />
       </ReactFlow>
-      {!isViewMode && stepperIndex === 0 && <FlowBuilderSidePanel />}
+      {!isViewMode && !isOnboarding && stepperIndex === 0 && (
+        <FlowBuilderSidePanel />
+      )}
     </div>
   );
 };

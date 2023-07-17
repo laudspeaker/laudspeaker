@@ -10,6 +10,7 @@ import {
   NodeData,
 } from "pages/FlowBuilderv2/Nodes/NodeData";
 import { JourneyStatus } from "pages/JourneyTablev2/JourneyTablev2";
+import { OnboardingAction } from "pages/Onboardingv2/OnboardingSandbox";
 import {
   applyNodeChanges,
   Edge,
@@ -137,7 +138,15 @@ export interface SwapDragAction {
   nodeId: string;
 }
 
-export type DragAction = DrawerDragAction | SwapDragAction;
+export interface OnboardingDragAction {
+  type: OnboardingAction;
+  targetId?: string;
+}
+
+export type DragAction =
+  | DrawerDragAction
+  | SwapDragAction
+  | OnboardingDragAction;
 
 interface FlowBuilderState {
   flowId: string;
@@ -152,6 +161,8 @@ interface FlowBuilderState {
   isViewMode: boolean;
   flowStatus: JourneyStatus;
   showSegmentsErrors: boolean;
+  isOnboarding: boolean;
+  isOnboardingWaitUntilTooltipVisible: boolean;
 }
 
 const startNodeUUID = uuid();
@@ -194,6 +205,8 @@ const initialState: FlowBuilderState = {
   isViewMode: false,
   flowStatus: JourneyStatus.DRAFT,
   showSegmentsErrors: false,
+  isOnboarding: false,
+  isOnboardingWaitUntilTooltipVisible: false,
 };
 
 const handlePruneNodeTree = (state: FlowBuilderState, nodeId: string) => {
@@ -680,6 +693,15 @@ const flowBuilderSlice = createSlice({
     setShowSegmentsErrors(state, action: PayloadAction<boolean>) {
       state.showSegmentsErrors = action.payload;
     },
+    setIsOnboarding(state, action: PayloadAction<boolean>) {
+      state.isOnboarding = action.payload;
+    },
+    setIsOnboardingWaitUntilTooltipVisible(
+      state,
+      action: PayloadAction<boolean>
+    ) {
+      state.isOnboardingWaitUntilTooltipVisible = action.payload;
+    },
     refreshFlowBuilder(state) {
       state.flowId = "";
       state.flowName = "";
@@ -693,6 +715,8 @@ const flowBuilderSlice = createSlice({
       state.isViewMode = false;
       state.flowStatus = JourneyStatus.DRAFT;
       state.showSegmentsErrors = false;
+      state.isOnboarding = false;
+      state.isOnboardingWaitUntilTooltipVisible = false;
     },
   },
 });
@@ -721,6 +745,8 @@ export const {
   setIsViewMode,
   setFlowStatus,
   setShowSegmentsErrors,
+  setIsOnboarding,
+  setIsOnboardingWaitUntilTooltipVisible,
   refreshFlowBuilder,
 } = flowBuilderSlice.actions;
 

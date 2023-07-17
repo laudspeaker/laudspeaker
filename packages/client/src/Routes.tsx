@@ -33,7 +33,6 @@ import Modal from "components/Elements/Modal";
 import ApiService from "services/api.service";
 import Account from "types/Account";
 import { GenericButton } from "components/Elements";
-import Home from "pages/Home";
 import FirebaseBuilder from "pages/FirebaseBuilder/FirebaseBuilder";
 import ResetPassword from "pages/ResetPassword";
 import SegmentTable from "pages/SegmentTable";
@@ -44,6 +43,8 @@ import EventTracker from "pages/EventTracker";
 import ModalBackgroundProvider from "pages/ModalBuilder/ModalBackgroundProvider";
 import FlowBuilderv2 from "pages/FlowBuilderv2";
 import FlowViewerv2 from "pages/FlowViewerv2";
+import Onboardingv2 from "pages/Onboardingv2";
+import Homev2 from "pages/Homev2";
 import Verificationv2 from "pages/Verificationv2";
 import { toast } from "react-toastify";
 import JourneyTablev2 from "pages/JourneyTablev2";
@@ -223,7 +224,7 @@ const RouteComponent: React.FC = () => {
             <Protected>
               <VerificationProtected>
                 <DrawerLayout>
-                  <Home />
+                  <Homev2 />
                 </DrawerLayout>
               </VerificationProtected>
             </Protected>
@@ -563,7 +564,7 @@ const RouteComponent: React.FC = () => {
             <Protected>
               <VerificationProtected>
                 <DrawerLayout>
-                  <Home />
+                  <Homev2 />
                 </DrawerLayout>
               </VerificationProtected>
             </Protected>
@@ -574,9 +575,7 @@ const RouteComponent: React.FC = () => {
           element={
             <Protected>
               <VerificationProtected>
-                <DrawerLayout>
-                  <OnboardingBeta />
-                </DrawerLayout>
+                <Onboardingv2 />
               </VerificationProtected>
             </Protected>
           }

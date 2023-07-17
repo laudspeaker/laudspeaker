@@ -23,7 +23,7 @@ export const PrimaryEdge: FC<EdgeProps> = ({
   source,
   target,
 }) => {
-  const { isDragging, nodes, dragAction } = useAppSelector(
+  const { isDragging, nodes, dragAction, isOnboarding } = useAppSelector(
     (state) => state.flowBuilder
   );
   const dispatch = useAppDispatch();
@@ -52,7 +52,8 @@ export const PrimaryEdge: FC<EdgeProps> = ({
         !isTargetInsertNode &&
         !isSourceInsertNode &&
         isDragging &&
-        !dragActionsNotToDoBetweenNodes.includes(dragAction?.type) && (
+        !dragActionsNotToDoBetweenNodes.includes(dragAction?.type) &&
+        !isOnboarding && (
           <EdgeLabelRenderer>
             <div
               style={{

@@ -16,11 +16,16 @@ import MaxTimeBranchEditor from "../components/MaxTimeBranchEditor";
 import Button, { ButtonType } from "components/Elements/Buttonv2/Button";
 import { toast } from "react-toastify";
 import deepCopy from "utils/deepCopy";
+import { useAppSelector } from "store/hooks";
 
 const WaitUntilSettings: FC<SidePanelComponentProps<WaitUntilNodeData>> = ({
   nodeData,
   setNodeData,
 }) => {
+  const { isOnboarding, isOnboardingWaitUntilTooltipVisible } = useAppSelector(
+    (state) => state.flowBuilder
+  );
+
   const { branches } = nodeData;
 
   const handleAddEventBranch = () => {
@@ -181,7 +186,7 @@ const WaitUntilSettings: FC<SidePanelComponentProps<WaitUntilNodeData>> = ({
 
             <Button
               type={ButtonType.LINK}
-              onClick={onDeleteBranch(i)}
+              onClick={isOnboarding ? () => {} : onDeleteBranch(i)}
               className="text-[#EB5757] hover:text-[#EB5757] focus:text-[#EB5757]"
             >
               Delete branch
@@ -203,11 +208,18 @@ const WaitUntilSettings: FC<SidePanelComponentProps<WaitUntilNodeData>> = ({
           )}
         </div>
       ))}
+
+      {isOnboarding && isOnboardingWaitUntilTooltipVisible && (
+        <div className="absolute w-full bottom-[-185px] left-0 p-[10px] bg-black text-white font-medium">
+          Add 1 hour to Time Delay trigger
+        </div>
+      )}
+
       <div className="pb-[20px] flex gap-[20px]">
         <Button
           type={ButtonType.SECONDARY}
           onClick={handleAddEventBranch}
-          disabled={nodeData.branches.length > 9}
+          disabled={isOnboarding || nodeData.branches.length > 9}
         >
           Add branch
         </Button>
@@ -215,9 +227,10 @@ const WaitUntilSettings: FC<SidePanelComponentProps<WaitUntilNodeData>> = ({
         <Button
           type={ButtonType.SECONDARY}
           onClick={handleAddMaxTimeBranch}
-          disabled={branches.some(
-            (branch) => branch.type === BranchType.MAX_TIME
-          )}
+          disabled={
+            isOnboarding ||
+            branches.some((branch) => branch.type === BranchType.MAX_TIME)
+          }
         >
           Set max. time
         </Button>
