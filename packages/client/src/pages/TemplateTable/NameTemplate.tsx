@@ -93,6 +93,7 @@ const NameTemplate = ({ onSubmit, isPrimary }: INameSegment) => {
                   { value: TemplateType.FIREBASE },
                   { value: TemplateType.WEBHOOK },
                   { value: TemplateType.MODAL },
+                  { value: TemplateType.CUSTOM_MODAL, title: "custom modal" },
                 ]}
                 displayEmpty
               />
