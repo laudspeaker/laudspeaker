@@ -872,6 +872,7 @@ export class WorkflowsService {
           account,
           event.correlationKey,
           event.correlationValue,
+          session,
           transactionSession
         );
         this.debug(

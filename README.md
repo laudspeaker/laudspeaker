@@ -1,4 +1,4 @@
-<p align="center"><a  href="https://laudspeaker.com/"><img  src="https://user-images.githubusercontent.com/7728266/194206039-0faecc9d-c500-4c64-8401-dfbefe501e4a.png"  height="100"/></a></p>
+<p align="center"><a  href="https://laudspeaker.com/?ref=github"><img  src="https://user-images.githubusercontent.com/7728266/194206039-0faecc9d-c500-4c64-8401-dfbefe501e4a.png"  height="100"/></a></p>
 
 <p align="center">
 <a href='https://laudspeakerusers.slack.com/ssb/redirect'><img alt="Join Slack Community" src="https://img.shields.io/badge/slack%20community-join-green"/></a>
@@ -8,10 +8,10 @@
 
 <h4 align="center">
   <a href="https://join.slack.com/t/laudspeakerusers/shared_invite/zt-1li25huaq-BljJUA1Zm8dXvbZViAbMwg">Slack</a> |
-  <a href="https://app.laudspeaker.com/login/">Laudspeaker Cloud</a> |
-  <a href="https://laudspeaker.com/docs/guides/category/deploy">Self-Hosting</a> |
-  <a href="https://laudspeaker.com/docs/guides/overview/intro/">Docs</a> |
-  <a href="https://laudspeaker.com/">Website</a>
+  <a href="https://app.laudspeaker.com/login/?ref=github">Laudspeaker Cloud</a> |
+  <a href="https://laudspeaker.com/docs/guides/category/deploy/?ref=github">Self-Hosting</a> |
+  <a href="https://laudspeaker.com/docs/guides/overview/intro/?ref=github">Docs</a> |
+  <a href="https://laudspeaker.com/?ref=github">Website</a>
 </h4>
   
 </p>
@@ -28,16 +28,18 @@
 - **1-Click Deploy** to Render
 - **Database / datalake / data warehouse import** ingest user data from your databases
 - **Build and save segments of users**
+- **Build custom modals with our modal designer**
+- 🔜 **Custom User onboarding components that can be added to journeys**
 - 🔜 **Trigger journeys from segment/rudderstack/mixpanel events**
-- 🔜 **Comprehensive journey testing** - simulate user actions, differents dates, and times and test and debug messages before you start journeys
+- 🔜 **Comprehensive versioning ** - simulate user actions, differents dates, and times and test and debug messages before you start journeys
 
 ## 🚀 Get Started
 
-Run yourself (instructions below) or use [Laudspeaker Cloud](https://app.laudspeaker.com/login) . Docs are [here](https://laudspeaker.com/docs/guides/overview/intro/)
+Run yourself (instructions below) or use [Laudspeaker Cloud](https://app.laudspeaker.com/login/?ref=github) . Docs are [here](https://laudspeaker.com/docs/guides/overview/intro/?ref=github)
 
 ### Deploy Laudspeaker on Render.com
 
-If you want a one-click render option **READ THIS** <a href="https://laudspeaker.com/docs/guides/deploy/options">**DOC**</a> and try it out here:
+If you want a one-click render option **READ THIS** <a href="https://laudspeaker.com/docs/guides/deploy/options/?ref=github">**DOC**</a> and try it out here:
 
 NB: Create environment group with name "laudspeaker"
 

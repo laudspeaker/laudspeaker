@@ -18,6 +18,7 @@ import Button, {
   ButtonType,
 } from "../../../components/Elements/Buttonv2/Button";
 import FlowBuilderStartModal from "../Modals/FlowBuilderStartModal";
+import posthog from "posthog-js";
 
 const isValidNodes = (nodes: Node<NodeData | EdgeData>[]): boolean => {
   const filterNodeByType = nodes.filter(
@@ -84,8 +85,11 @@ const FlowBuilderHeader = () => {
       return;
     }
 
-    if (stepperIndex !== 2)
+    if (stepperIndex !== 2) {
+      if (stepperIndex === 0) posthog.capture("journey_designed");
+      if (stepperIndex === 1) posthog.capture("segment_decision");
       dispatch(setStepperIndex((stepperIndex + 1) as 1 | 2));
+    }
   };
 
   return (

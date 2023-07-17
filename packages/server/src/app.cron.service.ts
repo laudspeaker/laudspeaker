@@ -159,8 +159,8 @@ export class CronService {
 
   @Cron(CronExpression.EVERY_HOUR)
   async handleCustomerKeysCron() {
+    const session = randomUUID();
     try {
-      this.logger.log('Cron customer keys job started');
       let current = 0;
       const documentsCount = await this.customerModel
         .estimatedDocumentCount()
@@ -228,21 +228,15 @@ export class CronService {
             .exec();
         }
       }
-
-      this.logger.log(
-        `Cron customer keys job finished, checked ${documentsCount} records, found ${
-          Object.keys(keys).length
-        } keys`
-      );
     } catch (e) {
-      this.logger.error('Cron error: ' + e);
+      this.error(e, this.handleCustomerKeysCron.name, session);
     }
   }
 
   @Cron(CronExpression.EVERY_HOUR)
   async handleEventKeysCron() {
+    const session = randomUUID();
     try {
-      this.logger.log('Cron event keys job started');
       let current = 0;
       const documentsCount = await this.eventModel
         .estimatedDocumentCount()
@@ -313,33 +307,17 @@ export class CronService {
             await this.eventKeysModel.insertMany(batchToSave);
             batchToSave = [];
           }
-
-          // await this.eventKeysModel
-          //   .updateOne(
-          //     { key },
-          //     {
-          //       $set: eventKey,
-          //     },
-          //     { upsert: true }
-          //   )
-          //   .exec();
         }
-
         await this.eventKeysModel.insertMany(batchToSave);
       }
-
-      this.logger.log(
-        `Cron event keys job finished, checked ${documentsCount} records, found ${
-          Object.keys(keys).length
-        } keys`
-      );
     } catch (e) {
-      this.logger.error('Cron error: ' + e);
+      this.error(e, this.handleEventKeysCron.name, session);
     }
   }
 
   @Cron(CronExpression.EVERY_HOUR)
   async handleVerificationCheck() {
+    const session = randomUUID();
     try {
       await this.verificationRepository
         .createQueryBuilder()
@@ -349,7 +327,7 @@ export class CronService {
         .update({ status: 'expired' })
         .execute();
     } catch (e) {
-      this.logger.error('Cron error: ' + e);
+      this.error(e, this.handleVerificationCheck.name, session);
     }
   }
 
@@ -432,49 +410,9 @@ export class CronService {
     }
   }
 
-  @Cron(CronExpression.EVERY_10_SECONDS)
-  async handleTimeTriggers() {
-    const session = randomUUID();
-    try {
-      const date = new Date();
-      const jobs = await this.jobsService.jobsRepository.find({
-        where: [
-          { executionTime: Between(MIN_DATE, date) },
-          {
-            startTime: Between(MIN_DATE, date),
-            endTime: Between(date, MAX_DATE),
-            workflow: {
-              isActive: true,
-              isDeleted: false,
-              isPaused: false,
-              isStopped: false,
-            },
-            status: TimeJobStatus.PENDING,
-          },
-        ],
-        relations: ['owner', 'from', 'to', 'workflow'],
-      });
-      for (const job of jobs) {
-        try {
-          await this.jobsService.jobsRepository.save({
-            ...job,
-            status: TimeJobStatus.IN_PROGRESS,
-          });
-          if (await this.customerModel.findById(job.customer).exec()) {
-            await this.workflowsService.timeTick(job, session);
-          }
-          await this.jobsService.jobsRepository.delete({ id: job.id });
-        } catch (e) {
-          this.logger.error('Time job error: ' + e);
-        }
-      }
-    } catch (e) {
-      this.logger.error('Cron error: ' + e);
-    }
-  }
-
   @Cron(CronExpression.EVERY_DAY_AT_NOON)
   async handleMissedMailgunEvents() {
+    const session = randomUUID();
     try {
       // Get all pending Mailgun Jobs and accounts
       const mailgunJobs = await this.webhookJobsService.findAllByProvider(
@@ -559,14 +497,13 @@ export class CronService {
         await this.webhookJobsService.remove(mailgunJobs[i].id);
       }
     } catch (err) {
-      this.logger.error(
-        `app.cron.service.ts:CronService.handleMissedMailgunEvents: Error: ${err}`
-      );
+      this.error(err, this.handleMissedMailgunEvents.name, session);
     }
   }
 
   @Cron(CronExpression.EVERY_DAY_AT_NOON)
   async handleMissedSendgridEvents() {
+    const session = randomUUID();
     try {
       // Get all pending Twilio Jobs and accounts
       const sendgridJobs = await this.webhookJobsService.findAllByProvider(
@@ -678,14 +615,13 @@ export class CronService {
         await this.webhookJobsService.remove(sendgridJobs[i].id);
       }
     } catch (err) {
-      this.logger.error(
-        `app.cron.service.ts:CronService.handleMissedSendgridEvents: Error: ${err}`
-      );
+      this.error(err, this.handleMissedSendgridEvents.name, session);
     }
   }
 
   @Cron(CronExpression.EVERY_DAY_AT_NOON)
   async handleMissedTwilioEvents() {
+    const session = randomUUID();
     try {
       // Get all pending Twilio Jobs and accounts
       const twilioJobs = await this.webhookJobsService.findAllByProvider(
@@ -782,14 +718,13 @@ export class CronService {
         await this.webhookJobsService.remove(twilioJobs[i].id);
       }
     } catch (err) {
-      this.logger.error(
-        `app.cron.service.ts:CronService.handleMissedTwilioEvents: Error: ${err}`
-      );
+      this.error(err, this.handleMissedTwilioEvents.name, session);
     }
   }
 
   @Cron(CronExpression.EVERY_MINUTE)
   async handleRecovery() {
+    const session = randomUUID();
     try {
       await this.recoveryRepository
         .createQueryBuilder()
@@ -797,16 +732,17 @@ export class CronService {
         .delete()
         .execute();
     } catch (e) {
-      this.logger.error('Recovery cron error: ' + e);
+      this.error(e, this.handleRecovery.name, session);
     }
   }
 
   @Cron(CronExpression.EVERY_MINUTE)
   async handleExpiredModalEvents() {
+    const session = randomUUID();
     try {
       await this.modalsService.deleteExpiredModalEvents();
     } catch (e) {
-      this.logger.error('Expired modal events cron error: ' + e);
+      this.error(e, this.handleExpiredModalEvents.name, session);
     }
   }
 }
