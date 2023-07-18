@@ -5,6 +5,7 @@ import twilioCardIconImage from "../svg/twilio-card-icon.svg";
 import customModalCardIconImage from "../svg/custom-modal-card-icon.svg";
 import slackCardIconImage from "../svg/slack-card-icon.svg";
 import firebaseCardIconImage from "../svg/firebase-card-icon.svg";
+import { useNavigate } from "react-router-dom";
 
 export enum MessageChannel {
   EMAIL,
@@ -24,6 +25,8 @@ interface MessageChannelCardFixture {
 }
 
 const MessageChannelTab = () => {
+  const navigate = useNavigate();
+
   const messageChannelCardsFixtures: Record<
     MessageChannel,
     MessageChannelCardFixture
@@ -32,16 +35,19 @@ const MessageChannelTab = () => {
       id: MessageChannel.EMAIL,
       title: "Email",
       icon: emailCardIconImage,
+      onClick: () => navigate("/settings/email"),
     },
     [MessageChannel.TWILIO]: {
       id: MessageChannel.TWILIO,
       title: "Twilio SMS",
       icon: twilioCardIconImage,
+      onClick: () => navigate("/settings/sms"),
     },
     [MessageChannel.CUSTOM_MODAL]: {
       id: MessageChannel.CUSTOM_MODAL,
       title: "Custom modal",
       icon: customModalCardIconImage,
+      onClick: () => navigate("/settings/custom-modal"),
     },
     [MessageChannel.SLACK]: {
       id: MessageChannel.SLACK,
@@ -126,6 +132,7 @@ const MessageChannelTab = () => {
           {supportedFixtures.map((fixture, i) => (
             <button
               key={i}
+              onClick={fixture.onClick}
               className="p-[20px] rounded-[8px] bg-[#F9FAFB] border-[1px] border-[#E5E7EB] flex justify-between items-center"
             >
               <div className="flex items-center gap-[10px]">

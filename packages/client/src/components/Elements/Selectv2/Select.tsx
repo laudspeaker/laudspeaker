@@ -58,7 +58,13 @@ const Select = <T,>({
               panelClassName ? panelClassName : ""
             }`}
           >
-            <div className="bg-white py-[4px] w-[200px]">
+            <div
+              className="bg-white py-[4px] w-[200px]"
+              style={{
+                boxShadow:
+                  "0px 9px 28px 8px rgba(0, 0, 0, 0.05), 0px 6px 16px 0px rgba(0, 0, 0, 0.08), 0px 3px 6px -4px rgba(0, 0, 0, 0.12)",
+              }}
+            >
               {options.map((option) => (
                 <div
                   className="px-[12px] py-[5px] hover:bg-[#F3F4F6] select-none cursor-pointer"

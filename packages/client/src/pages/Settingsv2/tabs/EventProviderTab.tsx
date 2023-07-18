@@ -1,6 +1,7 @@
 import React from "react";
 import posthogLogoIcon from "../svg/posthog-logo-icon.svg";
 import javascriptLogoIcon from "../svg/javascript-logo-icon.svg";
+import { useNavigate } from "react-router-dom";
 
 export enum EventProvider {
   POSTHOG,
@@ -12,22 +13,28 @@ interface EventProviderFixture {
   name: string;
   icon: string;
   connected?: boolean;
+  onClick?: () => void;
 }
 
-const eventProviderToFixtureMap: Record<EventProvider, EventProviderFixture> = {
-  [EventProvider.POSTHOG]: {
-    id: EventProvider.POSTHOG,
-    name: "PostHog",
-    icon: posthogLogoIcon,
-  },
-  [EventProvider.JAVASCRIPT_SNIPPET]: {
-    id: EventProvider.JAVASCRIPT_SNIPPET,
-    name: "Javascript snippet",
-    icon: javascriptLogoIcon,
-  },
-};
-
 const EventProviderTab = () => {
+  const navigate = useNavigate();
+
+  const eventProviderToFixtureMap: Record<EventProvider, EventProviderFixture> =
+    {
+      [EventProvider.POSTHOG]: {
+        id: EventProvider.POSTHOG,
+        name: "PostHog",
+        icon: posthogLogoIcon,
+        onClick: () => navigate("/settings/posthog"),
+      },
+      [EventProvider.JAVASCRIPT_SNIPPET]: {
+        id: EventProvider.JAVASCRIPT_SNIPPET,
+        name: "Javascript snippet",
+        icon: javascriptLogoIcon,
+        onClick: () => navigate("/settings/javascript-snippet"),
+      },
+    };
+
   const connectedProviders = Object.values(eventProviderToFixtureMap).filter(
     (fixture) => fixture.connected
   );
@@ -88,7 +95,7 @@ const EventProviderTab = () => {
             {supportedProviders.map((fixture) => (
               <button
                 className="w-[240px] flex gap-[10px] items-center p-[20px] border-[1px] border-[#D1D5DB] rounded-[8px]"
-                onClick={() => {}}
+                onClick={fixture.onClick}
               >
                 <div>
                   <img src={fixture.icon} />

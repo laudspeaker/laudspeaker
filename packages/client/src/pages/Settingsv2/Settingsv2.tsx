@@ -48,7 +48,7 @@ const Settingsv2 = () => {
         </div>
       </div>
 
-      <SetupGuide currentTab={currentTab} setCurrentTab={setCurrentTab} />
+      {/* <SetupGuide currentTab={currentTab} setCurrentTab={setCurrentTab} /> */}
     </div>
   );
 };

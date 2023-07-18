@@ -53,6 +53,11 @@ import PeopleTablev2 from "pages/PeopleTablev2";
 import SegmentTablev2 from "pages/SegmentTablev2";
 import CustomModalBuilder from "pages/CustomModalBuilder";
 import Settingsv2 from "pages/Settingsv2";
+import EmailSettings from "pages/EmailSettings/EmailSettings";
+import TwilioSettings from "pages/TwilioSettings";
+import PosthogSettings from "pages/PosthogSettings";
+import JavascriptSnippetSettings from "pages/JavascriptSnippetSettings";
+import CustomModalSettings from "pages/CustomModalSettings";
 
 interface IProtected {
   children: ReactElement;
@@ -555,6 +560,66 @@ const RouteComponent: React.FC = () => {
               <VerificationProtected>
                 <DrawerLayout>
                   <Settingsv2 />
+                </DrawerLayout>
+              </VerificationProtected>
+            </Protected>
+          }
+        />
+        <Route
+          path="/settings/email"
+          element={
+            <Protected>
+              <VerificationProtected>
+                <DrawerLayout>
+                  <EmailSettings />
+                </DrawerLayout>
+              </VerificationProtected>
+            </Protected>
+          }
+        />
+        <Route
+          path="/settings/sms"
+          element={
+            <Protected>
+              <VerificationProtected>
+                <DrawerLayout>
+                  <TwilioSettings />
+                </DrawerLayout>
+              </VerificationProtected>
+            </Protected>
+          }
+        />
+        <Route
+          path="/settings/custom-modal"
+          element={
+            <Protected>
+              <VerificationProtected>
+                <DrawerLayout>
+                  <CustomModalSettings />
+                </DrawerLayout>
+              </VerificationProtected>
+            </Protected>
+          }
+        />
+        <Route
+          path="/settings/posthog"
+          element={
+            <Protected>
+              <VerificationProtected>
+                <DrawerLayout>
+                  <PosthogSettings />
+                </DrawerLayout>
+              </VerificationProtected>
+            </Protected>
+          }
+        />
+        <Route
+          path="/settings/javascript-snippet"
+          element={
+            <Protected>
+              <VerificationProtected>
+                <DrawerLayout>
+                  <JavascriptSnippetSettings />
                 </DrawerLayout>
               </VerificationProtected>
             </Protected>
