@@ -2,10 +2,43 @@ import BackButton from "components/BackButton";
 import CopyButton from "components/CopyButton";
 import Button, { ButtonType } from "components/Elements/Buttonv2";
 import SnippetPicker from "components/SnippetPicker/SnippetPicker";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
+import { useInterval } from "react-use";
+import ApiService from "services/api.service";
+import Account from "types/Account";
 
 const JavascriptSnippetSettings = () => {
+  const navigate = useNavigate();
+
   const [APIKey, setAPIKey] = useState("");
+
+  const [isLoading, setIsLoading] = useState(false);
+  const [isConnected, setIsConnected] = useState(false);
+
+  const loadData = async () => {
+    setIsLoading(true);
+
+    try {
+      const {
+        data: { apiKey, javascriptSnippetSetupped },
+      } = await ApiService.get<Account>({ url: "/accounts" });
+
+      setAPIKey(apiKey);
+      setIsConnected(javascriptSnippetSetupped);
+    } catch (e) {
+      toast.error("Error while loading data");
+    } finally {
+      setIsLoading(true);
+    }
+  };
+
+  useInterval(loadData, 1000);
+
+  useEffect(() => {
+    if (isConnected) navigate("/settings");
+  }, [isConnected]);
 
   return (
     <div className="p-[20px] flex justify-center font-inter text-[14px] font-normal leading-[22px] text-[#111827]">
@@ -50,7 +83,7 @@ const JavascriptSnippetSettings = () => {
           className="w-fit"
           disabled
         >
-          Connect
+          Connecting...
         </Button>
       </div>
     </div>

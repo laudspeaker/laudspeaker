@@ -87,6 +87,11 @@ export class WebsocketGateway implements OnGatewayConnection {
       socket.data.customerId = customer.id;
       socket.emit('customerId', customer.id);
       socket.emit('log', 'Connected');
+
+      await this.accountsService.accountsRepository.save({
+        id: account.id,
+        javascriptSnippetSetupped: true,
+      });
     } catch (e) {
       socket.emit('error', e);
     }

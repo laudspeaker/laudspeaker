@@ -1,13 +1,17 @@
+import { AxiosError } from "axios";
 import BackButton from "components/BackButton";
 import Button, { ButtonType } from "components/Elements/Buttonv2";
 import Select from "components/Elements/Selectv2/Select";
-import React, { ReactNode, useState } from "react";
+import React, { ReactNode, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
+import ApiService from "services/api.service";
 import MailgunSettings from "./components/MailgunSettings";
 import SendgridSettings from "./components/SendgridSettings";
 
 export enum EmailSendingService {
-  MAILGUN,
-  SENDGRID,
+  MAILGUN = "mailgun",
+  SENDGRID = "sendgrid",
 }
 
 interface EmailSettingsFormData {
@@ -27,10 +31,11 @@ export interface SendingServiceSettingsProps {
 }
 
 const EmailSettings = () => {
+  const navigate = useNavigate();
+
   const [sendingService, setSendingService] = useState(
     EmailSendingService.MAILGUN
   );
-
   const [formData, setFormData] = useState<EmailSettingsFormData>({
     mailgunAPIKey: "",
     sendingDomain: "",
@@ -41,6 +46,9 @@ const EmailSettings = () => {
     sendgridApiKey: "",
     sendgridFromEmail: "",
   });
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string>();
 
   const sendingServiceToComponentMap: Record<EmailSendingService, ReactNode> = {
     [EmailSendingService.MAILGUN]: (
@@ -50,6 +58,76 @@ const EmailSettings = () => {
       <SendgridSettings formData={formData} setFormData={setFormData} />
     ),
   };
+
+  useEffect(() => {
+    (async () => {
+      setIsLoading(true);
+      try {
+        const { data } = await ApiService.get({ url: "/accounts" });
+        const {
+          mailgunAPIKey,
+          sendingDomain,
+          sendingName,
+          sendingEmail,
+          testSendingEmail,
+          testSendingName,
+          emailProvider: provider,
+          verified,
+          sendgridApiKey,
+          sendgridFromEmail,
+        } = data;
+        setFormData({
+          mailgunAPIKey: mailgunAPIKey || "",
+          sendingDomain: sendingDomain || "",
+          sendingName: sendingName || "",
+          sendingEmail: sendingEmail || "",
+          testSendingEmail: testSendingEmail || "",
+          testSendingName: testSendingName || "",
+          sendgridApiKey: sendgridApiKey || "",
+          sendgridFromEmail: sendgridFromEmail || "",
+        });
+        setSendingService(provider || sendingService);
+      } catch (e) {
+        toast.error("Error while loading data");
+      } finally {
+        setIsLoading(false);
+      }
+    })();
+  }, []);
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      const objToSend: Record<string, string> = {};
+      for (const key of Object.keys(formData)) {
+        if (formData[key as keyof typeof formData])
+          objToSend[key] = formData[key as keyof typeof formData];
+      }
+      await ApiService.patch({
+        url: "/accounts",
+        options: { ...objToSend, emailProvider: sendingService },
+      });
+      navigate("/settings");
+    } catch (e) {
+      let message = "Unexpected error";
+      if (e instanceof AxiosError) message = e.response?.data?.message;
+      toast.error(message);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const isError = Boolean(error);
+  const isFulfilled = Boolean(
+    sendingService === EmailSendingService.MAILGUN
+      ? formData.mailgunAPIKey &&
+          formData.sendingDomain &&
+          formData.sendingEmail &&
+          formData.sendingName
+      : sendingService === EmailSendingService.SENDGRID
+      ? formData.sendgridApiKey && formData.sendgridFromEmail
+      : false
+  );
 
   return (
     <div className="p-[20px] flex justify-center font-inter text-[14px] font-normal leading-[22px] text-[#111827]">
@@ -77,13 +155,19 @@ const EmailSettings = () => {
           {sendingServiceToComponentMap[sendingService]}
         </div>
 
+        {error && (
+          <div className="text-[#E11D48] font-inter text-[12px] leading-[20px]">
+            {error}
+          </div>
+        )}
+
         <Button
-          type={ButtonType.SECONDARY}
-          onClick={() => {}}
+          type={ButtonType.PRIMARY}
+          onClick={handleSave}
           className="w-fit"
-          disabled
+          disabled={isSaving || isError || !isFulfilled}
         >
-          Connect
+          {isSaving ? "Connecting..." : "Connect"}
         </Button>
       </div>
     </div>

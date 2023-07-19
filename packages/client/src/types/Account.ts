@@ -35,4 +35,6 @@ export default interface Account {
   smsAccountSid?: string;
   smsAuthToken?: string;
   smsFrom?: string;
+  posthogSetupped: boolean;
+  javascriptSnippetSetupped: boolean;
 }

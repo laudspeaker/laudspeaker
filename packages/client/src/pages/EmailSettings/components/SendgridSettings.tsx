@@ -17,6 +17,7 @@ const SendgridSettings: FC<SendingServiceSettingsProps> = ({
           onChange={(value) =>
             setFormData({ ...formData, sendgridApiKey: value })
           }
+          type="password"
           placeholder="Key number"
         />
       </div>

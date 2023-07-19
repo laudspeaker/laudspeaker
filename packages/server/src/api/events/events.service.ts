@@ -213,6 +213,11 @@ export class EventsService {
     // Step 1: Find corresponding account
     let jobArray: WorkflowTick[] = []; // created jobId
     try {
+      await queryRunner.manager.save(Account, {
+        id: account.id,
+        posthogSetupped: true,
+      });
+
       const chronologicalEvents: PostHogEventDto[] = eventDto.batch.sort(
         (a, b) =>
           new Date(a.originalTimestamp).getTime() -

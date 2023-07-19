@@ -1,7 +1,11 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import posthogLogoIcon from "../svg/posthog-logo-icon.svg";
 import javascriptLogoIcon from "../svg/javascript-logo-icon.svg";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
+import { useInterval } from "react-use";
+import ApiService from "services/api.service";
+import Account from "types/Account";
 
 export enum EventProvider {
   POSTHOG,
@@ -19,18 +23,39 @@ interface EventProviderFixture {
 const EventProviderTab = () => {
   const navigate = useNavigate();
 
+  const [isPosthogSetupped, setIsPosthogSetupped] = useState(false);
+  const [isJavascriptSnippetSetupped, setIsJavascriptSnippetSetupped] =
+    useState(false);
+
+  const loadData = async () => {
+    try {
+      const {
+        data: { posthogSetupped, javascriptSnippetSetupped },
+      } = await ApiService.get<Account>({ url: "/accounts" });
+
+      setIsPosthogSetupped(posthogSetupped);
+      setIsJavascriptSnippetSetupped(javascriptSnippetSetupped);
+    } catch (e) {
+      toast.error("Error while loading data");
+    }
+  };
+
+  useInterval(loadData, 1000);
+
   const eventProviderToFixtureMap: Record<EventProvider, EventProviderFixture> =
     {
       [EventProvider.POSTHOG]: {
         id: EventProvider.POSTHOG,
         name: "PostHog",
         icon: posthogLogoIcon,
+        connected: isPosthogSetupped,
         onClick: () => navigate("/settings/posthog"),
       },
       [EventProvider.JAVASCRIPT_SNIPPET]: {
         id: EventProvider.JAVASCRIPT_SNIPPET,
         name: "Javascript snippet",
         icon: javascriptLogoIcon,
+        connected: isJavascriptSnippetSetupped,
         onClick: () => navigate("/settings/javascript-snippet"),
       },
     };
@@ -62,8 +87,11 @@ const EventProviderTab = () => {
             Connected providers
           </div>
 
-          {connectedProviders.map((fixture) => (
-            <div className="w-full px-[20px] py-[10px] flex items-center justify-between border-[1px] border-[#E5E7EB] rounded-[8px]">
+          {connectedProviders.map((fixture, i) => (
+            <div
+              key={i}
+              className="w-full px-[20px] py-[10px] flex items-center justify-between border-[1px] border-[#E5E7EB] rounded-[8px]"
+            >
               <div className="flex items-center gap-[10px]">
                 <div>
                   <img src={fixture.icon} />
@@ -92,8 +120,9 @@ const EventProviderTab = () => {
           </div>
 
           <div className="flex gap-[20px] flex-wrap">
-            {supportedProviders.map((fixture) => (
+            {supportedProviders.map((fixture, i) => (
               <button
+                key={i}
                 className="w-[240px] flex gap-[10px] items-center p-[20px] border-[1px] border-[#D1D5DB] rounded-[8px]"
                 onClick={fixture.onClick}
               >

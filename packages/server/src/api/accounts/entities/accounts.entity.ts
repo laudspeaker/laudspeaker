@@ -138,4 +138,10 @@ export class Account extends BaseEntity {
 
   @Column({ type: 'varchar', nullable: true })
   public smsFrom?: string;
+
+  @Column({ type: 'boolean', default: false })
+  public posthogSetupped: boolean;
+
+  @Column({ type: 'boolean', default: false })
+  public javascriptSnippetSetupped: boolean;
 }

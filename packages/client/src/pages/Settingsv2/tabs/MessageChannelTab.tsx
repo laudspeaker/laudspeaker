@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import arrowRightIconImage from "../svg/arrow-right.svg";
 import emailCardIconImage from "../svg/email-card-icon.svg";
 import twilioCardIconImage from "../svg/twilio-card-icon.svg";
@@ -6,6 +6,11 @@ import customModalCardIconImage from "../svg/custom-modal-card-icon.svg";
 import slackCardIconImage from "../svg/slack-card-icon.svg";
 import firebaseCardIconImage from "../svg/firebase-card-icon.svg";
 import { useNavigate } from "react-router-dom";
+import Account from "types/Account";
+import ApiService from "services/api.service";
+import { toast } from "react-toastify";
+import { EmailSendingService } from "pages/EmailSettings/EmailSettings";
+import { title } from "process";
 
 export enum MessageChannel {
   EMAIL,
@@ -15,6 +20,11 @@ export enum MessageChannel {
   FIREBASE,
 }
 
+interface MessageChannelAdditionalInfoFixture {
+  key: keyof Account;
+  title: string;
+}
+
 interface MessageChannelCardFixture {
   id: MessageChannel;
   title: string;
@@ -22,10 +32,44 @@ interface MessageChannelCardFixture {
   beta?: boolean;
   onClick?: () => void;
   connected?: boolean;
+  additionalInfo?: MessageChannelAdditionalInfoFixture[];
 }
+
+const emailServiceToAdditionalInfoMap: Record<
+  EmailSendingService,
+  MessageChannelAdditionalInfoFixture[]
+> = {
+  [EmailSendingService.MAILGUN]: [
+    { key: "sendingDomain", title: "Domain" },
+    { key: "sendingName", title: "Sending name" },
+    { key: "sendingEmail", title: "Sending email" },
+  ],
+  [EmailSendingService.SENDGRID]: [
+    { key: "sendgridFromEmail", title: "Sending email" },
+  ],
+};
 
 const MessageChannelTab = () => {
   const navigate = useNavigate();
+
+  const [isLoading, setIsLoading] = useState(false);
+  const [account, setAccount] = useState<Account>();
+
+  const isEmailConnected = Boolean(
+    (account?.emailProvider === EmailSendingService.MAILGUN &&
+      account.mailgunAPIKey &&
+      account.sendingDomain &&
+      account.sendingEmail &&
+      account.sendingName) ||
+      (account?.emailProvider === EmailSendingService.SENDGRID &&
+        account.sendgridApiKey &&
+        account.sendgridVerificationKey &&
+        account.sendgridFromEmail)
+  );
+
+  const isTwilioConnected = Boolean(
+    account?.smsAccountSid && account.smsAuthToken && account.smsFrom
+  );
 
   const messageChannelCardsFixtures: Record<
     MessageChannel,
@@ -36,12 +80,20 @@ const MessageChannelTab = () => {
       title: "Email",
       icon: emailCardIconImage,
       onClick: () => navigate("/settings/email"),
+      connected: isEmailConnected,
+      additionalInfo: account?.emailProvider
+        ? emailServiceToAdditionalInfoMap[
+            account.emailProvider as EmailSendingService
+          ]
+        : undefined,
     },
     [MessageChannel.TWILIO]: {
       id: MessageChannel.TWILIO,
       title: "Twilio SMS",
       icon: twilioCardIconImage,
       onClick: () => navigate("/settings/sms"),
+      connected: isTwilioConnected,
+      additionalInfo: [{ key: "smsFrom", title: "SMS from" }],
     },
     [MessageChannel.CUSTOM_MODAL]: {
       id: MessageChannel.CUSTOM_MODAL,
@@ -71,6 +123,21 @@ const MessageChannelTab = () => {
     (fixture) => !fixture.connected
   );
 
+  useEffect(() => {
+    (async () => {
+      setIsLoading(true);
+      try {
+        const { data } = await ApiService.get<Account>({ url: "/accounts" });
+
+        setAccount(data);
+      } catch (e) {
+        toast.error("Error while loading data");
+      } finally {
+        setIsLoading(false);
+      }
+    })();
+  }, []);
+
   return (
     <div className="p-[20px] flex flex-col gap-[20px]">
       <div className="text-[#4B5563]">
@@ -93,27 +160,49 @@ const MessageChannelTab = () => {
           {connectedFixtures.map((fixture, i) => (
             <button
               key={i}
-              className="p-[20px] rounded-[8px] bg-[#F9FAFB] border-[1px] border-[#E5E7EB] flex justify-between items-center"
+              onClick={fixture.onClick}
+              className="p-[20px] rounded-[8px] bg-[#F9FAFB] border-[1px] border-[#E5E7EB] flex flex-col gap-[10px]"
             >
-              <div className="flex items-center gap-[10px]">
-                <div>
-                  <img src={fixture.icon} />
-                </div>
-
-                <div className="text-[#18181B] font-inter text-[16px] leading-[24px]">
-                  {fixture.title}
-                </div>
-
-                {fixture.beta && (
-                  <div className="px-[10px] py-[2px] rounded-[14px] font-inter text-[12px] font-normal leading-[20px] text-[#4B5563] border-[1px] border-[#E5E7EB] bg-white">
-                    Beta
+              <div className="w-full flex justify-between items-center">
+                <div className="flex items-center gap-[10px]">
+                  <div>
+                    <img src={fixture.icon} />
                   </div>
-                )}
+
+                  <div className="text-[#18181B] font-inter text-[16px] leading-[24px]">
+                    {fixture.title}
+                  </div>
+
+                  {fixture.beta && (
+                    <div className="px-[10px] py-[2px] rounded-[14px] font-inter text-[12px] font-normal leading-[20px] text-[#4B5563] border-[1px] border-[#E5E7EB] bg-white">
+                      Beta
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <img src={arrowRightIconImage} />
+                </div>
               </div>
 
-              <div>
-                <img src={arrowRightIconImage} />
-              </div>
+              {fixture.additionalInfo && fixture.additionalInfo.length > 0 && (
+                <>
+                  <div className="h-[1px] w-full bg-[#E5E7EB]" />
+
+                  <div className="flex w-full">
+                    {fixture.additionalInfo.map((info, j) => (
+                      <div key={j} className="w-full flex flex-col gap-[5px]">
+                        <div className="w-fit font-inter text-[14px] text-[#4B5563]">
+                          {info.title}
+                        </div>
+                        <div className="w-fit font-inter text-[14px] text-[#18181B]">
+                          {String(account?.[info.key])}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
             </button>
           ))}
         </>

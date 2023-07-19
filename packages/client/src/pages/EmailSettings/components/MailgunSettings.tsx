@@ -1,11 +1,37 @@
 import Input from "components/Elements/Inputv2";
-import React, { FC } from "react";
+import Select from "components/Elements/Selectv2";
+import React, { FC, useEffect, useState } from "react";
+import {
+  setSettingsPrivateApiKey,
+  setDomainsList,
+} from "reducers/settings.reducer";
+import { useAppDispatch } from "store/hooks";
 import { SendingServiceSettingsProps } from "../EmailSettings";
 
 const MailgunSettings: FC<SendingServiceSettingsProps> = ({
   formData,
   setFormData,
 }) => {
+  const dispatch = useAppDispatch();
+
+  const [possibleDomains, setPossibleDomains] = useState<string[]>([]);
+
+  const callDomains = async () => {
+    if (formData.mailgunAPIKey) {
+      dispatch(setSettingsPrivateApiKey(formData.mailgunAPIKey));
+      const response = await dispatch(setDomainsList(formData.mailgunAPIKey));
+      if (response?.data) {
+        setPossibleDomains(
+          response?.data?.map((item: { name: string }) => item.name) || []
+        );
+      }
+    }
+  };
+
+  useEffect(() => {
+    callDomains();
+  }, [formData.mailgunAPIKey]);
+
   return (
     <>
       <div className="flex flex-col gap-[5px]">
@@ -17,15 +43,18 @@ const MailgunSettings: FC<SendingServiceSettingsProps> = ({
           onChange={(value) =>
             setFormData({ ...formData, mailgunAPIKey: value })
           }
+          type="password"
           placeholder="Key number"
         />
       </div>
 
       <div className="flex flex-col gap-[5px]">
         <div>Domain</div>
-        <Input
-          wrapperClassName="!w-full"
-          className="w-full"
+        <Select
+          options={possibleDomains.map((domain) => ({
+            key: domain,
+            title: domain,
+          }))}
           value={formData.sendingDomain}
           onChange={(value) =>
             setFormData({ ...formData, sendingDomain: value })
