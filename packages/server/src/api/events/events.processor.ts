@@ -22,6 +22,7 @@ import {
 } from '../workflows/entities/workflow.entity';
 import { AudiencesHelper } from '../audiences/audiences.helper';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
+import { randomUUID } from 'crypto';
 
 @Injectable()
 @Processor('events', {
@@ -102,6 +103,7 @@ export class EventsProcessor extends WorkerHost {
   }
 
   async process(job: Job<any, any, string>): Promise<any> {
+    const session = randomUUID();
     let err: any, stepToQueue: Step, branch: number;
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
@@ -141,6 +143,7 @@ export class EventsProcessor extends WorkerHost {
           account,
           job.data.event.correlationKey,
           job.data.event.correlationValue,
+          session,
           transactionSession
         );
       // All steps in `journey` that might be listening for this event

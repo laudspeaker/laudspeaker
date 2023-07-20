@@ -282,7 +282,6 @@ export class CustomersController {
     try {
       account = await this.userService.findOne(user, session);
     } catch (e) {
-      this.logger.error('Error:' + e);
       return new HttpException(e, 500);
     }
 
@@ -296,7 +295,6 @@ export class CustomersController {
         session
       );
     } catch (e) {
-      this.logger.error('Error:' + e);
       return new HttpException(e, 500);
     }
   }

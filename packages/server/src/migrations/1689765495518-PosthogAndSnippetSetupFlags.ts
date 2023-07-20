@@ -23,4 +23,3 @@ export class PosthogAndSnippetSetupFlags1689765495518
     );
   }
 }
-

@@ -112,7 +112,7 @@ export class CustomersService {
           await this.recheckDynamicInclusion(account, customer, session);
         }
       } catch (e) {
-        this.logger.error(e);
+        this.error(e, this.constructor.name, session);
       }
     });
   }
@@ -683,50 +683,17 @@ export class CustomersService {
   async transactionalUpdate(
     account: Account,
     id: string,
+    session: string,
     updateCustomerDto: Record<string, unknown>,
     transactionSession: ClientSession
   ) {
     try {
-      this.logger.debug(
-        `In Trasactional Update`,
-        `customers.service.ts:CustomersService.transactionalUpdate()`
-      );
-
       const { ...newCustomerData } = updateCustomerDto;
-      this.logger.debug(
-        `New customer data: ${JSON.stringify(newCustomerData)}`,
-        `customers.service.ts:CustomersService.transactionalUpdate()`
-      );
-
       delete newCustomerData.verified;
-      this.logger.debug(
-        `Deleting verified: ${JSON.stringify(newCustomerData)}`,
-        `customers.service.ts:CustomersService.transactionalUpdate()`
-      );
-
       delete newCustomerData.ownerId;
-      this.logger.debug(
-        `Deleting ownerId: ${JSON.stringify(newCustomerData)}`,
-        `customers.service.ts:CustomersService.transactionalUpdate()`
-      );
-
       delete newCustomerData._id;
-      this.logger.debug(
-        `Deleting id: ${JSON.stringify(newCustomerData)}`,
-        `customers.service.ts:CustomersService.transactionalUpdate()`
-      );
-
       delete newCustomerData.__v;
-      this.logger.debug(
-        `Deleting v: ${JSON.stringify(newCustomerData)}`,
-        `customers.service.ts:CustomersService.transactionalUpdate()`
-      );
-
       delete newCustomerData.audiences;
-      this.logger.debug(
-        `Deleting audiences: ${JSON.stringify(newCustomerData)}`,
-        `customers.service.ts:CustomersService.transactionalUpdate()`
-      );
       delete newCustomerData.isFreezed;
       delete newCustomerData.id;
 
@@ -786,11 +753,8 @@ export class CustomersService {
         .exec();
 
       return newCustomerData;
-    } catch (err) {
-      this.logger.error(
-        `${err}`,
-        `customers.service.ts:CustomersService.transactionalUpdate()`
-      );
+    } catch (e) {
+      this.error(e, this.transactionalUpdate.name, session);
     }
   }
 
@@ -908,7 +872,7 @@ export class CustomersService {
         account: account,
       });
     } catch (e) {
-      this.logger.error('Error: ' + e);
+      this.error(e, this.ingestPosthogPersons.name, session);
     }
   }
 
@@ -1174,6 +1138,7 @@ export class CustomersService {
     account: Account,
     correlationKey: string,
     correlationValue: string | string[],
+    session: string,
     transactionSession?: ClientSession
   ): Promise<CustomerDocument> {
     let customer: CustomerDocument; // Found customer
@@ -1190,10 +1155,6 @@ export class CustomersService {
     } else {
       queryParam[correlationKey] = correlationValue;
     }
-    this.logger.debug(
-      `${JSON.stringify(queryParam, null, 2)}`,
-      `customers.service.ts:CustomersService.findByCorrelationKVPair()`
-    );
     queryParam.isFreezed = { $ne: true };
     try {
       if (transactionSession) {
@@ -1203,8 +1164,13 @@ export class CustomersService {
       } else {
         customer = await this.CustomerModel.findOne(queryParam).exec();
       }
-      this.logger.debug('Found customer in correlationKVPair:' + customer?.id);
     } catch (err) {
+      this.error(
+        err,
+        this.findByCorrelationKVPair.name,
+        session,
+        account.email
+      );
       return Promise.reject(err);
     }
     return Promise.resolve(customer);
@@ -1268,6 +1234,7 @@ export class CustomersService {
       await this.transactionalUpdate(
         account,
         correlation.cust.id,
+        session,
         _.merge(left, right),
         transactionSession
       );
@@ -1286,10 +1253,7 @@ export class CustomersService {
     } catch (err) {
       await transactionSession.abortTransaction();
       await queryRunner.rollbackTransaction();
-      this.logger.error(
-        `${JSON.stringify(err)}`,
-        `customers.service.ts:CustomersService.upsert()`
-      );
+      this.error(err, this.upsert.name, session, account.email);
       throw err;
     } finally {
       await transactionSession.endSession();

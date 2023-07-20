@@ -157,10 +157,8 @@ export class AccountsService extends BaseJwtHelper {
           updateUserDto.sendingDomain
         );
       } catch (e) {
-        this.logger.error(e);
-        throw new BadRequestException(
-          'There is something wrong with your mailgun'
-        );
+        this.error(e, this.update.name, session);
+        throw e;
       }
     }
 

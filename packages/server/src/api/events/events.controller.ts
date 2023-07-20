@@ -95,27 +95,6 @@ export class EventsController {
     );
   }
 
-  @Post('job-status/email')
-  @UseInterceptors(ClassSerializerInterceptor)
-  async getJobEmailStatus(@Body() body: StatusJobDto): Promise<string> {
-    const session = randomUUID();
-    return this.eventsService.getJobStatus(body, JobTypes.email, session);
-  }
-
-  @Post('job-status/slack')
-  @UseInterceptors(ClassSerializerInterceptor)
-  async getJobSlackStatus(@Body() body: StatusJobDto): Promise<string> {
-    const session = randomUUID();
-    return this.eventsService.getJobStatus(body, JobTypes.slack, session);
-  }
-
-  @Post('job-status/webhook')
-  @UseInterceptors(ClassSerializerInterceptor)
-  async getJobWebhookStatus(@Body() body: StatusJobDto): Promise<string> {
-    const session = randomUUID();
-    return this.eventsService.getJobStatus(body, JobTypes.webhooks, session);
-  }
-
   @Post('/posthog/')
   @UseInterceptors(ClassSerializerInterceptor)
   @UseGuards(ApiKeyAuthGuard)
