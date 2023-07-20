@@ -3,13 +3,16 @@ import CopyButton from "components/CopyButton";
 import Button, { ButtonType } from "components/Elements/Buttonv2";
 import SnippetPicker from "components/SnippetPicker/SnippetPicker";
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import ApiService from "services/api.service";
 import Account from "types/Account";
 
 const CustomModalSettings = () => {
-  const [APIKey, setAPIKey] = useState("");
+  const navigate = useNavigate();
 
+  const [APIKey, setAPIKey] = useState("");
+  const [isConnected, setIsConnected] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -18,10 +21,11 @@ const CustomModalSettings = () => {
 
       try {
         const {
-          data: { apiKey },
+          data: { apiKey, javascriptSnippetSetupped },
         } = await ApiService.get<Account>({ url: "/accounts" });
 
         setAPIKey(apiKey);
+        setIsConnected(javascriptSnippetSetupped);
       } catch (e) {
         toast.error("Error while loading data");
       } finally {
@@ -29,6 +33,10 @@ const CustomModalSettings = () => {
       }
     })();
   }, []);
+
+  useEffect(() => {
+    if (isConnected) navigate("/settings");
+  }, [isConnected]);
 
   return (
     <div className="p-[20px] flex justify-center font-inter text-[14px] font-normal leading-[22px] text-[#111827]">
@@ -71,7 +79,7 @@ const CustomModalSettings = () => {
           className="w-fit"
           disabled
         >
-          Connect
+          Connecting...
         </Button>
       </div>
     </div>

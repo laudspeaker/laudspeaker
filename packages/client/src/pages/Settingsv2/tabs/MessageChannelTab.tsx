@@ -30,6 +30,8 @@ interface MessageChannelCardFixture {
   title: string;
   icon: string;
   beta?: boolean;
+  commingSoon?: boolean;
+  disabled?: boolean;
   onClick?: () => void;
   connected?: boolean;
   additionalInfo?: MessageChannelAdditionalInfoFixture[];
@@ -99,28 +101,31 @@ const MessageChannelTab = () => {
       id: MessageChannel.CUSTOM_MODAL,
       title: "Custom modal",
       icon: customModalCardIconImage,
+      connected: account?.javascriptSnippetSetupped,
       onClick: () => navigate("/settings/custom-modal"),
     },
     [MessageChannel.SLACK]: {
       id: MessageChannel.SLACK,
       title: "Slack",
       icon: slackCardIconImage,
-      beta: true,
+      commingSoon: true,
+      disabled: true,
     },
     [MessageChannel.FIREBASE]: {
       id: MessageChannel.FIREBASE,
       title: "Firebase",
       icon: firebaseCardIconImage,
-      beta: true,
+      commingSoon: true,
+      disabled: true,
     },
   };
 
   const connectedFixtures = Object.values(messageChannelCardsFixtures).filter(
-    (fixture) => fixture.connected
+    (fixture) => fixture.connected && !fixture.disabled
   );
 
   const supportedFixtures = Object.values(messageChannelCardsFixtures).filter(
-    (fixture) => !fixture.connected
+    (fixture) => !fixture.connected || fixture.disabled
   );
 
   useEffect(() => {
@@ -222,7 +227,9 @@ const MessageChannelTab = () => {
             <button
               key={i}
               onClick={fixture.onClick}
-              className="p-[20px] rounded-[8px] bg-[#F9FAFB] border-[1px] border-[#E5E7EB] flex justify-between items-center"
+              className={`p-[20px] rounded-[8px] bg-[#F9FAFB] border-[1px] border-[#E5E7EB] flex justify-between items-center ${
+                fixture.disabled ? "select-none cursor-default grayscale" : ""
+              }`}
             >
               <div className="flex items-center gap-[10px]">
                 <div>
@@ -236,6 +243,12 @@ const MessageChannelTab = () => {
                 {fixture.beta && (
                   <div className="px-[10px] py-[2px] rounded-[14px] font-inter text-[12px] font-normal leading-[20px] text-[#4B5563] border-[1px] border-[#E5E7EB] bg-white">
                     Beta
+                  </div>
+                )}
+
+                {fixture.commingSoon && (
+                  <div className="px-[10px] py-[2px] rounded-[14px] font-inter text-[12px] font-normal leading-[20px] text-[#4B5563] border-[1px] border-[#E5E7EB] bg-white">
+                    comming soon
                   </div>
                 )}
               </div>
