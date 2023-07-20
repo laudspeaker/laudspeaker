@@ -315,7 +315,7 @@ export class TransitionProcessor extends WorkerHost {
               key = sendgridApiKey;
               from = sendgridFromEmail;
             }
-            let ret = await sender.process({
+            const ret = await sender.process({
               name: TemplateType.EMAIL,
               accountID: owner.id,
               cc: template.cc,

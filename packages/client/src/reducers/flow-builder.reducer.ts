@@ -535,6 +535,14 @@ const flowBuilderSlice = createSlice({
             stepId,
           };
           break;
+        case DrawerAction.TRACKER:
+          nodeToChange.type = NodeType.MESSAGE;
+          nodeToChange.data = {
+            type: NodeType.MESSAGE,
+            template: { type: MessageType.TRACKER },
+            stepId,
+          };
+          break;
         case DrawerAction.JUMP_TO:
           nodeToChange.type = NodeType.JUMP_TO;
           nodeToChange.data = {
@@ -559,7 +567,7 @@ const flowBuilderSlice = createSlice({
                 conditions: [
                   {
                     name: "",
-                    providerType: ProviderType.Custom,
+                    providerType: ProviderType.CUSTOM,
                     statements: [],
                     relationToNext: LogicRelation.AND,
                   },

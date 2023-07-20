@@ -47,12 +47,23 @@ export interface ElementStatement {
 
 export type Statement = PropertyStatement | ElementStatement;
 
-export interface Condition {
-  name: string;
-  providerType: ProviderType;
-  statements: Statement[];
+export interface CommonCondition {
   relationToNext: LogicRelation;
 }
+
+export interface TrackerCondition extends CommonCondition {
+  providerType: ProviderType.TRACKER;
+  tracker?: { id: string; name: string };
+  event?: string;
+}
+
+export interface HitCondition extends CommonCondition {
+  providerType: Exclude<ProviderType, ProviderType.TRACKER>;
+  name: string;
+  statements: Statement[];
+}
+
+export type Condition = HitCondition | TrackerCondition;
 
 export interface CommonBranch {
   id: string;
@@ -126,9 +137,10 @@ export interface CommonNodeData {
   stats?: Stats;
 }
 
-export interface MessageNodeData extends CommonNodeData {
+export interface MessageNodeData<T extends MessageType = MessageType>
+  extends CommonNodeData {
   type: NodeType.MESSAGE;
-  template: { type: MessageType; selected?: { id: number; name: string } };
+  template: { type: T; selected?: { id: number; name: string } };
 }
 
 export interface WaitUntilNodeData extends CommonNodeData {

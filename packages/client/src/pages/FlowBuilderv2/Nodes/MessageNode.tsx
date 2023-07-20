@@ -60,6 +60,10 @@ export const messageFixtures: Record<
     icon: <CustomModalIcon />,
     text: "Custom Modal",
   },
+  [MessageType.TRACKER]: {
+    icon: <CustomModalIcon />,
+    text: "Tracker",
+  },
   [MessageType.PUSH]: {
     icon: <PushIcon />,
     text: "Push",

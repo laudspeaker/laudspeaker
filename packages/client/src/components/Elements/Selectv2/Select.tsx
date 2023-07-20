@@ -9,6 +9,7 @@ interface SelectProps<T> {
   className?: string;
   buttonClassName?: string;
   panelClassName?: string;
+  noDataPlaceholder?: string;
 }
 
 const Select = <T,>({
@@ -19,6 +20,7 @@ const Select = <T,>({
   className,
   buttonClassName,
   panelClassName,
+  noDataPlaceholder,
 }: SelectProps<T>) => {
   return (
     <Popover
@@ -65,18 +67,24 @@ const Select = <T,>({
                   "0px 9px 28px 8px rgba(0, 0, 0, 0.05), 0px 6px 16px 0px rgba(0, 0, 0, 0.08), 0px 3px 6px -4px rgba(0, 0, 0, 0.12)",
               }}
             >
-              {options.map((option, i) => (
-                <div
-                  key={i}
-                  className="px-[12px] py-[5px] hover:bg-[#F3F4F6] select-none cursor-pointer"
-                  onClick={() => {
-                    onChange(option.key);
-                    close();
-                  }}
-                >
-                  {option.title}
+              {options.length === 0 ? (
+                <div className="px-[12px] py-[5px] hover:bg-[#F3F4F6] select-none text-[#9CA3AF] text-center">
+                  {noDataPlaceholder}
                 </div>
-              ))}
+              ) : (
+                options.map((option, i) => (
+                  <div
+                    key={i}
+                    className="px-[12px] py-[5px] hover:bg-[#F3F4F6] select-none cursor-pointer"
+                    onClick={() => {
+                      onChange(option.key);
+                      close();
+                    }}
+                  >
+                    {option.title}
+                  </div>
+                ))
+              )}
             </div>
           </Popover.Panel>
         </>

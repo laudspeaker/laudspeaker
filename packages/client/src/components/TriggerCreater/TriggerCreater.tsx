@@ -873,14 +873,14 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
                         })
                       }
                       options={[
-                        { value: ProviderType.Posthog, title: "Posthog" },
-                        { value: ProviderType.Custom, title: "Custom" },
+                        { value: ProviderType.POSTHOG, title: "Posthog" },
+                        { value: ProviderType.CUSTOM, title: "Custom" },
                       ]}
                       disabled={isViewMode}
                       wrapperClassnames="max-w-[200px] w-full mr-[15px]"
-                      value={eventTrigger.providerType || ProviderType.Custom}
+                      value={eventTrigger.providerType || ProviderType.CUSTOM}
                     />
-                    {eventTrigger.providerType === ProviderType.Posthog && (
+                    {eventTrigger.providerType === ProviderType.POSTHOG && (
                       <div className="relative mt-[4px]">
                         <Autocomplete
                           inputId="keyInput"
@@ -942,7 +942,7 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
                               possibleTypes={possibleTypes}
                               isViewMode={isViewMode}
                               specificProvider={
-                                eventTrigger.providerType || ProviderType.Custom
+                                eventTrigger.providerType || ProviderType.CUSTOM
                               }
                             />
                             {i !==

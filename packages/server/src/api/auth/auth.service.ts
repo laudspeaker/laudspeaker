@@ -127,7 +127,7 @@ export class AuthService {
       user.apiKey = this.helper.generateApiKey();
       user.accountCreatedAt = new Date();
       user.plan = PlanType.FREE;
-      let ret = await queryRunner.manager.save(user);
+      const ret = await queryRunner.manager.save(user);
       await this.helper.generateDefaultData(ret, queryRunner, session);
 
       user.id = ret.id;

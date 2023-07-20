@@ -10,6 +10,7 @@ import { NodeData } from "./NodeData";
 export const EmptyNode: FC<NodeProps<NodeData>> = ({ isConnectable, id }) => {
   const drawerActionToNodeTypeMap: Record<DrawerAction, NodeType> = {
     [DrawerAction.CUSTOM_MODAL]: NodeType.MESSAGE,
+    [DrawerAction.TRACKER]: NodeType.MESSAGE,
     [DrawerAction.EMAIL]: NodeType.MESSAGE,
     [DrawerAction.EXIT]: NodeType.EXIT,
     [DrawerAction.JUMP_TO]: NodeType.JUMP_TO,

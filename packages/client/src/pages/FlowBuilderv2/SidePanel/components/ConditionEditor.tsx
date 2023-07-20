@@ -17,6 +17,7 @@ import {
 } from "reducers/flow-builder.reducer";
 import ApiService from "services/api.service";
 import { ProviderType } from "types/Workflow";
+import TrackerEditor from "./TrackerEditor";
 
 enum ConditionEditorError {
   NO_PROPERTY_SPECIFIED,
@@ -88,6 +89,8 @@ const ConditionEditor: FC<ConditionEditorProps> = ({
   };
 
   const handleAddStatement = (type: StatementType) => {
+    if (condition.providerType === ProviderType.TRACKER) return;
+
     setCondition({
       ...condition,
       statements: [
@@ -116,18 +119,20 @@ const ConditionEditor: FC<ConditionEditorProps> = ({
 
   const errors: ConditionEditorError[][] = [];
 
-  for (const statement of condition.statements) {
-    const statementErrors: ConditionEditorError[] = [];
+  if (condition.providerType !== ProviderType.TRACKER) {
+    for (const statement of condition.statements) {
+      const statementErrors: ConditionEditorError[] = [];
 
-    if (!statement.value) {
-      statementErrors.push(ConditionEditorError.NO_VALUE_SPECIFIED);
+      if (!statement.value) {
+        statementErrors.push(ConditionEditorError.NO_VALUE_SPECIFIED);
+      }
+
+      if (statement.type === StatementType.PROPERTY && !statement.key) {
+        statementErrors.push(ConditionEditorError.NO_PROPERTY_SPECIFIED);
+      }
+
+      errors.push(statementErrors);
     }
-
-    if (statement.type === StatementType.PROPERTY && !statement.key) {
-      statementErrors.push(ConditionEditorError.NO_PROPERTY_SPECIFIED);
-    }
-
-    errors.push(statementErrors);
   }
 
   return (
@@ -139,253 +144,279 @@ const ConditionEditor: FC<ConditionEditorProps> = ({
         <Select
           value={condition.providerType}
           options={[
-            { key: ProviderType.Posthog, title: "Posthog" },
-            { key: ProviderType.Custom, title: "Custom" },
+            { key: ProviderType.POSTHOG, title: "Posthog" },
+            { key: ProviderType.CUSTOM, title: "Custom" },
+            { key: ProviderType.TRACKER, title: "Tracker" },
           ]}
           onChange={(value) =>
-            setCondition({
-              ...condition,
-              providerType: value,
-            })
+            value === ProviderType.TRACKER
+              ? setCondition({
+                  providerType: ProviderType.TRACKER,
+                  relationToNext: condition.relationToNext,
+                })
+              : setCondition({
+                  providerType: value,
+                  name: "",
+                  statements: [],
+                  relationToNext: condition.relationToNext,
+                })
           }
         />
 
-        <FlowBuilderAutoComplete
-          value={condition.name}
-          includedItems={
-            condition.providerType === ProviderType.Posthog
-              ? {
-                  type: "setter",
-                  getItems: loadPossiblePosthogEventTypes,
-                }
-              : { type: "getter", items: [] }
-          }
-          retrieveLabel={(item) => item}
-          onQueryChange={(query) => {
-            setCondition({ ...condition, name: query });
-          }}
-          onSelect={(value) => {
-            setCondition({ ...condition, name: value });
-          }}
-          placeholder="Event name"
-        />
+        {condition.providerType !== ProviderType.TRACKER && (
+          <FlowBuilderAutoComplete
+            value={condition.name}
+            includedItems={
+              condition.providerType === ProviderType.POSTHOG
+                ? {
+                    type: "setter",
+                    getItems: loadPossiblePosthogEventTypes,
+                  }
+                : { type: "getter", items: [] }
+            }
+            retrieveLabel={(item) => item}
+            onQueryChange={(query) => {
+              setCondition({ ...condition, name: query });
+            }}
+            onSelect={(value) => {
+              setCondition({ ...condition, name: value });
+            }}
+            placeholder="Event name"
+          />
+        )}
       </div>
-      {condition.statements.map((statement, i) => (
+
+      {condition.providerType === ProviderType.TRACKER ? (
+        <TrackerEditor
+          tracker={condition.tracker ? { ...condition.tracker } : undefined}
+          onTrackerChange={(tracker) => setCondition({ ...condition, tracker })}
+          event={condition.event}
+          onEventChange={(event) => setCondition({ ...condition, event })}
+        />
+      ) : (
         <>
-          <div
-            className="bg-white p-[10px] flex flex-col gap-[10px] border-[#E5E7EB] border-[1px] rounded-[4px]"
-            key={i}
-          >
-            <div className="flex justify-between items-center">
-              <div className="font-inter font-semibold text-[14px] leading-[22px]">
-                {statementTypeTitleMap[statement.type]}
-              </div>
-              <div
-                className="cursor-pointer font-roboto font-normal text-[14px] leading-[22px] underline text-[#EB5757]"
-                onClick={() => {
-                  condition.statements.splice(i);
-                  setCondition({ ...condition });
-                }}
-              >
-                Delete
-              </div>
-            </div>
-            {statement.type === StatementType.PROPERTY ? (
-              <div className="flex flex-col gap-[10px]">
-                <FlowBuilderAutoComplete
-                  initialValue={statement.key}
-                  value={statement.key}
-                  includedItems={{
-                    type: "getter",
-                    items: possibleKeys.map((item) => item.key),
-                  }}
-                  retrieveLabel={(item) => item}
-                  onQueryChange={(query) => {
-                    condition.statements[i] = { ...statement, key: query };
-                    setKeysQuery(query);
-                    setCondition({ ...condition });
-                  }}
-                  onSelect={(value) => {
-                    condition.statements[i] = { ...statement, key: value };
-                    condition.statements[i].valueType =
-                      possibleKeys.find((item) => item.key === value)?.type ||
-                      condition.statements[i].valueType;
-
-                    setKeysQuery(value);
-                    setCondition({ ...condition });
-                  }}
-                  getKey={(value) => value}
-                  placeholder="Property name"
-                />
-                {errors[i].some(
-                  (statementError) =>
-                    statementError ===
-                    ConditionEditorError.NO_PROPERTY_SPECIFIED
-                ) && (
-                  <div className="font-inter font-normal text-[12px] leading-[20px] text-[#E11D48]">
-                    {
-                      errorToMessageMap[
-                        ConditionEditorError.NO_PROPERTY_SPECIFIED
-                      ]
-                    }
+          {condition.statements.map((statement, i) => (
+            <React.Fragment key={i}>
+              <div className="bg-white p-[10px] flex flex-col gap-[10px] border-[#E5E7EB] border-[1px] rounded-[4px]">
+                <div className="flex justify-between items-center">
+                  <div className="font-inter font-semibold text-[14px] leading-[22px]">
+                    {statementTypeTitleMap[statement.type]}
                   </div>
-                )}
-              </div>
-            ) : (
-              <>
-                <div className="flex items-center justify-between">
-                  <div className="font-inter font-normal text-[14px] leading-[22px]">
-                    Order
-                  </div>
-                  <div>
-                    <input
-                      type="number"
-                      value={statement.order}
-                      onChange={(e) => {
-                        const order = +e.target.value;
-
-                        if (isNaN(order) || order < 0) return;
-
-                        const newStatements = [...condition.statements];
-
-                        newStatements[i] = {
-                          ...statement,
-                          order,
-                        };
-
-                        setCondition({
-                          ...condition,
-                          statements: newStatements,
-                        });
-                      }}
-                      className="w-full px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB] placeholder:font-inter placeholder:font-normal placeholder:text-[14px] placeholder:leading-[22px] placeholder:text-[#9CA3AF]"
-                    />
+                  <div
+                    className="cursor-pointer font-roboto font-normal text-[14px] leading-[22px] underline text-[#EB5757]"
+                    onClick={() => {
+                      condition.statements.splice(i);
+                      setCondition({ ...condition });
+                    }}
+                  >
+                    Delete
                   </div>
                 </div>
-                <div>
+                {statement.type === StatementType.PROPERTY ? (
+                  <div className="flex flex-col gap-[10px]">
+                    <FlowBuilderAutoComplete
+                      initialValue={statement.key}
+                      value={statement.key}
+                      includedItems={{
+                        type: "getter",
+                        items: possibleKeys.map((item) => item.key),
+                      }}
+                      retrieveLabel={(item) => item}
+                      onQueryChange={(query) => {
+                        condition.statements[i] = { ...statement, key: query };
+                        setKeysQuery(query);
+                        setCondition({ ...condition });
+                      }}
+                      onSelect={(value) => {
+                        condition.statements[i] = { ...statement, key: value };
+                        condition.statements[i].valueType =
+                          possibleKeys.find((item) => item.key === value)
+                            ?.type || condition.statements[i].valueType;
+
+                        setKeysQuery(value);
+                        setCondition({ ...condition });
+                      }}
+                      getKey={(value) => value}
+                      placeholder="Property name"
+                    />
+                    {errors[i].some(
+                      (statementError) =>
+                        statementError ===
+                        ConditionEditorError.NO_PROPERTY_SPECIFIED
+                    ) && (
+                      <div className="font-inter font-normal text-[12px] leading-[20px] text-[#E11D48]">
+                        {
+                          errorToMessageMap[
+                            ConditionEditorError.NO_PROPERTY_SPECIFIED
+                          ]
+                        }
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex items-center justify-between">
+                      <div className="font-inter font-normal text-[14px] leading-[22px]">
+                        Order
+                      </div>
+                      <div>
+                        <input
+                          type="number"
+                          value={statement.order}
+                          onChange={(e) => {
+                            const order = +e.target.value;
+
+                            if (isNaN(order) || order < 0) return;
+
+                            const newStatements = [...condition.statements];
+
+                            newStatements[i] = {
+                              ...statement,
+                              order,
+                            };
+
+                            setCondition({
+                              ...condition,
+                              statements: newStatements,
+                            });
+                          }}
+                          className="w-full px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB] placeholder:font-inter placeholder:font-normal placeholder:text-[14px] placeholder:leading-[22px] placeholder:text-[#9CA3AF]"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <select
+                        value={statement.elementKey}
+                        onChange={(e) => {
+                          const newStatements = [...condition.statements];
+
+                          newStatements[i] = {
+                            ...statement,
+                            elementKey: e.target.value as ElementKey,
+                          };
+
+                          setCondition({
+                            ...condition,
+                            statements: newStatements,
+                          });
+                        }}
+                        className="w-full px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB]"
+                      >
+                        <option value={ElementKey.TAG_NAME}>Tag Name</option>
+                        <option value={ElementKey.TEXT}>Text</option>
+                      </select>
+                    </div>
+                  </>
+                )}
+
+                <div className="flex gap-[10px]">
                   <select
-                    value={statement.elementKey}
+                    value={statement.comparisonType}
                     onChange={(e) => {
-                      const newStatements = [...condition.statements];
-
-                      newStatements[i] = {
-                        ...statement,
-                        elementKey: e.target.value as ElementKey,
-                      };
-
-                      setCondition({ ...condition, statements: newStatements });
+                      condition.statements[i].comparisonType = e.target
+                        .value as ComparisonType;
+                      setCondition({ ...condition });
                     }}
-                    className="w-full px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB]"
+                    className="w-[145px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB]"
                   >
-                    <option value={ElementKey.TAG_NAME}>Tag Name</option>
-                    <option value={ElementKey.TEXT}>Text</option>
+                    {valueTypeToComparisonTypesMap[statement.valueType].map(
+                      (comparisonType, j) => (
+                        <option key={j} value={comparisonType}>
+                          {comparisonType}
+                        </option>
+                      )
+                    )}
+                  </select>
+                  <select
+                    value={statement.valueType}
+                    onChange={(e) => {
+                      condition.statements[i].valueType = e.target
+                        .value as StatementValueType;
+                      setCondition({ ...condition });
+                    }}
+                    className="w-[145px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB]"
+                  >
+                    {Object.values(StatementValueType).map((valueType, j) => (
+                      <option key={j} value={valueType}>
+                        {valueType}
+                      </option>
+                    ))}
                   </select>
                 </div>
-              </>
-            )}
+                <div className="flex flex-col gap-[10px]">
+                  <FlowBuilderDynamicInput
+                    type={statement.valueType}
+                    value={statement.value}
+                    onChange={(value) => {
+                      condition.statements[i].value = value;
+                      setCondition({ ...condition });
+                    }}
+                  />
 
-            <div className="flex gap-[10px]">
-              <select
-                value={statement.comparisonType}
-                onChange={(e) => {
-                  condition.statements[i].comparisonType = e.target
-                    .value as ComparisonType;
-                  setCondition({ ...condition });
-                }}
-                className="w-[145px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB]"
-              >
-                {valueTypeToComparisonTypesMap[statement.valueType].map(
-                  (comparisonType, j) => (
-                    <option key={j} value={comparisonType}>
-                      {comparisonType}
-                    </option>
-                  )
-                )}
-              </select>
-              <select
-                value={statement.valueType}
-                onChange={(e) => {
-                  condition.statements[i].valueType = e.target
-                    .value as StatementValueType;
-                  setCondition({ ...condition });
-                }}
-                className="w-[145px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB]"
-              >
-                {Object.values(StatementValueType).map((valueType, j) => (
-                  <option key={j} value={valueType}>
-                    {valueType}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="flex flex-col gap-[10px]">
-              <FlowBuilderDynamicInput
-                type={statement.valueType}
-                value={statement.value}
-                onChange={(value) => {
-                  condition.statements[i].value = value;
-                  setCondition({ ...condition });
-                }}
-              />
-
-              {errors[i].some(
-                (statementError) =>
-                  statementError === ConditionEditorError.NO_VALUE_SPECIFIED
-              ) && (
-                <div className="font-inter font-normal text-[12px] leading-[20px] text-[#E11D48]">
-                  {errorToMessageMap[ConditionEditorError.NO_VALUE_SPECIFIED]}
+                  {errors[i].some(
+                    (statementError) =>
+                      statementError === ConditionEditorError.NO_VALUE_SPECIFIED
+                  ) && (
+                    <div className="font-inter font-normal text-[12px] leading-[20px] text-[#E11D48]">
+                      {
+                        errorToMessageMap[
+                          ConditionEditorError.NO_VALUE_SPECIFIED
+                        ]
+                      }
+                    </div>
+                  )}
                 </div>
+              </div>
+              {i !== condition.statements.length - 1 && (
+                <select
+                  value={statement.relationToNext}
+                  onChange={(e) => {
+                    const newStatements = [...condition.statements];
+
+                    newStatements[i] = {
+                      ...statement,
+                      relationToNext: e.target.value as LogicRelation,
+                    };
+
+                    setCondition({
+                      ...condition,
+                      statements: newStatements.map((el) => ({
+                        ...el,
+                        relationToNext: e.target.value as LogicRelation,
+                      })),
+                    });
+                  }}
+                  className="border-[1px] border-[#E5E7EB] max-w-[80px] px-[15px] py-[4px] rounded-[4px] font-roboto font-normal text-[14px] leading-[22px]"
+                >
+                  <option value={LogicRelation.AND}>And</option>
+                  <option value={LogicRelation.OR}>Or</option>
+                </select>
               )}
+            </React.Fragment>
+          ))}
+
+          <div className="flex items-center gap-[10px]">
+            <div className="border-[1px] border-[#E5E7EB] rounded-[2px] px-[12px] py-[5px] font-roboto font-normal text-[14px] leading-[22px] text-[#4B5563]">
+              {condition.statements[condition.statements.length - 1]
+                ?.relationToNext === LogicRelation.AND
+                ? "And"
+                : "Or"}
+            </div>
+
+            <div className="w-[145px]">
+              <Select
+                value={undefined}
+                options={[
+                  { key: StatementType.PROPERTY, title: "Property" },
+                  { key: StatementType.ELEMENT, title: "Element" },
+                ]}
+                onChange={(value) => value && handleAddStatement(value)}
+                placeholder="Add condition"
+              />
             </div>
           </div>
-          {i !== condition.statements.length - 1 && (
-            <select
-              value={statement.relationToNext}
-              onChange={(e) => {
-                const newStatements = [...condition.statements];
-
-                newStatements[i] = {
-                  ...statement,
-                  relationToNext: e.target.value as LogicRelation,
-                };
-
-                setCondition({
-                  ...condition,
-                  statements: newStatements.map((el) => ({
-                    ...el,
-                    relationToNext: e.target.value as LogicRelation,
-                  })),
-                });
-              }}
-              className="border-[1px] border-[#E5E7EB] max-w-[80px] px-[15px] py-[4px] rounded-[4px] font-roboto font-normal text-[14px] leading-[22px]"
-            >
-              <option value={LogicRelation.AND}>And</option>
-              <option value={LogicRelation.OR}>Or</option>
-            </select>
-          )}
         </>
-      ))}
-
-      <div className="flex items-center gap-[10px]">
-        <div className="border-[1px] border-[#E5E7EB] rounded-[2px] px-[12px] py-[5px] font-roboto font-normal text-[14px] leading-[22px] text-[#4B5563]">
-          {condition.statements[condition.statements.length - 1]
-            ?.relationToNext === LogicRelation.AND
-            ? "And"
-            : "Or"}
-        </div>
-
-        <div className="w-[145px]">
-          <Select
-            value={undefined}
-            options={[
-              { key: StatementType.PROPERTY, title: "Property" },
-              { key: StatementType.ELEMENT, title: "Element" },
-            ]}
-            onChange={(value) => value && handleAddStatement(value)}
-            placeholder="Add condition"
-          />
-        </div>
-      </div>
+      )}
 
       <div className="flex justify-between items-center">
         <div className="flex gap-[10px]">

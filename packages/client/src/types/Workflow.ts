@@ -14,6 +14,7 @@ export enum MessageType {
   PUSH = "push",
   WEBHOOK = "webhook",
   MODAL = "modal",
+  TRACKER = "tracker",
 }
 
 export enum EventConditionElementsFilter {
@@ -50,8 +51,9 @@ export interface EventProps {
 }
 
 export enum ProviderType {
-  Posthog = "posthog",
-  Custom = "custom",
+  POSTHOG = "posthog",
+  CUSTOM = "custom",
+  TRACKER = "tracker",
 }
 
 export interface Trigger {

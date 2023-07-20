@@ -464,7 +464,7 @@ const OnboardingSandbox: FC<OnboardingSandboxProps> = ({
       conditions: [
         {
           name: "Event_name",
-          providerType: ProviderType.Custom,
+          providerType: ProviderType.CUSTOM,
           statements: [
             {
               type: StatementType.PROPERTY,

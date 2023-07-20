@@ -92,36 +92,44 @@ const BranchPopover: FC<BranchPopoverProps> = ({
                       <React.Fragment key={i}>
                         <div className="p-[10px] bg-[#F3F4F6] flex flex-col gap-[5px]">
                           <div className="font-inter font-semibold text-[14px] leading-[22px] text-[#18181B]">
-                            {condition.providerType === ProviderType.Custom
+                            {condition.providerType === ProviderType.CUSTOM
                               ? "Custom Event"
                               : "Posthog Event"}
                           </div>
-                          {condition.statements.map((statement, j) => (
-                            <div
-                              key={j}
-                              className="font-inter font-normal text-[12px] leading-[20px] text-[#18181B]"
-                            >
-                              {statement.type === StatementType.PROPERTY ? (
-                                <div>
-                                  Property "{statement.key}"{" "}
-                                  {statement.comparisonType} "{statement.value}"
+                          {condition.providerType === ProviderType.TRACKER ? (
+                            <></>
+                          ) : (
+                            <>
+                              {condition.statements.map((statement, j) => (
+                                <div
+                                  key={j}
+                                  className="font-inter font-normal text-[12px] leading-[20px] text-[#18181B]"
+                                >
+                                  {statement.type === StatementType.PROPERTY ? (
+                                    <div>
+                                      Property "{statement.key}"{" "}
+                                      {statement.comparisonType} "
+                                      {statement.value}"
+                                    </div>
+                                  ) : (
+                                    <div>
+                                      Element{" "}
+                                      <span className="font-bold">
+                                        #{statement.order}
+                                      </span>{" "}
+                                      "
+                                      {statement.elementKey ===
+                                      ElementKey.TAG_NAME
+                                        ? "Tag name"
+                                        : "Text"}
+                                      " {statement.comparisonType} "
+                                      {statement.value}"
+                                    </div>
+                                  )}
                                 </div>
-                              ) : (
-                                <div>
-                                  Element{" "}
-                                  <span className="font-bold">
-                                    #{statement.order}
-                                  </span>{" "}
-                                  "
-                                  {statement.elementKey === ElementKey.TAG_NAME
-                                    ? "Tag name"
-                                    : "Text"}
-                                  " {statement.comparisonType} "
-                                  {statement.value}"
-                                </div>
-                              )}
-                            </div>
-                          ))}
+                              ))}
+                            </>
+                          )}
                         </div>
                         {i !== branch.conditions.length - 1 && i !== 2 && (
                           <div>

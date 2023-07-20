@@ -977,12 +977,12 @@ export class JourneysService {
 
       const { nodes, edges } = updateJourneyDto;
       for (let i = 0; i < nodes.length; i++) {
-        let step = await queryRunner.manager.findOne(Step, {
+        const step = await queryRunner.manager.findOne(Step, {
           where: {
             id: nodes[i].data.stepId,
           },
         });
-        let relevantEdges = edges.filter((edge) => {
+        const relevantEdges = edges.filter((edge) => {
           return edge.source === nodes[i].id;
         });
         let metadata;
@@ -1016,7 +1016,7 @@ export class JourneysService {
             metadata = new WaitUntilStepMetadata();
 
             //Time Branch configuration
-            let timeBranch = nodes[i].data['branches'].filter((branch) => {
+            const timeBranch = nodes[i].data['branches'].filter((branch) => {
               return branch.type === BranchType.MAX_TIME;
             })[0];
             if (timeBranch?.timeType === TimeType.TIME_DELAY) {
@@ -1302,12 +1302,12 @@ export class JourneysService {
 
     const { nodes, edges } = updateJourneyDto;
     for (let i = 0; i < nodes.length; i++) {
-      let step = await queryRunner.manager.findOne(Step, {
+      const step = await queryRunner.manager.findOne(Step, {
         where: {
           id: nodes[i].data.stepId,
         },
       });
-      let relevantEdges = edges.filter((edge) => {
+      const relevantEdges = edges.filter((edge) => {
         return edge.source === nodes[i].id;
       });
       let metadata;
@@ -1339,7 +1339,7 @@ export class JourneysService {
           metadata = new WaitUntilStepMetadata();
 
           //Time Branch configuration
-          let timeBranch = nodes[i].data['branches'].filter((branch) => {
+          const timeBranch = nodes[i].data['branches'].filter((branch) => {
             return branch.type === BranchType.MAX_TIME;
           })[0];
           if (timeBranch?.timeType === TimeType.TIME_DELAY) {

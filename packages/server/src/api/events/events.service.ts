@@ -203,7 +203,7 @@ export class EventsService {
     eventDto: PosthogBatchEventDto,
     session: string
   ) {
-    let customerFound: boolean = true;
+    let customerFound = true;
     const transactionSession = await this.connection.startSession();
     transactionSession.startTransaction();
     const queryRunner = this.dataSource.createQueryRunner();
@@ -335,7 +335,7 @@ export class EventsService {
             //TODO: check if the event sets props, if so we need to update the person traits
           }
 
-          let jobIDs: WorkflowTick[] = [];
+          const jobIDs: WorkflowTick[] = [];
           //Step 2: Create/Correlate customer for each eventTemplatesService.queueMessage
           const postHogEventMapping = (event: any) => {
             const cust = {};

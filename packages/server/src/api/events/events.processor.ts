@@ -172,12 +172,12 @@ export class EventsProcessor extends WorkerHost {
         stepIndex < steps.length;
         stepIndex++
       ) {
-        branch_loop: for (
+        for (
           let branchIndex = 0;
           branchIndex < steps[stepIndex].metadata.branches.length;
           branchIndex++
         ) {
-          let eventEvaluation: boolean[] = [];
+          const eventEvaluation: boolean[] = [];
           event_loop: for (
             let eventIndex = 0;
             eventIndex <
@@ -240,8 +240,8 @@ export class EventsProcessor extends WorkerHost {
               this.process.name,
               job.data.session
             );
-            let conditionEvalutation: boolean[] = [];
-            condition_loop: for (
+            const conditionEvalutation: boolean[] = [];
+            for (
               let conditionIndex = 0;
               conditionIndex <
               steps[stepIndex].metadata.branches[branchIndex].events[eventIndex]
@@ -425,7 +425,7 @@ export class EventsProcessor extends WorkerHost {
 
       // If customer isn't in step, we throw error, otherwise we queue and consume event
       if (stepToQueue) {
-        let found: boolean = false;
+        let found = false;
         for (let i = 0; i < stepToQueue.customers.length; i++) {
           if (JSON.parse(stepToQueue.customers[i]).customerID === customer.id)
             found = true;

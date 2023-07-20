@@ -175,7 +175,7 @@ const convertLayoutToTable = (
       properties: {
         ...(trigger?.properties || {}),
       },
-      providerType: trigger?.providerType || ProviderType.Custom,
+      providerType: trigger?.providerType || ProviderType.CUSTOM,
       providerParams: trigger?.providerParams,
     };
     dto.rules.push(rule);
@@ -578,7 +578,7 @@ const Flow = () => {
           properties: {
             conditions: [],
           },
-          providerType: ProviderType.Custom,
+          providerType: ProviderType.CUSTOM,
           providerParams: undefined,
         };
         setTriggers([...triggers, trigger]);
