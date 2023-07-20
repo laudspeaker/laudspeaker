@@ -7,7 +7,7 @@ import "ace-builds/src-noconflict/mode-javascript";
 import "ace-builds/src-noconflict/mode-python";
 import "ace-builds/src-noconflict/mode-plain_text";
 import "ace-builds/src-noconflict/theme-monokai";
-import { Select } from "components/Elements";
+import Select from "components/Elements/Selectv2/Select";
 
 export enum SnippetMode {
   JS_FETCH,
@@ -48,47 +48,49 @@ const SnippetPicker: FC<SnippetPickerProps> = ({ userApiKey }) => {
   }, [userApiKey, snippetMode]);
 
   return (
-    <div className="space-y-6 bg-white px-4 py-5 sm:p-6">
+    <div className="p-[20px] rounded-[8px] bg-[#F3F4F6] flex flex-col gap-[20px]">
       <Select
+        className="max-w-[200px]"
         options={[
           {
-            value: SnippetMode.JS_FETCH,
+            key: SnippetMode.JS_FETCH,
             title: "Javascript - Fetch",
           },
           {
-            value: SnippetMode.JS_JQUERY,
+            key: SnippetMode.JS_JQUERY,
             title: "Javascript - JQuery",
           },
           {
-            value: SnippetMode.JS_XHR,
+            key: SnippetMode.JS_XHR,
             title: "Javascript - XHR",
           },
           {
-            value: SnippetMode.NODEJS_AXIOS,
+            key: SnippetMode.NODEJS_AXIOS,
             title: "Node.js - Axios",
           },
           {
-            value: SnippetMode.NODEJS_NATIVE,
+            key: SnippetMode.NODEJS_NATIVE,
             title: "Node.js - Native",
           },
           {
-            value: SnippetMode.NODEJS_REQUEST,
+            key: SnippetMode.NODEJS_REQUEST,
             title: "Node.js - Request",
           },
           {
-            value: SnippetMode.PYTHON_HTTP_CLIENT,
+            key: SnippetMode.PYTHON_HTTP_CLIENT,
             title: "Python - http.client",
           },
           {
-            value: SnippetMode.PYTHON_REQUESTS,
+            key: SnippetMode.PYTHON_REQUESTS,
             title: "Python - requests",
           },
-          { value: SnippetMode.CURL, title: "cURL" },
+          { key: SnippetMode.CURL, title: "cURL" },
         ]}
         onChange={(val) => setSnippetMode(val)}
         value={snippetMode}
       />
       <AceEditor
+        className="rounded-[8px]"
         aria-label="editor"
         mode={snippetModeToEditorModeMap[snippetMode]}
         theme="monokai"

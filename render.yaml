@@ -29,7 +29,7 @@ services:
       - key: CH_MIGRATIONS_USER
         value: default
       - key: CH_MIGRATIONS_PASSWORD
-        value: 
+        value:
       - key: CH_MIGRATIONS_DB
         value: default
       - key: CH_MIGRATIONS_HOME
