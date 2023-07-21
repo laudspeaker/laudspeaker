@@ -51,13 +51,14 @@ import JourneyTablev2 from "pages/JourneyTablev2";
 import TemplateTablev2 from "pages/TemplateTablev2";
 import PeopleTablev2 from "pages/PeopleTablev2";
 import SegmentTablev2 from "pages/SegmentTablev2";
-import CustomModalBuilder from "pages/CustomModalBuilder";
+import TrackerTemplateBuilder from "pages/TrackerTemplateBuilder";
 import Settingsv2 from "pages/Settingsv2";
 import EmailSettings from "pages/EmailSettings/EmailSettings";
 import TwilioSettings from "pages/TwilioSettings";
 import PosthogSettings from "pages/PosthogSettings";
 import JavascriptSnippetSettings from "pages/JavascriptSnippetSettings";
 import CustomModalSettings from "pages/CustomModalSettings";
+import TrackerTemplateTable from "pages/TrackerTemplateTable";
 
 interface IProtected {
   children: ReactElement;
@@ -486,24 +487,36 @@ const RouteComponent: React.FC = () => {
           }
         />
         <Route
-          path="/templates/custom-modal/:name"
-          element={
-            <Protected>
-              <VerificationProtected>
-                <DrawerLayout>
-                  <CustomModalBuilder />
-                </DrawerLayout>
-              </VerificationProtected>
-            </Protected>
-          }
-        />
-        <Route
           path="/templates"
           element={
             <Protected>
               <VerificationProtected>
                 <DrawerLayout>
                   <TemplateTablev2 />
+                </DrawerLayout>
+              </VerificationProtected>
+            </Protected>
+          }
+        />
+        <Route
+          path="/tracker-template/:id"
+          element={
+            <Protected>
+              <VerificationProtected>
+                <DrawerLayout>
+                  <TrackerTemplateBuilder />
+                </DrawerLayout>
+              </VerificationProtected>
+            </Protected>
+          }
+        />
+        <Route
+          path="/tracker-template"
+          element={
+            <Protected>
+              <VerificationProtected>
+                <DrawerLayout>
+                  <TrackerTemplateTable />
                 </DrawerLayout>
               </VerificationProtected>
             </Protected>

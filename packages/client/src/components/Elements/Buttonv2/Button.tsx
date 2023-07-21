@@ -29,7 +29,7 @@ const specificTypeClassNameMap: Record<ButtonType, string> = {
 const Button: FC<ButtonProps> = ({ type, className, children, ...props }) => {
   return (
     <button
-      className={`disabled:!border-[#E5E7EB] disabled:!text-[#9CA3AF] font-roboto font-normal text-[14px] leading-[22px] ${
+      className={`disabled:!border-[#E5E7EB] disabled:!text-[#9CA3AF] font-roboto font-normal text-[14px] leading-[22px] disabled:pointer-events-none ${
         specificTypeClassNameMap[type]
       } ${className ? className : ""}`}
       {...props}
