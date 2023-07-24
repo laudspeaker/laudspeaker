@@ -14,6 +14,7 @@ import { NodeData } from "../Nodes/NodeData";
 import MessageSettings from "./settings/MessageSettings";
 import TimeDelaySettings from "./settings/TimeDelaySettings";
 import TimeWindowSettings from "./settings/TimeWindowSettings";
+import TrackerSettings from "./settings/TrackerSettings";
 import UserAttributeSettings from "./settings/UserAttributeSettings";
 import WaitUntilSettings from "./settings/WaitUntilSettings";
 
@@ -53,6 +54,7 @@ const FlowBuilderSidePanel: FC<FlowBuilderSidePanelProps> = ({ className }) => {
     [NodeType.WAIT_UNTIL]: "Wait until",
     [NodeType.USER_ATTRIBUTE]: "User attribute",
     [NodeType.INSERT_NODE]: "",
+    [NodeType.TRACKER]: "Tracker",
   };
 
   const nodeToSettingsComponentMap: Record<string, ReactNode> = {
@@ -91,6 +93,13 @@ const FlowBuilderSidePanel: FC<FlowBuilderSidePanelProps> = ({ className }) => {
             nodeData={nodeData}
             setNodeData={setNodeData}
           />
+        )}
+      </>
+    ),
+    [NodeType.TRACKER]: (
+      <>
+        {nodeData.type === NodeType.TRACKER && (
+          <TrackerSettings nodeData={nodeData} setNodeData={setNodeData} />
         )}
       </>
     ),

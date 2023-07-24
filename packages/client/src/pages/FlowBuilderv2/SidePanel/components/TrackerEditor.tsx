@@ -1,10 +1,9 @@
 import Select from "components/Elements/Selectv2";
 import { NodeType } from "pages/FlowBuilderv2/FlowEditor";
-import { MessageNodeData } from "pages/FlowBuilderv2/Nodes/NodeData";
+import { TrackerNodeData } from "pages/FlowBuilderv2/Nodes/NodeData";
 import React, { FC } from "react";
 import { Node } from "reactflow";
 import { useAppSelector } from "store/hooks";
-import { MessageType } from "types/Workflow";
 
 interface TrackerEditorProps {
   tracker?: {
@@ -25,14 +24,11 @@ const TrackerEditor: FC<TrackerEditorProps> = ({
   const { nodes } = useAppSelector((state) => state.flowBuilder);
 
   const filledTrackerNodes = nodes.filter(
-    (node) =>
-      node.data.type === NodeType.MESSAGE &&
-      node.data.template.type === MessageType.TRACKER &&
-      node.data.template.selected !== undefined
-  ) as Node<MessageNodeData<MessageType.TRACKER>>[];
+    (node) => node.data.type === NodeType.TRACKER && node.data.tracker
+  ) as Node<TrackerNodeData>[];
 
   const possibleTrackers = filledTrackerNodes.map(
-    (node) => node.data.template.selected
+    (node) => node.data.tracker?.trackerTemplate
   );
 
   return (

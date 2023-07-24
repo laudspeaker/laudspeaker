@@ -14,7 +14,6 @@ export enum MessageType {
   PUSH = "push",
   WEBHOOK = "webhook",
   MODAL = "modal",
-  TRACKER = "tracker",
 }
 
 export enum EventConditionElementsFilter {

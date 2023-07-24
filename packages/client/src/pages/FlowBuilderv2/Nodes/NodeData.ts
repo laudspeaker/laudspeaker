@@ -169,6 +169,22 @@ export interface JumpToNodeData extends CommonNodeData {
   targetId?: string;
 }
 
+export enum TrackerVisibility {
+  SHOW = "show",
+  HIDE = "hide",
+}
+
+export interface TrackerNodeData extends CommonNodeData {
+  type: NodeType.TRACKER;
+  needsCheck?: boolean;
+  tracker?: {
+    trackerId: string;
+    trackerTemplate: { id: string; name: string };
+    visibility: TrackerVisibility;
+    fields: { name: string; type: StatementValueType; value: string }[];
+  };
+}
+
 export interface AnotherNodeData extends CommonNodeData {
   type?: Exclude<
     NodeType,
@@ -178,6 +194,7 @@ export interface AnotherNodeData extends CommonNodeData {
     | NodeType.TIME_WINDOW
     | NodeType.USER_ATTRIBUTE
     | NodeType.JUMP_TO
+    | NodeType.TRACKER
   >;
 }
 
@@ -188,4 +205,5 @@ export type NodeData =
   | TimeWindowNodeData
   | UserAttributeNodeData
   | JumpToNodeData
+  | TrackerNodeData
   | AnotherNodeData;
