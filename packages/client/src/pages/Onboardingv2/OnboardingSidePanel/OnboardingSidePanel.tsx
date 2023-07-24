@@ -60,6 +60,7 @@ const OnboardingSidePanel: FC<OnboardingSidePanelProps> = ({
     [NodeType.TIME_WINDOW]: "Time window",
     [NodeType.WAIT_UNTIL]: "Wait until",
     [NodeType.USER_ATTRIBUTE]: "User attribute",
+    [NodeType.TRACKER]: "Tracker",
     [NodeType.INSERT_NODE]: "",
   };
 
