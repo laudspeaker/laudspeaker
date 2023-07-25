@@ -34,7 +34,7 @@ export class EventsController {
     private readonly logger: Logger,
     @Inject(EventsService)
     private readonly eventsService: EventsService
-  ) {}
+  ) { }
 
   log(message, method, session, user = 'ANONYMOUS') {
     this.logger.log(
@@ -101,7 +101,7 @@ export class EventsController {
   async posthogPayload(
     @Req() { user }: Request,
     @Body() body: PosthogBatchEventDto
-  ): Promise<WorkflowTick[] | HttpException> {
+  ): Promise<void | HttpException> {
     const session = randomUUID();
     return this.eventsService.posthogPayload(<Account>user, body, session);
   }

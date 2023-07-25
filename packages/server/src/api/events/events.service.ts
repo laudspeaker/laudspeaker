@@ -15,8 +15,6 @@ import {
 import { Account } from '../accounts/entities/accounts.entity';
 import { PosthogBatchEventDto } from './dto/posthog-batch-event.dto';
 import { EventDto } from './dto/event.dto';
-import { AccountsService } from '../accounts/accounts.service';
-import { WorkflowsService } from '../workflows/workflows.service';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { StatusJobDto } from './dto/status-event.dto';
 import { Queue } from 'bullmq';
@@ -34,7 +32,6 @@ import {
   PosthogEventType,
   PosthogEventTypeDocument,
 } from './schemas/posthog-event-type.schema';
-import { WorkflowTick } from '../workflows/interfaces/workflow-tick.interface';
 import { DataSource } from 'typeorm';
 import posthogEventMappings from '../../fixtures/posthogEventMappings';
 import {
@@ -48,15 +45,13 @@ import { Journey } from '../journeys/entities/journey.entity';
 export class EventsService {
   constructor(
     private dataSource: DataSource,
-    @Inject(AccountsService) private readonly userService: AccountsService,
-    @Inject(forwardRef(() => WorkflowsService))
-    private readonly workflowsService: WorkflowsService,
     @Inject(forwardRef(() => CustomersService))
     private readonly customersService: CustomersService,
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
     private readonly logger: Logger,
     @InjectQueue('message') private readonly messageQueue: Queue,
     @InjectQueue('events') private readonly eventQueue: Queue,
+    @InjectQueue('events_pre') private readonly eventPreprocessorQueue: Queue,
     @InjectQueue(JobTypes.slack) private readonly slackQueue: Queue,
     @InjectQueue(JobTypes.events)
     private readonly eventsQueue: Queue,
@@ -203,15 +198,11 @@ export class EventsService {
     eventDto: PosthogBatchEventDto,
     session: string
   ) {
-    let customerFound = true;
-    const transactionSession = await this.connection.startSession();
-    transactionSession.startTransaction();
+    let err: any;
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
-    // Step 1: Find corresponding account
-    let jobArray: WorkflowTick[] = []; // created jobId
     try {
       await queryRunner.manager.save(Account, {
         id: account.id,
@@ -224,310 +215,46 @@ export class EventsService {
           new Date(b.originalTimestamp).getTime()
       );
 
-      this.debug(
-        `Sorted events: ${JSON.stringify({ events: chronologicalEvents })}`,
-        this.posthogPayload.name,
-        session,
-        account.id
-      );
-
       for (
         let numEvent = 0;
         numEvent < chronologicalEvents.length;
         numEvent++
       ) {
-        let postHogEvent = new PosthogEvent();
-        let err: Error | undefined;
-        try {
-          const currentEvent = chronologicalEvents[numEvent];
-          this.debug(
-            `Processing PostHog event: ${JSON.stringify({
-              event: currentEvent,
-            })}`,
-            this.posthogPayload.name,
-            session,
-            account.id
-          );
-
-          postHogEvent = {
-            ...postHogEvent,
-            name: currentEvent.event,
-            type: currentEvent.type,
-            payload: JSON.stringify(currentEvent, null, 2),
-            ownerId: account.id,
-          };
-
-          //update customer properties on every identify call as per best practice
-          if (currentEvent.type === 'identify') {
-            this.debug(
-              `Updating customer on Identify event: ${JSON.stringify({
-                event: currentEvent,
-              })}`,
-              this.posthogPayload.name,
-              session,
-              account.id
-            );
-            customerFound = await this.customersService.phIdentifyUpdate(
-              account,
-              currentEvent,
-              transactionSession,
-              session
-            );
-          }
-          //checking for a custom tracked posthog event here
-          if (
-            currentEvent.type === 'track' &&
-            currentEvent.event &&
-            currentEvent.event !== 'change' &&
-            currentEvent.event !== 'click' &&
-            currentEvent.event !== 'submit' &&
-            currentEvent.event !== '$pageleave' &&
-            currentEvent.event !== '$rageclick'
-          ) {
-            //checks to see if we have seen this event before (otherwise we update the events dropdown)
-            const found = await this.PosthogEventTypeModel.findOne({
-              name: currentEvent.event,
-              ownerId: account.id,
-            })
-              .session(transactionSession)
-              .exec();
-            this.debug(
-              `Check if event exists in events DB: ${JSON.stringify({
-                event: found,
-              })}`,
-              this.posthogPayload.name,
-              session,
-              account.id
-            );
-
-            if (!found) {
-              this.debug(
-                `Event does not exist, creating: ${JSON.stringify({
-                  event: {
-                    name: currentEvent.event,
-                    type: currentEvent.type,
-                    displayName: currentEvent.event,
-                    event: currentEvent.event,
-                    ownerId: account.id,
-                  },
-                })}`,
-                this.posthogPayload.name,
-                session,
-                account.id
-              );
-              const res = await this.PosthogEventTypeModel.create(
-                {
-                  name: currentEvent.event,
-                  type: currentEvent.type,
-                  displayName: currentEvent.event,
-                  event: currentEvent.event,
-                  ownerId: account.id,
-                },
-                { session: transactionSession }
-              );
-              this.debug(
-                `Added event to events DB: ${JSON.stringify({ event: res })}`,
-                this.posthogPayload.name,
-                session,
-                account.id
-              );
-            }
-            //TODO: check if the event sets props, if so we need to update the person traits
-          }
-
-          const jobIDs: WorkflowTick[] = [];
-          //Step 2: Create/Correlate customer for each eventTemplatesService.queueMessage
-          const postHogEventMapping = (event: any) => {
-            const cust = {};
-            if (event?.phPhoneNumber) {
-              cust['phPhoneNumber'] = event.phPhoneNumber;
-            }
-            if (event?.phEmail) {
-              cust['phEmail'] = event.phEmail;
-            }
-            if (event?.phDeviceToken) {
-              cust['phDeviceToken'] = event.phDeviceToken;
-            }
-            if (event?.phCustom) {
-              cust['phCustom'] = event.phCustom;
-            }
-            return cust;
-          };
-
-          const correlation = await this.customersService.findBySpecifiedEvent(
-            account,
-            'posthogId',
-            [currentEvent.userId, currentEvent.anonymousId],
-            currentEvent,
-            transactionSession,
-            session,
-            postHogEventMapping
-          );
-
-          if (!correlation.found || !customerFound) {
-            this.warn(
-              `${JSON.stringify({
-                warning: 'calling enroll customer because found is ',
-                found: customerFound,
-              })}`,
-              this.posthogPayload.name,
-              session
-            );
-            await this.journeysService.enrollCustomer(
-              account,
-              correlation.cust,
-              queryRunner,
-              transactionSession,
-              session
-            );
-          }
-          //need to change posthogeventdto to eventdo
-          const convertedEventDto: EventDto = {
-            correlationKey: 'posthogId',
-            correlationValue: [currentEvent.userId, currentEvent.anonymousId],
-            event: currentEvent.event,
-            source: 'posthog',
-            payload: {
-              type: currentEvent.type,
-              context: currentEvent.context,
-            },
-          };
-
-          const journeys = await queryRunner.manager.find(Journey, {
-            where: {
-              owner: { id: account.id },
-              isActive: true,
-              isPaused: false,
-              isStopped: false,
-              isDeleted: false,
-            },
-          });
-          for (let i = 0; i < journeys.length; i++)
-            await this.eventQueue.add(
-              'event',
-              {
-                accountID: account.id,
-                event: convertedEventDto,
-                journeyID: journeys[i].id,
-              },
-              {
-                attempts: 10,
-                backoff: { delay: 1000, type: 'exponential' },
-              }
-            );
-          this.debug(
-            `Queued messages ${JSON.stringify({ jobIDs: jobIDs })}`,
-            this.posthogPayload.name,
-            session,
-            account.id
-          );
-          jobArray = [...jobArray, ...jobIDs];
-        } catch (e) {
-          if (e instanceof Error) {
-            postHogEvent.errorMessage = e.message;
-            err = e;
-          }
-          this.error(e, this.posthogPayload.name, session, account.id);
-        } finally {
-          await this.PosthogEventModel.create(postHogEvent);
-        }
-        if (err) throw err;
-      }
-
-      await transactionSession.commitTransaction();
-      await queryRunner.commitTransaction();
-    } catch (e) {
-      await transactionSession.abortTransaction();
-      await queryRunner.rollbackTransaction();
-      this.error(e, this.posthogPayload.name, session, account.id);
-      throw e;
-    } finally {
-      await transactionSession.endSession();
-      await queryRunner.release();
-    }
-
-    return jobArray;
-  }
-
-  async customPayload(account: Account, eventDto: EventDto, session: string) {
-    let err: any;
-    this.debug(
-      `${JSON.stringify({ account, eventDto, session })}`,
-      this.customPayload.name,
-      session,
-      account.email
-    );
-    const transactionSession = await this.connection.startSession();
-    transactionSession.startTransaction();
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-
-    try {
-      const correlation: Correlation =
-        await this.customersService.findOrCreateByCorrelationKVPair(
-          account,
-          eventDto,
-          transactionSession
-        );
-      this.debug(
-        `${JSON.stringify({ correlation: correlation })}`,
-        this.customPayload.name,
-        session,
-        account.email
-      );
-
-      if (!correlation.found)
-        await this.journeysService.enrollCustomer(
-          account,
-          correlation.cust,
-          queryRunner,
-          transactionSession,
-          session
-        );
-
-      const journeys = await queryRunner.manager.find(Journey, {
-        where: {
-          owner: { id: account.id },
-          isActive: true,
-          isPaused: false,
-          isStopped: false,
-          isDeleted: false,
-        },
-      });
-      for (let i = 0; i < journeys.length; i++)
-        await this.eventQueue.add(
-          'event',
+        await this.eventPreprocessorQueue.add(
+          'posthog',
           {
-            accountID: account.id,
+            account: account,
             event: eventDto,
-            journeyID: journeys[i].id,
+            session: session,
           },
           {
             attempts: 10,
             backoff: { delay: 1000, type: 'exponential' },
           }
         );
-      if (eventDto) {
-        await this.EventModel.create({
-          ...eventDto,
-          ownerId: account.id,
-          createdAt: new Date().toUTCString(),
-        });
       }
-
-      await transactionSession.commitTransaction();
-      await queryRunner.commitTransaction();
     } catch (e) {
-      await transactionSession.abortTransaction();
       await queryRunner.rollbackTransaction();
-      this.error(e, this.customPayload.name, session, account.email);
       err = e;
     } finally {
-      await transactionSession.endSession();
       await queryRunner.release();
       if (err) throw err;
     }
+  }
+
+  async customPayload(account: Account, eventDto: EventDto, session: string) {
+    await this.eventQueue.add(
+      'laudspeaker',
+      {
+        account: account,
+        event: eventDto,
+        session: session,
+      },
+      {
+        attempts: 10,
+        backoff: { delay: 1000, type: 'exponential' },
+      }
+    );
   }
 
   async getOrUpdateAttributes(resourceId: string, session: string) {

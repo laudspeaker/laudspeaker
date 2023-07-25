@@ -36,6 +36,7 @@ import {
 import { JourneysModule } from '../journeys/journeys.module';
 import { AudiencesHelper } from '../audiences/audiences.helper';
 import { SegmentsModule } from '../segments/segments.module';
+import { EventsPreProcessor } from './events.preprocessor';
 
 @Module({
   imports: [
@@ -68,6 +69,9 @@ import { SegmentsModule } from '../segments/segments.module';
       name: 'events',
     }),
     BullModule.registerQueue({
+      name: 'events_pre',
+    }),
+    BullModule.registerQueue({
       name: 'webhooks',
     }),
     BullModule.registerQueue({
@@ -84,7 +88,7 @@ import { SegmentsModule } from '../segments/segments.module';
     SlackModule,
   ],
   controllers: [EventsController],
-  providers: [EventsService, EventsProcessor, AudiencesHelper],
+  providers: [EventsService, EventsProcessor, EventsPreProcessor, AudiencesHelper],
   exports: [EventsService],
 })
-export class EventsModule {}
+export class EventsModule { }

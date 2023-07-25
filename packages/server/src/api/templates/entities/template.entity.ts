@@ -42,6 +42,7 @@ export enum TemplateType {
   FIREBASE = 'firebase',
   WEBHOOK = 'webhook',
   MODAL = 'modal',
+  CUSTOM_COMPONENT = 'custom_component',
 }
 
 @Entity()
@@ -97,4 +98,10 @@ export class Template {
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   updatedAt?: Date;
+
+  @Column('text', { nullable: false, array: true, default: [] })
+  customEvents: string[];
+
+  @Column({ type: 'jsonb', nullable: true })
+  customFields?: Record<string, unknown>;
 }

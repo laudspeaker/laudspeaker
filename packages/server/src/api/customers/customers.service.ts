@@ -87,8 +87,11 @@ export class CustomersService {
     private readonly workflowsService: WorkflowsService,
     @InjectConnection() private readonly connection: mongoose.Connection
   ) {
+    const session = randomUUID();
+    this.connection.db.collection('customers').createIndex({ '__posthog__id': 1, 'ownerId': 1 }, { unique: true, partialFilterExpression: { __posthog__id: { $exists: true, $type: "array", $gt: [] } } }).then((ret) => {
+      this.debug(`${JSON.stringify({ indexCreated: ret })}`, this.constructor.name, session);
+    })
     this.CustomerModel.watch().on('change', async (data: any) => {
-      const session = randomUUID();
       try {
         const customerId = data?.documentKey?._id;
         if (!customerId) return;
@@ -183,9 +186,9 @@ export class CustomersService {
     transactionSession?: ClientSession
   ): Promise<
     Customer &
-      mongoose.Document & {
-        _id: Types.ObjectId;
-      }
+    mongoose.Document & {
+      _id: Types.ObjectId;
+    }
   > {
     const createdCustomer = new this.CustomerModel({
       ownerId: (<Account>account).id,
@@ -364,8 +367,8 @@ export class CustomersService {
       ownerId: (<Account>account).id,
       ...(key && search
         ? {
-            [key]: new RegExp(`.*${search}.*`, 'i'),
-          }
+          [key]: new RegExp(`.*${search}.*`, 'i'),
+        }
         : {}),
       ...(showFreezed ? {} : { isFreezed: { $ne: true } }),
     })
@@ -891,9 +894,9 @@ export class CustomersService {
     customerId: string
   ): Promise<
     Customer &
-      mongoose.Document & {
-        _id: Types.ObjectId;
-      }
+    mongoose.Document & {
+      _id: Types.ObjectId;
+    }
   > {
     if (!isValidObjectId(customerId))
       throw new BadRequestException('Invalid object id');
