@@ -179,7 +179,7 @@ export interface TrackerNodeData extends CommonNodeData {
   needsCheck?: boolean;
   tracker?: {
     trackerId: string;
-    trackerTemplate: { id: string; name: string };
+    trackerTemplate: { id: number; name: string };
     visibility: TrackerVisibility;
     fields: { name: string; type: StatementValueType; value: string }[];
   };

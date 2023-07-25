@@ -34,7 +34,7 @@ export class EventsController {
     private readonly logger: Logger,
     @Inject(EventsService)
     private readonly eventsService: EventsService
-  ) { }
+  ) {}
 
   log(message, method, session, user = 'ANONYMOUS') {
     this.logger.log(

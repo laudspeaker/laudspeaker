@@ -21,7 +21,7 @@ import { TemplatesService } from './templates.service';
 import { CreateTemplateDto } from './dto/create-template.dto';
 import { UpdateTemplateDto } from './dto/update-template.dto';
 import { Account } from '../accounts/entities/accounts.entity';
-import { Template } from './entities/template.entity';
+import { Template, TemplateType } from './entities/template.entity';
 import { TestWebhookDto } from './dto/test-webhook.dto';
 import { randomUUID } from 'crypto';
 
@@ -102,7 +102,8 @@ export class TemplatesController {
     @Query('search') search?: string,
     @Query('orderBy') orderBy?: keyof Template,
     @Query('orderType') orderType?: 'asc' | 'desc',
-    @Query('showDeleted') showDeleted?: boolean
+    @Query('showDeleted') showDeleted?: boolean,
+    @Query('type') type?: TemplateType
   ): Promise<{ data: Template[]; totalPages: number }> {
     const session = randomUUID();
     return this.templatesService.findAll(
@@ -113,7 +114,8 @@ export class TemplatesController {
       search,
       orderBy,
       orderType,
-      showDeleted
+      showDeleted,
+      type
     );
   }
 

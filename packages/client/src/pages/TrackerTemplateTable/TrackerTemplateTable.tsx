@@ -1,6 +1,6 @@
 import Button, { ButtonType } from "components/Elements/Buttonv2";
 import Input from "components/Elements/Inputv2";
-import React, { Fragment, useState } from "react";
+import React, { Fragment, useEffect, useLayoutEffect, useState } from "react";
 import searchIconImage from "./svg/search-icon.svg";
 import threeDotsIconImage from "./svg/three-dots-icon.svg";
 import sortAscChevronsImage from "./svg/sort-asc-chevrons.svg";
@@ -12,9 +12,12 @@ import Pagination from "components/Pagination";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { Menu, Transition } from "@headlessui/react";
+import ApiService from "services/api.service";
+import Template from "types/Template";
+import { toast } from "react-toastify";
 
 interface TrackerRowData {
-  id: string;
+  id: string | number;
   name: string;
   createdAt: string;
 }
@@ -51,13 +54,59 @@ const TrackerTemplateTable = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pagesCount, setPagesCount] = useState(1);
 
-  const createTrackerTemplate = async () => {
-    navigate("/tracker-template/" + "123");
+  const ITEMS_PER_PAGE = 5;
+
+  const loadData = async () => {
+    setIsLoading(true);
+    try {
+      const {
+        data: { data, totalPages },
+      } = await ApiService.get<{ data: Template[]; totalPages: number }>({
+        url: `/templates?take=${ITEMS_PER_PAGE}&skip=${
+          (currentPage - 1) * ITEMS_PER_PAGE
+        }&search=${search}&orderBy=${sortOptions.sortBy}&orderType=${
+          sortOptions.sortType
+        }&type=custom_component`,
+      });
+
+      setRows(
+        data.map((template) => ({
+          id: template.id,
+          name: template.name,
+          createdAt: template.createdAt,
+        }))
+      );
+      setPagesCount(totalPages);
+      setIsLoaded(true);
+    } catch (e) {
+      toast.error("Failed to load data");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleDuplicateTrackerTemplate = async (id: string) => {};
+  useLayoutEffect(() => {
+    loadData();
+  }, [currentPage, search, sortOptions]);
 
-  const handleDeleteTrackerTemplate = async (id: string) => {};
+  useEffect(() => {
+    setSearch("");
+  }, [showSearch]);
+
+  const createTrackerTemplate = async () => {
+    const {
+      data: { name },
+    } = await ApiService.post<Template>({
+      url: "/templates/create",
+      options: { name: "new_tracker", type: "custom_component" },
+    });
+
+    navigate("/tracker-template/" + name);
+  };
+
+  const handleDuplicateTrackerTemplate = async (id: string | number) => {};
+
+  const handleDeleteTrackerTemplate = async (id: string | number) => {};
 
   return (
     <div className="p-[20px] flex flex-col gap-[20px] font-inter font-normal text-[14px] text-[#111827] leading-[22px]">
@@ -158,7 +207,7 @@ const TrackerTemplateTable = () => {
               rows={rows.map((row) => [
                 <button
                   className="text-[#6366F1]"
-                  onClick={() => navigate(`/segment/${row.id}`)}
+                  onClick={() => navigate(`/tracker-template/${row.name}`)}
                 >
                   {row.name}
                 </button>,

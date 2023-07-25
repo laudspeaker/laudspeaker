@@ -50,7 +50,7 @@ export const TrackerNode: FC<NodeProps<TrackerNodeData>> = ({
           {data.needsCheck ? (
             <div className="text-[#F43F5E]">Template changed, please check</div>
           ) : data.tracker ? (
-            <div className="px-[5px] bg-[#E0E7FF] text-[#4338CA] rounded-[4px]">
+            <div className="w-fit px-[5px] bg-[#E0E7FF] text-[#4338CA] rounded-[4px]">
               {data.tracker.trackerId}
             </div>
           ) : (

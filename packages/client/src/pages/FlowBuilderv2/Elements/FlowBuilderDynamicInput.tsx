@@ -1,3 +1,4 @@
+import Select from "components/Elements/Selectv2";
 import React, { FC, ReactNode, useEffect, useState } from "react";
 import { StatementValueType } from "reducers/flow-builder.reducer";
 
@@ -12,18 +13,15 @@ interface FlowBuilderDynamicInputProps extends ValueChanger {
 
 const BooleanComponent: FC<ValueChanger> = ({ value, onChange }) => {
   return (
-    <select
+    <Select
       placeholder="value"
       value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className="w-full px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB] placeholder:font-inter placeholder:font-normal placeholder:text-[14px] placeholder:leading-[22px] placeholder:text-[#9CA3AF] rounded-[2px]"
-    >
-      <option value="" disabled>
-        value
-      </option>
-      <option value="true">true</option>
-      <option value="false">false</option>
-    </select>
+      options={[
+        { key: "true", title: "true" },
+        { key: "false", title: "false" },
+      ]}
+      onChange={(v) => onChange(v)}
+    />
   );
 };
 

@@ -60,10 +60,9 @@ export class UpdateTemplateDto {
   @IsObject()
   @IsOptional()
   public modalState?: Record<string, unknown>;
-  
+
   @IsOptional()
   @IsArray()
-  @ValidateNested({ each: true })
   @Type(() => String)
   customEvents?: string[];
 

@@ -88,7 +88,12 @@ import { EventsPreProcessor } from './events.preprocessor';
     SlackModule,
   ],
   controllers: [EventsController],
-  providers: [EventsService, EventsProcessor, EventsPreProcessor, AudiencesHelper],
+  providers: [
+    EventsService,
+    EventsProcessor,
+    EventsPreProcessor,
+    AudiencesHelper,
+  ],
   exports: [EventsService],
 })
-export class EventsModule { }
+export class EventsModule {}

@@ -24,4 +24,6 @@ export default interface Template {
   webhookData: WebhookState;
   createdAt: string;
   updatedAt: string;
+  customEvents: string[];
+  customFields?: Record<string, unknown>;
 }

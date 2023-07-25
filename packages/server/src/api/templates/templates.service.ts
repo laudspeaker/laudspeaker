@@ -506,11 +506,17 @@ export class TemplatesService extends QueueEventsHost {
     search = '',
     orderBy?: keyof Template,
     orderType?: 'asc' | 'desc',
-    showDeleted?: boolean
+    showDeleted?: boolean,
+    type?: TemplateType
   ): Promise<{ data: Template[]; totalPages: number }> {
     const totalPages = Math.ceil(
       (await this.templatesRepository.count({
-        where: { owner: { id: account.id } },
+        where: {
+          name: Like(`%${search}%`),
+          owner: { id: account.id },
+          isDeleted: In([!!showDeleted, false]),
+          type,
+        },
       })) / take || 1
     );
     const orderOptions = {};
@@ -522,6 +528,7 @@ export class TemplatesService extends QueueEventsHost {
         name: Like(`%${search}%`),
         owner: { id: account.id },
         isDeleted: In([!!showDeleted, false]),
+        type,
       },
       order: orderOptions,
       take: take < 100 ? take : 100,
@@ -605,7 +612,7 @@ export class TemplatesService extends QueueEventsHost {
       webhookData,
       modalState,
       customEvents,
-      customFields
+      customFields,
     } = foundTemplate;
 
     const ownerId = owner.id;
@@ -639,7 +646,7 @@ export class TemplatesService extends QueueEventsHost {
       webhookData,
       modalState,
       customEvents,
-      customFields
+      customFields,
     });
   }
 
@@ -744,14 +751,14 @@ export class TemplatesService extends QueueEventsHost {
           retrievedData = ['data', 'body'].includes(webhookPath[0])
             ? body
             : webhookPath[0] === 'headers'
-              ? JSON.stringify(headers)
-              : '';
+            ? JSON.stringify(headers)
+            : '';
         } else {
           const objectToRetrievе = ['data', 'body'].includes(webhookPath[0])
             ? JSON.parse(body)
             : webhookPath[0] === 'headers'
-              ? headers
-              : {};
+            ? headers
+            : {};
           retrievedData = this.recursivelyRetrieveData(
             objectToRetrievе,
             webhookPath.slice(1)
@@ -905,9 +912,9 @@ export class TemplatesService extends QueueEventsHost {
         retriesCount++;
         this.logger.warn(
           'Unsuccessfull webhook request. Retries: ' +
-          retriesCount +
-          '. Error: ' +
-          e
+            retriesCount +
+            '. Error: ' +
+            e
         );
         if (e instanceof Error) error = e.message;
         await wait(5000);

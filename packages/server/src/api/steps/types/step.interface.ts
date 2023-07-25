@@ -18,6 +18,7 @@ export enum StepType {
   AB_TEST = 'ABTest',
   RANDOM_COHORT_BRANCH = 'randomCohort',
   WAIT_UNTIL_BRANCH = 'waitUntil',
+  TRACKER = 'tracker',
 }
 
 export class TimeWindow {
@@ -60,7 +61,7 @@ export type AnalyticsProviderParams =
   | PosthogProviderParams
   | LaudspeakerProviderParams;
 
-export enum LaudspeakerProviderParams { }
+export enum LaudspeakerProviderParams {}
 
 export enum PosthogProviderParams {
   TRACK = 'track',
@@ -117,13 +118,13 @@ export class EventBranch extends Branch {
  * Primary grouping of event information that can
  * be grouped via and/or.
  */
-export class Event { }
+export class Event {}
 
 /*
  * Events associated with messages; for example, if a customer
  * opens an email or receives a push notification.
  */
-export class MessageEvent extends Event { }
+export class MessageEvent extends Event {}
 
 /*
  * Events associated with product analytics, for example Posthog
@@ -140,7 +141,7 @@ export class AnalyticsEvent extends Event {
  * Events associated with customer attributes changing, for example
  * a customer changing from a 'free' to a 'paid' plan.
  */
-export class AttributeChangeEvent extends Event { }
+export class AttributeChangeEvent extends Event {}
 
 /*
  * Top level interface for any platform data that we are
@@ -164,7 +165,7 @@ export class AttributeGroup {
  * Primary grouping of platform data that shares relation
  * (and/or)
  */
-export class Attribute { }
+export class Attribute {}
 
 /*
  * Customer attributes, for example
@@ -198,23 +199,23 @@ export class CustomerAttribute extends Attribute {
  * Message event history, for example a customer
  * might have opened the 'Welcome' email twice.
  */
-export class MessageEventHistoryAttribute extends Attribute { }
+export class MessageEventHistoryAttribute extends Attribute {}
 
 /*
  * Analytics event history, for example a customer
  * might have opened the 'Welcome' email twice.
  */
-export class AnalyticsEventHistoryAttribute extends Attribute { }
+export class AnalyticsEventHistoryAttribute extends Attribute {}
 
 /*
  * Top level step metadata interface.
  */
-export class StepTypeMetadata { }
+export class StepTypeMetadata {}
 
 /*
  * Exit step metadata: no additional properties needed.
  */
-export class ExitStepMetadata extends StepTypeMetadata { }
+export class ExitStepMetadata extends StepTypeMetadata {}
 
 /*
  * Parent Metadata interface for steps with only a single
@@ -229,12 +230,12 @@ export class SingleBranchMetadata extends StepTypeMetadata {
 /*
  * Start step metadata: no additional properties needed.
  */
-export class StartStepMetadata extends SingleBranchMetadata { }
+export class StartStepMetadata extends SingleBranchMetadata {}
 
 /*
  * Loop step metadata: no additional properties needed.
  */
-export class LoopStepMetadata extends SingleBranchMetadata { }
+export class LoopStepMetadata extends SingleBranchMetadata {}
 
 /*
  * Message step metadata, includes messaging channel type and
@@ -248,13 +249,13 @@ export class MessageStepMetadata extends SingleBranchMetadata {
 
 /**
  * Custom Component Step metadata, need extra fields for what actions to
- * take (show/hide), what to change fields to, and the human readable 
+ * take (show/hide), what to change fields to, and the human readable
  * step name.
  */
 export class CustomComponentStepMetadata extends MessageStepMetadata {
   action: CustomComponentAction;
   humanReadableName: string;
-  pushedValues: Record<string,any>;
+  pushedValues: Record<string, any>;
 }
 
 export class TimeWindowStepMetadata extends SingleBranchMetadata {

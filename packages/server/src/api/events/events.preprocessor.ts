@@ -7,10 +7,16 @@ import mongoose, { Model } from 'mongoose';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { Journey } from '../journeys/entities/journey.entity';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
-import { PosthogEventType, PosthogEventTypeDocument } from './schemas/posthog-event-type.schema';
+import {
+  PosthogEventType,
+  PosthogEventTypeDocument,
+} from './schemas/posthog-event-type.schema';
 import { JourneysService } from '../journeys/journeys.service';
 import { EventDto } from './dto/event.dto';
-import { PosthogEvent, PosthogEventDocument } from './schemas/posthog-event.schema';
+import {
+  PosthogEvent,
+  PosthogEventDocument,
+} from './schemas/posthog-event.schema';
 import { EventDocument } from './schemas/event.schema';
 
 export enum ProviderType {
@@ -20,21 +26,20 @@ export enum ProviderType {
 
 @Injectable()
 @Processor('events_pre', {
-  removeOnComplete: { age: 0, count: 0 }
+  removeOnComplete: { age: 0, count: 0 },
 })
 export class EventsPreProcessor extends WorkerHost {
   private providerMap: Record<
     ProviderType,
     (job: Job<any, any, string>) => Promise<void>
   > = {
-      [ProviderType.LAUDSPEAKER]: async (job) => {
-        await this.handleCustom(job);
-      },
-      [ProviderType.POSTHOG]: async (job) => {
-        await this.handlePosthog(job);
-      },
-    };
-
+    [ProviderType.LAUDSPEAKER]: async (job) => {
+      await this.handleCustom(job);
+    },
+    [ProviderType.POSTHOG]: async (job) => {
+      await this.handlePosthog(job);
+    },
+  };
 
   constructor(
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
@@ -51,7 +56,7 @@ export class EventsPreProcessor extends WorkerHost {
     private posthogEventModel: Model<PosthogEventDocument>,
     @InjectModel(PosthogEventType.name)
     private posthogEventTypeModel: Model<PosthogEventTypeDocument>,
-    @InjectQueue('events') private readonly eventsQueue: Queue,
+    @InjectQueue('events') private readonly eventsQueue: Queue
   ) {
     super();
   }
@@ -132,7 +137,6 @@ export class EventsPreProcessor extends WorkerHost {
       let customerFound: boolean = true;
       let postHogEvent = new PosthogEvent();
       try {
-
         postHogEvent = {
           ...postHogEvent,
           name: job.data.event.event,
@@ -161,10 +165,11 @@ export class EventsPreProcessor extends WorkerHost {
           job.data.event.event !== '$rageclick'
         ) {
           //checks to see if we have seen this event before (otherwise we update the events dropdown)
-          const found = await this.posthogEventTypeModel.findOne({
-            name: job.data.event.event,
-            ownerId: job.data.account.id,
-          })
+          const found = await this.posthogEventTypeModel
+            .findOne({
+              name: job.data.event.event,
+              ownerId: job.data.account.id,
+            })
             .session(transactionSession)
             .exec();
 
@@ -258,7 +263,12 @@ export class EventsPreProcessor extends WorkerHost {
           postHogEvent.errorMessage = e.message;
           err = e;
         }
-        this.error(e, this.handlePosthog.name, job.data.session, job.data.account.id);
+        this.error(
+          e,
+          this.handlePosthog.name,
+          job.data.session,
+          job.data.account.id
+        );
       } finally {
         await this.posthogEventModel.create(postHogEvent);
       }
@@ -274,11 +284,22 @@ export class EventsPreProcessor extends WorkerHost {
       await transactionSession.endSession();
       await queryRunner.release();
       if (err?.code === 11000) {
-        this.warn(`${JSON.stringify({ warning: "Attempting to insert a duplicate key" })}`, this.handlePosthog.name, job.data.session, job.data.account.id);
+        this.warn(
+          `${JSON.stringify({
+            warning: 'Attempting to insert a duplicate key',
+          })}`,
+          this.handlePosthog.name,
+          job.data.session,
+          job.data.account.id
+        );
         throw err;
-      }
-      else if (err) {
-        this.error(err, this.handlePosthog.name, job.data.session, job.data.account.id);
+      } else if (err) {
+        this.error(
+          err,
+          this.handlePosthog.name,
+          job.data.session,
+          job.data.account.id
+        );
         throw new UnrecoverableError();
       }
     }
@@ -345,17 +366,33 @@ export class EventsPreProcessor extends WorkerHost {
     } catch (e) {
       await transactionSession.abortTransaction();
       await queryRunner.rollbackTransaction();
-      this.error(e, this.handleCustom.name, job.data.session, job.data.account.email);
+      this.error(
+        e,
+        this.handleCustom.name,
+        job.data.session,
+        job.data.account.email
+      );
       err = e;
     } finally {
       await transactionSession.endSession();
       await queryRunner.release();
       if (err?.code === 11000) {
-        this.warn(`${JSON.stringify({ warning: "Attempting to insert a duplicate key" })}`, this.handleCustom.name, job.data.session, job.data.account.id);
+        this.warn(
+          `${JSON.stringify({
+            warning: 'Attempting to insert a duplicate key',
+          })}`,
+          this.handleCustom.name,
+          job.data.session,
+          job.data.account.id
+        );
         throw err;
-      }
-      else if (err) {
-        this.error(err, this.handleCustom.name, job.data.session, job.data.account.id);
+      } else if (err) {
+        this.error(
+          err,
+          this.handleCustom.name,
+          job.data.session,
+          job.data.account.id
+        );
         throw new UnrecoverableError();
       }
     }

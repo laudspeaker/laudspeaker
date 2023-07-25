@@ -1,10 +1,12 @@
 import Button, { ButtonType } from "components/Elements/Buttonv2";
 import Input from "components/Elements/Inputv2";
 import FlowBuilderDynamicInput from "pages/FlowBuilderv2/Elements/FlowBuilderDynamicInput";
-import React, { useState } from "react";
+import React, { useEffect, useLayoutEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useHover } from "react-use";
 import { StatementValueType } from "reducers/flow-builder.reducer";
+import ApiService from "services/api.service";
+import Template from "types/Template";
 import TrackerTemplateEditor from "./components/TrackerTemplateEditor";
 import TrackerTemplateViewer from "./components/TrackerTemplateViewer";
 
@@ -23,6 +25,7 @@ export interface TrackerData {
 const TrackerTemplateBuilder = () => {
   const { id } = useParams();
 
+  const [isFirstRender, setIsFirstRender] = useState(true);
   const [trackerData, setTrackerData] = useState<TrackerData>({
     name: "",
     fields: [],
@@ -31,6 +34,43 @@ const TrackerTemplateBuilder = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [isUsed, setIsUsed] = useState(false);
   const [isEditHovered, setIsEditHovered] = useState(false);
+
+  const loadData = async () => {
+    const { data } = await ApiService.get<Template>({
+      url: "/templates/" + id,
+    });
+
+    setTrackerData({
+      name: data.name,
+      fields: (data.customFields?.fields || []) as TrackerField[],
+      events: data.customEvents,
+    });
+  };
+
+  useLayoutEffect(() => {
+    loadData();
+  }, []);
+
+  const saveData = async () => {
+    await ApiService.patch({
+      url: "/templates/" + id,
+      options: {
+        name: trackerData.name,
+        type: "custom_component",
+        customEvents: trackerData.events,
+        customFields: { fields: trackerData.fields },
+      },
+    });
+  };
+
+  useEffect(() => {
+    if (isFirstRender) {
+      setIsFirstRender(false);
+      return;
+    }
+
+    saveData();
+  }, [trackerData]);
 
   const handleDeleteTrackerTemplate = async () => {};
 
