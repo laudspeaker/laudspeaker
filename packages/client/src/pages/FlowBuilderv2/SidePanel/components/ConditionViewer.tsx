@@ -77,7 +77,25 @@ const ConditionViewer: FC<ConditionViewerProps> = ({
       </div>
 
       {condition.providerType === ProviderType.TRACKER ? (
-        <></>
+        <div className="flex flex-col gap-[10px] font-inter text-[14px] font-normal text-[#111827] leading-[22px]">
+          {condition.trackerId && (
+            <div className="flex gap-[5px] items-center">
+              <div>Tracker:</div>
+              <div className="px-[5px] py-[2px] border-[1px] border-[#E5E7EB] rounded-[2px] bg-white">
+                {condition.trackerId}
+              </div>
+            </div>
+          )}
+          {condition.event && (
+            <div className="flex gap-[5px] items-center">
+              <div>Event</div>
+              <div className="px-[5px] py-[2px] border-[1px] border-[#E5E7EB] rounded-[2px] bg-white">
+                {condition.event}
+              </div>
+              <div>is performed</div>
+            </div>
+          )}
+        </div>
       ) : (
         <>
           {condition.statements.map((statement, k) => (

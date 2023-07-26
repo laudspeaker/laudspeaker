@@ -53,7 +53,7 @@ export interface CommonCondition {
 
 export interface TrackerCondition extends CommonCondition {
   providerType: ProviderType.TRACKER;
-  tracker?: { id: string; name: string };
+  trackerId?: string;
   event?: string;
 }
 

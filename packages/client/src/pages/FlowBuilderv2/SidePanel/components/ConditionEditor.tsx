@@ -188,8 +188,10 @@ const ConditionEditor: FC<ConditionEditorProps> = ({
 
       {condition.providerType === ProviderType.TRACKER ? (
         <TrackerEditor
-          tracker={condition.tracker ? { ...condition.tracker } : undefined}
-          onTrackerChange={(tracker) => setCondition({ ...condition, tracker })}
+          trackerId={condition.trackerId}
+          onTrackerChange={(trackerId) =>
+            setCondition({ ...condition, trackerId })
+          }
           event={condition.event}
           onEventChange={(event) => setCondition({ ...condition, event })}
         />

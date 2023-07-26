@@ -6,11 +6,11 @@ import {
   TrackerVisibility,
 } from "pages/FlowBuilderv2/Nodes/NodeData";
 import { TrackerField } from "pages/TrackerTemplateBuilder/TrackerTemplateBuilder";
-import { FC, useEffect, useState } from "react";
+import React, { FC, useEffect, useState } from "react";
 import { Node } from "reactflow";
 import { StatementValueType } from "reducers/flow-builder.reducer";
 import ApiService from "services/api.service";
-import { useAppSelector } from "store/hooks";
+import { useAppDispatch, useAppSelector } from "store/hooks";
 import Template from "types/Template";
 import { SidePanelComponentProps } from "../FlowBuilderSidePanel";
 import generateName from "@good-ghosting/random-name-generator";
@@ -48,10 +48,6 @@ const TrackerSettings: FC<SidePanelComponentProps<TrackerNodeData>> = ({
     loadTrackerTemplates();
   }, []);
 
-  useEffect(() => {
-    setNodeData({ ...nodeData, needsCheck: false });
-  }, []);
-
   const handleChangeField = (i: number, value: string) => {
     if (!nodeData.tracker) return;
 
@@ -83,8 +79,6 @@ const TrackerSettings: FC<SidePanelComponentProps<TrackerNodeData>> = ({
         (node) => node.data.type === NodeType.TRACKER && node.data.tracker
       ) as Node<TrackerNodeData>[])
     : [];
-
-  console.log(filledTrackerNodes);
 
   return (
     <div className="font-inter text-[14px] font-normal leading-[22px] text-[#111827]">
@@ -126,12 +120,18 @@ const TrackerSettings: FC<SidePanelComponentProps<TrackerNodeData>> = ({
               <div>Tracker template</div>
               <div className="w-[200px]">
                 <Select
+                  panelClassName="max-w-[200px]"
                   options={trackerTemplates.map((template) => ({
                     key: template,
                     title: `${template.id} / ${template.name}`,
                   }))}
-                  value={trackerTemplates[0]}
-                  onChange={(template) =>
+                  value={trackerTemplates.find(
+                    (trackerTemplate) =>
+                      nodeData.tracker?.trackerTemplate.id ===
+                      trackerTemplate.id
+                  )}
+                  onChange={(template) => {
+                    if (!template) return;
                     setNodeData({
                       ...nodeData,
                       tracker: {
@@ -149,8 +149,8 @@ const TrackerSettings: FC<SidePanelComponentProps<TrackerNodeData>> = ({
                           name: template.name,
                         },
                       },
-                    })
-                  }
+                    });
+                  }}
                   placeholder="select tracker template"
                 />
               </div>
@@ -224,8 +224,12 @@ const TrackerSettings: FC<SidePanelComponentProps<TrackerNodeData>> = ({
               key: template,
               title: `${template.id} / ${template.name}`,
             }))}
-            value={trackerTemplates[0]}
-            onChange={(template) =>
+            value={trackerTemplates.find(
+              (trackerTemplate) =>
+                trackerTemplate.id === nodeData.tracker?.trackerTemplate.id
+            )}
+            onChange={(template) => {
+              if (!template) return;
               setNodeData({
                 ...nodeData,
                 tracker: {
@@ -238,8 +242,8 @@ const TrackerSettings: FC<SidePanelComponentProps<TrackerNodeData>> = ({
                   })),
                   trackerTemplate: { id: template.id, name: template.name },
                 },
-              })
-            }
+              });
+            }}
             placeholder="select tracker template"
           />
           {filledTrackerNodes.length > 0 && (
@@ -256,10 +260,9 @@ const TrackerSettings: FC<SidePanelComponentProps<TrackerNodeData>> = ({
                 filledTrackerNodes,
                 (item) => item.data.tracker?.trackerId
               ).map((trackerNode, i) => (
-                <>
+                <React.Fragment key={i}>
                   {trackerNode.data.tracker !== undefined && (
                     <button
-                      key={i}
                       onClick={() =>
                         trackerNode.data.tracker &&
                         setNodeData({
@@ -288,7 +291,7 @@ const TrackerSettings: FC<SidePanelComponentProps<TrackerNodeData>> = ({
                       </div>
                     </button>
                   )}
-                </>
+                </React.Fragment>
               ))}
             </>
           )}

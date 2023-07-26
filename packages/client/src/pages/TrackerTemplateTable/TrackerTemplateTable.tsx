@@ -15,6 +15,7 @@ import { Menu, Transition } from "@headlessui/react";
 import ApiService from "services/api.service";
 import Template from "types/Template";
 import { toast } from "react-toastify";
+import CreateTrackerTemplateModal from "./Modals/CreateTrackerTemplateModal";
 
 interface TrackerRowData {
   id: string | number;
@@ -50,7 +51,10 @@ const TrackerTemplateTable = () => {
     sortBy: SortProperty.CREATED_AT,
     sortType: SortType.DESC,
   });
-
+  const [
+    isCreateTrackerTemplateModalOpen,
+    setIsCreateTrackerTemplateModalOpen,
+  ] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [pagesCount, setPagesCount] = useState(1);
 
@@ -93,31 +97,28 @@ const TrackerTemplateTable = () => {
     setSearch("");
   }, [showSearch]);
 
-  const createTrackerTemplate = async () => {
-    const {
-      data: { name },
-    } = await ApiService.post<Template>({
-      url: "/templates/create",
-      options: { name: "new_tracker", type: "custom_component" },
-    });
-
-    navigate("/tracker-template/" + name);
+  const handleDuplicateTrackerTemplate = async (name: string) => {
+    await ApiService.post({ url: `/templates/${name}/duplicate` });
+    await loadData();
   };
 
-  const handleDuplicateTrackerTemplate = async (id: string | number) => {};
-
-  const handleDeleteTrackerTemplate = async (id: string | number) => {};
+  const handleDeleteTrackerTemplate = async (id: string | number) => {
+    await ApiService.delete({ url: `/templates/${id}` });
+    await loadData();
+  };
 
   return (
     <div className="p-[20px] flex flex-col gap-[20px] font-inter font-normal text-[14px] text-[#111827] leading-[22px]">
       <div className="flex justify-between items-center">
         <div className="text-[20px] font-semibold leading-[28px]">Tracker</div>
 
-        <Button type={ButtonType.PRIMARY} onClick={createTrackerTemplate}>
+        <Button
+          type={ButtonType.PRIMARY}
+          onClick={() => setIsCreateTrackerTemplateModalOpen(true)}
+        >
           Create tracker template
         </Button>
       </div>
-
       <div className="p-[20px] bg-white rounded-[8px] flex flex-col gap-[20px]">
         {rows.length === 0 && search === "" && isLoaded ? (
           <div className="w-full h-[300px] flex items-center justify-center select-none">
@@ -238,7 +239,7 @@ const TrackerTemplateTable = () => {
                               active ? "bg-[#F3F4F6]" : ""
                             }`}
                             onClick={() =>
-                              handleDuplicateTrackerTemplate(row.id)
+                              handleDuplicateTrackerTemplate(row.name)
                             }
                           >
                             Duplicate
@@ -275,6 +276,11 @@ const TrackerTemplateTable = () => {
           </div>
         )}
       </div>
+
+      <CreateTrackerTemplateModal
+        isOpen={isCreateTrackerTemplateModalOpen}
+        onClose={() => setIsCreateTrackerTemplateModalOpen(false)}
+      />
     </div>
   );
 };

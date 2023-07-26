@@ -7,6 +7,7 @@ import { useAppSelector } from "store/hooks";
 import MessageViewer from "./viewers/MessageViewer";
 import TimeDelayViewer from "./viewers/TimeDelayViewer";
 import TimeWindowViewer from "./viewers/TimeWindowViewer";
+import TrackerViewer from "./viewers/TrackerViewer";
 import UserAttributeViewer from "./viewers/UserAttributeViewer";
 import WaitUntilViewer from "./viewers/WaitUntilViewer";
 
@@ -77,6 +78,13 @@ const FlowViewerSidePanel: FC<FlowViewerSidePanelProps> = ({ className }) => {
       <>
         {nodeData.type === NodeType.USER_ATTRIBUTE && (
           <UserAttributeViewer nodeData={nodeData} />
+        )}
+      </>
+    ),
+    [NodeType.TRACKER]: (
+      <>
+        {nodeData.type === NodeType.TRACKER && (
+          <TrackerViewer nodeData={nodeData} />
         )}
       </>
     ),

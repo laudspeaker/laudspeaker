@@ -13,7 +13,25 @@ const EventBranchView: FC<EventBranchViewProps> = ({ branch }) => {
         <React.Fragment key={i}>
           <div className="bg-gray-100 p-3 rounded flex flex-col relative [&:not(:last-child)]:mb-11">
             {condition.providerType === ProviderType.TRACKER ? (
-              <></>
+              <div className="flex flex-col gap-[10px] font-inter text-[14px] font-normal text-[#111827] leading-[22px]">
+                {condition.trackerId && (
+                  <div className="flex gap-[5px] items-center">
+                    <div>Tracker:</div>
+                    <div className="px-[5px] py-[2px] border-[1px] border-[#E5E7EB] rounded-[2px] bg-white">
+                      {condition.trackerId}
+                    </div>
+                  </div>
+                )}
+                {condition.event && (
+                  <div className="flex gap-[5px] items-center">
+                    <div>Event</div>
+                    <div className="px-[5px] py-[2px] border-[1px] border-[#E5E7EB] rounded-[2px] bg-white">
+                      {condition.event}
+                    </div>
+                    <div>is performed</div>
+                  </div>
+                )}
+              </div>
             ) : (
               <>
                 <span className="pb-3 font-semibold">{condition.name}</span>
