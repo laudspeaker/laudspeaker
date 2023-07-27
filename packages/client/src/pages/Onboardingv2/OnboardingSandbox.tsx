@@ -41,6 +41,7 @@ import OnboardingSidePanel from "./OnboardingSidePanel/OnboardingSidePanel";
 import OnboardingDialog from "./OnbordingDialog/OnboardingDialog";
 import createJourneyColorfulHeaderImage from "./svg/create-journey-colorful-header.svg";
 import onboardingCursorImage from "./svg/onboarding-cursor.svg";
+import { LaudspeakerProvider, useTracker } from "@laudspeaker/react";
 
 export enum OnboardingAction {
   NOTHING = "nothing",
@@ -174,6 +175,11 @@ interface OnboardingSandboxProps {
 const OnboardingSandbox: FC<OnboardingSandboxProps> = ({
   onSandboxComplete,
 }) => {
+  const { state: trackerState, emitTrackerEvent } =
+    useTracker("create_journey");
+
+  const currentStep = trackerState?.step as SandboxStep;
+
   const flowBuilderState = useAppSelector((state) => state.flowBuilder);
   const dispatch = useAppDispatch();
 
@@ -451,8 +457,6 @@ const OnboardingSandbox: FC<OnboardingSandboxProps> = ({
     },
   };
 
-  const [currentStep, setCurrentStep] = useState(SandboxStep.MESSAGE_AND_STEP);
-
   const currentSandboxFixture = sanboxStepToFixtureMap[currentStep];
 
   useEffect(() => {
@@ -573,12 +577,25 @@ const OnboardingSandbox: FC<OnboardingSandboxProps> = ({
     };
   }, []);
 
+  const stepToTrackerEventMap: Record<SandboxStep, string> = {
+    [SandboxStep.MESSAGE_AND_STEP]: "",
+    [SandboxStep.DRAG_EMAIL]: "",
+    [SandboxStep.SETTING_PANEL]: "",
+    [SandboxStep.SELECT_TEMPLATE]: "",
+    [SandboxStep.SAVE_SETTINGS]: "",
+    [SandboxStep.TRIGGER]: "",
+    [SandboxStep.MODIFY_TRIGGER]: "",
+    [SandboxStep.CHANGE_TIME]: "",
+    [SandboxStep.SAVE_TRIGGER]: "",
+    [SandboxStep.FINISH]: "",
+  };
+
   useEffect(() => {
     if (!currentSandboxFixture.checkStepFinished()) return;
 
     if (currentStep === SandboxStep.FINISH) return;
 
-    setCurrentStep(currentStep + 1);
+    emitTrackerEvent(stepToTrackerEventMap[currentStep]);
   }, [flowBuilderState]);
 
   useEffect(() => {
@@ -621,7 +638,7 @@ const OnboardingSandbox: FC<OnboardingSandboxProps> = ({
   return (
     <>
       {currentSandboxFixture.header}
-      <div className="bg-[#F3F4F6] rounded-[25px] h-full overflow-hidden flex relative">
+      <div className="bg-[#F3F4F6] rounded-[25px] h-full overflow-hidden relative">
         {currentStep === SandboxStep.FINISH && <Confetti />}
 
         <div className="py-[20px] pl-[20px]">
@@ -637,7 +654,7 @@ const OnboardingSandbox: FC<OnboardingSandboxProps> = ({
           onSaveClick={() => {
             if (currentStep === SandboxStep.FINISH) return;
 
-            setCurrentStep(currentStep + 1);
+            emitTrackerEvent(stepToTrackerEventMap[currentStep]);
           }}
         />
 
@@ -663,7 +680,7 @@ const OnboardingSandbox: FC<OnboardingSandboxProps> = ({
             {currentSandboxFixture.tooltip.content}
           </div>
         )}
-        {currentSandboxFixture.dialog && (
+        {currentSandboxFixture.dialog && trackerState?.show && (
           <OnboardingDialog
             onNextClick={() => {
               if (currentStep === SandboxStep.FINISH) {
@@ -671,7 +688,7 @@ const OnboardingSandbox: FC<OnboardingSandboxProps> = ({
                 return;
               }
 
-              setCurrentStep(currentStep + 1);
+              emitTrackerEvent(stepToTrackerEventMap[currentStep]);
             }}
             position={currentSandboxFixture.dialog.position}
           >

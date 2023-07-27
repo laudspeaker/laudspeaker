@@ -59,6 +59,7 @@ import PosthogSettings from "pages/PosthogSettings";
 import JavascriptSnippetSettings from "pages/JavascriptSnippetSettings";
 import CustomModalSettings from "pages/CustomModalSettings";
 import TrackerTemplateTable from "pages/TrackerTemplateTable";
+import { LaudspeakerProvider } from "@laudspeaker/react";
 
 interface IProtected {
   children: ReactElement;
@@ -667,7 +668,9 @@ const RouteComponent: React.FC = () => {
           element={
             <Protected>
               <VerificationProtected>
-                <Onboardingv2 />
+                <LaudspeakerProvider apiKey="" apiHost="">
+                  <Onboardingv2 />
+                </LaudspeakerProvider>
               </VerificationProtected>
             </Protected>
           }
