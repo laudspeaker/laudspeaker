@@ -100,7 +100,7 @@ export class JourneysService {
     @Inject(forwardRef(() => CustomersService))
     private customersService: CustomersService,
     @InjectConnection() private readonly connection: mongoose.Connection
-  ) { }
+  ) {}
 
   log(message, method, session, user = 'ANONYMOUS') {
     this.logger.log(
@@ -534,8 +534,8 @@ export class JourneysService {
               ...(key === 'isActive'
                 ? { isStopped: false, isPaused: false }
                 : key === 'isPaused'
-                  ? { isStopped: false }
-                  : {}),
+                ? { isStopped: false }
+                : {}),
             });
         }
       } else {
@@ -1012,7 +1012,12 @@ export class JourneysService {
             metadata.channel = nodes[i].data['template']['type'];
             if (nodes[i].data['template']['selected'])
               metadata.template = nodes[i].data['template']['selected']['id'];
-            this.debug(JSON.stringify({ startMetadata: metadata }), this.updateLayout.name, account.email, session);
+            this.debug(
+              JSON.stringify({ startMetadata: metadata }),
+              this.updateLayout.name,
+              account.email,
+              session
+            );
 
             break;
           case NodeType.TRACKER:
@@ -1027,16 +1032,23 @@ export class JourneysService {
             })[0].data.stepId;
             if (nodes[i].data['tracker']) {
               if (nodes[i].data['tracker']['trackerTemplate']) {
-                metadata.template = nodes[i].data['tracker']['trackerTemplate']['id'];
+                metadata.template =
+                  nodes[i].data['tracker']['trackerTemplate']['id'];
               }
               metadata.action = nodes[i].data['tracker']['visibility'];
-              metadata.humanReadableName = nodes[i].data['tracker']["trackerId"];
+              metadata.humanReadableName =
+                nodes[i].data['tracker']['trackerId'];
               metadata.pushedValues = {} as Record<string, any>;
-              nodes[i].data['tracker']['fields'].forEach(field => {
-                metadata.pushedValues[field.name] = field.value
+              nodes[i].data['tracker']['fields'].forEach((field) => {
+                metadata.pushedValues[field.name] = field.value;
               });
             }
-            this.debug(JSON.stringify({ trackerMetadata: metadata }), this.updateLayout.name, account.email, session);
+            this.debug(
+              JSON.stringify({ trackerMetadata: metadata }),
+              this.updateLayout.name,
+              account.email,
+              session
+            );
             break;
           case NodeType.WAIT_UNTIL:
             metadata = new WaitUntilStepMetadata();
@@ -1177,7 +1189,12 @@ export class JourneysService {
             if (relevantEdges.length > 0)
               throw new Error('Cannot have any branches for Exit Step');
             metadata = new ExitStepMetadata();
-            this.debug(JSON.stringify({ exitMetadata: metadata }), this.updateLayout.name, account.email, session);
+            this.debug(
+              JSON.stringify({ exitMetadata: metadata }),
+              this.updateLayout.name,
+              account.email,
+              session
+            );
             break;
           case NodeType.TIME_DELAY:
             if (relevantEdges.length > 1)

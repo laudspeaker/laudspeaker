@@ -19,7 +19,10 @@ import { WebhooksService } from '@/api/webhooks/webhooks.service';
 import { TemplatesService } from '@/api/templates/templates.service';
 import { CustomersService } from '@/api/customers/customers.service';
 import { cleanTagsForSending } from '../../../shared/utils/helpers';
-import { Customer, CustomerDocument } from '@/api/customers/schemas/customer.schema';
+import {
+  Customer,
+  CustomerDocument,
+} from '@/api/customers/schemas/customer.schema';
 import { TemplateType } from '@/api/templates/entities/template.entity';
 import { WebsocketGateway } from '@/websockets/websocket.gateway';
 import { ModalsService } from '@/api/modals/modals.service';
@@ -48,7 +51,7 @@ export class TransitionProcessor extends WorkerHost {
     private websocketGateway: WebsocketGateway,
     @Inject(ModalsService) private modalsService: ModalsService,
     @Inject(SlackService) private slackService: SlackService,
-    @InjectModel(Customer.name) public customerModel: Model<CustomerDocument>,
+    @InjectModel(Customer.name) public customerModel: Model<CustomerDocument>
   ) {
     super();
   }
@@ -241,7 +244,11 @@ export class TransitionProcessor extends WorkerHost {
     const owner = await queryRunner.manager.findOne(Account, {
       where: { id: ownerID },
     });
-    this.debug(`${JSON.stringify({ owner: owner })}`, this.handleCustomComponent.name, session);
+    this.debug(
+      `${JSON.stringify({ owner: owner })}`,
+      this.handleCustomComponent.name,
+      session
+    );
 
     const currentStep = await queryRunner.manager.findOne(Step, {
       where: {
@@ -251,7 +258,11 @@ export class TransitionProcessor extends WorkerHost {
       lock: { mode: 'pessimistic_write' },
     });
 
-    this.debug(`${JSON.stringify({ currentStep: currentStep })}`, this.handleCustomComponent.name, session);
+    this.debug(
+      `${JSON.stringify({ currentStep: currentStep })}`,
+      this.handleCustomComponent.name,
+      session
+    );
 
     const nextStep = await queryRunner.manager.findOne(Step, {
       where: {
@@ -260,8 +271,11 @@ export class TransitionProcessor extends WorkerHost {
       lock: { mode: 'pessimistic_write' },
     });
 
-    this.debug(`${JSON.stringify({ nextStep: nextStep })}`, this.handleCustomComponent.name, session);
-
+    this.debug(
+      `${JSON.stringify({ nextStep: nextStep })}`,
+      this.handleCustomComponent.name,
+      session
+    );
 
     for (let i = 0; i < currentStep.customers.length; i++) {
       try {
@@ -280,28 +294,39 @@ export class TransitionProcessor extends WorkerHost {
         );
 
         if (template.type !== TemplateType.CUSTOM_COMPONENT) {
-          throw new Error(`Cannot use ${template.type} template for a custom component step`)
+          throw new Error(
+            `Cannot use ${template.type} template for a custom component step`
+          );
         }
-        const { action, humanReadableName, pushedValues } = currentStep.metadata;
+        const { action, humanReadableName, pushedValues } =
+          currentStep.metadata;
 
-        if (!customer.customComponents)
-          customer.customComponents = {};
+        if (!customer.customComponents) customer.customComponents = {};
 
         if (!customer.customComponents[humanReadableName])
-          customer.customComponents[humanReadableName] = { hidden: true, ...template.customFields }
+          customer.customComponents[humanReadableName] = {
+            hidden: true,
+            ...template.customFields,
+          };
 
-        customer.customComponents[humanReadableName].hidden = action === CustomComponentAction.HIDE ? true : false;
-        customer.customComponents[humanReadableName] = { ...customer.customComponents[humanReadableName], ...pushedValues };
+        customer.customComponents[humanReadableName].hidden =
+          action === CustomComponentAction.HIDE ? true : false;
+        customer.customComponents[humanReadableName] = {
+          ...customer.customComponents[humanReadableName],
+          ...pushedValues,
+        };
 
-        const res = await this.customerModel.findByIdAndUpdate(
-          customer.id,
-          {
-            $set: { customComponents: { ...customer.customComponents } }
-          }
-        ).session(transactionSession).exec();
-        this.debug(`${JSON.stringify({ res: res })}`, this.handleCustomComponent.name, session);
-
-
+        const res = await this.customerModel
+          .findByIdAndUpdate(customer.id, {
+            $set: { customComponents: { ...customer.customComponents } },
+          })
+          .session(transactionSession)
+          .exec();
+        this.debug(
+          `${JSON.stringify({ res: res })}`,
+          this.handleCustomComponent.name,
+          session
+        );
       } catch (err) {
         this.error(err, this.handleCustomComponent.name, session);
       }
@@ -950,7 +975,7 @@ export class TransitionProcessor extends WorkerHost {
     session: string,
     queryRunner: QueryRunner,
     transactionSession: mongoose.mongo.ClientSession
-  ) { }
+  ) {}
 
   /**
    *
@@ -965,11 +990,11 @@ export class TransitionProcessor extends WorkerHost {
     session: string,
     queryRunner: QueryRunner,
     transactionSession: mongoose.mongo.ClientSession
-  ) { }
+  ) {}
 
   // TODO
-  async handleABTest(job: Job<any, any, string>) { }
-  async handleRandomCohortBranch(job: Job<any, any, string>) { }
+  async handleABTest(job: Job<any, any, string>) {}
+  async handleRandomCohortBranch(job: Job<any, any, string>) {}
 
   // @OnWorkerEvent('active')
   // onActive(job: Job<any, any, any>, prev: string) {

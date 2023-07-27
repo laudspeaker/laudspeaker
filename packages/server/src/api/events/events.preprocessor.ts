@@ -134,7 +134,7 @@ export class EventsPreProcessor extends WorkerHost {
 
     // Step 1: Find corresponding account
     try {
-      let customerFound: boolean = true;
+      let customerFound = true;
       let postHogEvent = new PosthogEvent();
       try {
         postHogEvent = {
