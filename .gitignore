@@ -169,3 +169,6 @@ cypress.env.json
 .env
 /data
 test-firebase-credentials.json
+
+# grabage
+.DS_Store

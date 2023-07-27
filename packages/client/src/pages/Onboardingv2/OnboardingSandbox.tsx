@@ -178,7 +178,7 @@ const OnboardingSandbox: FC<OnboardingSandboxProps> = ({
   const { state: trackerState, emitTrackerEvent } =
     useTracker("create_journey");
 
-  const currentStep = trackerState?.step as SandboxStep;
+  const currentStep = SandboxStep.MESSAGE_AND_STEP as SandboxStep; // trackerState?.step as SandboxStep | undefined;
 
   const flowBuilderState = useAppSelector((state) => state.flowBuilder);
   const dispatch = useAppDispatch();
@@ -457,7 +457,8 @@ const OnboardingSandbox: FC<OnboardingSandboxProps> = ({
     },
   };
 
-  const currentSandboxFixture = sanboxStepToFixtureMap[currentStep];
+  const currentSandboxFixture =
+    currentStep !== undefined ? sanboxStepToFixtureMap[currentStep] : undefined;
 
   useEffect(() => {
     dispatch(setIsOnboarding(true));
@@ -591,7 +592,11 @@ const OnboardingSandbox: FC<OnboardingSandboxProps> = ({
   };
 
   useEffect(() => {
-    if (!currentSandboxFixture.checkStepFinished()) return;
+    if (
+      !currentSandboxFixture?.checkStepFinished() ||
+      currentStep === undefined
+    )
+      return;
 
     if (currentStep === SandboxStep.FINISH) return;
 
@@ -600,7 +605,7 @@ const OnboardingSandbox: FC<OnboardingSandboxProps> = ({
 
   useEffect(() => {
     const selectedNode = flowBuilderState.nodes.find((node) => node.selected);
-    if (!selectedNode) return;
+    if (!selectedNode || currentStep === undefined) return;
 
     if (
       selectedNode.type === NodeType.MESSAGE &&
@@ -637,8 +642,8 @@ const OnboardingSandbox: FC<OnboardingSandboxProps> = ({
 
   return (
     <>
-      {currentSandboxFixture.header}
-      <div className="bg-[#F3F4F6] rounded-[25px] h-full overflow-hidden relative">
+      {currentSandboxFixture?.header}
+      <div className="bg-[#F3F4F6] rounded-[25px] h-full overflow-hidden flex relative">
         {currentStep === SandboxStep.FINISH && <Confetti />}
 
         <div className="py-[20px] pl-[20px]">
@@ -647,18 +652,21 @@ const OnboardingSandbox: FC<OnboardingSandboxProps> = ({
         <FlowEditor />
         <OnboardingSidePanel
           isSaveDisabled={
-            ![SandboxStep.SAVE_SETTINGS, SandboxStep.SAVE_TRIGGER].includes(
-              currentStep
-            )
+            currentStep
+              ? ![SandboxStep.SAVE_SETTINGS, SandboxStep.SAVE_TRIGGER].includes(
+                  currentStep
+                )
+              : true
           }
           onSaveClick={() => {
-            if (currentStep === SandboxStep.FINISH) return;
+            if (currentStep === SandboxStep.FINISH || currentStep === undefined)
+              return;
 
             emitTrackerEvent(stepToTrackerEventMap[currentStep]);
           }}
         />
 
-        {currentSandboxFixture.cursor && (
+        {currentSandboxFixture?.cursor && (
           <div
             className="fixed"
             style={{
@@ -669,7 +677,7 @@ const OnboardingSandbox: FC<OnboardingSandboxProps> = ({
             <img src={onboardingCursorImage} />
           </div>
         )}
-        {currentSandboxFixture.tooltip && (
+        {currentSandboxFixture?.tooltip && (
           <div
             className="absolute"
             style={{
@@ -680,21 +688,23 @@ const OnboardingSandbox: FC<OnboardingSandboxProps> = ({
             {currentSandboxFixture.tooltip.content}
           </div>
         )}
-        {currentSandboxFixture.dialog && trackerState?.show && (
-          <OnboardingDialog
-            onNextClick={() => {
-              if (currentStep === SandboxStep.FINISH) {
-                onSandboxComplete();
-                return;
-              }
+        {currentSandboxFixture?.dialog &&
+          trackerState?.show &&
+          currentStep !== undefined && (
+            <OnboardingDialog
+              onNextClick={() => {
+                if (currentStep === SandboxStep.FINISH) {
+                  onSandboxComplete();
+                  return;
+                }
 
-              emitTrackerEvent(stepToTrackerEventMap[currentStep]);
-            }}
-            position={currentSandboxFixture.dialog.position}
-          >
-            {currentSandboxFixture.dialog.content}
-          </OnboardingDialog>
-        )}
+                emitTrackerEvent(stepToTrackerEventMap[currentStep]);
+              }}
+              position={currentSandboxFixture.dialog.position}
+            >
+              {currentSandboxFixture.dialog.content}
+            </OnboardingDialog>
+          )}
       </div>
     </>
   );

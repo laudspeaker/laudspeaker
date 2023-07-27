@@ -71,7 +71,7 @@ const Onboardingv2 = () => {
 
   return currentStep !== undefined ? (
     <div
-      className={`min-h-screen flex flex-col gap-[20px] p-[20px] font-inter text-[16px] font-normal text-[#111827] leading-[24px] ${
+      className={`min-h-screen h-screen flex flex-col gap-[20px] p-[20px] font-inter text-[16px] font-normal text-[#111827] leading-[24px] ${
         currentStep === OnboardingStep.SELECT_CUSTOMERS
           ? "bg-[#F9FAFB]"
           : "bg-white"
