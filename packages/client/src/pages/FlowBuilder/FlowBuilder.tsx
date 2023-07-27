@@ -1031,25 +1031,6 @@ const Flow = () => {
         className="h-[calc(100vh-64px)] flex w-full relative"
         id="flow-builder"
       >
-        <Helmet>
-          <script>
-            {`
-            (function (d, t) {
-              var BASE_URL = "https://app.chatwoot.com";
-              var g = d.createElement(t), s = d.getElementsByTagName(t)[0];
-              g.src = BASE_URL + "/packs/js/sdk.js";
-              g.defer = true;
-              g.async = true;
-              s.parentNode.insertBefore(g, s);
-              g.onload = function () {
-                window.chatwootSDK.run({
-                  websiteToken: 'SzjbgmVdjTexxW1nEFLHHBGM',
-                  baseUrl: BASE_URL
-                })
-              }
-            })(document, "script");`}
-          </script>
-        </Helmet>
         <div className="max-h-[calc(100vh-64px)] h-full lg:overflow-y-auto overflow-y-scroll overflow-x-hidden">
           <div className="flex flex-col">
             <SideDrawer

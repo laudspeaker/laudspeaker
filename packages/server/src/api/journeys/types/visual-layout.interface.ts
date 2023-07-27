@@ -21,6 +21,8 @@ export enum NodeType {
   TIME_DELAY = 'timeDelay',
   TIME_WINDOW = 'timeWindow',
   USER_ATTRIBUTE = 'userAttribute',
+  INSERT_NODE = 'insertNode',
+  TRACKER = 'tracker',
 }
 
 export enum MessageType {
