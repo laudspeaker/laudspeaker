@@ -33,10 +33,9 @@ export class WebsocketGateway implements OnGatewayConnection {
     private customersService: CustomersService,
     @Inject(forwardRef(() => EventsService))
     private eventsService: EventsService
-  ) {}
+  ) { }
 
   public async handleConnection(socket: Socket) {
-    console.log(socket.id);
     try {
       const { apiKey, customerId } = socket.handshake.auth;
 
@@ -55,6 +54,7 @@ export class WebsocketGateway implements OnGatewayConnection {
         id?: string;
         isAnonymous?: boolean;
         isFreezed?: boolean;
+        customComponents?: any;
       };
 
       if (customerId && isValidObjectId(customerId)) {
@@ -87,6 +87,17 @@ export class WebsocketGateway implements OnGatewayConnection {
       socket.data.customerId = customer.id;
       socket.emit('customerId', customer.id);
       socket.emit('log', 'Connected');
+      if (customer.customComponents) {
+        for (const [key, value] of Object.entries(customer.customComponents)) {
+          const show = !customer.customComponents[key].hidden;
+          delete customer.customComponents[key].hidden;
+          socket.emit('custom', {
+            show,
+            trackerId: key,
+            ...customer.customComponents[key]
+          })
+        }
+      }
 
       await this.accountsService.accountsRepository.save({
         id: account.id,
@@ -201,7 +212,7 @@ export class WebsocketGateway implements OnGatewayConnection {
         socket.emit('customerId', customer.id);
       }
 
-      const workflowTick = await this.eventsService.customPayload(
+      await this.eventsService.customPayload(
         socket.data.account,
         {
           correlationKey: '_id',
@@ -214,7 +225,54 @@ export class WebsocketGateway implements OnGatewayConnection {
       );
 
       socket.emit('log', 'Successful fire');
-      socket.emit('workflowTick', workflowTick);
+    } catch (e) {
+      socket.emit('error', e);
+    }
+  }
+
+  @SubscribeMessage('custom')
+  public async handleCustom(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody()
+    event: { [key: string]: unknown }
+  ) {
+    try {
+      const {
+        account: { id: ownerId, apiKey },
+        customerId,
+      } = socket.data as SocketData;
+
+      let customer = await this.customersService.CustomerModel.findOne({
+        _id: customerId,
+        ownerId,
+      });
+
+      if (!customer || customer.isFreezed) {
+        socket.emit(
+          'error',
+          'Invalid customer id. Creating new anonymous customer...'
+        );
+        customer = await this.customersService.CustomerModel.create({
+          isAnonymous: true,
+          ownerId,
+        });
+
+        socket.data.customerId = customer.id;
+        socket.emit('customerId', customer.id);
+      }
+      await this.eventsService.customPayload(
+        socket.data.account,
+        {
+          correlationKey: '_id',
+          correlationValue: customer.id,
+          source: 'tracker',
+          event: event.event,
+          payload: {trackerId: event.trackerId}
+        },
+        socket.data.session
+      );
+
+      // socket.emit('log', 'Successful fire');
     } catch (e) {
       socket.emit('error', e);
     }
@@ -228,6 +286,28 @@ export class WebsocketGateway implements OnGatewayConnection {
     for (const socket of sockets) {
       if (socket.data.customerId === customerId) {
         socket.emit('modal', template.modalState);
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  public async sendCustomComponentState(
+    customerID: string,
+    trackerID: string,
+    data: Record<string, any>
+  ): Promise<boolean> {
+    const show = !data.hidden;
+    delete data.hidden;
+    const sockets = await this.server.fetchSockets();
+    for (const socket of sockets) {
+      if (socket.data.customerId === customerID) {
+        socket.emit('custom', {
+          show,
+          trackerId: trackerID,
+          ...data
+        });
         return true;
       }
     }

@@ -327,6 +327,14 @@ export class TransitionProcessor extends WorkerHost {
           this.handleCustomComponent.name,
           session
         );
+
+        const isSent = await this.websocketGateway.sendCustomComponentState(
+          customer.id,
+          humanReadableName,
+          customer.customComponents[humanReadableName]
+        );
+        if (!isSent)
+          this.debug(JSON.stringify({ warning: "Socket not connected..." }), this.handleCustomComponent.name, session, owner.email)
       } catch (err) {
         this.error(err, this.handleCustomComponent.name, session);
       }
@@ -975,7 +983,7 @@ export class TransitionProcessor extends WorkerHost {
     session: string,
     queryRunner: QueryRunner,
     transactionSession: mongoose.mongo.ClientSession
-  ) {}
+  ) { }
 
   /**
    *
@@ -990,11 +998,45 @@ export class TransitionProcessor extends WorkerHost {
     session: string,
     queryRunner: QueryRunner,
     transactionSession: mongoose.mongo.ClientSession
-  ) {}
+  ) {
+    const owner = await queryRunner.manager.findOne(Account, {
+      where: { id: ownerID },
+    });
+    const currentStep = await queryRunner.manager.findOne(Step, {
+      where: {
+        id: stepID,
+        type: StepType.LOOP,
+      },
+      lock: { mode: 'pessimistic_write' },
+    });
+    const nextStep = await queryRunner.manager.findOne(Step, {
+      where: {
+        id: currentStep.metadata.destination,
+      },
+      lock: { mode: 'pessimistic_write' },
+    });
+
+    for (let i = 0; i < currentStep.customers.length; i++) {
+      nextStep.customers.push(
+        JSON.stringify({
+          customerID: JSON.parse(currentStep.customers[i]).customerID,
+          timestamp: new Date(),
+        })
+      );
+    }
+    currentStep.customers = [];
+    await queryRunner.manager.save(currentStep);
+    const newNext = await queryRunner.manager.save(nextStep);
+    await this.transitionQueue.add(newNext.type, {
+      ownerID,
+      step: newNext,
+      session: session,
+    });
+  }
 
   // TODO
-  async handleABTest(job: Job<any, any, string>) {}
-  async handleRandomCohortBranch(job: Job<any, any, string>) {}
+  async handleABTest(job: Job<any, any, string>) { }
+  async handleRandomCohortBranch(job: Job<any, any, string>) { }
 
   // @OnWorkerEvent('active')
   // onActive(job: Job<any, any, any>, prev: string) {
