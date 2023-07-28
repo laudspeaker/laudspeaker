@@ -141,7 +141,6 @@ const formatMongoConnectionString = (mongoConnectionString: string) => {
         ]
       : []),
     MongooseModule.forRoot(
-      // process.env.MONGOOSE_URL
       formatMongoConnectionString(process.env.MONGOOSE_URL)
     ),
     BullModule.forRoot({
