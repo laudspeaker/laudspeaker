@@ -1,6 +1,7 @@
+import { useTracker } from "@laudspeaker/react";
 import React, { ReactNode, useEffect, useRef, useState } from "react";
 import { useInterval } from "react-use";
-import OnboardingSandbox from "./OnboardingSandbox";
+import OnboardingSandbox, { SandboxStep } from "./OnboardingSandbox";
 import SelectCustomers from "./SelectCustomers";
 import StartJourney from "./StartJourney";
 import OnboardingStepper from "./Stepper/OnboardingStepper";
@@ -9,22 +10,29 @@ import segmentCustomersImage from "./svg/segment-customers.svg";
 import trackMetricsImage from "./svg/track-metrics.svg";
 import TrackPerformance from "./TrackPerformance";
 
-export enum OnboardingStep {
+export enum OnboardingPage {
   CREATE_JOURNEY,
   SELECT_CUSTOMERS,
   START_JOURNEY,
   TRACK_PERFORMANCE,
 }
 
-export const onboardingStepToNameMap: Record<OnboardingStep, string> = {
-  [OnboardingStep.CREATE_JOURNEY]: "Create a journey",
-  [OnboardingStep.SELECT_CUSTOMERS]: "Select Customers",
-  [OnboardingStep.START_JOURNEY]: "Start the Journey",
-  [OnboardingStep.TRACK_PERFORMANCE]: "Track performance",
+export const onboardingStepToNameMap: Record<OnboardingPage, string> = {
+  [OnboardingPage.CREATE_JOURNEY]: "Create a journey",
+  [OnboardingPage.SELECT_CUSTOMERS]: "Select Customers",
+  [OnboardingPage.START_JOURNEY]: "Start the Journey",
+  [OnboardingPage.TRACK_PERFORMANCE]: "Track performance",
 };
 
 const Onboardingv2 = () => {
-  const [currentStep, setCurrentStep] = useState<OnboardingStep>();
+  const { state: trackerState, emitTrackerEvent } = useTracker<{
+    step: SandboxStep;
+    page: OnboardingPage;
+  }>("tracker_id");
+
+  const currentPage = trackerState?.page;
+  const currentStep = trackerState?.step;
+
   const [renderFirstStep, setRenderFirstStep] = useState(false);
   const [showScrollButton, setShowScrollButton] = useState(false);
 
@@ -33,12 +41,12 @@ const Onboardingv2 = () => {
   useEffect(() => {
     if (!renderFirstStep) return;
 
-    setCurrentStep(OnboardingStep.CREATE_JOURNEY);
+    emitTrackerEvent("show-first-page");
     setRenderFirstStep(false);
   }, [renderFirstStep]);
 
   useInterval(() => {
-    if (!buttonRef.current || currentStep !== undefined) return;
+    if (!buttonRef.current || currentPage !== undefined) return;
 
     setShowScrollButton(
       buttonRef.current.offsetTop +
@@ -48,31 +56,31 @@ const Onboardingv2 = () => {
     );
   }, 100);
 
-  const stepComponentMap: Record<OnboardingStep, ReactNode> = {
-    [OnboardingStep.CREATE_JOURNEY]: (
+  const stepComponentMap: Record<OnboardingPage, ReactNode> = {
+    [OnboardingPage.CREATE_JOURNEY]: (
       <OnboardingSandbox
-        onSandboxComplete={() =>
-          setCurrentStep(OnboardingStep.SELECT_CUSTOMERS)
-        }
+        onSandboxComplete={() => emitTrackerEvent("show-customers-page")}
+        currentStep={currentStep}
+        emitTrackerEvent={emitTrackerEvent}
       />
     ),
-    [OnboardingStep.SELECT_CUSTOMERS]: (
+    [OnboardingPage.SELECT_CUSTOMERS]: (
       <SelectCustomers
-        onSendEmailClick={() => setCurrentStep(OnboardingStep.START_JOURNEY)}
+        onSendEmailClick={() => emitTrackerEvent("show-start-journey-page")}
       />
     ),
-    [OnboardingStep.START_JOURNEY]: (
+    [OnboardingPage.START_JOURNEY]: (
       <StartJourney
-        onStartClick={() => setCurrentStep(OnboardingStep.TRACK_PERFORMANCE)}
+        onStartClick={() => emitTrackerEvent("show-track-performance-page")}
       />
     ),
-    [OnboardingStep.TRACK_PERFORMANCE]: <TrackPerformance />,
+    [OnboardingPage.TRACK_PERFORMANCE]: <TrackPerformance />,
   };
 
-  return currentStep !== undefined ? (
+  return currentPage !== undefined && !renderFirstStep ? (
     <div
       className={`min-h-screen h-screen flex flex-col gap-[20px] p-[20px] font-inter text-[16px] font-normal text-[#111827] leading-[24px] ${
-        currentStep === OnboardingStep.SELECT_CUSTOMERS
+        currentPage === OnboardingPage.SELECT_CUSTOMERS
           ? "bg-[#F9FAFB]"
           : "bg-white"
       }`}
@@ -80,28 +88,28 @@ const Onboardingv2 = () => {
       <div className="flex justify-between px-[20px] pt-[20px]">
         <button
           className={`underline text-black font-inter font-normal text-[16px] leading-[24px] ${
-            currentStep === OnboardingStep.TRACK_PERFORMANCE
+            currentPage === OnboardingPage.TRACK_PERFORMANCE
               ? "opacity-0 pointer-events-none"
               : ""
           }`}
           onClick={
-            currentStep === OnboardingStep.CREATE_JOURNEY
+            currentPage === OnboardingPage.CREATE_JOURNEY
               ? () => {
-                  setCurrentStep(undefined);
+                  emitTrackerEvent("reset");
                   setRenderFirstStep(true);
                 }
               : () =>
-                  setCurrentStep(
-                    currentStep === OnboardingStep.SELECT_CUSTOMERS
-                      ? OnboardingStep.CREATE_JOURNEY
-                      : OnboardingStep.SELECT_CUSTOMERS
+                  emitTrackerEvent(
+                    currentPage === OnboardingPage.SELECT_CUSTOMERS
+                      ? "show-create-journey-page"
+                      : "show-customers-page"
                   )
           }
         >
-          {currentStep === OnboardingStep.CREATE_JOURNEY ? "Reset" : "Back"}
+          {currentPage === OnboardingPage.CREATE_JOURNEY ? "Reset" : "Back"}
         </button>
 
-        <OnboardingStepper currentStep={currentStep} />
+        <OnboardingStepper currentStep={currentPage} />
 
         <button onClick={() => window.history.back()}>
           <svg
@@ -122,7 +130,7 @@ const Onboardingv2 = () => {
         </button>
       </div>
 
-      {stepComponentMap[currentStep]}
+      {stepComponentMap[currentPage]}
     </div>
   ) : (
     <div className="bg-white w-full min-h-screen p-[60px] flex justify-center text-justify">
@@ -200,7 +208,9 @@ const Onboardingv2 = () => {
         <div className="mt-[40px] flex items-center justify-center">
           <button
             className="px-[30px] py-[10px] rounded-[30px] bg-[#6366F1] flex items-center justify-center text-white"
-            onClick={() => setCurrentStep(OnboardingStep.CREATE_JOURNEY)}
+            onClick={() => {
+              emitTrackerEvent("onboarding-start");
+            }}
             ref={buttonRef}
           >
             Let's start

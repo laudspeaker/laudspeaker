@@ -334,7 +334,12 @@ export class TransitionProcessor extends WorkerHost {
           customer.customComponents[humanReadableName]
         );
         if (!isSent)
-          this.debug(JSON.stringify({ warning: "Socket not connected..." }), this.handleCustomComponent.name, session, owner.email)
+          this.debug(
+            JSON.stringify({ warning: 'Socket not connected...' }),
+            this.handleCustomComponent.name,
+            session,
+            owner.email
+          );
       } catch (err) {
         this.error(err, this.handleCustomComponent.name, session);
       }
@@ -983,7 +988,7 @@ export class TransitionProcessor extends WorkerHost {
     session: string,
     queryRunner: QueryRunner,
     transactionSession: mongoose.mongo.ClientSession
-  ) { }
+  ) {}
 
   /**
    *
@@ -1035,8 +1040,8 @@ export class TransitionProcessor extends WorkerHost {
   }
 
   // TODO
-  async handleABTest(job: Job<any, any, string>) { }
-  async handleRandomCohortBranch(job: Job<any, any, string>) { }
+  async handleABTest(job: Job<any, any, string>) {}
+  async handleRandomCohortBranch(job: Job<any, any, string>) {}
 
   // @OnWorkerEvent('active')
   // onActive(job: Job<any, any, any>, prev: string) {

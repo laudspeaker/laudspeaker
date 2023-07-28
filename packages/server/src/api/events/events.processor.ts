@@ -157,10 +157,13 @@ export class EventsProcessor extends WorkerHost {
             // Special posthog handling: Skip over invalid posthog events
             const analyticsEvent =
               steps[stepIndex].metadata.branches[branchIndex].events[
-              eventIndex
+                eventIndex
               ];
             if (job.data.event.source === AnalyticsProviderTypes.TRACKER) {
-              eventEvaluation.push((job.data.event.event === analyticsEvent.event) && (job.data.event.payload.trackerId == analyticsEvent.trackerID))
+              eventEvaluation.push(
+                job.data.event.event === analyticsEvent.event &&
+                  job.data.event.payload.trackerId == analyticsEvent.trackerID
+              );
               continue event_loop;
             }
             if (
@@ -255,28 +258,28 @@ export class EventsProcessor extends WorkerHost {
                     comparisonType
                   )
                     ? this.audiencesHelper.operableCompare(
-                      job.data.event?.payload?.context?.page?.url,
-                      comparisonType
-                    )
+                        job.data.event?.payload?.context?.page?.url,
+                        comparisonType
+                      )
                     : await this.audiencesHelper.conditionalCompare(
-                      job.data.event?.payload?.context?.page?.url,
-                      value,
-                      comparisonType
-                    );
+                        job.data.event?.payload?.context?.page?.url,
+                        value,
+                        comparisonType
+                      );
                   conditionEvalutation.push(matches);
                 } else {
                   const matches = ['exists', 'doesNotExist'].includes(
                     comparisonType
                   )
                     ? this.audiencesHelper.operableCompare(
-                      job.data.event?.payload?.[key],
-                      comparisonType
-                    )
+                        job.data.event?.payload?.[key],
+                        comparisonType
+                      )
                     : await this.audiencesHelper.conditionalCompare(
-                      job.data.event?.payload?.[key],
-                      value,
-                      comparisonType
-                    );
+                        job.data.event?.payload?.[key],
+                        value,
+                        comparisonType
+                      );
                   this.warn(
                     `${JSON.stringify({
                       checkMatchResult: matches,

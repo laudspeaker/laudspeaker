@@ -33,7 +33,7 @@ export class WebsocketGateway implements OnGatewayConnection {
     private customersService: CustomersService,
     @Inject(forwardRef(() => EventsService))
     private eventsService: EventsService
-  ) { }
+  ) {}
 
   public async handleConnection(socket: Socket) {
     try {
@@ -94,8 +94,8 @@ export class WebsocketGateway implements OnGatewayConnection {
           socket.emit('custom', {
             show,
             trackerId: key,
-            ...customer.customComponents[key]
-          })
+            ...customer.customComponents[key],
+          });
         }
       }
 
@@ -267,7 +267,7 @@ export class WebsocketGateway implements OnGatewayConnection {
           correlationValue: customer.id,
           source: 'tracker',
           event: event.event,
-          payload: {trackerId: event.trackerId}
+          payload: { trackerId: event.trackerId },
         },
         socket.data.session
       );
@@ -306,7 +306,7 @@ export class WebsocketGateway implements OnGatewayConnection {
         socket.emit('custom', {
           show,
           trackerId: trackerID,
-          ...data
+          ...data,
         });
         return true;
       }

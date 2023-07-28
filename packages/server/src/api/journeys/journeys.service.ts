@@ -102,7 +102,7 @@ export class JourneysService {
     @Inject(forwardRef(() => CustomersService))
     private customersService: CustomersService,
     @InjectConnection() private readonly connection: mongoose.Connection
-  ) { }
+  ) {}
 
   log(message, method, session, user = 'ANONYMOUS') {
     this.logger.log(
@@ -536,8 +536,8 @@ export class JourneysService {
               ...(key === 'isActive'
                 ? { isStopped: false, isPaused: false }
                 : key === 'isPaused'
-                  ? { isStopped: false }
-                  : {}),
+                ? { isStopped: false }
+                : {}),
             });
         }
       } else {
@@ -979,7 +979,12 @@ export class JourneysService {
         throw new Error('Journey is no longer editable.');
 
       const { nodes, edges } = updateJourneyDto;
-      this.debug(JSON.stringify({ nodes, edges }), this.updateLayout.name, session, account.email)
+      this.debug(
+        JSON.stringify({ nodes, edges }),
+        this.updateLayout.name,
+        session,
+        account.email
+      );
       for (let i = 0; i < nodes.length; i++) {
         const step = await queryRunner.manager.findOne(Step, {
           where: {
@@ -1104,12 +1109,20 @@ export class JourneysService {
                   eventsIndex++
                 ) {
                   let event;
-                  if (relevantEdges[i].data['branch'].conditions[eventsIndex].providerType === ProviderType.Tracker) {
+                  if (
+                    relevantEdges[i].data['branch'].conditions[eventsIndex]
+                      .providerType === ProviderType.Tracker
+                  ) {
                     event = new ComponentEvent();
-                    event.event = relevantEdges[i].data['branch'].conditions[eventsIndex].event
-                    event.trackerID = relevantEdges[i].data['branch'].conditions[eventsIndex].trackerId
-                  }
-                  else {
+                    event.event =
+                      relevantEdges[i].data['branch'].conditions[
+                        eventsIndex
+                      ].event;
+                    event.trackerID =
+                      relevantEdges[i].data['branch'].conditions[
+                        eventsIndex
+                      ].trackerId;
+                  } else {
                     event = new AnalyticsEvent();
                     event.conditions = [];
                     event.event =

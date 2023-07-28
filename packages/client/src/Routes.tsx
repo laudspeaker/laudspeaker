@@ -668,7 +668,7 @@ const RouteComponent: React.FC = () => {
           element={
             <Protected>
               <VerificationProtected>
-                <LaudspeakerProvider apiKey="" apiHost="">
+                <LaudspeakerProvider apiKey="" apiHost="http://localhost:3001">
                   <Onboardingv2 />
                 </LaudspeakerProvider>
               </VerificationProtected>

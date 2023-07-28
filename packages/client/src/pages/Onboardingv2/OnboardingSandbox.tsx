@@ -170,16 +170,15 @@ const drawerFixtures: FlowBuilderDrawerFixture[] = [
 
 interface OnboardingSandboxProps {
   onSandboxComplete: () => void;
+  currentStep?: SandboxStep | undefined;
+  emitTrackerEvent: (event: string) => void;
 }
 
 const OnboardingSandbox: FC<OnboardingSandboxProps> = ({
   onSandboxComplete,
+  currentStep,
+  emitTrackerEvent,
 }) => {
-  const { state: trackerState, emitTrackerEvent } =
-    useTracker("create_journey");
-
-  const currentStep = SandboxStep.MESSAGE_AND_STEP as SandboxStep; // trackerState?.step as SandboxStep | undefined;
-
   const flowBuilderState = useAppSelector((state) => state.flowBuilder);
   const dispatch = useAppDispatch();
 
@@ -578,6 +577,7 @@ const OnboardingSandbox: FC<OnboardingSandboxProps> = ({
     };
   }, []);
 
+  // add step events here
   const stepToTrackerEventMap: Record<SandboxStep, string> = {
     [SandboxStep.MESSAGE_AND_STEP]: "",
     [SandboxStep.DRAG_EMAIL]: "",
@@ -688,23 +688,21 @@ const OnboardingSandbox: FC<OnboardingSandboxProps> = ({
             {currentSandboxFixture.tooltip.content}
           </div>
         )}
-        {currentSandboxFixture?.dialog &&
-          trackerState?.show &&
-          currentStep !== undefined && (
-            <OnboardingDialog
-              onNextClick={() => {
-                if (currentStep === SandboxStep.FINISH) {
-                  onSandboxComplete();
-                  return;
-                }
+        {currentSandboxFixture?.dialog && currentStep !== undefined && (
+          <OnboardingDialog
+            onNextClick={() => {
+              if (currentStep === SandboxStep.FINISH) {
+                onSandboxComplete();
+                return;
+              }
 
-                emitTrackerEvent(stepToTrackerEventMap[currentStep]);
-              }}
-              position={currentSandboxFixture.dialog.position}
-            >
-              {currentSandboxFixture.dialog.content}
-            </OnboardingDialog>
-          )}
+              emitTrackerEvent(stepToTrackerEventMap[currentStep]);
+            }}
+            position={currentSandboxFixture.dialog.position}
+          >
+            {currentSandboxFixture.dialog.content}
+          </OnboardingDialog>
+        )}
       </div>
     </>
   );
