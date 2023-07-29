@@ -38,16 +38,6 @@
 
 Run yourself (instructions below) or use [Laudspeaker Cloud](https://app.laudspeaker.com/login/?ref=github) . Docs are [here](https://laudspeaker.com/docs/guides/overview/intro/?ref=github)
 
-### Deploy Laudspeaker on Render.com
-
-If you want a one-click render option **READ THIS** <a href="https://laudspeaker.com/docs/guides/deploy/options/?ref=github">**DOC**</a> and try it out here:
-
-NB: Create environment group with name "laudspeaker"
-
-<a href="https://render.com/deploy?repo=https://github.com/laudspeaker/laudspeaker/tree/production">
-<img src="https://render.com/images/deploy-to-render-button.svg" alt="Deploy to Render">
-</a>
-
 ### Want help deploying?
 
 <a href="https://cal.com/laudspeaker-mahamad/20min-set-up" target="_blank"><img src="https://user-images.githubusercontent.com/7728266/226135023-e484e408-4434-4282-ae66-5c224fb65e20.png" /> </a>
