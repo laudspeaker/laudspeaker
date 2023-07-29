@@ -16,7 +16,8 @@
   
 </p>
 
-## Laudspeaker - Open source omni-channel customer messaging. Alternative to Braze / Iterable / One Signal / Customer Io
+
+## Laudspeaker - Open Source User Onboarding and omni-channel customer messaging Platform. Alternative to Braze / Appcues/ Iterable / One Signal / Customer Io / Pendo
 
 <img width="1708" alt="UI2" src="https://github.com/laudspeaker/laudspeaker/assets/7728266/4c3c2917-6899-48f7-bcbe-a4bd92049c24">
 
