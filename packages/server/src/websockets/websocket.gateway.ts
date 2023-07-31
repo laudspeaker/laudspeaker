@@ -260,6 +260,17 @@ export class WebsocketGateway implements OnGatewayConnection {
         socket.data.customerId = customer.id;
         socket.emit('customerId', customer.id);
       }
+
+      // TODO: remove after debug
+      console.log('before job queue');
+      console.log({
+        correlationKey: '_id',
+        correlationValue: customer.id,
+        source: 'tracker',
+        event: event.event,
+        payload: { trackerId: event.trackerId },
+      });
+
       await this.eventsService.customPayload(
         socket.data.account,
         {

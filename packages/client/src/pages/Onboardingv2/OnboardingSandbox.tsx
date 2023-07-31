@@ -579,15 +579,15 @@ const OnboardingSandbox: FC<OnboardingSandboxProps> = ({
 
   // add step events here
   const stepToTrackerEventMap: Record<SandboxStep, string> = {
-    [SandboxStep.MESSAGE_AND_STEP]: "",
-    [SandboxStep.DRAG_EMAIL]: "",
-    [SandboxStep.SETTING_PANEL]: "",
-    [SandboxStep.SELECT_TEMPLATE]: "",
-    [SandboxStep.SAVE_SETTINGS]: "",
-    [SandboxStep.TRIGGER]: "",
-    [SandboxStep.MODIFY_TRIGGER]: "",
-    [SandboxStep.CHANGE_TIME]: "",
-    [SandboxStep.SAVE_TRIGGER]: "",
+    [SandboxStep.MESSAGE_AND_STEP]: "proceed-to-drag-email-step",
+    [SandboxStep.DRAG_EMAIL]: "proceed-to-setting-panel-step",
+    [SandboxStep.SETTING_PANEL]: "proceed-to-select-template-step",
+    [SandboxStep.SELECT_TEMPLATE]: "proceed-to-save-settings-step",
+    [SandboxStep.SAVE_SETTINGS]: "proceed-to-trigger-step",
+    [SandboxStep.TRIGGER]: "proceed-to-modify-trigger-step",
+    [SandboxStep.MODIFY_TRIGGER]: "proceed-to-change-time-step",
+    [SandboxStep.CHANGE_TIME]: "proceed-to-save-trigger-step",
+    [SandboxStep.SAVE_TRIGGER]: "proceed-to-finish-step",
     [SandboxStep.FINISH]: "",
   };
 

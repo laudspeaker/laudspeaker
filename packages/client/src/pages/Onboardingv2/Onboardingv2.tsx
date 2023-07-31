@@ -1,5 +1,11 @@
-import { useTracker } from "@laudspeaker/react";
-import React, { ReactNode, useEffect, useRef, useState } from "react";
+import { useLaudspeaker, useTracker } from "@laudspeaker/react";
+import React, {
+  ReactNode,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import { useInterval } from "react-use";
 import OnboardingSandbox, { SandboxStep } from "./OnboardingSandbox";
 import SelectCustomers from "./SelectCustomers";
@@ -9,8 +15,10 @@ import buildJourneysImage from "./svg/build-journeys.svg";
 import segmentCustomersImage from "./svg/segment-customers.svg";
 import trackMetricsImage from "./svg/track-metrics.svg";
 import TrackPerformance from "./TrackPerformance";
+import { useAppSelector } from "store/hooks";
 
 export enum OnboardingPage {
+  MAIN_PAGE,
   CREATE_JOURNEY,
   SELECT_CUSTOMERS,
   START_JOURNEY,
@@ -18,6 +26,7 @@ export enum OnboardingPage {
 }
 
 export const onboardingStepToNameMap: Record<OnboardingPage, string> = {
+  [OnboardingPage.MAIN_PAGE]: "",
   [OnboardingPage.CREATE_JOURNEY]: "Create a journey",
   [OnboardingPage.SELECT_CUSTOMERS]: "Select Customers",
   [OnboardingPage.START_JOURNEY]: "Start the Journey",
@@ -28,10 +37,16 @@ const Onboardingv2 = () => {
   const { state: trackerState, emitTrackerEvent } = useTracker<{
     step: SandboxStep;
     page: OnboardingPage;
-  }>("tracker_id");
+  }>("innate-destruction-9267");
 
-  const currentPage = trackerState?.page;
-  const currentStep = trackerState?.step;
+  const currentPage =
+    trackerState === undefined
+      ? undefined
+      : (Number(trackerState.page) as OnboardingPage);
+  const currentStep =
+    trackerState === undefined
+      ? undefined
+      : (Number(trackerState.step) as SandboxStep);
 
   const [renderFirstStep, setRenderFirstStep] = useState(false);
   const [showScrollButton, setShowScrollButton] = useState(false);
@@ -46,7 +61,7 @@ const Onboardingv2 = () => {
   }, [renderFirstStep]);
 
   useInterval(() => {
-    if (!buttonRef.current || currentPage !== undefined) return;
+    if (!buttonRef.current || currentPage !== OnboardingPage.MAIN_PAGE) return;
 
     setShowScrollButton(
       buttonRef.current.offsetTop +
@@ -56,7 +71,10 @@ const Onboardingv2 = () => {
     );
   }, 100);
 
-  const stepComponentMap: Record<OnboardingPage, ReactNode> = {
+  const stepComponentMap: Record<
+    Exclude<OnboardingPage, OnboardingPage.MAIN_PAGE>,
+    ReactNode
+  > = {
     [OnboardingPage.CREATE_JOURNEY]: (
       <OnboardingSandbox
         onSandboxComplete={() => emitTrackerEvent("show-customers-page")}
@@ -77,7 +95,9 @@ const Onboardingv2 = () => {
     [OnboardingPage.TRACK_PERFORMANCE]: <TrackPerformance />,
   };
 
-  return currentPage !== undefined && !renderFirstStep ? (
+  return currentPage !== undefined &&
+    currentPage !== OnboardingPage.MAIN_PAGE &&
+    !renderFirstStep ? (
     <div
       className={`min-h-screen h-screen flex flex-col gap-[20px] p-[20px] font-inter text-[16px] font-normal text-[#111827] leading-[24px] ${
         currentPage === OnboardingPage.SELECT_CUSTOMERS

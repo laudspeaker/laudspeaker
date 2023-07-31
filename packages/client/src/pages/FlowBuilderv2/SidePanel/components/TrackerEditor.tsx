@@ -6,6 +6,8 @@ import { Node } from "reactflow";
 import ApiService from "services/api.service";
 import { useAppSelector } from "store/hooks";
 import Template from "types/Template";
+import getDistinct from "utils/getDistinct";
+import getNodesFromTreeAbove from "utils/getNodesFromTreeAbove";
 
 interface TrackerEditorProps {
   trackerId?: string;
@@ -20,7 +22,7 @@ const TrackerEditor: FC<TrackerEditorProps> = ({
   onTrackerChange,
   onEventChange,
 }) => {
-  const { nodes } = useAppSelector((state) => state.flowBuilder);
+  const { nodes, edges } = useAppSelector((state) => state.flowBuilder);
 
   const [possibleEvents, setPossibleEvents] = useState<string[]>([]);
 
@@ -46,12 +48,19 @@ const TrackerEditor: FC<TrackerEditorProps> = ({
     loadPossibleEvents();
   }, [chosenTracker]);
 
-  const filledTrackerNodes = nodes.filter(
-    (node) => node.data.type === NodeType.TRACKER && node.data.tracker
+  const selectedNode = nodes.find((node) => node.selected);
+
+  const filledTrackerNodes = (
+    selectedNode
+      ? getNodesFromTreeAbove(selectedNode, nodes, edges).filter(
+          (node) => node.data.type === NodeType.TRACKER && node.data.tracker
+        )
+      : []
   ) as Node<TrackerNodeData>[];
 
-  const possibleTrackers = filledTrackerNodes.map(
-    (node) => node.data.tracker?.trackerId
+  const possibleTrackers = getDistinct(
+    filledTrackerNodes.map((node) => node.data.tracker?.trackerId),
+    (item) => item
   );
 
   return (

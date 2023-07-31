@@ -6,7 +6,7 @@ import stepperDividerImage from "./svg/stepper-divider.svg";
 import stepperDoneIcon from "./svg/stepper-done-icon.svg";
 
 interface OnboardingStepperProps {
-  currentStep: OnboardingPage;
+  currentStep: Exclude<OnboardingPage, OnboardingPage.MAIN_PAGE>;
 }
 
 const OnboardingStepper: FC<OnboardingStepperProps> = ({ currentStep }) => {

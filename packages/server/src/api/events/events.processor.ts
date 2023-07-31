@@ -160,6 +160,9 @@ export class EventsProcessor extends WorkerHost {
                 eventIndex
               ];
             if (job.data.event.source === AnalyticsProviderTypes.TRACKER) {
+              // TODO: remove after debug
+              console.log('inside event loop');
+              console.log(analyticsEvent, job.data.event);
               eventEvaluation.push(
                 job.data.event.event === analyticsEvent.event &&
                   job.data.event.payload.trackerId == analyticsEvent.trackerID
