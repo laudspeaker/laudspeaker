@@ -243,7 +243,7 @@ export class EventsService {
   }
 
   async customPayload(account: Account, eventDto: EventDto, session: string) {
-    await this.eventQueue.add(
+    await this.eventPreprocessorQueue.add(
       'laudspeaker',
       {
         account: account,

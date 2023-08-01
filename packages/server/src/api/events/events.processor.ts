@@ -154,21 +154,24 @@ export class EventsProcessor extends WorkerHost {
             steps[stepIndex].metadata.branches[branchIndex].events.length;
             eventIndex++
           ) {
-            // Special posthog handling: Skip over invalid posthog events
             const analyticsEvent =
               steps[stepIndex].metadata.branches[branchIndex].events[
                 eventIndex
               ];
             if (job.data.event.source === AnalyticsProviderTypes.TRACKER) {
-              // TODO: remove after debug
-              console.log('inside event loop');
-              console.log(analyticsEvent, job.data.event);
               eventEvaluation.push(
-                job.data.event.event === analyticsEvent.event &&
-                  job.data.event.payload.trackerId == analyticsEvent.trackerID
+                job.data.event.event ===
+                  steps[stepIndex].metadata.branches[branchIndex].events[
+                    eventIndex
+                  ].event &&
+                  job.data.event.payload.trackerId ==
+                    steps[stepIndex].metadata.branches[branchIndex].events[
+                      eventIndex
+                    ].trackerID
               );
               continue event_loop;
             }
+            // Special posthog handling: Skip over invalid posthog events
             if (
               job.data.event.source === AnalyticsProviderTypes.POSTHOG &&
               analyticsEvent.provider === AnalyticsProviderTypes.POSTHOG &&
