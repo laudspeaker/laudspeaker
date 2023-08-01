@@ -222,7 +222,7 @@ const WaitUntilSettings: FC<SidePanelComponentProps<WaitUntilNodeData>> = ({
         <Button
           type={ButtonType.SECONDARY}
           onClick={handleAddEventBranch}
-          disabled={isOnboarding || nodeData.branches.length > 9}
+          disabled={isOnboarding || nodeData.branches.length > 14}
         >
           Add branch
         </Button>

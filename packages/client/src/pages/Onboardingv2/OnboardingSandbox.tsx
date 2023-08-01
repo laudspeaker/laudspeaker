@@ -41,7 +41,6 @@ import OnboardingSidePanel from "./OnboardingSidePanel/OnboardingSidePanel";
 import OnboardingDialog from "./OnbordingDialog/OnboardingDialog";
 import createJourneyColorfulHeaderImage from "./svg/create-journey-colorful-header.svg";
 import onboardingCursorImage from "./svg/onboarding-cursor.svg";
-import { LaudspeakerProvider, useTracker } from "@laudspeaker/react";
 
 export enum OnboardingAction {
   NOTHING = "nothing",
@@ -181,6 +180,8 @@ const OnboardingSandbox: FC<OnboardingSandboxProps> = ({
 }) => {
   const flowBuilderState = useAppSelector((state) => state.flowBuilder);
   const dispatch = useAppDispatch();
+
+  const [lastSentEvent, setLastSentEvent] = useState<string>();
 
   const emptyLeftNode = flowBuilderState.nodes.find(
     (node) => node.id === "emptyLeft"
@@ -594,14 +595,19 @@ const OnboardingSandbox: FC<OnboardingSandboxProps> = ({
   useEffect(() => {
     if (
       !currentSandboxFixture?.checkStepFinished() ||
-      currentStep === undefined
+      currentStep === undefined ||
+      currentStep === SandboxStep.FINISH ||
+      stepToTrackerEventMap[currentStep] === lastSentEvent
     )
       return;
 
-    if (currentStep === SandboxStep.FINISH) return;
-
     emitTrackerEvent(stepToTrackerEventMap[currentStep]);
+    setLastSentEvent(stepToTrackerEventMap[currentStep]);
   }, [flowBuilderState]);
+
+  useEffect(() => {
+    emitTrackerEvent("reset");
+  }, []);
 
   useEffect(() => {
     const selectedNode = flowBuilderState.nodes.find((node) => node.selected);

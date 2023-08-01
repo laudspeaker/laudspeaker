@@ -37,7 +37,7 @@ const Onboardingv2 = () => {
   const { state: trackerState, emitTrackerEvent } = useTracker<{
     step: SandboxStep;
     page: OnboardingPage;
-  }>("innate-destruction-9267");
+  }>("ONBOARDING_TRACKER");
 
   const currentPage =
     trackerState === undefined
@@ -48,17 +48,9 @@ const Onboardingv2 = () => {
       ? undefined
       : (Number(trackerState.step) as SandboxStep);
 
-  const [renderFirstStep, setRenderFirstStep] = useState(false);
   const [showScrollButton, setShowScrollButton] = useState(false);
 
   const buttonRef = useRef<HTMLButtonElement>(null);
-
-  useEffect(() => {
-    if (!renderFirstStep) return;
-
-    emitTrackerEvent("show-first-page");
-    setRenderFirstStep(false);
-  }, [renderFirstStep]);
 
   useInterval(() => {
     if (!buttonRef.current || currentPage !== OnboardingPage.MAIN_PAGE) return;
@@ -92,12 +84,13 @@ const Onboardingv2 = () => {
         onStartClick={() => emitTrackerEvent("show-track-performance-page")}
       />
     ),
-    [OnboardingPage.TRACK_PERFORMANCE]: <TrackPerformance />,
+    [OnboardingPage.TRACK_PERFORMANCE]: (
+      <TrackPerformance onFinish={() => emitTrackerEvent("restart")} />
+    ),
   };
 
   return currentPage !== undefined &&
-    currentPage !== OnboardingPage.MAIN_PAGE &&
-    !renderFirstStep ? (
+    currentPage !== OnboardingPage.MAIN_PAGE ? (
     <div
       className={`min-h-screen h-screen flex flex-col gap-[20px] p-[20px] font-inter text-[16px] font-normal text-[#111827] leading-[24px] ${
         currentPage === OnboardingPage.SELECT_CUSTOMERS
@@ -116,7 +109,6 @@ const Onboardingv2 = () => {
             currentPage === OnboardingPage.CREATE_JOURNEY
               ? () => {
                   emitTrackerEvent("reset");
-                  setRenderFirstStep(true);
                 }
               : () =>
                   emitTrackerEvent(
@@ -131,7 +123,12 @@ const Onboardingv2 = () => {
 
         <OnboardingStepper currentStep={currentPage} />
 
-        <button onClick={() => window.history.back()}>
+        <button
+          onClick={() => {
+            emitTrackerEvent("restart");
+            window.history.back();
+          }}
+        >
           <svg
             width="28"
             height="28"

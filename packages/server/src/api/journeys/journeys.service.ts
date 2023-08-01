@@ -772,14 +772,21 @@ export class JourneysService {
       );
       for (let i = 0; i < steps.length; i++) {
         graph.setNode(steps[i].id);
-        if (steps[i].metadata?.branches && steps[i].type !== StepType.WAIT_UNTIL_BRANCH) {
+        if (
+          steps[i].metadata?.branches &&
+          steps[i].type !== StepType.WAIT_UNTIL_BRANCH
+        ) {
           for (let j = 0; j < steps[i].metadata.branches.length; j++) {
             graph.setEdge(
               steps[i].id,
               steps[i].metadata.branches[j].destination
             );
           }
-        } else if (steps[i].metadata?.destination && steps[i].type !== StepType.TIME_DELAY  && steps[i].type !== StepType.TIME_WINDOW) {
+        } else if (
+          steps[i].metadata?.destination &&
+          steps[i].type !== StepType.TIME_DELAY &&
+          steps[i].type !== StepType.TIME_WINDOW
+        ) {
           graph.setEdge(steps[i].id, steps[i].metadata.destination);
         }
       }

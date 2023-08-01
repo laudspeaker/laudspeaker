@@ -21,6 +21,13 @@ interface SocketData {
   customerId: string;
 }
 
+const fieldSerializerMap = {
+  Number,
+  String,
+  Date: String,
+  Email: String,
+};
+
 @WebSocketGateway({ cors: true })
 export class WebsocketGateway implements OnGatewayConnection {
   @WebSocketServer()
@@ -91,6 +98,19 @@ export class WebsocketGateway implements OnGatewayConnection {
         for (const [key, value] of Object.entries(customer.customComponents)) {
           const show = !customer.customComponents[key].hidden;
           delete customer.customComponents[key].hidden;
+          const data = customer.customComponents[key];
+
+          for (const field of (data?.fields || []) as {
+            name: string;
+            type: string;
+            defaultValue: string;
+          }[]) {
+            const serializer: (value: unknown) => unknown =
+              fieldSerializerMap[field.type] || ((value: unknown) => value);
+
+            data[field.name] = serializer(data[field.name]);
+          }
+
           socket.emit('custom', {
             show,
             trackerId: key,
@@ -299,6 +319,17 @@ export class WebsocketGateway implements OnGatewayConnection {
     trackerID: string,
     data: Record<string, any>
   ): Promise<boolean> {
+    for (const field of (data?.fields || []) as {
+      name: string;
+      type: string;
+      defaultValue: string;
+    }[]) {
+      const serializer: (value: unknown) => unknown =
+        fieldSerializerMap[field.type] || ((value: unknown) => value);
+
+      data[field.name] = serializer(data[field.name]);
+    }
+
     const show = !data.hidden;
     delete data.hidden;
     const sockets = await this.server.fetchSockets();
