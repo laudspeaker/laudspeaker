@@ -9,12 +9,21 @@ import {
   OnGatewayConnection,
 } from '@nestjs/websockets';
 import { randomUUID } from 'crypto';
-import { isValidObjectId } from 'mongoose';
+import { isValidObjectId, Model } from 'mongoose';
 import { Server, Socket } from 'socket.io';
 import { AccountsService } from '../api/accounts/accounts.service';
 import { Account } from '../api/accounts/entities/accounts.entity';
 import { CustomersService } from '../api/customers/customers.service';
 import { EventsService } from '../api/events/events.service';
+import {
+  ClickHouseEventProvider,
+  WebhooksService,
+} from '@/api/webhooks/webhooks.service';
+import {
+  Customer,
+  CustomerDocument,
+} from '@/api/customers/schemas/customer.schema';
+import { InjectModel } from '@nestjs/mongoose';
 
 interface SocketData {
   account: Account;
@@ -39,7 +48,9 @@ export class WebsocketGateway implements OnGatewayConnection {
     @Inject(forwardRef(() => CustomersService))
     private customersService: CustomersService,
     @Inject(forwardRef(() => EventsService))
-    private eventsService: EventsService
+    private eventsService: EventsService,
+    @Inject(WebhooksService) private readonly webhooksService: WebhooksService,
+    @InjectModel(Customer.name) public customerModel: Model<CustomerDocument>
   ) {}
 
   public async handleConnection(socket: Socket) {
@@ -89,6 +100,18 @@ export class WebsocketGateway implements OnGatewayConnection {
           isAnonymous: true,
           ownerId: account.id,
         });
+
+        await this.eventsService.customPayload(
+          socket.data.account,
+          {
+            correlationKey: '_id',
+            correlationValue: customer.id,
+            source: 'tracker',
+            event: '',
+            payload: { trackerId: '' },
+          },
+          socket.data.session
+        );
       }
 
       socket.data.customerId = customer.id;
@@ -96,10 +119,19 @@ export class WebsocketGateway implements OnGatewayConnection {
       socket.emit('log', 'Connected');
       if (customer.customComponents) {
         for (const [key, value] of Object.entries(customer.customComponents)) {
+          //1. Extract visibility from custom component JSON on customer
           const show = !customer.customComponents[key].hidden;
+          //2. Track state of custom component to save for later
+          const toSave = {
+            hidden: !customer.customComponents[key].hidden,
+            delivered: true,
+            ...customer.customComponents[key],
+          };
+          //3. Remove hidden key so it doesnt reach frontend
           delete customer.customComponents[key].hidden;
           const data = customer.customComponents[key];
 
+          //4.Map fields
           for (const field of (data?.fields || []) as {
             name: string;
             type: string;
@@ -111,11 +143,35 @@ export class WebsocketGateway implements OnGatewayConnection {
             data[field.name] = serializer(data[field.name]);
           }
 
+          // 5. Emit data to frontend
           socket.emit('custom', {
             show,
             trackerId: key,
             ...customer.customComponents[key],
           });
+
+          //6. Update customer object to indicate that this state has been delivered
+          await this.customerModel
+            .findByIdAndUpdate(customer.id, {
+              $set: { [`customComponents.${key}`]: { ...toSave } },
+            })
+            .exec();
+
+          //7. If first time delivered, record in clickhouse
+          if (!customer.customComponents[key].delivered)
+            await this.webhooksService.insertClickHouseMessages([
+              {
+                stepId: toSave.step,
+                createdAt: new Date().toUTCString(),
+                customerId: customer.id,
+                event: 'delivered',
+                eventProvider: ClickHouseEventProvider.TRACKER,
+                messageId: key,
+                templateId: toSave.template,
+                userId: account.id,
+                processed: true,
+              },
+            ]);
         }
       }
 

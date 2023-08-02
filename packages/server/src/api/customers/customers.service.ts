@@ -56,7 +56,14 @@ const eventsMap = {
   opened: 'opened',
 };
 
-const KEYS_TO_SKIP = ['__v', '_id', 'workflows', 'ownerId', 'isFreezed'];
+const KEYS_TO_SKIP = [
+  '__v',
+  '_id',
+  'workflows',
+  'journeys',
+  'ownerId',
+  'isFreezed',
+];
 
 @Injectable()
 export class CustomersService {

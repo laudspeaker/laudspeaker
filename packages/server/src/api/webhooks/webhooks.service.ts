@@ -25,6 +25,7 @@ export enum ClickHouseEventProvider {
   SLACK = 'slack',
   FIREBASE = 'firebase',
   WEBHOOKS = 'webhooks',
+  TRACKER = 'tracker',
 }
 
 export interface ClickHouseMessage {

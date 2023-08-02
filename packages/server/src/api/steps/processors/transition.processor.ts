@@ -15,7 +15,10 @@ import mongoose, { Model } from 'mongoose';
 import { Temporal } from '@js-temporal/polyfill';
 import { randomUUID } from 'crypto';
 import { MessageSender } from '../types/messagesender.class';
-import { WebhooksService } from '@/api/webhooks/webhooks.service';
+import {
+  ClickHouseEventProvider,
+  WebhooksService,
+} from '@/api/webhooks/webhooks.service';
 import { TemplatesService } from '@/api/templates/templates.service';
 import { CustomersService } from '@/api/customers/customers.service';
 import { cleanTagsForSending } from '../../../shared/utils/helpers';
@@ -279,7 +282,6 @@ export class TransitionProcessor extends WorkerHost {
 
     for (let i = 0; i < currentStep.customers.length; i++) {
       try {
-        //send message here
         const customerID = JSON.parse(currentStep.customers[i]).customerID;
         const templateID = currentStep.metadata.template;
         const template = await this.templatesService.transactionalFindOneById(
@@ -301,21 +303,71 @@ export class TransitionProcessor extends WorkerHost {
         const { action, humanReadableName, pushedValues } =
           currentStep.metadata;
 
+        //1. Check if custom components exists on this customer
         if (!customer.customComponents) customer.customComponents = {};
 
+        // 2. Check if this specific component exists on this customer,
+        // If not, create it and put in the default values from the template
         if (!customer.customComponents[humanReadableName])
           customer.customComponents[humanReadableName] = {
             hidden: true,
             ...template.customFields,
+            delivered: false,
           };
 
+        // 3. Update the custom component to reflect the
+        // details outlined in the step that triggers this component.
         customer.customComponents[humanReadableName].hidden =
           action === CustomComponentAction.HIDE ? true : false;
+        customer.customComponents[humanReadableName].step = stepID;
+        customer.customComponents[humanReadableName].template =
+          String(templateID);
         customer.customComponents[humanReadableName] = {
           ...customer.customComponents[humanReadableName],
           ...pushedValues,
         };
 
+        // 4. Record that the message was sent
+        await this.webhooksService.insertClickHouseMessages([
+          {
+            stepId: stepID,
+            createdAt: new Date().toUTCString(),
+            customerId: customerID,
+            event: 'sent',
+            eventProvider: ClickHouseEventProvider.TRACKER,
+            messageId: humanReadableName,
+            templateId: String(templateID),
+            userId: owner.id,
+            processed: true,
+          },
+        ]);
+
+        // 5. Attempt delivery. If delivered, record delivery event
+        const isDelivered =
+          await this.websocketGateway.sendCustomComponentState(
+            customer.id,
+            humanReadableName,
+            customer.customComponents[humanReadableName]
+          );
+        if (isDelivered)
+          await this.webhooksService.insertClickHouseMessages([
+            {
+              stepId: stepID,
+              createdAt: new Date().toUTCString(),
+              customerId: customerID,
+              event: 'delivered',
+              eventProvider: ClickHouseEventProvider.TRACKER,
+              messageId: humanReadableName,
+              templateId: String(templateID),
+              userId: owner.id,
+              processed: true,
+            },
+          ]);
+
+        // 6. Set delivery status.
+        customer.customComponents[humanReadableName].delivered = isDelivered;
+
+        // 7. Commit customer changes to the db
         const res = await this.customerModel
           .findByIdAndUpdate(customer.id, {
             $set: { customComponents: { ...customer.customComponents } },
@@ -327,19 +379,6 @@ export class TransitionProcessor extends WorkerHost {
           this.handleCustomComponent.name,
           session
         );
-
-        const isSent = await this.websocketGateway.sendCustomComponentState(
-          customer.id,
-          humanReadableName,
-          customer.customComponents[humanReadableName]
-        );
-        if (!isSent)
-          this.debug(
-            JSON.stringify({ warning: 'Socket not connected...' }),
-            this.handleCustomComponent.name,
-            session,
-            owner.email
-          );
       } catch (err) {
         this.error(err, this.handleCustomComponent.name, session);
       }

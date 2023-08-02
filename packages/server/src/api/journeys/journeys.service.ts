@@ -66,6 +66,7 @@ import { TimeWindowStepMetadata } from '../steps/types/step.interface';
 import { CustomerAttribute } from '../steps/types/step.interface';
 import { MultiBranchMetadata } from '../steps/types/step.interface';
 import { Temporal } from '@js-temporal/polyfill';
+import generateName from '@good-ghosting/random-name-generator';
 
 export enum JourneyStatus {
   ACTIVE = 'Active',
@@ -387,6 +388,11 @@ export class JourneysService {
         const oldStepID = oldSteps[i].id;
         const newStepID = newSteps[i].id;
         visualLayout = visualLayout.replaceAll(oldStepID, newStepID);
+        if (oldSteps[i].type === StepType.TRACKER) {
+          const newStepName = generateName({ number: true }).dashed;
+          const oldStepName = oldSteps[i].metadata.humanReadableName;
+          visualLayout = visualLayout.replaceAll(oldStepName, newStepName);
+        }
       }
 
       visualLayout = JSON.parse(visualLayout);
@@ -413,9 +419,9 @@ export class JourneysService {
   }
 
   /**
-   * Adds a customer to dynamic primary audience of all active workflows,
+   * Adds a customer to dynamic primary audience of all active journeys,
    * and sends them any relevant messages. Similar to  start,
-   * one customer -> many workflows
+   * one customer -> many journeys
    *
    * @remarks Throws an error if the workflow is not found
    * @param account The owner of the workflow
