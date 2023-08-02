@@ -39,7 +39,6 @@
     "logform": "^2.4.2",
     "luxon": "^3.2.1",
     "p-map": "^5.5.0",
-    "taskforce-connector": "^1.24.3",
-    "@good-ghosting/random-name-generator": "^1.0.3"
+    "taskforce-connector": "^1.24.3"
   }
 }
