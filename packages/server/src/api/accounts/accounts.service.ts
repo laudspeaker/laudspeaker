@@ -24,6 +24,12 @@ import mongoose, { ClientSession } from 'mongoose';
 import { WebhooksService } from '../webhooks/webhooks.service';
 import * as admin from 'firebase-admin';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
+import { JourneysService } from '../journeys/journeys.service';
+import { TemplatesService } from '../templates/templates.service';
+import { TemplateType } from '../templates/entities/template.entity';
+import onboardingJourneyFixtures from './onboarding-journey.json';
+import { StepsService } from '../steps/steps.service';
+import { StepType } from '../steps/types/step.interface';
 
 @Injectable()
 export class AccountsService extends BaseJwtHelper {
@@ -39,10 +45,18 @@ export class AccountsService extends BaseJwtHelper {
     @Inject(forwardRef(() => CustomersService))
     private customersService: CustomersService,
     @Inject(forwardRef(() => AuthService)) private authService: AuthService,
+    @Inject(forwardRef(() => JourneysService))
+    private journeysService: JourneysService,
+    @Inject(forwardRef(() => TemplatesService))
+    private templatesService: TemplatesService,
+    @Inject(forwardRef(() => StepsService))
+    private stepsService: StepsService,
     @InjectConnection() private readonly connection: mongoose.Connection,
     private webhookService: WebhooksService
   ) {
     super();
+
+    this.createOnboadingAccount();
   }
 
   log(message, method, session, user = 'ANONYMOUS') {
@@ -435,6 +449,134 @@ export class AccountsService extends BaseJwtHelper {
       throw e;
     } finally {
       await transactionSession.endSession();
+    }
+  }
+
+  async createOnboadingAccount() {
+    let account = await this.accountsRepository.findOneBy({
+      email: 'laudspeaker.onboarding@gmail.com',
+      apiKey: 'onboarding-api-key',
+    });
+
+    if (!account)
+      account = await this.accountsRepository.save({
+        email: 'laudspeaker.onboarding@gmail.com',
+        apiKey: 'onboarding-api-key',
+        password: this.authService.helper.encodePassword('00000000'),
+        verified: true,
+      });
+
+    let trackerTemplate = await this.templatesService.findOne(
+      account,
+      'onboarding-template',
+      ''
+    );
+
+    if (!trackerTemplate) {
+      trackerTemplate = await this.templatesService.create(
+        account,
+        {
+          name: 'onboarding-template',
+          text: null,
+          style: null,
+          subject: null,
+          cc: [],
+          slackMessage: null,
+          type: TemplateType.CUSTOM_COMPONENT,
+          smsText: null,
+          pushText: null,
+          pushTitle: null,
+          webhookData: null,
+          modalState: null,
+          customEvents: [
+            'show-start-journey-page',
+            'show-customers-page',
+            'show-track-performance-page',
+            'onboarding-start',
+            'reset',
+            'proceed-to-drag-email-step',
+            'proceed-to-setting-panel-step',
+            'proceed-to-select-template-step',
+            'proceed-to-save-settings-step',
+            'proceed-to-trigger-step',
+            'proceed-to-modify-trigger-step',
+            'proceed-to-change-time-step',
+            'proceed-to-save-trigger-step',
+            'proceed-to-finish-step',
+            'show-create-journey-page',
+            'restart',
+          ],
+          customFields: {
+            fields: [
+              {
+                name: 'page',
+                type: 'Number',
+                defaultValue: '0',
+              },
+              {
+                name: 'step',
+                type: 'Number',
+                defaultValue: '0',
+              },
+            ],
+          },
+        },
+        ''
+      );
+    }
+
+    let journey = await this.journeysService.journeysRepository.findOneBy({
+      owner: { id: account.id },
+      name: 'onboarding',
+    });
+    if (!journey) {
+      journey = await this.journeysService.create(account, 'onboarding', '');
+
+      await this.journeysService.update(
+        account,
+        {
+          id: journey.id,
+          isDynamic: true,
+        },
+        ''
+      );
+      await this.journeysService.updateLayout(
+        account,
+        {
+          id: journey.id,
+          nodes: await Promise.all(
+            onboardingJourneyFixtures.nodes.map(async (node) => ({
+              ...node,
+              data: {
+                ...node.data,
+                stepId:
+                  (
+                    await this.stepsService.findOne(
+                      account,
+                      node.data.stepId,
+                      ''
+                    )
+                  )?.id ||
+                  (node.data.type
+                    ? (
+                        await this.stepsService.insert(
+                          account,
+                          {
+                            journeyID: journey.id,
+                            type: node.data.type as StepType,
+                          },
+                          ''
+                        )
+                      ).id
+                    : undefined),
+              },
+            }))
+          ),
+          edges: onboardingJourneyFixtures.edges,
+        },
+        ''
+      );
+      await this.journeysService.start(account, journey.id, '');
     }
   }
 }

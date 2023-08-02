@@ -44,6 +44,5 @@ export class EventDto {
   public payload?: any;
 
   @IsNotEmpty()
-  @IsString()
-  public event: string;
+  public event: any;
 }

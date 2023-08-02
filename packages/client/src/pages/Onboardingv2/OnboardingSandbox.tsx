@@ -169,13 +169,19 @@ const drawerFixtures: FlowBuilderDrawerFixture[] = [
 
 interface OnboardingSandboxProps {
   onSandboxComplete: () => void;
+  currentStep?: SandboxStep | undefined;
+  emitTrackerEvent: (event: string) => void;
 }
 
 const OnboardingSandbox: FC<OnboardingSandboxProps> = ({
   onSandboxComplete,
+  currentStep,
+  emitTrackerEvent,
 }) => {
   const flowBuilderState = useAppSelector((state) => state.flowBuilder);
   const dispatch = useAppDispatch();
+
+  const [lastSentEvent, setLastSentEvent] = useState<string>();
 
   const emptyLeftNode = flowBuilderState.nodes.find(
     (node) => node.id === "emptyLeft"
@@ -451,9 +457,8 @@ const OnboardingSandbox: FC<OnboardingSandboxProps> = ({
     },
   };
 
-  const [currentStep, setCurrentStep] = useState(SandboxStep.MESSAGE_AND_STEP);
-
-  const currentSandboxFixture = sanboxStepToFixtureMap[currentStep];
+  const currentSandboxFixture =
+    currentStep !== undefined ? sanboxStepToFixtureMap[currentStep] : undefined;
 
   useEffect(() => {
     dispatch(setIsOnboarding(true));
@@ -464,7 +469,7 @@ const OnboardingSandbox: FC<OnboardingSandboxProps> = ({
       conditions: [
         {
           name: "Event_name",
-          providerType: ProviderType.Custom,
+          providerType: ProviderType.CUSTOM,
           statements: [
             {
               type: StatementType.PROPERTY,
@@ -573,17 +578,40 @@ const OnboardingSandbox: FC<OnboardingSandboxProps> = ({
     };
   }, []);
 
+  // add step events here
+  const stepToTrackerEventMap: Record<SandboxStep, string> = {
+    [SandboxStep.MESSAGE_AND_STEP]: "proceed-to-drag-email-step",
+    [SandboxStep.DRAG_EMAIL]: "proceed-to-setting-panel-step",
+    [SandboxStep.SETTING_PANEL]: "proceed-to-select-template-step",
+    [SandboxStep.SELECT_TEMPLATE]: "proceed-to-save-settings-step",
+    [SandboxStep.SAVE_SETTINGS]: "proceed-to-trigger-step",
+    [SandboxStep.TRIGGER]: "proceed-to-modify-trigger-step",
+    [SandboxStep.MODIFY_TRIGGER]: "proceed-to-change-time-step",
+    [SandboxStep.CHANGE_TIME]: "proceed-to-save-trigger-step",
+    [SandboxStep.SAVE_TRIGGER]: "proceed-to-finish-step",
+    [SandboxStep.FINISH]: "",
+  };
+
   useEffect(() => {
-    if (!currentSandboxFixture.checkStepFinished()) return;
+    if (
+      !currentSandboxFixture?.checkStepFinished() ||
+      currentStep === undefined ||
+      currentStep === SandboxStep.FINISH ||
+      stepToTrackerEventMap[currentStep] === lastSentEvent
+    )
+      return;
 
-    if (currentStep === SandboxStep.FINISH) return;
-
-    setCurrentStep(currentStep + 1);
+    emitTrackerEvent(stepToTrackerEventMap[currentStep]);
+    setLastSentEvent(stepToTrackerEventMap[currentStep]);
   }, [flowBuilderState]);
 
   useEffect(() => {
+    emitTrackerEvent("reset");
+  }, []);
+
+  useEffect(() => {
     const selectedNode = flowBuilderState.nodes.find((node) => node.selected);
-    if (!selectedNode) return;
+    if (!selectedNode || currentStep === undefined) return;
 
     if (
       selectedNode.type === NodeType.MESSAGE &&
@@ -620,7 +648,7 @@ const OnboardingSandbox: FC<OnboardingSandboxProps> = ({
 
   return (
     <>
-      {currentSandboxFixture.header}
+      {currentSandboxFixture?.header}
       <div className="bg-[#F3F4F6] rounded-[25px] h-full overflow-hidden flex relative">
         {currentStep === SandboxStep.FINISH && <Confetti />}
 
@@ -630,18 +658,21 @@ const OnboardingSandbox: FC<OnboardingSandboxProps> = ({
         <FlowEditor />
         <OnboardingSidePanel
           isSaveDisabled={
-            ![SandboxStep.SAVE_SETTINGS, SandboxStep.SAVE_TRIGGER].includes(
-              currentStep
-            )
+            currentStep
+              ? ![SandboxStep.SAVE_SETTINGS, SandboxStep.SAVE_TRIGGER].includes(
+                  currentStep
+                )
+              : true
           }
           onSaveClick={() => {
-            if (currentStep === SandboxStep.FINISH) return;
+            if (currentStep === SandboxStep.FINISH || currentStep === undefined)
+              return;
 
-            setCurrentStep(currentStep + 1);
+            emitTrackerEvent(stepToTrackerEventMap[currentStep]);
           }}
         />
 
-        {currentSandboxFixture.cursor && (
+        {currentSandboxFixture?.cursor && (
           <div
             className="fixed"
             style={{
@@ -652,7 +683,7 @@ const OnboardingSandbox: FC<OnboardingSandboxProps> = ({
             <img src={onboardingCursorImage} />
           </div>
         )}
-        {currentSandboxFixture.tooltip && (
+        {currentSandboxFixture?.tooltip && (
           <div
             className="absolute"
             style={{
@@ -663,7 +694,7 @@ const OnboardingSandbox: FC<OnboardingSandboxProps> = ({
             {currentSandboxFixture.tooltip.content}
           </div>
         )}
-        {currentSandboxFixture.dialog && (
+        {currentSandboxFixture?.dialog && currentStep !== undefined && (
           <OnboardingDialog
             onNextClick={() => {
               if (currentStep === SandboxStep.FINISH) {
@@ -671,7 +702,7 @@ const OnboardingSandbox: FC<OnboardingSandboxProps> = ({
                 return;
               }
 
-              setCurrentStep(currentStep + 1);
+              emitTrackerEvent(stepToTrackerEventMap[currentStep]);
             }}
             position={currentSandboxFixture.dialog.position}
           >

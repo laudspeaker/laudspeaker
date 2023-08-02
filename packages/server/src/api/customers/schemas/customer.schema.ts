@@ -1,4 +1,4 @@
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Prop, Schema, SchemaFactory, raw } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 
 export type CustomerDocument = Customer & Document;
@@ -88,6 +88,9 @@ export class Customer {
 
   @Prop()
   isFreezed?: boolean;
+
+  @Prop(raw({}))
+  customComponents: Record<string, any>;
 }
 
 export const CustomerSchema = SchemaFactory.createForClass(Customer);

@@ -20,7 +20,7 @@ const FlowBuilderReview = () => {
           <div className="font-inter font-semibold text-[16px] leading-[24px]">
             Journey
           </div>
-          <div className="min-h-[420px]">
+          <div className="min-h-[420px] h-full">
             <FlowEditor isViewMode />
           </div>
         </div>

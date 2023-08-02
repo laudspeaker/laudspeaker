@@ -7,12 +7,18 @@ import { AuthModule } from '../auth/auth.module';
 import { CustomersModule } from '../customers/customers.module';
 import { WebhooksModule } from '../webhooks/webhooks.module';
 import { S3Service } from '../s3/s3.service';
+import { JourneysModule } from '../journeys/journeys.module';
+import { TemplatesModule } from '../templates/templates.module';
+import { StepsModule } from '../steps/steps.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Account]),
     forwardRef(() => AuthModule),
     forwardRef(() => CustomersModule),
+    forwardRef(() => JourneysModule),
+    forwardRef(() => TemplatesModule),
+    forwardRef(() => StepsModule),
     WebhooksModule,
   ],
   controllers: [AccountsController],

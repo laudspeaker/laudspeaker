@@ -56,7 +56,14 @@ const eventsMap = {
   opened: 'opened',
 };
 
-const KEYS_TO_SKIP = ['__v', '_id', 'workflows', 'ownerId', 'isFreezed'];
+const KEYS_TO_SKIP = [
+  '__v',
+  '_id',
+  'workflows',
+  'journeys',
+  'ownerId',
+  'isFreezed',
+];
 
 @Injectable()
 export class CustomersService {
@@ -87,8 +94,26 @@ export class CustomersService {
     private readonly workflowsService: WorkflowsService,
     @InjectConnection() private readonly connection: mongoose.Connection
   ) {
+    const session = randomUUID();
+    this.connection.db
+      .collection('customers')
+      .createIndex(
+        { __posthog__id: 1, ownerId: 1 },
+        {
+          unique: true,
+          partialFilterExpression: {
+            __posthog__id: { $exists: true, $type: 'array', $gt: [] },
+          },
+        }
+      )
+      .then((ret) => {
+        this.debug(
+          `${JSON.stringify({ indexCreated: ret })}`,
+          this.constructor.name,
+          session
+        );
+      });
     this.CustomerModel.watch().on('change', async (data: any) => {
-      const session = randomUUID();
       try {
         const customerId = data?.documentKey?._id;
         if (!customerId) return;

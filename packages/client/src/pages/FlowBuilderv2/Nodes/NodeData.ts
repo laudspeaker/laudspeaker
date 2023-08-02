@@ -47,12 +47,23 @@ export interface ElementStatement {
 
 export type Statement = PropertyStatement | ElementStatement;
 
-export interface Condition {
-  name: string;
-  providerType: ProviderType;
-  statements: Statement[];
+export interface CommonCondition {
   relationToNext: LogicRelation;
 }
+
+export interface TrackerCondition extends CommonCondition {
+  providerType: ProviderType.TRACKER;
+  trackerId?: string;
+  event?: string;
+}
+
+export interface HitCondition extends CommonCondition {
+  providerType: Exclude<ProviderType, ProviderType.TRACKER>;
+  name: string;
+  statements: Statement[];
+}
+
+export type Condition = HitCondition | TrackerCondition;
 
 export interface CommonBranch {
   id: string;
@@ -126,9 +137,10 @@ export interface CommonNodeData {
   stats?: Stats;
 }
 
-export interface MessageNodeData extends CommonNodeData {
+export interface MessageNodeData<T extends MessageType = MessageType>
+  extends CommonNodeData {
   type: NodeType.MESSAGE;
-  template: { type: MessageType; selected?: { id: number; name: string } };
+  template: { type: T; selected?: { id: number; name: string } };
 }
 
 export interface WaitUntilNodeData extends CommonNodeData {
@@ -157,6 +169,22 @@ export interface JumpToNodeData extends CommonNodeData {
   targetId?: string;
 }
 
+export enum TrackerVisibility {
+  SHOW = "show",
+  HIDE = "hide",
+}
+
+export interface TrackerNodeData extends CommonNodeData {
+  type: NodeType.TRACKER;
+  needsCheck?: boolean;
+  tracker?: {
+    trackerId: string;
+    trackerTemplate: { id: number; name: string };
+    visibility: TrackerVisibility;
+    fields: { name: string; type: StatementValueType; value: string }[];
+  };
+}
+
 export interface AnotherNodeData extends CommonNodeData {
   type?: Exclude<
     NodeType,
@@ -166,6 +194,7 @@ export interface AnotherNodeData extends CommonNodeData {
     | NodeType.TIME_WINDOW
     | NodeType.USER_ATTRIBUTE
     | NodeType.JUMP_TO
+    | NodeType.TRACKER
   >;
 }
 
@@ -176,4 +205,5 @@ export type NodeData =
   | TimeWindowNodeData
   | UserAttributeNodeData
   | JumpToNodeData
+  | TrackerNodeData
   | AnotherNodeData;

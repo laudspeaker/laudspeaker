@@ -158,7 +158,11 @@ const FlowViewerv2 = () => {
           loadVisualLayout({
             nodes: await Promise.all(
               data.nodes.map(async (node) => {
-                if (!node.data.stepId || node.type !== NodeType.MESSAGE)
+                if (
+                  !node.data.stepId ||
+                  (node.type !== NodeType.MESSAGE &&
+                    node.type !== NodeType.TRACKER)
+                )
                   return { ...node };
 
                 try {

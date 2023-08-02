@@ -111,32 +111,15 @@ export class EventsProcessor extends WorkerHost {
     const transactionSession = await this.connection.startSession();
     await transactionSession.startTransaction();
     try {
-      this.debug(
-        `${JSON.stringify({ jobData: job.data })}`,
-        this.process.name,
-        job.data.session
-      );
       //Account associated with event
       const account: Account = await queryRunner.manager.findOneBy(Account, {
         id: job.data.accountID,
       });
-
-      this.debug(
-        `${JSON.stringify({ account: account })}`,
-        this.process.name,
-        job.data.session
-      );
       // Multiple journeys can consume the same event, but only one step per journey,
       // so we create an event job for every journey
       const journey: Journey = await queryRunner.manager.findOneBy(Journey, {
         id: job.data.journeyID,
       });
-
-      this.debug(
-        `${JSON.stringify({ journey: journey })}`,
-        this.process.name,
-        job.data.session
-      );
       //Customer associated with event
       const customer: CustomerDocument =
         await this.customersService.findByCorrelationKVPair(
@@ -147,12 +130,6 @@ export class EventsProcessor extends WorkerHost {
           transactionSession
         );
       // All steps in `journey` that might be listening for this event
-
-      this.debug(
-        `${JSON.stringify({ customer })}`,
-        this.process.name,
-        job.data.session
-      );
       const steps = await queryRunner.manager.find(Step, {
         where: {
           type: StepType.WAIT_UNTIL_BRANCH,
@@ -160,35 +137,41 @@ export class EventsProcessor extends WorkerHost {
         },
         relations: ['owner', 'journey'],
       });
-
-      this.debug(
-        `${JSON.stringify({ job: job.data, steps: steps })}`,
-        this.process.name,
-        job.data.session
-      );
-
       step_loop: for (
         let stepIndex = 0;
         stepIndex < steps.length;
         stepIndex++
       ) {
-        branch_loop: for (
+        for (
           let branchIndex = 0;
           branchIndex < steps[stepIndex].metadata.branches.length;
           branchIndex++
         ) {
-          let eventEvaluation: boolean[] = [];
+          const eventEvaluation: boolean[] = [];
           event_loop: for (
             let eventIndex = 0;
             eventIndex <
             steps[stepIndex].metadata.branches[branchIndex].events.length;
             eventIndex++
           ) {
-            // Special posthog handling: Skip over invalid posthog events
-            const analyticsEvent: AnalyticsEvent =
+            const analyticsEvent =
               steps[stepIndex].metadata.branches[branchIndex].events[
                 eventIndex
               ];
+            if (job.data.event.source === AnalyticsProviderTypes.TRACKER) {
+              eventEvaluation.push(
+                job.data.event.event ===
+                  steps[stepIndex].metadata.branches[branchIndex].events[
+                    eventIndex
+                  ].event &&
+                  job.data.event.payload.trackerId ==
+                    steps[stepIndex].metadata.branches[branchIndex].events[
+                      eventIndex
+                    ].trackerID
+              );
+              continue event_loop;
+            }
+            // Special posthog handling: Skip over invalid posthog events
             if (
               job.data.event.source === AnalyticsProviderTypes.POSTHOG &&
               analyticsEvent.provider === AnalyticsProviderTypes.POSTHOG &&
@@ -240,8 +223,8 @@ export class EventsProcessor extends WorkerHost {
               this.process.name,
               job.data.session
             );
-            let conditionEvalutation: boolean[] = [];
-            condition_loop: for (
+            const conditionEvalutation: boolean[] = [];
+            for (
               let conditionIndex = 0;
               conditionIndex <
               steps[stepIndex].metadata.branches[branchIndex].events[eventIndex]
@@ -425,7 +408,7 @@ export class EventsProcessor extends WorkerHost {
 
       // If customer isn't in step, we throw error, otherwise we queue and consume event
       if (stepToQueue) {
-        let found: boolean = false;
+        let found = false;
         for (let i = 0; i < stepToQueue.customers.length; i++) {
           if (JSON.parse(stepToQueue.customers[i]).customerID === customer.id)
             found = true;

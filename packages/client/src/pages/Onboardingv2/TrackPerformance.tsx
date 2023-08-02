@@ -1,9 +1,13 @@
-import React from "react";
+import React, { FC } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppSelector } from "store/hooks";
 import trackPerformanceImage from "./svg/track-performance.svg";
 
-const TrackPerformance = () => {
+interface TrackPerformanceProps {
+  onFinish: () => void;
+}
+
+const TrackPerformance: FC<TrackPerformanceProps> = ({ onFinish }) => {
   const navigate = useNavigate();
 
   const email = useAppSelector((state) => state.auth.userData.email);
@@ -42,7 +46,10 @@ const TrackPerformance = () => {
 
           <button
             className="min-w-[200px] w-fit px-[30px] py-[10px] mt-[40px] rounded-[30px] bg-[#6366F1] flex items-center justify-center text-white"
-            onClick={() => navigate("/home")}
+            onClick={() => {
+              onFinish();
+              navigate("/home");
+            }}
           >
             Get Started in Laudspeaker
           </button>

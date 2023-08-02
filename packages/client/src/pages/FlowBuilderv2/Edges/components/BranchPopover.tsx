@@ -92,36 +92,66 @@ const BranchPopover: FC<BranchPopoverProps> = ({
                       <React.Fragment key={i}>
                         <div className="p-[10px] bg-[#F3F4F6] flex flex-col gap-[5px]">
                           <div className="font-inter font-semibold text-[14px] leading-[22px] text-[#18181B]">
-                            {condition.providerType === ProviderType.Custom
+                            {condition.providerType === ProviderType.CUSTOM
                               ? "Custom Event"
-                              : "Posthog Event"}
+                              : condition.providerType === ProviderType.POSTHOG
+                              ? "Posthog Event"
+                              : "Tracker"}
                           </div>
-                          {condition.statements.map((statement, j) => (
-                            <div
-                              key={j}
-                              className="font-inter font-normal text-[12px] leading-[20px] text-[#18181B]"
-                            >
-                              {statement.type === StatementType.PROPERTY ? (
-                                <div>
-                                  Property "{statement.key}"{" "}
-                                  {statement.comparisonType} "{statement.value}"
+                          {condition.providerType === ProviderType.TRACKER ? (
+                            <>
+                              <div className="flex flex-col gap-[10px] font-inter text-[14px] font-normal text-[#111827] leading-[22px]">
+                                {condition.trackerId && (
+                                  <div className="flex gap-[5px] items-center">
+                                    <div>Tracker:</div>
+                                    <div className="px-[5px] py-[2px] border-[1px] border-[#E5E7EB] rounded-[2px] bg-white">
+                                      {condition.trackerId}
+                                    </div>
+                                  </div>
+                                )}
+                                {condition.event && (
+                                  <div className="flex gap-[5px] items-center">
+                                    <div>Event</div>
+                                    <div className="px-[5px] py-[2px] border-[1px] border-[#E5E7EB] rounded-[2px] bg-white">
+                                      {condition.event}
+                                    </div>
+                                    <div>is performed</div>
+                                  </div>
+                                )}
+                              </div>
+                            </>
+                          ) : (
+                            <>
+                              {condition.statements.map((statement, j) => (
+                                <div
+                                  key={j}
+                                  className="font-inter font-normal text-[12px] leading-[20px] text-[#18181B]"
+                                >
+                                  {statement.type === StatementType.PROPERTY ? (
+                                    <div>
+                                      Property "{statement.key}"{" "}
+                                      {statement.comparisonType} "
+                                      {statement.value}"
+                                    </div>
+                                  ) : (
+                                    <div>
+                                      Element{" "}
+                                      <span className="font-bold">
+                                        #{statement.order}
+                                      </span>{" "}
+                                      "
+                                      {statement.elementKey ===
+                                      ElementKey.TAG_NAME
+                                        ? "Tag name"
+                                        : "Text"}
+                                      " {statement.comparisonType} "
+                                      {statement.value}"
+                                    </div>
+                                  )}
                                 </div>
-                              ) : (
-                                <div>
-                                  Element{" "}
-                                  <span className="font-bold">
-                                    #{statement.order}
-                                  </span>{" "}
-                                  "
-                                  {statement.elementKey === ElementKey.TAG_NAME
-                                    ? "Tag name"
-                                    : "Text"}
-                                  " {statement.comparisonType} "
-                                  {statement.value}"
-                                </div>
-                              )}
-                            </div>
-                          ))}
+                              ))}
+                            </>
+                          )}
                         </div>
                         {i !== branch.conditions.length - 1 && i !== 2 && (
                           <div>

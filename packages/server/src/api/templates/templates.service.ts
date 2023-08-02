@@ -307,6 +307,10 @@ export class TemplatesService extends QueueEventsHost {
       case TemplateType.MODAL:
         template.modalState = createTemplateDto.modalState;
         break;
+      case TemplateType.CUSTOM_COMPONENT:
+        template.customEvents = createTemplateDto.customEvents;
+        template.customFields = createTemplateDto.customFields;
+        break;
     }
     return this.templatesRepository.save({
       ...template,
@@ -502,11 +506,17 @@ export class TemplatesService extends QueueEventsHost {
     search = '',
     orderBy?: keyof Template,
     orderType?: 'asc' | 'desc',
-    showDeleted?: boolean
+    showDeleted?: boolean,
+    type?: TemplateType
   ): Promise<{ data: Template[]; totalPages: number }> {
     const totalPages = Math.ceil(
       (await this.templatesRepository.count({
-        where: { owner: { id: account.id } },
+        where: {
+          name: Like(`%${search}%`),
+          owner: { id: account.id },
+          isDeleted: In([!!showDeleted, false]),
+          type,
+        },
       })) / take || 1
     );
     const orderOptions = {};
@@ -518,6 +528,7 @@ export class TemplatesService extends QueueEventsHost {
         name: Like(`%${search}%`),
         owner: { id: account.id },
         isDeleted: In([!!showDeleted, false]),
+        type,
       },
       order: orderOptions,
       take: take < 100 ? take : 100,
@@ -600,6 +611,8 @@ export class TemplatesService extends QueueEventsHost {
       smsText,
       webhookData,
       modalState,
+      customEvents,
+      customFields,
     } = foundTemplate;
 
     const ownerId = owner.id;
@@ -632,6 +645,8 @@ export class TemplatesService extends QueueEventsHost {
       smsText,
       webhookData,
       modalState,
+      customEvents,
+      customFields,
     });
   }
 

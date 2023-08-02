@@ -5,11 +5,12 @@ interface TableProps {
   headings?: ReactNode[];
   rows?: ReactNode[][];
   isLoading?: boolean;
+  className?: string;
 }
 
-const Table: FC<TableProps> = ({ headings, rows, isLoading }) => {
+const Table: FC<TableProps> = ({ headings, rows, isLoading, className }) => {
   return (
-    <table className="rounded-[4px]">
+    <table className={`rounded-[4px] ${className ? className : ""}`}>
       {headings && (
         <thead>
           <tr className="bg-[#F3F4F6] border-b-[1px] border-[#E5E7EB] ">

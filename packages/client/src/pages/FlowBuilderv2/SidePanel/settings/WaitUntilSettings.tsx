@@ -58,7 +58,7 @@ const WaitUntilSettings: FC<SidePanelComponentProps<WaitUntilNodeData>> = ({
 
     branchToChange.conditions.push({
       name: "",
-      providerType: ProviderType.Custom,
+      providerType: ProviderType.CUSTOM,
       statements: [],
       relationToNext:
         branchToChange.conditions[branchToChange.conditions.length - 1]
@@ -91,7 +91,10 @@ const WaitUntilSettings: FC<SidePanelComponentProps<WaitUntilNodeData>> = ({
 
     const isSameNameAndProvider = branchToCheck.conditions.every(
       (el, _, arr) =>
-        arr[0].providerType === el.providerType && arr[0].name === el.name
+        arr[0].providerType === el.providerType &&
+        arr[0].providerType !== ProviderType.TRACKER &&
+        el.providerType !== ProviderType.TRACKER &&
+        arr[0].name === el.name
     );
 
     if (
@@ -219,7 +222,7 @@ const WaitUntilSettings: FC<SidePanelComponentProps<WaitUntilNodeData>> = ({
         <Button
           type={ButtonType.SECONDARY}
           onClick={handleAddEventBranch}
-          disabled={isOnboarding || nodeData.branches.length > 9}
+          disabled={isOnboarding || nodeData.branches.length > 14}
         >
           Add branch
         </Button>

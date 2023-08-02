@@ -8,3 +8,4 @@ export { TimeWindowNode } from "./TimeWindowNode";
 export { UserAttributeNode } from "./UserAttributeNode";
 export { ExitNode } from "./ExitNode";
 export { InsertNode } from "./InsertNode";
+export { TrackerNode } from "./TrackerNode";

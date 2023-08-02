@@ -363,7 +363,7 @@ export class CronService {
     await queryRunner.connect();
     await queryRunner.startTransaction();
     try {
-      let steps = await this.stepsService.transactionalFindAllActiveByType(
+      const steps = await this.stepsService.transactionalFindAllActiveByType(
         null,
         StepType.TIME_DELAY,
         session,

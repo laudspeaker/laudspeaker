@@ -25,9 +25,11 @@ const ConditionViewer: FC<ConditionViewerProps> = ({
     <div className="p-[10px] flex flex-col gap-[10px] bg-[#F3F4F6]">
       <div className="flex justify-between items-center">
         <div className="font-inter font-semibold text-[14px] leading-[22px]">
-          {condition.providerType === ProviderType.Custom
+          {condition.providerType === ProviderType.CUSTOM
             ? "Custom Event"
-            : `Posthog ${condition.name}`}
+            : condition.providerType === ProviderType.POSTHOG
+            ? `Posthog ${condition.name}`
+            : "Tracker"}
         </div>
         <div className="flex gap-[20px] items-center">
           <div
@@ -73,37 +75,64 @@ const ConditionViewer: FC<ConditionViewerProps> = ({
           </div>
         </div>
       </div>
-      {condition.statements.map((statement, k) => (
-        <div className="flex gap-[10px]" key={k}>
-          {k !== 0 && (
-            <div className="bg-[#E5E7EB] border-[#E5E7EB] border-[1px] w-[40px] h-[22px] flex items-center justify-center font-roboto font-normal text-[14px] leading-[22px]">
-              {condition.statements[k - 1].relationToNext === LogicRelation.AND
-                ? "And"
-                : "Or"}
+
+      {condition.providerType === ProviderType.TRACKER ? (
+        <div className="flex flex-col gap-[10px] font-inter text-[14px] font-normal text-[#111827] leading-[22px]">
+          {condition.trackerId && (
+            <div className="flex gap-[5px] items-center">
+              <div>Tracker:</div>
+              <div className="px-[5px] py-[2px] border-[1px] border-[#E5E7EB] rounded-[2px] bg-white">
+                {condition.trackerId}
+              </div>
             </div>
           )}
-          {statement.type === StatementType.PROPERTY ? (
-            <div
-              className="font-inter font-normal text-[14px] leading-[22px]"
-              key={k}
-            >
-              Property "{statement.key}" {statement.comparisonType} "
-              {statement.value}"
-            </div>
-          ) : (
-            <div
-              className="font-inter font-normal text-[14px] leading-[22px]"
-              key={k}
-            >
-              Element <span className="font-bold">#{statement.order}</span> "
-              {statement.elementKey === ElementKey.TAG_NAME
-                ? "Tag name"
-                : "Text"}
-              " {statement.comparisonType} "{statement.value}"
+          {condition.event && (
+            <div className="flex gap-[5px] items-center">
+              <div>Event</div>
+              <div className="px-[5px] py-[2px] border-[1px] border-[#E5E7EB] rounded-[2px] bg-white">
+                {condition.event}
+              </div>
+              <div>is performed</div>
             </div>
           )}
         </div>
-      ))}
+      ) : (
+        <>
+          {condition.statements.map((statement, k) => (
+            <div className="flex gap-[10px]" key={k}>
+              {k !== 0 && (
+                <div className="bg-[#E5E7EB] border-[#E5E7EB] border-[1px] w-[40px] h-[22px] flex items-center justify-center font-roboto font-normal text-[14px] leading-[22px]">
+                  {condition.statements[k - 1].relationToNext ===
+                  LogicRelation.AND
+                    ? "And"
+                    : "Or"}
+                </div>
+              )}
+              {statement.type === StatementType.PROPERTY ? (
+                <div
+                  className="font-inter font-normal text-[14px] leading-[22px]"
+                  key={k}
+                >
+                  Property "{statement.key}" {statement.comparisonType} "
+                  {statement.value}"
+                </div>
+              ) : (
+                <div
+                  className="font-inter font-normal text-[14px] leading-[22px]"
+                  key={k}
+                >
+                  Element <span className="font-bold">#{statement.order}</span>{" "}
+                  "
+                  {statement.elementKey === ElementKey.TAG_NAME
+                    ? "Tag name"
+                    : "Text"}
+                  " {statement.comparisonType} "{statement.value}"
+                </div>
+              )}
+            </div>
+          ))}
+        </>
+      )}
     </div>
   );
 };

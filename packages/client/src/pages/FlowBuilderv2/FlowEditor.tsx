@@ -19,6 +19,7 @@ import {
   StartNode,
   TimeDelayNode,
   TimeWindowNode,
+  TrackerNode,
   UserAttributeNode,
   WaitUntilNode,
 } from "./Nodes";
@@ -38,6 +39,7 @@ export enum NodeType {
   TIME_WINDOW = "timeWindow",
   USER_ATTRIBUTE = "userAttribute",
   INSERT_NODE = "insertNode",
+  TRACKER = "tracker",
 }
 
 export enum EdgeType {
@@ -56,6 +58,7 @@ const nodeTypes: Record<NodeType, FC<NodeProps<any>>> = {
   [NodeType.TIME_WINDOW]: TimeWindowNode,
   [NodeType.USER_ATTRIBUTE]: UserAttributeNode,
   [NodeType.INSERT_NODE]: InsertNode,
+  [NodeType.TRACKER]: TrackerNode,
 };
 
 const edgeTypes: Record<EdgeType, FC<EdgeProps<any>>> = {

@@ -9,17 +9,33 @@ import {
   OnGatewayConnection,
 } from '@nestjs/websockets';
 import { randomUUID } from 'crypto';
-import { isValidObjectId } from 'mongoose';
+import { isValidObjectId, Model } from 'mongoose';
 import { Server, Socket } from 'socket.io';
 import { AccountsService } from '../api/accounts/accounts.service';
 import { Account } from '../api/accounts/entities/accounts.entity';
 import { CustomersService } from '../api/customers/customers.service';
 import { EventsService } from '../api/events/events.service';
+import {
+  ClickHouseEventProvider,
+  WebhooksService,
+} from '@/api/webhooks/webhooks.service';
+import {
+  Customer,
+  CustomerDocument,
+} from '@/api/customers/schemas/customer.schema';
+import { InjectModel } from '@nestjs/mongoose';
 
 interface SocketData {
   account: Account;
   customerId: string;
 }
+
+const fieldSerializerMap = {
+  Number,
+  String,
+  Date: String,
+  Email: String,
+};
 
 @WebSocketGateway({ cors: true })
 export class WebsocketGateway implements OnGatewayConnection {
@@ -32,11 +48,12 @@ export class WebsocketGateway implements OnGatewayConnection {
     @Inject(forwardRef(() => CustomersService))
     private customersService: CustomersService,
     @Inject(forwardRef(() => EventsService))
-    private eventsService: EventsService
+    private eventsService: EventsService,
+    @Inject(WebhooksService) private readonly webhooksService: WebhooksService,
+    @InjectModel(Customer.name) public customerModel: Model<CustomerDocument>
   ) {}
 
   public async handleConnection(socket: Socket) {
-    console.log(socket.id);
     try {
       const { apiKey, customerId } = socket.handshake.auth;
 
@@ -55,6 +72,7 @@ export class WebsocketGateway implements OnGatewayConnection {
         id?: string;
         isAnonymous?: boolean;
         isFreezed?: boolean;
+        customComponents?: any;
       };
 
       if (customerId && isValidObjectId(customerId)) {
@@ -82,11 +100,80 @@ export class WebsocketGateway implements OnGatewayConnection {
           isAnonymous: true,
           ownerId: account.id,
         });
+
+        await this.eventsService.customPayload(
+          socket.data.account,
+          {
+            correlationKey: '_id',
+            correlationValue: customer.id,
+            source: 'tracker',
+            event: '',
+            payload: { trackerId: '' },
+          },
+          socket.data.session
+        );
       }
 
       socket.data.customerId = customer.id;
       socket.emit('customerId', customer.id);
       socket.emit('log', 'Connected');
+      if (customer.customComponents) {
+        for (const [key, value] of Object.entries(customer.customComponents)) {
+          //1. Extract visibility from custom component JSON on customer
+          const show = !customer.customComponents[key].hidden;
+          //2. Track state of custom component to save for later
+          const toSave = {
+            hidden: !customer.customComponents[key].hidden,
+            delivered: true,
+            ...customer.customComponents[key],
+          };
+          //3. Remove hidden key so it doesnt reach frontend
+          delete customer.customComponents[key].hidden;
+          const data = customer.customComponents[key];
+
+          //4.Map fields
+          for (const field of (data?.fields || []) as {
+            name: string;
+            type: string;
+            defaultValue: string;
+          }[]) {
+            const serializer: (value: unknown) => unknown =
+              fieldSerializerMap[field.type] || ((value: unknown) => value);
+
+            data[field.name] = serializer(data[field.name]);
+          }
+
+          // 5. Emit data to frontend
+          socket.emit('custom', {
+            show,
+            trackerId: key,
+            ...customer.customComponents[key],
+          });
+
+          //6. Update customer object to indicate that this state has been delivered
+          await this.customerModel
+            .findByIdAndUpdate(customer.id, {
+              $set: { [`customComponents.${key}`]: { ...toSave } },
+            })
+            .exec();
+
+          //7. If first time delivered, record in clickhouse
+          if (!customer.customComponents[key].delivered)
+            await this.webhooksService.insertClickHouseMessages([
+              {
+                stepId: toSave.step,
+                createdAt: new Date().toUTCString(),
+                customerId: customer.id,
+                event: 'delivered',
+                eventProvider: ClickHouseEventProvider.TRACKER,
+                messageId: key,
+                templateId: toSave.template,
+                userId: account.id,
+                processed: true,
+              },
+            ]);
+        }
+      }
 
       await this.accountsService.accountsRepository.save({
         id: account.id,
@@ -201,7 +288,7 @@ export class WebsocketGateway implements OnGatewayConnection {
         socket.emit('customerId', customer.id);
       }
 
-      const workflowTick = await this.eventsService.customPayload(
+      await this.eventsService.customPayload(
         socket.data.account,
         {
           correlationKey: '_id',
@@ -214,7 +301,55 @@ export class WebsocketGateway implements OnGatewayConnection {
       );
 
       socket.emit('log', 'Successful fire');
-      socket.emit('workflowTick', workflowTick);
+    } catch (e) {
+      socket.emit('error', e);
+    }
+  }
+
+  @SubscribeMessage('custom')
+  public async handleCustom(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody()
+    event: { [key: string]: unknown }
+  ) {
+    try {
+      const {
+        account: { id: ownerId, apiKey },
+        customerId,
+      } = socket.data as SocketData;
+
+      let customer = await this.customersService.CustomerModel.findOne({
+        _id: customerId,
+        ownerId,
+      });
+
+      if (!customer || customer.isFreezed) {
+        socket.emit(
+          'error',
+          'Invalid customer id. Creating new anonymous customer...'
+        );
+        customer = await this.customersService.CustomerModel.create({
+          isAnonymous: true,
+          ownerId,
+        });
+
+        socket.data.customerId = customer.id;
+        socket.emit('customerId', customer.id);
+      }
+
+      await this.eventsService.customPayload(
+        socket.data.account,
+        {
+          correlationKey: '_id',
+          correlationValue: customer.id,
+          source: 'tracker',
+          event: event.event,
+          payload: { trackerId: event.trackerId },
+        },
+        socket.data.session
+      );
+
+      // socket.emit('log', 'Successful fire');
     } catch (e) {
       socket.emit('error', e);
     }
@@ -228,6 +363,39 @@ export class WebsocketGateway implements OnGatewayConnection {
     for (const socket of sockets) {
       if (socket.data.customerId === customerId) {
         socket.emit('modal', template.modalState);
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  public async sendCustomComponentState(
+    customerID: string,
+    trackerID: string,
+    data: Record<string, any>
+  ): Promise<boolean> {
+    for (const field of (data?.fields || []) as {
+      name: string;
+      type: string;
+      defaultValue: string;
+    }[]) {
+      const serializer: (value: unknown) => unknown =
+        fieldSerializerMap[field.type] || ((value: unknown) => value);
+
+      data[field.name] = serializer(data[field.name]);
+    }
+
+    const show = !data.hidden;
+    delete data.hidden;
+    const sockets = await this.server.fetchSockets();
+    for (const socket of sockets) {
+      if (socket.data.customerId === customerID) {
+        socket.emit('custom', {
+          show,
+          trackerId: trackerID,
+          ...data,
+        });
         return true;
       }
     }

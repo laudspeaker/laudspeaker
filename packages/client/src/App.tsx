@@ -79,9 +79,7 @@ const App = ({ children }: IApp) => {
             pauseOnHover
             theme="colored"
           />
-          <GoogleOAuthProvider clientId="31818866399-n6jktkbmj0o0tt7gbi8i8nosu61nakda.apps.googleusercontent.com">
-            {children}
-          </GoogleOAuthProvider>
+          {children}
         </MTThemeProvider>
       </ThemeProvider>
     </ColorContext.Provider>

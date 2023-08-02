@@ -6,17 +6,11 @@ import { MailService } from '@sendgrid/mail';
 import {
   ClickHouseEventProvider,
   ClickHouseMessage,
-  WebhooksService,
 } from '../../webhooks/webhooks.service';
 import twilio from 'twilio';
 import { PostHog } from 'posthog-node';
 import * as admin from 'firebase-admin';
 import { WebClient } from '@slack/web-api';
-import {
-  FallBackAction,
-  WebhookMethod,
-} from '@/api/templates/entities/template.entity';
-import wait from '@/utils/wait';
 
 export enum MessageType {
   SMS = 'sms',

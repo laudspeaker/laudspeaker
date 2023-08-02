@@ -7,19 +7,25 @@ import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { cpus } from 'os';
-import { StepType } from '../types/step.interface';
+import { CustomComponentAction, StepType } from '../types/step.interface';
 import { Step } from '../entities/step.entity';
 import { DataSource, QueryRunner } from 'typeorm';
-import { InjectConnection } from '@nestjs/mongoose';
-import mongoose from 'mongoose';
+import { InjectConnection, InjectModel } from '@nestjs/mongoose';
+import mongoose, { Model } from 'mongoose';
 import { Temporal } from '@js-temporal/polyfill';
 import { randomUUID } from 'crypto';
 import { MessageSender } from '../types/messagesender.class';
-import { WebhooksService } from '@/api/webhooks/webhooks.service';
+import {
+  ClickHouseEventProvider,
+  WebhooksService,
+} from '@/api/webhooks/webhooks.service';
 import { TemplatesService } from '@/api/templates/templates.service';
 import { CustomersService } from '@/api/customers/customers.service';
 import { cleanTagsForSending } from '../../../shared/utils/helpers';
-import { CustomerDocument } from '@/api/customers/schemas/customer.schema';
+import {
+  Customer,
+  CustomerDocument,
+} from '@/api/customers/schemas/customer.schema';
 import { TemplateType } from '@/api/templates/entities/template.entity';
 import { WebsocketGateway } from '@/websockets/websocket.gateway';
 import { ModalsService } from '@/api/modals/modals.service';
@@ -29,7 +35,7 @@ import { Account } from '@/api/accounts/entities/accounts.entity';
 @Injectable()
 @Processor('transition', {
   concurrency: cpus().length,
-  removeOnComplete: { age: 0, count: 0 },
+  // removeOnComplete: { age: 0, count: 0 },
 })
 export class TransitionProcessor extends WorkerHost {
   constructor(
@@ -47,7 +53,8 @@ export class TransitionProcessor extends WorkerHost {
     @Inject(WebsocketGateway)
     private websocketGateway: WebsocketGateway,
     @Inject(ModalsService) private modalsService: ModalsService,
-    @Inject(SlackService) private slackService: SlackService
+    @Inject(SlackService) private slackService: SlackService,
+    @InjectModel(Customer.name) public customerModel: Model<CustomerDocument>
   ) {
     super();
   }
@@ -157,6 +164,15 @@ export class TransitionProcessor extends WorkerHost {
             transactionSession
           );
           break;
+        case StepType.TRACKER:
+          await this.handleCustomComponent(
+            job.data.ownerID,
+            job.data.step.id,
+            job.data.session,
+            queryRunner,
+            transactionSession
+          );
+          break;
         case StepType.RANDOM_COHORT_BRANCH:
           break;
         case StepType.START:
@@ -212,6 +228,176 @@ export class TransitionProcessor extends WorkerHost {
       await queryRunner.release();
       if (err) throw err;
     }
+  }
+
+  /**
+   * Handle custom component step;
+   * @param stepID
+   * @param session
+   * @param queryRunner
+   * @param transactionSession
+   */
+  async handleCustomComponent(
+    ownerID: string,
+    stepID: string,
+    session: string,
+    queryRunner: QueryRunner,
+    transactionSession: mongoose.mongo.ClientSession
+  ) {
+    const owner = await queryRunner.manager.findOne(Account, {
+      where: { id: ownerID },
+    });
+    this.debug(
+      `${JSON.stringify({ owner: owner })}`,
+      this.handleCustomComponent.name,
+      session
+    );
+
+    const currentStep = await queryRunner.manager.findOne(Step, {
+      where: {
+        id: stepID,
+        type: StepType.TRACKER,
+      },
+      lock: { mode: 'pessimistic_write' },
+    });
+
+    this.debug(
+      `${JSON.stringify({ currentStep: currentStep })}`,
+      this.handleCustomComponent.name,
+      session
+    );
+
+    const nextStep = await queryRunner.manager.findOne(Step, {
+      where: {
+        id: currentStep.metadata.destination,
+      },
+      lock: { mode: 'pessimistic_write' },
+    });
+
+    this.debug(
+      `${JSON.stringify({ nextStep: nextStep })}`,
+      this.handleCustomComponent.name,
+      session
+    );
+
+    for (let i = 0; i < currentStep.customers.length; i++) {
+      try {
+        const customerID = JSON.parse(currentStep.customers[i]).customerID;
+        const templateID = currentStep.metadata.template;
+        const template = await this.templatesService.transactionalFindOneById(
+          owner,
+          templateID.toString(),
+          queryRunner
+        );
+
+        const customer: CustomerDocument = await this.customersService.findById(
+          owner,
+          customerID
+        );
+
+        if (template.type !== TemplateType.CUSTOM_COMPONENT) {
+          throw new Error(
+            `Cannot use ${template.type} template for a custom component step`
+          );
+        }
+        const { action, humanReadableName, pushedValues } =
+          currentStep.metadata;
+
+        //1. Check if custom components exists on this customer
+        if (!customer.customComponents) customer.customComponents = {};
+
+        // 2. Check if this specific component exists on this customer,
+        // If not, create it and put in the default values from the template
+        if (!customer.customComponents[humanReadableName])
+          customer.customComponents[humanReadableName] = {
+            hidden: true,
+            ...template.customFields,
+            delivered: false,
+          };
+
+        // 3. Update the custom component to reflect the
+        // details outlined in the step that triggers this component.
+        customer.customComponents[humanReadableName].hidden =
+          action === CustomComponentAction.HIDE ? true : false;
+        customer.customComponents[humanReadableName].step = stepID;
+        customer.customComponents[humanReadableName].template =
+          String(templateID);
+        customer.customComponents[humanReadableName] = {
+          ...customer.customComponents[humanReadableName],
+          ...pushedValues,
+        };
+
+        // 4. Record that the message was sent
+        await this.webhooksService.insertClickHouseMessages([
+          {
+            stepId: stepID,
+            createdAt: new Date().toUTCString(),
+            customerId: customerID,
+            event: 'sent',
+            eventProvider: ClickHouseEventProvider.TRACKER,
+            messageId: humanReadableName,
+            templateId: String(templateID),
+            userId: owner.id,
+            processed: true,
+          },
+        ]);
+
+        // 5. Attempt delivery. If delivered, record delivery event
+        const isDelivered =
+          await this.websocketGateway.sendCustomComponentState(
+            customer.id,
+            humanReadableName,
+            customer.customComponents[humanReadableName]
+          );
+        if (isDelivered)
+          await this.webhooksService.insertClickHouseMessages([
+            {
+              stepId: stepID,
+              createdAt: new Date().toUTCString(),
+              customerId: customerID,
+              event: 'delivered',
+              eventProvider: ClickHouseEventProvider.TRACKER,
+              messageId: humanReadableName,
+              templateId: String(templateID),
+              userId: owner.id,
+              processed: true,
+            },
+          ]);
+
+        // 6. Set delivery status.
+        customer.customComponents[humanReadableName].delivered = isDelivered;
+
+        // 7. Commit customer changes to the db
+        const res = await this.customerModel
+          .findByIdAndUpdate(customer.id, {
+            $set: { customComponents: { ...customer.customComponents } },
+          })
+          .session(transactionSession)
+          .exec();
+        this.debug(
+          `${JSON.stringify({ res: res })}`,
+          this.handleCustomComponent.name,
+          session
+        );
+      } catch (err) {
+        this.error(err, this.handleCustomComponent.name, session);
+      }
+
+      nextStep.customers.push(
+        JSON.stringify({
+          customerID: JSON.parse(currentStep.customers[i]).customerID,
+          timestamp: new Date(),
+        })
+      );
+    }
+    currentStep.customers = [];
+    await queryRunner.manager.save(currentStep);
+    const newNext = await queryRunner.manager.save(nextStep);
+    await this.transitionQueue.add(newNext.type, {
+      ownerID,
+      step: newNext,
+      session: session,
+    });
   }
 
   /**
@@ -315,7 +501,7 @@ export class TransitionProcessor extends WorkerHost {
               key = sendgridApiKey;
               from = sendgridFromEmail;
             }
-            let ret = await sender.process({
+            const ret = await sender.process({
               name: TemplateType.EMAIL,
               accountID: owner.id,
               cc: template.cc,
@@ -856,7 +1042,41 @@ export class TransitionProcessor extends WorkerHost {
     session: string,
     queryRunner: QueryRunner,
     transactionSession: mongoose.mongo.ClientSession
-  ) {}
+  ) {
+    const owner = await queryRunner.manager.findOne(Account, {
+      where: { id: ownerID },
+    });
+    const currentStep = await queryRunner.manager.findOne(Step, {
+      where: {
+        id: stepID,
+        type: StepType.LOOP,
+      },
+      lock: { mode: 'pessimistic_write' },
+    });
+    const nextStep = await queryRunner.manager.findOne(Step, {
+      where: {
+        id: currentStep.metadata.destination,
+      },
+      lock: { mode: 'pessimistic_write' },
+    });
+
+    for (let i = 0; i < currentStep.customers.length; i++) {
+      nextStep.customers.push(
+        JSON.stringify({
+          customerID: JSON.parse(currentStep.customers[i]).customerID,
+          timestamp: new Date(),
+        })
+      );
+    }
+    currentStep.customers = [];
+    await queryRunner.manager.save(currentStep);
+    const newNext = await queryRunner.manager.save(nextStep);
+    await this.transitionQueue.add(newNext.type, {
+      ownerID,
+      step: newNext,
+      session: session,
+    });
+  }
 
   // TODO
   async handleABTest(job: Job<any, any, string>) {}

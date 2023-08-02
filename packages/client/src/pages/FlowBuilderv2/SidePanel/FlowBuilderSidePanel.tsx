@@ -9,11 +9,13 @@ import Button, {
 } from "../../../components/Elements/Buttonv2/Button";
 import { NodeType } from "../FlowEditor";
 import FlowBuilderDeleteModal from "../Modals/FlowBuilderDeleteModal";
+import FlowBuilderSaveTrackerModal from "../Modals/FlowBuilderSaveTrackerModal";
 import { messageFixtures } from "../Nodes/MessageNode";
 import { NodeData } from "../Nodes/NodeData";
 import MessageSettings from "./settings/MessageSettings";
 import TimeDelaySettings from "./settings/TimeDelaySettings";
 import TimeWindowSettings from "./settings/TimeWindowSettings";
+import TrackerSettings from "./settings/TrackerSettings";
 import UserAttributeSettings from "./settings/UserAttributeSettings";
 import WaitUntilSettings from "./settings/WaitUntilSettings";
 
@@ -36,6 +38,8 @@ const FlowBuilderSidePanel: FC<FlowBuilderSidePanelProps> = ({ className }) => {
     deepCopy({ ...selectedNode?.data })
   );
 
+  const [isTrackerModalSaveOpen, setIsTrackerModalSaveOpen] = useState(false);
+
   useEffect(() => {
     setNodeData(deepCopy({ ...selectedNode?.data }));
   }, [selectedNode]);
@@ -53,6 +57,7 @@ const FlowBuilderSidePanel: FC<FlowBuilderSidePanelProps> = ({ className }) => {
     [NodeType.WAIT_UNTIL]: "Wait until",
     [NodeType.USER_ATTRIBUTE]: "User attribute",
     [NodeType.INSERT_NODE]: "",
+    [NodeType.TRACKER]: "Tracker",
   };
 
   const nodeToSettingsComponentMap: Record<string, ReactNode> = {
@@ -94,6 +99,13 @@ const FlowBuilderSidePanel: FC<FlowBuilderSidePanelProps> = ({ className }) => {
         )}
       </>
     ),
+    [NodeType.TRACKER]: (
+      <>
+        {nodeData.type === NodeType.TRACKER && (
+          <TrackerSettings nodeData={nodeData} setNodeData={setNodeData} />
+        )}
+      </>
+    ),
   };
 
   const onCancel = () => {
@@ -101,11 +113,35 @@ const FlowBuilderSidePanel: FC<FlowBuilderSidePanelProps> = ({ className }) => {
   };
 
   const onSave = () => {
+    if (
+      nodeData.type === NodeType.TRACKER &&
+      nodeData.tracker &&
+      selectedNode?.data.type === NodeType.TRACKER &&
+      selectedNode.data.tracker &&
+      nodeData.tracker.trackerTemplate.id !==
+        selectedNode.data.tracker.trackerTemplate.id &&
+      nodes.some(
+        (node) =>
+          node.data.type === NodeType.TRACKER &&
+          node.id !== selectedNode.id &&
+          node.data.tracker?.trackerId === nodeData.tracker?.trackerId
+      )
+    ) {
+      setIsTrackerModalSaveOpen(true);
+      return;
+    }
+
     if (selectedNode)
       dispatch(changeNodeData({ id: selectedNode.id, data: nodeData }));
 
     dispatch(deselectNodes());
   };
+
+  useEffect(() => {
+    if (nodeData.type !== NodeType.TRACKER || !selectedNode) return;
+
+    setNodeData({ ...nodeData, needsCheck: false });
+  }, [nodeData]);
 
   const isOpen =
     selectedNode &&
@@ -200,6 +236,26 @@ const FlowBuilderSidePanel: FC<FlowBuilderSidePanelProps> = ({ className }) => {
             isOpen={isDeleteModalOpen}
             onClose={() => setIsDeleteModalOpen(false)}
             selectedNode={selectedNode}
+          />
+        )}
+        {nodeData.type === NodeType.TRACKER && (
+          <FlowBuilderSaveTrackerModal
+            isOpen={isTrackerModalSaveOpen}
+            onClose={() => {
+              setIsTrackerModalSaveOpen(false);
+              onCancel();
+            }}
+            onYes={() => {
+              if (selectedNode)
+                dispatch(
+                  changeNodeData({
+                    id: selectedNode.id,
+                    data: { ...nodeData, needsCheck: true },
+                  })
+                );
+
+              dispatch(deselectNodes());
+            }}
           />
         )}
       </Transition>

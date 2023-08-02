@@ -50,8 +50,9 @@ export interface EventProps {
 }
 
 export enum ProviderType {
-  Posthog = "posthog",
-  Custom = "custom",
+  POSTHOG = "posthog",
+  CUSTOM = "custom",
+  TRACKER = "tracker",
 }
 
 export interface Trigger {

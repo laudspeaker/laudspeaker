@@ -21,6 +21,7 @@ export enum DrawerAction {
   PUSH = "push",
   WEBHOOK = "webhook",
   CUSTOM_MODAL = "customModal",
+  TRACKER = "tracker",
   JUMP_TO = "jumpTo",
   EXIT = "exit",
   WAIT_UNTIL = "waitUntil",
@@ -62,6 +63,11 @@ const flowBuilderDrawerFixtures: FlowBuilderDrawerFixture[] = [
         id: DrawerAction.CUSTOM_MODAL,
         icon: CustomModalIcon(),
         text: "Custom Modal",
+      },
+      {
+        id: DrawerAction.TRACKER,
+        icon: CustomModalIcon(),
+        text: "Tracker",
       },
       {
         id: DrawerAction.JUMP_TO,

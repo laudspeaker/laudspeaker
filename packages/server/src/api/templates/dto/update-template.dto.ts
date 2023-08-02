@@ -1,13 +1,16 @@
 import { Trim } from 'class-sanitizer';
 import {
+  IsArray,
   IsEmail,
   IsNotEmpty,
   IsObject,
   IsOptional,
   IsString,
   MaxLength,
+  ValidateNested,
 } from 'class-validator';
 import { TemplateType, WebhookData } from '../entities/template.entity';
+import { Type } from 'class-transformer';
 
 export class UpdateTemplateDto {
   @Trim()
@@ -57,4 +60,13 @@ export class UpdateTemplateDto {
   @IsObject()
   @IsOptional()
   public modalState?: Record<string, unknown>;
+
+  @IsOptional()
+  @IsArray()
+  @Type(() => String)
+  customEvents?: string[];
+
+  @IsOptional()
+  @IsObject()
+  customFields?: Record<string, unknown>;
 }

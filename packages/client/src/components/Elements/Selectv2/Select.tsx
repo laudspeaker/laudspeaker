@@ -9,6 +9,7 @@ interface SelectProps<T> {
   className?: string;
   buttonClassName?: string;
   panelClassName?: string;
+  noDataPlaceholder?: string;
 }
 
 const Select = <T,>({
@@ -19,6 +20,7 @@ const Select = <T,>({
   className,
   buttonClassName,
   panelClassName,
+  noDataPlaceholder,
 }: SelectProps<T>) => {
   return (
     <Popover
@@ -32,7 +34,7 @@ const Select = <T,>({
             className={`w-full ${buttonClassName ? buttonClassName : ""}`}
           >
             <div className="border-[1px] border-[#E5E7EB] rounded-[2px] bg-white px-[12px] py-[4px] flex items-center justify-between gap-[6px]">
-              <div>
+              <div className="max-w-full overflow-hidden text-ellipsis whitespace-nowrap">
                 {options.find((option) => option.key === value)?.title ||
                   placeholder}
               </div>
@@ -59,24 +61,30 @@ const Select = <T,>({
             }`}
           >
             <div
-              className="bg-white py-[4px] min-w-[200px] w-fit"
+              className="bg-white py-[4px] min-w-[200px] max-w-full w-fit"
               style={{
                 boxShadow:
                   "0px 9px 28px 8px rgba(0, 0, 0, 0.05), 0px 6px 16px 0px rgba(0, 0, 0, 0.08), 0px 3px 6px -4px rgba(0, 0, 0, 0.12)",
               }}
             >
-              {options.map((option, i) => (
-                <div
-                  key={i}
-                  className="px-[12px] py-[5px] hover:bg-[#F3F4F6] select-none cursor-pointer"
-                  onClick={() => {
-                    onChange(option.key);
-                    close();
-                  }}
-                >
-                  {option.title}
+              {options.length === 0 ? (
+                <div className="px-[12px] py-[5px] hover:bg-[#F3F4F6] select-none text-[#9CA3AF] text-center">
+                  {noDataPlaceholder}
                 </div>
-              ))}
+              ) : (
+                options.map((option, i) => (
+                  <div
+                    key={i}
+                    className="max-w-full overflow-hidden text-ellipsis whitespace-nowrap px-[12px] py-[5px] hover:bg-[#F3F4F6] select-none cursor-pointer"
+                    onClick={() => {
+                      onChange(option.key);
+                      close();
+                    }}
+                  >
+                    {option.title}
+                  </div>
+                ))
+              )}
             </div>
           </Popover.Panel>
         </>

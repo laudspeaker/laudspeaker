@@ -18,7 +18,10 @@ export const JumpToNode: FC<NodeProps<JumpToNodeData>> = ({
     if (targetId === data.targetId) return;
 
     dispatch(
-      changeNodeData({ id, data: { type: NodeType.JUMP_TO, targetId } })
+      changeNodeData({
+        id,
+        data: { ...data, type: NodeType.JUMP_TO, targetId },
+      })
     );
   };
 

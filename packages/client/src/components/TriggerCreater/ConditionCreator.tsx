@@ -65,7 +65,7 @@ const ConditionCreater: FC<ConditionCreaterProps> = ({
   };
 
   useEffect(() => {
-    if (specificProvider === ProviderType.Custom)
+    if (specificProvider === ProviderType.CUSTOM)
       onChange({ ...condition, filterBy: FilterByOption.CUSTOMER_KEY });
   }, [specificProvider]);
 
@@ -145,7 +145,7 @@ const ConditionCreater: FC<ConditionCreaterProps> = ({
 
   return (
     <div className="flex flex-col gap-[10px] m-[10px_0px]">
-      {specificProvider === ProviderType.Posthog && (
+      {specificProvider === ProviderType.POSTHOG && (
         <div className="relative">
           <Select
             label="Filter by"

@@ -5,6 +5,7 @@ export enum AnalyticsProviderTypes {
   AMPLITUDE = 'amplitude',
   MIXPANEL = 'mixpanel',
   LAUDSPEAKER = 'custom',
+  TRACKER = 'tracker',
 }
 
 export enum StepType {
@@ -18,6 +19,7 @@ export enum StepType {
   AB_TEST = 'ABTest',
   RANDOM_COHORT_BRANCH = 'randomCohort',
   WAIT_UNTIL_BRANCH = 'waitUntil',
+  TRACKER = 'tracker',
 }
 
 export class TimeWindow {
@@ -81,6 +83,12 @@ export enum Channel {
   PUSH = 'push',
   WEBHOOK = 'webhook',
   MODAL = 'modal',
+  CUSTOM_COMPONENT = 'custom_component',
+}
+
+export enum CustomComponentAction {
+  SHOW = 'show',
+  HIDE = 'hide',
 }
 
 /*
@@ -120,13 +128,22 @@ export class Event {}
 export class MessageEvent extends Event {}
 
 /*
+ * Events associated with messages; for example, if a customer
+ * opens an email or receives a push notification.
+ */
+export class ComponentEvent extends Event {
+  event: string;
+  trackerID: string;
+}
+
+/*
  * Events associated with product analytics, for example Posthog
  * or Amplitude.
  */
 export class AnalyticsEvent extends Event {
   provider: AnalyticsProviderTypes; // client/src/types/Workflow.ts: ProviderType
   event: string;
-  conditions: AnalyticsEventCondition[];
+  conditions?: AnalyticsEventCondition[];
   relation?: string; // and/or
 }
 
@@ -240,6 +257,17 @@ export class MessageStepMetadata extends SingleBranchMetadata {
   template: string;
 }
 
+/**
+ * Custom Component Step metadata, need extra fields for what actions to
+ * take (show/hide), what to change fields to, and the human readable
+ * step name.
+ */
+export class CustomComponentStepMetadata extends MessageStepMetadata {
+  action: CustomComponentAction;
+  humanReadableName: string;
+  pushedValues: Record<string, any>;
+}
+
 export class TimeWindowStepMetadata extends SingleBranchMetadata {
   window: TimeWindow;
 }
@@ -265,6 +293,7 @@ export type AllStepTypeMetadata =
   | AttributeChangeEvent
   | AnalyticsEvent
   | MessageStepMetadata
+  | CustomComponentStepMetadata
   | LoopStepMetadata
   | StartStepMetadata
   | ExitStepMetadata
