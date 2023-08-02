@@ -130,7 +130,6 @@ export interface Stats {
   clickedPercentage?: number;
   wssent?: number;
   openedPercentage?: number;
-  shown?: number;
 }
 
 export interface CommonNodeData {

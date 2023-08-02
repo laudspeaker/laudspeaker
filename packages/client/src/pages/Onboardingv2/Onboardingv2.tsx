@@ -34,6 +34,22 @@ export const onboardingStepToNameMap: Record<OnboardingPage, string> = {
 };
 
 const Onboardingv2 = () => {
+  const email = useAppSelector((state) => state.auth.userData.email);
+
+  const laudspeaker = useLaudspeaker();
+
+  const identifyListener = () => {
+    if (email) laudspeaker.identify({ email });
+  };
+
+  useLayoutEffect(() => {
+    laudspeaker.on("connect", identifyListener);
+
+    return () => {
+      laudspeaker.removeListener("connect", identifyListener);
+    };
+  }, [laudspeaker, email]);
+
   const { state: trackerState, emitTrackerEvent } = useTracker<{
     step: SandboxStep;
     page: OnboardingPage;

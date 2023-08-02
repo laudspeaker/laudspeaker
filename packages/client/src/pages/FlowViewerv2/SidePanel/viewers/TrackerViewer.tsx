@@ -5,14 +5,17 @@ import {
   TrackerVisibility,
 } from "pages/FlowBuilderv2/Nodes/NodeData";
 import { trackerStatsToShow } from "pages/FlowBuilderv2/Nodes/TrackerNode";
-import React, { FC, ReactNode, useState } from "react";
+import React, { FC, ReactNode, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { SidePanelComponentProps } from "../FlowViewerSidePanel";
+import ApiService from "services/api.service";
 
 enum TrackerViewerTab {
   METRICS,
   TRACKER_FIELDS,
 }
+
+const ITEMS_PER_PAGE = 5;
 
 const TrackerViewer: FC<SidePanelComponentProps<TrackerNodeData>> = ({
   nodeData,
@@ -31,6 +34,28 @@ const TrackerViewer: FC<SidePanelComponentProps<TrackerNodeData>> = ({
       email?: string;
     }[]
   >([]);
+
+  const loadStatCustomers = async () => {
+    if (!pickedStat || !nodeData.stepId) return;
+
+    const {
+      data: { data, totalPages: pagesCount },
+    } = await ApiService.get<{
+      data: { id: string; email?: string }[];
+      totalPages: number;
+    }>({
+      url: `/customers/stats-from-step?event=${pickedStat}&stepId=${
+        nodeData.stepId
+      }&take=${ITEMS_PER_PAGE}&skip=${(currentPage - 1) * ITEMS_PER_PAGE}`,
+    });
+
+    setStatCustomers(data || []);
+    setTotalPages(pagesCount || 1);
+  };
+
+  useEffect(() => {
+    loadStatCustomers();
+  }, [pickedStat]);
 
   const viewerTabToComponentMap: Record<TrackerViewerTab, ReactNode> = {
     [TrackerViewerTab.METRICS]: (

@@ -12,13 +12,13 @@ export const trackerStatsToShow: {
   renderLabel: (value: number) => string;
 }[] = [
   {
-    key: "delivered",
+    key: "sent",
     name: "Delivered",
     renderLabel: (value) => compatNumberFormatter.format(value),
   },
   {
-    key: "shown",
-    name: "Show",
+    key: "delivered",
+    name: "Shown",
     renderLabel: (value) => compatNumberFormatter.format(value),
   },
 ];
@@ -29,8 +29,6 @@ export const TrackerNode: FC<NodeProps<TrackerNodeData>> = ({
   selected,
 }) => {
   const { isViewMode } = useAppSelector((state) => state.flowBuilder);
-
-  stats = { delivered: 0, shown: 0 };
 
   return (
     <div
