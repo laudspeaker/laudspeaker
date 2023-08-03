@@ -60,6 +60,7 @@ import JavascriptSnippetSettings from "pages/JavascriptSnippetSettings";
 import CustomModalSettings from "pages/CustomModalSettings";
 import TrackerTemplateTable from "pages/TrackerTemplateTable";
 import { LaudspeakerProvider } from "@laudspeaker/react";
+import AppConfig from "constants/app";
 
 interface IProtected {
   children: ReactElement;
@@ -670,7 +671,7 @@ const RouteComponent: React.FC = () => {
               <VerificationProtected>
                 <LaudspeakerProvider
                   apiKey="onboarding-api-key"
-                  apiHost="http://localhost:3001"
+                  apiHost={AppConfig.API_BASE_URL}
                 >
                   <Onboardingv2 />
                 </LaudspeakerProvider>
