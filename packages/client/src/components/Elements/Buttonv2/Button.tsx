@@ -13,6 +13,7 @@ export interface ButtonProps {
   children?: ReactNode;
   disabled?: boolean;
   onClick: (e: MouseEvent<HTMLButtonElement>) => void;
+  id?: string;
 }
 
 const specificTypeClassNameMap: Record<ButtonType, string> = {

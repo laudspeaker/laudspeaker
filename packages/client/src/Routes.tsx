@@ -200,20 +200,24 @@ const RouteComponent: React.FC = () => {
 
   useEffect(() => {
     (async () => {
-      const { data } = await ApiService.get<Account>({ url: "/accounts" });
+      try {
+        const { data } = await ApiService.get<Account>({ url: "/accounts" });
 
-      dispatch({
-        type: ActionType.LOGIN_USER_SUCCESS,
-        payload: {
-          firstName: data.firstName,
-          lastName: data.lastName,
-          uId: data.id,
-          onboarded: data.onboarded,
-          email: data.email,
-          expectedOnboarding: data.expectedOnboarding,
-          verified: data.verified,
-        },
-      });
+        dispatch({
+          type: ActionType.LOGIN_USER_SUCCESS,
+          payload: {
+            firstName: data.firstName,
+            lastName: data.lastName,
+            uId: data.id,
+            onboarded: data.onboarded,
+            email: data.email,
+            expectedOnboarding: data.expectedOnboarding,
+            verified: data.verified,
+          },
+        });
+      } catch (e) {
+        console.error(e);
+      }
     })();
   }, []);
 

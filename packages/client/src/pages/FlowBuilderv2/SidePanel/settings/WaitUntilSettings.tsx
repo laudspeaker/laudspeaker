@@ -190,7 +190,7 @@ const WaitUntilSettings: FC<SidePanelComponentProps<WaitUntilNodeData>> = ({
             <Button
               type={ButtonType.LINK}
               onClick={isOnboarding ? () => {} : onDeleteBranch(i)}
-              className="text-[#EB5757] hover:text-[#EB5757] focus:text-[#EB5757]"
+              className="delete-branch text-[#EB5757] hover:text-[#EB5757] focus:text-[#EB5757]"
             >
               Delete branch
             </Button>
@@ -223,6 +223,7 @@ const WaitUntilSettings: FC<SidePanelComponentProps<WaitUntilNodeData>> = ({
           type={ButtonType.SECONDARY}
           onClick={handleAddEventBranch}
           disabled={isOnboarding || nodeData.branches.length > 14}
+          id="add-branch"
         >
           Add branch
         </Button>
@@ -234,6 +235,7 @@ const WaitUntilSettings: FC<SidePanelComponentProps<WaitUntilNodeData>> = ({
             isOnboarding ||
             branches.some((branch) => branch.type === BranchType.MAX_TIME)
           }
+          id="set-max-time"
         >
           Set max. time
         </Button>

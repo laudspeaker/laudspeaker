@@ -21,7 +21,7 @@ export const WaitUntilNode: FC<NodeProps<WaitUntilNodeData>> = ({
 
   return (
     <div
-      className={`w-[260px] h-[80px] rounded-[4px] bg-white font-inter ${
+      className={`wait-until-node w-[260px] h-[80px] rounded-[4px] bg-white font-inter ${
         selected
           ? "border-[2px] border-[#6366F1]"
           : "border-[1px] border-[#E5E7EB]"

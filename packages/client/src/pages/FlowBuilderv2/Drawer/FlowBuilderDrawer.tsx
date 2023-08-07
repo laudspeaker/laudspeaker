@@ -72,6 +72,7 @@ const FlowBuilderDrawer: FC<FlowBuilderDrawerProps> = ({ fixtures }) => {
                   onDragEnd={onDragEnd}
                   key={i}
                   draggable={!child.disabled}
+                  id={child.id}
                 >
                   <div className="text-[#6366F1]">{child.icon}</div>
                   <div className="font-segoe font-normal text-[14px] leading-[22px]">

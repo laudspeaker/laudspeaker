@@ -89,6 +89,7 @@ const FlowBuilderStartModal: FC<FlowBuilderStartModalProps> = ({
               handleStartJourney();
               onClose();
             }}
+            id="journey-start-verify-button"
           >
             Start
           </Button>

@@ -89,6 +89,7 @@ const EventBranchEditor: FC<EventBranchEditorProps> = ({
           <Button
             type={ButtonType.LINK}
             onClick={isOnboarding ? () => null : onAddCondition}
+            className="add-condition"
           >
             Add condition
           </Button>

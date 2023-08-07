@@ -68,7 +68,10 @@ const StaticDrawer = () => {
                   >
                     {({ open }) => (
                       <div className="flex flex-col gap-[8px]">
-                        <Disclosure.Button className="w-full">
+                        <Disclosure.Button
+                          className="w-full"
+                          id={navigationItem.id}
+                        >
                           <div
                             className={`relative w-full h-[40px] flex items-center gap-[16px] select-none cursor-pointer`}
                           >
@@ -107,6 +110,7 @@ const StaticDrawer = () => {
                                 className={`w-full h-[40px] flex items-center select-none cursor-pointer pl-[22px]`}
                                 onClick={() => navigate(child.link)}
                                 key={child.id}
+                                id={child.id}
                               >
                                 <div
                                   className={`rounded-[4px] flex items-center w-full gap-[16px] ${
@@ -143,6 +147,7 @@ const StaticDrawer = () => {
                 <div
                   className={`w-full h-[40px] flex items-center select-none cursor-pointer `}
                   onClick={() => navigate(navigationItem.link)}
+                  id={navigationItem.id}
                 >
                   <div
                     className={`rounded-[4px] flex items-center w-full gap-[16px] ${

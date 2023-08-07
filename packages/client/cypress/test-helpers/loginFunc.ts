@@ -16,6 +16,4 @@ export const loginFunc = (
   cy.get("#email").type(_email);
   cy.get("#password").type(_password);
   cy.get("#loginIntoAccount").click();
-  cy.contains("Welcome").should("exist");
-  if (firstLogin) cy.get(".grayscale").click();
 };

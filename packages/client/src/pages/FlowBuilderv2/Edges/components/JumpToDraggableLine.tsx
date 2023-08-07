@@ -295,7 +295,7 @@ const JumpToDraggableLine: FC<JumpToDraggableLineProps> = ({
     >
       <div
         ref={sourceRef}
-        className="relative rounded-[100%] w-[10px] h-[10px] bg-[#4338CA] -translate-y-2/3"
+        className="jump-to-dragging-source relative rounded-[100%] w-[10px] h-[10px] bg-[#4338CA] -translate-y-2/3"
       >
         {edgesContainer &&
           createPortal(

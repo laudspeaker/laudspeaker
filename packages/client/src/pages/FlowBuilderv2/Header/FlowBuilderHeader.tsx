@@ -141,6 +141,7 @@ const FlowBuilderHeader = () => {
           type={ButtonType.PRIMARY}
           onClick={() => setIsStartModalOpen(true)}
           className="mr-[20px]"
+          id="start-journey-button"
         >
           Start journey
         </Button>
@@ -149,6 +150,7 @@ const FlowBuilderHeader = () => {
           type={ButtonType.PRIMARY}
           onClick={handleNextStep}
           className="mr-[20px]"
+          id="next-button"
         >
           Next
         </Button>
