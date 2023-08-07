@@ -16,7 +16,7 @@
   
 </p>
 
-## Laudspeaker - Open source omni-channel customer messaging. Alternative to Braze / Iterable / One Signal / Customer Io
+## Laudspeaker - Open Source User Onboarding and omni-channel customer messaging Platform. Alternative to Braze / Appcues/ Iterable / One Signal / Customer Io / Pendo
 
 <img width="1708" alt="UI2" src="https://github.com/laudspeaker/laudspeaker/assets/7728266/4c3c2917-6899-48f7-bcbe-a4bd92049c24">
 
@@ -36,16 +36,6 @@
 ## 🚀 Get Started
 
 Run yourself (instructions below) or use [Laudspeaker Cloud](https://app.laudspeaker.com/login/?ref=github) . Docs are [here](https://laudspeaker.com/docs/guides/overview/intro/?ref=github)
-
-### Deploy Laudspeaker on Render.com
-
-If you want a one-click render option **READ THIS** <a href="https://laudspeaker.com/docs/guides/deploy/options/?ref=github">**DOC**</a> and try it out here:
-
-NB: Create environment group with name "laudspeaker"
-
-<a href="https://render.com/deploy?repo=https://github.com/laudspeaker/laudspeaker/tree/production">
-<img src="https://render.com/images/deploy-to-render-button.svg" alt="Deploy to Render">
-</a>
 
 ### Want help deploying?
 
