@@ -322,14 +322,13 @@ export class EventsPreProcessor extends WorkerHost {
           transactionSession
         );
 
-      if (!correlation.found)
-        await this.journeysService.enrollCustomer(
-          job.data.account,
-          correlation.cust,
-          queryRunner,
-          transactionSession,
-          job.data.session
-        );
+      await this.journeysService.enrollCustomer(
+        job.data.account,
+        correlation.cust,
+        queryRunner,
+        transactionSession,
+        job.data.session
+      );
 
       const journeys = await queryRunner.manager.find(Journey, {
         where: {

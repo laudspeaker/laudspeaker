@@ -27,7 +27,7 @@ import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { JourneysService } from '../journeys/journeys.service';
 import { TemplatesService } from '../templates/templates.service';
 import { TemplateType } from '../templates/entities/template.entity';
-import onboardingJourneyFixtures from './onboarding-journey.json';
+import onboardingJourneyFixtures from './onboarding-journey';
 import { StepsService } from '../steps/steps.service';
 import { StepType } from '../steps/types/step.interface';
 
@@ -545,34 +545,36 @@ export class AccountsService extends BaseJwtHelper {
         {
           id: journey.id,
           nodes: await Promise.all(
-            onboardingJourneyFixtures.nodes.map(async (node) => ({
-              ...node,
-              data: {
-                ...node.data,
-                stepId:
-                  (
-                    await this.stepsService.findOne(
-                      account,
-                      node.data.stepId,
-                      ''
-                    )
-                  )?.id ||
-                  (node.data.type
-                    ? (
-                        await this.stepsService.insert(
-                          account,
-                          {
-                            journeyID: journey.id,
-                            type: node.data.type as StepType,
-                          },
-                          ''
-                        )
-                      ).id
-                    : undefined),
-              },
-            }))
+            onboardingJourneyFixtures(trackerTemplate.id).nodes.map(
+              async (node) => ({
+                ...node,
+                data: {
+                  ...node.data,
+                  stepId:
+                    (
+                      await this.stepsService.findOne(
+                        account,
+                        node.data.stepId,
+                        ''
+                      )
+                    )?.id ||
+                    (node.data.type
+                      ? (
+                          await this.stepsService.insert(
+                            account,
+                            {
+                              journeyID: journey.id,
+                              type: node.data.type as StepType,
+                            },
+                            ''
+                          )
+                        ).id
+                      : undefined),
+                },
+              })
+            )
           ),
-          edges: onboardingJourneyFixtures.edges,
+          edges: onboardingJourneyFixtures(trackerTemplate.id).edges,
         },
         ''
       );

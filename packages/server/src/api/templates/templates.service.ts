@@ -557,7 +557,6 @@ export class TemplatesService extends QueueEventsHost {
     queryRunner: QueryRunner
   ): Promise<Template> {
     return queryRunner.manager.findOneBy(Template, {
-      owner: { id: account.id },
       id: id,
     });
   }

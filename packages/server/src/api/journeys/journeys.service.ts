@@ -420,13 +420,15 @@ export class JourneysService {
   }
 
   /**
+   *  IMPORTANT: THIS METHOD MUST REMAIN IDEMPOTENT: CUSTOMER SHOULD
+   * NOT BE DOUBLE ENROLLED IN JOURNEY
+   *
    * Adds a customer to dynamic primary audience of all active journeys,
    * and sends them any relevant messages. Similar to  start,
    * one customer -> many journeys
    *
-   * @remarks Throws an error if the workflow is not found
-   * @param account The owner of the workflow
-   * @param updateAudienceDto DTO with the updated information
+   * @remarks Throws an error if the journey is not found
+   * @param account The owner of the journey
    *
    */
   async enrollCustomer(
