@@ -278,7 +278,7 @@ export class AccountsService extends BaseJwtHelper {
           oldUser.customerId
         );
 
-        customer.verified = false;
+        customer.__sys__isVerified = false;
         await customer.save({ session: transactionSession });
       }
     }

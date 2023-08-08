@@ -170,7 +170,7 @@ export class AudiencesHelper {
     session: string,
     account?: Account
   ): Promise<boolean> {
-    if (cust.isFreezed) return false;
+    if (cust.__sys__isFrozen) return false;
 
     if (
       !inclusionCriteria ||
