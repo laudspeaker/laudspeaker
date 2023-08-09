@@ -671,7 +671,7 @@ const RouteComponent: React.FC = () => {
               <VerificationProtected>
                 <LaudspeakerProvider
                   apiKey="onboarding-api-key"
-                  apiHost={AppConfig.API_BASE_URL}
+                  apiHost="https://staging-app.laudspeaker.com"
                 >
                   <Onboardingv2 />
                 </LaudspeakerProvider>
