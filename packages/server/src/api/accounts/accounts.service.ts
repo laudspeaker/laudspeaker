@@ -454,15 +454,15 @@ export class AccountsService extends BaseJwtHelper {
 
   async createOnboadingAccount() {
     let account = await this.accountsRepository.findOneBy({
-      email: 'laudspeaker.onboarding@gmail.com',
-      apiKey: 'onboarding-api-key',
+      email: process.env.ONBOARDING_ACCOUNT_EMAIL,
+      apiKey: process.env.ONBOARDING_ACCOUNT_API_KEY,
     });
 
     if (!account)
       account = await this.accountsRepository.save({
-        email: 'laudspeaker.onboarding@gmail.com',
-        apiKey: 'onboarding-api-key',
-        password: this.authService.helper.encodePassword('00000000'),
+        email: process.env.ONBOARDING_ACCOUNT_EMAIL,
+        apiKey: process.env.ONBOARDING_ACCOUNT_API_KEY,
+        password: this.authService.helper.encodePassword(process.env.ONBOARDING_ACCOUNT_PASSWORD),
         verified: true,
       });
 
