@@ -462,7 +462,9 @@ export class AccountsService extends BaseJwtHelper {
       account = await this.accountsRepository.save({
         email: process.env.ONBOARDING_ACCOUNT_EMAIL,
         apiKey: process.env.ONBOARDING_ACCOUNT_API_KEY,
-        password: this.authService.helper.encodePassword(process.env.ONBOARDING_ACCOUNT_PASSWORD),
+        password: this.authService.helper.encodePassword(
+          process.env.ONBOARDING_ACCOUNT_PASSWORD
+        ),
         verified: true,
       });
 

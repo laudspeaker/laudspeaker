@@ -37,6 +37,7 @@ import { JourneysModule } from '../journeys/journeys.module';
 import { AudiencesHelper } from '../audiences/audiences.helper';
 import { SegmentsModule } from '../segments/segments.module';
 import { EventsPreProcessor } from './events.preprocessor';
+import { TrackerHit } from './entities/tracker-hit.entity';
 
 @Module({
   imports: [
@@ -47,6 +48,7 @@ import { EventsPreProcessor } from './events.preprocessor';
       State,
       Template,
       Workflow,
+      TrackerHit,
     ]),
     MongooseModule.forFeature([
       { name: Customer.name, schema: CustomerSchema },
