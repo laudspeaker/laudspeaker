@@ -25,6 +25,7 @@ import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { createHash, randomUUID } from 'crypto';
 import { TrackerHit } from './entities/tracker-hit.entity';
 import { InjectRepository } from '@nestjs/typeorm';
+import { WebsocketGateway } from '@/websockets/websocket.gateway';
 
 @Injectable()
 @Processor('events', {
@@ -42,7 +43,9 @@ export class EventsProcessor extends WorkerHost {
     @InjectRepository(TrackerHit)
     public readonly trackerHitRepository: Repository<TrackerHit>,
     @InjectQueue('transition') private readonly transitionQueue: Queue,
-    private readonly audiencesHelper: AudiencesHelper
+    private readonly audiencesHelper: AudiencesHelper,
+    @Inject(WebsocketGateway)
+    private websocketGateway: WebsocketGateway
   ) {
     super();
   }
@@ -488,6 +491,10 @@ export class EventsProcessor extends WorkerHost {
           hash: trackerHitHash,
           processed: true,
         });
+        this.websocketGateway.sendProcessed(
+          job.data.event.correlationValue,
+          trackerHitHash
+        );
       }
 
       if (err) throw err;

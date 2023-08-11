@@ -38,6 +38,7 @@ import { AudiencesHelper } from '../audiences/audiences.helper';
 import { SegmentsModule } from '../segments/segments.module';
 import { EventsPreProcessor } from './events.preprocessor';
 import { TrackerHit } from './entities/tracker-hit.entity';
+import { WebsocketsModule } from '@/websockets/websockets.module';
 
 @Module({
   imports: [
@@ -86,6 +87,7 @@ import { TrackerHit } from './entities/tracker-hit.entity';
     forwardRef(() => WorkflowsModule),
     forwardRef(() => JourneysModule),
     forwardRef(() => SegmentsModule),
+    forwardRef(() => WebsocketsModule),
     AudiencesModule,
     SlackModule,
   ],

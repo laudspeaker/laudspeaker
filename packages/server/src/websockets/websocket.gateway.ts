@@ -372,6 +372,21 @@ export class WebsocketGateway implements OnGatewayConnection {
     return false;
   }
 
+  public async sendProcessed(
+    customerId: string,
+    hash: string
+  ): Promise<boolean> {
+    const sockets = await this.server.fetchSockets();
+    for (const socket of sockets) {
+      if (socket.data.customerId === customerId) {
+        socket.emit('processedEvent', hash);
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   public async sendCustomComponentState(
     customerID: string,
     trackerID: string,
