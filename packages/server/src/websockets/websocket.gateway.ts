@@ -337,6 +337,8 @@ export class WebsocketGateway implements OnGatewayConnection {
         socket.emit('customerId', customer.id);
       }
 
+      const trackerId = event.trackerId;
+
       await this.eventsService.customPayload(
         socket.data.account,
         {
@@ -344,7 +346,7 @@ export class WebsocketGateway implements OnGatewayConnection {
           correlationValue: customer.id,
           source: 'tracker',
           event: event.event,
-          payload: { trackerId: event.trackerId },
+          payload: { trackerId },
         },
         socket.data.session
       );

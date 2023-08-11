@@ -27,7 +27,7 @@ import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { JourneysService } from '../journeys/journeys.service';
 import { TemplatesService } from '../templates/templates.service';
 import { TemplateType } from '../templates/entities/template.entity';
-import onboardingJourneyFixtures from './onboarding-journey.json';
+import onboardingJourneyFixtures from './onboarding-journey';
 import { StepsService } from '../steps/steps.service';
 import { StepType } from '../steps/types/step.interface';
 
@@ -454,15 +454,17 @@ export class AccountsService extends BaseJwtHelper {
 
   async createOnboadingAccount() {
     let account = await this.accountsRepository.findOneBy({
-      email: 'laudspeaker.onboarding@gmail.com',
-      apiKey: 'onboarding-api-key',
+      email: process.env.ONBOARDING_ACCOUNT_EMAIL,
+      apiKey: process.env.ONBOARDING_ACCOUNT_API_KEY,
     });
 
     if (!account)
       account = await this.accountsRepository.save({
-        email: 'laudspeaker.onboarding@gmail.com',
-        apiKey: 'onboarding-api-key',
-        password: this.authService.helper.encodePassword('00000000'),
+        email: process.env.ONBOARDING_ACCOUNT_EMAIL,
+        apiKey: process.env.ONBOARDING_ACCOUNT_API_KEY,
+        password: this.authService.helper.encodePassword(
+          process.env.ONBOARDING_ACCOUNT_PASSWORD
+        ),
         verified: true,
       });
 
@@ -545,34 +547,36 @@ export class AccountsService extends BaseJwtHelper {
         {
           id: journey.id,
           nodes: await Promise.all(
-            onboardingJourneyFixtures.nodes.map(async (node) => ({
-              ...node,
-              data: {
-                ...node.data,
-                stepId:
-                  (
-                    await this.stepsService.findOne(
-                      account,
-                      node.data.stepId,
-                      ''
-                    )
-                  )?.id ||
-                  (node.data.type
-                    ? (
-                        await this.stepsService.insert(
-                          account,
-                          {
-                            journeyID: journey.id,
-                            type: node.data.type as StepType,
-                          },
-                          ''
-                        )
-                      ).id
-                    : undefined),
-              },
-            }))
+            onboardingJourneyFixtures(trackerTemplate.id).nodes.map(
+              async (node) => ({
+                ...node,
+                data: {
+                  ...node.data,
+                  stepId:
+                    (
+                      await this.stepsService.findOne(
+                        account,
+                        node.data.stepId,
+                        ''
+                      )
+                    )?.id ||
+                    (node.data.type
+                      ? (
+                          await this.stepsService.insert(
+                            account,
+                            {
+                              journeyID: journey.id,
+                              type: node.data.type as StepType,
+                            },
+                            ''
+                          )
+                        ).id
+                      : undefined),
+                },
+              })
+            )
           ),
-          edges: onboardingJourneyFixtures.edges,
+          edges: onboardingJourneyFixtures(trackerTemplate.id).edges,
         },
         ''
       );
