@@ -60,11 +60,12 @@ const FlowBuilderStartModal: FC<FlowBuilderStartModalProps> = ({
       await ApiService.patch({ url: "/journeys/start/" + flowId });
 
       toast.success("Journey has been started");
-      posthog.capture("journey_started");
+      posthog.capture("journey_started_success");
 
       navigate(`/flow/${flowId}/view`);
     } catch (e) {
       toast.error("Failed to start journey");
+      posthog.capture("journey_started_fail");
     }
   };
 
