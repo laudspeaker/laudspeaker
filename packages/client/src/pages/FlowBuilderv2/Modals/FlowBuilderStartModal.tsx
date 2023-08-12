@@ -8,6 +8,7 @@ import Button, {
   ButtonType,
 } from "../../../components/Elements/Buttonv2/Button";
 import FlowBuilderModal from "../Elements/FlowBuilderModal";
+import posthog from "posthog-js";
 
 interface FlowBuilderStartModalProps {
   isOpen: boolean;
@@ -59,6 +60,7 @@ const FlowBuilderStartModal: FC<FlowBuilderStartModalProps> = ({
       await ApiService.patch({ url: "/journeys/start/" + flowId });
 
       toast.success("Journey has been started");
+      posthog.capture("journey_started");
 
       navigate(`/flow/${flowId}/view`);
     } catch (e) {
