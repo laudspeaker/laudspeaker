@@ -8,7 +8,7 @@ import {
   WebSocketServer,
   OnGatewayConnection,
 } from '@nestjs/websockets';
-import { randomUUID } from 'crypto';
+import { createHash, randomUUID } from 'crypto';
 import { isValidObjectId, Model } from 'mongoose';
 import { Server, Socket } from 'socket.io';
 import { AccountsService } from '../api/accounts/accounts.service';
@@ -24,6 +24,9 @@ import {
   CustomerDocument,
 } from '@/api/customers/schemas/customer.schema';
 import { InjectModel } from '@nestjs/mongoose';
+import { InjectRepository } from '@nestjs/typeorm';
+import { TrackerHit } from '@/api/events/entities/tracker-hit.entity';
+import { Repository } from 'typeorm';
 
 interface SocketData {
   account: Account;
@@ -49,6 +52,8 @@ export class WebsocketGateway implements OnGatewayConnection {
     private customersService: CustomersService,
     @Inject(forwardRef(() => EventsService))
     private eventsService: EventsService,
+    @InjectRepository(TrackerHit)
+    public readonly trackerHitRepository: Repository<TrackerHit>,
     @Inject(WebhooksService) private readonly webhooksService: WebhooksService,
     @InjectModel(Customer.name) public customerModel: Model<CustomerDocument>
   ) {}
@@ -339,6 +344,29 @@ export class WebsocketGateway implements OnGatewayConnection {
 
       const trackerId = event.trackerId;
 
+      const trackerHitHash = Buffer.from(
+        createHash('sha256')
+          .update(
+            String(
+              (event.event as string) + (trackerId as string) + customer.id
+            )
+          )
+          .digest('hex')
+      ).toString('base64');
+
+      const foundTrackerHit = await this.trackerHitRepository.findOneBy({
+        hash: trackerHitHash,
+      });
+
+      if (foundTrackerHit && !foundTrackerHit.processed) {
+        throw new Error('Tracker event hit rate-limitted');
+      }
+
+      await this.trackerHitRepository.save({
+        hash: trackerHitHash,
+        processed: false,
+      });
+
       await this.eventsService.customPayload(
         socket.data.account,
         {
@@ -377,14 +405,16 @@ export class WebsocketGateway implements OnGatewayConnection {
     hash: string
   ): Promise<boolean> {
     const sockets = await this.server.fetchSockets();
-    for (const socket of sockets) {
-      if (socket.data.customerId === customerId) {
-        socket.emit('processedEvent', hash);
-        return true;
-      }
-    }
 
-    return false;
+    const customerSocket = sockets.find(
+      (socket) => socket.data.customerId === customerId
+    );
+
+    if (!customerSocket) return false;
+
+    customerSocket.emit('processedEvent', hash);
+
+    return true;
   }
 
   public async sendCustomComponentState(

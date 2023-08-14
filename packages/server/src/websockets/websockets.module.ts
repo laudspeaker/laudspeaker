@@ -10,9 +10,12 @@ import {
 } from '@/api/customers/schemas/customer.schema';
 import { MongooseModule } from '@nestjs/mongoose';
 import { WebhooksModule } from '@/api/webhooks/webhooks.module';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { TrackerHit } from '@/api/events/entities/tracker-hit.entity';
 
 @Module({
   imports: [
+    TypeOrmModule.forFeature([TrackerHit]),
     MongooseModule.forFeature([
       { name: Customer.name, schema: CustomerSchema },
     ]),

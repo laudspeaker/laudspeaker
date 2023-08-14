@@ -1,6 +1,6 @@
 import { InjectQueue, Processor, WorkerHost } from '@nestjs/bullmq';
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { Job, Queue } from 'bullmq';
+import { Job, Queue, QueueEvents } from 'bullmq';
 import { Account } from '../accounts/entities/accounts.entity';
 import { CustomerDocument } from '../customers/schemas/customer.schema';
 import { CustomersService } from '../customers/customers.service';
@@ -134,21 +134,6 @@ export class EventsProcessor extends WorkerHost {
         : undefined;
 
     try {
-      if (trackerHitHash) {
-        const foundTrackerHit = await this.trackerHitRepository.findOneBy({
-          hash: trackerHitHash,
-        });
-
-        if (foundTrackerHit && !foundTrackerHit.processed) {
-          throw new Error('Tracker event hit rate-limitted');
-        }
-
-        await this.trackerHitRepository.save({
-          hash: trackerHitHash,
-          processed: false,
-        });
-      }
-
       //Account associated with event
       const account: Account = await queryRunner.manager.findOneBy(Account, {
         id: job.data.accountID,
@@ -458,13 +443,18 @@ export class EventsProcessor extends WorkerHost {
             this.process.name,
             job.data.session
           );
-          await this.transitionQueue.add(stepToQueue.type, {
-            step: stepToQueue,
-            branch: branch,
-            customer: customer.id,
-            ownerID: stepToQueue.owner.id,
-            session: job.data.session,
-          });
+          const transitionJob = await this.transitionQueue.add(
+            stepToQueue.type,
+            {
+              step: stepToQueue,
+              branch: branch,
+              customer: customer.id,
+              ownerID: stepToQueue.owner.id,
+              session: job.data.session,
+            }
+          );
+
+          await transitionJob.waitUntilFinished(new QueueEvents('transition'));
         }
       } else {
         this.warn(
