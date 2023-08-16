@@ -22,6 +22,8 @@ import WaitUntilSettings from "./settings/WaitUntilSettings";
 export interface SidePanelComponentProps<T extends NodeData = NodeData> {
   nodeData: T;
   setNodeData: (nodeData: T) => void;
+  setIsError: (value: boolean) => void;
+  showErrors: boolean;
 }
 
 interface FlowBuilderSidePanelProps {
@@ -45,6 +47,8 @@ const FlowBuilderSidePanel: FC<FlowBuilderSidePanelProps> = ({ className }) => {
   }, [selectedNode]);
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isError, setIsError] = useState(false);
+  const [showErrors, setShowErrors] = useState(false);
 
   const nodeTypeToNameMap: Record<NodeType, string> = {
     [NodeType.START]: "",
@@ -64,28 +68,48 @@ const FlowBuilderSidePanel: FC<FlowBuilderSidePanelProps> = ({ className }) => {
     [NodeType.MESSAGE]: (
       <>
         {nodeData.type === NodeType.MESSAGE && (
-          <MessageSettings nodeData={nodeData} setNodeData={setNodeData} />
+          <MessageSettings
+            nodeData={nodeData}
+            setNodeData={setNodeData}
+            setIsError={setIsError}
+            showErrors={showErrors}
+          />
         )}
       </>
     ),
     [NodeType.WAIT_UNTIL]: (
       <>
         {nodeData.type === NodeType.WAIT_UNTIL && (
-          <WaitUntilSettings nodeData={nodeData} setNodeData={setNodeData} />
+          <WaitUntilSettings
+            nodeData={nodeData}
+            setNodeData={setNodeData}
+            setIsError={setIsError}
+            showErrors={showErrors}
+          />
         )}
       </>
     ),
     [NodeType.TIME_DELAY]: (
       <>
         {nodeData.type === NodeType.TIME_DELAY && (
-          <TimeDelaySettings nodeData={nodeData} setNodeData={setNodeData} />
+          <TimeDelaySettings
+            nodeData={nodeData}
+            setNodeData={setNodeData}
+            setIsError={setIsError}
+            showErrors={showErrors}
+          />
         )}
       </>
     ),
     [NodeType.TIME_WINDOW]: (
       <>
         {nodeData.type === NodeType.TIME_WINDOW && (
-          <TimeWindowSettings nodeData={nodeData} setNodeData={setNodeData} />
+          <TimeWindowSettings
+            nodeData={nodeData}
+            setNodeData={setNodeData}
+            setIsError={setIsError}
+            showErrors={showErrors}
+          />
         )}
       </>
     ),
@@ -95,6 +119,8 @@ const FlowBuilderSidePanel: FC<FlowBuilderSidePanelProps> = ({ className }) => {
           <UserAttributeSettings
             nodeData={nodeData}
             setNodeData={setNodeData}
+            setIsError={setIsError}
+            showErrors={showErrors}
           />
         )}
       </>
@@ -102,17 +128,34 @@ const FlowBuilderSidePanel: FC<FlowBuilderSidePanelProps> = ({ className }) => {
     [NodeType.TRACKER]: (
       <>
         {nodeData.type === NodeType.TRACKER && (
-          <TrackerSettings nodeData={nodeData} setNodeData={setNodeData} />
+          <TrackerSettings
+            nodeData={nodeData}
+            setNodeData={setNodeData}
+            setIsError={setIsError}
+            showErrors={showErrors}
+          />
         )}
       </>
     ),
   };
 
   const onCancel = () => {
+    if (selectedNode)
+      dispatch(
+        changeNodeData({
+          id: selectedNode.id,
+          data: { ...nodeData, showErrors: true },
+        })
+      );
     dispatch(deselectNodes());
   };
 
   const onSave = () => {
+    if (isError) {
+      setShowErrors(true);
+      return;
+    }
+
     if (
       nodeData.type === NodeType.TRACKER &&
       nodeData.tracker &&
@@ -132,7 +175,12 @@ const FlowBuilderSidePanel: FC<FlowBuilderSidePanelProps> = ({ className }) => {
     }
 
     if (selectedNode)
-      dispatch(changeNodeData({ id: selectedNode.id, data: nodeData }));
+      dispatch(
+        changeNodeData({
+          id: selectedNode.id,
+          data: { ...nodeData, showErrors: true },
+        })
+      );
 
     dispatch(deselectNodes());
   };
@@ -250,7 +298,7 @@ const FlowBuilderSidePanel: FC<FlowBuilderSidePanelProps> = ({ className }) => {
                 dispatch(
                   changeNodeData({
                     id: selectedNode.id,
-                    data: { ...nodeData, needsCheck: true },
+                    data: { ...nodeData, needsCheck: true, showErrors: true },
                   })
                 );
 

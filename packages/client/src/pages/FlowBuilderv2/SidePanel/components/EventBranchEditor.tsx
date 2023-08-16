@@ -21,7 +21,6 @@ interface EventBranchEditorProps {
     needRelationCheck: boolean
   ) => void;
   onDeleteCondition: (j: number) => void;
-  isOnlyBranch?: boolean;
 }
 
 const EventBranchEditor: FC<EventBranchEditorProps> = ({
@@ -29,7 +28,6 @@ const EventBranchEditor: FC<EventBranchEditorProps> = ({
   onAddCondition,
   onConditionChange,
   onDeleteCondition,
-  isOnlyBranch,
 }) => {
   const { isOnboarding } = useAppSelector((state) => state.flowBuilder);
 
@@ -37,8 +35,15 @@ const EventBranchEditor: FC<EventBranchEditorProps> = ({
     useState<number>();
 
   useEffect(() => {
-    if (branch.conditions.length === 1 && isOnlyBranch) {
-      setConditionIndexToChange(0);
+    for (let i = branch.conditions.length - 1; i >= 0; i--) {
+      const condition = branch.conditions[i];
+      if (
+        condition.providerType === ProviderType.CUSTOM &&
+        condition.statements.length === 0
+      ) {
+        setConditionIndexToChange(i);
+        return;
+      }
     }
   }, []);
 

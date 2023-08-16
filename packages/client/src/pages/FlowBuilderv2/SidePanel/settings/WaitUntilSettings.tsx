@@ -32,7 +32,14 @@ const WaitUntilSettings: FC<SidePanelComponentProps<WaitUntilNodeData>> = ({
     const newBranch: Branch = {
       id: uuid(),
       type: BranchType.EVENT,
-      conditions: [],
+      conditions: [
+        {
+          name: "",
+          providerType: ProviderType.CUSTOM,
+          relationToNext: LogicRelation.AND,
+          statements: [],
+        },
+      ],
     };
     setNodeData({ ...nodeData, branches: [...branches, newBranch] });
   };
@@ -201,7 +208,6 @@ const WaitUntilSettings: FC<SidePanelComponentProps<WaitUntilNodeData>> = ({
               onConditionChange={onConditionChange(i)}
               onDeleteCondition={onDeleteCondition(i)}
               branch={branch}
-              isOnlyBranch={branches.length === 1}
             />
           ) : (
             <MaxTimeBranchEditor

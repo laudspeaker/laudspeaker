@@ -398,12 +398,14 @@ const ConditionEditor: FC<ConditionEditorProps> = ({
           ))}
 
           <div className="flex items-center gap-[10px]">
-            <div className="border-[1px] border-[#E5E7EB] rounded-[2px] px-[12px] py-[5px] font-roboto font-normal text-[14px] leading-[22px] text-[#4B5563]">
-              {condition.statements[condition.statements.length - 1]
-                ?.relationToNext === LogicRelation.AND
-                ? "And"
-                : "Or"}
-            </div>
+            {condition.statements.length > 0 && (
+              <div className="border-[1px] border-[#E5E7EB] rounded-[2px] px-[12px] py-[5px] font-roboto font-normal text-[14px] leading-[22px] text-[#4B5563]">
+                {condition.statements[condition.statements.length - 1]
+                  ?.relationToNext === LogicRelation.AND
+                  ? "And"
+                  : "Or"}
+              </div>
+            )}
 
             <div className="w-[145px]">
               <Select
