@@ -122,7 +122,7 @@ export const applyLayoutCorrections = (
       translateTree(children[i], nodes, edges, {
         // x: widthOffsetSum * i + globalOffset,
         x: 0,
-        y: 100 + VERTICAL_GAP_BETWEEN_NODES,
+        y: 80 + VERTICAL_GAP_BETWEEN_NODES,
       });
     }
   }

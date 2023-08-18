@@ -53,6 +53,7 @@ const ConditionEditor: FC<ConditionEditorProps> = ({
       type: StatementValueType;
     }[]
   >([]);
+  const [showErrors, setShowErrors] = useState(false);
 
   useEffect(() => {
     setCondition(initialCondition);
@@ -241,19 +242,20 @@ const ConditionEditor: FC<ConditionEditorProps> = ({
                       getKey={(value) => value}
                       placeholder="Property name"
                     />
-                    {errors[i].some(
-                      (statementError) =>
-                        statementError ===
-                        ConditionEditorError.NO_PROPERTY_SPECIFIED
-                    ) && (
-                      <div className="font-inter font-normal text-[12px] leading-[20px] text-[#E11D48]">
-                        {
-                          errorToMessageMap[
-                            ConditionEditorError.NO_PROPERTY_SPECIFIED
-                          ]
-                        }
-                      </div>
-                    )}
+                    {showErrors &&
+                      errors[i].some(
+                        (statementError) =>
+                          statementError ===
+                          ConditionEditorError.NO_PROPERTY_SPECIFIED
+                      ) && (
+                        <div className="font-inter font-normal text-[12px] leading-[20px] text-[#E11D48]">
+                          {
+                            errorToMessageMap[
+                              ConditionEditorError.NO_PROPERTY_SPECIFIED
+                            ]
+                          }
+                        </div>
+                      )}
                   </div>
                 ) : (
                   <>
@@ -355,18 +357,20 @@ const ConditionEditor: FC<ConditionEditorProps> = ({
                     }}
                   />
 
-                  {errors[i].some(
-                    (statementError) =>
-                      statementError === ConditionEditorError.NO_VALUE_SPECIFIED
-                  ) && (
-                    <div className="font-inter font-normal text-[12px] leading-[20px] text-[#E11D48]">
-                      {
-                        errorToMessageMap[
-                          ConditionEditorError.NO_VALUE_SPECIFIED
-                        ]
-                      }
-                    </div>
-                  )}
+                  {showErrors &&
+                    errors[i].some(
+                      (statementError) =>
+                        statementError ===
+                        ConditionEditorError.NO_VALUE_SPECIFIED
+                    ) && (
+                      <div className="font-inter font-normal text-[12px] leading-[20px] text-[#E11D48]">
+                        {
+                          errorToMessageMap[
+                            ConditionEditorError.NO_VALUE_SPECIFIED
+                          ]
+                        }
+                      </div>
+                    )}
                 </div>
               </div>
               {i !== condition.statements.length - 1 && (
@@ -429,10 +433,16 @@ const ConditionEditor: FC<ConditionEditorProps> = ({
           </Button>
           <Button
             type={ButtonType.PRIMARY}
-            onClick={() => onSave(condition)}
-            disabled={errors.some(
-              (statementErrors) => statementErrors.length > 0
-            )}
+            onClick={() => {
+              if (
+                errors.some((statementErrors) => statementErrors.length > 0)
+              ) {
+                setShowErrors(true);
+                return;
+              }
+
+              onSave(condition);
+            }}
           >
             Save
           </Button>

@@ -25,7 +25,7 @@ export const trackerStatsToShow: {
 
 export const TrackerNode: FC<NodeProps<TrackerNodeData>> = ({
   isConnectable,
-  data: { stats, needsCheck, tracker },
+  data: { stats, needsCheck, tracker, showErrors },
   selected,
 }) => {
   const { isViewMode } = useAppSelector((state) => state.flowBuilder);
@@ -78,7 +78,9 @@ export const TrackerNode: FC<NodeProps<TrackerNodeData>> = ({
               {tracker.trackerId}
             </div>
           ) : (
-            "Set a tracker"
+            <span className={showErrors ? "text-[#F43F5E]" : ""}>
+              Set a tracker
+            </span>
           )}
         </div>
       </div>

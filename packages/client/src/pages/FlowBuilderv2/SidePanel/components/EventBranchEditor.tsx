@@ -33,8 +33,15 @@ const EventBranchEditor: FC<EventBranchEditorProps> = ({
 
   const [conditionIndexToChange, setConditionIndexToChange] =
     useState<number>();
+  const [lastFrameAddedCondition, setLastFrameAddedCondtion] = useState(false);
 
   useEffect(() => {
+    if (lastFrameAddedCondition) {
+      setConditionIndexToChange(branch.conditions.length - 1);
+      setLastFrameAddedCondtion(false);
+      return;
+    }
+
     for (let i = branch.conditions.length - 1; i >= 0; i--) {
       const condition = branch.conditions[i];
       if (
@@ -45,7 +52,7 @@ const EventBranchEditor: FC<EventBranchEditorProps> = ({
         return;
       }
     }
-  }, []);
+  }, [branch.conditions.length]);
 
   return (
     <div className="flex flex-col gap-[10px] relative border-b pb-5">
@@ -90,10 +97,18 @@ const EventBranchEditor: FC<EventBranchEditorProps> = ({
       ))}
 
       <div className="flex gap-[10px]">
-        {conditionIndexToChange === undefined && (
+        {(conditionIndexToChange === undefined ||
+          !branch.conditions[conditionIndexToChange]) && (
           <Button
             type={ButtonType.LINK}
-            onClick={isOnboarding ? () => null : onAddCondition}
+            onClick={
+              isOnboarding
+                ? () => null
+                : () => {
+                    setLastFrameAddedCondtion(true);
+                    onAddCondition();
+                  }
+            }
           >
             Add condition
           </Button>

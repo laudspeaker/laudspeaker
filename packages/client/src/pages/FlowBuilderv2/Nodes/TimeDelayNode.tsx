@@ -6,7 +6,7 @@ import { TimeDelayNodeData } from "./NodeData";
 export const TimeDelayNode: FC<NodeProps<TimeDelayNodeData>> = ({
   isConnectable,
   selected,
-  data: { delay },
+  data: { delay, showErrors },
 }) => {
   return (
     <div
@@ -33,7 +33,11 @@ export const TimeDelayNode: FC<NodeProps<TimeDelayNodeData>> = ({
           {delay.days === delay.hours &&
           delay.hours === delay.minutes &&
           delay.minutes === 0 ? (
-            <span className="font-inter font-normal text-[12px] text-[#F43F5E] leading-[20px]">
+            <span
+              className={`font-inter font-normal text-[12px] leading-[20px] ${
+                showErrors ? "text-[#F43F5E]" : ""
+              }`}
+            >
               Set time
             </span>
           ) : (
