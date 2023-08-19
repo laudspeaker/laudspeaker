@@ -1,7 +1,7 @@
 /* eslint-disable no-case-declarations */
-import { Processor, WorkerHost } from '@nestjs/bullmq';
+import { Processor, WorkerHost } from '@taskforcesh/nestjs-bullmq-pro';
+import { JobPro } from '@taskforcesh/bullmq-pro';
 import { Inject, Logger } from '@nestjs/common';
-import { Job } from 'bullmq';
 import { Injectable } from '@nestjs/common';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { Liquid } from 'liquidjs';
@@ -91,7 +91,7 @@ export class WebhooksProcessor extends WorkerHost {
     );
   }
 
-  async process(job: Job<{ template: Template; [key: string]: any }>) {
+  async process(job: JobPro<{ template: Template; [key: string]: any }>) {
     const { template, filteredTags } = job.data;
 
     const { method, retries, fallBackAction } = template.webhookData;

@@ -17,8 +17,13 @@ import { PosthogBatchEventDto } from './dto/posthog-batch-event.dto';
 import { EventDto } from './dto/event.dto';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { StatusJobDto } from './dto/status-event.dto';
-import { Queue } from 'bullmq';
-import { InjectQueue } from '@nestjs/bullmq';
+import {
+  Processor,
+  WorkerHost,
+  OnWorkerEvent,
+  InjectQueue,
+} from '@taskforcesh/nestjs-bullmq-pro';
+import { JobPro, QueuePro, UnrecoverableError } from '@taskforcesh/bullmq-pro';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import mongoose, { Model } from 'mongoose';
 import { EventDocument, Event } from './schemas/event.schema';
@@ -49,12 +54,13 @@ export class EventsService {
     private readonly customersService: CustomersService,
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
     private readonly logger: Logger,
-    @InjectQueue('message') private readonly messageQueue: Queue,
-    @InjectQueue('events') private readonly eventQueue: Queue,
-    @InjectQueue('events_pre') private readonly eventPreprocessorQueue: Queue,
-    @InjectQueue(JobTypes.slack) private readonly slackQueue: Queue,
+    @InjectQueue('message') private readonly messageQueue: QueuePro,
+    @InjectQueue('events') private readonly eventQueue: QueuePro,
+    @InjectQueue('events_pre')
+    private readonly eventPreprocessorQueue: QueuePro,
+    @InjectQueue(JobTypes.slack) private readonly slackQueue: QueuePro,
     @InjectQueue(JobTypes.events)
-    private readonly eventsQueue: Queue,
+    private readonly eventsQueue: QueuePro,
     @InjectModel(Event.name)
     private EventModel: Model<EventDocument>,
     @InjectModel(PosthogEvent.name)
@@ -64,7 +70,7 @@ export class EventsService {
     @InjectModel(PosthogEventType.name)
     private PosthogEventTypeModel: Model<PosthogEventTypeDocument>,
     @InjectConnection() private readonly connection: mongoose.Connection,
-    @InjectQueue('webhooks') private readonly webhooksQueue: Queue,
+    @InjectQueue('webhooks') private readonly webhooksQueue: QueuePro,
     @Inject(forwardRef(() => JourneysService))
     private readonly journeysService: JourneysService
   ) {
@@ -243,18 +249,11 @@ export class EventsService {
   }
 
   async customPayload(account: Account, eventDto: EventDto, session: string) {
-    await this.eventPreprocessorQueue.add(
-      'laudspeaker',
-      {
-        account: account,
-        event: eventDto,
-        session: session,
-      },
-      {
-        attempts: 10,
-        backoff: { delay: 1000, type: 'exponential' },
-      }
-    );
+    await this.eventPreprocessorQueue.add('laudspeaker', {
+      account: account,
+      event: eventDto,
+      session: session,
+    });
   }
 
   async getOrUpdateAttributes(resourceId: string, session: string) {

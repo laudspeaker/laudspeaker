@@ -17,7 +17,6 @@ import {
 import { InjectModel } from '@nestjs/mongoose';
 import { CreateTemplateDto } from './dto/create-template.dto';
 import { UpdateTemplateDto } from './dto/update-template.dto';
-import { Job, Queue } from 'bullmq';
 import {
   FallBackAction,
   Template,
@@ -30,7 +29,8 @@ import {
   OnQueueEvent,
   QueueEventsHost,
   QueueEventsListener,
-} from '@nestjs/bullmq';
+} from '@taskforcesh/nestjs-bullmq-pro';
+import { JobPro, QueuePro } from '@taskforcesh/bullmq-pro';
 import { Installation } from '../slack/entities/installation.entity';
 import { SlackService } from '../slack/slack.service';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
@@ -65,9 +65,9 @@ export class TemplatesService extends QueueEventsHost {
     @Inject(SlackService) private slackService: SlackService,
     @Inject(WebhooksService) private webhooksService: WebhooksService,
     @Inject(ModalsService) private modalsService: ModalsService,
-    @InjectQueue('message') private readonly messageQueue: Queue,
-    @InjectQueue('webhooks') private readonly webhooksQueue: Queue,
-    @InjectQueue('slack') private readonly slackQueue: Queue
+    @InjectQueue('message') private readonly messageQueue: QueuePro,
+    @InjectQueue('webhooks') private readonly webhooksQueue: QueuePro,
+    @InjectQueue('slack') private readonly slackQueue: QueuePro
   ) {
     super();
   }
@@ -339,7 +339,7 @@ export class TemplatesService extends QueueEventsHost {
   ): Promise<string | number> {
     const customerId = customer.id;
     let template: Template,
-      job: Job<any>, // created jobId
+      job: JobPro<any>, // created jobId
       installation: Installation,
       message: any;
     try {

@@ -8,7 +8,7 @@ import {
   WebSocketServer,
   OnGatewayConnection,
 } from '@nestjs/websockets';
-import { randomUUID } from 'crypto';
+import { createHash, randomUUID } from 'crypto';
 import { isValidObjectId, Model } from 'mongoose';
 import { Server, Socket } from 'socket.io';
 import { AccountsService } from '../api/accounts/accounts.service';
@@ -24,6 +24,8 @@ import {
   CustomerDocument,
 } from '@/api/customers/schemas/customer.schema';
 import { InjectModel } from '@nestjs/mongoose';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 
 interface SocketData {
   account: Account;
@@ -201,6 +203,9 @@ export class WebsocketGateway implements OnGatewayConnection {
       optionalProperties?: { [key: string]: unknown };
     }
   ) {
+    if (!socket.data?.account || !socket.data?.customerId) {
+      return;
+    }
     const {
       account: { id: ownerId },
       customerId,
@@ -337,6 +342,8 @@ export class WebsocketGateway implements OnGatewayConnection {
         socket.emit('customerId', customer.id);
       }
 
+      const trackerId = event.trackerId;
+
       await this.eventsService.customPayload(
         socket.data.account,
         {
@@ -344,7 +351,7 @@ export class WebsocketGateway implements OnGatewayConnection {
           correlationValue: customer.id,
           source: 'tracker',
           event: event.event,
-          payload: { trackerId: event.trackerId },
+          payload: { trackerId },
         },
         socket.data.session
       );
@@ -368,6 +375,23 @@ export class WebsocketGateway implements OnGatewayConnection {
     }
 
     return false;
+  }
+
+  public async sendProcessed(
+    customerId: string,
+    hash: string
+  ): Promise<boolean> {
+    const sockets = await this.server.fetchSockets();
+
+    const customerSocket = sockets.find(
+      (socket) => socket.data.customerId === customerId
+    );
+
+    if (!customerSocket) return false;
+
+    customerSocket.emit('processedEvent', hash);
+
+    return true;
   }
 
   public async sendCustomComponentState(

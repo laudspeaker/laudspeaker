@@ -1,7 +1,7 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MongooseModule } from '@nestjs/mongoose';
-import { BullModule } from '@nestjs/bullmq';
+import { BullModule } from '@taskforcesh/nestjs-bullmq-pro';
 import { EventsController } from './events.controller';
 import { EventsService } from './events.service';
 import { Customer, CustomerSchema } from '../customers/schemas/customer.schema';
@@ -37,6 +37,9 @@ import { JourneysModule } from '../journeys/journeys.module';
 import { AudiencesHelper } from '../audiences/audiences.helper';
 import { SegmentsModule } from '../segments/segments.module';
 import { EventsPreProcessor } from './events.preprocessor';
+import { WebsocketsModule } from '@/websockets/websockets.module';
+import { RedlockModule } from '../redlock/redlock.module';
+import { RedlockService } from '../redlock/redlock.service';
 
 @Module({
   imports: [
@@ -84,8 +87,10 @@ import { EventsPreProcessor } from './events.preprocessor';
     forwardRef(() => WorkflowsModule),
     forwardRef(() => JourneysModule),
     forwardRef(() => SegmentsModule),
+    forwardRef(() => WebsocketsModule),
     AudiencesModule,
     SlackModule,
+    forwardRef(() => RedlockModule),
   ],
   controllers: [EventsController],
   providers: [
@@ -93,6 +98,7 @@ import { EventsPreProcessor } from './events.preprocessor';
     EventsProcessor,
     EventsPreProcessor,
     AudiencesHelper,
+    RedlockService,
   ],
   exports: [EventsService],
 })

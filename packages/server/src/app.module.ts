@@ -3,7 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { TypeOrmConfigService } from './shared/typeorm/typeorm.service';
 import { ApiModule } from './api/api.module';
 import { WinstonModule } from 'nest-winston';
-import { BullModule } from '@nestjs/bullmq';
+import { BullModule } from '@taskforcesh/nestjs-bullmq-pro';
 import * as winston from 'winston';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AuthMiddleware } from './api/auth/middleware/auth.middleware';
@@ -54,6 +54,9 @@ import { ModalsModule } from './api/modals/modals.module';
 import { WebsocketsModule } from './websockets/websockets.module';
 import traverse from 'traverse';
 import { klona } from 'klona/full';
+import { JourneysModule } from './api/journeys/journeys.module';
+import { RedlockModule } from './api/redlock/redlock.module';
+import { RedlockService } from './api/redlock/redlock.service';
 
 const sensitiveKeys = [
   /cookie/i,
@@ -231,9 +234,11 @@ const formatMongoConnectionString = (mongoConnectionString: string) => {
     ModalsModule,
     WebsocketsModule,
     StepsModule,
+    JourneysModule,
+    RedlockModule,
   ],
   controllers: [AppController],
-  providers: [CronService],
+  providers: [CronService, RedlockService],
 })
 export class AppModule {
   configure(consumer: MiddlewareConsumer) {

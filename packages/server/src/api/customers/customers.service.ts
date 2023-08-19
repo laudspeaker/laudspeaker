@@ -27,8 +27,8 @@ import {
   CustomerKeys,
   CustomerKeysDocument,
 } from './schemas/customer-keys.schema';
-import { InjectQueue } from '@nestjs/bullmq';
-import { Queue } from 'bullmq';
+import { InjectQueue } from '@taskforcesh/nestjs-bullmq-pro';
+import { QueuePro } from '@taskforcesh/bullmq-pro';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { createClient } from '@clickhouse/client';
 import { Workflow } from '../workflows/entities/workflow.entity';
@@ -81,7 +81,7 @@ export class CustomersService {
   constructor(
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
     private readonly logger: Logger,
-    @InjectQueue('customers') private readonly customersQueue: Queue,
+    @InjectQueue('customers') private readonly customersQueue: QueuePro,
     @InjectModel(Customer.name) public CustomerModel: Model<CustomerDocument>,
     @InjectModel(CustomerKeys.name)
     public CustomerKeysModel: Model<CustomerKeysDocument>,

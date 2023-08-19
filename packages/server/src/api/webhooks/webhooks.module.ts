@@ -10,7 +10,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Account } from '../accounts/entities/accounts.entity';
 import twilio from 'twilio';
 import { WebhooksProcessor } from './webhooks.processor';
-import { BullModule } from '@nestjs/bullmq';
+import { BullModule } from '@taskforcesh/nestjs-bullmq-pro';
 import { TemplatesModule } from '../templates/templates.module';
 import { Step } from '../steps/entities/step.entity';
 
