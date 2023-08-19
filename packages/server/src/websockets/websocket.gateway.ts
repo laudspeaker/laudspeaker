@@ -25,7 +25,6 @@ import {
 } from '@/api/customers/schemas/customer.schema';
 import { InjectModel } from '@nestjs/mongoose';
 import { InjectRepository } from '@nestjs/typeorm';
-import { TrackerHit } from '@/api/events/entities/tracker-hit.entity';
 import { Repository } from 'typeorm';
 
 interface SocketData {
@@ -52,8 +51,6 @@ export class WebsocketGateway implements OnGatewayConnection {
     private customersService: CustomersService,
     @Inject(forwardRef(() => EventsService))
     private eventsService: EventsService,
-    @InjectRepository(TrackerHit)
-    public readonly trackerHitRepository: Repository<TrackerHit>,
     @Inject(WebhooksService) private readonly webhooksService: WebhooksService,
     @InjectModel(Customer.name) public customerModel: Model<CustomerDocument>
   ) {}
@@ -206,6 +203,9 @@ export class WebsocketGateway implements OnGatewayConnection {
       optionalProperties?: { [key: string]: unknown };
     }
   ) {
+    if (!socket.data?.account || !socket.data?.customerId) {
+      return;
+    }
     const {
       account: { id: ownerId },
       customerId,
@@ -343,29 +343,6 @@ export class WebsocketGateway implements OnGatewayConnection {
       }
 
       const trackerId = event.trackerId;
-
-      const trackerHitHash = Buffer.from(
-        createHash('sha256')
-          .update(
-            String(
-              (event.event as string) + (trackerId as string) + customer.id
-            )
-          )
-          .digest('hex')
-      ).toString('base64');
-
-      const foundTrackerHit = await this.trackerHitRepository.findOneBy({
-        hash: trackerHitHash,
-      });
-
-      if (foundTrackerHit && !foundTrackerHit.processed) {
-        throw new Error('Tracker event hit rate-limitted');
-      }
-
-      await this.trackerHitRepository.save({
-        hash: trackerHitHash,
-        processed: false,
-      });
 
       await this.eventsService.customPayload(
         socket.data.account,

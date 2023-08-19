@@ -1,11 +1,11 @@
-import { Processor, WorkerHost } from '@nestjs/bullmq';
+import { Processor, WorkerHost } from '@taskforcesh/nestjs-bullmq-pro';
+import { JobPro } from '@taskforcesh/bullmq-pro';
 import handleDatabricks from './databricks.worker';
 import {
   Database,
   DBType,
   FrequencyUnit,
 } from '../../api/integrations/entities/database.entity';
-import { Job } from 'bullmq';
 import { Account } from '../accounts/entities/accounts.entity';
 import { InjectModel } from '@nestjs/mongoose';
 import {
@@ -66,7 +66,7 @@ export class IntegrationsProcessor extends WorkerHost {
     },
   };
 
-  async process(job: Job<any, any, string>): Promise<any> {
+  async process(job: JobPro<any, any, string>): Promise<any> {
     const integration = job.data.integration;
     if (!integration || !integration.database)
       throw new Error('Wrong integration was passed to job');
