@@ -33,7 +33,7 @@ const UserAttributeSettings: FC<
       relationToNext:
         branchToChange.attributeConditions[
           branchToChange.attributeConditions.length - 1
-        ]?.relationToNext || LogicRelation.AND,
+        ]?.relationToNext || LogicRelation.OR,
     });
 
     setNodeData({ ...nodeData, branches });

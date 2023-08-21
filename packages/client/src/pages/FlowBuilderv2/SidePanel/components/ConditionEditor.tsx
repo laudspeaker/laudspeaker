@@ -103,7 +103,7 @@ const ConditionEditor: FC<ConditionEditorProps> = ({
               comparisonType: ComparisonType.EQUALS,
               valueType: StatementValueType.NUMBER,
               value: "",
-              relationToNext: LogicRelation.AND,
+              relationToNext: LogicRelation.OR,
             }
           : {
               type,
@@ -112,7 +112,7 @@ const ConditionEditor: FC<ConditionEditorProps> = ({
               comparisonType: ComparisonType.EQUALS,
               valueType: StatementValueType.NUMBER,
               value: "",
-              relationToNext: LogicRelation.AND,
+              relationToNext: LogicRelation.OR,
             },
       ],
     });

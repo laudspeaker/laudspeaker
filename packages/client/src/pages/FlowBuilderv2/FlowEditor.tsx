@@ -126,7 +126,14 @@ const FlowEditor: FC<FlowEditorProps> = ({ className, isViewMode }) => {
         selectionOnDrag
         nodeOrigin={[0.5, 0.5]}
         defaultEdgeOptions={{
-          markerEnd: { type: MarkerType.Arrow },
+          markerEnd: {
+            type: MarkerType.Arrow,
+            color: "#111827",
+            strokeWidth: 2,
+          },
+          style: {
+            stroke: "#111827",
+          },
         }}
         ref={flowRef}
       >

@@ -36,7 +36,7 @@ const WaitUntilSettings: FC<SidePanelComponentProps<WaitUntilNodeData>> = ({
         {
           name: "",
           providerType: ProviderType.CUSTOM,
-          relationToNext: LogicRelation.AND,
+          relationToNext: LogicRelation.OR,
           statements: [],
         },
       ],
@@ -105,6 +105,10 @@ const WaitUntilSettings: FC<SidePanelComponentProps<WaitUntilNodeData>> = ({
     );
 
     if (
+      (branchToChange.type !== BranchType.EVENT ||
+        !branchToChange.conditions.every(
+          (cond) => cond.providerType === ProviderType.TRACKER
+        )) &&
       branchToChange.conditions[0]?.relationToNext === LogicRelation.AND &&
       !isSameNameAndProvider
     ) {

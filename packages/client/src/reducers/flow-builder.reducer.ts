@@ -568,7 +568,7 @@ const flowBuilderSlice = createSlice({
                     name: "",
                     providerType: ProviderType.CUSTOM,
                     statements: [],
-                    relationToNext: LogicRelation.AND,
+                    relationToNext: LogicRelation.OR,
                   },
                 ],
               },

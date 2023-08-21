@@ -92,7 +92,7 @@ const nodeTypeHeightMap: Record<NodeType, number> = {
   [NodeType.EMPTY]: 80,
   [NodeType.EXIT]: 60,
   [NodeType.INSERT_NODE]: 80,
-  [NodeType.JUMP_TO]: 80,
+  [NodeType.JUMP_TO]: 60,
   [NodeType.MESSAGE]: 80,
   [NodeType.START]: 60,
   [NodeType.TIME_DELAY]: 80,
@@ -103,7 +103,7 @@ const nodeTypeHeightMap: Record<NodeType, number> = {
 };
 
 const STATS_HEIGHT = 60;
-const VERTICAL_GAP_BETWEEN_NODES = 45;
+const VERTICAL_GAP_BETWEEN_NODES = 44;
 
 export const applyLayoutCorrections = (
   rootNode: Node,
@@ -114,19 +114,6 @@ export const applyLayoutCorrections = (
 
   const rootHeight = nodeTypeHeightMap[rootNode.type as NodeType] || 0;
 
-  if (children.length > 1) {
-    // const widthOffsetSum = NODE_WIDTH + HORIZONTAL_OFFSET;
-    // const globalOffset = -widthOffsetSum * (children.length - 1) * 0.5;
-
-    for (let i = 0; i < children.length; i++) {
-      translateTree(children[i], nodes, edges, {
-        // x: widthOffsetSum * i + globalOffset,
-        x: 0,
-        y: 80 + VERTICAL_GAP_BETWEEN_NODES,
-      });
-    }
-  }
-
   for (const child of children) {
     const childHeight =
       (nodeTypeHeightMap[child.type as NodeType] || 0) +
@@ -134,7 +121,10 @@ export const applyLayoutCorrections = (
 
     translateTree(child, nodes, edges, {
       x: 0,
-      y: (rootHeight + childHeight) / 2 + VERTICAL_GAP_BETWEEN_NODES,
+      y:
+        (rootHeight + childHeight) / 2 +
+        VERTICAL_GAP_BETWEEN_NODES +
+        (children.length > 1 ? 2 * VERTICAL_GAP_BETWEEN_NODES : 0),
     });
 
     const childOutgoers = getOutgoers(child, nodes, edges);
