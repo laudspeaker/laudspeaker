@@ -1,8 +1,4 @@
-import {
-  Processor,
-  WorkerHost,
-  InjectQueue,
-} from '@nestjs/bullmq';
+import { Processor, WorkerHost, InjectQueue } from '@nestjs/bullmq';
 import { Job, Queue, UnrecoverableError } from 'bullmq';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Correlation, CustomersService } from '../customers/customers.service';

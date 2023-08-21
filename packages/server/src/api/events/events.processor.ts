@@ -1,8 +1,4 @@
-import {
-  Processor,
-  WorkerHost,
-  InjectQueue,
-} from '@nestjs/bullmq';
+import { Processor, WorkerHost, InjectQueue } from '@nestjs/bullmq';
 import { Job, Queue } from 'bullmq';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Account } from '../accounts/entities/accounts.entity';
@@ -26,7 +22,7 @@ import {
 } from '../workflows/entities/workflow.entity';
 import { AudiencesHelper } from '../audiences/audiences.helper';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
-import { randomUUID } from 'crypto';
+import { createHash, randomUUID } from 'crypto';
 import { WebsocketGateway } from '@/websockets/websocket.gateway';
 import { RedlockService } from '../redlock/redlock.service';
 import { Lock } from 'redlock';
@@ -451,6 +447,24 @@ export class EventsProcessor extends WorkerHost {
             session,
             account.email
           );
+          // Acknowledge that event is finished processing to frontend if its
+          // a tracker event
+          if (job.data.event.source === AnalyticsProviderTypes.TRACKER) {
+            await this.websocketGateway.sendProcessed(
+              customer.id,
+              Buffer.from(
+                createHash('sha256')
+                  .update(
+                    String(
+                      (job.data.event.event as string) +
+                        (job.data.event.payload.trackerId as string) +
+                        customer.id
+                    )
+                  )
+                  .digest('hex')
+              ).toString('base64')
+            );
+          }
           return;
         }
         await this.transitionQueue.add(stepToQueue.type, {
@@ -470,6 +484,28 @@ export class EventsProcessor extends WorkerHost {
           session,
           account.email
         );
+        this.warn(
+          `${JSON.stringify({ warning: 'No step matches event' })}`,
+          this.process.name,
+          session,
+          account.email
+        );
+        if (job.data.event.source === AnalyticsProviderTypes.TRACKER) {
+          await this.websocketGateway.sendProcessed(
+            customer.id,
+            Buffer.from(
+              createHash('sha256')
+                .update(
+                  String(
+                    (job.data.event.event as string) +
+                      (job.data.event.payload.trackerId as string) +
+                      customer.id
+                  )
+                )
+                .digest('hex')
+            ).toString('base64')
+          );
+        }
         return;
       }
     } catch (e) {

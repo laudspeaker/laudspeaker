@@ -1,9 +1,5 @@
 /* eslint-disable no-case-declarations */
-import {
-  Processor,
-  WorkerHost,
-  OnWorkerEvent,
-} from '@nestjs/bullmq';
+import { Processor, WorkerHost, OnWorkerEvent } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
 import { Inject, LoggerService } from '@nestjs/common';
 import { Injectable } from '@nestjs/common';

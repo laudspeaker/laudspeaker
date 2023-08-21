@@ -2,11 +2,7 @@
 import { HttpException, HttpStatus, Inject, Logger } from '@nestjs/common';
 import { Injectable } from '@nestjs/common';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
-import {
-  Processor,
-  WorkerHost,
-  InjectQueue,
-} from '@nestjs/bullmq';
+import { Processor, WorkerHost, InjectQueue } from '@nestjs/bullmq';
 import { Job, Queue } from 'bullmq';
 import { cpus } from 'os';
 import { CustomComponentAction, StepType } from '../types/step.interface';
@@ -455,7 +451,15 @@ export class TransitionProcessor extends WorkerHost {
     );
     await this.websocketGateway.sendProcessed(
       customer.id,
-      Buffer.from(createHash('sha256').update(String((event as string) + (humanReadableName as string) + customer.id)).digest('hex')).toString('base64')
+      Buffer.from(
+        createHash('sha256')
+          .update(
+            String(
+              (event as string) + (humanReadableName as string) + customer.id
+            )
+          )
+          .digest('hex')
+      ).toString('base64')
     );
     if (isDelivered)
       await this.webhooksService.insertClickHouseMessages([
