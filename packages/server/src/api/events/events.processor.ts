@@ -113,7 +113,8 @@ export class EventsProcessor extends WorkerHost {
 
   async process(job: Job<any, any, string>): Promise<any> {
     const session = randomUUID();
-    let err: any, stepsToQueue: Step[], branch: number, lock: Lock;
+    let err: any, branch: number, lock: Lock;
+    let stepsToQueue: Step[] = [];
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
