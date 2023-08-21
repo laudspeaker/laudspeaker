@@ -113,7 +113,7 @@ export class EventsProcessor extends WorkerHost {
 
   async process(job: Job<any, any, string>): Promise<any> {
     const session = randomUUID();
-    let err: any, stepToQueue: Step, branch: number, lock: Lock;
+    let err: any, stepsToQueue: Step[], branch: number, lock: Lock;
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -394,9 +394,9 @@ export class EventsProcessor extends WorkerHost {
                 return element === true;
               })
             ) {
-              stepToQueue = steps[stepIndex];
+              stepsToQueue.push(steps[stepIndex]);
               branch = branchIndex;
-              break step_loop;
+              // break step_loop;
             }
           }
           // Otherwise,check if all of the events match
@@ -415,21 +415,38 @@ export class EventsProcessor extends WorkerHost {
                 return element === true;
               })
             ) {
-              stepToQueue = steps[stepIndex];
+              stepsToQueue.push(steps[stepIndex]);
               branch = branchIndex;
-              break step_loop;
+              // break step_loop;
             }
           }
         }
       }
 
       // If customer isn't in step, we throw error, otherwise we queue and consume event
-      if (stepToQueue) {
-        if (
-          !_.find(stepToQueue.customers, (cust) => {
-            return JSON.parse(cust).customerID === customer.id;
-          })
-        ) {
+      if (stepsToQueue.length) {
+        let stepToQueue;
+        for (let i = 0; i < stepsToQueue.length; i++) {
+          if (
+            _.find(stepsToQueue[i].customers, (cust) => {
+              return JSON.parse(cust).customerID === customer.id;
+            })
+          ) {
+            stepToQueue = stepsToQueue[i];
+            break;
+          }
+        }
+        if (stepToQueue) {
+          await this.transitionQueue.add(stepToQueue.type, {
+            step: stepToQueue,
+            branch: branch,
+            customerID: customer.id,
+            ownerID: stepToQueue.owner.id,
+            session: job.data.session,
+            lock,
+            event: job.data.event.event,
+          });
+        } else {
           await lock.release();
           this.warn(
             `${JSON.stringify({ warning: 'Releasing lock' })}`,
@@ -467,15 +484,6 @@ export class EventsProcessor extends WorkerHost {
           }
           return;
         }
-        await this.transitionQueue.add(stepToQueue.type, {
-          step: stepToQueue,
-          branch: branch,
-          customerID: customer.id,
-          ownerID: stepToQueue.owner.id,
-          session: job.data.session,
-          lock,
-          event: job.data.event.event,
-        });
       } else {
         await lock.release();
         this.warn(
