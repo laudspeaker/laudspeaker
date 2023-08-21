@@ -8,8 +8,8 @@ import { Account } from '../accounts/entities/accounts.entity';
 import { CustomerDocument } from '../customers/schemas/customer.schema';
 import Errors from '../../shared/utils/errors';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
-import { InjectQueue } from '@taskforcesh/nestjs-bullmq-pro';
-import { QueuePro } from '@taskforcesh/bullmq-pro';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 import { StepType } from './types/step.interface';
 import { Temporal } from '@js-temporal/polyfill';
 import { createClient } from '@clickhouse/client';
@@ -37,7 +37,7 @@ export class StepsService {
     private readonly logger: Logger,
     @InjectRepository(Step)
     public stepsRepository: Repository<Step>,
-    @InjectQueue('transition') private readonly transitionQueue: QueuePro,
+    @InjectQueue('transition') private readonly transitionQueue: Queue,
     @Inject(RedlockService)
     private readonly redlockService: RedlockService
   ) {}

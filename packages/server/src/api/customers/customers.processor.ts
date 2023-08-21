@@ -1,5 +1,5 @@
-import { Processor, WorkerHost } from '@taskforcesh/nestjs-bullmq-pro';
-import { JobPro } from '@taskforcesh/bullmq-pro';
+import { Processor, WorkerHost } from '@nestjs/bullmq';
+import { Job } from 'bullmq';
 import { Inject, Injectable } from '@nestjs/common';
 import { CustomersService } from './customers.service';
 import axios from 'axios';
@@ -13,7 +13,7 @@ export class CustomersProcessor extends WorkerHost {
     super();
   }
 
-  async process(job: JobPro<any, any, string>): Promise<any> {
+  async process(job: Job<any, any, string>): Promise<any> {
     try {
       let res = await axios({
         method: 'get',

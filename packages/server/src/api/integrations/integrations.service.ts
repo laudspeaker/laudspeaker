@@ -1,6 +1,6 @@
 /* eslint-disable no-case-declarations */
-import { InjectQueue } from '@taskforcesh/nestjs-bullmq-pro';
-import { QueuePro, QueueEvents } from '@taskforcesh/bullmq-pro';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue, QueueEvents } from 'bullmq';
 import {
   BadRequestException,
   Injectable,
@@ -35,7 +35,7 @@ export class IntegrationsService {
     private integrationsRepository: Repository<Integration>,
     @InjectRepository(Database)
     private databaseRepository: Repository<Database>,
-    @InjectQueue('integrations') private readonly integrationsQueue: QueuePro
+    @InjectQueue('integrations') private readonly integrationsQueue: Queue
   ) {
     this.queueEvents = new QueueEvents('integrations', {
       connection: {

@@ -7,7 +7,7 @@ import { Audience } from '../audiences/entities/audience.entity';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Customer, CustomerSchema } from '../customers/schemas/customer.schema';
 import { Template } from '../templates/entities/template.entity';
-import { BullModule } from '@taskforcesh/nestjs-bullmq-pro';
+import { BullModule } from '@nestjs/bullmq';
 import { Installation } from '../slack/entities/installation.entity';
 import { State } from '../slack/entities/state.entity';
 import { Account } from '../accounts/entities/accounts.entity';

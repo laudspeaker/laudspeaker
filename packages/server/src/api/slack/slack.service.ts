@@ -8,8 +8,8 @@ import {
   InstallURLOptions,
   InvalidStateError,
 } from '@slack/oauth';
-import { InjectQueue } from '@taskforcesh/nestjs-bullmq-pro';
-import { QueuePro } from '@taskforcesh/bullmq-pro';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 import { Request, Response } from 'express';
 import { onboardingBlock } from './blocks/onboarding.block';
 import { syncBlock } from './blocks/sync.block';
@@ -50,8 +50,8 @@ export class SlackService {
     private stateRepository: Repository<State>,
     @InjectRepository(Account)
     private readonly accountsRepository: Repository<Account>,
-    @InjectQueue('slack') private readonly slackQueue: QueuePro,
-    @InjectQueue('message') private readonly messageQueue: QueuePro,
+    @InjectQueue('slack') private readonly slackQueue: Queue,
+    @InjectQueue('message') private readonly messageQueue: Queue,
     @Inject(forwardRef(() => CustomersService))
     private readonly customersService: CustomersService
   ) {

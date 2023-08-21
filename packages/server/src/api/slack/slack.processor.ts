@@ -1,5 +1,5 @@
-import { Processor, WorkerHost } from '@taskforcesh/nestjs-bullmq-pro';
-import { JobPro } from '@taskforcesh/bullmq-pro';
+import { Processor, WorkerHost } from '@nestjs/bullmq';
+import { Job } from 'bullmq';
 import { LoggerService, Injectable, Inject } from '@nestjs/common';
 import { WebClient } from '@slack/web-api';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
@@ -25,7 +25,7 @@ export class SlackProcessor extends WorkerHost {
     this.tagEngine = new Liquid();
   }
 
-  async process(job: JobPro<any, any, string>): Promise<any> {
+  async process(job: Job<any, any, string>): Promise<any> {
     try {
       let textWithInsertedTags;
       const { tags, text, ...args } = job.data.args;

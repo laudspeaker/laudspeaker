@@ -2,8 +2,8 @@ import {
   Processor,
   WorkerHost,
   InjectQueue,
-} from '@taskforcesh/nestjs-bullmq-pro';
-import { JobPro, QueuePro } from '@taskforcesh/bullmq-pro';
+} from '@nestjs/bullmq';
+import { Job, Queue } from 'bullmq';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Account } from '../accounts/entities/accounts.entity';
 import { CustomerDocument } from '../customers/schemas/customer.schema';
@@ -49,7 +49,7 @@ export class EventsProcessor extends WorkerHost {
     private readonly audiencesHelper: AudiencesHelper,
     @Inject(WebsocketGateway)
     private websocketGateway: WebsocketGateway,
-    @InjectQueue('transition') private readonly transitionQueue: QueuePro,
+    @InjectQueue('transition') private readonly transitionQueue: Queue,
     @Inject(RedlockService)
     private readonly redlockService: RedlockService
   ) {
@@ -115,7 +115,7 @@ export class EventsProcessor extends WorkerHost {
     );
   }
 
-  async process(job: JobPro<any, any, string>): Promise<any> {
+  async process(job: Job<any, any, string>): Promise<any> {
     const session = randomUUID();
     let err: any, stepToQueue: Step, branch: number, lock: Lock;
     const queryRunner = this.dataSource.createQueryRunner();

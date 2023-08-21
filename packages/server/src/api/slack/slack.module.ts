@@ -1,5 +1,5 @@
 import { forwardRef, Module } from '@nestjs/common';
-import { BullModule } from '@taskforcesh/nestjs-bullmq-pro';
+import { BullModule } from '@nestjs/bullmq';
 import { SlackProcessor } from './slack.processor';
 import { SlackController } from './slack.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';

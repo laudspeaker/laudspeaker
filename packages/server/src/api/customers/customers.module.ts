@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { CustomersController } from './customers.controller';
 import { CustomersService } from './customers.service';
 import { CustomersProcessor } from './customers.processor';
-import { BullModule } from '@taskforcesh/nestjs-bullmq-pro';
+import { BullModule } from '@nestjs/bullmq';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Customer, CustomerSchema } from './schemas/customer.schema';
 import {

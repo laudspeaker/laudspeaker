@@ -8,8 +8,8 @@ import {
   Req,
   Inject,
 } from '@nestjs/common';
-import { InjectQueue } from '@taskforcesh/nestjs-bullmq-pro';
-import { QueuePro } from '@taskforcesh/bullmq-pro';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 import Mailgun from 'mailgun.js';
 import FormData from 'form-data';
 import * as _ from 'lodash';
@@ -26,7 +26,7 @@ import { CustomersService } from '../customers/customers.service';
 @Controller('email')
 export class EmailController {
   constructor(
-    @InjectQueue('message') private readonly messageQueue: QueuePro,
+    @InjectQueue('message') private readonly messageQueue: Queue,
     @InjectRepository(Account)
     private usersRepository: Repository<Account>,
     @InjectRepository(Audience)

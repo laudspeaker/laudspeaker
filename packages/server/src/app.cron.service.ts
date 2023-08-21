@@ -45,8 +45,8 @@ import { ModalsService } from './api/modals/modals.service';
 import { randomUUID } from 'crypto';
 import { StepsService } from './api/steps/steps.service';
 import { StepType } from './api/steps/types/step.interface';
-import { InjectQueue } from '@taskforcesh/nestjs-bullmq-pro';
-import { QueuePro } from '@taskforcesh/bullmq-pro';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 import { JourneysService } from './api/journeys/journeys.service';
 import { RedlockService } from './api/redlock/redlock.service';
 import { Lock } from 'redlock';
@@ -93,7 +93,7 @@ export class CronService {
     @Inject(AccountsService) private accountsService: AccountsService,
     @Inject(ModalsService) private modalsService: ModalsService,
     @Inject(StepsService) private stepsService: StepsService,
-    @InjectQueue('transition') private readonly transitionQueue: QueuePro,
+    @InjectQueue('transition') private readonly transitionQueue: Queue,
     @Inject(RedlockService)
     private readonly redlockService: RedlockService
   ) {}

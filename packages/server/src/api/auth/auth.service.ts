@@ -12,8 +12,8 @@ import { DataSource, EntityManager, QueryRunner, Repository } from 'typeorm';
 import { RegisterDto } from '../auth/dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { AuthHelper } from './auth.helper';
-import { InjectQueue } from '@taskforcesh/nestjs-bullmq-pro';
-import { QueuePro } from '@taskforcesh/bullmq-pro';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 import { Verification } from './entities/verification.entity';
 import { CustomersService } from '../customers/customers.service';
 import mongoose from 'mongoose';
@@ -29,7 +29,7 @@ export class AuthService {
     private dataSource: DataSource,
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
     private readonly logger: Logger,
-    @InjectQueue('message') private readonly messageQueue: QueuePro,
+    @InjectQueue('message') private readonly messageQueue: Queue,
     @InjectRepository(Account)
     public readonly accountRepository: Repository<Account>,
     @InjectRepository(Verification)

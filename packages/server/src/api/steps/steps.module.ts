@@ -2,7 +2,7 @@ import { Module, forwardRef } from '@nestjs/common';
 import { StepsService } from './steps.service';
 import { StepsController } from './steps.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { BullModule } from '@taskforcesh/nestjs-bullmq-pro';
+import { BullModule } from '@nestjs/bullmq';
 import { Step } from './entities/step.entity';
 import { JobsService } from '../jobs/jobs.service';
 import { Template } from '../templates/entities/template.entity';

@@ -22,8 +22,8 @@ import {
   WorkerHost,
   OnWorkerEvent,
   InjectQueue,
-} from '@taskforcesh/nestjs-bullmq-pro';
-import { JobPro, QueuePro, UnrecoverableError } from '@taskforcesh/bullmq-pro';
+} from '@nestjs/bullmq';
+import { Job, Queue, UnrecoverableError } from 'bullmq';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import mongoose, { Model } from 'mongoose';
 import { EventDocument, Event } from './schemas/event.schema';
@@ -54,13 +54,13 @@ export class EventsService {
     private readonly customersService: CustomersService,
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
     private readonly logger: Logger,
-    @InjectQueue('message') private readonly messageQueue: QueuePro,
-    @InjectQueue('events') private readonly eventQueue: QueuePro,
+    @InjectQueue('message') private readonly messageQueue: Queue,
+    @InjectQueue('events') private readonly eventQueue: Queue,
     @InjectQueue('events_pre')
-    private readonly eventPreprocessorQueue: QueuePro,
-    @InjectQueue(JobTypes.slack) private readonly slackQueue: QueuePro,
+    private readonly eventPreprocessorQueue: Queue,
+    @InjectQueue(JobTypes.slack) private readonly slackQueue: Queue,
     @InjectQueue(JobTypes.events)
-    private readonly eventsQueue: QueuePro,
+    private readonly eventsQueue: Queue,
     @InjectModel(Event.name)
     private EventModel: Model<EventDocument>,
     @InjectModel(PosthogEvent.name)
@@ -70,7 +70,7 @@ export class EventsService {
     @InjectModel(PosthogEventType.name)
     private PosthogEventTypeModel: Model<PosthogEventTypeDocument>,
     @InjectConnection() private readonly connection: mongoose.Connection,
-    @InjectQueue('webhooks') private readonly webhooksQueue: QueuePro,
+    @InjectQueue('webhooks') private readonly webhooksQueue: Queue,
     @Inject(forwardRef(() => JourneysService))
     private readonly journeysService: JourneysService
   ) {

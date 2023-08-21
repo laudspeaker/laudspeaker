@@ -6,8 +6,8 @@ import {
   Processor,
   WorkerHost,
   InjectQueue,
-} from '@taskforcesh/nestjs-bullmq-pro';
-import { JobPro, QueuePro } from '@taskforcesh/bullmq-pro';
+} from '@nestjs/bullmq';
+import { Job, Queue } from 'bullmq';
 import { cpus } from 'os';
 import { CustomComponentAction, StepType } from '../types/step.interface';
 import { Step } from '../entities/step.entity';
@@ -44,8 +44,8 @@ export class TransitionProcessor extends WorkerHost {
     private dataSource: DataSource,
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
     private readonly logger: Logger,
-    @InjectQueue('transition') private readonly transitionQueue: QueuePro,
-    @InjectQueue('webhooks') private readonly webhooksQueue: QueuePro,
+    @InjectQueue('transition') private readonly transitionQueue: Queue,
+    @InjectQueue('webhooks') private readonly webhooksQueue: Queue,
     @InjectConnection() private readonly connection: mongoose.Connection,
     @Inject(WebhooksService) private readonly webhooksService: WebhooksService,
     @Inject(CustomersService)
@@ -121,7 +121,7 @@ export class TransitionProcessor extends WorkerHost {
     );
   }
 
-  async process(job: JobPro<any, any, string>): Promise<any> {
+  async process(job: Job<any, any, string>): Promise<any> {
     this.debug(
       `${JSON.stringify({ job })}`,
       this.process.name,
@@ -1515,8 +1515,8 @@ export class TransitionProcessor extends WorkerHost {
   }
 
   // TODO
-  async handleABTest(job: JobPro<any, any, string>) {}
-  async handleRandomCohortBranch(job: JobPro<any, any, string>) {}
+  async handleABTest(job: Job<any, any, string>) {}
+  async handleRandomCohortBranch(job: Job<any, any, string>) {}
 
   // @OnWorkerEvent('active')
   // onActive(job: Job<any, any, any>, prev: string) {

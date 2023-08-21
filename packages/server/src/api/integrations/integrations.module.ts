@@ -1,4 +1,4 @@
-import { BullModule } from '@taskforcesh/nestjs-bullmq-pro';
+import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { TypeOrmModule } from '@nestjs/typeorm';

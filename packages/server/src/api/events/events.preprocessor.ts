@@ -2,8 +2,8 @@ import {
   Processor,
   WorkerHost,
   InjectQueue,
-} from '@taskforcesh/nestjs-bullmq-pro';
-import { JobPro, QueuePro, UnrecoverableError } from '@taskforcesh/bullmq-pro';
+} from '@nestjs/bullmq';
+import { Job, Queue, UnrecoverableError } from 'bullmq';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Correlation, CustomersService } from '../customers/customers.service';
 import { DataSource } from 'typeorm';
@@ -40,7 +40,7 @@ export enum ProviderType {
 export class EventsPreProcessor extends WorkerHost {
   private providerMap: Record<
     ProviderType,
-    (job: JobPro<any, any, string>) => Promise<void>
+    (job: Job<any, any, string>) => Promise<void>
   > = {
     [ProviderType.LAUDSPEAKER]: async (job) => {
       await this.handleCustom(job);
@@ -66,7 +66,7 @@ export class EventsPreProcessor extends WorkerHost {
     @InjectModel(PosthogEventType.name)
     private posthogEventTypeModel: Model<PosthogEventTypeDocument>,
     @InjectModel(Customer.name) public customerModel: Model<CustomerDocument>,
-    @InjectQueue('events') private readonly eventsQueue: QueuePro,
+    @InjectQueue('events') private readonly eventsQueue: Queue,
     @Inject(RedlockService)
     private readonly redlockService: RedlockService
   ) {
@@ -132,11 +132,11 @@ export class EventsPreProcessor extends WorkerHost {
     );
   }
 
-  async process(job: JobPro<any, any, string>): Promise<any> {
+  async process(job: Job<any, any, string>): Promise<any> {
     await this.providerMap[job.name](job);
   }
 
-  async handlePosthog(job: JobPro<any, any, string>): Promise<any> {
+  async handlePosthog(job: Job<any, any, string>): Promise<any> {
     const transactionSession = await this.connection.startSession();
     transactionSession.startTransaction();
     const queryRunner = this.dataSource.createQueryRunner();
@@ -317,7 +317,7 @@ export class EventsPreProcessor extends WorkerHost {
     }
   }
 
-  async handleCustom(job: JobPro<any, any, string>): Promise<any> {
+  async handleCustom(job: Job<any, any, string>): Promise<any> {
     const transactionSession = await this.connection.startSession();
     transactionSession.startTransaction();
     const queryRunner = this.dataSource.createQueryRunner();

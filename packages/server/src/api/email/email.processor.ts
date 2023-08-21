@@ -3,8 +3,8 @@ import {
   Processor,
   WorkerHost,
   OnWorkerEvent,
-} from '@taskforcesh/nestjs-bullmq-pro';
-import { JobPro } from '@taskforcesh/bullmq-pro';
+} from '@nestjs/bullmq';
+import { Job } from 'bullmq';
 import { Inject, LoggerService } from '@nestjs/common';
 import { Injectable } from '@nestjs/common';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
@@ -38,7 +38,7 @@ export class MessageProcessor extends WorkerHost {
   });
   private messagesMap: Record<
     MessageType,
-    (job: JobPro<any, any, string>) => Promise<void>
+    (job: Job<any, any, string>) => Promise<void>
   > = {
     [MessageType.EMAIL]: async (job) => {
       await this.handleEmail(job);
@@ -59,12 +59,12 @@ export class MessageProcessor extends WorkerHost {
     super();
   }
 
-  async process(job: JobPro<any, any, string>): Promise<any> {
+  async process(job: Job<any, any, string>): Promise<any> {
     await this.messagesMap[job.name](job);
   }
 
   @OnWorkerEvent('active')
-  onActive(job: JobPro<any, any, any>, prev: string) {
+  onActive(job: Job<any, any, any>, prev: string) {
     this.logger.debug(
       `${JSON.stringify(job)} ${prev}`,
       `email.processor.ts:MessageProcessor.onActive()`
@@ -85,7 +85,7 @@ export class MessageProcessor extends WorkerHost {
   }
 
   @OnWorkerEvent('completed')
-  onCompleted(job: JobPro<any, any, any>, result: any, prev: string) {
+  onCompleted(job: Job<any, any, any>, result: any, prev: string) {
     this.logger.debug(
       `${JSON.stringify(job)} ${result} ${prev}`,
       `email.processor.ts:MessageProcessor.onCompleted()`
@@ -106,7 +106,7 @@ export class MessageProcessor extends WorkerHost {
   }
 
   @OnWorkerEvent('failed')
-  onFailed(job: JobPro<any, any, any> | undefined, error: Error, prev: string) {
+  onFailed(job: Job<any, any, any> | undefined, error: Error, prev: string) {
     this.logger.debug(
       `${JSON.stringify(job)} ${error} ${prev}`,
       `email.processor.ts:MessageProcessor.onFailed()`
@@ -119,7 +119,7 @@ export class MessageProcessor extends WorkerHost {
   }
 
   @OnWorkerEvent('progress')
-  onProgress(job: JobPro<any, any, any>, progress: number | object) {
+  onProgress(job: Job<any, any, any>, progress: number | object) {
     this.logger.debug(
       `${JSON.stringify(job)} ${progress}`,
       `email.processor.ts:MessageProcessor.onProgress()`
@@ -144,7 +144,7 @@ export class MessageProcessor extends WorkerHost {
     );
   }
 
-  async handleEmail(job: JobPro<any, any, string>): Promise<any> {
+  async handleEmail(job: Job<any, any, string>): Promise<any> {
     if (!job.data.to) {
       this.logger.error(
         `Error: Skipping sending for ${
@@ -291,7 +291,7 @@ export class MessageProcessor extends WorkerHost {
     }
   }
 
-  async handleSMS(job: JobPro) {
+  async handleSMS(job: Job) {
     if (!job.data.to) {
       this.logger.error(
         `Error: Skipping sending for ${
@@ -377,7 +377,7 @@ export class MessageProcessor extends WorkerHost {
     }
   }
 
-  async handleFirebase(job: JobPro) {
+  async handleFirebase(job: Job) {
     if (!job.data.phDeviceToken) {
       this.logger.error(
         `Error: Skipping sending for ${

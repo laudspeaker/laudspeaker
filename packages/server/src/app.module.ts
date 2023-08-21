@@ -3,7 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { TypeOrmConfigService } from './shared/typeorm/typeorm.service';
 import { ApiModule } from './api/api.module';
 import { WinstonModule } from 'nest-winston';
-import { BullModule } from '@taskforcesh/nestjs-bullmq-pro';
+import { BullModule } from '@nestjs/bullmq';
 import * as winston from 'winston';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AuthMiddleware } from './api/auth/middleware/auth.middleware';
