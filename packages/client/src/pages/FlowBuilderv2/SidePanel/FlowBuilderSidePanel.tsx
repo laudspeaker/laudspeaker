@@ -18,6 +18,7 @@ import TimeWindowSettings from "./settings/TimeWindowSettings";
 import TrackerSettings from "./settings/TrackerSettings";
 import UserAttributeSettings from "./settings/UserAttributeSettings";
 import WaitUntilSettings from "./settings/WaitUntilSettings";
+import JumpToSettings from "./settings/JumpToSettings";
 
 export interface SidePanelComponentProps<T extends NodeData = NodeData> {
   nodeData: T;
@@ -51,16 +52,16 @@ const FlowBuilderSidePanel: FC<FlowBuilderSidePanelProps> = ({ className }) => {
   const [showErrors, setShowErrors] = useState(false);
 
   const nodeTypeToNameMap: Record<NodeType, string> = {
-    [NodeType.START]: "",
-    [NodeType.EMPTY]: "",
-    [NodeType.MESSAGE]: "",
+    [NodeType.START]: "Start",
+    [NodeType.EMPTY]: "Empty",
+    [NodeType.MESSAGE]: "Message",
     [NodeType.JUMP_TO]: "Jump to",
     [NodeType.EXIT]: "Exit",
     [NodeType.TIME_DELAY]: "Time delay",
     [NodeType.TIME_WINDOW]: "Time window",
     [NodeType.WAIT_UNTIL]: "Wait until",
     [NodeType.USER_ATTRIBUTE]: "User attribute",
-    [NodeType.INSERT_NODE]: "",
+    [NodeType.INSERT_NODE]: "Insert",
     [NodeType.TRACKER]: "Tracker",
   };
 
@@ -133,6 +134,19 @@ const FlowBuilderSidePanel: FC<FlowBuilderSidePanelProps> = ({ className }) => {
             setNodeData={setNodeData}
             setIsError={setIsError}
             showErrors={showErrors}
+          />
+        )}
+      </>
+    ),
+    [NodeType.JUMP_TO]: (
+      <>
+        {nodeData.type === NodeType.JUMP_TO && selectedNode && (
+          <JumpToSettings
+            nodeData={nodeData}
+            setNodeData={setNodeData}
+            setIsError={setIsError}
+            showErrors={showErrors}
+            nodeId={selectedNode.id}
           />
         )}
       </>

@@ -17,25 +17,18 @@ import { v4 as uuid } from "uuid";
 import { useAppDispatch } from "store/hooks";
 import { selectNode } from "reducers/flow-builder.reducer";
 
-interface JumpToDraggableLineProps {
+interface JumpToLineProps {
   jumpToNodeId: string;
   targetId?: string;
   setTargetId: (targetId?: string) => void;
 }
 
-const JumpToDraggableLine: FC<JumpToDraggableLineProps> = ({
+const JumpToLine: FC<JumpToLineProps> = ({
   jumpToNodeId,
   targetId,
   setTargetId,
 }) => {
   const dispatch = useAppDispatch();
-
-  const nodeTypesConnectableToJumpTo: (string | undefined)[] = [
-    NodeType.EMPTY,
-    NodeType.INSERT_NODE,
-    NodeType.JUMP_TO,
-    NodeType.START,
-  ];
 
   const nodes = useNodes();
 
@@ -46,11 +39,6 @@ const JumpToDraggableLine: FC<JumpToDraggableLineProps> = ({
 
   const { x: viewX, y: viewY, zoom } = useViewport();
 
-  const [isDragging, setIsDragging] = useState(false);
-  const [mousePosition, setMousePosition] = useState<{
-    x: number;
-    y: number;
-  }>();
   const [edgePath, setEdgePath] = useState<string>();
   const [sourceTop, setSourceTop] = useState<number>();
   const [sourceLeft, setSourceLeft] = useState<number>();
@@ -90,16 +78,6 @@ const JumpToDraggableLine: FC<JumpToDraggableLineProps> = ({
         ? Position.Right
         : Position.Left;
 
-    if (
-      isDragging &&
-      mousePosition &&
-      mousePosition.x !== 0 &&
-      mousePosition.y !== 0
-    ) {
-      targetX = (mousePosition.x - viewX - boudingClientRect.left) / zoom;
-      targetY = (mousePosition.y - viewY - boudingClientRect.top) / zoom;
-    }
-
     if (targetId) {
       const targetNode = nodes.find((node) => node.id === targetId);
       if (!targetNode) {
@@ -131,12 +109,7 @@ const JumpToDraggableLine: FC<JumpToDraggableLineProps> = ({
       targetY = targetNode.position.y;
     }
 
-    if (
-      (isDragging || targetId) &&
-      jumpToNode &&
-      jumpToNode.width &&
-      jumpToNode.height
-    ) {
+    if (targetId && jumpToNode && jumpToNode.width && jumpToNode.height) {
       const xPickFunction =
         targetX < jumpToNode.position.x
           ? Math.max.bind(null, 0)
@@ -217,8 +190,6 @@ const JumpToDraggableLine: FC<JumpToDraggableLineProps> = ({
   }, [
     sourceRef.current,
     positionWrapperRef.current,
-    isDragging,
-    mousePosition,
     targetId,
     sourceTop,
     sourceLeft,
@@ -226,108 +197,54 @@ const JumpToDraggableLine: FC<JumpToDraggableLineProps> = ({
     nodes,
   ]);
 
-  const onDrag = (e: DragEvent) => {
-    setMousePosition({ x: e.clientX, y: e.clientY });
-  };
-
-  const onDragEnd = (e: DragEvent) => {
-    setSourceLeft(undefined);
-    setSourceTop(undefined);
-    setIsDragging(false);
-
-    if (!flowContainer) return;
-
-    const boudingClientRect = flowContainer.getBoundingClientRect();
-
-    const canvasX = (e.clientX - viewX - boudingClientRect.left) / zoom;
-    const canvasY = (e.clientY - viewY - boudingClientRect.top) / zoom;
-
-    for (const node of nodes) {
-      if (
-        !node.width ||
-        !node.height ||
-        nodeTypesConnectableToJumpTo.includes(node.type)
-      )
-        continue;
-
-      const halfWidth = node.width / 2;
-      const halfHeight = node.height / 2;
-
-      const leftBorderX = node.position.x - halfWidth;
-      const rightBorderX = node.position.x + halfWidth;
-
-      const topBorderY = node.position.y - halfHeight;
-      const bottomBorderY = node.position.y + halfHeight;
-
-      const isInsideNode =
-        canvasX > leftBorderX &&
-        canvasX < rightBorderX &&
-        canvasY > topBorderY &&
-        canvasY < bottomBorderY;
-
-      if (!isInsideNode) continue;
-
-      setTargetId(node.id);
-      return;
-    }
-  };
-
   const markerUUID = uuid();
 
-  const isActive = Boolean(jumpToNode?.selected) || isDragging || isHovered;
+  const isActive = Boolean(jumpToNode?.selected) || isHovered;
 
   const currentColor = isActive ? "#4338CA" : "#111827";
 
   return (
-    <div
-      className="absolute -translate-x-1/2"
-      style={{
-        left: sourceLeft === undefined ? "50%" : sourceLeft,
-        top: sourceTop === undefined ? "100%" : sourceTop,
-      }}
-      draggable
-      onClick={(e) => {
-        e.stopPropagation();
-        console.log("click");
-        dispatch(selectNode(jumpToNodeId));
-      }}
-      onDragStart={(e) => {
-        console.log("drag start");
-        e.dataTransfer.effectAllowed = "move";
-        setTargetId(undefined);
-        setIsDragging(true);
-        setMousePosition({ x: e.clientX, y: e.clientY });
-      }}
-      onDrag={onDrag}
-      onDragEnd={onDragEnd}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      onMouseDown={(e) => e.stopPropagation()}
-      onMouseDownCapture={(e) => e.stopPropagation()}
-    >
-      <div
-        ref={sourceRef}
-        className="relative rounded-[100%] w-[10px] h-[10px] -translate-y-2/3"
-        style={{
-          background: currentColor,
-        }}
-      >
-        {edgesContainer &&
-          createPortal(
-            <>
-              {edgePath && (
-                <g className="react-flow__edge outline-none nopan">
-                  <defs>
-                    <marker
-                      id={`arrowhead${markerUUID}`}
-                      markerWidth="10"
-                      markerHeight="7"
-                      refX={targetId ? "10" : "0"}
-                      refY="3.5"
-                      orient="auto"
-                      markerUnits="strokeWidth"
-                    >
-                      {/* <line
+    <>
+      {targetId && (
+        <div
+          className="absolute -translate-x-1/2"
+          style={{
+            left: sourceLeft === undefined ? "50%" : sourceLeft,
+            top: sourceTop === undefined ? "100%" : sourceTop,
+          }}
+          onClick={(e) => {
+            e.stopPropagation();
+            console.log("click");
+            dispatch(selectNode(jumpToNodeId));
+          }}
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+          onMouseDown={(e) => e.stopPropagation()}
+          onMouseDownCapture={(e) => e.stopPropagation()}
+        >
+          <div
+            ref={sourceRef}
+            className="relative rounded-[100%] w-[10px] h-[10px] -translate-y-2/3"
+            style={{
+              background: currentColor,
+            }}
+          >
+            {edgesContainer &&
+              createPortal(
+                <>
+                  {edgePath && (
+                    <g className="react-flow__edge outline-none nopan">
+                      <defs>
+                        <marker
+                          id={`arrowhead${markerUUID}`}
+                          markerWidth="10"
+                          markerHeight="7"
+                          refX={targetId ? "10" : "0"}
+                          refY="3.5"
+                          orient="auto"
+                          markerUnits="strokeWidth"
+                        >
+                          {/* <line
                         x1="0"
                         y1="0"
                         x2="10"
@@ -347,30 +264,30 @@ const JumpToDraggableLine: FC<JumpToDraggableLineProps> = ({
                           fill: "#4338CA",
                         }}
                       /> */}
-                      <polygon
-                        points="0 0, 10 3.5, 0 7"
-                        style={{
-                          stroke: currentColor,
-                          fill: currentColor,
+                          <polygon
+                            points="0 0, 10 3.5, 0 7"
+                            style={{
+                              stroke: currentColor,
+                              fill: currentColor,
+                            }}
+                          />
+                        </marker>
+                      </defs>
+                      <path
+                        onClick={() => {
+                          console.log("PATH CLICK");
                         }}
+                        className="react-flow__edge-path"
+                        style={{
+                          strokeWidth: 1,
+                          stroke: currentColor,
+                          outline: "none",
+                        }}
+                        d={edgePath}
+                        markerEnd={`url(#arrowhead${markerUUID})`}
                       />
-                    </marker>
-                  </defs>
-                  <path
-                    onClick={() => {
-                      console.log("PATH CLICK");
-                    }}
-                    className="react-flow__edge-path"
-                    style={{
-                      strokeWidth: 1,
-                      stroke: currentColor,
-                      outline: "none",
-                    }}
-                    d={edgePath}
-                    markerEnd={`url(#arrowhead${markerUUID})`}
-                  />
 
-                  {/* <path
+                      {/* <path
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
@@ -406,14 +323,16 @@ const JumpToDraggableLine: FC<JumpToDraggableLineProps> = ({
                     }}
                     d={edgePath}
                   /> */}
-                </g>
+                    </g>
+                  )}
+                </>,
+                edgesContainer
               )}
-            </>,
-            edgesContainer
-          )}
-      </div>
-    </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 
-export default JumpToDraggableLine;
+export default JumpToLine;

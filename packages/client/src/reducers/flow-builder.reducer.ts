@@ -163,6 +163,8 @@ interface FlowBuilderState {
   showSegmentsErrors: boolean;
   isOnboarding: boolean;
   isOnboardingWaitUntilTooltipVisible: boolean;
+  jumpToTargettingNode?: string;
+  isDrawerDisabled: boolean;
 }
 
 const startNodeUUID = uuid();
@@ -207,6 +209,8 @@ const initialState: FlowBuilderState = {
   showSegmentsErrors: false,
   isOnboarding: false,
   isOnboardingWaitUntilTooltipVisible: false,
+  jumpToTargettingNode: undefined,
+  isDrawerDisabled: false,
 };
 
 const handlePruneNodeTree = (state: FlowBuilderState, nodeId: string) => {
@@ -709,6 +713,21 @@ const flowBuilderSlice = createSlice({
     ) {
       state.isOnboardingWaitUntilTooltipVisible = action.payload;
     },
+    setJumpToTargettingNode(state, action: PayloadAction<string | undefined>) {
+      state.jumpToTargettingNode = action.payload;
+      state.isDrawerDisabled = Boolean(action.payload);
+      state.nodes = applyNodeChanges(
+        state.nodes.map<NodeChange>((node) => ({
+          type: "select",
+          id: node.id,
+          selected: false,
+        })),
+        state.nodes
+      );
+    },
+    setIsDrawerDisabled(state, action: PayloadAction<boolean>) {
+      state.isDrawerDisabled = action.payload;
+    },
     refreshFlowBuilder(state) {
       state.flowId = "";
       state.flowName = "";
@@ -724,6 +743,8 @@ const flowBuilderSlice = createSlice({
       state.showSegmentsErrors = false;
       state.isOnboarding = false;
       state.isOnboardingWaitUntilTooltipVisible = false;
+      state.jumpToTargettingNode = undefined;
+      state.isDrawerDisabled = false;
     },
   },
 });
@@ -754,6 +775,8 @@ export const {
   setShowSegmentsErrors,
   setIsOnboarding,
   setIsOnboardingWaitUntilTooltipVisible,
+  setJumpToTargettingNode,
+  setIsDrawerDisabled,
   refreshFlowBuilder,
 } = flowBuilderSlice.actions;
 

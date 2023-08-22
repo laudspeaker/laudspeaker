@@ -1,8 +1,26 @@
-import React, { FC } from "react";
-import { Handle, NodeProps, Position } from "reactflow";
+import React, { FC, useEffect, useState } from "react";
+import {
+  Edge,
+  Handle,
+  Node,
+  NodeProps,
+  Position,
+  getIncomers,
+} from "reactflow";
 import { useAppSelector } from "store/hooks";
-import { CustomModalIcon } from "../Icons";
-import { Stats, TrackerNodeData } from "./NodeData";
+import {
+  CustomModalIcon,
+  TrackerVisibilityHideIcon,
+  TrackerVisibilityShowIcon,
+} from "../Icons";
+import {
+  JumpToNodeData,
+  NodeData,
+  Stats,
+  TrackerNodeData,
+  TrackerVisibility,
+} from "./NodeData";
+import { NodeType } from "../FlowEditor";
 
 const compatNumberFormatter = Intl.NumberFormat("en", { notation: "compact" });
 
@@ -23,12 +41,75 @@ export const trackerStatsToShow: {
   },
 ];
 
+export const findFirstTrackerAbove = (
+  node: Node,
+  data: TrackerNodeData,
+  nodes: Node<NodeData>[],
+  edges: Edge[]
+): Node<TrackerNodeData> | undefined => {
+  const parents = getIncomers(node, nodes, edges);
+  for (const parent of parents) {
+    if (
+      parent.type === NodeType.TRACKER &&
+      parent.data.type === NodeType.TRACKER &&
+      parent.data.tracker?.trackerId &&
+      parent.data.tracker.trackerId === data.tracker?.trackerId
+    ) {
+      return parent as Node<TrackerNodeData>;
+    }
+
+    return findFirstTrackerAbove(parent, data, nodes, edges);
+  }
+
+  return undefined;
+};
+
 export const TrackerNode: FC<NodeProps<TrackerNodeData>> = ({
   isConnectable,
   data: { stats, needsCheck, tracker, showErrors },
   selected,
+  id,
 }) => {
-  const { isViewMode } = useAppSelector((state) => state.flowBuilder);
+  const { nodes, edges, isViewMode } = useAppSelector(
+    (state) => state.flowBuilder
+  );
+
+  const [changesCount, setChangesCount] = useState(0);
+  const [firstTrackerNodeAbove, setFirstTrackerNodeAbove] =
+    useState<Node<TrackerNodeData>>();
+
+  const thisNode = nodes.find((node) => node.id === id);
+
+  useEffect(() => {
+    setFirstTrackerNodeAbove(
+      thisNode
+        ? findFirstTrackerAbove(
+            thisNode as Node<TrackerNodeData>,
+            thisNode.data as TrackerNodeData,
+            nodes,
+            edges
+          )
+        : undefined
+    );
+  }, [thisNode, nodes, edges]);
+
+  useEffect(() => {
+    if (!tracker?.fields || !firstTrackerNodeAbove) return;
+
+    let newChangesCount = 0;
+
+    for (const field1 of tracker.fields) {
+      const field2 = firstTrackerNodeAbove.data.tracker?.fields.find(
+        (f) => f.name === field1.name
+      );
+
+      if (field1.value !== field2?.value) {
+        newChangesCount++;
+      }
+    }
+
+    setChangesCount(newChangesCount);
+  }, [tracker?.fields, firstTrackerNodeAbove]);
 
   return (
     <div
@@ -65,9 +146,25 @@ export const TrackerNode: FC<NodeProps<TrackerNodeData>> = ({
             <CustomModalIcon />
           </div>
           <div
-            className={`font-inter font-semibold text-[16px] leading-[24px]`}
+            className={`font-inter font-semibold text-[16px] leading-[24px] flex justify-between items-center w-full`}
           >
-            Tracker
+            <div>Tracker</div>
+            {tracker && (
+              <div className="flex items-center gap-[6px]">
+                {Boolean(changesCount) && (
+                  <div className="px-[4px] py-[2px] rounded-[2px] bg-[#FEF9C3] text-[#A16207] font-inter font-normal leading-normal text-[10px] h-[18px]">
+                    {compatNumberFormatter.format(changesCount || 0)} changes
+                  </div>
+                )}
+                <div>
+                  {tracker?.visibility === TrackerVisibility.SHOW ? (
+                    <TrackerVisibilityShowIcon />
+                  ) : (
+                    <TrackerVisibilityHideIcon />
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </div>
         <div className="font-inter font-normal text-[14px] leading-[22px] whitespace-nowrap text-ellipsis max-w-full overflow-hidden">

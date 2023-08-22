@@ -1,8 +1,8 @@
-import React, { FC } from "react";
+import React, { FC, useEffect } from "react";
 import { Handle, NodeProps, Position } from "reactflow";
 import { changeNodeData } from "reducers/flow-builder.reducer";
 import { useAppDispatch } from "store/hooks";
-import JumpToDraggableLine from "../Edges/components/JumpToDraggableLine";
+import JumpToLine from "../Edges/components/JumpToLine";
 import { NodeType } from "../FlowEditor";
 import { JumpToNodeData } from "./NodeData";
 
@@ -24,6 +24,16 @@ export const JumpToNode: FC<NodeProps<JumpToNodeData>> = ({
       })
     );
   };
+
+  useEffect(() => {
+    if (!data.targetId)
+      dispatch(
+        changeNodeData({
+          id,
+          data: { ...data, type: NodeType.JUMP_TO, targetId: undefined },
+        })
+      );
+  }, [data.targetId]);
 
   return (
     <div
@@ -74,7 +84,7 @@ export const JumpToNode: FC<NodeProps<JumpToNodeData>> = ({
           </div>
         </div>
 
-        <JumpToDraggableLine
+        <JumpToLine
           jumpToNodeId={id}
           targetId={data.targetId}
           setTargetId={setTargetId}

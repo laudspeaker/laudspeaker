@@ -19,7 +19,7 @@ const specificTypeClassNameMap: Record<ButtonType, string> = {
   [ButtonType.PRIMARY]:
     "bg-[#6366F1] border-[1px] border-[#6366F1] rounded-[4px] px-[15px] py-[4px] text-white flex items-center justify-center hover:border-[#818CF8] hover:bg-[#818CF8] focus:border-[#4338CA] focus:bg-[#4338CA] disabled:!bg-[#F3F4F6]",
   [ButtonType.SECONDARY]:
-    "bg-white border-[1px] border-[#E5E7EB] rounded-[4px] px-[15px] py-[4px] text-[#111827] flex items-center justify-center hover:border-[#818CF8] hover:text-[#818CF8] focus:border-[#4338CA] focus:text-[#4338CA] disabled:!bg-[#F3F4F6]",
+    "bg-white border-[1px] border-[#6366F1] rounded-[4px] px-[15px] py-[4px] text-[#6366F1] flex items-center justify-center hover:border-[#818CF8] hover:text-[#818CF8] focus:border-[#4338CA] focus:text-[#4338CA] disabled:!bg-[#F3F4F6]",
   [ButtonType.LINK]:
     "text-[#111827] underline hover:text-[#818CF8] focus:text-[#4338CA]",
   [ButtonType.DANGEROUS]:
