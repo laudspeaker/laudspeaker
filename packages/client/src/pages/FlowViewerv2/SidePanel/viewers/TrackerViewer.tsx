@@ -228,7 +228,11 @@ const TrackerViewer: FC<
                           firstTrackerNodeAbove?.data.tracker?.fields.find(
                             (f) => f.name === field.name
                           )?.value && (
-                          <Tooltip content="Value changed compared to previous occurrence">
+                          <Tooltip
+                            placement="bottom-start"
+                            className="bg-[#111827] rounded-none p-[5px] text-white"
+                            content="Value changed compared to previous occurrence"
+                          >
                             <div className="w-[8px] h-[8px] bg-[#F43F5E] rounded-[100%]" />
                           </Tooltip>
                         )}

@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useState } from "react";
+import React, { FC, Fragment, useEffect, useRef, useState } from "react";
 import {
   Edge,
   Handle,
@@ -6,6 +6,7 @@ import {
   NodeProps,
   Position,
   getIncomers,
+  useViewport,
 } from "reactflow";
 import { useAppSelector } from "store/hooks";
 import {
@@ -21,6 +22,13 @@ import {
   TrackerVisibility,
 } from "./NodeData";
 import { NodeType } from "../FlowEditor";
+import { Transition } from "@headlessui/react";
+import { createPortal } from "react-dom";
+
+interface ChangesObject {
+  field: string;
+  value: string;
+}
 
 const compatNumberFormatter = Intl.NumberFormat("en", { notation: "compact" });
 
@@ -73,12 +81,17 @@ export const TrackerNode: FC<NodeProps<TrackerNodeData>> = ({
   const { nodes, edges, isViewMode } = useAppSelector(
     (state) => state.flowBuilder
   );
+  const [isPopperShowing, setIsPopperShowing] = useState(false);
 
-  const [changesCount, setChangesCount] = useState(0);
+  const [changes, setChanges] = useState<ChangesObject[]>([]);
   const [firstTrackerNodeAbove, setFirstTrackerNodeAbove] =
     useState<Node<TrackerNodeData>>();
 
   const thisNode = nodes.find((node) => node.id === id);
+
+  const elementRef = useRef<HTMLDivElement>(null);
+
+  const { zoom } = useViewport();
 
   useEffect(() => {
     setFirstTrackerNodeAbove(
@@ -96,7 +109,7 @@ export const TrackerNode: FC<NodeProps<TrackerNodeData>> = ({
   useEffect(() => {
     if (!tracker?.fields || !firstTrackerNodeAbove) return;
 
-    let newChangesCount = 0;
+    const newChanges: ChangesObject[] = [];
 
     for (const field1 of tracker.fields) {
       const field2 = firstTrackerNodeAbove.data.tracker?.fields.find(
@@ -104,15 +117,19 @@ export const TrackerNode: FC<NodeProps<TrackerNodeData>> = ({
       );
 
       if (field1.value !== field2?.value) {
-        newChangesCount++;
+        newChanges.push({
+          field: field2?.name || "",
+          value: field2?.value || "",
+        });
       }
     }
 
-    setChangesCount(newChangesCount);
+    setChanges(newChanges);
   }, [tracker?.fields, firstTrackerNodeAbove]);
 
   return (
     <div
+      ref={elementRef}
       className={`${isViewMode ? "w-[300px]" : "w-[260px]"} ${
         isViewMode && stats ? "h-[140px]" : "h-[80px]"
       }  rounded-[4px] bg-white ${
@@ -150,11 +167,60 @@ export const TrackerNode: FC<NodeProps<TrackerNodeData>> = ({
           >
             <div>Tracker</div>
             {tracker && (
-              <div className="flex items-center gap-[6px]">
-                {Boolean(changesCount) && (
-                  <div className="px-[4px] py-[2px] rounded-[2px] bg-[#FEF9C3] text-[#A16207] font-inter font-normal leading-normal text-[10px] h-[18px]">
-                    {compatNumberFormatter.format(changesCount || 0)} changes
-                  </div>
+              <div
+                className="flex items-center gap-[6px]"
+                onMouseEnter={() => setIsPopperShowing(true)}
+                onMouseLeave={() => setIsPopperShowing(false)}
+              >
+                {Boolean(changes.length) && elementRef?.current && (
+                  <>
+                    <div className="px-[4px] py-[2px] rounded-[2px] bg-[#FEF9C3] text-[#A16207] font-inter font-normal leading-normal text-[10px] h-[18px]">
+                      {compatNumberFormatter.format(changes.length)} changes
+                    </div>
+                    {createPortal(
+                      <Transition
+                        as={Fragment}
+                        show={isPopperShowing}
+                        enter="transition ease-out duration-200"
+                        enterFrom="opacity-0 translate-y-1"
+                        enterTo="opacity-100 translate-y-0"
+                        leave="transition ease-in duration-150"
+                        leaveFrom="opacity-100 translate-y-0"
+                        leaveTo="opacity-0 translate-y-1"
+                      >
+                        <div
+                          style={{
+                            top: elementRef.current.getBoundingClientRect().top,
+                            left:
+                              elementRef.current.getBoundingClientRect().left +
+                              4,
+                            transformOrigin: "0 0",
+                            transform: `scale(${zoom}) translateX(100%)`,
+                          }}
+                          className={`fixed px-[10px] py-[12px] w-[260px] bg-white z-[999999999] rounded-[4px] flex flex-col gap-[10px]`}
+                        >
+                          <span className="font-[Inter] text-[14px] leading-[22px] font-semibold">
+                            Changed Fields:{" "}
+                            {compatNumberFormatter.format(changes.length)}
+                          </span>
+                          {changes.map((el, i) => (
+                            <div
+                              key={i}
+                              className="flex flex-col p-[10px] gap-[5px] rounded-[4px] bg-[#F3F4F6] w-full"
+                            >
+                              <span className="font-[Inter] text-[14px] leading-[22px] font-semibold text-[#18181B]">
+                                {el.field}
+                              </span>
+                              <span className="font-[Inter] text-[12px] leading-[20px] text-[#18181B]">
+                                {el.value}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </Transition>,
+                      document.body
+                    )}
+                  </>
                 )}
                 <div>
                   {tracker?.visibility === TrackerVisibility.SHOW ? (

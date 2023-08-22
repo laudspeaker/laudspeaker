@@ -1,12 +1,6 @@
 import React, { DragEvent, FC, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import {
-  getBezierPath,
-  getSmoothStepPath,
-  Position,
-  useViewport,
-  useNodes,
-} from "reactflow";
+import { getBezierPath, Position, useViewport, useNodes } from "reactflow";
 import {
   getSmartEdge,
   pathfindingAStarNoDiagonal,
@@ -175,7 +169,7 @@ const JumpToLine: FC<JumpToLineProps> = ({
       return;
     }
 
-    const dumbPathFunction = targetId ? getSmoothStepPath : getBezierPath;
+    const dumbPathFunction = getBezierPath;
 
     const [newEdgePath] = dumbPathFunction({
       sourceX,
@@ -237,9 +231,9 @@ const JumpToLine: FC<JumpToLineProps> = ({
                       <defs>
                         <marker
                           id={`arrowhead${markerUUID}`}
-                          markerWidth="10"
-                          markerHeight="7"
-                          refX={targetId ? "10" : "0"}
+                          markerWidth="20"
+                          markerHeight="14"
+                          refX={targetId ? "3.5" : "0"}
                           refY="3.5"
                           orient="auto"
                           markerUnits="strokeWidth"
@@ -264,8 +258,8 @@ const JumpToLine: FC<JumpToLineProps> = ({
                           fill: "#4338CA",
                         }}
                       /> */}
-                          <polygon
-                            points="0 0, 10 3.5, 0 7"
+                          <path
+                            d="M 3.5 3.5 L 0 7 L 3.5 3.5 L 0 0 Z"
                             style={{
                               stroke: currentColor,
                               fill: currentColor,
@@ -279,9 +273,12 @@ const JumpToLine: FC<JumpToLineProps> = ({
                         }}
                         className="react-flow__edge-path"
                         style={{
-                          strokeWidth: 1,
+                          strokeWidth: 3,
                           stroke: currentColor,
                           outline: "none",
+                          strokeDasharray: "4 4",
+                          strokeLinecap: "round",
+                          animation: "dash 1s linear infinite",
                         }}
                         d={edgePath}
                         markerEnd={`url(#arrowhead${markerUUID})`}
