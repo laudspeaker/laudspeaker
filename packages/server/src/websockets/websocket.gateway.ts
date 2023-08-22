@@ -41,10 +41,10 @@ const fieldSerializerMap = {
 
 @WebSocketGateway({
   cors: {
-    origin: "*",
-    methods: "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS",
-    preflightContinue: false,
-    optionsSuccessStatus: 204,
+    origin: function (origin, callback) {
+      callback(null, true);
+    },
+    preflightContinue: true,
     credentials: true
   }
 })

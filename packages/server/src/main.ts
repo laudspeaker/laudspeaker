@@ -35,10 +35,10 @@ async function bootstrap() {
   if (process.env.SERVE_CLIENT_FROM_NEST) app.setGlobalPrefix('api');
   app.set('trust proxy', 1);
   const options = {
-    origin: "*",
-    methods: "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS",
-    preflightContinue: false,
-    optionsSuccessStatus: 204,
+    origin: function (origin, callback) {
+      callback(null,true);
+    },
+    preflightContinue: true,
     credentials: true
   };
   app.enableCors(options);
