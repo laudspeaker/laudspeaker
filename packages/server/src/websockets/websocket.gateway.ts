@@ -40,13 +40,7 @@ const fieldSerializerMap = {
 };
 
 @WebSocketGateway({
-  cors: {
-    origin: function (origin, callback) {
-      callback(null, true);
-    },
-    preflightContinue: true,
-    credentials: true
-  }
+  cors: true,
 })
 export class WebsocketGateway implements OnGatewayConnection {
   @WebSocketServer()
@@ -61,7 +55,7 @@ export class WebsocketGateway implements OnGatewayConnection {
     private eventsService: EventsService,
     @Inject(WebhooksService) private readonly webhooksService: WebhooksService,
     @InjectModel(Customer.name) public customerModel: Model<CustomerDocument>
-  ) { }
+  ) {}
 
   public async handleConnection(socket: Socket) {
     try {

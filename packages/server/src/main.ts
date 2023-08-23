@@ -34,14 +34,7 @@ async function bootstrap() {
   app.use(urlencoded({ verify: rawBodyBuffer, extended: true }));
   if (process.env.SERVE_CLIENT_FROM_NEST) app.setGlobalPrefix('api');
   app.set('trust proxy', 1);
-  const options = {
-    origin: function (origin, callback) {
-      callback(null,true);
-    },
-    preflightContinue: true,
-    credentials: true
-  };
-  app.enableCors(options);
+  app.enableCors();
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
   const logger = app.get(WINSTON_MODULE_NEST_PROVIDER);
   const morganMiddleware = morgan(
