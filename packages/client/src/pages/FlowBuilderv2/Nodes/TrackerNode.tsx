@@ -74,7 +74,7 @@ export const findFirstTrackerAbove = (
 
 export const TrackerNode: FC<NodeProps<TrackerNodeData>> = ({
   isConnectable,
-  data: { stats, needsCheck, tracker, showErrors },
+  data: { stats, needsCheck, tracker, showErrors, disabled },
   selected,
   id,
 }) => {
@@ -132,7 +132,9 @@ export const TrackerNode: FC<NodeProps<TrackerNodeData>> = ({
       ref={elementRef}
       className={`${isViewMode ? "w-[300px]" : "w-[260px]"} ${
         isViewMode && stats ? "h-[140px]" : "h-[80px]"
-      }  rounded-[4px] bg-white ${
+      } ${
+        disabled ? "opacity-50 cursor-not-allowed" : ""
+      } rounded-[4px] bg-white ${
         selected
           ? "border-[2px] border-[#6366F1]"
           : "border-[1px] border-[#E5E7EB]"

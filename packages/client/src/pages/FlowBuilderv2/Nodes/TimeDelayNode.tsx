@@ -6,11 +6,13 @@ import { TimeDelayNodeData } from "./NodeData";
 export const TimeDelayNode: FC<NodeProps<TimeDelayNodeData>> = ({
   isConnectable,
   selected,
-  data: { delay, showErrors },
+  data: { delay, showErrors, disabled },
 }) => {
   return (
     <div
       className={`w-[260px] h-[80px] rounded-[4px] bg-white font-inter ${
+        disabled ? "opacity-50 cursor-not-allowed" : ""
+      } ${
         selected
           ? "border-[2px] border-[#6366F1]"
           : "border-[1px] border-[#E5E7EB]"

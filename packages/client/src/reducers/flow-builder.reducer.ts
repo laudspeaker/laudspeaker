@@ -1,7 +1,11 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { DrawerAction } from "pages/FlowBuilderv2/Drawer/drawer.fixtures";
 import { BranchEdgeData, EdgeData } from "pages/FlowBuilderv2/Edges/EdgeData";
-import { NodeType, EdgeType } from "pages/FlowBuilderv2/FlowEditor";
+import {
+  NodeType,
+  EdgeType,
+  nodeTypesNotConnectableByJumpTo,
+} from "pages/FlowBuilderv2/FlowEditor";
 import { getLayoutedNodes } from "pages/FlowBuilderv2/layout.helper";
 import {
   Branch,
@@ -307,6 +311,32 @@ const handleClearInsertNodes = (state: FlowBuilderState) => {
   }
 };
 
+const handleJumpToTargettingNodeChange = (
+  state: FlowBuilderState,
+  payload: string | undefined
+) => {
+  state.jumpToTargettingNode = payload;
+  state.isDrawerDisabled = Boolean(payload);
+  state.nodes = applyNodeChanges(
+    state.nodes.map<NodeChange>((node) => ({
+      type: "select",
+      id: node.id,
+      selected: false,
+    })),
+    state.nodes
+  ).map((node) =>
+    payload
+      ? {
+          ...node,
+          data: {
+            ...node.data,
+            disabled: nodeTypesNotConnectableByJumpTo.includes(node.type),
+          },
+        }
+      : { ...node, data: { ...node.data, disabled: false } }
+  );
+};
+
 const flowBuilderSlice = createSlice({
   name: "flowBuilder",
   initialState,
@@ -552,6 +582,7 @@ const flowBuilderSlice = createSlice({
             type: NodeType.JUMP_TO,
             stepId,
           };
+          handleJumpToTargettingNodeChange(state, nodeToChange.id);
           break;
         case DrawerAction.EXIT:
           nodeToChange.type = NodeType.EXIT;
@@ -714,16 +745,7 @@ const flowBuilderSlice = createSlice({
       state.isOnboardingWaitUntilTooltipVisible = action.payload;
     },
     setJumpToTargettingNode(state, action: PayloadAction<string | undefined>) {
-      state.jumpToTargettingNode = action.payload;
-      state.isDrawerDisabled = Boolean(action.payload);
-      state.nodes = applyNodeChanges(
-        state.nodes.map<NodeChange>((node) => ({
-          type: "select",
-          id: node.id,
-          selected: false,
-        })),
-        state.nodes
-      );
+      handleJumpToTargettingNodeChange(state, action.payload);
     },
     setIsDrawerDisabled(state, action: PayloadAction<boolean>) {
       state.isDrawerDisabled = action.payload;

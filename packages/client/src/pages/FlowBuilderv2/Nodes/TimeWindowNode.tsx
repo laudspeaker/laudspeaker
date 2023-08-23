@@ -6,11 +6,13 @@ import { TimeWindowNodeData } from "./NodeData";
 export const TimeWindowNode: FC<NodeProps<TimeWindowNodeData>> = ({
   isConnectable,
   selected,
-  data: { from, to, showErrors },
+  data: { from, to, showErrors, disabled },
 }) => {
   return (
     <div
       className={`w-[260px] h-[80px] rounded-[4px] bg-white font-inter ${
+        disabled ? "opacity-50 cursor-not-allowed" : ""
+      } ${
         selected
           ? "border-[2px] border-[#6366F1]"
           : "border-[1px] border-[#E5E7EB]"

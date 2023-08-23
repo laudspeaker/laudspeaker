@@ -8,7 +8,7 @@ import { UserAttributeNodeData } from "./NodeData";
 export const UserAttributeNode: FC<NodeProps<UserAttributeNodeData>> = ({
   isConnectable,
   selected,
-  data: { branches },
+  data: { branches, disabled },
   id,
 }) => {
   const { nodes } = useAppSelector((state) => state.flowBuilder);
@@ -20,6 +20,8 @@ export const UserAttributeNode: FC<NodeProps<UserAttributeNodeData>> = ({
   return (
     <div
       className={`w-[260px] h-[80px] rounded-[4px] bg-white font-inter ${
+        disabled ? "opacity-50 cursor-not-allowed" : ""
+      } ${
         selected
           ? "border-[2px] border-[#6366F1]"
           : "border-[1px] border-[#E5E7EB]"

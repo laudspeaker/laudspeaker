@@ -136,6 +136,7 @@ export interface CommonNodeData {
   stepId?: string;
   stats?: Stats;
   showErrors?: boolean;
+  disabled?: boolean;
 }
 
 export interface MessageNodeData<T extends MessageType = MessageType>

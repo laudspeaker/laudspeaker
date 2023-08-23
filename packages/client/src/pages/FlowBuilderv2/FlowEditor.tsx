@@ -78,7 +78,7 @@ interface FlowEditorProps {
   className?: string;
 }
 
-const nodeTypesNotConnectableByJumpTo: (string | undefined)[] = [
+export const nodeTypesNotConnectableByJumpTo: (string | undefined)[] = [
   NodeType.EMPTY,
   NodeType.INSERT_NODE,
   NodeType.JUMP_TO,

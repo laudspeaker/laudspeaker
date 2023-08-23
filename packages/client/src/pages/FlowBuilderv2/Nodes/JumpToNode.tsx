@@ -37,7 +37,9 @@ export const JumpToNode: FC<NodeProps<JumpToNodeData>> = ({
 
   return (
     <div
-      className={`w-[120px] h-[60px] rounded-[4px]  bg-white ${
+      className={`w-[120px] h-[60px] rounded-[4px] bg-white ${
+        data.disabled ? "opacity-50 cursor-not-allowed" : ""
+      } ${
         selected
           ? "border-[2px] border-[#6366F1]"
           : "border-[1px] border-[#E5E7EB]"
