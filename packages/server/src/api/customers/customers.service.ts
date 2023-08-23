@@ -448,7 +448,7 @@ export class CustomersService {
   ) {
     await this.findOne(account, customerId, session);
     const response = await this.clickhouseClient.query({
-      query: `SELECT audienceId, event, createdAt FROM message_status WHERE customerId = {customerId:String} LIMIT 4`,
+      query: `SELECT stepId, event, createdAt FROM message_status WHERE customerId = {customerId:String} LIMIT 4`,
       query_params: { customerId },
     });
     const data = (
