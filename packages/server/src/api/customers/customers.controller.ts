@@ -26,6 +26,7 @@ import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiKeyAuthGuard } from '../auth/guards/apikey-auth.guard';
 import { randomUUID } from 'crypto';
+import { GetBulkCustomerCountDto } from './dto/get-bulk-customer-count.dto';
 
 @Controller('customers')
 export class CustomersController {
@@ -331,5 +332,35 @@ export class CustomersController {
       this.error(e, this.deletePerson.name, session, (<Account>user).id);
       throw e;
     }
+  }
+
+  @Post('/count/bulk')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor)
+  async getBulkCustomersCountInSteps(
+    @Req() { user }: Request,
+    @Body() getBulkCustomerCountDto: GetBulkCustomerCountDto
+  ) {
+    return this.customersService.bulkCountCustomersInSteps(
+      <Account>user,
+      getBulkCustomerCountDto.stepIds
+    );
+  }
+
+  @Get('/in-step/:stepId')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor)
+  async getCustomersInStep(
+    @Req() { user }: Request,
+    @Param('stepId') stepId,
+    @Query('take') take?: string,
+    @Query('skip') skip?: string
+  ) {
+    return this.customersService.getCustomersInStep(
+      <Account>user,
+      stepId,
+      take && +take,
+      skip && +skip
+    );
   }
 }
