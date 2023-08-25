@@ -382,7 +382,8 @@ export class CustomersService {
     skip = 0,
     key = '',
     search = '',
-    showFreezed = false
+    showFreezed = false,
+    createdAtSortType: 'asc' | 'desc' = 'desc'
   ): Promise<{ data: CustomerDocument[]; totalPages: number }> {
     const totalPages =
       Math.ceil(
@@ -399,9 +400,9 @@ export class CustomersService {
         : {}),
       ...(showFreezed ? {} : { isFreezed: { $ne: true } }),
     })
-      .sort({ createdAt: 'desc' })
       .skip(skip)
       .limit(take <= 100 ? take : 100)
+      .sort({ _id: createdAtSortType === 'asc' ? 1 : -1 })
       .exec();
     return { data: customers, totalPages };
   }
@@ -796,7 +797,8 @@ export class CustomersService {
     checkInSegment?: string,
     searchKey?: string,
     searchValue?: string,
-    showFreezed?: boolean
+    showFreezed?: boolean,
+    createdAtSortType?: 'asc' | 'desc'
   ) {
     const { data, totalPages } = await this.findAll(
       <Account>account,
@@ -804,7 +806,8 @@ export class CustomersService {
       skip,
       searchKey,
       searchValue,
-      showFreezed
+      showFreezed,
+      createdAtSortType || 'desc'
     );
 
     const listInfo = await Promise.all(

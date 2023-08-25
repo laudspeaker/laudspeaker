@@ -108,7 +108,8 @@ export class CustomersController {
     @Query('checkInSegment') checkInSegment?: string,
     @Query('searchKey') searchKey?: string,
     @Query('searchValue') searchValue?: string,
-    @Query('showFreezed') showFreezed?: string
+    @Query('showFreezed') showFreezed?: string,
+    @Query('orderType') orderType?: string
   ) {
     const session = randomUUID();
 
@@ -120,7 +121,8 @@ export class CustomersController {
       checkInSegment,
       searchKey,
       searchValue,
-      showFreezed === 'true'
+      showFreezed === 'true',
+      orderType === 'asc' ? 'asc' : 'desc'
     );
   }
 
