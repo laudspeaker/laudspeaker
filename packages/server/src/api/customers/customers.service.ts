@@ -96,24 +96,23 @@ export class CustomersService {
     @InjectConnection() private readonly connection: mongoose.Connection
   ) {
     const session = randomUUID();
-    this.connection.db
-      .collection('customers')
-      .createIndex(
-        { __posthog__id: 1, ownerId: 1 },
-        {
-          unique: true,
-          partialFilterExpression: {
-            __posthog__id: { $exists: true, $type: 'array', $gt: [] },
-          },
-        }
-      )
-      .then((ret) => {
-        this.debug(
-          `${JSON.stringify({ indexCreated: ret })}`,
-          this.constructor.name,
-          session
+    (async () => {
+      try {
+        const collection = this.connection.db.collection('customers');
+        await collection.createIndex('ownerId');
+        await collection.createIndex(
+          { __posthog__id: 1, ownerId: 1 },
+          {
+            unique: true,
+            partialFilterExpression: {
+              __posthog__id: { $exists: true, $type: 'array', $gt: [] },
+            },
+          }
         );
-      });
+      } catch (e) {
+        this.error(e, CustomersService.name, session);
+      }
+    })();
     this.CustomerModel.watch().on('change', async (data: any) => {
       try {
         const customerId = data?.documentKey?._id;

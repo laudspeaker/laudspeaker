@@ -451,15 +451,8 @@ export class TransitionProcessor extends WorkerHost {
     );
     await this.websocketGateway.sendProcessed(
       customer.id,
-      Buffer.from(
-        createHash('sha256')
-          .update(
-            String(
-              (event as string) + (humanReadableName as string) + customer.id
-            )
-          )
-          .digest('hex')
-      ).toString('base64')
+      event,
+      humanReadableName
     );
     if (isDelivered)
       await this.webhooksService.insertClickHouseMessages([

@@ -455,7 +455,7 @@ export class AccountsService extends BaseJwtHelper {
   }
 
   async createOnboadingAccount() {
-    const session = 'onboarding-creation'
+    const session = 'onboarding-creation';
     let account = await this.accountsRepository.findOneBy({
       email: process.env.ONBOARDING_ACCOUNT_EMAIL,
       apiKey: process.env.ONBOARDING_ACCOUNT_API_KEY,
@@ -535,7 +535,11 @@ export class AccountsService extends BaseJwtHelper {
       name: 'onboarding',
     });
     if (!journey) {
-      journey = await this.journeysService.create(account, 'onboarding', session);
+      journey = await this.journeysService.create(
+        account,
+        'onboarding',
+        session
+      );
 
       await this.journeysService.update(
         account,

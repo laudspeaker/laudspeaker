@@ -470,17 +470,8 @@ export class EventsProcessor extends WorkerHost {
           if (job.data.event.source === AnalyticsProviderTypes.TRACKER) {
             await this.websocketGateway.sendProcessed(
               customer.id,
-              Buffer.from(
-                createHash('sha256')
-                  .update(
-                    String(
-                      (job.data.event.event as string) +
-                        (job.data.event.payload.trackerId as string) +
-                        customer.id
-                    )
-                  )
-                  .digest('hex')
-              ).toString('base64')
+              job.data.event.event,
+              job.data.event.payload.trackerId
             );
           }
           return;
@@ -502,17 +493,8 @@ export class EventsProcessor extends WorkerHost {
         if (job.data.event.source === AnalyticsProviderTypes.TRACKER) {
           await this.websocketGateway.sendProcessed(
             customer.id,
-            Buffer.from(
-              createHash('sha256')
-                .update(
-                  String(
-                    (job.data.event.event as string) +
-                      (job.data.event.payload.trackerId as string) +
-                      customer.id
-                  )
-                )
-                .digest('hex')
-            ).toString('base64')
+            job.data.event.event,
+            job.data.event.payload.trackerId
           );
         }
         return;
