@@ -17,8 +17,13 @@ import { PosthogBatchEventDto } from './dto/posthog-batch-event.dto';
 import { EventDto } from './dto/event.dto';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { StatusJobDto } from './dto/status-event.dto';
-import { Queue } from 'bullmq';
-import { InjectQueue } from '@nestjs/bullmq';
+import {
+  Processor,
+  WorkerHost,
+  OnWorkerEvent,
+  InjectQueue,
+} from '@nestjs/bullmq';
+import { Job, Queue, UnrecoverableError } from 'bullmq';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import mongoose, { Model } from 'mongoose';
 import { EventDocument, Event } from './schemas/event.schema';
@@ -51,7 +56,8 @@ export class EventsService {
     private readonly logger: Logger,
     @InjectQueue('message') private readonly messageQueue: Queue,
     @InjectQueue('events') private readonly eventQueue: Queue,
-    @InjectQueue('events_pre') private readonly eventPreprocessorQueue: Queue,
+    @InjectQueue('events_pre')
+    private readonly eventPreprocessorQueue: Queue,
     @InjectQueue(JobTypes.slack) private readonly slackQueue: Queue,
     @InjectQueue(JobTypes.events)
     private readonly eventsQueue: Queue,
@@ -243,18 +249,11 @@ export class EventsService {
   }
 
   async customPayload(account: Account, eventDto: EventDto, session: string) {
-    await this.eventPreprocessorQueue.add(
-      'laudspeaker',
-      {
-        account: account,
-        event: eventDto,
-        session: session,
-      },
-      {
-        attempts: 10,
-        backoff: { delay: 1000, type: 'exponential' },
-      }
-    );
+    await this.eventPreprocessorQueue.add('laudspeaker', {
+      account: account,
+      event: eventDto,
+      session: session,
+    });
   }
 
   async getOrUpdateAttributes(resourceId: string, session: string) {

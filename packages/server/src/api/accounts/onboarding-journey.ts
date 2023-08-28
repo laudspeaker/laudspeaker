@@ -5,7 +5,7 @@ export default (templateID) => {
       {
         id: '409e8310-d934-46db-8498-c1540eec5d7b',
         data: {
-          stepId: '56ded498-1f09-4f92-acce-6c022dba1db6',
+          stepId: '00000000-0000-0000-0000-000000000000',
         },
         type: 'start',
         position: {
@@ -18,7 +18,7 @@ export default (templateID) => {
         id: 'aa364698-9648-4595-ac98-a8a816abb863',
         data: {
           type: 'tracker',
-          stepId: 'c7f21665-9446-420e-8997-ada616058a2c',
+          stepId: '00000000-0000-0000-0000-000000000000',
           tracker: {
             fields: [
               {
@@ -52,7 +52,7 @@ export default (templateID) => {
         id: '3b12fc9b-a129-41fe-85e2-65cd6db512e4',
         data: {
           type: 'waitUntil',
-          stepId: 'a3a538e2-ea5b-461d-a34d-945867f8b83f',
+          stepId: '00000000-0000-0000-0000-000000000000',
           branches: [
             {
               id: 'acfbddd1-6b6f-4a77-90cb-0a3c2d6c52f2',
@@ -79,7 +79,7 @@ export default (templateID) => {
         id: 'b0d46fbe-e377-4ac9-b847-8ea4be9b0aab',
         data: {
           type: 'tracker',
-          stepId: '91ac817d-35ed-4f7a-a173-4cca067014ed',
+          stepId: '00000000-0000-0000-0000-000000000000',
           tracker: {
             fields: [
               {
@@ -113,7 +113,7 @@ export default (templateID) => {
         id: 'c6bfea75-e3c5-48cb-ada3-52ac55dc2bcc',
         data: {
           type: 'waitUntil',
-          stepId: '98b6c8a4-ae6f-41c7-a5e2-411af329b397',
+          stepId: '00000000-0000-0000-0000-000000000000',
           branches: [
             {
               id: '114b1dd5-d42d-428f-92e7-c701c905bcb2',
@@ -260,7 +260,7 @@ export default (templateID) => {
         id: '3161180f-f1b1-4d8a-841d-dc89682c2a21',
         data: {
           type: 'jumpTo',
-          stepId: 'd0840360-be11-43a2-83bf-02445773ec1f',
+          stepId: '00000000-0000-0000-0000-000000000000',
           targetId: 'b0d46fbe-e377-4ac9-b847-8ea4be9b0aab',
         },
         type: 'jumpTo',
@@ -274,7 +274,7 @@ export default (templateID) => {
         id: 'bc7965cf-cbe6-4155-b7e4-6193b8a4b42a',
         data: {
           type: 'tracker',
-          stepId: '42ec2382-7342-49f8-8745-025534610d00',
+          stepId: '00000000-0000-0000-0000-000000000000',
           tracker: {
             fields: [
               {
@@ -308,7 +308,7 @@ export default (templateID) => {
         id: '932d7d05-c3b7-4d59-90b2-33beb30738f0',
         data: {
           type: 'jumpTo',
-          stepId: '46d06a81-7942-4bce-aa69-e2efceac3dfd',
+          stepId: '00000000-0000-0000-0000-000000000000',
           targetId: 'c6bfea75-e3c5-48cb-ada3-52ac55dc2bcc',
         },
         type: 'jumpTo',
@@ -322,7 +322,7 @@ export default (templateID) => {
         id: 'bf8e2bf5-84a8-49d4-8606-7b0d4109e8d0',
         data: {
           type: 'tracker',
-          stepId: 'f02fc060-0a4e-4226-bdde-ded6bd3cceb5',
+          stepId: '00000000-0000-0000-0000-000000000000',
           tracker: {
             fields: [
               {
@@ -356,7 +356,7 @@ export default (templateID) => {
         id: 'b9ea2abe-896b-45ee-8c24-23117ffdf398',
         data: {
           type: 'jumpTo',
-          stepId: 'e0460e10-a3e1-4a80-a78e-9c4936c40201',
+          stepId: '00000000-0000-0000-0000-000000000000',
           targetId: 'c6bfea75-e3c5-48cb-ada3-52ac55dc2bcc',
         },
         type: 'jumpTo',
@@ -370,7 +370,7 @@ export default (templateID) => {
         id: 'cd42d3a6-4160-4042-a7e0-184042e19b89',
         data: {
           type: 'tracker',
-          stepId: '1ba20ad5-9373-4275-8bea-62437b6bd1d3',
+          stepId: '00000000-0000-0000-0000-000000000000',
           tracker: {
             fields: [
               {
@@ -404,7 +404,7 @@ export default (templateID) => {
         id: '778802bf-ca7e-4f63-9249-94c8f22b065c',
         data: {
           type: 'jumpTo',
-          stepId: '01220ef1-7e65-4a84-82f3-2bd597c9c0e1',
+          stepId: '00000000-0000-0000-0000-000000000000',
           targetId: 'c6bfea75-e3c5-48cb-ada3-52ac55dc2bcc',
         },
         type: 'jumpTo',
@@ -418,7 +418,7 @@ export default (templateID) => {
         id: 'a0ac08ee-3f95-46a7-b13d-e8027cc13b3e',
         data: {
           type: 'tracker',
-          stepId: '137f670c-4733-4dff-b7a3-b517099b2018',
+          stepId: '00000000-0000-0000-0000-000000000000',
           tracker: {
             fields: [
               {
@@ -452,7 +452,7 @@ export default (templateID) => {
         id: '4ab4f2c7-8b02-4fbe-b9fb-1bc6d8453dfa',
         data: {
           type: 'jumpTo',
-          stepId: 'a972efbe-6a2d-4c8e-a583-5a86a277a838',
+          stepId: '00000000-0000-0000-0000-000000000000',
           targetId: 'c6bfea75-e3c5-48cb-ada3-52ac55dc2bcc',
         },
         type: 'jumpTo',
@@ -466,7 +466,7 @@ export default (templateID) => {
         id: '4297a18b-0d75-4cd1-8e7f-4c4f58a9a335',
         data: {
           type: 'tracker',
-          stepId: '4fea3c8a-e97c-4685-b075-6079839026fb',
+          stepId: '00000000-0000-0000-0000-000000000000',
           tracker: {
             fields: [
               {
@@ -500,7 +500,7 @@ export default (templateID) => {
         id: '9202f6af-7067-431c-86da-1fd90f5c7d31',
         data: {
           type: 'jumpTo',
-          stepId: '6064b6b6-6035-4f96-b883-69e81d93ce1c',
+          stepId: '00000000-0000-0000-0000-000000000000',
           targetId: 'c6bfea75-e3c5-48cb-ada3-52ac55dc2bcc',
         },
         type: 'jumpTo',
@@ -514,7 +514,7 @@ export default (templateID) => {
         id: '82445c0b-c585-4ece-8ced-7fb301a38fae',
         data: {
           type: 'tracker',
-          stepId: 'c15237fc-2b14-473e-a074-ef7c01ca05c5',
+          stepId: '00000000-0000-0000-0000-000000000000',
           tracker: {
             fields: [
               {
@@ -548,7 +548,7 @@ export default (templateID) => {
         id: 'dfb7bab5-ba84-49a7-9d4b-35e035728d7b',
         data: {
           type: 'jumpTo',
-          stepId: '37906ada-a5c6-4dcf-bc49-5a992e32a417',
+          stepId: '00000000-0000-0000-0000-000000000000',
           targetId: 'c6bfea75-e3c5-48cb-ada3-52ac55dc2bcc',
         },
         type: 'jumpTo',
@@ -562,7 +562,7 @@ export default (templateID) => {
         id: '3f59dbc3-3aec-4326-aa1b-e05f92bef5c8',
         data: {
           type: 'tracker',
-          stepId: '0e246e18-6da1-4aeb-a720-3e104670c525',
+          stepId: '00000000-0000-0000-0000-000000000000',
           tracker: {
             fields: [
               {
@@ -596,7 +596,7 @@ export default (templateID) => {
         id: 'afc30265-f85d-4e17-87b4-2028f369e3eb',
         data: {
           type: 'jumpTo',
-          stepId: '249cafa2-f551-4cab-befc-3a1c76fd5e52',
+          stepId: '00000000-0000-0000-0000-000000000000',
           targetId: 'c6bfea75-e3c5-48cb-ada3-52ac55dc2bcc',
         },
         type: 'jumpTo',
@@ -610,7 +610,7 @@ export default (templateID) => {
         id: '763ea2f1-8900-4495-8ea3-634e40f8c3a2',
         data: {
           type: 'tracker',
-          stepId: '5da49d17-3b46-4e2a-aa0a-210e22f34f0c',
+          stepId: '00000000-0000-0000-0000-000000000000',
           tracker: {
             fields: [
               {
@@ -644,7 +644,7 @@ export default (templateID) => {
         id: '7c0e85db-e3ad-4e67-8722-baa5d6345465',
         data: {
           type: 'jumpTo',
-          stepId: '1e27e68c-86ca-463f-a62f-d07fc3bdfe6d',
+          stepId: '00000000-0000-0000-0000-000000000000',
           targetId: 'c6bfea75-e3c5-48cb-ada3-52ac55dc2bcc',
         },
         type: 'jumpTo',
@@ -658,7 +658,7 @@ export default (templateID) => {
         id: '0f61d770-7001-47a2-a1d6-2ae6c57c6af7',
         data: {
           type: 'tracker',
-          stepId: '0312aa36-465c-4bed-8cb7-10021c373c5f',
+          stepId: '00000000-0000-0000-0000-000000000000',
           tracker: {
             fields: [
               {
@@ -692,7 +692,7 @@ export default (templateID) => {
         id: '77f12acd-ab2c-47c8-baab-35bf3a8f6b32',
         data: {
           type: 'jumpTo',
-          stepId: 'fd3c3b67-032a-4941-bd98-73c0e13b84ab',
+          stepId: '00000000-0000-0000-0000-000000000000',
           targetId: 'c6bfea75-e3c5-48cb-ada3-52ac55dc2bcc',
         },
         type: 'jumpTo',
@@ -706,7 +706,7 @@ export default (templateID) => {
         id: '073bbeb3-7621-45aa-9388-5e4114d0a5aa',
         data: {
           type: 'tracker',
-          stepId: 'ff0e5e02-2c4c-4e6c-933b-15b8943f6758',
+          stepId: '00000000-0000-0000-0000-000000000000',
           tracker: {
             fields: [
               {
@@ -740,7 +740,7 @@ export default (templateID) => {
         id: 'e0146611-8e73-4972-8fdd-447aa5f03725',
         data: {
           type: 'waitUntil',
-          stepId: '9880aa58-db6d-4fc1-813f-f738c3c24c70',
+          stepId: '00000000-0000-0000-0000-000000000000',
           branches: [
             {
               id: '420e7118-126e-46bd-b151-d96ebfeb08b6',
@@ -779,7 +779,7 @@ export default (templateID) => {
         id: '5ed71893-da80-4f0f-b200-bddbf0250267',
         data: {
           type: 'jumpTo',
-          stepId: '84da26ca-de91-4786-8d88-92d17044fd4e',
+          stepId: '00000000-0000-0000-0000-000000000000',
           targetId: 'b0d46fbe-e377-4ac9-b847-8ea4be9b0aab',
         },
         type: 'jumpTo',
@@ -793,7 +793,7 @@ export default (templateID) => {
         id: 'a2071f77-ddfe-4fbe-9db5-16a77227e5bd',
         data: {
           type: 'tracker',
-          stepId: '3042f2d9-bad1-4e1b-9a69-086c746eec88',
+          stepId: '00000000-0000-0000-0000-000000000000',
           tracker: {
             fields: [
               {
@@ -827,7 +827,7 @@ export default (templateID) => {
         id: '59c37782-9f53-411d-955e-53aec6308c0c',
         data: {
           type: 'waitUntil',
-          stepId: 'd6abbd94-bf2e-4197-b018-ce5b2145ef30',
+          stepId: '00000000-0000-0000-0000-000000000000',
           branches: [
             {
               id: '8a47abf2-64a9-4998-87ae-fd5fa2be1b98',
@@ -866,7 +866,7 @@ export default (templateID) => {
         id: '2ba1bc95-89c0-46c7-be9a-e795e875d8b8',
         data: {
           type: 'jumpTo',
-          stepId: '3578ab46-e227-480f-b2b7-f418ef9dea60',
+          stepId: '00000000-0000-0000-0000-000000000000',
           targetId: '073bbeb3-7621-45aa-9388-5e4114d0a5aa',
         },
         type: 'jumpTo',
@@ -880,7 +880,7 @@ export default (templateID) => {
         id: '4a4de0cf-18ab-4f28-bb1d-28d4400c1b02',
         data: {
           type: 'tracker',
-          stepId: '6eb09748-d936-4365-b52a-ee11e878a587',
+          stepId: '00000000-0000-0000-0000-000000000000',
           tracker: {
             fields: [
               {
@@ -914,7 +914,7 @@ export default (templateID) => {
         id: 'f1fb26df-eced-4a3c-8937-9f19a1bdd877',
         data: {
           type: 'waitUntil',
-          stepId: '8e4ac280-27c5-404a-8b58-c4aefa8ad315',
+          stepId: '00000000-0000-0000-0000-000000000000',
           branches: [
             {
               id: 'e539e665-95d6-4dac-97b9-fc9e467023b9',
@@ -941,7 +941,7 @@ export default (templateID) => {
         id: 'd5595afe-f1b8-4bf1-be3d-0a43868e642d',
         data: {
           type: 'jumpTo',
-          stepId: 'd9ffc8f6-3753-41f1-ba02-e199b847b45e',
+          stepId: '00000000-0000-0000-0000-000000000000',
           targetId: 'aa364698-9648-4595-ac98-a8a816abb863',
         },
         type: 'jumpTo',

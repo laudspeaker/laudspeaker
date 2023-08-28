@@ -37,7 +37,7 @@
 
 Run yourself (instructions below) or use [Laudspeaker Cloud](https://app.laudspeaker.com/login/?ref=github) . Docs are [here](https://laudspeaker.com/docs/guides/overview/intro/?ref=github)
 
-### Want help deploying?
+### Want to use at your company?
 
 <a href="https://cal.com/laudspeaker-mahamad/20min-set-up" target="_blank"><img src="https://user-images.githubusercontent.com/7728266/226135023-e484e408-4434-4282-ae66-5c224fb65e20.png" /> </a>
 
@@ -94,7 +94,7 @@ We're currently in Public Alpha.
 
 ## License
 
-**Laudspeaker** is open source and released under the [MIT License][mit_license], and AGPLv3 licenses (code in separate directories) with the exception of our ee directory (which is currently empty!) but will be under the Laudspeaker Enterprise Edition license. If you can only use MIT licencsed code, you can still use Laudspeaker but with a few fewer features.
+**Laudspeaker** is open source and released under the [MIT License][mit_license], and AGPLv3 licenses (code in separate directories) with the exception of our ee directory (which is currently empty!) but will be under the Laudspeaker Enterprise Edition license.
 
 ## 🌱 Contribute
 
@@ -111,8 +111,7 @@ A quick how to for contribution:
 
 ## 🎥 Video Walkthrough
 
-- Check out how to set up and trigger an email with posthog in our [video](https://vimeo.com/763728112)
-- Check out how to trigger a slack message with a custom event in this [video](https://www.loom.com/share/8e1d349ceed24d2bb50280db36b19214)
+- Coming soon!
 
 ## Follow Us
 

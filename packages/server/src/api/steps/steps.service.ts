@@ -13,6 +13,7 @@ import { Queue } from 'bullmq';
 import { StepType } from './types/step.interface';
 import { Temporal } from '@js-temporal/polyfill';
 import { createClient } from '@clickhouse/client';
+import { RedlockService } from '../redlock/redlock.service';
 
 @Injectable()
 export class StepsService {
@@ -36,7 +37,9 @@ export class StepsService {
     private readonly logger: Logger,
     @InjectRepository(Step)
     public stepsRepository: Repository<Step>,
-    @InjectQueue('transition') private readonly transitionQueue: Queue
+    @InjectQueue('transition') private readonly transitionQueue: Queue,
+    @Inject(RedlockService)
+    private readonly redlockService: RedlockService
   ) {}
 
   log(message, method, session, user = 'ANONYMOUS') {
@@ -140,32 +143,55 @@ export class StepsService {
     queryRunner: QueryRunner,
     session: string
   ) {
-    const startStep = await queryRunner.manager.find(Step, {
-      where: {
-        owner: { id: account.id },
-        journey: { id: journeyID },
-        type: StepType.START,
-      },
-      lock: { mode: 'pessimistic_write' },
-    });
-    if (startStep.length != 1)
-      throw new Error('Can only have one start step per journey.');
+    const lock = await this.redlockService.acquire(
+      `${customer.id}${journeyID}`
+    );
+    this.warn(
+      `${JSON.stringify({ warning: 'Acquiring lock' })}`,
+      this.addToStart.name,
+      session,
+      account.email
+    );
+    try {
+      const startStep = await queryRunner.manager.find(Step, {
+        where: {
+          owner: { id: account.id },
+          journey: { id: journeyID },
+          type: StepType.START,
+        },
+        lock: { mode: 'pessimistic_write' },
+      });
 
-    // if (!startStep[0].customers.find((customerTuple) => { return JSON.parse(customerTuple).customerID === customer.id })) {
-    startStep[0].customers = [
-      ...startStep[0].customers,
-      JSON.stringify({
+      if (startStep.length != 1)
+        throw new Error('Can only have one start step per journey.');
+
+      // if (!startStep[0].customers.find((customerTuple) => { return JSON.parse(customerTuple).customerID === customer.id })) {
+      startStep[0].customers.push(
+        JSON.stringify({
+          customerID: customer.id,
+          timestamp: Temporal.Now.instant().toString(),
+        })
+      );
+      // }
+      const step = await queryRunner.manager.save(startStep[0]);
+      await this.transitionQueue.add('start', {
+        ownerID: account.id,
+        step: step,
+        lock,
+        session: session,
         customerID: customer.id,
-        timestamp: Temporal.Now.instant().toString(),
-      }),
-    ];
-    // }
-    const step = await queryRunner.manager.save(startStep[0]);
-    await this.transitionQueue.add('start', {
-      ownerID: account.id,
-      step: step,
-      session: session,
-    });
+      });
+    } catch (err) {
+      await lock.release();
+      this.warn(
+        `${JSON.stringify({ warning: 'Releasing lock' })}`,
+        this.addToStart.name,
+        session,
+        account.email
+      );
+      this.error(err, this.addToStart.name, session, account.email);
+      throw err;
+    }
   }
 
   /**
@@ -287,6 +313,33 @@ export class StepsService {
       });
     } catch (e) {
       this.error(e, this.findAllByType.name, session, account.id);
+      throw e;
+    }
+  }
+
+  /**
+   * Find all steps of a certain type using db transaction(owner optional).
+   * @param account
+   * @param type
+   * @param session
+   * @returns
+   */
+  async transactionalFindAllActiveByTypeAndJourney(
+    type: StepType,
+    journeyID: string,
+    session: string,
+    queryRunner: QueryRunner
+  ): Promise<Step[]> {
+    try {
+      return await queryRunner.manager.find(Step, {
+        where: {
+          journey: { id: journeyID },
+          type: type,
+        },
+        relations: ['journey'],
+      });
+    } catch (e) {
+      this.error(e, this.findAllByType.name, session);
       throw e;
     }
   }
