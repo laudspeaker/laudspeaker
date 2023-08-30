@@ -16,26 +16,19 @@
   
 </p>
 
-## Laudspeaker - Open Source User Onboarding and omni-channel customer messaging Platform. Alternative to Braze / Appcues/ Iterable / One Signal / Customer Io / Pendo
+## Laudspeaker - Open Source User Onboarding, Product Adoption and Messaging Platform. Alternative to Appcues / Pendo / Braze / One Signal / Customer io 
 
 <img width="1708" alt="UI2" src="https://github.com/laudspeaker/laudspeaker/assets/7728266/4c3c2917-6899-48f7-bcbe-a4bd92049c24">
 
-- **Multiple messaging channels like email, sms and push** Send product or event-triggered emails, sms and more to your customers and users at scale
-- **Visual Journey Builder** Build complex messaging workflows the whole team can understand in a visual tool, and see stats once a journey is started
-- **Run on your own infra** Deploy and run on your own infrastructure to keep control of your data.
-- **Integrate with PostHog analytics** Easily trigger journeys with PostHog, the open source product analytics platform
-- **Easy WYSIWYG Template builder** Build nice emails and more with our template builder
-- **1-Click Deploy** to Render
-- **Database / datalake / data warehouse import** ingest user data from your databases
-- **Build and save segments of users**
-- **Build custom modals with our modal designer**
-- 🔜 **Custom User onboarding components that can be added to journeys**
-- 🔜 **Trigger journeys from segment/rudderstack/mixpanel events**
-- 🔜 **Comprehensive versioning ** - simulate user actions, differents dates, and times and test and debug messages before you start journeys
+- **Visual Journey Builder** Build complex workflows the whole team can understand in a visual tool. Describe the onboarding journey and messaging steps clearly.
+- **Monitor and Track User Progress** See user progress and which steps users get stuck on.
+- **Personalize Journeys for Different User Personas** Build different user journeys for different personas, so that you highlight the right features for the right users.
+- **Edit, Experiment and Change Onboarding Easily** Make changes to onboarding copy easily, or edit live journeys.
+- **Multiple out of product messaging channels like email and sms** Trigger Emails, SMS and more to nudge users back to complete specific flows.
 
 ## 🚀 Get Started
 
-Run yourself (instructions below) or use [Laudspeaker Cloud](https://app.laudspeaker.com/login/?ref=github) . Docs are [here](https://laudspeaker.com/docs/guides/overview/intro/?ref=github)
+use [Laudspeaker Cloud](https://app.laudspeaker.com/login/?ref=github) or run yourself docs are [here](https://laudspeaker.com/docs/guides/overview/intro/?ref=github)
 
 ### Want to use at your company?
 
