@@ -28,44 +28,11 @@
 
 ## 🚀 Get Started
 
-use [Laudspeaker Cloud](https://app.laudspeaker.com/login/?ref=github) or run yourself docs are [here](https://laudspeaker.com/docs/guides/overview/intro/?ref=github)
+Use [Laudspeaker Cloud](https://app.laudspeaker.com/login/?ref=github) or check out more options [here](https://laudspeaker.com/docs/guides/overview/intro/?ref=github)
 
 ### Want to use at your company?
 
 <a href="https://cal.com/laudspeaker-mahamad/20min-set-up" target="_blank"><img src="https://user-images.githubusercontent.com/7728266/226135023-e484e408-4434-4282-ae66-5c224fb65e20.png" /> </a>
-
-### Setting up with docker:
-
-Run services:
-
-- `docker-compose up` or `docker compose up` depending on your version of docker
-
-Instantiate Mongo:
-
-- `mongosh --eval "rs.initiate()"`
-
-Run backend and front end:
-
-- `npm install`
-- `npm run start`
-
-To stop running system services (Linux):
-
-- Postgres: `sudo systemctl stop postgresql.service`
-- Redis: `/etc/init.d/redis-server stop`
-- Mongo: `sudo systemctl stop mongod`
-
-To remove compose containers:
-
-- `docker-compose down --volumes`
-
-Add a `.env` file to both `packages/server` and `packages/client`.
-
-We have provided examples which you can use:
-
-`mv env-server-example packages/server/.env` and `mv env-client-example packages/client/.env`
-
-Make sure you fill in the fields in the env files before running.
 
 Questions? Please join our [Slack channel](https://join.slack.com/t/laudspeakerusers/shared_invite/zt-1io0f6u50-rSCnNtqkJT6QIdbPOyJh6g) or visit our [site](https://laudspeaker.com/).
 
@@ -93,15 +60,6 @@ We're currently in Public Alpha.
 
 We would love to see you contribute to Laudspeaker. Join our slack to get involved.
 
-A quick how to for contribution:
-
-1. Fork the project
-2. Create your feature branch (`git checkout -b feature/some-feature`)
-3. Make your changes
-4. Commit your changes (`git commit -m 'Implement an amazing feature.'`)
-5. Push to the branch (`git push origin feature/some-feature`)
-6. Open a pull request
-
 ## 🎥 Video Walkthrough
 
 - Coming soon!
@@ -113,12 +71,6 @@ A quick how to for contribution:
 [slack]: https://join.slack.com/t/laudspeakerusers/shared_invite/zt-1li25huaq-BljJUA1Zm8dXvbZViAbMwg
 [twitter]: https://twitter.com/laudspeaker
 [mit_license]: https://opensource.org/licenses/MIT
-
-## We’re hiring!
-
-Come help us make Laudspeaker better. Email us at hey [at] laudspeaker [dot] com
-
-If you're interested have a look at this repo and feel free to raise an issue!
 
 <!---
 -  [Laudspeaker Blog][laudspeaker-blog]
