@@ -114,60 +114,7 @@ export class WebsocketGateway implements OnGatewayConnection {
           );
           socket.data.customerId = customer.id;
           socket.emit('customerId', customer.id);
-          if (customer.customComponents) {
-            for (const [key, value] of Object.entries(
-              customer.customComponents
-            )) {
-              //1.Map fields
-              const data = customer.customComponents[key];
-
-              for (const field of (data?.fields || []) as {
-                name: string;
-                type: string;
-                defaultValue: string;
-              }[]) {
-                const serializer: (value: unknown) => unknown =
-                  fieldSerializerMap[field.type] || ((value: unknown) => value);
-
-                data[field.name] = serializer(data[field.name]);
-              }
-
-              //2. Emit data to frontend
-              socket.emit('custom', {
-                show: !customer.customComponents[key].hidden,
-                trackerId: key,
-                ...customer.customComponents[key],
-              });
-
-              //3. Update customer object to indicate that this state has been delivered
-              await this.customerModel
-                .findByIdAndUpdate(customer.id, {
-                  $set: {
-                    [`customComponents.${key}`]: {
-                      ...customer.customComponents[key],
-                      delivered: true,
-                    },
-                  },
-                })
-                .exec();
-
-              //4. If first time delivered, record in clickhouse
-              if (!customer.customComponents[key].delivered)
-                await this.webhooksService.insertClickHouseMessages([
-                  {
-                    stepId: customer.customComponents[key].step,
-                    createdAt: new Date().toUTCString(),
-                    customerId: customer.id,
-                    event: 'delivered',
-                    eventProvider: ClickHouseEventProvider.TRACKER,
-                    messageId: key,
-                    templateId: customer.customComponents[key].template,
-                    userId: account.id,
-                    processed: true,
-                  },
-                ]);
-            }
-          }
+          await this.syncCustomData(socket, account, customer);
         }
       } else {
         socket.emit(
@@ -204,6 +151,65 @@ export class WebsocketGateway implements OnGatewayConnection {
     }
   }
 
+  public async syncCustomData(
+    socket: Socket,
+    account: Account,
+    customer: CustomerDocument
+  ) {
+    if (!customer.customComponents) return;
+
+    for (const [key, value] of Object.entries(customer.customComponents)) {
+      //1.Map fields
+      const data = customer.customComponents[key];
+
+      for (const field of (data?.fields || []) as {
+        name: string;
+        type: string;
+        defaultValue: string;
+      }[]) {
+        const serializer: (value: unknown) => unknown =
+          fieldSerializerMap[field.type] || ((value: unknown) => value);
+
+        data[field.name] = serializer(data[field.name]);
+      }
+
+      //2. Emit data to frontend
+      socket.emit('custom', {
+        show: !customer.customComponents[key].hidden,
+        trackerId: key,
+        ...customer.customComponents[key],
+      });
+
+      //3. Update customer object to indicate that this state has been delivered
+      await this.customerModel
+        .findByIdAndUpdate(customer.id, {
+          $set: {
+            [`customComponents.${key}`]: {
+              ...customer.customComponents[key],
+              delivered: true,
+            },
+          },
+        })
+        .exec();
+
+      //4. If first time delivered, record in clickhouse
+      if (!customer.customComponents[key].delivered)
+        await this.webhooksService.insertClickHouseMessages([
+          {
+            stepId: customer.customComponents[key].step,
+            createdAt: new Date().toUTCString(),
+            customerId: customer.id,
+            event: 'delivered',
+            eventProvider: ClickHouseEventProvider.TRACKER,
+            messageId: key,
+            templateId: customer.customComponents[key].template,
+            userId: account.id,
+            processed: true,
+          },
+        ]);
+    }
+  }
+
   @SubscribeMessage('ping')
   public async handlePing(@ConnectedSocket() socket: Socket) {
     socket.emit('log', 'pong');
@@ -224,14 +230,11 @@ export class WebsocketGateway implements OnGatewayConnection {
     if (!socket.data?.account || !socket.data?.customerId) {
       return;
     }
-    const {
-      account: { id: ownerId },
-      customerId,
-    } = socket.data as SocketData;
+    const { account, customerId } = socket.data as SocketData;
 
     let customer = await this.customersService.CustomerModel.findOne({
       _id: customerId,
-      ownerId,
+      ownerId: account.id,
     });
 
     if (!customer || customer.isFreezed) {
@@ -241,7 +244,7 @@ export class WebsocketGateway implements OnGatewayConnection {
       );
       customer = await this.customersService.CustomerModel.create({
         isAnonymous: true,
-        ownerId,
+        ownerId: account.id,
       });
 
       socket.data.customerId = customer.id;
@@ -256,7 +259,7 @@ export class WebsocketGateway implements OnGatewayConnection {
     const identifiedCustomer =
       await this.customersService.CustomerModel.findOne({
         ...uniqueProperties,
-        ownerId,
+        ownerId: account.id,
       });
 
     if (identifiedCustomer) {
@@ -268,11 +271,14 @@ export class WebsocketGateway implements OnGatewayConnection {
 
       socket.data.customerId = identifiedCustomer.id;
       socket.emit('customerId', identifiedCustomer.id);
+
+      await this.syncCustomData(socket, account, identifiedCustomer);
     } else {
       await this.customersService.CustomerModel.findByIdAndUpdate(customer.id, {
+        ...customer,
         ...optionalProperties,
         ...uniqueProperties,
-        ownerId,
+        ownerId: account.id,
         isAnonymous: false,
       });
     }
@@ -300,7 +306,7 @@ export class WebsocketGateway implements OnGatewayConnection {
       let err = false;
       socket.emit('log', 'CustomerID:' + JSON.stringify(customerId));
 
-      let customer = await this.customersService.CustomerModel.findById(
+      const customer = await this.customersService.CustomerModel.findById(
         customerId
       );
 

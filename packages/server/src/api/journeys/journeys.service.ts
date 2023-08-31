@@ -391,8 +391,10 @@ export class JourneysService {
         visualLayout = visualLayout.replaceAll(oldStepID, newStepID);
         if (oldSteps[i].type === StepType.TRACKER) {
           const newStepName = generateName({ number: true }).dashed;
-          const oldStepName = oldSteps[i].metadata.humanReadableName;
-          visualLayout = visualLayout.replaceAll(oldStepName, newStepName);
+          const oldStepName = oldSteps[i]?.metadata?.humanReadableName;
+
+          if (oldStepName)
+            visualLayout = visualLayout.replaceAll(oldStepName, newStepName);
         }
       }
 
