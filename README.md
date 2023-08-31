@@ -4,75 +4,34 @@
 <a href='https://laudspeakerusers.slack.com/ssb/redirect'><img alt="Join Slack Community" src="https://img.shields.io/badge/slack%20community-join-green"/></a>
 <a href='https://twitter.com/laudspeaker'><img alt="Follow Laudspeaker" src="https://img.shields.io/badge/%40laudspeaker-follow-blue"/></a>
 <a href='https://img.shields.io/github/commit-activity/m/laudspeaker/laudspeaker'><img alt="Commits" src="https://img.shields.io/github/commit-activity/m/laudspeaker/laudspeaker"/></a>
-<a href='https://hub.docker.com/repository/docker/laudspeaker/laudspeaker'><img alt="Docker Pulls" src="https://img.shields.io/docker/pulls/laudspeaker/laudspeaker"></a>
 
 <h4 align="center">
   <a href="https://join.slack.com/t/laudspeakerusers/shared_invite/zt-1li25huaq-BljJUA1Zm8dXvbZViAbMwg">Slack</a> |
   <a href="https://app.laudspeaker.com/login/?ref=github">Laudspeaker Cloud</a> |
-  <a href="https://laudspeaker.com/docs/guides/category/deploy/?ref=github">Self-Hosting</a> |
   <a href="https://laudspeaker.com/docs/guides/overview/intro/?ref=github">Docs</a> |
   <a href="https://laudspeaker.com/?ref=github">Website</a>
 </h4>
   
 </p>
 
-## Laudspeaker - Open Source User Onboarding and omni-channel customer messaging Platform. Alternative to Braze / Appcues/ Iterable / One Signal / Customer Io / Pendo
+
+## Laudspeaker - Open Source User Onboarding, Product Adoption and Messaging Platform. Alternative to Appcues / Pendo / Braze / One Signal / Customer io 
 
 <img width="1708" alt="UI2" src="https://github.com/laudspeaker/laudspeaker/assets/7728266/4c3c2917-6899-48f7-bcbe-a4bd92049c24">
 
-- **Multiple messaging channels like email, sms and push** Send product or event-triggered emails, sms and more to your customers and users at scale
-- **Visual Journey Builder** Build complex messaging workflows the whole team can understand in a visual tool, and see stats once a journey is started
-- **Run on your own infra** Deploy and run on your own infrastructure to keep control of your data.
-- **Integrate with PostHog analytics** Easily trigger journeys with PostHog, the open source product analytics platform
-- **Easy WYSIWYG Template builder** Build nice emails and more with our template builder
-- **1-Click Deploy** to Render
-- **Database / datalake / data warehouse import** ingest user data from your databases
-- **Build and save segments of users**
-- **Build custom modals with our modal designer**
-- 🔜 **Custom User onboarding components that can be added to journeys**
-- 🔜 **Trigger journeys from segment/rudderstack/mixpanel events**
-- 🔜 **Comprehensive versioning ** - simulate user actions, differents dates, and times and test and debug messages before you start journeys
+- **Visual Journey Builder:** Build complex workflows the whole team can understand in a visual tool. Describe the onboarding journey and messaging steps clearly.
+- **Monitor and Track User Progress:** See user progress and which steps users get stuck on.
+- **Personalize Journeys for Different User Personas:** Build different user journeys for different personas, so that you highlight the right features for the right users.
+- **Edit, Experiment and Change Onboarding Easily:** Make changes to onboarding copy easily, or edit live journeys.
+- **Multiple out of product messaging channels like email and sms:** Trigger Emails, SMS and more to nudge users back to complete specific flows.
 
 ## 🚀 Get Started
 
-Run yourself (instructions below) or use [Laudspeaker Cloud](https://app.laudspeaker.com/login/?ref=github) . Docs are [here](https://laudspeaker.com/docs/guides/overview/intro/?ref=github)
+Use [Laudspeaker Cloud](https://app.laudspeaker.com/login/?ref=github) or check out more options [here](https://laudspeaker.com/docs/guides/overview/intro/?ref=github)
 
-### Want help deploying?
+### Want to use at your company?
 
 <a href="https://cal.com/laudspeaker-mahamad/20min-set-up" target="_blank"><img src="https://user-images.githubusercontent.com/7728266/226135023-e484e408-4434-4282-ae66-5c224fb65e20.png" /> </a>
-
-### Setting up with docker:
-
-Run services:
-
-- `docker-compose up` or `docker compose up` depending on your version of docker
-
-Instantiate Mongo:
-
-- `mongosh --eval "rs.initiate()"`
-
-Run backend and front end:
-
-- `npm install`
-- `npm run start`
-
-To stop running system services (Linux):
-
-- Postgres: `sudo systemctl stop postgresql.service`
-- Redis: `/etc/init.d/redis-server stop`
-- Mongo: `sudo systemctl stop mongod`
-
-To remove compose containers:
-
-- `docker-compose down --volumes`
-
-Add a `.env` file to both `packages/server` and `packages/client`.
-
-We have provided examples which you can use:
-
-`mv env-server-example packages/server/.env` and `mv env-client-example packages/client/.env`
-
-Make sure you fill in the fields in the env files before running.
 
 Questions? Please join our [Slack channel](https://join.slack.com/t/laudspeakerusers/shared_invite/zt-1io0f6u50-rSCnNtqkJT6QIdbPOyJh6g) or visit our [site](https://laudspeaker.com/).
 
@@ -94,25 +53,15 @@ We're currently in Public Alpha.
 
 ## License
 
-**Laudspeaker** is open source and released under the [MIT License][mit_license], and AGPLv3 licenses (code in separate directories) with the exception of our ee directory (which is currently empty!) but will be under the Laudspeaker Enterprise Edition license. If you can only use MIT licencsed code, you can still use Laudspeaker but with a few fewer features.
+**Laudspeaker** is open source and released under the [MIT License][mit_license], and AGPLv3 licenses (code in separate directories) with the exception of our ee directory (which is currently empty!) but will be under the Laudspeaker Enterprise Edition license.
 
 ## 🌱 Contribute
 
 We would love to see you contribute to Laudspeaker. Join our slack to get involved.
 
-A quick how to for contribution:
-
-1. Fork the project
-2. Create your feature branch (`git checkout -b feature/some-feature`)
-3. Make your changes
-4. Commit your changes (`git commit -m 'Implement an amazing feature.'`)
-5. Push to the branch (`git push origin feature/some-feature`)
-6. Open a pull request
-
 ## 🎥 Video Walkthrough
 
-- Check out how to set up and trigger an email with posthog in our [video](https://vimeo.com/763728112)
-- Check out how to trigger a slack message with a custom event in this [video](https://www.loom.com/share/8e1d349ceed24d2bb50280db36b19214)
+- Coming soon!
 
 ## Follow Us
 
@@ -121,12 +70,6 @@ A quick how to for contribution:
 [slack]: https://join.slack.com/t/laudspeakerusers/shared_invite/zt-1li25huaq-BljJUA1Zm8dXvbZViAbMwg
 [twitter]: https://twitter.com/laudspeaker
 [mit_license]: https://opensource.org/licenses/MIT
-
-## We’re hiring!
-
-Come help us make Laudspeaker better. Email us at hey [at] laudspeaker [dot] com
-
-If you're interested have a look at this repo and feel free to raise an issue!
 
 <!---
 -  [Laudspeaker Blog][laudspeaker-blog]

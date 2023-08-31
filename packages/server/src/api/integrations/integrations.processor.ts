@@ -1,11 +1,11 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
+import { Job } from 'bullmq';
 import handleDatabricks from './databricks.worker';
 import {
   Database,
   DBType,
   FrequencyUnit,
 } from '../../api/integrations/entities/database.entity';
-import { Job } from 'bullmq';
 import { Account } from '../accounts/entities/accounts.entity';
 import { InjectModel } from '@nestjs/mongoose';
 import {

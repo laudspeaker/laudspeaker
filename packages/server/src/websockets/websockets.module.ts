@@ -3,7 +3,6 @@ import { CustomersModule } from '..//api/customers/customers.module';
 import { EventsModule } from '../api/events/events.module';
 import { forwardRef, Module } from '@nestjs/common';
 import { WebsocketGateway } from './websocket.gateway';
-import { WebhooksService } from '@/api/webhooks/webhooks.service';
 import {
   Customer,
   CustomerSchema,

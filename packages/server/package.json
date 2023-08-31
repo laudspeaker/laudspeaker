@@ -25,6 +25,9 @@
     "typeorm:revert": "npm run typeorm migration:revert"
   },
   "dependencies": {
+    "redis": "^4.6.7",
+    "redlock": "^5.0.0-beta.2",
+    "@liaoliaots/nestjs-redis": "^9.0.5",
     "@clickhouse/client": "^0.0.9",
     "@dagrejs/graphlib": "^2.1.13",
     "@databricks/sql": "1.0.0",

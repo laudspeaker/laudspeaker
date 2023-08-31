@@ -8,8 +8,8 @@ import {
   Req,
   Inject,
 } from '@nestjs/common';
-import { Queue } from 'bullmq';
 import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 import Mailgun from 'mailgun.js';
 import FormData from 'form-data';
 import * as _ from 'lodash';

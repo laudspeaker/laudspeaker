@@ -1,6 +1,6 @@
-import { InjectQueue, Processor, WorkerHost } from '@nestjs/bullmq';
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Processor, WorkerHost, InjectQueue } from '@nestjs/bullmq';
 import { Job, Queue, UnrecoverableError } from 'bullmq';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Correlation, CustomersService } from '../customers/customers.service';
 import { DataSource } from 'typeorm';
 import mongoose, { Model } from 'mongoose';
@@ -18,6 +18,11 @@ import {
   PosthogEventDocument,
 } from './schemas/posthog-event.schema';
 import { EventDocument } from './schemas/event.schema';
+import {
+  Customer,
+  CustomerDocument,
+} from '../customers/schemas/customer.schema';
+import { RedlockService } from '../redlock/redlock.service';
 
 export enum ProviderType {
   LAUDSPEAKER = 'laudspeaker',
@@ -26,7 +31,7 @@ export enum ProviderType {
 
 @Injectable()
 @Processor('events_pre', {
-  removeOnComplete: { age: 0, count: 0 },
+  // removeOnComplete: { age: 0, count: 0 },
 })
 export class EventsPreProcessor extends WorkerHost {
   private providerMap: Record<
@@ -56,7 +61,10 @@ export class EventsPreProcessor extends WorkerHost {
     private posthogEventModel: Model<PosthogEventDocument>,
     @InjectModel(PosthogEventType.name)
     private posthogEventTypeModel: Model<PosthogEventTypeDocument>,
-    @InjectQueue('events') private readonly eventsQueue: Queue
+    @InjectModel(Customer.name) public customerModel: Model<CustomerDocument>,
+    @InjectQueue('events') private readonly eventsQueue: Queue,
+    @Inject(RedlockService)
+    private readonly redlockService: RedlockService
   ) {
     super();
   }
@@ -245,7 +253,7 @@ export class EventsPreProcessor extends WorkerHost {
             isDeleted: false,
           },
         });
-        for (let i = 0; i < journeys.length; i++)
+        for (let i = 0; i < journeys.length; i++) {
           await this.eventsQueue.add(
             'event',
             {
@@ -254,10 +262,10 @@ export class EventsPreProcessor extends WorkerHost {
               journeyID: journeys[i].id,
             },
             {
-              attempts: 10,
-              backoff: { delay: 1000, type: 'exponential' },
+              attempts: 1,
             }
           );
+        }
       } catch (e) {
         if (e instanceof Error) {
           postHogEvent.errorMessage = e.message;
@@ -286,7 +294,7 @@ export class EventsPreProcessor extends WorkerHost {
       if (err?.code === 11000) {
         this.warn(
           `${JSON.stringify({
-            warning: 'Attempting to insert a duplicate key',
+            warning: 'Attempting to insert a duplicate key!',
           })}`,
           this.handlePosthog.name,
           job.data.session,
@@ -339,7 +347,7 @@ export class EventsPreProcessor extends WorkerHost {
           isDeleted: false,
         },
       });
-      for (let i = 0; i < journeys.length; i++)
+      for (let i = 0; i < journeys.length; i++) {
         await this.eventsQueue.add(
           'event',
           {
@@ -348,10 +356,10 @@ export class EventsPreProcessor extends WorkerHost {
             journeyID: journeys[i].id,
           },
           {
-            attempts: 10,
-            backoff: { delay: 1000, type: 'exponential' },
+            attempts: 1,
           }
         );
+      }
       if (job.data.event) {
         await this.eventModel.create({
           ...job.data.event,
@@ -378,7 +386,7 @@ export class EventsPreProcessor extends WorkerHost {
       if (err?.code === 11000) {
         this.warn(
           `${JSON.stringify({
-            warning: 'Attempting to insert a duplicate key',
+            warning: 'Attempting to insert a duplicate key!',
           })}`,
           this.handleCustom.name,
           job.data.session,

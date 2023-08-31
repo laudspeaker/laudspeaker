@@ -486,6 +486,22 @@ export class JourneysService {
   }
 
   /**
+   * Finds all active journeys
+   *
+   * @param account - The owner of the workflows
+   *
+   */
+  async allActiveTransactional(queryRunner: QueryRunner): Promise<Journey[]> {
+    return await queryRunner.manager.find(Journey, {
+      where: {
+        isActive: true,
+        isStopped: false,
+        isPaused: false,
+      },
+    });
+  }
+
+  /**
    * Finds all journeys matching a certain criteria.
    *
    * @param {Account} account The owner of the journeys

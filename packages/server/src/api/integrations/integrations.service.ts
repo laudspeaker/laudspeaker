@@ -1,5 +1,6 @@
 /* eslint-disable no-case-declarations */
 import { InjectQueue } from '@nestjs/bullmq';
+import { Queue, QueueEvents } from 'bullmq';
 import {
   BadRequestException,
   Injectable,
@@ -7,7 +8,6 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Queue, QueueEvents } from 'bullmq';
 import { DataSource, Repository } from 'typeorm';
 import { AccountsService } from '../accounts/accounts.service';
 import { CreateDBDto } from './dto/create-db.dto';
