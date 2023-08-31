@@ -71,7 +71,7 @@ export const BranchEdge: FC<EdgeProps<BranchEdgeData>> = ({
             style={{
               position: "absolute",
               transform: `translateX(${targetX - 100}px) translateY(${
-                labelY + 20
+                labelY + 10
               }px)`,
               pointerEvents: "all",
             }}

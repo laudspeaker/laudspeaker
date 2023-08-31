@@ -14,6 +14,8 @@ import {
 } from "@tisoap/react-flow-smart-edge";
 import { NodeType } from "pages/FlowBuilderv2/FlowEditor";
 import { v4 as uuid } from "uuid";
+import { useAppDispatch } from "store/hooks";
+import { selectNode } from "reducers/flow-builder.reducer";
 
 interface JumpToDraggableLineProps {
   jumpToNodeId: string;
@@ -26,6 +28,8 @@ const JumpToDraggableLine: FC<JumpToDraggableLineProps> = ({
   targetId,
   setTargetId,
 }) => {
+  const dispatch = useAppDispatch();
+
   const nodeTypesConnectableToJumpTo: (string | undefined)[] = [
     NodeType.EMPTY,
     NodeType.INSERT_NODE,
@@ -50,6 +54,7 @@ const JumpToDraggableLine: FC<JumpToDraggableLineProps> = ({
   const [edgePath, setEdgePath] = useState<string>();
   const [sourceTop, setSourceTop] = useState<number>();
   const [sourceLeft, setSourceLeft] = useState<number>();
+  const [isHovered, setIsHovered] = useState(false);
 
   const flowContainer = document.querySelector(".react-flow");
   const edgesContainer = document.querySelector(".react-flow__edges > g");
@@ -269,6 +274,10 @@ const JumpToDraggableLine: FC<JumpToDraggableLineProps> = ({
 
   const markerUUID = uuid();
 
+  const isActive = Boolean(jumpToNode?.selected) || isDragging || isHovered;
+
+  const currentColor = isActive ? "#4338CA" : "#111827";
+
   return (
     <div
       className="absolute -translate-x-1/2"
@@ -280,6 +289,7 @@ const JumpToDraggableLine: FC<JumpToDraggableLineProps> = ({
       onClick={(e) => {
         e.stopPropagation();
         console.log("click");
+        dispatch(selectNode(jumpToNodeId));
       }}
       onDragStart={(e) => {
         console.log("drag start");
@@ -290,12 +300,17 @@ const JumpToDraggableLine: FC<JumpToDraggableLineProps> = ({
       }}
       onDrag={onDrag}
       onDragEnd={onDragEnd}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       onMouseDown={(e) => e.stopPropagation()}
       onMouseDownCapture={(e) => e.stopPropagation()}
     >
       <div
         ref={sourceRef}
-        className="relative rounded-[100%] w-[10px] h-[10px] bg-[#4338CA] -translate-y-2/3"
+        className="relative rounded-[100%] w-[10px] h-[10px] -translate-y-2/3"
+        style={{
+          background: currentColor,
+        }}
       >
         {edgesContainer &&
           createPortal(
@@ -335,8 +350,8 @@ const JumpToDraggableLine: FC<JumpToDraggableLineProps> = ({
                       <polygon
                         points="0 0, 10 3.5, 0 7"
                         style={{
-                          stroke: "#4338CA",
-                          fill: "#4338CA",
+                          stroke: currentColor,
+                          fill: currentColor,
                         }}
                       />
                     </marker>
@@ -348,7 +363,7 @@ const JumpToDraggableLine: FC<JumpToDraggableLineProps> = ({
                     className="react-flow__edge-path"
                     style={{
                       strokeWidth: 1,
-                      stroke: "#4338CA",
+                      stroke: currentColor,
                       outline: "none",
                     }}
                     d={edgePath}

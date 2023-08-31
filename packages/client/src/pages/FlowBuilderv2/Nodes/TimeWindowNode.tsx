@@ -6,7 +6,7 @@ import { TimeWindowNodeData } from "./NodeData";
 export const TimeWindowNode: FC<NodeProps<TimeWindowNodeData>> = ({
   isConnectable,
   selected,
-  data: { from, to },
+  data: { from, to, showErrors },
 }) => {
   return (
     <div
@@ -50,7 +50,11 @@ export const TimeWindowNode: FC<NodeProps<TimeWindowNodeData>> = ({
               }).format(new Date(to))}
             </div>
           ) : (
-            <span className="font-inter font-normal text-[12px] text-[#F43F5E] leading-[20px]">
+            <span
+              className={`font-inter font-normal text-[12px] leading-[20px] ${
+                showErrors ? "text-[#F43F5E]" : ""
+              }`}
+            >
               Set time
             </span>
           )}
