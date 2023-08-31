@@ -391,8 +391,10 @@ export class JourneysService {
         visualLayout = visualLayout.replaceAll(oldStepID, newStepID);
         if (oldSteps[i].type === StepType.TRACKER) {
           const newStepName = generateName({ number: true }).dashed;
-          const oldStepName = oldSteps[i].metadata.humanReadableName;
-          visualLayout = visualLayout.replaceAll(oldStepName, newStepName);
+          const oldStepName = oldSteps[i]?.metadata?.humanReadableName;
+
+          if (oldStepName)
+            visualLayout = visualLayout.replaceAll(oldStepName, newStepName);
         }
       }
 
@@ -483,6 +485,22 @@ export class JourneysService {
       this.error(err, this.enrollCustomer.name, session, account.id);
       throw err;
     }
+  }
+
+  /**
+   * Finds all active journeys
+   *
+   * @param account - The owner of the workflows
+   *
+   */
+  async allActiveTransactional(queryRunner: QueryRunner): Promise<Journey[]> {
+    return await queryRunner.manager.find(Journey, {
+      where: {
+        isActive: true,
+        isStopped: false,
+        isPaused: false,
+      },
+    });
   }
 
   /**

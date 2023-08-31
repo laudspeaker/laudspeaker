@@ -1,11 +1,9 @@
 /* eslint-disable no-case-declarations */
-import { OnWorkerEvent, Processor, WorkerHost } from '@nestjs/bullmq';
 import { HttpException, HttpStatus, Inject, Logger } from '@nestjs/common';
-import { Job } from 'bullmq';
 import { Injectable } from '@nestjs/common';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
-import { InjectQueue } from '@nestjs/bullmq';
-import { Queue } from 'bullmq';
+import { Processor, WorkerHost, InjectQueue } from '@nestjs/bullmq';
+import { Job, Queue } from 'bullmq';
 import { cpus } from 'os';
 import { CustomComponentAction, StepType } from '../types/step.interface';
 import { Step } from '../entities/step.entity';
@@ -13,7 +11,7 @@ import { DataSource, QueryRunner } from 'typeorm';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import mongoose, { Model } from 'mongoose';
 import { Temporal } from '@js-temporal/polyfill';
-import { randomUUID } from 'crypto';
+import { createHash, randomUUID } from 'crypto';
 import { MessageSender } from '../types/messagesender.class';
 import {
   ClickHouseEventProvider,
@@ -31,12 +29,12 @@ import { WebsocketGateway } from '@/websockets/websocket.gateway';
 import { ModalsService } from '@/api/modals/modals.service';
 import { SlackService } from '@/api/slack/slack.service';
 import { Account } from '@/api/accounts/entities/accounts.entity';
+import { RedlockService } from '@/api/redlock/redlock.service';
+import * as _ from 'lodash';
+import { Lock } from 'redlock';
 
 @Injectable()
-@Processor('transition', {
-  concurrency: cpus().length,
-  // removeOnComplete: { age: 0, count: 0 },
-})
+@Processor('transition', { concurrency: cpus().length })
 export class TransitionProcessor extends WorkerHost {
   constructor(
     private dataSource: DataSource,
@@ -54,7 +52,8 @@ export class TransitionProcessor extends WorkerHost {
     private websocketGateway: WebsocketGateway,
     @Inject(ModalsService) private modalsService: ModalsService,
     @Inject(SlackService) private slackService: SlackService,
-    @InjectModel(Customer.name) public customerModel: Model<CustomerDocument>
+    @InjectModel(Customer.name) public customerModel: Model<CustomerDocument>,
+    @Inject(RedlockService) private redlockService: RedlockService
   ) {
     super();
   }
@@ -140,19 +139,47 @@ export class TransitionProcessor extends WorkerHost {
             job.data.ownerID,
             job.data.step.id,
             job.data.session,
+            job.data.customerID,
+            this.redlockService.retrieve(
+              job.data.lock.resources,
+              job.data.lock.value,
+              job.data.lock.attempts,
+              job.data.lock.expiration
+            ),
             queryRunner,
-            transactionSession
+            transactionSession,
+            job.data.event
           );
           break;
         case StepType.EXIT:
+          const lock = this.redlockService.retrieve(
+            job.data.lock.resources,
+            job.data.lock.value,
+            job.data.lock.attempts,
+            job.data.lock.expiration
+          );
+          await lock.release();
+          this.warn(
+            `${JSON.stringify({ warning: 'Releasing lock' })}`,
+            this.process.name,
+            job.data.session
+          );
           break;
         case StepType.LOOP:
           await this.handleLoop(
             job.data.ownerID,
             job.data.step.id,
             job.data.session,
+            job.data.customerID,
+            this.redlockService.retrieve(
+              job.data.lock.resources,
+              job.data.lock.value,
+              job.data.lock.attempts,
+              job.data.lock.expiration
+            ),
             queryRunner,
-            transactionSession
+            transactionSession,
+            job.data.event
           );
           break;
         case StepType.MESSAGE:
@@ -160,8 +187,16 @@ export class TransitionProcessor extends WorkerHost {
             job.data.ownerID,
             job.data.step.id,
             job.data.session,
+            job.data.customerID,
+            this.redlockService.retrieve(
+              job.data.lock.resources,
+              job.data.lock.value,
+              job.data.lock.attempts,
+              job.data.lock.expiration
+            ),
             queryRunner,
-            transactionSession
+            transactionSession,
+            job.data.event
           );
           break;
         case StepType.TRACKER:
@@ -169,8 +204,16 @@ export class TransitionProcessor extends WorkerHost {
             job.data.ownerID,
             job.data.step.id,
             job.data.session,
+            job.data.customerID,
+            this.redlockService.retrieve(
+              job.data.lock.resources,
+              job.data.lock.value,
+              job.data.lock.attempts,
+              job.data.lock.expiration
+            ),
             queryRunner,
-            transactionSession
+            transactionSession,
+            job.data.event
           );
           break;
         case StepType.RANDOM_COHORT_BRANCH:
@@ -180,8 +223,16 @@ export class TransitionProcessor extends WorkerHost {
             job.data.ownerID,
             job.data.step.id,
             job.data.session,
+            job.data.customerID,
+            this.redlockService.retrieve(
+              job.data.lock.resources,
+              job.data.lock.value,
+              job.data.lock.attempts,
+              job.data.lock.expiration
+            ),
             queryRunner,
-            transactionSession
+            transactionSession,
+            job.data.event
           );
           break;
         case StepType.TIME_DELAY:
@@ -189,8 +240,16 @@ export class TransitionProcessor extends WorkerHost {
             job.data.ownerID,
             job.data.step.id,
             job.data.session,
+            job.data.customerID,
+            this.redlockService.retrieve(
+              job.data.lock.resources,
+              job.data.lock.value,
+              job.data.lock.attempts,
+              job.data.lock.expiration
+            ),
             queryRunner,
-            transactionSession
+            transactionSession,
+            job.data.event
           );
           break;
         case StepType.TIME_WINDOW:
@@ -198,8 +257,16 @@ export class TransitionProcessor extends WorkerHost {
             job.data.ownerID,
             job.data.step.id,
             job.data.session,
+            job.data.customerID,
+            this.redlockService.retrieve(
+              job.data.lock.resources,
+              job.data.lock.value,
+              job.data.lock.attempts,
+              job.data.lock.expiration
+            ),
             queryRunner,
-            transactionSession
+            transactionSession,
+            job.data.event
           );
           break;
         case StepType.WAIT_UNTIL_BRANCH:
@@ -207,10 +274,17 @@ export class TransitionProcessor extends WorkerHost {
             job.data.ownerID,
             job.data.step.id,
             job.data.session,
-            job.data.customer,
+            job.data.customerID,
+            this.redlockService.retrieve(
+              job.data.lock.resources,
+              job.data.lock.value,
+              job.data.lock.attempts,
+              job.data.lock.expiration
+            ),
             job.data.branch,
             queryRunner,
-            transactionSession
+            transactionSession,
+            job.data.event
           );
           break;
         default:
@@ -223,6 +297,18 @@ export class TransitionProcessor extends WorkerHost {
       await queryRunner.rollbackTransaction();
       this.error(e, this.process.name, job.data.session);
       err = e;
+      const lock = this.redlockService.retrieve(
+        job.data.lock.resources,
+        job.data.lock.value,
+        job.data.lock.attempts,
+        job.data.lock.expiration
+      );
+      await lock.release();
+      this.warn(
+        `${JSON.stringify({ warning: 'Releasing lock' })}`,
+        this.process.name,
+        job.data.session
+      );
     } finally {
       await transactionSession.endSession();
       await queryRunner.release();
@@ -241,17 +327,18 @@ export class TransitionProcessor extends WorkerHost {
     ownerID: string,
     stepID: string,
     session: string,
+    customerID: string,
+    lock: Lock,
     queryRunner: QueryRunner,
-    transactionSession: mongoose.mongo.ClientSession
+    transactionSession: mongoose.mongo.ClientSession,
+    event?: string
   ) {
+    /**
+     * Boilerplate Step One Start
+     */
     const owner = await queryRunner.manager.findOne(Account, {
       where: { id: ownerID },
     });
-    this.debug(
-      `${JSON.stringify({ owner: owner })}`,
-      this.handleCustomComponent.name,
-      session
-    );
 
     const currentStep = await queryRunner.manager.findOne(Step, {
       where: {
@@ -261,11 +348,30 @@ export class TransitionProcessor extends WorkerHost {
       lock: { mode: 'pessimistic_write' },
     });
 
-    this.debug(
-      `${JSON.stringify({ currentStep: currentStep })}`,
-      this.handleCustomComponent.name,
-      session
-    );
+    if (
+      !_.find(currentStep.customers, (customer) => {
+        return JSON.parse(customer).customerID === customerID;
+      })
+    ) {
+      await lock.release();
+      this.warn(
+        `${JSON.stringify({ warning: 'Releasing lock' })}`,
+        this.handleCustomComponent.name,
+        session,
+        owner.email
+      );
+      this.warn(
+        `${JSON.stringify({
+          warning: 'Customer not in step',
+          customerID,
+          currentStep,
+        })}`,
+        this.handleCustomComponent.name,
+        session,
+        owner.email
+      );
+      return;
+    }
 
     const nextStep = await queryRunner.manager.findOne(Step, {
       where: {
@@ -273,131 +379,168 @@ export class TransitionProcessor extends WorkerHost {
       },
       lock: { mode: 'pessimistic_write' },
     });
+    /**
+     * Boilerplate Step One Finish
+     */
 
+    /**
+     * Step Business Logic Start
+     */
+    const templateID = currentStep.metadata.template;
+    const template = await this.templatesService.transactionalFindOneById(
+      owner,
+      templateID.toString(),
+      queryRunner
+    );
+
+    const customer: CustomerDocument = await this.customersService.findById(
+      owner,
+      customerID
+    );
+
+    if (template.type !== TemplateType.CUSTOM_COMPONENT) {
+      throw new Error(
+        `Cannot use ${template.type} template for a custom component step`
+      );
+    }
+    const { action, humanReadableName, pushedValues } = currentStep.metadata;
+
+    //1. Check if custom components exists on this customer
+    if (!customer.customComponents) customer.customComponents = {};
+
+    // 2. Check if this specific component exists on this customer,
+    // If not, create it and put in the default values from the template
+    if (!customer.customComponents[humanReadableName])
+      customer.customComponents[humanReadableName] = {
+        hidden: true,
+        ...template.customFields,
+        delivered: false,
+      };
+
+    // 3. Update the custom component to reflect the
+    // details outlined in the step that triggers this component.
+    customer.customComponents[humanReadableName].hidden =
+      action === CustomComponentAction.HIDE ? true : false;
+    customer.customComponents[humanReadableName].step = stepID;
+    customer.customComponents[humanReadableName].template = String(templateID);
+    customer.customComponents[humanReadableName] = {
+      ...customer.customComponents[humanReadableName],
+      ...pushedValues,
+    };
+
+    // 4. Record that the message was sent
+    await this.webhooksService.insertClickHouseMessages([
+      {
+        stepId: stepID,
+        createdAt: new Date().toUTCString(),
+        customerId: customerID,
+        event: 'sent',
+        eventProvider: ClickHouseEventProvider.TRACKER,
+        messageId: humanReadableName,
+        templateId: String(templateID),
+        userId: owner.id,
+        processed: true,
+      },
+    ]);
+
+    // 5. Attempt delivery. If delivered, record delivery event
+    const isDelivered = await this.websocketGateway.sendCustomComponentState(
+      customer.id,
+      humanReadableName,
+      customer.customComponents[humanReadableName]
+    );
+    await this.websocketGateway.sendProcessed(
+      customer.id,
+      event,
+      humanReadableName
+    );
+    if (isDelivered)
+      await this.webhooksService.insertClickHouseMessages([
+        {
+          stepId: stepID,
+          createdAt: new Date().toUTCString(),
+          customerId: customerID,
+          event: 'delivered',
+          eventProvider: ClickHouseEventProvider.TRACKER,
+          messageId: humanReadableName,
+          templateId: String(templateID),
+          userId: owner.id,
+          processed: true,
+        },
+      ]);
+
+    // 6. Set delivery status.
+    customer.customComponents[humanReadableName].delivered = isDelivered;
+
+    // 7. Commit customer changes to the db
+    const res = await this.customerModel
+      .findByIdAndUpdate(customer.id, {
+        $set: { customComponents: { ...customer.customComponents } },
+      })
+      .session(transactionSession)
+      .exec();
     this.debug(
-      `${JSON.stringify({ nextStep: nextStep })}`,
+      `${JSON.stringify({ res: res })}`,
       this.handleCustomComponent.name,
       session
     );
+    /**
+     * Step Business Logic Finish
+     */
 
-    for (let i = 0; i < currentStep.customers.length; i++) {
-      try {
-        const customerID = JSON.parse(currentStep.customers[i]).customerID;
-        const templateID = currentStep.metadata.template;
-        const template = await this.templatesService.transactionalFindOneById(
-          owner,
-          templateID.toString(),
-          queryRunner
-        );
-
-        const customer: CustomerDocument = await this.customersService.findById(
-          owner,
-          customerID
-        );
-
-        if (template.type !== TemplateType.CUSTOM_COMPONENT) {
-          throw new Error(
-            `Cannot use ${template.type} template for a custom component step`
-          );
-        }
-        const { action, humanReadableName, pushedValues } =
-          currentStep.metadata;
-
-        //1. Check if custom components exists on this customer
-        if (!customer.customComponents) customer.customComponents = {};
-
-        // 2. Check if this specific component exists on this customer,
-        // If not, create it and put in the default values from the template
-        if (!customer.customComponents[humanReadableName])
-          customer.customComponents[humanReadableName] = {
-            hidden: true,
-            ...template.customFields,
-            delivered: false,
-          };
-
-        // 3. Update the custom component to reflect the
-        // details outlined in the step that triggers this component.
-        customer.customComponents[humanReadableName].hidden =
-          action === CustomComponentAction.HIDE ? true : false;
-        customer.customComponents[humanReadableName].step = stepID;
-        customer.customComponents[humanReadableName].template =
-          String(templateID);
-        customer.customComponents[humanReadableName] = {
-          ...customer.customComponents[humanReadableName],
-          ...pushedValues,
-        };
-
-        // 4. Record that the message was sent
-        await this.webhooksService.insertClickHouseMessages([
-          {
-            stepId: stepID,
-            createdAt: new Date().toUTCString(),
-            customerId: customerID,
-            event: 'sent',
-            eventProvider: ClickHouseEventProvider.TRACKER,
-            messageId: humanReadableName,
-            templateId: String(templateID),
-            userId: owner.id,
-            processed: true,
-          },
-        ]);
-
-        // 5. Attempt delivery. If delivered, record delivery event
-        const isDelivered =
-          await this.websocketGateway.sendCustomComponentState(
-            customer.id,
-            humanReadableName,
-            customer.customComponents[humanReadableName]
-          );
-        if (isDelivered)
-          await this.webhooksService.insertClickHouseMessages([
-            {
-              stepId: stepID,
-              createdAt: new Date().toUTCString(),
-              customerId: customerID,
-              event: 'delivered',
-              eventProvider: ClickHouseEventProvider.TRACKER,
-              messageId: humanReadableName,
-              templateId: String(templateID),
-              userId: owner.id,
-              processed: true,
-            },
-          ]);
-
-        // 6. Set delivery status.
-        customer.customComponents[humanReadableName].delivered = isDelivered;
-
-        // 7. Commit customer changes to the db
-        const res = await this.customerModel
-          .findByIdAndUpdate(customer.id, {
-            $set: { customComponents: { ...customer.customComponents } },
-          })
-          .session(transactionSession)
-          .exec();
-        this.debug(
-          `${JSON.stringify({ res: res })}`,
-          this.handleCustomComponent.name,
-          session
-        );
-      } catch (err) {
-        this.error(err, this.handleCustomComponent.name, session);
-      }
-
+    /**
+     * Boilerplate Step Two Start
+     */
+    if (nextStep) {
+      // Destination exists, move customer into destination
       nextStep.customers.push(
         JSON.stringify({
-          customerID: JSON.parse(currentStep.customers[i]).customerID,
-          timestamp: new Date(),
+          customerID,
+          timestamp: Temporal.Now.instant().toString(),
         })
       );
+      _.remove(currentStep.customers, (customer) => {
+        return JSON.parse(customer).customerID === customerID;
+      });
+      await queryRunner.manager.save(currentStep);
+      const newNext = await queryRunner.manager.save(nextStep);
+
+      if (
+        newNext.type !== StepType.TIME_DELAY &&
+        newNext.type !== StepType.TIME_WINDOW &&
+        newNext.type !== StepType.WAIT_UNTIL_BRANCH
+      )
+        await this.transitionQueue.add(newNext.type, {
+          ownerID,
+          step: newNext,
+          session: session,
+          customerID,
+          lock,
+          event,
+        });
+      else {
+        await lock.release();
+        this.warn(
+          `${JSON.stringify({ warning: 'Releasing lock' })}`,
+          this.handleCustomComponent.name,
+          session,
+          owner.email
+        );
+      }
+    } else {
+      // Destination does not exist, customer has stopped moving so
+      // we can release lock
+      await lock.release();
+      this.warn(
+        `${JSON.stringify({ warning: 'Releasing lock' })}`,
+        this.handleCustomComponent.name,
+        session,
+        owner.email
+      );
     }
-    currentStep.customers = [];
-    await queryRunner.manager.save(currentStep);
-    const newNext = await queryRunner.manager.save(nextStep);
-    await this.transitionQueue.add(newNext.type, {
-      ownerID,
-      step: newNext,
-      session: session,
-    });
+    /**
+     * Boilerplate Step Two Finish
+     */
   }
 
   /**
@@ -411,12 +554,16 @@ export class TransitionProcessor extends WorkerHost {
     ownerID: string,
     stepID: string,
     session: string,
+    customerID: string,
+    lock: Lock,
     queryRunner: QueryRunner,
-    transactionSession: mongoose.mongo.ClientSession
+    transactionSession: mongoose.mongo.ClientSession,
+    event?: string
   ) {
     const owner = await queryRunner.manager.findOne(Account, {
       where: { id: ownerID },
     });
+
     const currentStep = await queryRunner.manager.findOne(Step, {
       where: {
         id: stepID,
@@ -424,11 +571,32 @@ export class TransitionProcessor extends WorkerHost {
       },
       lock: { mode: 'pessimistic_write' },
     });
-    this.debug(
-      `${JSON.stringify({ currentStep: currentStep })}`,
-      this.handleMessage.name,
-      session
-    );
+
+    if (
+      !_.find(currentStep.customers, (customer) => {
+        return JSON.parse(customer).customerID === customerID;
+      })
+    ) {
+      await lock.release();
+      this.warn(
+        `${JSON.stringify({ warning: 'Releasing lock' })}`,
+        this.handleMessage.name,
+        session,
+        owner.email
+      );
+      this.warn(
+        `${JSON.stringify({
+          warning: 'Customer not in step',
+          customerID,
+          currentStep,
+        })}`,
+        this.handleCustomComponent.name,
+        session,
+        owner.email
+      );
+      return;
+    }
+
     const nextStep = await queryRunner.manager.findOne(Step, {
       where: {
         id: currentStep.metadata.destination,
@@ -436,212 +604,216 @@ export class TransitionProcessor extends WorkerHost {
       lock: { mode: 'pessimistic_write' },
     });
 
-    for (let i = 0; i < currentStep.customers.length; i++) {
-      try {
-        //send message here
-        const customerID = JSON.parse(currentStep.customers[i]).customerID;
-        const templateID = currentStep.metadata.template;
-        this.debug(
-          `${JSON.stringify({ metadata: currentStep.metadata.template })}`,
-          this.handleMessage.name,
-          session
-        );
-        this.debug(
-          `${JSON.stringify({ templateID: templateID })}`,
-          this.handleMessage.name,
-          session
-        );
-        const template = await this.templatesService.transactionalFindOneById(
-          owner,
-          templateID.toString(),
-          queryRunner
-        );
-        this.debug(
-          `${JSON.stringify({ template: template })}`,
-          this.handleMessage.name,
-          session
-        );
-        const {
-          mailgunAPIKey,
-          sendingName,
-          testSendingEmail,
-          testSendingName,
-          sendgridApiKey,
-          sendgridFromEmail,
-          email,
-        } = owner;
-        let { sendingDomain, sendingEmail } = owner;
+    //send message here
+    const templateID = currentStep.metadata.template;
+    const template = await this.templatesService.transactionalFindOneById(
+      owner,
+      templateID.toString(),
+      queryRunner
+    );
+    const {
+      mailgunAPIKey,
+      sendingName,
+      testSendingEmail,
+      testSendingName,
+      sendgridApiKey,
+      sendgridFromEmail,
+      email,
+    } = owner;
+    let { sendingDomain, sendingEmail } = owner;
 
-        let key = mailgunAPIKey;
-        let from = sendingName;
-        const customer: CustomerDocument = await this.customersService.findById(
-          owner,
-          customerID
-        );
-        const { _id, ownerId, workflows, journeys, ...tags } =
-          customer.toObject();
-        const filteredTags = cleanTagsForSending(tags);
-        const sender = new MessageSender();
+    let key = mailgunAPIKey;
+    let from = sendingName;
+    const customer: CustomerDocument = await this.customersService.findById(
+      owner,
+      customerID
+    );
+    const { _id, ownerId, workflows, journeys, ...tags } = customer.toObject();
+    const filteredTags = cleanTagsForSending(tags);
+    const sender = new MessageSender();
 
-        switch (template.type) {
-          case TemplateType.EMAIL:
-            if (owner.emailProvider === 'free3') {
-              if (owner.freeEmailsCount === 0)
-                throw new HttpException(
-                  'You exceeded limit of 3 emails',
-                  HttpStatus.PAYMENT_REQUIRED
-                );
-              sendingDomain = process.env.MAILGUN_TEST_DOMAIN;
-              key = process.env.MAILGUN_API_KEY;
-              from = testSendingName;
-              sendingEmail = testSendingEmail;
-              owner.freeEmailsCount--;
-            }
-            if (owner.emailProvider === 'sendgrid') {
-              key = sendgridApiKey;
-              from = sendgridFromEmail;
-            }
-            const ret = await sender.process({
-              name: TemplateType.EMAIL,
-              accountID: owner.id,
-              cc: template.cc,
-              customerID: customerID,
-              domain: sendingDomain,
-              email: sendingEmail,
-              stepID: currentStep.id,
-              from: from,
-              trackingEmail: email,
-              key: key,
-              subject: await this.templatesService.parseApiCallTags(
-                template.subject,
-                filteredTags
-              ),
-              to: customer.phEmail ? customer.phEmail : customer.email,
-              text: await this.templatesService.parseApiCallTags(
-                template.text,
-                filteredTags
-              ),
-              tags: filteredTags,
-              templateID: template.id,
-              eventProvider: owner.emailProvider,
-            });
-            this.debug(
-              `${JSON.stringify(ret)}`,
-              this.handleMessage.name,
-              session
+    switch (template.type) {
+      case TemplateType.EMAIL:
+        if (owner.emailProvider === 'free3') {
+          if (owner.freeEmailsCount === 0)
+            throw new HttpException(
+              'You exceeded limit of 3 emails',
+              HttpStatus.PAYMENT_REQUIRED
             );
-            await this.webhooksService.insertClickHouseMessages(ret);
-            if (owner.emailProvider === 'free3') await owner.save();
-            break;
-          case TemplateType.FIREBASE:
-            await this.webhooksService.insertClickHouseMessages(
-              await sender.process({
-                name: TemplateType.FIREBASE,
-                accountID: owner.id,
-                stepID: currentStep.id,
-                customerID: customerID,
-                firebaseCredentials: owner.firebaseCredentials,
-                phDeviceToken: customer.phDeviceToken,
-                pushText: await this.templatesService.parseApiCallTags(
-                  template.pushText,
-                  filteredTags
-                ),
-                pushTitle: await this.templatesService.parseApiCallTags(
-                  template.pushTitle,
-                  filteredTags
-                ),
-                trackingEmail: email,
-                filteredTags: filteredTags,
-                templateID: template.id,
-              })
-            );
-            break;
-          case TemplateType.MODAL:
-            if (template.modalState) {
-              const isSent = await this.websocketGateway.sendModal(
-                customerID,
-                template
-              );
-              if (!isSent)
-                await this.modalsService.queueModalEvent(customerID, template);
-            }
-            break;
-          case TemplateType.SLACK:
-            const installation = await this.slackService.getInstallation(
-              customer
-            );
-            await this.webhooksService.insertClickHouseMessages(
-              await sender.process({
-                name: TemplateType.SLACK,
-                accountID: owner.id,
-                stepID: currentStep.id,
-                customerID: customer.id,
-                templateID: template.id,
-                methodName: 'chat.postMessage',
-                filteredTags: filteredTags,
-                args: {
-                  token: installation.installation.bot.token,
-                  channel: customer.slackId,
-                  text: await this.templatesService.parseApiCallTags(
-                    template.slackMessage,
-                    filteredTags
-                  ),
-                },
-              })
-            );
-            break;
-          case TemplateType.SMS:
-            await this.webhooksService.insertClickHouseMessages(
-              await sender.process({
-                name: TemplateType.SMS,
-                accountID: owner.id,
-                stepID: currentStep.id,
-                customerID: customer.id,
-                templateID: template.id,
-                from: owner.smsFrom,
-                sid: owner.smsAccountSid,
-                tags: filteredTags,
-                text: await this.templatesService.parseApiCallTags(
-                  template.smsText,
-                  filteredTags
-                ),
-                to: customer.phPhoneNumber || customer.phone,
-                token: owner.smsAuthToken,
-                trackingEmail: email,
-              })
-            );
-            break;
-          case TemplateType.WEBHOOK: //TODO:remove this from queue
-            if (template.webhookData) {
-              await this.webhooksQueue.add('whapicall', {
-                template,
-                filteredTags,
-                audienceId: stepID,
-                customerId: customerID,
-                accountId: owner.id,
-              });
-            }
-            break;
+          sendingDomain = process.env.MAILGUN_TEST_DOMAIN;
+          key = process.env.MAILGUN_API_KEY;
+          from = testSendingName;
+          sendingEmail = testSendingEmail;
+          owner.freeEmailsCount--;
         }
-      } catch (err) {
-        this.error(err, this.handleMessage.name, session);
-      }
+        if (owner.emailProvider === 'sendgrid') {
+          key = sendgridApiKey;
+          from = sendgridFromEmail;
+        }
+        const ret = await sender.process({
+          name: TemplateType.EMAIL,
+          accountID: owner.id,
+          cc: template.cc,
+          customerID: customerID,
+          domain: sendingDomain,
+          email: sendingEmail,
+          stepID: currentStep.id,
+          from: from,
+          trackingEmail: email,
+          key: key,
+          subject: await this.templatesService.parseApiCallTags(
+            template.subject,
+            filteredTags
+          ),
+          to: customer.phEmail ? customer.phEmail : customer.email,
+          text: await this.templatesService.parseApiCallTags(
+            template.text,
+            filteredTags
+          ),
+          tags: filteredTags,
+          templateID: template.id,
+          eventProvider: owner.emailProvider,
+        });
+        this.debug(`${JSON.stringify(ret)}`, this.handleMessage.name, session);
+        await this.webhooksService.insertClickHouseMessages(ret);
+        if (owner.emailProvider === 'free3') await owner.save();
+        break;
+      case TemplateType.FIREBASE:
+        await this.webhooksService.insertClickHouseMessages(
+          await sender.process({
+            name: TemplateType.FIREBASE,
+            accountID: owner.id,
+            stepID: currentStep.id,
+            customerID: customerID,
+            firebaseCredentials: owner.firebaseCredentials,
+            phDeviceToken: customer.phDeviceToken,
+            pushText: await this.templatesService.parseApiCallTags(
+              template.pushText,
+              filteredTags
+            ),
+            pushTitle: await this.templatesService.parseApiCallTags(
+              template.pushTitle,
+              filteredTags
+            ),
+            trackingEmail: email,
+            filteredTags: filteredTags,
+            templateID: template.id,
+          })
+        );
+        break;
+      case TemplateType.MODAL:
+        if (template.modalState) {
+          const isSent = await this.websocketGateway.sendModal(
+            customerID,
+            template
+          );
+          if (!isSent)
+            await this.modalsService.queueModalEvent(customerID, template);
+        }
+        break;
+      case TemplateType.SLACK:
+        const installation = await this.slackService.getInstallation(customer);
+        await this.webhooksService.insertClickHouseMessages(
+          await sender.process({
+            name: TemplateType.SLACK,
+            accountID: owner.id,
+            stepID: currentStep.id,
+            customerID: customer.id,
+            templateID: template.id,
+            methodName: 'chat.postMessage',
+            filteredTags: filteredTags,
+            args: {
+              token: installation.installation.bot.token,
+              channel: customer.slackId,
+              text: await this.templatesService.parseApiCallTags(
+                template.slackMessage,
+                filteredTags
+              ),
+            },
+          })
+        );
+        break;
+      case TemplateType.SMS:
+        await this.webhooksService.insertClickHouseMessages(
+          await sender.process({
+            name: TemplateType.SMS,
+            accountID: owner.id,
+            stepID: currentStep.id,
+            customerID: customer.id,
+            templateID: template.id,
+            from: owner.smsFrom,
+            sid: owner.smsAccountSid,
+            tags: filteredTags,
+            text: await this.templatesService.parseApiCallTags(
+              template.smsText,
+              filteredTags
+            ),
+            to: customer.phPhoneNumber || customer.phone,
+            token: owner.smsAuthToken,
+            trackingEmail: email,
+          })
+        );
+        break;
+      case TemplateType.WEBHOOK: //TODO:remove this from queue
+        if (template.webhookData) {
+          await this.webhooksQueue.add('whapicall', {
+            template,
+            filteredTags,
+            audienceId: stepID,
+            customerId: customerID,
+            accountId: owner.id,
+          });
+        }
+        break;
+    }
 
+    if (nextStep) {
+      // Destination exists, move customer into destination
       nextStep.customers.push(
         JSON.stringify({
-          customerID: JSON.parse(currentStep.customers[i]).customerID,
-          timestamp: new Date(),
+          customerID,
+          timestamp: Temporal.Now.instant().toString(),
         })
       );
+      _.remove(currentStep.customers, (customer) => {
+        return JSON.parse(customer).customerID === customerID;
+      });
+      await queryRunner.manager.save(currentStep);
+      const newNext = await queryRunner.manager.save(nextStep);
+
+      if (
+        newNext.type !== StepType.TIME_DELAY &&
+        newNext.type !== StepType.TIME_WINDOW &&
+        newNext.type !== StepType.WAIT_UNTIL_BRANCH
+      )
+        await this.transitionQueue.add(newNext.type, {
+          ownerID,
+          step: newNext,
+          session: session,
+          customerID,
+          lock,
+          event,
+        });
+      else {
+        await lock.release();
+        this.warn(
+          `${JSON.stringify({ warning: 'Releasing lock' })}`,
+          this.handleMessage.name,
+          session,
+          owner.email
+        );
+      }
+    } else {
+      // Destination does not exist, customer has stopped moving so
+      // we can release lock
+      await lock.release();
+      this.warn(
+        `${JSON.stringify({ warning: 'Releasing lock' })}`,
+        this.handleMessage.name,
+        session,
+        owner.email
+      );
     }
-    currentStep.customers = [];
-    await queryRunner.manager.save(currentStep);
-    const newNext = await queryRunner.manager.save(nextStep);
-    await this.transitionQueue.add(newNext.type, {
-      ownerID,
-      step: newNext,
-      session: session,
-    });
   }
 
   /**
@@ -658,13 +830,17 @@ export class TransitionProcessor extends WorkerHost {
     ownerID: string,
     stepID: string,
     session: string,
+    customerID: string,
+    lock: Lock,
     queryRunner: QueryRunner,
-    transactionSession: mongoose.mongo.ClientSession
+    transactionSession: mongoose.mongo.ClientSession,
+    event?: string
   ) {
     const owner = await queryRunner.manager.findOne(Account, {
       where: { id: ownerID },
     });
-    const startStep = await queryRunner.manager.findOne(Step, {
+
+    const currentStep = await queryRunner.manager.findOne(Step, {
       where: {
         id: stepID,
         type: StepType.START,
@@ -672,40 +848,84 @@ export class TransitionProcessor extends WorkerHost {
       lock: { mode: 'pessimistic_write' },
     });
 
+    if (
+      !_.find(currentStep.customers, (customer) => {
+        return JSON.parse(customer).customerID === customerID;
+      })
+    ) {
+      await lock.release();
+      this.warn(
+        `${JSON.stringify({ warning: 'Releasing lock' })}`,
+        this.handleStart.name,
+        session,
+        owner.email
+      );
+      this.warn(
+        `${JSON.stringify({
+          warning: 'Customer not in step',
+          customerID,
+          currentStep,
+        })}`,
+        this.handleCustomComponent.name,
+        session,
+        owner.email
+      );
+      return;
+    }
+
     const nextStep = await queryRunner.manager.findOne(Step, {
       where: {
-        id: startStep.metadata.destination,
+        id: currentStep.metadata.destination,
       },
       lock: { mode: 'pessimistic_write' },
     });
 
-    const forDeletion = [];
-    for (let i = 0; i < startStep.customers.length; i++) {
+    if (nextStep) {
+      // Destination exists, move customer into destination
       nextStep.customers.push(
         JSON.stringify({
-          customerID: JSON.parse(startStep.customers[i]).customerID,
-          timestamp: new Date(),
+          customerID,
+          timestamp: Temporal.Now.instant().toString(),
         })
       );
-      forDeletion.push(startStep.customers[i]);
-    }
-    startStep.customers = startStep.customers.filter(
-      (item) => !forDeletion.includes(item)
-    );
-
-    await queryRunner.manager.save(startStep);
-    const newNext: Step = await queryRunner.manager.save(nextStep);
-
-    if (
-      newNext.type !== StepType.TIME_DELAY &&
-      newNext.type !== StepType.TIME_WINDOW &&
-      newNext.type !== StepType.WAIT_UNTIL_BRANCH
-    ) {
-      await this.transitionQueue.add(newNext.type, {
-        ownerID,
-        step: newNext,
-        session: session,
+      _.remove(currentStep.customers, (customer) => {
+        return JSON.parse(customer).customerID === customerID;
       });
+      await queryRunner.manager.save(currentStep);
+      const newNext = await queryRunner.manager.save(nextStep);
+
+      if (
+        newNext.type !== StepType.TIME_DELAY &&
+        newNext.type !== StepType.TIME_WINDOW &&
+        newNext.type !== StepType.WAIT_UNTIL_BRANCH
+      )
+        await this.transitionQueue.add(newNext.type, {
+          ownerID,
+          step: newNext,
+          session: session,
+          customerID,
+          lock,
+          event,
+        });
+      else {
+        await lock.release();
+        this.warn(
+          `${JSON.stringify({ warning: 'Releasing lock' })}`,
+          this.handleStart.name,
+          session,
+          owner.email
+        );
+      }
+    } else {
+      // Destination does not exist, customer has stopped moving so
+      // we can release lock
+      await lock.release();
+      this.warn(
+        `${JSON.stringify({ warning: 'Releasing lock' })}`,
+        this.handleStart.name,
+        session,
+        owner.email
+      );
     }
   }
 
@@ -721,8 +941,11 @@ export class TransitionProcessor extends WorkerHost {
     ownerID: string,
     stepID: string,
     session: string,
+    customerID: string,
+    lock: Lock,
     queryRunner: QueryRunner,
-    transactionSession: mongoose.mongo.ClientSession
+    transactionSession: mongoose.mongo.ClientSession,
+    event?: string
   ) {
     const owner = await queryRunner.manager.findOne(Account, {
       where: { id: ownerID },
@@ -735,56 +958,102 @@ export class TransitionProcessor extends WorkerHost {
       lock: { mode: 'pessimistic_write' },
     });
 
-    this.debug(
-      `${JSON.stringify({ currentStep: currentStep })}`,
-      this.handleTimeDelay.name,
-      session
-    );
+    if (
+      !_.find(currentStep.customers, (customer) => {
+        return JSON.parse(customer).customerID === customerID;
+      })
+    ) {
+      await lock.release();
+      this.warn(
+        `${JSON.stringify({ warning: 'Releasing lock' })}`,
+        this.handleTimeDelay.name,
+        session,
+        owner.email
+      );
+      this.warn(
+        `${JSON.stringify({
+          warning: 'Customer not in step',
+          customerID,
+          currentStep,
+        })}`,
+        this.handleCustomComponent.name,
+        session,
+        owner.email
+      );
+      return;
+    }
 
     const nextStep = await queryRunner.manager.findOne(Step, {
-      where: { id: currentStep.metadata.destination },
+      where: {
+        id: currentStep.metadata.destination,
+      },
       lock: { mode: 'pessimistic_write' },
     });
 
-    this.debug(
-      `${JSON.stringify({ nextStep: nextStep })}`,
-      this.handleTimeDelay.name,
-      session
-    );
-
-    const forDeletion = [];
-    for (let i = 0; i < currentStep.customers.length; i++) {
-      if (
-        Temporal.Duration.compare(
-          currentStep.metadata.delay,
-          Temporal.Now.instant().since(
-            Temporal.Instant.from(
-              JSON.parse(currentStep.customers[i]).timestamp
-            )
+    let moveCustomer: boolean = false;
+    let customerIndex = _.findIndex(currentStep.customers, (customer) => {
+      return JSON.parse(customer).customerID === customerID;
+    });
+    if (
+      Temporal.Duration.compare(
+        currentStep.metadata.delay,
+        Temporal.Now.instant().since(
+          Temporal.Instant.from(
+            JSON.parse(currentStep.customers[customerIndex]).timestamp
           )
-        ) < 0
-      ) {
-        nextStep.customers.push(
-          JSON.stringify({
-            customerID: JSON.parse(currentStep.customers[i]).customerID,
-            timestamp: Temporal.Now.instant().toString(),
-          })
-        );
-        forDeletion.push(currentStep.customers[i]);
-      }
+        )
+      ) < 0
+    ) {
+      moveCustomer = true;
     }
-    currentStep.customers = currentStep.customers.filter(
-      (item) => !forDeletion.includes(item)
-    );
-    await queryRunner.manager.save(currentStep);
-    const newNext = await queryRunner.manager.save(nextStep);
 
-    if (forDeletion.length > 0)
-      await this.transitionQueue.add(newNext.type, {
-        ownerID,
-        step: newNext,
-        session: session,
+    if (nextStep && moveCustomer) {
+      // Destination exists, move customer into destination
+      nextStep.customers.push(
+        JSON.stringify({
+          customerID,
+          timestamp: Temporal.Now.instant().toString(),
+        })
+      );
+      _.remove(currentStep.customers, (customer) => {
+        return JSON.parse(customer).customerID === customerID;
       });
+      await queryRunner.manager.save(currentStep);
+      const newNext = await queryRunner.manager.save(nextStep);
+
+      if (
+        newNext.type !== StepType.TIME_DELAY &&
+        newNext.type !== StepType.TIME_WINDOW &&
+        newNext.type !== StepType.WAIT_UNTIL_BRANCH
+      )
+        await this.transitionQueue.add(newNext.type, {
+          ownerID,
+          step: newNext,
+          session: session,
+          customerID,
+          lock,
+          event,
+        });
+      else {
+        await lock.release();
+        this.warn(
+          `${JSON.stringify({ warning: 'Releasing lock' })}`,
+          this.handleTimeDelay.name,
+          session,
+          owner.email
+        );
+      }
+    } else {
+      // Destination does not exist, customer has stopped moving so
+      // we can release lock
+      await lock.release();
+      this.warn(
+        `${JSON.stringify({ warning: 'Releasing lock' })}`,
+        this.handleTimeDelay.name,
+        session,
+        owner.email
+      );
+    }
   }
 
   /**
@@ -799,8 +1068,11 @@ export class TransitionProcessor extends WorkerHost {
     ownerID: string,
     stepID: string,
     session: string,
+    customerID: string,
+    lock: Lock,
     queryRunner: QueryRunner,
-    transactionSession: mongoose.mongo.ClientSession
+    transactionSession: mongoose.mongo.ClientSession,
+    event?: string
   ) {
     const owner = await queryRunner.manager.findOne(Account, {
       where: { id: ownerID },
@@ -812,43 +1084,103 @@ export class TransitionProcessor extends WorkerHost {
       },
       lock: { mode: 'pessimistic_write' },
     });
+
+    if (
+      !_.find(currentStep.customers, (customer) => {
+        return JSON.parse(customer).customerID === customerID;
+      })
+    ) {
+      await lock.release();
+      this.warn(
+        `${JSON.stringify({ warning: 'Releasing lock' })}`,
+        this.handleTimeWindow.name,
+        session,
+        owner.email
+      );
+      this.warn(
+        `${JSON.stringify({
+          warning: 'Customer not in step',
+          customerID,
+          currentStep,
+        })}`,
+        this.handleCustomComponent.name,
+        session,
+        owner.email
+      );
+      return;
+    }
+
     const nextStep = await queryRunner.manager.findOne(Step, {
-      where: { id: currentStep.metadata.destination },
+      where: {
+        id: currentStep.metadata.destination,
+      },
       lock: { mode: 'pessimistic_write' },
     });
-    const forDeletion = [];
-    for (let i = 0; i < currentStep.customers.length; i++) {
-      if (
-        Temporal.Duration.compare(
-          currentStep.metadata.delay,
-          Temporal.Now.instant().since(
-            Temporal.Instant.from(
-              JSON.parse(currentStep.customers[i]).timestamp
-            )
-          )
-        ) < 0
-      ) {
-        nextStep.customers.push(
-          JSON.stringify({
-            customerID: JSON.parse(currentStep.customers[i]).customerID,
-            timestamp: Temporal.Now.instant().toString(),
-          })
-        );
-        forDeletion.push(currentStep.customers[i]);
-      }
-    }
-    currentStep.customers = currentStep.customers.filter(
-      (item) => !forDeletion.includes(item)
-    );
-    await queryRunner.manager.save(currentStep);
-    await queryRunner.manager.save(nextStep);
 
-    if (forDeletion.length > 0)
-      this.transitionQueue.add('', {
-        ownerID,
-        step: nextStep,
-        session: session,
+    let moveCustomer: boolean = false;
+    let customerIndex = _.findIndex(currentStep.customers, (customer) => {
+      return JSON.parse(customer).customerID === customerID;
+    });
+    if (
+      Temporal.Duration.compare(
+        currentStep.metadata.delay,
+        Temporal.Now.instant().since(
+          Temporal.Instant.from(
+            JSON.parse(currentStep.customers[customerIndex]).timestamp
+          )
+        )
+      ) < 0
+    ) {
+      moveCustomer = true;
+    }
+
+    if (nextStep && moveCustomer) {
+      // Destination exists, move customer into destination
+      nextStep.customers.push(
+        JSON.stringify({
+          customerID,
+          timestamp: Temporal.Now.instant().toString(),
+        })
+      );
+      _.remove(currentStep.customers, (customer) => {
+        return JSON.parse(customer).customerID === customerID;
       });
+      await queryRunner.manager.save(currentStep);
+      const newNext = await queryRunner.manager.save(nextStep);
+
+      if (
+        newNext.type !== StepType.TIME_DELAY &&
+        newNext.type !== StepType.TIME_WINDOW &&
+        newNext.type !== StepType.WAIT_UNTIL_BRANCH
+      )
+        await this.transitionQueue.add(newNext.type, {
+          ownerID,
+          step: newNext,
+          session: session,
+          customerID,
+          lock,
+          event,
+        });
+      else {
+        await lock.release();
+        this.warn(
+          `${JSON.stringify({ warning: 'Releasing lock' })}`,
+          this.handleTimeWindow.name,
+          session,
+          owner.email
+        );
+      }
+    } else {
+      // Destination does not exist, customer has stopped moving so
+      // we can release lock
+      await lock.release();
+      this.warn(
+        `${JSON.stringify({ warning: 'Releasing lock' })}`,
+        this.handleTimeWindow.name,
+        session,
+        owner.email
+      );
+    }
   }
 
   /**
@@ -865,152 +1197,189 @@ export class TransitionProcessor extends WorkerHost {
     stepID: string,
     session: string,
     customerID: string,
+    lock: Lock,
     branch: number,
     queryRunner: QueryRunner,
-    transactionSession: mongoose.mongo.ClientSession
+    transactionSession: mongoose.mongo.ClientSession,
+    event?: string
   ) {
-    let nextStep: Step,
-      forDeletion: string[] = [];
     const owner = await queryRunner.manager.findOne(Account, {
       where: { id: ownerID },
     });
-    const waitUntilStep = await queryRunner.manager.findOne(Step, {
+
+    const currentStep = await queryRunner.manager.findOne(Step, {
       where: {
         id: stepID,
         type: StepType.WAIT_UNTIL_BRANCH,
       },
       lock: { mode: 'pessimistic_write' },
     });
-    this.debug(
-      `${JSON.stringify({
-        stepID,
+
+    if (
+      !_.find(currentStep.customers, (customer) => {
+        return JSON.parse(customer).customerID === customerID;
+      })
+    ) {
+      await lock.release();
+      this.warn(
+        `${JSON.stringify({ warning: 'Releasing lock' })}`,
+        this.handleWaitUntil.name,
         session,
-        customerID,
-        branch,
-        waitUntilStep,
-      })}`,
-      this.handleWaitUntil.name,
-      session
-    );
-    if (branch < 0 && waitUntilStep.metadata.timeBranch) {
+        owner.email
+      );
+      this.warn(
+        `${JSON.stringify({
+          warning: 'Customer not in step',
+          customerID,
+          currentStep,
+        })}`,
+        this.handleCustomComponent.name,
+        session,
+        owner.email
+      );
+      return;
+    }
+
+    let nextStep: Step,
+      moveCustomer: boolean = false;
+
+    // Time branch case
+    if (branch < 0 && currentStep.metadata.timeBranch) {
       nextStep = await queryRunner.manager.findOne(Step, {
         where: {
-          id: waitUntilStep.metadata.timeBranch?.destination,
+          id: currentStep.metadata.timeBranch?.destination,
         },
         lock: { mode: 'pessimistic_write' },
       });
-      this.debug(
-        `${JSON.stringify({ nextStep: nextStep })}`,
-        this.handleWaitUntil.name,
-        session
-      );
-      if (waitUntilStep.metadata.timeBranch.delay) {
-        for (let i = 0; i < waitUntilStep.customers.length; i++) {
-          if (
-            Temporal.Duration.compare(
-              waitUntilStep.metadata.timeBranch.delay,
-              Temporal.Now.instant().since(
-                Temporal.Instant.from(
-                  JSON.parse(waitUntilStep.customers[i]).timestamp
-                )
-              )
-            ) < 0
-          ) {
-            nextStep.customers.push(
-              JSON.stringify({
-                customerID: JSON.parse(waitUntilStep.customers[i]).customerID,
-                timestamp: Temporal.Now.instant().toString(),
-              })
-            );
-            forDeletion.push(waitUntilStep.customers[i]);
-          }
-        }
-        waitUntilStep.customers = waitUntilStep.customers.filter(
-          (item) => !forDeletion.includes(item)
-        );
-      } else if (waitUntilStep.metadata.timeBranch.window) {
-      }
-      await queryRunner.manager.save(waitUntilStep);
-      const newNext: Step = await queryRunner.manager.save(nextStep);
-      this.debug(
-        `${JSON.stringify({ newNext: newNext })}`,
-        this.handleWaitUntil.name,
-        session
-      );
-      if (
-        forDeletion.length > 0 &&
-        newNext.type !== StepType.TIME_DELAY &&
-        newNext.type !== StepType.TIME_WINDOW &&
-        newNext.type !== StepType.WAIT_UNTIL_BRANCH
-      ) {
-        this.transitionQueue.add(newNext.type, {
-          ownerID,
-          step: newNext,
-          session: session,
+      if (currentStep.metadata.timeBranch.delay) {
+        let customerIndex = _.findIndex(currentStep.customers, (customer) => {
+          return JSON.parse(customer).customerID === customerID;
         });
+        if (
+          Temporal.Duration.compare(
+            currentStep.metadata.timeBranch.delay,
+            Temporal.Now.instant().since(
+              Temporal.Instant.from(
+                JSON.parse(currentStep.customers[customerIndex]).timestamp
+              )
+            )
+          ) < 0
+        ) {
+          moveCustomer = true;
+        }
+      } else if (currentStep.metadata.timeBranch.window) {
       }
-    } else if (branch > -1 && waitUntilStep.metadata.branches.length > 0) {
+      if (nextStep && moveCustomer) {
+        // Destination exists, move customer into destination
+        nextStep.customers.push(
+          JSON.stringify({
+            customerID,
+            timestamp: Temporal.Now.instant().toString(),
+          })
+        );
+        _.remove(currentStep.customers, (customer) => {
+          return JSON.parse(customer).customerID === customerID;
+        });
+        await queryRunner.manager.save(currentStep);
+        const newNext = await queryRunner.manager.save(nextStep);
+
+        if (
+          newNext.type !== StepType.TIME_DELAY &&
+          newNext.type !== StepType.TIME_WINDOW &&
+          newNext.type !== StepType.WAIT_UNTIL_BRANCH
+        )
+          await this.transitionQueue.add(newNext.type, {
+            ownerID,
+            step: newNext,
+            session: session,
+            customerID,
+            lock,
+            event,
+          });
+        else {
+          await lock.release();
+          this.warn(
+            `${JSON.stringify({ warning: 'Releasing lock' })}`,
+            this.handleWaitUntil.name,
+            session,
+            owner.email
+          );
+        }
+      } else {
+        // Destination does not exist, customer has stopped moving so
+        // we can release lock
+        await lock.release();
+        this.warn(
+          `${JSON.stringify({ warning: 'Releasing lock' })}`,
+          this.handleWaitUntil.name,
+          session,
+          owner.email
+        );
+      }
+    } else if (branch > -1 && currentStep.metadata.branches.length > 0) {
       nextStep = await queryRunner.manager.findOne(Step, {
         where: {
-          id: waitUntilStep.metadata.branches.filter((branchItem) => {
+          id: currentStep.metadata.branches.filter((branchItem) => {
             return branchItem.index === branch;
           })[0].destination,
         },
         lock: { mode: 'pessimistic_write' },
       });
-      for (
-        let customersIndex = 0;
-        customersIndex < waitUntilStep.customers.length;
-        customersIndex++
-      ) {
-        const customerTimestampTuple = JSON.parse(
-          waitUntilStep.customers[customersIndex]
+      if (nextStep) {
+        // Destination exists, move customer into destination
+        nextStep.customers.push(
+          JSON.stringify({
+            customerID,
+            timestamp: Temporal.Now.instant().toString(),
+          })
         );
-        if (customerTimestampTuple.customerID === customerID) {
-          forDeletion.push(waitUntilStep.customers[customersIndex]);
-          nextStep.customers.push(
-            JSON.stringify({
-              customerID: customerTimestampTuple.customerID,
-              timestamp: Temporal.Now.instant().toString(),
-            })
+        _.remove(currentStep.customers, (customer) => {
+          return JSON.parse(customer).customerID === customerID;
+        });
+        await queryRunner.manager.save(currentStep);
+        const newNext = await queryRunner.manager.save(nextStep);
+
+        if (
+          newNext.type !== StepType.TIME_DELAY &&
+          newNext.type !== StepType.TIME_WINDOW &&
+          newNext.type !== StepType.WAIT_UNTIL_BRANCH
+        )
+          await this.transitionQueue.add(newNext.type, {
+            ownerID,
+            step: newNext,
+            session: session,
+            customerID,
+            lock,
+            event,
+          });
+        else {
+          await lock.release();
+          this.warn(
+            `${JSON.stringify({ warning: 'Releasing lock' })}`,
+            this.handleWaitUntil.name,
+            session,
+            owner.email
           );
         }
+      } else {
+        // Destination does not exist, customer has stopped moving so
+        // we can release lock
+        await lock.release();
+        this.warn(
+          `${JSON.stringify({ warning: 'Releasing lock' })}`,
+          this.handleWaitUntil.name,
+          session,
+          owner.email
+        );
       }
-      this.debug(
-        `${JSON.stringify({
-          waitUntilStep: waitUntilStep,
-          forDeletion: forDeletion,
-        })}`,
+    } else {
+      await lock.release();
+      this.warn(
+        `${JSON.stringify({ warning: 'Releasing lock' })}`,
         this.handleWaitUntil.name,
-        session
+        session,
+        owner.email
       );
-      waitUntilStep.customers = waitUntilStep.customers.filter(
-        (item) => !forDeletion.includes(item)
-      );
-      this.debug(
-        `${JSON.stringify({ waitUntilStep: waitUntilStep })}`,
-        this.handleWaitUntil.name,
-        session
-      );
-      await queryRunner.manager.save(waitUntilStep);
-      const newNext: Step = await queryRunner.manager.save(nextStep);
-      this.debug(
-        `${JSON.stringify({ newNext: newNext })}`,
-        this.handleWaitUntil.name,
-        session
-      );
-      if (
-        forDeletion.length > 0 &&
-        newNext.type !== StepType.TIME_DELAY &&
-        newNext.type !== StepType.TIME_WINDOW &&
-        newNext.type !== StepType.WAIT_UNTIL_BRANCH
-      ) {
-        this.transitionQueue.add(newNext.type, {
-          ownerID,
-          step: newNext,
-          session: session,
-        });
-      }
     }
   }
 
@@ -1025,8 +1394,11 @@ export class TransitionProcessor extends WorkerHost {
     ownerID: string,
     stepID: string,
     session: string,
+    customerID: string,
+    lock: Lock,
     queryRunner: QueryRunner,
-    transactionSession: mongoose.mongo.ClientSession
+    transactionSession: mongoose.mongo.ClientSession,
+    event?: string
   ) {}
 
   /**
@@ -1040,12 +1412,16 @@ export class TransitionProcessor extends WorkerHost {
     ownerID: string,
     stepID: string,
     session: string,
+    customerID: string,
+    lock: Lock,
     queryRunner: QueryRunner,
-    transactionSession: mongoose.mongo.ClientSession
+    transactionSession: mongoose.mongo.ClientSession,
+    event?: string
   ) {
     const owner = await queryRunner.manager.findOne(Account, {
       where: { id: ownerID },
     });
+
     const currentStep = await queryRunner.manager.findOne(Step, {
       where: {
         id: stepID,
@@ -1053,6 +1429,32 @@ export class TransitionProcessor extends WorkerHost {
       },
       lock: { mode: 'pessimistic_write' },
     });
+
+    if (
+      !_.find(currentStep.customers, (customer) => {
+        return JSON.parse(customer).customerID === customerID;
+      })
+    ) {
+      await lock.release();
+      this.warn(
+        `${JSON.stringify({ warning: 'Releasing lock' })}`,
+        this.handleLoop.name,
+        session,
+        owner.email
+      );
+      this.warn(
+        `${JSON.stringify({
+          warning: 'Customer not in step',
+          customerID,
+          currentStep,
+        })}`,
+        this.handleCustomComponent.name,
+        session,
+        owner.email
+      );
+      return;
+    }
+
     const nextStep = await queryRunner.manager.findOne(Step, {
       where: {
         id: currentStep.metadata.destination,
@@ -1060,22 +1462,53 @@ export class TransitionProcessor extends WorkerHost {
       lock: { mode: 'pessimistic_write' },
     });
 
-    for (let i = 0; i < currentStep.customers.length; i++) {
+    if (nextStep) {
+      // Destination exists, move customer into destination
       nextStep.customers.push(
         JSON.stringify({
-          customerID: JSON.parse(currentStep.customers[i]).customerID,
-          timestamp: new Date(),
+          customerID,
+          timestamp: Temporal.Now.instant().toString(),
         })
       );
+      _.remove(currentStep.customers, (customer) => {
+        return JSON.parse(customer).customerID === customerID;
+      });
+      await queryRunner.manager.save(currentStep);
+      const newNext = await queryRunner.manager.save(nextStep);
+
+      if (
+        newNext.type !== StepType.TIME_DELAY &&
+        newNext.type !== StepType.TIME_WINDOW &&
+        newNext.type !== StepType.WAIT_UNTIL_BRANCH
+      )
+        await this.transitionQueue.add(newNext.type, {
+          ownerID,
+          step: newNext,
+          session: session,
+          customerID,
+          lock,
+          event,
+        });
+      else {
+        await lock.release();
+        this.warn(
+          `${JSON.stringify({ warning: 'Releasing lock' })}`,
+          this.handleLoop.name,
+          session,
+          owner.email
+        );
+      }
+    } else {
+      // Destination does not exist, customer has stopped moving so
+      // we can release lock
+      await lock.release();
+      this.warn(
+        `${JSON.stringify({ warning: 'Releasing lock' })}`,
+        this.handleLoop.name,
+        session,
+        owner.email
+      );
     }
-    currentStep.customers = [];
-    await queryRunner.manager.save(currentStep);
-    const newNext = await queryRunner.manager.save(nextStep);
-    await this.transitionQueue.add(newNext.type, {
-      ownerID,
-      step: newNext,
-      session: session,
-    });
   }
 
   // TODO

@@ -1,4 +1,4 @@
-import { WorkerHost, Processor } from '@nestjs/bullmq';
+import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
 import { LoggerService, Injectable, Inject } from '@nestjs/common';
 import { WebClient } from '@slack/web-api';

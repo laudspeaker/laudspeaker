@@ -30,6 +30,7 @@ import { TemplateType } from '../templates/entities/template.entity';
 import onboardingJourneyFixtures from './onboarding-journey';
 import { StepsService } from '../steps/steps.service';
 import { StepType } from '../steps/types/step.interface';
+import { randomUUID } from 'crypto';
 
 @Injectable()
 export class AccountsService extends BaseJwtHelper {
@@ -454,6 +455,7 @@ export class AccountsService extends BaseJwtHelper {
   }
 
   async createOnboadingAccount() {
+    const session = 'onboarding-creation';
     let account = await this.accountsRepository.findOneBy({
       email: process.env.ONBOARDING_ACCOUNT_EMAIL,
       apiKey: process.env.ONBOARDING_ACCOUNT_API_KEY,
@@ -472,7 +474,7 @@ export class AccountsService extends BaseJwtHelper {
     let trackerTemplate = await this.templatesService.findOne(
       account,
       'onboarding-template',
-      ''
+      session
     );
 
     if (!trackerTemplate) {
@@ -524,7 +526,7 @@ export class AccountsService extends BaseJwtHelper {
             ],
           },
         },
-        ''
+        session
       );
     }
 
@@ -533,7 +535,11 @@ export class AccountsService extends BaseJwtHelper {
       name: 'onboarding',
     });
     if (!journey) {
-      journey = await this.journeysService.create(account, 'onboarding', '');
+      journey = await this.journeysService.create(
+        account,
+        'onboarding',
+        session
+      );
 
       await this.journeysService.update(
         account,
@@ -541,7 +547,7 @@ export class AccountsService extends BaseJwtHelper {
           id: journey.id,
           isDynamic: true,
         },
-        ''
+        session
       );
       await this.journeysService.updateLayout(
         account,
@@ -558,7 +564,7 @@ export class AccountsService extends BaseJwtHelper {
                       await this.stepsService.findOne(
                         account,
                         node.data.stepId,
-                        ''
+                        session
                       )
                     )?.id ||
                     (node.data.type
@@ -569,7 +575,7 @@ export class AccountsService extends BaseJwtHelper {
                               journeyID: journey.id,
                               type: node.data.type as StepType,
                             },
-                            ''
+                            session
                           )
                         ).id
                       : undefined),
