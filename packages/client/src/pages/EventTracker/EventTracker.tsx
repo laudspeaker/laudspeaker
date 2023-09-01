@@ -82,7 +82,7 @@ const EventTracker = () => {
   if (loading) return <Progress />;
 
   return (
-    <div className="min-h-[100vh] max-h-[100vh] px-[50px] py-[10px]">
+    <div className="px-[50px] py-[10px]">
       <div className="max-w-[300px] mb-[10px]">
         <Autocomplete
           inputId="searchName"

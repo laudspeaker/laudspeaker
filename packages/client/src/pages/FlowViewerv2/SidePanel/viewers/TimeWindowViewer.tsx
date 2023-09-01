@@ -100,13 +100,13 @@ const TimeWindowViewer: FC<SidePanelComponentProps<TimeWindowNodeData>> = ({
       name: "Customer Data",
       onClick: () => setActiveTab(TimeWindowViewerTab.CUSTOMER_DATA),
       content: (
-        <div className="p-[20px] flex flex-col gap-[10px]">
+        <div className="p-[20px] flex flex-col gap-[10px] w-full">
           <div className="text-[16px] font-semibold leading-[24px]">
             {compatNumberFormatter.format(nodeData.customersCount || 0)}{" "}
             customers at this Step
           </div>
-          <div className="py-[10px] flex flex-col gap-[10px]">
-            <div className="border-x-[1px] border-t-[1px] border-[#E5E7EB] rounded-[4px]">
+          <div className="py-[10px] flex flex-col gap-[10px] w-full">
+            <div className="border-x-[1px] border-t-[1px] border-[#E5E7EB] rounded-[4px] w-full">
               <Table
                 className="w-full"
                 headings={[

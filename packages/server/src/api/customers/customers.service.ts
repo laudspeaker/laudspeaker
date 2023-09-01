@@ -1591,7 +1591,26 @@ export class CustomersService {
     const step = await this.stepsService.findOne(account, stepId, '');
     if (!step) throw new NotFoundException('Step not found');
 
-    return step.customers.length;
+    let result = step.customers.length;
+
+    for (const customerJSON of step.customers) {
+      const customerId = JSON.parse(customerJSON)?.customerID;
+
+      if (!customerId) {
+        result--;
+        continue;
+      }
+
+      const customer = await this.findById(account, customerId);
+      if (!customer) {
+        result--;
+        continue;
+      }
+
+      console.log(customer);
+    }
+
+    return result;
   }
 
   public async bulkCountCustomersInSteps(account: Account, stepIds: string[]) {
@@ -1634,6 +1653,9 @@ export class CustomersService {
       })
     );
 
-    return { data: customers, totalPages };
+    return {
+      data: customers.filter((customer) => customer && customer.id),
+      totalPages,
+    };
   }
 }
