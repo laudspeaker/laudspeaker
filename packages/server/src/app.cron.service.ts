@@ -13,15 +13,12 @@ import {
 } from './api/customers/schemas/customer-keys.schema';
 import { isDateString, isEmail } from 'class-validator';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Between, DataSource, Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { Verification } from './api/auth/entities/verification.entity';
 import { EventDocument } from './api/events/schemas/event.schema';
 import { EventKeysDocument } from './api/events/schemas/event-keys.schema';
 import { Event } from './api/events/schemas/event.schema';
 import { EventKeys } from './api/events/schemas/event-keys.schema';
-import { JobsService } from './api/jobs/jobs.service';
-import { WorkflowsService } from './api/workflows/workflows.service';
-import { TimeJobStatus } from './api/jobs/entities/job.entity';
 import { IntegrationsService } from './api/integrations/integrations.service';
 import {
   Integration,
@@ -50,12 +47,13 @@ import { StepsService } from './api/steps/steps.service';
 import { StepType } from './api/steps/types/step.interface';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
+import { JourneysService } from './api/journeys/journeys.service';
+import { RedlockService } from './api/redlock/redlock.service';
+import { Lock } from 'redlock';
+import * as _ from 'lodash';
 
 const BATCH_SIZE = 500;
 const KEYS_TO_SKIP = ['__v', '_id', 'audiences', 'ownerId'];
-
-const MAX_DATE = new Date(8640000000000000);
-const MIN_DATE = new Date(0);
 
 @Injectable()
 export class CronService {
@@ -88,15 +86,16 @@ export class CronService {
     private verificationRepository: Repository<Verification>,
     @InjectRepository(Recovery)
     public readonly recoveryRepository: Repository<Recovery>,
-    @Inject(JobsService) private jobsService: JobsService,
+    @Inject(JourneysService) private journeysService: JourneysService,
     @Inject(IntegrationsService)
     private integrationsService: IntegrationsService,
-    @Inject(WorkflowsService) private workflowsService: WorkflowsService,
     @Inject(WebhookJobsService) private webhookJobsService: WebhookJobsService,
     @Inject(AccountsService) private accountsService: AccountsService,
     @Inject(ModalsService) private modalsService: ModalsService,
     @Inject(StepsService) private stepsService: StepsService,
-    @InjectQueue('transition') private readonly transitionQueue: Queue
+    @InjectQueue('transition') private readonly transitionQueue: Queue,
+    @Inject(RedlockService)
+    private readonly redlockService: RedlockService
   ) {}
 
   log(message, method, session, user = 'ANONYMOUS') {
@@ -356,49 +355,111 @@ export class CronService {
     }
   }
 
-  @Cron(CronExpression.EVERY_MINUTE)
+  @Cron(CronExpression.EVERY_2_HOURS)
   async handleTimeBasedSteps() {
-    let err;
+    let err: any, lock: Lock;
     const session = randomUUID();
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
     try {
-      const steps = await this.stepsService.transactionalFindAllActiveByType(
-        null,
-        StepType.TIME_DELAY,
-        session,
+      const journeys = await this.journeysService.allActiveTransactional(
         queryRunner
       );
-      steps.push(
-        ...(await this.stepsService.transactionalFindAllActiveByType(
-          null,
-          StepType.TIME_WINDOW,
-          session,
-          queryRunner
-        ))
-      );
-      steps.push(
-        ...(await this.stepsService.transactionalFindAllActiveByType(
-          null,
-          StepType.WAIT_UNTIL_BRANCH,
-          session,
-          queryRunner
-        ))
-      );
-      for (let i = 0; i < steps.length; i++) {
-        let branch;
-        if (steps[i].type === StepType.WAIT_UNTIL_BRANCH) {
-          if (!steps[i].metadata.timeBranch) continue;
-          branch = -1;
+      for (
+        let journeyIndex = 0;
+        journeyIndex < journeys.length;
+        journeyIndex++
+      ) {
+        const customers = await this.customerModel.find({
+          journeys: journeys[journeyIndex].id,
+        });
+        for (
+          let customersIndex = 0;
+          customersIndex < customers.length;
+          customersIndex++
+        ) {
+          try {
+            lock = await this.redlockService.acquire(
+              `${customers[customersIndex].id}${journeys[journeyIndex].id}`
+            );
+            this.warn(
+              `${JSON.stringify({ warning: 'Acquiring lock' })}`,
+              this.handleTimeBasedSteps.name,
+              session
+            );
+            const steps =
+              await this.stepsService.transactionalFindAllActiveByTypeAndJourney(
+                StepType.TIME_DELAY,
+                journeys[journeyIndex].id,
+                session,
+                queryRunner
+              );
+            steps.push(
+              ...(await this.stepsService.transactionalFindAllActiveByTypeAndJourney(
+                StepType.TIME_WINDOW,
+                journeys[journeyIndex].id,
+                session,
+                queryRunner
+              ))
+            );
+            steps.push(
+              ...(await this.stepsService.transactionalFindAllActiveByTypeAndJourney(
+                StepType.WAIT_UNTIL_BRANCH,
+                journeys[journeyIndex].id,
+                session,
+                queryRunner
+              ))
+            );
+            for (let i = 0; i < steps.length; i++) {
+              let branch;
+              if (steps[i].type === StepType.WAIT_UNTIL_BRANCH) {
+                if (!steps[i].metadata.timeBranch) {
+                  await lock.release();
+                  this.warn(
+                    `${JSON.stringify({ warning: 'Releasing lock' })}`,
+                    this.handleTimeBasedSteps.name,
+                    session
+                  );
+                  continue;
+                }
+                branch = -1;
+              }
+              if (
+                _.find(steps[i].customers, (customer) => {
+                  return (
+                    JSON.parse(customer).customerID ===
+                    customers[customersIndex].id
+                  );
+                })
+              )
+                this.transitionQueue.add(steps[i].type, {
+                  step: steps[i],
+                  ownerID: steps[i].owner.id,
+                  session: session,
+                  customerID: customers[customersIndex].id,
+                  lock,
+                  branch,
+                });
+              else {
+                await lock.release();
+                this.warn(
+                  `${JSON.stringify({ warning: 'Releasing lock' })}`,
+                  this.handleTimeBasedSteps.name,
+                  session
+                );
+              }
+            }
+          } catch (e) {
+            this.error(e, this.handleTimeBasedSteps.name, session);
+            if (lock) await lock.release();
+            this.warn(
+              `${JSON.stringify({ warning: 'Releasing lock' })}`,
+              this.handleTimeBasedSteps.name,
+              session
+            );
+          }
         }
-        if (steps[i].customers.length > 0)
-          this.transitionQueue.add(steps[i].type, {
-            step: steps[i],
-            ownerID: steps[i].owner.id,
-            session: session,
-            branch,
-          });
       }
       await queryRunner.commitTransaction();
     } catch (e) {

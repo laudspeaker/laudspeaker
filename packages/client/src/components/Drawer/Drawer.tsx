@@ -1,25 +1,11 @@
-import React, {
-  FC,
-  Fragment,
-  MouseEvent,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import React, { FC, useEffect, useRef, useState } from "react";
 import { dataSubArray } from "./Drawer.fixtures";
-import { AuthState } from "../../reducers/auth.reducer";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Dialog, Disclosure, Transition } from "@headlessui/react";
-import LaudspeakerIcon from "../../assets/images/icon_cyan_cyan.svg";
-import { XMarkIcon } from "@heroicons/react/20/solid";
-import { useDispatch } from "react-redux";
-import { toggleNavbar } from "reducers/settings.reducer";
-import { useAppDispatch, useAppSelector } from "store/hooks";
+import { Disclosure } from "@headlessui/react";
+import { useAppDispatch } from "store/hooks";
 import { refreshFlowBuilder } from "reducers/flow-builder.reducer";
 import laudspeakerIcon from "../../assets/images/laudspeakerHeaderIcon.svg";
-import useTimedHover from "hooks/useTimedHover";
 import useHover from "hooks/useHover";
-import StaticDrawer from "./StaticDrawer";
 
 const classNames = (...classes: string[]) => classes.filter(Boolean).join(" ");
 
@@ -56,20 +42,22 @@ const ResponsiveDrawer: FC<ResponsiveDrawerProps> = ({ expandable }) => {
     }
 
     setIsExpanded(isHovered);
-  }, [isHovered]);
+  }, [isHovered, location.pathname]);
 
   useEffect(() => {
     dispatch(refreshFlowBuilder());
   }, [location.pathname]);
 
-  if (!expandable) return <StaticDrawer />;
-
   return (
     <div
-      className={`fixed hover:!w-[200px] w-[50px] transition-[width] [&_.notexapndable]:hover:!scale-100 top-0 left-0 px-[10px] text-[14px] text-[#111827] leading-[22px] font-normal font-roboto z-[9999999999] border-collapse bg-[#F3F4F6] border-[1px] border-[#E5E7EB] h-screen`}
+      className={`${
+        expandable
+          ? "absolute transition-[width] [&_.notexapndable]:hover:!scale-100 w-[50px] hover:!w-[200px]"
+          : "block min-w-[200px]"
+      } top-0 left-0 px-[10px] text-[14px] text-[#111827] leading-[22px] font-normal font-roboto z-[999999999999] border-collapse bg-[#F3F4F6] border-[1px] border-[#E5E7EB] h-screen`}
       ref={drawerRef}
     >
-      <div className="flex flex-col gap-[8px] ">
+      <div className="flex flex-col gap-[8px]">
         <div className={`w-full h-[50px] flex items-center gap-[20px]`}>
           <div className="min-w-[30px] min-h-[30px] flex items-center justify-center">
             <img
@@ -79,9 +67,11 @@ const ResponsiveDrawer: FC<ResponsiveDrawerProps> = ({ expandable }) => {
           </div>
 
           <svg
-            className={`notexapndable scale-0 transition-[width] delay-1000 whitespace-nowrap ${
-              !isExpanded && "hidden"
-            }`}
+            className={`${
+              expandable
+                ? "notexapndable scale-0 transition-[width] delay-1000"
+                : ""
+            } whitespace-nowrap ${!isExpanded && "hidden"}`}
             width="102"
             height="16"
             viewBox="0 0 102 16"
@@ -113,20 +103,28 @@ const ResponsiveDrawer: FC<ResponsiveDrawerProps> = ({ expandable }) => {
                           <div
                             className={`relative w-full h-[40px] flex items-center gap-[16px] select-none cursor-pointer`}
                           >
-                            <div className="flex items-center justify-center min-w-[30px] min-h-[30px]  max-w-[30px] max-h-[30px]  rounded-[4px]">
+                            <div className="flex items-center justify-center min-w-[30px] min-h-[30px] max-w-[30px] max-h-[30px] rounded-[4px]">
                               <img src={navigationItem.imgIcon} />
                             </div>
                             <span
-                              className={`notexapndable scale-0 transition-[width] delay-150 whitespace-nowrap ${
-                                !isExpanded && "hidden"
+                              className={`${
+                                expandable
+                                  ? "notexapndable scale-0 transition-[width] delay-150"
+                                  : ""
+                              } whitespace-nowrap ${
+                                expandable && !isExpanded && "hidden"
                               }`}
                             >
                               {navigationItem.text}
                             </span>
                             <div
-                              className={`notexapndable scale-0 transition-[width] delay-150 absolute top-1/2 -translate-y-1/2 right-[5px] ${
-                                open ? "" : "rotate-180"
-                              } ${isExpanded && "!delay-0"}`}
+                              className={`${
+                                expandable
+                                  ? "notexapndable scale-0 transition-[width] delay-150 absolute top-1/2 -translate-y-1/2 right-[5px]"
+                                  : ""
+                              } ${open ? "" : "rotate-180"} ${
+                                expandable && isExpanded && "!delay-0"
+                              }`}
                             >
                               <svg
                                 width="10"
@@ -150,7 +148,9 @@ const ResponsiveDrawer: FC<ResponsiveDrawerProps> = ({ expandable }) => {
                             {navigationItem.children.map((child) => (
                               <div
                                 className={`w-full h-[40px] flex items-center select-none cursor-pointer ${
-                                  isExpanded ? "pl-[22px]" : "justify-center"
+                                  !expandable || isExpanded
+                                    ? "pl-[22px]"
+                                    : "justify-center"
                                 }`}
                                 onClick={() => navigate(child.link)}
                                 key={child.id}
@@ -181,7 +181,11 @@ const ResponsiveDrawer: FC<ResponsiveDrawerProps> = ({ expandable }) => {
                                     />
                                   </div>
                                   <span
-                                    className={`notexapndable scale-0 transition-[width] delay-1000 whitespace-nowrap ${
+                                    className={`${
+                                      expandable
+                                        ? "notexapndable scale-0 transition-[width] delay-1000"
+                                        : ""
+                                    } whitespace-nowrap ${
                                       !isExpanded && "hidden"
                                     }`}
                                   >
@@ -199,7 +203,7 @@ const ResponsiveDrawer: FC<ResponsiveDrawerProps> = ({ expandable }) => {
               ) : (
                 <div
                   className={`w-full h-[40px] flex items-center select-none cursor-pointer ${
-                    isExpanded ? "" : "justify-center"
+                    expandable && isExpanded ? "" : "justify-center"
                   }`}
                   onClick={() => navigate(navigationItem.link)}
                 >
@@ -228,8 +232,12 @@ const ResponsiveDrawer: FC<ResponsiveDrawerProps> = ({ expandable }) => {
                       />
                     </div>
                     <span
-                      className={`notexapndable scale-0 transition-[width] delay-1000 whitespace-nowrap ${
-                        !isExpanded && "hidden"
+                      className={`${
+                        expandable
+                          ? "notexapndable scale-0 transition-[width] delay-1000"
+                          : ""
+                      } whitespace-nowrap ${
+                        expandable && !isExpanded && "hidden"
                       }`}
                     >
                       {navigationItem.text}

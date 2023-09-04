@@ -1,4 +1,8 @@
-import { EventBranch, StatementType } from "pages/FlowBuilderv2/Nodes/NodeData";
+import {
+  EventBranch,
+  LogicRelation,
+  StatementType,
+} from "pages/FlowBuilderv2/Nodes/NodeData";
 import React, { FC } from "react";
 import { ProviderType } from "types/Workflow";
 
@@ -8,10 +12,10 @@ interface EventBranchViewProps {
 
 const EventBranchView: FC<EventBranchViewProps> = ({ branch }) => {
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-[10px]">
       {branch.conditions.map((condition, i) => (
         <React.Fragment key={i}>
-          <div className="bg-gray-100 p-3 rounded flex flex-col relative [&:not(:last-child)]:mb-11">
+          <div className="bg-gray-100 p-3 rounded flex flex-col relative">
             {condition.providerType === ProviderType.TRACKER ? (
               <div className="flex flex-col gap-[10px] font-inter text-[14px] font-normal text-[#111827] leading-[22px]">
                 {condition.trackerId && (
@@ -57,6 +61,11 @@ const EventBranchView: FC<EventBranchViewProps> = ({ branch }) => {
               </>
             )}
           </div>
+          {i !== branch.conditions.length - 1 && (
+            <div className="w-fit px-[12px] py-[5px] rounded-[2px] border-[1px] border-[#E5E7EB] bg-[#F3F4F6]">
+              {condition.relationToNext === LogicRelation.AND ? "And" : "Or"}
+            </div>
+          )}
         </React.Fragment>
       ))}
     </div>

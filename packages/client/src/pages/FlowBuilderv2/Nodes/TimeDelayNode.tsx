@@ -1,16 +1,23 @@
 import React, { FC } from "react";
 import { Handle, NodeProps, Position } from "reactflow";
-import { TimeDelayIcon } from "../Icons";
+import { TimeDelayIcon, UserIcon } from "../Icons";
 import { TimeDelayNodeData } from "./NodeData";
+import { useAppSelector } from "store/hooks";
+
+const compatNumberFormatter = Intl.NumberFormat("en", { notation: "compact" });
 
 export const TimeDelayNode: FC<NodeProps<TimeDelayNodeData>> = ({
   isConnectable,
   selected,
-  data: { delay },
+  data: { delay, showErrors, disabled, customersCount },
 }) => {
+  const { isViewMode } = useAppSelector((state) => state.flowBuilder);
+
   return (
     <div
       className={`w-[260px] h-[80px] rounded-[4px] bg-white font-inter ${
+        disabled ? "opacity-50 cursor-not-allowed" : ""
+      } ${
         selected
           ? "border-[2px] border-[#6366F1]"
           : "border-[1px] border-[#E5E7EB]"
@@ -26,14 +33,26 @@ export const TimeDelayNode: FC<NodeProps<TimeDelayNodeData>> = ({
         </div>
       </Handle>
       <div className="p-[16px]">
-        <div className="font-semibold text-[16px] leading-[24px] mb-[2px]">
-          Time delay
+        <div className="flex justify-between font-semibold text-[16px] leading-[24px] mb-[2px]">
+          <div>Time delay</div>
+          {isViewMode && (
+            <div className="h-fit px-[4px] py-[2px] flex items-center gap-[4px] bg-[#F3F4F6] rounded-sm">
+              <UserIcon />
+              <div className="text-[10px] leading-normal">
+                {compatNumberFormatter.format(customersCount || 0)}
+              </div>
+            </div>
+          )}
         </div>
         <div className="font-normal text-[14px] leading-[22px] text-[#4B5563]">
           {delay.days === delay.hours &&
           delay.hours === delay.minutes &&
           delay.minutes === 0 ? (
-            <span className="font-inter font-normal text-[12px] text-[#F43F5E] leading-[20px]">
+            <span
+              className={`font-inter font-normal text-[12px] leading-[20px] ${
+                showErrors ? "text-[#F43F5E]" : ""
+              }`}
+            >
               Set time
             </span>
           ) : (

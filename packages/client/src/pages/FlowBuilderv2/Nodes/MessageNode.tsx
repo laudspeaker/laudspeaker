@@ -102,7 +102,7 @@ export const MessageNode: FC<NodeProps<MessageNodeData>> = ({
 }) => {
   const { isViewMode } = useAppSelector((state) => state.flowBuilder);
 
-  const { template, stats } = data;
+  const { template, stats, disabled } = data;
 
   const nodeFixtures: {
     icon: ReactNode;
@@ -122,7 +122,9 @@ export const MessageNode: FC<NodeProps<MessageNodeData>> = ({
         isViewMode && stats && nodeFixtures.statsToShow
           ? "h-[140px]"
           : "h-[80px]"
-      }  rounded-[4px] bg-white ${
+      } rounded-[4px] bg-white ${
+        disabled ? "opacity-50 cursor-not-allowed" : ""
+      } ${
         selected
           ? "border-[2px] border-[#6366F1]"
           : "border-[1px] border-[#E5E7EB]"
@@ -166,7 +168,9 @@ export const MessageNode: FC<NodeProps<MessageNodeData>> = ({
               <span className="font-medium">{template.selected.name}</span>
             </>
           ) : (
-            <span className="text-[#F43F5E]">Select a template</span>
+            <span className={data.showErrors ? "text-[#F43F5E]" : ""}>
+              Select a template
+            </span>
           )}
         </div>
       </div>

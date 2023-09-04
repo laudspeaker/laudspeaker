@@ -17,7 +17,6 @@ import {
 import { InjectModel } from '@nestjs/mongoose';
 import { CreateTemplateDto } from './dto/create-template.dto';
 import { UpdateTemplateDto } from './dto/update-template.dto';
-import { Job, Queue } from 'bullmq';
 import {
   FallBackAction,
   Template,
@@ -31,6 +30,7 @@ import {
   QueueEventsHost,
   QueueEventsListener,
 } from '@nestjs/bullmq';
+import { Job, Queue } from 'bullmq';
 import { Installation } from '../slack/entities/installation.entity';
 import { SlackService } from '../slack/slack.service';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';

@@ -20,6 +20,8 @@ import MessageSettings from "./settings/MessageSettings";
 export interface SidePanelComponentProps<T extends NodeData = NodeData> {
   nodeData: T;
   setNodeData: (nodeData: T) => void;
+  setIsError: (value: boolean) => void;
+  showErrors: boolean;
 }
 
 interface OnboardingSidePanelProps {
@@ -50,6 +52,9 @@ const OnboardingSidePanel: FC<OnboardingSidePanelProps> = ({
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
+  const [isError, setIsError] = useState(false);
+  const [showErrors, setShowErrors] = useState(false);
+
   const nodeTypeToNameMap: Record<NodeType, string> = {
     [NodeType.START]: "",
     [NodeType.EMPTY]: "",
@@ -68,28 +73,48 @@ const OnboardingSidePanel: FC<OnboardingSidePanelProps> = ({
     [NodeType.MESSAGE]: (
       <>
         {nodeData.type === NodeType.MESSAGE && (
-          <MessageSettings nodeData={nodeData} setNodeData={setNodeData} />
+          <MessageSettings
+            nodeData={nodeData}
+            setNodeData={setNodeData}
+            setIsError={setIsError}
+            showErrors={showErrors}
+          />
         )}
       </>
     ),
     [NodeType.WAIT_UNTIL]: (
       <>
         {nodeData.type === NodeType.WAIT_UNTIL && (
-          <WaitUntilSettings nodeData={nodeData} setNodeData={setNodeData} />
+          <WaitUntilSettings
+            nodeData={nodeData}
+            setNodeData={setNodeData}
+            setIsError={setIsError}
+            showErrors={showErrors}
+          />
         )}
       </>
     ),
     [NodeType.TIME_DELAY]: (
       <>
         {nodeData.type === NodeType.TIME_DELAY && (
-          <TimeDelaySettings nodeData={nodeData} setNodeData={setNodeData} />
+          <TimeDelaySettings
+            nodeData={nodeData}
+            setNodeData={setNodeData}
+            setIsError={setIsError}
+            showErrors={showErrors}
+          />
         )}
       </>
     ),
     [NodeType.TIME_WINDOW]: (
       <>
         {nodeData.type === NodeType.TIME_WINDOW && (
-          <TimeWindowSettings nodeData={nodeData} setNodeData={setNodeData} />
+          <TimeWindowSettings
+            nodeData={nodeData}
+            setNodeData={setNodeData}
+            setIsError={setIsError}
+            showErrors={showErrors}
+          />
         )}
       </>
     ),
@@ -99,6 +124,8 @@ const OnboardingSidePanel: FC<OnboardingSidePanelProps> = ({
           <UserAttributeSettings
             nodeData={nodeData}
             setNodeData={setNodeData}
+            setIsError={setIsError}
+            showErrors={showErrors}
           />
         )}
       </>

@@ -14,7 +14,6 @@ import {
   CustomerKeysSchema,
 } from '../customers/schemas/customer-keys.schema';
 import { Audience } from '../audiences/entities/audience.entity';
-import { WebsocketGateway } from '@/websockets/websocket.gateway';
 import { SlackModule } from '../slack/slack.module';
 import { CustomersModule } from '../customers/customers.module';
 import { TemplatesModule } from '../templates/templates.module';
@@ -25,6 +24,8 @@ import { TransitionProcessor } from './processors/transition.processor';
 import { WebhooksModule } from '../webhooks/webhooks.module';
 import { ModalsModule } from '../modals/modals.module';
 import { WebsocketsModule } from '@/websockets/websockets.module';
+import { RedlockModule } from '../redlock/redlock.module';
+import { RedlockService } from '../redlock/redlock.service';
 
 @Module({
   imports: [
@@ -48,9 +49,10 @@ import { WebsocketsModule } from '@/websockets/websockets.module';
     forwardRef(() => EventsModule),
     forwardRef(() => ModalsModule),
     forwardRef(() => WebsocketsModule),
+    forwardRef(() => RedlockModule),
     SlackModule,
   ],
-  providers: [StepsService, JobsService, TransitionProcessor],
+  providers: [StepsService, JobsService, TransitionProcessor, RedlockService],
   controllers: [StepsController],
   exports: [StepsService],
 })

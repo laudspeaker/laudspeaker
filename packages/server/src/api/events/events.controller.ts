@@ -103,7 +103,7 @@ export class EventsController {
     @Body() body: PosthogBatchEventDto
   ): Promise<void | HttpException> {
     const session = randomUUID();
-    return this.eventsService.posthogPayload(<Account>user, body, session);
+    return; //this.eventsService.posthogPayload(<Account>user, body, session);
   }
 
   @Post()

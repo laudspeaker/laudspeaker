@@ -22,14 +22,24 @@ const ConditionViewer: FC<ConditionViewerProps> = ({
   const { isOnboarding } = useAppSelector((state) => state.flowBuilder);
 
   return (
-    <div className="p-[10px] flex flex-col gap-[10px] bg-[#F3F4F6]">
+    <div
+      className="p-[10px] flex flex-col gap-[10px] bg-[#F3F4F6] cursor-pointer"
+      onClick={onEdit}
+    >
       <div className="flex justify-between items-center">
         <div className="font-inter font-semibold text-[14px] leading-[22px]">
-          {condition.providerType === ProviderType.CUSTOM
-            ? "Custom Event"
-            : condition.providerType === ProviderType.POSTHOG
-            ? `Posthog ${condition.name}`
-            : "Tracker"}
+          {condition.providerType === ProviderType.CUSTOM ? (
+            "Custom Event"
+          ) : condition.providerType === ProviderType.POSTHOG ? (
+            <>
+              Posthog{" "}
+              <span className="px-[5px] py-[2px] bg-white rounded-[2px] border-[1px] border-[#E5E7EB] font-normal">
+                {condition.name || "[empty]"}
+              </span>
+            </>
+          ) : (
+            "Tracker"
+          )}
         </div>
         <div className="flex gap-[20px] items-center">
           <div
@@ -113,8 +123,14 @@ const ConditionViewer: FC<ConditionViewerProps> = ({
                   className="font-inter font-normal text-[14px] leading-[22px]"
                   key={k}
                 >
-                  Property "{statement.key}" {statement.comparisonType} "
-                  {statement.value}"
+                  Property{" "}
+                  <span className="px-[5px] py-[2px] bg-white rounded-[2px] border-[1px] border-[#E5E7EB] font-normal">
+                    {statement.key}
+                  </span>{" "}
+                  {statement.comparisonType}{" "}
+                  <span className="px-[5px] py-[2px] bg-white rounded-[2px] border-[1px] border-[#E5E7EB] font-normal">
+                    {statement.value}
+                  </span>
                 </div>
               ) : (
                 <div
@@ -122,11 +138,15 @@ const ConditionViewer: FC<ConditionViewerProps> = ({
                   key={k}
                 >
                   Element <span className="font-bold">#{statement.order}</span>{" "}
-                  "
-                  {statement.elementKey === ElementKey.TAG_NAME
-                    ? "Tag name"
-                    : "Text"}
-                  " {statement.comparisonType} "{statement.value}"
+                  <span className="px-[5px] py-[2px] bg-white rounded-[2px] border-[1px] border-[#E5E7EB] font-normal">
+                    {statement.elementKey === ElementKey.TAG_NAME
+                      ? "Tag name"
+                      : "Text"}
+                  </span>{" "}
+                  {statement.comparisonType}{" "}
+                  <span className="px-[5px] py-[2px] bg-white rounded-[2px] border-[1px] border-[#E5E7EB] font-normal">
+                    {statement.value}
+                  </span>
                 </div>
               )}
             </div>

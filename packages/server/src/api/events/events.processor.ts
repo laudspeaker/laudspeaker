@@ -1,6 +1,6 @@
-import { InjectQueue, Processor, WorkerHost } from '@nestjs/bullmq';
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Processor, WorkerHost, InjectQueue } from '@nestjs/bullmq';
 import { Job, Queue } from 'bullmq';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Account } from '../accounts/entities/accounts.entity';
 import { CustomerDocument } from '../customers/schemas/customer.schema';
 import { CustomersService } from '../customers/customers.service';
@@ -25,11 +25,16 @@ import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { createHash, randomUUID } from 'crypto';
 import { TrackerHit } from './entities/tracker-hit.entity';
 import { InjectRepository } from '@nestjs/typeorm';
+import { WebsocketGateway } from '@/websockets/websocket.gateway';
+import { RedlockService } from '../redlock/redlock.service';
+import { Lock } from 'redlock';
+import * as _ from 'lodash';
 
 @Injectable()
 @Processor('events', {
-  removeOnComplete: { age: 0, count: 0 },
-  removeOnFail: { count: 0 },
+  // removeOnComplete: { age: 0, count: 0 },
+  // removeOnFail: { count: 0 },
+  // group: { concurrency: 1 }
 })
 export class EventsProcessor extends WorkerHost {
   constructor(
@@ -41,8 +46,12 @@ export class EventsProcessor extends WorkerHost {
     private readonly customersService: CustomersService,
     @InjectRepository(TrackerHit)
     public readonly trackerHitRepository: Repository<TrackerHit>,
+    private readonly audiencesHelper: AudiencesHelper,
+    @Inject(WebsocketGateway)
+    private websocketGateway: WebsocketGateway,
     @InjectQueue('transition') private readonly transitionQueue: Queue,
-    private readonly audiencesHelper: AudiencesHelper
+    @Inject(RedlockService)
+    private readonly redlockService: RedlockService
   ) {
     super();
   }
@@ -108,7 +117,8 @@ export class EventsProcessor extends WorkerHost {
 
   async process(job: Job<any, any, string>): Promise<any> {
     const session = randomUUID();
-    let err: any, stepToQueue: Step, branch: number;
+    let err: any, branch: number, lock: Lock;
+    let stepsToQueue: Step[] = [];
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -164,6 +174,14 @@ export class EventsProcessor extends WorkerHost {
           session,
           transactionSession
         );
+      //Have to take lock before you read the customers in the step, so before you read the step
+      lock = await this.redlockService.acquire(`${customer.id}${journey.id}`);
+      this.warn(
+        `${JSON.stringify({ warning: 'Acquiring lock' })}`,
+        this.process.name,
+        session,
+        account.email
+      );
       // All steps in `journey` that might be listening for this event
       const steps = await queryRunner.manager.find(Step, {
         where: {
@@ -412,9 +430,9 @@ export class EventsProcessor extends WorkerHost {
                 return element === true;
               })
             ) {
-              stepToQueue = steps[stepIndex];
+              stepsToQueue.push(steps[stepIndex]);
               branch = branchIndex;
-              break step_loop;
+              // break step_loop;
             }
           }
           // Otherwise,check if all of the events match
@@ -433,48 +451,98 @@ export class EventsProcessor extends WorkerHost {
                 return element === true;
               })
             ) {
-              stepToQueue = steps[stepIndex];
+              stepsToQueue.push(steps[stepIndex]);
               branch = branchIndex;
-              break step_loop;
+              // break step_loop;
             }
           }
         }
       }
 
       // If customer isn't in step, we throw error, otherwise we queue and consume event
-      if (stepToQueue) {
-        let found = false;
-        for (let i = 0; i < stepToQueue.customers.length; i++) {
-          if (JSON.parse(stepToQueue.customers[i]).customerID === customer.id)
-            found = true;
+      if (stepsToQueue.length) {
+        let stepToQueue;
+        for (let i = 0; i < stepsToQueue.length; i++) {
+          if (
+            _.find(stepsToQueue[i].customers, (cust) => {
+              return JSON.parse(cust).customerID === customer.id;
+            })
+          ) {
+            stepToQueue = stepsToQueue[i];
+            break;
+          }
         }
-        if (!found) throw new Error('Customer has not yet arrived in step.');
-        else {
-          this.debug(
-            `${JSON.stringify({ stepToQueue, event: job.data.event })}`,
-            this.process.name,
-            job.data.session
-          );
+        if (stepToQueue) {
           await this.transitionQueue.add(stepToQueue.type, {
             step: stepToQueue,
             branch: branch,
-            customer: customer.id,
+            customerID: customer.id,
             ownerID: stepToQueue.owner.id,
             session: job.data.session,
+            lock,
+            event: job.data.event.event,
           });
+        } else {
+          await lock.release();
+          this.warn(
+            `${JSON.stringify({ warning: 'Releasing lock' })}`,
+            this.process.name,
+            session,
+            account.email
+          );
+          this.warn(
+            `${JSON.stringify({
+              warning: 'Customer not in step',
+              customerID: customer.id,
+              stepToQueue,
+            })}`,
+            this.process.name,
+            session,
+            account.email
+          );
+          // Acknowledge that event is finished processing to frontend if its
+          // a tracker event
+          if (job.data.event.source === AnalyticsProviderTypes.TRACKER) {
+            await this.websocketGateway.sendProcessed(
+              customer.id,
+              job.data.event.event,
+              job.data.event.payload.trackerId
+            );
+          }
+          return;
         }
       } else {
+        await lock.release();
         this.warn(
-          `${JSON.stringify({
-            warning: 'No step matches event',
-            event: job.data.event,
-          })}`,
+          `${JSON.stringify({ warning: 'Releasing lock' })}`,
           this.process.name,
-          job.data.session
+          session,
+          account.email
         );
+        this.warn(
+          `${JSON.stringify({ warning: 'No step matches event' })}`,
+          this.process.name,
+          session,
+          account.email
+        );
+        if (job.data.event.source === AnalyticsProviderTypes.TRACKER) {
+          await this.websocketGateway.sendProcessed(
+            customer.id,
+            job.data.event.event,
+            job.data.event.payload.trackerId
+          );
+        }
         return;
       }
     } catch (e) {
+      if (lock) {
+        await lock.release();
+        this.warn(
+          `${JSON.stringify({ warning: 'Releasing lock' })}`,
+          this.process.name,
+          session
+        );
+      }
       await transactionSession.abortTransaction();
       await queryRunner.rollbackTransaction();
       this.error(e, this.process.name, job.data.session);

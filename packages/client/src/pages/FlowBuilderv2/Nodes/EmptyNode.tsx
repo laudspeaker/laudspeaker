@@ -7,7 +7,11 @@ import { DrawerAction } from "../Drawer/drawer.fixtures";
 import { NodeType } from "../FlowEditor";
 import { NodeData } from "./NodeData";
 
-export const EmptyNode: FC<NodeProps<NodeData>> = ({ isConnectable, id }) => {
+export const EmptyNode: FC<NodeProps<NodeData>> = ({
+  isConnectable,
+  id,
+  data: { disabled },
+}) => {
   const drawerActionToNodeTypeMap: Record<DrawerAction, NodeType> = {
     [DrawerAction.CUSTOM_MODAL]: NodeType.MESSAGE,
     [DrawerAction.TRACKER]: NodeType.MESSAGE,
@@ -38,8 +42,8 @@ export const EmptyNode: FC<NodeProps<NodeData>> = ({ isConnectable, id }) => {
   return (
     <div
       className={`empty-node w-[260px] h-[80px] rounded-[8px] bg-[#F3F4F6] border-[2px] border-dashed border-[#9CA3AF] flex justify-center items-center ${
-        isDraggedOver ? "!border-[#6366F1] !bg-[#E0E7FF]" : ""
-      }`}
+        disabled ? "opacity-50 cursor-not-allowed" : ""
+      } ${isDraggedOver ? "!border-[#6366F1] !bg-[#E0E7FF]" : ""}`}
       onDragOver={(e) => {
         e.preventDefault();
         e.dataTransfer.dropEffect = "move";

@@ -83,6 +83,28 @@ export const translateTree = (
 const NODE_WIDTH = 260;
 const HORIZONTAL_OFFSET = 45;
 
+const nodeTypesWithPossibleStats: string[] = [
+  NodeType.MESSAGE,
+  NodeType.TRACKER,
+];
+
+const nodeTypeHeightMap: Record<NodeType, number> = {
+  [NodeType.EMPTY]: 80,
+  [NodeType.EXIT]: 60,
+  [NodeType.INSERT_NODE]: 80,
+  [NodeType.JUMP_TO]: 60,
+  [NodeType.MESSAGE]: 80,
+  [NodeType.START]: 60,
+  [NodeType.TIME_DELAY]: 80,
+  [NodeType.TIME_WINDOW]: 80,
+  [NodeType.TRACKER]: 80,
+  [NodeType.USER_ATTRIBUTE]: 80,
+  [NodeType.WAIT_UNTIL]: 80,
+};
+
+const STATS_HEIGHT = 60;
+const VERTICAL_GAP_BETWEEN_NODES = 44;
+
 export const applyLayoutCorrections = (
   rootNode: Node,
   nodes: Node[],
@@ -90,20 +112,35 @@ export const applyLayoutCorrections = (
 ) => {
   const children = getOutgoers(rootNode, nodes, edges);
 
-  if (children.length > 1) {
-    // const widthOffsetSum = NODE_WIDTH + HORIZONTAL_OFFSET;
-    // const globalOffset = -widthOffsetSum * (children.length - 1) * 0.5;
-
-    for (let i = 0; i < children.length; i++) {
-      translateTree(children[i], nodes, edges, {
-        // x: widthOffsetSum * i + globalOffset,
-        x: 0,
-        y: 145,
-      });
-    }
-  }
+  const rootHeight = nodeTypeHeightMap[rootNode.type as NodeType] || 0;
 
   for (const child of children) {
+    const childHeight =
+      (nodeTypeHeightMap[child.type as NodeType] || 0) +
+      (child.data.stats ? STATS_HEIGHT : 0);
+
+    translateTree(child, nodes, edges, {
+      x: 0,
+      y:
+        (rootHeight + childHeight) / 2 +
+        VERTICAL_GAP_BETWEEN_NODES +
+        (children.length > 1 ? 2 * VERTICAL_GAP_BETWEEN_NODES : 0),
+    });
+
+    const childOutgoers = getOutgoers(child, nodes, edges);
+
+    if (
+      child.type &&
+      child.data.stats &&
+      childOutgoers.length === 1 &&
+      nodeTypesWithPossibleStats.includes(child.type)
+    ) {
+      translateTree(childOutgoers[0], nodes, edges, {
+        x: 0,
+        y: STATS_HEIGHT / 2,
+      });
+    }
+
     applyLayoutCorrections(child, nodes, edges);
   }
 };
@@ -118,7 +155,7 @@ export const getLayoutedNodes = (nodes: Node[], edges: Edge[]) => {
 
   const root = hierarchy(retrieveHierarchyObject(rootNode, nodes, edges));
   const treeLayout = tree<HierarchyObject>()
-    .nodeSize([260, 125])
+    .nodeSize([260, 0])
     .separation(() => 2);
 
   const layoutedNodes = treeLayout(root);

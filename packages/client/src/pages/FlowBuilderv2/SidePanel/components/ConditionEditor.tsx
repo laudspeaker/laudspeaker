@@ -53,6 +53,7 @@ const ConditionEditor: FC<ConditionEditorProps> = ({
       type: StatementValueType;
     }[]
   >([]);
+  const [showErrors, setShowErrors] = useState(false);
 
   useEffect(() => {
     setCondition(initialCondition);
@@ -102,7 +103,7 @@ const ConditionEditor: FC<ConditionEditorProps> = ({
               comparisonType: ComparisonType.EQUALS,
               valueType: StatementValueType.NUMBER,
               value: "",
-              relationToNext: LogicRelation.AND,
+              relationToNext: LogicRelation.OR,
             }
           : {
               type,
@@ -111,7 +112,7 @@ const ConditionEditor: FC<ConditionEditorProps> = ({
               comparisonType: ComparisonType.EQUALS,
               valueType: StatementValueType.NUMBER,
               value: "",
-              relationToNext: LogicRelation.AND,
+              relationToNext: LogicRelation.OR,
             },
       ],
     });
@@ -250,19 +251,20 @@ const ConditionEditor: FC<ConditionEditorProps> = ({
                       />
                     </div>
 
-                    {errors[i].some(
-                      (statementError) =>
-                        statementError ===
-                        ConditionEditorError.NO_PROPERTY_SPECIFIED
-                    ) && (
-                      <div className="font-inter font-normal text-[12px] leading-[20px] text-[#E11D48]">
-                        {
-                          errorToMessageMap[
-                            ConditionEditorError.NO_PROPERTY_SPECIFIED
-                          ]
-                        }
-                      </div>
-                    )}
+                    {showErrors &&
+                      errors[i].some(
+                        (statementError) =>
+                          statementError ===
+                          ConditionEditorError.NO_PROPERTY_SPECIFIED
+                      ) && (
+                        <div className="font-inter font-normal text-[12px] leading-[20px] text-[#E11D48]">
+                          {
+                            errorToMessageMap[
+                              ConditionEditorError.NO_PROPERTY_SPECIFIED
+                            ]
+                          }
+                        </div>
+                      )}
                   </div>
                 ) : (
                   <>
@@ -366,18 +368,20 @@ const ConditionEditor: FC<ConditionEditorProps> = ({
                     />
                   </div>
 
-                  {errors[i].some(
-                    (statementError) =>
-                      statementError === ConditionEditorError.NO_VALUE_SPECIFIED
-                  ) && (
-                    <div className="font-inter font-normal text-[12px] leading-[20px] text-[#E11D48]">
-                      {
-                        errorToMessageMap[
-                          ConditionEditorError.NO_VALUE_SPECIFIED
-                        ]
-                      }
-                    </div>
-                  )}
+                  {showErrors &&
+                    errors[i].some(
+                      (statementError) =>
+                        statementError ===
+                        ConditionEditorError.NO_VALUE_SPECIFIED
+                    ) && (
+                      <div className="font-inter font-normal text-[12px] leading-[20px] text-[#E11D48]">
+                        {
+                          errorToMessageMap[
+                            ConditionEditorError.NO_VALUE_SPECIFIED
+                          ]
+                        }
+                      </div>
+                    )}
                 </div>
               </div>
               {i !== condition.statements.length - 1 && (
@@ -409,12 +413,14 @@ const ConditionEditor: FC<ConditionEditorProps> = ({
           ))}
 
           <div className="flex items-center gap-[10px]">
-            <div className="border-[1px] border-[#E5E7EB] rounded-[2px] px-[12px] py-[5px] font-roboto font-normal text-[14px] leading-[22px] text-[#4B5563]">
-              {condition.statements[condition.statements.length - 1]
-                ?.relationToNext === LogicRelation.AND
-                ? "And"
-                : "Or"}
-            </div>
+            {condition.statements.length > 0 && (
+              <div className="border-[1px] border-[#E5E7EB] rounded-[2px] px-[12px] py-[5px] font-roboto font-normal text-[14px] leading-[22px] text-[#4B5563]">
+                {condition.statements[condition.statements.length - 1]
+                  ?.relationToNext === LogicRelation.AND
+                  ? "And"
+                  : "Or"}
+              </div>
+            )}
 
             <div className="w-[145px]">
               <Select
@@ -443,10 +449,16 @@ const ConditionEditor: FC<ConditionEditorProps> = ({
           <Button
             className="save-condition"
             type={ButtonType.PRIMARY}
-            onClick={() => onSave(condition)}
-            disabled={errors.some(
-              (statementErrors) => statementErrors.length > 0
-            )}
+            onClick={() => {
+              if (
+                errors.some((statementErrors) => statementErrors.length > 0)
+              ) {
+                setShowErrors(true);
+                return;
+              }
+
+              onSave(condition);
+            }}
           >
             Save
           </Button>

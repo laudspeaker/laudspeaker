@@ -38,6 +38,9 @@ import { AudiencesHelper } from '../audiences/audiences.helper';
 import { SegmentsModule } from '../segments/segments.module';
 import { EventsPreProcessor } from './events.preprocessor';
 import { TrackerHit } from './entities/tracker-hit.entity';
+import { WebsocketsModule } from '@/websockets/websockets.module';
+import { RedlockModule } from '../redlock/redlock.module';
+import { RedlockService } from '../redlock/redlock.service';
 
 @Module({
   imports: [
@@ -86,8 +89,10 @@ import { TrackerHit } from './entities/tracker-hit.entity';
     forwardRef(() => WorkflowsModule),
     forwardRef(() => JourneysModule),
     forwardRef(() => SegmentsModule),
+    forwardRef(() => WebsocketsModule),
     AudiencesModule,
     SlackModule,
+    forwardRef(() => RedlockModule),
   ],
   controllers: [EventsController],
   providers: [
@@ -95,6 +100,7 @@ import { TrackerHit } from './entities/tracker-hit.entity';
     EventsProcessor,
     EventsPreProcessor,
     AudiencesHelper,
+    RedlockService,
   ],
   exports: [EventsService],
 })

@@ -20,7 +20,7 @@ const MaxTimeBranchEditor: FC<MaxTimeBranchEditorProps> = ({
   const { isOnboarding } = useAppSelector((state) => state.flowBuilder);
 
   return (
-    <div className="flex flex-col gap-[10px]">
+    <div className="flex flex-col gap-[10px] pb-[20px] border-b-[1px] border-[]">
       <div className="font-inter font-normal text-[12px] leading-[20px] text-[#4B5563]">
         Set a maximum amount of time or a time window before moving users to
         another step
