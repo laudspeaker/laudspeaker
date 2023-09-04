@@ -2,12 +2,8 @@
 /* eslint-disable jest/valid-describe-callback */
 /* eslint-disable @typescript-eslint/no-shadow */
 import credentials from "../fixtures/credentials";
-import checkSuccessfulEmailEventHit from "../test-helpers/checkSuccessfulEmailEventHit";
 import drag from "../test-helpers/drag";
 import { loginFunc } from "../test-helpers/loginFunc";
-import runTwoStepEmailJourney from "../test-helpers/runTwoStepEmailJourney";
-import setupEventTrigger from "../test-helpers/setupEventTrigger";
-import { templatesFunc } from "../test-helpers/templatesFunc";
 
 const { email, password, emailTemplate, journeyName, userAPIkey } =
   credentials.MessageHitUser;
@@ -23,7 +19,7 @@ describe(
 
     it("passes", () => {
       loginFunc(email, password);
-      cy.get("#messaging > .relative").click();
+      cy.get("#messaging").click();
       cy.get("#journeys").click();
       cy.get("#create-journey").click();
       cy.get("#journey-name-input").type("Journey name");

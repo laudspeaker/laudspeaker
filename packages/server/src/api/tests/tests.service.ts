@@ -244,10 +244,10 @@ export class TestsService {
     }
   }
 
-  public async getTestVerification(session: string) {
+  public async getTestVerification(email: string, session: string) {
     const verification = await this.authService.verificationRepository.findOne({
       where: {
-        email: 'testmail@gmail.com',
+        email,
         status: 'sent',
       },
       relations: ['account'],

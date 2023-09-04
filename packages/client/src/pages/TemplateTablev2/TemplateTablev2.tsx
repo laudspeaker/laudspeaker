@@ -133,6 +133,7 @@ const TemplateTablev2 = () => {
         <Button
           type={ButtonType.PRIMARY}
           onClick={() => setIsNameTemplateOpen(true)}
+          id="create-template-button"
         >
           Create template
         </Button>

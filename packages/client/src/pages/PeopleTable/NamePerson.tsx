@@ -77,6 +77,7 @@ const NamePerson = ({ isPrimary }: INameSegment) => {
                 maxWidth: "200px",
               }}
               disabled={!segmentForm?.name?.trim()}
+              id="create-person-modal-button"
             >
               Create Person
             </GenericButton>

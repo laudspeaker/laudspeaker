@@ -101,10 +101,10 @@ export class TestsController {
     return this.testsService.resetTestData(session);
   }
 
-  @Get('test-verification')
-  async getTestVerification() {
+  @Get('test-verification/:email')
+  async getTestVerification(@Param('email') email) {
     const session = randomUUID();
-    return this.testsService.getTestVerification(session);
+    return this.testsService.getTestVerification(email, session);
   }
 
   @Patch('test-account')

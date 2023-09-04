@@ -112,7 +112,7 @@ const EmailBuilder = () => {
     const populateEmailBuilder = async () => {
       const { data } = await getTemplate(name);
       setTitle(data.subject);
-      setCC(data.cc.join());
+      if (data?.cc) setCC(data.cc.join());
       setTemplateName(name);
       setEmailTemplateId(data.id);
       setText(data.text);

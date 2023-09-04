@@ -88,6 +88,7 @@ const ResponsiveDrawer: FC<ResponsiveDrawerProps> = ({ expandable }) => {
           {navigation.map((navigationItem) => (
             <div
               className="w-full flex justify-center items-center"
+              id={navigationItem.id}
               key={navigationItem.id}
             >
               {navigationItem.children ? (
@@ -153,6 +154,7 @@ const ResponsiveDrawer: FC<ResponsiveDrawerProps> = ({ expandable }) => {
                                     : "justify-center"
                                 }`}
                                 onClick={() => navigate(child.link)}
+                                id={child.id}
                                 key={child.id}
                               >
                                 <div
@@ -206,6 +208,7 @@ const ResponsiveDrawer: FC<ResponsiveDrawerProps> = ({ expandable }) => {
                     expandable && isExpanded ? "" : "justify-center"
                   }`}
                   onClick={() => navigate(navigationItem.link)}
+                  id={navigationItem.id}
                 >
                   <div
                     className={`rounded-[4px] flex items-center w-full gap-[16px] ${
