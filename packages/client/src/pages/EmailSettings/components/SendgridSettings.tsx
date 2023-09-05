@@ -11,6 +11,7 @@ const SendgridSettings: FC<SendingServiceSettingsProps> = ({
       <div className="flex flex-col gap-[5px]">
         <div>SendGrid API Key</div>
         <Input
+          id="sendgrid-api-key-input"
           wrapperClassName="!w-full"
           className="w-full"
           value={formData.sendgridApiKey}
@@ -25,6 +26,7 @@ const SendgridSettings: FC<SendingServiceSettingsProps> = ({
       <div className="flex flex-col gap-[5px]">
         <div>SendGrid email</div>
         <Input
+          id="sendgrid-email-input"
           wrapperClassName="!w-full"
           className="w-full"
           value={formData.sendgridFromEmail}

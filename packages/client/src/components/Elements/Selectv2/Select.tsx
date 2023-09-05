@@ -10,6 +10,7 @@ interface SelectProps<T> {
   buttonClassName?: string;
   panelClassName?: string;
   noDataPlaceholder?: string;
+  id?: string;
 }
 
 const Select = <T,>({
@@ -21,6 +22,7 @@ const Select = <T,>({
   buttonClassName,
   panelClassName,
   noDataPlaceholder,
+  id,
 }: SelectProps<T>) => {
   return (
     <Popover
@@ -32,6 +34,7 @@ const Select = <T,>({
         <>
           <Popover.Button
             className={`w-full ${buttonClassName ? buttonClassName : ""}`}
+            id={id}
           >
             <div className="border-[1px] border-[#E5E7EB] rounded-[2px] bg-white px-[12px] py-[4px] flex items-center justify-between gap-[6px]">
               <div className="max-w-full overflow-hidden text-ellipsis whitespace-nowrap">
@@ -84,6 +87,7 @@ const Select = <T,>({
                       onChange(option.key);
                       close();
                     }}
+                    data-option={option.key}
                   >
                     {option.title}
                   </div>

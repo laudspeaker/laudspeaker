@@ -105,6 +105,7 @@ const TwilioSettings = () => {
           <div className="flex flex-col gap-[5px]">
             <div>Twilio account SID</div>
             <Input
+              id="twilio-account-sid-input"
               wrapperClassName="!w-full"
               className="w-full"
               value={formData.smsAccountSid}
@@ -118,6 +119,7 @@ const TwilioSettings = () => {
           <div className="flex flex-col gap-[5px]">
             <div>Twilio auth token</div>
             <Input
+              id="twilio-auth-token-input"
               wrapperClassName="!w-full"
               className="w-full"
               value={formData.smsAuthToken}
@@ -131,6 +133,7 @@ const TwilioSettings = () => {
           <div className="flex flex-col gap-[5px]">
             <div>SMS from</div>
             <Select
+              id="twilio-sms-from-select"
               options={possibleNumbers.map((number) => ({
                 key: number,
                 title: number,
@@ -149,6 +152,7 @@ const TwilioSettings = () => {
         )}
 
         <Button
+          id="twilio-connect-button"
           type={ButtonType.PRIMARY}
           onClick={handleConnect}
           className="w-fit"

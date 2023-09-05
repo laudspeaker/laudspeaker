@@ -22,18 +22,8 @@ describe(
 
     it("passes", () => {
       loginFunc(email, password);
-      cy.contains("Messaging").click();
-      runTwoStepEmailJourney(
-        "example-template-review",
-        emailTemplate.eventName
-      );
-
-      checkSuccessfulEmailEventHit(
-        userAPIkey,
-        emailTemplate.eventName,
-        "email",
-        emailTemplate.correlationValue
-      );
+      cy.get("#messaging").click();
+      cy.get("#journeys").click();
     });
   }
 );

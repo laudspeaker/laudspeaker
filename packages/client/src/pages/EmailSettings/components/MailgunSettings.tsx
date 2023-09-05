@@ -37,6 +37,7 @@ const MailgunSettings: FC<SendingServiceSettingsProps> = ({
       <div className="flex flex-col gap-[5px]">
         <div>Mailgun API Key</div>
         <Input
+          id="mailgun-api-key-input"
           wrapperClassName="!w-full"
           className="w-full"
           value={formData.mailgunAPIKey}
@@ -51,6 +52,7 @@ const MailgunSettings: FC<SendingServiceSettingsProps> = ({
       <div className="flex flex-col gap-[5px]">
         <div>Domain</div>
         <Select
+          id="mailgun-domain-select"
           options={possibleDomains.map((domain) => ({
             key: domain,
             title: domain,
@@ -66,6 +68,7 @@ const MailgunSettings: FC<SendingServiceSettingsProps> = ({
       <div className="flex flex-col gap-[5px]">
         <div>Sending name</div>
         <Input
+          id="mailgun-sending-name-input"
           wrapperClassName="!w-full"
           className="w-full"
           value={formData.sendingName}
@@ -77,6 +80,7 @@ const MailgunSettings: FC<SendingServiceSettingsProps> = ({
       <div className="flex flex-col gap-[5px]">
         <div>Sending email</div>
         <Input
+          id="mailgun-sending-email-input"
           wrapperClassName="!w-full"
           className="w-full"
           value={formData.sendingEmail}
