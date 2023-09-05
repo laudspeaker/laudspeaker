@@ -13,6 +13,7 @@ import {
   Inject,
   Injectable,
   Logger,
+  NotFoundException,
 } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { Customer, CustomerDocument } from './schemas/customer.schema';
@@ -43,6 +44,7 @@ import { AudiencesService } from '../audiences/audiences.service';
 import { WorkflowsService } from '../workflows/workflows.service';
 import * as _ from 'lodash';
 import { randomUUID } from 'crypto';
+import { StepsService } from '../steps/steps.service';
 
 export type Correlation = {
   cust: CustomerDocument;
@@ -93,6 +95,8 @@ export class CustomersService {
     private readonly audiencesService: AudiencesService,
     @Inject(WorkflowsService)
     private readonly workflowsService: WorkflowsService,
+    @Inject(StepsService)
+    private readonly stepsService: StepsService,
     @InjectConnection() private readonly connection: mongoose.Connection
   ) {
     const session = randomUUID();
@@ -377,7 +381,8 @@ export class CustomersService {
     skip = 0,
     key = '',
     search = '',
-    showFreezed = false
+    showFreezed = false,
+    createdAtSortType: 'asc' | 'desc' = 'desc'
   ): Promise<{ data: CustomerDocument[]; totalPages: number }> {
     const totalPages =
       Math.ceil(
@@ -394,9 +399,9 @@ export class CustomersService {
         : {}),
       ...(showFreezed ? {} : { isFreezed: { $ne: true } }),
     })
-      .sort({ createdAt: 'desc' })
       .skip(skip)
       .limit(take <= 100 ? take : 100)
+      .sort({ _id: createdAtSortType === 'asc' ? 1 : -1 })
       .exec();
     return { data: customers, totalPages };
   }
@@ -791,7 +796,8 @@ export class CustomersService {
     checkInSegment?: string,
     searchKey?: string,
     searchValue?: string,
-    showFreezed?: boolean
+    showFreezed?: boolean,
+    createdAtSortType?: 'asc' | 'desc'
   ) {
     const { data, totalPages } = await this.findAll(
       <Account>account,
@@ -799,7 +805,8 @@ export class CustomersService {
       skip,
       searchKey,
       searchValue,
-      showFreezed
+      showFreezed,
+      createdAtSortType || 'desc'
     );
 
     const listInfo = await Promise.all(
@@ -1578,5 +1585,77 @@ export class CustomersService {
         ),
       };
     }
+  }
+
+  public async countCustomersInStep(account: Account, stepId: string) {
+    const step = await this.stepsService.findOne(account, stepId, '');
+    if (!step) throw new NotFoundException('Step not found');
+
+    let result = step.customers.length;
+
+    for (const customerJSON of step.customers) {
+      const customerId = JSON.parse(customerJSON)?.customerID;
+
+      if (!customerId) {
+        result--;
+        continue;
+      }
+
+      const customer = await this.findById(account, customerId);
+      if (!customer) {
+        result--;
+        continue;
+      }
+
+      console.log(customer);
+    }
+
+    return result;
+  }
+
+  public async bulkCountCustomersInSteps(account: Account, stepIds: string[]) {
+    const result: number[] = [];
+
+    for (const stepId of stepIds) {
+      try {
+        result.push(await this.countCustomersInStep(account, stepId));
+      } catch (e) {
+        result.push(0);
+      }
+    }
+
+    return result;
+  }
+
+  public async getCustomersInStep(
+    account: Account,
+    stepId: string,
+    take = 100,
+    skip = 0
+  ) {
+    if (take > 100) take = 100;
+
+    const step = await this.stepsService.findOne(account, stepId, '');
+    if (!step) throw new NotFoundException('Step not found');
+
+    const totalPages = Math.ceil(step.customers.length / take || 1);
+
+    const customerIds = step.customers
+      .slice(skip, skip + take)
+      .map((customer) => JSON.parse(customer).customerID);
+
+    const customers = await Promise.all(
+      customerIds.map(async (customerId) => {
+        const customer = await this.findById(account, customerId);
+        if (!customer) return undefined;
+
+        return { id: customer.id, email: customer.email };
+      })
+    );
+
+    return {
+      data: customers.filter((customer) => customer && customer.id),
+      totalPages,
+    };
   }
 }

@@ -31,6 +31,12 @@ export enum FlowViewerTab {
   CUSTOMER_SEGMENT = "Customer segment",
 }
 
+const nodesToLoadCustomerCount: NodeType[] = [
+  NodeType.WAIT_UNTIL,
+  NodeType.TIME_DELAY,
+  NodeType.TIME_WINDOW,
+];
+
 const FlowViewerv2 = () => {
   const { id } = useParams();
 
@@ -154,28 +160,58 @@ const FlowViewerv2 = () => {
         data.nodes.length !== 0 &&
         data.nodes.some((node) => node.type === NodeType.START)
       ) {
+        const stepIdsToLoadCustomerCount: string[] = [];
+
+        const updatedNodesWithStats = await Promise.all(
+          data.nodes.map(async (node) => {
+            if (
+              nodesToLoadCustomerCount.includes(node.type as NodeType) &&
+              node.data.stepId
+            ) {
+              stepIdsToLoadCustomerCount.push(node.data.stepId);
+            }
+
+            if (
+              !node.data.stepId ||
+              (node.type !== NodeType.MESSAGE && node.type !== NodeType.TRACKER)
+            )
+              return { ...node };
+
+            try {
+              const { data: stats } = await ApiService.get<Stats>({
+                url: "/steps/stats/" + node.data.stepId,
+              });
+
+              return { ...node, data: { ...node.data, stats } };
+            } catch (e) {
+              return { ...node };
+            }
+          })
+        );
+
+        try {
+          const { data: bulkCustomersCount } = await ApiService.post<number[]>({
+            url: "/customers/count/bulk",
+            options: {
+              stepIds: stepIdsToLoadCustomerCount,
+            },
+          });
+
+          for (let i = 0; i < stepIdsToLoadCustomerCount.length; i++) {
+            const node = updatedNodesWithStats.find(
+              (n) => n.data.stepId === stepIdsToLoadCustomerCount[i]
+            );
+            if (!node) continue;
+
+            node.data.customersCount = bulkCustomersCount[i];
+          }
+        } catch (e) {
+          console.error("Failed to load customer count", e);
+        }
+
         dispatch(
           loadVisualLayout({
-            nodes: await Promise.all(
-              data.nodes.map(async (node) => {
-                if (
-                  !node.data.stepId ||
-                  (node.type !== NodeType.MESSAGE &&
-                    node.type !== NodeType.TRACKER)
-                )
-                  return { ...node };
-
-                try {
-                  const { data: stats } = await ApiService.get<Stats>({
-                    url: "/steps/stats/" + node.data.stepId,
-                  });
-
-                  return { ...node, data: { ...node.data, stats } };
-                } catch (e) {
-                  return { ...node };
-                }
-              })
-            ),
+            nodes: updatedNodesWithStats,
             edges: data.edges,
           })
         );
@@ -218,7 +254,7 @@ const FlowViewerv2 = () => {
   return (
     <div className="relative w-full h-full text-[#111827] font-inter font-normal text-[14px] leading-[22px]">
       {isLoading && (
-        <div className="w-full h-full absolute top-0 left-0 bg-[#111827] bg-opacity-20 z-[9999999999999]">
+        <div className="w-full h-full absolute top-0 left-0 bg-[#111827] bg-opacity-20 z-[99]">
           <Progress />
         </div>
       )}

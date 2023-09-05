@@ -22,7 +22,7 @@ const DrawerLayout: FC<DrawerLayoutProps> = ({
         }`}
       >
         <Header crumbs={crumbs || []} />
-        <div className="h-[calc(100%-46px)] overflow-y-scroll">{children}</div>
+        <div className="h-[calc(100%-46px)] overflow-y-auto">{children}</div>
       </div>
     </div>
   );

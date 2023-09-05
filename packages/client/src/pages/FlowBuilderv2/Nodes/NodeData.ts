@@ -137,6 +137,7 @@ export interface CommonNodeData {
   stats?: Stats;
   showErrors?: boolean;
   disabled?: boolean;
+  customersCount?: number;
 }
 
 export interface MessageNodeData<T extends MessageType = MessageType>

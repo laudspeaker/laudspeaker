@@ -52,12 +52,12 @@ const ResponsiveDrawer: FC<ResponsiveDrawerProps> = ({ expandable }) => {
     <div
       className={`${
         expandable
-          ? "fixed transition-[width] [&_.notexapndable]:hover:!scale-100 w-[50px] hover:!w-[200px]"
+          ? "absolute transition-[width] [&_.notexapndable]:hover:!scale-100 w-[50px] hover:!w-[200px]"
           : "block min-w-[200px]"
-      } top-0 left-0 px-[10px] text-[14px] text-[#111827] leading-[22px] font-normal font-roboto z-[9999999999] border-collapse bg-[#F3F4F6] border-[1px] border-[#E5E7EB] h-screen`}
+      } top-0 left-0 px-[10px] text-[14px] text-[#111827] leading-[22px] font-normal font-roboto z-[999999999999] border-collapse bg-[#F3F4F6] border-[1px] border-[#E5E7EB] h-screen`}
       ref={drawerRef}
     >
-      <div className="flex flex-col gap-[8px] ">
+      <div className="flex flex-col gap-[8px]">
         <div className={`w-full h-[50px] flex items-center gap-[20px]`}>
           <div className="min-w-[30px] min-h-[30px] flex items-center justify-center">
             <img

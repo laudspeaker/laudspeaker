@@ -2,18 +2,19 @@ import React, { FC } from "react";
 import { Handle, Node, NodeProps, Position } from "reactflow";
 import { useAppSelector } from "store/hooks";
 import BranchPopover from "../Edges/components/BranchPopover";
-import { WaitUntilIcon } from "../Icons";
+import { UserIcon, WaitUntilIcon } from "../Icons";
 import { EventBranch, WaitUntilNodeData } from "./NodeData";
+
+const compatNumberFormatter = Intl.NumberFormat("en", { notation: "compact" });
 
 export const WaitUntilNode: FC<NodeProps<WaitUntilNodeData>> = ({
   isConnectable,
   selected,
-  data: { branches, disabled },
+  data: { branches, disabled, customersCount },
   id,
 }) => {
-  const { nodes, isOnboardingWaitUntilTooltipVisible } = useAppSelector(
-    (state) => state.flowBuilder
-  );
+  const { nodes, isOnboardingWaitUntilTooltipVisible, isViewMode } =
+    useAppSelector((state) => state.flowBuilder);
 
   const thisNode = nodes.find(
     (node) => node.id === id
@@ -42,8 +43,16 @@ export const WaitUntilNode: FC<NodeProps<WaitUntilNodeData>> = ({
       {branches.length === 1 ? (
         <BranchPopover branch={branches[0]} node={thisNode}>
           <div className="p-[16px]">
-            <div className="font-semibold text-[16px] leading-[24px] mb-[2px]">
-              Wait until
+            <div className="flex justify-between font-semibold text-[16px] leading-[24px] mb-[2px]">
+              <div>Wait until</div>
+              {isViewMode && (
+                <div className="h-fit px-[4px] py-[2px] flex items-center gap-[4px] bg-[#F3F4F6] rounded-sm">
+                  <UserIcon />
+                  <div className="text-[10px] leading-normal">
+                    {compatNumberFormatter.format(customersCount || 0)}
+                  </div>
+                </div>
+              )}
             </div>
             <div className="font-normal text-[14px] leading-[22px] text-[#4B5563]">
               {!branches.length ||
