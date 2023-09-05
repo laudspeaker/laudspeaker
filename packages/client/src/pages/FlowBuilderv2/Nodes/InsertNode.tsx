@@ -2,10 +2,16 @@ import React, { FC } from "react";
 import { Handle, NodeProps, Position } from "reactflow";
 import { NodeData } from "./NodeData";
 
-export const InsertNode: FC<NodeProps<NodeData>> = ({ isConnectable, id }) => {
+export const InsertNode: FC<NodeProps<NodeData>> = ({
+  isConnectable,
+  id,
+  data: { disabled },
+}) => {
   return (
     <div
-      className={`w-[260px] h-[80px] rounded-[8px] border-[2px] border-dashed flex justify-center items-center !border-[#6366F1] !bg-[#E0E7FF]`}
+      className={`w-[260px] h-[80px] rounded-[8px] border-[2px] border-dashed flex justify-center items-center !border-[#6366F1] !bg-[#E0E7FF] ${
+        disabled ? "opacity-50 cursor-not-allowed" : ""
+      }`}
       onDragOver={(e) => {
         e.stopPropagation();
         e.preventDefault();

@@ -83,8 +83,8 @@ const FlowViewerSidePanel: FC<FlowViewerSidePanelProps> = ({ className }) => {
     ),
     [NodeType.TRACKER]: (
       <>
-        {nodeData.type === NodeType.TRACKER && (
-          <TrackerViewer nodeData={nodeData} />
+        {nodeData.type === NodeType.TRACKER && selectedNode && (
+          <TrackerViewer nodeData={nodeData} id={selectedNode.id} />
         )}
       </>
     ),

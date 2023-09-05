@@ -4,11 +4,17 @@ import {
   TrackerNodeData,
   TrackerVisibility,
 } from "pages/FlowBuilderv2/Nodes/NodeData";
-import { trackerStatsToShow } from "pages/FlowBuilderv2/Nodes/TrackerNode";
+import {
+  findFirstTrackerAbove,
+  trackerStatsToShow,
+} from "pages/FlowBuilderv2/Nodes/TrackerNode";
 import React, { FC, ReactNode, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { SidePanelComponentProps } from "../FlowViewerSidePanel";
 import ApiService from "services/api.service";
+import { useAppSelector } from "store/hooks";
+import { Node } from "reactflow";
+import Tooltip from "components/Elements/Tooltip";
 
 enum TrackerViewerTab {
   METRICS,
@@ -17,11 +23,15 @@ enum TrackerViewerTab {
 
 const ITEMS_PER_PAGE = 5;
 
-const TrackerViewer: FC<SidePanelComponentProps<TrackerNodeData>> = ({
-  nodeData,
-}) => {
+const TrackerViewer: FC<
+  SidePanelComponentProps<TrackerNodeData> & { id: string }
+> = ({ nodeData, id }) => {
+  const { nodes, edges } = useAppSelector((state) => state.flowBuilder);
+
   const navigate = useNavigate();
 
+  const [firstTrackerNodeAbove, setFirstTrackerNodeAbove] =
+    useState<Node<TrackerNodeData>>();
   const [viewerTab, setViewerTab] = useState(TrackerViewerTab.METRICS);
   const [pickedStat, setPickedStat] = useState<keyof Stats | undefined>(
     trackerStatsToShow?.[0].key
@@ -56,6 +66,21 @@ const TrackerViewer: FC<SidePanelComponentProps<TrackerNodeData>> = ({
   useEffect(() => {
     loadStatCustomers();
   }, [pickedStat]);
+
+  const thisNode = nodes.find((node) => node.id === id);
+
+  useEffect(() => {
+    setFirstTrackerNodeAbove(
+      thisNode
+        ? findFirstTrackerAbove(
+            thisNode as Node<TrackerNodeData>,
+            thisNode.data as TrackerNodeData,
+            nodes,
+            edges
+          )
+        : undefined
+    );
+  }, [thisNode, nodes, edges]);
 
   const viewerTabToComponentMap: Record<TrackerViewerTab, ReactNode> = {
     [TrackerViewerTab.METRICS]: (
@@ -198,7 +223,21 @@ const TrackerViewer: FC<SidePanelComponentProps<TrackerNodeData>> = ({
                   ]
                 : nodeData.tracker.fields.map((field) => [
                     <div className="flex flex-col gap-[2px] min-h-[22px]">
-                      <div>{field.name}</div>
+                      <div className="flex gap-[5px] items-center">
+                        {field.value !==
+                          firstTrackerNodeAbove?.data.tracker?.fields.find(
+                            (f) => f.name === field.name
+                          )?.value && (
+                          <Tooltip
+                            placement="bottom-start"
+                            className="bg-[#111827] rounded-none p-[5px] text-white"
+                            content="Value changed compared to previous occurrence"
+                          >
+                            <div className="w-[8px] h-[8px] bg-[#F43F5E] rounded-[100%]" />
+                          </Tooltip>
+                        )}
+                        <div>{field.name}</div>
+                      </div>
                       <div className="text-[#4B5563]">{field.type}</div>
                     </div>,
                     <div className="min-h-[22px]">{field.value}</div>,

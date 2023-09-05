@@ -28,7 +28,9 @@ interface FlowBuilderDrawerProps {
 const FlowBuilderDrawer: FC<FlowBuilderDrawerProps> = ({ fixtures }) => {
   const fixturesToRender = fixtures || defaultFixtures;
 
-  const { isOnboarding } = useAppSelector((state) => state.flowBuilder);
+  const { isOnboarding, isDrawerDisabled } = useAppSelector(
+    (state) => state.flowBuilder
+  );
 
   const dispatch = useAppDispatch();
 
@@ -64,14 +66,14 @@ const FlowBuilderDrawer: FC<FlowBuilderDrawerProps> = ({ fixtures }) => {
               {group.children.map((child, i) => (
                 <div
                   className={`w-full h-[44px] px-[15px] py-[10px] flex gap-[10px] border-[1px] border-[#E5E7EB]  rounded-[4px] select-none items-end cursor-grab ${
-                    child.disabled && !isOnboarding
+                    (child.disabled || isDrawerDisabled) && !isOnboarding
                       ? "grayscale cursor-not-allowed !text-[#9CA3AF] !bg-[#F3F4F6]"
                       : ""
                   }`}
                   onDragStart={(e) => onDragStart(e, child.id, child.targetId)}
                   onDragEnd={onDragEnd}
                   key={i}
-                  draggable={!child.disabled}
+                  draggable={!child.disabled && !isDrawerDisabled}
                 >
                   <div className="text-[#6366F1]">{child.icon}</div>
                   <div className="font-segoe font-normal text-[14px] leading-[22px]">

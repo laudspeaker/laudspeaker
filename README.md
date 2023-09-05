@@ -14,8 +14,7 @@
   
 </p>
 
-
-## Laudspeaker - Open Source User Onboarding, Product Adoption and Messaging Platform. Alternative to Appcues / Pendo / Braze / One Signal / Customer io 
+## Laudspeaker - Open Source User Onboarding, Product Adoption and Messaging Platform. Alternative to Appcues / Pendo / Braze / One Signal / Customer io
 
 <img width="1708" alt="UI2" src="https://github.com/laudspeaker/laudspeaker/assets/7728266/4c3c2917-6899-48f7-bcbe-a4bd92049c24">
 
