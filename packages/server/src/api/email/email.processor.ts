@@ -192,7 +192,7 @@ export class MessageProcessor extends WorkerHost {
       let msg: any;
       switch (job.data.eventProvider) {
         case 'sendgrid':
-          console.log('Inside of message sending');
+          console.log('Inside of message sending ');
           const sg = new MailService();
           sg.setApiKey(job.data.key);
           const sendgridMessage = await sg.send({
