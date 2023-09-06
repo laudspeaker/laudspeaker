@@ -221,9 +221,11 @@ export class AccountsService extends BaseJwtHelper {
         });
         verificationKey = body.public_key;
       } catch (e) {
-        throw new BadRequestException(
-          'There is something wrong with your sendgrid account. Check if your email is verified'
-        );
+        this.error(e, this.update.name, session, oldUser.email);
+        throw e;
+        // throw new BadRequestException(
+        //   'There is something wrong with your sendgrid account. Check if your email is verified'
+        // );
       }
     }
 
