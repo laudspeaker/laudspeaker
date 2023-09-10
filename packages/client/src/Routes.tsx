@@ -61,6 +61,7 @@ import CustomModalSettings from "pages/CustomModalSettings";
 import TrackerTemplateTable from "pages/TrackerTemplateTable";
 import { LaudspeakerProvider } from "@laudspeaker/react";
 import AppConfig from "constants/app";
+import Personv2 from "pages/Personv2";
 
 interface IProtected {
   children: ReactElement;
@@ -354,7 +355,7 @@ const RouteComponent: React.FC = () => {
             <Protected>
               <VerificationProtected>
                 <DrawerLayout>
-                  <Person />
+                  <Personv2 />
                 </DrawerLayout>
               </VerificationProtected>
             </Protected>
