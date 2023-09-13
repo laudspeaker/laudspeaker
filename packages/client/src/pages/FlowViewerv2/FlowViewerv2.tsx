@@ -4,8 +4,9 @@ import FlowEditor, { NodeType } from "pages/FlowBuilderv2/FlowEditor";
 import { NodeData, Stats } from "pages/FlowBuilderv2/Nodes/NodeData";
 import { JourneyStatus } from "pages/JourneyTablev2/JourneyTablev2";
 import React, { ReactNode, useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { useParams } from "react-router-dom";
-import { Edge, Node } from "reactflow";
+import { applyNodeChanges, Edge, Node, NodeChange } from "reactflow";
 import {
   JourneyType,
   loadVisualLayout,
@@ -19,6 +20,7 @@ import {
   setFlowStatus,
   setIsViewMode,
   setJourneyType,
+  setNodes,
   setSegmentsSettings,
 } from "reducers/flow-builder.reducer";
 import ApiService from "services/api.service";
@@ -39,15 +41,36 @@ const nodesToLoadCustomerCount: NodeType[] = [
 
 const FlowViewerv2 = () => {
   const { id } = useParams();
-
+  const { state: locationState } = useLocation();
   const [isLoading, setIsLoading] = useState(true);
   const [currentTab, setCurrentTab] = useState(FlowViewerTab.JOURNEY);
 
   const dispatch = useAppDispatch();
 
-  const { journeyType, segments: segmentsSettings } = useAppSelector(
-    (state) => state.flowBuilder
-  );
+  const {
+    journeyType,
+    segments: segmentsSettings,
+    nodes,
+  } = useAppSelector((state) => state.flowBuilder);
+
+  useEffect(() => {
+    if (locationState?.stepId && nodes.length > 0) {
+      const searchedNode = nodes.find(
+        (el) => el.data.stepId === locationState?.stepId
+      );
+
+      if (!searchedNode) return;
+      dispatch(
+        setNodes(
+          nodes.map((node) => ({
+            ...node,
+            selected: node.data.stepId === locationState.stepId ? true : false,
+          }))
+        )
+      );
+      locationState.stepId = null;
+    }
+  }, [nodes]);
 
   const tabs: Record<FlowViewerTab, ReactNode> = {
     [FlowViewerTab.JOURNEY]: (

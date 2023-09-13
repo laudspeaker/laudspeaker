@@ -147,6 +147,7 @@ const MessageViewer: FC<SidePanelComponentProps<MessageNodeData>> = ({
 
                 {new Array(totalPages).fill(0, 0, totalPages).map((_, i) => (
                   <div
+                    key={i}
                     className={`min-w-[24px] h-[24px] flex justify-center items-center rounded-[2px] cursor-pointer select-none ${
                       i + 1 === currentPage
                         ? "border-[1px] border-[#6366F1] text-[#6366F1]"

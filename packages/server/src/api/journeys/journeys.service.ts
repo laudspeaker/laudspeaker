@@ -475,7 +475,14 @@ export class JourneysService {
           );
           await this.CustomerModel.updateOne(
             { _id: customer._id },
-            { $addToSet: { journeys: journey.id } }
+            {
+              $addToSet: {
+                journeys: journey.id,
+                journeyEnrollmentsDates: {
+                  [journey.id]: new Date().toUTCString(),
+                },
+              },
+            }
           )
             .session(clientSession)
             .exec();
@@ -841,8 +848,16 @@ export class JourneysService {
         {
           _id: { $in: unenrolledCustomers.map((customer) => customer.id) },
         },
-        { $addToSet: { journeys: journeyID } }
+        {
+          $addToSet: {
+            journeys: journeyID,
+          },
+          $set: {
+            [`journeyEnrollmentsDates.${journeyID}`]: new Date().toUTCString(),
+          },
+        }
       )
+
         .session(transactionSession)
         .exec();
 

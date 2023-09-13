@@ -11,14 +11,29 @@ import { toast } from "react-toastify";
 import { confirmAlert } from "react-confirm-alert";
 import { ApiConfig } from "../../constants";
 import { useNavigate } from "react-router-dom";
+import PeopleInJourneyTable from "components/PeopleInJourneyTable";
+import Scrollbars from "react-custom-scrollbars-2";
+import { format } from "date-fns";
+import { capitalize } from "lodash";
+import { ChevronDoubleDownIcon } from "@heroicons/react/20/solid";
 
-export interface EventsFetchData {
-  id: string;
-  name: string;
+export interface EventObject {
   event: string;
+  stepId: string;
   createdAt: string;
-  audname: string;
-  audName: string;
+  templateId: string;
+  journeyName: string;
+  templateName: string;
+  templateType: string;
+  eventProvider: string;
+}
+
+interface CustomerEventsResponse {
+  data: EventObject[];
+  page: number;
+  pageSize: number;
+  totalPage: number;
+  totalCount: number;
 }
 
 enum PersonTab {
@@ -38,12 +53,38 @@ const Personv2 = () => {
   const [isAddingAttribute, setIsAddingAttribute] = useState(false);
   const [newAttributeKey, setNewAttributeKey] = useState("");
   const [newAttributeValue, setNewAttributeValue] = useState("");
+  const [timeLine, setTimeLine] = useState<CustomerEventsResponse | undefined>(
+    undefined
+  );
+  const [eventsData, setEventsData] = useState<EventObject[]>([]);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(9);
 
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingEvents, setIsLoadingEvents] = useState(true);
   const [isFirstRenderSave, setIsFirstRenderSave] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
   const [currentTab, setCurrentTab] = useState(PersonTab.OVERVIEW);
+
+  const uploadEvents = async () => {
+    setIsLoadingEvents(true);
+    try {
+      const { data: timelineData } =
+        await ApiService.get<CustomerEventsResponse>({
+          url: `/customers/${id}/events?page=${page}&pageSize=${pageSize}`,
+        });
+      setEventsData((prev) => [...prev, ...timelineData.data]);
+      setTimeLine(timelineData);
+    } catch (error) {
+      toast.error("Error loading timeline");
+    }
+    setIsLoadingEvents(false);
+  };
+
+  useEffect(() => {
+    uploadEvents();
+  }, [page]);
 
   useEffect(() => {
     (async () => {
@@ -51,32 +92,9 @@ const Personv2 = () => {
         const { data: personData } = await ApiService.get({
           url: "/customers/" + id,
         });
-        // if (personData.createdAt) {
-        //   const [firstItem, ...items] = timeline;
-        //   const creationDate = new Date(personData.createdAt);
-        //   firstItem.datetime = creationDate.toUTCString();
-        //   firstItem.date = creationDate.toLocaleDateString();
-        //   setTimeline([firstItem, ...items]);
-        // }
+
         setPersonInfo(personData);
-
-        // const { data: eventsData } = await ApiService.get<EventsFetchData[]>({
-        //   url: `/customers/${id}/events`,
-        // });
-
-        // TODO: Fix with timeline fix
-        // setTimeline([
-        //   ...timeline,
-        //   ...eventsData.map((item) => ({
-        //     id: item.id + item.name + item.audName + item.event,
-        //     type: eventTypes.completed,
-        //     content: "Email " + item.event,
-        //     datetime: item.createdAt,
-        //     name: item.name,
-        //     audName: item.audname,
-        //     date: new Date(item.createdAt).toLocaleString(),
-        //   })),
-        // ]);
+        uploadEvents();
       } catch (e) {
         console.error(e);
       } finally {
@@ -190,140 +208,212 @@ const Personv2 = () => {
         </button>
       </div>
       <div className="w-full h-[calc(100vh-188px)] p-[20px] flex gap-[20px]">
-        <div className="w-full h-fit bg-white rounded-[8px] p-[20px] flex flex-col gap-[20px]">
-          <div className="w-full flex justify-between">
-            <div className="text-[20px] font-semibold leading-[28px]">
-              {isEditing ? "Edit attributes" : "Attributes"}
-            </div>
-            {!isEditing && (
-              <Button
-                type={ButtonType.SECONDARY}
-                onClick={() => setIsEditing(true)}
+        {currentTab === PersonTab.OVERVIEW ? (
+          <>
+            <div className="w-full h-fit bg-white rounded-[8px] p-[20px] flex flex-col gap-[20px]">
+              <div className="w-full flex justify-between">
+                <div className="text-[20px] font-semibold leading-[28px]">
+                  {isEditing ? "Edit attributes" : "Attributes"}
+                </div>
+                {!isEditing && (
+                  <Button
+                    type={ButtonType.SECONDARY}
+                    onClick={() => setIsEditing(true)}
+                  >
+                    Edit
+                  </Button>
+                )}
+              </div>
+              <div
+                className={`w-full grid grid-cols-2 ${
+                  isEditing ? "gap-y-[20px] gap-x-[60px]" : "gap-y-[10px]"
+                }`}
               >
-                Edit
-              </Button>
-            )}
-          </div>
-          <div
-            className={`w-full grid grid-cols-2 ${
-              isEditing ? "gap-y-[20px] gap-x-[60px]" : "gap-y-[10px]"
-            }`}
-          >
-            {Object.keys(personInfoToShow).map((key) =>
-              isEditing ? (
-                <div className="flex flex-col gap-[10px]" key={key}>
-                  <div className="text-[#4B5563]">{key}</div>
-                  <div className="flex gap-[16px] items-center">
-                    <Input
-                      className="w-full"
-                      wrapperClassName="w-full"
-                      value={personInfoToShow[key]}
-                      onChange={(val) =>
-                        setEditingPersonInfo({
-                          ...editingPersonInfo,
-                          [key]: val,
-                        })
-                      }
-                    />
-                    <button
-                      onClick={() => {
-                        const newEditingPersonInfo = { ...editingPersonInfo };
-                        delete newEditingPersonInfo[key];
-                        setEditingPersonInfo(newEditingPersonInfo);
-                      }}
-                    >
-                      <TrashIcon />
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div className="" key={key}>
-                  <div>{key}</div>
-                  <div>
-                    {typeof personInfoToShow[key] === "object"
-                      ? JSON.stringify(personInfoToShow[key])
-                      : personInfoToShow[key]}
-                  </div>
-                </div>
-              )
-            )}
+                {Object.keys(personInfoToShow).map((key) =>
+                  isEditing ? (
+                    <div className="flex flex-col gap-[10px]" key={key}>
+                      <div className="text-[#4B5563]">{key}</div>
+                      <div className="flex gap-[16px] items-center">
+                        <Input
+                          className="w-full"
+                          wrapperClassName="w-full"
+                          value={personInfoToShow[key]}
+                          onChange={(val) =>
+                            setEditingPersonInfo({
+                              ...editingPersonInfo,
+                              [key]: val,
+                            })
+                          }
+                        />
+                        <button
+                          onClick={() => {
+                            const newEditingPersonInfo = {
+                              ...editingPersonInfo,
+                            };
+                            delete newEditingPersonInfo[key];
+                            setEditingPersonInfo(newEditingPersonInfo);
+                          }}
+                        >
+                          <TrashIcon />
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="" key={key}>
+                      <div>{key}</div>
+                      <div>
+                        {typeof personInfoToShow[key] === "object"
+                          ? JSON.stringify(personInfoToShow[key])
+                          : personInfoToShow[key]}
+                      </div>
+                    </div>
+                  )
+                )}
 
-            {isEditing &&
-              (isAddingAttribute ? (
-                <div className="px-[20px] py-[14px] flex flex-col gap-[20px] bg-[#F3F4F6] rounded-[4px] w-full">
-                  <div className="flex gap-[20px]">
-                    <Input
-                      className="w-full"
-                      wrapperClassName="w-full"
-                      value={newAttributeKey}
-                      onChange={(val) => setNewAttributeKey(val)}
-                      placeholder="Attribute"
-                    />
-                    <Input
-                      className="w-full"
-                      wrapperClassName="w-full"
-                      value={newAttributeValue}
-                      onChange={(val) => setNewAttributeValue(val)}
-                      placeholder="value"
-                    />
-                  </div>
+                {isEditing &&
+                  (isAddingAttribute ? (
+                    <div className="px-[20px] py-[14px] flex flex-col gap-[20px] bg-[#F3F4F6] rounded-[4px] w-full">
+                      <div className="flex gap-[20px]">
+                        <Input
+                          className="w-full"
+                          wrapperClassName="w-full"
+                          value={newAttributeKey}
+                          onChange={(val) => setNewAttributeKey(val)}
+                          placeholder="Attribute"
+                        />
+                        <Input
+                          className="w-full"
+                          wrapperClassName="w-full"
+                          value={newAttributeValue}
+                          onChange={(val) => setNewAttributeValue(val)}
+                          placeholder="value"
+                        />
+                      </div>
+                      <div className="flex gap-[10px]">
+                        <Button
+                          type={ButtonType.PRIMARY}
+                          onClick={() => {
+                            setEditingPersonInfo({
+                              ...editingPersonInfo,
+                              [newAttributeKey]: newAttributeValue,
+                            });
+                            setIsAddingAttribute(false);
+                          }}
+                        >
+                          Save
+                        </Button>
+                        <Button
+                          type={ButtonType.SECONDARY}
+                          onClick={() => setIsAddingAttribute(false)}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <Button
+                      className="w-fit h-fit"
+                      type={ButtonType.SECONDARY}
+                      onClick={() => setIsAddingAttribute(true)}
+                    >
+                      Add an attribute
+                    </Button>
+                  ))}
+              </div>
+
+              {isEditing && (
+                <>
+                  <div className="h-[1px] w-full bg-[#E5E7EB]" />
                   <div className="flex gap-[10px]">
                     <Button
                       type={ButtonType.PRIMARY}
                       onClick={() => {
-                        setEditingPersonInfo({
-                          ...editingPersonInfo,
-                          [newAttributeKey]: newAttributeValue,
-                        });
-                        setIsAddingAttribute(false);
+                        setPersonInfo(editingPersonInfo);
+                        setIsEditing(false);
                       }}
                     >
                       Save
                     </Button>
                     <Button
                       type={ButtonType.SECONDARY}
-                      onClick={() => setIsAddingAttribute(false)}
+                      onClick={() => setIsEditing(false)}
                     >
                       Cancel
                     </Button>
                   </div>
-                </div>
-              ) : (
-                <Button
-                  className="w-fit h-fit"
-                  type={ButtonType.SECONDARY}
-                  onClick={() => setIsAddingAttribute(true)}
-                >
-                  Add an attribute
-                </Button>
-              ))}
-          </div>
-
-          {isEditing && (
-            <>
-              <div className="h-[1px] w-full bg-[#E5E7EB]" />
-              <div className="flex gap-[10px]">
-                <Button
-                  type={ButtonType.PRIMARY}
-                  onClick={() => {
-                    setPersonInfo(editingPersonInfo);
-                    setIsEditing(false);
-                  }}
-                >
-                  Save
-                </Button>
-                <Button
-                  type={ButtonType.SECONDARY}
-                  onClick={() => setIsEditing(false)}
-                >
-                  Cancel
-                </Button>
+                </>
+              )}
+            </div>
+            {!isEditing && eventsData.length > 0 && (
+              <div className="w-[420px] h-full bg-white rounded-[8px] p-[20px] flex flex-col gap-[20px]">
+                <span className="text-[#111827] font-inter text-[20px] leading-[28px] font-semibold">
+                  Timeline
+                </span>
+                <Scrollbars>
+                  <div className="flex flex-col w-full">
+                    {eventsData.map((el, i) => (
+                      <div className="w-full h-[74px] flex">
+                        <div className="w-[22px] mr-[10px] relative">
+                          <div className="w-[2px] bg-[#0000000F] h-[6px] left-[10px] absolute" />
+                          <div className="w-[10px] absolute top-[6px] left-[6px] h-[10px] rounded-full border-[2px] border-[#6366F1]" />
+                          {(i + 1 !== eventsData.length ||
+                            timeLine?.totalPage === timeLine?.page) && (
+                            <div className="w-[2px] bg-[#0000000F] h-[58px] top-[16px] left-[10px] top absolute" />
+                          )}
+                        </div>
+                        <div className="flex flex-col text-[#111827]">
+                          <div className="max-w-[230px] text-[16px] leading-[24px] font-semibold font-inter text-ellipsis overflow-hidden whitespace-nowrap">
+                            {capitalize(el.event)} {el.templateType}-
+                            {el.templateName}
+                          </div>
+                          <div className="max-w-[230px] text-[14px] leading-[22px] font-normal font-inter text-ellipsis overflow-hidden whitespace-nowrap">
+                            Journey: {el.journeyName}
+                          </div>
+                          <div className="max-w-[230px] text-[12px] leading-[20px] font-normal font-inter text-ellipsis overflow-hidden whitespace-nowrap">
+                            {format(new Date(el.createdAt), "dd/MM/yyyy HH:mm")}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                    {timeLine?.totalPage !== timeLine?.page && (
+                      <button
+                        className="flex w-full justify-center items-center text-[#6366F1] font-inter mb-[6px] font-semibold disabled:grayscale disabled:opacity-70"
+                        onClick={() => setPage((prev) => prev + 1)}
+                        disabled={isLoadingEvents}
+                      >
+                        <ChevronDoubleDownIcon className="w-[16px] mx-[6px] animate-bounce" />
+                        See more
+                        <ChevronDoubleDownIcon className="w-[16px] mx-[6px] animate-bounce" />
+                      </button>
+                    )}
+                    <div className="w-full h-[50px] flex">
+                      <div className="w-[22px] mr-[10px] relative">
+                        {timeLine?.totalPage === timeLine?.page && (
+                          <div className="w-[2px] bg-[#0000000F] h-[6px] left-[10px] absolute" />
+                        )}
+                        <div className="w-[10px] absolute top-[6px] left-[6px] h-[10px] rounded-full border-[2px] border-[#6366F1] bg-[#6366F1]" />
+                      </div>
+                      <div className="flex flex-col text-[#111827]">
+                        <div className="max-w-[230px] text-[16px] leading-[24px] font-semibold font-inter text-ellipsis overflow-hidden whitespace-nowrap">
+                          Created in Laudspeaker
+                        </div>
+                        <div className="max-w-[230px] text-[12px] leading-[20px] font-normal font-inter text-ellipsis overflow-hidden whitespace-nowrap">
+                          {format(
+                            new Date(personInfo.createdAt),
+                            "dd/MM/yyyy HH:mm"
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </Scrollbars>
               </div>
-            </>
-          )}
-        </div>
-        {!isEditing && (
-          <div className="w-[420px] h-full bg-white rounded-[8px] p-[20px] flex flex-col gap-[20px]"></div>
+            )}
+          </>
+        ) : (
+          <div className="w-full h-full bg-white rounded-[8px] p-[20px]">
+            <PeopleInJourneyTable />
+          </div>
         )}
       </div>
     </div>

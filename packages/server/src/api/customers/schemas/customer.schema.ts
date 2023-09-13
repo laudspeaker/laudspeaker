@@ -3,6 +3,8 @@ import { Document } from 'mongoose';
 
 export type CustomerDocument = Customer & Document;
 
+export type JourneyEnrollmentsDates = Record<string, Date>;
+
 @Schema({ strict: false })
 export class Customer {
   @Prop()
@@ -19,6 +21,9 @@ export class Customer {
 
   @Prop()
   journeys: string[];
+
+  @Prop(raw({}))
+  journeyEnrollmentsDates: JourneyEnrollmentsDates;
 
   @Prop()
   ownerId: string;
