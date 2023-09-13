@@ -805,6 +805,7 @@ export class JourneysService {
         session,
         account.email
       );
+
       for (let i = 0; i < steps.length; i++) {
         graph.setNode(steps[i].id);
         if (
