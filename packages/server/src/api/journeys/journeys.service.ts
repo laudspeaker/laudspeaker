@@ -798,6 +798,7 @@ export class JourneysService {
         journey.id,
         queryRunner
       );
+
       this.debug(
         `${JSON.stringify({ steps: steps })}`,
         this.start.name,
@@ -857,7 +858,6 @@ export class JourneysService {
           },
         }
       )
-
         .session(transactionSession)
         .exec();
 
