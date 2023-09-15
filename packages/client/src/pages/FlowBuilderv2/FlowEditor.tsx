@@ -128,7 +128,8 @@ const FlowEditor: FC<FlowEditorProps> = ({ className, isViewMode }) => {
         data: {
           type: NodeType.JUMP_TO,
           targetId: selectedNode.id,
-          stepId: selectedNode.data.stepId,
+          stepId: nodes.find((node) => node.id === jumpToTargettingNode)?.data
+            .stepId,
         } as JumpToNodeData,
       })
     );
