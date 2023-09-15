@@ -22,7 +22,10 @@ export class Customer {
   @Prop()
   journeys: string[];
 
-  @Prop(raw({}))
+  @Prop({
+    type: Object,
+    obj: {},
+  })
   journeyEnrollmentsDates: JourneyEnrollmentsDates;
 
   @Prop()

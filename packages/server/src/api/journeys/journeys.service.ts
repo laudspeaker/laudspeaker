@@ -478,6 +478,8 @@ export class JourneysService {
             {
               $addToSet: {
                 journeys: journey.id,
+              },
+              $set: {
                 journeyEnrollmentsDates: {
                   [journey.id]: new Date().toUTCString(),
                 },
