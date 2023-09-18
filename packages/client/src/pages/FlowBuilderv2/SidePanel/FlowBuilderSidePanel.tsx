@@ -276,6 +276,7 @@ const FlowBuilderSidePanel: FC<FlowBuilderSidePanelProps> = ({ className }) => {
         </div>
         <div className="absolute bottom-0 w-full min-h-[60px] h-[60px] py-[14px] px-[20px] border-t-[1px] flex justify-between items-center">
           <Button
+            id="delete-node"
             type={ButtonType.LINK}
             onClick={() => setIsDeleteModalOpen(true)}
           >
@@ -284,10 +285,18 @@ const FlowBuilderSidePanel: FC<FlowBuilderSidePanelProps> = ({ className }) => {
 
           {selectedNode?.type !== NodeType.EXIT && (
             <div className="flex justify-end items-center gap-[10px]">
-              <Button type={ButtonType.SECONDARY} onClick={onCancel}>
+              <Button
+                id="cancel-saving-node-data"
+                type={ButtonType.SECONDARY}
+                onClick={onCancel}
+              >
                 Cancel
               </Button>
-              <Button type={ButtonType.PRIMARY} onClick={onSave}>
+              <Button
+                id="save-node-data"
+                type={ButtonType.PRIMARY}
+                onClick={onSave}
+              >
                 Save
               </Button>
             </div>

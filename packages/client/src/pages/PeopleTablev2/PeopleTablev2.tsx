@@ -156,6 +156,7 @@ const PeopleTablev2 = () => {
           <Button
             type={ButtonType.PRIMARY}
             onClick={() => setIsNamePersonModalOpen(true)}
+            id="create-customer-button"
           >
             Create customer
           </Button>

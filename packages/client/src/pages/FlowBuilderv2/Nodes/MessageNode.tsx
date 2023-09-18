@@ -118,7 +118,7 @@ export const MessageNode: FC<NodeProps<MessageNodeData>> = ({
 
   return (
     <div
-      className={`${isViewMode ? "w-[300px]" : "w-[260px]"} ${
+      className={`message-node ${isViewMode ? "w-[300px]" : "w-[260px]"} ${
         isViewMode && stats && nodeFixtures.statsToShow
           ? "h-[140px]"
           : "h-[80px]"
@@ -179,7 +179,7 @@ export const MessageNode: FC<NodeProps<MessageNodeData>> = ({
           {nodeFixtures.statsToShow.map((stat, i) => (
             <div
               key={i}
-              className={`h-[46px] w-full flex flex-col gap-[4px] ${
+              className={`${stat.key} h-[46px] w-full flex flex-col gap-[4px] ${
                 i !== (nodeFixtures.statsToShow?.length || 1) - 1
                   ? "border-r-[1px] border-[#E5E7EB]"
                   : ""
@@ -188,7 +188,7 @@ export const MessageNode: FC<NodeProps<MessageNodeData>> = ({
               <div className="text-[12px] leading-[20px] text-[#4B5563]">
                 {stat.name}
               </div>
-              <div className="font-semibold text-[14px] leading-[22px]">
+              <div className="stat-result font-semibold text-[14px] leading-[22px]">
                 {stat.renderLabel(stats[stat.key] || 0)}
               </div>
             </div>

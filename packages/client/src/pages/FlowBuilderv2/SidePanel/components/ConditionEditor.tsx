@@ -137,7 +137,7 @@ const ConditionEditor: FC<ConditionEditorProps> = ({
   }
 
   return (
-    <div className="flex flex-col gap-[10px] p-[10px] bg-[#F3F4F6]">
+    <div className="condition-editor flex flex-col gap-[10px] p-[10px] bg-[#F3F4F6]">
       <div className="font-inter font-semibold text-[14px] leading-[22px]">
         Event
       </div>
@@ -217,31 +217,40 @@ const ConditionEditor: FC<ConditionEditorProps> = ({
                 </div>
                 {statement.type === StatementType.PROPERTY ? (
                   <div className="flex flex-col gap-[10px]">
-                    <FlowBuilderAutoComplete
-                      initialValue={statement.key}
-                      value={statement.key}
-                      includedItems={{
-                        type: "getter",
-                        items: possibleKeys.map((item) => item.key),
-                      }}
-                      retrieveLabel={(item) => item}
-                      onQueryChange={(query) => {
-                        condition.statements[i] = { ...statement, key: query };
-                        setKeysQuery(query);
-                        setCondition({ ...condition });
-                      }}
-                      onSelect={(value) => {
-                        condition.statements[i] = { ...statement, key: value };
-                        condition.statements[i].valueType =
-                          possibleKeys.find((item) => item.key === value)
-                            ?.type || condition.statements[i].valueType;
+                    <div className="property-name w-full">
+                      <FlowBuilderAutoComplete
+                        initialValue={statement.key}
+                        value={statement.key}
+                        includedItems={{
+                          type: "getter",
+                          items: possibleKeys.map((item) => item.key),
+                        }}
+                        retrieveLabel={(item) => item}
+                        onQueryChange={(query) => {
+                          condition.statements[i] = {
+                            ...statement,
+                            key: query,
+                          };
+                          setKeysQuery(query);
+                          setCondition({ ...condition });
+                        }}
+                        onSelect={(value) => {
+                          condition.statements[i] = {
+                            ...statement,
+                            key: value,
+                          };
+                          condition.statements[i].valueType =
+                            possibleKeys.find((item) => item.key === value)
+                              ?.type || condition.statements[i].valueType;
 
-                        setKeysQuery(value);
-                        setCondition({ ...condition });
-                      }}
-                      getKey={(value) => value}
-                      placeholder="Property name"
-                    />
+                          setKeysQuery(value);
+                          setCondition({ ...condition });
+                        }}
+                        getKey={(value) => value}
+                        placeholder="Property name"
+                      />
+                    </div>
+
                     {showErrors &&
                       errors[i].some(
                         (statementError) =>
@@ -321,7 +330,7 @@ const ConditionEditor: FC<ConditionEditorProps> = ({
                         .value as ComparisonType;
                       setCondition({ ...condition });
                     }}
-                    className="w-[145px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB]"
+                    className="comparison-type-select w-[145px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB]"
                   >
                     {valueTypeToComparisonTypesMap[statement.valueType].map(
                       (comparisonType, j) => (
@@ -338,7 +347,7 @@ const ConditionEditor: FC<ConditionEditorProps> = ({
                         .value as StatementValueType;
                       setCondition({ ...condition });
                     }}
-                    className="w-[145px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB]"
+                    className="value-type-select w-[145px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB]"
                   >
                     {Object.values(StatementValueType).map((valueType, j) => (
                       <option key={j} value={valueType}>
@@ -348,14 +357,16 @@ const ConditionEditor: FC<ConditionEditorProps> = ({
                   </select>
                 </div>
                 <div className="flex flex-col gap-[10px]">
-                  <FlowBuilderDynamicInput
-                    type={statement.valueType}
-                    value={statement.value}
-                    onChange={(value) => {
-                      condition.statements[i].value = value;
-                      setCondition({ ...condition });
-                    }}
-                  />
+                  <div className="dynamic-input w-full">
+                    <FlowBuilderDynamicInput
+                      type={statement.valueType}
+                      value={statement.value}
+                      onChange={(value) => {
+                        condition.statements[i].value = value;
+                        setCondition({ ...condition });
+                      }}
+                    />
+                  </div>
 
                   {showErrors &&
                     errors[i].some(
@@ -428,10 +439,15 @@ const ConditionEditor: FC<ConditionEditorProps> = ({
 
       <div className="flex justify-between items-center">
         <div className="flex gap-[10px]">
-          <Button type={ButtonType.SECONDARY} onClick={onCancel}>
+          <Button
+            className="cancel-condition"
+            type={ButtonType.SECONDARY}
+            onClick={onCancel}
+          >
             Cancel
           </Button>
           <Button
+            className="save-condition"
             type={ButtonType.PRIMARY}
             onClick={() => {
               if (

@@ -488,6 +488,7 @@ export default function SettingsGeneralBeta() {
                     onClick={() => setIsDeleteAccountModalOpen(true)}
                     loading={isLoading}
                     disabled={isLoading}
+                    id="delete-account-button"
                   >
                     Delete
                   </GenericButton>
@@ -508,12 +509,14 @@ export default function SettingsGeneralBeta() {
             type="password"
             value={passwordToDelete}
             onChange={(e) => setPasswordToDelete(e.target.value)}
+            id="delete-account-modal-password-input"
           />
           <div>
             <GenericButton
               customClasses="bg-red-600 hover:bg-red-500 focus:ring-red-500"
               onClick={handleDeleteAccount}
               disabled={!passwordToDelete}
+              id="delete-account-modal-button"
             >
               Delete
             </GenericButton>

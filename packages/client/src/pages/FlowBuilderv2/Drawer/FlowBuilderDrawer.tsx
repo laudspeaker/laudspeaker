@@ -73,6 +73,7 @@ const FlowBuilderDrawer: FC<FlowBuilderDrawerProps> = ({ fixtures }) => {
                   onDragStart={(e) => onDragStart(e, child.id, child.targetId)}
                   onDragEnd={onDragEnd}
                   key={i}
+                  id={child.id}
                   draggable={!child.disabled && !isDrawerDisabled}
                 >
                   <div className="text-[#6366F1]">{child.icon}</div>

@@ -67,6 +67,25 @@ const KEYS_TO_SKIP = [
   'isFreezed',
 ];
 
+export interface JourneyDataForTimeLine {
+  id: string;
+  name: string;
+  isFinished: boolean | null;
+  currentStepId: string | null;
+  enrollmentTime: Date | null;
+}
+
+export interface EventResponse {
+  event: string;
+  stepId: string;
+  createdAt: string;
+  templateId: string;
+  journeyName: string;
+  templateName: string;
+  templateType: string;
+  eventProvider: string;
+}
+
 @Injectable()
 export class CustomersService {
   private clickhouseClient = createClient({
@@ -448,34 +467,63 @@ export class CustomersService {
   async findCustomerEvents(
     account: Account,
     customerId: string,
-    session: string
+    session: string,
+    page: number = 1,
+    pageSize: number = 10
   ) {
-    await this.findOne(account, customerId, session);
-    const response = await this.clickhouseClient.query({
-      query: `SELECT stepId, event, createdAt FROM message_status WHERE customerId = {customerId:String} LIMIT 4`,
+    const offset = (page - 1) * pageSize;
+
+    const countResponse = await this.clickhouseClient.query({
+      query: `SELECT count() as totalCount FROM message_status WHERE customerId = {customerId:String}`,
       query_params: { customerId },
     });
+
+    const totalCount =
+      (await countResponse.json<{ data: { totalCount: number }[] }>()).data[0]
+        ?.totalCount || 0;
+    const totalPage = Math.ceil(totalCount / pageSize);
+
+    const response = await this.clickhouseClient.query({
+      query: `
+        SELECT stepId, event, createdAt, eventProvider, templateId 
+        FROM message_status 
+        WHERE customerId = {customerId:String} 
+        ORDER BY createdAt DESC
+        LIMIT ${pageSize} OFFSET ${offset}
+      `,
+      query_params: { customerId },
+    });
+
     const data = (
       await response.json<{
         data: { audienceId: string; event: string; createdAt: string }[];
       }>()
     )?.data;
 
-    const result = await Promise.all(
-      data.map(async (el) => {
-        const query = await this.dataSource
-          .createQueryBuilder(Audience, 'audience')
-          .select('workflow.id, workflow.name, audience.name as audname')
-          .leftJoin('workflow', 'workflow', 'workflow.id = audience.workflowId')
-          .execute();
-        return {
-          ...el,
-          ...(query?.[0] || {}),
-        };
-      })
+    const updatedData: { ch: EventResponse }[] = await this.dataSource.query(
+      `
+        SELECT 
+          ch::jsonb 
+          || jsonb_build_object('templateName', tp.name)
+          || jsonb_build_object('templateType', tp.type)
+          || jsonb_build_object('journeyName', jr.name) as ch
+        FROM unnest($1::jsonb[]) as ch_data(ch)
+        LEFT JOIN "template" as tp ON tp.id = (ch::json->>'templateId')::int
+        LEFT JOIN "step" ON step.id = (ch::json->>'stepId')::uuid
+        LEFT JOIN "journey" as jr ON jr.id = step."journeyId"
+        ORDER BY (ch::json->>'createdAt')::timestamp DESC;
+      `,
+      [data]
     );
+    const result = updatedData.map((el) => el.ch);
 
-    return result;
+    return {
+      data: result,
+      page,
+      pageSize,
+      totalPage,
+      totalCount,
+    };
   }
 
   addPrefixToKeys(
@@ -1656,6 +1704,100 @@ export class CustomersService {
     return {
       data: customers.filter((customer) => customer && customer.id),
       totalPages,
+    };
+  }
+
+  public async getCustomerJourneys(
+    user: Account,
+    custId: string,
+    take: number,
+    skip: number
+  ) {
+    const customer = await this.CustomerModel.findOne({
+      _id: custId,
+      ownerId: user.id,
+    });
+
+    if (!customer) {
+      throw new HttpException('Such customer not found', HttpStatus.FORBIDDEN);
+    }
+
+    const queryText = `
+    SELECT 
+        jr.id, 
+        jr.name, 
+        (
+            SELECT 
+                (
+                    (sp.metadata):: json #>'{destination}' IS NULL 
+                    AND NOT EXISTS (
+                        SELECT 
+                            1 
+                        FROM 
+                            jsonb_array_elements(sp.metadata -> 'branches') AS branch 
+                        WHERE 
+                            (branch ->> 'destination') IS NULL
+                    )
+                ) 
+            FROM 
+                step AS sp 
+            WHERE 
+                EXISTS (
+                    SELECT 
+                        1 
+                    FROM 
+                        unnest(sp.customers :: jsonb[]) AS json_text 
+                    WHERE 
+                        json_text ->> 'customerID' = $1
+                ) 
+                and sp."journeyId" = jr.id
+        ) as "isFinished",
+        (
+          SELECT 
+            sp.id
+          FROM 
+            step AS sp 
+          WHERE 
+            EXISTS (
+              SELECT 
+                1 
+              FROM 
+                unnest(sp.customers :: jsonb[]) AS json_text 
+              WHERE 
+                json_text ->> 'customerID' = $1
+            ) 
+            and sp."journeyId" = jr.id
+        ) as "currentStepId"
+    FROM 
+        journey as jr 
+        LEFT JOIN step ON step."journeyId" = jr.id 
+    WHERE 
+        jr.id = ANY($2)
+    GROUP BY 
+        jr.id
+    LIMIT $3 OFFSET $4`;
+
+    const totalJourneys = await this.dataSource.query(
+      `
+        SELECT COUNT(DISTINCT jr.id) 
+        FROM journey as jr 
+        LEFT JOIN step ON step."journeyId" = jr.id 
+        WHERE jr.id = ANY($1);
+      `,
+      [customer.journeys]
+    );
+
+    const data = await this.dataSource.query<JourneyDataForTimeLine[]>(
+      queryText,
+      [customer.id, customer.journeys, take, skip]
+    );
+
+    return {
+      data: data.map((el) => ({
+        ...el,
+        enrollmentTime: customer?.journeyEnrollmentsDates?.[el.id] || null,
+      })),
+      total: Number(totalJourneys[0].count),
     };
   }
 }

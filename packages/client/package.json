@@ -10,7 +10,7 @@
     "@headlessui/react": "^1.7.3",
     "@heroicons/react": "^2.0.12",
     "@laudspeaker/laudspeaker-js": "^0.3.4",
-    "@laudspeaker/react": "^0.3.4",
+    "@laudspeaker/react": "^0.3.5",
     "@lottiefiles/react-lottie-player": "^3.5.3",
     "@material-tailwind/react": "^1.2.4",
     "@mui/icons-material": "^5.8.4",

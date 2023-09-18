@@ -41,7 +41,7 @@ export const EmptyNode: FC<NodeProps<NodeData>> = ({
 
   return (
     <div
-      className={`w-[260px] h-[80px] rounded-[8px] bg-[#F3F4F6] border-[2px] border-dashed border-[#9CA3AF] flex justify-center items-center ${
+      className={`empty-node w-[260px] h-[80px] rounded-[8px] bg-[#F3F4F6] border-[2px] border-dashed border-[#9CA3AF] flex justify-center items-center ${
         disabled ? "opacity-50 cursor-not-allowed" : ""
       } ${isDraggedOver ? "!border-[#6366F1] !bg-[#E0E7FF]" : ""}`}
       onDragOver={(e) => {

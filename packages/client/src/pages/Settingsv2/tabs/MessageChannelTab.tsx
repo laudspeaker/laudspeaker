@@ -165,6 +165,7 @@ const MessageChannelTab = () => {
           {connectedFixtures.map((fixture, i) => (
             <button
               key={i}
+              id={fixture.title.split(" ").join("-").toLowerCase()}
               onClick={fixture.onClick}
               className="p-[20px] rounded-[8px] bg-[#F9FAFB] border-[1px] border-[#E5E7EB] flex flex-col gap-[10px]"
             >
@@ -226,6 +227,7 @@ const MessageChannelTab = () => {
           {supportedFixtures.map((fixture, i) => (
             <button
               key={i}
+              id={fixture.title.split(" ").join("-").toLowerCase()}
               onClick={fixture.onClick}
               className={`p-[20px] rounded-[8px] bg-[#F9FAFB] border-[1px] border-[#E5E7EB] flex justify-between items-center ${
                 fixture.disabled ? "select-none cursor-default grayscale" : ""

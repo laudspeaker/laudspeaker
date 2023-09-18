@@ -195,8 +195,19 @@ export class CustomersController {
   @UseInterceptors(ClassSerializerInterceptor)
   async findOne(@Req() { user }: Request, @Param() { id }: { id: string }) {
     const session = randomUUID();
-    const { _id, __v, ownerId, verified, ...customer } =
-      await this.customersService.findOne(<Account>user, id, session);
+    const {
+      _id,
+      __v,
+      ownerId,
+      verified,
+      journeys,
+      journeyEnrollmentsDates,
+      slackTeamId,
+      posthogId,
+      workflows,
+      customComponents,
+      ...customer
+    } = await this.customersService.findOne(<Account>user, id, session);
     const createdAt = new Date(parseInt(_id.slice(0, 8), 16) * 1000).getTime();
     return { ...customer, createdAt };
   }
@@ -269,10 +280,18 @@ export class CustomersController {
   @UseInterceptors(ClassSerializerInterceptor)
   findCustomerEvents(
     @Req() { user }: Request,
-    @Param() { id }: { id: string }
+    @Param() { id }: { id: string },
+    @Query('page') page: number,
+    @Query('pageSize') pageSize: number
   ) {
     const session = randomUUID();
-    return this.customersService.findCustomerEvents(<Account>user, id, session);
+    return this.customersService.findCustomerEvents(
+      <Account>user,
+      id,
+      session,
+      page,
+      pageSize
+    );
   }
 
   @Post('/importph')
@@ -363,6 +382,23 @@ export class CustomersController {
       stepId,
       take && +take,
       skip && +skip
+    );
+  }
+
+  @Get(':custId/getJourneys')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor)
+  async getCustomerJourneys(
+    @Req() { user }: Request,
+    @Param('custId') custId: string,
+    @Query('take') take: number,
+    @Query('skip') skip: number
+  ) {
+    return this.customersService.getCustomerJourneys(
+      <Account>user,
+      custId,
+      take,
+      skip
     );
   }
 }

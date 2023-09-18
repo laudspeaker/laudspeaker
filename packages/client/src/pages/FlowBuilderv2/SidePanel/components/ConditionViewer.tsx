@@ -43,7 +43,7 @@ const ConditionViewer: FC<ConditionViewerProps> = ({
         </div>
         <div className="flex gap-[20px] items-center">
           <div
-            className="cursor-pointer"
+            className="edit-condition cursor-pointer"
             onClick={isOnboarding ? undefined : onEdit}
           >
             <svg
@@ -67,7 +67,7 @@ const ConditionViewer: FC<ConditionViewerProps> = ({
             </svg>
           </div>
           <div
-            className="cursor-pointer"
+            className="delete-condition cursor-pointer"
             onClick={isOnboarding ? undefined : onDelete}
           >
             <svg

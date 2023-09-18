@@ -1,11 +1,12 @@
 import React, { FC, useEffect, useRef, useState } from "react";
 import { dataSubArray } from "./Drawer.fixtures";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { Disclosure } from "@headlessui/react";
 import { useAppDispatch } from "store/hooks";
 import { refreshFlowBuilder } from "reducers/flow-builder.reducer";
 import laudspeakerIcon from "../../assets/images/laudspeakerHeaderIcon.svg";
 import useHover from "hooks/useHover";
+import { Link } from "react-router-dom";
 
 const classNames = (...classes: string[]) => classes.filter(Boolean).join(" ");
 
@@ -27,7 +28,6 @@ export interface ResponsiveDrawerProps {
 const ResponsiveDrawer: FC<ResponsiveDrawerProps> = ({ expandable }) => {
   const dispatch = useAppDispatch();
   const location = useLocation();
-  const navigate = useNavigate();
 
   const drawerRef = useRef<HTMLDivElement>(null);
 
@@ -88,6 +88,7 @@ const ResponsiveDrawer: FC<ResponsiveDrawerProps> = ({ expandable }) => {
           {navigation.map((navigationItem) => (
             <div
               className="w-full flex justify-center items-center"
+              id={navigationItem.id}
               key={navigationItem.id}
             >
               {navigationItem.children ? (
@@ -146,13 +147,14 @@ const ResponsiveDrawer: FC<ResponsiveDrawerProps> = ({ expandable }) => {
                         <Disclosure.Panel>
                           <div className="flex flex-col gap-[8px]">
                             {navigationItem.children.map((child) => (
-                              <div
+                              <Link
                                 className={`w-full h-[40px] flex items-center select-none cursor-pointer ${
                                   !expandable || isExpanded
                                     ? "pl-[22px]"
                                     : "justify-center"
                                 }`}
-                                onClick={() => navigate(child.link)}
+                                id={child.id}
+                                to={child.link}
                                 key={child.id}
                               >
                                 <div
@@ -192,7 +194,7 @@ const ResponsiveDrawer: FC<ResponsiveDrawerProps> = ({ expandable }) => {
                                     {child.text}
                                   </span>
                                 </div>
-                              </div>
+                              </Link>
                             ))}
                           </div>
                         </Disclosure.Panel>
@@ -201,11 +203,12 @@ const ResponsiveDrawer: FC<ResponsiveDrawerProps> = ({ expandable }) => {
                   </Disclosure>
                 </div>
               ) : (
-                <div
+                <Link
                   className={`w-full h-[40px] flex items-center select-none cursor-pointer ${
                     expandable && isExpanded ? "" : "justify-center"
                   }`}
-                  onClick={() => navigate(navigationItem.link)}
+                  to={navigationItem.link}
+                  id={navigationItem.id}
                 >
                   <div
                     className={`rounded-[4px] flex items-center w-full gap-[16px] ${
@@ -243,7 +246,7 @@ const ResponsiveDrawer: FC<ResponsiveDrawerProps> = ({ expandable }) => {
                       {navigationItem.text}
                     </span>
                   </div>
-                </div>
+                </Link>
               )}
             </div>
           ))}

@@ -37,6 +37,7 @@ import { JourneysModule } from '../journeys/journeys.module';
 import { AudiencesHelper } from '../audiences/audiences.helper';
 import { SegmentsModule } from '../segments/segments.module';
 import { EventsPreProcessor } from './events.preprocessor';
+import { TrackerHit } from './entities/tracker-hit.entity';
 import { WebsocketsModule } from '@/websockets/websockets.module';
 import { RedlockModule } from '../redlock/redlock.module';
 import { RedlockService } from '../redlock/redlock.service';
@@ -50,6 +51,7 @@ import { RedlockService } from '../redlock/redlock.service';
       State,
       Template,
       Workflow,
+      TrackerHit,
     ]),
     MongooseModule.forFeature([
       { name: Customer.name, schema: CustomerSchema },

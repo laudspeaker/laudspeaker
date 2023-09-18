@@ -475,7 +475,16 @@ export class JourneysService {
           );
           await this.CustomerModel.updateOne(
             { _id: customer._id },
-            { $addToSet: { journeys: journey.id } }
+            {
+              $addToSet: {
+                journeys: journey.id,
+              },
+              $set: {
+                journeyEnrollmentsDates: {
+                  [journey.id]: new Date().toUTCString(),
+                },
+              },
+            }
           )
             .session(clientSession)
             .exec();
@@ -791,12 +800,14 @@ export class JourneysService {
         journey.id,
         queryRunner
       );
+
       this.debug(
         `${JSON.stringify({ steps: steps })}`,
         this.start.name,
         session,
         account.email
       );
+
       for (let i = 0; i < steps.length; i++) {
         graph.setNode(steps[i].id);
         if (
@@ -841,7 +852,14 @@ export class JourneysService {
         {
           _id: { $in: unenrolledCustomers.map((customer) => customer.id) },
         },
-        { $addToSet: { journeys: journeyID } }
+        {
+          $addToSet: {
+            journeys: journeyID,
+          },
+          $set: {
+            [`journeyEnrollmentsDates.${journeyID}`]: new Date().toUTCString(),
+          },
+        }
       )
         .session(transactionSession)
         .exec();

@@ -47,10 +47,15 @@ const NameJourneyModal: FC<NameJourneyModalProps> = ({ isOpen, onClose }) => {
             value={flowName}
             onChange={setFlowName}
             placeholder="Journey name"
+            id="journey-name-input"
           />
 
           <div className="w-full flex justify-end">
-            <Button type={ButtonType.PRIMARY} onClick={createJourney}>
+            <Button
+              type={ButtonType.PRIMARY}
+              onClick={createJourney}
+              id="create-journey-modal-button"
+            >
               Create journey
             </Button>
           </div>

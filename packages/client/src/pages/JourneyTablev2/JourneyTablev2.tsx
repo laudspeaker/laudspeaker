@@ -232,6 +232,7 @@ const JourneyTablev2 = () => {
         <Button
           type={ButtonType.PRIMARY}
           onClick={() => setIsNameJourneyModalOpen(true)}
+          id="create-journey"
         >
           Create journey
         </Button>

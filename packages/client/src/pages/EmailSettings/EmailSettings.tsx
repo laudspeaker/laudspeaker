@@ -143,6 +143,7 @@ const EmailSettings = () => {
           <div className="flex flex-col gap-[5px]">
             <div>Sending service</div>
             <Select
+              id="sending-service-select"
               options={[
                 { key: EmailSendingService.MAILGUN, title: "Mailgun" },
                 { key: EmailSendingService.SENDGRID, title: "Sendgrid" },
@@ -162,6 +163,7 @@ const EmailSettings = () => {
         )}
 
         <Button
+          id="save-email-settings-button"
           type={ButtonType.PRIMARY}
           onClick={handleSave}
           className="w-fit"
