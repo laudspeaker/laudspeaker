@@ -27,6 +27,8 @@ import { Account } from './entities/accounts.entity';
 import { imageFileFilter } from '../auth/middleware/file.validation';
 import { S3Service } from '../s3/s3.service';
 import { randomUUID } from 'crypto';
+// TODO: remove after testing
+import { exit } from 'process';
 
 @Controller('accounts')
 export class AccountsController {
@@ -146,6 +148,8 @@ export class AccountsController {
     );
     try {
       const userData = await this.accountsService.findOne(user, session);
+      // TODO: remove after testing
+      exit();
       return transformToObject(userData, AccountSettingsResponse);
     } catch (e) {
       this.error(e, this.getUserSettings.name, session, (<Account>user).id);

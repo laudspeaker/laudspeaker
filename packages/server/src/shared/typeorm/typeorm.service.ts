@@ -1,4 +1,8 @@
 import { TypeOrmOptionsFactory, TypeOrmModuleOptions } from '@nestjs/typeorm';
+// TODO: remove after testing
+import * as dotenv from 'dotenv';
+// TODO: remove after testing
+dotenv.config();
 
 export class TypeOrmConfigService implements TypeOrmOptionsFactory {
   public createTypeOrmOptions(): TypeOrmModuleOptions {

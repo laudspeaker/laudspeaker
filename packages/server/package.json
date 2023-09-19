@@ -5,6 +5,10 @@
   "private": true,
   "scripts": {
     "prebuild": "rimraf dist",
+    "clinic:doctor": "npm run build && clinic doctor flame -- node dist/src/main.js",
+    "clinic:flame": "npm run build && clinic flame -- node dist/src/main.js",
+    "clinic:bubbleprof": "npm run build && clinic Bubbleprof -- node dist/src/main.js",
+    "clinic:autocanon": "npm run build && clinic doctor --on-port 'autocannon localhost:$PORT' -- node dist/src/main.js",
     "build": "nest build",
     "start": "nest start",
     "start:dev": "env-cmd -f .env npm run prebuild && env-cmd -f .env nest start --watch",
@@ -101,7 +105,8 @@
     "undici": "^5.21.0",
     "winston": "^3.8.1",
     "winston-papertrail": "^1.0.5",
-    "winston-syslog": "^2.6.0"
+    "winston-syslog": "^2.6.0",
+    "dotenv": "^16.0.2"
   },
   "devDependencies": {
     "@nestjs/schematics": "^9.0.0",
@@ -119,7 +124,6 @@
     "@types/supertest": "^2.0.11",
     "@typescript-eslint/eslint-plugin": "^5.39.0",
     "@typescript-eslint/parser": "^5.39.0",
-    "dotenv": "^16.0.2",
     "eslint": "^8.24.0",
     "eslint-config-prettier": "^8.5.0",
     "eslint-plugin-prettier": "^4.2.1",
@@ -156,3 +160,4 @@
     "testEnvironment": "node"
   }
 }
+
