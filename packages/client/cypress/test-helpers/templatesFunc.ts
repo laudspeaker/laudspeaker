@@ -36,7 +36,7 @@ export const templatesFunc = (
     .click();
 
   // create slack template
-  cy.get('[data-disclosure-link="Template Builder"]').click();
+  cy.get('[data-disclosure-link="Message templates"]').click();
   cy.url().should("include", "/templates");
   cy.get("#createTemplate").click();
   cy.get("#name").clear().type(slackTemplate.name);

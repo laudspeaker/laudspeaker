@@ -94,7 +94,7 @@ const TrackerTemplateBuilder = () => {
               />
             </svg>
           )}
-          <div>{isEditing ? "Tracker template" : trackerData.name}</div>
+          <div>{isEditing ? "Component template" : trackerData.name}</div>
         </div>
 
         {!isEditing && (

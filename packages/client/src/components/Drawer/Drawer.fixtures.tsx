@@ -46,14 +46,14 @@ export const dataSubArray = [
       {
         id: "campaigns",
         imgIcon: templateBuilderIcon,
-        text: "Template Builder",
+        text: "Message templates",
         type: "menu",
         link: "/templates",
       },
       {
         id: "tracker-template",
         imgIcon: templateBuilderIcon,
-        text: "Tracker template",
+        text: "Component templates",
         type: "menu",
         link: "/tracker-template",
       },
@@ -79,37 +79,39 @@ export const dataSubArray = [
         type: "menu",
         link: "/people",
       },
-      {
-        id: "segments",
-        imgIcon: audienceIcon,
-        text: "Segments",
-        type: "menu",
-        link: "/segment",
-      },
-    ],
-  },
-  {
-    id: "integrations",
-    imgIcon: dataIcon,
-    text: "Data",
-    type: "group",
-    children: [
-      {
-        id: "integrations",
-        imgIcon: dataIcon,
-        text: "Database import",
-        type: "menu",
-        link: "/integrations",
-      },
+      // Removed for version 1 release
       // {
-      //   id: "analysis",
-      //   imgIcon: Analysis(),
-      //   text: "Analysis",
+      //   id: "segments",
+      //   imgIcon: audienceIcon,
+      //   text: "Segments",
       //   type: "menu",
-      //   link: "/analysis",
+      //   link: "/segment",
       // },
     ],
   },
+  // Removed for version 1 release
+  // {
+  //   id: "integrations",
+  //   imgIcon: dataIcon,
+  //   text: "Data",
+  //   type: "group",
+  //   children: [
+  //     {
+  //       id: "integrations",
+  //       imgIcon: dataIcon,
+  //       text: "Database import",
+  //       type: "menu",
+  //       link: "/integrations",
+  //     },
+  //     // {
+  //     //   id: "analysis",
+  //     //   imgIcon: Analysis(),
+  //     //   text: "Analysis",
+  //     //   type: "menu",
+  //     //   link: "/analysis",
+  //     // },
+  //   ],
+  // },
   {
     id: "settings",
     imgIcon: settingsIcon,

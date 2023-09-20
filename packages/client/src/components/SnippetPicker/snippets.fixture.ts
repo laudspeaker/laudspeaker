@@ -4,14 +4,18 @@ export const createSnippet = (apiKey: string, mode: SnippetMode) => {
   switch (mode) {
     case SnippetMode.JS_FETCH:
       return `var myHeaders = new Headers();
-myHeaders.append("Authorization", "Api-Key ${apiKey}");
+myHeaders.append("Authorization", "Api-Key yeuZ5yhTLBhk53aWLuRGAj36bD0jXvKp0KNdWqgD");
 myHeaders.append("Content-Type", "application/json");
 
 var raw = JSON.stringify({
   "correlationKey": "email",
-  "correlationValue": "testmail@gmail.com",
-  "event": {
-    "a": "a"
+  "correlationValue": "mahamad@trytachyon.com",
+  "source": "custom",
+  "event": "failure",
+  "payload": {
+    "firstName": "Mahamad",
+    "middleName": "Alli",
+    "lastName": "Charawi"
   }
 });
 
@@ -22,200 +26,237 @@ var requestOptions = {
   redirect: 'follow'
 };
 
-fetch("http://localhost:3001/events", requestOptions)
+fetch("https://api.laudspeaker.com/events/", requestOptions)
   .then(response => response.text())
   .then(result => console.log(result))
   .catch(error => console.log('error', error));`;
     case SnippetMode.JS_JQUERY:
-      return `var settings = {
-  "url": "http://localhost:3001/events",
-  "method": "POST",
-  "timeout": 0,
-  "headers": {
-    "Authorization": "Api-Key ${apiKey}",
+      return `$.ajax({
+  url: "https://api.laudspeaker.com/events/",
+  method: "POST",
+  headers: {
+    "Authorization": "Api-Key yeuZ5yhTLBhk53aWLuRGAj36bD0jXvKp0KNdWqgD",
     "Content-Type": "application/json"
   },
-  "data": JSON.stringify({
+  data: JSON.stringify({
     "correlationKey": "email",
-    "correlationValue": "testmail@gmail.com",
-    "event": {
-      "a": "a"
+    "correlationValue": "mahamad@trytachyon.com",
+    "source": "custom",
+    "event": "failure",
+    "payload": {
+      "firstName": "Mahamad",
+      "middleName": "Alli",
+      "lastName": "Charawi"
     }
   }),
-};
-
-$.ajax(settings).done(function (response) {
-  console.log(response);
-});`;
+  success: function(result) {
+    console.log(result);
+  },
+  error: function(error) {
+    console.log('error', error);
+  }
+});
+`;
     case SnippetMode.JS_XHR:
       return `// WARNING: For POST requests, body is set to null by browsers.
-var data = JSON.stringify({
-  "correlationKey": "email",
-  "correlationValue": "testmail@gmail.com",
-  "event": {
-    "a": "a"
-  }
-});
-
 var xhr = new XMLHttpRequest();
-xhr.withCredentials = true;
-
-xhr.addEventListener("readystatechange", function() {
-  if(this.readyState === 4) {
-    console.log(this.responseText);
-  }
-});
-
-xhr.open("POST", "http://localhost:3001/events");
-xhr.setRequestHeader("Authorization", "Api-Key ${apiKey}");
+xhr.open("POST", "https://api.laudspeaker.com/events/", true);
+xhr.setRequestHeader("Authorization", "Api-Key yeuZ5yhTLBhk53aWLuRGAj36bD0jXvKp0KNdWqgD");
 xhr.setRequestHeader("Content-Type", "application/json");
 
-xhr.send(data);`;
+xhr.onreadystatechange = function() {
+  if (xhr.readyState == 4) {
+    if (xhr.status == 200) {
+      console.log(xhr.responseText);
+    } else {
+      console.log('error', xhr.statusText);
+    }
+  }
+};
+
+xhr.send(JSON.stringify({
+  "correlationKey": "email",
+  "correlationValue": "mahamad@trytachyon.com",
+  "source": "custom",
+  "event": "failure",
+  "payload": {
+    "firstName": "Mahamad",
+    "middleName": "Alli",
+    "lastName": "Charawi"
+  }
+}));
+`;
     case SnippetMode.NODEJS_AXIOS:
-      return `var axios = require('axios');
-var data = JSON.stringify({
+      return `const axios = require('axios');
+
+axios.post("https://api.laudspeaker.com/events/", {
   "correlationKey": "email",
-  "correlationValue": "testmail@gmail.com",
-  "event": {
-    "a": "a"
+  "correlationValue": "mahamad@trytachyon.com",
+  "source": "custom",
+  "event": "failure",
+  "payload": {
+    "firstName": "Mahamad",
+    "middleName": "Alli",
+    "lastName": "Charawi"
   }
+}, {
+  headers: {
+    "Authorization": "Api-Key yeuZ5yhTLBhk53aWLuRGAj36bD0jXvKp0KNdWqgD",
+    "Content-Type": "application/json"
+  }
+}).then(response => {
+  console.log(response.data);
+}).catch(error => {
+  console.log('error', error);
 });
-
-var config = {
-  method: 'post',
-  url: 'http://localhost:3001/events',
-  headers: { 
-    'Authorization': 'Api-Key ${apiKey}', 
-    'Content-Type': 'application/json'
-  },
-  data : data
-};
-
-axios(config)
-.then(function (response) {
-  console.log(JSON.stringify(response.data));
-})
-.catch(function (error) {
-  console.log(error);
-});`;
+`;
     case SnippetMode.NODEJS_NATIVE:
-      return `var http = require('follow-redirects').http;
-var fs = require('fs');
+      return `const https = require('https');
 
-var options = {
-  'method': 'POST',
-  'hostname': 'localhost',
-  'port': 3001,
-  'path': '/events',
-  'headers': {
-    'Authorization': 'Api-Key ${apiKey}',
-    'Content-Type': 'application/json'
-  },
-  'maxRedirects': 20
-};
-
-var req = http.request(options, function (res) {
-  var chunks = [];
-
-  res.on("data", function (chunk) {
-    chunks.push(chunk);
-  });
-
-  res.on("end", function (chunk) {
-    var body = Buffer.concat(chunks);
-    console.log(body.toString());
-  });
-
-  res.on("error", function (error) {
-    console.error(error);
-  });
-});
-
-var postData = JSON.stringify({
+const data = JSON.stringify({
   "correlationKey": "email",
-  "correlationValue": "testmail@gmail.com",
-  "event": {
-    "a": "a"
+  "correlationValue": "mahamad@trytachyon.com",
+  "source": "custom",
+  "event": "failure",
+  "payload": {
+    "firstName": "Mahamad",
+    "middleName": "Alli",
+    "lastName": "Charawi"
   }
 });
 
-req.write(postData);
+const options = {
+  hostname: 'api.laudspeaker.com',
+  path: '/events/',
+  method: 'POST',
+  headers: {
+    "Authorization": "Api-Key yeuZ5yhTLBhk53aWLuRGAj36bD0jXvKp0KNdWqgD",
+    "Content-Type": "application/json",
+    'Content-Length': data.length
+  }
+};
 
-req.end();`;
+const req = https.request(options, (res) => {
+  let responseBody = '';
+
+  res.on('data', (chunk) => {
+    responseBody += chunk;
+  });
+
+  res.on('end', () => {
+    console.log(responseBody);
+  });
+});
+
+req.on('error', (error) => {
+  console.log('error', error);
+});
+
+req.write(data);
+req.end();
+`;
     case SnippetMode.NODEJS_REQUEST:
-      return `var request = require('request');
-var options = {
-  'method': 'POST',
-  'url': 'http://localhost:3001/events',
-  'headers': {
-    'Authorization': 'Api-Key ${apiKey}',
-    'Content-Type': 'application/json'
+      return `const request = require('request');
+
+request({
+  url: "https://api.laudspeaker.com/events/",
+  method: "POST",
+  headers: {
+    "Authorization": "Api-Key yeuZ5yhTLBhk53aWLuRGAj36bD0jXvKp0KNdWqgD",
+    "Content-Type": "application/json"
   },
   body: JSON.stringify({
     "correlationKey": "email",
-    "correlationValue": "testmail@gmail.com",
-    "event": {
-      "a": "a"
+    "correlationValue": "mahamad@trytachyon.com",
+    "source": "custom",
+    "event": "failure",
+    "payload": {
+      "firstName": "Mahamad",
+      "middleName": "Alli",
+      "lastName": "Charawi"
     }
   })
-
-};
-request(options, function (error, response) {
-  if (error) throw new Error(error);
-  console.log(response.body);
-});`;
+}, function(error, response, body) {
+  if (error) {
+    console.log('error', error);
+  } else {
+    console.log(body);
+  }
+});
+`;
     case SnippetMode.PYTHON_HTTP_CLIENT:
       return `import http.client
 import json
 
-conn = http.client.HTTPSConnection("localhost", 3001)
+conn = http.client.HTTPSConnection("api.laudspeaker.com")
+
+headers = {
+    'Authorization': 'Api-Key yeuZ5yhTLBhk53aWLuRGAj36bD0jXvKp0KNdWqgD',
+    'Content-Type': 'application/json'
+}
+
 payload = json.dumps({
   "correlationKey": "email",
-  "correlationValue": "testmail@gmail.com",
-  "event": {
-    "a": "a"
+  "correlationValue": "mahamad@trytachyon.com",
+  "source": "custom",
+  "event": "failure",
+  "payload": {
+    "firstName": "Mahamad",
+    "middleName": "Alli",
+    "lastName": "Charawi"
   }
 })
-headers = {
-  'Authorization': 'Api-Key ${apiKey}',
-  'Content-Type': 'application/json'
-}
-conn.request("POST", "/events", payload, headers)
+
+conn.request("POST", "/events/", payload, headers)
 res = conn.getresponse()
 data = res.read()
-print(data.decode("utf-8"))`;
+
+print(data.decode("utf-8"))
+`;
     case SnippetMode.PYTHON_REQUESTS:
       return `import requests
 import json
 
-url = "http://localhost:3001/events"
+url = "https://api.laudspeaker.com/events/"
 
-payload = json.dumps({
-  "correlationKey": "email",
-  "correlationValue": "testmail@gmail.com",
-  "event": {
-    "a": "a"
-  }
-})
 headers = {
-  'Authorization': 'Api-Key ${apiKey}',
-  'Content-Type': 'application/json'
+    'Authorization': 'Api-Key yeuZ5yhTLBhk53aWLuRGAj36bD0jXvKp0KNdWqgD',
+    'Content-Type': 'application/json'
 }
 
-response = requests.request("POST", url, headers=headers, data=payload)
+payload = {
+  "correlationKey": "email",
+  "correlationValue": "mahamad@trytachyon.com",
+  "source": "custom",
+  "event": "failure",
+  "payload": {
+    "firstName": "Mahamad",
+    "middleName": "Alli",
+    "lastName": "Charawi"
+  }
+}
 
-print(response.text)`;
+response = requests.post(url, headers=headers, data=json.dumps(payload))
+
+print(response.text)
+`;
     case SnippetMode.CURL:
-      return `curl --location --request POST 'http://localhost:3001/events' \
---header 'Authorization: Api-Key ${apiKey}' \
---header 'Content-Type: application/json' \
---data-raw '{
-    "correlationKey": "email",
-    "correlationValue": "testmail@gmail.com",
-    "event": {
-        "a": "a"
-    }
-}'`;
+      return `curl -X POST \
+https://api.laudspeaker.com/events/ \
+-H 'Authorization: Api-Key yeuZ5yhTLBhk53aWLuRGAj36bD0jXvKp0KNdWqgD' \
+-H 'Content-Type: application/json' \
+-d '{
+  "correlationKey": "email",
+  "correlationValue": "mahamad@trytachyon.com",
+  "source": "custom",
+  "event": "failure",
+  "payload": {
+    "firstName": "Mahamad",
+    "middleName": "Alli",
+    "lastName": "Charawi"
+  }
+}'
+    `;
     default:
       return "";
   }

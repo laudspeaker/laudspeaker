@@ -1,8 +1,9 @@
 import { ChangeEvent, useState } from "react";
 import { Grid, FormControl } from "@mui/material";
-import { GenericButton, Input, Select } from "components/Elements";
+import { GenericButton, Input } from "components/Elements";
 import { useNavigate } from "react-router-dom";
 import { TemplateType } from "types/Template";
+import Select from "components/Elements/Selectv2";
 
 export interface INameSegmentForm {
   name: string;
@@ -77,25 +78,35 @@ const NameTemplate = ({ onSubmit, isPrimary }: INameSegment) => {
             >
               <label
                 htmlFor="handletemplateType"
-                className="font-[Inter] text-[16px] font-medium mr-1"
+                className="font-[Inter] whitespace-nowrap text-[16px] font-medium mr-1"
               >
                 Type of template:
               </label>
               <Select
                 id="handleTemplateType"
-                name="handleTemplateType"
                 value={templateType}
                 onChange={handleType}
+                className="min-w-[80px]"
                 options={[
-                  { value: TemplateType.EMAIL },
-                  { value: TemplateType.SLACK },
-                  { value: TemplateType.SMS },
-                  { value: TemplateType.FIREBASE },
-                  { value: TemplateType.WEBHOOK },
-                  { value: TemplateType.MODAL },
-                  { value: TemplateType.CUSTOM_MODAL, title: "custom modal" },
+                  {
+                    key: TemplateType.EMAIL,
+                    title: TemplateType.EMAIL,
+                  },
+                  // Removed for 1 release
+                  // {
+                  //   key: TemplateType.SLACK,
+                  //   title: TemplateType.SLACK,
+                  // },
+                  {
+                    key: TemplateType.SMS,
+                    title: TemplateType.SMS,
+                  },
+                  // Removed for 1 release
+                  // { value: TemplateType.FIREBASE },
+                  // { value: TemplateType.WEBHOOK },
+                  // { value: TemplateType.MODAL },
+                  // { value: TemplateType.CUSTOM_MODAL, title: "custom modal" },
                 ]}
-                displayEmpty
               />
             </form>
           </Grid>

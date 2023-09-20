@@ -352,6 +352,8 @@ const RouteComponent: React.FC = () => {
             </Protected>
           }
         />
+
+        {/* Removed for version 1 release
         <Route
           path="/segment"
           element={
@@ -363,7 +365,7 @@ const RouteComponent: React.FC = () => {
               </VerificationProtected>
             </Protected>
           }
-        />
+        /> 
         <Route
           path="/segment/:id"
           element={
@@ -376,6 +378,7 @@ const RouteComponent: React.FC = () => {
             </Protected>
           }
         />
+        */}
         <Route
           path="/email-builder"
           element={
@@ -424,7 +427,8 @@ const RouteComponent: React.FC = () => {
             </Protected>
           }
         />
-        <Route
+        {/* Removed for 1 release
+         <Route
           path="/templates/slack/:name"
           element={
             <Protected>
@@ -435,7 +439,7 @@ const RouteComponent: React.FC = () => {
               </VerificationProtected>
             </Protected>
           }
-        />
+        /> */}
         <Route
           path="/templates/sms/:name"
           element={
@@ -448,6 +452,7 @@ const RouteComponent: React.FC = () => {
             </Protected>
           }
         />
+        {/* Removed for 1 release
         <Route
           path="/templates/firebase/:name"
           element={
@@ -483,7 +488,7 @@ const RouteComponent: React.FC = () => {
               </VerificationProtected>
             </Protected>
           }
-        />
+        /> */}
         <Route
           path="/templates"
           element={
@@ -520,6 +525,7 @@ const RouteComponent: React.FC = () => {
             </Protected>
           }
         />
+        {/* Removed for version 1 release
         <Route
           path="/integrations"
           element={
@@ -555,7 +561,7 @@ const RouteComponent: React.FC = () => {
               </VerificationProtected>
             </Protected>
           }
-        />
+        /> */}
         <Route
           path="/verification"
           element={

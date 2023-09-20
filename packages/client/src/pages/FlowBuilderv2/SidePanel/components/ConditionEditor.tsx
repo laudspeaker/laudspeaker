@@ -145,7 +145,8 @@ const ConditionEditor: FC<ConditionEditorProps> = ({
         <Select
           value={condition.providerType}
           options={[
-            { key: ProviderType.POSTHOG, title: "Posthog" },
+            // Removed for 1 release
+            // { key: ProviderType.POSTHOG, title: "Posthog" },
             { key: ProviderType.CUSTOM, title: "Custom" },
             { key: ProviderType.TRACKER, title: "Tracker" },
           ]}

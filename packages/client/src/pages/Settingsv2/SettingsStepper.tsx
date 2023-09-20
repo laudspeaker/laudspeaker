@@ -15,19 +15,21 @@ const SettingsStepper: FC<SettingsStepperProps> = ({
     SettingsTab.MESSAGE_CHANNEL,
     SettingsTab.EVENT_PROVIDER,
     SettingsTab.API,
-    SettingsTab.PLAN,
-    SettingsTab.BILLING,
-    SettingsTab.TEAM,
+    // Removed for 1 release
+    // SettingsTab.PLAN,
+    // SettingsTab.BILLING,
+    // SettingsTab.TEAM,
   ];
 
-  const settingsTabToNameMap: Record<SettingsTab, string> = {
+  const settingsTabToNameMap: { [key: number]: string } = {
     [SettingsTab.ACCOUNT]: "Account",
     [SettingsTab.MESSAGE_CHANNEL]: "Message channel",
     [SettingsTab.EVENT_PROVIDER]: "Event provider",
     [SettingsTab.API]: "API",
-    [SettingsTab.PLAN]: "Plan",
-    [SettingsTab.BILLING]: "Billing",
-    [SettingsTab.TEAM]: "Team",
+    // Removed for 1 release
+    // [SettingsTab.PLAN]: "Plan",
+    // [SettingsTab.BILLING]: "Billing",
+    // [SettingsTab.TEAM]: "Team",
   };
 
   return (

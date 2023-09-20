@@ -5,7 +5,7 @@ export default () => {
     .find('[data-disclosure="Messaging"]')
     .click();
 
-  cy.get('[data-disclosure-link="Template Builder"]').click();
+  cy.get('[data-disclosure-link="Message templates"]').click();
   cy.url().should("include", "/templates");
   cy.get("#createTemplate").click();
 
@@ -19,7 +19,7 @@ export default () => {
     .type("https://jsonplaceholder.typicode.com/posts");
   cy.get("#saveDraftTemplate").click();
 
-  cy.get('[data-disclosure-link="Template Builder"]').click();
+  cy.get('[data-disclosure-link="Message templates"]').click();
   cy.url().should("include", "/templates");
   cy.get("#createTemplate").click();
 
@@ -49,7 +49,7 @@ export default () => {
     );
   cy.get("#saveDraftTemplate").click();
 
-  cy.get('[data-disclosure-link="Template Builder"]').click();
+  cy.get('[data-disclosure-link="Message templates"]').click();
   cy.url().should("include", "/templates");
   cy.get("#createTemplate").click();
 

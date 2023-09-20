@@ -117,7 +117,7 @@ const TrackerSettings: FC<SidePanelComponentProps<TrackerNodeData>> = ({
               </div>
             </div>
             <div className="flex justify-between items-center">
-              <div>Tracker template</div>
+              <div>Component template</div>
               <div className="w-[200px]">
                 <Select
                   panelClassName="max-w-[200px]"
@@ -151,7 +151,7 @@ const TrackerSettings: FC<SidePanelComponentProps<TrackerNodeData>> = ({
                       },
                     });
                   }}
-                  placeholder="select tracker template"
+                  placeholder="select component template"
                 />
               </div>
             </div>
@@ -216,7 +216,7 @@ const TrackerSettings: FC<SidePanelComponentProps<TrackerNodeData>> = ({
       ) : (
         <div className="flex flex-col gap-[10px]">
           <div className="font-semibold">
-            Create a tracker from tracker templates
+            Create a tracker from component templates
           </div>
 
           <Select
@@ -244,7 +244,7 @@ const TrackerSettings: FC<SidePanelComponentProps<TrackerNodeData>> = ({
                 },
               });
             }}
-            placeholder="select tracker template"
+            placeholder="select component template"
           />
           {filledTrackerNodes.length > 0 && (
             <>
