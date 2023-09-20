@@ -44,30 +44,31 @@ const flowBuilderDrawerFixtures: FlowBuilderDrawerFixture[] = [
         icon: SMSIcon(),
         text: "SMS",
       },
-      {
-        id: DrawerAction.SLACK,
-        icon: SlackIcon(),
-        text: "Slack",
-      },
-      {
-        id: DrawerAction.PUSH,
-        icon: PushIcon(),
-        text: "Push Notification",
-      },
-      {
-        id: DrawerAction.WEBHOOK,
-        icon: WebhookIcon(),
-        text: "Webhook",
-      },
-      {
-        id: DrawerAction.CUSTOM_MODAL,
-        icon: CustomModalIcon(),
-        text: "Custom Modal",
-      },
+      // Removed for 1 release
+      // {
+      //   id: DrawerAction.SLACK,
+      //   icon: SlackIcon(),
+      //   text: "Slack",
+      // },
+      // {
+      //   id: DrawerAction.PUSH,
+      //   icon: PushIcon(),
+      //   text: "Push Notification",
+      // },
+      // {
+      //   id: DrawerAction.WEBHOOK,
+      //   icon: WebhookIcon(),
+      //   text: "Webhook",
+      // },
+      // {
+      //   id: DrawerAction.CUSTOM_MODAL,
+      //   icon: CustomModalIcon(),
+      //   text: "Custom Modal",
+      // },
       {
         id: DrawerAction.TRACKER,
         icon: CustomModalIcon(),
-        text: "Tracker",
+        text: "Custom Component",
       },
       {
         id: DrawerAction.JUMP_TO,

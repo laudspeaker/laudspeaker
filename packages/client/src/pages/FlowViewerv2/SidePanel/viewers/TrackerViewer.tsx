@@ -286,7 +286,7 @@ const TrackerViewer: FC<
               </div>
             </div>
             <div className="w-full flex justify-between items-center">
-              <div>Tracker template</div>
+              <div>Component template</div>
               <div>{nodeData.tracker.trackerTemplate.name}</div>
             </div>
             <div className="w-full flex justify-between items-center">

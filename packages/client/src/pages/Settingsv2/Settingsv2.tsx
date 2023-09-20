@@ -19,14 +19,15 @@ export enum SettingsTab {
   TEAM,
 }
 
-const settingsTabToComponentMap: Record<SettingsTab, ReactNode> = {
+const settingsTabToComponentMap: { [key: number]: ReactNode } = {
   [SettingsTab.ACCOUNT]: <AccountTab />,
   [SettingsTab.MESSAGE_CHANNEL]: <MessageChannelTab />,
   [SettingsTab.EVENT_PROVIDER]: <EventProviderTab />,
   [SettingsTab.API]: <APITab />,
-  [SettingsTab.PLAN]: <PlanTab />,
-  [SettingsTab.BILLING]: <BillingTab />,
-  [SettingsTab.TEAM]: <TeamTab />,
+  // Removed for 1 release
+  // [SettingsTab.PLAN]: <PlanTab />,
+  // [SettingsTab.BILLING]: <BillingTab />,
+  // [SettingsTab.TEAM]: <TeamTab />,
 };
 
 const Settingsv2 = () => {

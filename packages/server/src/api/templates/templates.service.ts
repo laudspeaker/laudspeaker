@@ -8,7 +8,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, QueryRunner, Like, Repository } from 'typeorm';
+import { In, QueryRunner, Like, Repository, FindManyOptions } from 'typeorm';
 import { Account } from '../accounts/entities/accounts.entity';
 import {
   Customer,
@@ -507,15 +507,22 @@ export class TemplatesService extends QueueEventsHost {
     orderBy?: keyof Template,
     orderType?: 'asc' | 'desc',
     showDeleted?: boolean,
-    type?: TemplateType
+    type?: TemplateType | TemplateType[]
   ): Promise<{ data: Template[]; totalPages: number }> {
+    const typeConvertedCheck: FindManyOptions<Template>['where'] = {};
+
+    if (Array.isArray(type)) {
+      typeConvertedCheck.type = In(type);
+    } else {
+      typeConvertedCheck.type = type;
+    }
     const totalPages = Math.ceil(
       (await this.templatesRepository.count({
         where: {
           name: Like(`%${search}%`),
           owner: { id: account.id },
           isDeleted: In([!!showDeleted, false]),
-          type,
+          ...typeConvertedCheck,
         },
       })) / take || 1
     );
@@ -528,7 +535,7 @@ export class TemplatesService extends QueueEventsHost {
         name: Like(`%${search}%`),
         owner: { id: account.id },
         isDeleted: In([!!showDeleted, false]),
-        type,
+        ...typeConvertedCheck,
       },
       order: orderOptions,
       take: take < 100 ? take : 100,

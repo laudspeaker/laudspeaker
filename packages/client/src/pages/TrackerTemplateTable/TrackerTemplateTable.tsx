@@ -116,7 +116,7 @@ const TrackerTemplateTable = () => {
           type={ButtonType.PRIMARY}
           onClick={() => setIsCreateTrackerTemplateModalOpen(true)}
         >
-          Create tracker template
+          Create component template
         </Button>
       </div>
       <div className="p-[20px] bg-white rounded-[8px] flex flex-col gap-[20px]">
@@ -126,7 +126,7 @@ const TrackerTemplateTable = () => {
               <img src={emptyDataImage} />
 
               <div className="font-inter text-[16px] font-semibold leading-[24px] text-[#4B5563]">
-                Create a tracker template
+                Create a component template
               </div>
             </div>
           </div>
@@ -138,7 +138,7 @@ const TrackerTemplateTable = () => {
                   <Input
                     value={search}
                     onChange={setSearch}
-                    placeholder="Search all tracker templates"
+                    placeholder="Search all component templates"
                     showClearButton
                   />
 

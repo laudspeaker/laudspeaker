@@ -103,7 +103,7 @@ export class TemplatesController {
     @Query('orderBy') orderBy?: keyof Template,
     @Query('orderType') orderType?: 'asc' | 'desc',
     @Query('showDeleted') showDeleted?: boolean,
-    @Query('type') type?: TemplateType
+    @Query('type') type?: TemplateType | TemplateType[]
   ): Promise<{ data: Template[]; totalPages: number }> {
     const session = randomUUID();
     return this.templatesService.findAll(

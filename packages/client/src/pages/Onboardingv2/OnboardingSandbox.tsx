@@ -98,30 +98,31 @@ const drawerFixtures: FlowBuilderDrawerFixture[] = [
         text: "SMS",
         disabled: true,
       },
-      {
-        id: OnboardingAction.NOTHING,
-        icon: SlackIcon(),
-        text: "Slack",
-        disabled: true,
-      },
-      {
-        id: OnboardingAction.NOTHING,
-        icon: PushIcon(),
-        text: "Push Notification",
-        disabled: true,
-      },
-      {
-        id: OnboardingAction.NOTHING,
-        icon: WebhookIcon(),
-        text: "Webhook",
-        disabled: true,
-      },
-      {
-        id: OnboardingAction.NOTHING,
-        icon: CustomModalIcon(),
-        text: "Custom Modal",
-        disabled: true,
-      },
+      // Removed for 1 release
+      // {
+      //   id: OnboardingAction.NOTHING,
+      //   icon: SlackIcon(),
+      //   text: "Slack",
+      //   disabled: true,
+      // },
+      // {
+      //   id: OnboardingAction.NOTHING,
+      //   icon: PushIcon(),
+      //   text: "Push Notification",
+      //   disabled: true,
+      // },
+      // {
+      //   id: OnboardingAction.NOTHING,
+      //   icon: WebhookIcon(),
+      //   text: "Webhook",
+      //   disabled: true,
+      // },
+      // {
+      //   id: OnboardingAction.NOTHING,
+      //   icon: CustomModalIcon(),
+      //   text: "Custom Modal",
+      //   disabled: true,
+      // },
       {
         id: OnboardingAction.NOTHING,
         icon: JumpToIcon(),

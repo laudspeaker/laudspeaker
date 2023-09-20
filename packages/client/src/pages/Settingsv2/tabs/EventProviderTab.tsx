@@ -17,6 +17,7 @@ interface EventProviderFixture {
   name: string;
   icon: string;
   connected?: boolean;
+  comingSoon?: boolean;
   onClick?: () => void;
 }
 
@@ -49,6 +50,7 @@ const EventProviderTab = () => {
         name: "PostHog",
         icon: posthogLogoIcon,
         connected: isPosthogSetupped,
+        comingSoon: true,
         onClick: () => navigate("/settings/posthog"),
       },
       [EventProvider.JAVASCRIPT_SNIPPET]: {
@@ -123,8 +125,9 @@ const EventProviderTab = () => {
             {supportedProviders.map((fixture, i) => (
               <button
                 key={i}
-                className="w-[240px] flex gap-[10px] items-center p-[20px] border-[1px] border-[#D1D5DB] rounded-[8px]"
+                className="w-[280px] flex gap-[10px] items-center p-[20px] border-[1px] border-[#D1D5DB] rounded-[8px] disabled:select-none disabled:cursor-default disabled:grayscale"
                 onClick={fixture.onClick}
+                disabled={fixture.comingSoon}
               >
                 <div>
                   <img src={fixture.icon} />
@@ -133,6 +136,11 @@ const EventProviderTab = () => {
                 <div className="font-inter text-[16px] font-normal leading-[24px]">
                   {fixture.name}
                 </div>
+                {fixture.comingSoon && (
+                  <div className="px-[10px] py-[2px] rounded-[14px] font-inter text-[12px] font-normal leading-[20px] text-[#4B5563] border-[1px] border-[#E5E7EB] bg-white">
+                    comming soon
+                  </div>
+                )}
               </button>
             ))}
           </div>

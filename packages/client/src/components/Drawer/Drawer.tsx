@@ -102,7 +102,7 @@ const ResponsiveDrawer: FC<ResponsiveDrawerProps> = ({ expandable }) => {
                       <div className="flex flex-col gap-[8px]">
                         <Disclosure.Button className="w-full">
                           <div
-                            className={`relative w-full h-[40px] flex items-center gap-[16px] select-none cursor-pointer`}
+                            className={`relative w-full h-[40px] flex items-center gap-[8px] select-none cursor-pointer`}
                           >
                             <div className="flex items-center justify-center min-w-[30px] min-h-[30px] max-w-[30px] max-h-[30px] rounded-[4px]">
                               <img src={navigationItem.imgIcon} />
@@ -158,7 +158,7 @@ const ResponsiveDrawer: FC<ResponsiveDrawerProps> = ({ expandable }) => {
                                 key={child.id}
                               >
                                 <div
-                                  className={`rounded-[4px] flex items-center w-full gap-[16px] ${
+                                  className={`rounded-[4px] flex items-center w-full gap-[8px] ${
                                     isExpanded &&
                                     location.pathname.includes(child.link)
                                       ? "bg-[#6366F1] text-white"
@@ -187,7 +187,7 @@ const ResponsiveDrawer: FC<ResponsiveDrawerProps> = ({ expandable }) => {
                                       expandable
                                         ? "notexapndable scale-0 transition-[width] delay-1000"
                                         : ""
-                                    } whitespace-nowrap ${
+                                    } whitespace-nowrap max-w-[120px] inline-block text-ellipsis overflow-hidden ${
                                       !isExpanded && "hidden"
                                     }`}
                                   >
@@ -211,7 +211,7 @@ const ResponsiveDrawer: FC<ResponsiveDrawerProps> = ({ expandable }) => {
                   id={navigationItem.id}
                 >
                   <div
-                    className={`rounded-[4px] flex items-center w-full gap-[16px] ${
+                    className={`rounded-[4px] flex items-center w-full gap-[8px] ${
                       isExpanded &&
                       location.pathname.includes(navigationItem.link)
                         ? "bg-[#6366F1] text-white"
