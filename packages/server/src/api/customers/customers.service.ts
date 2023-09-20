@@ -1621,7 +1621,6 @@ export class CustomersService {
         ?.data;
       const customerIds = data?.map((item) => item.customerId) || [];
 
-      console.log(customerIds);
 
       return {
         totalPages,
@@ -1654,8 +1653,6 @@ export class CustomersService {
         result--;
         continue;
       }
-
-      console.log(customer);
     }
 
     return result;
