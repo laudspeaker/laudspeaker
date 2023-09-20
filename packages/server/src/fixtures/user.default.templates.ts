@@ -3246,6 +3246,72 @@ const DEFAULT_TEMPLATES: Template[] = [
     style: `* { box-sizing: border-box; } body {margin: 0;}#i2yf{padding:10px;}`,
     type: TemplateType.EMAIL,
   },
+  {
+    ...new Template(),
+    name: 'side-checklist-example',
+    type: TemplateType.CUSTOM_COMPONENT,
+    customEvents: ['1-to-2', '2-to-3', '3-to-start', 'start'],
+    customFields: {
+      fields: [
+        {
+          name: 'MainTitle',
+          type: 'String',
+          defaultValue: 'Welcome to Example',
+        },
+        {
+          name: 'step-1-title',
+          type: 'String',
+          defaultValue: 'Create a example',
+        },
+        {
+          name: 'step-1-desc',
+          type: 'String',
+          defaultValue:
+            'An introduction to "projects" and instructions on how to create them.',
+        },
+        {
+          name: 'step-1-button-text',
+          type: 'String',
+          defaultValue: 'Create a example',
+        },
+        { name: 'step-1-done', type: 'Boolean', defaultValue: 'false' },
+        {
+          name: 'step-2-title',
+          type: 'String',
+          defaultValue: 'Import contacts',
+        },
+        {
+          name: 'step-2-desc',
+          type: 'String',
+          defaultValue:
+            'An introduction to "contacts" An introduction to "contacts" An introduction to "contacts" An introduction to "contacts"An introduction to "contacts',
+        },
+        {
+          name: 'step-2-button-text',
+          type: 'String',
+          defaultValue: 'Import contacts',
+        },
+        { name: 'step-2-done', type: 'Boolean', defaultValue: 'false' },
+        {
+          name: 'step-3-title',
+          type: 'String',
+          defaultValue: 'Create a sequence',
+        },
+        {
+          name: 'step-3-desc',
+          type: 'String',
+          defaultValue:
+            'An introduction to "sequence", the value. An introduction to "sequence", the value. An introduction to "sequence", the value.',
+        },
+        {
+          name: 'step-3-button-text',
+          type: 'String',
+          defaultValue: 'Create a sequence',
+        },
+        { name: 'step-3-done', type: 'Boolean', defaultValue: 'false' },
+      ],
+    },
+  },
 ];
 
 export { DEFAULT_TEMPLATES };

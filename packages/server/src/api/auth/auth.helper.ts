@@ -10,15 +10,14 @@ import { QueryRunner, Repository } from 'typeorm';
 import { Account } from '../accounts/entities/accounts.entity';
 import { BaseJwtHelper } from '../../common/helper/base-jwt.helper';
 import { DEFAULT_TEMPLATES } from '../../fixtures/user.default.templates';
-import { Template } from '../templates/entities/template.entity';
-import { Workflow } from '../workflows/entities/workflow.entity';
+import { Template, TemplateType } from '../templates/entities/template.entity';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { LoggerService } from '@nestjs/common/services';
 import { Inject } from '@nestjs/common/decorators';
-import { Audience } from '../audiences/entities/audience.entity';
 import { JourneysService } from '../journeys/journeys.service';
 import { StepsService } from '../steps/steps.service';
 import { StepType } from '../steps/types/step.interface';
+import generateName from '@good-ghosting/random-name-generator';
 
 @Injectable()
 export class AuthHelper extends BaseJwtHelper {
@@ -69,6 +68,7 @@ export class AuthHelper extends BaseJwtHelper {
 
   private async generateExampleSideChecklist(
     account: Account,
+    template: Template,
     queryRunner: QueryRunner,
     session: string
   ) {
@@ -78,6 +78,8 @@ export class AuthHelper extends BaseJwtHelper {
       queryRunner,
       session
     );
+
+    const trackerId = generateName({ number: true }).dashed;
 
     const startstep =
       await this.stepsService.transactionalfindAllByTypeInJourney(
@@ -151,707 +153,722 @@ export class AuthHelper extends BaseJwtHelper {
     const visualLayout = {
       edges: [
         {
-          "id": "e776ee148-00df-4fb8-9781-6e921050d491-3f451c93-0545-4ca0-aac8-069f84b4998e",
-          "type": "primary",
-          "source": "776ee148-00df-4fb8-9781-6e921050d491",
-          "target": "3f451c93-0545-4ca0-aac8-069f84b4998e"
+          id: 'e776ee148-00df-4fb8-9781-6e921050d491-3f451c93-0545-4ca0-aac8-069f84b4998e',
+          type: 'primary',
+          source: '776ee148-00df-4fb8-9781-6e921050d491',
+          target: '3f451c93-0545-4ca0-aac8-069f84b4998e',
         },
         {
-          "id": "3f451c93-0545-4ca0-aac8-069f84b4998e-1cf6cf01-dcde-482e-b29e-b2c1a78c1892",
-          "type": "primary",
-          "source": "3f451c93-0545-4ca0-aac8-069f84b4998e",
-          "target": "1cf6cf01-dcde-482e-b29e-b2c1a78c1892"
+          id: '3f451c93-0545-4ca0-aac8-069f84b4998e-1cf6cf01-dcde-482e-b29e-b2c1a78c1892',
+          type: 'primary',
+          source: '3f451c93-0545-4ca0-aac8-069f84b4998e',
+          target: '1cf6cf01-dcde-482e-b29e-b2c1a78c1892',
         },
         {
-          "id": "be29d13d6-de72-4801-af09-c07652e90bf8",
-          "data": {
-            "type": "branch",
-            "branch": {
-              "id": "e29d13d6-de72-4801-af09-c07652e90bf8",
-              "type": "event",
-              "conditions": [
+          id: 'be29d13d6-de72-4801-af09-c07652e90bf8',
+          data: {
+            type: 'branch',
+            branch: {
+              id: 'e29d13d6-de72-4801-af09-c07652e90bf8',
+              type: 'event',
+              conditions: [
                 {
-                  "event": "1-to-2",
-                  "trackerId": "wacky-place-6727",
-                  "providerType": "tracker",
-                  "relationToNext": "or"
-                }
-              ]
-            }
+                  event: '1-to-2',
+                  trackerId,
+                  providerType: 'tracker',
+                  relationToNext: 'or',
+                },
+              ],
+            },
           },
-          "type": "branch",
-          "source": "1cf6cf01-dcde-482e-b29e-b2c1a78c1892",
-          "target": "77ef64b7-783d-42c5-9902-7969358353c9"
+          type: 'branch',
+          source: '1cf6cf01-dcde-482e-b29e-b2c1a78c1892',
+          target: '77ef64b7-783d-42c5-9902-7969358353c9',
         },
         {
-          "id": "77ef64b7-783d-42c5-9902-7969358353c9-4536f114-6392-4246-9f7c-4c1c7f7fddd4",
-          "type": "primary",
-          "source": "77ef64b7-783d-42c5-9902-7969358353c9",
-          "target": "4536f114-6392-4246-9f7c-4c1c7f7fddd4"
+          id: '77ef64b7-783d-42c5-9902-7969358353c9-4536f114-6392-4246-9f7c-4c1c7f7fddd4',
+          type: 'primary',
+          source: '77ef64b7-783d-42c5-9902-7969358353c9',
+          target: '4536f114-6392-4246-9f7c-4c1c7f7fddd4',
         },
         {
-          "id": "bb7da45ed-2911-4689-8161-8421726b9e2f",
-          "data": {
-            "type": "branch",
-            "branch": {
-              "id": "b7da45ed-2911-4689-8161-8421726b9e2f",
-              "type": "event",
-              "conditions": [
+          id: 'bb7da45ed-2911-4689-8161-8421726b9e2f',
+          data: {
+            type: 'branch',
+            branch: {
+              id: 'b7da45ed-2911-4689-8161-8421726b9e2f',
+              type: 'event',
+              conditions: [
                 {
-                  "event": "2-to-3",
-                  "trackerId": "wacky-place-6727",
-                  "providerType": "tracker",
-                  "relationToNext": "or"
-                }
-              ]
-            }
+                  event: '2-to-3',
+                  trackerId,
+                  providerType: 'tracker',
+                  relationToNext: 'or',
+                },
+              ],
+            },
           },
-          "type": "branch",
-          "source": "4536f114-6392-4246-9f7c-4c1c7f7fddd4",
-          "target": "1d86c6d3-564b-405f-86a5-f494e10491fa"
+          type: 'branch',
+          source: '4536f114-6392-4246-9f7c-4c1c7f7fddd4',
+          target: '1d86c6d3-564b-405f-86a5-f494e10491fa',
         },
         {
-          "id": "1d86c6d3-564b-405f-86a5-f494e10491fa-3c6eaf46-b764-4220-8e04-63de14a6744f",
-          "type": "primary",
-          "source": "1d86c6d3-564b-405f-86a5-f494e10491fa",
-          "target": "3c6eaf46-b764-4220-8e04-63de14a6744f"
+          id: '1d86c6d3-564b-405f-86a5-f494e10491fa-3c6eaf46-b764-4220-8e04-63de14a6744f',
+          type: 'primary',
+          source: '1d86c6d3-564b-405f-86a5-f494e10491fa',
+          target: '3c6eaf46-b764-4220-8e04-63de14a6744f',
         },
         {
-          "id": "bf9195627-90d3-4bb0-8907-0fda80a3971c",
-          "data": {
-            "type": "branch",
-            "branch": {
-              "id": "f9195627-90d3-4bb0-8907-0fda80a3971c",
-              "type": "event",
-              "conditions": [
+          id: 'bf9195627-90d3-4bb0-8907-0fda80a3971c',
+          data: {
+            type: 'branch',
+            branch: {
+              id: 'f9195627-90d3-4bb0-8907-0fda80a3971c',
+              type: 'event',
+              conditions: [
                 {
-                  "event": "3-to-start",
-                  "trackerId": "wacky-place-6727",
-                  "providerType": "tracker",
-                  "relationToNext": "or"
-                }
-              ]
-            }
+                  event: '3-to-start',
+                  trackerId,
+                  providerType: 'tracker',
+                  relationToNext: 'or',
+                },
+              ],
+            },
           },
-          "type": "branch",
-          "source": "3c6eaf46-b764-4220-8e04-63de14a6744f",
-          "target": "c59f3dd9-e6ea-4485-a938-b6518915bfba"
+          type: 'branch',
+          source: '3c6eaf46-b764-4220-8e04-63de14a6744f',
+          target: 'c59f3dd9-e6ea-4485-a938-b6518915bfba',
         },
         {
-          "id": "c59f3dd9-e6ea-4485-a938-b6518915bfba-5125f2ed-9218-4905-ae7d-5c42d1352c82",
-          "type": "primary",
-          "source": "c59f3dd9-e6ea-4485-a938-b6518915bfba",
-          "target": "5125f2ed-9218-4905-ae7d-5c42d1352c82"
+          id: 'c59f3dd9-e6ea-4485-a938-b6518915bfba-5125f2ed-9218-4905-ae7d-5c42d1352c82',
+          type: 'primary',
+          source: 'c59f3dd9-e6ea-4485-a938-b6518915bfba',
+          target: '5125f2ed-9218-4905-ae7d-5c42d1352c82',
         },
         {
-          "id": "b67eb779c-7324-4f79-8451-35defea5869c",
-          "data": {
-            "type": "branch",
-            "branch": {
-              "id": "67eb779c-7324-4f79-8451-35defea5869c",
-              "type": "event",
-              "conditions": [
+          id: 'b67eb779c-7324-4f79-8451-35defea5869c',
+          data: {
+            type: 'branch',
+            branch: {
+              id: '67eb779c-7324-4f79-8451-35defea5869c',
+              type: 'event',
+              conditions: [
                 {
-                  "event": "start",
-                  "trackerId": "wacky-place-6727",
-                  "providerType": "tracker",
-                  "relationToNext": "or"
-                }
-              ]
-            }
+                  event: 'start',
+                  trackerId,
+                  providerType: 'tracker',
+                  relationToNext: 'or',
+                },
+              ],
+            },
           },
-          "type": "branch",
-          "source": "5125f2ed-9218-4905-ae7d-5c42d1352c82",
-          "target": "0ae71936-923a-429b-a9c1-38792cb900a1"
+          type: 'branch',
+          source: '5125f2ed-9218-4905-ae7d-5c42d1352c82',
+          target: '0ae71936-923a-429b-a9c1-38792cb900a1',
         },
         {
-          "id": "0ae71936-923a-429b-a9c1-38792cb900a1-4b22a55d-5efe-4f11-ba0a-2afe54e026b1",
-          "type": "primary",
-          "source": "0ae71936-923a-429b-a9c1-38792cb900a1",
-          "target": "4b22a55d-5efe-4f11-ba0a-2afe54e026b1"
-        }
+          id: '0ae71936-923a-429b-a9c1-38792cb900a1-4b22a55d-5efe-4f11-ba0a-2afe54e026b1',
+          type: 'primary',
+          source: '0ae71936-923a-429b-a9c1-38792cb900a1',
+          target: '4b22a55d-5efe-4f11-ba0a-2afe54e026b1',
+        },
       ],
-      "nodes": [
+      nodes: [
         {
-          "id": "776ee148-00df-4fb8-9781-6e921050d491",
-          "data": {
-            "stepId": startstep[0].id
+          id: '776ee148-00df-4fb8-9781-6e921050d491',
+          data: {
+            stepId: startstep[0].id,
           },
-          "type": "start",
-          "position": {
-            "x": 0,
-            "y": 0
+          type: 'start',
+          position: {
+            x: 0,
+            y: 0,
           },
-          "selected": false
+          selected: false,
         },
         {
-          "id": "3f451c93-0545-4ca0-aac8-069f84b4998e",
-          "data": {
-            "type": "tracker",
-            "stepId": trackerOne.id,
-            "tracker": {
-              "fields": [
+          id: '3f451c93-0545-4ca0-aac8-069f84b4998e',
+          data: {
+            type: 'tracker',
+            stepId: trackerOne.id,
+            tracker: {
+              fields: [
                 {
-                  "name": "MainTitle",
-                  "type": "String",
-                  "value": "Welcome to Example"
+                  name: 'MainTitle',
+                  type: 'String',
+                  value: 'Welcome to Example',
                 },
                 {
-                  "name": "step-1-title",
-                  "type": "String",
-                  "value": "Create a example"
+                  name: 'step-1-title',
+                  type: 'String',
+                  value: 'Create a example',
                 },
                 {
-                  "name": "step-1-desc",
-                  "type": "String",
-                  "value": "An introduction to \"projects\" and instructions on how to create them."
+                  name: 'step-1-desc',
+                  type: 'String',
+                  value:
+                    'An introduction to "projects" and instructions on how to create them.',
                 },
                 {
-                  "name": "step-1-button-text",
-                  "type": "String",
-                  "value": "Create a example"
+                  name: 'step-1-button-text',
+                  type: 'String',
+                  value: 'Create a example',
                 },
                 {
-                  "name": "step-1-done",
-                  "type": "Boolean",
-                  "value": "false"
+                  name: 'step-1-done',
+                  type: 'Boolean',
+                  value: 'false',
                 },
                 {
-                  "name": "step-2-title",
-                  "type": "String",
-                  "value": "Import contacts"
+                  name: 'step-2-title',
+                  type: 'String',
+                  value: 'Import contacts',
                 },
                 {
-                  "name": "step-2-desc",
-                  "type": "String",
-                  "value": "An introduction to \"contacts\" An introduction to \"contacts\" An introduction to \"contacts\" An introduction to \"contacts\"An introduction to \"contacts"
+                  name: 'step-2-desc',
+                  type: 'String',
+                  value:
+                    'An introduction to "contacts" An introduction to "contacts" An introduction to "contacts" An introduction to "contacts"An introduction to "contacts',
                 },
                 {
-                  "name": "step-2-button-text",
-                  "type": "String",
-                  "value": "Import contacts"
+                  name: 'step-2-button-text',
+                  type: 'String',
+                  value: 'Import contacts',
                 },
                 {
-                  "name": "step-2-done",
-                  "type": "Boolean",
-                  "value": "false"
+                  name: 'step-2-done',
+                  type: 'Boolean',
+                  value: 'false',
                 },
                 {
-                  "name": "step-3-title",
-                  "type": "String",
-                  "value": "Create a sequence"
+                  name: 'step-3-title',
+                  type: 'String',
+                  value: 'Create a sequence',
                 },
                 {
-                  "name": "step-3-desc",
-                  "type": "String",
-                  "value": "An introduction to \"sequence\", the value. An introduction to \"sequence\", the value. An introduction to \"sequence\", the value."
+                  name: 'step-3-desc',
+                  type: 'String',
+                  value:
+                    'An introduction to "sequence", the value. An introduction to "sequence", the value. An introduction to "sequence", the value.',
                 },
                 {
-                  "name": "step-3-button-text",
-                  "type": "String",
-                  "value": "Create a sequence"
+                  name: 'step-3-button-text',
+                  type: 'String',
+                  value: 'Create a sequence',
                 },
                 {
-                  "name": "step-3-done",
-                  "type": "Boolean",
-                  "value": "false"
-                }
+                  name: 'step-3-done',
+                  type: 'Boolean',
+                  value: 'false',
+                },
               ],
-              "trackerId": "wacky-place-6727",
-              "visibility": "show",
-              "trackerTemplate": {
-                "id": 104,
-                "name": "side-checklist-example"
-              }
+              trackerId,
+              visibility: 'show',
+              trackerTemplate: {
+                id: template.id,
+                name: template.name,
+              },
             },
-            "needsCheck": false,
-            "showErrors": true
+            needsCheck: false,
+            showErrors: true,
           },
-          "type": "tracker",
-          "position": {
-            "x": 0,
-            "y": 114
+          type: 'tracker',
+          position: {
+            x: 0,
+            y: 114,
           },
-          "selected": false
+          selected: false,
         },
         {
-          "id": "1cf6cf01-dcde-482e-b29e-b2c1a78c1892",
-          "data": {
-            "type": "waitUntil",
-            "stepId": "7e5b983f-90ef-41d4-a5ec-884171884139",
-            "branches": [
+          id: '1cf6cf01-dcde-482e-b29e-b2c1a78c1892',
+          data: {
+            type: 'waitUntil',
+            stepId: waitUntilOne.id,
+            branches: [
               {
-                "id": "e29d13d6-de72-4801-af09-c07652e90bf8",
-                "type": "event",
-                "conditions": [
+                id: 'e29d13d6-de72-4801-af09-c07652e90bf8',
+                type: 'event',
+                conditions: [
                   {
-                    "event": "1-to-2",
-                    "trackerId": "wacky-place-6727",
-                    "providerType": "tracker",
-                    "relationToNext": "or"
-                  }
-                ]
-              }
-            ]
+                    event: '1-to-2',
+                    trackerId,
+                    providerType: 'tracker',
+                    relationToNext: 'or',
+                  },
+                ],
+              },
+            ],
           },
-          "type": "waitUntil",
-          "position": {
-            "x": 0,
-            "y": 238
+          type: 'waitUntil',
+          position: {
+            x: 0,
+            y: 238,
           },
-          "selected": false
+          selected: false,
         },
         {
-          "id": "77ef64b7-783d-42c5-9902-7969358353c9",
-          "data": {
-            "type": "tracker",
-            "stepId": "db39b751-8375-46db-af3c-08320b607cf1",
-            "tracker": {
-              "fields": [
+          id: '77ef64b7-783d-42c5-9902-7969358353c9',
+          data: {
+            type: 'tracker',
+            stepId: trackerTwo.id,
+            tracker: {
+              fields: [
                 {
-                  "name": "MainTitle",
-                  "type": "String",
-                  "value": "Welcome to Example"
+                  name: 'MainTitle',
+                  type: 'String',
+                  value: 'Welcome to Example',
                 },
                 {
-                  "name": "step-1-title",
-                  "type": "String",
-                  "value": "Create a example"
+                  name: 'step-1-title',
+                  type: 'String',
+                  value: 'Create a example',
                 },
                 {
-                  "name": "step-1-desc",
-                  "type": "String",
-                  "value": "An introduction to \"projects\" and instructions on how to create them."
+                  name: 'step-1-desc',
+                  type: 'String',
+                  value:
+                    'An introduction to "projects" and instructions on how to create them.',
                 },
                 {
-                  "name": "step-1-button-text",
-                  "type": "String",
-                  "value": "Create a example"
+                  name: 'step-1-button-text',
+                  type: 'String',
+                  value: 'Create a example',
                 },
                 {
-                  "name": "step-1-done",
-                  "type": "Boolean",
-                  "value": "true"
+                  name: 'step-1-done',
+                  type: 'Boolean',
+                  value: 'true',
                 },
                 {
-                  "name": "step-2-title",
-                  "type": "String",
-                  "value": "Import contacts"
+                  name: 'step-2-title',
+                  type: 'String',
+                  value: 'Import contacts',
                 },
                 {
-                  "name": "step-2-desc",
-                  "type": "String",
-                  "value": "An introduction to \"contacts\" An introduction to \"contacts\" An introduction to \"contacts\" An introduction to \"contacts\"An introduction to \"contacts"
+                  name: 'step-2-desc',
+                  type: 'String',
+                  value:
+                    'An introduction to "contacts" An introduction to "contacts" An introduction to "contacts" An introduction to "contacts"An introduction to "contacts',
                 },
                 {
-                  "name": "step-2-button-text",
-                  "type": "String",
-                  "value": "Import contacts"
+                  name: 'step-2-button-text',
+                  type: 'String',
+                  value: 'Import contacts',
                 },
                 {
-                  "name": "step-2-done",
-                  "type": "Boolean",
-                  "value": "false"
+                  name: 'step-2-done',
+                  type: 'Boolean',
+                  value: 'false',
                 },
                 {
-                  "name": "step-3-title",
-                  "type": "String",
-                  "value": "Create a sequence"
+                  name: 'step-3-title',
+                  type: 'String',
+                  value: 'Create a sequence',
                 },
                 {
-                  "name": "step-3-desc",
-                  "type": "String",
-                  "value": "An introduction to \"sequence\", the value. An introduction to \"sequence\", the value. An introduction to \"sequence\", the value."
+                  name: 'step-3-desc',
+                  type: 'String',
+                  value:
+                    'An introduction to "sequence", the value. An introduction to "sequence", the value. An introduction to "sequence", the value.',
                 },
                 {
-                  "name": "step-3-button-text",
-                  "type": "String",
-                  "value": "Create a sequence"
+                  name: 'step-3-button-text',
+                  type: 'String',
+                  value: 'Create a sequence',
                 },
                 {
-                  "name": "step-3-done",
-                  "type": "Boolean",
-                  "value": "false"
-                }
+                  name: 'step-3-done',
+                  type: 'Boolean',
+                  value: 'false',
+                },
               ],
-              "trackerId": "wacky-place-6727",
-              "visibility": "show",
-              "trackerTemplate": {
-                "id": 104,
-                "name": "side-checklist-example"
-              }
+              trackerId,
+              visibility: 'show',
+              trackerTemplate: {
+                id: template.id,
+                name: template.name,
+              },
             },
-            "needsCheck": false
+            needsCheck: false,
           },
-          "type": "tracker",
-          "position": {
-            "x": 0,
-            "y": 362
+          type: 'tracker',
+          position: {
+            x: 0,
+            y: 362,
           },
-          "selected": false
+          selected: false,
         },
         {
-          "id": "4536f114-6392-4246-9f7c-4c1c7f7fddd4",
-          "data": {
-            "type": "waitUntil",
-            "stepId": "5aeb894f-2fe1-4df1-9c56-4300ec94d090",
-            "branches": [
+          id: '4536f114-6392-4246-9f7c-4c1c7f7fddd4',
+          data: {
+            type: 'waitUntil',
+            stepId: waitUntilTwo.id,
+            branches: [
               {
-                "id": "b7da45ed-2911-4689-8161-8421726b9e2f",
-                "type": "event",
-                "conditions": [
+                id: 'b7da45ed-2911-4689-8161-8421726b9e2f',
+                type: 'event',
+                conditions: [
                   {
-                    "event": "2-to-3",
-                    "trackerId": "wacky-place-6727",
-                    "providerType": "tracker",
-                    "relationToNext": "or"
-                  }
-                ]
-              }
-            ]
+                    event: '2-to-3',
+                    trackerId,
+                    providerType: 'tracker',
+                    relationToNext: 'or',
+                  },
+                ],
+              },
+            ],
           },
-          "type": "waitUntil",
-          "position": {
-            "x": 0,
-            "y": 486
+          type: 'waitUntil',
+          position: {
+            x: 0,
+            y: 486,
           },
-          "selected": false
+          selected: false,
         },
         {
-          "id": "1d86c6d3-564b-405f-86a5-f494e10491fa",
-          "data": {
-            "type": "tracker",
-            "stepId": "2c266f3f-f1ff-4300-b6ee-144402c62376",
-            "tracker": {
-              "fields": [
+          id: '1d86c6d3-564b-405f-86a5-f494e10491fa',
+          data: {
+            type: 'tracker',
+            stepId: trackerThree.id,
+            tracker: {
+              fields: [
                 {
-                  "name": "MainTitle",
-                  "type": "String",
-                  "value": "Welcome to Example"
+                  name: 'MainTitle',
+                  type: 'String',
+                  value: 'Welcome to Example',
                 },
                 {
-                  "name": "step-1-title",
-                  "type": "String",
-                  "value": "Create a example"
+                  name: 'step-1-title',
+                  type: 'String',
+                  value: 'Create a example',
                 },
                 {
-                  "name": "step-1-desc",
-                  "type": "String",
-                  "value": "An introduction to \"projects\" and instructions on how to create them."
+                  name: 'step-1-desc',
+                  type: 'String',
+                  value:
+                    'An introduction to "projects" and instructions on how to create them.',
                 },
                 {
-                  "name": "step-1-button-text",
-                  "type": "String",
-                  "value": "Create a example"
+                  name: 'step-1-button-text',
+                  type: 'String',
+                  value: 'Create a example',
                 },
                 {
-                  "name": "step-1-done",
-                  "type": "Boolean",
-                  "value": "true"
+                  name: 'step-1-done',
+                  type: 'Boolean',
+                  value: 'true',
                 },
                 {
-                  "name": "step-2-title",
-                  "type": "String",
-                  "value": "Import contacts"
+                  name: 'step-2-title',
+                  type: 'String',
+                  value: 'Import contacts',
                 },
                 {
-                  "name": "step-2-desc",
-                  "type": "String",
-                  "value": "An introduction to \"contacts\" An introduction to \"contacts\" An introduction to \"contacts\" An introduction to \"contacts\"An introduction to \"contacts"
+                  name: 'step-2-desc',
+                  type: 'String',
+                  value:
+                    'An introduction to "contacts" An introduction to "contacts" An introduction to "contacts" An introduction to "contacts"An introduction to "contacts',
                 },
                 {
-                  "name": "step-2-button-text",
-                  "type": "String",
-                  "value": "Import contacts"
+                  name: 'step-2-button-text',
+                  type: 'String',
+                  value: 'Import contacts',
                 },
                 {
-                  "name": "step-2-done",
-                  "type": "Boolean",
-                  "value": "true"
+                  name: 'step-2-done',
+                  type: 'Boolean',
+                  value: 'true',
                 },
                 {
-                  "name": "step-3-title",
-                  "type": "String",
-                  "value": "Create a sequence"
+                  name: 'step-3-title',
+                  type: 'String',
+                  value: 'Create a sequence',
                 },
                 {
-                  "name": "step-3-desc",
-                  "type": "String",
-                  "value": "An introduction to \"sequence\", the value. An introduction to \"sequence\", the value. An introduction to \"sequence\", the value."
+                  name: 'step-3-desc',
+                  type: 'String',
+                  value:
+                    'An introduction to "sequence", the value. An introduction to "sequence", the value. An introduction to "sequence", the value.',
                 },
                 {
-                  "name": "step-3-button-text",
-                  "type": "String",
-                  "value": "Create a sequence"
+                  name: 'step-3-button-text',
+                  type: 'String',
+                  value: 'Create a sequence',
                 },
                 {
-                  "name": "step-3-done",
-                  "type": "Boolean",
-                  "value": "false"
-                }
+                  name: 'step-3-done',
+                  type: 'Boolean',
+                  value: 'false',
+                },
               ],
-              "trackerId": "wacky-place-6727",
-              "visibility": "show",
-              "trackerTemplate": {
-                "id": 104,
-                "name": "side-checklist-example"
-              }
+              trackerId,
+              visibility: 'show',
+              trackerTemplate: {
+                id: template.id,
+                name: template.name,
+              },
             },
-            "needsCheck": false
+            needsCheck: false,
           },
-          "type": "tracker",
-          "position": {
-            "x": 0,
-            "y": 610
+          type: 'tracker',
+          position: {
+            x: 0,
+            y: 610,
           },
-          "selected": false
+          selected: false,
         },
         {
-          "id": "3c6eaf46-b764-4220-8e04-63de14a6744f",
-          "data": {
-            "type": "waitUntil",
-            "stepId": "bbec9596-9356-43b4-a476-5b2e79f46267",
-            "branches": [
+          id: '3c6eaf46-b764-4220-8e04-63de14a6744f',
+          data: {
+            type: 'waitUntil',
+            stepId: waitUntilThree.id,
+            branches: [
               {
-                "id": "f9195627-90d3-4bb0-8907-0fda80a3971c",
-                "type": "event",
-                "conditions": [
+                id: 'f9195627-90d3-4bb0-8907-0fda80a3971c',
+                type: 'event',
+                conditions: [
                   {
-                    "event": "3-to-start",
-                    "trackerId": "wacky-place-6727",
-                    "providerType": "tracker",
-                    "relationToNext": "or"
-                  }
-                ]
-              }
-            ]
+                    event: '3-to-start',
+                    trackerId,
+                    providerType: 'tracker',
+                    relationToNext: 'or',
+                  },
+                ],
+              },
+            ],
           },
-          "type": "waitUntil",
-          "position": {
-            "x": 0,
-            "y": 734
+          type: 'waitUntil',
+          position: {
+            x: 0,
+            y: 734,
           },
-          "selected": false
+          selected: false,
         },
         {
-          "id": "c59f3dd9-e6ea-4485-a938-b6518915bfba",
-          "data": {
-            "type": "tracker",
-            "stepId": "bb518165-763f-4385-92fd-073693d2a127",
-            "tracker": {
-              "fields": [
+          id: 'c59f3dd9-e6ea-4485-a938-b6518915bfba',
+          data: {
+            type: 'tracker',
+            stepId: trackerFour.id,
+            tracker: {
+              fields: [
                 {
-                  "name": "MainTitle",
-                  "type": "String",
-                  "value": "Welcome to Example"
+                  name: 'MainTitle',
+                  type: 'String',
+                  value: 'Welcome to Example',
                 },
                 {
-                  "name": "step-1-title",
-                  "type": "String",
-                  "value": "Create a example"
+                  name: 'step-1-title',
+                  type: 'String',
+                  value: 'Create a example',
                 },
                 {
-                  "name": "step-1-desc",
-                  "type": "String",
-                  "value": "An introduction to \"projects\" and instructions on how to create them."
+                  name: 'step-1-desc',
+                  type: 'String',
+                  value:
+                    'An introduction to "projects" and instructions on how to create them.',
                 },
                 {
-                  "name": "step-1-button-text",
-                  "type": "String",
-                  "value": "Create a example"
+                  name: 'step-1-button-text',
+                  type: 'String',
+                  value: 'Create a example',
                 },
                 {
-                  "name": "step-1-done",
-                  "type": "Boolean",
-                  "value": "true"
+                  name: 'step-1-done',
+                  type: 'Boolean',
+                  value: 'true',
                 },
                 {
-                  "name": "step-2-title",
-                  "type": "String",
-                  "value": "Import contacts"
+                  name: 'step-2-title',
+                  type: 'String',
+                  value: 'Import contacts',
                 },
                 {
-                  "name": "step-2-desc",
-                  "type": "String",
-                  "value": "An introduction to \"contacts\" An introduction to \"contacts\" An introduction to \"contacts\" An introduction to \"contacts\"An introduction to \"contacts"
+                  name: 'step-2-desc',
+                  type: 'String',
+                  value:
+                    'An introduction to "contacts" An introduction to "contacts" An introduction to "contacts" An introduction to "contacts"An introduction to "contacts',
                 },
                 {
-                  "name": "step-2-button-text",
-                  "type": "String",
-                  "value": "Import contacts"
+                  name: 'step-2-button-text',
+                  type: 'String',
+                  value: 'Import contacts',
                 },
                 {
-                  "name": "step-2-done",
-                  "type": "Boolean",
-                  "value": "true"
+                  name: 'step-2-done',
+                  type: 'Boolean',
+                  value: 'true',
                 },
                 {
-                  "name": "step-3-title",
-                  "type": "String",
-                  "value": "Create a sequence"
+                  name: 'step-3-title',
+                  type: 'String',
+                  value: 'Create a sequence',
                 },
                 {
-                  "name": "step-3-desc",
-                  "type": "String",
-                  "value": "An introduction to \"sequence\", the value. An introduction to \"sequence\", the value. An introduction to \"sequence\", the value."
+                  name: 'step-3-desc',
+                  type: 'String',
+                  value:
+                    'An introduction to "sequence", the value. An introduction to "sequence", the value. An introduction to "sequence", the value.',
                 },
                 {
-                  "name": "step-3-button-text",
-                  "type": "String",
-                  "value": "Create a sequence"
+                  name: 'step-3-button-text',
+                  type: 'String',
+                  value: 'Create a sequence',
                 },
                 {
-                  "name": "step-3-done",
-                  "type": "Boolean",
-                  "value": "true"
-                }
+                  name: 'step-3-done',
+                  type: 'Boolean',
+                  value: 'true',
+                },
               ],
-              "trackerId": "wacky-place-6727",
-              "visibility": "show",
-              "trackerTemplate": {
-                "id": 104,
-                "name": "side-checklist-example"
-              }
+              trackerId,
+              visibility: 'show',
+              trackerTemplate: {
+                id: template.id,
+                name: template.name,
+              },
             },
-            "needsCheck": false
+            needsCheck: false,
           },
-          "type": "tracker",
-          "position": {
-            "x": 0,
-            "y": 858
+          type: 'tracker',
+          position: {
+            x: 0,
+            y: 858,
           },
-          "selected": false
+          selected: false,
         },
         {
-          "id": "5125f2ed-9218-4905-ae7d-5c42d1352c82",
-          "data": {
-            "type": "waitUntil",
-            "stepId": "5d3063a1-c6ef-4e45-be31-0f68b7e192e2",
-            "branches": [
+          id: '5125f2ed-9218-4905-ae7d-5c42d1352c82',
+          data: {
+            type: 'waitUntil',
+            stepId: waitUntilFour.id,
+            branches: [
               {
-                "id": "67eb779c-7324-4f79-8451-35defea5869c",
-                "type": "event",
-                "conditions": [
+                id: '67eb779c-7324-4f79-8451-35defea5869c',
+                type: 'event',
+                conditions: [
                   {
-                    "event": "start",
-                    "trackerId": "wacky-place-6727",
-                    "providerType": "tracker",
-                    "relationToNext": "or"
-                  }
-                ]
-              }
-            ]
+                    event: 'start',
+                    trackerId,
+                    providerType: 'tracker',
+                    relationToNext: 'or',
+                  },
+                ],
+              },
+            ],
           },
-          "type": "waitUntil",
-          "position": {
-            "x": 0,
-            "y": 982
+          type: 'waitUntil',
+          position: {
+            x: 0,
+            y: 982,
           },
-          "selected": false
+          selected: false,
         },
         {
-          "id": "0ae71936-923a-429b-a9c1-38792cb900a1",
-          "data": {
-            "type": "tracker",
-            "stepId": "24ecc4b3-fb33-4217-b51b-37605535603e",
-            "tracker": {
-              "fields": [
+          id: '0ae71936-923a-429b-a9c1-38792cb900a1',
+          data: {
+            type: 'tracker',
+            stepId: trackerFive.id,
+            tracker: {
+              fields: [
                 {
-                  "name": "MainTitle",
-                  "type": "String",
-                  "value": "Welcome to Example"
+                  name: 'MainTitle',
+                  type: 'String',
+                  value: 'Welcome to Example',
                 },
                 {
-                  "name": "step-1-title",
-                  "type": "String",
-                  "value": "Create a example"
+                  name: 'step-1-title',
+                  type: 'String',
+                  value: 'Create a example',
                 },
                 {
-                  "name": "step-1-desc",
-                  "type": "String",
-                  "value": "An introduction to \"projects\" and instructions on how to create them."
+                  name: 'step-1-desc',
+                  type: 'String',
+                  value:
+                    'An introduction to "projects" and instructions on how to create them.',
                 },
                 {
-                  "name": "step-1-button-text",
-                  "type": "String",
-                  "value": "Create a example"
+                  name: 'step-1-button-text',
+                  type: 'String',
+                  value: 'Create a example',
                 },
                 {
-                  "name": "step-1-done",
-                  "type": "Boolean",
-                  "value": "true"
+                  name: 'step-1-done',
+                  type: 'Boolean',
+                  value: 'true',
                 },
                 {
-                  "name": "step-2-title",
-                  "type": "String",
-                  "value": "Import contacts"
+                  name: 'step-2-title',
+                  type: 'String',
+                  value: 'Import contacts',
                 },
                 {
-                  "name": "step-2-desc",
-                  "type": "String",
-                  "value": "An introduction to \"contacts\" An introduction to \"contacts\" An introduction to \"contacts\" An introduction to \"contacts\"An introduction to \"contacts"
+                  name: 'step-2-desc',
+                  type: 'String',
+                  value:
+                    'An introduction to "contacts" An introduction to "contacts" An introduction to "contacts" An introduction to "contacts"An introduction to "contacts',
                 },
                 {
-                  "name": "step-2-button-text",
-                  "type": "String",
-                  "value": "Import contacts"
+                  name: 'step-2-button-text',
+                  type: 'String',
+                  value: 'Import contacts',
                 },
                 {
-                  "name": "step-2-done",
-                  "type": "Boolean",
-                  "value": "true"
+                  name: 'step-2-done',
+                  type: 'Boolean',
+                  value: 'true',
                 },
                 {
-                  "name": "step-3-title",
-                  "type": "String",
-                  "value": "Create a sequence"
+                  name: 'step-3-title',
+                  type: 'String',
+                  value: 'Create a sequence',
                 },
                 {
-                  "name": "step-3-desc",
-                  "type": "String",
-                  "value": "An introduction to \"sequence\", the value. An introduction to \"sequence\", the value. An introduction to \"sequence\", the value."
+                  name: 'step-3-desc',
+                  type: 'String',
+                  value:
+                    'An introduction to "sequence", the value. An introduction to "sequence", the value. An introduction to "sequence", the value.',
                 },
                 {
-                  "name": "step-3-button-text",
-                  "type": "String",
-                  "value": "Create a sequence"
+                  name: 'step-3-button-text',
+                  type: 'String',
+                  value: 'Create a sequence',
                 },
                 {
-                  "name": "step-3-done",
-                  "type": "Boolean",
-                  "value": "true"
-                }
+                  name: 'step-3-done',
+                  type: 'Boolean',
+                  value: 'true',
+                },
               ],
-              "trackerId": "wacky-place-6727",
-              "visibility": "hide",
-              "trackerTemplate": {
-                "id": 104,
-                "name": "side-checklist-example"
-              }
+              trackerId,
+              visibility: 'hide',
+              trackerTemplate: {
+                id: template.id,
+                name: template.name,
+              },
             },
-            "needsCheck": false
+            needsCheck: false,
           },
-          "type": "tracker",
-          "position": {
-            "x": 0,
-            "y": 1106
+          type: 'tracker',
+          position: {
+            x: 0,
+            y: 1106,
           },
-          "selected": false
+          selected: false,
         },
         {
-          "id": "4b22a55d-5efe-4f11-ba0a-2afe54e026b1",
-          "data": {
-            "stepId": exit.id
+          id: '4b22a55d-5efe-4f11-ba0a-2afe54e026b1',
+          data: {
+            stepId: exit.id,
           },
-          "type": "exit",
-          "position": {
-            "x": 0,
-            "y": 1220
+          type: 'exit',
+          position: {
+            x: 0,
+            y: 1220,
           },
-          "selected": false
-        }
-      ]
-    }
+          selected: false,
+        },
+      ],
+    };
 
     await this.journeysService.updateLayoutTransactional(
       account,
@@ -1289,7 +1306,7 @@ export class AuthHelper extends BaseJwtHelper {
     queryRunner: QueryRunner,
     session: string
   ) {
-    await queryRunner.manager.save(
+    const templates = await queryRunner.manager.save(
       DEFAULT_TEMPLATES.map((el) => {
         const template = new Template();
         template.id = el.id;
@@ -1301,15 +1318,29 @@ export class AuthHelper extends BaseJwtHelper {
         template.subject = el.subject;
         template.text = el.text;
         template.type = el.type;
+        if (template.type === TemplateType.CUSTOM_COMPONENT) {
+          template.customEvents = el.customEvents;
+          template.customFields = el.customFields;
+        }
 
         return template;
       })
+    );
+
+    const sidechecklistTemplate = templates.find(
+      (el) => el.name === DEFAULT_TEMPLATES[6].name
     );
 
     await this.generateExampleOnboardingJourney(account, queryRunner, session);
     await this.generateExampleModalJourney(account, queryRunner, session);
     await this.generateExampleSingleCampaignJourney(
       account,
+      queryRunner,
+      session
+    );
+    await this.generateExampleSideChecklist(
+      account,
+      sidechecklistTemplate,
       queryRunner,
       session
     );
