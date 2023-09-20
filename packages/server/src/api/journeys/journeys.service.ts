@@ -889,7 +889,7 @@ export class JourneysService {
     } catch (err) {
       await transactionSession.abortTransaction();
       await queryRunner.rollbackTransaction();
-      this.logger.error('Error: ' + err);
+      this.logger.error('Error:  ' + err);
       throw err;
     } finally {
       await transactionSession.endSession();
