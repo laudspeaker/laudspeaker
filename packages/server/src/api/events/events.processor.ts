@@ -183,13 +183,15 @@ export class EventsProcessor extends WorkerHost {
         account.email
       );
       // All steps in `journey` that might be listening for this event
-      const steps = await queryRunner.manager.find(Step, {
-        where: {
-          type: StepType.WAIT_UNTIL_BRANCH,
-          journey: { id: journey.id },
-        },
-        relations: ['owner', 'journey'],
-      });
+      const steps = (
+        await queryRunner.manager.find(Step, {
+          where: {
+            type: StepType.WAIT_UNTIL_BRANCH,
+            journey: { id: journey.id },
+          },
+          relations: ['owner', 'journey'],
+        })
+      ).filter((el) => el?.metadata?.branches !== undefined);
       step_loop: for (
         let stepIndex = 0;
         stepIndex < steps.length;
