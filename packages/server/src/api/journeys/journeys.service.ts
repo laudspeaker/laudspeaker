@@ -1037,6 +1037,9 @@ export class JourneysService {
         session,
         account.email
       );
+
+      this.logger.warn('SAVE TEST 1 BEFORE LOOP');
+      this.logger.warn(journey);
       for (let i = 0; i < nodes.length; i++) {
         const step = await queryRunner.manager.findOne(Step, {
           where: {
@@ -1110,6 +1113,10 @@ export class JourneysService {
             );
             break;
           case NodeType.WAIT_UNTIL:
+            if (nodes[i].id === '226a7112-96ec-477d-a1ac-d604b4f04301') {
+              this.logger.warn('SAVE TEST 2 Before processing');
+              this.logger.warn(journey);
+            }
             metadata = new WaitUntilStepMetadata();
 
             //Time Branch configuration
@@ -1248,6 +1255,10 @@ export class JourneysService {
                 }
                 metadata.branches.push(branch);
               }
+            }
+            if (nodes[i].id === '226a7112-96ec-477d-a1ac-d604b4f04301') {
+              this.logger.warn('SAVE TEST 3 After processing');
+              this.logger.warn(journey);
             }
             break;
           case NodeType.JUMP_TO:
