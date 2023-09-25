@@ -4,27 +4,21 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Account } from '../accounts/entities/accounts.entity';
 import { CustomerDocument } from '../customers/schemas/customer.schema';
 import { CustomersService } from '../customers/customers.service';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource } from 'typeorm';
 import mongoose from 'mongoose';
 import { InjectConnection } from '@nestjs/mongoose';
 import { Step } from '../steps/entities/step.entity';
 import {
-  AnalyticsEvent,
   AnalyticsProviderTypes,
   ElementConditionFilter,
   FilterByOption,
   StepType,
 } from '../steps/types/step.interface';
 import { Journey } from '../journeys/entities/journey.entity';
-import {
-  PosthogTriggerParams,
-  ProviderTypes,
-} from '../workflows/entities/workflow.entity';
+import { PosthogTriggerParams } from '../workflows/entities/workflow.entity';
 import { AudiencesHelper } from '../audiences/audiences.helper';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
-import { createHash, randomUUID } from 'crypto';
-import { TrackerHit } from './entities/tracker-hit.entity';
-import { InjectRepository } from '@nestjs/typeorm';
+import { randomUUID } from 'crypto';
 import { WebsocketGateway } from '@/websockets/websocket.gateway';
 import { RedlockService } from '../redlock/redlock.service';
 import { Lock } from 'redlock';
@@ -44,8 +38,6 @@ export class EventsProcessor extends WorkerHost {
     @InjectConnection() private readonly connection: mongoose.Connection,
     @Inject(CustomersService)
     private readonly customersService: CustomersService,
-    @InjectRepository(TrackerHit)
-    public readonly trackerHitRepository: Repository<TrackerHit>,
     private readonly audiencesHelper: AudiencesHelper,
     @Inject(WebsocketGateway)
     private websocketGateway: WebsocketGateway,
@@ -125,37 +117,7 @@ export class EventsProcessor extends WorkerHost {
     const transactionSession = await this.connection.startSession();
     await transactionSession.startTransaction();
 
-    const trackerHitHash =
-      job.data.event.source === 'tracker'
-        ? Buffer.from(
-            createHash('sha256')
-              .update(
-                String(
-                  job.data.event.event +
-                    job.data.event.payload.trackerId +
-                    job.data.event.correlationValue
-                )
-              )
-              .digest('hex')
-          ).toString('base64')
-        : undefined;
-
     try {
-      if (trackerHitHash) {
-        const foundTrackerHit = await this.trackerHitRepository.findOneBy({
-          hash: trackerHitHash,
-        });
-
-        if (foundTrackerHit && !foundTrackerHit.processed) {
-          throw new Error('Tracker event hit rate-limitted');
-        }
-
-        await this.trackerHitRepository.save({
-          hash: trackerHitHash,
-          processed: false,
-        });
-      }
-
       //Account associated with event
       const account: Account = await queryRunner.manager.findOneBy(Account, {
         id: job.data.accountID,
@@ -552,13 +514,6 @@ export class EventsProcessor extends WorkerHost {
     } finally {
       await transactionSession.endSession();
       await queryRunner.release();
-
-      if (trackerHitHash) {
-        await this.trackerHitRepository.save({
-          hash: trackerHitHash,
-          processed: true,
-        });
-      }
 
       if (err) throw err;
     }
