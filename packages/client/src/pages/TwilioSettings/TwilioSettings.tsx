@@ -126,7 +126,7 @@ const TwilioSettings = () => {
               onChange={(value) =>
                 setFormData({ ...formData, smsAuthToken: value })
               }
-              placeholder="Email domain"
+              placeholder="Auth Token"
             />
           </div>
 
