@@ -807,4 +807,46 @@ export class CronService {
       this.error(e, this.handleExpiredModalEvents.name, session);
     }
   }
+
+  @Cron(CronExpression.EVERY_DAY_AT_NOON)
+  async cleanTrashSteps() {
+    const session = randomUUID();
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    this.log('Start cleaning unused steps', this.cleanTrashSteps.name, session);
+    try {
+      const data = await queryRunner.query(`
+          WITH active_journeys AS (
+            SELECT id, "visualLayout"
+            FROM journey
+            WHERE "isActive" = true or "isPaused" = true or "isStopped" = true or "isDeleted" = true
+        )
+        
+        , step_ids_to_keep AS (
+            SELECT 
+                aj.id as journey_id,
+                (node->'data'->>'stepId')::uuid as step_id
+            FROM active_journeys aj
+            CROSS JOIN LATERAL jsonb_array_elements("visualLayout"->'nodes') as node
+            WHERE node->'data' ? 'stepId'
+        )
+        
+        DELETE FROM step s
+        WHERE s."journeyId" IN (SELECT id FROM active_journeys)
+        AND (s."journeyId", s.id) NOT IN (SELECT journey_id, step_id FROM step_ids_to_keep);
+      `);
+      await queryRunner.commitTransaction();
+      this.log(
+        `Finish cleaning unused steps, removed: ${data[1]}`,
+        this.cleanTrashSteps.name,
+        session
+      );
+    } catch (e) {
+      await queryRunner.rollbackTransaction();
+      this.error(e, this.cleanTrashSteps.name, session);
+    } finally {
+      await queryRunner.release();
+    }
+  }
 }
