@@ -53,6 +53,7 @@ import TrackerTemplateTable from "pages/TrackerTemplateTable";
 import { LaudspeakerProvider } from "@laudspeaker/react";
 import AppConfig from "constants/app";
 import Personv2 from "pages/Personv2";
+import SettingsFirebaseBeta from "pages/Settings/SettingsFirebaseBeta";
 
 interface IProtected {
   children: ReactElement;
@@ -452,7 +453,7 @@ const RouteComponent: React.FC = () => {
             </Protected>
           }
         />
-        {/* Removed for 1 release
+        {/* Removed for 1 release but uncommented for recording  */}
         <Route
           path="/templates/firebase/:name"
           element={
@@ -477,6 +478,7 @@ const RouteComponent: React.FC = () => {
             </Protected>
           }
         />
+        {/* Removed for 1 release
         <Route
           path="/templates/modal/:name"
           element={
@@ -525,7 +527,7 @@ const RouteComponent: React.FC = () => {
             </Protected>
           }
         />
-        {/* Removed for version 1 release
+        {/* Removed for version 1 release but uncommented for recordings */}
         <Route
           path="/integrations"
           element={
@@ -561,7 +563,7 @@ const RouteComponent: React.FC = () => {
               </VerificationProtected>
             </Protected>
           }
-        /> */}
+        />
         <Route
           path="/verification"
           element={
@@ -637,6 +639,18 @@ const RouteComponent: React.FC = () => {
               <VerificationProtected>
                 <DrawerLayout>
                   <JavascriptSnippetSettings />
+                </DrawerLayout>
+              </VerificationProtected>
+            </Protected>
+          }
+        />
+        <Route
+          path="/settings/firebase"
+          element={
+            <Protected>
+              <VerificationProtected>
+                <DrawerLayout>
+                  <SettingsFirebaseBeta />
                 </DrawerLayout>
               </VerificationProtected>
             </Protected>

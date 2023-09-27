@@ -90,28 +90,28 @@ export const dataSubArray = [
     ],
   },
   // Removed for version 1 release
-  // {
-  //   id: "integrations",
-  //   imgIcon: dataIcon,
-  //   text: "Data",
-  //   type: "group",
-  //   children: [
-  //     {
-  //       id: "integrations",
-  //       imgIcon: dataIcon,
-  //       text: "Database import",
-  //       type: "menu",
-  //       link: "/integrations",
-  //     },
-  //     // {
-  //     //   id: "analysis",
-  //     //   imgIcon: Analysis(),
-  //     //   text: "Analysis",
-  //     //   type: "menu",
-  //     //   link: "/analysis",
-  //     // },
-  //   ],
-  // },
+  {
+    id: "integrations",
+    imgIcon: dataIcon,
+    text: "Data",
+    type: "group",
+    children: [
+      {
+        id: "integrations",
+        imgIcon: dataIcon,
+        text: "Database import",
+        type: "menu",
+        link: "/integrations",
+      },
+      // {
+      //   id: "analysis",
+      //   imgIcon: Analysis(),
+      //   text: "Analysis",
+      //   type: "menu",
+      //   link: "/analysis",
+      // },
+    ],
+  },
   {
     id: "settings",
     imgIcon: settingsIcon,

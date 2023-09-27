@@ -150,7 +150,7 @@ export default function SettingsFirebaseBeta() {
 
   return (
     <>
-      <div className="mt-10 divide-y divide-gray-200">
+      <div className="pl-10 mt-10 divide-y divide-gray-200">
         <div className="mt-6">
           <dl className="divide-y divide-gray-200">
             <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:py-5">

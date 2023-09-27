@@ -11,6 +11,7 @@ import ApiService from "services/api.service";
 import { toast } from "react-toastify";
 import { EmailSendingService } from "pages/EmailSettings/EmailSettings";
 import { title } from "process";
+import { Navigate } from "react-router-dom";
 
 export enum MessageChannel {
   EMAIL,
@@ -115,8 +116,9 @@ const MessageChannelTab = () => {
       id: MessageChannel.FIREBASE,
       title: "Firebase",
       icon: firebaseCardIconImage,
-      commingSoon: true,
-      disabled: true,
+      commingSoon: false,
+      disabled: false,
+      onClick: () => navigate("/settings/firebase"),
     },
   };
 

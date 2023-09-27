@@ -101,9 +101,15 @@ const NameTemplate = ({ onSubmit, isPrimary }: INameSegment) => {
                     key: TemplateType.SMS,
                     title: TemplateType.SMS,
                   },
-                  // Removed for 1 release
-                  // { value: TemplateType.FIREBASE },
-                  // { value: TemplateType.WEBHOOK },
+                  // Removed for 1 release uncomented temprorary
+                  {
+                    key: TemplateType.FIREBASE,
+                    title: TemplateType.FIREBASE,
+                  },
+                  {
+                    key: TemplateType.WEBHOOK,
+                    title: TemplateType.WEBHOOK,
+                  },
                   // { value: TemplateType.MODAL },
                   // { value: TemplateType.CUSTOM_MODAL, title: "custom modal" },
                 ]}

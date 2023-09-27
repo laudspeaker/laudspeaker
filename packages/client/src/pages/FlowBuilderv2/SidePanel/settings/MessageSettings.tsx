@@ -26,7 +26,8 @@ const MessageSettings: FC<SidePanelComponentProps<MessageNodeData>> = ({
     });
 
     const filteredTemplates = templates?.data?.filter(
-      (item: { type?: string }) => item.type === templateType
+      (item: { type?: string }) =>
+        item.type === (templateType === "push" ? "firebase" : templateType)
     );
     setTemplateList(filteredTemplates);
   };

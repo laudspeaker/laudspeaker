@@ -108,6 +108,7 @@ const TwilioSettings = () => {
               id="twilio-account-sid-input"
               wrapperClassName="!w-full"
               className="w-full"
+              type="password"
               value={formData.smsAccountSid}
               onChange={(value) =>
                 setFormData({ ...formData, smsAccountSid: value })
@@ -122,6 +123,7 @@ const TwilioSettings = () => {
               id="twilio-auth-token-input"
               wrapperClassName="!w-full"
               className="w-full"
+              type="password"
               value={formData.smsAuthToken}
               onChange={(value) =>
                 setFormData({ ...formData, smsAuthToken: value })
