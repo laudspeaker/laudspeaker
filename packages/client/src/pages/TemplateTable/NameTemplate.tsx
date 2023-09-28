@@ -103,7 +103,10 @@ const NameTemplate = ({ onSubmit, isPrimary }: INameSegment) => {
                   },
                   // Removed for 1 release
                   // { value: TemplateType.FIREBASE },
-                  // { value: TemplateType.WEBHOOK },
+                  {
+                    key: TemplateType.WEBHOOK,
+                    title: TemplateType.WEBHOOK,
+                  },
                   // { value: TemplateType.MODAL },
                   // { value: TemplateType.CUSTOM_MODAL, title: "custom modal" },
                 ]}

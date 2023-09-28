@@ -33,7 +33,7 @@ export const dataSubArray = [
   {
     id: "messaging",
     imgIcon: messagingIcon,
-    text: "Messaging",
+    text: "Journeys",
     type: "group",
     children: [
       {

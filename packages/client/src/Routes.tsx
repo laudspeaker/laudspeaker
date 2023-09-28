@@ -465,6 +465,7 @@ const RouteComponent: React.FC = () => {
             </Protected>
           }
         />
+        */}
         <Route
           path="/templates/webhook/:name"
           element={
@@ -477,6 +478,7 @@ const RouteComponent: React.FC = () => {
             </Protected>
           }
         />
+        {/*
         <Route
           path="/templates/modal/:name"
           element={

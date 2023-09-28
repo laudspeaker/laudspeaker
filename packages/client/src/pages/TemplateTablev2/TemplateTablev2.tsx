@@ -70,7 +70,7 @@ const TemplateTablev2 = () => {
           (currentPage - 1) * ITEMS_PER_PAGE
         }&search=${search}&orderBy=${sortOptions.sortBy}&orderType=${
           sortOptions.sortType
-        }&type=email&type=sms`,
+        }&type=email&type=sms&type=webhook`,
       });
 
       setRows(

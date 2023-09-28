@@ -204,7 +204,7 @@ const Personv2 = () => {
           }`}
           onClick={() => setCurrentTab(PersonTab.JOURNEY)}
         >
-          Journey
+          Journeys
         </button>
       </div>
       <div className="w-full h-[calc(100vh-188px)] p-[20px] flex gap-[20px]">

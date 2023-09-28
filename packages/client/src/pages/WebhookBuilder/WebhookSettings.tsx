@@ -653,7 +653,8 @@ const WebhookSettings: FC<WebhookSettingsProps> = ({
       <Modal
         isOpen={!!testResponseData}
         onClose={() => setTestResponseData(undefined)}
-        panelClass="min-w-[90vw]"
+        dialogClass="!z-[9999999999]"
+        panelClass="max-w-[70vw]"
       >
         {testResponseData && (
           <div>

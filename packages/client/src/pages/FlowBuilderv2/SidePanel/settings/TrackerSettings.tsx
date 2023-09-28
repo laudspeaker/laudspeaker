@@ -216,7 +216,7 @@ const TrackerSettings: FC<SidePanelComponentProps<TrackerNodeData>> = ({
       ) : (
         <div className="flex flex-col gap-[10px]">
           <div className="font-semibold">
-            Create a tracker from component templates
+            Create a custom component from component templates
           </div>
 
           <Select

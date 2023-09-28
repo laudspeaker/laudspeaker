@@ -1130,10 +1130,10 @@ export class JourneysService {
               metadata.timeBranch = new TimeWindowStepMetadata();
               metadata.timeBranch.window = new TimeWindow();
               metadata.timeBranch.window.from = Temporal.Instant.from(
-                new Date(timeBranch['from']).toISOString()
+                new Date(timeBranch['waitFrom']).toISOString()
               );
               metadata.timeBranch.window.to = Temporal.Instant.from(
-                new Date(timeBranch['to']).toISOString()
+                new Date(timeBranch['waitTo']).toISOString()
               );
             }
             metadata.branches = [];

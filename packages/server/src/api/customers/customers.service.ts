@@ -1621,7 +1621,6 @@ export class CustomersService {
         ?.data;
       const customerIds = data?.map((item) => item.customerId) || [];
 
-
       return {
         totalPages,
         data: await Promise.all(
@@ -1721,58 +1720,52 @@ export class CustomersService {
 
     const queryText = `
     SELECT 
-        jr.id, 
-        jr.name, 
+    jr.id, 
+    jr.name, 
+    COALESCE(
         (
             SELECT 
-                (
-                    (sp.metadata):: json #>'{destination}' IS NULL 
-                    AND NOT EXISTS (
-                        SELECT 
-                            1 
-                        FROM 
-                            jsonb_array_elements(sp.metadata -> 'branches') AS branch 
-                        WHERE 
-                            (branch ->> 'destination') IS NULL
+                NOT (
+                    (sp.metadata)::json #>'{destination}' IS NOT NULL 
+                    OR EXISTS (
+                        SELECT 1 
+                        FROM jsonb_array_elements(sp.metadata -> 'branches') AS branch 
+                        WHERE (branch ->> 'destination') IS NOT NULL
                     )
-                ) 
+                    OR (sp.metadata -> 'timeBranch' ->> 'destination') IS NOT NULL
+                )
             FROM 
                 step AS sp 
             WHERE 
                 EXISTS (
-                    SELECT 
-                        1 
-                    FROM 
-                        unnest(sp.customers :: jsonb[]) AS json_text 
-                    WHERE 
-                        json_text ->> 'customerID' = $1
+                    SELECT 1 
+                    FROM unnest(sp.customers :: jsonb[]) AS json_text 
+                    WHERE json_text ->> 'customerID' = $1
                 ) 
-                and sp."journeyId" = jr.id
+                AND sp."journeyId" = jr.id
+        ), true
         ) as "isFinished",
-        (
-          SELECT 
-            sp.id
+              (
+                  SELECT 
+                      sp.id
+                  FROM 
+                      step AS sp 
+                  WHERE 
+                      EXISTS (
+                          SELECT 1 
+                          FROM unnest(sp.customers :: jsonb[]) AS json_text 
+                          WHERE json_text ->> 'customerID' = $1
+                      ) 
+                      AND sp."journeyId" = jr.id
+              ) as "currentStepId"
           FROM 
-            step AS sp 
+              journey as jr 
+              LEFT JOIN step ON step."journeyId" = jr.id 
           WHERE 
-            EXISTS (
-              SELECT 
-                1 
-              FROM 
-                unnest(sp.customers :: jsonb[]) AS json_text 
-              WHERE 
-                json_text ->> 'customerID' = $1
-            ) 
-            and sp."journeyId" = jr.id
-        ) as "currentStepId"
-    FROM 
-        journey as jr 
-        LEFT JOIN step ON step."journeyId" = jr.id 
-    WHERE 
-        jr.id = ANY($2)
-    GROUP BY 
-        jr.id
-    LIMIT $3 OFFSET $4`;
+              jr.id = ANY($2)
+          GROUP BY 
+              jr.id 
+          LIMIT $3 OFFSET $4`;
 
     const totalJourneys = await this.dataSource.query(
       `

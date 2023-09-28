@@ -111,12 +111,12 @@ const drawerFixtures: FlowBuilderDrawerFixture[] = [
       //   text: "Push Notification",
       //   disabled: true,
       // },
-      // {
-      //   id: OnboardingAction.NOTHING,
-      //   icon: WebhookIcon(),
-      //   text: "Webhook",
-      //   disabled: true,
-      // },
+      {
+        id: OnboardingAction.NOTHING,
+        icon: WebhookIcon(),
+        text: "Webhook",
+        disabled: true,
+      },
       // {
       //   id: OnboardingAction.NOTHING,
       //   icon: CustomModalIcon(),
