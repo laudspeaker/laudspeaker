@@ -38,11 +38,6 @@ export const trackerStatsToShow: {
   renderLabel: (value: number) => string;
 }[] = [
   {
-    key: "sent",
-    name: "Delivered",
-    renderLabel: (value) => compatNumberFormatter.format(value),
-  },
-  {
     key: "delivered",
     name: "Shown",
     renderLabel: (value) => compatNumberFormatter.format(value),
@@ -167,7 +162,7 @@ export const TrackerNode: FC<NodeProps<TrackerNodeData>> = ({
           <div
             className={`font-inter font-semibold text-[16px] leading-[24px] flex justify-between items-center w-full`}
           >
-            <div>Tracker</div>
+            <div>Custom component</div>
             {tracker && (
               <div
                 className="flex items-center gap-[6px]"

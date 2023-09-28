@@ -62,7 +62,7 @@ const FlowBuilderSidePanel: FC<FlowBuilderSidePanelProps> = ({ className }) => {
     [NodeType.WAIT_UNTIL]: "Wait until",
     [NodeType.USER_ATTRIBUTE]: "User attribute",
     [NodeType.INSERT_NODE]: "Insert",
-    [NodeType.TRACKER]: "Tracker",
+    [NodeType.TRACKER]: "Custom component",
   };
 
   const nodeToSettingsComponentMap: Record<string, ReactNode> = {
@@ -242,6 +242,7 @@ const FlowBuilderSidePanel: FC<FlowBuilderSidePanelProps> = ({ className }) => {
                   ? messageFixtures[selectedNode.data.template.type].text
                   : nodeTypeToNameMap[selectedNode.type as NodeType]
                 : ""}
+              <br />
             </div>
             <div className="font-inter font-normal text-[12px] leading-[20px] text-[#4B5563]">
               {(() => {

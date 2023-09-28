@@ -55,11 +55,11 @@ const flowBuilderDrawerFixtures: FlowBuilderDrawerFixture[] = [
       //   icon: PushIcon(),
       //   text: "Push Notification",
       // },
-      // {
-      //   id: DrawerAction.WEBHOOK,
-      //   icon: WebhookIcon(),
-      //   text: "Webhook",
-      // },
+      {
+        id: DrawerAction.WEBHOOK,
+        icon: WebhookIcon(),
+        text: "Webhook",
+      },
       // {
       //   id: DrawerAction.CUSTOM_MODAL,
       //   icon: CustomModalIcon(),

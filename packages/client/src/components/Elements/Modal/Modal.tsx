@@ -9,6 +9,7 @@ export interface ModalProps {
   titleClass?: string;
   childrenClass?: string;
   panelClass?: string;
+  dialogClass?: string;
   closeButtonNeed?: boolean;
   onClose?: () => void;
   onEnterPress?: (e: KeyboardEvent<HTMLDivElement>) => void;
@@ -20,6 +21,7 @@ const Modal: FC<ModalProps> = ({
   children,
   title,
   childrenClass = "",
+  dialogClass = "",
   panelClass = "",
   titleClass = "",
   closeButtonNeed = true,
@@ -27,7 +29,11 @@ const Modal: FC<ModalProps> = ({
 }) => {
   return (
     <Transition appear show={isOpen} as={Fragment}>
-      <Dialog as="div" className="relative z-[1000]" onClose={onClose}>
+      <Dialog
+        as="div"
+        className={`${dialogClass} relative z-[1000]`}
+        onClose={onClose}
+      >
         <Transition.Child
           as={Fragment}
           enter="ease-out duration-300"

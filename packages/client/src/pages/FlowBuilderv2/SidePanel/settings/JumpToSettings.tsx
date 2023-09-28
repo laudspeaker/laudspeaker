@@ -20,7 +20,7 @@ const JumpToSettings: FC<
     [NodeType.WAIT_UNTIL]: "Wait until",
     [NodeType.USER_ATTRIBUTE]: "User attribute",
     [NodeType.INSERT_NODE]: "Insert",
-    [NodeType.TRACKER]: "Tracker",
+    [NodeType.TRACKER]: "Custom component",
   };
 
   const { nodes } = useAppSelector((state) => state.flowBuilder);

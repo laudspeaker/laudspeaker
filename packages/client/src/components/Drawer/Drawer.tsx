@@ -52,8 +52,8 @@ const ResponsiveDrawer: FC<ResponsiveDrawerProps> = ({ expandable }) => {
     <div
       className={`${
         expandable
-          ? "absolute transition-[width] [&_.notexapndable]:hover:!scale-100 w-[50px] hover:!w-[200px]"
-          : "block min-w-[200px]"
+          ? "absolute transition-[width] [&_.notexapndable]:hover:!scale-100 w-[50px] hover:!w-[230px]"
+          : "block min-w-[230px]"
       } top-0 left-0 px-[10px] text-[14px] text-[#111827] leading-[22px] font-normal font-roboto z-[999999999999] border-collapse bg-[#F3F4F6] border-[1px] border-[#E5E7EB] h-screen`}
       ref={drawerRef}
     >
@@ -187,7 +187,7 @@ const ResponsiveDrawer: FC<ResponsiveDrawerProps> = ({ expandable }) => {
                                       expandable
                                         ? "notexapndable scale-0 transition-[width] delay-1000"
                                         : ""
-                                    } whitespace-nowrap max-w-[120px] inline-block text-ellipsis overflow-hidden ${
+                                    } whitespace-nowrap inline-block overflow-hidden ${
                                       !isExpanded && "hidden"
                                     }`}
                                   >

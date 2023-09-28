@@ -74,7 +74,7 @@ export class AuthHelper extends BaseJwtHelper {
   ) {
     const journey = await this.journeysService.transactionalCreate(
       account,
-      'Basic Onboarding (Sample)',
+      'Example onboarding checklist',
       queryRunner,
       session
     );
