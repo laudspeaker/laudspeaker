@@ -1,6 +1,8 @@
 import React, { FC } from "react";
+import { toast } from "react-toastify";
 import { Node } from "reactflow";
 import { removeNode } from "reducers/flow-builder.reducer";
+import ApiService from "services/api.service";
 import { useAppDispatch } from "store/hooks";
 import Button, {
   ButtonType,
@@ -20,6 +22,20 @@ const FlowBuilderDeleteModal: FC<FlowBuilderDeleteModalProps> = ({
   selectedNode,
 }) => {
   const dispatch = useAppDispatch();
+
+  const handleNodeDeletion = async () => {
+    try {
+      if (selectedNode.data.stepId) {
+        await ApiService.delete({
+          url: `/steps/${selectedNode.data.stepId}`,
+        });
+      }
+      dispatch(removeNode(selectedNode.id));
+      onClose();
+    } catch (error) {
+      toast.error("Error while removing node, contact support if it repeats.");
+    }
+  };
 
   return (
     <FlowBuilderModal isOpen={isOpen} onClose={onClose}>
@@ -64,13 +80,7 @@ const FlowBuilderDeleteModal: FC<FlowBuilderDeleteModalProps> = ({
           <Button type={ButtonType.SECONDARY} onClick={onClose}>
             No
           </Button>
-          <Button
-            type={ButtonType.PRIMARY}
-            onClick={() => {
-              dispatch(removeNode(selectedNode.id));
-              onClose();
-            }}
-          >
+          <Button type={ButtonType.PRIMARY} onClick={handleNodeDeletion}>
             Yes
           </Button>
         </div>

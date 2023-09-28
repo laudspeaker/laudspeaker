@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { QueryRunner, Repository } from 'typeorm';
+import { DataSource, QueryRunner, Repository } from 'typeorm';
 import { Step } from './entities/step.entity';
 import { CreateStepDto } from './dto/create-step.dto';
 import { UpdateStepDto } from './dto/update-step.dto';
@@ -33,6 +33,7 @@ export class StepsService {
    * @class
    */
   constructor(
+    private dataSource: DataSource,
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
     private readonly logger: Logger,
     @InjectRepository(Step)
@@ -491,14 +492,47 @@ export class StepsService {
    * @param session
    */
   async delete(account: Account, id: string, session: string): Promise<void> {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
     try {
-      await this.stepsRepository.delete({
-        owner: { id: (<Account>account).id },
-        id,
-      });
+      await queryRunner.query(
+        `
+          WITH RECURSIVE nodes_to_delete AS (
+            SELECT 
+                id, 
+                metadata->'branches' AS branches, 
+                (metadata->>'destination')::uuid AS destination,
+                CASE 
+                    WHEN jsonb_array_length(metadata->'branches') IS NULL OR jsonb_array_length(metadata->'branches') = 1 THEN FALSE
+                    ELSE TRUE
+                END as recursive_delete
+            FROM step
+            WHERE id = $1::uuid and "ownerId" = $2::uuid
+            
+            UNION
+            
+            SELECT 
+                t.id, 
+                t.metadata->'branches' AS branches, 
+                (t.metadata->>'destination')::uuid AS destination,
+                ntd.recursive_delete
+            FROM step t
+            INNER JOIN nodes_to_delete ntd 
+            ON (t.id = ntd.destination OR t.id IN (SELECT (value->>'destination')::uuid FROM jsonb_array_elements(ntd.branches))) 
+            AND ntd.recursive_delete = TRUE
+        )
+        DELETE FROM step WHERE id IN (SELECT id FROM nodes_to_delete);
+      `,
+        [id, (<Account>account).id]
+      );
+      await queryRunner.commitTransaction();
     } catch (e) {
+      await queryRunner.rollbackTransaction();
       this.error(e, this.delete.name, session, account.email);
       throw e;
+    } finally {
+      await queryRunner.release();
     }
   }
 
