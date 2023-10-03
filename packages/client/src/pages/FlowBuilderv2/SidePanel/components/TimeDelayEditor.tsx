@@ -1,5 +1,7 @@
 import { DelayData } from "pages/FlowBuilderv2/Nodes/NodeData";
 import React, { FC } from "react";
+import { useAppSelector } from "store/hooks";
+import onboardingCursorImage from "../../../Onboardingv2/svg/onboarding-cursor.svg";
 
 interface TimeDelayEditorProps {
   delay: DelayData;
@@ -7,8 +9,11 @@ interface TimeDelayEditorProps {
 }
 
 const TimeDelayEditor: FC<TimeDelayEditorProps> = ({ delay, onChange }) => {
+  const { isOnboarding, isOnboardingWaitUntilTimeSettingTooltipVisible } =
+    useAppSelector((store) => store.flowBuilder);
+
   return (
-    <div className="flex items-center gap-[10px] w-full h-[32px] mt-[1px] p-[1px]">
+    <div className="relative flex items-center gap-[10px] w-full h-[32px] mt-[1px] p-[1px]">
       <div className="font-inter font-normal text-[14px] leading-[22px]">
         Wait
       </div>
@@ -47,6 +52,18 @@ const TimeDelayEditor: FC<TimeDelayEditorProps> = ({ delay, onChange }) => {
         placeholder="Mins"
         className="w-full px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB] placeholder:font-inter placeholder:font-normal placeholder:text-[14px] placeholder:leading-[22px] placeholder:text-[#9CA3AF] rounded-[2px]"
       />
+      {isOnboarding && isOnboardingWaitUntilTimeSettingTooltipVisible && (
+        <>
+          <div className="absolute w-full bottom-[-60px] left-0 p-[10px] bg-black text-white font-medium">
+            Add 1 hour to Time Delay trigger
+          </div>
+          <img
+            className="absolute pointer-events-none -bottom-[40%] left-[65%] -translate-x-1/2 "
+            src={onboardingCursorImage}
+            alt=""
+          />
+        </>
+      )}
     </div>
   );
 };

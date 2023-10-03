@@ -76,6 +76,8 @@ const edgeTypes: Record<EdgeType, FC<EdgeProps<any>>> = {
 interface FlowEditorProps {
   isViewMode?: boolean;
   className?: string;
+  onMove?: () => void;
+  onMoveEnd?: () => void;
 }
 
 export const nodeTypesNotConnectableByJumpTo: (string | undefined)[] = [
@@ -85,7 +87,12 @@ export const nodeTypesNotConnectableByJumpTo: (string | undefined)[] = [
   NodeType.START,
 ];
 
-const FlowEditor: FC<FlowEditorProps> = ({ className, isViewMode }) => {
+const FlowEditor: FC<FlowEditorProps> = ({
+  className,
+  isViewMode,
+  onMove = () => {},
+  onMoveEnd = () => {},
+}) => {
   const { nodes, edges, stepperIndex, isOnboarding, jumpToTargettingNode } =
     useAppSelector((state) => state.flowBuilder);
 
@@ -172,6 +179,8 @@ const FlowEditor: FC<FlowEditorProps> = ({ className, isViewMode }) => {
           }}
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
+          onMove={onMove}
+          onMoveEnd={onMoveEnd}
           nodeTypes={nodeTypes}
           edgeTypes={edgeTypes}
           panOnScroll

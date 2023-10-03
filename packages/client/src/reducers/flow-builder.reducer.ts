@@ -167,6 +167,7 @@ interface FlowBuilderState {
   showSegmentsErrors: boolean;
   isOnboarding: boolean;
   isOnboardingWaitUntilTooltipVisible: boolean;
+  isOnboardingWaitUntilTimeSettingTooltipVisible: boolean;
   jumpToTargettingNode?: string;
   isDrawerDisabled: boolean;
 }
@@ -213,6 +214,7 @@ const initialState: FlowBuilderState = {
   showSegmentsErrors: false,
   isOnboarding: false,
   isOnboardingWaitUntilTooltipVisible: false,
+  isOnboardingWaitUntilTimeSettingTooltipVisible: false,
   jumpToTargettingNode: undefined,
   isDrawerDisabled: false,
 };
@@ -744,6 +746,12 @@ const flowBuilderSlice = createSlice({
     ) {
       state.isOnboardingWaitUntilTooltipVisible = action.payload;
     },
+    setIsOnboardingWaitUntilTimeSettingTooltipVisible(
+      state,
+      action: PayloadAction<boolean>
+    ) {
+      state.isOnboardingWaitUntilTimeSettingTooltipVisible = action.payload;
+    },
     setJumpToTargettingNode(state, action: PayloadAction<string | undefined>) {
       handleJumpToTargettingNodeChange(state, action.payload);
     },
@@ -797,6 +805,7 @@ export const {
   setShowSegmentsErrors,
   setIsOnboarding,
   setIsOnboardingWaitUntilTooltipVisible,
+  setIsOnboardingWaitUntilTimeSettingTooltipVisible,
   setJumpToTargettingNode,
   setIsDrawerDisabled,
   refreshFlowBuilder,
