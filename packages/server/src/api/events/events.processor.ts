@@ -445,6 +445,13 @@ export class EventsProcessor extends WorkerHost {
             session: job.data.session,
             lock,
             event: job.data.event.event,
+          },
+          {
+            attempts: 5,
+            backoff: {
+              type: 'fixed',
+              delay: 300,
+            },
           });
         } else {
           await lock.release();

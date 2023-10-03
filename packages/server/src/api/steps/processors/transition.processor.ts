@@ -510,14 +510,24 @@ export class TransitionProcessor extends WorkerHost {
         newNext.type !== StepType.TIME_WINDOW &&
         newNext.type !== StepType.WAIT_UNTIL_BRANCH
       )
-        await this.transitionQueue.add(newNext.type, {
-          ownerID,
-          step: newNext,
-          session: session,
-          customerID,
-          lock,
-          event,
-        });
+        await this.transitionQueue.add(
+          newNext.type,
+          {
+            ownerID,
+            step: newNext,
+            session: session,
+            customerID,
+            lock,
+            event,
+          },
+          {
+            attempts: 5,
+            backoff: {
+              type: 'fixed',
+              delay: 300,
+            },
+          }
+        );
       else {
         await lock.release();
         this.warn(
@@ -786,14 +796,24 @@ export class TransitionProcessor extends WorkerHost {
         newNext.type !== StepType.TIME_WINDOW &&
         newNext.type !== StepType.WAIT_UNTIL_BRANCH
       )
-        await this.transitionQueue.add(newNext.type, {
-          ownerID,
-          step: newNext,
-          session: session,
-          customerID,
-          lock,
-          event,
-        });
+        await this.transitionQueue.add(
+          newNext.type,
+          {
+            ownerID,
+            step: newNext,
+            session: session,
+            customerID,
+            lock,
+            event,
+          },
+          {
+            attempts: 5,
+            backoff: {
+              type: 'fixed',
+              delay: 300,
+            },
+          }
+        );
       else {
         await lock.release();
         this.warn(
@@ -906,6 +926,13 @@ export class TransitionProcessor extends WorkerHost {
           customerID,
           lock,
           event,
+        },
+        {
+          attempts: 5,
+          backoff: {
+            type: 'fixed',
+            delay: 300,
+          },
         });
       else {
         await lock.release();
@@ -1033,6 +1060,13 @@ export class TransitionProcessor extends WorkerHost {
           customerID,
           lock,
           event,
+        },
+        {
+          attempts: 5,
+          backoff: {
+            type: 'fixed',
+            delay: 300,
+          },
         });
       else {
         await lock.release();
@@ -1160,6 +1194,13 @@ export class TransitionProcessor extends WorkerHost {
           customerID,
           lock,
           event,
+        },
+        {
+          attempts: 5,
+          backoff: {
+            type: 'fixed',
+            delay: 300,
+          },
         });
       else {
         await lock.release();
@@ -1295,6 +1336,13 @@ export class TransitionProcessor extends WorkerHost {
             customerID,
             lock,
             event,
+          },
+          {
+            attempts: 5,
+            backoff: {
+              type: 'fixed',
+              delay: 300,
+            },
           });
         else {
           await lock.release();
@@ -1351,6 +1399,13 @@ export class TransitionProcessor extends WorkerHost {
             customerID,
             lock,
             event,
+          },
+          {
+            attempts: 5,
+            backoff: {
+              type: 'fixed',
+              delay: 300,
+            },
           });
         else {
           await lock.release();
@@ -1488,6 +1543,13 @@ export class TransitionProcessor extends WorkerHost {
           customerID,
           lock,
           event,
+        },
+        {
+          attempts: 5,
+          backoff: {
+            type: 'fixed',
+            delay: 300,
+          },
         });
       else {
         await lock.release();

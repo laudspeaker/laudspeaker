@@ -181,6 +181,13 @@ export class StepsService {
         lock,
         session: session,
         customerID: customer.id,
+      },
+      {
+        attempts: 5,
+        backoff: {
+          type: 'fixed',
+          delay: 300,
+        },
       });
     } catch (err) {
       await lock.release();

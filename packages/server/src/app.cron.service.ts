@@ -433,14 +433,24 @@ export class CronService {
                   );
                 })
               )
-                this.transitionQueue.add(steps[i].type, {
-                  step: steps[i],
-                  ownerID: steps[i].owner.id,
-                  session: session,
-                  customerID: customers[customersIndex].id,
-                  lock,
-                  branch,
-                });
+                this.transitionQueue.add(
+                  steps[i].type,
+                  {
+                    step: steps[i],
+                    ownerID: steps[i].owner.id,
+                    session: session,
+                    customerID: customers[customersIndex].id,
+                    lock,
+                    branch,
+                  },
+                  {
+                    attempts: 5,
+                    backoff: {
+                      type: 'fixed',
+                      delay: 300,
+                    },
+                  }
+                );
               else {
                 await lock.release();
                 this.warn(
