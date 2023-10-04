@@ -4,12 +4,14 @@ import { createPortal } from "react-dom";
 interface FlowBuilderModalProps {
   children: ReactNode;
   isOpen: boolean;
+  className?: string;
   onClose?: () => void;
 }
 
 const FlowBuilderModal: FC<FlowBuilderModalProps> = ({
   children,
   isOpen,
+  className = "",
   onClose,
 }) => {
   const rootDiv = document.querySelector("#root");
@@ -23,7 +25,7 @@ const FlowBuilderModal: FC<FlowBuilderModalProps> = ({
             onClick={onClose}
           >
             <div
-              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[416px] bg-white px-[32px] pt-[32px] pb-[24px] text-[#111827]"
+              className={`${className} absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[416px] bg-white px-[32px] pt-[32px] pb-[24px] text-[#111827]`}
               onClick={(e) => e.stopPropagation()}
             >
               {children}

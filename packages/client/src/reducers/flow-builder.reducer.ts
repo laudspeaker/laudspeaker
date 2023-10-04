@@ -152,6 +152,12 @@ export type DragAction =
   | SwapDragAction
   | OnboardingDragAction;
 
+interface DevModeStatePayload {
+  enabled?: boolean;
+  isPreviewModalOpened?: boolean;
+  isConnectionFailed?: boolean;
+}
+
 interface FlowBuilderState {
   flowId: string;
   flowName: string;
@@ -170,6 +176,7 @@ interface FlowBuilderState {
   isOnboardingWaitUntilTimeSettingTooltipVisible: boolean;
   jumpToTargettingNode?: string;
   isDrawerDisabled: boolean;
+  devModeState: DevModeStatePayload;
 }
 
 const startNodeUUID = uuid();
@@ -217,6 +224,11 @@ const initialState: FlowBuilderState = {
   isOnboardingWaitUntilTimeSettingTooltipVisible: false,
   jumpToTargettingNode: undefined,
   isDrawerDisabled: false,
+  devModeState: {
+    enabled: false,
+    isPreviewModalOpened: false,
+    isConnectionFailed: false,
+  },
 };
 
 const handlePruneNodeTree = (state: FlowBuilderState, nodeId: string) => {
@@ -509,6 +521,12 @@ const flowBuilderSlice = createSlice({
     setEdges(state, action: PayloadAction<Edge<EdgeData>[]>) {
       state.edges = action.payload;
       state.nodes = getLayoutedNodes(state.nodes, state.edges);
+    },
+    handleDevModeState(state, action: PayloadAction<DevModeStatePayload>) {
+      state.devModeState = {
+        ...state.devModeState,
+        ...action.payload,
+      };
     },
     handleDrawerAction(
       state,
@@ -803,6 +821,7 @@ export const {
   setIsViewMode,
   setFlowStatus,
   setShowSegmentsErrors,
+  handleDevModeState,
   setIsOnboarding,
   setIsOnboardingWaitUntilTooltipVisible,
   setIsOnboardingWaitUntilTimeSettingTooltipVisible,

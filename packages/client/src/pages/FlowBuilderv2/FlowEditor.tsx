@@ -1,5 +1,6 @@
 import ReactFlow, {
   applyNodeChanges,
+  ControlButton,
   Controls,
   EdgeChange,
   EdgeProps,
@@ -34,6 +35,8 @@ import { FC, useEffect, useRef } from "react";
 import NodeDraggingProvider from "./FlowPlugins/NodeDraggingProvider";
 import Button, { ButtonType } from "components/Elements/Buttonv2";
 import { JumpToNodeData } from "./Nodes/NodeData";
+import MapIcon from "@heroicons/react/24/outline/MapIcon";
+import { DevModeControlHint } from "./DevModeControlHint";
 
 export enum NodeType {
   START = "start",
@@ -93,8 +96,14 @@ const FlowEditor: FC<FlowEditorProps> = ({
   onMove = () => {},
   onMoveEnd = () => {},
 }) => {
-  const { nodes, edges, stepperIndex, isOnboarding, jumpToTargettingNode } =
-    useAppSelector((state) => state.flowBuilder);
+  const {
+    nodes,
+    edges,
+    stepperIndex,
+    isOnboarding,
+    jumpToTargettingNode,
+    devModeState,
+  } = useAppSelector((state) => state.flowBuilder);
 
   const dispatch = useAppDispatch();
 
@@ -203,7 +212,9 @@ const FlowEditor: FC<FlowEditorProps> = ({
             showInteractive={false}
             position="top-left"
             className="rounded-[2px]"
-          />
+          >
+            {devModeState.enabled && <DevModeControlHint />}
+          </Controls>
         </ReactFlow>
         {!isViewMode && !isOnboarding && stepperIndex === 0 && (
           <FlowBuilderSidePanel />
