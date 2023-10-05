@@ -32,10 +32,16 @@ import { Account } from '@/api/accounts/entities/accounts.entity';
 import { RedlockService } from '@/api/redlock/redlock.service';
 import * as _ from 'lodash';
 import { Lock } from 'redlock';
+import { PostHog } from 'posthog-node';
+
 
 @Injectable()
 @Processor('transition', { concurrency: cpus().length })
 export class TransitionProcessor extends WorkerHost {
+  private phClient = new PostHog(process.env.POSTHOG_KEY, {
+    host: process.env.POSTHOG_HOST,
+  });
+
   constructor(
     private dataSource: DataSource,
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
@@ -484,6 +490,18 @@ export class TransitionProcessor extends WorkerHost {
       this.handleCustomComponent.name,
       session
     );
+    this.phClient.capture({
+      distinctId: owner.email,
+      event: 'message_sent',
+      properties: {
+        type: 'custom_component',
+        step: stepID,
+        customer: customerID,
+        template: templateID,
+        provider: ClickHouseEventProvider.TRACKER,
+      },
+    });
+
     /**
      * Step Business Logic Finish
      */
@@ -1399,7 +1417,7 @@ export class TransitionProcessor extends WorkerHost {
     queryRunner: QueryRunner,
     transactionSession: mongoose.mongo.ClientSession,
     event?: string
-  ) {}
+  ) { }
 
   /**
    *
@@ -1512,8 +1530,8 @@ export class TransitionProcessor extends WorkerHost {
   }
 
   // TODO
-  async handleABTest(job: Job<any, any, string>) {}
-  async handleRandomCohortBranch(job: Job<any, any, string>) {}
+  async handleABTest(job: Job<any, any, string>) { }
+  async handleRandomCohortBranch(job: Job<any, any, string>) { }
 
   // @OnWorkerEvent('active')
   // onActive(job: Job<any, any, any>, prev: string) {
