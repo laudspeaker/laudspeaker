@@ -22,9 +22,7 @@ const WaitUntilSettings: FC<SidePanelComponentProps<WaitUntilNodeData>> = ({
   nodeData,
   setNodeData,
 }) => {
-  const { isOnboarding, isOnboardingWaitUntilTooltipVisible } = useAppSelector(
-    (state) => state.flowBuilder
-  );
+  const { isOnboarding } = useAppSelector((state) => state.flowBuilder);
 
   const { branches } = nodeData;
 
@@ -221,12 +219,6 @@ const WaitUntilSettings: FC<SidePanelComponentProps<WaitUntilNodeData>> = ({
           )}
         </div>
       ))}
-
-      {isOnboarding && isOnboardingWaitUntilTooltipVisible && (
-        <div className="absolute w-full bottom-[-185px] left-0 p-[10px] bg-black text-white font-medium">
-          Add 1 hour to Time Delay trigger
-        </div>
-      )}
 
       <div className="pb-[20px] flex gap-[20px]">
         <Button

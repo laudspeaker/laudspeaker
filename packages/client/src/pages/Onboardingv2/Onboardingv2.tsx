@@ -1,4 +1,4 @@
-import { useLaudspeaker, useTracker } from "@laudspeaker/react";
+import { useLaudspeaker, useLaudComponent } from "@laudspeaker/react";
 import React, {
   ReactNode,
   useEffect,
@@ -50,7 +50,7 @@ const Onboardingv2 = () => {
     };
   }, [laudspeaker, email]);
 
-  const { state: trackerState, emitTrackerEvent } = useTracker<{
+  const { state: trackerState, emitCustomComponents } = useLaudComponent<{
     step: SandboxStep;
     page: OnboardingPage;
   }>("ONBOARDING_TRACKER");
@@ -85,23 +85,23 @@ const Onboardingv2 = () => {
   > = {
     [OnboardingPage.CREATE_JOURNEY]: (
       <OnboardingSandbox
-        onSandboxComplete={() => emitTrackerEvent("show-customers-page")}
+        onSandboxComplete={() => emitCustomComponents("show-customers-page")}
         currentStep={currentStep}
-        emitTrackerEvent={emitTrackerEvent}
+        emitTrackerEvent={emitCustomComponents}
       />
     ),
     [OnboardingPage.SELECT_CUSTOMERS]: (
       <SelectCustomers
-        onSendEmailClick={() => emitTrackerEvent("show-start-journey-page")}
+        onSendEmailClick={() => emitCustomComponents("show-start-journey-page")}
       />
     ),
     [OnboardingPage.START_JOURNEY]: (
       <StartJourney
-        onStartClick={() => emitTrackerEvent("show-track-performance-page")}
+        onStartClick={() => emitCustomComponents("show-track-performance-page")}
       />
     ),
     [OnboardingPage.TRACK_PERFORMANCE]: (
-      <TrackPerformance onFinish={() => emitTrackerEvent("restart")} />
+      <TrackPerformance onFinish={() => emitCustomComponents("restart")} />
     ),
   };
 
@@ -124,10 +124,10 @@ const Onboardingv2 = () => {
           onClick={
             currentPage === OnboardingPage.CREATE_JOURNEY
               ? () => {
-                  emitTrackerEvent("reset");
+                  emitCustomComponents("reset");
                 }
               : () =>
-                  emitTrackerEvent(
+                  emitCustomComponents(
                     currentPage === OnboardingPage.SELECT_CUSTOMERS
                       ? "show-create-journey-page"
                       : "show-customers-page"
@@ -141,7 +141,7 @@ const Onboardingv2 = () => {
 
         <button
           onClick={() => {
-            emitTrackerEvent("restart");
+            emitCustomComponents("restart");
             window.history.back();
           }}
         >
@@ -242,7 +242,7 @@ const Onboardingv2 = () => {
           <button
             className="px-[30px] py-[10px] rounded-[30px] bg-[#6366F1] flex items-center justify-center text-white"
             onClick={() => {
-              emitTrackerEvent("onboarding-start");
+              emitCustomComponents("onboarding-start");
             }}
             ref={buttonRef}
           >

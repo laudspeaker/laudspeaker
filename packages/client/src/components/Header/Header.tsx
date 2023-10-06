@@ -30,7 +30,9 @@ const Header: FC<HeaderProps> = ({ crumbs }) => {
     window.location.reload();
   };
 
-  const firstName = useAppSelector((state) => state.auth.userData.firstName);
+  const { firstName, lastName, email } = useAppSelector(
+    (state) => state.auth.userData
+  );
 
   return (
     <div className="w-full h-[46px] bg-white border-[0px] px-[16px] py-[12px] flex justify-between items-center">
@@ -77,13 +79,13 @@ const Header: FC<HeaderProps> = ({ crumbs }) => {
             />
           </svg>
         </div>
-        {firstName && (
+        {(firstName || lastName || email) && (
           <Menu as="div" className="relative ml-3 z-auto">
             <div>
               <Menu.Button className="flex max-w-xs items-center rounded-full bg-white text-sm focus:outline-none lg:p-2 lg:hover:bg-gray-50">
                 <span className="ml-3 hidden text-[14px] leading-[22px] font-roboto  text-[#4B5563] lg:block">
                   <span className="sr-only">Open user menu for </span>
-                  {firstName}
+                  {firstName || lastName || email}
                 </span>
                 <ChevronDownIcon
                   className="ml-1 hidden h-5 w-5 flex-shrink-0 text-[#4B5563] lg:block"
