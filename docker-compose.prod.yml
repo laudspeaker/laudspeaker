@@ -1,0 +1,68 @@
+version: "3.7"
+services:
+  frontend:
+    image: laudspeaker:latest
+    depends_on:
+      - backend
+    ports:
+      - "80:3000"
+    stdin_open: true
+    tty: true
+
+  backend:
+    image: laudspeaker:api-latest
+    ports:
+      - "3001:3001"
+    depends_on:
+      - redis
+      - postgres
+      - mongo
+      - clickhouse
+
+  redis:
+    image: redis:alpine
+    command: redis-server
+    ports:
+      - "6379:6379"
+    environment:
+      - REDIS_REPLICATION_MODE=master
+    networks:
+      - laudspeaker_default
+
+  postgres:
+    image: postgres:14.4-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+      POSTGRES_DB: laudspeaker
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    networks:
+      - laudspeaker_default
+
+  mongo:
+    image: "mongo:latest"
+    ports:
+      - "27017:27017"
+    healthcheck:
+      test: test $$(echo "rs.initiate().ok || rs.status().ok" | mongo --quiet) -eq 1
+      interval: 10s
+      start_period: 30s
+    command: "--bind_ip_all --replSet rs0"
+    networks:
+      - laudspeaker_default
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:latest
+    restart: on-failure
+    ports:
+      - "8123:8123"
+      - "9000:9000"
+    networks:
+      - laudspeaker_default
+
+networks:
+  laudspeaker_default:
+    driver: bridge
+    name: laudspeaker_default
