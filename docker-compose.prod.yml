@@ -1,15 +1,15 @@
 version: "3.7"
 services:
-  frontend:
-    build:
-      context: .
-      dockerfile: Dockerfile.prod.client
-    depends_on:
-      - backend
-    ports:
-      - "80:3000"
-    stdin_open: true
-    tty: true
+  # frontend:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile.prod.client
+  #   depends_on:
+  #     - backend
+  #   ports:
+  #     - "80:3000"
+  #   stdin_open: true
+  #   tty: true
 
   backend:
     build:
@@ -18,7 +18,7 @@ services:
     env_file:
       - .env
     ports:
-      - "3001:3001"
+      - "80:3001"
     depends_on:
       - redis
       - postgres
