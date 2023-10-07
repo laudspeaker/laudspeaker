@@ -1,7 +1,9 @@
 version: "3.7"
 services:
   frontend:
-    image: laudspeaker:latest
+    build:
+      context: .
+      dockerfile: Dockerfile.prod.client
     depends_on:
       - backend
     ports:
@@ -10,7 +12,9 @@ services:
     tty: true
 
   backend:
-    image: laudspeaker:api-latest
+    build:
+      context: .
+      dockerfile: Dockerfile.prod.server
     ports:
       - "3001:3001"
     depends_on:
