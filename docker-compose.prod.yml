@@ -42,6 +42,8 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
       POSTGRES_DB: laudspeaker
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
     restart: unless-stopped
@@ -50,6 +52,8 @@ services:
 
   mongo:
     image: "mongo:latest"
+    volumes:
+      - mongo-data:/data/db
     ports:
       - "27017:27017"
     healthcheck:
@@ -63,6 +67,8 @@ services:
   clickhouse:
     image: clickhouse/clickhouse-server:latest
     restart: on-failure
+    volumes:
+      - clickhouse-data:/var/lib/clickhouse
     ports:
       - "8123:8123"
       - "9000:9000"
@@ -73,3 +79,8 @@ networks:
   laudspeaker_default:
     driver: bridge
     name: laudspeaker_default
+
+volumes:
+  postgres-data:
+  mongo-data:
+  clickhouse-data:
