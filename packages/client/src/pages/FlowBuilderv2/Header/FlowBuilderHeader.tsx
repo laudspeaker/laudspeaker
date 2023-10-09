@@ -196,14 +196,16 @@ const FlowBuilderHeader = () => {
               </div>
             )}
           </button>
-          <Button
-            type={ButtonType.PRIMARY}
-            onClick={handleNextStep}
-            className="mr-[20px]"
-            id="next-button"
-          >
-            Next
-          </Button>
+          {!devModeState.enabled && (
+            <Button
+              type={ButtonType.PRIMARY}
+              onClick={handleNextStep}
+              className="mr-[20px]"
+              id="next-button"
+            >
+              Next
+            </Button>
+          )}
         </div>
       )}
     </div>

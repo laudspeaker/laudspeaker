@@ -4,6 +4,7 @@ import { useAppSelector } from "store/hooks";
 import BranchPopover from "../Edges/components/BranchPopover";
 import { UserIcon, WaitUntilIcon } from "../Icons";
 import { EventBranch, WaitUntilNodeData } from "./NodeData";
+import { NodeDevModeHighlighter } from "./NodeDevModeHighlighter";
 
 const compatNumberFormatter = Intl.NumberFormat("en", { notation: "compact" });
 
@@ -22,7 +23,7 @@ export const WaitUntilNode: FC<NodeProps<WaitUntilNodeData>> = ({
 
   return (
     <div
-      className={`wait-until-node w-[260px] h-[80px] rounded-[4px] bg-white font-inter ${
+      className={`relative wait-until-node w-[260px] h-[80px] rounded-[4px] bg-white font-inter ${
         disabled ? "opacity-50 cursor-not-allowed" : ""
       } ${
         selected
@@ -106,6 +107,7 @@ export const WaitUntilNode: FC<NodeProps<WaitUntilNodeData>> = ({
         isConnectable={isConnectable}
         className="!min-h-[1px] !h-[1px] !bottom-[1px] !opacity-0 !border-0 pointer-events-none cursor-default"
       />
+      <NodeDevModeHighlighter id={id} />
     </div>
   );
 };

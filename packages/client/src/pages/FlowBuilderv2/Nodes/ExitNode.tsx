@@ -1,15 +1,17 @@
 import React, { FC } from "react";
 import { Handle, NodeProps, Position } from "reactflow";
 import { NodeData } from "./NodeData";
+import { NodeDevModeHighlighter } from "./NodeDevModeHighlighter";
 
 export const ExitNode: FC<NodeProps<NodeData>> = ({
   isConnectable,
   selected,
   data: { disabled },
+  id,
 }) => {
   return (
     <div
-      className={`w-[120px] h-[60px] bg-white rounded-[4px] flex justify-center items-center ${
+      className={`relative w-[120px] h-[60px] bg-white rounded-[4px] flex justify-center items-center ${
         disabled ? "opacity-50 cursor-not-allowed" : ""
       } ${
         selected
@@ -26,6 +28,7 @@ export const ExitNode: FC<NodeProps<NodeData>> = ({
       <div className="font-medium font-inter text-[16px] leading-[22px]">
         Exit
       </div>
+      <NodeDevModeHighlighter id={id} />
     </div>
   );
 };

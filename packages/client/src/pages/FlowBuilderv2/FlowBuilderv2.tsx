@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import FlowBuilderDrawer from "./Drawer/FlowBuilderDrawer";
 import FlowBuilderHeader from "./Header/FlowBuilderHeader";
-import FlowEditor, { NodeType } from "./FlowEditor";
+import FlowEditor from "./FlowEditor";
 import { useThrottle } from "react-use";
 import { useAppDispatch, useAppSelector } from "store/hooks";
 import FlowBuilderSegmentEditor from "./FlowBuilderSegmentEditor";
@@ -23,6 +23,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { JourneyStatus } from "pages/JourneyTablev2/JourneyTablev2";
+import { NodeType } from "./FlowEditor";
 
 const FlowBuilderv2 = () => {
   const { id } = useParams();

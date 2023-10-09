@@ -6,6 +6,7 @@ import FlowBuilderModal from "../Elements/FlowBuilderModal";
 import { ChromeIcon, TutorialImage } from "../Icons";
 import ExclamationTriangleIcon from "@heroicons/react/20/solid/ExclamationTriangleIcon";
 import { Link } from "react-router-dom";
+import { NodeType } from "../FlowEditor";
 
 interface FlowBuilderDevModeModalProps {
   isOpen: boolean;
@@ -16,8 +17,20 @@ const FlowBuilderDevModeModal = ({
   isOpen,
   onClose,
 }: FlowBuilderDevModeModalProps) => {
-  const { devModeState } = useAppSelector((state) => state.flowBuilder);
+  const { devModeState, nodes } = useAppSelector((state) => state.flowBuilder);
   const dispatch = useDispatch();
+
+  const handleStartDevMode = () => {
+    const start = nodes.find((el) => el.type === NodeType.START);
+    dispatch(
+      handleDevModeState({
+        enabled: true,
+        isPreviewModalOpened: false,
+        isConnectionFailed: false,
+        customerInNode: start?.id,
+      })
+    );
+  };
 
   return (
     <FlowBuilderModal
@@ -58,15 +71,7 @@ const FlowBuilderDevModeModal = ({
               <Button
                 type={ButtonType.PRIMARY}
                 className="!border-[#E5E7EB] !text-[white]"
-                onClick={() =>
-                  dispatch(
-                    handleDevModeState({
-                      enabled: true,
-                      isPreviewModalOpened: false,
-                      isConnectionFailed: false,
-                    })
-                  )
-                }
+                onClick={handleStartDevMode}
               >
                 Refresh
               </Button>

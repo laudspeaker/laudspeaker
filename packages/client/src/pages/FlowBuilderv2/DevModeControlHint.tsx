@@ -15,7 +15,7 @@ const DevModeControlHint = () => {
     <ControlButton
       className={`${
         expanded && "!p-[15px] !w-[220px] !h-[172px]"
-      } mt-[20px] absolute !rounded-sm !border-[1px] !border-[#E5E7EB] !bg-[#FFFBEB] transition-all`}
+      } mt-[20px] !outline-none absolute !rounded-sm !border-[1px] !border-[#E5E7EB] !bg-[#FFFBEB] transition-all`}
       onClick={() => setExpanded(true)}
     >
       {expanded ? (
@@ -39,7 +39,7 @@ const DevModeControlHint = () => {
                 xmlns="http://www.w3.org/2000/svg"
                 fill="transparent"
                 viewBox="0 0 24 24"
-                stroke-width="1.5"
+                strokeWidth="1.5"
                 stroke="black"
                 className="w-[14px] h-[14px]"
               >
@@ -112,7 +112,7 @@ const DevModeControlHint = () => {
           xmlns="http://www.w3.org/2000/svg"
           fill="transparent"
           viewBox="0 0 24 24"
-          stroke-width="1.5"
+          strokeWidth="1.5"
           stroke="black"
           className="w-[14px] h-[14px]"
         >
