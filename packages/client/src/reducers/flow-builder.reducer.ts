@@ -579,6 +579,33 @@ const flowBuilderSlice = createSlice({
         ...action.payload,
       };
     },
+    recountAvailableNodes(state) {
+      if (!state.devModeState.enabled || !state.devModeState.customerInNode)
+        return;
+
+      const node = state.nodes.find(
+        (el) => el.id === state.devModeState.customerInNode
+      );
+      if (!node) return;
+
+      const availableNodes = getClosestNextAndPrevious(
+        node,
+        state.nodes,
+        state.edges
+      ).filter((el) => el.type !== NodeType.EMPTY);
+
+      const start = state.nodes.find((el) => el.type === NodeType.START);
+
+      if (node.type === NodeType.EXIT && start) {
+        availableNodes.push(start);
+      }
+
+      state.devModeState.availableNodeToJump = availableNodes.map(
+        (el) => el.id
+      );
+
+      state.devModeState.arrowPreSelectNode = undefined;
+    },
     resetDevMode(state) {
       state.devModeState = defaultDevMode;
     },
@@ -883,6 +910,7 @@ export const {
   setJumpToTargettingNode,
   setIsDrawerDisabled,
   refreshFlowBuilder,
+  recountAvailableNodes,
 } = flowBuilderSlice.actions;
 
 export { defaultDevMode };

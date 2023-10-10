@@ -1,4 +1,5 @@
-import { Edge, getOutgoers, Node } from "reactflow";
+import { Edge, getOutgoers, getIncomers, Node } from "reactflow";
+import { NodeType } from "./FlowEditor";
 
 export const getOutgoersCustom = <T>(
   node: Node,
@@ -17,4 +18,18 @@ export const getOutgoersCustom = <T>(
   }
 
   return [...out];
+};
+
+export const getIncomersCustom = <T>(
+  node: Node,
+  nodes: Node[],
+  edges: Edge[]
+): Node[] => {
+  const out = getIncomers(node, nodes, edges);
+
+  const allIncomersJumpTo = nodes.filter(
+    (el) => el.data.targetId === node.id && el.type === NodeType.JUMP_TO
+  );
+
+  return [...out, ...allIncomersJumpTo];
 };

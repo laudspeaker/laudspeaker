@@ -15,6 +15,7 @@ import {
   changeNodeData,
   deselectNodes,
   handleDevModeState,
+  recountAvailableNodes,
   resetDevMode,
   setJumpToTargettingNode,
   setNodes,
@@ -128,7 +129,12 @@ const FlowEditor: FC<FlowEditorProps> = ({
   };
 
   const handleDevModeDBClick = (node: Node<any, string | undefined>) => {
-    if (!devModeState.enabled) return;
+    if (
+      !devModeState.enabled &&
+      node.type !== NodeType.START &&
+      node.type !== NodeType.EMPTY
+    )
+      return;
 
     dispatch(
       setNodes(
@@ -192,6 +198,10 @@ const FlowEditor: FC<FlowEditorProps> = ({
     );
     dispatch(setJumpToTargettingNode(undefined));
   }, [selectedNode, jumpToTargettingNode]);
+
+  useEffect(() => {
+    dispatch(recountAvailableNodes());
+  }, [nodes]);
 
   useEffect(() => {
     dispatch(resetDevMode());

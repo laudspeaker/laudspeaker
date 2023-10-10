@@ -18,6 +18,7 @@ const useDevKeysHandler = () => {
   );
   const [outNodes, setOutNodes] = useState<Node<NodeData>[]>([]);
   const [inNodes, setInNodes] = useState<Node<NodeData>[]>([]);
+  const [isKeysBlocked, setIsKeysBlocked] = useState(false);
   const isUpKeyPressed = useKeyboardJs("up");
   const isDownKeyPressed = useKeyboardJs("down");
   const isLeftKeyPressed = useKeyboardJs("left");
@@ -86,7 +87,12 @@ const useDevKeysHandler = () => {
           })
         );
       }
-    } else if (isEnterKeyPressed[0] && currentNode) {
+    } else if (
+      isEnterKeyPressed[0] &&
+      currentNode &&
+      currentNode.type !== NodeType.START &&
+      currentNode.type !== NodeType.EMPTY
+    ) {
       dispatch(
         setNodes(
           applyNodeChanges(
@@ -105,7 +111,8 @@ const useDevKeysHandler = () => {
   };
 
   useEffect(() => {
-    if (!devModeState.enabled || !devModeState.customerInNode) return;
+    if (!devModeState.enabled || !devModeState.customerInNode || isKeysBlocked)
+      return;
 
     handleKeysClickHandler();
   }, [
@@ -115,6 +122,10 @@ const useDevKeysHandler = () => {
     isRightKeyPressed,
     isEnterKeyPressed,
   ]);
+
+  useEffect(() => {
+    setIsKeysBlocked(nodes.some((el) => el.selected === true));
+  }, [nodes]);
 
   useEffect(() => {
     const node = nodes.find((el) => el.id === devModeState.customerInNode);
