@@ -24,6 +24,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { JourneyStatus } from "pages/JourneyTablev2/JourneyTablev2";
 import { NodeType } from "./FlowEditor";
+import { SocketProvider } from "./useDevSocketConnection";
 
 const FlowBuilderv2 = () => {
   const { id } = useParams();
@@ -134,20 +135,22 @@ const FlowBuilderv2 = () => {
   ]);
 
   return (
-    <div className="relative w-full h-full">
-      <FlowBuilderHeader />
-      <div className="relative flex w-full h-full max-h-[calc(100%-60px)]">
-        {flowBuilderState.stepperIndex === 0 && <FlowBuilderDrawer />}
+    <SocketProvider>
+      <div className="relative w-full h-full">
+        <FlowBuilderHeader />
+        <div className="relative flex w-full h-full max-h-[calc(100%-60px)]">
+          {flowBuilderState.stepperIndex === 0 && <FlowBuilderDrawer />}
 
-        {flowBuilderState.stepperIndex === 0 ? (
-          <FlowEditor />
-        ) : flowBuilderState.stepperIndex === 1 ? (
-          <FlowBuilderSegmentEditor />
-        ) : (
-          <FlowBuilderReview />
-        )}
+          {flowBuilderState.stepperIndex === 0 ? (
+            <FlowEditor />
+          ) : flowBuilderState.stepperIndex === 1 ? (
+            <FlowBuilderSegmentEditor />
+          ) : (
+            <FlowBuilderReview />
+          )}
+        </div>
       </div>
-    </div>
+    </SocketProvider>
   );
 };
 

@@ -209,7 +209,7 @@ const initialEdges: Edge<EdgeData>[] = [
   },
 ];
 
-const defaultDevMode = {
+const defaultDevMode: DevModeStatePayload = {
   enabled: false,
   isPreviewModalOpened: false,
   isConnectionFailed: false,

@@ -7,6 +7,7 @@ import { ChromeIcon, TutorialImage } from "../Icons";
 import ExclamationTriangleIcon from "@heroicons/react/20/solid/ExclamationTriangleIcon";
 import { Link } from "react-router-dom";
 import { NodeType } from "../FlowEditor";
+import { useDevSocketConnection } from "../useDevSocketConnection";
 
 interface FlowBuilderDevModeModalProps {
   isOpen: boolean;
@@ -18,6 +19,7 @@ const FlowBuilderDevModeModal = ({
   onClose,
 }: FlowBuilderDevModeModalProps) => {
   const { devModeState, nodes } = useAppSelector((state) => state.flowBuilder);
+  const { handleConnect } = useDevSocketConnection();
   const dispatch = useDispatch();
 
   const handleStartDevMode = () => {
@@ -136,16 +138,7 @@ const FlowBuilderDevModeModal = ({
             >
               Cancel
             </Button>
-            <Button
-              type={ButtonType.PRIMARY}
-              onClick={() =>
-                dispatch(
-                  handleDevModeState({
-                    isConnectionFailed: true,
-                  })
-                )
-              }
-            >
+            <Button type={ButtonType.PRIMARY} onClick={handleConnect}>
               Open Dev Mode
             </Button>
           </div>

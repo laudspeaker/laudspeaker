@@ -7,6 +7,7 @@ import {
   WebSocketGateway,
   WebSocketServer,
   OnGatewayConnection,
+  WsException,
 } from '@nestjs/websockets';
 import { createHash, randomUUID } from 'crypto';
 import { isValidObjectId, Model } from 'mongoose';
@@ -24,6 +25,7 @@ import {
   CustomerDocument,
 } from '@/api/customers/schemas/customer.schema';
 import { InjectModel } from '@nestjs/mongoose';
+import { Types } from 'mongoose';
 
 interface SocketData {
   account: Account;
@@ -57,10 +59,17 @@ export class WebsocketGateway implements OnGatewayConnection {
 
   public async handleConnection(socket: Socket) {
     try {
-      const { apiKey, customerId } = socket.handshake.auth;
+      const { apiKey, customerId, userId, development } = socket.handshake.auth;
       socket.emit('log', 'Connection procedure initiated.');
-
-      const account = await this.accountsService.findOneByAPIKey(apiKey);
+      const account =
+        development && userId && !apiKey
+          ? await this.accountsService.findOne(
+              {
+                id: userId,
+              },
+              ''
+            )
+          : await this.accountsService.findOneByAPIKey(apiKey);
 
       if (!account) {
         socket.emit('error', 'Bad API key');
@@ -70,11 +79,12 @@ export class WebsocketGateway implements OnGatewayConnection {
 
       socket.data.account = account;
       socket.data.session = randomUUID();
+      socket.data.development = development;
 
       let customer: CustomerDocument;
 
       // Check if given customer ID is a valid format.
-      if (customerId && isValidObjectId(customerId)) {
+      if (customerId && isValidObjectId(customerId) && !development) {
         // Check if customer ID corresponds to an actual customer
         customer = await this.customersService.CustomerModel.findById(
           customerId
@@ -116,7 +126,7 @@ export class WebsocketGateway implements OnGatewayConnection {
           socket.emit('customerId', customer.id);
           await this.syncCustomData(socket, account, customer);
         }
-      } else {
+      } else if (!development) {
         socket.emit(
           'log',
           'Customer id is not valid. Creating new anonymous customer.'
@@ -139,6 +149,33 @@ export class WebsocketGateway implements OnGatewayConnection {
         );
         socket.data.customerId = customer.id;
         socket.emit('customerId', customer.id);
+      } else if (apiKey && development) {
+        // User connect with devmode from his side
+        socket.emit('log', 'Development mode connection');
+        const id = new Types.ObjectId() + '-development';
+
+        socket.data.customerId = id;
+        socket.emit('customerId', id);
+      } else if (
+        !apiKey &&
+        development &&
+        userId &&
+        process.env.WS_ORIGIN_VERIFY === socket.handshake.headers.origin
+      ) {
+        // User try to make connection for dev mode setup
+        socket.emit('log', 'Checking if dev environment is connected.');
+
+        const sockets = await this.server.fetchSockets();
+        const socketLocal = sockets.find(
+          (el) => el.data?.account?.id === account.id && el.id !== socket.id
+        );
+        if (!socketLocal) {
+          throw new WsException('Dev environment not connected');
+        }
+      } else {
+        socket.emit('error', 'Unknown connection type');
+        socket.disconnect(true);
+        return;
       }
       socket.emit('log', 'Connection procedure complete.');
 
@@ -148,6 +185,9 @@ export class WebsocketGateway implements OnGatewayConnection {
       });
     } catch (e) {
       socket.emit('error', e);
+      if (e instanceof WsException) {
+        socket._error(e);
+      }
     }
   }
 
