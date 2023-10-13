@@ -2,7 +2,11 @@ import { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import useKeyboardJs from "react-use/lib/useKeyboardJs";
 import { applyNodeChanges, getIncomers, getOutgoers, Node } from "reactflow";
-import { handleDevModeState, setNodes } from "reducers/flow-builder.reducer";
+import {
+  ConnectionStatus,
+  handleDevModeState,
+  setNodes,
+} from "reducers/flow-builder.reducer";
 import { useAppSelector } from "store/hooks";
 import { NodeType } from "./FlowEditor";
 import { JumpToNodeData, NodeData, WaitUntilNodeData } from "./Nodes/NodeData";
@@ -111,7 +115,11 @@ const useDevKeysHandler = () => {
   };
 
   useEffect(() => {
-    if (!devModeState.enabled || !devModeState.customerInNode || isKeysBlocked)
+    if (
+      devModeState.status !== ConnectionStatus.Connected ||
+      !devModeState.customerInNode ||
+      isKeysBlocked
+    )
       return;
 
     handleKeysClickHandler();

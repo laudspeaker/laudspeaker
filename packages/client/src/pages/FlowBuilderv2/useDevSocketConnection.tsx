@@ -10,7 +10,11 @@ import { io, Socket } from "socket.io-client";
 import { useAppSelector } from "store/hooks";
 import constants from "constants/app";
 import { useDispatch } from "react-redux";
-import { handleDevModeState } from "reducers/flow-builder.reducer";
+import {
+  ConnectionStatus,
+  handleDevModeState,
+} from "reducers/flow-builder.reducer";
+import { toast } from "react-toastify";
 
 const SocketContext = createContext<Socket | null>(null);
 
@@ -18,6 +22,10 @@ const MAX_RETRIES = 5;
 
 export const SocketProvider = ({ children }: { children: ReactElement }) => {
   const { userData, loading } = useAppSelector((state) => state.auth);
+  const { devModeState } = useAppSelector((state) => state.flowBuilder);
+
+  const dispatch = useDispatch();
+
   const [socket, setSocket] = useState<Socket | null>(null);
   const [retries, setRetries] = useState(0);
 
@@ -57,6 +65,13 @@ export const SocketProvider = ({ children }: { children: ReactElement }) => {
         }, 1000);
       } else {
         console.error("Max retries reached. Giving up.");
+        socket.disconnect();
+        dispatch(
+          handleDevModeState({
+            status: ConnectionStatus.Error,
+          })
+        );
+        setRetries(0);
       }
     };
 
@@ -69,6 +84,56 @@ export const SocketProvider = ({ children }: { children: ReactElement }) => {
     };
   }, [socket, retries]);
 
+  useEffect(() => {
+    if (!socket) return;
+    let retry: NodeJS.Timeout | undefined = undefined;
+    socket.on("log", (data) => {
+      console.log("log:", data);
+    });
+    socket.on("devModeConnected", () => {
+      dispatch(
+        handleDevModeState({
+          status: ConnectionStatus.Connected,
+        })
+      );
+    });
+    socket.on("devModeNeedReconnection", () => {
+      dispatch(
+        handleDevModeState({
+          status: ConnectionStatus.Reconnection,
+        })
+      );
+      retry = setTimeout(() => {
+        dispatch(
+          handleDevModeState({
+            status: ConnectionStatus.Disabled,
+          })
+        );
+        toast.error("Looks like your local environment was disconnected.");
+        socket.disconnect();
+      }, 5000);
+    });
+    socket.on("devModeReconnected", () => {
+      if (!retry) return;
+
+      clearTimeout(retry);
+      dispatch(
+        handleDevModeState({
+          status: ConnectionStatus.Connected,
+        })
+      );
+    });
+  }, [socket]);
+
+  useEffect(() => {
+    if (!socket) return;
+
+    return () => {
+      socket.disconnect();
+      setSocket(null);
+    };
+  }, []);
+
   return (
     <SocketContext.Provider value={socket}>{children}</SocketContext.Provider>
   );
@@ -80,12 +145,27 @@ export const useDevSocket = () => {
 
 export const useDevSocketConnection = () => {
   const socket = useDevSocket();
+  const dispatch = useDispatch();
 
   const handleConnect = () => {
-    console.log(socket);
     if (!socket) return;
     socket.connect();
+    dispatch(
+      handleDevModeState({
+        status: ConnectionStatus.Connecting,
+      })
+    );
   };
 
-  return { socket, handleConnect };
+  const handleDisconnect = () => {
+    if (!socket) return;
+    socket.disconnect();
+    dispatch(
+      handleDevModeState({
+        status: ConnectionStatus.Disabled,
+      })
+    );
+  };
+
+  return { socket, handleConnect, handleDisconnect };
 };

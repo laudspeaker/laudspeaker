@@ -1,6 +1,9 @@
 import Button, { ButtonType } from "components/Elements/Buttonv2";
 import { useDispatch } from "react-redux";
-import { handleDevModeState } from "reducers/flow-builder.reducer";
+import {
+  ConnectionStatus,
+  handleDevModeState,
+} from "reducers/flow-builder.reducer";
 import { useAppSelector } from "store/hooks";
 import FlowBuilderModal from "../Elements/FlowBuilderModal";
 import { ChromeIcon, TutorialImage } from "../Icons";
@@ -19,20 +22,8 @@ const FlowBuilderDevModeModal = ({
   onClose,
 }: FlowBuilderDevModeModalProps) => {
   const { devModeState, nodes } = useAppSelector((state) => state.flowBuilder);
-  const { handleConnect } = useDevSocketConnection();
+  const { handleConnect, handleDisconnect } = useDevSocketConnection();
   const dispatch = useDispatch();
-
-  const handleStartDevMode = () => {
-    const start = nodes.find((el) => el.type === NodeType.START);
-    dispatch(
-      handleDevModeState({
-        enabled: true,
-        isPreviewModalOpened: false,
-        isConnectionFailed: false,
-        customerInNode: start?.id,
-      })
-    );
-  };
 
   return (
     <FlowBuilderModal
@@ -40,7 +31,7 @@ const FlowBuilderDevModeModal = ({
       onClose={onClose}
       className="max-w-[600px] w-full p-[20px]"
     >
-      {devModeState.isConnectionFailed ? (
+      {devModeState.status === ConnectionStatus.Error ? (
         <>
           <div className="mb-[8px] flex justify-center text-[#F43F5E]">
             <ExclamationTriangleIcon className="w-[28px] h-[28px]" />
@@ -73,7 +64,7 @@ const FlowBuilderDevModeModal = ({
               <Button
                 type={ButtonType.PRIMARY}
                 className="!border-[#E5E7EB] !text-[white]"
-                onClick={handleStartDevMode}
+                onClick={handleConnect}
               >
                 Refresh
               </Button>
@@ -86,8 +77,7 @@ const FlowBuilderDevModeModal = ({
               onClick={() =>
                 dispatch(
                   handleDevModeState({
-                    enabled: false,
-                    isPreviewModalOpened: false,
+                    status: ConnectionStatus.Disabled,
                   })
                 )
               }
@@ -127,19 +117,18 @@ const FlowBuilderDevModeModal = ({
             <Button
               type={ButtonType.SECONDARY}
               className="!border-[#E5E7EB] !text-[#111827]"
-              onClick={() =>
-                dispatch(
-                  handleDevModeState({
-                    enabled: false,
-                    isPreviewModalOpened: false,
-                  })
-                )
-              }
+              onClick={handleDisconnect}
             >
               Cancel
             </Button>
-            <Button type={ButtonType.PRIMARY} onClick={handleConnect}>
-              Open Dev Mode
+            <Button
+              disabled={devModeState.status === ConnectionStatus.Connecting}
+              type={ButtonType.PRIMARY}
+              onClick={handleConnect}
+            >
+              {devModeState.status === ConnectionStatus.Connecting
+                ? "Trying to connect..."
+                : "Open Dev Mode"}
             </Button>
           </div>
         </>

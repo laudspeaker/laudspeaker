@@ -13,6 +13,7 @@ import { useAppDispatch, useAppSelector } from "store/hooks";
 import "reactflow/dist/style.css";
 import {
   changeNodeData,
+  ConnectionStatus,
   deselectNodes,
   handleDevModeState,
   recountAvailableNodes,
@@ -112,7 +113,7 @@ const FlowEditor: FC<FlowEditorProps> = ({
   const dispatch = useAppDispatch();
 
   const onNodesChange = (changes: NodeChange[]) => {
-    if (devModeState.enabled) {
+    if (devModeState.status === ConnectionStatus.Connected) {
       changes = changes.filter(
         (change) => change.type !== "select"
         //&& nodes.find((node) => node.id === change.id)?.type !== NodeType.EMPTY
@@ -130,7 +131,7 @@ const FlowEditor: FC<FlowEditorProps> = ({
 
   const handleDevModeDBClick = (node: Node<any, string | undefined>) => {
     if (
-      !devModeState.enabled &&
+      devModeState.status !== ConnectionStatus.Connected &&
       node.type !== NodeType.START &&
       node.type !== NodeType.EMPTY
     )
@@ -153,7 +154,7 @@ const FlowEditor: FC<FlowEditorProps> = ({
   };
 
   const handleDevModeClick = (node: Node<any, string | undefined>) => {
-    if (!devModeState.enabled) return;
+    if (devModeState.status !== ConnectionStatus.Connected) return;
 
     if (!devModeState.availableNodeToJump?.includes(node.id)) return;
 
@@ -252,7 +253,7 @@ const FlowEditor: FC<FlowEditorProps> = ({
           nodesFocusable={false}
           onMove={onMove}
           onMoveEnd={onMoveEnd}
-          zoomOnDoubleClick={!devModeState.enabled}
+          zoomOnDoubleClick={devModeState.status !== ConnectionStatus.Connected}
           nodeTypes={nodeTypes}
           edgeTypes={edgeTypes}
           panOnScroll
@@ -276,7 +277,9 @@ const FlowEditor: FC<FlowEditorProps> = ({
             position="top-left"
             className="rounded-[2px]"
           >
-            {devModeState.enabled && <DevModeControlHint />}
+            {devModeState.status !== ConnectionStatus.Disabled && (
+              <DevModeControlHint />
+            )}
           </Controls>
         </ReactFlow>
         {!isViewMode && !isOnboarding && stepperIndex === 0 && (

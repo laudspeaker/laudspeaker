@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useMouse } from "react-use";
 import { getIncomers, Node } from "reactflow";
+import { ConnectionStatus } from "reducers/flow-builder.reducer";
 import { useAppSelector } from "store/hooks";
 import { NodeType } from "../FlowEditor";
 import { NodeData } from "./NodeData";
@@ -13,7 +14,7 @@ const NodeDevModeHighlighter = ({ id }: NodeDevModeHighlighterProps) => {
   const {
     devModeState: {
       customerInNode,
-      enabled,
+      status,
       availableNodeToJump,
       arrowPreSelectNode,
     },
@@ -33,7 +34,7 @@ const NodeDevModeHighlighter = ({ id }: NodeDevModeHighlighterProps) => {
   const mouse = useMouse(ref);
 
   useEffect(() => {
-    if (!ref?.current || !enabled) return;
+    if (!ref?.current || status !== ConnectionStatus.Connected) return;
     const rect = ref.current?.getBoundingClientRect();
     if (
       mouse.docX >= rect.x &&
@@ -48,7 +49,7 @@ const NodeDevModeHighlighter = ({ id }: NodeDevModeHighlighterProps) => {
   }, [mouse]);
 
   useEffect(() => {
-    if (!enabled) return;
+    if (status !== ConnectionStatus.Connected) return;
 
     setIsCustomerInNode(customerInNode === id);
     if (availableNodeToJump) {
@@ -66,14 +67,14 @@ const NodeDevModeHighlighter = ({ id }: NodeDevModeHighlighterProps) => {
   }, [customerInNode]);
 
   useEffect(() => {
-    if (!enabled) return;
+    if (status !== ConnectionStatus.Connected) return;
 
     setIsArrowPreSelected(id === arrowPreSelectNode);
     const node = nodes.find((el) => el.id === id);
     setCurrentSelectedNode(node);
   }, [arrowPreSelectNode]);
 
-  if (!enabled) return <></>;
+  if (status !== ConnectionStatus.Connected) return <></>;
 
   return (
     <div

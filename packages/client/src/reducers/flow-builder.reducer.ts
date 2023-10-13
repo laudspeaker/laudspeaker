@@ -153,10 +153,17 @@ export type DragAction =
   | SwapDragAction
   | OnboardingDragAction;
 
+export const enum ConnectionStatus {
+  Disabled,
+  ShowPreview,
+  Connecting,
+  Reconnection,
+  Error,
+  Connected,
+}
+
 interface DevModeStatePayload {
-  enabled?: boolean;
-  isPreviewModalOpened?: boolean;
-  isConnectionFailed?: boolean;
+  status?: ConnectionStatus;
   customerInNode?: string;
   arrowPreSelectNode?: string;
   availableNodeToJump?: string[];
@@ -210,9 +217,7 @@ const initialEdges: Edge<EdgeData>[] = [
 ];
 
 const defaultDevMode: DevModeStatePayload = {
-  enabled: false,
-  isPreviewModalOpened: false,
-  isConnectionFailed: false,
+  status: ConnectionStatus.Disabled,
   customerInNode: undefined,
   availableNodeToJump: undefined,
   arrowPreSelectNode: undefined,
@@ -524,8 +529,7 @@ const flowBuilderSlice = createSlice({
     removeNode(state, action: PayloadAction<string>) {
       handleRemoveNode(state, action.payload);
 
-      // TODO: might be moved and changed
-      if (state.devModeState.enabled) {
+      if (state.devModeState.status === ConnectionStatus.Connected) {
         if (
           !state.nodes.find(
             (el) => el.id === state.devModeState.arrowPreSelectNode
@@ -580,7 +584,10 @@ const flowBuilderSlice = createSlice({
       };
     },
     recountAvailableNodes(state) {
-      if (!state.devModeState.enabled || !state.devModeState.customerInNode)
+      if (
+        state.devModeState.status !== ConnectionStatus.Connected ||
+        !state.devModeState.customerInNode
+      )
         return;
 
       const node = state.nodes.find(

@@ -156,22 +156,47 @@ export class WebsocketGateway implements OnGatewayConnection {
 
         socket.data.customerId = id;
         socket.emit('customerId', id);
+
+        const fetchedSockets = await this.server.fetchSockets();
+
+        // TODO: Check if need to be changed or removed
+        // const sameTestConnection = fetchedSockets.find(
+        //   (el) => el.handshake.auth.apiKey === apiKey && el.data.development
+        // );
+        // if (sameTestConnection) {
+        //   sameTestConnection.disconnect(true);
+        // }
+        const relatedSocket = fetchedSockets.find(
+          (el) =>
+            el.data.account?.apiKey === socket.handshake.auth.apiKey &&
+            el.data.relatedDevConnection
+        );
+
+        if (relatedSocket) {
+          relatedSocket.data.relatedDevConnection = socket.id;
+          relatedSocket.emit('devModeReconnected');
+        }
       } else if (
         !apiKey &&
         development &&
         userId &&
         process.env.WS_ORIGIN_VERIFY === socket.handshake.headers.origin
       ) {
-        // User try to make connection for dev mode setup
+        // User try to make connection for dev mode setup from our client
         socket.emit('log', 'Checking if dev environment is connected.');
 
         const sockets = await this.server.fetchSockets();
-        const socketLocal = sockets.find(
-          (el) => el.data?.account?.id === account.id && el.id !== socket.id
+        const socketsLocal = sockets.filter(
+          (el) =>
+            el.data?.account?.id === account.id &&
+            el.id !== socket.id &&
+            el.data.development === development
         );
-        if (!socketLocal) {
+        if (!socketsLocal.length) {
           throw new WsException('Dev environment not connected');
         }
+        socket.data.relatedDevConnection = socketsLocal[0].id;
+        socket.emit('devModeConnected', true);
       } else {
         socket.emit('error', 'Unknown connection type');
         socket.disconnect(true);
@@ -188,6 +213,16 @@ export class WebsocketGateway implements OnGatewayConnection {
       if (e instanceof WsException) {
         socket._error(e);
       }
+    }
+  }
+
+  public async handleDisconnect(socket: Socket) {
+    if (socket.data.development && socket.handshake.auth.apiKey) {
+      const sockets = await this.server.fetchSockets();
+      const socketToClose = sockets.find(
+        (el) => el.data?.relatedDevConnection === socket.id
+      );
+      socketToClose?.emit('devModeNeedReconnection');
     }
   }
 
