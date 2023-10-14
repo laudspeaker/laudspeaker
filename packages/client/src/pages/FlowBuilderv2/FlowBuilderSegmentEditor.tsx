@@ -44,7 +44,7 @@ const FlowBuilderSegmentEditor = () => {
                 All customers
               </div>
               <div className="font-normal text-[14px] leading-[22px] text-[#4B5563]">
-                Description description description
+                All users will be enrolled
               </div>
             </div>
 
@@ -78,7 +78,7 @@ const FlowBuilderSegmentEditor = () => {
                 When customer meets conditions
               </div>
               <div className="font-normal text-[14px] leading-[22px] text-[#4B5563]">
-                Description description description
+                Define which users can be enrolled in this journey
               </div>
             </div>
           </div>
