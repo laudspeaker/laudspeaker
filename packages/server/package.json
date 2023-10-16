@@ -51,6 +51,7 @@
     "@nestjs/typeorm": "^9.0.1",
     "@nestjs/websockets": "^9.4.0",
     "@sendgrid/mail": "^7.7.0",
+    "@sentry/cli": "^2.21.2",
     "@sentry/node": "^7.73.0",
     "@sentry/profiling-node": "^1.2.1",
     "@slack/oauth": "^2.5.4",
