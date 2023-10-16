@@ -26,7 +26,7 @@ ENV SENTRY_AUTH_TOKEN=${BACKEND_SENTRY_AUTH_TOKEN}
 WORKDIR /app
 COPY --from=frontend_build /app/packages/client/package.json /app/
 COPY ./packages/server/package.json /app
-RUN npm install
+RUN npm install --legacy-peer-deps
 COPY . /app
 RUN npm run build:server
 
