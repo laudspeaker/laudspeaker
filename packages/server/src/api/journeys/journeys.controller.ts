@@ -22,6 +22,7 @@ import { Journey } from './entities/journey.entity';
 import { CreateJourneyDto } from './dto/create-journey.dto';
 import { randomUUID } from 'crypto';
 import { UpdateJourneyLayoutDto } from './dto/update-journey-layout.dto';
+import { RavenInterceptor } from 'nest-raven';
 
 @Controller('journeys')
 export class JourneysController {
@@ -32,7 +33,7 @@ export class JourneysController {
 
   @Get()
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
   findAll(
     @Req() { user }: Request,
     @Query('take') take?: string,
@@ -59,7 +60,7 @@ export class JourneysController {
 
   @Get(':id')
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
   async findOne(@Req() { user }: Request, @Param('id') id: string) {
     const session = randomUUID();
     return await this.journeysService.findOne(<Account>user, id, session);
@@ -67,7 +68,7 @@ export class JourneysController {
 
   @Post()
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
   async create(
     @Req() { user }: Request,
     @Body() createJourneyDto: CreateJourneyDto
@@ -82,7 +83,7 @@ export class JourneysController {
 
   @Post('duplicate/:id')
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
   async duplicate(@Req() { user }: Request, @Param('id') id: string) {
     const session = randomUUID();
     return await this.journeysService.duplicate(<Account>user, id, session);
@@ -90,7 +91,7 @@ export class JourneysController {
 
   @Patch()
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
   async update(
     @Req() { user }: Request,
     @Body() updateJourneyDto: UpdateJourneyDto
@@ -105,7 +106,7 @@ export class JourneysController {
 
   @Patch('visual-layout/')
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
   async updateLayout(
     @Req() { user }: Request,
     @Body() updateJourneyDto: UpdateJourneyLayoutDto
@@ -120,7 +121,7 @@ export class JourneysController {
 
   @Patch('pause/:id')
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
   async pause(@Req() { user }: Request, @Param('id') id: string) {
     const session = randomUUID();
     return await this.journeysService.setPaused(
@@ -133,7 +134,7 @@ export class JourneysController {
 
   @Patch('resume/:id')
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
   async resume(@Req() { user }: Request, @Param('id') id: string) {
     const session = randomUUID();
     return await this.journeysService.setPaused(
@@ -146,7 +147,7 @@ export class JourneysController {
 
   @Patch('stop/:id')
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
   async stop(@Req() { user }: Request, @Param('id') id: string) {
     const session = randomUUID();
     return await this.journeysService.stop(<Account>user, id, session);
@@ -154,7 +155,7 @@ export class JourneysController {
 
   @Patch('start/:id')
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
   async start(@Req() { user }: Request, @Param('id') id: string) {
     const session = randomUUID();
     return await this.journeysService.start(<Account>user, id, session);
@@ -162,7 +163,7 @@ export class JourneysController {
 
   @Patch('delete/:id')
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
   async delete(@Req() { user }: Request, @Param('id') id: string) {
     const session = randomUUID();
     return await this.journeysService.markDeleted(<Account>user, id, session);

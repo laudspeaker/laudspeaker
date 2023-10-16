@@ -27,6 +27,7 @@ import { UpdateSegmentDTO } from './dto/update-segment.dto';
 import { SegmentsService } from './segments.service';
 import { randomUUID } from 'crypto';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
+import { RavenInterceptor } from 'nest-raven';
 
 @Controller('segments')
 export class SegmentsController {
@@ -97,7 +98,7 @@ export class SegmentsController {
 
   @Get()
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
   public async findAll(
     @Req() { user }: Request,
     @Query('take') take?: string,
@@ -117,7 +118,7 @@ export class SegmentsController {
 
   @Get('/:id')
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
   public async findOne(@Req() { user }: Request, @Param('id') id: string) {
     const session = randomUUID();
 
@@ -126,7 +127,7 @@ export class SegmentsController {
 
   @Post()
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
   public async create(
     @Req() { user }: Request,
     @Body() createSegmentDTO: CreateSegmentDTO
@@ -142,7 +143,7 @@ export class SegmentsController {
 
   @Patch('/:id')
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
   public async update(
     @Req() { user }: Request,
     @Param('id') id: string,
@@ -160,7 +161,7 @@ export class SegmentsController {
 
   @Delete('/:id')
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
   public async delete(@Req() { user }: Request, @Param('id') id: string) {
     const session = randomUUID();
 
@@ -169,7 +170,7 @@ export class SegmentsController {
 
   @Post('/:id/duplicate')
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
   public async duplicate(@Req() { user }: Request, @Param('id') id: string) {
     const session = randomUUID();
 
@@ -178,7 +179,7 @@ export class SegmentsController {
 
   @Get('/:id/customers')
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
   public async getCustomers(
     @Req() { user }: Request,
     @Param('id') id: string,
@@ -198,7 +199,7 @@ export class SegmentsController {
 
   @Post('/:id/customers')
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
   public async assignCustomer(
     @Req() { user }: Request,
     @Param('id') id: string,
@@ -216,7 +217,7 @@ export class SegmentsController {
 
   @Put('/:id/customers')
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
   public async putCustomers(
     @Req() { user }: Request,
     @Param('id') id: string,
@@ -234,7 +235,7 @@ export class SegmentsController {
 
   @Delete('/:id/customers')
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
   public async clearCustomers(
     @Req() { user }: Request,
     @Param('id') id: string
@@ -246,7 +247,7 @@ export class SegmentsController {
 
   @Delete('/:id/customers/:customerId')
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
   public async deleteCustomer(
     @Req() { user }: Request,
     @Param('id') id: string,
@@ -264,7 +265,7 @@ export class SegmentsController {
 
   @Post('/:id/importcsv')
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
   @UseInterceptors(FileInterceptor('file'))
   async getCSVPeople(
     @Req() { user }: Request,
@@ -283,7 +284,7 @@ export class SegmentsController {
 
   @Get('/:id/user-in-workflows')
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
   public async checkUsedInWorkflows(
     @Req() { user }: Request,
     @Param('id') id: string

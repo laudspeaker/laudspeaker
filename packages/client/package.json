@@ -21,6 +21,7 @@
     "@react-oauth/google": "^0.2.6",
     "@reduxjs/toolkit": "^1.9.5",
     "@sendgrid/client": "^7.7.0",
+    "@sentry/react": "^7.73.0",
     "@svgr/webpack": "^5.5.0",
     "@tailwindcss/forms": "^0.5.3",
     "@testing-library/jest-dom": "5.16.4",
@@ -128,13 +129,14 @@
     "start": "env-cmd -f .env node scripts/start.js",
     "start:ci": "node scripts/start.js",
     "build:staging": "env-cmd --silent -f .env.staging node scripts/build.js",
-    "build:prod": "env-cmd --silent -f .env.prod node scripts/build.js",
+    "build:prod": "env-cmd --silent -f .env.prod node scripts/build.js && npm run sentry:sourcemaps",
     "test": "node scripts/test.js --passWithNoTests",
     "test:e2e": "npx cypress run",
     "npm run test:components": "",
     "cypress:open": "cypress open",
     "format": "prettier --write src/**/*.ts{,x}",
-    "lint": "tsc --noEmit && eslint src/**/*.ts{,x}"
+    "lint": "tsc --noEmit && eslint src/**/*.ts{,x}",
+    "sentry:sourcemaps": "sentry-cli sourcemaps inject --org laudspeaker-rb --project javascript-react ./build && sentry-cli sourcemaps upload --org laudspeaker-rb --project javascript-react ./build"
   },
   "eslintConfig": {
     "extends": [

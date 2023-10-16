@@ -2,9 +2,11 @@
 # To run: docker run -it -p 80:80 --env-file packages/server/.env --rm laudspeaker/laudspeaker:latest
 FROM node:16 as frontend_build
 ARG EXTERNAL_URL
+ARG FRONTEND_SENTRY_AUTH_TOKEN
 ARG REACT_APP_POSTHOG_HOST
 ARG REACT_APP_POSTHOG_KEY
 ARG REACT_APP_ONBOARDING_API_KEY
+ENV SENTRY_AUTH_TOKEN=${FRONTEND_SENTRY_AUTH_TOKEN}
 ENV REACT_APP_API_BASE_URL=${EXTERNAL_URL}/api
 ENV REACT_APP_WS_BASE_URL=${EXTERNAL_URL}
 ENV REACT_APP_POSTHOG_HOST=${REACT_APP_POSTHOG_HOST}
@@ -19,6 +21,8 @@ RUN npm run format:client
 RUN npm run build:client
 
 FROM node:16 as backend_build
+ARG BACKEND_SENTRY_AUTH_TOKEN
+ENV SENTRY_AUTH_TOKEN=${BACKEND_SENTRY_AUTH_TOKEN}
 WORKDIR /app
 COPY --from=frontend_build /app/packages/client/package.json /app/
 COPY ./packages/server/package.json /app

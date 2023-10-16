@@ -6,11 +6,13 @@ import {
   Req,
   Inject,
   Query,
+  UseInterceptors,
 } from '@nestjs/common';
 import { Request } from 'express';
 import { WebhooksService } from './webhooks.service';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { randomUUID } from 'crypto';
+import { RavenInterceptor } from 'nest-raven';
 
 @Controller('webhooks')
 export class WebhooksController {
@@ -80,6 +82,7 @@ export class WebhooksController {
   }
 
   @Post('sendgrid')
+  @UseInterceptors(new RavenInterceptor())
   public async processSendgridData(@Req() req: Request, @Body() data: any) {
     const session = randomUUID();
     const signature = req.headers[
@@ -97,6 +100,7 @@ export class WebhooksController {
   }
 
   @Post('twilio')
+  @UseInterceptors(new RavenInterceptor())
   public async processTwilioData(
     @Body()
     body: {
@@ -126,6 +130,7 @@ export class WebhooksController {
   }
 
   @Post('mailgun')
+  @UseInterceptors(new RavenInterceptor())
   public async processMailgunData(@Body() body: any) {
     const session = randomUUID();
     await this.webhooksService.processMailgunData(body, session);

@@ -5,3 +5,5 @@ build
 tmp
 temp
 package-lock.json
+# Sentry Config File
+.sentryclirc

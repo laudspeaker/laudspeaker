@@ -1,4 +1,4 @@
-import { Processor, WorkerHost, InjectQueue } from '@nestjs/bullmq';
+import { Processor, WorkerHost, InjectQueue, OnQueueEvent, QueueEventsListener } from '@nestjs/bullmq';
 import { Job, Queue, UnrecoverableError } from 'bullmq';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Correlation, CustomersService } from '../customers/customers.service';
@@ -23,6 +23,7 @@ import {
   CustomerDocument,
 } from '../customers/schemas/customer.schema';
 import { RedlockService } from '../redlock/redlock.service';
+import * as Sentry from '@sentry/node';
 
 export enum ProviderType {
   LAUDSPEAKER = 'laudspeaker',
@@ -30,6 +31,7 @@ export enum ProviderType {
 }
 
 @Injectable()
+@QueueEventsListener('events_pre')
 @Processor('events_pre', {
   // removeOnComplete: { age: 0, count: 0 },
 })
@@ -38,13 +40,13 @@ export class EventsPreProcessor extends WorkerHost {
     ProviderType,
     (job: Job<any, any, string>) => Promise<void>
   > = {
-    [ProviderType.LAUDSPEAKER]: async (job) => {
-      await this.handleCustom(job);
-    },
-    [ProviderType.POSTHOG]: async (job) => {
-      await this.handlePosthog(job);
-    },
-  };
+      [ProviderType.LAUDSPEAKER]: async (job) => {
+        await this.handleCustom(job);
+      },
+      [ProviderType.POSTHOG]: async (job) => {
+        await this.handlePosthog(job);
+      },
+    };
 
   constructor(
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
@@ -403,5 +405,17 @@ export class EventsPreProcessor extends WorkerHost {
         throw new UnrecoverableError();
       }
     }
+  }
+
+  @OnQueueEvent('failed')
+  async onFailed(
+    args: { jobId: string; failedReason: string; prev?: string },
+    id: string
+  ) {
+    Sentry.withScope((scope) => {
+      scope.setTag('job_id', args.jobId);
+      scope.setTag('processor', EventsPreProcessor.name);
+      Sentry.captureException(args.failedReason);
+    });
   }
 }

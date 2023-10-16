@@ -7,4 +7,3 @@ export class DropTrackerHit1695391579679 implements MigrationInterface {
 
   public async down(queryRunner: QueryRunner): Promise<void> {}
 }
-

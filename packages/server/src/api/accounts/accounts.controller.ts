@@ -27,6 +27,7 @@ import { Account } from './entities/accounts.entity';
 import { imageFileFilter } from '../auth/middleware/file.validation';
 import { S3Service } from '../s3/s3.service';
 import { randomUUID } from 'crypto';
+import { RavenInterceptor } from 'nest-raven';
 
 @Controller('accounts')
 export class AccountsController {
@@ -98,7 +99,7 @@ export class AccountsController {
 
   @Get()
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
   async findOne(@Req() { user }: Request) {
     const session = randomUUID();
     this.debug(
@@ -135,7 +136,7 @@ export class AccountsController {
 
   @Get('/settings')
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
   async getUserSettings(@Req() { user }: Request) {
     const session = randomUUID();
     this.debug(
@@ -155,7 +156,7 @@ export class AccountsController {
 
   @Patch('keygen')
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
   async generateApiKey(@Req() { user }: Request) {
     const session = randomUUID();
     this.debug(
@@ -174,7 +175,7 @@ export class AccountsController {
 
   @Patch()
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
   async update(
     @Req() { user }: Request,
     @Body() updateUserDto: UpdateAccountDto
@@ -201,7 +202,7 @@ export class AccountsController {
 
   @Delete()
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
   remove(@Req() { user }: Request, @Body() removeAccountDto: RemoveAccountDto) {
     const session = randomUUID();
     this.debug(
@@ -220,7 +221,7 @@ export class AccountsController {
 
   @Post('/upload-public-media')
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
   @UseInterceptors(
     FileInterceptor('file', {
       limits: {
@@ -238,7 +239,7 @@ export class AccountsController {
 
   @Post('/delete-media/:key')
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
   async deleteMedia(@Req() { user }: Request, @Param('key') key: string) {
     return this.s3Service.deleteFile(key, <Account>user);
   }

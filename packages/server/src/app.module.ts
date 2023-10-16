@@ -57,6 +57,7 @@ import { klona } from 'klona/full';
 import { JourneysModule } from './api/journeys/journeys.module';
 import { RedlockModule } from './api/redlock/redlock.module';
 import { RedlockService } from './api/redlock/redlock.service';
+import { RavenModule } from 'nest-raven';
 
 const sensitiveKeys = [
   /cookie/i,
@@ -236,6 +237,7 @@ const formatMongoConnectionString = (mongoConnectionString: string) => {
     StepsModule,
     JourneysModule,
     RedlockModule,
+    RavenModule,
   ],
   controllers: [AppController],
   providers: [CronService, RedlockService],
