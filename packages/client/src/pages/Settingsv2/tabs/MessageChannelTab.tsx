@@ -146,8 +146,8 @@ const MessageChannelTab = () => {
   return (
     <div className="p-[20px] flex flex-col gap-[20px]">
       <div className="text-[#4B5563]">
-        Browse the available channels in Laudspeaker, and set up the channels you want to use
-        {" "}
+        Browse the available channels in Laudspeaker, and set up the channels
+        you want to use{" "}
         <button className="text-[#111827] font-bold underline">
           Documentation
         </button>

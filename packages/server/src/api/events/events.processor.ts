@@ -1,4 +1,12 @@
-import { Processor, WorkerHost, InjectQueue, OnQueueEvent, QueueEventsListener } from '@nestjs/bullmq';
+import {
+  Processor,
+  WorkerHost,
+  InjectQueue,
+  OnQueueEvent,
+  QueueEventsListener,
+  QueueEventsHost,
+  OnWorkerEvent,
+} from '@nestjs/bullmq';
 import { Job, Queue } from 'bullmq';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Account } from '../accounts/entities/accounts.entity';
@@ -26,7 +34,6 @@ import * as _ from 'lodash';
 import * as Sentry from '@sentry/node';
 
 @Injectable()
-@QueueEventsListener('events')
 @Processor('events', {
   // removeOnComplete: { age: 0, count: 0 },
   // removeOnFail: { count: 0 },
@@ -175,18 +182,18 @@ export class EventsProcessor extends WorkerHost {
           ) {
             const analyticsEvent =
               steps[stepIndex].metadata.branches[branchIndex].events[
-              eventIndex
+                eventIndex
               ];
             if (job.data.event.source === AnalyticsProviderTypes.TRACKER) {
               eventEvaluation.push(
                 job.data.event.event ===
-                steps[stepIndex].metadata.branches[branchIndex].events[
-                  eventIndex
-                ].event &&
-                job.data.event.payload.trackerId ==
-                steps[stepIndex].metadata.branches[branchIndex].events[
-                  eventIndex
-                ].trackerID
+                  steps[stepIndex].metadata.branches[branchIndex].events[
+                    eventIndex
+                  ].event &&
+                  job.data.event.payload.trackerId ==
+                    steps[stepIndex].metadata.branches[branchIndex].events[
+                      eventIndex
+                    ].trackerID
               );
               continue event_loop;
             }
@@ -283,28 +290,28 @@ export class EventsProcessor extends WorkerHost {
                     comparisonType
                   )
                     ? this.audiencesHelper.operableCompare(
-                      job.data.event?.payload?.context?.page?.url,
-                      comparisonType
-                    )
+                        job.data.event?.payload?.context?.page?.url,
+                        comparisonType
+                      )
                     : await this.audiencesHelper.conditionalCompare(
-                      job.data.event?.payload?.context?.page?.url,
-                      value,
-                      comparisonType
-                    );
+                        job.data.event?.payload?.context?.page?.url,
+                        value,
+                        comparisonType
+                      );
                   conditionEvalutation.push(matches);
                 } else {
                   const matches = ['exists', 'doesNotExist'].includes(
                     comparisonType
                   )
                     ? this.audiencesHelper.operableCompare(
-                      job.data.event?.payload?.[key],
-                      comparisonType
-                    )
+                        job.data.event?.payload?.[key],
+                        comparisonType
+                      )
                     : await this.audiencesHelper.conditionalCompare(
-                      job.data.event?.payload?.[key],
-                      value,
-                      comparisonType
-                    );
+                        job.data.event?.payload?.[key],
+                        value,
+                        comparisonType
+                      );
                   this.warn(
                     `${JSON.stringify({
                       checkMatchResult: matches,
@@ -522,15 +529,12 @@ export class EventsProcessor extends WorkerHost {
     return;
   }
 
-  @OnQueueEvent('failed')
-  async onFailed(
-    args: { jobId: string; failedReason: string; prev?: string },
-    id: string
-  ) {
+  @OnWorkerEvent('failed')
+  async onFailed(job: Job, error: Error, prev?: string) {
     Sentry.withScope((scope) => {
-      scope.setTag('job_id', args.jobId);
+      scope.setTag('job_id', job.id);
       scope.setTag('processor', EventsProcessor.name);
-      Sentry.captureException(args.failedReason);
+      Sentry.captureException(error);
     });
   }
 }

@@ -2,7 +2,14 @@
 import { HttpException, HttpStatus, Inject, Logger } from '@nestjs/common';
 import { Injectable } from '@nestjs/common';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
-import { Processor, WorkerHost, InjectQueue, OnQueueEvent, QueueEventsListener } from '@nestjs/bullmq';
+import {
+  Processor,
+  WorkerHost,
+  InjectQueue,
+  OnQueueEvent,
+  QueueEventsListener,
+  OnWorkerEvent,
+} from '@nestjs/bullmq';
 import { Job, Queue } from 'bullmq';
 import { cpus } from 'os';
 import { CustomComponentAction, StepType } from '../types/step.interface';
@@ -33,11 +40,10 @@ import { RedlockService } from '@/api/redlock/redlock.service';
 import * as _ from 'lodash';
 import { Lock } from 'redlock';
 import { PostHog } from 'posthog-node';
-import * as Sentry from '@sentry/node'
+import * as Sentry from '@sentry/node';
 
 @Injectable()
 @Processor('transition', { concurrency: cpus().length })
-@QueueEventsListener('transition')
 export class TransitionProcessor extends WorkerHost {
   private phClient = new PostHog(process.env.POSTHOG_KEY, {
     host: process.env.POSTHOG_HOST,
@@ -1613,15 +1619,12 @@ export class TransitionProcessor extends WorkerHost {
   //   );
   // }
 
-  @OnQueueEvent('failed')
-  async onFailed(
-    args: { jobId: string; failedReason: string; prev?: string },
-    id: string
-  ) {
+  @OnWorkerEvent('failed')
+  async onFailed(job: Job, error: Error, prev?: string) {
     Sentry.withScope((scope) => {
-      scope.setTag('job_id', args.jobId);
+      scope.setTag('job_id', job.id);
       scope.setTag('processor', TransitionProcessor.name);
-      Sentry.captureException(args.failedReason);
+      Sentry.captureException(error);
     });
   }
 }

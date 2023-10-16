@@ -73,7 +73,8 @@ const EventProviderTab = () => {
   return (
     <div className="p-[20px] flex flex-col gap-[20px]">
       <div className="text-[#4B5563]">
-        Connect your product analytics provider or use our event tracker to trigger messages from external actions{" "}
+        Connect your product analytics provider or use our event tracker to
+        trigger messages from external actions{" "}
         <button className="text-[#111827] font-bold underline">
           Documentation
         </button>
