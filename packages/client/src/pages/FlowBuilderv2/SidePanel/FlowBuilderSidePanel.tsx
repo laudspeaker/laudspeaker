@@ -200,7 +200,6 @@ const FlowBuilderSidePanel: FC<FlowBuilderSidePanelProps> = ({ className }) => {
   };
 
   useEffect(() => {
-    console.log(nodeData);
     if (nodeData.type !== NodeType.TRACKER || !selectedNode) return;
 
     setNodeData({ ...nodeData, needsCheck: false });

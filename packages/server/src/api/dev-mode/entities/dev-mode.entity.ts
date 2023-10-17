@@ -1,4 +1,5 @@
 import { Account } from '@/api/accounts/entities/accounts.entity';
+import { Customer } from '@/api/customers/schemas/customer.schema';
 import { Journey } from '@/api/journeys/entities/journey.entity';
 import {
   BaseEntity,
@@ -9,19 +10,28 @@ import {
   JoinColumn,
 } from 'typeorm';
 
+export interface DevModeState {
+  customerIn: {
+    nodeId: string;
+    stepId: string;
+  };
+  customerData: Customer;
+  customerStory: Record<string,Customer>;
+}
+
 @Entity()
 export class DevMode extends BaseEntity {
   @PrimaryColumn('uuid')
-  @ManyToOne(() => Account, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'ownerId' })
-  public ownerId!: Account;
+  @ManyToOne(() => Account, (account) => account.id, { onDelete: 'CASCADE' })
+  public ownerId: string;
 
   @PrimaryColumn('uuid')
-  @ManyToOne(() => Journey, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'journeyId' })
-  public journeyId!: Journey;
+  @ManyToOne(() => Journey, (journey) => journey.id, { onDelete: 'CASCADE' })
+  public journeyId: string;
 
   @Column({ type: 'jsonb' })
-  public devModeState!: JSON;
+  public devModeState!: DevModeState;
 }
 

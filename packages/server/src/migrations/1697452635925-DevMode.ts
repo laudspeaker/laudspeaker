@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
 
-export class DevModeState1697029379345 implements MigrationInterface {
-    name = 'DevModeState1697029379345'
+export class DevMode1697452635925 implements MigrationInterface {
+    name = 'DevMode1697452635925'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`CREATE TABLE "dev_mode" ("ownerId" uuid NOT NULL, "journeyId" uuid NOT NULL, "devModeState" jsonb NOT NULL, CONSTRAINT "PK_cf1d403bab10d946393c562adc9" PRIMARY KEY ("ownerId", "journeyId"))`);

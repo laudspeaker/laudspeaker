@@ -11,12 +11,14 @@ import { useAppSelector } from "store/hooks";
 import { NodeType } from "./FlowEditor";
 import { JumpToNodeData, NodeData, WaitUntilNodeData } from "./Nodes/NodeData";
 import { getOutgoersCustom } from "./search.helper";
+import { useDevSocket } from "./useDevSocketConnection";
 
 const useDevKeysHandler = () => {
   const { nodes, edges, devModeState } = useAppSelector(
     (state) => state.flowBuilder
   );
   const dispatch = useDispatch();
+  const socket = useDevSocket();
   const [currentNode, setCurrentNode] = useState<Node<NodeData> | undefined>(
     undefined
   );
@@ -31,33 +33,20 @@ const useDevKeysHandler = () => {
 
   const handleKeysClickHandler = () => {
     if (isUpKeyPressed[0]) {
-      if (inNodes[0] && !devModeState.arrowPreSelectNode)
-        dispatch(
-          handleDevModeState({
-            customerInNode: inNodes[0].id,
-          })
-        );
-      else if (inNodes[0] && devModeState.arrowPreSelectNode)
+      if (inNodes[0] && !devModeState.arrowPreSelectNode) {
+        socket?.emit("moveToNode", inNodes[0].id);
+      } else if (inNodes[0] && devModeState.arrowPreSelectNode)
         dispatch(
           handleDevModeState({
             arrowPreSelectNode: undefined,
           })
         );
     } else if (isDownKeyPressed[0]) {
-      if (outNodes.length === 1)
-        dispatch(
-          handleDevModeState({
-            customerInNode: outNodes[0].id,
-          })
-        );
-      else if (outNodes.length > 1) {
-        // console.log(nodes.find((el) => el.id));
+      if (outNodes.length === 1) {
+        socket?.emit("moveToNode", outNodes[0].id);
+      } else if (outNodes.length > 1) {
         if (devModeState.arrowPreSelectNode) {
-          dispatch(
-            handleDevModeState({
-              customerInNode: devModeState.arrowPreSelectNode,
-            })
-          );
+          socket?.emit("moveToNode", devModeState.arrowPreSelectNode);
         } else {
           dispatch(
             handleDevModeState({
@@ -118,7 +107,8 @@ const useDevKeysHandler = () => {
     if (
       devModeState.status !== ConnectionStatus.Connected ||
       !devModeState.customerInNode ||
-      isKeysBlocked
+      isKeysBlocked ||
+      !socket
     )
       return;
 

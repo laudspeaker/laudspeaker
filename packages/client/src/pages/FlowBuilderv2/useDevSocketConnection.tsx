@@ -15,6 +15,7 @@ import {
   handleDevModeState,
 } from "reducers/flow-builder.reducer";
 import { toast } from "react-toastify";
+import { useParams } from "react-router-dom";
 
 const SocketContext = createContext<Socket | null>(null);
 
@@ -23,18 +24,19 @@ const MAX_RETRIES = 5;
 export const SocketProvider = ({ children }: { children: ReactElement }) => {
   const { userData, loading } = useAppSelector((state) => state.auth);
   const { devModeState } = useAppSelector((state) => state.flowBuilder);
-
+  const { id } = useParams();
   const dispatch = useDispatch();
 
   const [socket, setSocket] = useState<Socket | null>(null);
   const [retries, setRetries] = useState(0);
 
   useEffect(() => {
-    if (!constants.WS_BASE_URL || loading || !userData || socket) return;
+    if (!constants.WS_BASE_URL || loading || !userData || socket || !id) return;
 
     const newSocket = io(constants.WS_BASE_URL, {
       auth: {
         userId: userData.uId,
+        journeyId: id,
         development: true,
       },
       autoConnect: false,
@@ -90,39 +92,51 @@ export const SocketProvider = ({ children }: { children: ReactElement }) => {
     socket.on("log", (data) => {
       console.log("log:", data);
     });
-    socket.on("devModeConnected", () => {
-      dispatch(
-        handleDevModeState({
-          status: ConnectionStatus.Connected,
-        })
-      );
-    });
-    socket.on("devModeNeedReconnection", () => {
-      dispatch(
-        handleDevModeState({
-          status: ConnectionStatus.Reconnection,
-        })
-      );
-      retry = setTimeout(() => {
+    socket
+      .on("devModeConnected", (nodeId) => {
         dispatch(
           handleDevModeState({
-            status: ConnectionStatus.Disabled,
+            status: ConnectionStatus.Connected,
+            customerInNode: nodeId,
           })
         );
-        toast.error("Looks like your local environment was disconnected.");
-        socket.disconnect();
-      }, 5000);
-    });
-    socket.on("devModeReconnected", () => {
-      if (!retry) return;
+      })
+      .on("devModeNeedReconnection", () => {
+        dispatch(
+          handleDevModeState({
+            status: ConnectionStatus.Reconnection,
+          })
+        );
+        retry = setTimeout(() => {
+          dispatch(
+            handleDevModeState({
+              status: ConnectionStatus.Disabled,
+            })
+          );
+          toast.error("Looks like your local environment was disconnected.");
+          socket.disconnect();
+        }, 5000);
+      })
+      .on("devModeReconnected", () => {
+        if (!retry) return;
 
-      clearTimeout(retry);
-      dispatch(
-        handleDevModeState({
-          status: ConnectionStatus.Connected,
-        })
-      );
-    });
+        clearTimeout(retry);
+        dispatch(
+          handleDevModeState({
+            status: ConnectionStatus.Connected,
+          })
+        );
+      })
+      .on("nodeMovedTo", (nodeId) => {
+        dispatch(
+          handleDevModeState({
+            customerInNode: nodeId,
+          })
+        );
+      })
+      .on("moveError", (error) => {
+        toast.error(error);
+      });
   }, [socket]);
 
   useEffect(() => {

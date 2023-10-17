@@ -42,6 +42,7 @@ import Button, { ButtonType } from "components/Elements/Buttonv2";
 import { JumpToNodeData } from "./Nodes/NodeData";
 import { DevModeControlHint } from "./DevModeControlHint";
 import useDevKeysHandler from "./useDevKeysHandler";
+import { useDevSocket } from "./useDevSocketConnection";
 
 export enum NodeType {
   START = "start",
@@ -110,6 +111,7 @@ const FlowEditor: FC<FlowEditorProps> = ({
     devModeState,
   } = useAppSelector((state) => state.flowBuilder);
   useDevKeysHandler();
+  const socket = useDevSocket();
   const dispatch = useAppDispatch();
 
   const onNodesChange = (changes: NodeChange[]) => {
@@ -158,11 +160,7 @@ const FlowEditor: FC<FlowEditorProps> = ({
 
     if (!devModeState.availableNodeToJump?.includes(node.id)) return;
 
-    dispatch(
-      handleDevModeState({
-        customerInNode: node.id,
-      })
-    );
+    socket?.emit("moveToNode", node.id);
   };
 
   const onEdgesChange = (changes: EdgeChange[]) => {

@@ -541,6 +541,7 @@ const flowBuilderSlice = createSlice({
           !state.nodes.find((el) => el.id === state.devModeState.customerInNode)
         ) {
           const start = state.nodes.find((el) => el.type === NodeType.START);
+          // TODO: restart journey on remove
           state.devModeState.customerInNode = start?.id;
         }
       }

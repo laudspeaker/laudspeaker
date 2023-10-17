@@ -79,14 +79,20 @@ const NodeDevModeHighlighter = ({ id }: NodeDevModeHighlighterProps) => {
   return (
     <div
       ref={ref}
-      className={`absolute w-full h-full bottom-[-10px] left-[-10px] transition-all rounded box-content z-[-5] p-[10px] border-[1px]
+      className={`absolute pt-[28px] w-full h-full bottom-[-10px] left-[-10px] transition-all rounded box-content z-[-5] p-[10px] border-[1px]
       ${
         isCustomerInNode
-          ? "pt-[28px] bg-[#F0FDF4] border-[#22C55E]"
+          ? "bg-[#F0FDF4] border-[#22C55E]"
           : (isHovered || isArrowPreSelected) && isAvailableForJump
-          ? "opacity-1 bg-[#F0FDF4] border-[#86EFAC]"
+          ? "opacity-1 bg-transparent border-[#22C55E] border-dashed"
           : "opacity-0"
-      } ${
+      }
+      ${
+        isArrowPreSelected &&
+        isAvailableForJump &&
+        "shadow-[0px_0px_0px_4px_rgba(42,208,98,0.25)]"
+      }
+      ${
         isFromMultipleBranches &&
         !isCustomerInNode &&
         `pt-[60px] bg-opacity-30 ${
@@ -96,9 +102,11 @@ const NodeDevModeHighlighter = ({ id }: NodeDevModeHighlighterProps) => {
         }`
       }`}
     >
-      {isCustomerInNode && (
-        <div className="absolute w-[9px] h-[9px] rounded-full top-[10px] left-[10px] bg-[#22C55E]" />
-      )}
+      <div
+        className={`absolute border w-[9px] h-[9px] rounded-full top-[10px] left-[10px] transition-all ${
+          isCustomerInNode ? "bg-[#22C55E]" : "border-[#22C55E]"
+        }`}
+      />
     </div>
   );
 };
