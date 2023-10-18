@@ -1,5 +1,5 @@
 import { Template } from '../api/templates/entities/template.entity';
-import { forwardRef, Inject } from '@nestjs/common';
+import { forwardRef, Inject, UseInterceptors } from '@nestjs/common';
 import {
   ConnectedSocket,
   MessageBody,
@@ -28,6 +28,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Types } from 'mongoose';
 import { JourneysService } from '@/api/journeys/journeys.service';
 import { DevModeService } from '@/api/dev-mode/dev-mode.service';
+import { RavenInterceptor } from 'nest-raven';
 
 interface SocketData {
   account: Account;
@@ -45,6 +46,7 @@ const fieldSerializerMap = {
   Email: String,
 };
 
+@UseInterceptors(new RavenInterceptor())
 @WebSocketGateway({
   cors: true,
 })

@@ -22,6 +22,7 @@ import { RequestResetPasswordDto } from './dto/request-reset-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { randomUUID } from 'crypto';
+import { RavenInterceptor } from 'nest-raven';
 
 @Controller('auth')
 export class AuthController {
@@ -92,7 +93,7 @@ export class AuthController {
   }
 
   @Post('register')
-  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
   public async register(@Body() body: RegisterDto) {
     const session = randomUUID();
     this.debug(
@@ -109,6 +110,7 @@ export class AuthController {
   }
 
   @Post('login')
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
   public async login(@Body() body: LoginDto) {
     const session = randomUUID();
     this.debug(`Logging in: ${JSON.stringify(body)}`, this.login.name, session);
@@ -122,6 +124,7 @@ export class AuthController {
 
   @Post('refresh')
   @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
   public async refresh(@Req() { user }: Request): Promise<string | never> {
     const session = randomUUID();
     this.debug(
@@ -139,7 +142,7 @@ export class AuthController {
   }
 
   @Get()
-  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
   @UseGuards(JwtAuthGuard)
   public async verify() {
     const session = randomUUID();
@@ -148,7 +151,7 @@ export class AuthController {
   }
 
   @Patch('verify-email/:id')
-  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
   @UseGuards(JwtAuthGuard)
   public async verifyEmail(@Req() { user }: Request, @Param('id') id: string) {
     const session = randomUUID();
@@ -170,7 +173,7 @@ export class AuthController {
   }
 
   @Patch('resend-email')
-  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
   @UseGuards(JwtAuthGuard)
   public async resendEmail(@Req() { user }: Request) {
     const session = randomUUID();
@@ -193,7 +196,7 @@ export class AuthController {
   }
 
   @Post('reset-password')
-  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
   public async requestResetPassword(
     @Body() requestResetPasswordDto: RequestResetPasswordDto
   ) {
@@ -215,7 +218,7 @@ export class AuthController {
   }
 
   @Post('reset-password/:id')
-  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
   public async resetPassword(
     @Body() resetPasswordDto: ResetPasswordDto,
     @Param('id') id: string

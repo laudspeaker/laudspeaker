@@ -24,6 +24,7 @@ import { Account } from '../accounts/entities/accounts.entity';
 import { Template, TemplateType } from './entities/template.entity';
 import { TestWebhookDto } from './dto/test-webhook.dto';
 import { randomUUID } from 'crypto';
+import { RavenInterceptor } from 'nest-raven';
 
 @Controller('templates')
 export class TemplatesController {
@@ -94,7 +95,7 @@ export class TemplatesController {
 
   @Get()
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
   findAll(
     @Req() { user }: Request,
     @Query('take') take?: string,
@@ -121,7 +122,7 @@ export class TemplatesController {
 
   @Post('/create')
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
   create(
     @Req() { user }: Request,
     @Body() createTemplateDto: CreateTemplateDto
@@ -136,7 +137,7 @@ export class TemplatesController {
 
   @Get(':id/usedInJourneys')
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
   findUsedInJourneys(@Req() { user }: Request, @Param('id') id: string) {
     const session = randomUUID();
     return this.templatesService.findUsedInJourneys(<Account>user, id, session);
@@ -152,7 +153,7 @@ export class TemplatesController {
 
   @Patch(':name')
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
   update(
     @Req() { user }: Request,
     @Param('name') name: string,
@@ -169,7 +170,7 @@ export class TemplatesController {
 
   @Delete(':id')
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
   remove(@Req() { user }: Request, @Param('id') id: string) {
     const session = randomUUID();
     return this.templatesService.remove(<Account>user, id, session);
@@ -177,7 +178,7 @@ export class TemplatesController {
 
   @Post(':name/duplicate')
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
   duplicate(@Req() { user }: Request, @Param('name') name: string) {
     const session = randomUUID();
     return this.templatesService.duplicate(<Account>user, name, session);
@@ -185,7 +186,7 @@ export class TemplatesController {
 
   @Post('/test-webhook')
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
   testWebhookTemplate(@Body() testWebhookDto: TestWebhookDto) {
     const session = randomUUID();
     return this.templatesService.testWebhookTemplate(testWebhookDto, session);

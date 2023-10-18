@@ -27,6 +27,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiKeyAuthGuard } from '../auth/guards/apikey-auth.guard';
 import { randomUUID } from 'crypto';
 import { GetBulkCustomerCountDto } from './dto/get-bulk-customer-count.dto';
+import { RavenInterceptor } from 'nest-raven';
 
 @Controller('customers')
 export class CustomersController {
@@ -100,7 +101,7 @@ export class CustomersController {
 
   @Get()
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
   findAll(
     @Req() { user }: Request,
     @Query('take') take?: string,
@@ -128,7 +129,7 @@ export class CustomersController {
 
   @Get('/possible-attributes')
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
   async getPossibleAttributes(
     @Req() { user }: Request,
     @Query('key') key = '',
@@ -148,7 +149,7 @@ export class CustomersController {
 
   @Get('/audienceStats')
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
   findAudienceStatsCustomers(
     @Req() { user }: Request,
     @Query('take') take?: string,
@@ -170,7 +171,7 @@ export class CustomersController {
 
   @Get('/stats-from-step')
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
   async getCustomersFromStepStatsByEvent(
     @Req() { user }: Request,
     @Query('take') take?: string,
@@ -192,7 +193,7 @@ export class CustomersController {
 
   @Get('/:id')
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
   async findOne(@Req() { user }: Request, @Param() { id }: { id: string }) {
     const session = randomUUID();
     const {
@@ -214,7 +215,7 @@ export class CustomersController {
 
   @Put('/:id')
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
   update(
     @Req() { user }: Request,
     @Param() { id }: { id: string },
@@ -231,7 +232,7 @@ export class CustomersController {
 
   @Post('/create/')
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
   async create(
     @Req() { user }: Request,
     @Body() createCustomerDto: CreateCustomerDto
@@ -247,7 +248,7 @@ export class CustomersController {
 
   @Post('/upsert/')
   @UseGuards(ApiKeyAuthGuard)
-  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
   async upsert(
     @Req() { user }: Request,
     @Body() updateCustomerDto: Record<string, unknown>
@@ -262,7 +263,7 @@ export class CustomersController {
 
   @Get('/attributes/:resourceId')
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
   getAttributes(
     @Req() { user }: Request,
     @Param('resourceId') resourceId: string
@@ -277,7 +278,7 @@ export class CustomersController {
 
   @Get('/:id/events')
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
   findCustomerEvents(
     @Req() { user }: Request,
     @Param() { id }: { id: string },
@@ -296,7 +297,7 @@ export class CustomersController {
 
   @Post('/importph')
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
   async getPostHogPersons(@Req() { user }: Request) {
     const session = randomUUID();
 
@@ -323,7 +324,7 @@ export class CustomersController {
 
   @Post('/importcsv')
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
   @UseInterceptors(FileInterceptor('file'))
   async getCSVPeople(
     @Req() { user }: Request,
@@ -335,7 +336,7 @@ export class CustomersController {
 
   @Post('/delete/:custId')
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
   async deletePerson(
     @Req() { user }: Request,
     @Param('custId') custId: string
@@ -357,7 +358,7 @@ export class CustomersController {
 
   @Post('/count/bulk')
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
   async getBulkCustomersCountInSteps(
     @Req() { user }: Request,
     @Body() getBulkCustomerCountDto: GetBulkCustomerCountDto
@@ -370,7 +371,7 @@ export class CustomersController {
 
   @Get('/in-step/:stepId')
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
   async getCustomersInStep(
     @Req() { user }: Request,
     @Param('stepId') stepId,
@@ -387,7 +388,7 @@ export class CustomersController {
 
   @Get(':custId/getJourneys')
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
   async getCustomerJourneys(
     @Req() { user }: Request,
     @Param('custId') custId: string,

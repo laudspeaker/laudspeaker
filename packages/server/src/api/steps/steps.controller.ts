@@ -18,11 +18,13 @@ import { UpdateStepDto } from './dto/update-step.dto';
 import { Request } from 'express';
 import { Account } from '../accounts/entities/accounts.entity';
 import { randomUUID } from 'crypto';
+import { RavenInterceptor } from 'nest-raven';
 
 @Controller('steps')
 export class StepsController {
   constructor(private readonly stepsService: StepsService) {}
 
+  @UseInterceptors(new RavenInterceptor())
   @Get()
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
@@ -31,6 +33,7 @@ export class StepsController {
     return await this.stepsService.findAll(<Account>user, session);
   }
 
+  @UseInterceptors(new RavenInterceptor())
   @Get(':id')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
@@ -39,6 +42,7 @@ export class StepsController {
     return await this.stepsService.findOne(<Account>user, id, session);
   }
 
+  @UseInterceptors(new RavenInterceptor())
   @Get('stats/:id')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
@@ -47,6 +51,7 @@ export class StepsController {
     return await this.stepsService.getStats(<Account>user, session, id);
   }
 
+  @UseInterceptors(new RavenInterceptor())
   @Post()
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
@@ -59,6 +64,7 @@ export class StepsController {
     );
   }
 
+  @UseInterceptors(new RavenInterceptor())
   @Patch()
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
@@ -71,6 +77,7 @@ export class StepsController {
     );
   }
 
+  @UseInterceptors(new RavenInterceptor())
   @Delete(':id')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)

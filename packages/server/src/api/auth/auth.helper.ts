@@ -1300,6 +1300,348 @@ export class AuthHelper extends BaseJwtHelper {
     );
   }
 
+  private async generateExampleThreeBranchEventJourney(
+    account: Account,
+    templates: Template[],
+    queryRunner: QueryRunner,
+    session: string
+  ) {
+    const journey = await this.journeysService.transactionalCreate(
+      account,
+      'Three branch journey (Sample)',
+      queryRunner,
+      session
+    );
+    const waitUntil = await this.stepsService.transactionalInsert(
+      account,
+      { journeyID: journey.id, type: StepType.WAIT_UNTIL_BRANCH },
+      queryRunner,
+      session
+    );
+    const reactivation = await this.stepsService.transactionalInsert(
+      account,
+      { journeyID: journey.id, type: StepType.MESSAGE },
+      queryRunner,
+      session
+    );
+    const reactivationJumpTo = await this.stepsService.transactionalInsert(
+      account,
+      { journeyID: journey.id, type: StepType.LOOP },
+      queryRunner,
+      session
+    );
+    const newsletter = await this.stepsService.transactionalInsert(
+      account,
+      { journeyID: journey.id, type: StepType.MESSAGE },
+      queryRunner,
+      session
+    );
+    const newsletterJumpTo = await this.stepsService.transactionalInsert(
+      account,
+      { journeyID: journey.id, type: StepType.LOOP },
+      queryRunner,
+      session
+    );
+    const invoice = await this.stepsService.transactionalInsert(
+      account,
+      { journeyID: journey.id, type: StepType.MESSAGE },
+      queryRunner,
+      session
+    );
+    const invoiceJumpTo = await this.stepsService.transactionalInsert(
+      account,
+      { journeyID: journey.id, type: StepType.LOOP },
+      queryRunner,
+      session
+    );
+    const startstep =
+      await this.stepsService.transactionalfindAllByTypeInJourney(
+        account,
+        StepType.START,
+        journey.id,
+        queryRunner,
+        session
+      );
+
+    const visualLayout = {
+      edges: [
+        {
+          id: 'ef51c7f51-b5c6-4111-b72a-bc91a223619d-97f37a62-0a53-4b97-8e3c-ef413fc4fa24',
+          type: 'primary',
+          source: 'f51c7f51-b5c6-4111-b72a-bc91a223619d',
+          target: '97f37a62-0a53-4b97-8e3c-ef413fc4fa24',
+        },
+        {
+          id: 'b969aa15c-cb15-447b-805e-9e3398b130ae',
+          data: {
+            type: 'branch',
+            branch: {
+              id: '969aa15c-cb15-447b-805e-9e3398b130ae',
+              type: 'event',
+              conditions: [
+                {
+                  name: 'reactivation',
+                  statements: [],
+                  providerType: 'custom',
+                  relationToNext: 'or',
+                },
+              ],
+            },
+          },
+          type: 'branch',
+          source: '97f37a62-0a53-4b97-8e3c-ef413fc4fa24',
+          target: '88e3aeb3-a8a1-4245-acfd-69cb17cae8ad',
+        },
+        {
+          id: 'b6406f073-41bb-4de8-a32c-6606e5601dcc',
+          type: 'branch',
+          data: {
+            type: 'branch',
+            branch: {
+              id: '6406f073-41bb-4de8-a32c-6606e5601dcc',
+              type: 'event',
+              conditions: [
+                {
+                  name: 'newsletter',
+                  providerType: 'custom',
+                  relationToNext: 'or',
+                  statements: [],
+                },
+              ],
+            },
+          },
+          source: '97f37a62-0a53-4b97-8e3c-ef413fc4fa24',
+          target: '059ee8e9-f27a-45b6-8660-8ba102eefaa0',
+        },
+        {
+          id: 'b2bc7f31b-23ba-423f-8419-c118d281e670',
+          type: 'branch',
+          data: {
+            type: 'branch',
+            branch: {
+              id: '2bc7f31b-23ba-423f-8419-c118d281e670',
+              type: 'event',
+              conditions: [
+                {
+                  name: 'invoice',
+                  providerType: 'custom',
+                  relationToNext: 'or',
+                  statements: [],
+                },
+              ],
+            },
+          },
+          source: '97f37a62-0a53-4b97-8e3c-ef413fc4fa24',
+          target: '7c27462f-7d05-4d1c-b586-f373ba348bb3',
+        },
+        {
+          id: '88e3aeb3-a8a1-4245-acfd-69cb17cae8ad-a9661283-1f16-4f2e-b61c-0fdf028cb6bd',
+          type: 'primary',
+          source: '88e3aeb3-a8a1-4245-acfd-69cb17cae8ad',
+          target: 'a9661283-1f16-4f2e-b61c-0fdf028cb6bd',
+        },
+        {
+          id: '059ee8e9-f27a-45b6-8660-8ba102eefaa0-aca80750-a8c1-4ed5-945e-f428145a31bc',
+          type: 'primary',
+          source: '059ee8e9-f27a-45b6-8660-8ba102eefaa0',
+          target: 'aca80750-a8c1-4ed5-945e-f428145a31bc',
+        },
+        {
+          id: '7c27462f-7d05-4d1c-b586-f373ba348bb3-313bd3a7-b9d6-412a-9897-3d54eb4097ae',
+          type: 'primary',
+          source: '7c27462f-7d05-4d1c-b586-f373ba348bb3',
+          target: '313bd3a7-b9d6-412a-9897-3d54eb4097ae',
+        },
+      ],
+      nodes: [
+        {
+          id: 'f51c7f51-b5c6-4111-b72a-bc91a223619d',
+          data: {
+            stepId: startstep[0].id,
+            disabled: false,
+          },
+          type: 'start',
+          position: {
+            x: 0,
+            y: 0,
+          },
+          selected: false,
+        },
+        {
+          id: '97f37a62-0a53-4b97-8e3c-ef413fc4fa24',
+          data: {
+            type: 'waitUntil',
+            stepId: waitUntil.id,
+            branches: [
+              {
+                id: '969aa15c-cb15-447b-805e-9e3398b130ae',
+                type: 'event',
+                conditions: [
+                  {
+                    name: 'reactivation',
+                    statements: [],
+                    providerType: 'custom',
+                    relationToNext: 'or',
+                  },
+                ],
+              },
+              {
+                id: '6406f073-41bb-4de8-a32c-6606e5601dcc',
+                type: 'event',
+                conditions: [
+                  {
+                    name: 'newsletter',
+                    providerType: 'custom',
+                    relationToNext: 'or',
+                    statements: [],
+                  },
+                ],
+              },
+              {
+                id: '2bc7f31b-23ba-423f-8419-c118d281e670',
+                type: 'event',
+                conditions: [
+                  {
+                    name: 'invoice',
+                    providerType: 'custom',
+                    relationToNext: 'or',
+                    statements: [],
+                  },
+                ],
+              },
+            ],
+            showErrors: true,
+            disabled: false,
+          },
+          type: 'waitUntil',
+          position: {
+            x: 0,
+            y: 114,
+          },
+          selected: false,
+        },
+        {
+          id: '88e3aeb3-a8a1-4245-acfd-69cb17cae8ad',
+          data: {
+            type: 'message',
+            template: {
+              type: 'email',
+              selected: {
+                id: templates[0].id,
+                name: templates[0].name,
+              },
+            },
+            stepId: reactivation.id,
+            showErrors: true,
+            disabled: false,
+          },
+          type: 'message',
+          position: {
+            x: -520,
+            y: 326,
+          },
+          selected: false,
+        },
+        {
+          id: 'a9661283-1f16-4f2e-b61c-0fdf028cb6bd',
+          type: 'jumpTo',
+          data: {
+            type: 'jumpTo',
+            targetId: '97f37a62-0a53-4b97-8e3c-ef413fc4fa24',
+            stepId: reactivationJumpTo.id,
+            disabled: false,
+          },
+          position: {
+            x: -520,
+            y: 440,
+          },
+          selected: false,
+        },
+        {
+          id: '059ee8e9-f27a-45b6-8660-8ba102eefaa0',
+          type: 'message',
+          data: {
+            type: 'message',
+            template: {
+              type: 'email',
+              selected: {
+                id: templates[1].id,
+                name: templates[1].name,
+              },
+            },
+            stepId: newsletter.id,
+            showErrors: true,
+            disabled: false,
+          },
+          position: {
+            x: 0,
+            y: 326,
+          },
+          selected: false,
+        },
+        {
+          id: 'aca80750-a8c1-4ed5-945e-f428145a31bc',
+          type: 'jumpTo',
+          data: {
+            type: 'jumpTo',
+            targetId: '97f37a62-0a53-4b97-8e3c-ef413fc4fa24',
+            stepId: newsletterJumpTo.id,
+            disabled: false,
+          },
+          position: {
+            x: 0,
+            y: 440,
+          },
+          selected: false,
+        },
+        {
+          id: '7c27462f-7d05-4d1c-b586-f373ba348bb3',
+          type: 'message',
+          data: {
+            type: 'message',
+            template: {
+              type: 'email',
+              selected: {
+                id: templates[2].id,
+                name: templates[2].name,
+              },
+            },
+            stepId: invoice.id,
+            showErrors: true,
+            disabled: false,
+          },
+          position: {
+            x: 520,
+            y: 326,
+          },
+          selected: false,
+        },
+        {
+          id: '313bd3a7-b9d6-412a-9897-3d54eb4097ae',
+          type: 'jumpTo',
+          data: {
+            type: 'jumpTo',
+            targetId: '97f37a62-0a53-4b97-8e3c-ef413fc4fa24',
+            stepId: invoiceJumpTo.id,
+            disabled: false,
+          },
+          position: {
+            x: 520,
+            y: 440,
+          },
+          selected: false,
+        },
+      ],
+    };
+
+    await this.journeysService.updateLayoutTransactional(
+      account,
+      { id: journey.id, nodes: visualLayout.nodes, edges: visualLayout.edges },
+      queryRunner,
+      session
+    );
+  }
+
   // generate default templates and workflows for newly registered user
   public async generateDefaultData(
     account: Account,
@@ -1331,6 +1673,16 @@ export class AuthHelper extends BaseJwtHelper {
       (el) => el.name === DEFAULT_TEMPLATES[6].name
     );
 
+    const reactivationTemplate = templates.find(
+      (el) => el.name === DEFAULT_TEMPLATES[0].name
+    );
+    const newsTemplate = templates.find(
+      (el) => el.name === DEFAULT_TEMPLATES[3].name
+    );
+    const invoiceTemplate = templates.find(
+      (el) => el.name === DEFAULT_TEMPLATES[2].name
+    );
+
     await this.generateExampleOnboardingJourney(account, queryRunner, session);
     await this.generateExampleModalJourney(account, queryRunner, session);
     await this.generateExampleSingleCampaignJourney(
@@ -1341,6 +1693,12 @@ export class AuthHelper extends BaseJwtHelper {
     await this.generateExampleSideChecklist(
       account,
       sidechecklistTemplate,
+      queryRunner,
+      session
+    );
+    await this.generateExampleThreeBranchEventJourney(
+      account,
+      [reactivationTemplate, newsTemplate, invoiceTemplate],
       queryRunner,
       session
     );

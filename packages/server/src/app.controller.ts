@@ -1,7 +1,15 @@
-import { Controller, Get, Inject, Logger } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  HttpException,
+  HttpStatus,
+  Inject,
+  Logger,
+  UseInterceptors,
+} from '@nestjs/common';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { randomUUID } from 'crypto';
-
+import { RavenInterceptor } from 'nest-raven';
 @Controller()
 export class AppController {
   constructor(
@@ -68,10 +76,19 @@ export class AppController {
     );
   }
 
+  @UseInterceptors(new RavenInterceptor())
   @Get()
   root() {
     const session = randomUUID();
     this.debug(`GET / `, this.root.name, session);
     return 'laudspeaker API v 1.0';
+  }
+
+  @UseInterceptors(new RavenInterceptor())
+  @Get('/sentry-test')
+  sentryTest() {
+    const session = randomUUID();
+    this.debug(`GET / `, this.root.name, session);
+    throw new HttpException('sentry-online', HttpStatus.INTERNAL_SERVER_ERROR);
   }
 }

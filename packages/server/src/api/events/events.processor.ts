@@ -1,4 +1,12 @@
-import { Processor, WorkerHost, InjectQueue } from '@nestjs/bullmq';
+import {
+  Processor,
+  WorkerHost,
+  InjectQueue,
+  OnQueueEvent,
+  QueueEventsListener,
+  QueueEventsHost,
+  OnWorkerEvent,
+} from '@nestjs/bullmq';
 import { Job, Queue } from 'bullmq';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Account } from '../accounts/entities/accounts.entity';
@@ -23,6 +31,7 @@ import { WebsocketGateway } from '@/websockets/websocket.gateway';
 import { RedlockService } from '../redlock/redlock.service';
 import { Lock } from 'redlock';
 import * as _ from 'lodash';
+import * as Sentry from '@sentry/node';
 
 @Injectable()
 @Processor('events', {
@@ -518,5 +527,14 @@ export class EventsProcessor extends WorkerHost {
       if (err) throw err;
     }
     return;
+  }
+
+  @OnWorkerEvent('failed')
+  async onFailed(job: Job, error: Error, prev?: string) {
+    Sentry.withScope((scope) => {
+      scope.setTag('job_id', job.id);
+      scope.setTag('processor', EventsProcessor.name);
+      Sentry.captureException(error);
+    });
   }
 }

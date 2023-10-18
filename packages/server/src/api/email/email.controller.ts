@@ -7,6 +7,7 @@ import {
   Body,
   Req,
   Inject,
+  UseInterceptors,
 } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
@@ -22,6 +23,7 @@ import { Request } from 'express';
 import { Audience } from '../audiences/entities/audience.entity';
 import * as __ from 'async-dash';
 import { CustomersService } from '../customers/customers.service';
+import { RavenInterceptor } from 'nest-raven';
 
 @Controller('email')
 export class EmailController {
@@ -35,6 +37,7 @@ export class EmailController {
     private readonly customersService: CustomersService
   ) {}
 
+  @UseInterceptors(new RavenInterceptor())
   @Post('send')
   @UseGuards(JwtAuthGuard)
   async send(@Req() { user }: Request, @Body() sendEmailDto: SendEmailDto) {
@@ -54,6 +57,7 @@ export class EmailController {
     });
   }
 
+  @UseInterceptors(new RavenInterceptor())
   @Get('domains/:key')
   @UseGuards(JwtAuthGuard)
   async domains(@Param('key') key: string) {
@@ -62,6 +66,7 @@ export class EmailController {
     return _.filter(await mg.domains.list(), ['state', 'active']);
   }
 
+  @UseInterceptors(new RavenInterceptor())
   @Post('send/:audienceName')
   @UseGuards(JwtAuthGuard)
   async sendBatch(

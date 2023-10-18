@@ -26,6 +26,7 @@ import { Account } from '../accounts/entities/accounts.entity';
 import { Request } from 'express';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { randomUUID } from 'crypto';
+import { RavenInterceptor } from 'nest-raven';
 
 @Controller('events')
 export class EventsController {
@@ -96,7 +97,7 @@ export class EventsController {
   }
 
   @Post('/posthog/')
-  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
   @UseGuards(ApiKeyAuthGuard)
   async posthogPayload(
     @Req() { user }: Request,
@@ -107,7 +108,7 @@ export class EventsController {
   }
 
   @Post()
-  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
   @UseGuards(ApiKeyAuthGuard)
   async customPayload(
     @Req() { user }: Request,
@@ -119,7 +120,7 @@ export class EventsController {
 
   @Get('/possible-attributes/:resourceId?')
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
   async getAttributes(
     @Req() { user }: Request,
     @Param('resourceId') resourceId = '',
@@ -136,7 +137,7 @@ export class EventsController {
 
   @Get('/attributes/:resourceId?')
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
   async getOrUpdateAttributes(@Param('resourceId') resourceId = '') {
     const session = randomUUID();
     return this.eventsService.getOrUpdateAttributes(resourceId, session);
@@ -144,7 +145,7 @@ export class EventsController {
 
   @Get('/possible-types')
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
   async getPossibleTypes() {
     const session = randomUUID();
     return this.eventsService.getPossibleTypes(session);
@@ -152,7 +153,7 @@ export class EventsController {
 
   @Get('/possible-comparison/:type')
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
   async getPossibleComparison(@Param('type') type: string) {
     const session = randomUUID();
     return this.eventsService.getPossibleComparisonTypes(type, session);
@@ -160,7 +161,7 @@ export class EventsController {
 
   @Get('/possible-values/:key')
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
   async getPossibleValues(
     @Param('key') key: string,
     @Query('search') search: string
@@ -171,7 +172,7 @@ export class EventsController {
 
   @Get('/possible-posthog-types')
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
   async getPossiblePothogTypes(
     @Query('search') search: string,
     @Req() { user }: Request
@@ -186,7 +187,7 @@ export class EventsController {
 
   @Get('/posthog-events')
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
   async getPosthogEvents(
     @Req() { user }: Request,
     @Query('take') take?: string,

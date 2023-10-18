@@ -1,4 +1,11 @@
-import { Processor, WorkerHost, InjectQueue } from '@nestjs/bullmq';
+import {
+  Processor,
+  WorkerHost,
+  InjectQueue,
+  OnQueueEvent,
+  QueueEventsListener,
+  OnWorkerEvent,
+} from '@nestjs/bullmq';
 import { Job, Queue, UnrecoverableError } from 'bullmq';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Correlation, CustomersService } from '../customers/customers.service';
@@ -23,6 +30,7 @@ import {
   CustomerDocument,
 } from '../customers/schemas/customer.schema';
 import { RedlockService } from '../redlock/redlock.service';
+import * as Sentry from '@sentry/node';
 
 export enum ProviderType {
   LAUDSPEAKER = 'laudspeaker',
@@ -403,5 +411,14 @@ export class EventsPreProcessor extends WorkerHost {
         throw new UnrecoverableError();
       }
     }
+  }
+
+  @OnWorkerEvent('failed')
+  async onFailed(job: Job, error: Error, prev?: string) {
+    Sentry.withScope((scope) => {
+      scope.setTag('job_id', job.id);
+      scope.setTag('processor', EventsPreProcessor.name);
+      Sentry.captureException(error);
+    });
   }
 }
