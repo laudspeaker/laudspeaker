@@ -47,7 +47,7 @@ const FlowBuilderDevModeModal = ({
               <div className="text-black text-sm font-semibold font-inter leading-snug">
                 Step 1. Initiate the connection process.
               </div>
-              <Link to="/settings" target="_blank">
+              <Link to="/settings/javascript-snippet" target="_blank">
                 <Button
                   type={ButtonType.PRIMARY}
                   className="!border-[#E5E7EB] !text-[white]"

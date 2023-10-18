@@ -1,25 +1,26 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { WsException } from '@nestjs/websockets';
 import { klona } from 'klona/full';
+import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { RemoteSocket, Socket } from 'socket.io';
 import { DefaultEventsMap } from 'socket.io/dist/typed-events';
 import { Repository } from 'typeorm';
+import { Logger } from 'winston';
 import { Account } from '../accounts/entities/accounts.entity';
 import { Customer } from '../customers/schemas/customer.schema';
 import { Journey } from '../journeys/entities/journey.entity';
 import { NodeType } from '../journeys/types/visual-layout.interface';
 import { Step } from '../steps/entities/step.entity';
-import {
-  AnalyticsProviderTypes,
-  CustomComponentAction,
-  StepType,
-} from '../steps/types/step.interface';
+import { CustomComponentAction, StepType } from '../steps/types/step.interface';
 import { Template } from '../templates/entities/template.entity';
 import { DevMode, DevModeState } from './entities/dev-mode.entity';
 
 @Injectable()
 export class DevModeService {
   constructor(
+    @Inject(WINSTON_MODULE_NEST_PROVIDER)
+    private readonly logger: Logger,
     @InjectRepository(Journey)
     public journeysRepository: Repository<Journey>,
     @InjectRepository(DevMode)
@@ -29,6 +30,65 @@ export class DevModeService {
     @InjectRepository(Template)
     public templateRepository: Repository<Template>
   ) {}
+
+  log(message, method, session, user = 'ANONYMOUS') {
+    this.logger.log(
+      message,
+      JSON.stringify({
+        class: DevModeService.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+  debug(message, method, session, user = 'ANONYMOUS') {
+    this.logger.debug(
+      message,
+      JSON.stringify({
+        class: DevModeService.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+  warn(message, method, session, user = 'ANONYMOUS') {
+    this.logger.warn(
+      message,
+      JSON.stringify({
+        class: DevModeService.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+  error(error, method, session, user = 'ANONYMOUS') {
+    this.logger.error(
+      error.message,
+      error.stack,
+      JSON.stringify({
+        class: DevModeService.name,
+        method: method,
+        session: session,
+        cause: error.cause,
+        name: error.name,
+        user: user,
+      })
+    );
+  }
+  verbose(message, method, session, user = 'ANONYMOUS') {
+    this.logger.verbose(
+      message,
+      JSON.stringify({
+        class: DevModeService.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
 
   public async upsertDevMode(
     account: Account,
@@ -50,8 +110,9 @@ export class DevModeService {
           upsertType: 'on-conflict-do-update',
         }
       );
-    } catch (error: any) {
-      throw new Error(error);
+    } catch (error) {
+      this.error(error, this.upsertDevMode.name, '', account.id);
+      throw error;
     }
   }
 
@@ -64,7 +125,7 @@ export class DevModeService {
       });
 
       if (!journey) {
-        throw new Error('No such journey found.');
+        throw new WsException('No such journey found.');
       }
 
       const startNode = journey.visualLayout?.nodes?.find(
@@ -108,8 +169,9 @@ export class DevModeService {
         ownerId: account.id,
       });
       return devMode;
-    } catch (error: any) {
-      throw new Error(error);
+    } catch (error) {
+      this.error(error, this.resetDevMode.name, '', account.id);
+      throw error;
     }
   }
 
@@ -129,16 +191,16 @@ export class DevModeService {
       });
 
       if (!devMode)
-        throw new Error("Dev mode not found can't be moved to step");
+        throw new WsException("Dev mode not found can't be moved to step");
       if (!journey)
-        throw new Error("Journey not found, can't be moved to step");
+        throw new WsException("Journey not found, can't be moved to step");
 
       const node = journey.visualLayout.nodes.find(
         (el) => el.id === toNodeId && el.type !== NodeType.EMPTY
       );
 
       if (!node)
-        throw new Error(
+        throw new WsException(
           "Current node don't have stepId, try again or recreate step"
         );
 
@@ -231,7 +293,8 @@ export class DevModeService {
         }
       );
     } catch (error: any) {
-      throw new Error(error);
+      this.error(error, this.moveToNode.name, '', account.id);
+      throw new WsException(error);
     }
   }
 
@@ -259,7 +322,7 @@ export class DevModeService {
       });
 
       if (!journey) {
-        throw new Error('No such journey found.');
+        throw new WsException('No such journey found.');
       }
 
       if (!step) return;
@@ -313,7 +376,7 @@ export class DevModeService {
         (el) => el.data.stepId === step.metadata.branches[branch].destination
       );
 
-      if (!node) throw new Error("Can't find node");
+      if (!node) throw new WsException("Can't find node");
 
       await this.moveToNode(socketLocal.data.account, journey.id, node.id);
 
@@ -332,7 +395,13 @@ export class DevModeService {
 
       socketClient.emit('nodeMovedTo', node.id);
     } catch (error) {
-      console.log(error);
+      this.error(
+        error,
+        this.reactOnCustom.name,
+        '',
+        socketLocal.data.account.id
+      );
+      throw error;
     }
   }
 

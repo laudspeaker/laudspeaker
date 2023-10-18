@@ -167,6 +167,7 @@ interface DevModeStatePayload {
   customerInNode?: string;
   arrowPreSelectNode?: string;
   availableNodeToJump?: string[];
+  requireMovementToStart?: string;
 }
 
 interface FlowBuilderState {
@@ -221,6 +222,7 @@ const defaultDevMode: DevModeStatePayload = {
   customerInNode: undefined,
   availableNodeToJump: undefined,
   arrowPreSelectNode: undefined,
+  requireMovementToStart: undefined,
 };
 
 const initialState: FlowBuilderState = {
@@ -522,7 +524,13 @@ const flowBuilderSlice = createSlice({
 
           existedChildrenEdge.data = { type: EdgeType.BRANCH, branch };
         }
-
+        if (
+          state.devModeState.status === ConnectionStatus.Connected &&
+          !state.nodes.find((el) => el.id === state.devModeState.customerInNode)
+        ) {
+          const start = state.nodes.find((el) => el.type === NodeType.START);
+          state.devModeState.requireMovementToStart = start?.id;
+        }
         state.nodes = getLayoutedNodes(state.nodes, state.edges);
       }
     },
@@ -541,8 +549,7 @@ const flowBuilderSlice = createSlice({
           !state.nodes.find((el) => el.id === state.devModeState.customerInNode)
         ) {
           const start = state.nodes.find((el) => el.type === NodeType.START);
-          // TODO: restart journey on remove
-          state.devModeState.customerInNode = start?.id;
+          state.devModeState.requireMovementToStart = start?.id;
         }
       }
     },

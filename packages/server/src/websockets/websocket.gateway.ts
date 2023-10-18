@@ -199,9 +199,8 @@ export class WebsocketGateway implements OnGatewayConnection {
         !apiKey &&
         development &&
         userId &&
-        journeyId
-        // &&
-        // process.env.WS_ORIGIN_VERIFY === socket.handshake.headers.origin
+        journeyId &&
+        process.env.WS_ORIGIN_VERIFY === socket.handshake.headers.origin
       ) {
         // User try to make connection for dev mode setup from our client
         socket.emit('log', 'Checking if dev environment is connected.');
@@ -507,6 +506,10 @@ export class WebsocketGateway implements OnGatewayConnection {
       );
     } catch (e) {
       socket.emit('error', e);
+      socket.emit(
+        'processedEvent',
+        this.getHash(socket.data.customerId, event.trackerId, event.event)
+      );
     }
   }
 
@@ -677,7 +680,7 @@ export class WebsocketGateway implements OnGatewayConnection {
   ) {
     try {
       if (socket.data.processingDev)
-        throw new Error('Processing another dev option please wait');
+        throw new WsException('Processing another dev option please wait');
 
       socket.data.processingDev = true;
 
@@ -694,6 +697,7 @@ export class WebsocketGateway implements OnGatewayConnection {
       const localSocket = this.server.sockets.sockets.get(
         socket.data.relatedDevConnection
       );
+
       for (const key in devMode.devModeState.customerData.customComponents) {
         localSocket.emit('custom', {
           trackerId: key,
@@ -703,7 +707,7 @@ export class WebsocketGateway implements OnGatewayConnection {
 
       socket.emit('nodeMovedTo', nodeId);
     } catch (error) {
-      socket.emit('moveError', error);
+      if (error instanceof WsException) socket.emit('moveError', error.message);
     } finally {
       socket.data.processingDev = false;
     }

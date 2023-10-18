@@ -131,6 +131,7 @@ export const SocketProvider = ({ children }: { children: ReactElement }) => {
         dispatch(
           handleDevModeState({
             customerInNode: nodeId,
+            requireMovementToStart: undefined,
           })
         );
       })
@@ -138,6 +139,12 @@ export const SocketProvider = ({ children }: { children: ReactElement }) => {
         toast.error(error);
       });
   }, [socket]);
+
+  useEffect(() => {
+    if (!socket || !devModeState.requireMovementToStart) return;
+
+    socket.emit("moveToNode", devModeState.requireMovementToStart);
+  }, [devModeState.requireMovementToStart]);
 
   useEffect(() => {
     if (!socket) return;

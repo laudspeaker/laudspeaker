@@ -116,10 +116,7 @@ const FlowEditor: FC<FlowEditorProps> = ({
 
   const onNodesChange = (changes: NodeChange[]) => {
     if (devModeState.status === ConnectionStatus.Connected) {
-      changes = changes.filter(
-        (change) => change.type !== "select"
-        //&& nodes.find((node) => node.id === change.id)?.type !== NodeType.EMPTY
-      );
+      changes = changes.filter((change) => change.type !== "select");
     } else {
       changes = changes.filter(
         (change) =>
@@ -133,9 +130,9 @@ const FlowEditor: FC<FlowEditorProps> = ({
 
   const handleDevModeDBClick = (node: Node<any, string | undefined>) => {
     if (
-      devModeState.status !== ConnectionStatus.Connected &&
-      node.type !== NodeType.START &&
-      node.type !== NodeType.EMPTY
+      devModeState.status !== ConnectionStatus.Connected ||
+      node.type === NodeType.START ||
+      node.type === NodeType.EMPTY
     )
       return;
 

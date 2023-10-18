@@ -142,7 +142,9 @@ const FlowBuilderHeader = () => {
           onClose={() => setIsStartModalOpen(false)}
         />
       </div>
-      <FlowBuilderStepper />
+      {devModeState.status === ConnectionStatus.Disabled && (
+        <FlowBuilderStepper />
+      )}
       {!isViewMode &&
         (devModeState.status === ConnectionStatus.ShowPreview ||
           devModeState.status === ConnectionStatus.Connecting ||
@@ -169,52 +171,55 @@ const FlowBuilderHeader = () => {
         </Button>
       ) : (
         <div className="flex">
-          <button
-            className="px-[8px] py-[10px] border-[1px] border-[#E5E7EB] rounded-[4px] mr-[10px]"
-            onClick={() => navigate("/flow")}
-          >
-            <ArrowLeftIcon className="w-[13px] h-[10px]" />
-          </button>
-          <button
-            className={`${
-              devModeState.status === ConnectionStatus.Connected
-                ? "pl-[10px] text-[#16A34A] bg-[#F0FDF4] border-[#22C55E]"
-                : "pr-[10px] text-[#111827] border-[#E5E7EB]"
-            } disabled:!grayscale-1 flex items-center p-[4px] border-[1px] mr-[10px] rounded-[16px] text-[14px] leading-[22px] font-roboto`}
-            disabled={devModeState.status === ConnectionStatus.Reconnection}
-            onClick={() =>
-              devModeState.status === ConnectionStatus.Reconnection
-                ? null
-                : devModeState.status === ConnectionStatus.Connected
-                ? handleDisconnect()
-                : dispatch(
-                    handleDevModeState(
-                      {
+          {devModeState.status === ConnectionStatus.Disabled && (
+            <button
+              className="px-[8px] py-[10px] border-[1px] border-[#E5E7EB] rounded-[4px] mr-[10px]"
+              onClick={() => navigate("/flow")}
+            >
+              <ArrowLeftIcon className="w-[13px] h-[10px]" />
+            </button>
+          )}
+
+          <div className="relative [&_.whitespace-nowrap]:hover:block">
+            <button
+              className={`${
+                devModeState.status === ConnectionStatus.Connected
+                  ? "pl-[10px] text-[#16A34A] bg-[#F0FDF4] border-[#22C55E]"
+                  : "pr-[10px] text-[#111827] border-[#E5E7EB]"
+              } disabled:!grayscale-1 flex items-center p-[4px] border-[1px] mr-[10px] rounded-[16px] text-[14px] leading-[22px] font-roboto`}
+              disabled={devModeState.status === ConnectionStatus.Reconnection}
+              onClick={() =>
+                devModeState.status === ConnectionStatus.Reconnection
+                  ? null
+                  : devModeState.status === ConnectionStatus.Connected
+                  ? handleDisconnect()
+                  : dispatch(
+                      handleDevModeState({
                         status: ConnectionStatus.ShowPreview,
-                      }
-                      // devModeState.status=== ConnectionStatus.Connected
-                      //   ? { enabled: false }
-                      //   : {
-                      //       isPreviewModalOpened: true,
-                      //     }
+                      })
                     )
-                  )
-            }
-          >
-            {devModeState.status !== ConnectionStatus.Connected && (
-              <div className="px-[4px] py-[5px] mr-[5px] bg-[#4B5563] rounded-full">
-                <CodeBracketIcon className="w-[12px] h-[9px] text-white" />
+              }
+            >
+              {devModeState.status !== ConnectionStatus.Connected && (
+                <div className="px-[4px] py-[5px] mr-[5px] bg-[#4B5563] rounded-full">
+                  <CodeBracketIcon className="w-[12px] h-[9px] text-white" />
+                </div>
+              )}
+              {devModeState.status === ConnectionStatus.Reconnection
+                ? "Reconnecting..."
+                : "Dev Mode"}
+              {devModeState.status === ConnectionStatus.Connected && (
+                <div className="px-[4px] py-[5px] ml-[5px] bg-[#22C55E] rounded-full">
+                  <CodeBracketIcon className="w-[12px] h-[9px] text-white" />
+                </div>
+              )}
+            </button>
+            {devModeState.status === ConnectionStatus.Disabled && (
+              <div className="hidden absolute whitespace-nowrap leading-[22px] text-[14px] top-[44px] z-[1] right-[-30px] p-[8px] bg-black text-white font-medium">
+                Dev Mode help you to test the journey with your localhost
               </div>
             )}
-            {devModeState.status === ConnectionStatus.Reconnection
-              ? "Reconnecting..."
-              : "Dev Mode"}
-            {devModeState.status === ConnectionStatus.Connected && (
-              <div className="px-[4px] py-[5px] ml-[5px] bg-[#22C55E] rounded-full">
-                <CodeBracketIcon className="w-[12px] h-[9px] text-white" />
-              </div>
-            )}
-          </button>
+          </div>
           {devModeState.status !== ConnectionStatus.Connected && (
             <Button
               type={ButtonType.PRIMARY}
