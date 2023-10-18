@@ -171,11 +171,11 @@ const OnboardingSidePanel: FC<OnboardingSidePanelProps> = ({
           className ? className : ""
         }`}
         enter="transition-all duration-300"
-        enterFrom="right-[-100%]"
-        enterTo="right-[20px]"
-        leave="transition-all duration-500"
-        leaveTo="right-[-100%]"
-        leaveFrom="right-[20px]"
+        enterFrom="!right-[-100%]"
+        enterTo="!right-[20px]"
+        leave="!transition-all !duration-500"
+        leaveTo="!right-[-100%]"
+        leaveFrom="!right-[20px]"
       >
         <div className="h-full relative flex flex-col justify-stretch">
           <div className="p-[20px] border-b-[1px] flex flex-col gap-[5px]">
