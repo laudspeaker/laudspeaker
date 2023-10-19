@@ -24,6 +24,7 @@ import {
 import { NodeType } from "../FlowEditor";
 import { Transition } from "@headlessui/react";
 import { createPortal } from "react-dom";
+import { NodeDevModeHighlighter } from "./NodeDevModeHighlighter";
 
 interface ChangesObject {
   field: string;
@@ -133,7 +134,7 @@ export const TrackerNode: FC<NodeProps<TrackerNodeData>> = ({
         selected
           ? "border-[2px] border-[#6366F1]"
           : "border-[1px] border-[#E5E7EB]"
-      }`}
+      } relative`}
       onDragOver={(e) => {
         e.stopPropagation();
         e.preventDefault();
@@ -144,7 +145,7 @@ export const TrackerNode: FC<NodeProps<TrackerNodeData>> = ({
         position={Position.Top}
         type="target"
         isConnectable={isConnectable}
-        className="!min-h-[1px] !h-[1px] !top-[1px] !opacity-0 !border-0 !pointer-events-none !cursor-default"
+        className="!min-h-[1px] !h-[1px] !top-[-1px] !opacity-0 !border-0 !pointer-events-none !cursor-default"
       />
       <div
         className="p-[16px] flex flex-col gap-[2px]"
@@ -162,7 +163,7 @@ export const TrackerNode: FC<NodeProps<TrackerNodeData>> = ({
           <div
             className={`font-inter font-semibold text-[16px] leading-[24px] flex justify-between items-center w-full`}
           >
-            <div className="whitespace-nowrap">Custom component</div>
+            <div className="whitespace-nowrap">Component</div>
             {tracker && (
               <div
                 className="flex items-center gap-[6px]"
@@ -272,6 +273,7 @@ export const TrackerNode: FC<NodeProps<TrackerNodeData>> = ({
         isConnectable={isConnectable}
         className="!min-h-[1px] !h-[1px] !bottom-[1px] !opacity-0 !border-0 !pointer-events-none !cursor-default"
       />
+      <NodeDevModeHighlighter id={id} />
     </div>
   );
 };

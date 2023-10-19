@@ -3,10 +3,12 @@ import { Handle, NodeProps, Position } from "reactflow";
 import { TimeDelayIcon, UserIcon } from "../Icons";
 import { TimeDelayNodeData } from "./NodeData";
 import { useAppSelector } from "store/hooks";
+import { NodeDevModeHighlighter } from "./NodeDevModeHighlighter";
 
 const compatNumberFormatter = Intl.NumberFormat("en", { notation: "compact" });
 
 export const TimeDelayNode: FC<NodeProps<TimeDelayNodeData>> = ({
+  id,
   isConnectable,
   selected,
   data: { delay, showErrors, disabled, customersCount },
@@ -15,7 +17,7 @@ export const TimeDelayNode: FC<NodeProps<TimeDelayNodeData>> = ({
 
   return (
     <div
-      className={`w-[260px] h-[80px] rounded-[4px] bg-white font-inter ${
+      className={`relative w-[260px] h-[80px] rounded-[4px] bg-white font-inter ${
         disabled ? "opacity-50 cursor-not-allowed" : ""
       } ${
         selected
@@ -71,6 +73,7 @@ export const TimeDelayNode: FC<NodeProps<TimeDelayNodeData>> = ({
         isConnectable={isConnectable}
         className="!min-h-[1px] !h-[1px] !bottom-[1px] !opacity-0 !border-0 pointer-events-none cursor-default"
       />
+      <NodeDevModeHighlighter id={id} />
     </div>
   );
 };

@@ -90,24 +90,6 @@ const Person = () => {
           setTimeline([firstItem, ...items]);
         }
         setPersonInfo(personData);
-
-        const { data: eventsData } = await ApiService.get<IEventsFetchData[]>({
-          url: `/customers/${id}/events`,
-        });
-
-        // TODO: Fix with timeline fix
-        // setTimeline([
-        //   ...timeline,
-        //   ...eventsData.map((item) => ({
-        //     id: item.id + item.name + item.audName + item.event,
-        //     type: eventTypes.completed,
-        //     content: "Email " + item.event,
-        //     datetime: item.createdAt,
-        //     name: item.name,
-        //     audName: item.audname,
-        //     date: new Date(item.createdAt).toLocaleString(),
-        //   })),
-        // ]);
       } catch (e) {
         console.error(e);
       } finally {

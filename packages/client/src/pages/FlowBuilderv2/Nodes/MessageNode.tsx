@@ -11,6 +11,7 @@ import {
   WebhookIcon,
 } from "../Icons";
 import { MessageNodeData, Stats } from "./NodeData";
+import { NodeDevModeHighlighter } from "./NodeDevModeHighlighter";
 
 const compatNumberFormatter = Intl.NumberFormat("en", { notation: "compact" });
 
@@ -99,6 +100,7 @@ export const MessageNode: FC<NodeProps<MessageNodeData>> = ({
   isConnectable,
   data,
   selected,
+  id,
 }) => {
   const { isViewMode } = useAppSelector((state) => state.flowBuilder);
 
@@ -118,7 +120,9 @@ export const MessageNode: FC<NodeProps<MessageNodeData>> = ({
 
   return (
     <div
-      className={`message-node ${isViewMode ? "w-[300px]" : "w-[260px]"} ${
+      className={`relative message-node ${
+        isViewMode ? "w-[300px]" : "w-[260px]"
+      } ${
         isViewMode && stats && nodeFixtures.statsToShow
           ? "h-[140px]"
           : "h-[80px]"
@@ -136,11 +140,12 @@ export const MessageNode: FC<NodeProps<MessageNodeData>> = ({
         console.log(e.dataTransfer.getData("jumpTo"));
       }}
     >
+      <NodeDevModeHighlighter id={id} />
       <Handle
         position={Position.Top}
         type="target"
         isConnectable={isConnectable}
-        className="!min-h-[1px] !h-[1px] !top-[1px] !opacity-0 !border-0 !pointer-events-none !cursor-default"
+        className="!min-h-[1px] !h-[1px] !top-[-1px] !opacity-0 !border-0 !pointer-events-none !cursor-default"
       />
       <div
         className="p-[16px] flex flex-col gap-[2px]"

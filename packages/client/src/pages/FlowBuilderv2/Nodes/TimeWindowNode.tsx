@@ -3,10 +3,12 @@ import { Handle, NodeProps, Position } from "reactflow";
 import { TimeWindowIcon, UserIcon } from "../Icons";
 import { TimeWindowNodeData } from "./NodeData";
 import { useAppSelector } from "store/hooks";
+import { NodeDevModeHighlighter } from "./NodeDevModeHighlighter";
 
 const compatNumberFormatter = Intl.NumberFormat("en", { notation: "compact" });
 
 export const TimeWindowNode: FC<NodeProps<TimeWindowNodeData>> = ({
+  id,
   isConnectable,
   selected,
   data: { from, to, showErrors, disabled, customersCount },
@@ -15,7 +17,7 @@ export const TimeWindowNode: FC<NodeProps<TimeWindowNodeData>> = ({
 
   return (
     <div
-      className={`w-[260px] h-[80px] rounded-[4px] bg-white font-inter ${
+      className={`relative w-[260px] h-[80px] rounded-[4px] bg-white font-inter ${
         disabled ? "opacity-50 cursor-not-allowed" : ""
       } ${
         selected
@@ -82,6 +84,7 @@ export const TimeWindowNode: FC<NodeProps<TimeWindowNodeData>> = ({
         isConnectable={isConnectable}
         className="!min-h-[1px] !h-[1px] !bottom-[1px] !opacity-0 !border-0 pointer-events-none cursor-default"
       />
+      <NodeDevModeHighlighter id={id} />
     </div>
   );
 };
