@@ -24,6 +24,7 @@ import {
   NodeChange,
 } from "reactflow";
 import { MessageType, ProviderType } from "types/Workflow";
+import getClosestNextAndPrevious from "utils/getClosestNextAndPrevious";
 import { v4 as uuid } from "uuid";
 
 export enum SegmentsSettingsType {
@@ -152,6 +153,23 @@ export type DragAction =
   | SwapDragAction
   | OnboardingDragAction;
 
+export const enum ConnectionStatus {
+  Disabled,
+  ShowPreview,
+  Connecting,
+  Reconnection,
+  Error,
+  Connected,
+}
+
+interface DevModeStatePayload {
+  status?: ConnectionStatus;
+  customerInNode?: string;
+  arrowPreSelectNode?: string;
+  availableNodeToJump?: string[];
+  requireMovementToStart?: string;
+}
+
 interface FlowBuilderState {
   flowId: string;
   flowName: string;
@@ -170,6 +188,7 @@ interface FlowBuilderState {
   isOnboardingWaitUntilTimeSettingTooltipVisible: boolean;
   jumpToTargettingNode?: string;
   isDrawerDisabled: boolean;
+  devModeState: DevModeStatePayload;
 }
 
 const startNodeUUID = uuid();
@@ -198,6 +217,14 @@ const initialEdges: Edge<EdgeData>[] = [
   },
 ];
 
+const defaultDevMode: DevModeStatePayload = {
+  status: ConnectionStatus.Disabled,
+  customerInNode: undefined,
+  availableNodeToJump: undefined,
+  arrowPreSelectNode: undefined,
+  requireMovementToStart: undefined,
+};
+
 const initialState: FlowBuilderState = {
   flowId: "",
   flowName: "",
@@ -217,6 +244,7 @@ const initialState: FlowBuilderState = {
   isOnboardingWaitUntilTimeSettingTooltipVisible: false,
   jumpToTargettingNode: undefined,
   isDrawerDisabled: false,
+  devModeState: defaultDevMode,
 };
 
 const handlePruneNodeTree = (state: FlowBuilderState, nodeId: string) => {
@@ -496,12 +524,34 @@ const flowBuilderSlice = createSlice({
 
           existedChildrenEdge.data = { type: EdgeType.BRANCH, branch };
         }
-
+        if (
+          state.devModeState.status === ConnectionStatus.Connected &&
+          !state.nodes.find((el) => el.id === state.devModeState.customerInNode)
+        ) {
+          const start = state.nodes.find((el) => el.type === NodeType.START);
+          state.devModeState.requireMovementToStart = start?.id;
+        }
         state.nodes = getLayoutedNodes(state.nodes, state.edges);
       }
     },
     removeNode(state, action: PayloadAction<string>) {
       handleRemoveNode(state, action.payload);
+
+      if (state.devModeState.status === ConnectionStatus.Connected) {
+        if (
+          !state.nodes.find(
+            (el) => el.id === state.devModeState.arrowPreSelectNode
+          )
+        ) {
+          state.devModeState.arrowPreSelectNode = undefined;
+        }
+        if (
+          !state.nodes.find((el) => el.id === state.devModeState.customerInNode)
+        ) {
+          const start = state.nodes.find((el) => el.type === NodeType.START);
+          state.devModeState.requireMovementToStart = start?.id;
+        }
+      }
     },
     pruneNodeTree(state, action: PayloadAction<string>) {
       handlePruneNodeTree(state, action.payload);
@@ -509,6 +559,70 @@ const flowBuilderSlice = createSlice({
     setEdges(state, action: PayloadAction<Edge<EdgeData>[]>) {
       state.edges = action.payload;
       state.nodes = getLayoutedNodes(state.nodes, state.edges);
+    },
+    handleDevModeState(state, action: PayloadAction<DevModeStatePayload>) {
+      if ("customerInNode" in action.payload) {
+        const node = state.nodes.find(
+          (el) => el.id === action.payload.customerInNode
+        );
+        if (node) {
+          const availableNodes = getClosestNextAndPrevious(
+            node,
+            state.nodes,
+            state.edges
+          ).filter((el) => el.type !== NodeType.EMPTY);
+
+          const start = state.nodes.find((el) => el.type === NodeType.START);
+
+          if (node.type === NodeType.EXIT && start) {
+            availableNodes.push(start);
+          }
+
+          action.payload.availableNodeToJump = availableNodes.map(
+            (el) => el.id
+          );
+
+          state.devModeState.arrowPreSelectNode = undefined;
+        }
+      }
+
+      state.devModeState = {
+        ...state.devModeState,
+        ...action.payload,
+      };
+    },
+    recountAvailableNodes(state) {
+      if (
+        state.devModeState.status !== ConnectionStatus.Connected ||
+        !state.devModeState.customerInNode
+      )
+        return;
+
+      const node = state.nodes.find(
+        (el) => el.id === state.devModeState.customerInNode
+      );
+      if (!node) return;
+
+      const availableNodes = getClosestNextAndPrevious(
+        node,
+        state.nodes,
+        state.edges
+      ).filter((el) => el.type !== NodeType.EMPTY);
+
+      const start = state.nodes.find((el) => el.type === NodeType.START);
+
+      if (node.type === NodeType.EXIT && start) {
+        availableNodes.push(start);
+      }
+
+      state.devModeState.availableNodeToJump = availableNodes.map(
+        (el) => el.id
+      );
+
+      state.devModeState.arrowPreSelectNode = undefined;
+    },
+    resetDevMode(state) {
+      state.devModeState = defaultDevMode;
     },
     handleDrawerAction(
       state,
@@ -803,12 +917,17 @@ export const {
   setIsViewMode,
   setFlowStatus,
   setShowSegmentsErrors,
+  handleDevModeState,
+  resetDevMode,
   setIsOnboarding,
   setIsOnboardingWaitUntilTooltipVisible,
   setIsOnboardingWaitUntilTimeSettingTooltipVisible,
   setJumpToTargettingNode,
   setIsDrawerDisabled,
   refreshFlowBuilder,
+  recountAvailableNodes,
 } = flowBuilderSlice.actions;
+
+export { defaultDevMode };
 
 export default flowBuilderSlice.reducer;

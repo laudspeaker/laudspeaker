@@ -1,9 +1,11 @@
 import ReactFlow, {
   applyNodeChanges,
+  ControlButton,
   Controls,
   EdgeChange,
   EdgeProps,
   MarkerType,
+  Node,
   NodeChange,
   NodeProps,
 } from "reactflow";
@@ -11,7 +13,11 @@ import { useAppDispatch, useAppSelector } from "store/hooks";
 import "reactflow/dist/style.css";
 import {
   changeNodeData,
+  ConnectionStatus,
   deselectNodes,
+  handleDevModeState,
+  recountAvailableNodes,
+  resetDevMode,
   setJumpToTargettingNode,
   setNodes,
 } from "reducers/flow-builder.reducer";
@@ -34,6 +40,9 @@ import { FC, useEffect, useRef } from "react";
 import NodeDraggingProvider from "./FlowPlugins/NodeDraggingProvider";
 import Button, { ButtonType } from "components/Elements/Buttonv2";
 import { JumpToNodeData } from "./Nodes/NodeData";
+import { DevModeControlHint } from "./DevModeControlHint";
+import useDevKeysHandler from "./useDevKeysHandler";
+import { useDevSocket } from "./useDevSocketConnection";
 
 export enum NodeType {
   START = "start",
@@ -93,19 +102,62 @@ const FlowEditor: FC<FlowEditorProps> = ({
   onMove = () => {},
   onMoveEnd = () => {},
 }) => {
-  const { nodes, edges, stepperIndex, isOnboarding, jumpToTargettingNode } =
-    useAppSelector((state) => state.flowBuilder);
-
+  const {
+    nodes,
+    edges,
+    stepperIndex,
+    isOnboarding,
+    jumpToTargettingNode,
+    devModeState,
+  } = useAppSelector((state) => state.flowBuilder);
+  useDevKeysHandler();
+  const socket = useDevSocket();
   const dispatch = useAppDispatch();
 
   const onNodesChange = (changes: NodeChange[]) => {
-    changes = changes.filter(
-      (change) =>
-        change.type === "select" &&
-        nodes.find((node) => node.id === change.id)?.type !== NodeType.EMPTY
-    );
+    if (devModeState.status === ConnectionStatus.Connected) {
+      changes = changes.filter((change) => change.type !== "select");
+    } else {
+      changes = changes.filter(
+        (change) =>
+          change.type === "select" &&
+          nodes.find((node) => node.id === change.id)?.type !== NodeType.EMPTY
+      );
+    }
 
     dispatch(setNodes(applyNodeChanges(changes, nodes)));
+  };
+
+  const handleDevModeDBClick = (node: Node<any, string | undefined>) => {
+    if (
+      devModeState.status !== ConnectionStatus.Connected ||
+      node.type === NodeType.START ||
+      node.type === NodeType.EMPTY
+    )
+      return;
+
+    dispatch(
+      setNodes(
+        applyNodeChanges(
+          [
+            {
+              id: node.id,
+              selected: true,
+              type: "select",
+            },
+          ],
+          nodes
+        )
+      )
+    );
+  };
+
+  const handleDevModeClick = (node: Node<any, string | undefined>) => {
+    if (devModeState.status !== ConnectionStatus.Connected) return;
+
+    if (!devModeState.availableNodeToJump?.includes(node.id)) return;
+
+    socket?.emit("moveToNode", node.id);
   };
 
   const onEdgesChange = (changes: EdgeChange[]) => {
@@ -143,6 +195,18 @@ const FlowEditor: FC<FlowEditorProps> = ({
     dispatch(setJumpToTargettingNode(undefined));
   }, [selectedNode, jumpToTargettingNode]);
 
+  useEffect(() => {
+    dispatch(recountAvailableNodes());
+  }, [nodes]);
+
+  useEffect(() => {
+    dispatch(resetDevMode());
+
+    return () => {
+      dispatch(resetDevMode());
+    };
+  }, []);
+
   return (
     <div
       className={`relative w-full h-full bg-[#F3F4F6] text-[#111827] flex flex-col ${
@@ -177,10 +241,14 @@ const FlowEditor: FC<FlowEditorProps> = ({
               ev.setViewport({ x: x - 200, y, zoom: 0.8 });
             }
           }}
+          onNodeClick={(_, node) => handleDevModeClick(node)}
+          onNodeDoubleClick={(_, node) => handleDevModeDBClick(node)}
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
+          nodesFocusable={false}
           onMove={onMove}
           onMoveEnd={onMoveEnd}
+          zoomOnDoubleClick={devModeState.status !== ConnectionStatus.Connected}
           nodeTypes={nodeTypes}
           edgeTypes={edgeTypes}
           panOnScroll
@@ -203,7 +271,11 @@ const FlowEditor: FC<FlowEditorProps> = ({
             showInteractive={false}
             position="top-left"
             className="rounded-[2px]"
-          />
+          >
+            {devModeState.status !== ConnectionStatus.Disabled && (
+              <DevModeControlHint />
+            )}
+          </Controls>
         </ReactFlow>
         {!isViewMode && !isOnboarding && stepperIndex === 0 && (
           <FlowBuilderSidePanel />

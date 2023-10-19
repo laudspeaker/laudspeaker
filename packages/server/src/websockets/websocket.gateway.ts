@@ -7,6 +7,7 @@ import {
   WebSocketGateway,
   WebSocketServer,
   OnGatewayConnection,
+  WsException,
 } from '@nestjs/websockets';
 import { createHash, randomUUID } from 'crypto';
 import { isValidObjectId, Model } from 'mongoose';
@@ -24,11 +25,18 @@ import {
   CustomerDocument,
 } from '@/api/customers/schemas/customer.schema';
 import { InjectModel } from '@nestjs/mongoose';
+import { Types } from 'mongoose';
+import { JourneysService } from '@/api/journeys/journeys.service';
+import { DevModeService } from '@/api/dev-mode/dev-mode.service';
 import { RavenInterceptor } from 'nest-raven';
 
 interface SocketData {
   account: Account;
   customerId: string;
+  development?: boolean;
+  relatedDevConnection?: string;
+  relatedClientDevConnection?: string;
+  devJourney?: string;
 }
 
 const fieldSerializerMap = {
@@ -53,16 +61,28 @@ export class WebsocketGateway implements OnGatewayConnection {
     private customersService: CustomersService,
     @Inject(forwardRef(() => EventsService))
     private eventsService: EventsService,
+    @Inject(forwardRef(() => JourneysService))
+    private journeyService: JourneysService,
+    @Inject(forwardRef(() => DevModeService))
+    private devModeService: DevModeService,
     @Inject(WebhooksService) private readonly webhooksService: WebhooksService,
     @InjectModel(Customer.name) public customerModel: Model<CustomerDocument>
   ) {}
 
   public async handleConnection(socket: Socket) {
     try {
-      const { apiKey, customerId } = socket.handshake.auth;
+      const { apiKey, customerId, userId, journeyId, development } =
+        socket.handshake.auth;
       socket.emit('log', 'Connection procedure initiated.');
-
-      const account = await this.accountsService.findOneByAPIKey(apiKey);
+      const account =
+        development && userId && !apiKey
+          ? await this.accountsService.findOne(
+              {
+                id: userId,
+              },
+              ''
+            )
+          : await this.accountsService.findOneByAPIKey(apiKey);
 
       if (!account) {
         socket.emit('error', 'Bad API key');
@@ -72,11 +92,12 @@ export class WebsocketGateway implements OnGatewayConnection {
 
       socket.data.account = account;
       socket.data.session = randomUUID();
+      socket.data.development = development;
 
       let customer: CustomerDocument;
 
       // Check if given customer ID is a valid format.
-      if (customerId && isValidObjectId(customerId)) {
+      if (customerId && isValidObjectId(customerId) && !development) {
         // Check if customer ID corresponds to an actual customer
         customer = await this.customersService.CustomerModel.findById(
           customerId
@@ -118,7 +139,7 @@ export class WebsocketGateway implements OnGatewayConnection {
           socket.emit('customerId', customer.id);
           await this.syncCustomData(socket, account, customer);
         }
-      } else {
+      } else if (!development) {
         socket.emit(
           'log',
           'Customer id is not valid. Creating new anonymous customer.'
@@ -141,6 +162,97 @@ export class WebsocketGateway implements OnGatewayConnection {
         );
         socket.data.customerId = customer.id;
         socket.emit('customerId', customer.id);
+      } else if (apiKey && development) {
+        // User connect with devmode from his side
+        socket.emit('log', 'Development mode connection');
+        const id = new Types.ObjectId();
+
+        socket.data.customerId = id;
+        socket.emit('customerId', id);
+
+        const fetchedSockets = await this.server.fetchSockets();
+
+        const relatedSocket = fetchedSockets.find(
+          (el) =>
+            el.data.account?.apiKey === socket.handshake.auth.apiKey &&
+            el.data.relatedDevConnection
+        );
+
+        if (relatedSocket) {
+          relatedSocket.data.relatedDevConnection = socket.id;
+          socket.data.relatedClientDevConnection = relatedSocket.id;
+
+          const devMode = await this.devModeService.getDevModeState(
+            account.id,
+            relatedSocket.handshake.auth.journeyId
+          );
+          if (devMode) {
+            for (const key in devMode.devModeState.customerData
+              .customComponents) {
+              socket.emit('custom', {
+                trackerId: key,
+                ...devMode.devModeState.customerData.customComponents[key],
+              });
+            }
+          }
+          relatedSocket.emit('devModeReconnected');
+        }
+      } else if (
+        !apiKey &&
+        development &&
+        userId &&
+        journeyId &&
+        process.env.WS_ORIGIN_VERIFY === socket.handshake.headers.origin
+      ) {
+        // User try to make connection for dev mode setup from our client
+        socket.emit('log', 'Checking if dev environment is connected.');
+
+        const journey = await this.journeyService.journeysRepository.findOne({
+          where: {
+            id: journeyId,
+            owner: {
+              id: userId,
+            },
+          },
+        });
+
+        if (!journey) {
+          throw new WsException(
+            "You don't have permission to start this journey."
+          );
+        }
+
+        const sockets = await this.server.fetchSockets();
+        const socketsLocal = sockets.find(
+          (el) =>
+            el.data?.account?.id === account.id &&
+            el.id !== socket.id &&
+            el.data.development === development
+        );
+        if (!socketsLocal) {
+          throw new WsException('Dev environment not connected');
+        }
+
+        socket.data.relatedDevConnection = socketsLocal.id;
+        socketsLocal.data.relatedClientDevConnection = socket.id;
+        socket.data.devJourney = journey.id;
+
+        const devMode = await this.devModeService.resetDevMode(
+          account,
+          journeyId
+        );
+
+        for (const key in devMode.devModeState.customerData.customComponents) {
+          socketsLocal.emit('custom', {
+            trackerId: key,
+            ...devMode.devModeState.customerData.customComponents[key],
+          });
+        }
+        socket.emit('devModeConnected', devMode.devModeState.customerIn.nodeId);
+      } else {
+        socket.emit('error', 'Unknown connection type');
+        socket.disconnect(true);
+        return;
       }
       socket.emit('log', 'Connection procedure complete.');
 
@@ -150,6 +262,19 @@ export class WebsocketGateway implements OnGatewayConnection {
       });
     } catch (e) {
       socket.emit('error', e);
+      if (e instanceof WsException) {
+        socket._error(e);
+      }
+    }
+  }
+
+  public async handleDisconnect(socket: Socket) {
+    if (socket.data.development && socket.handshake.auth.apiKey) {
+      const sockets = await this.server.fetchSockets();
+      const socketToClose = sockets.find(
+        (el) => el.data?.relatedDevConnection === socket.id
+      );
+      socketToClose?.emit('devModeNeedReconnection');
     }
   }
 
@@ -303,10 +428,24 @@ export class WebsocketGateway implements OnGatewayConnection {
       const {
         account: { id: ownerId },
         customerId,
+        development,
       } = socket.data as SocketData;
 
       let err = false;
       socket.emit('log', 'CustomerID:' + JSON.stringify(customerId));
+
+      if (development) {
+        const sockets = await this.server.fetchSockets();
+        const socketClient = sockets.find(
+          (el) => el.id === socket.data.relatedClientDevConnection
+        );
+        await this.devModeService.reactOnCustom(socketClient, socket, event);
+        socket.emit(
+          'processedEvent',
+          this.getHash(customerId, event.trackerId, event.event)
+        );
+        return;
+      }
 
       const customer = await this.customersService.CustomerModel.findById(
         customerId
@@ -369,6 +508,10 @@ export class WebsocketGateway implements OnGatewayConnection {
       );
     } catch (e) {
       socket.emit('error', e);
+      socket.emit(
+        'processedEvent',
+        this.getHash(socket.data.customerId, event.trackerId, event.event)
+      );
     }
   }
 
@@ -528,6 +671,47 @@ export class WebsocketGateway implements OnGatewayConnection {
       socket.emit('log', 'Successful fire');
     } catch (e) {
       socket.emit('error', e);
+    }
+  }
+
+  @SubscribeMessage('moveToNode')
+  public async moveToNode(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody()
+    nodeId: string
+  ) {
+    try {
+      if (socket.data.processingDev)
+        throw new WsException('Processing another dev option please wait');
+
+      socket.data.processingDev = true;
+
+      await this.devModeService.moveToNode(
+        socket.data.account,
+        socket.data.devJourney,
+        nodeId
+      );
+      const devMode = await this.devModeService.getDevModeState(
+        socket.data.account.id,
+        socket.data.devJourney
+      );
+
+      const localSocket = this.server.sockets.sockets.get(
+        socket.data.relatedDevConnection
+      );
+
+      for (const key in devMode.devModeState.customerData.customComponents) {
+        localSocket.emit('custom', {
+          trackerId: key,
+          ...devMode.devModeState.customerData.customComponents[key],
+        });
+      }
+
+      socket.emit('nodeMovedTo', nodeId);
+    } catch (error) {
+      if (error instanceof WsException) socket.emit('moveError', error.message);
+    } finally {
+      socket.data.processingDev = false;
     }
   }
 }

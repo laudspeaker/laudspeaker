@@ -878,6 +878,9 @@ export class JourneysService {
         session
       );
 
+      // TODO: update to remove dev mode on start
+      // await this.
+
       await queryRunner.manager.save(Journey, {
         ...journey,
         isActive: true,

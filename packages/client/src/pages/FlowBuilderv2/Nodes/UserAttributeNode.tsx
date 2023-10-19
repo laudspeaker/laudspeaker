@@ -4,6 +4,7 @@ import { useAppSelector } from "store/hooks";
 import BranchPopover from "../Edges/components/BranchPopover";
 import { UserAttributeIcon } from "../Icons";
 import { UserAttributeNodeData } from "./NodeData";
+import { NodeDevModeHighlighter } from "./NodeDevModeHighlighter";
 
 export const UserAttributeNode: FC<NodeProps<UserAttributeNodeData>> = ({
   isConnectable,
@@ -19,7 +20,7 @@ export const UserAttributeNode: FC<NodeProps<UserAttributeNodeData>> = ({
 
   return (
     <div
-      className={`w-[260px] h-[80px] rounded-[4px] bg-white font-inter ${
+      className={`relative w-[260px] h-[80px] rounded-[4px] bg-white font-inter ${
         disabled ? "opacity-50 cursor-not-allowed" : ""
       } ${
         selected
@@ -74,6 +75,7 @@ export const UserAttributeNode: FC<NodeProps<UserAttributeNodeData>> = ({
         isConnectable={isConnectable}
         className="!min-h-[1px] !h-[1px] !bottom-[1px] !opacity-0 !border-0 pointer-events-none cursor-default"
       />
+      <NodeDevModeHighlighter id={id} />
     </div>
   );
 };

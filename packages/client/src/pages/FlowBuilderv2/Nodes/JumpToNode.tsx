@@ -5,6 +5,7 @@ import { useAppDispatch } from "store/hooks";
 import JumpToLine from "../Edges/components/JumpToLine";
 import { NodeType } from "../FlowEditor";
 import { JumpToNodeData } from "./NodeData";
+import { NodeDevModeHighlighter } from "./NodeDevModeHighlighter";
 
 export const JumpToNode: FC<NodeProps<JumpToNodeData>> = ({
   isConnectable,
@@ -37,7 +38,7 @@ export const JumpToNode: FC<NodeProps<JumpToNodeData>> = ({
 
   return (
     <div
-      className={`w-[120px] h-[60px] rounded-[4px] bg-white ${
+      className={`relative w-[120px] h-[60px] rounded-[4px] bg-white ${
         data.disabled ? "opacity-50 cursor-not-allowed" : ""
       } ${
         selected
@@ -49,7 +50,7 @@ export const JumpToNode: FC<NodeProps<JumpToNodeData>> = ({
         position={Position.Top}
         type="target"
         isConnectable={isConnectable}
-        className="!min-h-[1px] !h-[1px] !top-[1px] !opacity-0 !border-0 !pointer-events-none !cursor-default"
+        className="!min-h-[1px] !h-[1px] !top-[-1px] !opacity-0 !border-0 !pointer-events-none !cursor-default"
       />
       <div className="relative px-[15px] py-[18px] flex flex-col gap-[2px]">
         <div className="flex gap-[5px] items-center">
@@ -91,6 +92,7 @@ export const JumpToNode: FC<NodeProps<JumpToNodeData>> = ({
           targetId={data.targetId}
           setTargetId={setTargetId}
         />
+        <NodeDevModeHighlighter id={id} />
       </div>
     </div>
   );
