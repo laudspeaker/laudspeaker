@@ -8,28 +8,36 @@ import {
   LogicRelation,
   StatementType,
 } from "pages/FlowBuilderv2/Nodes/NodeData";
-import React, { FC, useEffect, useState } from "react";
+import React, { FC, useEffect, useId, useState } from "react";
 import { useDebounce } from "react-use";
 import {
   StatementValueType,
   ComparisonType,
   valueTypeToComparisonTypesMap,
+  addSidePanelError,
+  removeSidePanelError,
 } from "reducers/flow-builder.reducer";
 import ApiService from "services/api.service";
 import { ProviderType } from "types/Workflow";
 import TrackerEditor from "./TrackerEditor";
+import { useAppSelector } from "store/hooks";
+import { useDispatch } from "react-redux";
 
-enum ConditionEditorError {
+export enum ConditionEditorError {
   NO_PROPERTY_SPECIFIED,
   NO_VALUE_SPECIFIED,
+  NO_TRACKER_SPECIFiED,
+  NO_TRACKER_EVENT_SPECIFiED,
 }
 
-const errorToMessageMap: Record<ConditionEditorError, string> = {
+export const errorToMessageMap: Record<ConditionEditorError, string> = {
   [ConditionEditorError.NO_PROPERTY_SPECIFIED]: "No property specified",
   [ConditionEditorError.NO_VALUE_SPECIFIED]: "No value specified",
+  [ConditionEditorError.NO_TRACKER_SPECIFiED]: "No template specified",
+  [ConditionEditorError.NO_TRACKER_EVENT_SPECIFiED]: "No event specified",
 };
 
-const statementTypeTitleMap: Record<StatementType, string> = {
+export const statementTypeTitleMap: Record<StatementType, string> = {
   [StatementType.PROPERTY]: "Property",
   [StatementType.ELEMENT]: "Element",
 };
@@ -45,6 +53,9 @@ const ConditionEditor: FC<ConditionEditorProps> = ({
   onCancel,
   onSave,
 }) => {
+  const { requireSaveEmit } = useAppSelector((store) => store.flowBuilder);
+  const id = useId();
+  const dispatch = useDispatch();
   const [condition, setCondition] = useState(initialCondition);
   const [keysQuery, setKeysQuery] = useState("");
   const [possibleKeys, setPossibleKeys] = useState<
@@ -134,7 +145,44 @@ const ConditionEditor: FC<ConditionEditorProps> = ({
 
       errors.push(statementErrors);
     }
+  } else if (condition.providerType === ProviderType.TRACKER) {
+    const statementErrors: ConditionEditorError[] = [];
+
+    if (!condition.trackerId) {
+      statementErrors.push(ConditionEditorError.NO_TRACKER_SPECIFiED);
+    }
+
+    if (!condition.event) {
+      statementErrors.push(ConditionEditorError.NO_TRACKER_EVENT_SPECIFiED);
+    }
+
+    errors.push(statementErrors);
   }
+
+  useEffect(() => {
+    const isError =
+      errors.length > 0 ? errors.every((el) => !!el.length) : false;
+    dispatch(isError ? addSidePanelError(id) : removeSidePanelError(id));
+  }, [errors]);
+
+  useEffect(() => {
+    return () => {
+      dispatch(removeSidePanelError(id));
+    };
+  }, []);
+
+  const handleSave = () => {
+    if (errors.some((statementErrors) => statementErrors.length > 0)) {
+      setShowErrors(true);
+      return;
+    }
+
+    onSave(condition);
+  };
+
+  useEffect(() => {
+    if (requireSaveEmit) handleSave();
+  }, [requireSaveEmit]);
 
   return (
     <div className="condition-editor flex flex-col gap-[10px] p-[10px] bg-[#F3F4F6]">
@@ -194,6 +242,24 @@ const ConditionEditor: FC<ConditionEditorProps> = ({
           onTrackerChange={(trackerId) =>
             setCondition({ ...condition, trackerId })
           }
+          showErrors={showErrors}
+          errors={{
+            [ConditionEditorError.NO_TRACKER_EVENT_SPECIFiED]: errors[0].some(
+              (statementError) =>
+                statementError ===
+                ConditionEditorError.NO_TRACKER_EVENT_SPECIFiED
+            )
+              ? errorToMessageMap[
+                  ConditionEditorError.NO_TRACKER_EVENT_SPECIFiED
+                ]
+              : "",
+            [ConditionEditorError.NO_TRACKER_SPECIFiED]: errors[0].some(
+              (statementError) =>
+                statementError === ConditionEditorError.NO_TRACKER_SPECIFiED
+            )
+              ? errorToMessageMap[ConditionEditorError.NO_TRACKER_SPECIFiED]
+              : "",
+          }}
           event={condition.event}
           onEventChange={(event) => setCondition({ ...condition, event })}
         />
@@ -450,16 +516,7 @@ const ConditionEditor: FC<ConditionEditorProps> = ({
           <Button
             className="save-condition"
             type={ButtonType.PRIMARY}
-            onClick={() => {
-              if (
-                errors.some((statementErrors) => statementErrors.length > 0)
-              ) {
-                setShowErrors(true);
-                return;
-              }
-
-              onSave(condition);
-            }}
+            onClick={handleSave}
           >
             Save
           </Button>

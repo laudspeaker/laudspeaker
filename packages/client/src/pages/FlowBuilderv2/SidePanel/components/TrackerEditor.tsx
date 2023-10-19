@@ -8,10 +8,16 @@ import { useAppSelector } from "store/hooks";
 import Template from "types/Template";
 import getDistinct from "utils/getDistinct";
 import getNodesFromTreeAbove from "utils/getNodesFromTreeAbove";
+import { ConditionEditorError, errorToMessageMap } from "./ConditionEditor";
 
 interface TrackerEditorProps {
   trackerId?: string;
   event?: string;
+  errors?: {
+    [ConditionEditorError.NO_TRACKER_EVENT_SPECIFiED]: string;
+    [ConditionEditorError.NO_TRACKER_SPECIFiED]: string;
+  };
+  showErrors?: boolean;
   onTrackerChange: (trackerId: string) => void;
   onEventChange: (event: string) => void;
 }
@@ -19,6 +25,8 @@ interface TrackerEditorProps {
 const TrackerEditor: FC<TrackerEditorProps> = ({
   trackerId,
   event,
+  errors,
+  showErrors,
   onTrackerChange,
   onEventChange,
 }) => {
@@ -75,6 +83,13 @@ const TrackerEditor: FC<TrackerEditorProps> = ({
         placeholder="Tracker id"
         noDataPlaceholder="No trackers in this journey"
       />
+      {showErrors &&
+        errors &&
+        errors[ConditionEditorError.NO_TRACKER_SPECIFiED] && (
+          <div className="font-inter font-normal text-[12px] leading-[20px] text-[#E11D48]">
+            {errorToMessageMap[ConditionEditorError.NO_TRACKER_SPECIFiED]}
+          </div>
+        )}
 
       <Select
         options={possibleEvents.map((possibleEvent) => ({
@@ -86,6 +101,13 @@ const TrackerEditor: FC<TrackerEditorProps> = ({
         placeholder="Event name"
         noDataPlaceholder="No events"
       />
+      {showErrors &&
+        errors &&
+        errors[ConditionEditorError.NO_TRACKER_EVENT_SPECIFiED] && (
+          <div className="font-inter font-normal text-[12px] leading-[20px] text-[#E11D48]">
+            {errorToMessageMap[ConditionEditorError.NO_TRACKER_EVENT_SPECIFiED]}
+          </div>
+        )}
     </>
   );
 };

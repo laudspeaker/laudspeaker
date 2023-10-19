@@ -9,6 +9,7 @@ import {
 import React, { FC, useEffect, useState } from "react";
 import { useAppSelector } from "store/hooks";
 import { ProviderType } from "types/Workflow";
+import deepCopy from "utils/deepCopy";
 import ConditionEditor from "./ConditionEditor";
 import ConditionViewer from "./ConditionViewer";
 
@@ -33,6 +34,9 @@ const EventBranchEditor: FC<EventBranchEditorProps> = ({
 
   const [conditionIndexToChange, setConditionIndexToChange] =
     useState<number>();
+  const [initialConditionData, setInitialConditionData] = useState<
+    Condition | undefined
+  >();
   const [lastFrameAddedCondition, setLastFrameAddedCondtion] = useState(false);
 
   useEffect(() => {
@@ -54,6 +58,16 @@ const EventBranchEditor: FC<EventBranchEditorProps> = ({
     }
   }, [branch.conditions.length]);
 
+  useEffect(() => {
+    if (conditionIndexToChange !== undefined) {
+      setInitialConditionData(
+        deepCopy(branch.conditions[conditionIndexToChange])
+      );
+    } else {
+      setInitialConditionData(undefined);
+    }
+  }, [conditionIndexToChange]);
+
   return (
     <div className="flex flex-col gap-[10px] relative border-b pb-5">
       {branch.conditions.map((condition, i) => (
@@ -61,7 +75,12 @@ const EventBranchEditor: FC<EventBranchEditorProps> = ({
           {conditionIndexToChange === i ? (
             <ConditionEditor
               condition={condition}
-              onCancel={() => setConditionIndexToChange(undefined)}
+              onCancel={() => {
+                if (initialConditionData) {
+                  onConditionChange(i, initialConditionData, false);
+                }
+                setConditionIndexToChange(undefined);
+              }}
               onSave={(changedCondition) => {
                 onConditionChange(i, changedCondition, false);
                 setConditionIndexToChange(undefined);
