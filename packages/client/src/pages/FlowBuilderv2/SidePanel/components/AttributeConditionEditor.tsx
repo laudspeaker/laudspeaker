@@ -5,14 +5,19 @@ import {
   AttributeCondition,
   LogicRelation,
 } from "pages/FlowBuilderv2/Nodes/NodeData";
-import React, { FC, useEffect, useState } from "react";
+import React, { FC, useEffect, useId, useState } from "react";
 import { useDebounce } from "react-use";
 import {
+  addSidePanelError,
   ComparisonType,
+  removeSidePanelError,
   StatementValueType,
   valueTypeToComparisonTypesMap,
 } from "reducers/flow-builder.reducer";
 import ApiService from "services/api.service";
+import { ConditionEditorError, errorToMessageMap } from "./ConditionEditor";
+import { useDispatch } from "react-redux";
+import { useAppSelector } from "store/hooks";
 
 interface AttributeConditionEditorProps {
   condition: AttributeCondition;
@@ -27,12 +32,44 @@ const AttributeConditionEditor: FC<AttributeConditionEditorProps> = ({
 }) => {
   const [condition, setCondition] = useState(initialCondition);
   const [keysQuery, setKeysQuery] = useState("");
+  const { requireSaveEmit } = useAppSelector((state) => state.flowBuilder);
+  const dispatch = useDispatch();
+  const id = useId();
   const [possibleKeys, setPossibleKeys] = useState<
     {
       key: string;
       type: StatementValueType;
     }[]
   >([]);
+  const [showErrors, setShowErrors] = useState(false);
+
+  const errors: ConditionEditorError[][] = [];
+
+  for (const statement of condition.statements) {
+    const statementErrors: ConditionEditorError[] = [];
+
+    if (!statement.value) {
+      statementErrors.push(ConditionEditorError.NO_VALUE_SPECIFIED);
+    }
+
+    if (!statement.key) {
+      statementErrors.push(ConditionEditorError.NO_PROPERTY_SPECIFIED);
+    }
+
+    errors.push(statementErrors);
+  }
+
+  useEffect(() => {
+    const isError =
+      errors.length > 0 ? errors.every((el) => !!el.length) : false;
+    dispatch(isError ? addSidePanelError(id) : removeSidePanelError(id));
+  }, [errors]);
+
+  useEffect(() => {
+    return () => {
+      dispatch(removeSidePanelError(id));
+    };
+  }, []);
 
   useEffect(() => {
     setCondition(initialCondition);
@@ -51,6 +88,18 @@ const AttributeConditionEditor: FC<AttributeConditionEditorProps> = ({
 
     setPossibleKeys(data);
   };
+
+  const handleSave = () => {
+    if (errors.some((statementErrors) => statementErrors.length > 0)) {
+      setShowErrors(true);
+      return;
+    }
+    onSave(condition);
+  };
+
+  useEffect(() => {
+    if (requireSaveEmit) handleSave();
+  }, [requireSaveEmit]);
 
   useDebounce(
     () => {
@@ -101,6 +150,20 @@ const AttributeConditionEditor: FC<AttributeConditionEditorProps> = ({
               getKey={(value) => value}
               placeholder="Property name"
             />
+
+            {showErrors &&
+              errors[i].some(
+                (statementError) =>
+                  statementError === ConditionEditorError.NO_PROPERTY_SPECIFIED
+              ) && (
+                <div className="font-inter font-normal text-[12px] leading-[20px] text-[#E11D48]">
+                  {
+                    errorToMessageMap[
+                      ConditionEditorError.NO_PROPERTY_SPECIFIED
+                    ]
+                  }
+                </div>
+              )}
           </div>
           <div className="flex gap-[10px]">
             <select
@@ -145,6 +208,15 @@ const AttributeConditionEditor: FC<AttributeConditionEditorProps> = ({
                 setCondition({ ...condition });
               }}
             />
+            {showErrors &&
+              errors[i].some(
+                (statementError) =>
+                  statementError === ConditionEditorError.NO_VALUE_SPECIFIED
+              ) && (
+                <div className="font-inter font-normal text-[12px] leading-[20px] text-[#E11D48]">
+                  {errorToMessageMap[ConditionEditorError.NO_VALUE_SPECIFIED]}
+                </div>
+              )}
           </div>
           {i !== condition.statements.length - 1 && (
             <select
@@ -198,7 +270,7 @@ const AttributeConditionEditor: FC<AttributeConditionEditorProps> = ({
           <Button type={ButtonType.SECONDARY} onClick={onCancel}>
             Cancel
           </Button>
-          <Button type={ButtonType.PRIMARY} onClick={() => onSave(condition)}>
+          <Button type={ButtonType.PRIMARY} onClick={handleSave}>
             Save
           </Button>
         </div>

@@ -4,7 +4,8 @@ import {
   AttributeCondition,
   LogicRelation,
 } from "pages/FlowBuilderv2/Nodes/NodeData";
-import React, { FC, useState } from "react";
+import React, { FC, useEffect, useState } from "react";
+import deepCopy from "utils/deepCopy";
 import AttributeConditionEditor from "./AttributeConditionEditor";
 
 interface AttributeBranchEditorProps {
@@ -24,6 +25,20 @@ const AttributeBranchEditor: FC<AttributeBranchEditorProps> = ({
 }) => {
   const [conditionIndexToChange, setConditionIndexToChange] =
     useState<number>();
+  const [initialConditionData, setInitialConditionData] = useState<
+    AttributeCondition | undefined
+  >();
+
+  useEffect(() => {
+    if (conditionIndexToChange !== undefined) {
+      setInitialConditionData(
+        deepCopy(branch.attributeConditions[conditionIndexToChange])
+      );
+    } else {
+      setInitialConditionData(undefined);
+    }
+  }, [conditionIndexToChange]);
+
   return (
     <div className="flex flex-col gap-[10px]">
       {branch.attributeConditions.map((condition, i) => (
@@ -31,7 +46,12 @@ const AttributeBranchEditor: FC<AttributeBranchEditorProps> = ({
           {conditionIndexToChange === i ? (
             <AttributeConditionEditor
               condition={condition}
-              onCancel={() => setConditionIndexToChange(undefined)}
+              onCancel={() => {
+                if (initialConditionData) {
+                  onConditionChange(i, initialConditionData);
+                }
+                setConditionIndexToChange(undefined);
+              }}
               onSave={(changedCondition) => {
                 onConditionChange(i, changedCondition);
                 setConditionIndexToChange(undefined);
@@ -144,7 +164,13 @@ const AttributeBranchEditor: FC<AttributeBranchEditorProps> = ({
       ))}
 
       <div className="flex gap-[10px]">
-        <Button type={ButtonType.LINK} onClick={onAddCondition}>
+        <Button
+          type={ButtonType.LINK}
+          onClick={() => {
+            onAddCondition();
+            setConditionIndexToChange(branch.attributeConditions.length - 1);
+          }}
+        >
           Add attribute
         </Button>
 

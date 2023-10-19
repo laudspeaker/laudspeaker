@@ -186,6 +186,8 @@ interface FlowBuilderState {
   isOnboarding: boolean;
   isOnboardingWaitUntilTooltipVisible: boolean;
   isOnboardingWaitUntilTimeSettingTooltipVisible: boolean;
+  requireSaveEmit: boolean;
+  sidePanelErrors: Record<string, any>;
   jumpToTargettingNode?: string;
   isDrawerDisabled: boolean;
   devModeState: DevModeStatePayload;
@@ -241,6 +243,8 @@ const initialState: FlowBuilderState = {
   showSegmentsErrors: false,
   isOnboarding: false,
   isOnboardingWaitUntilTooltipVisible: false,
+  requireSaveEmit: false,
+  sidePanelErrors: {},
   isOnboardingWaitUntilTimeSettingTooltipVisible: false,
   jumpToTargettingNode: undefined,
   isDrawerDisabled: false,
@@ -854,6 +858,18 @@ const flowBuilderSlice = createSlice({
     setIsOnboarding(state, action: PayloadAction<boolean>) {
       state.isOnboarding = action.payload;
     },
+    setRequireSaveEmit(state, action: PayloadAction<boolean>) {
+      state.requireSaveEmit = action.payload;
+    },
+    addSidePanelError(state, action: PayloadAction<string>) {
+      state.sidePanelErrors[action.payload] = true;
+    },
+    removeSidePanelError(state, action: PayloadAction<string>) {
+      delete state.sidePanelErrors[action.payload];
+    },
+    clearSidePanelError(state) {
+      state.sidePanelErrors = {};
+    },
     setIsOnboardingWaitUntilTooltipVisible(
       state,
       action: PayloadAction<boolean>
@@ -925,6 +941,10 @@ export const {
   setJumpToTargettingNode,
   setIsDrawerDisabled,
   refreshFlowBuilder,
+  setRequireSaveEmit,
+  addSidePanelError,
+  removeSidePanelError,
+  clearSidePanelError,
   recountAvailableNodes,
 } = flowBuilderSlice.actions;
 
