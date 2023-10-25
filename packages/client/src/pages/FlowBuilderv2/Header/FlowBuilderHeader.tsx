@@ -53,18 +53,6 @@ const isValidNodes = (nodes: Node<NodeData | EdgeData>[]): boolean => {
   return filterNodeByData.length === 0;
 };
 
-const isValidSegmentQuery = (query: Query) => {
-  for (const statement of query.statements) {
-    if (
-      (statement.type === QueryStatementType.ATTRIBUTE && !statement.key) ||
-      (statement.type === QueryStatementType.SEGMENT && !statement.segmentId)
-    )
-      return false;
-  }
-
-  return true;
-};
-
 const FlowBuilderHeader = () => {
   const dispatch = useAppDispatch();
 
@@ -73,15 +61,22 @@ const FlowBuilderHeader = () => {
   const [isStartModalOpen, setIsStartModalOpen] = useState(false);
   const navigate = useNavigate();
   const { handleDisconnect } = useDevSocketConnection();
-  const { flowName, stepperIndex, nodes, segments, devModeState, isViewMode } =
-    useAppSelector((state) => state.flowBuilder);
+  const {
+    flowName,
+    stepperIndex,
+    nodes,
+    segments,
+    devModeState,
+    isViewMode,
+    segmentQueryErrors,
+  } = useAppSelector((state) => state.flowBuilder);
 
   const handleNextStep = () => {
     if (
       (stepperIndex === 0 && !isValidNodes(nodes)) ||
       (stepperIndex === 1 &&
         segments.type === SegmentsSettingsType.CONDITIONAL &&
-        !isValidSegmentQuery(segments.query))
+        Object.values(segmentQueryErrors).length > 0)
     ) {
       setIsErrorNextModalOpen(true);
 

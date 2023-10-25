@@ -96,6 +96,8 @@ const FlowBuilderDynamicInput: FC<FlowBuilderDynamicInputProps> = ({
     [StatementValueType.EMAIL]: "email@gmail.com",
     [StatementValueType.NUMBER]: "0",
     [StatementValueType.STRING]: "",
+    [StatementValueType.ARRAY]: "",
+    [StatementValueType.OBJECT]: "",
   };
 
   const valueTypeToComponentMap: Record<StatementValueType, ReactNode> = {
@@ -112,6 +114,12 @@ const FlowBuilderDynamicInput: FC<FlowBuilderDynamicInputProps> = ({
       <NumberComponent value={value} onChange={onChange} />
     ),
     [StatementValueType.STRING]: (
+      <StringComponent value={value} onChange={onChange} />
+    ),
+    [StatementValueType.ARRAY]: (
+      <StringComponent value={value} onChange={onChange} />
+    ),
+    [StatementValueType.OBJECT]: (
       <StringComponent value={value} onChange={onChange} />
     ),
   };

@@ -79,14 +79,13 @@ export const dataSubArray = [
         type: "menu",
         link: "/people",
       },
-      // Removed for version 1 release
-      // {
-      //   id: "segments",
-      //   imgIcon: audienceIcon,
-      //   text: "Segments",
-      //   type: "menu",
-      //   link: "/segment",
-      // },
+      {
+        id: "segments",
+        imgIcon: audienceIcon,
+        text: "Segments",
+        type: "menu",
+        link: "/segment",
+      },
     ],
   },
   // Removed for version 1 release

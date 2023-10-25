@@ -145,10 +145,12 @@ const FlowViewerv2 = () => {
                             {statement.value}
                           </div>
                         </>
-                      ) : (
+                      ) : statement.type === QueryStatementType.SEGMENT ? (
                         <div className="px-[12px] py-[5px] text-[#4B5563] border-[1px] border-[#E5E7EB] rounded-[2px] bg-white">
                           {statement.segmentId}
                         </div>
+                      ) : (
+                        <></>
                       )}
                     </div>
                   </div>

@@ -44,11 +44,21 @@ export enum QueryType {
 export enum QueryStatementType {
   ATTRIBUTE = "Attribute",
   SEGMENT = "Segment",
+  EVENT = "Event",
+  MessageEvent = "Message Event",
+  JourneyAttributes = "Journey Attributes",
 }
 
 export enum ComparisonType {
   EQUALS = "is equal to",
   NOT_EQUALS = "is not equal to",
+  OBJECT_KEY = "key",
+  BETWEEN = "between",
+  ARRAY_LENGTH_GREATER = "length is greater than",
+  ARRAY_LENGTH_LESS = "length is less than",
+  ARRAY_LENGTH_EQUAL = "length is equal to",
+  EXIST = "exist",
+  NOT_EXIST = "not exist",
   GREATER = "is greater than",
   LESS = "is less than",
   CONTAINS = "contains",
@@ -59,12 +69,21 @@ export enum ComparisonType {
   BOOL_NOT_EQUALS = "is not equal to",
 }
 
+export enum ObjectKeyComparisonType {
+  KEY_EXIST = "exist",
+  KEY_NOT_EXIST = "not exist",
+  KEY_VALUE_EQUAL_TO = "equal to",
+  KEY_VALUE_NOT_EQUAL_TO = "not equal to",
+}
+
 export enum StatementValueType {
   STRING = "String",
   NUMBER = "Number",
   BOOLEAN = "Boolean",
   EMAIL = "Email",
   DATE = "Date",
+  ARRAY = "Array",
+  OBJECT = "Object",
 }
 
 export const valueTypeToComparisonTypesMap: Record<
@@ -76,24 +95,52 @@ export const valueTypeToComparisonTypesMap: Record<
     ComparisonType.NOT_EQUALS,
     ComparisonType.CONTAINS,
     ComparisonType.NOT_CONTAINS,
+    ComparisonType.EXIST,
+    ComparisonType.NOT_EXIST,
   ],
   [StatementValueType.NUMBER]: [
     ComparisonType.GREATER,
     ComparisonType.EQUALS,
     ComparisonType.NOT_EQUALS,
     ComparisonType.LESS,
+    ComparisonType.EXIST,
+    ComparisonType.NOT_EXIST,
   ],
   [StatementValueType.BOOLEAN]: [
     ComparisonType.BOOL_EQUALS,
     ComparisonType.BOOL_NOT_EQUALS,
+    ComparisonType.EXIST,
+    ComparisonType.NOT_EXIST,
   ],
   [StatementValueType.EMAIL]: [
     ComparisonType.EQUALS,
     ComparisonType.NOT_EQUALS,
     ComparisonType.CONTAINS,
     ComparisonType.NOT_CONTAINS,
+    ComparisonType.EXIST,
+    ComparisonType.NOT_EXIST,
   ],
-  [StatementValueType.DATE]: [ComparisonType.BEFORE, ComparisonType.AFTER],
+  [StatementValueType.DATE]: [
+    ComparisonType.BEFORE,
+    ComparisonType.AFTER,
+    ComparisonType.BETWEEN,
+    ComparisonType.EXIST,
+    ComparisonType.NOT_EXIST,
+  ],
+  [StatementValueType.ARRAY]: [
+    ComparisonType.ARRAY_LENGTH_GREATER,
+    ComparisonType.ARRAY_LENGTH_LESS,
+    ComparisonType.ARRAY_LENGTH_EQUAL,
+    ComparisonType.CONTAINS,
+    ComparisonType.NOT_CONTAINS,
+    ComparisonType.EXIST,
+    ComparisonType.NOT_EXIST,
+  ],
+  [StatementValueType.OBJECT]: [
+    ComparisonType.OBJECT_KEY,
+    ComparisonType.EXIST,
+    ComparisonType.NOT_EXIST,
+  ],
 };
 
 export interface AttributeQueryStatement {
@@ -101,7 +148,37 @@ export interface AttributeQueryStatement {
   key: string;
   valueType: StatementValueType;
   comparisonType: ComparisonType;
+  subComparisonType: ObjectKeyComparisonType;
+  subComparisonValue: string;
   value: string;
+}
+
+export enum PerformedType {
+  HasPerformed = "has performed",
+  HasNotPerformed = "has not performed",
+}
+
+export interface EventQueryStatement {
+  type: QueryStatementType.EVENT;
+  eventName: string;
+  comparisonType: PerformedType;
+  value: number;
+  time?: {
+    comparisonType:
+      | ComparisonType.BEFORE
+      | ComparisonType.AFTER
+      | ComparisonType.BETWEEN;
+    timeAfter?: string;
+    timeBefore?: string;
+  };
+}
+
+export interface MessageEventQueryStatement {
+  type: QueryStatementType.MessageEvent;
+  messageId: string;
+  eventId: string;
+  performedType: PerformedType;
+  value: number;
 }
 
 export interface SegmentQueryStatement {
@@ -109,7 +186,12 @@ export interface SegmentQueryStatement {
   segmentId: string;
 }
 
-export type QueryStatement = AttributeQueryStatement | SegmentQueryStatement;
+export type QueryStatement =
+  | AttributeQueryStatement
+  | SegmentQueryStatement
+  | EventQueryStatement
+  | MessageEventQueryStatement
+  | Query;
 
 export interface Query {
   type: QueryType;
@@ -190,6 +272,7 @@ interface FlowBuilderState {
   sidePanelErrors: Record<string, any>;
   jumpToTargettingNode?: string;
   isDrawerDisabled: boolean;
+  segmentQueryErrors: Record<string, any>;
   devModeState: DevModeStatePayload;
 }
 
@@ -249,6 +332,7 @@ const initialState: FlowBuilderState = {
   jumpToTargettingNode: undefined,
   isDrawerDisabled: false,
   devModeState: defaultDevMode,
+  segmentQueryErrors: {},
 };
 
 const handlePruneNodeTree = (state: FlowBuilderState, nodeId: string) => {
@@ -870,6 +954,15 @@ const flowBuilderSlice = createSlice({
     clearSidePanelError(state) {
       state.sidePanelErrors = {};
     },
+    addSegmentQueryError(state, action: PayloadAction<string>) {
+      state.segmentQueryErrors[action.payload] = true;
+    },
+    removeSegmentQueryError(state, action: PayloadAction<string>) {
+      delete state.segmentQueryErrors[action.payload];
+    },
+    clearSegmentPanelErrors(state) {
+      state.segmentQueryErrors = {};
+    },
     setIsOnboardingWaitUntilTooltipVisible(
       state,
       action: PayloadAction<boolean>
@@ -946,6 +1039,9 @@ export const {
   removeSidePanelError,
   clearSidePanelError,
   recountAvailableNodes,
+  addSegmentQueryError,
+  removeSegmentQueryError,
+  clearSegmentPanelErrors,
 } = flowBuilderSlice.actions;
 
 export { defaultDevMode };

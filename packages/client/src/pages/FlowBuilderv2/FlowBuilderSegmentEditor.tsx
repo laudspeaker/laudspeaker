@@ -1,7 +1,9 @@
 import React from "react";
 import {
   ComparisonType,
+  ConditionalSegmentsSettings,
   JourneyType,
+  ObjectKeyComparisonType,
   QueryStatementType,
   QueryType,
   SegmentsSettingsType,
@@ -66,6 +68,8 @@ const FlowBuilderSegmentEditor = () => {
                           key: "",
                           comparisonType: ComparisonType.EQUALS,
                           valueType: StatementValueType.STRING,
+                          subComparisonType: ObjectKeyComparisonType.KEY_EXIST,
+                          subComparisonValue: "",
                           value: "",
                         },
                       ],
@@ -92,7 +96,9 @@ const FlowBuilderSegmentEditor = () => {
             <FilterBuilder
               settings={segmentsSettings}
               onSettingsChange={(settings) =>
-                dispatch(setSegmentsSettings(settings))
+                dispatch(
+                  setSegmentsSettings(settings as ConditionalSegmentsSettings)
+                )
               }
             />
           </div>
