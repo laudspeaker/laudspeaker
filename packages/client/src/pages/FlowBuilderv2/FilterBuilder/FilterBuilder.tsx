@@ -36,6 +36,8 @@ import { SegmentsSettings } from "reducers/segment.reducer";
 interface FilterBuilderProps {
   settings: ConditionalSegmentsSettings | SegmentsSettings;
   isSegmentSettings?: boolean;
+  isSubBuilderChild?: boolean;
+  onSubBuilderUngroup?: (statements: QueryStatement[]) => void;
   onSettingsChange: (
     settings: ConditionalSegmentsSettings | SegmentsSettings
   ) => void;
@@ -102,6 +104,8 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
   settings,
   isSegmentSettings,
   onSettingsChange,
+  onSubBuilderUngroup,
+  isSubBuilderChild,
 }) => {
   const { showSegmentsErrors } = useAppSelector((state) => state.flowBuilder);
   const { showSegmentsErrors: showSegmentsSettingsErrors } = useAppSelector(
@@ -110,8 +114,9 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
   const id = useId();
   const dispatch = useDispatch();
 
-  const { query } = settings;
-
+  const [filterSettings, setFilterSettings] = useState<
+    ConditionalSegmentsSettings | SegmentsSettings
+  >(settings);
   const [segments, setSegments] = useState<Segment[]>([]);
   const [keysQuery, setKeysQuery] = useState("");
   const [possibleKeys, setPossibleKeys] = useState<
@@ -156,12 +161,12 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
   );
 
   const handleAddStatement = () => {
-    onSettingsChange({
+    setFilterSettings({
       ...settings,
       query: {
-        ...query,
+        ...filterSettings.query,
         statements: [
-          ...query.statements,
+          ...filterSettings.query.statements,
           {
             type: QueryStatementType.ATTRIBUTE,
             key: "",
@@ -176,31 +181,62 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
     });
   };
 
+  const handleAddGroup = () => {
+    setFilterSettings({
+      ...settings,
+      query: {
+        ...filterSettings.query,
+        statements: [
+          ...filterSettings.query.statements,
+          {
+            type: QueryType.ALL,
+            statements: [],
+            isSubBuilderChild: true,
+          },
+        ],
+      },
+    });
+  };
+
   const handleDeleteStatement = (i: number) => {
-    const newStatements = [...query.statements];
+    const newStatements = [...filterSettings.query.statements];
 
     newStatements.splice(i, 1);
 
-    onSettingsChange({
+    setFilterSettings({
       ...settings,
-      query: { ...query, statements: newStatements },
+      query: { ...filterSettings.query, statements: newStatements },
     });
   };
 
   const handleChangeStatement = (i: number, statement: QueryStatement) => {
-    const newStatements = [...query.statements];
+    const newStatements = [...filterSettings.query.statements];
 
     newStatements[i] = statement;
 
-    onSettingsChange({
+    setFilterSettings({
       ...settings,
-      query: { ...query, statements: newStatements },
+      query: { ...filterSettings.query, statements: newStatements },
+    });
+  };
+
+  const handleUngroup = (i: number) => (statements: QueryStatement[]) => {
+    const newStatements = [...filterSettings.query.statements];
+
+    newStatements.splice(i, 1);
+
+    setFilterSettings({
+      ...settings,
+      query: {
+        ...filterSettings.query,
+        statements: [...newStatements, ...statements],
+      },
     });
   };
 
   const statementsErrors: QueryStatementError[][] = [];
 
-  for (const statement of query.statements) {
+  for (const statement of filterSettings.query.statements) {
     const statementErrors = [];
 
     if (statement.type === QueryStatementType.ATTRIBUTE) {
@@ -283,16 +319,23 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
     );
   }, [statementsErrors]);
 
+  useEffect(() => {
+    onSettingsChange(filterSettings);
+  }, [filterSettings]);
+
   return (
     <div className="flex w-full flex-col gap-[10px]">
       <div className="flex w-full gap-[10px] items-center">
         <div>
           <select
-            value={query.type}
+            value={filterSettings.query.type}
             onChange={(e) =>
-              onSettingsChange({
+              setFilterSettings({
                 ...settings,
-                query: { ...query, type: e.target.value as QueryType },
+                query: {
+                  ...filterSettings.query,
+                  type: e.target.value as QueryType,
+                },
               })
             }
             className="w-[100px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB] placeholder:font-inter placeholder:font-normal placeholder:text-[14px] placeholder:leading-[22px] placeholder:text-[#9CA3AF] rounded-[2px]"
@@ -308,15 +351,15 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
           of the following conditions match
         </div>
       </div>
-      {query.statements.map((statement, i) => (
+      {filterSettings.query.statements.map((statement, i) => (
         <div className="flex max-w-[924px] w-full flex-nowrap items-center">
-          {query.statements.length > 1 && (
+          {filterSettings.query.statements.length > 1 && (
             <div
               className={`min-w-[52px] text-center mr-[12px] py-[5px] px-[12px] bg-[#F3F4F6] border-[1px] border-[#E5E7EB] rounded-[4px] font-roboto font-normal text-[14px] leading-[22px] text-[#4B5563] ${
                 i === 0 && "opacity-0"
               }`}
             >
-              {query.type === QueryType.ALL ? "And" : "Or"}
+              {filterSettings.query.type === QueryType.ALL ? "And" : "Or"}
             </div>
           )}
           <div
@@ -324,32 +367,35 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
             className="bg-[#F3F4F6] p-[10px] rounded-[4px] flex justify-between items-center"
           >
             <div className="flex gap-[10px] items-center flex-wrap">
-              <div>
-                <select
-                  value={statement.type}
-                  onChange={(e) =>
-                    handleChangeStatement(
-                      i,
-                      // @ts-ignore
-                      corelationTypeToDefaultSettings?.[e.target.value] ||
-                        statement
-                    )
-                  }
-                  className={`${
-                    statement.type === QueryStatementType.MessageEvent
-                      ? "w-[140px]"
-                      : "w-[100px]"
-                  } px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB] placeholder:font-inter placeholder:font-normal placeholder:text-[14px] placeholder:leading-[22px] placeholder:text-[#9CA3AF] rounded-[2px]`}
-                >
-                  {Object.values(QueryStatementType).map(
-                    (comparisonType, j) => (
-                      <option key={j} value={comparisonType}>
-                        {comparisonType}
-                      </option>
-                    )
-                  )}
-                </select>
-              </div>
+              {/* @ts-ignore */}
+              {!statement?.isSubBuilderChild && (
+                <div>
+                  <select
+                    value={statement.type}
+                    onChange={(e) =>
+                      handleChangeStatement(
+                        i,
+                        // @ts-ignore
+                        corelationTypeToDefaultSettings?.[e.target.value] ||
+                          statement
+                      )
+                    }
+                    className={`${
+                      statement.type === QueryStatementType.MessageEvent
+                        ? "w-[140px]"
+                        : "w-[100px]"
+                    } px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB] placeholder:font-inter placeholder:font-normal placeholder:text-[14px] placeholder:leading-[22px] placeholder:text-[#9CA3AF] rounded-[2px]`}
+                  >
+                    {Object.values(QueryStatementType).map(
+                      (comparisonType, j) => (
+                        <option key={j} value={comparisonType}>
+                          {comparisonType}
+                        </option>
+                      )
+                    )}
+                  </select>
+                </div>
+              )}
               {statement.type === QueryStatementType.ATTRIBUTE ? (
                 <>
                   <div>
@@ -795,6 +841,18 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                     </span>
                   </div>
                 </>
+              ) : statement.isSubBuilderChild ? (
+                <FilterBuilder
+                  settings={{
+                    query: statement,
+                  }}
+                  isSubBuilderChild
+                  onSettingsChange={(filter) => {
+                    handleChangeStatement(i, filter.query);
+                  }}
+                  onSubBuilderUngroup={handleUngroup(i)}
+                  isSegmentSettings={isSegmentSettings}
+                />
               ) : (
                 // TODO: add  QueryStatementType.JourneyAttributes after clarification
                 <></>
@@ -826,13 +884,33 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
           </div>
         </div>
       ))}
-      <Button
-        type={ButtonType.SECONDARY}
-        onClick={handleAddStatement}
-        className="max-w-[120px]"
-      >
-        Add condition
-      </Button>
+      <div className="flex gap-[10px]">
+        <Button
+          type={ButtonType.SECONDARY}
+          onClick={handleAddStatement}
+          className="max-w-[120px]"
+        >
+          Add condition
+        </Button>
+        <Button
+          type={ButtonType.SECONDARY}
+          onClick={handleAddGroup}
+          className="max-w-[120px]"
+        >
+          Create group
+        </Button>
+        {isSubBuilderChild && onSubBuilderUngroup && (
+          <Button
+            type={ButtonType.SECONDARY}
+            onClick={() => {
+              onSubBuilderUngroup(filterSettings.query.statements);
+            }}
+            className="max-w-[120px]"
+          >
+            Ungroup
+          </Button>
+        )}
+      </div>
     </div>
   );
 };

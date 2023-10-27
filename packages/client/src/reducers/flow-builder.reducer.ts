@@ -195,6 +195,7 @@ export type QueryStatement =
 
 export interface Query {
   type: QueryType;
+  isSubBuilderChild?: boolean;
   statements: QueryStatement[];
 }
 
