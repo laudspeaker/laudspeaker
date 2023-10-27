@@ -59,10 +59,6 @@ We're currently in Public Alpha.
 
 We would love to see you contribute to Laudspeaker. Join our slack to get involved.
 
-## 🎥 Video Walkthrough
-
-- Coming soon!
-
 ## Follow Us
 
 - [Slack][slack]
