@@ -515,7 +515,7 @@ const FlowBuilderSegmentEditor = () => {
           </div>
         )}
 
-        <div className="flex flex-col gap-[10px]">
+        {/* <div className="flex flex-col gap-[10px]">
           <div className="font-semibold text-[16px] leading-[24px]">
             Journey type
           </div>
@@ -545,7 +545,7 @@ const FlowBuilderSegmentEditor = () => {
               Static journey
             </div>
           </div>
-        </div>
+        </div> */}
       </div>
     </div>
   );

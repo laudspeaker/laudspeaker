@@ -82,7 +82,7 @@ const FlowViewerv2 = () => {
     ),
     [FlowViewerTab.CUSTOMER_SEGMENT]: (
       <div className="w-full m-[20px] bg-white overflow-y-scroll">
-        <div className="bg-white p-[20px] flex flex-col gap-[10px]">
+        {/* <div className="bg-white p-[20px] flex flex-col gap-[10px]">
           <div className="font-inter font-semibold text-[20px] leading-[28px]">
             Journey type
           </div>
@@ -98,7 +98,7 @@ const FlowViewerv2 = () => {
             </span>
             <span>When new customers meet conditions will be enrolled.</span>
           </div>
-        </div>
+        </div> */}
         <div className="bg-white p-[20px] flex flex-col gap-[10px]">
           <div className="font-inter font-semibold text-[20px] leading-[28px]">
             Condition
