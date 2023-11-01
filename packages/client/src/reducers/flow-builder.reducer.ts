@@ -1,4 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { addDays, getDay } from "date-fns";
 import { DrawerAction } from "pages/FlowBuilderv2/Drawer/drawer.fixtures";
 import { BranchEdgeData, EdgeData } from "pages/FlowBuilderv2/Edges/EdgeData";
 import {
@@ -44,11 +45,21 @@ export enum QueryType {
 export enum QueryStatementType {
   ATTRIBUTE = "Attribute",
   SEGMENT = "Segment",
+  EVENT = "Event",
+  MessageEvent = "Message Event",
+  JourneyAttributes = "Journey Attributes",
 }
 
 export enum ComparisonType {
   EQUALS = "is equal to",
   NOT_EQUALS = "is not equal to",
+  OBJECT_KEY = "key",
+  BETWEEN = "between",
+  ARRAY_LENGTH_GREATER = "length is greater than",
+  ARRAY_LENGTH_LESS = "length is less than",
+  ARRAY_LENGTH_EQUAL = "length is equal to",
+  EXIST = "exist",
+  NOT_EXIST = "not exist",
   GREATER = "is greater than",
   LESS = "is less than",
   CONTAINS = "contains",
@@ -59,12 +70,21 @@ export enum ComparisonType {
   BOOL_NOT_EQUALS = "is not equal to",
 }
 
+export enum ObjectKeyComparisonType {
+  KEY_EXIST = "exist",
+  KEY_NOT_EXIST = "not exist",
+  KEY_VALUE_EQUAL_TO = "equal to",
+  KEY_VALUE_NOT_EQUAL_TO = "not equal to",
+}
+
 export enum StatementValueType {
   STRING = "String",
   NUMBER = "Number",
   BOOLEAN = "Boolean",
   EMAIL = "Email",
   DATE = "Date",
+  ARRAY = "Array",
+  OBJECT = "Object",
 }
 
 export const valueTypeToComparisonTypesMap: Record<
@@ -76,24 +96,52 @@ export const valueTypeToComparisonTypesMap: Record<
     ComparisonType.NOT_EQUALS,
     ComparisonType.CONTAINS,
     ComparisonType.NOT_CONTAINS,
+    ComparisonType.EXIST,
+    ComparisonType.NOT_EXIST,
   ],
   [StatementValueType.NUMBER]: [
     ComparisonType.GREATER,
     ComparisonType.EQUALS,
     ComparisonType.NOT_EQUALS,
     ComparisonType.LESS,
+    ComparisonType.EXIST,
+    ComparisonType.NOT_EXIST,
   ],
   [StatementValueType.BOOLEAN]: [
     ComparisonType.BOOL_EQUALS,
     ComparisonType.BOOL_NOT_EQUALS,
+    ComparisonType.EXIST,
+    ComparisonType.NOT_EXIST,
   ],
   [StatementValueType.EMAIL]: [
     ComparisonType.EQUALS,
     ComparisonType.NOT_EQUALS,
     ComparisonType.CONTAINS,
     ComparisonType.NOT_CONTAINS,
+    ComparisonType.EXIST,
+    ComparisonType.NOT_EXIST,
   ],
-  [StatementValueType.DATE]: [ComparisonType.BEFORE, ComparisonType.AFTER],
+  [StatementValueType.DATE]: [
+    ComparisonType.BEFORE,
+    ComparisonType.AFTER,
+    ComparisonType.BETWEEN,
+    ComparisonType.EXIST,
+    ComparisonType.NOT_EXIST,
+  ],
+  [StatementValueType.ARRAY]: [
+    ComparisonType.ARRAY_LENGTH_GREATER,
+    ComparisonType.ARRAY_LENGTH_LESS,
+    ComparisonType.ARRAY_LENGTH_EQUAL,
+    ComparisonType.CONTAINS,
+    ComparisonType.NOT_CONTAINS,
+    ComparisonType.EXIST,
+    ComparisonType.NOT_EXIST,
+  ],
+  [StatementValueType.OBJECT]: [
+    ComparisonType.OBJECT_KEY,
+    ComparisonType.EXIST,
+    ComparisonType.NOT_EXIST,
+  ],
 };
 
 export interface AttributeQueryStatement {
@@ -101,7 +149,37 @@ export interface AttributeQueryStatement {
   key: string;
   valueType: StatementValueType;
   comparisonType: ComparisonType;
+  subComparisonType: ObjectKeyComparisonType;
+  subComparisonValue: string;
   value: string;
+}
+
+export enum PerformedType {
+  HasPerformed = "has performed",
+  HasNotPerformed = "has not performed",
+}
+
+export interface EventQueryStatement {
+  type: QueryStatementType.EVENT;
+  eventName: string;
+  comparisonType: PerformedType;
+  value: number;
+  time?: {
+    comparisonType:
+      | ComparisonType.BEFORE
+      | ComparisonType.AFTER
+      | ComparisonType.BETWEEN;
+    timeAfter?: string;
+    timeBefore?: string;
+  };
+}
+
+export interface MessageEventQueryStatement {
+  type: QueryStatementType.MessageEvent;
+  messageId: string;
+  eventId: string;
+  performedType: PerformedType;
+  value: number;
 }
 
 export interface SegmentQueryStatement {
@@ -109,10 +187,16 @@ export interface SegmentQueryStatement {
   segmentId: string;
 }
 
-export type QueryStatement = AttributeQueryStatement | SegmentQueryStatement;
+export type QueryStatement =
+  | AttributeQueryStatement
+  | SegmentQueryStatement
+  | EventQueryStatement
+  | MessageEventQueryStatement
+  | Query;
 
 export interface Query {
   type: QueryType;
+  isSubBuilderChild?: boolean;
   statements: QueryStatement[];
 }
 
@@ -170,6 +254,98 @@ interface DevModeStatePayload {
   requireMovementToStart?: string;
 }
 
+export enum EntryTiming {
+  WhenPublished = "WhenPublished",
+  SpecificTime = "SpecificTime",
+}
+
+export enum EntryTimingFrequency {
+  Once = "Once",
+  Daily = "Daily",
+  Weekly = "Weekly",
+  Monthly = "Monthly",
+}
+
+export enum RecurrenceEndsOptions {
+  Never = "Never",
+  After = "After",
+  SpecificDate = "SpecificDate",
+}
+
+export interface EntryTimingRecurrence {
+  repeatEvery: number;
+  endsOn: RecurrenceEndsOptions;
+  endAdditionalValue?: number | string; // string as Date
+  weeklyOn: number[]; // Day of week number
+}
+
+export interface EntryTimingSpecificTime {
+  startDate: string;
+  frequency: EntryTimingFrequency;
+  recurrence: EntryTimingRecurrence;
+  userLocalTimeZone: boolean;
+}
+
+export enum JourneyEnrollmentType {
+  CurrentAndFutureUsers = "CurrentAndFutureUsers",
+  OnlyCurrent = "OnlyCurrent",
+  OnlyFuture = "OnlyFuture",
+}
+
+interface JourneyEntrySettings {
+  entryTiming: {
+    type: EntryTiming;
+    time?: EntryTimingSpecificTime;
+  };
+  enrollmentType: JourneyEnrollmentType;
+}
+
+export enum JourneySettingsQuiteFallbackBehavior {
+  NextAvailableTime = "NextAvailableTime",
+  Abort = "Abort",
+}
+
+interface JourneySettingsQuiteHours {
+  enabled: boolean;
+  startTime: string;
+  endTime: string;
+  fallbackBehavior: JourneySettingsQuiteFallbackBehavior;
+}
+
+export enum MaxOptions {
+  Ten = "10",
+  Fifty = "50",
+  OneHundred = "100",
+  FiveHundred = "500",
+  OneThousand = "1000",
+  FiveThousand = "5000",
+  TenThousand = "10000",
+  TwentyFiveThousand = "25000",
+  FiftyThousand = "50000",
+  OneHundredThousand = "100000",
+  TwoHundredFiftyThousand = "250000",
+  FiveHundredThousand = "500000",
+}
+
+interface JourneySettingsMaxUserEntries {
+  enabled: boolean;
+  maxEntries: MaxOptions;
+  limitOnEverySchedule: boolean;
+}
+
+interface JourneySettingsMaxMessageSends {
+  enabled: boolean;
+  maxUsersReceive?: MaxOptions;
+  maxSendRate?: MaxOptions;
+}
+
+interface JourneySettings {
+  tags: string[];
+  quiteHours: JourneySettingsQuiteHours;
+  maxEntries: JourneySettingsMaxUserEntries;
+  maxMessageSends: JourneySettingsMaxMessageSends;
+}
+
 interface FlowBuilderState {
   flowId: string;
   flowName: string;
@@ -177,12 +353,13 @@ interface FlowBuilderState {
   edges: Edge<EdgeData>[];
   isDragging: boolean;
   dragAction?: DragAction;
-  stepperIndex: 0 | 1 | 2;
+  stepperIndex: 0 | 1 | 2 | 3;
   segments: SegmentsSettings;
   journeyType: JourneyType;
   isViewMode: boolean;
   flowStatus: JourneyStatus;
   showSegmentsErrors: boolean;
+  journeyEntrySettings: JourneyEntrySettings;
   isOnboarding: boolean;
   isOnboardingWaitUntilTooltipVisible: boolean;
   isOnboardingWaitUntilTimeSettingTooltipVisible: boolean;
@@ -190,7 +367,9 @@ interface FlowBuilderState {
   sidePanelErrors: Record<string, any>;
   jumpToTargettingNode?: string;
   isDrawerDisabled: boolean;
+  segmentQueryErrors: Record<string, any>;
   devModeState: DevModeStatePayload;
+  journeySettings: JourneySettings;
 }
 
 const startNodeUUID = uuid();
@@ -249,6 +428,33 @@ const initialState: FlowBuilderState = {
   jumpToTargettingNode: undefined,
   isDrawerDisabled: false,
   devModeState: defaultDevMode,
+  segmentQueryErrors: {},
+  journeyEntrySettings: {
+    entryTiming: {
+      type: EntryTiming.WhenPublished,
+      time: undefined,
+    },
+    enrollmentType: JourneyEnrollmentType.CurrentAndFutureUsers,
+  },
+  journeySettings: {
+    tags: [],
+    maxEntries: {
+      enabled: false,
+      limitOnEverySchedule: false,
+      maxEntries: MaxOptions.FiveHundredThousand,
+    },
+    quiteHours: {
+      enabled: false,
+      startTime: "00:00",
+      endTime: "08:00",
+      fallbackBehavior: JourneySettingsQuiteFallbackBehavior.NextAvailableTime,
+    },
+    maxMessageSends: {
+      enabled: false,
+      maxSendRate: undefined,
+      maxUsersReceive: undefined,
+    },
+  },
 };
 
 const handlePruneNodeTree = (state: FlowBuilderState, nodeId: string) => {
@@ -837,7 +1043,7 @@ const flowBuilderSlice = createSlice({
     setDragAction(state, action: PayloadAction<DragAction | undefined>) {
       state.dragAction = action.payload;
     },
-    setStepperIndex(state, action: PayloadAction<0 | 1 | 2>) {
+    setStepperIndex(state, action: PayloadAction<0 | 1 | 2 | 3>) {
       state.stepperIndex = action.payload;
     },
     setSegmentsSettings(state, action: PayloadAction<SegmentsSettings>) {
@@ -867,8 +1073,115 @@ const flowBuilderSlice = createSlice({
     removeSidePanelError(state, action: PayloadAction<string>) {
       delete state.sidePanelErrors[action.payload];
     },
+    setJourneySettingsTags(state, action: PayloadAction<string[]>) {
+      state.journeySettings.tags = Array.from(new Set(action.payload));
+    },
+    setJourneySettingsMaxEntries(
+      state,
+      action: PayloadAction<JourneySettingsMaxUserEntries>
+    ) {
+      state.journeySettings.maxEntries = action.payload;
+    },
+    setJourneySettingsQuiteHours(
+      state,
+      action: PayloadAction<JourneySettingsQuiteHours>
+    ) {
+      state.journeySettings.quiteHours = action.payload;
+    },
+    setMaxMessageSends(
+      state,
+      action: PayloadAction<JourneySettingsMaxMessageSends>
+    ) {
+      state.journeySettings.maxMessageSends = action.payload;
+    },
     clearSidePanelError(state) {
       state.sidePanelErrors = {};
+    },
+    setJourneyEntryTimingType(state, action: PayloadAction<EntryTiming>) {
+      state.journeyEntrySettings.entryTiming.type = action.payload;
+      if (action.payload === EntryTiming.WhenPublished) {
+        state.journeyEntrySettings.entryTiming.time = undefined;
+      } else {
+        state.journeyEntrySettings.entryTiming.time = {
+          frequency: EntryTimingFrequency.Once,
+          startDate: new Date().toISOString(),
+          recurrence: {
+            endsOn: RecurrenceEndsOptions.Never,
+            repeatEvery: 1,
+            weeklyOn: [...new Array(7)].map(() => 0),
+            endAdditionalValue: undefined,
+          },
+          userLocalTimeZone: false,
+        };
+      }
+    },
+    setJourneyEntryTimingTime(
+      state,
+      action: PayloadAction<EntryTimingSpecificTime>
+    ) {
+      let weeklyOn = null;
+      let defaultAdditionalValue: number | string | undefined | null = null;
+      if (state.journeyEntrySettings.entryTiming.time) {
+        if (
+          state.journeyEntrySettings.entryTiming.time.frequency !==
+            action.payload.frequency &&
+          action.payload.frequency === EntryTimingFrequency.Weekly
+        ) {
+          const now = getDay(new Date());
+          weeklyOn = [...new Array(7)].map(() => 0);
+          weeklyOn[now === 0 ? 6 : now - 1] = 1;
+        }
+        if (
+          state.journeyEntrySettings.entryTiming.time.recurrence.endsOn !==
+          action.payload.recurrence.endsOn
+        ) {
+          if (action.payload.recurrence.endsOn === RecurrenceEndsOptions.After)
+            defaultAdditionalValue = 1;
+          else if (
+            action.payload.recurrence.endsOn ===
+            RecurrenceEndsOptions.SpecificDate
+          )
+            defaultAdditionalValue = addDays(new Date(), 5).toISOString();
+          else defaultAdditionalValue = undefined;
+        }
+      }
+
+      state.journeyEntrySettings.entryTiming.time = action.payload;
+
+      if (weeklyOn) {
+        state.journeyEntrySettings.entryTiming.time = {
+          ...state.journeyEntrySettings.entryTiming.time,
+          recurrence: {
+            ...state.journeyEntrySettings.entryTiming.time.recurrence,
+            weeklyOn: weeklyOn,
+          },
+        };
+      }
+
+      if (defaultAdditionalValue !== null) {
+        state.journeyEntrySettings.entryTiming.time = {
+          ...state.journeyEntrySettings.entryTiming.time,
+          recurrence: {
+            ...state.journeyEntrySettings.entryTiming.time.recurrence,
+            endAdditionalValue: defaultAdditionalValue,
+          },
+        };
+      }
+    },
+    setJourneyEntryEnrollmentType(
+      state,
+      action: PayloadAction<JourneyEnrollmentType>
+    ) {
+      state.journeyEntrySettings.enrollmentType = action.payload;
+    },
+    addSegmentQueryError(state, action: PayloadAction<string>) {
+      state.segmentQueryErrors[action.payload] = true;
+    },
+    removeSegmentQueryError(state, action: PayloadAction<string>) {
+      delete state.segmentQueryErrors[action.payload];
+    },
+    clearSegmentPanelErrors(state) {
+      state.segmentQueryErrors = {};
     },
     setIsOnboardingWaitUntilTooltipVisible(
       state,
@@ -946,6 +1259,16 @@ export const {
   removeSidePanelError,
   clearSidePanelError,
   recountAvailableNodes,
+  addSegmentQueryError,
+  removeSegmentQueryError,
+  clearSegmentPanelErrors,
+  setJourneyEntryTimingType,
+  setJourneyEntryTimingTime,
+  setJourneyEntryEnrollmentType,
+  setJourneySettingsTags,
+  setJourneySettingsMaxEntries,
+  setJourneySettingsQuiteHours,
+  setMaxMessageSends,
 } = flowBuilderSlice.actions;
 
 export { defaultDevMode };

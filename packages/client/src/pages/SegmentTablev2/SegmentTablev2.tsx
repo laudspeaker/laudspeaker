@@ -17,6 +17,7 @@ import sortNoneChevronsImage from "./svg/sort-none-chevrons.svg";
 import emptyDataImage from "./svg/empty-data.svg";
 import NameSegmentModal from "./Modals/NameSegmentModal";
 import { Segment } from "types/Segment";
+import { Link } from "react-router-dom";
 
 interface SegmentRowData {
   id: string;
@@ -132,12 +133,15 @@ const SegmentTablev2 = () => {
       <div className="flex justify-between items-center">
         <div className="text-[20px] font-semibold leading-[28px]">Segments</div>
 
-        <Button
-          type={ButtonType.PRIMARY}
-          onClick={() => setIsNameSegmentModalOpen(true)}
-        >
-          Create segment
-        </Button>
+        <Link to="/segment/create">
+          <Button
+            className="select-none"
+            type={ButtonType.PRIMARY}
+            onClick={() => null}
+          >
+            Create segment
+          </Button>
+        </Link>
       </div>
       <div className="p-[20px] bg-white rounded-[8px] flex flex-col gap-[20px]">
         {rows.length === 0 && search === "" && isLoaded ? (

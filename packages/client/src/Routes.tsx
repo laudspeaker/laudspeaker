@@ -53,6 +53,7 @@ import TrackerTemplateTable from "pages/TrackerTemplateTable";
 import { LaudspeakerProvider } from "@laudspeaker/react";
 import AppConfig from "constants/app";
 import Personv2 from "pages/Personv2";
+import SegmentCreation from "pages/SegmentCreation/index";
 
 interface IProtected {
   children: ReactElement;
@@ -353,7 +354,6 @@ const RouteComponent: React.FC = () => {
           }
         />
 
-        {/* Removed for version 1 release
         <Route
           path="/segment"
           element={
@@ -365,7 +365,19 @@ const RouteComponent: React.FC = () => {
               </VerificationProtected>
             </Protected>
           }
-        /> 
+        />
+        <Route
+          path="/segment/create"
+          element={
+            <Protected>
+              <VerificationProtected>
+                <DrawerLayout>
+                  <SegmentCreation />
+                </DrawerLayout>
+              </VerificationProtected>
+            </Protected>
+          }
+        />
         <Route
           path="/segment/:id"
           element={
@@ -378,7 +390,6 @@ const RouteComponent: React.FC = () => {
             </Protected>
           }
         />
-        */}
         <Route
           path="/email-builder"
           element={
