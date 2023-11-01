@@ -25,6 +25,7 @@ import { toast } from "react-toastify";
 import { JourneyStatus } from "pages/JourneyTablev2/JourneyTablev2";
 import { NodeType } from "./FlowEditor";
 import { SocketProvider } from "./useDevSocketConnection";
+import FlowBuilderSettings from "./FlowBuilderSettings";
 
 const FlowBuilderv2 = () => {
   const { id } = useParams();
@@ -145,6 +146,8 @@ const FlowBuilderv2 = () => {
             <FlowEditor />
           ) : flowBuilderState.stepperIndex === 1 ? (
             <FlowBuilderSegmentEditor />
+          ) : flowBuilderState.stepperIndex === 2 ? (
+            <FlowBuilderSettings />
           ) : (
             <FlowBuilderReview />
           )}

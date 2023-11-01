@@ -87,10 +87,10 @@ const FlowBuilderHeader = () => {
       return;
     }
 
-    if (stepperIndex !== 2) {
+    if (stepperIndex < 3) {
       if (stepperIndex === 0) posthog.capture("journey_designed");
       if (stepperIndex === 1) posthog.capture("segment_decision");
-      dispatch(setStepperIndex((stepperIndex + 1) as 1 | 2));
+      dispatch(setStepperIndex((stepperIndex + 1) as 1 | 2 | 3));
     }
   };
 
@@ -155,7 +155,7 @@ const FlowBuilderHeader = () => {
             }
           />
         )}
-      {stepperIndex === 2 ? (
+      {stepperIndex === 3 ? (
         <Button
           type={ButtonType.PRIMARY}
           onClick={() => setIsStartModalOpen(true)}

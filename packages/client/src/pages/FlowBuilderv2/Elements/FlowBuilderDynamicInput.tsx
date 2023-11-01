@@ -25,7 +25,7 @@ const BooleanComponent: FC<ValueChanger> = ({ value, onChange }) => {
   );
 };
 
-const DateComponent: FC<ValueChanger> = ({ value, onChange }) => {
+export const DateComponent: FC<ValueChanger> = ({ value, onChange }) => {
   let relativeValue = "";
 
   try {
