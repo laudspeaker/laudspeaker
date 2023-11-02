@@ -108,7 +108,6 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
   onSettingsChange,
   onSubBuilderUngroup,
   isSubBuilderChild,
-  requireSettingsReset,
 }) => {
   const { showSegmentsErrors } = useAppSelector((state) => state.flowBuilder);
   const { showSegmentsErrors: showSegmentsSettingsErrors } = useAppSelector(
@@ -117,13 +116,8 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
   const id = useId();
   const dispatch = useDispatch();
 
-  const [filterSettings, setFilterSettings] = useState<
-    ConditionalSegmentsSettings | SegmentsSettings
-  >(settings);
   const [segments, setSegments] = useState<Segment[]>([]);
   const [keysQuery, setKeysQuery] = useState("");
-  const [requireResetFromSettings, setRequireResetFromSettings] =
-    useState(false);
   const [possibleKeys, setPossibleKeys] = useState<
     {
       key: string;
@@ -166,12 +160,12 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
   );
 
   const handleAddStatement = () => {
-    setFilterSettings({
-      ...filterSettings,
+    onSettingsChange({
+      ...settings,
       query: {
-        ...filterSettings.query,
+        ...settings.query,
         statements: [
-          ...filterSettings.query.statements,
+          ...settings.query.statements,
           {
             type: QueryStatementType.ATTRIBUTE,
             key: "",
@@ -187,12 +181,12 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
   };
 
   const handleAddGroup = () => {
-    setFilterSettings({
-      ...filterSettings,
+    onSettingsChange({
+      ...settings,
       query: {
-        ...filterSettings.query,
+        ...settings.query,
         statements: [
-          ...filterSettings.query.statements,
+          ...settings.query.statements,
           {
             type: QueryType.ALL,
             statements: [],
@@ -204,45 +198,44 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
   };
 
   const handleDeleteStatement = (i: number) => {
-    const newStatements = [...filterSettings.query.statements];
+    const newStatements = [...settings.query.statements];
 
     newStatements.splice(i, 1);
 
-    setFilterSettings({
-      ...filterSettings,
-      query: { ...filterSettings.query, statements: newStatements },
+    onSettingsChange({
+      ...settings,
+      query: { ...settings.query, statements: newStatements },
     });
   };
 
   const handleChangeStatement = (i: number, statement: QueryStatement) => {
-    const newStatements = [...filterSettings.query.statements];
+    const newStatements = [...settings.query.statements];
 
     newStatements[i] = statement;
 
-    setFilterSettings({
-      ...filterSettings,
-      query: { ...filterSettings.query, statements: newStatements },
+    onSettingsChange({
+      ...settings,
+      query: { ...settings.query, statements: newStatements },
     });
   };
 
   const handleUngroup = (i: number) => (statements: QueryStatement[]) => {
-    const newStatements = [...filterSettings.query.statements];
+    const newStatements = [...settings.query.statements];
 
     newStatements.splice(i, 1);
 
-    setFilterSettings({
-      ...filterSettings,
+    onSettingsChange({
+      ...settings,
       query: {
-        ...filterSettings.query,
+        ...settings.query,
         statements: [...newStatements, ...statements],
       },
     });
-    setRequireResetFromSettings(true);
   };
 
   const statementsErrors: QueryStatementError[][] = [];
 
-  for (const statement of filterSettings.query.statements) {
+  for (const statement of settings.query.statements) {
     const statementErrors = [];
 
     if (statement.type === QueryStatementType.ATTRIBUTE) {
@@ -325,32 +318,17 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
     );
   }, [statementsErrors]);
 
-  useEffect(() => {
-    onSettingsChange({ ...filterSettings });
-  }, [filterSettings]);
-
-  useEffect(() => {
-    if (requireResetFromSettings) {
-      setFilterSettings({ ...settings });
-      setRequireResetFromSettings(false);
-    }
-  }, [settings]);
-
-  useEffect(() => {
-    if (requireSettingsReset) setRequireResetFromSettings(requireSettingsReset);
-  }, [requireSettingsReset]);
-
   return (
     <div className="flex w-full flex-col gap-[10px]">
       <div className="flex relative w-full gap-[10px] items-center">
         <div>
           <select
-            value={filterSettings.query.type}
+            value={settings.query.type}
             onChange={(e) =>
-              setFilterSettings({
-                ...filterSettings,
+              onSettingsChange({
+                ...settings,
                 query: {
-                  ...filterSettings.query,
+                  ...settings.query,
                   type: e.target.value as QueryType,
                 },
               })
@@ -369,14 +347,14 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
         </div>
         <div className="absolute top-full left-[25px] z-[0] h-[10px] w-[1px] bg-[#E5E7EB]" />
       </div>
-      {filterSettings.query.statements.map((statement, i) => (
-        <>
+      {settings.query.statements.map((statement, i) => (
+        <React.Fragment key={i}>
           <div className="flex max-w-[924px] relative w-full flex-nowrap items-center">
             <div className="absolute top-0 left-[25px] z-[0] h-full w-[1px] bg-[#E5E7EB]" />
             <div className="absolute top-full left-[25px] z-[0] h-[10px] w-[1px] bg-[#E5E7EB]" />
             <div
               className={`${
-                filterSettings.query.type === QueryType.ALL
+                settings.query.type === QueryType.ALL
                   ? "text-[#0C4A6E] bg-[#E0F2FE]"
                   : "text-[#713F12] bg-[#FEF9C3]"
               } ${
@@ -384,7 +362,7 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                 statement?.isSubBuilderChild ? "self-start mt-[4px]" : ""
               } min-w-[50px] z-[1] text-center mr-[10px] py-[2px] px-[11.5px] rounded-[14px] font-roboto font-normal text-[14px] leading-[22px]`}
             >
-              {filterSettings.query.type === QueryType.ALL ? "AND" : "OR"}
+              {settings.query.type === QueryType.ALL ? "AND" : "OR"}
             </div>
             <div
               key={i}
@@ -887,7 +865,6 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                     onSettingsChange={(filter) => {
                       handleChangeStatement(i, filter.query);
                     }}
-                    requireSettingsReset={requireResetFromSettings}
                     onSubBuilderUngroup={handleUngroup(i)}
                     isSegmentSettings={isSegmentSettings}
                   />
@@ -896,8 +873,11 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                   <></>
                 )}
                 {(showSegmentsErrors || showSegmentsSettingsErrors) &&
-                  statementsErrors[i].map((error) => (
-                    <div className="w-full font-inter font-normal text-[12px] leading-[20px] text-[#E11D48]">
+                  statementsErrors[i].map((error, k) => (
+                    <div
+                      key={k}
+                      className="w-full font-inter font-normal text-[12px] leading-[20px] text-[#E11D48]"
+                    >
                       {queryStatementErrorToMessageMap[error]}
                     </div>
                   ))}
@@ -927,7 +907,7 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
           {/* @ts-ignore */}
           {!settings?.query?.isSubBuilderChild &&
             (settings.query.type === QueryType.ALL ||
-              i === filterSettings.query.statements.length - 1) && (
+              i === settings.query.statements.length - 1) && (
               <div className="relative flex items-center py-[8.45px] max-w-[360px] px-[11.45px] rounded bg-[#F3F4F6]">
                 <div
                   className="mr-[2px] min-w-[15px] min-h-[15px] border-[1px] border-[#6366F1] rounded-full"
@@ -954,7 +934,7 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                 <div className="absolute top-full left-[25px] z-[0] h-[10px] w-[1px] bg-[#E5E7EB]" />
               </div>
             )}
-        </>
+        </React.Fragment>
       ))}
       <div className="flex gap-[10px]">
         <Button
@@ -975,7 +955,7 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
           <Button
             type={ButtonType.LINK}
             onClick={() => {
-              onSubBuilderUngroup(filterSettings.query.statements);
+              onSubBuilderUngroup(settings.query.statements);
             }}
             className="max-w-[130px] text-[#6366F1]"
           >
