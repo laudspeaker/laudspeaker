@@ -21,10 +21,18 @@ services:
       - "80:3001"
       - "443:3001"
     depends_on:
-      - redis
-      - postgres
-      - mongo
-      - clickhouse
+      redis: 
+        condition: service_started
+      postgres: 
+        condition: service_started
+      clickhouse:
+        condition: service_started
+      mongo: 
+        condition: service_healthy
+    links: 
+        - mongo
+    networks:
+      - laudspeaker_default
 
   redis:
     image: redis:alpine
@@ -56,10 +64,13 @@ services:
       - mongo-data:/data/db
     ports:
       - "27017:27017"
+    restart: always
     healthcheck:
-      test: test $$(echo "rs.initiate().ok || rs.status().ok" | mongo --quiet) -eq 1
-      interval: 10s
-      start_period: 30s
+      test:  echo 'db.runCommand("ping").ok' | mongosh --eval "rs.initiate()" --quiet
+      interval: 5s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
     command: "--bind_ip_all --replSet rs0"
     networks:
       - laudspeaker_default

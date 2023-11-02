@@ -353,12 +353,13 @@ export class WebhooksService {
     mailgunAPIKey: string,
     sendingDomain: string
   ) {
-    const mailgun = new Mailgun(formData);
-    const mg = mailgun.client({
-      username: 'api',
-      key: mailgunAPIKey,
-    });
     try {
+      const mailgun = new Mailgun(formData);
+      const mg = mailgun.client({
+        username: 'api',
+        key: mailgunAPIKey,
+      });
+
       let installedWebhooks = await mg.webhooks.list(sendingDomain, {});
       this.logger.log(JSON.stringify(installedWebhooks));
 
