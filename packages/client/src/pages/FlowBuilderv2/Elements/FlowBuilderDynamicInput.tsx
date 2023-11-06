@@ -4,6 +4,7 @@ import { StatementValueType } from "reducers/flow-builder.reducer";
 
 interface ValueChanger {
   value: string;
+  placeholder?: string;
   onChange: (value: string) => void;
 }
 
@@ -71,11 +72,15 @@ const NumberComponent: FC<ValueChanger> = ({ value, onChange }) => {
   );
 };
 
-const StringComponent: FC<ValueChanger> = ({ value, onChange }) => {
+const StringComponent: FC<ValueChanger> = ({
+  value,
+  placeholder = "",
+  onChange,
+}) => {
   return (
     <input
       type="text"
-      placeholder="value"
+      placeholder={placeholder || "value"}
       value={value}
       onChange={(e) => onChange(e.target.value)}
       className="w-full px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB] placeholder:font-inter placeholder:font-normal placeholder:text-[14px] placeholder:leading-[22px] placeholder:text-[#9CA3AF] rounded-[2px]"
@@ -86,6 +91,7 @@ const StringComponent: FC<ValueChanger> = ({ value, onChange }) => {
 const FlowBuilderDynamicInput: FC<FlowBuilderDynamicInputProps> = ({
   type,
   value,
+  placeholder,
   onChange,
 }) => {
   const [isFirstRender, setIsFirstRender] = useState(true);
@@ -114,13 +120,25 @@ const FlowBuilderDynamicInput: FC<FlowBuilderDynamicInputProps> = ({
       <NumberComponent value={value} onChange={onChange} />
     ),
     [StatementValueType.STRING]: (
-      <StringComponent value={value} onChange={onChange} />
+      <StringComponent
+        placeholder={placeholder}
+        value={value}
+        onChange={onChange}
+      />
     ),
     [StatementValueType.ARRAY]: (
-      <StringComponent value={value} onChange={onChange} />
+      <StringComponent
+        placeholder={placeholder}
+        value={value}
+        onChange={onChange}
+      />
     ),
     [StatementValueType.OBJECT]: (
-      <StringComponent value={value} onChange={onChange} />
+      <StringComponent
+        placeholder={placeholder}
+        value={value}
+        onChange={onChange}
+      />
     ),
   };
 

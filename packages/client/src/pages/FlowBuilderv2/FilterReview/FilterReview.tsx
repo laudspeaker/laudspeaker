@@ -1,16 +1,12 @@
 import { format } from "date-fns";
 import {
   ComparisonType,
-  ConditionalSegmentsSettings,
   ObjectKeyComparisonType,
   Query,
   QueryStatementType,
   QueryType,
-  SegmentsSettings,
-  SegmentsSettingsType,
   StatementValueType,
 } from "reducers/flow-builder.reducer";
-import { useAppSelector } from "store/hooks";
 
 interface FlowBuilderReviewProps {
   settingsQuery: Query;
@@ -55,7 +51,7 @@ const FilterReview = ({ settingsQuery }: FlowBuilderReviewProps) => {
                       )}
 
                     {statement.valueType === StatementValueType.DATE &&
-                      statement.comparisonType === ComparisonType.BETWEEN && (
+                      statement.comparisonType === ComparisonType.DURING && (
                         <>
                           <div>-</div>
                           <div className="px-[12px] py-[5px] text-[#4B5563] border-[1px] border-[#E5E7EB] rounded-[2px] bg-white">
@@ -95,9 +91,11 @@ const FilterReview = ({ settingsQuery }: FlowBuilderReviewProps) => {
                       {statement.value}
                     </div>
                     <div>time</div>
+                    {/* TODO: ADD REVIEW FOR EVENTS */}
                     {statement.time && (
                       <div className="min-w-full gap-[10px] flex items-center">
                         <div>{statement.time.comparisonType}</div>
+
                         {statement.time.timeAfter && (
                           <div className="px-[12px] py-[5px] text-[#4B5563] border-[1px] border-[#E5E7EB] rounded-[2px] bg-white">
                             {format(
@@ -106,18 +104,20 @@ const FilterReview = ({ settingsQuery }: FlowBuilderReviewProps) => {
                             )}
                           </div>
                         )}
-                        {statement.time.timeBefore &&
-                          statement.time.timeAfter && (
-                            <>
-                              <div>-</div>
-                              <div className="px-[12px] py-[5px] text-[#4B5563] border-[1px] border-[#E5E7EB] rounded-[2px] bg-white">
-                                {format(
-                                  new Date(statement.time.timeBefore),
-                                  "MM/dd/yyyy HH:mm"
-                                )}
-                              </div>
-                            </>
-                          )}
+                        {statement.time.comparisonType ===
+                          ComparisonType.DURING && <div>-</div>}
+                        {((statement.time.timeBefore &&
+                          statement.time.timeAfter) ||
+                          statement.time.timeBefore) && (
+                          <>
+                            <div className="px-[12px] py-[5px] text-[#4B5563] border-[1px] border-[#E5E7EB] rounded-[2px] bg-white">
+                              {format(
+                                new Date(statement.time.timeBefore),
+                                "MM/dd/yyyy HH:mm"
+                              )}
+                            </div>
+                          </>
+                        )}
                       </div>
                     )}
                   </>

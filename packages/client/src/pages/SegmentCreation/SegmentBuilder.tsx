@@ -1,9 +1,7 @@
 import Button, { ButtonType } from "components/Elements/Buttonv2";
 import Input from "components/Elements/Inputv2";
-import Select from "components/Elements/Selectv2";
-import { ConditionalType } from "components/EventCard/EventCard";
 import FilterBuilder from "pages/FlowBuilderv2/FilterBuilder/FilterBuilder";
-import { DragEvent, useState } from "react";
+import { DragEvent, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
 import {
@@ -14,7 +12,7 @@ import { useAppDispatch, useAppSelector } from "store/hooks";
 import { SegmentType } from "types/Segment";
 
 const SegmentBuilder = () => {
-  const { segment, showSegmentsErrors, segmentQueryErrors } = useAppSelector(
+  const { segment, segmentQueryErrors } = useAppSelector(
     (state) => state.segment
   );
   const dispatch = useAppDispatch();
@@ -90,6 +88,12 @@ const SegmentBuilder = () => {
       return;
     }
   };
+
+  useEffect(() => {
+    return () => {
+      dispatch(setShowSegmentsErrors(false));
+    };
+  }, []);
 
   return (
     <div>
