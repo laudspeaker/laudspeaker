@@ -54,7 +54,7 @@ export enum ComparisonType {
   EQUALS = "is equal to",
   NOT_EQUALS = "is not equal to",
   OBJECT_KEY = "key",
-  BETWEEN = "between",
+  DURING = "during",
   ARRAY_LENGTH_GREATER = "length is greater than",
   ARRAY_LENGTH_LESS = "length is less than",
   ARRAY_LENGTH_EQUAL = "length is equal to",
@@ -124,7 +124,7 @@ export const valueTypeToComparisonTypesMap: Record<
   [StatementValueType.DATE]: [
     ComparisonType.BEFORE,
     ComparisonType.AFTER,
-    ComparisonType.BETWEEN,
+    ComparisonType.DURING,
     ComparisonType.EXIST,
     ComparisonType.NOT_EXIST,
   ],
@@ -159,16 +159,31 @@ export enum PerformedType {
   HasNotPerformed = "has not performed",
 }
 
+export interface EventQueryAdditionalProperty {
+  key: string;
+  valueType: StatementValueType;
+  comparisonType: ComparisonType;
+  subComparisonType: ObjectKeyComparisonType;
+  subComparisonValue: string;
+  value: string;
+}
+
+export interface EventQueryAdditionalProperties {
+  comparison: QueryType;
+  properties: EventQueryAdditionalProperty[];
+}
+
 export interface EventQueryStatement {
   type: QueryStatementType.EVENT;
   eventName: string;
   comparisonType: PerformedType;
+  additionalProperties: EventQueryAdditionalProperties;
   value: number;
   time?: {
     comparisonType:
       | ComparisonType.BEFORE
       | ComparisonType.AFTER
-      | ComparisonType.BETWEEN;
+      | ComparisonType.DURING;
     timeAfter?: string;
     timeBefore?: string;
   };
@@ -1059,7 +1074,9 @@ const flowBuilderSlice = createSlice({
       state.flowStatus = action.payload;
     },
     setShowSegmentsErrors(state, action: PayloadAction<boolean>) {
-      state.showSegmentsErrors = action.payload;
+      if (!Object.keys(state.segmentQueryErrors).length)
+        state.showSegmentsErrors = false;
+      else state.showSegmentsErrors = action.payload;
     },
     setIsOnboarding(state, action: PayloadAction<boolean>) {
       state.isOnboarding = action.payload;

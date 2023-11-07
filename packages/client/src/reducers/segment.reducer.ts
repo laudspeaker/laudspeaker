@@ -27,7 +27,9 @@ const segmentSettingsSlice = createSlice({
   initialState,
   reducers: {
     setShowSegmentsErrors(state, action: PayloadAction<boolean>) {
-      state.showSegmentsErrors = action.payload;
+      if (!Object.keys(state.segmentQueryErrors).length)
+        state.showSegmentsErrors = false;
+      else state.showSegmentsErrors = action.payload;
     },
     setSegmentsSettings(state, action: PayloadAction<SegmentsSettings>) {
       state.segment = action.payload;
