@@ -121,24 +121,8 @@ const FilterReview = ({ settingsQuery }: FlowBuilderReviewProps) => {
                       </div>
                     )}
                   </>
-                ) : statement.type === QueryStatementType.MessageEvent ? (
-                  <>
-                    <div>message</div>
-                    <div className="px-[12px] py-[5px] text-[#4B5563] border-[1px] border-[#E5E7EB] rounded-[2px] bg-white">
-                      {statement.messageId}
-                    </div>
-                    <div>event</div>
-                    <div className="px-[12px] py-[5px] text-[#4B5563] border-[1px] border-[#E5E7EB] rounded-[2px] bg-white">
-                      {statement.eventId}
-                    </div>
-                    <div>{statement.performedType} at least</div>
-                    <div className="px-[12px] py-[5px] text-[#4B5563] border-[1px] border-[#E5E7EB] rounded-[2px] bg-white">
-                      {statement.value}
-                    </div>
-                    time
-                  </>
-                ) : statement.isSubBuilderChild ? (
-                  <FilterReview settingsQuery={statement} />
+                ) : (statement as Query)?.isSubBuilderChild ? (
+                  <FilterReview settingsQuery={statement as Query} />
                 ) : (
                   <></>
                 )}

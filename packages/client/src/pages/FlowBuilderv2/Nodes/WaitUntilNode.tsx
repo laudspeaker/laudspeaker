@@ -74,8 +74,16 @@ export const WaitUntilNode: FC<NodeProps<WaitUntilNodeData>> = ({
         </BranchPopover>
       ) : (
         <div className="p-[16px]">
-          <div className="font-semibold text-[16px] leading-[24px] mb-[2px]">
-            Wait until
+          <div className="flex justify-between font-semibold text-[16px] leading-[24px] mb-[2px]">
+            <div>Wait until</div>
+            {isViewMode && (
+              <div className="h-fit px-[4px] py-[2px] flex items-center gap-[4px] bg-[#F3F4F6] rounded-sm">
+                <UserIcon />
+                <div className="text-[10px] leading-normal">
+                  {compatNumberFormatter.format(customersCount || 0)}
+                </div>
+              </div>
+            )}
           </div>
           <div className="font-normal text-[14px] leading-[22px] text-[#4B5563]">
             {!branches.length ||

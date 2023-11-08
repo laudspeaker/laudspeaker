@@ -97,12 +97,12 @@ const FlowViewerSidePanel: FC<FlowViewerSidePanelProps> = ({ className }) => {
       className={`h-[calc(100vh-186px)] min-w-[440px] w-[440px] fixed right-[-100%] bg-white border-l-[1px] border-[#E5E7EB] flex flex-col justify-between overflow-hidden ${
         className ? className : ""
       }`}
-      enter="transition-all duration-300"
-      enterFrom="right-[-100%]"
-      enterTo="right-0"
-      leave="transition-all duration-500"
-      leaveTo="right-[-100%]"
-      leaveFrom="right-0"
+      enter="!transition-all !duration-300"
+      enterFrom="!right-[-100%]"
+      enterTo="!right-0"
+      leave="!transition-all !duration-500"
+      leaveTo="!right-[-100%]"
+      leaveFrom="!right-0"
     >
       <div className="overflow-auto h-screen">
         <div className="px-[20px] pt-[20px] mb-[10px] flex flex-col gap-[10px]">

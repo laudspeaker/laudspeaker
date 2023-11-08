@@ -42,12 +42,71 @@ export enum QueryType {
   ANY = "any",
 }
 
+export enum MessageFromJourney {
+  ANY = "ANY",
+  WITH_TAG = "WITH_TAG",
+}
+
+export enum MessageGeneralComparison {
+  HAS = "has",
+  HAS_NOT = "has not",
+}
+
+export enum MessageEmailEventCondition {
+  RECEIVED = "received",
+  OPENED = "opened",
+}
+
+export enum MessagePushEventCondition {
+  RECEIVED = "received",
+  OPENED = "opened",
+}
+
+export enum MessageSMSEventCondition {
+  RECEIVED = "received",
+  CLICK_LINK = "click_link",
+}
+
+export enum MessageInAPPEventCondition {
+  RECEIVED = "received",
+  OPENED = "opened",
+}
+
 export enum QueryStatementType {
   ATTRIBUTE = "Attribute",
   SEGMENT = "Segment",
   EVENT = "Event",
-  MessageEvent = "Message Event",
-  JourneyAttributes = "Journey Attributes",
+  EMAIL = "Email",
+  PUSH = "Push",
+  SMS = "SMS",
+  InAPP = "In-app message",
+}
+
+export type MessageEventTypes =
+  | QueryStatementType.EMAIL
+  | QueryStatementType.PUSH
+  | QueryStatementType.SMS
+  | QueryStatementType.InAPP;
+
+export interface MessageEventQuery {
+  type: MessageEventTypes;
+  from: MessageFromJourney | string;
+  happenCondition: MessageGeneralComparison;
+  eventCondition:
+    | MessageEmailEventCondition
+    | MessagePushEventCondition
+    | MessageSMSEventCondition
+    | MessageInAPPEventCondition;
+  fromSpecificJourney: "ANY" | string;
+  tag?: string;
+  time?: {
+    comparisonType:
+      | ComparisonType.BEFORE
+      | ComparisonType.AFTER
+      | ComparisonType.DURING;
+    timeAfter?: string;
+    timeBefore?: string;
+  };
 }
 
 export enum ComparisonType {
@@ -189,14 +248,6 @@ export interface EventQueryStatement {
   };
 }
 
-export interface MessageEventQueryStatement {
-  type: QueryStatementType.MessageEvent;
-  messageId: string;
-  eventId: string;
-  performedType: PerformedType;
-  value: number;
-}
-
 export interface SegmentQueryStatement {
   type: QueryStatementType.SEGMENT;
   segmentId: string;
@@ -206,7 +257,7 @@ export type QueryStatement =
   | AttributeQueryStatement
   | SegmentQueryStatement
   | EventQueryStatement
-  | MessageEventQueryStatement
+  | MessageEventQuery
   | Query;
 
 export interface Query {
