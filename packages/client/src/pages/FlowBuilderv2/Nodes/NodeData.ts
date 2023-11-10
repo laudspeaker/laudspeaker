@@ -143,6 +143,7 @@ export interface CommonNodeData {
 export interface MessageNodeData<T extends MessageType = MessageType>
   extends CommonNodeData {
   type: NodeType.MESSAGE;
+  customName?: string;
   template: { type: T; selected?: { id: number; name: string } };
 }
 

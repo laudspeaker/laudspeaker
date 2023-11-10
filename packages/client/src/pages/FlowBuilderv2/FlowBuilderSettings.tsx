@@ -15,21 +15,11 @@ import {
 } from "reducers/flow-builder.reducer";
 import { useAppSelector } from "store/hooks";
 
-const testExampleTags: string[] = [
-  "a10",
-  "b11",
-  "c12",
-  "d13",
-  "e14",
-  "f15",
-  "g16",
-  "h17",
-  "k10",
-];
-
 const FlowBuilderSettings = () => {
   const [searchTagsValue, setSearchTagsValue] = useState("");
-  const { journeySettings } = useAppSelector((store) => store.flowBuilder);
+  const { journeySettings, availableTags } = useAppSelector(
+    (store) => store.flowBuilder
+  );
   const dispatch = useDispatch();
 
   return (
@@ -42,7 +32,7 @@ const FlowBuilderSettings = () => {
           <div className="max-w-[800px]">
             <TagComponent
               tags={journeySettings.tags}
-              possibleTags={testExampleTags.filter((el) =>
+              possibleTags={availableTags.filter((el) =>
                 el.includes(searchTagsValue)
               )}
               onTagChange={(tags) => {

@@ -1,5 +1,6 @@
 import { Popover } from "@headlessui/react";
 import XCircle from "@heroicons/react/24/solid/XCircleIcon";
+import { useCallback, useRef } from "react";
 
 interface SelectProps<T> {
   value: T;
@@ -9,13 +10,14 @@ interface SelectProps<T> {
     groupLabel?: boolean;
     nonSelectable?: boolean;
   }[];
-  onChange: (value: T) => void;
+  onChange: (value: T, i?: number) => void;
   placeholder?: string;
   searchPlaceholder?: string;
   className?: string;
   isLoading?: boolean;
   searchValue?: string;
   onSearchValueChange?: (value: string) => void;
+  onScrollToEnd?: () => void; // The new callback prop
   buttonClassName?: string;
   panelClassName?: string;
   noDataPlaceholder?: string;
@@ -34,9 +36,21 @@ const Select = <T,>({
   id,
   isLoading,
   onSearchValueChange,
+  onScrollToEnd,
   searchValue,
   searchPlaceholder,
 }: SelectProps<T>) => {
+  const scrollableRef = useRef(null);
+
+  const handleScroll = useCallback(() => {
+    if (scrollableRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } = scrollableRef.current;
+      if (scrollTop + clientHeight >= scrollHeight) {
+        onScrollToEnd?.();
+      }
+    }
+  }, [onScrollToEnd]);
+
   return (
     <Popover
       className={`relative w-full font-roboto font-normal text-[14px] leading-[22px] text-[#111827] ${
@@ -145,11 +159,15 @@ const Select = <T,>({
                   </svg>
                 </div>
               ) : options.length === 0 ? (
-                <div className="px-[12px] py-[5px] hover:bg-[#F3F4F6] select-none text-[#4B5563] font-inter text-[14px] leading-[22px]">
+                <div className="px-[12px] py-[5px] select-none text-[#4B5563] font-inter text-[14px] leading-[22px]">
                   {noDataPlaceholder}
                 </div>
               ) : (
-                <div className="h-full max-h-[344px] overflow-y-auto">
+                <div
+                  className="h-full max-h-[344px] overflow-y-auto"
+                  ref={scrollableRef}
+                  onScroll={handleScroll}
+                >
                   {options.map((option, i) => (
                     <div
                       key={i}
@@ -162,7 +180,7 @@ const Select = <T,>({
                       onClick={() => {
                         if (option.groupLabel || option.nonSelectable) return;
 
-                        onChange(option.key);
+                        onChange(option.key, i);
                         close();
                       }}
                       data-option={option.key}

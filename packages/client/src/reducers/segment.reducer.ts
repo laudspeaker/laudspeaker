@@ -7,6 +7,7 @@ export interface SegmentsSettings {
 
 interface SegmentState {
   segment: SegmentsSettings;
+  availableTags: string[];
   segmentQueryErrors: Record<string, any>;
   showSegmentsErrors: boolean;
 }
@@ -18,6 +19,7 @@ const initialState: SegmentState = {
       statements: [],
     },
   },
+  availableTags: [],
   segmentQueryErrors: {},
   showSegmentsErrors: false,
 };
@@ -40,6 +42,9 @@ const segmentSettingsSlice = createSlice({
     removeSegmentQueryError(state, action: PayloadAction<string>) {
       delete state.segmentQueryErrors[action.payload];
     },
+    setAvailableTags(state, action: PayloadAction<string[]>) {
+      state.availableTags = action.payload;
+    },
     clearSegmentPanelErrors(state) {
       state.segmentQueryErrors = {};
     },
@@ -52,6 +57,7 @@ export const {
   removeSegmentQueryError,
   clearSegmentPanelErrors,
   setShowSegmentsErrors,
+  setAvailableTags,
 } = segmentSettingsSlice.actions;
 
 export default segmentSettingsSlice.reducer;
