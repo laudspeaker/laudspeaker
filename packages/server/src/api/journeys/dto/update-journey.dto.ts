@@ -24,6 +24,14 @@ export class UpdateJourneyDto {
   @IsOptional()
   public inclusionCriteria?: any;
 
+  @IsObject()
+  @IsOptional()
+  public journeyEntrySettings?: any;
+
+  @IsObject()
+  @IsOptional()
+  public journeySettings?: any;
+
   @IsBoolean()
   @IsOptional()
   public isDynamic?: boolean;

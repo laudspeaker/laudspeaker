@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { addDays, getDay } from "date-fns";
+import { capitalize } from "lodash";
 import { DrawerAction } from "pages/FlowBuilderv2/Drawer/drawer.fixtures";
 import { BranchEdgeData, EdgeData } from "pages/FlowBuilderv2/Edges/EdgeData";
 import {
@@ -12,6 +13,7 @@ import {
   Branch,
   BranchType,
   LogicRelation,
+  MessageNodeData,
   NodeData,
 } from "pages/FlowBuilderv2/Nodes/NodeData";
 import { JourneyStatus } from "pages/JourneyTablev2/JourneyTablev2";
@@ -24,6 +26,7 @@ import {
   Node,
   NodeChange,
 } from "reactflow";
+import { TemplateType } from "types/Template";
 import { MessageType, ProviderType } from "types/Workflow";
 import getClosestNextAndPrevious from "utils/getClosestNextAndPrevious";
 import { v4 as uuid } from "uuid";
@@ -88,16 +91,21 @@ export type MessageEventTypes =
   | QueryStatementType.SMS
   | QueryStatementType.InAPP;
 
+export interface GeneralSelectedType {
+  key: string;
+  title: string;
+}
+
 export interface MessageEventQuery {
   type: MessageEventTypes;
-  from: MessageFromJourney | string;
+  from: GeneralSelectedType;
   happenCondition: MessageGeneralComparison;
   eventCondition:
     | MessageEmailEventCondition
     | MessagePushEventCondition
     | MessageSMSEventCondition
     | MessageInAPPEventCondition;
-  fromSpecificJourney: "ANY" | string;
+  fromSpecificMessage: GeneralSelectedType;
   tag?: string;
   time?: {
     comparisonType:
@@ -358,7 +366,7 @@ export enum JourneyEnrollmentType {
   OnlyFuture = "OnlyFuture",
 }
 
-interface JourneyEntrySettings {
+export interface JourneyEntrySettings {
   entryTiming: {
     type: EntryTiming;
     time?: EntryTimingSpecificTime;
@@ -405,7 +413,7 @@ interface JourneySettingsMaxMessageSends {
   maxSendRate?: MaxOptions;
 }
 
-interface JourneySettings {
+export interface JourneySettings {
   tags: string[];
   quiteHours: JourneySettingsQuiteHours;
   maxEntries: JourneySettingsMaxUserEntries;
@@ -425,7 +433,6 @@ interface FlowBuilderState {
   isViewMode: boolean;
   flowStatus: JourneyStatus;
   showSegmentsErrors: boolean;
-  journeyEntrySettings: JourneyEntrySettings;
   isOnboarding: boolean;
   isOnboardingWaitUntilTooltipVisible: boolean;
   isOnboardingWaitUntilTimeSettingTooltipVisible: boolean;
@@ -435,7 +442,9 @@ interface FlowBuilderState {
   isDrawerDisabled: boolean;
   segmentQueryErrors: Record<string, any>;
   devModeState: DevModeStatePayload;
+  journeyEntrySettings: JourneyEntrySettings;
   journeySettings: JourneySettings;
+  availableTags: string[];
 }
 
 const startNodeUUID = uuid();
@@ -472,6 +481,34 @@ const defaultDevMode: DevModeStatePayload = {
   requireMovementToStart: undefined,
 };
 
+export const defaultJourneyEntrySettings = {
+  entryTiming: {
+    type: EntryTiming.WhenPublished,
+    time: undefined,
+  },
+  enrollmentType: JourneyEnrollmentType.CurrentAndFutureUsers,
+};
+
+export const defaultJourneySettings = {
+  tags: [],
+  maxEntries: {
+    enabled: false,
+    limitOnEverySchedule: false,
+    maxEntries: MaxOptions.FiveHundredThousand,
+  },
+  quiteHours: {
+    enabled: false,
+    startTime: "00:00",
+    endTime: "08:00",
+    fallbackBehavior: JourneySettingsQuiteFallbackBehavior.NextAvailableTime,
+  },
+  maxMessageSends: {
+    enabled: false,
+    maxSendRate: undefined,
+    maxUsersReceive: undefined,
+  },
+};
+
 const initialState: FlowBuilderState = {
   flowId: "",
   flowName: "",
@@ -495,32 +532,9 @@ const initialState: FlowBuilderState = {
   isDrawerDisabled: false,
   devModeState: defaultDevMode,
   segmentQueryErrors: {},
-  journeyEntrySettings: {
-    entryTiming: {
-      type: EntryTiming.WhenPublished,
-      time: undefined,
-    },
-    enrollmentType: JourneyEnrollmentType.CurrentAndFutureUsers,
-  },
-  journeySettings: {
-    tags: [],
-    maxEntries: {
-      enabled: false,
-      limitOnEverySchedule: false,
-      maxEntries: MaxOptions.FiveHundredThousand,
-    },
-    quiteHours: {
-      enabled: false,
-      startTime: "00:00",
-      endTime: "08:00",
-      fallbackBehavior: JourneySettingsQuiteFallbackBehavior.NextAvailableTime,
-    },
-    maxMessageSends: {
-      enabled: false,
-      maxSendRate: undefined,
-      maxUsersReceive: undefined,
-    },
-  },
+  availableTags: [],
+  journeyEntrySettings: defaultJourneyEntrySettings,
+  journeySettings: defaultJourneySettings,
 };
 
 const handlePruneNodeTree = (state: FlowBuilderState, nodeId: string) => {
@@ -912,12 +926,34 @@ const flowBuilderSlice = createSlice({
 
       if (!nodeToChange) return;
 
+      let newMessageNodeName = "";
+
+      const messageNodes = state.nodes.filter((node) => node.type == "message");
+      let postFixValue = messageNodes.length;
+      newMessageNodeName = `${capitalize(action.payload.action)} ${
+        postFixValue + 1
+      }`;
+
+      while (
+        messageNodes.find(
+          /* eslint-disable */
+          (node) =>
+            (node?.data as MessageNodeData)?.customName === newMessageNodeName
+        )
+      ) {
+        postFixValue++;
+        newMessageNodeName = `${capitalize(
+          action.payload.action
+        )} ${postFixValue}`;
+      }
+
       switch (action.payload.action) {
         case DrawerAction.EMAIL:
           nodeToChange.type = NodeType.MESSAGE;
           nodeToChange.data = {
             type: NodeType.MESSAGE,
             template: { type: MessageType.EMAIL },
+            customName: newMessageNodeName,
             stepId,
           };
           break;
@@ -926,6 +962,7 @@ const flowBuilderSlice = createSlice({
           nodeToChange.data = {
             type: NodeType.MESSAGE,
             template: { type: MessageType.SMS },
+            customName: newMessageNodeName,
             stepId,
           };
           break;
@@ -934,6 +971,7 @@ const flowBuilderSlice = createSlice({
           nodeToChange.data = {
             type: NodeType.MESSAGE,
             template: { type: MessageType.SLACK },
+            customName: newMessageNodeName,
             stepId,
           };
           break;
@@ -942,6 +980,7 @@ const flowBuilderSlice = createSlice({
           nodeToChange.data = {
             type: NodeType.MESSAGE,
             template: { type: MessageType.PUSH },
+            customName: newMessageNodeName,
             stepId,
           };
           break;
@@ -1124,6 +1163,9 @@ const flowBuilderSlice = createSlice({
     setFlowStatus(state, action: PayloadAction<JourneyStatus>) {
       state.flowStatus = action.payload;
     },
+    setAvailableTags(state, action: PayloadAction<string[]>) {
+      state.availableTags = action.payload;
+    },
     setShowSegmentsErrors(state, action: PayloadAction<boolean>) {
       if (!Object.keys(state.segmentQueryErrors).length)
         state.showSegmentsErrors = false;
@@ -1189,9 +1231,9 @@ const flowBuilderSlice = createSlice({
     ) {
       let weeklyOn = null;
       let defaultAdditionalValue: number | string | undefined | null = null;
-      if (state.journeyEntrySettings.entryTiming.time) {
+      if (state.journeyEntrySettings.entryTiming?.time) {
         if (
-          state.journeyEntrySettings.entryTiming.time.frequency !==
+          state.journeyEntrySettings.entryTiming?.time.frequency !==
             action.payload.frequency &&
           action.payload.frequency === EntryTimingFrequency.Weekly
         ) {
@@ -1200,7 +1242,7 @@ const flowBuilderSlice = createSlice({
           weeklyOn[now === 0 ? 6 : now - 1] = 1;
         }
         if (
-          state.journeyEntrySettings.entryTiming.time.recurrence.endsOn !==
+          state.journeyEntrySettings.entryTiming?.time.recurrence.endsOn !==
           action.payload.recurrence.endsOn
         ) {
           if (action.payload.recurrence.endsOn === RecurrenceEndsOptions.After)
@@ -1218,9 +1260,9 @@ const flowBuilderSlice = createSlice({
 
       if (weeklyOn) {
         state.journeyEntrySettings.entryTiming.time = {
-          ...state.journeyEntrySettings.entryTiming.time,
+          ...state.journeyEntrySettings.entryTiming?.time,
           recurrence: {
-            ...state.journeyEntrySettings.entryTiming.time.recurrence,
+            ...state.journeyEntrySettings.entryTiming?.time.recurrence,
             weeklyOn: weeklyOn,
           },
         };
@@ -1228,9 +1270,9 @@ const flowBuilderSlice = createSlice({
 
       if (defaultAdditionalValue !== null) {
         state.journeyEntrySettings.entryTiming.time = {
-          ...state.journeyEntrySettings.entryTiming.time,
+          ...state.journeyEntrySettings.entryTiming?.time,
           recurrence: {
-            ...state.journeyEntrySettings.entryTiming.time.recurrence,
+            ...state.journeyEntrySettings.entryTiming?.time.recurrence,
             endAdditionalValue: defaultAdditionalValue,
           },
         };
@@ -1241,6 +1283,22 @@ const flowBuilderSlice = createSlice({
       action: PayloadAction<JourneyEnrollmentType>
     ) {
       state.journeyEntrySettings.enrollmentType = action.payload;
+    },
+    setJourneyEntrySettings(
+      state,
+      action: PayloadAction<JourneyEntrySettings | undefined>
+    ) {
+      if (action.payload === undefined)
+        state.journeyEntrySettings = defaultJourneyEntrySettings;
+      else state.journeyEntrySettings = action.payload;
+    },
+    setJourneySettings(
+      state,
+      action: PayloadAction<JourneySettings | undefined>
+    ) {
+      if (action.payload === undefined)
+        state.journeySettings = defaultJourneySettings;
+      else state.journeySettings = action.payload;
     },
     addSegmentQueryError(state, action: PayloadAction<string>) {
       state.segmentQueryErrors[action.payload] = true;
@@ -1334,9 +1392,12 @@ export const {
   setJourneyEntryTimingTime,
   setJourneyEntryEnrollmentType,
   setJourneySettingsTags,
+  setJourneyEntrySettings,
+  setJourneySettings,
   setJourneySettingsMaxEntries,
   setJourneySettingsQuiteHours,
   setMaxMessageSends,
+  setAvailableTags,
 } = flowBuilderSlice.actions;
 
 export { defaultDevMode };

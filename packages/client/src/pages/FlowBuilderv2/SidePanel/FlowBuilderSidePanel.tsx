@@ -25,6 +25,7 @@ import WaitUntilSettings from "./settings/WaitUntilSettings";
 import JumpToSettings from "./settings/JumpToSettings";
 import { isEqual } from "lodash";
 import Modal from "components/Elements/Modal";
+import { FlowBuilderMessageRenameModal } from "../Modals/FlowBuilderMessageRenameModal";
 
 export interface SidePanelComponentProps<T extends NodeData = NodeData> {
   nodeData: T;
@@ -52,7 +53,7 @@ const FlowBuilderSidePanel: FC<FlowBuilderSidePanelProps> = ({ className }) => {
     deepCopy({ ...selectedNode?.data })
   );
   const [needCancelConfirmation, setNeedCancelConfirmation] = useState(false);
-
+  const [messageRenameModalShow, setMessageRenameModalShow] = useState(false);
   const [isTrackerModalSaveOpen, setIsTrackerModalSaveOpen] = useState(false);
 
   useEffect(() => {
@@ -339,13 +340,44 @@ const FlowBuilderSidePanel: FC<FlowBuilderSidePanelProps> = ({ className }) => {
       >
         <div className="h-full relative flex flex-col justify-stretch">
           <div className="p-[20px] border-b-[1px] flex flex-col gap-[5px]">
-            <div className="font-inter font-semibold text-[20px] leading-[28px]">
+            <div className="font-inter flex items-center font-semibold text-[20px] leading-[28px]">
               {selectedNode?.type
                 ? selectedNode.data.type === NodeType.MESSAGE &&
                   selectedNode.data.template
-                  ? messageFixtures[selectedNode.data.template.type].text
+                  ? selectedNode.data.customName ||
+                    messageFixtures[selectedNode.data.template.type].text
                   : nodeTypeToNameMap[selectedNode.type as NodeType]
                 : ""}
+              {selectedNode?.data.type === NodeType.MESSAGE && (
+                <>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 16 16"
+                    fill="none"
+                    className="ml-[10px] cursor-pointer"
+                    onClick={() => setMessageRenameModalShow(true)}
+                  >
+                    <g clip-path="url(#clip0_192_30125)">
+                      <path
+                        d="M3.45872 12.2841C3.49443 12.2841 3.53015 12.2805 3.56586 12.2752L6.56943 11.7484C6.60515 11.7412 6.63908 11.7252 6.66408 11.6984L14.2337 4.12874C14.2503 4.11222 14.2634 4.0926 14.2724 4.071C14.2813 4.0494 14.2859 4.02624 14.2859 4.00285C14.2859 3.97946 14.2813 3.95631 14.2724 3.9347C14.2634 3.9131 14.2503 3.89348 14.2337 3.87696L11.2659 0.907316C11.2319 0.873387 11.1873 0.85553 11.1391 0.85553C11.0909 0.85553 11.0462 0.873387 11.0123 0.907316L3.44265 8.47696C3.41586 8.50374 3.39979 8.53589 3.39265 8.5716L2.86586 11.5752C2.84849 11.6708 2.8547 11.7693 2.88395 11.862C2.91319 11.9547 2.9646 12.0389 3.03372 12.1073C3.15158 12.2216 3.29979 12.2841 3.45872 12.2841ZM4.66229 9.16982L11.1391 2.69482L12.448 4.00374L5.97122 10.4787L4.38372 10.7591L4.66229 9.16982ZM14.5712 13.7841H1.42836C1.11229 13.7841 0.856934 14.0395 0.856934 14.3555V14.9984C0.856934 15.077 0.921219 15.1412 0.999791 15.1412H14.9998C15.0784 15.1412 15.1426 15.077 15.1426 14.9984V14.3555C15.1426 14.0395 14.8873 13.7841 14.5712 13.7841Z"
+                        fill="#111827"
+                      />
+                    </g>
+                    <defs>
+                      <clipPath id="clip0_192_30125">
+                        <rect width="16" height="16" fill="white" />
+                      </clipPath>
+                    </defs>
+                  </svg>
+                  <FlowBuilderMessageRenameModal
+                    isOpen={messageRenameModalShow}
+                    onClose={() => setMessageRenameModalShow(false)}
+                    selectedNode={selectedNode}
+                  />
+                </>
+              )}
               <br />
             </div>
             <div className="font-inter font-normal text-[12px] leading-[20px] text-[#4B5563]">

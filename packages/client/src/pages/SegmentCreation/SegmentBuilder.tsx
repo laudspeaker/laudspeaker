@@ -5,9 +5,11 @@ import { DragEvent, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
 import {
+  setAvailableTags,
   setSegmentsSettings,
   setShowSegmentsErrors,
 } from "reducers/segment.reducer";
+import ApiService from "services/api.service";
 import { useAppDispatch, useAppSelector } from "store/hooks";
 import { SegmentType } from "types/Segment";
 
@@ -19,6 +21,18 @@ const SegmentBuilder = () => {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [segmentType, setSegmentType] = useState(SegmentType.AUTOMATIC);
+
+  const loadAllTags = async () => {
+    try {
+      const { data } = await ApiService.get<string[]>({
+        url: "/journeys/tags",
+      });
+
+      dispatch(setAvailableTags(data));
+    } catch (error) {
+      dispatch(setAvailableTags([]));
+    }
+  };
 
   const [isCSVImportModalOpen, setIsCSVImportModalOpen] = useState(false);
   const [isCSVDragActive, setIsCSVDragActive] = useState(false);
@@ -90,6 +104,7 @@ const SegmentBuilder = () => {
   };
 
   useEffect(() => {
+    loadAllTags();
     return () => {
       dispatch(setShowSegmentsErrors(false));
     };

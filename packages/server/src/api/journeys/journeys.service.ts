@@ -664,6 +664,8 @@ export class JourneysService {
         isPaused: found.isPaused,
         isStopped: found.isStopped,
         isDeleted: found.isDeleted,
+        journeyEntrySettings: found.journeyEntrySettings,
+        journeySettings: found.journeySettings,
       });
     } catch (err) {
       this.error(err, this.findOne.name, session, account.email);
@@ -993,13 +995,21 @@ export class JourneysService {
       if (journey.isActive || journey.isDeleted || journey.isPaused)
         throw new Error('Journey is no longer editable.');
 
-      const { isDynamic, name, inclusionCriteria } = updateJourneyDto;
+      const {
+        isDynamic,
+        name,
+        inclusionCriteria,
+        journeyEntrySettings,
+        journeySettings,
+      } = updateJourneyDto;
 
       return await this.journeysRepository.save({
         ...journey,
         isDynamic,
         name,
         inclusionCriteria,
+        journeyEntrySettings,
+        journeySettings,
       });
     } catch (e) {
       this.error(e, this.update.name, session, account.email);
@@ -1076,6 +1086,7 @@ export class JourneysService {
               return node.id === relevantEdges[0].target;
             })[0].data.stepId;
             metadata.channel = nodes[i].data['template']['type'];
+            metadata.customName = nodes[i].data['customName'] || 'Unknown name';
             if (nodes[i].data['template']['selected'])
               metadata.template = nodes[i].data['template']['selected']['id'];
             this.debug(
@@ -1756,5 +1767,52 @@ export class JourneysService {
       },
     });
     return Promise.resolve(journey);
+  }
+
+  async getAllJourneyTags(account: Account, session: string): Promise<any> {
+    try {
+      const tags = await this.dataSource.query(
+        `
+      SELECT DISTINCT json_array_elements_text("journeySettings"::json->'tags') as tag
+      FROM journey
+      WHERE "journeySettings" is not null and "ownerId" = $1
+      `,
+        [account.id]
+      );
+
+      return tags.map((el) => el.tag);
+    } catch (e) {
+      this.error(e, this.getAllJourneyTags.name, session, account.email);
+      throw e;
+    }
+  }
+
+  async findAllMessages(
+    account: Account,
+    id: string,
+    type: string,
+    session: string
+  ): Promise<any> {
+    if (!isUUID(id)) throw new BadRequestException('Id is not valid uuid');
+    try {
+      const data = await this.dataSource.query(
+        `
+        SELECT id,metadata
+        FROM step
+        WHERE type = 'message'
+          AND metadata is not null
+          AND metadata::jsonb->>'channel' = $1
+          AND metadata::jsonb->>'template' is not null
+          AND "journeyId" = $2
+          AND "ownerId" = $3
+  `,
+        [type, id, account.id]
+      );
+
+      return data;
+    } catch (err) {
+      this.error(err, this.findAllMessages.name, session, account.email);
+      throw err;
+    }
   }
 }

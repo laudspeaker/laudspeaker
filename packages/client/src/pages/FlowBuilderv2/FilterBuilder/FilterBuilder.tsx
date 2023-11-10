@@ -7,6 +7,7 @@ import {
   ConditionalSegmentsSettings,
   EventQueryAdditionalProperty,
   EventQueryStatement,
+  GeneralSelectedType,
   MessageEmailEventCondition,
   MessageEventQuery,
   MessageFromJourney,
@@ -42,6 +43,7 @@ import { useDispatch } from "react-redux";
 import { SegmentsSettings } from "reducers/segment.reducer";
 import { capitalize } from "lodash";
 import Select from "components/Elements/Selectv2";
+import { Workflow } from "types/Workflow";
 
 interface FilterBuilderProps {
   settings: ConditionalSegmentsSettings | SegmentsSettings;
@@ -123,8 +125,14 @@ const corelationTypeToDefaultSettings: {
   [QueryStatementType.EMAIL]: {
     type: QueryStatementType.EMAIL,
     eventCondition: MessageEmailEventCondition.RECEIVED,
-    from: MessageFromJourney.ANY,
-    fromSpecificJourney: "ANY",
+    from: {
+      key: MessageFromJourney.ANY,
+      title: "Any journeys",
+    },
+    fromSpecificMessage: {
+      key: "ANY",
+      title: "Any step",
+    },
     happenCondition: MessageGeneralComparison.HAS,
     tag: undefined,
     time: undefined,
@@ -132,8 +140,14 @@ const corelationTypeToDefaultSettings: {
   [QueryStatementType.SMS]: {
     type: QueryStatementType.SMS,
     eventCondition: MessageSMSEventCondition.RECEIVED,
-    from: MessageFromJourney.ANY,
-    fromSpecificJourney: "ANY",
+    from: {
+      key: MessageFromJourney.ANY,
+      title: "Any journeys",
+    },
+    fromSpecificMessage: {
+      key: "ANY",
+      title: "Any step",
+    },
     happenCondition: MessageGeneralComparison.HAS,
     tag: undefined,
     time: undefined,
@@ -141,8 +155,14 @@ const corelationTypeToDefaultSettings: {
   [QueryStatementType.PUSH]: {
     type: QueryStatementType.PUSH,
     eventCondition: MessagePushEventCondition.RECEIVED,
-    from: MessageFromJourney.ANY,
-    fromSpecificJourney: "ANY",
+    from: {
+      key: MessageFromJourney.ANY,
+      title: "Any journeys",
+    },
+    fromSpecificMessage: {
+      key: "ANY",
+      title: "Any step",
+    },
     happenCondition: MessageGeneralComparison.HAS,
     tag: undefined,
     time: undefined,
@@ -150,8 +170,14 @@ const corelationTypeToDefaultSettings: {
   [QueryStatementType.InAPP]: {
     type: QueryStatementType.InAPP,
     eventCondition: MessageInAPPEventCondition.RECEIVED,
-    from: MessageFromJourney.ANY,
-    fromSpecificJourney: "ANY",
+    from: {
+      key: MessageFromJourney.ANY,
+      title: "Any journeys",
+    },
+    fromSpecificMessage: {
+      key: "ANY",
+      title: "Any step",
+    },
     happenCondition: MessageGeneralComparison.HAS,
     tag: undefined,
     time: undefined,
@@ -209,16 +235,38 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
   onSubBuilderUngroup,
   isSubBuilderChild,
 }) => {
-  const { showSegmentsErrors } = useAppSelector((state) => state.flowBuilder);
-  const { showSegmentsErrors: showSegmentsSettingsErrors } = useAppSelector(
-    (state) => state.segment
-  );
+  const { showSegmentsErrors, availableTags: availableTagsFlow } =
+    useAppSelector((state) => state.flowBuilder);
+  const {
+    showSegmentsErrors: showSegmentsSettingsErrors,
+    availableTags: availableTagsSegment,
+  } = useAppSelector((state) => state.segment);
+
+  const availableTags = isSegmentSettings
+    ? availableTagsSegment
+    : availableTagsFlow;
+
   const id = useId();
   const dispatch = useDispatch();
 
   const [segments, setSegments] = useState<Segment[]>([]);
   const [keysQuery, setKeysQuery] = useState("");
+
   const [journeySearchQuery, setJourneySearchQuery] = useState("");
+  const [journeySearchQueryPage, setJourneySearchQueryPage] = useState(1);
+  const [journeySearchTotalPages, setJourneySearchTotalPages] = useState(1);
+  const [availableJourneys, setAvailableJourneys] = useState<Workflow[]>([]);
+  const [isJourneySearchLoading, setIsJourneySearchLoading] = useState(false);
+
+  const [tagSearchQuery, setTagSearchQuery] = useState("");
+
+  const [specMessageQuery, setSpecMessageQuery] = useState("");
+  const [isSpecMessageQueryLoading, setIsSpecMessageQueryLoading] =
+    useState(false);
+  const [possibleMessages, setPossibleMessages] = useState<
+    Record<string, { key: string; title: string }[]>
+  >({});
+
   const [possibleKeys, setPossibleKeys] = useState<
     {
       key: string;
@@ -234,9 +282,35 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
     setSegments(data);
   };
 
-  useEffect(() => {
-    loadSegments();
-  }, []);
+  const loadAllMessages = async (channel: string, specJourneyId: string) => {
+    setIsSpecMessageQueryLoading(true);
+    try {
+      const { data } = await ApiService.get<
+        {
+          id: string;
+          metadata: {
+            channel: string;
+            customName: string;
+            destination: string;
+            template: number;
+          };
+        }[]
+      >({
+        url: `/journeys/messages/${specJourneyId}/${channel}`,
+      });
+      setPossibleMessages((prev) => {
+        prev[`${channel};;${specJourneyId}`] = data.map((el) => ({
+          key: el.id,
+          title: el.metadata.customName,
+        }));
+
+        return prev;
+      });
+    } catch (error) {
+    } finally {
+      setIsSpecMessageQueryLoading(false);
+    }
+  };
 
   const loadPossibleKeys = async (q: string) => {
     const { data } = await ApiService.get<
@@ -251,6 +325,48 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
 
     setPossibleKeys(data);
   };
+
+  const loadPossibleJourneys = async () => {
+    setIsJourneySearchLoading(true);
+    try {
+      const { data } = await ApiService.get<{
+        data: Workflow[];
+        totalPages: number;
+      }>({
+        url: `/journeys?take=12&skip=${
+          (journeySearchQueryPage - 1) * 12
+        }&search=${journeySearchQuery}&orderBy=latestSave&orderType=desc&filterStatuses=Active`,
+      });
+
+      setAvailableJourneys(
+        journeySearchQueryPage === 1
+          ? data.data
+          : [...availableJourneys, ...data.data]
+      );
+      setJourneySearchTotalPages(data.totalPages);
+    } catch (error) {
+    } finally {
+      setIsJourneySearchLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadSegments();
+    loadPossibleJourneys();
+  }, []);
+
+  useDebounce(
+    () => {
+      setJourneySearchQueryPage(1);
+      loadPossibleJourneys();
+    },
+    100,
+    [journeySearchQuery]
+  );
+
+  useEffect(() => {
+    loadPossibleJourneys();
+  }, [journeySearchQueryPage]);
 
   useDebounce(
     () => {
@@ -509,7 +625,7 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
     ) {
       const specStatement = { ...(statement as MessageEventQuery) };
 
-      if (specStatement.fromSpecificJourney !== "ANY" && !specStatement.tag)
+      if (specStatement.fromSpecificMessage.key !== "ANY" && !specStatement.tag)
         statementErrors.push({
           type: QueryStatementErrors.JOURNEY_TAG_SHOULD_BE_SELECTED,
           eventPropertyErrors: [],
@@ -553,6 +669,50 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
         : removeSegmentQueryError)(id)
     );
   }, [statementsErrors]);
+
+  const searchableJournys = [
+    ...(!journeySearchQuery
+      ? [
+          {
+            key: MessageFromJourney.ANY,
+            title: "Any journeys",
+          },
+          {
+            key: MessageFromJourney.WITH_TAG,
+            title: "Journeys with a tag",
+          },
+        ]
+      : []),
+    ...(!availableJourneys?.length && journeySearchQuery
+      ? []
+      : [
+          {
+            key: "JourneysLabel",
+            title: "Journeys",
+            groupLabel: true,
+          },
+        ]),
+    ...(!availableJourneys?.length && !journeySearchQuery
+      ? [
+          {
+            key: "NoCreatedLabel",
+            title: "No journey created",
+            nonSelectable: true,
+          },
+        ]
+      : availableJourneys?.map((el) => ({
+          key: el.id,
+          title: el.name,
+        })) || []),
+  ];
+
+  const searchableMessageInJourney = (channel: string, specId: string) => [
+    {
+      key: "ANY",
+      title: `Any ${channel} in this journey`,
+    },
+    ...(possibleMessages[`${channel};;${specId}`] || []),
+  ];
 
   return (
     <div className="flex w-full flex-col gap-[10px] pr-[10px]">
@@ -1387,85 +1547,118 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                       from
                     </span>
                     <Select
-                      value={(statement as MessageEventQuery).from}
+                      value={(statement as MessageEventQuery).from.key}
                       searchPlaceholder="search journey"
+                      placeholder={(statement as MessageEventQuery).from.title}
                       searchValue={journeySearchQuery}
+                      isLoading={isJourneySearchLoading}
                       onSearchValueChange={setJourneySearchQuery}
-                      onChange={(el) => {
+                      onScrollToEnd={() => {
+                        if (
+                          isJourneySearchLoading ||
+                          journeySearchQueryPage >= journeySearchTotalPages
+                        )
+                          return;
+
+                        setJourneySearchQueryPage((prev) => prev + 1);
+                      }}
+                      onChange={(el, selectedOptionI) => {
+                        if (selectedOptionI === undefined) return;
+
+                        if (
+                          el !== MessageFromJourney.ANY &&
+                          el !== MessageFromJourney.WITH_TAG
+                        ) {
+                          loadAllMessages(
+                            (statement as MessageEventQuery).type.toLowerCase(),
+                            el
+                          );
+                        }
+
                         handleChangeStatement(i, {
                           ...statement,
-                          from: el as MessageFromJourney,
+                          from: {
+                            key: el,
+                            title: searchableJournys[selectedOptionI].title,
+                          },
+                          fromSpecificMessage: {
+                            key: "ANY",
+                            title: "Any message",
+                          },
                         } as MessageEventQuery);
                       }}
                       noDataPlaceholder={"No results"}
                       className="min-w-[200px] max-w-[200px]"
-                      options={[
-                        {
-                          key: MessageFromJourney.ANY,
-                          title: "Any journeys",
-                        },
-                        {
-                          key: MessageFromJourney.WITH_TAG,
-                          title: "Journeys with a tag",
-                        },
-                        {
-                          key: "JourneysLabel",
-                          title: "Journeys",
-                          groupLabel: true,
-                        },
-                        {
-                          key: "UNIQE_ID",
-                          title: "JOURNEY",
-                        },
-                      ]}
+                      options={searchableJournys}
                     />
-                    {(statement as MessageEventQuery).from ===
+                    {(statement as MessageEventQuery).from.key ===
                       MessageFromJourney.WITH_TAG && (
                       <Select
                         value={(statement as MessageEventQuery).tag}
-                        placeholder={"select a tag"}
-                        searchPlaceholder="search journey"
-                        searchValue={journeySearchQuery}
-                        onSearchValueChange={setJourneySearchQuery}
+                        placeholder={
+                          (statement as MessageEventQuery).tag || "select a tag"
+                        }
+                        searchPlaceholder={"filter tag"}
+                        searchValue={tagSearchQuery}
+                        onSearchValueChange={setTagSearchQuery}
                         onChange={(el) => {
                           handleChangeStatement(i, {
                             ...statement,
-                            from: el as MessageFromJourney,
+                            tag: el,
                           } as MessageEventQuery);
                         }}
                         noDataPlaceholder={"No results"}
                         className="min-w-[200px] max-w-[200px]"
-                        options={[]}
+                        options={availableTags
+                          .filter((el) =>
+                            el
+                              .toLowerCase()
+                              .includes(tagSearchQuery.toLowerCase())
+                          )
+                          .map((el) => ({
+                            key: el,
+                            title: el,
+                          }))}
                       />
                     )}
-                    {(statement as MessageEventQuery).from !==
+                    {(statement as MessageEventQuery).from.key !==
                       MessageFromJourney.WITH_TAG &&
-                      (statement as MessageEventQuery).from !==
+                      (statement as MessageEventQuery).from.key !==
                         MessageFromJourney.ANY && (
                         <Select
                           value={
-                            (statement as MessageEventQuery).fromSpecificJourney
+                            (statement as MessageEventQuery).fromSpecificMessage
+                              .key
                           }
-                          searchValue={journeySearchQuery}
-                          onSearchValueChange={setJourneySearchQuery}
-                          onChange={(el) => {
+                          placeholder={
+                            (statement as MessageEventQuery).fromSpecificMessage
+                              .title
+                          }
+                          searchValue={specMessageQuery}
+                          isLoading={isSpecMessageQueryLoading}
+                          onSearchValueChange={setSpecMessageQuery}
+                          onChange={(el, selectedOptionI) => {
+                            if (selectedOptionI === undefined) return;
+
                             handleChangeStatement(i, {
                               ...statement,
-                              fromSpecificJourney: el,
+                              fromSpecificMessage: {
+                                key: el,
+                                title: searchableMessageInJourney(
+                                  statement.type.toLowerCase(),
+                                  (statement as MessageEventQuery).from.key
+                                ).filter((filterEl) =>
+                                  filterEl.title.includes(specMessageQuery)
+                                )[selectedOptionI].title,
+                              },
                             } as MessageEventQuery);
                           }}
                           noDataPlaceholder={"No results"}
                           className="min-w-[140px] max-w-[140px]"
-                          options={[
-                            {
-                              key: "ANY",
-                              title: `Any ${statement.type.toLocaleLowerCase()} in this journey`,
-                            },
-                            {
-                              key: "Onboarding email",
-                              title: "Onboarding email",
-                            },
-                          ]}
+                          options={searchableMessageInJourney(
+                            statement.type.toLowerCase(),
+                            (statement as MessageEventQuery).from.key
+                          ).filter((el) => el.title.includes(specMessageQuery))}
                         />
                       )}
                     <Select

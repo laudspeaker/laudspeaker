@@ -8,17 +8,25 @@ import FlowBuilderSegmentEditor from "./FlowBuilderSegmentEditor";
 import FlowBuilderReview from "./FlowBuilderReview";
 import { useParams } from "react-router-dom";
 import ApiService from "services/api.service";
-import { NodeData } from "./Nodes/NodeData";
+import { MessageNodeData, NodeData } from "./Nodes/NodeData";
 import { Edge, Node } from "reactflow";
 import { EdgeData } from "./Edges/EdgeData";
 import {
+  clearSegmentPanelErrors,
+  JourneyEntrySettings,
+  JourneySettings,
   JourneyType,
   loadVisualLayout,
   SegmentsSettings,
+  setAvailableTags,
   setFlowId,
   setFlowName,
+  setJourneyEntrySettings,
+  setJourneySettings,
   setJourneyType,
+  setNodes,
   setSegmentsSettings,
+  setShowSegmentsErrors,
 } from "reducers/flow-builder.reducer";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -26,6 +34,7 @@ import { JourneyStatus } from "pages/JourneyTablev2/JourneyTablev2";
 import { NodeType } from "./FlowEditor";
 import { SocketProvider } from "./useDevSocketConnection";
 import FlowBuilderSettings from "./FlowBuilderSettings";
+import { capitalize } from "lodash";
 
 const FlowBuilderv2 = () => {
   const { id } = useParams();
@@ -38,6 +47,18 @@ const FlowBuilderv2 = () => {
   const flowBuilderState = useAppSelector((state) => state.flowBuilder);
 
   const throttledFlowBuilderState = useThrottle(flowBuilderState, 1000);
+
+  const loadAllTags = async () => {
+    try {
+      const { data } = await ApiService.get<string[]>({
+        url: "/journeys/tags",
+      });
+
+      dispatch(setAvailableTags(data));
+    } catch (error) {
+      dispatch(setAvailableTags([]));
+    }
+  };
 
   const loadJourney = async () => {
     setIsLoading(true);
@@ -52,6 +73,8 @@ const FlowBuilderv2 = () => {
         isPaused: boolean;
         isStopped: boolean;
         isDeleted: boolean;
+        journeyEntrySettings?: JourneyEntrySettings;
+        journeySettings?: JourneySettings;
       }>({
         url: "/journeys/" + id,
       });
@@ -70,6 +93,12 @@ const FlowBuilderv2 = () => {
           data.isDynamic ? JourneyType.DYNAMIC : JourneyType.STATIC
         )
       );
+      dispatch(setShowSegmentsErrors(false));
+      dispatch(clearSegmentPanelErrors());
+      dispatch(
+        setJourneyEntrySettings(data?.journeyEntrySettings || undefined)
+      );
+      dispatch(setJourneySettings(data?.journeySettings || undefined));
       dispatch(setFlowId(id));
 
       let status: JourneyStatus = JourneyStatus.DRAFT;
@@ -88,6 +117,10 @@ const FlowBuilderv2 = () => {
   useEffect(() => {
     loadJourney();
   }, []);
+
+  useEffect(() => {
+    loadAllTags();
+  }, [flowBuilderState.stepperIndex]);
 
   const handleSaveLayout = async () => {
     try {
@@ -122,6 +155,8 @@ const FlowBuilderv2 = () => {
         inclusionCriteria: throttledFlowBuilderState.segments,
         isDynamic:
           throttledFlowBuilderState.journeyType === JourneyType.DYNAMIC,
+        journeyEntrySettings: throttledFlowBuilderState.journeyEntrySettings,
+        journeySettings: throttledFlowBuilderState.journeySettings,
       },
     });
   };
@@ -133,7 +168,38 @@ const FlowBuilderv2 = () => {
     throttledFlowBuilderState.flowName,
     throttledFlowBuilderState.segments,
     throttledFlowBuilderState.journeyType,
+    throttledFlowBuilderState.journeyEntrySettings,
+    throttledFlowBuilderState.journeySettings,
   ]);
+
+  useEffect(() => {
+    if (
+      flowBuilderState.nodes.some(
+        (node) =>
+          !(node.data as MessageNodeData)?.customName && node.type == "message"
+      )
+    ) {
+      let messageCount = 1;
+      dispatch(
+        setNodes(
+          flowBuilderState.nodes.map((node) => {
+            if (node.type == "message") {
+              return {
+                ...node,
+                data: {
+                  ...node.data,
+                  customName: `${capitalize(
+                    (node.data as MessageNodeData).template.type
+                  )} ${messageCount++}`,
+                },
+              };
+            }
+            return node;
+          })
+        )
+      );
+    }
+  }, [flowBuilderState]);
 
   return (
     <SocketProvider>

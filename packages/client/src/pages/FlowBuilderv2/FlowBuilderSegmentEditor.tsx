@@ -70,6 +70,8 @@ const FlowBuilderSegmentEditor = () => {
   } = useAppSelector((state) => state.flowBuilder);
   const dispatch = useAppDispatch();
 
+  if (!journeyEntrySettings) return <></>;
+
   return (
     <div className="m-[20px] max-h-full overflow-y-scroll w-full bg-white rounded-[4px] p-[20px] text-[#111827] font-inter">
       <div className="flex flex-col gap-[20px]">

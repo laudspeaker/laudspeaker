@@ -7,6 +7,10 @@ import {
   ManyToOne,
 } from 'typeorm';
 import { VisualLayout } from '../types/visual-layout.interface';
+import {
+  JourneyEntrySettings,
+  JourneySettings,
+} from '../types/additional-journey-settings.interface';
 
 @Entity()
 export class Journey {
@@ -59,4 +63,11 @@ export class Journey {
 
   @Column('jsonb', { default: { type: 'allCustomers' } })
   inclusionCriteria: any;
+
+  // TODO: might need to add default values for those two columns
+  @Column('jsonb', { nullable: true })
+  journeyEntrySettings?: JourneyEntrySettings;
+
+  @Column('jsonb', { nullable: true })
+  journeySettings?: JourneySettings;
 }

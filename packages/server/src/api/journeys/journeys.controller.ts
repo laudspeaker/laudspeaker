@@ -58,6 +58,31 @@ export class JourneysController {
     );
   }
 
+  @Get('tags')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
+  async getJourneysTags(@Req() { user }: Request) {
+    const session = randomUUID();
+    return await this.journeysService.getAllJourneyTags(<Account>user, session);
+  }
+
+  @Get('messages/:id/:type')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
+  async findAllMessagesSteps(
+    @Req() { user }: Request,
+    @Param('id') id: string,
+    @Param('type') type: string
+  ) {
+    const session = randomUUID();
+    return await this.journeysService.findAllMessages(
+      <Account>user,
+      id,
+      type,
+      session
+    );
+  }
+
   @Get(':id')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())

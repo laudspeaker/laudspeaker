@@ -110,7 +110,8 @@ const FlowViewerSidePanel: FC<FlowViewerSidePanelProps> = ({ className }) => {
             {selectedNode?.type
               ? selectedNode.data.type === NodeType.MESSAGE &&
                 selectedNode.data.template
-                ? messageFixtures[selectedNode.data.template.type].text
+                ? selectedNode.data.customName ||
+                  messageFixtures[selectedNode.data.template.type].text
                 : nodeTypeToNameMap[selectedNode.type as NodeType]
               : ""}
           </div>
