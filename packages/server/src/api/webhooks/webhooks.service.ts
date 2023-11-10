@@ -17,29 +17,19 @@ import axios from 'axios';
 import FormData from 'form-data';
 import { randomUUID } from 'crypto';
 import { Step } from '../steps/entities/step.entity';
-
-export enum ClickHouseEventProvider {
-  MAILGUN = 'mailgun',
-  SENDGRID = 'sendgrid',
-  TWILIO = 'twilio',
-  SLACK = 'slack',
-  FIREBASE = 'firebase',
-  WEBHOOKS = 'webhooks',
-  TRACKER = 'tracker',
-}
-
-export interface ClickHouseMessage {
-  audienceId?: string;
-  stepId?: string;
-  createdAt: string;
-  customerId: string;
-  event: string;
-  eventProvider: ClickHouseEventProvider;
-  messageId: string;
-  templateId: string;
-  userId: string;
-  processed: boolean;
-}
+import {
+  ClickHouseEventProvider,
+  ClickHouseMessage,
+} from './entities/clickhouse';
+import ProducerFactory, {
+  getEventsTopic,
+  getUTCHourFromTimestamp,
+} from './kafka/producer';
+import {
+  getEventsTopicForHour,
+  getEventsTopicForPastHour,
+} from './kafka/consumer';
+import ClientFactory from './clickhouse/client';
 
 @Injectable()
 export class WebhooksService {
@@ -53,23 +43,23 @@ export class WebhooksService {
     'unsubscribed',
   ];
 
-  private clickHouseClient = createClient({
-    host: process.env.CLICKHOUSE_HOST
-      ? process.env.CLICKHOUSE_HOST.includes('http')
-        ? process.env.CLICKHOUSE_HOST
-        : `http://${process.env.CLICKHOUSE_HOST}`
-      : 'http://localhost:8123',
-    username: process.env.CLICKHOUSE_USER ?? 'default',
-    password: process.env.CLICKHOUSE_PASSWORD ?? '',
-    database: process.env.CLICKHOUSE_DB ?? 'default',
-  });
+  private clickHouseClient = new ClientFactory();
+  public insertClickHouseMessages =
+    this.clickHouseClient.insertClickHouseMessages;
 
-  public insertClickHouseMessages = async (values: ClickHouseMessage[]) => {
-    await this.clickHouseClient.insert<ClickHouseMessage>({
-      table: 'message_status',
-      values,
-      format: 'JSONEachRow',
-    });
+  private kafkaProducer = new ProducerFactory();
+
+  public insertKafkaMessages = async (values: ClickHouseMessage[]) => {
+    // debug line
+    this.debug(
+      `processing kafka message: ${JSON.stringify({
+        kafkaMessage: values,
+        topic: getEventsTopicForPastHour(),
+      })}`,
+      this.insertKafkaMessages.name,
+      randomUUID()
+    );
+    await this.kafkaProducer.sendBatch(getEventsTopic(), values);
   };
 
   private sendgridEventsMap = {
@@ -157,6 +147,47 @@ export class WebhooksService {
     );
   }
 
+  // TODO: just for testing, remove before merge
+  public async processTestingData(session: string, data: any) {
+    const messagesToInsert: ClickHouseMessage[] = [];
+
+    for (const item of data) {
+      const {
+        userId,
+        stepId,
+        customerId,
+        templateId,
+        event,
+        messageId,
+        eventProvider,
+      } = item;
+      if (
+        !stepId ||
+        !customerId ||
+        !templateId ||
+        !event ||
+        !messageId ||
+        !eventProvider
+      )
+        continue;
+
+      const clickHouseRecord: ClickHouseMessage = {
+        userId,
+        stepId,
+        customerId,
+        templateId: String(templateId),
+        messageId,
+        event: event,
+        eventProvider,
+        processed: false,
+        createdAt: new Date().toUTCString(),
+      };
+
+      messagesToInsert.push(clickHouseRecord);
+    }
+    await this.insertKafkaMessages(messagesToInsert);
+  }
+
   public async processSendgridData(
     signature: string,
     timestamp: string,
@@ -235,7 +266,7 @@ export class WebhooksService {
 
       messagesToInsert.push(clickHouseRecord);
     }
-    await this.insertClickHouseMessages(messagesToInsert);
+    await this.insertKafkaMessages(messagesToInsert);
   }
 
   public async processTwilioData(
@@ -271,7 +302,7 @@ export class WebhooksService {
       processed: false,
       createdAt: new Date().toUTCString(),
     };
-    await this.insertClickHouseMessages([clickHouseRecord]);
+    await this.insertKafkaMessages([clickHouseRecord]);
   }
 
   public async processMailgunData(
@@ -346,7 +377,7 @@ export class WebhooksService {
       session
     );
 
-    await this.insertClickHouseMessages([clickHouseRecord]);
+    await this.insertKafkaMessages([clickHouseRecord]);
   }
 
   public async setupMailgunWebhook(

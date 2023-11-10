@@ -1,6 +1,6 @@
 import { Inject, Injectable, LoggerService } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Cron, CronExpression } from '@nestjs/schedule';
+import { Cron, CronExpression, Interval, Timeout } from '@nestjs/schedule';
 import { Model } from 'mongoose';
 import {
   Customer,
@@ -37,7 +37,7 @@ import { createClient } from '@clickhouse/client';
 import {
   ClickHouseEventProvider,
   ClickHouseMessage,
-} from './api/webhooks/webhooks.service';
+} from './api/webhooks/entities/clickhouse';
 import twilio from 'twilio';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import client from '@sendgrid/client';
@@ -51,22 +51,23 @@ import { JourneysService } from './api/journeys/journeys.service';
 import { RedlockService } from './api/redlock/redlock.service';
 import { Lock } from 'redlock';
 import * as _ from 'lodash';
+import ConsumerFactory, {
+  getEventsTopicForHour,
+  getEventsTopicForPastHour,
+} from './api/webhooks/kafka/consumer';
+import { KafkaMessage } from 'kafkajs';
+import {
+  getEventsTopic,
+  getUTCHourFromTimestamp,
+} from './api/webhooks/kafka/producer';
+import ClientFactory from './api/webhooks/clickhouse/client';
 
 const BATCH_SIZE = 500;
 const KEYS_TO_SKIP = ['__v', '_id', 'audiences', 'ownerId'];
 
 @Injectable()
 export class CronService {
-  private clickHouseClient = createClient({
-    host: process.env.CLICKHOUSE_HOST
-      ? process.env.CLICKHOUSE_HOST.includes('http')
-        ? process.env.CLICKHOUSE_HOST
-        : `http://${process.env.CLICKHOUSE_HOST}`
-      : 'http://localhost:8123',
-    username: process.env.CLICKHOUSE_USER ?? 'default',
-    password: process.env.CLICKHOUSE_PASSWORD ?? '',
-    database: process.env.CLICKHOUSE_DB ?? 'default',
-  });
+  private clickHouseClient = new ClientFactory();
 
   constructor(
     private dataSource: DataSource,
@@ -155,6 +156,70 @@ export class CronService {
         user: user,
       })
     );
+  }
+
+  private kafkaMessageProcessor = (cutoffTime: Date) => {
+    return async (messages: KafkaMessage[]): Promise<boolean> => {
+      let greaterThanCutoff = false;
+
+      const parsedMessages = messages.map((m) => {
+        const msg = JSON.parse(m.value.toString()) as ClickHouseMessage;
+        msg.createdAt = this.clickHouseClient.toClickHouseDateTime(
+          new Date(msg.createdAt)
+        );
+
+        if (new Date(msg.createdAt) > cutoffTime) {
+          greaterThanCutoff = true;
+        }
+
+        return msg;
+      });
+
+      await this.clickHouseClient.insertClickHouseMessages(parsedMessages);
+
+      return greaterThanCutoff;
+    };
+  };
+
+  // NOTE: just for testing, remove before merge
+  @Timeout(1) // start immediately
+  async pushEventsToClickhouseImmediately() {
+    // create consumer
+    const consumer = new ConsumerFactory(
+      this.kafkaMessageProcessor(new Date())
+    );
+
+    setTimeout(() => {
+      consumer.shutdown();
+    }, 300000); // 5 minutes
+
+    consumer.startBatchConsumer(getEventsTopic());
+  }
+
+  // NOTE: just for testing, remove before merge
+  @Interval(300000) // 5 minutes
+  async pushEventsToClickhouseInterval() {
+    // create consumer
+    const consumer = new ConsumerFactory(
+      this.kafkaMessageProcessor(new Date())
+    );
+
+    setTimeout(() => {
+      consumer.shutdown();
+    }, 300000); // 5 minutes
+
+    consumer.startBatchConsumer(getEventsTopic());
+  }
+
+  @Cron(CronExpression.EVERY_HOUR)
+  async pushEventsToClickhouseCron() {
+    // create consumer
+    const consumer = new ConsumerFactory(
+      this.kafkaMessageProcessor(new Date())
+    );
+
+    // we subscribe to events from the past hour
+    consumer.startBatchConsumer(getEventsTopic());
   }
 
   @Cron(CronExpression.EVERY_HOUR)

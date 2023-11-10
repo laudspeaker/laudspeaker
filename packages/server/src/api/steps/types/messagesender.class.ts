@@ -6,7 +6,7 @@ import { MailService } from '@sendgrid/mail';
 import {
   ClickHouseEventProvider,
   ClickHouseMessage,
-} from '../../webhooks/webhooks.service';
+} from '../../webhooks/entities/clickhouse';
 import twilio from 'twilio';
 import { PostHog } from 'posthog-node';
 import * as admin from 'firebase-admin';

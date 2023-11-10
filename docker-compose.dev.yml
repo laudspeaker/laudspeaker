@@ -15,12 +15,14 @@ services:
     depends_on:
       - backend
     ports:
-      - "3000:3000"
+      - "3000:80"
     stdin_open: true
     tty: true
 
   backend:
     image: laudspeaker:api-latest
+    env_file:
+      - ./packages/server/.env
     ports:
       - "3001:3001"
     depends_on:

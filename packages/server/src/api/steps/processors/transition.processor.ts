@@ -20,10 +20,7 @@ import mongoose, { Model } from 'mongoose';
 import { Temporal } from '@js-temporal/polyfill';
 import { createHash, randomUUID } from 'crypto';
 import { MessageSender } from '../types/messagesender.class';
-import {
-  ClickHouseEventProvider,
-  WebhooksService,
-} from '@/api/webhooks/webhooks.service';
+import { WebhooksService } from '@/api/webhooks/webhooks.service';
 import { TemplatesService } from '@/api/templates/templates.service';
 import { CustomersService } from '@/api/customers/customers.service';
 import { cleanTagsForSending } from '../../../shared/utils/helpers';
@@ -41,6 +38,7 @@ import * as _ from 'lodash';
 import { Lock } from 'redlock';
 import { PostHog } from 'posthog-node';
 import * as Sentry from '@sentry/node';
+import { ClickHouseEventProvider } from '@/api/webhooks/entities/clickhouse';
 
 @Injectable()
 @Processor('transition', { concurrency: cpus().length })

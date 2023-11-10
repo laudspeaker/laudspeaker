@@ -3,7 +3,7 @@
 FROM node:16 as build
 WORKDIR /app
 COPY ./packages/server/package.json /app
-RUN npm install
+RUN npm install --legacy-peer-deps
 COPY . /app
 RUN npm run build:server
 
@@ -26,7 +26,7 @@ ENV PORT=3001
 ENV NODE_ENV=development
 ENV FRONTEND_URL=project_frontend_1:3000
 ENV ENVIRONMENT=development
-ENV DATABASE_HOST=project_postgres_1
+ENV DATABASE_HOST=postgres
 ENV DATABASE_NAME=laudspeaker
 ENV DATABASE_USER=postgres
 ENV DATABASE_PASSWORD=postgres
@@ -34,19 +34,19 @@ ENV DATABASE_PORT=5432
 ENV SYNCHRONIZE=true
 ENV JWT_KEY=dev
 ENV JWT_EXPIRES=365d
-ENV REDIS_HOST=project_redis_1
+ENV REDIS_HOST=redis
 ENV REDIS_PORT=6379
 ENV REDIS_PASSWORD=
-ENV MONGOOSE_URL=mongodb://project_mongo_1:27017/nest
+ENV MONGOOSE_URL=mongodb://mongo:27017/nest
 ENV MAILGUN_DOMAIN=${MAGIC_EMAIL_DOMAIN}
 ENV MAILGUN_TEST_DOMAIN=${MAGIC_EMAIL_DOMAIN}
 ENV SENDGRID_WEBHOOK_ENDPOINT=${SENDGRID_WEBHOOK_ENDPOINT}
-ENV CLICKHOUSE_HOST=http://project_clickhouse_1:8123
+ENV CLICKHOUSE_HOST=http://clickhouse:8123
 ENV CLICKHOUSE_USER=default
 ENV CLICKHOUSE_PASSWORD=
 WORKDIR /app
 COPY ./packages/server/package.json /app
-RUN npm install --only=production
+RUN npm install --only=production --legacy-peer-deps
 COPY --from=build /app/packages/server/dist /app/dist
 EXPOSE 3001
 CMD ["node", "dist/src/main.js"]

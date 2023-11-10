@@ -10,6 +10,7 @@ import {
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { randomUUID } from 'crypto';
 import { RavenInterceptor } from 'nest-raven';
+
 @Controller()
 export class AppController {
   constructor(
@@ -88,6 +89,7 @@ export class AppController {
   @Get('/sentry-test')
   sentryTest() {
     const session = randomUUID();
+    console.log('hi');
     this.debug(`GET / `, this.root.name, session);
     throw new HttpException('sentry-online', HttpStatus.INTERNAL_SERVER_ERROR);
   }

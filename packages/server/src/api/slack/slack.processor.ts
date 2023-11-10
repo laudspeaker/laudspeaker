@@ -4,10 +4,8 @@ import { LoggerService, Injectable, Inject } from '@nestjs/common';
 import { WebClient } from '@slack/web-api';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { Liquid } from 'liquidjs';
-import {
-  ClickHouseEventProvider,
-  WebhooksService,
-} from '../webhooks/webhooks.service';
+import { WebhooksService } from '../webhooks/webhooks.service';
+import { ClickHouseEventProvider } from '../webhooks/entities/clickhouse';
 
 @Injectable()
 @Processor('slack', { removeOnComplete: { age: 0, count: 0 } })

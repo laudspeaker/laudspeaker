@@ -16,10 +16,7 @@ import { AccountsService } from '../api/accounts/accounts.service';
 import { Account } from '../api/accounts/entities/accounts.entity';
 import { CustomersService } from '../api/customers/customers.service';
 import { EventsService } from '../api/events/events.service';
-import {
-  ClickHouseEventProvider,
-  WebhooksService,
-} from '@/api/webhooks/webhooks.service';
+import { WebhooksService } from '@/api/webhooks/webhooks.service';
 import {
   Customer,
   CustomerDocument,
@@ -29,6 +26,7 @@ import { Types } from 'mongoose';
 import { JourneysService } from '@/api/journeys/journeys.service';
 import { DevModeService } from '@/api/dev-mode/dev-mode.service';
 import { RavenInterceptor } from 'nest-raven';
+import { ClickHouseEventProvider } from '@/api/webhooks/entities/clickhouse';
 
 interface SocketData {
   account: Account;

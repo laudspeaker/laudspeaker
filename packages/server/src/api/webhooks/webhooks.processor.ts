@@ -5,10 +5,7 @@ import { Inject, Logger } from '@nestjs/common';
 import { Injectable } from '@nestjs/common';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { Liquid } from 'liquidjs';
-import {
-  ClickHouseEventProvider,
-  WebhooksService,
-} from '../webhooks/webhooks.service';
+import { WebhooksService } from '../webhooks/webhooks.service';
 import { fetch } from 'undici';
 import wait from '../../utils/wait';
 import {
@@ -17,6 +14,7 @@ import {
   WebhookMethod,
 } from '../templates/entities/template.entity';
 import { TemplatesService } from '../templates/templates.service';
+import { ClickHouseEventProvider } from './entities/clickhouse';
 
 @Processor('webhooks', { removeOnComplete: { age: 0, count: 0 } })
 @Injectable()

@@ -81,6 +81,14 @@ export class WebhooksController {
     );
   }
 
+  // TODO: just for testing, remove before merge
+  @Post('testing')
+  @UseInterceptors(new RavenInterceptor())
+  public async processTestingData(@Body() body: { items: any[] }) {
+    const session = randomUUID();
+    await this.webhooksService.processTestingData(session, body.items);
+  }
+
   @Post('sendgrid')
   @UseInterceptors(new RavenInterceptor())
   public async processSendgridData(@Req() req: Request, @Body() data: any) {

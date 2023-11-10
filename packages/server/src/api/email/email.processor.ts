@@ -8,13 +8,11 @@ import Mailgun from 'mailgun.js';
 import formData from 'form-data';
 import { Liquid } from 'liquidjs';
 import { MailService } from '@sendgrid/mail';
-import {
-  ClickHouseEventProvider,
-  WebhooksService,
-} from '../webhooks/webhooks.service';
+import { WebhooksService } from '../webhooks/webhooks.service';
 import twilio from 'twilio';
 import { PostHog } from 'posthog-node';
 import * as admin from 'firebase-admin';
+import { ClickHouseEventProvider } from '../webhooks/entities/clickhouse';
 
 export enum MessageType {
   SMS = 'sms',

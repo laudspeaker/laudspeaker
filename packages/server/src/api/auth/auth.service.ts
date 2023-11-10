@@ -201,6 +201,8 @@ export class AuthService {
 
     const verificationLink = `${process.env.FRONTEND_URL}/verify-email/${verification.id}`;
 
+    console.log('MAILGUN DOMAIN', process.env.MAILGUN_DOMAIN);
+
     await this.messageQueue.add('email', {
       key: process.env.MAILGUN_API_KEY,
       from: 'Laudspeaker',
