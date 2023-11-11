@@ -158,6 +158,23 @@ export class CronService {
     );
   }
 
+  private testKafkaMessageProcessor = () => {
+    return async (messages: KafkaMessage[]): Promise<boolean> => {
+      const parsedMessages = messages.map((m) => {
+        const msg = JSON.parse(m.value.toString()) as ClickHouseMessage;
+        msg.createdAt = this.clickHouseClient.toClickHouseDateTime(
+          new Date(msg.createdAt)
+        );
+
+        return msg;
+      });
+
+      await this.clickHouseClient.insertClickHouseMessages(parsedMessages);
+
+      return false;
+    };
+  };
+
   private kafkaMessageProcessor = (cutoffTime: Date) => {
     return async (messages: KafkaMessage[]): Promise<boolean> => {
       let greaterThanCutoff = false;
@@ -185,9 +202,7 @@ export class CronService {
   @Timeout(1) // start immediately
   async pushEventsToClickhouseImmediately() {
     // create consumer
-    const consumer = new ConsumerFactory(
-      this.kafkaMessageProcessor(new Date())
-    );
+    const consumer = new ConsumerFactory(this.testKafkaMessageProcessor());
 
     setTimeout(() => {
       consumer.shutdown();
@@ -200,9 +215,7 @@ export class CronService {
   @Interval(300000) // 5 minutes
   async pushEventsToClickhouseInterval() {
     // create consumer
-    const consumer = new ConsumerFactory(
-      this.kafkaMessageProcessor(new Date())
-    );
+    const consumer = new ConsumerFactory(this.testKafkaMessageProcessor());
 
     setTimeout(() => {
       consumer.shutdown();

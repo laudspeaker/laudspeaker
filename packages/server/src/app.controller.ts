@@ -89,7 +89,6 @@ export class AppController {
   @Get('/sentry-test')
   sentryTest() {
     const session = randomUUID();
-    console.log('hi');
     this.debug(`GET / `, this.root.name, session);
     throw new HttpException('sentry-online', HttpStatus.INTERNAL_SERVER_ERROR);
   }
