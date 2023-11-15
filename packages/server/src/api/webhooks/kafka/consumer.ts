@@ -8,7 +8,7 @@ import {
 } from 'kafkajs';
 
 type MessageProcessor = {
-  (messages: KafkaMessage[]): Promise<boolean>;
+  (messages: KafkaMessage[], eachBatchPayload: EachBatchPayload): Promise<boolean>;
 };
 
 export default class ConsumerFactory {
@@ -21,7 +21,7 @@ export default class ConsumerFactory {
     this.kafkaConsumer = this.createKafkaConsumer();
   }
 
-  public async startBatchConsumer(topicStr: string): Promise<void> {
+  public async startBatchConsumer(topicStr: string, options?: { inactivityTimeout: boolean }): Promise<void> {
     const topic: ConsumerSubscribeTopics = {
       topics: [topicStr],
       fromBeginning: true,
@@ -33,8 +33,10 @@ export default class ConsumerFactory {
       await this.kafkaConsumer.run({
         eachBatch: async (eachBatchPayload: EachBatchPayload) => {
           const { batch } = eachBatchPayload;
-          this.resetMessageTimeout();
-          const shouldShutdown = await this.messageProcessor(batch.messages);
+          if (options.inactivityTimeout){
+            this.resetMessageTimeout();
+          }
+          const shouldShutdown = await this.messageProcessor(batch.messages, eachBatchPayload);
 
           if (shouldShutdown) {
             this.shutdown();

@@ -21,14 +21,8 @@ import {
   ClickHouseEventProvider,
   ClickHouseMessage,
 } from './entities/clickhouse';
-import ProducerFactory, {
-  getEventsTopic,
-  getUTCHourFromTimestamp,
-} from './kafka/producer';
-import {
-  getEventsTopicForHour,
-  getEventsTopicForPastHour,
-} from './kafka/consumer';
+import ProducerFactory from './kafka/producer';
+import { getEventsTopicForPastHour } from './kafka/consumer';
 import ClientFactory from './clickhouse/client';
 
 @Injectable()
@@ -59,7 +53,7 @@ export class WebhooksService {
       this.insertKafkaMessages.name,
       randomUUID()
     );
-    await this.kafkaProducer.sendBatch(getEventsTopic(), values);
+    await this.kafkaProducer.sendClickHouseBatch(values);
   };
 
   private sendgridEventsMap = {

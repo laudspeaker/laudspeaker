@@ -7,12 +7,16 @@ import {
   TopicMessages,
 } from 'kafkajs';
 import { ClickHouseMessage } from '../entities/clickhouse';
+import { ChangeStreamDocument } from 'typeorm';
+import { CustomerDocument } from '@/api/customers/schemas/customer.schema';
+import { KafkaMessageType, encodeMessage, getCustomerChangesTopic, getEventsTopic } from './utils';
 
 export default class ProducerFactory {
   private producer: Producer;
 
   constructor() {
     this.producer = this.createProducer();
+    // TODO: await this promise before interacting with the producer
     this.start();
   }
 
@@ -28,20 +32,39 @@ export default class ProducerFactory {
     await this.producer.disconnect();
   }
 
-  public async sendBatch(
-    topicStr: string,
+  public async sendClickHouseBatch(
     messages: Array<ClickHouseMessage>
   ): Promise<void> {
-    try {
-      const kafkaMessages: Array<Message> = messages.map((message) => {
-        return {
-          value: JSON.stringify(message),
-        };
-      });
+    return await this.sendBatch(
+      getEventsTopic(),
+      messages.map((msg) =>
+        encodeMessage({ type: KafkaMessageType.ClickHouse, message: msg })
+      )
+    );
+  }
 
+  public async sendCustomerChangedBatch(
+    messages: Array<ChangeStreamDocument<CustomerDocument>>
+  ): Promise<void> {
+    return await this.sendBatch(
+      getCustomerChangesTopic(),
+      messages.map((msg) =>
+        encodeMessage({
+          type: KafkaMessageType.CustomerChanged,
+          message: msg,
+        })
+      )
+    );
+  }
+
+  private async sendBatch(
+    topicStr: string,
+    messages: Array<Message>
+  ): Promise<void> {
+    try {
       const topicMessages: TopicMessages = {
         topic: topicStr,
-        messages: kafkaMessages,
+        messages,
       };
 
       const batch: ProducerBatch = {
@@ -68,13 +91,3 @@ export default class ProducerFactory {
     return kafka.producer();
   }
 }
-
-export function getEventsTopic(): string {
-  return process.env.KAFKA_EVENTS_TOPIC;
-}
-
-export function getUTCHourFromTimestamp(timestamp: string): number {
-  const date = new Date(timestamp);
-  return date.getUTCHours();
-}
-

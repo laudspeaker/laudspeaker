@@ -22,7 +22,7 @@ import mockData from '../../fixtures/mockData';
 import { Account } from '../accounts/entities/accounts.entity';
 import { Audience } from '../audiences/entities/audience.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, Repository } from 'typeorm';
+import { ChangeStreamDocument, DataSource, Repository } from 'typeorm';
 import { EventDto } from '../events/dto/event.dto';
 import {
   CustomerKeys,
@@ -45,6 +45,7 @@ import { WorkflowsService } from '../workflows/workflows.service';
 import * as _ from 'lodash';
 import { randomUUID } from 'crypto';
 import { StepsService } from '../steps/steps.service';
+import ProducerFactory from '../webhooks/kafka/producer';
 
 export type Correlation = {
   cust: CustomerDocument;
@@ -99,6 +100,8 @@ export class CustomersService {
     database: process.env.CLICKHOUSE_DB ?? 'default',
   });
 
+  private kafkaProducer = new ProducerFactory();
+
   constructor(
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
     private readonly logger: Logger,
@@ -136,33 +139,20 @@ export class CustomersService {
         this.error(e, CustomersService.name, session);
       }
     })();
-    this.CustomerModel.watch().on('change', async (data: any) => {
-      try {
-        const customerId = data?.documentKey?._id;
-        if (!customerId) return;
-        if (data.operationType === 'delete') {
-          await this.deleteEverywhere(customerId.toString());
-        } else {
-          const customer = await this.CustomerModel.findById(customerId).exec();
+    this.CustomerModel.watch().on(
+      'change',
+      async (data: ChangeStreamDocument<CustomerDocument>) => {
+        try {
+          // @ts-expect-error "documentKey" is not present in some ChangeStreamDocument operations but anyway we're exiting the function if it's not present
+          const customerId = data?.documentKey?._id;
+          if (!customerId) return;
 
-          if (!customer?.ownerId) return;
-
-          const account = await this.accountsRepository.findOneBy({
-            id: customer.ownerId,
-          });
-
-          await this.segmentsService.updateAutomaticSegmentCustomerInclusion(
-            account,
-            customer,
-            session
-          );
-
-          await this.recheckDynamicInclusion(account, customer, session);
+          await this.kafkaProducer.sendCustomerChangedBatch([data]);
+        } catch (e) {
+          this.error(e, this.constructor.name, session);
         }
-      } catch (e) {
-        this.error(e, this.constructor.name, session);
       }
-    });
+    );
   }
 
   log(message, method, session, user = 'ANONYMOUS') {
@@ -222,6 +212,35 @@ export class CustomersService {
         user: user,
       })
     );
+  }
+
+  async handleCustomerChange(
+    data: ChangeStreamDocument<CustomerDocument>
+  ): Promise<void> {
+    const session = randomUUID();
+    // TODO: remove this @ts-expect-error by checking the type of ChangeStreamDocument
+    // @ts-expect-error "documentKey" is not present in some ChangeStreamDocument operations but anyway we're exiting the function if it's not present
+    const customerId = data?.documentKey?._id;
+    if (!customerId) return;
+    if (data.operationType === 'delete') {
+      await this.deleteEverywhere(customerId.toString());
+    } else {
+      const customer = await this.CustomerModel.findById(customerId).exec();
+
+      if (!customer?.ownerId) return;
+
+      const account = await this.accountsRepository.findOneBy({
+        id: customer.ownerId,
+      });
+
+      await this.segmentsService.updateAutomaticSegmentCustomerInclusion(
+        account,
+        customer,
+        session
+      );
+
+      await this.recheckDynamicInclusion(account, customer, session);
+    }
   }
 
   async create(

@@ -55,12 +55,15 @@ import ConsumerFactory, {
   getEventsTopicForHour,
   getEventsTopicForPastHour,
 } from './api/webhooks/kafka/consumer';
-import { KafkaMessage } from 'kafkajs';
+import { EachBatchPayload, KafkaMessage } from 'kafkajs';
 import {
+  KafkaMessageType,
+  decodeMessage,
+  getCustomerChangesTopic,
   getEventsTopic,
-  getUTCHourFromTimestamp,
-} from './api/webhooks/kafka/producer';
+} from './api/webhooks/kafka/utils';
 import ClientFactory from './api/webhooks/clickhouse/client';
+import { CustomersService } from './api/customers/customers.service';
 
 const BATCH_SIZE = 500;
 const KEYS_TO_SKIP = ['__v', '_id', 'audiences', 'ownerId'];
@@ -96,7 +99,8 @@ export class CronService {
     @Inject(StepsService) private stepsService: StepsService,
     @InjectQueue('transition') private readonly transitionQueue: Queue,
     @Inject(RedlockService)
-    private readonly redlockService: RedlockService
+    private readonly redlockService: RedlockService,
+    @Inject(CustomersService) private customersService: CustomersService
   ) {}
 
   log(message, method, session, user = 'ANONYMOUS') {
@@ -208,7 +212,7 @@ export class CronService {
       consumer.shutdown();
     }, 300000); // 5 minutes
 
-    consumer.startBatchConsumer(getEventsTopic());
+    consumer.startBatchConsumer(getEventsTopic(), { inactivityTimeout: true });
   }
 
   // NOTE: just for testing, remove before merge
@@ -221,7 +225,7 @@ export class CronService {
       consumer.shutdown();
     }, 300000); // 5 minutes
 
-    consumer.startBatchConsumer(getEventsTopic());
+    consumer.startBatchConsumer(getEventsTopic(), { inactivityTimeout: true });
   }
 
   @Cron(CronExpression.EVERY_HOUR)
@@ -232,7 +236,37 @@ export class CronService {
     );
 
     // we subscribe to events from the past hour
-    consumer.startBatchConsumer(getEventsTopic());
+    consumer.startBatchConsumer(getEventsTopic(), { inactivityTimeout: true });
+  }
+
+  @Cron(CronExpression.EVERY_SECOND)
+  async processCustomerChanged() {
+    const consumer = new ConsumerFactory(
+      async (
+        messages: KafkaMessage[],
+        { resolveOffset, heartbeat }: EachBatchPayload
+      ): Promise<boolean> => {
+        await Promise.all(
+          messages.map(async (kafkaMessage) => {
+            const decodedMessage = decodeMessage(kafkaMessage);
+            // TODO: catch parse/decoding errors, else it can become a "poison pill"
+            if (decodedMessage.type !== KafkaMessageType.CustomerChanged) {
+              return;
+            }
+            // TODO: handle errors
+            await this.customersService.handleCustomerChange(
+              decodedMessage.message
+            );
+            resolveOffset(kafkaMessage.offset);
+            await heartbeat();
+          })
+        );
+
+        return true;
+      }
+    );
+
+    consumer.startBatchConsumer(getCustomerChangesTopic());
   }
 
   @Cron(CronExpression.EVERY_HOUR)
