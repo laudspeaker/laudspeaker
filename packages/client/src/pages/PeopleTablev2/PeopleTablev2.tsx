@@ -125,7 +125,7 @@ const PeopleTablev2 = () => {
         key: string;
       }[]
     >({
-      url: `/customers/possible-attributes?key=${q}`,
+      url: `/customers/possible-attributes?key=${q}&isArray=false`,
     });
 
     setPossibleKeys(data.map((item) => item.key));

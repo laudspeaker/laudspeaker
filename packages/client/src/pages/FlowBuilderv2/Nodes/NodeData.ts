@@ -1,5 +1,12 @@
 import {
   ComparisonType,
+  GeneralSelectedType,
+  MessageEmailEventCondition,
+  MessageEventTypes,
+  MessageGeneralComparison,
+  MessageInAPPEventCondition,
+  MessagePushEventCondition,
+  MessageSMSEventCondition,
   StatementValueType,
 } from "reducers/flow-builder.reducer";
 import { MessageType, ProviderType } from "types/Workflow";
@@ -9,6 +16,8 @@ export enum BranchType {
   EVENT = "event",
   MAX_TIME = "maxTime",
   ATTRIBUTE = "attribute",
+  WU_ATTRIBUTE = "wu_attribute",
+  MESSAGE = "message",
 }
 
 export enum LogicRelation {
@@ -63,7 +72,43 @@ export interface HitCondition extends CommonCondition {
   statements: Statement[];
 }
 
-export type Condition = HitCondition | TrackerCondition;
+export enum WUAttributeHappenCondition {
+  CHANGED = "changed",
+  CHANGED_TO = "changed to",
+}
+
+export interface WUAttributeCondition extends CommonCondition {
+  providerType: ProviderType.WU_ATTRIBUTE;
+  attributeName: string;
+  happenCondition: WUAttributeHappenCondition;
+  valueType: Exclude<
+    StatementValueType,
+    StatementValueType.ARRAY | StatementValueType.OBJECT
+  >;
+  value: string;
+}
+
+export interface MessageCondition extends CommonCondition {
+  providerType:
+    | ProviderType.EMAIL_MESSAGE
+    | ProviderType.SMS_MESSAGE
+    | ProviderType.IN_APP_MESSAGE
+    | ProviderType.PUSH_MESSAGE;
+  from?: GeneralSelectedType;
+  happenCondition: MessageGeneralComparison;
+  eventCondition:
+    | MessageEmailEventCondition
+    | MessagePushEventCondition
+    | MessageSMSEventCondition
+    | MessageInAPPEventCondition;
+  fromSpecificMessage: GeneralSelectedType;
+}
+
+export type Condition =
+  | HitCondition
+  | TrackerCondition
+  | MessageCondition
+  | WUAttributeCondition;
 
 export interface CommonBranch {
   id: string;
@@ -71,6 +116,16 @@ export interface CommonBranch {
 
 export interface EventBranch extends CommonBranch {
   type: BranchType.EVENT;
+  conditions: Condition[];
+}
+
+export interface MessageBranch extends CommonBranch {
+  type: BranchType.MESSAGE;
+  conditions: Condition[];
+}
+
+export interface WUAttributeBranch extends CommonBranch {
+  type: BranchType.WU_ATTRIBUTE;
   conditions: Condition[];
 }
 
@@ -102,7 +157,11 @@ export interface TimeWindowBranch extends CommonMaxTimeBranch {
 
 export type MaxTimeBranch = TimeDelayBranch | TimeWindowBranch;
 
-export type WaitUntilBranch = EventBranch | MaxTimeBranch;
+export type WaitUntilBranch =
+  | EventBranch
+  | MaxTimeBranch
+  | MessageBranch
+  | WUAttributeBranch;
 
 export interface AttributeStatement {
   key: string;
@@ -122,7 +181,12 @@ export interface AttributeBranch extends CommonBranch {
   attributeConditions: AttributeCondition[];
 }
 
-export type Branch = EventBranch | MaxTimeBranch | AttributeBranch;
+export type Branch =
+  | EventBranch
+  | MaxTimeBranch
+  | AttributeBranch
+  | MessageBranch
+  | WUAttributeBranch;
 
 export interface Stats {
   sent?: number;
@@ -157,8 +221,17 @@ export interface TimeDelayNodeData extends CommonNodeData {
   delay: DelayData;
 }
 
+export enum TimeWindowTypes {
+  SPEC_DATES = "SpecDates",
+  SPEC_WEEK_DAYS = "SpecWeekDays",
+}
+
 export interface TimeWindowNodeData extends CommonNodeData {
   type: NodeType.TIME_WINDOW;
+  windowType?: TimeWindowTypes;
+  onDays?: number[];
+  fromTime?: string;
+  toTime?: string;
   from?: string;
   to?: string;
 }

@@ -22,9 +22,18 @@ export enum StepType {
   TRACKER = 'tracker',
 }
 
+export enum TimeWindowTypes {
+  SPEC_DATES = 'SpecDates',
+  SPEC_WEEK_DAYS = 'SpecWeekDays',
+}
+
 export class TimeWindow {
   from: Temporal.Instant;
   to: Temporal.Instant;
+  windowType?: TimeWindowTypes;
+  onDays?: number[];
+  fromTime?: string;
+  toTime?: string;
 }
 
 export enum ElementConditionFilter {

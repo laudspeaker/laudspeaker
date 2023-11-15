@@ -5,8 +5,13 @@ import Select from "components/Elements/Selectv2/Select";
 import {
   Condition,
   ElementKey,
+  ElementStatement,
   LogicRelation,
+  MessageCondition,
+  PropertyStatement,
   StatementType,
+  WUAttributeCondition,
+  WUAttributeHappenCondition,
 } from "pages/FlowBuilderv2/Nodes/NodeData";
 import React, { FC, useEffect, useId, useState } from "react";
 import { useDebounce } from "react-use";
@@ -18,16 +23,21 @@ import {
   removeSidePanelError,
 } from "reducers/flow-builder.reducer";
 import ApiService from "services/api.service";
-import { ProviderType } from "types/Workflow";
+import { ProviderType, Workflow } from "types/Workflow";
 import TrackerEditor from "./TrackerEditor";
 import { useAppSelector } from "store/hooks";
 import { useDispatch } from "react-redux";
+import { MessageEditor } from "./MessageEditor";
+import { WUAttributeEditor } from "./WUAttributeEditor";
 
 export enum ConditionEditorError {
   NO_PROPERTY_SPECIFIED,
   NO_VALUE_SPECIFIED,
   NO_TRACKER_SPECIFiED,
   NO_TRACKER_EVENT_SPECIFiED,
+  NO_JOURNEY_SPECIFiED,
+  NO_ATTRIBUTE_SELECTED,
+  UNSUPPORTED_ATTRIBUTE_TYPE,
 }
 
 export const errorToMessageMap: Record<ConditionEditorError, string> = {
@@ -35,6 +45,10 @@ export const errorToMessageMap: Record<ConditionEditorError, string> = {
   [ConditionEditorError.NO_VALUE_SPECIFIED]: "No value specified",
   [ConditionEditorError.NO_TRACKER_SPECIFiED]: "No template specified",
   [ConditionEditorError.NO_TRACKER_EVENT_SPECIFiED]: "No event specified",
+  [ConditionEditorError.NO_JOURNEY_SPECIFiED]: "No journey specified",
+  [ConditionEditorError.NO_ATTRIBUTE_SELECTED]: "No attribute specified",
+  [ConditionEditorError.UNSUPPORTED_ATTRIBUTE_TYPE]:
+    "Unsupportable attribute type",
 };
 
 export const statementTypeTitleMap: Record<StatementType, string> = {
@@ -78,7 +92,7 @@ const ConditionEditor: FC<ConditionEditorProps> = ({
         isArray: boolean;
       }[]
     >({
-      url: `/customers/possible-attributes?key=${query}`,
+      url: `/customers/possible-attributes?key=${query}&isArray=false`,
     });
 
     setPossibleKeys(data);
@@ -101,22 +115,22 @@ const ConditionEditor: FC<ConditionEditorProps> = ({
   };
 
   const handleAddStatement = (type: StatementType) => {
-    if (condition.providerType === ProviderType.TRACKER) return;
+    if (condition.providerType !== ProviderType.CUSTOM) return;
 
     setCondition({
       ...condition,
       statements: [
         ...condition.statements,
         type === StatementType.PROPERTY
-          ? {
+          ? ({
               type,
               key: "",
               comparisonType: ComparisonType.EQUALS,
               valueType: StatementValueType.NUMBER,
               value: "",
               relationToNext: LogicRelation.OR,
-            }
-          : {
+            } as PropertyStatement)
+          : ({
               type,
               order: 0,
               elementKey: ElementKey.TAG_NAME,
@@ -124,23 +138,31 @@ const ConditionEditor: FC<ConditionEditorProps> = ({
               valueType: StatementValueType.NUMBER,
               value: "",
               relationToNext: LogicRelation.OR,
-            },
+            } as ElementStatement),
       ],
     });
   };
 
   const errors: ConditionEditorError[][] = [];
 
-  if (condition.providerType !== ProviderType.TRACKER) {
+  if (
+    condition.providerType === ProviderType.CUSTOM ||
+    condition.providerType === ProviderType.POSTHOG
+  ) {
     for (const statement of condition.statements) {
       const statementErrors: ConditionEditorError[] = [];
 
-      if (!statement.value) {
-        statementErrors.push(ConditionEditorError.NO_VALUE_SPECIFIED);
-      }
+      if (
+        statement.type == StatementType.ELEMENT ||
+        statement.type == StatementType.PROPERTY
+      ) {
+        if (!statement.value) {
+          statementErrors.push(ConditionEditorError.NO_VALUE_SPECIFIED);
+        }
 
-      if (statement.type === StatementType.PROPERTY && !statement.key) {
-        statementErrors.push(ConditionEditorError.NO_PROPERTY_SPECIFIED);
+        if (statement.type === StatementType.PROPERTY && !statement.key) {
+          statementErrors.push(ConditionEditorError.NO_PROPERTY_SPECIFIED);
+        }
       }
 
       errors.push(statementErrors);
@@ -154,6 +176,33 @@ const ConditionEditor: FC<ConditionEditorProps> = ({
 
     if (!condition.event) {
       statementErrors.push(ConditionEditorError.NO_TRACKER_EVENT_SPECIFiED);
+    }
+
+    errors.push(statementErrors);
+  } else if (condition.providerType === ProviderType.WU_ATTRIBUTE) {
+    const statementErrors: ConditionEditorError[] = [];
+
+    if (!(condition as WUAttributeCondition).attributeName) {
+      statementErrors.push(ConditionEditorError.NO_ATTRIBUTE_SELECTED);
+    }
+
+    // Might be removed later when support of those two will be added
+    if (
+      [StatementValueType.ARRAY, StatementValueType.OBJECT].includes(
+        (condition as WUAttributeCondition).valueType
+      ) &&
+      (condition as WUAttributeCondition).happenCondition ===
+        WUAttributeHappenCondition.CHANGED_TO
+    ) {
+      statementErrors.push(ConditionEditorError.UNSUPPORTED_ATTRIBUTE_TYPE);
+    }
+
+    errors.push(statementErrors);
+  } else {
+    const statementErrors: ConditionEditorError[] = [];
+
+    if (!(condition as MessageCondition).from) {
+      statementErrors.push(ConditionEditorError.NO_JOURNEY_SPECIFiED);
     }
 
     errors.push(statementErrors);
@@ -184,57 +233,97 @@ const ConditionEditor: FC<ConditionEditorProps> = ({
     if (requireSaveEmit) handleSave();
   }, [requireSaveEmit]);
 
+  const isMessageEditing = [
+    ProviderType.EMAIL_MESSAGE,
+    ProviderType.IN_APP_MESSAGE,
+    ProviderType.PUSH_MESSAGE,
+    ProviderType.SMS_MESSAGE,
+  ].includes(condition.providerType);
+
   return (
     <div className="condition-editor flex flex-col gap-[10px] p-[10px] bg-[#F3F4F6]">
       <div className="font-inter font-semibold text-[14px] leading-[22px]">
-        Event
+        {isMessageEditing
+          ? "Message"
+          : condition.providerType === ProviderType.WU_ATTRIBUTE
+          ? "Attribute"
+          : "Event"}
       </div>
-      <div className="flex gap-[10px]">
-        <Select
-          value={condition.providerType}
-          options={[
-            // Removed for 1 release
-            // { key: ProviderType.POSTHOG, title: "Posthog" },
-            { key: ProviderType.CUSTOM, title: "Custom" },
-            { key: ProviderType.TRACKER, title: "Tracker" },
-          ]}
-          onChange={(value) =>
-            value === ProviderType.TRACKER
-              ? setCondition({
-                  providerType: ProviderType.TRACKER,
-                  relationToNext: condition.relationToNext,
-                })
-              : setCondition({
-                  providerType: value,
-                  name: "",
-                  statements: [],
-                  relationToNext: condition.relationToNext,
-                })
-          }
-        />
-
-        {condition.providerType !== ProviderType.TRACKER && (
-          <FlowBuilderAutoComplete
-            value={condition.name}
-            includedItems={
-              condition.providerType === ProviderType.POSTHOG
-                ? {
-                    type: "setter",
-                    getItems: loadPossiblePosthogEventTypes,
-                  }
-                : { type: "getter", items: [] }
+      {condition.providerType !== ProviderType.WU_ATTRIBUTE && (
+        <div className="flex gap-[10px]">
+          <Select
+            value={condition.providerType}
+            options={[
+              // Removed for 1 release
+              // { key: ProviderType.POSTHOG, title: "Posthog" },
+              ...(isMessageEditing
+                ? [
+                    { key: ProviderType.EMAIL_MESSAGE, title: "Email" },
+                    { key: ProviderType.SMS_MESSAGE, title: "SMS" },
+                    { key: ProviderType.PUSH_MESSAGE, title: "Push" },
+                    {
+                      key: ProviderType.IN_APP_MESSAGE,
+                      title: "In-App message",
+                    },
+                  ]
+                : [
+                    { key: ProviderType.CUSTOM, title: "Custom" },
+                    { key: ProviderType.TRACKER, title: "Tracker" },
+                  ]),
+            ]}
+            onChange={(value) =>
+              value === ProviderType.TRACKER
+                ? setCondition({
+                    providerType: ProviderType.TRACKER,
+                    relationToNext: condition.relationToNext,
+                  })
+                : isMessageEditing
+                ? setCondition({
+                    ...condition,
+                    providerType: value,
+                    relationToNext: condition.relationToNext,
+                    from: undefined,
+                    fromSpecificMessage: {
+                      key: "ANY",
+                      title: "Any message",
+                    },
+                    eventCondition: "received",
+                    happenCondition: "has",
+                  } as MessageCondition)
+                : setCondition({
+                    providerType: value,
+                    name: "",
+                    statements: [],
+                    relationToNext: condition.relationToNext,
+                  })
             }
-            retrieveLabel={(item) => item}
-            onQueryChange={(query) => {
-              setCondition({ ...condition, name: query });
-            }}
-            onSelect={(value) => {
-              setCondition({ ...condition, name: value });
-            }}
-            placeholder="Event name"
           />
-        )}
-      </div>
+
+          {(condition.providerType === ProviderType.CUSTOM ||
+            condition.providerType === ProviderType.POSTHOG) &&
+            !isMessageEditing && (
+              <FlowBuilderAutoComplete
+                value={condition.name}
+                includedItems={
+                  condition.providerType === ProviderType.POSTHOG
+                    ? {
+                        type: "setter",
+                        getItems: loadPossiblePosthogEventTypes,
+                      }
+                    : { type: "getter", items: [] }
+                }
+                retrieveLabel={(item) => item}
+                onQueryChange={(query) => {
+                  setCondition({ ...condition, name: query });
+                }}
+                onSelect={(value) => {
+                  setCondition({ ...condition, name: value });
+                }}
+                placeholder="Event name"
+              />
+            )}
+        </div>
+      )}
 
       {condition.providerType === ProviderType.TRACKER ? (
         <TrackerEditor
@@ -263,7 +352,7 @@ const ConditionEditor: FC<ConditionEditorProps> = ({
           event={condition.event}
           onEventChange={(event) => setCondition({ ...condition, event })}
         />
-      ) : (
+      ) : condition.providerType === ProviderType.CUSTOM ? (
         <>
           {condition.statements.map((statement, i) => (
             <React.Fragment key={i}>
@@ -306,9 +395,13 @@ const ConditionEditor: FC<ConditionEditorProps> = ({
                             ...statement,
                             key: value,
                           };
-                          condition.statements[i].valueType =
+                          (
+                            condition.statements[i] as PropertyStatement
+                          ).valueType =
                             possibleKeys.find((item) => item.key === value)
-                              ?.type || condition.statements[i].valueType;
+                              ?.type ||
+                            (condition.statements[i] as PropertyStatement)
+                              .valueType;
 
                           setKeysQuery(value);
                           setCondition({ ...condition });
@@ -333,7 +426,7 @@ const ConditionEditor: FC<ConditionEditorProps> = ({
                         </div>
                       )}
                   </div>
-                ) : (
+                ) : statement.type === StatementType.ELEMENT ? (
                   <>
                     <div className="flex items-center justify-between">
                       <div className="font-inter font-normal text-[14px] leading-[22px]">
@@ -387,69 +480,80 @@ const ConditionEditor: FC<ConditionEditorProps> = ({
                       </select>
                     </div>
                   </>
+                ) : (
+                  <></>
                 )}
-
-                <div className="flex gap-[10px]">
-                  <select
-                    value={statement.comparisonType}
-                    onChange={(e) => {
-                      condition.statements[i].comparisonType = e.target
-                        .value as ComparisonType;
-                      setCondition({ ...condition });
-                    }}
-                    className="comparison-type-select w-[145px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB]"
-                  >
-                    {valueTypeToComparisonTypesMap[statement.valueType].map(
-                      (comparisonType, j) => (
-                        <option key={j} value={comparisonType}>
-                          {comparisonType}
-                        </option>
-                      )
-                    )}
-                  </select>
-                  <select
-                    value={statement.valueType}
-                    onChange={(e) => {
-                      condition.statements[i].valueType = e.target
-                        .value as StatementValueType;
-                      setCondition({ ...condition });
-                    }}
-                    className="value-type-select w-[145px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB]"
-                  >
-                    {Object.values(StatementValueType).map((valueType, j) => (
-                      <option key={j} value={valueType}>
-                        {valueType}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="flex flex-col gap-[10px]">
-                  <div className="dynamic-input w-full">
-                    <FlowBuilderDynamicInput
-                      type={statement.valueType}
-                      value={statement.value}
-                      onChange={(value) => {
-                        condition.statements[i].value = value;
-                        setCondition({ ...condition });
-                      }}
-                    />
-                  </div>
-
-                  {showErrors &&
-                    errors[i].some(
-                      (statementError) =>
-                        statementError ===
-                        ConditionEditorError.NO_VALUE_SPECIFIED
-                    ) && (
-                      <div className="font-inter font-normal text-[12px] leading-[20px] text-[#E11D48]">
-                        {
-                          errorToMessageMap[
-                            ConditionEditorError.NO_VALUE_SPECIFIED
-                          ]
-                        }
+                {statement.type === StatementType.ELEMENT ||
+                  (statement.type === StatementType.PROPERTY && (
+                    <>
+                      <div className="flex gap-[10px]">
+                        <select
+                          value={statement.comparisonType}
+                          onChange={(e) => {
+                            // @ts-ignore
+                            condition.statements[i].comparisonType = e.target
+                              .value as ComparisonType;
+                            setCondition({ ...condition });
+                          }}
+                          className="comparison-type-select w-[145px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB]"
+                        >
+                          {valueTypeToComparisonTypesMap[
+                            statement.valueType
+                          ].map((comparisonType, j) => (
+                            <option key={j} value={comparisonType}>
+                              {comparisonType}
+                            </option>
+                          ))}
+                        </select>
+                        <select
+                          value={statement.valueType}
+                          onChange={(e) => {
+                            // @ts-ignore
+                            condition.statements[i].valueType = e.target
+                              .value as StatementValueType;
+                            setCondition({ ...condition });
+                          }}
+                          className="value-type-select w-[145px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB]"
+                        >
+                          {Object.values(StatementValueType).map(
+                            (valueType, j) => (
+                              <option key={j} value={valueType}>
+                                {valueType}
+                              </option>
+                            )
+                          )}
+                        </select>
                       </div>
-                    )}
-                </div>
+                      <div className="flex flex-col gap-[10px]">
+                        <div className="dynamic-input w-full">
+                          <FlowBuilderDynamicInput
+                            type={statement.valueType}
+                            value={statement.value}
+                            onChange={(value) => {
+                              // @ts-ignore
+                              condition.statements[i].value = value;
+                              setCondition({ ...condition });
+                            }}
+                          />
+                        </div>
+
+                        {showErrors &&
+                          errors[i].some(
+                            (statementError) =>
+                              statementError ===
+                              ConditionEditorError.NO_VALUE_SPECIFIED
+                          ) && (
+                            <div className="font-inter font-normal text-[12px] leading-[20px] text-[#E11D48]">
+                              {
+                                errorToMessageMap[
+                                  ConditionEditorError.NO_VALUE_SPECIFIED
+                                ]
+                              }
+                            </div>
+                          )}
+                      </div>
+                    </>
+                  ))}
               </div>
               {i !== condition.statements.length - 1 && (
                 <select
@@ -502,9 +606,48 @@ const ConditionEditor: FC<ConditionEditorProps> = ({
             </div>
           </div>
         </>
+      ) : isMessageEditing ? (
+        <MessageEditor
+          showErrors={showErrors}
+          errors={{
+            [ConditionEditorError.NO_JOURNEY_SPECIFiED]: errors[0].some(
+              (statementError) =>
+                statementError === ConditionEditorError.NO_JOURNEY_SPECIFiED
+            )
+              ? errorToMessageMap[ConditionEditorError.NO_JOURNEY_SPECIFiED]
+              : "",
+          }}
+          condition={condition as MessageCondition}
+          onChange={setCondition}
+        />
+      ) : condition.providerType === ProviderType.WU_ATTRIBUTE ? (
+        <WUAttributeEditor
+          showErrors={showErrors}
+          errors={{
+            [ConditionEditorError.NO_ATTRIBUTE_SELECTED]: errors[0].some(
+              (statementError) =>
+                statementError === ConditionEditorError.NO_ATTRIBUTE_SELECTED
+            )
+              ? errorToMessageMap[ConditionEditorError.NO_ATTRIBUTE_SELECTED]
+              : "",
+            [ConditionEditorError.UNSUPPORTED_ATTRIBUTE_TYPE]: errors[0].some(
+              (statementError) =>
+                statementError ===
+                ConditionEditorError.UNSUPPORTED_ATTRIBUTE_TYPE
+            )
+              ? errorToMessageMap[
+                  ConditionEditorError.UNSUPPORTED_ATTRIBUTE_TYPE
+                ]
+              : "",
+          }}
+          condition={condition as WUAttributeCondition}
+          onChange={setCondition}
+        />
+      ) : (
+        <></>
       )}
 
-      <div className="flex justify-between items-center">
+      <div className="flex justify-end items-center">
         <div className="flex gap-[10px]">
           <Button
             className="cancel-condition"

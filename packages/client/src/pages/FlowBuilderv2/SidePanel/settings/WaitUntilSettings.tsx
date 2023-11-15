@@ -3,9 +3,13 @@ import {
   BranchType,
   Condition,
   LogicRelation,
+  MessageBranch,
+  MessageCondition,
   TimeType,
   WaitUntilBranch,
   WaitUntilNodeData,
+  WUAttributeCondition,
+  WUAttributeHappenCondition,
 } from "pages/FlowBuilderv2/Nodes/NodeData";
 import React, { FC } from "react";
 import { ProviderType } from "types/Workflow";
@@ -17,6 +21,15 @@ import Button, { ButtonType } from "components/Elements/Buttonv2/Button";
 import { toast } from "react-toastify";
 import deepCopy from "utils/deepCopy";
 import { useAppSelector } from "store/hooks";
+import Select from "components/Elements/Selectv2";
+import { StatementValueType } from "reducers/flow-builder.reducer";
+
+const branchNaming = {
+  [BranchType.EVENT]: "Event",
+  [BranchType.MAX_TIME]: "Max time",
+  [BranchType.MESSAGE]: "Message",
+  [BranchType.WU_ATTRIBUTE]: "Attribute",
+};
 
 const WaitUntilSettings: FC<SidePanelComponentProps<WaitUntilNodeData>> = ({
   nodeData,
@@ -42,6 +55,45 @@ const WaitUntilSettings: FC<SidePanelComponentProps<WaitUntilNodeData>> = ({
     setNodeData({ ...nodeData, branches: [...branches, newBranch] });
   };
 
+  const handleAddMessageBranch = (providerType: ProviderType) => {
+    const newBranch: Branch = {
+      id: uuid(),
+      type: BranchType.MESSAGE,
+      conditions: [
+        {
+          providerType,
+          relationToNext: LogicRelation.OR,
+          from: undefined,
+          fromSpecificMessage: {
+            key: "ANY",
+            title: "Any message",
+          },
+          eventCondition: "received",
+          happenCondition: "has",
+        } as MessageCondition,
+      ],
+    };
+    setNodeData({ ...nodeData, branches: [...branches, newBranch] });
+  };
+
+  const handleWUAttributeBranch = () => {
+    const newBranch: Branch = {
+      id: uuid(),
+      type: BranchType.WU_ATTRIBUTE,
+      conditions: [
+        {
+          providerType: ProviderType.WU_ATTRIBUTE,
+          attributeName: "",
+          happenCondition: WUAttributeHappenCondition.CHANGED,
+          value: "",
+          valueType: StatementValueType.STRING,
+          relationToNext: LogicRelation.OR,
+        } as WUAttributeCondition,
+      ],
+    };
+    setNodeData({ ...nodeData, branches: [...branches, newBranch] });
+  };
+
   const handleAddMaxTimeBranch = () => {
     const newBranch: Branch = {
       id: uuid(),
@@ -57,18 +109,58 @@ const WaitUntilSettings: FC<SidePanelComponentProps<WaitUntilNodeData>> = ({
     setNodeData({ ...nodeData, branches: [...branches, newBranch] });
   };
 
-  const handleAddCondition = (i: number) => {
+  const handleAddCondition = (i: number, providerType: ProviderType) => {
     const branchToChange = branches[i];
-    if (branchToChange.type !== BranchType.EVENT) return;
 
-    branchToChange.conditions.push({
-      name: "",
-      providerType: ProviderType.CUSTOM,
-      statements: [],
-      relationToNext:
-        branchToChange.conditions[branchToChange.conditions.length - 1]
-          ?.relationToNext || LogicRelation.OR,
-    });
+    const isMessageEditing = [
+      ProviderType.EMAIL_MESSAGE,
+      ProviderType.IN_APP_MESSAGE,
+      ProviderType.PUSH_MESSAGE,
+      ProviderType.SMS_MESSAGE,
+    ].includes(providerType);
+
+    if (
+      branchToChange.type !== BranchType.EVENT &&
+      branchToChange.type !== BranchType.MESSAGE &&
+      branchToChange.type !== BranchType.WU_ATTRIBUTE
+    )
+      return;
+
+    if (!isMessageEditing && providerType !== ProviderType.WU_ATTRIBUTE) {
+      branchToChange.conditions.push({
+        name: "",
+        providerType: ProviderType.CUSTOM,
+        statements: [],
+        relationToNext:
+          branchToChange.conditions[branchToChange.conditions.length - 1]
+            ?.relationToNext || LogicRelation.OR,
+      });
+    } else if (providerType === ProviderType.WU_ATTRIBUTE) {
+      branchToChange.conditions.push({
+        providerType: ProviderType.WU_ATTRIBUTE,
+        attributeName: "",
+        happenCondition: WUAttributeHappenCondition.CHANGED,
+        value: "",
+        valueType: StatementValueType.STRING,
+        relationToNext:
+          branchToChange.conditions[branchToChange.conditions.length - 1]
+            ?.relationToNext || LogicRelation.OR,
+      } as WUAttributeCondition);
+    } else {
+      branchToChange.conditions.push({
+        providerType,
+        relationToNext:
+          branchToChange.conditions[branchToChange.conditions.length - 1]
+            ?.relationToNext || LogicRelation.OR,
+        from: undefined,
+        fromSpecificMessage: {
+          key: "ANY",
+          title: "Any message",
+        },
+        eventCondition: "received",
+        happenCondition: "has",
+      } as MessageCondition);
+    }
 
     setNodeData({ ...nodeData, branches });
   };
@@ -86,7 +178,13 @@ const WaitUntilSettings: FC<SidePanelComponentProps<WaitUntilNodeData>> = ({
   ) => {
     const branchToChange = branches[i];
 
-    if (branchToChange.type !== BranchType.EVENT) return;
+    if (
+      branchToChange.type !== BranchType.EVENT &&
+      branchToChange.type !== BranchType.MESSAGE &&
+      branchToChange.type !== BranchType.WU_ATTRIBUTE
+    )
+      return;
+
     const branchToCheck = deepCopy(branchToChange);
 
     branchToCheck.conditions[j] = {
@@ -99,7 +197,8 @@ const WaitUntilSettings: FC<SidePanelComponentProps<WaitUntilNodeData>> = ({
         arr[0].providerType === el.providerType &&
         arr[0].providerType !== ProviderType.TRACKER &&
         el.providerType !== ProviderType.TRACKER &&
-        arr[0].name === el.name
+        // @ts-ignore TODO:FIX
+        arr[0]?.name === el?.name
     );
 
     if (
@@ -163,7 +262,12 @@ const WaitUntilSettings: FC<SidePanelComponentProps<WaitUntilNodeData>> = ({
   const handleDeleteCondition = (i: number, j: number) => {
     const branchToChange = branches[i];
 
-    if (branchToChange.type !== BranchType.EVENT) return;
+    if (
+      branchToChange.type !== BranchType.EVENT &&
+      branchToChange.type !== BranchType.MESSAGE &&
+      branchToChange.type !== BranchType.WU_ATTRIBUTE
+    )
+      return;
 
     branchToChange.conditions.splice(j, 1);
     setNodeData({ ...nodeData, branches });
@@ -175,7 +279,8 @@ const WaitUntilSettings: FC<SidePanelComponentProps<WaitUntilNodeData>> = ({
     setNodeData({ ...nodeData, branches });
   };
 
-  const onAddCondition = (i: number) => () => handleAddCondition(i);
+  const onAddCondition = (i: number) => (providerType: ProviderType) =>
+    handleAddCondition(i, providerType);
   const onDeleteBranch = (i: number) => () => handleDeleteBranch(i);
   const onConditionChange =
     (i: number) =>
@@ -192,8 +297,7 @@ const WaitUntilSettings: FC<SidePanelComponentProps<WaitUntilNodeData>> = ({
         <div key={i} className="mb-[20px] flex flex-col gap-[10px]">
           <div className="font-inter font-semibold text-[16px] leading-[24px] text-[#18181B] flex items-center justify-between">
             <div>
-              Branch {i + 1} -{" "}
-              {branch.type === BranchType.EVENT ? "Event" : "Max time"}
+              Branch {i + 1} - {branchNaming[branch.type]}
             </div>
 
             <Button
@@ -204,32 +308,81 @@ const WaitUntilSettings: FC<SidePanelComponentProps<WaitUntilNodeData>> = ({
               Delete branch
             </Button>
           </div>
-          {branch.type === BranchType.EVENT ? (
+          {branch.type === BranchType.EVENT ||
+          branch.type === BranchType.MESSAGE ||
+          branch.type === BranchType.WU_ATTRIBUTE ? (
             <EventBranchEditor
               onAddCondition={onAddCondition(i)}
               onConditionChange={onConditionChange(i)}
               onDeleteCondition={onDeleteCondition(i)}
               branch={branch}
             />
-          ) : (
+          ) : branch.type === BranchType.MAX_TIME ? (
             <MaxTimeBranchEditor
               branch={branch}
               onChangeBranch={onChangeBranch(i)}
             />
+          ) : (
+            <></>
           )}
         </div>
       ))}
 
       <div className="pb-[20px] flex gap-[20px]">
-        <Button
-          type={ButtonType.SECONDARY}
-          onClick={handleAddEventBranch}
-          disabled={isOnboarding || nodeData.branches.length > 14}
-          id="add-branch"
-        >
-          Add branch
-        </Button>
-
+        <Select
+          value={""}
+          onChange={(el) => {
+            const value = el?.split(";;");
+            if (value.length === 2 && value[0] === "message") {
+              handleAddMessageBranch(value[1] as ProviderType);
+            } else if (value[0] === BranchType.WU_ATTRIBUTE) {
+              handleWUAttributeBranch();
+            } else {
+              if (value[0] === BranchType.EVENT) {
+                handleAddEventBranch();
+              }
+            }
+          }}
+          className="max-w-[121px] hover:!outline-none focus:outline-none"
+          buttonInnerWrapperClassName="!rounded-[4px]"
+          placeholder="Add branch"
+          options={[
+            {
+              key: "UserDataLabel",
+              title: "User Data",
+              groupLabel: true,
+            },
+            {
+              key: BranchType.WU_ATTRIBUTE,
+              title: "Attribute",
+            },
+            {
+              key: BranchType.EVENT,
+              title: "Event",
+            },
+            {
+              key: "MessageLabel",
+              title: "Message",
+              groupLabel: true,
+            },
+            {
+              key: `${BranchType.MESSAGE};;${ProviderType.EMAIL_MESSAGE}`,
+              title: "Email",
+            },
+            {
+              key: `${BranchType.MESSAGE};;${ProviderType.PUSH_MESSAGE}`,
+              title: "Push",
+            },
+            {
+              key: `${BranchType.MESSAGE};;${ProviderType.SMS_MESSAGE}`,
+              title: "SMS",
+            },
+            {
+              key: `${BranchType.MESSAGE};;${ProviderType.IN_APP_MESSAGE}`,
+              title: "In-app message",
+            },
+          ]}
+        />
         <Button
           type={ButtonType.SECONDARY}
           onClick={handleAddMaxTimeBranch}
