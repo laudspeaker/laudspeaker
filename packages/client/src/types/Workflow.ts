@@ -1,4 +1,5 @@
 import { MarkerType } from "reactflow";
+import { QueryStatementType } from "reducers/flow-builder.reducer";
 
 export enum TriggerType {
   EVENT = "eventBased",
@@ -53,6 +54,11 @@ export enum ProviderType {
   POSTHOG = "posthog",
   CUSTOM = "custom",
   TRACKER = "tracker",
+  WU_ATTRIBUTE = "wu_attribute",
+  EMAIL_MESSAGE = "email_message",
+  SMS_MESSAGE = "sms_message",
+  PUSH_MESSAGE = "push_message",
+  IN_APP_MESSAGE = "in_app_message",
 }
 
 export interface Trigger {

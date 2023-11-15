@@ -93,8 +93,10 @@ const WaitUntilViewer: FC<SidePanelComponentProps<WaitUntilNodeData>> = ({
               </div>
               {branch.type === BranchType.EVENT ? (
                 <EventBranchView branch={branch} />
-              ) : (
+              ) : branch.type === BranchType.MAX_TIME ? (
                 <MaxTimeBranchView branch={branch} />
+              ) : (
+                <></>
               )}
             </div>
           ))}

@@ -111,7 +111,9 @@ export const BranchEdge: FC<EdgeProps<BranchEdgeData>> = ({
                 <span className="font-semibold">
                   <span>Branch {branchIndex + 1}: </span>
                 </span>
-                {branch.type === BranchType.EVENT ? (
+                {branch.type === BranchType.EVENT ||
+                branch.type === BranchType.MESSAGE ||
+                branch.type === BranchType.WU_ATTRIBUTE ? (
                   branch.conditions.length === 0 ? (
                     <span className="text-[#E11D48]">Has no conditions</span>
                   ) : (

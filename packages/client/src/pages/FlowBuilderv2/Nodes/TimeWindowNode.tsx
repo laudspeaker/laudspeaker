@@ -1,7 +1,7 @@
 import React, { FC } from "react";
 import { Handle, NodeProps, Position } from "reactflow";
 import { TimeWindowIcon, UserIcon } from "../Icons";
-import { TimeWindowNodeData } from "./NodeData";
+import { TimeWindowNodeData, TimeWindowTypes } from "./NodeData";
 import { useAppSelector } from "store/hooks";
 import { NodeDevModeHighlighter } from "./NodeDevModeHighlighter";
 
@@ -11,7 +11,17 @@ export const TimeWindowNode: FC<NodeProps<TimeWindowNodeData>> = ({
   id,
   isConnectable,
   selected,
-  data: { from, to, showErrors, disabled, customersCount },
+  data: {
+    from,
+    to,
+    showErrors,
+    disabled,
+    customersCount,
+    windowType,
+    fromTime,
+    toTime,
+    onDays,
+  },
 }) => {
   const { isViewMode } = useAppSelector((state) => state.flowBuilder);
 
@@ -47,7 +57,7 @@ export const TimeWindowNode: FC<NodeProps<TimeWindowNodeData>> = ({
           )}
         </div>
         <div className="font-normal text-[14px] leading-[22px] text-[#4B5563]">
-          {from && to ? (
+          {from && to && windowType === TimeWindowTypes.SPEC_DATES ? (
             <div className="max-h-[22px] overflow-hidden whitespace-nowrap text-ellipsis">
               From{" "}
               {new Intl.DateTimeFormat("en-GB", {
@@ -65,6 +75,13 @@ export const TimeWindowNode: FC<NodeProps<TimeWindowNodeData>> = ({
                 hour: "numeric",
                 minute: "numeric",
               }).format(new Date(to))}
+            </div>
+          ) : fromTime &&
+            toTime &&
+            windowType === TimeWindowTypes.SPEC_WEEK_DAYS ? (
+            <div className="max-h-[22px] overflow-hidden whitespace-nowrap text-ellipsis">
+              From {fromTime} to {toTime}{" "}
+              {(onDays || []).filter((el) => el).length} days per week
             </div>
           ) : (
             <span

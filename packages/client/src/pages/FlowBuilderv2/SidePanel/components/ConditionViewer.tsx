@@ -1,10 +1,15 @@
+import { capitalize } from "lodash";
 import {
   Condition,
   ElementKey,
   LogicRelation,
+  MessageCondition,
   StatementType,
+  WUAttributeCondition,
+  WUAttributeHappenCondition,
 } from "pages/FlowBuilderv2/Nodes/NodeData";
 import React, { FC } from "react";
+import { WaitUntilMessageProviderCorelation } from "reducers/flow-builder.reducer";
 import { useAppSelector } from "store/hooks";
 import { ProviderType } from "types/Workflow";
 
@@ -20,6 +25,13 @@ const ConditionViewer: FC<ConditionViewerProps> = ({
   onDelete,
 }) => {
   const { isOnboarding } = useAppSelector((state) => state.flowBuilder);
+
+  const isMessageEditing = [
+    ProviderType.EMAIL_MESSAGE,
+    ProviderType.IN_APP_MESSAGE,
+    ProviderType.PUSH_MESSAGE,
+    ProviderType.SMS_MESSAGE,
+  ].includes(condition.providerType);
 
   return (
     <div
@@ -37,6 +49,14 @@ const ConditionViewer: FC<ConditionViewerProps> = ({
                 {condition.name || "[empty]"}
               </span>
             </>
+          ) : isMessageEditing ? (
+            <>
+              {capitalize(
+                WaitUntilMessageProviderCorelation[condition.providerType]
+              )}
+            </>
+          ) : condition.providerType === ProviderType.WU_ATTRIBUTE ? (
+            "Attribute"
           ) : (
             "Tracker"
           )}
@@ -106,7 +126,7 @@ const ConditionViewer: FC<ConditionViewerProps> = ({
             </div>
           )}
         </div>
-      ) : (
+      ) : condition.providerType === ProviderType.CUSTOM ? (
         <>
           {condition.statements.map((statement, k) => (
             <div className="flex gap-[10px]" key={k}>
@@ -132,7 +152,7 @@ const ConditionViewer: FC<ConditionViewerProps> = ({
                     {statement.value}
                   </span>
                 </div>
-              ) : (
+              ) : statement.type === StatementType.ELEMENT ? (
                 <div
                   className="font-inter font-normal text-[14px] leading-[22px]"
                   key={k}
@@ -148,10 +168,65 @@ const ConditionViewer: FC<ConditionViewerProps> = ({
                     {statement.value}
                   </span>
                 </div>
+              ) : (
+                <></>
               )}
             </div>
           ))}
         </>
+      ) : isMessageEditing ? (
+        <>
+          <div className="text-[14px] leading-[22px]">
+            {(condition as MessageCondition).fromSpecificMessage.key ===
+            "ANY" ? (
+              <span className="font-bold text-[#111827]">
+                Any {WaitUntilMessageProviderCorelation[condition.providerType]}
+              </span>
+            ) : (
+              <span className="px-[5px] py-[2px] border-[1px] border-[#E5E7EB] rounded-[2px] bg-white font-inter">
+                {(condition as MessageCondition).fromSpecificMessage.title}
+              </span>
+            )}
+            <span> from </span>
+            {(condition as MessageCondition).from?.key ? (
+              <span className="px-[5px] py-[2px] border-[1px] border-[#E5E7EB] rounded-[2px] bg-white font-inter">
+                {(condition as MessageCondition).from?.title}
+              </span>
+            ) : (
+              <span className="font-bold text-[#EB5757]">Select journey</span>
+            )}
+          </div>
+          <div className="text-[14px] leading-[22px] font-inter">
+            {(condition as MessageCondition).happenCondition} been{" "}
+            {(condition as MessageCondition).eventCondition}
+          </div>
+        </>
+      ) : condition.providerType === ProviderType.WU_ATTRIBUTE ? (
+        <div className="text-[14px] leading-[22px]">
+          {(condition as WUAttributeCondition).attributeName ? (
+            <span className="px-[5px] py-[2px] border-[1px] border-[#E5E7EB] rounded-[2px] bg-white font-inter">
+              {(condition as WUAttributeCondition).attributeName.split(";;")[0]}
+            </span>
+          ) : (
+            <span className="font-bold text-[#EB5757] font-inter">
+              Select attribute
+            </span>
+          )}
+          <span className="text-[#111827] font-inter">
+            {" "}
+            has been {(condition as WUAttributeCondition).happenCondition}{" "}
+          </span>
+          {(condition as WUAttributeCondition).happenCondition ===
+            WUAttributeHappenCondition.CHANGED_TO && (
+            <span className="px-[5px] py-[2px] border-[1px] border-[#E5E7EB] rounded-[2px] bg-white font-inter">
+              {(condition as WUAttributeCondition).value || (
+                <i className="opacity-70">Empty value</i>
+              )}
+            </span>
+          )}
+        </div>
+      ) : (
+        <></>
       )}
     </div>
   );

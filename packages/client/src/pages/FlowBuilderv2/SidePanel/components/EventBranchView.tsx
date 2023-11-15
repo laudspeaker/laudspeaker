@@ -36,7 +36,8 @@ const EventBranchView: FC<EventBranchViewProps> = ({ branch }) => {
                   </div>
                 )}
               </div>
-            ) : (
+            ) : condition.providerType === ProviderType.CUSTOM ||
+              condition.providerType === ProviderType.POSTHOG ? (
               <>
                 <span className="pb-3 font-semibold">{condition.name}</span>
                 {condition.statements.map((statement, j) => (
@@ -45,8 +46,20 @@ const EventBranchView: FC<EventBranchViewProps> = ({ branch }) => {
                       “
                       {statement.type === StatementType.PROPERTY
                         ? statement.key
-                        : statement.elementKey}
-                      ” {statement.comparisonType} “{statement.value}”{" "}
+                        : statement.type === StatementType.ELEMENT
+                        ? statement.elementKey
+                        : ""}
+                      ”{" "}
+                      {statement.type === StatementType.PROPERTY ||
+                      statement.type === StatementType.ELEMENT
+                        ? statement.comparisonType
+                        : ""}{" "}
+                      “
+                      {statement.type === StatementType.PROPERTY ||
+                      statement.type === StatementType.ELEMENT
+                        ? statement.value
+                        : ""}
+                      ”{" "}
                       {condition.statements.length !== j + 1 &&
                         statement.relationToNext}
                     </span>
@@ -59,6 +72,8 @@ const EventBranchView: FC<EventBranchViewProps> = ({ branch }) => {
                   </React.Fragment>
                 ))}
               </>
+            ) : (
+              <></>
             )}
           </div>
           {i !== branch.conditions.length - 1 && (

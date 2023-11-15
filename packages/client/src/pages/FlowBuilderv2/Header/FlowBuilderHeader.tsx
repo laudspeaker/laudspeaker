@@ -49,6 +49,13 @@ const isValidNodes = (nodes: Node<NodeData | EdgeData>[]): boolean => {
             branch.type === BranchType.ATTRIBUTE &&
             branch.attributeConditions.length === 0
         ))
+    //   ||
+    // (data.type === NodeType.TIME_WINDOW &&
+    //   data.branches.some(
+    //     (branch) =>
+    //       branch.type === BranchType.ATTRIBUTE &&
+    //       branch.attributeConditions.length === 0
+    //   ))
   );
   return filterNodeByData.length === 0;
 };
