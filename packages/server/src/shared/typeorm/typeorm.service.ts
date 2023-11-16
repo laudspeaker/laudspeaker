@@ -7,6 +7,7 @@ export class TypeOrmConfigService implements TypeOrmOptionsFactory {
       host: process.env.DATABASE_HOST || 'localhost',
       port: process.env.DATABASE_PORT ? +process.env.DATABASE_PORT : 5432,
       database: process.env.DATABASE_NAME || 'laudspeaker',
+      ssl: process.env.DATABASE_SSL === 'true' ? true : false,
       username: process.env.DATABASE_USER || 'postgres',
       password: process.env.DATABASE_PASSWORD || 'postgres',
       entities: ['dist/**/*.entity.{ts,js}'],

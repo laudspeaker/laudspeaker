@@ -10,6 +10,8 @@ DATABASE_NAME=laudspeaker
 DATABASE_USER=postgres
 DATABASE_PASSWORD=password
 DATABASE_PORT=5432
+# if true, connect with SSL any other value don't
+DATABASE_SSL=false
 SYNCHRONIZE=true
 
 # Javascript Web Tokens for Auth
