@@ -20,6 +20,7 @@ export enum StepType {
   RANDOM_COHORT_BRANCH = 'randomCohort',
   WAIT_UNTIL_BRANCH = 'waitUntil',
   TRACKER = 'tracker',
+  MULTISPLIT = 'multisplit',
 }
 
 export enum TimeWindowTypes {

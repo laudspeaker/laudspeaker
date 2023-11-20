@@ -11,6 +11,7 @@ import { NodeType } from "../FlowEditor";
 import {
   Branch,
   BranchType,
+  MultisplitBranch,
   UserAttributeNodeData,
   WaitUntilNodeData,
 } from "../Nodes/NodeData";
@@ -46,11 +47,13 @@ export const BranchEdge: FC<EdgeProps<BranchEdgeData>> = ({
     !sourceNode ||
     !(
       sourceNode.type === NodeType.WAIT_UNTIL ||
-      sourceNode.type === NodeType.USER_ATTRIBUTE
+      sourceNode.type === NodeType.USER_ATTRIBUTE ||
+      sourceNode.type === NodeType.MULTISPLIT
     ) ||
     !(
       sourceNode.data.type === NodeType.WAIT_UNTIL ||
-      sourceNode.data.type === NodeType.USER_ATTRIBUTE
+      sourceNode.data.type === NodeType.USER_ATTRIBUTE ||
+      sourceNode.data.type === NodeType.MULTISPLIT
     ) ||
     !data?.branch
   )
@@ -70,9 +73,9 @@ export const BranchEdge: FC<EdgeProps<BranchEdgeData>> = ({
           <div
             style={{
               position: "absolute",
-              transform: `translateX(${targetX - 100}px) translateY(${
-                labelY + 10
-              }px)`,
+              transform: `translateX(${
+                targetX - ((branch as MultisplitBranch)?.isOthers ? 36 : 100)
+              }px) translateY(${labelY + 10}px)`,
               pointerEvents: "all",
             }}
           >
@@ -108,12 +111,13 @@ export const BranchEdge: FC<EdgeProps<BranchEdgeData>> = ({
                   </span>
                 )}
 
-                <span className="font-semibold">
-                  <span>Branch {branchIndex + 1}: </span>
-                </span>
+                {!(branch as MultisplitBranch)?.isOthers && (
+                  <span className="font-semibold">
+                    <span>Branch {branchIndex + 1}: </span>
+                  </span>
+                )}
                 {branch.type === BranchType.EVENT ||
-                branch.type === BranchType.MESSAGE ||
-                branch.type === BranchType.WU_ATTRIBUTE ? (
+                branch.type === BranchType.MESSAGE ? (
                   branch.conditions.length === 0 ? (
                     <span className="text-[#E11D48]">Has no conditions</span>
                   ) : (
@@ -124,6 +128,15 @@ export const BranchEdge: FC<EdgeProps<BranchEdgeData>> = ({
                     <span className="text-[#E11D48]">Has no conditions</span>
                   ) : (
                     `Meet ${branch.attributeConditions.length} conditions`
+                  )
+                ) : branch.type === BranchType.MULTISPLIT ? (
+                  branch.isOthers ? (
+                    "All others"
+                  ) : branch.conditions?.query.statements.length === 0 ||
+                    branch.conditions === undefined ? (
+                    <span className="text-[#E11D48]">Has no conditions</span>
+                  ) : (
+                    `Meet ${branch.conditions.query.statements.length} conditions`
                   )
                 ) : (
                   <>Wait max time</>

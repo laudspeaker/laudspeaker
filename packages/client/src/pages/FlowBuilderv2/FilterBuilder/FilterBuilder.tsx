@@ -7,7 +7,6 @@ import {
   ConditionalSegmentsSettings,
   EventQueryAdditionalProperty,
   EventQueryStatement,
-  GeneralSelectedType,
   MessageEmailEventCondition,
   MessageEventQuery,
   MessageFromJourney,
@@ -48,8 +47,13 @@ import { Workflow } from "types/Workflow";
 interface FilterBuilderProps {
   settings: ConditionalSegmentsSettings | SegmentsSettings;
   isSegmentSettings?: boolean;
+  isMultisplitBuilder?: boolean;
   isSubBuilderChild?: boolean;
-  requireSettingsReset?: boolean;
+  shouldShowErrors?: boolean;
+  queryErrorsActions?: {
+    add: (str: string) => void;
+    remove: (str: string) => void;
+  };
   onSubBuilderUngroup?: (statements: QueryStatement[]) => void;
   onSettingsChange: (
     settings: ConditionalSegmentsSettings | SegmentsSettings
@@ -233,7 +237,10 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
   isSegmentSettings,
   onSettingsChange,
   onSubBuilderUngroup,
+  shouldShowErrors,
   isSubBuilderChild,
+  isMultisplitBuilder,
+  queryErrorsActions,
 }) => {
   const { showSegmentsErrors, availableTags: availableTagsFlow } =
     useAppSelector((state) => state.flowBuilder);
@@ -241,6 +248,9 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
     showSegmentsErrors: showSegmentsSettingsErrors,
     availableTags: availableTagsSegment,
   } = useAppSelector((state) => state.segment);
+
+  const showErrors =
+    showSegmentsErrors || showSegmentsSettingsErrors || shouldShowErrors;
 
   const availableTags = isSegmentSettings
     ? availableTagsSegment
@@ -625,11 +635,12 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
     ) {
       const specStatement = { ...(statement as MessageEventQuery) };
 
-      if (specStatement.fromSpecificMessage.key !== "ANY" && !specStatement.tag)
+      if (specStatement.from.key === "WITH_TAG" && !specStatement.tag) {
         statementErrors.push({
           type: QueryStatementErrors.JOURNEY_TAG_SHOULD_BE_SELECTED,
           eventPropertyErrors: [],
         });
+      }
 
       if (
         (specStatement.time?.comparisonType === ComparisonType.BEFORE &&
@@ -659,15 +670,20 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
         ? statementsErrors.some((el) => !!el.length)
         : false;
 
-    dispatch(
-      (isError
-        ? isSegmentSettings
-          ? addSegmentSettingQueryError
-          : addSegmentQueryError
-        : isSegmentSettings
-        ? removeSegmentSettingQueryError
-        : removeSegmentQueryError)(id)
-    );
+    if (queryErrorsActions) {
+      if (isError) queryErrorsActions.add(id);
+      else queryErrorsActions.remove(id);
+    } else {
+      dispatch(
+        (isError
+          ? isSegmentSettings
+            ? addSegmentSettingQueryError
+            : addSegmentQueryError
+          : isSegmentSettings
+          ? removeSegmentSettingQueryError
+          : removeSegmentQueryError)(id)
+      );
+    }
   }, [statementsErrors]);
 
   const searchableJournys = [
@@ -1083,7 +1099,7 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                             ComparisonType.BEFORE,
                             ComparisonType.AFTER,
                             ComparisonType.DURING,
-                          ].map((comparisonType, j) => ({
+                          ].map((comparisonType) => ({
                             key: comparisonType,
                             title: comparisonType,
                           }))}
@@ -1462,9 +1478,7 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                                       </div>
                                     </div>
                                   </div>
-                                  {(isSegmentSettings
-                                    ? showSegmentsSettingsErrors
-                                    : showSegmentsErrors) &&
+                                  {showErrors &&
                                     statementsErrors[i].map((error, errorI) => (
                                       <React.Fragment key={errorI}>
                                         {error?.eventPropertyErrors[
@@ -1658,7 +1672,9 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                           options={searchableMessageInJourney(
                             statement.type.toLowerCase(),
                             (statement as MessageEventQuery).from.key
-                          ).filter((el) => el.title.includes(specMessageQuery))}
+                          ).filter((el) =>
+                            (el.title || "").includes(specMessageQuery)
+                          )}
                         />
                       )}
                     <Select
@@ -1728,7 +1744,7 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                             ComparisonType.BEFORE,
                             ComparisonType.AFTER,
                             ComparisonType.DURING,
-                          ].map((comparisonType, j) => ({
+                          ].map((comparisonType) => ({
                             key: comparisonType,
                             title: comparisonType,
                           }))}
@@ -1826,13 +1842,15 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                     onSettingsChange={(filter) => {
                       handleChangeStatement(i, filter.query);
                     }}
+                    shouldShowErrors={showErrors}
+                    queryErrorsActions={queryErrorsActions}
                     onSubBuilderUngroup={handleUngroup(i)}
                     isSegmentSettings={isSegmentSettings}
                   />
                 ) : (
                   <></>
                 )}
-                {(showSegmentsErrors || showSegmentsSettingsErrors) &&
+                {showErrors &&
                   statementsErrors[i].map((error, k) => (
                     <div
                       key={k}
@@ -1866,6 +1884,7 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
           </div>
           {/* @ts-ignore */}
           {!settings?.query?.isSubBuilderChild &&
+            !isMultisplitBuilder &&
             (settings.query.type === QueryType.ALL ||
               i === settings.query.statements.length - 1) && (
               <div className="relative flex items-center py-[8.45px] max-w-[360px] px-[11.45px] rounded bg-[#F3F4F6]">

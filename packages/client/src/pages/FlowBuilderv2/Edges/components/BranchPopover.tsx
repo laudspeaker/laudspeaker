@@ -6,6 +6,7 @@ import {
   ElementKey,
   LogicRelation,
   MessageCondition,
+  MultisplitNodeData,
   StatementType,
   TimeType,
   UserAttributeNodeData,
@@ -13,6 +14,8 @@ import {
   WUAttributeCondition,
   WUAttributeHappenCondition,
 } from "pages/FlowBuilderv2/Nodes/NodeData";
+import MultisplitCondtionsReview from "pages/FlowBuilderv2/SidePanel/components/MultisplitCondtionsReview";
+import { limitQuery } from "pages/FlowBuilderv2/SidePanel/settings/MulisplitSettings";
 import React, { FC, Fragment, ReactNode, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Node, useViewport } from "reactflow";
@@ -29,10 +32,11 @@ const popperNameMap: Record<BranchType, string> = {
   [BranchType.ATTRIBUTE]: "If attribute",
   [BranchType.MESSAGE]: "Wait people until",
   [BranchType.WU_ATTRIBUTE]: "Wait people until",
+  [BranchType.MULTISPLIT]: "If users are",
 };
 
 interface BranchPopoverProps {
-  node: Node<WaitUntilNodeData | UserAttributeNodeData>;
+  node: Node<WaitUntilNodeData | UserAttributeNodeData | MultisplitNodeData>;
   branch: Branch;
   children: ReactNode;
   className?: string;
@@ -91,8 +95,7 @@ const BranchPopover: FC<BranchPopoverProps> = ({
                 {popperNameMap[branch.type]}
               </div>
               {branch.type === BranchType.EVENT ||
-              branch.type === BranchType.MESSAGE ||
-              branch.type === BranchType.WU_ATTRIBUTE ? (
+              branch.type === BranchType.MESSAGE ? (
                 <>
                   {branch.conditions.length === 0 ? (
                     <div className="bg-[#FFF1F2] p-[10px] font-inter font-normal text-[12px] leading-[20px] text-[#E11D48]">
@@ -356,22 +359,35 @@ const BranchPopover: FC<BranchPopoverProps> = ({
                     </div>
                   )}
                 </>
+              ) : branch.type === BranchType.MULTISPLIT ? (
+                <div>
+                  {branch.conditions ? (
+                    <MultisplitCondtionsReview
+                      condition={limitQuery(branch.conditions?.query, 3)[0]}
+                    />
+                  ) : (
+                    <div className="font-inter font-normal text-[14px] leading-[20px] text-[#18181B]">
+                      Not suitable for other branches
+                    </div>
+                  )}
+                </div>
               ) : (
                 <></>
               )}
 
               <div className="font-inter font-normal text-[14px] leading-[22px]">
                 {(branch.type === BranchType.EVENT ||
-                  branch.type === BranchType.MESSAGE ||
-                  branch.type === BranchType.WU_ATTRIBUTE) &&
+                  branch.type === BranchType.MESSAGE) &&
                 branch.conditions.length === 0 ? (
                   <></>
                 ) : ((branch.type === BranchType.EVENT ||
-                    branch.type === BranchType.MESSAGE ||
-                    branch.type === BranchType.WU_ATTRIBUTE) &&
+                    branch.type === BranchType.MESSAGE) &&
                     branch.conditions.length > 3) ||
                   (branch.type === BranchType.ATTRIBUTE &&
-                    branch.attributeConditions.length > 3) ? (
+                    branch.attributeConditions.length > 3) ||
+                  (branch.type === BranchType.MULTISPLIT &&
+                    branch.conditions &&
+                    limitQuery(branch.conditions.query, 3)[1] >= 3) ? (
                   <>More conditions</>
                 ) : (
                   <>Then move to the next step.</>

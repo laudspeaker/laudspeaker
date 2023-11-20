@@ -43,6 +43,7 @@ import { JumpToNodeData } from "./Nodes/NodeData";
 import { DevModeControlHint } from "./DevModeControlHint";
 import useDevKeysHandler from "./useDevKeysHandler";
 import { useDevSocket } from "./useDevSocketConnection";
+import { MultisplitNode } from "./Nodes/MultisplitNode";
 
 export enum NodeType {
   START = "start",
@@ -56,6 +57,7 @@ export enum NodeType {
   USER_ATTRIBUTE = "userAttribute",
   INSERT_NODE = "insertNode",
   TRACKER = "tracker",
+  MULTISPLIT = "multisplit",
 }
 
 export enum EdgeType {
@@ -75,6 +77,7 @@ const nodeTypes: Record<NodeType, FC<NodeProps<any>>> = {
   [NodeType.USER_ATTRIBUTE]: UserAttributeNode,
   [NodeType.INSERT_NODE]: InsertNode,
   [NodeType.TRACKER]: TrackerNode,
+  [NodeType.MULTISPLIT]: MultisplitNode,
 };
 
 const edgeTypes: Record<EdgeType, FC<EdgeProps<any>>> = {

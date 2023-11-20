@@ -1,5 +1,6 @@
 import {
   ComparisonType,
+  ConditionalSegmentsSettings,
   GeneralSelectedType,
   MessageEmailEventCondition,
   MessageEventTypes,
@@ -18,6 +19,7 @@ export enum BranchType {
   ATTRIBUTE = "attribute",
   WU_ATTRIBUTE = "wu_attribute",
   MESSAGE = "message",
+  MULTISPLIT = "multisplit",
 }
 
 export enum LogicRelation {
@@ -129,6 +131,12 @@ export interface WUAttributeBranch extends CommonBranch {
   conditions: Condition[];
 }
 
+export interface MultisplitBranch extends CommonBranch {
+  type: BranchType.MULTISPLIT;
+  conditions?: ConditionalSegmentsSettings;
+  isOthers?: boolean;
+}
+
 export enum TimeType {
   TIME_DELAY = "timeDelay",
   TIME_WINDOW = "timeWindow",
@@ -186,7 +194,8 @@ export type Branch =
   | MaxTimeBranch
   | AttributeBranch
   | MessageBranch
-  | WUAttributeBranch;
+  | WUAttributeBranch
+  | MultisplitBranch;
 
 export interface Stats {
   sent?: number;
@@ -214,6 +223,11 @@ export interface MessageNodeData<T extends MessageType = MessageType>
 export interface WaitUntilNodeData extends CommonNodeData {
   type: NodeType.WAIT_UNTIL;
   branches: WaitUntilBranch[];
+}
+
+export interface MultisplitNodeData extends CommonNodeData {
+  type: NodeType.MULTISPLIT;
+  branches: MultisplitBranch[];
 }
 
 export interface TimeDelayNodeData extends CommonNodeData {
@@ -272,6 +286,7 @@ export interface AnotherNodeData extends CommonNodeData {
     | NodeType.USER_ATTRIBUTE
     | NodeType.JUMP_TO
     | NodeType.TRACKER
+    | NodeType.MULTISPLIT
   >;
 }
 
@@ -282,5 +297,6 @@ export type NodeData =
   | TimeWindowNodeData
   | UserAttributeNodeData
   | JumpToNodeData
+  | MultisplitNodeData
   | TrackerNodeData
   | AnotherNodeData;

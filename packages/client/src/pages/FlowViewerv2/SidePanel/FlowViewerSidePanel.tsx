@@ -42,6 +42,7 @@ const FlowViewerSidePanel: FC<FlowViewerSidePanelProps> = ({ className }) => {
     [NodeType.WAIT_UNTIL]: "Wait until",
     [NodeType.USER_ATTRIBUTE]: "User attribute",
     [NodeType.TRACKER]: "Custom component",
+    [NodeType.MULTISPLIT]: "Multiplit",
     [NodeType.INSERT_NODE]: "",
   };
 
