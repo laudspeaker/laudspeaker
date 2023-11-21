@@ -14,6 +14,7 @@ import {
   BranchType,
   LogicRelation,
   MessageNodeData,
+  MultisplitBranch,
   NodeData,
   TimeWindowTypes,
 } from "pages/FlowBuilderv2/Nodes/NodeData";
@@ -27,7 +28,6 @@ import {
   Node,
   NodeChange,
 } from "reactflow";
-import { TemplateType } from "types/Template";
 import { MessageType, ProviderType } from "types/Workflow";
 import getClosestNextAndPrevious from "utils/getClosestNextAndPrevious";
 import { v4 as uuid } from "uuid";
@@ -814,11 +814,44 @@ const flowBuilderSlice = createSlice({
         (nodeToChange.type === NodeType.WAIT_UNTIL &&
           nodeToChange.data.type === NodeType.WAIT_UNTIL) ||
         (nodeToChange.type === NodeType.USER_ATTRIBUTE &&
-          nodeToChange.data.type === NodeType.USER_ATTRIBUTE)
+          nodeToChange.data.type === NodeType.USER_ATTRIBUTE) ||
+        (nodeToChange.type === NodeType.MULTISPLIT &&
+          nodeToChange.data.type === NodeType.MULTISPLIT)
       ) {
         const existedBranchEdges = state.edges.filter(
           (edge) => edge.source === nodeToChange.id
         );
+
+        if (
+          nodeToChange.type === NodeType.MULTISPLIT &&
+          nodeToChange.data.type === NodeType.MULTISPLIT
+        ) {
+          if (
+            !nodeToChange.data.branches.some((el) => el.isOthers) &&
+            nodeToChange.data.branches.length > 0
+          ) {
+            nodeToChange.data.branches.push({
+              id: uuid(),
+              type: BranchType.MULTISPLIT,
+              isOthers: true,
+            });
+          } else if (nodeToChange.data.branches.some((el) => el.isOthers)) {
+            const otherNodeIndex = nodeToChange.data.branches.findIndex(
+              (el) => el.isOthers
+            );
+            if (nodeToChange.data.branches.length - 1 > 0) {
+              if (otherNodeIndex !== nodeToChange.data.branches.length - 1) {
+                const element = nodeToChange.data.branches.splice(
+                  otherNodeIndex,
+                  1
+                )[0];
+                nodeToChange.data.branches.push(element);
+              }
+            } else {
+              nodeToChange.data.branches = [];
+            }
+          }
+        }
 
         // prune disconnected branches
         for (const edge of existedBranchEdges) {
@@ -866,6 +899,7 @@ const flowBuilderSlice = createSlice({
 
           existedChildrenEdge.data = { type: EdgeType.BRANCH, branch };
         }
+
         if (
           state.devModeState.status === ConnectionStatus.Connected &&
           !state.nodes.find((el) => el.id === state.devModeState.customerInNode)
@@ -1127,6 +1161,14 @@ const flowBuilderSlice = createSlice({
             stepId,
           };
           break;
+        case DrawerAction.MULTISPLIT:
+          nodeToChange.type = NodeType.MULTISPLIT;
+          nodeToChange.data = {
+            type: NodeType.MULTISPLIT,
+            stepId,
+            branches: [],
+          };
+          break;
         default:
           break;
       }
@@ -1139,6 +1181,7 @@ const flowBuilderSlice = createSlice({
             NodeType.WAIT_UNTIL,
             NodeType.USER_ATTRIBUTE,
             NodeType.EXIT,
+            NodeType.MULTISPLIT,
           ] as string[]
         ).includes(nodeToChange.type || "")
       ) {

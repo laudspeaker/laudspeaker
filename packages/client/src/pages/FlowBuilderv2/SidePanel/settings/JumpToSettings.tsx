@@ -21,6 +21,7 @@ const JumpToSettings: FC<
     [NodeType.USER_ATTRIBUTE]: "User attribute",
     [NodeType.INSERT_NODE]: "Insert",
     [NodeType.TRACKER]: "Custom component",
+    [NodeType.MULTISPLIT]: "Multisplit",
   };
 
   const { nodes } = useAppSelector((state) => state.flowBuilder);

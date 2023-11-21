@@ -26,6 +26,7 @@ export const EmptyNode: FC<NodeProps<NodeData>> = ({
     [DrawerAction.USER_ATTRIBUTE]: NodeType.USER_ATTRIBUTE,
     [DrawerAction.WAIT_UNTIL]: NodeType.WAIT_UNTIL,
     [DrawerAction.WEBHOOK]: NodeType.MESSAGE,
+    [DrawerAction.MULTISPLIT]: NodeType.MESSAGE,
   };
 
   const { nodes, edges, flowId } = useAppSelector((state) => state.flowBuilder);

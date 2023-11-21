@@ -27,6 +27,7 @@ export enum DrawerAction {
   WAIT_UNTIL = "waitUntil",
   TIME_DELAY = "timeDelay",
   TIME_WINDOW = "timeWindow",
+  MULTISPLIT = "multisplit",
   USER_ATTRIBUTE = "userAttribute",
 }
 
@@ -105,6 +106,22 @@ const flowBuilderDrawerFixtures: FlowBuilderDrawerFixture[] = [
         icon: UserAttributeIcon(),
         text: "User Attribute",
       },
+    ],
+  },
+  {
+    groupName: "Audience Split ",
+    children: [
+      {
+        id: DrawerAction.MULTISPLIT,
+        // TODO: change icon
+        icon: WaitUntilIcon(),
+        text: "Multisplit",
+      },
+      // {
+      //   id: DrawerAction.TIME_DELAY,
+      //   icon: TimeDelayIcon(),
+      //   text: "A/B Test",
+      // },
     ],
   },
 ];
