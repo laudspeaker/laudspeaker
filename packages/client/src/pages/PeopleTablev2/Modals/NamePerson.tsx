@@ -3,7 +3,7 @@ import { Grid, FormControl } from "@mui/material";
 import { GenericButton, Input } from "components/Elements";
 import { useNavigate } from "react-router-dom";
 import ApiService from "services/api.service";
-import { ApiConfig } from "../../constants";
+import { ApiConfig } from "../../../constants";
 
 export interface INameSegmentForm {
   name: string;
