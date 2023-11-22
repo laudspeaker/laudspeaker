@@ -10,7 +10,7 @@ import { toast } from "react-toastify";
 import Progress from "components/Progress";
 
 const SlackBuilder = () => {
-  const { name } = useParams();
+  const { id } = useParams();
   const [slackMessage, setSlackMessage] = useState<string>("");
   const [templateName, setTemplateName] = useState<string>("My slack template");
   const [slackTemplateId, setSlackTemplateId] = useState<string>("");
@@ -35,22 +35,13 @@ const SlackBuilder = () => {
         slackMessage: slackMessage,
         type: "slack",
       };
-      if (!slackTemplateId) {
-        const response = await ApiService.post({
-          url: `${ApiConfig.createTemplate}`,
-          options: {
-            ...reqBody,
-          },
-        });
-        setSlackTemplateId(response.data.id);
-      } else {
-        await ApiService.patch({
-          url: `${ApiConfig.getAllTemplates}/${name}`,
-          options: {
-            ...reqBody,
-          },
-        });
-      }
+
+      await ApiService.patch({
+        url: `${ApiConfig.getAllTemplates}/${id}`,
+        options: {
+          ...reqBody,
+        },
+      });
     } catch (e) {
       toast.error("Error while saving");
     } finally {
@@ -61,9 +52,9 @@ const SlackBuilder = () => {
   useLayoutEffect(() => {
     const populateSlackBuilder = async () => {
       try {
-        const { data } = await getTemplate(name);
+        const { data } = await getTemplate(id);
         setSlackMessage(data.slackMessage || "");
-        setTemplateName(name);
+        setTemplateName(id);
         setSlackTemplateId(data.id);
       } catch (e) {
         toast.error("Error while loading");

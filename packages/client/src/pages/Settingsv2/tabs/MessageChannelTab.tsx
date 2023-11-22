@@ -10,7 +10,6 @@ import Account from "types/Account";
 import ApiService from "services/api.service";
 import { toast } from "react-toastify";
 import { EmailSendingService } from "pages/EmailSettings/EmailSettings";
-import { title } from "process";
 
 export enum MessageChannel {
   EMAIL,

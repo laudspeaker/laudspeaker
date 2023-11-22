@@ -70,7 +70,7 @@ const TemplateTablev2 = () => {
           (currentPage - 1) * ITEMS_PER_PAGE
         }&search=${search}&orderBy=${sortOptions.sortBy}&orderType=${
           sortOptions.sortType
-        }&type=email&type=sms&type=webhook`,
+        }&type=email&type=sms&type=webhook&type=push`,
       });
 
       setRows(
@@ -226,7 +226,7 @@ const TemplateTablev2 = () => {
               rows={rows.map((row) => [
                 <button
                   className="text-[#6366F1]"
-                  onClick={() => navigate(`/templates/${row.type}/${row.name}`)}
+                  onClick={() => navigate(`/templates/${row.type}/${row.id}`)}
                 >
                   {row.name}
                 </button>,

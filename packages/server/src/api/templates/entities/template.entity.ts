@@ -39,10 +39,10 @@ export enum TemplateType {
   EMAIL = 'email',
   SLACK = 'slack',
   SMS = 'sms',
-  FIREBASE = 'firebase',
   WEBHOOK = 'webhook',
   MODAL = 'modal',
   CUSTOM_COMPONENT = 'custom_component',
+  PUSH = 'push',
 }
 
 @Entity()

@@ -25,7 +25,6 @@ import Modal from "components/Elements/Modal";
 import ApiService from "services/api.service";
 import Account from "types/Account";
 import { GenericButton } from "components/Elements";
-import FirebaseBuilder from "pages/FirebaseBuilder/FirebaseBuilder";
 import ResetPassword from "pages/ResetPassword";
 import SegmentViewer from "pages/SegmentViewer";
 import ModalBuilder from "pages/ModalBuilder";
@@ -54,6 +53,7 @@ import { LaudspeakerProvider } from "@laudspeaker/react";
 import AppConfig from "constants/app";
 import Personv2 from "pages/Personv2";
 import SegmentCreation from "pages/SegmentCreation/index";
+import PushBuilder from "pages/PushBuilder/PushBuilder";
 
 interface IProtected {
   children: ReactElement;
@@ -427,7 +427,7 @@ const RouteComponent: React.FC = () => {
           }
         />
         <Route
-          path="/templates/email/:name"
+          path="/templates/email/:id"
           element={
             <Protected>
               <VerificationProtected>
@@ -452,12 +452,25 @@ const RouteComponent: React.FC = () => {
           }
         /> */}
         <Route
-          path="/templates/sms/:name"
+          path="/templates/sms/:id"
           element={
             <Protected>
               <VerificationProtected>
                 <DrawerLayout>
                   <SmsBuilder />
+                </DrawerLayout>
+              </VerificationProtected>
+            </Protected>
+          }
+        />
+
+        <Route
+          path="/templates/push/:id"
+          element={
+            <Protected>
+              <VerificationProtected>
+                <DrawerLayout>
+                  <PushBuilder />
                 </DrawerLayout>
               </VerificationProtected>
             </Protected>
@@ -478,7 +491,7 @@ const RouteComponent: React.FC = () => {
         />
         */}
         <Route
-          path="/templates/webhook/:name"
+          path="/templates/webhook/:id"
           element={
             <Protected>
               <VerificationProtected>

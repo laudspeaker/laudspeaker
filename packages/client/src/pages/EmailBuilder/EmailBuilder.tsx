@@ -35,10 +35,10 @@ export interface Resource {
 }
 
 const EmailBuilder = () => {
-  const { name } = useParams();
+  const { id } = useParams();
   const [title, setTitle] = useState<string>("");
   const [cc, setCC] = useState<string>("");
-  const [templateName, setTemplateName] = useState<string>(name);
+  const [templateName, setTemplateName] = useState<string>("");
   const [editor, setEditor] = useState<grapesjs.Editor>();
   const [emailTemplateId, setEmailTemplateId] = useState<string>();
   const [text, setText] = useState<string>("");
@@ -110,10 +110,10 @@ const EmailBuilder = () => {
 
   useLayoutEffect(() => {
     const populateEmailBuilder = async () => {
-      const { data } = await getTemplate(name);
+      const { data } = await getTemplate(id);
       setTitle(data.subject);
       if (data?.cc) setCC(data.cc.join());
-      setTemplateName(name);
+      setTemplateName(data.name);
       setEmailTemplateId(data.id);
       setText(data.text);
       setStyle(data.style);
@@ -134,22 +134,12 @@ const EmailBuilder = () => {
         style: editor?.getCss(),
         type: "email",
       };
-      if (emailTemplateId == null) {
-        const response = await ApiService.post({
-          url: `${ApiConfig.createTemplate}`,
-          options: {
-            ...reqBody,
-          },
-        });
-        setEmailTemplateId(response.data.id);
-      } else {
-        await ApiService.patch({
-          url: `${ApiConfig.getAllTemplates}/${name}`,
-          options: {
-            ...reqBody,
-          },
-        });
-      }
+      await ApiService.patch({
+        url: `${ApiConfig.getAllTemplates}/${id}`,
+        options: {
+          ...reqBody,
+        },
+      });
     } catch (e) {
       toast.error("Error while saving");
     } finally {

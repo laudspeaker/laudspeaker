@@ -281,41 +281,44 @@ export class TemplatesService extends QueueEventsHost {
     createTemplateDto: CreateTemplateDto,
     session: string
   ) {
-    const template = new Template();
-    template.type = createTemplateDto.type;
-    template.name = createTemplateDto.name;
-    switch (template.type) {
-      case TemplateType.EMAIL:
-        template.subject = createTemplateDto.subject;
-        template.text = createTemplateDto.text;
-        if (createTemplateDto.cc) template.cc = createTemplateDto.cc;
-        template.style = createTemplateDto.style;
-        break;
-      case TemplateType.SLACK:
-        template.slackMessage = createTemplateDto.slackMessage;
-        break;
-      case TemplateType.SMS:
-        template.smsText = createTemplateDto.smsText;
-        break;
-      case TemplateType.FIREBASE:
-        template.pushText = createTemplateDto.pushText;
-        template.pushTitle = createTemplateDto.pushTitle;
-        break;
-      case TemplateType.WEBHOOK:
-        template.webhookData = createTemplateDto.webhookData;
-        break;
-      case TemplateType.MODAL:
-        template.modalState = createTemplateDto.modalState;
-        break;
-      case TemplateType.CUSTOM_COMPONENT:
-        template.customEvents = createTemplateDto.customEvents;
-        template.customFields = createTemplateDto.customFields;
-        break;
+    try {
+      const template = new Template();
+      template.type = createTemplateDto.type;
+      template.name = createTemplateDto.name;
+      switch (template.type) {
+        case TemplateType.EMAIL:
+          template.subject = createTemplateDto.subject;
+          template.text = createTemplateDto.text;
+          if (createTemplateDto.cc) template.cc = createTemplateDto.cc;
+          template.style = createTemplateDto.style;
+          break;
+        case TemplateType.SLACK:
+          template.slackMessage = createTemplateDto.slackMessage;
+          break;
+        case TemplateType.SMS:
+          template.smsText = createTemplateDto.smsText;
+          break;
+        case TemplateType.PUSH:
+          // UPDATE WITH PUSH LOGIC
+          break;
+        case TemplateType.WEBHOOK:
+          template.webhookData = createTemplateDto.webhookData;
+          break;
+        case TemplateType.MODAL:
+          template.modalState = createTemplateDto.modalState;
+          break;
+        case TemplateType.CUSTOM_COMPONENT:
+          template.customEvents = createTemplateDto.customEvents;
+          template.customFields = createTemplateDto.customFields;
+          break;
+      }
+      return this.templatesRepository.save({
+        ...template,
+        owner: { id: account.id },
+      });
+    } catch (error) {
+      this.logger.error(`Api error: ${error}`);
     }
-    return this.templatesRepository.save({
-      ...template,
-      owner: { id: account.id },
-    });
   }
 
   /**
@@ -453,8 +456,8 @@ export class TemplatesService extends QueueEventsHost {
           trackingEmail: email,
         });
         break;
-      case TemplateType.FIREBASE:
-        job = await this.messageQueue.add(MessageType.FIREBASE, {
+      case TemplateType.PUSH:
+        job = await this.messageQueue.add(MessageType.PUSH_FIREBASE, {
           accountId: account.id,
           audienceId,
           customerId,
@@ -577,12 +580,12 @@ export class TemplatesService extends QueueEventsHost {
 
   update(
     account: Account,
-    name: string,
+    id: string,
     updateTemplateDto: UpdateTemplateDto,
     session: string
   ) {
     return this.templatesRepository.update(
-      { owner: { id: (<Account>account).id }, name: name },
+      { owner: { id: (<Account>account).id }, id },
       { ...updateTemplateDto, updatedAt: new Date() }
     );
   }
@@ -597,11 +600,11 @@ export class TemplatesService extends QueueEventsHost {
     );
   }
 
-  async duplicate(account: Account, name: string, session: string) {
+  async duplicate(account: Account, id: string, session: string) {
     const foundTemplate = await this.templatesRepository.findOne({
       where: {
         owner: { id: account.id },
-        name,
+        id,
       },
       relations: ['owner'],
     });

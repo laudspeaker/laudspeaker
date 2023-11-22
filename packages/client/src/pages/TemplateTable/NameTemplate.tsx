@@ -4,6 +4,13 @@ import { GenericButton, Input } from "components/Elements";
 import { useNavigate } from "react-router-dom";
 import { TemplateType } from "types/Template";
 import Select from "components/Elements/Selectv2";
+import ApiConfig from "../../constants/api";
+import ApiService from "services/api.service";
+import {
+  FallBackAction,
+  WebhookMethod,
+} from "pages/WebhookBuilder/WebhookSettings";
+import { defaultModalState } from "pages/ModalBuilder/ModalBuilder";
 
 export interface INameSegmentForm {
   name: string;
@@ -14,6 +21,30 @@ interface INameSegment {
   onSubmit?: (e: INameSegmentForm) => void;
   isPrimary: boolean;
 }
+
+const reqestCreationBody = (templateName: string) => ({
+  [TemplateType.EMAIL]: {
+    name: templateName,
+    type: TemplateType.EMAIL,
+  },
+  [TemplateType.SMS]: {
+    name: templateName,
+    type: TemplateType.SMS,
+  },
+  [TemplateType.WEBHOOK]: {
+    name: templateName,
+    type: TemplateType.WEBHOOK,
+  },
+  [TemplateType.MODAL]: {
+    name: templateName,
+    type: TemplateType.MODAL,
+    modalState: defaultModalState,
+  },
+  [TemplateType.PUSH]: {
+    name: templateName,
+    type: TemplateType.PUSH,
+  },
+});
 
 const NameTemplate = ({ onSubmit, isPrimary }: INameSegment) => {
   // A Segment initally has three Properties:
@@ -40,9 +71,17 @@ const NameTemplate = ({ onSubmit, isPrimary }: INameSegment) => {
   };
 
   // Pushing state back up to the flow builder
-  const handleSubmit = (e: { preventDefault: () => void }) => {
+  const handleSubmit = async (e: { preventDefault: () => void }) => {
     if (segmentForm.name && templateType) {
-      navigate(`/templates/${templateType}/${segmentForm.name}`);
+      const response = await ApiService.post({
+        url: `${ApiConfig.createTemplate}`,
+        options: {
+          // @ts-ignore
+          ...reqestCreationBody(segmentForm.name)[templateType],
+        },
+      });
+
+      navigate(`/templates/${templateType}/${response.data.id}`);
 
       e.preventDefault();
       if (onSubmit) {
@@ -92,20 +131,17 @@ const NameTemplate = ({ onSubmit, isPrimary }: INameSegment) => {
                     key: TemplateType.EMAIL,
                     title: TemplateType.EMAIL,
                   },
-                  // Removed for 1 release
-                  // {
-                  //   key: TemplateType.SLACK,
-                  //   title: TemplateType.SLACK,
-                  // },
                   {
                     key: TemplateType.SMS,
                     title: TemplateType.SMS,
                   },
-                  // Removed for 1 release
-                  // { value: TemplateType.FIREBASE },
                   {
                     key: TemplateType.WEBHOOK,
                     title: TemplateType.WEBHOOK,
+                  },
+                  {
+                    key: TemplateType.PUSH,
+                    title: "push notification",
                   },
                   // { value: TemplateType.MODAL },
                   // { value: TemplateType.CUSTOM_MODAL, title: "custom modal" },

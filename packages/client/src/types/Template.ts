@@ -5,10 +5,10 @@ export enum TemplateType {
   EMAIL = "email",
   SLACK = "slack",
   SMS = "sms",
-  FIREBASE = "firebase",
   WEBHOOK = "webhook",
   MODAL = "modal",
   CUSTOM_MODAL = "custom-modal",
+  PUSH = "push",
 }
 
 export default interface Template {

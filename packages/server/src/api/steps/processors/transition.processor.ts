@@ -703,10 +703,10 @@ export class TransitionProcessor extends WorkerHost {
         await this.webhooksService.insertClickHouseMessages(ret);
         if (owner.emailProvider === 'free3') await owner.save();
         break;
-      case TemplateType.FIREBASE:
+      case TemplateType.PUSH:
         await this.webhooksService.insertClickHouseMessages(
           await sender.process({
-            name: TemplateType.FIREBASE,
+            name: TemplateType.PUSH,
             accountID: owner.id,
             stepID: currentStep.id,
             customerID: customerID,

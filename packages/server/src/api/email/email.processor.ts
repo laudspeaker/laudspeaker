@@ -19,7 +19,7 @@ import * as admin from 'firebase-admin';
 export enum MessageType {
   SMS = 'sms',
   EMAIL = 'email',
-  FIREBASE = 'firebase',
+  PUSH_FIREBASE = 'push_firebase',
 }
 
 @Injectable()
@@ -42,7 +42,7 @@ export class MessageProcessor extends WorkerHost {
     [MessageType.SMS]: async (job) => {
       await this.handleSMS(job);
     },
-    [MessageType.FIREBASE]: async (job) => {
+    [MessageType.PUSH_FIREBASE]: async (job) => {
       await this.handleFirebase(job);
     },
   };
@@ -409,7 +409,7 @@ export class MessageProcessor extends WorkerHost {
           userId: job.data.accountId,
           event: 'error',
           createdAt: new Date().toUTCString(),
-          eventProvider: ClickHouseEventProvider.FIREBASE,
+          eventProvider: ClickHouseEventProvider.PUSH,
           messageId: null,
           audienceId: job.data.args.audienceId,
           customerId: job.data.args.customerId,
@@ -465,7 +465,7 @@ export class MessageProcessor extends WorkerHost {
           customerId: job.data.customerId,
           createdAt: new Date().toUTCString(),
           event: 'sent',
-          eventProvider: ClickHouseEventProvider.FIREBASE,
+          eventProvider: ClickHouseEventProvider.PUSH,
           messageId: messageId,
           templateId: String(job.data.templateId),
           userId: job.data.accountId,

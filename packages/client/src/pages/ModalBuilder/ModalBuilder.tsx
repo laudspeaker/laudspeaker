@@ -149,85 +149,87 @@ export enum SaveState {
   ERROR = "Error",
 }
 
-const ModalBuilder = () => {
-  const { name } = useParams();
-  const navigate = useNavigate();
-
-  const [modalState, setModalState] = useState<ModalState>({
-    position: ModalPosition.CENTER,
-    xOffset: { value: 0, unit: SizeUnit.PIXEL },
-    yOffset: { value: 0, unit: SizeUnit.PIXEL },
-    width: { value: 400, unit: SizeUnit.PIXEL },
-    borderRadius: { value: 20, unit: SizeUnit.PIXEL },
-    background: {
-      selected: BackgroundType.SOLID,
-      [BackgroundType.SOLID]: defaultSolidBackground,
-      [BackgroundType.GRADIENT]: defaultGradientBackground,
-      [BackgroundType.IMAGE]: defaultImageBackground,
-    },
-    title: {
-      hidden: true,
-      alignment: Alignment.CENTER,
-      content: "",
-      fontSize: 14,
-      textColor: "#FFFFFF",
-      linkColor: "#515E7D",
-    },
-    body: {
-      hidden: false,
-      alignment: Alignment.CENTER,
-      content: `## **Say hi to our new look** 👋
+export const defaultModalState = {
+  position: ModalPosition.CENTER,
+  xOffset: { value: 0, unit: SizeUnit.PIXEL },
+  yOffset: { value: 0, unit: SizeUnit.PIXEL },
+  width: { value: 400, unit: SizeUnit.PIXEL },
+  borderRadius: { value: 20, unit: SizeUnit.PIXEL },
+  background: {
+    selected: BackgroundType.SOLID,
+    [BackgroundType.SOLID]: defaultSolidBackground,
+    [BackgroundType.GRADIENT]: defaultGradientBackground,
+    [BackgroundType.IMAGE]: defaultImageBackground,
+  },
+  title: {
+    hidden: true,
+    alignment: Alignment.CENTER,
+    content: "",
+    fontSize: 14,
+    textColor: "#FFFFFF",
+    linkColor: "#515E7D",
+  },
+  body: {
+    hidden: false,
+    alignment: Alignment.CENTER,
+    content: `## **Say hi to our new look** 👋
 
 We've made some changes to our styling and our navigation. We did this to speed up your workflows and save you some clicks. Take a few moments to get familiar with the changes.
 `,
-      fontSize: 14,
-      textColor: "#FFFFFF",
-      linkColor: "#515E7D",
+    fontSize: 14,
+    textColor: "#FFFFFF",
+    linkColor: "#515E7D",
+  },
+  media: {
+    hidden: false,
+    type: MediaType.IMAGE,
+    imageSrc: "",
+    key: null,
+    altText: "",
+    actionOnClick: MediaClickAction.NONE,
+    height: { value: 60, unit: SizeUnit.PERCENTAGE },
+    position: MediaPosition.TOP,
+    videoUrl: null,
+    additionalClick: JSON.parse(JSON.stringify(defaultAdditionalClicksObj)),
+  },
+  primaryButton: {
+    hidden: false,
+    content: "Read more",
+    fillColor: "#1A86FF",
+    borderColor: "#64CF67",
+    textColor: "#FFFFFF",
+    borderRadius: { value: 8, unit: SizeUnit.PIXEL },
+    position: PrimaryButtonPosition.BOTTOM_CENTER,
+    clickAction: GeneralClickAction.NONE,
+    additionalClick: JSON.parse(JSON.stringify(defaultAdditionalClicksObj)),
+  },
+  dismiss: {
+    hidden: true,
+    content: "close",
+    type: DismissType.CROSS,
+    textSize: 14,
+    color: "#FFFFFF",
+    position: DismissPosition.INSIDE_RIGHT,
+    timedDismiss: {
+      enabled: false,
+      duration: 3,
+      displayTimer: false,
+      timerColor: "#1CC88A",
     },
-    media: {
-      hidden: false,
-      type: MediaType.IMAGE,
-      imageSrc: "",
-      key: null,
-      altText: "",
-      actionOnClick: MediaClickAction.NONE,
-      height: { value: 60, unit: SizeUnit.PERCENTAGE },
-      position: MediaPosition.TOP,
-      videoUrl: null,
-      additionalClick: JSON.parse(JSON.stringify(defaultAdditionalClicksObj)),
-    },
-    primaryButton: {
-      hidden: false,
-      content: "Read more",
-      fillColor: "#1A86FF",
-      borderColor: "#64CF67",
-      textColor: "#FFFFFF",
-      borderRadius: { value: 8, unit: SizeUnit.PIXEL },
-      position: PrimaryButtonPosition.BOTTOM_CENTER,
-      clickAction: GeneralClickAction.NONE,
-      additionalClick: JSON.parse(JSON.stringify(defaultAdditionalClicksObj)),
-    },
-    dismiss: {
-      hidden: true,
-      content: "close",
-      type: DismissType.CROSS,
-      textSize: 14,
-      color: "#FFFFFF",
-      position: DismissPosition.INSIDE_RIGHT,
-      timedDismiss: {
-        enabled: false,
-        duration: 3,
-        displayTimer: false,
-        timerColor: "#1CC88A",
-      },
-    },
-    shroud: {
-      hidden: false,
-      color: "#000000",
-      opacity: 0.8,
-      blur: 2,
-    },
-  });
+  },
+  shroud: {
+    hidden: false,
+    color: "#000000",
+    opacity: 0.8,
+    blur: 2,
+  },
+};
+
+const ModalBuilder = () => {
+  const { id } = useParams();
+  const navigate = useNavigate();
+
+  const [modalState, setModalState] = useState<ModalState>(defaultModalState);
   const [editorMode, setEditorMode] = useState<
     EditorMenuOptions | SubMenuOptions
   >(EditorMenuOptions.MAIN);
@@ -246,7 +248,7 @@ We've made some changes to our styling and our navigation. We did this to speed 
     (async () => {
       try {
         const { data } = await ApiService.get({
-          url: `${ApiConfig.getAllTemplates}/${name}`,
+          url: `${ApiConfig.getAllTemplates}/${id}`,
         });
 
         setTemplateId(data.id);
@@ -267,22 +269,12 @@ We've made some changes to our styling and our navigation. We did this to speed 
         modalState,
       };
 
-      if (templateId) {
-        await ApiService.patch({
-          url: `${ApiConfig.getAllTemplates}/${name}`,
-          options: {
-            ...reqBody,
-          },
-        });
-      } else {
-        const { data } = await ApiService.post({
-          url: `${ApiConfig.createTemplate}`,
-          options: {
-            ...reqBody,
-          },
-        });
-        setTemplateId(data.id);
-      }
+      await ApiService.patch({
+        url: `${ApiConfig.getAllTemplates}/${id}`,
+        options: {
+          ...reqBody,
+        },
+      });
       setSaveState(SaveState.SAVED);
     } catch (e) {
       toast.error("Error while saving");
