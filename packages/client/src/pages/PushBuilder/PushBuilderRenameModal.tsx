@@ -2,6 +2,7 @@ import Button, { ButtonType } from "components/Elements/Buttonv2";
 import FlowBuilderInput from "pages/FlowBuilderv2/Elements/FlowBuilderInput";
 import FlowBuilderModal from "pages/FlowBuilderv2/Elements/FlowBuilderModal";
 import React, { FC, useEffect, useState } from "react";
+import { toast } from "react-toastify";
 
 interface PushBuilderRenameModalProps {
   isOpen: boolean;
@@ -40,6 +41,11 @@ const PushBuilderRenameModal: FC<PushBuilderRenameModalProps> = ({
           <Button
             type={ButtonType.PRIMARY}
             onClick={() => {
+              if (!name) {
+                toast.error("Name can't be empty");
+                return;
+              }
+
               onSave(name);
               onClose();
             }}

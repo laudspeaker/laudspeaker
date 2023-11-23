@@ -29,7 +29,7 @@ const AndroidOnlySettings = ({ data, onChange }: AndroidOnlySettingsProps) => (
       Expanded notification image (optional)
     </div>
     <PushBuilderMediaUpload
-      img={data.image}
+      img={data.expandedImage}
       onImageUploaded={(newImg) => onChange({ ...data, expandedImage: newImg })}
     />
   </>

@@ -1,11 +1,18 @@
+import { AxiosError } from "axios";
+import Button, { ButtonType } from "components/Elements/Buttonv2";
+import ApiConfig from "constants/api";
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import { toast } from "react-toastify";
+import ApiService from "services/api.service";
+import Template, { TemplateType } from "types/Template";
 import PushBuilderContent, {
   defaultPlatformSettings,
   PushBuilderData,
   PushPlatforms,
 } from "./PushBuilderContent";
 import PushBuilderRenameModal from "./PushBuilderRenameModal";
+import PushBuilderTestTab from "./PushBuilderTestTab";
 
 const StepperFixtures: { text: string; icon: React.ReactNode }[] = [
   {
@@ -92,15 +99,61 @@ const PushBuilder = () => {
   const [isRenameModalOpen, setIsRenameModalOpen] = useState(false);
   const [pageIndex, setPageIndex] = useState(0);
   const [templateName, setTemplateName] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
   const { id } = useParams();
 
+  const loadData = async (withData?: boolean) => {
+    const { data } = await ApiService.get<Template>({
+      url: "/templates/" + id,
+    });
+
+    setTemplateName(data.name);
+    if (withData && data.pushObject) setPushBuilderData(data.pushObject);
+  };
+
   useEffect(() => {
-    setTemplateName("");
+    loadData(true);
   }, [id]);
+
+  const onSave = async (newName?: string) => {
+    setIsSaving(true);
+
+    const reqBody = {
+      type: TemplateType.PUSH,
+      name: newName || templateName,
+      ...(newName
+        ? {}
+        : {
+            pushObject: pushBuilderData,
+          }),
+    };
+
+    try {
+      await ApiService.patch({
+        url: `${ApiConfig.getAllTemplates}/${id}`,
+        options: {
+          ...reqBody,
+        },
+      });
+      loadData();
+    } catch (e) {
+      let message = "Unexpected error";
+      if (e instanceof AxiosError) {
+        message = e.response?.data?.message?.[0] || e.response?.data?.message;
+      }
+      toast.error(message);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // useEffect(() => {
+  //
+  // }, [name]);
 
   return (
     <>
-      <div className="w-full flex justify-between items-center h-[60px] border-y-[1px] border-[#E5E7EB] bg-white font-segoe font-normal text-[16px] text-[#111827] leading-[24px]">
+      <div className="w-full px-[14.5px] flex justify-between items-center h-[60px] border-y-[1px] border-[#E5E7EB] bg-white font-segoe font-normal text-[16px] text-[#111827] leading-[24px]">
         <div className="flex items-center ml-[16px]">
           <div className="text-ellipsis max-w-[260px] overflow-hidden mr-[16px] font-inter font-normal text-[14px] leading-[22px]">
             {templateName}
@@ -172,20 +225,38 @@ const PushBuilder = () => {
             </React.Fragment>
           ))}
         </div>
-        <div></div>
+
+        <Button
+          type={ButtonType.PRIMARY}
+          onClick={() => {
+            if (pageIndex) {
+              onSave();
+            } else setPageIndex(1);
+          }}
+        >
+          {pageIndex ? "Save" : "Next"}
+        </Button>
+
         <PushBuilderRenameModal
           initName={templateName}
           isOpen={isRenameModalOpen}
           onClose={() => setIsRenameModalOpen(false)}
           onSave={(newName) => {
-            setTemplateName(newName);
+            onSave(newName);
           }}
         />
       </div>
-      <PushBuilderContent
-        data={pushBuilderData}
-        onChange={setPushBuilderData}
-      />
+      {pageIndex === 0 ? (
+        <PushBuilderContent
+          data={pushBuilderData}
+          onChange={setPushBuilderData}
+        />
+      ) : (
+        <PushBuilderTestTab
+          data={pushBuilderData}
+          onChange={setPushBuilderData}
+        />
+      )}
     </>
   );
 };

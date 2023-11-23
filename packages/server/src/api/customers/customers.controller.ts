@@ -127,6 +127,23 @@ export class CustomersController {
     );
   }
 
+  @Get('/search-for-test')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
+  async searchForTest(
+    @Req() { user }: Request,
+    @Query('take') take = 100,
+    @Query('skip') skip = 0,
+    @Query('search') search = ''
+  ) {
+    return await this.customersService.searchForTest(
+      <Account>user,
+      take,
+      skip,
+      search
+    );
+  }
+
   @Get('/possible-attributes')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())

@@ -457,24 +457,25 @@ export class TemplatesService extends QueueEventsHost {
         });
         break;
       case TemplateType.PUSH:
-        job = await this.messageQueue.add(MessageType.PUSH_FIREBASE, {
-          accountId: account.id,
-          audienceId,
-          customerId,
-          firebaseCredentials: account.firebaseCredentials,
-          phDeviceToken: customer.phDeviceToken,
-          pushText: await this.parseApiCallTags(
-            template.pushText,
-            filteredTags
-          ),
-          pushTitle: await this.parseApiCallTags(
-            template.pushTitle,
-            filteredTags
-          ),
-          trackingEmail: email,
-          tags: filteredTags,
-          templateId: template.id,
-        });
+        // TODO: update for PUSH
+        // job = await this.messageQueue.add(MessageType.PUSH_FIREBASE, {
+        //   accountId: account.id,
+        //   audienceId,
+        //   customerId,
+        //   firebaseCredentials: account.firebaseCredentials,
+        //   phDeviceToken: customer.phDeviceToken,
+        //   pushText: await this.parseApiCallTags(
+        //     template.pushText,
+        //     filteredTags
+        //   ),
+        //   pushTitle: await this.parseApiCallTags(
+        //     template.pushTitle,
+        //     filteredTags
+        //   ),
+        //   trackingEmail: email,
+        //   tags: filteredTags,
+        //   templateId: template.id,
+        // });
         break;
       case TemplateType.WEBHOOK:
         if (template.webhookData) {

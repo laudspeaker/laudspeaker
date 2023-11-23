@@ -1795,4 +1795,47 @@ export class CustomersService {
       total: Number(totalJourneys[0].count),
     };
   }
+
+  public async searchForTest(
+    account: Account,
+    take = 100,
+    skip = 0,
+    search = ''
+  ): Promise<{
+    data: { id: string; email: string; phone: string }[];
+    totalPages: number;
+  }> {
+    const query: any = { ownerId: account.id };
+
+    if (search) {
+      query['$or'] = [
+        { email: new RegExp(`.*${search}.*`, 'i') },
+        { phone: new RegExp(`.*${search}.*`, 'i') },
+      ];
+    }
+
+    const totalCustomers = await this.CustomerModel.count(query).exec();
+    const totalPages = Math.ceil(totalCustomers / take) || 1;
+
+    const customers = await this.CustomerModel.find(query)
+      .skip(skip)
+      .limit(take <= 100 ? take : 100)
+      .lean()
+      .exec();
+
+    return {
+      data: customers.map((cust) => {
+        const info: { id: string; email: string; phone: string } = {
+          id: '',
+          email: '',
+          phone: '',
+        };
+        info['id'] = cust['_id'].toString();
+        info['email'] = cust['email']?.toString() || '';
+        info['phone'] = cust['phone']?.toString() || '';
+        return info;
+      }),
+      totalPages,
+    };
+  }
 }

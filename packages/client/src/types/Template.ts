@@ -1,3 +1,4 @@
+import { PushBuilderData } from "pages/PushBuilder/PushBuilderContent";
 import { WebhookState } from "pages/WebhookBuilder/WebhookSettings";
 import Account from "./Account";
 
@@ -19,6 +20,7 @@ export default interface Template {
   style: string;
   subject: string;
   slackMessage: string;
+  pushObject: PushBuilderData | null;
   type: TemplateType;
   smsText: string;
   webhookData: WebhookState;

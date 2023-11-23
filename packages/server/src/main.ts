@@ -47,7 +47,14 @@ async function bootstrap() {
   if (process.env.SERVE_CLIENT_FROM_NEST) app.setGlobalPrefix('api');
   app.set('trust proxy', 1);
   app.enableCors();
-  app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      transform: true,
+      exceptionFactory: (errors) =>
+        console.log(JSON.stringify(errors, null, 2)),
+    })
+  );
   const logger = app.get(WINSTON_MODULE_NEST_PROVIDER);
   const morganMiddleware = morgan(
     ':method :url :status :res[content-length] :remote-addr :user-agent - :response-time ms :total-time ms',

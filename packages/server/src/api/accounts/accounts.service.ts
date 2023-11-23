@@ -486,8 +486,7 @@ export class AccountsService extends BaseJwtHelper {
           slackMessage: null,
           type: TemplateType.CUSTOM_COMPONENT,
           smsText: null,
-          pushText: null,
-          pushTitle: null,
+          pushObject: null,
           webhookData: null,
           modalState: null,
           customEvents: [

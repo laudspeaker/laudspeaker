@@ -1,6 +1,6 @@
 import ApiService from "services/api.service";
 import { toast } from "react-toastify";
-import { useState } from "react";
+import { useId, useState } from "react";
 import tokenService from "services/token.service";
 import axios, { AxiosError } from "axios";
 import ApiConfig from "../../constants/api";
@@ -15,6 +15,7 @@ const PushBuilderMediaUpload = ({
   img,
   onImageUploaded,
 }: PushBuilderMediaUploadProps) => {
+  const id = useId();
   const [isMediaLoading, setIsMediaLoading] = useState(false);
   const [progress, setProgress] = useState(0);
 
@@ -103,7 +104,7 @@ const PushBuilderMediaUpload = ({
       </div>
     </div>
   ) : (
-    <label className="cursor-pointer" htmlFor="pick-image">
+    <label className="cursor-pointer" htmlFor={`pick-image-${id}`}>
       {!img?.imageSrc ? (
         <>
           <div className="bg-[#F9FAFB] w-[100px] h-[100px] text-[#111827] transition-colors border-[1px] border-[#E5E7EB] rounded-[2px] inline-flex justify-center flex-col items-center px-[16px] py-[5px]">
@@ -113,7 +114,7 @@ const PushBuilderMediaUpload = ({
             </div>
           </div>
           <input
-            id="pick-image"
+            id={`pick-image-${id}`}
             hidden
             type="file"
             accept=".jpg, .jpeg, .png, .gif"

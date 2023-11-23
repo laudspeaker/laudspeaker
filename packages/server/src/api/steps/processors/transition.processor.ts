@@ -704,27 +704,28 @@ export class TransitionProcessor extends WorkerHost {
         if (owner.emailProvider === 'free3') await owner.save();
         break;
       case TemplateType.PUSH:
-        await this.webhooksService.insertClickHouseMessages(
-          await sender.process({
-            name: TemplateType.PUSH,
-            accountID: owner.id,
-            stepID: currentStep.id,
-            customerID: customerID,
-            firebaseCredentials: owner.firebaseCredentials,
-            phDeviceToken: customer.phDeviceToken,
-            pushText: await this.templatesService.parseApiCallTags(
-              template.pushText,
-              filteredTags
-            ),
-            pushTitle: await this.templatesService.parseApiCallTags(
-              template.pushTitle,
-              filteredTags
-            ),
-            trackingEmail: email,
-            filteredTags: filteredTags,
-            templateID: template.id,
-          })
-        );
+        // TODO: update for new PUSH
+        // await this.webhooksService.insertClickHouseMessages(
+        //   await sender.process({
+        //     name: TemplateType.PUSH,
+        //     accountID: owner.id,
+        //     stepID: currentStep.id,
+        //     customerID: customerID,
+        //     firebaseCredentials: owner.firebaseCredentials,
+        //     phDeviceToken: customer.phDeviceToken,
+        //     pushText: await this.templatesService.parseApiCallTags(
+        //       template.pushText,
+        //       filteredTags
+        //     ),
+        //     pushTitle: await this.templatesService.parseApiCallTags(
+        //       template.pushTitle,
+        //       filteredTags
+        //     ),
+        //     trackingEmail: email,
+        //     filteredTags: filteredTags,
+        //     templateID: template.id,
+        //   })
+        // );
         break;
       case TemplateType.MODAL:
         if (template.modalState) {

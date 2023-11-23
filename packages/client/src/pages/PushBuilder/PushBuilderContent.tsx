@@ -5,6 +5,7 @@ import AndroidOnlySettings from "./AndroidOnlySettings";
 import Button, { ButtonType } from "components/Elements/Buttonv2";
 import Input from "components/Elements/Inputv2";
 import TrashIcon from "pages/Personv2/icons/TrashIcon";
+import PushBuilderPreviewer from "./PushBuilderPreviewer";
 
 export enum PushPlatforms {
   IOS = "iOS",
@@ -101,17 +102,25 @@ const PushBuilderContent = ({ data, onChange }: PushBuilderContentProps) => {
           ...settings,
         };
       });
+
       onChange(newData);
     };
 
   const handleUpdateConsistent = (checked: boolean) => {
+    const isNotConsistent =
+      Object.values(data.platform).filter((el) => el).length === 1;
+
     onChange({
       ...data,
-      keepContentConsistent: checked,
-      settings: {
-        [PushPlatforms.ANDROID]: data.settings[PushPlatforms.IOS],
-        [PushPlatforms.IOS]: data.settings[PushPlatforms.IOS],
-      },
+      keepContentConsistent: isNotConsistent ? false : checked,
+      ...(isNotConsistent
+        ? {}
+        : {
+            settings: {
+              [PushPlatforms.ANDROID]: data.settings[PushPlatforms.IOS],
+              [PushPlatforms.IOS]: data.settings[PushPlatforms.IOS],
+            },
+          }),
     });
   };
 
@@ -127,12 +136,16 @@ const PushBuilderContent = ({ data, onChange }: PushBuilderContentProps) => {
     onChange({ ...data, fields: newFields });
   };
 
+  const isFewConnected =
+    Object.values(data.platform).filter((pl) => pl).length > 1;
+
   return (
     <div className="max-h-[calc(100vh-106px)] h-full flex">
-      <div className="h-full w-[420px] bg-[#F3F4F6] p-[20px]">
+      <div className="h-full min-w-[420px] bg-[#F3F4F6] p-[20px]">
         <div className="font-inter text-[16px] font-semibold leading-[24px]">
           Preview
         </div>
+        <PushBuilderPreviewer data={data} />
       </div>
       <div className="h-full w-full bg-white py-[20px] overflow-y-scroll">
         <div className="px-[20px]">
@@ -146,15 +159,29 @@ const PushBuilderContent = ({ data, onChange }: PushBuilderContentProps) => {
                 className={`${
                   data.platform[el] ? "bg-[#EEF2FF] !border-[#6366F1]" : ""
                 } w-[200px] px-[20px] py-[10px] rounded border-[#E5E7EB] border-[2px] flex items-center cursor-pointer select-none transition-all`}
-                onClick={() =>
-                  onChange({
+                onClick={() => {
+                  const newData = {
                     ...data,
                     platform: {
                       ...data.platform,
                       [el]: !data.platform[el],
                     },
-                  })
-                }
+                  };
+
+                  if (
+                    Object.values(newData.platform).filter((pl) => pl)
+                      .length === 0
+                  )
+                    return;
+
+                  if (
+                    Object.values(newData.platform).filter((pl) => pl)
+                      .length === 1
+                  )
+                    newData.keepContentConsistent = false;
+
+                  onChange(newData);
+                }}
               >
                 {platformIcons[el]}
                 <div className="ml-[10px] font-inter text-[16px] font-semibold text-[#111827] leading-[24px]">
@@ -169,11 +196,14 @@ const PushBuilderContent = ({ data, onChange }: PushBuilderContentProps) => {
           <div className="font-inter text-[16px] font-semibold leading-[24px] mb-[10px]">
             General
           </div>
-          <CheckBox
-            text={"Keep iOS and Android content consistent"}
-            initValue={data.keepContentConsistent}
-            onCheck={handleUpdateConsistent}
-          />
+          {isFewConnected && (
+            <CheckBox
+              text={"Keep iOS and Android content consistent"}
+              initValue={data.keepContentConsistent}
+              propControl={true}
+              onCheck={handleUpdateConsistent}
+            />
+          )}
         </div>
         {data.keepContentConsistent ? (
           <>
@@ -205,15 +235,17 @@ const PushBuilderContent = ({ data, onChange }: PushBuilderContentProps) => {
         ) : (
           <>
             {Object.values(PushPlatforms).map((el, i) => (
-              <React.Fragment key={i}>
+              <React.Fragment key={el}>
                 {data.platform[el] ? (
                   <>
                     <div className="px-[20px] mt-[20px]">
-                      <div className="h-8 p-[5px] bg-gray-100 rounded-sm justify-start items-start gap-2.5 inline-flex">
-                        <div className="text-gray-900 text-sm font-semibold font-inter leading-snug">
-                          {el} settings
+                      {isFewConnected && (
+                        <div className="h-8 p-[5px] bg-gray-100 rounded-sm justify-start items-start gap-2.5 inline-flex">
+                          <div className="text-gray-900 text-sm font-semibold font-inter leading-snug">
+                            {el} settings
+                          </div>
                         </div>
-                      </div>
+                      )}
                       <PlatformSettingsComponents
                         data={data.settings[el]}
                         onChange={handleChangeData([el])}
