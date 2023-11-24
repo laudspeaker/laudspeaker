@@ -100,6 +100,11 @@ const PushBuilderContent = ({ data, onChange }: PushBuilderContentProps) => {
       platforms.forEach((el) => {
         newData.settings[el] = {
           ...settings,
+          title: settings.title.slice(0, 65),
+          description: settings.description.slice(
+            0,
+            el === PushPlatforms.IOS ? 178 : 240
+          ),
         };
       });
 
@@ -141,8 +146,8 @@ const PushBuilderContent = ({ data, onChange }: PushBuilderContentProps) => {
 
   return (
     <div className="max-h-[calc(100vh-106px)] h-full flex">
-      <div className="h-full min-w-[420px] bg-[#F3F4F6] p-[20px]">
-        <div className="font-inter text-[16px] font-semibold leading-[24px]">
+      <div className="h-full min-w-[420px] bg-[#F3F4F6]">
+        <div className="font-inter text-[16px] font-semibold pt-[20px] px-[20px] leading-[24px]">
           Preview
         </div>
         <PushBuilderPreviewer data={data} />

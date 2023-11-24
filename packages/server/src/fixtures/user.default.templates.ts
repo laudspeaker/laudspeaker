@@ -393,6 +393,7 @@ const DEFAULT_TEMPLATES: Template[] = [
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://db.onlinewebfonts.com/c/4a10ddb94826a97967f5f6e72f24b582?family=F.PingFang-SC-Regular" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700" rel="stylesheet" type="text/css">
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700" rel="stylesheet" type="text/css">
     <div style="box-sizing: border-box;">
