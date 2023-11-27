@@ -466,13 +466,13 @@ export class JourneysService {
           )) &&
           customer.journeys.indexOf(journey.id) < 0
         ) {
-          await this.stepsService.addToStart(
-            account,
-            journey.id,
-            customer,
-            queryRunner,
-            session
-          );
+          // await this.stepsService.addToStart(
+          //   account,
+          //   journey.id,
+          //   customer,
+          //   queryRunner,
+          //   session
+          // );
           await this.CustomerModel.updateOne(
             { _id: customer._id },
             {
@@ -749,14 +749,8 @@ export class JourneysService {
    * @param session
    * @returns
    */
-  async start(
-    account: Account,
-    journeyID: string,
-    session: string
-  ): Promise<(string | number)[]> {
+  async start(account: Account, journeyID: string, session: string) {
     let journey: Journey; // Workflow to update
-    let customers: CustomerDocument[]; // Customers to add to primary audience
-    const jobIDs: (string | number)[] = [];
     this.debug(
       `${JSON.stringify({ account, journeyID })}`,
       this.start.name,
@@ -764,8 +758,8 @@ export class JourneysService {
       account.email
     );
     const transactionSession = await this.connection.startSession();
-    await transactionSession.startTransaction();
-    const queryRunner = await this.dataSource.createQueryRunner();
+    transactionSession.startTransaction();
+    const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
@@ -833,49 +827,18 @@ export class JourneysService {
       if (!alg.isAcyclic(graph))
         throw new Error('Flow has infinite loops, cannot start.');
 
-      customers = await this.customersService.findByInclusionCriteria(
+      const audienceSize = await this.customersService.getAudienceSize(
         account,
         journey.inclusionCriteria,
-        transactionSession,
-        session
-      );
-
-      this.debug(
-        `${JSON.stringify({ customers })}`,
-        this.start.name,
         session,
-        account.email
+        transactionSession
       );
 
-      const unenrolledCustomers = customers.filter(
-        (customer) => customer.journeys.indexOf(journeyID) < 0
-      );
-      await this.CustomerModel.updateMany(
-        {
-          _id: { $in: unenrolledCustomers.map((customer) => customer.id) },
-        },
-        {
-          $addToSet: {
-            journeys: journeyID,
-          },
-          $set: {
-            [`journeyEnrollmentsDates.${journeyID}`]: new Date().toUTCString(),
-          },
-        }
-      )
-        .session(transactionSession)
-        .exec();
-
-      this.debug(
-        `adding to start ${JSON.stringify(unenrolledCustomers)}`,
-        this.start.name,
-        session,
-        account.email
-      );
-      await this.stepsService.bulkAddToStart(
+      await this.stepsService.addToStart(
         account,
         journeyID,
-        unenrolledCustomers,
+        journey.inclusionCriteria,
+        audienceSize,
         queryRunner,
         session
       );
@@ -900,8 +863,6 @@ export class JourneysService {
       await transactionSession.endSession();
       await queryRunner.release();
     }
-
-    return Promise.resolve(jobIDs);
   }
 
   /**

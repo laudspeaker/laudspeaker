@@ -136,33 +136,33 @@ export class CustomersService {
         this.error(e, CustomersService.name, session);
       }
     })();
-    this.CustomerModel.watch().on('change', async (data: any) => {
-      try {
-        const customerId = data?.documentKey?._id;
-        if (!customerId) return;
-        if (data.operationType === 'delete') {
-          await this.deleteEverywhere(customerId.toString());
-        } else {
-          const customer = await this.CustomerModel.findById(customerId).exec();
+    // this.CustomerModel.watch().on('change', async (data: any) => {
+    //   try {
+    //     const customerId = data?.documentKey?._id;
+    //     if (!customerId) return;
+    //     if (data.operationType === 'delete') {
+    //       await this.deleteEverywhere(customerId.toString());
+    //     } else {
+    //       const customer = await this.CustomerModel.findById(customerId).exec();
 
-          if (!customer?.ownerId) return;
+    //       if (!customer?.ownerId) return;
 
-          const account = await this.accountsRepository.findOneBy({
-            id: customer.ownerId,
-          });
+    //       const account = await this.accountsRepository.findOneBy({
+    //         id: customer.ownerId,
+    //       });
 
-          await this.segmentsService.updateAutomaticSegmentCustomerInclusion(
-            account,
-            customer,
-            session
-          );
+    //       await this.segmentsService.updateAutomaticSegmentCustomerInclusion(
+    //         account,
+    //         customer,
+    //         session
+    //       );
 
-          await this.recheckDynamicInclusion(account, customer, session);
-        }
-      } catch (e) {
-        this.error(e, this.constructor.name, session);
-      }
-    });
+    //       await this.recheckDynamicInclusion(account, customer, session);
+    //     }
+    //   } catch (e) {
+    //     this.error(e, this.constructor.name, session);
+    //   }
+    // });
   }
 
   log(message, method, session, user = 'ANONYMOUS') {
@@ -1140,52 +1140,137 @@ export class CustomersService {
   }
 
   /**
-   * Finds all customers that match the inclusion criteria. Uses findAll under
-   * the hood.
+   * Finds all customers that match conditions.
    *
    * @remarks
-   * Optimize this to happen inside of mongo later.
+   * TODO: translate segment conditions to mongo query
    *
-   * @param account - The owner of the customers
-   * @param criteria - Inclusion criteria to match on
+   * @param {string} account The owner of the customers; if a string, its the id,otherwise its an account object
+   * @param {any} criteria Conditions to match on
+   * @param {string} session Session identifier
+   * @param {ClientSession} [transactionSession]  Mongo Transaction
+   * @param {number} [skip] How many documents to skip; used for pagination
+   * @param {number} [limit] Max no. documents to return; used for pagination
+   *
+   * @returns {Promise<CustomerDocument[]>} Array of customer documents
    *
    */
-  async findByInclusionCriteria(
+  async find(
+    account: string,
+    criteria: any,
+    session: string,
+    transactionSession?: ClientSession,
+    skip?: number,
+    limit?: number
+  ): Promise<CustomerDocument[]> {
+    let query: any;
+    if (
+      !criteria ||
+      criteria.type === 'allCustomers' ||
+      !criteria.query ||
+      !criteria.query.statements ||
+      !criteria.query.statements.length
+    ) {
+      query = this.CustomerModel.find({
+        ownerId: account,
+      });
+    } else {
+      //TODO: We need to translate segment builder condiitons
+      // into a mongo query
+    }
+
+    if (transactionSession) query.session(transactionSession);
+    if (limit) query.limit(limit);
+    if (skip) query.skip(skip);
+    return await query.exec();
+  }
+
+  /**
+   * Adds journey to customer's `Journeys` array.
+   *
+   * @param {CustomerDocument} customers The owner of the customers; if a string, its the id,otherwise its an account object
+   * @param {string} session Session identifier
+   * @param {ClientSession} [transactionSession]  Mongo Transaction
+   * @param {number} [skip] How many documents to skip; used for pagination
+   * @param {number} [limit] Max no. documents to return; used for pagination
+   *
+   * @returns {Promise<CustomerDocument[]>} Array of customer documents
+   *
+   */
+  async updateJourneyList(
+    customers: CustomerDocument[],
+    journeyID: string,
+    session: string,
+    transactionSession?: ClientSession
+  ) {
+    const unenrolledCustomers = customers.filter(
+      (customer) => customer.journeys.indexOf(journeyID) < 0
+    );
+    const query = this.CustomerModel.updateMany(
+      {
+        _id: { $in: unenrolledCustomers.map((customer) => customer.id) },
+      },
+      {
+        $addToSet: {
+          journeys: journeyID,
+        },
+        $set: {
+          [`journeyEnrollmentsDates.${journeyID}`]: new Date().toUTCString(),
+        },
+      }
+    );
+    if (transactionSession) query.session(transactionSession);
+
+    return await query.exec();
+  }
+
+  /**
+   * Finds size of audience that match the some inclusion criteria.
+   * Uses count under the hood.
+   *
+   * @remarks
+   * Still need to translate segment conditions to mongo query
+   *
+   * @param account  The owner of the customers
+   * @param criteria Inclusion criteria to match on
+   * @param session Session ID
+   * @param transactionSession Mongo transaction object
+   *
+   * @returns Size of audience based on inclusion criteria
+   *
+   */
+  async getAudienceSize(
     account: Account,
     criteria: any,
-    transactionSession: ClientSession,
-    session: string
-  ): Promise<CustomerDocument[]> {
-    let customers: CustomerDocument[] = [];
-    const ret: CustomerDocument[] = [];
-    try {
-      customers = await this.CustomerModel.find({
+    session: string,
+    transactionSession?: ClientSession
+  ): Promise<number> {
+    let count = 0;
+    if (
+      !criteria ||
+      criteria.type === 'allCustomers' ||
+      !criteria.query ||
+      !criteria.query.statements ||
+      !criteria.query.statements.length
+    ) {
+      count = await this.CustomerModel.countDocuments({
         ownerId: (<Account>account).id,
       })
         .session(transactionSession)
         .exec();
-    } catch (err) {
-      return Promise.reject(err);
+    } else {
+      //TODO: We need to translate segment builder condiitons
+      // into a mongo query
     }
 
     this.debug(
-      `${JSON.stringify({ customers })}`,
-      this.findByInclusionCriteria.name,
-      session
+      `${JSON.stringify({ audienceSize: count })}`,
+      this.getAudienceSize.name,
+      session,
+      account.email
     );
-    for (const customer of customers) {
-      if (
-        await this.audiencesHelper.checkInclusion(
-          customer,
-          criteria,
-          session,
-          account
-        )
-      )
-        ret.push(customer);
-    }
 
-    return Promise.resolve(ret);
+    return count;
   }
 
   checkInclusion(
