@@ -50,6 +50,7 @@ const NodeDraggingProvider: FC<NodeDraggingProviderProps> = ({ flowRef }) => {
     [DrawerAction.USER_ATTRIBUTE]: NodeType.USER_ATTRIBUTE,
     [DrawerAction.WAIT_UNTIL]: NodeType.WAIT_UNTIL,
     [DrawerAction.WEBHOOK]: NodeType.MESSAGE,
+    [DrawerAction.MULTISPLIT]: NodeType.MULTISPLIT,
   };
 
   const { nodes, edges, isDragging, flowId, dragAction, isOnboarding } =

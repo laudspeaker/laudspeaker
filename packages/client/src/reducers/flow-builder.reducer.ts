@@ -14,7 +14,9 @@ import {
   BranchType,
   LogicRelation,
   MessageNodeData,
+  MultisplitBranch,
   NodeData,
+  TimeWindowTypes,
 } from "pages/FlowBuilderv2/Nodes/NodeData";
 import { JourneyStatus } from "pages/JourneyTablev2/JourneyTablev2";
 import { OnboardingAction } from "pages/Onboardingv2/OnboardingSandbox";
@@ -26,7 +28,6 @@ import {
   Node,
   NodeChange,
 } from "reactflow";
-import { TemplateType } from "types/Template";
 import { MessageType, ProviderType } from "types/Workflow";
 import getClosestNextAndPrevious from "utils/getClosestNextAndPrevious";
 import { v4 as uuid } from "uuid";
@@ -84,6 +85,57 @@ export enum QueryStatementType {
   SMS = "SMS",
   InAPP = "In-app message",
 }
+
+export const messageEventsCorelationWaitUntil: Record<
+  | ProviderType.EMAIL_MESSAGE
+  | ProviderType.SMS_MESSAGE
+  | ProviderType.PUSH_MESSAGE
+  | ProviderType.IN_APP_MESSAGE,
+  {
+    key:
+      | MessageEmailEventCondition
+      | MessageSMSEventCondition
+      | MessagePushEventCondition
+      | MessageInAPPEventCondition;
+    title: string;
+  }[]
+> = {
+  [ProviderType.EMAIL_MESSAGE]: Object.values(MessageEmailEventCondition).map(
+    (el) => ({
+      key: el,
+      title: "been " + el,
+    })
+  ),
+  [ProviderType.SMS_MESSAGE]: [
+    {
+      key: MessageSMSEventCondition.RECEIVED,
+      title: "been " + MessageSMSEventCondition.RECEIVED,
+    },
+    {
+      key: MessageSMSEventCondition.CLICK_LINK,
+      title: "been clicked sms link",
+    },
+  ],
+  [ProviderType.PUSH_MESSAGE]: Object.values(MessagePushEventCondition).map(
+    (el) => ({
+      key: el,
+      title: "been " + el,
+    })
+  ),
+  [ProviderType.IN_APP_MESSAGE]: Object.values(MessageInAPPEventCondition).map(
+    (el) => ({
+      key: el,
+      title: "been " + el,
+    })
+  ),
+};
+
+export const WaitUntilMessageProviderCorelation: any = {
+  [ProviderType.EMAIL_MESSAGE]: QueryStatementType.EMAIL.toLowerCase(),
+  [ProviderType.SMS_MESSAGE]: QueryStatementType.SMS.toLowerCase(),
+  [ProviderType.PUSH_MESSAGE]: QueryStatementType.PUSH.toLowerCase(),
+  [ProviderType.IN_APP_MESSAGE]: QueryStatementType.InAPP.toLowerCase(),
+};
 
 export type MessageEventTypes =
   | QueryStatementType.EMAIL
@@ -762,11 +814,44 @@ const flowBuilderSlice = createSlice({
         (nodeToChange.type === NodeType.WAIT_UNTIL &&
           nodeToChange.data.type === NodeType.WAIT_UNTIL) ||
         (nodeToChange.type === NodeType.USER_ATTRIBUTE &&
-          nodeToChange.data.type === NodeType.USER_ATTRIBUTE)
+          nodeToChange.data.type === NodeType.USER_ATTRIBUTE) ||
+        (nodeToChange.type === NodeType.MULTISPLIT &&
+          nodeToChange.data.type === NodeType.MULTISPLIT)
       ) {
         const existedBranchEdges = state.edges.filter(
           (edge) => edge.source === nodeToChange.id
         );
+
+        if (
+          nodeToChange.type === NodeType.MULTISPLIT &&
+          nodeToChange.data.type === NodeType.MULTISPLIT
+        ) {
+          if (
+            !nodeToChange.data.branches.some((el) => el.isOthers) &&
+            nodeToChange.data.branches.length > 0
+          ) {
+            nodeToChange.data.branches.push({
+              id: uuid(),
+              type: BranchType.MULTISPLIT,
+              isOthers: true,
+            });
+          } else if (nodeToChange.data.branches.some((el) => el.isOthers)) {
+            const otherNodeIndex = nodeToChange.data.branches.findIndex(
+              (el) => el.isOthers
+            );
+            if (nodeToChange.data.branches.length - 1 > 0) {
+              if (otherNodeIndex !== nodeToChange.data.branches.length - 1) {
+                const element = nodeToChange.data.branches.splice(
+                  otherNodeIndex,
+                  1
+                )[0];
+                nodeToChange.data.branches.push(element);
+              }
+            } else {
+              nodeToChange.data.branches = [];
+            }
+          }
+        }
 
         // prune disconnected branches
         for (const edge of existedBranchEdges) {
@@ -814,6 +899,7 @@ const flowBuilderSlice = createSlice({
 
           existedChildrenEdge.data = { type: EdgeType.BRANCH, branch };
         }
+
         if (
           state.devModeState.status === ConnectionStatus.Connected &&
           !state.nodes.find((el) => el.id === state.devModeState.customerInNode)
@@ -1060,6 +1146,10 @@ const flowBuilderSlice = createSlice({
             type: NodeType.TIME_WINDOW,
             from: undefined,
             to: undefined,
+            fromTime: "12:00",
+            toTime: "23:59",
+            onDays: [...new Array(7)].map(() => 0),
+            windowType: TimeWindowTypes.SPEC_DATES,
             stepId,
           };
           break;
@@ -1069,6 +1159,14 @@ const flowBuilderSlice = createSlice({
             type: NodeType.USER_ATTRIBUTE,
             branches: [],
             stepId,
+          };
+          break;
+        case DrawerAction.MULTISPLIT:
+          nodeToChange.type = NodeType.MULTISPLIT;
+          nodeToChange.data = {
+            type: NodeType.MULTISPLIT,
+            stepId,
+            branches: [],
           };
           break;
         default:
@@ -1083,6 +1181,7 @@ const flowBuilderSlice = createSlice({
             NodeType.WAIT_UNTIL,
             NodeType.USER_ATTRIBUTE,
             NodeType.EXIT,
+            NodeType.MULTISPLIT,
           ] as string[]
         ).includes(nodeToChange.type || "")
       ) {

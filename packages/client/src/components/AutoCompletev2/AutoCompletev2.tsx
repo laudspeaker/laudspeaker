@@ -19,6 +19,7 @@ interface AutoCompleteProps<T = unknown> {
   onQueryChange: (query: string) => void;
   onSelect: (value: T) => void;
   placeholder?: string;
+  noDataFoundPlaceholder?: string;
   includedItems: ItemsSetter<T> | ItemsGetter<T>;
   getKey?: (item: T) => string;
 }
@@ -31,6 +32,7 @@ const AutoComplete = <T,>({
   onQueryChange,
   onSelect,
   placeholder,
+  noDataFoundPlaceholder = "",
   getKey,
 }: AutoCompleteProps<T>) => {
   const [query, setQuery] = useState(initialValue || "");
@@ -75,6 +77,11 @@ const AutoComplete = <T,>({
         />
         <Combobox.Options className="translate-y-[4px] absolute w-full z-[99999999]">
           <div className="py-[4px] bg-white rounded-[2px]">
+            {items.length === 0 && (
+              <span className="text-[14px] block px-[10px] py-[5px] font-inter leading-[22px] text-[#4B5563]">
+                {noDataFoundPlaceholder}
+              </span>
+            )}
             {items.map((item) => (
               <Combobox.Option
                 key={retrieveLabel(item)}

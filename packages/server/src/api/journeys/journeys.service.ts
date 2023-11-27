@@ -55,6 +55,7 @@ import {
   PropertyCondition,
   StartStepMetadata,
   StepType,
+  TimeWindowTypes,
 } from '../steps/types/step.interface';
 import { MessageStepMetadata } from '../steps/types/step.interface';
 import { WaitUntilStepMetadata } from '../steps/types/step.interface';
@@ -1281,12 +1282,30 @@ export class JourneysService {
               return node.id === relevantEdges[0].target;
             })[0].data.stepId;
             metadata.window = new TimeWindow();
-            metadata.window.from = Temporal.Instant.from(
-              new Date(nodes[i].data['from']).toISOString()
-            );
-            metadata.window.to = Temporal.Instant.from(
-              new Date(nodes[i].data['to']).toISOString()
-            );
+            if (
+              nodes[i].data?.['windowType'] === undefined ||
+              nodes[i].data['windowType'] === TimeWindowTypes.SPEC_DATES
+            ) {
+              if (nodes[i].data['from'])
+                metadata.window.from = Temporal.Instant.from(
+                  new Date(nodes[i].data['from']).toISOString()
+                );
+              if (nodes[i].data['to'])
+                metadata.window.to = Temporal.Instant.from(
+                  new Date(nodes[i].data['to']).toISOString()
+                );
+            } else if (
+              nodes[i].data['windowType'] === TimeWindowTypes.SPEC_WEEK_DAYS
+            ) {
+              if (nodes[i].data['onDays'])
+                metadata.window.onDays = nodes[i].data?.['onDays'];
+
+              if (nodes[i].data['fromTime'])
+                metadata.window.fromTime = nodes[i].data?.['fromTime'];
+
+              if (nodes[i].data['toTime'])
+                metadata.window.toTime = nodes[i].data?.['toTime'];
+            }
             break;
           case NodeType.USER_ATTRIBUTE:
             metadata = new MultiBranchMetadata();

@@ -1,10 +1,14 @@
 import Button, { ButtonType } from "components/Elements/Buttonv2/Button";
+import Select from "components/Elements/Selectv2";
 import {
+  BranchType,
   Condition,
   ElementKey,
   EventBranch,
   LogicRelation,
+  MessageBranch,
   StatementType,
+  WUAttributeBranch,
 } from "pages/FlowBuilderv2/Nodes/NodeData";
 import React, { FC, useEffect, useState } from "react";
 import { useAppSelector } from "store/hooks";
@@ -14,8 +18,8 @@ import ConditionEditor from "./ConditionEditor";
 import ConditionViewer from "./ConditionViewer";
 
 interface EventBranchEditorProps {
-  branch: EventBranch;
-  onAddCondition: () => void;
+  branch: EventBranch | MessageBranch | WUAttributeBranch;
+  onAddCondition: (providerType: ProviderType) => void;
   onConditionChange: (
     j: number,
     condition: Condition,
@@ -118,19 +122,64 @@ const EventBranchEditor: FC<EventBranchEditorProps> = ({
       <div className="flex gap-[10px]">
         {(conditionIndexToChange === undefined ||
           !branch.conditions[conditionIndexToChange]) && (
-          <Button
-            type={ButtonType.LINK}
-            onClick={
-              isOnboarding
-                ? () => null
-                : () => {
-                    setLastFrameAddedCondtion(true);
-                    onAddCondition();
-                  }
-            }
-          >
-            Add condition
-          </Button>
+          <>
+            <Select
+              value={""}
+              onChange={(el) => {
+                if (isOnboarding) return;
+
+                setLastFrameAddedCondtion(true);
+                if (el === BranchType.EVENT) {
+                  onAddCondition(ProviderType.CUSTOM);
+                } else {
+                  onAddCondition(el as ProviderType);
+                }
+              }}
+              className="max-w-[90px]"
+              placeholder="Add condition"
+              customBTN={
+                <Button type={ButtonType.LINK} onClick={() => null}>
+                  Add condition
+                </Button>
+              }
+              options={[
+                {
+                  key: "UserDataLabel",
+                  title: "User Data",
+                  groupLabel: true,
+                },
+                {
+                  key: ProviderType.WU_ATTRIBUTE,
+                  title: "Attribute",
+                },
+                {
+                  key: BranchType.EVENT,
+                  title: "Event",
+                },
+                {
+                  key: "MessageLabel",
+                  title: "Message",
+                  groupLabel: true,
+                },
+                {
+                  key: `${ProviderType.EMAIL_MESSAGE}`,
+                  title: "Email",
+                },
+                {
+                  key: `${ProviderType.PUSH_MESSAGE}`,
+                  title: "Push",
+                },
+                {
+                  key: `${ProviderType.SMS_MESSAGE}`,
+                  title: "SMS",
+                },
+                {
+                  key: `${ProviderType.IN_APP_MESSAGE}`,
+                  title: "In-app message",
+                },
+              ]}
+            />
+          </>
         )}
       </div>
     </div>
