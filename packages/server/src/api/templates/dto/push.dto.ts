@@ -7,10 +7,10 @@ import {
   MaxLength,
   IsArray,
   ValidateNested,
-  // Додаткові імпорти для валідації
   IsBoolean,
   IsEnum,
   ValidateIf,
+  IsEmpty,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import {
@@ -42,11 +42,9 @@ export class PushBuilderDataDto {
 }
 
 class PlatformSettingsDto {
-  @IsNotEmpty()
   @IsString()
   title: string;
 
-  @IsNotEmpty()
   @IsString()
   description: string;
 
@@ -56,6 +54,7 @@ class PlatformSettingsDto {
 
   @IsNotEmpty()
   @IsObject()
+  @IsOptional()
   @ValidateNested()
   @Type(() => ClickBehaviorDto)
   clickBehavior: {
@@ -63,7 +62,7 @@ class PlatformSettingsDto {
     webURL: string;
   };
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
   summary: string;
 
@@ -76,7 +75,6 @@ class ClickBehaviorDto {
   @IsEnum(PushClickBehavior)
   type: PushClickBehavior;
 
-  @IsNotEmpty()
   @IsString()
   webURL: string;
 }

@@ -1,11 +1,14 @@
 import { AxiosError } from "axios";
 import Button, { ButtonType } from "components/Elements/Buttonv2";
 import ApiConfig from "constants/api";
+import { isEqual } from "lodash";
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { toast } from "react-toastify";
+import { useBeforeUnload, usePageLeave } from "react-use";
 import ApiService from "services/api.service";
 import Template, { TemplateType } from "types/Template";
+import deepCopy from "utils/deepCopy";
 import PushBuilderContent, {
   defaultPlatformSettings,
   PushBuilderData,
@@ -84,6 +87,8 @@ const StepperFixtures: { text: string; icon: React.ReactNode }[] = [
 ];
 
 const PushBuilder = () => {
+  const [initialPushBuilderData, setInitialPushBuilderData] =
+    useState<PushBuilderData | null>();
   const [pushBuilderData, setPushBuilderData] = useState<PushBuilderData>({
     platform: {
       [PushPlatforms.ANDROID]: true,
@@ -100,20 +105,23 @@ const PushBuilder = () => {
   const [pageIndex, setPageIndex] = useState(0);
   const [templateName, setTemplateName] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [isSame, setIsSame] = useState(true);
   const { id } = useParams();
 
-  const loadData = async (withData?: boolean) => {
+  const loadData = async (withData?: boolean, updateInitial?: boolean) => {
     const { data } = await ApiService.get<Template>({
       url: "/templates/" + id,
     });
 
     setTemplateName(data.name);
-    if (withData && data.pushObject) setPushBuilderData(data.pushObject);
+    if (withData && data.pushObject) setPushBuilderData({ ...data.pushObject });
+    if (updateInitial && data.pushObject)
+      setInitialPushBuilderData(deepCopy(data.pushObject));
   };
 
   useEffect(() => {
-    loadData(true);
-  }, [id]);
+    loadData(true, true);
+  }, []);
 
   const onSave = async (newName?: string) => {
     setIsSaving(true);
@@ -135,7 +143,7 @@ const PushBuilder = () => {
           ...reqBody,
         },
       });
-      loadData();
+      loadData(false, true);
     } catch (e) {
       let message = "Unexpected error";
       if (e instanceof AxiosError) {
@@ -147,9 +155,14 @@ const PushBuilder = () => {
     }
   };
 
-  // useEffect(() => {
-  //
-  // }, [name]);
+  useEffect(() => {
+    setIsSame(isEqual(pushBuilderData, initialPushBuilderData));
+  }, [pushBuilderData]);
+
+  useBeforeUnload(
+    !isSame,
+    "You have unsaved changes, are you sure you want to leave?"
+  );
 
   return (
     <>

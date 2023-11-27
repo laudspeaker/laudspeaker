@@ -60,9 +60,10 @@ export class UpdateTemplateDto {
 
   @IsOptional()
   @IsObject()
-  @ValidateNested()
-  @Type(() => PushBuilderDataDto)
-  public pushObject?: PushBuilderData;
+  // TODO: fix object error
+  // @ValidateNested()
+  // @Type(() => PushBuilderDataDto)
+  public pushObject?: PushBuilderDataDto;
 
   @IsObject()
   @IsOptional()
