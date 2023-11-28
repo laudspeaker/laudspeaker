@@ -69,7 +69,7 @@ const flowBuilderDrawerFixtures: FlowBuilderDrawerFixture[] = [
       {
         id: DrawerAction.TRACKER,
         icon: CustomModalIcon(),
-        text: "Custom Component",
+        text: "Onboarding",
       },
       {
         id: DrawerAction.JUMP_TO,
@@ -101,11 +101,6 @@ const flowBuilderDrawerFixtures: FlowBuilderDrawerFixture[] = [
         icon: TimeWindowIcon(),
         text: "Time Window",
       },
-      {
-        id: DrawerAction.USER_ATTRIBUTE,
-        icon: UserAttributeIcon(),
-        text: "User Attribute",
-      },
     ],
   },
   {
@@ -114,7 +109,7 @@ const flowBuilderDrawerFixtures: FlowBuilderDrawerFixture[] = [
       {
         id: DrawerAction.MULTISPLIT,
         // TODO: change icon
-        icon: WaitUntilIcon(),
+        icon: UserAttributeIcon(),
         text: "Multisplit",
       },
       // {
