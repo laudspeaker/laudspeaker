@@ -26,12 +26,10 @@ export class KafkaService implements OnModuleDestroy, OnModuleInit {
 
   onModuleInit() {
     // Initialize kafka producer and connect
-    this.logger.warn('KAFKA INITIALIZED');
     this.getProducer();
   }
   onModuleDestroy() {
     // Disconnect
-    this.logger.warn('KAFKA DISCONNECTED');
     this.getProducer().disconnect();
   }
 
@@ -40,9 +38,7 @@ export class KafkaService implements OnModuleDestroy, OnModuleInit {
    * @returns kafkajs.Producer
    */
   private getProducer() {
-    this.logger.warn('KAFKA PRODUCER GET ');
     if (this.CACHE.producer == null) {
-      this.logger.warn('KAFKA INITIALIZED V2');
       this.CACHE.producer = this.kafka.producer({
         allowAutoTopicCreation: true,
       });

@@ -80,6 +80,20 @@ services:
       - zoo1
     networks:
       - laudspeaker_default
+
+  kafka-gui:
+    image: provectuslabs/kafka-ui
+    hostname: kafka-gui
+    container_name: kafak-gui
+    environment:
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka1:29092
+      KAFKA_CLUSTERS_0_NAME: local
+    ports:
+      - "1002:8080"
+    depends_on:
+      - kafka1
+    networks:
+      - laudspeaker_default
   #### END kafka related containers
 
 networks:

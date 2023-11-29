@@ -1,10 +1,3 @@
--- update message_status to accept proper ISO6801 format
-ALTER TABLE message_status 
-MODIFY SETTING
-    date_time_input_format='best_effort'
-;
-
-
 -- create kafka ingestion
 CREATE TABLE IF NOT EXISTS message_status_kafka
 (
