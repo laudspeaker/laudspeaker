@@ -17,6 +17,9 @@ import axios from 'axios';
 import FormData from 'form-data';
 import { randomUUID } from 'crypto';
 import { Step } from '../steps/entities/step.entity';
+import { KafkaService } from '../kafka/kafka.service';
+import { Message } from 'kafkajs';
+import { KAFKA_TOPIC_MESSAGE_STATUS } from '../kafka/constants';
 
 export enum ClickHouseEventProvider {
   MAILGUN = 'mailgun',
@@ -31,7 +34,7 @@ export enum ClickHouseEventProvider {
 export interface ClickHouseMessage {
   audienceId?: string;
   stepId?: string;
-  createdAt: string;
+  createdAt: Date;
   customerId: string;
   event: string;
   eventProvider: ClickHouseEventProvider;
@@ -83,7 +86,9 @@ export class WebhooksService {
     @InjectRepository(Step)
     private stepRepository: Repository<Step>,
     @InjectRepository(Account)
-    private accountRepository: Repository<Account>
+    private accountRepository: Repository<Account>,
+    @Inject(KafkaService)
+    private kafkaService: KafkaService
   ) {
     const session = randomUUID();
     (async () => {
@@ -230,12 +235,15 @@ export class WebhooksService {
         event: this.sendgridEventsMap[event] || event,
         eventProvider: ClickHouseEventProvider.SENDGRID,
         processed: false,
-        createdAt: new Date().toUTCString(),
+        createdAt: new Date(),
       };
 
       messagesToInsert.push(clickHouseRecord);
     }
-    await this.insertClickHouseMessages(messagesToInsert);
+    await this.kafkaService.produceMessage(
+      KAFKA_TOPIC_MESSAGE_STATUS,
+      this.convertClickhouseToKafka(messagesToInsert)
+    );
   }
 
   public async processTwilioData(
@@ -269,9 +277,12 @@ export class WebhooksService {
       event: SmsStatus,
       eventProvider: ClickHouseEventProvider.TWILIO,
       processed: false,
-      createdAt: new Date().toUTCString(),
+      createdAt: new Date(),
     };
-    await this.insertClickHouseMessages([clickHouseRecord]);
+    await this.kafkaService.produceMessage(
+      KAFKA_TOPIC_MESSAGE_STATUS,
+      this.convertClickhouseToKafka([clickHouseRecord])
+    );
   }
 
   public async processMailgunData(
@@ -337,7 +348,7 @@ export class WebhooksService {
       event: event,
       eventProvider: ClickHouseEventProvider.MAILGUN,
       processed: false,
-      createdAt: new Date().toUTCString(),
+      createdAt: new Date(),
     };
 
     this.debug(
@@ -346,7 +357,10 @@ export class WebhooksService {
       session
     );
 
-    await this.insertClickHouseMessages([clickHouseRecord]);
+    await this.kafkaService.produceMessage(
+      KAFKA_TOPIC_MESSAGE_STATUS,
+      this.convertClickhouseToKafka([clickHouseRecord])
+    );
   }
 
   public async setupMailgunWebhook(
@@ -413,5 +427,13 @@ export class WebhooksService {
       );
       return Promise.reject(err);
     }
+  }
+
+  private convertClickhouseToKafka(
+    clickhouseMessages: ClickHouseMessage[]
+  ): Message[] {
+    return clickhouseMessages.map((clickhouseMessage) => ({
+      value: JSON.stringify(clickhouseMessage),
+    }));
   }
 }

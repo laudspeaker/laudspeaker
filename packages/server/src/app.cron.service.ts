@@ -539,9 +539,7 @@ export class CronService {
                     messageId: events.items[k].message.headers['message-id'],
                     event: events.items[k].event,
                     eventProvider: ClickHouseEventProvider.MAILGUN,
-                    createdAt: new Date(
-                      events.items[k].timestamp * 1000
-                    ).toUTCString(),
+                    createdAt: new Date(events.items[k].timestamp * 1000),
                     processed: false,
                   };
                   messagesToInsert.push(clickHouseRecord);
@@ -636,7 +634,7 @@ export class CronService {
                       messageId: rowObject.messageId,
                       event: message.status,
                       eventProvider: ClickHouseEventProvider.TWILIO,
-                      createdAt: new Date().toUTCString(),
+                      createdAt: new Date(),
                       userId: accounts[j].id,
                       processed: false,
                     };
@@ -742,7 +740,7 @@ export class CronService {
                       messageId: rowObject.messageId,
                       event: message.status,
                       eventProvider: ClickHouseEventProvider.TWILIO,
-                      createdAt: new Date().toUTCString(),
+                      createdAt: new Date(),
                       userId: accounts[j].id,
                       processed: false,
                     };

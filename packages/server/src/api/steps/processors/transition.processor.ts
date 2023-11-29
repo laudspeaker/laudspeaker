@@ -445,7 +445,7 @@ export class TransitionProcessor extends WorkerHost {
     await this.webhooksService.insertClickHouseMessages([
       {
         stepId: stepID,
-        createdAt: new Date().toUTCString(),
+        createdAt: new Date(),
         customerId: customerID,
         event: 'sent',
         eventProvider: ClickHouseEventProvider.TRACKER,
@@ -471,7 +471,7 @@ export class TransitionProcessor extends WorkerHost {
       await this.webhooksService.insertClickHouseMessages([
         {
           stepId: stepID,
-          createdAt: new Date().toUTCString(),
+          createdAt: new Date(),
           customerId: customerID,
           event: 'delivered',
           eventProvider: ClickHouseEventProvider.TRACKER,

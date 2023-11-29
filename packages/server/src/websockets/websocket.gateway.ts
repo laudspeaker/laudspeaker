@@ -324,7 +324,7 @@ export class WebsocketGateway implements OnGatewayConnection {
         await this.webhooksService.insertClickHouseMessages([
           {
             stepId: customer.customComponents[key].step,
-            createdAt: new Date().toUTCString(),
+            createdAt: new Date(),
             customerId: customer.id,
             event: 'delivered',
             eventProvider: ClickHouseEventProvider.TRACKER,

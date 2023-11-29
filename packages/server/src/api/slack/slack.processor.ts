@@ -43,7 +43,7 @@ export class SlackProcessor extends WorkerHost {
           {
             userId: job.data.accountId,
             event: 'error',
-            createdAt: new Date().toUTCString(),
+            createdAt: new Date(),
             eventProvider: ClickHouseEventProvider.SLACK,
             messageId: '',
             audienceId: job.data.args.audienceId,
