@@ -44,15 +44,13 @@ const CustomModalSettings = () => {
         <div className="flex gap-[15px] items-center">
           <BackButton />
           <div className="text-[20px] font-semibold leading-[28px] text-black">
-            Custom modal
+            Onboarding Suite
           </div>
         </div>
 
         <div className="bg-white p-[20px] flex flex-col gap-[20px]">
           <div className="text-[#4B5563]">
-            Description Description Description Description Description
-            Description Description Description Description Description
-            Description Description Description Description{" "}
+            Laudspeaker allows you to create custom product onboarding flows{" "}
             <button className="text-[#111827] font-bold underline">
               Documentation
             </button>
