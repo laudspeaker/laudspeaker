@@ -23,8 +23,7 @@
     "typeorm:generate": "npm run typeorm migration:generate",
     "typeorm:run": "npm run typeorm migration:run",
     "typeorm:revert": "npm run typeorm migration:revert",
-    "sentry:sourcemaps": "sentry-cli sourcemaps inject --org laudspeaker-rb --project node ./dist && sentry-cli sourcemaps upload --org laudspeaker-rb --project node ./dist",
-    "clickhouse:migrate": "clickhouse-migrations migrate"
+    "sentry:sourcemaps": "sentry-cli sourcemaps inject --org laudspeaker-rb --project node ./dist && sentry-cli sourcemaps upload --org laudspeaker-rb --project node ./dist"
   },
   "dependencies": {
     "@clickhouse/client": "^0.0.9",
