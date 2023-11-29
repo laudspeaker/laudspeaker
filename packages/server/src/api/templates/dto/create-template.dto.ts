@@ -9,8 +9,13 @@ import {
   IsArray,
   ValidateNested,
 } from 'class-validator';
-import { TemplateType, WebhookData } from '../entities/template.entity';
+import {
+  PushBuilderData,
+  TemplateType,
+  WebhookData,
+} from '../entities/template.entity';
 import { Type } from 'class-transformer';
+import { PushBuilderDataDto } from './push.dto';
 
 export class CreateTemplateDto {
   @Trim()
@@ -52,15 +57,11 @@ export class CreateTemplateDto {
   @MaxLength(2000)
   public smsText?: string;
 
-  @IsString()
-  @IsNotEmpty()
   @IsOptional()
-  public pushText?: string;
-
-  @IsString()
-  @IsNotEmpty()
-  @IsOptional()
-  public pushTitle?: string;
+  @IsObject()
+  @ValidateNested()
+  @Type(() => PushBuilderDataDto)
+  public pushObject?: PushBuilderData;
 
   @IsObject()
   @IsOptional()

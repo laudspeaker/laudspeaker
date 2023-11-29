@@ -15,7 +15,7 @@ import { WebClient } from '@slack/web-api';
 export enum MessageType {
   SMS = 'sms',
   EMAIL = 'email',
-  FIREBASE = 'firebase',
+  PUSH = 'PUSH',
   SLACK = 'slack',
   // WEBHOOK = 'webhook',
 }
@@ -67,7 +67,7 @@ export class MessageSender {
         job.trackingEmail
       );
     },
-    [MessageType.FIREBASE]: async (job) => {
+    [MessageType.PUSH]: async (job) => {
       await this.handleFirebase(
         job.trackingEmail,
         job.firebaseCredentials,
@@ -415,7 +415,7 @@ export class MessageSender {
           userId: accountID,
           event: 'error',
           createdAt: new Date().toUTCString(),
-          eventProvider: ClickHouseEventProvider.FIREBASE,
+          eventProvider: ClickHouseEventProvider.PUSH,
           messageId: null,
           stepId: stepID,
           customerId: customerID,
@@ -441,7 +441,7 @@ export class MessageSender {
             userId: accountID,
             event: 'error',
             createdAt: new Date().toUTCString(),
-            eventProvider: ClickHouseEventProvider.FIREBASE,
+            eventProvider: ClickHouseEventProvider.PUSH,
             messageId: null,
             stepId: stepID,
             customerId: customerID,
@@ -481,7 +481,7 @@ export class MessageSender {
         customerId: customerID,
         createdAt: new Date().toUTCString(),
         event: 'sent',
-        eventProvider: ClickHouseEventProvider.FIREBASE,
+        eventProvider: ClickHouseEventProvider.PUSH,
         messageId: messageId,
         templateId: String(templateID),
         userId: accountID,

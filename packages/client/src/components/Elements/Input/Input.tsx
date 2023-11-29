@@ -6,7 +6,7 @@ import React, {
   RefObject,
 } from "react";
 
-export interface InputProps {
+interface InputProps {
   id?: string;
   name: string;
   value?: string | number | readonly string[];

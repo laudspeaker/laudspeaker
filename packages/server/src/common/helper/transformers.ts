@@ -13,5 +13,6 @@ export function transformToObject<T, R>(
   const objectTransformed = plainToClass(type, item, {
     strategy: 'exposeAll',
   });
+
   return instanceToPlain(objectTransformed, options);
 }

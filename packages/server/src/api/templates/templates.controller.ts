@@ -143,26 +143,25 @@ export class TemplatesController {
     return this.templatesService.findUsedInJourneys(<Account>user, id, session);
   }
 
-  @Get(':name')
+  @Get(':id')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
-  findOne(@Req() { user }: Request, @Param('name') name: string) {
-    const session = randomUUID();
-    return this.templatesService.findOne(<Account>user, name, session);
+  findOne(@Req() { user }: Request, @Param('id') id: string) {
+    return this.templatesService.findOneById(<Account>user, id);
   }
 
-  @Patch(':name')
+  @Patch(':id')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
   update(
     @Req() { user }: Request,
-    @Param('name') name: string,
+    @Param('id') id: string,
     @Body() updateTemplateDto: UpdateTemplateDto
   ) {
     const session = randomUUID();
     return this.templatesService.update(
       <Account>user,
-      name,
+      id,
       updateTemplateDto,
       session
     );
@@ -176,12 +175,12 @@ export class TemplatesController {
     return this.templatesService.remove(<Account>user, id, session);
   }
 
-  @Post(':name/duplicate')
+  @Post(':id/duplicate')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
-  duplicate(@Req() { user }: Request, @Param('name') name: string) {
+  duplicate(@Req() { user }: Request, @Param('id') id: string) {
     const session = randomUUID();
-    return this.templatesService.duplicate(<Account>user, name, session);
+    return this.templatesService.duplicate(<Account>user, id, session);
   }
 
   @Post('/test-webhook')

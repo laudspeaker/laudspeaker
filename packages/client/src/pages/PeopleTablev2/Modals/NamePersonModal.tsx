@@ -1,5 +1,5 @@
 import Modal from "components/Elements/Modalv2";
-import NamePerson from "pages/PeopleTable/NamePerson";
+import NamePerson from "pages/PeopleTablev2/Modals/NamePerson";
 import React, { FC } from "react";
 
 interface NamePersonModalProps {

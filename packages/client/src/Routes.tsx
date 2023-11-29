@@ -16,7 +16,6 @@ import SlackBuilder from "pages/SlackBuilder";
 import Cor from "pages/Cor";
 import { useDispatch } from "react-redux";
 import DrawerLayout from "components/DrawerLayout";
-import TableBeta from "pages/TemplateTable/TableBeta";
 import Verify from "pages/Verify";
 import SmsBuilder from "pages/SmsBuilder";
 import Database from "pages/Integrations/Database";
@@ -25,9 +24,7 @@ import Modal from "components/Elements/Modal";
 import ApiService from "services/api.service";
 import Account from "types/Account";
 import { GenericButton } from "components/Elements";
-import FirebaseBuilder from "pages/FirebaseBuilder/FirebaseBuilder";
 import ResetPassword from "pages/ResetPassword";
-import SegmentViewer from "pages/SegmentViewer";
 import ModalBuilder from "pages/ModalBuilder";
 import WebhookBuilder from "pages/WebhookBuilder";
 import EventTracker from "pages/EventTracker";
@@ -54,6 +51,7 @@ import { LaudspeakerProvider } from "@laudspeaker/react";
 import AppConfig from "constants/app";
 import Personv2 from "pages/Personv2";
 import SegmentCreation from "pages/SegmentCreation/index";
+import PushBuilder from "pages/PushBuilder/PushBuilder";
 
 interface IProtected {
   children: ReactElement;
@@ -384,7 +382,7 @@ const RouteComponent: React.FC = () => {
             <Protected>
               <VerificationProtected>
                 <DrawerLayout>
-                  <SegmentViewer />
+                  <>{/* Add viewer when it's gonna be ready */}</>
                 </DrawerLayout>
               </VerificationProtected>
             </Protected>
@@ -427,7 +425,7 @@ const RouteComponent: React.FC = () => {
           }
         />
         <Route
-          path="/templates/email/:name"
+          path="/templates/email/:id"
           element={
             <Protected>
               <VerificationProtected>
@@ -452,12 +450,25 @@ const RouteComponent: React.FC = () => {
           }
         /> */}
         <Route
-          path="/templates/sms/:name"
+          path="/templates/sms/:id"
           element={
             <Protected>
               <VerificationProtected>
                 <DrawerLayout>
                   <SmsBuilder />
+                </DrawerLayout>
+              </VerificationProtected>
+            </Protected>
+          }
+        />
+
+        <Route
+          path="/templates/push/:id"
+          element={
+            <Protected>
+              <VerificationProtected>
+                <DrawerLayout>
+                  <PushBuilder />
                 </DrawerLayout>
               </VerificationProtected>
             </Protected>
@@ -478,7 +489,7 @@ const RouteComponent: React.FC = () => {
         />
         */}
         <Route
-          path="/templates/webhook/:name"
+          path="/templates/webhook/:id"
           element={
             <Protected>
               <VerificationProtected>
@@ -650,18 +661,6 @@ const RouteComponent: React.FC = () => {
               <VerificationProtected>
                 <DrawerLayout>
                   <JavascriptSnippetSettings />
-                </DrawerLayout>
-              </VerificationProtected>
-            </Protected>
-          }
-        />
-        <Route
-          path="/beta/table"
-          element={
-            <Protected>
-              <VerificationProtected>
-                <DrawerLayout>
-                  <TableBeta />
                 </DrawerLayout>
               </VerificationProtected>
             </Protected>

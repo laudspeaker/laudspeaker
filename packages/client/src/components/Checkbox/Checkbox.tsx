@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 interface CheckBoxProps extends React.HTMLAttributes<HTMLDivElement> {
   text: string | React.ReactElement;
   initValue?: boolean;
+  propControl?: boolean;
   onCheck: (checked: boolean) => void;
 }
 
@@ -10,15 +11,22 @@ const CheckBox = ({
   text,
   className,
   initValue,
+  propControl,
   onCheck,
   ...props
 }: CheckBoxProps) => {
   const [checked, setChecked] = useState(!!initValue);
 
   const handleCheck = () => {
-    setChecked((prev) => !prev);
+    if (!propControl) setChecked((prev) => !prev);
     onCheck(!checked);
   };
+
+  useEffect(() => {
+    if (propControl) {
+      setChecked(!!initValue);
+    }
+  }, [initValue]);
 
   return (
     <div

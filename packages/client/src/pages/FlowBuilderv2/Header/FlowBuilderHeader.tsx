@@ -27,6 +27,7 @@ import { useNavigate } from "react-router-dom";
 import { FlowBuilderDevModeModal } from "../Modals/FlowBuilderDevModeModal";
 import { useDevSocketConnection } from "../useDevSocketConnection";
 
+// TODO: update validation for new types
 const isValidNodes = (nodes: Node<NodeData | EdgeData>[]): boolean => {
   const filterNodeByType = nodes.filter(
     ({ type }) =>

@@ -23,7 +23,7 @@ export enum ClickHouseEventProvider {
   SENDGRID = 'sendgrid',
   TWILIO = 'twilio',
   SLACK = 'slack',
-  FIREBASE = 'firebase',
+  PUSH = 'PUSH',
   WEBHOOKS = 'webhooks',
   TRACKER = 'tracker',
 }

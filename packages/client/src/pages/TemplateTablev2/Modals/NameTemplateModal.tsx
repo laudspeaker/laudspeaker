@@ -1,5 +1,5 @@
 import Modal from "components/Elements/Modalv2";
-import NameTemplate from "pages/TemplateTable/NameTemplate";
+import NameTemplate from "pages/TemplateTablev2/Modals/NameTemplate";
 import React, { FC } from "react";
 
 interface NameTemplateModalProps {
