@@ -63,4 +63,3 @@ export class KafkaService implements OnModuleDestroy, OnModuleInit {
     await this.getProducer().send({ topic, messages, ...otherConfig });
   }
 }
-
