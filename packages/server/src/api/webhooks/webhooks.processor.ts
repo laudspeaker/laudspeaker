@@ -176,7 +176,7 @@ export class WebhooksProcessor extends WorkerHost {
       }
 
       try {
-        await this.webhooksService.insertClickHouseMessages([
+        await this.webhooksService.insertMessageStatusToClickhouse([
           {
             event: 'error',
             createdAt: new Date(),
@@ -196,7 +196,7 @@ export class WebhooksProcessor extends WorkerHost {
       throw new Error(error);
     } else {
       try {
-        await this.webhooksService.insertClickHouseMessages([
+        await this.webhooksService.insertMessageStatusToClickhouse([
           {
             event: 'sent',
             createdAt: new Date(),

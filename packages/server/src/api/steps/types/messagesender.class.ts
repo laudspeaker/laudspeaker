@@ -640,7 +640,7 @@ export class MessageSender {
   //     }
 
   //     try {
-  //       await this.webhooksService.insertClickHouseMessages([
+  //       await this.webhooksService.insertMessageStatusToClickhouse([
   //         {
   //           event: 'error',
   //           createdAt: new Date(),
@@ -659,7 +659,7 @@ export class MessageSender {
   //     throw new Error(error);
   //   } else {
   //     try {
-  //       await this.webhooksService.insertClickHouseMessages([
+  //       await this.webhooksService.insertMessageStatusToClickhouse([
   //         {
   //           event: 'sent',
   //           createdAt: new Date(),

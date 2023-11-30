@@ -321,7 +321,7 @@ export class WebsocketGateway implements OnGatewayConnection {
 
       //4. If first time delivered, record in clickhouse
       if (!customer.customComponents[key].delivered)
-        await this.webhooksService.insertClickHouseMessages([
+        await this.webhooksService.insertMessageStatusToClickhouse([
           {
             stepId: customer.customComponents[key].step,
             createdAt: new Date(),

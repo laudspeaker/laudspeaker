@@ -56,25 +56,6 @@ export class WebhooksService {
     'unsubscribed',
   ];
 
-  private clickHouseClient = createClient({
-    host: process.env.CLICKHOUSE_HOST
-      ? process.env.CLICKHOUSE_HOST.includes('http')
-        ? process.env.CLICKHOUSE_HOST
-        : `http://${process.env.CLICKHOUSE_HOST}`
-      : 'http://localhost:8123',
-    username: process.env.CLICKHOUSE_USER ?? 'default',
-    password: process.env.CLICKHOUSE_PASSWORD ?? '',
-    database: process.env.CLICKHOUSE_DB ?? 'default',
-  });
-
-  public insertClickHouseMessages = async (values: ClickHouseMessage[]) => {
-    await this.clickHouseClient.insert<ClickHouseMessage>({
-      table: 'message_status',
-      values,
-      format: 'JSONEachRow',
-    });
-  };
-
   private sendgridEventsMap = {
     click: 'clicked',
     open: 'opened',
@@ -240,10 +221,7 @@ export class WebhooksService {
 
       messagesToInsert.push(clickHouseRecord);
     }
-    await this.kafkaService.produceMessage(
-      KAFKA_TOPIC_MESSAGE_STATUS,
-      this.convertClickhouseToKafka(messagesToInsert)
-    );
+    await this.insertMessageStatusToClickhouse(messagesToInsert);
   }
 
   public async processTwilioData(
@@ -279,10 +257,7 @@ export class WebhooksService {
       processed: false,
       createdAt: new Date(),
     };
-    await this.kafkaService.produceMessage(
-      KAFKA_TOPIC_MESSAGE_STATUS,
-      this.convertClickhouseToKafka([clickHouseRecord])
-    );
+    await this.insertMessageStatusToClickhouse([clickHouseRecord]);
   }
 
   public async processMailgunData(
@@ -357,10 +332,7 @@ export class WebhooksService {
       session
     );
 
-    await this.kafkaService.produceMessage(
-      KAFKA_TOPIC_MESSAGE_STATUS,
-      this.convertClickhouseToKafka([clickHouseRecord])
-    );
+    await this.insertMessageStatusToClickhouse([clickHouseRecord]);
   }
 
   public async setupMailgunWebhook(
@@ -429,11 +401,17 @@ export class WebhooksService {
     }
   }
 
-  private convertClickhouseToKafka(
+  /**
+   * Queue a ClickHouseMessage to kafka so that it will be ingested into clickhouse.
+   */
+  public async insertMessageStatusToClickhouse(
     clickhouseMessages: ClickHouseMessage[]
-  ): Message[] {
-    return clickhouseMessages.map((clickhouseMessage) => ({
-      value: JSON.stringify(clickhouseMessage),
-    }));
+  ) {
+    return await this.kafkaService.produceMessage(
+      KAFKA_TOPIC_MESSAGE_STATUS,
+      clickhouseMessages.map((clickhouseMessage) => ({
+        value: JSON.stringify(clickhouseMessage),
+      }))
+    );
   }
 }
