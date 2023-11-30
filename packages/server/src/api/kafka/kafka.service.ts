@@ -24,25 +24,25 @@ export class KafkaService implements OnModuleDestroy, OnModuleInit {
     private readonly logger: LoggerService
   ) {}
 
-  onModuleInit() {
+  async onModuleInit() {
     // Initialize kafka producer and connect
-    this.getProducer();
+    await this.getProducer();
   }
-  onModuleDestroy() {
+  async onModuleDestroy() {
     // Disconnect
-    this.getProducer().disconnect();
+    (await this.getProducer()).disconnect();
   }
 
   /**
    * Creates producer and connects, if one doesn't exist.
    * @returns kafkajs.Producer
    */
-  private getProducer() {
+  private async getProducer() {
     if (this.CACHE.producer == null) {
       this.CACHE.producer = this.kafka.producer({
         allowAutoTopicCreation: true,
       });
-      this.CACHE.producer.connect();
+      await this.CACHE.producer.connect();
     }
     return this.CACHE.producer!;
   }
@@ -56,6 +56,6 @@ export class KafkaService implements OnModuleDestroy, OnModuleInit {
     messages: Message[],
     otherConfig: Exclude<ProducerConfig, 'topic' | 'messages'> = {}
   ) {
-    await this.getProducer().send({ topic, messages, ...otherConfig });
+    return (await this.getProducer()).send({ topic, messages, ...otherConfig });
   }
 }
