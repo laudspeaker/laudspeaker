@@ -61,12 +61,12 @@ const FlowBuilderSettings = () => {
                 iconRequired={false}
               />
               <div className="ml-[10px] font-semibold text-[16px] leading-[24px]">
-                Quite hours
+                Quiet hours
               </div>
             </span>
           </div>
           <div className="text-[#4B5563] font-inter text-[12px] leading-[20px] font-normal">
-            Description description description
+            Send messages only during certain hours
           </div>
           {journeySettings.quiteHours.enabled && (
             <div className="p-[10px] border border-[#E5E7EB] bg-[#F3F4F6] rounded max-w-[800px] flex flex-col gap-[10px]">
@@ -118,7 +118,8 @@ const FlowBuilderSettings = () => {
                 Fallback behavior
               </div>
               <div className="text-[#4B5563] font-inter text-[12px] leading-[20px] font-normal">
-                Description description description
+                Specify what happens if a message is triggered during quiet
+                hours
               </div>
               <RadioGroup
                 value={journeySettings.quiteHours.fallbackBehavior}
@@ -168,7 +169,8 @@ const FlowBuilderSettings = () => {
             </span>
           </div>
           <div className="text-[#4B5563] font-inter text-[12px] leading-[20px] font-normal">
-            Description description description
+            Specify the maximum number of users that can be enrolled in this
+            journey
           </div>
           {journeySettings.maxEntries.enabled && (
             <div className="p-[10px] border border-[#E5E7EB] bg-[#F3F4F6] rounded max-w-[800px] flex flex-col gap-[10px]">
@@ -237,7 +239,8 @@ const FlowBuilderSettings = () => {
             </span>
           </div>
           <div className="text-[#4B5563] font-inter text-[12px] leading-[20px] font-normal">
-            Description description description
+            Specify the maximum number of messages sent in this journey, or the
+            max rate at which messages are sent
           </div>
           {journeySettings.maxMessageSends.enabled && (
             <div className="p-[10px] border border-[#E5E7EB] bg-[#F3F4F6] rounded max-w-[800px] flex flex-col gap-[10px]">
