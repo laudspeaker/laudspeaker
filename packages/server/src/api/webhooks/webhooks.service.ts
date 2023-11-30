@@ -34,7 +34,7 @@ export enum ClickHouseEventProvider {
 export interface ClickHouseMessage {
   audienceId?: string;
   stepId?: string;
-  createdAt: Date;
+  createdAt: string;
   customerId: string;
   event: string;
   eventProvider: ClickHouseEventProvider;
@@ -216,7 +216,7 @@ export class WebhooksService {
         event: this.sendgridEventsMap[event] || event,
         eventProvider: ClickHouseEventProvider.SENDGRID,
         processed: false,
-        createdAt: new Date(),
+        createdAt: new Date().toISOString(),
       };
 
       messagesToInsert.push(clickHouseRecord);
@@ -255,7 +255,7 @@ export class WebhooksService {
       event: SmsStatus,
       eventProvider: ClickHouseEventProvider.TWILIO,
       processed: false,
-      createdAt: new Date(),
+      createdAt: new Date().toISOString(),
     };
     await this.insertMessageStatusToClickhouse([clickHouseRecord]);
   }
@@ -323,7 +323,7 @@ export class WebhooksService {
       event: event,
       eventProvider: ClickHouseEventProvider.MAILGUN,
       processed: false,
-      createdAt: new Date(),
+      createdAt: new Date().toISOString(),
     };
 
     this.debug(
