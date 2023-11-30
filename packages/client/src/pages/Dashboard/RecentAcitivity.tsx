@@ -39,7 +39,7 @@ export default function RecentActivity({ activities }: IRecentActivity) {
   const getListItem = (activity: IActivity) => {
     return (
       <ul className="min-w-full bg-white list-none">
-        <li className="flex justify-start items-center decoration-transparent w-full text-left py-[8px] px-[16px] box-border">
+        <li className="flex justify-start items-center decoration-transparent w-full text-left py-2 px-[16px] box-border">
           <div className="min-w-[54px]">
             {/* <Avatar>
             <ImageIcon />

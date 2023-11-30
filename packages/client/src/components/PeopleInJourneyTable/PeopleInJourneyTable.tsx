@@ -126,7 +126,7 @@ const PeopleInJourneyTable = () => {
         </>
       ) : (
         <div className="w-full h-[300px] my-auto flex items-center justify-center select-none">
-          <div className="flex flex-col items-center gap-[20px]">
+          <div className="flex flex-col items-center gap-5">
             <img src={emptyDataImage} />
 
             <div className="font-inter text-[16px] font-semibold leading-[24px] text-[#4B5563]">

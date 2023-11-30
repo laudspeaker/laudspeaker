@@ -32,7 +32,7 @@ const FlowBuilderRenameModal: FC<FlowBuilderRenameModalProps> = ({
             onChange={(val) => setName(val)}
           />
         </div>
-        <div className="flex justify-end items-center mt-[24px] gap-[8px]">
+        <div className="flex justify-end items-center mt-[24px] gap-2">
           <Button type={ButtonType.SECONDARY} onClick={onClose}>
             Cancel
           </Button>

@@ -291,7 +291,7 @@ const DatabaseStep3: FC<DatabaseStepProps> = ({
             </div>
             <div className="mt-[20px] flex flex-col gap-[10px]">
               <b>Params separeted</b>
-              <div className="flex justify-between items-center gap-[20px]">
+              <div className="flex justify-between items-center gap-5">
                 <Input
                   id="host"
                   name="host"

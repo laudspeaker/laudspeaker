@@ -38,7 +38,7 @@ const CheckBox = ({
         <div
           className={`${
             checked ? "border-[#6366F1] bg-[#6366F1]" : "border-[#D9D9D9]"
-          } w-[16px] h-[16px] border-[1px]  rounded-[2px] transition-all relative mr-[8px]`}
+          } w-[16px] h-[16px] border  rounded-sm transition-all relative mr-2`}
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"

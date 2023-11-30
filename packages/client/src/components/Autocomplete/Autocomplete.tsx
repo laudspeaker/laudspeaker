@@ -73,7 +73,7 @@ const Autocomplete = <T extends any>({
         <Combobox.Options
           className={`${
             !items.length && "hidden"
-          } max-h-[200px] overflow-y-scroll shadow-md  border-[1px] bg-white border-cyan-500 absolute top-[calc(100%+4px)] w-full rounded-[6px] z-[9999999999]`}
+          } max-h-[200px] overflow-y-scroll shadow-md  border bg-white border-cyan-500 absolute top-[calc(100%+4px)] w-full rounded-md z-[9999999999]`}
         >
           {items.map((el) => (
             <Combobox.Option

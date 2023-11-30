@@ -77,7 +77,7 @@ const TrackerTemplateEditor: FC<TrackerTemplateEditorProps> = ({
   };
 
   return (
-    <div className="p-[20px] bg-white rounded-[4px] flex flex-col gap-[20px]">
+    <div className="p-5 bg-white rounded flex flex-col gap-5">
       <div className="flex flex-col gap-[10px]">
         <div className="text-[#18181B]">Template name</div>
         <Input
@@ -112,7 +112,7 @@ const TrackerTemplateEditor: FC<TrackerTemplateEditorProps> = ({
                     type: e.target.value as StatementValueType,
                   })
                 }
-                className="w-[145px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB] rounded-[2px]"
+                className="w-[145px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border border-[#E5E7EB] rounded-sm"
               >
                 {Object.values(StatementValueType).map((type, j) => (
                   <option key={j} value={type}>
@@ -161,7 +161,7 @@ const TrackerTemplateEditor: FC<TrackerTemplateEditorProps> = ({
       <div className="flex flex-col gap-[10px]">
         <div className="text-[16px] font-semibold leading-[24px]">Event</div>
         {trackerData.events.map((event, i) => (
-          <div className="flex justify-between gap-[16px] items-center" key={i}>
+          <div className="flex justify-between gap-4 items-center" key={i}>
             <Input
               wrapperClassName="!w-full"
               className="w-full"

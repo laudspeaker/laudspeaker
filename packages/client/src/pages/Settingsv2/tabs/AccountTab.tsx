@@ -3,7 +3,7 @@ import React from "react";
 
 const AccountTab = () => {
   return (
-    <div className="p-[20px]">
+    <div className="p-5">
       <SettingsGeneralBeta />
     </div>
   );

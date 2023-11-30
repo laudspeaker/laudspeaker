@@ -147,23 +147,23 @@ const PushBuilderContent = ({ data, onChange }: PushBuilderContentProps) => {
   return (
     <div className="max-h-[calc(100vh-106px)] h-full flex">
       <div className="h-full min-w-[420px] bg-[#F3F4F6]">
-        <div className="font-inter text-[16px] font-semibold pt-[20px] px-[20px] leading-[24px]">
+        <div className="font-inter text-[16px] font-semibold pt-[20px] px-5 leading-[24px]">
           Preview
         </div>
         <PushBuilderPreviewer data={data} />
       </div>
-      <div className="h-full w-full bg-white py-[20px] overflow-y-scroll">
-        <div className="px-[20px]">
+      <div className="h-full w-full bg-white py-5 overflow-y-scroll">
+        <div className="px-5">
           <div className="font-inter text-[16px] font-semibold leading-[24px] mb-[10px]">
             Platform
           </div>
-          <div className="flex gap-[20px]">
+          <div className="flex gap-5">
             {Object.values(PushPlatforms).map((el, i) => (
               <div
                 key={el}
                 className={`${
                   data.platform[el] ? "bg-[#EEF2FF] !border-[#6366F1]" : ""
-                } w-[200px] px-[20px] py-[10px] rounded border-[#E5E7EB] border-[2px] flex items-center cursor-pointer select-none transition-all`}
+                } w-[200px] px-5 py-[10px] rounded border-[#E5E7EB] border-2 flex items-center cursor-pointer select-none transition-all`}
                 onClick={() => {
                   const newData = {
                     ...data,
@@ -196,8 +196,8 @@ const PushBuilderContent = ({ data, onChange }: PushBuilderContentProps) => {
             ))}
           </div>
         </div>
-        <hr className="border-[#E5E7EB] my-[20px]" />
-        <div className="px-[20px]">
+        <hr className="border-[#E5E7EB] my-5" />
+        <div className="px-5">
           <div className="font-inter text-[16px] font-semibold leading-[24px] mb-[10px]">
             General
           </div>
@@ -212,7 +212,7 @@ const PushBuilderContent = ({ data, onChange }: PushBuilderContentProps) => {
         </div>
         {data.keepContentConsistent ? (
           <>
-            <div className="px-[20px]">
+            <div className="px-5">
               <PlatformSettingsComponents
                 data={data.settings[PushPlatforms.IOS]}
                 onChange={handleChangeData([
@@ -221,10 +221,10 @@ const PushBuilderContent = ({ data, onChange }: PushBuilderContentProps) => {
                 ])}
               />
             </div>
-            <hr className="border-[#E5E7EB] my-[20px]" />
+            <hr className="border-[#E5E7EB] my-5" />
             {data.platform[PushPlatforms.ANDROID] && (
               <>
-                <div className="px-[20px]">
+                <div className="px-5">
                   <div className="font-inter text-[16px] font-semibold leading-[24px] mb-[10px]">
                     Android only
                   </div>
@@ -233,7 +233,7 @@ const PushBuilderContent = ({ data, onChange }: PushBuilderContentProps) => {
                     onChange={handleChangeData([PushPlatforms.ANDROID])}
                   />
                 </div>
-                <hr className="border-[#E5E7EB] my-[20px]" />
+                <hr className="border-[#E5E7EB] my-5" />
               </>
             )}
           </>
@@ -243,7 +243,7 @@ const PushBuilderContent = ({ data, onChange }: PushBuilderContentProps) => {
               <React.Fragment key={el}>
                 {data.platform[el] ? (
                   <>
-                    <div className="px-[20px] mt-[20px]">
+                    <div className="px-5 mt-[20px]">
                       {isFewConnected && (
                         <div className="h-8 p-[5px] bg-gray-100 rounded-sm justify-start items-start gap-2.5 inline-flex">
                           <div className="text-gray-900 text-sm font-semibold font-inter leading-snug">
@@ -257,14 +257,14 @@ const PushBuilderContent = ({ data, onChange }: PushBuilderContentProps) => {
                       />
                     </div>
                     {el === PushPlatforms.ANDROID && (
-                      <div className="px-[20px]">
+                      <div className="px-5">
                         <AndroidOnlySettings
                           data={data.settings[el]}
                           onChange={handleChangeData([el])}
                         />
                       </div>
                     )}
-                    <hr className="border-[#E5E7EB] my-[20px]" />
+                    <hr className="border-[#E5E7EB] my-5" />
                   </>
                 ) : (
                   <></>
@@ -273,7 +273,7 @@ const PushBuilderContent = ({ data, onChange }: PushBuilderContentProps) => {
             ))}
           </>
         )}
-        <div className="px-[20px]">
+        <div className="px-5">
           <div className="font-inter text-[16px] font-semibold leading-[24px] mb-[10px]">
             Key value pairs
           </div>
@@ -290,7 +290,7 @@ const PushBuilderContent = ({ data, onChange }: PushBuilderContentProps) => {
                   placeholder="key"
                   value={el.key}
                   wrapperClassName="!w-[200px] mr-[10px]"
-                  className="!w-full !rounded-[2px]"
+                  className="!w-full !rounded-sm"
                   onChange={(val) => {
                     handleFieldChange(val, el.value, i);
                   }}
@@ -299,14 +299,14 @@ const PushBuilderContent = ({ data, onChange }: PushBuilderContentProps) => {
                   placeholder="value"
                   value={el.value}
                   wrapperClassName="!w-[200px]"
-                  className="!w-full !rounded-[2px]"
+                  className="!w-full !rounded-sm"
                   onChange={(val) => {
                     handleFieldChange(el.key, val, i);
                   }}
                 />
               </div>
               <div
-                className="inline-block cursor-pointer h-full px-[4px]"
+                className="inline-block cursor-pointer h-full px-1"
                 onClick={() => handleFieldDelete(i)}
               >
                 <TrashIcon />

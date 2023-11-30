@@ -76,7 +76,7 @@ const Select = <T, U = any>({
               <div
                 className={`${
                   buttonInnerWrapperClassName || ""
-                } border-[1px] border-[#E5E7EB] rounded-[2px] bg-white px-[12px] py-[4px] flex items-center justify-between gap-[6px]`}
+                } border border-[#E5E7EB] rounded-sm bg-white px-[12px] py-[4px] flex items-center justify-between gap-[6px]`}
               >
                 <div className="max-w-full overflow-hidden text-ellipsis whitespace-nowrap">
                   {options.find((option) => option.key === value)?.title ||
@@ -135,7 +135,7 @@ const Select = <T, U = any>({
                     onChange={(e) =>
                       onSearchValueChange?.(e.target.value || "")
                     }
-                    className="w-full max-h-[32px] pl-[30px] pr-[26px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB] placeholder:font-inter placeholder:font-normal placeholder:text-[14px] placeholder:leading-[22px] placeholder:text-[#9CA3AF] rounded-[2px]"
+                    className="w-full max-h-[32px] pl-[30px] pr-[26px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border border-[#E5E7EB] placeholder:font-inter placeholder:font-normal placeholder:text-[14px] placeholder:leading-[22px] placeholder:text-[#9CA3AF] rounded-sm"
                   />
                   {!!searchValue.length && (
                     <XCircle
@@ -187,7 +187,7 @@ const Select = <T, U = any>({
                     const props = {
                       className: `${
                         option.groupLabel &&
-                        "bg-[#F3F4F6] !py-[2px] !cursor-auto !text-[#4B5563] leading-[20px] font-inter !text-[12px]"
+                        "bg-[#F3F4F6] !py-[2px] !cursor-auto !text-[#4B5563] leading-5 font-inter !text-[12px]"
                       }
                       ${option.nonSelectable && "hover:bg-white !cursor-auto"}
                       max-w-[240px] overflow-hidden text-ellipsis whitespace-nowrap px-[12px] py-[5px] hover:bg-[#F3F4F6] select-none cursor-pointer`,

@@ -148,14 +148,14 @@ const WUAttributeEditor = ({
       {showErrors &&
         errors &&
         errors[ConditionEditorError.NO_ATTRIBUTE_SELECTED] && (
-          <div className="font-inter font-normal text-[12px] leading-[20px] text-[#E11D48]">
+          <div className="font-inter font-normal text-[12px] leading-5 text-[#E11D48]">
             {errorToMessageMap[ConditionEditorError.NO_ATTRIBUTE_SELECTED]}
           </div>
         )}
       {showErrors &&
         errors &&
         errors[ConditionEditorError.UNSUPPORTED_ATTRIBUTE_TYPE] && (
-          <div className="font-inter font-normal text-[12px] leading-[20px] text-[#E11D48]">
+          <div className="font-inter font-normal text-[12px] leading-5 text-[#E11D48]">
             {errorToMessageMap[ConditionEditorError.UNSUPPORTED_ATTRIBUTE_TYPE]}
           </div>
         )}

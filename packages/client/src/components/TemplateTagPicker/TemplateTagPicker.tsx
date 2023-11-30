@@ -92,7 +92,7 @@ const TemplateTagPicker: FC<TemplateTagPickerProps> = ({
         isOpen={isTemplateTagModalOpen}
         onClose={() => setIsTemplateTagModalOpen(false)}
       >
-        <div className="py-[20px] px-[15px] outline-none">
+        <div className="py-5 px-[15px] outline-none">
           <div>Type:</div>
           <Select
             value={templateType}
@@ -139,7 +139,7 @@ const TemplateTagPicker: FC<TemplateTagPickerProps> = ({
               onChange={handleInputChange}
               onClick={(e) => e.stopPropagation()}
               onKeyDown={(e) => e.stopPropagation()}
-              className="!bg-[#E5E5E5] outline-none !rounded-[10px] !py-[12px] !px-[20px] font-[Poppins] not-italic font-normal text-[16px] leading-[30px]  min-w-[280px] min-h-[23px]"
+              className="!bg-[#E5E5E5] outline-none !rounded-[10px] !py-[12px] !px-5 font-[Poppins] not-italic font-normal text-[16px] leading-[30px]  min-w-[280px] min-h-[23px]"
             />
           </form>
           <div className="overflow-y-scroll max-h-[260px]">
@@ -157,7 +157,7 @@ const TemplateTagPicker: FC<TemplateTagPickerProps> = ({
                     handleValueReplace(`{{${tagContent}}}`, `{{${attribute}}}`);
                     handleClose();
                   }}
-                  className="min-w-[338px] h-[62px] border-[1px] border-[#F3F3F3] rounded-[5px] font-[Inter] font-medium not-italic text-[16px] leading-[24px]  my-[2.5px] mx-0 p-[5px]  flex justify-start items-start"
+                  className="min-w-[338px] h-[62px] border border-[#F3F3F3] rounded-[5px] font-[Inter] font-medium not-italic text-[16px] leading-[24px]  my-[2.5px] mx-0 p-[5px]  flex justify-start items-start"
                   key={index}
                 >
                   <div>{attribute}</div>

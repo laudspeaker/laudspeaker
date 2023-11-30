@@ -10,7 +10,7 @@ export const InsertNode: FC<NodeProps<NodeData>> = ({
 }) => {
   return (
     <div
-      className={`relative w-[260px] h-[80px] rounded-[8px] border-[2px] border-dashed flex justify-center items-center !border-[#6366F1] !bg-[#E0E7FF] ${
+      className={`relative w-[260px] h-[80px] rounded-lg border-2 border-dashed flex justify-center items-center !border-[#6366F1] !bg-[#E0E7FF] ${
         disabled ? "opacity-50 cursor-not-allowed" : ""
       }`}
       onDragOver={(e) => {

@@ -21,7 +21,7 @@ const MaxTimeBranchEditor: FC<MaxTimeBranchEditorProps> = ({
 
   return (
     <div className="flex flex-col gap-[10px] pb-[20px] border-b-[1px] border-[]">
-      <div className="font-inter font-normal text-[12px] leading-[20px] text-[#4B5563]">
+      <div className="font-inter font-normal text-[12px] leading-5 text-[#4B5563]">
         Set a maximum amount of time or a time window before moving users to
         another step
       </div>
@@ -48,7 +48,7 @@ const MaxTimeBranchEditor: FC<MaxTimeBranchEditorProps> = ({
                   }),
             })
           }
-          className="w-full px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB]"
+          className="w-full px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border border-[#E5E7EB]"
         >
           <option value={TimeType.TIME_DELAY}>Time delay</option>
           {!isOnboarding && (

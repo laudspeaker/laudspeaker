@@ -1,3 +1,4 @@
+import { PushBuilderData } from "pages/PushBuilder/PushBuilderContent";
 import {
   ComparisonType,
   ConditionalSegmentsSettings,
@@ -10,6 +11,7 @@ import {
   MessageSMSEventCondition,
   StatementValueType,
 } from "reducers/flow-builder.reducer";
+import { PushPlatforms } from "../../PushBuilder/PushBuilderContent";
 import { MessageType, ProviderType } from "types/Workflow";
 import { NodeType } from "../FlowEditor";
 
@@ -213,11 +215,22 @@ export interface CommonNodeData {
   customersCount?: number;
 }
 
+export type MessageTemplatePushbuilderData = PushBuilderData & {
+  selectedPlatform: "All" | PushPlatforms;
+};
+
 export interface MessageNodeData<T extends MessageType = MessageType>
   extends CommonNodeData {
-  type: NodeType.MESSAGE;
+  type: NodeType.MESSAGE | NodeType.PUSH;
   customName?: string;
-  template: { type: T; selected?: { id: number; name: string } };
+  template: {
+    type: T;
+    selected?: {
+      id: number;
+      name: string;
+      pushBuilder?: MessageTemplatePushbuilderData;
+    };
+  };
 }
 
 export interface WaitUntilNodeData extends CommonNodeData {

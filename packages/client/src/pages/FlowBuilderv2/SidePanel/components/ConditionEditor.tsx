@@ -356,7 +356,7 @@ const ConditionEditor: FC<ConditionEditorProps> = ({
         <>
           {condition.statements.map((statement, i) => (
             <React.Fragment key={i}>
-              <div className="bg-white p-[10px] flex flex-col gap-[10px] border-[#E5E7EB] border-[1px] rounded-[4px]">
+              <div className="bg-white p-[10px] flex flex-col gap-[10px] border-[#E5E7EB] border rounded">
                 <div className="flex justify-between items-center">
                   <div className="font-inter font-semibold text-[14px] leading-[22px]">
                     {statementTypeTitleMap[statement.type]}
@@ -417,7 +417,7 @@ const ConditionEditor: FC<ConditionEditorProps> = ({
                           statementError ===
                           ConditionEditorError.NO_PROPERTY_SPECIFIED
                       ) && (
-                        <div className="font-inter font-normal text-[12px] leading-[20px] text-[#E11D48]">
+                        <div className="font-inter font-normal text-[12px] leading-5 text-[#E11D48]">
                           {
                             errorToMessageMap[
                               ConditionEditorError.NO_PROPERTY_SPECIFIED
@@ -453,7 +453,7 @@ const ConditionEditor: FC<ConditionEditorProps> = ({
                               statements: newStatements,
                             });
                           }}
-                          className="w-full px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB] placeholder:font-inter placeholder:font-normal placeholder:text-[14px] placeholder:leading-[22px] placeholder:text-[#9CA3AF]"
+                          className="w-full px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border border-[#E5E7EB] placeholder:font-inter placeholder:font-normal placeholder:text-[14px] placeholder:leading-[22px] placeholder:text-[#9CA3AF]"
                         />
                       </div>
                     </div>
@@ -473,7 +473,7 @@ const ConditionEditor: FC<ConditionEditorProps> = ({
                             statements: newStatements,
                           });
                         }}
-                        className="w-full px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB]"
+                        className="w-full px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border border-[#E5E7EB]"
                       >
                         <option value={ElementKey.TAG_NAME}>Tag Name</option>
                         <option value={ElementKey.TEXT}>Text</option>
@@ -495,7 +495,7 @@ const ConditionEditor: FC<ConditionEditorProps> = ({
                               .value as ComparisonType;
                             setCondition({ ...condition });
                           }}
-                          className="comparison-type-select w-[145px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB]"
+                          className="comparison-type-select w-[145px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border border-[#E5E7EB]"
                         >
                           {valueTypeToComparisonTypesMap[
                             statement.valueType
@@ -513,7 +513,7 @@ const ConditionEditor: FC<ConditionEditorProps> = ({
                               .value as StatementValueType;
                             setCondition({ ...condition });
                           }}
-                          className="value-type-select w-[145px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB]"
+                          className="value-type-select w-[145px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border border-[#E5E7EB]"
                         >
                           {Object.values(StatementValueType).map(
                             (valueType, j) => (
@@ -543,7 +543,7 @@ const ConditionEditor: FC<ConditionEditorProps> = ({
                               statementError ===
                               ConditionEditorError.NO_VALUE_SPECIFIED
                           ) && (
-                            <div className="font-inter font-normal text-[12px] leading-[20px] text-[#E11D48]">
+                            <div className="font-inter font-normal text-[12px] leading-5 text-[#E11D48]">
                               {
                                 errorToMessageMap[
                                   ConditionEditorError.NO_VALUE_SPECIFIED
@@ -574,7 +574,7 @@ const ConditionEditor: FC<ConditionEditorProps> = ({
                       })),
                     });
                   }}
-                  className="border-[1px] border-[#E5E7EB] max-w-[80px] px-[15px] py-[4px] rounded-[4px] font-roboto font-normal text-[14px] leading-[22px]"
+                  className="border border-[#E5E7EB] max-w-[80px] px-[15px] py-[4px] rounded font-roboto font-normal text-[14px] leading-[22px]"
                 >
                   <option value={LogicRelation.AND}>And</option>
                   <option value={LogicRelation.OR}>Or</option>
@@ -585,7 +585,7 @@ const ConditionEditor: FC<ConditionEditorProps> = ({
 
           <div className="flex items-center gap-[10px]">
             {condition.statements.length > 0 && (
-              <div className="border-[1px] border-[#E5E7EB] rounded-[2px] px-[12px] py-[5px] font-roboto font-normal text-[14px] leading-[22px] text-[#4B5563]">
+              <div className="border border-[#E5E7EB] rounded-sm px-[12px] py-[5px] font-roboto font-normal text-[14px] leading-[22px] text-[#4B5563]">
                 {condition.statements[condition.statements.length - 1]
                   ?.relationToNext === LogicRelation.AND
                   ? "And"

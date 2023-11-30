@@ -138,7 +138,7 @@ const FlowBuilderStepper = () => {
     <div className="flex items-center">
       {flowBuilderStepperFixtures.map((item, i) => (
         <React.Fragment key={i}>
-          <div className="px-[20px]">
+          <div className="px-5">
             <div
               className={`py-[18px] font-inter text-[14px] leading-[24px] font-normal select-none ${
                 stepperIndex === i

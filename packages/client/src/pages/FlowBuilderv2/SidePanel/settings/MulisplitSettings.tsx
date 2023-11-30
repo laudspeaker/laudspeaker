@@ -98,7 +98,7 @@ const MulisplitSettings: FC<SidePanelComponentProps<MultisplitNodeData>> = ({
                   />
                   {limitQuery(el.conditions!.query, 3)[1] >= 3 && (
                     <div
-                      className="cursor-pointer select-none text-[#111827] mt-[10px] text-[14px] font-roboto w-full px-[15px] py-[4px] text-center border rounded-[4px] border-[#E5E7EB]"
+                      className="cursor-pointer select-none text-[#111827] mt-[10px] text-[14px] font-roboto w-full px-[15px] py-[4px] text-center border rounded border-[#E5E7EB]"
                       onClick={() => setEditBranchIndex(i)}
                     >
                       See all conditions
@@ -128,7 +128,7 @@ const MulisplitSettings: FC<SidePanelComponentProps<MultisplitNodeData>> = ({
             );
           })}
       </div>
-      <div className="py-[20px] relative">
+      <div className="py-5 relative">
         <Button
           type={ButtonType.SECONDARY}
           onClick={() => {

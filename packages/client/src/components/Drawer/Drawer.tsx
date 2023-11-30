@@ -54,11 +54,11 @@ const ResponsiveDrawer: FC<ResponsiveDrawerProps> = ({ expandable }) => {
         expandable
           ? "absolute transition-[width] [&_.notexapndable]:hover:!scale-100 w-[50px] hover:!w-[230px]"
           : "block min-w-[230px]"
-      } top-0 left-0 px-[10px] text-[14px] text-[#111827] leading-[22px] font-normal font-roboto z-[999999999999] border-collapse bg-[#F3F4F6] border-[1px] border-[#E5E7EB] h-screen`}
+      } top-0 left-0 px-[10px] text-[14px] text-[#111827] leading-[22px] font-normal font-roboto z-[999999999999] border-collapse bg-[#F3F4F6] border border-[#E5E7EB] h-screen`}
       ref={drawerRef}
     >
-      <div className="flex flex-col gap-[8px]">
-        <div className={`w-full h-[50px] flex items-center gap-[20px]`}>
+      <div className="flex flex-col gap-2">
+        <div className={`w-full h-[50px] flex items-center gap-5`}>
           <div className="min-w-[30px] min-h-[30px] flex items-center justify-center">
             <img
               className="min-w-[15px] min-h-[20px] max-w-[15px] max-h-[20px]"
@@ -84,7 +84,7 @@ const ResponsiveDrawer: FC<ResponsiveDrawerProps> = ({ expandable }) => {
             />
           </svg>
         </div>
-        <div className="w-full flex flex-col gap-[8px] ">
+        <div className="w-full flex flex-col gap-2 ">
           {navigation.map((navigationItem) => (
             <div
               className="w-full flex justify-center items-center"
@@ -99,12 +99,12 @@ const ResponsiveDrawer: FC<ResponsiveDrawerProps> = ({ expandable }) => {
                     )}
                   >
                     {({ open }) => (
-                      <div className="flex flex-col gap-[8px]">
+                      <div className="flex flex-col gap-2">
                         <Disclosure.Button className="w-full">
                           <div
-                            className={`relative w-full h-[40px] flex items-center gap-[8px] select-none cursor-pointer`}
+                            className={`relative w-full h-[40px] flex items-center gap-2 select-none cursor-pointer`}
                           >
-                            <div className="flex items-center justify-center min-w-[30px] min-h-[30px] max-w-[30px] max-h-[30px] rounded-[4px]">
+                            <div className="flex items-center justify-center min-w-[30px] min-h-[30px] max-w-[30px] max-h-[30px] rounded">
                               <img src={navigationItem.imgIcon} />
                             </div>
                             <span
@@ -145,7 +145,7 @@ const ResponsiveDrawer: FC<ResponsiveDrawerProps> = ({ expandable }) => {
                           </div>
                         </Disclosure.Button>
                         <Disclosure.Panel>
-                          <div className="flex flex-col gap-[8px]">
+                          <div className="flex flex-col gap-2">
                             {navigationItem.children.map((child) => (
                               <Link
                                 className={`w-full h-[40px] flex items-center select-none cursor-pointer ${
@@ -158,7 +158,7 @@ const ResponsiveDrawer: FC<ResponsiveDrawerProps> = ({ expandable }) => {
                                 key={child.id}
                               >
                                 <div
-                                  className={`rounded-[4px] flex items-center w-full gap-[8px] ${
+                                  className={`rounded flex items-center w-full gap-2 ${
                                     isExpanded &&
                                     location.pathname.includes(child.link)
                                       ? "bg-[#6366F1] text-white"
@@ -166,7 +166,7 @@ const ResponsiveDrawer: FC<ResponsiveDrawerProps> = ({ expandable }) => {
                                   }`}
                                 >
                                   <div
-                                    className={`flex items-center justify-center min-w-[30px] min-h-[30px] max-w-[30px] max-h-[30px] rounded-[4px] ${
+                                    className={`flex items-center justify-center min-w-[30px] min-h-[30px] max-w-[30px] max-h-[30px] rounded ${
                                       !isExpanded &&
                                       location.pathname.includes(child.link)
                                         ? "bg-[#6366F1]"
@@ -211,7 +211,7 @@ const ResponsiveDrawer: FC<ResponsiveDrawerProps> = ({ expandable }) => {
                   id={navigationItem.id}
                 >
                   <div
-                    className={`rounded-[4px] flex items-center w-full gap-[8px] ${
+                    className={`rounded flex items-center w-full gap-2 ${
                       isExpanded &&
                       location.pathname.includes(navigationItem.link)
                         ? "bg-[#6366F1] text-white"
@@ -219,7 +219,7 @@ const ResponsiveDrawer: FC<ResponsiveDrawerProps> = ({ expandable }) => {
                     }`}
                   >
                     <div
-                      className={`flex items-center justify-center min-w-[30px] min-h-[30px]  max-w-[30px] max-h-[30px] rounded-[4px] ${
+                      className={`flex items-center justify-center min-w-[30px] min-h-[30px]  max-w-[30px] max-h-[30px] rounded ${
                         !isExpanded &&
                         location.pathname.includes(navigationItem.link)
                           ? "bg-[#6366F1]"

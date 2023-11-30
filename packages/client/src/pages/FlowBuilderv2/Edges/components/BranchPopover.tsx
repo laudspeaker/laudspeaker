@@ -86,7 +86,7 @@ const BranchPopover: FC<BranchPopoverProps> = ({
                 transformOrigin: "0 0",
                 transform: `scale(${zoom}) translateY(5px)`,
               }}
-              className={`fixed p-[10px] w-[260px] bg-white z-[999999999] rounded-[4px] flex flex-col gap-[10px] ${
+              className={`fixed p-[10px] w-[260px] bg-white z-[999999999] rounded flex flex-col gap-[10px] ${
                 className ? className : ""
               }`}
               onClick={() => dispatch(selectNode(node.id))}
@@ -98,7 +98,7 @@ const BranchPopover: FC<BranchPopoverProps> = ({
               branch.type === BranchType.MESSAGE ? (
                 <>
                   {branch.conditions.length === 0 ? (
-                    <div className="bg-[#FFF1F2] p-[10px] font-inter font-normal text-[12px] leading-[20px] text-[#E11D48]">
+                    <div className="bg-[#FFF1F2] p-[10px] font-inter font-normal text-[12px] leading-5 text-[#E11D48]">
                       You need to set branch conditions
                     </div>
                   ) : (
@@ -136,7 +136,7 @@ const BranchPopover: FC<BranchPopoverProps> = ({
                                   {condition.trackerId && (
                                     <div className="flex gap-[5px] items-center">
                                       <div>Tracker:</div>
-                                      <div className="px-[5px] py-[2px] border-[1px] border-[#E5E7EB] rounded-[2px] bg-white">
+                                      <div className="px-[5px] py-[2px] border border-[#E5E7EB] rounded-sm bg-white">
                                         {condition.trackerId}
                                       </div>
                                     </div>
@@ -144,7 +144,7 @@ const BranchPopover: FC<BranchPopoverProps> = ({
                                   {condition.event && (
                                     <div className="flex gap-[5px] items-center">
                                       <div>Event</div>
-                                      <div className="px-[5px] py-[2px] border-[1px] border-[#E5E7EB] rounded-[2px] bg-white">
+                                      <div className="px-[5px] py-[2px] border border-[#E5E7EB] rounded-sm bg-white">
                                         {condition.event}
                                       </div>
                                       <div>is performed</div>
@@ -158,7 +158,7 @@ const BranchPopover: FC<BranchPopoverProps> = ({
                                 {condition.statements.map((statement, j) => (
                                   <div
                                     key={j}
-                                    className="font-inter font-normal text-[12px] leading-[20px] text-[#18181B]"
+                                    className="font-inter font-normal text-[12px] leading-5 text-[#18181B]"
                                   >
                                     {statement.type ===
                                     StatementType.PROPERTY ? (
@@ -202,18 +202,16 @@ const BranchPopover: FC<BranchPopoverProps> = ({
                                       }
                                     </span>
                                   ) : (
-                                    <span className="whitespace-nowrap max-w-[100px] overflow-hidden text-ellipsis inline-block text-[14px] px-[5px] py-[2px] border-[1px] border-[#E5E7EB] rounded-[2px] bg-white font-inter">
+                                    <span className="whitespace-nowrap max-w-[100px] overflow-hidden text-ellipsis inline-block text-[14px] px-[5px] py-[2px] border border-[#E5E7EB] rounded-sm bg-white font-inter">
                                       {
                                         (condition as MessageCondition)
                                           .fromSpecificMessage.title
                                       }
                                     </span>
                                   )}
-                                  <span className="px-[4px] text-[12px]">
-                                    from
-                                  </span>
+                                  <span className="px-1 text-[12px]">from</span>
                                   {(condition as MessageCondition).from?.key ? (
-                                    <span className="whitespace-nowrap max-w-[100px] overflow-hidden text-ellipsis inline-block text-[14px] px-[5px] py-[2px] border-[1px] border-[#E5E7EB] rounded-[2px] bg-white font-inter">
+                                    <span className="whitespace-nowrap max-w-[100px] overflow-hidden text-ellipsis inline-block text-[14px] px-[5px] py-[2px] border border-[#E5E7EB] rounded-sm bg-white font-inter">
                                       {
                                         (condition as MessageCondition).from
                                           ?.title
@@ -225,7 +223,7 @@ const BranchPopover: FC<BranchPopoverProps> = ({
                                     </span>
                                   )}
                                 </div>
-                                <div className="text-[14px] leading-[20px] font-inter">
+                                <div className="text-[14px] leading-5 font-inter">
                                   {
                                     (condition as MessageCondition)
                                       .happenCondition
@@ -242,7 +240,7 @@ const BranchPopover: FC<BranchPopoverProps> = ({
                               <div className="flex w-full items-center flex-wrap gap-[4px]">
                                 {(condition as WUAttributeCondition)
                                   .attributeName ? (
-                                  <span className="whitespace-nowrap text-[14px] max-w-[80px] overflow-hidden text-ellipsis inline-block px-[5px] py-[2px] border-[1px] border-[#E5E7EB] rounded-[2px] bg-white font-inter">
+                                  <span className="whitespace-nowrap text-[14px] max-w-[80px] overflow-hidden text-ellipsis inline-block px-[5px] py-[2px] border border-[#E5E7EB] rounded-sm bg-white font-inter">
                                     {
                                       (
                                         condition as WUAttributeCondition
@@ -265,7 +263,7 @@ const BranchPopover: FC<BranchPopoverProps> = ({
                                 {(condition as WUAttributeCondition)
                                   .happenCondition ===
                                   WUAttributeHappenCondition.CHANGED_TO && (
-                                  <span className="whitespace-nowrap text-[14px] max-w-[100px] overflow-hidden text-ellipsis inline-block px-[5px] py-[2px] border-[1px] border-[#E5E7EB] rounded-[2px] bg-white font-inter">
+                                  <span className="whitespace-nowrap text-[14px] max-w-[100px] overflow-hidden text-ellipsis inline-block px-[5px] py-[2px] border border-[#E5E7EB] rounded-sm bg-white font-inter">
                                     {(condition as WUAttributeCondition)
                                       .value || (
                                       <i className="opacity-70">Empty value</i>
@@ -299,7 +297,7 @@ const BranchPopover: FC<BranchPopoverProps> = ({
                           {condition.statements.map((statement, j) => (
                             <div
                               key={j}
-                              className="font-inter font-normal text-[12px] leading-[20px] text-[#18181B]"
+                              className="font-inter font-normal text-[12px] leading-5 text-[#18181B]"
                             >
                               "{statement.key}" {statement.comparisonType} "
                               {statement.value}"
@@ -320,12 +318,12 @@ const BranchPopover: FC<BranchPopoverProps> = ({
               ) : branch.type === BranchType.MAX_TIME ? (
                 <>
                   {branch.timeType === TimeType.TIME_DELAY ? (
-                    <div className="px-[8px] py-[10px] rounded-[4px] bg-[#F3F4F6] font-inter font-normal text-[14px] leading-[22px] text-[#18181B]">
+                    <div className="px-2 py-[10px] rounded bg-[#F3F4F6] font-inter font-normal text-[14px] leading-[22px] text-[#18181B]">
                       {branch.delay.days} days {branch.delay.hours} hours{" "}
                       {branch.delay.minutes} min
                     </div>
                   ) : (
-                    <div className="flex gap-[10px] px-[8px] py-[10px] rounded-[4px] bg-[#F3F4F6] font-inter font-normal text-[14px] leading-[22px] text-[#18181B]">
+                    <div className="flex gap-[10px] px-2 py-[10px] rounded bg-[#F3F4F6] font-inter font-normal text-[14px] leading-[22px] text-[#18181B]">
                       <div>
                         <div>From</div>
                         <div>To</div>
@@ -366,7 +364,7 @@ const BranchPopover: FC<BranchPopoverProps> = ({
                       condition={limitQuery(branch.conditions?.query, 3)[0]}
                     />
                   ) : (
-                    <div className="font-inter font-normal text-[14px] leading-[20px] text-[#18181B]">
+                    <div className="font-inter font-normal text-[14px] leading-5 text-[#18181B]">
                       Not suitable for other branches
                     </div>
                   )}

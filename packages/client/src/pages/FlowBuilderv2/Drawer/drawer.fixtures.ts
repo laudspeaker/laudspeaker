@@ -51,11 +51,11 @@ const flowBuilderDrawerFixtures: FlowBuilderDrawerFixture[] = [
       //   icon: SlackIcon(),
       //   text: "Slack",
       // },
-      // {
-      //   id: DrawerAction.PUSH,
-      //   icon: PushIcon(),
-      //   text: "Push Notification",
-      // },
+      {
+        id: DrawerAction.PUSH,
+        icon: PushIcon(),
+        text: "Push Notification",
+      },
       {
         id: DrawerAction.WEBHOOK,
         icon: WebhookIcon(),

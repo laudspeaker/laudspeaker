@@ -36,7 +36,7 @@ const Header: FC<HeaderProps> = ({ crumbs }) => {
 
   return (
     <div className="w-full h-[46px] bg-white border-[0px] px-[16px] py-[12px] flex justify-between items-center">
-      <div className="flex items-center gap-[8px] font-roboto font-normal text-[14px] leading-[22px] text-[#000000D9] select-none">
+      <div className="flex items-center gap-2 font-roboto font-normal text-[14px] leading-[22px] text-[#000000D9] select-none">
         {crumbs?.map((crumb, i) => (
           <Fragment key={i}>
             <div

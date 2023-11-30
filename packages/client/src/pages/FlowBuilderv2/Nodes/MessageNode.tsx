@@ -122,12 +122,8 @@ export const MessageNode: FC<NodeProps<MessageNodeData>> = ({
         isViewMode && stats && nodeFixtures.statsToShow
           ? "h-[140px]"
           : "h-[80px]"
-      } rounded-[4px] bg-white ${
-        disabled ? "opacity-50 cursor-not-allowed" : ""
-      } ${
-        selected
-          ? "border-[2px] border-[#6366F1]"
-          : "border-[1px] border-[#E5E7EB]"
+      } rounded bg-white ${disabled ? "opacity-50 cursor-not-allowed" : ""} ${
+        selected ? "border-2 border-[#6366F1]" : "border border-[#E5E7EB]"
       }`}
       onDragOver={(e) => {
         e.stopPropagation();
@@ -186,7 +182,7 @@ export const MessageNode: FC<NodeProps<MessageNodeData>> = ({
                   : ""
               }`}
             >
-              <div className="text-[12px] leading-[20px] text-[#4B5563]">
+              <div className="text-[12px] leading-5 text-[#4B5563]">
                 {stat.name}
               </div>
               <div className="stat-result font-semibold text-[14px] leading-[22px]">

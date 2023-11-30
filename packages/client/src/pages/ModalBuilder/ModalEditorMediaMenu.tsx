@@ -46,7 +46,7 @@ const ModalEditorMediaMenu = ({
   return (
     <div className="text-[14px] font-normal">
       <div>
-        <div className="flex flex-col gap-[10px] p-[20px]">
+        <div className="flex flex-col gap-[10px] p-5">
           <div>Type:</div>
           <div className="flex select-none">
             {mediaTypes.map((el, i) => (
@@ -55,7 +55,7 @@ const ModalEditorMediaMenu = ({
                 className={`flex justify-center items-center w-full h-[32px] cursor-pointer ${
                   modalState.media.type === el
                     ? "bg-[#6366F1] text-white"
-                    : "border-[#E5E7EB] border-[1px]"
+                    : "border-[#E5E7EB] border"
                 } ${
                   i === 0
                     ? "rounded-l-[2px]"
@@ -89,7 +89,7 @@ const ModalEditorMediaMenu = ({
               </span>
               <input
                 placeholder="Image alt text"
-                className="bg-white border-[1px] border-[#D9D9D9] rounded-[5px] px-[12px] py-[5px] outline-none font-normal text-[14px] placeholder:text-[#00000040] leading-[22px]"
+                className="bg-white border border-[#D9D9D9] rounded-[5px] px-[12px] py-[5px] outline-none font-normal text-[14px] placeholder:text-[#00000040] leading-[22px]"
                 value={modalState.media.altText}
                 onChange={(el) =>
                   setModalState({
@@ -108,7 +108,7 @@ const ModalEditorMediaMenu = ({
               <span className="text-[14px] font-thin">Video URL:</span>
               <textarea
                 value={modalState.media.videoUrl || ""}
-                className="resize-none border-[1px] border-[#D9D9D9] rounded-[5px] bg-transparent outline-none focus:outline-none shadow-none text-[12px]"
+                className="resize-none border border-[#D9D9D9] rounded-[5px] bg-transparent outline-none focus:outline-none shadow-none text-[12px]"
                 placeholder="Video URL (YouTube, Facebook, Instagram, Twitter)"
                 onChange={(el) =>
                   setModalState({
@@ -126,7 +126,7 @@ const ModalEditorMediaMenu = ({
 
         <div className="border-t-[1px] border-[#E5E7EB]" />
 
-        <div className="flex flex-col gap-[10px] p-[20px]">
+        <div className="flex flex-col gap-[10px] p-5">
           <div>
             <div className="flex w-full justify-between items-center">
               <div className="flex w-full flex-col">
@@ -137,7 +137,7 @@ const ModalEditorMediaMenu = ({
                   {MediaPositionMap.map((el) => (
                     <li key={el.position}>
                       <div
-                        className={`flex justify-center items-center p-[2px] relative w-[35px] h-[35px] hover:border-[1px] hover:border-[#818CF8] rounded-md cursor-pointer text-transparent hover:text-white ${
+                        className={`flex justify-center items-center p-[2px] relative w-[35px] h-[35px] hover:border hover:border-[#818CF8] rounded-md cursor-pointer text-transparent hover:text-white ${
                           el.position === modalState.media.position
                             ? "bg-[#C7D2FE]"
                             : ""
@@ -162,7 +162,7 @@ const ModalEditorMediaMenu = ({
                 </ul>
               </div>
             </div>
-            <div className="w-full mt-[10px] font-normal text-[12px] leading-[20px] text-[#4B5563]">
+            <div className="w-full mt-[10px] font-normal text-[12px] leading-5 text-[#4B5563]">
               Relative to the Body component
             </div>
           </div>
@@ -173,7 +173,7 @@ const ModalEditorMediaMenu = ({
               <div>
                 <ReactSlider
                   className="h-[20px] flex items-center justify-center mb-[8px]"
-                  trackClassName="h-[4px] bg-[#818CF8] rounded-[4px]"
+                  trackClassName="h-[4px] bg-[#818CF8] rounded"
                   min={modalState.media.height.unit === SizeUnit.PIXEL ? 20 : 1}
                   max={
                     modalState.media.height.unit === SizeUnit.PIXEL
@@ -193,7 +193,7 @@ const ModalEditorMediaMenu = ({
                   renderThumb={(props) => (
                     <div
                       {...props}
-                      className="rounded-[100%] w-[14px] h-[14px] cursor-grab bg-white border-[1px] border-[#818CF8]"
+                      className="rounded-[100%] w-[14px] h-[14px] cursor-grab bg-white border border-[#818CF8]"
                     />
                   )}
                 />
@@ -235,7 +235,7 @@ const ModalEditorMediaMenu = ({
 
         <div className="border-t-[1px] border-[#E5E7EB]" />
 
-        <div className="p-[20px] flex flex-col gap-[10px]">
+        <div className="p-5 flex flex-col gap-[10px]">
           {modalState.media.type === MediaType.IMAGE && (
             <>
               <div className="flex w-full justify-between items-center">
@@ -243,7 +243,7 @@ const ModalEditorMediaMenu = ({
                   <span>Action:</span>
                 </div>
                 <div className="w-full flex">
-                  <ul className="flex w-[214px] border-[#E5E7EB] border-[1px] items-center justify-start">
+                  <ul className="flex w-[214px] border-[#E5E7EB] border items-center justify-start">
                     {MediaClickActions.map((el) => (
                       <li
                         key={el.actionOnClick}

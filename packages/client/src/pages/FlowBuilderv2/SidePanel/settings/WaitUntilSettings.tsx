@@ -292,7 +292,7 @@ const WaitUntilSettings: FC<SidePanelComponentProps<WaitUntilNodeData>> = ({
     handleChangeBranch(i, branch);
 
   return (
-    <div>
+    <div className="p-5">
       {branches.map((branch, i) => (
         <div key={i} className="mb-[20px] flex flex-col gap-[10px]">
           <div className="font-inter font-semibold text-[16px] leading-[24px] text-[#18181B] flex items-center justify-between">
@@ -328,7 +328,7 @@ const WaitUntilSettings: FC<SidePanelComponentProps<WaitUntilNodeData>> = ({
         </div>
       ))}
 
-      <div className="pb-[20px] flex gap-[20px]">
+      <div className="pb-[20px] flex gap-5">
         <Select
           value={""}
           onChange={(el) => {
@@ -344,7 +344,7 @@ const WaitUntilSettings: FC<SidePanelComponentProps<WaitUntilNodeData>> = ({
             }
           }}
           className="max-w-[121px] hover:!outline-none focus:outline-none"
-          buttonInnerWrapperClassName="!rounded-[4px]"
+          buttonInnerWrapperClassName="!rounded"
           placeholder="Add branch"
           options={[
             {

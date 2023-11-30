@@ -29,7 +29,7 @@ const Stepper: FC<StepperProps> = ({ activeStep, onChange, steps }) => {
                 <span
                   className={`w-[30px] h-[30px] ${
                     index === activeStep ? "bg-cyan-500" : "bg-gray-400"
-                  } rounded-full text-white border-[1px] flex justify-center items-center`}
+                  } rounded-full text-white border flex justify-center items-center`}
                 >
                   {index + 1}
                 </span>

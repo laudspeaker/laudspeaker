@@ -42,13 +42,13 @@ const ModalPositionBodyMenu = ({
   };
 
   return (
-    <div className="w-full p-[20px] text-[14px] font-normal">
+    <div className="w-full p-5 text-[14px] font-normal">
       <div className="mb-[10px]">Position</div>
       <ul className="flex items-center justify-between mb-[10px]">
         {modalPositions.map((position) => (
           <li key={position}>
             <div
-              className={`flex justify-center items-center p-[2px] relative w-[32px] h-[32px] hover:border-[1px] rounded-md cursor-pointer text-transparent hover:text-[#374151] ${
+              className={`flex justify-center items-center p-[2px] relative w-[32px] h-[32px] hover:border rounded-md cursor-pointer text-transparent hover:text-[#374151] ${
                 position === modalState.position
                   ? "bg-[#C7D2FE]"
                   : "hover:border-[#818CF8]"

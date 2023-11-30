@@ -37,13 +37,13 @@ const MultisplitCondtionsReview = ({
 
             {statement.type === QueryStatementType.ATTRIBUTE ? (
               <div className="items-center flex flex-wrap gap-[5px]">
-                <span className="max-w-[90px] inline-block overflow-hidden text-ellipsis whitespace-nowrap text-[14px] px-[5px] py-[2px] text-[#4B5563] border-[1px] border-[#E5E7EB] rounded-[2px] bg-white">
+                <span className="max-w-[90px] inline-block overflow-hidden text-ellipsis whitespace-nowrap text-[14px] px-[5px] py-[2px] text-[#4B5563] border border-[#E5E7EB] rounded-sm bg-white">
                   {statement.key}
                 </span>
                 <span> {statement.comparisonType} </span>
                 {statement.comparisonType !== ComparisonType.EXIST &&
                   statement.comparisonType !== ComparisonType.NOT_EXIST && (
-                    <span className="max-w-[90px] overflow-hidden text-ellipsis px-[5px] py-[2px] text-[#4B5563] border-[1px] border-[#E5E7EB] rounded-[2px] bg-white">
+                    <span className="max-w-[90px] overflow-hidden text-ellipsis px-[5px] py-[2px] text-[#4B5563] border border-[#E5E7EB] rounded-sm bg-white">
                       {statement.valueType === StatementValueType.DATE
                         ? format(new Date(statement.value), "MM/dd/yyyy HH:mm")
                         : statement.value}
@@ -54,7 +54,7 @@ const MultisplitCondtionsReview = ({
                   statement.comparisonType === ComparisonType.DURING && (
                     <>
                       <div>-</div>
-                      <div className="px-[5px] py-[2px] text-[#4B5563] border-[1px] border-[#E5E7EB] rounded-[2px] bg-white">
+                      <div className="px-[5px] py-[2px] text-[#4B5563] border border-[#E5E7EB] rounded-sm bg-white">
                         {format(
                           new Date(statement.subComparisonValue),
                           "MM/dd/yyyy HH:mm"
@@ -72,22 +72,22 @@ const MultisplitCondtionsReview = ({
                     ObjectKeyComparisonType.KEY_VALUE_EQUAL_TO ||
                     statement.subComparisonType ===
                       ObjectKeyComparisonType.KEY_VALUE_NOT_EQUAL_TO) && (
-                    <div className="px-[5px] py-[2px] text-[#4B5563] border-[1px] border-[#E5E7EB] rounded-[2px] bg-white">
+                    <div className="px-[5px] py-[2px] text-[#4B5563] border border-[#E5E7EB] rounded-sm bg-white">
                       {statement.subComparisonValue}
                     </div>
                   )}
               </div>
             ) : statement.type === QueryStatementType.SEGMENT ? (
-              <div className="px-[5px] py-[2px] text-[#4B5563] border-[1px] border-[#E5E7EB] rounded-[2px] bg-white">
+              <div className="px-[5px] py-[2px] text-[#4B5563] border border-[#E5E7EB] rounded-sm bg-white">
                 {statement.segmentId}
               </div>
             ) : statement.type === QueryStatementType.EVENT ? (
               <div className="items-center flex flex-wrap gap-[5px]">
-                <div className="max-w-[90px] inline-block overflow-hidden text-ellipsis px-[5px] py-[2px] text-[#4B5563] border-[1px] border-[#E5E7EB] rounded-[2px] bg-white">
+                <div className="max-w-[90px] inline-block overflow-hidden text-ellipsis px-[5px] py-[2px] text-[#4B5563] border border-[#E5E7EB] rounded-sm bg-white">
                   {statement.eventName}
                 </div>
                 <div>{statement.comparisonType} at least</div>
-                <div className="max-w-[90px] inline-block overflow-hidden text-ellipsis  px-[5px] py-[2px] text-[#4B5563] border-[1px] border-[#E5E7EB] rounded-[2px] bg-white">
+                <div className="max-w-[90px] inline-block overflow-hidden text-ellipsis  px-[5px] py-[2px] text-[#4B5563] border border-[#E5E7EB] rounded-sm bg-white">
                   {statement.value}
                 </div>
                 <div>time</div>
@@ -96,7 +96,7 @@ const MultisplitCondtionsReview = ({
                     <div>{statement.time.comparisonType}</div>
 
                     {statement.time.timeAfter && (
-                      <div className="px-[5px] py-[2px] text-[#4B5563] border-[1px] border-[#E5E7EB] rounded-[2px] bg-white">
+                      <div className="px-[5px] py-[2px] text-[#4B5563] border border-[#E5E7EB] rounded-sm bg-white">
                         {format(
                           new Date(statement.time.timeAfter),
                           "MM/dd/yyyy HH:mm"
@@ -108,7 +108,7 @@ const MultisplitCondtionsReview = ({
                     {((statement.time.timeBefore && statement.time.timeAfter) ||
                       statement.time.timeBefore) && (
                       <>
-                        <div className="px-[5px] py-[2px] text-[#4B5563] border-[1px] border-[#E5E7EB] rounded-[2px] bg-white">
+                        <div className="px-[5px] py-[2px] text-[#4B5563] border border-[#E5E7EB] rounded-sm bg-white">
                           {format(
                             new Date(statement.time.timeBefore),
                             "MM/dd/yyyy HH:mm"
@@ -161,7 +161,7 @@ const MultisplitCondtionsReview = ({
                       Any {statement.type.toLowerCase()}
                     </span>
                   ) : (
-                    <span className=" px-[5px] py-[2px] border-[1px] border-[#E5E7EB] rounded-[2px] bg-white font-inter">
+                    <span className=" px-[5px] py-[2px] border border-[#E5E7EB] rounded-sm bg-white font-inter">
                       {
                         (statement as MessageEventQuery).fromSpecificMessage
                           .title
@@ -170,7 +170,7 @@ const MultisplitCondtionsReview = ({
                   )}
                   <span> from </span>
                   {(statement as MessageEventQuery).from?.key ? (
-                    <span className="px-[5px] py-[2px] border-[1px] border-[#E5E7EB] rounded-[2px] bg-white font-inter">
+                    <span className="px-[5px] py-[2px] border border-[#E5E7EB] rounded-sm bg-white font-inter">
                       {(statement as MessageEventQuery).from?.title}
                     </span>
                   ) : (

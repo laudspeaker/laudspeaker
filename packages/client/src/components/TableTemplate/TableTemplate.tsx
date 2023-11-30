@@ -540,7 +540,7 @@ export default function TableTemplate<T extends TableDataItem>({
             leaveFrom="transform opacity-100 scale-100"
             leaveTo="transform opacity-0 scale-95"
           >
-            <Menu.Items className="absolute outline-none w-auto flex flex-col bg-gray-50 shadow-md rounded-[8px] border-[1px] border-gray-200 items-center right-1/2 top-full z-[1000]">
+            <Menu.Items className="absolute outline-none w-auto flex flex-col bg-gray-50 shadow-md rounded-lg border border-gray-200 items-center right-1/2 top-full z-[1000]">
               {[
                 <Link
                   className="!no-underline"
@@ -605,7 +605,7 @@ export default function TableTemplate<T extends TableDataItem>({
             leaveFrom="transform opacity-100 scale-100"
             leaveTo="transform opacity-0 scale-95"
           >
-            <Menu.Items className="absolute outline-none w-auto flex flex-col bg-gray-50 shadow-md rounded-[8px] border-[1px] border-gray-200 items-center right-1/2 top-full z-[1000]">
+            <Menu.Items className="absolute outline-none w-auto flex flex-col bg-gray-50 shadow-md rounded-lg border border-gray-200 items-center right-1/2 top-full z-[1000]">
               {[
                 <Link className="!no-underline" href={`/person/${row.id}`}>
                   <div className="w-full">Edit</div>
@@ -654,7 +654,7 @@ export default function TableTemplate<T extends TableDataItem>({
             leaveFrom="transform opacity-100 scale-100"
             leaveTo="transform opacity-0 scale-95"
           >
-            <Menu.Items className="absolute outline-none w-auto flex flex-col bg-gray-50 shadow-md rounded-[8px] border-[1px] border-gray-200 items-center right-1/2 top-full z-[1000]">
+            <Menu.Items className="absolute outline-none w-auto flex flex-col bg-gray-50 shadow-md rounded-lg border border-gray-200 items-center right-1/2 top-full z-[1000]">
               {[
                 <Link
                   className="!no-underline"
@@ -719,7 +719,7 @@ export default function TableTemplate<T extends TableDataItem>({
             leaveFrom="transform opacity-100 scale-100"
             leaveTo="transform opacity-0 scale-95"
           >
-            <Menu.Items className="absolute outline-none w-auto flex flex-col bg-gray-50 shadow-md rounded-[8px] border-[1px] border-gray-200 items-center right-1/2 top-full z-[1000]">
+            <Menu.Items className="absolute outline-none w-auto flex flex-col bg-gray-50 shadow-md rounded-lg border border-gray-200 items-center right-1/2 top-full z-[1000]">
               {[
                 <Link
                   className="!no-underline"
@@ -784,7 +784,7 @@ export default function TableTemplate<T extends TableDataItem>({
             leaveFrom="transform opacity-100 scale-100"
             leaveTo="transform opacity-0 scale-95"
           >
-            <Menu.Items className="absolute outline-none w-auto flex flex-col bg-gray-50 shadow-md rounded-[8px] border-[1px] border-gray-200 items-center right-1/2 top-full z-[1000]">
+            <Menu.Items className="absolute outline-none w-auto flex flex-col bg-gray-50 shadow-md rounded-lg border border-gray-200 items-center right-1/2 top-full z-[1000]">
               {[
                 <Link
                   className="!no-underline"
@@ -849,7 +849,7 @@ export default function TableTemplate<T extends TableDataItem>({
             leaveFrom="transform opacity-100 scale-100"
             leaveTo="transform opacity-0 scale-95"
           >
-            <Menu.Items className="absolute outline-none w-auto flex flex-col bg-gray-50 shadow-md rounded-[8px] border-[1px] border-gray-200 items-center right-1/2 top-full z-[1000]">
+            <Menu.Items className="absolute outline-none w-auto flex flex-col bg-gray-50 shadow-md rounded-lg border border-gray-200 items-center right-1/2 top-full z-[1000]">
               {[
                 <Link
                   className="!no-underline"
@@ -914,7 +914,7 @@ export default function TableTemplate<T extends TableDataItem>({
             leaveFrom="transform opacity-100 scale-100"
             leaveTo="transform opacity-0 scale-95"
           >
-            <Menu.Items className="absolute outline-none w-auto flex flex-col bg-gray-50 shadow-md rounded-[8px] border-[1px] border-gray-200 items-center right-1/2 top-full z-[1000]">
+            <Menu.Items className="absolute outline-none w-auto flex flex-col bg-gray-50 shadow-md rounded-lg border border-gray-200 items-center right-1/2 top-full z-[1000]">
               {[
                 <Link
                   className="!no-underline"
@@ -979,7 +979,7 @@ export default function TableTemplate<T extends TableDataItem>({
             leaveFrom="transform opacity-100 scale-100"
             leaveTo="transform opacity-0 scale-95"
           >
-            <Menu.Items className="absolute outline-none w-auto flex flex-col bg-gray-50 shadow-md rounded-[8px] border-[1px] border-gray-200 items-center right-1/2 top-full z-[1000]">
+            <Menu.Items className="absolute outline-none w-auto flex flex-col bg-gray-50 shadow-md rounded-lg border border-gray-200 items-center right-1/2 top-full z-[1000]">
               {[
                 <Link className="!no-underline" href={`segment/${row.id}`}>
                   <div className="w-full">Edit</div>
@@ -1060,7 +1060,7 @@ export default function TableTemplate<T extends TableDataItem>({
             leaveFrom="transform opacity-100 scale-100"
             leaveTo="transform opacity-0 scale-95"
           >
-            <Menu.Items className="absolute outline-none w-auto flex flex-col bg-gray-50 shadow-md rounded-[8px] border-[1px] border-gray-200 items-center right-1/2 top-full z-[1000]">
+            <Menu.Items className="absolute outline-none w-auto flex flex-col bg-gray-50 shadow-md rounded-lg border border-gray-200 items-center right-1/2 top-full z-[1000]">
               {[
                 <Link
                   className="!no-underline"
@@ -1172,7 +1172,7 @@ export default function TableTemplate<T extends TableDataItem>({
               ${
                 itemsPerPage === option
                   ? "bg-[linear-gradient(96.63deg,_#6BCDB5_10.79%,_#307179_67.24%,_#122F5C_87.43%)]"
-                  : "border-[#E5E5E5] border-[2px]"
+                  : "border-[#E5E5E5] border-2"
               } 
               flex relative justify-center items-center px-[17px] py-[5px] cursor-pointer max-w-[57px] max-h-[36px] font-[Poppins] font-medium text-[14px] leading-[26px] text-center text-[color]`}
             onClick={() => setItemsPerPage(option)}

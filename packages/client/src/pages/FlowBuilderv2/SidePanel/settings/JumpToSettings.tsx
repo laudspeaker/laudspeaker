@@ -22,6 +22,7 @@ const JumpToSettings: FC<
     [NodeType.INSERT_NODE]: "Insert",
     [NodeType.TRACKER]: "Custom component",
     [NodeType.MULTISPLIT]: "Multisplit",
+    [NodeType.PUSH]: "Push",
   };
 
   const { nodes } = useAppSelector((state) => state.flowBuilder);
@@ -34,7 +35,7 @@ const JumpToSettings: FC<
       <div>Jump to</div>
       <div className="max-w-[200px] w-full flex flex-col gap-[10px]">
         {targetNode && (
-          <div className="px-[12px] py-[4px] border-[1px] border-[#E5E7EB] bg-[#F3F4F6] font-roboto">
+          <div className="px-[12px] py-[4px] border border-[#E5E7EB] bg-[#F3F4F6] font-roboto">
             {nodeTypeToNameMap[targetNode.type as NodeType] || "-"}
           </div>
         )}

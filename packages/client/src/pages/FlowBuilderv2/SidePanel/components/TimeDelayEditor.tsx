@@ -25,7 +25,7 @@ const TimeDelayEditor: FC<TimeDelayEditorProps> = ({ delay, onChange }) => {
           +e.target.value >= 0 && onChange({ ...delay, days: +e.target.value })
         }
         placeholder="Days"
-        className="w-full px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB] placeholder:font-inter placeholder:font-normal placeholder:text-[14px] placeholder:leading-[22px] placeholder:text-[#9CA3AF] rounded-[2px]"
+        className="w-full px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border border-[#E5E7EB] placeholder:font-inter placeholder:font-normal placeholder:text-[14px] placeholder:leading-[22px] placeholder:text-[#9CA3AF] rounded-sm"
       />
 
       <div>:</div>
@@ -37,7 +37,7 @@ const TimeDelayEditor: FC<TimeDelayEditorProps> = ({ delay, onChange }) => {
           +e.target.value >= 0 && onChange({ ...delay, hours: +e.target.value })
         }
         placeholder="Hours"
-        className="w-full px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB] placeholder:font-inter placeholder:font-normal placeholder:text-[14px] placeholder:leading-[22px] placeholder:text-[#9CA3AF] rounded-[2px]"
+        className="w-full px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border border-[#E5E7EB] placeholder:font-inter placeholder:font-normal placeholder:text-[14px] placeholder:leading-[22px] placeholder:text-[#9CA3AF] rounded-sm"
       />
 
       <div>:</div>
@@ -50,7 +50,7 @@ const TimeDelayEditor: FC<TimeDelayEditorProps> = ({ delay, onChange }) => {
           onChange({ ...delay, minutes: +e.target.value })
         }
         placeholder="Mins"
-        className="w-full px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB] placeholder:font-inter placeholder:font-normal placeholder:text-[14px] placeholder:leading-[22px] placeholder:text-[#9CA3AF] rounded-[2px]"
+        className="w-full px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border border-[#E5E7EB] placeholder:font-inter placeholder:font-normal placeholder:text-[14px] placeholder:leading-[22px] placeholder:text-[#9CA3AF] rounded-sm"
       />
       {isOnboarding && isOnboardingWaitUntilTimeSettingTooltipVisible && (
         <>

@@ -124,7 +124,7 @@ const MergeTagInput: FC<MergeTagInputProps> = ({
         <div
           className={`${
             !isPreview && "hidden"
-          } ${viewerClassNames} w-full bg-[#E5E5E5] max-w-full overflow-x-scroll py-[18px] px-[29px] z-[1000] rounded-[8px] text-[20px] whitespace-nowrap `}
+          } ${viewerClassNames} w-full bg-[#E5E5E5] max-w-full overflow-x-scroll py-[18px] px-[29px] z-[1000] rounded-lg text-[20px] whitespace-nowrap `}
           onClick={() => {
             setIsPreview(false);
           }}
@@ -151,7 +151,7 @@ const MergeTagInput: FC<MergeTagInputProps> = ({
         fullWidth={fullWidth}
         className={`${
           isPreview && "hidden"
-        } ${inputClassNames} !text-[20px] bg-[#E5E5E5] outline-none text-[#000] py-[18px] px-[29px] z-[1000] rounded-[8px] whitespace-nowrap`}
+        } ${inputClassNames} !text-[20px] bg-[#E5E5E5] outline-none text-[#000] py-[18px] px-[29px] z-[1000] rounded-lg whitespace-nowrap`}
         onChange={onChange}
         inputRef={inputRef}
         onFocus={onFocus}
