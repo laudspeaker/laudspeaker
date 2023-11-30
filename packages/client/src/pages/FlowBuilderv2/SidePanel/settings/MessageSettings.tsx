@@ -68,10 +68,8 @@ const MessageSettings: FC<SidePanelComponentProps<MessageNodeData>> = ({
       type: templateType,
     };
 
-    if ((selectedNode.data as MessageNodeData).template.selected?.id) {
-      inlineCreator.templateId = (
-        selectedNode.data as MessageNodeData
-      ).template.selected!.id.toString();
+    if (nodeData.template.selected?.id) {
+      inlineCreator.templateId = nodeData.template.selected.id.toString();
     }
 
     dispatch(setTemplateInlineCreator(inlineCreator));
