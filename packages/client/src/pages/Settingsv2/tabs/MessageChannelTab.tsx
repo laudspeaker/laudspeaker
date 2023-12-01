@@ -98,7 +98,7 @@ const MessageChannelTab = () => {
     },
     [MessageChannel.CUSTOM_MODAL]: {
       id: MessageChannel.CUSTOM_MODAL,
-      title: "Custom modal",
+      title: "Onboarding Suite",
       icon: customModalCardIconImage,
       connected: account?.javascriptSnippetSetupped,
       onClick: () => navigate("/settings/custom-modal"),
