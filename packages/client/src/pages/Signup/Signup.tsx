@@ -58,19 +58,22 @@ const Signup: FC<SignupProps> = ({ setShowWelcomeBanner }) => {
         laudspeakerId: response.data.id,
         email: signUpForm.email,
       });
-      toast.info(
-        "You need to verify your email. We've sent you a verification email",
-        {
-          position: "bottom-center",
-          autoClose: 5000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          progress: undefined,
-          theme: "colored",
-        }
-      );
+      if (!response?.data?.verified) {
+        //console.log("oi oi");
+        toast.info(
+          "You need to verify your email. We've sent you a verification email",
+          {
+            position: "bottom-center",
+            autoClose: 5000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+            theme: "colored",
+          }
+        );
+      }
       setShowWelcomeBanner(true);
       navigate("/home");
     }
