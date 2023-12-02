@@ -108,13 +108,13 @@ const Onboardingv2 = () => {
   return currentPage !== undefined &&
     currentPage !== OnboardingPage.MAIN_PAGE ? (
     <div
-      className={`min-h-screen h-screen flex flex-col gap-[20px] p-[20px] font-inter text-[16px] font-normal text-[#111827] leading-[24px] ${
+      className={`min-h-screen h-screen flex flex-col gap-5 p-5 font-inter text-[16px] font-normal text-[#111827] leading-[24px] ${
         currentPage === OnboardingPage.SELECT_CUSTOMERS
           ? "bg-[#F9FAFB]"
           : "bg-white"
       }`}
     >
-      <div className="flex justify-between px-[20px] pt-[20px]">
+      <div className="flex justify-between px-5 pt-[20px]">
         <button
           className={`underline text-black font-inter font-normal text-[16px] leading-[24px] ${
             currentPage === OnboardingPage.TRACK_PERFORMANCE

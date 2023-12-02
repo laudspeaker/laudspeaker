@@ -5,7 +5,7 @@ interface ListItemProps {
 }
 const ListItem = ({ title, subtitle, tick }: ListItemProps) => {
   return (
-    <div className="flex flex-[1] justify-between items-center p-[10px] border-[1px] border-[#F3F3F3] rounded-[5px]">
+    <div className="flex flex-[1] justify-between items-center p-[10px] border border-[#F3F3F3] rounded-[5px]">
       <div>
         <p className="font-medium text-[16px] text-black flex justify-between">
           {title}

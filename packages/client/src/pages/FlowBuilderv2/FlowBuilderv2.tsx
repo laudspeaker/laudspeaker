@@ -27,6 +27,7 @@ import {
   setNodes,
   setSegmentsSettings,
   setShowSegmentsErrors,
+  setTemplateInlineCreator,
 } from "reducers/flow-builder.reducer";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -35,6 +36,8 @@ import { NodeType } from "./FlowEditor";
 import { SocketProvider } from "./useDevSocketConnection";
 import FlowBuilderSettings from "./FlowBuilderSettings";
 import { capitalize } from "lodash";
+import PushBuilder from "pages/PushBuilder/PushBuilder";
+import { MessageType } from "types/Workflow";
 
 const FlowBuilderv2 = () => {
   const { id } = useParams();
@@ -116,6 +119,10 @@ const FlowBuilderv2 = () => {
 
   useEffect(() => {
     loadJourney();
+
+    return () => {
+      dispatch(setTemplateInlineCreator(undefined));
+    };
   }, []);
 
   useEffect(() => {
@@ -201,24 +208,41 @@ const FlowBuilderv2 = () => {
     }
   }, [flowBuilderState]);
 
+  const TemplateRender = () => {
+    if (!flowBuilderState.templateInlineCreation) return <></>;
+
+    const templates: Record<string, React.ReactNode> = {
+      [MessageType.PUSH]: <PushBuilder isInlineCreator />,
+    };
+
+    return templates?.[flowBuilderState.templateInlineCreation.type] || <></>;
+  };
+
   return (
     <SocketProvider>
-      <div className="relative w-full h-full">
-        <FlowBuilderHeader />
-        <div className="relative flex w-full h-full max-h-[calc(100%-60px)]">
-          {flowBuilderState.stepperIndex === 0 && <FlowBuilderDrawer />}
+      <>
+        <div
+          className={`${
+            flowBuilderState.templateInlineCreation && "hidden"
+          } relative w-full h-full`}
+        >
+          <FlowBuilderHeader />
+          <div className="relative flex w-full h-full max-h-[calc(100%-60px)]">
+            {flowBuilderState.stepperIndex === 0 && <FlowBuilderDrawer />}
 
-          {flowBuilderState.stepperIndex === 0 ? (
-            <FlowEditor />
-          ) : flowBuilderState.stepperIndex === 1 ? (
-            <FlowBuilderSegmentEditor />
-          ) : flowBuilderState.stepperIndex === 2 ? (
-            <FlowBuilderSettings />
-          ) : (
-            <FlowBuilderReview />
-          )}
+            {flowBuilderState.stepperIndex === 0 ? (
+              <FlowEditor />
+            ) : flowBuilderState.stepperIndex === 1 ? (
+              <FlowBuilderSegmentEditor />
+            ) : flowBuilderState.stepperIndex === 2 ? (
+              <FlowBuilderSettings />
+            ) : (
+              <FlowBuilderReview />
+            )}
+          </div>
         </div>
-      </div>
+        {TemplateRender()}
+      </>
     </SocketProvider>
   );
 };

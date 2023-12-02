@@ -2,11 +2,15 @@ import { AxiosError } from "axios";
 import Button, { ButtonType } from "components/Elements/Buttonv2";
 import ApiConfig from "constants/api";
 import { isEqual } from "lodash";
+import TemplateInlineEditor from "pages/FlowBuilderv2/TemplateInlineEditor";
 import React, { useEffect, useState } from "react";
+import { useDispatch } from "react-redux";
 import { useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import { useBeforeUnload, usePageLeave } from "react-use";
+import { setTemplateInlineCreator } from "reducers/flow-builder.reducer";
 import ApiService from "services/api.service";
+import { useAppSelector } from "store/hooks";
 import Template, { TemplateType } from "types/Template";
 import deepCopy from "utils/deepCopy";
 import PushBuilderContent, {
@@ -86,7 +90,16 @@ const StepperFixtures: { text: string; icon: React.ReactNode }[] = [
   },
 ];
 
-const PushBuilder = () => {
+interface PushBuilderProps {
+  isInlineCreator?: boolean;
+}
+
+const PushBuilder = ({ isInlineCreator }: PushBuilderProps) => {
+  const { templateInlineCreation } = useAppSelector(
+    (state) => state.flowBuilder
+  );
+  const dispatch = useDispatch();
+
   const [initialPushBuilderData, setInitialPushBuilderData] =
     useState<PushBuilderData | null>();
   const [pushBuilderData, setPushBuilderData] = useState<PushBuilderData>({
@@ -106,9 +119,13 @@ const PushBuilder = () => {
   const [templateName, setTemplateName] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [isSame, setIsSame] = useState(true);
-  const { id } = useParams();
+  const { id: paramsId } = useParams();
+
+  const id = isInlineCreator ? templateInlineCreation?.templateId : paramsId;
 
   const loadData = async (withData?: boolean, updateInitial?: boolean) => {
+    if (!id) return;
+
     const { data } = await ApiService.get<Template>({
       url: "/templates/" + id,
     });
@@ -121,9 +138,11 @@ const PushBuilder = () => {
 
   useEffect(() => {
     loadData(true, true);
-  }, []);
+  }, [id]);
 
   const onSave = async (newName?: string) => {
+    if (!id) return;
+
     setIsSaving(true);
 
     const reqBody = {
@@ -160,95 +179,150 @@ const PushBuilder = () => {
   }, [pushBuilderData]);
 
   useBeforeUnload(
-    !isSame,
+    !isSame && !isInlineCreator,
     "You have unsaved changes, are you sure you want to leave?"
   );
+
+  const handleInlineCreatedTemplate = (createdId: string) => {
+    if (!templateInlineCreation) return;
+
+    dispatch(
+      setTemplateInlineCreator({
+        ...templateInlineCreation,
+        templateId: createdId,
+      })
+    );
+  };
+
+  const handleBackToJourney = async () => {
+    if (!isInlineCreator || !templateInlineCreation) return;
+
+    if (!templateInlineCreation.needsCallbackUpdate) {
+      dispatch(setTemplateInlineCreator(undefined));
+    }
+    await onSave();
+
+    dispatch(
+      setTemplateInlineCreator({
+        ...templateInlineCreation,
+        needsCallbackUpdate: {
+          id: id,
+          name: templateName,
+          data: pushBuilderData,
+        },
+      })
+    );
+  };
 
   return (
     <>
       <div className="w-full px-[14.5px] flex justify-between items-center h-[60px] border-y-[1px] border-[#E5E7EB] bg-white font-segoe font-normal text-[16px] text-[#111827] leading-[24px]">
-        <div className="flex items-center ml-[16px]">
-          <div className="text-ellipsis max-w-[260px] overflow-hidden mr-[16px] font-inter font-normal text-[14px] leading-[22px]">
-            {templateName}
-          </div>
-          <div
-            className="cursor-pointer"
-            onClick={() => setIsRenameModalOpen(true)}
-          >
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 16 16"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <g clipPath="url(#clip0_2222_57368)">
-                <path
-                  d="M3.45921 12.284C3.49492 12.284 3.53064 12.2805 3.56635 12.2751L6.56992 11.7483C6.60564 11.7412 6.63957 11.7251 6.66457 11.6983L14.2342 4.12868C14.2508 4.11216 14.2639 4.09254 14.2729 4.07094C14.2818 4.04934 14.2864 4.02618 14.2864 4.00279C14.2864 3.9794 14.2818 3.95625 14.2729 3.93464C14.2639 3.91304 14.2508 3.89342 14.2342 3.8769L11.2664 0.907254C11.2324 0.873326 11.1878 0.855469 11.1396 0.855469C11.0914 0.855469 11.0467 0.873326 11.0128 0.907254L3.44314 8.4769C3.41635 8.50368 3.40028 8.53583 3.39314 8.57154L2.86635 11.5751C2.84898 11.6708 2.85519 11.7692 2.88443 11.862C2.91368 11.9547 2.96509 12.0389 3.03421 12.1073C3.15207 12.2215 3.30028 12.284 3.45921 12.284ZM4.66278 9.16975L11.1396 2.69475L12.4485 4.00368L5.97171 10.4787L4.38421 10.759L4.66278 9.16975ZM14.5717 13.784H1.42885C1.11278 13.784 0.857422 14.0394 0.857422 14.3555V14.9983C0.857422 15.0769 0.921708 15.1412 1.00028 15.1412H15.0003C15.0789 15.1412 15.1431 15.0769 15.1431 14.9983V14.3555C15.1431 14.0394 14.8878 13.784 14.5717 13.784Z"
-                  fill="#6366F1"
-                />
-              </g>
-              <defs>
-                <clipPath id="clip0_2222_57368">
-                  <rect width="16" height="16" fill="white" />
-                </clipPath>
-              </defs>
-            </svg>
-          </div>
-        </div>
-        <div className="flex items-center">
-          {StepperFixtures.map((item, i) => (
-            <React.Fragment key={i}>
-              <div className="px-[20px] cursor-pointer">
-                <div
-                  className={`py-[18px] font-inter text-[14px] leading-[24px] font-normal select-none ${
-                    pageIndex === i
-                      ? "border-b-[4px] border-[#6366F1] text-[#6366F1] !font-semibold"
-                      : pageIndex < i
-                      ? "text-[#9CA3AF]"
-                      : "text-[#111827] cursor-pointer"
-                  }`}
-                  onClick={() => {
-                    setPageIndex(i);
-                  }}
-                >
-                  <div className={`flex gap-[10px] items-center`}>
-                    <div>{item.icon}</div>
-                    <div>{item.text}</div>
-                  </div>
-                </div>
+        {(!isInlineCreator || templateInlineCreation?.templateId) && (
+          <>
+            <div className="flex items-center ml-[16px]">
+              <div className="text-ellipsis max-w-[260px] overflow-hidden mr-[16px] font-inter font-normal text-[14px] leading-[22px]">
+                {templateName}
               </div>
-              {i !== StepperFixtures.length - 1 && (
+              <div
+                className="cursor-pointer"
+                onClick={() => setIsRenameModalOpen(true)}
+              >
                 <svg
-                  width="17"
+                  width="16"
                   height="16"
-                  viewBox="0 0 17 16"
+                  viewBox="0 0 16 16"
                   fill="none"
                   xmlns="http://www.w3.org/2000/svg"
-                  className={
-                    i >= pageIndex ? "text-[#D1D5DB]" : "text-[#000000D9]"
-                  }
                 >
-                  <path
-                    d="M13.0304 7.55042L4.98036 1.26292C4.95932 1.24636 4.93404 1.23607 4.90742 1.23323C4.8808 1.23038 4.85392 1.23511 4.82987 1.24686C4.80581 1.25861 4.78556 1.2769 4.77143 1.29964C4.7573 1.32238 4.74987 1.34865 4.75 1.37542V2.75578C4.75 2.84328 4.79107 2.9272 4.85893 2.98078L11.2875 8.00042L4.85893 13.0201C4.78929 13.0736 4.75 13.1576 4.75 13.2451V14.6254C4.75 14.7451 4.8875 14.8111 4.98036 14.7379L13.0304 8.45042C13.0988 8.39705 13.1541 8.32878 13.1922 8.2508C13.2303 8.17282 13.2501 8.08719 13.2501 8.00042C13.2501 7.91364 13.2303 7.82801 13.1922 7.75004C13.1541 7.67206 13.0988 7.60379 13.0304 7.55042Z"
-                    fill="currentColor"
-                  />
+                  <g clipPath="url(#clip0_2222_57368)">
+                    <path
+                      d="M3.45921 12.284C3.49492 12.284 3.53064 12.2805 3.56635 12.2751L6.56992 11.7483C6.60564 11.7412 6.63957 11.7251 6.66457 11.6983L14.2342 4.12868C14.2508 4.11216 14.2639 4.09254 14.2729 4.07094C14.2818 4.04934 14.2864 4.02618 14.2864 4.00279C14.2864 3.9794 14.2818 3.95625 14.2729 3.93464C14.2639 3.91304 14.2508 3.89342 14.2342 3.8769L11.2664 0.907254C11.2324 0.873326 11.1878 0.855469 11.1396 0.855469C11.0914 0.855469 11.0467 0.873326 11.0128 0.907254L3.44314 8.4769C3.41635 8.50368 3.40028 8.53583 3.39314 8.57154L2.86635 11.5751C2.84898 11.6708 2.85519 11.7692 2.88443 11.862C2.91368 11.9547 2.96509 12.0389 3.03421 12.1073C3.15207 12.2215 3.30028 12.284 3.45921 12.284ZM4.66278 9.16975L11.1396 2.69475L12.4485 4.00368L5.97171 10.4787L4.38421 10.759L4.66278 9.16975ZM14.5717 13.784H1.42885C1.11278 13.784 0.857422 14.0394 0.857422 14.3555V14.9983C0.857422 15.0769 0.921708 15.1412 1.00028 15.1412H15.0003C15.0789 15.1412 15.1431 15.0769 15.1431 14.9983V14.3555C15.1431 14.0394 14.8878 13.784 14.5717 13.784Z"
+                      fill="#6366F1"
+                    />
+                  </g>
+                  <defs>
+                    <clipPath id="clip0_2222_57368">
+                      <rect width="16" height="16" fill="white" />
+                    </clipPath>
+                  </defs>
                 </svg>
-              )}
-            </React.Fragment>
-          ))}
-        </div>
+              </div>
+            </div>
+            <div className="flex items-center">
+              {StepperFixtures.map((item, i) => (
+                <React.Fragment key={i}>
+                  <div className="px-5 cursor-pointer">
+                    <div
+                      className={`py-[18px] font-inter text-[14px] leading-[24px] font-normal select-none ${
+                        pageIndex === i
+                          ? "border-b-[4px] border-[#6366F1] text-[#6366F1] !font-semibold"
+                          : pageIndex < i
+                          ? "text-[#9CA3AF]"
+                          : "text-[#111827] cursor-pointer"
+                      }`}
+                      onClick={() => {
+                        setPageIndex(i);
+                      }}
+                    >
+                      <div className={`flex gap-[10px] items-center`}>
+                        <div>{item.icon}</div>
+                        <div>{item.text}</div>
+                      </div>
+                    </div>
+                  </div>
+                  {i !== StepperFixtures.length - 1 && (
+                    <svg
+                      width="17"
+                      height="16"
+                      viewBox="0 0 17 16"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                      className={
+                        i >= pageIndex ? "text-[#D1D5DB]" : "text-[#000000D9]"
+                      }
+                    >
+                      <path
+                        d="M13.0304 7.55042L4.98036 1.26292C4.95932 1.24636 4.93404 1.23607 4.90742 1.23323C4.8808 1.23038 4.85392 1.23511 4.82987 1.24686C4.80581 1.25861 4.78556 1.2769 4.77143 1.29964C4.7573 1.32238 4.74987 1.34865 4.75 1.37542V2.75578C4.75 2.84328 4.79107 2.9272 4.85893 2.98078L11.2875 8.00042L4.85893 13.0201C4.78929 13.0736 4.75 13.1576 4.75 13.2451V14.6254C4.75 14.7451 4.8875 14.8111 4.98036 14.7379L13.0304 8.45042C13.0988 8.39705 13.1541 8.32878 13.1922 8.2508C13.2303 8.17282 13.2501 8.08719 13.2501 8.00042C13.2501 7.91364 13.2303 7.82801 13.1922 7.75004C13.1541 7.67206 13.0988 7.60379 13.0304 7.55042Z"
+                        fill="currentColor"
+                      />
+                    </svg>
+                  )}
+                </React.Fragment>
+              ))}
+            </div>
+          </>
+        )}
 
-        <Button
-          type={ButtonType.PRIMARY}
-          onClick={() => {
-            if (pageIndex) {
-              onSave();
-            } else setPageIndex(1);
-          }}
+        <div
+          className={`flex ${
+            templateInlineCreation &&
+            !templateInlineCreation.templateId &&
+            isInlineCreator &&
+            "w-full justify-end"
+          }`}
         >
-          {pageIndex ? "Save" : "Next"}
-        </Button>
+          {isInlineCreator && (
+            <Button
+              type={ButtonType.SECONDARY}
+              className="!text-[#111827] !border-[#E5E7EB] mr-[10px]"
+              onClick={handleBackToJourney}
+            >
+              Back to journey
+            </Button>
+          )}
+          {(!isInlineCreator || templateInlineCreation?.templateId) && (
+            <Button
+              type={ButtonType.PRIMARY}
+              onClick={() => {
+                if (pageIndex) {
+                  (isInlineCreator ? handleBackToJourney : onSave)();
+                } else setPageIndex(1);
+              }}
+            >
+              {pageIndex ? "Save" : "Next"}
+            </Button>
+          )}
+        </div>
 
         <PushBuilderRenameModal
           initName={templateName}
@@ -259,7 +333,12 @@ const PushBuilder = () => {
           }}
         />
       </div>
-      {pageIndex === 0 ? (
+      {templateInlineCreation && !templateInlineCreation.templateId ? (
+        <TemplateInlineEditor
+          type={templateInlineCreation.type}
+          onTemplateCreated={handleInlineCreatedTemplate}
+        />
+      ) : pageIndex === 0 ? (
         <PushBuilderContent
           data={pushBuilderData}
           onChange={setPushBuilderData}

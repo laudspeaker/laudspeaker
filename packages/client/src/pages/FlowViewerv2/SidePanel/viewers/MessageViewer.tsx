@@ -50,15 +50,15 @@ const MessageViewer: FC<SidePanelComponentProps<MessageNodeData>> = ({
 
   return (
     <div>
-      <div className="px-[20px] pb-[20px] border-b-[1px] border-[#E5E7EB]">
-        <div className="w-[200px] h-[60px] px-[8px] flex items-center gap-[5px] border-[1px] border-[#4B5563] rounded-[4px]">
+      <div className="px-5 pb-[20px] border-b-[1px] border-[#E5E7EB]">
+        <div className="w-[200px] h-[60px] px-2 flex items-center gap-[5px] border border-[#4B5563] rounded">
           <div className="text-[#4B5563]">{fixtures.icon}</div>
           <div className="font-inter font-normal text-[14px] leading-[22px] text-[#111827]">
             {nodeData.template.selected?.name || "Unknown template"}
           </div>
         </div>
       </div>
-      <div className="p-[20px] flex flex-col gap-[20px]">
+      <div className="p-5 flex flex-col gap-5">
         <div className="flex flex-col gap-[10px]">
           <div className="font-semibold text-[20px] leading-[28px]">
             Metrics
@@ -68,7 +68,7 @@ const MessageViewer: FC<SidePanelComponentProps<MessageNodeData>> = ({
               {fixtures.statsToShow.map((stat, i) => (
                 <div
                   key={i}
-                  className={`w-full rounded-[4px] px-[10px] py-[4px] flex flex-col gap-[9px] border-[1px] border-[#E5E7EB] select-none cursor-pointer ${
+                  className={`w-full rounded px-[10px] py-[4px] flex flex-col gap-[9px] border border-[#E5E7EB] select-none cursor-pointer ${
                     stat.key === pickedStat
                       ? "!border-[#6366F1] !bg-[#EEF2FF]"
                       : ""
@@ -148,9 +148,9 @@ const MessageViewer: FC<SidePanelComponentProps<MessageNodeData>> = ({
                 {new Array(totalPages).fill(0, 0, totalPages).map((_, i) => (
                   <div
                     key={i}
-                    className={`min-w-[24px] h-[24px] flex justify-center items-center rounded-[2px] cursor-pointer select-none ${
+                    className={`min-w-[24px] h-[24px] flex justify-center items-center rounded-sm cursor-pointer select-none ${
                       i + 1 === currentPage
-                        ? "border-[1px] border-[#6366F1] text-[#6366F1]"
+                        ? "border border-[#6366F1] text-[#6366F1]"
                         : ""
                     }`}
                     onClick={() => setCurrentPage(i + 1)}

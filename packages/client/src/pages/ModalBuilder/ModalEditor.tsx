@@ -292,14 +292,14 @@ const ModalEditor: FC<ModalEditorProps> = ({
         y: 10,
       }}
     >
-      <div className="fixed rounded-[8px] w-[360px] z-[2147483646] min-h-[475px] max-h-[600px] shadow-lg bg-[#F9FAFB] text-[#111827] font-semibold leading-[22px] font-segoe">
+      <div className="fixed rounded-lg w-[360px] z-[2147483646] min-h-[475px] max-h-[600px] shadow-lg bg-[#F9FAFB] text-[#111827] font-semibold leading-[22px] font-segoe">
         <div className="h-[8px] bg-[#4338CA] rounded-t-[8px]" />
         <div className="w-full border-b-[1px] border-[#E5E7EB]">
           <div
             id="draggableHead"
             className="w-full cursor-move flex flex-col font-medium justify-center"
           >
-            <div className="flex items-center text-[20px] px-[20px] py-[15px]">
+            <div className="flex items-center text-[20px] px-5 py-[15px]">
               <div>
                 <div className="flex">
                   {editorMode !== EditorMenuOptions.MAIN && (
@@ -312,7 +312,7 @@ const ModalEditor: FC<ModalEditorProps> = ({
                     {menuOptions[editorMode]?.name}
                   </span>
                 </div>
-                <span className="block min-w-full text-[12px] leading-[20px] font-normal text-[#4B5563]">
+                <span className="block min-w-full text-[12px] leading-5 font-normal text-[#4B5563]">
                   {menuOptions[editorMode]?.description}
                 </span>
               </div>

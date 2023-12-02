@@ -100,7 +100,7 @@ const TimeWindowSettings: FC<SidePanelComponentProps<TimeWindowNodeData>> = ({
                 });
               }}
               type="time"
-              className="w-full h-[32px] px-[12px] py-[5px] font-roboto text-[14px] leading-[22px] rounded-[2px] border-[1px] border-[#E5E7EB]"
+              className="w-full h-[32px] px-[12px] py-[5px] font-roboto text-[14px] leading-[22px] rounded-sm border border-[#E5E7EB]"
               placeholder="Select date"
             />
           </div>
@@ -126,7 +126,7 @@ const TimeWindowSettings: FC<SidePanelComponentProps<TimeWindowNodeData>> = ({
                 });
               }}
               type="time"
-              className="w-full h-[32px] px-[12px] py-[5px] font-roboto text-[14px] leading-[22px] rounded-[2px] border-[1px] border-[#E5E7EB]"
+              className="w-full h-[32px] px-[12px] py-[5px] font-roboto text-[14px] leading-[22px] rounded-sm border border-[#E5E7EB]"
               placeholder="Select date"
             />
           </div>

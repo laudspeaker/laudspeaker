@@ -107,13 +107,13 @@ const WaitUntilViewer: FC<SidePanelComponentProps<WaitUntilNodeData>> = ({
       name: "Customer Data",
       onClick: () => setActiveTab(WaitUntilViewerTab.CUSTOMER_DATA),
       content: (
-        <div className="p-[20px] flex flex-col gap-[10px] w-full">
+        <div className="p-5 flex flex-col gap-[10px] w-full">
           <div className="text-[16px] font-semibold leading-[24px]">
             {compatNumberFormatter.format(nodeData.customersCount || 0)}{" "}
             customers at this Step
           </div>
           <div className="py-[10px] flex flex-col gap-[10px] full">
-            <div className="border-x-[1px] border-t-[1px] border-[#E5E7EB] rounded-[4px] full">
+            <div className="border-x-[1px] border-t-[1px] border-[#E5E7EB] rounded full">
               <Table
                 className="w-full"
                 headings={[
@@ -156,7 +156,7 @@ const WaitUntilViewer: FC<SidePanelComponentProps<WaitUntilNodeData>> = ({
           <button
             className={`w-full py-[12px] font-inter text-[16px] leading-[24px] ${
               activeTab === tab
-                ? "font-semibold border-b-[2px] border-[#6366F1] text-[#6366F1]"
+                ? "font-semibold border-b-2 border-[#6366F1] text-[#6366F1]"
                 : "font-normal border-b-[1px] border-[#E5E7EB]"
             }`}
             key={i}

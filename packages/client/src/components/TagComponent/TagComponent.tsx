@@ -63,10 +63,10 @@ export default function TagComponent({
         } rounded-sm border border-gray-300 bg-white overflow-hidden p-1 react-tagsinput`}
         renderTag={(tag) => (
           <div
-            className="rounded-[2px] h-[24px] mb-0 mr-[4px] bg-[#E5E7EB] inline-flex items-center py-[2px] pl-[8px] pr-[4px] select-none cursor-pointer text-[#111827]"
+            className="rounded-sm h-[24px] mb-0 mr-[4px] bg-[#E5E7EB] inline-flex items-center py-[2px] pl-2 pr-[4px] select-none cursor-pointer text-[#111827]"
             onClick={() => tag.onRemove(tags.findIndex((el) => el === tag.tag))}
           >
-            <span className="inline-block mr-[4px]  text-[12px] font-roboto leading-[20px]">
+            <span className="inline-block mr-[4px]  text-[12px] font-roboto leading-5">
               {tag.tag}
             </span>
             <CloseIcon className="w-[16px] h-[16px]" />

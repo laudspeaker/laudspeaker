@@ -42,7 +42,8 @@ const FlowViewerSidePanel: FC<FlowViewerSidePanelProps> = ({ className }) => {
     [NodeType.WAIT_UNTIL]: "Wait until",
     [NodeType.USER_ATTRIBUTE]: "User attribute",
     [NodeType.TRACKER]: "Custom component",
-    [NodeType.MULTISPLIT]: "Multiplit",
+    [NodeType.MULTISPLIT]: "Multisplit",
+    [NodeType.PUSH]: "Push",
     [NodeType.INSERT_NODE]: "",
   };
 
@@ -106,7 +107,7 @@ const FlowViewerSidePanel: FC<FlowViewerSidePanelProps> = ({ className }) => {
       leaveFrom="!right-0"
     >
       <div className="overflow-auto h-screen">
-        <div className="px-[20px] pt-[20px] mb-[10px] flex flex-col gap-[10px]">
+        <div className="px-5 pt-[20px] mb-[10px] flex flex-col gap-[10px]">
           <div className="font-inter font-semibold text-[20px] leading-[28px]">
             {selectedNode?.type
               ? selectedNode.data.type === NodeType.MESSAGE &&

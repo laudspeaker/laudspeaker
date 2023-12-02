@@ -63,7 +63,7 @@ const AttributeBranchEditor: FC<AttributeBranchEditorProps> = ({
                 <div className="font-inter font-semibold text-[14px] leading-[22px]">
                   Attribute {i + 1}
                 </div>
-                <div className="flex gap-[20px] items-center">
+                <div className="flex gap-5 items-center">
                   <div
                     className="cursor-pointer"
                     onClick={() => setConditionIndexToChange(i)}
@@ -135,7 +135,7 @@ const AttributeBranchEditor: FC<AttributeBranchEditorProps> = ({
                           })),
                         });
                       }}
-                      className="border-[1px] border-[#E5E7EB] max-w-[80px] px-[15px] py-[4px] rounded-[4px] font-roboto font-normal text-[14px] leading-[22px]"
+                      className="border border-[#E5E7EB] max-w-[80px] px-[15px] py-[4px] rounded font-roboto font-normal text-[14px] leading-[22px]"
                     >
                       <option value={LogicRelation.AND}>And</option>
                       <option value={LogicRelation.OR}>Or</option>
@@ -154,7 +154,7 @@ const AttributeBranchEditor: FC<AttributeBranchEditorProps> = ({
                   relationToNext: e.target.value as LogicRelation,
                 })
               }
-              className="border-[1px] border-[#E5E7EB] max-w-[80px] px-[15px] py-[4px] rounded-[4px] font-roboto font-normal text-[14px] leading-[22px]"
+              className="border border-[#E5E7EB] max-w-[80px] px-[15px] py-[4px] rounded font-roboto font-normal text-[14px] leading-[22px]"
             >
               <option value={LogicRelation.AND}>And</option>
               <option value={LogicRelation.OR}>Or</option>

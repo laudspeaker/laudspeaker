@@ -89,14 +89,14 @@ const ModalEditorBodyMenu = ({
 
   return (
     <div className="text-[14px] font-normal">
-      <div className="p-[20px] flex items-center justify-between">
+      <div className="p-5 flex items-center justify-between">
         <div>Alignment:</div>
 
         <ul className="flex items-center justify-between w-[180px]">
           {textAlignment.map((alignment) => (
             <li key={alignment}>
               <div
-                className={`flex justify-center items-center p-[2px] relative w-[32px] h-[32px] hover:border-[1px] hover:border-[#818CF8] rounded-md cursor-pointer ${
+                className={`flex justify-center items-center p-[2px] relative w-[32px] h-[32px] hover:border hover:border-[#818CF8] rounded-md cursor-pointer ${
                   alignment === modalState.body.alignment ? "bg-[#C7D2FE]" : ""
                 }`}
                 onClick={() =>
@@ -115,7 +115,7 @@ const ModalEditorBodyMenu = ({
 
       <div className="border-t-[1px] border-[#E5E7EB]" />
 
-      <div className="p-[20px]">
+      <div className="p-5">
         <div className="flex items-center justify-between">
           <div>Styles:</div>
           <div className="flex items-center gap-[10px]">
@@ -142,7 +142,7 @@ const ModalEditorBodyMenu = ({
 
       <div className="border-t-[1px] border-[#E5E7EB]" />
 
-      <div className="p-[20px]">
+      <div className="p-5">
         <div className="flex items-center justify-between mb-[10px]">
           <div>Text:</div>
           <div className="flex items-center gap-[10px]">
@@ -177,7 +177,7 @@ const ModalEditorBodyMenu = ({
 
       <div className="border-t-[1px] border-[#E5E7EB]" />
 
-      <div className="p-[20px] flex items-center justify-between">
+      <div className="p-5 flex items-center justify-between">
         <div>Font size:</div>
         <div className="flex items-center gap-[10px]">
           <ModalBuilderNumberInput
@@ -201,7 +201,7 @@ const ModalEditorBodyMenu = ({
 
       <div className="border-t-[1px] border-[#E5E7EB]" />
 
-      <div className="p-[20px]">
+      <div className="p-5">
         <div className="flex items-center justify-between">
           <div>Personalization:</div>
           <div className="flex items-center gap-[10px]">

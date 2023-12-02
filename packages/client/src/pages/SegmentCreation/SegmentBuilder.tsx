@@ -129,7 +129,7 @@ const SegmentBuilder = () => {
           Description
         </div>
         <textarea
-          className="border-[1px] border-[#E5E7EB] rounded-[4px] px-[12px] py-[4px] font-roboto text-[14px] leading-[22px] text-[#111827] placeholder:text-[#9CA3AF] focus:border-[#6366F1] outline-none"
+          className="border border-[#E5E7EB] rounded px-[12px] py-[4px] font-roboto text-[14px] leading-[22px] text-[#111827] placeholder:text-[#9CA3AF] focus:border-[#6366F1] outline-none"
           value={description}
           placeholder={"Segment description"}
           name="segmentDescription"
@@ -140,12 +140,12 @@ const SegmentBuilder = () => {
       <div className="mb-[10px] font-inter font-semibold text-[16px] leading-[24px] text-[#111827]">
         Segment type
       </div>
-      <div className="flex gap-[20px] mb-[20px]">
+      <div className="flex gap-5 mb-[20px]">
         <div
-          className={`w-[340px] px-[20px] py-[10px] flex flex-col gap-[10px] rounded-[4px] select-none cursor-pointer ${
+          className={`w-[340px] px-5 py-[10px] flex flex-col gap-[10px] rounded select-none cursor-pointer ${
             segmentType === SegmentType.AUTOMATIC
-              ? "border-[2px] border-[#6366F1] bg-[#EEF2FF]"
-              : "border-[1px] border-[#E5E7EB]"
+              ? "border-2 border-[#6366F1] bg-[#EEF2FF]"
+              : "border border-[#E5E7EB]"
           }`}
           onClick={() => setSegmentType(SegmentType.AUTOMATIC)}
         >
@@ -158,10 +158,10 @@ const SegmentBuilder = () => {
         </div>
 
         <div
-          className={`w-[340px] px-[20px] py-[10px] flex flex-col gap-[10px] rounded-[4px] select-none cursor-pointer ${
+          className={`w-[340px] px-5 py-[10px] flex flex-col gap-[10px] rounded select-none cursor-pointer ${
             segmentType === SegmentType.MANUAL
-              ? "border-[2px] border-[#6366F1] bg-[#EEF2FF]"
-              : "border-[1px] border-[#E5E7EB]"
+              ? "border-2 border-[#6366F1] bg-[#EEF2FF]"
+              : "border border-[#E5E7EB]"
           }`}
           onClick={() => setSegmentType(SegmentType.MANUAL)}
         >

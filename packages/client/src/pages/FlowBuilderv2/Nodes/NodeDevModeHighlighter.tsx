@@ -79,7 +79,7 @@ const NodeDevModeHighlighter = ({ id }: NodeDevModeHighlighterProps) => {
   return (
     <div
       ref={ref}
-      className={`absolute pt-[28px] w-full h-full bottom-[-10px] left-[-10px] transition-all rounded box-content z-[-5] p-[10px] border-[1px]
+      className={`absolute pt-[28px] w-full h-full bottom-[-10px] left-[-10px] transition-all rounded box-content z-[-5] p-[10px] border
       ${
         isCustomerInNode
           ? "bg-[#F0FDF4] border-[#22C55E]"

@@ -43,7 +43,7 @@ const ModalEditorPersonalization: FC<ModalEditorPersonalizationProps> = ({
   // useDebounce(fetchKeys, 200, [searchStr]);
 
   return (
-    <div className="p-[20px]">
+    <div className="p-5">
       <div className="w-full relative mb-[20px]">
         <svg
           width="14"
@@ -62,7 +62,7 @@ const ModalEditorPersonalization: FC<ModalEditorPersonalizationProps> = ({
           type="text"
           value={searchStr}
           onChange={(e) => setSeatchStr(e.target.value)}
-          className="w-full bg-white border-[1px] border-[#E5E7EB] focus:border-[#6366F1] text-[14px] leading-[22px] font-normal py-[5px] px-[28px]"
+          className="w-full bg-white border border-[#E5E7EB] focus:border-[#6366F1] text-[14px] leading-[22px] font-normal py-[5px] px-[28px]"
           placeholder="search variables"
         />
         <svg

@@ -745,7 +745,7 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                 },
               })
             }
-            className="w-[100px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB] placeholder:font-inter placeholder:font-normal placeholder:text-[14px] placeholder:leading-[22px] placeholder:text-[#9CA3AF] rounded-[2px]"
+            className="w-[100px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border border-[#E5E7EB] placeholder:font-inter placeholder:font-normal placeholder:text-[14px] placeholder:leading-[22px] placeholder:text-[#9CA3AF] rounded-sm"
           >
             {Object.values(QueryType).map((comparisonType, j) => (
               <option key={j} value={comparisonType}>
@@ -781,7 +781,7 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
               className={`${
                 /* @ts-ignore */
                 !statement?.isSubBuilderChild && "bg-[#F3F4F6] p-[10px]"
-              } rounded-[4px] flex justify-between items-center`}
+              } rounded flex justify-between items-center`}
             >
               <div className="flex gap-[10px] relative items-center flex-wrap">
                 {/* @ts-ignore */}
@@ -874,7 +874,7 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                     <div>
                       <select
                         value={`${statement.valueType};;${statement.comparisonType}`}
-                        className="w-[145px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB] rounded-[2px]"
+                        className="w-[145px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border border-[#E5E7EB] rounded-sm"
                         onChange={(ev) => {
                           if (!ev.target.value) return;
 
@@ -971,7 +971,7 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                                 .value as ObjectKeyComparisonType,
                             })
                           }
-                          className="w-[145px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB] rounded-[2px]"
+                          className="w-[145px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border border-[#E5E7EB] rounded-sm"
                         >
                           {Object.values(ObjectKeyComparisonType).map(
                             (comparisonType, j) => (
@@ -1012,7 +1012,7 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                           segmentId: e.target.value,
                         })
                       }
-                      className={`w-[140px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB] placeholder:font-inter placeholder:font-normal placeholder:text-[14px] placeholder:leading-[22px] placeholder:text-[#9CA3AF] rounded-[2px] ${
+                      className={`w-[140px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border border-[#E5E7EB] placeholder:font-inter placeholder:font-normal placeholder:text-[14px] placeholder:leading-[22px] placeholder:text-[#9CA3AF] rounded-sm ${
                         statement.segmentId ? "" : "text-[#9CA3AF]"
                       }`}
                     >
@@ -1056,7 +1056,7 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                               comparisonType: e.target.value as PerformedType,
                             })
                           }
-                          className="w-[166px] px-[12px] py-[5px] mr-[10px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB] rounded-[2px]"
+                          className="w-[166px] px-[12px] py-[5px] mr-[10px] font-inter font-normal text-[14px] leading-[22px] border border-[#E5E7EB] rounded-sm"
                         >
                           {Object.values(PerformedType).map(
                             (performedType, j) => (
@@ -1083,7 +1083,7 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                           }
                           min="0"
                           placeholder="Mins"
-                          className="w-full max-w-[80px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB] placeholder:font-inter placeholder:font-normal placeholder:text-[14px] mr-[6px] placeholder:leading-[22px] placeholder:text-[#9CA3AF] rounded-[2px]"
+                          className="w-full max-w-[80px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border border-[#E5E7EB] placeholder:font-inter placeholder:font-normal placeholder:text-[14px] mr-[6px] placeholder:leading-[22px] placeholder:text-[#9CA3AF] rounded-sm"
                         />
                         <span className="font-inter text-[14px] leading-[22px] text-[#18181B]">
                           time
@@ -1092,7 +1092,7 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                     </div>
 
                     {statement.time !== undefined && (
-                      <div className="min-w-full flex items-center px-[20px] py-[14px] border border-[#E5E7EB] bg-white gap-[10px]">
+                      <div className="min-w-full flex items-center px-5 py-[14px] border border-[#E5E7EB] bg-white gap-[10px]">
                         <Select
                           value={statement.time.comparisonType}
                           options={[
@@ -1200,7 +1200,7 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                                     },
                                   })
                                 }
-                                className="w-[100px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB] placeholder:font-inter placeholder:font-normal placeholder:text-[14px] placeholder:leading-[22px] placeholder:text-[#9CA3AF] rounded-[2px]"
+                                className="w-[100px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border border-[#E5E7EB] placeholder:font-inter placeholder:font-normal placeholder:text-[14px] placeholder:leading-[22px] placeholder:text-[#9CA3AF] rounded-sm"
                               >
                                 {Object.values(QueryType).map(
                                   (comparisonType, j) => (
@@ -1275,7 +1275,7 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                                         <div>
                                           <select
                                             value={`${property.valueType};;${property.comparisonType}`}
-                                            className="w-[145px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB] rounded-[2px]"
+                                            className="w-[145px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border border-[#E5E7EB] rounded-sm"
                                             onChange={(ev) => {
                                               if (!ev.target.value) return;
 
@@ -1411,7 +1411,7 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                                                   }
                                                 )
                                               }
-                                              className="w-[145px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB] rounded-[2px]"
+                                              className="w-[145px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border border-[#E5E7EB] rounded-sm"
                                             >
                                               {Object.values(
                                                 ObjectKeyComparisonType
@@ -1486,7 +1486,7 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                                         ]?.map((propError, propErrorI) => (
                                           <div
                                             key={propErrorI}
-                                            className="ml-[60px] w-full font-inter font-normal text-[12px] leading-[20px] text-[#E11D48]"
+                                            className="ml-[60px] w-full font-inter font-normal text-[12px] leading-5 text-[#E11D48]"
                                           >
                                             {
                                               queryStatementErrorToMessageMap[
@@ -1734,7 +1734,7 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                       </div>
                     )}
                     {(statement as MessageEventQuery).time !== undefined && (
-                      <div className="min-w-full flex items-center px-[20px] py-[14px] border border-[#E5E7EB] bg-white gap-[10px]">
+                      <div className="min-w-full flex items-center px-5 py-[14px] border border-[#E5E7EB] bg-white gap-[10px]">
                         <Select
                           value={
                             (statement as MessageEventQuery).time!
@@ -1854,7 +1854,7 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                   statementsErrors[i].map((error, k) => (
                     <div
                       key={k}
-                      className="w-full font-inter font-normal text-[12px] leading-[20px] text-[#E11D48]"
+                      className="w-full font-inter font-normal text-[12px] leading-5 text-[#E11D48]"
                     >
                       {queryStatementErrorToMessageMap[error.type]}
                     </div>
@@ -1889,7 +1889,7 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
               i === settings.query.statements.length - 1) && (
               <div className="relative flex items-center py-[8.45px] max-w-[360px] px-[11.45px] rounded bg-[#F3F4F6]">
                 <div
-                  className="mr-[2px] min-w-[15px] min-h-[15px] border-[1px] border-[#6366F1] rounded-full"
+                  className="mr-[2px] min-w-[15px] min-h-[15px] border border-[#6366F1] rounded-full"
                   // TODO: update to render on BE data
                   style={{
                     background: `

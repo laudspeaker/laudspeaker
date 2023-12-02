@@ -40,13 +40,13 @@ const FlowViewerHeader: FC<FlowViewerHeaderProps> = ({
 
   return (
     <div className="relative h-[140px] bg-white border-b-[1px] border-[#E5E7EB] flex flex-col justify-between">
-      <div className="h-full px-[20px] flex justify-between items-center border-[#E5E7EB] border-y-[1px]">
+      <div className="h-full px-5 flex justify-between items-center border-[#E5E7EB] border-y-[1px]">
         <div className="flex items-center gap-[10px]">
           <div className="font-semibold text-[20px] leading-[28px]">
             {flowName}
           </div>
           <div
-            className={`px-[10px] py-[2px] font-inter font-semibold text-[12px] leading-[20px] rounded-[14px] ${journeyStatusClassName[flowStatus]}`}
+            className={`px-[10px] py-[2px] font-inter font-semibold text-[12px] leading-5 rounded-[14px] ${journeyStatusClassName[flowStatus]}`}
           >
             {flowStatus}
           </div>
@@ -73,13 +73,13 @@ const FlowViewerHeader: FC<FlowViewerHeaderProps> = ({
             </div>
           )}
       </div>
-      <div className="px-[20px] flex gap-[32px] font-roboto font-normal text-[14px] leading-[22px]">
+      <div className="px-5 flex gap-[32px] font-roboto font-normal text-[14px] leading-[22px]">
         {(Object.keys(tabs) as FlowViewerTab[]).map((tabKey, i) => (
           <div
             key={i}
             className={`py-[12px] select-none cursor-pointer ${
               tabKey === currentTab
-                ? "text-[#6366F1] border-b-[2px] border-[#6366F1]"
+                ? "text-[#6366F1] border-b-2 border-[#6366F1]"
                 : ""
             }`}
             onClick={() => setCurrentTab(tabKey)}

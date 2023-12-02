@@ -17,7 +17,7 @@ const AndroidOnlySettings = ({ data, onChange }: AndroidOnlySettingsProps) => (
       placeholder="Summary text only for Android"
       value={data.summary}
       wrapperClassName="!w-full"
-      className="!w-full !rounded-[2px]"
+      className="!w-full !rounded-sm"
       onChange={(val) => {
         onChange({
           ...data,

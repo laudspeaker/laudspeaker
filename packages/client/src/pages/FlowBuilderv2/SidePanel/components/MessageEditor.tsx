@@ -237,7 +237,7 @@ const MessageEditor = ({
       {showErrors &&
         errors &&
         errors[ConditionEditorError.NO_JOURNEY_SPECIFiED] && (
-          <div className="font-inter font-normal text-[12px] leading-[20px] text-[#E11D48]">
+          <div className="font-inter font-normal text-[12px] leading-5 text-[#E11D48]">
             {errorToMessageMap[ConditionEditorError.NO_JOURNEY_SPECIFiED]}
           </div>
         )}

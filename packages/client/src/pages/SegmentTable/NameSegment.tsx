@@ -211,7 +211,7 @@ const NameSegment: FC<NameSegmentProps> = ({ onSubmit }) => {
                   placeholder={"Enter name"}
                   name="name"
                   id="name"
-                  className="w-full px-[16px] py-[15px] bg-[#fff] border-[1px] border-[#D1D5DB] font-[Inter] text-[16px] "
+                  className="w-full px-[16px] py-[15px] bg-[#fff] border border-[#D1D5DB] font-[Inter] text-[16px] "
                   onChange={handleSegmentFormChange}
                 />
               </div>
@@ -222,7 +222,7 @@ const NameSegment: FC<NameSegmentProps> = ({ onSubmit }) => {
                   placeholder={"Enter description"}
                   name="description"
                   id="description"
-                  className="w-full px-[16px] py-[15px] bg-[#fff] border-[1px] border-[#D1D5DB] font-[Inter] text-[16px] "
+                  className="w-full px-[16px] py-[15px] bg-[#fff] border border-[#D1D5DB] font-[Inter] text-[16px] "
                   onChange={handleSegmentFormChange}
                 />
               </div>

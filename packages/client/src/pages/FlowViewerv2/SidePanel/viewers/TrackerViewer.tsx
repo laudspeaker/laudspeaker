@@ -89,7 +89,7 @@ const TrackerViewer: FC<
           {trackerStatsToShow.map((stat, i) => (
             <div
               key={i}
-              className={`w-full rounded-[4px] px-[10px] py-[4px] flex flex-col gap-[9px] border-[1px] border-[#E5E7EB] select-none cursor-pointer ${
+              className={`w-full rounded px-[10px] py-[4px] flex flex-col gap-[9px] border border-[#E5E7EB] select-none cursor-pointer ${
                 stat.key === pickedStat ? "!border-[#6366F1] !bg-[#EEF2FF]" : ""
               }`}
               onClick={() =>
@@ -160,9 +160,9 @@ const TrackerViewer: FC<
 
                 {new Array(totalPages).fill(0, 0, totalPages).map((_, i) => (
                   <div
-                    className={`min-w-[24px] h-[24px] flex justify-center items-center rounded-[2px] cursor-pointer select-none ${
+                    className={`min-w-[24px] h-[24px] flex justify-center items-center rounded-sm cursor-pointer select-none ${
                       i + 1 === currentPage
-                        ? "border-[1px] border-[#6366F1] text-[#6366F1]"
+                        ? "border border-[#6366F1] text-[#6366F1]"
                         : ""
                     }`}
                     onClick={() => setCurrentPage(i + 1)}
@@ -202,14 +202,14 @@ const TrackerViewer: FC<
     ),
     [TrackerViewerTab.TRACKER_FIELDS]: (
       <>
-        <div className="rounded-[4px] border-t-[1px] border-x-[1px] border-[#E5E7EB]">
+        <div className="rounded border-t-[1px] border-x-[1px] border-[#E5E7EB]">
           <Table
             className="w-full"
             headings={[
-              <div className="px-[20px] py-[10px] min-h-[22px] min-w-[150px]">
+              <div className="px-5 py-[10px] min-h-[22px] min-w-[150px]">
                 Field
               </div>,
-              <div className="px-[20px] py-[10px] min-h-[22px]">Value</div>,
+              <div className="px-5 py-[10px] min-h-[22px]">Value</div>,
             ]}
             rows={
               !nodeData.tracker || nodeData.tracker.fields.length === 0
@@ -253,10 +253,10 @@ const TrackerViewer: FC<
     <div className="border-t-[1px] border-[#E5E7EB]">
       {nodeData.tracker ? (
         <div>
-          <div className="p-[20px] flex flex-col gap-[10px]">
+          <div className="p-5 flex flex-col gap-[10px]">
             <div className="w-full flex justify-between items-center">
               <div>Tracker ID</div>
-              <div className="relative w-[200px] font-roboto bg-[#F3F4F6] px-[12px] py-[5px] rounded-[2px] border-[1px] border-[#E5E7EB]">
+              <div className="relative w-[200px] font-roboto bg-[#F3F4F6] px-[12px] py-[5px] rounded-sm border border-[#E5E7EB]">
                 <div>{nodeData.tracker.trackerId}</div>
 
                 <button
@@ -292,11 +292,11 @@ const TrackerViewer: FC<
             <div className="w-full flex justify-between items-center">
               <div>Visibility</div>
               {nodeData.tracker.visibility === TrackerVisibility.SHOW ? (
-                <div className="bg-[#DCFCE7] px-[10px] py-[2px] rounded-[14px] font-inter text-[12px] text-[#14532D] font-semibold leading-[20px]">
+                <div className="bg-[#DCFCE7] px-[10px] py-[2px] rounded-[14px] font-inter text-[12px] text-[#14532D] font-semibold leading-5">
                   Shown
                 </div>
               ) : (
-                <div className="bg-[#F3F4F6] px-[10px] py-[2px] rounded-[14px] font-inter text-[12px] text-[#6B7280] font-semibold leading-[20px]">
+                <div className="bg-[#F3F4F6] px-[10px] py-[2px] rounded-[14px] font-inter text-[12px] text-[#6B7280] font-semibold leading-5">
                   Hidden
                 </div>
               )}
@@ -326,7 +326,7 @@ const TrackerViewer: FC<
             </button>
           </div>
 
-          <div className="p-[20px]">{viewerTabToComponentMap[viewerTab]}</div>
+          <div className="p-5">{viewerTabToComponentMap[viewerTab]}</div>
         </div>
       ) : (
         <>No tracker chosen</>

@@ -92,10 +92,10 @@ const EventCard = (props: IEventCardProp) => {
 
   return (
     <div className="flex items-center relative">
-      <div className="absolute left-[-72px] top-[40px] flex justify-center items-center z-[1111] w-[60px] h-[45px] bg-white border-[1px] border-[#DEDEDE] rounded-[24px]">
+      <div className="absolute left-[-72px] top-[40px] flex justify-center items-center z-[1111] w-[60px] h-[45px] bg-white border border-[#DEDEDE] rounded-3xl">
         {conditionType == ConditionalType.and ? "And" : "Or"}
       </div>
-      <div className="rounded-[10px] mt-[10px] mx-[0px] pt-[0px] px-[20px] flex items-center cursor-pointer w-full bg-[#F9F9FA]">
+      <div className="rounded-[10px] mt-[10px] mx-[0px] pt-[0px] px-5 flex items-center cursor-pointer w-full bg-[#F9F9FA]">
         <div
           id="event-conditions"
           className="flex flex-[1] flex-wrap pt-[15px]"

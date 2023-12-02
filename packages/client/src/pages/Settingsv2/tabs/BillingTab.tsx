@@ -3,7 +3,7 @@ import React from "react";
 
 const BillingTab = () => {
   return (
-    <div className="p-[20px]">
+    <div className="p-5">
       <SettingsBillingBeta />
     </div>
   );

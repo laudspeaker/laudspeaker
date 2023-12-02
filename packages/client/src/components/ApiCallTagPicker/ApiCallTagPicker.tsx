@@ -108,7 +108,7 @@ const ApiCallTagPicker: FC<ApiCallTagPickerProps> = ({
         onClose={() => setIsWebhookModalOpen(false)}
         panelClass="min-w-[90vw]"
       >
-        <div className="py-[20px] px-[15px] outline-none max-h-[75vh] overflow-y-scroll flex justify-center items-center">
+        <div className="py-5 px-[15px] outline-none max-h-[75vh] overflow-y-scroll flex justify-center items-center">
           <div className="w-[490px] max-h-[75vh]">
             <div className="w-full flex justify-end items-center">
               <SlackTemplateHeader
