@@ -119,22 +119,6 @@ const flowBuilderDrawerFixtures: FlowBuilderDrawerFixture[] = [
       // },
     ],
   },
-  {
-    groupName: "Audience Split ",
-    children: [
-      {
-        id: DrawerAction.MULTISPLIT,
-        // TODO: change icon
-        icon: WaitUntilIcon(),
-        text: "Multisplit",
-      },
-      // {
-      //   id: DrawerAction.TIME_DELAY,
-      //   icon: TimeDelayIcon(),
-      //   text: "A/B Test",
-      // },
-    ],
-  },
 ];
 
 export default flowBuilderDrawerFixtures;
