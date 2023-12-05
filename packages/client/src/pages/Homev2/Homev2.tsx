@@ -6,6 +6,7 @@ import messageChannelsImage from "./svg/message-channels.svg";
 import eventProviderImage from "./svg/event-provider.svg";
 import { useNavigate } from "react-router-dom";
 import Button, { ButtonType } from "components/Elements/Buttonv2";
+import { AppConfig } from "../../constants";
 
 const Homev2 = () => {
   const navigate = useNavigate();
