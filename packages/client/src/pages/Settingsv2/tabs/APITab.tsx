@@ -3,7 +3,7 @@ import React from "react";
 
 const APITab = () => {
   return (
-    <div className="p-[20px]">
+    <div className="p-5">
       <SettingsAPIBeta />
     </div>
   );

@@ -54,7 +54,7 @@ const FlowBuilderDrawer: FC<FlowBuilderDrawerProps> = ({ fixtures }) => {
   return (
     <div className="min-w-[232px] w-[232px] border-col border-right-[1px] border-[#E5E7EB] bg-white h-full">
       <Scrollbars>
-        <div className="px-[16px] py-[20px] flex flex-col gap-[20px]">
+        <div className="px-[16px] py-5 flex flex-col gap-5">
           {fixturesToRender.map((group) => (
             <div
               className="flex flex-col gap-[10px] w-[200px]"
@@ -65,7 +65,7 @@ const FlowBuilderDrawer: FC<FlowBuilderDrawerProps> = ({ fixtures }) => {
               </div>
               {group.children.map((child, i) => (
                 <div
-                  className={`w-full h-[44px] px-[15px] py-[10px] flex gap-[10px] border-[1px] border-[#E5E7EB]  rounded-[4px] select-none items-end cursor-grab ${
+                  className={`w-full h-[44px] px-[15px] py-[10px] flex gap-[10px] border border-[#E5E7EB]  rounded select-none items-end cursor-grab ${
                     (child.disabled || isDrawerDisabled) && !isOnboarding
                       ? "grayscale cursor-not-allowed !text-[#9CA3AF] !bg-[#F3F4F6]"
                       : ""

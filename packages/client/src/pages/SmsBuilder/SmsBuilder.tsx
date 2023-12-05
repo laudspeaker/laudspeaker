@@ -10,7 +10,7 @@ import { AxiosError } from "axios";
 import Progress from "components/Progress";
 
 const SmsBuilder = () => {
-  const { name } = useParams();
+  const { id } = useParams();
   const [smsMessage, setSmsMessage] = useState<string>("");
   const [templateName, setTemplateName] = useState<string>("My sms template");
   const [smsTemplateId, setSmsTemplateId] = useState<string>("");
@@ -37,22 +37,12 @@ const SmsBuilder = () => {
         type: "sms",
       };
 
-      if (!smsTemplateId) {
-        const response = await ApiService.post({
-          url: `${ApiConfig.createTemplate}`,
-          options: {
-            ...reqBody,
-          },
-        });
-        setSmsTemplateId(response.data.id);
-      } else {
-        await ApiService.patch({
-          url: `${ApiConfig.getAllTemplates}/${name}`,
-          options: {
-            ...reqBody,
-          },
-        });
-      }
+      await ApiService.patch({
+        url: `${ApiConfig.getAllTemplates}/${id}`,
+        options: {
+          ...reqBody,
+        },
+      });
     } catch (e) {
       let message = "Unexpected error";
       if (e instanceof AxiosError) {
@@ -67,9 +57,9 @@ const SmsBuilder = () => {
   useLayoutEffect(() => {
     const populateSlackBuilder = async () => {
       try {
-        const { data } = await getTemplate(name);
+        const { data } = await getTemplate(id);
         setSmsMessage(data.smsText || "");
-        setTemplateName(name);
+        setTemplateName(data.name);
         setSmsTemplateId(data.id);
       } catch (e) {
         toast.error("Error while loading");

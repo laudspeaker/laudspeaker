@@ -25,7 +25,7 @@ const MessageSettings: FC<SidePanelComponentProps<MessageNodeData>> = ({
       </div>
       <div>
         <select
-          className="w-[200px] h-[32px] rounded-[2px] px-[12px] py-[4px] text-[14px] font-roboto leading-[22px]"
+          className="w-[200px] h-[32px] rounded-sm px-[12px] py-[4px] text-[14px] font-roboto leading-[22px]"
           value={selectedTemplateId}
           onChange={(e) =>
             setNodeData({

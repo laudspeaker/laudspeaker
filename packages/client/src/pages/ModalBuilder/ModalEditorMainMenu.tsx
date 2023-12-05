@@ -228,7 +228,7 @@ const ModalEditorMainMenu: FC<MainMenuProps> = ({
   ];
 
   return (
-    <div className="w-full p-[20px]">
+    <div className="w-full p-5">
       {editorMenu.map((block, i) => (
         <span key={i}>
           <div
@@ -242,7 +242,7 @@ const ModalEditorMainMenu: FC<MainMenuProps> = ({
             {block.elements.map((el, i2) => (
               <div key={i2} className="w-[155px] mt-[10px]">
                 <GenericButton
-                  customClasses={`relative w-full flex !text-[14px] !leading-[22px] !border-[2px] !outline-none !ring-transparent !focus:!ring-transparent !font-normal !rounded-[8px] !px-[10px] !py-[9px] flex align-center whitespace-nowrap overflow-hidden ${
+                  customClasses={`relative w-full flex !text-[14px] !leading-[22px] !border-2 !outline-none !ring-transparent !focus:!ring-transparent !font-normal !rounded-lg !px-[10px] !py-[9px] flex align-center whitespace-nowrap overflow-hidden ${
                     el.hidden
                       ? "!bg-[#FFFFFF] border-[#E5E7EB] !text-[#4B5563] hover:border-[#6366F1] hover:!text-[#6366F1]"
                       : "!bg-[#EEF2FF] !border-[#6366F1] hover:border-[#6366F1] !text-[#4338CA]"
@@ -255,7 +255,7 @@ const ModalEditorMainMenu: FC<MainMenuProps> = ({
                   <span className="!pr-[30px] text-ellipsis w-full block text-left overflow-hidden">
                     {el.name}
                   </span>
-                  <div className="absolute opacity-0 hover:!opacity-100 bg-opacity-40 top-0 left-0 w-full h-full !rounded-[8px] transition-all border-[2px] border-white">
+                  <div className="absolute opacity-0 hover:!opacity-100 bg-opacity-40 top-0 left-0 w-full h-full !rounded-lg transition-all border-2 border-white">
                     <EditIconSVG className="absolute w-[20px] right-[10px] top-1/2 -translate-y-1/2 shadow-2xl rounded-full" />
                   </div>
                 </GenericButton>

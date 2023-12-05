@@ -8,7 +8,7 @@ interface BackButtonProps {
 const BackButton: FC<BackButtonProps> = ({ onClick }) => {
   return (
     <button
-      className="px-[8px] py-[10px] rounded-[4px] border-[1px] border-[#D1D5DB]"
+      className="px-2 py-[10px] rounded border border-[#D1D5DB]"
       onClick={onClick || (() => window.history.back())}
     >
       <img src={backIcon} />

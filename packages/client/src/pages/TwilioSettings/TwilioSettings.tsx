@@ -92,8 +92,8 @@ const TwilioSettings = () => {
   );
 
   return (
-    <div className="p-[20px] flex justify-center font-inter text-[14px] font-normal leading-[22px] text-[#111827]">
-      <div className="max-w-[970px] w-full flex flex-col gap-[20px]">
+    <div className="p-5 flex justify-center font-inter text-[14px] font-normal leading-[22px] text-[#111827]">
+      <div className="max-w-[970px] w-full flex flex-col gap-5">
         <div className="flex gap-[15px] items-center">
           <BackButton />
           <div className="text-[20px] font-semibold leading-[28px] text-black">
@@ -101,7 +101,7 @@ const TwilioSettings = () => {
           </div>
         </div>
 
-        <div className="bg-white p-[20px] flex flex-col gap-[20px]">
+        <div className="bg-white p-5 flex flex-col gap-5">
           <div className="flex flex-col gap-[5px]">
             <div>Twilio account SID</div>
             <Input
@@ -146,7 +146,7 @@ const TwilioSettings = () => {
         </div>
 
         {error && (
-          <div className="text-[#E11D48] font-inter text-[12px] leading-[20px]">
+          <div className="text-[#E11D48] font-inter text-[12px] leading-5">
             {error}
           </div>
         )}

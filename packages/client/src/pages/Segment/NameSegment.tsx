@@ -103,7 +103,7 @@ const NameSegment = ({
                 placeholder={"Enter name"}
                 name="name"
                 id="name"
-                className="w-full p-[16px] bg-white border-[1px] border-[#D1D5DB] font-[Inter] text-[16px]"
+                className="w-full p-[16px] bg-white border border-[#D1D5DB] font-[Inter] text-[16px]"
                 onChange={handleSegmentFormChange}
               />
             </FormControl>
@@ -179,10 +179,7 @@ const NameSegment = ({
               </GenericButton>
             </div>
           ) : (
-            <div
-              className="flex justify-between gap-[20px]"
-              data-namesegmentbox
-            >
+            <div className="flex justify-between gap-5" data-namesegmentbox>
               <GenericButton
                 onClick={handleSubmit}
                 disabled={!segmentForm.name}

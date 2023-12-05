@@ -145,7 +145,7 @@ const PeopleTablev2 = () => {
   };
 
   return (
-    <div className="p-[20px] flex flex-col gap-[20px] font-inter font-normal text-[14px] text-[#111827] leading-[22px]">
+    <div className="p-5 flex flex-col gap-5 font-inter font-normal text-[14px] text-[#111827] leading-[22px]">
       <div className="flex justify-between items-center">
         <div className="text-[20px] font-semibold leading-[28px]">User</div>
 
@@ -162,13 +162,13 @@ const PeopleTablev2 = () => {
           </Button>
         </div>
       </div>
-      <div className="p-[20px] bg-white rounded-[8px] flex flex-col gap-[20px]">
+      <div className="p-5 bg-white rounded-lg flex flex-col gap-5">
         {rows.length === 0 &&
         searchKey === "" &&
         searchValue === "" &&
         isLoaded ? (
           <div className="w-full h-[300px] flex items-center justify-center select-none">
-            <div className="flex flex-col items-center gap-[20px]">
+            <div className="flex flex-col items-center gap-5">
               <img src={emptyDataImage} />
 
               <div className="font-inter text-[16px] font-semibold leading-[24px] text-[#4B5563]">
@@ -224,10 +224,10 @@ const PeopleTablev2 = () => {
             <Table
               isLoading={isLoading}
               headings={[
-                <div className="px-[20px] py-[10px] select-none">ID</div>,
-                <div className="px-[20px] py-[10px] select-none">Email</div>,
+                <div className="px-5 py-[10px] select-none">ID</div>,
+                <div className="px-5 py-[10px] select-none">Email</div>,
                 <div
-                  className="px-[20px] py-[10px] select-none flex gap-[2px] items-center cursor-pointer"
+                  className="px-5 py-[10px] select-none flex gap-[2px] items-center cursor-pointer"
                   onClick={() => {
                     if (sortOptions.sortBy !== SortProperty.CREATED_AT) {
                       setSortOptions({
@@ -267,7 +267,7 @@ const PeopleTablev2 = () => {
                   </div>
                 </div>,
                 ,
-                <div className="px-[20px] py-[10px] select-none"></div>,
+                <div className="px-5 py-[10px] select-none"></div>,
               ]}
               rows={rows.map((row) => [
                 <button
@@ -282,7 +282,7 @@ const PeopleTablev2 = () => {
                 </div>,
                 <Menu as="div" className="relative">
                   <Menu.Button>
-                    <button className="px-[5px] py-[11px] rounded-[4px]">
+                    <button className="px-[5px] py-[11px] rounded">
                       <img src={threeDotsIconImage} />
                     </button>
                   </Menu.Button>
@@ -295,7 +295,7 @@ const PeopleTablev2 = () => {
                     leaveFrom="transform opacity-100 scale-100"
                     leaveTo="transform opacity-0 scale-95"
                   >
-                    <Menu.Items className="absolute z-[120] right-0 origin-top-right w-[200px] py-[4px] rounded-[2px] bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                    <Menu.Items className="absolute z-[120] right-0 origin-top-right w-[200px] py-[4px] rounded-sm bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
                       <Menu.Item>
                         {({ active }) => (
                           <button

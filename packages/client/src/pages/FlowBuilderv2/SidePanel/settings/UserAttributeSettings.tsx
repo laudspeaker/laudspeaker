@@ -93,7 +93,7 @@ const UserAttributeSettings: FC<
           />
         </div>
       ))}
-      <div className="py-[20px] flex gap-[20px]">
+      <div className="py-5 flex gap-5">
         <Button type={ButtonType.SECONDARY} onClick={handleAddAttributeBranch}>
           Add branch
         </Button>

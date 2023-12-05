@@ -16,7 +16,7 @@ import { NodeType } from "../FlowEditor";
 import FlowBuilderDeleteModal from "../Modals/FlowBuilderDeleteModal";
 import FlowBuilderSaveTrackerModal from "../Modals/FlowBuilderSaveTrackerModal";
 import { messageFixtures } from "../Nodes/MessageNode";
-import { NodeData } from "../Nodes/NodeData";
+import { MessageNodeData, NodeData } from "../Nodes/NodeData";
 import MessageSettings from "./settings/MessageSettings";
 import TimeDelaySettings from "./settings/TimeDelaySettings";
 import TimeWindowSettings from "./settings/TimeWindowSettings";
@@ -27,6 +27,8 @@ import JumpToSettings from "./settings/JumpToSettings";
 import { isEqual } from "lodash";
 import Modal from "components/Elements/Modal";
 import { FlowBuilderMessageRenameModal } from "../Modals/FlowBuilderMessageRenameModal";
+import { MessageType } from "types/Workflow";
+import { Node } from "reactflow";
 
 export interface SidePanelComponentProps<T extends NodeData = NodeData> {
   nodeData: T;
@@ -45,7 +47,9 @@ const FlowBuilderSidePanel: FC<FlowBuilderSidePanelProps> = ({ className }) => {
   );
   const dispatch = useAppDispatch();
 
-  const selectedNode = nodes.find((node) => node.selected);
+  const [selectedNode, setSelectedNode] = useState<
+    Node<NodeData, string | undefined> | undefined
+  >(undefined);
 
   const [nodeData, setNodeData] = useState<NodeData>(
     deepCopy({ ...selectedNode?.data })
@@ -79,6 +83,7 @@ const FlowBuilderSidePanel: FC<FlowBuilderSidePanelProps> = ({ className }) => {
     [NodeType.INSERT_NODE]: "Insert",
     [NodeType.TRACKER]: "Custom component",
     [NodeType.MULTISPLIT]: "Multisplit",
+    [NodeType.PUSH]: "Push",
   };
 
   const nodeToSettingsComponentMap: Record<string, ReactNode> = {
@@ -87,6 +92,18 @@ const FlowBuilderSidePanel: FC<FlowBuilderSidePanelProps> = ({ className }) => {
         {nodeData.type === NodeType.MESSAGE && (
           <MessageSettings
             nodeData={nodeData}
+            setNodeData={setNodeData}
+            setIsError={setIsError}
+            showErrors={showErrors}
+          />
+        )}
+      </>
+    ),
+    [NodeType.PUSH]: (
+      <>
+        {nodeData.type === NodeType.PUSH && (
+          <MessageSettings
+            nodeData={nodeData as MessageNodeData<MessageType>}
             setNodeData={setNodeData}
             setIsError={setIsError}
             showErrors={showErrors}
@@ -109,73 +126,85 @@ const FlowBuilderSidePanel: FC<FlowBuilderSidePanelProps> = ({ className }) => {
     [NodeType.TIME_DELAY]: (
       <>
         {nodeData.type === NodeType.TIME_DELAY && (
-          <TimeDelaySettings
-            nodeData={nodeData}
-            setNodeData={setNodeData}
-            setIsError={setIsError}
-            showErrors={showErrors}
-          />
+          <div className="p-5">
+            <TimeDelaySettings
+              nodeData={nodeData}
+              setNodeData={setNodeData}
+              setIsError={setIsError}
+              showErrors={showErrors}
+            />
+          </div>
         )}
       </>
     ),
     [NodeType.TIME_WINDOW]: (
       <>
         {nodeData.type === NodeType.TIME_WINDOW && (
-          <TimeWindowSettings
-            nodeData={nodeData}
-            setNodeData={setNodeData}
-            setIsError={setIsError}
-            showErrors={showErrors}
-          />
+          <div className="p-5">
+            <TimeWindowSettings
+              nodeData={nodeData}
+              setNodeData={setNodeData}
+              setIsError={setIsError}
+              showErrors={showErrors}
+            />
+          </div>
         )}
       </>
     ),
     [NodeType.USER_ATTRIBUTE]: (
       <>
         {nodeData.type === NodeType.USER_ATTRIBUTE && (
-          <UserAttributeSettings
-            nodeData={nodeData}
-            setNodeData={setNodeData}
-            setIsError={setIsError}
-            showErrors={showErrors}
-          />
+          <div className="p-5">
+            <UserAttributeSettings
+              nodeData={nodeData}
+              setNodeData={setNodeData}
+              setIsError={setIsError}
+              showErrors={showErrors}
+            />
+          </div>
         )}
       </>
     ),
     [NodeType.TRACKER]: (
       <>
         {nodeData.type === NodeType.TRACKER && (
-          <TrackerSettings
-            nodeData={nodeData}
-            setNodeData={setNodeData}
-            setIsError={setIsError}
-            showErrors={showErrors}
-          />
+          <div className="p-5">
+            <TrackerSettings
+              nodeData={nodeData}
+              setNodeData={setNodeData}
+              setIsError={setIsError}
+              showErrors={showErrors}
+            />
+          </div>
         )}
       </>
     ),
     [NodeType.JUMP_TO]: (
       <>
         {nodeData.type === NodeType.JUMP_TO && selectedNode && (
-          <JumpToSettings
-            nodeData={nodeData}
-            setNodeData={setNodeData}
-            setIsError={setIsError}
-            showErrors={showErrors}
-            nodeId={selectedNode.id}
-          />
+          <div className="p-5">
+            <JumpToSettings
+              nodeData={nodeData}
+              setNodeData={setNodeData}
+              setIsError={setIsError}
+              showErrors={showErrors}
+              nodeId={selectedNode.id}
+            />
+          </div>
         )}
       </>
     ),
     [NodeType.MULTISPLIT]: (
       <>
         {nodeData.type === NodeType.MULTISPLIT && (
-          <MulisplitSettings
-            setIsError={setIsError}
-            showErrors={showErrors}
-            nodeData={nodeData}
-            setNodeData={setNodeData}
-          />
+          <div className="p-5">
+            <MulisplitSettings
+              setIsError={setIsError}
+              showErrors={showErrors}
+              nodeData={nodeData}
+              setNodeData={setNodeData}
+            />
+          </div>
         )}
       </>
     ),
@@ -241,10 +270,15 @@ const FlowBuilderSidePanel: FC<FlowBuilderSidePanelProps> = ({ className }) => {
   };
 
   useEffect(() => {
+    // TODO: CHECK TRACKER TEMPLATE NONSTOP REFRESHING
     if (nodeData.type !== NodeType.TRACKER || !selectedNode) return;
 
     setNodeData({ ...nodeData, needsCheck: false });
   }, [nodeData]);
+
+  useEffect(() => {
+    setSelectedNode(nodes.find((node) => node.selected));
+  }, [nodes]);
 
   const isOpen =
     selectedNode &&
@@ -320,7 +354,7 @@ const FlowBuilderSidePanel: FC<FlowBuilderSidePanelProps> = ({ className }) => {
                 setNeedCancelConfirmation(false);
                 dispatch(deselectNodes());
               }}
-              className="!px-[15px] !py-[4px] !rounded-none !text-[14px] !leading-[22px] font-inter mr-[8px]"
+              className="!px-[15px] !py-[4px] !rounded-none !text-[14px] !leading-[22px] font-inter mr-2"
             >
               Discard
             </Button>
@@ -353,16 +387,20 @@ const FlowBuilderSidePanel: FC<FlowBuilderSidePanelProps> = ({ className }) => {
         leaveFrom="!right-0"
       >
         <div className="h-full relative flex flex-col justify-stretch">
-          <div className="p-[20px] border-b-[1px] flex flex-col gap-[5px]">
+          <div className="p-5 border-b-[1px] flex flex-col gap-[5px]">
             <div className="font-inter flex items-center font-semibold text-[20px] leading-[28px]">
               {selectedNode?.type
-                ? selectedNode.data.type === NodeType.MESSAGE &&
-                  selectedNode.data.template
-                  ? selectedNode.data.customName ||
-                    messageFixtures[selectedNode.data.template.type].text
+                ? (selectedNode.data.type === NodeType.MESSAGE ||
+                    selectedNode?.data.type === NodeType.PUSH) &&
+                  (selectedNode.data as MessageNodeData).template
+                  ? (selectedNode.data as MessageNodeData).customName ||
+                    messageFixtures[
+                      (selectedNode.data as MessageNodeData).template.type
+                    ].text
                   : nodeTypeToNameMap[selectedNode.type as NodeType]
                 : ""}
-              {selectedNode?.data.type === NodeType.MESSAGE && (
+              {(selectedNode?.data.type === NodeType.MESSAGE ||
+                selectedNode?.data.type === NodeType.PUSH) && (
                 <>
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -394,10 +432,12 @@ const FlowBuilderSidePanel: FC<FlowBuilderSidePanelProps> = ({ className }) => {
               )}
               <br />
             </div>
-            <div className="font-inter font-normal text-[12px] leading-[20px] text-[#4B5563]">
+            <div className="font-inter font-normal text-[12px] leading-5 text-[#4B5563]">
               {(() => {
                 switch (selectedNode?.data.type) {
                   case NodeType.MESSAGE:
+                    return "Users in this step will receive a message with the following template";
+                  case NodeType.PUSH:
                     return "Users in this step will receive a message with the following template";
                   case NodeType.START:
                     return "";
@@ -421,13 +461,13 @@ const FlowBuilderSidePanel: FC<FlowBuilderSidePanelProps> = ({ className }) => {
               })()}
             </div>
           </div>
-          <div className="p-[20px] h-full max-h-full mb-[60px] overflow-y-hidden">
+          <div className="h-full max-h-full mb-[60px] overflow-y-hidden">
             <Scrollbars>
               {nodeToSettingsComponentMap[selectedNode?.type || ""]}
             </Scrollbars>
           </div>
         </div>
-        <div className="absolute bottom-0 w-full min-h-[60px] h-[60px] py-[14px] px-[20px] border-t-[1px] flex justify-between items-center">
+        <div className="absolute bottom-0 w-full min-h-[60px] h-[60px] py-[14px] px-5 border-t-[1px] flex justify-between items-center">
           <Button
             id="delete-node"
             type={ButtonType.LINK}

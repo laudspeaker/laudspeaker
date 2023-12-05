@@ -1,3 +1,4 @@
+import { PushBuilderData } from "pages/PushBuilder/PushBuilderContent";
 import { WebhookState } from "pages/WebhookBuilder/WebhookSettings";
 import Account from "./Account";
 
@@ -5,10 +6,10 @@ export enum TemplateType {
   EMAIL = "email",
   SLACK = "slack",
   SMS = "sms",
-  FIREBASE = "firebase",
   WEBHOOK = "webhook",
   MODAL = "modal",
   CUSTOM_MODAL = "custom-modal",
+  PUSH = "push",
 }
 
 export default interface Template {
@@ -19,6 +20,7 @@ export default interface Template {
   style: string;
   subject: string;
   slackMessage: string;
+  pushObject: PushBuilderData | null;
   type: TemplateType;
   smsText: string;
   webhookData: WebhookState;

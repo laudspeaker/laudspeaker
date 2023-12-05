@@ -15,7 +15,7 @@ import WebhookSettings, {
 import Progress from "components/Progress";
 
 const WebhookBuilder = () => {
-  const { name } = useParams();
+  const { id } = useParams();
 
   const [webhookState, setWebhookState] = useState<WebhookState>({
     url: "",
@@ -49,11 +49,11 @@ const WebhookBuilder = () => {
     (async () => {
       try {
         const { data } = await ApiService.get<Template>({
-          url: `${ApiConfig.getAllTemplates}/${name}`,
+          url: `${ApiConfig.getAllTemplates}/${id}`,
         });
 
         setTemplateId(data.id);
-        setTemplateName(name);
+        setTemplateName(data.name);
         setWebhookState(data.webhookData || webhookState);
 
         const { data: attributesData } = await getResources("attributes");
@@ -80,22 +80,12 @@ const WebhookBuilder = () => {
         webhookData: webhookState,
       };
 
-      if (templateId) {
-        await ApiService.patch({
-          url: `${ApiConfig.getAllTemplates}/${name}`,
-          options: {
-            ...reqBody,
-          },
-        });
-      } else {
-        const { data } = await ApiService.post<Template>({
-          url: `${ApiConfig.createTemplate}`,
-          options: {
-            ...reqBody,
-          },
-        });
-        setTemplateId(data.id);
-      }
+      await ApiService.patch({
+        url: `${ApiConfig.getAllTemplates}/${id}`,
+        options: {
+          ...reqBody,
+        },
+      });
     } catch (e) {
       let message = "Unexpected error";
       if (e instanceof AxiosError) {

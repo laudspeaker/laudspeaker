@@ -83,11 +83,11 @@ const TrackerSettings: FC<SidePanelComponentProps<TrackerNodeData>> = ({
   return (
     <div className="font-inter text-[14px] font-normal leading-[22px] text-[#111827]">
       {nodeData.tracker ? (
-        <div className="flex flex-col gap-[20px]">
+        <div className="flex flex-col gap-5">
           <div className="flex flex-col gap-[10px]">
             <div className="flex justify-between items-center">
               <div>Tracker ID</div>
-              <div className="relative w-[200px] font-roboto bg-[#F3F4F6] px-[12px] py-[5px] rounded-[2px] border-[1px] border-[#E5E7EB]">
+              <div className="relative w-[200px] font-roboto bg-[#F3F4F6] px-[12px] py-[5px] rounded-sm border border-[#E5E7EB]">
                 <div>{nodeData.tracker.trackerId}</div>
 
                 <button
@@ -162,7 +162,7 @@ const TrackerSettings: FC<SidePanelComponentProps<TrackerNodeData>> = ({
                   className={`w-full px-[6px] py-[5px] flex justify-center rounded-l-[2px] ${
                     nodeData.tracker.visibility === TrackerVisibility.SHOW
                       ? "bg-[#6366F1] text-white"
-                      : "border-[1px] border-[#E5E7EB]"
+                      : "border border-[#E5E7EB]"
                   }`}
                   onClick={() => handleChangeVisibility(TrackerVisibility.SHOW)}
                 >
@@ -172,7 +172,7 @@ const TrackerSettings: FC<SidePanelComponentProps<TrackerNodeData>> = ({
                   className={`w-full px-[6px] py-[5px] flex justify-center rounded-r-[2px] ${
                     nodeData.tracker.visibility === TrackerVisibility.HIDE
                       ? "bg-[#6366F1] text-white"
-                      : "border-[1px] border-[#E5E7EB]"
+                      : "border border-[#E5E7EB]"
                   }`}
                   onClick={() => handleChangeVisibility(TrackerVisibility.HIDE)}
                 >
@@ -188,19 +188,19 @@ const TrackerSettings: FC<SidePanelComponentProps<TrackerNodeData>> = ({
 
               <div className="flex flex-col gap-[10px]">
                 <div className="font-semibold">Field value</div>
-                <div className="text-[12px] leading-[20px] text-[#4B5563]">
+                <div className="text-[12px] leading-5 text-[#4B5563]">
                   Description Description Description Des
                 </div>
                 {nodeData.tracker.fields.map((field, i) => (
                   <div
                     key={i}
-                    className="p-[10px] bg-[#F3F4F6] border-[1px] border-[#E5E7EB] rounded-[4px] flex flex-col gap-[5px]"
+                    className="p-[10px] bg-[#F3F4F6] border border-[#E5E7EB] rounded flex flex-col gap-[5px]"
                   >
                     <div className="flex gap-[5px]">
                       <div className="font-semibold">{field.name}</div>
                       <div className="text-[#4B5563]">({field.type})</div>
                     </div>
-                    <div className="bg-white rounded-[2px]">
+                    <div className="bg-white rounded-sm">
                       <FlowBuilderDynamicInput
                         type={field.type}
                         value={field.value}
@@ -248,7 +248,7 @@ const TrackerSettings: FC<SidePanelComponentProps<TrackerNodeData>> = ({
           />
           {filledTrackerNodes.length > 0 && (
             <>
-              <div className="w-fit px-[12px] py-[5px] bg-[#F3F4F6] rounded-[2px] border-[#E5E7EB] border-[1px]">
+              <div className="w-fit px-[12px] py-[5px] bg-[#F3F4F6] rounded-sm border-[#E5E7EB] border">
                 OR
               </div>
 
@@ -270,7 +270,7 @@ const TrackerSettings: FC<SidePanelComponentProps<TrackerNodeData>> = ({
                           tracker: { ...deepCopy(trackerNode.data.tracker) },
                         })
                       }
-                      className="w-full p-[10px] rounded-[4px] border-[1px] border-[#E5E7EB] flex justify-between items-center hover:bg-[#EEF2FF]"
+                      className="w-full p-[10px] rounded border border-[#E5E7EB] flex justify-between items-center hover:bg-[#EEF2FF]"
                     >
                       <div>{trackerNode.data.tracker?.trackerId}</div>
                       <div>

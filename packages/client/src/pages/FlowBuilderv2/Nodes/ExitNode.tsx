@@ -11,13 +11,9 @@ export const ExitNode: FC<NodeProps<NodeData>> = ({
 }) => {
   return (
     <div
-      className={`relative w-[120px] h-[60px] bg-white rounded-[4px] flex justify-center items-center ${
+      className={`relative w-[120px] h-[60px] bg-white rounded flex justify-center items-center ${
         disabled ? "opacity-50 cursor-not-allowed" : ""
-      } ${
-        selected
-          ? "border-[2px] border-[#6366F1]"
-          : "border-[1px] border-[#E5E7EB]"
-      }`}
+      } ${selected ? "border-2 border-[#6366F1]" : "border border-[#E5E7EB]"}`}
     >
       <Handle
         position={Position.Top}

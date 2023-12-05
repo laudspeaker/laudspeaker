@@ -21,7 +21,7 @@ const EventBranchView: FC<EventBranchViewProps> = ({ branch }) => {
                 {condition.trackerId && (
                   <div className="flex gap-[5px] items-center">
                     <div>Tracker:</div>
-                    <div className="px-[5px] py-[2px] border-[1px] border-[#E5E7EB] rounded-[2px] bg-white">
+                    <div className="px-[5px] py-[2px] border border-[#E5E7EB] rounded-sm bg-white">
                       {condition.trackerId}
                     </div>
                   </div>
@@ -29,7 +29,7 @@ const EventBranchView: FC<EventBranchViewProps> = ({ branch }) => {
                 {condition.event && (
                   <div className="flex gap-[5px] items-center">
                     <div>Event</div>
-                    <div className="px-[5px] py-[2px] border-[1px] border-[#E5E7EB] rounded-[2px] bg-white">
+                    <div className="px-[5px] py-[2px] border border-[#E5E7EB] rounded-sm bg-white">
                       {condition.event}
                     </div>
                     <div>is performed</div>
@@ -77,7 +77,7 @@ const EventBranchView: FC<EventBranchViewProps> = ({ branch }) => {
             )}
           </div>
           {i !== branch.conditions.length - 1 && (
-            <div className="w-fit px-[12px] py-[5px] rounded-[2px] border-[1px] border-[#E5E7EB] bg-[#F3F4F6]">
+            <div className="w-fit px-[12px] py-[5px] rounded-sm border border-[#E5E7EB] bg-[#F3F4F6]">
               {condition.relationToNext === LogicRelation.AND ? "And" : "Or"}
             </div>
           )}

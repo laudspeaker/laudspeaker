@@ -17,7 +17,7 @@ const OnboardingStepper: FC<OnboardingStepperProps> = ({ currentStep }) => {
   ];
 
   return (
-    <div className="flex items-center gap-[20px]">
+    <div className="flex items-center gap-5">
       {stepsToShow.map((onboardingStep, i) => (
         <React.Fragment key={i}>
           <div

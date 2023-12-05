@@ -21,6 +21,7 @@ export default {
   correlateSlack: "/slack/cor",
   getAllTemplates: "/templates",
   getAllPeople: "/customers",
+  searchCustomersForTest: "/customers/search-for-test",
   customerCreate: "/customers/create",
   customerDelete: "/customers/delete/",
   flow: "/workflows",

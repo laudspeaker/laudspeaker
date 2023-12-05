@@ -73,10 +73,10 @@ const AutoComplete = <T,>({
         <Combobox.Input
           onChange={(event) => setQuery(event.target.value)}
           placeholder={placeholder}
-          className="w-full px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB] placeholder:font-inter placeholder:font-normal placeholder:text-[14px] placeholder:leading-[22px] placeholder:text-[#9CA3AF] focus:border-[#6366F1]"
+          className="w-full px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border border-[#E5E7EB] placeholder:font-inter placeholder:font-normal placeholder:text-[14px] placeholder:leading-[22px] placeholder:text-[#9CA3AF] focus:border-[#6366F1]"
         />
         <Combobox.Options className="translate-y-[4px] absolute w-full z-[99999999]">
-          <div className="py-[4px] bg-white rounded-[2px]">
+          <div className="py-[4px] bg-white rounded-sm">
             {items.length === 0 && (
               <span className="text-[14px] block px-[10px] py-[5px] font-inter leading-[22px] text-[#4B5563]">
                 {noDataFoundPlaceholder}

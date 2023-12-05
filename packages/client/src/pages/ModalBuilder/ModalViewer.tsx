@@ -143,7 +143,7 @@ const ModalViewer: FC<ModalViewerProps> = ({
               backdropFilter: `blur(${modalState.shroud.blur}px)`,
             }),
       }}
-      className="h-full w-screen flex z-[2147483645] p-[20px]"
+      className="h-full w-screen flex z-[2147483645] p-5"
     >
       <style>
         {`
@@ -471,7 +471,7 @@ const ModalViewer: FC<ModalViewerProps> = ({
                   editorMode === EditorMenuOptions.MAIN
                 )();
               }}
-              className={`flex justify-center items-center whitespace-nowrap h-fit p-[5px_9px_3px_9px] select-none cursor-pointer border-[2px] mt-[18px] ${
+              className={`flex justify-center items-center whitespace-nowrap h-fit p-[5px_9px_3px_9px] select-none cursor-pointer border-2 mt-[18px] ${
                 primaryButtomPositionMap[modalState.primaryButton.position]
               } ${modalState.primaryButton.hidden && "hidden"}`}
               style={{

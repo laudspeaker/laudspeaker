@@ -11,7 +11,6 @@ export enum MessageType {
   EMAIL = "email",
   SLACK = "slack",
   SMS = "sms",
-  FIREBASE = "firebase",
   PUSH = "push",
   WEBHOOK = "webhook",
   MODAL = "modal",

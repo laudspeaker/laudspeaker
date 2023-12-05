@@ -9,7 +9,7 @@ const ModalBuilderPersonalizationButton: FC<
 > = ({ onClick }) => {
   return (
     <div
-      className="flex justify-between items-center p-[4px_12px] w-[180px] h-[32px] rounded-md bg-white border-[#E5E7EB] border-[1px] float-left cursor-pointer"
+      className="flex justify-between items-center p-[4px_12px] w-[180px] h-[32px] rounded-md bg-white border-[#E5E7EB] border float-left cursor-pointer"
       onClick={onClick}
     >
       <div>Insert variable</div>

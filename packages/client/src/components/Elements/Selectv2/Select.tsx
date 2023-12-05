@@ -1,14 +1,15 @@
 import { Popover } from "@headlessui/react";
 import XCircle from "@heroicons/react/24/solid/XCircleIcon";
-import { useCallback, useRef } from "react";
+import React, { useCallback, useRef } from "react";
 
-interface SelectProps<T> {
+interface SelectProps<T, U = any> {
   value: T;
   options: {
     key: T;
     title: string;
     groupLabel?: boolean;
     nonSelectable?: boolean;
+    additionalData?: U;
   }[];
   onChange: (value: T, i?: number) => void;
   placeholder?: string;
@@ -16,8 +17,12 @@ interface SelectProps<T> {
   className?: string;
   isLoading?: boolean;
   searchValue?: string;
+  renderCustomOption?: (
+    props: { className: string; onClick: () => void; "data-option": T },
+    data?: U
+  ) => React.ReactNode;
   onSearchValueChange?: (value: string) => void;
-  onScrollToEnd?: () => void; // The new callback prop
+  onScrollToEnd?: () => void;
   buttonClassName?: string;
   buttonInnerWrapperClassName?: string;
   panelClassName?: string;
@@ -26,7 +31,7 @@ interface SelectProps<T> {
   id?: string;
 }
 
-const Select = <T,>({
+const Select = <T, U = any>({
   value,
   options,
   onChange,
@@ -39,11 +44,12 @@ const Select = <T,>({
   isLoading,
   onSearchValueChange,
   onScrollToEnd,
+  renderCustomOption,
   searchValue,
   searchPlaceholder,
   buttonInnerWrapperClassName,
   customBTN,
-}: SelectProps<T>) => {
+}: SelectProps<T, U>) => {
   const scrollableRef = useRef(null);
 
   const handleScroll = useCallback(() => {
@@ -70,7 +76,7 @@ const Select = <T,>({
               <div
                 className={`${
                   buttonInnerWrapperClassName || ""
-                } border-[1px] border-[#E5E7EB] rounded-[2px] bg-white px-[12px] py-[4px] flex items-center justify-between gap-[6px]`}
+                } border border-[#E5E7EB] rounded-sm bg-white px-[12px] py-[4px] flex items-center justify-between gap-[6px]`}
               >
                 <div className="max-w-full overflow-hidden text-ellipsis whitespace-nowrap">
                   {options.find((option) => option.key === value)?.title ||
@@ -99,7 +105,7 @@ const Select = <T,>({
               panelClassName ? panelClassName : ""
             }`}
           >
-            <div className="bg-white py-[4px] min-w-[200px] max-w-full w-fit">
+            <div className="bg-white py-[4px] min-w-[200px] max-w-full">
               {searchValue !== undefined && (
                 <div className="p-[10px] relative">
                   <svg
@@ -129,7 +135,7 @@ const Select = <T,>({
                     onChange={(e) =>
                       onSearchValueChange?.(e.target.value || "")
                     }
-                    className="w-full max-h-[32px] pl-[30px] pr-[26px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB] placeholder:font-inter placeholder:font-normal placeholder:text-[14px] placeholder:leading-[22px] placeholder:text-[#9CA3AF] rounded-[2px]"
+                    className="w-full max-h-[32px] pl-[30px] pr-[26px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border border-[#E5E7EB] placeholder:font-inter placeholder:font-normal placeholder:text-[14px] placeholder:leading-[22px] placeholder:text-[#9CA3AF] rounded-sm"
                   />
                   {!!searchValue.length && (
                     <XCircle
@@ -177,26 +183,33 @@ const Select = <T,>({
                   ref={scrollableRef}
                   onScroll={handleScroll}
                 >
-                  {options.map((option, i) => (
-                    <div
-                      key={i}
-                      className={`${
+                  {options.map((option, i) => {
+                    const props = {
+                      className: `${
                         option.groupLabel &&
-                        "bg-[#F3F4F6] !py-[2px] !cursor-auto !text-[#4B5563] leading-[20px] font-inter !text-[12px]"
-                      } ${
-                        option.nonSelectable && "hover:bg-white !cursor-auto"
-                      } max-w-[240px] overflow-hidden text-ellipsis whitespace-nowrap px-[12px] py-[5px] hover:bg-[#F3F4F6] select-none cursor-pointer`}
-                      onClick={() => {
+                        "bg-[#F3F4F6] !py-[2px] !cursor-auto !text-[#4B5563] leading-5 font-inter !text-[12px]"
+                      }
+                      ${option.nonSelectable && "hover:bg-white !cursor-auto"}
+                      max-w-[240px] overflow-hidden text-ellipsis whitespace-nowrap px-[12px] py-[5px] hover:bg-[#F3F4F6] select-none cursor-pointer`,
+                      onClick: () => {
                         if (option.groupLabel || option.nonSelectable) return;
 
                         onChange(option.key, i);
                         close();
-                      }}
-                      data-option={option.key}
-                    >
-                      {option.title}
-                    </div>
-                  ))}
+                      },
+                      ["data-option"]: option.key,
+                    };
+
+                    return (
+                      <React.Fragment key={i}>
+                        {renderCustomOption ? (
+                          renderCustomOption(props, option.additionalData)
+                        ) : (
+                          <div {...props}>{option.title}</div>
+                        )}
+                      </React.Fragment>
+                    );
+                  })}
                 </div>
               )}
             </div>

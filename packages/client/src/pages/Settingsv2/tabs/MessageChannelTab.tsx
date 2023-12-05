@@ -10,7 +10,6 @@ import Account from "types/Account";
 import ApiService from "services/api.service";
 import { toast } from "react-toastify";
 import { EmailSendingService } from "pages/EmailSettings/EmailSettings";
-import { title } from "process";
 
 export enum MessageChannel {
   EMAIL,
@@ -99,7 +98,7 @@ const MessageChannelTab = () => {
     },
     [MessageChannel.CUSTOM_MODAL]: {
       id: MessageChannel.CUSTOM_MODAL,
-      title: "Custom modal",
+      title: "Onboarding Suite",
       icon: customModalCardIconImage,
       connected: account?.javascriptSnippetSetupped,
       onClick: () => navigate("/settings/custom-modal"),
@@ -144,7 +143,7 @@ const MessageChannelTab = () => {
   }, []);
 
   return (
-    <div className="p-[20px] flex flex-col gap-[20px]">
+    <div className="p-5 flex flex-col gap-5">
       <div className="text-[#4B5563]">
         Browse the available channels in Laudspeaker, and set up the channels
         you want to use{" "}
@@ -166,7 +165,7 @@ const MessageChannelTab = () => {
               key={i}
               id={fixture.title.split(" ").join("-").toLowerCase()}
               onClick={fixture.onClick}
-              className="p-[20px] rounded-[8px] bg-[#F9FAFB] border-[1px] border-[#E5E7EB] flex flex-col gap-[10px]"
+              className="p-5 rounded-lg bg-[#F9FAFB] border border-[#E5E7EB] flex flex-col gap-[10px]"
             >
               <div className="w-full flex justify-between items-center">
                 <div className="flex items-center gap-[10px]">
@@ -179,7 +178,7 @@ const MessageChannelTab = () => {
                   </div>
 
                   {fixture.beta && (
-                    <div className="px-[10px] py-[2px] rounded-[14px] font-inter text-[12px] font-normal leading-[20px] text-[#4B5563] border-[1px] border-[#E5E7EB] bg-white">
+                    <div className="px-[10px] py-[2px] rounded-[14px] font-inter text-[12px] font-normal leading-5 text-[#4B5563] border border-[#E5E7EB] bg-white">
                       Beta
                     </div>
                   )}
@@ -228,7 +227,7 @@ const MessageChannelTab = () => {
               key={i}
               id={fixture.title.split(" ").join("-").toLowerCase()}
               onClick={fixture.onClick}
-              className={`p-[20px] rounded-[8px] bg-[#F9FAFB] border-[1px] border-[#E5E7EB] flex justify-between items-center ${
+              className={`p-5 rounded-lg bg-[#F9FAFB] border border-[#E5E7EB] flex justify-between items-center ${
                 fixture.disabled ? "select-none cursor-default grayscale" : ""
               }`}
             >
@@ -242,13 +241,13 @@ const MessageChannelTab = () => {
                 </div>
 
                 {fixture.beta && (
-                  <div className="px-[10px] py-[2px] rounded-[14px] font-inter text-[12px] font-normal leading-[20px] text-[#4B5563] border-[1px] border-[#E5E7EB] bg-white">
+                  <div className="px-[10px] py-[2px] rounded-[14px] font-inter text-[12px] font-normal leading-5 text-[#4B5563] border border-[#E5E7EB] bg-white">
                     Beta
                   </div>
                 )}
 
                 {fixture.commingSoon && (
-                  <div className="px-[10px] py-[2px] rounded-[14px] font-inter text-[12px] font-normal leading-[20px] text-[#4B5563] border-[1px] border-[#E5E7EB] bg-white">
+                  <div className="px-[10px] py-[2px] rounded-[14px] font-inter text-[12px] font-normal leading-5 text-[#4B5563] border border-[#E5E7EB] bg-white">
                     comming soon
                   </div>
                 )}

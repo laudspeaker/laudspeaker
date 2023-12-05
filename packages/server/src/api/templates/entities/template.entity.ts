@@ -39,10 +39,42 @@ export enum TemplateType {
   EMAIL = 'email',
   SLACK = 'slack',
   SMS = 'sms',
-  FIREBASE = 'firebase',
   WEBHOOK = 'webhook',
   MODAL = 'modal',
   CUSTOM_COMPONENT = 'custom_component',
+  PUSH = 'push',
+}
+
+export enum PushPlatforms {
+  IOS = 'iOS',
+  ANDROID = 'Android',
+}
+
+export enum PushClickBehavior {
+  OPEN_APP = 'OPEN_APP',
+  REDIRECT_URL = 'REDIRECT_URL',
+}
+
+export interface PlatformSettings {
+  title: string;
+  description: string;
+  image?: { key: string; imageSrc: string };
+  clickBehavior: {
+    type: PushClickBehavior;
+    webURL: string;
+  };
+  summary: string;
+  expandedImage?: { key: string; imageSrc: string };
+}
+
+export interface PushBuilderData {
+  platform: Record<PushPlatforms, boolean>;
+  keepContentConsistent: boolean;
+  settings: Record<PushPlatforms, PlatformSettings>;
+  fields: {
+    key: string;
+    value: string;
+  }[];
 }
 
 @Entity()
@@ -78,11 +110,8 @@ export class Template {
   @Column({ nullable: true })
   smsText: string;
 
-  @Column({ nullable: true })
-  pushText: string;
-
-  @Column({ nullable: true })
-  pushTitle: string;
+  @Column({ type: 'jsonb', nullable: true })
+  pushObject?: PushBuilderData;
 
   @Column({ default: false })
   isDeleted: boolean;

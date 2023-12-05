@@ -71,7 +71,7 @@ const DatabaseStep5: FC<
           </table>
         </div>
       ) : (
-        <div className="flex justify-center items-center text-gray-400 text-[48px] border-[2px]  rounded-md">
+        <div className="flex justify-center items-center text-gray-400 text-[48px] border-2  rounded-md">
           NO DATA
         </div>
       )}

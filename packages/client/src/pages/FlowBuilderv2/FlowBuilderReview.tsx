@@ -15,9 +15,9 @@ const FlowBuilderReview = () => {
   );
 
   return (
-    <div className="relative w-full m-[20px] text-[#111827] overflow-y-scroll">
-      <div className="h-full flex flex-col gap-[20px]">
-        <div className="relative bg-white h-full p-[20px] flex flex-col gap-[10px]">
+    <div className="relative w-full m-5 text-[#111827] overflow-y-scroll">
+      <div className="h-full flex flex-col gap-5">
+        <div className="relative bg-white h-full p-5 flex flex-col gap-[10px]">
           <div className="font-inter font-semibold text-[16px] leading-[24px]">
             Journey
           </div>
@@ -25,7 +25,7 @@ const FlowBuilderReview = () => {
             <FlowEditor isViewMode />
           </div>
         </div>
-        <div className="bg-white p-[20px] flex flex-col gap-[10px]">
+        <div className="bg-white p-5 flex flex-col gap-[10px]">
           <div className="font-inter font-semibold text-[20px] leading-[28px]">
             Condition
           </div>

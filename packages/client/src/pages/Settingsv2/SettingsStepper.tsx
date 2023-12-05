@@ -39,7 +39,7 @@ const SettingsStepper: FC<SettingsStepperProps> = ({
           key={i}
           className={`py-[12px] select-none ${
             settingsTab === currentTab
-              ? "text-[#6366F1] border-b-[2px] border-[#6366F1]"
+              ? "text-[#6366F1] border-b-2 border-[#6366F1]"
               : ""
           }`}
           onClick={() => setCurrentTab(settingsTab)}

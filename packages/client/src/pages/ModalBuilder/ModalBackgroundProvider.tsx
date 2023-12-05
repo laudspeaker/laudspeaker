@@ -27,15 +27,15 @@ const ModalBackgroundProvider: FC<ModalBackgroundProviderProps> = ({
           </div>
           <div className="flex flex-col gap-[15px]">
             <input
-              className="w-full rounded-[12px] border-[1px] border-[#E5E7EB] py-[14px] px-[11px] placeholder:text-[#9CA3AF] placeholder:leading-[22px] placeholder:font-normal placeholder:text-[14px] text-[14px]"
+              className="w-full rounded-xl border border-[#E5E7EB] py-[14px] px-[11px] placeholder:text-[#9CA3AF] placeholder:leading-[22px] placeholder:font-normal placeholder:text-[14px] text-[14px]"
               placeholder="Your name"
             />
             <input
-              className="w-full rounded-[12px] border-[1px] border-[#E5E7EB] py-[14px] px-[11px] placeholder:text-[#9CA3AF] placeholder:leading-[22px] placeholder:font-normal placeholder:text-[14px] text-[14px]"
+              className="w-full rounded-xl border border-[#E5E7EB] py-[14px] px-[11px] placeholder:text-[#9CA3AF] placeholder:leading-[22px] placeholder:font-normal placeholder:text-[14px] text-[14px]"
               placeholder="Email"
             />
             <input
-              className="w-full rounded-[12px] border-[1px] border-[#E5E7EB] py-[14px] px-[11px] placeholder:text-[#9CA3AF] placeholder:leading-[22px] placeholder:font-normal placeholder:text-[14px] text-[14px]"
+              className="w-full rounded-xl border border-[#E5E7EB] py-[14px] px-[11px] placeholder:text-[#9CA3AF] placeholder:leading-[22px] placeholder:font-normal placeholder:text-[14px] text-[14px]"
               placeholder="Password"
             />
 
@@ -47,7 +47,7 @@ const ModalBackgroundProvider: FC<ModalBackgroundProviderProps> = ({
               />
               <label
                 htmlFor="agree"
-                className="font-normal text-[12px] leading-[20px] text-[#4B5563]"
+                className="font-normal text-[12px] leading-5 text-[#4B5563]"
               >
                 I agree with <span className="text-[#6366F1]">Terms</span> and{" "}
                 <span className="text-[#6366F1]">Privacy</span>
@@ -55,19 +55,19 @@ const ModalBackgroundProvider: FC<ModalBackgroundProviderProps> = ({
             </div>
           </div>
           <div className="flex flex-col gap-[15px]">
-            <div className="h-[50px] bg-[#4338CA] rounded-[12px] flex justify-center items-center font-semibold text-[16px] leading-[24px] text-white">
+            <div className="h-[50px] bg-[#4338CA] rounded-xl flex justify-center items-center font-semibold text-[16px] leading-[24px] text-white">
               SIGN UP
             </div>
-            <div className="h-[50px] border-[1.5px] border-[#0B465440] rounded-[12px] flex items-center justify-center text-[#00000080] leading-[22px] text-[14px] font-normal">
+            <div className="h-[50px] border-[1.5px] border-[#0B465440] rounded-xl flex items-center justify-center text-[#00000080] leading-[22px] text-[14px] font-normal">
               <img src={GoogleIcon} className="w-[12px] h-[12px] mr-[10px]" />
               Sign Up with Google
             </div>
-            <div className="h-[50px] border-[1.5px] border-[#0B465440] rounded-[12px] flex items-center justify-center text-[#00000080] leading-[22px] text-[14px] font-normal">
+            <div className="h-[50px] border-[1.5px] border-[#0B465440] rounded-xl flex items-center justify-center text-[#00000080] leading-[22px] text-[14px] font-normal">
               <img src={FacebookIcon} className="w-[12px] h-[12px] mr-[10px]" />
               Sign Up with Facebook
             </div>
           </div>
-          <div className="flex justify-center items-center font-normal text-[12px] leading-[20px] text-[#4B5563]">
+          <div className="flex justify-center items-center font-normal text-[12px] leading-5 text-[#4B5563]">
             Already have an account?
             <span className="text-[#6366F1]">Log in</span>
           </div>

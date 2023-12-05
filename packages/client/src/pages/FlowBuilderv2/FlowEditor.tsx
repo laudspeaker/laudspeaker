@@ -53,6 +53,7 @@ export enum NodeType {
   EXIT = "exit",
   WAIT_UNTIL = "waitUntil",
   TIME_DELAY = "timeDelay",
+  PUSH = "push",
   TIME_WINDOW = "timeWindow",
   USER_ATTRIBUTE = "userAttribute",
   INSERT_NODE = "insertNode",
@@ -78,6 +79,7 @@ const nodeTypes: Record<NodeType, FC<NodeProps<any>>> = {
   [NodeType.INSERT_NODE]: InsertNode,
   [NodeType.TRACKER]: TrackerNode,
   [NodeType.MULTISPLIT]: MultisplitNode,
+  [NodeType.PUSH]: MessageNode,
 };
 
 const edgeTypes: Record<EdgeType, FC<EdgeProps<any>>> = {
@@ -217,7 +219,7 @@ const FlowEditor: FC<FlowEditorProps> = ({
       }`}
     >
       {jumpToTargettingNode && (
-        <div className="w-full px-[16px] py-[10px] bg-[#6366F1] rounded-[2px] flex justify-center items-center gap-[20px] text-white font-inter text-[16px] font-semibold leading-[24px]">
+        <div className="w-full px-[16px] py-[10px] bg-[#6366F1] rounded-sm flex justify-center items-center gap-5 text-white font-inter text-[16px] font-semibold leading-[24px]">
           <div>Navigate the journey and select the target step</div>
           <Button
             type={ButtonType.SECONDARY}
@@ -273,7 +275,7 @@ const FlowEditor: FC<FlowEditorProps> = ({
           <Controls
             showInteractive={false}
             position="top-left"
-            className="rounded-[2px]"
+            className="rounded-sm"
           >
             {devModeState.status !== ConnectionStatus.Disabled && (
               <DevModeControlHint />

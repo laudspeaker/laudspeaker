@@ -31,7 +31,7 @@ const DeleteJourneyModal: FC<DeleteJourneyModalProps> = ({
         Please note that deleting the journey is an irreversible action.
       </div>
 
-      <div className="mt-[24px] flex items-center justify-end gap-[8px] font-roboto font-normal text-[14px] text-[#111827] leading-[22px]">
+      <div className="mt-[24px] flex items-center justify-end gap-2 font-roboto font-normal text-[14px] text-[#111827] leading-[22px]">
         <Button type={ButtonType.SECONDARY} onClick={onClose}>
           Cancel
         </Button>
