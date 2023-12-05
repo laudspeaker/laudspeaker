@@ -26,6 +26,7 @@ import { ModalsModule } from '../modals/modals.module';
 import { WebsocketsModule } from '@/websockets/websockets.module';
 import { RedlockModule } from '../redlock/redlock.module';
 import { RedlockService } from '../redlock/redlock.service';
+import { StartProcessor } from '../journeys/start.processor';
 
 @Module({
   imports: [
@@ -42,6 +43,9 @@ import { RedlockService } from '../redlock/redlock.service';
     BullModule.registerQueue({
       name: 'webhooks',
     }),
+    BullModule.registerQueue({
+      name: 'start',
+    }),
     forwardRef(() => CustomersModule),
     forwardRef(() => WebhooksModule),
     forwardRef(() => TemplatesModule),
@@ -52,7 +56,13 @@ import { RedlockService } from '../redlock/redlock.service';
     forwardRef(() => RedlockModule),
     SlackModule,
   ],
-  providers: [StepsService, JobsService, TransitionProcessor, RedlockService],
+  providers: [
+    StepsService,
+    JobsService,
+    TransitionProcessor,
+    StartProcessor,
+    RedlockService,
+  ],
   controllers: [StepsController],
   exports: [StepsService],
 })
