@@ -618,127 +618,127 @@ export class WorkflowsService {
    * @param updateAudienceDto - DTO with the updated information
    *
    */
-  async start(
-    account: Account,
-    workflowID: string,
-    session: string
-  ): Promise<(string | number)[]> {
-    let workflow: Workflow; // Workflow to update
-    let customers: CustomerDocument[]; // Customers to add to primary audience
-    let jobIDs: (string | number)[] = [];
+  // async start(
+  //   account: Account,
+  //   workflowID: string,
+  //   session: string
+  // ): Promise<(string | number)[]> {
+  // let workflow: Workflow; // Workflow to update
+  // let customers: CustomerDocument[]; // Customers to add to primary audience
+  // let jobIDs: (string | number)[] = [];
 
-    const transactionSession = await this.connection.startSession();
-    await transactionSession.startTransaction();
-    const queryRunner = await this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
+  // const transactionSession = await this.connection.startSession();
+  // await transactionSession.startTransaction();
+  // const queryRunner = await this.dataSource.createQueryRunner();
+  // await queryRunner.connect();
+  // await queryRunner.startTransaction();
 
-    try {
-      if (!account) throw new HttpException('User not found', 404);
+  // try {
+  //   if (!account) throw new HttpException('User not found', 404);
 
-      workflow = await queryRunner.manager.findOne(Workflow, {
-        where: {
-          owner: { id: account?.id },
-          id: workflowID,
-        },
-        relations: ['filter'],
-      });
-      if (!workflow) {
-        this.logger.debug('Workflow does not exist');
-        return Promise.reject(errors.ERROR_DOES_NOT_EXIST);
-      }
+  //   workflow = await queryRunner.manager.findOne(Workflow, {
+  //     where: {
+  //       owner: { id: account?.id },
+  //       id: workflowID,
+  //     },
+  //     relations: ['filter'],
+  //   });
+  //   if (!workflow) {
+  //     this.logger.debug('Workflow does not exist');
+  //     return Promise.reject(errors.ERROR_DOES_NOT_EXIST);
+  //   }
 
-      if (workflow.isActive) {
-        this.logger.debug('Workflow already active');
-        return Promise.reject(new Error('Workflow already active'));
-      }
-      if (workflow?.isStopped)
-        return Promise.reject(
-          new Error('The workflow has already been stopped')
-        );
-      if (!workflow?.filter)
-        return Promise.reject(
-          new Error('To start workflow filter should be defined')
-        );
+  //   if (workflow.isActive) {
+  //     this.logger.debug('Workflow already active');
+  //     return Promise.reject(new Error('Workflow already active'));
+  //   }
+  //   if (workflow?.isStopped)
+  //     return Promise.reject(
+  //       new Error('The workflow has already been stopped')
+  //     );
+  //   if (!workflow?.filter)
+  //     return Promise.reject(
+  //       new Error('To start workflow filter should be defined')
+  //     );
 
-      const audiences = await queryRunner.manager.findBy(Audience, {
-        workflow: { id: workflow.id },
-      });
+  //   const audiences = await queryRunner.manager.findBy(Audience, {
+  //     workflow: { id: workflow.id },
+  //   });
 
-      for (let audience of audiences) {
-        audience = await this.audiencesService.freeze(
-          account,
-          audience.id,
-          queryRunner,
-          session
-        );
-        this.logger.debug('Freezing audience ' + audience?.id);
+  //   for (let audience of audiences) {
+  //     audience = await this.audiencesService.freeze(
+  //       account,
+  //       audience.id,
+  //       queryRunner,
+  //       session
+  //     );
+  //     this.logger.debug('Freezing audience ' + audience?.id);
 
-        if (audience.isPrimary) {
-          customers = await this.customersService.findByInclusionCriteria(
-            account,
-            workflow.filter.inclusionCriteria,
-            transactionSession,
-            session
-          );
+  //     if (audience.isPrimary) {
+  //       customers = await this.customersService.findByInclusionCriteria(
+  //         account,
+  //         workflow.filter.inclusionCriteria,
+  //         transactionSession,
+  //         session
+  //       );
 
-          const unenrolledCustomers = customers.filter(
-            (customer) => customer.workflows.indexOf(workflowID) < 0
-          );
-          await this.CustomerModel.updateMany(
-            {
-              _id: { $in: unenrolledCustomers.map((customer) => customer.id) },
-            },
-            { $addToSet: { workflows: workflowID } }
-          )
-            .session(transactionSession)
-            .exec();
+  //       const unenrolledCustomers = customers.filter(
+  //         (customer) => customer.workflows.indexOf(workflowID) < 0
+  //       );
+  //       await this.CustomerModel.updateMany(
+  //         {
+  //           _id: { $in: unenrolledCustomers.map((customer) => customer.id) },
+  //         },
+  //         { $addToSet: { workflows: workflowID } }
+  //       )
+  //         .session(transactionSession)
+  //         .exec();
 
-          this.logger.debug(
-            'Customers to include in workflow: ' + customers.length
-          );
+  //       this.logger.debug(
+  //         'Customers to include in workflow: ' + customers.length
+  //       );
 
-          jobIDs = await this.audiencesService.moveCustomers(
-            account,
-            null,
-            audience,
-            unenrolledCustomers,
-            null,
-            queryRunner,
-            workflow.rules,
-            workflow.id,
-            session
-          );
-          this.logger.debug('Finished moving customers into workflow');
+  //       jobIDs = await this.audiencesService.moveCustomers(
+  //         account,
+  //         null,
+  //         audience,
+  //         unenrolledCustomers,
+  //         null,
+  //         queryRunner,
+  //         workflow.rules,
+  //         workflow.id,
+  //         session
+  //       );
+  //       this.logger.debug('Finished moving customers into workflow');
 
-          await queryRunner.manager.save(Workflow, {
-            ...workflow,
-            isActive: true,
-            startedAt: new Date(Date.now()),
-          });
-          this.logger.debug('Started workflow ' + workflow?.id);
-        }
-      }
+  //       await queryRunner.manager.save(Workflow, {
+  //         ...workflow,
+  //         isActive: true,
+  //         startedAt: new Date(Date.now()),
+  //       });
+  //       this.logger.debug('Started workflow ' + workflow?.id);
+  //     }
+  //   }
 
-      const filter = await queryRunner.manager.findOneBy(Filter, {
-        id: workflow.filter.id,
-      });
-      await queryRunner.manager.save(Filter, { ...filter, isFreezed: true });
+  //   const filter = await queryRunner.manager.findOneBy(Filter, {
+  //     id: workflow.filter.id,
+  //   });
+  //   await queryRunner.manager.save(Filter, { ...filter, isFreezed: true });
 
-      await transactionSession.commitTransaction();
-      await queryRunner.commitTransaction();
-    } catch (err) {
-      await transactionSession.abortTransaction();
-      await queryRunner.rollbackTransaction();
-      this.logger.error('Error: ' + err);
-      throw err;
-    } finally {
-      await transactionSession.endSession();
-      await queryRunner.release();
-    }
+  //   await transactionSession.commitTransaction();
+  //   await queryRunner.commitTransaction();
+  // } catch (err) {
+  //   await transactionSession.abortTransaction();
+  //   await queryRunner.rollbackTransaction();
+  //   this.logger.error('Error: ' + err);
+  //   throw err;
+  // } finally {
+  //   await transactionSession.endSession();
+  //   await queryRunner.release();
+  // }
 
-    return Promise.resolve(jobIDs);
-  }
+  // return Promise.resolve(jobIDs);
+  // }
 
   /**
    * Adds a customer to dynamic primary audience of all active workflows,

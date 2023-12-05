@@ -165,6 +165,12 @@ export class TransitionProcessor extends WorkerHost {
           );
           break;
         case StepType.EXIT:
+          this.handleExitStep(
+            job.data.ownerID,
+            job.data.step.id,
+            job.data.customerID,
+            
+          )
           const lock = this.redlockService.retrieve(
             job.data.lock.resources,
             job.data.lock.value,

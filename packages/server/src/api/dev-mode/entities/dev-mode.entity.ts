@@ -16,7 +16,7 @@ export interface DevModeState {
     stepId: string;
   };
   customerData: Customer;
-  customerStory: Record<string,Customer>;
+  customerStory: Record<string, Customer>;
 }
 
 @Entity()
@@ -34,4 +34,3 @@ export class DevMode extends BaseEntity {
   @Column({ type: 'jsonb' })
   public devModeState!: DevModeState;
 }
-

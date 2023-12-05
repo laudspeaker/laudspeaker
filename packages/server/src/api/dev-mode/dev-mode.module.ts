@@ -13,4 +13,3 @@ import { DevMode } from './entities/dev-mode.entity';
   exports: [DevModeService],
 })
 export class DevModeModule {}
-
