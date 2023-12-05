@@ -72,3 +72,6 @@ TESTS_SMS_TO=[YOUR_VALUE]
 # Kafka conf
 # KAFKA_BROKERS_LIST: comma separated list of kafka brokers (ex: kafka1:29092,kafka2:29092)
 KAFKA_BROKERS_LIST=''
+# KAFKA SSL connection related params, when both specified default to using SSL connections
+# KAFKA_SASL_USERNAME=''
+# KAFKA_SASL_PASSWORD=''
