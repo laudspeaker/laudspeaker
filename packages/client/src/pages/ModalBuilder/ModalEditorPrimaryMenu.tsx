@@ -74,7 +74,7 @@ const ModalEditorPrimaryMenu = ({
 
   return (
     <div className="text-[14px] font-normal">
-      <div className="flex flex-col gap-[10px] p-[20px]">
+      <div className="flex flex-col gap-[10px] p-5">
         <div className="flex items-center justify-between">
           <div>Fill:</div>
           <div className="flex items-center pl-[5px] gap-[10px]">
@@ -159,7 +159,7 @@ const ModalEditorPrimaryMenu = ({
             {primaryPostions.map((el) => (
               <li key={el.type}>
                 <div
-                  className={`flex justify-center items-center relative w-[28px] h-[28px] hover:border-[1px] hover:border-[#818CF8] rounded-[4px] cursor-pointer text-transparent hover:text-white ${
+                  className={`flex justify-center items-center relative w-[28px] h-[28px] hover:border hover:border-[#818CF8] rounded cursor-pointer text-transparent hover:text-white ${
                     el.type === modalState.primaryButton.position
                       ? "bg-[#C7D2FE]"
                       : ""
@@ -187,13 +187,13 @@ const ModalEditorPrimaryMenu = ({
 
       <div className="border-t-[1px] border-[#E5E7EB]" />
 
-      <div className="p-[20px] flex flex-col gap-[10px]">
+      <div className="p-5 flex flex-col gap-[10px]">
         <div className="flex w-full justify-between items-center">
           <div className="flex w-full flex-col">
             <span>Action:</span>
           </div>
           <div className="w-full flex">
-            <ul className="flex w-[214px] border-[#E5E7EB] border-[1px] items-center justify-start">
+            <ul className="flex w-[214px] border-[#E5E7EB] border items-center justify-start">
               {PrimaryButtonClickActions.map((el, i) => (
                 <li
                   key={i}

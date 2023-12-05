@@ -38,13 +38,9 @@ export const JumpToNode: FC<NodeProps<JumpToNodeData>> = ({
 
   return (
     <div
-      className={`relative w-[120px] h-[60px] rounded-[4px] bg-white ${
+      className={`relative w-[120px] h-[60px] rounded bg-white ${
         data.disabled ? "opacity-50 cursor-not-allowed" : ""
-      } ${
-        selected
-          ? "border-[2px] border-[#6366F1]"
-          : "border-[1px] border-[#E5E7EB]"
-      }`}
+      } ${selected ? "border-2 border-[#6366F1]" : "border border-[#E5E7EB]"}`}
     >
       <Handle
         position={Position.Top}

@@ -308,12 +308,12 @@ const ModalBuilder = () => {
     <div className="min-h-screen w-full fixed top-0 left-0">
       <div className="relative w-full">
         <div
-          className="w-full h-[60px] px-[20px] py-[19px] flex  justify-between items-center bg-[#F9FAFB] font-inter font-normal text-[14px] leading-[22px] text-[#111827]"
+          className="w-full h-[60px] px-5 py-[19px] flex  justify-between items-center bg-[#F9FAFB] font-inter font-normal text-[14px] leading-[22px] text-[#111827]"
           id="modalHeader"
         >
           {isPreview ? (
             <div
-              className="bg-[#6366F1] text-white border-[1px] border-[#6366F1] px-[15px] py-[4px] rounded-[4px] font-roboto select-none cursor-pointer"
+              className="bg-[#6366F1] text-white border border-[#6366F1] px-[15px] py-[4px] rounded font-roboto select-none cursor-pointer"
               onClick={() => setIsPreview(false)}
             >
               Back to edit
@@ -344,7 +344,7 @@ const ModalBuilder = () => {
                 </div>
 
                 <div
-                  className="border-[1px] border-[#E5E7EB] py-[4px] px-[10px] flex items-center gap-[5px] select-none cursor-pointer"
+                  className="border border-[#E5E7EB] py-[4px] px-[10px] flex items-center gap-[5px] select-none cursor-pointer"
                   onClick={() => setIsPreview(true)}
                 >
                   <svg

@@ -20,7 +20,7 @@ const PlatformSettingsComponents = ({
       placeholder="Text that appears above your message"
       value={data.title}
       wrapperClassName="!w-full"
-      className="!w-full !rounded-[2px]"
+      className="!w-full !rounded-sm"
       onChange={(val) => {
         onChange({
           ...data,
@@ -33,7 +33,7 @@ const PlatformSettingsComponents = ({
     </div>
     <textarea
       value={data.description}
-      className="resize-none w-full border-[1px] border-[#E5E7EB] rounded-[4px] px-[12px] py-[4px] font-roboto text-[14px] leading-[22px] text-[#111827] placeholder:text-[#9CA3AF] focus:border-[#6366F1] outline-none"
+      className="resize-none w-full border border-[#E5E7EB] rounded px-[12px] py-[4px] font-roboto text-[14px] leading-[22px] text-[#111827] placeholder:text-[#9CA3AF] focus:border-[#6366F1] outline-none"
       placeholder="Message you want to send"
       rows={3}
       onChange={(ev) => {
@@ -80,7 +80,7 @@ const PlatformSettingsComponents = ({
         placeholder="Web URL"
         value={data.clickBehavior.webURL}
         wrapperClassName="!w-full mt-[5px]"
-        className="!w-full !rounded-[2px]"
+        className="!w-full !rounded-sm"
         onChange={(val) => {
           onChange({
             ...data,

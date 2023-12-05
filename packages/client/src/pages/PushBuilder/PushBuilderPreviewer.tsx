@@ -49,7 +49,7 @@ const PushBuilderPreviewer = ({ data }: PushBuilderPreviewerProps) => {
 
   return (
     <>
-      <div className="flex gap-[20px] mt-[15px] px-[20px]">
+      <div className="flex gap-5 mt-[15px] px-5">
         <div className="flex ">
           {Object.values(PushPlatforms).map((el, i) => (
             <Button
@@ -72,7 +72,6 @@ const PushBuilderPreviewer = ({ data }: PushBuilderPreviewerProps) => {
         </div>
         <Select
           value={currentPreviewMode}
-          //   className="min-w-[200px]"
           options={Object.values(PreviewOptions).map((el) => ({
             key: el,
             title: previewOptionsMap(el, currentPreviewPlatform) as string,
@@ -81,13 +80,13 @@ const PushBuilderPreviewer = ({ data }: PushBuilderPreviewerProps) => {
         />
       </div>
       <div className="h-full max-h-[calc(100vh-227px)] overflow-y-auto mt-[15px]">
-        <div className="px-[20px]">
+        <div className="px-5">
           <div className="relative min-w-[380px] max-w-[380px] min-h-[794px] max-h-[794px]">
             <img
               className={`${
                 currentPreviewPlatform === PushPlatforms.IOS
                   ? "rounded-[44.3px]"
-                  : "rounded-[16px]"
+                  : "rounded-2xl"
               }  border-[7px] border-white min-w-[380px] max-w-[380px] min-h-[794px] max-h-[794px]`}
               src={
                 currentPreviewPlatform === PushPlatforms.ANDROID
@@ -222,9 +221,9 @@ const PushBuilderPreviewer = ({ data }: PushBuilderPreviewerProps) => {
                           : "rounded-t-[22px]"
                       } `
                     : currentPreviewMode === PreviewOptions.LOCK
-                    ? "rounded-[22px] bg-[linear-gradient(121deg,_rgba(221,165,154,1)_0%,_rgba(221,198,176,1)_100%)]  backdrop-blur-[69px] bg-opacity-50"
-                    : "bg-[rgba(245,245,245,0.50)] backdrop-blur-[38px] rounded-[14px] !top-[54px]"
-                  : `bg-[#E6E9E7] !px-[14px] !py-[19px] !max-w-[350px] rounded-[4px] !top-[254px] ${
+                    ? "rounded-[22px] items-center bg-[linear-gradient(121deg,_rgba(221,165,154,1)_0%,_rgba(221,198,176,1)_100%)]  backdrop-blur-[69px] bg-opacity-50"
+                    : "bg-[rgba(245,245,245,0.50)] items-center backdrop-blur-[38px] rounded-[14px] !top-[54px]"
+                  : `bg-[#E6E9E7] !px-[14px] !py-[19px] !max-w-[350px] rounded !top-[254px] ${
                       currentPreviewMode !== PreviewOptions.EXPANDED &&
                       "items-center"
                     }`
@@ -238,8 +237,8 @@ const PushBuilderPreviewer = ({ data }: PushBuilderPreviewerProps) => {
                 src={NO_APP_ICON}
                 className={`${
                   currentPreviewPlatform === PushPlatforms.ANDROID
-                    ? "min-w-[22px] rounded-[4px] min-h-[22px] max-w-[22px] max-h-[22px]"
-                    : "min-w-[35px] rounded-[8px] min-h-[35px] max-w-[35px] max-h-[35px]"
+                    ? "min-w-[22px] rounded min-h-[22px] max-w-[22px] max-h-[22px]"
+                    : "min-w-[35px] rounded-lg min-h-[35px] max-w-[35px] max-h-[35px]"
                 }`}
                 alt=""
               />
@@ -267,7 +266,7 @@ const PushBuilderPreviewer = ({ data }: PushBuilderPreviewerProps) => {
                   currentPreviewMode === PreviewOptions.EXPANDED && (
                     <div className="flex items-center text-[#3F4946] font-roboto text-[11px] leading-[14px] mb-[14px]">
                       <span>App name</span>
-                      <span className="mx-[4px]">•</span>
+                      <span className="mx-1">•</span>
                       <span className="">5m</span>
                     </div>
                   )}
@@ -278,7 +277,11 @@ const PushBuilderPreviewer = ({ data }: PushBuilderPreviewerProps) => {
                           data.settings[currentPreviewPlatform].image &&
                           "!max-w-[189px] min-w-[189px]"
                         }`
-                      : "justify-between min-w-[280px] max-w-[280px]"
+                      : `justify-between min-w-[280px] max-w-[280px] ${
+                          currentPreviewMode !== PreviewOptions.EXPANDED &&
+                          data.settings.iOS.image &&
+                          "pt-[10px]"
+                        }`
                   } flex items-center`}
                 >
                   <div
@@ -293,7 +296,7 @@ const PushBuilderPreviewer = ({ data }: PushBuilderPreviewerProps) => {
                   {currentPreviewPlatform === PushPlatforms.ANDROID &&
                     currentPreviewMode !== PreviewOptions.EXPANDED && (
                       <>
-                        <span className="mx-[4px] text-[11px] leading-[14px] font-roboto">
+                        <span className="mx-1 text-[11px] leading-[14px] font-roboto">
                           •
                         </span>
                         <span className="text-[11px] leading-[14px] font-roboto text-[#3F4946]">
@@ -309,7 +312,11 @@ const PushBuilderPreviewer = ({ data }: PushBuilderPreviewerProps) => {
                           : currentPreviewMode === PreviewOptions.LOCK
                           ? "text-[rgba(127,127,127,0.50)]"
                           : "text-[#591f25]"
-                      } text-right text-xs font-normal font-['PingFang HK'] leading-[18.47px]`}
+                      } text-right text-xs font-normal font-['PingFang HK'] leading-[18.47px] ${
+                        currentPreviewMode !== PreviewOptions.EXPANDED &&
+                        data.settings.iOS.image &&
+                        "-translate-y-[10px]"
+                      }`}
                     >
                       9:41 AM
                     </span>
@@ -345,7 +352,7 @@ const PushBuilderPreviewer = ({ data }: PushBuilderPreviewerProps) => {
                         src={
                           data.settings[currentPreviewPlatform].image?.imageSrc
                         }
-                        className="object-cover min-w-[30px] min-h-[30px] max-w-[30px] max-h-[30px] rounded-[6px]"
+                        className="object-cover min-w-[30px] min-h-[30px] max-w-[30px] max-h-[30px] rounded-md"
                         alt=""
                       />
                     )}
@@ -357,7 +364,7 @@ const PushBuilderPreviewer = ({ data }: PushBuilderPreviewerProps) => {
                       src={
                         data.settings[currentPreviewPlatform].image?.imageSrc
                       }
-                      className="mt-[11px] object-cover min-w-[285px] min-h-[177px] max-w-[285px] max-h-[177px] rounded-[4px]"
+                      className="mt-[11px] object-cover min-w-[285px] min-h-[177px] max-w-[285px] max-h-[177px] rounded"
                       alt=""
                     />
                   )}
@@ -367,7 +374,7 @@ const PushBuilderPreviewer = ({ data }: PushBuilderPreviewerProps) => {
                 currentPreviewMode !== PreviewOptions.EXPANDED && (
                   <img
                     src={data.settings[currentPreviewPlatform].image?.imageSrc}
-                    className="object-cover mx-auto min-w-[44px] min-h-[44px] max-w-[44px] max-h-[44px] rounded-[6px]"
+                    className="object-cover mx-auto min-w-[44px] min-h-[44px] max-w-[44px] max-h-[44px] rounded-md"
                     alt=""
                   />
                 )}

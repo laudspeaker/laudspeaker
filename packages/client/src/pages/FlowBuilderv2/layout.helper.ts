@@ -101,6 +101,7 @@ const nodeTypeHeightMap: Record<NodeType, number> = {
   [NodeType.USER_ATTRIBUTE]: 80,
   [NodeType.WAIT_UNTIL]: 80,
   [NodeType.MULTISPLIT]: 80,
+  [NodeType.PUSH]: 80,
 };
 
 const STATS_HEIGHT = 60;

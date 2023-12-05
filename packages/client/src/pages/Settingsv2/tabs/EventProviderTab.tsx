@@ -71,7 +71,7 @@ const EventProviderTab = () => {
   );
 
   return (
-    <div className="p-[20px] flex flex-col gap-[20px]">
+    <div className="p-5 flex flex-col gap-5">
       <div className="text-[#4B5563]">
         Connect your product analytics provider or use our event tracker to
         trigger messages from external actions{" "}
@@ -91,7 +91,7 @@ const EventProviderTab = () => {
           {connectedProviders.map((fixture, i) => (
             <div
               key={i}
-              className="w-full px-[20px] py-[10px] flex items-center justify-between border-[1px] border-[#E5E7EB] rounded-[8px]"
+              className="w-full px-5 py-[10px] flex items-center justify-between border border-[#E5E7EB] rounded-lg"
             >
               <div className="flex items-center gap-[10px]">
                 <div>
@@ -120,11 +120,11 @@ const EventProviderTab = () => {
             Supported providers
           </div>
 
-          <div className="flex gap-[20px] flex-wrap">
+          <div className="flex gap-5 flex-wrap">
             {supportedProviders.map((fixture, i) => (
               <button
                 key={i}
-                className="w-[280px] flex gap-[10px] items-center p-[20px] border-[1px] border-[#D1D5DB] rounded-[8px] disabled:select-none disabled:cursor-default disabled:grayscale"
+                className="w-[280px] flex gap-[10px] items-center p-5 border border-[#D1D5DB] rounded-lg disabled:select-none disabled:cursor-default disabled:grayscale"
                 onClick={fixture.onClick}
                 disabled={fixture.comingSoon}
               >
@@ -136,7 +136,7 @@ const EventProviderTab = () => {
                   {fixture.name}
                 </div>
                 {fixture.comingSoon && (
-                  <div className="px-[10px] py-[2px] rounded-[14px] font-inter text-[12px] font-normal leading-[20px] text-[#4B5563] border-[1px] border-[#E5E7EB] bg-white">
+                  <div className="px-[10px] py-[2px] rounded-[14px] font-inter text-[12px] font-normal leading-5 text-[#4B5563] border border-[#E5E7EB] bg-white">
                     comming soon
                   </div>
                 )}

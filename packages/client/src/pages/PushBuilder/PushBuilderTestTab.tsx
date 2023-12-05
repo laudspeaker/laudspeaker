@@ -58,8 +58,8 @@ const PushBuilderTestTab = ({ data, onChange }: PushBuilderTestTabProps) => {
   );
 
   return (
-    <div className="max-h-[calc(100vh-106px)] h-full w-full p-[20px]">
-      <div className="w-full pb-[40px] pt-[20px] px-[20px] bg-white">
+    <div className="max-h-[calc(100vh-106px)] h-full w-full p-5">
+      <div className="w-full pb-[40px] pt-[20px] px-5 bg-white">
         <div className="font-inter text-[16px] font-semibold leading-[24px] text-[#111827]">
           Send / Preview a test push
         </div>

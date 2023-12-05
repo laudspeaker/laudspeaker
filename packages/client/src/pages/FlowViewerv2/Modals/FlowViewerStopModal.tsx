@@ -24,8 +24,8 @@ const FlowViewerStopModal: FC<FlowViewerStopModalProps> = ({
   return (
     <FlowBuilderModal isOpen={isOpen} onClose={onClose}>
       <div className="font-roboto">
-        <div className="flex gap-[16px]">
-          <div className="flex flex-col gap-[8px]">
+        <div className="flex gap-4">
+          <div className="flex flex-col gap-2">
             <div className="font-medium text-[16px] leading-[24px]">
               Do you want to stop the journey?
             </div>
@@ -35,13 +35,13 @@ const FlowViewerStopModal: FC<FlowViewerStopModalProps> = ({
             </div>
           </div>
         </div>
-        <div className="flex justify-end items-center mt-[24px] gap-[8px]">
+        <div className="flex justify-end items-center mt-[24px] gap-2">
           <Button type={ButtonType.SECONDARY} onClick={onClose}>
             Cancel
           </Button>
           <Button
             type={ButtonType.STOP}
-            className="!rounded-[2px] bg-[#F43F5E] !border-[1px] !border-[#F43F5E] text-white"
+            className="!rounded-sm bg-[#F43F5E] !border !border-[#F43F5E] text-white"
             onClick={handleStop}
           >
             Stop

@@ -20,13 +20,9 @@ export const UserAttributeNode: FC<NodeProps<UserAttributeNodeData>> = ({
 
   return (
     <div
-      className={`relative w-[260px] h-[80px] rounded-[4px] bg-white font-inter ${
+      className={`relative w-[260px] h-[80px] rounded bg-white font-inter ${
         disabled ? "opacity-50 cursor-not-allowed" : ""
-      } ${
-        selected
-          ? "border-[2px] border-[#6366F1]"
-          : "border-[1px] border-[#E5E7EB]"
-      }`}
+      } ${selected ? "border-2 border-[#6366F1]" : "border border-[#E5E7EB]"}`}
     >
       <Handle
         position={Position.Top}

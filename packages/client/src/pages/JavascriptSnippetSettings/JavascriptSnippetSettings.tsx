@@ -41,8 +41,8 @@ const JavascriptSnippetSettings = () => {
   }, [isConnected]);
 
   return (
-    <div className="p-[20px] flex justify-center font-inter text-[14px] font-normal leading-[22px] text-[#111827]">
-      <div className="max-w-[970px] w-full flex flex-col gap-[20px]">
+    <div className="p-5 flex justify-center font-inter text-[14px] font-normal leading-[22px] text-[#111827]">
+      <div className="max-w-[970px] w-full flex flex-col gap-5">
         <div className="flex gap-[15px] items-center">
           <BackButton />
           <div className="text-[20px] font-semibold leading-[28px] text-black">
@@ -50,7 +50,7 @@ const JavascriptSnippetSettings = () => {
           </div>
         </div>
 
-        <div className="bg-white p-[20px] flex flex-col gap-[20px]">
+        <div className="bg-white p-5 flex flex-col gap-5">
           <div className="text-[#4B5563]">
             Description Description Description Description Description
             Description Description Description Description Description
@@ -64,7 +64,7 @@ const JavascriptSnippetSettings = () => {
             <div className="max-w-[100px] w-full text-[#18181B]">
               Copy API Key
             </div>
-            <div className="w-full px-[12px] py-[4px] rounded-[2px] border-[1px] border-[#E5E7EB] bg-[#F3F4F6] font-roboto flex justify-between items-center">
+            <div className="w-full px-[12px] py-[4px] rounded-sm border border-[#E5E7EB] bg-[#F3F4F6] font-roboto flex justify-between items-center">
               <div>{APIKey}</div>
               <CopyButton
                 onClick={() => navigator.clipboard.writeText(APIKey)}

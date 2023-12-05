@@ -105,7 +105,7 @@ const ModalMediaUploader = ({
   };
 
   return isMediaLoading ? (
-    <div className="relative flex flex-col justify-center items-center gap-[10px] border-dashed border-[2px] p-[10px] h-[100px] w-[100px] rounded-md border-[#D9D9D9]">
+    <div className="relative flex flex-col justify-center items-center gap-[10px] border-dashed border-2 p-[10px] h-[100px] w-[100px] rounded-md border-[#D9D9D9]">
       <div>
         {imageList[currentMainMode].key ? "Deleting..." : "Uploading..."}
       </div>
@@ -123,7 +123,7 @@ const ModalMediaUploader = ({
     <label className="cursor-pointer" htmlFor="pick-image">
       {!imageList[currentMainMode].imageSrc ? (
         <>
-          <div className="text-[#111827] transition-colors border-[1px] border-[#E5E7EB] rounded-md inline-flex justify-center items-center px-[16px] py-[5px]">
+          <div className="text-[#111827] transition-colors border border-[#E5E7EB] rounded-md inline-flex justify-center items-center px-[16px] py-[5px]">
             <svg
               width="12"
               height="12"
@@ -151,7 +151,7 @@ const ModalMediaUploader = ({
           />
         </>
       ) : (
-        <div className="relative inline-block border-[2px] p-[10px] min-h-[20px] min-w-[20px] rounded-md border-[#D9D9D9]">
+        <div className="relative inline-block border-2 p-[10px] min-h-[20px] min-w-[20px] rounded-md border-[#D9D9D9]">
           <div className="relative">
             <img
               className="min-h-[80px] max-h-[80px] max-w-full rounded-md"

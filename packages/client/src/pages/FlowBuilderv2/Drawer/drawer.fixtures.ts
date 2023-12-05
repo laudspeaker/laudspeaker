@@ -51,11 +51,11 @@ const flowBuilderDrawerFixtures: FlowBuilderDrawerFixture[] = [
       //   icon: SlackIcon(),
       //   text: "Slack",
       // },
-      // {
-      //   id: DrawerAction.PUSH,
-      //   icon: PushIcon(),
-      //   text: "Push Notification",
-      // },
+      {
+        id: DrawerAction.PUSH,
+        icon: PushIcon(),
+        text: "Push Notification",
+      },
       {
         id: DrawerAction.WEBHOOK,
         icon: WebhookIcon(),
@@ -110,6 +110,22 @@ const flowBuilderDrawerFixtures: FlowBuilderDrawerFixture[] = [
         id: DrawerAction.MULTISPLIT,
         // TODO: change icon
         icon: UserAttributeIcon(),
+        text: "Multisplit",
+      },
+      // {
+      //   id: DrawerAction.TIME_DELAY,
+      //   icon: TimeDelayIcon(),
+      //   text: "A/B Test",
+      // },
+    ],
+  },
+  {
+    groupName: "Audience Split ",
+    children: [
+      {
+        id: DrawerAction.MULTISPLIT,
+        // TODO: change icon
+        icon: WaitUntilIcon(),
         text: "Multisplit",
       },
       // {

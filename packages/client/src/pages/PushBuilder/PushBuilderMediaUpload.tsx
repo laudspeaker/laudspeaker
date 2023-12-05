@@ -91,7 +91,7 @@ const PushBuilderMediaUpload = ({
   };
 
   return isMediaLoading ? (
-    <div className="relative flex flex-col justify-center items-center gap-[10px] border-dashed border-[2px] p-[10px] h-[100px] w-[100px] rounded-[2px] border-[#D9D9D9]">
+    <div className="relative flex flex-col justify-center items-center gap-[10px] border-dashed border-2 p-[10px] h-[100px] w-[100px] rounded-sm border-[#D9D9D9]">
       <div>{img?.key ? "Deleting..." : "Uploading..."}</div>
 
       <div className="w-full bg-[#D1D5DB] rounded-full h-1">
@@ -107,7 +107,7 @@ const PushBuilderMediaUpload = ({
     <label className="cursor-pointer" htmlFor={`pick-image-${id}`}>
       {!img?.imageSrc ? (
         <>
-          <div className="bg-[#F9FAFB] w-[100px] h-[100px] text-[#111827] transition-colors border-[1px] border-[#E5E7EB] rounded-[2px] inline-flex justify-center flex-col items-center px-[16px] py-[5px]">
+          <div className="bg-[#F9FAFB] w-[100px] h-[100px] text-[#111827] transition-colors border border-[#E5E7EB] rounded-sm inline-flex justify-center flex-col items-center px-[16px] py-[5px]">
             <PlusIcon className="text-[#111827] fill-[#111827] w-[18px] h-[18px]" />
             <div className="text-[#4B5563] font-roboto leading-[22px] text-[14px]">
               Upload
@@ -123,10 +123,10 @@ const PushBuilderMediaUpload = ({
           />
         </>
       ) : (
-        <div className="relative bg-[#F9FAFB] inline-block border-[2px] p-[10px] min-h-[20px] min-w-[20px] rounded-[2px] border-[#D9D9D9]">
+        <div className="relative bg-[#F9FAFB] inline-block border-2 p-[10px] min-h-[20px] min-w-[20px] rounded-sm border-[#D9D9D9]">
           <div className="relative">
             <img
-              className="min-h-[80px] max-h-[80px] max-w-full rounded-[2px]"
+              className="min-h-[80px] max-h-[80px] max-w-full rounded-sm"
               src={img?.imageSrc || ""}
             />
 

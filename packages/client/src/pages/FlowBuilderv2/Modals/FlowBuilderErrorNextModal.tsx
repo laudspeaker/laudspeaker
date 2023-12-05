@@ -16,7 +16,7 @@ const FlowBuilderErrorNextModal: FC<FlowBuilderErrorNextModalProps> = ({
   return (
     <FlowBuilderModal isOpen={isOpen} onClose={onClose}>
       <div className="font-roboto">
-        <div className="flex gap-[16px]">
+        <div className="flex gap-4">
           <div>
             <svg
               width="22"
@@ -43,7 +43,7 @@ const FlowBuilderErrorNextModal: FC<FlowBuilderErrorNextModalProps> = ({
             </svg>
           </div>
 
-          <div className="flex flex-col gap-[8px]">
+          <div className="flex flex-col gap-2">
             <div className="font-medium text-[16px] leading-[24px]">
               Please complete all fields
             </div>
@@ -54,7 +54,7 @@ const FlowBuilderErrorNextModal: FC<FlowBuilderErrorNextModalProps> = ({
             </div>
           </div>
         </div>
-        <div className="flex justify-end items-center mt-[24px] gap-[8px]">
+        <div className="flex justify-end items-center mt-[24px] gap-2">
           <Button type={ButtonType.PRIMARY} onClick={onClose}>
             Ok
           </Button>

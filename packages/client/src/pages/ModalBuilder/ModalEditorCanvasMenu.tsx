@@ -21,14 +21,14 @@ const ModalEditorCanvasMenu = ({
 
   return (
     <div className="w-full text-[14px] font-normal">
-      <div className="p-[20px]">
+      <div className="p-5">
         <div className="flex items-start justify-between mb-[20px]">
           <div>Width:</div>
           <div>
             <div>
               <ReactSlider
                 className="h-[20px] flex items-center justify-center mb-[8px]"
-                trackClassName="h-[4px] bg-[#6366F1] rounded-[4px]"
+                trackClassName="h-[4px] bg-[#6366F1] rounded"
                 min={modalState.width.unit === SizeUnit.PIXEL ? 100 : 1}
                 max={modalState.width.unit === SizeUnit.PIXEL ? bodyWidth : 100}
                 value={modalState.width.value}
@@ -41,7 +41,7 @@ const ModalEditorCanvasMenu = ({
                 renderThumb={(props) => (
                   <div
                     {...props}
-                    className="rounded-[100%] w-[14px] h-[14px] cursor-grab bg-white border-[2px] border-[#6366F1]"
+                    className="rounded-[100%] w-[14px] h-[14px] cursor-grab bg-white border-2 border-[#6366F1]"
                   />
                 )}
               />
@@ -94,14 +94,14 @@ const ModalEditorCanvasMenu = ({
 
       <div className="border-t-[1px] border-[#E5E7EB]" />
 
-      <div className="px-[20px] pb-[20px] pt-[10px] flex flex-col gap-[10px]">
+      <div className="px-5 pb-[20px] pt-[10px] flex flex-col gap-[10px]">
         <div>Background:</div>
         <div className="flex select-none">
           <div
-            className={`flex p-[5px_16px] justify-center items-center w-full rounded-[2px] cursor-pointer ${
+            className={`flex p-[5px_16px] justify-center items-center w-full rounded-sm cursor-pointer ${
               modalState.background.selected === BackgroundType.SOLID
                 ? "bg-[#6366F1] text-white"
-                : "border-[1px] border-[#E5E7EB] hover:bg-white hover:bg-opacity-25"
+                : "border border-[#E5E7EB] hover:bg-white hover:bg-opacity-25"
             }`}
             onClick={() =>
               setModalState({
@@ -119,7 +119,7 @@ const ModalEditorCanvasMenu = ({
             className={`flex p-[5px_16px] justify-center items-center w-full cursor-pointer ${
               modalState.background.selected === BackgroundType.GRADIENT
                 ? "bg-[#6366F1] text-white"
-                : "border-[1px] border-[#E5E7EB] hover:bg-white hover:bg-opacity-25"
+                : "border border-[#E5E7EB] hover:bg-white hover:bg-opacity-25"
             }`}
             onClick={() =>
               setModalState({
@@ -134,10 +134,10 @@ const ModalEditorCanvasMenu = ({
             Gradient
           </div>
           <div
-            className={`flex p-[5px_16px] justify-center items-center w-full rounded-[2px] cursor-pointer ${
+            className={`flex p-[5px_16px] justify-center items-center w-full rounded-sm cursor-pointer ${
               modalState.background.selected === BackgroundType.IMAGE
                 ? "bg-[#6366F1] text-white"
-                : "border-[1px] border-[#E5E7EB] hover:bg-white hover:bg-opacity-25"
+                : "border border-[#E5E7EB] hover:bg-white hover:bg-opacity-25"
             }`}
             onClick={() =>
               setModalState({

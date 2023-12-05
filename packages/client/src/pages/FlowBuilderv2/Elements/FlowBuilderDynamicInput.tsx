@@ -42,7 +42,7 @@ export const DateComponent: FC<ValueChanger> = ({ value, onChange }) => {
       value={relativeValue}
       onChange={(e) => onChange(new Date(e.target.value).toUTCString())}
       type="datetime-local"
-      className="w-[200px] h-[32px] px-[12px] py-[5px] font-roboto text-[14px] leading-[22px] rounded-[2px] border-[1px] border-[#E5E7EB]"
+      className="w-[200px] h-[32px] px-[12px] py-[5px] font-roboto text-[14px] leading-[22px] rounded-sm border border-[#E5E7EB]"
       placeholder="Select time"
     />
   );
@@ -55,7 +55,7 @@ const EmailComponent: FC<ValueChanger> = ({ value, onChange }) => {
       placeholder="value"
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className="w-full px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB] placeholder:font-inter placeholder:font-normal placeholder:text-[14px] placeholder:leading-[22px] placeholder:text-[#9CA3AF] rounded-[2px]"
+      className="w-full px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border border-[#E5E7EB] placeholder:font-inter placeholder:font-normal placeholder:text-[14px] placeholder:leading-[22px] placeholder:text-[#9CA3AF] rounded-sm"
     />
   );
 };
@@ -67,7 +67,7 @@ const NumberComponent: FC<ValueChanger> = ({ value, onChange }) => {
       placeholder="value"
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className="w-full px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB] placeholder:font-inter placeholder:font-normal placeholder:text-[14px] placeholder:leading-[22px] placeholder:text-[#9CA3AF] rounded-[2px]"
+      className="w-full px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border border-[#E5E7EB] placeholder:font-inter placeholder:font-normal placeholder:text-[14px] placeholder:leading-[22px] placeholder:text-[#9CA3AF] rounded-sm"
     />
   );
 };
@@ -83,7 +83,7 @@ const StringComponent: FC<ValueChanger> = ({
       placeholder={placeholder || "value"}
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className="w-full px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB] placeholder:font-inter placeholder:font-normal placeholder:text-[14px] placeholder:leading-[22px] placeholder:text-[#9CA3AF] rounded-[2px]"
+      className="w-full px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border border-[#E5E7EB] placeholder:font-inter placeholder:font-normal placeholder:text-[14px] placeholder:leading-[22px] placeholder:text-[#9CA3AF] rounded-sm"
     />
   );
 };

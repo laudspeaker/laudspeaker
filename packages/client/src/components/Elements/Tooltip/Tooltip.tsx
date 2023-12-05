@@ -17,7 +17,7 @@ const Tooltip: FC<CustomTooltipProps & TooltipProps> = ({
 }) => {
   return (
     <MTTooltip
-      className={`${className} text-center z-[99999999] border-[1px] shadow-lg`}
+      className={`${className} text-center z-[99999999] border shadow-lg`}
       content={content}
       placement={placement}
       color="red"

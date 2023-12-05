@@ -21,7 +21,7 @@ const FilterReview = ({ settingsQuery }: FlowBuilderReviewProps) => {
             <div className="flex items-center gap-[13px]">
               {i !== 0 && (
                 <div
-                  className={`w-fit px-[12px] py-[5px] border-[1px] border-[#E5E7EB] font-roboto text-[14px] leading-[22px] text-[#4B5563] select-none`}
+                  className={`w-fit px-[12px] py-[5px] border border-[#E5E7EB] font-roboto text-[14px] leading-[22px] text-[#4B5563] select-none`}
                 >
                   {settingsQuery.type === QueryType.ALL ? "And" : "Or"}
                 </div>
@@ -29,18 +29,18 @@ const FilterReview = ({ settingsQuery }: FlowBuilderReviewProps) => {
 
               <div
                 key={i}
-                className="max-w-[600px] w-full flex flex-wrap items-center gap-[10px] font-inter font-normal text-[14px] leading-[22px] bg-[#F3F4F6] px-[20px] py-[6px]"
+                className="max-w-[600px] w-full flex flex-wrap items-center gap-[10px] font-inter font-normal text-[14px] leading-[22px] bg-[#F3F4F6] px-5 py-[6px]"
               >
                 <div>{statement.type}</div>
                 {statement.type === QueryStatementType.ATTRIBUTE ? (
                   <>
-                    <div className="px-[12px] py-[5px] text-[#4B5563] border-[1px] border-[#E5E7EB] rounded-[2px] bg-white">
+                    <div className="px-[12px] py-[5px] text-[#4B5563] border border-[#E5E7EB] rounded-sm bg-white">
                       {statement.key}
                     </div>
                     <div>{statement.comparisonType}</div>
                     {statement.comparisonType !== ComparisonType.EXIST &&
                       statement.comparisonType !== ComparisonType.NOT_EXIST && (
-                        <div className="px-[12px] py-[5px] text-[#4B5563] border-[1px] border-[#E5E7EB] rounded-[2px] bg-white">
+                        <div className="px-[12px] py-[5px] text-[#4B5563] border border-[#E5E7EB] rounded-sm bg-white">
                           {statement.valueType === StatementValueType.DATE
                             ? format(
                                 new Date(statement.value),
@@ -54,7 +54,7 @@ const FilterReview = ({ settingsQuery }: FlowBuilderReviewProps) => {
                       statement.comparisonType === ComparisonType.DURING && (
                         <>
                           <div>-</div>
-                          <div className="px-[12px] py-[5px] text-[#4B5563] border-[1px] border-[#E5E7EB] rounded-[2px] bg-white">
+                          <div className="px-[12px] py-[5px] text-[#4B5563] border border-[#E5E7EB] rounded-sm bg-white">
                             {format(
                               new Date(statement.subComparisonValue),
                               "MM/dd/yyyy HH:mm"
@@ -72,22 +72,22 @@ const FilterReview = ({ settingsQuery }: FlowBuilderReviewProps) => {
                         ObjectKeyComparisonType.KEY_VALUE_EQUAL_TO ||
                         statement.subComparisonType ===
                           ObjectKeyComparisonType.KEY_VALUE_NOT_EQUAL_TO) && (
-                        <div className="px-[12px] py-[5px] text-[#4B5563] border-[1px] border-[#E5E7EB] rounded-[2px] bg-white">
+                        <div className="px-[12px] py-[5px] text-[#4B5563] border border-[#E5E7EB] rounded-sm bg-white">
                           {statement.subComparisonValue}
                         </div>
                       )}
                   </>
                 ) : statement.type === QueryStatementType.SEGMENT ? (
-                  <div className="px-[12px] py-[5px] text-[#4B5563] border-[1px] border-[#E5E7EB] rounded-[2px] bg-white">
+                  <div className="px-[12px] py-[5px] text-[#4B5563] border border-[#E5E7EB] rounded-sm bg-white">
                     {statement.segmentId}
                   </div>
                 ) : statement.type === QueryStatementType.EVENT ? (
                   <>
-                    <div className="px-[12px] py-[5px] text-[#4B5563] border-[1px] border-[#E5E7EB] rounded-[2px] bg-white">
+                    <div className="px-[12px] py-[5px] text-[#4B5563] border border-[#E5E7EB] rounded-sm bg-white">
                       {statement.eventName}
                     </div>
                     <div>{statement.comparisonType} at least</div>
-                    <div className="px-[12px] py-[5px] text-[#4B5563] border-[1px] border-[#E5E7EB] rounded-[2px] bg-white">
+                    <div className="px-[12px] py-[5px] text-[#4B5563] border border-[#E5E7EB] rounded-sm bg-white">
                       {statement.value}
                     </div>
                     <div>time</div>
@@ -97,7 +97,7 @@ const FilterReview = ({ settingsQuery }: FlowBuilderReviewProps) => {
                         <div>{statement.time.comparisonType}</div>
 
                         {statement.time.timeAfter && (
-                          <div className="px-[12px] py-[5px] text-[#4B5563] border-[1px] border-[#E5E7EB] rounded-[2px] bg-white">
+                          <div className="px-[12px] py-[5px] text-[#4B5563] border border-[#E5E7EB] rounded-sm bg-white">
                             {format(
                               new Date(statement.time.timeAfter),
                               "MM/dd/yyyy HH:mm"
@@ -110,7 +110,7 @@ const FilterReview = ({ settingsQuery }: FlowBuilderReviewProps) => {
                           statement.time.timeAfter) ||
                           statement.time.timeBefore) && (
                           <>
-                            <div className="px-[12px] py-[5px] text-[#4B5563] border-[1px] border-[#E5E7EB] rounded-[2px] bg-white">
+                            <div className="px-[12px] py-[5px] text-[#4B5563] border border-[#E5E7EB] rounded-sm bg-white">
                               {format(
                                 new Date(statement.time.timeBefore),
                                 "MM/dd/yyyy HH:mm"

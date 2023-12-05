@@ -20,6 +20,7 @@ import {
 } from "pages/FlowBuilderv2/Nodes/NodeData";
 import { JourneyStatus } from "pages/JourneyTablev2/JourneyTablev2";
 import { OnboardingAction } from "pages/Onboardingv2/OnboardingSandbox";
+import { PushBuilderData } from "pages/PushBuilder/PushBuilderContent";
 import {
   applyNodeChanges,
   Edge,
@@ -472,6 +473,17 @@ export interface JourneySettings {
   maxMessageSends: JourneySettingsMaxMessageSends;
 }
 
+export interface TemplateInlineEditor {
+  selectedNode: Node<NodeData, string | undefined>;
+  templateId?: string;
+  type: MessageType;
+  needsCallbackUpdate?: {
+    id: number | string;
+    name: string;
+    data: PushBuilderData;
+  };
+}
+
 interface FlowBuilderState {
   flowId: string;
   flowName: string;
@@ -484,6 +496,7 @@ interface FlowBuilderState {
   journeyType: JourneyType;
   isViewMode: boolean;
   flowStatus: JourneyStatus;
+  templateInlineCreation?: TemplateInlineEditor;
   showSegmentsErrors: boolean;
   isOnboarding: boolean;
   isOnboardingWaitUntilTooltipVisible: boolean;
@@ -1062,9 +1075,9 @@ const flowBuilderSlice = createSlice({
           };
           break;
         case DrawerAction.PUSH:
-          nodeToChange.type = NodeType.MESSAGE;
+          nodeToChange.type = NodeType.PUSH;
           nodeToChange.data = {
-            type: NodeType.MESSAGE,
+            type: NodeType.PUSH,
             template: { type: MessageType.PUSH },
             customName: newMessageNodeName,
             stepId,
@@ -1426,6 +1439,12 @@ const flowBuilderSlice = createSlice({
     setIsDrawerDisabled(state, action: PayloadAction<boolean>) {
       state.isDrawerDisabled = action.payload;
     },
+    setTemplateInlineCreator(
+      state,
+      action: PayloadAction<TemplateInlineEditor | undefined>
+    ) {
+      state.templateInlineCreation = action.payload;
+    },
     refreshFlowBuilder(state) {
       state.flowId = "";
       state.flowName = "";
@@ -1497,6 +1516,7 @@ export const {
   setJourneySettingsQuiteHours,
   setMaxMessageSends,
   setAvailableTags,
+  setTemplateInlineCreator,
 } = flowBuilderSlice.actions;
 
 export { defaultDevMode };

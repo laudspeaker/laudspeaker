@@ -620,6 +620,7 @@ export class TemplatesService extends QueueEventsHost {
       type,
       smsText,
       webhookData,
+      pushObject,
       modalState,
       customEvents,
       customFields,
@@ -644,7 +645,7 @@ export class TemplatesService extends QueueEventsHost {
       '-copy-' +
       (res?.[0]?.count || '0');
 
-    await this.templatesRepository.save({
+    const tmp = await this.templatesRepository.save({
       name: newName,
       owner: { id: ownerId },
       slackMessage,
@@ -653,11 +654,14 @@ export class TemplatesService extends QueueEventsHost {
       text,
       type,
       smsText,
+      pushObject,
       webhookData,
       modalState,
       customEvents,
       customFields,
     });
+
+    return { id: tmp.id };
   }
 
   async findUsedInJourneys(account: Account, id: string, session: string) {

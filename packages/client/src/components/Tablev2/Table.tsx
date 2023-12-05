@@ -17,7 +17,7 @@ const Table: FC<TableProps> = ({
   bodyClassName = "",
 }) => {
   return (
-    <table className={`rounded-[4px] ${className ? className : ""}`}>
+    <table className={`rounded ${className ? className : ""}`}>
       {headings && (
         <thead>
           <tr className="border-b-[1px] border-[#E5E7EB] ">
@@ -45,7 +45,7 @@ const Table: FC<TableProps> = ({
               className="border-b-[1px] border-[#E5E7EB] hover:bg-[#F3F4F6]"
             >
               {row.map((el, j) => (
-                <td className="px-[20px] py-[10px]" key={j}>
+                <td className="px-5 py-[10px]" key={j}>
                   {el}
                 </td>
               ))}

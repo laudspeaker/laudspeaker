@@ -21,7 +21,7 @@ const RadioOption = <T,>({
           <div
             className={`${
               checked ? "border-[#6366F1]" : "border-[#D9D9D9]"
-            } w-[16px] h-[16px] border-[1px]  rounded-full transition-all relative mr-[8px]`}
+            } w-[16px] h-[16px] border  rounded-full transition-all relative mr-2`}
           >
             <div
               className={`${

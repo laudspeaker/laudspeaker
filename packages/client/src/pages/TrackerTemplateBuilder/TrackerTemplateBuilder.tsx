@@ -75,7 +75,7 @@ const TrackerTemplateBuilder = () => {
   const handleDeleteTrackerTemplate = async () => {};
 
   return (
-    <div className="font-inter text-[14px] font-normal leading-[22px] text-[#111827] flex flex-col gap-[20px]">
+    <div className="font-inter text-[14px] font-normal leading-[22px] text-[#111827] flex flex-col gap-5">
       <div className="px-[40px] py-[34px] bg-white border-b-[1px] border-b-[#E5E7EB] flex justify-between items-center">
         <div className="text-[20px] font-semibold leading-[28px] flex gap-[10px] items-center">
           {!isEditing && (
@@ -129,7 +129,7 @@ const TrackerTemplateBuilder = () => {
         )}
       </div>
 
-      <div className="p-[20px]">
+      <div className="p-5">
         {isEditing ? (
           <TrackerTemplateEditor
             trackerData={trackerData}

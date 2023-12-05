@@ -80,7 +80,7 @@ const ModalEditorAdditionalClicks = ({
   };
 
   return (
-    <div className="p-[20px]">
+    <div className="p-5">
       {AdditionClickMenu.map((block, i) => (
         <span key={i}>
           <div
@@ -95,7 +95,7 @@ const ModalEditorAdditionalClicks = ({
             {block.options.map((el, i2) => (
               <div key={i2} className="w-1/2 pr-[6px] pb-[6px]">
                 <GenericButton
-                  customClasses={`relative w-full flex text-[12px] !border-[1px] !shadow-none !outline-none !ring-transparent !focus:!ring-transparent !font-normal !rounded-[2px] !p-[6px] flex align-center whitespace-nowrap overflow-hidden ${
+                  customClasses={`relative w-full flex text-[12px] !border !shadow-none !outline-none !ring-transparent !focus:!ring-transparent !font-normal !rounded-sm !p-[6px] flex align-center whitespace-nowrap overflow-hidden ${
                     actionData[currentMainMode]?.[el.action]?.hidden
                       ? "!bg-white !border-[#E5E7EB] !text-black"
                       : "!bg-[#EEF2FF] !border-[#6366F1] !text-[#4338CA]"

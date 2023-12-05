@@ -34,7 +34,7 @@ const Settingsv2 = () => {
   const [currentTab, setCurrentTab] = useState(SettingsTab.ACCOUNT);
 
   return (
-    <div className="w-full flex flex-col gap-[20px] items-center p-[20px] font-roboto text-[14px] font-normal leading-[22px] text-[#111827]">
+    <div className="w-full flex flex-col gap-5 items-center p-5 font-roboto text-[14px] font-normal leading-[22px] text-[#111827]">
       <div className="max-w-[970px] w-full font-inter text-[20px] font-medium leading-[28px] text-black">
         Settings
       </div>
