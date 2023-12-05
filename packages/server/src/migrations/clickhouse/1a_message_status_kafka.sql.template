@@ -1,3 +1,10 @@
+-- READ FIRST --
+-- This files shows a migration that allows you to ingest
+-- kafka messages directly into the message_status table.
+-- in a cloud environment, this table will be setup using the 
+-- cloud's GUI or other means. This migration should only work
+-- in local development, or similar environments.
+
 -- create kafka ingestion
 CREATE TABLE IF NOT EXISTS message_status_kafka
 (
