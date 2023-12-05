@@ -71,6 +71,7 @@ const Homev2 = () => {
         <div>{format(new Date(), "MM/dd/yyyy")}</div>
       </div>
 
+      {AppConfig.JOURNEY_ONBOARDING === "true" && (
       <div className="flex justify-between gap-5">
         <div className="flex flex-col gap-5 w-full">
           <div className="p-5 rounded-lg flex flex-col bg-white">
@@ -169,6 +170,7 @@ const Homev2 = () => {
         </div>
         {/* <div className="min-w-[360px] w-[360px]">3</div> */}
       </div>
+     )}
     </div>
   );
 };

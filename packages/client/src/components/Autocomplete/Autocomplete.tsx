@@ -57,7 +57,7 @@ const Autocomplete = <T extends any>({
             id={inputId}
             onChange={disabled ? () => null : onInputChange}
             value={inputValue}
-            className={`${customInputClassNames} relative min-h-[30px] border-transparent cursor-pointer w-full rounded-lg bg-white py-2 pl-3 pr-10 text-left shadow-md focus:outline-none focus-visible:border-cyan-500 focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-opacity-75 focus-visible:ring-offset-2 focus-visible:ring-offset-cyan-300 sm:text-sm`}
+            className={`${customInputClassNames} relative min-h-[30px] border-transparent cursor-pointer w-full rounded-lg bg-white py-2 pl-3 pr-10 text-left shadow-md focus:outline-none focus-visible:border-[#818CF8] focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-opacity-75 focus-visible:ring-offset-2 focus-visible:ring-offset-[#818CF8] sm:text-sm`}
             onFocus={handleInputFocus}
             autoComplete="off"
           />

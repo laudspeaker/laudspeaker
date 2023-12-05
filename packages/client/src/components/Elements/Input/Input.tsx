@@ -95,7 +95,7 @@ const Input = (props: InputProps) => {
             } ${
               isError
                 ? "focus:!border-red-500 !border-red-300 shadow-sm focus:!ring-red-500"
-                : "border-gray-300 focus:border-cyan-500 focus:ring-cyan-500"
+                : "border-gray-300 focus:border-[#818CF8] focus:ring-[#818CF8]"
             }`}
             placeholder={placeholder}
             style={style}

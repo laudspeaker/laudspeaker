@@ -1125,18 +1125,18 @@ const flowBuilderSlice = createSlice({
           nodeToChange.data = {
             type: NodeType.WAIT_UNTIL,
             branches: [
-              {
-                id: uuid(),
-                type: BranchType.EVENT,
-                conditions: [
-                  {
-                    name: "",
-                    providerType: ProviderType.CUSTOM,
-                    statements: [],
-                    relationToNext: LogicRelation.OR,
-                  },
-                ],
-              },
+              // {
+              //   id: uuid(),
+              //   type: BranchType.EVENT,
+              //   conditions: [
+              //     {
+              //       name: "",
+              //       providerType: ProviderType.CUSTOM,
+              //       statements: [],
+              //       relationToNext: LogicRelation.OR,
+              //     },
+              //   ],
+              // },
             ],
             stepId,
           };

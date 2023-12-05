@@ -40,7 +40,7 @@ const enrollmentTypes = [
   {
     type: JourneyEnrollmentType.CurrentAndFutureUsers,
     label: "Enroll current users and future matching users",
-    desc: "Description description description",
+    desc: "Users that currently exist in the Laudspeaker database, as well as those users that will be created in the future after the journey begins",
   },
   {
     type: JourneyEnrollmentType.OnlyCurrent,
@@ -49,7 +49,7 @@ const enrollmentTypes = [
         Only enroll <b>current</b> users
       </>
     ),
-    desc: "Description description description",
+    desc: "Only users that currently exist in the Laudspeaker database",
   },
   {
     type: JourneyEnrollmentType.OnlyFuture,
@@ -58,7 +58,7 @@ const enrollmentTypes = [
         Only enroll <b>future</b> matching users
       </>
     ),
-    desc: "Description description description",
+    desc: "Only users that do currently exist in the Laudspeaker database, and are created after the journey begins",
   },
 ];
 
