@@ -21,7 +21,7 @@ const OnboardingStepper: FC<OnboardingStepperProps> = ({ currentStep }) => {
       {stepsToShow.map((onboardingStep, i) => (
         <React.Fragment key={i}>
           <div
-            className={`flex items-center gap-[10px] font-inter text-[16px] leading-[24px] ${
+            className={`flex items-center gap-[10px] font-inter text-base ${
               currentStep === onboardingStep ||
               (currentStep === OnboardingPage.TRACK_PERFORMANCE &&
                 onboardingStep === OnboardingPage.START_JOURNEY)

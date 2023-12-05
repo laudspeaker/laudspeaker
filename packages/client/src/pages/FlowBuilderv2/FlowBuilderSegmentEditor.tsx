@@ -76,9 +76,7 @@ const FlowBuilderSegmentEditor = () => {
     <div className="m-5 max-h-full overflow-y-scroll w-full bg-white rounded p-5 text-[#111827] font-inter">
       <div className="flex flex-col gap-5">
         <div className="flex flex-col gap-[10px]">
-          <div className="font-semibold text-[16px] leading-[24px]">
-            Entry Timing
-          </div>
+          <div className="font-semibold text-base">Entry Timing</div>
           <RadioGroup
             value={journeyEntrySettings.entryTiming.type}
             onChange={(el) => dispatch(setJourneyEntryTimingType(el))}
@@ -413,9 +411,7 @@ const FlowBuilderSegmentEditor = () => {
         </div>
         <div className="w-[calc(100%+40px)] h-[1px] bg-[#E5E7EB] -translate-x-[20px]" />
         <div className="flex flex-col gap-[10px]">
-          <div className="font-semibold text-[16px] leading-[24px]">
-            Enrollment type
-          </div>
+          <div className="font-semibold text-base">Enrollment type</div>
           <RadioGroup
             value={journeyEntrySettings.enrollmentType}
             onChange={(el) => dispatch(setJourneyEntryEnrollmentType(el))}
@@ -437,9 +433,7 @@ const FlowBuilderSegmentEditor = () => {
         </div>
         <div className="w-[calc(100%+40px)] h-[1px] bg-[#E5E7EB] -translate-x-[20px]" />
         <div className="flex flex-col gap-[10px]">
-          <div className="font-semibold text-[16px] leading-[24px]">
-            Eligible users
-          </div>
+          <div className="font-semibold text-base">Eligible users</div>
           <div className="flex gap-5">
             <div
               className={`w-[390px] px-5 py-[10px] flex flex-col gap-[10px] rounded select-none cursor-pointer ${
@@ -455,9 +449,7 @@ const FlowBuilderSegmentEditor = () => {
                 )
               }
             >
-              <div className="font-semibold text-[16px] leading-[24px]">
-                All customers
-              </div>
+              <div className="font-semibold text-base">All customers</div>
               <div className="font-normal text-[14px] leading-[22px] text-[#4B5563]">
                 All users will be enrolled
               </div>
@@ -491,7 +483,7 @@ const FlowBuilderSegmentEditor = () => {
                 )
               }
             >
-              <div className="font-semibold text-[16px] leading-[24px]">
+              <div className="font-semibold text-base">
                 When customer meets conditions
               </div>
               <div className="font-normal text-[14px] leading-[22px] text-[#4B5563]">
@@ -503,9 +495,7 @@ const FlowBuilderSegmentEditor = () => {
 
         {segmentsSettings.type === SegmentsSettingsType.CONDITIONAL && (
           <div className="flex flex-col gap-[10px]">
-            <div className="font-semibold text-[16px] leading-[24px]">
-              Conditions
-            </div>
+            <div className="font-semibold text-base">Conditions</div>
             <FilterBuilder
               settings={segmentsSettings}
               onSettingsChange={(settings) =>
@@ -518,14 +508,14 @@ const FlowBuilderSegmentEditor = () => {
         )}
 
         {/* <div className="flex flex-col gap-[10px]">
-          <div className="font-semibold text-[16px] leading-[24px]">
+          <div className="font-semibold text-base">
             Journey type
           </div>
           <div className="font-normal text-[14px] leading-[22px] text-[#4B5563]">
             Dynamic journeys enroll new customers who meet conditions, while
             static journeys only enroll customers who meet conditions at start.
           </div>
-          <div className="flex font-roboto font-normal text-[16px] leading-[24px]">
+          <div className="flex font-roboto font-normal text-base">
             <div
               className={`px-[16px] py-2 select-none cursor-pointer rounded-l-[2px] ${
                 journeyType === JourneyType.DYNAMIC

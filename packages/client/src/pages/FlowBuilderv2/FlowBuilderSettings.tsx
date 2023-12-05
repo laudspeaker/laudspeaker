@@ -26,9 +26,7 @@ const FlowBuilderSettings = () => {
     <div className="m-5 max-h-full overflow-y-scroll w-full bg-white rounded p-5 text-[#111827] font-inter">
       <div className="flex flex-col gap-5">
         <div className="flex flex-col gap-5">
-          <div className="font-semibold text-[16px] leading-[24px]">
-            Journey Tags
-          </div>
+          <div className="font-semibold text-base">Journey Tags</div>
           <div className="max-w-[800px]">
             <TagComponent
               tags={journeySettings.tags}
@@ -60,7 +58,7 @@ const FlowBuilderSettings = () => {
                 checked={journeySettings.quiteHours.enabled}
                 iconRequired={false}
               />
-              <div className="ml-[10px] font-semibold text-[16px] leading-[24px]">
+              <div className="ml-[10px] font-semibold text-base">
                 Quite hours
               </div>
             </span>
@@ -162,7 +160,7 @@ const FlowBuilderSettings = () => {
                 checked={journeySettings.maxEntries.enabled}
                 iconRequired={false}
               />
-              <div className="ml-[10px] font-semibold text-[16px] leading-[24px]">
+              <div className="ml-[10px] font-semibold text-base">
                 Max user entries
               </div>
             </span>
@@ -231,7 +229,7 @@ const FlowBuilderSettings = () => {
                 checked={journeySettings.maxMessageSends.enabled}
                 iconRequired={false}
               />
-              <div className="ml-[10px] font-semibold text-[16px] leading-[24px]">
+              <div className="ml-[10px] font-semibold text-base">
                 Max message sends
               </div>
             </span>

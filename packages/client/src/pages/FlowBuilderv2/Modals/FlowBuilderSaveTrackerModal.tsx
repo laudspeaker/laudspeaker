@@ -44,9 +44,7 @@ const FlowBuilderSaveTrackerModal: FC<FlowBuilderSaveTrackerModalProps> = ({
           </div>
 
           <div className="flex flex-col gap-2">
-            <div className="font-medium text-[16px] leading-[24px]">
-              Are you sure save it?
-            </div>
+            <div className="font-medium text-base">Are you sure save it?</div>
             <div className="font-normal text-[14px] leading-[22px]">
               This modal is used in multiple steps. Changing the template may
               affect other steps using this modal.

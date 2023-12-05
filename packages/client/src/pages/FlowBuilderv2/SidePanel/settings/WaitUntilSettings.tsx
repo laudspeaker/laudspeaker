@@ -295,7 +295,7 @@ const WaitUntilSettings: FC<SidePanelComponentProps<WaitUntilNodeData>> = ({
     <div className="p-5">
       {branches.map((branch, i) => (
         <div key={i} className="mb-[20px] flex flex-col gap-[10px]">
-          <div className="font-inter font-semibold text-[16px] leading-[24px] text-[#18181B] flex items-center justify-between">
+          <div className="font-inter font-semibold text-base text-[#18181B] flex items-center justify-between">
             <div>
               Branch {i + 1} - {branchNaming[branch.type]}
             </div>

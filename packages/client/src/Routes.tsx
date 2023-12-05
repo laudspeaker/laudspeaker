@@ -52,6 +52,7 @@ import AppConfig from "constants/app";
 import Personv2 from "pages/Personv2";
 import SegmentCreation from "pages/SegmentCreation/index";
 import PushBuilder from "pages/PushBuilder/PushBuilder";
+import PushSettings from "pages/PushSettings";
 
 interface IProtected {
   children: ReactElement;
@@ -625,6 +626,18 @@ const RouteComponent: React.FC = () => {
               <VerificationProtected>
                 <DrawerLayout>
                   <TwilioSettings />
+                </DrawerLayout>
+              </VerificationProtected>
+            </Protected>
+          }
+        />
+        <Route
+          path="/settings/push"
+          element={
+            <Protected>
+              <VerificationProtected>
+                <DrawerLayout>
+                  <PushSettings />
                 </DrawerLayout>
               </VerificationProtected>
             </Protected>

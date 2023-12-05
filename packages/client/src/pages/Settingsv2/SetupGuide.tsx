@@ -101,7 +101,7 @@ const SetupGuide: FC<SetupGuideProps> = ({ currentTab, setCurrentTab }) => {
 
             <div className="flex flex-col gap-[10px]">
               <div
-                className={`font-inter text-[16px] leading-[24px] ${
+                className={`font-inter text-base ${
                   activeFixtureIndex === i ? "font-semibold" : "font-normal"
                 } `}
               >

@@ -157,7 +157,7 @@ const TemplateTagPicker: FC<TemplateTagPickerProps> = ({
                     handleValueReplace(`{{${tagContent}}}`, `{{${attribute}}}`);
                     handleClose();
                   }}
-                  className="min-w-[338px] h-[62px] border border-[#F3F3F3] rounded-[5px] font-[Inter] font-medium not-italic text-[16px] leading-[24px]  my-[2.5px] mx-0 p-[5px]  flex justify-start items-start"
+                  className="min-w-[338px] h-[62px] border border-[#F3F3F3] rounded-[5px] font-[Inter] font-medium not-italic text-base  my-[2.5px] mx-0 p-[5px]  flex justify-start items-start"
                   key={index}
                 >
                   <div>{attribute}</div>

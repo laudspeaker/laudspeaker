@@ -91,7 +91,7 @@ const BranchPopover: FC<BranchPopoverProps> = ({
               }`}
               onClick={() => dispatch(selectNode(node.id))}
             >
-              <div className="font-inter font-semibold text-[16px] leading-[24px]">
+              <div className="font-inter font-semibold text-base">
                 {popperNameMap[branch.type]}
               </div>
               {branch.type === BranchType.EVENT ||

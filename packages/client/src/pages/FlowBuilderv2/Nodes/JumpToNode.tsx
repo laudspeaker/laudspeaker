@@ -76,11 +76,7 @@ export const JumpToNode: FC<NodeProps<JumpToNodeData>> = ({
               </defs>
             </svg>
           </div>
-          <div
-            className={`font-inter font-semibold text-[16px] leading-[24px]`}
-          >
-            Jump to
-          </div>
+          <div className={`font-inter font-semibold text-base`}>Jump to</div>
         </div>
 
         <JumpToLine

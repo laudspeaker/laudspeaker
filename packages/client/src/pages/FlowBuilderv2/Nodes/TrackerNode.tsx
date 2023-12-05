@@ -157,7 +157,7 @@ export const TrackerNode: FC<NodeProps<TrackerNodeData>> = ({
             <CustomModalIcon />
           </div>
           <div
-            className={`font-inter font-semibold text-[16px] leading-[24px] flex justify-between items-center w-full`}
+            className={`font-inter font-semibold text-base flex justify-between items-center w-full`}
           >
             <div className="whitespace-nowrap">Component</div>
             {tracker && (

@@ -305,7 +305,7 @@ const TrackerViewer: FC<
 
           <div className="flex items-center">
             <button
-              className={`w-full py-[12px] flex justify-center items-center font-inter text-[16px] leading-[24px] ${
+              className={`w-full py-[12px] flex justify-center items-center font-inter text-base ${
                 viewerTab === TrackerViewerTab.METRICS
                   ? "border-b-[3px] border-[#6366F1] text-[#6366F1] font-semibold"
                   : "border-b-[1px] border-[#E5E7EB]"
@@ -315,7 +315,7 @@ const TrackerViewer: FC<
               Metrics
             </button>
             <button
-              className={`w-full py-[12px] flex justify-center items-center font-inter text-[16px] leading-[24px] ${
+              className={`w-full py-[12px] flex justify-center items-center font-inter text-base ${
                 viewerTab === TrackerViewerTab.TRACKER_FIELDS
                   ? "border-b-[3px] border-[#6366F1] text-[#6366F1] font-semibold"
                   : "border-b-[1px] border-[#E5E7EB]"

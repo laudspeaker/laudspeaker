@@ -68,9 +68,7 @@ const FlowBuilderDeleteModal: FC<FlowBuilderDeleteModalProps> = ({
           </div>
 
           <div className="flex flex-col gap-2">
-            <div className="font-medium text-[16px] leading-[24px]">
-              Are you sure delete it?
-            </div>
+            <div className="font-medium text-base">Are you sure delete it?</div>
             <div className="font-normal text-[14px] leading-[22px]">
               This action cannot be undone.
             </div>
