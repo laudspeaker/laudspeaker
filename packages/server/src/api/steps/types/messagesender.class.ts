@@ -174,7 +174,7 @@ export class MessageSender {
       return [
         {
           stepId: stepID,
-          createdAt: new Date().toUTCString(),
+          createdAt: new Date().toISOString(),
           customerId: customerID,
           event: 'error',
           eventProvider: eventProvider,
@@ -213,7 +213,7 @@ export class MessageSender {
         ret = [
           {
             stepId: stepID,
-            createdAt: new Date().toUTCString(),
+            createdAt: new Date().toISOString(),
             customerId: customerID,
             event: 'sent',
             eventProvider: ClickHouseEventProvider.SENDGRID,
@@ -243,7 +243,7 @@ export class MessageSender {
         ret = [
           {
             stepId: stepID,
-            createdAt: new Date().toUTCString(),
+            createdAt: new Date().toISOString(),
             customerId: customerID,
             event: 'sent',
             eventProvider: ClickHouseEventProvider.MAILGUN,
@@ -320,7 +320,7 @@ export class MessageSender {
       return [
         {
           stepId: stepID,
-          createdAt: new Date().toUTCString(),
+          createdAt: new Date().toISOString(),
           customerId: customerID,
           event: 'error',
           eventProvider: ClickHouseEventProvider.TWILIO,
@@ -341,7 +341,7 @@ export class MessageSender {
     ret = [
       {
         stepId: stepID,
-        createdAt: new Date().toUTCString(),
+        createdAt: new Date().toISOString(),
         customerId: customerID,
         event: 'sent',
         eventProvider: ClickHouseEventProvider.TWILIO,
@@ -414,7 +414,7 @@ export class MessageSender {
         {
           userId: accountID,
           event: 'error',
-          createdAt: new Date().toUTCString(),
+          createdAt: new Date().toISOString(),
           eventProvider: ClickHouseEventProvider.PUSH,
           messageId: null,
           stepId: stepID,
@@ -440,7 +440,7 @@ export class MessageSender {
           {
             userId: accountID,
             event: 'error',
-            createdAt: new Date().toUTCString(),
+            createdAt: new Date().toISOString(),
             eventProvider: ClickHouseEventProvider.PUSH,
             messageId: null,
             stepId: stepID,
@@ -479,7 +479,7 @@ export class MessageSender {
       {
         stepId: stepID,
         customerId: customerID,
-        createdAt: new Date().toUTCString(),
+        createdAt: new Date().toISOString(),
         event: 'sent',
         eventProvider: ClickHouseEventProvider.PUSH,
         messageId: messageId,
@@ -537,7 +537,7 @@ export class MessageSender {
         {
           userId: accountID,
           event: 'sent',
-          createdAt: new Date().toUTCString(),
+          createdAt: new Date().toISOString(),
           eventProvider: ClickHouseEventProvider.SLACK,
           messageId: String(message.ts),
           stepId: stepID,
@@ -551,7 +551,7 @@ export class MessageSender {
         {
           userId: accountID,
           event: 'error',
-          createdAt: new Date().toUTCString(),
+          createdAt: new Date().toISOString(),
           eventProvider: ClickHouseEventProvider.SLACK,
           messageId: '',
           stepId: stepID,
@@ -640,10 +640,10 @@ export class MessageSender {
   //     }
 
   //     try {
-  //       await this.webhooksService.insertClickHouseMessages([
+  //       await this.webhooksService.insertMessageStatusToClickhouse([
   //         {
   //           event: 'error',
-  //           createdAt: new Date().toUTCString(),
+  //           createdAt: new Date().toISOString(),
   //           eventProvider: ClickHouseEventProvider.WEBHOOKS,
   //           messageId: '',
   //           audienceId: job.data.audienceId,
@@ -659,10 +659,10 @@ export class MessageSender {
   //     throw new Error(error);
   //   } else {
   //     try {
-  //       await this.webhooksService.insertClickHouseMessages([
+  //       await this.webhooksService.insertMessageStatusToClickhouse([
   //         {
   //           event: 'sent',
-  //           createdAt: new Date().toUTCString(),
+  //           createdAt: new Date().toISOString(),
   //           eventProvider: ClickHouseEventProvider.WEBHOOKS,
   //           messageId: '',
   //           audienceId: job.data.audienceId,

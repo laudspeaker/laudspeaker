@@ -17,6 +17,9 @@ import axios from 'axios';
 import FormData from 'form-data';
 import { randomUUID } from 'crypto';
 import { Step } from '../steps/entities/step.entity';
+import { KafkaService } from '../kafka/kafka.service';
+import { Message } from 'kafkajs';
+import { KAFKA_TOPIC_MESSAGE_STATUS } from '../kafka/constants';
 
 export enum ClickHouseEventProvider {
   MAILGUN = 'mailgun',
@@ -53,25 +56,6 @@ export class WebhooksService {
     'unsubscribed',
   ];
 
-  private clickHouseClient = createClient({
-    host: process.env.CLICKHOUSE_HOST
-      ? process.env.CLICKHOUSE_HOST.includes('http')
-        ? process.env.CLICKHOUSE_HOST
-        : `http://${process.env.CLICKHOUSE_HOST}`
-      : 'http://localhost:8123',
-    username: process.env.CLICKHOUSE_USER ?? 'default',
-    password: process.env.CLICKHOUSE_PASSWORD ?? '',
-    database: process.env.CLICKHOUSE_DB ?? 'default',
-  });
-
-  public insertClickHouseMessages = async (values: ClickHouseMessage[]) => {
-    await this.clickHouseClient.insert<ClickHouseMessage>({
-      table: 'message_status',
-      values,
-      format: 'JSONEachRow',
-    });
-  };
-
   private sendgridEventsMap = {
     click: 'clicked',
     open: 'opened',
@@ -83,7 +67,9 @@ export class WebhooksService {
     @InjectRepository(Step)
     private stepRepository: Repository<Step>,
     @InjectRepository(Account)
-    private accountRepository: Repository<Account>
+    private accountRepository: Repository<Account>,
+    @Inject(KafkaService)
+    private kafkaService: KafkaService
   ) {
     const session = randomUUID();
     (async () => {
@@ -230,12 +216,12 @@ export class WebhooksService {
         event: this.sendgridEventsMap[event] || event,
         eventProvider: ClickHouseEventProvider.SENDGRID,
         processed: false,
-        createdAt: new Date().toUTCString(),
+        createdAt: new Date().toISOString(),
       };
 
       messagesToInsert.push(clickHouseRecord);
     }
-    await this.insertClickHouseMessages(messagesToInsert);
+    await this.insertMessageStatusToClickhouse(messagesToInsert);
   }
 
   public async processTwilioData(
@@ -269,9 +255,9 @@ export class WebhooksService {
       event: SmsStatus,
       eventProvider: ClickHouseEventProvider.TWILIO,
       processed: false,
-      createdAt: new Date().toUTCString(),
+      createdAt: new Date().toISOString(),
     };
-    await this.insertClickHouseMessages([clickHouseRecord]);
+    await this.insertMessageStatusToClickhouse([clickHouseRecord]);
   }
 
   public async processMailgunData(
@@ -337,7 +323,7 @@ export class WebhooksService {
       event: event,
       eventProvider: ClickHouseEventProvider.MAILGUN,
       processed: false,
-      createdAt: new Date().toUTCString(),
+      createdAt: new Date().toISOString(),
     };
 
     this.debug(
@@ -346,7 +332,7 @@ export class WebhooksService {
       session
     );
 
-    await this.insertClickHouseMessages([clickHouseRecord]);
+    await this.insertMessageStatusToClickhouse([clickHouseRecord]);
   }
 
   public async setupMailgunWebhook(
@@ -413,5 +399,19 @@ export class WebhooksService {
       );
       return Promise.reject(err);
     }
+  }
+
+  /**
+   * Queue a ClickHouseMessage to kafka so that it will be ingested into clickhouse.
+   */
+  public async insertMessageStatusToClickhouse(
+    clickhouseMessages: ClickHouseMessage[]
+  ) {
+    return await this.kafkaService.produceMessage(
+      KAFKA_TOPIC_MESSAGE_STATUS,
+      clickhouseMessages.map((clickhouseMessage) => ({
+        value: JSON.stringify(clickhouseMessage),
+      }))
+    );
   }
 }
