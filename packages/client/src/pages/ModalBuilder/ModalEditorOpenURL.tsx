@@ -53,11 +53,11 @@ const ModalEditorOpenURL = ({
   }, []);
 
   return (
-    <div className="p-[20px]">
+    <div className="p-5">
       <div className="text-[14px] mb-[10px]">Action URL:</div>
       <textarea
         value={actionData[currentMainMode]?.OPENURL.object?.url || ""}
-        className="resize-none w-full border-[1px] border-[#D9D9D9] bg-white rounded-[2px] outline-none focus:outline-none shadow-none text-[12px]"
+        className="resize-none w-full border border-[#D9D9D9] bg-white rounded-sm outline-none focus:outline-none shadow-none text-[12px]"
         placeholder="URL (google.com)"
         onChange={(ev) => handleOpenURLChange({ link: ev.target.value || "" })}
       />

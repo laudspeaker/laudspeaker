@@ -20,9 +20,9 @@ const Pagination: FC<PaginationProps> = ({
   const showDotsAfter = currentPage + 2 < totalPages - lastStickyElementsCount;
 
   return (
-    <div className="flex border-[1px] border-[#E5E7EB] rounded-[6px] w-fit">
+    <div className="flex border border-[#E5E7EB] rounded-md w-fit">
       <button
-        className="p-[8px] border-r-[1px] border-[#E5E7EB]"
+        className="p-2 border-r-[1px] border-[#E5E7EB]"
         onClick={() => currentPage !== 1 && setCurrentPage(currentPage - 1)}
       >
         <img className="w-[20px] h-[20px]" src={chevronLeftImage} />
@@ -30,7 +30,7 @@ const Pagination: FC<PaginationProps> = ({
       {new Array(totalPages).fill(0, 0, totalPages).map((_, i) => (
         <React.Fragment key={i}>
           {i + 1 === currentPage - 1 && showDotsBefore && (
-            <div className="px-[16px] py-[8px] border-r-[1px] border-[#E5E7EB]">
+            <div className="px-[16px] py-2 border-r-[1px] border-[#E5E7EB]">
               ...
             </div>
           )}
@@ -39,7 +39,7 @@ const Pagination: FC<PaginationProps> = ({
             i >= totalPages - lastStickyElementsCount ||
             (i + 2 >= currentPage && i <= currentPage)) && (
             <button
-              className={`px-[16px] py-[8px] border-r-[1px] border-[#E5E7EB] ${
+              className={`px-[16px] py-2 border-r-[1px] border-[#E5E7EB] ${
                 i + 1 === currentPage ? "bg-[#6366F1] text-white" : ""
               }`}
               onClick={() => setCurrentPage(i + 1)}
@@ -49,14 +49,14 @@ const Pagination: FC<PaginationProps> = ({
           )}
 
           {i + 1 === currentPage + 1 && showDotsAfter && (
-            <div className="px-[16px] py-[8px] select-none border-r-[1px] border-[#E5E7EB]">
+            <div className="px-[16px] py-2 select-none border-r-[1px] border-[#E5E7EB]">
               ...
             </div>
           )}
         </React.Fragment>
       ))}
       <button
-        className="p-[8px]"
+        className="p-2"
         onClick={() =>
           currentPage !== totalPages && setCurrentPage(currentPage + 1)
         }

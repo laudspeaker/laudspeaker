@@ -16,7 +16,7 @@ const FlowBuilderSaveTrackerModal: FC<FlowBuilderSaveTrackerModalProps> = ({
   return (
     <FlowBuilderModal isOpen={isOpen} onClose={onClose}>
       <div className="font-roboto">
-        <div className="flex gap-[16px]">
+        <div className="flex gap-4">
           <div>
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -43,17 +43,15 @@ const FlowBuilderSaveTrackerModal: FC<FlowBuilderSaveTrackerModalProps> = ({
             </svg>
           </div>
 
-          <div className="flex flex-col gap-[8px]">
-            <div className="font-medium text-[16px] leading-[24px]">
-              Are you sure save it?
-            </div>
+          <div className="flex flex-col gap-2">
+            <div className="font-medium text-base">Are you sure save it?</div>
             <div className="font-normal text-[14px] leading-[22px]">
               This modal is used in multiple steps. Changing the template may
               affect other steps using this modal.
             </div>
           </div>
         </div>
-        <div className="flex justify-end items-center mt-[24px] gap-[8px]">
+        <div className="flex justify-end items-center mt-[24px] gap-2">
           <Button type={ButtonType.SECONDARY} onClick={onClose}>
             No
           </Button>

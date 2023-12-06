@@ -20,13 +20,9 @@ export const UserAttributeNode: FC<NodeProps<UserAttributeNodeData>> = ({
 
   return (
     <div
-      className={`relative w-[260px] h-[80px] rounded-[4px] bg-white font-inter ${
+      className={`relative w-[260px] h-[80px] rounded bg-white font-inter ${
         disabled ? "opacity-50 cursor-not-allowed" : ""
-      } ${
-        selected
-          ? "border-[2px] border-[#6366F1]"
-          : "border-[1px] border-[#E5E7EB]"
-      }`}
+      } ${selected ? "border-2 border-[#6366F1]" : "border border-[#E5E7EB]"}`}
     >
       <Handle
         position={Position.Top}
@@ -41,7 +37,7 @@ export const UserAttributeNode: FC<NodeProps<UserAttributeNodeData>> = ({
       {branches.length === 1 ? (
         <BranchPopover branch={branches[0]} node={thisNode}>
           <div className="p-[16px]">
-            <div className="font-semibold text-[16px] leading-[24px] mb-[2px]">
+            <div className="font-semibold text-base mb-[2px]">
               User attribute
             </div>
             <div className="font-normal text-[14px] leading-[22px] text-[#4B5563]">
@@ -56,9 +52,7 @@ export const UserAttributeNode: FC<NodeProps<UserAttributeNodeData>> = ({
         </BranchPopover>
       ) : (
         <div className="p-[16px]">
-          <div className="font-semibold text-[16px] leading-[24px] mb-[2px]">
-            User attribute
-          </div>
+          <div className="font-semibold text-base mb-[2px]">User attribute</div>
           <div className="font-normal text-[14px] leading-[22px] text-[#4B5563]">
             {!branches.length || !branches[0]?.attributeConditions?.length
               ? "Set attribute condition"

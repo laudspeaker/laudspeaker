@@ -27,6 +27,7 @@ import { useNavigate } from "react-router-dom";
 import { FlowBuilderDevModeModal } from "../Modals/FlowBuilderDevModeModal";
 import { useDevSocketConnection } from "../useDevSocketConnection";
 
+// TODO: update validation for new types
 const isValidNodes = (nodes: Node<NodeData | EdgeData>[]): boolean => {
   const filterNodeByType = nodes.filter(
     ({ type }) =>
@@ -175,7 +176,7 @@ const FlowBuilderHeader = () => {
         <div className="flex">
           {devModeState.status === ConnectionStatus.Disabled && (
             <button
-              className="px-[8px] py-[10px] border-[1px] border-[#E5E7EB] rounded-[4px] mr-[10px]"
+              className="px-2 py-[10px] border border-[#E5E7EB] rounded mr-[10px]"
               onClick={() => navigate("/flow")}
             >
               <ArrowLeftIcon className="w-[13px] h-[10px]" />
@@ -188,7 +189,7 @@ const FlowBuilderHeader = () => {
                 devModeState.status === ConnectionStatus.Connected
                   ? "pl-[10px] text-[#16A34A] bg-[#F0FDF4] border-[#22C55E]"
                   : "pr-[10px] text-[#111827] border-[#E5E7EB]"
-              } disabled:!grayscale-1 flex items-center p-[4px] border-[1px] mr-[10px] rounded-[16px] text-[14px] leading-[22px] font-roboto`}
+              } disabled:!grayscale-1 flex items-center p-1 border mr-[10px] rounded-2xl text-[14px] leading-[22px] font-roboto`}
               disabled={devModeState.status === ConnectionStatus.Reconnection}
               onClick={() =>
                 devModeState.status === ConnectionStatus.Reconnection
@@ -203,7 +204,7 @@ const FlowBuilderHeader = () => {
               }
             >
               {devModeState.status !== ConnectionStatus.Connected && (
-                <div className="px-[4px] py-[5px] mr-[5px] bg-[#4B5563] rounded-full">
+                <div className="px-1 py-[5px] mr-[5px] bg-[#4B5563] rounded-full">
                   <CodeBracketIcon className="w-[12px] h-[9px] text-white" />
                 </div>
               )}
@@ -211,13 +212,13 @@ const FlowBuilderHeader = () => {
                 ? "Reconnecting..."
                 : "Dev Mode"}
               {devModeState.status === ConnectionStatus.Connected && (
-                <div className="px-[4px] py-[5px] ml-[5px] bg-[#22C55E] rounded-full">
+                <div className="px-1 py-[5px] ml-[5px] bg-[#22C55E] rounded-full">
                   <CodeBracketIcon className="w-[12px] h-[9px] text-white" />
                 </div>
               )}
             </button>
             {devModeState.status === ConnectionStatus.Disabled && (
-              <div className="hidden absolute whitespace-nowrap leading-[22px] text-[14px] top-[44px] z-[1] right-[-30px] p-[8px] bg-black text-white font-medium">
+              <div className="hidden absolute whitespace-nowrap leading-[22px] text-[14px] top-[44px] z-[1] right-[-30px] p-2 bg-black text-white font-medium">
                 Dev Mode help you to test the journey with your localhost
               </div>
             )}

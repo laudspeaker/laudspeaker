@@ -86,7 +86,7 @@ const TrackerEditor: FC<TrackerEditorProps> = ({
       {showErrors &&
         errors &&
         errors[ConditionEditorError.NO_TRACKER_SPECIFiED] && (
-          <div className="font-inter font-normal text-[12px] leading-[20px] text-[#E11D48]">
+          <div className="font-inter font-normal text-[12px] leading-5 text-[#E11D48]">
             {errorToMessageMap[ConditionEditorError.NO_TRACKER_SPECIFiED]}
           </div>
         )}
@@ -104,7 +104,7 @@ const TrackerEditor: FC<TrackerEditorProps> = ({
       {showErrors &&
         errors &&
         errors[ConditionEditorError.NO_TRACKER_EVENT_SPECIFiED] && (
-          <div className="font-inter font-normal text-[12px] leading-[20px] text-[#E11D48]">
+          <div className="font-inter font-normal text-[12px] leading-5 text-[#E11D48]">
             {errorToMessageMap[ConditionEditorError.NO_TRACKER_EVENT_SPECIFiED]}
           </div>
         )}

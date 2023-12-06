@@ -4,20 +4,19 @@ import emailCardIconImage from "../svg/email-card-icon.svg";
 import twilioCardIconImage from "../svg/twilio-card-icon.svg";
 import customModalCardIconImage from "../svg/custom-modal-card-icon.svg";
 import slackCardIconImage from "../svg/slack-card-icon.svg";
-import firebaseCardIconImage from "../svg/firebase-card-icon.svg";
+import pushLogoIcon from "../svg/push-logo-icon.svg";
 import { useNavigate } from "react-router-dom";
 import Account from "types/Account";
 import ApiService from "services/api.service";
 import { toast } from "react-toastify";
 import { EmailSendingService } from "pages/EmailSettings/EmailSettings";
-import { title } from "process";
 
 export enum MessageChannel {
   EMAIL,
   TWILIO,
   CUSTOM_MODAL,
   SLACK,
-  FIREBASE,
+  PUSH,
 }
 
 interface MessageChannelAdditionalInfoFixture {
@@ -99,22 +98,21 @@ const MessageChannelTab = () => {
     },
     [MessageChannel.CUSTOM_MODAL]: {
       id: MessageChannel.CUSTOM_MODAL,
-      title: "Custom modal",
+      title: "Onboarding Suite",
       icon: customModalCardIconImage,
       connected: account?.javascriptSnippetSetupped,
       onClick: () => navigate("/settings/custom-modal"),
+    },
+    [MessageChannel.PUSH]: {
+      id: MessageChannel.PUSH,
+      title: "Push",
+      icon: pushLogoIcon,
+      onClick: () => navigate("/settings/push"),
     },
     [MessageChannel.SLACK]: {
       id: MessageChannel.SLACK,
       title: "Slack",
       icon: slackCardIconImage,
-      commingSoon: true,
-      disabled: true,
-    },
-    [MessageChannel.FIREBASE]: {
-      id: MessageChannel.FIREBASE,
-      title: "Firebase",
-      icon: firebaseCardIconImage,
       commingSoon: true,
       disabled: true,
     },
@@ -144,7 +142,7 @@ const MessageChannelTab = () => {
   }, []);
 
   return (
-    <div className="p-[20px] flex flex-col gap-[20px]">
+    <div className="p-5 flex flex-col gap-5">
       <div className="text-[#4B5563]">
         Browse the available channels in Laudspeaker, and set up the channels
         you want to use{" "}
@@ -166,7 +164,7 @@ const MessageChannelTab = () => {
               key={i}
               id={fixture.title.split(" ").join("-").toLowerCase()}
               onClick={fixture.onClick}
-              className="p-[20px] rounded-[8px] bg-[#F9FAFB] border-[1px] border-[#E5E7EB] flex flex-col gap-[10px]"
+              className="p-5 rounded-lg bg-[#F9FAFB] border border-[#E5E7EB] flex flex-col gap-[10px]"
             >
               <div className="w-full flex justify-between items-center">
                 <div className="flex items-center gap-[10px]">
@@ -174,12 +172,12 @@ const MessageChannelTab = () => {
                     <img src={fixture.icon} />
                   </div>
 
-                  <div className="text-[#18181B] font-inter text-[16px] leading-[24px]">
+                  <div className="text-[#18181B] font-inter text-base">
                     {fixture.title}
                   </div>
 
                   {fixture.beta && (
-                    <div className="px-[10px] py-[2px] rounded-[14px] font-inter text-[12px] font-normal leading-[20px] text-[#4B5563] border-[1px] border-[#E5E7EB] bg-white">
+                    <div className="px-[10px] py-[2px] rounded-[14px] font-inter text-[12px] font-normal leading-5 text-[#4B5563] border border-[#E5E7EB] bg-white">
                       Beta
                     </div>
                   )}
@@ -228,7 +226,7 @@ const MessageChannelTab = () => {
               key={i}
               id={fixture.title.split(" ").join("-").toLowerCase()}
               onClick={fixture.onClick}
-              className={`p-[20px] rounded-[8px] bg-[#F9FAFB] border-[1px] border-[#E5E7EB] flex justify-between items-center ${
+              className={`p-5 rounded-lg bg-[#F9FAFB] border border-[#E5E7EB] flex justify-between items-center ${
                 fixture.disabled ? "select-none cursor-default grayscale" : ""
               }`}
             >
@@ -237,18 +235,18 @@ const MessageChannelTab = () => {
                   <img src={fixture.icon} />
                 </div>
 
-                <div className="text-[#18181B] font-inter text-[16px] leading-[24px]">
+                <div className="text-[#18181B] font-inter text-base">
                   {fixture.title}
                 </div>
 
                 {fixture.beta && (
-                  <div className="px-[10px] py-[2px] rounded-[14px] font-inter text-[12px] font-normal leading-[20px] text-[#4B5563] border-[1px] border-[#E5E7EB] bg-white">
+                  <div className="px-[10px] py-[2px] rounded-[14px] font-inter text-[12px] font-normal leading-5 text-[#4B5563] border border-[#E5E7EB] bg-white">
                     Beta
                   </div>
                 )}
 
                 {fixture.commingSoon && (
-                  <div className="px-[10px] py-[2px] rounded-[14px] font-inter text-[12px] font-normal leading-[20px] text-[#4B5563] border-[1px] border-[#E5E7EB] bg-white">
+                  <div className="px-[10px] py-[2px] rounded-[14px] font-inter text-[12px] font-normal leading-5 text-[#4B5563] border border-[#E5E7EB] bg-white">
                     comming soon
                   </div>
                 )}

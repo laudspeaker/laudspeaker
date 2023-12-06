@@ -81,7 +81,7 @@ const UserAttributeSettings: FC<
     <div>
       {branches.map((branch, i) => (
         <div key={i} className="mb-[20px] flex flex-col gap-[10px]">
-          <div className="font-inter font-semibold text-[16px] leading-[24px] text-[#18181B]">
+          <div className="font-inter font-semibold text-base text-[#18181B]">
             Branch {i + 1} - Attribute
           </div>
           <AttributeBranchEditor
@@ -93,7 +93,7 @@ const UserAttributeSettings: FC<
           />
         </div>
       ))}
-      <div className="py-[20px] flex gap-[20px]">
+      <div className="py-5 flex gap-5">
         <Button type={ButtonType.SECONDARY} onClick={handleAddAttributeBranch}>
           Add branch
         </Button>

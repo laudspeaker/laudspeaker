@@ -40,7 +40,7 @@ const enrollmentTypes = [
   {
     type: JourneyEnrollmentType.CurrentAndFutureUsers,
     label: "Enroll current users and future matching users",
-    desc: "Description description description",
+    desc: "Users that currently exist in the Laudspeaker database, as well as those users that will be created in the future after the journey begins",
   },
   {
     type: JourneyEnrollmentType.OnlyCurrent,
@@ -49,7 +49,7 @@ const enrollmentTypes = [
         Only enroll <b>current</b> users
       </>
     ),
-    desc: "Description description description",
+    desc: "Only users that currently exist in the Laudspeaker database",
   },
   {
     type: JourneyEnrollmentType.OnlyFuture,
@@ -58,7 +58,7 @@ const enrollmentTypes = [
         Only enroll <b>future</b> matching users
       </>
     ),
-    desc: "Description description description",
+    desc: "Only users that do currently exist in the Laudspeaker database, and are created after the journey begins",
   },
 ];
 
@@ -73,12 +73,10 @@ const FlowBuilderSegmentEditor = () => {
   if (!journeyEntrySettings) return <></>;
 
   return (
-    <div className="m-[20px] max-h-full overflow-y-scroll w-full bg-white rounded-[4px] p-[20px] text-[#111827] font-inter">
-      <div className="flex flex-col gap-[20px]">
+    <div className="m-5 max-h-full overflow-y-scroll w-full bg-white rounded p-5 text-[#111827] font-inter">
+      <div className="flex flex-col gap-5">
         <div className="flex flex-col gap-[10px]">
-          <div className="font-semibold text-[16px] leading-[24px]">
-            Entry Timing
-          </div>
+          <div className="font-semibold text-base">Entry Timing</div>
           <RadioGroup
             value={journeyEntrySettings.entryTiming.type}
             onChange={(el) => dispatch(setJourneyEntryTimingType(el))}
@@ -96,7 +94,7 @@ const FlowBuilderSegmentEditor = () => {
           {journeyEntrySettings.entryTiming.type === EntryTiming.SpecificTime &&
             journeyEntrySettings.entryTiming.time !== undefined && (
               <div className="border-[#E5E7EB] border bg-[#F3F4F6] max-w-[800px] p-[10px] rounded">
-                <div className="flex w-full gap-[20px]">
+                <div className="flex w-full gap-5">
                   <div className="flex flex-col w-full">
                     <div className="text-[#111827] font-inter text-[14px] leading-[22px] mb-[5px] font-semibold">
                       Start on date
@@ -136,7 +134,7 @@ const FlowBuilderSegmentEditor = () => {
                           );
                         }}
                         type="date"
-                        className="w-full h-[32px] px-[12px] py-[5px] font-roboto text-[14px] leading-[22px] rounded-[2px] border-[1px] border-[#E5E7EB]"
+                        className="w-full h-[32px] px-[12px] py-[5px] font-roboto text-[14px] leading-[22px] rounded-sm border border-[#E5E7EB]"
                         placeholder="Select date"
                       />
                     </div>
@@ -173,7 +171,7 @@ const FlowBuilderSegmentEditor = () => {
                           );
                         }}
                         type="time"
-                        className="w-full h-[32px] px-[12px] py-[5px] font-roboto text-[14px] leading-[22px] rounded-[2px] border-[1px] border-[#E5E7EB]"
+                        className="w-full h-[32px] px-[12px] py-[5px] font-roboto text-[14px] leading-[22px] rounded-sm border border-[#E5E7EB]"
                         placeholder="Select date"
                       />
                     </div>
@@ -194,7 +192,7 @@ const FlowBuilderSegmentEditor = () => {
                             })
                           )
                         }
-                        className="w-[145px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB] rounded-[2px]"
+                        className="w-[145px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border border-[#E5E7EB] rounded-sm"
                       >
                         {Object.values(EntryTimingFrequency).map((freq, i) => (
                           <option key={freq} value={freq}>
@@ -236,7 +234,7 @@ const FlowBuilderSegmentEditor = () => {
                               })
                             );
                           }}
-                          className="w-full max-w-[134px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB] placeholder:font-inter placeholder:font-normal placeholder:text-[14px] placeholder:leading-[22px] placeholder:text-[#9CA3AF] rounded-[2px]"
+                          className="w-full max-w-[134px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border border-[#E5E7EB] placeholder:font-inter placeholder:font-normal placeholder:text-[14px] placeholder:leading-[22px] placeholder:text-[#9CA3AF] rounded-sm"
                         />
                         <span className="text-[#111827] font-inter leading-[22px] text-[14px]">
                           {journeyEntrySettings.entryTiming.time.frequency ===
@@ -315,7 +313,7 @@ const FlowBuilderSegmentEditor = () => {
                               })
                             )
                           }
-                          className="w-[180px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB] rounded-[2px]"
+                          className="w-[180px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border border-[#E5E7EB] rounded-sm"
                         >
                           <option value={RecurrenceEndsOptions.Never}>
                             Never
@@ -352,7 +350,7 @@ const FlowBuilderSegmentEditor = () => {
                                   })
                                 );
                               }}
-                              className="w-full max-w-[80px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB] placeholder:font-inter placeholder:font-normal placeholder:text-[14px] placeholder:leading-[22px] placeholder:text-[#9CA3AF] rounded-[2px]"
+                              className="w-full max-w-[80px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border border-[#E5E7EB] placeholder:font-inter placeholder:font-normal placeholder:text-[14px] placeholder:leading-[22px] placeholder:text-[#9CA3AF] rounded-sm"
                             />
                             <span className="text-[#111827] font-inter leading-[22px] text-[14px]">
                               occurrence(s)
@@ -413,9 +411,7 @@ const FlowBuilderSegmentEditor = () => {
         </div>
         <div className="w-[calc(100%+40px)] h-[1px] bg-[#E5E7EB] -translate-x-[20px]" />
         <div className="flex flex-col gap-[10px]">
-          <div className="font-semibold text-[16px] leading-[24px]">
-            Enrollment type
-          </div>
+          <div className="font-semibold text-base">Enrollment type</div>
           <RadioGroup
             value={journeyEntrySettings.enrollmentType}
             onChange={(el) => dispatch(setJourneyEntryEnrollmentType(el))}
@@ -428,7 +424,7 @@ const FlowBuilderSegmentEditor = () => {
                   radioText={el.label}
                   className=""
                 />
-                <div className="text-[#4B5563] font-inter text-[12px] leading-[20px] font-normal">
+                <div className="text-[#4B5563] font-inter text-[12px] leading-5 font-normal">
                   {el.desc}
                 </div>
               </div>
@@ -437,15 +433,13 @@ const FlowBuilderSegmentEditor = () => {
         </div>
         <div className="w-[calc(100%+40px)] h-[1px] bg-[#E5E7EB] -translate-x-[20px]" />
         <div className="flex flex-col gap-[10px]">
-          <div className="font-semibold text-[16px] leading-[24px]">
-            Eligible users
-          </div>
-          <div className="flex gap-[20px]">
+          <div className="font-semibold text-base">Eligible users</div>
+          <div className="flex gap-5">
             <div
-              className={`w-[390px] px-[20px] py-[10px] flex flex-col gap-[10px] rounded-[4px] select-none cursor-pointer ${
+              className={`w-[390px] px-5 py-[10px] flex flex-col gap-[10px] rounded select-none cursor-pointer ${
                 segmentsSettings.type === SegmentsSettingsType.ALL_CUSTOMERS
-                  ? "border-[2px] border-[#6366F1] bg-[#EEF2FF]"
-                  : "border-[1px] border-[#E5E7EB]"
+                  ? "border-2 border-[#6366F1] bg-[#EEF2FF]"
+                  : "border border-[#E5E7EB]"
               }`}
               onClick={() =>
                 dispatch(
@@ -455,19 +449,17 @@ const FlowBuilderSegmentEditor = () => {
                 )
               }
             >
-              <div className="font-semibold text-[16px] leading-[24px]">
-                All customers
-              </div>
+              <div className="font-semibold text-base">All customers</div>
               <div className="font-normal text-[14px] leading-[22px] text-[#4B5563]">
                 All users will be enrolled
               </div>
             </div>
 
             <div
-              className={`w-[390px] px-[20px] py-[10px] flex flex-col gap-[10px] rounded-[4px] select-none cursor-pointer ${
+              className={`w-[390px] px-5 py-[10px] flex flex-col gap-[10px] rounded select-none cursor-pointer ${
                 segmentsSettings.type === SegmentsSettingsType.CONDITIONAL
-                  ? "border-[2px] border-[#6366F1] bg-[#EEF2FF]"
-                  : "border-[1px] border-[#E5E7EB]"
+                  ? "border-2 border-[#6366F1] bg-[#EEF2FF]"
+                  : "border border-[#E5E7EB]"
               }`}
               onClick={() =>
                 dispatch(
@@ -491,7 +483,7 @@ const FlowBuilderSegmentEditor = () => {
                 )
               }
             >
-              <div className="font-semibold text-[16px] leading-[24px]">
+              <div className="font-semibold text-base">
                 When customer meets conditions
               </div>
               <div className="font-normal text-[14px] leading-[22px] text-[#4B5563]">
@@ -503,9 +495,7 @@ const FlowBuilderSegmentEditor = () => {
 
         {segmentsSettings.type === SegmentsSettingsType.CONDITIONAL && (
           <div className="flex flex-col gap-[10px]">
-            <div className="font-semibold text-[16px] leading-[24px]">
-              Conditions
-            </div>
+            <div className="font-semibold text-base">Conditions</div>
             <FilterBuilder
               settings={segmentsSettings}
               onSettingsChange={(settings) =>
@@ -518,29 +508,29 @@ const FlowBuilderSegmentEditor = () => {
         )}
 
         {/* <div className="flex flex-col gap-[10px]">
-          <div className="font-semibold text-[16px] leading-[24px]">
+          <div className="font-semibold text-base">
             Journey type
           </div>
           <div className="font-normal text-[14px] leading-[22px] text-[#4B5563]">
             Dynamic journeys enroll new customers who meet conditions, while
             static journeys only enroll customers who meet conditions at start.
           </div>
-          <div className="flex font-roboto font-normal text-[16px] leading-[24px]">
+          <div className="flex font-roboto font-normal text-base">
             <div
-              className={`px-[16px] py-[8px] select-none cursor-pointer rounded-l-[2px] ${
+              className={`px-[16px] py-2 select-none cursor-pointer rounded-l-[2px] ${
                 journeyType === JourneyType.DYNAMIC
                   ? "bg-[#6366F1] text-white"
-                  : "border-[1px] border-[#9CA3AF]"
+                  : "border border-[#9CA3AF]"
               }`}
               onClick={() => dispatch(setJourneyType(JourneyType.DYNAMIC))}
             >
               Dynamic journey
             </div>
             <div
-              className={`px-[16px] py-[8px] select-none cursor-pointer rounded-r-[2px] ${
+              className={`px-[16px] py-2 select-none cursor-pointer rounded-r-[2px] ${
                 journeyType === JourneyType.STATIC
                   ? "bg-[#6366F1] text-white"
-                  : "border-[1px] border-[#9CA3AF]"
+                  : "border border-[#9CA3AF]"
               }`}
               onClick={() => dispatch(setJourneyType(JourneyType.STATIC))}
             >

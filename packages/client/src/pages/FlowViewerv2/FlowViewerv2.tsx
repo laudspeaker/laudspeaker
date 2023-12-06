@@ -81,14 +81,14 @@ const FlowViewerv2 = () => {
       </div>
     ),
     [FlowViewerTab.CUSTOMER_SEGMENT]: (
-      <div className="w-full m-[20px] bg-white overflow-y-scroll">
-        {/* <div className="bg-white p-[20px] flex flex-col gap-[10px]">
+      <div className="w-full m-5 bg-white overflow-y-scroll">
+        {/* <div className="bg-white p-5 flex flex-col gap-[10px]">
           <div className="font-inter font-semibold text-[20px] leading-[28px]">
             Journey type
           </div>
           <div className="font-inter font-normal text-[14px] leading-[22px] flex items-center gap-[10px]">
             <span>This Journey is a</span>
-            <span className="px-[8px] py-[10px] bg-[#F3F4F6] border-[1px] border-[#E5E7EB] font-semibold">
+            <span className="px-2 py-[10px] bg-[#F3F4F6] border border-[#E5E7EB] font-semibold">
               {journeyType === JourneyType.DYNAMIC
                 ? "Dynamic"
                 : journeyType === JourneyType.STATIC
@@ -99,7 +99,7 @@ const FlowViewerv2 = () => {
             <span>When new customers meet conditions will be enrolled.</span>
           </div>
         </div> */}
-        <div className="bg-white p-[20px] flex flex-col gap-[10px]">
+        <div className="bg-white p-5 flex flex-col gap-[10px]">
           <div className="font-inter font-semibold text-[20px] leading-[28px]">
             Condition
           </div>

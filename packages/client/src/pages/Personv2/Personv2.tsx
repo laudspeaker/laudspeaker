@@ -171,7 +171,7 @@ const Personv2 = () => {
 
   return (
     <div className="w-full font-inter font-normal text-[14px] text-[#111827] leading-[22px]">
-      <div className="h-[96px] w-full bg-white border-t-[1px] border-[#E5E7EB] px-[20px] flex justify-between items-center">
+      <div className="h-[96px] w-full bg-white border-t-[1px] border-[#E5E7EB] px-5 flex justify-between items-center">
         <div className="flex items-center gap-[10px]">
           <UserIcon />
           <div className="flex flex-col gap-[5px]">
@@ -185,12 +185,10 @@ const Personv2 = () => {
           Delete
         </Button>
       </div>
-      <div className="w-full h-[46px] bg-white px-[20px] flex gap-[32px] text-[#000000D9] font-roboto">
+      <div className="w-full h-[46px] bg-white px-5 flex gap-[32px] text-[#000000D9] font-roboto">
         <button
           className={`border-[#4338CA] ${
-            currentTab === PersonTab.OVERVIEW
-              ? "border-b-[2px] text-[#4338CA]"
-              : ""
+            currentTab === PersonTab.OVERVIEW ? "border-b-2 text-[#4338CA]" : ""
           }`}
           onClick={() => setCurrentTab(PersonTab.OVERVIEW)}
         >
@@ -198,19 +196,17 @@ const Personv2 = () => {
         </button>
         <button
           className={`border-[#4338CA] ${
-            currentTab === PersonTab.JOURNEY
-              ? "border-b-[2px] text-[#4338CA]"
-              : ""
+            currentTab === PersonTab.JOURNEY ? "border-b-2 text-[#4338CA]" : ""
           }`}
           onClick={() => setCurrentTab(PersonTab.JOURNEY)}
         >
           Journeys
         </button>
       </div>
-      <div className="w-full h-[calc(100vh-188px)] p-[20px] flex gap-[20px]">
+      <div className="w-full h-[calc(100vh-188px)] p-5 flex gap-5">
         {currentTab === PersonTab.OVERVIEW ? (
           <>
-            <div className="w-full h-fit bg-white rounded-[8px] p-[20px] flex flex-col gap-[20px]">
+            <div className="w-full h-fit bg-white rounded-lg p-5 flex flex-col gap-5">
               <div className="w-full flex justify-between">
                 <div className="text-[20px] font-semibold leading-[28px]">
                   {isEditing ? "Edit attributes" : "Attributes"}
@@ -233,7 +229,7 @@ const Personv2 = () => {
                   isEditing ? (
                     <div className="flex flex-col gap-[10px]" key={key}>
                       <div className="text-[#4B5563]">{key}</div>
-                      <div className="flex gap-[16px] items-center">
+                      <div className="flex gap-4 items-center">
                         <Input
                           className="w-full"
                           wrapperClassName="w-full"
@@ -272,8 +268,8 @@ const Personv2 = () => {
 
                 {isEditing &&
                   (isAddingAttribute ? (
-                    <div className="px-[20px] py-[14px] flex flex-col gap-[20px] bg-[#F3F4F6] rounded-[4px] w-full">
-                      <div className="flex gap-[20px]">
+                    <div className="px-5 py-[14px] flex flex-col gap-5 bg-[#F3F4F6] rounded w-full">
+                      <div className="flex gap-5">
                         <Input
                           className="w-full"
                           wrapperClassName="w-full"
@@ -345,7 +341,7 @@ const Personv2 = () => {
               )}
             </div>
             {!isEditing && eventsData.length > 0 && (
-              <div className="w-[420px] h-full bg-white rounded-[8px] p-[20px] flex flex-col gap-[20px]">
+              <div className="w-[420px] h-full bg-white rounded-lg p-5 flex flex-col gap-5">
                 <span className="text-[#111827] font-inter text-[20px] leading-[28px] font-semibold">
                   Timeline
                 </span>
@@ -355,21 +351,21 @@ const Personv2 = () => {
                       <div className="w-full h-[74px] flex">
                         <div className="w-[22px] mr-[10px] relative">
                           <div className="w-[2px] bg-[#0000000F] h-[6px] left-[10px] absolute" />
-                          <div className="w-[10px] absolute top-[6px] left-[6px] h-[10px] rounded-full border-[2px] border-[#6366F1]" />
+                          <div className="w-[10px] absolute top-[6px] left-[6px] h-[10px] rounded-full border-2 border-[#6366F1]" />
                           {(i + 1 !== eventsData.length ||
                             timeLine?.totalPage === timeLine?.page) && (
                             <div className="w-[2px] bg-[#0000000F] h-[58px] top-[16px] left-[10px] top absolute" />
                           )}
                         </div>
                         <div className="flex flex-col text-[#111827]">
-                          <div className="max-w-[230px] text-[16px] leading-[24px] font-semibold font-inter text-ellipsis overflow-hidden whitespace-nowrap">
+                          <div className="max-w-[230px] text-base font-semibold font-inter text-ellipsis overflow-hidden whitespace-nowrap">
                             {capitalize(el.event)} {el.templateType}-
                             {el.templateName}
                           </div>
                           <div className="max-w-[230px] text-[14px] leading-[22px] font-normal font-inter text-ellipsis overflow-hidden whitespace-nowrap">
                             Journey: {el.journeyName}
                           </div>
-                          <div className="max-w-[230px] text-[12px] leading-[20px] font-normal font-inter text-ellipsis overflow-hidden whitespace-nowrap">
+                          <div className="max-w-[230px] text-[12px] leading-5 font-normal font-inter text-ellipsis overflow-hidden whitespace-nowrap">
                             {format(new Date(el.createdAt), "dd/MM/yyyy HH:mm")}
                           </div>
                         </div>
@@ -391,13 +387,13 @@ const Personv2 = () => {
                         {timeLine?.totalPage === timeLine?.page && (
                           <div className="w-[2px] bg-[#0000000F] h-[6px] left-[10px] absolute" />
                         )}
-                        <div className="w-[10px] absolute top-[6px] left-[6px] h-[10px] rounded-full border-[2px] border-[#6366F1] bg-[#6366F1]" />
+                        <div className="w-[10px] absolute top-[6px] left-[6px] h-[10px] rounded-full border-2 border-[#6366F1] bg-[#6366F1]" />
                       </div>
                       <div className="flex flex-col text-[#111827]">
-                        <div className="max-w-[230px] text-[16px] leading-[24px] font-semibold font-inter text-ellipsis overflow-hidden whitespace-nowrap">
+                        <div className="max-w-[230px] text-base font-semibold font-inter text-ellipsis overflow-hidden whitespace-nowrap">
                           Created in Laudspeaker
                         </div>
-                        <div className="max-w-[230px] text-[12px] leading-[20px] font-normal font-inter text-ellipsis overflow-hidden whitespace-nowrap">
+                        <div className="max-w-[230px] text-[12px] leading-5 font-normal font-inter text-ellipsis overflow-hidden whitespace-nowrap">
                           {format(
                             new Date(personInfo.createdAt),
                             "dd/MM/yyyy HH:mm"
@@ -411,7 +407,7 @@ const Personv2 = () => {
             )}
           </>
         ) : (
-          <div className="w-full h-full bg-white rounded-[8px] p-[20px]">
+          <div className="w-full h-full bg-white rounded-lg p-5">
             <PeopleInJourneyTable />
           </div>
         )}

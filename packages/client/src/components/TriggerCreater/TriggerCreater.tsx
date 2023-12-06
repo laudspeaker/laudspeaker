@@ -1044,7 +1044,7 @@ const TriggerCreater = (props: ITriggerCreaterProp) => {
           </div>
         )}
         {!isViewMode && (
-          <div className="mt-[10px] flex flex-col gap-[20px]">
+          <div className="mt-[10px] flex flex-col gap-5">
             <div data-savetriggerreator>
               <GenericButton
                 onClick={handleSubmit}

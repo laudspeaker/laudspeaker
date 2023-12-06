@@ -60,7 +60,7 @@ const SetupGuide: FC<SetupGuideProps> = ({ currentTab, setCurrentTab }) => {
         boxShadow: "0px 2px 8px 0px rgba(0, 0, 0, 0.15)",
       }}
     >
-      <div className="rounded-t-[8px] bg-[#111827] text-white p-[20px] flex items-center justify-between">
+      <div className="rounded-t-[8px] bg-[#111827] text-white p-5 flex items-center justify-between">
         <div className="font-inter text-[16px] font-semibold leading-[24px]">
           {setupFixtures.every(
             (fixture, i) => fixture.done || fixturesMarked.includes(i)
@@ -81,12 +81,12 @@ const SetupGuide: FC<SetupGuideProps> = ({ currentTab, setCurrentTab }) => {
         </button>
       </div>
 
-      <div className="bg-white p-[20px]">
+      <div className="bg-white p-5">
         {setupFixtures.map((fixture, i) => (
           <div
             key={i}
             className={`p-[10px] flex gap-[10px] ${
-              activeFixtureIndex === i ? "!py-[20px]" : ""
+              activeFixtureIndex === i ? "!py-5" : ""
             }`}
           >
             <div className="min-w-[24px]">
@@ -101,7 +101,7 @@ const SetupGuide: FC<SetupGuideProps> = ({ currentTab, setCurrentTab }) => {
 
             <div className="flex flex-col gap-[10px]">
               <div
-                className={`font-inter text-[16px] leading-[24px] ${
+                className={`font-inter text-base ${
                   activeFixtureIndex === i ? "font-semibold" : "font-normal"
                 } `}
               >

@@ -85,7 +85,7 @@ export const BranchEdge: FC<EdgeProps<BranchEdgeData>> = ({
                 sourceNode as Node<WaitUntilNodeData | UserAttributeNodeData>
               }
             >
-              <span className="bg-[#F3F4F6] flex gap-[5px] items-center py-[8px] px-[4px] leading-[22px] text-[14px] text-[#111827] border-b-[1px] border-b-black">
+              <span className="bg-[#F3F4F6] flex gap-[5px] items-center py-2 px-1 leading-[22px] text-[14px] text-[#111827] border-b-[1px] border-b-black">
                 {branch.type === BranchType.MAX_TIME && (
                   <span>
                     <svg

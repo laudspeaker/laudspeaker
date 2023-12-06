@@ -38,13 +38,9 @@ export const JumpToNode: FC<NodeProps<JumpToNodeData>> = ({
 
   return (
     <div
-      className={`relative w-[120px] h-[60px] rounded-[4px] bg-white ${
+      className={`relative w-[120px] h-[60px] rounded bg-white ${
         data.disabled ? "opacity-50 cursor-not-allowed" : ""
-      } ${
-        selected
-          ? "border-[2px] border-[#6366F1]"
-          : "border-[1px] border-[#E5E7EB]"
-      }`}
+      } ${selected ? "border-2 border-[#6366F1]" : "border border-[#E5E7EB]"}`}
     >
       <Handle
         position={Position.Top}
@@ -80,11 +76,7 @@ export const JumpToNode: FC<NodeProps<JumpToNodeData>> = ({
               </defs>
             </svg>
           </div>
-          <div
-            className={`font-inter font-semibold text-[16px] leading-[24px]`}
-          >
-            Jump to
-          </div>
+          <div className={`font-inter font-semibold text-base`}>Jump to</div>
         </div>
 
         <JumpToLine

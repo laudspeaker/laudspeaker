@@ -67,6 +67,7 @@ const OnboardingSidePanel: FC<OnboardingSidePanelProps> = ({
     [NodeType.USER_ATTRIBUTE]: "User attribute",
     [NodeType.TRACKER]: "Custom component",
     [NodeType.MULTISPLIT]: "Multisplit",
+    [NodeType.PUSH]: "Push",
     [NodeType.INSERT_NODE]: "",
   };
 
@@ -179,7 +180,7 @@ const OnboardingSidePanel: FC<OnboardingSidePanelProps> = ({
         leaveFrom="!right-[20px]"
       >
         <div className="h-full relative flex flex-col justify-stretch">
-          <div className="p-[20px] border-b-[1px] flex flex-col gap-[5px]">
+          <div className="p-5 border-b-[1px] flex flex-col gap-[5px]">
             <div className="font-inter font-semibold text-[20px] leading-[28px]">
               {selectedNode?.type
                 ? selectedNode.data.type === NodeType.MESSAGE &&
@@ -188,7 +189,7 @@ const OnboardingSidePanel: FC<OnboardingSidePanelProps> = ({
                   : nodeTypeToNameMap[selectedNode.type as NodeType]
                 : ""}
             </div>
-            <div className="font-inter font-normal text-[12px] leading-[20px] text-[#4B5563]">
+            <div className="font-inter font-normal text-[12px] leading-5 text-[#4B5563]">
               {(() => {
                 switch (selectedNode?.data.type) {
                   case NodeType.MESSAGE:
@@ -213,7 +214,7 @@ const OnboardingSidePanel: FC<OnboardingSidePanelProps> = ({
               })()}
             </div>
           </div>
-          <div className="p-[20px] h-full max-h-full mb-[60px] overflow-y-hidden">
+          <div className="p-5 h-full max-h-full mb-[60px] overflow-y-hidden">
             <Scrollbars>
               {nodeToSettingsComponentMap[selectedNode?.type || ""]}
             </Scrollbars>
@@ -225,7 +226,7 @@ const OnboardingSidePanel: FC<OnboardingSidePanelProps> = ({
               )} */}
           </div>
         </div>
-        <div className="absolute bottom-0 w-full min-h-[60px] h-[60px] py-[14px] px-[20px] border-t-[1px] flex justify-between items-center">
+        <div className="absolute bottom-0 w-full min-h-[60px] h-[60px] py-[14px] px-5 border-t-[1px] flex justify-between items-center">
           <Button
             type={ButtonType.LINK}
             onClick={() => setIsDeleteModalOpen(true)}

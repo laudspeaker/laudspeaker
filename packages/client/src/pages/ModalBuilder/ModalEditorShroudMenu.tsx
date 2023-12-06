@@ -24,7 +24,7 @@ const ModalEditorShroudMenu: FC<ModalEditorShroudMenuProps> = ({
   }, []);
 
   return (
-    <div className="p-[20px] flex flex-col text-[14px] gap-[10px] font-normal">
+    <div className="p-5 flex flex-col text-[14px] gap-[10px] font-normal">
       <div className="flex items-center justify-between mb-[10px]">
         <div>Color:</div>
         <div className="flex items-center pl-[5px] gap-[10px]">
@@ -67,7 +67,7 @@ const ModalEditorShroudMenu: FC<ModalEditorShroudMenuProps> = ({
           <div className="relative">
             <ReactSlider
               className="h-[20px] flex items-center justify-center mb-[8px] w-[180px]"
-              trackClassName="h-[4px] bg-[#6366F1] rounded-[4px]"
+              trackClassName="h-[4px] bg-[#6366F1] rounded"
               min={0}
               max={6}
               value={modalState.shroud.blur}
@@ -81,7 +81,7 @@ const ModalEditorShroudMenu: FC<ModalEditorShroudMenuProps> = ({
               renderThumb={(props) => (
                 <div
                   {...props}
-                  className="rounded-[100%] w-[16px] h-[16px] cursor-grab bg-white border-[2px] border-[#6366F1]"
+                  className="rounded-[100%] w-[16px] h-[16px] cursor-grab bg-white border-2 border-[#6366F1]"
                 />
               )}
             />

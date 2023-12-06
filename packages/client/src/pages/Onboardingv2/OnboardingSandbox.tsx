@@ -204,7 +204,7 @@ const OnboardingSandbox: FC<OnboardingSandboxProps> = ({
     () => ({
       [SandboxStep.MESSAGE_AND_STEP]: {
         header: (
-          <div className="flex flex-col items-center gap-[20px]">
+          <div className="flex flex-col items-center gap-5">
             <div>
               <img src={createJourneyColorfulHeaderImage} />
             </div>
@@ -237,7 +237,7 @@ const OnboardingSandbox: FC<OnboardingSandboxProps> = ({
       },
       [SandboxStep.DRAG_EMAIL]: {
         header: (
-          <div className="flex justify-center py-[20px]">
+          <div className="flex justify-center py-5">
             <div className="text-center max-w-[830px]">
               Scenario: New users sign up for your platform and receive a
               verification email. Verify within 1 day to receive a welcome
@@ -272,7 +272,7 @@ const OnboardingSandbox: FC<OnboardingSandboxProps> = ({
       },
       [SandboxStep.SETTING_PANEL]: {
         header: (
-          <div className="flex justify-center py-[20px]">
+          <div className="flex justify-center py-5">
             <div className="text-center max-w-[830px]">
               Scenario: New users sign up for your platform and receive a
               verification email. Verify within 1 day to receive a welcome
@@ -299,7 +299,7 @@ const OnboardingSandbox: FC<OnboardingSandboxProps> = ({
       },
       [SandboxStep.SELECT_TEMPLATE]: {
         header: (
-          <div className="flex justify-center py-[20px]">
+          <div className="flex justify-center py-5">
             <div className="text-center max-w-[830px]">
               Scenario: New users sign up for your platform and receive a
               verification email. Verify within 1 day to receive a welcome
@@ -328,7 +328,7 @@ const OnboardingSandbox: FC<OnboardingSandboxProps> = ({
       },
       [SandboxStep.SAVE_SETTINGS]: {
         header: (
-          <div className="flex justify-center py-[20px]">
+          <div className="flex justify-center py-5">
             <div className="text-center max-w-[830px]">
               Scenario: New users sign up for your platform and receive a
               verification email. Verify within 1 day to receive a welcome
@@ -357,7 +357,7 @@ const OnboardingSandbox: FC<OnboardingSandboxProps> = ({
       },
       [SandboxStep.TRIGGER]: {
         header: (
-          <div className="flex justify-center py-[20px]">
+          <div className="flex justify-center py-5">
             <div className="text-center max-w-[830px]">
               Scenario: New users sign up for your platform and receive a
               verification email. Verify within 1 day to receive a welcome
@@ -383,7 +383,7 @@ const OnboardingSandbox: FC<OnboardingSandboxProps> = ({
       },
       [SandboxStep.MODIFY_TRIGGER]: {
         header: (
-          <div className="flex justify-center py-[20px]">
+          <div className="flex justify-center py-5">
             <div className="text-center max-w-[830px]">
               Scenario: New users sign up for your platform and receive a
               verification email. Verify within 1 day to receive a welcome
@@ -403,7 +403,7 @@ const OnboardingSandbox: FC<OnboardingSandboxProps> = ({
       },
       [SandboxStep.CHANGE_TIME]: {
         header: (
-          <div className="flex justify-center py-[20px]">
+          <div className="flex justify-center py-5">
             <div className="text-center max-w-[830px]">
               Scenario: New users sign up for your platform and receive a
               verification email. Verify within 1 day to receive a welcome
@@ -422,7 +422,7 @@ const OnboardingSandbox: FC<OnboardingSandboxProps> = ({
       },
       [SandboxStep.SAVE_TRIGGER]: {
         header: (
-          <div className="flex justify-center py-[20px]">
+          <div className="flex justify-center py-5">
             <div className="text-center max-w-[830px]">
               Scenario: New users sign up for your platform and receive a
               verification email. Verify within 1 day to receive a welcome
@@ -445,7 +445,7 @@ const OnboardingSandbox: FC<OnboardingSandboxProps> = ({
       },
       [SandboxStep.FINISH]: {
         header: (
-          <div className="flex justify-center py-[20px]">
+          <div className="flex justify-center py-5">
             <div className="text-center max-w-[830px]">
               Scenario: New users sign up for your platform and receive a
               verification email. Verify within 1 day to receive a welcome
@@ -677,7 +677,7 @@ const OnboardingSandbox: FC<OnboardingSandboxProps> = ({
       {currentSandboxFixture?.header}
       <div className="bg-[#F3F4F6] rounded-[25px] h-full overflow-hidden flex relative">
         {currentStep === SandboxStep.FINISH && <Confetti />}
-        <div className="py-[20px] pl-[20px]">
+        <div className="py-5 pl-[20px]">
           <FlowBuilderDrawer fixtures={drawerFixtures} />
         </div>
         <FlowEditor

@@ -19,7 +19,7 @@ import * as admin from 'firebase-admin';
 export enum MessageType {
   SMS = 'sms',
   EMAIL = 'email',
-  FIREBASE = 'firebase',
+  PUSH_FIREBASE = 'push_firebase',
 }
 
 @Injectable()
@@ -42,7 +42,7 @@ export class MessageProcessor extends WorkerHost {
     [MessageType.SMS]: async (job) => {
       await this.handleSMS(job);
     },
-    [MessageType.FIREBASE]: async (job) => {
+    [MessageType.PUSH_FIREBASE]: async (job) => {
       await this.handleFirebase(job);
     },
   };
@@ -172,10 +172,10 @@ export class MessageProcessor extends WorkerHost {
         )}`,
         `email.processor.ts:MessageProcessor.handleEmail()`
       );
-      await this.webhooksService.insertClickHouseMessages([
+      await this.webhooksService.insertMessageStatusToClickhouse([
         {
           audienceId: job.data.audienceId,
-          createdAt: new Date().toUTCString(),
+          createdAt: new Date().toISOString(),
           customerId: job.data.customerId,
           event: 'error',
           eventProvider: job.data.eventProvider,
@@ -215,10 +215,10 @@ export class MessageProcessor extends WorkerHost {
           });
           msg = sendgridMessage;
           console.log('Inside of message sending');
-          await this.webhooksService.insertClickHouseMessages([
+          await this.webhooksService.insertMessageStatusToClickhouse([
             {
               audienceId: job.data.audienceId,
-              createdAt: new Date().toUTCString(),
+              createdAt: new Date().toISOString(),
               customerId: job.data.customerId,
               event: 'sent',
               eventProvider: ClickHouseEventProvider.SENDGRID,
@@ -245,10 +245,10 @@ export class MessageProcessor extends WorkerHost {
             'v:accountId': job.data.accountId,
           });
           msg = mailgunMessage;
-          await this.webhooksService.insertClickHouseMessages([
+          await this.webhooksService.insertMessageStatusToClickhouse([
             {
               audienceId: job.data.audienceId,
-              createdAt: new Date().toUTCString(),
+              createdAt: new Date().toISOString(),
               customerId: job.data.customerId,
               event: 'sent',
               eventProvider: ClickHouseEventProvider.MAILGUN,
@@ -313,10 +313,10 @@ export class MessageProcessor extends WorkerHost {
         )}`,
         `email.processor.ts:MessageProcessor.handleSMS()`
       );
-      await this.webhooksService.insertClickHouseMessages([
+      await this.webhooksService.insertMessageStatusToClickhouse([
         {
           audienceId: job.data.audienceId,
-          createdAt: new Date().toUTCString(),
+          createdAt: new Date().toISOString(),
           customerId: job.data.customerId,
           event: 'error',
           eventProvider: ClickHouseEventProvider.TWILIO,
@@ -336,10 +336,10 @@ export class MessageProcessor extends WorkerHost {
         to: job.data.to,
         statusCallback: `${process.env.TWILIO_WEBHOOK_ENDPOINT}?audienceId=${job.data.audienceId}&customerId=${job.data.customerId}&templateId=${job.data.templateId}`,
       });
-      await this.webhooksService.insertClickHouseMessages([
+      await this.webhooksService.insertMessageStatusToClickhouse([
         {
           audienceId: job.data.audienceId,
-          createdAt: new Date().toUTCString(),
+          createdAt: new Date().toISOString(),
           customerId: job.data.customerId,
           event: 'sent',
           eventProvider: ClickHouseEventProvider.TWILIO,
@@ -404,12 +404,12 @@ export class MessageProcessor extends WorkerHost {
         )}`,
         `email.processor.ts:MessageProcessor.handleFirebase()`
       );
-      await this.webhooksService.insertClickHouseMessages([
+      await this.webhooksService.insertMessageStatusToClickhouse([
         {
           userId: job.data.accountId,
           event: 'error',
-          createdAt: new Date().toUTCString(),
-          eventProvider: ClickHouseEventProvider.FIREBASE,
+          createdAt: new Date().toISOString(),
+          eventProvider: ClickHouseEventProvider.PUSH,
           messageId: null,
           audienceId: job.data.args.audienceId,
           customerId: job.data.args.customerId,
@@ -459,13 +459,13 @@ export class MessageProcessor extends WorkerHost {
           },
         },
       });
-      await this.webhooksService.insertClickHouseMessages([
+      await this.webhooksService.insertMessageStatusToClickhouse([
         {
           audienceId: job.data.audienceId,
           customerId: job.data.customerId,
-          createdAt: new Date().toUTCString(),
+          createdAt: new Date().toISOString(),
           event: 'sent',
-          eventProvider: ClickHouseEventProvider.FIREBASE,
+          eventProvider: ClickHouseEventProvider.PUSH,
           messageId: messageId,
           templateId: String(job.data.templateId),
           userId: job.data.accountId,

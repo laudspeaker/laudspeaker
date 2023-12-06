@@ -226,7 +226,7 @@ const JourneyTablev2 = () => {
   };
 
   return (
-    <div className="bg-[#F3F4F6] p-[20px] flex flex-col gap-[20px] font-inter font-normal text-[14px] text-[#111827] leading-[22px]">
+    <div className="bg-[#F3F4F6] p-5 flex flex-col gap-5 font-inter font-normal text-[14px] text-[#111827] leading-[22px]">
       <div className="flex justify-between">
         <div className="text-[20px] font-semibold leading-[28px]">Journeys</div>
         <Button
@@ -237,13 +237,13 @@ const JourneyTablev2 = () => {
           Create journey
         </Button>
       </div>
-      <div className="p-[20px] rounded-[8px] bg-white flex flex-col gap-[20px]">
+      <div className="p-5 rounded-lg bg-white flex flex-col gap-5">
         {rows.length === 0 &&
         chosenFilter === FilterOption.ALL &&
         search === "" &&
         isLoaded ? (
           <div className="w-full h-[300px] flex items-center justify-center select-none">
-            <div className="flex flex-col items-center gap-[20px]">
+            <div className="flex flex-col items-center gap-5">
               <img src={emptyDataImage} />
 
               <div className="font-inter text-[16px] font-semibold leading-[24px] text-[#4B5563]">
@@ -257,13 +257,13 @@ const JourneyTablev2 = () => {
               <div className="flex gap-[10px]">
                 {filterOptionsToRender.map((filterOption, i) => (
                   <button
-                    className={`px-[12px] py-[5px] rounded-[4px] ${
+                    className={`px-[12px] py-[5px] rounded ${
                       (chosenFilter === FilterOption.ALL &&
                         filterOption === FilterOption.ALL) ||
                       (chosenFilter !== FilterOption.ALL &&
                         filterOption !== FilterOption.ALL &&
                         chosenFilter.includes(filterOption))
-                        ? "border-[1px] border-[#6366F1] bg-[#EEF2FF] text-[#6366F1]"
+                        ? "border border-[#6366F1] bg-[#EEF2FF] text-[#6366F1]"
                         : ""
                     }`}
                     onClick={() => handleChangeChosenFilter(filterOption)}
@@ -300,13 +300,13 @@ const JourneyTablev2 = () => {
             <Table
               isLoading={isLoading}
               headings={[
-                <div className="px-[20px] py-[10px] select-none">Name</div>,
-                <div className="px-[20px] py-[10px] select-none">Status</div>,
-                <div className="px-[20px] py-[10px] select-none">
+                <div className="px-5 py-[10px] select-none">Name</div>,
+                <div className="px-5 py-[10px] select-none">Status</div>,
+                <div className="px-5 py-[10px] select-none">
                   Enrolled customer
                 </div>,
                 <div
-                  className="px-[20px] py-[10px] select-none flex gap-[2px] items-center cursor-pointer"
+                  className="px-5 py-[10px] select-none flex gap-[2px] items-center cursor-pointer"
                   onClick={() => {
                     if (sortOptions.sortBy !== SortProperty.LAST_UPDATE) {
                       setSortOptions({
@@ -345,7 +345,7 @@ const JourneyTablev2 = () => {
                     />
                   </div>
                 </div>,
-                <div className="px-[20px] py-[10px] select-none"></div>,
+                <div className="px-5 py-[10px] select-none"></div>,
               ]}
               rows={rows.map((row) => [
                 <button
@@ -373,7 +373,7 @@ const JourneyTablev2 = () => {
                 </div>,
                 <Menu as="div" className="relative">
                   <Menu.Button>
-                    <button className="px-[5px] py-[11px] rounded-[4px]">
+                    <button className="px-[5px] py-[11px] rounded">
                       <img src={threeDotsIcon} />
                     </button>
                   </Menu.Button>
@@ -386,7 +386,7 @@ const JourneyTablev2 = () => {
                     leaveFrom="transform opacity-100 scale-100"
                     leaveTo="transform opacity-0 scale-95"
                   >
-                    <Menu.Items className="absolute z-[120] right-0 origin-top-right w-[200px] h-[72px] py-[4px] rounded-[2px] bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                    <Menu.Items className="absolute z-[120] right-0 origin-top-right w-[200px] h-[72px] py-[4px] rounded-sm bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
                       <Menu.Item>
                         {({ active }) => (
                           <button

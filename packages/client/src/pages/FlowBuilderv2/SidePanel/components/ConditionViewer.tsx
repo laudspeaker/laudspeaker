@@ -45,7 +45,7 @@ const ConditionViewer: FC<ConditionViewerProps> = ({
           ) : condition.providerType === ProviderType.POSTHOG ? (
             <>
               Posthog{" "}
-              <span className="px-[5px] py-[2px] bg-white rounded-[2px] border-[1px] border-[#E5E7EB] font-normal">
+              <span className="px-[5px] py-[2px] bg-white rounded-sm border border-[#E5E7EB] font-normal">
                 {condition.name || "[empty]"}
               </span>
             </>
@@ -61,7 +61,7 @@ const ConditionViewer: FC<ConditionViewerProps> = ({
             "Tracker"
           )}
         </div>
-        <div className="flex gap-[20px] items-center">
+        <div className="flex gap-5 items-center">
           <div
             className="edit-condition cursor-pointer"
             onClick={isOnboarding ? undefined : onEdit}
@@ -111,7 +111,7 @@ const ConditionViewer: FC<ConditionViewerProps> = ({
           {condition.trackerId && (
             <div className="flex gap-[5px] items-center">
               <div>Tracker:</div>
-              <div className="px-[5px] py-[2px] border-[1px] border-[#E5E7EB] rounded-[2px] bg-white">
+              <div className="px-[5px] py-[2px] border border-[#E5E7EB] rounded-sm bg-white">
                 {condition.trackerId}
               </div>
             </div>
@@ -119,7 +119,7 @@ const ConditionViewer: FC<ConditionViewerProps> = ({
           {condition.event && (
             <div className="flex gap-[5px] items-center">
               <div>Event</div>
-              <div className="px-[5px] py-[2px] border-[1px] border-[#E5E7EB] rounded-[2px] bg-white">
+              <div className="px-[5px] py-[2px] border border-[#E5E7EB] rounded-sm bg-white">
                 {condition.event}
               </div>
               <div>is performed</div>
@@ -131,7 +131,7 @@ const ConditionViewer: FC<ConditionViewerProps> = ({
           {condition.statements.map((statement, k) => (
             <div className="flex gap-[10px]" key={k}>
               {k !== 0 && (
-                <div className="bg-[#E5E7EB] border-[#E5E7EB] border-[1px] w-[40px] h-[22px] flex items-center justify-center font-roboto font-normal text-[14px] leading-[22px]">
+                <div className="bg-[#E5E7EB] border-[#E5E7EB] border w-[40px] h-[22px] flex items-center justify-center font-roboto font-normal text-[14px] leading-[22px]">
                   {condition.statements[k - 1].relationToNext ===
                   LogicRelation.AND
                     ? "And"
@@ -144,11 +144,11 @@ const ConditionViewer: FC<ConditionViewerProps> = ({
                   key={k}
                 >
                   Property{" "}
-                  <span className="px-[5px] py-[2px] bg-white rounded-[2px] border-[1px] border-[#E5E7EB] font-normal">
+                  <span className="px-[5px] py-[2px] bg-white rounded-sm border border-[#E5E7EB] font-normal">
                     {statement.key}
                   </span>{" "}
                   {statement.comparisonType}{" "}
-                  <span className="px-[5px] py-[2px] bg-white rounded-[2px] border-[1px] border-[#E5E7EB] font-normal">
+                  <span className="px-[5px] py-[2px] bg-white rounded-sm border border-[#E5E7EB] font-normal">
                     {statement.value}
                   </span>
                 </div>
@@ -158,13 +158,13 @@ const ConditionViewer: FC<ConditionViewerProps> = ({
                   key={k}
                 >
                   Element <span className="font-bold">#{statement.order}</span>{" "}
-                  <span className="px-[5px] py-[2px] bg-white rounded-[2px] border-[1px] border-[#E5E7EB] font-normal">
+                  <span className="px-[5px] py-[2px] bg-white rounded-sm border border-[#E5E7EB] font-normal">
                     {statement.elementKey === ElementKey.TAG_NAME
                       ? "Tag name"
                       : "Text"}
                   </span>{" "}
                   {statement.comparisonType}{" "}
-                  <span className="px-[5px] py-[2px] bg-white rounded-[2px] border-[1px] border-[#E5E7EB] font-normal">
+                  <span className="px-[5px] py-[2px] bg-white rounded-sm border border-[#E5E7EB] font-normal">
                     {statement.value}
                   </span>
                 </div>
@@ -183,13 +183,13 @@ const ConditionViewer: FC<ConditionViewerProps> = ({
                 Any {WaitUntilMessageProviderCorelation[condition.providerType]}
               </span>
             ) : (
-              <span className="px-[5px] py-[2px] border-[1px] border-[#E5E7EB] rounded-[2px] bg-white font-inter">
+              <span className="px-[5px] py-[2px] border border-[#E5E7EB] rounded-sm bg-white font-inter">
                 {(condition as MessageCondition).fromSpecificMessage.title}
               </span>
             )}
             <span> from </span>
             {(condition as MessageCondition).from?.key ? (
-              <span className="px-[5px] py-[2px] border-[1px] border-[#E5E7EB] rounded-[2px] bg-white font-inter">
+              <span className="px-[5px] py-[2px] border border-[#E5E7EB] rounded-sm bg-white font-inter">
                 {(condition as MessageCondition).from?.title}
               </span>
             ) : (
@@ -204,7 +204,7 @@ const ConditionViewer: FC<ConditionViewerProps> = ({
       ) : condition.providerType === ProviderType.WU_ATTRIBUTE ? (
         <div className="text-[14px] leading-[22px]">
           {(condition as WUAttributeCondition).attributeName ? (
-            <span className="px-[5px] py-[2px] border-[1px] border-[#E5E7EB] rounded-[2px] bg-white font-inter">
+            <span className="px-[5px] py-[2px] border border-[#E5E7EB] rounded-sm bg-white font-inter">
               {(condition as WUAttributeCondition).attributeName.split(";;")[0]}
             </span>
           ) : (
@@ -218,7 +218,7 @@ const ConditionViewer: FC<ConditionViewerProps> = ({
           </span>
           {(condition as WUAttributeCondition).happenCondition ===
             WUAttributeHappenCondition.CHANGED_TO && (
-            <span className="px-[5px] py-[2px] border-[1px] border-[#E5E7EB] rounded-[2px] bg-white font-inter">
+            <span className="px-[5px] py-[2px] border border-[#E5E7EB] rounded-sm bg-white font-inter">
               {(condition as WUAttributeCondition).value || (
                 <i className="opacity-70">Empty value</i>
               )}

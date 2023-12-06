@@ -23,12 +23,10 @@ const FlowBuilderSettings = () => {
   const dispatch = useDispatch();
 
   return (
-    <div className="m-[20px] max-h-full overflow-y-scroll w-full bg-white rounded-[4px] p-[20px] text-[#111827] font-inter">
-      <div className="flex flex-col gap-[20px]">
-        <div className="flex flex-col gap-[20px]">
-          <div className="font-semibold text-[16px] leading-[24px]">
-            Journey Tags
-          </div>
+    <div className="m-5 max-h-full overflow-y-scroll w-full bg-white rounded p-5 text-[#111827] font-inter">
+      <div className="flex flex-col gap-5">
+        <div className="flex flex-col gap-5">
+          <div className="font-semibold text-base">Journey Tags</div>
           <div className="max-w-[800px]">
             <TagComponent
               tags={journeySettings.tags}
@@ -60,17 +58,17 @@ const FlowBuilderSettings = () => {
                 checked={journeySettings.quiteHours.enabled}
                 iconRequired={false}
               />
-              <div className="ml-[10px] font-semibold text-[16px] leading-[24px]">
+              <div className="ml-[10px] font-semibold text-base">
                 Quite hours
               </div>
             </span>
           </div>
-          <div className="text-[#4B5563] font-inter text-[12px] leading-[20px] font-normal">
-            Description description description
+          <div className="text-[#4B5563] font-inter text-[12px] leading-5 font-normal">
+            Send messages only during certain hours
           </div>
           {journeySettings.quiteHours.enabled && (
             <div className="p-[10px] border border-[#E5E7EB] bg-[#F3F4F6] rounded max-w-[800px] flex flex-col gap-[10px]">
-              <div className="flex gap-[20px]">
+              <div className="flex gap-5">
                 <div className="flex flex-col w-full">
                   <div className="text-[#111827] font-inter text-[14px] leading-[22px] mb-[5px] font-semibold">
                     Start time
@@ -87,7 +85,7 @@ const FlowBuilderSettings = () => {
                         );
                       }}
                       type="time"
-                      className="w-full h-[32px] px-[12px] py-[5px] font-roboto text-[14px] leading-[22px] rounded-[2px] border-[1px] border-[#E5E7EB]"
+                      className="w-full h-[32px] px-[12px] py-[5px] font-roboto text-[14px] leading-[22px] rounded-sm border border-[#E5E7EB]"
                       placeholder="Select start time"
                     />
                   </div>
@@ -108,7 +106,7 @@ const FlowBuilderSettings = () => {
                         );
                       }}
                       type="time"
-                      className="w-full h-[32px] px-[12px] py-[5px] font-roboto text-[14px] leading-[22px] rounded-[2px] border-[1px] border-[#E5E7EB]"
+                      className="w-full h-[32px] px-[12px] py-[5px] font-roboto text-[14px] leading-[22px] rounded-sm border border-[#E5E7EB]"
                       placeholder="Select date"
                     />
                   </div>
@@ -117,8 +115,9 @@ const FlowBuilderSettings = () => {
               <div className="text-[#111827] font-inter text-[14px] leading-[22px] font-semibold">
                 Fallback behavior
               </div>
-              <div className="text-[#4B5563] font-inter text-[12px] leading-[20px] font-normal">
-                Description description description
+              <div className="text-[#4B5563] font-inter text-[12px] leading-5 font-normal">
+                Specify what happens if a message is triggered during quiet
+                hours
               </div>
               <RadioGroup
                 value={journeySettings.quiteHours.fallbackBehavior}
@@ -162,13 +161,14 @@ const FlowBuilderSettings = () => {
                 checked={journeySettings.maxEntries.enabled}
                 iconRequired={false}
               />
-              <div className="ml-[10px] font-semibold text-[16px] leading-[24px]">
+              <div className="ml-[10px] font-semibold text-base">
                 Max user entries
               </div>
             </span>
           </div>
-          <div className="text-[#4B5563] font-inter text-[12px] leading-[20px] font-normal">
-            Description description description
+          <div className="text-[#4B5563] font-inter text-[12px] leading-5 font-normal">
+            Specify the maximum number of users that can be enrolled in this
+            journey
           </div>
           {journeySettings.maxEntries.enabled && (
             <div className="p-[10px] border border-[#E5E7EB] bg-[#F3F4F6] rounded max-w-[800px] flex flex-col gap-[10px]">
@@ -186,7 +186,7 @@ const FlowBuilderSettings = () => {
                       })
                     );
                   }}
-                  className="w-[145px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB] rounded-[2px]"
+                  className="w-[145px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border border-[#E5E7EB] rounded-sm"
                 >
                   {Object.values(MaxOptions).map((max) => (
                     <option key={max} value={max}>
@@ -231,13 +231,14 @@ const FlowBuilderSettings = () => {
                 checked={journeySettings.maxMessageSends.enabled}
                 iconRequired={false}
               />
-              <div className="ml-[10px] font-semibold text-[16px] leading-[24px]">
+              <div className="ml-[10px] font-semibold text-base">
                 Max message sends
               </div>
             </span>
           </div>
-          <div className="text-[#4B5563] font-inter text-[12px] leading-[20px] font-normal">
-            Description description description
+          <div className="text-[#4B5563] font-inter text-[12px] leading-5 font-normal">
+            Specify the maximum number of messages sent in this journey, or the
+            max rate at which messages are sent
           </div>
           {journeySettings.maxMessageSends.enabled && (
             <div className="p-[10px] border border-[#E5E7EB] bg-[#F3F4F6] rounded max-w-[800px] flex flex-col gap-[10px]">
@@ -270,7 +271,7 @@ const FlowBuilderSettings = () => {
                         })
                       );
                     }}
-                    className="w-[145px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB] rounded-[2px]"
+                    className="w-[145px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border border-[#E5E7EB] rounded-sm"
                   >
                     {Object.values(MaxOptions).map((max) => (
                       <option key={max} value={max}>
@@ -311,7 +312,7 @@ const FlowBuilderSettings = () => {
                         })
                       );
                     }}
-                    className="w-[145px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB] rounded-[2px]"
+                    className="w-[145px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border border-[#E5E7EB] rounded-sm"
                   >
                     {Object.values(MaxOptions).map((max) => (
                       <option key={max} value={max}>

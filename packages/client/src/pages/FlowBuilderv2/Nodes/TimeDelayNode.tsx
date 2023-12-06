@@ -17,13 +17,9 @@ export const TimeDelayNode: FC<NodeProps<TimeDelayNodeData>> = ({
 
   return (
     <div
-      className={`relative w-[260px] h-[80px] rounded-[4px] bg-white font-inter ${
+      className={`relative w-[260px] h-[80px] rounded bg-white font-inter ${
         disabled ? "opacity-50 cursor-not-allowed" : ""
-      } ${
-        selected
-          ? "border-[2px] border-[#6366F1]"
-          : "border-[1px] border-[#E5E7EB]"
-      }`}
+      } ${selected ? "border-2 border-[#6366F1]" : "border border-[#E5E7EB]"}`}
     >
       <Handle
         position={Position.Top}
@@ -35,10 +31,10 @@ export const TimeDelayNode: FC<NodeProps<TimeDelayNodeData>> = ({
         </div>
       </Handle>
       <div className="p-[16px]">
-        <div className="flex justify-between font-semibold text-[16px] leading-[24px] mb-[2px]">
+        <div className="flex justify-between font-semibold text-base mb-[2px]">
           <div>Time delay</div>
           {isViewMode && (
-            <div className="h-fit px-[4px] py-[2px] flex items-center gap-[4px] bg-[#F3F4F6] rounded-sm">
+            <div className="h-fit px-1 py-[2px] flex items-center gap-[4px] bg-[#F3F4F6] rounded-sm">
               <UserIcon />
               <div className="text-[10px] leading-normal">
                 {compatNumberFormatter.format(customersCount || 0)}
@@ -51,7 +47,7 @@ export const TimeDelayNode: FC<NodeProps<TimeDelayNodeData>> = ({
           delay.hours === delay.minutes &&
           delay.minutes === 0 ? (
             <span
-              className={`font-inter font-normal text-[12px] leading-[20px] ${
+              className={`font-inter font-normal text-[12px] leading-5 ${
                 showErrors ? "text-[#F43F5E]" : ""
               }`}
             >

@@ -6,22 +6,6 @@ import audienceIcon from "./DrawerIcons/audience.svg";
 import dataIcon from "./DrawerIcons/data.svg";
 import settingsIcon from "./DrawerIcons/settings.svg";
 
-// export default [
-//   { id: "home", imgIcon: Home(), text: "Home" },
-//   { id: "journeys", imgIcon: Journeys(), text: "Journeys" },
-//   { id: "campaigns", imgIcon: Campaigns(), text: "Campaigns" },
-//   { id: "alltemplates", imgIcon: Campaigns(), text: "Templates" },
-//   { id: "segments", imgIcon: Segments(), text: "Segments" },
-//   { id: "users", imgIcon: Users(), text: "Users" },
-//   // {
-//   //   id: "integrations",
-//   //   imgIcon: Integrations(),
-//   //   text: "Integrations",
-//   // },
-//   { id: "settings", imgIcon: Settings(), text: "Settings" },
-//   //{ id: "analysis", imgIcon: Analysis(), text: "Analysis" },
-// ];
-
 export const dataSubArray = [
   {
     id: "home",

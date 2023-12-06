@@ -6,6 +6,7 @@ import messageChannelsImage from "./svg/message-channels.svg";
 import eventProviderImage from "./svg/event-provider.svg";
 import { useNavigate } from "react-router-dom";
 import Button, { ButtonType } from "components/Elements/Buttonv2";
+import { AppConfig } from "../../constants";
 
 const Homev2 = () => {
   const navigate = useNavigate();
@@ -63,25 +64,26 @@ const Homev2 = () => {
     : -1;
 
   return (
-    <div className="bg-[#F3F4F6] p-[40px] flex flex-col gap-[20px] font-inter font-normal text-[14px] text-[#111827] leading-[22px]">
-      <div className="flex gap-[16px] items-end">
+    <div className="bg-[#F3F4F6] p-[40px] flex flex-col gap-5 font-inter font-normal text-[14px] text-[#111827] leading-[22px]">
+      <div className="flex gap-4 items-end">
         <div className="text-[30px] font-roboto font-medium leading-[40px]">
           Hi, {firstName}
         </div>
         <div>{format(new Date(), "MM/dd/yyyy")}</div>
       </div>
 
-      <div className="flex justify-between gap-[20px]">
-        <div className="flex flex-col gap-[20px] w-full">
-          <div className="p-[20px] rounded-[8px] flex flex-col bg-white">
+      {AppConfig.JOURNEY_ONBOARDING === "true" && (
+      <div className="flex justify-between gap-5">
+        <div className="flex flex-col gap-5 w-full">
+          <div className="p-5 rounded-lg flex flex-col bg-white">
             <div className="font-inter text-[20px] font-semibold leading-[28px]">
               Setup guide
             </div>
             {onboardingFixtures.map((fixture, i) => (
               <div
-                className={`flex justify-between gap-[10px] rounded-[8px] px-[10px] ${
+                className={`flex justify-between gap-[10px] rounded-lg px-[10px] ${
                   i === activeFixtureIndex || fixture.done
-                    ? "bg-[#F3F4F6] border-[1px] border-[#E5E7EB] py-[20px] mt-[20px]"
+                    ? "bg-[#F3F4F6] border border-[#E5E7EB] py-5 mt-[20px]"
                     : "py-[10px]"
                 }`}
                 key={i}
@@ -123,7 +125,7 @@ const Homev2 = () => {
 
                   <div className="flex flex-col gap-[10px]">
                     <div
-                      className={`font-inter text-[16px] leading-[24px] font-normal ${
+                      className={`font-inter text-base font-normal ${
                         i === activeFixtureIndex || fixture.done
                           ? "font-semibold"
                           : ""
@@ -145,7 +147,7 @@ const Homev2 = () => {
                                 ? ButtonType.SECONDARY
                                 : ButtonType.PRIMARY
                             }
-                            className={`!px-[20px] !py-[10px] !leading-[20px] !font-semibold !font-inter !text-[14px] !rounded-[8px] ${
+                            className={`!px-5 !py-[10px] !leading-5 !font-semibold !font-inter !text-[14px] !rounded-lg ${
                               fixture.done ? "!bg-[#F3F4F6]" : ""
                             }`}
                             onClick={() => navigate(fixture.link)}
@@ -169,6 +171,7 @@ const Homev2 = () => {
         </div>
         {/* <div className="min-w-[360px] w-[360px]">3</div> */}
       </div>
+     )}
     </div>
   );
 };

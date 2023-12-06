@@ -96,7 +96,7 @@ export const dataSubArray = [
         canBeDisabled: false,
         requiredOnboarding: "Email",
         // enabledToolTip: (
-        //   <div className="p-5 flex flex-col justify-between gap-[20px] items-center">
+        //   <div className="p-5 flex flex-col justify-between gap-5 items-center">
         //     <img
         //       className="w-[200px]"
         //       src="https://thumbs.dreamstime.com/b/glass-clean-drinking-water-44066082.jpg"

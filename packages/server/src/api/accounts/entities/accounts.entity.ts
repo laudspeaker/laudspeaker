@@ -1,3 +1,4 @@
+import { PushPlatforms } from '@/api/templates/entities/template.entity';
 import { Exclude } from 'class-transformer';
 import {
   BaseEntity,
@@ -12,6 +13,16 @@ export enum PlanType {
   PAID = 'paid',
   ENTERPRISE = 'enterprise',
 }
+
+export type PushFirebasePlatforms = Record<
+  PushPlatforms,
+  | {
+      fileName: string;
+      credentials: JSON;
+      isTrackingDisabled: boolean;
+    }
+  | undefined
+>;
 
 @Entity()
 @Unique(['email', 'apiKey'])
@@ -144,4 +155,13 @@ export class Account extends BaseEntity {
 
   @Column({ type: 'boolean', default: false })
   public javascriptSnippetSetupped: boolean;
+
+  @Column({
+    type: 'jsonb',
+    default: {
+      [PushPlatforms.IOS]: undefined,
+      [PushPlatforms.ANDROID]: undefined,
+    },
+  })
+  public pushPlatforms: PushFirebasePlatforms;
 }

@@ -39,20 +39,18 @@ const CustomModalSettings = () => {
   }, [isConnected]);
 
   return (
-    <div className="p-[20px] flex justify-center font-inter text-[14px] font-normal leading-[22px] text-[#111827]">
-      <div className="max-w-[970px] w-full flex flex-col gap-[20px]">
+    <div className="p-5 flex justify-center font-inter text-[14px] font-normal leading-[22px] text-[#111827]">
+      <div className="max-w-[970px] w-full flex flex-col gap-5">
         <div className="flex gap-[15px] items-center">
           <BackButton />
           <div className="text-[20px] font-semibold leading-[28px] text-black">
-            Custom modal
+            Onboarding Suite
           </div>
         </div>
 
-        <div className="bg-white p-[20px] flex flex-col gap-[20px]">
+        <div className="bg-white p-5 flex flex-col gap-5">
           <div className="text-[#4B5563]">
-            Description Description Description Description Description
-            Description Description Description Description Description
-            Description Description Description Description{" "}
+            Laudspeaker allows you to create custom product onboarding flows{" "}
             <button className="text-[#111827] font-bold underline">
               Documentation
             </button>
@@ -60,7 +58,7 @@ const CustomModalSettings = () => {
 
           <div className="flex items-center gap-[10px]">
             <div className="max-w-[100px] w-full text-[#18181B]">API Key</div>
-            <div className="w-full px-[12px] py-[4px] rounded-[2px] border-[1px] border-[#E5E7EB] bg-[#F3F4F6] font-roboto flex justify-between items-center">
+            <div className="w-full px-[12px] py-[4px] rounded-sm border border-[#E5E7EB] bg-[#F3F4F6] font-roboto flex justify-between items-center">
               <div>{APIKey}</div>
               <CopyButton
                 onClick={() => navigator.clipboard.writeText(APIKey)}

@@ -72,19 +72,19 @@ const Verificationv2 = () => {
   }, [isVerified]);
 
   return (
-    <div className="w-full min-h-screen h-full bg-[#F3F4F6] flex flex-col gap-[20px] py-[20px] items-center font-inter font-normal text-[14px] leading-[22px] text-[#111827]">
+    <div className="w-full min-h-screen h-full bg-[#F3F4F6] flex flex-col gap-5 py-5 items-center font-inter font-normal text-[14px] leading-[22px] text-[#111827]">
       <div>
         <img src={verificationLaudspeakerHeaderImage} />
       </div>
 
-      <div className="max-w-[800px] min-h-[532px] p-[40px] rounded-[12px] bg-white flex flex-col items-center gap-[60px]">
+      <div className="max-w-[800px] min-h-[532px] p-[40px] rounded-xl bg-white flex flex-col items-center gap-[60px]">
         {isVerified ? (
           <>
             <div>
               <img src={successfullVerificationCheckImage} />
             </div>
 
-            <div className="flex flex-col gap-[20px] text-center">
+            <div className="flex flex-col gap-5 text-center">
               <div className="font-roboto text-[30px] font-medium leading-[40px] w-[800px]">
                 Email Verification Successful!
               </div>
@@ -108,7 +108,7 @@ const Verificationv2 = () => {
               <img src={verificationIconImage} />
             </div>
 
-            <div className="flex flex-col items-center text-center gap-[20px]">
+            <div className="flex flex-col items-center text-center gap-5">
               <div className="font-roboto font-normal text-[30px] leading-[40px]">
                 Verify your email address
               </div>
@@ -120,7 +120,7 @@ const Verificationv2 = () => {
               </div>
             </div>
 
-            <div className="flex flex-col items-center text-center gap-[20px]">
+            <div className="flex flex-col items-center text-center gap-5">
               <div>
                 If you did not receive the verification email, click the button
                 below to resend the verification email.

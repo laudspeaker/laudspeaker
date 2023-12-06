@@ -106,7 +106,7 @@ const MergeTagTextarea: FC<MergeTagTextareaProps> = ({
       <div
         className={`${
           !isPreview && "hidden"
-        } w-full bg-[#E5E5E5] max-w-full overflow-x-scroll py-[18px] px-[29px] z-[1000] rounded-[8px] text-[20px] whitespace-pre-line ${viewerClassNames}`}
+        } w-full bg-[#E5E5E5] max-w-full overflow-x-scroll py-[18px] px-[29px] z-[1000] rounded-lg text-[20px] whitespace-pre-line ${viewerClassNames}`}
         onClick={() => {
           setIsPreview(false);
         }}
@@ -129,7 +129,7 @@ const MergeTagTextarea: FC<MergeTagTextareaProps> = ({
         id={id}
         className={`${
           isPreview && "hidden"
-        } w-full !text-[20px] bg-[#E5E5E5] outline-none text-[#000] py-[18px] px-[29px] z-[1000] rounded-[8px] whitespace-pre-line ${inputClassNames}`}
+        } w-full !text-[20px] bg-[#E5E5E5] outline-none text-[#000] py-[18px] px-[29px] z-[1000] rounded-lg whitespace-pre-line ${inputClassNames}`}
         onChange={onChange}
         textareaRef={textareaRef}
         onFocus={onFocus}

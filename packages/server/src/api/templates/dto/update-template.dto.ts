@@ -9,8 +9,13 @@ import {
   MaxLength,
   ValidateNested,
 } from 'class-validator';
-import { TemplateType, WebhookData } from '../entities/template.entity';
+import {
+  PushBuilderData,
+  TemplateType,
+  WebhookData,
+} from '../entities/template.entity';
 import { Type } from 'class-transformer';
+import { PushBuilderDataDto } from './push.dto';
 
 export class UpdateTemplateDto {
   @Trim()
@@ -52,6 +57,13 @@ export class UpdateTemplateDto {
   @IsOptional()
   @MaxLength(2000)
   public smsText?: string;
+
+  @IsOptional()
+  @IsObject()
+  // TODO: fix object error
+  // @ValidateNested()
+  // @Type(() => PushBuilderDataDto)
+  public pushObject?: PushBuilderDataDto;
 
   @IsObject()
   @IsOptional()

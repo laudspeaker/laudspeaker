@@ -40,7 +40,7 @@ const FlowBuilderDeleteModal: FC<FlowBuilderDeleteModalProps> = ({
   return (
     <FlowBuilderModal isOpen={isOpen} onClose={onClose}>
       <div className="font-roboto">
-        <div className="flex gap-[16px]">
+        <div className="flex gap-4">
           <div>
             <svg
               width="22"
@@ -67,16 +67,14 @@ const FlowBuilderDeleteModal: FC<FlowBuilderDeleteModalProps> = ({
             </svg>
           </div>
 
-          <div className="flex flex-col gap-[8px]">
-            <div className="font-medium text-[16px] leading-[24px]">
-              Are you sure delete it?
-            </div>
+          <div className="flex flex-col gap-2">
+            <div className="font-medium text-base">Are you sure delete it?</div>
             <div className="font-normal text-[14px] leading-[22px]">
               This action cannot be undone.
             </div>
           </div>
         </div>
-        <div className="flex justify-end items-center mt-[24px] gap-[8px]">
+        <div className="flex justify-end items-center mt-[24px] gap-2">
           <Button type={ButtonType.SECONDARY} onClick={onClose}>
             No
           </Button>

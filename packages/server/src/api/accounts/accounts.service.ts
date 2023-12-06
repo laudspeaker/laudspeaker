@@ -22,7 +22,6 @@ import { RemoveAccountDto } from './dto/remove-account.dto';
 import { InjectConnection } from '@nestjs/mongoose';
 import mongoose, { ClientSession } from 'mongoose';
 import { WebhooksService } from '../webhooks/webhooks.service';
-import * as admin from 'firebase-admin';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { JourneysService } from '../journeys/journeys.service';
 import { TemplatesService } from '../templates/templates.service';
@@ -31,6 +30,7 @@ import onboardingJourneyFixtures from './onboarding-journey';
 import { StepsService } from '../steps/steps.service';
 import { StepType } from '../steps/types/step.interface';
 import { randomUUID } from 'crypto';
+import admin from 'firebase-admin';
 
 @Injectable()
 export class AccountsService extends BaseJwtHelper {
@@ -296,6 +296,12 @@ export class AccountsService extends BaseJwtHelper {
         HttpStatus.BAD_REQUEST
       );
 
+    if (updateUserDto.pushPlatforms) {
+      const platform =
+        updateUserDto.pushPlatforms.Android || updateUserDto.pushPlatforms.iOS;
+      await this.validateFirebase(user, platform.credentials, session);
+    }
+
     const { smsAccountSid, smsAuthToken, smsFrom } = updateUserDto;
 
     const smsDetails = [smsAccountSid, smsAuthToken, smsFrom];
@@ -313,7 +319,13 @@ export class AccountsService extends BaseJwtHelper {
     try {
       let updatedUser: Account;
       for (const key of Object.keys(updateUserDto)) {
-        oldUser[key] = updateUserDto[key];
+        if (key === 'pushPlatforms') {
+          oldUser[key] = {
+            Android:
+              updateUserDto.pushPlatforms.Android || oldUser[key].Android,
+            iOS: updateUserDto.pushPlatforms.iOS || oldUser[key].iOS,
+          };
+        } else oldUser[key] = updateUserDto[key];
       }
 
       oldUser.password = password;
@@ -486,8 +498,7 @@ export class AccountsService extends BaseJwtHelper {
           slackMessage: null,
           type: TemplateType.CUSTOM_COMPONENT,
           smsText: null,
-          pushText: null,
-          pushTitle: null,
+          pushObject: null,
           webhookData: null,
           modalState: null,
           customEvents: [
@@ -585,6 +596,40 @@ export class AccountsService extends BaseJwtHelper {
         ''
       );
       await this.journeysService.start(account, journey.id, '');
+    }
+  }
+
+  async validateFirebase(
+    user: Express.User,
+    credentials: Express.Multer.File | JSON,
+    session: string
+  ) {
+    let content = '';
+    if ((credentials as Express.Multer.File).buffer) {
+      content = (credentials as Express.Multer.File).buffer.toString('utf-8');
+    } else {
+      content = JSON.stringify(credentials as JSON);
+    }
+
+    try {
+      const serviceAccount = JSON.parse(content);
+      const firebaseApp = admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount),
+      });
+      firebaseApp.delete();
+
+      return serviceAccount;
+    } catch (error) {
+      this.error(
+        error,
+        this.validateFirebase.name,
+        session,
+        (<Account>user).id
+      );
+      throw new HttpException(
+        'Error during message processing.',
+        HttpStatus.BAD_REQUEST
+      );
     }
   }
 }

@@ -68,7 +68,7 @@ const FlowBuilderMessageRenameModal = ({
   return (
     <FlowBuilderModal isOpen={isOpen} onClose={onClose}>
       <div className="font-roboto">
-        <div className="font-medium text-[16px] leading-[24px] ">Rename</div>
+        <div className="font-medium text-base ">Rename</div>
         <div className="mt-[16px]">
           <FlowBuilderInput
             type="text"
@@ -80,12 +80,12 @@ const FlowBuilderMessageRenameModal = ({
           errors.map((err) => (
             <div
               key={err}
-              className="w-full font-inter font-normal text-[12px] leading-[20px] text-[#E11D48]"
+              className="w-full font-inter font-normal text-[12px] leading-5 text-[#E11D48]"
             >
               {MessageRenameErrorsMapping[err]}
             </div>
           ))}
-        <div className="flex justify-end items-center mt-[24px] gap-[8px]">
+        <div className="flex justify-end items-center mt-[24px] gap-2">
           <Button type={ButtonType.SECONDARY} onClick={onClose}>
             Cancel
           </Button>

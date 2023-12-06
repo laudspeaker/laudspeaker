@@ -48,7 +48,7 @@ const SnippetPicker: FC<SnippetPickerProps> = ({ userApiKey }) => {
   }, [userApiKey, snippetMode]);
 
   return (
-    <div className="p-[20px] rounded-[8px] bg-[#F3F4F6] flex flex-col gap-[20px]">
+    <div className="p-5 rounded-lg bg-[#F3F4F6] flex flex-col gap-5">
       <Select
         className="max-w-[200px]"
         options={[
@@ -90,7 +90,7 @@ const SnippetPicker: FC<SnippetPickerProps> = ({ userApiKey }) => {
         value={snippetMode}
       />
       <AceEditor
-        className="rounded-[8px]"
+        className="rounded-lg"
         aria-label="editor"
         mode={snippetModeToEditorModeMap[snippetMode]}
         theme="monokai"

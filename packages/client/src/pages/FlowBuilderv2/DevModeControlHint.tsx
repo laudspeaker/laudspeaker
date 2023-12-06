@@ -15,7 +15,7 @@ const DevModeControlHint = () => {
     <ControlButton
       className={`${
         expanded && "!p-[15px] !w-[220px] !h-[172px]"
-      } mt-[20px] !outline-none absolute !rounded-sm !border-[1px] !border-[#E5E7EB] !bg-[#FFFBEB] transition-all`}
+      } mt-[20px] !outline-none absolute !rounded-sm !border !border-[#E5E7EB] !bg-[#FFFBEB] transition-all`}
       onClick={() => setExpanded(true)}
     >
       {expanded ? (
@@ -68,10 +68,10 @@ const DevModeControlHint = () => {
                 Navigate steps
               </span>
               <div className="flex items-center justify-between gap-[5px]">
-                <div className="px-[4px] py-[4px] border-[1px] rounded border-[#111827]">
+                <div className="px-1 py-[4px] border rounded border-[#111827]">
                   <ArrowUpIcon className="min-w-[12px] min-h-[12px] text-[#111827]" />
                 </div>
-                <div className="px-[4px] py-[4px] border-[1px] rounded border-[#111827]">
+                <div className="px-1 py-[4px] border rounded border-[#111827]">
                   <ArrowDownIcon className="min-w-[12px] min-h-[12px] text-[#111827]" />
                 </div>
                 <span className="text-[14px] leading-[22px] text-[#111827] font-inter">
@@ -84,10 +84,10 @@ const DevModeControlHint = () => {
                 Select branches
               </span>
               <div className="flex items-center justify-between gap-[5px]">
-                <div className="px-[4px] py-[4px] border-[1px] rounded border-[#111827]">
+                <div className="px-1 py-[4px] border rounded border-[#111827]">
                   <ArrowLeftIcon className="min-w-[12px] min-h-[12px] text-[#111827]" />
                 </div>
-                <div className="px-[4px] py-[4px] border-[1px] rounded border-[#111827]">
+                <div className="px-1 py-[4px] border rounded border-[#111827]">
                   <ArrowRightIcon className="min-w-[12px] min-h-[12px] text-[#111827]" />
                 </div>
               </div>
@@ -97,7 +97,7 @@ const DevModeControlHint = () => {
                 Edit a step
               </span>
               <div className="flex items-center justify-between gap-[5px]">
-                <div className="px-[4px] py-[4px] border-[1px] rounded border-[#111827]">
+                <div className="px-1 py-[4px] border rounded border-[#111827]">
                   <ArrowUturnRightIcon className="min-w-[12px] min-h-[12px] text-[#111827] rotate-180" />
                 </div>
                 <span className="text-[14px] leading-[22px] text-[#111827] font-inter">

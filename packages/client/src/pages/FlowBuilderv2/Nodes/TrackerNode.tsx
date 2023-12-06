@@ -128,12 +128,8 @@ export const TrackerNode: FC<NodeProps<TrackerNodeData>> = ({
       ref={elementRef}
       className={`${isViewMode ? "w-[300px]" : "w-[260px]"} ${
         isViewMode && stats ? "h-[140px]" : "h-[80px]"
-      } ${
-        disabled ? "opacity-50 cursor-not-allowed" : ""
-      } rounded-[4px] bg-white ${
-        selected
-          ? "border-[2px] border-[#6366F1]"
-          : "border-[1px] border-[#E5E7EB]"
+      } ${disabled ? "opacity-50 cursor-not-allowed" : ""} rounded bg-white ${
+        selected ? "border-2 border-[#6366F1]" : "border border-[#E5E7EB]"
       } relative`}
       onDragOver={(e) => {
         e.stopPropagation();
@@ -161,7 +157,7 @@ export const TrackerNode: FC<NodeProps<TrackerNodeData>> = ({
             <CustomModalIcon />
           </div>
           <div
-            className={`font-inter font-semibold text-[16px] leading-[24px] flex justify-between items-center w-full`}
+            className={`font-inter font-semibold text-base flex justify-between items-center w-full`}
           >
             <div className="whitespace-nowrap">Component</div>
             {tracker && (
@@ -172,7 +168,7 @@ export const TrackerNode: FC<NodeProps<TrackerNodeData>> = ({
               >
                 {Boolean(changes.length) && elementRef?.current && (
                   <>
-                    <div className="px-[4px] py-[2px] rounded-[2px] bg-[#FEF9C3] text-[#A16207] font-inter font-normal leading-normal text-[10px] h-[18px]">
+                    <div className="px-1 py-[2px] rounded-sm bg-[#FEF9C3] text-[#A16207] font-inter font-normal leading-normal text-[10px] h-[18px]">
                       {compatNumberFormatter.format(changes.length)} changes
                     </div>
                     {createPortal(
@@ -195,7 +191,7 @@ export const TrackerNode: FC<NodeProps<TrackerNodeData>> = ({
                             transformOrigin: "0 0",
                             transform: `scale(${zoom}) translateX(100%)`,
                           }}
-                          className={`fixed px-[10px] py-[12px] w-[260px] bg-white z-[999999999] rounded-[4px] flex flex-col gap-[10px]`}
+                          className={`fixed px-[10px] py-[12px] w-[260px] bg-white z-[999999999] rounded flex flex-col gap-[10px]`}
                         >
                           <span className="font-[Inter] text-[14px] leading-[22px] font-semibold">
                             Changed Fields:{" "}
@@ -204,12 +200,12 @@ export const TrackerNode: FC<NodeProps<TrackerNodeData>> = ({
                           {changes.map((el, i) => (
                             <div
                               key={i}
-                              className="flex flex-col p-[10px] gap-[5px] rounded-[4px] bg-[#F3F4F6] w-full"
+                              className="flex flex-col p-[10px] gap-[5px] rounded bg-[#F3F4F6] w-full"
                             >
                               <span className="font-[Inter] text-[14px] leading-[22px] font-semibold text-[#18181B]">
                                 {el.field}
                               </span>
-                              <span className="font-[Inter] text-[12px] leading-[20px] text-[#18181B]">
+                              <span className="font-[Inter] text-[12px] leading-5 text-[#18181B]">
                                 {el.value}
                               </span>
                             </div>
@@ -235,7 +231,7 @@ export const TrackerNode: FC<NodeProps<TrackerNodeData>> = ({
           {needsCheck ? (
             <div className="text-[#F43F5E]">Template changed, please check</div>
           ) : tracker ? (
-            <div className="w-fit px-[5px] bg-[#E0E7FF] text-[#4338CA] rounded-[4px]">
+            <div className="w-fit px-[5px] bg-[#E0E7FF] text-[#4338CA] rounded">
               {tracker.trackerId}
             </div>
           ) : (
@@ -256,7 +252,7 @@ export const TrackerNode: FC<NodeProps<TrackerNodeData>> = ({
                   : ""
               }`}
             >
-              <div className="text-[12px] leading-[20px] text-[#4B5563]">
+              <div className="text-[12px] leading-5 text-[#4B5563]">
                 {stat.name}
               </div>
               <div className="font-semibold text-[14px] leading-[22px]">

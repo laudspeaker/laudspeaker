@@ -13,6 +13,7 @@ import { WebhooksProcessor } from './webhooks.processor';
 import { BullModule } from '@nestjs/bullmq';
 import { TemplatesModule } from '../templates/templates.module';
 import { Step } from '../steps/entities/step.entity';
+import { KafkaModule } from '../kafka/kafka.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { Step } from '../steps/entities/step.entity';
       name: 'webhooks',
     }),
     TemplatesModule,
+    KafkaModule,
   ],
   providers: [WebhooksService, WebhooksProcessor],
   controllers: [WebhooksController],

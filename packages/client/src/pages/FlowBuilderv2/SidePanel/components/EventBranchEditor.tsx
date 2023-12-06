@@ -110,7 +110,7 @@ const EventBranchEditor: FC<EventBranchEditorProps> = ({
                   true
                 )
               }
-              className="border-[1px] border-[#E5E7EB] max-w-[80px] px-[15px] py-[4px] rounded-[4px] font-roboto font-normal text-[14px] leading-[22px]"
+              className="border border-[#E5E7EB] max-w-[80px] px-[15px] py-[4px] rounded font-roboto font-normal text-[14px] leading-[22px]"
             >
               <option value={LogicRelation.OR}>Or</option>
               <option value={LogicRelation.AND}>And</option>

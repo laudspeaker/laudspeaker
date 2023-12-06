@@ -623,7 +623,7 @@ const WebhookSettings: FC<WebhookSettingsProps> = ({
               </nav>
             </div>
           </div>
-          <div className="my-[20px] flex flex-col gap-[10px]">
+          <div className="my-5 flex flex-col gap-[10px]">
             {tabComponents[currentTab]}
           </div>
           <div>
@@ -635,13 +635,13 @@ const WebhookSettings: FC<WebhookSettingsProps> = ({
                 <div className="w-full border-t border-gray-300" />
               </div>
               <div className="relative flex justify-center">
-                <span className="bg-white border-[1px] border-cyan-100 px-3 text-base rounded-md font-semibold leading-6 text-gray-700">
+                <span className="bg-white border border-cyan-100 px-3 text-base rounded-md font-semibold leading-6 text-gray-700">
                   Raw
                 </span>
               </div>
             </div>
             {isValidURL ? (
-              <div className="whitespace-pre-line border-[2px] border-cyan-200 p-[10px] rounded-md bg-white">
+              <div className="whitespace-pre-line border-2 border-cyan-200 p-[10px] rounded-md bg-white">
                 {rawRequest}
               </div>
             ) : (
@@ -666,7 +666,7 @@ const WebhookSettings: FC<WebhookSettingsProps> = ({
                 <div className="w-full border-t border-gray-300" />
               </div>
               <div className="relative flex justify-center">
-                <span className="bg-white border-[1px] border-cyan-100 px-3 text-base rounded-md font-semibold leading-6 text-gray-700">
+                <span className="bg-white border border-cyan-100 px-3 text-base rounded-md font-semibold leading-6 text-gray-700">
                   Status: {testResponseData.status}
                 </span>
               </div>
@@ -679,7 +679,7 @@ const WebhookSettings: FC<WebhookSettingsProps> = ({
                 <div className="w-full border-t border-gray-300" />
               </div>
               <div className="relative flex justify-center">
-                <span className="bg-white border-[1px] border-cyan-100 px-3 text-base rounded-md font-semibold leading-6 text-gray-700">
+                <span className="bg-white border border-cyan-100 px-3 text-base rounded-md font-semibold leading-6 text-gray-700">
                   Headers
                 </span>
               </div>
@@ -699,7 +699,7 @@ const WebhookSettings: FC<WebhookSettingsProps> = ({
                 <div className="w-full border-t border-gray-300" />
               </div>
               <div className="relative flex justify-center">
-                <span className="bg-white border-[1px] border-cyan-100 px-3 text-base rounded-md font-semibold leading-6 text-gray-700">
+                <span className="bg-white border border-cyan-100 px-3 text-base rounded-md font-semibold leading-6 text-gray-700">
                   Body
                 </span>
               </div>

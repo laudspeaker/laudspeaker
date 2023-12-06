@@ -156,7 +156,7 @@ const AttributeConditionEditor: FC<AttributeConditionEditorProps> = ({
                 (statementError) =>
                   statementError === ConditionEditorError.NO_PROPERTY_SPECIFIED
               ) && (
-                <div className="font-inter font-normal text-[12px] leading-[20px] text-[#E11D48]">
+                <div className="font-inter font-normal text-[12px] leading-5 text-[#E11D48]">
                   {
                     errorToMessageMap[
                       ConditionEditorError.NO_PROPERTY_SPECIFIED
@@ -173,7 +173,7 @@ const AttributeConditionEditor: FC<AttributeConditionEditorProps> = ({
                   .value as ComparisonType;
                 setCondition({ ...condition });
               }}
-              className="w-[145px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB]"
+              className="w-[145px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border border-[#E5E7EB]"
             >
               {valueTypeToComparisonTypesMap[statement.valueType].map(
                 (comparisonType, j) => (
@@ -190,7 +190,7 @@ const AttributeConditionEditor: FC<AttributeConditionEditorProps> = ({
                   .value as StatementValueType;
                 setCondition({ ...condition });
               }}
-              className="w-[145px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border-[1px] border-[#E5E7EB]"
+              className="w-[145px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border border-[#E5E7EB]"
             >
               {Object.values(StatementValueType).map((valueType, j) => (
                 <option key={j} value={valueType}>
@@ -213,7 +213,7 @@ const AttributeConditionEditor: FC<AttributeConditionEditorProps> = ({
                 (statementError) =>
                   statementError === ConditionEditorError.NO_VALUE_SPECIFIED
               ) && (
-                <div className="font-inter font-normal text-[12px] leading-[20px] text-[#E11D48]">
+                <div className="font-inter font-normal text-[12px] leading-5 text-[#E11D48]">
                   {errorToMessageMap[ConditionEditorError.NO_VALUE_SPECIFIED]}
                 </div>
               )}
@@ -237,7 +237,7 @@ const AttributeConditionEditor: FC<AttributeConditionEditorProps> = ({
                   })),
                 });
               }}
-              className="border-[1px] border-[#E5E7EB] max-w-[80px] px-[15px] py-[4px] rounded-[4px] font-roboto font-normal text-[14px] leading-[22px]"
+              className="border border-[#E5E7EB] max-w-[80px] px-[15px] py-[4px] rounded font-roboto font-normal text-[14px] leading-[22px]"
             >
               <option value={LogicRelation.AND}>And</option>
               <option value={LogicRelation.OR}>Or</option>
