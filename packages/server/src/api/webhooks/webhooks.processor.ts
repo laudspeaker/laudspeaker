@@ -176,10 +176,10 @@ export class WebhooksProcessor extends WorkerHost {
       }
 
       try {
-        await this.webhooksService.insertClickHouseMessages([
+        await this.webhooksService.insertMessageStatusToClickhouse([
           {
             event: 'error',
-            createdAt: new Date().toUTCString(),
+            createdAt: new Date().toISOString(),
             eventProvider: ClickHouseEventProvider.WEBHOOKS,
             messageId: '',
             audienceId: job.data.audienceId,
@@ -196,10 +196,10 @@ export class WebhooksProcessor extends WorkerHost {
       throw new Error(error);
     } else {
       try {
-        await this.webhooksService.insertClickHouseMessages([
+        await this.webhooksService.insertMessageStatusToClickhouse([
           {
             event: 'sent',
-            createdAt: new Date().toUTCString(),
+            createdAt: new Date().toISOString(),
             eventProvider: ClickHouseEventProvider.WEBHOOKS,
             messageId: '',
             audienceId: job.data.audienceId,

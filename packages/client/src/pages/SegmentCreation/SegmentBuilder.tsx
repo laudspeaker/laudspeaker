@@ -153,7 +153,7 @@ const SegmentBuilder = () => {
             Automatic segment
           </div>
           <div className="font-normal text-[14px] leading-[22px] text-[#4B5563]">
-            Description description description
+            A segment defined by the following set of filters
           </div>
         </div>
 
@@ -169,7 +169,7 @@ const SegmentBuilder = () => {
             Manual segment
           </div>
           <div className="font-normal text-[14px] leading-[22px] text-[#4B5563]">
-            Description description description
+            A segment defined by a list of users, by csv upload or otherwise
           </div>
         </div>
       </div>

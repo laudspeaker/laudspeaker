@@ -58,19 +58,22 @@ const Signup: FC<SignupProps> = ({ setShowWelcomeBanner }) => {
         laudspeakerId: response.data.id,
         email: signUpForm.email,
       });
-      toast.info(
-        "You need to verify your email. We've sent you a verification email",
-        {
-          position: "bottom-center",
-          autoClose: 5000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          progress: undefined,
-          theme: "colored",
-        }
-      );
+      if (!response?.data?.verified) {
+        //console.log("oi oi");
+        toast.info(
+          "You need to verify your email. We've sent you a verification email",
+          {
+            position: "bottom-center",
+            autoClose: 5000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+            theme: "colored",
+          }
+        );
+      }
       setShowWelcomeBanner(true);
       navigate("/home");
     }
@@ -138,7 +141,7 @@ const Signup: FC<SignupProps> = ({ setShowWelcomeBanner }) => {
                     className={`${
                       isInvalids.firstName && checkedFields.firstName
                         ? "border-red-600 text-red-600 focus:border-red-600 focus:ring-red-600"
-                        : "focus:border-cyan-500 focus:ring-cyan-500"
+                        : "focus:border-[#818CF8] focus:ring-[#818CF8]"
                     } block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 placeholder-gray-400 shadow-sm  sm:text-sm focus:outline-none`}
                     onBlur={handleFieldBlur("firstName")}
                   />
@@ -167,7 +170,7 @@ const Signup: FC<SignupProps> = ({ setShowWelcomeBanner }) => {
                     className={`${
                       isInvalids.lastName && checkedFields.lastName
                         ? "border-red-600 text-red-600 focus:border-red-600 focus:ring-red-600"
-                        : "focus:border-cyan-500 focus:ring-cyan-500"
+                        : "focus:border-[#818CF8] focus:ring-[#818CF8]"
                     } block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 placeholder-gray-400 shadow-sm  sm:text-sm focus:outline-none`}
                     onBlur={handleFieldBlur("lastName")}
                   />
@@ -197,7 +200,7 @@ const Signup: FC<SignupProps> = ({ setShowWelcomeBanner }) => {
                   className={`${
                     isInvalids.mail && checkedFields.email
                       ? "border-red-600 text-red-600 focus:border-red-600 focus:ring-red-600"
-                      : "focus:border-cyan-500 focus:ring-cyan-500"
+                      : "focus:border-[#818CF8] focus:ring-[#818CF8]"
                   } block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 placeholder-gray-400 shadow-sm  sm:text-sm focus:outline-none`}
                   onBlur={handleFieldBlur("email")}
                 />
@@ -225,7 +228,7 @@ const Signup: FC<SignupProps> = ({ setShowWelcomeBanner }) => {
                   className={`${
                     isInvalids.pass && checkedFields.password
                       ? "border-red-600 text-red-600 focus:border-red-600 focus:ring-red-600"
-                      : "focus:border-cyan-500 focus:ring-cyan-500"
+                      : "focus:border-[#818CF8] focus:ring-[#818CF8]"
                   } block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 placeholder-gray-400 shadow-sm  sm:text-sm focus:outline-none`}
                   onBlur={handleFieldBlur("password")}
                 />
@@ -250,7 +253,7 @@ const Signup: FC<SignupProps> = ({ setShowWelcomeBanner }) => {
                   className={`${
                     isInvalids.pass && checkedFields.password
                       ? "border-red-600 text-red-600 focus:border-red-600 focus:ring-red-600"
-                      : "focus:border-cyan-500 focus:ring-cyan-500"
+                      : "focus:border-[#818CF8] focus:ring-[#818CF8]"
                   } block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 placeholder-gray-400 shadow-sm  sm:text-sm focus:outline-none`}
                   onBlur={handleFieldBlur("password")}
                 />
@@ -271,7 +274,7 @@ const Signup: FC<SignupProps> = ({ setShowWelcomeBanner }) => {
                 <button
                   type="submit"
                   onClick={handleSubmit}
-                  className="flex w-full disabled:bg-gray-400 disabled:border-gray-400 disabled:text-gray-600 justify-center rounded-md border border-transparent bg-cyan-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2"
+                  className="flex w-full disabled:bg-gray-400 disabled:border-gray-400 disabled:text-gray-600 justify-center rounded-md border border-transparent bg-[#6366F1] py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-[#818CF8] focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2"
                   disabled={isInvalid}
                 >
                   Create Account
@@ -284,7 +287,7 @@ const Signup: FC<SignupProps> = ({ setShowWelcomeBanner }) => {
             Already have an account?
             <Link
               href="/login"
-              className="no-underline text-[#4FA198] m-[0_10px]"
+              className="no-underline text-[#6366F1] m-[0_10px]"
             >
               Log in
             </Link>

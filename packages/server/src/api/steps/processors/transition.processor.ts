@@ -442,10 +442,10 @@ export class TransitionProcessor extends WorkerHost {
     };
 
     // 4. Record that the message was sent
-    await this.webhooksService.insertClickHouseMessages([
+    await this.webhooksService.insertMessageStatusToClickhouse([
       {
         stepId: stepID,
-        createdAt: new Date().toUTCString(),
+        createdAt: new Date().toISOString(),
         customerId: customerID,
         event: 'sent',
         eventProvider: ClickHouseEventProvider.TRACKER,
@@ -468,10 +468,10 @@ export class TransitionProcessor extends WorkerHost {
       humanReadableName
     );
     if (isDelivered)
-      await this.webhooksService.insertClickHouseMessages([
+      await this.webhooksService.insertMessageStatusToClickhouse([
         {
           stepId: stepID,
-          createdAt: new Date().toUTCString(),
+          createdAt: new Date().toISOString(),
           customerId: customerID,
           event: 'delivered',
           eventProvider: ClickHouseEventProvider.TRACKER,
@@ -700,12 +700,12 @@ export class TransitionProcessor extends WorkerHost {
           eventProvider: owner.emailProvider,
         });
         this.debug(`${JSON.stringify(ret)}`, this.handleMessage.name, session);
-        await this.webhooksService.insertClickHouseMessages(ret);
+        await this.webhooksService.insertMessageStatusToClickhouse(ret);
         if (owner.emailProvider === 'free3') await owner.save();
         break;
       case TemplateType.PUSH:
         // TODO: update for new PUSH
-        // await this.webhooksService.insertClickHouseMessages(
+        // await this.webhooksService.insertMessageStatusToClickhouse(
         //   await sender.process({
         //     name: TemplateType.PUSH,
         //     accountID: owner.id,
@@ -739,7 +739,7 @@ export class TransitionProcessor extends WorkerHost {
         break;
       case TemplateType.SLACK:
         const installation = await this.slackService.getInstallation(customer);
-        await this.webhooksService.insertClickHouseMessages(
+        await this.webhooksService.insertMessageStatusToClickhouse(
           await sender.process({
             name: TemplateType.SLACK,
             accountID: owner.id,
@@ -760,7 +760,7 @@ export class TransitionProcessor extends WorkerHost {
         );
         break;
       case TemplateType.SMS:
-        await this.webhooksService.insertClickHouseMessages(
+        await this.webhooksService.insertMessageStatusToClickhouse(
           await sender.process({
             name: TemplateType.SMS,
             accountID: owner.id,

@@ -110,7 +110,9 @@ const TrackerTemplateTable = () => {
   return (
     <div className="p-5 flex flex-col gap-5 font-inter font-normal text-[14px] text-[#111827] leading-[22px]">
       <div className="flex justify-between items-center">
-        <div className="text-[20px] font-semibold leading-[28px]">Tracker</div>
+        <div className="text-[20px] font-semibold leading-[28px]">
+          Onboarding Components
+        </div>
 
         <Button
           type={ButtonType.PRIMARY}

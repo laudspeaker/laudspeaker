@@ -42,7 +42,6 @@ import { Response, fetch } from 'undici';
 import { Model } from 'mongoose';
 import { Liquid } from 'liquidjs';
 import { TestWebhookDto } from './dto/test-webhook.dto';
-import { WebhooksService } from '../webhooks/webhooks.service';
 import wait from '../../utils/wait';
 import { ModalsService } from '../modals/modals.service';
 import { WebsocketGateway } from '../../websockets/websocket.gateway';
@@ -63,7 +62,6 @@ export class TemplatesService extends QueueEventsHost {
     @Inject(WebsocketGateway)
     private websocketGateway: WebsocketGateway,
     @Inject(SlackService) private slackService: SlackService,
-    @Inject(WebhooksService) private webhooksService: WebhooksService,
     @Inject(ModalsService) private modalsService: ModalsService,
     @InjectQueue('message') private readonly messageQueue: Queue,
     @InjectQueue('webhooks') private readonly webhooksQueue: Queue,

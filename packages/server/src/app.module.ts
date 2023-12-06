@@ -58,6 +58,7 @@ import { JourneysModule } from './api/journeys/journeys.module';
 import { RedlockModule } from './api/redlock/redlock.module';
 import { RedlockService } from './api/redlock/redlock.service';
 import { RavenModule } from 'nest-raven';
+import { KafkaModule } from './api/kafka/kafka.module';
 
 const sensitiveKeys = [
   /cookie/i,
@@ -238,6 +239,7 @@ const formatMongoConnectionString = (mongoConnectionString: string) => {
     JourneysModule,
     RedlockModule,
     RavenModule,
+    KafkaModule,
   ],
   controllers: [AppController],
   providers: [CronService, RedlockService],

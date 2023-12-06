@@ -27,7 +27,7 @@ const FlowViewerStopModal: FC<FlowViewerStopModalProps> = ({
         <div className="flex gap-4">
           <div className="flex flex-col gap-2">
             <div className="font-medium text-base">
-              Are you sure to stop the journey?
+              Do you want to stop the journey?
             </div>
             <div className="font-normal text-[14px] leading-[22px]">
               Please note that stopping the journey is an irreversible action,
@@ -40,7 +40,7 @@ const FlowViewerStopModal: FC<FlowViewerStopModalProps> = ({
             Cancel
           </Button>
           <Button
-            type={ButtonType.PRIMARY}
+            type={ButtonType.STOP}
             className="!rounded-sm bg-[#F43F5E] !border !border-[#F43F5E] text-white"
             onClick={handleStop}
           >
