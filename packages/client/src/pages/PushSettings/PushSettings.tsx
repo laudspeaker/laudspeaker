@@ -115,7 +115,10 @@ const PushSettings = () => {
       const { pushPlatforms } = data;
 
       handleUpdateConfig({
-        connectedPlatforms: pushPlatforms,
+        connectedPlatforms: {
+          iOS: pushPlatforms?.iOS,
+          Android: pushPlatforms?.Android,
+        },
       });
     } catch (error) {}
     setIsLoadingSettings(false);
