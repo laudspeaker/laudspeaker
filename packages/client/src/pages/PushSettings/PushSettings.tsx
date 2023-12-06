@@ -8,6 +8,9 @@ import PushSettingsAddUsers from "./PushSettingsAddUsers";
 import ArrowRightIcon from "@heroicons/react/24/outline/ArrowRightIcon";
 import PushSettingsFirebaseConfiguration from "./PushSettingsFirebaseConfiguration";
 import Input from "components/Elements/Inputv2";
+import ApiService from "services/api.service";
+import { toast } from "react-toastify";
+import CheckBox from "components/Checkbox/Checkbox";
 
 const platformIcons = {
   [PushPlatforms.ANDROID]: (
@@ -57,7 +60,7 @@ export interface PushSettingsConfiguration {
     PushPlatforms,
     | {
         fileName: string;
-        fileKey: string;
+        credentials: JSON;
       }
     | undefined
   >;
@@ -67,7 +70,7 @@ export interface PushSettingsConfiguration {
     PushPlatforms,
     | {
         fileName: string;
-        fileKey: string;
+        isTrackingDisabled: boolean;
       }
     | undefined
   >;
@@ -76,6 +79,8 @@ export interface PushSettingsConfiguration {
 const PushSettings = () => {
   const navigate = useNavigate();
   const [tabIndex, setTabIndex] = useState(0);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isLoadingSettings, setIsLoadingSettings] = useState(true);
   const [config, setConfig] = useState<PushSettingsConfiguration>({
     configFile: {
       Android: undefined,
@@ -92,6 +97,7 @@ const PushSettings = () => {
     },
   });
   const [testToken, setTestToken] = useState("");
+  const [viewConnected, setViewConnected] = useState<PushPlatforms>();
 
   const handleUpdateConfig = (values: Partial<PushSettingsConfiguration>) => {
     setConfig((prev) => ({ ...prev, ...values }));
@@ -101,6 +107,23 @@ const PushSettings = () => {
     if (tabIndex === 0) navigate("/settings");
     else setTabIndex((prev) => prev - 1);
   };
+
+  const clarifyData = async () => {
+    setIsLoadingSettings(true);
+    try {
+      const { data } = await ApiService.get({ url: "/accounts" });
+      const { pushPlatforms } = data;
+
+      handleUpdateConfig({
+        connectedPlatforms: pushPlatforms,
+      });
+    } catch (error) {}
+    setIsLoadingSettings(false);
+  };
+
+  useEffect(() => {
+    clarifyData();
+  }, []);
 
   const tabs: Record<number, React.ReactElement> = {
     1: (
@@ -114,26 +137,47 @@ const PushSettings = () => {
     ),
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (
       tabIndex === 2 &&
       (config.configFile.Android || config.configFile.iOS)
     ) {
-      handleUpdateConfig({
-        configFile: {
-          Android: undefined,
-          iOS: undefined,
-        },
-        selectedPlatforms: {
-          Android: false,
-          iOS: false,
-        },
-        connectedPlatforms: {
-          Android:
-            config.connectedPlatforms.Android || config.configFile.Android,
-          iOS: config.connectedPlatforms.iOS || config.configFile.iOS,
-        },
-      });
+      setIsSaving(true);
+      try {
+        const object: Record<string, any> = {};
+
+        Object.keys(config.selectedPlatforms).forEach((el) => {
+          if (config.selectedPlatforms[el as PushPlatforms]) {
+            object[el] = {
+              ...config.configFile[el as PushPlatforms],
+              isTrackingDisabled: config.isTrackingDisabled,
+            };
+          }
+        });
+
+        await ApiService.patch({
+          url: "/accounts",
+          options: {
+            pushPlatforms: object,
+          },
+        });
+        await clarifyData();
+        handleUpdateConfig({
+          configFile: {
+            Android: undefined,
+            iOS: undefined,
+          },
+          selectedPlatforms: {
+            Android: false,
+            iOS: false,
+          },
+          isTrackingDisabled: true,
+        });
+      } catch (err) {
+        toast.error("Error saving credentials, please try again.");
+      } finally {
+        setIsSaving(false);
+      }
     }
     setTabIndex((prev) => (prev < setupTabs.length - 1 ? prev + 1 : 0));
   };
@@ -151,205 +195,255 @@ const PushSettings = () => {
     <div className="p-5 flex justify-center font-inter text-[14px] font-normal leading-[22px] text-[#111827]">
       <div className="max-w-[970px] w-full flex flex-col gap-5">
         <div className="flex gap-[15px] items-center">
-          <BackButton onClick={() => navigate("/settings")} />
+          <BackButton
+            onClick={() =>
+              viewConnected
+                ? setViewConnected(undefined)
+                : navigate("/settings")
+            }
+          />
           <div className="text-[20px] font-semibold leading-[28px] text-black">
-            Push
+            {viewConnected} Push
           </div>
         </div>
         <div className="bg-white p-5 flex flex-col gap-5">
-          {isPlatformSelected && (
+          {viewConnected ? (
             <>
-              <div className="flex justify-center items-center gap-4">
-                {setupTabs.map((el, i) => (
-                  <div key={i} className="flex items-center">
-                    <div
-                      className={`text-base font-roboto flex justify-center transition-all items-center min-w-[24px] max-w-[24px] min-h-[24px] max-h-6 rounded-full border ${
-                        i == tabIndex
-                          ? "bg-[#6366F1] border-[#6366F1] text-white"
-                          : i < tabIndex
-                          ? "bg-[#22C55E] border-[#22C55E]"
-                          : "bg-transparent border-[#9CA3AF] text-[#9CA3AF]"
-                      }`}
-                    >
-                      {i < tabIndex ? (
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="12"
-                          height="13"
-                          viewBox="0 0 12 13"
-                          fill="none"
-                        >
-                          <path
-                            d="M11.3578 2.52051H10.4216C10.2904 2.52051 10.1658 2.58078 10.0855 2.6839L4.56358 9.67899L1.91581 6.32408C1.87576 6.27323 1.82471 6.23211 1.76648 6.20381C1.70826 6.17551 1.64439 6.16077 1.57965 6.16069H0.643492C0.55376 6.16069 0.504207 6.26381 0.559117 6.33345L4.22742 10.9808C4.39885 11.1977 4.72831 11.1977 4.90108 10.9808L11.4422 2.69194C11.4971 2.62363 11.4475 2.52051 11.3578 2.52051Z"
-                            fill="white"
-                          />
-                        </svg>
-                      ) : (
-                        i + 1
-                      )}
-                    </div>
-                    <div
-                      className={`${
-                        i == tabIndex
-                          ? "text-base text-[#111827] font-semibold"
-                          : i < tabIndex
-                          ? "text-sm text-[#111827]"
-                          : "text-sm text-[#9CA3AF]"
-                      } mx-2 whitespace-nowrap font-inter transition-all`}
-                    >
-                      {el.title}
-                    </div>
-                    {setupTabs.length - 1 !== i && (
-                      <div
-                        className={`${
-                          i < tabIndex ? "border-[#22C55E]" : "border-[#E5E7EB]"
-                        } ml-2 border-t w-[124px] transition-all`}
-                      />
-                    )}
-                  </div>
-                ))}
+              <div className=" font-inter text-[#111827] text-base font-semibold">
+                Server key (.JSON)
               </div>
-              <hr className="border-[#E5E7EB] mb-5" />
-              {tabIndex === 0 && (
-                <div className="mb-[-10px] font-inter text-[#111827] text-base font-semibold">
-                  Platform selection
+              <div className="w-full flex text-[#6366F1] p-[10px] border font-semibold border-[#E5E7EB] bg-[#F9FAFB] ">
+                <div className="whitespace-nowrap overflow-hidden max-w-full text-ellipsis text-sm font-inter">
+                  {config.connectedPlatforms[viewConnected]?.fileName ||
+                    "Unknown name"}
                 </div>
-              )}
-            </>
-          )}
-          {tabIndex === 0 ? (
-            <>
-              <div className="text-[#9c9fa3] font-roboto text-[14px] leading-[22px]">
-                Description Description Description Description Description
-                Description Description Description Description Description
-                Description Description Description Description
-                <a
-                  href="https://laudspeaker.com/docs/overview/introduction"
-                  target="_blank"
-                >
-                  <span className="inline-block ml-1 text-roboto text-[#111827] font-bold underline">
-                    Documentation
-                  </span>
-                </a>
               </div>
-              <hr className="border-[#E5E7EB]" />
-              {isSomeConnected && !isPlatformSelected && (
-                <>
-                  <div className="font-inter text-[#111827] text-base font-semibold">
-                    Connected platforms
-                  </div>
-                  {Object.keys(config.connectedPlatforms)
-                    .filter(
-                      (el) => !!config.connectedPlatforms[el as PushPlatforms]
-                    )
-                    .map((el) => (
-                      <div
-                        key={el}
-                        className="rounded border-[#E5E7EB] border px-5 py-6 flex items-center justify-between cursor-pointer select-none"
-                      >
-                        <div className="flex items-center [&>svg]:mr-[10px] [&>svg]:max-w-[30px] [&>svg]:min-w-[30px] [&>svg]:min-h-[30px] [&>svg]:max-h-[30px]">
-                          {platformIcons[el as PushPlatforms]}
-                          <span className="text-[#18181B] text-base font-inter">
-                            {el}
-                          </span>
-                        </div>
-                        <div className="flex items-center">
-                          <Chip
-                            label="Connected"
-                            wrapperClass="!bg-[#DCFCE7] !py-[2px] mr-[10px]"
-                            textClass="!text-sm !font-inter !font-normal !text-[#14532D]"
-                          />
-                          <ArrowRightIcon className="w-6 h-6 text-[#111827]" />
-                        </div>
-                      </div>
-                    ))}
-                  <div className="font-inter text-[#111827] text-sm font-semibold">
-                    Send a test push
-                  </div>
-                  <div className="text-xs font-inter text-[#4B5563] -my-[10px]">
-                    Enter a device token for a test push. If you receive it, the
-                    setup is successful. Find the token in your app or
-                    notification service settings.
-                  </div>
-                  <div className="flex">
-                    <Input
-                      value={testToken}
-                      onChange={setTestToken}
-                      wrapperClassName="max-w-[220px] w-full mr-[10px]"
-                      className="w-full max-w-[220px]"
-                    />
-                    <Button
-                      type={ButtonType.SECONDARY}
-                      disabled={!testToken}
-                      onClick={() => {}}
-                    >
-                      Send test
-                    </Button>
-                  </div>
-                  {!isBothConnected && <hr className="border-[#E5E7EB]" />}
-                </>
-              )}
-              {!isBothConnected && !isPlatformSelected && (
-                <div className="font-inter text-[#111827] text-base font-semibold">
-                  Supported platforms
+              <div className=" font-inter text-[#111827] text-sm font-semibold">
+                URL
+              </div>
+              <div className="w-full flex text-[#111827] px-3 py-[5px] border border-[#E5E7EB] bg-[#F9FAFB] ">
+                <div className="whitespace-nowrap overflow-hidden max-w-full text-ellipsis text-sm font-inter">
+                  exampleurl.com
                 </div>
-              )}
-              {!isBothConnected && (
-                <div className="flex gap-5 h-[66px] items-center">
-                  {Object.values(PushPlatforms)
-                    .filter((el) => !config.connectedPlatforms[el])
-                    .map((el, i) => (
-                      <div
-                        key={el}
-                        className={`${
-                          config.selectedPlatforms[el] &&
-                          "!bg-[#EEF2FF] !border-[#6366F1] border-2"
-                        } w-[200px] px-5 bg-white py-[10px] rounded-[6px] border-[#D1D5DB] border flex items-center cursor-pointer select-none transition-all`}
-                        onClick={() => {
-                          handleUpdateConfig({
-                            selectedPlatforms: {
-                              ...config.selectedPlatforms,
-                              [el]: !config.selectedPlatforms[el],
-                            },
-                          });
-                        }}
-                      >
-                        {platformIcons[el]}
-                        <div className="ml-[10px] font-inter text-base text-[#18181B]">
-                          {el}
-                        </div>
-                      </div>
-                    ))}
-                </div>
-              )}
+              </div>
+              <CheckBox
+                text={"Uninstall tracking for this app"}
+                initValue={
+                  config.connectedPlatforms[viewConnected]?.isTrackingDisabled
+                }
+                propControl={true}
+                className="grayscale opacity-70"
+                onCheck={() => {}}
+              />
             </>
           ) : (
-            tabs[tabIndex]
-          )}
-
-          {isPlatformSelected && (
             <>
-              <hr className="border-[#E5E7EB] mt-[20px]" />
-              <div className="flex justify-end gap-[10px]">
-                <Button
-                  type={ButtonType.SECONDARY}
-                  className="text-[#6366F1] border-[#6366F1]"
-                  onClick={handleCancelBack}
-                >
-                  {tabIndex === 0 ? "Cancel" : "Back"}
-                </Button>
-                <Button
-                  type={ButtonType.PRIMARY}
-                  disabled={
-                    tabIndex == 1
-                      ? !(config.configFile.Android || config.configFile.iOS)
-                      : tabIndex == 2 && false
-                  }
-                  onClick={handleSave}
-                >
-                  {tabIndex === 2 ? "Save" : "Next"}
-                </Button>
-              </div>
+              {isPlatformSelected && (
+                <>
+                  <div className="flex justify-center items-center gap-4">
+                    {setupTabs.map((el, i) => (
+                      <div key={i} className="flex items-center">
+                        <div
+                          className={`text-base font-roboto flex justify-center transition-all items-center min-w-[24px] max-w-[24px] min-h-[24px] max-h-6 rounded-full border ${
+                            i == tabIndex
+                              ? "bg-[#6366F1] border-[#6366F1] text-white"
+                              : i < tabIndex
+                              ? "bg-[#22C55E] border-[#22C55E]"
+                              : "bg-transparent border-[#9CA3AF] text-[#9CA3AF]"
+                          }`}
+                        >
+                          {i < tabIndex ? (
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="12"
+                              height="13"
+                              viewBox="0 0 12 13"
+                              fill="none"
+                            >
+                              <path
+                                d="M11.3578 2.52051H10.4216C10.2904 2.52051 10.1658 2.58078 10.0855 2.6839L4.56358 9.67899L1.91581 6.32408C1.87576 6.27323 1.82471 6.23211 1.76648 6.20381C1.70826 6.17551 1.64439 6.16077 1.57965 6.16069H0.643492C0.55376 6.16069 0.504207 6.26381 0.559117 6.33345L4.22742 10.9808C4.39885 11.1977 4.72831 11.1977 4.90108 10.9808L11.4422 2.69194C11.4971 2.62363 11.4475 2.52051 11.3578 2.52051Z"
+                                fill="white"
+                              />
+                            </svg>
+                          ) : (
+                            i + 1
+                          )}
+                        </div>
+                        <div
+                          className={`${
+                            i == tabIndex
+                              ? "text-base text-[#111827] font-semibold"
+                              : i < tabIndex
+                              ? "text-sm text-[#111827]"
+                              : "text-sm text-[#9CA3AF]"
+                          } mx-2 whitespace-nowrap font-inter transition-all`}
+                        >
+                          {el.title}
+                        </div>
+                        {setupTabs.length - 1 !== i && (
+                          <div
+                            className={`${
+                              i < tabIndex
+                                ? "border-[#22C55E]"
+                                : "border-[#E5E7EB]"
+                            } ml-2 border-t w-[124px] transition-all`}
+                          />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  <hr className="border-[#E5E7EB] mb-5" />
+                  {tabIndex === 0 && (
+                    <div className="mb-[-10px] font-inter text-[#111827] text-base font-semibold">
+                      Platform selection
+                    </div>
+                  )}
+                </>
+              )}
+              {tabIndex === 0 ? (
+                <>
+                  <div className="text-[#9c9fa3] font-roboto text-[14px] leading-[22px]">
+                    Description Description Description Description Description
+                    Description Description Description Description Description
+                    Description Description Description Description
+                    <a
+                      href="https://laudspeaker.com/docs/overview/introduction"
+                      target="_blank"
+                    >
+                      <span className="inline-block ml-1 text-roboto text-[#111827] font-bold underline">
+                        Documentation
+                      </span>
+                    </a>
+                  </div>
+                  <hr className="border-[#E5E7EB]" />
+                  {isSomeConnected && !isPlatformSelected && (
+                    <>
+                      <div className="font-inter text-[#111827] text-base font-semibold">
+                        Connected platforms
+                      </div>
+                      {Object.keys(config.connectedPlatforms)
+                        .filter(
+                          (el) =>
+                            !!config.connectedPlatforms[el as PushPlatforms]
+                        )
+                        .map((el) => (
+                          <div
+                            key={el}
+                            className="rounded border-[#E5E7EB] border px-5 py-6 flex items-center justify-between cursor-pointer select-none"
+                            onClick={() => {
+                              setViewConnected(el as PushPlatforms);
+                            }}
+                          >
+                            <div className="flex items-center [&>svg]:mr-[10px] [&>svg]:max-w-[30px] [&>svg]:min-w-[30px] [&>svg]:min-h-[30px] [&>svg]:max-h-[30px]">
+                              {platformIcons[el as PushPlatforms]}
+                              <span className="text-[#18181B] text-base font-inter">
+                                {el}
+                              </span>
+                            </div>
+                            <div className="flex items-center">
+                              <Chip
+                                label="Connected"
+                                wrapperClass="!bg-[#DCFCE7] !py-[2px] mr-[10px]"
+                                textClass="!text-sm !font-inter !font-normal !text-[#14532D]"
+                              />
+                              <ArrowRightIcon className="w-6 h-6 text-[#111827]" />
+                            </div>
+                          </div>
+                        ))}
+                      <div className="font-inter text-[#111827] text-sm font-semibold">
+                        Send a test push
+                      </div>
+                      <div className="text-xs font-inter text-[#4B5563] -my-[10px]">
+                        Enter a device token for a test push. If you receive it,
+                        the setup is successful. Find the token in your app or
+                        notification service settings.
+                      </div>
+                      <div className="flex">
+                        <Input
+                          value={testToken}
+                          onChange={setTestToken}
+                          wrapperClassName="max-w-[220px] w-full mr-[10px]"
+                          className="w-full max-w-[220px]"
+                        />
+                        <Button
+                          type={ButtonType.SECONDARY}
+                          disabled={!testToken}
+                          onClick={() => {}}
+                        >
+                          Send test
+                        </Button>
+                      </div>
+                      {!isBothConnected && <hr className="border-[#E5E7EB]" />}
+                    </>
+                  )}
+                  {!isBothConnected && !isPlatformSelected && (
+                    <div className="font-inter text-[#111827] text-base font-semibold">
+                      Supported platforms
+                    </div>
+                  )}
+                  {!isBothConnected && (
+                    <div className="flex gap-5 h-[66px] items-center">
+                      {Object.values(PushPlatforms)
+                        .filter((el) => !config.connectedPlatforms[el])
+                        .map((el, i) => (
+                          <div
+                            key={el}
+                            className={`${
+                              config.selectedPlatforms[el] &&
+                              "!bg-[#EEF2FF] !border-[#6366F1] border-2"
+                            } w-[200px] px-5 bg-white py-[10px] rounded-[6px] border-[#D1D5DB] border flex items-center cursor-pointer select-none transition-all`}
+                            onClick={() => {
+                              handleUpdateConfig({
+                                selectedPlatforms: {
+                                  ...config.selectedPlatforms,
+                                  [el]: !config.selectedPlatforms[el],
+                                },
+                              });
+                            }}
+                          >
+                            {platformIcons[el]}
+                            <div className="ml-[10px] font-inter text-base text-[#18181B]">
+                              {el}
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+                  )}
+                </>
+              ) : (
+                tabs[tabIndex]
+              )}
+
+              {isPlatformSelected && (
+                <>
+                  <hr className="border-[#E5E7EB] mt-[20px]" />
+                  <div className="flex justify-end gap-[10px]">
+                    <Button
+                      type={ButtonType.SECONDARY}
+                      className="text-[#6366F1] border-[#6366F1]"
+                      disabled={
+                        (tabIndex == 2 && isSaving) || isLoadingSettings
+                      }
+                      onClick={handleCancelBack}
+                    >
+                      {tabIndex === 0 ? "Cancel" : "Back"}
+                    </Button>
+                    <Button
+                      type={ButtonType.PRIMARY}
+                      disabled={
+                        (tabIndex == 1
+                          ? !(
+                              config.configFile.Android || config.configFile.iOS
+                            )
+                          : tabIndex == 2 && isSaving) || isLoadingSettings
+                      }
+                      onClick={handleSave}
+                    >
+                      {tabIndex === 2 ? "Save" : "Next"}
+                    </Button>
+                  </div>
+                </>
+              )}
             </>
           )}
         </div>

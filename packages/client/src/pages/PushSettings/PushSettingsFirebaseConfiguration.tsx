@@ -5,6 +5,7 @@ import { toast } from "react-toastify";
 import { PushSettingsConfiguration } from "./PushSettings";
 import TrashIcon from "@heroicons/react/24/outline/TrashIcon";
 import { PushPlatforms } from "pages/PushBuilder/PushBuilderContent";
+import tokenService from "services/token.service";
 
 interface PushSettingsFirebaseConfigurationProps {
   config: PushSettingsConfiguration;
@@ -29,35 +30,32 @@ const PushSettingsFirebaseConfiguration = ({
 
     setIsFileLoading(true);
     try {
-      // Remove on upload update
-      await new Promise((resolve) => setTimeout(resolve, 4000));
+      const res = await fetch(
+        `${process.env.REACT_APP_API_BASE_URL}/accounts/settings/validateFirebase`,
+        {
+          method: "POST",
+          body: formData,
+          headers: {
+            Authorization: `Bearer ${tokenService.getLocalAccessToken()}`,
+          },
+        }
+      );
+      if (!res.ok) throw new Error("Error during credentials validation");
+
+      const data = await res.json();
+
       const object = {
-        fileKey: "test",
         fileName: file.name,
+        credentials: data,
       };
+
       updateConfig({
         configFile: {
           Android: config.selectedPlatforms.Android ? object : undefined,
           iOS: config.selectedPlatforms.iOS ? object : undefined,
         },
       });
-      //   const res = await fetch(
-      //     `${process.env.REACT_APP_API_BASE_URL}/customers/importcsv`,
-      //     {
-      //       method: "POST",
-      //       body: formData,
-      //       headers: {
-      //         Authorization: `Bearer ${TokenService.getLocalAccessToken()}`,
-      //       },
-      //     }
-      //   );
-      //   if (!res.ok) throw new Error("Error while loading csv");
-      //   const {
-      //     stats: { created, updated, skipped },
-      //   } = await res.json();
-      // toast.success(
-      //   `Successfully loaded your customer from csv file.\nCreated: ${created}.\nUpdated: ${updated}.\nSkipped: ${skipped}`
-      // );
+      toast.success(`Credentials validated.`);
     } catch (e) {
       console.error(e);
       if (e instanceof Error) toast.error(e.message);
@@ -65,6 +63,7 @@ const PushSettingsFirebaseConfiguration = ({
       setIsFileLoading(false);
     }
   };
+
   const handleDrag = function (e: DragEvent<HTMLDivElement>) {
     e.preventDefault();
     e.stopPropagation();
