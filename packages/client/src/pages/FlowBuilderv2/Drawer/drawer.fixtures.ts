@@ -33,7 +33,7 @@ export enum DrawerAction {
 
 const flowBuilderDrawerFixtures: FlowBuilderDrawerFixture[] = [
   {
-    groupName: "Messages & Step",
+    groupName: "Messages & Steps",
     children: [
       {
         id: DrawerAction.EMAIL,
@@ -84,7 +84,7 @@ const flowBuilderDrawerFixtures: FlowBuilderDrawerFixture[] = [
     ],
   },
   {
-    groupName: "Trigger",
+    groupName: "Delays & Triggers",
     children: [
       {
         id: DrawerAction.WAIT_UNTIL,
@@ -104,7 +104,7 @@ const flowBuilderDrawerFixtures: FlowBuilderDrawerFixture[] = [
     ],
   },
   {
-    groupName: "Audience Split ",
+    groupName: "Audience Split",
     children: [
       {
         id: DrawerAction.MULTISPLIT,

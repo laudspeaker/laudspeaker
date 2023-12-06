@@ -59,7 +59,7 @@ const PeopleTablev2 = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pagesCount, setPagesCount] = useState(1);
 
-  const ITEMS_PER_PAGE = 5;
+  const ITEMS_PER_PAGE = 10;
 
   const loadData = async () => {
     setIsLoading(true);
