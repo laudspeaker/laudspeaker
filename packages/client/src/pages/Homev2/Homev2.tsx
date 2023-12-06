@@ -125,7 +125,7 @@ const Homev2 = () => {
 
                   <div className="flex flex-col gap-[10px]">
                     <div
-                      className={`font-inter text-[16px] leading-[24px] font-normal ${
+                      className={`font-inter text-base font-normal ${
                         i === activeFixtureIndex || fixture.done
                           ? "font-semibold"
                           : ""

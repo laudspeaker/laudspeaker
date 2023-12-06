@@ -26,7 +26,7 @@ const FlowViewerStopModal: FC<FlowViewerStopModalProps> = ({
       <div className="font-roboto">
         <div className="flex gap-4">
           <div className="flex flex-col gap-2">
-            <div className="font-medium text-[16px] leading-[24px]">
+            <div className="font-medium text-base">
               Do you want to stop the journey?
             </div>
             <div className="font-normal text-[14px] leading-[22px]">

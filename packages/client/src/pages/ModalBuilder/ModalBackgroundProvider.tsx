@@ -55,7 +55,7 @@ const ModalBackgroundProvider: FC<ModalBackgroundProviderProps> = ({
             </div>
           </div>
           <div className="flex flex-col gap-[15px]">
-            <div className="h-[50px] bg-[#4338CA] rounded-xl flex justify-center items-center font-semibold text-[16px] leading-[24px] text-white">
+            <div className="h-[50px] bg-[#4338CA] rounded-xl flex justify-center items-center font-semibold text-base text-white">
               SIGN UP
             </div>
             <div className="h-[50px] border-[1.5px] border-[#0B465440] rounded-xl flex items-center justify-center text-[#00000080] leading-[22px] text-[14px] font-normal">

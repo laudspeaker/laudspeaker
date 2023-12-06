@@ -127,6 +127,9 @@ export class AccountsController {
         .limit(1)
         .execute();
 
+      delete data?.[0].pushPlatforms?.Android?.credentials;
+      delete data?.[0].pushPlatforms?.IOS?.credentials;
+
       return data?.[0];
     } catch (e) {
       this.error(e, this.findOne.name, session, (<Account>user).id);
@@ -152,6 +155,31 @@ export class AccountsController {
       this.error(e, this.getUserSettings.name, session, (<Account>user).id);
       throw e;
     }
+  }
+
+  @Post('/settings/validateFirebase')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
+  @UseInterceptors(
+    FileInterceptor('file', {
+      limits: {
+        fileSize: 10240,
+      },
+      fileFilter: (req, file, callback) => {
+        if (file.mimetype === 'application/json') {
+          callback(null, true);
+        } else {
+          callback(new Error('Unsupported file type'), false);
+        }
+      },
+    })
+  )
+  async validateFirebaseConnection(
+    @Req() { user }: Request,
+    @UploadedFile() file: Express.Multer.File
+  ) {
+    const session = randomUUID();
+    return this.accountsService.validateFirebase(<Account>user, file, session);
   }
 
   @Patch('keygen')

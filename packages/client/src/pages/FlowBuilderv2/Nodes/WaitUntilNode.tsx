@@ -40,7 +40,7 @@ export const WaitUntilNode: FC<NodeProps<WaitUntilNodeData>> = ({
       {branches.length === 1 ? (
         <BranchPopover branch={branches[0]} node={thisNode}>
           <div className="p-[16px]">
-            <div className="flex justify-between font-semibold text-[16px] leading-[24px] mb-[2px]">
+            <div className="flex justify-between font-semibold text-base mb-[2px]">
               <div>Wait until</div>
               {isViewMode && (
                 <div className="h-fit px-1 py-[2px] flex items-center gap-[4px] bg-[#F3F4F6] rounded-sm">
@@ -70,7 +70,7 @@ export const WaitUntilNode: FC<NodeProps<WaitUntilNodeData>> = ({
         </BranchPopover>
       ) : (
         <div className="p-[16px]">
-          <div className="flex justify-between font-semibold text-[16px] leading-[24px] mb-[2px]">
+          <div className="flex justify-between font-semibold text-base mb-[2px]">
             <div>Wait until</div>
             {isViewMode && (
               <div className="h-fit px-1 py-[2px] flex items-center gap-[4px] bg-[#F3F4F6] rounded-sm">

@@ -137,7 +137,7 @@ const SegmentBuilder = () => {
           onChange={(ev) => setDescription(ev.target.value || "")}
         />
       </div>
-      <div className="mb-[10px] font-inter font-semibold text-[16px] leading-[24px] text-[#111827]">
+      <div className="mb-[10px] font-inter font-semibold text-base text-[#111827]">
         Segment type
       </div>
       <div className="flex gap-5 mb-[20px]">
@@ -149,7 +149,7 @@ const SegmentBuilder = () => {
           }`}
           onClick={() => setSegmentType(SegmentType.AUTOMATIC)}
         >
-          <div className="font-semibold font-inter text-[16px] leading-[24px]">
+          <div className="font-semibold font-inter text-base">
             Automatic segment
           </div>
           <div className="font-normal text-[14px] leading-[22px] text-[#4B5563]">
@@ -165,7 +165,7 @@ const SegmentBuilder = () => {
           }`}
           onClick={() => setSegmentType(SegmentType.MANUAL)}
         >
-          <div className="font-semibold font-inter text-[16px] leading-[24px]">
+          <div className="font-semibold font-inter text-base">
             Manual segment
           </div>
           <div className="font-normal text-[14px] leading-[22px] text-[#4B5563]">
@@ -173,7 +173,7 @@ const SegmentBuilder = () => {
           </div>
         </div>
       </div>
-      <div className="mb-[10px] font-inter font-semibold text-[16px] leading-[24px]">
+      <div className="mb-[10px] font-inter font-semibold text-base">
         {segmentType === SegmentType.AUTOMATIC ? "Conditions" : "CSV file"}
       </div>
       {segmentType === SegmentType.AUTOMATIC ? (
@@ -228,7 +228,7 @@ const SegmentBuilder = () => {
               </svg>
 
               <div className="text-center">
-                <p className="mb-2 text-sm text-[16px] leading-[24px] font-roboto text-[#111827]">
+                <p className="mb-2 text-sm text-base font-roboto text-[#111827]">
                   Click or drag file to this area to upload
                 </p>
                 <p className="max-w-[458px] text-[#4B5563] text-[14px] font-roboto leading-[22px] inline-block">

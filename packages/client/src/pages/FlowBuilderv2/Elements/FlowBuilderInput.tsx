@@ -15,7 +15,7 @@ const FlowBuilderInput: FC<FlowBuilderInputProps> = ({
 }) => {
   return (
     <input
-      className={`w-full bg-white border border-[#E5E7EB] px-[12px] py-2 font-normal text-[16px] leading-[24px] text-[#111827] rounded-sm ${
+      className={`w-full bg-white border border-[#E5E7EB] px-[12px] py-2 font-normal text-base text-[#111827] rounded-sm ${
         className ? className : ""
       }`}
       type={type}

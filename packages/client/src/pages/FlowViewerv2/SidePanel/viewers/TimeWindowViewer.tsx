@@ -146,7 +146,7 @@ const TimeWindowViewer: FC<SidePanelComponentProps<TimeWindowNodeData>> = ({
       <div className="w-full flex">
         {timeWindowViewerTabsToShow.map((tab, i) => (
           <button
-            className={`w-full py-[12px] font-inter text-[16px] leading-[24px] ${
+            className={`w-full py-[12px] font-inter text-base ${
               activeTab === tab
                 ? "font-semibold border-b-2 border-[#6366F1] text-[#6366F1]"
                 : "font-normal border-b-[1px] border-[#E5E7EB]"
