@@ -10,11 +10,17 @@ import SnippetPicker from "components/SnippetPicker/SnippetPicker";
 
 export default function SettingsAPIBeta() {
   const [privateAPIKey, setPrivateAPIKey] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
 
   useEffect(() => {
     (async () => {
       const { data } = await ApiService.get({ url: "/accounts/settings" });
       setPrivateAPIKey(data.apiKey);
+      setFirstName(data.firstName);
+      setLastName(data.lastName);
+      setEmail(data.email);
     })();
   }, []);
 
@@ -97,7 +103,12 @@ export default function SettingsAPIBeta() {
               <div className="md:col-span-2 pd-5">
                 <div>
                   <div className="shadow sm:rounded-md">
-                    <SnippetPicker userApiKey={privateAPIKey} />
+                    <SnippetPicker
+                      userApiKey={privateAPIKey}
+                      firstName={firstName}
+                      lastName={lastName}
+                      email={email}
+                    />
                   </div>
                 </div>
               </div>
