@@ -9,18 +9,27 @@ export const createSnippet = (
 ) => {
   switch (mode) {
     case SnippetMode.JS_FETCH:
-      return `var myHeaders = new Headers();
-myHeaders.append("Authorization", "Api-Key `+apiKey+`");
+      return (
+        `var myHeaders = new Headers();
+myHeaders.append("Authorization", "Api-Key ` +
+        apiKey +
+        `");
 myHeaders.append("Content-Type", "application/json");
 
 var raw = JSON.stringify({
   "correlationKey": "email",
-  "correlationValue": "` + email +`",
+  "correlationValue": "` +
+        email +
+        `",
   "source": "custom",
   "event": "great success",
   "payload": {
-    "firstName": "`+firstName+`",
-    "lastName": "`+lastName+`"
+    "firstName": "` +
+        firstName +
+        `",
+    "lastName": "` +
+        lastName +
+        `"
   }
 });
 
@@ -34,23 +43,33 @@ var requestOptions = {
 fetch("https://api.laudspeaker.com/events/", requestOptions)
   .then(response => response.text())
   .then(result => console.log(result))
-  .catch(error => console.log('error', error));`;
+  .catch(error => console.log('error', error));`
+      );
     case SnippetMode.JS_JQUERY:
-      return `$.ajax({
+      return (
+        `$.ajax({
   url: "https://api.laudspeaker.com/events/",
   method: "POST",
   headers: {
-    "Authorization": "Api-Key `+apiKey+`",
+    "Authorization": "Api-Key ` +
+        apiKey +
+        `",
     "Content-Type": "application/json"
   },
   data: JSON.stringify({
     "correlationKey": "email",
-    "correlationValue": "` + email +`",
+    "correlationValue": "` +
+        email +
+        `",
     "source": "custom",
     "event": "great success",
     "payload": {
-      "firstName": "`+firstName+`",
-      "lastName": "`+lastName+`"
+      "firstName": "` +
+        firstName +
+        `",
+      "lastName": "` +
+        lastName +
+        `"
     }
   }),
   success: function(result) {
@@ -60,12 +79,16 @@ fetch("https://api.laudspeaker.com/events/", requestOptions)
     console.log('error', error);
   }
 });
-`;
+`
+      );
     case SnippetMode.JS_XHR:
-      return `// WARNING: For POST requests, body is set to null by browsers.
+      return (
+        `// WARNING: For POST requests, body is set to null by browsers.
 var xhr = new XMLHttpRequest();
 xhr.open("POST", "https://api.laudspeaker.com/events/", true);
-xhr.setRequestHeader("Authorization", "Api-Key `+apiKey+`");
+xhr.setRequestHeader("Authorization", "Api-Key ` +
+        apiKey +
+        `");
 xhr.setRequestHeader("Content-Type", "application/json");
 
 xhr.onreadystatechange = function() {
@@ -80,30 +103,46 @@ xhr.onreadystatechange = function() {
 
 xhr.send(JSON.stringify({
   "correlationKey": "email",
-  "correlationValue": "` + email +`",
+  "correlationValue": "` +
+        email +
+        `",
   "source": "custom",
   "event": "great success",
   "payload": {
-    "firstName":"`+firstName+`",
-    "lastName": "`+lastName+`"
+    "firstName":"` +
+        firstName +
+        `",
+    "lastName": "` +
+        lastName +
+        `"
   }
 }));
-`;
+`
+      );
     case SnippetMode.NODEJS_AXIOS:
-      return `const axios = require('axios');
+      return (
+        `const axios = require('axios');
 
 axios.post("https://api.laudspeaker.com/events/", {
   "correlationKey": "email",
-  "correlationValue": "` + email +`",
+  "correlationValue": "` +
+        email +
+        `",
   "source": "custom",
   "event": "great success",
   "payload": {
-    "firstName": "`+firstName+`",
-    "lastName": "`+lastName+`"
+    "firstName": "` +
+        firstName +
+        `",
+    "lastName": "` +
+        lastName +
+        `"
   }
 }, {
   headers: {
-    "Authorization": "Api-Key `+apiKey+`",
+    "Authorization": "Api-Key ` +
+        apiKey +
+        `",
     "Content-Type": "application/json"
   }
 }).then(response => {
@@ -111,18 +150,26 @@ axios.post("https://api.laudspeaker.com/events/", {
 }).catch(error => {
   console.log('error', error);
 });
-`;
+`
+      );
     case SnippetMode.NODEJS_NATIVE:
-      return `const https = require('https');
+      return (
+        `const https = require('https');
 
 const data = JSON.stringify({
   "correlationKey": "email",
-  "correlationValue": "` + email +`",
+  "correlationValue": "` +
+        email +
+        `",
   "source": "custom",
   "event": "great success",
   "payload": {
-    "firstName": "`+firstName+`",
-    "lastName": "`+lastName+`"
+    "firstName": "` +
+        firstName +
+        `",
+    "lastName": "` +
+        lastName +
+        `"
   }
 });
 
@@ -131,7 +178,9 @@ const options = {
   path: '/events/',
   method: 'POST',
   headers: {
-    "Authorization": "Api-Key `+apiKey+`",
+    "Authorization": "Api-Key ` +
+        apiKey +
+        `",
     "Content-Type": "application/json",
     'Content-Length': data.length
   }
@@ -155,25 +204,35 @@ req.on('error', (error) => {
 
 req.write(data);
 req.end();
-`;
+`
+      );
     case SnippetMode.NODEJS_REQUEST:
-      return `const request = require('request');
+      return (
+        `const request = require('request');
 
 request({
   url: "https://api.laudspeaker.com/events/",
   method: "POST",
   headers: {
-    "Authorization": "Api-Key `+apiKey+`",
+    "Authorization": "Api-Key ` +
+        apiKey +
+        `",
     "Content-Type": "application/json"
   },
   body: JSON.stringify({
     "correlationKey": "email",
-    "correlationValue": "` + email +`",
+    "correlationValue": "` +
+        email +
+        `",
     "source": "custom",
     "event": "great success",
     "payload": {
-      "firstName": "`+firstName+`",
-      "lastName": "`+lastName+`"
+      "firstName": "` +
+        firstName +
+        `",
+      "lastName": "` +
+        lastName +
+        `"
     }
   })
 }, function(error, response, body) {
@@ -183,26 +242,36 @@ request({
     console.log(body);
   }
 });
-`;
+`
+      );
     case SnippetMode.PYTHON_HTTP_CLIENT:
-      return `import http.client
+      return (
+        `import http.client
 import json
 
 conn = http.client.HTTPSConnection("api.laudspeaker.com")
 
 headers = {
-    'Authorization': 'Api-Key `+apiKey+`',
+    'Authorization': 'Api-Key ` +
+        apiKey +
+        `',
     'Content-Type': 'application/json'
 }
 
 payload = json.dumps({
   "correlationKey": "email",
-  "correlationValue": "` + email +`",
+  "correlationValue": "` +
+        email +
+        `",
   "source": "custom",
   "event": "great success",
   "payload": {
-    "firstName": "`+firstName+`",
-    "lastName": "`+lastName+`"
+    "firstName": "` +
+        firstName +
+        `",
+    "lastName": "` +
+        lastName +
+        `"
   }
 })
 
@@ -211,49 +280,70 @@ res = conn.getresponse()
 data = res.read()
 
 print(data.decode("utf-8"))
-`;
+`
+      );
     case SnippetMode.PYTHON_REQUESTS:
-      return `import requests
+      return (
+        `import requests
 import json
 
 url = "https://api.laudspeaker.com/events/"
 
 headers = {
-    'Authorization': 'Api-Key `+apiKey+`',
+    'Authorization': 'Api-Key ` +
+        apiKey +
+        `',
     'Content-Type': 'application/json'
 }
 
 payload = {
   "correlationKey": "email",
-  "correlationValue": "` + email +`",
+  "correlationValue": "` +
+        email +
+        `",
   "source": "custom",
   "event": "great success",
   "payload": {
-    "firstName": "`+firstName+`",
-    "lastName": "`+lastName+`"
+    "firstName": "` +
+        firstName +
+        `",
+    "lastName": "` +
+        lastName +
+        `"
   }
 }
 
 response = requests.post(url, headers=headers, data=json.dumps(payload))
 
 print(response.text)
-`;
+`
+      );
     case SnippetMode.CURL:
-      return `curl -X POST \
+      return (
+        `curl -X POST \
 https://api.laudspeaker.com/events/ \
--H 'Authorization: Api-Key `+apiKey+`' \
+-H 'Authorization: Api-Key ` +
+        apiKey +
+        `' \
 -H 'Content-Type: application/json' \
 -d '{
   "correlationKey": "email",
-  "correlationValue": "` + email +`",
+  "correlationValue": "` +
+        email +
+        `",
   "source": "custom",
   "event": "great success",
   "payload": {
-    "firstName": "`+firstName+`",
-    "lastName": "`+lastName+`"
+    "firstName": "` +
+        firstName +
+        `",
+    "lastName": "` +
+        lastName +
+        `"
   }
 }'
-    `;
+    `
+      );
     default:
       return "";
   }

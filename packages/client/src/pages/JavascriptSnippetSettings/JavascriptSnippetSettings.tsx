@@ -57,9 +57,7 @@ const JavascriptSnippetSettings = () => {
 
         <div className="bg-white p-5 flex flex-col gap-5">
           <div className="text-[#4B5563]">
-            Description Description Description Description Description
-            Description Description Description Description Description
-            Description Description Description Description{" "}
+            You can copy this code snippet to try out firing events{" "}
             <button className="text-[#111827] font-bold underline">
               Documentation
             </button>

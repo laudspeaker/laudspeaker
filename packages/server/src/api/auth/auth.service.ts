@@ -127,7 +127,7 @@ export class AuthService {
       user.apiKey = this.helper.generateApiKey();
       user.accountCreatedAt = new Date();
       user.plan = PlanType.FREE;
-      if(process.env.EMAIL_VERIFICATION !== 'true'){
+      if (process.env.EMAIL_VERIFICATION !== 'true') {
         user.verified = true;
       }
       const ret = await queryRunner.manager.save(user);
@@ -135,7 +135,7 @@ export class AuthService {
 
       user.id = ret.id;
 
-      if(process.env.EMAIL_VERIFICATION === 'true'){
+      if (process.env.EMAIL_VERIFICATION === 'true') {
         await this.requestVerification(ret, queryRunner, session);
       }
       await queryRunner.commitTransaction();
