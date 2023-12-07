@@ -25,7 +25,10 @@ import { WebhooksService } from '../webhooks/webhooks.service';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { JourneysService } from '../journeys/journeys.service';
 import { TemplatesService } from '../templates/templates.service';
-import { TemplateType } from '../templates/entities/template.entity';
+import {
+  PushPlatforms,
+  TemplateType,
+} from '../templates/entities/template.entity';
 import onboardingJourneyFixtures from './onboarding-journey';
 import { StepsService } from '../steps/steps.service';
 import { StepType } from '../steps/types/step.interface';
@@ -299,7 +302,7 @@ export class AccountsService extends BaseJwtHelper {
     if (updateUserDto.pushPlatforms) {
       const platform =
         updateUserDto.pushPlatforms.Android || updateUserDto.pushPlatforms.iOS;
-      await this.validateFirebase(user, platform.credentials, session);
+      await this.validateFirebase(oldUser, platform.credentials, session);
     }
 
     const { smsAccountSid, smsAuthToken, smsFrom } = updateUserDto;
@@ -600,9 +603,12 @@ export class AccountsService extends BaseJwtHelper {
   }
 
   async validateFirebase(
-    user: Express.User,
+    user: Account,
     credentials: Express.Multer.File | JSON,
-    session: string
+    session: string,
+    withSave?: {
+      platform: PushPlatforms;
+    }
   ) {
     let content = '';
     if ((credentials as Express.Multer.File).buffer) {
@@ -613,10 +619,13 @@ export class AccountsService extends BaseJwtHelper {
 
     try {
       const serviceAccount = JSON.parse(content);
-      const firebaseApp = admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount),
-      });
-      firebaseApp.delete();
+      const firebaseApp = admin.initializeApp(
+        {
+          credential: admin.credential.cert(serviceAccount),
+        },
+        withSave ? `${user.id};;${withSave.platform}` : undefined
+      );
+      if (!withSave) firebaseApp.delete();
 
       return serviceAccount;
     } catch (error) {

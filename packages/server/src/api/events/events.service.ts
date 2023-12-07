@@ -4,6 +4,7 @@ import {
   Logger,
   HttpException,
   forwardRef,
+  HttpStatus,
 } from '@nestjs/common';
 import { Correlation, CustomersService } from '../customers/customers.service';
 import { CustomerDocument } from '../customers/schemas/customer.schema';
@@ -23,6 +24,8 @@ import {
   OnWorkerEvent,
   InjectQueue,
 } from '@nestjs/bullmq';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { Job, Queue, UnrecoverableError } from 'bullmq';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import mongoose, { Model } from 'mongoose';
@@ -44,6 +47,7 @@ import {
   PosthogEventDocument,
 } from './schemas/posthog-event.schema';
 import { JourneysService } from '../journeys/journeys.service';
+import admin from 'firebase-admin';
 import { Journey } from '../journeys/entities/journey.entity';
 
 @Injectable()
@@ -67,6 +71,8 @@ export class EventsService {
     private PosthogEventModel: Model<PosthogEventDocument>,
     @InjectModel(EventKeys.name)
     private EventKeysModel: Model<EventKeysDocument>,
+    @InjectRepository(Account)
+    public accountsRepository: Repository<Account>,
     @InjectModel(PosthogEventType.name)
     private PosthogEventTypeModel: Model<PosthogEventTypeDocument>,
     @InjectConnection() private readonly connection: mongoose.Connection,
@@ -375,5 +381,79 @@ export class EventsService {
       })),
       totalPages,
     };
+  }
+
+  async sendTestPush(account: Account, token: string) {
+    const foundAcc = await this.accountsRepository.findOneBy({
+      id: account.id,
+    });
+
+    const hasConnected = Object.values(foundAcc.pushPlatforms).some(
+      (el) => !!el
+    );
+
+    try {
+      if (!hasConnected || true) {
+        throw new HttpException(
+          "You don't have platform's connected",
+          HttpStatus.NOT_ACCEPTABLE
+        );
+      }
+
+      await Promise.all(
+        Object.keys(foundAcc.pushPlatforms)
+          .filter((el) => !!foundAcc.pushPlatforms[el])
+          .map(async (el) => {
+            if (foundAcc.pushPlatforms[el].credentials) {
+              let firebaseApp: admin.app.App;
+
+              try {
+                firebaseApp = admin.app(foundAcc.id + ';;' + el);
+              } catch (e: any) {
+                if (e.code == 'app/no-app') {
+                  firebaseApp = admin.initializeApp(
+                    {
+                      credential: admin.credential.cert(
+                        foundAcc.pushPlatforms[el].credentials
+                      ),
+                    },
+                    `${foundAcc.id};;${el}`
+                  );
+                } else {
+                  throw new HttpException(
+                    `Error while using credentials for ${el}.`,
+                    HttpStatus.FAILED_DEPENDENCY
+                  );
+                }
+              }
+
+              const messaging = admin.messaging(firebaseApp);
+
+              await messaging.send({
+                token: token,
+                notification: {
+                  title: `Laudspeaker ${el} test`,
+                  body: 'Testing push notifications',
+                },
+                android: {
+                  notification: {
+                    sound: 'default',
+                  },
+                },
+                apns: {
+                  payload: {
+                    aps: {
+                      badge: 1,
+                      sound: 'default',
+                    },
+                  },
+                },
+              });
+            }
+          })
+      );
+    } catch (e) {
+      throw e;
+    }
   }
 }
