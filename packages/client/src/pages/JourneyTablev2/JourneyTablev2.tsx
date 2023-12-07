@@ -96,7 +96,7 @@ interface SortOptions {
   sortType: SortType;
 }
 
-const ITEMS_PER_PAGE = 5;
+const ITEMS_PER_PAGE = 10;
 
 const JourneyTablev2 = () => {
   const navigate = useNavigate();
