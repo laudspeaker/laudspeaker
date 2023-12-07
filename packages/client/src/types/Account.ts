@@ -1,3 +1,4 @@
+import { ConnectedPushFirebasePlatforms } from "pages/PushSettings/PushSettings";
 import PlanType from "./PlanType";
 
 export default interface Account {
@@ -37,4 +38,5 @@ export default interface Account {
   smsFrom?: string;
   posthogSetupped: boolean;
   javascriptSnippetSetupped: boolean;
+  pushPlatforms: ConnectedPushFirebasePlatforms;
 }
