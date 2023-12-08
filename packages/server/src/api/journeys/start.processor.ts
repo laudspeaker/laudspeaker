@@ -12,17 +12,13 @@ import { Job, Queue } from 'bullmq';
 import { DataSource, FindCursor } from 'typeorm';
 import { InjectConnection } from '@nestjs/mongoose';
 import mongoose from 'mongoose';
-import { RedlockService } from '@/api/redlock/redlock.service';
 import * as _ from 'lodash';
 import * as Sentry from '@sentry/node';
-import { In } from 'typeorm';
 import { CustomersService } from '../customers/customers.service';
 import { Step } from '../steps/entities/step.entity';
-import { JourneyLocation } from './entities/journey-location.entity';
-import { PerformanceObserver, performance } from 'perf_hooks';
-import * as os from 'os';
 import { Account } from '../accounts/entities/accounts.entity';
 import { Journey } from './entities/journey.entity';
+import { JourneyLocationsService } from './journey-locations.service';
 
 const BATCH_SIZE = +process.env.START_BATCH_SIZE;
 
@@ -37,7 +33,9 @@ export class StartProcessor extends WorkerHost {
     @InjectQueue('start') private readonly startQueue: Queue,
     @InjectConnection() private readonly connection: mongoose.Connection,
     @Inject(CustomersService)
-    private readonly customersService: CustomersService
+    private readonly customersService: CustomersService,
+    @Inject(JourneyLocationsService)
+    private readonly journeyLocationsService: JourneyLocationsService
   ) {
     super();
   }
@@ -144,7 +142,7 @@ export class StartProcessor extends WorkerHost {
     transactionSession.startTransaction();
     try {
       //base case: get documents, set them as moving in location table, and batch add the jobs to the transition queue
-      if (job.data.limit <= 10000) {
+      if (job.data.limit <= BATCH_SIZE) {
         // Retrieve customers from mongo
         const customers = await this.customersService.find(
           job.data.ownerID,
@@ -176,22 +174,25 @@ export class StartProcessor extends WorkerHost {
             id: job.data.journeyID,
           },
         });
-        const locations = customers.map((customer) => {
-          const location = new JourneyLocation();
-          location.customer = customer.id;
-          location.journey = journey;
-          location.step = step;
-          location.owner = account;
-          location.moveStarted = new Date();
-          return location;
-        });
-        await queryRunner.manager.save(JourneyLocation, locations);
+        await Promise.all(
+          customers.map(async (customer) => {
+            await this.journeyLocationsService.create(
+              account,
+              journey,
+              step,
+              customer,
+              job.data.session,
+              queryRunner
+            );
+          })
+        );
         await this.transitionQueue.addBulk(
           customers.map((customer) => {
             return {
               name: 'start',
               data: {
                 ownerID: account.id,
+                journeyID: journey.id,
                 step: step,
                 session: job.data.session,
                 customerID: customer.id,
@@ -232,7 +233,7 @@ export class StartProcessor extends WorkerHost {
     } catch (e) {
       await transactionSession.abortTransaction();
       await queryRunner.rollbackTransaction();
-      this.error(e, this.process.name, job.data.session);
+      this.error(e, this.process.name, job.data.session, job.data.ownerID);
       err = e;
     } finally {
       await transactionSession.endSession();

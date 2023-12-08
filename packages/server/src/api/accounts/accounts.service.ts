@@ -31,6 +31,7 @@ import { StepsService } from '../steps/steps.service';
 import { StepType } from '../steps/types/step.interface';
 import { randomUUID } from 'crypto';
 import admin from 'firebase-admin';
+import { update } from 'lodash';
 
 @Injectable()
 export class AccountsService extends BaseJwtHelper {
@@ -319,7 +320,7 @@ export class AccountsService extends BaseJwtHelper {
     try {
       let updatedUser: Account;
       for (const key of Object.keys(updateUserDto)) {
-        if (key === 'pushPlatforms') {
+        if (key === 'pushPlatforms' && updateUserDto[key]) {
           oldUser[key] = {
             Android:
               updateUserDto.pushPlatforms.Android || oldUser[key].Android,

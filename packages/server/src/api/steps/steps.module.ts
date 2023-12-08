@@ -27,10 +27,20 @@ import { WebsocketsModule } from '@/websockets/websockets.module';
 import { RedlockModule } from '../redlock/redlock.module';
 import { RedlockService } from '../redlock/redlock.service';
 import { StartProcessor } from '../journeys/start.processor';
+import { JourneyLocationsService } from '../journeys/journey-locations.service';
+import { JourneyLocation } from '../journeys/entities/journey-location.entity';
+import { JourneysModule } from '../journeys/journeys.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Step, Template, Job, Audience, Account]),
+    TypeOrmModule.forFeature([
+      Step,
+      Template,
+      Job,
+      Audience,
+      Account,
+      JourneyLocation,
+    ]),
     MongooseModule.forFeature([
       { name: Customer.name, schema: CustomerSchema },
     ]),
@@ -54,6 +64,7 @@ import { StartProcessor } from '../journeys/start.processor';
     forwardRef(() => ModalsModule),
     forwardRef(() => WebsocketsModule),
     forwardRef(() => RedlockModule),
+    forwardRef(() => JourneysModule),
     SlackModule,
   ],
   providers: [
@@ -62,6 +73,7 @@ import { StartProcessor } from '../journeys/start.processor';
     TransitionProcessor,
     StartProcessor,
     RedlockService,
+    JourneyLocationsService,
   ],
   controllers: [StepsController],
   exports: [StepsService],
