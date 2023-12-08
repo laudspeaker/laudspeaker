@@ -107,7 +107,8 @@
     "undici": "^5.21.0",
     "winston": "^3.8.1",
     "winston-papertrail": "^1.0.5",
-    "winston-syslog": "^2.6.0"
+    "winston-syslog": "^2.6.0",
+    "nodemailer": "^6.5.0"
   },
   "devDependencies": {
     "@nestjs/schematics": "^9.0.0",
