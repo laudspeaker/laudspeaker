@@ -229,8 +229,41 @@ export class MessageProcessor extends WorkerHost {
             },
           ]);
           break;
+          case 'gmail':
+            console.log("*** / we here in gmail");
+            const mailgun2 = new Mailgun(formData);
+            const mg2 = mailgun2.client({ username: 'api', key: job.data.key });
+            const mailgunMessage2 = await mg2.messages.create(job.data.domain, {
+              from: `${job.data.from} <${job.data.email}@${job.data.domain}>`,
+              to: job.data.to,
+              cc: job.data.cc,
+              subject: subjectWithInsertedTags,
+              html: textWithInsertedTags,
+              'v:audienceId': job.data.audienceId,
+              'v:customerId': job.data.customerId,
+              'v:templateId': job.data.templateId,
+              'v:accountId': job.data.accountId,
+            });
+            msg = mailgunMessage2;
+            await this.webhooksService.insertMessageStatusToClickhouse([
+              {
+                audienceId: job.data.audienceId,
+                createdAt: new Date().toISOString(),
+                customerId: job.data.customerId,
+                event: 'sent',
+                eventProvider: ClickHouseEventProvider.MAILGUN,
+                messageId: mailgunMessage2.id
+                  ? mailgunMessage2.id.substring(1, mailgunMessage2.id.length - 1)
+                  : '',
+                templateId: String(job.data.templateId),
+                userId: job.data.accountId,
+                processed: false,
+              },
+            ]);
+            break;
         case 'mailgun':
         default:
+          console.log("*** / we here in mailgun");
           const mailgun = new Mailgun(formData);
           const mg = mailgun.client({ username: 'api', key: job.data.key });
           const mailgunMessage = await mg.messages.create(job.data.domain, {
