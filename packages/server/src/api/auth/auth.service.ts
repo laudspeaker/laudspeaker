@@ -227,7 +227,17 @@ export class AuthService {
         subject: 'Email verification',
         text: `Link: <a href="${verificationLink}">${verificationLink}</a>`,
       });
-  
+    } else {
+      //default is mailgun right now
+      await this.messageQueue.add('email', {
+        key: process.env.MAILGUN_API_KEY,
+        from: 'Laudspeaker',
+        domain: process.env.MAILGUN_DOMAIN,
+        email: 'noreply',
+        to: user.email,
+        subject: 'Email verification',
+        text: `Link: <a href="${verificationLink}">${verificationLink}</a>`,
+      });
     }
     return verification;
   }
