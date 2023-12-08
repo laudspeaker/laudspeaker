@@ -15,6 +15,7 @@ import {
 import twilio from 'twilio';
 import { PostHog } from 'posthog-node';
 import * as admin from 'firebase-admin';
+import nodemailer from 'nodemailer';
 
 export enum MessageType {
   SMS = 'sms',
@@ -230,36 +231,25 @@ export class MessageProcessor extends WorkerHost {
           ]);
           break;
           case 'gmail':
-            console.log("*** / we here in gmail");
-            const mailgun2 = new Mailgun(formData);
-            const mg2 = mailgun2.client({ username: 'api', key: job.data.key });
-            const mailgunMessage2 = await mg2.messages.create(job.data.domain, {
-              from: `${job.data.from} <${job.data.email}@${job.data.domain}>`,
-              to: job.data.to,
-              cc: job.data.cc,
-              subject: subjectWithInsertedTags,
-              html: textWithInsertedTags,
-              'v:audienceId': job.data.audienceId,
-              'v:customerId': job.data.customerId,
-              'v:templateId': job.data.templateId,
-              'v:accountId': job.data.accountId,
-            });
-            msg = mailgunMessage2;
-            await this.webhooksService.insertMessageStatusToClickhouse([
-              {
-                audienceId: job.data.audienceId,
-                createdAt: new Date().toISOString(),
-                customerId: job.data.customerId,
-                event: 'sent',
-                eventProvider: ClickHouseEventProvider.MAILGUN,
-                messageId: mailgunMessage2.id
-                  ? mailgunMessage2.id.substring(1, mailgunMessage2.id.length - 1)
-                  : '',
-                templateId: String(job.data.templateId),
-                userId: job.data.accountId,
-                processed: false,
+            const transporter = nodemailer.createTransport({
+              service: 'gmail',
+              auth: {
+                user: job.data.email,
+                pass: job.data.key,
               },
-            ]);
+            })
+            console.log("about to send an email via gmail");
+            transporter.sendMail({
+              from: `${job.data.from}`, // sender address
+              to: job.data.to, // list of receivers
+              subject: subjectWithInsertedTags, // Subject line
+              text: job.data.plainText, //textWithInsertedTags, // plain text body
+              html: textWithInsertedTags,
+            }).then(info => {
+              console.log({info});
+            }).catch(error => {
+              console.log("Error occurred:", error);
+            })
             break;
         case 'mailgun':
         default:

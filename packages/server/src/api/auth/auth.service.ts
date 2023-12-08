@@ -206,18 +206,16 @@ export class AuthService {
 
     const verificationLink = `${process.env.FRONTEND_URL}/verify-email/${verification.id}`;
 
-    console.log("the provider is ", process.env.EMAIL_VERIFICATION_PROVIDER )
     if(process.env.EMAIL_VERIFICATION_PROVIDER === 'gmail'){
-      console.log("****** **** oi 1");
       await this.messageQueue.add('email', {
         eventProvider: "gmail",
-        key: process.env.MAILGUN_API_KEY,
+        key: process.env.GMAIL_APP_CRED,
         from: 'Laudspeaker',
-        domain: process.env.MAILGUN_DOMAIN,
-        email: 'noreply',
+        email: process.env.GMAIL_VERIFICATION_EMAIL,
         to: user.email,
         subject: 'Email verification',
-        text: `Link: <a href="${verificationLink}">${verificationLink}</a>`,
+        plainText: 'Paste the following link into your browser:' + verificationLink,
+        text: `Paste the following link into your browser: <a href="${verificationLink}">${verificationLink}</a>`,
       });
     } else if(process.env.EMAIL_VERIFICATION_PROVIDER === 'mailgun'){
       await this.messageQueue.add('email', {
@@ -231,16 +229,6 @@ export class AuthService {
       });
   
     }
-    // await this.messageQueue.add('email', {
-    //   key: process.env.MAILGUN_API_KEY,
-    //   from: 'Laudspeaker',
-    //   domain: process.env.MAILGUN_DOMAIN,
-    //   email: 'noreply',
-    //   to: user.email,
-    //   subject: 'Email verification',
-    //   text: `Link: <a href="${verificationLink}">${verificationLink}</a>`,
-    // });
-
     return verification;
   }
 
