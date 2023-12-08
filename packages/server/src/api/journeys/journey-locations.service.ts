@@ -18,9 +18,7 @@ import { Account } from '../accounts/entities/accounts.entity';
 import { UpdateJourneyDto } from './dto/update-journey.dto';
 import { Journey } from './entities/journey.entity';
 import errors from '../../shared/utils/errors';
-import {
-  CustomerDocument,
-} from '../customers/schemas/customer.schema';
+import { CustomerDocument } from '../customers/schemas/customer.schema';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { createClient } from '@clickhouse/client';
 import { isUUID } from 'class-validator';
@@ -74,8 +72,8 @@ export class JourneyLocationsService {
     private readonly logger: Logger,
     @InjectRepository(JourneyLocation)
     public journeyLocationsRepository: Repository<JourneyLocation>,
-    @Inject(StepsService) private stepsService: StepsService,
-  ) { }
+    @Inject(StepsService) private stepsService: StepsService
+  ) {}
 
   log(message, method, session, user = 'ANONYMOUS') {
     this.logger.log(
@@ -138,9 +136,12 @@ export class JourneyLocationsService {
 
   /**
    * Creates a Journey Location.
-   * 
-   * Takes a write lock on 
-   * (journey, customer) and sets row 
+   *
+   * This method should only be called by the start processor when
+   * a customer is added to the start step of a journey.
+   *
+   * Takes a write lock on
+   * (journey, customer) and sets row
    * to (journey, customer, step), marking the
    * time when it's finished updating the
    * step.
@@ -153,13 +154,19 @@ export class JourneyLocationsService {
    * @param {QueryRunner} [queryRunner]  Postgres Transaction
    * @returns
    */
-  async create(account: Account, journey: Journey, step: Step, customer: CustomerDocument, session: string, queryRunner?: QueryRunner) {
-
+  async create(
+    account: Account,
+    journey: Journey,
+    step: Step,
+    customer: CustomerDocument,
+    session: string,
+    queryRunner?: QueryRunner
+  ) {
     if (queryRunner) {
       // Step 1: Check if customer is already enrolled in Journey; if so, throw error
       const location = await queryRunner.manager.findOne(JourneyLocation, {
         where: {
-          journey: { id: journey.id },
+          journey: journey.id,
           owner: { id: account.id },
           customer: customer.id,
         },
@@ -167,100 +174,389 @@ export class JourneyLocationsService {
       });
 
       if (location)
-        throw new Error(`Customer ${customer.id} already enrolled in journey ${journey.id}; located in step ${location.step.id}`);
-
+        throw new Error(
+          `Customer ${customer.id} already enrolled in journey ${journey.id}; located in step ${location.step.id}`
+        );
 
       // Step 2: Create new journey Location row, add time that user entered the journey
       await queryRunner.manager.save(JourneyLocation, {
-        journey: journey,
+        journey: journey.id,
         owner: account,
         customer: customer.id,
         step: step,
         stepEntry: new Date(),
+        moveStarted: new Date(),
       });
     } else {
       const location = await this.journeyLocationsRepository.findOne({
         where: {
-          journey: { id: journey.id },
+          journey: journey.id,
           owner: { id: account.id },
           customer: customer.id,
         },
         lock: { mode: 'pessimistic_write' },
       });
       if (location)
-        throw new Error(`Customer ${customer.id} already enrolled in journey ${journey.id}; located in step ${location.step.id}`)
+        throw new Error(
+          `Customer ${customer.id} already enrolled in journey ${journey.id}; located in step ${location.step.id}`
+        );
       await this.journeyLocationsRepository.save({
-        journey: journey,
+        journey: journey.id,
         owner: account,
         customer: customer.id,
         step: step,
+        stepEntry: new Date(),
+        moveStarted: new Date(),
+      });
+    }
+  }
+
+  /**
+   * Moves a customer from one step to another while they are actively being moved.
+   *
+   * This method should only be called by time and event triggered steps.
+   *
+   * Takes a write lock on
+   * (journey, customer) and sets row
+   * to (journey, customer, step), marking the
+   * time when it's finished updating the
+   * step.
+   *
+   * @param {Account} account Associated Account
+   * @param {Journey} journey Associated Journey
+   * @param {Step} step Step customer is located in
+   * @param {CustomerDocument} customer Associated Customer
+   * @param {string} session HTTP session token
+   * @param {QueryRunner} [queryRunner]  Postgres Transaction
+   * @returns
+   */
+  async startMove(
+    account: Account,
+    journey: Journey,
+    from: Step,
+    to: Step,
+    customer: CustomerDocument,
+    session: string,
+    queryRunner?: QueryRunner
+  ) {
+    if (queryRunner) {
+      // Step 1: Check if customer is enrolled in journey. If not, throw error
+      const location = await queryRunner.manager.findOne(JourneyLocation, {
+        where: {
+          journey: journey.id,
+          owner: { id: account.id },
+          customer: customer.id,
+        },
+        lock: { mode: 'pessimistic_write' },
+      });
+
+      if (!location)
+        throw new Error(
+          `Customer ${customer.id} has not been enrolled in journey ${journey.id}`
+        );
+
+      // Step 2: Check if there is timestamp indicating that this customer is
+      // still being moved. if there is one and it is less than 5 minutes old,
+      // throw error.
+
+      const duration = Temporal.Now.instant().since(
+        Temporal.Instant.from(location.moveStarted.toISOString())
+      );
+
+      // Move started less than 5 mins ago
+      if (
+        Temporal.Duration.compare(
+          new Temporal.Duration(0, 0, 0, 0, 0, 5),
+          duration
+        ) > 0
+      ) {
+        throw new Error(
+          `Customer ${customer.id} is still moving through journey ${journey.id}`
+        );
+      }
+
+      // Step 3: If from step doesnt match current step for this customer in
+      // this journey, warn that the customer will not be moved and return
+      if (location.step.id !== from.id) {
+        this.warn(
+          JSON.stringify({
+            warning: `Customer ${customer.id} not in step ${from.id}`,
+          }),
+          this.startMove.name,
+          session,
+          account.email
+        );
+        return;
+      }
+
+      // Step 4: If everything checks out, start moving customer
+      await queryRunner.manager.save(JourneyLocation, {
+        journey: journey.id,
+        owner: account,
+        customer: customer.id,
+        step: to,
+        stepEntry: new Date(),
+        moveStarted: new Date(),
+      });
+    } else {
+      // Step 1: Check if customer is enrolled in journey. If not, throw error
+      const location = await this.journeyLocationsRepository.findOne({
+        where: {
+          journey: journey.id,
+          owner: { id: account.id },
+          customer: customer.id,
+        },
+        lock: { mode: 'pessimistic_write' },
+      });
+
+      if (!location)
+        throw new Error(
+          `Customer ${customer.id} has not been enrolled in journey ${journey.id}`
+        );
+
+      // Step 2: Check if there is timestamp indicating that this customer is
+      // still being moved. if there is one and it is less than 5 minutes old,
+      // throw error.
+
+      const duration = Temporal.Now.instant().since(
+        Temporal.Instant.from(location.moveStarted.toISOString())
+      );
+
+      // Move started less than 5 mins ago
+      if (
+        Temporal.Duration.compare(
+          new Temporal.Duration(0, 0, 0, 0, 0, 5),
+          duration
+        ) > 0
+      ) {
+        throw new Error(
+          `Customer ${customer.id} is still moving through journey ${journey.id}`
+        );
+      }
+
+      // Step 3: If from step doesnt match current step for this customer in
+      // this journey, warn that the customer will not be moved and return
+      if (location.step.id !== from.id) {
+        this.warn(
+          JSON.stringify({
+            warning: `Customer ${customer.id} not in step ${from.id}`,
+          }),
+          this.startMove.name,
+          session,
+          account.email
+        );
+        return;
+      }
+
+      // Step 4: If everything checks out, start moving customer
+      await this.journeyLocationsRepository.save({
+        journey: journey.id,
+        owner: account,
+        customer: customer.id,
+        step: to,
+        stepEntry: new Date(),
+        moveStarted: new Date(),
+      });
+    }
+  }
+
+  /**
+   * Moves a customer from one step to another while they are actively being moved
+   *
+   * Takes a write lock on
+   * (journey, customer) and sets row
+   * to (journey, customer, step), marking the
+   * time when it's finished updating the
+   * step.
+   *
+   * @param {Account} account Associated Account
+   * @param {Journey} journey Associated Journey
+   * @param {Step} step Step customer is located in
+   * @param {CustomerDocument} customer Associated Customer
+   * @param {string} session HTTP session token
+   * @param {QueryRunner} [queryRunner]  Postgres Transaction
+   * @returns
+   */
+  async continueMove(
+    account: Account,
+    journey: Journey,
+    from: Step,
+    to: Step,
+    customer: CustomerDocument,
+    session: string,
+    queryRunner?: QueryRunner
+  ) {
+    if (queryRunner) {
+      // Step 1: Check if customer is enrolled in journey. If not, throw error
+      const location = await queryRunner.manager.findOne(JourneyLocation, {
+        where: {
+          journey: journey.id,
+          owner: { id: account.id },
+          customer: customer.id,
+        },
+        loadRelationIds: true,
+        lock: { mode: 'pessimistic_write' },
+      });
+
+      // this.debug(JSON.stringify({ location: location }), this.continueMove.name, session, account.email)
+      const step = await this.stepsService.findByID(
+        account,
+        String(location.step),
+        session,
+        queryRunner
+      );
+
+      if (!location)
+        throw new Error(
+          `Customer ${customer.id} has not been enrolled in journey ${journey.id}`
+        );
+
+      // Step 2: If from step doesnt match current step for this customer in
+      // this journey, warn that the customer will not be moved and return
+      if (step.id !== from.id) {
+        this.warn(
+          JSON.stringify({
+            warning: `Customer ${customer.id} not in step ${from.id}`,
+          }),
+          this.startMove.name,
+          session,
+          account.email
+        );
+        return;
+      }
+
+      // Step 3: If everything checks out, start moving customer
+      await queryRunner.manager.update(
+        JourneyLocation,
+        {
+          journey: journey.id,
+          owner: { id: account.id },
+          customer: customer.id,
+        },
+        {
+          step: to,
+          stepEntry: new Date(),
+        }
+      );
+    } else {
+      // Step 1: Check if customer is enrolled in journey. If not, throw error
+      const location = await this.journeyLocationsRepository.findOne({
+        where: {
+          journey: journey.id,
+          owner: { id: account.id },
+          customer: customer.id,
+        },
+        lock: { mode: 'pessimistic_write' },
+      });
+
+      if (!location)
+        throw new Error(
+          `Customer ${customer.id} has not been enrolled in journey ${journey.id}`
+        );
+
+      // Step 2: If from step doesnt match current step for this customer in
+      // this journey, warn that the customer will not be moved and return
+      if (location.step.id !== from.id) {
+        this.warn(
+          JSON.stringify({
+            warning: `Customer ${customer.id} not in step ${from.id}`,
+          }),
+          this.startMove.name,
+          session,
+          account.email
+        );
+        return;
+      }
+
+      // Step 3: If everything checks out, start moving customer
+      await this.journeyLocationsRepository.save({
+        ...location,
+        step: to,
         stepEntry: new Date(),
       });
     }
   }
 
-
-
   /**
-   * Moves a customer from one step to another
-   * 
-   * Takes a write lock on 
-   * (journey, customer) and sets row 
-   * to (journey, customer, step), marking the
-   * time when it's finished updating the
-   * step.
+   * Find a customer's location in a journey.
    *
-   * @param {Account} account Associated Account
-   * @param {Journey} journey Associated Journey
-   * @param {Step} step Step customer is located in
-   * @param {CustomerDocument} customer Associated Customer
-   * @param {string} session HTTP session token
-   * @param {QueryRunner} [queryRunner]  Postgres Transaction
+   * @param {Account} account
+   * @param {Journey} journey
+   * @param {CustomerDocument} customer
+   * @param {String} session
+   * @param {QueryRunner} queryRunner
    * @returns
    */
-  async move(account: Account, journey: Journey, step: Step, customer: CustomerDocument, end: boolean, session: string, queryRunner?: QueryRunner) {
-
+  async find(
+    account: Account,
+    journey: Journey,
+    customer: string,
+    session: string,
+    queryRunner?: QueryRunner
+  ) {
     if (queryRunner) {
-      // Step 1: Check if customer is already enrolled in Journey; if so, throw error
+      return await queryRunner.manager.findOne(JourneyLocation, {
+        where: {
+          journey: journey.id,
+          owner: { id: account.id },
+          customer: customer,
+        },
+        lock: { mode: 'pessimistic_write' },
+      });
+    } else {
+      return await this.journeyLocationsRepository.findOne({
+        where: {
+          journey: journey.id,
+          owner: { id: account.id },
+          customer: customer,
+        },
+        lock: { mode: 'pessimistic_write' },
+      });
+    }
+  }
+
+  /**
+   * Mark a customer as no longer moving through a journey.
+   *
+   * @param {Account} account
+   * @param {Journey} journey
+   * @param {CustomerDocument} customer
+   * @param {String} session
+   * @param {QueryRunner} [queryRunner]
+   */
+  async unlock(
+    account: Account,
+    journey: Journey,
+    customer: CustomerDocument,
+    session: string,
+    queryRunner?: QueryRunner
+  ) {
+    if (queryRunner) {
       const location = await queryRunner.manager.findOne(JourneyLocation, {
         where: {
-          journey: { id: journey.id },
+          journey: journey.id,
           owner: { id: account.id },
           customer: customer.id,
         },
         lock: { mode: 'pessimistic_write' },
       });
 
-      if (location)
-        throw new Error(`Customer ${customer.id} already enrolled in journey ${journey.id}; located in step ${location.step.id}`);
+      location.moveStarted = null;
 
-
-      // Step 2: Create new journey Location row, add time that user entered the journey
-      await queryRunner.manager.save(JourneyLocation, {
-        journey: journey,
-        owner: account,
-        customer: customer.id,
-        step: step,
-        stepEntry: new Date(),
-      });
+      await queryRunner.manager.save(location);
     } else {
       const location = await this.journeyLocationsRepository.findOne({
         where: {
-          journey: { id: journey.id },
+          journey: journey.id,
           owner: { id: account.id },
           customer: customer.id,
         },
         lock: { mode: 'pessimistic_write' },
       });
-      if (location)
-        throw new Error(`Customer ${customer.id} already enrolled in journey ${journey.id}; located in step ${location.step.id}`)
-      await this.journeyLocationsRepository.save({
-        journey: journey,
-        owner: account,
-        customer: customer.id,
-        step: step,
-        stepEntry: new Date(),
-      });
+
+      location.moveStarted = null;
+
+      await this.journeyLocationsRepository.save(location);
     }
   }
 }

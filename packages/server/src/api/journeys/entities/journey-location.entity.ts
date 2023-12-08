@@ -15,10 +15,10 @@ import { Journey } from './journey.entity';
 
 @Entity()
 export class JourneyLocation {
-  @PrimaryColumn({ name: 'journey_id', type: 'uuid' })
-  @ManyToOne((type) => Journey, (journey) => journey.id)
-  @JoinColumn({ name: 'journey_id' })
-  public journey!: Journey;
+  @PrimaryColumn({ name: 'journeyId' })
+  @ManyToOne(() => Journey, (journey) => journey.id, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'journeyId' })
+  public journey!: string;
 
   @PrimaryColumn()
   customer: string;

@@ -635,6 +635,37 @@ export class JourneysService {
   }
 
   /**
+   *
+   * Find a journey by id, using db transactoins
+   *
+   * @param {Account} account
+   * @param {string} id
+   * @param {string} session
+   * @param {QueryRunner} [queryRunner]
+   */
+  async findByID(
+    account: Account,
+    id: string,
+    session: string,
+    queryRunner?: QueryRunner
+  ) {
+    if (queryRunner)
+      return await queryRunner.manager.findOne(Journey, {
+        where: {
+          owner: { id: account.id },
+          id,
+        },
+      });
+    else
+      return await this.journeysRepository.findOne({
+        where: {
+          owner: { id: account.id },
+          id,
+        },
+      });
+  }
+
+  /**
    * Finds a journey by ID.
    *
    * @param account

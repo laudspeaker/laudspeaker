@@ -41,6 +41,8 @@ import * as _ from 'lodash';
 import { Lock } from 'redlock';
 import { PostHog } from 'posthog-node';
 import * as Sentry from '@sentry/node';
+import { JourneyLocationsService } from '@/api/journeys/journey-locations.service';
+import { JourneysService } from '@/api/journeys/journeys.service';
 
 @Injectable()
 @Processor('transition', { concurrency: cpus().length })
@@ -66,7 +68,10 @@ export class TransitionProcessor extends WorkerHost {
     @Inject(ModalsService) private modalsService: ModalsService,
     @Inject(SlackService) private slackService: SlackService,
     @InjectModel(Customer.name) public customerModel: Model<CustomerDocument>,
-    @Inject(RedlockService) private redlockService: RedlockService
+    @Inject(JourneysService) private journeysService: JourneysService,
+    @Inject(RedlockService) private redlockService: RedlockService,
+    @Inject(JourneyLocationsService)
+    private journeyLocationsService: JourneyLocationsService
   ) {
     super();
   }
@@ -165,12 +170,11 @@ export class TransitionProcessor extends WorkerHost {
           );
           break;
         case StepType.EXIT:
-          this.handleExitStep(
-            job.data.ownerID,
-            job.data.step.id,
-            job.data.customerID,
-            
-          )
+          // this.handleExitStep(
+          //   job.data.ownerID,
+          //   job.data.step.id,
+          //   job.data.customerID
+          // );
           const lock = this.redlockService.retrieve(
             job.data.lock.resources,
             job.data.lock.value,
@@ -240,15 +244,10 @@ export class TransitionProcessor extends WorkerHost {
         case StepType.START:
           await this.handleStart(
             job.data.ownerID,
+            job.data.journeyID,
             job.data.step.id,
             job.data.session,
             job.data.customerID,
-            this.redlockService.retrieve(
-              job.data.lock.resources,
-              job.data.lock.value,
-              job.data.lock.attempts,
-              job.data.lock.expiration
-            ),
             queryRunner,
             transactionSession,
             job.data.event
@@ -604,24 +603,21 @@ export class TransitionProcessor extends WorkerHost {
     });
 
     if (
-      !_.find(currentStep.customers, (customer) => {
-        return JSON.parse(customer).customerID === customerID;
-      })
-    ) {
-      await lock.release();
-      this.warn(
-        `${JSON.stringify({ warning: 'Releasing lock' })}`,
-        this.handleMessage.name,
+      !this.journeyLocationsService.find(
+        owner,
+        currentStep.journey,
+        customerID,
         session,
-        owner.email
-      );
+        queryRunner
+      )
+    ) {
       this.warn(
         `${JSON.stringify({
           warning: 'Customer not in step',
           customerID,
           currentStep,
         })}`,
-        this.handleCustomComponent.name,
+        this.handleMessage.name,
         session,
         owner.email
       );
@@ -799,51 +795,39 @@ export class TransitionProcessor extends WorkerHost {
         break;
     }
 
-    if (nextStep) {
+    if (
+      nextStep &&
+      nextStep.type !== StepType.TIME_DELAY &&
+      nextStep.type !== StepType.TIME_WINDOW &&
+      nextStep.type !== StepType.WAIT_UNTIL_BRANCH
+    ) {
       // Destination exists, move customer into destination
-      nextStep.customers.push(
-        JSON.stringify({
-          customerID,
-          timestamp: Temporal.Now.instant().toString(),
-        })
+      await this.journeyLocationsService.continueMove(
+        owner,
+        currentStep.journey,
+        currentStep,
+        nextStep,
+        customer,
+        session,
+        queryRunner
       );
-      _.remove(currentStep.customers, (customer) => {
-        return JSON.parse(customer).customerID === customerID;
+      await this.transitionQueue.add(nextStep.type, {
+        ownerID,
+        step: nextStep,
+        session: session,
+        customerID,
+        lock,
+        event,
       });
-      await queryRunner.manager.save(currentStep);
-      const newNext = await queryRunner.manager.save(nextStep);
-
-      if (
-        newNext.type !== StepType.TIME_DELAY &&
-        newNext.type !== StepType.TIME_WINDOW &&
-        newNext.type !== StepType.WAIT_UNTIL_BRANCH
-      )
-        await this.transitionQueue.add(newNext.type, {
-          ownerID,
-          step: newNext,
-          session: session,
-          customerID,
-          lock,
-          event,
-        });
-      else {
-        await lock.release();
-        this.warn(
-          `${JSON.stringify({ warning: 'Releasing lock' })}`,
-          this.handleMessage.name,
-          session,
-          owner.email
-        );
-      }
     } else {
       // Destination does not exist, customer has stopped moving so
       // we can release lock
-      await lock.release();
-      this.warn(
-        `${JSON.stringify({ warning: 'Releasing lock' })}`,
-        this.handleMessage.name,
+      await this.journeyLocationsService.unlock(
+        owner,
+        currentStep.journey,
+        customer,
         session,
-        owner.email
+        queryRunner
       );
     }
   }
@@ -860,10 +844,10 @@ export class TransitionProcessor extends WorkerHost {
    */
   async handleStart(
     ownerID: string,
+    journeyID: string,
     stepID: string,
     session: string,
     customerID: string,
-    lock: Lock,
     queryRunner: QueryRunner,
     transactionSession: mongoose.mongo.ClientSession,
     event?: string
@@ -871,6 +855,13 @@ export class TransitionProcessor extends WorkerHost {
     const owner = await queryRunner.manager.findOne(Account, {
       where: { id: ownerID },
     });
+
+    const journey = await this.journeysService.findByID(
+      owner,
+      journeyID,
+      session,
+      queryRunner
+    );
 
     const currentStep = await queryRunner.manager.findOne(Step, {
       where: {
@@ -881,24 +872,21 @@ export class TransitionProcessor extends WorkerHost {
     });
 
     if (
-      !_.find(currentStep.customers, (customer) => {
-        return JSON.parse(customer).customerID === customerID;
-      })
-    ) {
-      await lock.release();
-      this.warn(
-        `${JSON.stringify({ warning: 'Releasing lock' })}`,
-        this.handleStart.name,
+      !this.journeyLocationsService.find(
+        owner,
+        journey,
+        customerID,
         session,
-        owner.email
-      );
+        queryRunner
+      )
+    ) {
       this.warn(
         `${JSON.stringify({
           warning: 'Customer not in step',
           customerID,
           currentStep,
         })}`,
-        this.handleCustomComponent.name,
+        this.handleMessage.name,
         session,
         owner.email
       );
@@ -912,51 +900,38 @@ export class TransitionProcessor extends WorkerHost {
       lock: { mode: 'pessimistic_write' },
     });
 
-    if (nextStep) {
+    if (
+      nextStep &&
+      nextStep.type !== StepType.TIME_DELAY &&
+      nextStep.type !== StepType.TIME_WINDOW &&
+      nextStep.type !== StepType.WAIT_UNTIL_BRANCH
+    ) {
       // Destination exists, move customer into destination
-      nextStep.customers.push(
-        JSON.stringify({
-          customerID,
-          timestamp: Temporal.Now.instant().toString(),
-        })
+      await this.journeyLocationsService.continueMove(
+        owner,
+        journey,
+        currentStep,
+        nextStep,
+        await this.customersService.findById(owner, customerID),
+        session,
+        queryRunner
       );
-      _.remove(currentStep.customers, (customer) => {
-        return JSON.parse(customer).customerID === customerID;
+      await this.transitionQueue.add(nextStep.type, {
+        ownerID,
+        step: nextStep,
+        session: session,
+        customerID,
+        event,
       });
-      await queryRunner.manager.save(currentStep);
-      const newNext = await queryRunner.manager.save(nextStep);
-
-      if (
-        newNext.type !== StepType.TIME_DELAY &&
-        newNext.type !== StepType.TIME_WINDOW &&
-        newNext.type !== StepType.WAIT_UNTIL_BRANCH
-      )
-        await this.transitionQueue.add(newNext.type, {
-          ownerID,
-          step: newNext,
-          session: session,
-          customerID,
-          lock,
-          event,
-        });
-      else {
-        await lock.release();
-        this.warn(
-          `${JSON.stringify({ warning: 'Releasing lock' })}`,
-          this.handleStart.name,
-          session,
-          owner.email
-        );
-      }
     } else {
       // Destination does not exist, customer has stopped moving so
       // we can release lock
-      await lock.release();
-      this.warn(
-        `${JSON.stringify({ warning: 'Releasing lock' })}`,
-        this.handleStart.name,
+      await this.journeyLocationsService.unlock(
+        owner,
+        journey,
+        await this.customersService.findById(owner, customerID),
         session,
-        owner.email
+        queryRunner
       );
     }
   }
