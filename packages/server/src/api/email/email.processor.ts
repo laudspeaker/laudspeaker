@@ -253,7 +253,6 @@ export class MessageProcessor extends WorkerHost {
             break;
         case 'mailgun':
         default:
-          console.log("*** / we here in mailgun");
           const mailgun = new Mailgun(formData);
           const mg = mailgun.client({ username: 'api', key: job.data.key });
           const mailgunMessage = await mg.messages.create(job.data.domain, {
