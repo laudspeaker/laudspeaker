@@ -23,7 +23,7 @@ export class CustomersConsumerService implements OnApplicationBootstrap {
   constructor(
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
     private readonly logger: Logger,
-    private readonly consumerService: KafkaConsumerService, // private readonly segmentService: SegmentsService, // private readonly journeyService: JourneysService
+    private readonly consumerService: KafkaConsumerService,
     private readonly customersService: CustomersService,
     private readonly journeysService: JourneysService,
     private readonly accountsService: AccountsService,
