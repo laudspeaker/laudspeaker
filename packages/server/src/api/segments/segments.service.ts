@@ -252,7 +252,8 @@ export class SegmentsService {
     let removedFromSegments: Segment[] = [];
     let segments = await this.getSegments(account);
     segments.forEach(async (segment) => {
-      // let doInclude = this.checkInclusionCriteria(segment, customer)
+      // TODO: implement the following
+      // let doInclude = checkInclusionCriteria(segment, customer)
       let doInclude = true;
       let isMemberOf = await this.isCustomerMemberOf(
         account,
@@ -261,15 +262,64 @@ export class SegmentsService {
       );
       if (doInclude && !isMemberOf) {
         // If should include but not a member of, then add
-        await this.assignCustomer(account, segment.id, customerId, session);
+        await this.addCustomerToSegment(
+          account,
+          segment.id,
+          customerId,
+          session
+        );
         addedToSegments.push(segment);
       } else if (!doInclude && isMemberOf) {
         // If should not include but is a member of, then remove
-        await this.unassignCustomer(account, segment.id, customerId, session);
+        await this.removeCustomerFromSegment(segment.id, customerId);
         removedFromSegments.push(segment);
       }
     });
     return { added: addedToSegments, removed: removedFromSegments };
+  }
+
+  /**
+   * Add customer to segment record if not already exists.
+   */
+  public async addCustomerToSegment(
+    account: Account,
+    segmentId: string,
+    customerId: string,
+    session: string
+  ) {
+    const segment = await this.findOne(account, segmentId, session);
+
+    const foundRecord = await this.segmentCustomersRepository.findOneBy({
+      segment: { id: segment.id },
+      customerId,
+    });
+
+    if (foundRecord)
+      throw new ConflictException('Customer already in this segment');
+
+    await this.segmentCustomersRepository.save({
+      segment: { id: segment.id },
+      customerId,
+    });
+  }
+
+  public async removeCustomerFromSegment(
+    segmentId: string,
+    customerId: string
+  ) {
+    await this.segmentCustomersRepository.delete({
+      segment: { id: segmentId },
+      customerId,
+    });
+  }
+
+  /**
+   * Handles unassigning a customer from all segments.
+   */
+  public async removeCustomerFromAllSegments(customerId: string) {
+    await this.segmentCustomersRepository.delete({
+      customerId,
+    });
   }
 
   public async assignCustomer(
@@ -333,18 +383,6 @@ export class SegmentsService {
         this.logger.error(e);
       }
     }
-  }
-
-  public async unassignCustomer(
-    account: Account,
-    segmentId: string,
-    customerId: string,
-    session: string
-  ) {
-    await this.segmentCustomersRepository.delete({
-      segment: { id: segmentId },
-      customerId,
-    });
   }
 
   public async putCustomers(

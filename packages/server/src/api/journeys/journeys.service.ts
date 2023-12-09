@@ -429,32 +429,32 @@ export class JourneysService {
     customerUpdateType: 'NEW' | 'CHANGE',
     session: string
   ) {
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-    let transactionSession = await this.connection.startSession();
-    transactionSession.startTransaction();
-    const journeys = await queryRunner.manager.find(Journey, {
+    const journeys = await this.journeysRepository.find({
       where: {
         owner: { id: account.id },
         isActive: true,
+        isStopped: false,
+        isPaused: false,
+        // TODO should we be checking for these?
+        isDynamic: true,
       },
     });
     let customer = await this.customersService.findById(account, customerId);
     journeys.forEach(async (journey) => {
       // get segments for journey
+      let change: 'ADD' | 'REMOVE' | 'DO_NOTHING' = 'DO_NOTHING';
       let doesInclude = await this.customersService.isCustomerEnrolledInJourney(
         account,
         customerId,
         journey.id
       );
-      let shouldInclude = false;
-      let change: 'ADD' | 'REMOVE' | 'DO_NOTHING' = 'DO_NOTHING';
+      // TODO: implement the following
       // if (customer matches journeyInclusionCriteria)
       //     shouldInclude = true
       // for segment in journey.segments
       //    if customer in segment
       //        shouldInclude = true
+      let shouldInclude = false;
       if (!doesInclude && shouldInclude) {
         if (
           journey.journeyEntrySettings.enrollmentType ===
@@ -473,17 +473,72 @@ export class JourneysService {
       }
       switch (change) {
         case 'ADD':
-          this.enrollCustomer(
-            account,
-            customer,
-            queryRunner,
-            transactionSession,
-            session
-          );
+          this.enrollCustomerInJourney(account, journey, customer, session);
         case 'REMOVE':
-          this.unenrollCustomer();
+          this.unenrollCustomerFromJourney(account, journey, customer, session);
       }
     });
+  }
+
+  /**
+   * Enroll customer in a journey.
+   * Adds to first step in journey.
+   * WARNING: this method does not check if the journey **should** include the customer.
+   */
+  async enrollCustomerInJourney(
+    account: Account,
+    journey: Journey,
+    customer: CustomerDocument,
+    session: string
+  ): Promise<void> {
+    let queryRunner = await this.dataSource.createQueryRunner();
+    queryRunner.connect();
+    queryRunner.startTransaction();
+    await this.stepsService.addToStart(
+      account,
+      journey.id,
+      customer,
+      queryRunner,
+      session
+    );
+    await this.CustomerModel.updateOne(
+      { _id: customer._id },
+      {
+        $addToSet: {
+          journeys: journey.id,
+        },
+        $set: {
+          journeyEnrollmentsDates: {
+            [journey.id]: new Date().toUTCString(),
+          },
+        },
+      }
+    );
+    queryRunner.commitTransaction();
+  }
+
+  /**
+   * Un-Enroll Customer from journey and remove from any steps.
+   */
+  public async unenrollCustomerFromJourney(
+    account: Account,
+    journey: Journey,
+    customer: CustomerDocument,
+    session: string
+  ) {
+    // TODO: remove from steps also
+    await this.CustomerModel.updateOne(
+      { _id: customer._id },
+      {
+        $pullAll: {
+          journeys: journey.id,
+        },
+        // TODO: This logic needs to be checked
+        $unset: {
+          journeyEnrollmentsDates: [journey.id],
+        },
+      }
+    );
   }
 
   /**
@@ -558,10 +613,6 @@ export class JourneysService {
       this.error(err, this.enrollCustomer.name, session, account.id);
       throw err;
     }
-  }
-
-  public async unenrollCustomer() {
-    return true;
   }
 
   /**
