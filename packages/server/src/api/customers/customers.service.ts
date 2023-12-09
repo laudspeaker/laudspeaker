@@ -1708,6 +1708,15 @@ export class CustomersService {
     };
   }
 
+  public async isCustomerEnrolledInJourney(
+    account: Account,
+    customerId: string,
+    journeyId: string
+  ) {
+    let customer = await this.findById(account, customerId);
+    return customer.journeys.includes(journeyId);
+  }
+
   public async getCustomerJourneys(
     user: Account,
     custId: string,

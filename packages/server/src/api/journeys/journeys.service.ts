@@ -1,3 +1,4 @@
+import { JourneyEnrollmentType } from './types/additional-journey-settings.interface';
 import {
   Logger,
   Inject,
@@ -422,6 +423,69 @@ export class JourneysService {
     }
   }
 
+  public async updateEnrollmentForCustomer(
+    account: Account,
+    customerId: string,
+    customerUpdateType: 'NEW' | 'CHANGE',
+    session: string
+  ) {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    let transactionSession = await this.connection.startSession();
+    transactionSession.startTransaction();
+    const journeys = await queryRunner.manager.find(Journey, {
+      where: {
+        owner: { id: account.id },
+        isActive: true,
+      },
+    });
+    let customer = await this.customersService.findById(account, customerId);
+    journeys.forEach(async (journey) => {
+      // get segments for journey
+      let doesInclude = await this.customersService.isCustomerEnrolledInJourney(
+        account,
+        customerId,
+        journey.id
+      );
+      let shouldInclude = false;
+      let change: 'ADD' | 'REMOVE' | 'DO_NOTHING' = 'DO_NOTHING';
+      // if (customer matches journeyInclusionCriteria)
+      //     shouldInclude = true
+      // for segment in journey.segments
+      //    if customer in segment
+      //        shouldInclude = true
+      if (!doesInclude && shouldInclude) {
+        if (
+          journey.journeyEntrySettings.enrollmentType ===
+          JourneyEnrollmentType.CurrentAndFutureUsers
+        ) {
+          change = 'ADD';
+        } else if (
+          journey.journeyEntrySettings.enrollmentType ===
+            JourneyEnrollmentType.OnlyFuture &&
+          customerUpdateType === 'NEW'
+        ) {
+          change = 'ADD';
+        }
+      } else if (doesInclude && !shouldInclude) {
+        change = 'REMOVE';
+      }
+      switch (change) {
+        case 'ADD':
+          this.enrollCustomer(
+            account,
+            customer,
+            queryRunner,
+            transactionSession,
+            session
+          );
+        case 'REMOVE':
+          this.unenrollCustomer();
+      }
+    });
+  }
+
   /**
    *  IMPORTANT: THIS METHOD MUST REMAIN IDEMPOTENT: CUSTOMER SHOULD
    * NOT BE DOUBLE ENROLLED IN JOURNEY
@@ -451,7 +515,6 @@ export class JourneysService {
           isDynamic: true,
         },
       });
-
       for (
         let journeyIndex = 0;
         journeyIndex < journeys?.length;
@@ -495,6 +558,10 @@ export class JourneysService {
       this.error(err, this.enrollCustomer.name, session, account.id);
       throw err;
     }
+  }
+
+  public async unenrollCustomer() {
+    return true;
   }
 
   /**

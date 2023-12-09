@@ -17,6 +17,9 @@ import { AudiencesHelper } from '../audiences/audiences.helper';
 import { AudiencesModule } from '../audiences/audiences.module';
 import { WorkflowsModule } from '../workflows/workflows.module';
 import { StepsModule } from '../steps/steps.module';
+import { CustomersConsumerService } from './customers.consumer';
+import { KafkaModule } from '../kafka/kafka.module';
+import { JourneysModule } from '../journeys/journeys.module';
 
 @Module({
   imports: [
@@ -35,9 +38,17 @@ import { StepsModule } from '../steps/steps.module';
     WorkflowsModule,
     StepsModule,
     TypeOrmModule.forFeature([Account]),
+    KafkaModule,
+    JourneysModule,
   ],
   controllers: [CustomersController],
-  providers: [CustomersService, CustomersProcessor, AudiencesHelper],
-  exports: [CustomersService],
+  providers: [
+    CustomersService,
+    CustomersProcessor,
+    AudiencesHelper,
+    CustomersConsumerService,
+  ],
+
+  exports: [CustomersService, CustomersConsumerService],
 })
 export class CustomersModule {}
