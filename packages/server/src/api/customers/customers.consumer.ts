@@ -80,9 +80,9 @@ export class CustomersConsumerService implements OnApplicationBootstrap {
             session
           );
         case 'delete':
+          // TODO: remove customerID from all steps also
           let customerId = message.documentKey._id['$oid'];
           this.segmentsService.removeCustomerFromAllSegments(customerId);
-        // remove customerID from all steps
       }
       transactionSession.commitTransaction();
       queryRunner.commitTransaction();
