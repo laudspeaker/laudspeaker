@@ -325,9 +325,7 @@ const PushSettings = () => {
               {tabIndex === 0 ? (
                 <>
                   <div className="text-[#9c9fa3] font-roboto text-[14px] leading-[22px]">
-                    Description Description Description Description Description
-                    Description Description Description Description Description
-                    Description Description Description Description
+                    Set Up Push Notifications on the following platforms
                     <a
                       href="https://laudspeaker.com/docs/overview/introduction"
                       target="_blank"

@@ -278,7 +278,8 @@ const PushBuilderContent = ({ data, onChange }: PushBuilderContentProps) => {
             Key value pairs
           </div>
           <div className="font-inter text-[12px] text-[#000000D9] leading-[22px] my-[10px]">
-            description description description description description
+            Add aditional data that you would like to send as part of your push
+            here
           </div>
           {data.fields.map((el, i) => (
             <div
