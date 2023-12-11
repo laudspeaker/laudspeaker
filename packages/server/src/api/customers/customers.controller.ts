@@ -208,6 +208,14 @@ export class CustomersController {
     );
   }
 
+  @Get('/getLastImportCSV')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
+  async getLastImportCSV(@Req() { user }: Request) {
+    const session = randomUUID();
+    return this.customersService.getLastImportCSV(<Account>user, session);
+  }
+
   @Get('/:id')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
@@ -349,6 +357,40 @@ export class CustomersController {
   ) {
     const session = randomUUID();
     return this.customersService.loadCSV(<Account>user, file, session);
+  }
+
+  @Post('/uploadCSV')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
+  @UseInterceptors(
+    FileInterceptor('file', {
+      limits: {
+        files: 1,
+        fileSize: 1073741824,
+      },
+    })
+  )
+  async uploadCSV(
+    @Req() { user }: Request,
+    @UploadedFile() file: Express.Multer.File
+  ) {
+    const session = randomUUID();
+    return this.customersService.uploadCSV(<Account>user, file, session);
+  }
+
+  @Post('/imports/delete/:fileKey')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
+  async deleteImportFile(
+    @Req() { user }: Request,
+    @Param('fileKey') fileKey: string
+  ) {
+    const session = randomUUID();
+    return this.customersService.deleteImportFile(
+      <Account>user,
+      fileKey,
+      session
+    );
   }
 
   @Post('/delete/:custId')

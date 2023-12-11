@@ -11,6 +11,7 @@ import { Account } from '../accounts/entities/accounts.entity';
 @Injectable()
 export class S3Service {
   AWS_S3_BUCKET = process.env.AWS_S3_BUCKET;
+  AWS_S3_CUSTOMERS_IMPORT_BUCKET = process.env.AWS_S3_CUSTOMERS_IMPORT_BUCKET;
   s3 = new AWS.S3({
     accessKeyId: process.env.AWS_S3_ACCESS_KEY,
     secretAccessKey: process.env.AWS_S3_KEY_SECRET,
@@ -28,16 +29,28 @@ export class S3Service {
       file.buffer,
       this.AWS_S3_BUCKET,
       String(account.id) + Date.now().toString() + originalname,
+      file.mimetype,
+      'public-read'
+    );
+  }
+
+  async uploadCustomerImportFile(file, account: Account) {
+    const { originalname } = file;
+
+    return await this.s3_upload(
+      file.buffer,
+      this.AWS_S3_CUSTOMERS_IMPORT_BUCKET,
+      String(account.id) + Date.now().toString() + originalname,
       file.mimetype
     );
   }
 
-  async s3_upload(file, bucket, key, mimetype) {
+  async s3_upload(file, bucket, key, mimetype, ACL?: string) {
     const params = {
       Bucket: bucket,
       Key: key,
       Body: file,
-      ACL: 'public-read',
+      ACL: ACL,
       ContentType: mimetype,
       ContentDisposition: 'inline',
       CreateBucketConfiguration: {
@@ -55,11 +68,15 @@ export class S3Service {
       return { url: s3Response.Location, key: s3Response.Key };
     } catch (e) {
       this.logger.error(e);
-      throw new HttpException('Error while trying to delete file.', 500);
+      throw new HttpException('Error while trying to upload file.', 500);
     }
   }
 
-  async deleteFile(key: string, account: Account) {
+  async deleteFile(
+    key: string,
+    account: Account,
+    isCustomerImportBucket = false
+  ) {
     if (!key.startsWith(account.id)) {
       throw new HttpException('You are not allowed to delete this file.', 500);
     }
@@ -67,7 +84,9 @@ export class S3Service {
     try {
       await this.s3
         .deleteObject({
-          Bucket: this.AWS_S3_BUCKET,
+          Bucket: isCustomerImportBucket
+            ? this.AWS_S3_CUSTOMERS_IMPORT_BUCKET
+            : this.AWS_S3_BUCKET,
           Key: key,
         })
         .promise();

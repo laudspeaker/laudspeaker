@@ -45,6 +45,9 @@ import { WorkflowsService } from '../workflows/workflows.service';
 import * as _ from 'lodash';
 import { randomUUID } from 'crypto';
 import { StepsService } from '../steps/steps.service';
+import { S3Service } from '../s3/s3.service';
+import { Imports } from './entities/imports.entity';
+import { thrift } from '@databricks/sql';
 
 export type Correlation = {
   cust: CustomerDocument;
@@ -110,13 +113,17 @@ export class CustomersService {
     private segmentsService: SegmentsService,
     @InjectRepository(Account)
     public accountsRepository: Repository<Account>,
+    @InjectRepository(Imports)
+    public importsRepository: Repository<Imports>,
     private readonly audiencesHelper: AudiencesHelper,
     private readonly audiencesService: AudiencesService,
     @Inject(WorkflowsService)
     private readonly workflowsService: WorkflowsService,
     @Inject(StepsService)
     private readonly stepsService: StepsService,
-    @InjectConnection() private readonly connection: mongoose.Connection
+    @InjectConnection()
+    private readonly connection: mongoose.Connection,
+    private readonly s3Service: S3Service
   ) {
     const session = randomUUID();
     (async () => {
@@ -1457,7 +1464,139 @@ export class CustomersService {
     );
   }
 
-  // TODO: optimize
+  async uploadCSV(
+    account: Account,
+    csvFile: Express.Multer.File,
+    session: string
+  ) {
+    if (csvFile?.mimetype !== 'text/csv')
+      throw new BadRequestException('Only CSV files are allowed');
+
+    try {
+      const errorPromise = new Promise<{
+        headers: string[];
+        firstThreeRecords: Object[];
+      }>((resolve, reject) => {
+        let headers = [];
+        let firstThreeRecords = [];
+        let recordCount = 0;
+
+        parse(
+          csvFile.buffer,
+          {
+            columns: true,
+            delimiter: ',',
+            encoding: 'utf-8',
+            onRecord: (record, { lines }) => {
+              if (!headers.length) headers = Object.keys(record);
+
+              if (recordCount < 3) {
+                firstThreeRecords.push(record);
+                recordCount++;
+              }
+              return recordCount <= 3 ? record : false;
+            },
+          },
+          (csvError) => {
+            if (csvError) reject(csvError);
+            else resolve({ headers, firstThreeRecords });
+          }
+        );
+      });
+
+      const res = await errorPromise;
+
+      const headers: Record<string, { header: string; preview: any[] }> = {};
+      res.headers.forEach((header) => {
+        if (!headers[header])
+          headers[header] = {
+            header: '',
+            preview: [],
+          };
+
+        res.firstThreeRecords.forEach((record) => {
+          headers[header].header = header;
+          headers[header].preview.push(record[header] || '');
+        });
+      });
+
+      this.removeImportFile(account);
+
+      const { key } = await this.s3Service.uploadCustomerImportFile(
+        csvFile,
+        account
+      );
+      const fName = csvFile?.originalname || 'Unknown name';
+
+      await this.importsRepository.insert({
+        account,
+        fileKey: key,
+        fileName: fName,
+        headers: headers,
+      });
+
+      return;
+    } catch (error) {
+      this.error(error, this.uploadCSV.name, session);
+      this.removeImportFile(account);
+      throw new BadRequestException('Error processing processing your CSV');
+    }
+  }
+
+  async deleteImportFile(account: Account, fileKey: string, session?: string) {
+    try {
+      const importFile = await this.importsRepository.findOneBy({
+        account: {
+          id: account.id,
+        },
+        fileKey,
+      });
+      if (!importFile) {
+        throw new BadRequestException("Can't find imported file for deletion.");
+      }
+
+      await this.removeImportFile(account, fileKey);
+    } catch (error) {
+      this.error(error, this.deleteImportFile.name, session);
+      throw new BadRequestException(
+        `Error getting last importedCSV, account ${account.id}, sessions:${session}`
+      );
+    }
+  }
+
+  async getLastImportCSV(account: Account, session?: string) {
+    try {
+      const importFile = await this.importsRepository.findOneBy({
+        account: {
+          id: account.id,
+        },
+      });
+      return importFile;
+    } catch (error) {
+      this.error(error, this.getLastImportCSV.name, session);
+      throw new BadRequestException(
+        `Error getting last importedCSV, account ${account.id}, sessions:${session}`
+      );
+    }
+  }
+
+  async removeImportFile(account: Account, fileKey?: string) {
+    const previousImport = await this.importsRepository.findOneBy({
+      account: {
+        id: account.id,
+      },
+      fileKey,
+    });
+
+    if (!previousImport) {
+      throw new BadRequestException("Can't find imported file for deletion.");
+    }
+
+    await this.s3Service.deleteFile(previousImport.fileKey, account, true);
+    await previousImport.remove();
+  }
+
+  // TODO: remove after new implementation finished
   async loadCSV(
     account: Account,
     csvFile: Express.Multer.File,
