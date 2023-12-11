@@ -166,7 +166,11 @@ export class JourneyLocationsService {
   }
 
   /**
+<<<<<<< HEAD
    * Starts moving a customer between steps.
+=======
+   * Moves a customer from one step to another while they are actively being moved.
+>>>>>>> 6246e0eaab984531bbf795b5ab97cb3ffc9c4546
    *
    * This method should only be called by time and event triggered steps.
    *

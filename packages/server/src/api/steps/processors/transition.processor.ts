@@ -786,7 +786,6 @@ export class TransitionProcessor extends WorkerHost {
 
     }
 
-
     if (
       nextStep &&
       nextStep.type !== StepType.TIME_DELAY &&
