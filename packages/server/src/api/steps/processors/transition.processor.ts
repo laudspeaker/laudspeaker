@@ -1,5 +1,6 @@
 /* eslint-disable no-case-declarations */
 import { HttpException, HttpStatus, Inject, Logger } from '@nestjs/common';
+import * as http from 'node:http'
 import { Injectable } from '@nestjs/common';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import {
@@ -45,7 +46,7 @@ import { JourneyLocationsService } from '@/api/journeys/journey-locations.servic
 import { JourneysService } from '@/api/journeys/journeys.service';
 
 @Injectable()
-@Processor('transition', { concurrency: cpus().length })
+@Processor('transition')
 export class TransitionProcessor extends WorkerHost {
   private phClient = new PostHog(process.env.POSTHOG_KEY, {
     host: process.env.POSTHOG_HOST,
@@ -152,7 +153,7 @@ export class TransitionProcessor extends WorkerHost {
       switch (job.data.step.type) {
         case StepType.AB_TEST:
           break;
-        case StepType.ATTRIBUTE_BRANCH:
+        case StepType.MULTISPLIT:
           this.handleAttributeBranch(
             job.data.ownerID,
             job.data.step.id,
@@ -170,23 +171,7 @@ export class TransitionProcessor extends WorkerHost {
           );
           break;
         case StepType.EXIT:
-          // this.handleExitStep(
-          //   job.data.ownerID,
-          //   job.data.step.id,
-          //   job.data.customerID
-          // );
-          const lock = this.redlockService.retrieve(
-            job.data.lock.resources,
-            job.data.lock.value,
-            job.data.lock.attempts,
-            job.data.lock.expiration
-          );
-          await lock.release();
-          this.warn(
-            `${JSON.stringify({ warning: 'Releasing lock' })}`,
-            this.process.name,
-            job.data.session
-          );
+          await this.handleExit(job.data.ownerID, job.data.journeyID, job.data.session, job.data.customerID, queryRunner);
           break;
         case StepType.LOOP:
           await this.handleLoop(
@@ -208,15 +193,10 @@ export class TransitionProcessor extends WorkerHost {
         case StepType.MESSAGE:
           await this.handleMessage(
             job.data.ownerID,
+            job.data.journeyID,
             job.data.step.id,
             job.data.session,
             job.data.customerID,
-            this.redlockService.retrieve(
-              job.data.lock.resources,
-              job.data.lock.value,
-              job.data.lock.attempts,
-              job.data.lock.expiration
-            ),
             queryRunner,
             transactionSession,
             job.data.event
@@ -582,10 +562,10 @@ export class TransitionProcessor extends WorkerHost {
    */
   async handleMessage(
     ownerID: string,
+    journeyID: string,
     stepID: string,
     session: string,
     customerID: string,
-    lock: Lock,
     queryRunner: QueryRunner,
     transactionSession: mongoose.mongo.ClientSession,
     event?: string
@@ -594,18 +574,24 @@ export class TransitionProcessor extends WorkerHost {
       where: { id: ownerID },
     });
 
+    const journey = await this.journeysService.findByID(
+      owner,
+      journeyID,
+      session,
+      queryRunner
+    );
+
     const currentStep = await queryRunner.manager.findOne(Step, {
       where: {
         id: stepID,
         type: StepType.MESSAGE,
       },
-      lock: { mode: 'pessimistic_write' },
     });
 
     if (
       !this.journeyLocationsService.find(
         owner,
-        currentStep.journey,
+        journey,
         customerID,
         session,
         queryRunner
@@ -628,172 +614,178 @@ export class TransitionProcessor extends WorkerHost {
       where: {
         id: currentStep.metadata.destination,
       },
-      lock: { mode: 'pessimistic_write' },
     });
 
-    //send message here
-    const templateID = currentStep.metadata.template;
-    const template = await this.templatesService.transactionalFindOneById(
-      owner,
-      templateID.toString(),
-      queryRunner
-    );
-    const {
-      mailgunAPIKey,
-      sendingName,
-      testSendingEmail,
-      testSendingName,
-      sendgridApiKey,
-      sendgridFromEmail,
-      email,
-    } = owner;
-    let { sendingDomain, sendingEmail } = owner;
+    if (process.env.PERFORMANCE_TESTING) {
+      await http.get(process.env.PERFORMANCE_TESTING_ENDPOINT)
+    } else {
 
-    let key = mailgunAPIKey;
-    let from = sendingName;
-    const customer: CustomerDocument = await this.customersService.findById(
-      owner,
-      customerID
-    );
-    const { _id, ownerId, workflows, journeys, ...tags } = customer.toObject();
-    const filteredTags = cleanTagsForSending(tags);
-    const sender = new MessageSender();
+      //send message here
+      const templateID = currentStep.metadata.template;
+      const template = await this.templatesService.transactionalFindOneById(
+        owner,
+        templateID.toString(),
+        queryRunner
+      );
+      const {
+        mailgunAPIKey,
+        sendingName,
+        testSendingEmail,
+        testSendingName,
+        sendgridApiKey,
+        sendgridFromEmail,
+        email,
+      } = owner;
+      let { sendingDomain, sendingEmail } = owner;
 
-    switch (template.type) {
-      case TemplateType.EMAIL:
-        if (owner.emailProvider === 'free3') {
-          if (owner.freeEmailsCount === 0)
-            throw new HttpException(
-              'You exceeded limit of 3 emails',
-              HttpStatus.PAYMENT_REQUIRED
-            );
-          sendingDomain = process.env.MAILGUN_TEST_DOMAIN;
-          key = process.env.MAILGUN_API_KEY;
-          from = testSendingName;
-          sendingEmail = testSendingEmail;
-          owner.freeEmailsCount--;
-        }
-        if (owner.emailProvider === 'sendgrid') {
-          key = sendgridApiKey;
-          from = sendgridFromEmail;
-        }
-        const ret = await sender.process({
-          name: TemplateType.EMAIL,
-          accountID: owner.id,
-          cc: template.cc,
-          customerID: customerID,
-          domain: sendingDomain,
-          email: sendingEmail,
-          stepID: currentStep.id,
-          from: from,
-          trackingEmail: email,
-          key: key,
-          subject: await this.templatesService.parseApiCallTags(
-            template.subject,
-            filteredTags
-          ),
-          to: customer.phEmail ? customer.phEmail : customer.email,
-          text: await this.templatesService.parseApiCallTags(
-            template.text,
-            filteredTags
-          ),
-          tags: filteredTags,
-          templateID: template.id,
-          eventProvider: owner.emailProvider,
-        });
-        this.debug(`${JSON.stringify(ret)}`, this.handleMessage.name, session);
-        await this.webhooksService.insertMessageStatusToClickhouse(ret);
-        if (owner.emailProvider === 'free3') await owner.save();
-        break;
-      case TemplateType.PUSH:
-        // TODO: update for new PUSH
-        // await this.webhooksService.insertMessageStatusToClickhouse(
-        //   await sender.process({
-        //     name: TemplateType.PUSH,
-        //     accountID: owner.id,
-        //     stepID: currentStep.id,
-        //     customerID: customerID,
-        //     firebaseCredentials: owner.firebaseCredentials,
-        //     phDeviceToken: customer.phDeviceToken,
-        //     pushText: await this.templatesService.parseApiCallTags(
-        //       template.pushText,
-        //       filteredTags
-        //     ),
-        //     pushTitle: await this.templatesService.parseApiCallTags(
-        //       template.pushTitle,
-        //       filteredTags
-        //     ),
-        //     trackingEmail: email,
-        //     filteredTags: filteredTags,
-        //     templateID: template.id,
-        //   })
-        // );
-        break;
-      case TemplateType.MODAL:
-        if (template.modalState) {
-          const isSent = await this.websocketGateway.sendModal(
-            customerID,
-            template
-          );
-          if (!isSent)
-            await this.modalsService.queueModalEvent(customerID, template);
-        }
-        break;
-      case TemplateType.SLACK:
-        const installation = await this.slackService.getInstallation(customer);
-        await this.webhooksService.insertMessageStatusToClickhouse(
-          await sender.process({
-            name: TemplateType.SLACK,
+      let key = mailgunAPIKey;
+      let from = sendingName;
+      const customer: CustomerDocument = await this.customersService.findById(
+        owner,
+        customerID
+      );
+      const { _id, ownerId, workflows, journeys, ...tags } = customer.toObject();
+      const filteredTags = cleanTagsForSending(tags);
+      const sender = new MessageSender();
+
+      switch (template.type) {
+        case TemplateType.EMAIL:
+          if (owner.emailProvider === 'free3') {
+            if (owner.freeEmailsCount === 0)
+              throw new HttpException(
+                'You exceeded limit of 3 emails',
+                HttpStatus.PAYMENT_REQUIRED
+              );
+            sendingDomain = process.env.MAILGUN_TEST_DOMAIN;
+            key = process.env.MAILGUN_API_KEY;
+            from = testSendingName;
+            sendingEmail = testSendingEmail;
+            owner.freeEmailsCount--;
+          }
+          if (owner.emailProvider === 'sendgrid') {
+            key = sendgridApiKey;
+            from = sendgridFromEmail;
+          }
+          const ret = await sender.process({
+            name: TemplateType.EMAIL,
             accountID: owner.id,
+            cc: template.cc,
+            customerID: customerID,
+            domain: sendingDomain,
+            email: sendingEmail,
             stepID: currentStep.id,
-            customerID: customer.id,
-            templateID: template.id,
-            methodName: 'chat.postMessage',
-            filteredTags: filteredTags,
-            args: {
-              token: installation.installation.bot.token,
-              channel: customer.slackId,
-              text: await this.templatesService.parseApiCallTags(
-                template.slackMessage,
-                filteredTags
-              ),
-            },
-          })
-        );
-        break;
-      case TemplateType.SMS:
-        await this.webhooksService.insertMessageStatusToClickhouse(
-          await sender.process({
-            name: TemplateType.SMS,
-            accountID: owner.id,
-            stepID: currentStep.id,
-            customerID: customer.id,
-            templateID: template.id,
-            from: owner.smsFrom,
-            sid: owner.smsAccountSid,
-            tags: filteredTags,
-            text: await this.templatesService.parseApiCallTags(
-              template.smsText,
+            from: from,
+            trackingEmail: email,
+            key: key,
+            subject: await this.templatesService.parseApiCallTags(
+              template.subject,
               filteredTags
             ),
-            to: customer.phPhoneNumber || customer.phone,
-            token: owner.smsAuthToken,
-            trackingEmail: email,
-          })
-        );
-        break;
-      case TemplateType.WEBHOOK: //TODO:remove this from queue
-        if (template.webhookData) {
-          await this.webhooksQueue.add('whapicall', {
-            template,
-            filteredTags,
-            audienceId: stepID,
-            customerId: customerID,
-            accountId: owner.id,
+            to: customer.phEmail ? customer.phEmail : customer.email,
+            text: await this.templatesService.parseApiCallTags(
+              template.text,
+              filteredTags
+            ),
+            tags: filteredTags,
+            templateID: template.id,
+            eventProvider: owner.emailProvider,
           });
-        }
-        break;
+          this.debug(`${JSON.stringify(ret)}`, this.handleMessage.name, session);
+          await this.webhooksService.insertMessageStatusToClickhouse(ret);
+          if (owner.emailProvider === 'free3') await owner.save();
+          break;
+        case TemplateType.PUSH:
+          // TODO: update for new PUSH
+          // await this.webhooksService.insertMessageStatusToClickhouse(
+          //   await sender.process({
+          //     name: TemplateType.PUSH,
+          //     accountID: owner.id,
+          //     stepID: currentStep.id,
+          //     customerID: customerID,
+          //     firebaseCredentials: owner.firebaseCredentials,
+          //     phDeviceToken: customer.phDeviceToken,
+          //     pushText: await this.templatesService.parseApiCallTags(
+          //       template.pushText,
+          //       filteredTags
+          //     ),
+          //     pushTitle: await this.templatesService.parseApiCallTags(
+          //       template.pushTitle,
+          //       filteredTags
+          //     ),
+          //     trackingEmail: email,
+          //     filteredTags: filteredTags,
+          //     templateID: template.id,
+          //   })
+          // );
+          break;
+        case TemplateType.MODAL:
+          if (template.modalState) {
+            const isSent = await this.websocketGateway.sendModal(
+              customerID,
+              template
+            );
+            if (!isSent)
+              await this.modalsService.queueModalEvent(customerID, template);
+          }
+          break;
+        case TemplateType.SLACK:
+          const installation = await this.slackService.getInstallation(customer);
+          await this.webhooksService.insertMessageStatusToClickhouse(
+            await sender.process({
+              name: TemplateType.SLACK,
+              accountID: owner.id,
+              stepID: currentStep.id,
+              customerID: customer.id,
+              templateID: template.id,
+              methodName: 'chat.postMessage',
+              filteredTags: filteredTags,
+              args: {
+                token: installation.installation.bot.token,
+                channel: customer.slackId,
+                text: await this.templatesService.parseApiCallTags(
+                  template.slackMessage,
+                  filteredTags
+                ),
+              },
+            })
+          );
+          break;
+        case TemplateType.SMS:
+          await this.webhooksService.insertMessageStatusToClickhouse(
+            await sender.process({
+              name: TemplateType.SMS,
+              accountID: owner.id,
+              stepID: currentStep.id,
+              customerID: customer.id,
+              templateID: template.id,
+              from: owner.smsFrom,
+              sid: owner.smsAccountSid,
+              tags: filteredTags,
+              text: await this.templatesService.parseApiCallTags(
+                template.smsText,
+                filteredTags
+              ),
+              to: customer.phPhoneNumber || customer.phone,
+              token: owner.smsAuthToken,
+              trackingEmail: email,
+            })
+          );
+          break;
+        case TemplateType.WEBHOOK: //TODO:remove this from queue
+          if (template.webhookData) {
+            await this.webhooksQueue.add('whapicall', {
+              template,
+              filteredTags,
+              audienceId: stepID,
+              customerId: customerID,
+              accountId: owner.id,
+            });
+          }
+          break;
+      }
+
     }
+
 
     if (
       nextStep &&
@@ -804,19 +796,19 @@ export class TransitionProcessor extends WorkerHost {
       // Destination exists, move customer into destination
       await this.journeyLocationsService.continueMove(
         owner,
-        currentStep.journey,
+        journey,
         currentStep,
         nextStep,
-        customer,
+        await this.customersService.findById(owner, customerID),
         session,
         queryRunner
       );
       await this.transitionQueue.add(nextStep.type, {
         ownerID,
+        journeyID: journey.id,
         step: nextStep,
         session: session,
         customerID,
-        lock,
         event,
       });
     } else {
@@ -824,8 +816,8 @@ export class TransitionProcessor extends WorkerHost {
       // we can release lock
       await this.journeyLocationsService.unlock(
         owner,
-        currentStep.journey,
-        customer,
+        journey,
+        await this.customersService.findById(owner, customerID),
         session,
         queryRunner
       );
@@ -868,7 +860,6 @@ export class TransitionProcessor extends WorkerHost {
         id: stepID,
         type: StepType.START,
       },
-      lock: { mode: 'pessimistic_write' },
     });
 
     if (
@@ -897,7 +888,6 @@ export class TransitionProcessor extends WorkerHost {
       where: {
         id: currentStep.metadata.destination,
       },
-      lock: { mode: 'pessimistic_write' },
     });
 
     if (
@@ -918,6 +908,7 @@ export class TransitionProcessor extends WorkerHost {
       );
       await this.transitionQueue.add(nextStep.type, {
         ownerID,
+        journeyID,
         step: nextStep,
         session: session,
         customerID,
@@ -934,6 +925,43 @@ export class TransitionProcessor extends WorkerHost {
         queryRunner
       );
     }
+  }
+
+  /**
+ * Handle exit step type; move all customers to next step and update
+ * their step entry timestamps, then add next job to queue if following
+ * step is not time based.
+ * @param stepID
+ * @param accountID
+ * @param session
+ * @param queryRunner
+ * @param transactionSession
+ */
+  async handleExit(
+    ownerID: string,
+    journeyID: string,
+    session: string,
+    customerID: string,
+    queryRunner: QueryRunner,
+  ) {
+    const owner = await queryRunner.manager.findOne(Account, {
+      where: { id: ownerID },
+    });
+
+    const journey = await this.journeysService.findByID(
+      owner,
+      journeyID,
+      session,
+      queryRunner
+    );
+
+    await this.journeyLocationsService.unlock(
+      owner,
+      journey,
+      await this.customersService.findById(owner, customerID),
+      session,
+      queryRunner
+    );
   }
 
   /**
@@ -1406,7 +1434,7 @@ export class TransitionProcessor extends WorkerHost {
     queryRunner: QueryRunner,
     transactionSession: mongoose.mongo.ClientSession,
     event?: string
-  ) {}
+  ) { }
 
   /**
    *
@@ -1519,8 +1547,8 @@ export class TransitionProcessor extends WorkerHost {
   }
 
   // TODO
-  async handleABTest(job: Job<any, any, string>) {}
-  async handleRandomCohortBranch(job: Job<any, any, string>) {}
+  async handleABTest(job: Job<any, any, string>) { }
+  async handleRandomCohortBranch(job: Job<any, any, string>) { }
 
   // @OnWorkerEvent('active')
   // onActive(job: Job<any, any, any>, prev: string) {

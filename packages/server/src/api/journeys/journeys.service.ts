@@ -866,6 +866,13 @@ export class JourneysService {
         transactionSession
       );
 
+      this.debug(
+        `${JSON.stringify({ audienceSize: audienceSize })}`,
+        this.start.name,
+        session,
+        account.email
+      );
+
       await this.stepsService.addToStart(
         account,
         journeyID,

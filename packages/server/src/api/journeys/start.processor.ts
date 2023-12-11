@@ -23,7 +23,7 @@ import { JourneyLocationsService } from './journey-locations.service';
 const BATCH_SIZE = +process.env.START_BATCH_SIZE;
 
 @Injectable()
-@Processor('start', { concurrency: 100 /*os.cpus().length*/ })
+@Processor('start')
 export class StartProcessor extends WorkerHost {
   constructor(
     private dataSource: DataSource,
@@ -208,6 +208,7 @@ export class StartProcessor extends WorkerHost {
             name: 'start',
             data: {
               ownerID: job.data.ownerID,
+              journeyID: job.data.journeyID,
               stepID: job.data.stepID,
               session: job.data.session,
               query: job.data.query,
@@ -219,6 +220,7 @@ export class StartProcessor extends WorkerHost {
             name: 'start',
             data: {
               ownerID: job.data.ownerID,
+              journeyID: job.data.journeyID,
               stepID: job.data.stepID,
               session: job.data.session,
               query: job.data.query,
@@ -231,9 +233,9 @@ export class StartProcessor extends WorkerHost {
       await transactionSession.commitTransaction();
       await queryRunner.commitTransaction();
     } catch (e) {
+      this.error(e, this.process.name, job.data.session, job.data.ownerID);
       await transactionSession.abortTransaction();
       await queryRunner.rollbackTransaction();
-      this.error(e, this.process.name, job.data.session, job.data.ownerID);
       err = e;
     } finally {
       await transactionSession.endSession();

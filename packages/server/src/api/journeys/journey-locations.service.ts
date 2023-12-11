@@ -2,66 +2,20 @@ import {
   Logger,
   Inject,
   Injectable,
-  HttpException,
-  NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
   DataSource,
-  FindOptionsWhere,
-  In,
-  Like,
   QueryRunner,
   Repository,
 } from 'typeorm';
 import { Account } from '../accounts/entities/accounts.entity';
-import { UpdateJourneyDto } from './dto/update-journey.dto';
 import { Journey } from './entities/journey.entity';
-import errors from '../../shared/utils/errors';
 import { CustomerDocument } from '../customers/schemas/customer.schema';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
-import { createClient } from '@clickhouse/client';
-import { isUUID } from 'class-validator';
-import mongoose, { ClientSession, Model } from 'mongoose';
-import { InjectConnection, InjectModel } from '@nestjs/mongoose';
-import { BadRequestException } from '@nestjs/common/exceptions';
 import { StepsService } from '../steps/steps.service';
 import { Step } from '../steps/entities/step.entity';
-import { Graph, alg } from '@dagrejs/graphlib';
-import { UpdateJourneyLayoutDto } from './dto/update-journey-layout.dto';
-import { v4 as uuid } from 'uuid';
-import {
-  BranchType,
-  EdgeType,
-  FilterByOption,
-  NodeType,
-  ProviderType,
-  TimeType,
-} from './types/visual-layout.interface';
-import {
-  AnalyticsEvent,
-  AnalyticsEventCondition,
-  AttributeBranch,
-  AttributeGroup,
-  ComponentEvent,
-  CustomComponentStepMetadata,
-  ElementCondition,
-  EventBranch,
-  PropertyCondition,
-  StartStepMetadata,
-  StepType,
-} from '../steps/types/step.interface';
-import { MessageStepMetadata } from '../steps/types/step.interface';
-import { WaitUntilStepMetadata } from '../steps/types/step.interface';
-import { LoopStepMetadata } from '../steps/types/step.interface';
-import { ExitStepMetadata } from '../steps/types/step.interface';
-import { TimeDelayStepMetadata } from '../steps/types/step.interface';
-import { TimeWindow } from '../steps/types/step.interface';
-import { TimeWindowStepMetadata } from '../steps/types/step.interface';
-import { CustomerAttribute } from '../steps/types/step.interface';
-import { MultiBranchMetadata } from '../steps/types/step.interface';
 import { Temporal } from '@js-temporal/polyfill';
-import generateName from '@good-ghosting/random-name-generator';
 import { JourneyLocation } from './entities/journey-location.entity';
 
 @Injectable()
@@ -73,7 +27,7 @@ export class JourneyLocationsService {
     @InjectRepository(JourneyLocation)
     public journeyLocationsRepository: Repository<JourneyLocation>,
     @Inject(StepsService) private stepsService: StepsService
-  ) {}
+  ) { }
 
   log(message, method, session, user = 'ANONYMOUS') {
     this.logger.log(
@@ -212,7 +166,7 @@ export class JourneyLocationsService {
   }
 
   /**
-   * Moves a customer from one step to another while they are actively being moved.
+   * Starts moving a customer between steps.
    *
    * This method should only be called by time and event triggered steps.
    *
@@ -386,6 +340,9 @@ export class JourneyLocationsService {
     session: string,
     queryRunner?: QueryRunner
   ) {
+
+    this.warn(JSON.stringify({ account, journey, from, to, customer }), this.continueMove.name, session, account.email);
+
     if (queryRunner) {
       // Step 1: Check if customer is enrolled in journey. If not, throw error
       const location = await queryRunner.manager.findOne(JourneyLocation, {
@@ -397,6 +354,8 @@ export class JourneyLocationsService {
         loadRelationIds: true,
         lock: { mode: 'pessimistic_write' },
       });
+
+      this.warn(JSON.stringify({ location: location }), this.continueMove.name, session, account.email);
 
       // this.debug(JSON.stringify({ location: location }), this.continueMove.name, session, account.email)
       const step = await this.stepsService.findByID(
@@ -501,7 +460,7 @@ export class JourneyLocationsService {
           owner: { id: account.id },
           customer: customer,
         },
-        lock: { mode: 'pessimistic_write' },
+        loadRelationIds: true
       });
     } else {
       return await this.journeyLocationsRepository.findOne({
@@ -510,7 +469,7 @@ export class JourneyLocationsService {
           owner: { id: account.id },
           customer: customer,
         },
-        lock: { mode: 'pessimistic_write' },
+        loadRelationIds: true
       });
     }
   }
@@ -541,9 +500,16 @@ export class JourneyLocationsService {
         lock: { mode: 'pessimistic_write' },
       });
 
-      location.moveStarted = null;
-
-      await queryRunner.manager.save(location);
+      await queryRunner.manager.update(
+        JourneyLocation,
+        {
+          journey: journey.id,
+          owner: { id: account.id },
+          customer: customer.id,
+        },
+        {
+          moveStarted: null,
+        });
     } else {
       const location = await this.journeyLocationsRepository.findOne({
         where: {
