@@ -1,13 +1,21 @@
-import { JourneyEnrollmentType } from './types/additional-journey-settings.interface';
+import { createClient } from '@clickhouse/client';
+import { alg, Graph } from '@dagrejs/graphlib';
+import generateName from '@good-ghosting/random-name-generator';
+import { Temporal } from '@js-temporal/polyfill';
 import {
-  Logger,
+  forwardRef,
+  HttpException,
   Inject,
   Injectable,
-  HttpException,
+  Logger,
   NotFoundException,
-  forwardRef,
 } from '@nestjs/common';
+import { BadRequestException } from '@nestjs/common/exceptions';
+import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { InjectRepository } from '@nestjs/typeorm';
+import { isUUID } from 'class-validator';
+import mongoose, { ClientSession, Model } from 'mongoose';
+import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import {
   DataSource,
   FindOptionsWhere,
@@ -16,26 +24,43 @@ import {
   QueryRunner,
   Repository,
 } from 'typeorm';
-import { Account } from '../accounts/entities/accounts.entity';
-import { UpdateJourneyDto } from './dto/update-journey.dto';
-import { Journey } from './entities/journey.entity';
+import { v4 as uuid } from 'uuid';
 import errors from '../../shared/utils/errors';
+import { Account } from '../accounts/entities/accounts.entity';
 import { CustomersService } from '../customers/customers.service';
 import {
   Customer,
   CustomerDocument,
 } from '../customers/schemas/customer.schema';
-import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
-import { createClient } from '@clickhouse/client';
-import { isUUID } from 'class-validator';
-import mongoose, { ClientSession, Model } from 'mongoose';
-import { InjectConnection, InjectModel } from '@nestjs/mongoose';
-import { BadRequestException } from '@nestjs/common/exceptions';
-import { StepsService } from '../steps/steps.service';
 import { Step } from '../steps/entities/step.entity';
-import { Graph, alg } from '@dagrejs/graphlib';
+import { StepsService } from '../steps/steps.service';
+import {
+  AnalyticsEvent,
+  AnalyticsEventCondition,
+  AttributeBranch,
+  AttributeGroup,
+  ComponentEvent,
+  CustomComponentStepMetadata,
+  CustomerAttribute,
+  ElementCondition,
+  EventBranch,
+  ExitStepMetadata,
+  LoopStepMetadata,
+  MessageStepMetadata,
+  MultiBranchMetadata,
+  PropertyCondition,
+  StartStepMetadata,
+  StepType,
+  TimeDelayStepMetadata,
+  TimeWindow,
+  TimeWindowStepMetadata,
+  TimeWindowTypes,
+  WaitUntilStepMetadata,
+} from '../steps/types/step.interface';
 import { UpdateJourneyLayoutDto } from './dto/update-journey-layout.dto';
-import { v4 as uuid } from 'uuid';
+import { UpdateJourneyDto } from './dto/update-journey.dto';
+import { Journey } from './entities/journey.entity';
+import { JourneyEnrollmentType } from './types/additional-journey-settings.interface';
 import {
   BranchType,
   EdgeType,
@@ -44,31 +69,6 @@ import {
   ProviderType,
   TimeType,
 } from './types/visual-layout.interface';
-import {
-  AnalyticsEvent,
-  AnalyticsEventCondition,
-  AttributeBranch,
-  AttributeGroup,
-  ComponentEvent,
-  CustomComponentStepMetadata,
-  ElementCondition,
-  EventBranch,
-  PropertyCondition,
-  StartStepMetadata,
-  StepType,
-  TimeWindowTypes,
-} from '../steps/types/step.interface';
-import { MessageStepMetadata } from '../steps/types/step.interface';
-import { WaitUntilStepMetadata } from '../steps/types/step.interface';
-import { LoopStepMetadata } from '../steps/types/step.interface';
-import { ExitStepMetadata } from '../steps/types/step.interface';
-import { TimeDelayStepMetadata } from '../steps/types/step.interface';
-import { TimeWindow } from '../steps/types/step.interface';
-import { TimeWindowStepMetadata } from '../steps/types/step.interface';
-import { CustomerAttribute } from '../steps/types/step.interface';
-import { MultiBranchMetadata } from '../steps/types/step.interface';
-import { Temporal } from '@js-temporal/polyfill';
-import generateName from '@good-ghosting/random-name-generator';
 
 export enum JourneyStatus {
   ACTIVE = 'Active',
@@ -435,7 +435,7 @@ export class JourneysService {
         isActive: true,
         isStopped: false,
         isPaused: false,
-        // TODO should we be checking for these?
+        // TODO_JH should we be checking for these? (should be updated to the proper check for "active/addable")
         isDynamic: true,
       },
     });
@@ -448,13 +448,13 @@ export class JourneysService {
         customerId,
         journey.id
       );
-      // TODO: implement the following
+      let shouldInclude = false;
+      // TODO_JH: implement the following
       // if (customer matches journeyInclusionCriteria)
       //     shouldInclude = true
       // for segment in journey.segments
       //    if customer in segment
       //        shouldInclude = true
-      let shouldInclude = false;
       if (!doesInclude && shouldInclude) {
         if (
           journey.journeyEntrySettings.enrollmentType ===
@@ -468,6 +468,7 @@ export class JourneysService {
         ) {
           change = 'ADD';
         }
+        // TODO_JH: add in check for when customer was added to allow "CHANGE" on OnlyCurrent journey type
       } else if (doesInclude && !shouldInclude) {
         change = 'REMOVE';
       }
@@ -526,14 +527,14 @@ export class JourneysService {
     customer: CustomerDocument,
     session: string
   ) {
-    // TODO: remove from steps also
+    // TODO_JH: remove from steps also
     await this.CustomerModel.updateOne(
       { _id: customer._id },
       {
         $pullAll: {
           journeys: journey.id,
         },
-        // TODO: This logic needs to be checked
+        // TODO_JH: This logic needs to be checked
         $unset: {
           journeyEnrollmentsDates: [journey.id],
         },

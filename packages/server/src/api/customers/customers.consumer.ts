@@ -47,7 +47,7 @@ export class CustomersConsumerService implements OnApplicationBootstrap {
       let messStr = changeMessage.message.value.toString();
       let message: ChangeStreamDocument<Customer> = JSON.parse(
         JSON.parse(messStr)
-      ); //double parse because single parses it to just string ?? TODO figure out why that's the case
+      ); //double parse because single parses it to just string ?? TODO_JH figure out why that's the case
       const session = randomUUID();
       let account: Account;
       let customer: CustomerDocument;
@@ -80,7 +80,7 @@ export class CustomersConsumerService implements OnApplicationBootstrap {
             session
           );
         case 'delete':
-          // TODO: remove customerID from all steps also
+          // TODO_JH: remove customerID from all steps also
           let customerId = message.documentKey._id['$oid'];
           this.segmentsService.removeCustomerFromAllSegments(customerId);
       }

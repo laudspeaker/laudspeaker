@@ -7,7 +7,9 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { BadRequestException } from '@nestjs/common/exceptions';
+import { InjectConnection } from '@nestjs/mongoose';
 import { InjectRepository } from '@nestjs/typeorm';
+import mongoose from 'mongoose';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { DataSource, In, Like, Repository } from 'typeorm';
 import { Account } from '../accounts/entities/accounts.entity';
@@ -20,8 +22,6 @@ import { CreateSegmentDTO } from './dto/create-segment.dto';
 import { UpdateSegmentDTO } from './dto/update-segment.dto';
 import { SegmentCustomers } from './entities/segment-customers.entity';
 import { Segment, SegmentType } from './entities/segment.entity';
-import { InjectConnection } from '@nestjs/mongoose';
-import mongoose from 'mongoose';
 
 @Injectable()
 export class SegmentsService {
@@ -252,7 +252,7 @@ export class SegmentsService {
     let removedFromSegments: Segment[] = [];
     let segments = await this.getSegments(account);
     segments.forEach(async (segment) => {
-      // TODO: implement the following
+      // TODO_JH: implement the following
       // let doInclude = checkInclusionCriteria(segment, customer)
       let doInclude = true;
       let isMemberOf = await this.isCustomerMemberOf(

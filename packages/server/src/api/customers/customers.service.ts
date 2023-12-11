@@ -1,11 +1,6 @@
 /* eslint-disable no-case-declarations */
-import mongoose, {
-  ClientSession,
-  isObjectIdOrHexString,
-  isValidObjectId,
-  Model,
-  Types,
-} from 'mongoose';
+import { createClient } from '@clickhouse/client';
+import { InjectQueue } from '@nestjs/bullmq';
 import {
   BadRequestException,
   HttpException,
@@ -16,35 +11,39 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
-import { Customer, CustomerDocument } from './schemas/customer.schema';
-import { CreateCustomerDto } from './dto/create-customer.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Queue } from 'bullmq';
+import { isDateString, isEmail } from 'class-validator';
+import { randomUUID } from 'crypto';
+import { parse } from 'csv-parse';
+import * as _ from 'lodash';
+import mongoose, {
+  ClientSession,
+  isValidObjectId,
+  Model,
+  Types,
+} from 'mongoose';
+import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
+import { getType } from 'tst-reflect';
+import { DataSource, Repository } from 'typeorm';
+import { attributeConditions } from '../../fixtures/attributeConditions';
 import mockData from '../../fixtures/mockData';
 import { Account } from '../accounts/entities/accounts.entity';
+import { AudiencesHelper } from '../audiences/audiences.helper';
+import { AudiencesService } from '../audiences/audiences.service';
 import { Audience } from '../audiences/entities/audience.entity';
-import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, Repository } from 'typeorm';
 import { EventDto } from '../events/dto/event.dto';
+import { SegmentCustomers } from '../segments/entities/segment-customers.entity';
+import { SegmentsService } from '../segments/segments.service';
+import { StepsService } from '../steps/steps.service';
+import { Workflow } from '../workflows/entities/workflow.entity';
+import { WorkflowsService } from '../workflows/workflows.service';
+import { CreateCustomerDto } from './dto/create-customer.dto';
 import {
   CustomerKeys,
   CustomerKeysDocument,
 } from './schemas/customer-keys.schema';
-import { InjectQueue } from '@nestjs/bullmq';
-import { Queue } from 'bullmq';
-import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
-import { createClient } from '@clickhouse/client';
-import { Workflow } from '../workflows/entities/workflow.entity';
-import { attributeConditions } from '../../fixtures/attributeConditions';
-import { getType } from 'tst-reflect';
-import { isDateString, isEmail } from 'class-validator';
-import { parse } from 'csv-parse';
-import { SegmentsService } from '../segments/segments.service';
-import { AudiencesHelper } from '../audiences/audiences.helper';
-import { SegmentCustomers } from '../segments/entities/segment-customers.entity';
-import { AudiencesService } from '../audiences/audiences.service';
-import { WorkflowsService } from '../workflows/workflows.service';
-import * as _ from 'lodash';
-import { randomUUID } from 'crypto';
-import { StepsService } from '../steps/steps.service';
+import { Customer, CustomerDocument } from './schemas/customer.schema';
 
 export type Correlation = {
   cust: CustomerDocument;
@@ -1713,6 +1712,7 @@ export class CustomersService {
     customerId: string,
     journeyId: string
   ) {
+    // TODO_JH: update to journey location table as source of truth
     let customer = await this.findById(account, customerId);
     return customer.journeys.includes(journeyId);
   }
