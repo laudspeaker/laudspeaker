@@ -11,7 +11,7 @@ import { InjectConnection } from '@nestjs/mongoose';
 import { InjectRepository } from '@nestjs/typeorm';
 import mongoose from 'mongoose';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
-import { DataSource, In, Like, Repository } from 'typeorm';
+import { DataSource, In, Like, QueryRunner, Repository } from 'typeorm';
 import { Account } from '../accounts/entities/accounts.entity';
 import { AudiencesHelper } from '../audiences/audiences.helper';
 import { CustomersService } from '../customers/customers.service';
@@ -39,11 +39,24 @@ export class SegmentsService {
     @InjectConnection() private readonly connection: mongoose.Connection
   ) {}
 
-  public async findOne(account: Account, id: string, session: string) {
-    const segment = await this.segmentRepository.findOneBy({
-      id,
-      owner: { id: account.id },
-    });
+  public async findOne(
+    account: Account,
+    id: string,
+    session: string,
+    queryRunner?: QueryRunner
+  ) {
+    let segment: Segment;
+    if (queryRunner) {
+      segment = await queryRunner.manager.findOneBy(Segment, {
+        id,
+        owner: { id: account.id },
+      });
+    } else {
+      segment = await this.segmentRepository.findOneBy({
+        id,
+        owner: { id: account.id },
+      });
+    }
 
     if (!segment) throw new NotFoundException('Segment not found');
 
@@ -75,11 +88,15 @@ export class SegmentsService {
 
   /**
    * Get all segements for an account. Optionally filter by type
-   * @param account
+   * If @param type is undefined, return all types.
    * @returns
    */
-  public async getSegments(account: Account, type?: SegmentType) {
-    return await this.segmentRepository.find({
+  public async getSegments(
+    account: Account,
+    type: SegmentType | undefined,
+    queryRunner: QueryRunner
+  ) {
+    return await queryRunner.manager.find(Segment, {
       where: { owner: { id: account.id }, ...(type ? { type: type } : {}) },
     });
   }
@@ -246,11 +263,12 @@ export class SegmentsService {
   public async updateCustomerSegments(
     account: Account,
     customerId: string,
-    session: string
+    session: string,
+    queryRunner: QueryRunner
   ) {
     let addedToSegments: Segment[] = [];
     let removedFromSegments: Segment[] = [];
-    let segments = await this.getSegments(account);
+    let segments = await this.getSegments(account, undefined, queryRunner);
     segments.forEach(async (segment) => {
       // TODO_JH: implement the following
       // let doInclude = checkInclusionCriteria(segment, customer)
@@ -258,7 +276,8 @@ export class SegmentsService {
       let isMemberOf = await this.isCustomerMemberOf(
         account,
         segment.id,
-        customerId
+        customerId,
+        queryRunner
       );
       if (doInclude && !isMemberOf) {
         // If should include but not a member of, then add
@@ -266,12 +285,17 @@ export class SegmentsService {
           account,
           segment.id,
           customerId,
-          session
+          session,
+          queryRunner
         );
         addedToSegments.push(segment);
       } else if (!doInclude && isMemberOf) {
         // If should not include but is a member of, then remove
-        await this.removeCustomerFromSegment(segment.id, customerId);
+        await this.removeCustomerFromSegment(
+          segment.id,
+          customerId,
+          queryRunner
+        );
         removedFromSegments.push(segment);
       }
     });
@@ -285,11 +309,17 @@ export class SegmentsService {
     account: Account,
     segmentId: string,
     customerId: string,
-    session: string
+    session: string,
+    queryRunner: QueryRunner
   ) {
-    const segment = await this.findOne(account, segmentId, session);
+    const segment = await this.findOne(
+      account,
+      segmentId,
+      session,
+      queryRunner
+    );
 
-    const foundRecord = await this.segmentCustomersRepository.findOneBy({
+    const foundRecord = await queryRunner.manager.findOneBy(SegmentCustomers, {
       segment: { id: segment.id },
       customerId,
     });
@@ -297,7 +327,7 @@ export class SegmentsService {
     if (foundRecord)
       throw new ConflictException('Customer already in this segment');
 
-    await this.segmentCustomersRepository.save({
+    await queryRunner.manager.save(SegmentCustomers, {
       segment: { id: segment.id },
       customerId,
     });
@@ -305,9 +335,10 @@ export class SegmentsService {
 
   public async removeCustomerFromSegment(
     segmentId: string,
-    customerId: string
+    customerId: string,
+    queryRunner: QueryRunner
   ) {
-    await this.segmentCustomersRepository.delete({
+    await queryRunner.manager.delete(SegmentCustomers, {
       segment: { id: segmentId },
       customerId,
     });
@@ -316,8 +347,11 @@ export class SegmentsService {
   /**
    * Handles unassigning a customer from all segments.
    */
-  public async removeCustomerFromAllSegments(customerId: string) {
-    await this.segmentCustomersRepository.delete({
+  public async removeCustomerFromAllSegments(
+    customerId: string,
+    queryRunner: QueryRunner
+  ) {
+    await queryRunner.manager.delete(SegmentCustomers, {
       customerId,
     });
   }
@@ -545,12 +579,21 @@ export class SegmentsService {
   public async isCustomerMemberOf(
     account: Account,
     id: string,
-    customerId: string
+    customerId: string,
+    queryRunner?: QueryRunner
   ) {
-    const record = await this.segmentCustomersRepository.findOneBy({
-      segment: { id, owner: { id: account.id } },
-      customerId,
-    });
+    let record: SegmentCustomers;
+    if (!queryRunner) {
+      record = await this.segmentCustomersRepository.findOneBy({
+        segment: { id, owner: { id: account.id } },
+        customerId,
+      });
+    } else {
+      record = await queryRunner.manager.findOneBy(SegmentCustomers, {
+        segment: { id, owner: { id: account.id } },
+        customerId,
+      });
+    }
 
     return !!record;
   }

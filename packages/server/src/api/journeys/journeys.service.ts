@@ -427,9 +427,11 @@ export class JourneysService {
     account: Account,
     customerId: string,
     customerUpdateType: 'NEW' | 'CHANGE',
-    session: string
+    session: string,
+    queryRunner: QueryRunner,
+    clientSession: ClientSession
   ) {
-    const journeys = await this.journeysRepository.find({
+    const journeys = await queryRunner.manager.find(Journey, {
       where: {
         owner: { id: account.id },
         isActive: true,
@@ -439,14 +441,19 @@ export class JourneysService {
         isDynamic: true,
       },
     });
-    let customer = await this.customersService.findById(account, customerId);
+    let customer = await this.customersService.findById(
+      account,
+      customerId,
+      clientSession
+    );
     journeys.forEach(async (journey) => {
       // get segments for journey
       let change: 'ADD' | 'REMOVE' | 'DO_NOTHING' = 'DO_NOTHING';
       let doesInclude = await this.customersService.isCustomerEnrolledInJourney(
         account,
         customerId,
-        journey.id
+        journey.id,
+        clientSession
       );
       let shouldInclude = false;
       // TODO_JH: implement the following
@@ -474,9 +481,22 @@ export class JourneysService {
       }
       switch (change) {
         case 'ADD':
-          this.enrollCustomerInJourney(account, journey, customer, session);
+          this.enrollCustomerInJourney(
+            account,
+            journey,
+            customer,
+            session,
+            queryRunner,
+            clientSession
+          );
         case 'REMOVE':
-          this.unenrollCustomerFromJourney(account, journey, customer, session);
+          this.unenrollCustomerFromJourney(
+            account,
+            journey,
+            customer,
+            session,
+            clientSession
+          );
       }
     });
   }
@@ -490,11 +510,10 @@ export class JourneysService {
     account: Account,
     journey: Journey,
     customer: CustomerDocument,
-    session: string
+    session: string,
+    queryRunner: QueryRunner,
+    clientSession: ClientSession
   ): Promise<void> {
-    let queryRunner = await this.dataSource.createQueryRunner();
-    queryRunner.connect();
-    queryRunner.startTransaction();
     await this.stepsService.addToStart(
       account,
       journey.id,
@@ -514,8 +533,9 @@ export class JourneysService {
           },
         },
       }
-    );
-    queryRunner.commitTransaction();
+    )
+      .session(clientSession)
+      .exec();
   }
 
   /**
@@ -525,7 +545,8 @@ export class JourneysService {
     account: Account,
     journey: Journey,
     customer: CustomerDocument,
-    session: string
+    session: string,
+    clientSession: ClientSession
   ) {
     // TODO_JH: remove from steps also
     await this.CustomerModel.updateOne(
@@ -539,7 +560,9 @@ export class JourneysService {
           journeyEnrollmentsDates: [journey.id],
         },
       }
-    );
+    )
+      .session(clientSession)
+      .exec();
   }
 
   /**

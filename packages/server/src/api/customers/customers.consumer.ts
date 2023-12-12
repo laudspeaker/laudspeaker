@@ -54,8 +54,8 @@ export class CustomersConsumerService implements OnApplicationBootstrap {
       let queryRunner = await this.dataSource.createQueryRunner();
       queryRunner.connect();
       queryRunner.startTransaction();
-      let transactionSession = await this.connection.startSession();
-      transactionSession.startTransaction();
+      let clientSession = await this.connection.startSession();
+      clientSession.startTransaction();
       switch (message.operationType) {
         case 'insert':
         case 'update':
@@ -66,25 +66,32 @@ export class CustomersConsumerService implements OnApplicationBootstrap {
           );
           customer = await this.customersService.findById(
             account,
-            message.documentKey._id['$oid']
+            message.documentKey._id['$oid'],
+            clientSession
           );
           await this.segmentsService.updateCustomerSegments(
             account,
             customer.id,
-            session
+            session,
+            queryRunner
           );
           await this.journeysService.updateEnrollmentForCustomer(
             account,
             customer.id,
             message.operationType === 'insert' ? 'NEW' : 'CHANGE',
-            session
+            session,
+            queryRunner,
+            clientSession
           );
         case 'delete':
           // TODO_JH: remove customerID from all steps also
           let customerId = message.documentKey._id['$oid'];
-          this.segmentsService.removeCustomerFromAllSegments(customerId);
+          this.segmentsService.removeCustomerFromAllSegments(
+            customerId,
+            queryRunner
+          );
       }
-      transactionSession.commitTransaction();
+      clientSession.commitTransaction();
       queryRunner.commitTransaction();
     };
   }

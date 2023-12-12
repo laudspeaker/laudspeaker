@@ -967,7 +967,8 @@ export class CustomersService {
 
   async findById(
     account: Account,
-    customerId: string
+    customerId: string,
+    clientSession?: ClientSession
   ): Promise<
     Customer &
       mongoose.Document & {
@@ -977,7 +978,11 @@ export class CustomersService {
     if (!isValidObjectId(customerId))
       throw new BadRequestException('Invalid object id');
 
-    const found = await this.CustomerModel.findById(customerId).exec();
+    let query = this.CustomerModel.findById(customerId);
+    if (clientSession) {
+      query.session(clientSession);
+    }
+    const found = await query.exec();
     if (found && found?.ownerId == (<Account>account).id) return found;
     return;
   }
@@ -1710,10 +1715,11 @@ export class CustomersService {
   public async isCustomerEnrolledInJourney(
     account: Account,
     customerId: string,
-    journeyId: string
+    journeyId: string,
+    clientSession: ClientSession
   ) {
     // TODO_JH: update to journey location table as source of truth
-    let customer = await this.findById(account, customerId);
+    let customer = await this.findById(account, customerId, clientSession);
     return customer.journeys.includes(journeyId);
   }
 
