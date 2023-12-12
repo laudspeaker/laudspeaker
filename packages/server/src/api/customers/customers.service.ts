@@ -46,7 +46,6 @@ import * as _ from 'lodash';
 import { randomUUID } from 'crypto';
 import { StepsService } from '../steps/steps.service';
 
-
 export type Correlation = {
   cust: CustomerDocument;
   found: boolean;
@@ -965,6 +964,18 @@ export class CustomersService {
       ownerId: (<Account>account).id,
       audiences: audienceId,
     }).exec();
+  }
+
+  async findByCustomerId(customerId: string, clientSession: ClientSession) {
+    if (!isValidObjectId(customerId))
+      throw new BadRequestException('Invalid object id');
+
+    let query = this.CustomerModel.findById(customerId);
+    if (clientSession) {
+      query.session(clientSession);
+    }
+    const found = await query.exec();
+    return found;
   }
 
   async findById(

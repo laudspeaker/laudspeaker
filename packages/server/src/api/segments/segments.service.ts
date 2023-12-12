@@ -269,7 +269,7 @@ export class SegmentsService {
     let addedToSegments: Segment[] = [];
     let removedFromSegments: Segment[] = [];
     let segments = await this.getSegments(account, undefined, queryRunner);
-    segments.forEach(async (segment) => {
+    for (const segment of segments) {
       // TODO_JH: implement the following
       // let doInclude = checkInclusionCriteria(segment, customer)
       let doInclude = true;
@@ -298,7 +298,7 @@ export class SegmentsService {
         );
         removedFromSegments.push(segment);
       }
-    });
+    }
     return { added: addedToSegments, removed: removedFromSegments };
   }
 

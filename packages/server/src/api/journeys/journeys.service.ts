@@ -446,7 +446,7 @@ export class JourneysService {
       customerId,
       clientSession
     );
-    journeys.forEach(async (journey) => {
+    for (const journey of journeys) {
       // get segments for journey
       let change: 'ADD' | 'REMOVE' | 'DO_NOTHING' = 'DO_NOTHING';
       let doesInclude = await this.customersService.isCustomerEnrolledInJourney(
@@ -455,7 +455,7 @@ export class JourneysService {
         journey.id,
         clientSession
       );
-      let shouldInclude = false;
+      let shouldInclude = true;
       // TODO_JH: implement the following
       // if (customer matches journeyInclusionCriteria)
       //     shouldInclude = true
@@ -463,13 +463,16 @@ export class JourneysService {
       //    if customer in segment
       //        shouldInclude = true
       if (!doesInclude && shouldInclude) {
+        let journeyEntrySettings = journey.journeyEntrySettings ?? {
+          enrollmentType: JourneyEnrollmentType.CurrentAndFutureUsers,
+        };
         if (
-          journey.journeyEntrySettings.enrollmentType ===
+          journeyEntrySettings.enrollmentType ===
           JourneyEnrollmentType.CurrentAndFutureUsers
         ) {
           change = 'ADD';
         } else if (
-          journey.journeyEntrySettings.enrollmentType ===
+          journeyEntrySettings.enrollmentType ===
             JourneyEnrollmentType.OnlyFuture &&
           customerUpdateType === 'NEW'
         ) {
@@ -481,7 +484,7 @@ export class JourneysService {
       }
       switch (change) {
         case 'ADD':
-          this.enrollCustomerInJourney(
+          await this.enrollCustomerInJourney(
             account,
             journey,
             customer,
@@ -490,7 +493,7 @@ export class JourneysService {
             clientSession
           );
         case 'REMOVE':
-          this.unenrollCustomerFromJourney(
+          await this.unenrollCustomerFromJourney(
             account,
             journey,
             customer,
@@ -498,7 +501,7 @@ export class JourneysService {
             clientSession
           );
       }
-    });
+    }
   }
 
   /**
@@ -553,7 +556,7 @@ export class JourneysService {
       { _id: customer._id },
       {
         $pullAll: {
-          journeys: journey.id,
+          journeys: [journey.id],
         },
         // TODO_JH: This logic needs to be checked
         $unset: {

@@ -16,7 +16,11 @@ import { JourneysService } from '../journeys/journeys.service';
 import { KafkaConsumerService } from '../kafka/consumer.service';
 import { SegmentsService } from '../segments/segments.service';
 import { CustomersService } from './customers.service';
-import { Customer, CustomerDocument } from './schemas/customer.schema';
+import {
+  Customer,
+  CustomerDocument,
+  CustomerSchema,
+} from './schemas/customer.schema';
 
 @Injectable()
 export class CustomersConsumerService implements OnApplicationBootstrap {
@@ -32,10 +36,14 @@ export class CustomersConsumerService implements OnApplicationBootstrap {
     private dataSource: DataSource
   ) {}
 
+  private MONGO_DB_NAME = process.env.MONGO_DB_NAME ?? 'nest'; // Confluent cluster API secret
+  private MONGO_CUSTOMERS_TABLE_NAME = 'customers'; // no other way to configure since hardcoded, make sure it matches in CustomersService.constructor
+  private MONGO_CHANGE_STREAM_CONSUMER_GROUP = 'laudspeaker-customers-change';
+
   async onApplicationBootstrap() {
     await this.consumerService.consume(
-      { topics: ['nest.customers'] },
-      { groupId: new Date().toString() },
+      { topics: [`${this.MONGO_DB_NAME}.${this.MONGO_CUSTOMERS_TABLE_NAME}`] },
+      { groupId: this.MONGO_CHANGE_STREAM_CONSUMER_GROUP },
       {
         eachMessage: this.handleCustomerChangeStream(),
       }
@@ -52,22 +60,27 @@ export class CustomersConsumerService implements OnApplicationBootstrap {
       let account: Account;
       let customer: CustomerDocument;
       let queryRunner = await this.dataSource.createQueryRunner();
-      queryRunner.connect();
-      queryRunner.startTransaction();
+      await queryRunner.connect();
+      await queryRunner.startTransaction();
       let clientSession = await this.connection.startSession();
-      clientSession.startTransaction();
+      await clientSession.startTransaction();
       switch (message.operationType) {
         case 'insert':
         case 'update':
         case 'replace':
-          account = await this.accountsService.findOne(
-            { id: message.fullDocument.ownerId },
-            session
-          );
-          customer = await this.customersService.findById(
-            account,
+          customer = await this.customersService.findByCustomerId(
             message.documentKey._id['$oid'],
             clientSession
+          );
+          if (!customer) {
+            this.logger.warn(
+              `No customer with id ${message.documentKey._id['$oid']}. Can't process ${CustomersConsumerService.name}.`
+            );
+            break;
+          }
+          account = await this.accountsService.findOne(
+            { id: customer.ownerId },
+            session
           );
           await this.segmentsService.updateCustomerSegments(
             account,
@@ -86,13 +99,15 @@ export class CustomersConsumerService implements OnApplicationBootstrap {
         case 'delete':
           // TODO_JH: remove customerID from all steps also
           let customerId = message.documentKey._id['$oid'];
-          this.segmentsService.removeCustomerFromAllSegments(
+          await this.segmentsService.removeCustomerFromAllSegments(
             customerId,
             queryRunner
           );
       }
-      clientSession.commitTransaction();
-      queryRunner.commitTransaction();
+      await clientSession.commitTransaction();
+      await queryRunner.commitTransaction();
+      await queryRunner.release();
+      await clientSession.endSession();
     };
   }
 }
