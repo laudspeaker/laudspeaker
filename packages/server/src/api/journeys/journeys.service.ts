@@ -1,21 +1,12 @@
-import { createClient } from '@clickhouse/client';
-import { alg, Graph } from '@dagrejs/graphlib';
-import generateName from '@good-ghosting/random-name-generator';
-import { Temporal } from '@js-temporal/polyfill';
 import {
-  forwardRef,
-  HttpException,
+  Logger,
   Inject,
   Injectable,
-  Logger,
+  HttpException,
   NotFoundException,
+  forwardRef,
 } from '@nestjs/common';
-import { BadRequestException } from '@nestjs/common/exceptions';
-import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { InjectRepository } from '@nestjs/typeorm';
-import { isUUID } from 'class-validator';
-import mongoose, { ClientSession, Model } from 'mongoose';
-import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import {
   DataSource,
   FindOptionsWhere,
@@ -24,43 +15,26 @@ import {
   QueryRunner,
   Repository,
 } from 'typeorm';
-import { v4 as uuid } from 'uuid';
-import errors from '../../shared/utils/errors';
 import { Account } from '../accounts/entities/accounts.entity';
+import { UpdateJourneyDto } from './dto/update-journey.dto';
+import { Journey } from './entities/journey.entity';
+import errors from '../../shared/utils/errors';
 import { CustomersService } from '../customers/customers.service';
 import {
   Customer,
   CustomerDocument,
 } from '../customers/schemas/customer.schema';
-import { Step } from '../steps/entities/step.entity';
+import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
+import { createClient } from '@clickhouse/client';
+import { isUUID } from 'class-validator';
+import mongoose, { ClientSession, Model } from 'mongoose';
+import { InjectConnection, InjectModel } from '@nestjs/mongoose';
+import { BadRequestException } from '@nestjs/common/exceptions';
 import { StepsService } from '../steps/steps.service';
-import {
-  AnalyticsEvent,
-  AnalyticsEventCondition,
-  AttributeBranch,
-  AttributeGroup,
-  ComponentEvent,
-  CustomComponentStepMetadata,
-  CustomerAttribute,
-  ElementCondition,
-  EventBranch,
-  ExitStepMetadata,
-  LoopStepMetadata,
-  MessageStepMetadata,
-  MultiBranchMetadata,
-  PropertyCondition,
-  StartStepMetadata,
-  StepType,
-  TimeDelayStepMetadata,
-  TimeWindow,
-  TimeWindowStepMetadata,
-  TimeWindowTypes,
-  WaitUntilStepMetadata,
-} from '../steps/types/step.interface';
+import { Step } from '../steps/entities/step.entity';
+import { Graph, alg } from '@dagrejs/graphlib';
 import { UpdateJourneyLayoutDto } from './dto/update-journey-layout.dto';
-import { UpdateJourneyDto } from './dto/update-journey.dto';
-import { Journey } from './entities/journey.entity';
-import { JourneyEnrollmentType } from './types/additional-journey-settings.interface';
+import { v4 as uuid } from 'uuid';
 import {
   BranchType,
   EdgeType,
@@ -69,6 +43,32 @@ import {
   ProviderType,
   TimeType,
 } from './types/visual-layout.interface';
+import {
+  AnalyticsEvent,
+  AnalyticsEventCondition,
+  AttributeBranch,
+  AttributeGroup,
+  ComponentEvent,
+  CustomComponentStepMetadata,
+  ElementCondition,
+  EventBranch,
+  PropertyCondition,
+  StartStepMetadata,
+  StepType,
+  TimeWindowTypes,
+} from '../steps/types/step.interface';
+import { MessageStepMetadata } from '../steps/types/step.interface';
+import { WaitUntilStepMetadata } from '../steps/types/step.interface';
+import { LoopStepMetadata } from '../steps/types/step.interface';
+import { ExitStepMetadata } from '../steps/types/step.interface';
+import { TimeDelayStepMetadata } from '../steps/types/step.interface';
+import { TimeWindow } from '../steps/types/step.interface';
+import { TimeWindowStepMetadata } from '../steps/types/step.interface';
+import { CustomerAttribute } from '../steps/types/step.interface';
+import { MultiBranchMetadata } from '../steps/types/step.interface';
+import { Temporal } from '@js-temporal/polyfill';
+import generateName from '@good-ghosting/random-name-generator';
+import { JourneyEnrollmentType } from './types/additional-journey-settings.interface';
 
 export enum JourneyStatus {
   ACTIVE = 'Active',
