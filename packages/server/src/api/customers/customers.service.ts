@@ -25,6 +25,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { EventDto } from '../events/dto/event.dto';
 import {
+  AttributeType,
   CustomerKeys,
   CustomerKeysDocument,
 } from './schemas/customer-keys.schema';
@@ -1475,11 +1476,13 @@ export class CustomersService {
     try {
       const errorPromise = new Promise<{
         headers: string[];
+        emptyCount: number;
         firstThreeRecords: Object[];
       }>((resolve, reject) => {
         let headers = [];
         let firstThreeRecords = [];
         let recordCount = 0;
+        let emptyCount = 0;
 
         parse(
           csvFile.buffer,
@@ -1494,17 +1497,34 @@ export class CustomersService {
                 firstThreeRecords.push(record);
                 recordCount++;
               }
+
+              Object.values(record).forEach((el) => {
+                if (!el) {
+                  emptyCount += 1;
+                }
+              });
+
               return recordCount <= 3 ? record : false;
             },
           },
           (csvError) => {
             if (csvError) reject(csvError);
-            else resolve({ headers, firstThreeRecords });
+            else resolve({ headers, firstThreeRecords, emptyCount });
           }
         );
       });
 
       const res = await errorPromise;
+
+      const primaryAttribute = await this.CustomerKeysModel.findOne({
+        $and: [{ isPrimary: true }, { ownerId: account.id }],
+      });
+
+      if (primaryAttribute && !res.headers.includes(primaryAttribute.key)) {
+        throw new BadRequestException(
+          `CSV file should contain column with same name as defined Primary key: ${primaryAttribute.key}`
+        );
+      }
 
       const headers: Record<string, { header: string; preview: any[] }> = {};
       res.headers.forEach((header) => {
@@ -1533,13 +1553,14 @@ export class CustomersService {
         fileKey: key,
         fileName: fName,
         headers: headers,
+        emptyCount: res.emptyCount,
       });
 
       return;
     } catch (error) {
       this.error(error, this.uploadCSV.name, session);
       this.removeImportFile(account);
-      throw new BadRequestException('Error processing processing your CSV');
+      throw error;
     }
   }
 
@@ -1571,7 +1592,11 @@ export class CustomersService {
           id: account.id,
         },
       });
-      return importFile;
+
+      const primaryAttribute = await this.CustomerKeysModel.findOne({
+        $and: [{ isPrimary: true }, { ownerId: account.id }],
+      });
+      return { ...importFile, primaryAttribute };
     } catch (error) {
       this.error(error, this.getLastImportCSV.name, session);
       throw new BadRequestException(
@@ -1707,21 +1732,29 @@ export class CustomersService {
     account: Account,
     session: string,
     key = '',
-    type?: string,
-    isArray?: boolean
+    type?: string | string[],
+    isArray?: boolean,
+    removeLimit?: boolean
   ) {
-    const attributes = await this.CustomerKeysModel.find({
+    const query = this.CustomerKeysModel.find({
       $and: [
         {
           key: RegExp(`.*${key}.*`, 'i'),
           ownerId: account.id,
-          ...(type !== null ? { type } : {}),
+          ...(type !== null && !(type instanceof Array)
+            ? { type }
+            : type instanceof Array
+            ? { $or: type.map((el) => ({ type: el })) }
+            : {}),
           ...(isArray !== null ? { isArray } : {}),
         },
       ],
-    })
-      .limit(20)
-      .exec();
+    });
+
+    if (!removeLimit) {
+      query.limit(20);
+    }
+    const attributes = await query.exec();
 
     return (
       attributes
@@ -1729,6 +1762,7 @@ export class CustomersService {
           key: el.key,
           type: el.type,
           isArray: el.isArray,
+          isPrimary: el.isPrimary,
         }))
         // @ts-ignore
         .filter((el) => el.type !== 'undefined')
@@ -1976,5 +2010,47 @@ export class CustomersService {
       }),
       totalPages,
     };
+  }
+
+  async createAttribute(
+    account: Account,
+    key: string,
+    type: AttributeType,
+    session: string
+  ) {
+    try {
+      if (!Object.values(AttributeType).includes(type)) {
+        throw new BadRequestException(
+          `Type: ${type} can't be used for attribute creation.`
+        );
+      }
+
+      const previousKey = await this.CustomerKeysModel.findOne({
+        key: key.trim(),
+        type,
+        isArray: false,
+        ownerId: account.id,
+      }).exec();
+
+      if (previousKey) {
+        throw new HttpException(
+          'Similar key already exist,please use different name or type',
+          503
+        );
+      }
+
+      const newKey = await this.CustomerKeysModel.create({
+        key: key.trim(),
+        type,
+        isArray: false,
+        ownerId: account.id,
+      });
+      return newKey;
+    } catch (error) {
+      this.error(error, this.createAttribute.name, session);
+      throw new BadRequestException(
+        'Similar key already exist,please use different name or type'
+      );
+    }
   }
 }

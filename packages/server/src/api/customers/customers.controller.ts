@@ -28,6 +28,7 @@ import { ApiKeyAuthGuard } from '../auth/guards/apikey-auth.guard';
 import { randomUUID } from 'crypto';
 import { GetBulkCustomerCountDto } from './dto/get-bulk-customer-count.dto';
 import { RavenInterceptor } from 'nest-raven';
+import { AttributeType } from './schemas/customer-keys.schema';
 
 @Controller('customers')
 export class CustomersController {
@@ -151,7 +152,8 @@ export class CustomersController {
     @Req() { user }: Request,
     @Query('key') key = '',
     @Query('type') type = null,
-    @Query('isArray') isArray = null
+    @Query('isArray') isArray = null,
+    @Query('removeLimit') removeLimit = null
   ) {
     const session = randomUUID();
 
@@ -160,7 +162,8 @@ export class CustomersController {
       session,
       key,
       type,
-      isArray
+      isArray,
+      removeLimit
     );
   }
 
@@ -301,10 +304,26 @@ export class CustomersController {
     );
   }
 
+  @Post('/attributes/create')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
+  async createAttribute(
+    @Req() { user }: Request,
+    @Body() { name, type }: { name: string; type: AttributeType }
+  ) {
+    const session = randomUUID();
+    return this.customersService.createAttribute(
+      <Account>user,
+      name,
+      type,
+      session
+    );
+  }
+
   @Get('/:id/events')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
-  findCustomerEvents(
+  async findCustomerEvents(
     @Req() { user }: Request,
     @Param() { id }: { id: string },
     @Query('page') page: number,

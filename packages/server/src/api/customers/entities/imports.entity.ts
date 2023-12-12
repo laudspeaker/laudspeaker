@@ -37,4 +37,7 @@ export class Imports extends BaseEntity {
 
   @Column({ type: 'jsonb' })
   public headers: ImportsPreview;
+
+  @Column({ type: 'integer', nullable: false, default: 0 })
+  public emptyCount: number;
 }

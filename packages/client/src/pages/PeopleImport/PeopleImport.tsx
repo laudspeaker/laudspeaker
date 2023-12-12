@@ -1,10 +1,17 @@
 import Button, { ButtonType } from "components/Elements/Buttonv2";
+import { keyBy } from "lodash";
 import { useEffect, useState } from "react";
 import { confirmAlert } from "react-confirm-alert";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import {
+  AttributeQueryStatement,
+  StatementValueType,
+} from "reducers/flow-builder.reducer";
 import ApiService from "services/api.service";
-import ImportTabOne from "./ImportTabOne";
+import ImportTabOne, { ImportOptions } from "./ImportTabOne";
+import MappingTab from "./MappingTab";
+import MapValidationErrors from "./Modals/MapValidationErrors";
 
 const tabs = [
   { title: "Upload CSV File" },
@@ -12,18 +19,54 @@ const tabs = [
   { title: "Import Completion" },
 ];
 
+export type AttributeType = Exclude<
+  StatementValueType,
+  StatementValueType.ARRAY & StatementValueType.OBJECT
+>;
+
+export interface ImportAttribute {
+  key: string;
+  type: AttributeType;
+  skip?: boolean;
+}
+
 export interface ImportParams {
   headers: Record<string, { header: string; preview: any[] }>;
   file?: {
     fileName: string;
     fileKey: string;
   };
+  emptyCount: number;
+  primaryAttribute: null | { key: string; type: AttributeType };
+}
+
+export type MappingParams = Record<
+  string,
+  {
+    asAttribute?: ImportAttribute;
+    isPrimary: boolean;
+    doNotOverwrite: boolean;
+  }
+>;
+
+enum ValidationErrors {
+  UNMAPPED_ATTRIBUTES,
+  MISSING_ATTRIBUTES_VALUES,
+  PRIMARY_REQUIRED,
+  PRIMARY_MAP_REQUIRED,
 }
 
 const PeopleImport = () => {
   const [tabIndex, setTabIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [fileData, setFileData] = useState<ImportParams>();
+  const [mappingSettings, setMappingSettings] = useState<MappingParams>({});
+  const [importOption, setImportOption] = useState<ImportOptions>(
+    ImportOptions.NEW
+  );
+  const [validationErrors, setValidationErrors] = useState<ValidationErrors[]>(
+    []
+  );
   const navigate = useNavigate();
 
   const loadData = async () => {
@@ -41,10 +84,55 @@ const PeopleImport = () => {
             fileKey: data.fileKey,
             fileName: data.fileName,
           },
+          emptyCount: data.emptyCount,
+          primaryAttribute: data.primaryAttribute,
         });
+
+        setMappingSettings(
+          keyBy(
+            Object.keys(data.headers).map((el) => ({
+              head: el,
+              asAttribute: undefined,
+              isPrimary: false,
+              doNotOverwrite: false,
+            })),
+            "head"
+          )
+        );
       }
     } catch (error) {}
     setIsLoading(false);
+  };
+
+  const validationContent = {
+    [ValidationErrors.UNMAPPED_ATTRIBUTES]: {
+      title: "You have unmapped attributes",
+      desc: "Unmapped attributes will not be imported. Do you want to proceed without mapping these attributes?",
+      cancel: "Go Back and Map",
+      confirm: "Proceed",
+    },
+    [ValidationErrors.MISSING_ATTRIBUTES_VALUES]: {
+      title: "Missing attribute values",
+      desc: "Some users have missing values for mapped attributes and won't be imported. Do you want to skip these users?",
+      cancel: "Cancel",
+      confirm: "Skip Users",
+    },
+    [ValidationErrors.PRIMARY_REQUIRED]: {
+      title: "Primary key missing",
+      desc: "You don't have primary key specified, without it you can't proceed, please specify primary key.",
+      cancel: "",
+      confirm: "Got it",
+    },
+    [ValidationErrors.PRIMARY_MAP_REQUIRED]: {
+      title: "Primary key attribute not mapped",
+      desc: `You don't have filed that mapping to your primary key (${fileData?.primaryAttribute}), it's required to map your data properly.`,
+      cancel: "",
+      confirm: "Got it",
+    },
+  };
+
+  const handleMappingSettingsUpdate = (val: MappingParams) => {
+    setMappingSettings((prev) => ({ ...prev, ...val }));
   };
 
   const tabToComponent: Record<number, React.ReactNode> = {
@@ -53,10 +141,20 @@ const PeopleImport = () => {
         setIsLoading={setIsLoading}
         isLoading={isLoading}
         fileData={fileData}
+        importOption={importOption}
+        setImportOption={setImportOption}
         onUpdate={() => loadData()}
       />
     ),
-    1: <></>,
+    1: (
+      <MappingTab
+        setIsLoading={setIsLoading}
+        mappingSettings={mappingSettings}
+        isLoading={isLoading}
+        updateSettings={handleMappingSettingsUpdate}
+        fileData={fileData}
+      />
+    ),
     2: <></>,
   };
 
@@ -96,6 +194,69 @@ const PeopleImport = () => {
         },
       ],
     });
+  };
+
+  const handle2TabValidation = async () => {
+    const pk = Object.values(mappingSettings).find(
+      (el) =>
+        el.isPrimary &&
+        el.asAttribute?.key &&
+        el.asAttribute?.type &&
+        !el.asAttribute.skip
+    );
+    const errors: ValidationErrors[] = [];
+
+    if (!pk && !fileData?.primaryAttribute) {
+      errors.push(ValidationErrors.PRIMARY_REQUIRED);
+    }
+    if (!pk && fileData?.primaryAttribute) {
+      errors.push(ValidationErrors.PRIMARY_MAP_REQUIRED);
+    }
+    if (
+      Object.values(mappingSettings).some(
+        (el) => !el.asAttribute?.key || !el.asAttribute?.type
+      )
+    ) {
+      errors.push(ValidationErrors.UNMAPPED_ATTRIBUTES);
+    }
+    if (fileData?.emptyCount) {
+      errors.push(ValidationErrors.MISSING_ATTRIBUTES_VALUES);
+    }
+
+    setValidationErrors(errors);
+  };
+
+  const handleValidationCancel = () => {
+    setValidationErrors([]);
+  };
+
+  const handleValidationConfirm = () => {
+    const currentError = validationErrors[0];
+
+    if (
+      currentError === ValidationErrors.PRIMARY_REQUIRED ||
+      currentError === ValidationErrors.PRIMARY_MAP_REQUIRED
+    ) {
+      setValidationErrors([]);
+      return;
+    }
+
+    if (currentError === ValidationErrors.UNMAPPED_ATTRIBUTES) {
+      setValidationErrors((prev) => {
+        prev.shift();
+        return [...prev];
+      });
+    }
+
+    if (currentError === ValidationErrors.MISSING_ATTRIBUTES_VALUES) {
+      setValidationErrors((prev) => {
+        prev.shift();
+        return [...prev];
+      });
+    }
+
+    // TODO: start analysing imports
+    if (!validationErrors.length) alert("start");
   };
 
   return (
@@ -160,13 +321,18 @@ const PeopleImport = () => {
           <hr className="border-[#E5E7EB] mt-5" />
           {tabToComponent[tabIndex]}
           <hr className="border-[#E5E7EB] mb-5" />
-          <div className="flex max-w-[800px] mx-auto w-full justify-end gap-[10px]">
+          <div
+            className={`${
+              tabIndex !== 1 ? "max-w-[800px]" : "max-w-full px-5"
+            } flex mx-auto w-full justify-end gap-[10px]`}
+          >
             <Button
               type={ButtonType.SECONDARY}
               className="text-[#6366F1] border-[#6366F1] disabled:grayscale"
               disabled={isLoading}
               onClick={() => {
                 if (tabIndex === 0) handleDelete();
+                else setTabIndex(tabIndex - 1);
               }}
             >
               {tabIndex === 0 ? "Cancel" : "Back"}
@@ -174,12 +340,26 @@ const PeopleImport = () => {
             <Button
               type={ButtonType.PRIMARY}
               className="disabled:grayscale"
-              disabled={isLoading}
-              onClick={() => {}}
+              disabled={isLoading || (tabIndex === 0 && !fileData?.file)}
+              onClick={() => {
+                if (tabIndex === 0) setTabIndex(tabIndex + 1);
+                else if (tabIndex === 1) handle2TabValidation();
+              }}
             >
               {tabIndex === 2 ? "Save" : "Next"}
             </Button>
           </div>
+          {validationErrors.length > 0 && (
+            <MapValidationErrors
+              isOpen={!!validationErrors.length}
+              title={validationContent[validationErrors[0]].title}
+              desc={validationContent[validationErrors[0]].desc}
+              cancelText={validationContent[validationErrors[0]].cancel}
+              confirmText={validationContent[validationErrors[0]].confirm}
+              onClose={handleValidationCancel}
+              onConfirm={handleValidationConfirm}
+            />
+          )}
         </div>
       </div>
     </div>

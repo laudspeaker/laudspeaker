@@ -30,6 +30,8 @@ const possibleOptions = [
 interface ImportTabOneProps {
   fileData?: ImportParams;
   isLoading: boolean;
+  importOption: ImportOptions;
+  setImportOption: (val: ImportOptions) => void;
   setIsLoading: (val: boolean) => void;
   onUpdate: () => {};
 }
@@ -37,6 +39,8 @@ interface ImportTabOneProps {
 const ImportTabOne = ({
   fileData,
   isLoading,
+  importOption,
+  setImportOption,
   setIsLoading,
   onUpdate,
 }: ImportTabOneProps) => {
@@ -60,9 +64,9 @@ const ImportTabOne = ({
         </div>
         <Select
           className="max-w-[400px]"
-          value={ImportOptions.NEW}
+          value={importOption}
           options={possibleOptions}
-          onChange={(val) => {}}
+          onChange={setImportOption}
         />
         <div className="text-[#111827] text-base font-inter font-semibold mt-5 mb-[10px]">
           File selection

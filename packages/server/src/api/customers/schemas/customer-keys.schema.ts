@@ -3,16 +3,29 @@ import { Document } from 'mongoose';
 
 export type CustomerKeysDocument = CustomerKeys & Document;
 
+export enum AttributeType {
+  STRING = 'String',
+  NUMBER = 'Number',
+  BOOLEAN = 'Boolean',
+  EMAIL = 'Email',
+  DATE = 'Date',
+  ARRAY = 'Array',
+  OBJECT = 'Object',
+}
+
 @Schema()
 export class CustomerKeys {
   @Prop()
   key: string;
 
   @Prop()
-  type: 'String' | 'Number' | 'Boolean' | 'Email';
+  type: AttributeType;
 
   @Prop()
   isArray: boolean;
+
+  @Prop()
+  isPrimary: boolean;
 
   @Prop()
   ownerId: string;
