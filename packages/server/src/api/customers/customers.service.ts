@@ -86,6 +86,16 @@ export interface EventResponse {
   eventProvider: string;
 }
 
+export interface QueryObject {
+  type: string;
+  key: string;
+  comparisonType: string;
+  subComparisonType: string;
+  subComparisonValue: string;
+  valueType: string;
+  value: any;
+}
+
 @Injectable()
 export class CustomersService {
   private clickhouseClient = createClient({
@@ -348,6 +358,57 @@ export class CustomersService {
 
     return ret;
   }
+
+/**
+   * Finds all customers that match the inclusion criteria. Uses findAll under
+   * the hood.
+   *
+   * @remarks
+   * Optimize this to happen inside of mongo later.
+   *
+   * @param account - The owner of the customers
+   * @param criteria - Inclusion criteria to match on
+   *
+   */
+ async findByInclusionCriteriaTwo(
+  account: Account,
+  criteria: any,
+  transactionSession: ClientSession,
+  session: string
+): Promise<CustomerDocument[]> {
+  let customers: CustomerDocument[] = [];
+  const ret: CustomerDocument[] = [];
+  try {
+    customers = await this.CustomerModel.find({
+      ownerId: (<Account>account).id,
+    })
+      .session(transactionSession)
+      .exec();
+  } catch (err) {
+    return Promise.reject(err);
+  }
+
+  this.debug(
+    `${JSON.stringify({ customers })}`,
+    this.findByInclusionCriteria.name,
+    session
+  );
+  for (const customer of customers) {
+    if (
+      await this.audiencesHelper.checkInclusion(
+        customer,
+        criteria,
+        session,
+        account
+      )
+    )
+      ret.push(customer);
+  }
+
+  return Promise.resolve(ret);
+}
+
+
 
   async addPhCustomers(data: any[], account: Account) {
     for (let index = 0; index < data.length; index++) {
@@ -1795,7 +1856,133 @@ export class CustomersService {
       total: Number(totalJourneys[0].count),
     };
   }
+ 
+  /*
+  * 
+  * 
+  *
+  * @remarks
+  * Op.
+  *
+  * @param query eg "query": {
+       "type": "all",
+       "statements": [
+         {
+           "type": "Attribute",
+           "key": "firstName",
+           "comparisonType": "is equal to",
+           "subComparisonType": "exist",
+           "subComparisonValue": "",
+           "valueType": "String",
+           "value": "a"
+         },
+         {
+           "type": "Attribute",
+           "key": "lastName",
+           "comparisonType": "is equal to",
+           "subComparisonType": "exist",
+           "subComparisonValue": "",
+           "valueType": "String",
+           "value": "b"
+         }
+       ]
+     }
+  * @param 
+  * @param 
+  *
+  */
+ createSegmentQuery(query: any){
+  let expressions = [];
+  let andOrs = [];
+  for (const statement of query.statements){
+    if (statement.isSubBuilderChild && statement.statements){
+      expressions.push(this.createSegmentQuery(statement.statements))
+      andOrs.push(statement.type);
+    }
+    else {
+      expressions.push(this.constructMongoQuery(statement));
+      andOrs.push(statement.type)
+    }
+  }
+  return(this.constructFinalQuery(expressions,andOrs));
+ }
 
+ constructFinalQuery(expressions: any[], andOrs: any[]){
+  console.log("here");
+  return;
+ }
+
+  constructMongoQuery(statement: any){
+    switch (statement.type){
+      case 'Attribute':
+        this.generateMongoAttributeQuery(statement);
+        break;
+      case 'Event':
+        break;
+      case 'Email':
+        break;
+      case 'Push':
+        break;
+      case 'SMS':
+        break;
+      case 'In-app message': 
+        break; 
+      case 'Segment':  
+        break;
+    }
+  }
+
+  public generateMongoAttributeQuery(queryObject: QueryObject): object {
+    const { key, comparisonType, subComparisonType, value, subComparisonValue } = queryObject;
+    let query: any = {};
+  
+    switch (comparisonType) {
+      case 'is equal to':
+        query[key] = value;
+        break;
+      case 'is not equal to':
+        query[key] = { $ne: value };
+        break;
+      case 'contains':
+        query[key] = { $regex: new RegExp(value, 'i') };
+        break;
+      case 'does not contain':
+        query[key] = { $not: new RegExp(value, 'i') };
+        break;
+      case 'exist':
+        query[key] = { $exists: value === 'true' };
+        break;
+      case 'does not exist':
+        query[key] = { $exists: false };
+        break;    
+      case 'is greater than':
+        query[key]  = { $gt: value };
+        break;
+      case 'is less than':
+        query[key] = { $lt: value };
+        break;
+      // nested object  
+      case 'key':  
+      if (subComparisonType === 'equal to') {
+        query[key] = { [subComparisonValue]: value };
+      } else if (subComparisonType === 'not equal to') {
+        query[key] = { [subComparisonValue]: { $ne: value } };
+      } else if (subComparisonType === 'exist') {
+        query[key] = { [subComparisonValue]: { $exists: true } };
+      } else if (subComparisonType === 'not exist') {
+        query[key] = { [subComparisonValue]: { $exists: false } };
+      } else {
+        throw new Error('Invalid sub-comparison type for nested property');
+      }
+      break;
+      // Add more cases for other comparison types as needed
+      default:
+        throw new Error('Invalid comparison type');
+    }
+  
+    return query;
+  }
+  
   public async searchForTest(
     account: Account,
     take = 100,

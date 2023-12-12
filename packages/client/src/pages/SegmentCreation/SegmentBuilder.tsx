@@ -95,11 +95,27 @@ const SegmentBuilder = () => {
     }
   };
 
-  const handleSaveClick = () => {
+  const handleSaveClick = async () => {
+    console.log("***oi oi ***");
+    console.log("/n\ntrying inclusion criteria with", segment);
+    //console.log("the object is", JSON.stringify(Object, undefined, 2));
     if (Object.values(segmentQueryErrors).length > 0) {
       dispatch(setShowSegmentsErrors(true));
-
       return;
+    }
+    //create segment
+    try {
+      await ApiService.post({
+        url: "/segments/",
+        options: {
+          name: name,
+          type: segmentType,
+          inclusionCriteria: segment
+        },
+      });
+    } catch (e) {
+      console.error(e);
+      toast.error("Error: failed to save segment");
     }
   };
 
@@ -153,7 +169,7 @@ const SegmentBuilder = () => {
             Automatic segment
           </div>
           <div className="font-normal text-[14px] leading-[22px] text-[#4B5563]">
-            A segment defined by the following set of filters
+            A segment defined by the following set of filters and conditions
           </div>
         </div>
 
