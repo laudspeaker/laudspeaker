@@ -21,6 +21,7 @@ export enum NodeType {
   TIME_DELAY = 'timeDelay',
   TIME_WINDOW = 'timeWindow',
   USER_ATTRIBUTE = 'userAttribute',
+  MULTISPLIT = 'multisplit',
   INSERT_NODE = 'insertNode',
   TRACKER = 'tracker',
 }

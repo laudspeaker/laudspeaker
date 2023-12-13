@@ -357,26 +357,27 @@ export class StepsService {
   }
 
   /**
-   * Find a step by its ID.
+   * Find a step by its ID, account optional
+   *
    * @param account
    * @param id
    * @param session
    * @returns
    */
   async findByID(
-    account: Account,
     id: string,
     session: string,
+    account?: Account,
     queryRunner?: QueryRunner
   ): Promise<Step | null> {
     if (queryRunner) {
       return await queryRunner.manager.findOneBy(Step, {
-        owner: { id: account.id },
+        owner: account ? { id: account.id } : undefined,
         id: id,
       });
     } else {
       return await this.stepsRepository.findOneBy({
-        owner: { id: account.id },
+        owner: account ? { id: account.id } : undefined,
         id: id,
       });
     }

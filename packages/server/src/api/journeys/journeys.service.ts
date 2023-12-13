@@ -46,8 +46,9 @@ import {
 import {
   AnalyticsEvent,
   AnalyticsEventCondition,
-  AttributeBranch,
+  AttributeConditions,
   AttributeGroup,
+  Branch,
   ComponentEvent,
   CustomComponentStepMetadata,
   ElementCondition,
@@ -65,7 +66,7 @@ import { TimeDelayStepMetadata } from '../steps/types/step.interface';
 import { TimeWindow } from '../steps/types/step.interface';
 import { TimeWindowStepMetadata } from '../steps/types/step.interface';
 import { CustomerAttribute } from '../steps/types/step.interface';
-import { MultiBranchMetadata } from '../steps/types/step.interface';
+import { AttributeSplitMetadata } from '../steps/types/step.interface';
 import { Temporal } from '@js-temporal/polyfill';
 import generateName from '@good-ghosting/random-name-generator';
 
@@ -1044,8 +1045,6 @@ export class JourneysService {
         account.email
       );
 
-      this.logger.warn('SAVE TEST 1 BEFORE LOOP');
-      this.logger.warn(journey);
       for (let i = 0; i < nodes.length; i++) {
         const step = await queryRunner.manager.findOne(Step, {
           where: {
@@ -1120,10 +1119,6 @@ export class JourneysService {
             );
             break;
           case NodeType.WAIT_UNTIL:
-            if (nodes[i].id === '226a7112-96ec-477d-a1ac-d604b4f04301') {
-              this.logger.warn('SAVE TEST 2 Before processing');
-              this.logger.warn(journey);
-            }
             metadata = new WaitUntilStepMetadata();
 
             //Time Branch configuration
@@ -1338,66 +1333,26 @@ export class JourneysService {
                 metadata.window.toTime = nodes[i].data?.['toTime'];
             }
             break;
-          case NodeType.USER_ATTRIBUTE:
-            metadata = new MultiBranchMetadata();
+          case NodeType.MULTISPLIT:
+            metadata = new AttributeSplitMetadata();
             metadata.branches = [];
-            let index = 0;
             for (let i = 0; i < relevantEdges.length; i++) {
-              if (
-                relevantEdges[i].data['branch'].type === BranchType.ATTRIBUTE
-              ) {
-                const branch = new AttributeBranch();
-                branch.groups = [];
-                for (
-                  let groupsIndex = 0;
-                  groupsIndex <
-                  relevantEdges[i].data['branch'].attributeConditions.length;
-                  groupsIndex++
-                ) {
-                  const group = new AttributeGroup();
-                  group.attributes = [];
-                  for (
-                    let attributeIndex = 0;
-                    attributeIndex <
-                    relevantEdges[i].data['branch'].attributeConditions[
-                      groupsIndex
-                    ].statements.length;
-                    attributeIndex++
-                  ) {
-                    const attribute = new CustomerAttribute();
-                    attribute.comparisonType =
-                      relevantEdges[i].data['branch'].attributeConditions[
-                        groupsIndex
-                      ].statements[attributeIndex].comparisonType;
-                    attribute.key =
-                      relevantEdges[i].data['branch'].attributeConditions[
-                        groupsIndex
-                      ].statements[attributeIndex].key;
-                    attribute.keyType =
-                      relevantEdges[i].data['branch'].attributeConditions[
-                        groupsIndex
-                      ].statements[attributeIndex].valueType;
-                    attribute.value =
-                      relevantEdges[i].data['branch'].attributeConditions[
-                        groupsIndex
-                      ].statements[attributeIndex].value;
-                    group.attributes.push(attribute);
-                  }
-                  group.relation =
-                    relevantEdges[i].data['branch'].attributeConditions[
-                      groupsIndex
-                    ].statements[0].relationToNext;
-                  branch.groups.push(group);
-                }
+              // All others branch check
+              if (relevantEdges[i].data['branch'].isOthers === true) {
+                metadata.allOthers = nodes.filter((node) => {
+                  return node.id === relevantEdges[i].target;
+                })[0].data.stepId;
+              } else {
+                const branch = new AttributeConditions();
                 branch.destination = nodes.filter((node) => {
                   return node.id === relevantEdges[i].target;
                 })[0].data.stepId;
-                branch.index = index;
-                index++;
-                branch.relation =
-                  relevantEdges[i].data[
-                    'branch'
-                  ].attributeConditions[0].relationToNext;
+                branch.index = i;
+                branch.conditions =
+                  relevantEdges[i].data['branch']['conditions'];
+                branch.destination = nodes.filter((node) => {
+                  return node.id === relevantEdges[i].target;
+                })[0].data.stepId;
                 metadata.branches.push(branch);
               }
             }
@@ -1700,68 +1655,6 @@ export class JourneysService {
           metadata.window.to = Temporal.Instant.from(
             new Date(nodes[i].data['to']).toISOString()
           );
-          break;
-        case NodeType.USER_ATTRIBUTE:
-          metadata = new MultiBranchMetadata();
-          metadata.branches = [];
-          let index = 0;
-          for (let i = 0; i < relevantEdges.length; i++) {
-            if (relevantEdges[i].data['branch'].type === BranchType.ATTRIBUTE) {
-              const branch = new AttributeBranch();
-              branch.groups = [];
-              for (
-                let groupsIndex = 0;
-                groupsIndex <
-                relevantEdges[i].data['branch'].attributeConditions.length;
-                groupsIndex++
-              ) {
-                const group = new AttributeGroup();
-                group.attributes = [];
-                for (
-                  let attributeIndex = 0;
-                  attributeIndex <
-                  relevantEdges[i].data['branch'].attributeConditions[
-                    groupsIndex
-                  ].statements.length;
-                  attributeIndex++
-                ) {
-                  const attribute = new CustomerAttribute();
-                  attribute.comparisonType =
-                    relevantEdges[i].data['branch'].attributeConditions[
-                      groupsIndex
-                    ].statements[attributeIndex].comparisonType;
-                  attribute.key =
-                    relevantEdges[i].data['branch'].attributeConditions[
-                      groupsIndex
-                    ].statements[attributeIndex].key;
-                  attribute.keyType =
-                    relevantEdges[i].data['branch'].attributeConditions[
-                      groupsIndex
-                    ].statements[attributeIndex].valueType;
-                  attribute.value =
-                    relevantEdges[i].data['branch'].attributeConditions[
-                      groupsIndex
-                    ].statements[attributeIndex].value;
-                  group.attributes.push(attribute);
-                }
-                group.relation =
-                  relevantEdges[i].data['branch'].attributeConditions[
-                    groupsIndex
-                  ].statements[0].relationToNext;
-                branch.groups.push(group);
-              }
-              branch.destination = nodes.filter((node) => {
-                return node.id === relevantEdges[i].target;
-              })[0].data.stepId;
-              branch.index = index;
-              index++;
-              branch.relation =
-                relevantEdges[i].data[
-                  'branch'
-                ].attributeConditions[0].relationToNext;
-              metadata.branches.push(branch);
-            }
-          }
           break;
       }
       await queryRunner.manager.save(Step, {

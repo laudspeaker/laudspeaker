@@ -35,8 +35,8 @@ export class JourneyLocation {
   stepEntry!: Date;
 
   @Column({
-    type: 'timestamp',
+    type: 'number',
     nullable: true,
   })
-  moveStarted?: Date;
+  moveStarted?: number;
 }

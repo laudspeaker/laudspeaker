@@ -1,6 +1,6 @@
 /* eslint-disable no-case-declarations */
 import { HttpException, HttpStatus, Inject, Logger } from '@nestjs/common';
-import * as http from 'node:http'
+import * as http from 'node:http';
 import { Injectable } from '@nestjs/common';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import {
@@ -154,24 +154,25 @@ export class TransitionProcessor extends WorkerHost {
         case StepType.AB_TEST:
           break;
         case StepType.MULTISPLIT:
-          this.handleAttributeBranch(
+          this.handleMultisplit(
             job.data.ownerID,
+            job.data.journeyID,
             job.data.step.id,
             job.data.session,
             job.data.customerID,
-            this.redlockService.retrieve(
-              job.data.lock.resources,
-              job.data.lock.value,
-              job.data.lock.attempts,
-              job.data.lock.expiration
-            ),
             queryRunner,
             transactionSession,
             job.data.event
           );
           break;
         case StepType.EXIT:
-          await this.handleExit(job.data.ownerID, job.data.journeyID, job.data.session, job.data.customerID, queryRunner);
+          await this.handleExit(
+            job.data.ownerID,
+            job.data.journeyID,
+            job.data.session,
+            job.data.customerID,
+            queryRunner
+          );
           break;
         case StepType.LOOP:
           await this.handleLoop(
@@ -236,15 +237,10 @@ export class TransitionProcessor extends WorkerHost {
         case StepType.TIME_DELAY:
           await this.handleTimeDelay(
             job.data.ownerID,
+            job.data.journeyID,
             job.data.step.id,
             job.data.session,
             job.data.customerID,
-            this.redlockService.retrieve(
-              job.data.lock.resources,
-              job.data.lock.value,
-              job.data.lock.attempts,
-              job.data.lock.expiration
-            ),
             queryRunner,
             transactionSession,
             job.data.event
@@ -589,13 +585,13 @@ export class TransitionProcessor extends WorkerHost {
     });
 
     if (
-      !this.journeyLocationsService.find(
+      !(await this.journeyLocationsService.find(
         owner,
         journey,
         customerID,
         session,
         queryRunner
-      )
+      ))
     ) {
       this.warn(
         `${JSON.stringify({
@@ -617,9 +613,8 @@ export class TransitionProcessor extends WorkerHost {
     });
 
     if (process.env.PERFORMANCE_TESTING) {
-      await http.get(process.env.PERFORMANCE_TESTING_ENDPOINT)
+      await http.get(process.env.PERFORMANCE_TESTING_ENDPOINT);
     } else {
-
       //send message here
       const templateID = currentStep.metadata.template;
       const template = await this.templatesService.transactionalFindOneById(
@@ -644,7 +639,8 @@ export class TransitionProcessor extends WorkerHost {
         owner,
         customerID
       );
-      const { _id, ownerId, workflows, journeys, ...tags } = customer.toObject();
+      const { _id, ownerId, workflows, journeys, ...tags } =
+        customer.toObject();
       const filteredTags = cleanTagsForSending(tags);
       const sender = new MessageSender();
 
@@ -690,7 +686,11 @@ export class TransitionProcessor extends WorkerHost {
             templateID: template.id,
             eventProvider: owner.emailProvider,
           });
-          this.debug(`${JSON.stringify(ret)}`, this.handleMessage.name, session);
+          this.debug(
+            `${JSON.stringify(ret)}`,
+            this.handleMessage.name,
+            session
+          );
           await this.webhooksService.insertMessageStatusToClickhouse(ret);
           if (owner.emailProvider === 'free3') await owner.save();
           break;
@@ -729,7 +729,9 @@ export class TransitionProcessor extends WorkerHost {
           }
           break;
         case TemplateType.SLACK:
-          const installation = await this.slackService.getInstallation(customer);
+          const installation = await this.slackService.getInstallation(
+            customer
+          );
           await this.webhooksService.insertMessageStatusToClickhouse(
             await sender.process({
               name: TemplateType.SLACK,
@@ -783,7 +785,6 @@ export class TransitionProcessor extends WorkerHost {
           }
           break;
       }
-
     }
 
     if (
@@ -862,13 +863,13 @@ export class TransitionProcessor extends WorkerHost {
     });
 
     if (
-      !this.journeyLocationsService.find(
+      !(await this.journeyLocationsService.find(
         owner,
         journey,
         customerID,
         session,
         queryRunner
-      )
+      ))
     ) {
       this.warn(
         `${JSON.stringify({
@@ -927,21 +928,21 @@ export class TransitionProcessor extends WorkerHost {
   }
 
   /**
- * Handle exit step type; move all customers to next step and update
- * their step entry timestamps, then add next job to queue if following
- * step is not time based.
- * @param stepID
- * @param accountID
- * @param session
- * @param queryRunner
- * @param transactionSession
- */
+   * Handle exit step type; move all customers to next step and update
+   * their step entry timestamps, then add next job to queue if following
+   * step is not time based.
+   * @param stepID
+   * @param accountID
+   * @param session
+   * @param queryRunner
+   * @param transactionSession
+   */
   async handleExit(
     ownerID: string,
     journeyID: string,
     session: string,
     customerID: string,
-    queryRunner: QueryRunner,
+    queryRunner: QueryRunner
   ) {
     const owner = await queryRunner.manager.findOne(Account, {
       where: { id: ownerID },
@@ -973,10 +974,10 @@ export class TransitionProcessor extends WorkerHost {
    */
   async handleTimeDelay(
     ownerID: string,
+    journeyID: string,
     stepID: string,
     session: string,
     customerID: string,
-    lock: Lock,
     queryRunner: QueryRunner,
     transactionSession: mongoose.mongo.ClientSession,
     event?: string
@@ -984,33 +985,37 @@ export class TransitionProcessor extends WorkerHost {
     const owner = await queryRunner.manager.findOne(Account, {
       where: { id: ownerID },
     });
+
+    const journey = await this.journeysService.findByID(
+      owner,
+      journeyID,
+      session,
+      queryRunner
+    );
+
     const currentStep = await queryRunner.manager.findOne(Step, {
       where: {
         id: stepID,
-        type: StepType.TIME_DELAY,
+        type: StepType.START,
       },
-      lock: { mode: 'pessimistic_write' },
     });
 
-    if (
-      !_.find(currentStep.customers, (customer) => {
-        return JSON.parse(customer).customerID === customerID;
-      })
-    ) {
-      await lock.release();
-      this.warn(
-        `${JSON.stringify({ warning: 'Releasing lock' })}`,
-        this.handleTimeDelay.name,
-        session,
-        owner.email
-      );
+    const location = await this.journeyLocationsService.find(
+      owner,
+      journey,
+      customerID,
+      session,
+      queryRunner
+    );
+
+    if (!location) {
       this.warn(
         `${JSON.stringify({
           warning: 'Customer not in step',
           customerID,
           currentStep,
         })}`,
-        this.handleCustomComponent.name,
+        this.handleTimeDelay.name,
         session,
         owner.email
       );
@@ -1021,19 +1026,16 @@ export class TransitionProcessor extends WorkerHost {
       where: {
         id: currentStep.metadata.destination,
       },
-      lock: { mode: 'pessimistic_write' },
     });
 
     let moveCustomer: boolean = false;
-    let customerIndex = _.findIndex(currentStep.customers, (customer) => {
-      return JSON.parse(customer).customerID === customerID;
-    });
+
     if (
       Temporal.Duration.compare(
         currentStep.metadata.delay,
         Temporal.Now.instant().since(
           Temporal.Instant.from(
-            JSON.parse(currentStep.customers[customerIndex]).timestamp
+            Temporal.Instant.from(location.stepEntry.toUTCString())
           )
         )
       ) < 0
@@ -1042,50 +1044,49 @@ export class TransitionProcessor extends WorkerHost {
     }
 
     if (nextStep && moveCustomer) {
-      // Destination exists, move customer into destination
-      nextStep.customers.push(
-        JSON.stringify({
-          customerID,
-          timestamp: Temporal.Now.instant().toString(),
-        })
-      );
-      _.remove(currentStep.customers, (customer) => {
-        return JSON.parse(customer).customerID === customerID;
-      });
-      await queryRunner.manager.save(currentStep);
-      const newNext = await queryRunner.manager.save(nextStep);
-
       if (
-        newNext.type !== StepType.TIME_DELAY &&
-        newNext.type !== StepType.TIME_WINDOW &&
-        newNext.type !== StepType.WAIT_UNTIL_BRANCH
-      )
-        await this.transitionQueue.add(newNext.type, {
+        nextStep &&
+        nextStep.type !== StepType.TIME_DELAY &&
+        nextStep.type !== StepType.TIME_WINDOW &&
+        nextStep.type !== StepType.WAIT_UNTIL_BRANCH
+      ) {
+        // Destination exists, move customer into destination
+        await this.journeyLocationsService.continueMove(
+          owner,
+          journey,
+          currentStep,
+          nextStep,
+          await this.customersService.findById(owner, customerID),
+          session,
+          queryRunner
+        );
+        await this.transitionQueue.add(nextStep.type, {
           ownerID,
-          step: newNext,
+          journeyID,
+          step: nextStep,
           session: session,
           customerID,
-          lock,
           event,
         });
-      else {
-        await lock.release();
-        this.warn(
-          `${JSON.stringify({ warning: 'Releasing lock' })}`,
-          this.handleTimeDelay.name,
+      } else {
+        // Destination does not exist, customer has stopped moving so
+        // we can release lock
+        await this.journeyLocationsService.unlock(
+          owner,
+          journey,
+          await this.customersService.findById(owner, customerID),
           session,
-          owner.email
+          queryRunner
         );
       }
+      //Not time to move a customer, release lock on that customer
     } else {
-      // Destination does not exist, customer has stopped moving so
-      // we can release lock
-      await lock.release();
-      this.warn(
-        `${JSON.stringify({ warning: 'Releasing lock' })}`,
-        this.handleTimeDelay.name,
+      await this.journeyLocationsService.unlock(
+        owner,
+        journey,
+        await this.customersService.findById(owner, customerID),
         session,
-        owner.email
+        queryRunner
       );
     }
   }
@@ -1418,22 +1419,69 @@ export class TransitionProcessor extends WorkerHost {
   }
 
   /**
+   * Handle multisplit step
    *
-   * @param stepID
-   * @param session
-   * @param queryRunner
-   * @param transactionSession
+   * @param {String} ownerID
+   * @param {String} journeyID
+   * @param {String} stepID
+   * @param {String} session
+   * @param {String} customerID
+   * @param {QueryRunner} queryRunner
+   * @param {ClientSession} transactionSession
+   * @param {String} event
    */
-  async handleAttributeBranch(
+  async handleMultisplit(
     ownerID: string,
+    journeyID: string,
     stepID: string,
     session: string,
     customerID: string,
-    lock: Lock,
     queryRunner: QueryRunner,
     transactionSession: mongoose.mongo.ClientSession,
     event?: string
-  ) { }
+  ) {
+    const owner = await queryRunner.manager.findOne(Account, {
+      where: { id: ownerID },
+    });
+
+    const journey = await this.journeysService.findByID(
+      owner,
+      journeyID,
+      session,
+      queryRunner
+    );
+
+    const currentStep = await queryRunner.manager.findOne(Step, {
+      where: {
+        id: stepID,
+        type: StepType.MESSAGE,
+      },
+    });
+
+    if (
+      !(await this.journeyLocationsService.find(
+        owner,
+        journey,
+        customerID,
+        session,
+        queryRunner
+      ))
+    ) {
+      this.warn(
+        `${JSON.stringify({
+          warning: 'Customer not in step',
+          customerID,
+          currentStep,
+        })}`,
+        this.handleMessage.name,
+        session,
+        owner.email
+      );
+      return;
+    }
+
+    //await this.customersService.checkInclusion()
+  }
 
   /**
    *
@@ -1546,8 +1594,8 @@ export class TransitionProcessor extends WorkerHost {
   }
 
   // TODO
-  async handleABTest(job: Job<any, any, string>) { }
-  async handleRandomCohortBranch(job: Job<any, any, string>) { }
+  async handleABTest(job: Job<any, any, string>) {}
+  async handleRandomCohortBranch(job: Job<any, any, string>) {}
 
   // @OnWorkerEvent('active')
   // onActive(job: Job<any, any, any>, prev: string) {

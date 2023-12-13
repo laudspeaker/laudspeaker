@@ -1,14 +1,6 @@
-import {
-  Logger,
-  Inject,
-  Injectable,
-} from '@nestjs/common';
+import { Logger, Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import {
-  DataSource,
-  QueryRunner,
-  Repository,
-} from 'typeorm';
+import { DataSource, IsNull, QueryRunner, Repository } from 'typeorm';
 import { Account } from '../accounts/entities/accounts.entity';
 import { Journey } from './entities/journey.entity';
 import { CustomerDocument } from '../customers/schemas/customer.schema';
@@ -17,6 +9,9 @@ import { StepsService } from '../steps/steps.service';
 import { Step } from '../steps/entities/step.entity';
 import { Temporal } from '@js-temporal/polyfill';
 import { JourneyLocation } from './entities/journey-location.entity';
+import { StepType } from '../steps/types/step.interface';
+
+const LOCATION_LOCK_TIMEOUT_MS = +process.env.LOCATION_LOCK_TIMEOUT_MS;
 
 @Injectable()
 export class JourneyLocationsService {
@@ -27,7 +22,7 @@ export class JourneyLocationsService {
     @InjectRepository(JourneyLocation)
     public journeyLocationsRepository: Repository<JourneyLocation>,
     @Inject(StepsService) private stepsService: StepsService
-  ) { }
+  ) {}
 
   log(message, method, session, user = 'ANONYMOUS') {
     this.logger.log(
@@ -139,7 +134,7 @@ export class JourneyLocationsService {
         customer: customer.id,
         step: step,
         stepEntry: new Date(),
-        moveStarted: new Date(),
+        moveStarted: Date.now(),
       });
     } else {
       const location = await this.journeyLocationsRepository.findOne({
@@ -160,17 +155,13 @@ export class JourneyLocationsService {
         customer: customer.id,
         step: step,
         stepEntry: new Date(),
-        moveStarted: new Date(),
+        moveStarted: Date.now(),
       });
     }
   }
 
   /**
-<<<<<<< HEAD
-   * Starts moving a customer between steps.
-=======
    * Moves a customer from one step to another while they are actively being moved.
->>>>>>> 6246e0eaab984531bbf795b5ab97cb3ffc9c4546
    *
    * This method should only be called by time and event triggered steps.
    *
@@ -344,8 +335,12 @@ export class JourneyLocationsService {
     session: string,
     queryRunner?: QueryRunner
   ) {
-
-    this.warn(JSON.stringify({ account, journey, from, to, customer }), this.continueMove.name, session, account.email);
+    this.warn(
+      JSON.stringify({ account, journey, from, to, customer }),
+      this.continueMove.name,
+      session,
+      account.email
+    );
 
     if (queryRunner) {
       // Step 1: Check if customer is enrolled in journey. If not, throw error
@@ -359,7 +354,12 @@ export class JourneyLocationsService {
         lock: { mode: 'pessimistic_write' },
       });
 
-      this.warn(JSON.stringify({ location: location }), this.continueMove.name, session, account.email);
+      this.warn(
+        JSON.stringify({ location: location }),
+        this.continueMove.name,
+        session,
+        account.email
+      );
 
       // this.debug(JSON.stringify({ location: location }), this.continueMove.name, session, account.email)
       const step = await this.stepsService.findByID(
@@ -464,7 +464,7 @@ export class JourneyLocationsService {
           owner: { id: account.id },
           customer: customer,
         },
-        loadRelationIds: true
+        loadRelationIds: true,
       });
     } else {
       return await this.journeyLocationsRepository.findOne({
@@ -473,7 +473,57 @@ export class JourneyLocationsService {
           owner: { id: account.id },
           customer: customer,
         },
-        loadRelationIds: true
+        loadRelationIds: true,
+      });
+    }
+  }
+
+  /**
+   * Returns all journey locations where
+   * Step type is time based and moveStarted
+   * is.
+   *
+   * @param {Account} account
+   * @param {Journey} journey
+   * @param {CustomerDocument} customer
+   * @param {String} session
+   * @param {QueryRunner} queryRunner
+   * @returns
+   */
+  async findAllStaticCustomersInTimeBasedSteps(
+    journey: Journey,
+    session: string,
+    queryRunner?: QueryRunner
+  ) {
+    if (queryRunner) {
+      return await queryRunner.manager.find(JourneyLocation, {
+        where: {
+          journey: journey.id,
+          step: {
+            type:
+              StepType.TIME_DELAY ||
+              StepType.TIME_WINDOW ||
+              StepType.WAIT_UNTIL_BRANCH,
+          },
+          moveStarted: IsNull(),
+        },
+        lock: { mode: 'pessimistic_write' },
+        loadRelationIds: true,
+      });
+    } else {
+      return await this.journeyLocationsRepository.find({
+        where: {
+          journey: journey.id,
+          step: {
+            type:
+              StepType.TIME_DELAY ||
+              StepType.TIME_WINDOW ||
+              StepType.WAIT_UNTIL_BRANCH,
+          },
+          moveStarted: IsNull(),
+        },
+        lock: { mode: 'pessimistic_write' },
+        loadRelationIds: true,
       });
     }
   }
@@ -513,12 +563,125 @@ export class JourneyLocationsService {
         },
         {
           moveStarted: null,
-        });
+        }
+      );
     } else {
       const location = await this.journeyLocationsRepository.findOne({
         where: {
           journey: journey.id,
           owner: { id: account.id },
+          customer: customer.id,
+        },
+        lock: { mode: 'pessimistic_write' },
+      });
+
+      location.moveStarted = null;
+
+      await this.journeyLocationsRepository.save(location);
+    }
+  }
+
+  /**
+   * Mark a customer as started moving through a journey.
+   *
+   * @param {Account} account
+   * @param {Journey} journey
+   * @param {CustomerDocument} customer
+   * @param {String} session
+   * @param {QueryRunner} [queryRunner]
+   */
+  async findAndLock(
+    journey: Journey,
+    customer: CustomerDocument,
+    session: string,
+    account?: Account,
+    queryRunner?: QueryRunner
+  ) {
+    if (queryRunner) {
+      const location = await queryRunner.manager.findOne(JourneyLocation, {
+        where: {
+          journey: journey.id,
+          owner: account ? { id: account.id } : undefined,
+          customer: customer.id,
+        },
+        lock: { mode: 'pessimistic_write' },
+      });
+
+      if (
+        location.moveStarted &&
+        Date.now() - location.moveStarted < LOCATION_LOCK_TIMEOUT_MS
+      )
+        throw new Error(
+          `Customer ${customer.id} is still moving through journey ${journey.id}`
+        );
+
+      await queryRunner.manager.update(
+        JourneyLocation,
+        {
+          journey: journey.id,
+          owner: account ? { id: account.id } : undefined,
+          customer: customer.id,
+        },
+        {
+          moveStarted: Date.now(),
+        }
+      );
+    } else {
+      const location = await this.journeyLocationsRepository.findOne({
+        where: {
+          journey: journey.id,
+          owner: account ? { id: account.id } : undefined,
+          customer: customer.id,
+        },
+        lock: { mode: 'pessimistic_write' },
+      });
+
+      location.moveStarted = null;
+
+      await this.journeyLocationsRepository.save(location);
+    }
+  }
+
+  /**
+   * Mark a customer as started moving through a journey.
+   *
+   * @param {Account} account
+   * @param {Journey} journey
+   * @param {CustomerDocument} customer
+   * @param {String} session
+   * @param {QueryRunner} [queryRunner]
+   */
+  async lock(
+    location: JourneyLocation,
+    session: string,
+    account?: Account,
+    queryRunner?: QueryRunner
+  ) {
+    if (queryRunner) {
+      if (
+        location.moveStarted &&
+        Date.now() - location.moveStarted < LOCATION_LOCK_TIMEOUT_MS
+      )
+        throw new Error(
+          `Customer ${location.customer} is still moving through journey ${location.journey}`
+        );
+
+      await queryRunner.manager.update(
+        JourneyLocation,
+        {
+          journey: location.journey,
+          owner: account ? { id: account.id } : undefined,
+          customer: location.customer,
+        },
+        {
+          moveStarted: Date.now(),
+        }
+      );
+    } else {
+      const location = await this.journeyLocationsRepository.findOne({
+        where: {
+          journey: journey.id,
+          owner: account ? { id: account.id } : undefined,
           customer: customer.id,
         },
         lock: { mode: 'pessimistic_write' },
