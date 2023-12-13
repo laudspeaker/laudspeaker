@@ -397,7 +397,7 @@ const PeopleImport = () => {
           <FlowBuilderModal isOpen={isValidationInProcess}>
             <div className="w-full flex flex-col items-center justify-center">
               <div className="relative bg-transparent border-t-transparent  border-[#6366F1] border-4 rounded-full w-10 h-10 animate-spin" />
-              <p className="my-2 text-base font-roboto text-[#4B5563] animation-pulse">
+              <p className="my-2 text-base font-roboto text-[#4B5563] !animate-pulse">
                 Preforming calculation...
               </p>
             </div>

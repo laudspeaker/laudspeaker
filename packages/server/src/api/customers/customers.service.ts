@@ -2085,8 +2085,8 @@ export class CustomersService {
     } else if (convertTo === AttributeType.BOOLEAN) {
       converted = Boolean(value);
     } else if (convertTo === AttributeType.DATE) {
-      // TODO: update validation
-      if (isValid(new Date(value))) converted = new Date(value);
+      if (isValid(new Date(value))) converted = new Date(value).getTime();
+      else isError = true;
     } else if (convertTo === AttributeType.EMAIL) {
       if (isEmail(value)) {
         converted = String(value);
