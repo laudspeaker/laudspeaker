@@ -1892,30 +1892,58 @@ export class CustomersService {
   *
   */
  createSegmentQuery(query: any){
+  console.log("In the createSegmentQuery");
+  console.log("query is", JSON.stringify(query,null,2))
   let expressions = [];
   let andOrs = [];
   for (const statement of query.statements){
+    console.log("statement is", JSON.stringify(statement,null,2))
+    //has a subchild
     if (statement.isSubBuilderChild && statement.statements){
-      expressions.push(this.createSegmentQuery(statement.statements))
+      console.log("in sub statement");
+      expressions.push(this.createSegmentQuery(statement));
       andOrs.push(statement.type);
     }
     else {
       expressions.push(this.constructMongoQuery(statement));
-      andOrs.push(statement.type)
+      andOrs.push(query.type)
     }
   }
   return(this.constructFinalQuery(expressions,andOrs));
  }
 
  constructFinalQuery(expressions: any[], andOrs: any[]){
-  console.log("here");
+  console.log("here in final query");
+  console.log("expressions are", JSON.stringify(expressions, null, 2));
+  console.log("and ors are", andOrs);
   return;
  }
 
+ /**
+   * Takes in a statement of the form:
+   * 
+           "type": "Attribute",
+           "key": "firstName",
+           "comparisonType": "exist",
+           "subComparisonType": "exist",
+           "subComparisonValue": "",
+           "valueType": "String",
+           "value": ""
+         }
+   
+   *
+   * @remarks
+   * Optimize this to happen inside of mongo later.
+   *
+   * calls a sub method based on whether its an attribute, message, or other type of segment
+   * 
+   */
+
   constructMongoQuery(statement: any){
+    console.log("constructing Mongo Query");
     switch (statement.type){
       case 'Attribute':
-        this.generateMongoAttributeQuery(statement);
+        return this.generateMongoAttributeQuery(statement);
         break;
       case 'Event':
         break;
@@ -1933,26 +1961,33 @@ export class CustomersService {
   }
 
   public generateMongoAttributeQuery(queryObject: QueryObject): object {
+    console.log("generating attribute mongo query");
     const { key, comparisonType, subComparisonType, value, subComparisonValue } = queryObject;
     let query: any = {};
-  
+    console.log("comparison type is", comparisonType);
     switch (comparisonType) {
       case 'is equal to':
+        //checked
         query[key] = value;
         break;
       case 'is not equal to':
+        //checked
         query[key] = { $ne: value };
         break;
       case 'contains':
+        // doesnt seem to be working
         query[key] = { $regex: new RegExp(value, 'i') };
         break;
       case 'does not contain':
+        // doesnt seem to be working
         query[key] = { $not: new RegExp(value, 'i') };
         break;
       case 'exist':
-        query[key] = { $exists: value === 'true' };
+        //checked
+        query[key] = { $exists: true };
         break;
-      case 'does not exist':
+      case 'not exist':
+        //checked
         query[key] = { $exists: false };
         break;    
       case 'is greater than':
@@ -1964,13 +1999,13 @@ export class CustomersService {
       // nested object  
       case 'key':  
       if (subComparisonType === 'equal to') {
-        query[key] = { [subComparisonValue]: value };
+        query[key] = { [value]: subComparisonValue };
       } else if (subComparisonType === 'not equal to') {
-        query[key] = { [subComparisonValue]: { $ne: value } };
+        query[key] = { [value]: { $ne: subComparisonValue } };
       } else if (subComparisonType === 'exist') {
-        query[key] = { [subComparisonValue]: { $exists: true } };
+        query[key] = { [value]: { $exists: true } };
       } else if (subComparisonType === 'not exist') {
-        query[key] = { [subComparisonValue]: { $exists: false } };
+        query[key] = { [value]: { $exists: false } };
       } else {
         throw new Error('Invalid sub-comparison type for nested property');
       }
@@ -1979,8 +2014,172 @@ export class CustomersService {
       default:
         throw new Error('Invalid comparison type');
     }
+
+    console.log("generated attribute query is", JSON.stringify(query,null,2));
   
     return query;
+  }
+
+  /*
+   * checks if a given customer is in a segment
+
+   * 
+   * 
+   * @param customer 
+  eg {
+  "_id": {
+    "$oid": "657619ac0cd6aa53b5910962"
+  },
+  "firstName": "A",
+  "lastName": "B",
+  "email": "abe@example.com",
+  "workflows": [],
+  "journeys": [
+    "12624e62-367e-483b-9ddf-38160f4fd955"
+  ],
+  "ownerId": "c65069d2-ef33-427b-b093-6dd5870c4c33",
+  "posthogId": [],
+  "slackTeamId": [],
+  "verified": true,
+  "__v": 0,
+  "journeyEnrollmentsDates": {
+    "12624e62-367e-483b-9ddf-38160f4fd955": "Sun, 10 Dec 2023 23:15:14 GMT"
+  }
+}
+   * @param query eg 
+"query": {
+ "type": "all",
+ "statements": [
+   {
+     "type": "Attribute",
+     "key": "something",
+     "comparisonType": "is equal to",
+     "subComparisonType": "exist",
+     "subComparisonValue": "",
+     "valueType": "String",
+     "value": "another thing"
+   },
+   {
+     "type": "Attribute",
+     "key": "firstName",
+     "comparisonType": "is equal to",
+     "subComparisonType": "exist",
+     "subComparisonValue": "",
+     "valueType": "String",
+     "value": "s"
+   },
+   {
+     "type": "Attribute",
+     "key": "lastName",
+     "comparisonType": "is equal to",
+     "subComparisonType": "exist",
+     "subComparisonValue": "",
+     "valueType": "String",
+     "value": "f"
+   },
+   {
+     "type": "any",
+     "statements": [
+ {
+   "type": "Attribute",
+   "key": "lastName",
+   "comparisonType": "is equal to",
+   "subComparisonType": "exist",
+   "subComparisonValue": "",
+   "valueType": "String",
+   "value": "g"
+ }
+     ],
+     "isSubBuilderChild": true
+   }
+ ]
+}
+   */
+
+checkCustomerMatchesQuery(customer: CreateCustomerDto, query: any){
+
+    if (query.type === 'all') {
+      // 'all' logic: All conditions must be satisfied
+      if (!query.statements || query.statements.length === 0) {
+        // If no statements are provided, return false
+        return false;
+      }
+  
+      return query.statements.every((statement) => this.evaluateStatementWithSubQuery(customer, statement));
+    } else if (query.type === 'any') {
+      // 'any' logic: At least one condition must be satisfied
+      if (!query.statements || query.statements.length === 0) {
+        // If no statements are provided, return true
+        return true;
+      }
+  
+      return query.statements.some((statement) => this.evaluateStatementWithSubQuery(customer, statement));
+    }
+  
+    return false;
+  }
+
+  evaluateStatementWithSubQuery(customer: CreateCustomerDto, statement: any): boolean {
+    if (statement.statements && statement.statements.length > 0) {
+      // Statement has a subquery, recursively evaluate the subquery
+      return this.checkCustomerMatchesQuery(customer, statement);
+    } else {
+      return this.evaluateStatement(customer, statement);
+    }
+  }
+  
+  evaluateStatement(customer: CreateCustomerDto, statement: any): boolean {
+    const { key, comparisonType, subComparisonType, value, subComparisonValue } = statement;
+  
+    if (!customer.hasOwnProperty(key)) {
+      return false;
+    }
+  
+    const customerValue = customer[key];
+  
+    // Perform comparison based on comparisonType
+    console.log("comparison type is", comparisonType);
+    switch (comparisonType) {
+      case 'is equal to':
+        //checked
+        break;
+      case 'is not equal to':
+        //checked
+        break;
+      case 'contains':
+        // doesnt seem to be working
+        break;
+      case 'does not contain':
+        // doesnt seem to be working
+        break;
+      case 'exist':
+        //checked
+        break;
+      case 'not exist':
+        //checked
+        break;    
+      case 'is greater than':
+        break;
+      case 'is less than':
+        break;
+      // nested object  
+      case 'key':  
+      if (subComparisonType === 'equal to') {
+        //query[key] = { [value]: subComparisonValue };
+      } else if (subComparisonType === 'not equal to') {
+        //query[key] = { [value]: { $ne: subComparisonValue } };
+      } else if (subComparisonType === 'exist') {
+        //query[key] = { [value]: { $exists: true } };
+      } else if (subComparisonType === 'not exist') {
+       //query[key] = { [value]: { $exists: false } };
+      } else {
+        throw new Error('Invalid sub-comparison type for nested property');
+      }
+      break;
+      // Add more cases for other comparison types as needed
+      default:
+        throw new Error('Invalid comparison type');
+    }
   }
   
   public async searchForTest(

@@ -99,6 +99,9 @@ export class SegmentsService {
         });
     }
 
+    //test code
+    this.customersService.createSegmentQuery(createSegmentDTO.inclusionCriteria.query);
+
     return segment;
   }
 
