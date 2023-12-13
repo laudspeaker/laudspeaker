@@ -41,6 +41,10 @@ import * as _ from 'lodash';
 import { Lock } from 'redlock';
 import { PostHog } from 'posthog-node';
 import * as Sentry from '@sentry/node';
+import { interval } from 'rxjs';
+import { isWithinInterval } from '@/common/helper/timing';
+import { JourneySettingsQuiteFallbackBehavior } from '@/api/journeys/types/additional-journey-settings.interface';
+import { StepsService } from '../steps.service';
 
 @Injectable()
 @Processor('transition', { concurrency: cpus().length })
@@ -66,7 +70,8 @@ export class TransitionProcessor extends WorkerHost {
     @Inject(ModalsService) private modalsService: ModalsService,
     @Inject(SlackService) private slackService: SlackService,
     @InjectModel(Customer.name) public customerModel: Model<CustomerDocument>,
-    @Inject(RedlockService) private redlockService: RedlockService
+    @Inject(RedlockService) private redlockService: RedlockService,
+    @Inject(StepsService) private stepsService: StepsService
   ) {
     super();
   }
@@ -594,8 +599,56 @@ export class TransitionProcessor extends WorkerHost {
         id: stepID,
         type: StepType.MESSAGE,
       },
-      lock: { mode: 'pessimistic_write' },
+      relations: ['owner', 'journey'],
+      // lock: { mode: 'pessimistic_write' }, // TODO_JH: see why this is needed
     });
+
+    // Rate limiting and sending quiet hours will be stored here
+    let messageSendType: 'SEND' | 'QUIET_REQUEUE' | 'QUIET_ABORT' = 'SEND';
+    if (
+      currentStep.journey.journeySettings &&
+      currentStep.journey.journeySettings.quiteHours &&
+      currentStep.journey.journeySettings.quiteHours.enabled
+    ) {
+      let quietHours = currentStep.journey.journeySettings.quiteHours!;
+      // CHECK IF SENDING QUIET HOURS
+      let formatter = Intl.DateTimeFormat(undefined, {
+        hour: '2-digit',
+        minute: '2-digit',
+        hourCycle: 'h24',
+      });
+      let nowString = formatter.format(new Date());
+      let isQuietHour = isWithinInterval(
+        quietHours.startTime,
+        quietHours.endTime,
+        nowString
+      );
+
+      if (isQuietHour) {
+        switch (quietHours.fallbackBehavior) {
+          case JourneySettingsQuiteFallbackBehavior.NextAvailableTime:
+            messageSendType = 'QUIET_REQUEUE';
+            break;
+          case JourneySettingsQuiteFallbackBehavior.Abort:
+            messageSendType = 'QUIET_ABORT';
+            break;
+          default:
+            messageSendType = 'QUIET_REQUEUE';
+            this.warn(
+              'Unrecognized quiet hours fallback behavior. Defaulting to requeue.',
+              this.handleMessage.name,
+              session,
+              owner.email
+            );
+        }
+        this.log(
+          `Observing quiet hours, type ${messageSendType}`,
+          this.handleMessage.name,
+          session,
+          owner.email
+        );
+      }
+    }
 
     if (
       !_.find(currentStep.customers, (customer) => {
@@ -629,168 +682,196 @@ export class TransitionProcessor extends WorkerHost {
       lock: { mode: 'pessimistic_write' },
     });
 
-    //send message here
-    const templateID = currentStep.metadata.template;
-    const template = await this.templatesService.transactionalFindOneById(
-      owner,
-      templateID.toString(),
-      queryRunner
-    );
-    const {
-      mailgunAPIKey,
-      sendingName,
-      testSendingEmail,
-      testSendingName,
-      sendgridApiKey,
-      sendgridFromEmail,
-      email,
-    } = owner;
-    let { sendingDomain, sendingEmail } = owner;
+    if (messageSendType === 'SEND') {
+      //send message here
+      const templateID = currentStep.metadata.template;
+      const template = await this.templatesService.transactionalFindOneById(
+        owner,
+        templateID.toString(),
+        queryRunner
+      );
+      const {
+        mailgunAPIKey,
+        sendingName,
+        testSendingEmail,
+        testSendingName,
+        sendgridApiKey,
+        sendgridFromEmail,
+        email,
+      } = owner;
+      let { sendingDomain, sendingEmail } = owner;
 
-    let key = mailgunAPIKey;
-    let from = sendingName;
-    const customer: CustomerDocument = await this.customersService.findById(
-      owner,
-      customerID
-    );
-    const { _id, ownerId, workflows, journeys, ...tags } = customer.toObject();
-    const filteredTags = cleanTagsForSending(tags);
-    const sender = new MessageSender();
+      let key = mailgunAPIKey;
+      let from = sendingName;
+      const customer: CustomerDocument = await this.customersService.findById(
+        owner,
+        customerID
+      );
+      const { _id, ownerId, workflows, journeys, ...tags } =
+        customer.toObject();
+      const filteredTags = cleanTagsForSending(tags);
+      const sender = new MessageSender();
 
-    switch (template.type) {
-      case TemplateType.EMAIL:
-        if (owner.emailProvider === 'free3') {
-          if (owner.freeEmailsCount === 0)
-            throw new HttpException(
-              'You exceeded limit of 3 emails',
-              HttpStatus.PAYMENT_REQUIRED
-            );
-          sendingDomain = process.env.MAILGUN_TEST_DOMAIN;
-          key = process.env.MAILGUN_API_KEY;
-          from = testSendingName;
-          sendingEmail = testSendingEmail;
-          owner.freeEmailsCount--;
-        }
-        if (owner.emailProvider === 'sendgrid') {
-          key = sendgridApiKey;
-          from = sendgridFromEmail;
-        }
-        const ret = await sender.process({
-          name: TemplateType.EMAIL,
-          accountID: owner.id,
-          cc: template.cc,
-          customerID: customerID,
-          domain: sendingDomain,
-          email: sendingEmail,
-          stepID: currentStep.id,
-          from: from,
-          trackingEmail: email,
-          key: key,
-          subject: await this.templatesService.parseApiCallTags(
-            template.subject,
-            filteredTags
-          ),
-          to: customer.phEmail ? customer.phEmail : customer.email,
-          text: await this.templatesService.parseApiCallTags(
-            template.text,
-            filteredTags
-          ),
-          tags: filteredTags,
-          templateID: template.id,
-          eventProvider: owner.emailProvider,
-        });
-        this.debug(`${JSON.stringify(ret)}`, this.handleMessage.name, session);
-        await this.webhooksService.insertMessageStatusToClickhouse(ret);
-        if (owner.emailProvider === 'free3') await owner.save();
-        break;
-      case TemplateType.PUSH:
-        // TODO: update for new PUSH
-        // await this.webhooksService.insertMessageStatusToClickhouse(
-        //   await sender.process({
-        //     name: TemplateType.PUSH,
-        //     accountID: owner.id,
-        //     stepID: currentStep.id,
-        //     customerID: customerID,
-        //     firebaseCredentials: owner.firebaseCredentials,
-        //     phDeviceToken: customer.phDeviceToken,
-        //     pushText: await this.templatesService.parseApiCallTags(
-        //       template.pushText,
-        //       filteredTags
-        //     ),
-        //     pushTitle: await this.templatesService.parseApiCallTags(
-        //       template.pushTitle,
-        //       filteredTags
-        //     ),
-        //     trackingEmail: email,
-        //     filteredTags: filteredTags,
-        //     templateID: template.id,
-        //   })
-        // );
-        break;
-      case TemplateType.MODAL:
-        if (template.modalState) {
-          const isSent = await this.websocketGateway.sendModal(
-            customerID,
-            template
-          );
-          if (!isSent)
-            await this.modalsService.queueModalEvent(customerID, template);
-        }
-        break;
-      case TemplateType.SLACK:
-        const installation = await this.slackService.getInstallation(customer);
-        await this.webhooksService.insertMessageStatusToClickhouse(
-          await sender.process({
-            name: TemplateType.SLACK,
+      switch (template.type) {
+        case TemplateType.EMAIL:
+          if (owner.emailProvider === 'free3') {
+            if (owner.freeEmailsCount === 0)
+              throw new HttpException(
+                'You exceeded limit of 3 emails',
+                HttpStatus.PAYMENT_REQUIRED
+              );
+            sendingDomain = process.env.MAILGUN_TEST_DOMAIN;
+            key = process.env.MAILGUN_API_KEY;
+            from = testSendingName;
+            sendingEmail = testSendingEmail;
+            owner.freeEmailsCount--;
+          }
+          if (owner.emailProvider === 'sendgrid') {
+            key = sendgridApiKey;
+            from = sendgridFromEmail;
+          }
+          const ret = await sender.process({
+            name: TemplateType.EMAIL,
             accountID: owner.id,
+            cc: template.cc,
+            customerID: customerID,
+            domain: sendingDomain,
+            email: sendingEmail,
             stepID: currentStep.id,
-            customerID: customer.id,
-            templateID: template.id,
-            methodName: 'chat.postMessage',
-            filteredTags: filteredTags,
-            args: {
-              token: installation.installation.bot.token,
-              channel: customer.slackId,
-              text: await this.templatesService.parseApiCallTags(
-                template.slackMessage,
-                filteredTags
-              ),
-            },
-          })
-        );
-        break;
-      case TemplateType.SMS:
-        await this.webhooksService.insertMessageStatusToClickhouse(
-          await sender.process({
-            name: TemplateType.SMS,
-            accountID: owner.id,
-            stepID: currentStep.id,
-            customerID: customer.id,
-            templateID: template.id,
-            from: owner.smsFrom,
-            sid: owner.smsAccountSid,
-            tags: filteredTags,
-            text: await this.templatesService.parseApiCallTags(
-              template.smsText,
+            from: from,
+            trackingEmail: email,
+            key: key,
+            subject: await this.templatesService.parseApiCallTags(
+              template.subject,
               filteredTags
             ),
-            to: customer.phPhoneNumber || customer.phone,
-            token: owner.smsAuthToken,
-            trackingEmail: email,
-          })
-        );
-        break;
-      case TemplateType.WEBHOOK: //TODO:remove this from queue
-        if (template.webhookData) {
-          await this.webhooksQueue.add('whapicall', {
-            template,
-            filteredTags,
-            audienceId: stepID,
-            customerId: customerID,
-            accountId: owner.id,
+            to: customer.phEmail ? customer.phEmail : customer.email,
+            text: await this.templatesService.parseApiCallTags(
+              template.text,
+              filteredTags
+            ),
+            tags: filteredTags,
+            templateID: template.id,
+            eventProvider: owner.emailProvider,
           });
-        }
-        break;
+          this.debug(
+            `${JSON.stringify(ret)}`,
+            this.handleMessage.name,
+            session
+          );
+          await this.webhooksService.insertMessageStatusToClickhouse(ret);
+          if (owner.emailProvider === 'free3') await owner.save();
+          break;
+        case TemplateType.PUSH:
+          // TODO: update for new PUSH
+          // await this.webhooksService.insertMessageStatusToClickhouse(
+          //   await sender.process({
+          //     name: TemplateType.PUSH,
+          //     accountID: owner.id,
+          //     stepID: currentStep.id,
+          //     customerID: customerID,
+          //     firebaseCredentials: owner.firebaseCredentials,
+          //     phDeviceToken: customer.phDeviceToken,
+          //     pushText: await this.templatesService.parseApiCallTags(
+          //       template.pushText,
+          //       filteredTags
+          //     ),
+          //     pushTitle: await this.templatesService.parseApiCallTags(
+          //       template.pushTitle,
+          //       filteredTags
+          //     ),
+          //     trackingEmail: email,
+          //     filteredTags: filteredTags,
+          //     templateID: template.id,
+          //   })
+          // );
+          break;
+        case TemplateType.MODAL:
+          if (template.modalState) {
+            const isSent = await this.websocketGateway.sendModal(
+              customerID,
+              template
+            );
+            if (!isSent)
+              await this.modalsService.queueModalEvent(customerID, template);
+          }
+          break;
+        case TemplateType.SLACK:
+          const installation = await this.slackService.getInstallation(
+            customer
+          );
+          await this.webhooksService.insertMessageStatusToClickhouse(
+            await sender.process({
+              name: TemplateType.SLACK,
+              accountID: owner.id,
+              stepID: currentStep.id,
+              customerID: customer.id,
+              templateID: template.id,
+              methodName: 'chat.postMessage',
+              filteredTags: filteredTags,
+              args: {
+                token: installation.installation.bot.token,
+                channel: customer.slackId,
+                text: await this.templatesService.parseApiCallTags(
+                  template.slackMessage,
+                  filteredTags
+                ),
+              },
+            })
+          );
+          break;
+        case TemplateType.SMS:
+          await this.webhooksService.insertMessageStatusToClickhouse(
+            await sender.process({
+              name: TemplateType.SMS,
+              accountID: owner.id,
+              stepID: currentStep.id,
+              customerID: customer.id,
+              templateID: template.id,
+              from: owner.smsFrom,
+              sid: owner.smsAccountSid,
+              tags: filteredTags,
+              text: await this.templatesService.parseApiCallTags(
+                template.smsText,
+                filteredTags
+              ),
+              to: customer.phPhoneNumber || customer.phone,
+              token: owner.smsAuthToken,
+              trackingEmail: email,
+            })
+          );
+          break;
+        case TemplateType.WEBHOOK: //TODO:remove this from queue
+          if (template.webhookData) {
+            await this.webhooksQueue.add('whapicall', {
+              template,
+              filteredTags,
+              audienceId: stepID,
+              customerId: customerID,
+              accountId: owner.id,
+            });
+          }
+          break;
+      }
+    } else if (messageSendType === 'QUIET_ABORT') {
+      //do nothing, continue as usual just skip sending
+      // TODO_JH add clickhouse event for aborted.
+    } else if (messageSendType === 'QUIET_REQUEUE') {
+      this.stepsService.requeueMessage(
+        owner,
+        currentStep,
+        customerID,
+        session,
+        queryRunner
+      );
+      await lock.release();
+      this.warn(
+        `${JSON.stringify({ warning: 'Releasing lock' })}`,
+        this.handleMessage.name,
+        session,
+        owner.email
+      );
+      return;
     }
 
     if (nextStep) {

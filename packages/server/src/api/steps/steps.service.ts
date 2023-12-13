@@ -5,7 +5,10 @@ import { Step } from './entities/step.entity';
 import { CreateStepDto } from './dto/create-step.dto';
 import { UpdateStepDto } from './dto/update-step.dto';
 import { Account } from '../accounts/entities/accounts.entity';
-import { CustomerDocument } from '../customers/schemas/customer.schema';
+import {
+  Customer,
+  CustomerDocument,
+} from '../customers/schemas/customer.schema';
 import Errors from '../../shared/utils/errors';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { InjectQueue } from '@nestjs/bullmq';
@@ -14,6 +17,7 @@ import { StepType } from './types/step.interface';
 import { Temporal } from '@js-temporal/polyfill';
 import { createClient } from '@clickhouse/client';
 import { RedlockService } from '../redlock/redlock.service';
+import { Requeue } from './entities/requeue.entity';
 
 @Injectable()
 export class StepsService {
@@ -597,5 +601,36 @@ export class StepsService {
       clickedPercentage,
       wssent,
     };
+  }
+  async requeueMessage(
+    account: Account,
+    step: Step,
+    customerId: string,
+    session: string,
+    queryRunner: QueryRunner
+  ) {
+    await queryRunner.manager.save(Requeue, {
+      owner: account,
+      step,
+      customerId,
+    });
+  }
+
+  async deleteRequeueMessage(
+    account: Account,
+    step: Step,
+    customerId: string,
+    session: string,
+    queryRunner: QueryRunner
+  ) {
+    await queryRunner.manager.delete(Requeue, {
+      owner: { id: account.id },
+      step: { id: step.id },
+      customerId: customerId,
+    });
+  }
+
+  async getRequeuedMessages(session, queryRunner: QueryRunner) {
+    return await queryRunner.manager.findOneBy(Requeue, {});
   }
 }
