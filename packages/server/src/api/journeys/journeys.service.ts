@@ -492,6 +492,7 @@ export class JourneysService {
             queryRunner,
             clientSession
           );
+          break;
         case 'REMOVE':
           await this.unenrollCustomerFromJourney(
             account,
@@ -500,6 +501,7 @@ export class JourneysService {
             session,
             clientSession
           );
+          break;
       }
     }
   }
@@ -524,6 +526,7 @@ export class JourneysService {
       queryRunner,
       session
     );
+
     await this.CustomerModel.updateOne(
       { _id: customer._id },
       {
