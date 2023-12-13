@@ -1,5 +1,7 @@
+import { AxiosError } from "axios";
 import Button, { ButtonType } from "components/Elements/Buttonv2";
 import { keyBy } from "lodash";
+import FlowBuilderModal from "pages/FlowBuilderv2/Elements/FlowBuilderModal";
 import { useEffect, useState } from "react";
 import { confirmAlert } from "react-confirm-alert";
 import { useNavigate } from "react-router-dom";
@@ -9,6 +11,7 @@ import {
   StatementValueType,
 } from "reducers/flow-builder.reducer";
 import ApiService from "services/api.service";
+import ImportCompletion from "./ImportCompletion";
 import ImportTabOne, { ImportOptions } from "./ImportTabOne";
 import MappingTab from "./MappingTab";
 import MapValidationErrors from "./Modals/MapValidationErrors";
@@ -56,17 +59,26 @@ enum ValidationErrors {
   PRIMARY_MAP_REQUIRED,
 }
 
+export interface PreviewImportResults {
+  updated: number;
+  created: number;
+  skipped: number;
+  url: string;
+}
+
 const PeopleImport = () => {
   const [tabIndex, setTabIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [fileData, setFileData] = useState<ImportParams>();
   const [mappingSettings, setMappingSettings] = useState<MappingParams>({});
+  const [importPreview, setImportPreview] = useState<PreviewImportResults>();
   const [importOption, setImportOption] = useState<ImportOptions>(
     ImportOptions.NEW
   );
   const [validationErrors, setValidationErrors] = useState<ValidationErrors[]>(
     []
   );
+  const [isValidationInProcess, setIsValidationInProcess] = useState(false);
   const navigate = useNavigate();
 
   const loadData = async () => {
@@ -155,7 +167,7 @@ const PeopleImport = () => {
         fileData={fileData}
       />
     ),
-    2: <></>,
+    2: <ImportCompletion preview={importPreview} />,
   };
 
   useEffect(() => {
@@ -230,7 +242,28 @@ const PeopleImport = () => {
     setValidationErrors([]);
   };
 
-  const handleValidationConfirm = () => {
+  const handleValidationProcess = async () => {
+    setIsValidationInProcess(true);
+    try {
+      const { data } = await ApiService.post({
+        url: `customers/attributes/count-import-preview`,
+        options: {
+          mapping: mappingSettings,
+          importOption: importOption,
+          fileKey: fileData?.file?.fileKey,
+        },
+      });
+      setImportPreview({ ...data });
+      setTabIndex(tabIndex + 1);
+    } catch (error) {
+      if (error instanceof AxiosError) {
+        toast.error(error.response?.data);
+      }
+    }
+    setIsValidationInProcess(false);
+  };
+
+  const handleValidationConfirm = async () => {
     const currentError = validationErrors[0];
 
     if (
@@ -255,8 +288,9 @@ const PeopleImport = () => {
       });
     }
 
-    // TODO: start analysing imports
-    if (!validationErrors.length) alert("start");
+    if (!validationErrors.length) {
+      handleValidationProcess();
+    }
   };
 
   return (
@@ -346,7 +380,7 @@ const PeopleImport = () => {
                 else if (tabIndex === 1) handle2TabValidation();
               }}
             >
-              {tabIndex === 2 ? "Save" : "Next"}
+              {tabIndex === 2 ? "Import" : "Next"}
             </Button>
           </div>
           {validationErrors.length > 0 && (
@@ -360,6 +394,14 @@ const PeopleImport = () => {
               onConfirm={handleValidationConfirm}
             />
           )}
+          <FlowBuilderModal isOpen={isValidationInProcess}>
+            <div className="w-full flex flex-col items-center justify-center">
+              <div className="relative bg-transparent border-t-transparent  border-[#6366F1] border-4 rounded-full w-10 h-10 animate-spin" />
+              <p className="my-2 text-base font-roboto text-[#4B5563] animation-pulse">
+                Preforming calculation...
+              </p>
+            </div>
+          </FlowBuilderModal>
         </div>
       </div>
     </div>

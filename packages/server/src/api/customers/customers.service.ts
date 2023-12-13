@@ -49,6 +49,16 @@ import { StepsService } from '../steps/steps.service';
 import { S3Service } from '../s3/s3.service';
 import { Imports } from './entities/imports.entity';
 import { thrift } from '@databricks/sql';
+import {
+  ImportCustomersDTO,
+  ImportOptions,
+  MappingParam,
+} from './dto/import-customers.dto';
+import * as fastcsv from 'fast-csv';
+import * as fs from 'fs';
+import path from 'path';
+import { isValid } from 'date-fns';
+import e from 'express';
 
 export type Correlation = {
   cust: CustomerDocument;
@@ -2048,9 +2058,261 @@ export class CustomersService {
       return newKey;
     } catch (error) {
       this.error(error, this.createAttribute.name, session);
-      throw new BadRequestException(
-        'Similar key already exist,please use different name or type'
+      throw error;
+    }
+  }
+
+  formatErrorData(data, errorMessage) {
+    return `"${JSON.stringify(data).replace(/"/g, '""')}","${errorMessage}"\n`;
+  }
+
+  convertForImport(
+    value: string,
+    convertTo: AttributeType,
+    columnName: string
+  ) {
+    let error = '';
+    let isError = false;
+    let converted;
+    if (convertTo === AttributeType.STRING) {
+      converted = String(value);
+    } else if (convertTo === AttributeType.NUMBER) {
+      converted = Number(value);
+      if (isNaN(converted)) {
+        converted = 0;
+        isError = true;
+      }
+    } else if (convertTo === AttributeType.BOOLEAN) {
+      converted = Boolean(value);
+    } else if (convertTo === AttributeType.DATE) {
+      // TODO: update validation
+      if (isValid(new Date(value))) converted = new Date(value);
+    } else if (convertTo === AttributeType.EMAIL) {
+      if (isEmail(value)) {
+        converted = String(value);
+      } else {
+        converted = '';
+        isError = true;
+      }
+    }
+
+    if (isError) {
+      error = `Error converting '${value}' in '${columnName}' to type '${convertTo.toString()}'`;
+    }
+
+    return { converted, error };
+  }
+
+  async countCreateUpdateWithBatch(pk: string, data: any[]) {
+    const existing = await this.CustomerModel.find({
+      [pk]: { $in: data },
+    }).exec();
+
+    return {
+      createdCount: data.length - existing.length,
+      updatedCount: existing.length,
+    };
+  }
+
+  async countImportPreview(
+    account: Account,
+    settings: ImportCustomersDTO,
+    session: string
+  ) {
+    try {
+      const fileData = await this.importsRepository.findOneBy({
+        account: {
+          id: account.id,
+        },
+        fileKey: settings.fileKey,
+      });
+
+      if (!fileData) {
+        throw new HttpException(
+          'File for analysis is missing, check if you have file uploaded.',
+          HttpStatus.BAD_REQUEST
+        );
+      }
+
+      const clearedMapping: Record<string, MappingParam> = {};
+      Object.keys(settings.mapping).forEach((el) => {
+        if (
+          settings.mapping[el]?.asAttribute &&
+          !settings.mapping[el]?.asAttribute.skip
+        ) {
+          clearedMapping[el] = { ...settings.mapping[el] };
+        }
+      });
+
+      const primaryArr = Object.values(clearedMapping).filter(
+        (el) => el.isPrimary
       );
+
+      if (primaryArr.length !== 1) {
+        throw new HttpException(
+          'Primary key should be defined and should be selected only one.',
+          HttpStatus.BAD_REQUEST
+        );
+      }
+
+      const passedPK = primaryArr[0];
+      const savedPK = await this.CustomerKeysModel.findOne({
+        ownerId: account.id,
+        isPrimary: true,
+      }).exec();
+
+      if (
+        savedPK &&
+        !(
+          savedPK.type === passedPK.asAttribute.type &&
+          savedPK.key === passedPK.asAttribute.key
+        )
+      ) {
+        throw new HttpException(
+          'Field selected as primary not corresponding to saved primary Key',
+          HttpStatus.BAD_REQUEST
+        );
+      }
+
+      const folderPath = 'import-errors';
+      const errorFileName = `errors-${fileData.fileKey}.csv`;
+      const fullPath = path.join(folderPath, errorFileName);
+
+      if (!fs.existsSync(folderPath)) {
+        fs.mkdirSync(folderPath, { recursive: true });
+      }
+
+      if (fs.existsSync(fullPath)) {
+        fs.unlinkSync(fullPath);
+      }
+
+      const writeErrorsStream = fs.createWriteStream(fullPath);
+
+      let currentBatch = [];
+      let promisesList = [];
+
+      const readPromise = new Promise<{
+        created: number;
+        updated: number;
+        skipped: number;
+      }>(async (resolve, reject) => {
+        const s3CSVStream = await this.s3Service.getImportedCSVReadStream(
+          fileData.fileKey
+        );
+        let created = 0;
+        let updated = 0;
+        let skipped = 0;
+
+        const csvStream = fastcsv
+          .parse({ headers: true })
+          .on('data', async (data) => {
+            let skippedReason = '';
+            let convertedPKValue;
+
+            // validate file data to type convert
+            Object.keys(clearedMapping).forEach((el) => {
+              if (skippedReason) return;
+
+              const columnValue = data[el];
+
+              if (!columnValue) {
+                skippedReason = `Mapped column '${el}' can't have empty value`;
+                return;
+              }
+
+              const convertResult = this.convertForImport(
+                data[el],
+                clearedMapping[el].asAttribute.type,
+                el
+              );
+
+              if (convertResult.error) {
+                skippedReason = convertResult.error;
+                return;
+              }
+
+              if (clearedMapping[el].isPrimary) {
+                convertedPKValue = convertResult.converted;
+              }
+            });
+
+            if (skippedReason) {
+              skipped++;
+              writeErrorsStream.write(
+                this.formatErrorData(data, skippedReason)
+              );
+              return;
+            } else {
+              currentBatch.push(convertedPKValue);
+
+              if (currentBatch.length >= 10000) {
+                promisesList.push(
+                  (async () => {
+                    const { createdCount, updatedCount } =
+                      await this.countCreateUpdateWithBatch(
+                        passedPK.asAttribute.key,
+                        Array.from(currentBatch)
+                      );
+                    created += createdCount;
+                    updated += updatedCount;
+                  })()
+                );
+                currentBatch = [];
+              }
+            }
+          })
+          .on('end', async () => {
+            if (currentBatch.length > 0) {
+              promisesList.push(
+                (async () => {
+                  const { createdCount, updatedCount } =
+                    await this.countCreateUpdateWithBatch(
+                      passedPK.asAttribute.key,
+                      Array.from(currentBatch)
+                    );
+                  created += createdCount;
+                  updated += updatedCount;
+                })()
+              );
+              currentBatch = [];
+            }
+
+            await Promise.all(promisesList);
+
+            writeErrorsStream.end();
+            await new Promise((resolve2) =>
+              writeErrorsStream.on('finish', resolve2)
+            );
+
+            resolve({ created, updated, skipped });
+          });
+
+        s3CSVStream.pipe(csvStream);
+      });
+
+      const countResults = await readPromise;
+
+      let uploadResult = '';
+      if (countResults.skipped > 0) {
+        const fileBuffer = fs.readFileSync(fullPath);
+        const mimeType = 'text/csv';
+
+        const fileForUpload = {
+          buffer: fileBuffer,
+          originalname: errorFileName,
+          mimetype: mimeType,
+        };
+
+        uploadResult =
+          (await this.s3Service.uploadCustomerImportPreviewErrorsFile(
+            fileForUpload
+          )) as string;
+      }
+
+      return { ...countResults, url: uploadResult };
+    } catch (error) {
+      this.error(error, this.countImportPreview.name, session);
+      throw error;
     }
   }
 }

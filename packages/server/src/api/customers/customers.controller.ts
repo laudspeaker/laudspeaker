@@ -29,6 +29,7 @@ import { randomUUID } from 'crypto';
 import { GetBulkCustomerCountDto } from './dto/get-bulk-customer-count.dto';
 import { RavenInterceptor } from 'nest-raven';
 import { AttributeType } from './schemas/customer-keys.schema';
+import { ImportCustomersDTO } from './dto/import-customers.dto';
 
 @Controller('customers')
 export class CustomersController {
@@ -316,6 +317,21 @@ export class CustomersController {
       <Account>user,
       name,
       type,
+      session
+    );
+  }
+
+  @Post('/attributes/count-import-preview')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
+  async countImportPreview(
+    @Req() { user }: Request,
+    @Body() body: ImportCustomersDTO
+  ) {
+    const session = randomUUID();
+    return this.customersService.countImportPreview(
+      <Account>user,
+      body,
       session
     );
   }

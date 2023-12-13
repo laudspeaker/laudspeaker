@@ -45,6 +45,37 @@ export class S3Service {
     );
   }
 
+  async uploadCustomerImportPreviewErrorsFile(file) {
+    const { originalname } = file;
+
+    const data = await this.s3_upload(
+      file.buffer,
+      this.AWS_S3_CUSTOMERS_IMPORT_BUCKET,
+      originalname,
+      file.mimetype
+    );
+
+    return await this.generateImportPresignedUrl(data.key);
+  }
+
+  generateImportPresignedUrl(objectKey: string) {
+    const params = {
+      Bucket: this.AWS_S3_CUSTOMERS_IMPORT_BUCKET,
+      Key: objectKey,
+      Expires: 60 * 60 * 24,
+    };
+
+    return new Promise((resolve, reject) => {
+      this.s3.getSignedUrl('getObject', params, (err, url) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(url);
+        }
+      });
+    });
+  }
+
   async s3_upload(file, bucket, key, mimetype, ACL?: string) {
     const params = {
       Bucket: bucket,
@@ -70,6 +101,14 @@ export class S3Service {
       this.logger.error(e);
       throw new HttpException('Error while trying to upload file.', 500);
     }
+  }
+
+  async getImportedCSVReadStream(key: string) {
+    const s3Stream = this.s3
+      .getObject({ Bucket: this.AWS_S3_CUSTOMERS_IMPORT_BUCKET, Key: key })
+      .createReadStream();
+
+    return s3Stream;
   }
 
   async deleteFile(

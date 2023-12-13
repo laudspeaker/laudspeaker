@@ -74,7 +74,8 @@ const MappingTab = ({
     if (
       Object.values(mappingSettings).some(
         (el) => el.asAttribute?.key === key && el.asAttribute?.type === type
-      )
+      ) &&
+      type !== "_SKIP_RECORD_"
     ) {
       toast.error("This attribute already in use");
       return;
