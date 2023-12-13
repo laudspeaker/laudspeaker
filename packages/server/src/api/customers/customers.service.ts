@@ -1998,18 +1998,18 @@ export class CustomersService {
         break;
       // nested object  
       case 'key':  
-      if (subComparisonType === 'equal to') {
-        query[key] = { [value]: subComparisonValue };
-      } else if (subComparisonType === 'not equal to') {
-        query[key] = { [value]: { $ne: subComparisonValue } };
-      } else if (subComparisonType === 'exist') {
-        query[key] = { [value]: { $exists: true } };
-      } else if (subComparisonType === 'not exist') {
-        query[key] = { [value]: { $exists: false } };
-      } else {
-        throw new Error('Invalid sub-comparison type for nested property');
-      }
-      break;
+        if (subComparisonType === 'equal to') {
+          query[key] = { [value]: subComparisonValue };
+        } else if (subComparisonType === 'not equal to') {
+          query[key] = { [value]: { $ne: subComparisonValue } };
+        } else if (subComparisonType === 'exist') {
+          query[key] = { [value]: { $exists: true } };
+        } else if (subComparisonType === 'not exist') {
+          query[key] = { [value]: { $exists: false } };
+        } else {
+          throw new Error('Invalid sub-comparison type for nested property');
+        }
+        break;
       // Add more cases for other comparison types as needed
       default:
         throw new Error('Invalid comparison type');
@@ -2096,30 +2096,29 @@ export class CustomersService {
 }
    */
 
-checkCustomerMatchesQuery(customer: CreateCustomerDto, query: any){
-
+  checkCustomerMatchesQuery(customer: CustomerDocument, query: any){
+    console.log("in checkCustomerMatchesQuery");
     if (query.type === 'all') {
+      console.log("the query has all (AND)");
       // 'all' logic: All conditions must be satisfied
       if (!query.statements || query.statements.length === 0) {
         // If no statements are provided, return false
         return false;
       }
-  
       return query.statements.every((statement) => this.evaluateStatementWithSubQuery(customer, statement));
     } else if (query.type === 'any') {
+      console.log("the query has any (OR)");
       // 'any' logic: At least one condition must be satisfied
       if (!query.statements || query.statements.length === 0) {
         // If no statements are provided, return true
         return true;
       }
-  
       return query.statements.some((statement) => this.evaluateStatementWithSubQuery(customer, statement));
     }
-  
     return false;
   }
 
-  evaluateStatementWithSubQuery(customer: CreateCustomerDto, statement: any): boolean {
+  evaluateStatementWithSubQuery(customer: CustomerDocument, statement: any): boolean {
     if (statement.statements && statement.statements.length > 0) {
       // Statement has a subquery, recursively evaluate the subquery
       return this.checkCustomerMatchesQuery(customer, statement);
@@ -2128,58 +2127,151 @@ checkCustomerMatchesQuery(customer: CreateCustomerDto, query: any){
     }
   }
   
-  evaluateStatement(customer: CreateCustomerDto, statement: any): boolean {
+  evaluateStatement(customer: CustomerDocument, statement: any): boolean {
     const { key, comparisonType, subComparisonType, value, subComparisonValue } = statement;
+    console.log("In evaluateStatement");
+    console.log("the key is",key);
+    console.log("the type of key is", typeof(key));
+    console.log("the value is",value);
+    console.log("the subComparisonValue is",subComparisonValue);
   
-    if (!customer.hasOwnProperty(key)) {
+    // if (!customer.hasOwnProperty(key)) {
+    //   console.log("apparently the customer does not have the key", JSON.stringify(customer,null,2));
+    //   return false;
+    // }
+
+    if (!(key in customer)) {
+      console.log("apparently the customer does not have the key", JSON.stringify(customer,null,2));
       return false;
     }
   
     const customerValue = customer[key];
+    console.log("the customerValue is",customerValue);
   
     // Perform comparison based on comparisonType
     console.log("comparison type is", comparisonType);
     switch (comparisonType) {
       case 'is equal to':
-        //checked
-        break;
+        //not checked
+        return customerValue === value;
       case 'is not equal to':
-        //checked
-        break;
+        return customerValue !== value;
       case 'contains':
-        // doesnt seem to be working
-        break;
+        if (typeof customerValue === 'string' && typeof value === 'string') {
+          return customerValue.includes(value);
+        }
+        return false;
       case 'does not contain':
-        // doesnt seem to be working
-        break;
+        if (typeof customerValue === 'string' && typeof value === 'string') {
+          return !customerValue.includes(value);
+        }
+        return false;
       case 'exist':
-        //checked
-        break;
+        return customerValue !== undefined && customerValue !== null;
       case 'not exist':
-        //checked
-        break;    
+        return customerValue === undefined || customerValue === null;
       case 'is greater than':
-        break;
+        if (typeof customerValue === 'number' && typeof value === 'number') {
+          return customerValue > value;
+        }
+        return false;
       case 'is less than':
-        break;
+        if (typeof customerValue === 'number' && typeof value === 'number') {
+          return customerValue < value;
+        }
+        return false;
+      //not checked
       // nested object  
       case 'key':  
-      if (subComparisonType === 'equal to') {
-        //query[key] = { [value]: subComparisonValue };
-      } else if (subComparisonType === 'not equal to') {
-        //query[key] = { [value]: { $ne: subComparisonValue } };
-      } else if (subComparisonType === 'exist') {
-        //query[key] = { [value]: { $exists: true } };
-      } else if (subComparisonType === 'not exist') {
-       //query[key] = { [value]: { $exists: false } };
-      } else {
-        throw new Error('Invalid sub-comparison type for nested property');
-      }
-      break;
+        //const customerValue = customer[key];
+        if (subComparisonType === 'equal to') {
+          if (!customerValue.hasOwnProperty(value)) {
+            return false;
+          } else {
+            return customerValue[value] === subComparisonValue;
+          }
+        } else if (subComparisonType === 'not equal to') {
+          if (!customerValue.hasOwnProperty(value)) {
+            return false;
+          } else {
+            return customerValue[value] !== subComparisonValue;
+          }
+        } else if (subComparisonType === 'exist') {
+          if (!customerValue.hasOwnProperty(value)) {
+            return false;
+          } else {
+            return customerValue[value] !== undefined && customerValue[value] !== null;
+          } 
+        } else if (subComparisonType === 'not exist') {
+          if (!customerValue.hasOwnProperty(value)) {
+            return true;
+          } else {
+            return customerValue[value] === undefined || customerValue[value] === null;
+          } 
+        } else {
+          throw new Error('Invalid sub-comparison type for nested property');
+        }
       // Add more cases for other comparison types as needed
       default:
         throw new Error('Invalid comparison type');
     }
+  }
+
+  testCustomerInSegment(query: any){
+
+    console.log("In Test Customer Segment");
+    console.log("test query is", JSON.stringify(query,null,2));
+
+    let testCustomer = new this.CustomerModel({
+      "externalId": "657619ac0cd6aa53b5910962",
+      "firstName": "A",
+      "lastName": "B",
+      "email": "abe@example.com",
+      "workflows": [],
+      "journeys": [
+        "12624e62-367e-483b-9ddf-38160f4fd955"
+      ],
+      "ownerId": "c65069d2-ef33-427b-b093-6dd5870c4c33",
+      "posthogId": [],
+      "verified": true,
+      "__v": 0,
+    });
+
+    console.log("test customer is", JSON.stringify(testCustomer,null,2));
+
+    //console.log();
+    
+    // testCustomer = {
+    //     "externalId": "657619ac0cd6aa53b5910962",
+    //     "firstName": "A",
+    //     "lastName": "B",
+    //     "email": "abe@example.com",
+    //     "workflows": [],
+    //     "journeys": [
+    //       "12624e62-367e-483b-9ddf-38160f4fd955"
+    //     ],
+    //     "ownerId": "c65069d2-ef33-427b-b093-6dd5870c4c33",
+    //     "posthogId": [],
+    //     "verified": true,
+    //     "__v": 0,
+    //   }
+
+    // const testCustomer : CustomerDocument = {
+    //   "externalId": "657619ac0cd6aa53b5910962",
+    //   "firstName": "A",
+    //   "lastName": "B",
+    //   "email": "abe@example.com",
+    //   "workflows": [],
+    //   "journeys": [
+    //     "12624e62-367e-483b-9ddf-38160f4fd955"
+    //   ],
+    //   "ownerId": "c65069d2-ef33-427b-b093-6dd5870c4c33",
+    //   "posthogId": [],
+    //   "verified": true,
+    //   "__v": 0,
+    // }
+
+    console.log("the segment and the customer are", this.checkCustomerMatchesQuery(testCustomer,query));
   }
   
   public async searchForTest(

@@ -99,8 +99,9 @@ export class SegmentsService {
         });
     }
 
-    //test code
-    this.customersService.createSegmentQuery(createSegmentDTO.inclusionCriteria.query);
+    // test code
+    // this.customersService.createSegmentQuery(createSegmentDTO.inclusionCriteria.query);
+    this.customersService.testCustomerInSegment(createSegmentDTO.inclusionCriteria.query);
 
     return segment;
   }
