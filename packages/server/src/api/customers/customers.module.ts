@@ -17,6 +17,8 @@ import { AudiencesHelper } from '../audiences/audiences.helper';
 import { AudiencesModule } from '../audiences/audiences.module';
 import { WorkflowsModule } from '../workflows/workflows.module';
 import { StepsModule } from '../steps/steps.module';
+import { S3Service } from '../s3/s3.service';
+import { Imports } from './entities/imports.entity';
 
 @Module({
   imports: [
@@ -34,10 +36,10 @@ import { StepsModule } from '../steps/steps.module';
     AudiencesModule,
     WorkflowsModule,
     StepsModule,
-    TypeOrmModule.forFeature([Account]),
+    TypeOrmModule.forFeature([Account, Imports]),
   ],
   controllers: [CustomersController],
-  providers: [CustomersService, CustomersProcessor, AudiencesHelper],
+  providers: [CustomersService, CustomersProcessor, AudiencesHelper, S3Service],
   exports: [CustomersService],
 })
 export class CustomersModule {}
