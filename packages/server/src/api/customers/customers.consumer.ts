@@ -103,6 +103,7 @@ export class CustomersConsumerService implements OnApplicationBootstrap {
                 queryRunner,
                 clientSession
               );
+              break;
             case 'delete':
               // TODO_JH: remove customerID from all steps also
               let customerId = message.documentKey._id['$oid'];
@@ -110,6 +111,7 @@ export class CustomersConsumerService implements OnApplicationBootstrap {
                 customerId,
                 queryRunner
               );
+              break;
           }
           await clientSession.commitTransaction();
           await clientSession.endSession();
