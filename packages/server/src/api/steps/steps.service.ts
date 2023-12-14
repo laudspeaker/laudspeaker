@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, QueryRunner, Repository } from 'typeorm';
+import { DataSource, LessThanOrEqual, QueryRunner, Repository } from 'typeorm';
 import { Step } from './entities/step.entity';
 import { CreateStepDto } from './dto/create-step.dto';
 import { UpdateStepDto } from './dto/update-step.dto';
@@ -606,6 +606,7 @@ export class StepsService {
     account: Account,
     step: Step,
     customerId: string,
+    requeueTime: Date,
     session: string,
     queryRunner: QueryRunner
   ) {
@@ -613,6 +614,7 @@ export class StepsService {
       owner: account,
       step,
       customerId,
+      requeueAt: requeueTime.toISOString(),
     });
   }
 
@@ -631,6 +633,11 @@ export class StepsService {
   }
 
   async getRequeuedMessages(session, queryRunner: QueryRunner) {
-    return await queryRunner.manager.findOneBy(Requeue, {});
+    return await queryRunner.manager.find(Requeue, {
+      where: {
+        requeueAt: LessThanOrEqual(new Date()),
+      },
+      relations: { owner: true, step: { journey: true } },
+    });
   }
 }

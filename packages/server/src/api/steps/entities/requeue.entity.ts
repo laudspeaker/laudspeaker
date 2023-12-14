@@ -1,9 +1,11 @@
 import {
   BaseEntity,
+  Column,
   Entity,
   JoinColumn,
   ManyToOne,
   PrimaryColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 import { Account } from '../../accounts/entities/accounts.entity';
 import { Step } from './step.entity';
@@ -28,5 +30,8 @@ export class Requeue extends BaseEntity {
     nullable: false,
   })
   public step: Step;
+
+  @Column('timestamptz', { nullable: false })
+  public requeueAt: Date;
 }
 
