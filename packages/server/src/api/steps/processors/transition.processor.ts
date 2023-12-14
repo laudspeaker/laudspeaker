@@ -41,7 +41,6 @@ import * as _ from 'lodash';
 import { Lock } from 'redlock';
 import { PostHog } from 'posthog-node';
 import * as Sentry from '@sentry/node';
-import { interval } from 'rxjs';
 import { convertTimeToUTC, isWithinInterval } from '@/common/helper/timing';
 import { JourneySettingsQuiteFallbackBehavior } from '@/api/journeys/types/additional-journey-settings.interface';
 import { StepsService } from '../steps.service';
