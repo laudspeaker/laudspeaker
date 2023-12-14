@@ -5,10 +5,7 @@ import { Step } from './entities/step.entity';
 import { CreateStepDto } from './dto/create-step.dto';
 import { UpdateStepDto } from './dto/update-step.dto';
 import { Account } from '../accounts/entities/accounts.entity';
-import {
-  Customer,
-  CustomerDocument,
-} from '../customers/schemas/customer.schema';
+import { CustomerDocument } from '../customers/schemas/customer.schema';
 import Errors from '../../shared/utils/errors';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { InjectQueue } from '@nestjs/bullmq';
