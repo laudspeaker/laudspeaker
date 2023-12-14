@@ -25,6 +25,8 @@ REDIS_PASSWORD=
 
 # Mongo
 MONGOOSE_URL=mongodb://127.0.0.1:27017/nest?directConnection=true
+# Need the db name for mongo change stream connector & consumer
+MONGO_DB_NAME=nest
 
 # Email Conf
 MAGIC_EMAIL_KEY=[YOUR_VALUE]
