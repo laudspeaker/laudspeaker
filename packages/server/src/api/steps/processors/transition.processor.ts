@@ -883,8 +883,20 @@ export class TransitionProcessor extends WorkerHost {
           break;
       }
     } else if (messageSendType === 'QUIET_ABORT') {
-      //do nothing, continue as usual just skip sending
-      // TODO_JH add clickhouse event for aborted.
+      // Record that the message was aborted
+      await this.webhooksService.insertMessageStatusToClickhouse([
+        {
+          stepId: stepID,
+          createdAt: new Date().toISOString(),
+          customerId: customerID,
+          event: 'aborted',
+          eventProvider: ClickHouseEventProvider.TRACKER,
+          messageId: currentStep.metadata.humanReadableName,
+          templateId: currentStep.metadata.template,
+          userId: owner.id,
+          processed: true,
+        },
+      ]);
     } else if (messageSendType === 'QUIET_REQUEUE') {
       this.stepsService.requeueMessage(
         owner,
