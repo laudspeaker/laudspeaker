@@ -53,6 +53,7 @@ import Personv2 from "pages/Personv2";
 import SegmentCreation from "pages/SegmentCreation/index";
 import PushBuilder from "pages/PushBuilder/PushBuilder";
 import PushSettings from "pages/PushSettings";
+import PeopleImport from "pages/PeopleImport/PeopleImport";
 
 interface IProtected {
   children: ReactElement;
@@ -383,6 +384,18 @@ const RouteComponent: React.FC = () => {
               <VerificationProtected>
                 <DrawerLayout>
                   <PeopleTablev2 />
+                </DrawerLayout>
+              </VerificationProtected>
+            </Protected>
+          }
+        />
+        <Route
+          path="/people/import"
+          element={
+            <Protected>
+              <VerificationProtected>
+                <DrawerLayout>
+                  <PeopleImport />
                 </DrawerLayout>
               </VerificationProtected>
             </Protected>

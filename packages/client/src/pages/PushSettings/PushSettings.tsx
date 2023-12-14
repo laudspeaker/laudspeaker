@@ -9,8 +9,18 @@ import ArrowRightIcon from "@heroicons/react/24/outline/ArrowRightIcon";
 import PushSettingsFirebaseConfiguration from "./PushSettingsFirebaseConfiguration";
 import Input from "components/Elements/Inputv2";
 import ApiService from "services/api.service";
+import { AxiosError } from "axios";
 import { toast } from "react-toastify";
 import CheckBox from "components/Checkbox/Checkbox";
+
+export type ConnectedPushFirebasePlatforms = Record<
+  PushPlatforms,
+  | {
+      fileName: string;
+      isTrackingDisabled: boolean;
+    }
+  | undefined
+>;
 
 const platformIcons = {
   [PushPlatforms.ANDROID]: (
@@ -66,14 +76,7 @@ export interface PushSettingsConfiguration {
   >;
   isTrackingDisabled: boolean;
   selectedPlatforms: Record<PushPlatforms, boolean>;
-  connectedPlatforms: Record<
-    PushPlatforms,
-    | {
-        fileName: string;
-        isTrackingDisabled: boolean;
-      }
-    | undefined
-  >;
+  connectedPlatforms: ConnectedPushFirebasePlatforms;
 }
 
 const PushSettings = () => {
@@ -81,6 +84,7 @@ const PushSettings = () => {
   const [tabIndex, setTabIndex] = useState(0);
   const [isSaving, setIsSaving] = useState(false);
   const [isLoadingSettings, setIsLoadingSettings] = useState(true);
+  const [isTestLoading, setIsTestLoading] = useState(false);
   const [config, setConfig] = useState<PushSettingsConfiguration>({
     configFile: {
       Android: undefined,
@@ -183,6 +187,21 @@ const PushSettings = () => {
       }
     }
     setTabIndex((prev) => (prev < setupTabs.length - 1 ? prev + 1 : 0));
+  };
+
+  const handleTest = async () => {
+    setIsTestLoading(true);
+    try {
+      await ApiService.post({
+        url: "/events/sendTestPush",
+        options: { token: testToken },
+      });
+    } catch (error) {
+      if (error instanceof AxiosError)
+        toast.error(error.response?.data?.message);
+      else toast.error("Unhandled request error");
+    }
+    setIsTestLoading(false);
   };
 
   const isPlatformSelected =
@@ -368,8 +387,8 @@ const PushSettings = () => {
                         />
                         <Button
                           type={ButtonType.SECONDARY}
-                          disabled={!testToken}
-                          onClick={() => {}}
+                          disabled={!testToken || isTestLoading}
+                          onClick={handleTest}
                         >
                           Send test
                         </Button>

@@ -107,6 +107,9 @@ const MessageChannelTab = () => {
       id: MessageChannel.PUSH,
       title: "Push",
       icon: pushLogoIcon,
+      connected:
+        account?.pushPlatforms &&
+        Object.values(account.pushPlatforms).some((el) => !!el),
       onClick: () => navigate("/settings/push"),
     },
     [MessageChannel.SLACK]: {

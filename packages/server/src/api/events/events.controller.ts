@@ -135,6 +135,20 @@ export class EventsController {
     );
   }
 
+  @Post('/sendTestPush')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
+  async sendTestPush(
+    @Req() { user }: Request,
+    @Body() { token }: { token: string }
+  ) {
+    try {
+      await this.eventsService.sendTestPush(<Account>user, token);
+    } catch (error) {
+      throw error;
+    }
+  }
+
   @Get('/attributes/:resourceId?')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
