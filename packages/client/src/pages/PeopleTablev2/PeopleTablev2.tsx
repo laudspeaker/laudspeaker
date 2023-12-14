@@ -150,7 +150,12 @@ const PeopleTablev2 = () => {
         <div className="text-[20px] font-semibold leading-[28px]">User</div>
 
         <div className="flex items-center gap-[10px]">
-          <Button type={ButtonType.SECONDARY} disabled onClick={() => {}}>
+          <Button
+            type={ButtonType.SECONDARY}
+            onClick={() => {
+              navigate("/people/import");
+            }}
+          >
             Import Customer
           </Button>
           <Button

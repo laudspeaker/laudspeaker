@@ -13,7 +13,9 @@ const JavascriptSnippetSettings = () => {
   const navigate = useNavigate();
 
   const [APIKey, setAPIKey] = useState("");
-
+  const [FirstName, setFirstName] = useState("");
+  const [LastName, setLastName] = useState("");
+  const [Email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
 
@@ -22,10 +24,13 @@ const JavascriptSnippetSettings = () => {
 
     try {
       const {
-        data: { apiKey, javascriptSnippetSetupped },
+        data: { apiKey, javascriptSnippetSetupped, firstName, lastName, email },
       } = await ApiService.get<Account>({ url: "/accounts" });
 
       setAPIKey(apiKey);
+      setFirstName(firstName || "");
+      setLastName(lastName || "");
+      setEmail(email);
       setIsConnected(javascriptSnippetSetupped);
     } catch (e) {
       toast.error("Error while loading data");
@@ -52,9 +57,7 @@ const JavascriptSnippetSettings = () => {
 
         <div className="bg-white p-5 flex flex-col gap-5">
           <div className="text-[#4B5563]">
-            Description Description Description Description Description
-            Description Description Description Description Description
-            Description Description Description Description{" "}
+            You can copy this code snippet to try out firing events{" "}
             <button className="text-[#111827] font-bold underline">
               Documentation
             </button>
@@ -73,7 +76,12 @@ const JavascriptSnippetSettings = () => {
           </div>
 
           <div>
-            <SnippetPicker userApiKey={APIKey} />
+            <SnippetPicker
+              userApiKey={APIKey}
+              firstName={FirstName}
+              lastName={LastName}
+              email={Email}
+            />
           </div>
         </div>
 
