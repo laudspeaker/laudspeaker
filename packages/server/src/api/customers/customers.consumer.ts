@@ -59,9 +59,10 @@ export class CustomersConsumerService implements OnApplicationBootstrap {
     return async (changeMessage: EachMessagePayload) => {
       try {
         let messStr = changeMessage.message.value.toString();
-        let message: ChangeStreamDocument<Customer> = JSON.parse(
-          JSON.parse(messStr)
-        ); //double parse because single parses it to just string ?? TODO_JH figure out why that's the case
+        let message: ChangeStreamDocument<Customer> = JSON.parse(messStr);
+        if (typeof message === 'string') {
+          message = JSON.parse(message); //double parse if kafka record is published as string not object
+        }
         const session = randomUUID();
         let account: Account;
         let customer: CustomerDocument;
