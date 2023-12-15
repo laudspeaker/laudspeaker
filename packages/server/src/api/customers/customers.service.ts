@@ -429,8 +429,6 @@ export class CustomersService {
   return Promise.resolve(ret);
 }
 
-
-
   async addPhCustomers(data: any[], account: Account) {
     for (let index = 0; index < data.length; index++) {
       const addedBefore = await this.CustomerModel.find({
@@ -2351,7 +2349,7 @@ export class CustomersService {
   
   async evaluateStatement(customer: CustomerDocument, statement: any , account: Account): Promise<boolean> {
     const { key, type, comparisonType, subComparisonType, value, subComparisonValue } = statement;
-    console.log("In evaluateStatement/n\n");
+    console.log("In evaluateStatement deciding which sub evaluate statement to go to next/n\n");
     console.log("the type is", type);
     console.log("the key is",key);
     console.log("the type of key is", typeof(key));
@@ -2415,6 +2413,120 @@ export class CustomersService {
   }
 
   async evaluateMessageStatement(customer: CustomerDocument, statement: any, account: Account, typeOfMessage: string): Promise<boolean> {
+    console.log("In evealuate message statement");
+    console.log("the type of message is", typeOfMessage);
+    const userId = (<Account>account).id
+    console.log("account id is", userId);
+
+    const {
+      type,
+      eventCondition,
+      from,
+      fromSpecificMessage,
+      happenCondition,
+      time
+    } = statement;
+  
+    const userIdCondition = `userId = '${userId}'`;
+    let sqlQuery = `SELECT * FROM yourTableName WHERE `;
+  
+    if (
+      type === "Email" ||
+      type === "Push" ||
+      type === "SMS" ||
+      type === "In-App" ||
+      type === "Webhook"
+    ) {
+      if (from.key !== "ANY") {
+        sqlQuery += `stepId = '${fromSpecificMessage.key}' AND `;
+        //sqlQuery += `fromTitle = '${from.title}' AND `;
+      }
+  
+      if (fromSpecificMessage.key !== "ANY") {
+        sqlQuery += `specificMessageTitle = '${fromSpecificMessage.title}' AND `;
+      }
+      
+      switch (eventCondition) {
+        case 'received':
+          if (happenCondition === "has not") {
+            sqlQuery += `event != 'sent' AND `;
+            sqlQuery += `event != 'opened' AND `;
+            sqlQuery += `event != 'clicked' AND `;
+          } else {
+            sqlQuery += `event = 'sent' AND `;
+          }
+          break;
+        case 'opened':
+          if (happenCondition === "has not") {
+            sqlQuery += `event != 'opened' AND `;
+            //sqlQuery += `event != 'clicked' AND `;
+          } else {
+            sqlQuery += `event = 'opened' AND `;
+          }
+          break;
+        case 'clicked':
+          if (happenCondition === "has not") {
+            sqlQuery += `event != 'clicked' AND `;
+          } else {
+            sqlQuery += `event = 'clicked' AND `;
+          }
+          break;
+      }
+      //sqlQuery += `event = '${eventCondition === "received" ? "received" : "not received"}' AND `;
+      sqlQuery += `${userIdCondition} `;
+      
+      //during
+      if (
+        time &&
+        time.comparisonType === "during" &&
+        time.timeAfter &&
+        time.timeBefore
+      ) {
+        const timeAfter = new Date(time.timeAfter).toISOString();
+        const timeBefore = new Date(time.timeBefore).toISOString();
+        sqlQuery += `AND createdAt >= '${timeAfter}' AND createdAt <= '${timeBefore}' `;
+      } 
+      else if (
+        time &&
+        time.comparisonType === "before" &&
+        time.timeBefore
+      ) {
+        const timeBefore = new Date(time.timeBefore).toISOString();
+        sqlQuery += `AND createdAt <= '${timeBefore}' `;
+      }
+      else if (
+        time &&
+        time.comparisonType === "after" &&
+        time.timeAfter
+      ) {
+        const timeAfter = new Date(time.timeAfter).toISOString();
+        sqlQuery += `AND createdAt >= '${timeAfter}' `;
+      }
+
+      // moved up
+      // if (happenCondition === "has not") {
+      //   sqlQuery = sqlQuery.replace("event =", "event !=");
+      // }
+
+      const countEvents = await this.clickhouseClient.query({
+        query: sqlQuery,
+        //query_params: { customerId },
+      });
+
+      const totalCount =
+      (await countEvents.json<{ data: { totalCount: number }[] }>()).data[0]
+        ?.totalCount || 0;
+
+      return (totalCount > 0) ? true : false ;
+
+      //return (await this.eventsService.getEventsByMongo(mongoQuery )) >= value ? true : false ;
+      
+      //run sql query
+      //return sqlQuery;
+
+    }
+  
+    //return "Invalid statement type";
 
     return false;
   }
