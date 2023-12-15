@@ -32,7 +32,7 @@ import {
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
-import { createClient } from '@clickhouse/client';
+import { createClient, Row } from '@clickhouse/client';
 import { Workflow } from '../workflows/entities/workflow.entity';
 import { attributeConditions } from '../../fixtures/attributeConditions';
 import { getType } from 'tst-reflect';
@@ -2428,8 +2428,9 @@ export class CustomersService {
     } = statement;
   
     const userIdCondition = `userId = '${userId}'`;
-    let sqlQuery = `SELECT * FROM yourTableName WHERE `;
-  
+    let sqlQuery = `SELECT COUNT(*) FROM message_status WHERE `;
+    //let sqlQuery = `SELECT * FROM message_status WHERE `;
+
     if (
       type === "Email" ||
       type === "Push" ||
@@ -2441,10 +2442,11 @@ export class CustomersService {
         sqlQuery += `stepId = '${fromSpecificMessage.key}' AND `;
         //sqlQuery += `fromTitle = '${from.title}' AND `;
       }
-  
-      if (fromSpecificMessage.key !== "ANY") {
-        sqlQuery += `specificMessageTitle = '${fromSpecificMessage.title}' AND `;
-      }
+      
+      //to do any
+      // if (fromSpecificMessage.key !== "ANY") {
+      //   sqlQuery += `specificMessageTitle = '${fromSpecificMessage.title}' AND `;
+      // }
       
       switch (eventCondition) {
         case 'received':
@@ -2508,22 +2510,55 @@ export class CustomersService {
       //   sqlQuery = sqlQuery.replace("event =", "event !=");
       // }
 
+      console.log("the final sql squery is\n", sqlQuery);
+
+      //const testQuery = "SELECT COUNT(*) FROM message_status" ;
       const countEvents = await this.clickhouseClient.query({
         query: sqlQuery,
+        format: 'CSV',
         //query_params: { customerId },
       });
 
-      const totalCount =
-      (await countEvents.json<{ data: { totalCount: number }[] }>()).data[0]
-        ?.totalCount || 0;
+      let countOfEvents = "0";
+      const stream = countEvents.stream()
+      stream.on('data', (rows: Row[]) => {
+        rows.forEach((row: Row) => {
+          console.log("this is the data",row.text)
+          countOfEvents = row.text;
+        })
+      })
+      await new Promise((resolve) => {
+        stream.on('end', () => {
+          console.log('Completed!')
+          resolve(0)
+        })
+      });
 
-      return (totalCount > 0) ? true : false ;
+      const numericValue = Number(countOfEvents);
+      return (numericValue > 0) ? true : false ;
+
+      /*
+      const data = (
+        await countEvents.json<{
+          data: { messageId: string; stepId: string; event: string; createdAt: string }[];
+        }>()
+      )?.data;
+
+      console.log("results of the clickHouse call is", JSON.stringify(data, null, 2));
+      */
+      
+      // const totalCount =
+      // (await countEvents.json<{ data: { totalCount: number }[] }>()).data[0]
+      //   ?.totalCount || 0;
+
+      // console.log("the count of the data is", totalCount);
+
+      // return (totalCount > 0) ? true : false ;
 
       //return (await this.eventsService.getEventsByMongo(mongoQuery )) >= value ? true : false ;
       
       //run sql query
       //return sqlQuery;
-
     }
   
     //return "Invalid statement type";
