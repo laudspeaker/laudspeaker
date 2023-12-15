@@ -15,7 +15,7 @@ import {
   Put,
   UploadedFile,
 } from '@nestjs/common';
-import { Multer } from 'multer';
+import { diskStorage, Multer } from 'multer';
 import { CreateCustomerDto } from './dto/create-customer.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CustomersService } from './customers.service';
@@ -30,6 +30,7 @@ import { GetBulkCustomerCountDto } from './dto/get-bulk-customer-count.dto';
 import { RavenInterceptor } from 'nest-raven';
 import { AttributeType } from './schemas/customer-keys.schema';
 import { ImportCustomersDTO } from './dto/import-customers.dto';
+import { extname } from 'path';
 
 @Controller('customers')
 export class CustomersController {
@@ -336,6 +337,17 @@ export class CustomersController {
     );
   }
 
+  @Post('/attributes/start-import')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
+  async startImport(
+    @Req() { user }: Request,
+    @Body() body: ImportCustomersDTO
+  ) {
+    const session = randomUUID();
+    return this.customersService.startImport(<Account>user, body, session);
+  }
+
   @Get('/:id/events')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
@@ -403,6 +415,18 @@ export class CustomersController {
         files: 1,
         fileSize: 1073741824,
       },
+      storage: diskStorage({
+        destination: './import-upload',
+        filename(req, file, callback) {
+          const name = file.originalname.split('.')[0];
+          const fileExtName = extname(file.originalname);
+          const randomName = Array(4)
+            .fill(null)
+            .map(() => Math.round(Math.random() * 16).toString(16))
+            .join('');
+          callback(null, `${randomName}-${name}${fileExtName}`);
+        },
+      }),
     })
   )
   async uploadCSV(

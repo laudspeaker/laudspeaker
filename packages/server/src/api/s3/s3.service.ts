@@ -5,6 +5,7 @@ import {
   LoggerService,
 } from '@nestjs/common';
 import * as AWS from 'aws-sdk';
+import { createReadStream } from 'fs';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { Account } from '../accounts/entities/accounts.entity';
 
@@ -35,14 +36,23 @@ export class S3Service {
   }
 
   async uploadCustomerImportFile(file, account: Account) {
-    const { originalname } = file;
+    const { path, originalname, mimetype } = file;
+    const fileStream = createReadStream(path);
 
-    return await this.s3_upload(
-      file.buffer,
-      this.AWS_S3_CUSTOMERS_IMPORT_BUCKET,
-      String(account.id) + Date.now().toString() + originalname,
-      file.mimetype
-    );
+    try {
+      const key = String(account.id) + Date.now().toString() + originalname;
+      await this.s3_upload(
+        fileStream,
+        this.AWS_S3_CUSTOMERS_IMPORT_BUCKET,
+        key,
+        mimetype
+      );
+
+      return { key };
+    } catch (error) {
+      console.error('Error uploading file to S3', error);
+      throw error;
+    }
   }
 
   async uploadCustomerImportPreviewErrorsFile(file) {

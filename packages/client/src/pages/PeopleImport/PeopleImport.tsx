@@ -79,6 +79,7 @@ const PeopleImport = () => {
     []
   );
   const [isValidationInProcess, setIsValidationInProcess] = useState(false);
+  const [isImportStarting, setIsImportStarting] = useState(false);
   const navigate = useNavigate();
 
   const loadData = async () => {
@@ -137,7 +138,7 @@ const PeopleImport = () => {
     },
     [ValidationErrors.PRIMARY_MAP_REQUIRED]: {
       title: "Primary key attribute not mapped",
-      desc: `You don't have filed that mapping to your primary key (${fileData?.primaryAttribute}), it's required to map your data properly.`,
+      desc: `You don't have filed that mapping to your primary key (${fileData?.primaryAttribute?.key}), it's required to map your data properly.`,
       cancel: "",
       confirm: "Got it",
     },
@@ -257,10 +258,33 @@ const PeopleImport = () => {
       setTabIndex(tabIndex + 1);
     } catch (error) {
       if (error instanceof AxiosError) {
-        toast.error(error.response?.data);
+        // @ts-ignore
+        toast.error(error.response?.data?.message);
       }
     }
     setIsValidationInProcess(false);
+  };
+
+  const handleStartImport = async () => {
+    setIsImportStarting(true);
+    try {
+      await ApiService.post({
+        url: `customers/attributes/start-import`,
+        options: {
+          mapping: mappingSettings,
+          importOption: importOption,
+          fileKey: fileData?.file?.fileKey,
+        },
+      });
+      toast.success("Imported started");
+      navigate("/people");
+    } catch (error) {
+      if (error instanceof AxiosError) {
+        // @ts-ignore
+        toast.error(error.response?.data?.message);
+      }
+    }
+    setIsImportStarting(false);
   };
 
   const handleValidationConfirm = async () => {
@@ -274,21 +298,19 @@ const PeopleImport = () => {
       return;
     }
 
+    const errors = [...validationErrors];
+
     if (currentError === ValidationErrors.UNMAPPED_ATTRIBUTES) {
-      setValidationErrors((prev) => {
-        prev.shift();
-        return [...prev];
-      });
+      errors.shift();
+      setValidationErrors([...errors]);
     }
 
     if (currentError === ValidationErrors.MISSING_ATTRIBUTES_VALUES) {
-      setValidationErrors((prev) => {
-        prev.shift();
-        return [...prev];
-      });
+      errors.shift();
+      setValidationErrors([...errors]);
     }
 
-    if (!validationErrors.length) {
+    if (!errors.length) {
       handleValidationProcess();
     }
   };
@@ -378,6 +400,7 @@ const PeopleImport = () => {
               onClick={() => {
                 if (tabIndex === 0) setTabIndex(tabIndex + 1);
                 else if (tabIndex === 1) handle2TabValidation();
+                else if (tabIndex === 2) handleStartImport();
               }}
             >
               {tabIndex === 2 ? "Import" : "Next"}
@@ -397,9 +420,17 @@ const PeopleImport = () => {
           <FlowBuilderModal isOpen={isValidationInProcess}>
             <div className="w-full flex flex-col items-center justify-center">
               <div className="relative bg-transparent border-t-transparent  border-[#6366F1] border-4 rounded-full w-10 h-10 animate-spin" />
-              <p className="my-2 text-base font-roboto text-[#4B5563] !animate-pulse">
+              <div className="my-2 text-base text-center font-roboto text-[#4B5563] animate-pulse">
                 Preforming calculation...
-              </p>
+              </div>
+            </div>
+          </FlowBuilderModal>
+          <FlowBuilderModal isOpen={isImportStarting}>
+            <div className="w-full flex flex-col items-center justify-center">
+              <div className="relative bg-transparent border-t-transparent  border-[#6366F1] border-4 rounded-full w-10 h-10 animate-spin" />
+              <div className="my-2 text-center text-base font-roboto text-[#4B5563] animate-pulse">
+                Starting import
+              </div>
             </div>
           </FlowBuilderModal>
         </div>

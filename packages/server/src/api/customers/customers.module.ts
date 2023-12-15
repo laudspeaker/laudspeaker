@@ -19,6 +19,7 @@ import { WorkflowsModule } from '../workflows/workflows.module';
 import { StepsModule } from '../steps/steps.module';
 import { S3Service } from '../s3/s3.service';
 import { Imports } from './entities/imports.entity';
+import { ImportProcessor } from './imports.porcessor';
 
 @Module({
   imports: [
@@ -31,6 +32,9 @@ import { Imports } from './entities/imports.entity';
     BullModule.registerQueue({
       name: 'customers',
     }),
+    BullModule.registerQueue({
+      name: 'imports',
+    }),
     AccountsModule,
     SegmentsModule,
     AudiencesModule,
@@ -39,7 +43,13 @@ import { Imports } from './entities/imports.entity';
     TypeOrmModule.forFeature([Account, Imports]),
   ],
   controllers: [CustomersController],
-  providers: [CustomersService, CustomersProcessor, AudiencesHelper, S3Service],
+  providers: [
+    CustomersService,
+    CustomersProcessor,
+    AudiencesHelper,
+    S3Service,
+    ImportProcessor,
+  ],
   exports: [CustomersService],
 })
 export class CustomersModule {}
