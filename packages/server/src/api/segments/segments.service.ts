@@ -101,7 +101,7 @@ export class SegmentsService {
 
     // test code
     // this.customersService.createSegmentQuery(createSegmentDTO.inclusionCriteria.query);
-    this.customersService.testCustomerInSegment(createSegmentDTO.inclusionCriteria.query);
+    await this.customersService.testCustomerInSegment(createSegmentDTO.inclusionCriteria.query, account);
 
     return segment;
   }

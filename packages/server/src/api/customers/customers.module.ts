@@ -16,6 +16,7 @@ import { Account } from '../accounts/entities/accounts.entity';
 import { AudiencesHelper } from '../audiences/audiences.helper';
 import { AudiencesModule } from '../audiences/audiences.module';
 import { WorkflowsModule } from '../workflows/workflows.module';
+import { EventsModule } from '../events/events.module';
 import { StepsModule } from '../steps/steps.module';
 
 @Module({
@@ -33,6 +34,7 @@ import { StepsModule } from '../steps/steps.module';
     SegmentsModule,
     AudiencesModule,
     WorkflowsModule,
+    EventsModule,
     StepsModule,
     TypeOrmModule.forFeature([Account]),
   ],

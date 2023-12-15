@@ -28,7 +28,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Job, Queue, UnrecoverableError } from 'bullmq';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
-import mongoose, { Model } from 'mongoose';
+import mongoose, { ClientSession, Model } from 'mongoose';
 import { EventDocument, Event } from './schemas/event.schema';
 import mockData from '../../fixtures/mockData';
 import { EventKeys, EventKeysDocument } from './schemas/event-keys.schema';
@@ -318,6 +318,8 @@ export class EventsService {
     return keyTypes;
   }
 
+  
+
   async getPossibleComparisonTypes(
     type: string,
     session: string,
@@ -381,6 +383,29 @@ export class EventsService {
       })),
       totalPages,
     };
+  }
+
+  async getEventsByMongo(
+    mongoQuery: any,
+    //numberOfTimes: Number,
+  ) {
+    console.log("In getEvents by mongo");
+
+    const tehevents = await this.EventModel.find(mongoQuery).exec();;
+    console.log("events are", JSON.stringify(tehevents, null, 2))
+
+    //console.log("mongo query is", JSON.stringify(mongoQuery, null, 2));
+    //console.log("events are", JSON.stringify(await this.EventModel.find(mongoQuery).exec(),null, 2));
+    const count = await this.EventModel.count(mongoQuery).exec();
+    console.log("here");
+    console.log("count is", count);
+    return count;
+    //return (count === numberOfTimes);
+    //** */
+    //const transactionSession = await this.connection.startSession();
+    //transactionSession.startTransaction();
+
+    //return this.customersService.findByCustomEvent(account, ev.slackId);
   }
 
   async sendTestPush(account: Account, token: string) {
