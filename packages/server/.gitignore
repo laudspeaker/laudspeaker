@@ -9,3 +9,4 @@ package-lock.json
 .sentryclirc
 # Import errors files
 errors-*.csv
+import-upload

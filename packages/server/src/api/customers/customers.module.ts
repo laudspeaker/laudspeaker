@@ -22,6 +22,7 @@ import { KafkaModule } from '../kafka/kafka.module';
 import { JourneysModule } from '../journeys/journeys.module';
 import { S3Service } from '../s3/s3.service';
 import { Imports } from './entities/imports.entity';
+import { ImportProcessor } from './imports.porcessor';
 
 @Module({
   imports: [
@@ -33,6 +34,9 @@ import { Imports } from './entities/imports.entity';
     ]),
     BullModule.registerQueue({
       name: 'customers',
+    }),
+    BullModule.registerQueue({
+      name: 'imports',
     }),
     AccountsModule,
     SegmentsModule,
@@ -50,6 +54,7 @@ import { Imports } from './entities/imports.entity';
     AudiencesHelper,
     CustomersConsumerService,
     S3Service,
+    ImportProcessor,
   ],
 
   exports: [CustomersService, CustomersConsumerService],
