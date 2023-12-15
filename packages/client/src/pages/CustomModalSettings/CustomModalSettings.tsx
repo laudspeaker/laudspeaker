@@ -12,6 +12,9 @@ const CustomModalSettings = () => {
   const navigate = useNavigate();
 
   const [APIKey, setAPIKey] = useState("");
+  const [FirstName, setFirstName] = useState("");
+  const [LastName, setLastName] = useState("");
+  const [Email, setEmail] = useState("");
   const [isConnected, setIsConnected] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -21,10 +24,19 @@ const CustomModalSettings = () => {
 
       try {
         const {
-          data: { apiKey, javascriptSnippetSetupped },
+          data: {
+            apiKey,
+            javascriptSnippetSetupped,
+            firstName,
+            lastName,
+            email,
+          },
         } = await ApiService.get<Account>({ url: "/accounts" });
 
         setAPIKey(apiKey);
+        setFirstName(firstName || "");
+        setLastName(lastName || "");
+        setEmail(email);
         setIsConnected(javascriptSnippetSetupped);
       } catch (e) {
         toast.error("Error while loading data");
@@ -67,7 +79,12 @@ const CustomModalSettings = () => {
           </div>
 
           <div>
-            <SnippetPicker userApiKey={APIKey} />
+            <SnippetPicker
+              userApiKey={APIKey}
+              firstName={FirstName}
+              lastName={LastName}
+              email={Email}
+            />
           </div>
         </div>
 

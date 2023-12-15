@@ -68,6 +68,7 @@ import { CustomerAttribute } from '../steps/types/step.interface';
 import { MultiBranchMetadata } from '../steps/types/step.interface';
 import { Temporal } from '@js-temporal/polyfill';
 import generateName from '@good-ghosting/random-name-generator';
+import { JourneyEnrollmentType } from './types/additional-journey-settings.interface';
 
 export enum JourneyStatus {
   ACTIVE = 'Active',
@@ -422,6 +423,154 @@ export class JourneysService {
     }
   }
 
+  public async updateEnrollmentForCustomer(
+    account: Account,
+    customerId: string,
+    customerUpdateType: 'NEW' | 'CHANGE',
+    session: string,
+    queryRunner: QueryRunner,
+    clientSession: ClientSession
+  ) {
+    const journeys = await queryRunner.manager.find(Journey, {
+      where: {
+        owner: { id: account.id },
+        isActive: true,
+        isStopped: false,
+        isPaused: false,
+        // TODO_JH should we be checking for these? (should be updated to the proper check for "active/addable")
+        isDynamic: true,
+      },
+    });
+    let customer = await this.customersService.findById(
+      account,
+      customerId,
+      clientSession
+    );
+    for (const journey of journeys) {
+      // get segments for journey
+      let change: 'ADD' | 'REMOVE' | 'DO_NOTHING' = 'DO_NOTHING';
+      let doesInclude = await this.customersService.isCustomerEnrolledInJourney(
+        account,
+        customerId,
+        journey.id,
+        clientSession
+      );
+      let shouldInclude = true;
+      // TODO_JH: implement the following
+      // if (customer matches journeyInclusionCriteria)
+      //     shouldInclude = true
+      // for segment in journey.segments
+      //    if customer in segment
+      //        shouldInclude = true
+      if (!doesInclude && shouldInclude) {
+        let journeyEntrySettings = journey.journeyEntrySettings ?? {
+          enrollmentType: JourneyEnrollmentType.CurrentAndFutureUsers,
+        };
+        if (
+          journeyEntrySettings.enrollmentType ===
+          JourneyEnrollmentType.CurrentAndFutureUsers
+        ) {
+          change = 'ADD';
+        } else if (
+          journeyEntrySettings.enrollmentType ===
+            JourneyEnrollmentType.OnlyFuture &&
+          customerUpdateType === 'NEW'
+        ) {
+          change = 'ADD';
+        }
+        // TODO_JH: add in check for when customer was added to allow "CHANGE" on OnlyCurrent journey type
+      } else if (doesInclude && !shouldInclude) {
+        change = 'REMOVE';
+      }
+      switch (change) {
+        case 'ADD':
+          await this.enrollCustomerInJourney(
+            account,
+            journey,
+            customer,
+            session,
+            queryRunner,
+            clientSession
+          );
+          break;
+        case 'REMOVE':
+          await this.unenrollCustomerFromJourney(
+            account,
+            journey,
+            customer,
+            session,
+            clientSession
+          );
+          break;
+      }
+    }
+  }
+
+  /**
+   * Enroll customer in a journey.
+   * Adds to first step in journey.
+   * WARNING: this method does not check if the journey **should** include the customer.
+   */
+  async enrollCustomerInJourney(
+    account: Account,
+    journey: Journey,
+    customer: CustomerDocument,
+    session: string,
+    queryRunner: QueryRunner,
+    clientSession: ClientSession
+  ): Promise<void> {
+    await this.stepsService.addToStart(
+      account,
+      journey.id,
+      customer,
+      queryRunner,
+      session
+    );
+
+    await this.CustomerModel.updateOne(
+      { _id: customer._id },
+      {
+        $addToSet: {
+          journeys: journey.id,
+        },
+        $set: {
+          journeyEnrollmentsDates: {
+            [journey.id]: new Date().toUTCString(),
+          },
+        },
+      }
+    )
+      .session(clientSession)
+      .exec();
+  }
+
+  /**
+   * Un-Enroll Customer from journey and remove from any steps.
+   */
+  public async unenrollCustomerFromJourney(
+    account: Account,
+    journey: Journey,
+    customer: CustomerDocument,
+    session: string,
+    clientSession: ClientSession
+  ) {
+    // TODO_JH: remove from steps also
+    await this.CustomerModel.updateOne(
+      { _id: customer._id },
+      {
+        $pullAll: {
+          journeys: [journey.id],
+        },
+        // TODO_JH: This logic needs to be checked
+        $unset: {
+          journeyEnrollmentsDates: [journey.id],
+        },
+      }
+    )
+      .session(clientSession)
+      .exec();
+  }
+
   /**
    *  IMPORTANT: THIS METHOD MUST REMAIN IDEMPOTENT: CUSTOMER SHOULD
    * NOT BE DOUBLE ENROLLED IN JOURNEY
@@ -451,7 +600,6 @@ export class JourneysService {
           isDynamic: true,
         },
       });
-
       for (
         let journeyIndex = 0;
         journeyIndex < journeys?.length;

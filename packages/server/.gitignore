@@ -7,3 +7,5 @@ temp
 package-lock.json
 # Sentry Config File
 .sentryclirc
+# Import errors files
+errors-*.csv

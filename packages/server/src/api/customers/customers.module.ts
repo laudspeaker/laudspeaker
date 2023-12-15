@@ -18,6 +18,11 @@ import { AudiencesModule } from '../audiences/audiences.module';
 import { WorkflowsModule } from '../workflows/workflows.module';
 import { EventsModule } from '../events/events.module';
 import { StepsModule } from '../steps/steps.module';
+import { CustomersConsumerService } from './customers.consumer';
+import { KafkaModule } from '../kafka/kafka.module';
+import { JourneysModule } from '../journeys/journeys.module';
+import { S3Service } from '../s3/s3.service';
+import { Imports } from './entities/imports.entity';
 
 @Module({
   imports: [
@@ -36,10 +41,19 @@ import { StepsModule } from '../steps/steps.module';
     WorkflowsModule,
     EventsModule,
     StepsModule,
-    TypeOrmModule.forFeature([Account]),
+    TypeOrmModule.forFeature([Account, Imports]),
+    KafkaModule,
+    JourneysModule,
   ],
   controllers: [CustomersController],
-  providers: [CustomersService, CustomersProcessor, AudiencesHelper],
-  exports: [CustomersService],
+  providers: [
+    CustomersService,
+    CustomersProcessor,
+    AudiencesHelper,
+    CustomersConsumerService,
+    S3Service,
+  ],
+
+  exports: [CustomersService, CustomersConsumerService],
 })
 export class CustomersModule {}
