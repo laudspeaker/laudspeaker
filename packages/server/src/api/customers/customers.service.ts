@@ -2450,6 +2450,7 @@ export class CustomersService {
       
       switch (eventCondition) {
         case 'received':
+          //if it hasnt been sent it cant be opened or clicked
           if (happenCondition === "has not") {
             sqlQuery += `event != 'sent' AND `;
             sqlQuery += `event != 'opened' AND `;
@@ -2486,7 +2487,9 @@ export class CustomersService {
       ) {
         const timeAfter = new Date(time.timeAfter).toISOString();
         const timeBefore = new Date(time.timeBefore).toISOString();
-        sqlQuery += `AND createdAt >= '${timeAfter}' AND createdAt <= '${timeBefore}' `;
+        const formattedTimeBefore = timeBefore.split('.')[0]; // Remove milliseconds if not supported by ClickHouse
+        const formattedTimeAfter = timeAfter.split('.')[0]; // Remove milliseconds if not supported by ClickHouse
+        sqlQuery += `AND createdAt >= '${formattedTimeAfter}' AND createdAt <= '${formattedTimeBefore}' `;
       } 
       else if (
         time &&
@@ -2494,7 +2497,8 @@ export class CustomersService {
         time.timeBefore
       ) {
         const timeBefore = new Date(time.timeBefore).toISOString();
-        sqlQuery += `AND createdAt <= '${timeBefore}' `;
+        const formattedTimeBefore = timeBefore.split('.')[0]; 
+        sqlQuery += `AND createdAt <= '${formattedTimeBefore}' `;
       }
       else if (
         time &&
@@ -2502,6 +2506,7 @@ export class CustomersService {
         time.timeAfter
       ) {
         const timeAfter = new Date(time.timeAfter).toISOString();
+        const formattedTimeAfter = timeAfter.split('.')[0];
         sqlQuery += `AND createdAt >= '${timeAfter}' `;
       }
 
