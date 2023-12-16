@@ -2443,11 +2443,8 @@ export class CustomersService {
         //sqlQuery += `fromTitle = '${from.title}' AND `;
       }
       
-      //to do any
-      // if (fromSpecificMessage.key !== "ANY") {
-      //   sqlQuery += `specificMessageTitle = '${fromSpecificMessage.title}' AND `;
-      // }
-      
+      //to do: add support for any and for tags
+
       switch (eventCondition) {
         case 'received':
           //if it hasnt been sent it cant be opened or clicked
@@ -2475,7 +2472,6 @@ export class CustomersService {
           }
           break;
       }
-      //sqlQuery += `event = '${eventCondition === "received" ? "received" : "not received"}' AND `;
       sqlQuery += `${userIdCondition} `;
       
       //during
@@ -2542,32 +2538,9 @@ export class CustomersService {
       const numericValue = Number(countOfEvents);
       return (numericValue > 0) ? true : false ;
 
-      /*
-      const data = (
-        await countEvents.json<{
-          data: { messageId: string; stepId: string; event: string; createdAt: string }[];
-        }>()
-      )?.data;
-
-      console.log("results of the clickHouse call is", JSON.stringify(data, null, 2));
-      */
-      
-      // const totalCount =
-      // (await countEvents.json<{ data: { totalCount: number }[] }>()).data[0]
-      //   ?.totalCount || 0;
-
-      // console.log("the count of the data is", totalCount);
-
-      // return (totalCount > 0) ? true : false ;
-
-      //return (await this.eventsService.getEventsByMongo(mongoQuery )) >= value ? true : false ;
-      
-      //run sql query
-      //return sqlQuery;
     }
-  
-    //return "Invalid statement type";
-
+    //to do: check what we should do in this case
+    //throw "Invalid statement type";
     return false;
   }
   
@@ -2631,8 +2604,14 @@ export class CustomersService {
     }
 
     console.log("mongo query is/n\n", JSON.stringify(mongoQuery, null, 2));
-    return (await this.eventsService.getEventsByMongo(mongoQuery )) >= value ? true : false ;
-    //return false;
+    if (comparisonType === 'has performed') {
+      return (await this.eventsService.getEventsByMongo(mongoQuery )) >= value ? true : false ;
+    } else if (comparisonType === 'has not performed') {
+      //need to check the logic for this one
+      return (await this.eventsService.getEventsByMongo(mongoQuery )) < 1 ? true : false ;
+    }
+    //return (await this.eventsService.getEventsByMongo(mongoQuery )) >= value ? true : false ;
+    return false;
   }
 
 
