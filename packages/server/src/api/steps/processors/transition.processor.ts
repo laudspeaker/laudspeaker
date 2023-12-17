@@ -44,6 +44,10 @@ import { PostHog } from 'posthog-node';
 import * as Sentry from '@sentry/node';
 import { JourneyLocationsService } from '@/api/journeys/journey-locations.service';
 import { JourneysService } from '@/api/journeys/journeys.service';
+import { convertTimeToUTC, isWithinInterval } from '@/common/helper/timing';
+import { JourneySettingsQuiteFallbackBehavior } from '@/api/journeys/types/additional-journey-settings.interface';
+import { StepsService } from '../steps.service';
+import { Journey } from '@/api/journeys/entities/journey.entity';
 
 @Injectable()
 @Processor('transition')
@@ -72,7 +76,8 @@ export class TransitionProcessor extends WorkerHost {
     @Inject(JourneysService) private journeysService: JourneysService,
     @Inject(RedlockService) private redlockService: RedlockService,
     @Inject(JourneyLocationsService)
-    private journeyLocationsService: JourneyLocationsService
+    private journeyLocationsService: JourneyLocationsService,
+    @Inject(StepsService) private stepsService: StepsService
   ) {
     super();
   }
@@ -582,7 +587,84 @@ export class TransitionProcessor extends WorkerHost {
         id: stepID,
         type: StepType.MESSAGE,
       },
+      loadRelationIds: true,
+      lock: { mode: 'pessimistic_write' },
     });
+
+    const journey = await queryRunner.manager.findOne(Journey, {
+      where: {
+        id: currentStep.journey as unknown as string, // casting to string because loadRelationIds,
+      },
+    });
+
+    // Rate limiting and sending quiet hours will be stored here
+    let messageSendType: 'SEND' | 'QUIET_REQUEUE' | 'QUIET_ABORT' = 'SEND';
+    let requeueTime: Date;
+    if (
+      journey.journeySettings &&
+      journey.journeySettings.quiteHours &&
+      journey.journeySettings.quiteHours.enabled
+    ) {
+      let quietHours = journey.journeySettings.quiteHours!;
+      // CHECK IF SENDING QUIET HOURS
+      let formatter = Intl.DateTimeFormat(undefined, {
+        hour: '2-digit',
+        minute: '2-digit',
+        hourCycle: 'h24',
+        timeZone: 'UTC',
+      });
+      let now = new Date();
+      let utcNowString = formatter.format(now);
+      let utcStartTime = convertTimeToUTC(
+        quietHours.startTime,
+        owner.timezoneUTCOffset
+      );
+      let utcEndTime = convertTimeToUTC(
+        quietHours.endTime,
+        owner.timezoneUTCOffset
+      );
+      let isQuietHour = isWithinInterval(
+        utcStartTime,
+        utcEndTime,
+        utcNowString
+      );
+
+      if (isQuietHour) {
+        switch (quietHours.fallbackBehavior) {
+          case JourneySettingsQuiteFallbackBehavior.NextAvailableTime:
+            messageSendType = 'QUIET_REQUEUE';
+            break;
+          case JourneySettingsQuiteFallbackBehavior.Abort:
+            messageSendType = 'QUIET_ABORT';
+            break;
+          default:
+            messageSendType = 'QUIET_REQUEUE';
+            this.warn(
+              'Unrecognized quiet hours fallback behavior. Defaulting to requeue.',
+              this.handleMessage.name,
+              session,
+              owner.email
+            );
+        }
+        requeueTime = new Date(now);
+        requeueTime.setUTCHours(
+          parseInt(utcEndTime.split(':')[0]),
+          parseInt(utcEndTime.split(':')[1]),
+          0,
+          0
+        );
+        if (requeueTime < now) {
+          // Date object should handle conversions of new month/new year etc
+          requeueTime.setDate(requeueTime.getDate() + 1);
+        }
+        this.log(
+          `Observing quiet hours, now ${now}, quietHours: ${quietHours.startTime}-${quietHours.endTime}, account UTC offset: ${owner.timezoneUTCOffset}, type ${messageSendType}`,
+          this.handleMessage.name,
+          session,
+          owner.email
+        );
+      }
+    }
 
     if (
       !(await this.journeyLocationsService.find(
@@ -612,9 +694,8 @@ export class TransitionProcessor extends WorkerHost {
       },
     });
 
-    if (process.env.PERFORMANCE_TESTING) {
-      await http.get(process.env.PERFORMANCE_TESTING_ENDPOINT);
-    } else {
+
+    if (messageSendType === 'SEND') {
       //send message here
       const templateID = currentStep.metadata.template;
       const template = await this.templatesService.transactionalFindOneById(
@@ -785,6 +866,38 @@ export class TransitionProcessor extends WorkerHost {
           }
           break;
       }
+    } else if (messageSendType === 'QUIET_ABORT') {
+      // Record that the message was aborted
+      await this.webhooksService.insertMessageStatusToClickhouse([
+        {
+          stepId: stepID,
+          createdAt: new Date().toISOString(),
+          customerId: customerID,
+          event: 'aborted',
+          eventProvider: ClickHouseEventProvider.TRACKER,
+          messageId: currentStep.metadata.humanReadableName,
+          templateId: currentStep.metadata.template,
+          userId: owner.id,
+          processed: true,
+        },
+      ]);
+    } else if (messageSendType === 'QUIET_REQUEUE') {
+      this.stepsService.requeueMessage(
+        owner,
+        currentStep,
+        customerID,
+        requeueTime,
+        session,
+        queryRunner
+      );
+      await lock.release();
+      this.warn(
+        `${JSON.stringify({ warning: 'Releasing lock' })}`,
+        this.handleMessage.name,
+        session,
+        owner.email
+      );
+      return;
     }
 
     if (

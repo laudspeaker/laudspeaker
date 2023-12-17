@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, QueryRunner, Repository } from 'typeorm';
+import { DataSource, LessThanOrEqual, QueryRunner, Repository } from 'typeorm';
 import { Step } from './entities/step.entity';
 import { CreateStepDto } from './dto/create-step.dto';
 import { UpdateStepDto } from './dto/update-step.dto';
@@ -14,6 +14,7 @@ import { StepType } from './types/step.interface';
 import { Temporal } from '@js-temporal/polyfill';
 import { createClient } from '@clickhouse/client';
 import { RedlockService } from '../redlock/redlock.service';
+import { Requeue } from './entities/requeue.entity';
 
 @Injectable()
 export class StepsService {
@@ -612,5 +613,43 @@ export class StepsService {
       clickedPercentage,
       wssent,
     };
+  }
+  async requeueMessage(
+    account: Account,
+    step: Step,
+    customerId: string,
+    requeueTime: Date,
+    session: string,
+    queryRunner: QueryRunner
+  ) {
+    await queryRunner.manager.save(Requeue, {
+      owner: account,
+      step,
+      customerId,
+      requeueAt: requeueTime.toISOString(),
+    });
+  }
+
+  async deleteRequeueMessage(
+    account: Account,
+    step: Step,
+    customerId: string,
+    session: string,
+    queryRunner: QueryRunner
+  ) {
+    await queryRunner.manager.delete(Requeue, {
+      owner: { id: account.id },
+      step: { id: step.id },
+      customerId: customerId,
+    });
+  }
+
+  async getRequeuedMessages(session, queryRunner: QueryRunner) {
+    return await queryRunner.manager.find(Requeue, {
+      where: {
+        requeueAt: LessThanOrEqual(new Date()),
+      },
+      relations: { owner: true, step: { journey: true } },
+    });
   }
 }

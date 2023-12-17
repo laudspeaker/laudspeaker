@@ -98,10 +98,10 @@ export class AppController {
     const session = randomUUID();
     this.debug(`GET / `, this.root.name, session);
     let allowedRoutes = {};
-    if (process.env.EMAIL_VERIFICATION == 'false') {
+    if (process.env.EMAIL_VERIFICATION !== 'true') {
       allowedRoutes['verified_not_allowed'] = true;
     }
-    if (process.env.SLACK_OPTIONAL == 'true') {
+    if (process.env.SLACK_OPTIONAL === 'true') {
       allowedRoutes['slack_not_allowed'] = true;
     }
     return allowedRoutes;

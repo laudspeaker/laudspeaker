@@ -156,6 +156,9 @@ export class Account extends BaseEntity {
   @Column({ type: 'boolean', default: false })
   public javascriptSnippetSetupped: boolean;
 
+  @Column({ type: 'varchar', default: 'UTC+00:00', nullable: false })
+  public timezoneUTCOffset: string; // must be in format `UTC(+/-)hh:mm`
+
   @Column({
     type: 'jsonb',
     default: {

@@ -806,4 +806,58 @@ export class CronService {
       await queryRunner.release();
     }
   }
+
+  @Cron(CronExpression.EVERY_30_SECONDS)
+  async requeueMessages() {
+    let lock: Lock;
+    const session = randomUUID();
+    const queryRunner = this.dataSource.createQueryRunner();
+    try {
+      await queryRunner.connect();
+      await queryRunner.startTransaction();
+      let requeuedMessages = await this.stepsService.getRequeuedMessages(
+        session,
+        queryRunner
+      );
+      this.log(
+        `Checking for messages to requeue... ${requeuedMessages.length} found`,
+        this.requeueMessages.name,
+        session
+      );
+      for (let requeue of requeuedMessages) {
+        this.log(
+          `Requeuing message: ${JSON.stringify(requeue)}`,
+          this.requeueMessages.name,
+          session
+        );
+        lock = await this.redlockService.acquire(
+          `${requeue.customerId}${requeue.step.journey.id}`
+        );
+        this.transitionQueue.add(StepType.MESSAGE, {
+          ownerId: requeue.owner.id,
+          step: requeue.step,
+          session,
+          customerID: requeue.customerId,
+          lock,
+        });
+      }
+    } catch (e) {
+      this.error(
+        `Requeue messages failed with exception. ${e}`,
+        this.requeueMessages.name,
+        session,
+        undefined
+      );
+      if (lock) {
+        lock.release();
+        this.warn(
+          `${JSON.stringify({ warning: 'Releasing lock' })}`,
+          this.requeueMessages.name,
+          session
+        );
+      }
+    } finally {
+      queryRunner.release();
+    }
+  }
 }
