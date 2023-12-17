@@ -385,8 +385,10 @@ export class EventsService {
     };
   }
 
+  //to do need to specify how this is 
   async getEventsByMongo(
     mongoQuery: any,
+    customer: CustomerDocument,
     //numberOfTimes: Number,
   ) {
     console.log("In getEvents by mongo");
@@ -394,19 +396,26 @@ export class EventsService {
     const tehevents = await this.EventModel.find(mongoQuery).exec();;
     console.log("events are", JSON.stringify(tehevents, null, 2))
 
-    //console.log("mongo query is", JSON.stringify(mongoQuery, null, 2));
     //console.log("events are", JSON.stringify(await this.EventModel.find(mongoQuery).exec(),null, 2));
     const count = await this.EventModel.count(mongoQuery).exec();
     console.log("here");
     console.log("count is", count);
     return count;
-    //return (count === numberOfTimes);
-    //** */
-    //const transactionSession = await this.connection.startSession();
-    //transactionSession.startTransaction();
-
-    //return this.customersService.findByCustomEvent(account, ev.slackId);
   }
+
+    //to do need to specify how this is 
+    async getCustomersbyEventsMongo(
+      aggregationPipeline: any,
+      //externalId: boolean,
+      //numberOfTimes: Number,
+    ) {
+      console.log("In getCustomersbyEventsMongo by mongo");
+
+      const docs = await this.EventModel.aggregate(
+        aggregationPipeline).exec();
+      
+      return docs;
+    }
 
   async sendTestPush(account: Account, token: string) {
     const foundAcc = await this.accountsRepository.findOneBy({
