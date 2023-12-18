@@ -2104,8 +2104,12 @@ export class CustomersService {
   // *** to do ***
   //checkCustomerMatchesQuery
 
-  async getSegmentCustomersFromQuery(query: any, account: Account) {
-    console.log('in getsCustomersFromQuery');
+  async getSegmentCustomersFromQuery(query: any, account: Account, session: string) {
+    this.debug(
+      "Creating segment from query",
+      this.getSegmentCustomersFromQuery.name,
+      session
+    );
     if (query.type === 'all') {
       console.log('the query has all (AND)');
       if (!query.statements || query.statements.length === 0) {
@@ -2113,7 +2117,7 @@ export class CustomersService {
       }
       const sets = await Promise.all(
         query.statements.map(async (statement) => {
-          return await this.getSegmentCustomersFromSubQuery(statement, account);
+          return await this.getSegmentCustomersFromSubQuery(statement, account , session);
         })
       );
       console.log('the sets are', sets);
@@ -2137,7 +2141,7 @@ export class CustomersService {
 
       const sets = await Promise.all(
         query.statements.map(async (statement) => {
-          return await this.getSegmentCustomersFromSubQuery(statement, account);
+          return await this.getSegmentCustomersFromSubQuery(statement, account, session);
         })
       );
 
@@ -2163,17 +2167,17 @@ export class CustomersService {
     return new Set<string>(); // Default: Return an empty set
   }
 
-  async getSegmentCustomersFromSubQuery(statement: any, account: Account) {
+  async getSegmentCustomersFromSubQuery(statement: any, account: Account, session: string) {
     if (statement.statements && statement.statements.length > 0) {
       // Statement has a subquery, recursively evaluate the subquery
-      return this.getSegmentCustomersFromQuery(statement, account);
+      return this.getSegmentCustomersFromQuery(statement, account, session);
     } else {
-      return await this.getCustomersFromStatement(statement, account);
+      return await this.getCustomersFromStatement(statement, account, session);
     }
     return false;
   }
 
-  async getCustomersFromStatement(statement: any, account: Account) {
+  async getCustomersFromStatement(statement: any, account: Account , session: string) {
     const {
       key,
       type,
@@ -2182,32 +2186,64 @@ export class CustomersService {
       value,
       subComparisonValue,
     } = statement;
-    console.log(
-      'In evaluateStatement deciding which sub evaluate statement to go to next/n\n'
+    this.debug(
+      "In evaluateStatement deciding which sub evaluate statement to go to next/n\n",
+      this.getCustomersFromStatement.name,
+      session
     );
+    /*
     console.log('the type is', type);
     console.log('the key is', key);
     console.log('the type of key is', typeof key);
     console.log('the value is', value);
     console.log('the subComparisonValue is', subComparisonValue);
+    */
+    this.debug(
+      `the key is: ${JSON.stringify(key, null, 2)}`,
+      this.getCustomersFromStatement.name,
+      session,
+      account.id
+    );
+    
+    this.debug(
+      `the type is: ${JSON.stringify(type, null, 2)}`,
+      this.getCustomersFromStatement.name,
+      session,
+      account.id
+    );
+    
+    this.debug(
+      `the value is: ${JSON.stringify(value, null, 2)}`,
+      this.getCustomersFromStatement.name,
+      session,
+      account.id
+    );
+    
+    this.debug(
+      `the subComparisonValue is: ${JSON.stringify(subComparisonValue, null, 2)}`,
+      this.getCustomersFromStatement.name,
+      session,
+      account.id
+    );
 
     switch (type) {
       case 'Attribute':
-        return this.customersFromAttributeStatement(statement, account);
+        return this.customersFromAttributeStatement(statement, account, session);
         break;
       case 'Event':
-        return await this.customersFromEventStatement(statement, account);
+        return await this.customersFromEventStatement(statement, account, session);
       case 'Email':
-        return this.customersFromMessageStatement(statement, account, 'Email');
+        return this.customersFromMessageStatement(statement, account, 'Email', session);
       case 'Push':
-        return this.customersFromMessageStatement(statement, account, 'Push');
+        return this.customersFromMessageStatement(statement, account, 'Push', session);
       case 'SMS':
-        return this.customersFromMessageStatement(statement, account, 'SMS');
+        return this.customersFromMessageStatement(statement, account, 'SMS', session);
       case 'In-app message':
         return this.customersFromMessageStatement(
           statement,
           account,
-          'In-app message'
+          'In-app message',
+          session
         );
       case 'Segment':
         break;
@@ -2219,13 +2255,36 @@ export class CustomersService {
   async customersFromMessageStatement(
     statement: any,
     account: Account,
-    typeOfMessage: string
+    typeOfMessage: string,
+    session: string
   ) {
+    const userId = (<Account>account).id;
+    /*
     console.log('In get customers from message statement');
     console.log('the type of message is', typeOfMessage);
-    const userId = (<Account>account).id;
     console.log('account id is', userId);
-
+    */
+    this.debug(
+      'In get customers from message statement',
+      this.customersFromMessageStatement.name,
+      session,
+      account.id
+    );
+    
+    this.debug(
+      `the type of message is: ${typeOfMessage}`,
+      this.customersFromMessageStatement.name,
+      session,
+      account.id
+    );
+    
+    this.debug(
+      `account id is: ${userId}`,
+      this.customersFromMessageStatement.name,
+      session,
+      account.id
+    );
+    
     const {
       type,
       eventCondition,
@@ -2302,7 +2361,14 @@ export class CustomersService {
         sqlQuery += `AND createdAt >= '${timeAfter}' `;
       }
 
-      console.log('the final sql squery is\n', sqlQuery);
+     // console.log('the final sql squery is\n', sqlQuery);
+      this.debug(
+        `the final SQL query is:\n${sqlQuery}`,
+        this.customersFromMessageStatement.name,
+        session,
+        account.id
+      );
+      
 
       //const testQuery = "SELECT COUNT(*) FROM message_status" ;
       const countEvents = await this.clickhouseClient.query({
@@ -2315,18 +2381,30 @@ export class CustomersService {
       stream.on('data', (rows: Row[]) => {
         rows.forEach((row: Row) => {
           const cleanedText = row.text.replace(/^"(.*)"$/, '$1'); // Removes surrounding quotes
-          console.log('this is the data', cleanedText);
+          //console.log('this is the data', cleanedText);
           customerIds.add(cleanedText);
         });
       });
       await new Promise((resolve) => {
         stream.on('end', () => {
-          console.log('Completed!');
+          //console.log('Completed!');
+          this.debug(
+            'Completed!',
+            this.customersFromMessageStatement.name,
+            session,
+            account.id
+          );
           resolve(0);
         });
       });
 
-      console.log('set from custoners from messages', customerIds);
+      //console.log('set from custoners from messages', customerIds);
+      this.debug(
+        `set from custoners from messages is:\n${customerIds}`,
+        this.customersFromMessageStatement.name,
+        session,
+        account.id
+      );
 
       return customerIds;
     }
@@ -2335,8 +2413,14 @@ export class CustomersService {
     return false;
   }
 
-  async customersFromAttributeStatement(statement: any, account: Account) {
-    console.log('generating attribute mongo query');
+  async customersFromAttributeStatement(statement: any, account: Account , session: string) {
+    //console.log('generating attribute mongo query');
+    this.debug(
+      'generating attribute mongo query',
+      this.customersFromAttributeStatement.name,
+      session,
+      account.id
+    );
     const {
       key,
       comparisonType,
@@ -2347,8 +2431,21 @@ export class CustomersService {
     let query: any = {
       ownerId: (<Account>account).id,
     };
-    console.log('key is', key);
-    console.log('comparison type is', comparisonType);
+    //console.log('key is', key);
+    //console.log('comparison type is', comparisonType);
+    this.debug(
+      `key is: ${key}`,
+      this.customersFromAttributeStatement.name,
+      session,
+      account.id
+    );
+    
+    this.debug(
+      `comparison type is: ${comparisonType}`,
+      this.customersFromAttributeStatement.name,
+      session,
+      account.id
+    );
     switch (comparisonType) {
       case 'is equal to':
         //checked
@@ -2399,9 +2496,29 @@ export class CustomersService {
         throw new Error('Invalid comparison type');
     }
 
-    console.log('generated attribute query is', JSON.stringify(query, null, 2));
-    console.log('now grabbing customers with the query');
-    console.log('in the aggregate construction - attribute');
+    //console.log('generated attribute query is', JSON.stringify(query, null, 2));
+    //console.log('now grabbing customers with the query');
+    //console.log('in the aggregate construction - attribute');
+    this.debug(
+      `generated attribute query is: ${JSON.stringify(query, null, 2)}`,
+      this.customersFromAttributeStatement.name,
+      session,
+      account.id
+    );
+    
+    this.debug(
+      'now grabbing customers with the query',
+      this.customersFromAttributeStatement.name,
+      session,
+      account.id
+    );
+    
+    this.debug(
+      'in the aggregate construction - attribute',
+      this.customersFromAttributeStatement.name,
+      session,
+      account.id
+    );
 
     const aggregationPipeline = [
       { $match: query },
@@ -2414,7 +2531,13 @@ export class CustomersService {
 
     const docs = await this.CustomerModel.aggregate(aggregationPipeline).exec();
 
-    console.log('Here are the docs', JSON.stringify(docs, null, 2));
+    //console.log('Here are the docs', JSON.stringify(docs, null, 2));
+    this.debug(
+      `Here are the docs: ${JSON.stringify(docs, null, 2)}`,
+      this.customersFromAttributeStatement.name,
+      session,
+      account.id
+    );
 
     const correlationValues = new Set<string>();
 
@@ -2422,22 +2545,72 @@ export class CustomersService {
       correlationValues.add(custData._id.toString());
     });
 
-    console.log('Here are the correlationValues', correlationValues);
+    //console.log('Here are the correlationValues', correlationValues);
+    this.debug(
+      `Here are the correlationValues: ${correlationValues}`,
+      this.customersFromAttributeStatement.name,
+      session,
+      account.id
+    );
 
     return correlationValues;
   }
 
-  async customersFromEventStatement(statement: any, account: Account) {
+  async customersFromEventStatement(statement: any, account: Account, session: string) {
     const { eventName, comparisonType, value, time, additionalProperties } =
       statement;
-    console.log('In customersEventStatement/n\n');
-    console.log('value is', value);
+    //console.log('In customersEventStatement/n\n');
+    //console.log('value is', value);
+    /*
     console.log(
       'here are time and additional properties (if they exist)',
       JSON.stringify(time, null, 2)
     );
     console.log(JSON.stringify(additionalProperties, null, 2));
     console.log('comparison type is', comparisonType);
+    */
+    
+    this.debug(
+      'In customersEventStatement/n\n',
+      this.customersFromEventStatement.name,
+      session,
+      account.id
+    );
+    
+    this.debug(
+      `value is: ${value}`,
+      this.customersFromEventStatement.name,
+      session,
+      account.id
+    );
+
+    this.debug(
+      `here are time and additional properties if they exist`,
+      this.customersFromEventStatement.name,
+      session,
+      account.id
+    );
+
+    this.debug(
+      JSON.stringify(time, null, 2),
+      this.customersFromEventStatement.name,
+      session,
+      account.id
+    );
+
+    this.debug(
+      JSON.stringify(additionalProperties, null, 2),
+      this.customersFromEventStatement.name,
+      session,
+      account.id
+    );
+    
+    this.debug(
+      `comparison type is: ${comparisonType}`,
+      this.customersFromEventStatement.name,
+      session,
+      account.id
+    );
     // ****
     const mongoQuery: any = {
       event: eventName,
@@ -2496,13 +2669,32 @@ export class CustomersService {
       }
     }
 
-    console.log('mongo query is/n\n', JSON.stringify(mongoQuery, null, 2));
+    //console.log('mongo query is/n\n', JSON.stringify(mongoQuery, null, 2));
+    this.debug(
+      'mongo query is/n\n',
+      this.customersFromEventStatement.name,
+      session,
+      account.id
+    );
+    
+    this.debug(
+      JSON.stringify(mongoQuery, null, 2),
+      this.customersFromEventStatement.name,
+      session,
+      account.id
+    );
 
     // we should enact a strict policy so that matching here is done on primary key
     // ie correlationKey = primary key, correlation values = unique identifier
 
     if (comparisonType === 'has performed') {
-      console.log('in the aggregate construction - has performed');
+      //console.log('in the aggregate construction - has performed');
+      this.debug(
+        'in the aggregate construction - has performed',
+        this.customersFromEventStatement.name,
+        session,
+        account.id
+      );
 
       const aggregationPipeline = [
         { $match: mongoQuery },
@@ -2591,14 +2783,43 @@ export class CustomersService {
         }
       ];
       */
+     /*
       console.log(
         'aggregate query is/n\n',
         JSON.stringify(aggregationPipeline, null, 2)
       );
+      */
+      this.debug(
+        'aggregate query is/n\n',
+        this.customersFromEventStatement.name,
+        session,
+        account.id
+      );
+      
+      this.debug(
+        JSON.stringify(aggregationPipeline, null, 2),
+        this.customersFromEventStatement.name,
+        session,
+        account.id
+      );
+      
       const result = await this.eventsService.getCustomersbyEventsMongo(
         aggregationPipeline
       );
-      console.log('Here are the results', JSON.stringify(result, null, 2));
+      //console.log('Here are the results', JSON.stringify(result, null, 2));
+      this.debug(
+        'Here are the results',
+        this.customersFromEventStatement.name,
+        session,
+        account.id
+      );
+      
+      this.debug(
+        JSON.stringify(result, null, 2),
+        this.customersFromEventStatement.name,
+        session,
+        account.id
+      );
 
       //const firstCorrelationKey = result[0].correlationKey;
       const correlationValues = result.map((doc) => doc.correlationValue);
@@ -2620,7 +2841,13 @@ export class CustomersService {
 
       return correlationValues;
     } else if (comparisonType === 'has not performed') {
-      console.log('in the aggregate construction - has performed');
+      //console.log('in the aggregate construction - has performed');
+      this.debug(
+        'in the aggregate construction - has performed',
+        this.customersFromEventStatement.name,
+        session,
+        account.id
+      );
       const aggregationPipeline = [
         { $match: mongoQuery },
         {
@@ -2649,14 +2876,44 @@ export class CustomersService {
         },
       ];
 
+      /*
       console.log(
         'aggregat query is/n\n',
         JSON.stringify(aggregationPipeline, null, 2)
       );
+      */
+      
+      this.debug(
+        'aggregat query is/n\n',
+        this.customersFromEventStatement.name,
+        session,
+        account.id
+      );
+      
+      this.debug(
+        JSON.stringify(aggregationPipeline, null, 2),
+        this.customersFromEventStatement.name,
+        session,
+        account.id
+      );
+
       const result = await this.eventsService.getCustomersbyEventsMongo(
         aggregationPipeline
       );
-      console.log('Here are the results', JSON.stringify(result, null, 2));
+      //console.log('Here are the results', JSON.stringify(result, null, 2));
+      this.debug(
+        'Here are the results',
+        this.customersFromEventStatement.name,
+        session,
+        account.id
+      );
+      
+      this.debug(
+        JSON.stringify(result, null, 2),
+        this.customersFromEventStatement.name,
+        session,
+        account.id
+      );
       const correlationValues = new Set<string>();
 
       result.forEach((eventData) => {
@@ -2690,7 +2947,8 @@ export class CustomersService {
    * calls a sub method based on whether its an attribute, message, or other type of segment
    * 
    */
-
+  
+  /*
   constructMongoQuery(statement: any) {
     console.log('constructing Mongo Query');
     switch (statement.type) {
@@ -2711,6 +2969,7 @@ export class CustomersService {
         break;
     }
   }
+  
 
   public generateMongoAttributeQuery(queryObject: QueryObject): object {
     console.log('generating attribute mongo query');
@@ -2777,7 +3036,7 @@ export class CustomersService {
 
     return query;
   }
-
+  */
   /*
    * checks if a given customer is in a segment
 
@@ -2857,11 +3116,24 @@ export class CustomersService {
   async checkCustomerMatchesQuery(
     customer: CustomerDocument,
     query: any,
-    account: Account
+    account: Account,
+    session: string
   ) {
-    console.log('in checkCustomerMatchesQuery');
+    this.debug(
+      'in checkCustomerMatchesQuery',
+      this.checkCustomerMatchesQuery.name,
+      session,
+      account.id
+    );
+    //console.log('in checkCustomerMatchesQuery');
     if (query.type === 'all') {
-      console.log('the query has all (AND)');
+      //console.log('the query has all (AND)');
+      this.debug(
+        'the query has all (AND',
+        this.checkCustomerMatchesQuery.name,
+        session,
+        account.id
+      );
       // 'all' logic: All conditions must be satisfied
       if (!query.statements || query.statements.length === 0) {
         // If no statements are provided, return false
@@ -2873,13 +3145,20 @@ export class CustomersService {
           return await this.evaluateStatementWithSubQuery(
             customer,
             statement,
-            account
+            account,
+            session
           );
         })
       );
       return results.every((result) => result);
     } else if (query.type === 'any') {
-      console.log('the query has any (OR)');
+      //console.log('the query has any (OR)');
+      this.debug(
+        'the query has any (OR)',
+        this.checkCustomerMatchesQuery.name,
+        session,
+        account.id
+      );
       // 'any' logic: At least one condition must be satisfied
       if (!query.statements || query.statements.length === 0) {
         // If no statements are provided, return true
@@ -2891,7 +3170,8 @@ export class CustomersService {
           return await this.evaluateStatementWithSubQuery(
             customer,
             statement,
-            account
+            account,
+            session
           );
         })
       );
@@ -2903,20 +3183,22 @@ export class CustomersService {
   async evaluateStatementWithSubQuery(
     customer: CustomerDocument,
     statement: any,
-    account: Account
+    account: Account,
+    session: string
   ): Promise<boolean> {
     if (statement.statements && statement.statements.length > 0) {
       // Statement has a subquery, recursively evaluate the subquery
-      return this.checkCustomerMatchesQuery(customer, statement, account);
+      return this.checkCustomerMatchesQuery(customer, statement, account, session);
     } else {
-      return await this.evaluateStatement(customer, statement, account);
+      return await this.evaluateStatement(customer, statement, account, session);
     }
   }
 
   async evaluateStatement(
     customer: CustomerDocument,
     statement: any,
-    account: Account
+    account: Account,
+    session: string
   ): Promise<boolean> {
     const {
       key,
@@ -2926,6 +3208,7 @@ export class CustomersService {
       value,
       subComparisonValue,
     } = statement;
+    /*
     console.log(
       'In evaluateStatement deciding which sub evaluate statement to go to next/n\n'
     );
@@ -2934,39 +3217,84 @@ export class CustomersService {
     console.log('the type of key is', typeof key);
     console.log('the value is', value);
     console.log('the subComparisonValue is', subComparisonValue);
-
+    */  
+    this.debug(
+      'In evaluateStatement deciding which sub evaluate statement to go to next/n\n',
+      this.evaluateStatement.name,
+      session,
+      account.id
+    );
+    this.debug(
+      `the type is: ${JSON.stringify(type, null, 2)}`,
+      this.evaluateStatement.name,
+      session,
+      account.id
+    );
+    
+    this.debug(
+      `the key is: ${key}`,
+      this.evaluateStatement.name,
+      session,
+      account.id
+    );
+    
+    this.debug(
+      `the type of key is: ${typeof key}`,
+      this.evaluateStatement.name,
+      session,
+      account.id
+    );
+    
+    this.debug(
+      `value is: ${value}`,
+      this.evaluateStatement.name,
+      session,
+      account.id
+    );
+    
+    this.debug(
+      `the subComparisonValue is: ${subComparisonValue}`,
+      this.evaluateStatement.name,
+      session,
+      account.id
+    );
+    
     switch (type) {
       case 'Attribute':
-        return this.evaluateAttributeStatement(customer, statement);
+        return this.evaluateAttributeStatement(customer, statement, session);
       case 'Event':
-        return await this.evaluateEventStatement(customer, statement, account);
+        return await this.evaluateEventStatement(customer, statement, account, session);
       case 'Email':
         return this.evaluateMessageStatement(
           customer,
           statement,
           account,
-          'Email'
+          'Email',
+          session
         );
       case 'Push':
         return this.evaluateMessageStatement(
           customer,
           statement,
           account,
-          'Push'
+          'Push',
+          session
         );
       case 'SMS':
         return this.evaluateMessageStatement(
           customer,
           statement,
           account,
-          'SMS'
+          'SMS',
+          session
         );
       case 'In-app message':
         return this.evaluateMessageStatement(
           customer,
           statement,
           account,
-          'In-app message'
+          'In-app message',
+          session
         );
       case 'Segment':
         break;
@@ -3015,12 +3343,33 @@ export class CustomersService {
     customer: CustomerDocument,
     statement: any,
     account: Account,
-    typeOfMessage: string
+    typeOfMessage: string,
+    session: string
   ): Promise<boolean> {
+    const userId = (<Account>account).id;
+    /*
     console.log('In evealuate message statement');
     console.log('the type of message is', typeOfMessage);
-    const userId = (<Account>account).id;
     console.log('account id is', userId);
+    */
+    this.debug(
+      'In evaluate message statement',
+      this.evaluateMessageStatement.name,
+      session,
+      account.id
+    );
+    this.debug(
+      `the type of message is: ${typeOfMessage}`,
+      this.evaluateMessageStatement.name,
+      session,
+      account.id
+    );
+    this.debug(
+      `account id is: ${userId}`,
+      this.evaluateMessageStatement.name,
+      session,
+      account.id
+    );
 
     const {
       type,
@@ -3105,7 +3454,13 @@ export class CustomersService {
       //   sqlQuery = sqlQuery.replace("event =", "event !=");
       // }
 
-      console.log('the final sql squery is\n', sqlQuery);
+      //console.log('the final sql squery is\n', sqlQuery);
+      this.debug(
+        `the final SQL query is:\n ${sqlQuery}`,
+        this.evaluateMessageStatement.name,
+        session,
+        account.id
+      );
 
       //const testQuery = "SELECT COUNT(*) FROM message_status" ;
       const countEvents = await this.clickhouseClient.query({
@@ -3118,13 +3473,19 @@ export class CustomersService {
       const stream = countEvents.stream();
       stream.on('data', (rows: Row[]) => {
         rows.forEach((row: Row) => {
-          console.log('this is the data', row.text);
+          //console.log('this is the data', row.text);
           countOfEvents = row.text;
         });
       });
       await new Promise((resolve) => {
         stream.on('end', () => {
-          console.log('Completed!');
+          //console.log('Completed!');
+          this.debug(
+            'Completed!',
+            this.evaluateMessageStatement.name,
+            session,
+            account.id
+          );
           resolve(0);
         });
       });
@@ -3146,10 +3507,12 @@ export class CustomersService {
   async evaluateEventStatement(
     customer: CustomerDocument,
     statement: any,
-    account: Account
+    account: Account,
+    session: string
   ): Promise<boolean> {
     const { eventName, comparisonType, value, time, additionalProperties } =
       statement;
+    /* 
     console.log('In evaluateEventStatement/n\n');
     console.log(
       'here are time and additional properties (if they exist)',
@@ -3157,6 +3520,38 @@ export class CustomersService {
     );
     console.log(JSON.stringify(additionalProperties, null, 2));
     console.log('comparison type is', comparisonType);
+    */
+    this.debug(
+      'In evaluateEventStatement/n\n',
+      this.evaluateEventStatement.name,
+      session,
+      account.id
+    );
+    this.debug(
+      'here are time and additional properties (if they exist)',
+      this.evaluateEventStatement.name,
+      session,
+      account.id
+    );
+    this.debug(
+      JSON.stringify(time, null, 2),
+      this.evaluateEventStatement.name,
+      session,
+      account.id
+    );
+    this.debug(
+      JSON.stringify(additionalProperties, null, 2),
+      this.evaluateEventStatement.name,
+      session,
+      account.id
+    );
+    this.debug(
+      `comparison type is: ${comparisonType}`,
+      this.evaluateEventStatement.name,
+      session,
+      account.id
+    );
+    
     // ****
     const mongoQuery: any = {
       event: eventName,
@@ -3223,7 +3618,21 @@ export class CustomersService {
       }
     }
 
-    console.log('mongo query is/n\n', JSON.stringify(mongoQuery, null, 2));
+    //console.log('mongo query is/n\n', JSON.stringify(mongoQuery, null, 2));
+    this.debug(
+      'mongo query is/n\n',
+      this.evaluateEventStatement.name,
+      session,
+      account.id
+    );
+    
+    this.debug(
+      JSON.stringify(mongoQuery, null, 2),
+      this.evaluateEventStatement.name,
+      session,
+      account.id
+    );
+    
     if (comparisonType === 'has performed') {
       return (await this.eventsService.getEventsByMongo(
         mongoQuery,
@@ -3244,9 +3653,16 @@ export class CustomersService {
 
   evaluateAttributeStatement(
     customer: CustomerDocument,
-    statement: any
+    statement: any,
+    session: string
   ): boolean {
-    console.log('In evaluateAttributeStatement/n\n');
+    //console.log('In evaluateAttributeStatement/n\n');
+
+    this.debug(
+      'In evaluateAttributeStatement/n\n',
+      this.evaluateAttributeStatement.name,
+      session,
+    );
 
     const {
       key,
@@ -3257,18 +3673,40 @@ export class CustomersService {
     } = statement;
 
     if (!(key in customer)) {
+      /*
       console.log(
         'apparently the customer does not have the key',
         JSON.stringify(customer, null, 2)
+      );
+      */
+      this.debug(
+        'apparently the customer does not have the key',
+        this.evaluateAttributeStatement.name,
+        session,
+      );
+      this.debug(
+        JSON.stringify(customer, null, 2),
+        this.evaluateAttributeStatement.name,
+        session,
       );
       return false;
     }
 
     const customerValue = customer[key];
-    console.log('the customerValue is', customerValue);
+    //console.log('the customerValue is', customerValue);
+    this.debug(
+      `the customerValue is: ${customerValue}`,
+      this.evaluateAttributeStatement.name,
+      session,
+    );
 
     // Perform comparison based on comparisonType
-    console.log('comparison type is', comparisonType);
+    //console.log('comparison type is', comparisonType);
+    this.debug(
+      `comparison type is: ${comparisonType}`,
+      this.evaluateAttributeStatement.name,
+      session,
+    );
     switch (comparisonType) {
       case 'is equal to':
         //not checked
@@ -3342,9 +3780,28 @@ export class CustomersService {
     }
   }
 
-  async testCustomerInSegment(query: any, account: Account) {
-    console.log('In Test Customer Segment');
-    console.log('test query is', JSON.stringify(query, null, 2));
+  async testCustomerInSegment(query: any, account: Account): Promise<Set<string>>  {
+    let session = "this is a fake session"
+    //console.log('In Test Customer Segment');
+    //console.log('test query is', JSON.stringify(query, null, 2));
+    this.debug(
+      'In Test Customer Segment',
+      this.testCustomerInSegment.name,
+      session,
+      account.id
+    );
+    this.debug(
+      'test query is',
+      this.testCustomerInSegment.name,
+      session,
+      account.id
+    );
+    this.debug(
+      JSON.stringify(query, null, 2),
+      this.testCustomerInSegment.name,
+      session,
+      account.id
+    );
 
     let testCustomer = new this.CustomerModel({
       externalId: '657619ac0cd6aa53b5910962',
@@ -3361,10 +3818,20 @@ export class CustomersService {
 
     //console.log("test customer is", JSON.stringify(testCustomer,null,2));
     //console.log("the segment and the customer are", await this.checkCustomerMatchesQuery(testCustomer, query, account));
+    let custs = await this.getSegmentCustomersFromQuery(query, account, session)
+    /*
     console.log(
       'the segment is',
-      await this.getSegmentCustomersFromQuery(query, account)
+      custs
     );
+    */  
+    this.debug(
+      `the segment is: ${custs}`,
+      this.testCustomerInSegment.name,
+      session,
+      account.id
+    );
+    return custs;
   }
 
   public async searchForTest(
