@@ -34,4 +34,3 @@ export class Requeue extends BaseEntity {
   @Column('timestamptz', { nullable: false })
   public requeueAt: Date;
 }
-

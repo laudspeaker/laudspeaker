@@ -22,7 +22,7 @@ import mockData from '../../fixtures/mockData';
 import { Account } from '../accounts/entities/accounts.entity';
 import { Audience } from '../audiences/entities/audience.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, QueryRunner, Repository } from 'typeorm';
 import { EventDto } from '../events/dto/event.dto';
 import {
   AttributeType,
@@ -59,6 +59,8 @@ import * as fs from 'fs';
 import path from 'path';
 import { isValid } from 'date-fns';
 import e from 'express';
+import { JourneyLocationsService } from '../journeys/journey-locations.service';
+import { Journey } from '../journeys/entities/journey.entity';
 
 export type Correlation = {
   cust: CustomerDocument;
@@ -135,7 +137,9 @@ export class CustomersService {
     private readonly stepsService: StepsService,
     @InjectConnection()
     private readonly connection: mongoose.Connection,
-    private readonly s3Service: S3Service
+    private readonly s3Service: S3Service,
+    @Inject(JourneyLocationsService)
+    private readonly journeyLocationsService: JourneyLocationsService
   ) {
     const session = randomUUID();
     (async () => {
@@ -1992,13 +1996,20 @@ export class CustomersService {
 
   public async isCustomerEnrolledInJourney(
     account: Account,
-    customerId: string,
-    journeyId: string,
-    clientSession: ClientSession
+    customer: CustomerDocument,
+    journey: Journey,
+    session: string,
+    queryRunner: QueryRunner
   ) {
     // TODO_JH: update to journey location table as source of truth
-    let customer = await this.findById(account, customerId, clientSession);
-    return customer.journeys.includes(journeyId);
+    const location = await this.journeyLocationsService.find(
+      journey,
+      customer,
+      session,
+      account,
+      queryRunner
+    );
+    return !!location;
   }
 
   public async getCustomerJourneys(

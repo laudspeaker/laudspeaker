@@ -21,7 +21,7 @@ export class JourneyLocation {
   public journey!: string;
 
   @PrimaryColumn()
-  customer: string;
+  customer!: string;
 
   @JoinColumn()
   @ManyToOne(() => Step, (step) => step.id, { onDelete: 'CASCADE' })
@@ -31,12 +31,16 @@ export class JourneyLocation {
   @ManyToOne(() => Account, (account) => account.id, { onDelete: 'CASCADE' })
   owner!: Account;
 
-  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
-  stepEntry!: Date;
+  // This is actually a timestamp using ECMAScript's native Date object; will yield
+  // the same number across any timezone
+  @Column({ type: 'bigint', nullable: false })
+  stepEntry!: number;
 
+  // This is actually a timestamp using ECMAScript's native Date object; will yield
+  // the same number across any timezone
   @Column({
-    type: 'number',
+    type: 'bigint',
     nullable: true,
   })
-  moveStarted?: number;
+  moveStarted?: number | null;
 }

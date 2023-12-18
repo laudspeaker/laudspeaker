@@ -134,15 +134,15 @@ export class StartProcessor extends WorkerHost {
       string
     >
   ): Promise<any> {
-    let err: any;
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-    const transactionSession = await this.connection.startSession();
-    transactionSession.startTransaction();
-    try {
-      //base case: get documents, set them as moving in location table, and batch add the jobs to the transition queue
-      if (job.data.limit <= BATCH_SIZE) {
+    //base case: get documents, set them as moving in location table, and batch add the jobs to the transition queue
+    if (job.data.limit <= BATCH_SIZE) {
+      let err: any;
+      const queryRunner = this.dataSource.createQueryRunner();
+      await queryRunner.connect();
+      await queryRunner.startTransaction();
+      const transactionSession = await this.connection.startSession();
+      transactionSession.startTransaction();
+      try {
         // Retrieve customers from mongo
         const customers = await this.customersService.find(
           job.data.ownerID,
@@ -176,12 +176,12 @@ export class StartProcessor extends WorkerHost {
         });
         await Promise.all(
           customers.map(async (customer) => {
-            await this.journeyLocationsService.create(
-              account,
+            await this.journeyLocationsService.createAndLock(
               journey,
-              step,
               customer,
+              step,
               job.data.session,
+              account,
               queryRunner
             );
           })
@@ -200,47 +200,47 @@ export class StartProcessor extends WorkerHost {
             };
           })
         );
+        await transactionSession.commitTransaction();
+        await queryRunner.commitTransaction();
+      } catch (e) {
+        this.error(e, this.process.name, job.data.session, job.data.ownerID);
+        await transactionSession.abortTransaction();
+        await queryRunner.rollbackTransaction();
+        err = e;
+      } finally {
+        await transactionSession.endSession();
+        await queryRunner.release();
+        if (err) throw err;
       }
-      //otherwise, split query in half and add both halves to the start queue
-      else {
-        await this.startQueue.addBulk([
-          {
-            name: 'start',
-            data: {
-              ownerID: job.data.ownerID,
-              journeyID: job.data.journeyID,
-              stepID: job.data.stepID,
-              session: job.data.session,
-              query: job.data.query,
-              skip: job.data.skip,
-              limit: Math.floor(job.data.limit / 2),
-            },
+    }
+    //otherwise, split query in half and add both halves to the start queue
+    else {
+      await this.startQueue.addBulk([
+        {
+          name: 'start',
+          data: {
+            ownerID: job.data.ownerID,
+            journeyID: job.data.journeyID,
+            stepID: job.data.stepID,
+            session: job.data.session,
+            query: job.data.query,
+            skip: job.data.skip,
+            limit: Math.floor(job.data.limit / 2),
           },
-          {
-            name: 'start',
-            data: {
-              ownerID: job.data.ownerID,
-              journeyID: job.data.journeyID,
-              stepID: job.data.stepID,
-              session: job.data.session,
-              query: job.data.query,
-              skip: job.data.skip + Math.floor(job.data.limit / 2),
-              limit: Math.floor(job.data.limit / 2),
-            },
+        },
+        {
+          name: 'start',
+          data: {
+            ownerID: job.data.ownerID,
+            journeyID: job.data.journeyID,
+            stepID: job.data.stepID,
+            session: job.data.session,
+            query: job.data.query,
+            skip: job.data.skip + Math.floor(job.data.limit / 2),
+            limit: Math.floor(job.data.limit / 2),
           },
-        ]);
-      }
-      await transactionSession.commitTransaction();
-      await queryRunner.commitTransaction();
-    } catch (e) {
-      this.error(e, this.process.name, job.data.session, job.data.ownerID);
-      await transactionSession.abortTransaction();
-      await queryRunner.rollbackTransaction();
-      err = e;
-    } finally {
-      await transactionSession.endSession();
-      await queryRunner.release();
-      if (err) throw err;
+        },
+      ]);
     }
   }
 

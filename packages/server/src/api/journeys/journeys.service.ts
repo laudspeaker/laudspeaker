@@ -70,6 +70,9 @@ import { AttributeSplitMetadata } from '../steps/types/step.interface';
 import { Temporal } from '@js-temporal/polyfill';
 import generateName from '@good-ghosting/random-name-generator';
 import { JourneyEnrollmentType } from './types/additional-journey-settings.interface';
+import { JourneyLocationsService } from './journey-locations.service';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 
 export enum JourneyStatus {
   ACTIVE = 'Active',
@@ -106,7 +109,10 @@ export class JourneysService {
     @InjectModel(Customer.name) public CustomerModel: Model<CustomerDocument>,
     @Inject(forwardRef(() => CustomersService))
     private customersService: CustomersService,
-    @InjectConnection() private readonly connection: mongoose.Connection
+    @InjectConnection() private readonly connection: mongoose.Connection,
+    @Inject(JourneyLocationsService)
+    private readonly journeyLocationsService: JourneyLocationsService,
+    @InjectQueue('transition') private readonly transitionQueue: Queue
   ) {}
 
   log(message, method, session, user = 'ANONYMOUS') {
@@ -424,6 +430,15 @@ export class JourneysService {
     }
   }
 
+  /**
+   *
+   * @param account
+   * @param customerId
+   * @param customerUpdateType
+   * @param session
+   * @param queryRunner
+   * @param clientSession
+   */
   public async updateEnrollmentForCustomer(
     account: Account,
     customerId: string,
@@ -452,9 +467,10 @@ export class JourneysService {
       let change: 'ADD' | 'REMOVE' | 'DO_NOTHING' = 'DO_NOTHING';
       let doesInclude = await this.customersService.isCustomerEnrolledInJourney(
         account,
-        customerId,
-        journey.id,
-        clientSession
+        customer,
+        journey,
+        session,
+        queryRunner
       );
       let shouldInclude = true;
       // TODO_JH: implement the following
@@ -520,13 +536,46 @@ export class JourneysService {
     queryRunner: QueryRunner,
     clientSession: ClientSession
   ): Promise<void> {
-    await this.stepsService.addToStart(
+    this.warn(
+      JSON.stringify({ warning: '_____________________________' }),
+      this.enrollCustomerInJourney.name,
+      session,
+      account.email
+    );
+    this.warn(
+      JSON.stringify({ warning: 'Enrolling customer in journey' }),
+      this.enrollCustomerInJourney.name,
+      session,
+      account.email
+    );
+    this.warn(
+      JSON.stringify({ warning: '_____________________________' }),
+      this.enrollCustomerInJourney.name,
+      session,
+      account.email
+    );
+    const step = await this.stepsService.findByJourneyAndType(
       account,
       journey.id,
-      customer,
-      queryRunner,
-      session
+      StepType.START,
+      session,
+      queryRunner
     );
+    await this.journeyLocationsService.createAndLock(
+      journey,
+      customer,
+      step,
+      session,
+      account,
+      queryRunner
+    );
+    await this.transitionQueue.add('start', {
+      ownerID: account.id,
+      journeyID: journey.id,
+      step: step,
+      session: session,
+      customerID: customer.id,
+    });
 
     await this.CustomerModel.updateOne(
       { _id: customer._id },
@@ -1015,7 +1064,7 @@ export class JourneysService {
         transactionSession
       );
 
-      await this.stepsService.addToStart(
+      await this.stepsService.triggerStart(
         account,
         journeyID,
         journey.inclusionCriteria,

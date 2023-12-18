@@ -139,7 +139,7 @@ export class StepsService {
    * @param queryRunner
    * @param session
    */
-  async addToStart(
+  async triggerStart(
     account: Account,
     journeyID: string,
     query: any,
@@ -158,18 +158,9 @@ export class StepsService {
     if (startStep.length != 1)
       throw new Error('Can only have one start step per journey.');
 
-    // // if (!startStep[0].customers.find((customerTuple) => { return JSON.parse(customerTuple).customerID === customer.id })) {
-    // startStep[0].customers.push(
-    //   JSON.stringify({
-    //     customerID: customer.id,
-    //     timestamp: Temporal.Now.instant().toString(),
-    //   })
-    // );
-    // // }
-    // const step = await queryRunner.manager.save(startStep[0]);
     this.log(
       JSON.stringify({ journeyID: journeyID }),
-      this.addToStart.name,
+      this.triggerStart.name,
       session,
       account.email
     );
@@ -354,6 +345,39 @@ export class StepsService {
     } catch (e) {
       this.error(e, this.findOne.name, session, account.id);
       throw e;
+    }
+  }
+
+  /**
+   * Find a step by its ID.
+   * @param account
+   * @param id
+   * @param session
+   * @returns
+   */
+  async findByJourneyAndType(
+    account: Account,
+    journey: string,
+    type: StepType,
+    session: string,
+    queryRunner?: QueryRunner
+  ): Promise<Step | null> {
+    if (queryRunner) {
+      return await queryRunner.manager.findOne(Step, {
+        where: {
+          journey: { id: journey },
+          owner: { id: account.id },
+          type: type,
+        },
+      });
+    } else {
+      return await this.stepsRepository.findOne({
+        where: {
+          journey: { id: journey },
+          owner: { id: account.id },
+          type: type,
+        },
+      });
     }
   }
 

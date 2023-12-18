@@ -23,6 +23,8 @@ import { JourneysModule } from '../journeys/journeys.module';
 import { S3Service } from '../s3/s3.service';
 import { Imports } from './entities/imports.entity';
 import { ImportProcessor } from './imports.porcessor';
+import { JourneyLocationsService } from '../journeys/journey-locations.service';
+import { JourneyLocation } from '../journeys/entities/journey-location.entity';
 
 @Module({
   imports: [
@@ -43,7 +45,7 @@ import { ImportProcessor } from './imports.porcessor';
     AudiencesModule,
     WorkflowsModule,
     StepsModule,
-    TypeOrmModule.forFeature([Account, Imports]),
+    TypeOrmModule.forFeature([Account, Imports, JourneyLocation]),
     KafkaModule,
     JourneysModule,
   ],
@@ -55,6 +57,7 @@ import { ImportProcessor } from './imports.porcessor';
     CustomersConsumerService,
     S3Service,
     ImportProcessor,
+    JourneyLocationsService,
   ],
 
   exports: [CustomersService, CustomersConsumerService],

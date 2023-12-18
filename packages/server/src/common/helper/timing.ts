@@ -93,4 +93,3 @@ export function convertTimeToUTC(time: string, utcOffset: string) {
   }
   return getTimeString(utcTime);
 }
-
