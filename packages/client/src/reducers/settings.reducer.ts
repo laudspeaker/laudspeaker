@@ -234,6 +234,8 @@ export const updateUserData = (body: any): any => {
           email: data.email,
           expectedOnboarding: data.expectedOnboarding,
           verified: data.verified,
+          pushPlatforms: data.pushPlatforms,
+          pk: data.pk,
         },
       });
 

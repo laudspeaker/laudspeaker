@@ -12,13 +12,15 @@ interface SegmentState {
   showSegmentsErrors: boolean;
 }
 
-const initialState: SegmentState = {
-  segment: {
-    query: {
-      type: QueryType.ANY,
-      statements: [],
-    },
+const defaultSegmentSettingsState = {
+  query: {
+    type: QueryType.ANY,
+    statements: [],
   },
+};
+
+const initialState: SegmentState = {
+  segment: defaultSegmentSettingsState,
   availableTags: [],
   segmentQueryErrors: {},
   showSegmentsErrors: false,
@@ -48,6 +50,9 @@ const segmentSettingsSlice = createSlice({
     clearSegmentPanelErrors(state) {
       state.segmentQueryErrors = {};
     },
+    setSettingsToDefault(state) {
+      state.segment = defaultSegmentSettingsState;
+    },
   },
 });
 
@@ -58,6 +63,7 @@ export const {
   clearSegmentPanelErrors,
   setShowSegmentsErrors,
   setAvailableTags,
+  setSettingsToDefault,
 } = segmentSettingsSlice.actions;
 
 export default segmentSettingsSlice.reducer;

@@ -11,6 +11,7 @@ import ApiService from "services/api.service";
 import { useNavigate } from "react-router-dom";
 import Pagination from "components/Pagination";
 import { toast } from "react-toastify";
+import KeyIcon from "@heroicons/react/24/solid/KeyIcon";
 import { useDebounce } from "react-use";
 import sortAscChevronsImage from "./svg/sort-asc-chevrons.svg";
 import sortDescChevronsImage from "./svg/sort-desc-chevrons.svg";
@@ -22,6 +23,7 @@ interface PeopleRowData {
   id: string;
   email?: string;
   createdAt: string;
+  [key: string]: any;
 }
 
 enum SortProperty {
@@ -55,6 +57,7 @@ const PeopleTablev2 = () => {
   });
   const [possibleKeys, setPossibleKeys] = useState<string[]>([]);
   const [keysQuery, setKeysQuery] = useState("");
+  const [pkKeyName, setPKKeyName] = useState<string>();
 
   const [currentPage, setCurrentPage] = useState(1);
   const [pagesCount, setPagesCount] = useState(1);
@@ -65,10 +68,11 @@ const PeopleTablev2 = () => {
     setIsLoading(true);
     try {
       const {
-        data: { data, totalPages },
+        data: { data, totalPages, pkName },
       } = await ApiService.get<{
-        data: { id: string; email?: string; createdAt: string }[];
+        data: PeopleRowData[];
         totalPages: number;
+        pkName?: string;
       }>({
         url: `/customers?take=${ITEMS_PER_PAGE}&skip=${
           (currentPage - 1) * ITEMS_PER_PAGE
@@ -77,11 +81,14 @@ const PeopleTablev2 = () => {
         }&orderType=${sortOptions.sortType}`,
       });
 
+      setPKKeyName(pkName);
+
       setRows(
         data.map((person) => ({
           id: person.id,
           email: person.email,
           createdAt: person.createdAt,
+          ...(pkName ? { [pkName]: person[pkName] } : {}),
         }))
       );
       setPagesCount(totalPages);
@@ -150,6 +157,14 @@ const PeopleTablev2 = () => {
         <div className="text-[20px] font-semibold leading-[28px]">User</div>
 
         <div className="flex items-center gap-[10px]">
+          <Button
+            type={ButtonType.SECONDARY}
+            onClick={() => {
+              navigate("/people/setting");
+            }}
+          >
+            Setting
+          </Button>
           <Button
             type={ButtonType.SECONDARY}
             onClick={() => {
@@ -230,7 +245,16 @@ const PeopleTablev2 = () => {
               isLoading={isLoading}
               headings={[
                 <div className="px-5 py-[10px] select-none">ID</div>,
-                <div className="px-5 py-[10px] select-none">Email</div>,
+                <div className="px-5 py-[10px] select-none">
+                  {pkKeyName ? (
+                    <div className="flex items-center gap-2">
+                      <KeyIcon className="max-w-[12px] min-w-[12px] max-h-[12px] min-h-[12px]" />
+                      {pkKeyName}
+                    </div>
+                  ) : (
+                    "Email"
+                  )}
+                </div>,
                 <div
                   className="px-5 py-[10px] select-none flex gap-[2px] items-center cursor-pointer"
                   onClick={() => {
@@ -281,7 +305,7 @@ const PeopleTablev2 = () => {
                 >
                   {row.id}
                 </button>,
-                <div>{row.email}</div>,
+                <div>{pkKeyName ? row[pkKeyName] : row.email}</div>,
                 <div>
                   {format(new Date(row.createdAt), "MM/dd/yyyy HH:mm")}
                 </div>,

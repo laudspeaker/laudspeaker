@@ -61,6 +61,7 @@ import path from 'path';
 import { isValid } from 'date-fns';
 import e from 'express';
 import { SegmentType } from '../segments/entities/segment.entity';
+import { UpdatePK_DTO } from './dto/update-pk.dto';
 
 export type Correlation = {
   cust: CustomerDocument;
@@ -912,6 +913,13 @@ export class CustomersService {
       createdAtSortType || 'desc'
     );
 
+    const pk = (
+      await this.CustomerKeysModel.findOne({
+        isPrimary: true,
+        ownerId: account.id,
+      })
+    )?.toObject();
+
     const listInfo = await Promise.all(
       data.map(async (person) => {
         const info: Record<string, any> = {};
@@ -930,6 +938,10 @@ export class CustomersService {
         ).toUTCString();
         info.dataSource = 'people';
 
+        if (pk && person[pk.key]) {
+          info[pk.key] = person[pk.key];
+        }
+
         if (checkInSegment)
           info.isInsideSegment = await this.segmentsService.isCustomerMemberOf(
             account,
@@ -941,7 +953,7 @@ export class CustomersService {
       })
     );
 
-    return { data: listInfo, totalPages };
+    return { data: listInfo, totalPages, pkName: pk?.key };
   }
 
   async findAudienceStatsCustomers(
@@ -3878,5 +3890,93 @@ export class CustomersService {
       this.error(error, this.countImportPreview.name, session);
       throw error;
     }
+  }
+
+  async updatePrimaryKey(
+    account: Account,
+    update: UpdatePK_DTO,
+    session: string
+  ) {
+    const pk = (
+      await this.CustomerKeysModel.findOne({
+        isPrimary: true,
+        ownerId: account.id,
+      })
+    )?.toObject();
+
+    const docsDuplicates = await this.CustomerModel.aggregate([
+      {
+        $match: {
+          ownerId: account.id,
+        },
+      },
+      {
+        $group: {
+          _id: `$${update.key}`,
+          count: { $sum: 1 },
+          docs: { $push: '$$ROOT' },
+        },
+      },
+      {
+        $match: {
+          count: { $gt: 1 },
+        },
+      },
+    ])
+      .option({ allowDiskUse: true })
+      .limit(2);
+
+    if (!!docsDuplicates?.length) {
+      throw new HttpException(
+        "Selected primary key can't be used cause it's value has duplicates or some customers don't have such key or it's empty.",
+        HttpStatus.BAD_REQUEST
+      );
+    }
+
+    const newPK = await this.CustomerKeysModel.findOne({
+      ownerId: account.id,
+      isPrimary: false,
+      ...update,
+    }).exec();
+
+    if (!newPK) {
+      throw new HttpException(
+        'Passed attribute for new PK not exist, please check again or select another one.',
+        HttpStatus.BAD_REQUEST
+      );
+    }
+
+    let clientSession = await this.connection.startSession();
+    await clientSession.startTransaction();
+
+    try {
+      const currentPK = await this.CustomerKeysModel.findOne({
+        ownerId: account.id,
+        isPrimary: true,
+      })
+        .session(clientSession)
+        .exec();
+
+      if (currentPK && currentPK._id.equals(newPK._id)) {
+        currentPK.isPrimary = true;
+      } else {
+        if (currentPK) {
+          currentPK.isPrimary = false;
+          await currentPK.save({ session: clientSession });
+        }
+
+        newPK.isPrimary = true;
+        await newPK.save({ session: clientSession });
+      }
+    } catch (error) {
+      this.error(error, this.updatePrimaryKey.name, session);
+      await clientSession.abortTransaction();
+      throw new HttpException(
+        'Error while performing operation, please try again.',
+        HttpStatus.BAD_REQUEST
+      );
+    }
+    await clientSession.commitTransaction();
+    await clientSession.endSession();
   }
 }

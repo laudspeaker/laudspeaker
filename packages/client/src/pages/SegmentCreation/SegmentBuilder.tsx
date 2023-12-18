@@ -1,12 +1,16 @@
+import { AxiosError } from "axios";
 import Button, { ButtonType } from "components/Elements/Buttonv2";
 import Input from "components/Elements/Inputv2";
 import FilterBuilder from "pages/FlowBuilderv2/FilterBuilder/FilterBuilder";
 import { DragEvent, useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
 import {
   setAvailableTags,
   setSegmentsSettings,
+  setSettingsToDefault,
   setShowSegmentsErrors,
 } from "reducers/segment.reducer";
 import ApiService from "services/api.service";
@@ -14,6 +18,8 @@ import { useAppDispatch, useAppSelector } from "store/hooks";
 import { SegmentType } from "types/Segment";
 
 const SegmentBuilder = () => {
+  const { id } = useParams();
+
   const { segment, segmentQueryErrors } = useAppSelector(
     (state) => state.segment
   );
@@ -21,6 +27,9 @@ const SegmentBuilder = () => {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [segmentType, setSegmentType] = useState(SegmentType.AUTOMATIC);
+  const [isLoadingSegment, setIsLoadingSegment] = useState(false);
+
+  const navigate = useNavigate();
 
   const loadAllTags = async () => {
     try {
@@ -42,12 +51,43 @@ const SegmentBuilder = () => {
       dispatch(setShowSegmentsErrors(true));
       return;
     }
+    setIsLoadingSegment(true);
+
     //create segment
     try {
-      await ApiService.post({
+      const { data } = await ApiService.post({
         url: "/segments/",
         options: {
           name: name,
+          description: description,
+          type: segmentType,
+          inclusionCriteria: segment,
+        },
+      });
+      navigate("/segments/" + data.id);
+    } catch (e) {
+      console.error(e);
+      toast.error("Error: failed to save segment");
+    }
+    setIsLoadingSegment(false);
+  };
+
+  const handleUpdateClick = async () => {
+    console.log("***oi oi ***");
+    console.log("/n\ntrying inclusion criteria with", segment);
+    //console.log("the object is", JSON.stringify(Object, undefined, 2));
+    if (Object.values(segmentQueryErrors).length > 0) {
+      dispatch(setShowSegmentsErrors(true));
+      return;
+    }
+    //update segment
+    setIsLoadingSegment(true);
+    try {
+      await ApiService.patch({
+        url: "/segments/" + id,
+        options: {
+          name: name,
+          description: description,
           type: segmentType,
           inclusionCriteria: segment,
         },
@@ -56,17 +96,56 @@ const SegmentBuilder = () => {
       console.error(e);
       toast.error("Error: failed to save segment");
     }
+    setIsLoadingSegment(false);
+  };
+
+  const loadSegment = async () => {
+    if (!id) return;
+    setIsLoadingSegment(true);
+
+    try {
+      const { data } = await ApiService.get({ url: "/segments/" + id });
+      if (data.type !== SegmentType.AUTOMATIC) {
+        toast.warning(
+          "Our apologize, manual segment viewer still in progress."
+        );
+        navigate("/segment");
+        return;
+      }
+
+      setName(data.name);
+      setDescription(data.description || "");
+      dispatch(setSegmentsSettings(data.inclusionCriteria));
+    } catch (error) {
+      if (error instanceof AxiosError) {
+        toast.error(
+          error.response?.data.message || "Unexpected error loading segment"
+        );
+        navigate("/segment");
+        return;
+      }
+    }
+    setIsLoadingSegment(false);
   };
 
   useEffect(() => {
-    loadAllTags();
+    (async () => {
+      await loadAllTags();
+      if (id) await loadSegment();
+    })();
     return () => {
       dispatch(setShowSegmentsErrors(false));
+      dispatch(setSettingsToDefault());
     };
   }, []);
 
   return (
-    <div>
+    <div
+      className={`${
+        isLoadingSegment &&
+        "pointer-events-none cursor-wait opacity-70 animate-pulse"
+      } `}
+    >
       <div className="mb-[10px] flex items-center">
         <div className="w-[76px] mr-[15px] font-inter text-[14px] leading-[22px] text-[#18181B]">
           Name
@@ -112,21 +191,23 @@ const SegmentBuilder = () => {
           </div>
         </div>
 
-        <div
-          className={`w-[340px] px-5 py-[10px] flex flex-col gap-[10px] rounded select-none cursor-pointer ${
-            segmentType === SegmentType.MANUAL
-              ? "border-2 border-[#6366F1] bg-[#EEF2FF]"
-              : "border border-[#E5E7EB]"
-          }`}
-          onClick={() => setSegmentType(SegmentType.MANUAL)}
-        >
-          <div className="font-semibold font-inter text-base">
-            Manual segment
+        {!(segmentType === SegmentType.AUTOMATIC && id) && (
+          <div
+            className={`w-[340px] px-5 py-[10px] flex flex-col gap-[10px] rounded select-none cursor-pointer ${
+              segmentType === SegmentType.MANUAL
+                ? "border-2 border-[#6366F1] bg-[#EEF2FF]"
+                : "border border-[#E5E7EB]"
+            }`}
+            onClick={() => setSegmentType(SegmentType.MANUAL)}
+          >
+            <div className="font-semibold font-inter text-base">
+              Manual segment
+            </div>
+            <div className="font-normal text-[14px] leading-[22px] text-[#4B5563]">
+              A segment defined by a list of users, by csv upload or otherwise
+            </div>
           </div>
-          <div className="font-normal text-[14px] leading-[22px] text-[#4B5563]">
-            A segment defined by a list of users, by csv upload or otherwise
-          </div>
-        </div>
+        )}
       </div>
       <div className="mb-[10px] font-inter font-semibold text-base">
         {segmentType === SegmentType.AUTOMATIC ? "Conditions" : "CSV file"}
@@ -156,9 +237,9 @@ const SegmentBuilder = () => {
         <Button
           type={ButtonType.PRIMARY}
           className="!text-[white]"
-          onClick={handleSaveClick}
+          onClick={id ? handleUpdateClick : handleSaveClick}
         >
-          Save
+          {id ? "Update" : "Save"}
         </Button>
         <Link to="/segment">
           <Button
