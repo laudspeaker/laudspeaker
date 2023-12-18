@@ -8,11 +8,23 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { AttributeType } from '../schemas/customer-keys.schema';
+import { Trim } from 'class-sanitizer';
 
 export enum ImportOptions {
   NEW = 'NEW',
   EXISTING = 'EXISTING',
   NEW_AND_EXISTING = 'NEW_AND_EXISTING',
+}
+
+class ManualSegmentCreation {
+  @IsString()
+  @Trim()
+  name: string;
+
+  @IsOptional()
+  @Trim()
+  @IsString()
+  description: string;
 }
 
 class ImportAttribute {
@@ -52,5 +64,10 @@ export class ImportCustomersDTO {
 
   @IsString()
   fileKey: string;
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => ManualSegmentCreation)
+  withSegment?: ManualSegmentCreation;
 }
 

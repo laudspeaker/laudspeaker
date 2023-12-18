@@ -129,8 +129,7 @@ export class SegmentsService {
 
     // test code
     // this.customersService.createSegmentQuery(createSegmentDTO.inclusionCriteria.query);
-    const customersInSegment = await this.customersService.testCustomerInSegment(createSegmentDTO.inclusionCriteria.query, account);
-
+    // const customersInSegment = await this.customersService.testCustomerInSegment(createSegmentDTO.inclusionCriteria.query, account);
 
     return segment;
   }
@@ -501,7 +500,7 @@ export class SegmentsService {
         }
       )
       .execute();
-    */ 
+    */
   }
 
   public async duplicate(account: Account, id: string, session: string) {

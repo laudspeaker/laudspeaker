@@ -60,6 +60,7 @@ import * as fs from 'fs';
 import path from 'path';
 import { isValid } from 'date-fns';
 import e from 'express';
+import { SegmentType } from '../segments/entities/segment.entity';
 
 export type Correlation = {
   cust: CustomerDocument;
@@ -3845,6 +3846,23 @@ export class CustomersService {
         }
       }
 
+      let segmentId = '';
+
+      if (settings.withSegment?.name) {
+        const data = await this.segmentsService.create(
+          account,
+          {
+            name: settings.withSegment.name,
+            description: settings.withSegment.description,
+            inclusionCriteria: {},
+            resources: {},
+            type: SegmentType.MANUAL,
+          },
+          session
+        );
+        segmentId = data.id;
+      }
+
       await this.importsQueue.add('import', {
         fileData,
         clearedMapping,
@@ -3852,6 +3870,7 @@ export class CustomersService {
         settings,
         passedPK,
         session,
+        segmentId,
       });
 
       return;

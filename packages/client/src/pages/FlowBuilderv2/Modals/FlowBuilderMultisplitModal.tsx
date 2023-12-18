@@ -49,7 +49,7 @@ const FlowBuilderMultisplitModal = ({
       setShowErrors(true);
       return;
     }
-    console.log("the segment data is", JSON.stringify(bufferBranch, null, 2))
+    console.log("the segment data is", JSON.stringify(bufferBranch, null, 2));
 
     onSave(bufferBranch);
   };

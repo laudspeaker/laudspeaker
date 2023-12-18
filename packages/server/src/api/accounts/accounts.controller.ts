@@ -128,7 +128,7 @@ export class AccountsController {
         .execute();
 
       delete data?.[0].pushPlatforms?.Android?.credentials;
-      delete data?.[0].pushPlatforms?.IOS?.credentials;
+      delete data?.[0].pushPlatforms?.iOS?.credentials;
 
       return data?.[0];
     } catch (e) {

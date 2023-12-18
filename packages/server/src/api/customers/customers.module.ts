@@ -24,6 +24,9 @@ import { JourneysModule } from '../journeys/journeys.module';
 import { S3Service } from '../s3/s3.service';
 import { Imports } from './entities/imports.entity';
 import { ImportProcessor } from './imports.porcessor';
+import { SegmentsService } from '../segments/segments.service';
+import { Segment } from '../segments/entities/segment.entity';
+import { SegmentCustomers } from '../segments/entities/segment-customers.entity';
 
 @Module({
   imports: [
@@ -45,7 +48,7 @@ import { ImportProcessor } from './imports.porcessor';
     WorkflowsModule,
     EventsModule,
     StepsModule,
-    TypeOrmModule.forFeature([Account, Imports]),
+    TypeOrmModule.forFeature([Account, Imports, Segment, SegmentCustomers]),
     KafkaModule,
     JourneysModule,
   ],
