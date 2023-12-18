@@ -354,7 +354,7 @@ export class CustomersService {
     return ret;
   }
 
-/**
+  /**
    * Finds all customers that match the inclusion criteria. Uses findAll under
    * the hood.
    *
@@ -365,43 +365,43 @@ export class CustomersService {
    * @param criteria - Inclusion criteria to match on
    *
    */
- async findByInclusionCriteriaTwo(
-  account: Account,
-  criteria: any,
-  transactionSession: ClientSession,
-  session: string
-): Promise<CustomerDocument[]> {
-  let customers: CustomerDocument[] = [];
-  const ret: CustomerDocument[] = [];
-  try {
-    customers = await this.CustomerModel.find({
-      ownerId: (<Account>account).id,
-    })
-      .session(transactionSession)
-      .exec();
-  } catch (err) {
-    return Promise.reject(err);
-  }
+  async findByInclusionCriteriaTwo(
+    account: Account,
+    criteria: any,
+    transactionSession: ClientSession,
+    session: string
+  ): Promise<CustomerDocument[]> {
+    let customers: CustomerDocument[] = [];
+    const ret: CustomerDocument[] = [];
+    try {
+      customers = await this.CustomerModel.find({
+        ownerId: (<Account>account).id,
+      })
+        .session(transactionSession)
+        .exec();
+    } catch (err) {
+      return Promise.reject(err);
+    }
 
-  this.debug(
-    `${JSON.stringify({ customers })}`,
-    this.findByInclusionCriteria.name,
-    session
-  );
-  for (const customer of customers) {
-    if (
-      await this.audiencesHelper.checkInclusion(
-        customer,
-        criteria,
-        session,
-        account
+    this.debug(
+      `${JSON.stringify({ customers })}`,
+      this.findByInclusionCriteria.name,
+      session
+    );
+    for (const customer of customers) {
+      if (
+        await this.audiencesHelper.checkInclusion(
+          customer,
+          criteria,
+          session,
+          account
+        )
       )
-    )
-      ret.push(customer);
-  }
+        ret.push(customer);
+    }
 
-  return Promise.resolve(ret);
-}
+    return Promise.resolve(ret);
+  }
 
   async addPhCustomers(data: any[], account: Account) {
     for (let index = 0; index < data.length; index++) {
@@ -2065,7 +2065,7 @@ export class CustomersService {
       total: Number(totalJourneys[0].count),
     };
   }
- 
+
   /*
   * 
   * 
@@ -2100,240 +2100,254 @@ export class CustomersService {
   * @param 
   *
   */
- // *** to do ***
- //checkCustomerMatchesQuery
+  // *** to do ***
+  //checkCustomerMatchesQuery
 
- async getSegmentCustomersFromQuery(query: any, account: Account) {
-  console.log("in getsCustomersFromQuery");
-  if (query.type === 'all') {
-    console.log("the query has all (AND)");
-    if (!query.statements || query.statements.length === 0) {
-      return new Set<string>(); // Return an empty set
-    }
-    const sets = await Promise.all(
-      query.statements.map(async (statement) => {
-        return await this.getSegmentCustomersFromSubQuery(statement, account);
-      })
-    );
-    console.log("the sets are", sets);
-    console.log("about to reduce the sets");
-    const results = sets.reduce((intersection, currentSet) => {
-      if (intersection.size === 0) {
-        return currentSet;
+  async getSegmentCustomersFromQuery(query: any, account: Account) {
+    console.log('in getsCustomersFromQuery');
+    if (query.type === 'all') {
+      console.log('the query has all (AND)');
+      if (!query.statements || query.statements.length === 0) {
+        return new Set<string>(); // Return an empty set
       }
-      return new Set([...intersection].filter((item) => currentSet.has(item)));
-    }, new Set<string>());
+      const sets = await Promise.all(
+        query.statements.map(async (statement) => {
+          return await this.getSegmentCustomersFromSubQuery(statement, account);
+        })
+      );
+      console.log('the sets are', sets);
+      console.log('about to reduce the sets');
+      const results = sets.reduce((intersection, currentSet) => {
+        if (intersection.size === 0) {
+          return currentSet;
+        }
+        return new Set(
+          [...intersection].filter((item) => currentSet.has(item))
+        );
+      }, new Set<string>());
 
-    console.log('Intersection of all sets:', results);
-    return results;
-  } else if (query.type === 'any') {
-    console.log("the query has any (OR)");
-    if (!query.statements || query.statements.length === 0) {
-      return new Set<string>(); // Return an empty set
-    }
+      console.log('Intersection of all sets:', results);
+      return results;
+    } else if (query.type === 'any') {
+      console.log('the query has any (OR)');
+      if (!query.statements || query.statements.length === 0) {
+        return new Set<string>(); // Return an empty set
+      }
 
-    const sets = await Promise.all(
-      query.statements.map(async (statement) => {
-        return await this.getSegmentCustomersFromSubQuery(statement, account);
-      })
-    );
+      const sets = await Promise.all(
+        query.statements.map(async (statement) => {
+          return await this.getSegmentCustomersFromSubQuery(statement, account);
+        })
+      );
 
-    const mergedSet = new Set<string>();
+      const mergedSet = new Set<string>();
 
-    sets.forEach((set) => {
-      set.forEach((item) => {
-        mergedSet.add(item);
+      sets.forEach((set) => {
+        set.forEach((item) => {
+          mergedSet.add(item);
+        });
       });
-    });
 
-    console.log('Union of all sets:', mergedSet);
-    return mergedSet;
+      console.log('Union of all sets:', mergedSet);
+      return mergedSet;
 
-    /*
+      /*
     console.log('all sets are:', JSON.stringify(sets, null, 2));
     
     const results = new Set<string>([].concat(...sets));
     console.log('Union of all sets:', results);
     return results;
     */
+    }
+    return new Set<string>(); // Default: Return an empty set
   }
-  return new Set<string>(); // Default: Return an empty set
-}
 
- async getSegmentCustomersFromSubQuery( statement: any, account: Account) {
-  if (statement.statements && statement.statements.length > 0) {
-    // Statement has a subquery, recursively evaluate the subquery
-    return this.getSegmentCustomersFromQuery(statement, account);
-  } else {
-    return (await this.getCustomersFromStatement( statement, account));
+  async getSegmentCustomersFromSubQuery(statement: any, account: Account) {
+    if (statement.statements && statement.statements.length > 0) {
+      // Statement has a subquery, recursively evaluate the subquery
+      return this.getSegmentCustomersFromQuery(statement, account);
+    } else {
+      return await this.getCustomersFromStatement(statement, account);
+    }
+    return false;
   }
-  return false;
-}
 
-async getCustomersFromStatement( statement: any , account: Account) {
-  const { key, type, comparisonType, subComparisonType, value, subComparisonValue } = statement;
-  console.log("In evaluateStatement deciding which sub evaluate statement to go to next/n\n");
-  console.log("the type is", type);
-  console.log("the key is",key);
-  console.log("the type of key is", typeof(key));
-  console.log("the value is",value);
-  console.log("the subComparisonValue is",subComparisonValue);
+  async getCustomersFromStatement(statement: any, account: Account) {
+    const {
+      key,
+      type,
+      comparisonType,
+      subComparisonType,
+      value,
+      subComparisonValue,
+    } = statement;
+    console.log(
+      'In evaluateStatement deciding which sub evaluate statement to go to next/n\n'
+    );
+    console.log('the type is', type);
+    console.log('the key is', key);
+    console.log('the type of key is', typeof key);
+    console.log('the value is', value);
+    console.log('the subComparisonValue is', subComparisonValue);
 
-  switch (type){
-    case 'Attribute':
-      return this.customersFromAttributeStatement( statement, account);
-      break;
-    case 'Event':
-      return (await this.customersFromEventStatement( statement, account));
-    case 'Email':
-      return this.customersFromMessageStatement( statement, account, "Email");
-    case 'Push':
-      return this.customersFromMessageStatement( statement, account, "Push");
-    case 'SMS':
-      return this.customersFromMessageStatement( statement, account, "SMS");
-    case 'In-app message': 
-      return this.customersFromMessageStatement( statement, account, "In-app message"); 
-    case 'Segment':  
-      break;
-    default:
+    switch (type) {
+      case 'Attribute':
+        return this.customersFromAttributeStatement(statement, account);
+        break;
+      case 'Event':
+        return await this.customersFromEventStatement(statement, account);
+      case 'Email':
+        return this.customersFromMessageStatement(statement, account, 'Email');
+      case 'Push':
+        return this.customersFromMessageStatement(statement, account, 'Push');
+      case 'SMS':
+        return this.customersFromMessageStatement(statement, account, 'SMS');
+      case 'In-app message':
+        return this.customersFromMessageStatement(
+          statement,
+          account,
+          'In-app message'
+        );
+      case 'Segment':
+        break;
+      default:
         throw new Error('Invalid comparison type');
+    }
   }
-}
 
-async customersFromMessageStatement( statement: any, account: Account, typeOfMessage: string) {
-  console.log("In get customers from message statement");
-  console.log("the type of message is", typeOfMessage);
-  const userId = (<Account>account).id
-  console.log("account id is", userId);
-
-  const {
-    type,
-    eventCondition,
-    from,
-    fromSpecificMessage,
-    happenCondition,
-    time
-  } = statement;
-
-  const userIdCondition = `userId = '${userId}'`;
-  let sqlQuery = `SELECT customerId FROM message_status WHERE `;
-
-  if (
-    type === "Email" ||
-    type === "Push" ||
-    type === "SMS" ||
-    type === "In-App" ||
-    type === "Webhook"
+  async customersFromMessageStatement(
+    statement: any,
+    account: Account,
+    typeOfMessage: string
   ) {
-    if (from.key !== "ANY") {
-      sqlQuery += `stepId = '${fromSpecificMessage.key}' AND `;
-    }
-    
-    //to do: add support for any and for tags
+    console.log('In get customers from message statement');
+    console.log('the type of message is', typeOfMessage);
+    const userId = (<Account>account).id;
+    console.log('account id is', userId);
 
-    switch (eventCondition) {
-      case 'received':
-        //if it hasnt been sent it cant be opened or clicked
-        if (happenCondition === "has not") {
-          sqlQuery += `event != 'sent' AND `;
-          sqlQuery += `event != 'opened' AND `;
-          sqlQuery += `event != 'clicked' AND `;
-        } else {
-          sqlQuery += `event = 'sent' AND `;
-        }
-        break;
-      case 'opened':
-        if (happenCondition === "has not") {
-          sqlQuery += `event != 'opened' AND `;
-          //sqlQuery += `event != 'clicked' AND `;
-        } else {
-          sqlQuery += `event = 'opened' AND `;
-        }
-        break;
-      case 'clicked':
-        if (happenCondition === "has not") {
-          sqlQuery += `event != 'clicked' AND `;
-        } else {
-          sqlQuery += `event = 'clicked' AND `;
-        }
-        break;
-    }
-    sqlQuery += `${userIdCondition} `;
-    
-    //during
+    const {
+      type,
+      eventCondition,
+      from,
+      fromSpecificMessage,
+      happenCondition,
+      time,
+    } = statement;
+
+    const userIdCondition = `userId = '${userId}'`;
+    let sqlQuery = `SELECT customerId FROM message_status WHERE `;
+
     if (
-      time &&
-      time.comparisonType === "during" &&
-      time.timeAfter &&
-      time.timeBefore
+      type === 'Email' ||
+      type === 'Push' ||
+      type === 'SMS' ||
+      type === 'In-App' ||
+      type === 'Webhook'
     ) {
-      const timeAfter = new Date(time.timeAfter).toISOString();
-      const timeBefore = new Date(time.timeBefore).toISOString();
-      const formattedTimeBefore = timeBefore.split('.')[0]; // Remove milliseconds if not supported by ClickHouse
-      const formattedTimeAfter = timeAfter.split('.')[0]; // Remove milliseconds if not supported by ClickHouse
-      sqlQuery += `AND createdAt >= '${formattedTimeAfter}' AND createdAt <= '${formattedTimeBefore}' `;
-    } 
-    else if (
-      time &&
-      time.comparisonType === "before" &&
-      time.timeBefore
-    ) {
-      const timeBefore = new Date(time.timeBefore).toISOString();
-      const formattedTimeBefore = timeBefore.split('.')[0]; 
-      sqlQuery += `AND createdAt <= '${formattedTimeBefore}' `;
+      if (from.key !== 'ANY') {
+        sqlQuery += `stepId = '${fromSpecificMessage.key}' AND `;
+      }
+
+      //to do: add support for any and for tags
+
+      switch (eventCondition) {
+        case 'received':
+          //if it hasnt been sent it cant be opened or clicked
+          if (happenCondition === 'has not') {
+            sqlQuery += `event != 'sent' AND `;
+            sqlQuery += `event != 'opened' AND `;
+            sqlQuery += `event != 'clicked' AND `;
+          } else {
+            sqlQuery += `event = 'sent' AND `;
+          }
+          break;
+        case 'opened':
+          if (happenCondition === 'has not') {
+            sqlQuery += `event != 'opened' AND `;
+            //sqlQuery += `event != 'clicked' AND `;
+          } else {
+            sqlQuery += `event = 'opened' AND `;
+          }
+          break;
+        case 'clicked':
+          if (happenCondition === 'has not') {
+            sqlQuery += `event != 'clicked' AND `;
+          } else {
+            sqlQuery += `event = 'clicked' AND `;
+          }
+          break;
+      }
+      sqlQuery += `${userIdCondition} `;
+
+      //during
+      if (
+        time &&
+        time.comparisonType === 'during' &&
+        time.timeAfter &&
+        time.timeBefore
+      ) {
+        const timeAfter = new Date(time.timeAfter).toISOString();
+        const timeBefore = new Date(time.timeBefore).toISOString();
+        const formattedTimeBefore = timeBefore.split('.')[0]; // Remove milliseconds if not supported by ClickHouse
+        const formattedTimeAfter = timeAfter.split('.')[0]; // Remove milliseconds if not supported by ClickHouse
+        sqlQuery += `AND createdAt >= '${formattedTimeAfter}' AND createdAt <= '${formattedTimeBefore}' `;
+      } else if (time && time.comparisonType === 'before' && time.timeBefore) {
+        const timeBefore = new Date(time.timeBefore).toISOString();
+        const formattedTimeBefore = timeBefore.split('.')[0];
+        sqlQuery += `AND createdAt <= '${formattedTimeBefore}' `;
+      } else if (time && time.comparisonType === 'after' && time.timeAfter) {
+        const timeAfter = new Date(time.timeAfter).toISOString();
+        const formattedTimeAfter = timeAfter.split('.')[0];
+        sqlQuery += `AND createdAt >= '${timeAfter}' `;
+      }
+
+      console.log('the final sql squery is\n', sqlQuery);
+
+      //const testQuery = "SELECT COUNT(*) FROM message_status" ;
+      const countEvents = await this.clickhouseClient.query({
+        query: sqlQuery,
+        format: 'CSV',
+        //query_params: { customerId },
+      });
+      let customerIds = new Set<string>();
+      const stream = countEvents.stream();
+      stream.on('data', (rows: Row[]) => {
+        rows.forEach((row: Row) => {
+          const cleanedText = row.text.replace(/^"(.*)"$/, '$1'); // Removes surrounding quotes
+          console.log('this is the data', cleanedText);
+          customerIds.add(cleanedText);
+        });
+      });
+      await new Promise((resolve) => {
+        stream.on('end', () => {
+          console.log('Completed!');
+          resolve(0);
+        });
+      });
+
+      console.log('set from custoners from messages', customerIds);
+
+      return customerIds;
     }
-    else if (
-      time &&
-      time.comparisonType === "after" &&
-      time.timeAfter
-    ) {
-      const timeAfter = new Date(time.timeAfter).toISOString();
-      const formattedTimeAfter = timeAfter.split('.')[0];
-      sqlQuery += `AND createdAt >= '${timeAfter}' `;
-    }
-
-    console.log("the final sql squery is\n", sqlQuery);
-
-    //const testQuery = "SELECT COUNT(*) FROM message_status" ;
-    const countEvents = await this.clickhouseClient.query({
-      query: sqlQuery,
-      format: 'CSV',
-      //query_params: { customerId },
-    });
-    let customerIds = new Set<string>()
-    const stream = countEvents.stream()
-    stream.on('data', (rows: Row[]) => {
-      rows.forEach((row: Row) => {
-        const cleanedText = row.text.replace(/^"(.*)"$/, '$1'); // Removes surrounding quotes
-        console.log("this is the data", cleanedText);
-        customerIds.add(cleanedText);
-      })
-    })
-    await new Promise((resolve) => {
-      stream.on('end', () => {
-        console.log('Completed!')
-        resolve(0)
-      })
-    });
-
-    console.log("set from custoners from messages", customerIds);
-
-    return customerIds;
-
+    //to do: check what we should do in this case
+    //throw "Invalid statement type";
+    return false;
   }
-  //to do: check what we should do in this case
-  //throw "Invalid statement type";
-  return false;
-}
 
-async customersFromAttributeStatement(statement: any, account: Account) {
-  console.log("generating attribute mongo query");
-    const { key, comparisonType, subComparisonType, value, subComparisonValue } = statement;
+  async customersFromAttributeStatement(statement: any, account: Account) {
+    console.log('generating attribute mongo query');
+    const {
+      key,
+      comparisonType,
+      subComparisonType,
+      value,
+      subComparisonValue,
+    } = statement;
     let query: any = {
-      ownerId: (<Account>account).id
+      ownerId: (<Account>account).id,
     };
-    console.log("key is", key);
-    console.log("comparison type is", comparisonType);
+    console.log('key is', key);
+    console.log('comparison type is', comparisonType);
     switch (comparisonType) {
       case 'is equal to':
         //checked
@@ -2358,15 +2372,15 @@ async customersFromAttributeStatement(statement: any, account: Account) {
       case 'not exist':
         //checked
         query[key] = { $exists: false };
-        break;    
+        break;
       case 'is greater than':
-        query[key]  = { $gt: value };
+        query[key] = { $gt: value };
         break;
       case 'is less than':
         query[key] = { $lt: value };
         break;
-      // nested object  
-      case 'key':  
+      // nested object
+      case 'key':
         if (subComparisonType === 'equal to') {
           query[key] = { [value]: subComparisonValue };
         } else if (subComparisonType === 'not equal to') {
@@ -2384,23 +2398,22 @@ async customersFromAttributeStatement(statement: any, account: Account) {
         throw new Error('Invalid comparison type');
     }
 
-    console.log("generated attribute query is", JSON.stringify(query,null,2));
-    console.log("now grabbing customers with the query");
-    console.log("in the aggregate construction - attribute");
+    console.log('generated attribute query is', JSON.stringify(query, null, 2));
+    console.log('now grabbing customers with the query');
+    console.log('in the aggregate construction - attribute');
 
     const aggregationPipeline = [
       { $match: query },
       {
         $project: {
-          _id: 1
-        }
-      }
+          _id: 1,
+        },
+      },
     ];
 
-    const docs = await this.CustomerModel.aggregate(
-      aggregationPipeline).exec();
+    const docs = await this.CustomerModel.aggregate(aggregationPipeline).exec();
 
-    console.log("Here are the docs", JSON.stringify(docs, null, 2));
+    console.log('Here are the docs', JSON.stringify(docs, null, 2));
 
     const correlationValues = new Set<string>();
 
@@ -2408,79 +2421,88 @@ async customersFromAttributeStatement(statement: any, account: Account) {
       correlationValues.add(custData._id.toString());
     });
 
-    console.log("Here are the correlationValues", correlationValues);
+    console.log('Here are the correlationValues', correlationValues);
 
     return correlationValues;
-}
-
-async customersFromEventStatement(statement: any, account: Account) {
-  const { eventName, comparisonType, value, time, additionalProperties } = statement;
-  console.log("In customersEventStatement/n\n");
-  console.log("value is", value);
-  console.log("here are time and additional properties (if they exist)", JSON.stringify(time, null, 2));
-  console.log(JSON.stringify(additionalProperties, null, 2));
-  console.log("comparison type is", comparisonType);
-  // ****
-  const mongoQuery: any = {
-    event: eventName,
-    ownerId: (<Account>account).id
-  };
-
-  if (time) {
-    switch (time.comparisonType) {
-      case 'before':
-        //.toUTCString()
-        mongoQuery.createdAt = { $lt: new Date(time.timeBefore).toISOString() };
-        break;
-      case 'after':
-        mongoQuery.createdAt = { $gt: new Date(time.timeAfter).toISOString() };
-        break;
-      case 'during':
-        mongoQuery.createdAt = {
-          $gte: new Date(time.timeAfter).toISOString(),
-          $lte: new Date(time.timeBefore).toISOString(),
-        };
-        break;
-      default:
-        break;
-    }
   }
 
-  if (comparisonType === 'has performed') {
-    //mongoQuery.value = value;
-  } else if (comparisonType === 'has not performed') {
-    //need to check the logic for this one
-    //mongoQuery.value = { $ne: value };
-  }
-  
-  //sub property not fully tested yet
-  if (additionalProperties) {
-    const propertiesQuery: any[] = [];
-    for (const property of additionalProperties.properties) {
-      const propQuery: any = {};
-      propQuery[`payload.${property.key}`] = this.getValueComparison(property);
-      propertiesQuery.push(propQuery);
-    }
+  async customersFromEventStatement(statement: any, account: Account) {
+    const { eventName, comparisonType, value, time, additionalProperties } =
+      statement;
+    console.log('In customersEventStatement/n\n');
+    console.log('value is', value);
+    console.log(
+      'here are time and additional properties (if they exist)',
+      JSON.stringify(time, null, 2)
+    );
+    console.log(JSON.stringify(additionalProperties, null, 2));
+    console.log('comparison type is', comparisonType);
+    // ****
+    const mongoQuery: any = {
+      event: eventName,
+      ownerId: (<Account>account).id,
+    };
 
-    if (additionalProperties.comparison === 'all') {
-      if (propertiesQuery.length > 0) {
-        mongoQuery.$and = propertiesQuery;
-      }
-    } else if (additionalProperties.comparison === 'any') {
-      if (propertiesQuery.length > 0) {
-        mongoQuery.$or = propertiesQuery;
+    if (time) {
+      switch (time.comparisonType) {
+        case 'before':
+          //.toUTCString()
+          mongoQuery.createdAt = {
+            $lt: new Date(time.timeBefore).toISOString(),
+          };
+          break;
+        case 'after':
+          mongoQuery.createdAt = {
+            $gt: new Date(time.timeAfter).toISOString(),
+          };
+          break;
+        case 'during':
+          mongoQuery.createdAt = {
+            $gte: new Date(time.timeAfter).toISOString(),
+            $lte: new Date(time.timeBefore).toISOString(),
+          };
+          break;
+        default:
+          break;
       }
     }
-  }
 
-  console.log("mongo query is/n\n", JSON.stringify(mongoQuery, null, 2));
+    if (comparisonType === 'has performed') {
+      //mongoQuery.value = value;
+    } else if (comparisonType === 'has not performed') {
+      //need to check the logic for this one
+      //mongoQuery.value = { $ne: value };
+    }
 
-  // we should enact a strict policy so that matching here is done on primary key
-  // ie correlationKey = primary key, correlation values = unique identifier
+    //sub property not fully tested yet
+    if (additionalProperties) {
+      const propertiesQuery: any[] = [];
+      for (const property of additionalProperties.properties) {
+        const propQuery: any = {};
+        propQuery[`payload.${property.key}`] =
+          this.getValueComparison(property);
+        propertiesQuery.push(propQuery);
+      }
 
-  if (comparisonType === 'has performed'){ 
-    console.log("in the aggregate construction - has performed");
-      
+      if (additionalProperties.comparison === 'all') {
+        if (propertiesQuery.length > 0) {
+          mongoQuery.$and = propertiesQuery;
+        }
+      } else if (additionalProperties.comparison === 'any') {
+        if (propertiesQuery.length > 0) {
+          mongoQuery.$or = propertiesQuery;
+        }
+      }
+    }
+
+    console.log('mongo query is/n\n', JSON.stringify(mongoQuery, null, 2));
+
+    // we should enact a strict policy so that matching here is done on primary key
+    // ie correlationKey = primary key, correlation values = unique identifier
+
+    if (comparisonType === 'has performed') {
+      console.log('in the aggregate construction - has performed');
+
       const aggregationPipeline = [
         { $match: mongoQuery },
         {
@@ -2488,15 +2510,15 @@ async customersFromEventStatement(statement: any, account: Account) {
             _id: {
               correlationKey: '$correlationKey',
               correlationValue: '$correlationValue',
-              event: '$event'
+              event: '$event',
             },
-            times: { $sum: 1 }
-          }
+            times: { $sum: 1 },
+          },
         },
         {
           $match: {
-            times: { $gte: value } // Adjust this condition as needed
-          }
+            times: { $gte: value }, // Adjust this condition as needed
+          },
         },
         {
           $project: {
@@ -2504,9 +2526,9 @@ async customersFromEventStatement(statement: any, account: Account) {
             correlationKey: '$_id.correlationKey',
             correlationValue: '$_id.correlationValue',
             event: '$_id.event',
-            times: 1
-          }
-        }
+            times: 1,
+          },
+        },
       ];
       /*
       const aggregationPipeline = [
@@ -2568,12 +2590,17 @@ async customersFromEventStatement(statement: any, account: Account) {
         }
       ];
       */
-      console.log("aggregate query is/n\n", JSON.stringify(aggregationPipeline, null, 2));
-      const result = await this.eventsService.getCustomersbyEventsMongo(aggregationPipeline);
-      console.log("Here are the results", JSON.stringify(result, null, 2));
+      console.log(
+        'aggregate query is/n\n',
+        JSON.stringify(aggregationPipeline, null, 2)
+      );
+      const result = await this.eventsService.getCustomersbyEventsMongo(
+        aggregationPipeline
+      );
+      console.log('Here are the results', JSON.stringify(result, null, 2));
 
       //const firstCorrelationKey = result[0].correlationKey;
-      const correlationValues = result.map(doc => doc.correlationValue);
+      const correlationValues = result.map((doc) => doc.correlationValue);
 
       /*
       // this probably won't work for millions of customers, we need to optimize
@@ -2591,8 +2618,8 @@ async customersFromEventStatement(statement: any, account: Account) {
       */
 
       return correlationValues;
-  } else if (comparisonType === 'has not performed'){
-    console.log("in the aggregate construction - has performed");
+    } else if (comparisonType === 'has not performed') {
+      console.log('in the aggregate construction - has performed');
       const aggregationPipeline = [
         { $match: mongoQuery },
         {
@@ -2600,15 +2627,15 @@ async customersFromEventStatement(statement: any, account: Account) {
             _id: {
               correlationKey: '$correlationKey',
               correlationValue: '$correlationValue',
-              event: '$event'
+              event: '$event',
             },
-            times: { $sum: 1 }
-          }
+            times: { $sum: 1 },
+          },
         },
         {
           $match: {
-            times: { $gte: 0 } // Adjust this condition as needed
-          }
+            times: { $gte: 0 }, // Adjust this condition as needed
+          },
         },
         {
           $project: {
@@ -2616,14 +2643,19 @@ async customersFromEventStatement(statement: any, account: Account) {
             correlationKey: '$_id.correlationKey',
             correlationValue: '$_id.correlationValue',
             event: '$_id.event',
-            times: 1
-          }
-        }
+            times: 1,
+          },
+        },
       ];
 
-      console.log("aggregat query is/n\n", JSON.stringify(aggregationPipeline, null, 2));
-      const result = await this.eventsService.getCustomersbyEventsMongo(aggregationPipeline);
-      console.log("Here are the results", JSON.stringify(result, null, 2));
+      console.log(
+        'aggregat query is/n\n',
+        JSON.stringify(aggregationPipeline, null, 2)
+      );
+      const result = await this.eventsService.getCustomersbyEventsMongo(
+        aggregationPipeline
+      );
+      console.log('Here are the results', JSON.stringify(result, null, 2));
       const correlationValues = new Set<string>();
 
       result.forEach((eventData) => {
@@ -2631,16 +2663,14 @@ async customersFromEventStatement(statement: any, account: Account) {
       });
       // we need to make a call to the customers table and take the complement of result here and return that
       //return correlationValues;
-  }
-  else{
-    return new Set<string>();
+    } else {
+      return new Set<string>();
+    }
+
+    return false;
   }
 
-    return false; 
-  }
-
-
- /**
+  /**
    * Takes in a statement of the form:
    * 
            "type": "Attribute",
@@ -2660,9 +2690,9 @@ async customersFromEventStatement(statement: any, account: Account) {
    * 
    */
 
-  constructMongoQuery(statement: any){
-    console.log("constructing Mongo Query");
-    switch (statement.type){
+  constructMongoQuery(statement: any) {
+    console.log('constructing Mongo Query');
+    switch (statement.type) {
       case 'Attribute':
         return this.generateMongoAttributeQuery(statement);
         break;
@@ -2674,18 +2704,24 @@ async customersFromEventStatement(statement: any, account: Account) {
         break;
       case 'SMS':
         break;
-      case 'In-app message': 
-        break; 
-      case 'Segment':  
+      case 'In-app message':
+        break;
+      case 'Segment':
         break;
     }
   }
 
   public generateMongoAttributeQuery(queryObject: QueryObject): object {
-    console.log("generating attribute mongo query");
-    const { key, comparisonType, subComparisonType, value, subComparisonValue } = queryObject;
+    console.log('generating attribute mongo query');
+    const {
+      key,
+      comparisonType,
+      subComparisonType,
+      value,
+      subComparisonValue,
+    } = queryObject;
     let query: any = {};
-    console.log("comparison type is", comparisonType);
+    console.log('comparison type is', comparisonType);
     switch (comparisonType) {
       case 'is equal to':
         //checked
@@ -2710,15 +2746,15 @@ async customersFromEventStatement(statement: any, account: Account) {
       case 'not exist':
         //checked
         query[key] = { $exists: false };
-        break;    
+        break;
       case 'is greater than':
-        query[key]  = { $gt: value };
+        query[key] = { $gt: value };
         break;
       case 'is less than':
         query[key] = { $lt: value };
         break;
-      // nested object  
-      case 'key':  
+      // nested object
+      case 'key':
         if (subComparisonType === 'equal to') {
           query[key] = { [value]: subComparisonValue };
         } else if (subComparisonType === 'not equal to') {
@@ -2736,8 +2772,8 @@ async customersFromEventStatement(statement: any, account: Account) {
         throw new Error('Invalid comparison type');
     }
 
-    console.log("generated attribute query is", JSON.stringify(query,null,2));
-  
+    console.log('generated attribute query is', JSON.stringify(query, null, 2));
+
     return query;
   }
 
@@ -2817,71 +2853,124 @@ async customersFromEventStatement(statement: any, account: Account) {
 }
    */
   //ref func
-  async checkCustomerMatchesQuery(customer: CustomerDocument, query: any, account: Account ){
-    console.log("in checkCustomerMatchesQuery");
+  async checkCustomerMatchesQuery(
+    customer: CustomerDocument,
+    query: any,
+    account: Account
+  ) {
+    console.log('in checkCustomerMatchesQuery');
     if (query.type === 'all') {
-      console.log("the query has all (AND)");
+      console.log('the query has all (AND)');
       // 'all' logic: All conditions must be satisfied
       if (!query.statements || query.statements.length === 0) {
         // If no statements are provided, return false
         return false;
       }
       //return query.statements.every(async (statement) => (await this.evaluateStatementWithSubQuery(customer, statement , account)));
-      const results = await Promise.all(query.statements.map(async (statement) => {
-        return await this.evaluateStatementWithSubQuery(customer, statement, account);
-      }));
-      return results.every(result => result);
+      const results = await Promise.all(
+        query.statements.map(async (statement) => {
+          return await this.evaluateStatementWithSubQuery(
+            customer,
+            statement,
+            account
+          );
+        })
+      );
+      return results.every((result) => result);
     } else if (query.type === 'any') {
-      console.log("the query has any (OR)");
+      console.log('the query has any (OR)');
       // 'any' logic: At least one condition must be satisfied
       if (!query.statements || query.statements.length === 0) {
         // If no statements are provided, return true
         return true;
       }
       //return query.statements.some(async (statement) => (await this.evaluateStatementWithSubQuery(customer, statement, account)));
-      const results = await Promise.all(query.statements.map(async (statement) => {
-        return await this.evaluateStatementWithSubQuery(customer, statement, account);
-      }));
-      return results.some(result => result);
+      const results = await Promise.all(
+        query.statements.map(async (statement) => {
+          return await this.evaluateStatementWithSubQuery(
+            customer,
+            statement,
+            account
+          );
+        })
+      );
+      return results.some((result) => result);
     }
     return false;
   }
 
-  async evaluateStatementWithSubQuery(customer: CustomerDocument, statement: any, account: Account): Promise<boolean> {
+  async evaluateStatementWithSubQuery(
+    customer: CustomerDocument,
+    statement: any,
+    account: Account
+  ): Promise<boolean> {
     if (statement.statements && statement.statements.length > 0) {
       // Statement has a subquery, recursively evaluate the subquery
       return this.checkCustomerMatchesQuery(customer, statement, account);
     } else {
-      return (await this.evaluateStatement(customer, statement, account));
+      return await this.evaluateStatement(customer, statement, account);
     }
   }
-  
-  async evaluateStatement(customer: CustomerDocument, statement: any , account: Account): Promise<boolean> {
-    const { key, type, comparisonType, subComparisonType, value, subComparisonValue } = statement;
-    console.log("In evaluateStatement deciding which sub evaluate statement to go to next/n\n");
-    console.log("the type is", type);
-    console.log("the key is",key);
-    console.log("the type of key is", typeof(key));
-    console.log("the value is",value);
-    console.log("the subComparisonValue is",subComparisonValue);
 
-    switch (type){
+  async evaluateStatement(
+    customer: CustomerDocument,
+    statement: any,
+    account: Account
+  ): Promise<boolean> {
+    const {
+      key,
+      type,
+      comparisonType,
+      subComparisonType,
+      value,
+      subComparisonValue,
+    } = statement;
+    console.log(
+      'In evaluateStatement deciding which sub evaluate statement to go to next/n\n'
+    );
+    console.log('the type is', type);
+    console.log('the key is', key);
+    console.log('the type of key is', typeof key);
+    console.log('the value is', value);
+    console.log('the subComparisonValue is', subComparisonValue);
+
+    switch (type) {
       case 'Attribute':
         return this.evaluateAttributeStatement(customer, statement);
       case 'Event':
-        return (await this.evaluateEventStatement(customer, statement, account));
+        return await this.evaluateEventStatement(customer, statement, account);
       case 'Email':
-        return this.evaluateMessageStatement(customer, statement, account, "Email");
+        return this.evaluateMessageStatement(
+          customer,
+          statement,
+          account,
+          'Email'
+        );
       case 'Push':
-        return this.evaluateMessageStatement(customer, statement, account, "Push");
+        return this.evaluateMessageStatement(
+          customer,
+          statement,
+          account,
+          'Push'
+        );
       case 'SMS':
-        return this.evaluateMessageStatement(customer, statement, account, "SMS");
-      case 'In-app message': 
-        return this.evaluateMessageStatement(customer, statement, account, "In-app message"); 
-      case 'Segment':  
+        return this.evaluateMessageStatement(
+          customer,
+          statement,
+          account,
+          'SMS'
+        );
+      case 'In-app message':
+        return this.evaluateMessageStatement(
+          customer,
+          statement,
+          account,
+          'In-app message'
+        );
+      case 'Segment':
         break;
       default:
-          throw new Error('Invalid comparison type');
+        throw new Error('Invalid comparison type');
     }
   }
 
@@ -2921,11 +3010,16 @@ async customersFromEventStatement(statement: any, account: Account) {
     }
   }
 
-  async evaluateMessageStatement(customer: CustomerDocument, statement: any, account: Account, typeOfMessage: string): Promise<boolean> {
-    console.log("In evealuate message statement");
-    console.log("the type of message is", typeOfMessage);
-    const userId = (<Account>account).id
-    console.log("account id is", userId);
+  async evaluateMessageStatement(
+    customer: CustomerDocument,
+    statement: any,
+    account: Account,
+    typeOfMessage: string
+  ): Promise<boolean> {
+    console.log('In evealuate message statement');
+    console.log('the type of message is', typeOfMessage);
+    const userId = (<Account>account).id;
+    console.log('account id is', userId);
 
     const {
       type,
@@ -2933,31 +3027,31 @@ async customersFromEventStatement(statement: any, account: Account) {
       from,
       fromSpecificMessage,
       happenCondition,
-      time
+      time,
     } = statement;
-  
+
     const userIdCondition = `userId = '${userId}'`;
     let sqlQuery = `SELECT COUNT(*) FROM message_status WHERE `;
     //let sqlQuery = `SELECT * FROM message_status WHERE `;
 
     if (
-      type === "Email" ||
-      type === "Push" ||
-      type === "SMS" ||
-      type === "In-App" ||
-      type === "Webhook"
+      type === 'Email' ||
+      type === 'Push' ||
+      type === 'SMS' ||
+      type === 'In-App' ||
+      type === 'Webhook'
     ) {
-      if (from.key !== "ANY") {
+      if (from.key !== 'ANY') {
         sqlQuery += `stepId = '${fromSpecificMessage.key}' AND `;
         //sqlQuery += `fromTitle = '${from.title}' AND `;
       }
-      
+
       //to do: add support for any and for tags
 
       switch (eventCondition) {
         case 'received':
           //if it hasnt been sent it cant be opened or clicked
-          if (happenCondition === "has not") {
+          if (happenCondition === 'has not') {
             sqlQuery += `event != 'sent' AND `;
             sqlQuery += `event != 'opened' AND `;
             sqlQuery += `event != 'clicked' AND `;
@@ -2966,7 +3060,7 @@ async customersFromEventStatement(statement: any, account: Account) {
           }
           break;
         case 'opened':
-          if (happenCondition === "has not") {
+          if (happenCondition === 'has not') {
             sqlQuery += `event != 'opened' AND `;
             //sqlQuery += `event != 'clicked' AND `;
           } else {
@@ -2974,7 +3068,7 @@ async customersFromEventStatement(statement: any, account: Account) {
           }
           break;
         case 'clicked':
-          if (happenCondition === "has not") {
+          if (happenCondition === 'has not') {
             sqlQuery += `event != 'clicked' AND `;
           } else {
             sqlQuery += `event = 'clicked' AND `;
@@ -2982,11 +3076,11 @@ async customersFromEventStatement(statement: any, account: Account) {
           break;
       }
       sqlQuery += `${userIdCondition} `;
-      
+
       //during
       if (
         time &&
-        time.comparisonType === "during" &&
+        time.comparisonType === 'during' &&
         time.timeAfter &&
         time.timeBefore
       ) {
@@ -2995,21 +3089,11 @@ async customersFromEventStatement(statement: any, account: Account) {
         const formattedTimeBefore = timeBefore.split('.')[0]; // Remove milliseconds if not supported by ClickHouse
         const formattedTimeAfter = timeAfter.split('.')[0]; // Remove milliseconds if not supported by ClickHouse
         sqlQuery += `AND createdAt >= '${formattedTimeAfter}' AND createdAt <= '${formattedTimeBefore}' `;
-      } 
-      else if (
-        time &&
-        time.comparisonType === "before" &&
-        time.timeBefore
-      ) {
+      } else if (time && time.comparisonType === 'before' && time.timeBefore) {
         const timeBefore = new Date(time.timeBefore).toISOString();
-        const formattedTimeBefore = timeBefore.split('.')[0]; 
+        const formattedTimeBefore = timeBefore.split('.')[0];
         sqlQuery += `AND createdAt <= '${formattedTimeBefore}' `;
-      }
-      else if (
-        time &&
-        time.comparisonType === "after" &&
-        time.timeAfter
-      ) {
+      } else if (time && time.comparisonType === 'after' && time.timeAfter) {
         const timeAfter = new Date(time.timeAfter).toISOString();
         const formattedTimeAfter = timeAfter.split('.')[0];
         sqlQuery += `AND createdAt >= '${timeAfter}' `;
@@ -3020,7 +3104,7 @@ async customersFromEventStatement(statement: any, account: Account) {
       //   sqlQuery = sqlQuery.replace("event =", "event !=");
       // }
 
-      console.log("the final sql squery is\n", sqlQuery);
+      console.log('the final sql squery is\n', sqlQuery);
 
       //const testQuery = "SELECT COUNT(*) FROM message_status" ;
       const countEvents = await this.clickhouseClient.query({
@@ -3029,24 +3113,23 @@ async customersFromEventStatement(statement: any, account: Account) {
         //query_params: { customerId },
       });
 
-      let countOfEvents = "0";
-      const stream = countEvents.stream()
+      let countOfEvents = '0';
+      const stream = countEvents.stream();
       stream.on('data', (rows: Row[]) => {
         rows.forEach((row: Row) => {
-          console.log("this is the data",row.text)
+          console.log('this is the data', row.text);
           countOfEvents = row.text;
-        })
-      })
+        });
+      });
       await new Promise((resolve) => {
         stream.on('end', () => {
-          console.log('Completed!')
-          resolve(0)
-        })
+          console.log('Completed!');
+          resolve(0);
+        });
       });
 
       const numericValue = Number(countOfEvents);
-      return (numericValue > 0) ? true : false ;
-
+      return numericValue > 0 ? true : false;
     }
     //to do: check what we should do in this case
     //throw "Invalid statement type";
@@ -3058,17 +3141,25 @@ async customersFromEventStatement(statement: any, account: Account) {
    * something like: mongoQuery[correlationKey] = correlationValue
 
    */
-  
-  async evaluateEventStatement(customer: CustomerDocument, statement: any, account: Account): Promise<boolean> {
-    const { eventName, comparisonType, value, time, additionalProperties } = statement;
-    console.log("In evaluateEventStatement/n\n");
-    console.log("here are time and additional properties (if they exist)", JSON.stringify(time, null, 2));
+
+  async evaluateEventStatement(
+    customer: CustomerDocument,
+    statement: any,
+    account: Account
+  ): Promise<boolean> {
+    const { eventName, comparisonType, value, time, additionalProperties } =
+      statement;
+    console.log('In evaluateEventStatement/n\n');
+    console.log(
+      'here are time and additional properties (if they exist)',
+      JSON.stringify(time, null, 2)
+    );
     console.log(JSON.stringify(additionalProperties, null, 2));
-    console.log("comparison type is", comparisonType);
+    console.log('comparison type is', comparisonType);
     // ****
     const mongoQuery: any = {
       event: eventName,
-      ownerId: (<Account>account).id
+      ownerId: (<Account>account).id,
     };
 
     // const filteredCustomer = Object.entries(customer)
@@ -3090,10 +3181,14 @@ async customersFromEventStatement(statement: any, account: Account) {
       switch (time.comparisonType) {
         case 'before':
           //.toUTCString()
-          mongoQuery.createdAt = { $lt: new Date(time.timeBefore).toISOString() };
+          mongoQuery.createdAt = {
+            $lt: new Date(time.timeBefore).toISOString(),
+          };
           break;
         case 'after':
-          mongoQuery.createdAt = { $gt: new Date(time.timeAfter).toISOString() };
+          mongoQuery.createdAt = {
+            $gt: new Date(time.timeAfter).toISOString(),
+          };
           break;
         case 'during':
           mongoQuery.createdAt = {
@@ -3105,16 +3200,17 @@ async customersFromEventStatement(statement: any, account: Account) {
           break;
       }
     }
-    
+
     //sub property not fully tested yet
     if (additionalProperties) {
       const propertiesQuery: any[] = [];
       for (const property of additionalProperties.properties) {
         const propQuery: any = {};
-        propQuery[`payload.${property.key}`] = this.getValueComparison(property);
+        propQuery[`payload.${property.key}`] =
+          this.getValueComparison(property);
         propertiesQuery.push(propQuery);
       }
-  
+
       if (additionalProperties.comparison === 'all') {
         if (propertiesQuery.length > 0) {
           mongoQuery.$and = propertiesQuery;
@@ -3126,35 +3222,52 @@ async customersFromEventStatement(statement: any, account: Account) {
       }
     }
 
-    console.log("mongo query is/n\n", JSON.stringify(mongoQuery, null, 2));
+    console.log('mongo query is/n\n', JSON.stringify(mongoQuery, null, 2));
     if (comparisonType === 'has performed') {
-      return (await this.eventsService.getEventsByMongo(mongoQuery, customer )) >= value ? true : false ;
+      return (await this.eventsService.getEventsByMongo(
+        mongoQuery,
+        customer
+      )) >= value
+        ? true
+        : false;
     } else if (comparisonType === 'has not performed') {
       //need to check the logic for this one
-      return (await this.eventsService.getEventsByMongo(mongoQuery, customer )) < 1 ? true : false ;
+      return (await this.eventsService.getEventsByMongo(mongoQuery, customer)) <
+        1
+        ? true
+        : false;
     }
     //return (await this.eventsService.getEventsByMongo(mongoQuery )) >= value ? true : false ;
     return false;
   }
 
+  evaluateAttributeStatement(
+    customer: CustomerDocument,
+    statement: any
+  ): boolean {
+    console.log('In evaluateAttributeStatement/n\n');
 
-
-  evaluateAttributeStatement(customer: CustomerDocument, statement: any): boolean {
-    console.log("In evaluateAttributeStatement/n\n");
-
-    const { key, comparisonType, subComparisonType, value, subComparisonValue } = statement;
-
+    const {
+      key,
+      comparisonType,
+      subComparisonType,
+      value,
+      subComparisonValue,
+    } = statement;
 
     if (!(key in customer)) {
-      console.log("apparently the customer does not have the key", JSON.stringify(customer,null,2));
+      console.log(
+        'apparently the customer does not have the key',
+        JSON.stringify(customer, null, 2)
+      );
       return false;
     }
-  
+
     const customerValue = customer[key];
-    console.log("the customerValue is",customerValue);
-  
+    console.log('the customerValue is', customerValue);
+
     // Perform comparison based on comparisonType
-    console.log("comparison type is", comparisonType);
+    console.log('comparison type is', comparisonType);
     switch (comparisonType) {
       case 'is equal to':
         //not checked
@@ -3186,33 +3299,39 @@ async customersFromEventStatement(statement: any, account: Account) {
         }
         return false;
       //not checked
-      // nested object  
-      case 'key':  
+      // nested object
+      case 'key':
         //const customerValue = customer[key];
         if (subComparisonType === 'equal to') {
-          if((!(value in customerValue))){
+          if (!(value in customerValue)) {
             return false;
           } else {
             return customerValue[value] === subComparisonValue;
           }
         } else if (subComparisonType === 'not equal to') {
-          if((value in customerValue)){
+          if (value in customerValue) {
             return false;
           } else {
             return customerValue[value] !== subComparisonValue;
           }
         } else if (subComparisonType === 'exist') {
-          if((!(value in customerValue))){
+          if (!(value in customerValue)) {
             return false;
           } else {
-            return customerValue[value] !== undefined && customerValue[value] !== null;
-          } 
+            return (
+              customerValue[value] !== undefined &&
+              customerValue[value] !== null
+            );
+          }
         } else if (subComparisonType === 'not exist') {
-          if((value in customerValue)){
+          if (value in customerValue) {
             return true;
           } else {
-            return customerValue[value] === undefined || customerValue[value] === null;
-          } 
+            return (
+              customerValue[value] === undefined ||
+              customerValue[value] === null
+            );
+          }
         } else {
           throw new Error('Invalid sub-comparison type for nested property');
         }
@@ -3222,32 +3341,31 @@ async customersFromEventStatement(statement: any, account: Account) {
     }
   }
 
-  async testCustomerInSegment(query: any, account: Account){
-
-    console.log("In Test Customer Segment");
-    console.log("test query is", JSON.stringify(query,null,2));
+  async testCustomerInSegment(query: any, account: Account) {
+    console.log('In Test Customer Segment');
+    console.log('test query is', JSON.stringify(query, null, 2));
 
     let testCustomer = new this.CustomerModel({
-      "externalId": "657619ac0cd6aa53b5910962",
-      "firstName": "A",
-      "lastName": "B",
-      "email": "abe@example.com",
-      "workflows": [],
-      "journeys": [
-        "12624e62-367e-483b-9ddf-38160f4fd955"
-      ],
-      "ownerId": "c65069d2-ef33-427b-b093-6dd5870c4c33",
-      "posthogId": [],
-      "verified": true,
-      "__v": 0,
+      externalId: '657619ac0cd6aa53b5910962',
+      firstName: 'A',
+      lastName: 'B',
+      email: 'abe@example.com',
+      workflows: [],
+      journeys: ['12624e62-367e-483b-9ddf-38160f4fd955'],
+      ownerId: 'c65069d2-ef33-427b-b093-6dd5870c4c33',
+      posthogId: [],
+      verified: true,
+      __v: 0,
     });
 
     //console.log("test customer is", JSON.stringify(testCustomer,null,2));
     //console.log("the segment and the customer are", await this.checkCustomerMatchesQuery(testCustomer, query, account));
-    console.log("the segment is", await this.getSegmentCustomersFromQuery(query, account));
-
+    console.log(
+      'the segment is',
+      await this.getSegmentCustomersFromQuery(query, account)
+    );
   }
-  
+
   public async searchForTest(
     account: Account,
     take = 100,
