@@ -129,7 +129,8 @@ export class SegmentsService {
 
     // test code
     // this.customersService.createSegmentQuery(createSegmentDTO.inclusionCriteria.query);
-    await this.customersService.testCustomerInSegment(createSegmentDTO.inclusionCriteria.query, account);
+    const customersInSegment = await this.customersService.testCustomerInSegment(createSegmentDTO.inclusionCriteria.query, account);
+
 
     return segment;
   }
@@ -477,6 +478,14 @@ export class SegmentsService {
     account: Account,
     customerId: string
   ) {
+    /*
+    await this.segmentCustomersRepository.delete({
+      segment:{type:SegmentType.AUTOMATIC},
+      customerId: customerId,
+      owner: {id:account.id}
+    })
+    */
+    /*
     await this.segmentCustomersRepository
       .createQueryBuilder()
       .delete()
@@ -492,6 +501,7 @@ export class SegmentsService {
         }
       )
       .execute();
+    */ 
   }
 
   public async duplicate(account: Account, id: string, session: string) {
