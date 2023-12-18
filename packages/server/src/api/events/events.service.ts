@@ -389,15 +389,14 @@ export class EventsService {
     customer: CustomerDocument,
     //numberOfTimes: Number,
   ) {
-    console.log("In getEvents by mongo");
+    //console.log("In getEvents by mongo");
 
     const tehevents = await this.EventModel.find(mongoQuery).exec();;
-    console.log("events are", JSON.stringify(tehevents, null, 2))
+    //console.log("events are", JSON.stringify(tehevents, null, 2))
 
     //console.log("events are", JSON.stringify(await this.EventModel.find(mongoQuery).exec(),null, 2));
     const count = await this.EventModel.count(mongoQuery).exec();
-    console.log("here");
-    console.log("count is", count);
+    //console.log("count is", count);
     return count;
   }
 
@@ -407,7 +406,7 @@ export class EventsService {
       //externalId: boolean,
       //numberOfTimes: Number,
     ) {
-      console.log("In getCustomersbyEventsMongo by mongo");
+      //console.log("In getCustomersbyEventsMongo by mongo");
 
       const docs = await this.EventModel.aggregate(
         aggregationPipeline).exec();
