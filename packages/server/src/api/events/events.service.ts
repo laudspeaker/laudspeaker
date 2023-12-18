@@ -318,8 +318,6 @@ export class EventsService {
     return keyTypes;
   }
 
-  
-
   async getPossibleComparisonTypes(
     type: string,
     session: string,

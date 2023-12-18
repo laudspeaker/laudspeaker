@@ -2118,6 +2118,7 @@ export class CustomersService {
         return await this.getSegmentCustomersFromSubQuery(statement, account);
       })
     );
+    console.log("the sets are", sets);
     console.log("about to reduce the sets");
     const results = sets.reduce((intersection, currentSet) => {
       if (intersection.size === 0) {
@@ -2133,15 +2134,31 @@ export class CustomersService {
     if (!query.statements || query.statements.length === 0) {
       return new Set<string>(); // Return an empty set
     }
+
     const sets = await Promise.all(
       query.statements.map(async (statement) => {
         return await this.getSegmentCustomersFromSubQuery(statement, account);
       })
     );
+
+    const mergedSet = new Set<string>();
+
+    sets.forEach((set) => {
+      set.forEach((item) => {
+        mergedSet.add(item);
+      });
+    });
+
+    console.log('Union of all sets:', mergedSet);
+    return mergedSet;
+
+    /*
+    console.log('all sets are:', JSON.stringify(sets, null, 2));
     
     const results = new Set<string>([].concat(...sets));
     console.log('Union of all sets:', results);
     return results;
+    */
   }
   return new Set<string>(); // Default: Return an empty set
 }
@@ -2172,13 +2189,13 @@ async getCustomersFromStatement( statement: any , account: Account) {
     case 'Event':
       return (await this.customersFromEventStatement( statement, account));
     case 'Email':
-      //return this.customersFromMessageStatement( statement, account, "Email");
+      return this.customersFromMessageStatement( statement, account, "Email");
     case 'Push':
-      //return this.customersFromMessageStatement( statement, account, "Push");
+      return this.customersFromMessageStatement( statement, account, "Push");
     case 'SMS':
-      //return this.customersFromMessageStatement( statement, account, "SMS");
+      return this.customersFromMessageStatement( statement, account, "SMS");
     case 'In-app message': 
-      //return this.customersFromMessageStatement( statement, account, "In-app message"); 
+      return this.customersFromMessageStatement( statement, account, "In-app message"); 
     case 'Segment':  
       break;
     default:
@@ -2186,9 +2203,217 @@ async getCustomersFromStatement( statement: any , account: Account) {
   }
 }
 
-async customersFromAttributeStatement(customer: CustomerDocument, statement: any) {
-  
+async customersFromMessageStatement( statement: any, account: Account, typeOfMessage: string) {
+  console.log("In get customers from message statement");
+  console.log("the type of message is", typeOfMessage);
+  const userId = (<Account>account).id
+  console.log("account id is", userId);
+
+  const {
+    type,
+    eventCondition,
+    from,
+    fromSpecificMessage,
+    happenCondition,
+    time
+  } = statement;
+
+  const userIdCondition = `userId = '${userId}'`;
+  let sqlQuery = `SELECT customerId FROM message_status WHERE `;
+
+  if (
+    type === "Email" ||
+    type === "Push" ||
+    type === "SMS" ||
+    type === "In-App" ||
+    type === "Webhook"
+  ) {
+    if (from.key !== "ANY") {
+      sqlQuery += `stepId = '${fromSpecificMessage.key}' AND `;
+    }
+    
+    //to do: add support for any and for tags
+
+    switch (eventCondition) {
+      case 'received':
+        //if it hasnt been sent it cant be opened or clicked
+        if (happenCondition === "has not") {
+          sqlQuery += `event != 'sent' AND `;
+          sqlQuery += `event != 'opened' AND `;
+          sqlQuery += `event != 'clicked' AND `;
+        } else {
+          sqlQuery += `event = 'sent' AND `;
+        }
+        break;
+      case 'opened':
+        if (happenCondition === "has not") {
+          sqlQuery += `event != 'opened' AND `;
+          //sqlQuery += `event != 'clicked' AND `;
+        } else {
+          sqlQuery += `event = 'opened' AND `;
+        }
+        break;
+      case 'clicked':
+        if (happenCondition === "has not") {
+          sqlQuery += `event != 'clicked' AND `;
+        } else {
+          sqlQuery += `event = 'clicked' AND `;
+        }
+        break;
+    }
+    sqlQuery += `${userIdCondition} `;
+    
+    //during
+    if (
+      time &&
+      time.comparisonType === "during" &&
+      time.timeAfter &&
+      time.timeBefore
+    ) {
+      const timeAfter = new Date(time.timeAfter).toISOString();
+      const timeBefore = new Date(time.timeBefore).toISOString();
+      const formattedTimeBefore = timeBefore.split('.')[0]; // Remove milliseconds if not supported by ClickHouse
+      const formattedTimeAfter = timeAfter.split('.')[0]; // Remove milliseconds if not supported by ClickHouse
+      sqlQuery += `AND createdAt >= '${formattedTimeAfter}' AND createdAt <= '${formattedTimeBefore}' `;
+    } 
+    else if (
+      time &&
+      time.comparisonType === "before" &&
+      time.timeBefore
+    ) {
+      const timeBefore = new Date(time.timeBefore).toISOString();
+      const formattedTimeBefore = timeBefore.split('.')[0]; 
+      sqlQuery += `AND createdAt <= '${formattedTimeBefore}' `;
+    }
+    else if (
+      time &&
+      time.comparisonType === "after" &&
+      time.timeAfter
+    ) {
+      const timeAfter = new Date(time.timeAfter).toISOString();
+      const formattedTimeAfter = timeAfter.split('.')[0];
+      sqlQuery += `AND createdAt >= '${timeAfter}' `;
+    }
+
+    console.log("the final sql squery is\n", sqlQuery);
+
+    //const testQuery = "SELECT COUNT(*) FROM message_status" ;
+    const countEvents = await this.clickhouseClient.query({
+      query: sqlQuery,
+      format: 'CSV',
+      //query_params: { customerId },
+    });
+    let customerIds = new Set<string>()
+    const stream = countEvents.stream()
+    stream.on('data', (rows: Row[]) => {
+      rows.forEach((row: Row) => {
+        const cleanedText = row.text.replace(/^"(.*)"$/, '$1'); // Removes surrounding quotes
+        console.log("this is the data", cleanedText);
+        customerIds.add(cleanedText);
+      })
+    })
+    await new Promise((resolve) => {
+      stream.on('end', () => {
+        console.log('Completed!')
+        resolve(0)
+      })
+    });
+
+    console.log("set from custoners from messages", customerIds);
+
+    return customerIds;
+
+  }
+  //to do: check what we should do in this case
+  //throw "Invalid statement type";
   return false;
+}
+
+async customersFromAttributeStatement(statement: any, account: Account) {
+  console.log("generating attribute mongo query");
+    const { key, comparisonType, subComparisonType, value, subComparisonValue } = statement;
+    let query: any = {
+      ownerId: (<Account>account).id
+    };
+    console.log("key is", key);
+    console.log("comparison type is", comparisonType);
+    switch (comparisonType) {
+      case 'is equal to':
+        //checked
+        query[key] = value;
+        break;
+      case 'is not equal to':
+        //checked
+        query[key] = { $ne: value };
+        break;
+      case 'contains':
+        // doesnt seem to be working
+        query[key] = { $regex: new RegExp(value, 'i') };
+        break;
+      case 'does not contain':
+        // doesnt seem to be working
+        query[key] = { $not: new RegExp(value, 'i') };
+        break;
+      case 'exist':
+        //checked
+        query[key] = { $exists: true };
+        break;
+      case 'not exist':
+        //checked
+        query[key] = { $exists: false };
+        break;    
+      case 'is greater than':
+        query[key]  = { $gt: value };
+        break;
+      case 'is less than':
+        query[key] = { $lt: value };
+        break;
+      // nested object  
+      case 'key':  
+        if (subComparisonType === 'equal to') {
+          query[key] = { [value]: subComparisonValue };
+        } else if (subComparisonType === 'not equal to') {
+          query[key] = { [value]: { $ne: subComparisonValue } };
+        } else if (subComparisonType === 'exist') {
+          query[key] = { [value]: { $exists: true } };
+        } else if (subComparisonType === 'not exist') {
+          query[key] = { [value]: { $exists: false } };
+        } else {
+          throw new Error('Invalid sub-comparison type for nested property');
+        }
+        break;
+      // Add more cases for other comparison types as needed
+      default:
+        throw new Error('Invalid comparison type');
+    }
+
+    console.log("generated attribute query is", JSON.stringify(query,null,2));
+    console.log("now grabbing customers with the query");
+    console.log("in the aggregate construction - attribute");
+
+    const aggregationPipeline = [
+      { $match: query },
+      {
+        $project: {
+          _id: 1
+        }
+      }
+    ];
+
+    const docs = await this.CustomerModel.aggregate(
+      aggregationPipeline).exec();
+
+    console.log("Here are the docs", JSON.stringify(docs, null, 2));
+
+    const correlationValues = new Set<string>();
+
+    docs.forEach((custData) => {
+      correlationValues.add(custData._id.toString());
+    });
+
+    console.log("Here are the correlationValues", correlationValues);
+
+    return correlationValues;
 }
 
 async customersFromEventStatement(statement: any, account: Account) {
@@ -2255,8 +2480,10 @@ async customersFromEventStatement(statement: any, account: Account) {
 
   // we should enact a strict policy so that matching here is done on primary key
   // ie correlationKey = primary key, correlation values = unique identifier
+
   if (comparisonType === 'has performed'){ 
     console.log("in the aggregate construction - has performed");
+      
       const aggregationPipeline = [
         { $match: mongoQuery },
         {
@@ -2284,18 +2511,87 @@ async customersFromEventStatement(statement: any, account: Account) {
           }
         }
       ];
-
-      console.log("aggregat query is/n\n", JSON.stringify(aggregationPipeline, null, 2));
-
+      /*
+      const aggregationPipeline = [
+        { $match: mongoQuery },
+        {
+          $group: {
+            _id: {
+              correlationKey: '$correlationKey',
+              correlationValue: '$correlationValue',
+              event: '$event'
+            },
+            times: { $sum: 1 }
+          }
+        },
+        {
+          $match: {
+            times: { $gte: value }
+          }
+        },
+        {
+          $project: {
+            _id: 0,
+            correlationKey: '$_id.correlationKey',
+            correlationValue: '$_id.correlationValue',
+            event: '$_id.event',
+            times: 1
+          }
+        },
+        {
+          $addFields: {
+            lookupCorrelationKey: '$correlationKey',
+            lookupCorrelationValue: '$correlationValue'
+          }
+        },
+        {
+          $lookup: {
+            from: 'customers',
+            let: {
+              correlationKey: '$lookupCorrelationKey',
+              correlationValue: '$lookupCorrelationValue'
+            },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $eq: ['$correlationKey', '$$correlationValue']
+                  }
+                }
+              }
+              // Add any additional stages if needed
+            ],
+            as: 'matchedCustomers'
+          }
+        },
+        {
+          $match: {
+            matchedCustomers: { $ne: [] }
+          }
+        }
+      ];
+      */
+      console.log("aggregate query is/n\n", JSON.stringify(aggregationPipeline, null, 2));
       const result = await this.eventsService.getCustomersbyEventsMongo(aggregationPipeline);
-
       console.log("Here are the results", JSON.stringify(result, null, 2));
 
-      const correlationValues = new Set<string>();
+      //const firstCorrelationKey = result[0].correlationKey;
+      const correlationValues = result.map(doc => doc.correlationValue);
+
+      /*
+      // this probably won't work for millions of customers, we need to optimize
+      const customers = await this.CustomerModel.find(
+        { firstCorrelationKey: { $in: correlationValues } },
+        { _id: 1 } // Specify to only retrieve the _id field
+      ).exec();
+
+      const customerIds = new Set<string>();
+      
 
       result.forEach((eventData) => {
-        correlationValues.add(eventData.correlationValue);
+        customerIds.add(eventData.correlationValue);
       });
+      */
 
       return correlationValues;
   } else if (comparisonType === 'has not performed'){
