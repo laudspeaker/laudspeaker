@@ -128,6 +128,7 @@ export class CustomersService {
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
     private readonly logger: Logger,
     @InjectQueue('customers') private readonly customersQueue: Queue,
+    @InjectQueue('imports') private readonly importsQueue: Queue,
     @InjectModel(Customer.name) public CustomerModel: Model<CustomerDocument>,
     @InjectModel(CustomerKeys.name)
     public CustomerKeysModel: Model<CustomerKeysDocument>,
@@ -167,33 +168,6 @@ export class CustomersService {
         this.error(e, CustomersService.name, session);
       }
     })();
-    this.CustomerModel.watch().on('change', async (data: any) => {
-      try {
-        const customerId = data?.documentKey?._id;
-        if (!customerId) return;
-        if (data.operationType === 'delete') {
-          await this.deleteEverywhere(customerId.toString());
-        } else {
-          const customer = await this.CustomerModel.findById(customerId).exec();
-
-          if (!customer?.ownerId) return;
-
-          const account = await this.accountsRepository.findOneBy({
-            id: customer.ownerId,
-          });
-
-          await this.segmentsService.updateAutomaticSegmentCustomerInclusion(
-            account,
-            customer,
-            session
-          );
-
-          await this.recheckDynamicInclusion(account, customer, session);
-        }
-      } catch (e) {
-        this.error(e, this.constructor.name, session);
-      }
-    });
   }
 
   log(message, method, session, user = 'ANONYMOUS') {
@@ -1554,6 +1528,16 @@ export class CustomersService {
     );
   }
 
+  private async removeFile(filePath: string): Promise<void> {
+    fs.unlink(filePath, (err) => {
+      if (err) {
+        console.error(`Error removing file: ${filePath}`, err);
+      } else {
+        console.log(`Successfully removed file: ${filePath}`);
+      }
+    });
+  }
+
   async uploadCSV(
     account: Account,
     csvFile: Express.Multer.File,
@@ -1573,34 +1557,36 @@ export class CustomersService {
         let recordCount = 0;
         let emptyCount = 0;
 
-        parse(
-          csvFile.buffer,
-          {
-            columns: true,
+        const fileStream = fs.createReadStream(csvFile.path);
+
+        fastcsv
+          .parseStream(fileStream, {
+            headers: true,
             delimiter: ',',
             encoding: 'utf-8',
-            onRecord: (record, { lines }) => {
-              if (!headers.length) headers = Object.keys(record);
+          })
+          .on('data', (record) => {
+            if (!headers.length) headers = Object.keys(record);
 
-              if (recordCount < 3) {
-                firstThreeRecords.push(record);
-                recordCount++;
+            if (recordCount < 3) {
+              firstThreeRecords.push(record);
+              recordCount++;
+            }
+
+            Object.values(record).forEach((el) => {
+              if (!el) {
+                emptyCount += 1;
               }
+            });
 
-              Object.values(record).forEach((el) => {
-                if (!el) {
-                  emptyCount += 1;
-                }
-              });
-
-              return recordCount <= 3 ? record : false;
-            },
-          },
-          (csvError) => {
-            if (csvError) reject(csvError);
-            else resolve({ headers, firstThreeRecords, emptyCount });
-          }
-        );
+            return recordCount <= 3 ? record : false;
+          })
+          .on('error', (error) => {
+            reject(error);
+          })
+          .on('finish', () => {
+            resolve({ headers, firstThreeRecords, emptyCount });
+          });
       });
 
       const res = await errorPromise;
@@ -1629,7 +1615,9 @@ export class CustomersService {
         });
       });
 
-      this.removeImportFile(account);
+      try {
+        await this.removeImportFile(account);
+      } catch (error) {}
 
       const { key } = await this.s3Service.uploadCustomerImportFile(
         csvFile,
@@ -1645,10 +1633,14 @@ export class CustomersService {
         emptyCount: res.emptyCount,
       });
 
+      await this.removeFile(csvFile.path);
+
       return;
     } catch (error) {
       this.error(error, this.uploadCSV.name, session);
       this.removeImportFile(account);
+      // Local file removal
+      await this.removeFile(csvFile.path);
       throw error;
     }
   }
@@ -1685,7 +1677,12 @@ export class CustomersService {
       const primaryAttribute = await this.CustomerKeysModel.findOne({
         $and: [{ isPrimary: true }, { ownerId: account.id }],
       });
-      return { ...importFile, primaryAttribute };
+
+      const response = { ...importFile, primaryAttribute: undefined };
+      if (primaryAttribute) {
+        response.primaryAttribute = primaryAttribute.toObject();
+      }
+      return response;
     } catch (error) {
       this.error(error, this.getLastImportCSV.name, session);
       throw new BadRequestException(
@@ -3391,6 +3388,7 @@ async customersFromEventStatement(statement: any, account: Account) {
     settings: ImportCustomersDTO,
     session: string
   ) {
+    let errorFilePath = '';
     try {
       const fileData = await this.importsRepository.findOneBy({
         account: {
@@ -3446,9 +3444,37 @@ async customersFromEventStatement(statement: any, account: Account) {
         );
       }
 
+      const docs = await this.CustomerModel.aggregate([
+        {
+          $match: {
+            ownerId: account.id,
+          },
+        },
+        {
+          $group: {
+            _id: `$${passedPK.asAttribute.key}`,
+            count: { $sum: 1 },
+            docs: { $push: '$$ROOT' },
+          },
+        },
+        {
+          $match: {
+            count: { $gt: 1 },
+          },
+        },
+      ]).option({ allowDiskUse: true });
+
+      if (!!docs?.length) {
+        throw new HttpException(
+          "Selected primary key can't be used cause it's value has duplicates among already existing users.",
+          HttpStatus.BAD_REQUEST
+        );
+      }
+
       const folderPath = 'import-errors';
       const errorFileName = `errors-${fileData.fileKey}.csv`;
       const fullPath = path.join(folderPath, errorFileName);
+      errorFilePath = fullPath;
 
       if (!fs.existsSync(folderPath)) {
         fs.mkdirSync(folderPath, { recursive: true });
@@ -3581,7 +3607,136 @@ async customersFromEventStatement(statement: any, account: Account) {
           )) as string;
       }
 
+      await this.removeFile(fullPath);
+
       return { ...countResults, url: uploadResult };
+    } catch (error) {
+      this.error(error, this.countImportPreview.name, session);
+      if (errorFilePath) await this.removeFile(errorFilePath);
+      throw error;
+    }
+  }
+
+  async startImport(
+    account: Account,
+    settings: ImportCustomersDTO,
+    session: string
+  ) {
+    try {
+      const fileData = await this.importsRepository.findOneBy({
+        account: {
+          id: account.id,
+        },
+        fileKey: settings.fileKey,
+      });
+
+      if (!fileData) {
+        throw new HttpException(
+          'File for analysis is missing, check if you have file uploaded.',
+          HttpStatus.BAD_REQUEST
+        );
+      }
+
+      const clearedMapping: Record<string, MappingParam> = {};
+      Object.keys(settings.mapping).forEach((el) => {
+        if (
+          settings.mapping[el]?.asAttribute &&
+          !settings.mapping[el]?.asAttribute.skip
+        ) {
+          clearedMapping[el] = { ...settings.mapping[el] };
+        }
+      });
+
+      const primaryArr = Object.values(clearedMapping).filter(
+        (el) => el.isPrimary
+      );
+
+      if (primaryArr.length !== 1) {
+        throw new HttpException(
+          'Primary key should be defined and should be selected only one.',
+          HttpStatus.BAD_REQUEST
+        );
+      }
+
+      const passedPK = primaryArr[0];
+      const savedPK = await this.CustomerKeysModel.findOne({
+        ownerId: account.id,
+        isPrimary: true,
+      }).exec();
+
+      if (
+        savedPK &&
+        !(
+          savedPK.type === passedPK.asAttribute.type &&
+          savedPK.key === passedPK.asAttribute.key
+        )
+      ) {
+        throw new HttpException(
+          'Field selected as primary not corresponding to saved primary Key',
+          HttpStatus.BAD_REQUEST
+        );
+      }
+
+      const docs = await this.CustomerModel.aggregate([
+        {
+          $match: {
+            ownerId: account.id,
+          },
+        },
+        {
+          $group: {
+            _id: `$${passedPK.asAttribute.key}`,
+            count: { $sum: 1 },
+            docs: { $push: '$$ROOT' },
+          },
+        },
+        {
+          $match: {
+            count: { $gt: 1 },
+          },
+        },
+      ]).option({ allowDiskUse: true });
+
+      if (!!docs?.length) {
+        throw new HttpException(
+          "Selected primary key can't be used cause it's value has duplicates among already existing users.",
+          HttpStatus.BAD_REQUEST
+        );
+      }
+
+      if (!savedPK && passedPK) {
+        const afterSaveNewPK = await this.CustomerKeysModel.findOneAndUpdate(
+          {
+            ownerId: account.id,
+            key: passedPK.asAttribute.key,
+            type: passedPK.asAttribute.type,
+          },
+          {
+            isPrimary: true,
+          },
+          {
+            new: true,
+          }
+        ).exec();
+
+        if (!afterSaveNewPK) {
+          throw new HttpException(
+            "Couldn't save selected primary key.",
+            HttpStatus.BAD_REQUEST
+          );
+        }
+      }
+
+      await this.importsQueue.add('import', {
+        fileData,
+        clearedMapping,
+        account,
+        settings,
+        passedPK,
+        session,
+      });
+
+      return;
     } catch (error) {
       this.error(error, this.countImportPreview.name, session);
       throw error;

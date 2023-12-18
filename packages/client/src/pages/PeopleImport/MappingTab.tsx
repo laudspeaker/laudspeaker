@@ -56,9 +56,38 @@ const MappingTab = ({
   };
 
   const loadPossibleKeys = async () => {
-    const { data } = await ApiService.get({
+    const { data } = await ApiService.get<any[]>({
       url: `/customers/possible-attributes?removeLimit=true&type=String&type=Number&type=Boolean&type=Email&type=Date&isArray=false`,
     });
+
+    if (
+      fileData?.primaryAttribute &&
+      !Object.values(mappingSettings).find((el) => el.isPrimary)
+    ) {
+      const pk = data.find((el) => el.isPrimary);
+      if (
+        fileData?.primaryAttribute.key === pk.key &&
+        fileData?.primaryAttribute.type === pk.type
+      ) {
+        const suggestedFieldForPK = Object.keys(fileData.headers).find(
+          (el: string) => el.toLowerCase().includes(pk.key.toLowerCase())
+        );
+        if (suggestedFieldForPK) {
+          updateSettings({
+            [suggestedFieldForPK]: {
+              ...mappingSettings[suggestedFieldForPK],
+              asAttribute: {
+                key: pk.key,
+                type: pk.type,
+                skip: false,
+              },
+              isPrimary: true,
+            },
+          });
+        }
+      }
+    }
+
     setPossibleKeys(data);
   };
 
@@ -90,8 +119,15 @@ const MappingTab = ({
           skip: selectKey === "_SKIP_RECORD_;-;_SKIP_RECORD_",
         },
         isPrimary:
-          selectKey === "_SKIP_RECORD_;-;_SKIP_RECORD_"
+          selectKey === "_SKIP_RECORD_;-;_SKIP_RECORD_" ||
+          (fileData?.primaryAttribute &&
+            fileData?.primaryAttribute.key !== key &&
+            fileData?.primaryAttribute.type !== type)
             ? false
+            : fileData?.primaryAttribute &&
+              fileData?.primaryAttribute.key === key &&
+              fileData?.primaryAttribute.type === type
+            ? true
             : mappingSettings[head].isPrimary,
       },
     });
