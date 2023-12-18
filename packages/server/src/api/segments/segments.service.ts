@@ -22,6 +22,7 @@ import { SegmentCustomers } from './entities/segment-customers.entity';
 import { Segment, SegmentType } from './entities/segment.entity';
 import { InjectConnection } from '@nestjs/mongoose';
 import mongoose from 'mongoose';
+import { query } from 'express';
 
 @Injectable()
 export class SegmentsService {
@@ -38,6 +39,65 @@ export class SegmentsService {
     private readonly audiencesHelper: AudiencesHelper,
     @InjectConnection() private readonly connection: mongoose.Connection
   ) {}
+
+  log(message, method, session, user = 'ANONYMOUS') {
+    this.logger.log(
+      message,
+      JSON.stringify({
+        class: SegmentsService.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+  debug(message, method, session, user = 'ANONYMOUS') {
+    this.logger.debug(
+      message,
+      JSON.stringify({
+        class: SegmentsService.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+  warn(message, method, session, user = 'ANONYMOUS') {
+    this.logger.warn(
+      message,
+      JSON.stringify({
+        class: SegmentsService.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+  error(error, method, session, user = 'ANONYMOUS') {
+    this.logger.error(
+      error.message,
+      error.stack,
+      JSON.stringify({
+        class: SegmentsService.name,
+        method: method,
+        session: session,
+        cause: error.cause,
+        name: error.name,
+        user: user,
+      })
+    );
+  }
+  verbose(message, method, session, user = 'ANONYMOUS') {
+    this.logger.verbose(
+      message,
+      JSON.stringify({
+        class: SegmentsService.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
 
   public async findOne(
     account: Account,
@@ -106,11 +166,19 @@ export class SegmentsService {
     createSegmentDTO: CreateSegmentDTO,
     session: string
   ) {
-    const segment = await this.segmentRepository.save({
+    let err;
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try{
+    const segment = await queryRunner.manager.save(Segment , 
+      {
       ...createSegmentDTO,
       owner: { id: account.id },
     });
+  
 
+    /*
     if (segment.type === SegmentType.AUTOMATIC) {
       this.customersService.CustomerModel.find({
         ownerId: account.id,
@@ -126,12 +194,38 @@ export class SegmentsService {
           }
         });
     }
+    */
 
     // test code
     // this.customersService.createSegmentQuery(createSegmentDTO.inclusionCriteria.query);
-    // const customersInSegment = await this.customersService.testCustomerInSegment(createSegmentDTO.inclusionCriteria.query, account);
+    if (segment.type === SegmentType.AUTOMATIC) {
+
+      const customersInSegment = await this.customersService.testCustomerInSegment(createSegmentDTO.inclusionCriteria.query, account);
+      
+      const segmentCustomersArray: SegmentCustomers[] = Array.from(customersInSegment).map((stringValue) => {
+        const segmentCustomer = new SegmentCustomers();
+        segmentCustomer.customerId = stringValue;
+        segmentCustomer.segment = segment;
+        segmentCustomer.owner = account; // Replace `propertyName` with the actual property name in your entity
+        // Set other properties as needed for each SegmentCustomers entity
+        return segmentCustomer;
+      }); 
+      await queryRunner.manager.save( SegmentCustomers , segmentCustomersArray);
+      //await SegmentCustomers.save(segmentCustomersArray);
+    }
+    await queryRunner.commitTransaction();
 
     return segment;
+    } catch (e){
+      err = e;
+      this.error(e, this.create.name, session, account.email);
+      await queryRunner.rollbackTransaction();
+    } finally {
+      await queryRunner.release();
+      if(err){
+        throw err;
+      }
+    }
   }
 
   public async update(
