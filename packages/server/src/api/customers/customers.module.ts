@@ -16,6 +16,7 @@ import { Account } from '../accounts/entities/accounts.entity';
 import { AudiencesHelper } from '../audiences/audiences.helper';
 import { AudiencesModule } from '../audiences/audiences.module';
 import { WorkflowsModule } from '../workflows/workflows.module';
+import { EventsModule } from '../events/events.module';
 import { StepsModule } from '../steps/steps.module';
 import { CustomersConsumerService } from './customers.consumer';
 import { KafkaModule } from '../kafka/kafka.module';
@@ -25,6 +26,9 @@ import { Imports } from './entities/imports.entity';
 import { ImportProcessor } from './imports.porcessor';
 import { JourneyLocationsService } from '../journeys/journey-locations.service';
 import { JourneyLocation } from '../journeys/entities/journey-location.entity';
+import { SegmentsService } from '../segments/segments.service';
+import { Segment } from '../segments/entities/segment.entity';
+import { SegmentCustomers } from '../segments/entities/segment-customers.entity';
 
 @Module({
   imports: [
@@ -44,8 +48,9 @@ import { JourneyLocation } from '../journeys/entities/journey-location.entity';
     SegmentsModule,
     AudiencesModule,
     WorkflowsModule,
+    EventsModule,
     StepsModule,
-    TypeOrmModule.forFeature([Account, Imports, JourneyLocation]),
+    TypeOrmModule.forFeature([Account, Imports, JourneyLocation, Segment, SegmentCustomers]),
     KafkaModule,
     JourneysModule,
   ],

@@ -82,9 +82,11 @@ const Personv2 = () => {
     setIsLoadingEvents(false);
   };
 
+  /*
   useEffect(() => {
     uploadEvents();
   }, [page]);
+  */
 
   useEffect(() => {
     (async () => {
@@ -94,7 +96,7 @@ const Personv2 = () => {
         });
 
         setPersonInfo(personData);
-        uploadEvents();
+        //uploadEvents();
       } catch (e) {
         console.error(e);
       } finally {

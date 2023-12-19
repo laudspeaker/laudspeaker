@@ -21,6 +21,8 @@ import {
 import LockScreenIOS from "pages/PushBuilder/Badges/LockScreenIOS";
 import LockScreenAndroid from "pages/PushBuilder/Badges/LockScreenAndroid";
 import Select from "components/Elements/Selectv2";
+import CogIcon from "@heroicons/react/24/outline/CogIcon";
+import { Link } from "react-router-dom";
 
 const MessageSettings: FC<SidePanelComponentProps<MessageNodeData>> = ({
   nodeData,
@@ -30,6 +32,8 @@ const MessageSettings: FC<SidePanelComponentProps<MessageNodeData>> = ({
 }) => {
   const templateType = nodeData.template?.type;
   const selectedTemplate = nodeData.template?.selected;
+
+  const userData = useAppSelector((state) => state.auth.userData);
 
   const [templateList, setTemplateList] = useState<Template[]>([]);
   const dispatch = useDispatch();
@@ -200,12 +204,36 @@ const MessageSettings: FC<SidePanelComponentProps<MessageNodeData>> = ({
             </select>
           </div>
         </div>
+      ) : userData.pushPlatforms &&
+        Object.keys(userData.pushPlatforms).length === 0 ? (
+        <div className="w-full p-5">
+          <div className="flex w-full gap-[5px] items-center">
+            <CogIcon className="min-w-[24px] min-h-[24px] max-w-[24px] max-h-[24px] text-[#111827]" />
+            <span className="text-base font-inter font-medium text-[#111827]">
+              Setup required for Push
+            </span>
+          </div>
+          <div className="text-sm my-[10px] font-inter text-[#111827]">
+            Push supports iOS and Android devices. To enable this feature in
+            your journey, a brief setup is required for correct delivery.
+          </div>
+          <Link to="/settings/push" target="_blank">
+            <Button
+              className="w-full"
+              type={ButtonType.PRIMARY}
+              onClick={() => {}}
+            >
+              Go To Push Setup
+            </Button>
+          </Link>
+        </div>
       ) : (
         <>
           <div className="p-5 flex flex-col gap-[10px]">
             <div className="text-[#111827] font-inter text-[14px] leading-[22px] font-semibold">
               Push
             </div>
+
             {selectedTemplate?.pushBuilder ? (
               <div className="w-full border border-[#E5E7EB] rounded overflow-hidden">
                 <div className="px-[10px] py-2 bg-[#F3F4F6] flex justify-between">

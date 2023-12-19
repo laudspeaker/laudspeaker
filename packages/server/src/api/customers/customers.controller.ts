@@ -31,6 +31,7 @@ import { RavenInterceptor } from 'nest-raven';
 import { AttributeType } from './schemas/customer-keys.schema';
 import { ImportCustomersDTO } from './dto/import-customers.dto';
 import { extname } from 'path';
+import { UpdatePK_DTO } from './dto/update-pk.dto';
 
 @Controller('customers')
 export class CustomersController {
@@ -145,6 +146,15 @@ export class CustomersController {
       skip,
       search
     );
+  }
+
+  @Put('/primary-key')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
+  async updatePrimaryKey(@Req() { user }: Request, @Body() body: UpdatePK_DTO) {
+    const session = randomUUID();
+
+    await this.customersService.updatePrimaryKey(<Account>user, body, session);
   }
 
   @Get('/possible-attributes')

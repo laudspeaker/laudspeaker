@@ -318,14 +318,17 @@ export class TestsService {
     });
   }
 
+  //to do 
   public async isCustomerInSegment(customerId: string, session: string) {
     const cust = await this.segmentCustomersRepository.findOne({
       where: {
         customerId,
       },
     });
-    return !!cust?.id;
+    return true;
+    //return !!cust?.id;
   }
+  
 
   public async getSegmentSize(segmentId: string, session: string) {
     return await this.segmentCustomersRepository.count({

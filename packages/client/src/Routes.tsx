@@ -54,6 +54,8 @@ import SegmentCreation from "pages/SegmentCreation/index";
 import PushBuilder from "pages/PushBuilder/PushBuilder";
 import PushSettings from "pages/PushSettings";
 import PeopleImport from "pages/PeopleImport/PeopleImport";
+import PeopleSetting from "pages/PeopleSetting/PeopleSetting";
+import SegmentEditor from "pages/SegmentCreation/SegmentEditor";
 
 interface IProtected {
   children: ReactElement;
@@ -254,6 +256,8 @@ const RouteComponent: React.FC = () => {
             email: data.email,
             expectedOnboarding: data.expectedOnboarding,
             verified: data.verified,
+            pk: data.pk,
+            pushPlatforms: data.pushPlatforms,
           },
         });
       } catch (e) {
@@ -394,8 +398,30 @@ const RouteComponent: React.FC = () => {
           element={
             <Protected>
               <VerificationProtected>
-                <DrawerLayout>
+                <DrawerLayout
+                  crumbs={[
+                    { text: "Users", link: "/people" },
+                    { text: "Import users" },
+                  ]}
+                >
                   <PeopleImport />
+                </DrawerLayout>
+              </VerificationProtected>
+            </Protected>
+          }
+        />
+        <Route
+          path="/people/setting"
+          element={
+            <Protected>
+              <VerificationProtected>
+                <DrawerLayout
+                  crumbs={[
+                    { text: "Users", link: "/people" },
+                    { text: "Setting" },
+                  ]}
+                >
+                  <PeopleSetting />
                 </DrawerLayout>
               </VerificationProtected>
             </Protected>
@@ -444,7 +470,7 @@ const RouteComponent: React.FC = () => {
             <Protected>
               <VerificationProtected>
                 <DrawerLayout>
-                  <>{/* Add viewer when it's gonna be ready */}</>
+                  <SegmentEditor />
                 </DrawerLayout>
               </VerificationProtected>
             </Protected>
