@@ -27,7 +27,7 @@
 
 ## 🚀 Get Started
 
-Use [Laudspeaker Cloud](https://app.laudspeaker.com/login/?ref=github) or if you are interested in our paid self deployed (enterprise) plan book a time below:
+Use [Laudspeaker Cloud](https://app.laudspeaker.com/login/?ref=github) or if you are interested in our paid self deployed (business/enterprise) plan book a time below:
 
 ### Want to use at your company?
 
