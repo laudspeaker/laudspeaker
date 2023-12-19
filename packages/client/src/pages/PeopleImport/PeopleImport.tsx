@@ -11,7 +11,9 @@ import {
   StatementValueType,
 } from "reducers/flow-builder.reducer";
 import ApiService from "services/api.service";
-import ImportCompletion from "./ImportCompletion";
+import ImportCompletion, {
+  ImportCompletionSegmentProps,
+} from "./ImportCompletion";
 import ImportTabOne, { ImportOptions } from "./ImportTabOne";
 import MappingTab from "./MappingTab";
 import MapValidationErrors from "./Modals/MapValidationErrors";
@@ -80,6 +82,12 @@ const PeopleImport = () => {
   );
   const [isValidationInProcess, setIsValidationInProcess] = useState(false);
   const [isImportStarting, setIsImportStarting] = useState(false);
+  const [completionSegment, setCompletionSegment] =
+    useState<ImportCompletionSegmentProps>({
+      name: "",
+      description: "",
+      withSegment: false,
+    });
   const navigate = useNavigate();
 
   const loadData = async () => {
@@ -168,7 +176,13 @@ const PeopleImport = () => {
         fileData={fileData}
       />
     ),
-    2: <ImportCompletion preview={importPreview} />,
+    2: (
+      <ImportCompletion
+        preview={importPreview}
+        segment={completionSegment}
+        setSegment={setCompletionSegment}
+      />
+    ),
   };
 
   useEffect(() => {
@@ -274,6 +288,14 @@ const PeopleImport = () => {
           mapping: mappingSettings,
           importOption: importOption,
           fileKey: fileData?.file?.fileKey,
+          ...(completionSegment.withSegment && completionSegment.name
+            ? {
+                withSegment: {
+                  name: completionSegment.name,
+                  description: completionSegment.description,
+                },
+              }
+            : {}),
         },
       });
       toast.success("Imported started");
@@ -396,7 +418,13 @@ const PeopleImport = () => {
             <Button
               type={ButtonType.PRIMARY}
               className="disabled:grayscale"
-              disabled={isLoading || (tabIndex === 0 && !fileData?.file)}
+              disabled={
+                isLoading ||
+                (tabIndex === 0 && !fileData?.file) ||
+                (tabIndex === 2 &&
+                  completionSegment.withSegment &&
+                  !completionSegment.name)
+              }
               onClick={() => {
                 if (tabIndex === 0) setTabIndex(tabIndex + 1);
                 else if (tabIndex === 1) handle2TabValidation();

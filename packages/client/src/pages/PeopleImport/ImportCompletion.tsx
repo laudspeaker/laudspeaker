@@ -4,15 +4,23 @@ import CheckBox from "components/Checkbox/Checkbox";
 import { useState } from "react";
 import Input from "components/Elements/Inputv2";
 
-interface ImportCompletionProps {
-  preview?: PreviewImportResults;
+export interface ImportCompletionSegmentProps {
+  withSegment: boolean;
+  name: string;
+  description: string;
 }
 
-const ImportCompletion = ({ preview }: ImportCompletionProps) => {
-  const [withSegment, setWithSegment] = useState(false);
-  const [segmentName, setSegmentName] = useState("");
-  const [segmentDesc, setSegmentDesc] = useState("");
+interface ImportCompletionProps {
+  preview?: PreviewImportResults;
+  segment: ImportCompletionSegmentProps;
+  setSegment: (val: ImportCompletionSegmentProps) => void;
+}
 
+const ImportCompletion = ({
+  preview,
+  segment,
+  setSegment,
+}: ImportCompletionProps) => {
   return (
     <div className="w-full flex justify-center">
       <div className="py-10 max-w-[800px] w-full">
@@ -58,24 +66,28 @@ const ImportCompletion = ({ preview }: ImportCompletionProps) => {
           Segment creation
         </div>
         <CheckBox
-          onCheck={setWithSegment}
+          onCheck={(checked) =>
+            setSegment({ ...segment, withSegment: checked })
+          }
           propControl
-          initValue={withSegment}
+          initValue={segment.withSegment}
           text={
             <span className="text-[#6B7280] text-xs font-inter">
               Create a Segment from this Import
             </span>
           }
         />
-        {withSegment && (
+        {segment.withSegment && (
           <>
             <div className="mt-[10px]">
               <div className="mb-[5px] text-sm text-[#111827] font-inter">
                 Segment name
               </div>
               <Input
-                value={segmentName}
-                onChange={setSegmentName}
+                value={segment.name}
+                onChange={(val) => {
+                  setSegment({ ...segment, name: val });
+                }}
                 placeholder={"Segment name"}
                 wrapperClassName="!max-w-full w-full"
                 className="w-full"
@@ -86,12 +98,15 @@ const ImportCompletion = ({ preview }: ImportCompletionProps) => {
                 Description (optional)
               </div>
               <textarea
-                value={segmentDesc}
+                value={segment.description}
                 className="resize-none w-full border border-[#E5E7EB] rounded px-[12px] py-[4px] font-roboto text-[14px] leading-[22px] text-[#111827] placeholder:text-[#9CA3AF] focus:border-[#6366F1] outline-none"
                 placeholder="Segment description"
                 rows={3}
                 onChange={(ev) => {
-                  setSegmentDesc(ev.target.value || "");
+                  setSegment({
+                    ...segment,
+                    description: ev.target.value || "",
+                  });
                 }}
               />
             </div>

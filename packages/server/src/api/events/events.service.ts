@@ -28,7 +28,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Job, Queue, UnrecoverableError } from 'bullmq';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
-import mongoose, { Model } from 'mongoose';
+import mongoose, { ClientSession, Model } from 'mongoose';
 import { EventDocument, Event } from './schemas/event.schema';
 import mockData from '../../fixtures/mockData';
 import { EventKeys, EventKeysDocument } from './schemas/event-keys.schema';
@@ -382,6 +382,37 @@ export class EventsService {
       totalPages,
     };
   }
+
+  //to do need to specify how this is 
+  async getEventsByMongo(
+    mongoQuery: any,
+    customer: CustomerDocument,
+    //numberOfTimes: Number,
+  ) {
+    //console.log("In getEvents by mongo");
+
+    const tehevents = await this.EventModel.find(mongoQuery).exec();;
+    //console.log("events are", JSON.stringify(tehevents, null, 2))
+
+    //console.log("events are", JSON.stringify(await this.EventModel.find(mongoQuery).exec(),null, 2));
+    const count = await this.EventModel.count(mongoQuery).exec();
+    //console.log("count is", count);
+    return count;
+  }
+
+    //to do need to specify how this is 
+    async getCustomersbyEventsMongo(
+      aggregationPipeline: any,
+      //externalId: boolean,
+      //numberOfTimes: Number,
+    ) {
+      //console.log("In getCustomersbyEventsMongo by mongo");
+
+      const docs = await this.EventModel.aggregate(
+        aggregationPipeline).exec();
+      
+      return docs;
+    }
 
   async sendTestPush(account: Account, token: string) {
     const foundAcc = await this.accountsRepository.findOneBy({

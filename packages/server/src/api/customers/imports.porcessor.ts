@@ -11,6 +11,10 @@ import { Model } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { Logger } from 'winston';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Segment } from '../segments/entities/segment.entity';
+import { Repository } from 'typeorm';
+import { SegmentCustomers } from '../segments/entities/segment-customers.entity';
 
 @Injectable()
 @Processor('imports', { removeOnComplete: { age: 0, count: 0 } })
@@ -20,7 +24,10 @@ export class ImportProcessor extends WorkerHost {
     private readonly logger: Logger,
     @Inject(CustomersService) private customersService: CustomersService,
     @Inject(S3Service) private s3Service: S3Service,
-    @InjectModel(Customer.name) public CustomerModel: Model<CustomerDocument>
+    @InjectModel(Customer.name) public CustomerModel: Model<CustomerDocument>,
+    @InjectRepository(Segment) public segmentRepository: Repository<Segment>,
+    @InjectRepository(SegmentCustomers)
+    public segmentCustomersRepository: Repository<SegmentCustomers>
   ) {
     super();
   }
@@ -88,8 +95,16 @@ export class ImportProcessor extends WorkerHost {
     console.log(
       '\n\n------\n\n------\n\n------\n\n------\n\n------\n\n------\n\n------\n\n'
     );
-    const { fileData, clearedMapping, account, settings, passedPK, session } =
-      job.data;
+    const {
+      fileData,
+      clearedMapping,
+      account,
+      settings,
+      passedPK,
+      segmentId,
+      session,
+    } = job.data;
+
     try {
       let batch = [];
       let batchPromise;
@@ -156,7 +171,9 @@ export class ImportProcessor extends WorkerHost {
                 account,
                 settings.importOption,
                 passedPK.asAttribute.key,
-                batch
+                batch,
+                segmentId,
+                session
               );
               batch = [];
             }
@@ -170,7 +187,9 @@ export class ImportProcessor extends WorkerHost {
                 account,
                 settings.importOption,
                 passedPK.asAttribute.key,
-                batch
+                batch,
+                segmentId,
+                session
               );
               batch = [];
             }
@@ -196,18 +215,20 @@ export class ImportProcessor extends WorkerHost {
     account: Account,
     importOption: ImportOptions,
     pkKey: string,
-    data: { pkKeyValue: any; create: object; update: object }[]
+    data: { pkKeyValue: any; create: object; update: object }[],
+    segmentId?: string,
+    session?: string
   ) {
     const withoutDuplicateKeys = Array.from(
       new Set(data.map((el) => el.pkKeyValue))
     );
 
-    const existing = (
-      await this.CustomerModel.find({
-        ownerId: account.id,
-        [pkKey]: { $in: withoutDuplicateKeys },
-      }).exec()
-    ).map((el) => el.toObject()[pkKey]);
+    const foundExisting = await this.CustomerModel.find({
+      ownerId: account.id,
+      [pkKey]: { $in: withoutDuplicateKeys },
+    }).exec();
+
+    const existing = foundExisting.map((el) => el.toObject()[pkKey]);
 
     const toCreate = withoutDuplicateKeys
       .filter((el) => !existing.includes(el))
@@ -221,9 +242,18 @@ export class ImportProcessor extends WorkerHost {
         ...el.update,
       }));
 
+    let addToSegment = [];
+
     if (importOption === ImportOptions.NEW) {
       try {
-        await this.CustomerModel.insertMany(toCreate, { ordered: false });
+        const insertedResults = await this.CustomerModel.insertMany(toCreate, {
+          ordered: false,
+        });
+
+        if (segmentId)
+          addToSegment.push(
+            ...insertedResults.map((doc) => doc._id.toString())
+          );
       } catch (error) {
         this.error(
           error,
@@ -247,7 +277,7 @@ export class ImportProcessor extends WorkerHost {
 
       const bulk = toUpdate.map((el) => ({
         updateOne: {
-          filter: { [pkKey]: el.pkKeyValue, ownerId: account.id },
+          filter: { [pkKey]: el[pkKey], ownerId: account.id },
           update: {
             $set: {
               ...el,
@@ -257,7 +287,15 @@ export class ImportProcessor extends WorkerHost {
       }));
 
       try {
-        await this.CustomerModel.insertMany(toCreate, { ordered: false });
+        const insertedResults = await this.CustomerModel.insertMany(toCreate, {
+          ordered: false,
+        });
+
+        if (segmentId)
+          addToSegment.push(
+            ...insertedResults.map((doc) => doc._id.toString())
+          );
+
         await this.CustomerModel.bulkWrite(bulk, {
           ordered: false,
         });
@@ -281,10 +319,9 @@ export class ImportProcessor extends WorkerHost {
           [pkKey]: el.pkKeyValue,
           ...el.update,
         }));
-
       const bulk = toUpdate.map((el) => ({
         updateOne: {
-          filter: { [pkKey]: el.pkKeyValue, ownerId: account.id },
+          filter: { [pkKey]: el[pkKey], ownerId: account.id },
           update: {
             $set: {
               ...el,
@@ -300,10 +337,43 @@ export class ImportProcessor extends WorkerHost {
         this.error(
           error,
           this.processImportRecord.name,
-          '',
+          session,
           'User: ' + account.id
         );
       }
+    }
+
+    if (
+      segmentId &&
+      foundExisting.length !== 0 &&
+      (importOption === ImportOptions.NEW_AND_EXISTING ||
+        importOption === ImportOptions.EXISTING)
+    )
+      addToSegment.push(...foundExisting.map((doc) => doc._id.toString()));
+
+    if (segmentId && addToSegment.length !== 0) {
+      const segment = await this.segmentRepository.findOne({
+        where: {
+          id: segmentId,
+        },
+      });
+
+      if (!segment) {
+        this.error(
+          `Segment ${segmentId} doesn't exist in database`,
+          'Processing customer import -> moving to segment',
+          session
+        );
+        return;
+      }
+
+      await this.segmentCustomersRepository.insert(
+        addToSegment.map((el) => ({
+          customerId: el,
+          segment: segment,
+          owner: account,
+        }))
+      );
     }
   }
 }

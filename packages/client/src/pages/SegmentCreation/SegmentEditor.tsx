@@ -1,11 +1,11 @@
 import Scrollbars from "react-custom-scrollbars-2";
 import SegmentBuilder from "./SegmentBuilder";
 
-const SegmentCreation = () => {
+const SegmentEditor = () => {
   return (
     <div>
       <div className="w-full bg-white py-[34px] mb-[20px] pl-[40px] font-inter font-semibold text-[20px] leading-[28px] text-[#111827] border-[#E5E7EB] border-t">
-        Create segment
+        Update segment
       </div>
       <div className="px-5 pb-[20px] h-[calc(100vh-162px)]">
         <Scrollbars className="bg-white h-full">
@@ -18,4 +18,4 @@ const SegmentCreation = () => {
   );
 };
 
-export default SegmentCreation;
+export default SegmentEditor;
