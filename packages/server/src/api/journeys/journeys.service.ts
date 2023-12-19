@@ -536,24 +536,6 @@ export class JourneysService {
     queryRunner: QueryRunner,
     clientSession: ClientSession
   ): Promise<void> {
-    this.warn(
-      JSON.stringify({ warning: '_____________________________' }),
-      this.enrollCustomerInJourney.name,
-      session,
-      account.email
-    );
-    this.warn(
-      JSON.stringify({ warning: 'Enrolling customer in journey' }),
-      this.enrollCustomerInJourney.name,
-      session,
-      account.email
-    );
-    this.warn(
-      JSON.stringify({ warning: '_____________________________' }),
-      this.enrollCustomerInJourney.name,
-      session,
-      account.email
-    );
     const step = await this.stepsService.findByJourneyAndType(
       account,
       journey.id,

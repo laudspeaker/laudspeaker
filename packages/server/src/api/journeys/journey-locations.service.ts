@@ -383,12 +383,17 @@ export class JourneyLocationsService {
       return await queryRunner.manager.find(JourneyLocation, {
         where: {
           journey: journey.id,
-          step: {
-            type:
-              StepType.TIME_DELAY ||
-              StepType.TIME_WINDOW ||
-              StepType.WAIT_UNTIL_BRANCH,
-          },
+          step: [
+            {
+              type: StepType.TIME_DELAY,
+            },
+            {
+              type: StepType.TIME_WINDOW,
+            },
+            {
+              type: StepType.WAIT_UNTIL_BRANCH,
+            },
+          ],
           moveStarted: IsNull(),
         },
         lock: { mode: 'pessimistic_write' },

@@ -412,10 +412,13 @@ export class CronService {
               step: step,
               ownerID: step.owner.id,
               session: session,
-              customerID: location[locationsIndex].id,
+              journeyID: journeys[journeyIndex].id,
+              customerID: locations[locationsIndex].customer,
               branch,
             });
-          } catch (e) {}
+          } catch (e) {
+            this.error(e, this.handleTimeBasedSteps.name, session);
+          }
         }
       }
       await queryRunner.commitTransaction();

@@ -396,14 +396,20 @@ export class StepsService {
     queryRunner?: QueryRunner
   ): Promise<Step | null> {
     if (queryRunner) {
-      return await queryRunner.manager.findOneBy(Step, {
-        owner: account ? { id: account.id } : undefined,
-        id: id,
+      return await queryRunner.manager.findOne(Step, {
+        where: {
+          owner: account ? { id: account.id } : undefined,
+          id: id,
+        },
+        relations: ['owner', 'journey'],
       });
     } else {
-      return await this.stepsRepository.findOneBy({
-        owner: account ? { id: account.id } : undefined,
-        id: id,
+      return await this.stepsRepository.findOne({
+        where: {
+          owner: account ? { id: account.id } : undefined,
+          id: id,
+        },
+        relations: ['owner', 'journey'],
       });
     }
   }
