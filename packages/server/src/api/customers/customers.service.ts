@@ -3126,13 +3126,38 @@ export class CustomersService {
    */
   //ref func
   async checkCustomerMatchesQuery(
-    customer: CustomerDocument,
     query: any,
     account: Account,
-    session: string
+    session: string,
+    customer?: CustomerDocument,
+    customerId?: string,
   ) {
     this.debug(
       'in checkCustomerMatchesQuery',
+      this.checkCustomerMatchesQuery.name,
+      session,
+      account.id
+    );
+    if (!customerId && !customer) {
+      throw new Error("At least one of 'customerId' or 'customer' must be provided.");
+    }
+    if (customerId && !customer) {
+      // If customerId is provided but customer is not
+      customer = await this.CustomerModel.findOne({
+        _id: new Types.ObjectId(customerId),
+        ownerId: account.id,
+      }).exec();
+      if (!customer)
+        throw new Error("Person not found");
+    }
+    this.debug(
+      `the query is: ${JSON.stringify(query, null, 2)}`,
+      this.checkCustomerMatchesQuery.name,
+      session,
+      account.id
+    );
+    this.debug(
+      `the customer is: ${JSON.stringify(customer, null, 2)}`,
       this.checkCustomerMatchesQuery.name,
       session,
       account.id
@@ -3189,6 +3214,15 @@ export class CustomersService {
       );
       return results.some((result) => result);
     }
+    else{
+      //shouldnt get here
+      this.debug(
+        `shouldnt get here, what is query type?: ${JSON.stringify(query.type, null, 2)}`,
+        this.checkCustomerMatchesQuery.name,
+        session,
+        account.id
+      );
+    }
     return false;
   }
 
@@ -3200,7 +3234,7 @@ export class CustomersService {
   ): Promise<boolean> {
     if (statement.statements && statement.statements.length > 0) {
       // Statement has a subquery, recursively evaluate the subquery
-      return this.checkCustomerMatchesQuery(customer, statement, account, session);
+      return this.checkCustomerMatchesQuery(statement, account, session, customer );
     } else {
       return await this.evaluateStatement(customer, statement, account, session);
     }

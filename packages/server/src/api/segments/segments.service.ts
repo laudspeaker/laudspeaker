@@ -369,8 +369,14 @@ export class SegmentsService {
     let segments = await this.getSegments(account, undefined, queryRunner);
     for (const segment of segments) {
       // TODO_JH: implement the following
-      // let doInclude = checkInclusionCriteria(segment, customer)
-      let doInclude = true;
+      let doInclude = await this.customersService.checkCustomerMatchesQuery(segment.inclusionCriteria.query, account, session, undefined, customerId);
+      this.debug(
+        `we updated doInclude: ${doInclude}`,
+        this.updateCustomerSegments.name,
+        session,
+        account.id
+      );
+      //let doInclude = true;
       let isMemberOf = await this.isCustomerMemberOf(
         account,
         segment.id,
