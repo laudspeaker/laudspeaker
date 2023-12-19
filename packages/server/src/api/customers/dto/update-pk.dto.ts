@@ -9,4 +9,3 @@ export class UpdatePK_DTO {
   @IsEnum(AttributeType)
   type: AttributeType;
 }
-

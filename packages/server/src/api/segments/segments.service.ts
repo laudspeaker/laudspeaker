@@ -170,15 +170,13 @@ export class SegmentsService {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
-    try{
-    const segment = await queryRunner.manager.save(Segment , 
-      {
-      ...createSegmentDTO,
-      owner: { id: account.id },
-    });
-  
+    try {
+      const segment = await queryRunner.manager.save(Segment, {
+        ...createSegmentDTO,
+        owner: { id: account.id },
+      });
 
-    /*
+      /*
     if (segment.type === SegmentType.AUTOMATIC) {
       this.customersService.CustomerModel.find({
         ownerId: account.id,
@@ -196,33 +194,38 @@ export class SegmentsService {
     }
     */
 
-    // test code
-    // this.customersService.createSegmentQuery(createSegmentDTO.inclusionCriteria.query);
-    if (segment.type === SegmentType.AUTOMATIC) {
+      // test code
+      // this.customersService.createSegmentQuery(createSegmentDTO.inclusionCriteria.query);
+      if (segment.type === SegmentType.AUTOMATIC) {
+        const customersInSegment =
+          await this.customersService.testCustomerInSegment(
+            createSegmentDTO.inclusionCriteria.query,
+            account
+          );
 
-      const customersInSegment = await this.customersService.testCustomerInSegment(createSegmentDTO.inclusionCriteria.query, account);
-      
-      const segmentCustomersArray: SegmentCustomers[] = Array.from(customersInSegment).map((stringValue) => {
-        const segmentCustomer = new SegmentCustomers();
-        segmentCustomer.customerId = stringValue;
-        segmentCustomer.segment = segment;
-        segmentCustomer.owner = account; // Replace `propertyName` with the actual property name in your entity
-        // Set other properties as needed for each SegmentCustomers entity
-        return segmentCustomer;
-      }); 
-      await queryRunner.manager.save( SegmentCustomers , segmentCustomersArray);
-      //await SegmentCustomers.save(segmentCustomersArray);
-    }
-    await queryRunner.commitTransaction();
+        const segmentCustomersArray: SegmentCustomers[] = Array.from(
+          customersInSegment
+        ).map((stringValue) => {
+          const segmentCustomer = new SegmentCustomers();
+          segmentCustomer.customerId = stringValue;
+          segmentCustomer.segment = segment;
+          segmentCustomer.owner = account; // Replace `propertyName` with the actual property name in your entity
+          // Set other properties as needed for each SegmentCustomers entity
+          return segmentCustomer;
+        });
+        await queryRunner.manager.save(SegmentCustomers, segmentCustomersArray);
+        //await SegmentCustomers.save(segmentCustomersArray);
+      }
+      await queryRunner.commitTransaction();
 
-    return segment;
-    } catch (e){
+      return segment;
+    } catch (e) {
       err = e;
       this.error(e, this.create.name, session, account.email);
       await queryRunner.rollbackTransaction();
     } finally {
       await queryRunner.release();
-      if(err){
+      if (err) {
         throw err;
       }
     }
