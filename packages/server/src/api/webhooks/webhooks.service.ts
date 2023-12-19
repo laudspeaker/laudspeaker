@@ -17,7 +17,7 @@ import axios from 'axios';
 import FormData from 'form-data';
 import { randomUUID } from 'crypto';
 import { Step } from '../steps/entities/step.entity';
-import { KafkaService } from '../kafka/kafka.service';
+import { KafkaProducerService } from '../kafka/producer.service';
 import { Message } from 'kafkajs';
 import { KAFKA_TOPIC_MESSAGE_STATUS } from '../kafka/constants';
 
@@ -68,8 +68,8 @@ export class WebhooksService {
     private stepRepository: Repository<Step>,
     @InjectRepository(Account)
     private accountRepository: Repository<Account>,
-    @Inject(KafkaService)
-    private kafkaService: KafkaService
+    @Inject(KafkaProducerService)
+    private kafkaService: KafkaProducerService
   ) {
     const session = randomUUID();
     (async () => {

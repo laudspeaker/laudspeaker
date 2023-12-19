@@ -167,9 +167,8 @@ export class AttributeChangeEvent extends Event {}
  * Top level interface for any platform data that we are
  * sorting/switching on.
  */
-export class AttributeBranch extends Branch {
-  groups: AttributeGroup[];
-  relation: string;
+export class AttributeConditions extends Branch {
+  conditions: any;
 }
 
 /*
@@ -288,6 +287,11 @@ export class TimeDelayStepMetadata extends SingleBranchMetadata {
 
 export class MultiBranchMetadata extends StepTypeMetadata {
   branches: Branch[];
+}
+
+export class AttributeSplitMetadata extends MultiBranchMetadata {
+  // Step ID of
+  allOthers: string;
 }
 
 export class WaitUntilStepMetadata extends MultiBranchMetadata {

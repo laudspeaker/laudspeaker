@@ -1,22 +1,24 @@
+import { Account } from '../../accounts/entities/accounts.entity';
 import {
   BaseEntity,
-  Column,
   Entity,
   JoinColumn,
   ManyToOne,
-  PrimaryGeneratedColumn,
+  PrimaryColumn,
 } from 'typeorm';
 import { Segment } from './segment.entity';
 
 @Entity()
 export class SegmentCustomers extends BaseEntity {
-  @PrimaryGeneratedColumn('uuid')
-  public id: string;
-
-  @JoinColumn()
+  @PrimaryColumn({ name: 'segmentId' })
+  @JoinColumn({ name: 'segmentId' })
   @ManyToOne(() => Segment, (segment) => segment.id, { onDelete: 'CASCADE' })
   public segment: Segment;
 
-  @Column()
+  @PrimaryColumn()
   public customerId: string;
+
+  @JoinColumn()
+  @ManyToOne(() => Account, (account) => account.id, { onDelete: 'CASCADE' })
+  public owner: Account;
 }

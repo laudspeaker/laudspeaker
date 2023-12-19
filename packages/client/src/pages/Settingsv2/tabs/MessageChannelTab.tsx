@@ -4,7 +4,7 @@ import emailCardIconImage from "../svg/email-card-icon.svg";
 import twilioCardIconImage from "../svg/twilio-card-icon.svg";
 import customModalCardIconImage from "../svg/custom-modal-card-icon.svg";
 import slackCardIconImage from "../svg/slack-card-icon.svg";
-import firebaseCardIconImage from "../svg/firebase-card-icon.svg";
+import pushLogoIcon from "../svg/push-logo-icon.svg";
 import { useNavigate } from "react-router-dom";
 import Account from "types/Account";
 import ApiService from "services/api.service";
@@ -16,7 +16,7 @@ export enum MessageChannel {
   TWILIO,
   CUSTOM_MODAL,
   SLACK,
-  FIREBASE,
+  PUSH,
 }
 
 interface MessageChannelAdditionalInfoFixture {
@@ -103,17 +103,19 @@ const MessageChannelTab = () => {
       connected: account?.javascriptSnippetSetupped,
       onClick: () => navigate("/settings/custom-modal"),
     },
+    [MessageChannel.PUSH]: {
+      id: MessageChannel.PUSH,
+      title: "Push",
+      icon: pushLogoIcon,
+      connected:
+        account?.pushPlatforms &&
+        Object.values(account.pushPlatforms).some((el) => !!el),
+      onClick: () => navigate("/settings/push"),
+    },
     [MessageChannel.SLACK]: {
       id: MessageChannel.SLACK,
       title: "Slack",
       icon: slackCardIconImage,
-      commingSoon: true,
-      disabled: true,
-    },
-    [MessageChannel.FIREBASE]: {
-      id: MessageChannel.FIREBASE,
-      title: "Firebase",
-      icon: firebaseCardIconImage,
       commingSoon: true,
       disabled: true,
     },
@@ -173,7 +175,7 @@ const MessageChannelTab = () => {
                     <img src={fixture.icon} />
                   </div>
 
-                  <div className="text-[#18181B] font-inter text-[16px] leading-[24px]">
+                  <div className="text-[#18181B] font-inter text-base">
                     {fixture.title}
                   </div>
 
@@ -236,7 +238,7 @@ const MessageChannelTab = () => {
                   <img src={fixture.icon} />
                 </div>
 
-                <div className="text-[#18181B] font-inter text-[16px] leading-[24px]">
+                <div className="text-[#18181B] font-inter text-base">
                   {fixture.title}
                 </div>
 

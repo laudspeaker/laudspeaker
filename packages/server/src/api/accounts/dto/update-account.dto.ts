@@ -1,4 +1,5 @@
 import { Trim } from 'class-sanitizer';
+import { Type } from 'class-transformer';
 import {
   IsEmail,
   IsString,
@@ -8,7 +9,33 @@ import {
   IsOptional,
   IsBoolean,
   IsArray,
+  IsObject,
+  ValidateNested,
 } from 'class-validator';
+
+class PlatformCredentials {
+  @IsString()
+  @IsNotEmpty()
+  fileName: string;
+
+  @IsObject()
+  credentials: JSON;
+
+  @IsBoolean()
+  isTrackingDisabled: boolean;
+}
+
+export class PushPlatformDto {
+  @ValidateNested()
+  @Type(() => PlatformCredentials)
+  @IsOptional()
+  Android?: PlatformCredentials;
+
+  @ValidateNested()
+  @Type(() => PlatformCredentials)
+  @IsOptional()
+  iOS?: PlatformCredentials;
+}
 
 export class UpdateAccountDto {
   @Trim()
@@ -141,4 +168,9 @@ export class UpdateAccountDto {
   @IsString()
   @IsOptional()
   public smsFrom: string;
+
+  @IsOptional()
+  @Type(() => PushPlatformDto)
+  @ValidateNested()
+  pushPlatforms?: PushPlatformDto;
 }

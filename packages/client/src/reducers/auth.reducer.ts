@@ -4,6 +4,8 @@ import ApiService from "../services/api.service";
 import tokenService from "../services/token.service";
 import posthog from "posthog-js";
 import { toast } from "react-toastify";
+import { ConnectedPushFirebasePlatforms } from "pages/PushSettings/PushSettings";
+import { UserPK } from "types/Account";
 
 export enum ActionType {
   AUTH_USER_PENDING = "AUTH_USER_PENDING",
@@ -23,6 +25,8 @@ export interface IUserData {
   onboarded: boolean;
   verified: boolean;
   expectedOnboarding: string[];
+  pushPlatforms: ConnectedPushFirebasePlatforms;
+  pk?: UserPK;
 }
 
 export interface ILoginForm {
@@ -181,6 +185,8 @@ export const loginUser = (body: ILoginForm): any => {
           email: data.email,
           expectedOnboarding: data.expectedOnboarding,
           verified: data.verified,
+          pushPlatforms: data.pushPlatforms,
+          pk: data.pk,
         },
       });
 
@@ -263,6 +269,8 @@ export const signUpUser = (body: ISignUpForm): any => {
           onboarded: data.onboarded,
           expectedOnboarding: [],
           verified: data.verified,
+          pushPlatforms: data.pushPlatforms,
+          pk: data.pk,
         },
       });
       return {

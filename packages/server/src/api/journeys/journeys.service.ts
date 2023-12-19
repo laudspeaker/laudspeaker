@@ -46,8 +46,9 @@ import {
 import {
   AnalyticsEvent,
   AnalyticsEventCondition,
-  AttributeBranch,
+  AttributeConditions,
   AttributeGroup,
+  Branch,
   ComponentEvent,
   CustomComponentStepMetadata,
   ElementCondition,
@@ -65,9 +66,13 @@ import { TimeDelayStepMetadata } from '../steps/types/step.interface';
 import { TimeWindow } from '../steps/types/step.interface';
 import { TimeWindowStepMetadata } from '../steps/types/step.interface';
 import { CustomerAttribute } from '../steps/types/step.interface';
-import { MultiBranchMetadata } from '../steps/types/step.interface';
+import { AttributeSplitMetadata } from '../steps/types/step.interface';
 import { Temporal } from '@js-temporal/polyfill';
 import generateName from '@good-ghosting/random-name-generator';
+import { JourneyEnrollmentType } from './types/additional-journey-settings.interface';
+import { JourneyLocationsService } from './journey-locations.service';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 
 export enum JourneyStatus {
   ACTIVE = 'Active',
@@ -104,7 +109,10 @@ export class JourneysService {
     @InjectModel(Customer.name) public CustomerModel: Model<CustomerDocument>,
     @Inject(forwardRef(() => CustomersService))
     private customersService: CustomersService,
-    @InjectConnection() private readonly connection: mongoose.Connection
+    @InjectConnection() private readonly connection: mongoose.Connection,
+    @Inject(JourneyLocationsService)
+    private readonly journeyLocationsService: JourneyLocationsService,
+    @InjectQueue('transition') private readonly transitionQueue: Queue
   ) {}
 
   log(message, method, session, user = 'ANONYMOUS') {
@@ -423,6 +431,179 @@ export class JourneysService {
   }
 
   /**
+   *
+   * @param account
+   * @param customerId
+   * @param customerUpdateType
+   * @param session
+   * @param queryRunner
+   * @param clientSession
+   */
+  public async updateEnrollmentForCustomer(
+    account: Account,
+    customerId: string,
+    customerUpdateType: 'NEW' | 'CHANGE',
+    session: string,
+    queryRunner: QueryRunner,
+    clientSession: ClientSession
+  ) {
+    const journeys = await queryRunner.manager.find(Journey, {
+      where: {
+        owner: { id: account.id },
+        isActive: true,
+        isStopped: false,
+        isPaused: false,
+        // TODO_JH should we be checking for these? (should be updated to the proper check for "active/addable")
+        isDynamic: true,
+      },
+    });
+    let customer = await this.customersService.findById(
+      account,
+      customerId,
+      clientSession
+    );
+    for (const journey of journeys) {
+      // get segments for journey
+      let change: 'ADD' | 'REMOVE' | 'DO_NOTHING' = 'DO_NOTHING';
+      let doesInclude = await this.customersService.isCustomerEnrolledInJourney(
+        account,
+        customer,
+        journey,
+        session,
+        queryRunner
+      );
+      let shouldInclude = true;
+      // TODO_JH: implement the following
+      // if (customer matches journeyInclusionCriteria)
+      //     shouldInclude = true
+      // for segment in journey.segments
+      //    if customer in segment
+      //        shouldInclude = true
+      if (!doesInclude && shouldInclude) {
+        let journeyEntrySettings = journey.journeyEntrySettings ?? {
+          enrollmentType: JourneyEnrollmentType.CurrentAndFutureUsers,
+        };
+        if (
+          journeyEntrySettings.enrollmentType ===
+          JourneyEnrollmentType.CurrentAndFutureUsers
+        ) {
+          change = 'ADD';
+        } else if (
+          journeyEntrySettings.enrollmentType ===
+            JourneyEnrollmentType.OnlyFuture &&
+          customerUpdateType === 'NEW'
+        ) {
+          change = 'ADD';
+        }
+        // TODO_JH: add in check for when customer was added to allow "CHANGE" on OnlyCurrent journey type
+      } else if (doesInclude && !shouldInclude) {
+        change = 'REMOVE';
+      }
+      switch (change) {
+        case 'ADD':
+          await this.enrollCustomerInJourney(
+            account,
+            journey,
+            customer,
+            session,
+            queryRunner,
+            clientSession
+          );
+          break;
+        case 'REMOVE':
+          await this.unenrollCustomerFromJourney(
+            account,
+            journey,
+            customer,
+            session,
+            clientSession
+          );
+          break;
+      }
+    }
+  }
+
+  /**
+   * Enroll customer in a journey.
+   * Adds to first step in journey.
+   * WARNING: this method does not check if the journey **should** include the customer.
+   */
+  async enrollCustomerInJourney(
+    account: Account,
+    journey: Journey,
+    customer: CustomerDocument,
+    session: string,
+    queryRunner: QueryRunner,
+    clientSession: ClientSession
+  ): Promise<void> {
+    const step = await this.stepsService.findByJourneyAndType(
+      account,
+      journey.id,
+      StepType.START,
+      session,
+      queryRunner
+    );
+    await this.journeyLocationsService.createAndLock(
+      journey,
+      customer,
+      step,
+      session,
+      account,
+      queryRunner
+    );
+    await this.transitionQueue.add('start', {
+      ownerID: account.id,
+      journeyID: journey.id,
+      step: step,
+      session: session,
+      customerID: customer.id,
+    });
+
+    await this.CustomerModel.updateOne(
+      { _id: customer._id },
+      {
+        $addToSet: {
+          journeys: journey.id,
+        },
+        $set: {
+          journeyEnrollmentsDates: {
+            [journey.id]: new Date().toUTCString(),
+          },
+        },
+      }
+    )
+      .session(clientSession)
+      .exec();
+  }
+
+  /**
+   * Un-Enroll Customer from journey and remove from any steps.
+   */
+  public async unenrollCustomerFromJourney(
+    account: Account,
+    journey: Journey,
+    customer: CustomerDocument,
+    session: string,
+    clientSession: ClientSession
+  ) {
+    // TODO_JH: remove from steps also
+    await this.CustomerModel.updateOne(
+      { _id: customer._id },
+      {
+        $pullAll: {
+          journeys: [journey.id],
+        },
+        // TODO_JH: This logic needs to be checked
+        $unset: {
+          journeyEnrollmentsDates: [journey.id],
+        },
+      }
+    )
+      .session(clientSession)
+      .exec();
+  }
+
+  /**
    *  IMPORTANT: THIS METHOD MUST REMAIN IDEMPOTENT: CUSTOMER SHOULD
    * NOT BE DOUBLE ENROLLED IN JOURNEY
    *
@@ -451,7 +632,6 @@ export class JourneysService {
           isDynamic: true,
         },
       });
-
       for (
         let journeyIndex = 0;
         journeyIndex < journeys?.length;
@@ -632,6 +812,37 @@ export class JourneysService {
         isPaused: false,
       },
     });
+  }
+
+  /**
+   *
+   * Find a journey by id, using db transactoins
+   *
+   * @param {Account} account
+   * @param {string} id
+   * @param {string} session
+   * @param {QueryRunner} [queryRunner]
+   */
+  async findByID(
+    account: Account,
+    id: string,
+    session: string,
+    queryRunner?: QueryRunner
+  ) {
+    if (queryRunner)
+      return await queryRunner.manager.findOne(Journey, {
+        where: {
+          owner: { id: account.id },
+          id,
+        },
+      });
+    else
+      return await this.journeysRepository.findOne({
+        where: {
+          owner: { id: account.id },
+          id,
+        },
+      });
   }
 
   /**
@@ -835,7 +1046,7 @@ export class JourneysService {
         transactionSession
       );
 
-      await this.stepsService.addToStart(
+      await this.stepsService.triggerStart(
         account,
         journeyID,
         journey.inclusionCriteria,
@@ -1013,8 +1224,6 @@ export class JourneysService {
         account.email
       );
 
-      this.logger.warn('SAVE TEST 1 BEFORE LOOP');
-      this.logger.warn(journey);
       for (let i = 0; i < nodes.length; i++) {
         const step = await queryRunner.manager.findOne(Step, {
           where: {
@@ -1089,10 +1298,6 @@ export class JourneysService {
             );
             break;
           case NodeType.WAIT_UNTIL:
-            if (nodes[i].id === '226a7112-96ec-477d-a1ac-d604b4f04301') {
-              this.logger.warn('SAVE TEST 2 Before processing');
-              this.logger.warn(journey);
-            }
             metadata = new WaitUntilStepMetadata();
 
             //Time Branch configuration
@@ -1307,66 +1512,26 @@ export class JourneysService {
                 metadata.window.toTime = nodes[i].data?.['toTime'];
             }
             break;
-          case NodeType.USER_ATTRIBUTE:
-            metadata = new MultiBranchMetadata();
+          case NodeType.MULTISPLIT:
+            metadata = new AttributeSplitMetadata();
             metadata.branches = [];
-            let index = 0;
             for (let i = 0; i < relevantEdges.length; i++) {
-              if (
-                relevantEdges[i].data['branch'].type === BranchType.ATTRIBUTE
-              ) {
-                const branch = new AttributeBranch();
-                branch.groups = [];
-                for (
-                  let groupsIndex = 0;
-                  groupsIndex <
-                  relevantEdges[i].data['branch'].attributeConditions.length;
-                  groupsIndex++
-                ) {
-                  const group = new AttributeGroup();
-                  group.attributes = [];
-                  for (
-                    let attributeIndex = 0;
-                    attributeIndex <
-                    relevantEdges[i].data['branch'].attributeConditions[
-                      groupsIndex
-                    ].statements.length;
-                    attributeIndex++
-                  ) {
-                    const attribute = new CustomerAttribute();
-                    attribute.comparisonType =
-                      relevantEdges[i].data['branch'].attributeConditions[
-                        groupsIndex
-                      ].statements[attributeIndex].comparisonType;
-                    attribute.key =
-                      relevantEdges[i].data['branch'].attributeConditions[
-                        groupsIndex
-                      ].statements[attributeIndex].key;
-                    attribute.keyType =
-                      relevantEdges[i].data['branch'].attributeConditions[
-                        groupsIndex
-                      ].statements[attributeIndex].valueType;
-                    attribute.value =
-                      relevantEdges[i].data['branch'].attributeConditions[
-                        groupsIndex
-                      ].statements[attributeIndex].value;
-                    group.attributes.push(attribute);
-                  }
-                  group.relation =
-                    relevantEdges[i].data['branch'].attributeConditions[
-                      groupsIndex
-                    ].statements[0].relationToNext;
-                  branch.groups.push(group);
-                }
+              // All others branch check
+              if (relevantEdges[i].data['branch'].isOthers === true) {
+                metadata.allOthers = nodes.filter((node) => {
+                  return node.id === relevantEdges[i].target;
+                })[0].data.stepId;
+              } else {
+                const branch = new AttributeConditions();
                 branch.destination = nodes.filter((node) => {
                   return node.id === relevantEdges[i].target;
                 })[0].data.stepId;
-                branch.index = index;
-                index++;
-                branch.relation =
-                  relevantEdges[i].data[
-                    'branch'
-                  ].attributeConditions[0].relationToNext;
+                branch.index = i;
+                branch.conditions =
+                  relevantEdges[i].data['branch']['conditions'];
+                branch.destination = nodes.filter((node) => {
+                  return node.id === relevantEdges[i].target;
+                })[0].data.stepId;
                 metadata.branches.push(branch);
               }
             }
@@ -1669,68 +1834,6 @@ export class JourneysService {
           metadata.window.to = Temporal.Instant.from(
             new Date(nodes[i].data['to']).toISOString()
           );
-          break;
-        case NodeType.USER_ATTRIBUTE:
-          metadata = new MultiBranchMetadata();
-          metadata.branches = [];
-          let index = 0;
-          for (let i = 0; i < relevantEdges.length; i++) {
-            if (relevantEdges[i].data['branch'].type === BranchType.ATTRIBUTE) {
-              const branch = new AttributeBranch();
-              branch.groups = [];
-              for (
-                let groupsIndex = 0;
-                groupsIndex <
-                relevantEdges[i].data['branch'].attributeConditions.length;
-                groupsIndex++
-              ) {
-                const group = new AttributeGroup();
-                group.attributes = [];
-                for (
-                  let attributeIndex = 0;
-                  attributeIndex <
-                  relevantEdges[i].data['branch'].attributeConditions[
-                    groupsIndex
-                  ].statements.length;
-                  attributeIndex++
-                ) {
-                  const attribute = new CustomerAttribute();
-                  attribute.comparisonType =
-                    relevantEdges[i].data['branch'].attributeConditions[
-                      groupsIndex
-                    ].statements[attributeIndex].comparisonType;
-                  attribute.key =
-                    relevantEdges[i].data['branch'].attributeConditions[
-                      groupsIndex
-                    ].statements[attributeIndex].key;
-                  attribute.keyType =
-                    relevantEdges[i].data['branch'].attributeConditions[
-                      groupsIndex
-                    ].statements[attributeIndex].valueType;
-                  attribute.value =
-                    relevantEdges[i].data['branch'].attributeConditions[
-                      groupsIndex
-                    ].statements[attributeIndex].value;
-                  group.attributes.push(attribute);
-                }
-                group.relation =
-                  relevantEdges[i].data['branch'].attributeConditions[
-                    groupsIndex
-                  ].statements[0].relationToNext;
-                branch.groups.push(group);
-              }
-              branch.destination = nodes.filter((node) => {
-                return node.id === relevantEdges[i].target;
-              })[0].data.stepId;
-              branch.index = index;
-              index++;
-              branch.relation =
-                relevantEdges[i].data[
-                  'branch'
-                ].attributeConditions[0].relationToNext;
-              metadata.branches.push(branch);
-            }
-          }
           break;
       }
       await queryRunner.manager.save(Step, {

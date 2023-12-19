@@ -69,6 +69,7 @@ const MulisplitSettings: FC<SidePanelComponentProps<MultisplitNodeData>> = ({
     } else {
       newData.branches[editBranchIndex].conditions = branch;
     }
+    console.log("the segment data is", JSON.stringify(newData, null, 2));
 
     setNodeData(newData);
     setEditBranchIndex(undefined);

@@ -82,9 +82,11 @@ const Personv2 = () => {
     setIsLoadingEvents(false);
   };
 
+  /*
   useEffect(() => {
     uploadEvents();
   }, [page]);
+  */
 
   useEffect(() => {
     (async () => {
@@ -94,7 +96,7 @@ const Personv2 = () => {
         });
 
         setPersonInfo(personData);
-        uploadEvents();
+        //uploadEvents();
       } catch (e) {
         console.error(e);
       } finally {
@@ -358,7 +360,7 @@ const Personv2 = () => {
                           )}
                         </div>
                         <div className="flex flex-col text-[#111827]">
-                          <div className="max-w-[230px] text-[16px] leading-[24px] font-semibold font-inter text-ellipsis overflow-hidden whitespace-nowrap">
+                          <div className="max-w-[230px] text-base font-semibold font-inter text-ellipsis overflow-hidden whitespace-nowrap">
                             {capitalize(el.event)} {el.templateType}-
                             {el.templateName}
                           </div>
@@ -390,7 +392,7 @@ const Personv2 = () => {
                         <div className="w-[10px] absolute top-[6px] left-[6px] h-[10px] rounded-full border-2 border-[#6366F1] bg-[#6366F1]" />
                       </div>
                       <div className="flex flex-col text-[#111827]">
-                        <div className="max-w-[230px] text-[16px] leading-[24px] font-semibold font-inter text-ellipsis overflow-hidden whitespace-nowrap">
+                        <div className="max-w-[230px] text-base font-semibold font-inter text-ellipsis overflow-hidden whitespace-nowrap">
                           Created in Laudspeaker
                         </div>
                         <div className="max-w-[230px] text-[12px] leading-5 font-normal font-inter text-ellipsis overflow-hidden whitespace-nowrap">

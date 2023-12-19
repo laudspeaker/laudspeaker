@@ -91,4 +91,19 @@ export class AppController {
     this.debug(`GET / `, this.root.name, session);
     throw new HttpException('sentry-online', HttpStatus.INTERNAL_SERVER_ERROR);
   }
+
+  @UseInterceptors(new RavenInterceptor())
+  @Get('/allowed')
+  allowed() {
+    const session = randomUUID();
+    this.debug(`GET / `, this.root.name, session);
+    let allowedRoutes = {};
+    if (process.env.EMAIL_VERIFICATION !== 'true') {
+      allowedRoutes['verified_not_allowed'] = true;
+    }
+    if (process.env.SLACK_OPTIONAL === 'true') {
+      allowedRoutes['slack_not_allowed'] = true;
+    }
+    return allowedRoutes;
+  }
 }

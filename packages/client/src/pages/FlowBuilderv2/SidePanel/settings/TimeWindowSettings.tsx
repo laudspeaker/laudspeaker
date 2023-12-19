@@ -54,7 +54,7 @@ const TimeWindowSettings: FC<SidePanelComponentProps<TimeWindowNodeData>> = ({
       ) : nodeData.windowType === TimeWindowTypes.SPEC_WEEK_DAYS ? (
         <>
           <div className="flex mb-[10px]">
-            {["M", "T", "W", "T", "F", "S", "S"].map((el, i) => {
+            {["S", "M", "T", "W", "T", "F", "S"].map((el, i) => {
               const isChecked = !!nodeData?.onDays?.[i];
 
               return (

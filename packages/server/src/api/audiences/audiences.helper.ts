@@ -6,7 +6,6 @@ import { CustomerDocument } from '../customers/schemas/customer.schema';
 import { SegmentsService } from '../segments/segments.service';
 import { InclusionCriteria } from '../segments/types/segment.type';
 import {
-  AttributeBranch,
   AttributeGroup,
   CustomerAttribute,
 } from '../steps/types/step.interface';

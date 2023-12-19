@@ -44,7 +44,7 @@ const FlowBuilderErrorNextModal: FC<FlowBuilderErrorNextModalProps> = ({
           </div>
 
           <div className="flex flex-col gap-2">
-            <div className="font-medium text-[16px] leading-[24px]">
+            <div className="font-medium text-base">
               Please complete all fields
             </div>
             <div className="font-normal text-[14px] leading-[22px]">

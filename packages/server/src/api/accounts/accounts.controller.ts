@@ -28,6 +28,12 @@ import { imageFileFilter } from '../auth/middleware/file.validation';
 import { S3Service } from '../s3/s3.service';
 import { randomUUID } from 'crypto';
 import { RavenInterceptor } from 'nest-raven';
+import { InjectModel } from '@nestjs/mongoose';
+import {
+  CustomerKeys,
+  CustomerKeysDocument,
+} from '../customers/schemas/customer-keys.schema';
+import { Model } from 'mongoose';
 
 @Controller('accounts')
 export class AccountsController {
@@ -35,7 +41,9 @@ export class AccountsController {
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
     private readonly logger: Logger,
     private readonly accountsService: AccountsService,
-    private readonly s3Service: S3Service
+    private readonly s3Service: S3Service,
+    @InjectModel(CustomerKeys.name)
+    public CustomerKeysModel: Model<CustomerKeysDocument>
   ) {}
 
   log(message, method, session, user = 'ANONYMOUS') {
@@ -120,14 +128,29 @@ export class AccountsController {
           `ac.id = vr.accountId and extract ('epoch' from (now() - "vr"."createdAt")::interval) < 300 AND vr.status = 'sent'`
         )
         .where(`ac.id = :userId`, {
-          // @ts-ignore
-          userId: <Account>user.id,
+          userId: (<Account>user).id,
         })
         .orderBy('vr.createdAt', 'DESC')
         .limit(1)
         .execute();
 
-      return data?.[0];
+      delete data?.[0].pushPlatforms?.Android?.credentials;
+      delete data?.[0].pushPlatforms?.iOS?.credentials;
+
+      const pk = (
+        await this.CustomerKeysModel.findOne({
+          isPrimary: true,
+          ownerId: (<Account>user).id,
+        })
+      )?.toObject();
+
+      if (pk) {
+        pk._id = pk._id.toString();
+        delete pk?.ownerId;
+        delete pk?.__v;
+      }
+
+      return { ...data?.[0], pk };
     } catch (e) {
       this.error(e, this.findOne.name, session, (<Account>user).id);
       throw e;
@@ -152,6 +175,31 @@ export class AccountsController {
       this.error(e, this.getUserSettings.name, session, (<Account>user).id);
       throw e;
     }
+  }
+
+  @Post('/settings/validateFirebase')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
+  @UseInterceptors(
+    FileInterceptor('file', {
+      limits: {
+        fileSize: 10240,
+      },
+      fileFilter: (req, file, callback) => {
+        if (file.mimetype === 'application/json') {
+          callback(null, true);
+        } else {
+          callback(new Error('Unsupported file type'), false);
+        }
+      },
+    })
+  )
+  async validateFirebaseConnection(
+    @Req() { user }: Request,
+    @UploadedFile() file: Express.Multer.File
+  ) {
+    const session = randomUUID();
+    return this.accountsService.validateFirebase(<Account>user, file, session);
   }
 
   @Patch('keygen')

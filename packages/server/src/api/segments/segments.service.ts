@@ -9,7 +9,7 @@ import {
 import { BadRequestException } from '@nestjs/common/exceptions';
 import { InjectRepository } from '@nestjs/typeorm';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
-import { DataSource, In, Like, Repository } from 'typeorm';
+import { DataSource, In, Like, QueryRunner, Repository } from 'typeorm';
 import { Account } from '../accounts/entities/accounts.entity';
 import { AudiencesHelper } from '../audiences/audiences.helper';
 import { CustomersService } from '../customers/customers.service';
@@ -22,6 +22,7 @@ import { SegmentCustomers } from './entities/segment-customers.entity';
 import { Segment, SegmentType } from './entities/segment.entity';
 import { InjectConnection } from '@nestjs/mongoose';
 import mongoose from 'mongoose';
+import { query } from 'express';
 
 @Injectable()
 export class SegmentsService {
@@ -39,11 +40,83 @@ export class SegmentsService {
     @InjectConnection() private readonly connection: mongoose.Connection
   ) {}
 
-  public async findOne(account: Account, id: string, session: string) {
-    const segment = await this.segmentRepository.findOneBy({
-      id,
-      owner: { id: account.id },
-    });
+  log(message, method, session, user = 'ANONYMOUS') {
+    this.logger.log(
+      message,
+      JSON.stringify({
+        class: SegmentsService.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+  debug(message, method, session, user = 'ANONYMOUS') {
+    this.logger.debug(
+      message,
+      JSON.stringify({
+        class: SegmentsService.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+  warn(message, method, session, user = 'ANONYMOUS') {
+    this.logger.warn(
+      message,
+      JSON.stringify({
+        class: SegmentsService.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+  error(error, method, session, user = 'ANONYMOUS') {
+    this.logger.error(
+      error.message,
+      error.stack,
+      JSON.stringify({
+        class: SegmentsService.name,
+        method: method,
+        session: session,
+        cause: error.cause,
+        name: error.name,
+        user: user,
+      })
+    );
+  }
+  verbose(message, method, session, user = 'ANONYMOUS') {
+    this.logger.verbose(
+      message,
+      JSON.stringify({
+        class: SegmentsService.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+
+  public async findOne(
+    account: Account,
+    id: string,
+    session: string,
+    queryRunner?: QueryRunner
+  ) {
+    let segment: Segment;
+    if (queryRunner) {
+      segment = await queryRunner.manager.findOneBy(Segment, {
+        id,
+        owner: { id: account.id },
+      });
+    } else {
+      segment = await this.segmentRepository.findOneBy({
+        id,
+        owner: { id: account.id },
+      });
+    }
 
     if (!segment) throw new NotFoundException('Segment not found');
 
@@ -73,16 +146,37 @@ export class SegmentsService {
     return { data: segments, totalPages };
   }
 
+  /**
+   * Get all segements for an account. Optionally filter by type
+   * If @param type is undefined, return all types.
+   * @returns
+   */
+  public async getSegments(
+    account: Account,
+    type: SegmentType | undefined,
+    queryRunner: QueryRunner
+  ) {
+    return await queryRunner.manager.find(Segment, {
+      where: { owner: { id: account.id }, ...(type ? { type: type } : {}) },
+    });
+  }
+
   public async create(
     account: Account,
     createSegmentDTO: CreateSegmentDTO,
     session: string
   ) {
-    const segment = await this.segmentRepository.save({
-      ...createSegmentDTO,
-      owner: { id: account.id },
-    });
+    let err;
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
+      const segment = await queryRunner.manager.save(Segment, {
+        ...createSegmentDTO,
+        owner: { id: account.id },
+      });
 
+      /*
     if (segment.type === SegmentType.AUTOMATIC) {
       this.customersService.CustomerModel.find({
         ownerId: account.id,
@@ -98,8 +192,43 @@ export class SegmentsService {
           }
         });
     }
+    */
 
-    return segment;
+      // test code
+      // this.customersService.createSegmentQuery(createSegmentDTO.inclusionCriteria.query);
+      if (segment.type === SegmentType.AUTOMATIC) {
+        const customersInSegment =
+          await this.customersService.testCustomerInSegment(
+            createSegmentDTO.inclusionCriteria.query,
+            account
+          );
+
+        const segmentCustomersArray: SegmentCustomers[] = Array.from(
+          customersInSegment
+        ).map((stringValue) => {
+          const segmentCustomer = new SegmentCustomers();
+          segmentCustomer.customerId = stringValue;
+          segmentCustomer.segment = segment;
+          segmentCustomer.owner = account; // Replace `propertyName` with the actual property name in your entity
+          // Set other properties as needed for each SegmentCustomers entity
+          return segmentCustomer;
+        });
+        await queryRunner.manager.save(SegmentCustomers, segmentCustomersArray);
+        //await SegmentCustomers.save(segmentCustomersArray);
+      }
+      await queryRunner.commitTransaction();
+
+      return segment;
+    } catch (e) {
+      err = e;
+      this.error(e, this.create.name, session, account.email);
+      await queryRunner.rollbackTransaction();
+    } finally {
+      await queryRunner.release();
+      if (err) {
+        throw err;
+      }
+    }
   }
 
   public async update(
@@ -227,6 +356,107 @@ export class SegmentsService {
     };
   }
 
+  /**
+   * Goes through all account segments and updates membership of the segment
+   * based on the customer's attributes.
+   * @returns object with two arrays of segments indicating where the customer was added/removed
+   */
+  public async updateCustomerSegments(
+    account: Account,
+    customerId: string,
+    session: string,
+    queryRunner: QueryRunner
+  ) {
+    let addedToSegments: Segment[] = [];
+    let removedFromSegments: Segment[] = [];
+    let segments = await this.getSegments(account, undefined, queryRunner);
+    for (const segment of segments) {
+      // TODO_JH: implement the following
+      // let doInclude = checkInclusionCriteria(segment, customer)
+      let doInclude = true;
+      let isMemberOf = await this.isCustomerMemberOf(
+        account,
+        segment.id,
+        customerId,
+        queryRunner
+      );
+      if (doInclude && !isMemberOf) {
+        // If should include but not a member of, then add
+        await this.addCustomerToSegment(
+          account,
+          segment.id,
+          customerId,
+          session,
+          queryRunner
+        );
+        addedToSegments.push(segment);
+      } else if (!doInclude && isMemberOf) {
+        // If should not include but is a member of, then remove
+        await this.removeCustomerFromSegment(
+          segment.id,
+          customerId,
+          queryRunner
+        );
+        removedFromSegments.push(segment);
+      }
+    }
+    return { added: addedToSegments, removed: removedFromSegments };
+  }
+
+  /**
+   * Add customer to segment record if not already exists.
+   */
+  public async addCustomerToSegment(
+    account: Account,
+    segmentId: string,
+    customerId: string,
+    session: string,
+    queryRunner: QueryRunner
+  ) {
+    const segment = await this.findOne(
+      account,
+      segmentId,
+      session,
+      queryRunner
+    );
+
+    const foundRecord = await queryRunner.manager.findOneBy(SegmentCustomers, {
+      segment: { id: segment.id },
+      customerId,
+    });
+
+    if (foundRecord)
+      throw new ConflictException('Customer already in this segment');
+
+    await queryRunner.manager.save(SegmentCustomers, {
+      segment: { id: segment.id },
+      customerId,
+    });
+  }
+
+  public async removeCustomerFromSegment(
+    segmentId: string,
+    customerId: string,
+    queryRunner: QueryRunner
+  ) {
+    await queryRunner.manager.delete(SegmentCustomers, {
+      segment: { id: segmentId },
+      customerId,
+    });
+  }
+
+  /**
+   * Handles unassigning a customer from all segments.
+   */
+  public async removeCustomerFromAllSegments(
+    customerId: string,
+    queryRunner: QueryRunner
+  ) {
+    await queryRunner.manager.delete(SegmentCustomers, {
+      customerId,
+    });
+  }
+
   public async assignCustomer(
     account: Account,
     id: string,
@@ -344,6 +574,14 @@ export class SegmentsService {
     account: Account,
     customerId: string
   ) {
+    /*
+    await this.segmentCustomersRepository.delete({
+      segment:{type:SegmentType.AUTOMATIC},
+      customerId: customerId,
+      owner: {id:account.id}
+    })
+    */
+    /*
     await this.segmentCustomersRepository
       .createQueryBuilder()
       .delete()
@@ -359,6 +597,7 @@ export class SegmentsService {
         }
       )
       .execute();
+    */
   }
 
   public async duplicate(account: Account, id: string, session: string) {
@@ -450,12 +689,21 @@ export class SegmentsService {
   public async isCustomerMemberOf(
     account: Account,
     id: string,
-    customerId: string
+    customerId: string,
+    queryRunner?: QueryRunner
   ) {
-    const record = await this.segmentCustomersRepository.findOneBy({
-      segment: { id, owner: { id: account.id } },
-      customerId,
-    });
+    let record: SegmentCustomers;
+    if (!queryRunner) {
+      record = await this.segmentCustomersRepository.findOneBy({
+        segment: { id, owner: { id: account.id } },
+        customerId,
+      });
+    } else {
+      record = await queryRunner.manager.findOneBy(SegmentCustomers, {
+        segment: { id, owner: { id: account.id } },
+        customerId,
+      });
+    }
 
     return !!record;
   }

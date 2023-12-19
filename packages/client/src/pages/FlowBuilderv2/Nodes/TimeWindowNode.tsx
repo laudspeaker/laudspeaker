@@ -41,7 +41,7 @@ export const TimeWindowNode: FC<NodeProps<TimeWindowNodeData>> = ({
         </div>
       </Handle>
       <div className="p-[16px] max-h-full">
-        <div className="flex justify-between font-semibold text-[16px] leading-[24px] mb-[2px]">
+        <div className="flex justify-between font-semibold text-base mb-[2px]">
           <div>Time window</div>
           {isViewMode && (
             <div className="h-fit px-1 py-[2px] flex items-center gap-[4px] bg-[#F3F4F6] rounded-sm">

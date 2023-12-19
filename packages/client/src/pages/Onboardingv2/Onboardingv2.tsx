@@ -116,7 +116,7 @@ const Onboardingv2 = () => {
     >
       <div className="flex justify-between px-5 pt-[20px]">
         <button
-          className={`underline text-black font-inter font-normal text-[16px] leading-[24px] ${
+          className={`underline text-black font-inter font-normal text-base ${
             currentPage === OnboardingPage.TRACK_PERFORMANCE
               ? "opacity-0 pointer-events-none"
               : ""

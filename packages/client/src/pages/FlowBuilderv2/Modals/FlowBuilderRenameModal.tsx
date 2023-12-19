@@ -24,7 +24,7 @@ const FlowBuilderRenameModal: FC<FlowBuilderRenameModalProps> = ({
   return (
     <FlowBuilderModal isOpen={isOpen} onClose={onClose}>
       <div className="font-roboto">
-        <div className="font-medium text-[16px] leading-[24px] ">Rename</div>
+        <div className="font-medium text-base ">Rename</div>
         <div className="mt-[16px]">
           <FlowBuilderInput
             type="text"

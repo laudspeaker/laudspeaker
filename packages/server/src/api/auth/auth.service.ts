@@ -127,7 +127,7 @@ export class AuthService {
       user.apiKey = this.helper.generateApiKey();
       user.accountCreatedAt = new Date();
       user.plan = PlanType.FREE;
-      if(process.env.EMAIL_VERIFICATION == 'false'){
+      if (process.env.EMAIL_VERIFICATION !== 'true') {
         user.verified = true;
       }
       const ret = await queryRunner.manager.save(user);
@@ -135,7 +135,7 @@ export class AuthService {
 
       user.id = ret.id;
 
-      if(process.env.EMAIL_VERIFICATION == 'true'){
+      if (process.env.EMAIL_VERIFICATION === 'true') {
         await this.requestVerification(ret, queryRunner, session);
       }
       await queryRunner.commitTransaction();
@@ -206,16 +206,40 @@ export class AuthService {
 
     const verificationLink = `${process.env.FRONTEND_URL}/verify-email/${verification.id}`;
 
-    await this.messageQueue.add('email', {
-      key: process.env.MAILGUN_API_KEY,
-      from: 'Laudspeaker',
-      domain: process.env.MAILGUN_DOMAIN,
-      email: 'noreply',
-      to: user.email,
-      subject: 'Email verification',
-      text: `Link: <a href="${verificationLink}">${verificationLink}</a>`,
-    });
-
+    if (process.env.EMAIL_VERIFICATION_PROVIDER === 'gmail') {
+      await this.messageQueue.add('email', {
+        eventProvider: 'gmail',
+        key: process.env.GMAIL_APP_CRED,
+        from: 'Laudspeaker',
+        email: process.env.GMAIL_VERIFICATION_EMAIL,
+        to: user.email,
+        subject: 'Email verification',
+        plainText:
+          'Paste the following link into your browser:' + verificationLink,
+        text: `Paste the following link into your browser: <a href="${verificationLink}">${verificationLink}</a>`,
+      });
+    } else if (process.env.EMAIL_VERIFICATION_PROVIDER === 'mailgun') {
+      await this.messageQueue.add('email', {
+        key: process.env.MAILGUN_API_KEY,
+        from: 'Laudspeaker',
+        domain: process.env.MAILGUN_DOMAIN,
+        email: 'noreply',
+        to: user.email,
+        subject: 'Email verification',
+        text: `Link: <a href="${verificationLink}">${verificationLink}</a>`,
+      });
+    } else {
+      //default is mailgun right now
+      await this.messageQueue.add('email', {
+        key: process.env.MAILGUN_API_KEY,
+        from: 'Laudspeaker',
+        domain: process.env.MAILGUN_DOMAIN,
+        email: 'noreply',
+        to: user.email,
+        subject: 'Email verification',
+        text: `Link: <a href="${verificationLink}">${verificationLink}</a>`,
+      });
+    }
     return verification;
   }
 

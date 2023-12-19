@@ -16,7 +16,19 @@ import { Account } from '../accounts/entities/accounts.entity';
 import { AudiencesHelper } from '../audiences/audiences.helper';
 import { AudiencesModule } from '../audiences/audiences.module';
 import { WorkflowsModule } from '../workflows/workflows.module';
+import { EventsModule } from '../events/events.module';
 import { StepsModule } from '../steps/steps.module';
+import { CustomersConsumerService } from './customers.consumer';
+import { KafkaModule } from '../kafka/kafka.module';
+import { JourneysModule } from '../journeys/journeys.module';
+import { S3Service } from '../s3/s3.service';
+import { Imports } from './entities/imports.entity';
+import { ImportProcessor } from './imports.porcessor';
+import { JourneyLocationsService } from '../journeys/journey-locations.service';
+import { JourneyLocation } from '../journeys/entities/journey-location.entity';
+import { SegmentsService } from '../segments/segments.service';
+import { Segment } from '../segments/entities/segment.entity';
+import { SegmentCustomers } from '../segments/entities/segment-customers.entity';
 
 @Module({
   imports: [
@@ -29,15 +41,36 @@ import { StepsModule } from '../steps/steps.module';
     BullModule.registerQueue({
       name: 'customers',
     }),
+    BullModule.registerQueue({
+      name: 'imports',
+    }),
     AccountsModule,
     SegmentsModule,
     AudiencesModule,
     WorkflowsModule,
+    EventsModule,
     StepsModule,
-    TypeOrmModule.forFeature([Account]),
+    TypeOrmModule.forFeature([
+      Account,
+      Imports,
+      JourneyLocation,
+      Segment,
+      SegmentCustomers,
+    ]),
+    KafkaModule,
+    JourneysModule,
   ],
   controllers: [CustomersController],
-  providers: [CustomersService, CustomersProcessor, AudiencesHelper],
-  exports: [CustomersService],
+  providers: [
+    CustomersService,
+    CustomersProcessor,
+    AudiencesHelper,
+    CustomersConsumerService,
+    S3Service,
+    ImportProcessor,
+    JourneyLocationsService,
+  ],
+
+  exports: [CustomersService, CustomersConsumerService],
 })
 export class CustomersModule {}

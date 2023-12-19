@@ -151,7 +151,7 @@ export const MessageNode: FC<NodeProps<MessageNodeData>> = ({
         <div className="flex gap-[6px]">
           <div className="text-[#6366F1]">{nodeFixtures.icon}</div>
           <div
-            className={`font-inter whitespace-nowrap overflow-hidden text-ellipsis font-semibold text-[16px] leading-[24px] ${
+            className={`font-inter whitespace-nowrap overflow-hidden text-ellipsis font-semibold text-base ${
               nodeFixtures === unknownMessageFixtures ? "text-red-500" : ""
             }`}
           >

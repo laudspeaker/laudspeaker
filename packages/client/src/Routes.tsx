@@ -52,6 +52,10 @@ import AppConfig from "constants/app";
 import Personv2 from "pages/Personv2";
 import SegmentCreation from "pages/SegmentCreation/index";
 import PushBuilder from "pages/PushBuilder/PushBuilder";
+import PushSettings from "pages/PushSettings";
+import PeopleImport from "pages/PeopleImport/PeopleImport";
+import PeopleSetting from "pages/PeopleSetting/PeopleSetting";
+import SegmentEditor from "pages/SegmentCreation/SegmentEditor";
 
 interface IProtected {
   children: ReactElement;
@@ -75,6 +79,54 @@ const Protected = ({ children }: IProtected) => {
   }
 
   return isLoggedIn ? children : <></>;
+};
+
+interface IAllowed {
+  route: string;
+  children: ReactElement;
+}
+
+const Allowed = ({ route, children }: IAllowed) => {
+  const navigate = useNavigate();
+  const [isSlackAllowed, setIsSlackAllowed] = useState(true);
+  const [isVerifiedAllowed, setIsVerifiedAllowed] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  const loadData = async () => {
+    setIsLoading(true);
+    try {
+      const { data } = await ApiService.get({ url: "/allowed" });
+      const { verified_not_allowed, slack_not_allowed } = data;
+      setIsVerifiedAllowed(!verified_not_allowed);
+      setIsSlackAllowed(!slack_not_allowed);
+      setIsLoaded(true);
+    } catch (e) {
+      toast.error("Error while checking allowed routes");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  useEffect(() => {
+    if (route === "verified") {
+      if (isLoaded && !isVerifiedAllowed) navigate("/home");
+    } else if (route === "slack") {
+      if (isLoaded && !isSlackAllowed) navigate("/home");
+    }
+  }, [isVerifiedAllowed, isSlackAllowed, isLoaded]);
+
+  if (route === "verified") {
+    return isVerifiedAllowed ? <>{children}</> : <></>;
+  }
+  if (route === "slack") {
+    return isSlackAllowed ? <>{children}</> : <></>;
+  }
+  return <></>;
 };
 
 interface VerificationProtectedProps {
@@ -204,6 +256,8 @@ const RouteComponent: React.FC = () => {
             email: data.email,
             expectedOnboarding: data.expectedOnboarding,
             verified: data.verified,
+            pk: data.pk,
+            pushPlatforms: data.pushPlatforms,
           },
         });
       } catch (e) {
@@ -340,6 +394,40 @@ const RouteComponent: React.FC = () => {
           }
         />
         <Route
+          path="/people/import"
+          element={
+            <Protected>
+              <VerificationProtected>
+                <DrawerLayout
+                  crumbs={[
+                    { text: "Users", link: "/people" },
+                    { text: "Import users" },
+                  ]}
+                >
+                  <PeopleImport />
+                </DrawerLayout>
+              </VerificationProtected>
+            </Protected>
+          }
+        />
+        <Route
+          path="/people/setting"
+          element={
+            <Protected>
+              <VerificationProtected>
+                <DrawerLayout
+                  crumbs={[
+                    { text: "Users", link: "/people" },
+                    { text: "Setting" },
+                  ]}
+                >
+                  <PeopleSetting />
+                </DrawerLayout>
+              </VerificationProtected>
+            </Protected>
+          }
+        />
+        <Route
           path="/person/:id"
           element={
             <Protected>
@@ -382,7 +470,7 @@ const RouteComponent: React.FC = () => {
             <Protected>
               <VerificationProtected>
                 <DrawerLayout>
-                  <>{/* Add viewer when it's gonna be ready */}</>
+                  <SegmentEditor />
                 </DrawerLayout>
               </VerificationProtected>
             </Protected>
@@ -631,6 +719,18 @@ const RouteComponent: React.FC = () => {
           }
         />
         <Route
+          path="/settings/push"
+          element={
+            <Protected>
+              <VerificationProtected>
+                <DrawerLayout>
+                  <PushSettings />
+                </DrawerLayout>
+              </VerificationProtected>
+            </Protected>
+          }
+        />
+        <Route
           path="/settings/custom-modal"
           element={
             <Protected>
@@ -697,9 +797,14 @@ const RouteComponent: React.FC = () => {
           path="/slack/cor/:id"
           element={
             <Protected>
-              <VerificationProtected>
-                <Cor />
-              </VerificationProtected>
+              <Allowed
+                route={"slack"}
+                children={
+                  <VerificationProtected>
+                    <Cor />
+                  </VerificationProtected>
+                }
+              />
             </Protected>
           }
         />

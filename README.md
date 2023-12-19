@@ -53,7 +53,7 @@ We're currently in Public Alpha.
 
 ## License
 
-**Laudspeaker** is open source and released under the [MIT License][mit_license], and AGPL-3.0 licenses (code in separate directories) with the exception of our ee directory (which is currently empty!) but will be under the Laudspeaker Enterprise Edition license.
+**Laudspeaker** is open source and released under the AGPL-3.0 license with the exception of our ee directory (which is currently empty!) but will be under the Laudspeaker Enterprise Edition license.
 
 ## 🌱 Contribute
 

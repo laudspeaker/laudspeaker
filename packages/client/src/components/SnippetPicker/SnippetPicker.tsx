@@ -37,14 +37,24 @@ const snippetModeToEditorModeMap: Record<SnippetMode, EditorType> = {
 
 export interface SnippetPickerProps {
   userApiKey: string;
+  email: string;
+  firstName: string;
+  lastName: string;
 }
 
-const SnippetPicker: FC<SnippetPickerProps> = ({ userApiKey }) => {
+const SnippetPicker: FC<SnippetPickerProps> = ({
+  userApiKey,
+  email,
+  firstName,
+  lastName,
+}) => {
   const [snippet, setSnippet] = useState("");
   const [snippetMode, setSnippetMode] = useState(SnippetMode.JS_FETCH);
 
   useEffect(() => {
-    setSnippet(createSnippet(userApiKey, snippetMode));
+    setSnippet(
+      createSnippet(userApiKey, firstName, lastName, email, snippetMode)
+    );
   }, [userApiKey, snippetMode]);
 
   return (

@@ -1,12 +1,12 @@
 import { Popover } from "@headlessui/react";
 import XCircle from "@heroicons/react/24/solid/XCircleIcon";
-import React, { useCallback, useRef } from "react";
+import React, { ReactNode, useCallback, useRef } from "react";
 
 interface SelectProps<T, U = any> {
   value: T;
   options: {
     key: T;
-    title: string;
+    title: string | ReactNode;
     groupLabel?: boolean;
     nonSelectable?: boolean;
     additionalData?: U;
