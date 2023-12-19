@@ -25,6 +25,8 @@ import { JourneysController } from './journeys.controller';
 import { JourneysService } from './journeys.service';
 import { Journey } from './entities/journey.entity';
 import { StepsModule } from '../steps/steps.module';
+import { JourneyLocation } from './entities/journey-location.entity';
+import { JourneyLocationsService } from './journey-locations.service';
 
 @Module({
   imports: [
@@ -35,6 +37,7 @@ import { StepsModule } from '../steps/steps.module';
       State,
       Template,
       Journey,
+      JourneyLocation,
     ]),
     MongooseModule.forFeature([
       { name: Customer.name, schema: CustomerSchema },
@@ -45,6 +48,9 @@ import { StepsModule } from '../steps/steps.module';
     ]),
     BullModule.registerQueue({
       name: 'message',
+    }),
+    BullModule.registerQueue({
+      name: 'transition',
     }),
     BullModule.registerQueue({
       name: 'slack',
@@ -63,7 +69,7 @@ import { StepsModule } from '../steps/steps.module';
     SlackModule,
   ],
   controllers: [JourneysController],
-  providers: [JourneysService],
+  providers: [JourneysService, JourneyLocationsService],
   exports: [JourneysService],
 })
 export class JourneysModule {}

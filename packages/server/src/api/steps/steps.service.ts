@@ -40,6 +40,7 @@ export class StepsService {
     @InjectRepository(Step)
     public stepsRepository: Repository<Step>,
     @InjectQueue('transition') private readonly transitionQueue: Queue,
+    @InjectQueue('start') private readonly startQueue: Queue,
     @Inject(RedlockService)
     private readonly redlockService: RedlockService
   ) {}
@@ -112,23 +113,23 @@ export class StepsService {
    * @param queryRunner
    * @param session
    */
-  async bulkAddToStart(
-    account: Account,
-    journeyID: string,
-    customers: CustomerDocument[],
-    queryRunner: QueryRunner,
-    session: string
-  ) {
-    for (let i = 0; i < customers.length; i++) {
-      await this.addToStart(
-        account,
-        journeyID,
-        customers[i],
-        queryRunner,
-        session
-      );
-    }
-  }
+  // async bulkAddToStart(
+  //   account: Account,
+  //   journeyID: string,
+  //   customers: CustomerDocument[],
+  //   queryRunner: QueryRunner,
+  //   session: string
+  // ) {
+  //   for (let i = 0; i < customers.length; i++) {
+  //     await this.addToStart(
+  //       account,
+  //       journeyID,
+  //       customers[i],
+  //       queryRunner,
+  //       session
+  //     );
+  //   }
+  // }
 
   /**
    * Add array of customer documents to starting step of a journey
@@ -138,62 +139,40 @@ export class StepsService {
    * @param queryRunner
    * @param session
    */
-  async addToStart(
+  async triggerStart(
     account: Account,
     journeyID: string,
-    customer: CustomerDocument,
+    query: any,
+    audienceSize: Number,
     queryRunner: QueryRunner,
     session: string
   ) {
-    const lock = await this.redlockService.acquire(
-      `${customer.id}${journeyID}`
-    );
-    this.warn(
-      `${JSON.stringify({ warning: 'Acquiring lock' })}`,
-      this.addToStart.name,
+    const startStep = await queryRunner.manager.find(Step, {
+      where: {
+        owner: { id: account.id },
+        journey: { id: journeyID },
+        type: StepType.START,
+      },
+    });
+
+    if (startStep.length != 1)
+      throw new Error('Can only have one start step per journey.');
+
+    this.log(
+      JSON.stringify({ journeyID: journeyID }),
+      this.triggerStart.name,
       session,
       account.email
     );
-    try {
-      const startStep = await queryRunner.manager.find(Step, {
-        where: {
-          owner: { id: account.id },
-          journey: { id: journeyID },
-          type: StepType.START,
-        },
-        lock: { mode: 'pessimistic_write' },
-      });
-
-      if (startStep.length != 1)
-        throw new Error('Can only have one start step per journey.');
-
-      // if (!startStep[0].customers.find((customerTuple) => { return JSON.parse(customerTuple).customerID === customer.id })) {
-      startStep[0].customers.push(
-        JSON.stringify({
-          customerID: customer.id,
-          timestamp: Temporal.Now.instant().toString(),
-        })
-      );
-      // }
-      const step = await queryRunner.manager.save(startStep[0]);
-      await this.transitionQueue.add('start', {
-        ownerID: account.id,
-        step: step,
-        lock,
-        session: session,
-        customerID: customer.id,
-      });
-    } catch (err) {
-      await lock.release();
-      this.warn(
-        `${JSON.stringify({ warning: 'Releasing lock' })}`,
-        this.addToStart.name,
-        session,
-        account.email
-      );
-      this.error(err, this.addToStart.name, session, account.email);
-      throw err;
-    }
+    await this.startQueue.add('start', {
+      ownerID: account.id,
+      stepID: startStep[0].id,
+      journeyID,
+      session: session,
+      query,
+      skip: 0,
+      limit: audienceSize,
+    });
   }
 
   /**
@@ -366,6 +345,72 @@ export class StepsService {
     } catch (e) {
       this.error(e, this.findOne.name, session, account.id);
       throw e;
+    }
+  }
+
+  /**
+   * Find a step by its ID.
+   * @param account
+   * @param id
+   * @param session
+   * @returns
+   */
+  async findByJourneyAndType(
+    account: Account,
+    journey: string,
+    type: StepType,
+    session: string,
+    queryRunner?: QueryRunner
+  ): Promise<Step | null> {
+    if (queryRunner) {
+      return await queryRunner.manager.findOne(Step, {
+        where: {
+          journey: { id: journey },
+          owner: { id: account.id },
+          type: type,
+        },
+      });
+    } else {
+      return await this.stepsRepository.findOne({
+        where: {
+          journey: { id: journey },
+          owner: { id: account.id },
+          type: type,
+        },
+      });
+    }
+  }
+
+  /**
+   * Find a step by its ID, account optional
+   *
+   * @param account
+   * @param id
+   * @param session
+   * @returns
+   */
+  async findByID(
+    id: string,
+    session: string,
+    account?: Account,
+    queryRunner?: QueryRunner
+  ): Promise<Step | null> {
+    if (queryRunner) {
+      return await queryRunner.manager.findOne(Step, {
+        where: {
+          owner: account ? { id: account.id } : undefined,
+          id: id,
+        },
+        relations: ['owner', 'journey'],
+      });
+    } else {
+      return await this.stepsRepository.findOne({
+        where: {
+          owner: account ? { id: account.id } : undefined,
+          id: id,
+        },
+        relations: ['owner', 'journey'],
+      });
     }
   }
 

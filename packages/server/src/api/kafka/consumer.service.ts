@@ -47,4 +47,3 @@ export class KafkaConsumerService implements OnModuleDestroy {
     }
   }
 }
-

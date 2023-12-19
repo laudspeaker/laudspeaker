@@ -138,4 +138,3 @@ export class CustomersConsumerService implements OnApplicationBootstrap {
     };
   }
 }
-

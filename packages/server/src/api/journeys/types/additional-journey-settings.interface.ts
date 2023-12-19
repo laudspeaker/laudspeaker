@@ -89,4 +89,3 @@ export interface JourneySettings {
   maxEntries: JourneySettingsMaxUserEntries;
   maxMessageSends: JourneySettingsMaxMessageSends;
 }
-
