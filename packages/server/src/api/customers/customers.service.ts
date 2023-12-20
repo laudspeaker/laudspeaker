@@ -2079,12 +2079,22 @@ export class CustomersService {
     };
   }
 
+  async customersSize (account: Account, session: string){
+    
+    const totalNumberOfCustomers = this.CustomerModel.find(
+      { ownerId: account.id } 
+    ).count();
+    
+    return totalNumberOfCustomers;
+  }
+
   /*
   * 
   * 
-  *
+  * Takes in a segment query (inclusion criteria) and returns a set of customerIds
+  * 
   * @remarks
-  * Op.
+  * This can be, and needs to be optimized, we need to offload as much logic to the actual databases
   *
   * @param query eg "query": {
        "type": "all",
@@ -2109,14 +2119,11 @@ export class CustomersService {
          }
        ]
      }
-  * @param 
-  * @param 
+  *  
   *
   */
-  // *** to do ***
-  //checkCustomerMatchesQuery
 
-  async getSegmentCustomersFromQuery(query: any, account: Account, session: string) {
+  async getSegmentCustomersFromQuery(query: any, account: Account, session: string): Promise<Set<string>> {
     this.debug(
       "Creating segment from query",
       this.getSegmentCustomersFromQuery.name,
@@ -2168,7 +2175,7 @@ export class CustomersService {
       console.log('Union of all sets:', mergedSet);
       return mergedSet;
 
-      /*
+    /*
     console.log('all sets are:', JSON.stringify(sets, null, 2));
     
     const results = new Set<string>([].concat(...sets));
@@ -2179,6 +2186,14 @@ export class CustomersService {
     return new Set<string>(); // Default: Return an empty set
   }
 
+
+  /**
+   * Helper function for getSegmentCustomersFromQuery
+   * 
+   * Handle queries with subqueries 
+   * 
+   * @returns set of customers
+   */
   async getSegmentCustomersFromSubQuery(statement: any, account: Account, session: string) {
     if (statement.statements && statement.statements.length > 0) {
       // Statement has a subquery, recursively evaluate the subquery

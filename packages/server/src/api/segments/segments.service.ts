@@ -200,7 +200,13 @@ export class SegmentsService {
     // this.customersService.createSegmentQuery(createSegmentDTO.inclusionCriteria.query);
     if (segment.type === SegmentType.AUTOMATIC) {
 
-      const customersInSegment = await this.customersService.testCustomerInSegment(createSegmentDTO.inclusionCriteria.query, account);
+      const customersInSegment = await this.customersService.getSegmentCustomersFromQuery(createSegmentDTO.inclusionCriteria.query, account, session);
+      this.debug(
+        `we have customersInSegment: ${customersInSegment.size}`,
+        this.create.name,
+        session,
+        account.id
+      );
       
       const segmentCustomersArray: SegmentCustomers[] = Array.from(customersInSegment).map((stringValue) => {
         const segmentCustomer = new SegmentCustomers();
@@ -227,6 +233,25 @@ export class SegmentsService {
         throw err;
       }
     }
+  }
+
+  /**
+   * Get size of the segment
+   * @param account
+   * @param query
+   * @returns {size: size of segment, total: total num of users}
+   */
+  public async size(
+    account: Account,
+    createSegmentDTO: CreateSegmentDTO,
+    session: string
+  ) {
+    //testCustomerInSegment
+    const customersInSegment = await this.customersService.getSegmentCustomersFromQuery(createSegmentDTO.inclusionCriteria.query, account, session);
+    const totalCount = await this.customersService.customersSize;
+    
+    return {size: customersInSegment.size, total: totalCount };
+
   }
 
   public async update(

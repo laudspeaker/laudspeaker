@@ -143,6 +143,24 @@ export class SegmentsController {
     );
   }
 
+  @Post('/size')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
+  public async size(
+    @Req() { user }: Request,
+    @Body() createSegmentDTO: CreateSegmentDTO
+  ) {
+    const session = randomUUID();
+    //console.log("**** in save segment /n\n");
+    //console.log("the segmentDTO is", JSON.stringify(createSegmentDTO, null, 2) );
+    
+    return await this.segmentsService.size(
+      <Account>user,
+      createSegmentDTO,
+      session
+    );
+  }
+
   @Patch('/:id')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
