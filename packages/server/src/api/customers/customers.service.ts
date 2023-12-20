@@ -3143,10 +3143,14 @@ export class CustomersService {
     }
     if (customerId && !customer) {
       // If customerId is provided but customer is not
-      customer = await this.CustomerModel.findOne({
-        _id: new Types.ObjectId(customerId),
-        ownerId: account.id,
-      }).exec();
+      customer = await this.findById(
+        account,
+        customerId,
+      );
+      // customer = await this.CustomerModel.findOne({
+      //   _id: new Types.ObjectId(customerId),
+      //   ownerId: account.id,
+      // }).exec();
       if (!customer)
         throw new Error("Person not found");
     }

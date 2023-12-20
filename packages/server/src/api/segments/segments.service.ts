@@ -205,7 +205,8 @@ export class SegmentsService {
       const segmentCustomersArray: SegmentCustomers[] = Array.from(customersInSegment).map((stringValue) => {
         const segmentCustomer = new SegmentCustomers();
         segmentCustomer.customerId = stringValue;
-        segmentCustomer.segment = segment;
+        segmentCustomer.segment = segment.id;
+        //segmentCustomer.segment = segment;
         segmentCustomer.owner = account; // Replace `propertyName` with the actual property name in your entity
         // Set other properties as needed for each SegmentCustomers entity
         return segmentCustomer;
@@ -243,7 +244,7 @@ export class SegmentsService {
 
     (async () => {
       const forDelete = await this.segmentCustomersRepository.findBy({
-        segment: { id: segment.id },
+        segment: id,//{ id: segment.id },
       });
 
       for (const { customerId } of forDelete) {
@@ -292,7 +293,7 @@ export class SegmentsService {
       }
 
       const records = await this.segmentCustomersRepository.findBy({
-        segment: { id: segment.id },
+        segment: id,//{ id: segment.id },
       });
 
       for (const { customerId } of records) {
@@ -324,14 +325,14 @@ export class SegmentsService {
     const totalPages = Math.ceil(
       (await this.segmentCustomersRepository.count({
         where: {
-          segment: { id: segment.id },
+          segment: segment.id, //{ id: segment.id },
         },
       })) / take || 1
     );
 
     const records = await this.segmentCustomersRepository.find({
       where: {
-        segment: { id: segment.id },
+        segment: segment.id,//{ id: segment.id },
       },
       take: take < 100 ? take : 100,
       skip,
@@ -377,6 +378,7 @@ export class SegmentsService {
         account.id
       );
       //let doInclude = true;
+      //console.log("before isMemberOf");
       let isMemberOf = await this.isCustomerMemberOf(
         account,
         segment.id,
@@ -385,6 +387,7 @@ export class SegmentsService {
       );
       if (doInclude && !isMemberOf) {
         // If should include but not a member of, then add
+        //console.log("before addCustomerToSe");
         await this.addCustomerToSegment(
           account,
           segment.id,
@@ -395,6 +398,7 @@ export class SegmentsService {
         addedToSegments.push(segment);
       } else if (!doInclude && isMemberOf) {
         // If should not include but is a member of, then remove
+        //console.log("before removeCustomerFromSegment");
         await this.removeCustomerFromSegment(
           segment.id,
           customerId,
@@ -403,6 +407,7 @@ export class SegmentsService {
         removedFromSegments.push(segment);
       }
     }
+    //console.log("before return");
     return { added: addedToSegments, removed: removedFromSegments };
   }
 
@@ -416,24 +421,26 @@ export class SegmentsService {
     session: string,
     queryRunner: QueryRunner
   ) {
+    /*
     const segment = await this.findOne(
       account,
       segmentId,
       session,
       queryRunner
     );
+    */
 
     const foundRecord = await queryRunner.manager.findOneBy(SegmentCustomers, {
-      segment: { id: segment.id },
+      segment: segmentId,//{ id: segment.id },
       customerId,
     });
 
     if (foundRecord)
       throw new ConflictException('Customer already in this segment');
-
     await queryRunner.manager.save(SegmentCustomers, {
-      segment: { id: segment.id },
+      segment: segmentId,//{ id: segment.id },
       customerId,
+      owner: account,
     });
   }
 
@@ -443,7 +450,7 @@ export class SegmentsService {
     queryRunner: QueryRunner
   ) {
     await queryRunner.manager.delete(SegmentCustomers, {
-      segment: { id: segmentId },
+      segment: segmentId,//{ id: segmentId },
       customerId,
     });
   }
@@ -469,7 +476,7 @@ export class SegmentsService {
     const segment = await this.findOne(account, id, session);
 
     const foundRecord = await this.segmentCustomersRepository.findOneBy({
-      segment: { id: segment.id },
+      segment: id,//{ id: segment.id },
       customerId,
     });
 
@@ -477,8 +484,9 @@ export class SegmentsService {
       throw new ConflictException('Customer already in this segment');
 
     await this.segmentCustomersRepository.save({
-      segment: { id: segment.id },
+      segment: id,//{ id: segment.id },
       customerId,
+      owner: account,
     });
     const runner = this.dataSource.createQueryRunner();
     await runner.connect();
@@ -534,8 +542,9 @@ export class SegmentsService {
 
     return this.segmentCustomersRepository.save(
       customerIds.map((customerId) => ({
-        segment: { id: segment.id },
+        segment: id,//{ id: segment.id },
         customerId,
+        owner: account,
       }))
     );
   }
@@ -543,7 +552,7 @@ export class SegmentsService {
   public async clearCustomers(account: Account, id: string, session: string) {
     const segment = await this.findOne(account, id, session);
     await this.segmentCustomersRepository.delete({
-      segment: { id: segment.id },
+      segment: id,//{ id: segment.id },
     });
   }
 
@@ -556,7 +565,7 @@ export class SegmentsService {
     const segment = await this.findOne(account, id, session);
 
     await this.segmentCustomersRepository.delete({
-      segment: { id: segment.id },
+      segment: id,//{ id: segment.id },
       customerId,
     });
 
@@ -698,14 +707,34 @@ export class SegmentsService {
     let record: SegmentCustomers;
     if (!queryRunner) {
       record = await this.segmentCustomersRepository.findOneBy({
-        segment: { id, owner: { id: account.id } },
+        segment: id,//{ id, owner: { id: account.id } },
         customerId,
       });
     } else {
-      record = await queryRunner.manager.findOneBy(SegmentCustomers, {
-        segment: { id, owner: { id: account.id } },
-        customerId,
-      });
+      //looks like this is the issue
+      //console.log("this is the issue");
+      //console.log("id is", id);
+      try{
+        /*
+        const segment = await queryRunner.manager.findOne(Segment,{
+          where: {
+            id: id,
+          }
+        });
+        */
+        record = await queryRunner.manager.findOne(SegmentCustomers, {
+          where: {
+            segment: id,// {id},//{ id, owner: { id: account.id } },
+            customerId,
+          }
+          //segment: segment.id,// {id},//{ id, owner: { id: account.id } },
+          //customerId,
+        });
+      } catch (e) {
+        this.error(e, this.isCustomerMemberOf.name, "dafd" );
+        throw e;
+      } 
+      //console.log("no this is the issue");
     }
 
     return !!record;

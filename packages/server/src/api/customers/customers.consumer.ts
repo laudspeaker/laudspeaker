@@ -76,6 +76,7 @@ export class CustomersConsumerService implements OnApplicationBootstrap {
             case 'insert':
             case 'update':
             case 'replace':
+              //console.log("replace, insert, update");
               customer = await this.customersService.findByCustomerId(
                 message.documentKey._id['$oid'],
                 clientSession
@@ -96,6 +97,7 @@ export class CustomersConsumerService implements OnApplicationBootstrap {
                 session,
                 queryRunner
               );
+              //console.log("before update enrolle");
               await this.journeysService.updateEnrollmentForCustomer(
                 account,
                 customer.id,
@@ -104,6 +106,7 @@ export class CustomersConsumerService implements OnApplicationBootstrap {
                 queryRunner,
                 clientSession
               );
+              //console.log("after update enrolle");
               break;
             case 'delete':
               // TODO_JH: remove customerID from all steps also
