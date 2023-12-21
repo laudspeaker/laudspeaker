@@ -5,6 +5,7 @@ import tokenService from "services/token.service";
 import axios, { AxiosError } from "axios";
 import ApiConfig from "../../constants/api";
 import PlusIcon from "@heroicons/react/20/solid/PlusIcon";
+import config, { API_BASE_URL_KEY } from "config";
 
 interface PushBuilderMediaUploadProps {
   img?: { key: string; imageSrc: string };
@@ -40,7 +41,7 @@ const PushBuilderMediaUpload = ({
     try {
       const { data } = await axios.request({
         method: "post",
-        url: `${process.env.REACT_APP_API_BASE_URL}/accounts/upload-public-media`,
+        url: `${config.get(API_BASE_URL_KEY)}/accounts/upload-public-media`,
         data: formData,
         headers: {
           Authorization: `Bearer ${tokenService.getLocalAccessToken()}`,

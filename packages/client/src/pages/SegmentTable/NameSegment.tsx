@@ -7,6 +7,7 @@ import Progress from "components/Progress";
 import ApiService from "services/api.service";
 import { useNavigate } from "react-router-dom";
 import MySegment from "pages/Segment/MySegment";
+import config, { API_BASE_URL_KEY } from "config";
 
 export enum SegmentType {
   AUTOMATIC = "automatic",
@@ -55,7 +56,7 @@ const NameSegment: FC<NameSegmentProps> = ({ onSubmit }) => {
     setIsCSVLoading(true);
     try {
       const res = await fetch(
-        `${process.env.REACT_APP_API_BASE_URL}/segments/${id}/importcsv`,
+        `${config.get(API_BASE_URL_KEY)}/segments/${id}/importcsv`,
         {
           method: "POST",
           body: formData,
