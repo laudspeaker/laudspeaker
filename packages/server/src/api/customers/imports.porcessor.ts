@@ -370,7 +370,7 @@ export class ImportProcessor extends WorkerHost {
       await this.segmentCustomersRepository.insert(
         addToSegment.map((el) => ({
           customerId: el,
-          segment: segment,
+          segment: segmentId,//segment,
           owner: account,
         }))
       );

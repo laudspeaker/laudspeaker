@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useId, useState } from "react";
+import React, { FC, useEffect, useId, useRef, useState } from "react";
 import { useDebounce } from "react-use";
 import {
   addSegmentQueryError,
@@ -43,6 +43,8 @@ import { SegmentsSettings } from "reducers/segment.reducer";
 import { capitalize } from "lodash";
 import Select from "components/Elements/Selectv2";
 import { Workflow } from "types/Workflow";
+import axios, { CancelTokenSource } from "axios";
+import deepCopy from "utils/deepCopy";
 
 interface FilterBuilderProps {
   settings: ConditionalSegmentsSettings | SegmentsSettings;
@@ -276,6 +278,17 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
   const [possibleMessages, setPossibleMessages] = useState<
     Record<string, { key: string; title: string }[]>
   >({});
+  const [sizeCountCancelToken, setSizeCountCancelToken] = useState<
+    Record<string, CancelTokenSource>
+  >({});
+  const [changesHappenIndex, setChangesHappenIndex] = useState<
+    Record<string, boolean>
+  >({});
+  const [sizeLoading, setSizeLoading] = useState<Record<string, boolean>>({});
+  const [sizeData, setSizeData] = useState<
+    Record<string, { size: number; total: number }>
+  >({});
+  const [withDebounce, setWithDebounce] = useState(false);
 
   const [possibleKeys, setPossibleKeys] = useState<
     {
@@ -374,6 +387,120 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
     [journeySearchQuery]
   );
 
+  const getRecountAsync = async () => {
+    if (isSubBuilderChild || !settings?.query?.type) return;
+
+    if (settings.query.type === QueryType.ANY && changesHappenIndex[0]) {
+      setSizeLoading((prev) => {
+        prev[0] = true;
+        return { ...prev };
+      });
+      if (sizeCountCancelToken[0]) {
+        sizeCountCancelToken[0].cancel();
+        setSizeCountCancelToken((prev) => {
+          delete prev[0];
+          return { ...prev };
+        });
+      }
+      sizeCountCancelToken[0] = axios.CancelToken.source();
+      try {
+        const { data } = await ApiService.post({
+          url: "/segments/size",
+          options: {
+            inclusionCriteria: {
+              query: settings.query,
+            },
+          },
+        });
+        setChangesHappenIndex((prev) => {
+          prev[0] = false;
+          return { ...prev };
+        });
+        setSizeData((prev) => ({
+          0: data,
+        }));
+      } catch (error) {}
+      setSizeLoading((prev) => {
+        prev[0] = false;
+        return { ...prev };
+      });
+      setWithDebounce(true);
+    } else if (settings.query.type === QueryType.ALL) {
+      const index = Object.keys(changesHappenIndex).find(
+        (el) => changesHappenIndex[el]
+      );
+      if (index === undefined) {
+        setWithDebounce(true);
+        return;
+      }
+
+      setChangesHappenIndex((prev) => {
+        delete prev[index];
+        return { ...prev };
+      });
+
+      setSizeLoading((prev) => {
+        prev[index] = true;
+        return { ...prev };
+      });
+      if (sizeCountCancelToken[index]) {
+        sizeCountCancelToken[index].cancel();
+        setSizeCountCancelToken((prev) => {
+          delete prev[index];
+          return { ...prev };
+        });
+      }
+      sizeCountCancelToken[index] = axios.CancelToken.source();
+
+      const newQuery = deepCopy(settings.query);
+      newQuery.statements = [newQuery.statements[Number(index)]];
+      try {
+        const { data } = await ApiService.post({
+          url: "/segments/size",
+          options: {
+            inclusionCriteria: {
+              query: newQuery,
+            },
+          },
+        });
+        setSizeData((prev) => {
+          prev[index] = data;
+          return prev;
+        });
+      } catch (error) {}
+      setSizeLoading((prev) => {
+        prev[index] = false;
+        return { ...prev };
+      });
+    }
+  };
+
+  useDebounce(
+    () => {
+      getRecountAsync();
+    },
+    withDebounce ? 2000 : 0,
+    [changesHappenIndex]
+  );
+
+  useEffect(() => {
+    if (isSubBuilderChild) return;
+    setWithDebounce(false);
+    setSizeLoading({});
+    setSizeData({});
+    setSizeCountCancelToken({});
+
+    if (settings.query.type === QueryType.ANY)
+      setChangesHappenIndex({ 0: true });
+    else {
+      const indexsToCheck: Record<string, boolean> = {};
+      settings.query.statements.forEach((el, i) => {
+        indexsToCheck[i] = true;
+      });
+      setChangesHappenIndex(indexsToCheck);
+    }
+  }, [settings.query.type]);
+
   useEffect(() => {
     loadPossibleJourneys();
   }, [journeySearchQueryPage]);
@@ -435,6 +562,22 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
     });
   };
 
+  const handleUpdateSetEvents = (i: number) => {
+    if (!isSubBuilderChild) {
+      if (settings.query.type === QueryType.ANY)
+        setChangesHappenIndex((prev) => {
+          prev[0] = true;
+          return { ...prev };
+        });
+      else {
+        setChangesHappenIndex((prev) => {
+          prev[i] = true;
+          return { ...prev };
+        });
+      }
+    }
+  };
+
   const handleChangeStatement = (i: number, statement: QueryStatement) => {
     const newStatements = [...settings.query.statements];
 
@@ -444,6 +587,7 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
       ...settings,
       query: { ...settings.query, statements: newStatements },
     });
+    handleUpdateSetEvents(i);
   };
 
   const handleChangeEventProperty = (
@@ -1886,33 +2030,64 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
           {!settings?.query?.isSubBuilderChild &&
             !isMultisplitBuilder &&
             (settings.query.type === QueryType.ALL ||
-              i === settings.query.statements.length - 1) && (
-              <div className="relative flex items-center py-[8.45px] max-w-[360px] px-[11.45px] rounded bg-[#F3F4F6]">
+              i === settings.query.statements.length - 1) &&
+            (() => {
+              const isLoading =
+                settings?.query?.type === QueryType.ALL
+                  ? !!sizeLoading[i]
+                  : !!sizeLoading[0];
+
+              const data =
+                settings?.query?.type === QueryType.ALL
+                  ? sizeData[i]
+                  : sizeData[0];
+
+              const percentage = data
+                ? Math.ceil((data.size / data.total) * 100)
+                : 0;
+
+              return !data && !isLoading ? (
+                <></>
+              ) : (
                 <div
-                  className="mr-[2px] min-w-[15px] min-h-[15px] border border-[#6366F1] rounded-full"
-                  // TODO: update to render on BE data
-                  style={{
-                    background: `
+                  className={`${
+                    isLoading && "opacity-70 animate-pulse pointer-events-none"
+                  } relative flex items-center py-[8.45px] max-w-[360px] px-[11.45px] rounded bg-[#F3F4F6]`}
+                >
+                  <div
+                    className="mr-[2px] min-w-[15px] min-h-[15px] border border-[#6366F1] rounded-full"
+                    style={{
+                      background: `
                   conic-gradient(
-                    #6366F1 ${90}%,
-                    white ${90}% 100%
+                    #6366F1 ${percentage}%,
+                    white ${percentage}% 100%
                   )
                 `,
-                  }}
-                />
-                {/* TODO: update to render on BE data */}
-                <span className="text-[#6366F1] font-roboto font-semibold text-[14px] leading-[22px]">
-                  90%
-                </span>
-                <span className="ml-[6px] text-[#4B5563] font-roboto text-[14px] leading-[22px]">
-                  of users estimated reached ≈{" "}
-                  {Intl.NumberFormat("en", { notation: "compact" }).format(
-                    21567
+                    }}
+                  />
+                  {isLoading ? (
+                    <span className="ml-[6px] text-[#4B5563] font-roboto text-[14px] leading-[22px]">
+                      Loading...
+                    </span>
+                  ) : (
+                    data && (
+                      <>
+                        <span className="text-[#6366F1] font-roboto font-semibold text-[14px] leading-[22px]">
+                          {percentage}%
+                        </span>
+                        <span className="ml-[6px] text-[#4B5563] font-roboto text-[14px] leading-[22px]">
+                          of users estimated reached ≈{" "}
+                          {Intl.NumberFormat("en", {
+                            notation: "compact",
+                          }).format(data.size)}
+                        </span>
+                      </>
+                    )
                   )}
-                </span>
-                <div className="absolute top-full left-[25px] z-[0] h-[10px] w-[1px] bg-[#E5E7EB]" />
-              </div>
-            )}
+                  <div className="absolute top-full left-[25px] z-[0] h-[10px] w-[1px] bg-[#E5E7EB]" />
+                </div>
+              );
+            })()}
         </React.Fragment>
       ))}
       <div className="flex flex-nowrap gap-[10px]">

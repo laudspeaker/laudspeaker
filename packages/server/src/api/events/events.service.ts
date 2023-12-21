@@ -386,8 +386,7 @@ export class EventsService {
   //to do need to specify how this is
   async getEventsByMongo(
     mongoQuery: any,
-    customer: CustomerDocument
-    //numberOfTimes: Number,
+    customer: CustomerDocument,
   ) {
     //console.log("In getEvents by mongo");
 

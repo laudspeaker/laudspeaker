@@ -8,6 +8,7 @@ import EventProviderTab from "./tabs/EventProviderTab";
 import MessageChannelTab from "./tabs/MessageChannelTab";
 import PlanTab from "./tabs/PlanTab";
 import TeamTab from "./tabs/TeamTab";
+import OrganizationTab from "./tabs/OrganizationTab";
 
 export enum SettingsTab {
   ACCOUNT,
@@ -17,6 +18,7 @@ export enum SettingsTab {
   PLAN,
   BILLING,
   TEAM,
+  ORGANIZATION,
 }
 
 const settingsTabToComponentMap: { [key: number]: ReactNode } = {
@@ -24,6 +26,7 @@ const settingsTabToComponentMap: { [key: number]: ReactNode } = {
   [SettingsTab.MESSAGE_CHANNEL]: <MessageChannelTab />,
   [SettingsTab.EVENT_PROVIDER]: <EventProviderTab />,
   [SettingsTab.API]: <APITab />,
+  [SettingsTab.ORGANIZATION]: <OrganizationTab />,
   // Removed for 1 release
   // [SettingsTab.PLAN]: <PlanTab />,
   // [SettingsTab.BILLING]: <BillingTab />,

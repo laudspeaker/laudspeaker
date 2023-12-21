@@ -475,8 +475,9 @@ export class JourneysService {
         session,
         queryRunner
       );
-      let shouldInclude = true;
+      //let shouldInclude = true;
       // TODO_JH: implement the following
+      let shouldInclude = this.customersService.checkCustomerMatchesQuery(journey.inclusionCriteria, account, session, undefined, customerId);
       // if (customer matches journeyInclusionCriteria)
       //     shouldInclude = true
       // for segment in journey.segments

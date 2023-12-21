@@ -2175,12 +2175,23 @@ export class CustomersService {
     };
   }
 
+  async customersSize (account: Account, session: string){
+    
+    const totalNumberOfCustomers = this.CustomerModel.find(
+      { ownerId: account.id } 
+    ).count();
+    
+    return totalNumberOfCustomers;
+  }
+
   /*
   * 
   * 
-  *
+  * Takes in a segment query (inclusion criteria) and returns a set of customerIds
+  * NB a query is composed of SingleStatements, and sub queries (which we sometimes call statement with subquery)
+  * 
   * @remarks
-  * Op.
+  * This can be, and needs to be optimized, we need to offload as much logic to the actual databases
   *
   * @param query eg "query": {
        "type": "all",
@@ -2205,18 +2216,11 @@ export class CustomersService {
          }
        ]
      }
-  * @param 
-  * @param 
+  *  
   *
   */
-  // *** to do ***
-  //checkCustomerMatchesQuery
 
-  async getSegmentCustomersFromQuery(
-    query: any,
-    account: Account,
-    session: string
-  ) {
+  async getSegmentCustomersFromQuery(query: any, account: Account, session: string): Promise<Set<string>> {
     this.debug(
       'Creating segment from query',
       this.getSegmentCustomersFromQuery.name,
@@ -2276,7 +2280,7 @@ export class CustomersService {
       console.log('Union of all sets:', mergedSet);
       return mergedSet;
 
-      /*
+    /*
     console.log('all sets are:', JSON.stringify(sets, null, 2));
     
     const results = new Set<string>([].concat(...sets));
@@ -2287,6 +2291,14 @@ export class CustomersService {
     return new Set<string>(); // Default: Return an empty set
   }
 
+
+  /**
+   * Helper function for getSegmentCustomersFromQuery
+   * 
+   * Handle queries with subqueries 
+   * 
+   * @returns set of customers
+   */
   async getSegmentCustomersFromSubQuery(
     statement: any,
     account: Account,
@@ -2301,6 +2313,14 @@ export class CustomersService {
     return false;
   }
 
+   /**
+   * Routes to the right statement handler for getting customers
+   *  essentially 3 types, Attribute, Event, Message
+   *
+   * Handles SINGLE statements not queries with subqueries 
+   * 
+   * @returns set of customers
+   */
   async getCustomersFromStatement(
     statement: any,
     account: Account,
@@ -2315,17 +2335,11 @@ export class CustomersService {
       subComparisonValue,
     } = statement;
     this.debug(
-      'In evaluateStatement deciding which sub evaluate statement to go to next/n\n',
+      "In getCustomersFromStatement deciding which sub evaluate statement to go to next/n\n",
       this.getCustomersFromStatement.name,
-      session
+      session,
+      account.email
     );
-    /*
-    console.log('the type is', type);
-    console.log('the key is', key);
-    console.log('the type of key is', typeof key);
-    console.log('the value is', value);
-    console.log('the subComparisonValue is', subComparisonValue);
-    */
     this.debug(
       `the key is: ${JSON.stringify(key, null, 2)}`,
       this.getCustomersFromStatement.name,
@@ -2407,6 +2421,17 @@ export class CustomersService {
     }
   }
 
+   /**
+   * Gets set of customers from a single statement that
+   * includes messages,
+   * 
+   *  eg email from journey a, email 1 has been received
+   *
+   * Handles SINGLE statements not queries with subqueries 
+   * 
+   * @returns set of customers
+   */
+
   async customersFromMessageStatement(
     statement: any,
     account: Account,
@@ -2414,11 +2439,6 @@ export class CustomersService {
     session: string
   ) {
     const userId = (<Account>account).id;
-    /*
-    console.log('In get customers from message statement');
-    console.log('the type of message is', typeOfMessage);
-    console.log('account id is', userId);
-    */
     this.debug(
       'In get customers from message statement',
       this.customersFromMessageStatement.name,
@@ -2516,7 +2536,6 @@ export class CustomersService {
         sqlQuery += `AND createdAt >= '${timeAfter}' `;
       }
 
-      // console.log('the final sql squery is\n', sqlQuery);
       this.debug(
         `the final SQL query is:\n${sqlQuery}`,
         this.customersFromMessageStatement.name,
@@ -2541,7 +2560,6 @@ export class CustomersService {
       });
       await new Promise((resolve) => {
         stream.on('end', () => {
-          //console.log('Completed!');
           this.debug(
             'Completed!',
             this.customersFromMessageStatement.name,
@@ -2552,7 +2570,6 @@ export class CustomersService {
         });
       });
 
-      //console.log('set from custoners from messages', customerIds);
       this.debug(
         `set from custoners from messages is:\n${customerIds}`,
         this.customersFromMessageStatement.name,
@@ -2567,6 +2584,16 @@ export class CustomersService {
     return false;
   }
 
+   /**
+   * Gets set of customers from a single statement that
+   * includes Attribute,
+   * 
+   *  eg firstName equal to Abe
+   *
+   * Handles SINGLE statements not queries with subqueries 
+   * 
+   * @returns set of customers
+   */
   async customersFromAttributeStatement(
     statement: any,
     account: Account,
@@ -2589,8 +2616,7 @@ export class CustomersService {
     let query: any = {
       ownerId: (<Account>account).id,
     };
-    //console.log('key is', key);
-    //console.log('comparison type is', comparisonType);
+
     this.debug(
       `key is: ${key}`,
       this.customersFromAttributeStatement.name,
@@ -2654,9 +2680,6 @@ export class CustomersService {
         throw new Error('Invalid comparison type');
     }
 
-    //console.log('generated attribute query is', JSON.stringify(query, null, 2));
-    //console.log('now grabbing customers with the query');
-    //console.log('in the aggregate construction - attribute');
     this.debug(
       `generated attribute query is: ${JSON.stringify(query, null, 2)}`,
       this.customersFromAttributeStatement.name,
@@ -2689,7 +2712,6 @@ export class CustomersService {
 
     const docs = await this.CustomerModel.aggregate(aggregationPipeline).exec();
 
-    //console.log('Here are the docs', JSON.stringify(docs, null, 2));
     this.debug(
       `Here are the docs: ${JSON.stringify(docs, null, 2)}`,
       this.customersFromAttributeStatement.name,
@@ -2703,7 +2725,6 @@ export class CustomersService {
       correlationValues.add(custData._id.toString());
     });
 
-    //console.log('Here are the correlationValues', correlationValues);
     this.debug(
       `Here are the correlationValues: ${correlationValues}`,
       this.customersFromAttributeStatement.name,
@@ -2714,6 +2735,16 @@ export class CustomersService {
     return correlationValues;
   }
 
+  /**
+   * Gets set of customers from a single statement that
+   * includes Events,
+   * 
+   *  eg onboarding has performed 1 times
+   *
+   * Handles SINGLE statements not queries with subqueries 
+   * 
+   * @returns set of customers
+   */
   async customersFromEventStatement(
     statement: any,
     account: Account,
@@ -2721,16 +2752,6 @@ export class CustomersService {
   ) {
     const { eventName, comparisonType, value, time, additionalProperties } =
       statement;
-    //console.log('In customersEventStatement/n\n');
-    //console.log('value is', value);
-    /*
-    console.log(
-      'here are time and additional properties (if they exist)',
-      JSON.stringify(time, null, 2)
-    );
-    console.log(JSON.stringify(additionalProperties, null, 2));
-    console.log('comparison type is', comparisonType);
-    */
 
     this.debug(
       'In customersEventStatement/n\n',
@@ -2831,7 +2852,6 @@ export class CustomersService {
       }
     }
 
-    //console.log('mongo query is/n\n', JSON.stringify(mongoQuery, null, 2));
     this.debug(
       'mongo query is/n\n',
       this.customersFromEventStatement.name,
@@ -2850,7 +2870,6 @@ export class CustomersService {
     // ie correlationKey = primary key, correlation values = unique identifier
 
     if (comparisonType === 'has performed') {
-      //console.log('in the aggregate construction - has performed');
       this.debug(
         'in the aggregate construction - has performed',
         this.customersFromEventStatement.name,
@@ -2945,12 +2964,6 @@ export class CustomersService {
         }
       ];
       */
-      /*
-      console.log(
-        'aggregate query is/n\n',
-        JSON.stringify(aggregationPipeline, null, 2)
-      );
-      */
       this.debug(
         'aggregate query is/n\n',
         this.customersFromEventStatement.name,
@@ -2968,7 +2981,6 @@ export class CustomersService {
       const result = await this.eventsService.getCustomersbyEventsMongo(
         aggregationPipeline
       );
-      //console.log('Here are the results', JSON.stringify(result, null, 2));
       this.debug(
         'Here are the results',
         this.customersFromEventStatement.name,
@@ -3003,7 +3015,6 @@ export class CustomersService {
 
       return correlationValues;
     } else if (comparisonType === 'has not performed') {
-      //console.log('in the aggregate construction - has performed');
       this.debug(
         'in the aggregate construction - has performed',
         this.customersFromEventStatement.name,
@@ -3037,14 +3048,6 @@ export class CustomersService {
           },
         },
       ];
-
-      /*
-      console.log(
-        'aggregat query is/n\n',
-        JSON.stringify(aggregationPipeline, null, 2)
-      );
-      */
-
       this.debug(
         'aggregat query is/n\n',
         this.customersFromEventStatement.name,
@@ -3062,7 +3065,6 @@ export class CustomersService {
       const result = await this.eventsService.getCustomersbyEventsMongo(
         aggregationPipeline
       );
-      //console.log('Here are the results', JSON.stringify(result, null, 2));
       this.debug(
         'Here are the results',
         this.customersFromEventStatement.name,
@@ -3199,87 +3201,89 @@ export class CustomersService {
     return query;
   }
   */
-  /*
-   * checks if a given customer is in a segment
 
-   * 
+  /*
+   * Checks if a given customer should be in a segment
+   * returns a boolean
    * 
    * @param customer 
-  eg {
-  "_id": {
-    "$oid": "657619ac0cd6aa53b5910962"
-  },
-  "firstName": "A",
-  "lastName": "B",
-  "email": "abe@example.com",
-  "workflows": [],
-  "journeys": [
-    "12624e62-367e-483b-9ddf-38160f4fd955"
-  ],
-  "ownerId": "c65069d2-ef33-427b-b093-6dd5870c4c33",
-  "posthogId": [],
-  "slackTeamId": [],
-  "verified": true,
-  "__v": 0,
-  "journeyEnrollmentsDates": {
-    "12624e62-367e-483b-9ddf-38160f4fd955": "Sun, 10 Dec 2023 23:15:14 GMT"
-  }
-}
+   eg 
+    {
+      "_id": {
+        "$oid": "657619ac0cd6aa53b5910962"
+      },
+      "firstName": "A",
+      "lastName": "B",
+      "email": "abe@example.com",
+      "workflows": [],
+      "journeys": [
+        "12624e62-367e-483b-9ddf-38160f4fd955"
+      ],
+      "ownerId": "c65069d2-ef33-427b-b093-6dd5870c4c33",
+      "posthogId": [],
+      "slackTeamId": [],
+      "verified": true,
+      "__v": 0,
+      "journeyEnrollmentsDates": {
+        "12624e62-367e-483b-9ddf-38160f4fd955": "Sun, 10 Dec 2023 23:15:14 GMT"
+      }
+    }
    * @param query eg 
-"query": {
- "type": "all",
- "statements": [
-   {
-     "type": "Attribute",
-     "key": "something",
-     "comparisonType": "is equal to",
-     "subComparisonType": "exist",
-     "subComparisonValue": "",
-     "valueType": "String",
-     "value": "another thing"
-   },
-   {
-     "type": "Attribute",
-     "key": "firstName",
-     "comparisonType": "is equal to",
-     "subComparisonType": "exist",
-     "subComparisonValue": "",
-     "valueType": "String",
-     "value": "s"
-   },
-   {
-     "type": "Attribute",
-     "key": "lastName",
-     "comparisonType": "is equal to",
-     "subComparisonType": "exist",
-     "subComparisonValue": "",
-     "valueType": "String",
-     "value": "f"
-   },
-   {
-     "type": "any",
-     "statements": [
- {
-   "type": "Attribute",
-   "key": "lastName",
-   "comparisonType": "is equal to",
-   "subComparisonType": "exist",
-   "subComparisonValue": "",
-   "valueType": "String",
-   "value": "g"
- }
-     ],
-     "isSubBuilderChild": true
-   }
- ]
-}
+    "query": {
+    "type": "all",
+    "statements": [
+      {
+        "type": "Attribute",
+        "key": "something",
+        "comparisonType": "is equal to",
+        "subComparisonType": "exist",
+        "subComparisonValue": "",
+        "valueType": "String",
+        "value": "another thing"
+      },
+      {
+        "type": "Attribute",
+        "key": "firstName",
+        "comparisonType": "is equal to",
+        "subComparisonType": "exist",
+        "subComparisonValue": "",
+        "valueType": "String",
+        "value": "s"
+      },
+      {
+        "type": "Attribute",
+        "key": "lastName",
+        "comparisonType": "is equal to",
+        "subComparisonType": "exist",
+        "subComparisonValue": "",
+        "valueType": "String",
+        "value": "f"
+      },
+      {
+        "type": "any",
+        "statements": [
+    {
+      "type": "Attribute",
+      "key": "lastName",
+      "comparisonType": "is equal to",
+      "subComparisonType": "exist",
+      "subComparisonValue": "",
+      "valueType": "String",
+      "value": "g"
+    }
+        ],
+        "isSubBuilderChild": true
+      }
+    ]
+    }
    */
   //ref func
   async checkCustomerMatchesQuery(
-    customer: CustomerDocument,
     query: any,
     account: Account,
-    session: string
+    session: string,
+    customer?: CustomerDocument,
+    customerId?: string,
   ) {
     this.debug(
       'in checkCustomerMatchesQuery',
@@ -3287,9 +3291,35 @@ export class CustomersService {
       session,
       account.id
     );
-    //console.log('in checkCustomerMatchesQuery');
+    if (!customerId && !customer) {
+      throw new Error("At least one of 'customerId' or 'customer' must be provided.");
+    }
+    if (customerId && !customer) {
+      // If customerId is provided but customer is not
+      customer = await this.findById(
+        account,
+        customerId,
+      );
+      // customer = await this.CustomerModel.findOne({
+      //   _id: new Types.ObjectId(customerId),
+      //   ownerId: account.id,
+      // }).exec();
+      if (!customer)
+        throw new Error("Person not found");
+    }
+    this.debug(
+      `the query is: ${JSON.stringify(query, null, 2)}`,
+      this.checkCustomerMatchesQuery.name,
+      session,
+      account.id
+    );
+    this.debug(
+      `the customer is: ${JSON.stringify(customer, null, 2)}`,
+      this.checkCustomerMatchesQuery.name,
+      session,
+      account.id
+    );
     if (query.type === 'all') {
-      //console.log('the query has all (AND)');
       this.debug(
         'the query has all (AND',
         this.checkCustomerMatchesQuery.name,
@@ -3314,7 +3344,6 @@ export class CustomersService {
       );
       return results.every((result) => result);
     } else if (query.type === 'any') {
-      //console.log('the query has any (OR)');
       this.debug(
         'the query has any (OR)',
         this.checkCustomerMatchesQuery.name,
@@ -3339,6 +3368,15 @@ export class CustomersService {
       );
       return results.some((result) => result);
     }
+    else{
+      //shouldnt get here
+      this.debug(
+        `shouldnt get here, what is query type?: ${JSON.stringify(query.type, null, 2)}`,
+        this.checkCustomerMatchesQuery.name,
+        session,
+        account.id
+      );
+    }
     return false;
   }
 
@@ -3350,23 +3388,22 @@ export class CustomersService {
   ): Promise<boolean> {
     if (statement.statements && statement.statements.length > 0) {
       // Statement has a subquery, recursively evaluate the subquery
-      return this.checkCustomerMatchesQuery(
-        customer,
-        statement,
-        account,
-        session
-      );
+      return this.checkCustomerMatchesQuery(statement, account, session, customer );
     } else {
-      return await this.evaluateStatement(
-        customer,
-        statement,
-        account,
-        session
-      );
+      return await this.evaluateSingleStatement(customer, statement, account, session);
     }
   }
 
-  async evaluateStatement(
+  /**
+   * Evaluates if a customer should be included according to the single statement provided 
+   * @returns a boolean in promise
+   * 
+   * @param takes in a single statement, NOT a query.
+   *   single statments do not include 'all' or 'any' for types
+   * @param customer     
+   *  
+   */
+  async evaluateSingleStatement(
     customer: CustomerDocument,
     statement: any,
     account: Account,
@@ -3379,54 +3416,51 @@ export class CustomersService {
       subComparisonType,
       value,
       subComparisonValue,
-    } = statement;
-    /*
-    console.log(
-      'In evaluateStatement deciding which sub evaluate statement to go to next/n\n'
-    );
-    console.log('the type is', type);
-    console.log('the key is', key);
-    console.log('the type of key is', typeof key);
-    console.log('the value is', value);
-    console.log('the subComparisonValue is', subComparisonValue);
-    */
+    } = statement; 
     this.debug(
-      'In evaluateStatement deciding which sub evaluate statement to go to next/n\n',
-      this.evaluateStatement.name,
+      'NB this function takes in single statements not full queries, for full queries use customerMatchesQuery/n\n',
+      this.evaluateSingleStatement.name,
       session,
       account.id
     );
     this.debug(
+      'In evaluateSingleStatement deciding which sub evaluate statement to go to next/n\n',
+      this.evaluateSingleStatement.name,
+      session,
+      account.id
+    );
+
+    this.debug(
+      `the query is: ${JSON.stringify(statement, null, 2)}`,
+      this.evaluateSingleStatement.name,
+      session,
+      account.id
+    );
+
+    this.debug(
       `the type is: ${JSON.stringify(type, null, 2)}`,
-      this.evaluateStatement.name,
+      this.evaluateSingleStatement.name,
       session,
       account.id
     );
 
     this.debug(
       `the key is: ${key}`,
-      this.evaluateStatement.name,
-      session,
-      account.id
-    );
-
-    this.debug(
-      `the type of key is: ${typeof key}`,
-      this.evaluateStatement.name,
+      this.evaluateSingleStatement.name,
       session,
       account.id
     );
 
     this.debug(
       `value is: ${value}`,
-      this.evaluateStatement.name,
+      this.evaluateSingleStatement.name,
       session,
       account.id
     );
 
     this.debug(
       `the subComparisonValue is: ${subComparisonValue}`,
-      this.evaluateStatement.name,
+      this.evaluateSingleStatement.name,
       session,
       account.id
     );
@@ -3516,6 +3550,16 @@ export class CustomersService {
     }
   }
 
+   /**
+   * Evaluates if a customer should be included according to the single  Message statement provided 
+   * @returns a boolean in promise
+   * 
+   * @param takes in a single message statement, NOT a query.
+   *   single statments do not include 'all' or 'any' for types
+   *    eg email from journey a, email 1 has been received
+   * @param customer     
+   *  
+   */
   async evaluateMessageStatement(
     customer: CustomerDocument,
     statement: any,
@@ -3524,11 +3568,6 @@ export class CustomersService {
     session: string
   ): Promise<boolean> {
     const userId = (<Account>account).id;
-    /*
-    console.log('In evealuate message statement');
-    console.log('the type of message is', typeOfMessage);
-    console.log('account id is', userId);
-    */
     this.debug(
       'In evaluate message statement',
       this.evaluateMessageStatement.name,
@@ -3631,7 +3670,6 @@ export class CustomersService {
       //   sqlQuery = sqlQuery.replace("event =", "event !=");
       // }
 
-      //console.log('the final sql squery is\n', sqlQuery);
       this.debug(
         `the final SQL query is:\n ${sqlQuery}`,
         this.evaluateMessageStatement.name,
@@ -3675,12 +3713,56 @@ export class CustomersService {
     return false;
   }
 
+  async addPrimaryKeyToMongoQuery(mongoQuery: any, account: Account, session: string, customer:CustomerDocument){
+    let currentPK : string = await this.CustomerKeysModel.findOne({
+      ownerId: account.id,
+      isPrimary: true,
+  })
+
+    if (currentPK) {
+      this.debug(
+        `current pk is: ${currentPK}`,
+        this.evaluateEventStatement.name,
+        session,
+        account.id
+      );
+      mongoQuery.correlationKey = currentPK;
+      mongoQuery.correlationValue = customer[currentPK];
+    } else {
+      // Handle case where currentPK is null
+      //uncomment when primary key thing is working correctly
+      /*
+      throw new HttpException(
+        "Select a primary key first.",
+        HttpStatus.BAD_REQUEST
+      );
+      */
+
+      //to do just for testing
+      console.log("pk isnt working so set as email")
+      currentPK = "email";
+      mongoQuery.correlationKey = currentPK;
+      mongoQuery.correlationValue = customer[currentPK];
+        
+    }
+  }
+
+
   /*
    * this needs to be rejigged a little the mongo query takes in a customer field to filter against
    * something like: mongoQuery[correlationKey] = correlationValue
 
    */
-
+  /**
+   * Evaluates if a customer should be included according to the single Event statement provided 
+   * @returns a boolean in promise
+   * 
+   * @param takes in a single Event statement, NOT a query.
+   *   single statments do not include 'all' or 'any' for types
+   *    eg onboarding has performed 1 times
+   * @param customer     
+   *  
+   */
   async evaluateEventStatement(
     customer: CustomerDocument,
     statement: any,
@@ -3735,20 +3817,37 @@ export class CustomersService {
       ownerId: (<Account>account).id,
     };
 
-    // const filteredCustomer = Object.entries(customer)
-    // .filter(([_, value]) => !Array.isArray(value) && typeof value !== 'object')
-    // .reduce((obj, [key, value]) => ({ ...obj, [key]: value }), {});
+    let currentPK : string = await this.CustomerKeysModel.findOne({
+        ownerId: account.id,
+        isPrimary: true,
+    })
 
-    // console.log("filtered customer is", JSON.stringify(filteredCustomer, null, 2));
+    if (currentPK) {
+      this.debug(
+        `current pk is: ${currentPK}`,
+        this.evaluateEventStatement.name,
+        session,
+        account.id
+      );
+      mongoQuery.correlationKey = currentPK;
+      mongoQuery.correlationValue = customer[currentPK];
+    } else {
+      // Handle case where currentPK is null
+      //uncomment when primary key thing is working correctly
+      /*
+      throw new HttpException(
+        "Select a primary key first.",
+        HttpStatus.BAD_REQUEST
+      );
+      */
 
-    // const mongoQuery: any = {
-    //   event: eventName,
-    //   ownerId: (<Account>account).id,
-    //   $or: Object.keys(filteredCustomer).map((key) => ({
-    //     correlationKey: key,
-    //     correlationValue: filteredCustomer[key],
-    //   })),
-    // };
+      //to do just for testing
+      console.log("pk isnt working so set as email")
+      currentPK = "email";
+      mongoQuery.correlationKey = currentPK;
+      mongoQuery.correlationValue = customer[currentPK];
+        
+    }
 
     if (time) {
       switch (time.comparisonType) {
@@ -3957,13 +4056,14 @@ export class CustomersService {
     }
   }
 
-  async testCustomerInSegment(
-    query: any,
-    account: Account
-  ): Promise<Set<string>> {
-    let session = 'this is a fake session';
-    //console.log('In Test Customer Segment');
-    //console.log('test query is', JSON.stringify(query, null, 2));
+  //** test **
+  /*
+   * NB the structure of the query argument 
+   *  
+   *
+   */
+  async testCustomerInSegment(query: any, account: Account): Promise<boolean>{//Promise<Set<string>>  {
+    let session = "this is a fake session"
     this.debug(
       'In Test Customer Segment',
       this.testCustomerInSegment.name,
@@ -3983,11 +4083,13 @@ export class CustomersService {
       account.id
     );
 
+    console.log("here here");
+
     let testCustomer = new this.CustomerModel({
-      externalId: '657619ac0cd6aa53b5910962',
+      externalId: '6583b25df2be8cd3c8b17f61',
       firstName: 'A',
       lastName: 'B',
-      email: 'abe@example.com',
+      email: 'd@trytachyon.com',
       workflows: [],
       journeys: ['12624e62-367e-483b-9ddf-38160f4fd955'],
       ownerId: 'c65069d2-ef33-427b-b093-6dd5870c4c33',
@@ -3996,19 +4098,34 @@ export class CustomersService {
       __v: 0,
     });
 
+    this.debug(
+      JSON.stringify(testCustomer, null, 2),
+      this.testCustomerInSegment.name,
+      session,
+      account.id
+    );
+
+    console.log("here here 3");
+
+    //statement, account, session
+    const eventCust = await this.getSegmentCustomersFromQuery(query, account, "fake session");
+    console.log("the result of the eventCust is", eventCust);//JSON.stringify(eventCust, null, 2));
+
+    //query: any,account: Account,session: string,customer?: CustomerDocument, customerId?: string,
+    const resultOfCheckCustomerMatchesQuery = await this.checkCustomerMatchesQuery( query, account, "fake session", testCustomer );
+    console.log("the result of the evaluation is", resultOfCheckCustomerMatchesQuery);
+
     //console.log("test customer is", JSON.stringify(testCustomer,null,2));
     //console.log("the segment and the customer are", await this.checkCustomerMatchesQuery(testCustomer, query, account));
-    let custs = await this.getSegmentCustomersFromQuery(
-      query,
-      account,
-      session
-    );
+    
+    return false//await evaluateStatement()
     /*
+    let custs = await this.getSegmentCustomersFromQuery(query, account, session)
+    
     console.log(
       'the segment is',
       custs
     );
-    */
     this.debug(
       `the segment is: ${custs}`,
       this.testCustomerInSegment.name,
@@ -4016,6 +4133,7 @@ export class CustomersService {
       account.id
     );
     return custs;
+    */
   }
 
   public async searchForTest(
@@ -4567,7 +4685,7 @@ export class CustomersService {
 
     if (!!docsDuplicates?.length) {
       throw new HttpException(
-        "Selected primary key can't be used cause it's value has duplicates or some customers don't have such key or it's empty.",
+        "Selected primary key can't be used because of duplicated or missing values. Primary key values must exist and be unique",
         HttpStatus.BAD_REQUEST
       );
     }

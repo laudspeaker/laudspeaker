@@ -70,6 +70,7 @@
     "keyboardjs": "^2.7.0",
     "lodash": "^4.17.21",
     "mini-css-extract-plugin": "^2.4.5",
+    "moment-timezone": "^0.5.43",
     "papaparse": "^5.4.1",
     "postcss": "^8.4.4",
     "postcss-flexbugs-fixes": "^5.0.2",

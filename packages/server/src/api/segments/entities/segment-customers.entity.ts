@@ -13,7 +13,7 @@ export class SegmentCustomers extends BaseEntity {
   @PrimaryColumn({ name: 'segmentId' })
   @JoinColumn({ name: 'segmentId' })
   @ManyToOne(() => Segment, (segment) => segment.id, { onDelete: 'CASCADE' })
-  public segment: Segment;
+  public segment: string;
 
   @PrimaryColumn()
   public customerId: string;
