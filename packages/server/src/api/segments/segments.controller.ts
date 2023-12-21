@@ -28,6 +28,7 @@ import { SegmentsService } from './segments.service';
 import { randomUUID } from 'crypto';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { RavenInterceptor } from 'nest-raven';
+import { CountSegmentUsersSizeDTO } from './dto/size-count.dto';
 
 @Controller('segments')
 export class SegmentsController {
@@ -148,7 +149,6 @@ export class SegmentsController {
       createSegmentDTO,
       session
     );
-  
   }
 
   @Post('/size')
@@ -156,7 +156,7 @@ export class SegmentsController {
   @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
   public async size(
     @Req() { user }: Request,
-    @Body() createSegmentDTO: CreateSegmentDTO
+    @Body() countSegmentUsersSizeDTO: CountSegmentUsersSizeDTO
   ) {
     const session = randomUUID();
     //console.log("**** in save segment /n\n");
@@ -164,7 +164,7 @@ export class SegmentsController {
 
     return await this.segmentsService.size(
       <Account>user,
-      createSegmentDTO,
+      countSegmentUsersSizeDTO,
       session
     );
   }

@@ -4,7 +4,11 @@ import TokenService from "./token.service";
 
 export interface ApiServiceArgs<T extends Record<string, any>> {
   url: string;
-  options?: T & { fakeAPI?: boolean; jsonServer?: boolean };
+  options?: T & {
+    fakeAPI?: boolean;
+    jsonServer?: boolean;
+    cancelToken?: string;
+  };
 }
 
 const instance = axios.create({
@@ -69,10 +73,16 @@ const ApiService = {
     url,
     options,
   }: ApiServiceArgs<R>) {
-    const { fakeAPI = false, jsonServer = false, ...rest } = options || {};
+    const {
+      fakeAPI = false,
+      jsonServer = false,
+      cancelToken,
+      ...rest
+    } = options || {};
     return instance.post<T>(url, {
       ...(fakeAPI && { baseURL: AppConfig.FAKE_SERVER_URL }),
       ...(jsonServer && { baseURL: AppConfig.JSON_SERVER_URL }),
+      cancelToken,
       ...rest,
     });
   },
