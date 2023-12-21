@@ -2205,6 +2205,14 @@ export class CustomersService {
     return false;
   }
 
+   /**
+   * Routes to the right statement handler for getting customers
+   *  essentially 3 types, Attribute, Event, Message
+   *
+   * Handles SINGLE statements not queries with subqueries 
+   * 
+   * @returns set of customers
+   */
   async getCustomersFromStatement(statement: any, account: Account , session: string) {
     const {
       key,
@@ -2272,6 +2280,17 @@ export class CustomersService {
         throw new Error('Invalid comparison type');
     }
   }
+
+   /**
+   * Gets set of customers from a single statement that
+   * includes messages,
+   * 
+   *  eg email from journey a, email 1 has been received
+   *
+   * Handles SINGLE statements not queries with subqueries 
+   * 
+   * @returns set of customers
+   */
 
   async customersFromMessageStatement(
     statement: any,
@@ -2426,6 +2445,17 @@ export class CustomersService {
     return false;
   }
 
+   /**
+   * Gets set of customers from a single statement that
+   * includes Attribute,
+   * 
+   *  eg firstName equal to Abe
+   *
+   * Handles SINGLE statements not queries with subqueries 
+   * 
+   * @returns set of customers
+   */
+
   async customersFromAttributeStatement(statement: any, account: Account , session: string) {
 
     this.debug(
@@ -2563,18 +2593,21 @@ export class CustomersService {
     return correlationValues;
   }
 
+  /**
+   * Gets set of customers from a single statement that
+   * includes Events,
+   * 
+   *  eg onboarding has performed 1 times
+   *
+   * Handles SINGLE statements not queries with subqueries 
+   * 
+   * @returns set of customers
+   */
+
   async customersFromEventStatement(statement: any, account: Account, session: string) {
     const { eventName, comparisonType, value, time, additionalProperties } =
       statement;
-    /*
-    console.log(
-      'here are time and additional properties (if they exist)',
-      JSON.stringify(time, null, 2)
-    );
-    console.log(JSON.stringify(additionalProperties, null, 2));
-    console.log('comparison type is', comparisonType);
-    */
-    
+
     this.debug(
       'In customersEventStatement/n\n',
       this.customersFromEventStatement.name,
@@ -3875,6 +3908,11 @@ export class CustomersService {
   }
 
   //** test **
+  /*
+   * NB the structure of the query argument 
+   *  
+   *
+   */
   async testCustomerInSegment(query: any, account: Account): Promise<boolean>{//Promise<Set<string>>  {
     let session = "this is a fake session"
     this.debug(
@@ -3919,6 +3957,10 @@ export class CustomersService {
     );
 
     console.log("here here 3");
+
+    //statement, account, session
+    const eventCust = await this.getSegmentCustomersFromQuery(query, account, "fake session");
+    console.log("the result of the eventCust is", eventCust);//JSON.stringify(eventCust, null, 2));
 
     //query: any,account: Account,session: string,customer?: CustomerDocument, customerId?: string,
     const resultOfCheckCustomerMatchesQuery = await this.checkCustomerMatchesQuery( query, account, "fake session", testCustomer );
