@@ -51,6 +51,10 @@ import { JourneysService } from './api/journeys/journeys.service';
 import { RedlockService } from './api/redlock/redlock.service';
 import { Lock } from 'redlock';
 import * as _ from 'lodash';
+import { JourneyLocationsService } from './api/journeys/journey-locations.service';
+import { query } from 'winston';
+import { Journey } from './api/journeys/entities/journey.entity';
+import { EntryTiming } from './api/journeys/types/additional-journey-settings.interface';
 
 const BATCH_SIZE = 500;
 const KEYS_TO_SKIP = ['__v', '_id', 'audiences', 'ownerId'];
@@ -93,6 +97,8 @@ export class CronService {
     @Inject(AccountsService) private accountsService: AccountsService,
     @Inject(ModalsService) private modalsService: ModalsService,
     @Inject(StepsService) private stepsService: StepsService,
+    @Inject(JourneyLocationsService)
+    private journeyLocationsService: JourneyLocationsService,
     @InjectQueue('transition') private readonly transitionQueue: Queue,
     @Inject(RedlockService)
     private readonly redlockService: RedlockService
@@ -355,9 +361,9 @@ export class CronService {
     }
   }
 
-  @Cron(CronExpression.EVERY_2_HOURS)
+  @Cron(CronExpression.EVERY_MINUTE)
   async handleTimeBasedSteps() {
-    let err: any, lock: Lock;
+    let err: any;
     const session = randomUUID();
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
@@ -371,93 +377,49 @@ export class CronService {
         journeyIndex < journeys.length;
         journeyIndex++
       ) {
-        const customers = await this.customerModel.find({
-          journeys: journeys[journeyIndex].id,
-        });
+        const locations =
+          await this.journeyLocationsService.findAllStaticCustomersInTimeBasedSteps(
+            journeys[journeyIndex],
+            session,
+            queryRunner
+          );
         for (
-          let customersIndex = 0;
-          customersIndex < customers.length;
-          customersIndex++
+          let locationsIndex = 0;
+          locationsIndex < locations.length;
+          locationsIndex++
         ) {
-          try {
-            lock = await this.redlockService.acquire(
-              `${customers[customersIndex].id}${journeys[journeyIndex].id}`
-            );
-            this.warn(
-              `${JSON.stringify({ warning: 'Acquiring lock' })}`,
-              this.handleTimeBasedSteps.name,
-              session
-            );
-            const steps =
-              await this.stepsService.transactionalFindAllActiveByTypeAndJourney(
-                StepType.TIME_DELAY,
-                journeys[journeyIndex].id,
-                session,
-                queryRunner
-              );
-            steps.push(
-              ...(await this.stepsService.transactionalFindAllActiveByTypeAndJourney(
-                StepType.TIME_WINDOW,
-                journeys[journeyIndex].id,
-                session,
-                queryRunner
-              ))
-            );
-            steps.push(
-              ...(await this.stepsService.transactionalFindAllActiveByTypeAndJourney(
-                StepType.WAIT_UNTIL_BRANCH,
-                journeys[journeyIndex].id,
-                session,
-                queryRunner
-              ))
-            );
-            for (let i = 0; i < steps.length; i++) {
-              let branch;
-              if (steps[i].type === StepType.WAIT_UNTIL_BRANCH) {
-                if (!steps[i].metadata.timeBranch) {
-                  await lock.release();
-                  this.warn(
-                    `${JSON.stringify({ warning: 'Releasing lock' })}`,
-                    this.handleTimeBasedSteps.name,
-                    session
-                  );
-                  continue;
-                }
-                branch = -1;
-              }
-              if (
-                _.find(steps[i].customers, (customer) => {
-                  return (
-                    JSON.parse(customer).customerID ===
-                    customers[customersIndex].id
-                  );
-                })
-              )
-                this.transitionQueue.add(steps[i].type, {
-                  step: steps[i],
-                  ownerID: steps[i].owner.id,
-                  session: session,
-                  customerID: customers[customersIndex].id,
-                  lock,
-                  branch,
-                });
-              else {
-                await lock.release();
-                this.warn(
-                  `${JSON.stringify({ warning: 'Releasing lock' })}`,
-                  this.handleTimeBasedSteps.name,
-                  session
-                );
-              }
+          const step = await this.stepsService.findByID(
+            String(locations[locationsIndex].step),
+            session,
+            null,
+            queryRunner
+          );
+          let branch;
+          // Set branch to -1 for wait until
+          if (step.type === StepType.WAIT_UNTIL_BRANCH) {
+            //Wait until time branch isnt set, continue
+            if (!step.metadata.timeBranch) {
+              continue;
             }
+            branch = -1;
+          }
+          try {
+            await this.journeyLocationsService.lock(
+              locations[locationsIndex],
+              session,
+              undefined,
+              queryRunner
+            );
+            this.transitionQueue.add(step.type, {
+              step: step,
+              ownerID: step.owner.id,
+              session: session,
+              journeyID: journeys[journeyIndex].id,
+              customerID: locations[locationsIndex].customer,
+              branch,
+            });
           } catch (e) {
             this.error(e, this.handleTimeBasedSteps.name, session);
-            if (lock) await lock.release();
-            this.warn(
-              `${JSON.stringify({ warning: 'Releasing lock' })}`,
-              this.handleTimeBasedSteps.name,
-              session
-            );
           }
         }
       }
@@ -808,7 +770,7 @@ export class CronService {
     }
   }
 
-  @Cron(CronExpression.EVERY_DAY_AT_NOON)
+  @Cron(CronExpression.EVERY_30_MINUTES)
   async cleanTrashSteps() {
     const session = randomUUID();
     const queryRunner = this.dataSource.createQueryRunner();
@@ -899,6 +861,31 @@ export class CronService {
           session
         );
       }
+    } finally {
+      queryRunner.release();
+    }
+  }
+
+  @Cron(CronExpression.EVERY_MINUTE)
+  async handleEntryTiming() {
+    const session = randomUUID();
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
+      const delayedJourneys = await queryRunner.manager
+        .createQueryBuilder(Journey, 'journey')
+        .where(
+          'journey."journeyEntrySettings"->\'entryTiming\'->>\'type\' = :type AND journey."isActive" = true',
+          {
+            type: EntryTiming.SpecificTime,
+          }
+        )
+        .getMany();
+      await queryRunner.commitTransaction();
+    } catch (e) {
+      this.error(e, this.handleEntryTiming.name, session);
+      await queryRunner.rollbackTransaction();
     } finally {
       queryRunner.release();
     }

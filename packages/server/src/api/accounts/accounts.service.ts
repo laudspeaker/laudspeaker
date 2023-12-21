@@ -34,6 +34,7 @@ import { StepsService } from '../steps/steps.service';
 import { StepType } from '../steps/types/step.interface';
 import { randomUUID } from 'crypto';
 import admin from 'firebase-admin';
+import { update } from 'lodash';
 
 @Injectable()
 export class AccountsService extends BaseJwtHelper {
@@ -59,8 +60,12 @@ export class AccountsService extends BaseJwtHelper {
     private webhookService: WebhooksService
   ) {
     super();
-
-    this.createOnboadingAccount();
+    if (
+      process.env.ONBOARDING_ACCOUNT_EMAIL &&
+      process.env.ONBOARDING_ACCOUNT_API_KEY &&
+      process.env.ONBOARDING_ACCOUNT_PASSWORD
+    )
+      this.createOnboadingAccount();
   }
 
   log(message, method, session, user = 'ANONYMOUS') {
@@ -322,7 +327,7 @@ export class AccountsService extends BaseJwtHelper {
     try {
       let updatedUser: Account;
       for (const key of Object.keys(updateUserDto)) {
-        if (key === 'pushPlatforms') {
+        if (key === 'pushPlatforms' && updateUserDto[key]) {
           oldUser[key] = {
             Android:
               updateUserDto.pushPlatforms.Android || oldUser[key].Android,

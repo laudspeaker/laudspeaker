@@ -228,16 +228,16 @@ export class WorkflowsController {
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
   async start(@Req() { user }: Request, @Param('id') id: string) {
-    const session = randomUUID();
-    try {
-      const res = await this.workflowsService.start(<Account>user, id, session);
-      return Promise.resolve(res);
-    } catch (err) {
-      this.logger.error(
-        `workflows.controller.ts:WorkflowsController.start: Error: ${err}`
-      );
-      return Promise.reject(err);
-    }
+    // const session = randomUUID();
+    // try {
+    //   const res = await this.workflowsService.start(<Account>user, id, session);
+    //   return Promise.resolve(res);
+    // } catch (err) {
+    //   this.logger.error(
+    //     `workflows.controller.ts:WorkflowsController.start: Error: ${err}`
+    //   );
+    //   return Promise.reject(err);
+    // }
   }
 
   @Patch()
@@ -247,20 +247,20 @@ export class WorkflowsController {
     @Req() { user }: Request,
     @Body() startWorkflowDto: StartWorkflowDto
   ) {
-    const session = randomUUID();
-    try {
-      const res = await this.workflowsService.start(
-        <Account>user,
-        startWorkflowDto.id,
-        session
-      );
-      return Promise.resolve(res);
-    } catch (err) {
-      this.logger.error(
-        `workflows.controller.ts:WorkflowsController.startPatch: Error: ${err}`
-      );
-      return Promise.reject(err);
-    }
+    // const session = randomUUID();
+    // try {
+    //   const res = await this.workflowsService.start(
+    //     <Account>user,
+    //     startWorkflowDto.id,
+    //     session
+    //   );
+    //   return Promise.resolve(res);
+    // } catch (err) {
+    //   this.logger.error(
+    //     `workflows.controller.ts:WorkflowsController.startPatch: Error: ${err}`
+    //   );
+    //   return Promise.reject(err);
+    // }
   }
 
   @Post('delete')

@@ -383,14 +383,14 @@ export class EventsService {
     };
   }
 
-  //to do need to specify how this is 
+  //to do need to specify how this is
   async getEventsByMongo(
     mongoQuery: any,
     customer: CustomerDocument,
   ) {
     //console.log("In getEvents by mongo");
 
-    const tehevents = await this.EventModel.find(mongoQuery).exec();;
+    const tehevents = await this.EventModel.find(mongoQuery).exec();
     //console.log("events are", JSON.stringify(tehevents, null, 2))
 
     //console.log("events are", JSON.stringify(await this.EventModel.find(mongoQuery).exec(),null, 2));
@@ -399,19 +399,18 @@ export class EventsService {
     return count;
   }
 
-    //to do need to specify how this is 
-    async getCustomersbyEventsMongo(
-      aggregationPipeline: any,
-      //externalId: boolean,
-      //numberOfTimes: Number,
-    ) {
-      //console.log("In getCustomersbyEventsMongo by mongo");
+  //to do need to specify how this is
+  async getCustomersbyEventsMongo(
+    aggregationPipeline: any
+    //externalId: boolean,
+    //numberOfTimes: Number,
+  ) {
+    //console.log("In getCustomersbyEventsMongo by mongo");
 
-      const docs = await this.EventModel.aggregate(
-        aggregationPipeline).exec();
-      
-      return docs;
-    }
+    const docs = await this.EventModel.aggregate(aggregationPipeline).exec();
+
+    return docs;
+  }
 
   async sendTestPush(account: Account, token: string) {
     const foundAcc = await this.accountsRepository.findOneBy({

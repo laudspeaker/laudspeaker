@@ -1,5 +1,6 @@
 import Header from "components/Header";
 import Progress from "components/Progress";
+import config, { API_BASE_URL_KEY } from "config";
 import React, { DragEvent, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -35,7 +36,7 @@ const Home = () => {
     setIsCSVLoading(true);
     try {
       const res = await fetch(
-        `${process.env.REACT_APP_API_BASE_URL}/customers/importcsv`,
+        `${config.get(API_BASE_URL_KEY)}/customers/importcsv`,
         {
           method: "POST",
           body: formData,

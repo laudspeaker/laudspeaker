@@ -7,7 +7,6 @@ ARG REACT_APP_POSTHOG_HOST
 ARG REACT_APP_POSTHOG_KEY
 ARG REACT_APP_ONBOARDING_API_KEY
 ENV SENTRY_AUTH_TOKEN=${FRONTEND_SENTRY_AUTH_TOKEN}
-ENV REACT_APP_API_BASE_URL=${EXTERNAL_URL}/api
 ENV REACT_APP_WS_BASE_URL=${EXTERNAL_URL}
 ENV REACT_APP_POSTHOG_HOST=${REACT_APP_POSTHOG_HOST}
 ENV REACT_APP_POSTHOG_KEY=${REACT_APP_POSTHOG_KEY}
@@ -52,9 +51,10 @@ COPY --from=frontend_build /app/packages/client/build /app/client
 COPY --from=backend_build /app/packages/server/dist /app/dist
 COPY --from=backend_build /app/node_modules /app/node_modules
 COPY --from=backend_build /app/packages /app/packages
+COPY ./scripts /app/scripts/
 
 #Expose web port
 EXPOSE 80
 
 # Run migrations and serve app
-CMD ["sh", "-c", "clickhouse-migrations migrate && typeorm-ts-node-commonjs migration:run -d packages/server/src/data-source.ts && node dist/src/main.js"]
+CMD ["sh", "-c", "./scripts/setup_config.sh && clickhouse-migrations migrate && typeorm-ts-node-commonjs migration:run -d packages/server/src/data-source.ts && node dist/src/main.js"]

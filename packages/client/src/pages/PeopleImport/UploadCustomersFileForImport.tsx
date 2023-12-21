@@ -7,6 +7,7 @@ import { TrashIcon } from "@heroicons/react/24/outline";
 import { ImportParams } from "./PeopleImport";
 import ApiService from "services/api.service";
 import { confirmAlert } from "react-confirm-alert";
+import config, { API_BASE_URL_KEY } from "config";
 
 interface UploadFileProps {
   fileData?: ImportParams;
@@ -71,7 +72,7 @@ const UploadCustomersFileForImport = ({
     try {
       const { data } = await axios.request({
         method: "post",
-        url: `${process.env.REACT_APP_API_BASE_URL}/customers/uploadCSV`,
+        url: `${config.get(API_BASE_URL_KEY)}/customers/uploadCSV`,
         data: formData,
         headers: {
           Authorization: `Bearer ${tokenService.getLocalAccessToken()}`,

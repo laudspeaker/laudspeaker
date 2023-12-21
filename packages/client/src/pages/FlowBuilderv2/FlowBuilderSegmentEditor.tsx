@@ -289,6 +289,46 @@ const FlowBuilderSegmentEditor = () => {
                           </div>
                         )}
                       </div>
+                      <div className="w-full bg-[#F3F4F6] rounded max-w-[800px] flex flex-col gap-[10px]">
+                        <CheckBox
+                          text={"Continue previous occurence"}
+                          initValue={
+                            journeyEntrySettings.entryTiming.time.recurrence
+                              .continueOccurence
+                          }
+                          onCheck={(checked) => {
+                            dispatch(
+                              setJourneyEntryTimingTime({
+                                ...journeyEntrySettings.entryTiming.time!,
+                                recurrence: {
+                                  ...journeyEntrySettings.entryTiming.time!
+                                    .recurrence,
+                                  continueOccurence: checked,
+                                },
+                              })
+                            );
+                          }}
+                        />
+                        <CheckBox
+                          text={"Continue previous occurence enrollment"}
+                          initValue={
+                            journeyEntrySettings.entryTiming.time.recurrence
+                              .continueOccurenceEnrollment
+                          }
+                          onCheck={(checked) => {
+                            dispatch(
+                              setJourneyEntryTimingTime({
+                                ...journeyEntrySettings.entryTiming.time!,
+                                recurrence: {
+                                  ...journeyEntrySettings.entryTiming.time!
+                                    .recurrence,
+                                  continueOccurenceEnrollment: checked,
+                                },
+                              })
+                            );
+                          }}
+                        />
+                      </div>
                     </div>
                     <div className="flex flex-col gap-[10px] mt-[20px]">
                       <div className="leading-[22px] text-[14px] font-semibold font-inter">

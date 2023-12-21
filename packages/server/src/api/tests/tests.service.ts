@@ -318,7 +318,7 @@ export class TestsService {
     });
   }
 
-  //to do 
+  //to do
   public async isCustomerInSegment(customerId: string, session: string) {
     const cust = await this.segmentCustomersRepository.findOne({
       where: {
@@ -328,7 +328,6 @@ export class TestsService {
     return true;
     //return !!cust?.id;
   }
-  
 
   public async getSegmentSize(segmentId: string, session: string) {
     return await this.segmentCustomersRepository.count({

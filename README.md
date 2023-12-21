@@ -27,7 +27,7 @@
 
 ## 🚀 Get Started
 
-Use [Laudspeaker Cloud](https://app.laudspeaker.com/login/?ref=github) or check out more options [here](https://laudspeaker.com/docs/guides/overview/intro/?ref=github)
+Use [Laudspeaker Cloud](https://app.laudspeaker.com/login/?ref=github) or if you are interested in our paid self deployed (business/enterprise) plan book a time below:
 
 ### Want to use at your company?
 
@@ -53,7 +53,7 @@ We're currently in Public Alpha.
 
 ## License
 
-**Laudspeaker** is open source and released under the [MIT License][mit_license], and AGPL-3.0 licenses (code in separate directories) with the exception of our ee directory (which is currently empty!) but will be under the Laudspeaker Enterprise Edition license.
+**Laudspeaker** is open source and released under the AGPL-3.0 license with the exception of our ee directory (which is currently empty!) but will be under the Laudspeaker Enterprise Edition license.
 
 ## 🌱 Contribute
 

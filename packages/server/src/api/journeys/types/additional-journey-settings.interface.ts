@@ -44,16 +44,16 @@ export interface JourneyEntrySettings {
   enrollmentType: JourneyEnrollmentType;
 }
 
-export enum JourneySettingsQuiteFallbackBehavior {
+export enum JourneySettingsQuietFallbackBehavior {
   NextAvailableTime = 'NextAvailableTime',
   Abort = 'Abort',
 }
 
-export interface JourneySettingsQuiteHours {
+export interface JourneySettingsQuietHours {
   enabled: boolean;
   startTime: string;
   endTime: string;
-  fallbackBehavior: JourneySettingsQuiteFallbackBehavior;
+  fallbackBehavior: JourneySettingsQuietFallbackBehavior;
 }
 
 export enum MaxOptions {
@@ -85,8 +85,7 @@ export interface JourneySettingsMaxMessageSends {
 
 export interface JourneySettings {
   tags: string[];
-  quiteHours: JourneySettingsQuiteHours;
+  quietHours: JourneySettingsQuietHours;
   maxEntries: JourneySettingsMaxUserEntries;
   maxMessageSends: JourneySettingsMaxMessageSends;
 }
-

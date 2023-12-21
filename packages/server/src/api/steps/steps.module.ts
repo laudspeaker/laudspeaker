@@ -26,10 +26,21 @@ import { ModalsModule } from '../modals/modals.module';
 import { WebsocketsModule } from '@/websockets/websockets.module';
 import { RedlockModule } from '../redlock/redlock.module';
 import { RedlockService } from '../redlock/redlock.service';
+import { StartProcessor } from '../journeys/start.processor';
+import { JourneyLocationsService } from '../journeys/journey-locations.service';
+import { JourneyLocation } from '../journeys/entities/journey-location.entity';
+import { JourneysModule } from '../journeys/journeys.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Step, Template, Job, Audience, Account]),
+    TypeOrmModule.forFeature([
+      Step,
+      Template,
+      Job,
+      Audience,
+      Account,
+      JourneyLocation,
+    ]),
     MongooseModule.forFeature([
       { name: Customer.name, schema: CustomerSchema },
     ]),
@@ -42,6 +53,9 @@ import { RedlockService } from '../redlock/redlock.service';
     BullModule.registerQueue({
       name: 'webhooks',
     }),
+    BullModule.registerQueue({
+      name: 'start',
+    }),
     forwardRef(() => CustomersModule),
     forwardRef(() => WebhooksModule),
     forwardRef(() => TemplatesModule),
@@ -50,9 +64,17 @@ import { RedlockService } from '../redlock/redlock.service';
     forwardRef(() => ModalsModule),
     forwardRef(() => WebsocketsModule),
     forwardRef(() => RedlockModule),
+    forwardRef(() => JourneysModule),
     SlackModule,
   ],
-  providers: [StepsService, JobsService, TransitionProcessor, RedlockService],
+  providers: [
+    StepsService,
+    JobsService,
+    TransitionProcessor,
+    StartProcessor,
+    RedlockService,
+    JourneyLocationsService,
+  ],
   controllers: [StepsController],
   exports: [StepsService],
 })

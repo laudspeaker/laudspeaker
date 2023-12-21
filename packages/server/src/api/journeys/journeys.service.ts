@@ -46,8 +46,9 @@ import {
 import {
   AnalyticsEvent,
   AnalyticsEventCondition,
-  AttributeBranch,
+  AttributeConditions,
   AttributeGroup,
+  Branch,
   ComponentEvent,
   CustomComponentStepMetadata,
   ElementCondition,
@@ -65,10 +66,16 @@ import { TimeDelayStepMetadata } from '../steps/types/step.interface';
 import { TimeWindow } from '../steps/types/step.interface';
 import { TimeWindowStepMetadata } from '../steps/types/step.interface';
 import { CustomerAttribute } from '../steps/types/step.interface';
-import { MultiBranchMetadata } from '../steps/types/step.interface';
+import { AttributeSplitMetadata } from '../steps/types/step.interface';
 import { Temporal } from '@js-temporal/polyfill';
 import generateName from '@good-ghosting/random-name-generator';
-import { JourneyEnrollmentType } from './types/additional-journey-settings.interface';
+import {
+  EntryTiming,
+  JourneyEnrollmentType,
+} from './types/additional-journey-settings.interface';
+import { JourneyLocationsService } from './journey-locations.service';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 
 export enum JourneyStatus {
   ACTIVE = 'Active',
@@ -105,7 +112,10 @@ export class JourneysService {
     @InjectModel(Customer.name) public CustomerModel: Model<CustomerDocument>,
     @Inject(forwardRef(() => CustomersService))
     private customersService: CustomersService,
-    @InjectConnection() private readonly connection: mongoose.Connection
+    @InjectConnection() private readonly connection: mongoose.Connection,
+    @Inject(JourneyLocationsService)
+    private readonly journeyLocationsService: JourneyLocationsService,
+    @InjectQueue('transition') private readonly transitionQueue: Queue
   ) {}
 
   log(message, method, session, user = 'ANONYMOUS') {
@@ -423,6 +433,15 @@ export class JourneysService {
     }
   }
 
+  /**
+   *
+   * @param account
+   * @param customerId
+   * @param customerUpdateType
+   * @param session
+   * @param queryRunner
+   * @param clientSession
+   */
   public async updateEnrollmentForCustomer(
     account: Account,
     customerId: string,
@@ -451,9 +470,10 @@ export class JourneysService {
       let change: 'ADD' | 'REMOVE' | 'DO_NOTHING' = 'DO_NOTHING';
       let doesInclude = await this.customersService.isCustomerEnrolledInJourney(
         account,
-        customerId,
-        journey.id,
-        clientSession
+        customer,
+        journey,
+        session,
+        queryRunner
       );
       //let shouldInclude = true;
       // TODO_JH: implement the following
@@ -520,13 +540,28 @@ export class JourneysService {
     queryRunner: QueryRunner,
     clientSession: ClientSession
   ): Promise<void> {
-    await this.stepsService.addToStart(
+    const step = await this.stepsService.findByJourneyAndType(
       account,
       journey.id,
-      customer,
-      queryRunner,
-      session
+      StepType.START,
+      session,
+      queryRunner
     );
+    await this.journeyLocationsService.createAndLock(
+      journey,
+      customer,
+      step,
+      session,
+      account,
+      queryRunner
+    );
+    await this.transitionQueue.add('start', {
+      ownerID: account.id,
+      journeyID: journey.id,
+      step: step,
+      session: session,
+      customerID: customer.id,
+    });
 
     await this.CustomerModel.updateOne(
       { _id: customer._id },
@@ -616,13 +651,13 @@ export class JourneysService {
           )) &&
           customer.journeys.indexOf(journey.id) < 0
         ) {
-          await this.stepsService.addToStart(
-            account,
-            journey.id,
-            customer,
-            queryRunner,
-            session
-          );
+          // await this.stepsService.addToStart(
+          //   account,
+          //   journey.id,
+          //   customer,
+          //   queryRunner,
+          //   session
+          // );
           await this.CustomerModel.updateOne(
             { _id: customer._id },
             {
@@ -784,6 +819,37 @@ export class JourneysService {
   }
 
   /**
+   *
+   * Find a journey by id, using db transactoins
+   *
+   * @param {Account} account
+   * @param {string} id
+   * @param {string} session
+   * @param {QueryRunner} [queryRunner]
+   */
+  async findByID(
+    account: Account,
+    id: string,
+    session: string,
+    queryRunner?: QueryRunner
+  ) {
+    if (queryRunner)
+      return await queryRunner.manager.findOne(Journey, {
+        where: {
+          owner: { id: account.id },
+          id,
+        },
+      });
+    else
+      return await this.journeysRepository.findOne({
+        where: {
+          owner: { id: account.id },
+          id,
+        },
+      });
+  }
+
+  /**
    * Finds a journey by ID.
    *
    * @param account
@@ -899,14 +965,8 @@ export class JourneysService {
    * @param session
    * @returns
    */
-  async start(
-    account: Account,
-    journeyID: string,
-    session: string
-  ): Promise<(string | number)[]> {
+  async start(account: Account, journeyID: string, session: string) {
     let journey: Journey; // Workflow to update
-    let customers: CustomerDocument[]; // Customers to add to primary audience
-    const jobIDs: (string | number)[] = [];
     this.debug(
       `${JSON.stringify({ account, journeyID })}`,
       this.start.name,
@@ -914,8 +974,8 @@ export class JourneysService {
       account.email
     );
     const transactionSession = await this.connection.startSession();
-    await transactionSession.startTransaction();
-    const queryRunner = await this.dataSource.createQueryRunner();
+    transactionSession.startTransaction();
+    const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
@@ -983,52 +1043,26 @@ export class JourneysService {
       if (!alg.isAcyclic(graph))
         throw new Error('Flow has infinite loops, cannot start.');
 
-      customers = await this.customersService.findByInclusionCriteria(
+      const audienceSize = await this.customersService.getAudienceSize(
         account,
         journey.inclusionCriteria,
-        transactionSession,
-        session
-      );
-
-      this.debug(
-        `${JSON.stringify({ customers })}`,
-        this.start.name,
         session,
-        account.email
+        transactionSession
       );
 
-      const unenrolledCustomers = customers.filter(
-        (customer) => customer.journeys.indexOf(journeyID) < 0
-      );
-      await this.CustomerModel.updateMany(
-        {
-          _id: { $in: unenrolledCustomers.map((customer) => customer.id) },
-        },
-        {
-          $addToSet: {
-            journeys: journeyID,
-          },
-          $set: {
-            [`journeyEnrollmentsDates.${journeyID}`]: new Date().toUTCString(),
-          },
-        }
-      )
-        .session(transactionSession)
-        .exec();
-
-      this.debug(
-        `adding to start ${JSON.stringify(unenrolledCustomers)}`,
-        this.start.name,
-        session,
-        account.email
-      );
-      await this.stepsService.bulkAddToStart(
-        account,
-        journeyID,
-        unenrolledCustomers,
-        queryRunner,
-        session
-      );
+      if (
+        journey.journeyEntrySettings.entryTiming.type ===
+        EntryTiming.WhenPublished
+      ) {
+        await this.stepsService.triggerStart(
+          account,
+          journeyID,
+          journey.inclusionCriteria,
+          audienceSize,
+          queryRunner,
+          session
+        );
+      }
 
       // TODO: update to remove dev mode on start
       // await this.
@@ -1050,8 +1084,6 @@ export class JourneysService {
       await transactionSession.endSession();
       await queryRunner.release();
     }
-
-    return Promise.resolve(jobIDs);
   }
 
   /**
@@ -1201,8 +1233,6 @@ export class JourneysService {
         account.email
       );
 
-      this.logger.warn('SAVE TEST 1 BEFORE LOOP');
-      this.logger.warn(journey);
       for (let i = 0; i < nodes.length; i++) {
         const step = await queryRunner.manager.findOne(Step, {
           where: {
@@ -1277,10 +1307,6 @@ export class JourneysService {
             );
             break;
           case NodeType.WAIT_UNTIL:
-            if (nodes[i].id === '226a7112-96ec-477d-a1ac-d604b4f04301') {
-              this.logger.warn('SAVE TEST 2 Before processing');
-              this.logger.warn(journey);
-            }
             metadata = new WaitUntilStepMetadata();
 
             //Time Branch configuration
@@ -1495,66 +1521,26 @@ export class JourneysService {
                 metadata.window.toTime = nodes[i].data?.['toTime'];
             }
             break;
-          case NodeType.USER_ATTRIBUTE:
-            metadata = new MultiBranchMetadata();
+          case NodeType.MULTISPLIT:
+            metadata = new AttributeSplitMetadata();
             metadata.branches = [];
-            let index = 0;
             for (let i = 0; i < relevantEdges.length; i++) {
-              if (
-                relevantEdges[i].data['branch'].type === BranchType.ATTRIBUTE
-              ) {
-                const branch = new AttributeBranch();
-                branch.groups = [];
-                for (
-                  let groupsIndex = 0;
-                  groupsIndex <
-                  relevantEdges[i].data['branch'].attributeConditions.length;
-                  groupsIndex++
-                ) {
-                  const group = new AttributeGroup();
-                  group.attributes = [];
-                  for (
-                    let attributeIndex = 0;
-                    attributeIndex <
-                    relevantEdges[i].data['branch'].attributeConditions[
-                      groupsIndex
-                    ].statements.length;
-                    attributeIndex++
-                  ) {
-                    const attribute = new CustomerAttribute();
-                    attribute.comparisonType =
-                      relevantEdges[i].data['branch'].attributeConditions[
-                        groupsIndex
-                      ].statements[attributeIndex].comparisonType;
-                    attribute.key =
-                      relevantEdges[i].data['branch'].attributeConditions[
-                        groupsIndex
-                      ].statements[attributeIndex].key;
-                    attribute.keyType =
-                      relevantEdges[i].data['branch'].attributeConditions[
-                        groupsIndex
-                      ].statements[attributeIndex].valueType;
-                    attribute.value =
-                      relevantEdges[i].data['branch'].attributeConditions[
-                        groupsIndex
-                      ].statements[attributeIndex].value;
-                    group.attributes.push(attribute);
-                  }
-                  group.relation =
-                    relevantEdges[i].data['branch'].attributeConditions[
-                      groupsIndex
-                    ].statements[0].relationToNext;
-                  branch.groups.push(group);
-                }
+              // All others branch check
+              if (relevantEdges[i].data['branch'].isOthers === true) {
+                metadata.allOthers = nodes.filter((node) => {
+                  return node.id === relevantEdges[i].target;
+                })[0].data.stepId;
+              } else {
+                const branch = new AttributeConditions();
                 branch.destination = nodes.filter((node) => {
                   return node.id === relevantEdges[i].target;
                 })[0].data.stepId;
-                branch.index = index;
-                index++;
-                branch.relation =
-                  relevantEdges[i].data[
-                    'branch'
-                  ].attributeConditions[0].relationToNext;
+                branch.index = i;
+                branch.conditions =
+                  relevantEdges[i].data['branch']['conditions'];
+                branch.destination = nodes.filter((node) => {
+                  return node.id === relevantEdges[i].target;
+                })[0].data.stepId;
                 metadata.branches.push(branch);
               }
             }
@@ -1857,68 +1843,6 @@ export class JourneysService {
           metadata.window.to = Temporal.Instant.from(
             new Date(nodes[i].data['to']).toISOString()
           );
-          break;
-        case NodeType.USER_ATTRIBUTE:
-          metadata = new MultiBranchMetadata();
-          metadata.branches = [];
-          let index = 0;
-          for (let i = 0; i < relevantEdges.length; i++) {
-            if (relevantEdges[i].data['branch'].type === BranchType.ATTRIBUTE) {
-              const branch = new AttributeBranch();
-              branch.groups = [];
-              for (
-                let groupsIndex = 0;
-                groupsIndex <
-                relevantEdges[i].data['branch'].attributeConditions.length;
-                groupsIndex++
-              ) {
-                const group = new AttributeGroup();
-                group.attributes = [];
-                for (
-                  let attributeIndex = 0;
-                  attributeIndex <
-                  relevantEdges[i].data['branch'].attributeConditions[
-                    groupsIndex
-                  ].statements.length;
-                  attributeIndex++
-                ) {
-                  const attribute = new CustomerAttribute();
-                  attribute.comparisonType =
-                    relevantEdges[i].data['branch'].attributeConditions[
-                      groupsIndex
-                    ].statements[attributeIndex].comparisonType;
-                  attribute.key =
-                    relevantEdges[i].data['branch'].attributeConditions[
-                      groupsIndex
-                    ].statements[attributeIndex].key;
-                  attribute.keyType =
-                    relevantEdges[i].data['branch'].attributeConditions[
-                      groupsIndex
-                    ].statements[attributeIndex].valueType;
-                  attribute.value =
-                    relevantEdges[i].data['branch'].attributeConditions[
-                      groupsIndex
-                    ].statements[attributeIndex].value;
-                  group.attributes.push(attribute);
-                }
-                group.relation =
-                  relevantEdges[i].data['branch'].attributeConditions[
-                    groupsIndex
-                  ].statements[0].relationToNext;
-                branch.groups.push(group);
-              }
-              branch.destination = nodes.filter((node) => {
-                return node.id === relevantEdges[i].target;
-              })[0].data.stepId;
-              branch.index = index;
-              index++;
-              branch.relation =
-                relevantEdges[i].data[
-                  'branch'
-                ].attributeConditions[0].relationToNext;
-              metadata.branches.push(branch);
-            }
-          }
           break;
       }
       await queryRunner.manager.save(Step, {

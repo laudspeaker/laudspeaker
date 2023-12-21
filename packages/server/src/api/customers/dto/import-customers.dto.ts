@@ -70,4 +70,3 @@ export class ImportCustomersDTO {
   @Type(() => ManualSegmentCreation)
   withSegment?: ManualSegmentCreation;
 }
-

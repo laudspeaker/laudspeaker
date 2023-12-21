@@ -275,7 +275,6 @@ export class SegmentsService {
         session,
         account.id
       );
-
       /*
     if (segment.type === SegmentType.AUTOMATIC) {
       this.customersService.CustomerModel.find({
@@ -308,6 +307,7 @@ export class SegmentsService {
           session,
           account.id
         );
+
 
         const segmentCustomersArray: SegmentCustomers[] = Array.from(
           customersInSegment

@@ -230,27 +230,30 @@ export class MessageProcessor extends WorkerHost {
             },
           ]);
           break;
-          case 'gmail':
-            const transporter = nodemailer.createTransport({
-              service: 'gmail',
-              auth: {
-                user: job.data.email,
-                pass: job.data.key,
-              },
-            })
-            console.log("about to send an email via gmail");
-            transporter.sendMail({
+        case 'gmail':
+          const transporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth: {
+              user: job.data.email,
+              pass: job.data.key,
+            },
+          });
+          console.log('about to send an email via gmail');
+          transporter
+            .sendMail({
               from: `${job.data.from}`, // sender address
               to: job.data.to, // list of receivers
               subject: subjectWithInsertedTags, // Subject line
               text: job.data.plainText, //textWithInsertedTags, // plain text body
               html: textWithInsertedTags,
-            }).then(info => {
-              console.log({info});
-            }).catch(error => {
-              console.log("Error occurred:", error);
             })
-            break;
+            .then((info) => {
+              console.log({ info });
+            })
+            .catch((error) => {
+              console.log('Error occurred:', error);
+            });
+          break;
         case 'mailgun':
         default:
           const mailgun = new Mailgun(formData);

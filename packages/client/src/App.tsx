@@ -21,6 +21,7 @@ import {
   ThemeProvider as MTThemeProvider,
   TooltipStylesType,
 } from "@material-tailwind/react";
+import config, { POSTHOG_KEY_KEY, POSTHOG_HOST_KEY } from "config";
 
 interface IApp {
   children: React.ReactNode;
@@ -54,9 +55,9 @@ const App = ({ children }: IApp) => {
     },
   };
 
-  posthog.init(AppConfig.POSTHOG_KEY ? AppConfig.POSTHOG_KEY : "", {
-    api_host: AppConfig.POSTHOG_HOST
-      ? AppConfig.POSTHOG_HOST
+  posthog.init(config.get(POSTHOG_KEY_KEY) ? config.get(POSTHOG_KEY_KEY) : "", {
+    api_host: config.get(POSTHOG_HOST_KEY)
+      ? config.get(POSTHOG_HOST_KEY)
       : "https://app.posthog.com",
   });
 

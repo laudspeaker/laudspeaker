@@ -402,8 +402,10 @@ export enum RecurrenceEndsOptions {
 export interface EntryTimingRecurrence {
   repeatEvery: number;
   endsOn: RecurrenceEndsOptions;
-  endAdditionalValue?: number | string; // string as Date
+  endAdditionalValue?: number | string; // string as Date (Ends after number occurnecs or on Specific string Date )
   weeklyOn: number[]; // Day of week number
+  continueOccurence: boolean;
+  continueOccurenceEnrollment: boolean;
 }
 
 export interface EntryTimingSpecificTime {
@@ -427,16 +429,16 @@ export interface JourneyEntrySettings {
   enrollmentType: JourneyEnrollmentType;
 }
 
-export enum JourneySettingsQuiteFallbackBehavior {
+export enum JourneySettingsQuietFallbackBehavior {
   NextAvailableTime = "NextAvailableTime",
   Abort = "Abort",
 }
 
-interface JourneySettingsQuiteHours {
+interface JourneySettingsQuietHours {
   enabled: boolean;
   startTime: string;
   endTime: string;
-  fallbackBehavior: JourneySettingsQuiteFallbackBehavior;
+  fallbackBehavior: JourneySettingsQuietFallbackBehavior;
 }
 
 export enum MaxOptions {
@@ -468,7 +470,7 @@ interface JourneySettingsMaxMessageSends {
 
 export interface JourneySettings {
   tags: string[];
-  quiteHours: JourneySettingsQuiteHours;
+  quietHours: JourneySettingsQuietHours;
   maxEntries: JourneySettingsMaxUserEntries;
   maxMessageSends: JourneySettingsMaxMessageSends;
 }
@@ -561,11 +563,11 @@ export const defaultJourneySettings = {
     limitOnEverySchedule: false,
     maxEntries: MaxOptions.FiveHundredThousand,
   },
-  quiteHours: {
+  quietHours: {
     enabled: false,
     startTime: "00:00",
     endTime: "08:00",
-    fallbackBehavior: JourneySettingsQuiteFallbackBehavior.NextAvailableTime,
+    fallbackBehavior: JourneySettingsQuietFallbackBehavior.NextAvailableTime,
   },
   maxMessageSends: {
     enabled: false,
@@ -1304,11 +1306,11 @@ const flowBuilderSlice = createSlice({
     ) {
       state.journeySettings.maxEntries = action.payload;
     },
-    setJourneySettingsQuiteHours(
+    setJourneySettingsQuietHours(
       state,
-      action: PayloadAction<JourneySettingsQuiteHours>
+      action: PayloadAction<JourneySettingsQuietHours>
     ) {
-      state.journeySettings.quiteHours = action.payload;
+      state.journeySettings.quietHours = action.payload;
     },
     setMaxMessageSends(
       state,
@@ -1332,6 +1334,8 @@ const flowBuilderSlice = createSlice({
             repeatEvery: 1,
             weeklyOn: [...new Array(7)].map(() => 0),
             endAdditionalValue: undefined,
+            continueOccurence: false,
+            continueOccurenceEnrollment: false,
           },
           userLocalTimeZone: false,
         };
@@ -1513,7 +1517,7 @@ export const {
   setJourneyEntrySettings,
   setJourneySettings,
   setJourneySettingsMaxEntries,
-  setJourneySettingsQuiteHours,
+  setJourneySettingsQuietHours,
   setMaxMessageSends,
   setAvailableTags,
   setTemplateInlineCreator,

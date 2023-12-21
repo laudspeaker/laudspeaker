@@ -59,6 +59,8 @@ import { RedlockModule } from './api/redlock/redlock.module';
 import { RedlockService } from './api/redlock/redlock.service';
 import { RavenModule } from 'nest-raven';
 import { KafkaModule } from './api/kafka/kafka.module';
+import { JourneyLocation } from './api/journeys/entities/journey-location.entity';
+import { JourneyLocationsService } from './api/journeys/journey-locations.service';
 
 const sensitiveKeys = [
   /cookie/i,
@@ -204,6 +206,7 @@ const formatMongoConnectionString = (mongoConnectionString: string) => {
       State,
       Recovery,
       WebhookJob,
+      JourneyLocation,
     ]),
     BullModule.registerQueue({
       name: 'integrations',
@@ -242,7 +245,7 @@ const formatMongoConnectionString = (mongoConnectionString: string) => {
     KafkaModule,
   ],
   controllers: [AppController],
-  providers: [CronService, RedlockService],
+  providers: [CronService, RedlockService, JourneyLocationsService],
 })
 export class AppModule {
   configure(consumer: MiddlewareConsumer) {
