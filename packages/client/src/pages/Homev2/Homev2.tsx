@@ -7,6 +7,7 @@ import eventProviderImage from "./svg/event-provider.svg";
 import { useNavigate } from "react-router-dom";
 import Button, { ButtonType } from "components/Elements/Buttonv2";
 import { AppConfig } from "../../constants";
+import config, { JOURNEY_ONBOARDING_KEY } from "config";
 
 const Homev2 = () => {
   const navigate = useNavigate();
@@ -72,7 +73,7 @@ const Homev2 = () => {
         <div>{format(new Date(), "MM/dd/yyyy")}</div>
       </div>
 
-      {AppConfig.JOURNEY_ONBOARDING === "true" && (
+      {config.get(JOURNEY_ONBOARDING_KEY) === "true" && (
         <div className="flex justify-between gap-5">
           <div className="flex flex-col gap-5 w-full">
             <div className="p-5 rounded-lg flex flex-col bg-white">

@@ -69,7 +69,10 @@ import { CustomerAttribute } from '../steps/types/step.interface';
 import { AttributeSplitMetadata } from '../steps/types/step.interface';
 import { Temporal } from '@js-temporal/polyfill';
 import generateName from '@good-ghosting/random-name-generator';
-import { JourneyEnrollmentType } from './types/additional-journey-settings.interface';
+import {
+  EntryTiming,
+  JourneyEnrollmentType,
+} from './types/additional-journey-settings.interface';
 import { JourneyLocationsService } from './journey-locations.service';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
@@ -1046,14 +1049,19 @@ export class JourneysService {
         transactionSession
       );
 
-      await this.stepsService.triggerStart(
-        account,
-        journeyID,
-        journey.inclusionCriteria,
-        audienceSize,
-        queryRunner,
-        session
-      );
+      if (
+        journey.journeyEntrySettings.entryTiming.type ===
+        EntryTiming.WhenPublished
+      ) {
+        await this.stepsService.triggerStart(
+          account,
+          journeyID,
+          journey.inclusionCriteria,
+          audienceSize,
+          queryRunner,
+          session
+        );
+      }
 
       // TODO: update to remove dev mode on start
       // await this.

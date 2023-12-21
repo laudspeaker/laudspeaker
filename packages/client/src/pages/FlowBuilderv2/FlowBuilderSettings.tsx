@@ -6,8 +6,8 @@ import TagComponent from "components/TagComponent/TagComponent";
 import { useState } from "react";
 import { useDispatch } from "react-redux";
 import {
-  JourneySettingsQuiteFallbackBehavior,
-  setJourneySettingsQuiteHours,
+  JourneySettingsQuietFallbackBehavior,
+  setJourneySettingsQuietHours,
   MaxOptions,
   setJourneySettingsMaxEntries,
   setMaxMessageSends,
@@ -47,26 +47,26 @@ const FlowBuilderSettings = () => {
               className="flex cursor-pointer select-none"
               onClick={() => {
                 dispatch(
-                  setJourneySettingsQuiteHours({
-                    ...journeySettings.quiteHours,
-                    enabled: !journeySettings.quiteHours.enabled,
+                  setJourneySettingsQuietHours({
+                    ...journeySettings.quietHours,
+                    enabled: !journeySettings.quietHours.enabled,
                   })
                 );
               }}
             >
               <ToggleSwitch
-                checked={journeySettings.quiteHours.enabled}
+                checked={journeySettings.quietHours.enabled}
                 iconRequired={false}
               />
               <div className="ml-[10px] font-semibold text-base">
-                Quite hours
+                Quiet hours
               </div>
             </span>
           </div>
           <div className="text-[#4B5563] font-inter text-[12px] leading-5 font-normal">
             Send messages only during certain hours
           </div>
-          {journeySettings.quiteHours.enabled && (
+          {journeySettings.quietHours.enabled && (
             <div className="p-[10px] border border-[#E5E7EB] bg-[#F3F4F6] rounded max-w-[800px] flex flex-col gap-[10px]">
               <div className="flex gap-5">
                 <div className="flex flex-col w-full">
@@ -75,11 +75,11 @@ const FlowBuilderSettings = () => {
                   </div>
                   <div>
                     <input
-                      value={journeySettings.quiteHours.startTime}
+                      value={journeySettings.quietHours.startTime}
                       onChange={(e) => {
                         dispatch(
-                          setJourneySettingsQuiteHours({
-                            ...journeySettings.quiteHours,
+                          setJourneySettingsQuietHours({
+                            ...journeySettings.quietHours,
                             startTime: e.target.value,
                           })
                         );
@@ -96,11 +96,11 @@ const FlowBuilderSettings = () => {
                   </div>
                   <div>
                     <input
-                      value={journeySettings.quiteHours.endTime}
+                      value={journeySettings.quietHours.endTime}
                       onChange={(e) => {
                         dispatch(
-                          setJourneySettingsQuiteHours({
-                            ...journeySettings.quiteHours,
+                          setJourneySettingsQuietHours({
+                            ...journeySettings.quietHours,
                             endTime: e.target.value,
                           })
                         );
@@ -120,23 +120,23 @@ const FlowBuilderSettings = () => {
                 hours
               </div>
               <RadioGroup
-                value={journeySettings.quiteHours.fallbackBehavior}
+                value={journeySettings.quietHours.fallbackBehavior}
                 onChange={(el) =>
                   dispatch(
-                    setJourneySettingsQuiteHours({
-                      ...journeySettings.quiteHours,
+                    setJourneySettingsQuietHours({
+                      ...journeySettings.quietHours,
                       fallbackBehavior: el,
                     })
                   )
                 }
               >
                 <RadioOption
-                  value={JourneySettingsQuiteFallbackBehavior.NextAvailableTime}
+                  value={JourneySettingsQuietFallbackBehavior.NextAvailableTime}
                   radioText="Send at next available time"
                   className={"mb-[10px]"}
                 />
                 <RadioOption
-                  value={JourneySettingsQuiteFallbackBehavior.Abort}
+                  value={JourneySettingsQuietFallbackBehavior.Abort}
                   radioText="Abort message"
                 />
               </RadioGroup>

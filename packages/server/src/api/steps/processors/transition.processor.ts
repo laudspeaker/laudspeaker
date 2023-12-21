@@ -45,7 +45,7 @@ import * as Sentry from '@sentry/node';
 import { JourneyLocationsService } from '@/api/journeys/journey-locations.service';
 import { JourneysService } from '@/api/journeys/journeys.service';
 import { convertTimeToUTC, isWithinInterval } from '@/common/helper/timing';
-import { JourneySettingsQuiteFallbackBehavior } from '@/api/journeys/types/additional-journey-settings.interface';
+import { JourneySettingsQuietFallbackBehavior } from '@/api/journeys/types/additional-journey-settings.interface';
 import { StepsService } from '../steps.service';
 import { Journey } from '@/api/journeys/entities/journey.entity';
 
@@ -610,10 +610,10 @@ export class TransitionProcessor extends WorkerHost {
     let requeueTime: Date;
     if (
       journey.journeySettings &&
-      journey.journeySettings.quiteHours &&
-      journey.journeySettings.quiteHours.enabled
+      journey.journeySettings.quietHours &&
+      journey.journeySettings.quietHours.enabled
     ) {
-      let quietHours = journey.journeySettings.quiteHours!;
+      let quietHours = journey.journeySettings.quietHours!;
       // CHECK IF SENDING QUIET HOURS
       let formatter = Intl.DateTimeFormat(undefined, {
         hour: '2-digit',
@@ -639,10 +639,10 @@ export class TransitionProcessor extends WorkerHost {
 
       if (isQuietHour) {
         switch (quietHours.fallbackBehavior) {
-          case JourneySettingsQuiteFallbackBehavior.NextAvailableTime:
+          case JourneySettingsQuietFallbackBehavior.NextAvailableTime:
             messageSendType = 'QUIET_REQUEUE';
             break;
-          case JourneySettingsQuiteFallbackBehavior.Abort:
+          case JourneySettingsQuietFallbackBehavior.Abort:
             messageSendType = 'QUIET_ABORT';
             break;
           default:

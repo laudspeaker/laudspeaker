@@ -56,6 +56,7 @@ import PushSettings from "pages/PushSettings";
 import PeopleImport from "pages/PeopleImport/PeopleImport";
 import PeopleSetting from "pages/PeopleSetting/PeopleSetting";
 import SegmentEditor from "pages/SegmentCreation/SegmentEditor";
+import config, { ONBOARDING_API_KEY_KEY, WS_BASE_URL_KEY } from "config";
 
 interface IProtected {
   children: ReactElement;
@@ -784,8 +785,10 @@ const RouteComponent: React.FC = () => {
             <Protected>
               <VerificationProtected>
                 <LaudspeakerProvider
-                  apiKey={AppConfig.ONBOARDING_API_KEY ?? "onboarding-api-key"}
-                  apiHost={AppConfig.WS_BASE_URL}
+                  apiKey={
+                    config.get(ONBOARDING_API_KEY_KEY) ?? "onboarding-api-key"
+                  }
+                  apiHost={config.get(WS_BASE_URL_KEY)}
                 >
                   <Onboardingv2 />
                 </LaudspeakerProvider>

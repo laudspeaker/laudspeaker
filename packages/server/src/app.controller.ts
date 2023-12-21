@@ -101,7 +101,7 @@ export class AppController {
     if (process.env.EMAIL_VERIFICATION !== 'true') {
       allowedRoutes['verified_not_allowed'] = true;
     }
-    if (process.env.SLACK_OPTIONAL === 'true') {
+    if (process.env.SLACK_ENABLED !== 'true') {
       allowedRoutes['slack_not_allowed'] = true;
     }
     return allowedRoutes;

@@ -56,7 +56,7 @@ export class SlackService {
     private readonly customersService: CustomersService
   ) {
     this.client = new WebClient();
-    if (process.env.SLACK_OPTIONAL == 'true') {
+    if (process.env.SLACK_ENABLED !== 'true') {
       return;
     }
     this.installer = new InstallProvider({

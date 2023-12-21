@@ -1,6 +1,7 @@
 import axios from "axios";
 import { ApiConfig, AppConfig } from "../constants";
 import TokenService from "./token.service";
+import config, { API_BASE_URL_KEY } from "config";
 
 export interface ApiServiceArgs<T extends Record<string, any>> {
   url: string;
@@ -8,18 +9,18 @@ export interface ApiServiceArgs<T extends Record<string, any>> {
 }
 
 const instance = axios.create({
-  baseURL: AppConfig.API_BASE_URL,
+  baseURL: config.get(API_BASE_URL_KEY),
   headers: {
     "Content-Type": "application/json",
   },
 });
 instance.interceptors.request.use(
-  (config) => {
+  (conf) => {
     const token = TokenService.getLocalAccessToken();
-    if (token && config?.headers) {
-      config.headers.Authorization = "Bearer " + token;
+    if (token && conf?.headers) {
+      conf.headers.Authorization = "Bearer " + token;
     }
-    return config;
+    return conf;
   },
   (error) => {
     return Promise.reject(error);

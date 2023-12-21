@@ -60,8 +60,12 @@ export class AccountsService extends BaseJwtHelper {
     private webhookService: WebhooksService
   ) {
     super();
-
-    this.createOnboadingAccount();
+    if (
+      process.env.ONBOARDING_ACCOUNT_EMAIL &&
+      process.env.ONBOARDING_ACCOUNT_API_KEY &&
+      process.env.ONBOARDING_ACCOUNT_PASSWORD
+    )
+      this.createOnboadingAccount();
   }
 
   log(message, method, session, user = 'ANONYMOUS') {

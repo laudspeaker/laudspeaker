@@ -53,6 +53,8 @@ import { Lock } from 'redlock';
 import * as _ from 'lodash';
 import { JourneyLocationsService } from './api/journeys/journey-locations.service';
 import { query } from 'winston';
+import { Journey } from './api/journeys/entities/journey.entity';
+import { EntryTiming } from './api/journeys/types/additional-journey-settings.interface';
 
 const BATCH_SIZE = 500;
 const KEYS_TO_SKIP = ['__v', '_id', 'audiences', 'ownerId'];
@@ -859,6 +861,31 @@ export class CronService {
           session
         );
       }
+    } finally {
+      queryRunner.release();
+    }
+  }
+
+  @Cron(CronExpression.EVERY_MINUTE)
+  async handleEntryTiming() {
+    const session = randomUUID();
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
+      const delayedJourneys = await queryRunner.manager
+        .createQueryBuilder(Journey, 'journey')
+        .where(
+          'journey."journeyEntrySettings"->\'entryTiming\'->>\'type\' = :type AND journey."isActive" = true',
+          {
+            type: EntryTiming.SpecificTime,
+          }
+        )
+        .getMany();
+      await queryRunner.commitTransaction();
+    } catch (e) {
+      this.error(e, this.handleEntryTiming.name, session);
+      await queryRunner.rollbackTransaction();
     } finally {
       queryRunner.release();
     }
