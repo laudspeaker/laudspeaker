@@ -1,3 +1,4 @@
+import { default as appConfig } from "../../config";
 import CheckBox from "components/Checkbox/Checkbox";
 import Input from "components/Elements/Inputv2";
 import { DragEvent, useState } from "react";
@@ -6,6 +7,7 @@ import { PushSettingsConfiguration } from "./PushSettings";
 import TrashIcon from "@heroicons/react/24/outline/TrashIcon";
 import { PushPlatforms } from "pages/PushBuilder/PushBuilderContent";
 import tokenService from "services/token.service";
+import { API_BASE_URL_KEY } from "config";
 
 interface PushSettingsFirebaseConfigurationProps {
   config: PushSettingsConfiguration;
@@ -31,7 +33,7 @@ const PushSettingsFirebaseConfiguration = ({
     setIsFileLoading(true);
     try {
       const res = await fetch(
-        `${process.env.REACT_APP_API_BASE_URL}/accounts/settings/validateFirebase`,
+        `${appConfig.get(API_BASE_URL_KEY)}/accounts/settings/validateFirebase`,
         {
           method: "POST",
           body: formData,
