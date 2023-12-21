@@ -161,6 +161,92 @@ export class SegmentsService {
     });
   }
 
+  //test code
+  public async testSegment(
+    account: Account,
+    createSegmentDTO: CreateSegmentDTO,
+    session: string
+  ) {
+    let err;
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try{
+    const segment = await queryRunner.manager.save(Segment , 
+      {
+      ...createSegmentDTO,
+      owner: { id: account.id },
+    });
+
+    this.debug(
+      `In test Segment`,
+      this.create.name,
+      session,
+      account.id
+    );
+
+    this.debug(
+      `SegmentDTO is: ${JSON.stringify(createSegmentDTO,null,2)}`,
+      this.create.name,
+      session,
+      account.id
+    );
+
+    this.debug(
+      `inclusionCriteria.query (argument to test func) is: ${JSON.stringify(createSegmentDTO.inclusionCriteria.query,null,2)}`,
+      this.create.name,
+      session,
+      account.id
+    );
+
+    // test code
+    // this.customersService.createSegmentQuery(createSegmentDTO.inclusionCriteria.query);
+    if (segment.type === SegmentType.AUTOMATIC) {
+
+      // test code
+      const testResult = await this.customersService.testCustomerInSegment(createSegmentDTO.inclusionCriteria.query, account) ;
+      console.log("testResult is", testResult);
+      await queryRunner.commitTransaction();
+
+      return segment;
+      return testResult;
+      const customersInSegment = await this.customersService.getSegmentCustomersFromQuery(createSegmentDTO.inclusionCriteria.query, account, session);
+      this.debug(
+        `we have customersInSegment: ${customersInSegment.size}`,
+        this.create.name,
+        session,
+        account.id
+      );
+      
+      const segmentCustomersArray: SegmentCustomers[] = Array.from(customersInSegment).map((stringValue) => {
+        const segmentCustomer = new SegmentCustomers();
+        segmentCustomer.customerId = stringValue;
+        segmentCustomer.segment = segment.id;
+        //segmentCustomer.segment = segment;
+        segmentCustomer.owner = account; // Replace `propertyName` with the actual property name in your entity
+        // Set other properties as needed for each SegmentCustomers entity
+        return segmentCustomer;
+      }); 
+      await queryRunner.manager.save( SegmentCustomers , segmentCustomersArray);
+      //await SegmentCustomers.save(segmentCustomersArray);
+    }
+    await queryRunner.commitTransaction();
+
+    return segment;
+    } catch (e){
+      console.log("oi oi");
+      err = e;
+      this.error(e, this.create.name, session, account.email);
+      await queryRunner.rollbackTransaction();
+    } finally {
+      await queryRunner.release();
+      if(err){
+        throw err;
+      }
+    }
+  }
+
+
   public async create(
     account: Account,
     createSegmentDTO: CreateSegmentDTO,
@@ -176,8 +262,14 @@ export class SegmentsService {
       ...createSegmentDTO,
       owner: { id: account.id },
     });
-  
 
+    this.debug(
+      `SegmentDTO is: ${createSegmentDTO}`,
+      this.create.name,
+      session,
+      account.id
+    );
+  
     /*
     if (segment.type === SegmentType.AUTOMATIC) {
       this.customersService.CustomerModel.find({
@@ -196,7 +288,6 @@ export class SegmentsService {
     }
     */
 
-    // test code
     // this.customersService.createSegmentQuery(createSegmentDTO.inclusionCriteria.query);
     if (segment.type === SegmentType.AUTOMATIC) {
 
@@ -246,7 +337,9 @@ export class SegmentsService {
     createSegmentDTO: CreateSegmentDTO,
     session: string
   ) {
-    //testCustomerInSegment
+    //real
+    //const customersInSegment = await this.customersService.getSegmentCustomersFromQuery(createSegmentDTO.inclusionCriteria.query, account, session);
+    //test
     const customersInSegment = await this.customersService.getSegmentCustomersFromQuery(createSegmentDTO.inclusionCriteria.query, account, session);
     const totalCount = await this.customersService.customersSize;
     

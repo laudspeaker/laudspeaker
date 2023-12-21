@@ -135,12 +135,19 @@ export class SegmentsController {
     const session = randomUUID();
     //console.log("**** in save segment /n\n");
     //console.log("the segmentDTO is", JSON.stringify(createSegmentDTO, null, 2) );
-
+    //test switch back to segmentsService.create
+    return await this.segmentsService.testSegment(
+      <Account>user,
+      createSegmentDTO,
+      session
+    );
+    /*
     return await this.segmentsService.create(
       <Account>user,
       createSegmentDTO,
       session
     );
+    */
   }
 
   @Post('/size')
@@ -153,7 +160,7 @@ export class SegmentsController {
     const session = randomUUID();
     //console.log("**** in save segment /n\n");
     //console.log("the segmentDTO is", JSON.stringify(createSegmentDTO, null, 2) );
-    
+
     return await this.segmentsService.size(
       <Account>user,
       createSegmentDTO,
