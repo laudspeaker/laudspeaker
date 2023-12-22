@@ -9,24 +9,44 @@ enum ORGANIZATION_TABS {
   TEAM = "Team members",
 }
 
-function getTimezonesWithOffset() {
+function convertOffsetStringToMinutes(offsetString: string) {
+  const match = offsetString.match(/UTC([+-])(\d{2}):(\d{2})/);
+  if (match) {
+    const sign = match[1] === "+" ? 1 : -1;
+    const hours = parseInt(match[2], 10);
+    const minutes = parseInt(match[3], 10);
+    return sign * (hours * 60 + minutes);
+  }
+  return 0;
+}
+
+export function getTimezonesWithOffset() {
   const timezones = moment.tz.names();
-  const timezoneMap = new Map<number, string>();
+  const timezoneMap = new Map<string, string>();
 
   timezones.forEach((tz) => {
     const offsetInMinutes = moment.tz(tz).utcOffset();
-    const offsetHours = offsetInMinutes / 60;
-    const offsetString = "UTC " + (offsetHours >= 0 ? "+" : "") + offsetHours;
+    const hours = Math.floor(Math.abs(offsetInMinutes) / 60);
+    const minutes = Math.abs(offsetInMinutes) % 60;
+    const sign = offsetInMinutes >= 0 ? "+" : "-";
 
-    if (!timezoneMap.has(offsetInMinutes)) {
-      timezoneMap.set(offsetInMinutes, offsetString);
+    const formattedHours = String(hours).padStart(2, "0");
+    const formattedMinutes = String(minutes).padStart(2, "0");
+    const offsetString = `UTC${sign}${formattedHours}:${formattedMinutes}`;
+
+    if (!timezoneMap.has(offsetString)) {
+      timezoneMap.set(offsetString, offsetString);
     }
   });
 
-  return Array.from(timezoneMap, ([offset, timezone]) => ({
+  return Array.from(timezoneMap, ([timezone, offset]) => ({
     timezone,
     offset,
-  })).sort((a, b) => a.offset - b.offset);
+  })).sort((a, b) => {
+    const offsetA = convertOffsetStringToMinutes(a.timezone);
+    const offsetB = convertOffsetStringToMinutes(b.timezone);
+    return offsetA - offsetB;
+  });
 }
 
 const timezoneList = getTimezonesWithOffset();
@@ -34,9 +54,7 @@ const timezoneList = getTimezonesWithOffset();
 const OrganizationTab = () => {
   const [tab, setTab] = useState(ORGANIZATION_TABS.GENERAL);
   const [companyName, setCompanyName] = useState("");
-  const [selectedTimeZone, setSelectedTimeZone] = useState(
-    new Date().getTimezoneOffset()
-  );
+  const [selectedTimeZone, setSelectedTimeZone] = useState("");
 
   return (
     <div className="p-5 pt-[10px]">

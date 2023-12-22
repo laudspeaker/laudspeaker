@@ -116,6 +116,7 @@ export class AccountsController {
       session,
       (<Account>user).id
     );
+
     try {
       const data = await this.accountsService.accountsRepository
         .createQueryBuilder('ac')
@@ -150,7 +151,10 @@ export class AccountsController {
         delete pk?.__v;
       }
 
-      return { ...data?.[0], pk };
+      delete (<Account>user).organization.pushPlatforms?.Android?.credentials;
+      delete (<Account>user).organization.pushPlatforms?.iOS?.credentials;
+
+      return { ...data?.[0], pk, organization: (<Account>user).organization };
     } catch (e) {
       this.error(e, this.findOne.name, session, (<Account>user).id);
       throw e;

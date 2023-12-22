@@ -61,6 +61,7 @@ import { RavenModule } from 'nest-raven';
 import { KafkaModule } from './api/kafka/kafka.module';
 import { JourneyLocation } from './api/journeys/entities/journey-location.entity';
 import { JourneyLocationsService } from './api/journeys/journey-locations.service';
+import { OrganizationsModule } from './api/organizations/organizations.module';
 
 const sensitiveKeys = [
   /cookie/i,
@@ -226,6 +227,9 @@ const formatMongoConnectionString = (mongoConnectionString: string) => {
     BullModule.registerQueue({
       name: 'transition',
     }),
+    BullModule.registerQueue({
+      name: 'imports',
+    }),
     IntegrationsModule,
     WorkflowsModule,
     JobsModule,
@@ -243,6 +247,7 @@ const formatMongoConnectionString = (mongoConnectionString: string) => {
     RedlockModule,
     RavenModule,
     KafkaModule,
+    OrganizationsModule,
   ],
   controllers: [AppController],
   providers: [CronService, RedlockService, JourneyLocationsService],

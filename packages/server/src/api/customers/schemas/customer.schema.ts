@@ -28,6 +28,7 @@ export class Customer {
   })
   journeyEnrollmentsDates: JourneyEnrollmentsDates;
 
+  // switch to organizationId
   @Prop()
   ownerId: string;
 

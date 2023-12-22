@@ -17,6 +17,7 @@ import { CustomersModule } from '../customers/customers.module';
 import { Recovery } from './entities/recovery.entity';
 import { JourneysModule } from '../journeys/journeys.module';
 import { StepsModule } from '../steps/steps.module';
+import { OrganizationTeam } from '../organizations/entities/organization-team.entity';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { StepsModule } from '../steps/steps.module';
       Verification,
       Workflow,
       Recovery,
+      OrganizationTeam,
     ]),
     BullModule.registerQueue({
       name: 'message',

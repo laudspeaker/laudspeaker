@@ -57,6 +57,7 @@ import PeopleImport from "pages/PeopleImport/PeopleImport";
 import PeopleSetting from "pages/PeopleSetting/PeopleSetting";
 import SegmentEditor from "pages/SegmentCreation/SegmentEditor";
 import config, { ONBOARDING_API_KEY_KEY, WS_BASE_URL_KEY } from "config";
+import CompanySetup from "pages/CompanySetup/CompanySetup";
 
 interface IProtected {
   children: ReactElement;
@@ -142,13 +143,15 @@ const VerificationProtected: FC<VerificationProtectedProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
+  const [isCompanySetuped, setIsCompanySetuped] = useState(false);
 
   const loadData = async () => {
     setIsLoading(true);
     try {
       const { data } = await ApiService.get({ url: "/accounts" });
-      const { verified } = data;
+      const { verified, organization } = data;
       setIsVerified(verified);
+      setIsCompanySetuped(!!organization);
       setIsLoaded(true);
     } catch (e) {
       toast.error("Error while loading data");
@@ -162,10 +165,11 @@ const VerificationProtected: FC<VerificationProtectedProps> = ({
   }, []);
 
   useEffect(() => {
+    if (isLoaded && !isCompanySetuped) navigate("/company-setup");
     if (isLoaded && !isVerified) navigate("/verification");
-  }, [isVerified, isLoaded]);
+  }, [isLoaded]);
 
-  return isVerified ? <>{children}</> : <></>;
+  return isVerified && isCompanySetuped ? <>{children}</> : <></>;
 };
 
 export interface WelcomeBannerProviderProps {
@@ -247,6 +251,7 @@ const RouteComponent: React.FC = () => {
       try {
         const { data } = await ApiService.get<Account>({ url: "/accounts" });
 
+        // Update to info from organization
         dispatch({
           type: ActionType.LOGIN_USER_SUCCESS,
           payload: {
@@ -302,6 +307,7 @@ const RouteComponent: React.FC = () => {
         />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/reset-password/:id" element={<ResetPassword />} />
+        <Route path="/company-setup" element={<CompanySetup />} />
         <Route
           path="/flow"
           element={
