@@ -2984,148 +2984,130 @@ export class CustomersService {
         return new Set<string>();
       }
     } else if (comparisonType === 'has not performed') {
+      /*
+       * we first check if the event has ever been performed
+       * if not we return all customers
+       * 
+       * if event has been performed by any user, we get the customer ids of the users who have performed
+       * then filter for all other customer ids ie never performed event
+       * 
+       */
       this.debug(
         'in the aggregate construction - has performed',
         this.customersFromEventStatement.name,
         session,
         account.id
       );
-      /*
-      const aggregationPipeline = [
-        { $match: mongoQuery },
+
+      //first check
+      const checkEventExists = [
         {
-          $lookup: {
-            from: 'customers',
-            localField: 'correlationValue', // Field in "events" collection
-            foreignField: await this.getPrimaryKey(account, session), // Field in "customers" collection
-            as: 'matchedCustomers'
-          }
+          $match: mongoQuery
         },
         {
-          $addFields: {
-            matchedCustomerIds: '$matchedCustomers._id'
-          }
-        },
-        {
-          $lookup: {
-            from: 'customers',
-            pipeline: [
-              {
-                $match: {
-                  $expr: {
-                    $not: {
-                      $in: ['$_id', '$matchedCustomerIds']
-                    }
-                  }
-                }
-              }
-            ],
-            as: 'unmatchedCustomers'
-          }
-        },
-        {
-          $project: {
-            unmatchedCustomers: 1,
-            _id: 0
+          $group: {
+            _id: "$event",
+            count: { $sum: 1 }
           }
         }
       ];
-      */
+      const check = await this.eventsService.getCustomersbyEventsMongo(
+        checkEventExists
+      );
+      console.log("the check is", JSON.stringify(check,null,2) );
+
+      if (check.length < 1){
+        this.debug(
+          'no events of this name',
+          this.customersFromEventStatement.name,
+          session,
+          account.id
+        );        //the event does not exist, so we should return all customers
+        const allUsers = [
+          {
+            $match: {
+              ownerId: (<Account>account).id
+            }
+          },
+          {
+            $group: {
+              _id: null,
+              customerIds: { $push: '$_id' }
+            }
+          },
+          {
+            $project: {
+              _id: 0,
+              allCustomerIds: '$customerIds'
+            }
+          }
+        ]
+
+        const result = await this.CustomerModel.aggregate(allUsers).exec();
+        console.log("the result is", JSON.stringify(result,null,2) );
+
+        if (result.length > 0) {
+          const customerIdsSet: Set<string> = new Set(result[0].allCustomerIds);
+          return customerIdsSet;
+        }
+        else{
+          // no customers who satisfy conditions so return empty set
+          // likely on a fresh account with no users 
+          return new Set<string>();
+        }
+      }
+      console.log("event exists");
+      // double lookup, first find users who perform id, then filter them out
       const aggregationPipeline = [
         { $match: mongoQuery },
         {
           $lookup: {
             from: 'customers',
             localField: 'correlationValue',
-            foreignField: await this.getPrimaryKey(account, session), // Field in "customers" collection
+            foreignField: await this.getPrimaryKey(account, session),
             as: 'matchedCustomers'
           }
         },
         {
-          $addFields: {
-            matchedCustomerIds: { $ifNull: [{ $map: { input: '$matchedCustomers', as: 'customer', in: '$$customer._id' } }, []] }
-          }
-        },
-        {
-          $lookup: {
-            from: 'customers',
-            let: { matchedIds: '$matchedCustomerIds' },
-            pipeline: [
-              {
-                $match: {
-                  $expr: {
-                    $not: { $in: ['$_id', '$$matchedIds'] }
-                  }
-                }
-              }
-            ],
-            as: 'unmatchedCustomers'
-          }
-        },
-        {
-          $project: {
-            unmatchedCustomers: 1,
-            _id: 0
-          }
-        }
-      ];
-      /*
-      const aggregationPipeline =  [
-        { $match: mongoQuery },
-        {
-          $lookup: {
-            from: 'customers',
-            let: { correlationValue: '$correlationValue' },
-            pipeline: [
-              {
-                $match: {
-                  $expr: {
-                    $ne: [ await this.getPrimaryKey(account, session), '$correlationValue']
-                  }
-                }
-              }
-            ],
-            as: 'unmatchedCustomers'
-          }
-        },
-        // Optionally, project to shape the output
-        {
-          $project: {
-            unmatchedCustomers: 1,
-            _id: 0
-          }
-        }
-      ];
-      */
-      /*
-      const aggregationPipeline = [
-        { $match: mongoQuery },
-        {
           $group: {
-            _id: {
-              correlationKey: '$correlationKey',
-              correlationValue: '$correlationValue',
-              event: '$event',
-            },
-            times: { $sum: 1 },
-          },
+            _id: '$event',
+            correlationValues: { $addToSet: '$correlationValue' },
+            matchedCustomers: { $addToSet: '$matchedCustomers._id' }
+          }
         },
         {
-          $match: {
-            times: { $gte: 0 }, // Adjust this condition as needed
-          },
+          $lookup: {
+            from: 'customers',
+            let: { matchedCustomerIds: '$matchedCustomers', correlationValues: '$correlationValues' },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $and: [
+                      { $not: { $in: ['$' + await this.getPrimaryKey(account, session), { $ifNull: ['$$correlationValues', []] }] } },
+                      { $not: { $in: ['$_id', { $ifNull: ['$$matchedCustomerIds', []] }] } }
+                    ]
+                  }
+                }
+              }
+            ],
+            as: 'unmatchedCustomers'
+          }
         },
         {
           $project: {
-            _id: 0,
-            correlationKey: '$_id.correlationKey',
-            correlationValue: '$_id.correlationValue',
-            event: '$_id.event',
-            times: 1,
-          },
-        },
+            unmatchedCustomers: {
+              $map: {
+                input: '$unmatchedCustomers',
+                as: 'customer',
+                in: '$$customer._id'
+              }
+            },
+            _id: 0
+          }
+        }
       ];
-      */
+
       this.debug(
         'aggregat query is/n\n',
         this.customersFromEventStatement.name,
@@ -3143,7 +3125,18 @@ export class CustomersService {
       const result = await this.eventsService.getCustomersbyEventsMongo(
         aggregationPipeline
       );
-      console.log('Here are the results', JSON.stringify(result, null, 2));
+
+      console.log("the result is", JSON.stringify(result,null,2) );
+
+      if (result.length > 0) {
+        const customerIdsSet: Set<string> = new Set(result[0].unmatchedCustomers);
+        return customerIdsSet;
+      }
+      else{
+        // no customers who satisfy conditions so return empty set
+        // likely on a fresh account with no users 
+        return new Set<string>();
+      }
       /*
       this.debug(
         'Here are the results',
@@ -3159,17 +3152,9 @@ export class CustomersService {
         account.id
       );
       */
-      const correlationValues = new Set<string>();
-
-      result.forEach((eventData) => {
-        correlationValues.add(eventData.correlationValue);
-      });
-      // we need to make a call to the customers table and take the complement of result here and return that
-      //return correlationValues;
     } else {
       return new Set<string>();
     }
-
     return false;
   }
 
