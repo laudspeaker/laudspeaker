@@ -201,16 +201,17 @@ export class SegmentsService {
       // test code
       // this.customersService.createSegmentQuery(createSegmentDTO.inclusionCriteria.query);
       if (segment.type === SegmentType.AUTOMATIC) {
-        // test code
+        // test code getSegmentCustomersFromQuery
+        /*
         const testResult = await this.customersService.testCustomerInSegment(
           createSegmentDTO.inclusionCriteria.query,
           account
         );
         console.log('testResult is', testResult);
-        await queryRunner.commitTransaction();
-
         return segment;
         return testResult;
+        */
+        await queryRunner.commitTransaction();
         const customersInSegment =
           await this.customersService.getSegmentCustomersFromQuery(
             createSegmentDTO.inclusionCriteria.query,

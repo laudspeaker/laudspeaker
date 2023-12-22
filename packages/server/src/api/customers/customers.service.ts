@@ -2735,6 +2735,41 @@ export class CustomersService {
     return correlationValues;
   }
 
+ /**
+   * Gets the primary key for a given user
+   * 
+   * @returns string
+   */
+  async getPrimaryKey(account: Account, session: string ): Promise<string> {
+    
+    let currentPK : string = await this.CustomerKeysModel.findOne({
+      ownerId: account.id,
+      isPrimary: true,
+    })
+
+    if (currentPK) {
+      this.debug(
+        `current pk is: ${currentPK}`,
+        this.getPrimaryKey.name,
+        session,
+        account.id
+      );
+      return currentPK;
+      
+    } else {
+      // Handle case where currentPK is null
+      this.debug(
+        `pk isnt working so set as email`,
+        this.getPrimaryKey.name,
+        session,
+        account.id
+      );
+      //to do just for testing
+      currentPK = "email";
+      return currentPK;
+    }
+  }
+
   /**
    * Gets set of customers from a single statement that
    * includes Events,
@@ -2824,13 +2859,6 @@ export class CustomersService {
       }
     }
 
-    if (comparisonType === 'has performed') {
-      //mongoQuery.value = value;
-    } else if (comparisonType === 'has not performed') {
-      //need to check the logic for this one
-      //mongoQuery.value = { $ne: value };
-    }
-
     //sub property not fully tested yet
     if (additionalProperties) {
       const propertiesQuery: any[] = [];
@@ -2866,9 +2894,8 @@ export class CustomersService {
       account.id
     );
 
-    // we should enact a strict policy so that matching here is done on primary key
-    // ie correlationKey = primary key, correlation values = unique identifier
-
+    // we should enact a strict policy in all other areas in the application as matching here is done on primary key
+    
     if (comparisonType === 'has performed') {
       this.debug(
         'in the aggregate construction - has performed',
@@ -2877,93 +2904,31 @@ export class CustomersService {
         account.id
       );
 
-      const aggregationPipeline = [
+      const aggregationPipeline =  [
         { $match: mongoQuery },
-        {
-          $group: {
-            _id: {
-              correlationKey: '$correlationKey',
-              correlationValue: '$correlationValue',
-              event: '$event',
-            },
-            times: { $sum: 1 },
-          },
-        },
-        {
-          $match: {
-            times: { $gte: value }, // Adjust this condition as needed
-          },
-        },
-        {
-          $project: {
-            _id: 0,
-            correlationKey: '$_id.correlationKey',
-            correlationValue: '$_id.correlationValue',
-            event: '$_id.event',
-            times: 1,
-          },
-        },
-      ];
-      /*
-      const aggregationPipeline = [
-        { $match: mongoQuery },
-        {
-          $group: {
-            _id: {
-              correlationKey: '$correlationKey',
-              correlationValue: '$correlationValue',
-              event: '$event'
-            },
-            times: { $sum: 1 }
-          }
-        },
-        {
-          $match: {
-            times: { $gte: value }
-          }
-        },
-        {
-          $project: {
-            _id: 0,
-            correlationKey: '$_id.correlationKey',
-            correlationValue: '$_id.correlationValue',
-            event: '$_id.event',
-            times: 1
-          }
-        },
-        {
-          $addFields: {
-            lookupCorrelationKey: '$correlationKey',
-            lookupCorrelationValue: '$correlationValue'
-          }
-        },
-        {
-          $lookup: {
+        { $lookup: {
             from: 'customers',
-            let: {
-              correlationKey: '$lookupCorrelationKey',
-              correlationValue: '$lookupCorrelationValue'
-            },
-            pipeline: [
-              {
-                $match: {
-                  $expr: {
-                    $eq: ['$correlationKey', '$$correlationValue']
-                  }
-                }
-              }
-              // Add any additional stages if needed
-            ],
+            localField: 'correlationValue',
+            foreignField: await this.getPrimaryKey(account, session) ,
             as: 'matchedCustomers'
           }
         },
+        { $unwind: '$matchedCustomers' },
         {
-          $match: {
-            matchedCustomers: { $ne: [] }
+          $group: {
+            _id: '$matchedCustomers._id',
+            count: { $sum: 1 }
+          }
+        },
+        { $match: { count: { $gte: value } } },
+        {
+          $group: {
+            _id: null,
+            customerIds: { $push: '$_id' }
           }
         }
       ];
-      */
+
       this.debug(
         'aggregate query is/n\n',
         this.customersFromEventStatement.name,
@@ -2978,42 +2943,46 @@ export class CustomersService {
         account.id
       );
 
-      const result = await this.eventsService.getCustomersbyEventsMongo(
+      //fetch users here
+      const result : any = await this.eventsService.getCustomersbyEventsMongo(
         aggregationPipeline
       );
+      /*
+      * Example result is: 
+      [
+        {
+          "_id": null,
+          "customerIds": [
+            "658515aba1256bc5c2232ba7",
+            "658515aba1256bc5c2232bad",
+            "6585156aa1256bc5c2232ba0"
+          ]
+        }
+      ]
+      Empty example: []
+      */
+      //console.log("results are", JSON.stringify(result, null, 2));
       this.debug(
         'Here are the results',
         this.customersFromEventStatement.name,
         session,
         account.id
       );
-
       this.debug(
         JSON.stringify(result, null, 2),
         this.customersFromEventStatement.name,
         session,
         account.id
       );
-
-      //const firstCorrelationKey = result[0].correlationKey;
-      const correlationValues = result.map((doc) => doc.correlationValue);
-
-      /*
-      // this probably won't work for millions of customers, we need to optimize
-      const customers = await this.CustomerModel.find(
-        { firstCorrelationKey: { $in: correlationValues } },
-        { _id: 1 } // Specify to only retrieve the _id field
-      ).exec();
-
-      const customerIds = new Set<string>();
       
-
-      result.forEach((eventData) => {
-        customerIds.add(eventData.correlationValue);
-      });
-      */
-
-      return correlationValues;
+      if (result.length > 0) {
+        const customerIdsSet: Set<string> = new Set(result[0].customerIds);
+        return customerIdsSet;
+      }
+      else{
+        // no customers who satisfy conditions so return empty set
+        return new Set<string>();
+      }
     } else if (comparisonType === 'has not performed') {
       this.debug(
         'in the aggregate construction - has performed',
@@ -3021,6 +2990,114 @@ export class CustomersService {
         session,
         account.id
       );
+      /*
+      const aggregationPipeline = [
+        { $match: mongoQuery },
+        {
+          $lookup: {
+            from: 'customers',
+            localField: 'correlationValue', // Field in "events" collection
+            foreignField: await this.getPrimaryKey(account, session), // Field in "customers" collection
+            as: 'matchedCustomers'
+          }
+        },
+        {
+          $addFields: {
+            matchedCustomerIds: '$matchedCustomers._id'
+          }
+        },
+        {
+          $lookup: {
+            from: 'customers',
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $not: {
+                      $in: ['$_id', '$matchedCustomerIds']
+                    }
+                  }
+                }
+              }
+            ],
+            as: 'unmatchedCustomers'
+          }
+        },
+        {
+          $project: {
+            unmatchedCustomers: 1,
+            _id: 0
+          }
+        }
+      ];
+      */
+      const aggregationPipeline = [
+        { $match: mongoQuery },
+        {
+          $lookup: {
+            from: 'customers',
+            localField: 'correlationValue',
+            foreignField: await this.getPrimaryKey(account, session), // Field in "customers" collection
+            as: 'matchedCustomers'
+          }
+        },
+        {
+          $addFields: {
+            matchedCustomerIds: { $ifNull: [{ $map: { input: '$matchedCustomers', as: 'customer', in: '$$customer._id' } }, []] }
+          }
+        },
+        {
+          $lookup: {
+            from: 'customers',
+            let: { matchedIds: '$matchedCustomerIds' },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $not: { $in: ['$_id', '$$matchedIds'] }
+                  }
+                }
+              }
+            ],
+            as: 'unmatchedCustomers'
+          }
+        },
+        {
+          $project: {
+            unmatchedCustomers: 1,
+            _id: 0
+          }
+        }
+      ];
+      /*
+      const aggregationPipeline =  [
+        { $match: mongoQuery },
+        {
+          $lookup: {
+            from: 'customers',
+            let: { correlationValue: '$correlationValue' },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $ne: [ await this.getPrimaryKey(account, session), '$correlationValue']
+                  }
+                }
+              }
+            ],
+            as: 'unmatchedCustomers'
+          }
+        },
+        // Optionally, project to shape the output
+        {
+          $project: {
+            unmatchedCustomers: 1,
+            _id: 0
+          }
+        }
+      ];
+      */
+      /*
       const aggregationPipeline = [
         { $match: mongoQuery },
         {
@@ -3048,6 +3125,7 @@ export class CustomersService {
           },
         },
       ];
+      */
       this.debug(
         'aggregat query is/n\n',
         this.customersFromEventStatement.name,
@@ -3065,6 +3143,8 @@ export class CustomersService {
       const result = await this.eventsService.getCustomersbyEventsMongo(
         aggregationPipeline
       );
+      console.log('Here are the results', JSON.stringify(result, null, 2));
+      /*
       this.debug(
         'Here are the results',
         this.customersFromEventStatement.name,
@@ -3078,6 +3158,7 @@ export class CustomersService {
         session,
         account.id
       );
+      */
       const correlationValues = new Set<string>();
 
       result.forEach((eventData) => {
@@ -3713,40 +3794,7 @@ export class CustomersService {
     return false;
   }
 
-  async addPrimaryKeyToMongoQuery(mongoQuery: any, account: Account, session: string, customer:CustomerDocument){
-    let currentPK : string = await this.CustomerKeysModel.findOne({
-      ownerId: account.id,
-      isPrimary: true,
-  })
-
-    if (currentPK) {
-      this.debug(
-        `current pk is: ${currentPK}`,
-        this.evaluateEventStatement.name,
-        session,
-        account.id
-      );
-      mongoQuery.correlationKey = currentPK;
-      mongoQuery.correlationValue = customer[currentPK];
-    } else {
-      // Handle case where currentPK is null
-      //uncomment when primary key thing is working correctly
-      /*
-      throw new HttpException(
-        "Select a primary key first.",
-        HttpStatus.BAD_REQUEST
-      );
-      */
-
-      //to do just for testing
-      console.log("pk isnt working so set as email")
-      currentPK = "email";
-      mongoQuery.correlationKey = currentPK;
-      mongoQuery.correlationValue = customer[currentPK];
-        
-    }
-  }
-
+  
 
   /*
    * this needs to be rejigged a little the mongo query takes in a customer field to filter against
