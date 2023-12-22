@@ -3014,7 +3014,18 @@ export class CustomersService {
       const check = await this.eventsService.getCustomersbyEventsMongo(
         checkEventExists
       );
-      console.log("the check is", JSON.stringify(check,null,2) );
+      this.debug(
+        'the check is',
+        this.customersFromEventStatement.name,
+        session,
+        account.id
+      );
+      this.debug(
+        JSON.stringify(check,null,2),
+        this.customersFromEventStatement.name,
+        session,
+        account.id
+      );
 
       if (check.length < 1){
         this.debug(
@@ -3044,7 +3055,19 @@ export class CustomersService {
         ]
 
         const result = await this.CustomerModel.aggregate(allUsers).exec();
-        console.log("the result is", JSON.stringify(result,null,2) );
+        this.debug(
+          'the result is',
+          this.customersFromEventStatement.name,
+          session,
+          account.id
+        );
+        this.debug(
+          JSON.stringify(result,null,2),
+          this.customersFromEventStatement.name,
+          session,
+          account.id
+        );
+        //console.log("the result is", JSON.stringify(result,null,2) );
 
         if (result.length > 0) {
           const customerIdsSet: Set<string> = new Set(result[0].allCustomerIds);
@@ -3056,7 +3079,12 @@ export class CustomersService {
           return new Set<string>();
         }
       }
-      console.log("event exists");
+      this.debug(
+        'event exists',
+        this.customersFromEventStatement.name,
+        session,
+        account.id
+      );
       // double lookup, first find users who perform id, then filter them out
       const aggregationPipeline = [
         { $match: mongoQuery },
@@ -3109,7 +3137,7 @@ export class CustomersService {
       ];
 
       this.debug(
-        'aggregat query is/n\n',
+        'aggregate query is/n\n',
         this.customersFromEventStatement.name,
         session,
         account.id
@@ -3126,18 +3154,6 @@ export class CustomersService {
         aggregationPipeline
       );
 
-      console.log("the result is", JSON.stringify(result,null,2) );
-
-      if (result.length > 0) {
-        const customerIdsSet: Set<string> = new Set(result[0].unmatchedCustomers);
-        return customerIdsSet;
-      }
-      else{
-        // no customers who satisfy conditions so return empty set
-        // likely on a fresh account with no users 
-        return new Set<string>();
-      }
-      /*
       this.debug(
         'Here are the results',
         this.customersFromEventStatement.name,
@@ -3151,7 +3167,18 @@ export class CustomersService {
         session,
         account.id
       );
-      */
+
+      //console.log("the result is", JSON.stringify(result,null,2) );
+
+      if (result.length > 0) {
+        const customerIdsSet: Set<string> = new Set(result[0].unmatchedCustomers);
+        return customerIdsSet;
+      }
+      else{
+        // no customers who satisfy conditions so return empty set
+        // likely on a fresh account with no users 
+        return new Set<string>();
+      }
     } else {
       return new Set<string>();
     }

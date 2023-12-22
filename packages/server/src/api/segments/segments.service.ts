@@ -210,8 +210,8 @@ export class SegmentsService {
         console.log('testResult is', testResult);
         return segment;
         return testResult;
-        */
         await queryRunner.commitTransaction();
+        */
         const customersInSegment =
           await this.customersService.getSegmentCustomersFromQuery(
             createSegmentDTO.inclusionCriteria.query,
