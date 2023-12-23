@@ -212,11 +212,14 @@ export class SegmentsService {
         return testResult;
         await queryRunner.commitTransaction();
         */
+
         const customersInSegment =
           await this.customersService.getSegmentCustomersFromQuery(
             createSegmentDTO.inclusionCriteria.query,
             account,
-            session
+            session,
+            true,
+            segment.id
           );
         this.debug(
           `we have customersInSegment: ${customersInSegment.size}`,
