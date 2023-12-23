@@ -19,8 +19,10 @@ export enum RecurrenceEndsOptions {
 export interface EntryTimingRecurrence {
   repeatEvery: number;
   endsOn: RecurrenceEndsOptions;
-  endAdditionalValue?: number | string; // string as Date
+  endAdditionalValue?: number | string; // string as Date (Ends after number occurnecs or on Specific string Date )
   weeklyOn: number[]; // Day of week number
+  continueOccurence: boolean;
+  continueOccurenceEnrollment: boolean;
 }
 
 export interface EntryTimingSpecificTime {

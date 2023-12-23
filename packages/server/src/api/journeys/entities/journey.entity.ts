@@ -70,4 +70,19 @@ export class Journey {
 
   @Column('jsonb', { nullable: true })
   journeySettings?: JourneySettings;
+
+  @Column('boolean', { nullable: false, default: false })
+  isRecurrence: boolean;
+
+  @Column('int', { nullable: false, default: -1 })
+  recurrenceTimestamp: number;
+
+  @Column('int', { nullable: false, default: 0 })
+  recurrenceCount: number;
+
+  @Column('boolean', { nullable: false, default: false })
+  customersEnrolled: boolean;
+
+  @Column('varchar', { nullable: true })
+  recurrenceId: string;
 }
