@@ -248,8 +248,32 @@ export class SegmentsService {
         const batchSize = 500; // Set an appropriate batch size
         const collectionName = customersInSegment; // Name of the MongoDB collection
         const mongoCollection = this.connection.db.collection(collectionName);
-        
-        const cursor = mongoCollection.find({});
+
+        let processedCount = 0;
+        let totalDocuments = await mongoCollection.countDocuments();
+
+        while (processedCount < totalDocuments) {
+          // Fetch a batch of documents
+          const customerDocuments = await mongoCollection.find({}).skip(processedCount).limit(batchSize).toArray();
+
+          // Map the MongoDB documents to SegmentCustomers entities
+          const segmentCustomersArray: SegmentCustomers[] = customerDocuments.map((doc) => {
+            const segmentCustomer = new SegmentCustomers();
+            segmentCustomer.customerId = doc._id.toString(); 
+            segmentCustomer.segment = segment.id;
+            segmentCustomer.owner = account;
+            // Set other properties as needed
+            return segmentCustomer;
+          });
+
+          // Batch insert into PostgreSQL database
+          await queryRunner.manager.save(SegmentCustomers, segmentCustomersArray);
+
+          // Update the count of processed documents
+          processedCount += customerDocuments.length;
+        }
+        /*
+        const cursor = mongoCollection.find({}).batchSize(batchSize);
         let hasNext = await cursor.hasNext();
         
         while (hasNext) {
@@ -272,6 +296,7 @@ export class SegmentsService {
           // Check if there are more documents to process
           hasNext = await cursor.hasNext();
         }
+        */
 
       }
       await queryRunner.commitTransaction();
