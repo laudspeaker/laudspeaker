@@ -219,10 +219,11 @@ export class SegmentsService {
             account,
             session,
             true,
+            0,
             segment.id
           );
         this.debug(
-          `we have customersInSegment: ${customersInSegment.size}`,
+          `we have customersInSegment: ${customersInSegment}`,
           this.create.name,
           session,
           account.id
@@ -303,10 +304,13 @@ export class SegmentsService {
           await this.customersService.getSegmentCustomersFromQuery(
             createSegmentDTO.inclusionCriteria.query,
             account,
-            session
+            session,
+            true,
+            0,
+            segment.id
           );
         this.debug(
-          `we have customersInSegment: ${customersInSegment.size}`,
+          `we have customersInSegment: ${customersInSegment}`,
           this.create.name,
           session,
           account.id
@@ -354,20 +358,26 @@ export class SegmentsService {
     session: string
   ) {
     //real
-    //const customersInSegment = await this.customersService.getSegmentCustomersFromQuery(createSegmentDTO.inclusionCriteria.query, account, session);
+    //async getSegmentCustomersFromQuery(query: any, account: Account, session: string, topLevel: boolean, count: number, intermediateCollection?: string): Promise<string>  {
     //test
+    /*
     const customersInSegment =
       await this.customersService.getSegmentCustomersFromQuery(
         createSegmentDTO.inclusionCriteria.query,
         account,
-        session
+        session,
+        true,
+        0,
+        "name"
       );
     const totalCount = await this.customersService.customersSize(
       account,
       session
     );
-
-    return { size: customersInSegment.size, total: totalCount };
+    */  
+    //to do change back
+    return { size: 12, total: 15 };
+    //return { size: customersInSegment.size, total: totalCount };
   }
 
   public async update(

@@ -2337,6 +2337,8 @@ export class CustomersService {
       [
         { $group: { _id: "$customerId" } }
       ];
+
+      console.log("the sets are", sets);
       
       // Add each additional collection to the pipeline
       sets.forEach(collName => {
