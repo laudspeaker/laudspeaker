@@ -252,6 +252,10 @@ export class SegmentsService {
         let processedCount = 0;
         let totalDocuments = await mongoCollection.countDocuments();
 
+        console.log("looks like top level segment is created in mongo");
+        console.log("going to save", totalDocuments);
+        console.log("saving to", segment.id);
+
         while (processedCount < totalDocuments) {
           // Fetch a batch of documents
           const customerDocuments = await mongoCollection.find({}).skip(processedCount).limit(batchSize).toArray();
@@ -302,7 +306,7 @@ export class SegmentsService {
       await queryRunner.commitTransaction();
       
       
-      
+      console.log("customers saved to segment");
 
       return segment;
     } catch (e) {

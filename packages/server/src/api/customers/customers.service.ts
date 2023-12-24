@@ -2294,7 +2294,7 @@ export class CustomersService {
         sets.map(async (collection) => {
           try {
             console.log("trying to release collection", collection);
-            await this.connection.db.collection(collection).drop();
+            //await this.connection.db.collection(collection).drop();
             console.log('Collection dropped successfully');
           } catch (e) {
             console.error('Error dropping collection:', e);
@@ -2333,23 +2333,29 @@ export class CustomersService {
         })
       );
 
-      let unionAggregation: any[] = 
+      let unionAggregation: any[] = [];
+      /*
       [
         { $group: { _id: "$customerId" } }
       ];
+      */
 
       console.log("the sets are", sets);
       
       // Add each additional collection to the pipeline
-      sets.forEach(collName => {
-        unionAggregation.push({ $unionWith: { coll: collName, pipeline: [{ $group: { _id: "$customerId" } }] } });
-      });
+      if (sets.length > 1) {
+        sets.forEach(collName => {
+          unionAggregation.push({ $unionWith: { coll: collName } });
+          //unionAggregation.push({ $unionWith: { coll: collName, pipeline: [{ $group: { _id: "$customerId" } }] } });
+        });
+      }
       //unique users
       unionAggregation.push({ $group: { _id: "$_id" } });
 
       // dump results to thisCollectionName
       unionAggregation.push({ $out: thisCollectionName });
       
+      console.log("the first collection is", sets[0]);
       // Perform the aggregation on the first collection
       const collectionHandle = this.connection.db.collection(sets[0]);
       await collectionHandle.aggregate(unionAggregation).toArray();
@@ -2369,7 +2375,7 @@ export class CustomersService {
         sets.map(async (collection) => {
           try {
             console.log("trying to release collection", collection);
-            await this.connection.db.collection(collection).drop();
+            //await this.connection.db.collection(collection).drop();
             console.log('Collection dropped successfully');
           } catch (e) {
             console.error('Error dropping collection:', e);
