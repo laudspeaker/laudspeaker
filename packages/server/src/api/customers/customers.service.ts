@@ -2400,8 +2400,10 @@ export class CustomersService {
 
     if (statement.statements && statement.statements.length > 0) {
       // Statement has a subquery, recursively evaluate the subquery
+      console.log("recursive call");
       return this.getSegmentCustomersFromQuery(statement, account, session, false, count, intermediateCollection);
     } else {
+      console.log("singleStatement call");
       return await this.getCustomersFromStatement(statement, account, session, count, intermediateCollection);
     }
   }
@@ -2658,6 +2660,7 @@ export class CustomersService {
         //query_params: { customerId },
       });
       
+      console.log("creating collection", intermediateCollection);
       const collectionHandle = this.connection.db.collection(intermediateCollection);
       const batchSize = 1000;  // Define batch size
       let batch = [];
@@ -2745,7 +2748,7 @@ export class CustomersService {
   ) {
     //console.log('generating attribute mongo query');
     this.debug(
-      'generating attribute mongo query',
+      'generating attribute mongo query\n',
       this.customersFromAttributeStatement.name,
       session,
       account.id
@@ -2825,7 +2828,7 @@ export class CustomersService {
     }
 
     this.debug(
-      `generated attribute query is: ${JSON.stringify(query, null, 2)}`,
+      ` generated attribute query is: ${JSON.stringify(query, null, 2)}`,
       this.customersFromAttributeStatement.name,
       session,
       account.id
@@ -2845,6 +2848,7 @@ export class CustomersService {
       account.id
     );
 
+    console.log("creating collection", intermediateCollection);
     this.connection.db.collection(intermediateCollection);
 
     const aggregationPipeline : any[] = [
@@ -2865,7 +2869,8 @@ export class CustomersService {
       session,
       account.id
     );
-
+    return intermediateCollection;
+    /*
     const correlationValues = new Set<string>();
 
     docs.forEach((custData) => {
@@ -2880,6 +2885,7 @@ export class CustomersService {
     );
 
     return correlationValues;
+    */
   }
 
  /**
@@ -3042,7 +3048,8 @@ export class CustomersService {
       session,
       account.id
     );
-
+    
+    console.log("creating collection", intermediateCollection);
     this.connection.db.collection(intermediateCollection);
 
     // we should enact a strict policy in all other areas in the application as matching here is done on primary key

@@ -220,7 +220,7 @@ export class SegmentsService {
             session,
             true,
             0,
-            segment.id
+            this.generateRandomString()
           );
         this.debug(
           `we have customersInSegment: ${customersInSegment}`,
@@ -228,7 +228,8 @@ export class SegmentsService {
           session,
           account.id
         );
-
+        
+        /*
         const segmentCustomersArray: SegmentCustomers[] = Array.from(
           customersInSegment
         ).map((stringValue) => {
@@ -242,8 +243,41 @@ export class SegmentsService {
         });
         await queryRunner.manager.save(SegmentCustomers, segmentCustomersArray);
         //await SegmentCustomers.save(segmentCustomersArray);
+        */
+      
+        const batchSize = 500; // Set an appropriate batch size
+        const collectionName = customersInSegment; // Name of the MongoDB collection
+        const mongoCollection = this.connection.db.collection(collectionName);
+        
+        const cursor = mongoCollection.find({});
+        let hasNext = await cursor.hasNext();
+        
+        while (hasNext) {
+          // Fetch a batch of documents
+          const customerDocuments = await cursor.limit(batchSize).toArray();
+        
+          // Map the MongoDB documents to SegmentCustomers entities
+          const segmentCustomersArray: SegmentCustomers[] = customerDocuments.map((doc) => {
+            const segmentCustomer = new SegmentCustomers();
+            segmentCustomer.customerId = doc._id.toString(); 
+            segmentCustomer.segment = segment.id;
+            segmentCustomer.owner = account;
+            // Set other properties as needed
+            return segmentCustomer;
+          });
+        
+          // Batch insert into PostgreSQL database
+          await queryRunner.manager.save(SegmentCustomers, segmentCustomersArray);
+        
+          // Check if there are more documents to process
+          hasNext = await cursor.hasNext();
+        }
+
       }
       await queryRunner.commitTransaction();
+      
+      
+      
 
       return segment;
     } catch (e) {
@@ -257,6 +291,18 @@ export class SegmentsService {
         throw err;
       }
     }
+  }
+
+  generateRandomString(length: number = 4): string {
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let result = '';
+    const charactersLength = characters.length;
+
+    for (let i = 0; i < length; i++) {
+        result += characters.charAt(Math.floor(Math.random() * charactersLength));
+    }
+
+    return result;
   }
 
   public async create(
@@ -307,7 +353,7 @@ export class SegmentsService {
             session,
             true,
             0,
-            segment.id
+            this.generateRandomString() // we generate a short random string for the segment
           );
         this.debug(
           `we have customersInSegment: ${customersInSegment}`,
@@ -376,7 +422,7 @@ export class SegmentsService {
     );
     */  
     //to do change back
-    return { size: 12, total: 15 };
+    return { size: 12, total: 17 };
     //return { size: customersInSegment.size, total: totalCount };
   }
 
