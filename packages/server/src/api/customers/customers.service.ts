@@ -2260,21 +2260,32 @@ export class CustomersService {
       );
       console.log('the sets are', sets);
       console.log('about to reduce the sets');
+      console.log('the sets length', sets.length);
 
-      let unionAggregation: any[];
-      // Add each additional collection to the pipeline
-      sets.forEach(collName => {
-        unionAggregation.push({ $unionWith: { coll: collName, pipeline: [{ $group: { _id: "$customerId" } }] } });
-      });
-      //filter only the customers across all the statements
-      //dump into temp collection      
-      unionAggregation.push(
-        { $group: { _id: "$_id", count: { $sum: 1 } } },
-        { $match: { count: sets.length } }, // Match only IDs present in all subqueries
-        { $out: thisCollectionName }
-      );
+      let unionAggregation: any[] = [];
 
-      
+      if (sets.length > 1) {
+        // Add each additional collection to the pipeline for union
+        sets.forEach(collName => {
+          unionAggregation.push({ $unionWith: { coll: collName } });
+        });
+        // Group by customerId and count occurrences
+        unionAggregation.push(
+          { $group: { _id: "$_id", count: { $sum: 1 } } },
+          //{ $group: { _id: "$customerId", count: { $sum: 1 } } },
+          { $match: { count: sets.length } }, // Match only IDs present in all subqueries
+        );
+      } else if (sets.length === 1) {
+        console.log("sets length 1");
+        // If there's only one collection, no matching
+      } else {
+        console.log("No collections to process.");
+        return; // Exit if there are no collections
+      }
+      unionAggregation.push({ $out: thisCollectionName });
+
+      console.log("the first collection is", sets[0]);
+
       // Perform the aggregation on the first collection
       const collectionHandle = this.connection.db.collection(sets[0]);
       await collectionHandle.aggregate(unionAggregation).toArray();
@@ -2350,6 +2361,7 @@ export class CustomersService {
         });
       }
       //unique users
+      //unionAggregation.push({ $group: { _id: "$customerId" } });
       unionAggregation.push({ $group: { _id: "$_id" } });
 
       // dump results to thisCollectionName
@@ -2861,6 +2873,8 @@ export class CustomersService {
       { $match: query },
       {
         $project: {
+        //customerId: "$_id", // or another field that uniquely identifies the customer
+        //_id: 0 // Optionally exclude the default _id if it's not needed
           _id: 1,
         },
       },
@@ -3216,8 +3230,9 @@ export class CustomersService {
           },
           {
             $project: {
-              _id: 0,
-              allCustomerIds: '$customerIds'
+              _id: 1,
+              //_id: 0,
+              //allCustomerIds: '$customerIds'
             }
           },
           { $out: intermediateCollection  }
