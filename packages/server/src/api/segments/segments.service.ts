@@ -276,31 +276,16 @@ export class SegmentsService {
           // Update the count of processed documents
           processedCount += customerDocuments.length;
         }
-        /*
-        const cursor = mongoCollection.find({}).batchSize(batchSize);
-        let hasNext = await cursor.hasNext();
+
         
-        while (hasNext) {
-          // Fetch a batch of documents
-          const customerDocuments = await cursor.limit(batchSize).toArray();
+        try {
+          console.log("trying to release collection", customersInSegment);
+          await this.connection.db.collection(customersInSegment).drop();
+          console.log('Collection dropped successfully');
+        } catch (e) {
+          console.error('Error dropping collection:', e);
+        } 
         
-          // Map the MongoDB documents to SegmentCustomers entities
-          const segmentCustomersArray: SegmentCustomers[] = customerDocuments.map((doc) => {
-            const segmentCustomer = new SegmentCustomers();
-            segmentCustomer.customerId = doc._id.toString(); 
-            segmentCustomer.segment = segment.id;
-            segmentCustomer.owner = account;
-            // Set other properties as needed
-            return segmentCustomer;
-          });
-        
-          // Batch insert into PostgreSQL database
-          await queryRunner.manager.save(SegmentCustomers, segmentCustomersArray);
-        
-          // Check if there are more documents to process
-          hasNext = await cursor.hasNext();
-        }
-        */
 
       }
       await queryRunner.commitTransaction();

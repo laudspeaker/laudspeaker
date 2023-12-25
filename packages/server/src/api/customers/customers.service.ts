@@ -2187,7 +2187,7 @@ export class CustomersService {
   /*
   * 
   * 
-  * Takes in a segment query (inclusion criteria) and returns a set of customerIds
+  * Takes in a segment query (inclusion criteria) and returns a string that is the name of a mongo collection of customerIds
   * NB a query is composed of SingleStatements, and sub queries (which we sometimes call statement with subquery)
   * 
   * @remarks
@@ -2239,7 +2239,7 @@ export class CustomersService {
     thisCollectionName = collectionName;
     this.connection.db.collection(thisCollectionName);
     count = count + 1;
-    collectionName = collectionName + count;
+    //collectionName = collectionName + count;
     
 
     if (query.type === 'all') {
@@ -2254,19 +2254,33 @@ export class CustomersService {
             account,
             session,
             count++,
-            collectionName
+            collectionName + count
           );
         })
       );
-      console.log('the sets are', sets);
-      console.log('about to reduce the sets');
-      console.log('the sets length', sets.length);
-
+      this.debug(
+        `the sets are: ${sets}`,
+        this.getSegmentCustomersFromQuery.name,
+        session,
+        account.id
+      );
+      this.debug(
+        `about to reduce the sets`,
+        this.getSegmentCustomersFromQuery.name,
+        session,
+        account.id
+      );
+      this.debug(
+        `the sets length: ${sets.length}`,
+        this.getSegmentCustomersFromQuery.name,
+        session,
+        account.id
+      );
       let unionAggregation: any[] = [];
-
-      if (sets.length > 1) {
+      //if (sets.length > 1) {
         // Add each additional collection to the pipeline for union
         sets.forEach(collName => {
+          //console.log("the set is", collName);
           unionAggregation.push({ $unionWith: { coll: collName } });
         });
         // Group by customerId and count occurrences
@@ -2275,57 +2289,51 @@ export class CustomersService {
           //{ $group: { _id: "$customerId", count: { $sum: 1 } } },
           { $match: { count: sets.length } }, // Match only IDs present in all subqueries
         );
-      } else if (sets.length === 1) {
-        console.log("sets length 1");
+      //} else if (sets.length === 1) {
+      //  console.log("sets length 1");
         // If there's only one collection, no matching
-      } else {
-        console.log("No collections to process.");
-        return; // Exit if there are no collections
-      }
+      //} else {
+      //  console.log("No collections to process.");
+      //  return; // Exit if there are no collections
+      //}
       unionAggregation.push({ $out: thisCollectionName });
 
-      console.log("the first collection is", sets[0]);
+      //console.log("the first collection is", thisCollectionName);
+      //console.log("union aggreagation is", JSON.stringify(unionAggregation,null,2));
 
       // Perform the aggregation on the first collection
-      const collectionHandle = this.connection.db.collection(sets[0]);
+      const collectionHandle = this.connection.db.collection(thisCollectionName);
       await collectionHandle.aggregate(unionAggregation).toArray();
-
-      /*
-      const mergedSet = new Set<string>();
-      sets.forEach((set) => {
-        set.forEach((item) => {
-          mergedSet.add(item);
-        });
-      });
-      console.log('Union of all sets:', mergedSet);
-      */
 
       if(topLevel){
         //for each count drop the collections up to the last one
         sets.map(async (collection) => {
           try {
-            console.log("trying to release collection", collection);
-            //await this.connection.db.collection(collection).drop();
-            console.log('Collection dropped successfully');
+            this.debug(
+              `trying to release collection`,
+              this.getSegmentCustomersFromQuery.name,
+              session,
+              account.id
+            );            
+            await this.connection.db.collection(collection).drop();
+            this.debug(
+              `dropped successfully`,
+              this.getSegmentCustomersFromQuery.name,
+              session,
+              account.id
+            );
           } catch (e) {
-            console.error('Error dropping collection:', e);
+            this.debug(
+              `error dropping collection: ${e}`,
+              this.getSegmentCustomersFromQuery.name,
+              session,
+              account.id
+            );
           } 
         });
       }
       return thisCollectionName; // mergedSet;
-      /*
-      const results = sets.reduce((intersection, currentSet) => {
-        if (intersection.size === 0) {
-          return currentSet;
-        }
-        return new Set(
-          [...intersection].filter((item) => currentSet.has(item))
-        );
-      }, new Set<string>());
 
-      console.log('Intersection of all sets:', results);
-      return results;
-      */
     } else if (query.type === 'any') {
       console.log('the query has any (OR)');
       if (!query.statements || query.statements.length === 0) {
@@ -2334,12 +2342,13 @@ export class CustomersService {
 
       const sets = await Promise.all(
         query.statements.map(async (statement) => {
+          //console.log("collectionName is", collectionName);
           return await this.getSegmentCustomersFromSubQuery(
             statement,
             account,
             session,
             count++,
-            collectionName,
+            collectionName + count,
           );
         })
       );
@@ -2351,7 +2360,24 @@ export class CustomersService {
       ];
       */
 
-      console.log("the sets are", sets);
+      this.debug(
+        `the sets are: ${sets}`,
+        this.getSegmentCustomersFromQuery.name,
+        session,
+        account.id
+      );
+      this.debug(
+        `about to union the sets`,
+        this.getSegmentCustomersFromQuery.name,
+        session,
+        account.id
+      );
+      this.debug(
+        `the sets length: ${sets.length}`,
+        this.getSegmentCustomersFromQuery.name,
+        session,
+        account.id
+      );
       
       // Add each additional collection to the pipeline
       if (sets.length > 1) {
@@ -2367,31 +2393,37 @@ export class CustomersService {
       // dump results to thisCollectionName
       unionAggregation.push({ $out: thisCollectionName });
       
-      console.log("the first collection is", sets[0]);
+      //console.log("the first collection is", sets[0]);
       // Perform the aggregation on the first collection
       const collectionHandle = this.connection.db.collection(sets[0]);
       await collectionHandle.aggregate(unionAggregation).toArray();
 
-      /*
-      const mergedSet = new Set<string>();
-      sets.forEach((set) => {
-        set.forEach((item) => {
-          mergedSet.add(item);
-        });
-      });
-      console.log('Union of all sets:', mergedSet);
-      */
 
       if(topLevel){
         //for each count drop the collections up to the last one
         sets.map(async (collection) => {
           try {
-            console.log("trying to release collection", collection);
-            //await this.connection.db.collection(collection).drop();
-            console.log('Collection dropped successfully');
+            this.debug(
+              `trying to release collection`,
+              this.getSegmentCustomersFromQuery.name,
+              session,
+              account.id
+            );            
+            await this.connection.db.collection(collection).drop();
+            this.debug(
+              `dropped successfully`,
+              this.getSegmentCustomersFromQuery.name,
+              session,
+              account.id
+            );
           } catch (e) {
-            console.error('Error dropping collection:', e);
-          } 
+            this.debug(
+              `error dropping collection: ${e}`,
+              this.getSegmentCustomersFromQuery.name,
+              session,
+              account.id
+            );
+          }
         });
       }
       return thisCollectionName; // mergedSet;
@@ -2415,13 +2447,22 @@ export class CustomersService {
     count: number,
     intermediateCollection: string
   ) {
-
     if (statement.statements && statement.statements.length > 0) {
       // Statement has a subquery, recursively evaluate the subquery
-      console.log("recursive call");
+      this.debug(
+        `recursive subquery call`,
+        this.getSegmentCustomersFromSubQuery.name,
+        session,
+        account.id
+      );      
       return this.getSegmentCustomersFromQuery(statement, account, session, false, count, intermediateCollection);
     } else {
-      console.log("singleStatement call");
+       this.debug(
+        `singleStatement call`,
+        this.getSegmentCustomersFromSubQuery.name,
+        session,
+        account.id
+      );            
       return await this.getCustomersFromStatement(statement, account, session, count, intermediateCollection);
     }
   }
@@ -2677,8 +2718,12 @@ export class CustomersService {
         format: 'CSV',
         //query_params: { customerId },
       });
-      
-      console.log("creating collection", intermediateCollection);
+      this.debug(
+        `creating collection`,
+        this.customersFromMessageStatement.name,
+        session,
+        account.id
+      );
       const collectionHandle = this.connection.db.collection(intermediateCollection);
       const batchSize = 1000;  // Define batch size
       let batch = [];
@@ -2866,7 +2911,13 @@ export class CustomersService {
       account.id
     );
 
-    console.log("creating collection", intermediateCollection);
+    this.debug(
+      `creating collection`,
+      this.customersFromAttributeStatement.name,
+      session,
+      account.id
+    );
+
     this.connection.db.collection(intermediateCollection);
 
     const aggregationPipeline : any[] = [
@@ -3068,8 +3119,12 @@ export class CustomersService {
       session,
       account.id
     );
-    
-    console.log("creating collection", intermediateCollection);
+    this.debug(
+      `creating collection`,
+      this.customersFromEventStatement.name,
+      session,
+      account.id
+    );
     this.connection.db.collection(intermediateCollection);
 
     // we should enact a strict policy in all other areas in the application as matching here is done on primary key
@@ -3356,18 +3411,6 @@ export class CustomersService {
         account.id
       );
       
-      //console.log("the result is", JSON.stringify(result,null,2) );
-      /*
-      if (result.length > 0) {
-        const customerIdsSet: Set<string> = new Set(result[0].unmatchedCustomers);
-        return customerIdsSet;
-      }
-      else{
-        // no customers who satisfy conditions so return empty set
-        // likely on a fresh account with no users 
-        return new Set<string>();
-      }
-      */
      return intermediateCollection;
     } else {
       return intermediateCollection;
@@ -3376,116 +3419,6 @@ export class CustomersService {
     return intermediateCollection;
     //return false;
   }
-
-  /**
-   * Takes in a statement of the form:
-   * 
-           "type": "Attribute",
-           "key": "firstName",
-           "comparisonType": "exist",
-           "subComparisonType": "exist",
-           "subComparisonValue": "",
-           "valueType": "String",
-           "value": ""
-         }
-   
-   *
-   * @remarks
-   * Optimize this to happen inside of mongo later.
-   *
-   * calls a sub method based on whether its an attribute, message, or other type of segment
-   * 
-   */
-
-  /*
-  constructMongoQuery(statement: any) {
-    console.log('constructing Mongo Query');
-    switch (statement.type) {
-      case 'Attribute':
-        return this.generateMongoAttributeQuery(statement);
-        break;
-      case 'Event':
-        break;
-      case 'Email':
-        break;
-      case 'Push':
-        break;
-      case 'SMS':
-        break;
-      case 'In-app message':
-        break;
-      case 'Segment':
-        break;
-    }
-  }
-  
-
-  public generateMongoAttributeQuery(queryObject: QueryObject): object {
-    console.log('generating attribute mongo query');
-    const {
-      key,
-      comparisonType,
-      subComparisonType,
-      value,
-      subComparisonValue,
-    } = queryObject;
-    let query: any = {};
-    console.log('comparison type is', comparisonType);
-    switch (comparisonType) {
-      case 'is equal to':
-        //checked
-        query[key] = value;
-        break;
-      case 'is not equal to':
-        //checked
-        query[key] = { $ne: value };
-        break;
-      case 'contains':
-        // doesnt seem to be working
-        query[key] = { $regex: new RegExp(value, 'i') };
-        break;
-      case 'does not contain':
-        // doesnt seem to be working
-        query[key] = { $not: new RegExp(value, 'i') };
-        break;
-      case 'exist':
-        //checked
-        query[key] = { $exists: true };
-        break;
-      case 'not exist':
-        //checked
-        query[key] = { $exists: false };
-        break;
-      case 'is greater than':
-        query[key] = { $gt: value };
-        break;
-      case 'is less than':
-        query[key] = { $lt: value };
-        break;
-      // nested object
-      case 'key':
-        if (subComparisonType === 'equal to') {
-          query[key] = { [value]: subComparisonValue };
-        } else if (subComparisonType === 'not equal to') {
-          query[key] = { [value]: { $ne: subComparisonValue } };
-        } else if (subComparisonType === 'exist') {
-          query[key] = { [value]: { $exists: true } };
-        } else if (subComparisonType === 'not exist') {
-          query[key] = { [value]: { $exists: false } };
-        } else {
-          throw new Error('Invalid sub-comparison type for nested property');
-        }
-        break;
-      // Add more cases for other comparison types as needed
-      default:
-        throw new Error('Invalid comparison type');
-    }
-
-    console.log('generated attribute query is', JSON.stringify(query, null, 2));
-
-    return query;
-  }
-  */
 
   /*
    * Checks if a given customer should be in a segment
