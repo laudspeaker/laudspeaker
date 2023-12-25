@@ -228,22 +228,6 @@ export class SegmentsService {
           session,
           account.id
         );
-        
-        /*
-        const segmentCustomersArray: SegmentCustomers[] = Array.from(
-          customersInSegment
-        ).map((stringValue) => {
-          const segmentCustomer = new SegmentCustomers();
-          segmentCustomer.customerId = stringValue;
-          segmentCustomer.segment = segment.id;
-          //segmentCustomer.segment = segment;
-          segmentCustomer.owner = account; // Replace `propertyName` with the actual property name in your entity
-          // Set other properties as needed for each SegmentCustomers entity
-          return segmentCustomer;
-        });
-        await queryRunner.manager.save(SegmentCustomers, segmentCustomersArray);
-        //await SegmentCustomers.save(segmentCustomersArray);
-        */
       
         const batchSize = 500; // Set an appropriate batch size
         const collectionName = customersInSegment; // Name of the MongoDB collection
@@ -259,7 +243,6 @@ export class SegmentsService {
         while (processedCount < totalDocuments) {
           // Fetch a batch of documents
           const customerDocuments = await mongoCollection.find({}).skip(processedCount).limit(batchSize).toArray();
-
           // Map the MongoDB documents to SegmentCustomers entities
           const segmentCustomersArray: SegmentCustomers[] = customerDocuments.map((doc) => {
             const segmentCustomer = new SegmentCustomers();
@@ -269,15 +252,12 @@ export class SegmentsService {
             // Set other properties as needed
             return segmentCustomer;
           });
-
           // Batch insert into PostgreSQL database
           await queryRunner.manager.save(SegmentCustomers, segmentCustomersArray);
-
           // Update the count of processed documents
           processedCount += customerDocuments.length;
         }
 
-        
         try {
           console.log("trying to release collection", customersInSegment);
           await this.connection.db.collection(customersInSegment).drop();
@@ -285,11 +265,8 @@ export class SegmentsService {
         } catch (e) {
           console.error('Error dropping collection:', e);
         } 
-        
-
       }
       await queryRunner.commitTransaction();
-      
       
       console.log("customers saved to segment");
 
@@ -340,56 +317,61 @@ export class SegmentsService {
         session,
         account.id
       );
-      /*
-    if (segment.type === SegmentType.AUTOMATIC) {
-      this.customersService.CustomerModel.find({
-        ownerId: account.id,
-      })
-        .exec()
-        .then((customers) => {
-          for (const customer of customers) {
-            this.updateAutomaticSegmentCustomerInclusion(
-              account,
-              customer,
-              session
-            );
-          }
-        });
-    }
-    */
 
       // this.customersService.createSegmentQuery(createSegmentDTO.inclusionCriteria.query);
       if (segment.type === SegmentType.AUTOMATIC) {
         const customersInSegment =
-          await this.customersService.getSegmentCustomersFromQuery(
-            createSegmentDTO.inclusionCriteria.query,
-            account,
-            session,
-            true,
-            0,
-            this.generateRandomString() // we generate a short random string for the segment
-          );
+        await this.customersService.getSegmentCustomersFromQuery(
+          createSegmentDTO.inclusionCriteria.query,
+          account,
+          session,
+          true,
+          0,
+          this.generateRandomString()
+        );
         this.debug(
           `we have customersInSegment: ${customersInSegment}`,
           this.create.name,
           session,
           account.id
         );
+    
+        const batchSize = 500; // Set an appropriate batch size
+        const collectionName = customersInSegment; // Name of the MongoDB collection
+        const mongoCollection = this.connection.db.collection(collectionName);
 
+        let processedCount = 0;
+        let totalDocuments = await mongoCollection.countDocuments();
 
-        const segmentCustomersArray: SegmentCustomers[] = Array.from(
-          customersInSegment
-        ).map((stringValue) => {
-          const segmentCustomer = new SegmentCustomers();
-          segmentCustomer.customerId = stringValue;
-          segmentCustomer.segment = segment.id;
-          //segmentCustomer.segment = segment;
-          segmentCustomer.owner = account; // Replace `propertyName` with the actual property name in your entity
-          // Set other properties as needed for each SegmentCustomers entity
-          return segmentCustomer;
-        });
-        await queryRunner.manager.save(SegmentCustomers, segmentCustomersArray);
-        //await SegmentCustomers.save(segmentCustomersArray);
+        //console.log("looks like top level segment is created in mongo");
+        //console.log("going to save", totalDocuments);
+        //console.log("saving to", segment.id);
+
+        while (processedCount < totalDocuments) {
+          // Fetch a batch of documents
+          const customerDocuments = await mongoCollection.find({}).skip(processedCount).limit(batchSize).toArray();
+          // Map the MongoDB documents to SegmentCustomers entities
+          const segmentCustomersArray: SegmentCustomers[] = customerDocuments.map((doc) => {
+            const segmentCustomer = new SegmentCustomers();
+            segmentCustomer.customerId = doc._id.toString(); 
+            segmentCustomer.segment = segment.id;
+            segmentCustomer.owner = account;
+            // Set other properties as needed
+            return segmentCustomer;
+          });
+          // Batch insert into PostgreSQL database
+          await queryRunner.manager.save(SegmentCustomers, segmentCustomersArray);
+          // Update the count of processed documents
+          processedCount += customerDocuments.length;
+        }
+
+        try {
+          //console.log("trying to release collection", customersInSegment);
+          await this.connection.db.collection(customersInSegment).drop();
+          //console.log('Collection dropped successfully');
+        } catch (e) {
+          //console.error('Error dropping collection:', e);
+        } 
       }
       await queryRunner.commitTransaction();
 
@@ -417,6 +399,14 @@ export class SegmentsService {
     createSegmentDTO: CountSegmentUsersSizeDTO,
     session: string
   ) {
+
+    this.debug(
+      `SegmentDTO is: ${createSegmentDTO}`,
+      this.create.name,
+      session,
+      account.id
+    );
+
     //real
     //async getSegmentCustomersFromQuery(query: any, account: Account, session: string, topLevel: boolean, count: number, intermediateCollection?: string): Promise<string>  {
     //test
