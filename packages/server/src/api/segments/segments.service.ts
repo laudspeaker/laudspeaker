@@ -22,7 +22,7 @@ import { SegmentCustomers } from './entities/segment-customers.entity';
 import { Segment, SegmentType } from './entities/segment.entity';
 import { InjectConnection } from '@nestjs/mongoose';
 import mongoose from 'mongoose';
-import { query } from 'express';
+import e, { query } from 'express';
 import { CountSegmentUsersSizeDTO } from './dto/size-count.dto';
 
 @Injectable()
@@ -400,12 +400,43 @@ export class SegmentsService {
     session: string
   ) {
 
+    console.log("In segment size");
+
     this.debug(
-      `SegmentDTO is: ${createSegmentDTO}`,
+      `SegmentDTO is: ${JSON.stringify(createSegmentDTO.inclusionCriteria.query.type, null, 2)}`,
       this.create.name,
       session,
       account.id
     );
+
+    if (createSegmentDTO.inclusionCriteria.query.type === 'any') {
+      console.log("in any");
+      const customersInSegment =
+        await this.customersService.getSegmentCustomersFromQuery(
+          createSegmentDTO.inclusionCriteria.query,
+          account,
+          session,
+          true,
+          0,
+          this.generateRandomString()
+        );
+      
+      const mongoCollection = this.connection.db.collection(customersInSegment);
+
+      let segmentDocuments = await mongoCollection.countDocuments();
+      const totalCount = await this.customersService.customersSize(
+          account,
+          session
+      );
+      return { size: segmentDocuments, total: totalCount };
+
+    } else if (createSegmentDTO.inclusionCriteria.type === 'all') {
+
+
+    } else {
+      //should never get here
+      return { size: 12, total: 17 };
+    }
 
     //real
     //async getSegmentCustomersFromQuery(query: any, account: Account, session: string, topLevel: boolean, count: number, intermediateCollection?: string): Promise<string>  {
