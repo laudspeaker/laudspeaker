@@ -46,6 +46,6 @@ import { OrganizationTeam } from '../organizations/entities/organization-team.en
   ],
   controllers: [AuthController],
   providers: [AuthService, AuthHelper, JwtStrategy, ApiKeyStrategy],
-  exports: [AuthService],
+  exports: [AuthService, AuthHelper],
 })
 export class AuthModule {}

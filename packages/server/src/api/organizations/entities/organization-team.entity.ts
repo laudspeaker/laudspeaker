@@ -1,9 +1,4 @@
-import {
-  Account,
-  PlanType,
-  PushFirebasePlatforms,
-} from '@/api/accounts/entities/accounts.entity';
-import { PushPlatforms } from '@/api/templates/entities/template.entity';
+import { Account } from '@/api/accounts/entities/accounts.entity';
 import {
   BaseEntity,
   Column,

@@ -149,9 +149,9 @@ const VerificationProtected: FC<VerificationProtectedProps> = ({
     setIsLoading(true);
     try {
       const { data } = await ApiService.get({ url: "/accounts" });
-      const { verified, organization } = data;
+      const { verified, workspace } = data;
       setIsVerified(verified);
-      setIsCompanySetuped(!!organization);
+      setIsCompanySetuped(!!workspace);
       setIsLoaded(true);
     } catch (e) {
       toast.error("Error while loading data");

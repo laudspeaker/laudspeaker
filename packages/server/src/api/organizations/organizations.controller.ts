@@ -1,13 +1,33 @@
-import { Controller, Inject } from '@nestjs/common';
+import {
+  Body,
+  ClassSerializerInterceptor,
+  Controller,
+  Get,
+  Inject,
+  Patch,
+  Post,
+  Query,
+  Req,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
+import { randomUUID } from 'crypto';
+import { Request } from 'express';
 import { Model } from 'mongoose';
+import { RavenInterceptor } from 'nest-raven';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { Logger } from 'winston';
+import { Account } from '../accounts/entities/accounts.entity';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import {
   CustomerKeys,
   CustomerKeysDocument,
 } from '../customers/schemas/customer-keys.schema';
 import { S3Service } from '../s3/s3.service';
+import { CreateOrganizationDTO } from './dto/create-ogranization.dto';
+import { UpdateOrganizationDTO } from './dto/update-organization.dto';
+import { OrganizationService } from './organizations.service';
 
 @Controller('organizations')
 export class OrganizationsController {
@@ -16,7 +36,9 @@ export class OrganizationsController {
     private readonly logger: Logger,
     private readonly s3Service: S3Service,
     @InjectModel(CustomerKeys.name)
-    public CustomerKeysModel: Model<CustomerKeysDocument>
+    public CustomerKeysModel: Model<CustomerKeysDocument>,
+    @Inject(OrganizationService)
+    public organizationService: OrganizationService
   ) {}
 
   log(message, method, session, user = 'ANONYMOUS') {
@@ -76,6 +98,57 @@ export class OrganizationsController {
         user: user,
       })
     );
+  }
+
+  // Need logic update on multiple teams management
+  @Get('/team-members')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
+  async getTeamMembers(
+    @Req() { user }: Request,
+    @Query('take') take?: number,
+    @Query('skip') skip?: number,
+    @Query('orderType') isASC?: boolean
+  ) {
+    return this.organizationService.getTeamMembers(
+      <Account>user,
+      take,
+      skip,
+      isASC
+    );
+  }
+
+  @Get()
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
+  async getOrganization(@Req() { user }: Request) {
+    return {
+      organization: {
+        id: (<Account>user)?.teams?.[0]?.organization.id,
+        name: (<Account>user)?.teams?.[0]?.organization.companyName,
+      },
+      workspace: {
+        id: (<Account>user)?.teams?.[0]?.organization?.workspaces?.[0]?.id,
+        timezoneUTCOffset: (<Account>user)?.teams?.[0]?.organization
+          ?.workspaces?.[0]?.timezoneUTCOffset,
+      },
+    };
+  }
+
+  @Patch()
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
+  async update(@Req() { user }: Request, @Body() body: UpdateOrganizationDTO) {
+    const session = randomUUID();
+    return this.organizationService.update(<Account>user, body, session);
+  }
+
+  @Post()
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
+  async create(@Req() { user }: Request, @Body() body: CreateOrganizationDTO) {
+    const session = randomUUID();
+    return this.organizationService.create(<Account>user, body, session);
   }
 }
 

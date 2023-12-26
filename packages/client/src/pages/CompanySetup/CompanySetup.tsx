@@ -6,25 +6,44 @@ import Input from "components/Elements/Inputv2";
 import { getTimezonesWithOffset } from "pages/Settingsv2/tabs/OrganizationTab";
 import Select from "components/Elements/Selectv2";
 import Button, { ButtonType } from "components/Elements/Buttonv2";
+import { toast } from "react-toastify";
 
 const listTimezones = getTimezonesWithOffset();
 
 const CompanySetup = () => {
   const navigate = useNavigate();
   const [loaded, setLoaded] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
   const [name, setName] = useState("");
   const [selectedTimeZone, setSelectedTimeZone] = useState("");
 
   const load = async () => {
     try {
       const { data } = await ApiService.get({ url: "/accounts" });
-      const { organization } = data;
-      if (organization) {
+      const { workspace } = data;
+      if (workspace) {
         navigate("/");
       }
       setLoaded(true);
     } catch (error) {
       navigate("/");
+    }
+  };
+
+  const handleCreate = async () => {
+    setIsCreating(true);
+    try {
+      await ApiService.post({
+        url: "/organizations",
+        options: {
+          name,
+          timezoneUTCOffset: selectedTimeZone,
+        },
+      });
+      navigate("/");
+    } catch (error) {
+      toast.error("Error creating organization");
+      setIsCreating(false);
     }
   };
 
@@ -72,7 +91,7 @@ const CompanySetup = () => {
             onChange={setName}
           />
           <div className="text-[#111827] text-base font-inter font-semibold mt-5">
-            Company name
+            Time zone
           </div>
           <div className="text-[#4B5563] font-inter text-xs my-[10px]">
             Description description description
@@ -90,7 +109,8 @@ const CompanySetup = () => {
           <Button
             className="w-full !text-base !py-[9px] !font-semibold"
             type={ButtonType.PRIMARY}
-            onClick={() => {}}
+            disabled={!name || !selectedTimeZone || isCreating}
+            onClick={handleCreate}
           >
             Let’s start
           </Button>

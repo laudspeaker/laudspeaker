@@ -1,6 +1,7 @@
 import { OrganizationTeam } from '@/api/organizations/entities/organization-team.entity';
 import { Organization } from '@/api/organizations/entities/organization.entity';
 import { PushPlatforms } from '@/api/templates/entities/template.entity';
+import { Workspaces } from '@/api/workspaces/entities/workspaces.entity';
 import { Exclude } from 'class-transformer';
 import {
   BaseEntity,
@@ -38,8 +39,6 @@ export class Account extends BaseEntity {
 
   @ManyToMany(() => OrganizationTeam, (team) => team.members)
   public teams: OrganizationTeam[];
-
-  public organization?: Organization;
 
   // REMOVE
   @Column({ type: 'varchar' })

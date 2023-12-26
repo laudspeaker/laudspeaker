@@ -8,7 +8,7 @@ function arrayToSQL(array) {
   }
 }
 
-export class MigrateDataToOrganization1703243345553
+export class MigrateDataToOrganization1703582686235
   implements MigrationInterface
 {
   public async up(queryRunner: QueryRunner): Promise<void> {
@@ -18,13 +18,25 @@ export class MigrateDataToOrganization1703243345553
       const accounts = await queryRunner.query('SELECT * FROM "account"');
 
       for (const account of accounts) {
-        // Default organization name
         const companyName = `${account.email.split('@')[0]} company`;
 
-        // Organization creation
         const organizationResult = await queryRunner.query(
-          `INSERT INTO "organization" (
-             "companyName", 
+          `INSERT INTO "organization" ("companyName", "ownerId") VALUES ('${companyName}', '${account.id}') RETURNING "id"`
+        );
+        const organizationId = organizationResult[0].id;
+
+        const teamResult = await queryRunner.query(
+          `INSERT INTO "organization_team" ("organizationId", "teamName") VALUES ('${organizationId}', 'Default team') RETURNING "id"`
+        );
+        const teamId = teamResult[0].id;
+
+        await queryRunner.query(
+          `INSERT INTO "organization_team_members_account" ("organizationTeamId", "accountId") VALUES ('${teamId}', '${account.id}')`
+        );
+
+        await queryRunner.query(
+          `INSERT INTO "workspaces" (
+             "name", 
              "timezoneUTCOffset", 
              "apiKey", 
              "mailgunAPIKey", 
@@ -39,7 +51,6 @@ export class MigrateDataToOrganization1703243345553
              "posthogEmailKey", 
              "posthogFirebaseDeviceTokenKey", 
              "firebaseCredentials", 
-             "customerId", 
              "emailProvider", 
              "testSendingEmail", 
              "testSendingName", 
@@ -53,9 +64,9 @@ export class MigrateDataToOrganization1703243345553
              "posthogSetupped", 
              "javascriptSnippetSetupped", 
              "pushPlatforms", 
-             "ownerId"
+             "organizationId"
            ) VALUES (
-             '${companyName}', 
+             '${companyName} Workspace', 
              'UTC+00:00', 
              '${account.apiKey ?? ''}', 
              '${account.mailgunAPIKey ?? ''}', 
@@ -70,7 +81,6 @@ export class MigrateDataToOrganization1703243345553
              ${arrayToSQL(account.posthogEmailKey)}, 
              ${arrayToSQL(account.posthogFirebaseDeviceTokenKey)}, 
              '${account.firebaseCredentials ?? ''}', 
-             '${account.customerId ?? ''}', 
              '${account.emailProvider ?? ''}', 
              '${account.testSendingEmail ?? ''}', 
              '${account.testSendingName ?? ''}', 
@@ -84,22 +94,8 @@ export class MigrateDataToOrganization1703243345553
              ${account.posthogSetupped ?? false}, 
              ${account.javascriptSnippetSetupped ?? false}, 
              '${JSON.stringify(account.pushPlatforms)}', 
-             '${account.id}'
-           ) RETURNING "id"`
-        );
-
-        const organizationId = organizationResult[0].id;
-
-        // Creating team for organization
-        const teamResult = await queryRunner.query(
-          `INSERT INTO "organization_team" ("organizationId", "teamName") VALUES ('${organizationId}', 'Default team') RETURNING "id"`
-        );
-
-        const teamId = teamResult[0].id;
-
-        // Adding owner account to members
-        await queryRunner.query(
-          `INSERT INTO "organization_team_members_account" ("organizationTeamId", "accountId") VALUES ('${teamId}', '${account.id}')`
+             '${organizationId}'
+           )`
         );
       }
       await queryRunner.commitTransaction();

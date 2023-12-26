@@ -151,10 +151,16 @@ export class AccountsController {
         delete pk?.__v;
       }
 
-      delete (<Account>user).organization.pushPlatforms?.Android?.credentials;
-      delete (<Account>user).organization.pushPlatforms?.iOS?.credentials;
+      delete (<Account>user)?.teams?.[0]?.organization?.workspaces?.[0]
+        ?.pushPlatforms?.Android?.credentials;
+      delete (<Account>user)?.teams?.[0]?.organization?.workspaces?.[0]
+        ?.pushPlatforms?.iOS?.credentials;
 
-      return { ...data?.[0], pk, organization: (<Account>user).organization };
+      return {
+        ...data?.[0],
+        pk,
+        workspace: (<Account>user)?.teams?.[0]?.organization?.workspaces?.[0],
+      };
     } catch (e) {
       this.error(e, this.findOne.name, session, (<Account>user).id);
       throw e;

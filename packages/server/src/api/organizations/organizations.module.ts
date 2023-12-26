@@ -14,23 +14,29 @@ import {
 } from '../customers/schemas/customer-keys.schema';
 import { Account } from '../accounts/entities/accounts.entity';
 import { OrganizationsController } from './organizations.controller';
+import { OrganizationService } from './organizations.service';
+import { Workspaces } from '../workspaces/entities/workspaces.entity';
+import { Organization } from './entities/organization.entity';
+import { OrganizationTeam } from './entities/organization-team.entity';
+import { AuthHelper } from '../auth/auth.helper';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
       { name: CustomerKeys.name, schema: CustomerKeysSchema },
     ]),
-    TypeOrmModule.forFeature([Account]),
+    TypeOrmModule.forFeature([
+      Account,
+      Workspaces,
+      Organization,
+      OrganizationTeam,
+    ]),
     forwardRef(() => AuthModule),
-    forwardRef(() => CustomersModule),
-    forwardRef(() => JourneysModule),
-    forwardRef(() => TemplatesModule),
-    forwardRef(() => StepsModule),
     WebhooksModule,
   ],
   controllers: [OrganizationsController],
-  providers: [S3Service],
-  exports: [],
+  providers: [S3Service, OrganizationService],
+  exports: [OrganizationService],
 })
 export class OrganizationsModule {}
 
