@@ -149,7 +149,7 @@ const FlowBuilderSegmentEditor = () => {
                           new Date(
                             journeyEntrySettings.entryTiming.time.startDate
                           ),
-                          "hh:mm"
+                          "HH:mm"
                         )}
                         onChange={(e) => {
                           let updatedDate = new Date(

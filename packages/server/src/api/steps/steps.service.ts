@@ -164,15 +164,22 @@ export class StepsService {
       session,
       account.email
     );
-    await this.startQueue.add('start', {
-      ownerID: account.id,
-      stepID: startStep[0].id,
-      journeyID,
-      session: session,
-      query,
-      skip: 0,
-      limit: audienceSize,
-    });
+    await this.startQueue.add(
+      'start',
+      {
+        ownerID: account.id,
+        stepID: startStep[0].id,
+        journeyID,
+        session: session,
+        query,
+        skip: 0,
+        limit: audienceSize,
+      },
+      {
+        attempts: Number.MAX_SAFE_INTEGER,
+        backoff: { type: 'exponential', delay: 1000 },
+      }
+    );
   }
 
   /**

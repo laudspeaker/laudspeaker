@@ -2175,12 +2175,11 @@ export class CustomersService {
     };
   }
 
-  async customersSize (account: Account, session: string){
-    
-    const totalNumberOfCustomers = this.CustomerModel.find(
-      { ownerId: account.id } 
-    ).count();
-    
+  async customersSize(account: Account, session: string) {
+    const totalNumberOfCustomers = this.CustomerModel.find({
+      ownerId: account.id,
+    }).count();
+
     return totalNumberOfCustomers;
   }
 
@@ -2220,7 +2219,11 @@ export class CustomersService {
   *
   */
 
-  async getSegmentCustomersFromQuery(query: any, account: Account, session: string): Promise<Set<string>> {
+  async getSegmentCustomersFromQuery(
+    query: any,
+    account: Account,
+    session: string
+  ): Promise<Set<string>> {
     this.debug(
       'Creating segment from query',
       this.getSegmentCustomersFromQuery.name,
@@ -2280,7 +2283,7 @@ export class CustomersService {
       console.log('Union of all sets:', mergedSet);
       return mergedSet;
 
-    /*
+      /*
     console.log('all sets are:', JSON.stringify(sets, null, 2));
     
     const results = new Set<string>([].concat(...sets));
@@ -2291,12 +2294,11 @@ export class CustomersService {
     return new Set<string>(); // Default: Return an empty set
   }
 
-
   /**
    * Helper function for getSegmentCustomersFromQuery
-   * 
-   * Handle queries with subqueries 
-   * 
+   *
+   * Handle queries with subqueries
+   *
    * @returns set of customers
    */
   async getSegmentCustomersFromSubQuery(
@@ -2313,12 +2315,12 @@ export class CustomersService {
     return false;
   }
 
-   /**
+  /**
    * Routes to the right statement handler for getting customers
    *  essentially 3 types, Attribute, Event, Message
    *
-   * Handles SINGLE statements not queries with subqueries 
-   * 
+   * Handles SINGLE statements not queries with subqueries
+   *
    * @returns set of customers
    */
   async getCustomersFromStatement(
@@ -2335,7 +2337,7 @@ export class CustomersService {
       subComparisonValue,
     } = statement;
     this.debug(
-      "In getCustomersFromStatement deciding which sub evaluate statement to go to next/n\n",
+      'In getCustomersFromStatement deciding which sub evaluate statement to go to next/n\n',
       this.getCustomersFromStatement.name,
       session,
       account.email
@@ -2421,14 +2423,14 @@ export class CustomersService {
     }
   }
 
-   /**
+  /**
    * Gets set of customers from a single statement that
    * includes messages,
-   * 
+   *
    *  eg email from journey a, email 1 has been received
    *
-   * Handles SINGLE statements not queries with subqueries 
-   * 
+   * Handles SINGLE statements not queries with subqueries
+   *
    * @returns set of customers
    */
 
@@ -2584,14 +2586,14 @@ export class CustomersService {
     return false;
   }
 
-   /**
+  /**
    * Gets set of customers from a single statement that
    * includes Attribute,
-   * 
+   *
    *  eg firstName equal to Abe
    *
-   * Handles SINGLE statements not queries with subqueries 
-   * 
+   * Handles SINGLE statements not queries with subqueries
+   *
    * @returns set of customers
    */
   async customersFromAttributeStatement(
@@ -2738,11 +2740,11 @@ export class CustomersService {
   /**
    * Gets set of customers from a single statement that
    * includes Events,
-   * 
+   *
    *  eg onboarding has performed 1 times
    *
-   * Handles SINGLE statements not queries with subqueries 
-   * 
+   * Handles SINGLE statements not queries with subqueries
+   *
    * @returns set of customers
    */
   async customersFromEventStatement(
@@ -3283,7 +3285,7 @@ export class CustomersService {
     account: Account,
     session: string,
     customer?: CustomerDocument,
-    customerId?: string,
+    customerId?: string
   ) {
     this.debug(
       'in checkCustomerMatchesQuery',
@@ -3292,20 +3294,18 @@ export class CustomersService {
       account.id
     );
     if (!customerId && !customer) {
-      throw new Error("At least one of 'customerId' or 'customer' must be provided.");
+      throw new Error(
+        "At least one of 'customerId' or 'customer' must be provided."
+      );
     }
     if (customerId && !customer) {
       // If customerId is provided but customer is not
-      customer = await this.findById(
-        account,
-        customerId,
-      );
+      customer = await this.findById(account, customerId);
       // customer = await this.CustomerModel.findOne({
       //   _id: new Types.ObjectId(customerId),
       //   ownerId: account.id,
       // }).exec();
-      if (!customer)
-        throw new Error("Person not found");
+      if (!customer) throw new Error('Person not found');
     }
     this.debug(
       `the query is: ${JSON.stringify(query, null, 2)}`,
@@ -3367,11 +3367,14 @@ export class CustomersService {
         })
       );
       return results.some((result) => result);
-    }
-    else{
+    } else {
       //shouldnt get here
       this.debug(
-        `shouldnt get here, what is query type?: ${JSON.stringify(query.type, null, 2)}`,
+        `shouldnt get here, what is query type?: ${JSON.stringify(
+          query.type,
+          null,
+          2
+        )}`,
         this.checkCustomerMatchesQuery.name,
         session,
         account.id
@@ -3388,20 +3391,30 @@ export class CustomersService {
   ): Promise<boolean> {
     if (statement.statements && statement.statements.length > 0) {
       // Statement has a subquery, recursively evaluate the subquery
-      return this.checkCustomerMatchesQuery(statement, account, session, customer );
+      return this.checkCustomerMatchesQuery(
+        statement,
+        account,
+        session,
+        customer
+      );
     } else {
-      return await this.evaluateSingleStatement(customer, statement, account, session);
+      return await this.evaluateSingleStatement(
+        customer,
+        statement,
+        account,
+        session
+      );
     }
   }
 
   /**
-   * Evaluates if a customer should be included according to the single statement provided 
+   * Evaluates if a customer should be included according to the single statement provided
    * @returns a boolean in promise
-   * 
+   *
    * @param takes in a single statement, NOT a query.
    *   single statments do not include 'all' or 'any' for types
-   * @param customer     
-   *  
+   * @param customer
+   *
    */
   async evaluateSingleStatement(
     customer: CustomerDocument,
@@ -3416,7 +3429,7 @@ export class CustomersService {
       subComparisonType,
       value,
       subComparisonValue,
-    } = statement; 
+    } = statement;
     this.debug(
       'NB this function takes in single statements not full queries, for full queries use customerMatchesQuery/n\n',
       this.evaluateSingleStatement.name,
@@ -3550,15 +3563,15 @@ export class CustomersService {
     }
   }
 
-   /**
-   * Evaluates if a customer should be included according to the single  Message statement provided 
+  /**
+   * Evaluates if a customer should be included according to the single  Message statement provided
    * @returns a boolean in promise
-   * 
+   *
    * @param takes in a single message statement, NOT a query.
    *   single statments do not include 'all' or 'any' for types
    *    eg email from journey a, email 1 has been received
-   * @param customer     
-   *  
+   * @param customer
+   *
    */
   async evaluateMessageStatement(
     customer: CustomerDocument,
@@ -3713,11 +3726,16 @@ export class CustomersService {
     return false;
   }
 
-  async addPrimaryKeyToMongoQuery(mongoQuery: any, account: Account, session: string, customer:CustomerDocument){
-    let currentPK : string = await this.CustomerKeysModel.findOne({
+  async addPrimaryKeyToMongoQuery(
+    mongoQuery: any,
+    account: Account,
+    session: string,
+    customer: CustomerDocument
+  ) {
+    let currentPK: string = await this.CustomerKeysModel.findOne({
       ownerId: account.id,
       isPrimary: true,
-  })
+    });
 
     if (currentPK) {
       this.debug(
@@ -3739,14 +3757,12 @@ export class CustomersService {
       */
 
       //to do just for testing
-      console.log("pk isnt working so set as email")
-      currentPK = "email";
+      console.log('pk isnt working so set as email');
+      currentPK = 'email';
       mongoQuery.correlationKey = currentPK;
       mongoQuery.correlationValue = customer[currentPK];
-        
     }
   }
-
 
   /*
    * this needs to be rejigged a little the mongo query takes in a customer field to filter against
@@ -3754,14 +3770,14 @@ export class CustomersService {
 
    */
   /**
-   * Evaluates if a customer should be included according to the single Event statement provided 
+   * Evaluates if a customer should be included according to the single Event statement provided
    * @returns a boolean in promise
-   * 
+   *
    * @param takes in a single Event statement, NOT a query.
    *   single statments do not include 'all' or 'any' for types
    *    eg onboarding has performed 1 times
-   * @param customer     
-   *  
+   * @param customer
+   *
    */
   async evaluateEventStatement(
     customer: CustomerDocument,
@@ -3817,10 +3833,10 @@ export class CustomersService {
       ownerId: (<Account>account).id,
     };
 
-    let currentPK : string = await this.CustomerKeysModel.findOne({
-        ownerId: account.id,
-        isPrimary: true,
-    })
+    let currentPK: string = await this.CustomerKeysModel.findOne({
+      ownerId: account.id,
+      isPrimary: true,
+    });
 
     if (currentPK) {
       this.debug(
@@ -3842,11 +3858,10 @@ export class CustomersService {
       */
 
       //to do just for testing
-      console.log("pk isnt working so set as email")
-      currentPK = "email";
+      console.log('pk isnt working so set as email');
+      currentPK = 'email';
       mongoQuery.correlationKey = currentPK;
       mongoQuery.correlationValue = customer[currentPK];
-        
     }
 
     if (time) {
@@ -4058,12 +4073,13 @@ export class CustomersService {
 
   //** test **
   /*
-   * NB the structure of the query argument 
-   *  
+   * NB the structure of the query argument
+   *
    *
    */
-  async testCustomerInSegment(query: any, account: Account): Promise<boolean>{//Promise<Set<string>>  {
-    let session = "this is a fake session"
+  async testCustomerInSegment(query: any, account: Account): Promise<boolean> {
+    //Promise<Set<string>>  {
+    let session = 'this is a fake session';
     this.debug(
       'In Test Customer Segment',
       this.testCustomerInSegment.name,
@@ -4083,7 +4099,7 @@ export class CustomersService {
       account.id
     );
 
-    console.log("here here");
+    console.log('here here');
 
     let testCustomer = new this.CustomerModel({
       externalId: '6583b25df2be8cd3c8b17f61',
@@ -4105,20 +4121,33 @@ export class CustomersService {
       account.id
     );
 
-    console.log("here here 3");
+    console.log('here here 3');
 
     //statement, account, session
-    const eventCust = await this.getSegmentCustomersFromQuery(query, account, "fake session");
-    console.log("the result of the eventCust is", eventCust);//JSON.stringify(eventCust, null, 2));
+    const eventCust = await this.getSegmentCustomersFromQuery(
+      query,
+      account,
+      'fake session'
+    );
+    console.log('the result of the eventCust is', eventCust); //JSON.stringify(eventCust, null, 2));
 
     //query: any,account: Account,session: string,customer?: CustomerDocument, customerId?: string,
-    const resultOfCheckCustomerMatchesQuery = await this.checkCustomerMatchesQuery( query, account, "fake session", testCustomer );
-    console.log("the result of the evaluation is", resultOfCheckCustomerMatchesQuery);
+    const resultOfCheckCustomerMatchesQuery =
+      await this.checkCustomerMatchesQuery(
+        query,
+        account,
+        'fake session',
+        testCustomer
+      );
+    console.log(
+      'the result of the evaluation is',
+      resultOfCheckCustomerMatchesQuery
+    );
 
     //console.log("test customer is", JSON.stringify(testCustomer,null,2));
     //console.log("the segment and the customer are", await this.checkCustomerMatchesQuery(testCustomer, query, account));
-    
-    return false//await evaluateStatement()
+
+    return false; //await evaluateStatement()
     /*
     let custs = await this.getSegmentCustomersFromQuery(query, account, session)
     

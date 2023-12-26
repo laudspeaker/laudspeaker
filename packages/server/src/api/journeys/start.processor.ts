@@ -174,6 +174,10 @@ export class StartProcessor extends WorkerHost {
             id: job.data.journeyID,
           },
         });
+        if (!journey)
+          throw new Error(
+            `Journey ${job.data.journeyID} has not been commited to the database yet`
+          );
         await Promise.all(
           customers.map(async (customer) => {
             await this.journeyLocationsService.createAndLock(

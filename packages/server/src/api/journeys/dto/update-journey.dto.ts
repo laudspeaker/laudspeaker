@@ -6,6 +6,7 @@ import {
   IsUUID,
   IsBoolean,
   IsObject,
+  IsNumber,
 } from 'class-validator';
 
 export class UpdateJourneyDto {
@@ -35,4 +36,24 @@ export class UpdateJourneyDto {
   @IsBoolean()
   @IsOptional()
   public isDynamic?: boolean;
+
+  @IsBoolean()
+  @IsOptional()
+  isRecurrence?: boolean;
+
+  @IsNumber()
+  @IsOptional()
+  recurrenceTimestamp?: number;
+
+  @IsNumber()
+  @IsOptional()
+  recurrenceCount?: number;
+
+  @IsBoolean()
+  @IsOptional()
+  customersEnrolled?: boolean;
+
+  @IsString()
+  @IsOptional()
+  recurrenceId?: string;
 }

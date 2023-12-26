@@ -308,7 +308,6 @@ export class SegmentsService {
           account.id
         );
 
-
         const segmentCustomersArray: SegmentCustomers[] = Array.from(
           customersInSegment
         ).map((stringValue) => {

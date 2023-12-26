@@ -332,7 +332,7 @@ export class TestsService {
   public async getSegmentSize(segmentId: string, session: string) {
     return await this.segmentCustomersRepository.count({
       where: {
-        segment: segmentId,//{id: segmentId,},
+        segment: segmentId, //{id: segmentId,},
       },
     });
   }

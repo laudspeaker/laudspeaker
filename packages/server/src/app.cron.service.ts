@@ -54,11 +54,17 @@ import * as _ from 'lodash';
 import { JourneyLocationsService } from './api/journeys/journey-locations.service';
 import { query } from 'winston';
 import { Journey } from './api/journeys/entities/journey.entity';
-import { EntryTiming, EntryTimingFrequency, RecurrenceEndsOptions } from './api/journeys/types/additional-journey-settings.interface';
+import {
+  EntryTiming,
+  EntryTimingFrequency,
+  RecurrenceEndsOptions,
+} from './api/journeys/types/additional-journey-settings.interface';
 import { CustomersService } from './api/customers/customers.service';
 
 const BATCH_SIZE = 500;
 const KEYS_TO_SKIP = ['__v', '_id', 'audiences', 'ownerId'];
+const numberOfMillisecondsInDay = 1000 * 60 * 60 * 24;
+const numberOfMillisecondsInWeek = 1000 * 60 * 60 * 24 * 7;
 
 @Injectable()
 export class CronService {
@@ -104,7 +110,7 @@ export class CronService {
     @InjectQueue('transition') private readonly transitionQueue: Queue,
     @Inject(RedlockService)
     private readonly redlockService: RedlockService
-  ) { }
+  ) {}
 
   log(message, method, session, user = 'ANONYMOUS') {
     this.logger.log(
@@ -886,97 +892,264 @@ export class CronService {
         )
         .getMany();
 
-      for (let journeysIndex = 0; journeysIndex < delayedJourneys.length; journeysIndex++) {
-        const audienceSize = await this.customersService.getAudienceSize(delayedJourneys[journeysIndex].owner, delayedJourneys[journeysIndex].inclusionCriteria, session)
-        if (delayedJourneys[journeysIndex].journeyEntrySettings?.entryTiming.type === EntryTiming.SpecificTime) {
-          // Case: Ends after # occurences <=# of occurences
-          if (delayedJourneys[journeysIndex].journeyEntrySettings?.entryTiming.time.frequency !== EntryTimingFrequency.Once) {
-            // Number of recurrences has met or exceeded recurrence settings,skip this journey
-            if (delayedJourneys[journeysIndex].journeyEntrySettings?.entryTiming.time.recurrence.endsOn === RecurrenceEndsOptions.After && +(delayedJourneys[journeysIndex].journeyEntrySettings?.entryTiming.time.recurrence.endAdditionalValue) <= delayedJourneys[journeysIndex].recurrenceCount - 1) {
-              continue;
-              // Date of recurrences has passed, skip this journey
-            } else if (delayedJourneys[journeysIndex].journeyEntrySettings?.entryTiming.time.recurrence.endsOn === RecurrenceEndsOptions.SpecificDate && new Date(delayedJourneys[journeysIndex].journeyEntrySettings?.entryTiming.time.recurrence.endAdditionalValue).getTime() <= Date.now()) {
-              continue;
-              // Journey is still eligible for recurrences
-            } else {
-              const startMills = new Date(delayedJourneys[journeysIndex].journeyEntrySettings.entryTiming.time.startDate).getTime();
-              // case 1: journey hasn't been started yet
-              if (!delayedJourneys[journeysIndex].customersEnrolled) {
-                // Time to start the journey
-                if (startMills < Date.now()) {
-                  await queryRunner.manager.update(
-                    Journey,
-                    {
-                      id: delayedJourneys[journeysIndex].id
-                    },
-                    {
-                      customersEnrolled: true,
-                      recurrenceCount: delayedJourneys[journeysIndex].recurrenceCount + 1
-                    }
-                  );
-                  await this.stepsService.triggerStart(delayedJourneys[journeysIndex].owner, delayedJourneys[journeysIndex].id, delayedJourneys[journeysIndex].inclusionCriteria, audienceSize, queryRunner, session);
-                }
-                continue;
-                //Journey has been started, find previous journey
-              } else {
-                let elapsedSinceLastOccurence;
-                const previousJourney = await queryRunner.manager.findOne(Journey, {
-                  where: {
-                    isRecurrence: true,
-                    recurrenceId: delayedJourneys[journeysIndex].id,
-                  },
-                  order: { recurrenceTimestamp: 'DESC' }
-                })
-                if (!previousJourney) {
-                  elapsedSinceLastOccurence = Date.now() - startMills;
-                } else {
-                  elapsedSinceLastOccurence = Date.now() - previousJourney.recurrenceTimestamp
-                }
-                let millsToNextRecurrence;
-                switch (delayedJourneys[journeysIndex].journeyEntrySettings.entryTiming.time.frequency){
-                  case EntryTimingFrequency.Daily:
-                    break;
-                  case EntryTimingFrequency.Weekly:
-                    break
-                  case EntryTimingFrequency.Monthly:
-                    break;
-                }
-
+      for (
+        let journeysIndex = 0;
+        journeysIndex < delayedJourneys.length;
+        journeysIndex++
+      ) {
+        const audienceSize = await this.customersService.getAudienceSize(
+          delayedJourneys[journeysIndex].owner,
+          delayedJourneys[journeysIndex].inclusionCriteria,
+          session
+        );
+        // Case: No recurrence
+        if (
+          delayedJourneys[journeysIndex].journeyEntrySettings?.entryTiming.time
+            .frequency === EntryTimingFrequency.Once
+        ) {
+          if (
+            new Date(
+              delayedJourneys[
+                journeysIndex
+              ].journeyEntrySettings?.entryTiming.time.startDate
+            ).getTime() < Date.now() &&
+            !delayedJourneys[journeysIndex].customersEnrolled
+          ) {
+            this.warn(
+              JSON.stringify({
+                warning: `No recurrence; Time to enroll customers in Journey ${delayedJourneys[journeysIndex].id}`,
+              }),
+              this.handleEntryTiming.name,
+              session
+            );
+            await queryRunner.manager.update(
+              Journey,
+              {
+                id: delayedJourneys[journeysIndex].id,
+              },
+              {
+                customersEnrolled: true,
+                recurrenceCount:
+                  delayedJourneys[journeysIndex].recurrenceCount + 1,
               }
-              // case 2: journey has recurred already
-              let triggerStart = false;
-              //Do math here...
-              if (triggerStart) {
-
-                if (!delayedJourneys[journeysIndex].journeyEntrySettings.entryTiming.time.recurrence.continueOccurence) {
-                  await this.journeysService.stop()
-
-                } else if (!delayedJourneys[journeysIndex].journeyEntrySettings.entryTiming.time.recurrence.continueOccurenceEnrollment) {
-
-                }
-              }
-            }
+            );
+            await this.stepsService.triggerStart(
+              delayedJourneys[journeysIndex].owner,
+              delayedJourneys[journeysIndex].id,
+              delayedJourneys[journeysIndex].inclusionCriteria,
+              audienceSize,
+              queryRunner,
+              session
+            );
           } else {
-            if (new Date(delayedJourneys[journeysIndex].journeyEntrySettings?.entryTiming.time.startDate).getTime() < Date.now() && !delayedJourneys[journeysIndex].customersEnrolled) {
+            this.warn(
+              JSON.stringify({
+                warning: `No recurrence; Journey ${delayedJourneys[journeysIndex].id} has already been started`,
+              }),
+              this.handleEntryTiming.name,
+              session
+            );
+          }
+        }
+        // Case: Number of recurrences has met or exceeded recurrence settings,skip this journey
+        else if (
+          delayedJourneys[journeysIndex].journeyEntrySettings?.entryTiming.time
+            .recurrence.endsOn === RecurrenceEndsOptions.After &&
+          +delayedJourneys[journeysIndex].journeyEntrySettings?.entryTiming.time
+            .recurrence.endAdditionalValue <=
+            delayedJourneys[journeysIndex].recurrenceCount - 1
+        ) {
+          this.warn(
+            JSON.stringify({
+              warning: `Recurrence; Journey ${delayedJourneys[journeysIndex].id} has reenrolled ${delayedJourneys[journeysIndex].journeyEntrySettings?.entryTiming.time.recurrence.endsOn} times, skipping...`,
+            }),
+            this.handleEntryTiming.name,
+            session
+          );
+          continue;
+        }
+        // Case: Date of recurrences has passed, skip this journey
+        else if (
+          delayedJourneys[journeysIndex].journeyEntrySettings?.entryTiming.time
+            .recurrence.endsOn === RecurrenceEndsOptions.SpecificDate &&
+          new Date(
+            delayedJourneys[
+              journeysIndex
+            ].journeyEntrySettings?.entryTiming.time.recurrence.endAdditionalValue
+          ).getTime() <= Date.now()
+        ) {
+          this.warn(
+            JSON.stringify({
+              warning: `Recurrence; Journey ${delayedJourneys[journeysIndex].id} has passed the reenrollment date, skipping...`,
+            }),
+            this.handleEntryTiming.name,
+            session
+          );
+          continue;
+        }
+        // Case: Journey is eligible for recurrence
+        else {
+          // Case: Original journey hasn't been started yet
+          if (!delayedJourneys[journeysIndex].customersEnrolled) {
+            // Case: Time to start original journey
+            if (
+              new Date(
+                delayedJourneys[
+                  journeysIndex
+                ].journeyEntrySettings.entryTiming.time.startDate
+              ).getTime() < Date.now()
+            ) {
+              this.warn(
+                JSON.stringify({
+                  warning: `Recurrence; Time to start Journey ${delayedJourneys[journeysIndex].id}`,
+                }),
+                this.handleEntryTiming.name,
+                session
+              );
               await queryRunner.manager.update(
                 Journey,
                 {
-                  id: delayedJourneys[journeysIndex].id
+                  id: delayedJourneys[journeysIndex].id,
                 },
                 {
                   customersEnrolled: true,
-                  recurrenceCount: delayedJourneys[journeysIndex].recurrenceCount + 1
+                  recurrenceCount:
+                    delayedJourneys[journeysIndex].recurrenceCount + 1,
                 }
               );
-              await this.stepsService.triggerStart(delayedJourneys[journeysIndex].owner, delayedJourneys[journeysIndex].id, delayedJourneys[journeysIndex].inclusionCriteria, audienceSize, queryRunner, session)
+              await this.stepsService.triggerStart(
+                delayedJourneys[journeysIndex].owner,
+                delayedJourneys[journeysIndex].id,
+                delayedJourneys[journeysIndex].inclusionCriteria,
+                audienceSize,
+                queryRunner,
+                session
+              );
+              // Case: not yet time to start original Journey
+            } else {
+              this.warn(
+                JSON.stringify({
+                  warning: `Recurrence; Not yet time to start Journey ${delayedJourneys[journeysIndex].id}`,
+                }),
+                this.handleEntryTiming.name,
+                session
+              );
+            }
+            continue;
+            // Case: Original Journey has been started, find previous journey
+          } else {
+            // Calculate time elapsed since last journey enrollment event
+            let timeElapsedSinceLastJourneyStart: number,
+              previousJourney: Journey,
+              previousJourneyStartTime: number,
+              triggerStart: boolean = false;
+            //Case: Original Journey has no reoccurences yet
+            if (delayedJourneys[journeysIndex].recurrenceCount === 1) {
+              timeElapsedSinceLastJourneyStart =
+                Date.now() -
+                new Date(
+                  delayedJourneys[
+                    journeysIndex
+                  ].journeyEntrySettings.entryTiming.time.startDate
+                ).getTime();
+              previousJourneyStartTime = new Date(
+                delayedJourneys[
+                  journeysIndex
+                ].journeyEntrySettings.entryTiming.time.startDate
+              ).getTime();
+              // Case: journey has recurred in the past
+            } else {
+              previousJourney = await queryRunner.manager.findOne(Journey, {
+                where: {
+                  isRecurrence: true,
+                  recurrenceId: delayedJourneys[journeysIndex].id,
+                },
+                order: { recurrenceTimestamp: 'DESC' },
+              });
+              timeElapsedSinceLastJourneyStart =
+                Date.now() - previousJourney.recurrenceTimestamp;
+              previousJourneyStartTime = previousJourney.recurrenceTimestamp;
+            }
+            // Calculate how long we should wait between reenrollments
+            let millsBetweenOccurences: number;
+            switch (
+              delayedJourneys[journeysIndex].journeyEntrySettings.entryTiming
+                .time.frequency
+            ) {
+              case EntryTimingFrequency.Daily:
+                millsBetweenOccurences =
+                  numberOfMillisecondsInDay *
+                  delayedJourneys[journeysIndex].journeyEntrySettings
+                    .entryTiming.time.recurrence.repeatEvery;
+                if (timeElapsedSinceLastJourneyStart > millsBetweenOccurences)
+                  triggerStart = true;
+                break;
+              case EntryTimingFrequency.Weekly:
+                break;
+              case EntryTimingFrequency.Monthly:
+                const tempTime = new Date(previousJourneyStartTime);
+                const newTime = tempTime.setMonth(
+                  tempTime.getMonth() +
+                    delayedJourneys[journeysIndex].journeyEntrySettings
+                      .entryTiming.time.recurrence.repeatEvery
+                );
+                if (
+                  tempTime.getTime() - previousJourneyStartTime >
+                  millsBetweenOccurences
+                )
+                  triggerStart = true;
+                break;
+            }
+            if (triggerStart) {
+              this.warn(
+                JSON.stringify({
+                  timeElapsedSinceLastJourneyStart,
+                  previousJourneyStartTime,
+                  millsBetweenOccurences,
+                  now: Date.now(),
+                }),
+                this.handleEntryTiming.name,
+                session
+              );
+              const dupe = await this.journeysService.duplicateForRecurrence(
+                delayedJourneys[journeysIndex].owner,
+                delayedJourneys[journeysIndex].id,
+                session,
+                queryRunner
+              );
+              this.warn(
+                JSON.stringify({
+                  warning: `Recurrence; Time to start duplicate Journey ${dupe.id}`,
+                }),
+                this.handleEntryTiming.name,
+                session
+              );
+              await this.journeysService.start(
+                dupe.owner,
+                dupe.id,
+                session,
+                queryRunner
+              );
+              if (
+                !delayedJourneys[journeysIndex].journeyEntrySettings.entryTiming
+                  .time.recurrence.continueOccurence
+              ) {
+                await this.journeysService.stop(
+                  delayedJourneys[journeysIndex].owner,
+                  delayedJourneys[journeysIndex].id,
+                  session,
+                  queryRunner
+                );
+              } else if (
+                !delayedJourneys[journeysIndex].journeyEntrySettings.entryTiming
+                  .time.recurrence.continueOccurenceEnrollment
+              ) {
+                // await this.journeysService.setEnrollmentType()
+              }
             }
           }
         }
       }
-      console.log("____________________________________________")
-      console.log(delayedJourneys);
-      console.log("____________________________________________")
-
       await queryRunner.commitTransaction();
     } catch (e) {
       this.error(e, this.handleEntryTiming.name, session);
@@ -986,7 +1159,6 @@ export class CronService {
     }
   }
 
-
   /**
    * Function for enrolling customers in their local timezone.
    * Checks Journey Enrollment Times compared to customer's
@@ -994,10 +1166,5 @@ export class CronService {
    * to be enrolled
    */
   @Cron(CronExpression.EVERY_5_SECONDS)
-  async handleLocalTimeZoneEnrollment() {
-
-  }
-
-
-
+  async handleLocalTimeZoneEnrollment() {}
 }

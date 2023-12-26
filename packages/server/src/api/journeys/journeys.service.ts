@@ -253,7 +253,9 @@ export class JourneysService {
     account: Account,
     name: string,
     queryRunner: QueryRunner,
-    session: string
+    session: string,
+    isRecurrence?: boolean,
+    dupeId?: string
   ) {
     try {
       const startNodeUUID = uuid();
@@ -273,6 +275,8 @@ export class JourneysService {
             },
           ],
         },
+        isRecurrence: isRecurrence ? true : false,
+        recurrenceId: dupeId,
       });
 
       await queryRunner.manager.save(journey);
@@ -434,6 +438,138 @@ export class JourneysService {
   }
 
   /**
+   * Duplicate a journey.
+   * @param user
+   * @param id
+   * @param session
+   */
+  async duplicateForRecurrence(
+    user: Account,
+    id: string,
+    session: string,
+    queryRunner: QueryRunner
+  ) {
+    const oldJourney = await queryRunner.manager.findOne(Journey, {
+      where: {
+        owner: { id: user.id },
+        id,
+      },
+    });
+    if (!oldJourney) throw new NotFoundException('Journey not found');
+
+    let copyEraseIndex = oldJourney.name.indexOf(' (Reccurence ');
+    if (copyEraseIndex === -1) copyEraseIndex = oldJourney.name.length;
+
+    const res = await queryRunner.manager
+      .createQueryBuilder(Journey, 'journey')
+      .select('COUNT(*)')
+      .where('starts_with(name, :oldName) = TRUE AND "ownerId" = :ownerId', {
+        oldName: oldJourney.name.substring(0, copyEraseIndex),
+        ownerId: user.id,
+      })
+      .execute();
+    const newName =
+      oldJourney.name.substring(0, copyEraseIndex) +
+      ' (Recurrence ' +
+      (res?.[0]?.count || '0') +
+      ' at ' +
+      new Date().toISOString() +
+      ')';
+    const newJourney = await this.transactionalCreate(
+      user,
+      newName,
+      queryRunner,
+      session,
+      true,
+      oldJourney.id
+    );
+
+    await this.transactionalUpdate(
+      user,
+      {
+        id: newJourney.id,
+        name: newName,
+        isDynamic: oldJourney.isDynamic,
+        journeyEntrySettings: { ...oldJourney.journeyEntrySettings },
+        journeySettings: { ...oldJourney.journeySettings },
+        isRecurrence: true,
+        recurrenceTimestamp: Date.now(),
+        recurrenceId: oldJourney.id,
+      },
+      session,
+      queryRunner
+    );
+
+    const oldSteps = await this.stepsService.transactionalfindByJourneyID(
+      user,
+      oldJourney.id,
+      queryRunner
+    );
+
+    const startStep = await this.stepsService.transactionalfindByJourneyID(
+      user,
+      newJourney.id,
+      queryRunner
+    );
+    let startIndex;
+    const newSteps: Step[] = await queryRunner.manager.save(
+      Step,
+      oldSteps
+        .filter((oldStep, index) => {
+          if (oldStep.type === StepType.START) {
+            startIndex = index;
+            return false;
+          }
+          return true;
+        })
+        .map((oldStep) => {
+          return {
+            createdAt: new Date(),
+            owner: oldStep.owner,
+            type: oldStep.type,
+            journey: newJourney,
+            customers: [],
+            isEditable: true,
+          };
+        })
+    );
+
+    newSteps.splice(startIndex, 0, startStep[0]);
+
+    let visualLayout: any = JSON.stringify(oldJourney.visualLayout);
+
+    for (let i = 0; i < oldSteps.length; i++) {
+      const oldStepID = oldSteps[i].id;
+      const newStepID = newSteps[i].id;
+      visualLayout = visualLayout.replaceAll(oldStepID, newStepID);
+      if (oldSteps[i].type === StepType.TRACKER) {
+        const newStepName = generateName({ number: true }).dashed;
+        const oldStepName = oldSteps[i]?.metadata?.humanReadableName;
+
+        if (oldStepName)
+          visualLayout = visualLayout.replaceAll(oldStepName, newStepName);
+      }
+    }
+
+    visualLayout = JSON.parse(visualLayout);
+    await this.updateLayoutTransactional(
+      user,
+      {
+        id: newJourney.id,
+        nodes: visualLayout.nodes,
+        edges: visualLayout.edges,
+      },
+      queryRunner,
+      session
+    );
+
+    return await queryRunner.manager.findOne(Journey, {
+      where: { id: newJourney.id },
+      relations: ['owner'],
+    });
+  }
+
+  /**
    *
    * @param account
    * @param customerId
@@ -477,7 +613,13 @@ export class JourneysService {
       );
       //let shouldInclude = true;
       // TODO_JH: implement the following
-      let shouldInclude = this.customersService.checkCustomerMatchesQuery(journey.inclusionCriteria, account, session, undefined, customerId);
+      let shouldInclude = this.customersService.checkCustomerMatchesQuery(
+        journey.inclusionCriteria,
+        account,
+        session,
+        undefined,
+        customerId
+      );
       // if (customer matches journeyInclusionCriteria)
       //     shouldInclude = true
       // for segment in journey.segments
@@ -965,7 +1107,12 @@ export class JourneysService {
    * @param session
    * @returns
    */
-  async start(account: Account, journeyID: string, session: string) {
+  async start(
+    account: Account,
+    journeyID: string,
+    session: string,
+    runner?: QueryRunner
+  ) {
     let journey: Journey; // Workflow to update
     this.debug(
       `${JSON.stringify({ account, journeyID })}`,
@@ -973,12 +1120,14 @@ export class JourneysService {
       session,
       account.email
     );
+    let queryRunner = runner;
     const transactionSession = await this.connection.startSession();
     transactionSession.startTransaction();
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-
+    if (!runner) {
+      queryRunner = this.dataSource.createQueryRunner();
+      await queryRunner.connect();
+      await queryRunner.startTransaction();
+    }
     try {
       if (!account) throw new HttpException('User not found', 404);
 
@@ -1052,7 +1201,8 @@ export class JourneysService {
 
       if (
         journey.journeyEntrySettings.entryTiming.type ===
-        EntryTiming.WhenPublished
+          EntryTiming.WhenPublished ||
+        journey.isRecurrence
       ) {
         await this.stepsService.triggerStart(
           account,
@@ -1074,15 +1224,15 @@ export class JourneysService {
       });
 
       await transactionSession.commitTransaction();
-      await queryRunner.commitTransaction();
+      if (!runner) await queryRunner.commitTransaction();
     } catch (err) {
       await transactionSession.abortTransaction();
-      await queryRunner.rollbackTransaction();
+      if (!runner) await queryRunner.rollbackTransaction();
       this.logger.error('Error:  ' + err);
       throw err;
     } finally {
       await transactionSession.endSession();
-      await queryRunner.release();
+      if (!runner) await queryRunner.release();
     }
   }
 
@@ -1093,8 +1243,13 @@ export class JourneysService {
    * @param session
    * @returns
    */
-  async stop(account: Account, id: string, session: string) {
-    try {
+  async stop(
+    account: Account,
+    id: string,
+    session: string,
+    queryRunner?: QueryRunner
+  ) {
+    if (!queryRunner) {
       const found: Journey = await this.journeysRepository.findOneBy({
         owner: { id: account.id },
         id,
@@ -1107,9 +1262,19 @@ export class JourneysService {
         isActive: false,
         isPaused: true,
       });
-    } catch (err) {
-      this.error(err, this.stop.name, session, account.email);
-      throw err;
+    } else {
+      const found: Journey = await queryRunner.manager.findOneBy(Journey, {
+        owner: { id: account.id },
+        id,
+      });
+      if (!found?.isActive)
+        throw new HttpException('The workflow was not activated', 400);
+      await queryRunner.manager.save(Journey, {
+        ...found,
+        isStopped: true,
+        isActive: false,
+        isPaused: true,
+      });
     }
   }
 
@@ -1138,8 +1303,18 @@ export class JourneysService {
       if (journey.isActive || journey.isDeleted || journey.isPaused)
         throw new Error('Journey is no longer editable.');
 
-      const { visualLayout, isDynamic, name, inclusionCriteria } =
-        updateJourneyDto;
+      const {
+        visualLayout,
+        isDynamic,
+        name,
+        inclusionCriteria,
+        journeyEntrySettings,
+        journeySettings,
+        isRecurrence,
+        recurrenceCount,
+        recurrenceTimestamp,
+        recurrenceId,
+      } = updateJourneyDto;
 
       return await queryRunner.manager.save(Journey, {
         ...journey,
@@ -1147,6 +1322,12 @@ export class JourneysService {
         isDynamic,
         name,
         inclusionCriteria,
+        journeyEntrySettings,
+        journeySettings,
+        isRecurrence,
+        recurrenceCount,
+        recurrenceId,
+        recurrenceTimestamp,
       });
     } catch (e) {
       this.error(e, this.update.name, session, account.email);

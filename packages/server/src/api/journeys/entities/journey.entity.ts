@@ -71,18 +71,29 @@ export class Journey {
   @Column('jsonb', { nullable: true })
   journeySettings?: JourneySettings;
 
+  // Indicates if a Journey is an original or a recurrence.
   @Column('boolean', { nullable: false, default: false })
   isRecurrence: boolean;
 
-  @Column('int', { nullable: false, default: -1 })
+  // If this is a recurrence Journey, this field indicates the
+  // time that this journey was started/recurred
+  @Column('bigint', { nullable: false, default: -1 })
   recurrenceTimestamp: number;
 
+  // If this is an original Journey, how many times has it has recurred.
+  // This will remain 0 until the first time the customers are enrolled.
+  // If journey type is 'Enter users as soon as this journey is published'
+  // this field can be ignored.
   @Column('int', { nullable: false, default: 0 })
   recurrenceCount: number;
 
+  // Boolean indicating whether or not customers have been enrolled in this journey yet;
+  // if journey enrollment type is 'Enter users as soon as this journey is published'
+  // or 'Enter users in their local time zone' this field can be ignored
   @Column('boolean', { nullable: false, default: false })
   customersEnrolled: boolean;
 
+  // Journey ID that this journey was copied from if its a recurrence
   @Column('varchar', { nullable: true })
   recurrenceId: string;
 }
