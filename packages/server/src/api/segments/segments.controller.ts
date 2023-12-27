@@ -144,11 +144,13 @@ export class SegmentsController {
       session
     );
     */
+    
     return await this.segmentsService.create(
       <Account>user,
       createSegmentDTO,
       session
     );
+    
   }
 
   @Post('/size')
