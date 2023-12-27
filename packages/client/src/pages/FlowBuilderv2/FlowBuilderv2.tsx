@@ -13,6 +13,8 @@ import { Edge, Node } from "reactflow";
 import { EdgeData } from "./Edges/EdgeData";
 import {
   clearSegmentPanelErrors,
+  defaultJourneyEntrySettings,
+  defaultJourneySettings,
   JourneyEntrySettings,
   JourneySettings,
   JourneyType,
@@ -99,9 +101,13 @@ const FlowBuilderv2 = () => {
       dispatch(setShowSegmentsErrors(false));
       dispatch(clearSegmentPanelErrors());
       dispatch(
-        setJourneyEntrySettings(data?.journeyEntrySettings || undefined)
+        setJourneyEntrySettings(
+          data?.journeyEntrySettings || defaultJourneyEntrySettings
+        )
       );
-      dispatch(setJourneySettings(data?.journeySettings || undefined));
+      dispatch(
+        setJourneySettings(data?.journeySettings || defaultJourneySettings)
+      );
       dispatch(setFlowId(id));
 
       let status: JourneyStatus = JourneyStatus.DRAFT;

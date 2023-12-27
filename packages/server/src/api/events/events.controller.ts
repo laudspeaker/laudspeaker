@@ -27,6 +27,7 @@ import { Request } from 'express';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { randomUUID } from 'crypto';
 import { RavenInterceptor } from 'nest-raven';
+import { CustomerPushTest } from './dto/customer-push-test.dto';
 
 @Controller('events')
 export class EventsController {
@@ -144,6 +145,20 @@ export class EventsController {
   ) {
     try {
       await this.eventsService.sendTestPush(<Account>user, token);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  @Post('/sendTestPushByCustomer')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
+  async sendTestPushByCustomer(
+    @Req() { user }: Request,
+    @Body() body: CustomerPushTest
+  ) {
+    try {
+      await this.eventsService.sendTestPushByCustomer(<Account>user, body);
     } catch (error) {
       throw error;
     }

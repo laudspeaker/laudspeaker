@@ -49,6 +49,11 @@ import {
 import { JourneysService } from '../journeys/journeys.service';
 import admin from 'firebase-admin';
 import { Journey } from '../journeys/entities/journey.entity';
+import { CustomerPushTest } from './dto/customer-push-test.dto';
+import {
+  PlatformSettings,
+  PushPlatforms,
+} from '../templates/entities/template.entity';
 
 @Injectable()
 export class EventsService {
@@ -384,10 +389,7 @@ export class EventsService {
   }
 
   //to do need to specify how this is
-  async getEventsByMongo(
-    mongoQuery: any,
-    customer: CustomerDocument,
-  ) {
+  async getEventsByMongo(mongoQuery: any, customer: CustomerDocument) {
     //console.log("In getEvents by mongo");
 
     const tehevents = await this.EventModel.find(mongoQuery).exec();
@@ -479,6 +481,138 @@ export class EventsService {
                 },
               });
             }
+          })
+      );
+    } catch (e) {
+      throw e;
+    }
+  }
+
+  async sendTestPushByCustomer(account: Account, body: CustomerPushTest) {
+    const foundAcc = await this.accountsRepository.findOneBy({
+      id: account.id,
+    });
+
+    const hasConnected = Object.values(foundAcc.pushPlatforms).some(
+      (el) => !!el
+    );
+
+    try {
+      if (!hasConnected) {
+        throw new HttpException(
+          "You don't have platform's connected",
+          HttpStatus.NOT_ACCEPTABLE
+        );
+      }
+
+      const customer = await this.customersService.findById(
+        account,
+        body.customerId
+      );
+
+      if (!customer.device_token_android && !customer.device_token_ios) {
+        throw new HttpException(
+          "Selected customer don't have device_token_android nor device_token_ios.",
+          HttpStatus.NOT_ACCEPTABLE
+        );
+      }
+
+      await Promise.all(
+        Object.entries(body.pushObject.platform)
+          .filter(
+            ([platform, isEnabled]) =>
+              isEnabled && foundAcc.pushPlatforms[platform]
+          )
+          .map(async ([platform]) => {
+            if (!foundAcc.pushPlatforms[platform]) {
+              throw new HttpException(
+                `Platform ${platform} is not connected.`,
+                HttpStatus.NOT_ACCEPTABLE
+              );
+            }
+
+            if (
+              platform === PushPlatforms.ANDROID &&
+              !customer.device_token_android
+            ) {
+              this.logger.warn(
+                `Customer ${body.customerId} don't have device_token_android property to test push notification. Skipping.`
+              );
+              return;
+            }
+
+            if (platform === PushPlatforms.IOS && !customer.device_token_ios) {
+              this.logger.warn(
+                `Customer ${body.customerId} don't have device_token_ios property to test push notification. Skipping.`
+              );
+              return;
+            }
+
+            const settings: PlatformSettings =
+              body.pushObject.settings[platform];
+            let firebaseApp;
+            try {
+              firebaseApp = admin.app(foundAcc.id + ';;' + platform);
+            } catch (e: any) {
+              if (e.code == 'app/no-app') {
+                firebaseApp = admin.initializeApp(
+                  {
+                    credential: admin.credential.cert(
+                      foundAcc.pushPlatforms[platform].credentials
+                    ),
+                  },
+                  `${foundAcc.id};;${platform}`
+                );
+              } else {
+                throw new HttpException(
+                  `Error while using credentials for ${platform}.`,
+                  HttpStatus.FAILED_DEPENDENCY
+                );
+              }
+            }
+
+            const messaging = admin.messaging(firebaseApp);
+
+            await messaging.send({
+              token:
+                platform === PushPlatforms.ANDROID
+                  ? customer.device_token_android
+                  : customer.device_token_ios,
+              notification: {
+                title: settings.title,
+                body: settings.description,
+              },
+              android:
+                platform === PushPlatforms.ANDROID
+                  ? {
+                      notification: {
+                        sound: 'default',
+                        imageUrl: settings?.image?.imageSrc || '',
+                      },
+                    }
+                  : undefined,
+              apns:
+                platform === PushPlatforms.IOS
+                  ? {
+                      payload: {
+                        aps: {
+                          badge: 1,
+                          sound: 'default',
+                          'content-available': 1,
+                          category: settings.clickBehavior?.type,
+                          'mutable-content': 1,
+                        },
+                      },
+                      fcmOptions: {
+                        imageUrl: settings?.image?.imageSrc || '',
+                      },
+                    }
+                  : undefined,
+              data: body.pushObject.fields.reduce((acc, field) => {
+                acc[field.key] = field.value;
+                return acc;
+              }, {}),
+            });
           })
       );
     } catch (e) {

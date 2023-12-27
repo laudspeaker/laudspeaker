@@ -7,6 +7,7 @@ import { useParams } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
+import { Query } from "reducers/flow-builder.reducer";
 import {
   setAvailableTags,
   setSegmentsSettings,
@@ -16,6 +17,21 @@ import {
 import ApiService from "services/api.service";
 import { useAppDispatch, useAppSelector } from "store/hooks";
 import { SegmentType } from "types/Segment";
+
+export const validateStatementsLength = (q: Query) => {
+  if (q.statements.length === 0)
+    throw new Error("Each logic group should have at least one statement");
+
+  const logicGroups = q.statements.filter(
+    (el) => (el as Query)?.isSubBuilderChild
+  );
+  if (logicGroups.length > 0) {
+    logicGroups.forEach((el) => {
+      validateStatementsLength(el as Query);
+    });
+  }
+  return;
+};
 
 const SegmentBuilder = () => {
   const { id } = useParams();
@@ -51,6 +67,12 @@ const SegmentBuilder = () => {
       dispatch(setShowSegmentsErrors(true));
       return;
     }
+    try {
+      validateStatementsLength(segment.query);
+    } catch (error) {
+      toast.error((error as Error).message);
+      return;
+    }
     setIsLoadingSegment(true);
 
     //create segment
@@ -64,7 +86,7 @@ const SegmentBuilder = () => {
           inclusionCriteria: segment,
         },
       });
-      navigate("/segments/" + data.id);
+      navigate("/segment/" + data.id);
     } catch (e) {
       console.error(e);
       toast.error("Error: failed to save segment");
@@ -237,6 +259,7 @@ const SegmentBuilder = () => {
         <Button
           type={ButtonType.PRIMARY}
           className="!text-[white]"
+          disabled={!name || isLoadingSegment}
           onClick={id ? handleUpdateClick : handleSaveClick}
         >
           {id ? "Update" : "Save"}
