@@ -575,7 +575,7 @@ export class EventsService {
 
             await messaging.send({
               token:
-                platform === 'Android'
+                platform === PushPlatforms.ANDROID
                   ? customer.device_token_android
                   : customer.device_token_ios,
               notification: {
@@ -583,7 +583,7 @@ export class EventsService {
                 body: settings.description,
               },
               android:
-                platform === 'Android'
+                platform === PushPlatforms.ANDROID
                   ? {
                       notification: {
                         sound: 'default',
