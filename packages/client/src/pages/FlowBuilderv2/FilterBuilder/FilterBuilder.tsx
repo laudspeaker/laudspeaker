@@ -477,6 +477,8 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
 
   useDebounce(
     () => {
+      if (isMultisplitBuilder) return;
+
       getRecountAsync();
     },
     withDebounce ? 2000 : 0,
