@@ -4525,8 +4525,8 @@ export class CustomersService {
 
     const deviceTokenConditions = {
       $or: [
-        { device_token_android: { $exists: true, $ne: '' } },
-        { device_token_ios: { $exists: true, $ne: '' } },
+        { androidDeviceToken: { $exists: true, $ne: '' } },
+        { iosDeviceToken: { $exists: true, $ne: '' } },
       ],
     };
 
