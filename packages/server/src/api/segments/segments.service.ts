@@ -1,12 +1,13 @@
 import {
   ConflictException,
   forwardRef,
+  HttpStatus,
   Inject,
   Injectable,
   LoggerService,
   NotFoundException,
 } from '@nestjs/common';
-import { BadRequestException } from '@nestjs/common/exceptions';
+import { BadRequestException, HttpException } from '@nestjs/common/exceptions';
 import { InjectRepository } from '@nestjs/typeorm';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { DataSource, In, Like, QueryRunner, Repository } from 'typeorm';
@@ -22,7 +23,7 @@ import { SegmentCustomers } from './entities/segment-customers.entity';
 import { Segment, SegmentType } from './entities/segment.entity';
 import { InjectConnection } from '@nestjs/mongoose';
 import mongoose from 'mongoose';
-import { query } from 'express';
+import e, { query } from 'express';
 import { CountSegmentUsersSizeDTO } from './dto/size-count.dto';
 
 @Injectable()
@@ -201,44 +202,82 @@ export class SegmentsService {
       // test code
       // this.customersService.createSegmentQuery(createSegmentDTO.inclusionCriteria.query);
       if (segment.type === SegmentType.AUTOMATIC) {
-        // test code
+        // test code getSegmentCustomersFromQuery
+        /*
         const testResult = await this.customersService.testCustomerInSegment(
           createSegmentDTO.inclusionCriteria.query,
           account
         );
         console.log('testResult is', testResult);
-        await queryRunner.commitTransaction();
-
         return segment;
         return testResult;
+        await queryRunner.commitTransaction();
+        */
+
         const customersInSegment =
           await this.customersService.getSegmentCustomersFromQuery(
             createSegmentDTO.inclusionCriteria.query,
             account,
-            session
+            session,
+            true,
+            0,
+            this.generateRandomString()
           );
         this.debug(
-          `we have customersInSegment: ${customersInSegment.size}`,
+          `we have customersInSegment: ${customersInSegment}`,
           this.create.name,
           session,
           account.id
         );
 
-        const segmentCustomersArray: SegmentCustomers[] = Array.from(
-          customersInSegment
-        ).map((stringValue) => {
-          const segmentCustomer = new SegmentCustomers();
-          segmentCustomer.customerId = stringValue;
-          segmentCustomer.segment = segment.id;
-          //segmentCustomer.segment = segment;
-          segmentCustomer.owner = account; // Replace `propertyName` with the actual property name in your entity
-          // Set other properties as needed for each SegmentCustomers entity
-          return segmentCustomer;
-        });
-        await queryRunner.manager.save(SegmentCustomers, segmentCustomersArray);
-        //await SegmentCustomers.save(segmentCustomersArray);
+        const batchSize = 500; // Set an appropriate batch size
+        const collectionName = customersInSegment; // Name of the MongoDB collection
+        const mongoCollection = this.connection.db.collection(collectionName);
+
+        let processedCount = 0;
+        let totalDocuments = await mongoCollection.countDocuments();
+
+        console.log('looks like top level segment is created in mongo');
+        console.log('going to save', totalDocuments);
+        console.log('saving to', segment.id);
+
+        while (processedCount < totalDocuments) {
+          // Fetch a batch of documents
+          const customerDocuments = await mongoCollection
+            .find({})
+            .skip(processedCount)
+            .limit(batchSize)
+            .toArray();
+          // Map the MongoDB documents to SegmentCustomers entities
+          const segmentCustomersArray: SegmentCustomers[] =
+            customerDocuments.map((doc) => {
+              const segmentCustomer = new SegmentCustomers();
+              segmentCustomer.customerId = doc._id.toString();
+              segmentCustomer.segment = segment.id;
+              segmentCustomer.owner = account;
+              // Set other properties as needed
+              return segmentCustomer;
+            });
+          // Batch insert into PostgreSQL database
+          await queryRunner.manager.save(
+            SegmentCustomers,
+            segmentCustomersArray
+          );
+          // Update the count of processed documents
+          processedCount += customerDocuments.length;
+        }
+
+        try {
+          console.log('trying to release collection', customersInSegment);
+          await this.connection.db.collection(customersInSegment).drop();
+          console.log('Collection dropped successfully');
+        } catch (e) {
+          console.error('Error dropping collection:', e);
+        }
       }
       await queryRunner.commitTransaction();
+
+      console.log('customers saved to segment');
 
       return segment;
     } catch (e) {
@@ -254,11 +293,34 @@ export class SegmentsService {
     }
   }
 
+  generateRandomString(length: number = 4): string {
+    const characters =
+      'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let result = '';
+    const charactersLength = characters.length;
+
+    for (let i = 0; i < length; i++) {
+      result += characters.charAt(Math.floor(Math.random() * charactersLength));
+    }
+
+    return result;
+  }
+
   public async create(
     account: Account,
     createSegmentDTO: CreateSegmentDTO,
     session: string
   ) {
+    if (
+      createSegmentDTO.type === SegmentType.AUTOMATIC &&
+      createSegmentDTO?.inclusionCriteria?.query?.statements?.length === 0
+    ) {
+      throw new HttpException(
+        'At least one statement should be defined',
+        HttpStatus.BAD_REQUEST
+      );
+    }
+
     let err;
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
@@ -275,23 +337,6 @@ export class SegmentsService {
         session,
         account.id
       );
-      /*
-    if (segment.type === SegmentType.AUTOMATIC) {
-      this.customersService.CustomerModel.find({
-        ownerId: account.id,
-      })
-        .exec()
-        .then((customers) => {
-          for (const customer of customers) {
-            this.updateAutomaticSegmentCustomerInclusion(
-              account,
-              customer,
-              session
-            );
-          }
-        });
-    }
-    */
 
       // this.customersService.createSegmentQuery(createSegmentDTO.inclusionCriteria.query);
       if (segment.type === SegmentType.AUTOMATIC) {
@@ -299,29 +344,62 @@ export class SegmentsService {
           await this.customersService.getSegmentCustomersFromQuery(
             createSegmentDTO.inclusionCriteria.query,
             account,
-            session
+            session,
+            true,
+            0,
+            this.generateRandomString()
           );
         this.debug(
-          `we have customersInSegment: ${customersInSegment.size}`,
+          `we have customersInSegment: ${customersInSegment}`,
           this.create.name,
           session,
           account.id
         );
 
+        const batchSize = 500; // Set an appropriate batch size
+        const collectionName = customersInSegment; // Name of the MongoDB collection
+        const mongoCollection = this.connection.db.collection(collectionName);
 
-        const segmentCustomersArray: SegmentCustomers[] = Array.from(
-          customersInSegment
-        ).map((stringValue) => {
-          const segmentCustomer = new SegmentCustomers();
-          segmentCustomer.customerId = stringValue;
-          segmentCustomer.segment = segment.id;
-          //segmentCustomer.segment = segment;
-          segmentCustomer.owner = account; // Replace `propertyName` with the actual property name in your entity
-          // Set other properties as needed for each SegmentCustomers entity
-          return segmentCustomer;
-        });
-        await queryRunner.manager.save(SegmentCustomers, segmentCustomersArray);
-        //await SegmentCustomers.save(segmentCustomersArray);
+        let processedCount = 0;
+        let totalDocuments = await mongoCollection.countDocuments();
+
+        //console.log("looks like top level segment is created in mongo");
+        //console.log("going to save", totalDocuments);
+        //console.log("saving to", segment.id);
+
+        while (processedCount < totalDocuments) {
+          // Fetch a batch of documents
+          const customerDocuments = await mongoCollection
+            .find({})
+            .skip(processedCount)
+            .limit(batchSize)
+            .toArray();
+          // Map the MongoDB documents to SegmentCustomers entities
+          const segmentCustomersArray: SegmentCustomers[] =
+            customerDocuments.map((doc) => {
+              const segmentCustomer = new SegmentCustomers();
+              segmentCustomer.customerId = doc._id.toString();
+              segmentCustomer.segment = segment.id;
+              segmentCustomer.owner = account;
+              // Set other properties as needed
+              return segmentCustomer;
+            });
+          // Batch insert into PostgreSQL database
+          await queryRunner.manager.save(
+            SegmentCustomers,
+            segmentCustomersArray
+          );
+          // Update the count of processed documents
+          processedCount += customerDocuments.length;
+        }
+
+        try {
+          //console.log("trying to release collection", customersInSegment);
+          await this.connection.db.collection(customersInSegment).drop();
+          //console.log('Collection dropped successfully');
+        } catch (e) {
+          //console.error('Error dropping collection:', e);
+        }
       }
       await queryRunner.commitTransaction();
 
@@ -340,6 +418,7 @@ export class SegmentsService {
 
   /**
    * Get size of the segment
+   * to do make AND query faster.
    * @param account
    * @param query
    * @returns {size: size of segment, total: total num of users}
@@ -349,21 +428,100 @@ export class SegmentsService {
     createSegmentDTO: CountSegmentUsersSizeDTO,
     session: string
   ) {
+    console.log('In segment size');
+
+    this.debug(
+      `SegmentDTO is: ${JSON.stringify(
+        createSegmentDTO.inclusionCriteria.query.type,
+        null,
+        2
+      )}`,
+      this.create.name,
+      session,
+      account.id
+    );
+
+    if (createSegmentDTO.inclusionCriteria.query.type === 'any') {
+      //console.log("in any");
+      const customersInSegment =
+        await this.customersService.getSegmentCustomersFromQuery(
+          createSegmentDTO.inclusionCriteria.query,
+          account,
+          session,
+          true,
+          0,
+          this.generateRandomString()
+        );
+
+      const mongoCollection = this.connection.db.collection(customersInSegment);
+
+      let segmentDocuments = await mongoCollection.countDocuments();
+      const totalCount = await this.customersService.customersSize(
+        account,
+        session
+      );
+      try {
+        //console.log("trying to release collection", customersInSegment);
+        await this.connection.db.collection(customersInSegment).drop();
+        //console.log('Collection dropped successfully');
+      } catch (e) {
+        //console.error('Error dropping collection:', e);
+      }
+      return { size: segmentDocuments, total: totalCount };
+    } else if (createSegmentDTO.inclusionCriteria.query.type === 'all') {
+      //console.log("in all");
+      const customersInSegment =
+        await this.customersService.getSegmentCustomersFromQuery(
+          createSegmentDTO.inclusionCriteria.query,
+          account,
+          session,
+          true,
+          0,
+          this.generateRandomString()
+        );
+
+      const mongoCollection = this.connection.db.collection(customersInSegment);
+
+      let segmentDocuments = await mongoCollection.countDocuments();
+      const totalCount = await this.customersService.customersSize(
+        account,
+        session
+      );
+      try {
+        //console.log("trying to release collection", customersInSegment);
+        await this.connection.db.collection(customersInSegment).drop();
+        //console.log('Collection dropped successfully');
+      } catch (e) {
+        //console.error('Error dropping collection:', e);
+      }
+      return { size: segmentDocuments, total: totalCount };
+    } else {
+      //console.log("DTO type", createSegmentDTO.inclusionCriteria.type);
+      //should never get here
+      return { size: 12, total: 17 };
+    }
+
     //real
-    //const customersInSegment = await this.customersService.getSegmentCustomersFromQuery(createSegmentDTO.inclusionCriteria.query, account, session);
+    //async getSegmentCustomersFromQuery(query: any, account: Account, session: string, topLevel: boolean, count: number, intermediateCollection?: string): Promise<string>  {
     //test
+    /*
     const customersInSegment =
       await this.customersService.getSegmentCustomersFromQuery(
         createSegmentDTO.inclusionCriteria.query,
         account,
-        session
+        session,
+        true,
+        0,
+        "name"
       );
     const totalCount = await this.customersService.customersSize(
       account,
       session
     );
-
-    return { size: customersInSegment.size, total: totalCount };
+    */
+    //to do change back
+    return { size: 12, total: 17 };
+    //return { size: customersInSegment.size, total: totalCount };
   }
 
   public async update(

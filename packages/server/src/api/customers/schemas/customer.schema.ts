@@ -48,6 +48,12 @@ export class Customer {
   phDeviceToken: string;
 
   @Prop()
+  androidDeviceToken: string;
+
+  @Prop()
+  iosDeviceToken: string;
+
+  @Prop()
   phCustom: string;
 
   @Prop()
@@ -97,6 +103,12 @@ export class Customer {
 
   @Prop()
   isFreezed?: boolean;
+
+  @Prop()
+  device_token_android?: string;
+
+  @Prop()
+  device_token_ios?: string;
 
   @Prop(raw({}))
   customComponents: Record<string, any>;

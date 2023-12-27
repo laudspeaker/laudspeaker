@@ -2175,19 +2175,153 @@ export class CustomersService {
     };
   }
 
-  async customersSize (account: Account, session: string){
-    
-    const totalNumberOfCustomers = this.CustomerModel.find(
-      { ownerId: account.id } 
-    ).count();
-    
+  async customersSize(account: Account, session: string) {
+    const totalNumberOfCustomers = this.CustomerModel.find({
+      ownerId: account.id,
+    }).count();
+
     return totalNumberOfCustomers;
+  }
+
+  /**
+   * Gets count of customers from and query
+   * includes messages,
+   *
+   *  eg email from journey a, email 1 has been received
+   *
+   * Handles top level query with And
+   *
+   * @returns count
+   */
+
+  async CountCustomersFromAndQuery(
+    query: any,
+    account: Account,
+    session: string,
+    topLevel: boolean,
+    count: number,
+    intermediateCollection?: string
+  ): Promise<string> {
+    this.debug(
+      'Creating segment from query',
+      this.getSegmentCustomersFromQuery.name,
+      session
+    );
+
+    //create collectionName
+    let collectionName: string;
+    let thisCollectionName: string;
+    if (count == 0) {
+      collectionName = intermediateCollection;
+    } else {
+      collectionName = intermediateCollection + count;
+    }
+    thisCollectionName = collectionName;
+    this.connection.db.collection(thisCollectionName);
+    count = count + 1;
+    //collectionName = collectionName + count;
+
+    if (query.type === 'all') {
+      console.log('the query has all (AND)');
+      if (!query.statements || query.statements.length === 0) {
+        return; //new Set<string>(); // Return an empty set
+      }
+      const sets = await Promise.all(
+        query.statements.map(async (statement) => {
+          return await this.getSegmentCustomersFromSubQuery(
+            statement,
+            account,
+            session,
+            count++,
+            collectionName + count
+          );
+        })
+      );
+      this.debug(
+        `the sets are: ${sets}`,
+        this.getSegmentCustomersFromQuery.name,
+        session,
+        account.id
+      );
+      this.debug(
+        `about to reduce the sets`,
+        this.getSegmentCustomersFromQuery.name,
+        session,
+        account.id
+      );
+      this.debug(
+        `the sets length: ${sets.length}`,
+        this.getSegmentCustomersFromQuery.name,
+        session,
+        account.id
+      );
+      let unionAggregation: any[] = [];
+      //if (sets.length > 1) {
+      // Add each additional collection to the pipeline for union
+      sets.forEach((collName) => {
+        //console.log("the set is", collName);
+        unionAggregation.push({ $unionWith: { coll: collName } });
+      });
+      // Group by customerId and count occurrences
+      unionAggregation.push(
+        { $group: { _id: '$_id', count: { $sum: 1 } } },
+        //{ $group: { _id: "$customerId", count: { $sum: 1 } } },
+        { $match: { count: sets.length } } // Match only IDs present in all subqueries
+      );
+      //} else if (sets.length === 1) {
+      //  console.log("sets length 1");
+      // If there's only one collection, no matching
+      //} else {
+      //  console.log("No collections to process.");
+      //  return; // Exit if there are no collections
+      //}
+      unionAggregation.push({ $out: thisCollectionName });
+
+      //console.log("the first collection is", thisCollectionName);
+      //console.log("union aggreagation is", JSON.stringify(unionAggregation,null,2));
+
+      // Perform the aggregation on the first collection
+      const collectionHandle =
+        this.connection.db.collection(thisCollectionName);
+      await collectionHandle.aggregate(unionAggregation).toArray();
+
+      if (topLevel) {
+        //for each count drop the collections up to the last one
+        sets.map(async (collection) => {
+          try {
+            this.debug(
+              `trying to release collection`,
+              this.getSegmentCustomersFromQuery.name,
+              session,
+              account.id
+            );
+            await this.connection.db.collection(collection).drop();
+            this.debug(
+              `dropped successfully`,
+              this.getSegmentCustomersFromQuery.name,
+              session,
+              account.id
+            );
+          } catch (e) {
+            this.debug(
+              `error dropping collection: ${e}`,
+              this.getSegmentCustomersFromQuery.name,
+              session,
+              account.id
+            );
+          }
+        });
+      }
+      return thisCollectionName; // mergedSet;
+    }
+    //shouldn't get here;
+    return ''; // Default: Return an empty set
   }
 
   /*
   * 
   * 
-  * Takes in a segment query (inclusion criteria) and returns a set of customerIds
+  * Takes in a segment query (inclusion criteria) and returns a string that is the name of a mongo collection of customerIds
   * NB a query is composed of SingleStatements, and sub queries (which we sometimes call statement with subquery)
   * 
   * @remarks
@@ -2219,112 +2353,284 @@ export class CustomersService {
   *  
   *
   */
-
-  async getSegmentCustomersFromQuery(query: any, account: Account, session: string): Promise<Set<string>> {
+  //to do create intermediate collection
+  async getSegmentCustomersFromQuery(
+    query: any,
+    account: Account,
+    session: string,
+    topLevel: boolean,
+    count: number,
+    intermediateCollection?: string
+  ): Promise<string> {
     this.debug(
       'Creating segment from query',
       this.getSegmentCustomersFromQuery.name,
       session
     );
+
+    //create collectionName
+    let collectionName: string;
+    let thisCollectionName: string;
+    if (count == 0) {
+      collectionName = intermediateCollection;
+    } else {
+      collectionName = intermediateCollection + count;
+    }
+    thisCollectionName = collectionName;
+    this.connection.db.collection(thisCollectionName);
+    count = count + 1;
+    //collectionName = collectionName + count;
+
     if (query.type === 'all') {
       console.log('the query has all (AND)');
       if (!query.statements || query.statements.length === 0) {
-        return new Set<string>(); // Return an empty set
+        return; //new Set<string>(); // Return an empty set
       }
       const sets = await Promise.all(
         query.statements.map(async (statement) => {
           return await this.getSegmentCustomersFromSubQuery(
             statement,
             account,
-            session
+            session,
+            count++,
+            collectionName + count
           );
         })
       );
-      console.log('the sets are', sets);
-      console.log('about to reduce the sets');
-      const results = sets.reduce((intersection, currentSet) => {
-        if (intersection.size === 0) {
-          return currentSet;
-        }
-        return new Set(
-          [...intersection].filter((item) => currentSet.has(item))
-        );
-      }, new Set<string>());
+      this.debug(
+        `the sets are: ${sets}`,
+        this.getSegmentCustomersFromQuery.name,
+        session,
+        account.id
+      );
+      this.debug(
+        `about to reduce the sets`,
+        this.getSegmentCustomersFromQuery.name,
+        session,
+        account.id
+      );
+      this.debug(
+        `the sets length: ${sets.length}`,
+        this.getSegmentCustomersFromQuery.name,
+        session,
+        account.id
+      );
+      let unionAggregation: any[] = [];
+      //if (sets.length > 1) {
+      // Add each additional collection to the pipeline for union
+      sets.forEach((collName) => {
+        //console.log("the set is", collName);
+        unionAggregation.push({ $unionWith: { coll: collName } });
+      });
+      // Group by customerId and count occurrences
+      unionAggregation.push(
+        { $group: { _id: '$_id', count: { $sum: 1 } } },
+        //{ $group: { _id: "$customerId", count: { $sum: 1 } } },
+        { $match: { count: sets.length } } // Match only IDs present in all subqueries
+      );
+      //} else if (sets.length === 1) {
+      //  console.log("sets length 1");
+      // If there's only one collection, no matching
+      //} else {
+      //  console.log("No collections to process.");
+      //  return; // Exit if there are no collections
+      //}
+      unionAggregation.push({ $out: thisCollectionName });
 
-      console.log('Intersection of all sets:', results);
-      return results;
+      //console.log("the first collection is", thisCollectionName);
+      //console.log("union aggreagation is", JSON.stringify(unionAggregation,null,2));
+
+      // Perform the aggregation on the first collection
+      const collectionHandle =
+        this.connection.db.collection(thisCollectionName);
+      await collectionHandle.aggregate(unionAggregation).toArray();
+
+      if (topLevel) {
+        //for each count drop the collections up to the last one
+        sets.map(async (collection) => {
+          try {
+            this.debug(
+              `trying to release collection`,
+              this.getSegmentCustomersFromQuery.name,
+              session,
+              account.id
+            );
+            await this.connection.db.collection(collection).drop();
+            this.debug(
+              `dropped successfully`,
+              this.getSegmentCustomersFromQuery.name,
+              session,
+              account.id
+            );
+          } catch (e) {
+            this.debug(
+              `error dropping collection: ${e}`,
+              this.getSegmentCustomersFromQuery.name,
+              session,
+              account.id
+            );
+          }
+        });
+      }
+      return thisCollectionName; // mergedSet;
     } else if (query.type === 'any') {
       console.log('the query has any (OR)');
       if (!query.statements || query.statements.length === 0) {
-        return new Set<string>(); // Return an empty set
+        return ''; //new Set<string>(); // Return an empty set
       }
 
       const sets = await Promise.all(
         query.statements.map(async (statement) => {
+          //console.log("collectionName is", collectionName);
           return await this.getSegmentCustomersFromSubQuery(
             statement,
             account,
-            session
+            session,
+            count++,
+            collectionName + count
           );
         })
       );
 
-      const mergedSet = new Set<string>();
+      let unionAggregation: any[] = [];
+      /*
+      [
+        { $group: { _id: "$customerId" } }
+      ];
+      */
 
-      sets.forEach((set) => {
-        set.forEach((item) => {
-          mergedSet.add(item);
+      this.debug(
+        `the sets are: ${sets}`,
+        this.getSegmentCustomersFromQuery.name,
+        session,
+        account.id
+      );
+      this.debug(
+        `about to union the sets`,
+        this.getSegmentCustomersFromQuery.name,
+        session,
+        account.id
+      );
+      this.debug(
+        `the sets length: ${sets.length}`,
+        this.getSegmentCustomersFromQuery.name,
+        session,
+        account.id
+      );
+
+      // Add each additional collection to the pipeline
+      if (sets.length > 1) {
+        sets.forEach((collName) => {
+          unionAggregation.push({ $unionWith: { coll: collName } });
+          //unionAggregation.push({ $unionWith: { coll: collName, pipeline: [{ $group: { _id: "$customerId" } }] } });
         });
-      });
+      }
+      //unique users
+      //unionAggregation.push({ $group: { _id: "$customerId" } });
+      unionAggregation.push({ $group: { _id: '$_id' } });
 
-      console.log('Union of all sets:', mergedSet);
-      return mergedSet;
+      // dump results to thisCollectionName
+      unionAggregation.push({ $out: thisCollectionName });
 
-    /*
-    console.log('all sets are:', JSON.stringify(sets, null, 2));
-    
-    const results = new Set<string>([].concat(...sets));
-    console.log('Union of all sets:', results);
-    return results;
-    */
+      //console.log("the first collection is", sets[0]);
+      // Perform the aggregation on the first collection
+      const collectionHandle = this.connection.db.collection(sets[0]);
+      await collectionHandle.aggregate(unionAggregation).toArray();
+
+      if (topLevel) {
+        //for each count drop the collections up to the last one
+        sets.map(async (collection) => {
+          try {
+            this.debug(
+              `trying to release collection`,
+              this.getSegmentCustomersFromQuery.name,
+              session,
+              account.id
+            );
+            await this.connection.db.collection(collection).drop();
+            this.debug(
+              `dropped successfully`,
+              this.getSegmentCustomersFromQuery.name,
+              session,
+              account.id
+            );
+          } catch (e) {
+            this.debug(
+              `error dropping collection: ${e}`,
+              this.getSegmentCustomersFromQuery.name,
+              session,
+              account.id
+            );
+          }
+        });
+      }
+      return thisCollectionName; // mergedSet;
     }
-    return new Set<string>(); // Default: Return an empty set
+    //shouldn't get here;
+    return ''; // Default: Return an empty set
   }
-
 
   /**
    * Helper function for getSegmentCustomersFromQuery
-   * 
-   * Handle queries with subqueries 
-   * 
+   *
+   * Handle queries with subqueries
+   *
    * @returns set of customers
    */
   async getSegmentCustomersFromSubQuery(
     statement: any,
     account: Account,
-    session: string
+    session: string,
+    count: number,
+    intermediateCollection: string
   ) {
     if (statement.statements && statement.statements.length > 0) {
       // Statement has a subquery, recursively evaluate the subquery
-      return this.getSegmentCustomersFromQuery(statement, account, session);
+      this.debug(
+        `recursive subquery call`,
+        this.getSegmentCustomersFromSubQuery.name,
+        session,
+        account.id
+      );
+      return this.getSegmentCustomersFromQuery(
+        statement,
+        account,
+        session,
+        false,
+        count,
+        intermediateCollection
+      );
     } else {
-      return await this.getCustomersFromStatement(statement, account, session);
+      this.debug(
+        `singleStatement call`,
+        this.getSegmentCustomersFromSubQuery.name,
+        session,
+        account.id
+      );
+      return await this.getCustomersFromStatement(
+        statement,
+        account,
+        session,
+        count,
+        intermediateCollection
+      );
     }
-    return false;
   }
 
-   /**
+  /**
    * Routes to the right statement handler for getting customers
    *  essentially 3 types, Attribute, Event, Message
    *
-   * Handles SINGLE statements not queries with subqueries 
-   * 
+   * Handles SINGLE statements not queries with subqueries
+   *
    * @returns set of customers
    */
   async getCustomersFromStatement(
     statement: any,
     account: Account,
-    session: string
+    session: string,
+    count: number,
+    intermediateCollection: string
   ) {
     const {
       key,
@@ -2335,7 +2641,7 @@ export class CustomersService {
       subComparisonValue,
     } = statement;
     this.debug(
-      "In getCustomersFromStatement deciding which sub evaluate statement to go to next/n\n",
+      'In getCustomersFromStatement deciding which sub evaluate statement to go to next/n\n',
       this.getCustomersFromStatement.name,
       session,
       account.email
@@ -2377,42 +2683,54 @@ export class CustomersService {
         return this.customersFromAttributeStatement(
           statement,
           account,
-          session
+          session,
+          count,
+          intermediateCollection
         );
         break;
       case 'Event':
         return await this.customersFromEventStatement(
           statement,
           account,
-          session
+          session,
+          count,
+          intermediateCollection
         );
       case 'Email':
         return this.customersFromMessageStatement(
           statement,
           account,
           'Email',
-          session
+          session,
+          count,
+          intermediateCollection
         );
       case 'Push':
         return this.customersFromMessageStatement(
           statement,
           account,
           'Push',
-          session
+          session,
+          count,
+          intermediateCollection
         );
       case 'SMS':
         return this.customersFromMessageStatement(
           statement,
           account,
           'SMS',
-          session
+          session,
+          count,
+          intermediateCollection
         );
       case 'In-app message':
         return this.customersFromMessageStatement(
           statement,
           account,
           'In-app message',
-          session
+          session,
+          count,
+          intermediateCollection
         );
       case 'Segment':
         break;
@@ -2421,14 +2739,14 @@ export class CustomersService {
     }
   }
 
-   /**
+  /**
    * Gets set of customers from a single statement that
    * includes messages,
-   * 
+   *
    *  eg email from journey a, email 1 has been received
    *
-   * Handles SINGLE statements not queries with subqueries 
-   * 
+   * Handles SINGLE statements not queries with subqueries
+   *
    * @returns set of customers
    */
 
@@ -2436,7 +2754,9 @@ export class CustomersService {
     statement: any,
     account: Account,
     typeOfMessage: string,
-    session: string
+    session: string,
+    count: number,
+    intermediateCollection: string
   ) {
     const userId = (<Account>account).id;
     this.debug(
@@ -2543,23 +2863,57 @@ export class CustomersService {
         account.id
       );
 
-      //const testQuery = "SELECT COUNT(*) FROM message_status" ;
       const countEvents = await this.clickhouseClient.query({
         query: sqlQuery,
         format: 'CSV',
         //query_params: { customerId },
       });
-      let customerIds = new Set<string>();
+      this.debug(
+        `creating collection`,
+        this.customersFromMessageStatement.name,
+        session,
+        account.id
+      );
+      const collectionHandle = this.connection.db.collection(
+        intermediateCollection
+      );
+      const batchSize = 1000; // Define batch size
+      let batch = [];
+
       const stream = countEvents.stream();
+
       stream.on('data', (rows: Row[]) => {
         rows.forEach((row: Row) => {
           const cleanedText = row.text.replace(/^"(.*)"$/, '$1'); // Removes surrounding quotes
-          //console.log('this is the data', cleanedText);
-          customerIds.add(cleanedText);
+          batch.push({ customerId: cleanedText });
+          if (batch.length >= batchSize) {
+            // Using async function to handle the insertion
+            (async () => {
+              try {
+                const result = await collectionHandle.insertMany(batch);
+                console.log('Batch of documents inserted:', result);
+                batch = []; // Reset batch after insertion
+              } catch (err) {
+                console.error('Error inserting documents:', err);
+              }
+            })();
+          }
         });
       });
+
       await new Promise((resolve) => {
         stream.on('end', () => {
+          if (batch.length > 0) {
+            // Insert any remaining documents
+            (async () => {
+              try {
+                const result = await collectionHandle.insertMany(batch);
+                console.log('Final batch of documents inserted:', result);
+              } catch (err) {
+                console.error('Error inserting documents:', err);
+              }
+            })();
+          }
           this.debug(
             'Completed!',
             this.customersFromMessageStatement.name,
@@ -2570,38 +2924,44 @@ export class CustomersService {
         });
       });
 
+      return intermediateCollection;
+      /*
       this.debug(
         `set from custoners from messages is:\n${customerIds}`,
         this.customersFromMessageStatement.name,
         session,
         account.id
       );
-
       return customerIds;
+      */
     }
     //to do: check what we should do in this case
     //throw "Invalid statement type";
-    return false;
+    return intermediateCollection;
+
+    //return false;
   }
 
-   /**
+  /**
    * Gets set of customers from a single statement that
    * includes Attribute,
-   * 
+   *
    *  eg firstName equal to Abe
    *
-   * Handles SINGLE statements not queries with subqueries 
-   * 
+   * Handles SINGLE statements not queries with subqueries
+   *
    * @returns set of customers
    */
   async customersFromAttributeStatement(
     statement: any,
     account: Account,
-    session: string
+    session: string,
+    count: number,
+    intermediateCollection: string
   ) {
     //console.log('generating attribute mongo query');
     this.debug(
-      'generating attribute mongo query',
+      'generating attribute mongo query\n',
       this.customersFromAttributeStatement.name,
       session,
       account.id
@@ -2681,7 +3041,7 @@ export class CustomersService {
     }
 
     this.debug(
-      `generated attribute query is: ${JSON.stringify(query, null, 2)}`,
+      ` generated attribute query is: ${JSON.stringify(query, null, 2)}`,
       this.customersFromAttributeStatement.name,
       session,
       account.id
@@ -2701,13 +3061,25 @@ export class CustomersService {
       account.id
     );
 
-    const aggregationPipeline = [
+    this.debug(
+      `creating collection`,
+      this.customersFromAttributeStatement.name,
+      session,
+      account.id
+    );
+
+    this.connection.db.collection(intermediateCollection);
+
+    const aggregationPipeline: any[] = [
       { $match: query },
       {
         $project: {
+          //customerId: "$_id", // or another field that uniquely identifies the customer
+          //_id: 0 // Optionally exclude the default _id if it's not needed
           _id: 1,
         },
       },
+      { $out: intermediateCollection },
     ];
 
     const docs = await this.CustomerModel.aggregate(aggregationPipeline).exec();
@@ -2718,7 +3090,8 @@ export class CustomersService {
       session,
       account.id
     );
-
+    return intermediateCollection;
+    /*
     const correlationValues = new Set<string>();
 
     docs.forEach((custData) => {
@@ -2733,22 +3106,58 @@ export class CustomersService {
     );
 
     return correlationValues;
+    */
+  }
+
+  /**
+   * Gets the primary key for a given user
+   *
+   * @returns string
+   */
+  async getPrimaryKey(account: Account, session: string): Promise<string> {
+    let currentPK: string = await this.CustomerKeysModel.findOne({
+      ownerId: account.id,
+      isPrimary: true,
+    });
+
+    if (currentPK) {
+      this.debug(
+        `current pk is: ${currentPK}`,
+        this.getPrimaryKey.name,
+        session,
+        account.id
+      );
+      return currentPK;
+    } else {
+      // Handle case where currentPK is null
+      this.debug(
+        `pk isnt working so set as email`,
+        this.getPrimaryKey.name,
+        session,
+        account.id
+      );
+      //to do just for testing
+      currentPK = 'email';
+      return currentPK;
+    }
   }
 
   /**
    * Gets set of customers from a single statement that
    * includes Events,
-   * 
+   *
    *  eg onboarding has performed 1 times
    *
-   * Handles SINGLE statements not queries with subqueries 
-   * 
+   * Handles SINGLE statements not queries with subqueries
+   *
    * @returns set of customers
    */
   async customersFromEventStatement(
     statement: any,
     account: Account,
-    session: string
+    session: string,
+    count: number,
+    intermediateCollection: string
   ) {
     const { eventName, comparisonType, value, time, additionalProperties } =
       statement;
@@ -2824,13 +3233,6 @@ export class CustomersService {
       }
     }
 
-    if (comparisonType === 'has performed') {
-      //mongoQuery.value = value;
-    } else if (comparisonType === 'has not performed') {
-      //need to check the logic for this one
-      //mongoQuery.value = { $ne: value };
-    }
-
     //sub property not fully tested yet
     if (additionalProperties) {
       const propertiesQuery: any[] = [];
@@ -2865,9 +3267,15 @@ export class CustomersService {
       session,
       account.id
     );
+    this.debug(
+      `creating collection`,
+      this.customersFromEventStatement.name,
+      session,
+      account.id
+    );
+    this.connection.db.collection(intermediateCollection);
 
-    // we should enact a strict policy so that matching here is done on primary key
-    // ie correlationKey = primary key, correlation values = unique identifier
+    // we should enact a strict policy in all other areas in the application as matching here is done on primary key
 
     if (comparisonType === 'has performed') {
       this.debug(
@@ -2877,93 +3285,266 @@ export class CustomersService {
         account.id
       );
 
-      const aggregationPipeline = [
+      const aggregationPipeline: any[] = [
         { $match: mongoQuery },
         {
+          $lookup: {
+            from: 'customers',
+            localField: 'correlationValue',
+            foreignField: await this.getPrimaryKey(account, session),
+            as: 'matchedCustomers',
+          },
+        },
+        { $unwind: '$matchedCustomers' },
+        {
           $group: {
-            _id: {
-              correlationKey: '$correlationKey',
-              correlationValue: '$correlationValue',
-              event: '$event',
-            },
-            times: { $sum: 1 },
+            _id: '$matchedCustomers._id',
+            count: { $sum: 1 },
           },
         },
+        { $match: { count: { $gte: value } } },
         {
-          $match: {
-            times: { $gte: value }, // Adjust this condition as needed
+          $group: {
+            _id: null,
+            customerIds: { $push: '$_id' },
           },
         },
+        { $out: intermediateCollection },
+        //to do
+      ];
+
+      this.debug(
+        'aggregate query is/n\n',
+        this.customersFromEventStatement.name,
+        session,
+        account.id
+      );
+
+      this.debug(
+        JSON.stringify(aggregationPipeline, null, 2),
+        this.customersFromEventStatement.name,
+        session,
+        account.id
+      );
+
+      //fetch users here
+      const result: any = await this.eventsService.getCustomersbyEventsMongo(
+        aggregationPipeline
+      );
+      /*
+      * Example result is: 
+      [
         {
-          $project: {
-            _id: 0,
-            correlationKey: '$_id.correlationKey',
-            correlationValue: '$_id.correlationValue',
-            event: '$_id.event',
-            times: 1,
+          "_id": null,
+          "customerIds": [
+            "658515aba1256bc5c2232ba7",
+            "658515aba1256bc5c2232bad",
+            "6585156aa1256bc5c2232ba0"
+          ]
+        }
+      ]
+      Empty example: []
+      */
+      //console.log("results are", JSON.stringify(result, null, 2));
+      /*
+      this.debug(
+        'Here are the results',
+        this.customersFromEventStatement.name,
+        session,
+        account.id
+      );
+      this.debug(
+        JSON.stringify(result, null, 2),
+        this.customersFromEventStatement.name,
+        session,
+        account.id
+      );
+      if (result.length > 0) {
+        const customerIdsSet: Set<string> = new Set(result[0].customerIds);
+        return customerIdsSet;
+      }
+      else{
+        // no customers who satisfy conditions so return empty set
+        return new Set<string>();
+      }
+      */
+      return intermediateCollection;
+    } else if (comparisonType === 'has not performed') {
+      /*
+       * we first check if the event has ever been performed
+       * if not we return all customers
+       *
+       * if event has been performed by any user, we get the customer ids of the users who have performed
+       * then filter for all other customer ids ie never performed event
+       *
+       */
+      this.debug(
+        'in the aggregate construction - has performed',
+        this.customersFromEventStatement.name,
+        session,
+        account.id
+      );
+
+      //first check
+      const checkEventExists = [
+        {
+          $match: mongoQuery,
+        },
+        {
+          $group: {
+            _id: '$event',
+            count: { $sum: 1 },
           },
         },
       ];
-      /*
-      const aggregationPipeline = [
+      const check = await this.eventsService.getCustomersbyEventsMongo(
+        checkEventExists
+      );
+      this.debug(
+        'the check is',
+        this.customersFromEventStatement.name,
+        session,
+        account.id
+      );
+      this.debug(
+        JSON.stringify(check, null, 2),
+        this.customersFromEventStatement.name,
+        session,
+        account.id
+      );
+
+      if (check.length < 1) {
+        this.debug(
+          'no events of this name',
+          this.customersFromEventStatement.name,
+          session,
+          account.id
+        ); //the event does not exist, so we should return all customers
+        const allUsers = [
+          {
+            $match: {
+              ownerId: (<Account>account).id,
+            },
+          },
+          {
+            $group: {
+              _id: null,
+              customerIds: { $push: '$_id' },
+            },
+          },
+          {
+            $project: {
+              _id: 1,
+              //_id: 0,
+              //allCustomerIds: '$customerIds'
+            },
+          },
+          { $out: intermediateCollection },
+        ];
+
+        const result = await this.CustomerModel.aggregate(allUsers).exec();
+        /*
+        this.debug(
+          'the result is',
+          this.customersFromEventStatement.name,
+          session,
+          account.id
+        );
+        this.debug(
+          JSON.stringify(result,null,2),
+          this.customersFromEventStatement.name,
+          session,
+          account.id
+        );
+        //console.log("the result is", JSON.stringify(result,null,2) );
+
+        if (result.length > 0) {
+          const customerIdsSet: Set<string> = new Set(result[0].allCustomerIds);
+          return customerIdsSet;
+        }
+        else{
+          // no customers who satisfy conditions so return empty set
+          // likely on a fresh account with no users 
+          return new Set<string>();
+        }
+        */
+        return intermediateCollection;
+      }
+      this.debug(
+        'event exists',
+        this.customersFromEventStatement.name,
+        session,
+        account.id
+      );
+      // double lookup, first find users who perform id, then filter them out
+      const aggregationPipeline: any[] = [
         { $match: mongoQuery },
         {
+          $lookup: {
+            from: 'customers',
+            localField: 'correlationValue',
+            foreignField: await this.getPrimaryKey(account, session),
+            as: 'matchedCustomers',
+          },
+        },
+        {
           $group: {
-            _id: {
-              correlationKey: '$correlationKey',
-              correlationValue: '$correlationValue',
-              event: '$event'
-            },
-            times: { $sum: 1 }
-          }
-        },
-        {
-          $match: {
-            times: { $gte: value }
-          }
-        },
-        {
-          $project: {
-            _id: 0,
-            correlationKey: '$_id.correlationKey',
-            correlationValue: '$_id.correlationValue',
-            event: '$_id.event',
-            times: 1
-          }
-        },
-        {
-          $addFields: {
-            lookupCorrelationKey: '$correlationKey',
-            lookupCorrelationValue: '$correlationValue'
-          }
+            _id: '$event',
+            correlationValues: { $addToSet: '$correlationValue' },
+            matchedCustomers: { $addToSet: '$matchedCustomers._id' },
+          },
         },
         {
           $lookup: {
             from: 'customers',
             let: {
-              correlationKey: '$lookupCorrelationKey',
-              correlationValue: '$lookupCorrelationValue'
+              matchedCustomerIds: '$matchedCustomers',
+              correlationValues: '$correlationValues',
             },
             pipeline: [
               {
                 $match: {
                   $expr: {
-                    $eq: ['$correlationKey', '$$correlationValue']
-                  }
-                }
-              }
-              // Add any additional stages if needed
+                    $and: [
+                      {
+                        $not: {
+                          $in: [
+                            '$' + (await this.getPrimaryKey(account, session)),
+                            { $ifNull: ['$$correlationValues', []] },
+                          ],
+                        },
+                      },
+                      {
+                        $not: {
+                          $in: [
+                            '$_id',
+                            { $ifNull: ['$$matchedCustomerIds', []] },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              },
             ],
-            as: 'matchedCustomers'
-          }
+            as: 'unmatchedCustomers',
+          },
         },
         {
-          $match: {
-            matchedCustomers: { $ne: [] }
-          }
-        }
+          $project: {
+            unmatchedCustomers: {
+              $map: {
+                input: '$unmatchedCustomers',
+                as: 'customer',
+                in: '$$customer._id',
+              },
+            },
+            _id: 0,
+          },
+        },
+        { $out: intermediateCollection },
       ];
-      */
+
       this.debug(
         'aggregate query is/n\n',
         this.customersFromEventStatement.name,
@@ -2981,6 +3562,7 @@ export class CustomersService {
       const result = await this.eventsService.getCustomersbyEventsMongo(
         aggregationPipeline
       );
+
       this.debug(
         'Here are the results',
         this.customersFromEventStatement.name,
@@ -2995,212 +3577,14 @@ export class CustomersService {
         account.id
       );
 
-      //const firstCorrelationKey = result[0].correlationKey;
-      const correlationValues = result.map((doc) => doc.correlationValue);
-
-      /*
-      // this probably won't work for millions of customers, we need to optimize
-      const customers = await this.CustomerModel.find(
-        { firstCorrelationKey: { $in: correlationValues } },
-        { _id: 1 } // Specify to only retrieve the _id field
-      ).exec();
-
-      const customerIds = new Set<string>();
-      
-
-      result.forEach((eventData) => {
-        customerIds.add(eventData.correlationValue);
-      });
-      */
-
-      return correlationValues;
-    } else if (comparisonType === 'has not performed') {
-      this.debug(
-        'in the aggregate construction - has performed',
-        this.customersFromEventStatement.name,
-        session,
-        account.id
-      );
-      const aggregationPipeline = [
-        { $match: mongoQuery },
-        {
-          $group: {
-            _id: {
-              correlationKey: '$correlationKey',
-              correlationValue: '$correlationValue',
-              event: '$event',
-            },
-            times: { $sum: 1 },
-          },
-        },
-        {
-          $match: {
-            times: { $gte: 0 }, // Adjust this condition as needed
-          },
-        },
-        {
-          $project: {
-            _id: 0,
-            correlationKey: '$_id.correlationKey',
-            correlationValue: '$_id.correlationValue',
-            event: '$_id.event',
-            times: 1,
-          },
-        },
-      ];
-      this.debug(
-        'aggregat query is/n\n',
-        this.customersFromEventStatement.name,
-        session,
-        account.id
-      );
-
-      this.debug(
-        JSON.stringify(aggregationPipeline, null, 2),
-        this.customersFromEventStatement.name,
-        session,
-        account.id
-      );
-
-      const result = await this.eventsService.getCustomersbyEventsMongo(
-        aggregationPipeline
-      );
-      this.debug(
-        'Here are the results',
-        this.customersFromEventStatement.name,
-        session,
-        account.id
-      );
-
-      this.debug(
-        JSON.stringify(result, null, 2),
-        this.customersFromEventStatement.name,
-        session,
-        account.id
-      );
-      const correlationValues = new Set<string>();
-
-      result.forEach((eventData) => {
-        correlationValues.add(eventData.correlationValue);
-      });
-      // we need to make a call to the customers table and take the complement of result here and return that
-      //return correlationValues;
+      return intermediateCollection;
     } else {
-      return new Set<string>();
+      return intermediateCollection;
+      //return new Set<string>();
     }
-
-    return false;
+    return intermediateCollection;
+    //return false;
   }
-
-  /**
-   * Takes in a statement of the form:
-   * 
-           "type": "Attribute",
-           "key": "firstName",
-           "comparisonType": "exist",
-           "subComparisonType": "exist",
-           "subComparisonValue": "",
-           "valueType": "String",
-           "value": ""
-         }
-   
-   *
-   * @remarks
-   * Optimize this to happen inside of mongo later.
-   *
-   * calls a sub method based on whether its an attribute, message, or other type of segment
-   * 
-   */
-
-  /*
-  constructMongoQuery(statement: any) {
-    console.log('constructing Mongo Query');
-    switch (statement.type) {
-      case 'Attribute':
-        return this.generateMongoAttributeQuery(statement);
-        break;
-      case 'Event':
-        break;
-      case 'Email':
-        break;
-      case 'Push':
-        break;
-      case 'SMS':
-        break;
-      case 'In-app message':
-        break;
-      case 'Segment':
-        break;
-    }
-  }
-  
-
-  public generateMongoAttributeQuery(queryObject: QueryObject): object {
-    console.log('generating attribute mongo query');
-    const {
-      key,
-      comparisonType,
-      subComparisonType,
-      value,
-      subComparisonValue,
-    } = queryObject;
-    let query: any = {};
-    console.log('comparison type is', comparisonType);
-    switch (comparisonType) {
-      case 'is equal to':
-        //checked
-        query[key] = value;
-        break;
-      case 'is not equal to':
-        //checked
-        query[key] = { $ne: value };
-        break;
-      case 'contains':
-        // doesnt seem to be working
-        query[key] = { $regex: new RegExp(value, 'i') };
-        break;
-      case 'does not contain':
-        // doesnt seem to be working
-        query[key] = { $not: new RegExp(value, 'i') };
-        break;
-      case 'exist':
-        //checked
-        query[key] = { $exists: true };
-        break;
-      case 'not exist':
-        //checked
-        query[key] = { $exists: false };
-        break;
-      case 'is greater than':
-        query[key] = { $gt: value };
-        break;
-      case 'is less than':
-        query[key] = { $lt: value };
-        break;
-      // nested object
-      case 'key':
-        if (subComparisonType === 'equal to') {
-          query[key] = { [value]: subComparisonValue };
-        } else if (subComparisonType === 'not equal to') {
-          query[key] = { [value]: { $ne: subComparisonValue } };
-        } else if (subComparisonType === 'exist') {
-          query[key] = { [value]: { $exists: true } };
-        } else if (subComparisonType === 'not exist') {
-          query[key] = { [value]: { $exists: false } };
-        } else {
-          throw new Error('Invalid sub-comparison type for nested property');
-        }
-        break;
-      // Add more cases for other comparison types as needed
-      default:
-        throw new Error('Invalid comparison type');
-    }
-
-    console.log('generated attribute query is', JSON.stringify(query, null, 2));
-
-    return query;
-  }
-  */
 
   /*
    * Checks if a given customer should be in a segment
@@ -3283,7 +3667,7 @@ export class CustomersService {
     account: Account,
     session: string,
     customer?: CustomerDocument,
-    customerId?: string,
+    customerId?: string
   ) {
     this.debug(
       'in checkCustomerMatchesQuery',
@@ -3292,20 +3676,18 @@ export class CustomersService {
       account.id
     );
     if (!customerId && !customer) {
-      throw new Error("At least one of 'customerId' or 'customer' must be provided.");
+      throw new Error(
+        "At least one of 'customerId' or 'customer' must be provided."
+      );
     }
     if (customerId && !customer) {
       // If customerId is provided but customer is not
-      customer = await this.findById(
-        account,
-        customerId,
-      );
+      customer = await this.findById(account, customerId);
       // customer = await this.CustomerModel.findOne({
       //   _id: new Types.ObjectId(customerId),
       //   ownerId: account.id,
       // }).exec();
-      if (!customer)
-        throw new Error("Person not found");
+      if (!customer) throw new Error('Person not found');
     }
     this.debug(
       `the query is: ${JSON.stringify(query, null, 2)}`,
@@ -3367,11 +3749,14 @@ export class CustomersService {
         })
       );
       return results.some((result) => result);
-    }
-    else{
+    } else {
       //shouldnt get here
       this.debug(
-        `shouldnt get here, what is query type?: ${JSON.stringify(query.type, null, 2)}`,
+        `shouldnt get here, what is query type?: ${JSON.stringify(
+          query.type,
+          null,
+          2
+        )}`,
         this.checkCustomerMatchesQuery.name,
         session,
         account.id
@@ -3388,20 +3773,30 @@ export class CustomersService {
   ): Promise<boolean> {
     if (statement.statements && statement.statements.length > 0) {
       // Statement has a subquery, recursively evaluate the subquery
-      return this.checkCustomerMatchesQuery(statement, account, session, customer );
+      return this.checkCustomerMatchesQuery(
+        statement,
+        account,
+        session,
+        customer
+      );
     } else {
-      return await this.evaluateSingleStatement(customer, statement, account, session);
+      return await this.evaluateSingleStatement(
+        customer,
+        statement,
+        account,
+        session
+      );
     }
   }
 
   /**
-   * Evaluates if a customer should be included according to the single statement provided 
+   * Evaluates if a customer should be included according to the single statement provided
    * @returns a boolean in promise
-   * 
+   *
    * @param takes in a single statement, NOT a query.
    *   single statments do not include 'all' or 'any' for types
-   * @param customer     
-   *  
+   * @param customer
+   *
    */
   async evaluateSingleStatement(
     customer: CustomerDocument,
@@ -3416,7 +3811,7 @@ export class CustomersService {
       subComparisonType,
       value,
       subComparisonValue,
-    } = statement; 
+    } = statement;
     this.debug(
       'NB this function takes in single statements not full queries, for full queries use customerMatchesQuery/n\n',
       this.evaluateSingleStatement.name,
@@ -3550,15 +3945,15 @@ export class CustomersService {
     }
   }
 
-   /**
-   * Evaluates if a customer should be included according to the single  Message statement provided 
+  /**
+   * Evaluates if a customer should be included according to the single  Message statement provided
    * @returns a boolean in promise
-   * 
+   *
    * @param takes in a single message statement, NOT a query.
    *   single statments do not include 'all' or 'any' for types
    *    eg email from journey a, email 1 has been received
-   * @param customer     
-   *  
+   * @param customer
+   *
    */
   async evaluateMessageStatement(
     customer: CustomerDocument,
@@ -3713,55 +4108,20 @@ export class CustomersService {
     return false;
   }
 
-  async addPrimaryKeyToMongoQuery(mongoQuery: any, account: Account, session: string, customer:CustomerDocument){
-    let currentPK : string = await this.CustomerKeysModel.findOne({
-      ownerId: account.id,
-      isPrimary: true,
-  })
-
-    if (currentPK) {
-      this.debug(
-        `current pk is: ${currentPK}`,
-        this.evaluateEventStatement.name,
-        session,
-        account.id
-      );
-      mongoQuery.correlationKey = currentPK;
-      mongoQuery.correlationValue = customer[currentPK];
-    } else {
-      // Handle case where currentPK is null
-      //uncomment when primary key thing is working correctly
-      /*
-      throw new HttpException(
-        "Select a primary key first.",
-        HttpStatus.BAD_REQUEST
-      );
-      */
-
-      //to do just for testing
-      console.log("pk isnt working so set as email")
-      currentPK = "email";
-      mongoQuery.correlationKey = currentPK;
-      mongoQuery.correlationValue = customer[currentPK];
-        
-    }
-  }
-
-
   /*
    * this needs to be rejigged a little the mongo query takes in a customer field to filter against
    * something like: mongoQuery[correlationKey] = correlationValue
 
    */
   /**
-   * Evaluates if a customer should be included according to the single Event statement provided 
+   * Evaluates if a customer should be included according to the single Event statement provided
    * @returns a boolean in promise
-   * 
+   *
    * @param takes in a single Event statement, NOT a query.
    *   single statments do not include 'all' or 'any' for types
    *    eg onboarding has performed 1 times
-   * @param customer     
-   *  
+   * @param customer
+   *
    */
   async evaluateEventStatement(
     customer: CustomerDocument,
@@ -3817,10 +4177,10 @@ export class CustomersService {
       ownerId: (<Account>account).id,
     };
 
-    let currentPK : string = await this.CustomerKeysModel.findOne({
-        ownerId: account.id,
-        isPrimary: true,
-    })
+    let currentPK: string = await this.CustomerKeysModel.findOne({
+      ownerId: account.id,
+      isPrimary: true,
+    });
 
     if (currentPK) {
       this.debug(
@@ -3842,11 +4202,10 @@ export class CustomersService {
       */
 
       //to do just for testing
-      console.log("pk isnt working so set as email")
-      currentPK = "email";
+      console.log('pk isnt working so set as email');
+      currentPK = 'email';
       mongoQuery.correlationKey = currentPK;
       mongoQuery.correlationValue = customer[currentPK];
-        
     }
 
     if (time) {
@@ -4058,12 +4417,13 @@ export class CustomersService {
 
   //** test **
   /*
-   * NB the structure of the query argument 
-   *  
+   * NB the structure of the query argument
+   *
    *
    */
-  async testCustomerInSegment(query: any, account: Account): Promise<boolean>{//Promise<Set<string>>  {
-    let session = "this is a fake session"
+  async testCustomerInSegment(query: any, account: Account): Promise<boolean> {
+    //Promise<Set<string>>  {
+    let session = 'this is a fake session';
     this.debug(
       'In Test Customer Segment',
       this.testCustomerInSegment.name,
@@ -4083,7 +4443,7 @@ export class CustomersService {
       account.id
     );
 
-    console.log("here here");
+    console.log('here here');
 
     let testCustomer = new this.CustomerModel({
       externalId: '6583b25df2be8cd3c8b17f61',
@@ -4105,20 +4465,36 @@ export class CustomersService {
       account.id
     );
 
-    console.log("here here 3");
+    console.log('here here 3');
 
     //statement, account, session
-    const eventCust = await this.getSegmentCustomersFromQuery(query, account, "fake session");
-    console.log("the result of the eventCust is", eventCust);//JSON.stringify(eventCust, null, 2));
+    const eventCust = await this.getSegmentCustomersFromQuery(
+      query,
+      account,
+      'fake session',
+      true,
+      0,
+      'test_collection'
+    );
+    console.log('the result of the eventCust is', eventCust); //JSON.stringify(eventCust, null, 2));
 
     //query: any,account: Account,session: string,customer?: CustomerDocument, customerId?: string,
-    const resultOfCheckCustomerMatchesQuery = await this.checkCustomerMatchesQuery( query, account, "fake session", testCustomer );
-    console.log("the result of the evaluation is", resultOfCheckCustomerMatchesQuery);
+    const resultOfCheckCustomerMatchesQuery =
+      await this.checkCustomerMatchesQuery(
+        query,
+        account,
+        'fake session',
+        testCustomer
+      );
+    console.log(
+      'the result of the evaluation is',
+      resultOfCheckCustomerMatchesQuery
+    );
 
     //console.log("test customer is", JSON.stringify(testCustomer,null,2));
     //console.log("the segment and the customer are", await this.checkCustomerMatchesQuery(testCustomer, query, account));
-    
-    return false//await evaluateStatement()
+
+    return false; //await evaluateStatement()
     /*
     let custs = await this.getSegmentCustomersFromQuery(query, account, session)
     
@@ -4147,11 +4523,24 @@ export class CustomersService {
   }> {
     const query: any = { ownerId: account.id };
 
+    const deviceTokenConditions = {
+      $or: [
+        { device_token_android: { $exists: true, $ne: '' } },
+        { device_token_ios: { $exists: true, $ne: '' } },
+      ],
+    };
+
     if (search) {
-      query['$or'] = [
-        { email: new RegExp(`.*${search}.*`, 'i') },
-        { phone: new RegExp(`.*${search}.*`, 'i') },
-      ];
+      const searchConditions = {
+        $or: [
+          { email: new RegExp(`.*${search}.*`, 'i') },
+          { phone: new RegExp(`.*${search}.*`, 'i') },
+        ],
+      };
+
+      query['$and'] = [deviceTokenConditions, searchConditions];
+    } else {
+      query['$or'] = deviceTokenConditions['$or'];
     }
 
     const totalCustomers = await this.CustomerModel.count(query).exec();

@@ -24,6 +24,7 @@ export enum NodeType {
   MULTISPLIT = 'multisplit',
   INSERT_NODE = 'insertNode',
   TRACKER = 'tracker',
+  PUSH = "push",
 }
 
 export enum MessageType {

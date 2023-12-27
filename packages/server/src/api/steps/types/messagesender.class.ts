@@ -16,6 +16,8 @@ export enum MessageType {
   SMS = 'sms',
   EMAIL = 'email',
   PUSH = 'PUSH',
+  IOS = 'ios',
+  ANDROID = 'android',
   SLACK = 'slack',
   // WEBHOOK = 'webhook',
 }
@@ -33,83 +35,86 @@ export class MessageSender {
     MessageType,
     (job: any) => Promise<ClickHouseMessage[] | void>
   > = {
-    [MessageType.EMAIL]: async (job) => {
-      return await this.handleEmail(
-        job.subject,
-        job.to,
-        job.text,
-        job.tags,
-        job.eventProvider,
-        job.key,
-        job.from,
-        job.stepID,
-        job.customerID,
-        job.templateID,
-        job.accountID,
-        job.email,
-        job.domain,
-        job.trackingEmail,
-        job.cc
-      );
-    },
-    [MessageType.SMS]: async (job) => {
-      return await this.handleSMS(
-        job.from,
-        job.sid,
-        job.token,
-        job.to,
-        job.text,
-        job.tags,
-        job.stepID,
-        job.customerID,
-        job.templateID,
-        job.accountID,
-        job.trackingEmail
-      );
-    },
-    [MessageType.PUSH]: async (job) => {
-      await this.handleFirebase(
-        job.trackingEmail,
-        job.firebaseCredentials,
-        job.phDeviceToken,
-        job.pushText,
-        job.templateID,
-        job.pushTitle,
-        job.customerID,
-        job.stepID,
-        job.filteredTags,
-        job.accountID
-      );
-    },
-    [MessageType.SLACK]: async (job) => {
-      await this.handleSlack(
-        job.templateID,
-        job.accountID,
-        job.stepID,
-        job.methodName,
-        job.args,
-        job.filteredTags,
-        job.customerID,
-        job.trackingEmail
-      );
-    },
-    // [MessageType.WEBHOOK]: async (job) => {
-    //   await this.handleWebhook(
-    //     job.trackingEmail,
-    //     job.firebaseCredentials,
-    //     job.phDeviceToken,
-    //     job.pushText,
-    //     job.templateID,
-    //     job.pushTitle,
-    //     job.customerID,
-    //     job.stepID,
-    //     job.filteredTags,
-    //     job.accountID
-    //   );
-    // },
-  };
+      [MessageType.EMAIL]: async (job) => {
+        return await this.handleEmail(
+          job.subject,
+          job.to,
+          job.text,
+          job.tags,
+          job.eventProvider,
+          job.key,
+          job.from,
+          job.stepID,
+          job.customerID,
+          job.templateID,
+          job.accountID,
+          job.email,
+          job.domain,
+          job.trackingEmail,
+          job.cc
+        );
+      },
+      [MessageType.SMS]: async (job) => {
+        return await this.handleSMS(
+          job.from,
+          job.sid,
+          job.token,
+          job.to,
+          job.text,
+          job.tags,
+          job.stepID,
+          job.customerID,
+          job.templateID,
+          job.accountID,
+          job.trackingEmail
+        );
+      },
+      [MessageType.IOS]: async (job) => {
+        return await this.handleIOS(
+          job.trackingEmail,
+          job.firebaseCredentials,
+          job.deviceToken,
+          job.pushText,
+          job.templateID,
+          job.pushTitle,
+          job.customerID,
+          job.stepID,
+          job.filteredTags,
+          job.accountID
+        );
+      },
+      [MessageType.ANDROID]: async (job) => {
+        return await this.handleAndroid(
+          job.trackingEmail,
+          job.firebaseCredentials,
+          job.deviceToken,
+          job.pushText,
+          job.templateID,
+          job.pushTitle,
+          job.customerID,
+          job.stepID,
+          job.filteredTags,
+          job.accountID
+        );
+      },
+      [MessageType.SLACK]: async (job) => {
+        return await this.handleSlack(
+          job.templateID,
+          job.accountID,
+          job.stepID,
+          job.methodName,
+          job.args,
+          job.filteredTags,
+          job.customerID,
+          job.trackingEmail
+        );
+      },
+      [MessageType.PUSH]: function (job: any): Promise<void | ClickHouseMessage[]> {
+        throw new Error('Function not implemented.');
+      }
+    };
 
-  constructor() {}
+  constructor() { }
 
   async process(job: any): Promise<ClickHouseMessage[]> {
     return await this.messagesMap[job.name](job);
@@ -370,7 +375,7 @@ export class MessageSender {
    *
    * @param trackingEmail
    * @param firebaseCredentials
-   * @param phDeviceToken
+   * @param iosDeviceToken
    * @param pushText
    * @param templateID
    * @param pushTitle
@@ -380,10 +385,10 @@ export class MessageSender {
    * @param accountID
    * @returns
    */
-  async handleFirebase(
+  async handleIOS(
     trackingEmail: string,
     firebaseCredentials: string,
-    phDeviceToken: string,
+    iosDeviceToken: string,
     pushText: string,
     templateID: string,
     pushTitle: string,
@@ -392,7 +397,7 @@ export class MessageSender {
     filteredTags: any,
     accountID: string
   ): Promise<ClickHouseMessage[]> {
-    if (!phDeviceToken) {
+    if (!iosDeviceToken) {
       return;
     }
     let textWithInsertedTags, titleWithInsertedTags: string | undefined;
@@ -431,7 +436,7 @@ export class MessageSender {
       if (e.code == 'app/no-app') {
         firebaseApp = admin.initializeApp(
           {
-            credential: admin.credential.cert(JSON.parse(firebaseCredentials)),
+            credential: admin.credential.cert(firebaseCredentials),
           },
           accountID
         );
@@ -455,7 +460,144 @@ export class MessageSender {
     const messaging = admin.messaging(firebaseApp);
 
     const messageId = await messaging.send({
-      token: phDeviceToken,
+      token: iosDeviceToken,
+      notification: {
+        title: titleWithInsertedTags.slice(0, this.MAXIMUM_PUSH_TITLE_LENGTH),
+        body: textWithInsertedTags.slice(0, this.MAXIMUM_PUSH_LENGTH),
+      },
+      android: {
+        notification: {
+          sound: 'default',
+          clickAction: 'FLUTTER_NOTIFICATION_CLICK',
+        },
+      },
+      apns: {
+        payload: {
+          aps: {
+            badge: 1,
+            sound: 'default',
+          },
+        },
+      },
+    });
+    ret = [
+      {
+        stepId: stepID,
+        customerId: customerID,
+        createdAt: new Date().toISOString(),
+        event: 'sent',
+        eventProvider: ClickHouseEventProvider.PUSH,
+        messageId: messageId,
+        templateId: String(templateID),
+        userId: accountID,
+        processed: false,
+      },
+    ];
+    if (trackingEmail) {
+      this.phClient.capture({
+        distinctId: trackingEmail,
+        event: 'message_sent',
+        properties: {
+          type: 'firebase',
+          step: stepID,
+          customer: customerID,
+          template: templateID,
+        },
+      });
+    }
+    return ret;
+  }
+
+  /**
+ *
+ * @param trackingEmail
+ * @param firebaseCredentials
+ * @param androidDeviceToken
+ * @param pushText
+ * @param templateID
+ * @param pushTitle
+ * @param customerID
+ * @param stepID
+ * @param filteredTags
+ * @param accountID
+ * @returns
+ */
+  async handleAndroid(
+    trackingEmail: string,
+    firebaseCredentials: string,
+    androidDeviceToken: string,
+    pushText: string,
+    templateID: string,
+    pushTitle: string,
+    customerID: string,
+    stepID: string,
+    filteredTags: any,
+    accountID: string
+  ): Promise<ClickHouseMessage[]> {
+    if (!androidDeviceToken) {
+      return;
+    }
+    let textWithInsertedTags, titleWithInsertedTags: string | undefined;
+    let ret: ClickHouseMessage[];
+    try {
+      textWithInsertedTags = await this.tagEngine.parseAndRender(
+        pushText,
+        filteredTags || {},
+        { strictVariables: true }
+      );
+
+      titleWithInsertedTags = await this.tagEngine.parseAndRender(
+        pushTitle,
+        filteredTags || {},
+        { strictVariables: true }
+      );
+    } catch (err) {
+      return [
+        {
+          userId: accountID,
+          event: 'error',
+          createdAt: new Date().toISOString(),
+          eventProvider: ClickHouseEventProvider.PUSH,
+          messageId: null,
+          stepId: stepID,
+          customerId: customerID,
+          templateId: String(templateID),
+          processed: false,
+        },
+      ];
+    }
+    let firebaseApp: admin.app.App;
+    try {
+      firebaseApp = admin.app(accountID);
+    } catch (e: any) {
+      if (e.code == 'app/no-app') {
+        firebaseApp = admin.initializeApp(
+          {
+            credential: admin.credential.cert(firebaseCredentials),
+          },
+          accountID
+        );
+      } else {
+        return [
+          {
+            userId: accountID,
+            event: 'error',
+            createdAt: new Date().toISOString(),
+            eventProvider: ClickHouseEventProvider.PUSH,
+            messageId: null,
+            stepId: stepID,
+            customerId: customerID,
+            templateId: String(templateID),
+            processed: false,
+          },
+        ];
+      }
+    }
+
+    const messaging = admin.messaging(firebaseApp);
+
+    const messageId = await messaging.send({
+      token: androidDeviceToken,
       notification: {
         title: titleWithInsertedTags.slice(0, this.MAXIMUM_PUSH_TITLE_LENGTH),
         body: textWithInsertedTags.slice(0, this.MAXIMUM_PUSH_LENGTH),

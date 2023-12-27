@@ -223,6 +223,56 @@ const PeopleImport = () => {
     });
   };
 
+  const handleValidationProcess = async () => {
+    setIsValidationInProcess(true);
+    try {
+      const { data } = await ApiService.post({
+        url: `customers/attributes/count-import-preview`,
+        options: {
+          mapping: mappingSettings,
+          importOption: importOption,
+          fileKey: fileData?.file?.fileKey,
+        },
+      });
+      setImportPreview({ ...data });
+      setTabIndex(tabIndex + 1);
+    } catch (error) {
+      if (error instanceof AxiosError) {
+        // @ts-ignore
+        toast.error(error.response?.data?.message);
+      }
+    }
+    setIsValidationInProcess(false);
+  };
+
+  const handleValidationConfirm = async () => {
+    const currentError = validationErrors[0];
+
+    if (
+      currentError === ValidationErrors.PRIMARY_REQUIRED ||
+      currentError === ValidationErrors.PRIMARY_MAP_REQUIRED
+    ) {
+      setValidationErrors([]);
+      return;
+    }
+
+    const errors = [...validationErrors];
+
+    if (currentError === ValidationErrors.UNMAPPED_ATTRIBUTES) {
+      errors.shift();
+      setValidationErrors([...errors]);
+    }
+
+    if (currentError === ValidationErrors.MISSING_ATTRIBUTES_VALUES) {
+      errors.shift();
+      setValidationErrors([...errors]);
+    }
+
+    if (!errors.length) {
+      handleValidationProcess();
+    }
+  };
+
   const handle2TabValidation = async () => {
     const pk = Object.values(mappingSettings).find(
       (el) =>
@@ -250,33 +300,15 @@ const PeopleImport = () => {
       errors.push(ValidationErrors.MISSING_ATTRIBUTES_VALUES);
     }
 
+    if (errors.length === 0) {
+      await handleValidationConfirm();
+    }
+
     setValidationErrors(errors);
   };
 
   const handleValidationCancel = () => {
     setValidationErrors([]);
-  };
-
-  const handleValidationProcess = async () => {
-    setIsValidationInProcess(true);
-    try {
-      const { data } = await ApiService.post({
-        url: `customers/attributes/count-import-preview`,
-        options: {
-          mapping: mappingSettings,
-          importOption: importOption,
-          fileKey: fileData?.file?.fileKey,
-        },
-      });
-      setImportPreview({ ...data });
-      setTabIndex(tabIndex + 1);
-    } catch (error) {
-      if (error instanceof AxiosError) {
-        // @ts-ignore
-        toast.error(error.response?.data?.message);
-      }
-    }
-    setIsValidationInProcess(false);
   };
 
   const handleStartImport = async () => {
@@ -307,34 +339,6 @@ const PeopleImport = () => {
       }
     }
     setIsImportStarting(false);
-  };
-
-  const handleValidationConfirm = async () => {
-    const currentError = validationErrors[0];
-
-    if (
-      currentError === ValidationErrors.PRIMARY_REQUIRED ||
-      currentError === ValidationErrors.PRIMARY_MAP_REQUIRED
-    ) {
-      setValidationErrors([]);
-      return;
-    }
-
-    const errors = [...validationErrors];
-
-    if (currentError === ValidationErrors.UNMAPPED_ATTRIBUTES) {
-      errors.shift();
-      setValidationErrors([...errors]);
-    }
-
-    if (currentError === ValidationErrors.MISSING_ATTRIBUTES_VALUES) {
-      errors.shift();
-      setValidationErrors([...errors]);
-    }
-
-    if (!errors.length) {
-      handleValidationProcess();
-    }
   };
 
   return (
