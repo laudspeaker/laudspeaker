@@ -390,6 +390,7 @@ export class SegmentsService {
 
   /**
    * Get size of the segment
+   * to do make AND query faster.
    * @param account
    * @param query
    * @returns {size: size of segment, total: total num of users}
@@ -410,7 +411,7 @@ export class SegmentsService {
     );
 
     if (createSegmentDTO.inclusionCriteria.query.type === 'any') {
-      console.log("in any");
+      //console.log("in any");
       const customersInSegment =
         await this.customersService.getSegmentCustomersFromQuery(
           createSegmentDTO.inclusionCriteria.query,
@@ -428,12 +429,45 @@ export class SegmentsService {
           account,
           session
       );
+      try {
+        //console.log("trying to release collection", customersInSegment);
+        await this.connection.db.collection(customersInSegment).drop();
+        //console.log('Collection dropped successfully');
+      } catch (e) {
+        //console.error('Error dropping collection:', e);
+      } 
       return { size: segmentDocuments, total: totalCount };
 
-    } else if (createSegmentDTO.inclusionCriteria.type === 'all') {
+    } else if (createSegmentDTO.inclusionCriteria.query.type === 'all') {
+      //console.log("in all");
+      const customersInSegment =
+      await this.customersService.getSegmentCustomersFromQuery(
+        createSegmentDTO.inclusionCriteria.query,
+        account,
+        session,
+        true,
+        0,
+        this.generateRandomString()
+      );
+    
+      const mongoCollection = this.connection.db.collection(customersInSegment);
 
+      let segmentDocuments = await mongoCollection.countDocuments();
+      const totalCount = await this.customersService.customersSize(
+        account,
+        session
+      );
+    try {
+      //console.log("trying to release collection", customersInSegment);
+      await this.connection.db.collection(customersInSegment).drop();
+      //console.log('Collection dropped successfully');
+    } catch (e) {
+      //console.error('Error dropping collection:', e);
+    } 
+    return { size: segmentDocuments, total: totalCount };
 
     } else {
+      //console.log("DTO type", createSegmentDTO.inclusionCriteria.type);
       //should never get here
       return { size: 12, total: 17 };
     }
