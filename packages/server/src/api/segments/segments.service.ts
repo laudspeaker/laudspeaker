@@ -212,7 +212,7 @@ export class SegmentsService {
         return testResult;
         await queryRunner.commitTransaction();
         */
-
+        const collectionPrefix = this.generateRandomString();
         const customersInSegment =
           await this.customersService.getSegmentCustomersFromQuery(
             createSegmentDTO.inclusionCriteria.query,
@@ -220,7 +220,7 @@ export class SegmentsService {
             session,
             true,
             0,
-            this.generateRandomString()
+            collectionPrefix
           );
         this.debug(
           `we have customersInSegment: ${customersInSegment}`,
@@ -260,7 +260,8 @@ export class SegmentsService {
 
         try {
           console.log("trying to release collection", customersInSegment);
-          await this.connection.db.collection(customersInSegment).drop();
+          await this.deleteCollectionsWithPrefix(collectionPrefix);
+          //await this.connection.db.collection(customersInSegment).drop();
           console.log('Collection dropped successfully');
         } catch (e) {
           console.error('Error dropping collection:', e);
@@ -296,6 +297,42 @@ export class SegmentsService {
     return result;
   }
 
+  /*
+   * Garbage collector for mongo collections!
+   */
+
+  //to do add part that filters out list of important dbs
+  //to do add debugs
+  async deleteCollectionsWithPrefix(prefix: string): Promise<void> {
+    try {
+        //console.log("deleting collections with prefix");
+        // List all collections in the database
+        //to do
+        const collections = await this.connection.db.listCollections().toArray();
+        //console.log("collections are", collections);
+        // this.debug(
+        //   `collections are: ${collections}`,
+        //   this.deleteCollectionsWithPrefix.name,
+        //   session,
+        //   account.id
+        // );
+
+        // Filter collections that start with the given prefix
+        const collectionsToDelete = collections
+            .filter(collection => collection.name.startsWith(prefix))
+            .map(collection => collection.name);
+
+        // Delete each collection
+        for (const collectionName of collectionsToDelete) {
+            await this.connection.db.collection(collectionName).drop();
+            //console.log(`Deleted collection: ${collectionName}`);
+        }
+    } catch (error) {
+        //console.error('Error deleting collections:', error);
+        //throw error; // Rethrow the error for further handling if necessary
+    }
+  }
+
   public async create(
     account: Account,
     createSegmentDTO: CreateSegmentDTO,
@@ -320,6 +357,7 @@ export class SegmentsService {
 
       // this.customersService.createSegmentQuery(createSegmentDTO.inclusionCriteria.query);
       if (segment.type === SegmentType.AUTOMATIC) {
+        const collectionPrefix = this.generateRandomString();
         const customersInSegment =
         await this.customersService.getSegmentCustomersFromQuery(
           createSegmentDTO.inclusionCriteria.query,
@@ -327,7 +365,7 @@ export class SegmentsService {
           session,
           true,
           0,
-          this.generateRandomString()
+          collectionPrefix
         );
         this.debug(
           `we have customersInSegment: ${customersInSegment}`,
@@ -367,9 +405,16 @@ export class SegmentsService {
 
         try {
           //console.log("trying to release collection", customersInSegment);
-          await this.connection.db.collection(customersInSegment).drop();
+          await this.deleteCollectionsWithPrefix(collectionPrefix);
+          //await this.connection.db.collection(customersInSegment).drop();
           //console.log('Collection dropped successfully');
         } catch (e) {
+          this.debug(
+            `could not drop: ${customersInSegment}`,
+            this.create.name,
+            session,
+            account.id
+          );
           //console.error('Error dropping collection:', e);
         } 
       }
@@ -412,6 +457,7 @@ export class SegmentsService {
 
     if (createSegmentDTO.inclusionCriteria.query.type === 'any') {
       //console.log("in any");
+      const collectionPrefix = this.generateRandomString();
       const customersInSegment =
         await this.customersService.getSegmentCustomersFromQuery(
           createSegmentDTO.inclusionCriteria.query,
@@ -419,7 +465,7 @@ export class SegmentsService {
           session,
           true,
           0,
-          this.generateRandomString()
+          collectionPrefix
         );
       
       const mongoCollection = this.connection.db.collection(customersInSegment);
@@ -431,7 +477,8 @@ export class SegmentsService {
       );
       try {
         //console.log("trying to release collection", customersInSegment);
-        await this.connection.db.collection(customersInSegment).drop();
+        await this.deleteCollectionsWithPrefix(collectionPrefix);
+        //await this.connection.db.collection(customersInSegment).drop();
         //console.log('Collection dropped successfully');
       } catch (e) {
         //console.error('Error dropping collection:', e);
@@ -440,6 +487,7 @@ export class SegmentsService {
 
     } else if (createSegmentDTO.inclusionCriteria.query.type === 'all') {
       //console.log("in all");
+      const collectionPrefix = this.generateRandomString();
       const customersInSegment =
       await this.customersService.getSegmentCustomersFromQuery(
         createSegmentDTO.inclusionCriteria.query,
@@ -447,7 +495,7 @@ export class SegmentsService {
         session,
         true,
         0,
-        this.generateRandomString()
+        collectionPrefix
       );
     
       const mongoCollection = this.connection.db.collection(customersInSegment);
@@ -459,7 +507,8 @@ export class SegmentsService {
       );
     try {
       //console.log("trying to release collection", customersInSegment);
-      await this.connection.db.collection(customersInSegment).drop();
+      await this.deleteCollectionsWithPrefix(collectionPrefix);
+      //await this.connection.db.collection(customersInSegment).drop();
       //console.log('Collection dropped successfully');
     } catch (e) {
       //console.error('Error dropping collection:', e);
