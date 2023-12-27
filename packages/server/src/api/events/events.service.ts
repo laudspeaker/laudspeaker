@@ -592,7 +592,7 @@ export class EventsService {
                     }
                   : undefined,
               apns:
-                platform === 'iOS'
+                platform === PushPlatforms.IOS
                   ? {
                       payload: {
                         aps: {
