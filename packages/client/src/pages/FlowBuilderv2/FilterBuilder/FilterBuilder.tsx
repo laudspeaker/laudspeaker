@@ -1213,7 +1213,9 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                           )}
                         </select>
                         <span className="font-inter text-[14px] leading-[22px] text-[#18181B]">
-                          at least
+                          {statement.comparisonType === "has performed"
+                            ? "at least"
+                            : "more than"}
                         </span>
                       </div>
                       <div className="flex items-center">
