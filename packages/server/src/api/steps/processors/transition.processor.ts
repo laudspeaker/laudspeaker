@@ -204,7 +204,7 @@ export class TransitionProcessor extends WorkerHost {
         case StepType.AB_TEST:
           break;
         case StepType.MULTISPLIT:
-          this.handleMultisplit(
+          await this.handleMultisplit(
             job.data.ownerID,
             job.data.journeyID,
             job.data.step.id,
@@ -1314,11 +1314,11 @@ export class TransitionProcessor extends WorkerHost {
           ).epochMilliseconds
         ).getTime() < Date.now() &&
         Date.now() <
-          new Date(
-            Temporal.Instant.from(
-              currentStep.metadata.window.to
-            ).epochMilliseconds
-          ).getTime()
+        new Date(
+          Temporal.Instant.from(
+            currentStep.metadata.window.to
+          ).epochMilliseconds
+        ).getTime()
       ) {
         this.warn(
           JSON.stringify({ warning: `${currentStep.metadata.window}` }),
@@ -1615,16 +1615,23 @@ export class TransitionProcessor extends WorkerHost {
     transactionSession: mongoose.mongo.ClientSession,
     event?: string
   ) {
+
     const owner = await queryRunner.manager.findOne(Account, {
       where: { id: ownerID },
     });
-
-    const journey = await this.journeysService.findByID(
-      owner,
-      journeyID,
+    this.warn(
+      JSON.stringify({ warning: `Inside multisplit` }),
+      this.handleMultisplit.name,
       session,
-      queryRunner
+      owner.email
     );
+
+    const journey = await queryRunner.manager.findOne(Journey,
+      {
+        where: {
+          id: journeyID
+        }
+      })
 
     const currentStep = await queryRunner.manager.findOne(Step, {
       where: {
@@ -1657,18 +1664,27 @@ export class TransitionProcessor extends WorkerHost {
       return;
     }
 
-    const nextStep = await queryRunner.manager.findOne(Step, {
-      where: {
-        id: currentStep.metadata.destination,
-      },
-    });
+    let nextStep: Step, matches: boolean = false;
 
-    if (
-      nextStep &&
-      nextStep.type !== StepType.TIME_DELAY &&
-      nextStep.type !== StepType.TIME_WINDOW &&
-      nextStep.type !== StepType.WAIT_UNTIL_BRANCH
-    ) {
+    for (let branchIndex = 0; branchIndex < currentStep.metadata.branches.length; branchIndex++) {
+      if (await this.customersService.checkCustomerMatchesQuery(currentStep.metadata.branches[branchIndex].conditions.query, owner, session, customer)) {
+        matches = true;
+        nextStep = await queryRunner.manager.findOne(Step, {
+          where: {
+            id: currentStep.metadata.branches[branchIndex].destination,
+          },
+        });
+        break;
+      }
+    }
+    if (!matches)
+      nextStep = await queryRunner.manager.findOne(Step, {
+        where: {
+          id: currentStep.metadata.allOthers,
+        },
+      });
+
+    if (nextStep) {
       // Destination exists, move customer into destination
       await this.journeyLocationsService.move(
         location,
@@ -1678,16 +1694,31 @@ export class TransitionProcessor extends WorkerHost {
         owner,
         queryRunner
       );
-      await this.transitionQueue.add(nextStep.type, {
-        ownerID,
-        journeyID,
-        step: nextStep,
-        session: session,
-        customerID,
-        event,
-      });
+      if (
+        nextStep.type !== StepType.TIME_DELAY &&
+        nextStep.type !== StepType.TIME_WINDOW &&
+        nextStep.type !== StepType.WAIT_UNTIL_BRANCH
+      ) {
+        await this.transitionQueue.add(nextStep.type, {
+          ownerID,
+          journeyID,
+          step: nextStep,
+          session: session,
+          customerID,
+          event,
+        });
+      } else {
+        // Destination is time based,
+        // customer has stopped moving so we can release lock
+        await this.journeyLocationsService.unlock(
+          location,
+          session,
+          owner,
+          queryRunner
+        );
+      }
     } else {
-      // Destination does not exist or is time based,
+      // Destination does not exist,
       // customer has stopped moving so we can release lock
       await this.journeyLocationsService.unlock(
         location,
@@ -1809,8 +1840,8 @@ export class TransitionProcessor extends WorkerHost {
   }
 
   // TODO
-  async handleABTest(job: Job<any, any, string>) {}
-  async handleRandomCohortBranch(job: Job<any, any, string>) {}
+  async handleABTest(job: Job<any, any, string>) { }
+  async handleRandomCohortBranch(job: Job<any, any, string>) { }
 
   // @OnWorkerEvent('active')
   // onActive(job: Job<any, any, any>, prev: string) {

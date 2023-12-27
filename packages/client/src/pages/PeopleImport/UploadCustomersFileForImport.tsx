@@ -72,7 +72,7 @@ const UploadCustomersFileForImport = ({
     try {
       const { data } = await axios.request({
         method: "post",
-        url: `${config.get(API_BASE_URL_KEY)}/customers/uploadCSV`,
+        url: `${config.get(API_BASE_URL_KEY)}customers/uploadCSV`,
         data: formData,
         headers: {
           Authorization: `Bearer ${tokenService.getLocalAccessToken()}`,
