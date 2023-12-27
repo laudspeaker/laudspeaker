@@ -19,8 +19,16 @@ const FlowBuilderStartModal: FC<FlowBuilderStartModalProps> = ({
   isOpen,
   onClose,
 }) => {
-  const { flowId, nodes, edges, flowName, segments, journeyType } =
-    useAppSelector((state) => state.flowBuilder);
+  const {
+    flowId,
+    nodes,
+    edges,
+    flowName,
+    segments,
+    journeyType,
+    journeyEntrySettings,
+    journeySettings,
+  } = useAppSelector((state) => state.flowBuilder);
 
   const navigate = useNavigate();
 
@@ -48,6 +56,8 @@ const FlowBuilderStartModal: FC<FlowBuilderStartModalProps> = ({
           name: flowName,
           inclusionCriteria: segments,
           isDynamic: journeyType === JourneyType.DYNAMIC,
+          journeyEntrySettings,
+          journeySettings,
         },
       });
     } catch (e) {
