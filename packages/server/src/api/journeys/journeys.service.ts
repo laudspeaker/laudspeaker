@@ -49,6 +49,7 @@ import {
   AttributeConditions,
   AttributeGroup,
   Branch,
+  Channel,
   ComponentEvent,
   CustomComponentStepMetadata,
   ElementCondition,
@@ -116,7 +117,7 @@ export class JourneysService {
     @Inject(JourneyLocationsService)
     private readonly journeyLocationsService: JourneyLocationsService,
     @InjectQueue('transition') private readonly transitionQueue: Queue
-  ) {}
+  ) { }
 
   log(message, method, session, user = 'ANONYMOUS') {
     this.logger.log(
@@ -494,7 +495,7 @@ export class JourneysService {
           change = 'ADD';
         } else if (
           journeyEntrySettings.enrollmentType ===
-            JourneyEnrollmentType.OnlyFuture &&
+          JourneyEnrollmentType.OnlyFuture &&
           customerUpdateType === 'NEW'
         ) {
           change = 'ADD';
@@ -757,8 +758,8 @@ export class JourneysService {
               ...(key === 'isActive'
                 ? { isStopped: false, isPaused: false }
                 : key === 'isPaused'
-                ? { isStopped: false }
-                : {}),
+                  ? { isStopped: false }
+                  : {}),
             });
         }
       } else {
@@ -1269,6 +1270,29 @@ export class JourneysService {
             metadata.customName = nodes[i].data['customName'] || 'Unknown name';
             if (nodes[i].data['template']['selected'])
               metadata.template = nodes[i].data['template']['selected']['id'];
+            this.debug(
+              JSON.stringify({ startMetadata: metadata }),
+              this.updateLayout.name,
+              account.email,
+              session
+            );
+            break;
+          case NodeType.PUSH:
+            if (relevantEdges.length > 1)
+              throw new Error(
+                'Cannot have more than one branch for Message Step'
+              );
+            metadata = new MessageStepMetadata();
+            metadata.destination = nodes.filter((node) => {
+              return node.id === relevantEdges[0].target;
+            })[0].data.stepId;
+            metadata.channel = Channel.PUSH;
+            metadata.customName = nodes[i].data['customName'] || 'Unknown name';
+            if (nodes[i].data['template']['selected']) {
+              metadata.template = nodes[i].data['template']['selected']['id'];
+              if (nodes[i].data['template']['selected']['pushBuilder'])
+                metadata.selectedPlatform = nodes[i].data['template']['selected']['pushBuilder']['selectedPlatform']
+            }
             this.debug(
               JSON.stringify({ startMetadata: metadata }),
               this.updateLayout.name,

@@ -422,7 +422,7 @@ export class EventsService {
     );
 
     try {
-      if (!hasConnected || true) {
+      if (!hasConnected) {
         throw new HttpException(
           "You don't have platform's connected",
           HttpStatus.NOT_ACCEPTABLE

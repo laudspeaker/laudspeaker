@@ -47,6 +47,12 @@ export class Customer {
   phDeviceToken: string;
 
   @Prop()
+  androidDeviceToken: string;
+
+  @Prop()
+  iosDeviceToken: string;
+
+  @Prop()
   phCustom: string;
 
   @Prop()

@@ -755,28 +755,74 @@ export class TransitionProcessor extends WorkerHost {
           if (owner.emailProvider === 'free3') await owner.save();
           break;
         case TemplateType.PUSH:
-          // TODO: update for new PUSH
-          // await this.webhooksService.insertMessageStatusToClickhouse(
-          //   await sender.process({
-          //     name: TemplateType.PUSH,
-          //     accountID: owner.id,
-          //     stepID: currentStep.id,
-          //     customerID: customerID,
-          //     firebaseCredentials: owner.firebaseCredentials,
-          //     phDeviceToken: customer.phDeviceToken,
-          //     pushText: await this.templatesService.parseApiCallTags(
-          //       template.pushText,
-          //       filteredTags
-          //     ),
-          //     pushTitle: await this.templatesService.parseApiCallTags(
-          //       template.pushTitle,
-          //       filteredTags
-          //     ),
-          //     trackingEmail: email,
-          //     filteredTags: filteredTags,
-          //     templateID: template.id,
-          //   })
-          // );
+          switch (currentStep.metadata.selectedPlatform) {
+            case "All":
+              await this.webhooksService.insertMessageStatusToClickhouse(
+                await sender.process({
+                  name: 'android',
+                  accountID: owner.id,
+                  stepID: currentStep.id,
+                  customerID: customerID,
+                  firebaseCredentials: owner.pushPlatforms.Android.credentials,
+                  deviceToken: customer.androidDeviceToken,
+                  pushTitle: template.pushObject.settings.Android.title,
+                  pushText: template.pushObject.settings.Android.description,
+                  trackingEmail: email,
+                  filteredTags: filteredTags,
+                  templateID: template.id
+                })
+              )
+              await this.webhooksService.insertMessageStatusToClickhouse(
+                await sender.process({
+                  name: 'ios',
+                  accountID: owner.id,
+                  stepID: currentStep.id,
+                  customerID: customerID,
+                  firebaseCredentials: owner.pushPlatforms.iOS.credentials,
+                  deviceToken: customer.iosDeviceToken,
+                  pushTitle: template.pushObject.settings.iOS.title,
+                  pushText: template.pushObject.settings.iOS.description,
+                  trackingEmail: email,
+                  filteredTags: filteredTags,
+                  templateID: template.id
+                })
+              )
+              break;
+            case "iOS":
+              await this.webhooksService.insertMessageStatusToClickhouse(
+                await sender.process({
+                  name: 'ios',
+                  accountID: owner.id,
+                  stepID: currentStep.id,
+                  customerID: customerID,
+                  firebaseCredentials: owner.pushPlatforms.iOS.credentials,
+                  deviceToken: customer.iosDeviceToken,
+                  pushTitle: template.pushObject.settings.iOS.title,
+                  pushText: template.pushObject.settings.iOS.description,
+                  trackingEmail: email,
+                  filteredTags: filteredTags,
+                  templateID: template.id
+                })
+              )
+              break;
+            case "Android":
+              await this.webhooksService.insertMessageStatusToClickhouse(
+                await sender.process({
+                  name: 'android',
+                  accountID: owner.id,
+                  stepID: currentStep.id,
+                  customerID: customerID,
+                  firebaseCredentials: owner.pushPlatforms.Android.credentials,
+                  deviceToken: customer.androidDeviceToken,
+                  pushTitle: template.pushObject.settings.Android.title,
+                  pushText: template.pushObject.settings.Android.description,
+                  trackingEmail: email,
+                  filteredTags: filteredTags,
+                  templateID: template.id
+                })
+              )
+              break;
+          }
           break;
         case TemplateType.MODAL:
           if (template.modalState) {
