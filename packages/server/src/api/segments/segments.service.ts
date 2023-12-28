@@ -22,7 +22,7 @@ import { UpdateSegmentDTO } from './dto/update-segment.dto';
 import { SegmentCustomers } from './entities/segment-customers.entity';
 import { Segment, SegmentType } from './entities/segment.entity';
 import { InjectConnection } from '@nestjs/mongoose';
-import mongoose from 'mongoose';
+import mongoose, { Types } from 'mongoose';
 import e, { query } from 'express';
 import { CountSegmentUsersSizeDTO } from './dto/size-count.dto';
 
@@ -293,6 +293,36 @@ export class SegmentsService {
         throw err;
       }
     }
+  }
+
+  /*
+   * Helper function for customers.service getCusotmersFromsegment()
+   */
+  //to do add account filter on records, later 
+  async getSegmentCustomers(account: Account,
+    session: string, segmentId: string, collectionName: string ){
+    const records = await this.segmentCustomersRepository.findBy({
+      segment: segmentId, //{ id: segment.id },
+    });
+    //console.log("In get segment customers");
+    const collectionHandle = this.connection.db.collection(collectionName);
+
+    for (const record of records) {
+      const customerId = record.customerId; // Assuming customerId is a field in record
+      // Update the collection: increment the count for this customerId
+      const objectId = new Types.ObjectId(customerId);
+      await collectionHandle.updateOne(
+          { _id: objectId },
+          { $setOnInsert: { _id: objectId } },
+          { upsert: true }
+      );
+    }
+
+    //const allValues = await collectionHandle.find({}).toArray();
+    //console.log("All values in the collection:", allValues);
+
+    return collectionName;
+    
   }
 
   generateRandomString(length: number = 4): string {
