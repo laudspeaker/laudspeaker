@@ -2733,10 +2733,41 @@ export class CustomersService {
           intermediateCollection
         );
       case 'Segment':
+        return this.customersFromSegmentStatement(
+          statement,
+          account,
+          session,
+          count,
+          intermediateCollection
+        );
         break;
       default:
         throw new Error('Invalid comparison type');
     }
+  }
+
+  /**
+   * Gets set of customers from a single statement that
+   * includes segments,
+   *
+   *  eg segment1 
+   *
+   * Handles SINGLE statements not queries with subqueries
+   *
+   * @returns mongo collection string with customers
+   */
+
+  async customersFromSegmentStatement(
+    statement: any,
+    account: Account,
+    session: string,
+    count: number,
+    intermediateCollection: string
+  ){
+    console.log("the segment statement is", JSON.stringify(statement,null,2));
+    const { type, segmentId } = statement;
+    const collectionOfCustomersFromSegment = await this.segmentsService.getSegmentCustomers(account, session, segmentId, intermediateCollection);
+    return collectionOfCustomersFromSegment;
   }
 
   /**
