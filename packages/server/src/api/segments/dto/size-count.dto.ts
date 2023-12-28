@@ -4,4 +4,3 @@ export class CountSegmentUsersSizeDTO {
   @IsObject()
   public inclusionCriteria: any;
 }
-

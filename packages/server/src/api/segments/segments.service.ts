@@ -268,7 +268,7 @@ export class SegmentsService {
         }
 
         try {
-          console.log("trying to release collection", customersInSegment);
+          console.log('trying to release collection', customersInSegment);
           await this.deleteCollectionsWithPrefix(collectionPrefix);
           //await this.connection.db.collection(customersInSegment).drop();
 
@@ -316,31 +316,31 @@ export class SegmentsService {
   //to do add debugs
   async deleteCollectionsWithPrefix(prefix: string): Promise<void> {
     try {
-        //console.log("deleting collections with prefix");
-        // List all collections in the database
-        //to do
-        const collections = await this.connection.db.listCollections().toArray();
-        //console.log("collections are", collections);
-        // this.debug(
-        //   `collections are: ${collections}`,
-        //   this.deleteCollectionsWithPrefix.name,
-        //   session,
-        //   account.id
-        // );
+      //console.log("deleting collections with prefix");
+      // List all collections in the database
+      //to do
+      const collections = await this.connection.db.listCollections().toArray();
+      //console.log("collections are", collections);
+      // this.debug(
+      //   `collections are: ${collections}`,
+      //   this.deleteCollectionsWithPrefix.name,
+      //   session,
+      //   account.id
+      // );
 
-        // Filter collections that start with the given prefix
-        const collectionsToDelete = collections
-            .filter(collection => collection.name.startsWith(prefix))
-            .map(collection => collection.name);
+      // Filter collections that start with the given prefix
+      const collectionsToDelete = collections
+        .filter((collection) => collection.name.startsWith(prefix))
+        .map((collection) => collection.name);
 
-        // Delete each collection
-        for (const collectionName of collectionsToDelete) {
-            await this.connection.db.collection(collectionName).drop();
-            //console.log(`Deleted collection: ${collectionName}`);
-        }
+      // Delete each collection
+      for (const collectionName of collectionsToDelete) {
+        await this.connection.db.collection(collectionName).drop();
+        //console.log(`Deleted collection: ${collectionName}`);
+      }
     } catch (error) {
-        //console.error('Error deleting collections:', error);
-        //throw error; // Rethrow the error for further handling if necessary
+      //console.error('Error deleting collections:', error);
+      //throw error; // Rethrow the error for further handling if necessary
     }
   }
 
@@ -380,14 +380,14 @@ export class SegmentsService {
       if (segment.type === SegmentType.AUTOMATIC) {
         const collectionPrefix = this.generateRandomString();
         const customersInSegment =
-        await this.customersService.getSegmentCustomersFromQuery(
-          createSegmentDTO.inclusionCriteria.query,
-          account,
-          session,
-          true,
-          0,
-          collectionPrefix
-        );
+          await this.customersService.getSegmentCustomersFromQuery(
+            createSegmentDTO.inclusionCriteria.query,
+            account,
+            session,
+            true,
+            0,
+            collectionPrefix
+          );
 
         this.debug(
           `we have customersInSegment: ${customersInSegment}`,
@@ -521,15 +521,15 @@ export class SegmentsService {
       //console.log("in all");
       const collectionPrefix = this.generateRandomString();
       const customersInSegment =
-      await this.customersService.getSegmentCustomersFromQuery(
-        createSegmentDTO.inclusionCriteria.query,
-        account,
-        session,
-        true,
-        0,
-        collectionPrefix
-      );
-    
+        await this.customersService.getSegmentCustomersFromQuery(
+          createSegmentDTO.inclusionCriteria.query,
+          account,
+          session,
+          true,
+          0,
+          collectionPrefix
+        );
+
       const mongoCollection = this.connection.db.collection(customersInSegment);
 
       let segmentDocuments = await mongoCollection.countDocuments();
@@ -537,17 +537,15 @@ export class SegmentsService {
         account,
         session
       );
-    try {
-      //console.log("trying to release collection", customersInSegment);
-      await this.deleteCollectionsWithPrefix(collectionPrefix);
-      //await this.connection.db.collection(customersInSegment).drop();
-      //console.log('Collection dropped successfully');
-    } catch (e) {
-      //console.error('Error dropping collection:', e);
-    } 
-    return { size: segmentDocuments, total: totalCount };
-
-
+      try {
+        //console.log("trying to release collection", customersInSegment);
+        await this.deleteCollectionsWithPrefix(collectionPrefix);
+        //await this.connection.db.collection(customersInSegment).drop();
+        //console.log('Collection dropped successfully');
+      } catch (e) {
+        //console.error('Error dropping collection:', e);
+      }
+      return { size: segmentDocuments, total: totalCount };
     } else {
       //console.log("DTO type", createSegmentDTO.inclusionCriteria.type);
       //should never get here

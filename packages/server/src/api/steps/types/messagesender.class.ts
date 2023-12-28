@@ -35,86 +35,88 @@ export class MessageSender {
     MessageType,
     (job: any) => Promise<ClickHouseMessage[] | void>
   > = {
-      [MessageType.EMAIL]: async (job) => {
-        return await this.handleEmail(
-          job.subject,
-          job.to,
-          job.text,
-          job.tags,
-          job.eventProvider,
-          job.key,
-          job.from,
-          job.stepID,
-          job.customerID,
-          job.templateID,
-          job.accountID,
-          job.email,
-          job.domain,
-          job.trackingEmail,
-          job.cc
-        );
-      },
-      [MessageType.SMS]: async (job) => {
-        return await this.handleSMS(
-          job.from,
-          job.sid,
-          job.token,
-          job.to,
-          job.text,
-          job.tags,
-          job.stepID,
-          job.customerID,
-          job.templateID,
-          job.accountID,
-          job.trackingEmail
-        );
-      },
-      [MessageType.IOS]: async (job) => {
-        return await this.handleIOS(
-          job.trackingEmail,
-          job.firebaseCredentials,
-          job.deviceToken,
-          job.pushText,
-          job.templateID,
-          job.pushTitle,
-          job.customerID,
-          job.stepID,
-          job.filteredTags,
-          job.accountID
-        );
-      },
-      [MessageType.ANDROID]: async (job) => {
-        return await this.handleAndroid(
-          job.trackingEmail,
-          job.firebaseCredentials,
-          job.deviceToken,
-          job.pushText,
-          job.templateID,
-          job.pushTitle,
-          job.customerID,
-          job.stepID,
-          job.filteredTags,
-          job.accountID
-        );
-      },
-      [MessageType.SLACK]: async (job) => {
-        return await this.handleSlack(
-          job.templateID,
-          job.accountID,
-          job.stepID,
-          job.methodName,
-          job.args,
-          job.filteredTags,
-          job.customerID,
-          job.trackingEmail
-        );
-      },
-      [MessageType.PUSH]: function (job: any): Promise<void | ClickHouseMessage[]> {
-        throw new Error('Function not implemented.');
-      }
-    };
+    [MessageType.EMAIL]: async (job) => {
+      return await this.handleEmail(
+        job.subject,
+        job.to,
+        job.text,
+        job.tags,
+        job.eventProvider,
+        job.key,
+        job.from,
+        job.stepID,
+        job.customerID,
+        job.templateID,
+        job.accountID,
+        job.email,
+        job.domain,
+        job.trackingEmail,
+        job.cc
+      );
+    },
+    [MessageType.SMS]: async (job) => {
+      return await this.handleSMS(
+        job.from,
+        job.sid,
+        job.token,
+        job.to,
+        job.text,
+        job.tags,
+        job.stepID,
+        job.customerID,
+        job.templateID,
+        job.accountID,
+        job.trackingEmail
+      );
+    },
+    [MessageType.IOS]: async (job) => {
+      return await this.handleIOS(
+        job.trackingEmail,
+        job.firebaseCredentials,
+        job.deviceToken,
+        job.pushText,
+        job.templateID,
+        job.pushTitle,
+        job.customerID,
+        job.stepID,
+        job.filteredTags,
+        job.accountID
+      );
+    },
+    [MessageType.ANDROID]: async (job) => {
+      return await this.handleAndroid(
+        job.trackingEmail,
+        job.firebaseCredentials,
+        job.deviceToken,
+        job.pushText,
+        job.templateID,
+        job.pushTitle,
+        job.customerID,
+        job.stepID,
+        job.filteredTags,
+        job.accountID
+      );
+    },
+    [MessageType.SLACK]: async (job) => {
+      return await this.handleSlack(
+        job.templateID,
+        job.accountID,
+        job.stepID,
+        job.methodName,
+        job.args,
+        job.filteredTags,
+        job.customerID,
+        job.trackingEmail
+      );
+    },
+    [MessageType.PUSH]: function (
+      job: any
+    ): Promise<void | ClickHouseMessage[]> {
+      throw new Error('Function not implemented.');
+    },
+  };
 
-  constructor() { }
+  constructor() {}
 
   async process(job: any): Promise<ClickHouseMessage[]> {
     return await this.messagesMap[job.name](job);
@@ -509,19 +511,19 @@ export class MessageSender {
   }
 
   /**
- *
- * @param trackingEmail
- * @param firebaseCredentials
- * @param androidDeviceToken
- * @param pushText
- * @param templateID
- * @param pushTitle
- * @param customerID
- * @param stepID
- * @param filteredTags
- * @param accountID
- * @returns
- */
+   *
+   * @param trackingEmail
+   * @param firebaseCredentials
+   * @param androidDeviceToken
+   * @param pushText
+   * @param templateID
+   * @param pushTitle
+   * @param customerID
+   * @param stepID
+   * @param filteredTags
+   * @param accountID
+   * @returns
+   */
   async handleAndroid(
     trackingEmail: string,
     firebaseCredentials: string,
