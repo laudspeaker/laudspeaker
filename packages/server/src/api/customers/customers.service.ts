@@ -242,9 +242,9 @@ export class CustomersService {
     transactionSession?: ClientSession
   ): Promise<
     Customer &
-      mongoose.Document & {
-        _id: Types.ObjectId;
-      }
+    mongoose.Document & {
+      _id: Types.ObjectId;
+    }
   > {
     const createdCustomer = new this.CustomerModel({
       ownerId: (<Account>account).id,
@@ -473,8 +473,8 @@ export class CustomersService {
       ownerId: (<Account>account).id,
       ...(key && search
         ? {
-            [key]: new RegExp(`.*${search}.*`, 'i'),
-          }
+          [key]: new RegExp(`.*${search}.*`, 'i'),
+        }
         : {}),
       ...(showFreezed ? {} : { isFreezed: { $ne: true } }),
     })
@@ -1055,9 +1055,9 @@ export class CustomersService {
     clientSession?: ClientSession
   ): Promise<
     Customer &
-      mongoose.Document & {
-        _id: Types.ObjectId;
-      }
+    mongoose.Document & {
+      _id: Types.ObjectId;
+    }
   > {
     if (!isValidObjectId(customerId))
       throw new BadRequestException('Invalid object id');
@@ -1719,7 +1719,9 @@ export class CustomersService {
 
       try {
         await this.removeImportFile(account);
-      } catch (error) {}
+      } catch (error) {
+        this.error(error, this.uploadCSV.name, account.email, session)
+      }
 
       const { key } = await this.s3Service.uploadCustomerImportFile(
         csvFile,
@@ -1727,7 +1729,7 @@ export class CustomersService {
       );
       const fName = csvFile?.originalname || 'Unknown name';
 
-      await this.importsRepository.insert({
+      const importRes = await this.importsRepository.save({
         account,
         fileKey: key,
         fileName: fName,
@@ -1932,8 +1934,8 @@ export class CustomersService {
           ...(type !== null && !(type instanceof Array)
             ? { type }
             : type instanceof Array
-            ? { $or: type.map((el) => ({ type: el })) }
-            : {}),
+              ? { $or: type.map((el) => ({ type: el })) }
+              : {}),
           ...(isArray !== null ? { isArray } : {}),
         },
       ],
@@ -2733,10 +2735,40 @@ export class CustomersService {
           intermediateCollection
         );
       case 'Segment':
+        return this.customersFromSegmentStatement(
+          statement,
+          account,
+          session,
+          count,
+          intermediateCollection
+        );
         break;
       default:
         throw new Error('Invalid comparison type');
     }
+  }
+
+  /**
+   * Gets set of customers from a single statement that
+   * includes segments,
+   *
+   *  eg segment1 
+   *
+   * Handles SINGLE statements not queries with subqueries
+   *
+   * @returns mongo collection string with customers
+   */
+
+  async customersFromSegmentStatement(
+    statement: any,
+    account: Account,
+    session: string,
+    count: number,
+    intermediateCollection: string
+  ) {
+    const { type, segmentId } = statement;
+    const collectionOfCustomersFromSegment = await this.segmentsService.getSegmentCustomers(account, session, segmentId, intermediateCollection);
+    return collectionOfCustomersFromSegment;
   }
 
   /**
@@ -4525,8 +4557,8 @@ export class CustomersService {
 
     const deviceTokenConditions = {
       $or: [
-        { device_token_android: { $exists: true, $ne: '' } },
-        { device_token_ios: { $exists: true, $ne: '' } },
+        { androidDeviceToken: { $exists: true, $ne: '' } },
+        { iosDeviceToken: { $exists: true, $ne: '' } },
       ],
     };
 

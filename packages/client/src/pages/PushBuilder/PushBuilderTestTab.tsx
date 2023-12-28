@@ -91,9 +91,9 @@ const PushBuilderTestTab = ({ data, onChange }: PushBuilderTestTabProps) => {
           Select an individual user
         </div>
         <div className="font-inter text-xs text-[#111827] mt-1 mb-2 opacity-70">
-          * Customer should have <b>device_token_android</b> property to test{" "}
-          <b>Android</b> notification and <b>device_token_ios</b> property to
-          test <b>IOS</b> notification otherwise they won't send.
+          * Customer should have <b>androidDeviceToken</b> property to test{" "}
+          <b>Android</b> notification and <b>iosDeviceToken</b> property to test{" "}
+          <b>IOS</b> notification otherwise they won't send.
         </div>
         <Select
           placeholder={

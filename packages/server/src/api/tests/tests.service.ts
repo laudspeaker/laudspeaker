@@ -229,7 +229,6 @@ export class TestsService {
         const foundInstallation = await this.installationRepository.findOneBy({
           id: installationId,
         });
-        console.log(installationJson);
         if (!foundInstallation)
           await this.installationRepository.insert({
             id: installationId,
@@ -332,7 +331,7 @@ export class TestsService {
   public async getSegmentSize(segmentId: string, session: string) {
     return await this.segmentCustomersRepository.count({
       where: {
-        segment: segmentId,//{id: segmentId,},
+        segment: segmentId, //{id: segmentId,},
       },
     });
   }

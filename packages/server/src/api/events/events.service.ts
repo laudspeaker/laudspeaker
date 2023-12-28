@@ -510,9 +510,9 @@ export class EventsService {
         body.customerId
       );
 
-      if (!customer.device_token_android && !customer.device_token_ios) {
+      if (!customer.androidDeviceToken && !customer.iosDeviceToken) {
         throw new HttpException(
-          "Selected customer don't have device_token_android nor device_token_ios.",
+          "Selected customer don't have androidDeviceToken nor iosDeviceToken.",
           HttpStatus.NOT_ACCEPTABLE
         );
       }
@@ -533,17 +533,17 @@ export class EventsService {
 
             if (
               platform === PushPlatforms.ANDROID &&
-              !customer.device_token_android
+              !customer.androidDeviceToken
             ) {
               this.logger.warn(
-                `Customer ${body.customerId} don't have device_token_android property to test push notification. Skipping.`
+                `Customer ${body.customerId} don't have androidDeviceToken property to test push notification. Skipping.`
               );
               return;
             }
 
-            if (platform === PushPlatforms.IOS && !customer.device_token_ios) {
+            if (platform === PushPlatforms.IOS && !customer.iosDeviceToken) {
               this.logger.warn(
-                `Customer ${body.customerId} don't have device_token_ios property to test push notification. Skipping.`
+                `Customer ${body.customerId} don't have iosDeviceToken property to test push notification. Skipping.`
               );
               return;
             }
@@ -575,15 +575,15 @@ export class EventsService {
 
             await messaging.send({
               token:
-                platform === 'Android'
-                  ? customer.device_token_android
-                  : customer.device_token_ios,
+                platform === PushPlatforms.ANDROID
+                  ? customer.androidDeviceToken
+                  : customer.iosDeviceToken,
               notification: {
                 title: settings.title,
                 body: settings.description,
               },
               android:
-                platform === 'Android'
+                platform === PushPlatforms.ANDROID
                   ? {
                       notification: {
                         sound: 'default',
@@ -592,7 +592,7 @@ export class EventsService {
                     }
                   : undefined,
               apns:
-                platform === 'iOS'
+                platform === PushPlatforms.IOS
                   ? {
                       payload: {
                         aps: {
