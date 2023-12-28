@@ -117,7 +117,7 @@ export class JourneysService {
     @Inject(JourneyLocationsService)
     private readonly journeyLocationsService: JourneyLocationsService,
     @InjectQueue('transition') private readonly transitionQueue: Queue
-  ) { }
+  ) {}
 
   log(message, method, session, user = 'ANONYMOUS') {
     this.logger.log(
@@ -478,7 +478,13 @@ export class JourneysService {
       );
       //let shouldInclude = true;
       // TODO_JH: implement the following
-      let shouldInclude = this.customersService.checkCustomerMatchesQuery(journey.inclusionCriteria, account, session, undefined, customerId);
+      let shouldInclude = this.customersService.checkCustomerMatchesQuery(
+        journey.inclusionCriteria,
+        account,
+        session,
+        undefined,
+        customerId
+      );
       // if (customer matches journeyInclusionCriteria)
       //     shouldInclude = true
       // for segment in journey.segments
@@ -495,7 +501,7 @@ export class JourneysService {
           change = 'ADD';
         } else if (
           journeyEntrySettings.enrollmentType ===
-          JourneyEnrollmentType.OnlyFuture &&
+            JourneyEnrollmentType.OnlyFuture &&
           customerUpdateType === 'NEW'
         ) {
           change = 'ADD';
@@ -758,8 +764,8 @@ export class JourneysService {
               ...(key === 'isActive'
                 ? { isStopped: false, isPaused: false }
                 : key === 'isPaused'
-                  ? { isStopped: false }
-                  : {}),
+                ? { isStopped: false }
+                : {}),
             });
         }
       } else {
@@ -1291,7 +1297,10 @@ export class JourneysService {
             if (nodes[i].data['template']['selected']) {
               metadata.template = nodes[i].data['template']['selected']['id'];
               if (nodes[i].data['template']['selected']['pushBuilder'])
-                metadata.selectedPlatform = nodes[i].data['template']['selected']['pushBuilder']['selectedPlatform']
+                metadata.selectedPlatform =
+                  nodes[i].data['template']['selected']['pushBuilder'][
+                    'selectedPlatform'
+                  ];
             }
             this.debug(
               JSON.stringify({ startMetadata: metadata }),

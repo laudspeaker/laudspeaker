@@ -32,6 +32,7 @@ import { RedlockService } from '../redlock/redlock.service';
 import { Lock } from 'redlock';
 import * as _ from 'lodash';
 import * as Sentry from '@sentry/node';
+import { JourneyLocationsService } from '../journeys/journey-locations.service';
 
 @Injectable()
 @Processor('events', {
@@ -51,8 +52,8 @@ export class EventsProcessor extends WorkerHost {
     @Inject(WebsocketGateway)
     private websocketGateway: WebsocketGateway,
     @InjectQueue('transition') private readonly transitionQueue: Queue,
-    @Inject(RedlockService)
-    private readonly redlockService: RedlockService
+    @Inject(JourneyLocationsService)
+    private readonly journeyLocationsService: JourneyLocationsService
   ) {
     super();
   }
@@ -118,7 +119,7 @@ export class EventsProcessor extends WorkerHost {
 
   async process(job: Job<any, any, string>): Promise<any> {
     const session = randomUUID();
-    let err: any, branch: number, lock: Lock;
+    let err: any, branch: number;
     let stepsToQueue: Step[] = [];
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
@@ -146,12 +147,34 @@ export class EventsProcessor extends WorkerHost {
           transactionSession
         );
       //Have to take lock before you read the customers in the step, so before you read the step
-      lock = await this.redlockService.acquire(`${customer.id}${journey.id}`);
-      this.warn(
-        `${JSON.stringify({ warning: 'Acquiring lock' })}`,
-        this.process.name,
+
+      const location = await this.journeyLocationsService.findForWrite(
+        journey,
+        customer,
         session,
-        account.email
+        account,
+        queryRunner
+      );
+
+      if (!location) {
+        this.warn(
+          `${JSON.stringify({
+            warning: 'Customer not in Journey',
+            customer,
+            journey,
+          })}`,
+          this.process.name,
+          session,
+          account.email
+        );
+        return;
+      }
+
+      await this.journeyLocationsService.lock(
+        location,
+        session,
+        account,
+        queryRunner
       );
       // All steps in `journey` that might be listening for this event
       const steps = (
@@ -182,18 +205,18 @@ export class EventsProcessor extends WorkerHost {
           ) {
             const analyticsEvent =
               steps[stepIndex].metadata.branches[branchIndex].events[
-                eventIndex
+              eventIndex
               ];
             if (job.data.event.source === AnalyticsProviderTypes.TRACKER) {
               eventEvaluation.push(
                 job.data.event.event ===
-                  steps[stepIndex].metadata.branches[branchIndex].events[
-                    eventIndex
-                  ].event &&
-                  job.data.event.payload.trackerId ==
-                    steps[stepIndex].metadata.branches[branchIndex].events[
-                      eventIndex
-                    ].trackerID
+                steps[stepIndex].metadata.branches[branchIndex].events[
+                  eventIndex
+                ].event &&
+                job.data.event.payload.trackerId ==
+                steps[stepIndex].metadata.branches[branchIndex].events[
+                  eventIndex
+                ].trackerID
               );
               continue event_loop;
             }
@@ -290,28 +313,28 @@ export class EventsProcessor extends WorkerHost {
                     comparisonType
                   )
                     ? this.audiencesHelper.operableCompare(
-                        job.data.event?.payload?.context?.page?.url,
-                        comparisonType
-                      )
+                      job.data.event?.payload?.context?.page?.url,
+                      comparisonType
+                    )
                     : await this.audiencesHelper.conditionalCompare(
-                        job.data.event?.payload?.context?.page?.url,
-                        value,
-                        comparisonType
-                      );
+                      job.data.event?.payload?.context?.page?.url,
+                      value,
+                      comparisonType
+                    );
                   conditionEvalutation.push(matches);
                 } else {
                   const matches = ['exists', 'doesNotExist'].includes(
                     comparisonType
                   )
                     ? this.audiencesHelper.operableCompare(
-                        job.data.event?.payload?.[key],
-                        comparisonType
-                      )
+                      job.data.event?.payload?.[key],
+                      comparisonType
+                    )
                     : await this.audiencesHelper.conditionalCompare(
-                        job.data.event?.payload?.[key],
-                        value,
-                        comparisonType
-                      );
+                      job.data.event?.payload?.[key],
+                      value,
+                      comparisonType
+                    );
                   this.warn(
                     `${JSON.stringify({
                       checkMatchResult: matches,
@@ -436,11 +459,7 @@ export class EventsProcessor extends WorkerHost {
       if (stepsToQueue.length) {
         let stepToQueue;
         for (let i = 0; i < stepsToQueue.length; i++) {
-          if (
-            _.find(stepsToQueue[i].customers, (cust) => {
-              return JSON.parse(cust).customerID === customer.id;
-            })
-          ) {
+          if (String(location.step) === stepsToQueue[i].id) {
             stepToQueue = stepsToQueue[i];
             break;
           }
@@ -452,16 +471,15 @@ export class EventsProcessor extends WorkerHost {
             customerID: customer.id,
             ownerID: stepToQueue.owner.id,
             session: job.data.session,
-            lock,
+            journeyID: journey.id,
             event: job.data.event.event,
           });
         } else {
-          await lock.release();
-          this.warn(
-            `${JSON.stringify({ warning: 'Releasing lock' })}`,
-            this.process.name,
+          await this.journeyLocationsService.unlock(
+            location,
             session,
-            account.email
+            account,
+            queryRunner
           );
           this.warn(
             `${JSON.stringify({
@@ -485,12 +503,11 @@ export class EventsProcessor extends WorkerHost {
           return;
         }
       } else {
-        await lock.release();
-        this.warn(
-          `${JSON.stringify({ warning: 'Releasing lock' })}`,
-          this.process.name,
+        await this.journeyLocationsService.unlock(
+          location,
           session,
-          account.email
+          account,
+          queryRunner
         );
         this.warn(
           `${JSON.stringify({ warning: 'No step matches event' })}`,
@@ -508,22 +525,13 @@ export class EventsProcessor extends WorkerHost {
         return;
       }
     } catch (e) {
-      if (lock) {
-        await lock.release();
-        this.warn(
-          `${JSON.stringify({ warning: 'Releasing lock' })}`,
-          this.process.name,
-          session
-        );
-      }
-      await transactionSession.abortTransaction();
-      await queryRunner.rollbackTransaction();
       this.error(e, this.process.name, job.data.session);
       err = e;
+      await transactionSession.abortTransaction();
+      await queryRunner.rollbackTransaction();
     } finally {
       await transactionSession.endSession();
       await queryRunner.release();
-
       if (err) throw err;
     }
     return;

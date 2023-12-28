@@ -208,7 +208,7 @@ export class JourneyLocationsService {
       JSON.stringify({
         info: `Finding JourneyLocation (${journey.id}, ${customer.id})`,
       }),
-      this.findAndUnlock.name,
+      this.findForWrite.name,
       session,
       account?.email
     );

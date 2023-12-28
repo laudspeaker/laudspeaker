@@ -261,15 +261,10 @@ export class TransitionProcessor extends WorkerHost {
         case StepType.WAIT_UNTIL_BRANCH:
           await this.handleWaitUntil(
             job.data.ownerID,
+            job.data.journeyID,
             job.data.step.id,
             job.data.session,
             job.data.customerID,
-            this.redlockService.retrieve(
-              job.data.lock.resources,
-              job.data.lock.value,
-              job.data.lock.attempts,
-              job.data.lock.expiration
-            ),
             job.data.branch,
             queryRunner,
             transactionSession,
@@ -756,7 +751,7 @@ export class TransitionProcessor extends WorkerHost {
           break;
         case TemplateType.PUSH:
           switch (currentStep.metadata.selectedPlatform) {
-            case "All":
+            case 'All':
               await this.webhooksService.insertMessageStatusToClickhouse(
                 await sender.process({
                   name: 'android',
@@ -769,9 +764,9 @@ export class TransitionProcessor extends WorkerHost {
                   pushText: template.pushObject.settings.Android.description,
                   trackingEmail: email,
                   filteredTags: filteredTags,
-                  templateID: template.id
+                  templateID: template.id,
                 })
-              )
+              );
               await this.webhooksService.insertMessageStatusToClickhouse(
                 await sender.process({
                   name: 'ios',
@@ -784,11 +779,11 @@ export class TransitionProcessor extends WorkerHost {
                   pushText: template.pushObject.settings.iOS.description,
                   trackingEmail: email,
                   filteredTags: filteredTags,
-                  templateID: template.id
+                  templateID: template.id,
                 })
-              )
+              );
               break;
-            case "iOS":
+            case 'iOS':
               await this.webhooksService.insertMessageStatusToClickhouse(
                 await sender.process({
                   name: 'ios',
@@ -801,11 +796,11 @@ export class TransitionProcessor extends WorkerHost {
                   pushText: template.pushObject.settings.iOS.description,
                   trackingEmail: email,
                   filteredTags: filteredTags,
-                  templateID: template.id
+                  templateID: template.id,
                 })
-              )
+              );
               break;
-            case "Android":
+            case 'Android':
               await this.webhooksService.insertMessageStatusToClickhouse(
                 await sender.process({
                   name: 'android',
@@ -818,9 +813,9 @@ export class TransitionProcessor extends WorkerHost {
                   pushText: template.pushObject.settings.Android.description,
                   trackingEmail: email,
                   filteredTags: filteredTags,
-                  templateID: template.id
+                  templateID: template.id,
                 })
-              )
+              );
               break;
           }
           break;
@@ -1450,10 +1445,10 @@ export class TransitionProcessor extends WorkerHost {
    */
   async handleWaitUntil(
     ownerID: string,
+    journeyID: string,
     stepID: string,
     session: string,
     customerID: string,
-    lock: Lock,
     branch: number,
     queryRunner: QueryRunner,
     transactionSession: mongoose.mongo.ClientSession,
@@ -1463,33 +1458,38 @@ export class TransitionProcessor extends WorkerHost {
       where: { id: ownerID },
     });
 
+    const journey = await this.journeysService.findByID(
+      owner,
+      journeyID,
+      session,
+      queryRunner
+    );
+
     const currentStep = await queryRunner.manager.findOne(Step, {
       where: {
         id: stepID,
         type: StepType.WAIT_UNTIL_BRANCH,
       },
-      lock: { mode: 'pessimistic_write' },
     });
 
-    if (
-      !_.find(currentStep.customers, (customer) => {
-        return JSON.parse(customer).customerID === customerID;
-      })
-    ) {
-      await lock.release();
-      this.warn(
-        `${JSON.stringify({ warning: 'Releasing lock' })}`,
-        this.handleWaitUntil.name,
-        session,
-        owner.email
-      );
+    const customer = await this.customersService.findById(owner, customerID);
+
+    const location = await this.journeyLocationsService.findForWrite(
+      journey,
+      customer,
+      session,
+      owner,
+      queryRunner
+    );
+
+    if (!location) {
       this.warn(
         `${JSON.stringify({
           warning: 'Customer not in step',
           customerID,
           currentStep,
         })}`,
-        this.handleCustomComponent.name,
+        this.handleMessage.name,
         session,
         owner.email
       );
@@ -1504,72 +1504,134 @@ export class TransitionProcessor extends WorkerHost {
       nextStep = await queryRunner.manager.findOne(Step, {
         where: {
           id: currentStep.metadata.timeBranch?.destination,
-        },
-        lock: { mode: 'pessimistic_write' },
+        }
       });
       if (currentStep.metadata.timeBranch.delay) {
-        let customerIndex = _.findIndex(currentStep.customers, (customer) => {
-          return JSON.parse(customer).customerID === customerID;
-        });
         if (
-          Temporal.Duration.compare(
-            currentStep.metadata.timeBranch.delay,
-            Temporal.Now.instant().since(
-              Temporal.Instant.from(
-                JSON.parse(currentStep.customers[customerIndex]).timestamp
-              )
-            )
-          ) < 0
+          Date.now() - location.stepEntry >
+          Temporal.Duration.from(currentStep.metadata.timeBranch.delay).total({
+            unit: 'millisecond',
+          })
         ) {
           moveCustomer = true;
         }
       } else if (currentStep.metadata.timeBranch.window) {
-      }
-      if (nextStep && moveCustomer) {
-        // Destination exists, move customer into destination
-        nextStep.customers.push(
-          JSON.stringify({
-            customerID,
-            timestamp: Temporal.Now.instant().toString(),
-          })
-        );
-        _.remove(currentStep.customers, (customer) => {
-          return JSON.parse(customer).customerID === customerID;
-        });
-        await queryRunner.manager.save(currentStep);
-        const newNext = await queryRunner.manager.save(nextStep);
+        if (currentStep.metadata.timeBranch.window.onDays) {
+          const now = new Date();
 
-        if (
-          newNext.type !== StepType.TIME_DELAY &&
-          newNext.type !== StepType.TIME_WINDOW &&
-          newNext.type !== StepType.WAIT_UNTIL_BRANCH
-        )
-          await this.transitionQueue.add(newNext.type, {
-            ownerID,
-            step: newNext,
-            session: session,
-            customerID,
-            lock,
-            event,
-          });
-        else {
-          await lock.release();
+          const startTime = new Date(now.getTime());
+          startTime.setHours(
+            currentStep.metadata.timeBranch.window.fromTime.split(':')[0]
+          );
+          startTime.setMinutes(
+            currentStep.metadata.timeBranch.window.fromTime.split(':')[1]
+          );
+
+          const endTime = new Date(now.getTime());
+          endTime.setHours(
+            currentStep.metadata.timeBranch.window.toTime.split(':')[0]
+          );
+          endTime.setMinutes(
+            currentStep.metadata.timeBranch.window.toTime.split(':')[1]
+          );
+
+          const day = now.getDay();
+
           this.warn(
-            `${JSON.stringify({ warning: 'Releasing lock' })}`,
-            this.handleWaitUntil.name,
+            JSON.stringify({ day, startTime, endTime, now, currentStep }),
+            this.handleTimeWindow.name,
             session,
             owner.email
           );
+
+          if (
+            startTime < now &&
+            endTime > now &&
+            currentStep.metadata.timeBranch.window.onDays[day] === 1
+          ) {
+            moveCustomer = true;
+          }
+        }
+        // Case2: Date and time of window
+        else {
+          if (
+            new Date(
+              Temporal.Instant.from(
+                currentStep.metadata.timeBranch.window.from
+              ).epochMilliseconds
+            ).getTime() < Date.now() &&
+            Date.now() <
+            new Date(
+              Temporal.Instant.from(
+                currentStep.metadata.timeBranch.window.to
+              ).epochMilliseconds
+            ).getTime()
+          ) {
+            this.warn(
+              JSON.stringify({
+                warning: `${currentStep.metadata.timeBranch.window}`,
+              }),
+              this.handleTimeWindow.name,
+              session,
+              owner.email
+            );
+
+            moveCustomer = true;
+          }
+        }
+      }
+      if (moveCustomer) {
+        if (nextStep) {
+          // Destination exists, move customer into destination
+          await this.journeyLocationsService.move(
+            location,
+            currentStep,
+            nextStep,
+            session,
+            owner,
+            queryRunner
+          );
+          if (
+            nextStep.type !== StepType.TIME_DELAY &&
+            nextStep.type !== StepType.TIME_WINDOW &&
+            nextStep.type !== StepType.WAIT_UNTIL_BRANCH
+          ) {
+            await this.transitionQueue.add(nextStep.type, {
+              ownerID,
+              journeyID,
+              step: nextStep,
+              session: session,
+              customerID,
+              event,
+            });
+          } else {
+            // Destination is time based,
+            // customer has stopped moving so we can release lock
+            await this.journeyLocationsService.unlock(
+              location,
+              session,
+              owner,
+              queryRunner
+            );
+          }
+        } else {
+          // Destination does not exist,
+          // customer has stopped moving so we can release lock
+          await this.journeyLocationsService.unlock(
+            location,
+            session,
+            owner,
+            queryRunner
+          );
         }
       } else {
-        // Destination does not exist, customer has stopped moving so
-        // we can release lock
-        await lock.release();
-        this.warn(
-          `${JSON.stringify({ warning: 'Releasing lock' })}`,
-          this.handleWaitUntil.name,
+        // Not yet time to move customer,
+        // customer has stopped moving so we can release lock
+        await this.journeyLocationsService.unlock(
+          location,
           session,
-          owner.email
+          owner,
+          queryRunner
         );
       }
     } else if (branch > -1 && currentStep.metadata.branches.length > 0) {
@@ -1578,63 +1640,57 @@ export class TransitionProcessor extends WorkerHost {
           id: currentStep.metadata.branches.filter((branchItem) => {
             return branchItem.index === branch;
           })[0].destination,
-        },
-        lock: { mode: 'pessimistic_write' },
+        }
       });
-      if (nextStep) {
-        // Destination exists, move customer into destination
-        nextStep.customers.push(
-          JSON.stringify({
-            customerID,
-            timestamp: Temporal.Now.instant().toString(),
-          })
-        );
-        _.remove(currentStep.customers, (customer) => {
-          return JSON.parse(customer).customerID === customerID;
-        });
-        await queryRunner.manager.save(currentStep);
-        const newNext = await queryRunner.manager.save(nextStep);
-
-        if (
-          newNext.type !== StepType.TIME_DELAY &&
-          newNext.type !== StepType.TIME_WINDOW &&
-          newNext.type !== StepType.WAIT_UNTIL_BRANCH
-        )
-          await this.transitionQueue.add(newNext.type, {
-            ownerID,
-            step: newNext,
-            session: session,
-            customerID,
-            lock,
-            event,
-          });
-        else {
-          await lock.release();
-          this.warn(
-            `${JSON.stringify({ warning: 'Releasing lock' })}`,
-            this.handleWaitUntil.name,
+        if (nextStep) {
+          // Destination exists, move customer into destination
+          await this.journeyLocationsService.move(
+            location,
+            currentStep,
+            nextStep,
             session,
-            owner.email
+            owner,
+            queryRunner
+          );
+          if (
+            nextStep.type !== StepType.TIME_DELAY &&
+            nextStep.type !== StepType.TIME_WINDOW &&
+            nextStep.type !== StepType.WAIT_UNTIL_BRANCH
+          ) {
+            await this.transitionQueue.add(nextStep.type, {
+              ownerID,
+              journeyID,
+              step: nextStep,
+              session: session,
+              customerID,
+              event,
+            });
+          } else {
+            // Destination is time based,
+            // customer has stopped moving so we can release lock
+            await this.journeyLocationsService.unlock(
+              location,
+              session,
+              owner,
+              queryRunner
+            );
+          }
+        } else {
+          // Destination does not exist,
+          // customer has stopped moving so we can release lock
+          await this.journeyLocationsService.unlock(
+            location,
+            session,
+            owner,
+            queryRunner
           );
         }
-      } else {
-        // Destination does not exist, customer has stopped moving so
-        // we can release lock
-        await lock.release();
-        this.warn(
-          `${JSON.stringify({ warning: 'Releasing lock' })}`,
-          this.handleWaitUntil.name,
-          session,
-          owner.email
-        );
-      }
     } else {
-      await lock.release();
-      this.warn(
-        `${JSON.stringify({ warning: 'Releasing lock' })}`,
-        this.handleWaitUntil.name,
+      await this.journeyLocationsService.unlock(
+        location,
         session,
-        owner.email
+        owner,
+        queryRunner
       );
     }
   }
@@ -1661,7 +1717,6 @@ export class TransitionProcessor extends WorkerHost {
     transactionSession: mongoose.mongo.ClientSession,
     event?: string
   ) {
-
     const owner = await queryRunner.manager.findOne(Account, {
       where: { id: ownerID },
     });
@@ -1672,12 +1727,11 @@ export class TransitionProcessor extends WorkerHost {
       owner.email
     );
 
-    const journey = await queryRunner.manager.findOne(Journey,
-      {
-        where: {
-          id: journeyID
-        }
-      })
+    const journey = await queryRunner.manager.findOne(Journey, {
+      where: {
+        id: journeyID,
+      },
+    });
 
     const currentStep = await queryRunner.manager.findOne(Step, {
       where: {
@@ -1710,10 +1764,22 @@ export class TransitionProcessor extends WorkerHost {
       return;
     }
 
-    let nextStep: Step, matches: boolean = false;
+    let nextStep: Step,
+      matches: boolean = false;
 
-    for (let branchIndex = 0; branchIndex < currentStep.metadata.branches.length; branchIndex++) {
-      if (await this.customersService.checkCustomerMatchesQuery(currentStep.metadata.branches[branchIndex].conditions.query, owner, session, customer)) {
+    for (
+      let branchIndex = 0;
+      branchIndex < currentStep.metadata.branches.length;
+      branchIndex++
+    ) {
+      if (
+        await this.customersService.checkCustomerMatchesQuery(
+          currentStep.metadata.branches[branchIndex].conditions.query,
+          owner,
+          session,
+          customer
+        )
+      ) {
         matches = true;
         nextStep = await queryRunner.manager.findOne(Step, {
           where: {

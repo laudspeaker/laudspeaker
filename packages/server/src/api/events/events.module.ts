@@ -40,6 +40,8 @@ import { EventsPreProcessor } from './events.preprocessor';
 import { WebsocketsModule } from '@/websockets/websockets.module';
 import { RedlockModule } from '../redlock/redlock.module';
 import { RedlockService } from '../redlock/redlock.service';
+import { JourneyLocationsService } from '../journeys/journey-locations.service';
+import { JourneyLocation } from '../journeys/entities/journey-location.entity';
 
 @Module({
   imports: [
@@ -50,6 +52,7 @@ import { RedlockService } from '../redlock/redlock.service';
       State,
       Template,
       Workflow,
+      JourneyLocation,
     ]),
     MongooseModule.forFeature([
       { name: Customer.name, schema: CustomerSchema },
@@ -99,6 +102,7 @@ import { RedlockService } from '../redlock/redlock.service';
     EventsPreProcessor,
     AudiencesHelper,
     RedlockService,
+    JourneyLocationsService,
   ],
   exports: [EventsService],
 })
