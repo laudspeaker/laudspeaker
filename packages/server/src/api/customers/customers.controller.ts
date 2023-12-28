@@ -42,7 +42,7 @@ export class CustomersController {
     private readonly customersService: CustomersService,
     @Inject(AccountsService)
     private readonly userService: AccountsService
-  ) {}
+  ) { }
 
   log(message, method, session, user = 'ANONYMOUS') {
     this.logger.log(
