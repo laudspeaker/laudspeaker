@@ -22,6 +22,7 @@ import { RequestResetPasswordDto } from './dto/request-reset-password.dto';
 import { Recovery } from './entities/recovery.entity';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
+import { Workspaces } from '../workspaces/entities/workspaces.entity';
 
 @Injectable()
 export class AuthService {
@@ -36,6 +37,8 @@ export class AuthService {
     public readonly verificationRepository: Repository<Verification>,
     @InjectRepository(Recovery)
     public readonly recoveryRepository: Repository<Recovery>,
+    @InjectRepository(Workspaces)
+    public readonly workspacesRepository: Repository<Workspaces>,
     @Inject(AuthHelper)
     public readonly helper: AuthHelper,
     @Inject(CustomersService) private customersService: CustomersService,
@@ -124,9 +127,7 @@ export class AuthService {
       user.lastName = lastName;
       user.email = email;
       user.password = this.helper.encodePassword(password);
-      user.apiKey = this.helper.generateApiKey();
       user.accountCreatedAt = new Date();
-      user.plan = PlanType.FREE;
       if (process.env.EMAIL_VERIFICATION !== 'true') {
         user.verified = true;
       }
@@ -177,11 +178,16 @@ export class AuthService {
     return { ...ret, access_token: this.helper.generateToken(user) };
   }
 
+  // For now return account from workspaces owner perspective
   public async validateAPIKey(apiKey: string): Promise<Account | never> {
-    const user: Account = await this.accountRepository.findOne({
-      where: { apiKey: apiKey },
+    const workspace = await this.workspacesRepository.findOne({
+      where: {
+        apiKey,
+      },
+      relations: ['organization.owner'],
     });
-    return user;
+
+    return workspace.organization.owner;
   }
 
   public async refresh(user: Account, session: string): Promise<string> {

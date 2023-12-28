@@ -20,7 +20,7 @@ export enum MessageChannel {
 }
 
 interface MessageChannelAdditionalInfoFixture {
-  key: keyof Account;
+  key: keyof Account["workspace"];
   title: string;
 }
 
@@ -57,19 +57,21 @@ const MessageChannelTab = () => {
   const [account, setAccount] = useState<Account>();
 
   const isEmailConnected = Boolean(
-    (account?.emailProvider === EmailSendingService.MAILGUN &&
-      account.mailgunAPIKey &&
-      account.sendingDomain &&
-      account.sendingEmail &&
-      account.sendingName) ||
-      (account?.emailProvider === EmailSendingService.SENDGRID &&
-        account.sendgridApiKey &&
-        account.sendgridVerificationKey &&
-        account.sendgridFromEmail)
+    (account?.workspace?.emailProvider === EmailSendingService.MAILGUN &&
+      account?.workspace?.mailgunAPIKey &&
+      account?.workspace?.sendingDomain &&
+      account?.workspace?.sendingEmail &&
+      account?.workspace?.sendingName) ||
+      (account?.workspace?.emailProvider === EmailSendingService.SENDGRID &&
+        account?.workspace?.sendgridApiKey &&
+        account?.workspace?.sendgridVerificationKey &&
+        account?.workspace?.sendgridFromEmail)
   );
 
   const isTwilioConnected = Boolean(
-    account?.smsAccountSid && account.smsAuthToken && account.smsFrom
+    account?.workspace?.smsAccountSid &&
+      account?.workspace?.smsAuthToken &&
+      account?.workspace?.smsFrom
   );
 
   const messageChannelCardsFixtures: Record<
@@ -82,9 +84,9 @@ const MessageChannelTab = () => {
       icon: emailCardIconImage,
       onClick: () => navigate("/settings/email"),
       connected: isEmailConnected,
-      additionalInfo: account?.emailProvider
+      additionalInfo: account?.workspace?.emailProvider
         ? emailServiceToAdditionalInfoMap[
-            account.emailProvider as EmailSendingService
+            account?.workspace?.emailProvider as EmailSendingService
           ]
         : undefined,
     },
@@ -100,7 +102,7 @@ const MessageChannelTab = () => {
       id: MessageChannel.CUSTOM_MODAL,
       title: "Onboarding Suite",
       icon: customModalCardIconImage,
-      connected: account?.javascriptSnippetSetupped,
+      connected: account?.workspace?.javascriptSnippetSetupped,
       onClick: () => navigate("/settings/custom-modal"),
     },
     [MessageChannel.PUSH]: {
@@ -108,8 +110,8 @@ const MessageChannelTab = () => {
       title: "Push",
       icon: pushLogoIcon,
       connected:
-        account?.pushPlatforms &&
-        Object.values(account.pushPlatforms).some((el) => !!el),
+        account?.workspace?.pushPlatforms &&
+        Object.values(account?.workspace?.pushPlatforms).some((el) => !!el),
       onClick: () => navigate("/settings/push"),
     },
     [MessageChannel.SLACK]: {
@@ -202,7 +204,7 @@ const MessageChannelTab = () => {
                           {info.title}
                         </div>
                         <div className="w-fit font-inter text-[14px] text-[#18181B]">
-                          {String(account?.[info.key])}
+                          {String(account?.workspace?.[info.key])}
                         </div>
                       </div>
                     ))}

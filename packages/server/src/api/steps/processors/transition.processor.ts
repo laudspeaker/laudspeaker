@@ -15,7 +15,7 @@ import { Job, Queue } from 'bullmq';
 import { cpus } from 'os';
 import { CustomComponentAction, StepType } from '../types/step.interface';
 import { Step } from '../entities/step.entity';
-import { DataSource, QueryRunner } from 'typeorm';
+import { DataSource, QueryRunner, Repository } from 'typeorm';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import mongoose, { Model } from 'mongoose';
 import { Temporal } from '@js-temporal/polyfill';
@@ -48,6 +48,8 @@ import { convertTimeToUTC, isWithinInterval } from '@/common/helper/timing';
 import { JourneySettingsQuietFallbackBehavior } from '@/api/journeys/types/additional-journey-settings.interface';
 import { StepsService } from '../steps.service';
 import { Journey } from '@/api/journeys/entities/journey.entity';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Workspaces } from '@/api/workspaces/entities/workspaces.entity';
 
 @Injectable()
 @Processor('transition')
@@ -63,7 +65,10 @@ export class TransitionProcessor extends WorkerHost {
     @InjectQueue('transition') private readonly transitionQueue: Queue,
     @InjectQueue('webhooks') private readonly webhooksQueue: Queue,
     @InjectConnection() private readonly connection: mongoose.Connection,
-    @Inject(WebhooksService) private readonly webhooksService: WebhooksService,
+    @InjectRepository(Workspaces)
+    private workspacesRepository: Repository<Workspaces>,
+    @Inject(WebhooksService)
+    private readonly webhooksService: WebhooksService,
     @Inject(CustomersService)
     private readonly customersService: CustomersService,
     @Inject(TemplatesService)
@@ -559,6 +564,16 @@ export class TransitionProcessor extends WorkerHost {
     const owner = await queryRunner.manager.findOne(Account, {
       where: { id: ownerID },
     });
+    const workspace = await this.workspacesRepository.findOne({
+      where: {
+        organization: {
+          owner: {
+            id: ownerID,
+          },
+        },
+      },
+      relations: ['organization'],
+    });
 
     const journey = await this.journeysService.findByID(
       owner,
@@ -620,11 +635,11 @@ export class TransitionProcessor extends WorkerHost {
       let utcNowString = formatter.format(now);
       let utcStartTime = convertTimeToUTC(
         quietHours.startTime,
-        owner.timezoneUTCOffset
+        workspace.timezoneUTCOffset
       );
       let utcEndTime = convertTimeToUTC(
         quietHours.endTime,
-        owner.timezoneUTCOffset
+        workspace.timezoneUTCOffset
       );
       let isQuietHour = isWithinInterval(
         utcStartTime,
@@ -661,7 +676,7 @@ export class TransitionProcessor extends WorkerHost {
           requeueTime.setDate(requeueTime.getDate() + 1);
         }
         this.log(
-          `Observing quiet hours, now ${now}, quietHours: ${quietHours.startTime}-${quietHours.endTime}, account UTC offset: ${owner.timezoneUTCOffset}, type ${messageSendType}`,
+          `Observing quiet hours, now ${now}, quietHours: ${quietHours.startTime}-${quietHours.endTime}, account UTC offset: ${workspace.timezoneUTCOffset}, type ${messageSendType}`,
           this.handleMessage.name,
           session,
           owner.email
@@ -677,6 +692,8 @@ export class TransitionProcessor extends WorkerHost {
         templateID.toString(),
         queryRunner
       );
+      const { email } = owner;
+
       const {
         mailgunAPIKey,
         sendingName,
@@ -684,9 +701,9 @@ export class TransitionProcessor extends WorkerHost {
         testSendingName,
         sendgridApiKey,
         sendgridFromEmail,
-        email,
-      } = owner;
-      let { sendingDomain, sendingEmail } = owner;
+      } = workspace;
+
+      let { sendingDomain, sendingEmail } = workspace;
 
       let key = mailgunAPIKey;
       let from = sendingName;
@@ -701,8 +718,8 @@ export class TransitionProcessor extends WorkerHost {
 
       switch (template.type) {
         case TemplateType.EMAIL:
-          if (owner.emailProvider === 'free3') {
-            if (owner.freeEmailsCount === 0)
+          if (workspace.emailProvider === 'free3') {
+            if (workspace.freeEmailsCount === 0)
               throw new HttpException(
                 'You exceeded limit of 3 emails',
                 HttpStatus.PAYMENT_REQUIRED
@@ -711,9 +728,9 @@ export class TransitionProcessor extends WorkerHost {
             key = process.env.MAILGUN_API_KEY;
             from = testSendingName;
             sendingEmail = testSendingEmail;
-            owner.freeEmailsCount--;
+            workspace.freeEmailsCount--;
           }
-          if (owner.emailProvider === 'sendgrid') {
+          if (workspace.emailProvider === 'sendgrid') {
             key = sendgridApiKey;
             from = sendgridFromEmail;
           }
@@ -739,7 +756,7 @@ export class TransitionProcessor extends WorkerHost {
             ),
             tags: filteredTags,
             templateID: template.id,
-            eventProvider: owner.emailProvider,
+            eventProvider: workspace.emailProvider,
           });
           this.debug(
             `${JSON.stringify(ret)}`,
@@ -747,7 +764,10 @@ export class TransitionProcessor extends WorkerHost {
             session
           );
           await this.webhooksService.insertMessageStatusToClickhouse(ret);
-          if (owner.emailProvider === 'free3') await owner.save();
+          if (workspace.emailProvider === 'free3') {
+            await owner.save();
+            await workspace.save();
+          }
           break;
         case TemplateType.PUSH:
           switch (currentStep.metadata.selectedPlatform) {
@@ -758,7 +778,8 @@ export class TransitionProcessor extends WorkerHost {
                   accountID: owner.id,
                   stepID: currentStep.id,
                   customerID: customerID,
-                  firebaseCredentials: owner.pushPlatforms.Android.credentials,
+                  firebaseCredentials:
+                    workspace.pushPlatforms.Android.credentials,
                   deviceToken: customer.androidDeviceToken,
                   pushTitle: template.pushObject.settings.Android.title,
                   pushText: template.pushObject.settings.Android.description,
@@ -773,7 +794,7 @@ export class TransitionProcessor extends WorkerHost {
                   accountID: owner.id,
                   stepID: currentStep.id,
                   customerID: customerID,
-                  firebaseCredentials: owner.pushPlatforms.iOS.credentials,
+                  firebaseCredentials: workspace.pushPlatforms.iOS.credentials,
                   deviceToken: customer.iosDeviceToken,
                   pushTitle: template.pushObject.settings.iOS.title,
                   pushText: template.pushObject.settings.iOS.description,
@@ -790,7 +811,7 @@ export class TransitionProcessor extends WorkerHost {
                   accountID: owner.id,
                   stepID: currentStep.id,
                   customerID: customerID,
-                  firebaseCredentials: owner.pushPlatforms.iOS.credentials,
+                  firebaseCredentials: workspace.pushPlatforms.iOS.credentials,
                   deviceToken: customer.iosDeviceToken,
                   pushTitle: template.pushObject.settings.iOS.title,
                   pushText: template.pushObject.settings.iOS.description,
@@ -807,7 +828,8 @@ export class TransitionProcessor extends WorkerHost {
                   accountID: owner.id,
                   stepID: currentStep.id,
                   customerID: customerID,
-                  firebaseCredentials: owner.pushPlatforms.Android.credentials,
+                  firebaseCredentials:
+                    workspace.pushPlatforms.Android.credentials,
                   deviceToken: customer.androidDeviceToken,
                   pushTitle: template.pushObject.settings.Android.title,
                   pushText: template.pushObject.settings.Android.description,
@@ -861,15 +883,15 @@ export class TransitionProcessor extends WorkerHost {
               stepID: currentStep.id,
               customerID: customer.id,
               templateID: template.id,
-              from: owner.smsFrom,
-              sid: owner.smsAccountSid,
+              from: workspace.smsFrom,
+              sid: workspace.smsAccountSid,
               tags: filteredTags,
               text: await this.templatesService.parseApiCallTags(
                 template.smsText,
                 filteredTags
               ),
               to: customer.phPhoneNumber || customer.phone,
-              token: owner.smsAuthToken,
+              token: workspace.smsAuthToken,
               trackingEmail: email,
             })
           );
@@ -1355,11 +1377,11 @@ export class TransitionProcessor extends WorkerHost {
           ).epochMilliseconds
         ).getTime() < Date.now() &&
         Date.now() <
-        new Date(
-          Temporal.Instant.from(
-            currentStep.metadata.window.to
-          ).epochMilliseconds
-        ).getTime()
+          new Date(
+            Temporal.Instant.from(
+              currentStep.metadata.window.to
+            ).epochMilliseconds
+          ).getTime()
       ) {
         this.warn(
           JSON.stringify({ warning: `${currentStep.metadata.window}` }),
@@ -1504,7 +1526,7 @@ export class TransitionProcessor extends WorkerHost {
       nextStep = await queryRunner.manager.findOne(Step, {
         where: {
           id: currentStep.metadata.timeBranch?.destination,
-        }
+        },
       });
       if (currentStep.metadata.timeBranch.delay) {
         if (
@@ -1561,11 +1583,11 @@ export class TransitionProcessor extends WorkerHost {
               ).epochMilliseconds
             ).getTime() < Date.now() &&
             Date.now() <
-            new Date(
-              Temporal.Instant.from(
-                currentStep.metadata.timeBranch.window.to
-              ).epochMilliseconds
-            ).getTime()
+              new Date(
+                Temporal.Instant.from(
+                  currentStep.metadata.timeBranch.window.to
+                ).epochMilliseconds
+              ).getTime()
           ) {
             this.warn(
               JSON.stringify({
@@ -1640,43 +1662,33 @@ export class TransitionProcessor extends WorkerHost {
           id: currentStep.metadata.branches.filter((branchItem) => {
             return branchItem.index === branch;
           })[0].destination,
-        }
+        },
       });
-        if (nextStep) {
-          // Destination exists, move customer into destination
-          await this.journeyLocationsService.move(
-            location,
-            currentStep,
-            nextStep,
-            session,
-            owner,
-            queryRunner
-          );
-          if (
-            nextStep.type !== StepType.TIME_DELAY &&
-            nextStep.type !== StepType.TIME_WINDOW &&
-            nextStep.type !== StepType.WAIT_UNTIL_BRANCH
-          ) {
-            await this.transitionQueue.add(nextStep.type, {
-              ownerID,
-              journeyID,
-              step: nextStep,
-              session: session,
-              customerID,
-              event,
-            });
-          } else {
-            // Destination is time based,
-            // customer has stopped moving so we can release lock
-            await this.journeyLocationsService.unlock(
-              location,
-              session,
-              owner,
-              queryRunner
-            );
-          }
+      if (nextStep) {
+        // Destination exists, move customer into destination
+        await this.journeyLocationsService.move(
+          location,
+          currentStep,
+          nextStep,
+          session,
+          owner,
+          queryRunner
+        );
+        if (
+          nextStep.type !== StepType.TIME_DELAY &&
+          nextStep.type !== StepType.TIME_WINDOW &&
+          nextStep.type !== StepType.WAIT_UNTIL_BRANCH
+        ) {
+          await this.transitionQueue.add(nextStep.type, {
+            ownerID,
+            journeyID,
+            step: nextStep,
+            session: session,
+            customerID,
+            event,
+          });
         } else {
-          // Destination does not exist,
+          // Destination is time based,
           // customer has stopped moving so we can release lock
           await this.journeyLocationsService.unlock(
             location,
@@ -1685,6 +1697,16 @@ export class TransitionProcessor extends WorkerHost {
             queryRunner
           );
         }
+      } else {
+        // Destination does not exist,
+        // customer has stopped moving so we can release lock
+        await this.journeyLocationsService.unlock(
+          location,
+          session,
+          owner,
+          queryRunner
+        );
+      }
     } else {
       await this.journeyLocationsService.unlock(
         location,
@@ -1952,8 +1974,8 @@ export class TransitionProcessor extends WorkerHost {
   }
 
   // TODO
-  async handleABTest(job: Job<any, any, string>) { }
-  async handleRandomCohortBranch(job: Job<any, any, string>) { }
+  async handleABTest(job: Job<any, any, string>) {}
+  async handleRandomCohortBranch(job: Job<any, any, string>) {}
 
   // @OnWorkerEvent('active')
   // onActive(job: Job<any, any, any>, prev: string) {

@@ -1,7 +1,5 @@
 import { OrganizationTeam } from '@/api/organizations/entities/organization-team.entity';
-import { Organization } from '@/api/organizations/entities/organization.entity';
 import { PushPlatforms } from '@/api/templates/entities/template.entity';
-import { Workspaces } from '@/api/workspaces/entities/workspaces.entity';
 import { Exclude } from 'class-transformer';
 import {
   BaseEntity,
@@ -29,7 +27,7 @@ export type PushFirebasePlatforms = Record<
 >;
 
 @Entity()
-@Unique(['email', 'apiKey'])
+@Unique(['email'])
 export class Account extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
   public id!: string;
@@ -39,10 +37,6 @@ export class Account extends BaseEntity {
 
   @ManyToMany(() => OrganizationTeam, (team) => team.members)
   public teams: OrganizationTeam[];
-
-  // REMOVE
-  @Column({ type: 'varchar' })
-  public apiKey!: string;
 
   @Exclude()
   @Column({ type: 'varchar' })
@@ -64,67 +58,8 @@ export class Account extends BaseEntity {
   @Column({ type: 'timestamp', nullable: true, default: null })
   public lastLoginAt: Date | null;
 
-  @Column({ type: 'integer', nullable: false, default: 0 })
-  public messagesSent: number;
-
-  // REMOVE
-  @Column({
-    type: 'enum',
-    enum: PlanType,
-    default: PlanType.FREE,
-  })
-  public plan: PlanType;
-
   @Column({ type: 'boolean', default: false })
   public verified!: boolean;
-
-  // remove
-  @Column({ type: 'varchar', nullable: true })
-  public mailgunAPIKey: string;
-
-  // remove
-  @Column({ type: 'varchar', nullable: true })
-  public sendingDomain: string;
-
-  // remove
-  @Column({ type: 'varchar', nullable: true })
-  public sendingEmail: string;
-
-  // remove
-  @Column({ type: 'varchar', nullable: true })
-  public sendingName: string;
-
-  // remove
-  @Column('simple-array', { nullable: true })
-  public slackTeamId: string[];
-
-  // remove
-  @Column('simple-array', { nullable: true })
-  public posthogApiKey: string[];
-
-  // remove
-  @Column('simple-array', { nullable: true })
-  public posthogProjectId: string[];
-
-  // remove
-  @Column('simple-array', { nullable: true })
-  public posthogHostUrl: string[];
-
-  // remove
-  @Column('simple-array', { nullable: true })
-  public posthogSmsKey: string[];
-
-  // remove
-  @Column('simple-array', { nullable: true })
-  public posthogEmailKey: string[];
-
-  // remove
-  @Column('simple-array', { nullable: true })
-  public posthogFirebaseDeviceTokenKey: string[];
-
-  // remove
-  @Column({ type: 'varchar', nullable: true })
-  public firebaseCredentials: string;
 
   @Column({ type: 'varchar', array: true, default: [] })
   public expectedOnboarding: string[];
@@ -138,66 +73,4 @@ export class Account extends BaseEntity {
   // Question - if it's still in use
   @Column({ type: 'varchar', nullable: true, default: null })
   public customerId?: string;
-
-  // remove
-  @Column({ type: 'varchar', nullable: true, default: null })
-  public emailProvider?: string;
-
-  // remove
-  @Column({ type: 'varchar', nullable: true, default: null })
-  public testSendingEmail?: string;
-
-  // remove
-  @Column({ type: 'varchar', nullable: true, default: null })
-  public testSendingName?: string;
-
-  // remove
-  @Column({ type: 'int', default: 3 })
-  public freeEmailsCount: number;
-
-  // remove
-  @Column({ type: 'varchar', nullable: true })
-  public sendgridApiKey?: string;
-
-  // remove
-  @Column({ type: 'varchar', nullable: true })
-  public sendgridFromEmail?: string;
-
-  // remove
-  @Column({ type: 'varchar', nullable: true })
-  public sendgridVerificationKey?: string;
-
-  // remove
-  @Column({ type: 'varchar', nullable: true })
-  public smsAccountSid?: string;
-
-  // remove
-  @Column({ type: 'varchar', nullable: true })
-  public smsAuthToken?: string;
-
-  // remove
-  @Column({ type: 'varchar', nullable: true })
-  public smsFrom?: string;
-
-  // remove
-  @Column({ type: 'boolean', default: false })
-  public posthogSetupped: boolean;
-
-  // remove
-  @Column({ type: 'boolean', default: false })
-  public javascriptSnippetSetupped: boolean;
-
-  // remove
-  @Column({ type: 'varchar', default: 'UTC+00:00', nullable: false })
-  public timezoneUTCOffset: string; // must be in format `UTC(+/-)hh:mm`
-
-  // remove
-  @Column({
-    type: 'jsonb',
-    default: {
-      [PushPlatforms.IOS]: undefined,
-      [PushPlatforms.ANDROID]: undefined,
-    },
-  })
-  public pushPlatforms: PushFirebasePlatforms;
 }

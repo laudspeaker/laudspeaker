@@ -609,7 +609,8 @@ export class AudiencesService {
         let toTemplates = toAud.templates.map((item) => item.id);
 
         if (
-          account.emailProvider === 'free3' &&
+          account?.teams?.[0]?.organization?.workspaces?.[0]?.emailProvider ===
+            'free3' &&
           account.customerId !== customerId &&
           toTemplates.length
         ) {

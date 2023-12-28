@@ -461,11 +461,16 @@ export class CronService {
 
         //Iterate through accounts
         for (let j = 0; j < accounts.length; j++) {
-          if (accounts[j].mailgunAPIKey && accounts[j].sendingDomain) {
+          if (
+            accounts[j]?.teams?.[0]?.organization?.workspaces?.[0]
+              .mailgunAPIKey &&
+            accounts[j]?.teams?.[0]?.organization?.workspaces?.[0].sendingDomain
+          ) {
             const mailgun = new Mailgun(formData);
             const mg = mailgun.client({
               username: 'api',
-              key: accounts[j].mailgunAPIKey,
+              key: accounts[j]?.teams?.[0]?.organization?.workspaces?.[0]
+                .mailgunAPIKey,
             });
             let query, events;
             query = {
@@ -474,7 +479,11 @@ export class CronService {
               ascending: 'yes',
             };
             do {
-              events = await mg.events.get(accounts[j].sendingDomain, query);
+              events = await mg.events.get(
+                accounts[j]?.teams?.[0]?.organization?.workspaces?.[0]
+                  ?.sendingDomain,
+                query
+              );
               for (let k = 0; k < events.items.length; k++) {
                 const existsCheck = await this.clickHouseClient.query({
                   query: `SELECT * FROM message_status WHERE event = {event:String} AND messageId = {messageId:String}`,
@@ -550,8 +559,13 @@ export class CronService {
 
         //Iterate through accounts
         for (let j = 0; j < accounts.length; j++) {
-          if (accounts[j].sendgridApiKey) {
-            client.setApiKey(accounts[j].sendgridApiKey);
+          if (
+            accounts[j].teams?.[0]?.organization?.workspaces?.[0].sendgridApiKey
+          ) {
+            client.setApiKey(
+              accounts[j].teams?.[0]?.organization?.workspaces?.[0]
+                .sendgridApiKey
+            );
             const resultSet = await this.clickHouseClient.query({
               query: `SELECT * FROM message_status WHERE processed = false AND eventProvider = 'sendgrid' AND userId = {userId:String}`,
               query_params: { userId: accounts[j].id },
@@ -668,10 +682,12 @@ export class CronService {
 
         //Iterate through accounts
         for (let j = 0; j < accounts.length; j++) {
-          if (accounts[j].smsAccountSid && accounts[j].smsAuthToken) {
+          const workspace =
+            accounts[j].teams?.[0]?.organization?.workspaces?.[0];
+          if (workspace.smsAccountSid && workspace.smsAuthToken) {
             const twilioClient = twilio(
-              accounts[j].smsAccountSid,
-              accounts[j].smsAuthToken
+              workspace.smsAccountSid,
+              workspace.smsAuthToken
             );
             const resultSet = await this.clickHouseClient.query({
               query: `SELECT * FROM message_status WHERE processed = false AND eventProvider = 'twilio' AND userId = {userId:String}`,

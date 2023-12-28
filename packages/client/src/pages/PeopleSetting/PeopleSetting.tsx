@@ -41,9 +41,9 @@ const PeopleSetting = () => {
 
     try {
       const {
-        data: { pk: primaryKey },
+        data: { workspace },
       } = await ApiService.get<Account>({ url: "/accounts" });
-      setPK(primaryKey);
+      setPK(workspace?.pk);
 
       setIsPKLoading(false);
     } catch (error) {
@@ -80,7 +80,7 @@ const PeopleSetting = () => {
         type: ActionType.LOGIN_USER_SUCCESS,
         payload: {
           ...userData,
-          pk: data.pk,
+          pk: data.workspace.pk,
         },
       });
 

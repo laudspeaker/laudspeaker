@@ -151,15 +151,18 @@ export class AccountsController {
         delete pk?.__v;
       }
 
-      delete (<Account>user)?.teams?.[0]?.organization?.workspaces?.[0]
-        ?.pushPlatforms?.Android?.credentials;
-      delete (<Account>user)?.teams?.[0]?.organization?.workspaces?.[0]
-        ?.pushPlatforms?.iOS?.credentials;
+      const workspace = (<Account>user)?.teams?.[0]?.organization
+        ?.workspaces?.[0];
+
+      delete workspace?.pushPlatforms?.Android?.credentials;
+      delete workspace?.pushPlatforms?.iOS?.credentials;
 
       return {
         ...data?.[0],
-        pk,
-        workspace: (<Account>user)?.teams?.[0]?.organization?.workspaces?.[0],
+        workspace: {
+          ...workspace,
+          pk,
+        },
       };
     } catch (e) {
       this.error(e, this.findOne.name, session, (<Account>user).id);
@@ -180,7 +183,14 @@ export class AccountsController {
     );
     try {
       const userData = await this.accountsService.findOne(user, session);
-      return transformToObject(userData, AccountSettingsResponse);
+      return transformToObject(
+        {
+          ...userData,
+          apiKey: (<Account>user).teams?.[0]?.organization?.workspaces?.[0]
+            .apiKey,
+        },
+        AccountSettingsResponse
+      );
     } catch (e) {
       this.error(e, this.getUserSettings.name, session, (<Account>user).id);
       throw e;

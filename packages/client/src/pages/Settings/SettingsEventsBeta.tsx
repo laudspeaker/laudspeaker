@@ -5,6 +5,7 @@ import ApiService from "services/api.service";
 import { GenericButton, Input } from "components/Elements";
 import { startPosthogImport } from "reducers/settings.reducer";
 import { toast } from "react-toastify";
+import Account from "types/Account";
 
 const memoryOptions = [
   { name: "Posthog", inStock: true },
@@ -22,7 +23,7 @@ function classNames(...classes: string[]) {
 export default function SettingsEventsBeta() {
   const [mem, setMem] = useState(memoryOptions[0]);
 
-  const [formData, setFormData] = useState<Record<string, string>>({
+  const [formData, setFormData] = useState<Record<string, any>>({
     posthogApiKey: "",
     posthogProjectId: "",
     posthogHostUrl: "app.posthog.com",
@@ -66,7 +67,7 @@ export default function SettingsEventsBeta() {
 
   useEffect(() => {
     (async () => {
-      const { data } = await ApiService.get({ url: "/accounts" });
+      const { data } = await ApiService.get<Account>({ url: "/accounts" });
       const {
         posthogApiKey,
         posthogProjectId,
@@ -74,14 +75,16 @@ export default function SettingsEventsBeta() {
         posthogSmsKey,
         posthogEmailKey,
         posthogFirebaseDeviceTokenKey,
-      } = data;
+      } = data.workspace;
       const newData = {
         posthogApiKey: posthogApiKey || "",
         posthogProjectId: posthogProjectId || "",
         posthogHostUrl: posthogHostUrl || "",
         posthogSmsKey: posthogSmsKey || "",
         posthogEmailKey: posthogEmailKey || "",
-        posthogFirebaseDeviceTokenKey: posthogFirebaseDeviceTokenKey || "",
+        posthogFirebaseDeviceTokenKey: "",
+        // Update when gonna work with posthog
+        // posthogFirebaseDeviceTokenKey: posthogFirebaseDeviceTokenKey || [],
       };
       setFormData(newData);
     })();

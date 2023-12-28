@@ -93,6 +93,9 @@ export class Workspaces extends BaseEntity {
   @Column({ type: 'varchar', nullable: true, default: null })
   public testSendingName?: string;
 
+  @Column({ type: 'integer', nullable: false, default: 0 })
+  public messagesSent: number;
+
   @Column({ type: 'int', default: 3 })
   public freeEmailsCount: number;
 

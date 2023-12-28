@@ -31,7 +31,7 @@ import { DevModeService } from '@/api/dev-mode/dev-mode.service';
 import { RavenInterceptor } from 'nest-raven';
 
 interface SocketData {
-  account: Account;
+  account: Account & { apiKey: string };
   customerId: string;
   development?: boolean;
   relatedDevConnection?: string;

@@ -4,9 +4,10 @@ import { ISignUpForm } from "reducers/auth.reducer";
 import { GenericButton } from "components/Elements";
 import ApiService from "services/api.service";
 import { toast } from "react-toastify";
+import Account from "types/Account";
 
 const fetchValues = async () => {
-  const response = await ApiService.get({ url: "/accounts/settings" });
+  const response = await ApiService.get<Account>({ url: "/accounts/settings" });
   const { data, status } = response;
   if (status !== 200) console.error(data);
   return data;
@@ -65,7 +66,7 @@ const ProfileForm = () => {
     setIsLoading(true);
     fetchValues()
       .then((data) => {
-        const { apiKey, ...newValues } = data;
+        const { apiKey, ...newValues } = data.workspace;
         setPrivateAPIKey(apiKey);
         setValues({ ...values, ...newValues });
         setStoredValues({ ...values, ...newValues });

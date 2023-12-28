@@ -21,6 +21,7 @@ import { State } from './entities/state.entity';
 import { platform, release } from 'os';
 import { CustomerDocument } from '../customers/schemas/customer.schema';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
+import { Workspaces } from '../workspaces/entities/workspaces.entity';
 
 interface ResponseError extends Error {
   status?: number;
@@ -48,6 +49,8 @@ export class SlackService {
     private installationRepository: Repository<Installation>,
     @InjectRepository(State)
     private stateRepository: Repository<State>,
+    @InjectRepository(Workspaces)
+    private workspacesRepository: Repository<Workspaces>,
     @InjectRepository(Account)
     private readonly accountsRepository: Repository<Account>,
     @InjectQueue('slack') private readonly slackQueue: Queue,
@@ -267,34 +270,35 @@ export class SlackService {
     const found: Account = await this.accountsRepository.findOneBy({
       id: (<Account>user).id,
     });
+    const workspace = user.teams?.[0]?.organization?.workspaces?.[0];
     //to do
     // null, undefined
-    if (found.slackTeamId == null) {
-      found.slackTeamId = [teamid];
+    if (workspace.slackTeamId == null) {
+      workspace.slackTeamId = [teamid];
     }
     // empty array
     else if (
-      Array.isArray(found.slackTeamId) &&
-      found.slackTeamId.length == 0
+      Array.isArray(workspace.slackTeamId) &&
+      workspace.slackTeamId.length == 0
     ) {
-      found.slackTeamId.push(teamid);
+      workspace.slackTeamId.push(teamid);
     }
     //if there are already team ids, make sur we dont add the same one twice
-    else if (found.slackTeamId.length > 0) {
+    else if (workspace.slackTeamId.length > 0) {
       let duplicate = false;
-      for (const team of found.slackTeamId) {
+      for (const team of workspace.slackTeamId) {
         if (team == teamid) {
           duplicate = true;
         }
       }
       if (!duplicate) {
-        found.slackTeamId.push(teamid);
+        workspace.slackTeamId.push(teamid);
       }
     }
     //do we need this case?
     //other arrays
     else {
-      found.slackTeamId.push(teamid);
+      workspace.slackTeamId.push(teamid);
     }
 
     found.currentOnboarding.push('Slack');
@@ -302,6 +306,7 @@ export class SlackService {
       found.currentOnboarding.length === found.expectedOnboarding.length;
 
     await this.accountsRepository.save(found);
+    await this.workspacesRepository.save(workspace);
     const newfound: Account = await this.accountsRepository.findOneBy({
       id: (<Account>user).id,
     });
@@ -496,9 +501,15 @@ export class SlackService {
       } else {
         sanitizedMember.slackTeamMember = true;
       }
-      const account: Account = await this.accountsRepository.findOneBy({
-        slackTeamId: teamOrEnterpriseId,
+
+      const workspaceUpdated = await this.workspacesRepository.findOne({
+        where: {
+          slackTeamId: teamOrEnterpriseId,
+        },
+        relations: ['organization'],
       });
+      const account = workspaceUpdated.organization.owner;
+
       //to do check if user is already there and only create if not
       const data = await this.customersService.findBySlackId(
         account,
@@ -606,9 +617,13 @@ export class SlackService {
         } else {
           sanitizedMember.slackTeamMember = true;
         }
-        const account: Account = await this.accountsRepository.findOneBy({
-          slackTeamId: teamOrEnterpriseId,
+        const workspaceUpdated = await this.workspacesRepository.findOne({
+          where: {
+            slackTeamId: teamOrEnterpriseId,
+          },
+          relations: ['organization'],
         });
+        const account = workspaceUpdated.organization.owner;
         //to do check if user is there
         const data = await this.customersService.findBySlackId(
           account,

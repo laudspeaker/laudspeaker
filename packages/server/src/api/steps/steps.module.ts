@@ -30,6 +30,7 @@ import { StartProcessor } from '../journeys/start.processor';
 import { JourneyLocationsService } from '../journeys/journey-locations.service';
 import { JourneyLocation } from '../journeys/entities/journey-location.entity';
 import { JourneysModule } from '../journeys/journeys.module';
+import { Workspaces } from '../workspaces/entities/workspaces.entity';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { JourneysModule } from '../journeys/journeys.module';
       Audience,
       Account,
       JourneyLocation,
+      Workspaces,
     ]),
     MongooseModule.forFeature([
       { name: Customer.name, schema: CustomerSchema },

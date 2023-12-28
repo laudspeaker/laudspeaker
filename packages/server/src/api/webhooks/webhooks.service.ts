@@ -159,16 +159,15 @@ export class WebhooksService {
         where: {
           id: item.stepId,
         },
-        relations: ['owner'],
+        relations: ['owner.teams.organization.workspaces'],
       });
 
       if (step) break;
     }
 
     if (!step) return;
-    const {
-      owner: { sendgridVerificationKey },
-    } = step;
+    const { sendgridVerificationKey } =
+      step.owner.teams?.[0]?.organization?.workspaces?.[0];
 
     if (!sendgridVerificationKey)
       throw new BadRequestException(
@@ -298,7 +297,8 @@ export class WebhooksService {
 
     const hash = createHmac(
       'sha256',
-      account.mailgunAPIKey || process.env.MAILGUN_API_KEY
+      account?.teams?.[0]?.organization?.workspaces?.[0]?.mailgunAPIKey ||
+        process.env.MAILGUN_API_KEY
     )
       .update(value)
       .digest('hex');

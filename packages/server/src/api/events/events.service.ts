@@ -415,11 +415,16 @@ export class EventsService {
   }
 
   async sendTestPush(account: Account, token: string) {
-    const foundAcc = await this.accountsRepository.findOneBy({
-      id: account.id,
+    const foundAcc = await this.accountsRepository.findOne({
+      where: {
+        id: account.id,
+      },
+      relations: ['teams.organization.workspaces'],
     });
 
-    const hasConnected = Object.values(foundAcc.pushPlatforms).some(
+    const workspace = foundAcc.teams?.[0]?.organization?.workspaces?.[0];
+
+    const hasConnected = Object.values(workspace.pushPlatforms).some(
       (el) => !!el
     );
 
@@ -432,10 +437,10 @@ export class EventsService {
       }
 
       await Promise.all(
-        Object.keys(foundAcc.pushPlatforms)
-          .filter((el) => !!foundAcc.pushPlatforms[el])
+        Object.keys(workspace.pushPlatforms)
+          .filter((el) => !!workspace.pushPlatforms[el])
           .map(async (el) => {
-            if (foundAcc.pushPlatforms[el].credentials) {
+            if (workspace.pushPlatforms[el].credentials) {
               let firebaseApp: admin.app.App;
 
               try {
@@ -445,7 +450,7 @@ export class EventsService {
                   firebaseApp = admin.initializeApp(
                     {
                       credential: admin.credential.cert(
-                        foundAcc.pushPlatforms[el].credentials
+                        workspace.pushPlatforms[el].credentials
                       ),
                     },
                     `${foundAcc.id};;${el}`
@@ -489,11 +494,16 @@ export class EventsService {
   }
 
   async sendTestPushByCustomer(account: Account, body: CustomerPushTest) {
-    const foundAcc = await this.accountsRepository.findOneBy({
-      id: account.id,
+    const foundAcc = await this.accountsRepository.findOne({
+      where: {
+        id: account.id,
+      },
+      relations: ['teams.organization.workspaces'],
     });
 
-    const hasConnected = Object.values(foundAcc.pushPlatforms).some(
+    const workspace = foundAcc.teams?.[0]?.organization?.workspaces?.[0];
+
+    const hasConnected = Object.values(workspace.pushPlatforms).some(
       (el) => !!el
     );
 
@@ -521,10 +531,10 @@ export class EventsService {
         Object.entries(body.pushObject.platform)
           .filter(
             ([platform, isEnabled]) =>
-              isEnabled && foundAcc.pushPlatforms[platform]
+              isEnabled && workspace.pushPlatforms[platform]
           )
           .map(async ([platform]) => {
-            if (!foundAcc.pushPlatforms[platform]) {
+            if (!workspace.pushPlatforms[platform]) {
               throw new HttpException(
                 `Platform ${platform} is not connected.`,
                 HttpStatus.NOT_ACCEPTABLE
@@ -558,7 +568,7 @@ export class EventsService {
                 firebaseApp = admin.initializeApp(
                   {
                     credential: admin.credential.cert(
-                      foundAcc.pushPlatforms[platform].credentials
+                      workspace.pushPlatforms[platform].credentials
                     ),
                   },
                   `${foundAcc.id};;${platform}`

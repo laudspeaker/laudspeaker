@@ -355,6 +355,10 @@ export class TemplatesService extends QueueEventsHost {
 
     const filteredTags = cleanTagsForSending(tags);
 
+    const { email } = account;
+
+    const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
+
     const {
       mailgunAPIKey,
       sendingName,
@@ -362,17 +366,17 @@ export class TemplatesService extends QueueEventsHost {
       testSendingName,
       sendgridApiKey,
       sendgridFromEmail,
-      email,
-    } = account;
-    let { sendingDomain, sendingEmail } = account;
+    } = workspace;
+
+    let { sendingDomain, sendingEmail } = workspace;
 
     let key = mailgunAPIKey;
     let from = sendingName;
 
     switch (template.type) {
       case TemplateType.EMAIL:
-        if (account.emailProvider === 'free3') {
-          if (account.freeEmailsCount === 0)
+        if (workspace.emailProvider === 'free3') {
+          if (workspace.freeEmailsCount === 0)
             throw new HttpException(
               'You exceeded limit of 3 emails',
               HttpStatus.PAYMENT_REQUIRED
@@ -381,10 +385,10 @@ export class TemplatesService extends QueueEventsHost {
           key = process.env.MAILGUN_API_KEY;
           from = testSendingName;
           sendingEmail = testSendingEmail;
-          account.freeEmailsCount--;
+          workspace.freeEmailsCount--;
         }
 
-        if (account.emailProvider === 'sendgrid') {
+        if (workspace.emailProvider === 'sendgrid') {
           key = sendgridApiKey;
           from = sendgridFromEmail;
         }
@@ -398,7 +402,7 @@ export class TemplatesService extends QueueEventsHost {
             customerId,
             domain: sendingDomain,
             email: sendingEmail,
-            eventProvider: account.emailProvider,
+            eventProvider: workspace.emailProvider,
             from,
             trackingEmail: email,
             key,
@@ -413,7 +417,10 @@ export class TemplatesService extends QueueEventsHost {
           },
           { attempts: Number.MAX_SAFE_INTEGER }
         );
-        if (account.emailProvider === 'free3') await account.save();
+        if (workspace.emailProvider === 'free3') {
+          await account.save();
+          await workspace.save();
+        }
         break;
       case TemplateType.SLACK:
         try {
@@ -444,13 +451,13 @@ export class TemplatesService extends QueueEventsHost {
           accountId: account.id,
           audienceId,
           customerId,
-          from: account.smsFrom,
-          sid: account.smsAccountSid,
+          from: workspace.smsFrom,
+          sid: workspace.smsAccountSid,
           tags: filteredTags,
           templateId: template.id,
           text: await this.parseApiCallTags(template.smsText, filteredTags),
           to: customer.phPhoneNumber || customer.phone,
-          token: account.smsAuthToken,
+          token: workspace.smsAuthToken,
           trackingEmail: email,
         });
         break;

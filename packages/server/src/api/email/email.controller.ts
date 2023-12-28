@@ -41,16 +41,17 @@ export class EmailController {
   @Post('send')
   @UseGuards(JwtAuthGuard)
   async send(@Req() { user }: Request, @Body() sendEmailDto: SendEmailDto) {
-    const found: Account = await this.usersRepository.findOneBy({
-      id: (<Account>user).id,
-    });
+    const found = <Account>user;
+
+    const workspace = found.teams?.[0]?.organization?.workspaces?.[0];
+
     await this.messageQueue.add('email', {
       trackingEmail: found.email,
       accountId: found.id,
-      key: found.mailgunAPIKey,
-      from: found.sendingName,
-      domain: found.sendingDomain,
-      email: found.sendingEmail,
+      key: workspace.mailgunAPIKey,
+      from: workspace.sendingName,
+      domain: workspace.sendingDomain,
+      email: workspace.sendingEmail,
       to: sendEmailDto.to,
       subject: sendEmailDto.subject,
       text: sendEmailDto.text,
@@ -74,11 +75,10 @@ export class EmailController {
     @Body() sendEmailDto: SendEmailDto,
     @Param('audienceName') name: string
   ) {
-    const found: Account = await this.usersRepository.findOneBy({
-      id: (<Account>user).id,
-    });
+    const found = <Account>user;
+    const workspace = found?.teams?.[0]?.organization?.workspaces?.[0];
     const audienceObj = await this.audienceRepository.findOneBy({
-      owner: { id: (<Account>user).id },
+      owner: { id: found.id },
       name: name,
     });
     const jobs = await Promise.all(
@@ -91,10 +91,10 @@ export class EmailController {
           name: 'email',
           data: {
             accountId: found.id,
-            key: found.mailgunAPIKey,
-            from: found.sendingName,
-            domain: found.sendingDomain,
-            email: found.sendingEmail,
+            key: workspace.mailgunAPIKey,
+            from: workspace.sendingName,
+            domain: workspace.sendingDomain,
+            email: workspace.sendingEmail,
             to: email,
             subject: sendEmailDto.subject,
             text: sendEmailDto.text,

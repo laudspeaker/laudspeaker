@@ -262,8 +262,8 @@ const RouteComponent: React.FC = () => {
             email: data.email,
             expectedOnboarding: data.expectedOnboarding,
             verified: data.verified,
-            pk: data.pk,
-            pushPlatforms: data.pushPlatforms,
+            pk: data.workspace.pk,
+            pushPlatforms: data.workspace.pushPlatforms,
           },
         });
       } catch (e) {

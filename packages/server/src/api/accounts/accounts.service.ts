@@ -35,6 +35,7 @@ import { StepType } from '../steps/types/step.interface';
 import { randomUUID } from 'crypto';
 import admin from 'firebase-admin';
 import { update } from 'lodash';
+import { Workspaces } from '../workspaces/entities/workspaces.entity';
 
 @Injectable()
 export class AccountsService extends BaseJwtHelper {
@@ -47,6 +48,8 @@ export class AccountsService extends BaseJwtHelper {
     private dataSource: DataSource,
     @InjectRepository(Account)
     public accountsRepository: Repository<Account>,
+    @InjectRepository(Workspaces)
+    public workspacesRepository: Repository<Workspaces>,
     @Inject(forwardRef(() => CustomersService))
     private customersService: CustomersService,
     @Inject(forwardRef(() => AuthService)) private authService: AuthService,
@@ -128,7 +131,9 @@ export class AccountsService extends BaseJwtHelper {
   }
 
   findAll(): Promise<Account[]> {
-    return this.accountsRepository.find();
+    return this.accountsRepository.find({
+      relations: ['teams.organization.workspaces'],
+    });
   }
 
   async findOne(
@@ -136,8 +141,9 @@ export class AccountsService extends BaseJwtHelper {
     session: string
   ): Promise<Account> {
     try {
-      const account = await this.accountsRepository.findOneBy({
-        id: (<Account>user).id,
+      const account = await this.accountsRepository.findOne({
+        where: { id: (<Account>user).id },
+        relations: ['teams.organization.workspaces'],
       });
 
       if (!account) {
@@ -158,8 +164,20 @@ export class AccountsService extends BaseJwtHelper {
     }
   }
 
-  findOneByAPIKey(apiKey: string): Promise<Account> {
-    return this.accountsRepository.findOneBy({ apiKey: apiKey });
+  async findOneByAPIKey(apiKey: string): Promise<Account & { apiKey: string }> {
+    const workspace = await this.workspacesRepository.findOne({
+      where: {
+        apiKey,
+      },
+      relations: ['organization.owner'],
+    });
+
+    const account = workspace.organization.owner as Account & {
+      apiKey: string;
+    };
+    account.apiKey = workspace.apiKey;
+
+    return account;
   }
 
   async update(
@@ -326,6 +344,7 @@ export class AccountsService extends BaseJwtHelper {
     let err;
     try {
       let updatedUser: Account;
+      const workspace = oldUser.teams?.[0]?.organization?.workspaces?.[0];
       for (const key of Object.keys(updateUserDto)) {
         if (key === 'pushPlatforms' && updateUserDto[key]) {
           oldUser[key] = {
@@ -338,10 +357,11 @@ export class AccountsService extends BaseJwtHelper {
 
       oldUser.password = password;
       oldUser.verified = verified;
-      oldUser.sendgridVerificationKey =
-        verificationKey || oldUser.sendgridVerificationKey;
+      workspace.sendgridVerificationKey =
+        verificationKey || workspace.sendgridVerificationKey;
 
       updatedUser = await queryRunner.manager.save(oldUser);
+      await queryRunner.manager.save(workspace);
 
       if (needEmailUpdate)
         await this.authService.requestVerification(
@@ -475,7 +495,6 @@ export class AccountsService extends BaseJwtHelper {
     const session = 'onboarding-creation';
     let account = await this.accountsRepository.findOneBy({
       email: process.env.ONBOARDING_ACCOUNT_EMAIL,
-      apiKey: process.env.ONBOARDING_ACCOUNT_API_KEY,
     });
 
     if (!account)
