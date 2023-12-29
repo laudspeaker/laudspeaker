@@ -69,8 +69,4 @@ export class Account extends BaseEntity {
 
   @Column({ type: 'boolean', default: false })
   public onboarded: boolean;
-
-  // Question - if it's still in use
-  @Column({ type: 'varchar', nullable: true, default: null })
-  public customerId?: string;
 }

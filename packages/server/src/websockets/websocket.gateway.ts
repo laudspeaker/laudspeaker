@@ -207,11 +207,13 @@ export class WebsocketGateway implements OnGatewayConnection {
         // User try to make connection for dev mode setup from our client
         socket.emit('log', 'Checking if dev environment is connected.');
 
+        const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
+
         const journey = await this.journeyService.journeysRepository.findOne({
           where: {
             id: journeyId,
-            owner: {
-              id: userId,
+            workspace: {
+              id: workspace.id,
             },
           },
         });

@@ -607,16 +607,14 @@ export class AudiencesService {
         }
 
         let toTemplates = toAud.templates.map((item) => item.id);
+        const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
-        if (
-          account?.teams?.[0]?.organization?.workspaces?.[0]?.emailProvider ===
-            'free3' &&
-          account.customerId !== customerId &&
-          toTemplates.length
-        ) {
+        if (workspace?.emailProvider === 'free3' && toTemplates.length) {
           const data = await queryRunner.manager.find(Template, {
             where: {
-              owner: { id: account.id },
+              workspace: {
+                id: workspace.id,
+              },
               type: TemplateType.EMAIL,
               id: In(toTemplates),
             },

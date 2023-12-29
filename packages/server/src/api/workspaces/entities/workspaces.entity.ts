@@ -2,8 +2,14 @@ import {
   Account,
   PushFirebasePlatforms,
 } from '@/api/accounts/entities/accounts.entity';
+import { Journey } from '@/api/journeys/entities/journey.entity';
 import { Organization } from '@/api/organizations/entities/organization.entity';
-import { PushPlatforms } from '@/api/templates/entities/template.entity';
+import { Segment } from '@/api/segments/entities/segment.entity';
+import { Step } from '@/api/steps/entities/step.entity';
+import {
+  PushPlatforms,
+  Template,
+} from '@/api/templates/entities/template.entity';
 import {
   BaseEntity,
   Column,
@@ -34,6 +40,18 @@ export class Workspaces extends BaseEntity {
     onDelete: 'CASCADE',
   })
   public organization: Organization;
+
+  @OneToMany(() => Journey, (journey) => journey.workspace)
+  public journeys: Journey[];
+
+  @OneToMany(() => Template, (template) => template.workspace)
+  public templates: Template[];
+
+  @OneToMany(() => Segment, (segment) => segment.workspace)
+  public segments: Segment[];
+
+  @OneToMany(() => Step, (step) => step.workspace)
+  public steps: Step[];
 
   @Column({ type: 'varchar', default: 'UTC+00:00', nullable: false })
   public timezoneUTCOffset: string; // must be in format `UTC(+/-)hh:mm`

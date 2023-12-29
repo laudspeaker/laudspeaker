@@ -525,11 +525,15 @@ export class TemplatesService extends QueueEventsHost {
     } else {
       typeConvertedCheck.type = type;
     }
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
     const totalPages = Math.ceil(
       (await this.templatesRepository.count({
         where: {
           name: Like(`%${search}%`),
-          owner: { id: account.id },
+          workspace: {
+            id: workspace.id,
+          },
           isDeleted: In([!!showDeleted, false]),
           ...typeConvertedCheck,
         },
@@ -542,7 +546,9 @@ export class TemplatesService extends QueueEventsHost {
     const templates = await this.templatesRepository.find({
       where: {
         name: Like(`%${search}%`),
-        owner: { id: account.id },
+        workspace: {
+          id: workspace.id,
+        },
         isDeleted: In([!!showDeleted, false]),
         ...typeConvertedCheck,
       },
@@ -554,15 +560,23 @@ export class TemplatesService extends QueueEventsHost {
   }
 
   findOne(account: Account, name: string, session: string): Promise<Template> {
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
     return this.templatesRepository.findOneBy({
-      owner: { id: account.id },
+      workspace: {
+        id: workspace.id,
+      },
       name,
     });
   }
 
   findOneById(account: Account, id: string): Promise<Template> {
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
     return this.templatesRepository.findOneBy({
-      owner: { id: account.id },
+      workspace: {
+        id: workspace.id,
+      },
       id: id,
     });
   }
@@ -578,8 +592,12 @@ export class TemplatesService extends QueueEventsHost {
   }
 
   findBy(account: Account, type: TemplateType): Promise<Template[]> {
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
     return this.templatesRepository.findBy({
-      owner: { id: account.id },
+      workspace: {
+        id: workspace.id,
+      },
       type: type,
     });
   }
@@ -590,16 +608,20 @@ export class TemplatesService extends QueueEventsHost {
     updateTemplateDto: UpdateTemplateDto,
     session: string
   ) {
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
     return this.templatesRepository.update(
-      { owner: { id: (<Account>account).id }, id },
+      { workspace: { id: workspace.id }, id },
       { ...updateTemplateDto, updatedAt: new Date() }
     );
   }
 
   async remove(account: Account, id: string, session: string): Promise<void> {
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
     await this.templatesRepository.update(
       {
-        owner: { id: (<Account>account).id },
+        workspace: { id: workspace.id },
         id,
       },
       { isDeleted: true, updatedAt: new Date() }
@@ -607,9 +629,13 @@ export class TemplatesService extends QueueEventsHost {
   }
 
   async duplicate(account: Account, id: string, session: string) {
+    const workspaceFromAccount =
+      account?.teams?.[0]?.organization?.workspaces?.[0];
+
     const foundTemplate = await this.templatesRepository.findOne({
       where: {
-        owner: { id: account.id },
+        workspace: { id: workspaceFromAccount.id },
+
         id,
       },
       relations: ['owner'],
@@ -617,7 +643,7 @@ export class TemplatesService extends QueueEventsHost {
     if (!foundTemplate) throw new NotFoundException('Template not found');
 
     const {
-      owner,
+      workspace,
       slackMessage,
       style,
       subject,
@@ -631,7 +657,7 @@ export class TemplatesService extends QueueEventsHost {
       customFields,
     } = foundTemplate;
 
-    const ownerId = owner.id;
+    const workspaceId = workspace.id;
 
     let copyEraseIndex = foundTemplate.name.indexOf('-copy');
     if (copyEraseIndex === -1) copyEraseIndex = foundTemplate.name.length;
@@ -639,10 +665,13 @@ export class TemplatesService extends QueueEventsHost {
     const res = await this.templatesRepository
       .createQueryBuilder()
       .select('COUNT(*)')
-      .where('starts_with(name, :oldName) = TRUE AND "ownerId" = :ownerId', {
-        oldName: foundTemplate.name.substring(0, copyEraseIndex),
-        ownerId: account.id,
-      })
+      .where(
+        'starts_with(name, :oldName) = TRUE AND "workspaceId" = :workspaceId',
+        {
+          oldName: foundTemplate.name.substring(0, copyEraseIndex),
+          workspaceId: workspaceId,
+        }
+      )
       .execute();
 
     const newName =
@@ -652,7 +681,7 @@ export class TemplatesService extends QueueEventsHost {
 
     const tmp = await this.templatesRepository.save({
       name: newName,
-      owner: { id: ownerId },
+      workspace: { id: workspaceId },
       slackMessage,
       style,
       subject,
@@ -670,9 +699,11 @@ export class TemplatesService extends QueueEventsHost {
   }
 
   async findUsedInJourneys(account: Account, id: string, session: string) {
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
     const template = await this.templatesRepository.findOneBy({
       id,
-      owner: { id: account.id },
+      workspace: { id: workspace.id },
     });
     if (!template) throw new NotFoundException('Template not found');
 
@@ -687,7 +718,8 @@ export class TemplatesService extends QueueEventsHost {
       .leftJoin('workflow', 'workflow', 'workflow.id = audience."workflowId"')
       .where(
         `workflow."isDeleted" = false AND audience."ownerId" = :ownerId AND audience_templates_template."templateId" = :templateId`,
-        { ownerId: account.id, templateId: template.id }
+        // update if used
+        { workspaceId: account.id, templateId: template.id }
       )
       .execute();
 

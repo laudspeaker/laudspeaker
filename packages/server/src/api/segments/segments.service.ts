@@ -108,15 +108,20 @@ export class SegmentsService {
     queryRunner?: QueryRunner
   ) {
     let segment: Segment;
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
     if (queryRunner) {
       segment = await queryRunner.manager.findOneBy(Segment, {
         id,
-        owner: { id: account.id },
+        workspace: {
+          id: workspace.id,
+        },
       });
     } else {
       segment = await this.segmentRepository.findOneBy({
         id,
-        owner: { id: account.id },
+        workspace: {
+          id: workspace.id,
+        },
       });
     }
 
@@ -132,15 +137,23 @@ export class SegmentsService {
     search = '',
     session: string
   ) {
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
     const totalPages = Math.ceil(
       (await this.segmentRepository.count({
         where: {
-          owner: { id: account.id },
+          workspace: {
+            id: workspace.id,
+          },
         },
       })) / take || 1
     );
     const segments = await this.segmentRepository.find({
-      where: { name: Like(`%${search}%`), owner: { id: account.id } },
+      where: {
+        name: Like(`%${search}%`),
+        workspace: {
+          id: workspace.id,
+        },
+      },
       take: take < 100 ? take : 100,
       skip,
     });
@@ -158,8 +171,13 @@ export class SegmentsService {
     type: SegmentType | undefined,
     queryRunner: QueryRunner
   ) {
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
     return await queryRunner.manager.find(Segment, {
-      where: { owner: { id: account.id }, ...(type ? { type: type } : {}) },
+      where: {
+        workspace: { id: workspace.id },
+        ...(type ? { type: type } : {}),
+      },
     });
   }
 
@@ -254,7 +272,8 @@ export class SegmentsService {
               const segmentCustomer = new SegmentCustomers();
               segmentCustomer.customerId = doc._id.toString();
               segmentCustomer.segment = segment.id;
-              segmentCustomer.owner = account;
+              segmentCustomer.workspace =
+                account?.teams?.[0]?.organization?.workspaces?.[0];
               // Set other properties as needed
               return segmentCustomer;
             });
@@ -453,7 +472,8 @@ export class SegmentsService {
               const segmentCustomer = new SegmentCustomers();
               segmentCustomer.customerId = doc._id.toString();
               segmentCustomer.segment = segment.id;
-              segmentCustomer.owner = account;
+              segmentCustomer.workspace =
+                account?.teams?.[0]?.organization?.workspaces?.[0];
               // Set other properties as needed
               return segmentCustomer;
             });
@@ -615,10 +635,11 @@ export class SegmentsService {
     session: string
   ) {
     const segment = await this.findOne(account, id, session);
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
     await this.segmentRepository.update(
-      { id, owner: { id: account.id } },
-      { ...updateSegmentDTO, owner: { id: account.id } }
+      { id, workspace: { id: workspace.id } },
+      { ...updateSegmentDTO, workspace: { id: workspace.id } }
     );
 
     (async () => {
@@ -689,7 +710,12 @@ export class SegmentsService {
   }
 
   public async delete(account: Account, id: string, session: string) {
-    await this.segmentRepository.delete({ id, owner: { id: account.id } });
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
+    await this.segmentRepository.delete({
+      id,
+      workspace: { id: workspace.id },
+    });
   }
 
   public async getCustomers(
@@ -1038,9 +1064,12 @@ export class SegmentsService {
     session: string
   ) {
     await this.deleteCustomerFromAllAutomaticSegments(account, customer.id);
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
     const segments = await this.segmentRepository.findBy({
-      owner: { id: account.id },
+      workspace: {
+        id: workspace.id,
+      },
       type: SegmentType.AUTOMATIC,
     });
 

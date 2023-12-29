@@ -13,6 +13,7 @@ import {
   StepType,
   StepTypeMetadata,
 } from '../types/step.interface';
+import { Workspaces } from '@/api/workspaces/entities/workspaces.entity';
 
 @Entity()
 export class Step extends BaseEntity {
@@ -23,8 +24,10 @@ export class Step extends BaseEntity {
   public createdAt: Date;
 
   @JoinColumn()
-  @ManyToOne(() => Account, (account) => account.id, { onDelete: 'CASCADE' })
-  public owner: Account;
+  @ManyToOne(() => Workspaces, (workspace) => workspace.id, {
+    onDelete: 'CASCADE',
+  })
+  workspace: Workspaces;
 
   @Column({ enum: StepType })
   public type: StepType;

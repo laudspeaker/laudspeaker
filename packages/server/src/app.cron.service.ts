@@ -412,7 +412,7 @@ export class CronService {
             );
             this.transitionQueue.add(step.type, {
               step: step,
-              ownerID: step.owner.id,
+              ownerID: step.workspace.organization.owner.id,
               session: session,
               journeyID: journeys[journeyIndex].id,
               customerID: locations[locationsIndex].customer,

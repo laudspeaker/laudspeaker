@@ -295,16 +295,6 @@ export class AccountsService extends BaseJwtHelper {
       updateUserDto.email && oldUser.email !== updateUserDto.email;
     if (needEmailUpdate) {
       verified = false;
-
-      if (oldUser.customerId) {
-        const customer = await this.customersService.findById(
-          oldUser,
-          oldUser.customerId
-        );
-
-        customer.verified = false;
-        await customer.save({ session: transactionSession });
-      }
     }
 
     if (updateUserDto.firebaseCredentials) {
@@ -493,9 +483,14 @@ export class AccountsService extends BaseJwtHelper {
 
   async createOnboadingAccount() {
     const session = 'onboarding-creation';
-    let account = await this.accountsRepository.findOneBy({
-      email: process.env.ONBOARDING_ACCOUNT_EMAIL,
+    let account = await this.accountsRepository.findOne({
+      where: {
+        email: process.env.ONBOARDING_ACCOUNT_EMAIL,
+      },
+      relations: ['teams.organization.workspaces'],
     });
+
+    const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
 
     if (!account)
       account = await this.accountsRepository.save({
@@ -566,7 +561,9 @@ export class AccountsService extends BaseJwtHelper {
     }
 
     let journey = await this.journeysService.journeysRepository.findOneBy({
-      owner: { id: account.id },
+      workspace: {
+        id: workspace.id,
+      },
       name: 'onboarding',
     });
     if (!journey) {

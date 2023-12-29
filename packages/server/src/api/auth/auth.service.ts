@@ -272,35 +272,12 @@ export class AuthService {
     account.verified = true;
     verification.status = 'verified';
 
-    const { email, firstName, lastName, verified, customerId } = account;
+    const { email, firstName, lastName, verified } = account;
 
     const transactionSession = await this.connection.startSession();
     transactionSession.startTransaction();
 
-    try {
-      if (customerId) {
-        const foundCustomer = await this.customersService.findById(
-          account,
-          customerId
-        );
-
-        foundCustomer.verified = true;
-        foundCustomer.email = email;
-        await foundCustomer.save({ session: transactionSession });
-      } else {
-        const customer = await this.customersService.create(
-          account,
-          {
-            email,
-            firstName,
-            lastName,
-            verified,
-          },
-          session,
-          transactionSession
-        );
-        account.customerId = customer.id;
-      }
+    try {      
 
       await this.dataSource.transaction(async (transactionSession) => {
         await transactionSession.save(account);

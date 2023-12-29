@@ -159,15 +159,14 @@ export class WebhooksService {
         where: {
           id: item.stepId,
         },
-        relations: ['owner.teams.organization.workspaces'],
+        relations: ['workspaces'],
       });
 
       if (step) break;
     }
 
     if (!step) return;
-    const { sendgridVerificationKey } =
-      step.owner.teams?.[0]?.organization?.workspaces?.[0];
+    const { sendgridVerificationKey } = step.workspace;
 
     if (!sendgridVerificationKey)
       throw new BadRequestException(
@@ -208,7 +207,8 @@ export class WebhooksService {
         continue;
 
       const clickHouseRecord: ClickHouseMessage = {
-        userId: step.owner.id,
+        // change to workspace ID instead UserId
+        userId: step.workspace.id,
         stepId,
         customerId,
         templateId: String(templateId),
@@ -247,7 +247,8 @@ export class WebhooksService {
       relations: ['owner'],
     });
     const clickHouseRecord: ClickHouseMessage = {
-      userId: step.owner.id,
+      // change to workspace ID instead UserId
+      userId: step.workspace.id,
       stepId,
       customerId,
       templateId: String(templateId),

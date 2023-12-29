@@ -1657,12 +1657,14 @@ export class AuthHelper extends BaseJwtHelper {
     queryRunner: QueryRunner,
     session: string
   ) {
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
     const templates = await queryRunner.manager.save(
       DEFAULT_TEMPLATES.map((el) => {
         const template = new Template();
         template.id = el.id;
         template.name = el.name;
-        template.owner = account;
+        template.workspace = workspace;
         template.slackMessage = el.slackMessage;
         template.smsText = el.smsText;
         template.style = el.style;

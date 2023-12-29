@@ -147,9 +147,11 @@ export class StepsService {
     queryRunner: QueryRunner,
     session: string
   ) {
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
     const startStep = await queryRunner.manager.find(Step, {
       where: {
-        owner: { id: account.id },
+        workspace: { id: workspace.id },
         journey: { id: journeyID },
         type: StepType.START,
       },
@@ -182,9 +184,11 @@ export class StepsService {
    * @returns
    */
   async findAll(account: Account, session: string): Promise<Step[]> {
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
     try {
       return await this.stepsRepository.findBy({
-        owner: { id: account.id },
+        workspace: { id: workspace.id },
       });
     } catch (e) {
       this.error(e, this.findAll.name, session, account.id);
@@ -205,8 +209,10 @@ export class StepsService {
     session: string
   ): Promise<Step[]> {
     try {
+      const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
       return await this.stepsRepository.findBy({
-        owner: account ? { id: account.id } : undefined,
+        workspace: account && workspace ? { id: workspace.id } : undefined,
         type: type,
       });
     } catch (e) {
@@ -230,8 +236,11 @@ export class StepsService {
     session: string
   ): Promise<Step[]> {
     try {
+      const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
       return await queryRunner.manager.findBy(Step, {
-        owner: account ? { id: account.id } : undefined,
+        workspace: account && workspace ? { id: workspace.id } : undefined,
+
         journey: { id: journeyID },
         type: type,
       });
@@ -255,8 +264,10 @@ export class StepsService {
     queryRunner: QueryRunner
   ): Promise<Step[]> {
     try {
+      const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
       return await queryRunner.manager.findBy(Step, {
-        owner: account ? { id: account.id } : undefined,
+        workspace: account && workspace ? { id: workspace.id } : undefined,
         type: type,
       });
     } catch (e) {
@@ -279,9 +290,12 @@ export class StepsService {
     queryRunner: QueryRunner
   ): Promise<Step[]> {
     try {
+      const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
       return await queryRunner.manager.find(Step, {
         where: {
-          owner: account ? { id: account.id } : undefined,
+          workspace: account && workspace ? { id: workspace.id } : undefined,
+
           type: type,
           journey: {
             isActive: true,
@@ -338,8 +352,10 @@ export class StepsService {
     session: string
   ): Promise<Step | null> {
     try {
+      const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
       return await this.stepsRepository.findOneBy({
-        owner: { id: account.id },
+        workspace: { id: workspace.id },
         id: id,
       });
     } catch (e) {
@@ -362,11 +378,13 @@ export class StepsService {
     session: string,
     queryRunner?: QueryRunner
   ): Promise<Step | null> {
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
     if (queryRunner) {
       return await queryRunner.manager.findOne(Step, {
         where: {
           journey: { id: journey },
-          owner: { id: account.id },
+          workspace: { id: workspace.id },
           type: type,
         },
       });
@@ -374,7 +392,7 @@ export class StepsService {
       return await this.stepsRepository.findOne({
         where: {
           journey: { id: journey },
-          owner: { id: account.id },
+          workspace: { id: workspace.id },
           type: type,
         },
       });
@@ -395,21 +413,22 @@ export class StepsService {
     account?: Account,
     queryRunner?: QueryRunner
   ): Promise<Step | null> {
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
     if (queryRunner) {
       return await queryRunner.manager.findOne(Step, {
         where: {
-          owner: account ? { id: account.id } : undefined,
+          workspace: account && workspace ? { id: workspace.id } : undefined,
           id: id,
         },
-        relations: ['owner', 'journey'],
+        relations: ['workspace.organization.owner', 'journey'],
       });
     } else {
       return await this.stepsRepository.findOne({
         where: {
-          owner: account ? { id: account.id } : undefined,
+          workspace: account && workspace ? { id: workspace.id } : undefined,
           id: id,
         },
-        relations: ['owner', 'journey'],
+        relations: ['workspace.organization.owner', 'journey'],
       });
     }
   }
@@ -481,9 +500,11 @@ export class StepsService {
     id: string,
     queryRunner: QueryRunner
   ) {
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
     return await queryRunner.manager.find(Step, {
       where: {
-        owner: { id: account.id },
+        workspace: { id: workspace.id },
         journey: { id: id },
       },
       relations: ['owner'],
@@ -504,8 +525,10 @@ export class StepsService {
     session: string
   ): Promise<Step> {
     try {
+      const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
       const step = await this.stepsRepository.findOneBy({
-        owner: { id: account.id },
+        workspace: { id: workspace.id },
         id: updateStepDto.id,
       });
       if (!step) {
@@ -542,6 +565,7 @@ export class StepsService {
     await queryRunner.connect();
     await queryRunner.startTransaction();
     try {
+      const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
       await queryRunner.query(
         `
           WITH RECURSIVE nodes_to_delete AS (
@@ -554,7 +578,7 @@ export class StepsService {
                     ELSE TRUE
                 END as recursive_delete
             FROM step
-            WHERE id = $1::uuid and "ownerId" = $2::uuid
+            WHERE id = $1::uuid and "workspaceId" = $2::uuid
             
             UNION
             
@@ -570,7 +594,7 @@ export class StepsService {
         )
         DELETE FROM step WHERE id IN (SELECT id FROM nodes_to_delete);
       `,
-        [id, (<Account>account).id]
+        [id, workspace.id]
       );
       await queryRunner.commitTransaction();
     } catch (e) {

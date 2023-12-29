@@ -252,9 +252,14 @@ export class EventsPreProcessor extends WorkerHost {
           },
         };
 
+        const workspace =
+          job.data.account.teams?.[0]?.organization?.workspaces?.[0];
+
         const journeys = await queryRunner.manager.find(Journey, {
           where: {
-            owner: { id: job.data.account.id },
+            workspace: {
+              id: workspace.id,
+            },
             isActive: true,
             isPaused: false,
             isStopped: false,
@@ -328,6 +333,9 @@ export class EventsPreProcessor extends WorkerHost {
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
+    const workspace =
+      job.data.account.teams?.[0]?.organization?.workspaces?.[0];
+
     let err: any;
 
     try {
@@ -348,7 +356,9 @@ export class EventsPreProcessor extends WorkerHost {
 
       const journeys = await queryRunner.manager.find(Journey, {
         where: {
-          owner: { id: job.data.account.id },
+          workspace: {
+            id: workspace.id,
+          }, 
           isActive: true,
           isPaused: false,
           isStopped: false,
