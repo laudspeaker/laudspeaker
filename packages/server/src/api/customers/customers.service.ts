@@ -47,6 +47,7 @@ import { EventsService } from '../events/events.service';
 import * as _ from 'lodash';
 import { randomUUID } from 'crypto';
 import { StepsService } from '../steps/steps.service';
+import { JourneysService } from '../journeys/journeys.service';
 import { S3Service } from '../s3/s3.service';
 import { Imports } from './entities/imports.entity';
 import { thrift } from '@databricks/sql';
@@ -64,6 +65,7 @@ import { JourneyLocationsService } from '../journeys/journey-locations.service';
 import { Journey } from '../journeys/entities/journey.entity';
 import { SegmentType } from '../segments/entities/segment.entity';
 import { UpdatePK_DTO } from './dto/update-pk.dto';
+import { StepType } from '../steps/types/step.interface';
 
 export type Correlation = {
   cust: CustomerDocument;
@@ -148,6 +150,8 @@ export class CustomersService {
     private readonly workflowsService: WorkflowsService,
     @Inject(StepsService)
     private readonly stepsService: StepsService,
+    @Inject(StepsService)
+    private journeysService: JourneysService,
     @Inject(EventsService)
     private readonly eventsService: EventsService,
     @InjectConnection()
@@ -2771,6 +2775,52 @@ export class CustomersService {
     return collectionOfCustomersFromSegment;
   }
 
+/*
+  Case 1: Any Journey: 
+
+  {
+    type: 'Email',
+    eventCondition: 'received',
+    from: { key: 'ANY', title: 'Any journeys' },
+    fromSpecificMessage: { key: 'ANY', title: 'Any message' },
+    happenCondition: 'has',
+    tag: 'a'
+  }
+
+  Case 2: Tagged Journey:
+
+  {
+    type: 'Email',
+    eventCondition: 'received',
+    from: { key: 'WITH_TAG', title: 'Journeys with a tag' },
+    fromSpecificMessage: { key: 'ANY', title: 'Any message' },
+    happenCondition: 'has',
+    tag: 'a'
+  }
+
+  Case 3: Any Message, specific Journey:
+
+  {
+    type: 'Email',
+    eventCondition: 'received',
+    from: { key: '7627eab1-1b51-4df5-800f-0f413bea21dd', title: 'atag' },
+    fromSpecificMessage: { key: 'ANY', title: 'Any email in this journey' },
+    happenCondition: 'has'
+  }
+
+  Case 4: Specific Message, specific Journey:
+
+  {
+    tag: 'a',
+    from: { key: '7627eab1-1b51-4df5-800f-0f413bea21dd', title: 'atag' },
+    type: 'Email',
+    eventCondition: 'received',
+    happenCondition: 'has',
+    fromSpecificMessage: { key: 'aa08729d-e80c-4546-9418-ece91cb686e3', title: 'Email 1' }
+  }
+
+*/
+
   /**
    * Gets set of customers from a single statement that
    * includes messages,
@@ -2819,7 +2869,36 @@ export class CustomersService {
       fromSpecificMessage,
       happenCondition,
       time,
+      tag
     } = statement;
+
+    console.log("statement is", statement);
+
+    let journeyIds = [];
+
+    if (from.key === 'ANY') {
+      // Get all journeys associated with the account
+      journeyIds = await this.journeysService.getJourneys(account, session);
+    } else if (from.key === 'WITH_TAG') {
+      // Get all journeys with the specific tag
+      journeyIds = await this.journeysService.getJourneysWithTag(account, session, tag);
+    }
+
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    let stepIds = [];
+    for (const journeyId of journeyIds) {
+      const steps = await this.stepsService.transactionalfindAllByTypeInJourney(
+        account, 
+        StepType.MESSAGE , 
+        journeyId, 
+        queryRunner, 
+        session
+      );
+      stepIds.push(...steps.map(step => step.id));
+    }
 
     const userIdCondition = `userId = '${userId}'`;
     let sqlQuery = `SELECT customerId FROM message_status WHERE `;
@@ -2831,8 +2910,18 @@ export class CustomersService {
       type === 'In-App' ||
       type === 'Webhook'
     ) {
+      //wasn;t really sure why this was here before
+      /*
       if (from.key !== 'ANY') {
         sqlQuery += `stepId = '${fromSpecificMessage.key}' AND `;
+      }
+      */
+
+      // Update SQL query based on step IDs case 1, 2
+      if (stepIds.length > 0) {
+        // Assuming stepIds are unique and need to be included in the SQL query
+        const stepIdCondition = `stepId IN (${stepIds.map(id => `'${id}'`).join(", ")})`;
+        sqlQuery += `${stepIdCondition} AND `;
       }
 
       //to do: add support for any and for tags
