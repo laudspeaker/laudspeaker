@@ -855,7 +855,7 @@ export class CronService {
           `${requeue.customerId}${requeue.step.journey.id}`
         );
         this.transitionQueue.add(StepType.MESSAGE, {
-          ownerId: requeue.owner.id,
+          ownerId: requeue.workspace.organization.owner.id,
           step: requeue.step,
           session,
           customerID: requeue.customerId,

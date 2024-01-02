@@ -65,8 +65,13 @@ export class IntegrationsService {
   public async getAllDatabases(user: Express.User, session: string) {
     const account = await this.accountsService.findOne(user, session);
 
+    const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
+
     const integrations = await this.integrationsRepository.find({
-      where: { owner: { id: account.id }, type: IntegrationType.DATABASE },
+      where: {
+        workspace: { id: workspace.id },
+        type: IntegrationType.DATABASE,
+      },
       relations: ['database'],
     });
 
@@ -82,9 +87,14 @@ export class IntegrationsService {
 
   public async getOneDatabase(user: Express.User, id: string, session: string) {
     const account = await this.accountsService.findOne(user, session);
+    const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
 
     const integration = await this.integrationsRepository.findOne({
-      where: { id, owner: { id: account.id }, type: IntegrationType.DATABASE },
+      where: {
+        id,
+        workspace: { id: workspace.id },
+        type: IntegrationType.DATABASE,
+      },
       relations: ['database'],
     });
 
@@ -155,10 +165,12 @@ export class IntegrationsService {
     session: string
   ) {
     const account = await this.accountsService.findOne(user, session);
+    const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
+
     const integration = await this.integrationsRepository.findOne({
       where: {
         id,
-        owner: { id: account.id },
+        workspace: { id: workspace.id },
         type: IntegrationType.DATABASE,
       },
       relations: ['database'],
@@ -209,10 +221,12 @@ export class IntegrationsService {
     session: string
   ) {
     const account = await this.accountsService.findOne(user, session);
+    const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
+
     await this.integrationsRepository.update(
       {
         id,
-        owner: { id: account.id },
+        workspace: { id: workspace.id },
       },
       {
         status: IntegrationStatus.PAUSED,
@@ -226,10 +240,12 @@ export class IntegrationsService {
     session: string
   ) {
     const account = await this.accountsService.findOne(user, session);
+    const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
+
     await this.integrationsRepository.update(
       {
         id,
-        owner: { id: account.id },
+        workspace: { id: workspace.id },
       },
       {
         status: IntegrationStatus.ACTIVE,
@@ -239,10 +255,12 @@ export class IntegrationsService {
 
   public async deleteIntegration(user: Express.User, id: string, session) {
     const account = await this.accountsService.findOne(user, session);
+    const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
+
     const integration = await this.integrationsRepository.findOne({
       where: {
         id,
-        owner: { id: account.id },
+        workspace: { id: workspace.id },
       },
     });
 

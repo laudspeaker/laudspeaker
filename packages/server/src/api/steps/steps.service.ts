@@ -703,7 +703,7 @@ export class StepsService {
       where: {
         requeueAt: LessThanOrEqual(new Date()),
       },
-      relations: { owner: true, step: { journey: true } },
+      relations: { workspace: { organization: true }, step: { journey: true } },
     });
   }
 }

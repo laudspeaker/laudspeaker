@@ -2,6 +2,7 @@ import {
   Account,
   PushFirebasePlatforms,
 } from '@/api/accounts/entities/accounts.entity';
+import { Integration } from '@/api/integrations/entities/integration.entity';
 import { Journey } from '@/api/journeys/entities/journey.entity';
 import { Organization } from '@/api/organizations/entities/organization.entity';
 import { Segment } from '@/api/segments/entities/segment.entity';
@@ -49,6 +50,9 @@ export class Workspaces extends BaseEntity {
 
   @OneToMany(() => Segment, (segment) => segment.workspace)
   public segments: Segment[];
+
+  @OneToMany(() => Integration, (integration) => integration.workspace)
+  public integrations: Integration[];
 
   @OneToMany(() => Step, (step) => step.workspace)
   public steps: Step[];
