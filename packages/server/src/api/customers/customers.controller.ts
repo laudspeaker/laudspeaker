@@ -239,7 +239,7 @@ export class CustomersController {
     const {
       _id,
       __v,
-      ownerId,
+      workspaceId,
       verified,
       journeys,
       journeyEnrollmentsDates,

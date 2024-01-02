@@ -222,9 +222,10 @@ export class ImportProcessor extends WorkerHost {
     const withoutDuplicateKeys = Array.from(
       new Set(data.map((el) => el.pkKeyValue))
     );
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
     const foundExisting = await this.CustomerModel.find({
-      ownerId: account.id,
+      workspaceId: workspace.id,
       [pkKey]: { $in: withoutDuplicateKeys },
     }).exec();
 
@@ -236,7 +237,7 @@ export class ImportProcessor extends WorkerHost {
         return data.find((el2) => el2.pkKeyValue === el);
       })
       .map((el) => ({
-        ownerId: account.id,
+        workspaceId: workspace.id,
         [pkKey]: el.pkKeyValue,
         ...el.create,
         ...el.update,
@@ -270,14 +271,14 @@ export class ImportProcessor extends WorkerHost {
           return data.find((el2) => el2.pkKeyValue === el);
         })
         .map((el) => ({
-          ownerId: account.id,
+          workspaceId: workspace.id,
           [pkKey]: el.pkKeyValue,
           ...el.update,
         }));
 
       const bulk = toUpdate.map((el) => ({
         updateOne: {
-          filter: { [pkKey]: el[pkKey], ownerId: account.id },
+          filter: { [pkKey]: el[pkKey], workspaceId: workspace.id },
           update: {
             $set: {
               ...el,
@@ -315,13 +316,13 @@ export class ImportProcessor extends WorkerHost {
           return data.find((el2) => el2.pkKeyValue === el);
         })
         .map((el) => ({
-          ownerId: account.id,
+          workspaceId: workspace.id,
           [pkKey]: el.pkKeyValue,
           ...el.update,
         }));
       const bulk = toUpdate.map((el) => ({
         updateOne: {
-          filter: { [pkKey]: el[pkKey], ownerId: account.id },
+          filter: { [pkKey]: el[pkKey], workspaceId: account.id },
           update: {
             $set: {
               ...el,

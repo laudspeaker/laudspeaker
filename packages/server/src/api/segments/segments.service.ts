@@ -664,7 +664,7 @@ export class SegmentsService {
       }
 
       const amount = await this.customersService.CustomerModel.count({
-        ownerId: account.id,
+        workspaceId: workspace.id,
       });
 
       const batchOptions = {
@@ -675,7 +675,7 @@ export class SegmentsService {
 
       while (batchOptions.current < batchOptions.documentsCount) {
         const batch = await this.customersService.CustomerModel.find({
-          ownerId: account.id,
+          workspaceId: workspace.id,
         })
           .skip(batchOptions.current)
           .limit(batchOptions.batchSize)

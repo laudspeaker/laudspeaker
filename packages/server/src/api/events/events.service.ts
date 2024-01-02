@@ -303,10 +303,16 @@ export class EventsService {
     session: string,
     providerSpecific?: string
   ) {
+    const account = await this.accountsRepository.findOne({
+      where: { id: ownerId },
+      relations: ['teams.organization.workspaces'],
+    });
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
     const attributes = await this.EventKeysModel.find({
       $and: [
         { key: RegExp(`.*${resourceId}.*`, 'i') },
-        { $or: [{ ownerId }, { isDefault: true }] },
+        { $or: [{ workspaceId: workspace.id }, { isDefault: true }] },
       ],
       providerSpecific,
     }).exec();

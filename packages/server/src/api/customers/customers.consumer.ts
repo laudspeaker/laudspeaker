@@ -86,10 +86,11 @@ export class CustomersConsumerService implements OnApplicationBootstrap {
                 );
                 break;
               }
-              account = await this.accountsService.findOne(
-                { id: customer.ownerId },
-                session
-              );
+              account =
+                await this.accountsService.findOrganizationOwnerByWorkspaceId(
+                  customer.workspaceId,
+                  session
+                );
               await this.segmentsService.updateCustomerSegments(
                 account,
                 customer.id,

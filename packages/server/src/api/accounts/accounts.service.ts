@@ -136,6 +136,38 @@ export class AccountsService extends BaseJwtHelper {
     });
   }
 
+  async findOrganizationOwnerByWorkspaceId(
+    id: string,
+    session: string
+  ): Promise<Account> {
+    try {
+      const account = (
+        await this.workspacesRepository.findOne({
+          where: {
+            id,
+          },
+          relations: { organization: { owner: true } },
+        })
+      ).organization.owner;
+
+      if (!account) {
+        const e = new NotFoundException('Account not found');
+        throw e;
+      }
+
+      this.debug(
+        `Found ${JSON.stringify(account)}`,
+        this.findOrganizationOwnerByWorkspaceId.name,
+        session,
+        id
+      );
+      return account;
+    } catch (e) {
+      this.error(e, this.findOrganizationOwnerByWorkspaceId.name, session, id);
+      throw e;
+    }
+  }
+
   async findOne(
     user: Express.User | { id: string },
     session: string
@@ -426,6 +458,7 @@ export class AccountsService extends BaseJwtHelper {
         session,
         (<Account>user).id
       );
+      const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
       if (!bcrypt.compareSync(removeAccountDto.password, account.password))
         throw new BadRequestException('Password is incorrect');
@@ -435,7 +468,7 @@ export class AccountsService extends BaseJwtHelper {
 
       await this.customersService.CustomerModel.deleteMany(
         {
-          ownerId: account.id,
+          workspaceId: workspace.id,
         },
         { session: transactionSession }
       )
@@ -450,7 +483,7 @@ export class AccountsService extends BaseJwtHelper {
 
       await this.customersService.CustomerKeysModel.deleteMany(
         {
-          ownerId: account.id,
+          workspaceId: workspace.id,
         },
         { session: transactionSession }
       )

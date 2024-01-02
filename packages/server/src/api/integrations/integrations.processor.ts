@@ -95,7 +95,7 @@ export class IntegrationsProcessor extends WorkerHost {
     });
     const pgClient = await pool.connect();
     const cursor = pgClient.query(new Cursor(database.query));
-
+    const workspace = owner?.teams?.[0]?.organization?.workspaces?.[0];
     let lastReadLength = Infinity;
     while (lastReadLength !== 0) {
       const customers = await cursor.read(BATCH_SiZE);
@@ -103,7 +103,7 @@ export class IntegrationsProcessor extends WorkerHost {
       for (const customer of customers) {
         if (!customer.id) continue;
         const customerInDb = await this.customerModel
-          .findOne({ postgresqlId: customer.id, ownerId: owner.id })
+          .findOne({ postgresqlId: customer.id, workspaceId: workspace.id })
           .exec();
 
         if (customerInDb) {
@@ -116,7 +116,7 @@ export class IntegrationsProcessor extends WorkerHost {
         } else {
           await this.customerModel.create({
             ...customer,
-            ownerId: owner.id,
+            workspaceId: workspace.id,
             id: undefined,
             postgresqlId: customer.id,
           });

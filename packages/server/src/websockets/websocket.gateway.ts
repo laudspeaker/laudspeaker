@@ -95,6 +95,7 @@ export class WebsocketGateway implements OnGatewayConnection {
       socket.data.development = development;
 
       let customer: CustomerDocument;
+      const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
       // Check if given customer ID is a valid format.
       if (customerId && isValidObjectId(customerId) && !development) {
@@ -106,7 +107,7 @@ export class WebsocketGateway implements OnGatewayConnection {
         if (
           !customer ||
           customer.isFreezed ||
-          customer.ownerId !== account.id
+          customer.workspaceId !== workspace.id
         ) {
           socket.emit(
             'log',
@@ -114,7 +115,7 @@ export class WebsocketGateway implements OnGatewayConnection {
           );
           customer = await this.customersService.CustomerModel.create({
             isAnonymous: true,
-            ownerId: account.id,
+            workspaceId: workspace.id,
           });
 
           await this.eventsService.customPayload(
@@ -146,7 +147,7 @@ export class WebsocketGateway implements OnGatewayConnection {
         );
         customer = await this.customersService.CustomerModel.create({
           isAnonymous: true,
-          ownerId: account.id,
+          workspaceId: workspace.id,
         });
 
         await this.eventsService.customPayload(
@@ -361,9 +362,11 @@ export class WebsocketGateway implements OnGatewayConnection {
     }
     const { account, customerId } = socket.data as SocketData;
 
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
     let customer = await this.customersService.CustomerModel.findOne({
       _id: customerId,
-      ownerId: account.id,
+      workspaceId: workspace.id,
     });
 
     if (!customer || customer.isFreezed) {
@@ -373,7 +376,7 @@ export class WebsocketGateway implements OnGatewayConnection {
       );
       customer = await this.customersService.CustomerModel.create({
         isAnonymous: true,
-        ownerId: account.id,
+        workspaceId: workspace.id,
       });
 
       socket.data.customerId = customer.id;
@@ -388,7 +391,7 @@ export class WebsocketGateway implements OnGatewayConnection {
     const identifiedCustomer =
       await this.customersService.CustomerModel.findOne({
         ...uniqueProperties,
-        ownerId: account.id,
+        workspaceId: workspace.id,
       });
 
     if (identifiedCustomer) {
@@ -407,7 +410,7 @@ export class WebsocketGateway implements OnGatewayConnection {
         ...customer,
         ...optionalProperties,
         ...uniqueProperties,
-        ownerId: account.id,
+        workspaceId: workspace.id,
         isAnonymous: false,
       });
     }
@@ -428,7 +431,7 @@ export class WebsocketGateway implements OnGatewayConnection {
   ) {
     try {
       const {
-        account: { id: ownerId },
+        account: { teams },
         customerId,
         development,
       } = socket.data as SocketData;
@@ -455,9 +458,11 @@ export class WebsocketGateway implements OnGatewayConnection {
 
       socket.emit('log', 'Found customer:' + JSON.stringify(customer));
 
+      const workspace = teams?.[0]?.organization?.workspaces?.[0];
+
       // They have the wrong customer ID, their initial connection failed and needs to
       // be retried.
-      if (!customer || customer.ownerId !== ownerId) {
+      if (!customer || customer.workspaceId !== workspace.id) {
         socket.emit(
           'error',
           'Customer does not exist. Please reconnect to generate a new customer ID.'
@@ -635,13 +640,15 @@ export class WebsocketGateway implements OnGatewayConnection {
   ) {
     try {
       const {
-        account: { id: ownerId, apiKey },
+        account: { teams },
         customerId,
       } = socket.data as SocketData;
 
+      const workspace = teams?.[0]?.organization?.workspaces?.[0];
+
       let customer = await this.customersService.CustomerModel.findOne({
         _id: customerId,
-        ownerId,
+        workspaceId: workspace.id,
       });
 
       if (!customer || customer.isFreezed) {
@@ -651,7 +658,7 @@ export class WebsocketGateway implements OnGatewayConnection {
         );
         customer = await this.customersService.CustomerModel.create({
           isAnonymous: true,
-          ownerId,
+          workspaceId: workspace.id,
         });
 
         socket.data.customerId = customer.id;

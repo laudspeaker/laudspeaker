@@ -119,7 +119,7 @@ const myFormat = winston.format.printf(function ({
   } ${ctx.name ? 'name: ' + ctx.name + '}' : ''}`;
 });
 
-const formatMongoConnectionString = (mongoConnectionString: string) => {
+export const formatMongoConnectionString = (mongoConnectionString: string) => {
   if (mongoConnectionString) {
     if (mongoConnectionString.includes('mongodb+srv')) {
       return mongoConnectionString;
@@ -127,11 +127,11 @@ const formatMongoConnectionString = (mongoConnectionString: string) => {
       !mongoConnectionString.includes('mongodb') &&
       !mongoConnectionString.includes('?directConnection=true')
     ) {
-      return `mongodb://${mongoConnectionString}/?directConnection=true`;
+      return `mongodb://${mongoConnectionString}?directConnection=true`;
     } else if (!mongoConnectionString.includes('mongodb')) {
       return `mongodb://${mongoConnectionString}`;
     } else if (!mongoConnectionString.includes('?directConnection=true')) {
-      return `${mongoConnectionString}/?directConnection=true`;
+      return `${mongoConnectionString}?directConnection=true`;
     } else return mongoConnectionString;
   }
 };
@@ -150,7 +150,6 @@ const formatMongoConnectionString = (mongoConnectionString: string) => {
       : []),
     MongooseModule.forRoot(
       formatMongoConnectionString(process.env.MONGOOSE_URL)
-      // process.env.MONGOOSE_URL
     ),
     BullModule.forRoot({
       connection: {

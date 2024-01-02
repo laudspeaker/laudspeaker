@@ -137,22 +137,21 @@ export class AccountsController {
 
       delete data?.[0].pushPlatforms?.Android?.credentials;
       delete data?.[0].pushPlatforms?.iOS?.credentials;
+      const workspace = (<Account>user)?.teams?.[0]?.organization
+        ?.workspaces?.[0];
 
       const pk = (
         await this.CustomerKeysModel.findOne({
           isPrimary: true,
-          ownerId: (<Account>user).id,
+          workspaceId: workspace.id,
         })
       )?.toObject();
 
       if (pk) {
         pk._id = pk._id.toString();
-        delete pk?.ownerId;
+        delete pk?.workspaceId;
         delete pk?.__v;
       }
-
-      const workspace = (<Account>user)?.teams?.[0]?.organization
-        ?.workspaces?.[0];
 
       delete workspace?.pushPlatforms?.Android?.credentials;
       delete workspace?.pushPlatforms?.iOS?.credentials;

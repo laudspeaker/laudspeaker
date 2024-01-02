@@ -351,7 +351,7 @@ export class TemplatesService extends QueueEventsHost {
     } catch (err) {
       return Promise.reject(err);
     }
-    const { _id, ownerId, workflows, ...tags } = customer.toObject();
+    const { _id, workspaceId, workflows, ...tags } = customer.toObject();
 
     const filteredTags = cleanTagsForSending(tags);
 
@@ -832,7 +832,7 @@ export class TemplatesService extends QueueEventsHost {
 
     if (!customer) throw new NotFoundException('Customer not found');
 
-    const { _id, ownerId, workflows, ...tags } = customer.toObject();
+    const { _id, workspaceId, workflows, ...tags } = customer.toObject();
     const filteredTags = cleanTagsForSending(tags);
 
     const { method } = testWebhookDto.webhookData;

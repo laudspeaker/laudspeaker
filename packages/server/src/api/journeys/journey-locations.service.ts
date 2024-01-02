@@ -116,13 +116,14 @@ export class JourneyLocationsService {
       session,
       account.email
     );
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
     if (queryRunner) {
       // Step 1: Check if customer is already enrolled in Journey; if so, throw error
       const location = await queryRunner.manager.findOne(JourneyLocation, {
         where: {
           journey: journey.id,
-          owner: { id: account.id },
+          workspace: { id: workspace.id },
           customer: customer.id,
         },
       });
@@ -145,7 +146,7 @@ export class JourneyLocationsService {
       const location = await this.journeyLocationsRepository.findOne({
         where: {
           journey: journey.id,
-          owner: { id: account.id },
+          workspace: { id: workspace.id },
           customer: customer.id,
         },
       });
@@ -212,11 +213,13 @@ export class JourneyLocationsService {
       session,
       account?.email
     );
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
     if (queryRunner) {
       return await queryRunner.manager.findOne(JourneyLocation, {
         where: {
           journey: journey.id,
-          owner: account ? { id: account.id } : undefined,
+          workspace: workspace ? { id: workspace.id } : undefined,
           customer: customer.id,
         },
         loadRelationIds: true,
@@ -226,7 +229,8 @@ export class JourneyLocationsService {
       return await this.journeyLocationsRepository.findOne({
         where: {
           journey: journey.id,
-          owner: account ? { id: account.id } : undefined,
+          workspace: workspace ? { id: workspace.id } : undefined,
+
           customer: customer.id,
         },
         loadRelationIds: true,
@@ -276,6 +280,8 @@ export class JourneyLocationsService {
       account.email
     );
 
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
     if (String(location.step) !== from.id) {
       this.warn(
         JSON.stringify({
@@ -305,7 +311,7 @@ export class JourneyLocationsService {
       await this.journeyLocationsRepository.update(
         {
           journey: location.journey,
-          owner: account ? { id: account.id } : undefined,
+          workspace: workspace ? { id: workspace.id } : undefined,
           customer: location.customer,
         },
         {
@@ -341,11 +347,14 @@ export class JourneyLocationsService {
       session,
       account?.email
     );
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
     if (queryRunner) {
       return await queryRunner.manager.findOne(JourneyLocation, {
         where: {
           journey: journey.id,
-          owner: account ? { id: account.id } : undefined,
+          workspace: workspace ? { id: workspace.id } : undefined,
+
           customer: customer.id,
         },
         relations: ['owner', 'journey', 'step'],
@@ -354,7 +363,8 @@ export class JourneyLocationsService {
       return await this.journeyLocationsRepository.findOne({
         where: {
           journey: journey.id,
-          owner: account ? { id: account.id } : undefined,
+          workspace: workspace ? { id: workspace.id } : undefined,
+
           customer: customer.id,
         },
         relations: ['owner', 'journey', 'step'],
@@ -440,6 +450,8 @@ export class JourneyLocationsService {
       session,
       account?.email
     );
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
     if (queryRunner) {
       await queryRunner.manager.update(
         JourneyLocation,
@@ -456,7 +468,7 @@ export class JourneyLocationsService {
       await this.journeyLocationsRepository.update(
         {
           journey: location.journey,
-          owner: account ? { id: account.id } : undefined,
+          workspace: workspace ? { id: workspace.id } : undefined,
           customer: location.customer,
         },
         {
@@ -549,6 +561,8 @@ export class JourneyLocationsService {
       session,
       account?.email
     );
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
     if (
       location.moveStarted &&
       Date.now() - location.moveStarted < LOCATION_LOCK_TIMEOUT_MS
@@ -572,7 +586,7 @@ export class JourneyLocationsService {
       await this.journeyLocationsRepository.update(
         {
           journey: location.journey,
-          owner: account ? { id: account.id } : undefined,
+          workspace: workspace ? { id: workspace.id } : undefined,
           customer: location.customer,
         },
         {

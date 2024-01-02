@@ -57,7 +57,7 @@ import { Journey } from './api/journeys/entities/journey.entity';
 import { EntryTiming } from './api/journeys/types/additional-journey-settings.interface';
 
 const BATCH_SIZE = 500;
-const KEYS_TO_SKIP = ['__v', '_id', 'audiences', 'ownerId'];
+const KEYS_TO_SKIP = ['__v', '_id', 'audiences', 'workspaceId'];
 
 @Injectable()
 export class CronService {
@@ -189,12 +189,12 @@ export class CronService {
 
             if (keys[key]) {
               keys[key].push(obj[key]);
-              keyCustomerMap[key].add(customer.ownerId);
+              keyCustomerMap[key].add(customer.workspaceId);
               continue;
             }
 
             keys[key] = [obj[key]];
-            keyCustomerMap[key] = new Set([customer.ownerId]);
+            keyCustomerMap[key] = new Set([customer.workspaceId]);
           }
         });
         current += BATCH_SIZE;
@@ -217,16 +217,16 @@ export class CronService {
           if (isDateString(validItem)) type = 'Date';
         }
 
-        for (const ownerId of keyCustomerMap[key].values()) {
+        for (const workspaceId of keyCustomerMap[key].values()) {
           await this.customerKeysModel
             .updateOne(
-              { key, ownerId },
+              { key, workspaceId },
               {
                 $set: {
                   key,
                   type,
                   isArray,
-                  ownerId,
+                  workspaceId,
                 },
               },
               { upsert: true }
@@ -248,7 +248,7 @@ export class CronService {
         .estimatedDocumentCount()
         .exec();
 
-      const keys: Record<string, { value: any; ownerId: string }[]> = {};
+      const keys: Record<string, { value: any; workspaceId: string }[]> = {};
 
       while (current < documentsCount) {
         const batch = await this.eventModel
@@ -258,17 +258,17 @@ export class CronService {
           .exec();
 
         batch.forEach((event) => {
-          const ownerId = event.ownerId;
+          const workspaceId = event.workspaceId;
           const obj = (event.toObject() as any)?.event || {};
           for (const key of Object.keys(obj)) {
             if (KEYS_TO_SKIP.includes(key)) continue;
 
             if (keys[key]) {
-              keys[key].push({ value: obj[key], ownerId });
+              keys[key].push({ value: obj[key], workspaceId });
               continue;
             }
 
-            keys[key] = [{ value: obj[key], ownerId }];
+            keys[key] = [{ value: obj[key], workspaceId }];
           }
         });
 
@@ -298,7 +298,7 @@ export class CronService {
             key,
             type,
             isArray,
-            ownerId: validItem.ownerId,
+            workspaceId: validItem.workspaceId,
           };
 
           const foundEventKey = await this.eventKeysModel

@@ -132,11 +132,13 @@ export class DevModeService {
         (el) => el.type === NodeType.START
       );
 
+      const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
       const customer = new Customer();
       customer.email = 'devmode@email.com';
       customer.firstName = 'dev';
       customer.lastName = 'mode';
-      customer.ownerId = account.id;
+      customer.workspaceId = workspace.id;
       customer.journeys = [journey.id];
       customer.customComponents = {};
 

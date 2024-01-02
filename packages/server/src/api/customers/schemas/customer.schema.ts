@@ -28,9 +28,8 @@ export class Customer {
   })
   journeyEnrollmentsDates: JourneyEnrollmentsDates;
 
-  // switch to organizationId
   @Prop()
-  ownerId: string;
+  workspaceId: string;
 
   @Prop()
   externalId: string;

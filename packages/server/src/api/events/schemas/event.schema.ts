@@ -6,7 +6,7 @@ export type EventDocument = Event & Document;
 @Schema({ strict: false })
 export class Event {
   @Prop()
-  ownerId: string;
+  workspaceId: string;
 }
 
 export const EventSchema = SchemaFactory.createForClass(Event);
