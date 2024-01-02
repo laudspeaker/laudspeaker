@@ -49,4 +49,5 @@ export default interface Account {
   javascriptSnippetSetupped: boolean;
   pushPlatforms: ConnectedPushFirebasePlatforms;
   pk?: UserPK;
+  timezoneUTCOffset: string;
 }

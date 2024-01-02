@@ -298,9 +298,13 @@ export class SegmentsService {
   /*
    * Helper function for customers.service getCusotmersFromsegment()
    */
-  //to do add account filter on records, later 
-  async getSegmentCustomers(account: Account,
-    session: string, segmentId: string, collectionName: string ){
+  //to do add account filter on records, later
+  async getSegmentCustomers(
+    account: Account,
+    session: string,
+    segmentId: string,
+    collectionName: string
+  ) {
     const records = await this.segmentCustomersRepository.findBy({
       segment: segmentId, //{ id: segment.id },
     });
@@ -312,9 +316,9 @@ export class SegmentsService {
       // Update the collection: increment the count for this customerId
       const objectId = new Types.ObjectId(customerId);
       await collectionHandle.updateOne(
-          { _id: objectId },
-          { $setOnInsert: { _id: objectId } },
-          { upsert: true }
+        { _id: objectId },
+        { $setOnInsert: { _id: objectId } },
+        { upsert: true }
       );
     }
 
@@ -322,7 +326,6 @@ export class SegmentsService {
     //console.log("All values in the collection:", allValues);
 
     return collectionName;
-    
   }
 
   generateRandomString(length: number = 4): string {

@@ -315,4 +315,3 @@ export type AllStepTypeMetadata =
   | AnalyticsEventHistoryAttribute
   | MessageEventHistoryAttribute
   | CustomerAttribute;
-

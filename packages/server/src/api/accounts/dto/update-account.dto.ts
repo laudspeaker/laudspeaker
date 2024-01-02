@@ -173,4 +173,8 @@ export class UpdateAccountDto {
   @Type(() => PushPlatformDto)
   @ValidateNested()
   pushPlatforms?: PushPlatformDto;
+
+  @IsString()
+  @IsOptional()
+  timezoneUTCOffset?: string;
 }
