@@ -191,7 +191,7 @@ const OrganizationTab = () => {
             placeholder="Select timezone"
             options={timezoneList.map((el) => ({
               key: el.offset,
-              title: el.timezone,
+              title: el.offset,
             }))}
             onChange={setSelectedTimeZone}
           />
