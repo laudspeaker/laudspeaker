@@ -40,7 +40,7 @@ export interface ClickHouseMessage {
   eventProvider: ClickHouseEventProvider;
   messageId: string;
   templateId: string;
-  workspaceId;
+  workspaceId: string;
   processed: boolean;
 }
 
@@ -411,6 +411,7 @@ export class WebhooksService {
   public async insertMessageStatusToClickhouse(
     clickhouseMessages: ClickHouseMessage[]
   ) {
+    console.log('clickhouseMessages', '\n\n\n\n\n', clickhouseMessages);
     return await this.kafkaService.produceMessage(
       KAFKA_TOPIC_MESSAGE_STATUS,
       clickhouseMessages.map((clickhouseMessage) => ({
