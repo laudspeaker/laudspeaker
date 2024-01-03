@@ -2808,7 +2808,8 @@ export class CustomersService {
       time,
     } = statement;
 
-    const userIdCondition = `userId = '${userId}'`;
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0]
+    const workspaceIdCondition = `workspaceId = '${workspace.id}'`;
     let sqlQuery = `SELECT customerId FROM message_status WHERE `;
 
     if (
@@ -2851,7 +2852,7 @@ export class CustomersService {
           }
           break;
       }
-      sqlQuery += `${userIdCondition} `;
+      sqlQuery += `${workspaceIdCondition} `;
 
       //during
       if (
@@ -4015,8 +4016,8 @@ export class CustomersService {
       happenCondition,
       time,
     } = statement;
-
-    const userIdCondition = `userId = '${userId}'`;
+    const workspace = account.teams?.[0]?.organization?.workspaces?.[0]
+    const workspaceIdCondition = `workspaceId = '${workspace.id}'`;
     let sqlQuery = `SELECT COUNT(*) FROM message_status WHERE `;
     //let sqlQuery = `SELECT * FROM message_status WHERE `;
 
@@ -4061,7 +4062,7 @@ export class CustomersService {
           }
           break;
       }
-      sqlQuery += `${userIdCondition} `;
+      sqlQuery += `${workspaceIdCondition} `;
 
       //during
       if (

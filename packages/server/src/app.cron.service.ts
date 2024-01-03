@@ -568,8 +568,11 @@ export class CronService {
                 .sendgridApiKey
             );
             const resultSet = await this.clickHouseClient.query({
-              query: `SELECT * FROM message_status WHERE processed = false AND eventProvider = 'sendgrid' AND userId = {userId:String}`,
-              query_params: { userId: accounts[j].id },
+              query: `SELECT * FROM message_status WHERE processed = false AND eventProvider = 'sendgrid' AND workspaceId = {workspaceId:String}`,
+              query_params: {
+                workspaceId:
+                  accounts[j].teams?.[0]?.organization?.workspaces?.[0].id,
+              },
               format: 'JSONEachRow',
             });
             for await (const rows of resultSet.stream()) {
@@ -693,8 +696,11 @@ export class CronService {
               workspace.smsAuthToken
             );
             const resultSet = await this.clickHouseClient.query({
-              query: `SELECT * FROM message_status WHERE processed = false AND eventProvider = 'twilio' AND userId = {userId:String}`,
-              query_params: { userId: accounts[j].id },
+              query: `SELECT * FROM message_status WHERE processed = false AND eventProvider = 'twilio' AND workspaceId = {workspaceId:String}`,
+              query_params: {
+                workspaceId:
+                  accounts[j].teams?.[0]?.organization?.workspaces?.[0]?.id,
+              },
               format: 'JSONEachRow',
             });
             for await (const rows of resultSet.stream()) {
