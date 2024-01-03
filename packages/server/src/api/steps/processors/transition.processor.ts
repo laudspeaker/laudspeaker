@@ -67,6 +67,8 @@ export class TransitionProcessor extends WorkerHost {
     @InjectConnection() private readonly connection: mongoose.Connection,
     @InjectRepository(Workspaces)
     private workspacesRepository: Repository<Workspaces>,
+    @InjectRepository(Account)
+    private accountRepository: Repository<Account>,
     @Inject(WebhooksService)
     private readonly webhooksService: WebhooksService,
     @Inject(CustomersService)
@@ -327,7 +329,9 @@ export class TransitionProcessor extends WorkerHost {
      */
     const owner = await queryRunner.manager.findOne(Account, {
       where: { id: ownerID },
+      relations: ['teams.organization.workspaces'],
     });
+    const workspace = owner.teams?.[0]?.organization?.workspaces?.[0];
 
     const currentStep = await queryRunner.manager.findOne(Step, {
       where: {
@@ -427,7 +431,7 @@ export class TransitionProcessor extends WorkerHost {
         eventProvider: ClickHouseEventProvider.TRACKER,
         messageId: humanReadableName,
         templateId: String(templateID),
-        userId: owner.id,
+        workspaceId: workspace.id,
         processed: true,
       },
     ]);
@@ -453,7 +457,7 @@ export class TransitionProcessor extends WorkerHost {
           eventProvider: ClickHouseEventProvider.TRACKER,
           messageId: humanReadableName,
           templateId: String(templateID),
-          userId: owner.id,
+          workspaceId: workspace.id,
           processed: true,
         },
       ]);
@@ -714,7 +718,7 @@ export class TransitionProcessor extends WorkerHost {
       const { _id, workspaceId, workflows, journeys, ...tags } =
         customer.toObject();
       const filteredTags = cleanTagsForSending(tags);
-      const sender = new MessageSender();
+      const sender = new MessageSender(this.accountRepository);
 
       switch (template.type) {
         case TemplateType.EMAIL:
@@ -919,7 +923,7 @@ export class TransitionProcessor extends WorkerHost {
           eventProvider: ClickHouseEventProvider.TRACKER,
           messageId: currentStep.metadata.humanReadableName,
           templateId: currentStep.metadata.template,
-          userId: owner.id,
+          workspaceId: workspace.id,
           processed: true,
         },
       ]);

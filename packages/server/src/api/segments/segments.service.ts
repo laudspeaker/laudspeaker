@@ -192,9 +192,11 @@ export class SegmentsService {
     await queryRunner.connect();
     await queryRunner.startTransaction();
     try {
+      const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
       const segment = await queryRunner.manager.save(Segment, {
         ...createSegmentDTO,
-        owner: { id: account.id },
+        workspace: { id: workspace.id },
       });
 
       this.debug(`In test Segment`, this.create.name, session, account.id);
@@ -410,6 +412,7 @@ export class SegmentsService {
         HttpStatus.BAD_REQUEST
       );
     }
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
     let err;
     const queryRunner = this.dataSource.createQueryRunner();
@@ -418,7 +421,7 @@ export class SegmentsService {
     try {
       const segment = await queryRunner.manager.save(Segment, {
         ...createSegmentDTO,
-        owner: { id: account.id },
+        workspace: { id: workspace.id },
       });
 
       this.debug(
@@ -846,12 +849,14 @@ export class SegmentsService {
       customerId,
     });
 
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
     if (foundRecord)
       throw new ConflictException('Customer already in this segment');
     await queryRunner.manager.save(SegmentCustomers, {
       segment: segmentId, //{ id: segment.id },
       customerId,
-      owner: account,
+      workspace,
     });
   }
 
@@ -885,6 +890,7 @@ export class SegmentsService {
     session: string
   ) {
     const segment = await this.findOne(account, id, session);
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
     const foundRecord = await this.segmentCustomersRepository.findOneBy({
       segment: id, //{ id: segment.id },
@@ -897,7 +903,7 @@ export class SegmentsService {
     await this.segmentCustomersRepository.save({
       segment: id, //{ id: segment.id },
       customerId,
-      owner: account,
+      workspace,
     });
     const runner = this.dataSource.createQueryRunner();
     await runner.connect();
@@ -950,12 +956,13 @@ export class SegmentsService {
   ) {
     const segment = await this.findOne(account, id, session);
     await this.clearCustomers(account, id, session);
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
     return this.segmentCustomersRepository.save(
       customerIds.map((customerId) => ({
         segment: id, //{ id: segment.id },
         customerId,
-        owner: account,
+        workspace,
       }))
     );
   }
@@ -998,10 +1005,12 @@ export class SegmentsService {
     customerId: string
   ) {
     /*
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
     await this.segmentCustomersRepository.delete({
       segment:{type:SegmentType.AUTOMATIC},
       customerId: customerId,
-      owner: {id:account.id}
+      workspace: {id:workspace.id}
     })
     */
     /*
@@ -1027,13 +1036,15 @@ export class SegmentsService {
     const { name, description, type, inclusionCriteria, resources } =
       await this.findOne(account, id, session);
 
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
     return this.segmentRepository.save({
       name,
       description,
       type,
       inclusionCriteria,
       resources,
-      owner: { id: account.id },
+      workspace: { id: workspace.id },
     });
   }
 
@@ -1152,44 +1163,5 @@ export class SegmentsService {
     }
 
     return !!record;
-  }
-
-  public async checkUsedInWorkflows(
-    account: Account,
-    id: string,
-    session: string
-  ) {
-    const segment = await this.findOne(account, id, session);
-
-    let names: string[] = [];
-
-    await this.dataSource.transaction(async (transactionManager) => {
-      const filters = await transactionManager.find(Filter, {
-        select: ['inclusionCriteria', 'id'],
-        where: { user: { id: account.id } },
-      });
-
-      const filterIds = filters
-        .filter((filter) =>
-          filter?.inclusionCriteria?.conditions?.some(
-            (condition) => condition?.value === segment.id
-          )
-        )
-        .map((filter) => filter.id);
-
-      names = (
-        await this.workflowsService.workflowsRepository.find({
-          select: ['name'],
-          where: {
-            filter: { id: In(filterIds) },
-            owner: { id: account.id },
-            isDeleted: false,
-            isStopped: false,
-          },
-        })
-      ).map((workflow) => workflow.name);
-    });
-
-    return names;
   }
 }

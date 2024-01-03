@@ -40,7 +40,7 @@ export interface ClickHouseMessage {
   eventProvider: ClickHouseEventProvider;
   messageId: string;
   templateId: string;
-  userId: string;
+  workspaceId;
   processed: boolean;
 }
 
@@ -207,8 +207,7 @@ export class WebhooksService {
         continue;
 
       const clickHouseRecord: ClickHouseMessage = {
-        // change to workspace ID instead UserId
-        userId: step.workspace.id,
+        workspaceId: step.workspace.id,
         stepId,
         customerId,
         templateId: String(templateId),
@@ -247,8 +246,7 @@ export class WebhooksService {
       relations: ['owner'],
     });
     const clickHouseRecord: ClickHouseMessage = {
-      // change to workspace ID instead UserId
-      userId: step.workspace.id,
+      workspaceId: step.workspace.id,
       stepId,
       customerId,
       templateId: String(templateId),
@@ -291,7 +289,10 @@ export class WebhooksService {
       'user-variables': { stepId, customerId, templateId, accountId },
     } = body['event-data'];
 
-    const account = await this.accountRepository.findOneBy({ id: accountId });
+    const account = await this.accountRepository.findOne({
+      where: { id: accountId },
+      relations: ['teams.organization.workspaces'],
+    });
     if (!account) throw new NotFoundException('Account not found');
 
     const value = signatureTimestamp + signatureToken;
@@ -316,8 +317,9 @@ export class WebhooksService {
 
     if (!stepId || !customerId || !templateId || !id) return;
 
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
     const clickHouseRecord: ClickHouseMessage = {
-      userId: account.id,
+      workspaceId: workspace.id,
       stepId,
       customerId,
       templateId: String(templateId),

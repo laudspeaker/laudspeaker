@@ -312,20 +312,4 @@ export class SegmentsController {
       session
     );
   }
-
-  @Get('/:id/user-in-workflows')
-  @UseGuards(JwtAuthGuard)
-  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
-  public async checkUsedInWorkflows(
-    @Req() { user }: Request,
-    @Param('id') id: string
-  ) {
-    const session = randomUUID();
-
-    return this.segmentsService.checkUsedInWorkflows(
-      <Account>user,
-      id,
-      session
-    );
-  }
 }

@@ -279,6 +279,8 @@ export class TemplatesService extends QueueEventsHost {
     createTemplateDto: CreateTemplateDto,
     session: string
   ) {
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
     try {
       const template = new Template();
       template.type = createTemplateDto.type;
@@ -312,7 +314,7 @@ export class TemplatesService extends QueueEventsHost {
       }
       return this.templatesRepository.save({
         ...template,
-        owner: { id: account.id },
+        workspace: { id: workspace.id },
       });
     } catch (error) {
       this.logger.error(`Api error: ${error}`);

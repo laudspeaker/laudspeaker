@@ -18,7 +18,9 @@ export class JourneyLocationsService {
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
     private readonly logger: Logger,
     @InjectRepository(JourneyLocation)
-    public journeyLocationsRepository: Repository<JourneyLocation>
+    public journeyLocationsRepository: Repository<JourneyLocation>,
+    @InjectRepository(Account)
+    public accountRepository: Repository<Account>
   ) {}
 
   log(message, method, session, user = 'ANONYMOUS') {
@@ -116,6 +118,7 @@ export class JourneyLocationsService {
       session,
       account.email
     );
+
     const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
     if (queryRunner) {
@@ -134,9 +137,9 @@ export class JourneyLocationsService {
         );
 
       // Step 2: Create new journey Location row, add time that user entered the journey
-      const locatoin = await queryRunner.manager.save(JourneyLocation, {
+      await queryRunner.manager.save(JourneyLocation, {
         journey: journey.id,
-        owner: account,
+        workspace,
         customer: customer.id,
         step: step,
         stepEntry: Date.now(),
@@ -156,7 +159,7 @@ export class JourneyLocationsService {
         );
       await this.journeyLocationsRepository.save({
         journey: journey.id,
-        owner: account,
+        workspace,
         customer: customer.id,
         step: step,
         stepEntry: Date.now(),
@@ -299,7 +302,7 @@ export class JourneyLocationsService {
         JourneyLocation,
         {
           journey: location.journey,
-          owner: account ? { id: account.id } : undefined,
+          workspace: workspace ? { id: workspace.id } : undefined,
           customer: location.customer,
         },
         {
@@ -457,7 +460,7 @@ export class JourneyLocationsService {
         JourneyLocation,
         {
           journey: location.journey,
-          owner: account ? { id: account.id } : undefined,
+          workspace: workspace ? { id: workspace.id } : undefined,
           customer: location.customer,
         },
         {
@@ -575,7 +578,7 @@ export class JourneyLocationsService {
         JourneyLocation,
         {
           journey: location.journey,
-          owner: account ? { id: account.id } : undefined,
+          workspace: workspace ? { id: workspace.id } : undefined,
           customer: location.customer,
         },
         {

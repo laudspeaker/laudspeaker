@@ -115,6 +115,7 @@ export class IntegrationsService {
     session
   ) {
     const account = await this.accountsService.findOne(user, session);
+    const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
 
     const { name, description, ...dbProperties } = createDBDto;
     const {
@@ -132,7 +133,7 @@ export class IntegrationsService {
       integration = await transactionManager.save(Integration, {
         name,
         description,
-        owner: account,
+        workspace,
         type: IntegrationType.DATABASE,
       });
 

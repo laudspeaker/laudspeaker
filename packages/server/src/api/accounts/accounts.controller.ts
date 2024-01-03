@@ -240,25 +240,26 @@ export class AccountsController {
     }
   }
 
-  @Patch('timezone')
-  @UseGuards(JwtAuthGuard)
-  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
-  async updateTimezone(
-    @Req() { user }: Request,
-    @Body() updateAccountDto: UpdateAccountDto
-  ) {
-    const session = randomUUID();
-    try {
-      return await this.accountsService.updateTimezone(
-        user,
-        updateAccountDto,
-        session
-      );
-    } catch (e) {
-      this.error(e, this.updateTimezone.name, session, (<Account>user).email);
-      throw e;
-    }
-  }
+  // DON'T NEED IT UPDATE HANDLE IN OTHER WAY
+  // @Patch('timezone')
+  // @UseGuards(JwtAuthGuard)
+  // @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
+  // async updateTimezone(
+  //   @Req() { user }: Request,
+  //   @Body() updateAccountDto: UpdateAccountDto
+  // ) {
+  //   const session = randomUUID();
+  //   try {
+  //     // return await this.accountsService.updateTimezone(
+  //     //   user,
+  //     //   updateAccountDto,
+  //     //   session
+  //     // );
+  //   } catch (e) {
+  //     this.error(e, this.updateTimezone.name, session, (<Account>user).email);
+  //     throw e;
+  //   }
+  // }
 
   @Patch()
   @UseGuards(JwtAuthGuard)

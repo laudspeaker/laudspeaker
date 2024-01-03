@@ -503,7 +503,8 @@ export class CronService {
                   const messageRow = JSON.parse(await messageInfo.text()).data;
                   const messagesToInsert: ClickHouseMessage[] = [];
                   const clickHouseRecord: ClickHouseMessage = {
-                    userId: accounts[j].id,
+                    workspaceId:
+                      accounts[j]?.teams?.[0]?.organization?.workspaces?.[0].id,
                     audienceId: messageRow[0]?.audienceId,
                     customerId: messageRow[0]?.customerId,
                     templateId: messageRow[0]?.templateId,
@@ -613,7 +614,9 @@ export class CronService {
                       event: message.status,
                       eventProvider: ClickHouseEventProvider.TWILIO,
                       createdAt: new Date().toISOString(),
-                      userId: accounts[j].id,
+                      workspaceId:
+                        accounts[j].teams?.[0]?.organization?.workspaces?.[0]
+                          ?.id,
                       processed: false,
                     };
                     messagesToInsert.push(clickHouseRecord);
@@ -721,7 +724,9 @@ export class CronService {
                       event: message.status,
                       eventProvider: ClickHouseEventProvider.TWILIO,
                       createdAt: new Date().toISOString(),
-                      userId: accounts[j].id,
+                      workspaceId:
+                        accounts[j].teams?.[0]?.organization?.workspaces?.[0]
+                          .id,
                       processed: false,
                     };
                     messagesToInsert.push(clickHouseRecord);

@@ -288,6 +288,7 @@ export class WebsocketGateway implements OnGatewayConnection {
   ) {
     if (!customer.customComponents) return;
 
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
     for (const [key, value] of Object.entries(customer.customComponents)) {
       //1.Map fields
       const data = customer.customComponents[key];
@@ -333,7 +334,7 @@ export class WebsocketGateway implements OnGatewayConnection {
             eventProvider: ClickHouseEventProvider.TRACKER,
             messageId: key,
             templateId: customer.customComponents[key].template,
-            userId: account.id,
+            workspaceId: workspace.id,
             processed: true,
           },
         ]);

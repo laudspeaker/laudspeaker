@@ -135,7 +135,6 @@ export class StartProcessor extends WorkerHost {
     >
   ): Promise<any> {
     //base case: get documents, set them as moving in location table, and batch add the jobs to the transition queue
-    console.log('\n\n\n\n\n\n\n\n\n', job.data);
     if (job.data.limit <= BATCH_SIZE) {
       let err: any;
       const queryRunner = this.dataSource.createQueryRunner();
@@ -164,6 +163,7 @@ export class StartProcessor extends WorkerHost {
           where: {
             id: job.data.ownerID,
           },
+          relations: ['teams.organization.workspaces'],
         });
 
         const step = await queryRunner.manager.findOne(Step, {

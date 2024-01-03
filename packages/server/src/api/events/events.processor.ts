@@ -179,7 +179,7 @@ export class EventsProcessor extends WorkerHost {
             type: StepType.WAIT_UNTIL_BRANCH,
             journey: { id: journey.id },
           },
-          relations: ['owner', 'journey'],
+          relations: ['workspace.organization.owner', 'journey'],
         })
       ).filter((el) => el?.metadata?.branches !== undefined);
       step_loop: for (
@@ -453,7 +453,7 @@ export class EventsProcessor extends WorkerHost {
 
       // If customer isn't in step, we throw error, otherwise we queue and consume event
       if (stepsToQueue.length) {
-        let stepToQueue;
+        let stepToQueue: Step;
         for (let i = 0; i < stepsToQueue.length; i++) {
           if (String(location.step) === stepsToQueue[i].id) {
             stepToQueue = stepsToQueue[i];
@@ -465,7 +465,7 @@ export class EventsProcessor extends WorkerHost {
             step: stepToQueue,
             branch: branch,
             customerID: customer.id,
-            ownerID: stepToQueue.owner.id,
+            ownerID: stepToQueue.workspace.organization.owner.id,
             session: job.data.session,
             journeyID: journey.id,
             event: job.data.event.event,

@@ -141,7 +141,7 @@ export class AccountsService extends BaseJwtHelper {
     session: string
   ): Promise<Account> {
     try {
-      const account = (
+      const owner = (
         await this.workspacesRepository.findOne({
           where: {
             id,
@@ -149,6 +149,13 @@ export class AccountsService extends BaseJwtHelper {
           relations: { organization: { owner: true } },
         })
       ).organization.owner;
+
+      const account = await this.accountsRepository.findOne({
+        where: {
+          id: owner.id,
+        },
+        relations: ['teams.organization.workspaces'],
+      });
 
       if (!account) {
         const e = new NotFoundException('Account not found');
@@ -442,19 +449,6 @@ export class AccountsService extends BaseJwtHelper {
       this.error(e, this.updateApiKey.name, session, (<Account>user).id);
       throw e;
     }
-  }
-
-  async updateTimezone(
-    user: Express.User,
-    updateAccountDto: UpdateAccountDto,
-    session: string
-  ): Promise<string> {
-    const oldUser = await this.findOne(user, session);
-    await this.accountsRepository.save({
-      ...oldUser,
-      timezoneUTCOffset: updateAccountDto.timezoneUTCOffset,
-    });
-    return updateAccountDto.timezoneUTCOffset;
   }
 
   async remove(
