@@ -229,10 +229,10 @@ export class TransitionProcessor extends WorkerHost {
             job.data.session,
             job.data.customerID,
             this.redlockService.retrieve(
-              job.data.lock.resources,
-              job.data.lock.value,
-              job.data.lock.attempts,
-              job.data.lock.expiration
+              job.data.lock?.resources,
+              job.data.lock?.value,
+              job.data.lock?.attempts,
+              job.data.lock?.expiration
             ),
             queryRunner,
             transactionSession,
@@ -346,7 +346,7 @@ export class TransitionProcessor extends WorkerHost {
         return JSON.parse(customer).customerID === customerID;
       })
     ) {
-      await lock.release();
+      await lock?.release();
       this.warn(
         `${JSON.stringify({ warning: 'Releasing lock' })}`,
         this.handleCustomComponent.name,
