@@ -215,22 +215,24 @@ export class JourneysService {
         });
         */
 
-        console.log("In getJourneysWithTag", JSON.stringify(journeys, null, 2));
+      console.log("In getJourneysWithTag", JSON.stringify(journeys, null, 2));
 
-        // Map each Journey object to its id
-        const journeyIds = journeys.map(journey => journey.id);
+      // Map each Journey object to its id
+      const journeyIds = journeys.map(journey => journey.id);
 
-        // Commit the transaction before returning the data
-        await queryRunner.commitTransaction();
+      // Commit the transaction before returning the data
+      await queryRunner.commitTransaction();
 
-        return journeyIds;
-    } catch (error) {
-        // Handle any errors that occur during the transaction
-        await queryRunner.rollbackTransaction();
-        throw error;
-    } finally {
-        // Release the query runner which will return it to the connection pool
-        await queryRunner.release();
+      return journeyIds;
+    } 
+    catch (error) {
+      // Handle any errors that occur during the transaction
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } 
+    finally {
+      // Release the query runner which will return it to the connection pool
+      await queryRunner.release();
     }
 }
 
@@ -270,7 +272,7 @@ export class JourneysService {
     } finally {
       // Release the query runner which will return it to the connection pool
       await queryRunner.release();
-  }
+    }
   
   }
 

@@ -150,8 +150,8 @@ export class CustomersService {
     private readonly workflowsService: WorkflowsService,
     @Inject(StepsService)
     private readonly stepsService: StepsService,
-    @Inject(StepsService)
-    private journeysService: JourneysService,
+    //@Inject(JourneysService)
+    //private readonly journeysService: JourneysService,
     @Inject(EventsService)
     private readonly eventsService: EventsService,
     @InjectConnection()
@@ -2775,6 +2775,98 @@ export class CustomersService {
     return collectionOfCustomersFromSegment;
   }
 
+  /**
+   * Gets all journeys associated with a user and a specific tag.
+   *
+   * @param account
+   * @param session
+   * @param tag
+   * @returns
+   */
+
+  //to do
+  async getJourneysWithTag(account: Account, session: string, tag: string): Promise<string[]> {
+
+    console.log("In getJourneysWithTag", tag);
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    console.log("account id is", account.id );
+
+    try {
+      
+      const journeys = await queryRunner.manager
+            .createQueryBuilder(Journey, "journey")
+            //.where('journey.ownerId = :ownerId', { owner: { id: account.id } })
+            .where('journey.ownerId = :ownerId', { ownerId: account.id })
+            //.where('journey.ownerId = "930fd606-2be2-4429-80a0-94fd3607dc66"')
+            //.where('ownerId = :ownerId', { owner: { id: account.id } })
+            .andWhere("journey.journeySettings -> 'tags' ? :tag", { tag })
+            //.andWhere('journeySettings -> "tags" ? :tag', { tag })
+            .getMany();
+
+      //console.log("In getJourneysWithTag", JSON.stringify(journeys, null, 2));
+
+      // Map each Journey object to its id
+      const journeyIds = journeys.map(journey => journey.id);
+      console.log("journeyIds are", JSON.stringify(journeyIds, null, 2));
+
+      // Commit the transaction before returning the data
+      await queryRunner.commitTransaction();
+
+      return journeyIds;
+    } 
+    catch (error) {
+      // Handle any errors that occur during the transaction
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } 
+    finally {
+      // Release the query runner which will return it to the connection pool
+      await queryRunner.release();
+    }
+}
+
+  /**
+   * Gets all journeys associated with a user.
+   *
+   * @param account
+   * @param name
+   * @param session
+   * @returns
+   */
+
+  async getJourneys(account: Account, session: string) {
+
+    console.log("In getJourneys");
+
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const journeys = await queryRunner.manager.find(Journey, {
+          where: { owner: { id: account.id } }
+      });
+
+      // Map each Journey object to its id
+      const journeyIds = journeys.map(journey => journey.id);
+
+      // Commit the transaction before returning the data
+      await queryRunner.commitTransaction();
+
+      return journeyIds;
+    } catch (error) {
+      // Handle any errors that occur during the transaction
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      // Release the query runner which will return it to the connection pool
+      await queryRunner.release();
+    }
+  
+  }
+
 /*
   Case 1: Any Journey: 
 
@@ -2831,7 +2923,7 @@ export class CustomersService {
    *
    * @returns set of customers
    */
-
+  
   async customersFromMessageStatement(
     statement: any,
     account: Account,
@@ -2878,10 +2970,10 @@ export class CustomersService {
 
     if (from.key === 'ANY') {
       // Get all journeys associated with the account
-      journeyIds = await this.journeysService.getJourneys(account, session);
+      journeyIds = await this.getJourneys(account, session);
     } else if (from.key === 'WITH_TAG') {
       // Get all journeys with the specific tag
-      journeyIds = await this.journeysService.getJourneysWithTag(account, session, tag);
+      journeyIds = await this.getJourneysWithTag(account, session, tag);
     }
 
     const queryRunner = this.dataSource.createQueryRunner();
