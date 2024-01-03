@@ -289,10 +289,10 @@ export class TransitionProcessor extends WorkerHost {
       this.error(e, this.process.name, job.data.session);
       err = e;
       const lock = this.redlockService.retrieve(
-        job.data.lock.resources,
-        job.data.lock.value,
-        job.data.lock.attempts,
-        job.data.lock.expiration
+        job.data.lock?.resources,
+        job.data.lock?.value,
+        job.data.lock?.attempts,
+        job.data.lock?.expiration
       );
       await lock.release();
       this.warn(
@@ -567,6 +567,7 @@ export class TransitionProcessor extends WorkerHost {
   ) {
     const owner = await queryRunner.manager.findOne(Account, {
       where: { id: ownerID },
+      relations: ['teams.organization.workspaces'],
     });
     const workspace = await this.workspacesRepository.findOne({
       where: {
