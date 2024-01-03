@@ -166,6 +166,7 @@ export class StepsService {
       session,
       account.email
     );
+
     await this.startQueue.add('start', {
       ownerID: account.id,
       stepID: startStep[0].id,
@@ -448,9 +449,11 @@ export class StepsService {
   ): Promise<Step> {
     try {
       const { journeyID, type } = createStepDto;
+      const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
       return await this.stepsRepository.save({
         customers: [],
-        owner: { id: account.id },
+        workspace: { id: workspace.id },
         journey: { id: journeyID },
         type,
       });
@@ -475,10 +478,12 @@ export class StepsService {
     session: string
   ): Promise<Step> {
     try {
+      const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
       const { journeyID, type } = createStepDto;
       return await queryRunner.manager.save(Step, {
         customers: [],
-        owner: { id: account.id },
+        workspace: { id: workspace.id },
         journey: { id: journeyID },
         type,
       });
@@ -507,7 +512,7 @@ export class StepsService {
         workspace: { id: workspace.id },
         journey: { id: id },
       },
-      relations: ['owner'],
+      relations: ['workspace'],
     });
   }
 
@@ -676,8 +681,10 @@ export class StepsService {
     session: string,
     queryRunner: QueryRunner
   ) {
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
     await queryRunner.manager.save(Requeue, {
-      owner: account,
+      workspace: workspace,
       step,
       customerId,
       requeueAt: requeueTime.toISOString(),
@@ -691,8 +698,10 @@ export class StepsService {
     session: string,
     queryRunner: QueryRunner
   ) {
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
     await queryRunner.manager.delete(Requeue, {
-      owner: { id: account.id },
+      workspace: { id: workspace.id },
       step: { id: step.id },
       customerId: customerId,
     });

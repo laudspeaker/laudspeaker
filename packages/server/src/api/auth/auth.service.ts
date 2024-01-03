@@ -277,8 +277,7 @@ export class AuthService {
     const transactionSession = await this.connection.startSession();
     transactionSession.startTransaction();
 
-    try {      
-
+    try {
       await this.dataSource.transaction(async (transactionSession) => {
         await transactionSession.save(account);
         await transactionSession.save(verification);

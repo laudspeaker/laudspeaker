@@ -711,7 +711,7 @@ export class TransitionProcessor extends WorkerHost {
         owner,
         customerID
       );
-      const { _id,workspaceId, workflows, journeys, ...tags } =
+      const { _id, workspaceId, workflows, journeys, ...tags } =
         customer.toObject();
       const filteredTags = cleanTagsForSending(tags);
       const sender = new MessageSender();
@@ -1014,6 +1014,7 @@ export class TransitionProcessor extends WorkerHost {
   ) {
     const owner = await queryRunner.manager.findOne(Account, {
       where: { id: ownerID },
+      relations: ['teams.organization.workspaces'],
     });
 
     const journey = await this.journeysService.findByID(

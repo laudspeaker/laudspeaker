@@ -330,7 +330,6 @@ export class JourneysService {
     let err: any;
 
     const workspace = user.teams?.[0]?.organization?.workspaces?.[0];
-
     try {
       const oldJourney = await queryRunner.manager.findOne(Journey, {
         where: {
@@ -411,9 +410,12 @@ export class JourneysService {
 
       let visualLayout: any = JSON.stringify(oldJourney.visualLayout);
 
+      // console.log('\n\n\n\n', workspace, oldJourney);
+
       for (let i = 0; i < oldSteps.length; i++) {
-        const oldStepID = oldSteps[i].id;
-        const newStepID = newSteps[i].id;
+        const oldStepID = oldSteps[i]?.id;
+        const newStepID = newSteps[i]?.id;
+        if (!oldStepID || !newStepID) continue;
         visualLayout = visualLayout.replaceAll(oldStepID, newStepID);
         if (oldSteps[i].type === StepType.TRACKER) {
           const newStepName = generateName({ number: true }).dashed;
@@ -1108,7 +1110,6 @@ export class JourneysService {
         session,
         transactionSession
       );
-
       if (
         journey.journeyEntrySettings.entryTiming.type ===
         EntryTiming.WhenPublished

@@ -7,6 +7,7 @@ import { RemoteSocket, Socket } from 'socket.io';
 import { DefaultEventsMap } from 'socket.io/dist/typed-events';
 import { Repository } from 'typeorm';
 import { Logger } from 'winston';
+import { AccountsService } from '../accounts/accounts.service';
 import { Account } from '../accounts/entities/accounts.entity';
 import { Customer } from '../customers/schemas/customer.schema';
 import { Journey } from '../journeys/entities/journey.entity';
@@ -25,6 +26,7 @@ export class DevModeService {
     public journeysRepository: Repository<Journey>,
     @InjectRepository(DevMode)
     public devModeRepository: Repository<DevMode>,
+    public accountsService: AccountsService,
     @InjectRepository(Step)
     public stepRepository: Repository<Step>,
     @InjectRepository(Template)
@@ -95,17 +97,19 @@ export class DevModeService {
     journey: Journey,
     state: DevModeState
   ) {
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
     try {
       await this.devModeRepository.upsert(
         {
           journeyId: journey.id,
-          ownerId: account.id,
+          workspaceId: workspace.id,
           devModeState: state,
         },
         {
           conflictPaths: {
             journeyId: true,
-            ownerId: true,
+            workspaceId: true,
           },
           upsertType: 'on-conflict-do-update',
         }
@@ -145,7 +149,7 @@ export class DevModeService {
       await this.devModeRepository.upsert(
         {
           journeyId: journey.id,
-          ownerId: account.id,
+          workspaceId: workspace.id,
           devModeState: {
             customerIn: {
               nodeId: startNode.id,
@@ -160,7 +164,7 @@ export class DevModeService {
         {
           conflictPaths: {
             journeyId: true,
-            ownerId: true,
+            workspaceId: true,
           },
           upsertType: 'on-conflict-do-update',
         }
@@ -168,7 +172,7 @@ export class DevModeService {
 
       const devMode = await this.devModeRepository.findOneBy({
         journeyId: journey.id,
-        ownerId: account.id,
+        workspaceId: workspace.id,
       });
       return devMode;
     } catch (error) {
@@ -182,10 +186,12 @@ export class DevModeService {
     journeyId: string,
     toNodeId: string
   ) {
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
     try {
       const devMode = await this.devModeRepository.findOneBy({
         journeyId,
-        ownerId: account.id,
+        workspaceId: workspace.id,
       });
 
       const journey = await this.journeysRepository.findOneBy({
@@ -281,7 +287,7 @@ export class DevModeService {
 
       await this.devModeRepository.update(
         {
-          ownerId: account.id,
+          workspaceId: workspace.id,
           journeyId: journeyId,
         },
         {
@@ -305,10 +311,13 @@ export class DevModeService {
     socketLocal: Socket,
     event: { [key: string]: unknown }
   ) {
+    const workspace =
+      socketLocal.data.account?.teams?.[0]?.organization?.workspaces?.[0];
+
     try {
       const devMode = await this.devModeRepository.findOneBy({
         journeyId: socketClient.handshake.auth.journeyId,
-        ownerId: socketLocal.data.account.id,
+        workspaceId: workspace.id,
       });
 
       const step = await this.stepRepository.findOne({
@@ -384,7 +393,7 @@ export class DevModeService {
 
       const devModeUpdated = await this.devModeRepository.findOneBy({
         journeyId: socketClient.handshake.auth.journeyId,
-        ownerId: socketLocal.data.account.id,
+        workspaceId: workspace.id,
       });
 
       for (const key in devModeUpdated.devModeState.customerData
@@ -408,9 +417,12 @@ export class DevModeService {
   }
 
   public async getDevModeState(accountId: string, journeyId: string) {
+    const account = await this.accountsService.findOne({ id: accountId }, '');
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
     return await this.devModeRepository.findOne({
       where: {
-        ownerId: accountId,
+        workspaceId: workspace.id,
         journeyId: journeyId,
       },
     });
