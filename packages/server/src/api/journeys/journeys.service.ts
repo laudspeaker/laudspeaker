@@ -415,7 +415,7 @@ export class JourneysService {
       for (let i = 0; i < oldSteps.length; i++) {
         const oldStepID = oldSteps[i]?.id;
         const newStepID = newSteps[i]?.id;
-        if (!oldStepID || !newStepID) continue;
+
         visualLayout = visualLayout.replaceAll(oldStepID, newStepID);
         if (oldSteps[i].type === StepType.TRACKER) {
           const newStepName = generateName({ number: true }).dashed;
