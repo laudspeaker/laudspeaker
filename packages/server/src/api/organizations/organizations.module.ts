@@ -18,18 +18,23 @@ import { OrganizationService } from './organizations.service';
 import { Workspaces } from '../workspaces/entities/workspaces.entity';
 import { Organization } from './entities/organization.entity';
 import { OrganizationTeam } from './entities/organization-team.entity';
-import { AuthHelper } from '../auth/auth.helper';
+import { OrganizationInvites } from './entities/organization-invites.entity';
+import { BullModule } from '@nestjs/bullmq';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
       { name: CustomerKeys.name, schema: CustomerKeysSchema },
     ]),
+    BullModule.registerQueue({
+      name: 'message',
+    }),
     TypeOrmModule.forFeature([
       Account,
       Workspaces,
       Organization,
       OrganizationTeam,
+      OrganizationInvites,
     ]),
     forwardRef(() => AuthModule),
     WebhooksModule,

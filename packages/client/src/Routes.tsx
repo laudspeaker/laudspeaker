@@ -58,6 +58,9 @@ import PeopleSetting from "pages/PeopleSetting/PeopleSetting";
 import SegmentEditor from "pages/SegmentCreation/SegmentEditor";
 import config, { ONBOARDING_API_KEY_KEY, WS_BASE_URL_KEY } from "config";
 import CompanySetup from "pages/CompanySetup/CompanySetup";
+import EEWrapper from "EE/EEWraper";
+import InviteMember from "pages/Settingsv2/InviteMember";
+import InviteConfirmation from "EE/InviteConfirmation";
 
 interface IProtected {
   children: ReactElement;
@@ -283,6 +286,14 @@ const RouteComponent: React.FC = () => {
           path="/signup"
           element={<Signup setShowWelcomeBanner={setShowWelcomeBanner} />}
         />
+        <Route
+          path="/signup/invitation/:id"
+          element={
+            <Signup fromInvite setShowWelcomeBanner={setShowWelcomeBanner} />
+          }
+        />
+        <Route path="/confirm-invite/:id" element={<InviteConfirmation />} />
+
         <Route
           path="/"
           element={
@@ -711,6 +722,20 @@ const RouteComponent: React.FC = () => {
                 </DrawerLayout>
               </VerificationProtected>
             </Protected>
+          }
+        />
+        <Route
+          path="/settings/add-member"
+          element={
+            <EEWrapper>
+              <Protected>
+                <VerificationProtected>
+                  <DrawerLayout>
+                    <InviteMember />
+                  </DrawerLayout>
+                </VerificationProtected>
+              </Protected>
+            </EEWrapper>
           }
         />
         <Route

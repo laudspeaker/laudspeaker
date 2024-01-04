@@ -29,9 +29,6 @@ import {
   EventKeysSchema,
 } from './api/events/schemas/event-keys.schema';
 import { Integration } from './api/integrations/entities/integration.entity';
-import { Workflow } from './api/workflows/entities/workflow.entity';
-import { Job } from './api/jobs/entities/job.entity';
-import { Audience } from './api/audiences/entities/audience.entity';
 import { Template } from './api/templates/entities/template.entity';
 import { Installation } from './api/slack/entities/installation.entity';
 import { State } from './api/slack/entities/state.entity';
@@ -39,9 +36,7 @@ import { IntegrationsModule } from './api/integrations/integrations.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { Recovery } from './api/auth/entities/recovery.entity';
 import { Segment } from './api/segments/entities/segment.entity';
-import { WorkflowsModule } from './api/workflows/workflows.module';
-import { JobsModule } from './api/jobs/jobs.module';
-import { AudiencesModule } from './api/audiences/audiences.module';
+
 import { CustomersModule } from './api/customers/customers.module';
 import { TemplatesModule } from './api/templates/templates.module';
 import { SlackModule } from './api/slack/slack.module';
@@ -62,6 +57,7 @@ import { KafkaModule } from './api/kafka/kafka.module';
 import { JourneyLocation } from './api/journeys/entities/journey-location.entity';
 import { JourneyLocationsService } from './api/journeys/journey-locations.service';
 import { OrganizationsModule } from './api/organizations/organizations.module';
+import { OrganizationInvites } from './api/organizations/entities/organization-invites.entity';
 
 const sensitiveKeys = [
   /cookie/i,
@@ -197,16 +193,14 @@ export const formatMongoConnectionString = (mongoConnectionString: string) => {
       Account,
       Verification,
       Integration,
-      Workflow,
-      Job,
       Segment,
-      Audience,
       Template,
       Installation,
       State,
       Recovery,
       WebhookJob,
       JourneyLocation,
+      OrganizationInvites,
     ]),
     BullModule.registerQueue({
       name: 'integrations',
@@ -230,9 +224,6 @@ export const formatMongoConnectionString = (mongoConnectionString: string) => {
       name: 'imports',
     }),
     IntegrationsModule,
-    WorkflowsModule,
-    JobsModule,
-    AudiencesModule,
     CustomersModule,
     TemplatesModule,
     SlackModule,

@@ -19,6 +19,7 @@ import { JourneysModule } from '../journeys/journeys.module';
 import { StepsModule } from '../steps/steps.module';
 import { OrganizationTeam } from '../organizations/entities/organization-team.entity';
 import { Workspaces } from '../workspaces/entities/workspaces.entity';
+import { OrganizationInvites } from '../organizations/entities/organization-invites.entity';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { Workspaces } from '../workspaces/entities/workspaces.entity';
       Workspaces,
       Recovery,
       OrganizationTeam,
+      OrganizationInvites,
     ]),
     BullModule.registerQueue({
       name: 'message',

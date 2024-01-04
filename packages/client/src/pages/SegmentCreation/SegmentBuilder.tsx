@@ -152,8 +152,12 @@ const SegmentBuilder = () => {
 
   useEffect(() => {
     (async () => {
-      await loadAllTags();
-      if (id) await loadSegment();
+      setIsLoadingSegment(true);
+      try {
+        await loadAllTags();
+        if (id) await loadSegment();
+      } catch (error) {}
+      setIsLoadingSegment(false);
     })();
     return () => {
       dispatch(setShowSegmentsErrors(false));

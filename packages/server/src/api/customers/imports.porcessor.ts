@@ -372,7 +372,7 @@ export class ImportProcessor extends WorkerHost {
         addToSegment.map((el) => ({
           customerId: el,
           segment: segmentId, //segment,
-          owner: account,
+          workspace: workspace,
         }))
       );
     }

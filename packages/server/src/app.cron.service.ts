@@ -55,6 +55,7 @@ import { JourneyLocationsService } from './api/journeys/journey-locations.servic
 import { query } from 'winston';
 import { Journey } from './api/journeys/entities/journey.entity';
 import { EntryTiming } from './api/journeys/types/additional-journey-settings.interface';
+import { OrganizationInvites } from './api/organizations/entities/organization-invites.entity';
 
 const BATCH_SIZE = 500;
 const KEYS_TO_SKIP = ['__v', '_id', 'audiences', 'workspaceId'];
@@ -90,6 +91,8 @@ export class CronService {
     private verificationRepository: Repository<Verification>,
     @InjectRepository(Recovery)
     public readonly recoveryRepository: Repository<Recovery>,
+    @InjectRepository(OrganizationInvites)
+    public organizationInvitesRepository: Repository<OrganizationInvites>,
     @Inject(JourneysService) private journeysService: JourneysService,
     @Inject(IntegrationsService)
     private integrationsService: IntegrationsService,
@@ -784,6 +787,22 @@ export class CronService {
         .execute();
     } catch (e) {
       this.error(e, this.handleRecovery.name, session);
+    }
+  }
+
+  @Cron(CronExpression.EVERY_MINUTE)
+  async handleOrganizationInvites() {
+    const session = randomUUID();
+    try {
+      await this.organizationInvitesRepository
+        .createQueryBuilder()
+        .where(
+          `now() > organization_invites."createdAt"::TIMESTAMP + INTERVAL '1 DAY'`
+        )
+        .delete()
+        .execute();
+    } catch (e) {
+      this.error(e, this.handleOrganizationInvites.name, session);
     }
   }
 

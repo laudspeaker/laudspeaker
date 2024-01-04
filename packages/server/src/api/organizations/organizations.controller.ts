@@ -4,6 +4,7 @@ import {
   Controller,
   Get,
   Inject,
+  Param,
   Patch,
   Post,
   Query,
@@ -26,6 +27,7 @@ import {
 } from '../customers/schemas/customer-keys.schema';
 import { S3Service } from '../s3/s3.service';
 import { CreateOrganizationDTO } from './dto/create-ogranization.dto';
+import { InviteMemberDTO } from './dto/invite-user.dto';
 import { UpdateOrganizationDTO } from './dto/update-organization.dto';
 import { OrganizationService } from './organizations.service';
 
@@ -108,7 +110,7 @@ export class OrganizationsController {
     @Req() { user }: Request,
     @Query('take') take?: number,
     @Query('skip') skip?: number,
-    @Query('orderType') isASC?: boolean
+    @Query('isASC') isASC?: boolean
   ) {
     return this.organizationService.getTeamMembers(
       <Account>user,
@@ -116,6 +118,32 @@ export class OrganizationsController {
       skip,
       isASC
     );
+  }
+
+  @Get('/check-invite-status/:id')
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
+  async checkInviteStatus(@Param('id') id: string) {
+    const session = randomUUID();
+    try {
+      return await this.organizationService.checkInviteStatus(id, session);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  @Post('/team-members/invite')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
+  async inviteTeamMember(
+    @Req() { user }: Request,
+    @Body() body: InviteMemberDTO
+  ) {
+    const session = randomUUID();
+    try {
+      await this.organizationService.inviteMember(<Account>user, body, session);
+    } catch (error) {
+      throw error;
+    }
   }
 
   @Get()

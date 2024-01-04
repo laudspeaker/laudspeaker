@@ -8,6 +8,8 @@ import { toast } from "react-toastify";
 import sortAscChevronsImage from "../../JourneyTablev2/svg/sort-asc-chevrons.svg";
 import sortDescChevronsImage from "../../JourneyTablev2/svg/sort-desc-chevrons.svg";
 import { format } from "date-fns";
+import { useNavigate } from "react-router-dom";
+import Pagination from "components/Pagination";
 
 enum ORGANIZATION_TABS {
   GENERAL = "General",
@@ -82,10 +84,10 @@ const OrganizationTab = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMembers, setIsLoadingMembers] = useState(true);
   const [teamData, setTeamData] = useState<OrganizationTeamData[]>([]);
-  const [skip, setSkip] = useState(0);
+  const [page, setPage] = useState(1);
   const [pageCount, setPageCount] = useState(0);
   const [isASC, setIsASC] = useState(false);
-
+  const navigate = useNavigate();
   const isSame =
     orgData?.organization?.name === companyName &&
     orgData.workspace.timezoneUTCOffset === selectedTimeZone;
@@ -108,8 +110,11 @@ const OrganizationTab = () => {
   const loadTeams = async () => {
     try {
       setIsLoadingMembers(true);
+      console.log(page);
       const { data } = await ApiService.get({
-        url: `/organizations/team-members?take=10&skip=${skip}&isASC=${isASC}`,
+        url: `/organizations/team-members?take=10&skip=${
+          page === 1 ? 0 : (page - 1) * 10
+        }&isASC=${isASC}`,
       });
       setPageCount(data.pageCount);
       setTeamData(data.data);
@@ -142,6 +147,10 @@ const OrganizationTab = () => {
     loadOrganization();
     loadTeams();
   }, []);
+
+  useEffect(() => {
+    loadTeams();
+  }, [isASC, page]);
 
   return (
     <div
@@ -219,11 +228,17 @@ const OrganizationTab = () => {
             <p className="text-base  text-[#111827] font-inter font-semibold">
               Team members
             </p>
-            <Button disabled type={ButtonType.PRIMARY} onClick={() => {}}>
+            <Button
+              disabled={!process.env.REACT_APP_EE}
+              type={ButtonType.PRIMARY}
+              onClick={() => {
+                navigate("/settings/add-member");
+              }}
+            >
               Add team member
             </Button>
           </div>
-          <table className="mt-[10px] min-w-full border-separate border-spacing-0">
+          <table className="my-[10px] min-w-full border-separate border-spacing-0">
             <thead>
               <tr>
                 <th
@@ -281,6 +296,15 @@ const OrganizationTab = () => {
               ))}
             </tbody>
           </table>
+          {pageCount > 1 && (
+            <div className="flex justify-center">
+              <Pagination
+                currentPage={page}
+                setCurrentPage={setPage}
+                totalPages={pageCount}
+              />
+            </div>
+          )}
         </div>
       )}
     </div>

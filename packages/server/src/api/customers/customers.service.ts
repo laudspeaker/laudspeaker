@@ -1729,11 +1729,9 @@ export class CustomersService {
         },
         fileKey,
       });
-      if (!importFile) {
-        throw new BadRequestException("Can't find imported file for deletion.");
+      if (importFile) {
+        await this.removeImportFile(account, fileKey);
       }
-
-      await this.removeImportFile(account, fileKey);
     } catch (error) {
       this.error(error, this.deleteImportFile.name, session);
       throw new BadRequestException(
@@ -1778,7 +1776,7 @@ export class CustomersService {
     });
 
     if (!previousImport) {
-      throw new BadRequestException("Can't find imported file for deletion.");
+      return;
     }
 
     await this.s3Service.deleteFile(previousImport.fileKey, account, true);
@@ -2808,7 +2806,7 @@ export class CustomersService {
       time,
     } = statement;
 
-    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0]
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
     const workspaceIdCondition = `workspaceId = '${workspace.id}'`;
     let sqlQuery = `SELECT customerId FROM message_status WHERE `;
 
@@ -4016,7 +4014,7 @@ export class CustomersService {
       happenCondition,
       time,
     } = statement;
-    const workspace = account.teams?.[0]?.organization?.workspaces?.[0]
+    const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
     const workspaceIdCondition = `workspaceId = '${workspace.id}'`;
     let sqlQuery = `SELECT COUNT(*) FROM message_status WHERE `;
     //let sqlQuery = `SELECT * FROM message_status WHERE `;

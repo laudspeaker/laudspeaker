@@ -1,6 +1,13 @@
-import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import { InjectQueue } from '@nestjs/bullmq';
+import {
+  BadRequestException,
+  HttpException,
+  HttpStatus,
+  Inject,
+  Injectable,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { tryCatch } from 'bullmq';
+import { Queue, tryCatch } from 'bullmq';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { DataSource, Repository } from 'typeorm';
 import { Logger } from 'winston';
@@ -8,7 +15,9 @@ import { Account } from '../accounts/entities/accounts.entity';
 import { AuthHelper } from '../auth/auth.helper';
 import { Workspaces } from '../workspaces/entities/workspaces.entity';
 import { CreateOrganizationDTO } from './dto/create-ogranization.dto';
+import { InviteMemberDTO } from './dto/invite-user.dto';
 import { UpdateOrganizationDTO } from './dto/update-organization.dto';
+import { OrganizationInvites } from './entities/organization-invites.entity';
 import { OrganizationTeam } from './entities/organization-team.entity';
 import { Organization } from './entities/organization.entity';
 
@@ -22,10 +31,15 @@ export class OrganizationService {
     public journeysRepository: Repository<Organization>,
     @InjectRepository(Workspaces)
     public workspacesRepository: Repository<Workspaces>,
+    @InjectRepository(OrganizationInvites)
+    public organizationInvitesRepository: Repository<OrganizationInvites>,
     @InjectRepository(OrganizationTeam)
     public organizationTeamRepository: Repository<OrganizationTeam>,
+    @Inject(AuthHelper)
+    public readonly helper: AuthHelper,
     @InjectRepository(Account)
     public accountRepository: Repository<Account>,
+    @InjectQueue('message') private readonly messageQueue: Queue,
     @Inject(AuthHelper)
     public readonly authHelper: AuthHelper
   ) {}
@@ -215,6 +229,111 @@ export class OrganizationService {
       page: skip / take + 1,
       pageCount: Math.ceil(total / take),
     };
+  }
+
+  public async inviteMember(
+    account: Account,
+    body: InviteMemberDTO,
+    session: string
+  ) {
+    const team = account.teams?.[0];
+    const invite = await this.organizationInvitesRepository.findOne({
+      where: {
+        organization: {
+          id: team.organization.id,
+        },
+        email: body.email,
+      },
+    });
+    const existingAccount = await this.accountRepository.findOneBy({
+      email: body.email,
+    });
+    if (!!existingAccount) {
+      throw new HttpException(
+        'This user already have registered account.',
+        HttpStatus.BAD_REQUEST
+      );
+    }
+    if (!!invite) {
+      throw new HttpException(
+        'This user already invited.',
+        HttpStatus.BAD_REQUEST
+      );
+    }
+    const queryRunner = await this.dataSource.createQueryRunner();
+
+    try {
+      await queryRunner.connect();
+      await queryRunner.startTransaction();
+
+      const createdInvite = await queryRunner.manager.save(
+        OrganizationInvites,
+        {
+          email: body.email,
+          organization: team.organization,
+          team: team,
+        }
+      );
+      const inviteLink = `${process.env.FRONTEND_URL}/confirm-invite/${createdInvite.id}`;
+
+      if (process.env.EMAIL_VERIFICATION_PROVIDER === 'gmail') {
+        await this.messageQueue.add('email', {
+          eventProvider: 'gmail',
+          key: process.env.GMAIL_APP_CRED,
+          from: 'Laudspeaker',
+          email: process.env.GMAIL_VERIFICATION_EMAIL,
+          to: body.email,
+          subject: `You been invited to organization: ${team.organization.companyName}`,
+          plainText: 'Paste the following link into your browser:' + inviteLink,
+          text: `Paste the following link into your browser: <a href="${inviteLink}">${inviteLink}</a>`,
+        });
+      } else if (process.env.EMAIL_VERIFICATION_PROVIDER === 'mailgun') {
+        await this.messageQueue.add('email', {
+          key: process.env.MAILGUN_API_KEY,
+          from: 'Laudspeaker',
+          domain: process.env.MAILGUN_DOMAIN,
+          email: 'noreply',
+          to: body.email,
+          subject: `You been invited to organization: ${team.organization.companyName}`,
+
+          text: `Link: <a href="${inviteLink}">${inviteLink}</a>`,
+        });
+      } else {
+        //default is mailgun right now
+        await this.messageQueue.add('email', {
+          key: process.env.MAILGUN_API_KEY,
+          from: 'Laudspeaker',
+          domain: process.env.MAILGUN_DOMAIN,
+          email: 'noreply',
+          to: body.email,
+          subject: `You been invited to organization: ${team.organization.companyName}`,
+          text: `Link: <a href="${inviteLink}">${inviteLink}</a>`,
+        });
+      }
+      await queryRunner.commitTransaction();
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+
+      this.error(error, this.create, session, account.id);
+
+      throw error;
+    }
+  }
+
+  public async checkInviteStatus(id: string, sessions: string) {
+    const invite = await this.organizationInvitesRepository.findOne({
+      where: { id },
+      relations: {
+        organization: {
+          owner: true,
+        },
+      },
+    });
+    if (!invite) {
+      throw new HttpException('No such invite found.', HttpStatus.BAD_REQUEST);
+    }
+
+    return invite;
   }
 }
 
