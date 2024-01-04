@@ -534,6 +534,11 @@ export class SegmentsService {
           collectionPrefix
         );
 
+      //console.log("customersInSegment name is", customersInSegment);
+      if(!customersInSegment || customersInSegment.length === 0){
+        return { size: 0, total: 1 };
+      }
+
       const mongoCollection = this.connection.db.collection(customersInSegment);
 
       let segmentDocuments = await mongoCollection.countDocuments();
@@ -562,6 +567,11 @@ export class SegmentsService {
           0,
           collectionPrefix
         );
+
+      //console.log("customersInSegment name is", customersInSegment);
+      if(!customersInSegment || customersInSegment.length === 0){
+        return { size: 0, total: 1 };
+      }
 
       const mongoCollection = this.connection.db.collection(customersInSegment);
 
