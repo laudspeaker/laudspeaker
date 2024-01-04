@@ -2,9 +2,6 @@ import {
   Processor,
   WorkerHost,
   InjectQueue,
-  OnQueueEvent,
-  QueueEventsListener,
-  QueueEventsHost,
   OnWorkerEvent,
 } from '@nestjs/bullmq';
 import { Job, Queue } from 'bullmq';
@@ -28,8 +25,6 @@ import { AudiencesHelper } from '../audiences/audiences.helper';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { randomUUID } from 'crypto';
 import { WebsocketGateway } from '@/websockets/websocket.gateway';
-import { RedlockService } from '../redlock/redlock.service';
-import { Lock } from 'redlock';
 import * as _ from 'lodash';
 import * as Sentry from '@sentry/node';
 import { JourneyLocationsService } from '../journeys/journey-locations.service';

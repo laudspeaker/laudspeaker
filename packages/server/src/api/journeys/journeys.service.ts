@@ -54,6 +54,7 @@ import {
   CustomComponentStepMetadata,
   ElementCondition,
   EventBranch,
+  MessageEvent,
   PropertyCondition,
   StartStepMetadata,
   StepType,
@@ -1477,6 +1478,50 @@ export class JourneysService {
                   branch.events.push(event);
                 }
                 metadata.branches.push(branch);
+              } else if (
+                relevantEdges[i].data['branch'].type === BranchType.MESSAGE
+              ) {
+                const branch = new EventBranch();
+                branch.events = [];
+                branch.relation =
+                  relevantEdges[i].data['branch'].conditions[0].relationToNext;
+                branch.index = i;
+                branch.destination = nodes.filter((node) => {
+                  return node.id === relevantEdges[i].target;
+                })[0].data.stepId;
+                for (
+                  let eventsIndex = 0;
+                  eventsIndex <
+                  relevantEdges[i].data['branch'].conditions.length;
+                  eventsIndex++
+                ) {
+                  const event = new MessageEvent();
+                  event.providerType =
+                    relevantEdges[i].data['branch'].conditions[eventsIndex][
+                      'providerType'
+                    ];
+                  event.journey =
+                    relevantEdges[i].data['branch'].conditions[eventsIndex][
+                      'from'
+                    ]['key'];
+                  event.step =
+                    relevantEdges[i].data['branch'].conditions[eventsIndex][
+                      'fromSpecificMessage'
+                    ]['key'];
+                  event.eventCondition =
+                    relevantEdges[i].data['branch'].conditions[eventsIndex][
+                      'eventCondition'
+                    ];
+                  event.happenCondition =
+                    relevantEdges[i].data['branch'].conditions[eventsIndex][
+                      'happenCondition'
+                    ];
+                  branch.events.push(event);
+                }
+                metadata.branches.push(branch);
+              } else if (
+                relevantEdges[i].data['branch'].type === BranchType.WU_ATTRIBUTE
+              ) {
               }
             }
             if (nodes[i].id === '226a7112-96ec-477d-a1ac-d604b4f04301') {

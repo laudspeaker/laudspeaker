@@ -88,7 +88,7 @@ const MessageEditor = ({
       }>({
         url: `/journeys?take=12&skip=${
           (journeySearchQueryPage - 1) * 12
-        }&search=${journeySearchQuery}&orderBy=latestSave&orderType=desc&filterStatuses=Active`,
+        }&search=${journeySearchQuery}&orderBy=latestSave&orderType=desc&filterStatuses=Active,Paused,Draft`,
       });
 
       setAvailableJourneys(

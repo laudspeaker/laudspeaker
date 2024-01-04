@@ -12,6 +12,7 @@ import { Account } from '../accounts/entities/accounts.entity';
 @Injectable()
 export class S3Service {
   AWS_S3_BUCKET = process.env.AWS_S3_BUCKET;
+  AWS_S3_BUCKET_REGION = process.env.AWS_S3_BUCKET_REGION;
   AWS_S3_CUSTOMERS_IMPORT_BUCKET = process.env.AWS_S3_CUSTOMERS_IMPORT_BUCKET;
   s3 = new AWS.S3({
     accessKeyId: process.env.AWS_S3_ACCESS_KEY,
@@ -95,7 +96,7 @@ export class S3Service {
       ContentType: mimetype,
       ContentDisposition: 'inline',
       CreateBucketConfiguration: {
-        LocationConstraint: 'ap-south-1',
+        LocationConstraint: this.AWS_S3_BUCKET_REGION,
       },
     };
 

@@ -114,6 +114,9 @@ export enum BranchType {
   EVENT = 'event',
   MAX_TIME = 'maxTime',
   ATTRIBUTE = 'attribute',
+  WU_ATTRIBUTE = 'wu_attribute',
+  MESSAGE = 'message',
+  MULTISPLIT = 'multisplit',
 }
 
 export enum LogicRelation {
