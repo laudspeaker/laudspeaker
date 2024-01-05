@@ -135,7 +135,13 @@ export class Event {}
  * Events associated with messages; for example, if a customer
  * opens an email or receives a push notification.
  */
-export class MessageEvent extends Event {}
+export class MessageEvent extends Event {
+  providerType: string; // Email, SMS, etc
+  eventCondition: string; // Received, opened, delivered, etc
+  happenCondition: string; // has, has not
+  journey: string; // Journey ID
+  step: string; // StepID or ANY
+}
 
 /*
  * Events associated with messages; for example, if a customer
