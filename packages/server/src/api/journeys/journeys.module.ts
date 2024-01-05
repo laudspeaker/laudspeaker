@@ -70,6 +70,6 @@ import { JourneyLocationsService } from './journey-locations.service';
   ],
   controllers: [JourneysController],
   providers: [JourneysService, JourneyLocationsService],
-  exports: [JourneysService],
+  exports: [JourneysService, JourneyLocationsService],
 })
 export class JourneysModule {}

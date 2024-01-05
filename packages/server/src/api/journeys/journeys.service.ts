@@ -78,6 +78,8 @@ import {
 import { JourneyLocationsService } from './journey-locations.service';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
+import { RedlockService } from '../redlock/redlock.service';
+import { RedisService } from '@liaoliaots/nestjs-redis';
 
 export enum JourneyStatus {
   ACTIVE = 'Active',
@@ -117,7 +119,8 @@ export class JourneysService {
     @InjectConnection() private readonly connection: mongoose.Connection,
     @Inject(JourneyLocationsService)
     private readonly journeyLocationsService: JourneyLocationsService,
-    @InjectQueue('transition') private readonly transitionQueue: Queue
+    @InjectQueue('transition') private readonly transitionQueue: Queue,
+    @Inject(RedisService) private redisService: RedisService
   ) {}
 
   log(message, method, session, user = 'ANONYMOUS') {
@@ -548,6 +551,21 @@ export class JourneysService {
     queryRunner: QueryRunner,
     clientSession: ClientSession
   ): Promise<void> {
+    if (
+      await this.rateLimitEntryByUniqueEnrolledCustomers(
+        account,
+        journey,
+        queryRunner
+      )
+    ) {
+      this.log(
+        `Max customer limit reached on journey: ${journey.id}. Preventing customer: ${customer.id} from being enrolled.`,
+        this.enrollCustomerInJourney.name,
+        session,
+        account.id
+      );
+      return;
+    }
     const step = await this.stepsService.findByJourneyAndType(
       account,
       journey.id,
@@ -570,22 +588,12 @@ export class JourneysService {
       session: session,
       customerID: customer.id,
     });
-
-    await this.CustomerModel.updateOne(
-      { _id: customer._id },
-      {
-        $addToSet: {
-          journeys: journey.id,
-        },
-        $set: {
-          journeyEnrollmentsDates: {
-            [journey.id]: new Date().toUTCString(),
-          },
-        },
-      }
-    )
-      .session(clientSession)
-      .exec();
+    await this.customersService.updateJourneyList(
+      [customer],
+      journey.id,
+      session,
+      clientSession
+    );
   }
 
   /**
@@ -1984,5 +1992,87 @@ export class JourneysService {
       this.error(err, this.findAllMessages.name, session, account.email);
       throw err;
     }
+  }
+
+  /**
+   * Checks if limit for unique customers on the given journey has been reached.
+   *
+   * @returns boolean
+   *    true if rate limit reached (aka new customer can not be added)
+   *    false if rate limit not yet reached (aka new customer can be added)
+   */
+  async rateLimitEntryByUniqueEnrolledCustomers(
+    owner: Account,
+    journey: Journey,
+    queryRunner?: QueryRunner
+  ) {
+    const maxEntriesSettings = journey?.journeySettings?.maxEntries;
+    if (maxEntriesSettings && maxEntriesSettings.enabled) {
+      const maxEnrollment = parseInt(maxEntriesSettings.maxEntries);
+      const currentEnrollment =
+        await this.journeyLocationsService.getNumberOfEnrolledCustomers(
+          owner,
+          journey,
+          queryRunner
+        );
+
+      if (currentEnrollment >= maxEnrollment) {
+        this.warn(
+          `Current enrollment ${currentEnrollment} Max Enrollment ${maxEnrollment}`,
+          'test',
+          'test'
+        );
+        return true;
+      }
+    }
+    return false;
+  }
+
+  async rateLimitByUniqueCustomerMessages() {
+    return;
+  }
+
+  /**
+   * Reads the settings of a journey and returns an array with two keys
+   * @returns [boolean, number | undefined] where:
+   *    first item: whether rate limit messsage sends per minute is enabled
+   *    second item: max number of message sends per minute, if enabled
+   */
+  rateLimitByMinuteEnabled(
+    journey: Journey
+  ): readonly [boolean, number | undefined] {
+    const maxMessageSends = journey?.journeySettings?.maxMessageSends;
+    if (maxMessageSends.enabled && maxMessageSends.maxSendRate != null) {
+      const rateLimit = parseInt(maxMessageSends.maxSendRate);
+      return [true, rateLimit] as const;
+    }
+    return [false, undefined] as const;
+  }
+
+  async rateLimitByMinute(owner: Account, journey: Journey) {
+    const [enabled, rateLimit] = this.rateLimitByMinuteEnabled(journey);
+    if (enabled) {
+      const now = new Date();
+      const currValue = parseInt(
+        await this.redisService
+          .getClient()
+          .get(`${owner.id}:${journey.id}:${now.getUTCMinutes()}`)
+      );
+      if (!isNaN(currValue) && currValue >= rateLimit) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  async rateLimitByMinuteIncrement(owner: Account, journey: Journey) {
+    const now = new Date();
+    const rateLimitKey = `${owner.id}:${journey.id}:${now.getUTCMinutes()}`;
+    await this.redisService
+      .getClient()
+      .multi()
+      .incr(rateLimitKey)
+      .expire(rateLimitKey, 59)
+      .exec();
   }
 }

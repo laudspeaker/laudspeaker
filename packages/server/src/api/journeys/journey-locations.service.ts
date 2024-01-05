@@ -1,6 +1,12 @@
 import { Logger, Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, IsNull, QueryRunner, Repository } from 'typeorm';
+import {
+  DataSource,
+  FindManyOptions,
+  IsNull,
+  QueryRunner,
+  Repository,
+} from 'typeorm';
 import { Account } from '../accounts/entities/accounts.entity';
 import { Journey } from './entities/journey.entity';
 import { CustomerDocument } from '../customers/schemas/customer.schema';
@@ -580,5 +586,25 @@ export class JourneyLocationsService {
         }
       );
     }
+  }
+
+  async getNumberOfEnrolledCustomers(
+    account: Account,
+    journey: Journey,
+    runner?: QueryRunner
+  ) {
+    let queryCriteria: FindManyOptions<JourneyLocation> = {
+      where: {
+        owner: { id: account.id },
+        journey: journey.id,
+      },
+    };
+    let count: number;
+    if (runner) {
+      count = await runner.manager.count(JourneyLocation, queryCriteria);
+    } else {
+      count = await this.journeyLocationsRepository.count(queryCriteria);
+    }
+    return count;
   }
 }

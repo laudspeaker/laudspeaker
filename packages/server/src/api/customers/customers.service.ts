@@ -1037,7 +1037,7 @@ export class CustomersService {
     }).exec();
   }
 
-  async findByCustomerId(customerId: string, clientSession: ClientSession) {
+  async findByCustomerId(customerId: string, clientSession?: ClientSession) {
     if (!isValidObjectId(customerId))
       throw new BadRequestException('Invalid object id');
 

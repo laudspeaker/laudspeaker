@@ -601,7 +601,11 @@ export class TransitionProcessor extends WorkerHost {
     }
 
     // Rate limiting and sending quiet hours will be stored here
-    let messageSendType: 'SEND' | 'QUIET_REQUEUE' | 'QUIET_ABORT' = 'SEND';
+    let messageSendType:
+      | 'SEND'
+      | 'QUIET_REQUEUE'
+      | 'QUIET_ABORT'
+      | 'LIMIT_REQUEUE' = 'SEND';
     let requeueTime: Date;
     if (
       journey.journeySettings &&
@@ -666,6 +670,24 @@ export class TransitionProcessor extends WorkerHost {
           session,
           owner.email
         );
+      }
+    }
+
+    if (messageSendType === 'SEND') {
+      const [rateLimitByMinuteEnabled] =
+        this.journeysService.rateLimitByMinuteEnabled(journey);
+      if (rateLimitByMinuteEnabled) {
+        const doRateLimit = await this.journeysService.rateLimitByMinute(
+          owner,
+          journey
+        );
+        if (doRateLimit) {
+          messageSendType = 'LIMIT_REQUEUE';
+          requeueTime = new Date();
+          requeueTime.setMinutes(requeueTime.getMinutes() + 1);
+        } else {
+          await this.journeysService.rateLimitByMinuteIncrement(owner, journey);
+        }
       }
     }
 
@@ -901,7 +923,16 @@ export class TransitionProcessor extends WorkerHost {
           processed: true,
         },
       ]);
-    } else if (messageSendType === 'QUIET_REQUEUE') {
+    } else if (
+      messageSendType === 'QUIET_REQUEUE' ||
+      messageSendType === 'LIMIT_REQUEUE'
+    ) {
+      this.log(
+        `Requeuing message for customer: ${customerID}, step: ${currentStep.id} for reason: ${messageSendType}`,
+        this.handleMessage.name,
+        session,
+        owner.id
+      );
       this.stepsService.requeueMessage(
         owner,
         currentStep,
