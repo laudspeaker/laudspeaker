@@ -222,6 +222,7 @@ export class OrganizationService {
       data: members.map((el) => ({
         id: el.id,
         name: el.firstName,
+        lastName: el.lastName,
         email: el.email,
         createdAt: el.accountCreatedAt,
       })),
@@ -318,6 +319,81 @@ export class OrganizationService {
 
       throw error;
     }
+  }
+
+  public async transferOwnerRights(
+    account: Account,
+    teamMemberAccountId: string,
+    session: string
+  ) {
+    const organizationOwner = account?.teams?.[0]?.organization?.owner;
+    const organization = account?.teams?.[0]?.organization;
+    if (organizationOwner.id !== account.id)
+      throw new HttpException(
+        "You don't have rights to move ownership",
+        HttpStatus.NOT_ACCEPTABLE
+      );
+
+    const teamId = account?.teams?.[0].id;
+
+    const teamWithAccount = await this.organizationTeamRepository
+      .createQueryBuilder('team')
+      .innerJoinAndSelect('team.members', 'member')
+      .where('team.id = :teamId', { teamId })
+      .andWhere('member.id = :teamMemberAccountId', { teamMemberAccountId })
+      .getOne();
+
+    const newOwner = teamWithAccount?.members?.[0];
+    if (!teamWithAccount || !newOwner)
+      throw new HttpException(
+        'This user not part of organization',
+        HttpStatus.NOT_ACCEPTABLE
+      );
+
+    organization.owner = newOwner;
+    await organization.save();
+  }
+
+  public async deleteMemberAccount(
+    account: Account,
+    teamMemberAccountId: string,
+    session: string
+  ) {
+    const organizationOwner = account?.teams?.[0]?.organization?.owner;
+
+    if (teamMemberAccountId === organizationOwner.id)
+      throw new HttpException(
+        "Owner can't be deleted",
+        HttpStatus.NOT_ACCEPTABLE
+      );
+
+    if (
+      teamMemberAccountId !== account.id &&
+      account.id !== organizationOwner.id
+    )
+      throw new HttpException(
+        "You don't have rights to delete user",
+        HttpStatus.NOT_ACCEPTABLE
+      );
+
+    const teamId = account?.teams?.[0].id;
+
+    const teamWithAccount = await this.organizationTeamRepository
+      .createQueryBuilder('team')
+      .innerJoinAndSelect('team.members', 'member')
+      .where('team.id = :teamId', { teamId })
+      .andWhere('member.id = :teamMemberAccountId', { teamMemberAccountId })
+      .getOne();
+
+    const foundAccount = teamWithAccount?.members?.[0];
+
+    if (!teamWithAccount || !foundAccount)
+      throw new HttpException(
+        'This user not part of organization',
+        HttpStatus.NOT_ACCEPTABLE
+      );
+
+    await foundAccount.remove();
   }
 
   public async checkInviteStatus(id: string, sessions: string) {

@@ -1,6 +1,6 @@
 import Input from "components/Elements/Inputv2";
 import Select from "components/Elements/Selectv2";
-import React, { useEffect, useState } from "react";
+import React, { Fragment, useEffect, useState } from "react";
 import moment from "moment-timezone";
 import Button, { ButtonType } from "components/Elements/Buttonv2";
 import ApiService from "services/api.service";
@@ -10,6 +10,9 @@ import sortDescChevronsImage from "../../JourneyTablev2/svg/sort-desc-chevrons.s
 import { format } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import Pagination from "components/Pagination";
+import { Menu, Transition } from "@headlessui/react";
+import { useAppSelector } from "store/hooks";
+import { confirmAlert } from "react-confirm-alert";
 
 enum ORGANIZATION_TABS {
   GENERAL = "General",
@@ -20,6 +23,7 @@ interface OrganizationData {
   organization: {
     id: string;
     name: string;
+    ownerId: string;
   };
   workspace: {
     id: string;
@@ -27,9 +31,10 @@ interface OrganizationData {
   };
 }
 
-interface OrganizationTeamData {
+export interface OrganizationTeamData {
   id: string;
   name: string;
+  lastName: string;
   email: string;
   createdAt: string;
 }
@@ -76,7 +81,12 @@ export function getTimezonesWithOffset() {
 
 const timezoneList = getTimezonesWithOffset();
 
-const OrganizationTab = () => {
+interface OrganizationTabProps {
+  setViewTeamMember: (val: OrganizationTeamData) => void;
+}
+
+const OrganizationTab = ({ setViewTeamMember }: OrganizationTabProps) => {
+  const { uId } = useAppSelector((state) => state.auth.userData);
   const [tab, setTab] = useState(ORGANIZATION_TABS.GENERAL);
   const [companyName, setCompanyName] = useState("");
   const [selectedTimeZone, setSelectedTimeZone] = useState("");
@@ -110,7 +120,6 @@ const OrganizationTab = () => {
   const loadTeams = async () => {
     try {
       setIsLoadingMembers(true);
-      console.log(page);
       const { data } = await ApiService.get({
         url: `/organizations/team-members?take=10&skip=${
           page === 1 ? 0 : (page - 1) * 10
@@ -136,6 +145,69 @@ const OrganizationTab = () => {
       toast.error("Error updating organization data");
     }
     setIsLoading(false);
+  };
+
+  const handleTransferOwner = (accountMemberId: string) => () => {
+    confirmAlert({
+      title: "Confirm transfer ownership!",
+      message: "Are you sure you want to transfer ownership?",
+      buttons: [
+        {
+          label: "Yes",
+          onClick: async () => {
+            setIsLoading(true);
+            try {
+              await ApiService.post({
+                url: `/organizations/transfer-owner-rights/${accountMemberId}`,
+              });
+              await loadOrganization();
+              await loadTeams();
+            } catch (error) {
+              toast.error("Error transfer ownership.");
+            }
+            setIsLoading(false);
+          },
+        },
+        {
+          label: "No",
+        },
+      ],
+    });
+  };
+
+  const handleDeleteMember = (accountMemberId: string) => () => {
+    confirmAlert({
+      title: "Confirm delete member.",
+      message: "Are you sure you want to delete member?",
+      buttons: [
+        {
+          label: "Yes",
+          onClick: async () => {
+            setIsLoading(true);
+            try {
+              await ApiService.delete({
+                url: `/organizations/delete-member/${accountMemberId}`,
+              });
+              if (uId === accountMemberId) {
+                localStorage.removeItem("userData");
+                document.cookie = "";
+                window.location.reload();
+                navigate("/");
+                return;
+              }
+              await loadOrganization();
+              await loadTeams();
+            } catch (error) {
+              toast.error("Error deleting account.");
+            }
+            setIsLoading(false);
+          },
+        },
+        {
+          label: "No",
+        },
+      ],
+    });
   };
 
   const handleCancel = () => {
@@ -276,6 +348,9 @@ const OrganizationTab = () => {
                 <tr key={memberIndex}>
                   <td
                     className={`border-b cursor-pointer border-gray-200 whitespace-nowrap overflow-hidden text-ellipsis px-5 py-4 text-sm font-inter text-[#6366F1] sm:pl-6 lg:pl-8`}
+                    onClick={() => {
+                      setViewTeamMember(member);
+                    }}
                   >
                     {member.name}
                   </td>
@@ -291,7 +366,84 @@ const OrganizationTab = () => {
                   </td>
                   <td
                     className={`border-b border-gray-200 whitespace-nowrap px-5 py-4 text-sm text-gray-500`}
-                  ></td>
+                  >
+                    <div
+                      className={`${
+                        member.id === orgData?.organization.ownerId &&
+                        "disabled:opacity-50 grayscale !cursor-not-allowed"
+                      } p-3 cursor-pointer`}
+                    >
+                      <Menu as="div" className="relative">
+                        <Menu.Button>
+                          <button
+                            disabled={
+                              member.id === orgData?.organization.ownerId
+                            }
+                            className="px-[5px] py-[11px] rounded disabled:!cursor-not-allowed"
+                          >
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="16"
+                              height="3"
+                              viewBox="0 0 16 3"
+                              fill="none"
+                            >
+                              <path
+                                d="M2.75 1.5C2.75 1.69891 2.67098 1.88968 2.53033 2.03033C2.38968 2.17098 2.19891 2.25 2 2.25C1.80109 2.25 1.61032 2.17098 1.46967 2.03033C1.32902 1.88968 1.25 1.69891 1.25 1.5C1.25 1.30109 1.32902 1.11032 1.46967 0.96967C1.61032 0.829018 1.80109 0.75 2 0.75C2.19891 0.75 2.38968 0.829018 2.53033 0.96967C2.67098 1.11032 2.75 1.30109 2.75 1.5ZM8.75 1.5C8.75 1.69891 8.67098 1.88968 8.53033 2.03033C8.38968 2.17098 8.19891 2.25 8 2.25C7.80109 2.25 7.61032 2.17098 7.46967 2.03033C7.32902 1.88968 7.25 1.69891 7.25 1.5C7.25 1.30109 7.32902 1.11032 7.46967 0.96967C7.61032 0.829018 7.80109 0.75 8 0.75C8.19891 0.75 8.38968 0.829018 8.53033 0.96967C8.67098 1.11032 8.75 1.30109 8.75 1.5ZM14.75 1.5C14.75 1.69891 14.671 1.88968 14.5303 2.03033C14.3897 2.17098 14.1989 2.25 14 2.25C13.8011 2.25 13.6103 2.17098 13.4697 2.03033C13.329 1.88968 13.25 1.69891 13.25 1.5C13.25 1.30109 13.329 1.11032 13.4697 0.96967C13.6103 0.829018 13.8011 0.75 14 0.75C14.1989 0.75 14.3897 0.829018 14.5303 0.96967C14.671 1.11032 14.75 1.30109 14.75 1.5Z"
+                                stroke="#111827"
+                                stroke-width="1.5"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                              />
+                            </svg>
+                          </button>
+                        </Menu.Button>
+                        {member.id !== orgData?.organization.ownerId && (
+                          <Transition
+                            as={Fragment}
+                            enter="transition ease-out duration-100"
+                            enterFrom="transform opacity-0 scale-95"
+                            enterTo="transform opacity-100 scale-100"
+                            leave="transition ease-in duration-75"
+                            leaveFrom="transform opacity-100 scale-100"
+                            leaveTo="transform opacity-0 scale-95"
+                          >
+                            <Menu.Items className="absolute z-[120] right-0 origin-top-right w-[200px] rounded-sm bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                              {uId === orgData?.organization.ownerId && (
+                                <Menu.Item>
+                                  {({ active }) => (
+                                    <button
+                                      className={`block w-full text-left py-[5px] px-[12px] text-[#111827] ${
+                                        active ? "bg-[#F3F4F6]" : ""
+                                      }`}
+                                      onClick={handleTransferOwner(member.id)}
+                                    >
+                                      Transfer rights
+                                    </button>
+                                  )}
+                                </Menu.Item>
+                              )}
+                              {(uId === orgData?.organization.ownerId ||
+                                member.id === uId) && (
+                                <Menu.Item>
+                                  {({ active }) => (
+                                    <button
+                                      className={`block w-full text-left py-[5px] px-[12px] text-[#F43F5E] ${
+                                        active ? "bg-[#F3F4F6]" : ""
+                                      }`}
+                                      onClick={handleDeleteMember(member.id)}
+                                    >
+                                      Delete
+                                    </button>
+                                  )}
+                                </Menu.Item>
+                              )}
+                            </Menu.Items>
+                          </Transition>
+                        )}
+                      </Menu>
+                    </div>
+                  </td>
                 </tr>
               ))}
             </tbody>

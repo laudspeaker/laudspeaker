@@ -2,6 +2,7 @@ import {
   Body,
   ClassSerializerInterceptor,
   Controller,
+  Delete,
   Get,
   Inject,
   Param,
@@ -146,6 +147,38 @@ export class OrganizationsController {
     }
   }
 
+  @Post('/transfer-owner-rights/:id')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
+  async transferOwnerRights(@Req() { user }: Request, @Param('id') id: string) {
+    const session = randomUUID();
+    try {
+      await this.organizationService.transferOwnerRights(
+        <Account>user,
+        id,
+        session
+      );
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  @Delete('/delete-member/:id')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
+  async deleteMemberAccount(@Req() { user }: Request, @Param('id') id: string) {
+    const session = randomUUID();
+    try {
+      await this.organizationService.deleteMemberAccount(
+        <Account>user,
+        id,
+        session
+      );
+    } catch (error) {
+      throw error;
+    }
+  }
+
   @Get()
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
@@ -154,6 +187,7 @@ export class OrganizationsController {
       organization: {
         id: (<Account>user)?.teams?.[0]?.organization.id,
         name: (<Account>user)?.teams?.[0]?.organization.companyName,
+        ownerId: (<Account>user)?.teams?.[0]?.organization.owner.id,
       },
       workspace: {
         id: (<Account>user)?.teams?.[0]?.organization?.workspaces?.[0]?.id,
