@@ -59,12 +59,14 @@ import * as fastcsv from 'fast-csv';
 import * as fs from 'fs';
 import path from 'path';
 import { isValid } from 'date-fns';
-import e from 'express';
 import { JourneyLocationsService } from '../journeys/journey-locations.service';
 import { Journey } from '../journeys/entities/journey.entity';
 import { SegmentType } from '../segments/entities/segment.entity';
 import { UpdatePK_DTO } from './dto/update-pk.dto';
-import { workspacesUrl } from 'twilio/lib/jwt/taskrouter/util';
+import {
+  KEYS_TO_SKIP,
+  validateKeyForMutations,
+} from '@/utils/customer-key-name-validator';
 
 export type Correlation = {
   cust: CustomerDocument;
@@ -77,15 +79,6 @@ const eventsMap = {
   delivered: 'delivered',
   opened: 'opened',
 };
-
-const KEYS_TO_SKIP = [
-  '__v',
-  '_id',
-  'workflows',
-  'journeys',
-  'workspaceId',
-  'isFreezed',
-];
 
 export interface JourneyDataForTimeLine {
   id: string;
@@ -695,13 +688,10 @@ export class CustomersService {
   ) {
     const { ...newCustomerData } = updateCustomerDto;
 
-    delete newCustomerData.verified;
-    delete newCustomerData.workspaceId;
-    delete newCustomerData._id;
-    delete newCustomerData.__v;
-    delete newCustomerData.audiences;
-    delete newCustomerData.isFreezed;
-    delete newCustomerData.id;
+    KEYS_TO_SKIP.forEach((el) => {
+      delete newCustomerData[el];
+    });
+
     const customer = await this.findOne(account, id, session);
     const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
@@ -1776,6 +1766,11 @@ export class CustomersService {
     });
 
     if (!previousImport) {
+      this.warn(
+        "Can't find imported file for deletion.",
+        this.removeImportFile.name,
+        ''
+      );
       return;
     }
 
@@ -4610,6 +4605,8 @@ export class CustomersService {
           `Type: ${type} can't be used for attribute creation.`
         );
       }
+
+      validateKeyForMutations(key);
 
       const previousKey = await this.CustomerKeysModel.findOne({
         key: key.trim(),
