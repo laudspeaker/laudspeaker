@@ -848,7 +848,7 @@ export class CronService {
           requeue.owner,
           queryRunner
         );
-        bulkJobs.push({
+        await bulkJobs.push({
           name: StepType.MESSAGE,
           data: {
             ownerId: requeue.owner.id,
