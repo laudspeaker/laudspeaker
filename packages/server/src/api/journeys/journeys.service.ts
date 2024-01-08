@@ -2051,7 +2051,7 @@ export class JourneysService {
       this.rateLimitByCustomersMessagedEnabled(journey);
     if (enabled) {
       const currentUniqueCustomers =
-        await this.journeyLocationsService.getNumberOfUniqueCustomerMessages(
+        await this.journeyLocationsService.getNumberOfUniqueCustomersMessaged(
           owner,
           journey,
           queryRunner

@@ -601,12 +601,13 @@ export class TransitionProcessor extends WorkerHost {
     }
 
     // Rate limiting and sending quiet hours will be stored here
+    // Initial default is 'SEND'
     let messageSendType:
-      | 'SEND'
-      | 'QUIET_REQUEUE'
-      | 'QUIET_ABORT'
-      | 'LIMIT_REQUEUE'
-      | 'LIMIT_ABORT' = 'SEND';
+      | 'SEND' // should send
+      | 'QUIET_REQUEUE' // quiet hours, requeue message when quiet hours over
+      | 'QUIET_ABORT' // quiet hours, abort message, move to next step
+      | 'LIMIT_REQUEUE' // messages per minute rate limit hit, requeue for next minute
+      | 'LIMIT_HOLD' = 'SEND'; // customers messaged per journey rate limit hit, hold at current
     let requeueTime: Date;
     if (
       journey.journeySettings &&
@@ -686,7 +687,7 @@ export class TransitionProcessor extends WorkerHost {
             queryRunner
           );
         if (doRateLimit) {
-          messageSendType = 'LIMIT_ABORT';
+          messageSendType = 'LIMIT_HOLD';
         }
       }
     }
@@ -703,8 +704,6 @@ export class TransitionProcessor extends WorkerHost {
           messageSendType = 'LIMIT_REQUEUE';
           requeueTime = new Date();
           requeueTime.setMinutes(requeueTime.getMinutes() + 1);
-        } else {
-          await this.journeysService.rateLimitByMinuteIncrement(owner, journey);
         }
       }
     }
@@ -926,15 +925,15 @@ export class TransitionProcessor extends WorkerHost {
           }
           break;
       }
+
+      // After send, update rate limit stuff
       await this.journeyLocationsService.setMessageSent(
         location,
         owner,
         queryRunner
       );
-    } else if (
-      messageSendType === 'QUIET_ABORT' ||
-      messageSendType === 'LIMIT_ABORT'
-    ) {
+      await this.journeysService.rateLimitByMinuteIncrement(owner, journey);
+    } else if (messageSendType === 'QUIET_ABORT') {
       // Record that the message was aborted
       await this.webhooksService.insertMessageStatusToClickhouse([
         {
@@ -949,6 +948,20 @@ export class TransitionProcessor extends WorkerHost {
           processed: true,
         },
       ]);
+    } else if (messageSendType === 'LIMIT_HOLD') {
+      this.log(
+        `Unique customers messaged limit hit. Holding customer:${customer.id} at message step for journey: ${journey.id}`,
+        this.handleMessage.name,
+        session,
+        owner.id
+      );
+      await this.journeyLocationsService.unlock(
+        location,
+        session,
+        owner,
+        queryRunner
+      );
+      return;
     } else if (
       messageSendType === 'QUIET_REQUEUE' ||
       messageSendType === 'LIMIT_REQUEUE'

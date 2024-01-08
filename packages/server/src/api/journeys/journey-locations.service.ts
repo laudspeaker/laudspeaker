@@ -651,7 +651,7 @@ export class JourneyLocationsService {
    * @param runner
    * @returns number of unique customers on a journey who have sent a message
    */
-  async getNumberOfUniqueCustomerMessages(
+  async getNumberOfUniqueCustomersMessaged(
     account: Account,
     journey: Journey,
     runner?: QueryRunner
