@@ -142,13 +142,12 @@ export class AccountsController {
 
       let pk;
       if (workspace?.id) {
-        const pk = (
+        pk = (
           await this.CustomerKeysModel.findOne({
             isPrimary: true,
             workspaceId: workspace.id,
           })
         )?.toObject();
-
         if (pk) {
           pk._id = pk._id.toString();
           delete pk?.workspaceId;
