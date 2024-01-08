@@ -1,6 +1,6 @@
-import { Trim } from "class-sanitizer";
-import { IsNotEmpty, IsString } from "class-validator";
-import { IsUTCOffset } from "./update-organization.dto";
+import { Trim } from 'class-sanitizer';
+import { IsNotEmpty, IsString } from 'class-validator';
+import { IsUTCOffset } from './update-organization.dto';
 
 export class CreateOrganizationDTO {
   @IsString()

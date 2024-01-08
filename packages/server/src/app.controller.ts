@@ -97,7 +97,7 @@ export class AppController {
   allowed() {
     const session = randomUUID();
     this.debug(`GET / `, this.root.name, session);
-    let allowedRoutes = {};
+    const allowedRoutes = {};
     if (process.env.EMAIL_VERIFICATION !== 'true') {
       allowedRoutes['verified_not_allowed'] = true;
     }

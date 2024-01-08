@@ -149,8 +149,6 @@ export class AuthService {
       }
 
       const ret = await queryRunner.manager.save(user);
-      if (!body.fromInviteId)
-        await this.helper.generateDefaultData(ret, queryRunner, session);
 
       user.id = ret.id;
 

@@ -148,7 +148,7 @@ export class OrganizationService {
     body: CreateOrganizationDTO,
     session: string
   ) {
-    if (!!account?.teams?.[0]?.organization?.workspaces?.[0]) {
+    if (account?.teams?.[0]?.organization?.workspaces?.[0]) {
       throw new BadRequestException('You have already setup organization');
     }
 
@@ -184,6 +184,8 @@ export class OrganizationService {
         ],
       });
       await queryRunner.manager.save(team);
+
+      await this.helper.generateDefaultData(account, queryRunner, session);
 
       await queryRunner.commitTransaction();
     } catch (err) {
@@ -249,13 +251,13 @@ export class OrganizationService {
     const existingAccount = await this.accountRepository.findOneBy({
       email: body.email,
     });
-    if (!!existingAccount) {
+    if (existingAccount) {
       throw new HttpException(
         'This user already have registered account.',
         HttpStatus.BAD_REQUEST
       );
     }
-    if (!!invite) {
+    if (invite) {
       throw new HttpException(
         'This user already invited.',
         HttpStatus.BAD_REQUEST
@@ -284,7 +286,7 @@ export class OrganizationService {
           from: 'Laudspeaker',
           email: process.env.GMAIL_VERIFICATION_EMAIL,
           to: body.email,
-          subject: `You been invited to organization: ${team.organization.companyName}`,
+          subject: `You have been invited to organization: ${team.organization.companyName}`,
           plainText: 'Paste the following link into your browser:' + inviteLink,
           text: `Paste the following link into your browser: <a href="${inviteLink}">${inviteLink}</a>`,
         });
@@ -295,7 +297,7 @@ export class OrganizationService {
           domain: process.env.MAILGUN_DOMAIN,
           email: 'noreply',
           to: body.email,
-          subject: `You been invited to organization: ${team.organization.companyName}`,
+          subject: `You have been invited to organization: ${team.organization.companyName}`,
 
           text: `Link: <a href="${inviteLink}">${inviteLink}</a>`,
         });
@@ -307,7 +309,7 @@ export class OrganizationService {
           domain: process.env.MAILGUN_DOMAIN,
           email: 'noreply',
           to: body.email,
-          subject: `You been invited to organization: ${team.organization.companyName}`,
+          subject: `You have been invited to organization: ${team.organization.companyName}`,
           text: `Link: <a href="${inviteLink}">${inviteLink}</a>`,
         });
       }
@@ -412,4 +414,3 @@ export class OrganizationService {
     return invite;
   }
 }
-

@@ -36,6 +36,8 @@ import { randomUUID } from 'crypto';
 import admin from 'firebase-admin';
 import { update } from 'lodash';
 import { Workspaces } from '../workspaces/entities/workspaces.entity';
+import { Organization } from '../organizations/entities/organization.entity';
+import { OrganizationTeam } from '../organizations/entities/organization-team.entity';
 
 @Injectable()
 export class AccountsService extends BaseJwtHelper {
@@ -523,17 +525,17 @@ export class AccountsService extends BaseJwtHelper {
 
   async createOnboadingAccount() {
     const session = 'onboarding-creation';
+
     let account = await this.accountsRepository.findOne({
       where: {
         email: process.env.ONBOARDING_ACCOUNT_EMAIL,
       },
-      relations: ['teams.organization.workspaces'],
     });
 
-    const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
+    if (!account) {
+      const queryRunner = await this.dataSource.createQueryRunner();
 
-    if (!account)
-      account = await this.accountsRepository.save({
+      account = await queryRunner.manager.save(Account, {
         email: process.env.ONBOARDING_ACCOUNT_EMAIL,
         apiKey: process.env.ONBOARDING_ACCOUNT_API_KEY,
         password: this.authService.helper.encodePassword(
@@ -541,6 +543,56 @@ export class AccountsService extends BaseJwtHelper {
         ),
         verified: true,
       });
+
+      try {
+        await queryRunner.connect();
+        await queryRunner.startTransaction();
+
+        const organization = await queryRunner.manager.create(Organization, {
+          companyName: 'OnboardingOrg',
+          owner: {
+            id: account.id,
+          },
+        });
+        await queryRunner.manager.save(organization);
+
+        const workspace = await queryRunner.manager.create(Workspaces, {
+          name: organization.companyName + ' workspace',
+          organization,
+          apiKey: process.env.ONBOARDING_ACCOUNT_API_KEY,
+          timezoneUTCOffset: 'UTC+00:00',
+        });
+        await queryRunner.manager.save(workspace);
+
+        const team = await queryRunner.manager.create(OrganizationTeam, {
+          teamName: 'Default team',
+          organization,
+          members: [
+            {
+              id: account.id,
+            },
+          ],
+        });
+        await queryRunner.manager.save(team);
+
+        await queryRunner.commitTransaction();
+      } catch (err) {
+        await queryRunner.rollbackTransaction();
+        this.error(err, this.update, session, account.id);
+        throw new BadRequestException(
+          'Error during onboarding account organization creation'
+        );
+      }
+    }
+
+    account = await this.accountsRepository.findOne({
+      where: {
+        email: process.env.ONBOARDING_ACCOUNT_EMAIL,
+      },
+      relations: ['teams.organization.workspaces'],
+    });
+
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
     let trackerTemplate = await this.templatesService.findOne(
       account,

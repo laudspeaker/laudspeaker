@@ -255,7 +255,7 @@ export class SegmentsService {
         const mongoCollection = this.connection.db.collection(collectionName);
 
         let processedCount = 0;
-        let totalDocuments = await mongoCollection.countDocuments();
+        const totalDocuments = await mongoCollection.countDocuments();
 
         console.log('looks like top level segment is created in mongo');
         console.log('going to save', totalDocuments);
@@ -349,7 +349,7 @@ export class SegmentsService {
     return collectionName;
   }
 
-  generateRandomString(length: number = 4): string {
+  generateRandomString(length = 4): string {
     const characters =
       'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     let result = '';
@@ -456,7 +456,7 @@ export class SegmentsService {
         const mongoCollection = this.connection.db.collection(collectionName);
 
         let processedCount = 0;
-        let totalDocuments = await mongoCollection.countDocuments();
+        const totalDocuments = await mongoCollection.countDocuments();
 
         //console.log("looks like top level segment is created in mongo");
         //console.log("going to save", totalDocuments);
@@ -558,13 +558,13 @@ export class SegmentsService {
         );
 
       //console.log("customersInSegment name is", customersInSegment);
-      if(!customersInSegment || customersInSegment.length === 0){
+      if (!customersInSegment || customersInSegment.length === 0) {
         return { size: 0, total: 1 };
       }
 
       const mongoCollection = this.connection.db.collection(customersInSegment);
 
-      let segmentDocuments = await mongoCollection.countDocuments();
+      const segmentDocuments = await mongoCollection.countDocuments();
       const totalCount = await this.customersService.customersSize(
         account,
         session
@@ -592,13 +592,13 @@ export class SegmentsService {
         );
 
       //console.log("customersInSegment name is", customersInSegment);
-      if(!customersInSegment || customersInSegment.length === 0){
+      if (!customersInSegment || customersInSegment.length === 0) {
         return { size: 0, total: 1 };
       }
 
       const mongoCollection = this.connection.db.collection(customersInSegment);
 
-      let segmentDocuments = await mongoCollection.countDocuments();
+      const segmentDocuments = await mongoCollection.countDocuments();
       const totalCount = await this.customersService.customersSize(
         account,
         session
@@ -783,12 +783,12 @@ export class SegmentsService {
     session: string,
     queryRunner: QueryRunner
   ) {
-    let addedToSegments: Segment[] = [];
-    let removedFromSegments: Segment[] = [];
-    let segments = await this.getSegments(account, undefined, queryRunner);
+    const addedToSegments: Segment[] = [];
+    const removedFromSegments: Segment[] = [];
+    const segments = await this.getSegments(account, undefined, queryRunner);
     for (const segment of segments) {
       // TODO_JH: implement the following
-      let doInclude = await this.customersService.checkCustomerMatchesQuery(
+      const doInclude = await this.customersService.checkCustomerMatchesQuery(
         segment.inclusionCriteria.query,
         account,
         session,
@@ -803,7 +803,7 @@ export class SegmentsService {
       );
       //let doInclude = true;
       //console.log("before isMemberOf");
-      let isMemberOf = await this.isCustomerMemberOf(
+      const isMemberOf = await this.isCustomerMemberOf(
         account,
         segment.id,
         customerId,

@@ -36,4 +36,3 @@ export class OrganizationInvites extends BaseEntity {
   })
   public createdAt: Date | null;
 }
-

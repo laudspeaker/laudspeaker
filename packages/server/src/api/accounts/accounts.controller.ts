@@ -140,17 +140,20 @@ export class AccountsController {
       const workspace = (<Account>user)?.teams?.[0]?.organization
         ?.workspaces?.[0];
 
-      const pk = (
-        await this.CustomerKeysModel.findOne({
-          isPrimary: true,
-          workspaceId: workspace.id,
-        })
-      )?.toObject();
+      let pk;
+      if (workspace?.id) {
+        const pk = (
+          await this.CustomerKeysModel.findOne({
+            isPrimary: true,
+            workspaceId: workspace.id,
+          })
+        )?.toObject();
 
-      if (pk) {
-        pk._id = pk._id.toString();
-        delete pk?.workspaceId;
-        delete pk?.__v;
+        if (pk) {
+          pk._id = pk._id.toString();
+          delete pk?.workspaceId;
+          delete pk?.__v;
+        }
       }
 
       delete workspace?.pushPlatforms?.Android?.credentials;

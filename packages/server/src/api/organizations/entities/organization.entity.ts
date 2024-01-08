@@ -39,4 +39,3 @@ export class Organization extends BaseEntity {
   @OneToOne(() => Account, (account) => account.id, { onDelete: 'CASCADE' })
   public owner: Account;
 }
-

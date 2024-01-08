@@ -154,4 +154,3 @@ export class Workspaces extends BaseEntity {
   })
   public pushPlatforms: PushFirebasePlatforms;
 }
-

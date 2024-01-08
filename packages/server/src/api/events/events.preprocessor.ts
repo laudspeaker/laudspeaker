@@ -356,7 +356,7 @@ export class EventsPreProcessor extends WorkerHost {
         where: {
           workspace: {
             id: workspace.id,
-          }, 
+          },
           isActive: true,
           isPaused: false,
           isStopped: false,

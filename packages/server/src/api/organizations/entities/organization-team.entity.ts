@@ -25,8 +25,9 @@ export class OrganizationTeam extends BaseEntity {
   @Column({ type: 'varchar', default: 'Default team' })
   public teamName!: string;
 
-  @ManyToMany(() => Account, (account) => account.teams)
   @JoinTable()
+  @ManyToMany(() => Account, (account) => account.teams, {
+    onDelete: 'CASCADE',
+  })
   public members: Account[];
 }
-

@@ -208,7 +208,7 @@ const TrackerTemplateTable = () => {
               rows={rows.map((row) => [
                 <button
                   className="text-[#6366F1]"
-                  onClick={() => navigate(`/tracker-template/${row.name}`)}
+                  onClick={() => navigate(`/tracker-template/${row.id}`)}
                 >
                   {row.name}
                 </button>,

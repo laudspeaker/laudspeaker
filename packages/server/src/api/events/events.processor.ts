@@ -111,7 +111,7 @@ export class EventsProcessor extends WorkerHost {
   async process(job: Job<any, any, string>): Promise<any> {
     const session = randomUUID();
     let err: any, branch: number;
-    let stepsToQueue: Step[] = [];
+    const stepsToQueue: Step[] = [];
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -177,11 +177,7 @@ export class EventsProcessor extends WorkerHost {
           relations: ['workspace.organization.owner', 'journey'],
         })
       ).filter((el) => el?.metadata?.branches !== undefined);
-      step_loop: for (
-        let stepIndex = 0;
-        stepIndex < steps.length;
-        stepIndex++
-      ) {
+      for (let stepIndex = 0; stepIndex < steps.length; stepIndex++) {
         for (
           let branchIndex = 0;
           branchIndex < steps[stepIndex].metadata.branches.length;

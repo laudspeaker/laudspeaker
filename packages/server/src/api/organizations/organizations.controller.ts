@@ -213,4 +213,3 @@ export class OrganizationsController {
     return this.organizationService.create(<Account>user, body, session);
   }
 }
-

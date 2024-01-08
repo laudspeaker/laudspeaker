@@ -143,7 +143,7 @@ export class StepsService {
     account: Account,
     journeyID: string,
     query: any,
-    audienceSize: Number,
+    audienceSize: number,
     queryRunner: QueryRunner,
     session: string
   ) {
@@ -478,6 +478,11 @@ export class StepsService {
     session: string
   ): Promise<Step> {
     try {
+      account = await queryRunner.manager.findOne(Account, {
+        where: { id: account.id },
+        relations: ['teams.organization.workspaces'],
+      });
+
       const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
       const { journeyID, type } = createStepDto;

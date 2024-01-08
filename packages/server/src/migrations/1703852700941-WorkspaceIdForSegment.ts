@@ -28,4 +28,3 @@ export class WorkspaceIdForSegment1703852700941 implements MigrationInterface {
     await queryRunner.query(`ALTER TABLE "segment" DROP COLUMN "workspaceId"`);
   }
 }
-

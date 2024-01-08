@@ -628,25 +628,25 @@ export class TransitionProcessor extends WorkerHost {
       journey.journeySettings.quietHours &&
       journey.journeySettings.quietHours.enabled
     ) {
-      let quietHours = journey.journeySettings.quietHours!;
+      const quietHours = journey.journeySettings.quietHours!;
       // CHECK IF SENDING QUIET HOURS
-      let formatter = Intl.DateTimeFormat(undefined, {
+      const formatter = Intl.DateTimeFormat(undefined, {
         hour: '2-digit',
         minute: '2-digit',
         hourCycle: 'h24',
         timeZone: 'UTC',
       });
-      let now = new Date();
-      let utcNowString = formatter.format(now);
-      let utcStartTime = convertTimeToUTC(
+      const now = new Date();
+      const utcNowString = formatter.format(now);
+      const utcStartTime = convertTimeToUTC(
         quietHours.startTime,
         workspace.timezoneUTCOffset
       );
-      let utcEndTime = convertTimeToUTC(
+      const utcEndTime = convertTimeToUTC(
         quietHours.endTime,
         workspace.timezoneUTCOffset
       );
-      let isQuietHour = isWithinInterval(
+      const isQuietHour = isWithinInterval(
         utcStartTime,
         utcEndTime,
         utcNowString
@@ -1210,7 +1210,7 @@ export class TransitionProcessor extends WorkerHost {
       return;
     }
 
-    let moveCustomer: boolean = false;
+    let moveCustomer = false;
 
     if (
       Date.now() - location.stepEntry >
@@ -1343,7 +1343,7 @@ export class TransitionProcessor extends WorkerHost {
       return;
     }
 
-    let moveCustomer: boolean = false;
+    let moveCustomer = false;
 
     // Case 1: Specific days of the week
     if (currentStep.metadata.window.onDays) {
@@ -1525,7 +1525,7 @@ export class TransitionProcessor extends WorkerHost {
     }
 
     let nextStep: Step,
-      moveCustomer: boolean = false;
+      moveCustomer = false;
 
     // Time branch case
     if (branch < 0 && currentStep.metadata.timeBranch) {
@@ -1793,7 +1793,7 @@ export class TransitionProcessor extends WorkerHost {
     }
 
     let nextStep: Step,
-      matches: boolean = false;
+      matches = false;
 
     for (
       let branchIndex = 0;

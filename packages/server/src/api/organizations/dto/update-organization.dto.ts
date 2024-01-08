@@ -43,4 +43,3 @@ export class UpdateOrganizationDTO {
   })
   public timezoneUTCOffset: string; // must be in format `UTC(+/-)hh:mm`
 }
-

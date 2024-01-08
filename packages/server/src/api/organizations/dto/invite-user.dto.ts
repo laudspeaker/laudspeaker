@@ -8,4 +8,3 @@ export class InviteMemberDTO {
   @IsNotEmpty()
   public email: string;
 }
-

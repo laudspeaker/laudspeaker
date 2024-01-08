@@ -13,4 +13,3 @@ export class CustomerPushTest {
   // @Type(() => PushBuilderDataDto)
   public pushObject: PushBuilderDataDto;
 }
-

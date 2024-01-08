@@ -9,6 +9,12 @@ export class UpdateMongoEvents1704217406853 implements MigrationInterface {
     const mg = await mongoose.connect(
       formatMongoConnectionString(process.env.MONGOOSE_URL)
     );
+
+    await mg.connection.db.admin().command({
+      setParameter: 1,
+      maxTransactionLockRequestTimeoutMillis: 3000,
+    });
+
     const session = await mg.startSession();
     session.startTransaction();
 
@@ -87,4 +93,3 @@ export class UpdateMongoEvents1704217406853 implements MigrationInterface {
 
   public async down(queryRunner: QueryRunner): Promise<void> {}
 }
-

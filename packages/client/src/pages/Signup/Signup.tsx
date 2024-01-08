@@ -278,7 +278,7 @@ const Signup: FC<SignupProps> = ({ fromInvite, setShowWelcomeBanner }) => {
                     isInvalids.mail && checkedFields.email
                       ? "border-red-600 text-red-600 focus:border-red-600 focus:ring-red-600"
                       : "focus:border-[#818CF8] focus:ring-[#818CF8]"
-                  } disabled:opacity-70 disabled:!bg-[#F3F4F6] pointer-events-none block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 placeholder-gray-400 shadow-sm  sm:text-sm focus:outline-none`}
+                  } disabled:opacity-70 disabled:!bg-[#F3F4F6] disabled:pointer-events-none block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 placeholder-gray-400 shadow-sm  sm:text-sm focus:outline-none`}
                   onBlur={handleFieldBlur("email")}
                 />
                 {isInvalids.mail && checkedFields.email && (

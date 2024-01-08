@@ -33,4 +33,3 @@ export class UpdateJourneyAndAccount1703841894657
     );
   }
 }
-

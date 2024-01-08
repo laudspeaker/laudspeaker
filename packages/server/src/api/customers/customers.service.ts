@@ -465,8 +465,8 @@ export class CustomersService {
     account: Account,
     customerId: string,
     session: string,
-    page: number = 1,
-    pageSize: number = 10
+    page = 1,
+    pageSize = 10
   ) {
     const offset = (page - 1) * pageSize;
 
@@ -985,7 +985,7 @@ export class CustomersService {
     if (!isValidObjectId(customerId))
       throw new BadRequestException('Invalid object id');
 
-    let query = this.CustomerModel.findById(customerId);
+    const query = this.CustomerModel.findById(customerId);
     if (clientSession) {
       query.session(clientSession);
     }
@@ -1006,7 +1006,7 @@ export class CustomersService {
     if (!isValidObjectId(customerId))
       throw new BadRequestException('Invalid object id');
 
-    let query = this.CustomerModel.findById(customerId);
+    const query = this.CustomerModel.findById(customerId);
     if (clientSession) {
       query.session(clientSession);
     }
@@ -1627,7 +1627,7 @@ export class CustomersService {
         firstThreeRecords: Object[];
       }>((resolve, reject) => {
         let headers = [];
-        let firstThreeRecords = [];
+        const firstThreeRecords = [];
         let recordCount = 0;
         let emptyCount = 0;
 
@@ -2236,7 +2236,7 @@ export class CustomersService {
         session,
         account.id
       );
-      let unionAggregation: any[] = [];
+      const unionAggregation: any[] = [];
       //if (sets.length > 1) {
       // Add each additional collection to the pipeline for union
       sets.forEach((collName) => {
@@ -2396,7 +2396,7 @@ export class CustomersService {
         session,
         account.id
       );
-      let unionAggregation: any[] = [];
+      const unionAggregation: any[] = [];
       //if (sets.length > 1) {
       // Add each additional collection to the pipeline for union
       sets.forEach((collName) => {
@@ -2473,7 +2473,7 @@ export class CustomersService {
         })
       );
 
-      let unionAggregation: any[] = [];
+      const unionAggregation: any[] = [];
       /*
       [
         { $group: { _id: "$customerId" } }
@@ -2993,7 +2993,7 @@ export class CustomersService {
       value,
       subComparisonValue,
     } = statement;
-    let query: any = {
+    const query: any = {
       workspaceId: workspace.id,
     };
 
@@ -4449,7 +4449,7 @@ export class CustomersService {
    */
   async testCustomerInSegment(query: any, account: Account): Promise<boolean> {
     //Promise<Set<string>>  {
-    let session = 'this is a fake session';
+    const session = 'this is a fake session';
     this.debug(
       'In Test Customer Segment',
       this.testCustomerInSegment.name,
@@ -4471,7 +4471,7 @@ export class CustomersService {
 
     console.log('here here');
 
-    let testCustomer = new this.CustomerModel({
+    const testCustomer = new this.CustomerModel({
       externalId: '6583b25df2be8cd3c8b17f61',
       firstName: 'A',
       lastName: 'B',
@@ -4773,7 +4773,7 @@ export class CustomersService {
         },
       ]).option({ allowDiskUse: true });
 
-      if (!!docs?.length) {
+      if (docs?.length) {
         throw new HttpException(
           "Selected primary key can't be used cause it's value has duplicates among already existing users.",
           HttpStatus.BAD_REQUEST
@@ -4796,7 +4796,7 @@ export class CustomersService {
       const writeErrorsStream = fs.createWriteStream(fullPath);
 
       let currentBatch = [];
-      let promisesList = [];
+      const promisesList = [];
 
       const readPromise = new Promise<{
         created: number;
@@ -5008,7 +5008,7 @@ export class CustomersService {
         },
       ]).option({ allowDiskUse: true });
 
-      if (!!docs?.length) {
+      if (docs?.length) {
         throw new HttpException(
           "Selected primary key can't be used cause it's value has duplicates among already existing users.",
           HttpStatus.BAD_REQUEST
@@ -5108,7 +5108,7 @@ export class CustomersService {
       .option({ allowDiskUse: true })
       .limit(2);
 
-    if (!!docsDuplicates?.length) {
+    if (docsDuplicates?.length) {
       throw new HttpException(
         "Selected primary key can't be used because of duplicated or missing values. Primary key values must exist and be unique",
         HttpStatus.BAD_REQUEST
@@ -5128,7 +5128,7 @@ export class CustomersService {
       );
     }
 
-    let clientSession = await this.connection.startSession();
+    const clientSession = await this.connection.startSession();
     await clientSession.startTransaction();
 
     try {

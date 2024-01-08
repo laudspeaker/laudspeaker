@@ -21,7 +21,8 @@ const CompanySetup = () => {
     try {
       const { data } = await ApiService.get({ url: "/accounts" });
       const { workspace } = data;
-      if (workspace) {
+
+      if (workspace.id) {
         navigate("/");
       }
       setLoaded(true);

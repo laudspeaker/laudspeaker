@@ -52,4 +52,3 @@ export class IntegrationWorkspaceId1704190103860 implements MigrationInterface {
     );
   }
 }
-

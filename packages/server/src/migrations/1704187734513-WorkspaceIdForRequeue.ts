@@ -28,4 +28,3 @@ export class WorkspaceIdForRequeue1704187734513 implements MigrationInterface {
     await queryRunner.query(`ALTER TABLE "requeue" DROP COLUMN "workspaceId"`);
   }
 }
-

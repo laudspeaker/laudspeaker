@@ -58,7 +58,7 @@ export class CustomersConsumerService implements OnApplicationBootstrap {
   private handleCustomerChangeStream(this: CustomersConsumerService) {
     return async (changeMessage: EachMessagePayload) => {
       try {
-        let messStr = changeMessage.message.value.toString();
+        const messStr = changeMessage.message.value.toString();
         let message: ChangeStreamDocument<Customer> = JSON.parse(messStr);
         if (typeof message === 'string') {
           message = JSON.parse(message); //double parse if kafka record is published as string not object
@@ -66,10 +66,10 @@ export class CustomersConsumerService implements OnApplicationBootstrap {
         const session = randomUUID();
         let account: Account;
         let customer: CustomerDocument;
-        let queryRunner = await this.dataSource.createQueryRunner();
+        const queryRunner = await this.dataSource.createQueryRunner();
         await queryRunner.connect();
         await queryRunner.startTransaction();
-        let clientSession = await this.connection.startSession();
+        const clientSession = await this.connection.startSession();
         await clientSession.startTransaction();
         try {
           switch (message.operationType) {
@@ -108,7 +108,7 @@ export class CustomersConsumerService implements OnApplicationBootstrap {
               break;
             case 'delete':
               // TODO_JH: remove customerID from all steps also
-              let customerId = message.documentKey._id['$oid'];
+              const customerId = message.documentKey._id['$oid'];
               await this.segmentsService.removeCustomerFromAllSegments(
                 customerId,
                 queryRunner

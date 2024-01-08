@@ -107,4 +107,3 @@ export class MigrateDataToOrganization1703582686235
 
   public async down(queryRunner: QueryRunner): Promise<void> {}
 }
-

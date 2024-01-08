@@ -34,4 +34,3 @@ export class JourneyLocationWorkspaceId1704213382337
     );
   }
 }
-

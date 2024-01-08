@@ -44,4 +44,3 @@ import { BullModule } from '@nestjs/bullmq';
   exports: [OrganizationService],
 })
 export class OrganizationsModule {}
-

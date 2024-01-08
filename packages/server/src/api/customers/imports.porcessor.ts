@@ -117,7 +117,7 @@ export class ImportProcessor extends WorkerHost {
           .on('data', async (data) => {
             let isSkipped = false;
             let convertedPKValue;
-            let convertedRecord = {};
+            const convertedRecord = {};
             // validate file data to type convert
             Object.keys(clearedMapping).forEach((el) => {
               if (isSkipped) return;
@@ -243,7 +243,7 @@ export class ImportProcessor extends WorkerHost {
         ...el.update,
       }));
 
-    let addToSegment = [];
+    const addToSegment = [];
 
     if (importOption === ImportOptions.NEW) {
       try {

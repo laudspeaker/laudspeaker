@@ -28,4 +28,3 @@ export class DevModeWorkspaceId1704274582113 implements MigrationInterface {
     await queryRunner.query(`ALTER TABLE "dev_mode" DROP COLUMN "workspaceId"`);
   }
 }
-

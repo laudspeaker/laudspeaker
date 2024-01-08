@@ -78,6 +78,7 @@ import {
 import { JourneyLocationsService } from './journey-locations.service';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
+import { where } from 'liquidjs/dist/builtin/filters';
 
 export enum JourneyStatus {
   ACTIVE = 'Active',
@@ -258,6 +259,11 @@ export class JourneysService {
     queryRunner: QueryRunner,
     session: string
   ) {
+    account = await queryRunner.manager.findOne(Account, {
+      where: { id: account.id },
+      relations: ['teams.organization.workspaces'],
+    });
+
     try {
       const startNodeUUID = uuid();
       const nextNodeUUID = uuid();
@@ -481,7 +487,7 @@ export class JourneysService {
         isDynamic: true,
       },
     });
-    let customer = await this.customersService.findById(
+    const customer = await this.customersService.findById(
       account,
       customerId,
       clientSession
@@ -489,16 +495,17 @@ export class JourneysService {
     for (const journey of journeys) {
       // get segments for journey
       let change: 'ADD' | 'REMOVE' | 'DO_NOTHING' = 'DO_NOTHING';
-      let doesInclude = await this.customersService.isCustomerEnrolledInJourney(
-        account,
-        customer,
-        journey,
-        session,
-        queryRunner
-      );
+      const doesInclude =
+        await this.customersService.isCustomerEnrolledInJourney(
+          account,
+          customer,
+          journey,
+          session,
+          queryRunner
+        );
       //let shouldInclude = true;
       // TODO_JH: implement the following
-      let shouldInclude = this.customersService.checkCustomerMatchesQuery(
+      const shouldInclude = this.customersService.checkCustomerMatchesQuery(
         journey.inclusionCriteria,
         account,
         session,
@@ -511,7 +518,7 @@ export class JourneysService {
       //    if customer in segment
       //        shouldInclude = true
       if (!doesInclude && shouldInclude) {
-        let journeyEntrySettings = journey.journeyEntrySettings ?? {
+        const journeyEntrySettings = journey.journeyEntrySettings ?? {
           enrollmentType: JourneyEnrollmentType.CurrentAndFutureUsers,
         };
         if (

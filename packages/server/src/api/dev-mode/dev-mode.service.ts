@@ -346,7 +346,7 @@ export class DevModeService {
         branchIndex++
       ) {
         const eventEvaluation: boolean[] = [];
-        event_loop: for (
+        for (
           let eventIndex = 0;
           eventIndex < step.metadata.branches[branchIndex].events.length;
           eventIndex++

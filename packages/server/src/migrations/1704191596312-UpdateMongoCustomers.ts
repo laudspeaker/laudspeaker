@@ -15,6 +15,12 @@ export class UpdateMongoCustomers1704191596312 implements MigrationInterface {
     const mg = await mongoose.connect(
       formatMongoConnectionString(process.env.MONGOOSE_URL)
     );
+
+    await mg.connection.db.admin().command({
+      setParameter: 1,
+      maxTransactionLockRequestTimeoutMillis: 3000,
+    });
+
     const session = await mg.startSession();
     session.startTransaction();
 
@@ -37,30 +43,32 @@ export class UpdateMongoCustomers1704191596312 implements MigrationInterface {
         .map((_, index) => `$${index + 1}`)
         .join(', ');
 
-      const workspaces = await queryRunner.query(
-        `SELECT w."id" AS workspace_id, o."ownerId" FROM "organization" o
+      if (ownerIds.length) {
+        const workspaces = await queryRunner.query(
+          `SELECT w."id" AS workspace_id, o."ownerId" FROM "organization" o
          JOIN "workspaces" w ON o."id" = w."organizationId"
          WHERE o."ownerId" IN (${placeholders})`,
-        ownerIds
-      );
+          ownerIds
+        );
 
-      const workspaceMap = new Map(
-        workspaces.map((ws) => [ws.ownerId, ws.workspace_id])
-      );
+        const workspaceMap = new Map(
+          workspaces.map((ws) => [ws.ownerId, ws.workspace_id])
+        );
 
-      for (const ownerId of ownerIds) {
-        const workspaceId = workspaceMap.get(ownerId);
-        if (workspaceId) {
-          await customerModel.updateMany(
-            { ownerId },
-            { $set: { workspaceId } },
-            { session }
-          );
-          await customerKeysModel.updateMany(
-            { ownerId },
-            { $set: { workspaceId } },
-            { session }
-          );
+        for (const ownerId of ownerIds) {
+          const workspaceId = workspaceMap.get(ownerId);
+          if (workspaceId) {
+            await customerModel.updateMany(
+              { ownerId },
+              { $set: { workspaceId } },
+              { session }
+            );
+            await customerKeysModel.updateMany(
+              { ownerId },
+              { $set: { workspaceId } },
+              { session }
+            );
+          }
         }
       }
 
@@ -76,4 +84,3 @@ export class UpdateMongoCustomers1704191596312 implements MigrationInterface {
 
   public async down(queryRunner: QueryRunner): Promise<void> {}
 }
-

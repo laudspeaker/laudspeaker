@@ -866,7 +866,7 @@ export class CronService {
     try {
       await queryRunner.connect();
       await queryRunner.startTransaction();
-      let requeuedMessages = await this.stepsService.getRequeuedMessages(
+      const requeuedMessages = await this.stepsService.getRequeuedMessages(
         session,
         queryRunner
       );
@@ -875,7 +875,7 @@ export class CronService {
         this.requeueMessages.name,
         session
       );
-      for (let requeue of requeuedMessages) {
+      for (const requeue of requeuedMessages) {
         this.log(
           `Requeuing message: ${JSON.stringify(requeue)}`,
           this.requeueMessages.name,

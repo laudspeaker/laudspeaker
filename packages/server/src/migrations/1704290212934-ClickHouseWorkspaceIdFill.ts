@@ -49,4 +49,3 @@ export class ClickHouseWorkspaceIdFill1704290212934
 
   public async down(queryRunner: QueryRunner): Promise<void> {}
 }
-
