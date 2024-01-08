@@ -3,6 +3,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import {
   DataSource,
   FindManyOptions,
+  FindOptions,
+  FindOptionsWhere,
   IsNull,
   QueryRunner,
   Repository,
@@ -588,15 +590,77 @@ export class JourneyLocationsService {
     }
   }
 
+  async setMessageSent(
+    location: JourneyLocation,
+    account?: Account,
+    queryRunner?: QueryRunner
+  ) {
+    const findCriteria: FindOptionsWhere<JourneyLocation> = {
+      journey: location.journey,
+      owner: account ? { id: account.id } : undefined,
+      customer: location.customer,
+    };
+    const updateData: Partial<JourneyLocation> = {
+      messageSent: true,
+    };
+    if (queryRunner) {
+      await queryRunner.manager.update(
+        JourneyLocation,
+        findCriteria,
+        updateData
+      );
+    } else {
+      await this.journeyLocationsRepository.update(findCriteria, updateData);
+    }
+  }
+
+  /**
+   * Get the number of unique customers enrolled in a specific journey
+   *
+   * @param account
+   * @param journey
+   * @param runner
+   * @returns number of unique customers enrolled in a specific journey
+   */
   async getNumberOfEnrolledCustomers(
     account: Account,
     journey: Journey,
     runner?: QueryRunner
   ) {
-    let queryCriteria: FindManyOptions<JourneyLocation> = {
+    const queryCriteria: FindManyOptions<JourneyLocation> = {
       where: {
         owner: { id: account.id },
         journey: journey.id,
+      },
+    };
+    let count: number;
+    if (runner) {
+      count = await runner.manager.count(JourneyLocation, queryCriteria);
+    } else {
+      count = await this.journeyLocationsRepository.count(queryCriteria);
+    }
+    return count;
+  }
+
+  /**
+   * Get the number of customers on a specific journey who have sent a message at some
+   * point on the journey.
+   *
+   * @param account
+   * @param journey
+   * @param runner
+   * @returns number of unique customers on a journey who have sent a message
+   */
+  async getNumberOfUniqueCustomerMessages(
+    account: Account,
+    journey: Journey,
+    runner?: QueryRunner
+  ) {
+    const queryCriteria: FindManyOptions<JourneyLocation> = {
+      where: {
+        owner: { id: account.id },
+        journey: journey.id,
+        messageSent: true,
       },
     };
     let count: number;

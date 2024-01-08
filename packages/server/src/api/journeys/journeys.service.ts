@@ -2017,19 +2017,56 @@ export class JourneysService {
         );
 
       if (currentEnrollment >= maxEnrollment) {
-        this.warn(
-          `Current enrollment ${currentEnrollment} Max Enrollment ${maxEnrollment}`,
-          'test',
-          'test'
-        );
         return true;
       }
     }
     return false;
   }
 
-  async rateLimitByUniqueCustomerMessages() {
-    return;
+  /**
+   * Reads the settings of a journey and returns an array with two keys
+   * @returns [boolean, number | undefined] where:
+   *    first item: whether rate limit of unique customers able to receive messsages is enabled
+   *    second item: max number of unique customers able to receive messages, if enabled
+   */
+  rateLimitByCustomersMessagedEnabled(
+    journey: Journey
+  ): readonly [boolean, number | undefined] {
+    const maxMessageSends = journey?.journeySettings?.maxMessageSends;
+    if (maxMessageSends.enabled && maxMessageSends.maxUsersReceive != null) {
+      const customerLimit = parseInt(maxMessageSends.maxUsersReceive);
+      return [true, customerLimit] as const;
+    }
+    return [false, undefined] as const;
+  }
+
+  /** */
+  async rateLimitByCustomersMessaged(
+    owner: Account,
+    journey: Journey,
+    session: string,
+    queryRunner?: QueryRunner
+  ) {
+    const [enabled, customerLimit] =
+      this.rateLimitByCustomersMessagedEnabled(journey);
+    if (enabled) {
+      const currentUniqueCustomers =
+        await this.journeyLocationsService.getNumberOfUniqueCustomerMessages(
+          owner,
+          journey,
+          queryRunner
+        );
+      if (currentUniqueCustomers >= customerLimit) {
+        this.log(
+          `Unique customers messaged limit hit. journey: ${journey.id} limit:${customerLimit} currentUniqueCustomers: ${currentUniqueCustomers}`,
+          this.rateLimitByCustomersMessaged.name,
+          session,
+          owner.id
+        );
+        return true;
+      }
+    }
+    return false;
   }
 
   /**

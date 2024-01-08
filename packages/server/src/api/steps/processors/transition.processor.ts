@@ -605,7 +605,8 @@ export class TransitionProcessor extends WorkerHost {
       | 'SEND'
       | 'QUIET_REQUEUE'
       | 'QUIET_ABORT'
-      | 'LIMIT_REQUEUE' = 'SEND';
+      | 'LIMIT_REQUEUE'
+      | 'LIMIT_ABORT' = 'SEND';
     let requeueTime: Date;
     if (
       journey.journeySettings &&
@@ -670,6 +671,23 @@ export class TransitionProcessor extends WorkerHost {
           session,
           owner.email
         );
+      }
+    }
+
+    if (messageSendType === 'SEND') {
+      const [customersMessagedLimitEnabled] =
+        this.journeysService.rateLimitByCustomersMessagedEnabled(journey);
+      if (customersMessagedLimitEnabled) {
+        const doRateLimit =
+          await this.journeysService.rateLimitByCustomersMessaged(
+            owner,
+            journey,
+            session,
+            queryRunner
+          );
+        if (doRateLimit) {
+          messageSendType = 'LIMIT_ABORT';
+        }
       }
     }
 
@@ -908,7 +926,15 @@ export class TransitionProcessor extends WorkerHost {
           }
           break;
       }
-    } else if (messageSendType === 'QUIET_ABORT') {
+      await this.journeyLocationsService.setMessageSent(
+        location,
+        owner,
+        queryRunner
+      );
+    } else if (
+      messageSendType === 'QUIET_ABORT' ||
+      messageSendType === 'LIMIT_ABORT'
+    ) {
       // Record that the message was aborted
       await this.webhooksService.insertMessageStatusToClickhouse([
         {
