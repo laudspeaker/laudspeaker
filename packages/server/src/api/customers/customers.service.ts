@@ -64,6 +64,10 @@ import { JourneyLocationsService } from '../journeys/journey-locations.service';
 import { Journey } from '../journeys/entities/journey.entity';
 import { SegmentType } from '../segments/entities/segment.entity';
 import { UpdatePK_DTO } from './dto/update-pk.dto';
+import {
+  KEYS_TO_SKIP,
+  validateKeyForMutations,
+} from '@/utils/customer-key-name-validator';
 
 export type Correlation = {
   cust: CustomerDocument;
@@ -76,15 +80,6 @@ const eventsMap = {
   delivered: 'delivered',
   opened: 'opened',
 };
-
-const KEYS_TO_SKIP = [
-  '__v',
-  '_id',
-  'workflows',
-  'journeys',
-  'ownerId',
-  'isFreezed',
-];
 
 export interface JourneyDataForTimeLine {
   id: string;
@@ -756,13 +751,10 @@ export class CustomersService {
   ) {
     const { ...newCustomerData } = updateCustomerDto;
 
-    delete newCustomerData.verified;
-    delete newCustomerData.ownerId;
-    delete newCustomerData._id;
-    delete newCustomerData.__v;
-    delete newCustomerData.audiences;
-    delete newCustomerData.isFreezed;
-    delete newCustomerData.id;
+    KEYS_TO_SKIP.forEach((el) => {
+      delete newCustomerData[el];
+    });
+
     const customer = await this.findOne(account, id, session);
 
     if (customer.isFreezed)
@@ -1804,7 +1796,12 @@ export class CustomersService {
     });
 
     if (!previousImport) {
-      throw new BadRequestException("Can't find imported file for deletion.");
+      this.warn(
+        "Can't find imported file for deletion.",
+        this.removeImportFile.name,
+        ''
+      );
+      return;
     }
 
     await this.s3Service.deleteFile(previousImport.fileKey, account, true);
@@ -4618,6 +4615,8 @@ export class CustomersService {
           `Type: ${type} can't be used for attribute creation.`
         );
       }
+
+      validateKeyForMutations(key);
 
       const previousKey = await this.CustomerKeysModel.findOne({
         key: key.trim(),
