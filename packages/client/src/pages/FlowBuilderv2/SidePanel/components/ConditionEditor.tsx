@@ -288,7 +288,6 @@ const ConditionEditor: FC<ConditionEditorProps> = ({
                       title: "Any message",
                     },
                     eventCondition: "received",
-                    happenCondition: "has",
                   } as MessageCondition)
                 : setCondition({
                     providerType: value,

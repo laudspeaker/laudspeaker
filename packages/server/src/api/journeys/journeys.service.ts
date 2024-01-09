@@ -1576,10 +1576,6 @@ export class JourneysService {
                     relevantEdges[i].data['branch'].conditions[eventsIndex][
                       'eventCondition'
                     ];
-                  event.happenCondition =
-                    relevantEdges[i].data['branch'].conditions[eventsIndex][
-                      'happenCondition'
-                    ];
                   branch.events.push(event);
                 }
                 metadata.branches.push(branch);
