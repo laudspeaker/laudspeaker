@@ -1,4 +1,7 @@
-import { Template } from '../api/templates/entities/template.entity';
+import {
+  PushPlatforms,
+  Template,
+} from '../api/templates/entities/template.entity';
 import { forwardRef, Inject, UseInterceptors } from '@nestjs/common';
 import {
   ConnectedSocket,
@@ -723,5 +726,55 @@ export class WebsocketGateway implements OnGatewayConnection {
     } finally {
       socket.data.processingDev = false;
     }
+  }
+
+  @SubscribeMessage('fcm_token')
+  public async getFCMToken(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody()
+    payload: {
+      type: PushPlatforms;
+      token: string;
+    }
+  ) {
+    const { type, token } = payload;
+
+    if (!type) throw new WsException('No type given');
+    if (!token) throw new WsException('No FCM token given');
+
+    const {
+      account: { teams },
+      customerId,
+    } = socket.data as SocketData;
+
+    const workspace = teams?.[0]?.organization?.workspaces?.[0];
+
+    let customer = await this.customersService.CustomerModel.findOne({
+      _id: customerId,
+      workspaceId: workspace.id,
+    });
+
+    if (!customer || customer.isFreezed) {
+      socket.emit(
+        'error',
+        'Invalid customer id. Creating new anonymous customer...'
+      );
+      customer = await this.customersService.CustomerModel.create({
+        isAnonymous: true,
+        workspaceId: workspace.id,
+      });
+
+      socket.data.customerId = customer.id;
+      socket.emit('customerId', customer.id);
+    }
+
+    await this.customersService.CustomerModel.updateOne(
+      { _id: customerId },
+      {
+        [type === PushPlatforms.ANDROID
+          ? 'androidDeviceToken'
+          : 'iosDeviceToken']: token,
+      }
+    );
   }
 }
