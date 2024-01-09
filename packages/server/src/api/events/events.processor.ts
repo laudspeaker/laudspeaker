@@ -177,11 +177,7 @@ export class EventsProcessor extends WorkerHost {
           relations: ['owner', 'journey'],
         })
       ).filter((el) => el?.metadata?.branches !== undefined);
-      step_loop: for (
-        let stepIndex = 0;
-        stepIndex < steps.length;
-        stepIndex++
-      ) {
+      for (let stepIndex = 0; stepIndex < steps.length; stepIndex++) {
         for (
           let branchIndex = 0;
           branchIndex < steps[stepIndex].metadata.branches.length;

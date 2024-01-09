@@ -117,15 +117,10 @@ export class ImportProcessor extends WorkerHost {
           .on('data', async (data) => {
             let isSkipped = false;
             let convertedPKValue;
-            let convertedRecord = {};
+            const convertedRecord = {};
             // validate file data to type convert
             Object.keys(clearedMapping).forEach((el) => {
               if (isSkipped) return;
-              const columnValue = data[el];
-              if (!columnValue) {
-                isSkipped = true;
-                return;
-              }
               const convertResult = this.customersService.convertForImport(
                 data[el],
                 clearedMapping[el].asAttribute.type,

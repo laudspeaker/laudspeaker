@@ -52,11 +52,6 @@ export enum MessageFromJourney {
   WITH_TAG = "WITH_TAG",
 }
 
-export enum MessageGeneralComparison {
-  HAS = "has",
-  HAS_NOT = "has not",
-}
-
 export enum MessageEmailEventCondition {
   RECEIVED = "received",
   OPENED = "opened",
@@ -104,29 +99,29 @@ export const messageEventsCorelationWaitUntil: Record<
   [ProviderType.EMAIL_MESSAGE]: Object.values(MessageEmailEventCondition).map(
     (el) => ({
       key: el,
-      title: "been " + el,
+      title: "is " + el,
     })
   ),
   [ProviderType.SMS_MESSAGE]: [
     {
       key: MessageSMSEventCondition.RECEIVED,
-      title: "been " + MessageSMSEventCondition.RECEIVED,
+      title: "is " + MessageSMSEventCondition.RECEIVED,
     },
     {
       key: MessageSMSEventCondition.CLICK_LINK,
-      title: "been clicked sms link",
+      title: "sms link is clicked",
     },
   ],
   [ProviderType.PUSH_MESSAGE]: Object.values(MessagePushEventCondition).map(
     (el) => ({
       key: el,
-      title: "been " + el,
+      title: "is " + el,
     })
   ),
   [ProviderType.IN_APP_MESSAGE]: Object.values(MessageInAPPEventCondition).map(
     (el) => ({
       key: el,
-      title: "been " + el,
+      title: "is " + el,
     })
   ),
 };
@@ -152,7 +147,6 @@ export interface GeneralSelectedType {
 export interface MessageEventQuery {
   type: MessageEventTypes;
   from: GeneralSelectedType;
-  happenCondition: MessageGeneralComparison;
   eventCondition:
     | MessageEmailEventCondition
     | MessagePushEventCondition

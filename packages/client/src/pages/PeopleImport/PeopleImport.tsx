@@ -56,7 +56,6 @@ export type MappingParams = Record<
 
 enum ValidationErrors {
   UNMAPPED_ATTRIBUTES,
-  MISSING_ATTRIBUTES_VALUES,
   PRIMARY_REQUIRED,
   PRIMARY_MAP_REQUIRED,
 }
@@ -131,12 +130,6 @@ const PeopleImport = () => {
       desc: "Unmapped attributes will not be imported. Do you want to proceed without mapping these attributes?",
       cancel: "Go Back and Map",
       confirm: "Proceed",
-    },
-    [ValidationErrors.MISSING_ATTRIBUTES_VALUES]: {
-      title: "Missing attribute values",
-      desc: "Some users have missing values for mapped attributes and won't be imported. Do you want to skip these users?",
-      cancel: "Cancel",
-      confirm: "Skip Users",
     },
     [ValidationErrors.PRIMARY_REQUIRED]: {
       title: "Primary key missing",
@@ -263,11 +256,6 @@ const PeopleImport = () => {
       setValidationErrors([...errors]);
     }
 
-    if (currentError === ValidationErrors.MISSING_ATTRIBUTES_VALUES) {
-      errors.shift();
-      setValidationErrors([...errors]);
-    }
-
     if (!errors.length) {
       handleValidationProcess();
     }
@@ -295,9 +283,6 @@ const PeopleImport = () => {
       )
     ) {
       errors.push(ValidationErrors.UNMAPPED_ATTRIBUTES);
-    }
-    if (fileData?.emptyCount) {
-      errors.push(ValidationErrors.MISSING_ATTRIBUTES_VALUES);
     }
 
     if (errors.length === 0) {
@@ -330,7 +315,7 @@ const PeopleImport = () => {
             : {}),
         },
       });
-      toast.success("Imported started");
+      toast.success("Import started");
       navigate("/people");
     } catch (error) {
       if (error instanceof AxiosError) {
