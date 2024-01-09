@@ -4825,13 +4825,6 @@ export class CustomersService {
             Object.keys(clearedMapping).forEach((el) => {
               if (skippedReason) return;
 
-              const columnValue = data[el];
-
-              if (!columnValue) {
-                skippedReason = `Mapped column '${el}' can't have empty value`;
-                return;
-              }
-
               const convertResult = this.convertForImport(
                 data[el],
                 clearedMapping[el].asAttribute.type,
