@@ -138,6 +138,7 @@ export class Event {}
 export class MessageEvent extends Event {
   providerType: string; // Email, SMS, etc
   eventCondition: string; // Received, opened, delivered, etc
+  happenCondition: string; // has, has not
   journey: string; // Journey ID
   step: string; // StepID or ANY
 }

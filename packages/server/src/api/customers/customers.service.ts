@@ -2815,7 +2815,14 @@ export class CustomersService {
       account.id
     );
 
-    const { type, eventCondition, from, fromSpecificMessage, time } = statement;
+    const {
+      type,
+      eventCondition,
+      from,
+      fromSpecificMessage,
+      happenCondition,
+      time,
+    } = statement;
 
     const userIdCondition = `userId = '${userId}'`;
     let sqlQuery = `SELECT customerId FROM message_status WHERE `;
@@ -2835,13 +2842,29 @@ export class CustomersService {
 
       switch (eventCondition) {
         case 'received':
-          sqlQuery += `event = 'sent' AND `;
+          //if it hasnt been sent it cant be opened or clicked
+          if (happenCondition === 'has not') {
+            sqlQuery += `event != 'sent' AND `;
+            sqlQuery += `event != 'opened' AND `;
+            sqlQuery += `event != 'clicked' AND `;
+          } else {
+            sqlQuery += `event = 'sent' AND `;
+          }
           break;
         case 'opened':
-          sqlQuery += `event = 'opened' AND `;
+          if (happenCondition === 'has not') {
+            sqlQuery += `event != 'opened' AND `;
+            //sqlQuery += `event != 'clicked' AND `;
+          } else {
+            sqlQuery += `event = 'opened' AND `;
+          }
           break;
         case 'clicked':
-          sqlQuery += `event = 'clicked' AND `;
+          if (happenCondition === 'has not') {
+            sqlQuery += `event != 'clicked' AND `;
+          } else {
+            sqlQuery += `event = 'clicked' AND `;
+          }
           break;
       }
       sqlQuery += `${userIdCondition} `;
@@ -3994,7 +4017,14 @@ export class CustomersService {
       account.id
     );
 
-    const { type, eventCondition, from, fromSpecificMessage, time } = statement;
+    const {
+      type,
+      eventCondition,
+      from,
+      fromSpecificMessage,
+      happenCondition,
+      time,
+    } = statement;
 
     const userIdCondition = `userId = '${userId}'`;
     let sqlQuery = `SELECT COUNT(*) FROM message_status WHERE `;
@@ -4016,13 +4046,29 @@ export class CustomersService {
 
       switch (eventCondition) {
         case 'received':
-          sqlQuery += `event = 'sent' AND `;
+          //if it hasnt been sent it cant be opened or clicked
+          if (happenCondition === 'has not') {
+            sqlQuery += `event != 'sent' AND `;
+            sqlQuery += `event != 'opened' AND `;
+            sqlQuery += `event != 'clicked' AND `;
+          } else {
+            sqlQuery += `event = 'sent' AND `;
+          }
           break;
         case 'opened':
-          sqlQuery += `event = 'opened' AND `;
+          if (happenCondition === 'has not') {
+            sqlQuery += `event != 'opened' AND `;
+            //sqlQuery += `event != 'clicked' AND `;
+          } else {
+            sqlQuery += `event = 'opened' AND `;
+          }
           break;
         case 'clicked':
-          sqlQuery += `event = 'clicked' AND `;
+          if (happenCondition === 'has not') {
+            sqlQuery += `event != 'clicked' AND `;
+          } else {
+            sqlQuery += `event = 'clicked' AND `;
+          }
           break;
       }
       sqlQuery += `${userIdCondition} `;
