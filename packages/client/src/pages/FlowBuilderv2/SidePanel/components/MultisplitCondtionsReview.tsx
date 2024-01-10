@@ -180,7 +180,8 @@ const MultisplitCondtionsReview = ({
                   )}
                 </div>
                 <div className="text-[14px] leading-[22px] font-inter">
-                  is {(statement as MessageEventQuery).eventCondition}
+                  {(statement as MessageEventQuery).happenCondition} been{" "}
+                  {(statement as MessageEventQuery).eventCondition}
                 </div>
               </>
             ) : (statement as Query)?.isSubBuilderChild ? (

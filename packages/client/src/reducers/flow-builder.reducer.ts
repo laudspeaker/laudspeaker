@@ -52,6 +52,11 @@ export enum MessageFromJourney {
   WITH_TAG = "WITH_TAG",
 }
 
+export enum MessageGeneralComparison {
+  HAS = "has",
+  HAS_NOT = "has not",
+}
+
 export enum MessageEmailEventCondition {
   RECEIVED = "received",
   OPENED = "opened",
@@ -152,6 +157,7 @@ export interface MessageEventQuery {
     | MessagePushEventCondition
     | MessageSMSEventCondition
     | MessageInAPPEventCondition;
+  happenCondition: MessageGeneralComparison;
   fromSpecificMessage: GeneralSelectedType;
   tag?: string;
   time?: {

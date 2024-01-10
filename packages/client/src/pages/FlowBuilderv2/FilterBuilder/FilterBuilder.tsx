@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useId, useState } from "react";
+import React, { FC, useEffect, useId, useRef, useState } from "react";
 import { useDebounce } from "react-use";
 import {
   addSegmentQueryError,
@@ -10,6 +10,7 @@ import {
   MessageEmailEventCondition,
   MessageEventQuery,
   MessageFromJourney,
+  MessageGeneralComparison,
   MessageInAPPEventCondition,
   MessagePushEventCondition,
   MessageSMSEventCondition,
@@ -138,6 +139,7 @@ const corelationTypeToDefaultSettings: {
       key: "ANY",
       title: "Any step",
     },
+    happenCondition: MessageGeneralComparison.HAS,
     tag: undefined,
     time: undefined,
   },
@@ -152,6 +154,7 @@ const corelationTypeToDefaultSettings: {
       key: "ANY",
       title: "Any step",
     },
+    happenCondition: MessageGeneralComparison.HAS,
     tag: undefined,
     time: undefined,
   },
@@ -166,6 +169,7 @@ const corelationTypeToDefaultSettings: {
       key: "ANY",
       title: "Any step",
     },
+    happenCondition: MessageGeneralComparison.HAS,
     tag: undefined,
     time: undefined,
   },
@@ -180,6 +184,7 @@ const corelationTypeToDefaultSettings: {
       key: "ANY",
       title: "Any step",
     },
+    happenCondition: MessageGeneralComparison.HAS,
     tag: undefined,
     time: undefined,
   },
@@ -202,29 +207,29 @@ const messageEventsCorelation: Record<
   [QueryStatementType.EMAIL]: Object.values(MessageEmailEventCondition).map(
     (el) => ({
       key: el,
-      title: "is " + el,
+      title: "been " + el,
     })
   ),
   [QueryStatementType.SMS]: [
     {
       key: MessageSMSEventCondition.RECEIVED,
-      title: "is " + MessageSMSEventCondition.RECEIVED,
+      title: "been " + MessageSMSEventCondition.RECEIVED,
     },
     {
       key: MessageSMSEventCondition.CLICK_LINK,
-      title: "sms link is clicked",
+      title: "been clicked sms link",
     },
   ],
   [QueryStatementType.PUSH]: Object.values(MessagePushEventCondition).map(
     (el) => ({
       key: el,
-      title: "is " + el,
+      title: "been " + el,
     })
   ),
   [QueryStatementType.InAPP]: Object.values(MessageInAPPEventCondition).map(
     (el) => ({
       key: el,
-      title: "is " + el,
+      title: "been " + el,
     })
   ),
 };
@@ -1820,6 +1825,27 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                           )}
                         />
                       )}
+                    <Select
+                      value={(statement as MessageEventQuery).happenCondition}
+                      onChange={(el) => {
+                        handleChangeStatement(i, {
+                          ...statement,
+                          happenCondition: el as MessageGeneralComparison,
+                        } as MessageEventQuery);
+                      }}
+                      noDataPlaceholder={"No results"}
+                      className="min-w-[80px] max-w-[110px]"
+                      options={[
+                        {
+                          key: MessageGeneralComparison.HAS,
+                          title: MessageGeneralComparison.HAS,
+                        },
+                        {
+                          key: MessageGeneralComparison.HAS_NOT,
+                          title: MessageGeneralComparison.HAS_NOT,
+                        },
+                      ]}
+                    />
                     <Select
                       value={(statement as MessageEventQuery).eventCondition}
                       onChange={(el) => {
