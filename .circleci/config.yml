@@ -46,8 +46,10 @@ jobs:
             export AWS_SECRET_ACCESS_KEY=$DEMO_AWS_SECRET
             aws configure set region $DEMO_AWS_REGION
             docker login -u $DOCKER_USER -p $DOCKER_PASS
-            docker build --build-arg="EXTERNAL_URL=$EXTERNAL_URL" --build-arg="FRONTEND_SENTRY_AUTH_TOKEN=$FRONTEND_SENTRY_AUTH_TOKEN" --build-arg="BACKEND_SENTRY_AUTH_TOKEN=$BACKEND_SENTRY_AUTH_TOKEN" --build-arg="REACT_APP_POSTHOG_HOST=$REACT_APP_POSTHOG_HOST" --build-arg="REACT_APP_POSTHOG_KEY=$REACT_APP_POSTHOG_KEY" --build-arg="REACT_APP_ONBOARDING_API_KEY=$REACT_APP_ONBOARDING_API_KEY" -f Dockerfile -t laudspeaker/laudspeaker:latest .
+            export DOCKER_TAG=${CIRCLE_SHA1:0:20}
+            docker build --build-arg="EXTERNAL_URL=$EXTERNAL_URL" --build-arg="FRONTEND_SENTRY_AUTH_TOKEN=$FRONTEND_SENTRY_AUTH_TOKEN" --build-arg="BACKEND_SENTRY_AUTH_TOKEN=$BACKEND_SENTRY_AUTH_TOKEN" --build-arg="REACT_APP_POSTHOG_HOST=$REACT_APP_POSTHOG_HOST" --build-arg="REACT_APP_POSTHOG_KEY=$REACT_APP_POSTHOG_KEY" --build-arg="REACT_APP_ONBOARDING_API_KEY=$REACT_APP_ONBOARDING_API_KEY" -f Dockerfile -t laudspeaker/laudspeaker:latest -t laudspeaker/laudspeaker:$DOCKER_TAG .
             docker push laudspeaker/laudspeaker:latest
+            docker push laudspeaker/laudspeaker:$DOCKER_TAG
             aws ecs update-service --cluster staging --service staging --force-new-deployment
   test:
     docker:
