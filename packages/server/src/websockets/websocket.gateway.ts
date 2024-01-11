@@ -32,6 +32,7 @@ import { Types } from 'mongoose';
 import { JourneysService } from '@/api/journeys/journeys.service';
 import { DevModeService } from '@/api/dev-mode/dev-mode.service';
 import { RavenInterceptor } from 'nest-raven';
+import { AnalyticsProviderTypes } from '@/api/steps/types/step.interface';
 
 interface SocketData {
   account: Account & { apiKey: string };
@@ -676,7 +677,7 @@ export class WebsocketGateway implements OnGatewayConnection {
         {
           correlationKey: '_id',
           correlationValue: customer.id,
-          source: 'custom',
+          source: AnalyticsProviderTypes.TRACKER,
           event: '',
           payload: event,
         },

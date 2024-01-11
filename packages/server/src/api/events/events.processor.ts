@@ -120,8 +120,9 @@ export class EventsProcessor extends WorkerHost {
 
     try {
       //Account associated with event
-      const account: Account = await queryRunner.manager.findOneBy(Account, {
-        id: job.data.accountID,
+      const account: Account = await queryRunner.manager.findOne(Account, {
+        where: { id: job.data.accountID },
+        relations: ['teams.organization.workspaces'],
       });
       // Multiple journeys can consume the same event, but only one step per journey,
       // so we create an event job for every journey
