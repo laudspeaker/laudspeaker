@@ -516,10 +516,10 @@ export class JourneysService {
       }
       switch (change) {
         case 'ADD':
-          await this.enrollCustomerInJourney(
+          await this.enrollCustomersInJourney(
             account,
             journey,
-            customer,
+            [customer],
             session,
             queryRunner,
             clientSession
@@ -539,33 +539,21 @@ export class JourneysService {
   }
 
   /**
-   * Enroll customer in a journey.
-   * Adds to first step in journey.
+   * Enroll customers in a journey.
+   * Adds customer to first step in journey and adds customer to transition processor.
    * WARNING: this method does not check if the journey **should** include the customer.
+   * NOTE: this method DOES check the rate limiting for unique enrolled customers.
+   *
    */
-  async enrollCustomerInJourney(
+  async enrollCustomersInJourney(
     account: Account,
     journey: Journey,
-    customer: CustomerDocument,
+    customers: CustomerDocument[],
     session: string,
     queryRunner: QueryRunner,
     clientSession: ClientSession
   ): Promise<void> {
-    if (
-      await this.rateLimitEntryByUniqueEnrolledCustomers(
-        account,
-        journey,
-        queryRunner
-      )
-    ) {
-      this.log(
-        `Max customer limit reached on journey: ${journey.id}. Preventing customer: ${customer.id} from being enrolled.`,
-        this.enrollCustomerInJourney.name,
-        session,
-        account.id
-      );
-      return;
-    }
+    const jobs: { name: string; data: any }[] = [];
     const step = await this.stepsService.findByJourneyAndType(
       account,
       journey.id,
@@ -573,27 +561,51 @@ export class JourneysService {
       session,
       queryRunner
     );
-    await this.journeyLocationsService.createAndLock(
-      journey,
-      customer,
-      step,
-      session,
-      account,
-      queryRunner
-    );
-    await this.transitionQueue.add('start', {
-      ownerID: account.id,
-      journeyID: journey.id,
-      step: step,
-      session: session,
-      customerID: customer.id,
-    });
-    await this.customersService.updateJourneyList(
-      [customer],
-      journey.id,
-      session,
-      clientSession
-    );
+    for (const customer of customers) {
+      if (
+        await this.rateLimitEntryByUniqueEnrolledCustomers(
+          account,
+          journey,
+          queryRunner
+        )
+      ) {
+        this.log(
+          `Max customer limit reached on journey: ${journey.id}. Preventing customer: ${customer.id} from being enrolled.`,
+          this.enrollCustomersInJourney.name,
+          session,
+          account.id
+        );
+        continue;
+      }
+      await this.journeyLocationsService.createAndLock(
+        journey,
+        customer,
+        step,
+        session,
+        account,
+        queryRunner
+      );
+      const job = {
+        name: 'start',
+        data: {
+          ownerID: account.id,
+          journeyID: journey.id,
+          step: step,
+          session: session,
+          customerID: customer.id,
+        },
+      };
+      jobs.push(job);
+      await this.customersService.updateJourneyList(
+        [customer],
+        journey.id,
+        session,
+        clientSession
+      );
+    }
+    if (jobs.length) {
+      await this.transitionQueue.addBulk(jobs);
+    }
   }
 
   /**

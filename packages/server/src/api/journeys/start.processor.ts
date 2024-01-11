@@ -156,21 +156,9 @@ export class StartProcessor extends WorkerHost {
           job.data.skip,
           job.data.limit
         );
-        await this.customersService.updateJourneyList(
-          customers,
-          job.data.journeyID,
-          job.data.session,
-          transactionSession
-        );
         const account = await queryRunner.manager.findOne(Account, {
           where: {
             id: job.data.ownerID,
-          },
-        });
-
-        const step = await queryRunner.manager.findOne(Step, {
-          where: {
-            id: job.data.stepID,
           },
         });
         const journey = await queryRunner.manager.findOne(Journey, {
@@ -178,16 +166,14 @@ export class StartProcessor extends WorkerHost {
             id: job.data.journeyID,
           },
         });
-        for (const customer of customers) {
-          await this.journeysService.enrollCustomerInJourney(
-            account,
-            journey,
-            customer,
-            job.data.session,
-            queryRunner,
-            transactionSession
-          );
-        }
+        await this.journeysService.enrollCustomersInJourney(
+          account,
+          journey,
+          customers,
+          job.data.session,
+          queryRunner,
+          transactionSession
+        );
         await transactionSession.commitTransaction();
         await queryRunner.commitTransaction();
       } catch (e) {
