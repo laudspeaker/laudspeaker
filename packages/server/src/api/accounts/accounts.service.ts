@@ -205,7 +205,9 @@ export class AccountsService extends BaseJwtHelper {
     }
   }
 
-  async findOneByAPIKey(apiKey: string): Promise<Account> {
+  async findOneByAPIKey(apiKey: string): Promise<Account | undefined> {
+    if (!apiKey) return undefined;
+
     const workspace = await this.workspacesRepository.findOne({
       where: {
         apiKey,
@@ -220,7 +222,7 @@ export class AccountsService extends BaseJwtHelper {
       relations: ['teams.organization.workspaces'],
     });
 
-    return account as Account & { apiKey: string };
+    return account;
   }
 
   async update(
