@@ -178,7 +178,8 @@ export class WebsocketGateway implements OnGatewayConnection {
 
         const relatedSocket = fetchedSockets.find(
           (el) =>
-            el.data.account?.apiKey === socket.handshake.auth.apiKey &&
+            el.data.account?.teams?.[0]?.organization?.workspaces?.[0]
+              ?.apiKey === socket.handshake.auth.apiKey &&
             el.data.relatedDevConnection
         );
 
@@ -268,6 +269,7 @@ export class WebsocketGateway implements OnGatewayConnection {
       });
     } catch (e) {
       socket.emit('error', e);
+      console.error(e);
       if (e instanceof WsException) {
         socket._error(e);
       }

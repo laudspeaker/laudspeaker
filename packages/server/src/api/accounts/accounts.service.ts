@@ -205,7 +205,7 @@ export class AccountsService extends BaseJwtHelper {
     }
   }
 
-  async findOneByAPIKey(apiKey: string): Promise<Account & { apiKey: string }> {
+  async findOneByAPIKey(apiKey: string): Promise<Account> {
     const workspace = await this.workspacesRepository.findOne({
       where: {
         apiKey,
@@ -213,12 +213,14 @@ export class AccountsService extends BaseJwtHelper {
       relations: ['organization.owner'],
     });
 
-    const account = workspace.organization.owner as Account & {
-      apiKey: string;
-    };
-    account.apiKey = workspace.apiKey;
+    const account = await this.accountsRepository.findOne({
+      where: {
+        id: workspace.organization.owner.id,
+      },
+      relations: ['teams.organization.workspaces'],
+    });
 
-    return account;
+    return account as Account & { apiKey: string };
   }
 
   async update(
