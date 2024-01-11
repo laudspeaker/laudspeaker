@@ -29,7 +29,6 @@ import {
   Customer,
   CustomerDocument,
 } from '../customers/schemas/customer.schema';
-import { RedlockService } from '../redlock/redlock.service';
 import * as Sentry from '@sentry/node';
 
 export enum ProviderType {
@@ -68,9 +67,7 @@ export class EventsPreProcessor extends WorkerHost {
     @InjectModel(PosthogEventType.name)
     private posthogEventTypeModel: Model<PosthogEventTypeDocument>,
     @InjectModel(Customer.name) public customerModel: Model<CustomerDocument>,
-    @InjectQueue('events') private readonly eventsQueue: Queue,
-    @Inject(RedlockService)
-    private readonly redlockService: RedlockService
+    @InjectQueue('events') private readonly eventsQueue: Queue
   ) {
     super();
   }

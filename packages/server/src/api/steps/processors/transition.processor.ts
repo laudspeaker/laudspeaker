@@ -39,7 +39,6 @@ import { SlackService } from '@/api/slack/slack.service';
 import { Account } from '@/api/accounts/entities/accounts.entity';
 import { RedlockService } from '@/api/redlock/redlock.service';
 import * as _ from 'lodash';
-import { Lock } from 'redlock';
 import { PostHog } from 'posthog-node';
 import * as Sentry from '@sentry/node';
 import { JourneyLocationsService } from '@/api/journeys/journey-locations.service';
@@ -228,12 +227,7 @@ export class TransitionProcessor extends WorkerHost {
             job.data.step.id,
             job.data.session,
             job.data.customerID,
-            this.redlockService.retrieve(
-              job.data.lock?.resources,
-              job.data.lock?.value,
-              job.data.lock?.attempts,
-              job.data.lock?.expiration
-            ),
+            job.data.journeyID,
             queryRunner,
             transactionSession,
             job.data.event
@@ -303,8 +297,8 @@ export class TransitionProcessor extends WorkerHost {
     } finally {
       await transactionSession.endSession();
       await queryRunner.release();
-      if (err) throw err;
     }
+    if (err) throw err;
   }
 
   /**
@@ -319,7 +313,7 @@ export class TransitionProcessor extends WorkerHost {
     stepID: string,
     session: string,
     customerID: string,
-    lock: Lock,
+    journeyID: string,
     queryRunner: QueryRunner,
     transactionSession: mongoose.mongo.ClientSession,
     event?: string
@@ -333,6 +327,13 @@ export class TransitionProcessor extends WorkerHost {
     });
     const workspace = owner.teams?.[0]?.organization?.workspaces?.[0];
 
+    const journey = await this.journeysService.findByID(
+      owner,
+      journeyID,
+      session,
+      queryRunner
+    );
+
     const currentStep = await queryRunner.manager.findOne(Step, {
       where: {
         id: stepID,
@@ -341,18 +342,17 @@ export class TransitionProcessor extends WorkerHost {
       lock: { mode: 'pessimistic_write' },
     });
 
-    if (
-      !_.find(currentStep.customers, (customer) => {
-        return JSON.parse(customer).customerID === customerID;
-      })
-    ) {
-      await lock?.release();
-      this.warn(
-        `${JSON.stringify({ warning: 'Releasing lock' })}`,
-        this.handleCustomComponent.name,
-        session,
-        owner.email
-      );
+    const customer = await this.customersService.findById(owner, customerID);
+
+    const location = await this.journeyLocationsService.findForWrite(
+      journey,
+      customer,
+      session,
+      owner,
+      queryRunner
+    );
+
+    if (!location) {
       this.warn(
         `${JSON.stringify({
           warning: 'Customer not in step',
@@ -384,11 +384,6 @@ export class TransitionProcessor extends WorkerHost {
       owner,
       templateID.toString(),
       queryRunner
-    );
-
-    const customer: CustomerDocument = await this.customersService.findById(
-      owner,
-      customerID
     );
 
     if (template.type !== TemplateType.CUSTOM_COMPONENT) {
@@ -520,11 +515,16 @@ export class TransitionProcessor extends WorkerHost {
           step: newNext,
           session: session,
           customerID,
-          lock,
+          journeyID,
           event,
         });
       else {
-        await lock.release();
+        await this.journeyLocationsService.unlock(
+          location,
+          session,
+          owner,
+          queryRunner
+        );
         this.warn(
           `${JSON.stringify({ warning: 'Releasing lock' })}`,
           this.handleCustomComponent.name,
@@ -535,7 +535,12 @@ export class TransitionProcessor extends WorkerHost {
     } else {
       // Destination does not exist, customer has stopped moving so
       // we can release lock
-      await lock.release();
+      await this.journeyLocationsService.unlock(
+        location,
+        session,
+        owner,
+        queryRunner
+      );
       this.warn(
         `${JSON.stringify({ warning: 'Releasing lock' })}`,
         this.handleCustomComponent.name,

@@ -11,9 +11,7 @@ import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { StepType } from './types/step.interface';
-import { Temporal } from '@js-temporal/polyfill';
 import { createClient } from '@clickhouse/client';
-import { RedlockService } from '../redlock/redlock.service';
 import { Requeue } from './entities/requeue.entity';
 
 @Injectable()
@@ -40,9 +38,7 @@ export class StepsService {
     @InjectRepository(Step)
     public stepsRepository: Repository<Step>,
     @InjectQueue('transition') private readonly transitionQueue: Queue,
-    @InjectQueue('start') private readonly startQueue: Queue,
-    @Inject(RedlockService)
-    private readonly redlockService: RedlockService
+    @InjectQueue('start') private readonly startQueue: Queue
   ) {}
 
   log(message, method, session, user = 'ANONYMOUS') {
