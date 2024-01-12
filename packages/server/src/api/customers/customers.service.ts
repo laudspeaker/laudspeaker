@@ -2301,6 +2301,7 @@ export class CustomersService {
               session,
               account.id
             );
+            //toggle this line for testing
             await this.connection.db.collection(collection).drop();
             this.debug(
               `dropped successfully`,
@@ -2372,6 +2373,13 @@ export class CustomersService {
       'Creating segment from query',
       this.getSegmentCustomersFromQuery.name,
       session
+    );
+
+    this.debug(
+      `top level query is: ${JSON.stringify(query,null,2)}`,
+      this.getSegmentCustomersFromQuery.name,
+      session,
+      account.id
     );
 
     //create collectionName
@@ -2461,6 +2469,7 @@ export class CustomersService {
               session,
               account.id
             );
+            //toggle for testing to do
             await this.connection.db.collection(collection).drop();
             this.debug(
               `dropped successfully`,
@@ -2553,6 +2562,7 @@ export class CustomersService {
               session,
               account.id
             );
+            //toggle to do
             await this.connection.db.collection(collection).drop();
             this.debug(
               `dropped successfully`,
@@ -2784,7 +2794,7 @@ export class CustomersService {
    * @returns
    */
 
-  //to do
+  //to do check with actual messages in clickhouse
   async getJourneysWithTag(account: Account, session: string, tag: string): Promise<string[]> {
 
     console.log("In getJourneysWithTag", tag);
@@ -2913,6 +2923,8 @@ export class CustomersService {
 
 */
 
+
+
   /**
    * Gets set of customers from a single statement that
    * includes messages,
@@ -2970,11 +2982,15 @@ export class CustomersService {
 
     if (from.key === 'ANY') {
       // Get all journeys associated with the account
+      console.log("ji any");
       journeyIds = await this.getJourneys(account, session);
     } else if (from.key === 'WITH_TAG') {
       // Get all journeys with the specific tag
+      console.log("ji with tag");
       journeyIds = await this.getJourneysWithTag(account, session, tag);
     }
+
+    console.log("THe journey ids are", journeyIds);
 
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
@@ -2991,6 +3007,8 @@ export class CustomersService {
       );
       stepIds.push(...steps.map(step => step.id));
     }
+
+    console.log("step ids are,", JSON.stringify(stepIds, null, 2));
 
     const userIdCondition = `userId = '${userId}'`;
     let sqlQuery = `SELECT customerId FROM message_status WHERE `;
@@ -3011,6 +3029,7 @@ export class CustomersService {
 
       // Update SQL query based on step IDs case 1, 2
       if (stepIds.length > 0) {
+        //console.log("in step ids > 0");
         // Assuming stepIds are unique and need to be included in the SQL query
         const stepIdCondition = `stepId IN (${stepIds.map(id => `'${id}'`).join(", ")})`;
         sqlQuery += `${stepIdCondition} AND `;
@@ -3093,12 +3112,46 @@ export class CustomersService {
       const batchSize = 1000; // Define batch size
       let batch = [];
 
+      // Async function to handle batch insertion
+      async function  processBatch(batch) {
+        try {
+            const result = await collectionHandle.insertMany(batch);
+            //console.log('Batch of documents inserted:', result);
+        } catch (err) {
+            console.error('Error inserting documents:', err);
+        }
+      }
+
       const stream = countEvents.stream();
 
-      stream.on('data', (rows: Row[]) => {
+      // to do this needs to be tested on a very large set of customers to check streaming logic is sound
+
+      stream.on('data', async (rows: Row[]) => {
+
+        stream.pause();
+
+        for (const row of rows) {
+            const cleanedText = row.text.replace(/^"(.*)"$/, '$1'); // Removes surrounding quotes
+            //console.log("cleaned text is", cleanedText);
+            const objectId = new Types.ObjectId(cleanedText);
+            batch.push({ _id: objectId }); // Convert each ObjectId into an object
+
+            if (batch.length >= batchSize) {
+                await processBatch(batch);
+                batch = []; // Reset batch after insertion
+            } else {
+              stream.resume(); // Resume the stream if batch size not reached
+          }
+        }
+        // Resume the stream after batch processing
+        //stream.resume();
+
+        /*
         rows.forEach((row: Row) => {
           const cleanedText = row.text.replace(/^"(.*)"$/, '$1'); // Removes surrounding quotes
-          batch.push({ customerId: cleanedText });
+          console.log("cleaned text is", cleanedText);
+          const objectId = new Types.ObjectId(cleanedText);
+          batch.push({ _id: objectId }); // Convert each ObjectId into an object
           if (batch.length >= batchSize) {
             // Using async function to handle the insertion
             (async () => {
@@ -3112,20 +3165,25 @@ export class CustomersService {
             })();
           }
         });
+        */ 
+
       });
 
-      await new Promise((resolve) => {
-        stream.on('end', () => {
+      //console.log("batch is", JSON.stringify(batch, null, 2));
+
+      const intermediateCollectionResult = await new Promise((resolve) => {
+        stream.on('end', async () => {
           if (batch.length > 0) {
+            //console.log("batch is", JSON.stringify(batch, null, 2));
+            
             // Insert any remaining documents
-            (async () => {
-              try {
-                const result = await collectionHandle.insertMany(batch);
-                console.log('Final batch of documents inserted:', result);
-              } catch (err) {
-                console.error('Error inserting documents:', err);
-              }
-            })();
+            try {
+              const result = await collectionHandle.insertMany(batch);
+              //console.log('Final batch of documents inserted:', result);
+            } catch (err) {
+              console.error('Error inserting documents:', err);
+            }
+      
           }
           this.debug(
             'Completed!',
@@ -3133,11 +3191,21 @@ export class CustomersService {
             session,
             account.id
           );
-          resolve(0);
+
+          //console.log("intermediate collection is", intermediateCollection );
+          //const documents = await collectionHandle.find({}).toArray();
+          //  documents.forEach(doc => console.log(doc));
+          //console.log("finished print items in", intermediateCollection );
+    
+          //return intermediateCollection;
+
+          resolve(intermediateCollection);
         });
       });
 
-      return intermediateCollection;
+      return intermediateCollectionResult;
+
+
       /*
       this.debug(
         `set from custoners from messages is:\n${customerIds}`,
