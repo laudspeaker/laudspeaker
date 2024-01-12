@@ -2,9 +2,6 @@ import {
   Processor,
   WorkerHost,
   InjectQueue,
-  OnQueueEvent,
-  QueueEventsListener,
-  QueueEventsHost,
   OnWorkerEvent,
 } from '@nestjs/bullmq';
 import { Job, Queue } from 'bullmq';
@@ -28,18 +25,12 @@ import { AudiencesHelper } from '../audiences/audiences.helper';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { randomUUID } from 'crypto';
 import { WebsocketGateway } from '@/websockets/websocket.gateway';
-import { RedlockService } from '../redlock/redlock.service';
-import { Lock } from 'redlock';
 import * as _ from 'lodash';
 import * as Sentry from '@sentry/node';
 import { JourneyLocationsService } from '../journeys/journey-locations.service';
 
 @Injectable()
-@Processor('events', {
-  // removeOnComplete: { age: 0, count: 0 },
-  // removeOnFail: { count: 0 },
-  // group: { concurrency: 1 }
-})
+@Processor('events', { removeOnComplete: { age: 0, count: 0 } })
 export class EventsProcessor extends WorkerHost {
   constructor(
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
@@ -186,11 +177,7 @@ export class EventsProcessor extends WorkerHost {
           relations: ['owner', 'journey'],
         })
       ).filter((el) => el?.metadata?.branches !== undefined);
-      step_loop: for (
-        let stepIndex = 0;
-        stepIndex < steps.length;
-        stepIndex++
-      ) {
+      for (let stepIndex = 0; stepIndex < steps.length; stepIndex++) {
         for (
           let branchIndex = 0;
           branchIndex < steps[stepIndex].metadata.branches.length;
@@ -205,18 +192,18 @@ export class EventsProcessor extends WorkerHost {
           ) {
             const analyticsEvent =
               steps[stepIndex].metadata.branches[branchIndex].events[
-              eventIndex
+                eventIndex
               ];
             if (job.data.event.source === AnalyticsProviderTypes.TRACKER) {
               eventEvaluation.push(
                 job.data.event.event ===
-                steps[stepIndex].metadata.branches[branchIndex].events[
-                  eventIndex
-                ].event &&
-                job.data.event.payload.trackerId ==
-                steps[stepIndex].metadata.branches[branchIndex].events[
-                  eventIndex
-                ].trackerID
+                  steps[stepIndex].metadata.branches[branchIndex].events[
+                    eventIndex
+                  ].event &&
+                  job.data.event.payload.trackerId ==
+                    steps[stepIndex].metadata.branches[branchIndex].events[
+                      eventIndex
+                    ].trackerID
               );
               continue event_loop;
             }
@@ -313,28 +300,28 @@ export class EventsProcessor extends WorkerHost {
                     comparisonType
                   )
                     ? this.audiencesHelper.operableCompare(
-                      job.data.event?.payload?.context?.page?.url,
-                      comparisonType
-                    )
+                        job.data.event?.payload?.context?.page?.url,
+                        comparisonType
+                      )
                     : await this.audiencesHelper.conditionalCompare(
-                      job.data.event?.payload?.context?.page?.url,
-                      value,
-                      comparisonType
-                    );
+                        job.data.event?.payload?.context?.page?.url,
+                        value,
+                        comparisonType
+                      );
                   conditionEvalutation.push(matches);
                 } else {
                   const matches = ['exists', 'doesNotExist'].includes(
                     comparisonType
                   )
                     ? this.audiencesHelper.operableCompare(
-                      job.data.event?.payload?.[key],
-                      comparisonType
-                    )
+                        job.data.event?.payload?.[key],
+                        comparisonType
+                      )
                     : await this.audiencesHelper.conditionalCompare(
-                      job.data.event?.payload?.[key],
-                      value,
-                      comparisonType
-                    );
+                        job.data.event?.payload?.[key],
+                        value,
+                        comparisonType
+                      );
                   this.warn(
                     `${JSON.stringify({
                       checkMatchResult: matches,

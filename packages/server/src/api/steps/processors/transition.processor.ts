@@ -50,7 +50,7 @@ import { StepsService } from '../steps.service';
 import { Journey } from '@/api/journeys/entities/journey.entity';
 
 @Injectable()
-@Processor('transition')
+@Processor('transition', { removeOnComplete: { age: 0, count: 0 } })
 export class TransitionProcessor extends WorkerHost {
   private phClient = new PostHog(process.env.POSTHOG_KEY, {
     host: process.env.POSTHOG_HOST,
@@ -1355,11 +1355,11 @@ export class TransitionProcessor extends WorkerHost {
           ).epochMilliseconds
         ).getTime() < Date.now() &&
         Date.now() <
-        new Date(
-          Temporal.Instant.from(
-            currentStep.metadata.window.to
-          ).epochMilliseconds
-        ).getTime()
+          new Date(
+            Temporal.Instant.from(
+              currentStep.metadata.window.to
+            ).epochMilliseconds
+          ).getTime()
       ) {
         this.warn(
           JSON.stringify({ warning: `${currentStep.metadata.window}` }),
@@ -1504,7 +1504,7 @@ export class TransitionProcessor extends WorkerHost {
       nextStep = await queryRunner.manager.findOne(Step, {
         where: {
           id: currentStep.metadata.timeBranch?.destination,
-        }
+        },
       });
       if (currentStep.metadata.timeBranch.delay) {
         if (
@@ -1561,11 +1561,11 @@ export class TransitionProcessor extends WorkerHost {
               ).epochMilliseconds
             ).getTime() < Date.now() &&
             Date.now() <
-            new Date(
-              Temporal.Instant.from(
-                currentStep.metadata.timeBranch.window.to
-              ).epochMilliseconds
-            ).getTime()
+              new Date(
+                Temporal.Instant.from(
+                  currentStep.metadata.timeBranch.window.to
+                ).epochMilliseconds
+              ).getTime()
           ) {
             this.warn(
               JSON.stringify({
@@ -1640,43 +1640,33 @@ export class TransitionProcessor extends WorkerHost {
           id: currentStep.metadata.branches.filter((branchItem) => {
             return branchItem.index === branch;
           })[0].destination,
-        }
+        },
       });
-        if (nextStep) {
-          // Destination exists, move customer into destination
-          await this.journeyLocationsService.move(
-            location,
-            currentStep,
-            nextStep,
-            session,
-            owner,
-            queryRunner
-          );
-          if (
-            nextStep.type !== StepType.TIME_DELAY &&
-            nextStep.type !== StepType.TIME_WINDOW &&
-            nextStep.type !== StepType.WAIT_UNTIL_BRANCH
-          ) {
-            await this.transitionQueue.add(nextStep.type, {
-              ownerID,
-              journeyID,
-              step: nextStep,
-              session: session,
-              customerID,
-              event,
-            });
-          } else {
-            // Destination is time based,
-            // customer has stopped moving so we can release lock
-            await this.journeyLocationsService.unlock(
-              location,
-              session,
-              owner,
-              queryRunner
-            );
-          }
+      if (nextStep) {
+        // Destination exists, move customer into destination
+        await this.journeyLocationsService.move(
+          location,
+          currentStep,
+          nextStep,
+          session,
+          owner,
+          queryRunner
+        );
+        if (
+          nextStep.type !== StepType.TIME_DELAY &&
+          nextStep.type !== StepType.TIME_WINDOW &&
+          nextStep.type !== StepType.WAIT_UNTIL_BRANCH
+        ) {
+          await this.transitionQueue.add(nextStep.type, {
+            ownerID,
+            journeyID,
+            step: nextStep,
+            session: session,
+            customerID,
+            event,
+          });
         } else {
-          // Destination does not exist,
+          // Destination is time based,
           // customer has stopped moving so we can release lock
           await this.journeyLocationsService.unlock(
             location,
@@ -1685,6 +1675,16 @@ export class TransitionProcessor extends WorkerHost {
             queryRunner
           );
         }
+      } else {
+        // Destination does not exist,
+        // customer has stopped moving so we can release lock
+        await this.journeyLocationsService.unlock(
+          location,
+          session,
+          owner,
+          queryRunner
+        );
+      }
     } else {
       await this.journeyLocationsService.unlock(
         location,
@@ -1952,8 +1952,8 @@ export class TransitionProcessor extends WorkerHost {
   }
 
   // TODO
-  async handleABTest(job: Job<any, any, string>) { }
-  async handleRandomCohortBranch(job: Job<any, any, string>) { }
+  async handleABTest(job: Job<any, any, string>) {}
+  async handleRandomCohortBranch(job: Job<any, any, string>) {}
 
   // @OnWorkerEvent('active')
   // onActive(job: Job<any, any, any>, prev: string) {

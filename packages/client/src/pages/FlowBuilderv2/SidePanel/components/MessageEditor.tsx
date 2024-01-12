@@ -9,7 +9,6 @@ import { useEffect, useState } from "react";
 import { useDebounce } from "react-use";
 import {
   messageEventsCorelationWaitUntil,
-  MessageGeneralComparison,
   WaitUntilMessageProviderCorelation,
 } from "reducers/flow-builder.reducer";
 import ApiService from "services/api.service";
@@ -88,7 +87,7 @@ const MessageEditor = ({
       }>({
         url: `/journeys?take=12&skip=${
           (journeySearchQueryPage - 1) * 12
-        }&search=${journeySearchQuery}&orderBy=latestSave&orderType=desc&filterStatuses=Active`,
+        }&search=${journeySearchQuery}&orderBy=latestSave&orderType=desc&filterStatuses=Active,Paused,Draft`,
       });
 
       setAvailableJourneys(
@@ -203,26 +202,6 @@ const MessageEditor = ({
         />
       )}
       <div className="flex gap-[10px]">
-        <Select
-          value={condition.happenCondition}
-          onChange={(el) => {
-            onChange({
-              ...condition,
-              happenCondition: el,
-            });
-          }}
-          className="max-w-[100px] min-w-[100px]"
-          options={[
-            {
-              key: MessageGeneralComparison.HAS,
-              title: MessageGeneralComparison.HAS,
-            },
-            {
-              key: MessageGeneralComparison.HAS_NOT,
-              title: MessageGeneralComparison.HAS_NOT,
-            },
-          ]}
-        />
         <Select
           value={condition.eventCondition}
           onChange={(el) => {

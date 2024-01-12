@@ -6,19 +6,28 @@ export const POSTHOG_HOST_KEY = "posthog_host";
 export const WS_BASE_URL_KEY = "ws_base_url";
 export const JOURNEY_ONBOARDING_KEY = "journey_onboarding";
 export const ONBOARDING_API_KEY_KEY = "onboarding_api_key";
+export const SENTRY_DSN_URL_FRONTEND_KEY = "sentry_dsn_url_frontend";
+export const SENTRY_ENVIRONMENT_TAG_KEY = "sentry_environment_tag";
+export const SENTRY_RELEASE_KEY = "sentry_release"; //not configurable in setup_config.sh because don't see reason to configure
 type ConfigKey =
   | typeof API_BASE_URL_KEY
   | typeof POSTHOG_KEY_KEY
   | typeof POSTHOG_HOST_KEY
   | typeof WS_BASE_URL_KEY
   | typeof JOURNEY_ONBOARDING_KEY
-  | typeof ONBOARDING_API_KEY_KEY;
+  | typeof ONBOARDING_API_KEY_KEY
+  | typeof SENTRY_ENVIRONMENT_TAG_KEY
+  | typeof SENTRY_DSN_URL_FRONTEND_KEY
+  | typeof SENTRY_RELEASE_KEY;
 
 class Config {
   appConfig: { [key: string]: any };
 
   defaultConfig: { [key: string]: any } = {
     [POSTHOG_KEY_KEY]: "",
+    [SENTRY_DSN_URL_FRONTEND_KEY]:
+      process.env.REACT_APP_SENTRY_DSN_URL_FRONTEND,
+    [SENTRY_RELEASE_KEY]: process.env.REACT_APP_SENTRY_RELEASE,
   };
 
   constructor() {

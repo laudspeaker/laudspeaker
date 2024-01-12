@@ -66,6 +66,11 @@ import { Journey } from '../journeys/entities/journey.entity';
 import { SegmentType } from '../segments/entities/segment.entity';
 import { UpdatePK_DTO } from './dto/update-pk.dto';
 import { StepType } from '../steps/types/step.interface';
+import {
+  KEYS_TO_SKIP,
+  validateKeyForMutations,
+} from '@/utils/customer-key-name-validator';
+
 
 export type Correlation = {
   cust: CustomerDocument;
@@ -78,15 +83,6 @@ const eventsMap = {
   delivered: 'delivered',
   opened: 'opened',
 };
-
-const KEYS_TO_SKIP = [
-  '__v',
-  '_id',
-  'workflows',
-  'journeys',
-  'ownerId',
-  'isFreezed',
-];
 
 export interface JourneyDataForTimeLine {
   id: string;
@@ -246,9 +242,9 @@ export class CustomersService {
     transactionSession?: ClientSession
   ): Promise<
     Customer &
-    mongoose.Document & {
-      _id: Types.ObjectId;
-    }
+      mongoose.Document & {
+        _id: Types.ObjectId;
+      }
   > {
     const createdCustomer = new this.CustomerModel({
       ownerId: (<Account>account).id,
@@ -477,8 +473,8 @@ export class CustomersService {
       ownerId: (<Account>account).id,
       ...(key && search
         ? {
-          [key]: new RegExp(`.*${search}.*`, 'i'),
-        }
+            [key]: new RegExp(`.*${search}.*`, 'i'),
+          }
         : {}),
       ...(showFreezed ? {} : { isFreezed: { $ne: true } }),
     })
@@ -760,13 +756,10 @@ export class CustomersService {
   ) {
     const { ...newCustomerData } = updateCustomerDto;
 
-    delete newCustomerData.verified;
-    delete newCustomerData.ownerId;
-    delete newCustomerData._id;
-    delete newCustomerData.__v;
-    delete newCustomerData.audiences;
-    delete newCustomerData.isFreezed;
-    delete newCustomerData.id;
+    KEYS_TO_SKIP.forEach((el) => {
+      delete newCustomerData[el];
+    });
+
     const customer = await this.findOne(account, id, session);
 
     if (customer.isFreezed)
@@ -1059,9 +1052,9 @@ export class CustomersService {
     clientSession?: ClientSession
   ): Promise<
     Customer &
-    mongoose.Document & {
-      _id: Types.ObjectId;
-    }
+      mongoose.Document & {
+        _id: Types.ObjectId;
+      }
   > {
     if (!isValidObjectId(customerId))
       throw new BadRequestException('Invalid object id');
@@ -1724,7 +1717,7 @@ export class CustomersService {
       try {
         await this.removeImportFile(account);
       } catch (error) {
-        this.error(error, this.uploadCSV.name, account.email, session)
+        this.error(error, this.uploadCSV.name, account.email, session);
       }
 
       const { key } = await this.s3Service.uploadCustomerImportFile(
@@ -1808,7 +1801,12 @@ export class CustomersService {
     });
 
     if (!previousImport) {
-      throw new BadRequestException("Can't find imported file for deletion.");
+      this.warn(
+        "Can't find imported file for deletion.",
+        this.removeImportFile.name,
+        ''
+      );
+      return;
     }
 
     await this.s3Service.deleteFile(previousImport.fileKey, account, true);
@@ -1938,8 +1936,8 @@ export class CustomersService {
           ...(type !== null && !(type instanceof Array)
             ? { type }
             : type instanceof Array
-              ? { $or: type.map((el) => ({ type: el })) }
-              : {}),
+            ? { $or: type.map((el) => ({ type: el })) }
+            : {}),
           ...(isArray !== null ? { isArray } : {}),
         },
       ],
@@ -2766,7 +2764,7 @@ export class CustomersService {
    * Gets set of customers from a single statement that
    * includes segments,
    *
-   *  eg segment1 
+   *  eg segment1
    *
    * Handles SINGLE statements not queries with subqueries
    *
@@ -2781,7 +2779,13 @@ export class CustomersService {
     intermediateCollection: string
   ) {
     const { type, segmentId } = statement;
-    const collectionOfCustomersFromSegment = await this.segmentsService.getSegmentCustomers(account, session, segmentId, intermediateCollection);
+    const collectionOfCustomersFromSegment =
+      await this.segmentsService.getSegmentCustomers(
+        account,
+        session,
+        segmentId,
+        intermediateCollection
+      );
     return collectionOfCustomersFromSegment;
   }
 
@@ -4862,6 +4866,8 @@ export class CustomersService {
         );
       }
 
+      validateKeyForMutations(key);
+
       const previousKey = await this.CustomerKeysModel.findOne({
         key: key.trim(),
         type,
@@ -5068,13 +5074,6 @@ export class CustomersService {
             // validate file data to type convert
             Object.keys(clearedMapping).forEach((el) => {
               if (skippedReason) return;
-
-              const columnValue = data[el];
-
-              if (!columnValue) {
-                skippedReason = `Mapped column '${el}' can't have empty value`;
-                return;
-              }
 
               const convertResult = this.convertForImport(
                 data[el],

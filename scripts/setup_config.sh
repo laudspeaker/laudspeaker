@@ -32,5 +32,14 @@ if [[ -z "$ONBOARDING_API_KEY" ]]; then
 fi
 echo "window.appConfig.onboarding_api_key =\"$ONBOARDING_API_KEY\"" >>$OUTPUT
 
+if [[ ! -z "$SENTRY_DSN_URL_FRONTEND" ]]; then
+    echo "SENTRY_DSN_URL variable is set, overriding default SENTRY_DSN_URL from build."
+    echo "window.appConfig.sentry_dsn_url_frontend=\"$SENTRY_DSN_URL_FRONTEND\"" >>$OUTPUT
+fi
+
+if [[ ! -z "$SENTRY_ENVIRONMENT_TAG" ]]; then
+    echo "window.appConfig.sentry_environment_tag=\"$SENTRY_ENVIRONMENT_TAG\"" >>$OUTPUT
+fi
+
 echo "Final config.js file"
 cat $OUTPUT

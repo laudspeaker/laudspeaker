@@ -402,6 +402,19 @@ export class AccountsService extends BaseJwtHelper {
     }
   }
 
+  async updateTimezone(
+    user: Express.User,
+    updateAccountDto: UpdateAccountDto,
+    session: string
+  ): Promise<string> {
+    const oldUser = await this.findOne(user, session);
+    await this.accountsRepository.save({
+      ...oldUser,
+      timezoneUTCOffset: updateAccountDto.timezoneUTCOffset,
+    });
+    return updateAccountDto.timezoneUTCOffset;
+  }
+
   async remove(
     user: Express.User,
     removeAccountDto: RemoveAccountDto,

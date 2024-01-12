@@ -224,11 +224,7 @@ const BranchPopover: FC<BranchPopoverProps> = ({
                                   )}
                                 </div>
                                 <div className="text-[14px] leading-5 font-inter">
-                                  {
-                                    (condition as MessageCondition)
-                                      .happenCondition
-                                  }{" "}
-                                  been{" "}
+                                  is{" "}
                                   {
                                     (condition as MessageCondition)
                                       .eventCondition
@@ -254,7 +250,7 @@ const BranchPopover: FC<BranchPopoverProps> = ({
                                 )}
                                 <span className="text-[#111827] text-[12px] font-inter">
                                   {" "}
-                                  has been{" "}
+                                  is{" "}
                                   {
                                     (condition as WUAttributeCondition)
                                       .happenCondition

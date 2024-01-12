@@ -144,7 +144,7 @@
     "cypress:open": "cypress open",
     "format": "prettier --write src/**/*.ts{,x}",
     "lint": "tsc --noEmit && eslint src/**/*.ts{,x}",
-    "sentry:sourcemaps": "sentry-cli sourcemaps inject --org laudspeaker-rb --project javascript-react ./build && sentry-cli sourcemaps upload --org laudspeaker-rb --project javascript-react ./build"
+    "sentry:sourcemaps": "sentry-cli sourcemaps inject --release $(sentry-cli releases propose-version) ./build && sentry-cli sourcemaps upload --release $(sentry-cli releases propose-version) ./build"
   },
   "eslintConfig": {
     "extends": [

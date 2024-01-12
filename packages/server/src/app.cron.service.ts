@@ -52,12 +52,11 @@ import { RedlockService } from './api/redlock/redlock.service';
 import { Lock } from 'redlock';
 import * as _ from 'lodash';
 import { JourneyLocationsService } from './api/journeys/journey-locations.service';
-import { query } from 'winston';
 import { Journey } from './api/journeys/entities/journey.entity';
 import { EntryTiming } from './api/journeys/types/additional-journey-settings.interface';
+import { KEYS_TO_SKIP } from './utils/customer-key-name-validator';
 
 const BATCH_SIZE = 500;
-const KEYS_TO_SKIP = ['__v', '_id', 'audiences', 'ownerId'];
 
 @Injectable()
 export class CronService {
