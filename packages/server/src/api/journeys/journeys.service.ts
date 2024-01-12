@@ -182,64 +182,6 @@ export class JourneysService {
    * Gets all journeys associated with a user.
    *
    * @param account
-   * @param session
-   * @param tag
-   * @returns
-   */
-
-
-  async getJourneysWithTag(account: Account, session: string, tag: string): Promise<string[]> {
-
-    console.log("In getJourneysWithTag", tag);
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-
-    try {
-      
-      const journeys = await queryRunner.manager
-            .createQueryBuilder(Journey, "journey")
-            .where("journey.ownerId = :ownerId", { owner: { id: account.id } })
-            .andWhere("journey.journeySettings -> 'tags' ? :tag", { tag })
-            .getMany();
-        /*    
-        const journeys = await queryRunner.manager.find(Journey, {
-            where: {
-                owner: { id: account.id },
-                // Assuming journeySettings is the column name and tags is an array inside it
-                journeySettings: queryRunner.manager.raw(
-                  `journeySettings->'tags' ? :tag AND jsonb_typeof(journeySettings->'tags') = 'array'`, 
-                  { tag }
-              )
-            }
-        });
-        */
-
-      console.log("In getJourneysWithTag", JSON.stringify(journeys, null, 2));
-
-      // Map each Journey object to its id
-      const journeyIds = journeys.map(journey => journey.id);
-
-      // Commit the transaction before returning the data
-      await queryRunner.commitTransaction();
-
-      return journeyIds;
-    } 
-    catch (error) {
-      // Handle any errors that occur during the transaction
-      await queryRunner.rollbackTransaction();
-      throw error;
-    } 
-    finally {
-      // Release the query runner which will return it to the connection pool
-      await queryRunner.release();
-    }
-}
-
-  /**
-   * Gets all journeys associated with a user.
-   *
-   * @param account
    * @param name
    * @param session
    * @returns
