@@ -61,6 +61,7 @@ import { RavenModule } from 'nest-raven';
 import { KafkaModule } from './api/kafka/kafka.module';
 import { JourneyLocation } from './api/journeys/entities/journey-location.entity';
 import { JourneyLocationsService } from './api/journeys/journey-locations.service';
+import { SegmentsModule } from './api/segments/segments.module';
 
 const sensitiveKeys = [
   /cookie/i,
@@ -240,6 +241,7 @@ const formatMongoConnectionString = (mongoConnectionString: string) => {
     WebsocketsModule,
     StepsModule,
     JourneysModule,
+    SegmentsModule,
     RedlockModule,
     RavenModule,
     KafkaModule,

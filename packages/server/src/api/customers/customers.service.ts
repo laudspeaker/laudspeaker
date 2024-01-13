@@ -2324,7 +2324,7 @@ export class CustomersService {
   * NB a query is composed of SingleStatements, and sub queries (which we sometimes call statement with subquery)
   * 
   * @remarks
-  * This can be, and needs to be optimized, we need to offload as much logic to the actual databases
+  * This has been initially optimized, but can likely be more optimized
   *
   * @param query eg "query": {
        "type": "all",
