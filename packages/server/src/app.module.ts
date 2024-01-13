@@ -60,6 +60,7 @@ import { OrganizationsModule } from './api/organizations/organizations.module';
 import { OrganizationInvites } from './api/organizations/entities/organization-invites.entity';
 import { redisStore } from 'cache-manager-redis-yet';
 import { CacheModule } from '@nestjs/cache-manager';
+import { SegmentsModule } from './api/segments/segments.module';
 
 const sensitiveKeys = [
   /cookie/i,
@@ -247,6 +248,7 @@ export const formatMongoConnectionString = (mongoConnectionString: string) => {
     WebsocketsModule,
     StepsModule,
     JourneysModule,
+    SegmentsModule,
     RedlockModule,
     RavenModule,
     KafkaModule,

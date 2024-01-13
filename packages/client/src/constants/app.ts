@@ -2,7 +2,7 @@ import config, { API_BASE_URL_KEY } from "config";
 
 export default {
   APP_VERSION: process.env.REACT_APP_APP_VESION,
-  API_BASE_URL: process.env.REACT_APP_API_BASE_URL, // config.get(API_BASE_URL_KEY),
+  API_BASE_URL: process.env.REACT_APP_API_BASE_URL || config.get(API_BASE_URL_KEY),
   FAKE_SERVER_URL: process.env.REACT_APP_FAKE_SERVER_URL,
   JSON_SERVER_URL: process.env.REACT_APP_JSON_SERVER_URL,
   POSTHOG_KEY: process.env.REACT_APP_POSTHOG_KEY,

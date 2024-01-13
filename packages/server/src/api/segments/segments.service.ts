@@ -398,6 +398,48 @@ export class SegmentsService {
     }
   }
 
+  async addCustomersToSegment(collectionName: string, batchSize: number, segmentId: string, account: Account, queryRunner: QueryRunner): Promise<void> {
+        
+        const mongoCollection = this.connection.db.collection(collectionName);
+
+        let processedCount = 0;
+        let totalDocuments = await mongoCollection.countDocuments();
+
+        //console.log("looks like top level segment is created in mongo");
+        //console.log("going to save", totalDocuments);
+        //console.log("saving to", segment.id);
+
+        while (processedCount < totalDocuments) {
+          // Fetch a batch of documents
+          const customerDocuments = await mongoCollection
+            .find({})
+            .skip(processedCount)
+            .limit(batchSize)
+            .toArray();
+          // Map the MongoDB documents to SegmentCustomers entities
+          const segmentCustomersArray: SegmentCustomers[] =
+            customerDocuments.map((doc) => {
+              const segmentCustomer = new SegmentCustomers();
+              segmentCustomer.customerId = doc._id.toString();
+              segmentCustomer.segment = segmentId;
+              segmentCustomer.owner = account;
+              // Set other properties as needed
+              return segmentCustomer;
+            });
+          // Batch insert into PostgreSQL database
+          await queryRunner.manager.save(
+            SegmentCustomers,
+            segmentCustomersArray
+          );
+          // Update the count of processed documents
+          processedCount += customerDocuments.length;
+        }
+  }
+
+  /*
+   *
+   */
+
   public async create(
     account: Account,
     createSegmentDTO: CreateSegmentDTO,
