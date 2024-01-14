@@ -501,14 +501,27 @@ export class CronService {
             accounts[j].id
           );
           // update the segment customer table
-          // put existing segment customers into mongo collection
+          try {
+            //collectionName: string,account: Account,segmentId: string,session: string,queryRunner: QueryRunner,batchSize: number = 500 // 
+            await this.segmentsService.updateSegmentCustomersBatched(customersInSegment, accounts[j], segment.id, session, queryRunner,500 );
+          }catch{
+            this.debug(
+              `error updating segment: ${segment.name}`,
+              this.updateStatementsWithMessageEvents.name,
+              session,
+              accounts[j].id
+            );
+          }
           
+          //let oldCollection = customersInSegment + "old";
+          //oldCollection = await this.segmentsService.getSegmentCustomersBatched(accounts[j], session, segment.id, oldCollection, 500);
+
           // customers to remove
           // customers to add
-          const batchSize = 500; // Set an appropriate batch size
-          const collectionName = customersInSegment; // Name of the MongoDB collection
+          //const batchSize = 500; // Set an appropriate batch size
+          //const NewCollection = customersInSegment; // Name of the MongoDB collection
           //async addCustomersToSegment(collectionName: string, batchSize: number, segmentId: string, account: Account, queryRunner: QueryRunner): Promise<void> {
-          let updatedSegment = await this.segmentsService.addCustomersToSegment(collectionName, batchSize, segment.id, accounts[j], queryRunner);
+          //let updatedSegment = await this.segmentsService.addCustomersToSegment(NewCollection, batchSize, segment.id, accounts[j], queryRunner);
 
         } 
       }
