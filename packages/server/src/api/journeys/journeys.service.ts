@@ -180,6 +180,47 @@ export class JourneysService {
   }
 
   /**
+   * Gets all journeys associated with a user.
+   *
+   * @param account
+   * @param name
+   * @param session
+   * @returns
+   */
+
+  async getJourneys(account: Account, session: string) {
+
+    console.log("In getJourneys");
+
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const journeys = await queryRunner.manager.find(Journey, {
+          where: { owner: { id: account.id } }
+      });
+
+      // Map each Journey object to its id
+      const journeyIds = journeys.map(journey => journey.id);
+
+      // Commit the transaction before returning the data
+      await queryRunner.commitTransaction();
+
+      return journeyIds;
+    } catch (error) {
+      // Handle any errors that occur during the transaction
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      // Release the query runner which will return it to the connection pool
+      await queryRunner.release();
+    }
+  
+  }
+
+
+  /**
    * Creates a journey.
    *
    * @param account

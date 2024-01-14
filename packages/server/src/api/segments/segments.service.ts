@@ -503,6 +503,8 @@ export class SegmentsService {
         owner: { id: account.id },
       });
 
+      this.debug(`clicked save segment\n`, this.create.name, session, account.id);
+
       this.debug(
         `SegmentDTO is: ${createSegmentDTO}`,
         this.create.name,
