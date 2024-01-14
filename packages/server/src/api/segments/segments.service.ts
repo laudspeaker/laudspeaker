@@ -377,6 +377,65 @@ export class SegmentsService {
     }
   }
 
+  /*
+   * 
+   * function to create intermediate mongo collection from segmentcustomers 
+   * 
+   * batched lookup and insert
+   * 
+   * we may want to add an account filter in later
+   * we may use this function in the plce of @getSegmentCustomers
+   * 
+   */
+
+  async getSegmentCustomersBatched(account: Account, session: string, segmentId: string, collectionName: string): Promise<string> {
+
+    const mongoCollection = this.connection.db.collection(collectionName);
+
+    let processedCount = 0;
+    let batchSize = 500; // Or any suitable batch size
+
+    // Find the total number of customers in the segment
+    //const totalCustomers = await segmentCustomersRepository.count({ where: { segment: segmentId, owner: account } });
+    const totalCustomers = await this.segmentCustomersRepository.count({ where: { segment: segmentId } });
+
+    while (processedCount < totalCustomers) {
+        // Fetch a batch of SegmentCustomers
+        const segmentCustomers = await this.segmentCustomersRepository.find({
+            where: { segment: segmentId },
+            skip: processedCount,
+            take: batchSize
+        });
+
+        // Convert SegmentCustomers to MongoDB documents
+        let mongoDocuments = segmentCustomers.map(sc => {
+            return {
+              _id: new Types.ObjectId(sc.customerId)
+                //_id: new ObjectId(sc.customerId), // Assuming customerId is stored in string format
+                // Add other properties if needed
+            };
+        });
+
+        try {
+          const result = await mongoCollection.insertMany(mongoDocuments);
+          console.log('Batch of documents inserted:', result);
+          mongoDocuments = []; // Reset batch after insertion
+        } catch (err) {
+          console.error('Error inserting documents:', err);
+        }
+
+        // Update the count of processed customers
+        processedCount += segmentCustomers.length;
+    }
+    
+    return collectionName;
+  }
+
+
+  /*
+   * function to add customers from mongo collection to segmentcustomers table
+   */
+
   async addCustomersToSegment(collectionName: string, batchSize: number, segmentId: string, account: Account, queryRunner: QueryRunner): Promise<void> {
         
         const mongoCollection = this.connection.db.collection(collectionName);

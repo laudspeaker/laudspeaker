@@ -460,7 +460,6 @@ export class CronService {
   async updateStatementsWithMessageEvents() {
 
     const session = randomUUID();
-
     // for each organization, get all segments
     // to do change this to organisations rather than 
     const accounts = await this.accountsService.findAll();
@@ -502,6 +501,10 @@ export class CronService {
             accounts[j].id
           );
           // update the segment customer table
+          // put existing segment customers into mongo collection
+          
+          // customers to remove
+          // customers to add
           const batchSize = 500; // Set an appropriate batch size
           const collectionName = customersInSegment; // Name of the MongoDB collection
           //async addCustomersToSegment(collectionName: string, batchSize: number, segmentId: string, account: Account, queryRunner: QueryRunner): Promise<void> {
@@ -512,30 +515,6 @@ export class CronService {
       await queryRunner.commitTransaction();
       await queryRunner.release();
     }
-    
-
-    // first find all segments with message filters
-
-    //"type": "Email"
-    //""type"": ""Email""
-
-    // for each segment make a clickhouse call on unprocessed events, and update members
-
-    // then i can process event
-
-
-
-    /*
-    for (let k = 0; k < events.items.length; k++) {
-      const existsCheck = await this.clickHouseClient.query({
-        query: `SELECT * FROM message_status WHERE event = {event:String} AND messageId = {messageId:String}`,
-        query_params: {
-          event: events.items[k].event,
-          messageId: events.items[k].message.headers['message-id'],
-        },
-      });
-    }
-    */
 
   }
 
