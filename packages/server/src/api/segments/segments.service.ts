@@ -409,12 +409,12 @@ export class SegmentsService {
    * 
    */
 
-  async getSegmentCustomersBatched(account: Account, session: string, segmentId: string, collectionName: string): Promise<string> {
+  async getSegmentCustomersBatched(account: Account, session: string, segmentId: string, collectionName: string, batchSize: number): Promise<string> {
 
     const mongoCollection = this.connection.db.collection(collectionName);
 
     let processedCount = 0;
-    let batchSize = 500; // Or any suitable batch size
+    //let batchSize = 500; // Or any suitable batch size
 
     // Find the total number of customers in the segment
     //const totalCustomers = await segmentCustomersRepository.count({ where: { segment: segmentId, owner: account } });
@@ -1074,6 +1074,64 @@ export class SegmentsService {
         this.logger.error(e);
       }
     }
+  }
+
+  public async updateSegmentCustomersBatched(
+    collectionName: string, 
+    account: Account,
+    segmentId: string,
+    session: string,
+    queryRunner: QueryRunner,
+    batchSize: number = 500 // default batch size
+  ) {
+      // Start transaction
+      await queryRunner.startTransaction();
+
+      try {
+          const segment = await this.findOne(account, segmentId, session, queryRunner);
+
+          // Delete existing customers in the segment
+          await queryRunner.manager.getRepository(SegmentCustomers).delete({
+              segment: segmentId, // Assuming segment is identified by segmentId
+          });
+
+          const mongoCollection = this.connection.db.collection(collectionName);
+
+          let processedCount = 0;
+          const totalDocuments = await mongoCollection.countDocuments();
+
+          while (processedCount < totalDocuments) {
+              // Fetch a batch of documents from MongoDB
+              const mongoDocuments = await mongoCollection
+                  .find({})
+                  .skip(processedCount)
+                  .limit(batchSize)
+                  .toArray();
+
+              // Convert MongoDB documents to SegmentCustomers entities
+              const segmentCustomersArray = mongoDocuments.map(doc => ({
+                  segment: segmentId,
+                  customerId: doc._id.toString(), // Assuming _id is the ObjectId
+                  owner: account
+              }));
+
+              // Batch save to segmentCustomersRepository
+              await queryRunner.manager.getRepository(SegmentCustomers).save(segmentCustomersArray);
+
+              // Update processed count
+              processedCount += mongoDocuments.length;
+          }
+
+          // Commit transaction
+          await queryRunner.commitTransaction();
+      } catch (err) {
+          // In case of an error, rollback the transaction
+          await queryRunner.rollbackTransaction();
+          throw err; // Re-throw the error for further handling
+      } finally {
+          // Release the query runner which will return it to the pool
+          await queryRunner.release();
+      }
   }
 
   public async putCustomers(
