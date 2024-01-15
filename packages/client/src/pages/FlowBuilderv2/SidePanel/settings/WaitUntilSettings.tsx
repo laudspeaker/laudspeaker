@@ -69,7 +69,6 @@ const WaitUntilSettings: FC<SidePanelComponentProps<WaitUntilNodeData>> = ({
             title: "Any message",
           },
           eventCondition: "received",
-          happenCondition: "has",
         } as MessageCondition,
       ],
     };
@@ -158,7 +157,6 @@ const WaitUntilSettings: FC<SidePanelComponentProps<WaitUntilNodeData>> = ({
           title: "Any message",
         },
         eventCondition: "received",
-        happenCondition: "has",
       } as MessageCondition);
     }
 

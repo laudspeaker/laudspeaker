@@ -46,6 +46,7 @@ import {
 import {
   AnalyticsEvent,
   AnalyticsEventCondition,
+  AttributeChangeEvent,
   AttributeConditions,
   AttributeGroup,
   Branch,
@@ -181,6 +182,47 @@ export class JourneysService {
       })
     );
   }
+
+  /**
+   * Gets all journeys associated with a user.
+   *
+   * @param account
+   * @param name
+   * @param session
+   * @returns
+   */
+
+  async getJourneys(account: Account, session: string) {
+
+    console.log("In getJourneys");
+
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const journeys = await queryRunner.manager.find(Journey, {
+          where: { owner: { id: account.id } }
+      });
+
+      // Map each Journey object to its id
+      const journeyIds = journeys.map(journey => journey.id);
+
+      // Commit the transaction before returning the data
+      await queryRunner.commitTransaction();
+
+      return journeyIds;
+    } catch (error) {
+      // Handle any errors that occur during the transaction
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      // Release the query runner which will return it to the connection pool
+      await queryRunner.release();
+    }
+  
+  }
+
 
   /**
    * Creates a journey.
@@ -1542,11 +1584,44 @@ export class JourneysService {
               } else if (
                 relevantEdges[i].data['branch'].type === BranchType.WU_ATTRIBUTE
               ) {
+                const branch = new EventBranch();
+                branch.events = [];
+                branch.relation =
+                  relevantEdges[i].data['branch'].conditions[0].relationToNext;
+                branch.index = i;
+                branch.destination = nodes.filter((node) => {
+                  return node.id === relevantEdges[i].target;
+                })[0].data.stepId;
+                for (
+                  let eventsIndex = 0;
+                  eventsIndex <
+                  relevantEdges[i].data['branch'].conditions.length;
+                  eventsIndex++
+                ) {
+                  const event = new AttributeChangeEvent();
+                  event.attributeName =
+                    relevantEdges[i].data['branch'].conditions[eventsIndex][
+                      'attributeName'
+                    ].split(';;')[0];
+                  event.happenCondition =
+                    relevantEdges[i].data['branch'].conditions[eventsIndex][
+                      'happenCondition'
+                    ];
+                  if (event.happenCondition === 'changed to') {
+                    event.value =
+                      relevantEdges[i].data['branch'].conditions[eventsIndex][
+                        'value'
+                      ];
+                    event.valueType =
+                      relevantEdges[i].data['branch'].conditions[eventsIndex][
+                        'valueType'
+                      ];
+                  }
+
+                  branch.events.push(event);
+                }
+                metadata.branches.push(branch);
               }
-            }
-            if (nodes[i].id === '226a7112-96ec-477d-a1ac-d604b4f04301') {
-              this.logger.warn('SAVE TEST 3 After processing');
-              this.logger.warn(journey);
             }
             break;
           case NodeType.JUMP_TO:

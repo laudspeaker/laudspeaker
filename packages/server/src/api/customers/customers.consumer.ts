@@ -21,6 +21,8 @@ import {
   CustomerDocument,
   CustomerSchema,
 } from './schemas/customer.schema';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 
 @Injectable()
 export class CustomersConsumerService implements OnApplicationBootstrap {
@@ -32,6 +34,8 @@ export class CustomersConsumerService implements OnApplicationBootstrap {
     private readonly journeysService: JourneysService,
     private readonly accountsService: AccountsService,
     private readonly segmentsService: SegmentsService,
+    @InjectQueue('events_pre')
+    private readonly eventPreprocessorQueue: Queue,
     @InjectConnection() private readonly connection: mongoose.Connection,
     private dataSource: DataSource
   ) {}
@@ -104,6 +108,13 @@ export class CustomersConsumerService implements OnApplicationBootstrap {
                 queryRunner,
                 clientSession
               );
+
+              if (message.operationType === 'update')
+                await this.eventPreprocessorQueue.add('wu_attribute', {
+                  account: account,
+                  session: session,
+                  message,
+                });
               break;
             case 'delete': {
               // TODO_JH: remove customerID from all steps also

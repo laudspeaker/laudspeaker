@@ -197,8 +197,7 @@ const ConditionViewer: FC<ConditionViewerProps> = ({
             )}
           </div>
           <div className="text-[14px] leading-[22px] font-inter">
-            {(condition as MessageCondition).happenCondition} been{" "}
-            {(condition as MessageCondition).eventCondition}
+            is {(condition as MessageCondition).eventCondition}
           </div>
         </>
       ) : condition.providerType === ProviderType.WU_ATTRIBUTE ? (

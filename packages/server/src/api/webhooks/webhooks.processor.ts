@@ -176,19 +176,22 @@ export class WebhooksProcessor extends WorkerHost {
       }
 
       try {
-        await this.webhooksService.insertMessageStatusToClickhouse([
-          {
-            event: 'error',
-            createdAt: new Date().toISOString(),
-            eventProvider: ClickHouseEventProvider.WEBHOOKS,
-            messageId: '',
-            audienceId: job.data.audienceId,
-            customerId: job.data.customerId,
-            templateId: String(job.data.template.id),
-            userId: job.data.accountId,
-            processed: false,
-          },
-        ]);
+        await this.webhooksService.insertMessageStatusToClickhouse(
+          [
+            {
+              event: 'error',
+              createdAt: new Date().toISOString(),
+              eventProvider: ClickHouseEventProvider.WEBHOOKS,
+              messageId: '',
+              audienceId: job.data.audienceId,
+              customerId: job.data.customerId,
+              templateId: String(job.data.template.id),
+              userId: job.data.accountId,
+              processed: false,
+            },
+          ],
+          job.data.session
+        );
       } catch (e) {
         this.logger.error('Failed to insert into clickhouse: ' + e);
       }
@@ -196,19 +199,22 @@ export class WebhooksProcessor extends WorkerHost {
       throw new Error(error);
     } else {
       try {
-        await this.webhooksService.insertMessageStatusToClickhouse([
-          {
-            event: 'sent',
-            createdAt: new Date().toISOString(),
-            eventProvider: ClickHouseEventProvider.WEBHOOKS,
-            messageId: '',
-            audienceId: job.data.audienceId,
-            customerId: job.data.customerId,
-            templateId: String(job.data.template.id),
-            userId: job.data.accountId,
-            processed: false,
-          },
-        ]);
+        await this.webhooksService.insertMessageStatusToClickhouse(
+          [
+            {
+              event: 'sent',
+              createdAt: new Date().toISOString(),
+              eventProvider: ClickHouseEventProvider.WEBHOOKS,
+              messageId: '',
+              audienceId: job.data.audienceId,
+              customerId: job.data.customerId,
+              templateId: String(job.data.template.id),
+              userId: job.data.accountId,
+              processed: false,
+            },
+          ],
+          job.data.session
+        );
       } catch (e) {
         this.logger.error('Failed to insert into clickhouse: ' + e);
       }

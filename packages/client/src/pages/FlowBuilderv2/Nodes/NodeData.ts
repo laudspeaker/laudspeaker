@@ -4,8 +4,6 @@ import {
   ConditionalSegmentsSettings,
   GeneralSelectedType,
   MessageEmailEventCondition,
-  MessageEventTypes,
-  MessageGeneralComparison,
   MessageInAPPEventCondition,
   MessagePushEventCondition,
   MessageSMSEventCondition,
@@ -99,7 +97,6 @@ export interface MessageCondition extends CommonCondition {
     | ProviderType.IN_APP_MESSAGE
     | ProviderType.PUSH_MESSAGE;
   from?: GeneralSelectedType;
-  happenCondition: MessageGeneralComparison;
   eventCondition:
     | MessageEmailEventCondition
     | MessagePushEventCondition

@@ -50,4 +50,9 @@ export default interface Account {
   pushPlatforms: ConnectedPushFirebasePlatforms;
   pk?: UserPK;
   timezoneUTCOffset: string;
+  resendAPIKey: string;
+  resendSigningSecret: string;
+  resendSendingDomain: string;
+  resendSendingName: string;
+  resendSendingEmail: string;
 }

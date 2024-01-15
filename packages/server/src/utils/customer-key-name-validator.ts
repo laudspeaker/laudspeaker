@@ -29,4 +29,3 @@ export const validateKeyForMutations = (val: any) => {
       'Inappropriate key name to create attribute. Please try another one.'
     );
 };
-
