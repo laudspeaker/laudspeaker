@@ -19,6 +19,8 @@ import { Step } from '../steps/entities/step.entity';
 import { Account } from '../accounts/entities/accounts.entity';
 import { Journey } from './entities/journey.entity';
 import { JourneyLocationsService } from './journey-locations.service';
+import { JourneysService } from './journeys.service';
+import { CustomerDocument } from '../customers/schemas/customer.schema';
 
 const BATCH_SIZE = +process.env.START_BATCH_SIZE;
 
@@ -35,7 +37,9 @@ export class StartProcessor extends WorkerHost {
     @Inject(CustomersService)
     private readonly customersService: CustomersService,
     @Inject(JourneyLocationsService)
-    private readonly journeyLocationsService: JourneyLocationsService
+    private readonly journeyLocationsService: JourneyLocationsService,
+    @Inject(JourneysService)
+    private readonly journeysService: JourneysService
   ) {
     super();
   }
@@ -152,21 +156,9 @@ export class StartProcessor extends WorkerHost {
           job.data.skip,
           job.data.limit
         );
-        await this.customersService.updateJourneyList(
-          customers,
-          job.data.journeyID,
-          job.data.session,
-          transactionSession
-        );
         const account = await queryRunner.manager.findOne(Account, {
           where: {
             id: job.data.ownerID,
-          },
-        });
-
-        const step = await queryRunner.manager.findOne(Step, {
-          where: {
-            id: job.data.stepID,
           },
         });
         const journey = await queryRunner.manager.findOne(Journey, {
@@ -174,31 +166,13 @@ export class StartProcessor extends WorkerHost {
             id: job.data.journeyID,
           },
         });
-        await Promise.all(
-          customers.map(async (customer) => {
-            await this.journeyLocationsService.createAndLock(
-              journey,
-              customer,
-              step,
-              job.data.session,
-              account,
-              queryRunner
-            );
-          })
-        );
-        await this.transitionQueue.addBulk(
-          customers.map((customer) => {
-            return {
-              name: 'start',
-              data: {
-                ownerID: account.id,
-                journeyID: journey.id,
-                step: step,
-                session: job.data.session,
-                customerID: customer.id,
-              },
-            };
-          })
+        await this.journeysService.enrollCustomersInJourney(
+          account,
+          journey,
+          customers,
+          job.data.session,
+          queryRunner,
+          transactionSession
         );
         await transactionSession.commitTransaction();
         await queryRunner.commitTransaction();

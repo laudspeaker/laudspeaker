@@ -79,6 +79,8 @@ import {
 import { JourneyLocationsService } from './journey-locations.service';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
+import { RedlockService } from '../redlock/redlock.service';
+import { RedisService } from '@liaoliaots/nestjs-redis';
 
 export enum JourneyStatus {
   ACTIVE = 'Active',
@@ -118,7 +120,8 @@ export class JourneysService {
     @InjectConnection() private readonly connection: mongoose.Connection,
     @Inject(JourneyLocationsService)
     private readonly journeyLocationsService: JourneyLocationsService,
-    @InjectQueue('transition') private readonly transitionQueue: Queue
+    @InjectQueue('transition') private readonly transitionQueue: Queue,
+    @Inject(RedisService) private redisService: RedisService
   ) {}
 
   log(message, method, session, user = 'ANONYMOUS') {
@@ -555,10 +558,10 @@ export class JourneysService {
       }
       switch (change) {
         case 'ADD':
-          await this.enrollCustomerInJourney(
+          await this.enrollCustomersInJourney(
             account,
             journey,
-            customer,
+            [customer],
             session,
             queryRunner,
             clientSession
@@ -578,18 +581,21 @@ export class JourneysService {
   }
 
   /**
-   * Enroll customer in a journey.
-   * Adds to first step in journey.
+   * Enroll customers in a journey.
+   * Adds customer to first step in journey and adds customer to transition processor.
    * WARNING: this method does not check if the journey **should** include the customer.
+   * NOTE: this method DOES check the rate limiting for unique enrolled customers.
+   *
    */
-  async enrollCustomerInJourney(
+  async enrollCustomersInJourney(
     account: Account,
     journey: Journey,
-    customer: CustomerDocument,
+    customers: CustomerDocument[],
     session: string,
     queryRunner: QueryRunner,
     clientSession: ClientSession
   ): Promise<void> {
+    const jobs: { name: string; data: any }[] = [];
     const step = await this.stepsService.findByJourneyAndType(
       account,
       journey.id,
@@ -597,37 +603,51 @@ export class JourneysService {
       session,
       queryRunner
     );
-    await this.journeyLocationsService.createAndLock(
-      journey,
-      customer,
-      step,
-      session,
-      account,
-      queryRunner
-    );
-    await this.transitionQueue.add('start', {
-      ownerID: account.id,
-      journeyID: journey.id,
-      step: step,
-      session: session,
-      customerID: customer.id,
-    });
-
-    await this.CustomerModel.updateOne(
-      { _id: customer._id },
-      {
-        $addToSet: {
-          journeys: journey.id,
-        },
-        $set: {
-          journeyEnrollmentsDates: {
-            [journey.id]: new Date().toUTCString(),
-          },
-        },
+    for (const customer of customers) {
+      if (
+        await this.rateLimitEntryByUniqueEnrolledCustomers(
+          account,
+          journey,
+          queryRunner
+        )
+      ) {
+        this.log(
+          `Max customer limit reached on journey: ${journey.id}. Preventing customer: ${customer.id} from being enrolled.`,
+          this.enrollCustomersInJourney.name,
+          session,
+          account.id
+        );
+        continue;
       }
-    )
-      .session(clientSession)
-      .exec();
+      await this.journeyLocationsService.createAndLock(
+        journey,
+        customer,
+        step,
+        session,
+        account,
+        queryRunner
+      );
+      const job = {
+        name: 'start',
+        data: {
+          ownerID: account.id,
+          journeyID: journey.id,
+          step: step,
+          session: session,
+          customerID: customer.id,
+        },
+      };
+      jobs.push(job);
+      await this.customersService.updateJourneyList(
+        [customer],
+        journey.id,
+        session,
+        clientSession
+      );
+    }
+    if (jobs.length) {
+      await this.transitionQueue.addBulk(jobs);
+    }
   }
 
   /**
@@ -2059,5 +2079,124 @@ export class JourneysService {
       this.error(err, this.findAllMessages.name, session, account.email);
       throw err;
     }
+  }
+
+  /**
+   * Checks if limit for unique customers on the given journey has been reached.
+   *
+   * @returns boolean
+   *    true if rate limit reached (aka new customer can not be added)
+   *    false if rate limit not yet reached (aka new customer can be added)
+   */
+  async rateLimitEntryByUniqueEnrolledCustomers(
+    owner: Account,
+    journey: Journey,
+    queryRunner?: QueryRunner
+  ) {
+    const maxEntriesSettings = journey?.journeySettings?.maxEntries;
+    if (maxEntriesSettings && maxEntriesSettings.enabled) {
+      const maxEnrollment = parseInt(maxEntriesSettings.maxEntries);
+      const currentEnrollment =
+        await this.journeyLocationsService.getNumberOfEnrolledCustomers(
+          owner,
+          journey,
+          queryRunner
+        );
+
+      if (currentEnrollment >= maxEnrollment) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Reads the settings of a journey and returns an array with two keys
+   * @returns [boolean, number | undefined] where:
+   *    first item: whether rate limit of unique customers able to receive messsages is enabled
+   *    second item: max number of unique customers able to receive messages, if enabled
+   */
+  rateLimitByCustomersMessagedEnabled(
+    journey: Journey
+  ): readonly [boolean, number | undefined] {
+    const maxMessageSends = journey?.journeySettings?.maxMessageSends;
+    if (maxMessageSends.enabled && maxMessageSends.maxUsersReceive != null) {
+      const customerLimit = parseInt(maxMessageSends.maxUsersReceive);
+      return [true, customerLimit] as const;
+    }
+    return [false, undefined] as const;
+  }
+
+  /** */
+  async rateLimitByCustomersMessaged(
+    owner: Account,
+    journey: Journey,
+    session: string,
+    queryRunner?: QueryRunner
+  ) {
+    const [enabled, customerLimit] =
+      this.rateLimitByCustomersMessagedEnabled(journey);
+    if (enabled) {
+      const currentUniqueCustomers =
+        await this.journeyLocationsService.getNumberOfUniqueCustomersMessaged(
+          owner,
+          journey,
+          queryRunner
+        );
+      if (currentUniqueCustomers >= customerLimit) {
+        this.log(
+          `Unique customers messaged limit hit. journey: ${journey.id} limit:${customerLimit} currentUniqueCustomers: ${currentUniqueCustomers}`,
+          this.rateLimitByCustomersMessaged.name,
+          session,
+          owner.id
+        );
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Reads the settings of a journey and returns an array with two keys
+   * @returns [boolean, number | undefined] where:
+   *    first item: whether rate limit messsage sends per minute is enabled
+   *    second item: max number of message sends per minute, if enabled
+   */
+  rateLimitByMinuteEnabled(
+    journey: Journey
+  ): readonly [boolean, number | undefined] {
+    const maxMessageSends = journey?.journeySettings?.maxMessageSends;
+    if (maxMessageSends.enabled && maxMessageSends.maxSendRate != null) {
+      const rateLimit = parseInt(maxMessageSends.maxSendRate);
+      return [true, rateLimit] as const;
+    }
+    return [false, undefined] as const;
+  }
+
+  async rateLimitByMinute(owner: Account, journey: Journey) {
+    const [enabled, rateLimit] = this.rateLimitByMinuteEnabled(journey);
+    if (enabled) {
+      const now = new Date();
+      const currValue = parseInt(
+        await this.redisService
+          .getClient()
+          .get(`${owner.id}:${journey.id}:${now.getUTCMinutes()}`)
+      );
+      if (!isNaN(currValue) && currValue >= rateLimit) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  async rateLimitByMinuteIncrement(owner: Account, journey: Journey) {
+    const now = new Date();
+    const rateLimitKey = `${owner.id}:${journey.id}:${now.getUTCMinutes()}`;
+    await this.redisService
+      .getClient()
+      .multi()
+      .incr(rateLimitKey)
+      .expire(rateLimitKey, 59)
+      .exec();
   }
 }

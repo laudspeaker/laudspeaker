@@ -43,4 +43,12 @@ export class JourneyLocation {
     nullable: true,
   })
   moveStarted?: number | null;
+
+  // This column is used to keep track of unique customers who've received a message
+  // for a journey. Allows for rate limiting by customers receiving messages.
+  @Column({
+    type: 'boolean',
+    nullable: true,
+  })
+  messageSent?: boolean | null;
 }

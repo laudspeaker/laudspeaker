@@ -70,10 +70,10 @@ export class CustomersConsumerService implements OnApplicationBootstrap {
         const session = randomUUID();
         let account: Account;
         let customer: CustomerDocument;
-        let queryRunner = await this.dataSource.createQueryRunner();
+        const queryRunner = await this.dataSource.createQueryRunner();
         await queryRunner.connect();
         await queryRunner.startTransaction();
-        let clientSession = await this.connection.startSession();
+        const clientSession = await this.connection.startSession();
         await clientSession.startTransaction();
         try {
           switch (message.operationType) {
@@ -116,14 +116,15 @@ export class CustomersConsumerService implements OnApplicationBootstrap {
                   message,
                 });
               break;
-            case 'delete':
+            case 'delete': {
               // TODO_JH: remove customerID from all steps also
-              let customerId = message.documentKey._id['$oid'];
+              const customerId = message.documentKey._id['$oid'];
               await this.segmentsService.removeCustomerFromAllSegments(
                 customerId,
                 queryRunner
               );
               break;
+            }
           }
           await clientSession.commitTransaction();
           await clientSession.endSession();

@@ -54,6 +54,9 @@ import * as _ from 'lodash';
 import { JourneyLocationsService } from './api/journeys/journey-locations.service';
 import { Journey } from './api/journeys/entities/journey.entity';
 import { EntryTiming } from './api/journeys/types/additional-journey-settings.interface';
+import { CustomersService } from './api/customers/customers.service';
+import { JourneyLocation } from './api/journeys/entities/journey-location.entity';
+import { Requeue } from './api/steps/entities/requeue.entity';
 import { KEYS_TO_SKIP } from './utils/customer-key-name-validator';
 
 const BATCH_SIZE = 500;
@@ -100,7 +103,9 @@ export class CronService {
     private journeyLocationsService: JourneyLocationsService,
     @InjectQueue('transition') private readonly transitionQueue: Queue,
     @Inject(RedlockService)
-    private readonly redlockService: RedlockService
+    private readonly redlockService: RedlockService,
+    @Inject(CustomersService)
+    private readonly customersService: CustomersService
   ) {}
 
   log(message, method, session, user = 'ANONYMOUS') {
@@ -813,13 +818,12 @@ export class CronService {
 
   @Cron(CronExpression.EVERY_30_SECONDS)
   async requeueMessages() {
-    let lock: Lock;
     const session = randomUUID();
     const queryRunner = this.dataSource.createQueryRunner();
     try {
       await queryRunner.connect();
       await queryRunner.startTransaction();
-      let requeuedMessages = await this.stepsService.getRequeuedMessages(
+      const requeuedMessages = await this.stepsService.getRequeuedMessages(
         session,
         queryRunner
       );
@@ -828,40 +832,46 @@ export class CronService {
         this.requeueMessages.name,
         session
       );
-      for (let requeue of requeuedMessages) {
-        this.log(
-          `Requeuing message: ${JSON.stringify(requeue)}`,
-          this.requeueMessages.name,
-          session
+      const bulkJobs: { name: string; data: any }[] = [];
+      for (const requeue of requeuedMessages) {
+        // THIS MIGHT BE SLOWER THAN WE WANT querying for the customer from mongo.
+        // findAndLock only uses customer.id, but the function currently
+        // only accepts the whole customer document. Consider changing
+        const customer = await this.customersService.findByCustomerId(
+          requeue.customerId,
+          undefined
         );
-        lock = await this.redlockService.acquire(
-          `${requeue.customerId}${requeue.step.journey.id}`
-        );
-        this.transitionQueue.add(StepType.MESSAGE, {
-          ownerId: requeue.owner.id,
-          step: requeue.step,
+        await this.journeyLocationsService.findAndLock(
+          requeue.step.journey,
+          customer,
           session,
-          customerID: requeue.customerId,
-          lock,
+          requeue.owner,
+          queryRunner
+        );
+        await bulkJobs.push({
+          name: StepType.MESSAGE,
+          data: {
+            ownerId: requeue.owner.id,
+            journeyID: requeue.step.journey.id,
+            step: requeue.step,
+            session,
+            customerID: requeue.customerId,
+          },
         });
+        await queryRunner.manager.remove(requeue);
       }
+      await this.transitionQueue.addBulk(bulkJobs);
+      await queryRunner.commitTransaction();
     } catch (e) {
-      this.error(
+      await queryRunner.rollbackTransaction();
+      this.log(
         `Requeue messages failed with exception. ${e}`,
         this.requeueMessages.name,
         session,
         undefined
       );
-      if (lock) {
-        lock.release();
-        this.warn(
-          `${JSON.stringify({ warning: 'Releasing lock' })}`,
-          this.requeueMessages.name,
-          session
-        );
-      }
     } finally {
-      queryRunner.release();
+      await queryRunner.release();
     }
   }
 
