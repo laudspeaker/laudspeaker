@@ -46,6 +46,7 @@ import {
 import {
   AnalyticsEvent,
   AnalyticsEventCondition,
+  AttributeChangeEvent,
   AttributeConditions,
   AttributeGroup,
   Branch,
@@ -1522,11 +1523,44 @@ export class JourneysService {
               } else if (
                 relevantEdges[i].data['branch'].type === BranchType.WU_ATTRIBUTE
               ) {
+                const branch = new EventBranch();
+                branch.events = [];
+                branch.relation =
+                  relevantEdges[i].data['branch'].conditions[0].relationToNext;
+                branch.index = i;
+                branch.destination = nodes.filter((node) => {
+                  return node.id === relevantEdges[i].target;
+                })[0].data.stepId;
+                for (
+                  let eventsIndex = 0;
+                  eventsIndex <
+                  relevantEdges[i].data['branch'].conditions.length;
+                  eventsIndex++
+                ) {
+                  const event = new AttributeChangeEvent();
+                  event.attributeName =
+                    relevantEdges[i].data['branch'].conditions[eventsIndex][
+                      'attributeName'
+                    ].split(';;')[0];
+                  event.happenCondition =
+                    relevantEdges[i].data['branch'].conditions[eventsIndex][
+                      'happenCondition'
+                    ];
+                  if (event.happenCondition === 'changed to') {
+                    event.value =
+                      relevantEdges[i].data['branch'].conditions[eventsIndex][
+                        'value'
+                      ];
+                    event.valueType =
+                      relevantEdges[i].data['branch'].conditions[eventsIndex][
+                        'valueType'
+                      ];
+                  }
+
+                  branch.events.push(event);
+                }
+                metadata.branches.push(branch);
               }
-            }
-            if (nodes[i].id === '226a7112-96ec-477d-a1ac-d604b4f04301') {
-              this.logger.warn('SAVE TEST 3 After processing');
-              this.logger.warn(journey);
             }
             break;
           case NodeType.JUMP_TO:

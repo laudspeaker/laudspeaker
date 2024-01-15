@@ -12,6 +12,7 @@ export default {
   campaigns: "/campaigns",
   segments: "/segments",
   domains: "/email/domains",
+  resendDomains: "/email/resend/domains",
   updateUserInfo: "/accounts",
   audiences: "/audiences",
   addtemplate: "/audiences/add-template",

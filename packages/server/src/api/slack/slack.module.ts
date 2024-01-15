@@ -30,6 +30,9 @@ import { KafkaModule } from '../kafka/kafka.module';
     BullModule.registerQueue({
       name: 'customers',
     }),
+    BullModule.registerQueue({
+      name: 'events_pre',
+    }),
     TypeOrmModule.forFeature([Account, Audience, Installation, State, Step]),
     MongooseModule.forFeature([
       { name: Customer.name, schema: CustomerSchema },

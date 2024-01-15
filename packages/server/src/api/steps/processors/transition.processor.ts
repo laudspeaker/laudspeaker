@@ -413,19 +413,22 @@ export class TransitionProcessor extends WorkerHost {
     };
 
     // 4. Record that the message was sent
-    await this.webhooksService.insertMessageStatusToClickhouse([
-      {
-        stepId: stepID,
-        createdAt: new Date().toISOString(),
-        customerId: customerID,
-        event: 'sent',
-        eventProvider: ClickHouseEventProvider.TRACKER,
-        messageId: humanReadableName,
-        templateId: String(templateID),
-        userId: owner.id,
-        processed: true,
-      },
-    ]);
+    await this.webhooksService.insertMessageStatusToClickhouse(
+      [
+        {
+          stepId: stepID,
+          createdAt: new Date().toISOString(),
+          customerId: customerID,
+          event: 'sent',
+          eventProvider: ClickHouseEventProvider.TRACKER,
+          messageId: humanReadableName,
+          templateId: String(templateID),
+          userId: owner.id,
+          processed: true,
+        },
+      ],
+      session
+    );
 
     // 5. Attempt delivery. If delivered, record delivery event
     const isDelivered = await this.websocketGateway.sendCustomComponentState(
@@ -439,19 +442,22 @@ export class TransitionProcessor extends WorkerHost {
       humanReadableName
     );
     if (isDelivered)
-      await this.webhooksService.insertMessageStatusToClickhouse([
-        {
-          stepId: stepID,
-          createdAt: new Date().toISOString(),
-          customerId: customerID,
-          event: 'delivered',
-          eventProvider: ClickHouseEventProvider.TRACKER,
-          messageId: humanReadableName,
-          templateId: String(templateID),
-          userId: owner.id,
-          processed: true,
-        },
-      ]);
+      await this.webhooksService.insertMessageStatusToClickhouse(
+        [
+          {
+            stepId: stepID,
+            createdAt: new Date().toISOString(),
+            customerId: customerID,
+            event: 'delivered',
+            eventProvider: ClickHouseEventProvider.TRACKER,
+            messageId: humanReadableName,
+            templateId: String(templateID),
+            userId: owner.id,
+            processed: true,
+          },
+        ],
+        session
+      );
 
     // 6. Set delivery status.
     customer.customComponents[humanReadableName].delivered = isDelivered;
@@ -713,6 +719,13 @@ export class TransitionProcessor extends WorkerHost {
             sendingEmail = testSendingEmail;
             owner.freeEmailsCount--;
           }
+
+          if (owner.emailProvider === 'resend') {
+            sendingDomain = owner.resendSendingDomain;
+            key = owner.resendAPIKey;
+            from = owner.resendSendingName;
+            sendingEmail = owner.resendSendingEmail;
+          }
           if (owner.emailProvider === 'sendgrid') {
             key = sendgridApiKey;
             from = sendgridFromEmail;
@@ -746,7 +759,10 @@ export class TransitionProcessor extends WorkerHost {
             this.handleMessage.name,
             session
           );
-          await this.webhooksService.insertMessageStatusToClickhouse(ret);
+          await this.webhooksService.insertMessageStatusToClickhouse(
+            ret,
+            session
+          );
           if (owner.emailProvider === 'free3') await owner.save();
           break;
         case TemplateType.PUSH:
@@ -765,7 +781,8 @@ export class TransitionProcessor extends WorkerHost {
                   trackingEmail: email,
                   filteredTags: filteredTags,
                   templateID: template.id,
-                })
+                }),
+                session
               );
               await this.webhooksService.insertMessageStatusToClickhouse(
                 await sender.process({
@@ -780,7 +797,8 @@ export class TransitionProcessor extends WorkerHost {
                   trackingEmail: email,
                   filteredTags: filteredTags,
                   templateID: template.id,
-                })
+                }),
+                session
               );
               break;
             case 'iOS':
@@ -797,7 +815,8 @@ export class TransitionProcessor extends WorkerHost {
                   trackingEmail: email,
                   filteredTags: filteredTags,
                   templateID: template.id,
-                })
+                }),
+                session
               );
               break;
             case 'Android':
@@ -814,7 +833,8 @@ export class TransitionProcessor extends WorkerHost {
                   trackingEmail: email,
                   filteredTags: filteredTags,
                   templateID: template.id,
-                })
+                }),
+                session
               );
               break;
           }
@@ -850,7 +870,8 @@ export class TransitionProcessor extends WorkerHost {
                   filteredTags
                 ),
               },
-            })
+            }),
+            session
           );
           break;
         case TemplateType.SMS:
@@ -871,7 +892,8 @@ export class TransitionProcessor extends WorkerHost {
               to: customer.phPhoneNumber || customer.phone,
               token: owner.smsAuthToken,
               trackingEmail: email,
-            })
+            }),
+            session
           );
           break;
         case TemplateType.WEBHOOK: //TODO:remove this from queue
@@ -888,19 +910,22 @@ export class TransitionProcessor extends WorkerHost {
       }
     } else if (messageSendType === 'QUIET_ABORT') {
       // Record that the message was aborted
-      await this.webhooksService.insertMessageStatusToClickhouse([
-        {
-          stepId: stepID,
-          createdAt: new Date().toISOString(),
-          customerId: customerID,
-          event: 'aborted',
-          eventProvider: ClickHouseEventProvider.TRACKER,
-          messageId: currentStep.metadata.humanReadableName,
-          templateId: currentStep.metadata.template,
-          userId: owner.id,
-          processed: true,
-        },
-      ]);
+      await this.webhooksService.insertMessageStatusToClickhouse(
+        [
+          {
+            stepId: stepID,
+            createdAt: new Date().toISOString(),
+            customerId: customerID,
+            event: 'aborted',
+            eventProvider: ClickHouseEventProvider.TRACKER,
+            messageId: currentStep.metadata.humanReadableName,
+            templateId: currentStep.metadata.template,
+            userId: owner.id,
+            processed: true,
+          },
+        ],
+        session
+      );
     } else if (messageSendType === 'QUIET_REQUEUE') {
       this.stepsService.requeueMessage(
         owner,

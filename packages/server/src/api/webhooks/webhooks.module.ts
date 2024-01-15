@@ -21,6 +21,9 @@ import { KafkaModule } from '../kafka/kafka.module';
     BullModule.registerQueue({
       name: 'webhooks',
     }),
+    BullModule.registerQueue({
+      name: 'events_pre',
+    }),
     TemplatesModule,
     KafkaModule,
   ],

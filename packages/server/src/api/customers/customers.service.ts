@@ -802,7 +802,7 @@ export class CustomersService {
       }).filter(([_, v]) => v != null)
     );
 
-    const replacementRes = await this.CustomerModel.replaceOne(
+    const replacementRes = await this.CustomerModel.findByIdAndUpdate(
       { _id: id },
       newCustomer
     ).exec();
@@ -4094,12 +4094,6 @@ export class CustomersService {
         const formattedTimeAfter = timeAfter.split('.')[0];
         sqlQuery += `AND createdAt >= '${timeAfter}' `;
       }
-
-      // moved up
-      // if (happenCondition === "has not") {
-      //   sqlQuery = sqlQuery.replace("event =", "event !=");
-      // }
-
       this.debug(
         `the final SQL query is:\n ${sqlQuery}`,
         this.evaluateMessageStatement.name,

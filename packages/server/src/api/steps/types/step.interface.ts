@@ -167,7 +167,12 @@ export class AnalyticsEvent extends Event {
  * Events associated with customer attributes changing, for example
  * a customer changing from a 'free' to a 'paid' plan.
  */
-export class AttributeChangeEvent extends Event {}
+export class AttributeChangeEvent extends Event {
+  attributeName: string; // FirstName, email, etc
+  happenCondition: string; // changed or changed to
+  value?: string; // Optional, indicates what we are waiting for the field to change to
+  valueType?: string; //type of value that field has changed to
+}
 
 /*
  * Top level interface for any platform data that we are

@@ -167,4 +167,19 @@ export class Account extends BaseEntity {
     },
   })
   public pushPlatforms: PushFirebasePlatforms;
+
+  @Column({ type: 'varchar', nullable: true })
+  public resendAPIKey: string;
+
+  @Column({ type: 'varchar', nullable: true })
+  public resendSigningSecret: string;
+
+  @Column({ type: 'varchar', nullable: true })
+  public resendSendingDomain: string;
+
+  @Column({ type: 'varchar', nullable: true })
+  public resendSendingEmail: string;
+
+  @Column({ type: 'varchar', nullable: true })
+  public resendSendingName: string;
 }

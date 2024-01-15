@@ -39,19 +39,22 @@ export class SlackProcessor extends WorkerHost {
         }
       } catch (error) {
         this.logger.warn("Merge tag can't be used, skipping sending...");
-        await this.webhooksService.insertMessageStatusToClickhouse([
-          {
-            userId: job.data.accountId,
-            event: 'error',
-            createdAt: new Date().toISOString(),
-            eventProvider: ClickHouseEventProvider.SLACK,
-            messageId: '',
-            audienceId: job.data.args.audienceId,
-            customerId: job.data.args.customerId,
-            templateId: String(job.data.args.templateId),
-            processed: false,
-          },
-        ]);
+        await this.webhooksService.insertMessageStatusToClickhouse(
+          [
+            {
+              userId: job.data.accountId,
+              event: 'error',
+              createdAt: new Date().toISOString(),
+              eventProvider: ClickHouseEventProvider.SLACK,
+              messageId: '',
+              audienceId: job.data.args.audienceId,
+              customerId: job.data.args.customerId,
+              templateId: String(job.data.args.templateId),
+              processed: false,
+            },
+          ],
+          job.data.session
+        );
         return;
       }
 

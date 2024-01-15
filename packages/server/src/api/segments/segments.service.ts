@@ -534,8 +534,7 @@ export class SegmentsService {
           collectionPrefix
         );
 
-      //console.log("customersInSegment name is", customersInSegment);
-      if(!customersInSegment || customersInSegment.length === 0){
+      if (!customersInSegment || customersInSegment.length === 0) {
         return { size: 0, total: 1 };
       }
 
@@ -568,8 +567,7 @@ export class SegmentsService {
           collectionPrefix
         );
 
-      //console.log("customersInSegment name is", customersInSegment);
-      if(!customersInSegment || customersInSegment.length === 0){
+      if (!customersInSegment || customersInSegment.length === 0) {
         return { size: 0, total: 1 };
       }
 
