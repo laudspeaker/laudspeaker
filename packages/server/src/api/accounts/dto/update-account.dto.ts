@@ -177,4 +177,24 @@ export class UpdateAccountDto {
   @IsString()
   @IsOptional()
   timezoneUTCOffset?: string;
+
+  @IsString()
+  @IsOptional()
+  public resendAPIKey: string;
+
+  @IsString()
+  @IsOptional()
+  public resendSigningSecret: string;
+
+  @IsFQDN()
+  @IsOptional()
+  public resendSendingDomain: string;
+
+  @IsString()
+  @IsOptional()
+  public resendSendingEmail: string;
+
+  @IsString()
+  @IsOptional()
+  public resendSendingName: string;
 }

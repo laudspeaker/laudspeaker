@@ -7,7 +7,9 @@ export enum SettingsActionType {
   SET_SETTINGS_DATA = "SET_SETTINGS_DATA",
   RESET_SETTINGS_DATA = "RESET_SETTINGS_DATA",
   SET_SETTINGS_PRIVATE_API_KEY = "SET_SETTINGS_PRIVATE_API_KEY",
+  SET_RESEND_SETTINGS_PRIVATE_API_KEY = "SET_RESEND_SETTINGS_PRIVATE_API_KEY",
   SET_DOMAINS_LIST = "SET_DOMAINS_LIST",
+  SET_RESEND_DOMAINS_LIST = "SET_RESEND_DOMAINS_LIST",
   SET_EVENTS_COMPLETION = "SET_EVENTS_COMPLETION",
   TOGGLE_NAVBAR = "TOGGLE_NAVBAR",
 }
@@ -26,8 +28,17 @@ interface setPrivateApiKeyData {
   payload: string;
 }
 
+interface setResendPrivateApiKeyData {
+  type: SettingsActionType.SET_RESEND_SETTINGS_PRIVATE_API_KEY;
+  payload: string;
+}
+
 interface setDomainsListData {
   type: SettingsActionType.SET_DOMAINS_LIST;
+  payload: Array<any>;
+}
+interface setResendDomainsListData {
+  type: SettingsActionType.SET_RESEND_DOMAINS_LIST;
   payload: Array<any>;
 }
 
@@ -45,7 +56,9 @@ export type SettingsAction =
   | setSettingsData
   | resetSettingData
   | setPrivateApiKeyData
+  | setResendPrivateApiKeyData
   | setDomainsListData
+  | setResendDomainsListData
   | setEventsCompletion
   | IToggleNavbar;
 
@@ -175,6 +188,15 @@ export const setSettingsPrivateApiKey = (payload: any): any => {
   };
 };
 
+export const setResendSettingsPrivateApiKey = (payload: any): any => {
+  return (dispatch: Dispatch<SettingsAction>) => {
+    dispatch({
+      type: SettingsActionType.SET_RESEND_SETTINGS_PRIVATE_API_KEY,
+      payload: payload,
+    });
+  };
+};
+
 export const setDomainsList = (body: any): any => {
   return async (dispatch: Dispatch<SettingsAction>) => {
     try {
@@ -183,6 +205,29 @@ export const setDomainsList = (body: any): any => {
       });
       dispatch({
         type: SettingsActionType.SET_DOMAINS_LIST,
+        payload: data,
+      });
+
+      return {
+        data,
+        status,
+      };
+    } catch (err) {
+      return {
+        err,
+      };
+    }
+  };
+};
+
+export const setResendDomainsList = (body: any): any => {
+  return async (dispatch: Dispatch<SettingsAction>) => {
+    try {
+      const { data, status } = await ApiService.get({
+        url: `${ApiConfig.resendDomains}/${body}`,
+      });
+      dispatch({
+        type: SettingsActionType.SET_RESEND_DOMAINS_LIST,
         payload: data,
       });
 

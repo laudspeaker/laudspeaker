@@ -20,6 +20,9 @@ import { Step } from '../steps/entities/step.entity';
 import { KafkaProducerService } from '../kafka/producer.service';
 import { Message } from 'kafkajs';
 import { KAFKA_TOPIC_MESSAGE_STATUS } from '../kafka/constants';
+import { EventWebhook } from '@sendgrid/eventwebhook';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 
 export enum ClickHouseEventProvider {
   MAILGUN = 'mailgun',
@@ -29,6 +32,7 @@ export enum ClickHouseEventProvider {
   PUSH = 'PUSH',
   WEBHOOKS = 'webhooks',
   TRACKER = 'tracker',
+  RESEND = 'resend',
 }
 
 export interface ClickHouseMessage {
@@ -69,7 +73,9 @@ export class WebhooksService {
     @InjectRepository(Account)
     private accountRepository: Repository<Account>,
     @Inject(KafkaProducerService)
-    private kafkaService: KafkaProducerService
+    private kafkaService: KafkaProducerService,
+    @InjectQueue('events_pre')
+    private readonly eventPreprocessorQueue: Queue
   ) {
     const session = randomUUID();
     (async () => {
@@ -173,16 +179,20 @@ export class WebhooksService {
         'No sendgridVerificationKey was found to check signature'
       );
 
-    const publicKey = PublicKey.fromPem(sendgridVerificationKey);
+    const payload =
+      data.length > 1
+        ? JSON.stringify(data).split('},{').join('},\r\n{') + '\r\n'
+        : JSON.stringify(data) + '\r\n';
 
-    const decodedSignature = Signature.fromBase64(signature);
-    const timestampPayload = timestamp + JSON.stringify(data) + '\r\n';
-
-    const validSignature = Ecdsa.verify(
-      timestampPayload,
-      decodedSignature,
-      publicKey
+    const ew = new EventWebhook();
+    const key = ew.convertPublicKeyToECDSA(sendgridVerificationKey);
+    const validSignature = ew.verifySignature(
+      key,
+      payload,
+      signature,
+      timestamp
     );
+
     if (!validSignature) throw new ForbiddenException('Invalid signature');
 
     const messagesToInsert: ClickHouseMessage[] = [];
@@ -220,7 +230,7 @@ export class WebhooksService {
 
       messagesToInsert.push(clickHouseRecord);
     }
-    await this.insertMessageStatusToClickhouse(messagesToInsert);
+    await this.insertMessageStatusToClickhouse(messagesToInsert, session);
   }
 
   public async processTwilioData(
@@ -256,7 +266,7 @@ export class WebhooksService {
       processed: false,
       createdAt: new Date().toISOString(),
     };
-    await this.insertMessageStatusToClickhouse([clickHouseRecord]);
+    await this.insertMessageStatusToClickhouse([clickHouseRecord], session);
   }
 
   public async processMailgunData(
@@ -336,7 +346,7 @@ export class WebhooksService {
       session
     );
 
-    await this.insertMessageStatusToClickhouse([clickHouseRecord]);
+    await this.insertMessageStatusToClickhouse([clickHouseRecord], session);
   }
 
   public async setupMailgunWebhook(
@@ -409,8 +419,22 @@ export class WebhooksService {
    * Queue a ClickHouseMessage to kafka so that it will be ingested into clickhouse.
    */
   public async insertMessageStatusToClickhouse(
-    clickhouseMessages: ClickHouseMessage[]
+    clickhouseMessages: ClickHouseMessage[],
+    session: string
   ) {
+    await this.eventPreprocessorQueue.addBulk(
+      clickhouseMessages.map((element) => {
+        return {
+          name: 'message',
+          data: {
+            workspaceId: element.workspaceId,
+            message: element,
+            session: session,
+            customer: element.customerId,
+          },
+        };
+      })
+    );
     return await this.kafkaService.produceMessage(
       KAFKA_TOPIC_MESSAGE_STATUS,
       clickhouseMessages.map((clickhouseMessage) => ({

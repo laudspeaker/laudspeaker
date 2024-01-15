@@ -47,6 +47,7 @@ import { EventsService } from '../events/events.service';
 import * as _ from 'lodash';
 import { randomUUID } from 'crypto';
 import { StepsService } from '../steps/steps.service';
+import { JourneysService } from '../journeys/journeys.service';
 import { S3Service } from '../s3/s3.service';
 import { Imports } from './entities/imports.entity';
 import { thrift } from '@databricks/sql';
@@ -63,6 +64,7 @@ import { JourneyLocationsService } from '../journeys/journey-locations.service';
 import { Journey } from '../journeys/entities/journey.entity';
 import { SegmentType } from '../segments/entities/segment.entity';
 import { UpdatePK_DTO } from './dto/update-pk.dto';
+import { StepType } from '../steps/types/step.interface';
 import {
   KEYS_TO_SKIP,
   validateKeyForMutations,
@@ -142,6 +144,8 @@ export class CustomersService {
     private readonly workflowsService: WorkflowsService,
     @Inject(StepsService)
     private readonly stepsService: StepsService,
+    //@Inject(JourneysService)
+    //private readonly journeysService: JourneysService,
     @Inject(EventsService)
     private readonly eventsService: EventsService,
     @InjectConnection()
@@ -740,7 +744,7 @@ export class CustomersService {
       }).filter(([_, v]) => v != null)
     );
 
-    const replacementRes = await this.CustomerModel.replaceOne(
+    const replacementRes = await this.CustomerModel.findByIdAndUpdate(
       { _id: id },
       newCustomer
     ).exec();
@@ -971,7 +975,7 @@ export class CustomersService {
     }).exec();
   }
 
-  async findByCustomerId(customerId: string, clientSession: ClientSession) {
+  async findByCustomerId(customerId: string, clientSession?: ClientSession) {
     if (!isValidObjectId(customerId))
       throw new BadRequestException('Invalid object id');
 
@@ -2271,6 +2275,7 @@ export class CustomersService {
               session,
               account.id
             );
+            //toggle this line for testing
             await this.connection.db.collection(collection).drop();
             this.debug(
               `dropped successfully`,
@@ -2342,6 +2347,13 @@ export class CustomersService {
       'Creating segment from query',
       this.getSegmentCustomersFromQuery.name,
       session
+    );
+
+    this.debug(
+      `top level query is: ${JSON.stringify(query, null, 2)}`,
+      this.getSegmentCustomersFromQuery.name,
+      session,
+      account.id
     );
 
     //create collectionName
@@ -2431,6 +2443,7 @@ export class CustomersService {
               session,
               account.id
             );
+            //toggle for testing to do
             await this.connection.db.collection(collection).drop();
             this.debug(
               `dropped successfully`,
@@ -2523,6 +2536,7 @@ export class CustomersService {
               session,
               account.id
             );
+            //toggle to do
             await this.connection.db.collection(collection).drop();
             this.debug(
               `dropped successfully`,
@@ -2752,6 +2766,144 @@ export class CustomersService {
   }
 
   /**
+   * Gets all journeys associated with a user and a specific tag.
+   *
+   * @param account
+   * @param session
+   * @param tag
+   * @returns
+   */
+
+  //to do check with actual messages in clickhouse
+  async getJourneysWithTag(
+    account: Account,
+    session: string,
+    tag: string
+  ): Promise<string[]> {
+    console.log('In getJourneysWithTag', tag);
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    console.log('account id is', account.id);
+
+    try {
+      const journeys = await queryRunner.manager
+        .createQueryBuilder(Journey, 'journey')
+        //.where('journey.ownerId = :ownerId', { owner: { id: account.id } })
+        .where('journey.ownerId = :ownerId', { ownerId: account.id })
+        //.where('journey.ownerId = "930fd606-2be2-4429-80a0-94fd3607dc66"')
+        //.where('ownerId = :ownerId', { owner: { id: account.id } })
+        .andWhere("journey.journeySettings -> 'tags' ? :tag", { tag })
+        //.andWhere('journeySettings -> "tags" ? :tag', { tag })
+        .getMany();
+
+      //console.log("In getJourneysWithTag", JSON.stringify(journeys, null, 2));
+
+      // Map each Journey object to its id
+      const journeyIds = journeys.map((journey) => journey.id);
+      console.log('journeyIds are', JSON.stringify(journeyIds, null, 2));
+
+      // Commit the transaction before returning the data
+      await queryRunner.commitTransaction();
+
+      return journeyIds;
+    } catch (error) {
+      // Handle any errors that occur during the transaction
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      // Release the query runner which will return it to the connection pool
+      await queryRunner.release();
+    }
+  }
+
+  /**
+   * Gets all journeys associated with a user.
+   *
+   * @param account
+   * @param name
+   * @param session
+   * @returns
+   */
+
+  async getJourneys(account: Account, session: string) {
+    console.log('In getJourneys');
+
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
+    try {
+      const journeys = await queryRunner.manager.find(Journey, {
+        where: { workspace: { id: workspace.id } },
+      });
+
+      // Map each Journey object to its id
+      const journeyIds = journeys.map((journey) => journey.id);
+
+      // Commit the transaction before returning the data
+      await queryRunner.commitTransaction();
+
+      return journeyIds;
+    } catch (error) {
+      // Handle any errors that occur during the transaction
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      // Release the query runner which will return it to the connection pool
+      await queryRunner.release();
+    }
+  }
+
+  /*
+  Case 1: Any Journey: 
+
+  {
+    type: 'Email',
+    eventCondition: 'received',
+    from: { key: 'ANY', title: 'Any journeys' },
+    fromSpecificMessage: { key: 'ANY', title: 'Any message' },
+    happenCondition: 'has',
+    tag: 'a'
+  }
+
+  Case 2: Tagged Journey:
+
+  {
+    type: 'Email',
+    eventCondition: 'received',
+    from: { key: 'WITH_TAG', title: 'Journeys with a tag' },
+    fromSpecificMessage: { key: 'ANY', title: 'Any message' },
+    happenCondition: 'has',
+    tag: 'a'
+  }
+
+  Case 3: Any Message, specific Journey:
+
+  {
+    type: 'Email',
+    eventCondition: 'received',
+    from: { key: '7627eab1-1b51-4df5-800f-0f413bea21dd', title: 'atag' },
+    fromSpecificMessage: { key: 'ANY', title: 'Any email in this journey' },
+    happenCondition: 'has'
+  }
+
+  Case 4: Specific Message, specific Journey:
+
+  {
+    tag: 'a',
+    from: { key: '7627eab1-1b51-4df5-800f-0f413bea21dd', title: 'atag' },
+    type: 'Email',
+    eventCondition: 'received',
+    happenCondition: 'has',
+    fromSpecificMessage: { key: 'aa08729d-e80c-4546-9418-ece91cb686e3', title: 'Email 1' }
+  }
+
+*/
+
+  /**
    * Gets set of customers from a single statement that
    * includes messages,
    *
@@ -2799,10 +2951,46 @@ export class CustomersService {
       fromSpecificMessage,
       happenCondition,
       time,
+      tag,
     } = statement;
 
     const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
     const workspaceIdCondition = `workspaceId = '${workspace.id}'`;
+    console.log('statement is', statement);
+
+    let journeyIds = [];
+
+    if (from.key === 'ANY') {
+      // Get all journeys associated with the account
+      console.log('ji any');
+      journeyIds = await this.getJourneys(account, session);
+    } else if (from.key === 'WITH_TAG') {
+      // Get all journeys with the specific tag
+      console.log('ji with tag');
+      journeyIds = await this.getJourneysWithTag(account, session, tag);
+    }
+
+    console.log('THe journey ids are', journeyIds);
+
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    const stepIds = [];
+    for (const journeyId of journeyIds) {
+      const steps = await this.stepsService.transactionalfindAllByTypeInJourney(
+        account,
+        StepType.MESSAGE,
+        journeyId,
+        queryRunner,
+        session
+      );
+      stepIds.push(...steps.map((step) => step.id));
+    }
+
+    console.log('step ids are,', JSON.stringify(stepIds, null, 2));
+
+    const userIdCondition = `userId = '${userId}'`;
     let sqlQuery = `SELECT customerId FROM message_status WHERE `;
 
     if (
@@ -2812,8 +3000,21 @@ export class CustomersService {
       type === 'In-App' ||
       type === 'Webhook'
     ) {
+      //wasn;t really sure why this was here before
+      /*
       if (from.key !== 'ANY') {
         sqlQuery += `stepId = '${fromSpecificMessage.key}' AND `;
+      }
+      */
+
+      // Update SQL query based on step IDs case 1, 2
+      if (stepIds.length > 0) {
+        //console.log("in step ids > 0");
+        // Assuming stepIds are unique and need to be included in the SQL query
+        const stepIdCondition = `stepId IN (${stepIds
+          .map((id) => `'${id}'`)
+          .join(', ')})`;
+        sqlQuery += `${stepIdCondition} AND `;
       }
 
       //to do: add support for any and for tags
@@ -2893,12 +3094,45 @@ export class CustomersService {
       const batchSize = 1000; // Define batch size
       let batch = [];
 
+      // Async function to handle batch insertion
+      async function processBatch(batch) {
+        try {
+          const result = await collectionHandle.insertMany(batch);
+          //console.log('Batch of documents inserted:', result);
+        } catch (err) {
+          console.error('Error inserting documents:', err);
+        }
+      }
+
       const stream = countEvents.stream();
 
-      stream.on('data', (rows: Row[]) => {
+      // to do this needs to be tested on a very large set of customers to check streaming logic is sound
+
+      stream.on('data', async (rows: Row[]) => {
+        stream.pause();
+
+        for (const row of rows) {
+          const cleanedText = row.text.replace(/^"(.*)"$/, '$1'); // Removes surrounding quotes
+          //console.log("cleaned text is", cleanedText);
+          const objectId = new Types.ObjectId(cleanedText);
+          batch.push({ _id: objectId }); // Convert each ObjectId into an object
+
+          if (batch.length >= batchSize) {
+            await processBatch(batch);
+            batch = []; // Reset batch after insertion
+          } else {
+            stream.resume(); // Resume the stream if batch size not reached
+          }
+        }
+        // Resume the stream after batch processing
+        //stream.resume();
+
+        /*
         rows.forEach((row: Row) => {
           const cleanedText = row.text.replace(/^"(.*)"$/, '$1'); // Removes surrounding quotes
-          batch.push({ customerId: cleanedText });
+          console.log("cleaned text is", cleanedText);
+          const objectId = new Types.ObjectId(cleanedText);
+          batch.push({ _id: objectId }); // Convert each ObjectId into an object
           if (batch.length >= batchSize) {
             // Using async function to handle the insertion
             (async () => {
@@ -2912,20 +3146,23 @@ export class CustomersService {
             })();
           }
         });
+        */
       });
 
-      await new Promise((resolve) => {
-        stream.on('end', () => {
+      //console.log("batch is", JSON.stringify(batch, null, 2));
+
+      const intermediateCollectionResult = await new Promise((resolve) => {
+        stream.on('end', async () => {
           if (batch.length > 0) {
+            //console.log("batch is", JSON.stringify(batch, null, 2));
+
             // Insert any remaining documents
-            (async () => {
-              try {
-                const result = await collectionHandle.insertMany(batch);
-                console.log('Final batch of documents inserted:', result);
-              } catch (err) {
-                console.error('Error inserting documents:', err);
-              }
-            })();
+            try {
+              const result = await collectionHandle.insertMany(batch);
+              //console.log('Final batch of documents inserted:', result);
+            } catch (err) {
+              console.error('Error inserting documents:', err);
+            }
           }
           this.debug(
             'Completed!',
@@ -2933,11 +3170,20 @@ export class CustomersService {
             session,
             account.id
           );
-          resolve(0);
+
+          //console.log("intermediate collection is", intermediateCollection );
+          //const documents = await collectionHandle.find({}).toArray();
+          //  documents.forEach(doc => console.log(doc));
+          //console.log("finished print items in", intermediateCollection );
+
+          //return intermediateCollection;
+
+          resolve(intermediateCollection);
         });
       });
 
-      return intermediateCollection;
+      return intermediateCollectionResult;
+
       /*
       this.debug(
         `set from custoners from messages is:\n${customerIds}`,
@@ -4078,12 +4324,6 @@ export class CustomersService {
         const formattedTimeAfter = timeAfter.split('.')[0];
         sqlQuery += `AND createdAt >= '${timeAfter}' `;
       }
-
-      // moved up
-      // if (happenCondition === "has not") {
-      //   sqlQuery = sqlQuery.replace("event =", "event !=");
-      // }
-
       this.debug(
         `the final SQL query is:\n ${sqlQuery}`,
         this.evaluateMessageStatement.name,

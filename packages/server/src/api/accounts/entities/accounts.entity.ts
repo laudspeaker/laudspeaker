@@ -35,7 +35,9 @@ export class Account extends BaseEntity {
   @Column({ type: 'varchar' })
   public email!: string;
 
-  @ManyToMany(() => OrganizationTeam, (team) => team.members)
+  @ManyToMany(() => OrganizationTeam, (team) => team.members, {
+    onDelete: 'CASCADE',
+  })
   public teams: OrganizationTeam[];
 
   @Exclude()

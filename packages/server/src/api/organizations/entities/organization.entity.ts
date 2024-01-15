@@ -29,10 +29,14 @@ export class Organization extends BaseEntity {
   @Column({ type: 'varchar' })
   public companyName!: string;
 
-  @OneToMany(() => OrganizationTeam, (team) => team.organization)
+  @OneToMany(() => OrganizationTeam, (team) => team.organization, {
+    onDelete: 'CASCADE',
+  })
   public teams: OrganizationTeam[];
 
-  @OneToMany(() => Workspaces, (workspace) => workspace.organization)
+  @OneToMany(() => Workspaces, (workspace) => workspace.organization, {
+    onDelete: 'CASCADE',
+  })
   public workspaces: Workspaces[];
 
   @JoinColumn()

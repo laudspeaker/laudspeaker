@@ -31,6 +31,9 @@ import { Workspaces } from '../workspaces/entities/workspaces.entity';
     BullModule.registerQueue({
       name: 'customers',
     }),
+    BullModule.registerQueue({
+      name: 'events_pre',
+    }),
     TypeOrmModule.forFeature([
       Account,
       Audience,

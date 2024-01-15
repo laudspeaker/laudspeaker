@@ -34,6 +34,8 @@ import * as Sentry from '@sentry/node';
 export enum ProviderType {
   LAUDSPEAKER = 'laudspeaker',
   POSTHOG = 'posthog',
+  WU_ATTRIBUTE = 'wu_attribute',
+  MESSAGE = 'message',
 }
 
 @Injectable()
@@ -48,6 +50,12 @@ export class EventsPreProcessor extends WorkerHost {
     },
     [ProviderType.POSTHOG]: async (job) => {
       await this.handlePosthog(job);
+    },
+    [ProviderType.MESSAGE]: async (job) => {
+      await this.handleMessage(job);
+    },
+    [ProviderType.WU_ATTRIBUTE]: async (job) => {
+      await this.handleAttributeChange(job);
     },
   };
 
@@ -299,25 +307,26 @@ export class EventsPreProcessor extends WorkerHost {
     } finally {
       await transactionSession.endSession();
       await queryRunner.release();
-      if (err?.code === 11000) {
-        this.warn(
-          `${JSON.stringify({
-            warning: 'Attempting to insert a duplicate key!',
-          })}`,
-          this.handlePosthog.name,
-          job.data.session,
-          job.data.account.id
-        );
-        throw err;
-      } else if (err) {
-        this.error(
-          err,
-          this.handlePosthog.name,
-          job.data.session,
-          job.data.account.id
-        );
-        throw new UnrecoverableError();
-      }
+    }
+
+    if (err?.code === 11000) {
+      this.warn(
+        `${JSON.stringify({
+          warning: 'Attempting to insert a duplicate key!',
+        })}`,
+        this.handlePosthog.name,
+        job.data.session,
+        job.data.account.id
+      );
+      throw err;
+    } else if (err) {
+      this.error(
+        err,
+        this.handlePosthog.name,
+        job.data.session,
+        job.data.account.id
+      );
+      throw new UnrecoverableError();
     }
   }
 
@@ -398,25 +407,153 @@ export class EventsPreProcessor extends WorkerHost {
     } finally {
       await transactionSession.endSession();
       await queryRunner.release();
-      if (err?.code === 11000) {
-        this.warn(
-          `${JSON.stringify({
-            warning: 'Attempting to insert a duplicate key!',
-          })}`,
-          this.handleCustom.name,
-          job.data.session,
-          job.data.account.id
+    }
+    if (err?.code === 11000) {
+      this.warn(
+        `${JSON.stringify({
+          warning: 'Attempting to insert a duplicate key!',
+        })}`,
+        this.handleCustom.name,
+        job.data.session,
+        job.data.account.id
+      );
+      throw err;
+    } else if (err) {
+      this.error(
+        err,
+        this.handleCustom.name,
+        job.data.session,
+        job.data.account.id
+      );
+      throw new UnrecoverableError();
+    }
+  }
+
+  async handleMessage(job: Job<any, any, string>): Promise<any> {
+    const transactionSession = await this.connection.startSession();
+    transactionSession.startTransaction();
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    let err: any;
+
+    try {
+      const journeys = await queryRunner.manager.find(Journey, {
+        where: {
+          workspace: {
+            id: job.data.workspaceId,
+          },
+          isActive: true,
+          isPaused: false,
+          isStopped: false,
+          isDeleted: false,
+        },
+      });
+      for (let i = 0; i < journeys.length; i++) {
+        await this.eventsQueue.add(
+          'message',
+          {
+            workspaceId: job.data.workspaceId,
+            message: job.data.message,
+            customer: job.data.customer,
+            journeyID: journeys[i].id,
+          },
+          {
+            attempts: 1,
+          }
         );
-        throw err;
-      } else if (err) {
-        this.error(
-          err,
-          this.handleCustom.name,
-          job.data.session,
-          job.data.account.id
-        );
-        throw new UnrecoverableError();
       }
+
+      await transactionSession.commitTransaction();
+      await queryRunner.commitTransaction();
+    } catch (e) {
+      await transactionSession.abortTransaction();
+      await queryRunner.rollbackTransaction();
+      this.error(
+        e,
+        this.handleMessage.name,
+        job.data.session,
+        job.data.accountID
+      );
+      err = e;
+    } finally {
+      await transactionSession.endSession();
+      await queryRunner.release();
+    }
+    if (err) {
+      this.error(
+        err,
+        this.handleMessage.name,
+        job.data.session,
+        job.data.accountID
+      );
+      throw new UnrecoverableError();
+    }
+  }
+
+  async handleAttributeChange(job: Job<any, any, string>): Promise<any> {
+    const transactionSession = await this.connection.startSession();
+    transactionSession.startTransaction();
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    let err: any;
+
+    try {
+      const journeys = await queryRunner.manager.find(Journey, {
+        where: {
+          workspace: {
+            id: job.data.workspaceId,
+          },
+          isActive: true,
+          isPaused: false,
+          isStopped: false,
+          isDeleted: false,
+        },
+      });
+      for (let i = 0; i < journeys.length; i++) {
+        if (job.data.message.operationType === 'update') {
+          await this.eventsQueue.add(
+            'attribute_change',
+            {
+              accountID: job.data.account.id,
+              customer: job.data.message.documentKey._id['$oid'],
+              fields: job.data.message.updateDescription?.updatedFields,
+              journeyID: journeys[i].id,
+            },
+            {
+              attempts: 1,
+            }
+          );
+        }
+      }
+
+      await transactionSession.commitTransaction();
+      await queryRunner.commitTransaction();
+    } catch (e) {
+      await transactionSession.abortTransaction();
+      await queryRunner.rollbackTransaction();
+      this.error(
+        e,
+        this.handleAttributeChange.name,
+        job.data.session,
+        job.data.account.email
+      );
+      err = e;
+    } finally {
+      await transactionSession.endSession();
+      await queryRunner.release();
+    }
+    if (err) {
+      this.error(
+        err,
+        this.handleAttributeChange.name,
+        job.data.session,
+        job.data.account.id
+      );
+      throw new UnrecoverableError();
     }
   }
 

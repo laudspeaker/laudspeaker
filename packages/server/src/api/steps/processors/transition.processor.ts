@@ -417,19 +417,22 @@ export class TransitionProcessor extends WorkerHost {
     };
 
     // 4. Record that the message was sent
-    await this.webhooksService.insertMessageStatusToClickhouse([
-      {
-        stepId: stepID,
-        createdAt: new Date().toISOString(),
-        customerId: customerID,
-        event: 'sent',
-        eventProvider: ClickHouseEventProvider.TRACKER,
-        messageId: humanReadableName,
-        templateId: String(templateID),
-        workspaceId: workspace.id,
-        processed: true,
-      },
-    ]);
+    await this.webhooksService.insertMessageStatusToClickhouse(
+      [
+        {
+          stepId: stepID,
+          createdAt: new Date().toISOString(),
+          customerId: customerID,
+          event: 'sent',
+          eventProvider: ClickHouseEventProvider.TRACKER,
+          messageId: humanReadableName,
+          templateId: String(templateID),
+          workspaceId: workspace.id,
+          processed: true,
+        },
+      ],
+      session
+    );
 
     // 5. Attempt delivery. If delivered, record delivery event
     const isDelivered = await this.websocketGateway.sendCustomComponentState(
@@ -443,19 +446,22 @@ export class TransitionProcessor extends WorkerHost {
       humanReadableName
     );
     if (isDelivered)
-      await this.webhooksService.insertMessageStatusToClickhouse([
-        {
-          stepId: stepID,
-          createdAt: new Date().toISOString(),
-          customerId: customerID,
-          event: 'delivered',
-          eventProvider: ClickHouseEventProvider.TRACKER,
-          messageId: humanReadableName,
-          templateId: String(templateID),
-          workspaceId: workspace.id,
-          processed: true,
-        },
-      ]);
+      await this.webhooksService.insertMessageStatusToClickhouse(
+        [
+          {
+            stepId: stepID,
+            createdAt: new Date().toISOString(),
+            customerId: customerID,
+            event: 'delivered',
+            eventProvider: ClickHouseEventProvider.TRACKER,
+            messageId: humanReadableName,
+            templateId: String(templateID),
+            workspaceId: workspace.id,
+            processed: true,
+          },
+        ],
+        session
+      );
 
     // 6. Set delivery status.
     customer.customComponents[humanReadableName].delivered = isDelivered;
@@ -626,7 +632,13 @@ export class TransitionProcessor extends WorkerHost {
     }
 
     // Rate limiting and sending quiet hours will be stored here
-    let messageSendType: 'SEND' | 'QUIET_REQUEUE' | 'QUIET_ABORT' = 'SEND';
+    // Initial default is 'SEND'
+    let messageSendType:
+      | 'SEND' // should send
+      | 'QUIET_REQUEUE' // quiet hours, requeue message when quiet hours over
+      | 'QUIET_ABORT' // quiet hours, abort message, move to next step
+      | 'LIMIT_REQUEUE' // messages per minute rate limit hit, requeue for next minute
+      | 'LIMIT_HOLD' = 'SEND'; // customers messaged per journey rate limit hit, hold at current
     let requeueTime: Date;
     if (
       journey.journeySettings &&
@@ -695,6 +707,39 @@ export class TransitionProcessor extends WorkerHost {
     }
 
     if (messageSendType === 'SEND') {
+      const [customersMessagedLimitEnabled] =
+        this.journeysService.rateLimitByCustomersMessagedEnabled(journey);
+      if (customersMessagedLimitEnabled) {
+        const doRateLimit =
+          await this.journeysService.rateLimitByCustomersMessaged(
+            owner,
+            journey,
+            session,
+            queryRunner
+          );
+        if (doRateLimit) {
+          messageSendType = 'LIMIT_HOLD';
+        }
+      }
+    }
+
+    if (messageSendType === 'SEND') {
+      const [rateLimitByMinuteEnabled] =
+        this.journeysService.rateLimitByMinuteEnabled(journey);
+      if (rateLimitByMinuteEnabled) {
+        const doRateLimit = await this.journeysService.rateLimitByMinute(
+          owner,
+          journey
+        );
+        if (doRateLimit) {
+          messageSendType = 'LIMIT_REQUEUE';
+          requeueTime = new Date();
+          requeueTime.setMinutes(requeueTime.getMinutes() + 1);
+        }
+      }
+    }
+
+    if (messageSendType === 'SEND') {
       //send message here
       const templateID = currentStep.metadata.template;
       const template = await this.templatesService.transactionalFindOneById(
@@ -711,6 +756,10 @@ export class TransitionProcessor extends WorkerHost {
         testSendingName,
         sendgridApiKey,
         sendgridFromEmail,
+        resendSendingDomain,
+        resendAPIKey,
+        resendSendingName,
+        resendSendingEmail,
       } = workspace;
 
       let { sendingDomain, sendingEmail } = workspace;
@@ -739,6 +788,13 @@ export class TransitionProcessor extends WorkerHost {
             from = testSendingName;
             sendingEmail = testSendingEmail;
             workspace.freeEmailsCount--;
+          }
+
+          if (workspace.emailProvider === 'resend') {
+            sendingDomain = workspace.resendSendingDomain;
+            key = workspace.resendAPIKey;
+            from = workspace.resendSendingName;
+            sendingEmail = workspace.resendSendingEmail;
           }
           if (workspace.emailProvider === 'sendgrid') {
             key = sendgridApiKey;
@@ -773,7 +829,10 @@ export class TransitionProcessor extends WorkerHost {
             this.handleMessage.name,
             session
           );
-          await this.webhooksService.insertMessageStatusToClickhouse(ret);
+          await this.webhooksService.insertMessageStatusToClickhouse(
+            ret,
+            session
+          );
           if (workspace.emailProvider === 'free3') {
             await owner.save();
             await workspace.save();
@@ -796,7 +855,8 @@ export class TransitionProcessor extends WorkerHost {
                   trackingEmail: email,
                   filteredTags: filteredTags,
                   templateID: template.id,
-                })
+                }),
+                session
               );
               await this.webhooksService.insertMessageStatusToClickhouse(
                 await sender.process({
@@ -811,7 +871,8 @@ export class TransitionProcessor extends WorkerHost {
                   trackingEmail: email,
                   filteredTags: filteredTags,
                   templateID: template.id,
-                })
+                }),
+                session
               );
               break;
             case 'iOS':
@@ -828,7 +889,8 @@ export class TransitionProcessor extends WorkerHost {
                   trackingEmail: email,
                   filteredTags: filteredTags,
                   templateID: template.id,
-                })
+                }),
+                session
               );
               break;
             case 'Android':
@@ -846,7 +908,8 @@ export class TransitionProcessor extends WorkerHost {
                   trackingEmail: email,
                   filteredTags: filteredTags,
                   templateID: template.id,
-                })
+                }),
+                session
               );
               break;
           }
@@ -882,7 +945,8 @@ export class TransitionProcessor extends WorkerHost {
                   filteredTags
                 ),
               },
-            })
+            }),
+            session
           );
           break;
         case TemplateType.SMS:
@@ -903,7 +967,8 @@ export class TransitionProcessor extends WorkerHost {
               to: customer.phPhoneNumber || customer.phone,
               token: workspace.smsAuthToken,
               trackingEmail: email,
-            })
+            }),
+            session
           );
           break;
         case TemplateType.WEBHOOK: //TODO:remove this from queue
@@ -918,22 +983,56 @@ export class TransitionProcessor extends WorkerHost {
           }
           break;
       }
+
+      // After send, update rate limit stuff
+      await this.journeyLocationsService.setMessageSent(
+        location,
+        owner,
+        queryRunner
+      );
+      await this.journeysService.rateLimitByMinuteIncrement(owner, journey);
     } else if (messageSendType === 'QUIET_ABORT') {
       // Record that the message was aborted
-      await this.webhooksService.insertMessageStatusToClickhouse([
-        {
-          stepId: stepID,
-          createdAt: new Date().toISOString(),
-          customerId: customerID,
-          event: 'aborted',
-          eventProvider: ClickHouseEventProvider.TRACKER,
-          messageId: currentStep.metadata.humanReadableName,
-          templateId: currentStep.metadata.template,
-          workspaceId: workspace.id,
-          processed: true,
-        },
-      ]);
-    } else if (messageSendType === 'QUIET_REQUEUE') {
+      await this.webhooksService.insertMessageStatusToClickhouse(
+        [
+          {
+            stepId: stepID,
+            createdAt: new Date().toISOString(),
+            customerId: customerID,
+            event: 'aborted',
+            eventProvider: ClickHouseEventProvider.TRACKER,
+            messageId: currentStep.metadata.humanReadableName,
+            templateId: currentStep.metadata.template,
+            workspaceId: workspace.id,
+            processed: true,
+          },
+        ],
+        session
+      );
+    } else if (messageSendType === 'LIMIT_HOLD') {
+      this.log(
+        `Unique customers messaged limit hit. Holding customer:${customer.id} at message step for journey: ${journey.id}`,
+        this.handleMessage.name,
+        session,
+        owner.id
+      );
+      await this.journeyLocationsService.unlock(
+        location,
+        session,
+        owner,
+        queryRunner
+      );
+      return;
+    } else if (
+      messageSendType === 'QUIET_REQUEUE' ||
+      messageSendType === 'LIMIT_REQUEUE'
+    ) {
+      this.log(
+        `Requeuing message for customer: ${customerID}, step: ${currentStep.id} for reason: ${messageSendType}`,
+        this.handleMessage.name,
+        session,
+        owner.id
+      );
       this.stepsService.requeueMessage(
         owner,
         currentStep,

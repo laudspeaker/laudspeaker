@@ -24,6 +24,7 @@ import { Audience } from '../audiences/entities/audience.entity';
 import * as __ from 'async-dash';
 import { CustomersService } from '../customers/customers.service';
 import { RavenInterceptor } from 'nest-raven';
+import { Resend } from 'resend';
 
 @Controller('email')
 export class EmailController {
@@ -65,6 +66,17 @@ export class EmailController {
     const mailgun = new Mailgun(FormData);
     const mg = mailgun.client({ username: 'api', key: key });
     return _.filter(await mg.domains.list(), ['state', 'active']);
+  }
+
+  @UseInterceptors(new RavenInterceptor())
+  @Get('resend/domains/:key')
+  @UseGuards(JwtAuthGuard)
+  async resendDomains(@Param('key') key: string) {
+    const resend = new Resend(key);
+    const response: any = await resend.domains.list();
+    const domains = response['data']['data'];
+    const verified = _.filter(domains, ['status', 'verified']);
+    return verified;
   }
 
   @UseInterceptors(new RavenInterceptor())

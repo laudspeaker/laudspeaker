@@ -48,6 +48,11 @@ const emailServiceToAdditionalInfoMap: Record<
   [EmailSendingService.SENDGRID]: [
     { key: "sendgridFromEmail", title: "Sending email" },
   ],
+  [EmailSendingService.RESEND]: [
+    { key: "resendSendingDomain", title: "Domain" },
+    { key: "resendSendingName", title: "Sending name" },
+    { key: "resendSendingEmail", title: "Sending email" },
+  ],
 };
 
 const MessageChannelTab = () => {
@@ -65,7 +70,13 @@ const MessageChannelTab = () => {
       (account?.workspace?.emailProvider === EmailSendingService.SENDGRID &&
         account?.workspace?.sendgridApiKey &&
         account?.workspace?.sendgridVerificationKey &&
-        account?.workspace?.sendgridFromEmail)
+        account?.workspace?.sendgridFromEmail) ||
+      (account?.workspace?.emailProvider === EmailSendingService.RESEND &&
+        account?.workspace?.resendAPIKey &&
+        account?.workspace?.resendSigningSecret &&
+        account?.workspace?.resendSendingDomain &&
+        account?.workspace?.resendSendingEmail &&
+        account?.workspace?.resendSendingName)
   );
 
   const isTwilioConnected = Boolean(

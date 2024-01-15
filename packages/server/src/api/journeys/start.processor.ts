@@ -9,16 +9,16 @@ import {
   OnWorkerEvent,
 } from '@nestjs/bullmq';
 import { Job, Queue } from 'bullmq';
-import { DataSource, FindCursor } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { InjectConnection } from '@nestjs/mongoose';
 import mongoose from 'mongoose';
 import * as _ from 'lodash';
 import * as Sentry from '@sentry/node';
 import { CustomersService } from '../customers/customers.service';
-import { Step } from '../steps/entities/step.entity';
 import { Account } from '../accounts/entities/accounts.entity';
 import { Journey } from './entities/journey.entity';
 import { JourneyLocationsService } from './journey-locations.service';
+import { JourneysService } from './journeys.service';
 
 const BATCH_SIZE = +process.env.START_BATCH_SIZE;
 
@@ -35,7 +35,9 @@ export class StartProcessor extends WorkerHost {
     @Inject(CustomersService)
     private readonly customersService: CustomersService,
     @Inject(JourneyLocationsService)
-    private readonly journeyLocationsService: JourneyLocationsService
+    private readonly journeyLocationsService: JourneyLocationsService,
+    @Inject(JourneysService)
+    private readonly journeysService: JourneysService
   ) {
     super();
   }
@@ -165,42 +167,18 @@ export class StartProcessor extends WorkerHost {
           },
           relations: ['teams.organization.workspaces'],
         });
-
-        const step = await queryRunner.manager.findOne(Step, {
-          where: {
-            id: job.data.stepID,
-          },
-        });
         const journey = await queryRunner.manager.findOne(Journey, {
           where: {
             id: job.data.journeyID,
           },
         });
-        await Promise.all(
-          customers.map(async (customer) => {
-            await this.journeyLocationsService.createAndLock(
-              journey,
-              customer,
-              step,
-              job.data.session,
-              account,
-              queryRunner
-            );
-          })
-        );
-        await this.transitionQueue.addBulk(
-          customers.map((customer) => {
-            return {
-              name: 'start',
-              data: {
-                ownerID: account.id,
-                journeyID: journey.id,
-                step: step,
-                session: job.data.session,
-                customerID: customer.id,
-              },
-            };
-          })
+        await this.journeysService.enrollCustomersInJourney(
+          account,
+          journey,
+          customers,
+          job.data.session,
+          queryRunner,
+          transactionSession
         );
         await transactionSession.commitTransaction();
         await queryRunner.commitTransaction();

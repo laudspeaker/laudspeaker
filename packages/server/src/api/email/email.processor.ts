@@ -185,20 +185,22 @@ export class MessageProcessor extends WorkerHost {
         )}`,
         `email.processor.ts:MessageProcessor.handleEmail()`
       );
-
-      await this.webhooksService.insertMessageStatusToClickhouse([
-        {
-          audienceId: job.data.audienceId,
-          createdAt: new Date().toISOString(),
-          customerId: job.data.customerId,
-          event: 'error',
-          eventProvider: job.data.eventProvider,
-          messageId: null,
-          templateId: String(job.data.templateId),
-          workspaceId: workspace?.id,
-          processed: false,
-        },
-      ]);
+      await this.webhooksService.insertMessageStatusToClickhouse(
+        [
+          {
+            audienceId: job.data.audienceId,
+            createdAt: new Date().toISOString(),
+            customerId: job.data.customerId,
+            event: 'error',
+            eventProvider: job.data.eventProvider,
+            messageId: null,
+            templateId: String(job.data.templateId),
+            workspaceId: workspace?.id,
+            processed: false,
+          },
+        ],
+        job.data.session
+      );
       return;
     }
 
@@ -229,19 +231,22 @@ export class MessageProcessor extends WorkerHost {
           });
           msg = sendgridMessage;
           console.log('Inside of message sending');
-          await this.webhooksService.insertMessageStatusToClickhouse([
-            {
-              audienceId: job.data.audienceId,
-              createdAt: new Date().toISOString(),
-              customerId: job.data.customerId,
-              event: 'sent',
-              eventProvider: ClickHouseEventProvider.SENDGRID,
-              messageId: sendgridMessage[0].headers['x-message-id'],
-              templateId: String(job.data.templateId),
-              workspaceId: workspace.id,
-              processed: false,
-            },
-          ]);
+          await this.webhooksService.insertMessageStatusToClickhouse(
+            [
+              {
+                audienceId: job.data.audienceId,
+                createdAt: new Date().toISOString(),
+                customerId: job.data.customerId,
+                event: 'sent',
+                eventProvider: ClickHouseEventProvider.SENDGRID,
+                messageId: sendgridMessage[0].headers['x-message-id'],
+                templateId: String(job.data.templateId),
+                workspaceId: workspace?.id,
+                processed: false,
+              },
+            ],
+            job.data.session
+          );
           break;
         case 'gmail':
           const transporter = nodemailer.createTransport({
@@ -283,21 +288,24 @@ export class MessageProcessor extends WorkerHost {
             'v:accountId': job.data.accountId,
           });
           msg = mailgunMessage;
-          await this.webhooksService.insertMessageStatusToClickhouse([
-            {
-              audienceId: job.data.audienceId,
-              createdAt: new Date().toISOString(),
-              customerId: job.data.customerId,
-              event: 'sent',
-              eventProvider: ClickHouseEventProvider.MAILGUN,
-              messageId: mailgunMessage.id
-                ? mailgunMessage.id.substring(1, mailgunMessage.id.length - 1)
-                : '',
-              templateId: String(job.data.templateId),
-              workspaceId: workspace.id,
-              processed: false,
-            },
-          ]);
+          await this.webhooksService.insertMessageStatusToClickhouse(
+            [
+              {
+                audienceId: job.data.audienceId,
+                createdAt: new Date().toISOString(),
+                customerId: job.data.customerId,
+                event: 'sent',
+                eventProvider: ClickHouseEventProvider.MAILGUN,
+                messageId: mailgunMessage.id
+                  ? mailgunMessage.id.substring(1, mailgunMessage.id.length - 1)
+                  : '',
+                templateId: String(job.data.templateId),
+                workspaceId: workspace?.id,
+                processed: false,
+              },
+            ],
+            job.data.session
+          );
           break;
       }
       if (job.data.trackingEmail) {
@@ -357,19 +365,22 @@ export class MessageProcessor extends WorkerHost {
         )}`,
         `email.processor.ts:MessageProcessor.handleSMS()`
       );
-      await this.webhooksService.insertMessageStatusToClickhouse([
-        {
-          audienceId: job.data.audienceId,
-          createdAt: new Date().toISOString(),
-          customerId: job.data.customerId,
-          event: 'error',
-          eventProvider: ClickHouseEventProvider.TWILIO,
-          messageId: null,
-          templateId: String(job.data.templateId),
-          workspaceId: workspace.id,
-          processed: false,
-        },
-      ]);
+      await this.webhooksService.insertMessageStatusToClickhouse(
+        [
+          {
+            audienceId: job.data.audienceId,
+            createdAt: new Date().toISOString(),
+            customerId: job.data.customerId,
+            event: 'error',
+            eventProvider: ClickHouseEventProvider.TWILIO,
+            messageId: null,
+            templateId: String(job.data.templateId),
+            workspaceId: workspace?.id,
+            processed: false,
+          },
+        ],
+        job.data.session
+      );
       return;
     }
     try {
@@ -380,19 +391,22 @@ export class MessageProcessor extends WorkerHost {
         to: job.data.to,
         statusCallback: `${process.env.TWILIO_WEBHOOK_ENDPOINT}?audienceId=${job.data.audienceId}&customerId=${job.data.customerId}&templateId=${job.data.templateId}`,
       });
-      await this.webhooksService.insertMessageStatusToClickhouse([
-        {
-          audienceId: job.data.audienceId,
-          createdAt: new Date().toISOString(),
-          customerId: job.data.customerId,
-          event: 'sent',
-          eventProvider: ClickHouseEventProvider.TWILIO,
-          messageId: message.sid,
-          templateId: String(job.data.templateId),
-          workspaceId: workspace.id,
-          processed: false,
-        },
-      ]);
+      await this.webhooksService.insertMessageStatusToClickhouse(
+        [
+          {
+            audienceId: job.data.audienceId,
+            createdAt: new Date().toISOString(),
+            customerId: job.data.customerId,
+            event: 'sent',
+            eventProvider: ClickHouseEventProvider.TWILIO,
+            messageId: message.sid,
+            templateId: String(job.data.templateId),
+            workspaceId: workspace?.id,
+            processed: false,
+          },
+        ],
+        job.data.session
+      );
       if (job.data.trackingEmail) {
         this.phClient.capture({
           distinctId: job.data.trackingEmail,
@@ -453,19 +467,22 @@ export class MessageProcessor extends WorkerHost {
         )}`,
         `email.processor.ts:MessageProcessor.handleFirebase()`
       );
-      await this.webhooksService.insertMessageStatusToClickhouse([
-        {
-          workspaceId: workspace.id,
-          event: 'error',
-          createdAt: new Date().toISOString(),
-          eventProvider: ClickHouseEventProvider.PUSH,
-          messageId: null,
-          audienceId: job.data.args.audienceId,
-          customerId: job.data.args.customerId,
-          templateId: String(job.data.args.templateId),
-          processed: false,
-        },
-      ]);
+      await this.webhooksService.insertMessageStatusToClickhouse(
+        [
+          {
+            workspaceId: workspace?.id,
+            event: 'error',
+            createdAt: new Date().toISOString(),
+            eventProvider: ClickHouseEventProvider.PUSH,
+            messageId: null,
+            audienceId: job.data.args.audienceId,
+            customerId: job.data.args.customerId,
+            templateId: String(job.data.args.templateId),
+            processed: false,
+          },
+        ],
+        job.data.session
+      );
       return;
     }
     try {
@@ -508,19 +525,22 @@ export class MessageProcessor extends WorkerHost {
           },
         },
       });
-      await this.webhooksService.insertMessageStatusToClickhouse([
-        {
-          audienceId: job.data.audienceId,
-          customerId: job.data.customerId,
-          createdAt: new Date().toISOString(),
-          event: 'sent',
-          eventProvider: ClickHouseEventProvider.PUSH,
-          messageId: messageId,
-          templateId: String(job.data.templateId),
-          workspaceId: workspace.id,
-          processed: false,
-        },
-      ]);
+      await this.webhooksService.insertMessageStatusToClickhouse(
+        [
+          {
+            audienceId: job.data.audienceId,
+            customerId: job.data.customerId,
+            createdAt: new Date().toISOString(),
+            event: 'sent',
+            eventProvider: ClickHouseEventProvider.PUSH,
+            messageId: messageId,
+            templateId: String(job.data.templateId),
+            workspaceId: workspace?.id,
+            processed: false,
+          },
+        ],
+        job.data.session
+      );
       if (job.data.trackingEmail) {
         this.phClient.capture({
           distinctId: job.data.trackingEmail,

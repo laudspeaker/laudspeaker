@@ -52,5 +52,10 @@ export default interface Account {
     posthogFirebaseDeviceTokenKey?: string[];
     pushPlatforms: ConnectedPushFirebasePlatforms;
     pk?: UserPK;
+    resendAPIKey: string;
+    resendSigningSecret: string;
+    resendSendingDomain: string;
+    resendSendingName: string;
+    resendSendingEmail: string;
   };
 }

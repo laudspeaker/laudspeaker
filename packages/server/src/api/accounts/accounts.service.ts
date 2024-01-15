@@ -248,7 +248,11 @@ export class AccountsService extends BaseJwtHelper {
       }
     }
 
-    if (updateUserDto.sendgridFromEmail && updateUserDto.sendgridApiKey) {
+    if (
+      updateUserDto.emailProvider === 'sendgrid' &&
+      updateUserDto.sendgridFromEmail &&
+      updateUserDto.sendgridApiKey
+    ) {
       try {
         this.sgMailService.setApiKey(updateUserDto.sendgridApiKey);
         await this.sgMailService.send({
@@ -378,7 +382,6 @@ export class AccountsService extends BaseJwtHelper {
     await queryRunner.startTransaction();
     let err;
     try {
-      let updatedUser: Account;
       const workspace = oldUser.teams?.[0]?.organization?.workspaces?.[0];
       for (const key of Object.keys(updateUserDto)) {
         if (key === 'pushPlatforms' && updateUserDto[key]) {
@@ -392,11 +395,67 @@ export class AccountsService extends BaseJwtHelper {
 
       oldUser.password = password;
       oldUser.verified = verified;
-      workspace.sendgridVerificationKey =
-        verificationKey || workspace.sendgridVerificationKey;
 
-      updatedUser = await queryRunner.manager.save(oldUser);
-      await queryRunner.manager.save(workspace);
+      const {
+        timezoneUTCOffset,
+        mailgunAPIKey,
+        sendingDomain,
+        sendingEmail,
+        sendingName,
+        slackTeamId,
+        posthogApiKey,
+        posthogProjectId,
+        posthogHostUrl,
+        posthogSmsKey,
+        posthogEmailKey,
+        posthogFirebaseDeviceTokenKey,
+        emailProvider,
+        testSendingEmail,
+        testSendingName,
+        sendgridApiKey,
+        sendgridFromEmail,
+        smsAccountSid,
+        smsAuthToken,
+        smsFrom,
+        pushPlatforms,
+        resendSendingDomain,
+        resendAPIKey,
+        resendSendingName,
+        resendSendingEmail,
+      } = updateUserDto;
+
+      const newWorkspace = {
+        id: workspace.id,
+        timezoneUTCOffset,
+        mailgunAPIKey,
+        sendingDomain,
+        sendingEmail,
+        sendingName,
+        slackTeamId,
+        posthogApiKey,
+        posthogProjectId,
+        posthogHostUrl,
+        posthogSmsKey,
+        posthogEmailKey,
+        posthogFirebaseDeviceTokenKey,
+        emailProvider,
+        testSendingEmail,
+        testSendingName,
+        sendgridApiKey,
+        sendgridFromEmail,
+        sendgridVerificationKey: verificationKey,
+        smsAccountSid,
+        smsAuthToken,
+        smsFrom,
+        pushPlatforms,
+        resendSendingDomain,
+        resendAPIKey,
+        resendSendingName,
+        resendSendingEmail,
+      };
+
+      const updatedUser = await queryRunner.manager.save(oldUser);
+      await queryRunner.manager.save(Workspaces, newWorkspace);
 
       if (needEmailUpdate)
         await this.authService.requestVerification(
@@ -417,8 +476,8 @@ export class AccountsService extends BaseJwtHelper {
     } finally {
       await queryRunner.release();
       await transactionSession.endSession();
-      if (err) throw err;
     }
+    if (err) throw err;
   }
 
   async updateApiKey(user: Express.User, session: string): Promise<string> {

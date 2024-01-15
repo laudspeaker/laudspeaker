@@ -425,6 +425,13 @@ export class SegmentsService {
       });
 
       this.debug(
+        `clicked save segment\n`,
+        this.create.name,
+        session,
+        account.id
+      );
+
+      this.debug(
         `SegmentDTO is: ${createSegmentDTO}`,
         this.create.name,
         session,
@@ -557,7 +564,6 @@ export class SegmentsService {
           collectionPrefix
         );
 
-      //console.log("customersInSegment name is", customersInSegment);
       if (!customersInSegment || customersInSegment.length === 0) {
         return { size: 0, total: 1 };
       }
@@ -591,7 +597,6 @@ export class SegmentsService {
           collectionPrefix
         );
 
-      //console.log("customersInSegment name is", customersInSegment);
       if (!customersInSegment || customersInSegment.length === 0) {
         return { size: 0, total: 1 };
       }

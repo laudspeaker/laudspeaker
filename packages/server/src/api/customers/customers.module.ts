@@ -44,6 +44,9 @@ import { SegmentCustomers } from '../segments/entities/segment-customers.entity'
     BullModule.registerQueue({
       name: 'imports',
     }),
+    BullModule.registerQueue({
+      name: 'events_pre',
+    }),
     AccountsModule,
     SegmentsModule,
     AudiencesModule,

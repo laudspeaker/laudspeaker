@@ -11,9 +11,9 @@ import twilio from 'twilio';
 import { PostHog } from 'posthog-node';
 import * as admin from 'firebase-admin';
 import { WebClient } from '@slack/web-api';
-import { InjectRepository } from '@nestjs/typeorm';
 import { Account } from '@/api/accounts/entities/accounts.entity';
 import { Repository } from 'typeorm';
+import { Resend } from 'resend';
 
 export enum MessageType {
   SMS = 'sms',
@@ -236,6 +236,48 @@ export class MessageSender {
             event: 'sent',
             eventProvider: ClickHouseEventProvider.SENDGRID,
             messageId: sendgridMessage[0].headers['x-message-id'],
+            templateId: String(templateID),
+            workspaceId: workspace.id,
+            processed: false,
+          },
+        ];
+        break;
+      case 'resend':
+        const resend = new Resend(key);
+        const resendMessage = await resend.emails.send({
+          from: `${from} <${email}@${domain}>`,
+          to: to,
+          cc: cc,
+          subject: subjectWithInsertedTags,
+          html: textWithInsertedTags,
+          tags: [
+            {
+              name: 'stepId',
+              value: stepID,
+            },
+            {
+              name: 'customerId',
+              value: customerID,
+            },
+            {
+              name: 'templateId',
+              value: String(templateID),
+            },
+            {
+              name: 'accountId',
+              value: accountID,
+            },
+          ],
+        });
+        msg = resendMessage;
+        ret = [
+          {
+            stepId: stepID,
+            createdAt: new Date().toISOString(),
+            customerId: customerID,
+            event: 'sent',
+            eventProvider: ClickHouseEventProvider.RESEND,
+            messageId: resendMessage.data ? resendMessage.data.id : '',
             templateId: String(templateID),
             workspaceId: workspace.id,
             processed: false,

@@ -1,7 +1,4 @@
-import {
-  Account,
-  PushFirebasePlatforms,
-} from '@/api/accounts/entities/accounts.entity';
+import { PushFirebasePlatforms } from '@/api/accounts/entities/accounts.entity';
 import { Integration } from '@/api/integrations/entities/integration.entity';
 import { Journey } from '@/api/journeys/entities/journey.entity';
 import { Organization } from '@/api/organizations/entities/organization.entity';
@@ -18,7 +15,6 @@ import {
   JoinColumn,
   ManyToOne,
   OneToMany,
-  OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
@@ -153,4 +149,16 @@ export class Workspaces extends BaseEntity {
     },
   })
   public pushPlatforms: PushFirebasePlatforms;
+
+  @Column({ type: 'varchar', nullable: true })
+  resendSendingDomain?: string;
+
+  @Column({ type: 'varchar', nullable: true })
+  resendAPIKey?: string;
+
+  @Column({ type: 'varchar', nullable: true })
+  resendSendingName?: string;
+
+  @Column({ type: 'varchar', nullable: true })
+  resendSendingEmail?: string;
 }

@@ -46,9 +46,8 @@ import {
 import {
   AnalyticsEvent,
   AnalyticsEventCondition,
+  AttributeChangeEvent,
   AttributeConditions,
-  AttributeGroup,
-  Branch,
   Channel,
   ComponentEvent,
   CustomComponentStepMetadata,
@@ -67,7 +66,6 @@ import { ExitStepMetadata } from '../steps/types/step.interface';
 import { TimeDelayStepMetadata } from '../steps/types/step.interface';
 import { TimeWindow } from '../steps/types/step.interface';
 import { TimeWindowStepMetadata } from '../steps/types/step.interface';
-import { CustomerAttribute } from '../steps/types/step.interface';
 import { AttributeSplitMetadata } from '../steps/types/step.interface';
 import { Temporal } from '@js-temporal/polyfill';
 import generateName from '@good-ghosting/random-name-generator';
@@ -78,7 +76,7 @@ import {
 import { JourneyLocationsService } from './journey-locations.service';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
-import { where } from 'liquidjs/dist/builtin/filters';
+import { RedisService } from '@liaoliaots/nestjs-redis';
 
 export enum JourneyStatus {
   ACTIVE = 'Active',
@@ -118,7 +116,8 @@ export class JourneysService {
     @InjectConnection() private readonly connection: mongoose.Connection,
     @Inject(JourneyLocationsService)
     private readonly journeyLocationsService: JourneyLocationsService,
-    @InjectQueue('transition') private readonly transitionQueue: Queue
+    @InjectQueue('transition') private readonly transitionQueue: Queue,
+    @Inject(RedisService) private redisService: RedisService
   ) {}
 
   log(message, method, session, user = 'ANONYMOUS') {
@@ -178,6 +177,48 @@ export class JourneysService {
         user: user,
       })
     );
+  }
+
+  /**
+   * Gets all journeys associated with a user.
+   *
+   * @param account
+   * @param name
+   * @param session
+   * @returns
+   */
+
+  async getJourneys(account: Account, session: string) {
+    console.log('In getJourneys');
+
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const journeys = await queryRunner.manager.find(Journey, {
+        where: {
+          workspace: {
+            id: account.teams?.[0]?.organization?.workspaces?.[0].id,
+          },
+        },
+      });
+
+      // Map each Journey object to its id
+      const journeyIds = journeys.map((journey) => journey.id);
+
+      // Commit the transaction before returning the data
+      await queryRunner.commitTransaction();
+
+      return journeyIds;
+    } catch (error) {
+      // Handle any errors that occur during the transaction
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      // Release the query runner which will return it to the connection pool
+      await queryRunner.release();
+    }
   }
 
   /**
@@ -539,10 +580,10 @@ export class JourneysService {
       }
       switch (change) {
         case 'ADD':
-          await this.enrollCustomerInJourney(
+          await this.enrollCustomersInJourney(
             account,
             journey,
-            customer,
+            [customer],
             session,
             queryRunner,
             clientSession
@@ -562,18 +603,21 @@ export class JourneysService {
   }
 
   /**
-   * Enroll customer in a journey.
-   * Adds to first step in journey.
+   * Enroll customers in a journey.
+   * Adds customer to first step in journey and adds customer to transition processor.
    * WARNING: this method does not check if the journey **should** include the customer.
+   * NOTE: this method DOES check the rate limiting for unique enrolled customers.
+   *
    */
-  async enrollCustomerInJourney(
+  async enrollCustomersInJourney(
     account: Account,
     journey: Journey,
-    customer: CustomerDocument,
+    customers: CustomerDocument[],
     session: string,
     queryRunner: QueryRunner,
     clientSession: ClientSession
   ): Promise<void> {
+    const jobs: { name: string; data: any }[] = [];
     const step = await this.stepsService.findByJourneyAndType(
       account,
       journey.id,
@@ -581,37 +625,51 @@ export class JourneysService {
       session,
       queryRunner
     );
-    await this.journeyLocationsService.createAndLock(
-      journey,
-      customer,
-      step,
-      session,
-      account,
-      queryRunner
-    );
-    await this.transitionQueue.add('start', {
-      ownerID: account.id,
-      journeyID: journey.id,
-      step: step,
-      session: session,
-      customerID: customer.id,
-    });
-
-    await this.CustomerModel.updateOne(
-      { _id: customer._id },
-      {
-        $addToSet: {
-          journeys: journey.id,
-        },
-        $set: {
-          journeyEnrollmentsDates: {
-            [journey.id]: new Date().toUTCString(),
-          },
-        },
+    for (const customer of customers) {
+      if (
+        await this.rateLimitEntryByUniqueEnrolledCustomers(
+          account,
+          journey,
+          queryRunner
+        )
+      ) {
+        this.log(
+          `Max customer limit reached on journey: ${journey.id}. Preventing customer: ${customer.id} from being enrolled.`,
+          this.enrollCustomersInJourney.name,
+          session,
+          account.id
+        );
+        continue;
       }
-    )
-      .session(clientSession)
-      .exec();
+      await this.journeyLocationsService.createAndLock(
+        journey,
+        customer,
+        step,
+        session,
+        account,
+        queryRunner
+      );
+      const job = {
+        name: 'start',
+        data: {
+          ownerID: account.id,
+          journeyID: journey.id,
+          step: step,
+          session: session,
+          customerID: customer.id,
+        },
+      };
+      jobs.push(job);
+      await this.customersService.updateJourneyList(
+        [customer],
+        journey.id,
+        session,
+        clientSession
+      );
+    }
+    if (jobs.length) {
+      await this.transitionQueue.addBulk(jobs);
+    }
   }
 
   /**
@@ -1586,11 +1644,44 @@ export class JourneysService {
               } else if (
                 relevantEdges[i].data['branch'].type === BranchType.WU_ATTRIBUTE
               ) {
+                const branch = new EventBranch();
+                branch.events = [];
+                branch.relation =
+                  relevantEdges[i].data['branch'].conditions[0].relationToNext;
+                branch.index = i;
+                branch.destination = nodes.filter((node) => {
+                  return node.id === relevantEdges[i].target;
+                })[0].data.stepId;
+                for (
+                  let eventsIndex = 0;
+                  eventsIndex <
+                  relevantEdges[i].data['branch'].conditions.length;
+                  eventsIndex++
+                ) {
+                  const event = new AttributeChangeEvent();
+                  event.attributeName =
+                    relevantEdges[i].data['branch'].conditions[eventsIndex][
+                      'attributeName'
+                    ].split(';;')[0];
+                  event.happenCondition =
+                    relevantEdges[i].data['branch'].conditions[eventsIndex][
+                      'happenCondition'
+                    ];
+                  if (event.happenCondition === 'changed to') {
+                    event.value =
+                      relevantEdges[i].data['branch'].conditions[eventsIndex][
+                        'value'
+                      ];
+                    event.valueType =
+                      relevantEdges[i].data['branch'].conditions[eventsIndex][
+                        'valueType'
+                      ];
+                  }
+
+                  branch.events.push(event);
+                }
+                metadata.branches.push(branch);
               }
-            }
-            if (nodes[i].id === '226a7112-96ec-477d-a1ac-d604b4f04301') {
-              this.logger.warn('SAVE TEST 3 After processing');
-              this.logger.warn(journey);
             }
             break;
           case NodeType.JUMP_TO:
@@ -2052,5 +2143,124 @@ export class JourneysService {
       this.error(err, this.findAllMessages.name, session, account.email);
       throw err;
     }
+  }
+
+  /**
+   * Checks if limit for unique customers on the given journey has been reached.
+   *
+   * @returns boolean
+   *    true if rate limit reached (aka new customer can not be added)
+   *    false if rate limit not yet reached (aka new customer can be added)
+   */
+  async rateLimitEntryByUniqueEnrolledCustomers(
+    owner: Account,
+    journey: Journey,
+    queryRunner?: QueryRunner
+  ) {
+    const maxEntriesSettings = journey?.journeySettings?.maxEntries;
+    if (maxEntriesSettings && maxEntriesSettings.enabled) {
+      const maxEnrollment = parseInt(maxEntriesSettings.maxEntries);
+      const currentEnrollment =
+        await this.journeyLocationsService.getNumberOfEnrolledCustomers(
+          owner,
+          journey,
+          queryRunner
+        );
+
+      if (currentEnrollment >= maxEnrollment) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Reads the settings of a journey and returns an array with two keys
+   * @returns [boolean, number | undefined] where:
+   *    first item: whether rate limit of unique customers able to receive messsages is enabled
+   *    second item: max number of unique customers able to receive messages, if enabled
+   */
+  rateLimitByCustomersMessagedEnabled(
+    journey: Journey
+  ): readonly [boolean, number | undefined] {
+    const maxMessageSends = journey?.journeySettings?.maxMessageSends;
+    if (maxMessageSends.enabled && maxMessageSends.maxUsersReceive != null) {
+      const customerLimit = parseInt(maxMessageSends.maxUsersReceive);
+      return [true, customerLimit] as const;
+    }
+    return [false, undefined] as const;
+  }
+
+  /** */
+  async rateLimitByCustomersMessaged(
+    owner: Account,
+    journey: Journey,
+    session: string,
+    queryRunner?: QueryRunner
+  ) {
+    const [enabled, customerLimit] =
+      this.rateLimitByCustomersMessagedEnabled(journey);
+    if (enabled) {
+      const currentUniqueCustomers =
+        await this.journeyLocationsService.getNumberOfUniqueCustomersMessaged(
+          owner,
+          journey,
+          queryRunner
+        );
+      if (currentUniqueCustomers >= customerLimit) {
+        this.log(
+          `Unique customers messaged limit hit. journey: ${journey.id} limit:${customerLimit} currentUniqueCustomers: ${currentUniqueCustomers}`,
+          this.rateLimitByCustomersMessaged.name,
+          session,
+          owner.id
+        );
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Reads the settings of a journey and returns an array with two keys
+   * @returns [boolean, number | undefined] where:
+   *    first item: whether rate limit messsage sends per minute is enabled
+   *    second item: max number of message sends per minute, if enabled
+   */
+  rateLimitByMinuteEnabled(
+    journey: Journey
+  ): readonly [boolean, number | undefined] {
+    const maxMessageSends = journey?.journeySettings?.maxMessageSends;
+    if (maxMessageSends.enabled && maxMessageSends.maxSendRate != null) {
+      const rateLimit = parseInt(maxMessageSends.maxSendRate);
+      return [true, rateLimit] as const;
+    }
+    return [false, undefined] as const;
+  }
+
+  async rateLimitByMinute(owner: Account, journey: Journey) {
+    const [enabled, rateLimit] = this.rateLimitByMinuteEnabled(journey);
+    if (enabled) {
+      const now = new Date();
+      const currValue = parseInt(
+        await this.redisService
+          .getClient()
+          .get(`${owner.id}:${journey.id}:${now.getUTCMinutes()}`)
+      );
+      if (!isNaN(currValue) && currValue >= rateLimit) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  async rateLimitByMinuteIncrement(owner: Account, journey: Journey) {
+    const now = new Date();
+    const rateLimitKey = `${owner.id}:${journey.id}:${now.getUTCMinutes()}`;
+    await this.redisService
+      .getClient()
+      .multi()
+      .incr(rateLimitKey)
+      .expire(rateLimitKey, 59)
+      .exec();
   }
 }
