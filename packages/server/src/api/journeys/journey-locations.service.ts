@@ -368,7 +368,7 @@ export class JourneyLocationsService {
 
           customer: customer.id,
         },
-        relations: ['owner', 'journey', 'step'],
+        relations: ['workspace', 'journey', 'step'],
       });
     } else {
       return await this.journeyLocationsRepository.findOne({
@@ -378,7 +378,7 @@ export class JourneyLocationsService {
 
           customer: customer.id,
         },
-        relations: ['owner', 'journey', 'step'],
+        relations: ['workspace', 'journey', 'step'],
       });
     }
   }

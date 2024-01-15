@@ -561,8 +561,9 @@ export class EventsProcessor extends WorkerHost {
 
     try {
       //Account associated with event
-      const account: Account = await queryRunner.manager.findOneBy(Account, {
-        id: job.data.accountID,
+      const account: Account = await queryRunner.manager.findOne(Account, {
+        where: { id: job.data.accountID },
+        relations: ['teams.organization.workspaces'],
       });
       const journey: Journey = await queryRunner.manager.findOneBy(Journey, {
         id: job.data.journeyID,
@@ -610,7 +611,7 @@ export class EventsProcessor extends WorkerHost {
             type: StepType.WAIT_UNTIL_BRANCH,
             journey: { id: journey.id },
           },
-          relations: ['owner', 'journey'],
+          relations: ['workspace.organization.owner', 'journey'],
         })
       ).filter((el) => el?.metadata?.branches !== undefined);
       for (let stepIndex = 0; stepIndex < steps.length; stepIndex++) {

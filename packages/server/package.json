@@ -104,6 +104,7 @@
     "rxjs": "^7.2.0",
     "socket.io-client": "^4.6.1",
     "starkbank-ecdsa": "^1.1.5",
+    "svix": "^1.15.0",
     "sync-fetch": "^0.4.2",
     "tr-nestjs-clickhouse": "^1.1.1",
     "traverse": "0.6.7",

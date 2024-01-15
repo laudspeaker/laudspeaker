@@ -157,6 +157,9 @@ export class Workspaces extends BaseEntity {
   resendAPIKey?: string;
 
   @Column({ type: 'varchar', nullable: true })
+  resendSigningSecret?: string;
+
+  @Column({ type: 'varchar', nullable: true })
   resendSendingName?: string;
 
   @Column({ type: 'varchar', nullable: true })

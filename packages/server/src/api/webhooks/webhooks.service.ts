@@ -23,6 +23,7 @@ import { KAFKA_TOPIC_MESSAGE_STATUS } from '../kafka/constants';
 import { EventWebhook } from '@sendgrid/eventwebhook';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
+import { Webhook } from 'svix';
 
 export enum ClickHouseEventProvider {
   MAILGUN = 'mailgun',
@@ -165,7 +166,7 @@ export class WebhooksService {
         where: {
           id: item.stepId,
         },
-        relations: ['workspaces'],
+        relations: ['workspace'],
       });
 
       if (step) break;
@@ -253,7 +254,7 @@ export class WebhooksService {
       where: {
         id: stepId,
       },
-      relations: ['owner'],
+      relations: ['workspace'],
     });
     const clickHouseRecord: ClickHouseMessage = {
       workspaceId: step.workspace.id,
@@ -267,6 +268,38 @@ export class WebhooksService {
       createdAt: new Date().toISOString(),
     };
     await this.insertMessageStatusToClickhouse([clickHouseRecord], session);
+  }
+
+  public async processResendData(req: any, body: any, session: string) {
+    const step = await this.stepRepository.findOne({
+      where: {
+        id: body.data.tags.stepId,
+      },
+      relations: ['workspace'],
+    });
+
+    const payload = req.rawBody.toString('utf8');
+    const headers = req.headers;
+
+    const webhook = new Webhook(step.workspace.resendSigningSecret);
+
+    try {
+      const event: any = webhook.verify(payload, headers);
+      const clickHouseRecord: ClickHouseMessage = {
+        workspaceId: step.workspace.id,
+        stepId: event.data.tags.stepId,
+        customerId: event.data.tags.customerId,
+        templateId: String(event.data.tags.templateId),
+        messageId: event.data.email_id,
+        event: event.type.replace('email.', ''),
+        eventProvider: ClickHouseEventProvider.RESEND,
+        processed: false,
+        createdAt: new Date().toISOString(),
+      };
+      await this.insertMessageStatusToClickhouse([clickHouseRecord], session);
+    } catch (e) {
+      throw new ForbiddenException(e, 'Invalid signature');
+    }
   }
 
   public async processMailgunData(

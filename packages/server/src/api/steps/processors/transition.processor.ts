@@ -178,6 +178,7 @@ export class TransitionProcessor extends WorkerHost {
           await this.handleExit(
             job.data.ownerID,
             job.data.journeyID,
+            job.data.step.id,
             job.data.session,
             job.data.customerID,
             queryRunner
@@ -1228,12 +1229,21 @@ export class TransitionProcessor extends WorkerHost {
   async handleExit(
     ownerID: string,
     journeyID: string,
+    stepID: string,
     session: string,
     customerID: string,
     queryRunner: QueryRunner
   ) {
     const owner = await queryRunner.manager.findOne(Account, {
       where: { id: ownerID },
+      relations: ['teams.organization.workspaces'],
+    });
+
+    const currentStep = await queryRunner.manager.findOne(Step, {
+      where: {
+        id: stepID,
+        type: StepType.EXIT,
+      },
     });
 
     const journey = await this.journeysService.findByID(
@@ -1245,9 +1255,30 @@ export class TransitionProcessor extends WorkerHost {
 
     const customer = await this.customersService.findById(owner, customerID);
 
-    await this.journeyLocationsService.findAndUnlock(
+    const location = await this.journeyLocationsService.findForWrite(
       journey,
       customer,
+      session,
+      owner,
+      queryRunner
+    );
+
+    if (!location) {
+      this.warn(
+        `${JSON.stringify({
+          warning: 'Customer not in step',
+          customerID,
+          currentStep,
+        })}`,
+        this.handleExit.name,
+        session,
+        owner.email
+      );
+      return;
+    }
+
+    await this.journeyLocationsService.unlock(
+      location,
       session,
       owner,
       queryRunner

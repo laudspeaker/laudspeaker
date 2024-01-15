@@ -420,6 +420,7 @@ export class AccountsService extends BaseJwtHelper {
         pushPlatforms,
         resendSendingDomain,
         resendAPIKey,
+        resendSigningSecret,
         resendSendingName,
         resendSendingEmail,
       } = updateUserDto;
@@ -450,6 +451,7 @@ export class AccountsService extends BaseJwtHelper {
         pushPlatforms,
         resendSendingDomain,
         resendAPIKey,
+        resendSigningSecret,
         resendSendingName,
         resendSendingEmail,
       };
