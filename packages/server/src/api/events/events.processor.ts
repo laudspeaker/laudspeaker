@@ -135,7 +135,7 @@ export class EventsProcessor extends WorkerHost {
   async handleEvent(job: Job<any, any, string>): Promise<any> {
     const session = randomUUID();
     let err: any, branch: number;
-    let stepsToQueue: Step[] = [];
+    const stepsToQueue: Step[] = [];
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -144,8 +144,9 @@ export class EventsProcessor extends WorkerHost {
 
     try {
       //Account associated with event
-      const account: Account = await queryRunner.manager.findOneBy(Account, {
-        id: job.data.accountID,
+      const account: Account = await queryRunner.manager.findOne(Account, {
+        where: { id: job.data.accountID },
+        relations: ['teams.organization.workspaces'],
       });
       // Multiple journeys can consume the same event, but only one step per journey,
       // so we create an event job for every journey
@@ -198,14 +199,10 @@ export class EventsProcessor extends WorkerHost {
             type: StepType.WAIT_UNTIL_BRANCH,
             journey: { id: journey.id },
           },
-          relations: ['owner', 'journey'],
+          relations: ['workspace.organization.owner', 'journey'],
         })
       ).filter((el) => el?.metadata?.branches !== undefined);
-      step_loop: for (
-        let stepIndex = 0;
-        stepIndex < steps.length;
-        stepIndex++
-      ) {
+      for (let stepIndex = 0; stepIndex < steps.length; stepIndex++) {
         for (
           let branchIndex = 0;
           branchIndex < steps[stepIndex].metadata.branches.length;
@@ -472,7 +469,7 @@ export class EventsProcessor extends WorkerHost {
 
       // If customer isn't in step, we throw error, otherwise we queue and consume event
       if (stepsToQueue.length) {
-        let stepToQueue;
+        let stepToQueue: Step;
         for (let i = 0; i < stepsToQueue.length; i++) {
           if (String(location.step) === stepsToQueue[i].id) {
             stepToQueue = stepsToQueue[i];
@@ -484,7 +481,7 @@ export class EventsProcessor extends WorkerHost {
             step: stepToQueue,
             branch: branch,
             customerID: customer.id,
-            ownerID: stepToQueue.owner.id,
+            ownerID: stepToQueue.workspace.organization.owner.id,
             session: job.data.session,
             journeyID: journey.id,
             event: job.data.event.event,
@@ -555,7 +552,7 @@ export class EventsProcessor extends WorkerHost {
   async handleAttributeChange(job: Job<any, any, string>): Promise<any> {
     const session = randomUUID();
     let err: any, branch: number;
-    let stepsToQueue: Step[] = [];
+    const stepsToQueue: Step[] = [];
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -616,18 +613,14 @@ export class EventsProcessor extends WorkerHost {
           relations: ['owner', 'journey'],
         })
       ).filter((el) => el?.metadata?.branches !== undefined);
-      step_loop: for (
-        let stepIndex = 0;
-        stepIndex < steps.length;
-        stepIndex++
-      ) {
+      for (let stepIndex = 0; stepIndex < steps.length; stepIndex++) {
         for (
           let branchIndex = 0;
           branchIndex < steps[stepIndex].metadata.branches.length;
           branchIndex++
         ) {
           const eventEvaluation: boolean[] = [];
-          event_loop: for (
+          for (
             let eventIndex = 0;
             eventIndex <
             steps[stepIndex].metadata.branches[branchIndex].events.length;
@@ -774,7 +767,7 @@ export class EventsProcessor extends WorkerHost {
 
   async handleMessage(job: Job<any, any, string>): Promise<any> {
     let err: any, branch: number;
-    let stepsToQueue: Step[] = [];
+    const stepsToQueue: Step[] = [];
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -838,11 +831,7 @@ export class EventsProcessor extends WorkerHost {
           relations: ['owner', 'journey'],
         })
       ).filter((el) => el?.metadata?.branches !== undefined);
-      step_loop: for (
-        let stepIndex = 0;
-        stepIndex < steps.length;
-        stepIndex++
-      ) {
+      for (let stepIndex = 0; stepIndex < steps.length; stepIndex++) {
         for (
           let branchIndex = 0;
           branchIndex < steps[stepIndex].metadata.branches.length;

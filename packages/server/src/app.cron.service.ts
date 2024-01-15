@@ -54,6 +54,7 @@ import * as _ from 'lodash';
 import { JourneyLocationsService } from './api/journeys/journey-locations.service';
 import { Journey } from './api/journeys/entities/journey.entity';
 import { EntryTiming } from './api/journeys/types/additional-journey-settings.interface';
+import { OrganizationInvites } from './api/organizations/entities/organization-invites.entity';
 import { CustomersService } from './api/customers/customers.service';
 import { JourneyLocation } from './api/journeys/entities/journey-location.entity';
 import { Requeue } from './api/steps/entities/requeue.entity';
@@ -92,6 +93,8 @@ export class CronService {
     private verificationRepository: Repository<Verification>,
     @InjectRepository(Recovery)
     public readonly recoveryRepository: Repository<Recovery>,
+    @InjectRepository(OrganizationInvites)
+    public organizationInvitesRepository: Repository<OrganizationInvites>,
     @Inject(JourneysService) private journeysService: JourneysService,
     @Inject(IntegrationsService)
     private integrationsService: IntegrationsService,
@@ -193,12 +196,12 @@ export class CronService {
 
             if (keys[key]) {
               keys[key].push(obj[key]);
-              keyCustomerMap[key].add(customer.ownerId);
+              keyCustomerMap[key].add(customer.workspaceId);
               continue;
             }
 
             keys[key] = [obj[key]];
-            keyCustomerMap[key] = new Set([customer.ownerId]);
+            keyCustomerMap[key] = new Set([customer.workspaceId]);
           }
         });
         current += BATCH_SIZE;
@@ -221,16 +224,16 @@ export class CronService {
           if (isDateString(validItem)) type = 'Date';
         }
 
-        for (const ownerId of keyCustomerMap[key].values()) {
+        for (const workspaceId of keyCustomerMap[key].values()) {
           await this.customerKeysModel
             .updateOne(
-              { key, ownerId },
+              { key, workspaceId },
               {
                 $set: {
                   key,
                   type,
                   isArray,
-                  ownerId,
+                  workspaceId,
                 },
               },
               { upsert: true }
@@ -252,7 +255,7 @@ export class CronService {
         .estimatedDocumentCount()
         .exec();
 
-      const keys: Record<string, { value: any; ownerId: string }[]> = {};
+      const keys: Record<string, { value: any; workspaceId: string }[]> = {};
 
       while (current < documentsCount) {
         const batch = await this.eventModel
@@ -262,17 +265,17 @@ export class CronService {
           .exec();
 
         batch.forEach((event) => {
-          const ownerId = event.ownerId;
+          const workspaceId = event.workspaceId;
           const obj = (event.toObject() as any)?.event || {};
           for (const key of Object.keys(obj)) {
             if (KEYS_TO_SKIP.includes(key)) continue;
 
             if (keys[key]) {
-              keys[key].push({ value: obj[key], ownerId });
+              keys[key].push({ value: obj[key], workspaceId });
               continue;
             }
 
-            keys[key] = [{ value: obj[key], ownerId }];
+            keys[key] = [{ value: obj[key], workspaceId }];
           }
         });
 
@@ -302,7 +305,7 @@ export class CronService {
             key,
             type,
             isArray,
-            ownerId: validItem.ownerId,
+            workspaceId: validItem.workspaceId,
           };
 
           const foundEventKey = await this.eventKeysModel
@@ -416,7 +419,7 @@ export class CronService {
             );
             this.transitionQueue.add(step.type, {
               step: step,
-              ownerID: step.owner.id,
+              ownerID: step.workspace.organization.owner.id,
               session: session,
               journeyID: journeys[journeyIndex].id,
               customerID: locations[locationsIndex].customer,
@@ -465,11 +468,16 @@ export class CronService {
 
         //Iterate through accounts
         for (let j = 0; j < accounts.length; j++) {
-          if (accounts[j].mailgunAPIKey && accounts[j].sendingDomain) {
+          if (
+            accounts[j]?.teams?.[0]?.organization?.workspaces?.[0]
+              .mailgunAPIKey &&
+            accounts[j]?.teams?.[0]?.organization?.workspaces?.[0].sendingDomain
+          ) {
             const mailgun = new Mailgun(formData);
             const mg = mailgun.client({
               username: 'api',
-              key: accounts[j].mailgunAPIKey,
+              key: accounts[j]?.teams?.[0]?.organization?.workspaces?.[0]
+                .mailgunAPIKey,
             });
             let query, events;
             query = {
@@ -478,7 +486,11 @@ export class CronService {
               ascending: 'yes',
             };
             do {
-              events = await mg.events.get(accounts[j].sendingDomain, query);
+              events = await mg.events.get(
+                accounts[j]?.teams?.[0]?.organization?.workspaces?.[0]
+                  ?.sendingDomain,
+                query
+              );
               for (let k = 0; k < events.items.length; k++) {
                 const existsCheck = await this.clickHouseClient.query({
                   query: `SELECT * FROM message_status WHERE event = {event:String} AND messageId = {messageId:String}`,
@@ -498,7 +510,8 @@ export class CronService {
                   const messageRow = JSON.parse(await messageInfo.text()).data;
                   const messagesToInsert: ClickHouseMessage[] = [];
                   const clickHouseRecord: ClickHouseMessage = {
-                    userId: accounts[j].id,
+                    workspaceId:
+                      accounts[j]?.teams?.[0]?.organization?.workspaces?.[0].id,
                     audienceId: messageRow[0]?.audienceId,
                     customerId: messageRow[0]?.customerId,
                     templateId: messageRow[0]?.templateId,
@@ -554,11 +567,19 @@ export class CronService {
 
         //Iterate through accounts
         for (let j = 0; j < accounts.length; j++) {
-          if (accounts[j].sendgridApiKey) {
-            client.setApiKey(accounts[j].sendgridApiKey);
+          if (
+            accounts[j].teams?.[0]?.organization?.workspaces?.[0].sendgridApiKey
+          ) {
+            client.setApiKey(
+              accounts[j].teams?.[0]?.organization?.workspaces?.[0]
+                .sendgridApiKey
+            );
             const resultSet = await this.clickHouseClient.query({
-              query: `SELECT * FROM message_status WHERE processed = false AND eventProvider = 'sendgrid' AND userId = {userId:String}`,
-              query_params: { userId: accounts[j].id },
+              query: `SELECT * FROM message_status WHERE processed = false AND eventProvider = 'sendgrid' AND workspaceId = {workspaceId:String}`,
+              query_params: {
+                workspaceId:
+                  accounts[j].teams?.[0]?.organization?.workspaces?.[0].id,
+              },
               format: 'JSONEachRow',
             });
             for await (const rows of resultSet.stream()) {
@@ -603,7 +624,9 @@ export class CronService {
                       event: message.status,
                       eventProvider: ClickHouseEventProvider.TWILIO,
                       createdAt: new Date().toISOString(),
-                      userId: accounts[j].id,
+                      workspaceId:
+                        accounts[j].teams?.[0]?.organization?.workspaces?.[0]
+                          ?.id,
                       processed: false,
                     };
                     messagesToInsert.push(clickHouseRecord);
@@ -672,14 +695,19 @@ export class CronService {
 
         //Iterate through accounts
         for (let j = 0; j < accounts.length; j++) {
-          if (accounts[j].smsAccountSid && accounts[j].smsAuthToken) {
+          const workspace =
+            accounts[j].teams?.[0]?.organization?.workspaces?.[0];
+          if (workspace.smsAccountSid && workspace.smsAuthToken) {
             const twilioClient = twilio(
-              accounts[j].smsAccountSid,
-              accounts[j].smsAuthToken
+              workspace.smsAccountSid,
+              workspace.smsAuthToken
             );
             const resultSet = await this.clickHouseClient.query({
-              query: `SELECT * FROM message_status WHERE processed = false AND eventProvider = 'twilio' AND userId = {userId:String}`,
-              query_params: { userId: accounts[j].id },
+              query: `SELECT * FROM message_status WHERE processed = false AND eventProvider = 'twilio' AND workspaceId = {workspaceId:String}`,
+              query_params: {
+                workspaceId:
+                  accounts[j].teams?.[0]?.organization?.workspaces?.[0]?.id,
+              },
               format: 'JSONEachRow',
             });
             for await (const rows of resultSet.stream()) {
@@ -709,7 +737,9 @@ export class CronService {
                       event: message.status,
                       eventProvider: ClickHouseEventProvider.TWILIO,
                       createdAt: new Date().toISOString(),
-                      userId: accounts[j].id,
+                      workspaceId:
+                        accounts[j].teams?.[0]?.organization?.workspaces?.[0]
+                          .id,
                       processed: false,
                     };
                     messagesToInsert.push(clickHouseRecord);
@@ -761,6 +791,22 @@ export class CronService {
         .execute();
     } catch (e) {
       this.error(e, this.handleRecovery.name, session);
+    }
+  }
+
+  @Cron(CronExpression.EVERY_MINUTE)
+  async handleOrganizationInvites() {
+    const session = randomUUID();
+    try {
+      await this.organizationInvitesRepository
+        .createQueryBuilder()
+        .where(
+          `now() > organization_invites."createdAt"::TIMESTAMP + INTERVAL '1 DAY'`
+        )
+        .delete()
+        .execute();
+    } catch (e) {
+      this.error(e, this.handleOrganizationInvites.name, session);
     }
   }
 
@@ -845,13 +891,13 @@ export class CronService {
           requeue.step.journey,
           customer,
           session,
-          requeue.owner,
+          requeue?.workspace?.organization?.owner,
           queryRunner
         );
         await bulkJobs.push({
           name: StepType.MESSAGE,
           data: {
-            ownerId: requeue.owner.id,
+            ownerId: requeue.workspace?.organization?.owner.id,
             journeyID: requeue.step.journey.id,
             step: requeue.step,
             session,

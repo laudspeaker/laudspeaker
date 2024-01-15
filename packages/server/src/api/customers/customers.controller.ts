@@ -239,7 +239,7 @@ export class CustomersController {
     const {
       _id,
       __v,
-      ownerId,
+      workspaceId,
       verified,
       journeys,
       journeyEnrollmentsDates,
@@ -389,13 +389,15 @@ export class CustomersController {
     } catch (e) {
       return new HttpException(e, 500);
     }
+    account = <Account>user;
+    const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
 
     //to do will eventually need to make it so it does not take the top g
     try {
       await this.customersService.ingestPosthogPersons(
-        account.posthogProjectId[0],
-        account.posthogApiKey[0],
-        account.posthogHostUrl[0],
+        workspace.posthogProjectId[0],
+        workspace.posthogApiKey[0],
+        workspace.posthogHostUrl[0],
         account,
         session
       );

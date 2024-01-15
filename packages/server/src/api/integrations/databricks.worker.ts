@@ -23,6 +23,8 @@ const handleDatabricksSync = async (
   });
   const session = await client.openSession();
 
+  const workspace = owner?.teams?.[0]?.organization?.workspaces?.[0];
+
   if (isReview) {
     const queryOperation = await session.executeStatement(database.query, {
       runAsync: true,
@@ -53,7 +55,7 @@ const handleDatabricksSync = async (
       for (const customer of customers) {
         if (!customer.id) continue;
         const customerInDb = await customerModel
-          .findOne({ databricksId: customer.id, ownerId: owner.id })
+          .findOne({ databricksId: customer.id, workspaceId: workspace.id })
           .exec();
 
         if (customerInDb) {
@@ -66,7 +68,7 @@ const handleDatabricksSync = async (
         } else {
           await customerModel.create({
             ...customer,
-            ownerId: owner.id,
+            workspaceId: owner.id,
             id: undefined,
             databricksId: customer.id,
           });

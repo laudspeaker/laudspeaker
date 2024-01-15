@@ -9,18 +9,16 @@ import {
   OnWorkerEvent,
 } from '@nestjs/bullmq';
 import { Job, Queue } from 'bullmq';
-import { DataSource, FindCursor } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { InjectConnection } from '@nestjs/mongoose';
 import mongoose from 'mongoose';
 import * as _ from 'lodash';
 import * as Sentry from '@sentry/node';
 import { CustomersService } from '../customers/customers.service';
-import { Step } from '../steps/entities/step.entity';
 import { Account } from '../accounts/entities/accounts.entity';
 import { Journey } from './entities/journey.entity';
 import { JourneyLocationsService } from './journey-locations.service';
 import { JourneysService } from './journeys.service';
-import { CustomerDocument } from '../customers/schemas/customer.schema';
 
 const BATCH_SIZE = +process.env.START_BATCH_SIZE;
 
@@ -156,10 +154,18 @@ export class StartProcessor extends WorkerHost {
           job.data.skip,
           job.data.limit
         );
+
+        await this.customersService.updateJourneyList(
+          customers,
+          job.data.journeyID,
+          job.data.session,
+          transactionSession
+        );
         const account = await queryRunner.manager.findOne(Account, {
           where: {
             id: job.data.ownerID,
           },
+          relations: ['teams.organization.workspaces'],
         });
         const journey = await queryRunner.manager.findOne(Journey, {
           where: {

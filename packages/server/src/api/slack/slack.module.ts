@@ -18,6 +18,7 @@ import { CustomersModule } from '../customers/customers.module';
 import { WebhooksService } from '../webhooks/webhooks.service';
 import { Step } from '../steps/entities/step.entity';
 import { KafkaModule } from '../kafka/kafka.module';
+import { Workspaces } from '../workspaces/entities/workspaces.entity';
 
 @Module({
   imports: [
@@ -33,7 +34,14 @@ import { KafkaModule } from '../kafka/kafka.module';
     BullModule.registerQueue({
       name: 'events_pre',
     }),
-    TypeOrmModule.forFeature([Account, Audience, Installation, State, Step]),
+    TypeOrmModule.forFeature([
+      Account,
+      Audience,
+      Installation,
+      State,
+      Step,
+      Workspaces,
+    ]),
     MongooseModule.forFeature([
       { name: Customer.name, schema: CustomerSchema },
       { name: CustomerKeys.name, schema: CustomerKeysSchema },

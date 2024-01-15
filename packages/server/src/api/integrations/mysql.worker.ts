@@ -33,11 +33,12 @@ const handleMySqlSync = async (
     const connection = mysql.createConnection(connectionString);
 
     const stream = connection.query(query).stream({ objectMode: true });
+    const workspace = owner?.teams?.[0]?.organization?.workspaces?.[0];
 
     for await (const customer of stream) {
       if (!customer.id) continue;
       const customerInDb = await customerModel
-        .findOne({ mysqlId: customer.id, ownerId: owner.id })
+        .findOne({ mysqlId: customer.id, workspaceId: workspace.id })
         .exec();
 
       if (customerInDb) {
@@ -50,7 +51,7 @@ const handleMySqlSync = async (
       } else {
         await customerModel.create({
           ...customer,
-          ownerId: owner.id,
+          workspaceId: workspace.id,
           id: undefined,
           mysqlId: customer.id,
         });

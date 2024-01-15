@@ -7,6 +7,7 @@ import {
   PrimaryColumn,
 } from 'typeorm';
 import { Segment } from './segment.entity';
+import { Workspaces } from '@/api/workspaces/entities/workspaces.entity';
 
 @Entity()
 export class SegmentCustomers extends BaseEntity {
@@ -19,6 +20,8 @@ export class SegmentCustomers extends BaseEntity {
   public customerId: string;
 
   @JoinColumn()
-  @ManyToOne(() => Account, (account) => account.id, { onDelete: 'CASCADE' })
-  public owner: Account;
+  @ManyToOne(() => Workspaces, (workspace) => workspace.id, {
+    onDelete: 'CASCADE',
+  })
+  workspace: Workspaces;
 }

@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 import Timer from "components/Timer";
 import { useInterval } from "react-use";
 import { useAppSelector } from "store/hooks";
+import Account from "types/Account";
 
 const Verificationv2 = () => {
   const navigate = useNavigate();
@@ -21,7 +22,7 @@ const Verificationv2 = () => {
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const { data } = await ApiService.get({ url: "/accounts" });
+      const { data } = await ApiService.get<Account>({ url: "/accounts" });
       const {
         email: emailFromRequest,
         verified,
@@ -29,7 +30,7 @@ const Verificationv2 = () => {
       } = data;
       setEmail(emailFromRequest);
       setIsVerified(verified);
-      setTimerSeconds(Math.ceil(+secondtillunblockresend || 0));
+      setTimerSeconds(Math.ceil(+(secondtillunblockresend || 0)));
     } catch (e) {
       if (!isToastLocked) {
         toast.error("Error while loading data");

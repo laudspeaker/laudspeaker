@@ -1,5 +1,12 @@
 import { Trim } from 'class-sanitizer';
-import { IsEmail, IsString, MinLength, IsNotEmpty } from 'class-validator';
+import {
+  IsEmail,
+  IsString,
+  MinLength,
+  IsNotEmpty,
+  IsOptional,
+  IsUUID,
+} from 'class-validator';
 
 export class RegisterDto {
   @Trim()
@@ -17,4 +24,9 @@ export class RegisterDto {
   @IsString()
   @MinLength(8)
   public readonly password: string;
+
+  @IsOptional()
+  @IsString()
+  @IsUUID()
+  public readonly fromInviteId: string;
 }

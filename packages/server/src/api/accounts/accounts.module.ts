@@ -15,13 +15,14 @@ import {
   CustomerKeys,
   CustomerKeysSchema,
 } from '../customers/schemas/customer-keys.schema';
+import { Workspaces } from '../workspaces/entities/workspaces.entity';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
       { name: CustomerKeys.name, schema: CustomerKeysSchema },
     ]),
-    TypeOrmModule.forFeature([Account]),
+    TypeOrmModule.forFeature([Account, Workspaces]),
     forwardRef(() => AuthModule),
     forwardRef(() => CustomersModule),
     forwardRef(() => JourneysModule),

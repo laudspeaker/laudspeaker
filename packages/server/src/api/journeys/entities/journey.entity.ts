@@ -1,4 +1,3 @@
-import { Account } from '../../accounts/entities/accounts.entity';
 import {
   Entity,
   Column,
@@ -11,6 +10,7 @@ import {
   JourneyEntrySettings,
   JourneySettings,
 } from '../types/additional-journey-settings.interface';
+import { Workspaces } from '@/api/workspaces/entities/workspaces.entity';
 
 @Entity()
 export class Journey {
@@ -21,8 +21,10 @@ export class Journey {
   name: string;
 
   @JoinColumn()
-  @ManyToOne(() => Account, (account) => account.id, { onDelete: 'CASCADE' })
-  owner: Account;
+  @ManyToOne(() => Workspaces, (workspace) => workspace.id, {
+    onDelete: 'CASCADE',
+  })
+  workspace: Workspaces;
 
   @Column('boolean', { default: false })
   isActive: boolean;

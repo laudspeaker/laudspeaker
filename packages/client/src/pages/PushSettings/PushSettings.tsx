@@ -12,6 +12,7 @@ import ApiService from "services/api.service";
 import { AxiosError } from "axios";
 import { toast } from "react-toastify";
 import CheckBox from "components/Checkbox/Checkbox";
+import Account from "types/Account";
 
 export type ConnectedPushFirebasePlatforms = Record<
   PushPlatforms,
@@ -115,8 +116,8 @@ const PushSettings = () => {
   const clarifyData = async () => {
     setIsLoadingSettings(true);
     try {
-      const { data } = await ApiService.get({ url: "/accounts" });
-      const { pushPlatforms } = data;
+      const { data } = await ApiService.get<Account>({ url: "/accounts" });
+      const { pushPlatforms } = data.workspace;
 
       handleUpdateConfig({
         connectedPlatforms: {

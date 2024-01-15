@@ -52,7 +52,9 @@ export class ModalsService {
     );
     if (!customer) throw new NotFoundException('Customer not found');
 
-    if (customer.ownerId !== account.id)
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
+    if (customer.workspaceId !== workspace.id)
       throw new ForbiddenException("Customer does't belongs to account");
   }
 
@@ -71,7 +73,7 @@ export class ModalsService {
     if (!modalEvent) return;
 
     const modalState = modalEvent.template.modalState;
-    const { _id, ownerId, workflows, ...tags } = customer.toObject();
+    const { _id, workspaceId, workflows, ...tags } = customer.toObject();
     const filteredTags = cleanTagsForSending(tags);
 
     recursivelyUpdateObject(modalState, (item, type) => {

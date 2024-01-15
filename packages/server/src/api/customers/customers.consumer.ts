@@ -62,7 +62,7 @@ export class CustomersConsumerService implements OnApplicationBootstrap {
   private handleCustomerChangeStream(this: CustomersConsumerService) {
     return async (changeMessage: EachMessagePayload) => {
       try {
-        let messStr = changeMessage.message.value.toString();
+        const messStr = changeMessage.message.value.toString();
         let message: ChangeStreamDocument<Customer> = JSON.parse(messStr);
         if (typeof message === 'string') {
           message = JSON.parse(message); //double parse if kafka record is published as string not object
@@ -90,10 +90,11 @@ export class CustomersConsumerService implements OnApplicationBootstrap {
                 );
                 break;
               }
-              account = await this.accountsService.findOne(
-                { id: customer.ownerId },
-                session
-              );
+              account =
+                await this.accountsService.findOrganizationOwnerByWorkspaceId(
+                  customer.workspaceId,
+                  session
+                );
               await this.segmentsService.updateCustomerSegments(
                 account,
                 customer.id,

@@ -29,7 +29,7 @@ export class Customer {
   journeyEnrollmentsDates: JourneyEnrollmentsDates;
 
   @Prop()
-  ownerId: string;
+  workspaceId: string;
 
   @Prop()
   externalId: string;
@@ -102,6 +102,12 @@ export class Customer {
 
   @Prop()
   isFreezed?: boolean;
+
+  @Prop()
+  device_token_android?: string;
+
+  @Prop()
+  device_token_ios?: string;
 
   @Prop(raw({}))
   customComponents: Record<string, any>;

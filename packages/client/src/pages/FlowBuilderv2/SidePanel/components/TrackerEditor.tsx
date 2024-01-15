@@ -46,7 +46,7 @@ const TrackerEditor: FC<TrackerEditorProps> = ({
   const loadPossibleEvents = async () => {
     if (!chosenTracker) return;
     const { data: template } = await ApiService.get<Template>({
-      url: "/templates/" + chosenTracker.trackerTemplate.name,
+      url: "/templates/" + chosenTracker.trackerTemplate.id,
     });
 
     setPossibleEvents(template.customEvents);

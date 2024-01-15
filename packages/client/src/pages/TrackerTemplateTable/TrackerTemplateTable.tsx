@@ -97,8 +97,8 @@ const TrackerTemplateTable = () => {
     setSearch("");
   }, [showSearch]);
 
-  const handleDuplicateTrackerTemplate = async (name: string) => {
-    await ApiService.post({ url: `/templates/${name}/duplicate` });
+  const handleDuplicateTrackerTemplate = async (id: string | number) => {
+    await ApiService.post({ url: `/templates/${id}/duplicate` });
     await loadData();
   };
 
@@ -208,7 +208,7 @@ const TrackerTemplateTable = () => {
               rows={rows.map((row) => [
                 <button
                   className="text-[#6366F1]"
-                  onClick={() => navigate(`/tracker-template/${row.name}`)}
+                  onClick={() => navigate(`/tracker-template/${row.id}`)}
                 >
                   {row.name}
                 </button>,
@@ -239,7 +239,7 @@ const TrackerTemplateTable = () => {
                               active ? "bg-[#F3F4F6]" : ""
                             }`}
                             onClick={() =>
-                              handleDuplicateTrackerTemplate(row.name)
+                              handleDuplicateTrackerTemplate(row.id)
                             }
                           >
                             Duplicate

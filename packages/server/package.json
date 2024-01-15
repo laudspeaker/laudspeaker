@@ -21,6 +21,7 @@
     "test:e2e": "env-cmd -f src/common/envs/development.env jest --config ./test/jest-e2e.json",
     "typeorm": "npm run build && typeorm-ts-node-commonjs -d ./src/data-source.ts",
     "typeorm:generate": "npm run typeorm migration:generate",
+    "typeorm:create": "npx typeorm-ts-node-commonjs migration:create",
     "typeorm:run": "npm run typeorm migration:run",
     "typeorm:revert": "npm run typeorm migration:revert",
     "sentry:sourcemaps": "sentry-cli sourcemaps inject --release $(sentry-cli releases propose-version) ./dist && sentry-cli sourcemaps upload --release $(sentry-cli releases propose-version) ./dist"

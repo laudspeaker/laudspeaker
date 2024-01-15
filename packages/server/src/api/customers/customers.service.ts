@@ -60,7 +60,6 @@ import * as fastcsv from 'fast-csv';
 import * as fs from 'fs';
 import path from 'path';
 import { isValid } from 'date-fns';
-import e from 'express';
 import { JourneyLocationsService } from '../journeys/journey-locations.service';
 import { Journey } from '../journeys/entities/journey.entity';
 import { SegmentType } from '../segments/entities/segment.entity';
@@ -70,7 +69,6 @@ import {
   KEYS_TO_SKIP,
   validateKeyForMutations,
 } from '@/utils/customer-key-name-validator';
-
 
 export type Correlation = {
   cust: CustomerDocument;
@@ -160,9 +158,9 @@ export class CustomersService {
     (async () => {
       try {
         const collection = this.connection.db.collection('customers');
-        await collection.createIndex('ownerId');
+        await collection.createIndex('workspaceId');
         await collection.createIndex(
-          { __posthog__id: 1, ownerId: 1 },
+          { __posthog__id: 1, workspaceId: 1 },
           {
             unique: true,
             partialFilterExpression: {
@@ -246,8 +244,10 @@ export class CustomersService {
         _id: Types.ObjectId;
       }
   > {
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
     const createdCustomer = new this.CustomerModel({
-      ownerId: (<Account>account).id,
+      workspaceId: workspace.id,
       ...createCustomerDto,
     });
     const ret = await createdCustomer.save({ session: transactionSession });
@@ -268,94 +268,18 @@ export class CustomersService {
       }
 
       await this.CustomerKeysModel.updateOne(
-        { key, ownerId: account.id },
+        { key, workspaceId: workspace.id },
         {
           $set: {
             key,
             type,
             isArray,
-            ownerId: account.id,
+            workspaceId: workspace.id,
           },
         },
         { upsert: true }
       ).exec();
     }
-
-    await this.dataSource.transaction(async (transactionManager) => {
-      // Already started (isEditable = false), dynamic (isDyanmic = true),push
-      // Not started (isEditable = true), dynamic (isDyanmic = true), push
-      const dynamicWkfs = await transactionManager.find(Workflow, {
-        where: {
-          owner: { id: account.id },
-          isDynamic: true,
-        },
-        relations: ['filter'],
-      });
-      for (let index = 0; index < dynamicWkfs.length; index++) {
-        const workflow = dynamicWkfs[index];
-        if (workflow.filter) {
-          if (
-            await this.audiencesHelper.checkInclusion(
-              ret,
-              workflow.filter.inclusionCriteria,
-              session
-            )
-          ) {
-            const audiences = await transactionManager.findBy(Audience, {
-              workflow: { id: workflow.id },
-            });
-
-            const primaryAudience = audiences.find(
-              (audience) => audience.isPrimary
-            );
-
-            await transactionManager.update(
-              Audience,
-              { owner: { id: account.id }, id: primaryAudience.id },
-              {
-                customers: primaryAudience.customers.concat(ret.id),
-              }
-            );
-          }
-        }
-      }
-      // Already started(isEditable = true), static(isDyanmic = false), don't push
-      // Not started(isEditable = false), static(isDyanmic = false), push
-      const staticWkfs = await transactionManager.find(Workflow, {
-        where: {
-          owner: { id: account.id },
-          isDynamic: false,
-        },
-        relations: ['filter'],
-      });
-      for (let index = 0; index < staticWkfs.length; index++) {
-        const workflow = staticWkfs[index];
-        if (workflow.filter) {
-          if (
-            await this.audiencesHelper.checkInclusion(
-              ret,
-              workflow.filter.inclusionCriteria,
-              session
-            )
-          ) {
-            const audiences = await transactionManager.findBy(Audience, {
-              workflow: { id: workflow.id },
-              isEditable: false,
-            });
-
-            const primaryAudience = audiences.find((item) => item.isPrimary);
-
-            await transactionManager.update(
-              Audience,
-              { owner: { id: account.id }, id: primaryAudience.id },
-              {
-                customers: primaryAudience.customers.concat(ret.id),
-              }
-            );
-          }
-        }
-      }
-    });
 
     return ret;
   }
@@ -379,9 +303,11 @@ export class CustomersService {
   ): Promise<CustomerDocument[]> {
     let customers: CustomerDocument[] = [];
     const ret: CustomerDocument[] = [];
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
     try {
       customers = await this.CustomerModel.find({
-        ownerId: (<Account>account).id,
+        workspaceId: workspace.id,
       })
         .session(transactionSession)
         .exec();
@@ -410,9 +336,11 @@ export class CustomersService {
   }
 
   async addPhCustomers(data: any[], account: Account) {
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
     for (let index = 0; index < data.length; index++) {
       const addedBefore = await this.CustomerModel.find({
-        ownerId: (<Account>account).id,
+        workspaceId: workspace.id,
         posthogId: {
           $in: [...data[index]['distinct_ids']],
         },
@@ -425,7 +353,7 @@ export class CustomersService {
         createdCustomer = addedBefore[0];
       }
 
-      createdCustomer['ownerId'] = account.id;
+      createdCustomer['workspaceId'] = workspace.id;
       createdCustomer['posthogId'] = data[index]['distinct_ids'];
       createdCustomer['phCreatedAt'] = data[index]['created_at'];
       if (data[index]?.properties?.$initial_os) {
@@ -463,14 +391,17 @@ export class CustomersService {
     showFreezed = false,
     createdAtSortType: 'asc' | 'desc' = 'desc'
   ): Promise<{ data: CustomerDocument[]; totalPages: number }> {
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
     const totalPages =
       Math.ceil(
         (await this.CustomerModel.count({
-          ownerId: (<Account>account).id,
+          workspaceId: workspace.id,
         }).exec()) / take
       ) || 1;
+
     const customers = await this.CustomerModel.find({
-      ownerId: (<Account>account).id,
+      workspaceId: workspace.id,
       ...(key && search
         ? {
             [key]: new RegExp(`.*${search}.*`, 'i'),
@@ -489,9 +420,11 @@ export class CustomersService {
     if (!isValidObjectId(id))
       throw new HttpException('Id is not valid', HttpStatus.BAD_REQUEST);
 
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
     const customer = await this.CustomerModel.findOne({
       _id: new Types.ObjectId(id),
-      ownerId: account.id,
+      workspaceId: workspace.id,
     }).exec();
     if (!customer)
       throw new HttpException('Person not found', HttpStatus.NOT_FOUND);
@@ -508,10 +441,11 @@ export class CustomersService {
   ) {
     if (!isValidObjectId(id))
       throw new HttpException('Id is not valid', HttpStatus.BAD_REQUEST);
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
     const customer = await this.CustomerModel.findOne({
       _id: new Types.ObjectId(id),
-      ownerId: account.id,
+      workspaceId: workspace.id,
     })
       .session(transactionSession)
       .exec();
@@ -528,8 +462,8 @@ export class CustomersService {
     account: Account,
     customerId: string,
     session: string,
-    page: number = 1,
-    pageSize: number = 10
+    page = 1,
+    pageSize = 10
   ) {
     const offset = (page - 1) * pageSize;
 
@@ -621,16 +555,18 @@ export class CustomersService {
     session: string
   ): Promise<boolean> {
     let query: any;
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
     try {
       delete identifyEvent.verified;
-      delete identifyEvent.ownerId;
+      delete identifyEvent.workspaceId;
       delete identifyEvent._id;
       delete identifyEvent.__v;
       delete identifyEvent.workflows;
       delete identifyEvent.journeys;
 
       query = {
-        ownerId: (<Account>account).id,
+        workspaceId: workspace.id,
         $or: [
           { posthogId: { $in: [identifyEvent.userId] } },
           { posthogId: { $in: [identifyEvent.anonymousId] } },
@@ -701,7 +637,7 @@ export class CustomersService {
         return true;
       } else if (addedBefore.length === 0) {
         query = {
-          ownerId: (<Account>account).id,
+          workspaceId: workspace.id,
           posthogId: this.filterFalsyAndDuplicates([
             identifyEvent.userId
               ? identifyEvent.userId
@@ -761,11 +697,12 @@ export class CustomersService {
     });
 
     const customer = await this.findOne(account, id, session);
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
     if (customer.isFreezed)
       throw new BadRequestException('Customer is freezed');
 
-    if (customer.ownerId != account.id) {
+    if (customer.workspaceId != workspace.id) {
       throw new HttpException("You can't update this customer.", 400);
     }
 
@@ -785,13 +722,13 @@ export class CustomersService {
       }
 
       await this.CustomerKeysModel.updateOne(
-        { key, ownerId: account.id },
+        { key, workspaceId: workspace.id },
         {
           $set: {
             key,
             type,
             isArray,
-            ownerId: account.id,
+            workspaceId: workspace.id,
           },
         },
         { upsert: true }
@@ -825,12 +762,13 @@ export class CustomersService {
     try {
       const { ...newCustomerData } = updateCustomerDto;
       delete newCustomerData.verified;
-      delete newCustomerData.ownerId;
+      delete newCustomerData.workspaceId;
       delete newCustomerData._id;
       delete newCustomerData.__v;
       delete newCustomerData.audiences;
       delete newCustomerData.isFreezed;
       delete newCustomerData.id;
+      const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
       const customer = await this.transactionalFindOne(
         account,
@@ -841,7 +779,7 @@ export class CustomersService {
       if (customer.isFreezed)
         throw new BadRequestException('Customer is freezed');
 
-      if (customer.ownerId != account.id) {
+      if (customer.workspaceId != workspace.id) {
         throw new HttpException("You can't update this customer.", 400);
       }
 
@@ -861,13 +799,13 @@ export class CustomersService {
         }
 
         await this.CustomerKeysModel.updateOne(
-          { key, ownerId: account.id },
+          { key, workspaceId: workspace.id },
           {
             $set: {
               key,
               type,
               isArray,
-              ownerId: account.id,
+              workspaceId: workspace.id,
             },
           },
           { upsert: true }
@@ -913,11 +851,12 @@ export class CustomersService {
       showFreezed,
       createdAtSortType || 'desc'
     );
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
     const pk = (
       await this.CustomerKeysModel.findOne({
         isPrimary: true,
-        ownerId: account.id,
+        workspaceId: workspace.id,
       })
     )?.toObject();
 
@@ -1028,8 +967,10 @@ export class CustomersService {
     account: Account,
     audienceId: string
   ): Promise<CustomerDocument[]> {
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
     return this.CustomerModel.find({
-      ownerId: (<Account>account).id,
+      workspaceId: workspace.id,
       audiences: audienceId,
     }).exec();
   }
@@ -1038,7 +979,7 @@ export class CustomersService {
     if (!isValidObjectId(customerId))
       throw new BadRequestException('Invalid object id');
 
-    let query = this.CustomerModel.findById(customerId);
+    const query = this.CustomerModel.findById(customerId);
     if (clientSession) {
       query.session(clientSession);
     }
@@ -1059,12 +1000,14 @@ export class CustomersService {
     if (!isValidObjectId(customerId))
       throw new BadRequestException('Invalid object id');
 
-    let query = this.CustomerModel.findById(customerId);
+    const query = this.CustomerModel.findById(customerId);
     if (clientSession) {
       query.session(clientSession);
     }
+
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
     const found = await query.exec();
-    if (found && found?.ownerId == (<Account>account).id) return found;
+    if (found && found?.workspaceId == workspace.id) return found;
     return;
   }
 
@@ -1072,8 +1015,10 @@ export class CustomersService {
     account: Account,
     slackId: string
   ): Promise<CustomerDocument> {
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
     const customers = await this.CustomerModel.find({
-      ownerId: (<Account>account).id,
+      workspaceId: workspace.id,
       slackId: slackId,
     }).exec();
     return customers[0];
@@ -1084,13 +1029,15 @@ export class CustomersService {
     account: Account,
     id: string
   ): Promise<CustomerDocument> {
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
     const customers = await this.CustomerModel.find({
-      ownerId: (<Account>account).id,
+      workspaceId: workspace.id,
       externalId: id,
     }).exec();
     if (customers.length < 1) {
       const createdCustomer = new this.CustomerModel({
-        ownerId: (<Account>account).id,
+        workspaceId: workspace.id,
         externalId: id,
       });
       return createdCustomer.save();
@@ -1098,13 +1045,15 @@ export class CustomersService {
   }
 
   async findByCustomEvent(account: Account, id: string): Promise<Correlation> {
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
     const customers = await this.CustomerModel.find({
-      ownerId: (<Account>account).id,
+      workspaceId: workspace.id,
       slackId: id,
     }).exec();
     if (customers.length < 1) {
       const createdCustomer = new this.CustomerModel({
-        ownerId: (<Account>account).id,
+        workspaceId: workspace.id,
         slackId: id,
       });
       return { cust: await createdCustomer.save(), found: false };
@@ -1134,8 +1083,10 @@ export class CustomersService {
     mapping?: (event: any) => any
   ): Promise<Correlation> {
     let customer, createdCustomer: CustomerDocument;
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
     const queryParam: any = {
-      ownerId: (<Account>account).id,
+      workspaceId: workspace.id,
     };
     if (Array.isArray(correlationValue)) {
       queryParam.$or = [];
@@ -1167,14 +1118,14 @@ export class CustomersService {
       );
       if (mapping) {
         const newCust = mapping(event);
-        newCust['ownerId'] = (<Account>account).id;
+        newCust['workspaceId'] = workspace.id;
         newCust[correlationKey] = Array.isArray(correlationValue)
           ? this.filterFalsyAndDuplicates(correlationValue)
           : correlationValue;
         createdCustomer = new this.CustomerModel(newCust);
       } else {
         createdCustomer = new this.CustomerModel({
-          ownerId: (<Account>account).id,
+          workspaceId: workspace.id,
           correlationKey: Array.isArray(correlationValue)
             ? this.filterFalsyAndDuplicates(correlationValue)
             : correlationValue,
@@ -1249,6 +1200,15 @@ export class CustomersService {
     limit?: number
   ): Promise<CustomerDocument[]> {
     let query: any;
+    this.accountsRepository;
+    const foundAccount = await this.accountsRepository.findOne({
+      where: {
+        id: account,
+      },
+      relations: ['teams.organization.workspaces'],
+    });
+    const workspace = foundAccount?.teams?.[0]?.organization?.workspaces?.[0];
+
     if (
       !criteria ||
       criteria.type === 'allCustomers' ||
@@ -1257,7 +1217,7 @@ export class CustomersService {
       !criteria.query.statements.length
     ) {
       query = this.CustomerModel.find({
-        ownerId: account,
+        workspaceId: workspace.id,
       });
     } else {
       //TODO: We need to translate segment builder condiitons
@@ -1330,6 +1290,8 @@ export class CustomersService {
     session: string,
     transactionSession?: ClientSession
   ): Promise<number> {
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
     let count = 0;
     if (
       !criteria ||
@@ -1339,7 +1301,7 @@ export class CustomersService {
       !criteria.query.statements.length
     ) {
       count = await this.CustomerModel.countDocuments({
-        ownerId: (<Account>account).id,
+        workspaceId: workspace.id,
       })
         .session(transactionSession)
         .exec();
@@ -1392,8 +1354,10 @@ export class CustomersService {
     transactionSession?: ClientSession
   ): Promise<CustomerDocument> {
     let customer: CustomerDocument; // Found customer
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
     const queryParam: any = {
-      ownerId: (<Account>account).id,
+      workspaceId: workspace.id,
     };
     if (Array.isArray(correlationValue)) {
       queryParam.$or = [];
@@ -1432,7 +1396,9 @@ export class CustomersService {
     transactionSession: ClientSession
   ): Promise<Correlation> {
     let customer: CustomerDocument; // Found customer
-    const queryParam = { ownerId: (<Account>account).id };
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
+    const queryParam = { workspaceId: workspace.id };
     queryParam[dto.correlationKey] = dto.correlationValue;
     try {
       customer = await this.CustomerModel.findOne(queryParam)
@@ -1557,8 +1523,6 @@ export class CustomersService {
       session,
       account.id
     );
-    if (account.customerId === custId)
-      throw new BadRequestException("You can't delete yourself as a customer");
 
     const cust = await this.CustomerModel.findById(custId);
     this.debug(
@@ -1582,8 +1546,10 @@ export class CustomersService {
   }
 
   async getAttributes(account: Account, resourceId: string, session: string) {
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
     const attributes = await this.CustomerKeysModel.find({
-      ownerId: account.id,
+      workspaceId: workspace.id,
     }).exec();
     if (resourceId === 'attributes') {
       return {
@@ -1610,7 +1576,9 @@ export class CustomersService {
 
     if (resourceId === 'memberof') {
       const segments = await this.segmentsService.segmentRepository.findBy({
-        owner: { id: account.id },
+        workspace: {
+          id: workspace.id,
+        },
       });
       return {
         id: resourceId,
@@ -1645,6 +1613,7 @@ export class CustomersService {
     if (csvFile?.mimetype !== 'text/csv')
       throw new BadRequestException('Only CSV files are allowed');
 
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
     try {
       const errorPromise = new Promise<{
         headers: string[];
@@ -1652,7 +1621,7 @@ export class CustomersService {
         firstThreeRecords: Object[];
       }>((resolve, reject) => {
         let headers = [];
-        let firstThreeRecords = [];
+        const firstThreeRecords = [];
         let recordCount = 0;
         let emptyCount = 0;
 
@@ -1691,7 +1660,7 @@ export class CustomersService {
       const res = await errorPromise;
 
       const primaryAttribute = await this.CustomerKeysModel.findOne({
-        $and: [{ isPrimary: true }, { ownerId: account.id }],
+        $and: [{ isPrimary: true }, { workspaceId: workspace.id }],
       });
 
       if (primaryAttribute && !res.headers.includes(primaryAttribute.key)) {
@@ -1754,11 +1723,9 @@ export class CustomersService {
         },
         fileKey,
       });
-      if (!importFile) {
-        throw new BadRequestException("Can't find imported file for deletion.");
+      if (importFile) {
+        await this.removeImportFile(account, fileKey);
       }
-
-      await this.removeImportFile(account, fileKey);
     } catch (error) {
       this.error(error, this.deleteImportFile.name, session);
       throw new BadRequestException(
@@ -1768,6 +1735,8 @@ export class CustomersService {
   }
 
   async getLastImportCSV(account: Account, session?: string) {
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
     try {
       const importFile = await this.importsRepository.findOneBy({
         account: {
@@ -1776,7 +1745,7 @@ export class CustomersService {
       });
 
       const primaryAttribute = await this.CustomerKeysModel.findOne({
-        $and: [{ isPrimary: true }, { ownerId: account.id }],
+        $and: [{ isPrimary: true }, { workspaceId: workspace.id }],
       });
 
       const response = { ...importFile, primaryAttribute: undefined };
@@ -1833,12 +1802,13 @@ export class CustomersService {
       columns: true,
       skipEmptyLines: true,
     });
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
     for await (const record of records) {
       if (record.email) {
         let customer = await this.CustomerModel.findOne({
           email: record.email,
-          ownerId: account.id,
+          workspaceId: workspace.id,
         });
 
         if (customer) {
@@ -1846,7 +1816,7 @@ export class CustomersService {
           stats.updated++;
         } else {
           delete record.verified;
-          delete record.ownerId;
+          delete record.workspaceId;
           delete record._id;
           delete record.__v;
           delete record.audiences;
@@ -1928,11 +1898,13 @@ export class CustomersService {
     isArray?: boolean,
     removeLimit?: boolean
   ) {
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
     const query = this.CustomerKeysModel.find({
       $and: [
         {
           key: RegExp(`.*${key}.*`, 'i'),
-          ownerId: account.id,
+          workspaceId: workspace.id,
           ...(type !== null && !(type instanceof Array)
             ? { type }
             : type instanceof Array
@@ -2097,9 +2069,11 @@ export class CustomersService {
     take: number,
     skip: number
   ) {
+    const workspace = user?.teams?.[0]?.organization?.workspaces?.[0];
+
     const customer = await this.CustomerModel.findOne({
       _id: custId,
-      ownerId: user.id,
+      workspaceId: workspace.id,
     });
 
     if (!customer) {
@@ -2180,8 +2154,10 @@ export class CustomersService {
   }
 
   async customersSize(account: Account, session: string) {
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
     const totalNumberOfCustomers = this.CustomerModel.find({
-      ownerId: account.id,
+      workspaceId: workspace.id,
     }).count();
 
     return totalNumberOfCustomers;
@@ -2259,7 +2235,7 @@ export class CustomersService {
         session,
         account.id
       );
-      let unionAggregation: any[] = [];
+      const unionAggregation: any[] = [];
       //if (sets.length > 1) {
       // Add each additional collection to the pipeline for union
       sets.forEach((collName) => {
@@ -2374,7 +2350,7 @@ export class CustomersService {
     );
 
     this.debug(
-      `top level query is: ${JSON.stringify(query,null,2)}`,
+      `top level query is: ${JSON.stringify(query, null, 2)}`,
       this.getSegmentCustomersFromQuery.name,
       session,
       account.id
@@ -2427,7 +2403,7 @@ export class CustomersService {
         session,
         account.id
       );
-      let unionAggregation: any[] = [];
+      const unionAggregation: any[] = [];
       //if (sets.length > 1) {
       // Add each additional collection to the pipeline for union
       sets.forEach((collName) => {
@@ -2505,7 +2481,7 @@ export class CustomersService {
         })
       );
 
-      let unionAggregation: any[] = [];
+      const unionAggregation: any[] = [];
       /*
       [
         { $group: { _id: "$customerId" } }
@@ -2799,72 +2775,33 @@ export class CustomersService {
    */
 
   //to do check with actual messages in clickhouse
-  async getJourneysWithTag(account: Account, session: string, tag: string): Promise<string[]> {
-
-    console.log("In getJourneysWithTag", tag);
+  async getJourneysWithTag(
+    account: Account,
+    session: string,
+    tag: string
+  ): Promise<string[]> {
+    console.log('In getJourneysWithTag', tag);
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
-    console.log("account id is", account.id );
+    console.log('account id is', account.id);
 
     try {
-      
       const journeys = await queryRunner.manager
-            .createQueryBuilder(Journey, "journey")
-            //.where('journey.ownerId = :ownerId', { owner: { id: account.id } })
-            .where('journey.ownerId = :ownerId', { ownerId: account.id })
-            //.where('journey.ownerId = "930fd606-2be2-4429-80a0-94fd3607dc66"')
-            //.where('ownerId = :ownerId', { owner: { id: account.id } })
-            .andWhere("journey.journeySettings -> 'tags' ? :tag", { tag })
-            //.andWhere('journeySettings -> "tags" ? :tag', { tag })
-            .getMany();
+        .createQueryBuilder(Journey, 'journey')
+        //.where('journey.ownerId = :ownerId', { owner: { id: account.id } })
+        .where('journey.ownerId = :ownerId', { ownerId: account.id })
+        //.where('journey.ownerId = "930fd606-2be2-4429-80a0-94fd3607dc66"')
+        //.where('ownerId = :ownerId', { owner: { id: account.id } })
+        .andWhere("journey.journeySettings -> 'tags' ? :tag", { tag })
+        //.andWhere('journeySettings -> "tags" ? :tag', { tag })
+        .getMany();
 
       //console.log("In getJourneysWithTag", JSON.stringify(journeys, null, 2));
 
       // Map each Journey object to its id
-      const journeyIds = journeys.map(journey => journey.id);
-      console.log("journeyIds are", JSON.stringify(journeyIds, null, 2));
-
-      // Commit the transaction before returning the data
-      await queryRunner.commitTransaction();
-
-      return journeyIds;
-    } 
-    catch (error) {
-      // Handle any errors that occur during the transaction
-      await queryRunner.rollbackTransaction();
-      throw error;
-    } 
-    finally {
-      // Release the query runner which will return it to the connection pool
-      await queryRunner.release();
-    }
-}
-
-  /**
-   * Gets all journeys associated with a user.
-   *
-   * @param account
-   * @param name
-   * @param session
-   * @returns
-   */
-
-  async getJourneys(account: Account, session: string) {
-
-    console.log("In getJourneys");
-
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-
-    try {
-      const journeys = await queryRunner.manager.find(Journey, {
-          where: { owner: { id: account.id } }
-      });
-
-      // Map each Journey object to its id
-      const journeyIds = journeys.map(journey => journey.id);
+      const journeyIds = journeys.map((journey) => journey.id);
+      console.log('journeyIds are', JSON.stringify(journeyIds, null, 2));
 
       // Commit the transaction before returning the data
       await queryRunner.commitTransaction();
@@ -2878,10 +2815,49 @@ export class CustomersService {
       // Release the query runner which will return it to the connection pool
       await queryRunner.release();
     }
-  
   }
 
-/*
+  /**
+   * Gets all journeys associated with a user.
+   *
+   * @param account
+   * @param name
+   * @param session
+   * @returns
+   */
+
+  async getJourneys(account: Account, session: string) {
+    console.log('In getJourneys');
+
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
+    try {
+      const journeys = await queryRunner.manager.find(Journey, {
+        where: { workspace: { id: workspace.id } },
+      });
+
+      // Map each Journey object to its id
+      const journeyIds = journeys.map((journey) => journey.id);
+
+      // Commit the transaction before returning the data
+      await queryRunner.commitTransaction();
+
+      return journeyIds;
+    } catch (error) {
+      // Handle any errors that occur during the transaction
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      // Release the query runner which will return it to the connection pool
+      await queryRunner.release();
+    }
+  }
+
+  /*
   Case 1: Any Journey: 
 
   {
@@ -2927,8 +2903,6 @@ export class CustomersService {
 
 */
 
-
-
   /**
    * Gets set of customers from a single statement that
    * includes messages,
@@ -2939,7 +2913,7 @@ export class CustomersService {
    *
    * @returns set of customers
    */
-  
+
   async customersFromMessageStatement(
     statement: any,
     account: Account,
@@ -2977,42 +2951,44 @@ export class CustomersService {
       fromSpecificMessage,
       happenCondition,
       time,
-      tag
+      tag,
     } = statement;
 
-    console.log("statement is", statement);
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+    const workspaceIdCondition = `workspaceId = '${workspace.id}'`;
+    console.log('statement is', statement);
 
     let journeyIds = [];
 
     if (from.key === 'ANY') {
       // Get all journeys associated with the account
-      console.log("ji any");
+      console.log('ji any');
       journeyIds = await this.getJourneys(account, session);
     } else if (from.key === 'WITH_TAG') {
       // Get all journeys with the specific tag
-      console.log("ji with tag");
+      console.log('ji with tag');
       journeyIds = await this.getJourneysWithTag(account, session, tag);
     }
 
-    console.log("THe journey ids are", journeyIds);
+    console.log('THe journey ids are', journeyIds);
 
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
-    let stepIds = [];
+    const stepIds = [];
     for (const journeyId of journeyIds) {
       const steps = await this.stepsService.transactionalfindAllByTypeInJourney(
-        account, 
-        StepType.MESSAGE , 
-        journeyId, 
-        queryRunner, 
+        account,
+        StepType.MESSAGE,
+        journeyId,
+        queryRunner,
         session
       );
-      stepIds.push(...steps.map(step => step.id));
+      stepIds.push(...steps.map((step) => step.id));
     }
 
-    console.log("step ids are,", JSON.stringify(stepIds, null, 2));
+    console.log('step ids are,', JSON.stringify(stepIds, null, 2));
 
     const userIdCondition = `userId = '${userId}'`;
     let sqlQuery = `SELECT customerId FROM message_status WHERE `;
@@ -3035,7 +3011,9 @@ export class CustomersService {
       if (stepIds.length > 0) {
         //console.log("in step ids > 0");
         // Assuming stepIds are unique and need to be included in the SQL query
-        const stepIdCondition = `stepId IN (${stepIds.map(id => `'${id}'`).join(", ")})`;
+        const stepIdCondition = `stepId IN (${stepIds
+          .map((id) => `'${id}'`)
+          .join(', ')})`;
         sqlQuery += `${stepIdCondition} AND `;
       }
 
@@ -3068,7 +3046,7 @@ export class CustomersService {
           }
           break;
       }
-      sqlQuery += `${userIdCondition} `;
+      sqlQuery += `${workspaceIdCondition} `;
 
       //during
       if (
@@ -3117,12 +3095,12 @@ export class CustomersService {
       let batch = [];
 
       // Async function to handle batch insertion
-      async function  processBatch(batch) {
+      async function processBatch(batch) {
         try {
-            const result = await collectionHandle.insertMany(batch);
-            //console.log('Batch of documents inserted:', result);
+          const result = await collectionHandle.insertMany(batch);
+          //console.log('Batch of documents inserted:', result);
         } catch (err) {
-            console.error('Error inserting documents:', err);
+          console.error('Error inserting documents:', err);
         }
       }
 
@@ -3131,20 +3109,19 @@ export class CustomersService {
       // to do this needs to be tested on a very large set of customers to check streaming logic is sound
 
       stream.on('data', async (rows: Row[]) => {
-
         stream.pause();
 
         for (const row of rows) {
-            const cleanedText = row.text.replace(/^"(.*)"$/, '$1'); // Removes surrounding quotes
-            //console.log("cleaned text is", cleanedText);
-            const objectId = new Types.ObjectId(cleanedText);
-            batch.push({ _id: objectId }); // Convert each ObjectId into an object
+          const cleanedText = row.text.replace(/^"(.*)"$/, '$1'); // Removes surrounding quotes
+          //console.log("cleaned text is", cleanedText);
+          const objectId = new Types.ObjectId(cleanedText);
+          batch.push({ _id: objectId }); // Convert each ObjectId into an object
 
-            if (batch.length >= batchSize) {
-                await processBatch(batch);
-                batch = []; // Reset batch after insertion
-            } else {
-              stream.resume(); // Resume the stream if batch size not reached
+          if (batch.length >= batchSize) {
+            await processBatch(batch);
+            batch = []; // Reset batch after insertion
+          } else {
+            stream.resume(); // Resume the stream if batch size not reached
           }
         }
         // Resume the stream after batch processing
@@ -3169,8 +3146,7 @@ export class CustomersService {
             })();
           }
         });
-        */ 
-
+        */
       });
 
       //console.log("batch is", JSON.stringify(batch, null, 2));
@@ -3179,7 +3155,7 @@ export class CustomersService {
         stream.on('end', async () => {
           if (batch.length > 0) {
             //console.log("batch is", JSON.stringify(batch, null, 2));
-            
+
             // Insert any remaining documents
             try {
               const result = await collectionHandle.insertMany(batch);
@@ -3187,7 +3163,6 @@ export class CustomersService {
             } catch (err) {
               console.error('Error inserting documents:', err);
             }
-      
           }
           this.debug(
             'Completed!',
@@ -3200,7 +3175,7 @@ export class CustomersService {
           //const documents = await collectionHandle.find({}).toArray();
           //  documents.forEach(doc => console.log(doc));
           //console.log("finished print items in", intermediateCollection );
-    
+
           //return intermediateCollection;
 
           resolve(intermediateCollection);
@@ -3208,7 +3183,6 @@ export class CustomersService {
       });
 
       return intermediateCollectionResult;
-
 
       /*
       this.debug(
@@ -3244,6 +3218,8 @@ export class CustomersService {
     count: number,
     intermediateCollection: string
   ) {
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
     //console.log('generating attribute mongo query');
     this.debug(
       'generating attribute mongo query\n',
@@ -3258,8 +3234,8 @@ export class CustomersService {
       value,
       subComparisonValue,
     } = statement;
-    let query: any = {
-      ownerId: (<Account>account).id,
+    const query: any = {
+      workspaceId: workspace.id,
     };
 
     this.debug(
@@ -3400,8 +3376,10 @@ export class CustomersService {
    * @returns string
    */
   async getPrimaryKey(account: Account, session: string): Promise<string> {
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
     let currentPK: string = await this.CustomerKeysModel.findOne({
-      ownerId: account.id,
+      workspaceId: workspace.id,
       isPrimary: true,
     });
 
@@ -3447,6 +3425,8 @@ export class CustomersService {
     const { eventName, comparisonType, value, time, additionalProperties } =
       statement;
 
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
     this.debug(
       'In customersEventStatement/n\n',
       this.customersFromEventStatement.name,
@@ -3491,7 +3471,7 @@ export class CustomersService {
     // ****
     const mongoQuery: any = {
       event: eventName,
-      ownerId: (<Account>account).id,
+      workspaceId: workspace.id,
     };
 
     if (time) {
@@ -3708,7 +3688,7 @@ export class CustomersService {
         const allUsers = [
           {
             $match: {
-              ownerId: (<Account>account).id,
+              workspaceId: workspace.id,
             },
           },
           {
@@ -4275,8 +4255,8 @@ export class CustomersService {
       happenCondition,
       time,
     } = statement;
-
-    const userIdCondition = `userId = '${userId}'`;
+    const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
+    const workspaceIdCondition = `workspaceId = '${workspace.id}'`;
     let sqlQuery = `SELECT COUNT(*) FROM message_status WHERE `;
     //let sqlQuery = `SELECT * FROM message_status WHERE `;
 
@@ -4321,7 +4301,7 @@ export class CustomersService {
           }
           break;
       }
-      sqlQuery += `${userIdCondition} `;
+      sqlQuery += `${workspaceIdCondition} `;
 
       //during
       if (
@@ -4450,14 +4430,16 @@ export class CustomersService {
       account.id
     );
 
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
     // ****
     const mongoQuery: any = {
       event: eventName,
-      ownerId: (<Account>account).id,
+      workspaceId: workspace.id,
     };
 
     let currentPK: string = await this.CustomerKeysModel.findOne({
-      ownerId: account.id,
+      workspaceId: workspace.id,
       isPrimary: true,
     });
 
@@ -4702,7 +4684,7 @@ export class CustomersService {
    */
   async testCustomerInSegment(query: any, account: Account): Promise<boolean> {
     //Promise<Set<string>>  {
-    let session = 'this is a fake session';
+    const session = 'this is a fake session';
     this.debug(
       'In Test Customer Segment',
       this.testCustomerInSegment.name,
@@ -4724,7 +4706,7 @@ export class CustomersService {
 
     console.log('here here');
 
-    let testCustomer = new this.CustomerModel({
+    const testCustomer = new this.CustomerModel({
       externalId: '6583b25df2be8cd3c8b17f61',
       firstName: 'A',
       lastName: 'B',
@@ -4800,7 +4782,9 @@ export class CustomersService {
     data: { id: string; email: string; phone: string }[];
     totalPages: number;
   }> {
-    const query: any = { ownerId: account.id };
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
+    const query: any = { workspaceId: workspace.id };
 
     const deviceTokenConditions = {
       $or: [
@@ -4853,6 +4837,8 @@ export class CustomersService {
     type: AttributeType,
     session: string
   ) {
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
     try {
       if (!Object.values(AttributeType).includes(type)) {
         throw new BadRequestException(
@@ -4866,7 +4852,7 @@ export class CustomersService {
         key: key.trim(),
         type,
         isArray: false,
-        ownerId: account.id,
+        workspaceId: workspace.id,
       }).exec();
 
       if (previousKey) {
@@ -4880,7 +4866,7 @@ export class CustomersService {
         key: key.trim(),
         type,
         isArray: false,
-        ownerId: account.id,
+        workspaceId: workspace.id,
       });
       return newKey;
     } catch (error) {
@@ -4946,6 +4932,8 @@ export class CustomersService {
     settings: ImportCustomersDTO,
     session: string
   ) {
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
     let errorFilePath = '';
     try {
       const fileData = await this.importsRepository.findOneBy({
@@ -4985,7 +4973,7 @@ export class CustomersService {
 
       const passedPK = primaryArr[0];
       const savedPK = await this.CustomerKeysModel.findOne({
-        ownerId: account.id,
+        workspaceId: workspace.id,
         isPrimary: true,
       }).exec();
 
@@ -5005,7 +4993,7 @@ export class CustomersService {
       const docs = await this.CustomerModel.aggregate([
         {
           $match: {
-            ownerId: account.id,
+            workspaceId: workspace.id,
           },
         },
         {
@@ -5022,7 +5010,7 @@ export class CustomersService {
         },
       ]).option({ allowDiskUse: true });
 
-      if (!!docs?.length) {
+      if (docs?.length) {
         throw new HttpException(
           "Selected primary key can't be used cause it's value has duplicates among already existing users.",
           HttpStatus.BAD_REQUEST
@@ -5045,7 +5033,7 @@ export class CustomersService {
       const writeErrorsStream = fs.createWriteStream(fullPath);
 
       let currentBatch = [];
-      let promisesList = [];
+      const promisesList = [];
 
       const readPromise = new Promise<{
         created: number;
@@ -5173,6 +5161,8 @@ export class CustomersService {
     settings: ImportCustomersDTO,
     session: string
   ) {
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
     try {
       const fileData = await this.importsRepository.findOneBy({
         account: {
@@ -5211,7 +5201,7 @@ export class CustomersService {
 
       const passedPK = primaryArr[0];
       const savedPK = await this.CustomerKeysModel.findOne({
-        ownerId: account.id,
+        workspaceId: workspace.id,
         isPrimary: true,
       }).exec();
 
@@ -5231,7 +5221,7 @@ export class CustomersService {
       const docs = await this.CustomerModel.aggregate([
         {
           $match: {
-            ownerId: account.id,
+            workspaceId: workspace.id,
           },
         },
         {
@@ -5248,7 +5238,7 @@ export class CustomersService {
         },
       ]).option({ allowDiskUse: true });
 
-      if (!!docs?.length) {
+      if (docs?.length) {
         throw new HttpException(
           "Selected primary key can't be used cause it's value has duplicates among already existing users.",
           HttpStatus.BAD_REQUEST
@@ -5258,7 +5248,7 @@ export class CustomersService {
       if (!savedPK && passedPK) {
         const afterSaveNewPK = await this.CustomerKeysModel.findOneAndUpdate(
           {
-            ownerId: account.id,
+            workspaceId: workspace.id,
             key: passedPK.asAttribute.key,
             type: passedPK.asAttribute.type,
           },
@@ -5317,17 +5307,19 @@ export class CustomersService {
     update: UpdatePK_DTO,
     session: string
   ) {
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
     const pk = (
       await this.CustomerKeysModel.findOne({
         isPrimary: true,
-        ownerId: account.id,
+        workspaceId: workspace.id,
       })
     )?.toObject();
 
     const docsDuplicates = await this.CustomerModel.aggregate([
       {
         $match: {
-          ownerId: account.id,
+          workspaceId: workspace.id,
         },
       },
       {
@@ -5346,7 +5338,7 @@ export class CustomersService {
       .option({ allowDiskUse: true })
       .limit(2);
 
-    if (!!docsDuplicates?.length) {
+    if (docsDuplicates?.length) {
       throw new HttpException(
         "Selected primary key can't be used because of duplicated or missing values. Primary key values must exist and be unique",
         HttpStatus.BAD_REQUEST
@@ -5354,7 +5346,7 @@ export class CustomersService {
     }
 
     const newPK = await this.CustomerKeysModel.findOne({
-      ownerId: account.id,
+      workspaceId: workspace.id,
       isPrimary: false,
       ...update,
     }).exec();
@@ -5366,12 +5358,12 @@ export class CustomersService {
       );
     }
 
-    let clientSession = await this.connection.startSession();
+    const clientSession = await this.connection.startSession();
     await clientSession.startTransaction();
 
     try {
       const currentPK = await this.CustomerKeysModel.findOne({
-        ownerId: account.id,
+        workspaceId: workspace.id,
         isPrimary: true,
       })
         .session(clientSession)

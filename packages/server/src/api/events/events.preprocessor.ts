@@ -29,7 +29,6 @@ import {
   Customer,
   CustomerDocument,
 } from '../customers/schemas/customer.schema';
-import { RedlockService } from '../redlock/redlock.service';
 import * as Sentry from '@sentry/node';
 
 export enum ProviderType {
@@ -76,9 +75,7 @@ export class EventsPreProcessor extends WorkerHost {
     @InjectModel(PosthogEventType.name)
     private posthogEventTypeModel: Model<PosthogEventTypeDocument>,
     @InjectModel(Customer.name) public customerModel: Model<CustomerDocument>,
-    @InjectQueue('events') private readonly eventsQueue: Queue,
-    @Inject(RedlockService)
-    private readonly redlockService: RedlockService
+    @InjectQueue('events') private readonly eventsQueue: Queue
   ) {
     super();
   }
@@ -258,9 +255,14 @@ export class EventsPreProcessor extends WorkerHost {
           },
         };
 
+        const workspace =
+          job.data.account.teams?.[0]?.organization?.workspaces?.[0];
+
         const journeys = await queryRunner.manager.find(Journey, {
           where: {
-            owner: { id: job.data.account.id },
+            workspace: {
+              id: workspace.id,
+            },
             isActive: true,
             isPaused: false,
             isStopped: false,
@@ -305,25 +307,26 @@ export class EventsPreProcessor extends WorkerHost {
     } finally {
       await transactionSession.endSession();
       await queryRunner.release();
-      if (err?.code === 11000) {
-        this.warn(
-          `${JSON.stringify({
-            warning: 'Attempting to insert a duplicate key!',
-          })}`,
-          this.handlePosthog.name,
-          job.data.session,
-          job.data.account.id
-        );
-        throw err;
-      } else if (err) {
-        this.error(
-          err,
-          this.handlePosthog.name,
-          job.data.session,
-          job.data.account.id
-        );
-        throw new UnrecoverableError();
-      }
+    }
+
+    if (err?.code === 11000) {
+      this.warn(
+        `${JSON.stringify({
+          warning: 'Attempting to insert a duplicate key!',
+        })}`,
+        this.handlePosthog.name,
+        job.data.session,
+        job.data.account.id
+      );
+      throw err;
+    } else if (err) {
+      this.error(
+        err,
+        this.handlePosthog.name,
+        job.data.session,
+        job.data.account.id
+      );
+      throw new UnrecoverableError();
     }
   }
 
@@ -333,6 +336,9 @@ export class EventsPreProcessor extends WorkerHost {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
+
+    const workspace =
+      job.data.account.teams?.[0]?.organization?.workspaces?.[0];
 
     let err: any;
 
@@ -354,7 +360,9 @@ export class EventsPreProcessor extends WorkerHost {
 
       const journeys = await queryRunner.manager.find(Journey, {
         where: {
-          owner: { id: job.data.account.id },
+          workspace: {
+            id: workspace.id,
+          },
           isActive: true,
           isPaused: false,
           isStopped: false,
@@ -399,25 +407,25 @@ export class EventsPreProcessor extends WorkerHost {
     } finally {
       await transactionSession.endSession();
       await queryRunner.release();
-      if (err?.code === 11000) {
-        this.warn(
-          `${JSON.stringify({
-            warning: 'Attempting to insert a duplicate key!',
-          })}`,
-          this.handleCustom.name,
-          job.data.session,
-          job.data.account.id
-        );
-        throw err;
-      } else if (err) {
-        this.error(
-          err,
-          this.handleCustom.name,
-          job.data.session,
-          job.data.account.id
-        );
-        throw new UnrecoverableError();
-      }
+    }
+    if (err?.code === 11000) {
+      this.warn(
+        `${JSON.stringify({
+          warning: 'Attempting to insert a duplicate key!',
+        })}`,
+        this.handleCustom.name,
+        job.data.session,
+        job.data.account.id
+      );
+      throw err;
+    } else if (err) {
+      this.error(
+        err,
+        this.handleCustom.name,
+        job.data.session,
+        job.data.account.id
+      );
+      throw new UnrecoverableError();
     }
   }
 
@@ -433,7 +441,9 @@ export class EventsPreProcessor extends WorkerHost {
     try {
       const journeys = await queryRunner.manager.find(Journey, {
         where: {
-          owner: { id: job.data.accountID },
+          workspace: {
+            id: job.data.workspaceId,
+          },
           isActive: true,
           isPaused: false,
           isStopped: false,
@@ -444,7 +454,7 @@ export class EventsPreProcessor extends WorkerHost {
         await this.eventsQueue.add(
           'message',
           {
-            accountID: job.data.accountID,
+            workspaceId: job.data.workspaceId,
             message: job.data.message,
             customer: job.data.customer,
             journeyID: journeys[i].id,
@@ -470,15 +480,15 @@ export class EventsPreProcessor extends WorkerHost {
     } finally {
       await transactionSession.endSession();
       await queryRunner.release();
-      if (err) {
-        this.error(
-          err,
-          this.handleMessage.name,
-          job.data.session,
-          job.data.accountID
-        );
-        throw new UnrecoverableError();
-      }
+    }
+    if (err) {
+      this.error(
+        err,
+        this.handleMessage.name,
+        job.data.session,
+        job.data.accountID
+      );
+      throw new UnrecoverableError();
     }
   }
 
@@ -494,7 +504,9 @@ export class EventsPreProcessor extends WorkerHost {
     try {
       const journeys = await queryRunner.manager.find(Journey, {
         where: {
-          owner: { id: job.data.account.id },
+          workspace: {
+            id: job.data.workspaceId,
+          },
           isActive: true,
           isPaused: false,
           isStopped: false,
@@ -533,15 +545,15 @@ export class EventsPreProcessor extends WorkerHost {
     } finally {
       await transactionSession.endSession();
       await queryRunner.release();
-      if (err) {
-        this.error(
-          err,
-          this.handleAttributeChange.name,
-          job.data.session,
-          job.data.account.id
-        );
-        throw new UnrecoverableError();
-      }
+    }
+    if (err) {
+      this.error(
+        err,
+        this.handleAttributeChange.name,
+        job.data.session,
+        job.data.account.id
+      );
+      throw new UnrecoverableError();
     }
   }
 

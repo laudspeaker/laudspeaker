@@ -116,6 +116,7 @@ export class AccountsController {
       session,
       (<Account>user).id
     );
+
     try {
       const data = await this.accountsService.accountsRepository
         .createQueryBuilder('ac')
@@ -136,21 +137,34 @@ export class AccountsController {
 
       delete data?.[0].pushPlatforms?.Android?.credentials;
       delete data?.[0].pushPlatforms?.iOS?.credentials;
+      const workspace = (<Account>user)?.teams?.[0]?.organization
+        ?.workspaces?.[0];
 
-      const pk = (
-        await this.CustomerKeysModel.findOne({
-          isPrimary: true,
-          ownerId: (<Account>user).id,
-        })
-      )?.toObject();
-
-      if (pk) {
-        pk._id = pk._id.toString();
-        delete pk?.ownerId;
-        delete pk?.__v;
+      let pk;
+      if (workspace?.id) {
+        pk = (
+          await this.CustomerKeysModel.findOne({
+            isPrimary: true,
+            workspaceId: workspace.id,
+          })
+        )?.toObject();
+        if (pk) {
+          pk._id = pk._id.toString();
+          delete pk?.workspaceId;
+          delete pk?.__v;
+        }
       }
 
-      return { ...data?.[0], pk };
+      delete workspace?.pushPlatforms?.Android?.credentials;
+      delete workspace?.pushPlatforms?.iOS?.credentials;
+
+      return {
+        ...data?.[0],
+        workspace: {
+          ...workspace,
+          pk,
+        },
+      };
     } catch (e) {
       this.error(e, this.findOne.name, session, (<Account>user).id);
       throw e;
@@ -170,7 +184,14 @@ export class AccountsController {
     );
     try {
       const userData = await this.accountsService.findOne(user, session);
-      return transformToObject(userData, AccountSettingsResponse);
+      return transformToObject(
+        {
+          ...userData,
+          apiKey: (<Account>user).teams?.[0]?.organization?.workspaces?.[0]
+            .apiKey,
+        },
+        AccountSettingsResponse
+      );
     } catch (e) {
       this.error(e, this.getUserSettings.name, session, (<Account>user).id);
       throw e;
@@ -221,25 +242,26 @@ export class AccountsController {
     }
   }
 
-  @Patch('timezone')
-  @UseGuards(JwtAuthGuard)
-  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
-  async updateTimezone(
-    @Req() { user }: Request,
-    @Body() updateAccountDto: UpdateAccountDto
-  ) {
-    const session = randomUUID();
-    try {
-      return await this.accountsService.updateTimezone(
-        user,
-        updateAccountDto,
-        session
-      );
-    } catch (e) {
-      this.error(e, this.updateTimezone.name, session, (<Account>user).email);
-      throw e;
-    }
-  }
+  // DON'T NEED IT UPDATE HANDLE IN OTHER WAY
+  // @Patch('timezone')
+  // @UseGuards(JwtAuthGuard)
+  // @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
+  // async updateTimezone(
+  //   @Req() { user }: Request,
+  //   @Body() updateAccountDto: UpdateAccountDto
+  // ) {
+  //   const session = randomUUID();
+  //   try {
+  //     // return await this.accountsService.updateTimezone(
+  //     //   user,
+  //     //   updateAccountDto,
+  //     //   session
+  //     // );
+  //   } catch (e) {
+  //     this.error(e, this.updateTimezone.name, session, (<Account>user).email);
+  //     throw e;
+  //   }
+  // }
 
   @Patch()
   @UseGuards(JwtAuthGuard)

@@ -6,6 +6,7 @@ import React, { ReactNode, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import ApiService from "services/api.service";
+import Account from "types/Account";
 import MailgunSettings from "./components/MailgunSettings";
 import SendgridSettings from "./components/SendgridSettings";
 import ResendSettings from "./components/ResendSettings";
@@ -78,7 +79,8 @@ const EmailSettings = () => {
     (async () => {
       setIsLoading(true);
       try {
-        const { data } = await ApiService.get({ url: "/accounts" });
+        const { data } = await ApiService.get<Account>({ url: "/accounts" });
+        const { verified } = data;
         const {
           mailgunAPIKey,
           sendingDomain,
@@ -87,7 +89,6 @@ const EmailSettings = () => {
           testSendingEmail,
           testSendingName,
           emailProvider: provider,
-          verified,
           sendgridApiKey,
           sendgridFromEmail,
           resendAPIKey,
@@ -95,7 +96,7 @@ const EmailSettings = () => {
           resendSendingName,
           resendSendingEmail,
           resendSigningSecret,
-        } = data;
+        } = data.workspace;
         setFormData({
           mailgunAPIKey: mailgunAPIKey || "",
           sendingDomain: sendingDomain || "",
@@ -111,6 +112,7 @@ const EmailSettings = () => {
           resendSendingEmail: resendSendingEmail || "",
           resendSigningSecret: resendSigningSecret || "",
         });
+        // @ts-ignore
         setSendingService(provider || sendingService);
       } catch (e) {
         toast.error("Error while loading data");

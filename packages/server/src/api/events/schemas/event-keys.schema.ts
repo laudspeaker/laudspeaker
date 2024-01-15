@@ -15,7 +15,7 @@ export class EventKeys {
   providerSpecific: string;
 
   @Prop()
-  ownerId: string;
+  workspaceId: string;
 
   @Prop()
   isArray: boolean;

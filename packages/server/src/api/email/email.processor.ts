@@ -16,6 +16,10 @@ import twilio from 'twilio';
 import { PostHog } from 'posthog-node';
 import * as admin from 'firebase-admin';
 import nodemailer from 'nodemailer';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Account } from '../accounts/entities/accounts.entity';
+import { Repository } from 'typeorm';
+import { workspacesUrl } from 'twilio/lib/jwt/taskrouter/util';
 
 export enum MessageType {
   SMS = 'sms',
@@ -51,7 +55,9 @@ export class MessageProcessor extends WorkerHost {
   constructor(
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
     private readonly logger: LoggerService,
-    private readonly webhooksService: WebhooksService
+    private readonly webhooksService: WebhooksService,
+    @InjectRepository(Account)
+    private accountRepository: Repository<Account>
   ) {
     super();
   }
@@ -152,6 +158,12 @@ export class MessageProcessor extends WorkerHost {
       return;
     }
     let textWithInsertedTags, subjectWithInsertedTags: string | undefined;
+    const account = await this.accountRepository.findOne({
+      where: { id: job.data.accountId },
+      relations: ['teams.organization.workspaces'],
+    });
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
     try {
       if (job.data.text)
         textWithInsertedTags = await this.tagEngine.parseAndRender(
@@ -183,7 +195,7 @@ export class MessageProcessor extends WorkerHost {
             eventProvider: job.data.eventProvider,
             messageId: null,
             templateId: String(job.data.templateId),
-            userId: job.data.accountId,
+            workspaceId: workspace?.id,
             processed: false,
           },
         ],
@@ -229,7 +241,7 @@ export class MessageProcessor extends WorkerHost {
                 eventProvider: ClickHouseEventProvider.SENDGRID,
                 messageId: sendgridMessage[0].headers['x-message-id'],
                 templateId: String(job.data.templateId),
-                userId: job.data.accountId,
+                workspaceId: workspace?.id,
                 processed: false,
               },
             ],
@@ -288,7 +300,7 @@ export class MessageProcessor extends WorkerHost {
                   ? mailgunMessage.id.substring(1, mailgunMessage.id.length - 1)
                   : '',
                 templateId: String(job.data.templateId),
-                userId: job.data.accountId,
+                workspaceId: workspace?.id,
                 processed: false,
               },
             ],
@@ -331,6 +343,12 @@ export class MessageProcessor extends WorkerHost {
       );
       return;
     }
+    const account = await this.accountRepository.findOne({
+      where: { id: job.data.accountId },
+      relations: ['teams.organization.workspaces'],
+    });
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
     let textWithInsertedTags: string | undefined;
     try {
       if (job.data.text) {
@@ -357,7 +375,7 @@ export class MessageProcessor extends WorkerHost {
             eventProvider: ClickHouseEventProvider.TWILIO,
             messageId: null,
             templateId: String(job.data.templateId),
-            userId: job.data.accountId,
+            workspaceId: workspace?.id,
             processed: false,
           },
         ],
@@ -383,7 +401,7 @@ export class MessageProcessor extends WorkerHost {
             eventProvider: ClickHouseEventProvider.TWILIO,
             messageId: message.sid,
             templateId: String(job.data.templateId),
-            userId: job.data.accountId,
+            workspaceId: workspace?.id,
             processed: false,
           },
         ],
@@ -423,6 +441,11 @@ export class MessageProcessor extends WorkerHost {
       );
       return;
     }
+    const account = await this.accountRepository.findOne({
+      where: { id: job.data.accountId },
+      relations: ['teams.organization.workspaces'],
+    });
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
     let textWithInsertedTags, titleWithInsertedTags: string | undefined;
     try {
@@ -447,7 +470,7 @@ export class MessageProcessor extends WorkerHost {
       await this.webhooksService.insertMessageStatusToClickhouse(
         [
           {
-            userId: job.data.accountId,
+            workspaceId: workspace?.id,
             event: 'error',
             createdAt: new Date().toISOString(),
             eventProvider: ClickHouseEventProvider.PUSH,
@@ -512,7 +535,7 @@ export class MessageProcessor extends WorkerHost {
             eventProvider: ClickHouseEventProvider.PUSH,
             messageId: messageId,
             templateId: String(job.data.templateId),
-            userId: job.data.accountId,
+            workspaceId: workspace?.id,
             processed: false,
           },
         ],

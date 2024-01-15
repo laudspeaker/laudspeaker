@@ -12,6 +12,7 @@ import {
 import { VisualLayout } from '../types/visual-layout.interface';
 import { Step } from '@/api/steps/entities/step.entity';
 import { Journey } from './journey.entity';
+import { Workspaces } from '@/api/workspaces/entities/workspaces.entity';
 
 @Entity()
 export class JourneyLocation {
@@ -28,8 +29,10 @@ export class JourneyLocation {
   step!: Step;
 
   @JoinColumn()
-  @ManyToOne(() => Account, (account) => account.id, { onDelete: 'CASCADE' })
-  owner!: Account;
+  @ManyToOne(() => Workspaces, (workspace) => workspace.id, {
+    onDelete: 'CASCADE',
+  })
+  workspace!: Workspaces;
 
   // This is actually a timestamp using ECMAScript's native Date object; will yield
   // the same number across any timezone

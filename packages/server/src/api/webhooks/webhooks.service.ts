@@ -44,7 +44,7 @@ export interface ClickHouseMessage {
   eventProvider: ClickHouseEventProvider;
   messageId: string;
   templateId: string;
-  userId: string;
+  workspaceId: string;
   processed: boolean;
 }
 
@@ -165,16 +165,14 @@ export class WebhooksService {
         where: {
           id: item.stepId,
         },
-        relations: ['owner'],
+        relations: ['workspaces'],
       });
 
       if (step) break;
     }
 
     if (!step) return;
-    const {
-      owner: { sendgridVerificationKey },
-    } = step;
+    const { sendgridVerificationKey } = step.workspace;
 
     if (!sendgridVerificationKey)
       throw new BadRequestException(
@@ -219,7 +217,7 @@ export class WebhooksService {
         continue;
 
       const clickHouseRecord: ClickHouseMessage = {
-        userId: step.owner.id,
+        workspaceId: step.workspace.id,
         stepId,
         customerId,
         templateId: String(templateId),
@@ -258,7 +256,7 @@ export class WebhooksService {
       relations: ['owner'],
     });
     const clickHouseRecord: ClickHouseMessage = {
-      userId: step.owner.id,
+      workspaceId: step.workspace.id,
       stepId,
       customerId,
       templateId: String(templateId),
@@ -301,14 +299,18 @@ export class WebhooksService {
       'user-variables': { stepId, customerId, templateId, accountId },
     } = body['event-data'];
 
-    const account = await this.accountRepository.findOneBy({ id: accountId });
+    const account = await this.accountRepository.findOne({
+      where: { id: accountId },
+      relations: ['teams.organization.workspaces'],
+    });
     if (!account) throw new NotFoundException('Account not found');
 
     const value = signatureTimestamp + signatureToken;
 
     const hash = createHmac(
       'sha256',
-      account.mailgunAPIKey || process.env.MAILGUN_API_KEY
+      account?.teams?.[0]?.organization?.workspaces?.[0]?.mailgunAPIKey ||
+        process.env.MAILGUN_API_KEY
     )
       .update(value)
       .digest('hex');
@@ -325,8 +327,9 @@ export class WebhooksService {
 
     if (!stepId || !customerId || !templateId || !id) return;
 
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
     const clickHouseRecord: ClickHouseMessage = {
-      userId: account.id,
+      workspaceId: workspace.id,
       stepId,
       customerId,
       templateId: String(templateId),
@@ -424,7 +427,7 @@ export class WebhooksService {
         return {
           name: 'message',
           data: {
-            accountID: element.userId,
+            workspaceId: element.workspaceId,
             message: element,
             session: session,
             customer: element.customerId,

@@ -18,7 +18,7 @@ export function isWithinInterval(
   const startTimeMinOfDay = getMinuteOfDay(startTime);
   const endTimeMinOfDay = getMinuteOfDay(endTime);
 
-  let checkIntervals: [number, number][] = [];
+  const checkIntervals: [number, number][] = [];
   if (endTimeMinOfDay < startTimeMinOfDay) {
     // add start time to 23:59
     checkIntervals.push([startTimeMinOfDay, 24 * 60]);
@@ -56,9 +56,9 @@ function getMinuteOfDay(timeString: string) {
  * @returns timeString in format "hh:mm"
  */
 function getTimeString(minOfDay: number) {
-  let numFormatter = Intl.NumberFormat('en-US', { minimumIntegerDigits: 2 });
-  let hour = Math.floor(minOfDay / 60);
-  let minute = minOfDay - hour * 60;
+  const numFormatter = Intl.NumberFormat('en-US', { minimumIntegerDigits: 2 });
+  const hour = Math.floor(minOfDay / 60);
+  const minute = minOfDay - hour * 60;
   return `${numFormatter.format(hour)}:${numFormatter.format(minute)}`;
 }
 
@@ -77,9 +77,9 @@ export function convertTimeToUTC(time: string, utcOffset: string) {
       `UTCOffset was not formatted correctly ${utcOffset}, ${convertTimeToUTC.name}`
     );
   }
-  let utcSign = utcOffset[3] as '+' | '-';
-  let offsetTime = getMinuteOfDay(utcOffset.split(utcSign)[1]);
-  let localTime = getMinuteOfDay(time);
+  const utcSign = utcOffset[3] as '+' | '-';
+  const offsetTime = getMinuteOfDay(utcOffset.split(utcSign)[1]);
+  const localTime = getMinuteOfDay(time);
   let utcTime: number;
   if (utcSign === '+') {
     utcTime = localTime - offsetTime;

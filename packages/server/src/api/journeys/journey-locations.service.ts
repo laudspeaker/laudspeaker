@@ -26,7 +26,9 @@ export class JourneyLocationsService {
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
     private readonly logger: Logger,
     @InjectRepository(JourneyLocation)
-    public journeyLocationsRepository: Repository<JourneyLocation>
+    public journeyLocationsRepository: Repository<JourneyLocation>,
+    @InjectRepository(Account)
+    public accountRepository: Repository<Account>
   ) {}
 
   log(message, method, session, user = 'ANONYMOUS') {
@@ -125,12 +127,14 @@ export class JourneyLocationsService {
       account.email
     );
 
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
     if (queryRunner) {
       // Step 1: Check if customer is already enrolled in Journey; if so, throw error
       const location = await queryRunner.manager.findOne(JourneyLocation, {
         where: {
           journey: journey.id,
-          owner: { id: account.id },
+          workspace: { id: workspace.id },
           customer: customer.id,
         },
       });
@@ -141,9 +145,9 @@ export class JourneyLocationsService {
         );
 
       // Step 2: Create new journey Location row, add time that user entered the journey
-      const locatoin = await queryRunner.manager.save(JourneyLocation, {
+      await queryRunner.manager.save(JourneyLocation, {
         journey: journey.id,
-        owner: account,
+        workspace,
         customer: customer.id,
         step: step,
         stepEntry: Date.now(),
@@ -153,7 +157,7 @@ export class JourneyLocationsService {
       const location = await this.journeyLocationsRepository.findOne({
         where: {
           journey: journey.id,
-          owner: { id: account.id },
+          workspace: { id: workspace.id },
           customer: customer.id,
         },
       });
@@ -163,7 +167,7 @@ export class JourneyLocationsService {
         );
       await this.journeyLocationsRepository.save({
         journey: journey.id,
-        owner: account,
+        workspace,
         customer: customer.id,
         step: step,
         stepEntry: Date.now(),
@@ -220,11 +224,13 @@ export class JourneyLocationsService {
       session,
       account?.email
     );
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
     if (queryRunner) {
       return await queryRunner.manager.findOne(JourneyLocation, {
         where: {
           journey: journey.id,
-          owner: account ? { id: account.id } : undefined,
+          workspace: workspace ? { id: workspace.id } : undefined,
           customer: customer.id,
         },
         loadRelationIds: true,
@@ -234,7 +240,8 @@ export class JourneyLocationsService {
       return await this.journeyLocationsRepository.findOne({
         where: {
           journey: journey.id,
-          owner: account ? { id: account.id } : undefined,
+          workspace: workspace ? { id: workspace.id } : undefined,
+
           customer: customer.id,
         },
         loadRelationIds: true,
@@ -284,6 +291,8 @@ export class JourneyLocationsService {
       account.email
     );
 
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
     if (String(location.step) !== from.id) {
       this.warn(
         JSON.stringify({
@@ -301,7 +310,7 @@ export class JourneyLocationsService {
         JourneyLocation,
         {
           journey: location.journey,
-          owner: account ? { id: account.id } : undefined,
+          workspace: workspace ? { id: workspace.id } : undefined,
           customer: location.customer,
         },
         {
@@ -313,7 +322,7 @@ export class JourneyLocationsService {
       await this.journeyLocationsRepository.update(
         {
           journey: location.journey,
-          owner: account ? { id: account.id } : undefined,
+          workspace: workspace ? { id: workspace.id } : undefined,
           customer: location.customer,
         },
         {
@@ -349,11 +358,14 @@ export class JourneyLocationsService {
       session,
       account?.email
     );
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
     if (queryRunner) {
       return await queryRunner.manager.findOne(JourneyLocation, {
         where: {
           journey: journey.id,
-          owner: account ? { id: account.id } : undefined,
+          workspace: workspace ? { id: workspace.id } : undefined,
+
           customer: customer.id,
         },
         relations: ['owner', 'journey', 'step'],
@@ -362,7 +374,8 @@ export class JourneyLocationsService {
       return await this.journeyLocationsRepository.findOne({
         where: {
           journey: journey.id,
-          owner: account ? { id: account.id } : undefined,
+          workspace: workspace ? { id: workspace.id } : undefined,
+
           customer: customer.id,
         },
         relations: ['owner', 'journey', 'step'],
@@ -448,12 +461,14 @@ export class JourneyLocationsService {
       session,
       account?.email
     );
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
     if (queryRunner) {
       await queryRunner.manager.update(
         JourneyLocation,
         {
           journey: location.journey,
-          owner: account ? { id: account.id } : undefined,
+          workspace: workspace ? { id: workspace.id } : undefined,
           customer: location.customer,
         },
         {
@@ -464,7 +479,7 @@ export class JourneyLocationsService {
       await this.journeyLocationsRepository.update(
         {
           journey: location.journey,
-          owner: account ? { id: account.id } : undefined,
+          workspace: workspace ? { id: workspace.id } : undefined,
           customer: location.customer,
         },
         {
@@ -557,6 +572,8 @@ export class JourneyLocationsService {
       session,
       account?.email
     );
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
     if (
       location.moveStarted &&
       Date.now() - location.moveStarted < LOCATION_LOCK_TIMEOUT_MS
@@ -569,7 +586,7 @@ export class JourneyLocationsService {
         JourneyLocation,
         {
           journey: location.journey,
-          owner: account ? { id: account.id } : undefined,
+          workspace: workspace ? { id: workspace.id } : undefined,
           customer: location.customer,
         },
         {
@@ -580,7 +597,7 @@ export class JourneyLocationsService {
       await this.journeyLocationsRepository.update(
         {
           journey: location.journey,
-          owner: account ? { id: account.id } : undefined,
+          workspace: workspace ? { id: workspace.id } : undefined,
           customer: location.customer,
         },
         {
@@ -597,7 +614,9 @@ export class JourneyLocationsService {
   ) {
     const findCriteria: FindOptionsWhere<JourneyLocation> = {
       journey: location.journey,
-      owner: account ? { id: account.id } : undefined,
+      workspace: account.teams?.[0]?.organization?.workspaces?.[0]?.id
+        ? { id: account.teams[0].organization.workspaces[0].id }
+        : undefined,
       customer: location.customer,
     };
     const updateData: Partial<JourneyLocation> = {
@@ -629,7 +648,7 @@ export class JourneyLocationsService {
   ) {
     const queryCriteria: FindManyOptions<JourneyLocation> = {
       where: {
-        owner: { id: account.id },
+        workspace: { id: account.teams?.[0]?.organization?.workspaces?.[0].id },
         journey: journey.id,
       },
     };
@@ -658,7 +677,7 @@ export class JourneyLocationsService {
   ) {
     const queryCriteria: FindManyOptions<JourneyLocation> = {
       where: {
-        owner: { id: account.id },
+        workspace: { id: account.teams[0].organization.workspaces[0].id },
         journey: journey.id,
         messageSent: true,
       },

@@ -28,7 +28,7 @@ export class CustomerKeys {
   isPrimary: boolean;
 
   @Prop()
-  ownerId: string;
+  workspaceId: string;
 }
 
 export const CustomerKeysSchema = SchemaFactory.createForClass(CustomerKeys);
