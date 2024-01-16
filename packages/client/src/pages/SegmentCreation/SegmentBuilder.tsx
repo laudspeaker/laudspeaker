@@ -197,9 +197,6 @@ const SegmentBuilder = () => {
           onChange={(ev) => setDescription(ev.target.value || "")}
         />
       </div>
-      <div className="mb-[10px] font-inter font-semibold text-base text-[#111827]">
-        Segment type
-      </div>
       <div className="mb-[10px] font-inter font-semibold text-base">
         {segmentType === SegmentType.AUTOMATIC ? "Conditions" : "CSV file"}
       </div>

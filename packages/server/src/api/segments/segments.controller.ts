@@ -216,7 +216,8 @@ export class SegmentsController {
     @Req() { user }: Request,
     @Param('id') id: string,
     @Query('take') take?: string,
-    @Query('skip') skip?: string
+    @Query('skip') skip?: string,
+    @Query('orderType') orderType?: 'asc' | 'desc'
   ) {
     const session = randomUUID();
 
@@ -225,6 +226,7 @@ export class SegmentsController {
       id,
       take && +take,
       skip && +skip,
+      orderType,
       session
     );
   }

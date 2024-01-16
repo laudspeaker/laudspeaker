@@ -13,6 +13,23 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import ApiService from "services/api.service";
 import { SegmentType } from "types/Segment";
+import sortAscChevronsImage from "./svg/sort-asc-chevrons.svg";
+import sortDescChevronsImage from "./svg/sort-desc-chevrons.svg";
+import sortNoneChevronsImage from "./svg/sort-none-chevrons.svg";
+
+enum SortProperty {
+  CREATED_AT = "createdAt",
+}
+
+enum SortType {
+  ASC = "asc",
+  DESC = "desc",
+}
+
+interface SortOptions {
+  sortBy: SortProperty;
+  sortType: SortType;
+}
 
 const SegmentViewer = () => {
   const { id } = useParams();
@@ -31,6 +48,10 @@ const SegmentViewer = () => {
 
   const [currentPage, setCurrentPage] = useState(1);
   const [pagesCount, setPagesCount] = useState(1);
+  const [sortOptions, setSortOptions] = useState<SortOptions>({
+    sortBy: SortProperty.CREATED_AT,
+    sortType: SortType.DESC,
+  });
 
   const ITEMS_PER_PAGE = 10;
 
@@ -75,7 +96,7 @@ const SegmentViewer = () => {
       }>({
         url: `/segments/${id}/customers?take=${ITEMS_PER_PAGE}&skip=${
           (currentPage - 1) * ITEMS_PER_PAGE
-        }`,
+        }&orderBy=${sortOptions.sortBy}&orderType=${sortOptions.sortType}`,
       });
 
       setPKKeyName(pkName);
@@ -107,7 +128,11 @@ const SegmentViewer = () => {
     if (isLoadingSegment) return;
 
     loadPeopleData();
-  }, [id, currentPage, ITEMS_PER_PAGE, isLoadingSegment]);
+  }, [id, currentPage, ITEMS_PER_PAGE, isLoadingSegment, sortOptions]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [sortOptions]);
 
   const handleChangeSelectedCustomers = (rowId: string, checked: boolean) => {
     if (checked) {
@@ -263,8 +288,45 @@ const SegmentViewer = () => {
                       "Email"
                     )}
                   </div>,
-                  <div className="px-5 py-2.5 select-none flex gap-[2px] items-center cursor-pointer">
+                  <div
+                    className="px-5 py-[10px] select-none flex gap-[2px] items-center cursor-pointer"
+                    onClick={() => {
+                      if (sortOptions.sortBy !== SortProperty.CREATED_AT) {
+                        setSortOptions({
+                          sortBy: SortProperty.CREATED_AT,
+                          sortType: SortType.DESC,
+                        });
+
+                        return;
+                      }
+
+                      if (sortOptions.sortType === SortType.ASC) {
+                        setSortOptions({
+                          sortBy: SortProperty.CREATED_AT,
+                          sortType: SortType.DESC,
+                        });
+
+                        return;
+                      }
+
+                      setSortOptions({
+                        sortBy: SortProperty.CREATED_AT,
+                        sortType: SortType.ASC,
+                      });
+                    }}
+                  >
                     <div>Created</div>
+                    <div>
+                      <img
+                        src={
+                          sortOptions.sortBy === SortProperty.CREATED_AT
+                            ? sortOptions.sortType === SortType.ASC
+                              ? sortAscChevronsImage
+                              : sortDescChevronsImage
+                            : sortNoneChevronsImage
+                        }
+                      />
+                    </div>
                   </div>,
                   ...(isEditing ? [<></>] : []),
                 ]}

@@ -741,6 +741,7 @@ export class SegmentsService {
     id: string,
     take = 100,
     skip = 0,
+    createdAtSortType: 'asc' | 'desc' = 'asc',
     session: string
   ) {
     const segment = await this.findOne(account, id, session);
@@ -761,11 +762,11 @@ export class SegmentsService {
       skip,
     });
 
-    const customers = await Promise.all(
-      records.map((record) =>
-        this.customersService.CustomerModel.findById(record.customerId).exec()
-      )
-    );
+    const customers = await this.customersService.CustomerModel.find({
+      _id: { $in: records.map((record) => record.customerId) },
+    })
+      .sort({ _id: createdAtSortType === 'asc' ? 1 : -1 })
+      .exec();
 
     const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
