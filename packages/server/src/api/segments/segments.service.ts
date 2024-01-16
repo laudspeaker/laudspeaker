@@ -767,6 +767,15 @@ export class SegmentsService {
       )
     );
 
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
+    const pk = (
+      await this.customersService.CustomerKeysModel.findOne({
+        isPrimary: true,
+        workspaceId: workspace.id,
+      })
+    )?.toObject();
+
     return {
       data: customers.map((customer) => ({
         ...(customer?.toObject() || {}),
@@ -774,6 +783,7 @@ export class SegmentsService {
         dataSource: 'segmentPeople',
       })),
       totalPages,
+      pkName: pk?.key,
     };
   }
 
@@ -987,6 +997,32 @@ export class SegmentsService {
     await this.segmentCustomersRepository.delete({
       segment: id, //{ id: segment.id },
     });
+  }
+
+  public async deleteBatchedCustomers(
+    account: Account,
+    id: string,
+    customerIds: string[],
+    session: string
+  ) {
+    await this.segmentCustomersRepository.delete({
+      segment: id,
+      customerId: In(customerIds),
+    });
+
+    for (const customerId of customerIds) {
+      (async () => {
+        const customer = await this.customersService.findById(
+          account,
+          customerId
+        );
+        await this.customersService.recheckDynamicInclusion(
+          account,
+          customer,
+          session
+        );
+      })();
+    }
   }
 
   public async deleteCustomer(
