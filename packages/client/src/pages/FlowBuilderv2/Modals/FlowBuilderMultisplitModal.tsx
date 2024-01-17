@@ -86,7 +86,7 @@ const FlowBuilderMultisplitModal = ({
         <span className="text-[#111827] font-inter leading-[28px] text-[20px] font-semibold block mb-[8px]">
           {branch ? `Branch ${index || 0 + 1}` : "New branch"}
         </span>
-        <div className="max-h-[584px] overflow-y-auto">
+        <div className="max-h-[584px] min-h-[500px] overflow-y-auto">
           <Suspense fallback={<></>}>
             <FilterBuilder
               settings={bufferBranch}
