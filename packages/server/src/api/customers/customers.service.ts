@@ -1,7 +1,6 @@
 /* eslint-disable no-case-declarations */
 import mongoose, {
   ClientSession,
-  isObjectIdOrHexString,
   isValidObjectId,
   Model,
   Types,
@@ -51,11 +50,7 @@ import { JourneysService } from '../journeys/journeys.service';
 import { S3Service } from '../s3/s3.service';
 import { Imports } from './entities/imports.entity';
 import { thrift } from '@databricks/sql';
-import {
-  ImportCustomersDTO,
-  ImportOptions,
-  MappingParam,
-} from './dto/import-customers.dto';
+import { ImportCustomersDTO, MappingParam } from './dto/import-customers.dto';
 import * as fastcsv from 'fast-csv';
 import * as fs from 'fs';
 import path from 'path';
@@ -69,6 +64,7 @@ import {
   KEYS_TO_SKIP,
   validateKeyForMutations,
 } from '@/utils/customer-key-name-validator';
+import { UpsertCustomerDto } from './dto/upsert-customer.dto';
 
 export type Correlation = {
   cust: CustomerDocument;
@@ -1416,13 +1412,20 @@ export class CustomersService {
     } else return { cust: customer, found: true };
   }
 
+  /**
+   * Upsert a customer into the customer database. Requires a primary key
+   * to have been set.
+   * @param account
+   * @param upsertCustomerDto
+   * @param session
+   * @returns
+   */
+
   async upsert(
     account: Account,
-    dto: Record<string, unknown>,
+    upsertCustomerDto: UpsertCustomerDto,
     session: string
-  ): Promise<string> {
-    let correlation: Correlation;
-
+  ): Promise<{ id: string }> {
     const transactionSession = await this.connection.startSession();
     transactionSession.startTransaction();
     const queryRunner = this.dataSource.createQueryRunner();
@@ -1430,52 +1433,77 @@ export class CustomersService {
     await queryRunner.startTransaction();
 
     try {
-      const eventDto: any = {
-        correlationKey: dto.correlationKey,
-        correlationValue: dto.correlationValue,
-        source: null,
-      };
-      correlation = await this.findOrCreateByCorrelationKVPair(
-        account,
-        eventDto,
-        transactionSession
-      );
+      const accountWithWorkspace = await queryRunner.manager.findOne(Account, {
+        where: { id: account.id },
+        relations: ['teams.organization.workspaces'],
+      });
+      const workspace =
+        accountWithWorkspace?.teams?.[0]?.organization?.workspaces?.[0];
 
-      const left = correlation.cust.toObject();
-      const right = _.cloneDeep(dto);
+      const primaryKey = await this.CustomerKeysModel.findOne({
+        workspaceId: workspace.id,
+        isPrimary: true,
+      })
+        .session(transactionSession)
+        .exec();
 
-      delete right.correlationKey;
-      delete right.correlationValue;
-
-      await this.transactionalUpdate(
-        account,
-        correlation.cust.id,
-        session,
-        _.merge(left, right),
-        transactionSession
-      );
-
-      if (!correlation.found)
-        await this.workflowsService.enrollCustomer(
-          account,
-          correlation.cust,
-          queryRunner,
-          transactionSession,
-          session
+      if (!primaryKey)
+        throw new HttpException(
+          'Primary key has not been set: see https://laudspeaker.com/docs/developer/api/users/upsert for more details.',
+          HttpStatus.BAD_REQUEST
         );
+
+      const existingCustomer = await this.CustomerModel.findOne({
+        workspaceId: workspace.id,
+        [primaryKey.key]: upsertCustomerDto.primary_key,
+      })
+        .session(transactionSession)
+        .exec();
+
+      let returnID: string;
+
+      if (existingCustomer) {
+        await this.CustomerModel.updateOne(
+          {
+            workspaceId: workspace.id,
+            [primaryKey.key]: upsertCustomerDto.primary_key,
+          },
+          {
+            $set: {
+              ...upsertCustomerDto.properties,
+            },
+          }
+        )
+          .session(transactionSession)
+          .exec();
+        returnID = existingCustomer.id;
+      } else {
+        const res = await this.CustomerModel.create(
+          [
+            {
+              workspaceId: workspace.id,
+              [primaryKey.key]: upsertCustomerDto.primary_key,
+              ...upsertCustomerDto.properties,
+            },
+          ],
+          { session: transactionSession }
+        );
+        returnID = res[0].id;
+      }
 
       await transactionSession.commitTransaction();
       await queryRunner.commitTransaction();
+      await transactionSession.endSession();
+      await queryRunner.release();
+      return Promise.resolve({ id: returnID });
     } catch (err) {
       await transactionSession.abortTransaction();
       await queryRunner.rollbackTransaction();
-      this.error(err, this.upsert.name, session, account.email);
-      throw err;
-    } finally {
       await transactionSession.endSession();
       await queryRunner.release();
+      this.error(err, this.upsert.name, session, account.email);
+      throw err;
     }
-    return Promise.resolve(correlation.cust.id);
   }
 
   async mergeCustomers(
@@ -5350,7 +5378,11 @@ export class CustomersService {
 
     const newPK = await this.CustomerKeysModel.findOne({
       workspaceId: workspace.id,
-      isPrimary: false,
+      $or: [
+        { isPrimary: false },
+        { isPrimary: null },
+        { isPrimary: { $exists: false } },
+      ],
       ...update,
     }).exec();
 

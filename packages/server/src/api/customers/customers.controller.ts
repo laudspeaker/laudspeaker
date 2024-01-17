@@ -32,6 +32,7 @@ import { AttributeType } from './schemas/customer-keys.schema';
 import { ImportCustomersDTO } from './dto/import-customers.dto';
 import { extname } from 'path';
 import { UpdatePK_DTO } from './dto/update-pk.dto';
+import { UpsertCustomerDto } from './dto/upsert-customer.dto';
 
 @Controller('customers')
 export class CustomersController {
@@ -291,12 +292,12 @@ export class CustomersController {
   @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
   async upsert(
     @Req() { user }: Request,
-    @Body() updateCustomerDto: Record<string, unknown>
+    @Body() upsertCustomerDto: UpsertCustomerDto
   ) {
     const session = randomUUID();
     return await this.customersService.upsert(
       <Account>user,
-      updateCustomerDto,
+      upsertCustomerDto,
       session
     );
   }
