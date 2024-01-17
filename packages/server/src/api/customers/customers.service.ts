@@ -4994,6 +4994,7 @@ export class CustomersService {
         {
           $match: {
             workspaceId: workspace.id,
+            isAnonymous: false,
           },
         },
         {
@@ -5222,6 +5223,7 @@ export class CustomersService {
         {
           $match: {
             workspaceId: workspace.id,
+            isAnonymous: false,
           },
         },
         {
@@ -5320,6 +5322,7 @@ export class CustomersService {
       {
         $match: {
           workspaceId: workspace.id,
+          isAnonymous: false,
         },
       },
       {

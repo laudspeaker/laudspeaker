@@ -489,7 +489,12 @@ const RouteComponent: React.FC = () => {
           element={
             <Protected>
               <VerificationProtected>
-                <DrawerLayout>
+                <DrawerLayout
+                  crumbs={[
+                    { text: "Segments", link: "/segment" },
+                    { text: "Upload CSV" },
+                  ]}
+                >
                   <ManualSegmentCreator />
                 </DrawerLayout>
               </VerificationProtected>

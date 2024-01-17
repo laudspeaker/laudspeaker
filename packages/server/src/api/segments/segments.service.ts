@@ -781,6 +781,7 @@ export class SegmentsService {
       data: customers.map((customer) => ({
         ...(customer?.toObject() || {}),
         id: customer.id,
+        createdAt: customer._id.getTimestamp(),
         dataSource: 'segmentPeople',
       })),
       totalPages,
@@ -995,6 +996,9 @@ export class SegmentsService {
 
   public async clearCustomers(account: Account, id: string, session: string) {
     const segment = await this.findOne(account, id, session);
+    if(!segment){
+      throw new HttpException("No segment found.",HttpStatus.NOT_FOUND)
+    }
     await this.segmentCustomersRepository.delete({
       segment: id, //{ id: segment.id },
     });

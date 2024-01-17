@@ -5,6 +5,7 @@ import Input from "components/Elements/Inputv2";
 import Pagination from "components/Pagination";
 import Table from "components/Tablev2";
 import { format } from "date-fns";
+import MapValidationErrors from "pages/PeopleImport/Modals/MapValidationErrors";
 import { PeopleRowData } from "pages/PeopleTablev2/PeopleTablev2";
 import SegmentEditor from "pages/SegmentCreation/SegmentEditor";
 import React, { useEffect, useState } from "react";
@@ -45,6 +46,7 @@ const SegmentViewer = () => {
   const [isPeopleLoading, setIsPeopleLoading] = useState(false);
   const [rows, setRows] = useState<PeopleRowData[]>([]);
   const [pkKeyName, setPKKeyName] = useState<string>();
+  const [isDeleteAllOpen, setIsDeleteAllOpen] = useState(false);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [pagesCount, setPagesCount] = useState(1);
@@ -83,7 +85,6 @@ const SegmentViewer = () => {
       setIsLoadingSegment(false);
     }
   };
-
   const loadPeopleData = async () => {
     setIsPeopleLoading(true);
     try {
@@ -115,6 +116,16 @@ const SegmentViewer = () => {
       toast.error("Failed to load data");
     } finally {
       setIsPeopleLoading(false);
+    }
+  };
+
+  const handleDeleteAllCustomers = async () => {
+    try {
+      await ApiService.delete({ url: `/segments/${id}/customers` });
+      setIsDeleteAllOpen(false);
+      await loadPeopleData();
+    } catch (err) {
+      toast.error("Failed to clear segment");
     }
   };
 
@@ -234,17 +245,26 @@ const SegmentViewer = () => {
               Eligible users
             </div>
             {isEditing ? (
-              <Button
-                type={ButtonType.DANGEROUS}
-                onClick={() => {
-                  setCustomersToDeleteFromSegment([...selectedCustomers]);
-                  setSelectedCustomers([]);
-                }}
-                disabled={selectedCustomers.length === 0}
-                className="w-fit"
-              >
-                Delete
-              </Button>
+              <div className="flex w-full justify-between items-center">
+                <Button
+                  type={ButtonType.DANGEROUS}
+                  onClick={() => {
+                    setCustomersToDeleteFromSegment([...selectedCustomers]);
+                    setSelectedCustomers([]);
+                  }}
+                  disabled={selectedCustomers.length === 0}
+                  className="w-fit"
+                >
+                  Delete
+                </Button>
+                <Button
+                  type={ButtonType.DANGEROUS}
+                  onClick={() => setIsDeleteAllOpen(true)}
+                  className="w-fit"
+                >
+                  Delete all users from segment
+                </Button>
+              </div>
             ) : (
               <div>
                 This segment includes users selected from the CSV file you
@@ -407,6 +427,17 @@ const SegmentViewer = () => {
           )}
         </div>
       </div>
+      <MapValidationErrors
+        isOpen={isDeleteAllOpen}
+        title={"Delete all users from segment?"}
+        desc={
+          "Are you sure you want to delete all customers from segment?\nThis action performed instantly and can't be canceled"
+        }
+        cancelText={"Cancel"}
+        confirmText={"Delete All"}
+        onClose={() => setIsDeleteAllOpen(false)}
+        onConfirm={handleDeleteAllCustomers}
+      />
     </div>
   );
 };
