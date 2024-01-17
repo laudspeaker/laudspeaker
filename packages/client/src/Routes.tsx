@@ -61,6 +61,8 @@ import CompanySetup from "pages/CompanySetup/CompanySetup";
 import EEWrapper from "EE/EEWraper";
 import InviteMember from "pages/Settingsv2/InviteMember";
 import InviteConfirmation from "EE/InviteConfirmation";
+import ManualSegmentCreator from "pages/ManualSegmentCreator";
+import SegmentViewer from "pages/SegmentViewer";
 
 interface IProtected {
   children: ReactElement;
@@ -471,7 +473,7 @@ const RouteComponent: React.FC = () => {
           }
         />
         <Route
-          path="/segment/create"
+          path="/segment/create/automatic"
           element={
             <Protected>
               <VerificationProtected>
@@ -483,12 +485,29 @@ const RouteComponent: React.FC = () => {
           }
         />
         <Route
+          path="/segment/create/manual"
+          element={
+            <Protected>
+              <VerificationProtected>
+                <DrawerLayout
+                  crumbs={[
+                    { text: "Segments", link: "/segment" },
+                    { text: "Upload CSV" },
+                  ]}
+                >
+                  <ManualSegmentCreator />
+                </DrawerLayout>
+              </VerificationProtected>
+            </Protected>
+          }
+        />
+        <Route
           path="/segment/:id"
           element={
             <Protected>
               <VerificationProtected>
                 <DrawerLayout>
-                  <SegmentEditor />
+                  <SegmentViewer />
                 </DrawerLayout>
               </VerificationProtected>
             </Protected>

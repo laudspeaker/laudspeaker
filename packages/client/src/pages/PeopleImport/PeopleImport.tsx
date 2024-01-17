@@ -2,7 +2,7 @@ import { AxiosError } from "axios";
 import Button, { ButtonType } from "components/Elements/Buttonv2";
 import { keyBy } from "lodash";
 import FlowBuilderModal from "pages/FlowBuilderv2/Elements/FlowBuilderModal";
-import { useEffect, useState } from "react";
+import { FC, useEffect, useState } from "react";
 import { confirmAlert } from "react-confirm-alert";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -54,7 +54,7 @@ export type MappingParams = Record<
   }
 >;
 
-enum ValidationErrors {
+enum ValidationError {
   UNMAPPED_ATTRIBUTES,
   PRIMARY_REQUIRED,
   PRIMARY_MAP_REQUIRED,
@@ -67,16 +67,20 @@ export interface PreviewImportResults {
   url: string;
 }
 
-const PeopleImport = () => {
+export interface PeopleImportProps {
+  inSegment?: boolean;
+}
+
+const PeopleImport: FC<PeopleImportProps> = ({ inSegment }) => {
   const [tabIndex, setTabIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [fileData, setFileData] = useState<ImportParams>();
   const [mappingSettings, setMappingSettings] = useState<MappingParams>({});
   const [importPreview, setImportPreview] = useState<PreviewImportResults>();
   const [importOption, setImportOption] = useState<ImportOptions>(
-    ImportOptions.NEW
+    inSegment ? ImportOptions.NEW_AND_EXISTING : ImportOptions.NEW
   );
-  const [validationErrors, setValidationErrors] = useState<ValidationErrors[]>(
+  const [validationErrors, setValidationErrors] = useState<ValidationError[]>(
     []
   );
   const [isValidationInProcess, setIsValidationInProcess] = useState(false);
@@ -125,19 +129,19 @@ const PeopleImport = () => {
   };
 
   const validationContent = {
-    [ValidationErrors.UNMAPPED_ATTRIBUTES]: {
+    [ValidationError.UNMAPPED_ATTRIBUTES]: {
       title: "You have unmapped attributes",
       desc: "Unmapped attributes will not be imported. Do you want to proceed without mapping these attributes?",
       cancel: "Go Back and Map",
       confirm: "Proceed",
     },
-    [ValidationErrors.PRIMARY_REQUIRED]: {
+    [ValidationError.PRIMARY_REQUIRED]: {
       title: "Primary key missing",
       desc: "You don't have primary key specified, without it you can't proceed, please specify primary key.",
       cancel: "",
       confirm: "Got it",
     },
-    [ValidationErrors.PRIMARY_MAP_REQUIRED]: {
+    [ValidationError.PRIMARY_MAP_REQUIRED]: {
       title: "Primary key attribute not mapped",
       desc: `You don't have filed that mapping to your primary key (${fileData?.primaryAttribute?.key}), it's required to map your data properly.`,
       cancel: "",
@@ -158,6 +162,9 @@ const PeopleImport = () => {
         importOption={importOption}
         setImportOption={setImportOption}
         onUpdate={() => loadData()}
+        segment={completionSegment}
+        setSegment={setCompletionSegment}
+        inSegment={inSegment}
       />
     ),
     1: (
@@ -174,6 +181,7 @@ const PeopleImport = () => {
         preview={importPreview}
         segment={completionSegment}
         setSegment={setCompletionSegment}
+        inSegment={inSegment}
       />
     ),
   };
@@ -242,8 +250,8 @@ const PeopleImport = () => {
     const currentError = validationErrors[0];
 
     if (
-      currentError === ValidationErrors.PRIMARY_REQUIRED ||
-      currentError === ValidationErrors.PRIMARY_MAP_REQUIRED
+      currentError === ValidationError.PRIMARY_REQUIRED ||
+      currentError === ValidationError.PRIMARY_MAP_REQUIRED
     ) {
       setValidationErrors([]);
       return;
@@ -251,7 +259,7 @@ const PeopleImport = () => {
 
     const errors = [...validationErrors];
 
-    if (currentError === ValidationErrors.UNMAPPED_ATTRIBUTES) {
+    if (currentError === ValidationError.UNMAPPED_ATTRIBUTES) {
       errors.shift();
       setValidationErrors([...errors]);
     }
@@ -269,20 +277,20 @@ const PeopleImport = () => {
         el.asAttribute?.type &&
         !el.asAttribute.skip
     );
-    const errors: ValidationErrors[] = [];
+    const errors: ValidationError[] = [];
 
     if (!pk && !fileData?.primaryAttribute) {
-      errors.push(ValidationErrors.PRIMARY_REQUIRED);
+      errors.push(ValidationError.PRIMARY_REQUIRED);
     }
     if (!pk && fileData?.primaryAttribute) {
-      errors.push(ValidationErrors.PRIMARY_MAP_REQUIRED);
+      errors.push(ValidationError.PRIMARY_MAP_REQUIRED);
     }
     if (
       Object.values(mappingSettings).some(
         (el) => !el.asAttribute?.key || !el.asAttribute?.type
       )
     ) {
-      errors.push(ValidationErrors.UNMAPPED_ATTRIBUTES);
+      errors.push(ValidationError.UNMAPPED_ATTRIBUTES);
     }
 
     if (errors.length === 0) {
@@ -329,7 +337,7 @@ const PeopleImport = () => {
   return (
     <div>
       <div className="w-full bg-white py-8 px-10 font-inter font-semibold text-[#111827] text-xl border-t border-b border-[#E5E7EB]">
-        Import users
+        {inSegment ? "Upload CSV" : "Import users"}
       </div>
       <div className="w-full px-5 mt-4">
         <div className="flex flex-col w-full h-full bg-white py-5">
@@ -410,6 +418,7 @@ const PeopleImport = () => {
               disabled={
                 isLoading ||
                 (tabIndex === 0 && !fileData?.file) ||
+                (inSegment && !completionSegment.withSegment) ||
                 (tabIndex === 2 &&
                   completionSegment.withSegment &&
                   !completionSegment.name)

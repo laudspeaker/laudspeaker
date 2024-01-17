@@ -31,6 +31,7 @@ import { randomUUID } from 'crypto';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { RavenInterceptor } from 'nest-raven';
 import { CountSegmentUsersSizeDTO } from './dto/size-count.dto';
+import { DeleteBatchedCustomersDto } from './dto/delete-batched-customers.dto';
 
 @Controller('segments')
 export class SegmentsController {
@@ -215,7 +216,8 @@ export class SegmentsController {
     @Req() { user }: Request,
     @Param('id') id: string,
     @Query('take') take?: string,
-    @Query('skip') skip?: string
+    @Query('skip') skip?: string,
+    @Query('orderType') orderType?: 'asc' | 'desc'
   ) {
     const session = randomUUID();
 
@@ -224,6 +226,7 @@ export class SegmentsController {
       id,
       take && +take,
       skip && +skip,
+      orderType,
       session
     );
   }
@@ -274,6 +277,24 @@ export class SegmentsController {
     const session = randomUUID();
 
     return this.segmentsService.clearCustomers(<Account>user, id, session);
+  }
+
+  @Post('/:id/customers/delete-batch')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
+  public async deleteBatchedCustomers(
+    @Req() { user }: Request,
+    @Param('id') id: string,
+    @Body() { customerIds }: DeleteBatchedCustomersDto
+  ) {
+    const session = randomUUID();
+
+    return this.segmentsService.deleteBatchedCustomers(
+      <Account>user,
+      id,
+      customerIds,
+      session
+    );
   }
 
   @Delete('/:id/customers/:customerId')

@@ -197,44 +197,6 @@ const SegmentBuilder = () => {
           onChange={(ev) => setDescription(ev.target.value || "")}
         />
       </div>
-      <div className="mb-[10px] font-inter font-semibold text-base text-[#111827]">
-        Segment type
-      </div>
-      <div className="flex gap-5 mb-[20px]">
-        <div
-          className={`w-[340px] px-5 py-[10px] flex flex-col gap-[10px] rounded select-none cursor-pointer ${
-            segmentType === SegmentType.AUTOMATIC
-              ? "border-2 border-[#6366F1] bg-[#EEF2FF]"
-              : "border border-[#E5E7EB]"
-          }`}
-          onClick={() => setSegmentType(SegmentType.AUTOMATIC)}
-        >
-          <div className="font-semibold font-inter text-base">
-            Automatic segment
-          </div>
-          <div className="font-normal text-[14px] leading-[22px] text-[#4B5563]">
-            A segment defined by the following set of filters and conditions
-          </div>
-        </div>
-
-        {!(segmentType === SegmentType.AUTOMATIC && id) && (
-          <div
-            className={`w-[340px] px-5 py-[10px] flex flex-col gap-[10px] rounded select-none cursor-pointer ${
-              segmentType === SegmentType.MANUAL
-                ? "border-2 border-[#6366F1] bg-[#EEF2FF]"
-                : "border border-[#E5E7EB]"
-            }`}
-            onClick={() => setSegmentType(SegmentType.MANUAL)}
-          >
-            <div className="font-semibold font-inter text-base">
-              Manual segment
-            </div>
-            <div className="font-normal text-[14px] leading-[22px] text-[#4B5563]">
-              A segment defined by a list of users, by csv upload or otherwise
-            </div>
-          </div>
-        )}
-      </div>
       <div className="mb-[10px] font-inter font-semibold text-base">
         {segmentType === SegmentType.AUTOMATIC ? "Conditions" : "CSV file"}
       </div>

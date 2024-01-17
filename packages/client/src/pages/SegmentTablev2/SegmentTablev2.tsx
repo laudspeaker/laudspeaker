@@ -16,8 +16,9 @@ import sortDescChevronsImage from "./svg/sort-desc-chevrons.svg";
 import sortNoneChevronsImage from "./svg/sort-none-chevrons.svg";
 import emptyDataImage from "./svg/empty-data.svg";
 import NameSegmentModal from "./Modals/NameSegmentModal";
-import { Segment } from "types/Segment";
+import { Segment, SegmentType } from "types/Segment";
 import { Link } from "react-router-dom";
+import Select from "components/Elements/Selectv2";
 
 interface SegmentRowData {
   id: string;
@@ -133,15 +134,29 @@ const SegmentTablev2 = () => {
       <div className="flex justify-between items-center">
         <div className="text-[20px] font-semibold leading-[28px]">Segments</div>
 
-        <Link to="/segment/create">
-          <Button
-            className="select-none"
-            type={ButtonType.PRIMARY}
-            onClick={() => null}
-          >
-            Create segment
-          </Button>
-        </Link>
+        <div>
+          <Select
+            options={[
+              { key: SegmentType.MANUAL, title: "Upload CSV" },
+              { key: SegmentType.AUTOMATIC, title: "Dynamic rules" },
+            ]}
+            value=""
+            onChange={(value) => {
+              if (value === SegmentType.MANUAL)
+                navigate("/segment/create/manual");
+
+              if (value === SegmentType.AUTOMATIC)
+                navigate("/segment/create/automatic");
+            }}
+            placeholder="Create segment"
+            customBTN={
+              <Button type={ButtonType.PRIMARY} onClick={() => {}}>
+                Create segment
+              </Button>
+            }
+            panelClassName="!max-w-[130px]"
+          />
+        </div>
       </div>
       <div className="p-5 bg-white rounded-lg flex flex-col gap-5">
         {rows.length === 0 && search === "" && isLoaded ? (

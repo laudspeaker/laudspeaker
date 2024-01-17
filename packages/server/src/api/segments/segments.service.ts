@@ -741,6 +741,7 @@ export class SegmentsService {
     id: string,
     take = 100,
     skip = 0,
+    createdAtSortType: 'asc' | 'desc' = 'asc',
     session: string
   ) {
     const segment = await this.findOne(account, id, session);
@@ -761,19 +762,30 @@ export class SegmentsService {
       skip,
     });
 
-    const customers = await Promise.all(
-      records.map((record) =>
-        this.customersService.CustomerModel.findById(record.customerId).exec()
-      )
-    );
+    const customers = await this.customersService.CustomerModel.find({
+      _id: { $in: records.map((record) => record.customerId) },
+    })
+      .sort({ _id: createdAtSortType === 'asc' ? 1 : -1 })
+      .exec();
+
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
+    const pk = (
+      await this.customersService.CustomerKeysModel.findOne({
+        isPrimary: true,
+        workspaceId: workspace.id,
+      })
+    )?.toObject();
 
     return {
       data: customers.map((customer) => ({
         ...(customer?.toObject() || {}),
         id: customer.id,
+        createdAt: customer._id.getTimestamp(),
         dataSource: 'segmentPeople',
       })),
       totalPages,
+      pkName: pk?.key,
     };
   }
 
@@ -984,9 +996,38 @@ export class SegmentsService {
 
   public async clearCustomers(account: Account, id: string, session: string) {
     const segment = await this.findOne(account, id, session);
+    if(!segment){
+      throw new HttpException("No segment found.",HttpStatus.NOT_FOUND)
+    }
     await this.segmentCustomersRepository.delete({
       segment: id, //{ id: segment.id },
     });
+  }
+
+  public async deleteBatchedCustomers(
+    account: Account,
+    id: string,
+    customerIds: string[],
+    session: string
+  ) {
+    await this.segmentCustomersRepository.delete({
+      segment: id,
+      customerId: In(customerIds),
+    });
+
+    for (const customerId of customerIds) {
+      (async () => {
+        const customer = await this.customersService.findById(
+          account,
+          customerId
+        );
+        await this.customersService.recheckDynamicInclusion(
+          account,
+          customer,
+          session
+        );
+      })();
+    }
   }
 
   public async deleteCustomer(
