@@ -21,6 +21,7 @@ export enum StepType {
   WAIT_UNTIL_BRANCH = 'waitUntil',
   TRACKER = 'tracker',
   MULTISPLIT = 'multisplit',
+  EXPERIMENT = 'experiment',
 }
 
 export enum TimeWindowTypes {

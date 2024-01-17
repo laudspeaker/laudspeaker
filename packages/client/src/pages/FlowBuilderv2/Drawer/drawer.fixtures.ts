@@ -11,6 +11,7 @@ import {
   JumpToIcon,
   CustomModalIcon,
   UserAttributeIcon,
+  ExperimentIcon,
 } from "pages/FlowBuilderv2/Icons";
 import { FlowBuilderDrawerFixture } from "./FlowBuilderDrawer";
 
@@ -28,6 +29,7 @@ export enum DrawerAction {
   TIME_DELAY = "timeDelay",
   TIME_WINDOW = "timeWindow",
   MULTISPLIT = "multisplit",
+  EXPERIMENT = "experiment",
   USER_ATTRIBUTE = "userAttribute",
 }
 
@@ -111,6 +113,11 @@ const flowBuilderDrawerFixtures: FlowBuilderDrawerFixture[] = [
         // TODO: change icon
         icon: UserAttributeIcon(),
         text: "Multisplit",
+      },
+      {
+        id: DrawerAction.EXPERIMENT,
+        icon: ExperimentIcon(),
+        text: "Experiment",
       },
       // {
       //   id: DrawerAction.TIME_DELAY,
