@@ -63,7 +63,11 @@ export const ExperimentNode: FC<NodeProps<ExperimentNodeData>> = ({
           )} */}
         </div>
         <div className="font-normal text-[14px] leading-[22px] text-[#4B5563]">
-          <span className="font-inter font-normal text-[12px] text-[#F43F5E] leading-5">
+          <span
+            className={`font-inter font-normal text-[12px] ${
+              thisNode.data.branches?.length < 2 ? "text-[#F43F5E]" : ""
+            }  leading-5`}
+          >
             Set the experiment
           </span>
         </div>

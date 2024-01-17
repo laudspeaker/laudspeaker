@@ -660,7 +660,8 @@ const handleRemoveNode = (state: FlowBuilderState, nodeId: string) => {
 
   if (
     nodeIn.type === NodeType.WAIT_UNTIL ||
-    nodeIn.type === NodeType.USER_ATTRIBUTE
+    nodeIn.type === NodeType.USER_ATTRIBUTE ||
+    nodeIn.type === NodeType.EXPERIMENT
   ) {
     const branchEdge = state.edges.find(
       (edge) => edge.source === nodeIn.id && edge.target === node.id

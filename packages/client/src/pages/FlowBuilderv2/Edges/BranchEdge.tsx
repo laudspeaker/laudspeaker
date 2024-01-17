@@ -146,7 +146,7 @@ export const BranchEdge: FC<EdgeProps<BranchEdgeData>> = ({
                     `Meet ${branch.conditions.query.statements.length} conditions`
                   )
                 ) : branch.type === BranchType.EXPERIMENT ? (
-                  <>{branch.ratio * 100} %</>
+                  <>{(branch.ratio * 100).toFixed()} %</>
                 ) : (
                   <>Wait max time</>
                 )}

@@ -4,7 +4,7 @@ import {
   ExperimentBranch,
   ExperimentNodeData,
 } from "pages/FlowBuilderv2/Nodes/NodeData";
-import React, { FC, useState } from "react";
+import React, { FC, useEffect, useState } from "react";
 import { SidePanelComponentProps } from "../FlowBuilderSidePanel";
 import Input from "components/Elements/Inputv2";
 import ReactSlider from "react-slider";
@@ -13,13 +13,18 @@ import { v4 as uuid } from "uuid";
 const ExperimentNodeSettings: FC<
   SidePanelComponentProps<ExperimentNodeData>
 > = ({ nodeData, setNodeData, setIsError, showErrors }) => {
+  const [total, setTotal] = useState(1);
+  const [remaining, setRemaining] = useState(1);
+
   const handleChangePercent = (index: number, value: number) => {
     const newData = { ...nodeData };
     const clearValue = +(value / 100).toFixed(2);
     newData.branches[index].ratio = +clearValue.toFixed(2);
 
     if (nodeData.branches.length === 2) {
-      newData.branches[index === 1 ? 0 : 1].ratio = 1 - clearValue;
+      newData.branches[index === 1 ? 0 : 1].ratio = +(1 - clearValue).toFixed(
+        2
+      );
     }
 
     setNodeData(newData);
@@ -56,6 +61,20 @@ const ExperimentNodeSettings: FC<
     setNodeData(newData);
     if (newData.branches.length === 2) handleDistribute();
   };
+
+  useEffect(() => {
+    const newTotal = nodeData.branches
+      .map((brach) => brach.ratio)
+      .reduce((acc, el) => acc + el);
+
+    setTotal(newTotal);
+
+    setRemaining(1 - newTotal);
+  }, [nodeData]);
+
+  useEffect(() => {
+    setIsError(total > 1);
+  }, [total]);
 
   return (
     <>
@@ -130,9 +149,36 @@ const ExperimentNodeSettings: FC<
       {nodeData.branches.length > 2 && (
         <>
           <hr className="border-[#E5E7EB] mb-5" />
+
+          <div className="pb-5 flex flex-col gap-2.5">
+            <div className="font-inter text-[14px] font-semibold leading-[22px]">
+              In total: {(total * 100).toFixed()} %
+            </div>
+            <div className="h-[6px] w-full rounded-[100px] bg-[#E5E7EB] relative">
+              <div
+                className={`h-full rounded-[100px] ${
+                  total === 1 ? "bg-[#22C55E]" : "bg-[#FACC15]"
+                }`}
+                style={{
+                  width: `${(total > 1 ? 1 : total) * 100}%`,
+                }}
+              />
+            </div>
+            {remaining > 0 && (
+              <div className="font-roboto text-[14px] leading-[22px]">
+                Remaining {(remaining * 100).toFixed()}% to be distributed
+              </div>
+            )}
+            {remaining < 0 && (
+              <div className="font-roboto text-[14px] leading-[22px] text-[#EB5757]">
+                Exceeded by {(remaining * -100).toFixed()}%. Please reduce to
+                100%.
+              </div>
+            )}
+          </div>
         </>
       )}
-      <div className="relative flex gap-[10px] pb-5">
+      <div className="relative flex gap-2.5 pb-5">
         {nodeData.branches.length === 2 && (
           <div className="w-[calc(100%+20px)] absolute left-[-20px] z-10 bottom-0 border-[#E5E7EB] border-t-[1px]" />
         )}

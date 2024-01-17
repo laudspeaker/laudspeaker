@@ -33,6 +33,7 @@ export const dragActionsNotToDoBetweenNodes: (
   DrawerAction.JUMP_TO,
   DrawerAction.WAIT_UNTIL,
   DrawerAction.USER_ATTRIBUTE,
+  DrawerAction.EXPERIMENT,
 ];
 
 const NodeDraggingProvider: FC<NodeDraggingProviderProps> = ({ flowRef }) => {
