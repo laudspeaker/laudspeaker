@@ -30,6 +30,7 @@ import {
   CustomerDocument,
 } from '../customers/schemas/customer.schema';
 import * as Sentry from '@sentry/node';
+import { Account } from '../accounts/entities/accounts.entity';
 
 export enum ProviderType {
   LAUDSPEAKER = 'laudspeaker',
@@ -337,21 +338,24 @@ export class EventsPreProcessor extends WorkerHost {
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
-    const workspace =
-      job.data.account.teams?.[0]?.organization?.workspaces?.[0];
+    const owner = await queryRunner.manager.findOne(Account, {
+      where: { id: job.data.account.id },
+      relations: ['teams.organization.workspaces'],
+    });
+    const workspace = owner.teams?.[0]?.organization?.workspaces?.[0];
 
     let err: any;
 
     try {
       const correlation: Correlation =
         await this.customersService.findOrCreateByCorrelationKVPair(
-          job.data.account,
+          owner,
           job.data.event,
           transactionSession
         );
 
       await this.journeysService.enrollCustomer(
-        job.data.account,
+        owner,
         correlation.cust,
         queryRunner,
         transactionSession,
