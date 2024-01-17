@@ -44,6 +44,7 @@ import { DevModeControlHint } from "./DevModeControlHint";
 import useDevKeysHandler from "./useDevKeysHandler";
 import { useDevSocket } from "./useDevSocketConnection";
 import { MultisplitNode } from "./Nodes/MultisplitNode";
+import { ExperimentNode } from "./Nodes/ExperimentNode";
 
 export enum NodeType {
   START = "start",
@@ -59,6 +60,7 @@ export enum NodeType {
   INSERT_NODE = "insertNode",
   TRACKER = "tracker",
   MULTISPLIT = "multisplit",
+  EXPERIMENT = "experiment",
 }
 
 export enum EdgeType {
@@ -80,6 +82,7 @@ const nodeTypes: Record<NodeType, FC<NodeProps<any>>> = {
   [NodeType.TRACKER]: TrackerNode,
   [NodeType.MULTISPLIT]: MultisplitNode,
   [NodeType.PUSH]: MessageNode,
+  [NodeType.EXPERIMENT]: ExperimentNode,
 };
 
 const edgeTypes: Record<EdgeType, FC<EdgeProps<any>>> = {

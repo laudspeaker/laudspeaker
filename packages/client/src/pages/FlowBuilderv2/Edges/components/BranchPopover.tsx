@@ -33,6 +33,7 @@ const popperNameMap: Record<BranchType, string> = {
   [BranchType.MESSAGE]: "Wait people until",
   [BranchType.WU_ATTRIBUTE]: "Wait people until",
   [BranchType.MULTISPLIT]: "If users are",
+  [BranchType.EXPERIMENT]: "Percentage of users",
 };
 
 interface BranchPopoverProps {
@@ -383,6 +384,8 @@ const BranchPopover: FC<BranchPopoverProps> = ({
                     branch.conditions &&
                     limitQuery(branch.conditions.query, 3)[1] >= 3) ? (
                   <>More conditions</>
+                ) : branch.type === BranchType.EXPERIMENT ? (
+                  <>That will be moved to this branch.</>
                 ) : (
                   <>Then move to the next step.</>
                 )}

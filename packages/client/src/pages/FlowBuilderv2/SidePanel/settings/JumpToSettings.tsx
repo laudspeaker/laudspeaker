@@ -22,6 +22,7 @@ const JumpToSettings: FC<
     [NodeType.INSERT_NODE]: "Insert",
     [NodeType.TRACKER]: "Custom component",
     [NodeType.MULTISPLIT]: "Multisplit",
+    [NodeType.EXPERIMENT]: "Experiment",
     [NodeType.PUSH]: "Push",
   };
 
