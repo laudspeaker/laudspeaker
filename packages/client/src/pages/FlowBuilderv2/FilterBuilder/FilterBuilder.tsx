@@ -102,7 +102,7 @@ const corelationTypeToDefaultSettings: {
   [QueryStatementType.EMAIL]: MessageEventQuery;
   [QueryStatementType.SMS]: MessageEventQuery;
   [QueryStatementType.PUSH]: MessageEventQuery;
-  [QueryStatementType.InAPP]: MessageEventQuery;
+  [QueryStatementType.IN_APP]: MessageEventQuery;
 } = {
   [QueryStatementType.ATTRIBUTE]: {
     type: QueryStatementType.ATTRIBUTE,
@@ -173,8 +173,8 @@ const corelationTypeToDefaultSettings: {
     tag: undefined,
     time: undefined,
   },
-  [QueryStatementType.InAPP]: {
-    type: QueryStatementType.InAPP,
+  [QueryStatementType.IN_APP]: {
+    type: QueryStatementType.IN_APP,
     eventCondition: MessageInAPPEventCondition.RECEIVED,
     from: {
       key: MessageFromJourney.ANY,
@@ -194,7 +194,7 @@ const messageEventsCorelation: Record<
   | QueryStatementType.EMAIL
   | QueryStatementType.SMS
   | QueryStatementType.PUSH
-  | QueryStatementType.InAPP,
+  | QueryStatementType.IN_APP,
   {
     key:
       | MessageEmailEventCondition
@@ -226,7 +226,7 @@ const messageEventsCorelation: Record<
       title: "been " + el,
     })
   ),
-  [QueryStatementType.InAPP]: Object.values(MessageInAPPEventCondition).map(
+  [QueryStatementType.IN_APP]: Object.values(MessageInAPPEventCondition).map(
     (el) => ({
       key: el,
       title: "been " + el,
@@ -776,7 +776,7 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
         QueryStatementType.EMAIL,
         QueryStatementType.SMS,
         QueryStatementType.PUSH,
-        QueryStatementType.InAPP,
+        QueryStatementType.IN_APP,
       ].includes(statement.type as QueryStatementType)
     ) {
       const specStatement = { ...(statement as MessageEventQuery) };
@@ -975,8 +975,8 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                           title: QueryStatementType.SMS,
                         },
                         {
-                          key: QueryStatementType.InAPP,
-                          title: QueryStatementType.InAPP,
+                          key: QueryStatementType.IN_APP,
+                          title: QueryStatementType.IN_APP,
                         },
                         {
                           key: "OthersLabel",
@@ -1702,7 +1702,7 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                     QueryStatementType.EMAIL,
                     QueryStatementType.SMS,
                     QueryStatementType.PUSH,
-                    QueryStatementType.InAPP,
+                    QueryStatementType.IN_APP,
                   ].includes(statement.type as QueryStatementType) ? (
                   <>
                     <span className="font-inter text-[14px] leading-[22px] text-[#111827]">

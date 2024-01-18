@@ -1,6 +1,6 @@
 import Progress from "components/Progress";
 import { EdgeData } from "pages/FlowBuilderv2/Edges/EdgeData";
-import FilterReview from "pages/FlowBuilderv2/FilterReview/FilterReview";
+import FilterViewer from "pages/FlowBuilderv2/FilterViewer/FilterViewer";
 import FlowEditor, { NodeType } from "pages/FlowBuilderv2/FlowEditor";
 import { NodeData, Stats } from "pages/FlowBuilderv2/Nodes/NodeData";
 import { JourneyStatus } from "pages/JourneyTablev2/JourneyTablev2";
@@ -117,7 +117,7 @@ const FlowViewerv2 = () => {
             )}
           </div>
           {segmentsSettings.type === SegmentsSettingsType.CONDITIONAL && (
-            <FilterReview settingsQuery={segmentsSettings.query} />
+            <FilterViewer settingsQuery={segmentsSettings.query} />
           )}
         </div>
       </div>
