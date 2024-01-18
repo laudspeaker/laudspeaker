@@ -619,9 +619,13 @@ export class EventsService {
                           'mutable-content': 1,
                         },
                       },
-                      fcmOptions: {
-                        imageUrl: settings?.image?.imageSrc || '',
-                      },
+                      ...(settings?.image?.imageSrc
+                        ? {
+                            fcmOptions: {
+                              imageUrl: settings?.image?.imageSrc,
+                            },
+                          }
+                        : {}),
                     }
                   : undefined,
               data: body.pushObject.fields.reduce((acc, field) => {
