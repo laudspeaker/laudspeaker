@@ -70,6 +70,7 @@ export class WebsocketGateway implements OnGatewayConnection {
   ) {}
 
   public async handleConnection(socket: Socket) {
+    console.log("In handle connection socket");
     try {
       const { apiKey, customerId, userId, journeyId, development } =
         socket.handshake.auth;
@@ -85,6 +86,7 @@ export class WebsocketGateway implements OnGatewayConnection {
           : await this.accountsService.findOneByAPIKey(apiKey);
 
       if (!account) {
+        console.log("no account found");
         socket.emit('error', 'Bad API key');
         socket.disconnect(true);
         return;
@@ -95,6 +97,7 @@ export class WebsocketGateway implements OnGatewayConnection {
       socket.data.development = development;
 
       let customer: CustomerDocument;
+      console.log("socket looking for customer");
 
       // Check if given customer ID is a valid format.
       if (customerId && isValidObjectId(customerId) && !development) {
@@ -112,6 +115,7 @@ export class WebsocketGateway implements OnGatewayConnection {
             'log',
             'Customer id is not valid. Creating new anonymous customer.'
           );
+          console.log("In handle connection socket - creating customer");
           customer = await this.customersService.CustomerModel.create({
             isAnonymous: true,
             ownerId: account.id,
