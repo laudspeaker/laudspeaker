@@ -363,7 +363,8 @@ export class AccountsService extends BaseJwtHelper {
 
     if (updateUserDto.pushPlatforms) {
       const platform =
-        updateUserDto.pushPlatforms.Android || updateUserDto.pushPlatforms.iOS;
+        updateUserDto.pushPlatforms?.Android ||
+        updateUserDto.pushPlatforms?.iOS;
       await this.validateFirebase(oldUser, platform.credentials, session);
     }
 
@@ -387,8 +388,8 @@ export class AccountsService extends BaseJwtHelper {
         if (key === 'pushPlatforms' && updateUserDto[key]) {
           oldUser[key] = {
             Android:
-              updateUserDto.pushPlatforms.Android || oldUser[key].Android,
-            iOS: updateUserDto.pushPlatforms.iOS || oldUser[key].iOS,
+              updateUserDto.pushPlatforms?.Android || oldUser[key]?.Android,
+            iOS: updateUserDto.pushPlatforms?.iOS || oldUser[key]?.iOS,
           };
         } else oldUser[key] = updateUserDto[key];
       }
