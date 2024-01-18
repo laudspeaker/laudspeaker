@@ -1,4 +1,5 @@
 import { format } from "date-fns";
+import { FC } from "react";
 import {
   ComparisonType,
   ObjectKeyComparisonType,
@@ -8,11 +9,11 @@ import {
   StatementValueType,
 } from "reducers/flow-builder.reducer";
 
-interface FlowBuilderReviewProps {
+interface FilterViewerProps {
   settingsQuery: Query;
 }
 
-const FilterReview = ({ settingsQuery }: FlowBuilderReviewProps) => {
+const FilterViewer: FC<FilterViewerProps> = ({ settingsQuery }) => {
   return (
     <>
       <div className="flex gap-[13px]">
@@ -122,7 +123,7 @@ const FilterReview = ({ settingsQuery }: FlowBuilderReviewProps) => {
                     )}
                   </>
                 ) : (statement as Query)?.isSubBuilderChild ? (
-                  <FilterReview settingsQuery={statement as Query} />
+                  <FilterViewer settingsQuery={statement as Query} />
                 ) : (
                   <></>
                 )}
@@ -135,4 +136,4 @@ const FilterReview = ({ settingsQuery }: FlowBuilderReviewProps) => {
   );
 };
 
-export default FilterReview;
+export default FilterViewer;
