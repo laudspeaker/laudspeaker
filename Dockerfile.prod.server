@@ -19,7 +19,7 @@ ARG NODE_ENV=production
 ENV NODE_ENV=${NODE_ENV}
 WORKDIR /app
 COPY ./packages/server/package.json /app
-RUN npm install --only=production
+RUN npm install --only=production --legacy-peer-deps
 COPY --from=build /app/packages/server/dist /app/dist
 EXPOSE 3001
 CMD ["node", "dist/src/main.js"]
