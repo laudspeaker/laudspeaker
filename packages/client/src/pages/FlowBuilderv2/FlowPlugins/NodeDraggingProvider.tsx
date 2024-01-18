@@ -33,6 +33,7 @@ export const dragActionsNotToDoBetweenNodes: (
   DrawerAction.JUMP_TO,
   DrawerAction.WAIT_UNTIL,
   DrawerAction.USER_ATTRIBUTE,
+  DrawerAction.EXPERIMENT,
 ];
 
 const NodeDraggingProvider: FC<NodeDraggingProviderProps> = ({ flowRef }) => {
@@ -51,6 +52,7 @@ const NodeDraggingProvider: FC<NodeDraggingProviderProps> = ({ flowRef }) => {
     [DrawerAction.WAIT_UNTIL]: NodeType.WAIT_UNTIL,
     [DrawerAction.WEBHOOK]: NodeType.MESSAGE,
     [DrawerAction.MULTISPLIT]: NodeType.MULTISPLIT,
+    [DrawerAction.EXPERIMENT]: NodeType.EXPERIMENT,
   };
 
   const { nodes, edges, isDragging, flowId, dragAction, isOnboarding } =

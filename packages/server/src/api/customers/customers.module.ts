@@ -23,7 +23,7 @@ import { KafkaModule } from '../kafka/kafka.module';
 import { JourneysModule } from '../journeys/journeys.module';
 import { S3Service } from '../s3/s3.service';
 import { Imports } from './entities/imports.entity';
-import { ImportProcessor } from './imports.porcessor';
+import { ImportProcessor } from './imports.processor';
 import { JourneyLocationsService } from '../journeys/journey-locations.service';
 import { JourneyLocation } from '../journeys/entities/journey-location.entity';
 import { SegmentsService } from '../segments/segments.service';

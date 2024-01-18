@@ -660,7 +660,8 @@ const handleRemoveNode = (state: FlowBuilderState, nodeId: string) => {
 
   if (
     nodeIn.type === NodeType.WAIT_UNTIL ||
-    nodeIn.type === NodeType.USER_ATTRIBUTE
+    nodeIn.type === NodeType.USER_ATTRIBUTE ||
+    nodeIn.type === NodeType.EXPERIMENT
   ) {
     const branchEdge = state.edges.find(
       (edge) => edge.source === nodeIn.id && edge.target === node.id
@@ -831,7 +832,9 @@ const flowBuilderSlice = createSlice({
         (nodeToChange.type === NodeType.USER_ATTRIBUTE &&
           nodeToChange.data.type === NodeType.USER_ATTRIBUTE) ||
         (nodeToChange.type === NodeType.MULTISPLIT &&
-          nodeToChange.data.type === NodeType.MULTISPLIT)
+          nodeToChange.data.type === NodeType.MULTISPLIT) ||
+        (nodeToChange.type === NodeType.EXPERIMENT &&
+          nodeToChange.data.type === NodeType.EXPERIMENT)
       ) {
         const existedBranchEdges = state.edges.filter(
           (edge) => edge.source === nodeToChange.id
@@ -1184,6 +1187,25 @@ const flowBuilderSlice = createSlice({
             branches: [],
           };
           break;
+        case DrawerAction.EXPERIMENT:
+          nodeToChange.type = NodeType.EXPERIMENT;
+          nodeToChange.data = {
+            type: NodeType.EXPERIMENT,
+            stepId,
+            branches: [
+              {
+                id: uuid(),
+                type: BranchType.EXPERIMENT,
+                ratio: 0.5,
+              },
+              {
+                id: uuid(),
+                type: BranchType.EXPERIMENT,
+                ratio: 0.5,
+              },
+            ],
+          };
+          break;
         default:
           break;
       }
@@ -1197,6 +1219,7 @@ const flowBuilderSlice = createSlice({
             NodeType.USER_ATTRIBUTE,
             NodeType.EXIT,
             NodeType.MULTISPLIT,
+            NodeType.EXPERIMENT,
           ] as string[]
         ).includes(nodeToChange.type || "")
       ) {

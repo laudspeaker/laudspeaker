@@ -715,7 +715,7 @@ export class EventsProcessor extends WorkerHost {
             step: stepToQueue,
             branch: branch,
             customerID: customer.id,
-            ownerID: stepToQueue.owner.id,
+            ownerID: stepToQueue.workspace.organization.owner.id,
             session: job.data.session,
             journeyID: journey.id,
           });

@@ -48,12 +48,14 @@ export const BranchEdge: FC<EdgeProps<BranchEdgeData>> = ({
     !(
       sourceNode.type === NodeType.WAIT_UNTIL ||
       sourceNode.type === NodeType.USER_ATTRIBUTE ||
-      sourceNode.type === NodeType.MULTISPLIT
+      sourceNode.type === NodeType.MULTISPLIT ||
+      sourceNode.type === NodeType.EXPERIMENT
     ) ||
     !(
       sourceNode.data.type === NodeType.WAIT_UNTIL ||
       sourceNode.data.type === NodeType.USER_ATTRIBUTE ||
-      sourceNode.data.type === NodeType.MULTISPLIT
+      sourceNode.data.type === NodeType.MULTISPLIT ||
+      sourceNode.data.type === NodeType.EXPERIMENT
     ) ||
     !data?.branch
   )
@@ -74,7 +76,12 @@ export const BranchEdge: FC<EdgeProps<BranchEdgeData>> = ({
             style={{
               position: "absolute",
               transform: `translateX(${
-                targetX - ((branch as MultisplitBranch)?.isOthers ? 36 : 100)
+                targetX -
+                ((branch as MultisplitBranch)?.isOthers
+                  ? 36
+                  : branch.type === BranchType.EXPERIMENT
+                  ? 50
+                  : 100)
               }px) translateY(${labelY + 10}px)`,
               pointerEvents: "all",
             }}
@@ -138,6 +145,8 @@ export const BranchEdge: FC<EdgeProps<BranchEdgeData>> = ({
                   ) : (
                     `Meet ${branch.conditions.query.statements.length} conditions`
                   )
+                ) : branch.type === BranchType.EXPERIMENT ? (
+                  <>{(branch.ratio * 100).toFixed()} %</>
                 ) : (
                   <>Wait max time</>
                 )}

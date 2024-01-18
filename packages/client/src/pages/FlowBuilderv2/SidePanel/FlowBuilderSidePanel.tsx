@@ -29,6 +29,7 @@ import Modal from "components/Elements/Modal";
 import { FlowBuilderMessageRenameModal } from "../Modals/FlowBuilderMessageRenameModal";
 import { MessageType } from "types/Workflow";
 import { Node } from "reactflow";
+import ExperimentNodeSettings from "./settings/ExperimentNodeSettings";
 
 export interface SidePanelComponentProps<T extends NodeData = NodeData> {
   nodeData: T;
@@ -83,6 +84,7 @@ const FlowBuilderSidePanel: FC<FlowBuilderSidePanelProps> = ({ className }) => {
     [NodeType.INSERT_NODE]: "Insert",
     [NodeType.TRACKER]: "Custom component",
     [NodeType.MULTISPLIT]: "Multisplit",
+    [NodeType.EXPERIMENT]: "Experiment",
     [NodeType.PUSH]: "Push",
   };
 
@@ -120,6 +122,20 @@ const FlowBuilderSidePanel: FC<FlowBuilderSidePanelProps> = ({ className }) => {
             setIsError={setIsError}
             showErrors={showErrors}
           />
+        )}
+      </>
+    ),
+    [NodeType.EXPERIMENT]: (
+      <>
+        {nodeData.type === NodeType.EXPERIMENT && (
+          <div className="p-5">
+            <ExperimentNodeSettings
+              nodeData={nodeData}
+              setNodeData={setNodeData}
+              setIsError={setIsError}
+              showErrors={showErrors}
+            />
+          </div>
         )}
       </>
     ),

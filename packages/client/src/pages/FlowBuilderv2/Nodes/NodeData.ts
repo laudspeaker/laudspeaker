@@ -20,6 +20,7 @@ export enum BranchType {
   WU_ATTRIBUTE = "wu_attribute",
   MESSAGE = "message",
   MULTISPLIT = "multisplit",
+  EXPERIMENT = "experiment",
 }
 
 export enum LogicRelation {
@@ -136,6 +137,11 @@ export interface MultisplitBranch extends CommonBranch {
   isOthers?: boolean;
 }
 
+export interface ExperimentBranch extends CommonBranch {
+  type: BranchType.EXPERIMENT;
+  ratio: number;
+}
+
 export enum TimeType {
   TIME_DELAY = "timeDelay",
   TIME_WINDOW = "timeWindow",
@@ -194,7 +200,8 @@ export type Branch =
   | AttributeBranch
   | MessageBranch
   | WUAttributeBranch
-  | MultisplitBranch;
+  | MultisplitBranch
+  | ExperimentBranch;
 
 export interface Stats {
   sent?: number;
@@ -238,6 +245,11 @@ export interface WaitUntilNodeData extends CommonNodeData {
 export interface MultisplitNodeData extends CommonNodeData {
   type: NodeType.MULTISPLIT;
   branches: MultisplitBranch[];
+}
+
+export interface ExperimentNodeData extends CommonNodeData {
+  type: NodeType.EXPERIMENT;
+  branches: ExperimentBranch[];
 }
 
 export interface TimeDelayNodeData extends CommonNodeData {
@@ -297,6 +309,7 @@ export interface AnotherNodeData extends CommonNodeData {
     | NodeType.JUMP_TO
     | NodeType.TRACKER
     | NodeType.MULTISPLIT
+    | NodeType.EXPERIMENT
   >;
 }
 
@@ -308,5 +321,6 @@ export type NodeData =
   | UserAttributeNodeData
   | JumpToNodeData
   | MultisplitNodeData
+  | ExperimentNodeData
   | TrackerNodeData
   | AnotherNodeData;

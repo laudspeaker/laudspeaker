@@ -69,6 +69,7 @@ const OnboardingSidePanel: FC<OnboardingSidePanelProps> = ({
     [NodeType.MULTISPLIT]: "Multisplit",
     [NodeType.PUSH]: "Push",
     [NodeType.INSERT_NODE]: "",
+    [NodeType.EXPERIMENT]: "Experiment",
   };
 
   const nodeToSettingsComponentMap: Record<string, ReactNode> = {
