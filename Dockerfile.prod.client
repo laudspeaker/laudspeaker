@@ -7,7 +7,7 @@ ENV SENTRY_AUTH_TOKEN=${FRONTEND_SENTRY_AUTH_TOKEN}
 ENV SENTRY_ORG=laudspeaker-rb
 ENV SENTRY_PROJECT=javascript-react
 ENV REACT_APP_WS_BASE_URL https://api.laudspeaker.com
-ENV REACT_APP_API_BASE_URL https://api.laudspeaker.com
+ENV REACT_APP_API_BASE_URL=https://api.laudspeaker.com
 ENV REACT_APP_ONBOARDING_API_KEY ONBOARDING-API-KEY
 ENV REACT_APP_POSTHOG_HOST https://app.posthog.com
 ENV REACT_APP_POSTHOG_KEY RxdBl8vjdTwic7xTzoKTdbmeSC1PCzV6sw-x-FKSB-k
@@ -26,7 +26,6 @@ COPY --from=build /app/packages/client/build /usr/share/nginx/html
 COPY ./scripts /app/scripts/
 RUN rm /etc/nginx/conf.d/default.conf
 COPY nginx/prod.nginx.conf /etc/nginx/conf.d
-ENV OUTPUT=/usr/share/nginx/html/config.js
 EXPOSE 80
 EXPOSE 443
 CMD ["nginx", "-g" ,"daemon off;"]
