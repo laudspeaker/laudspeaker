@@ -121,7 +121,7 @@ const MultisplitCondtionsReview = ({
               </div>
             ) : [
                 QueryStatementType.EMAIL,
-                QueryStatementType.InAPP,
+                QueryStatementType.IN_APP,
                 QueryStatementType.PUSH,
                 QueryStatementType.SMS,
               ].includes(statement.type as QueryStatementType) ? (

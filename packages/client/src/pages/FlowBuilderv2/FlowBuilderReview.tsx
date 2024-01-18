@@ -6,7 +6,7 @@ import {
   SegmentsSettingsType,
 } from "reducers/flow-builder.reducer";
 import { useAppSelector } from "store/hooks";
-import FilterReview from "./FilterReview/FilterReview";
+import FilterViewer from "./FilterViewer/FilterViewer";
 import FlowEditor from "./FlowEditor";
 
 const FlowBuilderReview = () => {
@@ -41,7 +41,7 @@ const FlowBuilderReview = () => {
             )}
           </div>
           {segmentsSettings.type === SegmentsSettingsType.CONDITIONAL && (
-            <FilterReview settingsQuery={segmentsSettings.query} />
+            <FilterViewer settingsQuery={segmentsSettings.query} />
           )}
         </div>
       </div>
