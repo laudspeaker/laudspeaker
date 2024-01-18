@@ -29,4 +29,4 @@ COPY nginx/prod.nginx.conf /etc/nginx/conf.d
 ENV OUTPUT=/usr/share/nginx/html/config.js
 EXPOSE 80
 EXPOSE 443
-CMD ["sh", "-c", "/app/scripts/setup_config.sh && nginx -g daemon off;"]
+CMD ["nginx", "-g" ,"daemon off;"]
